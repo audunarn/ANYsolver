@@ -26,6 +26,8 @@ CONTRADICTIONS=[]
 _FACADES={}
 _RESULTS={}
 _EXPECTED={}
+_OBSERVATIONS={}
+_CURRENT_OBSERVATION=None
 SOURCES={
  'src/anysolver/e4_pl_element.py':'7fc46a18046e043512a5fb2c3f61ed0b95b834e4dde764f63c500a885e87ea38',
  'src/anysolver/elements.py':'f8c59792947a3c9b84416c61a4d9db98e42926d1bf21e74e736afbf6a9a88b37',
@@ -132,12 +134,38 @@ def physical_scales(c):
     return physical,total
 
 
+def observe(table,row_id,c,q,qa):
+    """Bind the exact inputs of an actual cached or fresh candidate evaluation."""
+    global _CURRENT_OBSERVATION
+    key=(c.construction_id,np.asarray(q).tobytes(),np.asarray(qa).tobytes())
+    assert key in _RESULTS
+    state=dict(construction_id=c.construction_id,coordinates=c.coordinates.tolist(),q=np.asarray(q).tolist(),
+        accepted=np.asarray(qa).tolist(),normal=c.normal.tolist(),material_direction=c.material_direction.tolist(),
+        director_polarity=c.director_polarity)
+    locator=(table,row_id)
+    assert locator not in _OBSERVATIONS
+    value=dict(state=state,state_sha256=sha256(canonical(state)).hexdigest(),physical_checks={})
+    _OBSERVATIONS[locator]=value;_CURRENT_OBSERVATION=locator
+
+
+def save_physical_check(predicate,error,actual):
+    assert _CURRENT_OBSERVATION is not None
+    observation=_OBSERVATIONS[_CURRENT_OBSERVATION]
+    assert predicate not in observation['physical_checks']
+    result=dict(relative_error=error,passed=error<=1e-11,actual=array_digest(actual))
+    observation['physical_checks'][predicate]=result
+    return result
+
+
 def physical_comparison(c,q,qa,predicate,actual,expected):
     """A verified physical mismatch is evidence, never a disguised pytest crash."""
     target=predicate.removeprefix('source_')
     scaled_actual=checker.physical_scaled(target,actual,c.coordinates)
     scaled_expected=checker.physical_scaled(target,expected,c.coordinates)
     error=checker.relative_error(scaled_actual,scaled_expected)
+    table,row_id=_CURRENT_OBSERVATION
+    observation=_OBSERVATIONS[(table,row_id)]
+    assert observation['state']['construction_id']==c.construction_id
     if error>1e-11:
         directory=Path(os.environ['BEAM_QUALIFICATION_OUTPUT'])
         lease=json.loads((directory.parent/'lease.json').read_text())
@@ -146,25 +174,27 @@ def physical_comparison(c,q,qa,predicate,actual,expected):
             normal=c.normal.tolist(),material_direction=c.material_direction.tolist(),director_polarity=c.director_polarity,
             actual=np.asarray(actual).tolist(),tolerance=1e-11,scale_mode='REFERENCE_EDGE_NONDIMENSIONAL_V1',
             source_identity=sha256(canonical(lease['inputs'])).hexdigest(),candidate_identity=lease['candidate']['commit'],
-            fixture_identity=c.construction_id)
+            fixture_identity=c.construction_id,node=os.environ['BEAM_QUALIFICATION_NODE'],table=table,row_id=row_id,
+            state_sha256=observation['state_sha256'])
         # Independently reconstructed expected values and scales, not a caller's
         # fabricated expected operand. The runner verifies again before writing.
         verification=checker.verify_contradiction(payload)
         assert verification['accepted'] is True
         CONTRADICTIONS.append(payload)
-    return dict(relative_error=error,passed=error<=1e-11,actual=array_digest(actual))
+    return save_physical_check(predicate,error,actual)
 
 
-def check_physical(c,q,qa,trial,expected):
+def check_physical(c,q,qa,trial,expected,*,table,row_id):
+    observe(table,row_id,c,q,qa)
     s=scale_vector(c);zero,_=physical_scales(c)
     zero_pose=not np.any(q) and np.array_equal(qa,np.tile(np.eye(3),(4,1,1)))
     energy_scale=abs(float(expected['physical_energy']))
     if energy_scale==0 or zero_pose:energy_scale=zero
     force=s*expected['physical_force'];force_scale=zero if zero_pose else norm(force) or zero
     hessian=s[:,None]*expected['physical_hessian']*s[None,:]
-    return dict(energy=(close(trial.physical_energy,expected['physical_energy'],scale=energy_scale) if zero_pose else
+    return dict(energy=(save_physical_check('physical_energy',close(trial.physical_energy,expected['physical_energy'],scale=energy_scale),trial.physical_energy) if zero_pose else
                        physical_comparison(c,q,qa,'physical_energy',trial.physical_energy,expected['physical_energy'])),
-        force=(close(s*trial.physical_chart_force,force,scale=force_scale) if zero_pose else
+        force=(save_physical_check('physical_force',close(s*trial.physical_chart_force,force,scale=force_scale),trial.physical_chart_force) if zero_pose else
                physical_comparison(c,q,qa,'physical_force',trial.physical_chart_force,expected['physical_force'])),
         hessian=physical_comparison(c,q,qa,'physical_hessian',trial.physical_chart_hessian,expected['physical_hessian']),
         symmetry=close(s[:,None]*trial.physical_chart_hessian*s[None,:],(s[:,None]*trial.physical_chart_hessian*s[None,:]).T),
@@ -176,6 +206,9 @@ def check_physical(c,q,qa,trial,expected):
 def record(name,**tables):
     for table,rows in tables.items():
         assert rows and len({row['id'] for row in rows})==len(rows),table
+        for row in rows:
+            observation=_OBSERVATIONS.get((table,row['id']))
+            if observation is not None:row.update(observation)
     SCIENTIFIC_RECORDS.append(dict(test=name,tables=tables,full_g3c_qualified=False,production_qualified=False))
 
 
@@ -269,7 +302,7 @@ def test_affine_recovery_actual_chart_work_hessian():
     rows=[]
     for identity,pose,c,q,qa in base_contexts():
         trial=evaluate(c,q,qa);expected=independent(c,q,qa)
-        checks=check_physical(c,q,qa,trial,expected)
+        checks=check_physical(c,q,qa,trial,expected,table='work',row_id=identity+'::'+pose)
         zero_pose=not np.any(q) and np.array_equal(qa,np.tile(np.eye(3),(4,1,1)))
         if not zero_pose:
             checks['source_energy']=physical_comparison(c,q,qa,'source_physical_energy',trial.source_physical_energy,expected['physical_energy'])
@@ -325,12 +358,13 @@ def test_affine_recovery_six_rigid_modes_and_common_motion():
         c,q,qa=context(identity);base=evaluate(c,q,qa)
         for index in range(4):
             moved,accepted,W=registry.common_motion(q,qa,c.coordinates,index);result=evaluate(c,moved,accepted)
-            expected=independent(c,moved,accepted);check_chart(c,result,expected);check_physical(c,moved,accepted,result,expected)
+            expected=independent(c,moved,accepted);check_chart(c,result,expected)
+            checks=check_physical(c,moved,accepted,result,expected,table='common_motion',row_id=identity+'::motion='+str(index))
             close(result.physical_energy,base.physical_energy)
             for a,b in zip(result.stations,base.stations):close(a.strain,b.strain);close(a.resultant,b.resultant)
             transformed=(base.physical_spatial_force.reshape(4,6).reshape(4,2,3)@W.T).reshape(24)
             close(result.physical_spatial_force,transformed)
-            motion.append(dict(id=identity+'::motion='+str(index),energy=float(result.physical_energy)))
+            motion.append(dict(id=identity+'::motion='+str(index),energy=float(result.physical_energy),checks=checks))
     assert len(rigid)==3 and len(motion)==12;record('six_rigid_modes_and_common_motion',rigid=rigid,common_motion=motion)
 
 
@@ -340,7 +374,7 @@ def test_affine_recovery_d4_and_director_transports():
         base_c,base_q,base_qa=context(shape+'::1');base=evaluate(base_c,base_q,base_qa)
         for k in range(8):
             identity=shape+'::1::D4:'+str(k);c,q,qa=context(identity);trial=evaluate(c,q,qa)
-            expected=independent(c,q,qa);check_physical(c,q,qa,trial,expected)
+            expected=independent(c,q,qa);checks=check_physical(c,q,qa,trial,expected,table='d4',row_id=identity)
             close(trial.physical_energy,base.physical_energy)
             indices=np.array([6*i+j for i in c.permutation for j in range(6)])
             close(trial.physical_spatial_force,base.physical_spatial_force[indices])
@@ -351,17 +385,17 @@ def test_affine_recovery_d4_and_director_transports():
                 close(station.reference_position,positions[index])
                 close(station.reference_strain_tensors,base.stations[index].reference_strain_tensors)
                 close(station.reference_resultant_tensors,base.stations[index].reference_resultant_tensors)
-            d4.append(dict(id=identity,station_map=matched))
+            d4.append(dict(id=identity,station_map=matched,checks=checks))
         for polarity in (-1,1):
             identity=shape+'::1::DIRECTOR:'+str(polarity);c,q,qa=context(identity);trial=evaluate(c,q,qa)
-            expected=independent(c,q,qa);check_physical(c,q,qa,trial,expected)
+            expected=independent(c,q,qa);checks=check_physical(c,q,qa,trial,expected,table='director',row_id=identity)
             for station in trial.stations:
                 sigma=polarity
                 transform=np.diag([1,1,sigma,sigma,sigma,1,sigma,1])
                 close(station.physical_strain,transform@station.strain)
                 close(station.physical_resultant,transform@station.resultant)
                 close(station.physical_strain@station.physical_resultant,station.strain@station.resultant)
-            director.append(dict(id=identity,physical_polarity=polarity))
+            director.append(dict(id=identity,physical_polarity=polarity,checks=checks))
     assert len(d4)==24 and len(director)==6;record('d4_and_director_transports',d4=d4,director=director)
 
 
@@ -370,19 +404,21 @@ def test_affine_recovery_passive_and_same_pose_rebase():
     for shape in registry.SHAPES:
         c,q,qa=context(shape+'::1');base=evaluate(c,q,qa)
         transformed,uq,accepted=context(shape+'::1::PASSIVE');trial=evaluate(transformed,uq,accepted)
-        expected=independent(transformed,uq,accepted);check_chart(transformed,trial,expected);check_physical(transformed,uq,accepted,trial,expected)
+        expected=independent(transformed,uq,accepted);check_chart(transformed,trial,expected)
+        checks=check_physical(transformed,uq,accepted,trial,expected,table='passive',row_id=transformed.construction_id)
         W=transformed.passive_rotation
         close(trial.physical_energy,base.physical_energy)
         close(trial.physical_spatial_force,(base.physical_spatial_force.reshape(4,2,3)@W.T).reshape(24))
         for a,b in zip(trial.stations,base.stations):
             close(a.reference_strain_tensors,W@b.reference_strain_tensors@W.T)
             close(a.reference_resultant_tensors,W@b.reference_resultant_tensors@W.T)
-        passive.append(dict(id=transformed.construction_id,energy=float(trial.physical_energy)))
+        passive.append(dict(id=transformed.construction_id,energy=float(trial.physical_energy),checks=checks))
         rebased,accepted=registry.rebase(q,qa);trial=evaluate(c,rebased,accepted)
-        expected=independent(c,rebased,accepted);check_chart(c,trial,expected);check_physical(c,rebased,accepted,trial,expected)
+        expected=independent(c,rebased,accepted);check_chart(c,trial,expected)
+        checks=check_physical(c,rebased,accepted,trial,expected,table='rebase',row_id=c.construction_id)
         close(trial.kinematics.deformation,base.kinematics.deformation);close(trial.physical_energy,base.physical_energy)
         close(trial.physical_spatial_force,base.physical_spatial_force)
-        rebases.append(dict(id=c.construction_id,energy=float(trial.physical_energy)))
+        rebases.append(dict(id=c.construction_id,energy=float(trial.physical_energy),checks=checks))
     assert len(passive)==len(rebases)==3;record('passive_and_same_pose_rebase',passive=passive,rebase=rebases)
 
 
@@ -405,7 +441,7 @@ def test_affine_recovery_all_graph_q4_reference_variants():
             c,q,qa=context(identity,pose);trial=evaluate(c,q,qa);expected=independent(c,q,qa)
             assert tuple(ids)==c.node_ids and np.array_equal(X,c.coordinates)
             assert np.array_equal(normal,c.normal) and np.array_equal(direction,c.material_direction)
-            check_chart(c,trial,expected);checks=check_physical(c,q,qa,trial,expected)
+            check_chart(c,trial,expected);checks=check_physical(c,q,qa,trial,expected,table='graph',row_id=identity+'::'+pose)
             assert c.element_id in (11,13,20055,20065)
             close(c.material_direction,c.passive_rotation@np.array([1.,0.,0.]))
             close(c.normal,c.passive_rotation@np.array([0.,0.,1.]))
@@ -420,7 +456,7 @@ def test_affine_recovery_tiny_physical_energy_and_numerical_separation():
         for amplitude in (1e-6,1e-3):
             c,q,qa=context(shape+'::1',amplitude=amplitude);trial=evaluate(c,q,qa);expected=independent(c,q,qa)
             assert trial.physical_energy>0 and expected['physical_energy']>0
-            checks=check_physical(c,q,qa,trial,expected)
+            checks=check_physical(c,q,qa,trial,expected,table='tiny',row_id=c.construction_id+'::amplitude='+str(amplitude))
             tiny.append(dict(id=c.construction_id+'::amplitude='+str(amplitude),checks=checks,energy=float(trial.physical_energy)))
     for identity,pose,c,q,qa in base_contexts():
         trial=evaluate(c,q,qa);physical=sum(s.weight*.5*(s.strain@s.resultant) for s in trial.stations)
@@ -437,9 +473,21 @@ def test_affine_recovery_tiny_physical_energy_and_numerical_separation():
 def test_affine_recovery_definition_observation_races(monkeypatch):
     c,q,qa=context('SQUARE::1');rows=[]
     original_descriptor=candidate.AffineQ4PhysicalRecovery.descriptor
-    for route in ('descriptor','displacement_array','accepted_array','cancellation','material_descriptor','cache_array','cache_cancellation'):
+    for route in ('descriptor','displacement_array','accepted_array','cancellation','material_descriptor','cache_array','cache_cancellation',
+                  'preentry_E','preentry_coordinates','preentry_material_direction','preentry_policy','preentry_cached_definition'):
         f=candidate.AffineQ4PhysicalRecovery(c.construction_id);other=candidate.AffineQ4PhysicalRecovery('RECTANGLE::1')
         if route.startswith('cache_'):f.evaluate(q,qa)
+        if route=='preentry_cached_definition':
+            f.evaluate(q,qa)
+            object.__setattr__(f,'_body',other._body);object.__setattr__(f,'_seal',other._seal)
+        elif route.startswith('preentry_'):
+            body=json.loads(f._body)
+            key=route.removeprefix('preentry_')
+            if key=='E':body[key]=200.
+            elif key=='coordinates':body[key][0][0]+=.125
+            elif key=='material_direction':body[key]=[0.,1.,0.]
+            else:body[key]='GE_BEAM3_G3C_MATRIX_POSE_SHELL_PULLBACK_V1'
+            raw=canonical(body);object.__setattr__(f,'_body',raw);object.__setattr__(f,'_seal',sha256(raw).hexdigest())
         entered=[]
         def swap():
             if route.startswith('cache_'):
@@ -519,9 +567,14 @@ def test_affine_recovery_immutable_detached_results_and_reentry(monkeypatch):
     object.__setattr__(f,'_prepared',replace(cached,weights=badweights))
     with pytest.raises(ValueError):f.evaluate(q,qa)
     object.__setattr__(f,'_prepared',cached)
-    record('immutable_detached_results_and_reentry',immutability=[dict(id='all_detached_arrays',array_count=count),
-        dict(id='caller_arrays_preserved'),dict(id='same_input_repeat'),dict(id='reentry',rejections=len(inner)),
-        dict(id='changed_accepted_matrix'),dict(id='concurrent_evaluation'),dict(id='operator_cache_tamper')])
+    evidence=sha256(canonical(snapshots)).hexdigest()
+    record('immutable_detached_results_and_reentry',immutability=[dict(id='all_detached_arrays',array_count=count,verified=True,prior_arrays_sha256=evidence),
+        dict(id='caller_arrays_preserved',verified=True,prior_arrays_sha256=evidence),
+        dict(id='same_input_repeat',verified=True,prior_arrays_sha256=evidence),
+        dict(id='reentry',rejections=len(inner),verified=True,prior_arrays_sha256=evidence),
+        dict(id='changed_accepted_matrix',verified=True,prior_arrays_sha256=evidence),
+        dict(id='concurrent_evaluation',verified=True,prior_arrays_sha256=evidence),
+        dict(id='operator_cache_tamper',verified=True,prior_arrays_sha256=evidence)])
 
 
 def test_affine_recovery_unsupported_routes_and_cancellation(monkeypatch):
@@ -633,6 +686,6 @@ def test_affine_recovery_smoke_square_station_work():
     rows=[]
     for pose in ('ZERO','MIXED'):
         c,q,qa=context('SQUARE::1',pose);trial=evaluate(c,q,qa);expected=independent(c,q,qa)
-        check_chart(c,trial,expected);checks=check_physical(c,q,qa,trial,expected)
+        check_chart(c,trial,expected);checks=check_physical(c,q,qa,trial,expected,table='smoke',row_id='SQUARE::1::'+pose)
         rows.append(dict(id='SQUARE::1::'+pose,checks=checks))
     record('smoke_square_station_work',smoke=rows)

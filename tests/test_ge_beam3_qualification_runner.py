@@ -25,6 +25,94 @@ class Job:
     def poll(self):return self.code
     def launch(self,*a,**kw):return self
 
+
+def inert_zeros(shape):
+    return [inert_zeros(shape[1:]) for _ in range(shape[0])] if shape else 0.
+
+
+def inert_row(table,identity):
+    """Schema fixtures only: deliberately NOT mechanics or accepted evidence."""
+    row={'id':identity};digest=lambda shape:r.numeric_array(inert_zeros(shape),shape)
+    if table in r.PHYSICAL_TABLES:
+        state=dict(construction_id=r.row_construction(table,identity),coordinates=inert_zeros([4,3]),q=inert_zeros([24]),
+            accepted=inert_zeros([4,3,3]),normal=[0.,0.,1.],material_direction=[1.,0.,0.],director_polarity=-1 if identity.endswith('::DIRECTOR:-1') else 1)
+        row.update(state=state,state_sha256=sha256(r.canonical(state)).hexdigest(),physical_checks={})
+        checks=dict(symmetry=0.,spatial_force=0.,spatial_tangent=0.)
+        mapping={'energy':'physical_energy','force':'physical_force','hessian':'physical_hessian'}
+        if table=='work' and not identity.endswith('::ZERO'):
+            mapping.update(source_energy='source_physical_energy',source_force='source_physical_force',source_hessian='source_physical_hessian')
+        for key,predicate in mapping.items():
+            check=dict(relative_error=0.,passed=True,actual=digest(r.PHYSICAL_SHAPES[predicate]))
+            checks[key]=check;row['physical_checks'][predicate]=check
+        row['checks']=checks
+    if table=='definitions':row.update(recipe_sha256='0'*64,descriptor_sha256='0'*64)
+    elif table=='source_graph':row['hashes']=dict(r.NUMERICAL_SOURCE_HASHES)
+    elif table=='extension_lemma':row.update(lemma_sha256='156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762',review_sha256='e28f184023ce1bba825a89079bcd2f9af99cf7861d701d7d918e2d30492b073e')
+    elif table=='station':row.update(checks={key:0. for key in ('d','D','D2','R','Q','x')},energy=0.,stations=4)
+    elif table=='independent':row['stations']=[{key:0. for key in ('M','strain','resultant','frame','constitutive')} for _ in range(4)]
+    elif table=='schur':row.update(schur=digest([24,24]),full_internal_dimension=64)
+    elif table=='work':row['chart_image_sentinels']=True
+    elif table=='directional':row.update(work=0.,tangent=0.)
+    elif table=='rigid':row.update(rigid_columns=6,total_positive_modes=18,eigenvalues=digest([24]))
+    elif table in ('common_motion','passive','rebase','tiny'):row['energy']=1.
+    elif table=='d4':
+        k=int(identity.rsplit(':',1)[1]);row['station_map']=[(i+k%4)%4 for i in ((0,1,2,3) if k<4 else (0,3,2,1))]
+    elif table=='director':row['physical_polarity']=int(identity.rsplit(':',1)[1])
+    elif table=='graph':
+        ids=[101,102,103,104] if identity.startswith('J_Q4_PAIR::') else [301,302,303,304]
+        element=11 if identity.startswith('J_Q4_PAIR::') else 13
+        if '::RENUMBERED::' in identity:ids=[10000+7*i for i in ids];element=20000+5*element
+        if '::CONNECTIVITY_REVERSED::' in identity:ids=[ids[i] for i in (0,3,2,1)]
+        row.update(node_ids=ids,element_id=element,recipe_sha256='0'*64)
+    elif table=='channels':row.update(physical=0.,numerical=[dict(name=n,energy=0.) for n in ('NUMERICAL_PL','NUMERICAL_HOURGLASS')])
+    elif table=='races':row['rejected_before_family']=True
+    elif table=='immutability':
+        row.update(verified=True,prior_arrays_sha256='0'*64)
+        if identity=='all_detached_arrays':row['array_count']=31
+        if identity=='reentry':row['rejections']=2
+    elif table=='rejections':
+        if identity in ('before_work','before_publication','invalid_callback'):
+            row.update(callbacks=2 if identity=='before_publication' else 1,family_entries=1 if identity=='before_publication' else 0,published=False)
+        else:row['rejected_before_family']=True
+    elif table=='mutations':
+        mutation=identity.split('::',1)[1]
+        row['rejection']=('INDEPENDENT_HESSIAN' if mutation in ('force_weighted_Hessian','chart_second') else
+            'STATION_EQUILIBRIUM' if mutation=='coupling_sign' else 'STATION_INVERSE' if mutation=='inverse' else
+            'MATERIAL_ENERGY' if mutation=='numerical_energy_leak' else 'INDEPENDENT_STATION_COMPARISON')
+    return row
+
+
+def inert_records(index):
+    return [dict(test=r.NUMERICAL_TESTS[index].removeprefix('test_affine_recovery_'),
+        tables={table:[inert_row(table,identity) for identity in ids] for table,ids in r.NUMERICAL_TABLE_IDS[index].items()},
+        full_g3c_qualified=False,production_qualified=False)]
+
+
+def inert_observations(node,records):
+    return {(node,table,row['id']):row['state_sha256'] for table,rows in records[0]['tables'].items()
+            if table in r.PHYSICAL_TABLES for row in rows}
+
+
+def inert_contradiction(node,table,row,lease,predicate='physical_energy'):
+    """Protocol-only synthetic witness, never passed to the physics checker."""
+    state=row['state'];actual=inert_zeros(r.PHYSICAL_SHAPES[predicate])
+    error=.5;fingerprint=r.numeric_array(actual,r.PHYSICAL_SHAPES[predicate])
+    check=dict(relative_error=error,passed=False,actual=fingerprint)
+    row['physical_checks'][predicate]=check
+    key={'physical_energy':'energy','physical_force':'force','physical_hessian':'hessian',
+         'source_physical_energy':'source_energy','source_physical_force':'source_force','source_physical_hessian':'source_hessian'}[predicate]
+    row['checks'][key]=check
+    if predicate.startswith('source_'):row['chart_image_sentinels']=False
+    payload=dict(schema='Q4_AFFINE_NUMERICAL_CONTRADICTION_V1',predicate=predicate,actual=actual,tolerance=1e-11,
+        scale_mode='REFERENCE_EDGE_NONDIMENSIONAL_V1',source_identity=sha256(r.canonical(lease['inputs'])).hexdigest(),
+        candidate_identity=lease['candidate']['commit'],fixture_identity=state['construction_id'],
+        node=node,table=table,row_id=row['id'],state_sha256=row['state_sha256'],
+        **{key:state[key] for key in ('coordinates','q','accepted','normal','material_direction','director_polarity')})
+    verification=dict(accepted=True,predicate=predicate,relative_error=error,node=node,table=table,row_id=row['id'],
+        fixture_identity=state['construction_id'],payload_sha256=sha256(r.canonical(payload)).hexdigest(),
+        state_sha256=row['state_sha256'],actual=fingerprint,expected=dict(fingerprint,sha256='1'*64))
+    return dict(payload=payload,verification=verification)
+
 class GuardTests(unittest.TestCase):
     def test_registered_inventory(self):
         self.assertEqual(len(r.inventory('core')),8);self.assertEqual(len(r.inventory('smoke')),2)
@@ -193,7 +281,8 @@ class GuardTests(unittest.TestCase):
     def test_numerical_assignment_binds_single_node_and_whole_inventory(self):
         selected=['test.py::n'+str(i) for i in range(15)]
         lease=dict(schema=r.SCOPE,run_id=str(uuid.uuid4()),gate='q4-affine-numerical',lane='core',
-            candidate=dict(commit='a'*40,tree='b'*40),inputs={},review_sha256='c'*64,selected=selected)
+            candidate=dict(commit='a'*40,tree='b'*40),inputs={},review_sha256='c'*64,selected=selected,
+            observation_manifest_sha256='f'*64)
         assignment=r.numerical_assignment(lease,4);r.validate_assignment(assignment,lease,4)
         for key,value in (('index',5),('node',selected[5]),('lane','smoke'),('parent_lease_sha256','0'*64),
                           ('whole_inventory_sha256','0'*64),('inputs_sha256','0'*64),('run_id',str(uuid.uuid4()))):
@@ -230,35 +319,33 @@ class GuardTests(unittest.TestCase):
         self.assertTrue(job.killed)
 
     def test_numerical_result_schema_and_union_completeness(self):
-        lease=dict(run_id=str(uuid.uuid4()),gate='q4-affine-numerical',lane='core',candidate={},inputs={},
-                   selected=['fixture.py::'+name for name in r.NUMERICAL_TESTS])
-        values=[]
+        lease=dict(run_id=str(uuid.uuid4()),gate='q4-affine-numerical',lane='core',candidate=dict(commit='a'*40,tree='b'*40),inputs={},
+                   selected=['fixture.py::'+name for name in r.NUMERICAL_TESTS],observation_manifest_sha256='f'*64)
+        values=[];observations={}
         for i in range(15):
             a=r.numerical_assignment(lease,i);digest=sha256(r.canonical(a)).hexdigest()
-            value=dict(schema='GE_BEAM3_REGISTERED_NUMERICAL_NODE_V1',node=a['node'],index=i,candidate={},
+            value=dict(schema='GE_BEAM3_REGISTERED_NUMERICAL_NODE_V1',node=a['node'],index=i,candidate=lease['candidate'],
                 inputs_sha256=a['inputs_sha256'],whole_inventory_sha256=a['whole_inventory_sha256'],lane='core',
-                records=[dict(test=r.NUMERICAL_TESTS[i].removeprefix('test_affine_recovery_'),
-                    tables={key:[{'id':identity} for identity in ids] for key,ids in r.NUMERICAL_TABLE_IDS[i].items()},
-                    full_g3c_qualified=False,production_qualified=False)],contradictions=[],status='PASSED',
-                physical_recovery_scope='REGISTERED_AFFINE_LOCAL_ONLY',full_g3c_qualified=False,production_qualified=False)
+                records=inert_records(i),contradictions=[],status='PASSED',
+                physical_recovery_scope='REGISTERED_AFFINE_LOCAL_ONLY',full_g3c_qualified=False,production_qualified=False,
+                observation_manifest_sha256=lease['observation_manifest_sha256'])
+            observations.update(inert_observations(a['node'],value['records']))
             raw=r.canonical(value);completion=dict(assignment_sha256=digest,node=a['node'],scientific=r.fingerprint(raw))
-            self.assertEqual(r.validate_numerical_result(raw,completion,lease,i,digest),value);values.append(value)
+            self.assertEqual(r.validate_numerical_result(raw,completion,lease,i,digest,observations),value);values.append(value)
             for key,bad_value in (('index',True),('records',[]),('status','CONTRADICTION'),('production_qualified',True)):
                 bad=dict(value,**{key:bad_value});bad_raw=r.canonical(bad)
                 with self.assertRaises(ValueError):r.validate_numerical_result(bad_raw,
-                    dict(completion,scientific=r.fingerprint(bad_raw)),lease,i,digest)
-        self.assertEqual(r.numerical_union(lease,values)['terminal'],'PROVISIONAL_GO_G3C_Q4_AFFINE_LOCAL_PHYSICAL_RECOVERY_ONLY')
+                    dict(completion,scientific=r.fingerprint(bad_raw)),lease,i,digest,observations)
+        self.assertEqual(r.numerical_union(lease,values,observations)['terminal'],'PROVISIONAL_GO_G3C_Q4_AFFINE_LOCAL_PHYSICAL_RECOVERY_ONLY')
         for bad in (values[:-1],values[::-1],values+values[:1]):
-            with self.assertRaises(ValueError):r.numerical_union(lease,bad)
-        values[3]['contradictions']=[dict(payload={'inert':True},verification={'accepted':True})]
-        values[3]['status']='CONTRADICTION'
-        self.assertEqual(r.numerical_union(lease,values)['terminal'],'NO_GO_G3C_Q4_AFFINE_RECOVERY_VARIATIONAL_OR_STATE')
+            with self.assertRaises(ValueError):r.numerical_union(lease,bad,observations)
+        values[4]['contradictions']=[inert_contradiction(values[4]['node'],'work',values[4]['records'][0]['tables']['work'][1],lease)]
+        values[4]['status']='CONTRADICTION'
+        self.assertEqual(r.numerical_union(lease,values,observations)['terminal'],'NO_GO_G3C_Q4_AFFINE_RECOVERY_VARIATIONAL_OR_STATE')
 
     def test_numerical_ordered_table_identity_not_only_count(self):
         for i,name in enumerate(r.NUMERICAL_TESTS):
-            value=dict(test=name.removeprefix('test_affine_recovery_'),tables={
-                key:[{'id':identity} for identity in ids] for key,ids in r.NUMERICAL_TABLE_IDS[i].items()},
-                full_g3c_qualified=False,production_qualified=False)
+            value=inert_records(i)[0]
             r.validate_numerical_tables('fixture.py::'+name,[value])
             for key in value['tables']:
                 bad=copy.deepcopy(value);bad['tables'][key][0]['id']='substituted-but-unique'
@@ -266,6 +353,94 @@ class GuardTests(unittest.TestCase):
                 if len(value['tables'][key])>1:
                     bad=copy.deepcopy(value);bad['tables'][key]=bad['tables'][key][::-1]
                     with self.assertRaises(ValueError):r.validate_numerical_tables('fixture.py::'+name,[bad])
+
+    def test_every_numerical_row_rejects_missing_extra_and_wrong_types(self):
+        def paths(value,path=()):
+            if type(value)is dict:
+                for key,item in value.items():
+                    yield path+(key,),item
+                    yield from paths(item,path+(key,))
+            elif type(value)is list:
+                for index,item in enumerate(value):yield from paths(item,path+(index,))
+        def owner(value,path):
+            for key in path[:-1]:value=value[key]
+            return value,path[-1]
+        checked=set()
+        for tables in r.NUMERICAL_TABLE_IDS:
+            for table,ids in tables.items():
+                # Distinct schema branches include ZERO/nonzero, all negative
+                # probe IDs, graph renumberings and both director polarities.
+                selected=ids if table in ('immutability','rejections','graph','director') else [ids[0],ids[-1]]
+                for identity in selected:
+                    if (table,identity) in checked:continue
+                    checked.add((table,identity));row=inert_row(table,identity)
+                    r.validate_numerical_row(table,row)
+                    for path,item in paths(row):
+                        if type(path[-1])is str:
+                            bad=copy.deepcopy(row);target,key=owner(bad,path);del target[key]
+                            with self.assertRaises(ValueError):r.validate_numerical_row(table,bad)
+                        if type(item) in (float,int):
+                            for wrong in (True,float('nan'),float('inf'),'0'):
+                                bad=copy.deepcopy(row);target,key=owner(bad,path);target[key]=wrong
+                                with self.assertRaises(ValueError):r.validate_numerical_row(table,bad)
+                    bad=copy.deepcopy(row);bad['unregistered_summary']=True
+                    with self.assertRaises(ValueError):r.validate_numerical_row(table,bad)
+                    if table in r.PHYSICAL_TABLES:
+                        bad=copy.deepcopy(row);bad['physical_checks']['physical_force']['actual']['shape']=[23]
+                        with self.assertRaises(ValueError):r.validate_numerical_row(table,bad)
+
+    def test_contradiction_receipt_bijection_and_frozen_observed_state(self):
+        node='fixture.py::'+r.NUMERICAL_TESTS[4];records=inert_records(4)
+        lease=dict(candidate={'commit':'a'*40},inputs={})
+        observations=inert_observations(node,records)
+        row=records[0]['tables']['work'][1];witness=inert_contradiction(node,'work',row,lease)
+        r.validate_contradictions(node,records,[witness],lease,observations)
+        for bad in ([],[witness,witness],[dict(payload=witness['payload'],verification={'accepted':True})]):
+            with self.assertRaises(ValueError):r.validate_contradictions(node,records,bad,lease,observations)
+        for part,key,value in (('payload','row_id',records[0]['tables']['work'][2]['id']),
+            ('payload','node','other-node'),('payload','candidate_identity','c'*40),
+            ('payload','actual',1.),('payload','state_sha256','d'*64),
+            ('verification','payload_sha256','e'*64),('verification','relative_error',0.),
+            ('verification','state_sha256','b'*64),('verification','expected',{'shape':[24],'sha256':'0'*64})):
+            bad=copy.deepcopy(witness);bad[part][key]=value
+            with self.assertRaises(ValueError):r.validate_contradictions(node,records,[bad],lease,observations)
+        # Even a coherently rehashed row/payload/receipt cannot substitute an
+        # unregistered reference or trial state after the parent pins authority.
+        for field in ('coordinates','q','accepted'):
+            bad_records=copy.deepcopy(records);bad_row=bad_records[0]['tables']['work'][1]
+            if field=='coordinates':bad_row['state'][field][0][0]=.25
+            elif field=='q':bad_row['state'][field][0]=.25
+            else:bad_row['state'][field][0][0][0]=.25
+            bad_row['state_sha256']=sha256(r.canonical(bad_row['state'])).hexdigest()
+            bad_witness=inert_contradiction(node,'work',bad_row,lease)
+            with self.assertRaises(ValueError):r.validate_contradictions(node,bad_records,[bad_witness],lease,observations)
+        orphan_records=inert_records(4)
+        with self.assertRaises(ValueError):r.validate_contradictions(node,orphan_records,[witness],lease,observations)
+
+    def test_observation_manifest_is_canonical_pinned_and_ordered(self):
+        expected=dict(source_bindings={},generator_bindings={},capsule_sha256='a'*64,
+                      inventory_sha256=sha256(r.canonical(r.observation_specs())).hexdigest())
+        value=dict(schema='GE_BEAM3_REGISTERED_OBSERVATION_HASHES_V1',**expected,
+            observations=[dict(spec,state_sha256='b'*64) for spec in r.observation_specs()],
+            fixture_data_only=True,numerical_qualification=False)
+        raw=r.canonical(value);digest=sha256(raw).hexdigest()
+        with patch.object(r,'read',return_value=raw),patch.object(r,'OBSERVATION_MANIFEST_SHA',digest), \
+             patch.object(r,'observation_authority',return_value=expected):
+            self.assertEqual(len(r.frozen_observations()),130)
+        for mode in ('omitted','reordered','source','state_hash','wrong_id','duplicate'):
+            bad=copy.deepcopy(value)
+            if mode=='omitted':bad['observations'].pop()
+            elif mode=='reordered':bad['observations'].reverse()
+            elif mode=='source':bad['capsule_sha256']='c'*64
+            elif mode=='state_hash':bad['observations'][0]['state_sha256']='not-a-digest'
+            elif mode=='wrong_id':bad['observations'][0]['row_id']='foreign'
+            else:bad['observations'][1]=copy.deepcopy(bad['observations'][0])
+            bad_raw=r.canonical(bad)
+            with patch.object(r,'read',return_value=bad_raw),patch.object(r,'OBSERVATION_MANIFEST_SHA',sha256(bad_raw).hexdigest()), \
+                 patch.object(r,'observation_authority',return_value=expected):
+                with self.assertRaises(ValueError):r.frozen_observations()
+            with patch.object(r,'read',return_value=bad_raw),patch.object(r,'OBSERVATION_MANIFEST_SHA',digest):
+                with self.assertRaises(ValueError):r.frozen_observations()
 
     def test_numerical_watchdog_drains_all_jobs(self):
         class Timer:

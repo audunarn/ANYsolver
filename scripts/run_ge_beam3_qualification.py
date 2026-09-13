@@ -4,9 +4,11 @@ import ast
 from hashlib import sha256
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
+import struct
 import sys
 import tempfile
 import threading
@@ -48,7 +50,7 @@ NUMERICAL_SMOKE='test_affine_recovery_smoke_square_station_work'
 NUMERICAL_TABLES=[{'definitions':19,'source_graph':1,'extension_lemma':1},
     {'station':54},{'independent':54},{'schur':54},{'work':54},{'directional':27},
     {'rigid':3,'common_motion':12},{'d4':24,'director':6},{'passive':3,'rebase':3},
-    {'graph':20},{'tiny':6,'channels':54},{'races':7},{'immutability':7},{'rejections':19},{'mutations':39}]
+    {'graph':20},{'tiny':6,'channels':54},{'races':12},{'immutability':7},{'rejections':19},{'mutations':39}]
 NUMERICAL_SHAPES=('SQUARE','RECTANGLE','RHOMBUS')
 NUMERICAL_BASE_IDS=[s+'::'+v for s in NUMERICAL_SHAPES for v in ('0.01','1','10')]
 NUMERICAL_GRAPH_IDS=[g+'::'+v for g in ('J_Q4_PAIR','J_MULTIFAMILY_LOOP') for v in
@@ -64,13 +66,29 @@ NUMERICAL_TABLE_IDS=[
     {'passive':[s+'::1::PASSIVE' for s in NUMERICAL_SHAPES],'rebase':[s+'::1' for s in NUMERICAL_SHAPES]},
     {'graph':[g+'::'+p for g in NUMERICAL_GRAPH_IDS for p in ('ZERO','MIXED')]},
     {'tiny':[s+'::1::amplitude='+a for s in NUMERICAL_SHAPES for a in ('1e-06','0.001')],'channels':NUMERICAL_CONTEXT_IDS},
-    {'races':['descriptor','displacement_array','accepted_array','cancellation','material_descriptor','cache_array','cache_cancellation']},
+    {'races':['descriptor','displacement_array','accepted_array','cancellation','material_descriptor','cache_array','cache_cancellation',
+              'preentry_E','preentry_coordinates','preentry_material_direction','preentry_policy','preentry_cached_definition']},
     {'immutability':['all_detached_arrays','caller_arrays_preserved','same_input_repeat','reentry','changed_accepted_matrix','concurrent_evaluation','operator_cache_tamper']},
     {'rejections':['nonaffine','director','material_direction','node_ids','generalized_section','history_section','offset','initial_fields','foreign_policy',
        'GE_BEAM3_G3C_MATRIX_POSE_SHELL_PULLBACK_V1','OLD_RETAINED_35_VARIABLE_SYSTEM','FOREIGN',
        'nonfinite_q','nonfinite_accepted','wrong_q_shape','wrong_rotation_shape','before_work','before_publication','invalid_callback']},
     {'mutations':[s+'::'+m for s in NUMERICAL_SHAPES for m in ('station_order','weight','frame','M','resultant','n','Dn','Hn',
        'force_weighted_Hessian','chart_second','coupling_sign','inverse','numerical_energy_leak')]}]
+NUMERICAL_SOURCE_HASHES={
+ 'src/anysolver/e4_pl_element.py':'7fc46a18046e043512a5fb2c3f61ed0b95b834e4dde764f63c500a885e87ea38',
+ 'src/anysolver/elements.py':'f8c59792947a3c9b84416c61a4d9db98e42926d1bf21e74e736afbf6a9a88b37',
+ 'src/anysolver/_ge_beam3_g3c_local_shell.py':'69d9f27a96ed7e9a5959a42a081eeafbbe72021de6e4da1f91355c5fb3850f10',
+ 'src/anysolver/_ge_beam3_variational_shell.py':'b0db7a83633f4a835c06e940a6f0de36ab958f7e816c37a23c6ebc16259a2a60',
+ 'src/anysolver/_ge_beam3_mixed_ad.py':'b299ff765cd2eaae8b33a2ba1d05069f6fe8c39209e1eac75df356a2afb1fe36',
+ 'src/anysolver/_ge_beam3_pose_joint.py':'69cfb0a71761ab7cad0d62080d81511949e7c920f7f70162bcaba0497b402657',
+ 'src/anysolver/_ge_beam3_g3c_definition.py':'4b46b870fec010e3378df83c374d763f858d8f25820c14f9704dc6f0a656f0c2',
+ 'src/anysolver/_ge_beam3_g3c_owner.py':'18b9565d56192e23f192b1a3fbae3cb12ed7ede958c0e4b3e46279a799d1afc5',
+ 'docs/reference_cases/ge_beam3_g3c_fixtures_v1.json':'d5fecc80c3203ac7d191b4031d64bf35c56d2900066cb01fc1dfa4276d24c006'}
+PHYSICAL_TABLES=frozenset(('work','common_motion','d4','director','passive','rebase','graph','tiny','smoke'))
+PHYSICAL_SHAPES={'physical_energy':[],'physical_force':[24],'physical_hessian':[24,24],
+    'source_physical_energy':[],'source_physical_force':[24],'source_physical_hessian':[24,24]}
+OBSERVATION_MANIFEST='docs/reference_cases/ge_beam3_q4_affine_observation_manifest_v1.json'
+OBSERVATION_MANIFEST_SHA='7c1c64461d4598a81a32b560bdfdd088f4c0becbef07cd417cfcdc203ccf8568'
 AFFINE_TESTS=['test_affine_exact_arithmetic_and_schema','test_affine_source_and_representation_boundaries',
               'test_affine_square_chart_polynomial','test_affine_rectangle_chart_polynomial',
               'test_affine_rhombus_chart_polynomial','test_affine_stationary_schur_and_mutations']
@@ -92,6 +110,7 @@ ALLOWED={
     'docs/reference_cases/ge_beam3_q4_affine_numerical_chart.py',
     'docs/GE_BEAM3_Q4_AFFINE_RECOVERY_EXTENSION_LEMMA.md',
     'docs/reference_cases/ge_beam3_q4_affine_extension_lemma_review_v1.json',
+    OBSERVATION_MANIFEST,
     TESTS['q4-affine-numerical'][0],
 }
 INTEGRATION_REVIEW='docs/reference_cases/ge_beam3_8073635_integration_contract_review.json'
@@ -146,7 +165,7 @@ def verify_review(raw,digest,candidate,rows,gate='b2-core'):
         raise ValueError('implementation review authority')
     return r
 
-def authority(review_path,review_sha,gate='b2-core'):
+def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
     if gate not in TESTS:raise ValueError('unregistered gate')
     if git('status','--porcelain','--untracked-files=all'):raise ValueError('dirty candidate')
     candidate=dict(commit=git('rev-parse','HEAD'),tree=git('rev-parse','HEAD^{tree}'))
@@ -190,6 +209,8 @@ def authority(review_path,review_sha,gate='b2-core'):
             or lemma['reviewer'].get('independent') is not True
             or lemma['scope'].get('lemma_sha256')!='156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762'):
             raise ValueError('extension lemma prerequisite review')
+        observations=frozen_observations()
+        if observation_capture is not None:observation_capture.update(observations)
     inventory('core',gate)
     rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows,gate)
     environment.verify(CAPSULE,CAPSULE_SHA)
@@ -214,11 +235,14 @@ def monitor(job,process,progress,clock=time.monotonic,sleep=time.sleep,start=Non
 
 def validate_lease(lease,expected,review_sha,lane,out):
     candidate,rows,_=expected
-    if (set(lease)!={'schema','run_id','gate','lane','candidate','inputs','review_sha256','selected'}
+    numeric=lease.get('gate')=='q4-affine-numerical'
+    if (set(lease)!=({'schema','run_id','gate','lane','candidate','inputs','review_sha256','selected'}|
+                    ({'observation_manifest_sha256'} if numeric else set()))
         or lease['schema']!=SCOPE or lease['gate'] not in TESTS or lease['lane']!=lane
         or lease['candidate']!=candidate or lease['inputs']!=rows
         or lease['review_sha256']!=review_sha or lease['selected']!=inventory(lane,lease['gate'])
         or str(uuid.UUID(lease['run_id']))!=lease['run_id']):raise ValueError('lease authority')
+    if numeric and lease['observation_manifest_sha256']!=OBSERVATION_MANIFEST_SHA:raise ValueError('lease observation authority')
 
 def claim_attempt(out,run_id):
     write(out/'worker-attempt.json',dict(run_id=run_id))
@@ -392,11 +416,12 @@ def numerical_assignment(lease,index):
     """No free-form module dispatch: each assignment is one registered node."""
     if lease['gate']!='q4-affine-numerical' or type(index)is not int or not 0<=index<len(lease['selected']):
         raise ValueError('numerical assignment index')
+    sha_value(lease['observation_manifest_sha256'])
     return dict(schema='GE_BEAM3_REGISTERED_NODE_ASSIGNMENT_V1',run_id=lease['run_id'],
         index=index,node=lease['selected'][index],gate=lease['gate'],lane=lease['lane'],
         candidate=lease['candidate'],inputs_sha256=sha256(canonical(lease['inputs'])).hexdigest(),
         whole_inventory_sha256=sha256(canonical(lease['selected'])).hexdigest(),
-        parent_lease_sha256=sha256(canonical(lease)).hexdigest())
+        parent_lease_sha256=sha256(canonical(lease)).hexdigest(),observation_manifest_sha256=lease['observation_manifest_sha256'])
 
 
 def validate_assignment(value,lease,index):
@@ -406,7 +431,8 @@ def validate_assignment(value,lease,index):
 def numerical_worker(out,index,assignment_sha):
     lease_raw=read(out/'lease.json');lease=environment.strict(lease_raw)
     if canonical(lease)!=lease_raw:raise ValueError('noncanonical parent lease')
-    expected=authority(out/'review.json',lease['review_sha256'],'q4-affine-numerical')
+    observations={}
+    expected=authority(out/'review.json',lease['review_sha256'],'q4-affine-numerical',observation_capture=observations)
     validate_lease(lease,expected,lease['review_sha256'],lease['lane'],out)
     directory=out/('node-%02d'%index)
     raw=read(directory/'assignment.json')
@@ -416,6 +442,7 @@ def numerical_worker(out,index,assignment_sha):
     if any(os.environ.get(k)!='1' for k in THREADS):raise ValueError('numerical threads')
     print('BEAM CHECKPOINT node initialization '+assignment['node'],flush=True)
     os.environ['BEAM_QUALIFICATION_OUTPUT']=str(directory)
+    os.environ['BEAM_QUALIFICATION_NODE']=assignment['node']
     sys.path[:0]=[str(ROOT/'src'),str(ROOT),str(CAPSULE.parent/'site'),str(ROOT/'docs/reference_cases')]
     import pytest
     class Recorder:
@@ -434,6 +461,8 @@ def numerical_worker(out,index,assignment_sha):
     records=recorder.module.SCIENTIFIC_RECORDS
     contradictions=recorder.module.CONTRADICTIONS
     if type(records)is not list or not records or type(contradictions)is not list:raise ValueError('node evidence missing')
+    validate_numerical_tables(assignment['node'],records)
+    validate_registered_observations(records)
     from ge_beam3_q4_affine_numerical_checker import verify_contradiction
     verified=[]
     for payload in contradictions:
@@ -443,11 +472,13 @@ def numerical_worker(out,index,assignment_sha):
         verification=verify_contradiction(payload)
         if type(verification)is not dict or verification.get('accepted') is not True:raise ValueError('contradiction not independently accepted')
         verified.append(dict(payload=payload,verification=verification))
+    validate_contradictions(assignment['node'],records,verified,lease,observations)
     if authority(out/'review.json',lease['review_sha256'],lease['gate'])!=expected:raise ValueError('node final authority')
     if read(directory/'assignment.json')!=raw or read(out/'lease.json')!=lease_raw:raise ValueError('node authority changed')
     result=dict(schema='GE_BEAM3_REGISTERED_NUMERICAL_NODE_V1',node=assignment['node'],index=index,
         candidate=lease['candidate'],inputs_sha256=assignment['inputs_sha256'],
         whole_inventory_sha256=assignment['whole_inventory_sha256'],lane=lease['lane'],
+        observation_manifest_sha256=lease['observation_manifest_sha256'],
         records=records,contradictions=verified,status='CONTRADICTION' if verified else 'PASSED',
         physical_recovery_scope='REGISTERED_AFFINE_LOCAL_ONLY',full_g3c_qualified=False,production_qualified=False)
     write(directory/'scientific.pending.json',result)
@@ -457,16 +488,17 @@ def numerical_worker(out,index,assignment_sha):
     return 0
 
 
-def validate_numerical_result(raw,completion,lease,index,assignment_sha):
+def validate_numerical_result(raw,completion,lease,index,assignment_sha,observations):
     value=environment.strict(raw);assignment=numerical_assignment(lease,index)
     if canonical(value)!=raw:raise ValueError('noncanonical node science')
     if (set(value)!={'schema','node','index','candidate','inputs_sha256','whole_inventory_sha256','lane',
-                    'records','contradictions','status','physical_recovery_scope','full_g3c_qualified','production_qualified'}
+                    'records','contradictions','status','physical_recovery_scope','full_g3c_qualified','production_qualified','observation_manifest_sha256'}
         or value['schema']!='GE_BEAM3_REGISTERED_NUMERICAL_NODE_V1'
         or value['node']!=assignment['node'] or type(value['index'])is not int or value['index']!=index
         or value['candidate']!=lease['candidate'] or value['lane']!=lease['lane']
         or value['inputs_sha256']!=assignment['inputs_sha256']
         or value['whole_inventory_sha256']!=assignment['whole_inventory_sha256']
+        or value['observation_manifest_sha256']!=lease['observation_manifest_sha256']
         or type(value['records'])is not list or not value['records']
         or type(value['contradictions'])is not list
         or value['status']!=('CONTRADICTION' if value['contradictions'] else 'PASSED')
@@ -475,11 +507,322 @@ def validate_numerical_result(raw,completion,lease,index,assignment_sha):
         or completion!={'assignment_sha256':assignment_sha,'node':assignment['node'],'scientific':fingerprint(raw)}):
         raise ValueError('numerical node evidence authority')
     validate_numerical_tables(value['node'],value['records'])
-    for item in value['contradictions']:
-        if (type(item)is not dict or set(item)!={'payload','verification'} or type(item['payload'])is not dict
-            or type(item['verification'])is not dict or item['verification'].get('accepted') is not True):
-            raise ValueError('malformed typed contradiction')
+    validate_contradictions(value['node'],value['records'],value['contradictions'],lease,observations)
     return value
+
+
+def registered_observation_state(table,row_id):
+    """Fixture data only. Never construct a facade or evaluate any operator."""
+    from anysolver import _ge_beam3_g3c_affine_q4_registry as registry
+    c=registry.construction(row_construction(table,row_id))
+    pose=row_id.rsplit('::',1)[1] if table in ('work','graph','smoke') else 'MIXED'
+    amplitude=float(row_id.split('::amplitude=')[1]) if table=='tiny' else 1.
+    q,accepted=registry.pose(c.construction_id,pose,amplitude)
+    if table=='common_motion':q,accepted,_=registry.common_motion(q,accepted,c.coordinates,int(row_id.split('::motion=')[1]))
+    if table=='rebase':q,accepted=registry.rebase(q,accepted)
+    return dict(construction_id=c.construction_id,coordinates=c.coordinates.tolist(),q=q.tolist(),
+        accepted=accepted.tolist(),normal=c.normal.tolist(),material_direction=c.material_direction.tolist(),
+        director_polarity=c.director_polarity)
+
+
+def observation_specs():
+    result=[];path=TESTS['q4-affine-numerical'][0]
+    for name,tables in zip(NUMERICAL_TESTS,NUMERICAL_TABLE_IDS):
+        for table,ids in tables.items():
+            if table in PHYSICAL_TABLES:
+                result.extend(dict(node=path+'::'+name,table=table,row_id=identity) for identity in ids)
+    result.extend(dict(node=path+'::'+NUMERICAL_SMOKE,table='smoke',row_id=identity)
+                  for identity in ('SQUARE::1::ZERO','SQUARE::1::MIXED'))
+    return result
+
+
+def fixture_source_bindings():
+    """Whole importable ANYsolver Python graph plus frozen fixture/environment."""
+    paths={p.relative_to(ROOT).as_posix() for p in (ROOT/'src/anysolver').rglob('*.py')}
+    paths.update(('docs/reference_cases/ge_beam3_g3c_fixtures_v1.json',
+                  'scripts/ge_beam3_g3b_environment.py',JOB))
+    return {path:fingerprint(read(ROOT/path).replace(b'\r\n',b'\n')) for path in sorted(paths)}
+
+
+def fixture_generator_bindings():
+    # Individual fixed functions avoid circularity with the later inserted
+    # manifest hash. The accepted implementation review binds the whole runner.
+    source=read(Path(__file__)).decode().replace('\r\n','\n');tree=ast.parse(source)
+    names={'registered_observation_state','observation_specs','fixture_source_bindings',
+           'fixture_generator_bindings','observation_authority','prepare_observation_manifest',
+           'row_construction','canonical','fingerprint','read'}
+    functions={n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}
+    return {name:sha256(ast.get_source_segment(source,functions[name]).encode()).hexdigest() for name in sorted(names)}
+
+
+def observation_authority():
+    return dict(source_bindings=fixture_source_bindings(),generator_bindings=fixture_generator_bindings(),
+        capsule_sha256=CAPSULE_SHA,inventory_sha256=sha256(canonical(observation_specs())).hexdigest())
+
+
+def prepare_observation_manifest(output,expected_authority_sha256):
+    """Reviewed prefreeze fixture-only command, enclosed in existing ProcessJob.
+
+    This is not a scientific node, not a qualification result and not a retry.
+    Imported fixture helpers use NumPy/rotation construction, but no facade or
+    operator is called. The external caller must enforce the registered limits.
+    """
+    if not (sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):raise ValueError('isolated fixture preparation required')
+    if any(os.environ.get(k)!='1' for k in THREADS):raise ValueError('fixture thread envelope')
+    output=Path(output)
+    if not output.is_absolute() or output.exists():raise ValueError('exclusive external fixture output')
+    expected=observation_authority()
+    if sha256(canonical(expected)).hexdigest()!=expected_authority_sha256:raise ValueError('fixture preparation source authority')
+    environment.verify(CAPSULE,CAPSULE_SHA)
+    sys.path[:0]=[str(ROOT/'src'),str(CAPSULE.parent/'site')]
+    rows=[]
+    for spec in observation_specs():
+        print('BEAM CHECKPOINT fixture '+spec['row_id'],flush=True)
+        state=registered_observation_state(spec['table'],spec['row_id'])
+        rows.append(dict(spec,state_sha256=sha256(canonical(state)).hexdigest()))
+    environment.verify(CAPSULE,CAPSULE_SHA)
+    if observation_authority()!=expected:raise ValueError('fixture preparation final authority changed')
+    value=dict(schema='GE_BEAM3_REGISTERED_OBSERVATION_HASHES_V1',**expected,observations=rows,
+        fixture_data_only=True,numerical_qualification=False)
+    write(output,value)
+    print('BEAM CHECKPOINT fixture manifest complete '+sha256(read(output)).hexdigest(),flush=True)
+
+
+def frozen_observations():
+    raw=read(ROOT/OBSERVATION_MANIFEST)
+    if sha256(raw).hexdigest()!=OBSERVATION_MANIFEST_SHA:raise ValueError('frozen observation manifest hash')
+    value=environment.strict(raw)
+    if canonical(value)!=raw:raise ValueError('canonical observation manifest required')
+    exact_keys(value,('schema','source_bindings','generator_bindings','capsule_sha256','inventory_sha256',
+                      'observations','fixture_data_only','numerical_qualification'))
+    expected=observation_authority()
+    if (value['schema']!='GE_BEAM3_REGISTERED_OBSERVATION_HASHES_V1'
+        or any(value[k]!=v for k,v in expected.items())
+        or value['fixture_data_only'] is not True or value['numerical_qualification'] is not False):
+        raise ValueError('frozen fixture graph authority')
+    specs=observation_specs();rows=value['observations']
+    if type(rows)is not list or len(rows)!=len(specs):raise ValueError('observation manifest inventory')
+    result={}
+    for row,spec in zip(rows,specs):
+        exact_keys(row,('node','table','row_id','state_sha256'))
+        if any(row[k]!=v for k,v in spec.items()):raise ValueError('observation manifest row identity')
+        sha_value(row['state_sha256']);result[(row['node'],row['table'],row['row_id'])]=row['state_sha256']
+    return result
+
+
+def validate_registered_observations(records):
+    """Authorized child only: shared fixture recipes, never checker mechanics."""
+    for table,rows in records[0]['tables'].items():
+        if table not in PHYSICAL_TABLES:continue
+        for row in rows:
+            state=observed_state(row,table);expected=registered_observation_state(table,row['id'])
+            if canonical(state)!=canonical(expected):raise ValueError('observed state is not assigned registered fixture')
+
+
+def validate_contradictions(node,records,contradictions,lease,observations):
+    """Strict stdlib-only binding: one complete receipt per failed row predicate."""
+    lookup={(table,row['id']):row for table,rows in records[0]['tables'].items() for row in rows}
+    for table,rows in records[0]['tables'].items():
+        if table not in PHYSICAL_TABLES:continue
+        for row in rows:
+            if observations.get((node,table,row['id']))!=row['state_sha256']:raise ValueError('state differs from frozen observation manifest')
+    failed={(table,row['id'],predicate) for table,rows in records[0]['tables'].items() if table in PHYSICAL_TABLES
+            for row in rows for predicate,check in row['physical_checks'].items() if not check['passed']}
+    seen=set()
+    for item in contradictions:
+        exact_keys(item,('payload','verification'));payload=item['payload'];receipt=item['verification']
+        exact_keys(payload,('schema','predicate','coordinates','q','accepted','normal','material_direction',
+            'director_polarity','actual','tolerance','scale_mode','source_identity','candidate_identity',
+            'fixture_identity','node','table','row_id','state_sha256'))
+        exact_keys(receipt,('accepted','predicate','relative_error','node','table','row_id','fixture_identity',
+            'payload_sha256','state_sha256','actual','expected'))
+        table,row_id,predicate=payload['table'],payload['row_id'],payload['predicate']
+        if any(type(v)is not str for v in (table,row_id,predicate)):raise ValueError('contradiction locator types')
+        key=(table,row_id,predicate)
+        if key not in failed or key in seen:raise ValueError('orphan or reused contradiction')
+        row=lookup[(table,row_id)];state=observed_state(row,table);check=row['physical_checks'][predicate]
+        if (payload['schema']!='Q4_AFFINE_NUMERICAL_CONTRADICTION_V1' or payload['node']!=node
+            or type(payload['tolerance']) not in (int,float) or payload['tolerance']!=1e-11
+            or payload['scale_mode']!='REFERENCE_EDGE_NONDIMENSIONAL_V1'
+            or payload['source_identity']!=sha256(canonical(lease['inputs'])).hexdigest()
+            or payload['candidate_identity']!=lease['candidate']['commit']
+            or payload['fixture_identity']!=state['construction_id']):raise ValueError('contradiction assigned authority')
+        supplied_state=dict(construction_id=payload['fixture_identity'],**{name:payload[name] for name in
+            ('coordinates','q','accepted','normal','material_direction','director_polarity')})
+        if canonical(supplied_state)!=canonical(state) or payload['state_sha256']!=row['state_sha256']:raise ValueError('contradiction observed state mismatch')
+        actual=numeric_array(payload['actual'],PHYSICAL_SHAPES[predicate])
+        if actual!=check['actual']:raise ValueError('contradiction differs from actual row observation')
+        array_fingerprint(receipt['actual'],PHYSICAL_SHAPES[predicate]);array_fingerprint(receipt['expected'],PHYSICAL_SHAPES[predicate])
+        for keyname in ('payload_sha256','state_sha256'):sha_value(receipt[keyname])
+        if (receipt['accepted'] is not True or receipt['predicate']!=predicate or receipt['node']!=node
+            or receipt['table']!=table or receipt['row_id']!=row_id or receipt['fixture_identity']!=state['construction_id']
+            or receipt['payload_sha256']!=sha256(canonical(payload)).hexdigest()
+            or receipt['state_sha256']!=row['state_sha256'] or receipt['actual']!=actual
+            or finite_number(receipt['relative_error'])<=1e-11
+            or receipt['relative_error']!=check['relative_error']):raise ValueError('independent contradiction receipt mismatch')
+        seen.add(key)
+    if seen!=failed:raise ValueError('failed physical checks missing verified contradiction')
+
+
+def exact_keys(value,keys):
+    if type(value)is not dict or set(value)!=set(keys):raise ValueError('closed numerical object schema')
+
+
+def finite_number(value):
+    if type(value) not in (float,int) or not math.isfinite(value):raise ValueError('finite numerical scalar required')
+    return value
+
+
+def sha_value(value):
+    if type(value)is not str or len(value)!=64 or any(c not in '0123456789abcdef' for c in value):raise ValueError('SHA256 encoding')
+
+
+def residual(value,tolerance=1e-11):
+    if not 0<=finite_number(value)<=tolerance:raise ValueError('residual outside registered threshold')
+
+
+def numeric_array(value,shape):
+    """Shape/finite validation and LE-binary64 digest without importing NumPy."""
+    numbers=[]
+    def visit(v,dimensions):
+        if not dimensions:numbers.append(finite_number(v));return
+        if type(v)is not list or len(v)!=dimensions[0]:raise ValueError('numerical array shape')
+        for item in v:visit(item,dimensions[1:])
+    visit(value,shape)
+    return dict(shape=list(shape),sha256=sha256(b''.join(struct.pack('<d',v) for v in numbers)).hexdigest())
+
+
+def array_fingerprint(value,shape):
+    exact_keys(value,('shape','sha256'))
+    if type(value['shape'])is not list or any(type(v)is not int for v in value['shape']) or value['shape']!=shape:raise ValueError('array digest shape')
+    sha_value(value['sha256'])
+
+
+def physical_check(value,predicate):
+    exact_keys(value,('relative_error','passed','actual'))
+    error=finite_number(value['relative_error'])
+    if error<0 or type(value['passed'])is not bool or value['passed']!=(error<=1e-11):raise ValueError('physical predicate truth mismatch')
+    array_fingerprint(value['actual'],PHYSICAL_SHAPES[predicate])
+
+
+def row_construction(table,identity):
+    if table in ('work','graph','smoke'):return identity.rsplit('::',1)[0]
+    if table=='common_motion':return identity.split('::motion=')[0]
+    if table=='tiny':return identity.split('::amplitude=')[0]
+    return identity
+
+
+def observed_state(row,table):
+    state=row['state'];exact_keys(state,('construction_id','coordinates','q','accepted','normal','material_direction','director_polarity'))
+    if state['construction_id']!=row_construction(table,row['id']):raise ValueError('row construction mismatch')
+    for name,shape in (('coordinates',[4,3]),('q',[24]),('accepted',[4,3,3]),('normal',[3]),('material_direction',[3])):
+        numeric_array(state[name],shape)
+    if type(state['director_polarity'])is not int or state['director_polarity'] not in (-1,1):raise ValueError('director polarity type')
+    if state['director_polarity']!=(-1 if state['construction_id'].endswith('::DIRECTOR:-1') else 1):raise ValueError('registered physical director polarity')
+    sha_value(row['state_sha256'])
+    if row['state_sha256']!=sha256(canonical(state)).hexdigest():raise ValueError('observed state hash mismatch')
+    return state
+
+
+def validate_numerical_row(table,row):
+    if type(row)is not dict or type(row.get('id'))is not str:raise ValueError('numerical row identity schema')
+    identity=row['id'];physical=table in PHYSICAL_TABLES
+    base={'id','state','state_sha256','physical_checks'} if physical else {'id'}
+    if table=='definitions':
+        exact_keys(row,base|{'recipe_sha256','descriptor_sha256'})
+        sha_value(row['recipe_sha256']);sha_value(row['descriptor_sha256'])
+    elif table=='source_graph':
+        exact_keys(row,base|{'hashes'})
+        if row['hashes']!=NUMERICAL_SOURCE_HASHES:raise ValueError('source graph hashes')
+    elif table=='extension_lemma':
+        exact_keys(row,base|{'lemma_sha256','review_sha256'})
+        if row['lemma_sha256']!='156d33ae5a621b953b5d04050218618f6416bac1042f94d3d3fc5c305c9f8762' or row['review_sha256']!='e28f184023ce1bba825a89079bcd2f9af99cf7861d701d7d918e2d30492b073e':raise ValueError('lemma evidence binding')
+    elif table=='station':
+        exact_keys(row,base|{'checks','energy','stations'});finite_number(row['energy'])
+        if type(row['stations'])is not int or row['stations']!=4:raise ValueError('station count')
+        exact_keys(row['checks'],('d','D','D2','R','Q','x'))
+        for value in row['checks'].values():residual(value)
+    elif table=='independent':
+        exact_keys(row,base|{'stations'})
+        if type(row['stations'])is not list or len(row['stations'])!=4:raise ValueError('independent station inventory')
+        for item in row['stations']:
+            exact_keys(item,('M','strain','resultant','frame','constitutive'))
+            for value in item.values():residual(value)
+    elif table=='schur':
+        exact_keys(row,base|{'schur','full_internal_dimension'});array_fingerprint(row['schur'],[24,24])
+        if type(row['full_internal_dimension'])is not int or row['full_internal_dimension']!=64:raise ValueError('full station dimension')
+    elif table=='work':
+        exact_keys(row,base|{'checks','chart_image_sentinels'})
+        if type(row['chart_image_sentinels'])is not bool:raise ValueError('chart sentinel type')
+    elif table=='directional':
+        exact_keys(row,base|{'work','tangent'});residual(row['work'],1e-7);residual(row['tangent'],1e-7)
+    elif table=='rigid':
+        exact_keys(row,base|{'rigid_columns','total_positive_modes','eigenvalues'});array_fingerprint(row['eigenvalues'],[24])
+        if type(row['rigid_columns'])is not int or row['rigid_columns']!=6 or type(row['total_positive_modes'])is not int or row['total_positive_modes']!=18:raise ValueError('rigid mode inventory')
+    elif table in ('common_motion','passive','rebase','tiny'):
+        exact_keys(row,base|{'energy','checks'});energy=finite_number(row['energy'])
+        if table=='tiny' and energy<=0:raise ValueError('positive tiny physical energy required')
+    elif table=='d4':
+        exact_keys(row,base|{'station_map','checks'})
+        k=int(identity.rsplit(':',1)[1]);corners=(0,1,2,3) if k<4 else (0,3,2,1)
+        expected=[(i+k%4)%4 for i in corners]
+        if type(row['station_map'])is not list or any(type(i)is not int for i in row['station_map']) or row['station_map']!=expected:raise ValueError('D4 station transport')
+    elif table=='director':
+        exact_keys(row,base|{'physical_polarity','checks'})
+        if type(row['physical_polarity'])is not int or row['physical_polarity']!=int(identity.rsplit(':',1)[1]):raise ValueError('physical polarity authority')
+    elif table=='graph':
+        exact_keys(row,base|{'node_ids','element_id','recipe_sha256','checks'});sha_value(row['recipe_sha256'])
+        ids=[101,102,103,104] if identity.startswith('J_Q4_PAIR::') else [301,302,303,304]
+        element=11 if identity.startswith('J_Q4_PAIR::') else 13
+        if '::RENUMBERED::' in identity:ids=[10000+7*i for i in ids];element=20000+5*element
+        if '::CONNECTIVITY_REVERSED::' in identity:ids=[ids[i] for i in (0,3,2,1)]
+        if type(row['node_ids'])is not list or any(type(i)is not int for i in row['node_ids']) or row['node_ids']!=ids or type(row['element_id'])is not int or row['element_id']!=element:raise ValueError('graph source identities')
+    elif table=='channels':
+        exact_keys(row,base|{'physical','numerical'});finite_number(row['physical'])
+        if type(row['numerical'])is not list or len(row['numerical'])!=2:raise ValueError('numerical energy channel inventory')
+        for item,name in zip(row['numerical'],('NUMERICAL_PL','NUMERICAL_HOURGLASS')):
+            exact_keys(item,('name','energy'))
+            if item['name']!=name:raise ValueError('numerical channel identity')
+            finite_number(item['energy'])
+    elif table=='races':
+        exact_keys(row,base|{'rejected_before_family'})
+        if row['rejected_before_family'] is not True:raise ValueError('state safety rejection required')
+    elif table=='immutability':
+        extra={'array_count'} if identity=='all_detached_arrays' else {'rejections'} if identity=='reentry' else set()
+        exact_keys(row,base|{'verified','prior_arrays_sha256'}|extra);sha_value(row['prior_arrays_sha256'])
+        if row['verified'] is not True:raise ValueError('immutable output evidence required')
+        if identity=='all_detached_arrays' and (type(row['array_count'])is not int or row['array_count']<=30):raise ValueError('detached array inventory')
+        if identity=='reentry' and (type(row['rejections'])is not int or row['rejections']!=2):raise ValueError('reentry checks')
+    elif table=='rejections':
+        if identity in ('before_work','before_publication','invalid_callback'):
+            exact_keys(row,base|{'callbacks','family_entries','published'})
+            callbacks,entries=(2,1) if identity=='before_publication' else (1,0)
+            if type(row['callbacks'])is not int or row['callbacks']!=callbacks or type(row['family_entries'])is not int or row['family_entries']!=entries or row['published'] is not False:raise ValueError('cancellation receipt')
+        else:
+            exact_keys(row,base|{'rejected_before_family'})
+            if row['rejected_before_family'] is not True:raise ValueError('admission rejection receipt')
+    elif table=='mutations':
+        exact_keys(row,base|{'rejection'});mutation=identity.split('::',1)[1]
+        enum=('INDEPENDENT_HESSIAN' if mutation in ('force_weighted_Hessian','chart_second') else
+              'STATION_EQUILIBRIUM' if mutation=='coupling_sign' else 'STATION_INVERSE' if mutation=='inverse' else
+              'MATERIAL_ENERGY' if mutation=='numerical_energy_leak' else 'INDEPENDENT_STATION_COMPARISON')
+        if row['rejection']!=enum:raise ValueError('mutation rejection mechanism')
+    elif table=='smoke':exact_keys(row,base|{'checks'})
+    else:raise ValueError('unregistered numerical table')
+    if physical:
+        observed_state(row,table)
+        mapping={'energy':'physical_energy','force':'physical_force','hessian':'physical_hessian'}
+        if table=='work' and not identity.endswith('::ZERO'):
+            mapping.update(source_energy='source_physical_energy',source_force='source_physical_force',source_hessian='source_physical_hessian')
+        exact_keys(row['physical_checks'],mapping.values())
+        exact_keys(row['checks'],set(mapping)|{'symmetry','spatial_force','spatial_tangent'})
+        for key,predicate in mapping.items():
+            physical_check(row['physical_checks'][predicate],predicate)
+            if row['checks'][key]!=row['physical_checks'][predicate]:raise ValueError('physical check row mismatch')
+        for key in ('symmetry','spatial_force','spatial_tangent'):residual(row['checks'][key])
+        if table=='work':
+            source_failed=any(not value['passed'] for key,value in row['physical_checks'].items() if key.startswith('source_'))
+            if row['chart_image_sentinels'] is source_failed:raise ValueError('chart image sentinel disposition')
 
 
 def validate_numerical_tables(node,records):
@@ -497,18 +840,24 @@ def validate_numerical_tables(node,records):
         rows=record['tables'][key]
         if (type(rows)is not list or len(rows)!=count or any(type(row)is not dict or type(row.get('id'))is not str or not row['id'] for row in rows)
             or [row['id'] for row in rows]!=identities[key]):raise ValueError('numerical table coverage')
+        for row in rows:validate_numerical_row(key,row)
 
 
-def numerical_union(lease,nodes):
+def numerical_union(lease,nodes,observations):
     if len(nodes)!=len(lease['selected']) or [n['node'] for n in nodes]!=lease['selected']:
         raise ValueError('incomplete or reordered numerical union')
     if [n['index'] for n in nodes]!=list(range(len(nodes))):raise ValueError('duplicated numerical nodes')
+    for node in nodes:
+        validate_numerical_tables(node['node'],node['records'])
+        validate_contradictions(node['node'],node['records'],node['contradictions'],lease,observations)
+        if node['status']!=('CONTRADICTION' if node['contradictions'] else 'PASSED'):raise ValueError('node contradiction disposition')
     contradictions=[dict(node=n['node'],evidence=c) for n in nodes for c in n['contradictions']]
     terminal=('NOT_ADJUDICATED_SMOKE_ONLY' if lease['lane']=='smoke' else
         'NO_GO_G3C_Q4_AFFINE_RECOVERY_VARIATIONAL_OR_STATE' if contradictions else
         'PROVISIONAL_GO_G3C_Q4_AFFINE_LOCAL_PHYSICAL_RECOVERY_ONLY')
     return dict(schema='GE_BEAM3_REGISTERED_NUMERICAL_UNION_V1',gate=lease['gate'],lane=lease['lane'],
         candidate=lease['candidate'],inputs_sha256=sha256(canonical(lease['inputs'])).hexdigest(),
+        observation_manifest_sha256=lease['observation_manifest_sha256'],
         selected=lease['selected'],nodes=nodes,terminal=terminal,contradictions=contradictions,
         physical_recovery_qualified=lease['lane']=='core' and not contradictions,
         full_g3c_qualified=False,production_qualified=False)
@@ -559,11 +908,13 @@ def monitor_batch(entries,watchdog,clock=time.monotonic,sleep=time.sleep):
 
 
 def execute_numerical(args,watchdog):
-    expected=authority(args.review,args.review_sha256,args.gate);watchdog.check()
+    observations={}
+    expected=authority(args.review,args.review_sha256,args.gate,observation_capture=observations);watchdog.check()
     out=Path(tempfile.mkdtemp(prefix='anysolver-beam-qualification-'))
     print('DIAGNOSTICS '+str(out),flush=True)
     lease=dict(schema=SCOPE,run_id=str(uuid.uuid4()),gate=args.gate,lane=args.lane,candidate=expected[0],
-        inputs=expected[1],review_sha256=args.review_sha256,selected=inventory(args.lane,args.gate))
+        inputs=expected[1],review_sha256=args.review_sha256,selected=inventory(args.lane,args.gate),
+        observation_manifest_sha256=OBSERVATION_MANIFEST_SHA)
     write(out/'lease.json',lease)
     with (out/'review.json').open('xb') as stream:stream.write(expected[2])
     env=dict(os.environ,**{key:'1' for key in THREADS})
@@ -603,10 +954,10 @@ def execute_numerical(args,watchdog):
             for e in entries:
                 pending=read(e['directory']/'scientific.pending.json')
                 completion=environment.strict(read(e['directory']/'completion.json'))
-                nodes.append(validate_numerical_result(pending,completion,lease,e['index'],e['assignment_sha']))
+                nodes.append(validate_numerical_result(pending,completion,lease,e['index'],e['assignment_sha'],observations))
         if not failed:
             if authority(args.review,args.review_sha256,args.gate)!=expected:raise ValueError('numerical union final authority')
-            watchdog.check();science=numerical_union(lease,nodes)
+            watchdog.check();science=numerical_union(lease,nodes,observations)
             write(out/'scientific.pending.json',science)
     except BaseException:
         failed=True

@@ -4,6 +4,8 @@ Only NumPy, standard-library math and the independent analytic chart are used.
 No producer/facade/public mechanics/recovery/cached matrices are imported.
 """
 import math
+import json
+from hashlib import sha256
 import numpy as np
 import ge_beam3_q4_affine_numerical_chart as chart
 
@@ -294,7 +296,8 @@ def verify_contradiction(payload):
     """
     required={'schema','predicate','coordinates','q','accepted','normal',
               'material_direction','director_polarity','actual','tolerance','scale_mode',
-              'source_identity','candidate_identity','fixture_identity'}
+              'source_identity','candidate_identity','fixture_identity',
+              'node','table','row_id','state_sha256'}
     if type(payload) is not dict or set(payload) != required:
         raise ValueError('checker contradiction schema')
     if payload['schema'] != 'Q4_AFFINE_NUMERICAL_CONTRADICTION_V1':
@@ -304,8 +307,13 @@ def verify_contradiction(payload):
         raise ValueError('checker unregistered physical predicate')
     if payload['scale_mode'] != 'REFERENCE_EDGE_NONDIMENSIONAL_V1':
         raise ValueError('checker unregistered physical scale')
-    for key in ('source_identity','candidate_identity','fixture_identity'):
+    for key in ('source_identity','candidate_identity','fixture_identity','node','table','row_id'):
         if type(payload[key]) is not str or not payload[key]: raise ValueError('checker missing identity')
+    state=dict(construction_id=payload['fixture_identity'],coordinates=payload['coordinates'],
+               q=payload['q'],accepted=payload['accepted'],normal=payload['normal'],
+               material_direction=payload['material_direction'],director_polarity=payload['director_polarity'])
+    state_sha=sha256(canonical(state)).hexdigest()
+    if payload['state_sha256'] != state_sha: raise ValueError('checker observation hash mismatch')
     if np.array_equal(finite(payload['q']),np.zeros(24)) and np.array_equal(finite(payload['accepted']),np.tile(np.eye(3),(4,1,1))):
         raise ValueError('zero-state evidence requires separate tangent-reference scale review')
     expected=evaluate(payload['coordinates'],payload['q'],payload['accepted'],
@@ -318,4 +326,16 @@ def verify_contradiction(payload):
                          physical_scaled(target,expected[target],payload['coordinates']))
     if error <= 1e-11: raise ValueError('checker claimed contradiction is absent')
     return dict(accepted=True,predicate=name,relative_error=error,
-                fixture_identity=payload['fixture_identity'])
+                node=payload['node'],table=payload['table'],row_id=payload['row_id'],
+                fixture_identity=payload['fixture_identity'],
+                payload_sha256=sha256(canonical(payload)).hexdigest(),state_sha256=state_sha,
+                actual=array_digest(payload['actual']),expected=array_digest(expected[target]))
+
+
+def canonical(value):
+    return (json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode('ascii')
+
+
+def array_digest(value):
+    a=finite(value)
+    return dict(shape=list(a.shape),sha256=sha256(a.astype('<f8',copy=False).tobytes()).hexdigest())

@@ -16,6 +16,15 @@ from ._ge_beam3_g3c_affine_q4_registry import construction
 POLICY = 'GE_BEAM3_G3C_AFFINE_Q4_PHYSICAL_FACADE_V1'
 RECOVERY_ID = 'GE_BEAM3_Q4_AFFINE_CHART_PHYSICAL_RECOVERY_V1'
 REPRESENTATION_ID = 'GE_BEAM3_Q4_AFFINE_STATION_RECOVERY_64_V1'
+OPERATOR_ID = 'E4_PL_QUALIFIED_Q4_HYBRID_V2'
+
+def _expected_descriptor(c):
+    """Complete authority reconstruction, never a digest of caller-supplied facts."""
+    return canonical(dict(policy=POLICY,recovery_id=RECOVERY_ID,representation_id=REPRESENTATION_ID,
+        operator_id=OPERATOR_ID,construction_id=c.construction_id,recipe_sha256=c.recipe_sha256,
+        family='Q4',node_ids=c.node_ids,coordinates=c.coordinates,normal=c.normal,
+        material_direction=c.material_direction,director_polarity=c.director_polarity,
+        E=100.,nu=.25,thickness=.1,layers=3,origin='OWNED_VIRGIN_ONLY'))
 
 class AffineRecoveryCancelled(RuntimeError):
     pass
@@ -85,8 +94,9 @@ class Prepared:
     source_weights: np.ndarray
     linear_physical: np.ndarray
     operator_id: str
+    definition_sha256: str
 
-def _prepare_reference(element,mesh,material,coordinates):
+def _prepare_reference(element,mesh,material,coordinates,*,definition_sha256):
     from . import e4_pl_element as source
     mixed = element._recover_planar_mixed_fields(mesh,np.zeros(24),material,source._GAUSS)
     solution = source._solve_stationary_system(mixed['stationary_matrix'],mixed['stationary_coupling'])[0]
@@ -109,7 +119,7 @@ def _prepare_reference(element,mesh,material,coordinates):
         owned(geometry['R0']),_engineering_map(geometry['R0'],frame),
         owned([gp['B_m']@geometry['T0'] for gp in geometry['gp']]),
         owned([gp['Gw']@geometry['T0'] for gp in geometry['gp']]),source_weights,
-        owned(components['physical']),str(element.formulation_id))
+        owned(components['physical']),str(element.formulation_id),definition_sha256)
 
 @dataclass(frozen=True)
 class Station:
@@ -246,16 +256,20 @@ class AffineQ4PhysicalRecovery:
                 raise ValueError('reference bytes differ from registered recipe; no snapping permitted')
         if director_polarity is not None and (type(director_polarity) is not int or director_polarity != c.director_polarity):
             raise ValueError('director policy differs from registered recipe')
-        self._body = canonical(dict(policy=POLICY,recovery_id=RECOVERY_ID,representation_id=REPRESENTATION_ID,
-            construction_id=c.construction_id,recipe_sha256=c.recipe_sha256,family='Q4',node_ids=c.node_ids,
-            coordinates=c.coordinates,normal=c.normal,material_direction=c.material_direction,
-            director_polarity=c.director_polarity,E=100.,nu=.25,thickness=.1,layers=3,origin='OWNED_VIRGIN_ONLY'))
+        self._body = _expected_descriptor(c)
         self._seal=sha256(self._body).hexdigest(); self._lock=Lock(); self._prepared=None; self._prepared_seal=None
 
     def descriptor(self):
         if type(self) is not AffineQ4PhysicalRecovery or type(self._body) is not bytes or type(self._seal) is not str or sha256(self._body).hexdigest()!=self._seal:
             raise ValueError('registered recovery definition changed')
-        return json.loads(self._body)
+        body,seal=self._body,self._seal
+        description=json.loads(body)
+        if type(description) is not dict or type(description.get('construction_id')) is not str:
+            raise ValueError('registered descriptor construction identity required')
+        expected=_expected_descriptor(construction(description['construction_id']))
+        if body!=expected or self._body is not body or self._seal!=seal:
+            raise ValueError('descriptor differs from complete registered authority')
+        return description
 
     def evaluate(self,displacement,accepted_rotations,*,cancel_check=None):
         if type(self) is not AffineQ4PhysicalRecovery:
@@ -285,14 +299,22 @@ class AffineQ4PhysicalRecovery:
             guard(); description=self.descriptor(); guard()
             if canonical(description)!=body: raise ValueError('observed descriptor differs from immutable definition')
             c=construction(description['construction_id']); guard()
-            if c.recipe_sha256!=description['recipe_sha256']: raise ValueError('registered recipe changed')
+            expected_body=_expected_descriptor(c); guard()
+            if body!=expected_body:
+                raise ValueError('complete descriptor differs from registered authority')
+            if expected_prepared is not None and expected_prepared.definition_sha256!=seal:
+                raise ValueError('reference cache belongs to a different registered definition')
             u=array(displacement,(24,)); guard(); qa=rotations(accepted_rotations,4); guard(); cancellation()
             kin=deformation(c.coordinates,u,qa); guard()
             prepared=expected_prepared; prepared_seal=expected_prepared_seal
             guard()
             model,element,material,origin=family_objects(description); guard()
             if prepared is None:
-                prepared=_prepare_reference(element,model.mesh,material,c.coordinates); guard()
+                prepared=_prepare_reference(element,model.mesh,material,c.coordinates,definition_sha256=seal); guard()
+                if prepared.operator_id!=OPERATOR_ID:
+                    raise ValueError('source operator differs from registered authority')
+                if prepared.definition_sha256!=seal:
+                    raise ValueError('fresh reference cache has incorrect definition association')
                 prepared_seal=_fingerprint(prepared); guard()
                 # The only permitted transition has no caller observation between
                 # validating the old identity and installing the new baseline.

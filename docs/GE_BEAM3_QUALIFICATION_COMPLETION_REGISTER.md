@@ -21,7 +21,7 @@ publication or default change. No repeated approval needed inside this boundary.
 | B2 successor equations | Contract ba97556, independent review ba784eb4...c204a4,7 exact tests passed | No more equation changes without review |
 | B2 successor local core | Scoped local acceptance at dc607745; smoke and two identical full8-node cycles independently inspected | Matrix adapter; no graph or production acceptance inferred |
 | B2 matrix adapter | Scoped acceptance at5121102; three nodes and two formal cycles after complete rehearsal independently accepted | Successor graph and wider geometry parity remain open |
-| Q4 physical recovery | Exact affine identities accepted at d49aacd; numerical physical recovery still open; prior scoped d0057065 NO_GO preserved | Freeze numerical chart work/Hessian, constitutive fields and state/provenance gate; no public mechanics change |
+| Q4 physical recovery | Exact affine identities accepted at d49aacd; numerical contract accepted at 2a94542; implementation a308d89 rejected before execution and undergoing guard/evidence corrections; prior scoped d0057065 NO_GO preserved | Independent corrected-freeze review, smoke, complete rehearsal and two formal numerical cycles; no public mechanics change |
 | Successor mixed graph | Not implemented | Every original MO01-MO18 obligation with new operator/restart identities |
 | Full G3c | Not executed | Two complete375-history/3075-stage/3450-prefix cycles after prerequisites |
 | G4 | Open | S19-S24 material/state/recovery/control/restart closure |
@@ -357,3 +357,79 @@ fake jobs only. The printed injected RuntimeError/124 packet is an expected
 negative guard test, not a mechanics failure or consumed qualification attempt.
 Syntax and git diff --check also passed. No numerical test or scientific output
 exists for this new implementation yet; independent frozen review is next.
+
+Frozen implementation a308d89a4c4d7787cf347d92341c237f0aa519b6 received
+REVISION_REQUIRED, not execution acceptance. Independent review SHA-256
+3989030cd8d46eb455bd8311e33f68fffda2f3f1c42cceefb7c98be46c62f325
+identified AN01 (pre-entry resealed descriptor did not reconstruct complete
+registered authority), AN02 (ID-only scientific rows passed validation), and
+AN03 (contradictions/receipts were not completely linked to registered observed
+inputs). The original clean freeze and review are preserved; no numerical
+attempt or scientific result exists for a308d89. Durable review location:
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-numerical-a308d89-preexecution-review/.
+
+Successor corrections must compare the entire authoritative descriptor, close
+all result-row schemas recursively, and bind every failed physical check
+bijectively to its node/table/row, observed input state and independent receipt.
+These are guard/evidence corrections, not changes to physical equations,
+tolerances, registered fixture coverage or historical qualifications. Updated
+inert and numerical regressions and an independent successor review are required
+before any numerical execution.
+
+Correction follow-up: the complete registered descriptor is reconstructed before
+family work, and prepared operators now fingerprint and verify that same full
+definition SHA. This also rejects a valid different-geometry descriptor swapped
+onto an already populated cache. Independent read-only follow-up found those
+AN01 corrections sound. The numerical inventory includes the corresponding
+pre-entry definition and cross-definition cache regressions; they remain unrun.
+Recursive row schemas and observed-state/contradiction receipt bindings are
+implemented, but follow-up identified one remaining AN03 publication obligation:
+the coordinator must compare observed states against pinned registered fixture
+hashes, not merely against mutually consistent self-hashed records. This is still
+pre-execution correction work, not implementation acceptance or qualification.
+
+Read-only successor inventory audit: the two Q4-bearing graph families
+J_Q4_PAIR (element11, unit square) and J_MULTIFAMILY_LOOP (element13, translated
+2-by-1 rectangle), each with five variants, use the ten reference constructions
+already in the finite registry. Their elastic section constants also match.
+This is a reference-coverage observation, not solved-history evidence. The
+Q4-bearing subset of the full campaign is 150 histories, 1230 accepted stages
+and 1380 prefix probes per cycle; all 375/3075/3450 remain required overall.
+After numerical recovery acceptance, successor stable-owner authority/dispatch
+and history envelopes must receive new identities rather than redirecting
+GE_BEAM3_G3C_STABLE_MIXED_ELASTIC_OWNER_V1 or
+GE_BEAM3_G3C_STABLE_GRAPH_RESTART_V1. The original mixed-owner contract's
+next_tests MO01-MO18 and history/restart contract remain the controlling
+inventories. No successor owner is implemented or accepted by this audit.
+
+The independently reviewed fixture-only preparation ran once and passed with
+return code zero and zero active descendants (21.0075593 seconds; peak process
+tree 153862144 bytes). It evaluated construction/pose recipes only, not element
+operators. The 130 ordered observation hashes are preserved in
+docs/reference_cases/ge_beam3_q4_affine_observation_manifest_v1.json:
+81946 bytes, SHA-256
+7c1c64461d4598a81a32b560bdfdd088f4c0becbef07cd417cfcdc203ccf8568.
+Preparation authority SHA-256:
+8a132d90938c79c5c4a43a609eea0331f8b69c256a7171cb44a16d1d2a37a34d;
+reviewed launcher SHA-256:
+7b0211dc796b3ae092845739f6c54cb94d2c502497dbe360872f846ef8e3f30b.
+Original external logs and process receipt remain in
+C:/Users/AudunArnesenNyhus/AppData/Local/Temp/beam-affine-fixture-20260913-correction1/.
+This fixture-data artifact is not numerical qualification. No numerical smoke,
+rehearsal or formal cycle has run for the corrected implementation.
+
+Corrected separate inert inventory: 23 tests passed in 0.659 seconds. Coverage
+includes exact recursive row schemas, complete contradiction receipt bijection,
+coherently rehashed wrong observed states, frozen manifest source/order/hash
+mutations and process-tree guards. Its injected RuntimeError/124 is an expected
+fake-job rejection, not a numerical attempt. The 12 actual state-race probes,
+including populated-cache cross-definition replacement, are present in the
+numerical inventory but remain unrun. AST and whitespace checks passed. This
+successor is ready for a clean implementation freeze and independent review,
+not numerical acceptance.
+
+Independent fixture-preparation review SHA-256
+7cf9053eab957857f3ccd84a9fdddfb554d829ccfa485d25434049132a531852
+accepts only the generated input-hash data after inspecting all 130 ordered
+observations, 357 source bindings and the cleanly drained process receipt.
+It does not accept a308d89 or authorize numerical execution.
