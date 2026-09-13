@@ -258,6 +258,17 @@ class GuardTests(unittest.TestCase):
             self.assertFalse(stage.exists())
             self.assertTrue(all((root/name).is_file() for name in ('process.json','scientific.json','receipt.json')))
 
+    def test_physical_failed_guard_incident_distinguishes_unlaunched_nodes(self):
+        results={str(index):({'status':'FAILED','files':{}} if index==157 else
+            {'status':'NOT_LAUNCHED'} if index>=159 else {'status':'PASSED','files':{}})
+            for index in range(90,234)}
+        self.assertEqual(r.physical_failed_guard_layout(results),list(range(90,159)))
+        for index,replacement in ((157,{'status':'NOT_LAUNCHED'}),(159,{'status':'PASSED','files':{}})):
+            changed=copy.deepcopy(results);changed[str(index)]=replacement
+            with self.assertRaises(ValueError):r.physical_failed_guard_layout(changed)
+        changed=copy.deepcopy(results);changed['159']['extra']=True
+        with self.assertRaises(ValueError):r.physical_failed_guard_layout(changed)
+
     def test_physical_union_requires_ordered_original_indices(self):
         values=[]
         for partition_id,indices,_ in r.PHYSICAL_PARTITIONS:

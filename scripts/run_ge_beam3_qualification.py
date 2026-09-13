@@ -1295,6 +1295,22 @@ def physical_correction_predecessor(paths):
     return predecessor,values
 
 
+def physical_failed_guard_layout(results):
+    """Exact launched/terminal layout of the immutable failed guard incident."""
+    if type(results)is not dict or set(results)!={str(i) for i in range(90,234)}:
+        raise ValueError('correction failed incident result inventory')
+    launched=[]
+    for index in range(90,234):
+        row=results[str(index)]
+        expected=('FAILED' if index==157 else 'NOT_LAUNCHED' if index>=159 else 'PASSED')
+        if type(row)is not dict or row.get('status')!=expected:
+            raise ValueError('correction failed incident terminal layout')
+        if expected=='NOT_LAUNCHED':
+            if row!={'status':'NOT_LAUNCHED'}:raise ValueError('correction failed incident unlaunched schema')
+        else:launched.append(index)
+    return launched
+
+
 def physical_failed_guards(path,predecessor):
     path=Path(path).resolve()
     if path.name!='process.json' or path.parent.name!='rehearsal-r-guards-f6a6251-blocked-jphgio72':
@@ -1305,12 +1321,25 @@ def physical_failed_guards(path,predecessor):
     if (value.get('schema')!='GE_BEAM3_G3C_PHYSICAL_PARTITION_PROCESS_V1'
         or value.get('lane')!='rehearsal' or value.get('partition_id')!='R-GUARDS'
         or value.get('partition_manifest_sha256')!=PHYSICAL_PARTITION_MANIFEST_SHA
-        or value.get('passed')is not False or value.get('required_nodes')!=144
-        or value.get('terminal_nodes')!=144 or value.get('active_processes')!=0
+        or value.get('passed')is not False
+        or type(value.get('required_nodes'))is not int or value.get('required_nodes')!=144
+        or type(value.get('terminal_nodes'))is not int or value.get('terminal_nodes')!=144
+        or type(value.get('active_processes'))is not int or value.get('active_processes')!=0
         or type(results)is not dict or set(results)!={str(i) for i in range(90,234)}):
         raise ValueError('correction failed incident process')
-    physical_closed_world(path.parent,{'process.json'},{'node-%04d'%i for i in range(90,234)})
-    failed=[int(key) for key,row in results.items() if row.get('status')!='PASSED']
+    launched=physical_failed_guard_layout(results)
+    physical_closed_world(path.parent,{'process.json'},{'node-%04d'%i for i in launched})
+    for index in launched:
+        node=path.parent/f'node-{index:04d}';row=results[str(index)]
+        if type(row.get('files'))is not dict:raise ValueError('correction failed incident files schema')
+        expected_files=set(row['files'])|{'process.json'}
+        physical_closed_world(node,expected_files)
+        for name,frozen in row['files'].items():
+            if not exact_fingerprint(frozen,read(node/name)):
+                raise ValueError('correction failed incident node file')
+        if not exact_json(environment.strict(read(node/'process.json')),row):
+            raise ValueError('correction failed incident node process')
+    failed=[int(key) for key,row in results.items() if row.get('status')=='FAILED']
     if failed!=[157]:raise ValueError('correction failed incident node set')
     node=path.parent/'node-0157';physical_closed_world(node,
         {'lease.json','review.json','worker-attempt.json','stdout.log','stderr.log','process.json'})
