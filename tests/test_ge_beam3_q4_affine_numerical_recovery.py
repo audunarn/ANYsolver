@@ -8,6 +8,7 @@ from dataclasses import dataclass, fields, is_dataclass, replace, FrozenInstance
 from hashlib import sha256
 import json
 import math
+from itertools import permutations
 import os
 from pathlib import Path
 import sys
@@ -277,6 +278,19 @@ def chart_authority():
         addendum_sha256=addendum,review_sha256=review,sources=sources,verified=True)
 
 
+def station_join_fixture():
+    natural=np.array(((-1.,-1.),(1.,-1.),(1.,1.),(-1.,1.)))/math.sqrt(3)
+    for order in permutations(range(4)):
+        source=natural[list(order)];join=candidate._station_bijection(source,natural)
+        assert type(join)is tuple and sorted(join)==list(range(4))
+        assert np.array_equal(source[list(join)],natural)
+    duplicate=natural.copy();duplicate[1]=duplicate[0]
+    missing=natural.copy();missing[0,0]=0.
+    for source,target in ((duplicate,natural),(natural,duplicate),(missing,natural),(natural,missing)):
+        with pytest.raises(ValueError):candidate._station_bijection(source,target)
+    return dict(id='exact_coordinate_bijection',station_association_id=candidate.STATION_ASSOCIATION_ID,verified=True,rejections=4)
+
+
 def test_affine_recovery_definition_and_source_identity():
     hashes={}
     for name,digest in SOURCES.items():
@@ -290,6 +304,7 @@ def test_affine_recovery_definition_and_source_identity():
         assert c.recipe_sha256==sha256(c.recipe).hexdigest()
         descriptor=f.descriptor()
         assert descriptor['chart_numerics_id']==stable_chart.NUMERICS_ID
+        assert descriptor['station_association_id']=='GE_BEAM3_Q4_NATURAL_COORDINATE_BIJECTION_V1'
         assert not hasattr(f,'commit') and not hasattr(f,'restart')
         rows.append(dict(id=identity,recipe_sha256=c.recipe_sha256,descriptor_sha256=sha256(canonical(descriptor)).hexdigest()))
     lemma_raw=(ROOT/'docs/GE_BEAM3_Q4_AFFINE_RECOVERY_EXTENSION_LEMMA.md').read_bytes().replace(b'\r\n',b'\n')
@@ -302,7 +317,7 @@ def test_affine_recovery_definition_and_source_identity():
     assert lemma['scope']['lemma_sha256']==sha256(lemma_raw).hexdigest()
     record('definition_and_source_identity',definitions=rows,source_graph=[dict(id='source_graph',hashes=hashes)],
            extension_lemma=[dict(id='ideal_recipe_extension',lemma_sha256=sha256(lemma_raw).hexdigest(),review_sha256=sha256(review_raw).hexdigest())],
-           fingerprint=[fingerprint_fixture()],chart_authority=[chart_authority()])
+           fingerprint=[fingerprint_fixture()],chart_authority=[chart_authority()],station_join=[station_join_fixture()])
 
 
 def test_affine_recovery_zero_and_station_constitutive():
@@ -325,6 +340,13 @@ def test_affine_recovery_independent_material_fields():
     for identity,pose,c,q,qa in base_contexts():
         trial=evaluate(c,q,qa);expected=independent(c,q,qa);checks=[]
         for i,s in enumerate(trial.stations):
+            prepared=facade(c.construction_id)._prepared
+            join=candidate._station_bijection(prepared.nonlinear_source_natural,prepared.natural)
+            assert join==prepared.source_order and s.source_index==join[i]
+            assert np.array_equal(s.source_natural,prepared.nonlinear_source_natural[join[i]])
+            assert np.array_equal(s.source_natural,s.natural)
+            assert np.array_equal(s.source_reference_position,prepared.nonlinear_source_positions[join[i]])
+            close(s.source_reference_position,expected['reference_positions'][i])
             component_scale=np.array([1.,1.,1.,length(c),length(c),length(c),1.,1.])
             strain_scale=norm(component_scale[:,None]*expected['M'][i]*scale_vector(c)[None,:]) if pose=='ZERO' else norm(component_scale*expected['strains'][i])
             resultant_scale=norm((expected['C']@expected['M'][i])*scale_vector(c)[None,:]/component_scale[:,None]) if pose=='ZERO' else norm(expected['resultants'][i]/component_scale)
@@ -560,15 +582,16 @@ def test_affine_recovery_definition_observation_races(monkeypatch):
     original_descriptor=candidate.AffineQ4PhysicalRecovery.descriptor
     for route in ('descriptor','displacement_array','accepted_array','cancellation','material_descriptor','cache_array','cache_cancellation',
                   'preentry_E','preentry_coordinates','preentry_material_direction','preentry_policy','preentry_cached_definition',
-                  'preentry_chart_missing','preentry_chart_old','preentry_chart_wrong','preentry_chart_cache'):
+                  'preentry_chart_missing','preentry_chart_old','preentry_chart_wrong','preentry_chart_cache',
+                  'preentry_station_missing','preentry_station_old','preentry_station_wrong','preentry_station_cache'):
         f=candidate.AffineQ4PhysicalRecovery(c.construction_id);other=candidate.AffineQ4PhysicalRecovery('RECTANGLE::1')
         if route.startswith('cache_'):f.evaluate(q,qa)
         if route=='preentry_cached_definition':
             f.evaluate(q,qa)
             object.__setattr__(f,'_body',other._body);object.__setattr__(f,'_seal',other._seal)
-        elif route=='preentry_chart_cache':
+        elif route in ('preentry_chart_cache','preentry_station_cache'):
             f.evaluate(q,qa)
-            old=json.loads(f._body);del old['chart_numerics_id']
+            old=json.loads(f._body);del old['chart_numerics_id' if route=='preentry_chart_cache' else 'station_association_id']
             prior=replace(f._prepared,definition_sha256=sha256(canonical(old)).hexdigest())
             object.__setattr__(f,'_prepared',prior);object.__setattr__(f,'_prepared_seal',candidate._fingerprint(prior))
         elif route.startswith('preentry_'):
@@ -577,6 +600,9 @@ def test_affine_recovery_definition_observation_races(monkeypatch):
             if key=='chart_missing':del body['chart_numerics_id']
             elif key=='chart_old':body['chart_numerics_id']='GE_BEAM3_G3C_MATRIX_POSE_SHELL_PULLBACK_V1'
             elif key=='chart_wrong':body['chart_numerics_id']='FOREIGN_CHART_NUMERICS'
+            elif key=='station_missing':del body['station_association_id']
+            elif key=='station_old':body['station_association_id']='RAW_POSITIONAL_STATION_ZIP'
+            elif key=='station_wrong':body['station_association_id']='FOREIGN_STATION_ASSOCIATION'
             elif key=='E':body[key]=200.
             elif key=='coordinates':body[key][0][0]+=.125
             elif key=='material_direction':body[key]=[0.,1.,0.]
@@ -799,8 +825,26 @@ def test_affine_recovery_actual_mutation_rejection(monkeypatch):
             contaminated=trial.physical_energy+sum(channel.energy for channel in trial.numerical_channels)
             with pytest.raises(AssertionError):close(contaminated,expected['physical_energy'])
             rows.append(dict(id=shape+'::numerical_energy_leak',rejection='MATERIAL_ENERGY'))
+            # Recreate the actual positional-zip defect from the measured
+            # coordinate bijection, not an assumed swap. Reuse the immutable
+            # stationary maps; only the registered BENDING chart is evaluated.
+            bq,bqa=registry.pose(c.construction_id,'BENDING')
+            bkin=candidate.deformation(c.coordinates,bq,bqa)
+            good,_,_=candidate._station_fields(prepared,bkin)
+            independent_strains=np.array([m@bkin.deformation+.5*np.einsum('aij,i,j->a',h,bkin.deformation,bkin.deformation)
+                for m,h in zip(expected['M'],expected['nonlinear_hessians'])])
+            close(np.array([s.strain for s in good]),independent_strains)
+            raw_order=np.argsort(prepared.source_order)
+            assert not np.array_equal(raw_order,np.arange(4))
+            badjoin=replace(prepared,transverse_maps=np.array(prepared.transverse_maps)[raw_order],
+                membrane_maps=np.array(prepared.membrane_maps)[raw_order],source_weights=np.array(prepared.source_weights)[raw_order])
+            bad,_,_=candidate._station_fields(badjoin,bkin)
+            with pytest.raises(AssertionError):close(np.array([s.strain for s in bad]),independent_strains)
+            if shape=='SQUARE':
+                assert any(float(a.nonlinear[2])*float(b.nonlinear[2])<0 for a,b in zip(good,bad))
+            rows.append(dict(id=shape+'::nonlinear_point_join',rejection='INDEPENDENT_STATION_COMPARISON'))
         assert sha256(candidate.canonical(candidate._payload(prepared))).hexdigest()==before
-    assert len(rows)==39;record('actual_mutation_rejection',mutations=rows)
+    assert len(rows)==42;record('actual_mutation_rejection',mutations=rows)
 
 
 def test_affine_recovery_smoke_square_station_work():

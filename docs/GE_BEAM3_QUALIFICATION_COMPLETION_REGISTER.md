@@ -21,7 +21,7 @@ publication or default change. No repeated approval needed inside this boundary.
 | B2 successor equations | Contract ba97556, independent review ba784eb4...c204a4,7 exact tests passed | No more equation changes without review |
 | B2 successor local core | Scoped local acceptance at dc607745; smoke and two identical full8-node cycles independently inspected | Matrix adapter; no graph or production acceptance inferred |
 | B2 matrix adapter | Scoped acceptance at5121102; three nodes and two formal cycles after complete rehearsal independently accepted | Successor graph and wider geometry parity remain open |
-| Q4 physical recovery | Exact affine identities accepted at d49aacd; eb84fd5 numerical smoke passed; complete rehearsal blocked on derivative accuracy and comparison-frame defects; prior scoped d0057065 NO_GO preserved | Review private stable-chart dependency correction, then fresh smoke/rehearsal and two formal cycles; no public mechanics change |
+| Q4 physical recovery | Exact affine identities accepted at d49aacd; stable-chart b26d97f smoke passed; full rehearsal exposed a private station-association defect; prior scoped d0057065 NO_GO preserved | Correct exact point association, review fresh freeze, then smoke/rehearsal and two formal cycles; no public mechanics change |
 | Successor mixed graph | Not implemented | Every original MO01-MO18 obligation with new operator/restart identities |
 | Full G3c | Not executed | Two complete375-history/3075-stage/3450-prefix cycles after prerequisites |
 | G4 | Open | S19-S24 material/state/recovery/control/restart closure |
@@ -591,3 +591,71 @@ C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-fixture-corre
 The separate 23 inert guards passed in 0.670 seconds; AST, pinned-input and
 whitespace checks passed. A clean implementation review remains prerequisite
 to fresh smoke, complete rehearsal and formal confirmation.
+
+## b26d97f smoke passed; station association blocks rehearsal
+
+Clean stable-chart freeze b26d97fb8cc04a54e081444a8471142b2324b81c, tree
+277105064a5f509205f3089522cf1e04f5f41bee, received independent execution
+acceptance SHA-256
+1f2cfdd60300aa368862c147f015e4a1354cdde2265fb3070e154ee2ac1e4a81.
+Fresh two-node smoke run 9abeb411-602c-422c-9eb7-80f2c62c05f3 passed and
+drained. Its canonical smoke-only record is 13264 bytes, SHA-256
+debc87b5a0fbac632d7ec3f13dd7ebde085e413fa4903bdfb36c5ac1fa9e35ed.
+
+Complete rehearsal c47971d9-a95a-4955-b305-17e3595b9589 stopped after
+launching three of15 nodes, all drained. The station/chart node progressed
+beyond the previous small-scale MEMBRANE D2 failure, but was aborted on its
+peer's failure and is not counted as accepted. The independent-field node
+exposed opposite signs for the nonlinear engineering membrane shear in square
+BENDING: -6.75e-6 versus +6.75e-6, relative5.248906320529415e-4. There is no
+canonical rehearsal aggregate or formal cycle. Terminal remains BLOCKED
+process/evidence, not a manufactured scientific NO_GO.
+
+Author and independent source audits agree on the concrete cause: mixed
+source._GAUSS order is (--),(+-),(++),(-+), whereas source nonlinear geometry
+uses element.gauss_points order (--),(+-),(-+),(++). The private facade paired
+M with Bm/Gw by index, swapping the last two nonlinear station fields. The
+correct repair is an exact natural-coordinate bijection with physical-position
+verification, not a frame sign change. The source quadrature orders, actual
+source nonlinear response, public mechanics, checker and tolerances stay fixed.
+A new station-association definition ID must also reject old descriptors/cache
+associations before family work. This is a source-authorized implementation
+defect correction; numerical acceptance still requires a fresh reviewed freeze.
+
+Independent evidence review SHA-256
+7028a72e3380b72eb2a0baa996ebeee76bf562a214257e9f76a2d8eff7d5f46b
+and raw-file manifest SHA-256
+fcf7daf432ce451f32e8f7ee72ab46475d7a1640d05058eb35d6e7e58c5e9ef0
+preserve these outcomes. Separate original/archive inventories contain18 smoke
+files and18 rehearsal files, each copied and byte/SHA verified. Durable roots:
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-b26d97f-smoke-20260913/
+and
+C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/beam-q4-affine-b26d97f-rehearsal-20260913/.
+All originals, prior smoke/rehearsal failures and accepted exact proofs remain
+unchanged. No consumed attempt is reused.
+
+## Exact station-association correction prepared
+
+The private facade now joins each mixed station to its unique actual source
+natural coordinates, verifies shape rows and physical positions, and records
+source index/coordinates/position. Original public quadrature and source energy
+accumulation order remain unchanged. Mandatory station_association_id
+GE_BEAM3_Q4_NATURAL_COORDINATE_BIJECTION_V1 rejects old descriptors and caches.
+Regressions cover all24 point permutations, duplicate/missing points, actual
+point provenance,20 admission races and42 mutations including the bad positional
+BENDING join. The15 scientific nodes and130 physical observations are unchanged.
+
+Independent preliminary source review accepted this narrow correction and
+verified all36 archived b26d97f raw files. Fixture-only correction4 then passed
+once in20.3006606 seconds, peak156323840 bytes, returncode0, no descendants.
+Preparation authority SHA-256:
+dbd99f4407704af006a9f74c386f064dd6569a1b759b5a5d27c491a4b01f20fc.
+Reviewed launcher SHA-256:
+8578f8c3e9ba3254d202f32df9ff4b11406318bce42ce9c640e543e7a121fb18.
+New manifest82086 bytes, SHA-256:
+8ccaeb717fbbe05aab4a9024ffcc40fd33da5236bb6aeb626af654216fcb9d74.
+All130 observation records, generator bindings and inventory are byte-equivalent
+as canonical data to the preceding manifest; only source bindings changed.
+Separate23 inert runner tests passed in0.667 seconds. These are not scientific
+acceptance: clean implementation review and fresh smoke/rehearsal/formal runs
+remain required. Public mechanics, independent checker and tolerances unchanged.

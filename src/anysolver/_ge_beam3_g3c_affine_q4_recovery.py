@@ -18,11 +18,13 @@ POLICY = 'GE_BEAM3_G3C_AFFINE_Q4_PHYSICAL_FACADE_V1'
 RECOVERY_ID = 'GE_BEAM3_Q4_AFFINE_CHART_PHYSICAL_RECOVERY_V1'
 REPRESENTATION_ID = 'GE_BEAM3_Q4_AFFINE_STATION_RECOVERY_64_V1'
 OPERATOR_ID = 'E4_PL_QUALIFIED_Q4_HYBRID_V2'
+STATION_ASSOCIATION_ID = 'GE_BEAM3_Q4_NATURAL_COORDINATE_BIJECTION_V1'
 
 def _expected_descriptor(c):
     """Complete authority reconstruction, never a digest of caller-supplied facts."""
     return canonical(dict(policy=POLICY,recovery_id=RECOVERY_ID,representation_id=REPRESENTATION_ID,
         operator_id=OPERATOR_ID,chart_numerics_id=CHART_NUMERICS_ID,
+        station_association_id=STATION_ASSOCIATION_ID,
         construction_id=c.construction_id,recipe_sha256=c.recipe_sha256,
         family='Q4',node_ids=c.node_ids,coordinates=c.coordinates,normal=c.normal,
         material_direction=c.material_direction,director_polarity=c.director_polarity,
@@ -76,6 +78,20 @@ def _engineering_map(source_frame, target_frame):
         columns.append((L[0,0],L[1,1],2*L[0,1]))
     return owned(np.array(columns).T)
 
+def _station_bijection(source_natural,target_natural):
+    """Exact target-to-source point join; quadrature index is not an identity."""
+    original=array(source_natural,(4,2)); target=array(target_natural,(4,2))
+    source_keys=tuple(tuple(row) for row in original)
+    target_keys=tuple(tuple(row) for row in target)
+    if len(set(source_keys))!=4 or len(set(target_keys))!=4:
+        raise ValueError('duplicate quadrature point identity')
+    if set(source_keys)!=set(target_keys):
+        raise ValueError('mixed and nonlinear quadrature points do not coincide')
+    order=tuple(source_keys.index(point) for point in target_keys)
+    if len(set(order))!=4 or not np.array_equal(original[list(order)],target):
+        raise ValueError('nonbijective quadrature association')
+    return order
+
 def _nonlinear_terms(gw, d, engineering):
     p = gw@d
     n0 = np.array((.5*p[0]**2,.5*p[1]**2,p[0]*p[1]))
@@ -124,6 +140,9 @@ class Prepared:
     linear_physical: np.ndarray
     operator_id: str
     definition_sha256: str
+    source_order: tuple
+    nonlinear_source_natural: np.ndarray
+    nonlinear_source_positions: np.ndarray
 
 def _prepare_reference(element,mesh,material,coordinates,*,definition_sha256):
     from . import e4_pl_element as source
@@ -133,11 +152,22 @@ def _prepare_reference(element,mesh,material,coordinates,*,definition_sha256):
     transform = source._global_transform(frame).T
     maps = np.array([-source._source_fields(c,r,s)[1]@solution[14:]@transform for r,s in source._GAUSS])
     geometry = element._nonlinear_geometry(mesh)
+    source_natural=owned(element.gauss_points)
+    target_natural=owned(source._GAUSS)
+    source_order=_station_bijection(source_natural,target_natural)
+    if len(geometry['gp'])!=4:
+        raise ValueError('four identified nonlinear station records required')
+    ordered_gp=tuple(geometry['gp'][i] for i in source_order)
     physical_frame, membrane, curvature, shear, _ = element._physical_director_context(frame)
     P = np.zeros((8,8)); P[:3,:3]=membrane; P[3:6,3:6]=curvature; P[6:,6:]=shear
     interpolation = np.array([element.compute_shape_functions(float(r),float(s))[0] for r,s in source._GAUSS])
+    source_interpolation=owned([element.compute_shape_functions(float(r),float(s))[0] for r,s in source_natural])
+    source_positions=owned(source_interpolation@coordinates)
+    if (not np.array_equal(source_interpolation[list(source_order)],interpolation)
+            or not np.array_equal(source_positions[list(source_order)],interpolation@coordinates)):
+        raise ValueError('associated quadrature shape functions or physical positions differ')
     weights = owned(mixed['jacobian_determinants'])
-    source_weights = owned([gp['detw'] for gp in geometry['gp']])
+    source_weights = owned([gp['detw'] for gp in ordered_gp])
     if weights.shape != (4,) or np.any(weights <= 0) or np.any(source_weights <= 0):
         raise ValueError('positive four-station measure required')
     components = element.compute_stiffness_components(mesh,material)
@@ -146,9 +176,10 @@ def _prepare_reference(element,mesh,material,coordinates,*,definition_sha256):
         owned(mixed['stationary_matrix']),owned(mixed['stationary_coupling']),owned(solution),
         owned(maps),owned(source._GAUSS),weights,owned(interpolation),owned(interpolation@coordinates),
         owned(geometry['R0']),_engineering_map(geometry['R0'],frame),
-        owned([gp['B_m']@geometry['T0'] for gp in geometry['gp']]),
-        owned([gp['Gw']@geometry['T0'] for gp in geometry['gp']]),source_weights,
-        owned(components['physical']),str(element.formulation_id),definition_sha256)
+        owned([gp['B_m']@geometry['T0'] for gp in ordered_gp]),
+        owned([gp['Gw']@geometry['T0'] for gp in ordered_gp]),source_weights,
+        owned(components['physical']),str(element.formulation_id),definition_sha256,
+        source_order,source_natural,source_positions)
 
 @dataclass(frozen=True)
 class Station:
@@ -182,6 +213,9 @@ class Station:
     internal_inverse: np.ndarray
     internal_residual: np.ndarray
     old_mixed_resultant: np.ndarray
+    source_index: int
+    source_natural: np.ndarray
+    source_reference_position: np.ndarray
 
 def _station_fields(prepared,kin):
     from . import e4_pl_element as source
@@ -204,7 +238,9 @@ def _station_fields(prepared,kin):
             prepared.reference_positions[i],owned(prepared.interpolation[i]@kin.current_positions),
             prepared.frame,F,C,M,n,Dn,Hn,e,s,owned(pe),owned(ps),et,owned(R@et@R.T),
             st,owned(R@st@R.T),ev,owned(R@ev),sv,owned(R@sv),J,Fsecond,block,inverse,residual,
-            owned(source._source_fields(coeff,float(r),float(s0))[0]@params[:14])))
+            owned(source._source_fields(coeff,float(r),float(s0))[0]@params[:14]),
+            prepared.source_order[i],prepared.nonlinear_source_natural[prepared.source_order[i]],
+            prepared.nonlinear_source_positions[prepared.source_order[i]]))
         forces.append(f); tangents.append(H)
     return tuple(stations),owned(sum(forces)),owned(sum(tangents))
 
@@ -368,7 +404,10 @@ class AffineQ4PhysicalRecovery:
             physical_energy=float(sum(.5*s.weight*s.strain@s.resultant for s in stations))
             source_energy=float(.5*d@components['physical']@d)
             A=100./(1-.25**2)*.1*np.array(((1,.25,0),(.25,1,0),(0,0,(1-.25)/2)))
-            for bm,gw,w in zip(prepared.membrane_maps,prepared.transverse_maps,prepared.source_weights):
+            # Keep the unchanged source's actual accumulation order. Physical
+            # station pairing above follows the distinct mixed-field order.
+            for i in sorted(range(4),key=prepared.source_order.__getitem__):
+                bm,gw,w=prepared.membrane_maps[i],prepared.transverse_maps[i],prepared.source_weights[i]
                 linear=bm@d; p=gw@d; finite=linear+np.array((.5*p[0]**2,.5*p[1]**2,p[0]*p[1]))
                 source_energy+=float(.5*w*(finite@A@finite-linear@A@linear))
             block=np.zeros((64,64)); inverse=np.zeros((64,64)); coupling=np.zeros((64,24)); direct=np.zeros((24,24))
