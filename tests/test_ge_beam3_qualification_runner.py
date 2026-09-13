@@ -203,7 +203,8 @@ class GuardTests(unittest.TestCase):
             design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
             revision_sha256=r.PHYSICAL_CORRECTION_REVISION_SHA,
             revision_review_sha256=r.PHYSICAL_CORRECTION_REVISION_REVIEW_SHA,
-            unchanged_inputs_sha256='d'*64,allowed_changed_paths=sorted(r.PHYSICAL_CORRECTION_CHANGED_PATHS))
+            unchanged_inputs_sha256=r.PHYSICAL_CORRECTION_UNCHANGED_INPUTS_SHA,
+            allowed_changed_paths=sorted(r.PHYSICAL_CORRECTION_CHANGED_PATHS))
         value=dict(body,self_sha256=support.packet.digest(body))
         import ge_beam3_g3c_correction_lease_binding as binding
         captured=support.packet.digest(value)

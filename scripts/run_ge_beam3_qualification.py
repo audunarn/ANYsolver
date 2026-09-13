@@ -60,6 +60,7 @@ PHYSICAL_CORRECTION_REVISION_SHA='dae0dd3081ff45ab66a266b2706bdee6049e556d01c090
 PHYSICAL_CORRECTION_REVISION_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_correction_inheritance_v2_review_v2.json'
 PHYSICAL_CORRECTION_REVISION_REVIEW_SHA='339367400bc48eeb07eb09eca353097297e7dae2907f23ae53b53dab5199c26b'
 PHYSICAL_CORRECTION_SUPERSEDED_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_correction_inheritance_v2_review.json'
+PHYSICAL_CORRECTION_UNCHANGED_INPUTS_SHA='0a65262c4a016fbdaba8261f98efe2a04c66c15a2e84cfc973bba19ac06db623'
 PHYSICAL_PREDECESSOR={'commit':'f6a62518be52a414604aa5e1beddd4601093faca',
     'tree':'1230eea2b64ca6e585ad23b389e514f1d5c493c4'}
 PHYSICAL_PREDECESSOR_REVIEW_SHA='52f8df02bd22c635bf828bf93190a34ec1463b20268a1a822e4e0f3c6c042eaf'
@@ -1346,7 +1347,7 @@ def physical_validate_runtime_compatibility_record(value,expected,predecessor=No
         or value.get('revision_sha256')!=PHYSICAL_CORRECTION_REVISION_SHA
         or value.get('revision_review_sha256')!=PHYSICAL_CORRECTION_REVISION_REVIEW_SHA
         or not exact_json(value.get('allowed_changed_paths'),sorted(PHYSICAL_CORRECTION_CHANGED_PATHS))
-        or type(value.get('unchanged_inputs_sha256'))is not str
+        or value.get('unchanged_inputs_sha256')!=PHYSICAL_CORRECTION_UNCHANGED_INPUTS_SHA
         or value.get('self_sha256')!=sha256(canonical(body)).hexdigest()):
         raise ValueError('correction compatibility authority')
     sha_value(value['unchanged_inputs_sha256']);sha_value(value['self_sha256'])

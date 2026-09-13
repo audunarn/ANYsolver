@@ -32,6 +32,7 @@ CORRECTION_ADDENDUM_SHA='2c03f72a0e9c50c6a22fe5b7f47fd66f786aa3eadc23bedeb4dab1f
 CORRECTION_DESIGN_REVIEW_SHA='0fbaedb533e501a5136407d5dc039b5393b4bbf53064c273c7e974917ba9fec9'
 CORRECTION_REVISION_SHA='dae0dd3081ff45ab66a266b2706bdee6049e556d01c09003de2ba1749ce0be76'
 CORRECTION_REVISION_REVIEW_SHA='339367400bc48eeb07eb09eca353097297e7dae2907f23ae53b53dab5199c26b'
+CORRECTION_UNCHANGED_INPUTS_SHA='0a65262c4a016fbdaba8261f98efe2a04c66c15a2e84cfc973bba19ac06db623'
 CORRECTION_ALLOWED_CHANGED_PATHS=(
     'docs/GE_BEAM3_G3C_PHYSICAL_CORRECTION_INHERITANCE_ADDENDUM.md',
     'docs/GE_BEAM3_G3C_PHYSICAL_CORRECTION_INHERITANCE_V2.md',
@@ -135,7 +136,7 @@ def validate_runtime_compatibility(value, expected_runtime, live_runtime):
         or value.get('design_review_sha256')!=CORRECTION_DESIGN_REVIEW_SHA
         or value.get('revision_sha256')!=CORRECTION_REVISION_SHA
         or value.get('revision_review_sha256')!=CORRECTION_REVISION_REVIEW_SHA
-        or type(value.get('unchanged_inputs_sha256'))is not str
+        or value.get('unchanged_inputs_sha256')!=CORRECTION_UNCHANGED_INPUTS_SHA
         or type(value.get('allowed_changed_paths'))is not list
         or value.get('allowed_changed_paths')!=list(CORRECTION_ALLOWED_CHANGED_PATHS)
         or value.get('self_sha256')!=packet.digest(body)
