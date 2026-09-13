@@ -907,3 +907,32 @@ passed in0.26 seconds. AST compilation and git diff checks passed. These are
 nonmechanical checks only: no owner trial, graph solve, restart replay or
 scientific mechanics node has executed. A clean implementation freeze and
 independent review remain mandatory before the local or smoke lanes.
+
+## Physical mixed-owner implementation review correction
+
+Implementation freeze `7fc5b9092ee867c0562f52bd409342bd4c699f3a`, tree
+`433156f16eb8866a80017297db52786abb0458be`, was independently rejected before
+mechanics execution. The preserved review found a zero-angle CM0 test defect,
+an unbound initial-generation identity, self-rehashable prerequisite evidence,
+non-atomic canonical publication, reversed smoke/local ordering and incomplete
+MO03/MO06/MO08/MO10/MO12 fixtures. No scientific node ran and this freeze is
+not evidence for the successor.
+
+The successor correction uses the exact Rodrigues zero-angle limit, binds the
+constructor's initial generation and fixture identity, tests coherent definition
+replacement and real concurrent capture, and exercises the registered nonzero
+native line/couple diagnostic without changing the graph histories' spatial
+dead nodal load. Each history now executes all three KKT directional steps
+immediately before load stage zero. Canonical wave output is validated in a
+same-directory pending file before atomic promotion. A separate receipt binds
+the wave process and every node lease, review, completion, process, science and
+input-packet DAG; prerequisite acceptance reopens and recursively verifies
+those original files instead of trusting a self hash. Family smoke is now the
+first numerical lane; complete local composition requires that accepted smoke.
+
+Active/passive whole-operator and complete history-covariance comparison remain
+open, as do the formal partition/addendum, two full cycles and independent
+evidence review. These requirements are not discharged by local or rehearsal
+records and MO08/MO18 must remain incomplete until their separately frozen
+fixtures execute. No public/default, legacy, Q4, S3 or scientific-tolerance
+change is made by this correction.

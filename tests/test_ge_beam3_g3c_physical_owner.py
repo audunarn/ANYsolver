@@ -13,7 +13,7 @@ MO_TESTS={
  'MO02':'test_physical_family_work','MO03':'test_physical_family_work',
  'MO04':'test_physical_family_work','MO05':'test_physical_directional',
  'MO06':'test_physical_independent_joint_work_transport','MO07':'test_physical_history_assignment',
- 'MO08':'test_physical_independent_joint_work_transport','MO09':'test_physical_atomicity',
+ 'MO08':'DEFERRED_FULL_OPERATOR_HISTORY_TRANSPORT_PARTITION_ADDENDUM','MO09':'test_physical_atomicity',
  'MO10':'test_physical_atomicity','MO11':'test_physical_observation_and_cache_guards',
  'MO12':'test_physical_observation_and_cache_guards','MO13':'test_physical_preflight_guards',
  'MO14':'test_physical_history_assignment','MO15':'test_physical_mutation_assignment',
@@ -92,6 +92,7 @@ def native_checks(previous,current):
 def test_physical_family_work():
     import numpy as np
     from anysolver._ge_beam3_g3c_physical_owner import MixedGraphOwner,recovery_witness
+    from anysolver._ge_beam3_g3c_stable.operator import schur
     graph,variant=selected();owner=MixedGraphOwner(graph,variant)
     before=json.loads(owner.snapshot_bytes())['state']
     for command in history.commands('NONE',.01)[:2]:
@@ -109,8 +110,30 @@ def test_physical_family_work():
             close(actual.schur_chart_hessian,actual.physical_chart_hessian)
             close(actual.chart_force,actual.physical_chart_force+sum((c.chart_force for c in actual.numerical_channels),np.zeros(24)))
             for station in actual.stations:close(station.resultant,station.constitutive@station.strain)
+    # MO03 retains the registered G1 nonzero native line/couple diagnostic
+    # without changing the graph histories' frozen spatial dead nodal load.
+    # Evaluate every actual native operator at this accepted pose and verify
+    # the full42/internal24 response and its Schur reduction directly.
+    model,elements,states=owner._native_model(current);ids=[n for n,x in json.loads(owner._expanded)['graph']['nodes']]
+    total=np.asarray(current['total_u']);qa=np.asarray(current['rotations']);native_count=0
+    for element in elements:
+        mapping=element.get_dof_mapping(model.mesh);indices=[ids.index(n)for n in element.node_ids]
+        x,low=element._coordinates(total[mapping]);state=states[element.element_id];response=state['response']
+        frames=qa[indices]@element.operator.reference.nodal_triads
+        zero=element.operator.evaluate(x,low,frames,response['rotations'],response['resultants'])
+        loaded=element.operator.evaluate(x,low,frames,response['rotations'],response['resultants'],
+            line=(.01,-.02,.005),couple=(.001,.002,-.001))
+        assert np.linalg.norm(loaded['residual'][18:]-zero['residual'][18:])>1e-12
+        assert abs(loaded['potential']-zero['potential'])>1e-12 and loaded['conservative']is False
+        reduced=schur(loaded['residual'],loaded['jacobian'])
+        solved=np.linalg.solve(loaded['jacobian'][18:,18:],
+            np.c_[loaded['residual'][18:],loaded['jacobian'][18:,:18]])
+        close(reduced[0],loaded['residual'][:18]-loaded['jacobian'][:18,18:]@solved[:,0])
+        close(reduced[1],loaded['jacobian'][:18,:18]-loaded['jacobian'][:18,18:]@solved[:,1:])
+        native_count+=1
     assert owner.snapshot_bytes()==snapshot and trial['state_committed']is False
-    record('family_work',accepted_state_sha256=sha256(snapshot).hexdigest(),adapter_count=len(candidate['adapter_rows']))
+    record('family_work',accepted_state_sha256=sha256(snapshot).hexdigest(),adapter_count=len(candidate['adapter_rows']),
+           native_load_witnesses=native_count,native_internal_residual_nonzero=True,native_load_work_nonzero=True)
 
 
 def directional(owner,command):
@@ -154,16 +177,19 @@ def test_physical_atomicity():
 def test_physical_token_and_definition_guards():
     import pytest
     from anysolver._ge_beam3_g3c_physical_owner import MixedGraphOwner
-    for kind in ('nonce','definition','reentry'):
+    for kind in ('nonce','definition','initial','reentry'):
         owner=MixedGraphOwner(*selected());before=owner._published
         def mutate(stage):
             if stage!='pose':return
             if kind=='nonce':object.__setattr__(owner,'_active',object())
             elif kind=='definition':object.__setattr__(owner,'_definition',owner._definition+b' ')
+            elif kind=='initial':object.__setattr__(owner,'_initial','0'*64)
             else:owner.solve(history.commands('NONE',.01)[0])
         with pytest.raises((ValueError,RuntimeError)):owner.solve(history.commands('NONE',.01)[0],hook=mutate)
         assert owner._published is before and owner._active is None and not owner._owned_lock.locked()
-    record('tokens',rejections=3)
+        if kind=='initial':
+            with pytest.raises(ValueError):owner.snapshot_bytes()
+    record('tokens',rejections=4)
 
 
 def independent_constraints(owner,total,qa,mu,W=None,translation=None):
@@ -218,7 +244,8 @@ def test_physical_independent_joint_work_transport():
         # Independent Rodrigues value, never owner._targets or joint pullback.
         programs=json.loads(moved._programs);v=np.asarray(programs['common_rotation_vectors'][int(motion[-1])]);a=np.linalg.norm(v)
         K=np.array([[0.,-v[2],v[1]],[v[2],0.,-v[0]],[-v[1],v[0],0.]])
-        W=np.eye(3)+np.sin(a)/a*K+(1-np.cos(a))/a**2*(K@K);t=np.array([2.,-3.,1.])
+        W=(np.eye(3) if a==0. else
+           np.eye(3)+np.sin(a)/a*K+(1-np.cos(a))/a**2*(K@K));t=np.array([2.,-3.,1.])
         if variant=='PROPER_GLOBAL_TRANSFORM':
             U=np.array([[0.,-1.,0.],[1.,0.,0.],[0.,0.,1.]]);W=U@W@U.T;t=U@t+np.array([2.,-3.,1.])-W@np.array([2.,-3.,1.])
         X=np.array([x for i,x in json.loads(moved._expanded)['graph']['nodes']]);q=u.reshape(-1,6).copy()
@@ -265,6 +292,30 @@ def test_physical_observation_and_cache_guards():
     with patch.object(mechanics.MixedGraphOwner,'_targets',lambda self,cmd:None):
         with pytest.raises(ValueError):obj.solve(history.commands('NONE',.01)[0])
     assert obj._published is original
+    # A coherent replacement of all public definition bytes and their seal is
+    # still foreign to the constructor-captured graph identity.
+    _,source=history.packet.authorities();other=next(name for name in history.GRAPHS if name!=graph)
+    definition,expanded,programs=source.expand_inert(other,variant)
+    obj=Owner(graph,variant);original=obj._published
+    for name,value in (('_definition',mechanics.canonical(definition)),('_expanded',mechanics.canonical(expanded)),
+                       ('_programs',mechanics.canonical(programs))):object.__setattr__(obj,name,value)
+    object.__setattr__(obj,'_seal',mechanics.sha((obj._definition.hex(),obj._expanded.hex(),obj._programs.hex())))
+    with pytest.raises(ValueError):obj.solve(history.commands('NONE',.01)[0])
+    assert obj._published is original;probes.append('coherent_definition_swap')
+    # A true overlapping capture is rejected by the owned lock while the
+    # first nonpublishing observation remains deterministic.
+    obj=Owner(graph,variant);original=obj._published;entered=threading.Event();release=threading.Event();failures=[]
+    state=json.loads(original.state);u=np.zeros(obj.size);mu=np.zeros(len(state['multipliers']))
+    def hold(stage):
+        if stage=='pose':entered.set();release.wait(5)
+    def first():
+        try:obj.trial(u,mu,history.commands('NONE',.01)[0],hook=hold)
+        except BaseException as exc:failures.append(exc)
+    thread=threading.Thread(target=first);thread.start();assert entered.wait(5)
+    with pytest.raises(RuntimeError,match='owner already in use'):
+        obj.trial(u,mu,history.commands('NONE',.01)[0])
+    release.set();thread.join(5);assert not thread.is_alive() and not failures and obj._published is original
+    probes.append('concurrent_capture')
     if graph in ('J_Q4_PAIR','J_MULTIFAMILY_LOOP'):
         for kind in ('tuple','entry','descriptor','registry','operator'):
             obj=Owner(graph,variant);original=obj._published;cache=obj._q4_cache;local=cache[0][1]

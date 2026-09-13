@@ -195,26 +195,29 @@ class GuardTests(unittest.TestCase):
             bad=copy.deepcopy(lease);bad[key]=value
             with self.assertRaises((ValueError,OSError)):r.physical_lease_expected(bad,expected,lease['review_sha256'])
         with tempfile.TemporaryDirectory() as directory:
-            path=Path(directory)/'local.json'
-            prior_inventory=r.physical_inventory('local');prior_records=[]
+            path=Path(directory)/'scientific.json'
+            prior_inventory=r.physical_inventory('smoke');prior_records=[]
             for index,assignment in enumerate(prior_inventory):
-                science=dict(schema='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1',candidate=candidate,lane='local',
+                science=dict(schema='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1',candidate=candidate,lane='smoke',
                     assignment_index=index,assignment=assignment,records=[{}],
                     full_g3c_qualified=False,production_qualified=False)
                 prior_records.append(dict(assignment_index=index,
                     science_sha256=sha256(r.canonical(science)).hexdigest(),science=science))
-            body=dict(schema='GE_BEAM3_G3C_PHYSICAL_AGGREGATE_V1',candidate=candidate,lane='local',
+            body=dict(schema='GE_BEAM3_G3C_PHYSICAL_AGGREGATE_V1',candidate=candidate,lane='smoke',
                       inventory_sha256=sha256(r.canonical(prior_inventory)).hexdigest(),records=prior_records,
-                      passed=True,terminal='COMPLETE_GE_BEAM3_G3C_PHYSICAL_LOCAL_ONLY',
+                      passed=True,terminal='COMPLETE_GE_BEAM3_G3C_PHYSICAL_SMOKE_ONLY',
                       full_g3c_qualified=False,production_qualified=False)
             value=dict(body,self_sha256=sha256(r.canonical(body)).hexdigest());r.write(path,value)
-            r.verify_physical_priors([path],candidate,'smoke')
+            r.verify_physical_priors([],expected,'smoke')
+            # A self-rehashed aggregate without its accepted node/process DAG
+            # is never an admissible prerequisite.
+            with self.assertRaises(ValueError):r.verify_physical_priors([path],expected,'local')
             bad=dict(value,self_sha256='0'*64);path.unlink();r.write(path,bad)
-            with self.assertRaises(ValueError):r.verify_physical_priors([path],candidate,'smoke')
+            with self.assertRaises(ValueError):r.verify_physical_priors([path],expected,'local')
             bad=dict(value,inventory_sha256='0'*64);bad['self_sha256']=sha256(r.canonical(
                 {k:v for k,v in bad.items() if k!='self_sha256'})).hexdigest()
             path.unlink();r.write(path,bad)
-            with self.assertRaises(ValueError):r.verify_physical_priors([path],candidate,'smoke')
+            with self.assertRaises(ValueError):r.verify_physical_priors([path],expected,'local')
 
     def test_physical_packet_dependency_map(self):
         rehearsal=r.physical_inventory('rehearsal');histories={}
@@ -253,6 +256,19 @@ class GuardTests(unittest.TestCase):
             r.write(out/'completion.json',dict(assignment_index=0,assignment=assignment,
                 selected=[],passed=[],scientific=r.fingerprint(raw)))
             with self.assertRaises(ValueError):r.physical_verify_node(out,lease)
+
+    def test_physical_atomic_canonical_promotion(self):
+        watchdog=SimpleNamespace(check=lambda:None)
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);target=root/'scientific.json'
+            r.atomic_canonical(target,{'accepted':True},watchdog)
+            self.assertEqual(target.read_bytes(),r.canonical({'accepted':True}))
+            self.assertFalse((root/'scientific.pending.json').exists())
+            with self.assertRaises(ValueError):r.atomic_canonical(target,{'accepted':True},watchdog)
+            failed=root/'receipt.json'
+            with patch.object(r.os,'replace',side_effect=OSError('injected promotion failure')):
+                with self.assertRaises(OSError):r.atomic_canonical(failed,{'accepted':True},watchdog)
+            self.assertFalse(failed.exists());self.assertTrue((root/'receipt.pending.json').is_file())
 
     def test_strict_json(self):
         for raw in (b'{"x":1,"x":2}\n',b'{"x":NaN}\n',b'{"x":Infinity}\n'):

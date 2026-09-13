@@ -142,7 +142,8 @@ def generation(state,history):
 
 class MixedGraphOwner:
     __slots__=('_definition','_expanded','_programs','_seal','_runtime','_dispatch',
-               '_published','_initial','_q4_cache','_owned_q4_cache','_lock','_owned_lock','_active','_serial','_poisoned')
+               '_published','_initial','_initial_generation','_fixture_identity',
+               '_q4_cache','_owned_q4_cache','_lock','_owned_lock','_active','_serial','_poisoned')
     def __setattr__(self,name,value): raise AttributeError('owned graph attributes are immutable')
     def __delattr__(self,name): raise AttributeError('owned graph attributes are immutable')
 
@@ -160,6 +161,7 @@ class MixedGraphOwner:
             _dispatch=dispatch(),_lock=threading.Lock(),_active=None,_serial=0,_poisoned=False).items():
             object.__setattr__(self,name,value)
         object.__setattr__(self,'_owned_lock',self._lock)
+        object.__setattr__(self,'_fixture_identity',(fixture_id,variant,common_motion))
         object.__setattr__(self,'_seal',sha((self._definition.hex(),self._expanded.hex(),self._programs.hex())))
         # Cache only accepted immutable reference operators, never states or replay answers.
         cache=tuple((e['id'],physical_q4.AffineQ4PhysicalRecovery(fixture_id+'::'+variant))
@@ -176,6 +178,7 @@ class MixedGraphOwner:
             adapter_rows=rows,multipliers=np.zeros(6*(len(g['fixed_nodes'])+len(g['joints']))))
         made=generation(initial,[])
         object.__setattr__(self,'_published',made); object.__setattr__(self,'_initial',made.state_sha256)
+        object.__setattr__(self,'_initial_generation',made)
         self._guard(full=True)
         # Analytical component rigid spaces, not a stiffness eigenvalue cutoff.
         rows,H=self._constraints(zero,q,np.zeros(len(initial['multipliers'])),None)
@@ -206,6 +209,9 @@ class MixedGraphOwner:
                 after={(m,n):(f,c) for m,n,f,c in current}
                 names=sorted(k for k in before.keys()|after.keys() if before.get(k)!=after.get(k))
                 raise ValueError('runtime dispatch changed: '+repr(names[:5]))
+            definition=json.loads(self._definition); journal=json.loads(self._published.history)
+            initial=self._initial_generation
+            initial_link=self._published.state_sha256 if not journal else journal[0].get('origin_sha256')
             if (type(self) is not MixedGraphOwner or self._poisoned or
                 self._lock is not self._owned_lock or self._q4_cache is not self._owned_q4_cache or
                 (lock is not None and (self._lock is not lock or not lock.locked())) or
@@ -213,7 +219,12 @@ class MixedGraphOwner:
                 U!=((0,-1,0),(1,0,0),(0,0,1)) or SHIFT!=(2,-3,1) or
                 definition_module.U!=U or definition_module.SHIFT!=SHIFT or
                 sha((self._definition.hex(),self._expanded.hex(),self._programs.hex()))!=self._seal or
+                tuple(definition.get(k) for k in ('fixture_id','variant','common_motion'))!=self._fixture_identity or
                 (origin is not None and self._published is not origin) or
+                type(initial) is not Generation or self._initial!=initial.state_sha256 or
+                sha256(initial.state).hexdigest()!=initial.state_sha256 or
+                sha256(initial.history).hexdigest()!=initial.history_sha256 or initial.history!=b'[]\n' or
+                initial_link!=self._initial or
                 sha256(self._published.state).hexdigest()!=self._published.state_sha256 or
                 sha256(self._published.history).hexdigest()!=self._published.history_sha256):
                 raise ValueError('captured graph/runtime/generation changed')

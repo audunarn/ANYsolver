@@ -33,7 +33,7 @@ def store(raw,prefix):
 
 def test_physical_history_assignment():
     import numpy as np
-    from test_ge_beam3_g3c_physical_owner import native_checks
+    from test_ge_beam3_g3c_physical_owner import directional,native_checks
     if ASSIGNMENT not in sum((history.work_inventory(lane)for lane in ('smoke','rehearsal','formal')),[]):
         raise ValueError('unregistered history assignment')
     if history.runtime_identity()!=EXPECTED_RUNTIME_SHA256:raise ValueError('lease runtime mismatch')
@@ -52,7 +52,10 @@ def test_physical_history_assignment():
         return
     owner=history.HistoryOwner(row['graph'],row['variant'],row['common_motion'])
     raw=owner.checkpoint_bytes();previous=p.strict(raw)['final_state'];files=[store(raw,0)]
+    directional_errors=None
     for index,command in enumerate(commands[:ASSIGNMENT['stages']],1):
+        if command['kind']=='LOAD_STAGE' and command['root_stage']==0:
+            directional_errors=directional(owner,command)
         result=owner.solve(command);raw=owner.checkpoint_bytes();current=p.strict(raw)['final_state']
         assert result['epoch']==index and np.linalg.norm(result['residual'])<=1e-11
         assert current['previous_sha256']==p.digest(previous)
@@ -63,7 +66,9 @@ def test_physical_history_assignment():
         p.preflight(raw,sha256(raw).hexdigest(),expected_runtime_sha256=EXPECTED_RUNTIME_SHA256)
         files.append(store(raw,index));previous=current
         print('PHYSICAL HISTORY checkpoint',row['case_id'],index,flush=True)
-    SCIENTIFIC_RECORDS.append(dict(kind='history',case_id=row['case_id'],events=ASSIGNMENT['stages'],packets=files,passed=True))
+    if directional_errors is None:raise AssertionError('missing registered KKT directional probe')
+    SCIENTIFIC_RECORDS.append(dict(kind='history',case_id=row['case_id'],events=ASSIGNMENT['stages'],
+        directional_errors=directional_errors,packets=files,passed=True))
 
 
 def test_physical_preflight_guards():
