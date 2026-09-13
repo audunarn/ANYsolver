@@ -68,6 +68,8 @@ PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW='docs/reference_cases/ge_beam3_g3
 PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW_SHA='42240ff0a21dc322f97703edf8a5c1e483e3d3ee0d8579bf4b5c99cf4db8656f'
 PHYSICAL_CORRECTION_RECOVERY_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_correction_partition_recovery_review_v3_correction.json'
 PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA='f20539245dae880b332905a5e86cde3a42a840dbaa6a7b14731b7946a0b5498b'
+PHYSICAL_CORRECTION_RECOVERY_IMPL_INITIAL_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_correction_partition_implementation_review_v3_initial.json'
+PHYSICAL_CORRECTION_RECOVERY_IMPL_INITIAL_REVIEW_SHA='61be7f2377a20ad9d68fa389cd6cd35db5d98cc66f4f676b331bf69825706b0a'
 PHYSICAL_CORRECTION_UNCHANGED_INPUTS_SHA='0a65262c4a016fbdaba8261f98efe2a04c66c15a2e84cfc973bba19ac06db623'
 PHYSICAL_PREDECESSOR={'commit':'f6a62518be52a414604aa5e1beddd4601093faca',
     'tree':'1230eea2b64ca6e585ad23b389e514f1d5c493c4'}
@@ -109,6 +111,7 @@ PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     PHYSICAL_CORRECTION_REVISION,PHYSICAL_CORRECTION_REVISION_REVIEW,PHYSICAL_CORRECTION_SUPERSEDED_REVIEW,
     PHYSICAL_CORRECTION_RECOVERY,PHYSICAL_CORRECTION_RECOVERY_INITIAL_REVIEW,
     PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW,PHYSICAL_CORRECTION_RECOVERY_REVIEW,
+    PHYSICAL_CORRECTION_RECOVERY_IMPL_INITIAL_REVIEW,
     'scripts/ge_beam3_g3c_correction_lease_binding.py',
     'scripts/ge_beam3_g3c_physical_history_owner.py',PHYSICAL_CORRECTION_TEST}
 PHYSICAL_CORRECTION_CHANGED_PATHS={
@@ -118,6 +121,7 @@ PHYSICAL_CORRECTION_CHANGED_PATHS={
     PHYSICAL_CORRECTION_REVISION,PHYSICAL_CORRECTION_REVISION_REVIEW,PHYSICAL_CORRECTION_SUPERSEDED_REVIEW,
     PHYSICAL_CORRECTION_RECOVERY,PHYSICAL_CORRECTION_RECOVERY_INITIAL_REVIEW,
     PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW,PHYSICAL_CORRECTION_RECOVERY_REVIEW,
+    PHYSICAL_CORRECTION_RECOVERY_IMPL_INITIAL_REVIEW,'docs/GE_BEAM3_QUALIFICATION_COMPLETION_REGISTER.md',
     'scripts/ge_beam3_g3c_correction_lease_binding.py',
     'scripts/ge_beam3_g3c_physical_history_owner.py',PHYSICAL_CORRECTION_TEST,
     'scripts/run_ge_beam3_qualification.py','tests/test_ge_beam3_qualification_runner.py'}
@@ -265,6 +269,10 @@ def exact_fingerprint(actual,raw):
     return (type(actual)is dict and set(actual)=={'bytes','sha256'}
             and type(actual['bytes'])is int and actual['bytes']>=0
             and type(actual['sha256'])is str and exact_json(actual,fingerprint(raw)))
+
+def exact_assignment_index(value,expected):
+    if type(value)is not int or value!=expected:raise ValueError('exact assignment index')
+    return value
 
 def git(*args):
     return subprocess.check_output(['git','-c','safe.directory='+ROOT.as_posix(),
@@ -482,7 +490,8 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                             (PHYSICAL_CORRECTION_RECOVERY,PHYSICAL_CORRECTION_RECOVERY_SHA),
                             (PHYSICAL_CORRECTION_RECOVERY_INITIAL_REVIEW,PHYSICAL_CORRECTION_RECOVERY_INITIAL_REVIEW_SHA),
                             (PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW,PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW_SHA),
-                            (PHYSICAL_CORRECTION_RECOVERY_REVIEW,PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA)):
+                            (PHYSICAL_CORRECTION_RECOVERY_REVIEW,PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA),
+                            (PHYSICAL_CORRECTION_RECOVERY_IMPL_INITIAL_REVIEW,PHYSICAL_CORRECTION_RECOVERY_IMPL_INITIAL_REVIEW_SHA)):
             if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:
                 raise ValueError('physical correction revision input changed')
         correction_review=environment.strict(read(ROOT/PHYSICAL_CORRECTION_REVIEW).replace(b'\r\n',b'\n'))
@@ -795,7 +804,9 @@ def physical_lease_expected(lease,expected,review_sha,runtime_sha=None):
     candidate,rows,review=expected
     lane=lease.get('lane');index=lease.get('assignment_index')
     full=physical_inventory(lane)
-    compatibility=lease.get('runtime_compatibility');extra={'runtime_compatibility'} if compatibility is not None else set()
+    compatibility=lease.get('runtime_compatibility')
+    extra=({'runtime_compatibility','guard_segment_id','guard_segment_manifest_sha256',
+            'guard_segment_assignments_sha256'} if compatibility is not None else set())
     if (set(lease)!=({'kind','schema','run_id','gate','lane','candidate','inputs','review_sha256',
                     'implementation_review','contract_sha256','assignment_index','assignment',
                     'whole_inventory_sha256','runtime_sha256','input_packets'}|extra)
@@ -810,6 +821,11 @@ def physical_lease_expected(lease,expected,review_sha,runtime_sha=None):
         or type(lease['input_packets'])is not dict):raise ValueError('physical assignment lease')
     if compatibility is not None:
         physical_validate_runtime_compatibility_record(compatibility,expected,live=lease['runtime_sha256'])
+        _,segment=physical_correction_guard_segment_spec(lease.get('guard_segment_id'),full)
+        if (lease.get('guard_segment_manifest_sha256')!=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA
+            or lease.get('guard_segment_assignments_sha256')!=segment['assignment_sha256']
+            or index not in segment['indices']):
+            raise ValueError('physical correction segment lease')
     uuid.UUID(lease['run_id'])
     kind=lease['assignment']['kind']
     expected_packets=({'prefix','final'} if kind=='prefix' else {'origin'} if kind in
@@ -1199,6 +1215,9 @@ def physical_run_phase(root,indexes,base,review,watchdog,deadline,history_output
                 runtime_sha256=base['runtime_sha256'],input_packets=packets)
             if base.get('runtime_compatibility') is not None:
                 lease['runtime_compatibility']=base['runtime_compatibility']
+                lease['guard_segment_id']=base['guard_segment_id']
+                lease['guard_segment_manifest_sha256']=base['guard_segment_manifest_sha256']
+                lease['guard_segment_assignments_sha256']=base['guard_segment_assignments_sha256']
             active[pool.submit(physical_child,root/f'node-{index:04d}',lease,review,watchdog,deadline)]=(index,lease)
             return True
         for _ in range(min(3,len(indexes))):launch()
@@ -2095,8 +2114,9 @@ def physical_validate_correction_guard_segment(path,expected,prior_paths,segment
     history_outputs=physical_history_outputs_from_partition(prior_paths[2])
     for index,node in zip(indices,receipt['nodes']):
         out=path.parent/f'node-{index:04d}';lease=environment.strict(read(out/'lease.json'))
-        if type(node)is not dict or set(node)!={'assignment_index','lease','review','completion','process','science'} or node.get('assignment_index')!=index:
+        if (type(node)is not dict or set(node)!={'assignment_index','lease','review','completion','process','science'}):
             raise ValueError('correction guard segment node order')
+        exact_assignment_index(node.get('assignment_index'),index)
         for key,name in (('lease','lease.json'),('review','review.json'),('completion','completion.json'),
                          ('process','process.json'),('science','scientific.node.json')):
             if not exact_fingerprint(node.get(key),read(out/name)):raise ValueError('correction guard segment node hash')
@@ -2127,7 +2147,9 @@ def execute_physical_correction_guard_segment(args,watchdog,expected):
     root=Path(tempfile.mkdtemp(prefix='anysolver-g3c-physical-correction-'+segment_id.lower()+'-'));print('DIAGNOSTICS '+str(root),flush=True)
     base=dict(lane='rehearsal',candidate=expected[0],inputs=expected[1],review_sha256=args.review_sha256,
         implementation_review=environment.strict(expected[2]),runtime_sha256=physical_support().runtime_identity(),
-        inventory=inventory_rows,runtime_compatibility=compatibility)
+        inventory=inventory_rows,runtime_compatibility=compatibility,guard_segment_id=segment_id,
+        guard_segment_manifest_sha256=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
+        guard_segment_assignments_sha256=spec['assignment_sha256'])
     outputs=physical_history_outputs_from_partition(prior_paths[2]);results={};deadline=started+1800
     passed=physical_run_phase(root,indices,base,expected[2],watchdog,deadline,outputs,results)
     if time.monotonic()>=deadline or authority(args.review,args.review_sha256,'g3c-physical')!=expected:passed=False

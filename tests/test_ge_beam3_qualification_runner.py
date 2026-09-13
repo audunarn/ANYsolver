@@ -251,6 +251,35 @@ class GuardTests(unittest.TestCase):
             r.physical_runtime_compatibility(({'commit':'a','tree':'b'},{'x':{'sha256':'0'}},b'{}\n'),
                                              (r.PHYSICAL_PREDECESSOR,{'x':{'sha256':'1'}},b'{}\n'))
 
+    def test_physical_correction_lease_binds_exact_segment_and_slice(self):
+        inventory=r.physical_inventory('rehearsal');candidate={'commit':'a'*40,'tree':'b'*40};rows={};review=b'{}\n'
+        expected=(candidate,rows,review);runtime='c'*64;index=90;_,segment=r.physical_correction_guard_segment_spec('R-GUARDS-A',inventory)
+        lease=dict(kind='G3C_PHYSICAL_PRIVATE_DEVELOPMENT',schema=r.SCOPE,run_id=str(uuid.uuid4()),
+            gate='g3c-physical',lane='rehearsal',candidate=candidate,inputs=rows,
+            review_sha256='d'*64,implementation_review={},contract_sha256=r.PHYSICAL_PLAN_SHA,
+            assignment_index=index,assignment=inventory[index],
+            whole_inventory_sha256=sha256(r.canonical(inventory)).hexdigest(),runtime_sha256=runtime,
+            input_packets={'origin':{'path':str(Path(__file__).resolve()),'bytes':Path(__file__).stat().st_size,
+                                     'sha256':sha256(Path(__file__).read_bytes()).hexdigest()}},
+            runtime_compatibility={},guard_segment_id='R-GUARDS-A',
+            guard_segment_manifest_sha256=r.PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
+            guard_segment_assignments_sha256=segment['assignment_sha256'])
+        with patch.object(r,'physical_validate_runtime_compatibility_record'),patch.object(
+                r.physical_support(),'runtime_identity',return_value=runtime):
+            r.physical_lease_expected(lease,expected,'d'*64)
+            for key,value in (('guard_segment_id','R-GUARDS-B'),
+                              ('guard_segment_manifest_sha256','0'*64),
+                              ('guard_segment_assignments_sha256','0'*64)):
+                bad=copy.deepcopy(lease);bad[key]=value
+                with self.assertRaises(ValueError):r.physical_lease_expected(bad,expected,'d'*64)
+            bad=copy.deepcopy(lease);bad['assignment_index']=114;bad['assignment']=inventory[114]
+            with self.assertRaises(ValueError):r.physical_lease_expected(bad,expected,'d'*64)
+
+    def test_physical_segment_receipt_indices_are_exact_integers(self):
+        self.assertEqual(r.exact_assignment_index(90,90),90)
+        for value in (90.0,True,'90',None):
+            with self.assertRaises(ValueError):r.exact_assignment_index(value,90)
+
     def test_physical_correction_tests_and_dual_runtime_view_are_registered(self):
         preflight=next(row for row in r.physical_inventory('rehearsal') if row['kind']=='preflight')
         selected=r.physical_assignment_nodes(preflight,True)
