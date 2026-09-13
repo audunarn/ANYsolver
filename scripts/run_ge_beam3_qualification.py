@@ -104,6 +104,8 @@ PHYSICAL_CORRECTION_TEST='tests/test_ge_beam3_g3c_physical_correction_guards.py'
 PHYSICAL_FORMAL_TEST='tests/test_ge_beam3_g3c_physical_formal_case.py'
 PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_formal_shard_implementation_review_v1_initial.json'
 PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW_SHA='351aec568c44a02b0b78d57bb40568753f6657a6c8d51e959a651dfaf63f0d68'
+PHYSICAL_FORMAL_CORRECTION1_IMPLEMENTATION_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_formal_shard_implementation_review_v1_correction1.json'
+PHYSICAL_FORMAL_CORRECTION1_IMPLEMENTATION_REVIEW_SHA='0348afe2033e85f6ec423f2f18708b4235deed52eea8091b2760d031d9ee6f8c'
 PHYSICAL_FORMAL_MEASUREMENT_CASE_ORDINALS=(0,224,374)
 PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     PHYSICAL_PARTITION_ADDENDUM,PHYSICAL_PARTITION_REVIEW,
@@ -113,7 +115,7 @@ PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     'scripts/ge_beam3_g3c_physical_restart_preflight.py',
     PHYSICAL_OWNER_TEST,PHYSICAL_HISTORY_TEST,
     PHYSICAL_FORMAL_ADDENDUM,PHYSICAL_FORMAL_DESIGN_REVIEW,PHYSICAL_FORMAL_TEST,
-    PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW,
+    PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW,PHYSICAL_FORMAL_CORRECTION1_IMPLEMENTATION_REVIEW,
     'tests/test_ge_beam3_qualification_runner.py',
     'scripts/run_ge_beam3_qualification.py',
     'docs/GE_BEAM3_QUALIFICATION_COMPLETION_REGISTER.md',
@@ -500,7 +502,8 @@ def physical_validate_formal_producer_receipt(path,common):
     if (type(body)is not dict or set(body)!={'schema','mode','cycle','common_manifest_sha256','producer_shard_id',
         'case_ordinal','case_id','science','completion','packets','passed'}
         or body['schema']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_PRODUCER_RECEIPT_V1'
-        or body['mode']!=common['mode'] or body['cycle']!=common['cycle'] or body['passed']is not True
+        or not exact_json(body['mode'],common['mode']) or not exact_json(body['cycle'],common['cycle'])
+        or body['passed']is not True
         or value['self_sha256']!=sha256(canonical(body)).hexdigest()):raise ValueError('formal producer receipt content')
     ordinal=body['case_ordinal']
     if type(ordinal)is not int or type(ordinal)is bool or not 0<=ordinal<375:raise ValueError('formal producer receipt ordinal')
@@ -528,7 +531,7 @@ def physical_validate_formal_lease(lease,common):
         'shard_id','assignment','input_packets'}|extra)
         or lease['kind']!='G3C_PHYSICAL_PRIVATE_DEVELOPMENT'
         or lease['schema']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_LEASE_V1'
-        or lease['mode']!=common['mode'] or lease['cycle']!=common['cycle']):
+        or not exact_json(lease['mode'],common['mode']) or not exact_json(lease['cycle'],common['cycle'])):
         raise ValueError('formal shard lease schema')
     uuid.UUID(lease['run_id'])
     descriptor=lease['common_manifest'];raw=validate_packet_descriptor(descriptor)
@@ -547,6 +550,9 @@ def physical_validate_formal_lease(lease,common):
         receipt=physical_validate_formal_producer_receipt(descriptor['path'],common)
         if fingerprint(receipt_raw)!={k:descriptor[k] for k in ('bytes','sha256')}:
             raise ValueError('formal producer receipt descriptor')
+        if (receipt['case_ordinal']!=assignment['case_ordinal']
+            or receipt['case_id']!=assignment['case']['case_id']):
+            raise ValueError('formal replay producer case lineage')
         expected_packets={f'prefix-{prefix:02d}':receipt['packets'][f'prefix-{prefix:02d}']
             for prefix in range(assignment['prefix_start'],assignment['prefix_stop'])}
         expected_packets['final']=receipt['packets'][f"prefix-{assignment['case']['accepted_stages']:02d}"]
@@ -570,7 +576,7 @@ def physical_validate_formal_shard_science(out,lease,common):
     if (type(science)is not dict or set(science)!={'schema','mode','cycle','candidate','common_manifest_sha256',
         'shard_id','assignment','record','full_g3c_qualified','production_qualified'}
         or science['schema']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_SCIENCE_V1'
-        or science['mode']!=common['mode'] or science['cycle']!=common['cycle']
+        or not exact_json(science['mode'],common['mode']) or not exact_json(science['cycle'],common['cycle'])
         or not exact_json(science['candidate'],common['candidate'])
         or science['common_manifest_sha256']!=common_sha or science['shard_id']!=lease['shard_id']
         or not exact_json(science['assignment'],assignment)
@@ -811,7 +817,7 @@ def physical_formal_scientific_union(shard_sciences,common):
         if (set(science)!={'schema','mode','cycle','candidate','common_manifest_sha256','shard_id','assignment',
             'record','full_g3c_qualified','production_qualified'}
             or science['schema']!='GE_BEAM3_G3C_PHYSICAL_FORMAL_SHARD_SCIENCE_V1'
-            or science['mode']!=common['mode'] or science['cycle']!=common['cycle']
+            or not exact_json(science['mode'],common['mode']) or not exact_json(science['cycle'],common['cycle'])
             or not exact_json(science['candidate'],common['candidate'])
             or science['common_manifest_sha256']!=common_sha
             or science['shard_id']!=spec['shard_id'] or not exact_json(science['assignment'],assignment)
@@ -914,6 +920,8 @@ def physical_formal_worker(out,lease_sha):
     assignment=physical_validate_formal_lease(lease,common)
     if common['mode']!='measurement' or common['cycle']!=0:
         raise ValueError('formal execution authorization not frozen')
+    if common['runtime_sha256']!=physical_support().runtime_identity():
+        raise ValueError('formal runtime authority')
     expected=authority(out/'review.json',common['review_sha256'],'g3c-physical')
     if (not exact_json(common['candidate'],expected[0]) or not exact_json(common['inputs'],expected[1])
         or not exact_json(common['implementation_review'],environment.strict(expected[2]))):
@@ -1084,6 +1092,8 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                             (PHYSICAL_FORMAL_DESIGN_REVIEW,PHYSICAL_FORMAL_DESIGN_REVIEW_SHA),
                             (PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW,
                              PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW_SHA),
+                            (PHYSICAL_FORMAL_CORRECTION1_IMPLEMENTATION_REVIEW,
+                             PHYSICAL_FORMAL_CORRECTION1_IMPLEMENTATION_REVIEW_SHA),
                             (PHYSICAL_CORRECTION_ADDENDUM,PHYSICAL_CORRECTION_ADDENDUM_SHA),
                             (PHYSICAL_CORRECTION_REVIEW,PHYSICAL_CORRECTION_REVIEW_SHA),(JOB,JOB_SHA)):
             if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:

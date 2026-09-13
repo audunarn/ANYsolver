@@ -222,8 +222,10 @@ class GuardTests(unittest.TestCase):
             with self.assertRaises(ValueError):r.physical_validate_formal_common(bad)
 
     def test_physical_formal_lease_rejects_cross_case_packets(self):
-        producer=r.physical_formal_shard(0,'history-producer');replay=r.physical_formal_shard(0,'prefix-range',0,1)
-        shards=[producer,replay]
+        producer=r.physical_formal_shard(224,'history-producer')
+        replay=r.physical_formal_shard(224,'prefix-range',0,1)
+        foreign=r.physical_formal_shard(374,'prefix-range',0,1)
+        shards=[producer,replay,foreign]
         partition=r.physical_formal_partition(shards,'measurement')
         value=r.physical_formal_common_manifest({'commit':'a'*40,'tree':'b'*40},{},{},'c'*64,partition)
         with tempfile.TemporaryDirectory() as directory:
@@ -253,8 +255,13 @@ class GuardTests(unittest.TestCase):
                 mode='measurement',cycle=0,common_manifest=descriptor,shard_id='measurement-0001',assignment=replay,
                 input_packets=packets,producer_receipt=receipt_descriptor)
             r.physical_validate_formal_lease(lease,value['body'])
+            cross_case=copy.deepcopy(lease);cross_case['run_id']=str(uuid.uuid4())
+            cross_case['shard_id']='measurement-0002';cross_case['assignment']=foreign
+            with self.assertRaisesRegex(ValueError,'case lineage'):
+                r.physical_validate_formal_lease(cross_case,value['body'])
             for mutate in (
-                lambda x:x.__setitem__('cycle',1),lambda x:x.__setitem__('shard_id','measurement-9999'),
+                lambda x:x.__setitem__('cycle',1),lambda x:x.__setitem__('cycle',False),
+                lambda x:x.__setitem__('shard_id','measurement-9999'),
                 lambda x:x['assignment'].__setitem__('case_ordinal',1),
                 lambda x:x['input_packets'].__setitem__('prefix-01',x['input_packets'].pop('prefix-00')),
                 lambda x:x.__setitem__('producer_receipt',dict(x['producer_receipt'],sha256='0'*64))):
@@ -279,6 +286,9 @@ class GuardTests(unittest.TestCase):
         mode_guard=next(node.lineno for node in ast.walk(worker) if isinstance(node,ast.If)
             and 'formal execution authorization not frozen' in ast.get_source_segment(source,node))
         self.assertLess(mode_guard,authority_line)
+        runtime_guard=next(node.lineno for node in ast.walk(worker) if isinstance(node,ast.If)
+            and 'formal runtime authority' in ast.get_source_segment(source,node))
+        self.assertLess(runtime_guard,authority_line)
         imports=[node for node in ast.walk(worker) if isinstance(node,(ast.Import,ast.ImportFrom))
                  and (getattr(node,'module','')or'').startswith('anysolver')]
         self.assertTrue(imports);self.assertTrue(all(node.lineno>authority_line for node in imports))
@@ -291,7 +301,9 @@ class GuardTests(unittest.TestCase):
             and isinstance(node.func,ast.Name) and node.func.id=='common_identity']
         deletes=[node for node in ast.walk(prefix_loop) if isinstance(node,ast.Delete)
             and any(isinstance(target,ast.Name) and target.id=='owner' for target in node.targets)]
-        self.assertEqual(len(calls),2);self.assertEqual(len(deletes),1)
+        frozen_hash=[node for node in ast.walk(prefix_loop) if isinstance(node,ast.Name)
+            and node.id=='frozen_assignment_sha256']
+        self.assertEqual(len(calls),2);self.assertEqual(len(deletes),1);self.assertGreaterEqual(len(frozen_hash),2)
 
     def test_physical_formal_measurement_batch_is_bounded(self):
         with self.assertRaises(ValueError):
@@ -347,6 +359,8 @@ class GuardTests(unittest.TestCase):
         first=r.physical_formal_scientific_union(rows,common);second=r.physical_formal_scientific_union(list(reversed(rows)),common)
         self.assertEqual(r.canonical(first),r.canonical(second));self.assertEqual([x['assignment_index'] for x in first['records']],[0,375])
         self.assertNotIn('cycle',first)
+        wrong_cycle=copy.deepcopy(rows);wrong_cycle[0]['cycle']=False
+        with self.assertRaises(ValueError):r.physical_formal_scientific_union(wrong_cycle,common)
         with self.assertRaises(ValueError):r.physical_formal_scientific_union(rows+[rows[0]],common)
 
     def test_physical_rehearsal_partition_manifest_is_exact(self):

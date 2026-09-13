@@ -32,6 +32,10 @@ def exact(actual,expected):
     return actual==expected
 
 
+def canonical(value):
+    return (json.dumps(value,sort_keys=True,separators=(',', ':'),allow_nan=False)+'\n').encode('ascii')
+
+
 def packet(row):
     if type(row)is not dict or set(row)!={'path','bytes','sha256'}:raise ValueError('formal packet descriptor')
     path=Path(row['path'])
@@ -150,11 +154,14 @@ def test_physical_formal_shard_assignment():
         or type(indexes)is not list or len(indexes)!=stop-start
         or set(INPUT_PACKETS)!={f'prefix-{i:02d}' for i in range(start,stop)}|{'final'}):
         raise ValueError('formal prefix-range authority')
+    expected_assignment=dict(kind='prefix-range',case_ordinal=ordinal,case=row,
+        prefix_start=start,prefix_stop=stop,assignment_indexes=list(indexes))
+    frozen_assignment_sha256=sha256(canonical(ASSIGNMENT)).hexdigest()
     final=packet(INPUT_PACKETS['final']);final_sha=sha256(final).hexdigest();records=[];fresh_owners=0
     for offset,prefix in enumerate(range(start,stop)):
         common_identity()
-        if not exact(ASSIGNMENT,dict(kind='prefix-range',case_ordinal=ordinal,case=row,
-            prefix_start=start,prefix_stop=stop,assignment_indexes=indexes)):
+        if (sha256(canonical(ASSIGNMENT)).hexdigest()!=frozen_assignment_sha256
+            or not exact(ASSIGNMENT,expected_assignment)):
             raise ValueError('formal prefix assignment changed')
         raw=packet(INPUT_PACKETS[f'prefix-{prefix:02d}']);digest=sha256(raw).hexdigest()
         parsed=p.preflight(raw,digest,expected_runtime_sha256=EXPECTED_RUNTIME_SHA256)
@@ -169,5 +176,8 @@ def test_physical_formal_shard_assignment():
         print('PHYSICAL FORMAL prefix',row['case_id'],prefix,flush=True)
         del owner
         common_identity()
+        if (sha256(canonical(ASSIGNMENT)).hexdigest()!=frozen_assignment_sha256
+            or not exact(ASSIGNMENT,expected_assignment)):
+            raise ValueError('formal prefix assignment changed')
     FORMAL_SHARD_RECORD=dict(kind=kind,case_ordinal=ordinal,prefix_start=start,prefix_stop=stop,
         assignment_indexes=indexes,records=records,fresh_owners=fresh_owners,passed=True)
