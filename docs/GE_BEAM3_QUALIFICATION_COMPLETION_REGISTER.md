@@ -1024,3 +1024,23 @@ validator retained the same base-only family-ID assumption. The successor uses
 one hash-bound inert adapter-ID derivation for both atomicity and observation
 stages and compares both stage lists against independently expanded authority
 for all 25 assignments. No mechanics ran under this freeze.
+
+Stage-identity successor `5166d9282ce4a965c143474efcac01a78626bf95`,
+tree `a3a97f2edaa95800e219c7bf592232cc304d6a43`, was independently accepted
+for bounded development. Its five-history smoke passed in 198 seconds and its
+26-unit local composition gate passed in 975 seconds. The canonical smoke
+aggregate is 6645 bytes, SHA-256
+`a8e933ecc00dcd3c668c8c9e92b11a8ed3b30e7de929f9149ac3a858798a91ca`;
+the local aggregate is 84699 bytes, SHA-256
+`224df4c89f592959f66fecff4423cab8da2f5358336bcfc2ee3e6129ec1e56be`.
+Both complete receipt DAGs validate recursively.
+
+The unchanged 234-unit rehearsal then reached the frozen 1,800-second whole-wave
+limit. It preserved 37 complete assignments and three attempted assignments,
+with no scientific failure, no canonical aggregate and no surviving process.
+Its complete partial directory is retained externally. This is a process
+partition obstruction, not a mechanics contradiction. A design-only rehearsal
+partition addendum freezes the same assignments as one ten-history wave, four
+20-prefix waves and one 144-guard wave, followed by an exact no-mechanics union.
+The addendum authorizes nothing until independently reviewed and implemented
+under a new clean freeze.
