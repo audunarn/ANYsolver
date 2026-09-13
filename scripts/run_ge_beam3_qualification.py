@@ -45,9 +45,24 @@ PHYSICAL_PLAN='docs/GE_BEAM3_G3C_PHYSICAL_MIXED_OWNER_CONTRACT.md'
 PHYSICAL_PLAN_SHA='f6638863e6e222c795e980194c9a71cf42eb83bdcba6af2a8c409164ad4d957b'
 PHYSICAL_DESIGN_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_owner_contract_review_v1.json'
 PHYSICAL_DESIGN_SHA='47829c5c1c896ed2eb28131ffedadd25cc83bc5bed79bc2517cfe308f7dc8988'
+PHYSICAL_PARTITION_ADDENDUM='docs/GE_BEAM3_G3C_PHYSICAL_REHEARSAL_PARTITION_ADDENDUM.md'
+PHYSICAL_PARTITION_ADDENDUM_SHA='449a37b98bdc2fcbaf81a9a51d83712ac63988020fb632eab904595f10cf8e27'
+PHYSICAL_PARTITION_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_rehearsal_partition_review_v1.json'
+PHYSICAL_PARTITION_REVIEW_SHA='3868f1480cfdb8cb4883dc115ba6afd1e2a4069126245893fa4a9cf2b38671ab'
+PHYSICAL_PARTITION_INVENTORY_SHA='a53103c9d3162dbfdc04e647c81fa36aaad6fa80f9a13b1cd4abcae124c96733'
+PHYSICAL_PARTITION_MANIFEST_SHA='0b1beffb58ddbed1bb53891e11a7f5e0c8ad7b646cc539e4a908d7e4321ade86'
+PHYSICAL_PARTITIONS=(
+    ('R-HISTORY',tuple(range(0,10)),'654af72fd3dddca92c736a138e179df0e4ba97da7cd25e4ae97316403fbb5d27'),
+    ('R-PREFIX-A',tuple(range(10,30)),'7a3390c1df7c7391feb2bea111bd9ee314db0b90c411145f42fbe0844170eae5'),
+    ('R-PREFIX-B',tuple(range(30,50)),'b3e168ff12baee60cb5c88eed5e2337aafa9ec7b860704cf92ba0626ff4314bc'),
+    ('R-PREFIX-C',tuple(range(50,70)),'a91be5d24950c85c45bdaf4efd8e1ce23515c1f4adf2f3db472b973dbe8d8313'),
+    ('R-PREFIX-D',tuple(range(70,90)),'10d5cd0ca3a3529605f02f12d0b821c801cd4cce564f85d74830c158b3ad741e'),
+    ('R-GUARDS',tuple(range(90,234)),'e597616542d6bf5a323b1cd12b7e3c0517d726eab812118b8ec63548c5429827'))
+PHYSICAL_PARTITION_IDS=tuple(row[0] for row in PHYSICAL_PARTITIONS)
 PHYSICAL_OWNER_TEST='tests/test_ge_beam3_g3c_physical_owner.py'
 PHYSICAL_HISTORY_TEST='tests/test_ge_beam3_g3c_physical_history_restart.py'
 PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
+    PHYSICAL_PARTITION_ADDENDUM,PHYSICAL_PARTITION_REVIEW,
     'src/anysolver/_ge_beam3_g3c_physical_owner.py',
     'src/anysolver/_ge_beam3_g3c_physical_authority.py',
     'scripts/ge_beam3_g3c_physical_history_owner.py',
@@ -258,6 +273,37 @@ def physical_inventory(lane):
         rows.append(dict(kind='authority-mutation' if item['executor']=='authority' else 'mutation',probe=probe))
     return rows
 
+def physical_partition_manifest(inventory_rows=None):
+    """Return the exact design-reviewed partition of the unchanged rehearsal."""
+    rows=physical_inventory('rehearsal') if inventory_rows is None else inventory_rows
+    if sha256(canonical(rows)).hexdigest()!=PHYSICAL_PARTITION_INVENTORY_SHA:
+        raise ValueError('physical rehearsal inventory authority')
+    partitions=[];covered=[]
+    for partition_id,indices,digest in PHYSICAL_PARTITIONS:
+        selected=[rows[index] for index in indices]
+        if sha256(canonical(selected)).hexdigest()!=digest:
+            raise ValueError('physical partition assignment authority')
+        partitions.append(dict(assignments_sha256=digest,indices=list(indices),partition_id=partition_id))
+        covered.extend(indices)
+    if covered!=list(range(len(rows))) or len(covered)!=len(set(covered)):
+        raise ValueError('physical partition coverage')
+    value=dict(lane='rehearsal',partitions=partitions,
+        schema='GE_BEAM3_G3C_PHYSICAL_REHEARSAL_PARTITION_V1',
+        whole_inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA)
+    if sha256(canonical(value)).hexdigest()!=PHYSICAL_PARTITION_MANIFEST_SHA:
+        raise ValueError('physical partition manifest authority')
+    return value
+
+def physical_partition_spec(partition_id,inventory_rows=None):
+    manifest=physical_partition_manifest(inventory_rows)
+    for ordinal,row in enumerate(manifest['partitions']):
+        if row['partition_id']==partition_id:return ordinal,row
+    raise ValueError('unregistered physical rehearsal partition')
+
+def physical_partition_prerequisite_ids(partition_id):
+    ordinal,_=physical_partition_spec(partition_id)
+    return list(PHYSICAL_PARTITION_IDS[:ordinal])
+
 def inventory(lane,gate='b2-core'):
     if gate not in TESTS:raise ValueError('unregistered gate')
     if gate=='g3c-physical':return physical_inventory(lane)
@@ -280,6 +326,7 @@ def verify_review(raw,digest,candidate,rows,gate='b2-core'):
     if gate=='g3c-physical':
         expected_scope={'scope_id':SCOPE,'gate':gate,'subject_tree':candidate['tree'],
             'inputs_sha256':sha256(canonical(rows)).hexdigest(),'contract_sha256':PHYSICAL_PLAN_SHA,
+            'partition_addendum_sha256':PHYSICAL_PARTITION_ADDENDUM_SHA,
             'execution_authorized':True,'full_g3c_qualified':False,'production_qualified':False}
         if (set(r)!={'decision','findings','reviewer','scope','subject_commit'}
             or r['decision']!='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT'
@@ -310,7 +357,8 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
         if changed!=PHYSICAL_IMPLEMENTATION_PATHS:
             raise ValueError('physical successor implementation extent changed')
         for path,digest in ((PHYSICAL_PLAN,PHYSICAL_PLAN_SHA),(PHYSICAL_DESIGN_REVIEW,PHYSICAL_DESIGN_SHA),
-                            (JOB,JOB_SHA)):
+                            (PHYSICAL_PARTITION_ADDENDUM,PHYSICAL_PARTITION_ADDENDUM_SHA),
+                            (PHYSICAL_PARTITION_REVIEW,PHYSICAL_PARTITION_REVIEW_SHA),(JOB,JOB_SHA)):
             if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:
                 raise ValueError('physical frozen authority input')
         design=environment.strict(read(ROOT/PHYSICAL_DESIGN_REVIEW).replace(b'\r\n',b'\n'))
@@ -321,6 +369,18 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
             or design['scope'].get('contract_sha256')!=PHYSICAL_PLAN_SHA
             ):
             raise ValueError('physical design review authority')
+        partition_review=environment.strict(read(ROOT/PHYSICAL_PARTITION_REVIEW).replace(b'\r\n',b'\n'))
+        if (set(partition_review)!={'decision','findings','reviewer','scope','subject_commit'}
+            or partition_review['decision']!='ACCEPTED_GE_BEAM3_G3C_PHYSICAL_REHEARSAL_PARTITION_DESIGN_ONLY'
+            or partition_review['findings'] or partition_review['reviewer'].get('independent') is not True
+            or partition_review['subject_commit']!='bf60da41fc0f5c7e96d9e298ed755150c28a531d'
+            or partition_review['scope']!={'addendum_sha256':PHYSICAL_PARTITION_ADDENDUM_SHA,
+                'execution_authorized':False,'full_g3c_qualified':False,
+                'inventory_sha256':PHYSICAL_PARTITION_INVENTORY_SHA,
+                'partition_manifest_sha256':PHYSICAL_PARTITION_MANIFEST_SHA,
+                'production_qualified':False}):
+            raise ValueError('physical partition design review authority')
+        physical_partition_manifest()
         inventory('local',gate);inventory('smoke',gate);inventory('rehearsal',gate);inventory('formal',gate)
         rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows,gate)
         environment.verify(CAPSULE,CAPSULE_SHA)
@@ -1026,9 +1086,311 @@ def verify_physical_priors(paths,expected,lane):
             if records[index]['science_sha256']!=node['science']['sha256']:
                 raise ValueError('physical prerequisite aggregate DAG')
 
+def physical_evidence_descriptor(path,kind,identity):
+    path=Path(path).resolve();science=read(path)
+    return dict(kind=kind,identity=identity,path=str(path),science=fingerprint(science),
+        receipt=fingerprint(read(path.parent/'receipt.json')),
+        process=fingerprint(read(path.parent/'process.json')))
+
+def physical_verify_evidence_descriptor(value):
+    if (type(value)is not dict or set(value)!={'kind','identity','path','science','receipt','process'}
+        or value['kind'] not in ('base','partition') or type(value['identity'])is not str
+        or type(value['path'])is not str):
+        raise ValueError('physical evidence descriptor schema')
+    path=Path(value['path'])
+    if not path.is_absolute() or str(path.resolve())!=value['path']:
+        raise ValueError('physical evidence descriptor path')
+    for key,name in (('science',path.name),('receipt','receipt.json'),('process','process.json')):
+        target=path if key=='science' else path.parent/name
+        if not exact_fingerprint(value[key],read(target)):
+            raise ValueError('physical evidence descriptor hash')
+    return path
+
+def physical_partition_receipt(root,base,indices,partition_id,process,science_raw,prior_paths):
+    expected=(base['candidate'],base['inputs'],canonical(base['implementation_review']))
+    nodes=[]
+    for index in indices:
+        out=root/f'node-{index:04d}';lease=environment.strict(read(out/'lease.json'))
+        physical_lease_expected(lease,expected,base['review_sha256'])
+        physical_verify_node(out,lease);physical_verify_process(out,lease)
+        nodes.append(dict(assignment_index=index,
+            lease=fingerprint(read(out/'lease.json')),review=fingerprint(read(out/'review.json')),
+            completion=fingerprint(read(out/'completion.json')),process=fingerprint(read(out/'process.json')),
+            science=fingerprint(read(out/'scientific.node.json'))))
+    ordinal,_=physical_partition_spec(partition_id,base['inventory'])
+    identities=['smoke','local']+list(PHYSICAL_PARTITION_IDS[:ordinal])
+    if len(prior_paths)!=len(identities):raise ValueError('physical partition prerequisite count')
+    prerequisites=[physical_evidence_descriptor(path,'base' if i<2 else 'partition',identity)
+                   for i,(path,identity) in enumerate(zip(prior_paths,identities))]
+    body=dict(schema='GE_BEAM3_G3C_PHYSICAL_PARTITION_RECEIPT_V1',candidate=base['candidate'],
+        lane='rehearsal',partition_id=partition_id,partition_manifest_sha256=PHYSICAL_PARTITION_MANIFEST_SHA,
+        whole_inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA,
+        implementation_review_sha256=base['review_sha256'],
+        inputs_sha256=sha256(canonical(base['inputs'])).hexdigest(),prerequisites=prerequisites,
+        wave_process=fingerprint(read(root/'process.json')),science=fingerprint(science_raw),nodes=nodes,passed=True)
+    return dict(body,self_sha256=sha256(canonical(body)).hexdigest())
+
+def physical_validate_partition(path,expected,partition_id,stack=()):
+    """Recursively validate one accepted partition and its complete input DAG."""
+    if partition_id in stack:raise ValueError('physical partition prerequisite cycle')
+    path=Path(path).resolve();raw=read(path);value=environment.strict(raw)
+    candidate,inputs,review_raw=expected;review_sha=sha256(review_raw).hexdigest()
+    inventory_rows=physical_inventory('rehearsal');ordinal,spec=physical_partition_spec(partition_id,inventory_rows)
+    indices=spec['indices'];records=value.get('records')
+    body={k:v for k,v in value.items()if k!='self_sha256'}
+    if (set(value)!={'schema','candidate','lane','partition_id','partition_manifest_sha256',
+                    'whole_inventory_sha256','indices','records','passed','terminal',
+                    'full_g3c_qualified','production_qualified','self_sha256'}
+        or value.get('schema')!='GE_BEAM3_G3C_PHYSICAL_PARTITION_AGGREGATE_V1'
+        or sha256(canonical(body)).hexdigest()!=value.get('self_sha256','')
+        or not exact_json(value.get('candidate'),candidate) or value.get('lane')!='rehearsal'
+        or value.get('partition_id')!=partition_id
+        or value.get('partition_manifest_sha256')!=PHYSICAL_PARTITION_MANIFEST_SHA
+        or value.get('whole_inventory_sha256')!=PHYSICAL_PARTITION_INVENTORY_SHA
+        or not exact_json(value.get('indices'),indices) or value.get('passed')is not True
+        or value.get('terminal')!='COMPLETE_GE_BEAM3_G3C_PHYSICAL_REHEARSAL_PARTITION_ONLY'
+        or value.get('full_g3c_qualified')is not False or value.get('production_qualified')is not False
+        or type(records)is not list or len(records)!=len(indices)):
+        raise ValueError('physical partition aggregate')
+    for offset,(index,row) in enumerate(zip(indices,records)):
+        science=row.get('science') if type(row)is dict else None
+        if (set(row)!={'assignment_index','science_sha256','science'}
+            or type(row['assignment_index'])is not int or row['assignment_index']!=index
+            or type(science)is not dict or type(row['science_sha256'])is not str
+            or row['science_sha256']!=sha256(canonical(science)).hexdigest()
+            or science.get('schema')!='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1'
+            or not exact_json(science.get('candidate'),candidate) or science.get('lane')!='rehearsal'
+            or type(science.get('assignment_index'))is not int or science.get('assignment_index')!=index
+            or not exact_json(science.get('assignment'),inventory_rows[index])
+            or science.get('full_g3c_qualified')is not False
+            or science.get('production_qualified')is not False):
+            raise ValueError('physical partition record')
+    receipt_raw=read(path.parent/'receipt.json');receipt=environment.strict(receipt_raw)
+    receipt_body={k:v for k,v in receipt.items()if k!='self_sha256'}
+    expected_priors=['smoke','local']+list(PHYSICAL_PARTITION_IDS[:ordinal])
+    if (set(receipt)!={'schema','candidate','lane','partition_id','partition_manifest_sha256',
+                      'whole_inventory_sha256','implementation_review_sha256','inputs_sha256',
+                      'prerequisites','wave_process','science','nodes','passed','self_sha256'}
+        or receipt.get('schema')!='GE_BEAM3_G3C_PHYSICAL_PARTITION_RECEIPT_V1'
+        or not exact_json(receipt.get('candidate'),candidate) or receipt.get('lane')!='rehearsal'
+        or receipt.get('partition_id')!=partition_id
+        or receipt.get('partition_manifest_sha256')!=PHYSICAL_PARTITION_MANIFEST_SHA
+        or receipt.get('whole_inventory_sha256')!=PHYSICAL_PARTITION_INVENTORY_SHA
+        or receipt.get('implementation_review_sha256')!=review_sha
+        or receipt.get('inputs_sha256')!=sha256(canonical(inputs)).hexdigest()
+        or not exact_fingerprint(receipt.get('science'),raw) or receipt.get('passed')is not True
+        or type(receipt.get('prerequisites'))is not list
+        or [row.get('identity') if type(row)is dict else None for row in receipt['prerequisites']]!=expected_priors
+        or type(receipt.get('nodes'))is not list or len(receipt['nodes'])!=len(indices)
+        or sha256(canonical(receipt_body)).hexdigest()!=receipt.get('self_sha256','')):
+        raise ValueError('physical partition receipt')
+    prerequisite_paths=[]
+    for position,descriptor in enumerate(receipt['prerequisites']):
+        expected_kind='base' if position<2 else 'partition'
+        if descriptor.get('kind')!=expected_kind:raise ValueError('physical partition prerequisite kind')
+        prerequisite_paths.append(physical_verify_evidence_descriptor(descriptor))
+    verify_physical_priors(prerequisite_paths[:2],expected,'rehearsal')
+    for prior_id,prior_path in zip(PHYSICAL_PARTITION_IDS[:ordinal],prerequisite_paths[2:]):
+        physical_validate_partition(prior_path,expected,prior_id,stack+(partition_id,))
+    wave_raw=read(path.parent/'process.json')
+    if not exact_fingerprint(receipt['wave_process'],wave_raw):raise ValueError('physical partition process hash')
+    wave=environment.strict(wave_raw)
+    if (set(wave)!={'schema','lane','partition_id','partition_manifest_sha256','passed','required_nodes',
+                   'terminal_nodes','elapsed_seconds','active_processes','results'}
+        or wave.get('schema')!='GE_BEAM3_G3C_PHYSICAL_PARTITION_PROCESS_V1'
+        or wave.get('lane')!='rehearsal' or wave.get('partition_id')!=partition_id
+        or wave.get('partition_manifest_sha256')!=PHYSICAL_PARTITION_MANIFEST_SHA
+        or wave.get('passed')is not True or type(wave.get('required_nodes'))is not int
+        or wave.get('required_nodes')!=len(indices) or type(wave.get('terminal_nodes'))is not int
+        or wave.get('terminal_nodes')!=len(indices) or type(wave.get('active_processes'))is not int
+        or wave.get('active_processes')!=0 or type(wave.get('elapsed_seconds'))is not float
+        or not math.isfinite(wave['elapsed_seconds']) or wave['elapsed_seconds']<0
+        or type(wave.get('results'))is not dict or set(wave['results'])!={str(i) for i in indices}):
+        raise ValueError('physical partition process')
+    for index,node in zip(indices,receipt['nodes']):
+        out=path.parent/f'node-{index:04d}'
+        if (set(node)!={'assignment_index','lease','review','completion','process','science'}
+            or type(node['assignment_index'])is not int or node['assignment_index']!=index):
+            raise ValueError('physical partition node receipt')
+        for key,name in (('lease','lease.json'),('review','review.json'),('completion','completion.json'),
+                         ('process','process.json'),('science','scientific.node.json')):
+            if not exact_fingerprint(node[key],read(out/name)):raise ValueError('physical partition node hash')
+        lease=environment.strict(read(out/'lease.json'))
+        if read(out/'review.json')!=review_raw:raise ValueError('physical partition review bytes')
+        physical_lease_expected(lease,expected,review_sha);physical_verify_node(out,lease);physical_verify_process(out,lease)
+        if not exact_json(wave['results'][str(index)],environment.strict(read(out/'process.json'))):
+            raise ValueError('physical partition process DAG')
+        record=records[indices.index(index)]
+        if record['science_sha256']!=node['science']['sha256']:
+            raise ValueError('physical partition aggregate DAG')
+    return value,receipt
+
+def physical_verify_partition_priors(paths,expected,partition_id):
+    ordinal,_=physical_partition_spec(partition_id)
+    if len(paths)!=2+ordinal:raise ValueError('exact physical partition prerequisite count')
+    verify_physical_priors(paths[:2],expected,'rehearsal')
+    for prior_id,path in zip(PHYSICAL_PARTITION_IDS[:ordinal],paths[2:]):
+        physical_validate_partition(path,expected,prior_id)
+
+def physical_history_outputs_from_partition(path):
+    outputs={};inventory_rows=physical_inventory('rehearsal')
+    for index in physical_partition_spec('R-HISTORY',inventory_rows)[1]['indices']:
+        assignment=inventory_rows[index]
+        outputs[assignment['case']['case_id']]=physical_history_packets(Path(path).parent/f'node-{index:04d}',assignment)
+    return outputs
+
+def execute_physical_partition(args,watchdog,expected):
+    started=time.monotonic();prior_paths=args.prior or []
+    physical_verify_partition_priors(prior_paths,expected,args.partition_id)
+    inventory_rows=physical_inventory('rehearsal');_,spec=physical_partition_spec(args.partition_id,inventory_rows)
+    indices=spec['indices'];runtime=physical_support().runtime_identity()
+    root=Path(tempfile.mkdtemp(prefix='anysolver-g3c-physical-partition-'));print('DIAGNOSTICS '+str(root),flush=True)
+    base=dict(lane='rehearsal',candidate=expected[0],inputs=expected[1],review_sha256=args.review_sha256,
+        implementation_review=environment.strict(expected[2]),runtime_sha256=runtime,inventory=inventory_rows)
+    outputs={} if args.partition_id=='R-HISTORY' else physical_history_outputs_from_partition(prior_paths[2])
+    results={};deadline=started+1800
+    passed=physical_run_phase(root,indices,base,expected[2],watchdog,deadline,outputs,results)
+    if time.monotonic()>=deadline:passed=False
+    if authority(args.review,args.review_sha256,'g3c-physical')!=expected:passed=False
+    process=dict(schema='GE_BEAM3_G3C_PHYSICAL_PARTITION_PROCESS_V1',lane='rehearsal',
+        partition_id=args.partition_id,partition_manifest_sha256=PHYSICAL_PARTITION_MANIFEST_SHA,passed=passed,
+        required_nodes=len(indices),terminal_nodes=len(results),elapsed_seconds=time.monotonic()-started,
+        active_processes=sum(1 for row in results.values()if row.get('active_processes',0)),
+        results={str(key):results[key] for key in sorted(results)})
+    atomic_canonical(root/'process.json',process,watchdog)
+    if not passed:
+        print(canonical(process).decode(),flush=True);return 1
+    records=[]
+    for index in indices:
+        raw=read(root/f'node-{index:04d}'/'scientific.node.json')
+        records.append(dict(assignment_index=index,science_sha256=sha256(raw).hexdigest(),science=environment.strict(raw)))
+    value=dict(schema='GE_BEAM3_G3C_PHYSICAL_PARTITION_AGGREGATE_V1',candidate=expected[0],lane='rehearsal',
+        partition_id=args.partition_id,partition_manifest_sha256=PHYSICAL_PARTITION_MANIFEST_SHA,
+        whole_inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA,indices=indices,records=records,passed=True,
+        terminal='COMPLETE_GE_BEAM3_G3C_PHYSICAL_REHEARSAL_PARTITION_ONLY',
+        full_g3c_qualified=False,production_qualified=False)
+    value['self_sha256']=sha256(canonical(value)).hexdigest()
+    atomic_canonical(root/'scientific.json',value,watchdog);science_raw=read(root/'scientific.json')
+    receipt=physical_partition_receipt(root,base,indices,args.partition_id,process,science_raw,prior_paths)
+    atomic_canonical(root/'receipt.json',receipt,watchdog)
+    physical_validate_partition(root/'scientific.json',expected,args.partition_id)
+    print(canonical(process).decode(),flush=True);return 0
+
+def physical_union_receipt(root,expected,science_raw,prior_paths):
+    identities=['smoke','local']+list(PHYSICAL_PARTITION_IDS)
+    prerequisites=[physical_evidence_descriptor(path,'base' if i<2 else 'partition',identity)
+                   for i,(path,identity) in enumerate(zip(prior_paths,identities))]
+    body=dict(schema='GE_BEAM3_G3C_PHYSICAL_UNION_RECEIPT_V1',candidate=expected[0],lane='rehearsal',
+        partition_manifest_sha256=PHYSICAL_PARTITION_MANIFEST_SHA,
+        whole_inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA,
+        implementation_review_sha256=sha256(expected[2]).hexdigest(),
+        inputs_sha256=sha256(canonical(expected[1])).hexdigest(),prerequisites=prerequisites,
+        union_process=fingerprint(read(root/'process.json')),science=fingerprint(science_raw),passed=True)
+    return dict(body,self_sha256=sha256(canonical(body)).hexdigest())
+
+def physical_union_records(partition_values):
+    if type(partition_values)is not list or len(partition_values)!=len(PHYSICAL_PARTITION_IDS):
+        raise ValueError('physical union exact partition count')
+    records=[]
+    for expected_id,value in zip(PHYSICAL_PARTITION_IDS,partition_values):
+        if type(value)is not dict or value.get('partition_id')!=expected_id or type(value.get('records'))is not list:
+            raise ValueError('physical union partition order')
+        records.extend(value['records'])
+    actual=[row.get('assignment_index') if type(row)is dict else None for row in records]
+    expected=list(range(len(physical_inventory('rehearsal'))))
+    if not exact_json(actual,expected):
+        raise ValueError('physical union exact coverage')
+    return records
+
+def physical_validate_union(path,expected):
+    path=Path(path).resolve();raw=read(path);value=environment.strict(raw);inventory_rows=physical_inventory('rehearsal')
+    body={k:v for k,v in value.items()if k!='self_sha256'};records=value.get('records')
+    if (set(value)!={'schema','candidate','lane','inventory_sha256','records','passed','terminal',
+                    'full_g3c_qualified','production_qualified','self_sha256'}
+        or value.get('schema')!='GE_BEAM3_G3C_PHYSICAL_AGGREGATE_V1'
+        or sha256(canonical(body)).hexdigest()!=value.get('self_sha256','')
+        or not exact_json(value.get('candidate'),expected[0]) or value.get('lane')!='rehearsal'
+        or value.get('inventory_sha256')!=PHYSICAL_PARTITION_INVENTORY_SHA
+        or value.get('passed')is not True
+        or value.get('terminal')!='COMPLETE_GE_BEAM3_G3C_PHYSICAL_REHEARSAL_ONLY'
+        or value.get('full_g3c_qualified')is not False or value.get('production_qualified')is not False
+        or type(records)is not list or len(records)!=len(inventory_rows)):
+        raise ValueError('physical union aggregate')
+    if [row.get('assignment_index') if type(row)is dict else None for row in records]!=list(range(len(inventory_rows))):
+        raise ValueError('physical union ordering')
+    receipt=environment.strict(read(path.parent/'receipt.json'));receipt_body={k:v for k,v in receipt.items()if k!='self_sha256'}
+    expected_ids=['smoke','local']+list(PHYSICAL_PARTITION_IDS)
+    if (set(receipt)!={'schema','candidate','lane','partition_manifest_sha256','whole_inventory_sha256',
+                      'implementation_review_sha256','inputs_sha256','prerequisites','union_process',
+                      'science','passed','self_sha256'}
+        or receipt.get('schema')!='GE_BEAM3_G3C_PHYSICAL_UNION_RECEIPT_V1'
+        or not exact_json(receipt.get('candidate'),expected[0]) or receipt.get('lane')!='rehearsal'
+        or receipt.get('partition_manifest_sha256')!=PHYSICAL_PARTITION_MANIFEST_SHA
+        or receipt.get('whole_inventory_sha256')!=PHYSICAL_PARTITION_INVENTORY_SHA
+        or receipt.get('implementation_review_sha256')!=sha256(expected[2]).hexdigest()
+        or receipt.get('inputs_sha256')!=sha256(canonical(expected[1])).hexdigest()
+        or not exact_fingerprint(receipt.get('science'),raw) or receipt.get('passed')is not True
+        or type(receipt.get('prerequisites'))is not list
+        or [row.get('identity') if type(row)is dict else None for row in receipt['prerequisites']]!=expected_ids
+        or sha256(canonical(receipt_body)).hexdigest()!=receipt.get('self_sha256','')):
+        raise ValueError('physical union receipt')
+    paths=[physical_verify_evidence_descriptor(row) for row in receipt['prerequisites']]
+    verify_physical_priors(paths[:2],expected,'rehearsal')
+    partition_records={}
+    for partition_id,prior in zip(PHYSICAL_PARTITION_IDS,paths[2:]):
+        partition_records[partition_id]=physical_validate_partition(prior,expected,partition_id)[0]['records']
+    expected_records=physical_union_records([dict(partition_id=partition_id,records=partition_records[partition_id])
+                                             for partition_id in PHYSICAL_PARTITION_IDS])
+    if not exact_json(records,expected_records):raise ValueError('physical union partition DAG')
+    process_raw=read(path.parent/'process.json')
+    if not exact_fingerprint(receipt['union_process'],process_raw):raise ValueError('physical union process hash')
+    process=environment.strict(process_raw)
+    if (set(process)!={'schema','lane','partition_manifest_sha256','passed','required_partitions',
+                      'terminal_partitions','elapsed_seconds','active_processes'}
+        or process.get('schema')!='GE_BEAM3_G3C_PHYSICAL_UNION_PROCESS_V1'
+        or process.get('lane')!='rehearsal' or process.get('partition_manifest_sha256')!=PHYSICAL_PARTITION_MANIFEST_SHA
+        or process.get('passed')is not True or type(process.get('required_partitions'))is not int
+        or process.get('required_partitions')!=6 or type(process.get('terminal_partitions'))is not int
+        or process.get('terminal_partitions')!=6 or type(process.get('active_processes'))is not int
+        or process.get('active_processes')!=0 or type(process.get('elapsed_seconds'))is not float
+        or not math.isfinite(process['elapsed_seconds']) or process['elapsed_seconds']<0):
+        raise ValueError('physical union process')
+    return value,receipt
+
+def execute_physical_union(args,watchdog,expected):
+    started=time.monotonic();paths=args.prior or []
+    if len(paths)!=8:raise ValueError('exact physical union prerequisite count')
+    verify_physical_priors(paths[:2],expected,'rehearsal')
+    partition_values=[]
+    for partition_id,path in zip(PHYSICAL_PARTITION_IDS,paths[2:]):
+        partition_values.append(physical_validate_partition(path,expected,partition_id)[0])
+    if authority(args.review,args.review_sha256,'g3c-physical')!=expected:raise ValueError('physical union final authority')
+    root=Path(tempfile.mkdtemp(prefix='anysolver-g3c-physical-union-'));print('DIAGNOSTICS '+str(root),flush=True)
+    process=dict(schema='GE_BEAM3_G3C_PHYSICAL_UNION_PROCESS_V1',lane='rehearsal',
+        partition_manifest_sha256=PHYSICAL_PARTITION_MANIFEST_SHA,passed=True,required_partitions=6,
+        terminal_partitions=6,elapsed_seconds=time.monotonic()-started,active_processes=0)
+    atomic_canonical(root/'process.json',process,watchdog)
+    records=physical_union_records(partition_values)
+    value=dict(schema='GE_BEAM3_G3C_PHYSICAL_AGGREGATE_V1',candidate=expected[0],lane='rehearsal',
+        inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA,records=records,passed=True,
+        terminal='COMPLETE_GE_BEAM3_G3C_PHYSICAL_REHEARSAL_ONLY',
+        full_g3c_qualified=False,production_qualified=False)
+    value['self_sha256']=sha256(canonical(value)).hexdigest();atomic_canonical(root/'scientific.json',value,watchdog)
+    science_raw=read(root/'scientific.json')
+    atomic_canonical(root/'receipt.json',physical_union_receipt(root,expected,science_raw,paths),watchdog)
+    physical_validate_union(root/'scientific.json',expected)
+    print(canonical(process).decode(),flush=True);return 0
+
 def execute_physical(args,watchdog):
     started=time.monotonic();expected=authority(args.review,args.review_sha256,'g3c-physical')
     if args.lane=='formal':raise ValueError('formal physical partition/authorization addendum not frozen')
+    if args.lane=='rehearsal':
+        if (args.partition_id is None)==(not args.finalize_partitions):
+            raise ValueError('select exactly one rehearsal partition mode')
+        return (execute_physical_union(args,watchdog,expected) if args.finalize_partitions
+                else execute_physical_partition(args,watchdog,expected))
+    if args.partition_id is not None or args.finalize_partitions:
+        raise ValueError('physical partition mode is rehearsal-only')
     verify_physical_priors(args.prior or [],expected,args.lane)
     inventory_rows=physical_inventory(args.lane);runtime=physical_support().runtime_identity()
     root=Path(tempfile.mkdtemp(prefix='anysolver-g3c-physical-'));print('DIAGNOSTICS '+str(root),flush=True)
@@ -1807,6 +2169,8 @@ def main():
     parser.add_argument('--review',type=Path,required=True)
     parser.add_argument('--review-sha256',required=True)
     parser.add_argument('--prior',type=Path,action='append')
+    parser.add_argument('--partition-id',choices=PHYSICAL_PARTITION_IDS)
+    parser.add_argument('--finalize-partitions',action='store_true')
     return execute(parser.parse_args())
 
 if __name__=='__main__':raise SystemExit(main())

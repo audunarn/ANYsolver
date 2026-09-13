@@ -1,4 +1,5 @@
 """Inert runner guard tests: fake jobs only, never import mechanics."""
+import ast
 import copy
 from hashlib import sha256
 from pathlib import Path
@@ -153,12 +154,63 @@ class GuardTests(unittest.TestCase):
                          [graph+'::BASE::S0::NONE' for graph in r.physical_support().GRAPHS])
         self.assertNotIn('numpy',sys.modules);self.assertNotIn('anysolver',sys.modules)
 
+    def test_physical_rehearsal_partition_manifest_is_exact(self):
+        rows=r.physical_inventory('rehearsal');manifest=r.physical_partition_manifest(rows)
+        self.assertEqual(sha256(r.canonical(rows)).hexdigest(),r.PHYSICAL_PARTITION_INVENTORY_SHA)
+        self.assertEqual(sha256(r.canonical(manifest)).hexdigest(),r.PHYSICAL_PARTITION_MANIFEST_SHA)
+        covered=[]
+        for expected_id,(partition_id,indices,digest),actual in zip(
+                r.PHYSICAL_PARTITION_IDS,r.PHYSICAL_PARTITIONS,manifest['partitions']):
+            self.assertEqual(expected_id,partition_id);self.assertEqual(actual['partition_id'],partition_id)
+            self.assertEqual(actual['indices'],list(indices));covered.extend(indices)
+            self.assertEqual(sha256(r.canonical([rows[i] for i in indices])).hexdigest(),digest)
+        self.assertEqual(covered,list(range(234)));self.assertEqual(len(covered),len(set(covered)))
+        self.assertEqual(r.physical_partition_prerequisite_ids('R-GUARDS'),list(r.PHYSICAL_PARTITION_IDS[:-1]))
+        with self.assertRaises(ValueError):r.physical_partition_spec('FOREIGN')
+
+    def test_physical_rehearsal_partition_mode_is_explicit(self):
+        expected=({'commit':'a','tree':'b'},{},b'{}\n');watchdog=SimpleNamespace()
+        def arguments(lane,partition_id=None,finalize=False):
+            return SimpleNamespace(review=Path('review.json'),review_sha256='c'*64,lane=lane,prior=[],
+                                   partition_id=partition_id,finalize_partitions=finalize)
+        with patch.object(r,'authority',return_value=expected):
+            for args in (arguments('rehearsal'),arguments('rehearsal','R-HISTORY',True),
+                         arguments('smoke','R-HISTORY'),arguments('local',finalize=True)):
+                with self.assertRaises(ValueError):r.execute_physical(args,watchdog)
+
+    def test_physical_union_requires_ordered_original_indices(self):
+        values=[]
+        for partition_id,indices,_ in r.PHYSICAL_PARTITIONS:
+            values.append(dict(partition_id=partition_id,
+                records=[dict(assignment_index=index) for index in indices]))
+        records=r.physical_union_records(values)
+        self.assertEqual([row['assignment_index'] for row in records],list(range(234)))
+        for mutate in (
+            lambda rows:rows.pop(),
+            lambda rows:rows.__setitem__(0,dict(rows[0],partition_id='R-PREFIX-A')),
+            lambda rows:rows[1]['records'].__setitem__(0,dict(rows[1]['records'][0],assignment_index=10.0)),
+            lambda rows:rows[1]['records'].__setitem__(0,dict(rows[1]['records'][0],assignment_index=11)),
+        ):
+            bad=copy.deepcopy(values);mutate(bad)
+            with self.assertRaises(ValueError):r.physical_union_records(bad)
+
+    def test_physical_union_finalizer_has_no_mechanics_import(self):
+        source=(Path(r.__file__).read_text(encoding='utf-8'))
+        tree=ast.parse(source);names={'execute_physical_union','physical_validate_union','physical_union_records'}
+        selected=[node for node in tree.body if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)) and node.name in names]
+        self.assertEqual({node.name for node in selected},names)
+        self.assertFalse(any(isinstance(node,(ast.Import,ast.ImportFrom)) for fn in selected for node in ast.walk(fn)))
+        calls={node.func.id for fn in selected for node in ast.walk(fn)
+               if isinstance(node,ast.Call) and isinstance(node.func,ast.Name)}
+        self.assertFalse(calls&{'physical_run_phase','physical_child','job_type','subprocess','worker'})
+
     def test_physical_review_schema_and_mutations(self):
         candidate=dict(commit='a'*40,tree='b'*40)
         rows={'docs/reference_cases/ge_beam3_g3c_fixtures_v1.json':dict(bytes=1,sha256='c'*64),
               'src/anysolver/_ge_beam3_g3c_definition.py':dict(bytes=1,sha256='d'*64)}
         scope=dict(scope_id=r.SCOPE,gate='g3c-physical',subject_tree=candidate['tree'],
             inputs_sha256=sha256(r.canonical(rows)).hexdigest(),contract_sha256=r.PHYSICAL_PLAN_SHA,
+            partition_addendum_sha256=r.PHYSICAL_PARTITION_ADDENDUM_SHA,
             execution_authorized=True,full_g3c_qualified=False,production_qualified=False)
         review=dict(decision='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT',findings=[],
             reviewer=dict(independent=True),scope=scope,subject_commit=candidate['commit'])
@@ -179,6 +231,7 @@ class GuardTests(unittest.TestCase):
         candidate=dict(commit='a'*40,tree='b'*40);rows={'x':dict(bytes=1,sha256='c'*64)}
         scope=dict(scope_id=r.SCOPE,gate='g3c-physical',subject_tree=candidate['tree'],
             inputs_sha256=sha256(r.canonical(rows)).hexdigest(),contract_sha256=r.PHYSICAL_PLAN_SHA,
+            partition_addendum_sha256=r.PHYSICAL_PARTITION_ADDENDUM_SHA,
             execution_authorized=True,full_g3c_qualified=False,production_qualified=False)
         review=dict(decision='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT',findings=[],
             reviewer=dict(independent=True),scope=scope,subject_commit=candidate['commit'])

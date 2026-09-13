@@ -1051,3 +1051,25 @@ the original contract requires both fresh positive origin resumes before all
 serial dependency chain and requires `R-GUARDS` to bind all four accepted prefix
 partition receipts. No implementation or mechanics execution occurred under
 the earlier addendum freeze.
+
+The accepted partition design is now implemented in the shared runner without
+changing mechanics or the 234-assignment inventory. The runner exposes six
+explicit rehearsal partitions in the frozen serial order and one separate
+no-mechanics union mode. Every partition preserves original assignment indices,
+binds the complete rehearsal and manifest hashes, recursively validates smoke,
+local and all preceding partition receipt DAGs, and retains the existing child,
+memory, inactivity and invocation bounds. `R-GUARDS` therefore cannot start
+until the history wave and all four positive prefix waves are accepted.
+
+The union path accepts exactly the six design-reviewed partitions, recursively
+revalidates their reviews, leases, process records, completions, node science
+and packet inputs, and emits the unchanged rehearsal aggregate schema only for
+the exact ordered union `0..233`. Partition records have distinct process,
+aggregate and receipt schemas and cannot satisfy rehearsal acceptance. The
+formal lane remains disabled, MO08 and MO18 remain deferred, and every emitted
+record retains `full_g3c_qualified=false` and `production_qualified=false`.
+Thirty-six inert runner guards cover exact manifest hashes, complete/disjoint
+membership, explicit mode selection, dependency ordering, original-index and
+type-confusion mutations, exclusive publication and the finalizer's lack of a
+mechanics execution route. No mechanics may run until this implementation is
+committed cleanly and independently accepted for bounded development.
