@@ -1136,3 +1136,40 @@ process/evidence-schema incident, not a mechanics result; none of its child
 records may be reused. The successor changes only the exact registered negative
 count from nine to twelve and adds an inert regression before independent
 re-review and fresh segment authority.
+
+The evidence-schema successor freeze
+`692bd32c23922083d1f51a3a965dade9b7515d11`, tree
+`f1ac8af8dd73c94595273ce4f2add00eb951eb41`, passed all 45 isolated runner
+guards and was independently accepted under review SHA-256
+`fa72257ca3aa99484b1575e5a40955d73f6060e9c7e7f9a56daa42799437f91b`.
+Its unchanged 3,482-row input set remains
+`34a2f26c67aa71d7d443f514ca143657dc8a82fd0077108c53a922fb07230d1c`.
+The six serial correction segments each passed 24 of 24 assignments. Their
+canonical scientific SHA-256 values, in frozen order, are:
+
+- `R-GUARDS-A`: `17179f0ea1243e80fce77eb1d3477dc859ff0840f90dc6e542b980b5e837271f`;
+- `R-GUARDS-B`: `3e9962ccf7ba1920d66abd5717652afa81b0abb7243dea5bf7ab811358076588`;
+- `R-GUARDS-C`: `a44e31d51dbfa4f0608f428a0036443d835fb9530b5ee7ae01342d8e6a81566c`;
+- `R-GUARDS-D`: `9606c5f40cafcee0cca3d63a5c13ec923c320ca917fc603378d3ca5f4d54bc12`;
+- `R-GUARDS-E`: `e71488d824a362c1cfb27b3a6875ef8124902c37e0fb04f80dd4c3759cf9117e`;
+- `R-GUARDS-F`: `0bb0d6f40ee4f7ea478b25836f13b1c73d84cfc39abf19b40d7a69a4190ec118`.
+
+The no-mechanics guard union contains the exact ordered 144 records and has
+scientific SHA-256
+`21b87567a46ea060467787cb6e66400cbb3df91701b2331fb289f2febea2d0a8`.
+The independently validated final corrected rehearsal contains exactly records
+0 through 233. Its process, receipt and scientific SHA-256 values are,
+respectively,
+`7532ea3cddbcd5a1355d3637654d567ddf9582d6a36a326e25710447df7c7678`,
+`235fa5ecba1601a44e6df6532f4c6ace19568c002444a0eeee34b8a07ab27eb1`, and
+`ab55c23d0591a74cf612b9b7ab19b83d687e3c1ad0523858a8866c35c053e076`.
+It records
+`COMPLETE_GE_BEAM3_G3C_PHYSICAL_CORRECTED_REHEARSAL_ONLY`, with
+`full_g3c_qualified=false` and `production_qualified=false`.
+
+Independent evidence review SHA-256
+`47e8876ab262929160ff39231b2a677710a820eb39c3c356b96a1127139d2af2`
+accepted the corrected rehearsal only with empty findings. It authorizes
+preparation of a separately frozen formal G3c campaign. Formal execution,
+production qualification, default routing, release and publication remain
+unauthorized.
