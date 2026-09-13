@@ -14,9 +14,10 @@ its coordinator could write a terminal process record.  It is preserved only as
 process-incident diagnostics at
 `rehearsal-r-guards-4ae10ae-interrupted-gyj6_g4t`.  Its closed-world file-tree
 inventory has 1,039 files, 67,930,103 bytes, and canonical manifest SHA-256
-`22ed29bb4d10fd699c1f75d081de2296d099e75d40f31ef0892504c866663a0f`.
+`cdaaf2feeb38ba4e771c55ef66d9ff8ad32536fd9fea98fc2dff812910518ba6`.
 The manifest is the SHA-256 of the canonical JSON list of relative POSIX path,
-byte count, and file SHA-256 rows ordered by path.  Nodes 90 through 220 were
+byte count, and file SHA-256 rows ordered by path, including the canonical
+trailing newline.  Nodes 90 through 220 were
 launched, nodes 90 through 217 have terminal accepted child process records,
 and nodes 218 through 220 contain only incomplete process diagnostics.  There
 is no root `process.json`, `scientific.json`, or `receipt.json`.  These bytes are
