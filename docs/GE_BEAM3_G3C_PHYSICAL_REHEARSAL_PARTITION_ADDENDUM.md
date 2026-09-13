@@ -42,9 +42,15 @@ The manifest uses this exact canonical JSON value:
 ## Execution and dependency rules
 
 - `R-HISTORY` runs first and produces all ten authentic checkpoints.
-- Prefix and guard partitions require the complete accepted `R-HISTORY`
-  partition. Packet paths, byte counts and SHA-256 values are revalidated.
-- Partitions run serially under the shared three-worker ceiling.
+- Partitions run only in the exact serial order `R-HISTORY`, `R-PREFIX-A`,
+  `R-PREFIX-B`, `R-PREFIX-C`, `R-PREFIX-D`, `R-GUARDS`. Every partition after
+  `R-HISTORY` requires complete accepted records for every preceding partition,
+  in addition to the accepted smoke/local prerequisites.
+- Packet paths, byte counts and SHA-256 values are revalidated from the original
+  `R-HISTORY` nodes. `R-GUARDS` additionally binds all four accepted prefix
+  partition receipts. This proves the fresh positive resumes for B2 BASE S0
+  NONE prefix 2 and MULTIFAMILY_LOOP BASE S2 CM3 prefix 9 succeeded before any
+  of the inherited 142 negative probes is launched.
 - Assignments keep their original whole-inventory indices; local renumbering is
   forbidden.
 - Every partition binds the whole inventory hash, partition-manifest hash,

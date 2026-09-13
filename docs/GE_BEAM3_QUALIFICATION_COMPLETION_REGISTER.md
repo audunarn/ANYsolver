@@ -1044,3 +1044,10 @@ partition addendum freezes the same assignments as one ten-history wave, four
 20-prefix waves and one 144-guard wave, followed by an exact no-mechanics union.
 The addendum authorizes nothing until independently reviewed and implemented
 under a new clean freeze.
+
+The first design review required one pre-implementation sequencing correction:
+the original contract requires both fresh positive origin resumes before all
+142 negative probes. The successor addendum makes the six partitions a strict
+serial dependency chain and requires `R-GUARDS` to bind all four accepted prefix
+partition receipts. No implementation or mechanics execution occurred under
+the earlier addendum freeze.
