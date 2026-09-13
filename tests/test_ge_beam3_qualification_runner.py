@@ -30,6 +30,8 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(len(r.inventory('core')),8);self.assertEqual(len(r.inventory('smoke')),2)
         self.assertEqual(len(r.inventory('core','b2-adapter')),3)
         self.assertEqual(len(r.inventory('smoke','b2-adapter')),1)
+        self.assertEqual(len(r.inventory('core','q4-audit')),5)
+        self.assertEqual(len(r.inventory('smoke','q4-audit')),2)
         with self.assertRaises(ValueError):r.inventory('all')
 
     def test_strict_json(self):
@@ -96,6 +98,35 @@ class GuardTests(unittest.TestCase):
 
     def test_no_mechanics_import_before_authority(self):
         self.assertNotIn('numpy',sys.modules);self.assertNotIn('anysolver',sys.modules)
+
+    def test_checker_gate_and_replica_before_import(self):
+        with self.assertRaises(ValueError):r.q4_checker(Path('.'),'wrong','1','bad')
+        with self.assertRaises(ValueError):r.q4_checker(Path('.'),r.Q4_FIXTURES[0],'3','bad')
+        with patch.object(r,'read',return_value=r.canonical({'gate':'b2-adapter','lane':'core'})), \
+             patch.object(r,'authority',side_effect=AssertionError('wrong gate entered authority')):
+            with self.assertRaises(ValueError):r.q4_checker(Path('.'),r.Q4_FIXTURES[0],'1','bad')
+        self.assertNotIn('ge_beam3_q4_recovery_coefficient_checker',sys.modules)
+
+    def test_q4_terminal_order_and_incomplete_rejection(self):
+        # Inert decision-layer fixtures, not algebraic or scientific evidence.
+        zero={'coefficient':['0']*8};rows=[]
+        for fixture in r.Q4_FIXTURES:
+            proof=dict(coefficient_records=[zero]*20150,coefficient_count=20150,
+                       nonzero_count=0,zero_count=20150,first_nonzero=None)
+            rows.append(dict(test=fixture,proof=proof,checker_replicas_byte_identical=True,
+                verification=dict(first_nonzero=None,nonzero_count=0,independently_verified=True)))
+        self.assertEqual(r.q4_adjudication(rows,'core')['terminal'],'UNCLASSIFIED_G3C_Q4_TWO_FIXTURE_COEFFICIENT_IDENTITIES')
+        nonzero={'coefficient':['1']+['0']*7}
+        for row in reversed(rows):
+            row['proof']['coefficient_records'][0]=nonzero
+            row['proof'].update(first_nonzero=nonzero,nonzero_count=1,zero_count=20149)
+            row['verification'].update(first_nonzero=nonzero,nonzero_count=1)
+            result=r.q4_adjudication(rows,'core')
+            self.assertEqual(result['terminal'],'NO_GO_G3C_Q4_NATURAL_RETAINED_SPACE_FINITE_IDENTITY')
+            self.assertEqual(result['first_nonzero']['fixture_id'],row['test'])
+        with self.assertRaises(ValueError):r.q4_adjudication(rows[::-1],'core')
+        with self.assertRaises(ValueError):r.q4_adjudication(rows[:1],'core')
+        self.assertEqual(r.q4_adjudication([],'smoke')['terminal'],'NOT_ADJUDICATED_SMOKE_ONLY')
 
     def test_whole_invocation_watchdog(self):
         timers=[];exits=[]

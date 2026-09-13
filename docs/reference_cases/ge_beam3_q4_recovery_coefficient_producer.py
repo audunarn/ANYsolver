@@ -195,6 +195,12 @@ def _nonlinear_coefficients(dx, dy):
     return result
 
 
+def _engineering_transform(rotation):
+    """Exact engineering-strain re-expression, independently guarded in audit."""
+    a,b,c,d = rotation[0][0],rotation[0][1],rotation[1][0],rotation[1][1]
+    return [[a*a,b*b,a*b],[c*c,d*d,c*d],[2*a*c,2*b*d,a*d+b*c]]
+
+
 def _accumulate(polynomial, indices, value):
     if value:
         key = tuple(sorted(indices))
@@ -217,8 +223,7 @@ def audit(fixture_id, checkpoint=None):
         for i in range(3):
             for j in range(3):
                 dof_map[3*block+i][3*block+j] = rotation[i][j]
-    a,b,c,d = rotation[0][0],rotation[0][1],rotation[1][0],rotation[1][1]
-    strain_map = [[a*a,b*b,a*b],[c*c,d*d,c*d],[2*a*c,2*b*d,a*d+b*c]]
+    strain_map = _engineering_transform(rotation)
     section = _section()
     membrane = [row[:3] for row in section[:3]]
     H, b0, nonlinear = zeros(35,35), zeros(35,24), zeros(35,len(PAIRS))

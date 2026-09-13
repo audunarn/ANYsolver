@@ -143,3 +143,27 @@ remain required. These files are not Q4 recovery acceptance and have not run.
 Wider geometry admission parity remains OPEN. Initial adapter admission reuses
 the old pure chart, not the old physical operator. Its range is not represented
 as full geometry parity, and successful local tests cannot discharge that row.
+
+## Q4 audit execution preparation
+
+Dedicated `ge-beam3-g3c-q4-coefficient-audit-v1` branch preserves the adapter's
+separate execution freeze while adding the audit to the same shared harness.
+The Q4 registered inventory is five nodes: primitive exact field/schema guards;
+source/import guards; square proof; rhombus proof; actual assembly/proof mutations.
+Smoke selects only the first two. Full fixture proofs each launch two concurrent
+fresh checker processes under the inherited bounded Job; with their idle producer
+parent this uses at most three computational workers. No automatic retry.
+
+Six deliberately changed producer assemblies and eight proof corruptions are
+checked against an independent reconstruction, generated once per mutation node
+and protected as canonical bytes. This preserves the full verification boundary
+without redundantly solving the checker system for every altered proof.
+The checker verifies complete headers, frames, stations, 24x24 physical operators
+and every coefficient. Root adjudication chooses the first nonzero witness in
+the frozen fixture/monomial order; smoke never classifies the scientific outcome.
+
+Twelve inert shared-runner guards passed during preparation. No Q4 primitive,
+producer, checker or mutation test has executed yet. Independent implementation
+review, bounded smoke/rehearsal, two deterministic complete cycles and evidence
+review remain required. Any negative audit result is confined to its named
+retained-space representation, not a universal impossibility or public Q4 change.

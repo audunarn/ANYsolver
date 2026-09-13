@@ -213,6 +213,14 @@ def reconstruct(fixture_id,checkpoint=None):
 def verify(proof,checkpoint=None):
     if type(proof) is not dict or proof.get('fixture_id') not in FIXTURES:raise ValueError('fixture authority')
     expected=reconstruct(proof['fixture_id'],checkpoint)
+    return verify_against_reconstruction(proof,expected)
+
+def verify_against_reconstruction(proof,expected):
+    """Strict comparison to an independently generated complete reconstruction.
+
+    Normal verification always constructs it above; mutation tests reuse only a
+    freshly reconstructed, immutable-bytes baseline, not a producer baseline.
+    """
     # Canonical encoding also distinguishes booleans from integers, unlike ==.
     import json
     encode=lambda value:json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)
