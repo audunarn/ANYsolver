@@ -9,6 +9,31 @@ This plan does not authorize qualification claims from drafting or smoke results
 Source hashes in the draft bind unchanged inherited files, not the draft's old HEAD.
 Full G3c, G4/G5 and all applicable parity rows remain mandatory.
 
+## Concrete initial adapter identity and geometry admission
+
+Policy ID: `GE_BEAM3_G3C_B2_PHYSICAL_MATRIX_ADAPTER_V1`.
+Core ID: `GE_BEAM3_G3C_B2_PHYSICAL_FLEXIBILITY_V1`.
+Schema ID: `GE_BEAM3_G3C_B2_PHYSICAL_MATRIX_DESCRIPTOR_V1`.
+No old policy ID may dispatch to this adapter.
+
+This initial adapter uses the inherited pure analytic chart unchanged: exact
+finite binary64 arrays, two distinct positive integer node IDs, physical anchor
+equal to one of those IDs, finite computed length L>=1e-12, proper supplied
+rotations within1e-11, and both increment and all-pair relative-rotation guards
+already frozen in that chart. The physical local-z input is normalized after
+max-component scaling; its axis-orthogonal residual must exceed1e-6 of its norm.
+Nonfinite computed geometry or derivatives are typed admission/representability
+failures, not numerical fallback. No new scale-safe chart or relaxed admission
+is authorized by this initial adapter implementation.
+
+The formal fixtures are exactly the six geometries/materials and all transforms
+in the existing physical B2 contract. Core-only L=1e308 representability evidence
+is not adapter coverage. This initial gate does not settle the full geometry
+parity row: actual legacy-supported inputs outside this inherited chart admission
+must remain OPEN for a separately reviewed numerical-geometry extension, unless
+their legacy rejection is demonstrated. Rejecting them here is not proof that
+full parity is finished and does not authorize dropping them from the inventory.
+
 ---
 
 # Private physical B2 matrix adapter: design draft
