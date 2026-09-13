@@ -264,11 +264,47 @@ class GuardTests(unittest.TestCase):
             r.atomic_canonical(target,{'accepted':True},watchdog)
             self.assertEqual(target.read_bytes(),r.canonical({'accepted':True}))
             self.assertFalse((root/'scientific.pending.json').exists())
+            raced=root/'raced.json'
+            def race(source,destination):
+                Path(destination).write_bytes(b'foreign\n');raise FileExistsError('raced destination')
+            with patch.object(r.os,'link',side_effect=race):
+                with self.assertRaises(FileExistsError):r.atomic_canonical(raced,{'accepted':True},watchdog)
+            self.assertEqual(raced.read_bytes(),b'foreign\n')
             with self.assertRaises(ValueError):r.atomic_canonical(target,{'accepted':True},watchdog)
             failed=root/'receipt.json'
-            with patch.object(r.os,'replace',side_effect=OSError('injected promotion failure')):
+            with patch.object(r.os,'link',side_effect=OSError('injected promotion failure')):
                 with self.assertRaises(OSError):r.atomic_canonical(failed,{'accepted':True},watchdog)
             self.assertFalse(failed.exists());self.assertTrue((root/'receipt.pending.json').is_file())
+
+    def test_physical_owner_record_types_and_obligation_map_are_exact(self):
+        assignment=r.physical_inventory('local')[0];candidate=dict(commit='a'*40,tree='b'*40)
+        records=[dict(test='inventory',assignment=None,histories=375,events=3075,prefixes=3450,
+                      obligations=r.PHYSICAL_OBLIGATIONS,production_qualified=False,full_g3c_qualified=False),
+                 dict(test='inert_schema',assignment=None,rejections=6,
+                      production_qualified=False,full_g3c_qualified=False)]
+        template=dict(schema='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1',candidate=candidate,lane='local',
+                      assignment_index=0,assignment=assignment,records=records,
+                      full_g3c_qualified=False,production_qualified=False)
+        lease=dict(candidate=candidate,lane='local',assignment_index=0,assignment=assignment,input_packets={})
+        with tempfile.TemporaryDirectory() as directory:
+            out=Path(directory)
+            def store(value):
+                for name in ('scientific.node.json','completion.json'):
+                    path=out/name
+                    if path.exists():path.unlink()
+                r.write(out/'scientific.node.json',value);raw=(out/'scientific.node.json').read_bytes()
+                nodes=r.physical_assignment_nodes(assignment)
+                r.write(out/'completion.json',dict(assignment_index=0,assignment=assignment,
+                    selected=nodes,passed=nodes,scientific=r.fingerprint(raw)))
+            store(template);r.physical_verify_node(out,lease)
+            mutations=[]
+            bad=copy.deepcopy(template);bad['records'][0]['histories']=375.0;mutations.append(bad)
+            bad=copy.deepcopy(template);bad['records'][0]['obligations']['MO01']='UNBOUND';mutations.append(bad)
+            bad=copy.deepcopy(template);bad['full_g3c_qualified']=None;mutations.append(bad)
+            bad=copy.deepcopy(template);bad['production_qualified']=[];mutations.append(bad)
+            for bad in mutations:
+                store(bad)
+                with self.assertRaises(ValueError):r.physical_verify_node(out,lease)
 
     def test_strict_json(self):
         for raw in (b'{"x":1,"x":2}\n',b'{"x":NaN}\n',b'{"x":Infinity}\n'):

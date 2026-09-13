@@ -168,6 +168,36 @@ class HistoryOwner:
         finally:
             lock.release()
 
+    @property
+    def size(self):
+        lock=self._owned_lock
+        if not lock.acquire(False):raise RuntimeError('history owner in use')
+        try:
+            guard=self._guarding();guard();value=self._owned_owner.size;guard();return value
+        finally:lock.release()
+
+    def snapshot_bytes(self):
+        """Nonimportable diagnostic view used by directional qualification."""
+        lock=self._owned_lock
+        if not lock.acquire(False):raise RuntimeError('history owner in use')
+        try:
+            guard=self._guarding();guard();raw=self._owned_owner.snapshot_bytes();guard();return bytes(raw)
+        finally:lock.release()
+
+    def trial(self,total,multipliers,command,*,hook=None):
+        """Nonpublishing trial under both owner guards; never restart input."""
+        if hook is not None and not callable(hook):raise ValueError('callback required')
+        lock=self._owned_lock
+        if not lock.acquire(False):raise RuntimeError('history owner in use')
+        try:
+            guard=self._guarding();guard();copied=packet.strict(packet.canonical(command))
+            def check(stage):
+                guard()
+                if hook is not None:hook(stage);guard()
+            result=self._owned_owner.trial(total,multipliers,copied,hook=check)
+            guard();return result
+        finally:lock.release()
+
     def checkpoint_bytes(self):
         lock = self._owned_lock
         if not lock.acquire(False): raise RuntimeError('history owner in use')
