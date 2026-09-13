@@ -235,3 +235,32 @@ variational-work recovery. Full MO01-MO18,375/3075/3450 G3c cycles, G4/G5 and al
 applicable P01-P32/U01-U10 rows remain required. Public legacy B2/B3, qualified
 Q4/S3, defaults and historical evidence remain unchanged. No release/integration
 qualification is inferred from these local results.
+
+## Affine chart-image recovery successor preparation
+
+Successor branch codex/ge-beam3-g3c-affine-recovery-v1 preserves every executed
+freeze. Evidence closeout47e84f0 contains the reviewed local outcomes; exact-gate
+contract3a1751d is independently accepted for design only by review SHA-256
+0d7e631ed3aad3630aa6bd296670735d93f24a4fa8160e4a17a4eed0164b66f5,
+bound atc5a1ba0. No additional scientific acceptance follows from that review.
+
+The source-derived candidate uses recovered mixed-linear strain plus nonlinear
+membrane strain, constitutive physical resultants, and a separately identified
+64-variable station saddle representation. It must prove unchanged physical
+potential and work on the actual affine-reference Procrustes image, not equality
+of unrestricted local operators or restoration of the rejected35-variable pair.
+This is not a numerical stabilization, coefficient change or public recovery edit.
+
+Independent producer/checker implementations and bounded driver are implemented.
+The exact gate covers3 fixtures,21375 ordered reduced-image coefficients and
+full stationary/Schur identities. Interim static review caught missing nonlinear
+Schur coverage and an implicit section-frame congruence; both are now explicitly
+checked, including all18 residual and324 tangent polynomial entries per station.
+No new proof, mechanics import or scientific test has executed at this checkpoint.
+Fourteen separate inert runner guards passed (0.128s); their injected fake-job
+failure is expected negative evidence, not a failed mechanics run. AST parsing
+is syntax validation only. Independent frozen implementation review,
+smoke, complete rehearsal and two formal cycles remain required.
+
+The final goal remains full physical recovery, mixed G3c and the entire parity
+matrix. Exact-gate success alone cannot set physical_recovery_qualified=true.

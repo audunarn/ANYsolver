@@ -32,6 +32,8 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(len(r.inventory('smoke','b2-adapter')),1)
         self.assertEqual(len(r.inventory('core','q4-audit')),5)
         self.assertEqual(len(r.inventory('smoke','q4-audit')),2)
+        self.assertEqual(len(r.inventory('core','q4-affine-exact')),6)
+        self.assertEqual(len(r.inventory('smoke','q4-affine-exact')),2)
         with self.assertRaises(ValueError):r.inventory('all')
 
     def test_strict_json(self):
@@ -106,6 +108,42 @@ class GuardTests(unittest.TestCase):
              patch.object(r,'authority',side_effect=AssertionError('wrong gate entered authority')):
             with self.assertRaises(ValueError):r.q4_checker(Path('.'),r.Q4_FIXTURES[0],'1','bad')
         self.assertNotIn('ge_beam3_q4_recovery_coefficient_checker',sys.modules)
+        with self.assertRaises(ValueError):r.q4_checker(Path('.'),r.Q4_FIXTURES[0],'1','bad','q4-affine-exact')
+        with patch.object(r,'read',return_value=r.canonical({'gate':'q4-audit','lane':'core'})), \
+             patch.object(r,'authority',side_effect=AssertionError('cross gate entered authority')):
+            with self.assertRaises(ValueError):r.q4_checker(Path('.'),r.AFFINE_FIXTURES[0],'1','bad','q4-affine-exact')
+        self.assertNotIn('ge_beam3_q4_affine_recovery_checker',sys.modules)
+
+    def test_affine_review_gate_binding(self):
+        candidate=dict(commit='a'*40,tree='b'*40);rows={}
+        value=dict(decision='ACCEPTED_GE_BEAM3_REGISTERED_GATE_FOR_BOUNDED_EXECUTION',findings=[],
+            reviewer=dict(independent=True),subject_commit=candidate['commit'],scope=dict(scope_id=r.SCOPE,
+            gate='q4-affine-exact',subject_tree=candidate['tree'],inputs_sha256=sha256(r.canonical(rows)).hexdigest(),
+            contract_sha256=r.AFFINE_PLAN_SHA))
+        raw=r.canonical(value);digest=sha256(raw).hexdigest()
+        r.verify_review(raw,digest,candidate,rows,'q4-affine-exact')
+        with self.assertRaises(ValueError):r.verify_review(raw,digest,candidate,rows,'q4-audit')
+
+    def test_affine_terminal_inventory_and_first_witness(self):
+        rows=[];zero={'coefficient':['0']*8}
+        for fixture in r.AFFINE_FIXTURES:
+            proof=dict(schema='GE_BEAM3_Q4_AFFINE_RECOVERY_EXACT_FIXTURE_V1',fixture_id=fixture,
+                coefficient_records=[zero]*7125,coefficient_count=7125,degree_counts={'3':1140,'4':5985},
+                nonzero_count=0,zero_count=7125,first_nonzero=None,physical_recovery_qualified=False,full_g3c_qualified=False)
+            verification=dict(fixture_id=fixture,coefficient_count=7125,nonzero_count=0,first_nonzero=None,
+                independently_verified=True,physical_recovery_qualified=False,full_g3c_qualified=False)
+            rows.append(dict(test=fixture,proof=proof,verification=verification,checker_replicas_byte_identical=True))
+        self.assertEqual(r.affine_adjudication(rows,'core')['coefficient_count'],21375)
+        self.assertEqual(r.affine_adjudication(rows,'core')['terminal'],'UNCLASSIFIED_G3C_Q4_AFFINE_RECOVERY_EXACT_IDENTITIES_ONLY')
+        witness={'coefficient':['1']+['0']*7}
+        for row in reversed(rows):
+            row['proof']['coefficient_records'][0]=witness
+            row['proof'].update(first_nonzero=witness,nonzero_count=1,zero_count=7124)
+            row['verification'].update(first_nonzero=witness,nonzero_count=1)
+            self.assertEqual(r.affine_adjudication(rows,'core')['first_nonzero']['fixture_id'],row['test'])
+        for wrong in (rows[::-1],rows[:-1],rows+rows[:1]):
+            with self.assertRaises(ValueError):r.affine_adjudication(wrong,'core')
+        self.assertEqual(r.affine_adjudication([],'smoke')['terminal'],'NOT_ADJUDICATED_SMOKE_ONLY')
 
     def test_q4_terminal_order_and_incomplete_rejection(self):
         # Inert decision-layer fixtures, not algebraic or scientific evidence.

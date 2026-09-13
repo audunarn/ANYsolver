@@ -18,7 +18,7 @@ sys.path.insert(0,str(ROOT/'scripts'))
 import ge_beam3_g3b_environment as environment
 
 SCOPE='GE_BEAM3_BOUNDED_REGISTERED_GATE_V2'
-BASE='22289a62fda9bb09def91c21b297b2cf06533a19'
+BASE='c5a1ba0d96e1a27ab8001259f4eb8fd1defa0501'
 CONTRACT='docs/reference_cases/ge_beam3_g3c_b2_physical_contract_v1.json'
 CONTRACT_SHA='6d202e2c25bc62c0987f090a7b5c092bc788318bbb37e27c1261e67af592996b'
 DESIGN_REVIEW='docs/reference_cases/ge_beam3_g3c_b2_physical_contract_review_v1.json'
@@ -30,21 +30,25 @@ JOB_SHA='c5b192c9c3f6ee2c68a42ab4a0cfbcdbe81581381b800c13aacce0bb219a3383'
 TEST='tests/test_ge_beam3_g3c_b2_physical_core.py'
 TESTS={'b2-core':(TEST,'numeric_core'),
        'b2-adapter':('tests/test_ge_beam3_g3c_b2_physical_adapter.py','adapter'),
-       'q4-audit':('tests/test_ge_beam3_q4_recovery_coefficient_audit.py','q4_audit')}
+       'q4-audit':('tests/test_ge_beam3_q4_recovery_coefficient_audit.py','q4_audit'),
+       'q4-affine-exact':('tests/test_ge_beam3_q4_affine_recovery.py','q4_affine')}
+AFFINE_TESTS=['test_affine_exact_arithmetic_and_schema','test_affine_source_and_representation_boundaries',
+              'test_affine_square_chart_polynomial','test_affine_rectangle_chart_polynomial',
+              'test_affine_rhombus_chart_polynomial','test_affine_stationary_schur_and_mutations']
+AFFINE_FIXTURES=('AFFINE_Q4_SQUARE','AFFINE_Q4_RECTANGLE','AFFINE_Q4_RHOMBUS')
+AFFINE_PLAN='docs/GE_BEAM3_Q4_AFFINE_CHART_RECOVERY_PLAN.md'
+AFFINE_PLAN_SHA='42abd8f6cae8131be9bc62869329e1000244675f005b9bef9660a54e3e239fc0'
+AFFINE_REVIEW='docs/reference_cases/ge_beam3_q4_affine_design_review_v1.json'
+AFFINE_REVIEW_SHA='0d7e631ed3aad3630aa6bd296670735d93f24a4fa8160e4a17a4eed0164b66f5'
 Q4_TESTS=['test_exact_field_laws_and_schema','test_registered_source_boundary',
           'test_square_coefficient_proof','test_rhombus_coefficient_proof','test_assembly_and_proof_mutations']
 Q4_FIXTURES=('MO16_SQUARE_EXACT','MO16_AFFINE_RHOMBUS_EXACT')
 Q4_PLAN_SHA='65f51816fe678acd38dffa9578f7cf2864d7cea518fc0e16e659899632cc3ce8'
 ALLOWED={
-    'src/anysolver/_ge_beam3_g3c_b2_physical_adapter.py',TESTS['b2-adapter'][0],
     'scripts/run_ge_beam3_qualification.py','tests/test_ge_beam3_qualification_runner.py',
     'docs/GE_BEAM3_QUALIFICATION_COMPLETION_REGISTER.md',
-    'docs/GE_BEAM3_B2_PHYSICAL_ADAPTER_PLAN.md','docs/GE_BEAM3_Q4_RECOVERY_COEFFICIENT_AUDIT_PLAN.md',
-    'docs/reference_cases/ge_beam3_q4_exact_field.py',
-    'docs/reference_cases/ge_beam3_q4_recovery_coefficient_producer.py',
-    'docs/reference_cases/ge_beam3_q4_recovery_coefficient_checker.py',
-    'docs/reference_cases/ge_beam3_8073635_integration_contract_review.json',
-    TESTS['q4-audit'][0],
+    'docs/reference_cases/ge_beam3_q4_affine_recovery_producer.py',
+    'docs/reference_cases/ge_beam3_q4_affine_recovery_checker.py',TESTS['q4-affine-exact'][0],
 }
 INTEGRATION_REVIEW='docs/reference_cases/ge_beam3_8073635_integration_contract_review.json'
 INTEGRATION_SHA='3be7021fd63a259cca5c48d0e6b47e6a261805f10b4909374f5a9610c17a7b59'
@@ -73,12 +77,13 @@ def inventory(lane,gate='b2-core'):
     if gate not in TESTS:raise ValueError('unregistered gate')
     test_path,inventory_key=TESTS[gate]
     contract=environment.strict(read(ROOT/CONTRACT).replace(b'\r\n',b'\n'))
-    names=Q4_TESTS if gate=='q4-audit' else contract['test_nodes'][inventory_key]
+    names=(AFFINE_TESTS if gate=='q4-affine-exact' else
+           Q4_TESTS if gate=='q4-audit' else contract['test_nodes'][inventory_key])
     tree=ast.parse(read(ROOT/test_path))
     actual=[n.name for n in tree.body if isinstance(n,ast.FunctionDef) and n.name.startswith('test_')]
     if actual!=names:raise ValueError('registered test inventory changed')
     if lane=='smoke':
-        names=[names[2],names[7]] if gate=='b2-core' else (names[:2] if gate=='q4-audit' else [names[0]])
+        names=[names[2],names[7]] if gate=='b2-core' else (names[:2] if gate in ('q4-audit','q4-affine-exact') else [names[0]])
     elif lane!='core':raise ValueError('unregistered lane')
     return [test_path+'::'+name for name in names]
 
@@ -91,7 +96,8 @@ def verify_review(raw,digest,candidate,rows,gate='b2-core'):
         or r['subject_commit']!=candidate['commit']
         or r['scope']!={'scope_id':SCOPE,'gate':gate,'subject_tree':candidate['tree'],
                         'inputs_sha256':sha256(canonical(rows)).hexdigest(),
-                        'contract_sha256':Q4_PLAN_SHA if gate=='q4-audit' else CONTRACT_SHA}):
+                        'contract_sha256':AFFINE_PLAN_SHA if gate=='q4-affine-exact' else
+                                         Q4_PLAN_SHA if gate=='q4-audit' else CONTRACT_SHA}):
         raise ValueError('implementation review authority')
     return r
 
@@ -112,6 +118,15 @@ def authority(review_path,review_sha,gate='b2-core'):
     for path,key in (('docs/GE_BEAM3_B2_PHYSICAL_ADAPTER_PLAN.md','b2_adapter_plan_sha256'),
                      ('docs/GE_BEAM3_Q4_RECOVERY_COEFFICIENT_AUDIT_PLAN.md','q4_audit_plan_sha256')):
         if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=design['scope'][key]:raise ValueError('integration plan changed')
+    if gate=='q4-affine-exact':
+        for path,digest in ((AFFINE_PLAN,AFFINE_PLAN_SHA),(AFFINE_REVIEW,AFFINE_REVIEW_SHA)):
+            if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:raise ValueError('affine design authority')
+        affine=environment.strict(read(ROOT/AFFINE_REVIEW).replace(b'\r\n',b'\n'))
+        if (set(affine)!={'decision','findings','reviewer','scope','subject_commit'}
+            or affine['decision']!='ACCEPTED_GE_BEAM3_Q4_AFFINE_EXACT_GATE_DESIGN_ONLY' or affine['findings']
+            or affine['reviewer'].get('independent') is not True
+            or affine['scope'].get('gate')!='q4-affine-exact' or affine['scope'].get('plan_sha256')!=AFFINE_PLAN_SHA):
+            raise ValueError('affine independent design acceptance')
     inventory('core',gate)
     rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows,gate)
     environment.verify(CAPSULE,CAPSULE_SHA)
@@ -165,6 +180,31 @@ def q4_adjudication(records,lane):
                 first_nonzero=witness,coefficient_count=40300,recovery_qualified=False,
                 universal_impossibility_claim=False)
 
+
+def affine_adjudication(records,lane):
+    if lane=='smoke':return dict(terminal='NOT_ADJUDICATED_SMOKE_ONLY',physical_recovery_qualified=False)
+    rows=[row for row in records if row.get('test') in AFFINE_FIXTURES]
+    if [row['test'] for row in rows]!=list(AFFINE_FIXTURES):raise ValueError('affine fixture inventory')
+    first=None
+    for row in rows:
+        p,v=row['proof'],row['verification']
+        nonzero=[r for r in p['coefficient_records'] if any(x!='0' for x in r['coefficient'])]
+        witness=nonzero[0] if nonzero else None
+        if (p['schema']!='GE_BEAM3_Q4_AFFINE_RECOVERY_EXACT_FIXTURE_V1'
+            or p['fixture_id']!=row['test'] or len(p['coefficient_records'])!=7125 or p['coefficient_count']!=7125
+            or p['degree_counts']!={'3':1140,'4':5985}
+            or p['nonzero_count']!=len(nonzero) or p['zero_count']!=7125-len(nonzero)
+            or p['first_nonzero']!=witness or v!={'fixture_id':row['test'],'coefficient_count':7125,
+                'nonzero_count':len(nonzero),'first_nonzero':witness,'independently_verified':True,
+                'physical_recovery_qualified':False,'full_g3c_qualified':False}
+            or row['checker_replicas_byte_identical'] is not True
+            or p['physical_recovery_qualified'] is not False or p['full_g3c_qualified'] is not False):
+            raise ValueError('affine adjudication authority')
+        if first is None and witness is not None:first=dict(fixture_id=row['test'],coefficient=witness)
+    return dict(terminal='NO_GO_G3C_Q4_AFFINE_RECOVERY_VARIATIONAL_IDENTITY' if first else
+                'UNCLASSIFIED_G3C_Q4_AFFINE_RECOVERY_EXACT_IDENTITIES_ONLY',first_nonzero=first,
+                coefficient_count=21375,physical_recovery_qualified=False,full_g3c_qualified=False)
+
 def job_type():
     spec=importlib.util.spec_from_file_location('beam_bounded_job',ROOT/JOB)
     m=importlib.util.module_from_spec(spec);sys.modules[spec.name]=m;spec.loader.exec_module(m)
@@ -203,18 +243,21 @@ def worker(out,lease_sha):
                     candidate=lease['candidate'],selected=lease['selected'],records=records,
                     full_g3c_qualified=False,production_qualified=False)
     if lease['gate']=='q4-audit':scientific['adjudication']=q4_adjudication(records,lease['lane'])
+    if lease['gate']=='q4-affine-exact':scientific['adjudication']=affine_adjudication(records,lease['lane'])
     write(out/'scientific.pending.json',scientific)
     write(out/'completion.json',dict(selected=recorder.passed,scientific=fingerprint(read(out/'scientific.pending.json'))))
     print('BEAM CHECKPOINT evidence complete',flush=True)
     return 0
 
 
-def q4_checker(out,fixture,replica,proof_sha):
+def q4_checker(out,fixture,replica,proof_sha,gate='q4-audit'):
     """Independent fresh checker process inside the parent Windows job tree."""
-    if fixture not in Q4_FIXTURES or replica not in ('1','2'):raise ValueError('checker identity')
+    if gate not in ('q4-audit','q4-affine-exact'):raise ValueError('checker gate')
+    fixtures=AFFINE_FIXTURES if gate=='q4-affine-exact' else Q4_FIXTURES
+    if fixture not in fixtures or replica not in ('1','2'):raise ValueError('checker identity')
     lease=environment.strict(read(out/'lease.json'))
-    if lease['gate']!='q4-audit' or lease['lane']!='core':raise ValueError('checker gate authority')
-    expected=authority(out/'review.json',lease['review_sha256'],'q4-audit')
+    if lease['gate']!=gate or lease['lane']!='core':raise ValueError('checker gate authority')
+    expected=authority(out/'review.json',lease['review_sha256'],gate)
     validate_lease(lease,expected,lease['review_sha256'],'core',out)
     if any(os.environ.get(key)!='1' for key in THREADS):raise ValueError('checker thread authority')
     directory=out/fixture
@@ -224,11 +267,15 @@ def q4_checker(out,fixture,replica,proof_sha):
     proof=environment.strict(proof_raw)
     if canonical(proof)!=proof_raw or proof.get('fixture_id')!=fixture:raise ValueError('canonical proof authority')
     sys.path.insert(0,str(ROOT/'docs/reference_cases'))
-    from ge_beam3_q4_recovery_coefficient_checker import verify
+    if gate=='q4-affine-exact':
+        from ge_beam3_q4_affine_recovery_checker import verify
+    else:
+        from ge_beam3_q4_recovery_coefficient_checker import verify
     result=verify(proof,lambda message:print('BEAM CHECKPOINT '+message,flush=True))
     if read(directory/'proof.json')!=proof_raw:raise ValueError('checker proof changed')
-    if authority(out/'review.json',lease['review_sha256'],'q4-audit')!=expected:raise ValueError('checker final authority')
-    write(directory/('checker'+replica+'.json'),dict(schema='GE_BEAM3_Q4_CHECKER_RESULT_V1',
+    if authority(out/'review.json',lease['review_sha256'],gate)!=expected:raise ValueError('checker final authority')
+    schema='GE_BEAM3_Q4_AFFINE_CHECKER_RESULT_V1' if gate=='q4-affine-exact' else 'GE_BEAM3_Q4_CHECKER_RESULT_V1'
+    write(directory/('checker'+replica+'.json'),dict(schema=schema,
         candidate=expected[0],inputs_sha256=sha256(canonical(expected[1])).hexdigest(),
         proof_sha256=proof_sha,verification=result))
     print('BEAM CHECKPOINT checker complete',flush=True)
@@ -298,13 +345,15 @@ def execute_guarded(args,watchdog):
             pending=read(out/'scientific.pending.json');science=environment.strict(pending)
             if (completion!={'selected':lease['selected'],'scientific':fingerprint(pending)}
                 or set(science)!=({'schema','gate','lane','candidate','selected','records','full_g3c_qualified','production_qualified'}
-                                  | ({'adjudication'} if lease['gate']=='q4-audit' else set()))
+                                  | ({'adjudication'} if lease['gate'] in ('q4-audit','q4-affine-exact') else set()))
                 or science['schema']!='GE_BEAM3_REGISTERED_GATE_SCIENCE_V2' or science['gate']!=lease['gate']
                 or science['lane']!=lease['lane'] or type(science['records']) is not list or not science['records']
                 or science['candidate']!=lease['candidate'] or science['selected']!=lease['selected']
                 or science['full_g3c_qualified'] or science['production_qualified']):raise ValueError('completion mismatch')
             if lease['gate']=='q4-audit' and canonical(science['adjudication'])!=canonical(q4_adjudication(science['records'],lease['lane'])):
                 raise ValueError('Q4 terminal mismatch')
+            if lease['gate']=='q4-affine-exact' and canonical(science['adjudication'])!=canonical(affine_adjudication(science['records'],lease['lane'])):
+                raise ValueError('affine terminal mismatch')
             if authority(args.review,args.review_sha256,args.gate)!=expected:raise ValueError('coordinator final authority')
             if time.monotonic()-wave_start>=1800:raise ValueError('wave deadline')
     except BaseException as exc:
@@ -334,6 +383,8 @@ def main():
     if len(sys.argv)==4 and sys.argv[1]=='--worker':return worker(Path(sys.argv[2]),sys.argv[3])
     if len(sys.argv)==6 and sys.argv[1]=='--q4-checker':
         return q4_checker(Path(sys.argv[2]),sys.argv[3],sys.argv[4],sys.argv[5])
+    if len(sys.argv)==6 and sys.argv[1]=='--q4-affine-checker':
+        return q4_checker(Path(sys.argv[2]),sys.argv[3],sys.argv[4],sys.argv[5],'q4-affine-exact')
     if os.name!='nt':raise ValueError('Windows process-tree execution required')
     parser=argparse.ArgumentParser()
     parser.add_argument('--gate',choices=list(TESTS),required=True)
