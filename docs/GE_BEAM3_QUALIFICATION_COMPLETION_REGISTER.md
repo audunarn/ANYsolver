@@ -1173,3 +1173,31 @@ accepted the corrected rehearsal only with empty findings. It authorizes
 preparation of a separately frozen formal G3c campaign. Formal execution,
 production qualification, default routing, release and publication remain
 unauthorized.
+
+The grouped formal-harness implementation was corrected through commits
+`84cd85d6e0b431b09355714595a8036aa6efdef9` and
+`b99cbbb28a1ebc5c3ff3d3f1021ce927e7d4c5c3`, tree
+`4597b1d192f8294ce7f6ec6b3e9e9120db9651c4`. Its 54 inert runner guards pass.
+The final independent implementation review has no findings and accepts only
+bounded nonclassifying measurement; direct formal execution remains locked.
+
+The registered 12-shard measurement completed with all processes drained in
+1,238.878 seconds. Its process record is 4,844 bytes, SHA-256
+`39cdf5cc930b18fde3d0baf906c7f218589deab4f2c639efb772fc3d298a7384`;
+the measured partition SHA-256 is
+`22badb41f51e8939366220d25c47dae306804236bc64102057a803a63b027a41`,
+and the independently reproduced validation SHA-256 is
+`c43b6716c7eeb4b991b154f153ffa785215db977550363de8ad6aef2dc020141`.
+The first review attempt could not read the Windows Temp ACL and is preserved
+as access incident MR01. An unchanged accessible copy contained 130 files and
+4,812,281 bytes; the second independent review validated every shard DAG and
+confirmed that no formal aggregate or classification was published.
+
+Measured producer times were 139, 156 and 221 seconds. One/two/three-prefix
+times were respectively 110/191/270 seconds for B2, 115/199/282 seconds for
+Q4, and 172/311/444 seconds for the multifamily loop. Independent review
+recommends at most two contiguous prefixes for an unoptimized partition and
+estimates 88--144 hours for two cycles with planning reserve. Formal dispatch
+is therefore withheld. A separately frozen runtime optimization must preserve
+all 3,825 assignments, fresh-owner restart semantics, tolerances and science;
+MO08 and the independent formal evidence checker also remain open.
