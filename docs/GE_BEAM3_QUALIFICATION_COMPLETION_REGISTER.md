@@ -1093,3 +1093,32 @@ registered diagnostic logs. Rehashed-foreign-packet, divergent-chain,
 extra-root and extra-node mutations are covered. Thirty-eight isolated inert
 guards pass. A new clean freeze and independent review are required before any
 smoke or local mechanics rerun.
+
+The accepted successor freeze `f6a62518be52a414604aa5e1beddd4601093faca`,
+tree `1230eea2b64ca6e585ad23b389e514f1d5c493c4`, passed its smoke, local,
+`R-HISTORY`, and four positive prefix partitions. The inherited canonical
+evidence is preserved under its exact closed-world receipts and review SHA-256
+`52f8df02bd22c635bf828bf93190a34ec1463b20268a1a822e4e0f3c6c042eaf`.
+Its original `R-GUARDS` process stopped at assignment 157 because the registered
+null diagnostic mutation was passed through a string-only test constructor.
+That test-construction incident is preserved and is not a mechanics result.
+
+The no-source correction fixed that mutation constructor and added exact
+dual-runtime replay authority. The corrected monolithic guard rehearsal from
+commit `4ae10aeb156016cfab730ece84389f624345b6ef` passed assignments 90 through
+217, including former failure 157, but its parent process was externally
+interrupted while assignments 218 through 220 were actively checkpointing. It
+created no root process, scientific, or receipt record. Its immutable diagnostic
+tree contains 1,039 files and 67,930,103 bytes with canonical manifest SHA-256
+`cdaaf2feeb38ba4e771c55ef66d9ff8ad32536fd9fea98fc2dff812910518ba6`.
+No child result from this interrupted wave is accepted or reused.
+
+The independently accepted recovery design freezes six serial, disjoint
+24-assignment guard segments covering exactly 90 through 233. Each later
+segment binds all earlier accepted segment receipts, preserving the shared
+three-worker ceiling. Exact assignment-slice hashes and segment-manifest
+SHA-256 `8ae0c6560960ef9bf9035838abb5daae056372d7aae0f9426945330a898bf477`
+prevent regrouping. A no-mechanics guard finalizer combines the six accepted
+segments, after which the existing no-mechanics correction union may combine
+records 0 through 233. This remains rehearsal-only and retains
+`full_g3c_qualified=false` and `production_qualified=false`.

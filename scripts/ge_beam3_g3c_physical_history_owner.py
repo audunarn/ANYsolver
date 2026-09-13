@@ -26,19 +26,26 @@ GRAPHS=('J_B2_PAIR','J_B3_PAIR','J_Q4_PAIR','J_S3_PAIR','J_MULTIFAMILY_LOOP')
 VARIANTS=('BASE','SHUFFLED_INSERTION','RENUMBERED','CONNECTIVITY_REVERSED','PROPER_GLOBAL_TRANSFORM')
 SCALES=(.01,1.,10.)
 MOTIONS=('NONE','CM0','CM1','CM2','CM3')
-CORRECTION_COMPATIBILITY_SCHEMA='GE_BEAM3_G3C_PHYSICAL_RUNTIME_COMPATIBILITY_V2'
+CORRECTION_COMPATIBILITY_SCHEMA='GE_BEAM3_G3C_PHYSICAL_RUNTIME_COMPATIBILITY_V3'
 CORRECTION_PREDECESSOR_RUNTIME='41a0dddda886672479294953871e83be3073ed38e129e12f3fa210bfbf3ce87c'
 CORRECTION_ADDENDUM_SHA='2c03f72a0e9c50c6a22fe5b7f47fd66f786aa3eadc23bedeb4dab1f2045a8696'
 CORRECTION_DESIGN_REVIEW_SHA='0fbaedb533e501a5136407d5dc039b5393b4bbf53064c273c7e974917ba9fec9'
 CORRECTION_REVISION_SHA='dae0dd3081ff45ab66a266b2706bdee6049e556d01c09003de2ba1749ce0be76'
 CORRECTION_REVISION_REVIEW_SHA='339367400bc48eeb07eb09eca353097297e7dae2907f23ae53b53dab5199c26b'
+CORRECTION_RECOVERY_SHA='faabb5d96fd7e2fbd74f115a46e050dcb27df6bf05db9f7d5ce91d8ee5017bdd'
+CORRECTION_RECOVERY_REVIEW_SHA='f20539245dae880b332905a5e86cde3a42a840dbaa6a7b14731b7946a0b5498b'
+CORRECTION_GUARD_SEGMENT_MANIFEST_SHA='8ae0c6560960ef9bf9035838abb5daae056372d7aae0f9426945330a898bf477'
 CORRECTION_UNCHANGED_INPUTS_SHA='0a65262c4a016fbdaba8261f98efe2a04c66c15a2e84cfc973bba19ac06db623'
 CORRECTION_ALLOWED_CHANGED_PATHS=(
     'docs/GE_BEAM3_G3C_PHYSICAL_CORRECTION_INHERITANCE_ADDENDUM.md',
     'docs/GE_BEAM3_G3C_PHYSICAL_CORRECTION_INHERITANCE_V2.md',
+    'docs/GE_BEAM3_G3C_PHYSICAL_CORRECTION_PARTITION_RECOVERY_V3.md',
     'docs/reference_cases/ge_beam3_g3c_physical_correction_inheritance_review_v1.json',
     'docs/reference_cases/ge_beam3_g3c_physical_correction_inheritance_v2_review.json',
     'docs/reference_cases/ge_beam3_g3c_physical_correction_inheritance_v2_review_v2.json',
+    'docs/reference_cases/ge_beam3_g3c_physical_correction_partition_recovery_review_v3.json',
+    'docs/reference_cases/ge_beam3_g3c_physical_correction_partition_recovery_review_v3_correction.json',
+    'docs/reference_cases/ge_beam3_g3c_physical_correction_partition_recovery_review_v3_initial.json',
     'scripts/ge_beam3_g3c_correction_lease_binding.py',
     'scripts/ge_beam3_g3c_physical_history_owner.py',
     'scripts/ge_beam3_g3c_rehearsal_mutations.py',
@@ -118,7 +125,8 @@ def validate_runtime_compatibility(value, expected_runtime, live_runtime):
     """Admit only the exact token retained by the captured validated lease."""
     keys={'schema','mode','predecessor','successor','addendum_sha256','design_review_sha256',
           'revision_sha256','revision_review_sha256','unchanged_inputs_sha256',
-          'allowed_changed_paths','self_sha256'}
+          'partition_recovery_sha256','partition_recovery_review_sha256',
+          'guard_segment_manifest_sha256','allowed_changed_paths','self_sha256'}
     if type(value)is not dict or set(value)!=keys:raise ValueError('runtime compatibility schema')
     body={key:item for key,item in value.items()if key!='self_sha256'}
     predecessor=value.get('predecessor');successor=value.get('successor')
@@ -136,6 +144,9 @@ def validate_runtime_compatibility(value, expected_runtime, live_runtime):
         or value.get('design_review_sha256')!=CORRECTION_DESIGN_REVIEW_SHA
         or value.get('revision_sha256')!=CORRECTION_REVISION_SHA
         or value.get('revision_review_sha256')!=CORRECTION_REVISION_REVIEW_SHA
+        or value.get('partition_recovery_sha256')!=CORRECTION_RECOVERY_SHA
+        or value.get('partition_recovery_review_sha256')!=CORRECTION_RECOVERY_REVIEW_SHA
+        or value.get('guard_segment_manifest_sha256')!=CORRECTION_GUARD_SEGMENT_MANIFEST_SHA
         or value.get('unchanged_inputs_sha256')!=CORRECTION_UNCHANGED_INPUTS_SHA
         or type(value.get('allowed_changed_paths'))is not list
         or value.get('allowed_changed_paths')!=list(CORRECTION_ALLOWED_CHANGED_PATHS)

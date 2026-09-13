@@ -95,6 +95,9 @@ def test_runtime_compatibility_negatives():
         changed=copy.deepcopy(base);changed[field][key]=replacement
         changed['self_sha256']=p.digest({k:v for k,v in changed.items()if k!='self_sha256'});attacks.append(changed)
     for key,replacement in (('mode','FOREIGN'),('unchanged_inputs_sha256','0'*64),
+                            ('partition_recovery_sha256','0'*64),
+                            ('partition_recovery_review_sha256','0'*64),
+                            ('guard_segment_manifest_sha256','0'*64),
                             ('allowed_changed_paths',base['allowed_changed_paths'][:-1])):
         changed=copy.deepcopy(base);changed[key]=replacement
         changed['self_sha256']=p.digest({k:v for k,v in changed.items()if k!='self_sha256'});attacks.append(changed)

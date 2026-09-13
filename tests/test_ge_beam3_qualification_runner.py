@@ -168,6 +168,17 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(r.physical_partition_prerequisite_ids('R-GUARDS'),list(r.PHYSICAL_PARTITION_IDS[:-1]))
         with self.assertRaises(ValueError):r.physical_partition_spec('FOREIGN')
 
+        segments=r.physical_correction_guard_segment_manifest(rows);segment_coverage=[]
+        self.assertEqual(sha256(r.canonical(segments)).hexdigest(),r.PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA)
+        for expected_id,(segment_id,indices,digest),actual in zip(
+                r.PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS,r.PHYSICAL_CORRECTION_GUARD_SEGMENTS,segments['segments']):
+            self.assertEqual(expected_id,segment_id);self.assertEqual(actual['segment_id'],segment_id)
+            self.assertEqual(actual['indices'],list(indices));segment_coverage.extend(indices)
+            self.assertEqual(actual['assignment_sha256'],digest)
+            self.assertEqual(sha256(r.canonical([rows[i] for i in indices])).hexdigest(),digest)
+        self.assertEqual(segment_coverage,list(range(90,234)))
+        with self.assertRaises(ValueError):r.physical_correction_guard_segment_spec('FOREIGN')
+
     def test_physical_rehearsal_partition_mode_is_explicit(self):
         expected=({'commit':'a','tree':'b'},{},b'{}\n');watchdog=SimpleNamespace()
         def arguments(lane,partition_id=None,finalize=False):
@@ -180,16 +191,21 @@ class GuardTests(unittest.TestCase):
 
     def test_physical_correction_mode_is_exact_and_correction_only(self):
         expected=({'commit':'a','tree':'b'},{},b'{}\n');watchdog=SimpleNamespace()
-        def arguments(partition_id=None,finalize=False,lane='rehearsal',failed=Path('failed.json')):
+        def arguments(partition_id=None,finalize=False,lane='rehearsal',failed=Path('failed.json'),
+                      interrupted=Path('interrupted'),segment=None,finalize_segments=False):
             return SimpleNamespace(review=Path('review.json'),review_sha256='c'*64,lane=lane,prior=[],
                 partition_id=partition_id,finalize_partitions=finalize,inherit_correction=True,
-                failed_guards_process=failed)
+                failed_guards_process=failed,interrupted_guards_root=interrupted,
+                guard_segment_id=segment,finalize_guard_segments=finalize_segments)
         with patch.object(r,'authority',return_value=expected):
             for args in (arguments(),arguments('R-PREFIX-D'),arguments('R-GUARDS',True),
-                         arguments('R-GUARDS',lane='formal'),arguments('R-GUARDS',failed=None)):
+                         arguments('R-GUARDS',lane='formal'),arguments('R-GUARDS',failed=None),
+                         arguments('R-GUARDS',interrupted=None),arguments('R-GUARDS')):
                 with self.assertRaises(ValueError):r.execute_physical(args,watchdog)
-            with patch.object(r,'execute_physical_correction_guards',return_value=17) as guards:
-                self.assertEqual(r.execute_physical(arguments('R-GUARDS'),watchdog),17);guards.assert_called_once()
+            with patch.object(r,'execute_physical_correction_guard_segment',return_value=17) as segment:
+                self.assertEqual(r.execute_physical(arguments('R-GUARDS',segment='R-GUARDS-A'),watchdog),17);segment.assert_called_once()
+            with patch.object(r,'execute_physical_correction_guard_union',return_value=18) as guards:
+                self.assertEqual(r.execute_physical(arguments('R-GUARDS',finalize_segments=True),watchdog),18);guards.assert_called_once()
             with patch.object(r,'execute_physical_correction_union',return_value=19) as union:
                 self.assertEqual(r.execute_physical(arguments(finalize=True),watchdog),19);union.assert_called_once()
 
@@ -203,6 +219,9 @@ class GuardTests(unittest.TestCase):
             design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
             revision_sha256=r.PHYSICAL_CORRECTION_REVISION_SHA,
             revision_review_sha256=r.PHYSICAL_CORRECTION_REVISION_REVIEW_SHA,
+            partition_recovery_sha256=r.PHYSICAL_CORRECTION_RECOVERY_SHA,
+            partition_recovery_review_sha256=r.PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA,
+            guard_segment_manifest_sha256=r.PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
             unchanged_inputs_sha256=r.PHYSICAL_CORRECTION_UNCHANGED_INPUTS_SHA,
             allowed_changed_paths=sorted(r.PHYSICAL_CORRECTION_CHANGED_PATHS))
         value=dict(body,self_sha256=support.packet.digest(body))
@@ -218,6 +237,7 @@ class GuardTests(unittest.TestCase):
                 lambda x:x['successor'].__setitem__('review_sha256','0'*64),
                 lambda x:x.__setitem__('mode','FOREIGN'),
                 lambda x:x.__setitem__('unchanged_inputs_sha256','0'*64),
+                lambda x:x.__setitem__('guard_segment_manifest_sha256','0'*64),
                 lambda x:x.__setitem__('allowed_changed_paths',x['allowed_changed_paths'][:-1]),
                 lambda x:x.__setitem__('self_sha256','0'*64)):
                 bad=copy.deepcopy(value);mutate(bad)
@@ -287,7 +307,9 @@ class GuardTests(unittest.TestCase):
 
     def test_physical_union_finalizer_has_no_mechanics_import(self):
         source=(Path(r.__file__).read_text(encoding='utf-8'))
-        tree=ast.parse(source);names={'execute_physical_union','physical_validate_union','physical_union_records'}
+        tree=ast.parse(source);names={'execute_physical_union','physical_validate_union','physical_union_records',
+            'execute_physical_correction_guard_union','physical_validate_correction_guards',
+            'execute_physical_correction_union','physical_validate_correction_union'}
         selected=[node for node in tree.body if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)) and node.name in names]
         self.assertEqual({node.name for node in selected},names)
         self.assertFalse(any(isinstance(node,(ast.Import,ast.ImportFrom)) for fn in selected for node in ast.walk(fn)))
@@ -307,9 +329,12 @@ class GuardTests(unittest.TestCase):
             correction_design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
             correction_revision_sha256=r.PHYSICAL_CORRECTION_REVISION_SHA,
             correction_revision_review_sha256=r.PHYSICAL_CORRECTION_REVISION_REVIEW_SHA,
+            correction_partition_recovery_sha256=r.PHYSICAL_CORRECTION_RECOVERY_SHA,
+            correction_partition_recovery_review_sha256=r.PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA,
+            correction_guard_segment_manifest_sha256=r.PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
             predecessor_commit=r.PHYSICAL_PREDECESSOR['commit'],
             predecessor_runtime_sha256=r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,
-            correction_inheritance_authorized=True)
+            correction_inheritance_authorized=True,correction_partition_recovery_authorized=True)
         review=dict(decision='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT',findings=[],
             reviewer=dict(independent=True),scope=scope,subject_commit=candidate['commit'])
         raw=r.canonical(review);digest=sha256(raw).hexdigest()
@@ -335,9 +360,12 @@ class GuardTests(unittest.TestCase):
             correction_design_review_sha256=r.PHYSICAL_CORRECTION_REVIEW_SHA,
             correction_revision_sha256=r.PHYSICAL_CORRECTION_REVISION_SHA,
             correction_revision_review_sha256=r.PHYSICAL_CORRECTION_REVISION_REVIEW_SHA,
+            correction_partition_recovery_sha256=r.PHYSICAL_CORRECTION_RECOVERY_SHA,
+            correction_partition_recovery_review_sha256=r.PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA,
+            correction_guard_segment_manifest_sha256=r.PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
             predecessor_commit=r.PHYSICAL_PREDECESSOR['commit'],
             predecessor_runtime_sha256=r.PHYSICAL_PREDECESSOR_RUNTIME_SHA,
-            correction_inheritance_authorized=True)
+            correction_inheritance_authorized=True,correction_partition_recovery_authorized=True)
         review=dict(decision='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT',findings=[],
             reviewer=dict(independent=True),scope=scope,subject_commit=candidate['commit'])
         review_raw=r.canonical(review);inventory=r.physical_inventory('local')

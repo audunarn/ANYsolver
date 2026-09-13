@@ -60,6 +60,14 @@ PHYSICAL_CORRECTION_REVISION_SHA='dae0dd3081ff45ab66a266b2706bdee6049e556d01c090
 PHYSICAL_CORRECTION_REVISION_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_correction_inheritance_v2_review_v2.json'
 PHYSICAL_CORRECTION_REVISION_REVIEW_SHA='339367400bc48eeb07eb09eca353097297e7dae2907f23ae53b53dab5199c26b'
 PHYSICAL_CORRECTION_SUPERSEDED_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_correction_inheritance_v2_review.json'
+PHYSICAL_CORRECTION_RECOVERY='docs/GE_BEAM3_G3C_PHYSICAL_CORRECTION_PARTITION_RECOVERY_V3.md'
+PHYSICAL_CORRECTION_RECOVERY_SHA='faabb5d96fd7e2fbd74f115a46e050dcb27df6bf05db9f7d5ce91d8ee5017bdd'
+PHYSICAL_CORRECTION_RECOVERY_INITIAL_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_correction_partition_recovery_review_v3_initial.json'
+PHYSICAL_CORRECTION_RECOVERY_INITIAL_REVIEW_SHA='55d018012f19aec71ffdcf30b695ae815eabb2c443621756be2936accf7f844f'
+PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_correction_partition_recovery_review_v3.json'
+PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW_SHA='42240ff0a21dc322f97703edf8a5c1e483e3d3ee0d8579bf4b5c99cf4db8656f'
+PHYSICAL_CORRECTION_RECOVERY_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_correction_partition_recovery_review_v3_correction.json'
+PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA='f20539245dae880b332905a5e86cde3a42a840dbaa6a7b14731b7946a0b5498b'
 PHYSICAL_CORRECTION_UNCHANGED_INPUTS_SHA='0a65262c4a016fbdaba8261f98efe2a04c66c15a2e84cfc973bba19ac06db623'
 PHYSICAL_PREDECESSOR={'commit':'f6a62518be52a414604aa5e1beddd4601093faca',
     'tree':'1230eea2b64ca6e585ad23b389e514f1d5c493c4'}
@@ -73,6 +81,15 @@ PHYSICAL_PARTITIONS=(
     ('R-PREFIX-D',tuple(range(70,90)),'10d5cd0ca3a3529605f02f12d0b821c801cd4cce564f85d74830c158b3ad741e'),
     ('R-GUARDS',tuple(range(90,234)),'e597616542d6bf5a323b1cd12b7e3c0517d726eab812118b8ec63548c5429827'))
 PHYSICAL_PARTITION_IDS=tuple(row[0] for row in PHYSICAL_PARTITIONS)
+PHYSICAL_CORRECTION_GUARD_SEGMENTS=(
+    ('R-GUARDS-A',tuple(range(90,114)),'6981dc38e504841a158b7f9e747e33cf0e94d7c9736fdee60c276fb12792fd98'),
+    ('R-GUARDS-B',tuple(range(114,138)),'761a4c222e150bccc9f501ebcc64c150855d8d63bee2c30e03c4239355bc95af'),
+    ('R-GUARDS-C',tuple(range(138,162)),'c6f2002fec928892800c1d61b60ea2822e5c8c838a700ce8d6b4dd96a015b518'),
+    ('R-GUARDS-D',tuple(range(162,186)),'1eac165b1ad6a6dae98c5302949738a387d476497b62c3f7482e4408eaaa4b1c'),
+    ('R-GUARDS-E',tuple(range(186,210)),'8046ab0073bf7128568cb62a33e7286432edf18a8ea52f0e0b1940260b059c63'),
+    ('R-GUARDS-F',tuple(range(210,234)),'2bece23cb08bafb2bdee82f97c7245dc03429b4c1e6a65293907bfc0ad69b37c'))
+PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS=tuple(row[0] for row in PHYSICAL_CORRECTION_GUARD_SEGMENTS)
+PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA='8ae0c6560960ef9bf9035838abb5daae056372d7aae0f9426945330a898bf477'
 PHYSICAL_OWNER_TEST='tests/test_ge_beam3_g3c_physical_owner.py'
 PHYSICAL_HISTORY_TEST='tests/test_ge_beam3_g3c_physical_history_restart.py'
 PHYSICAL_CORRECTION_TEST='tests/test_ge_beam3_g3c_physical_correction_guards.py'
@@ -90,6 +107,8 @@ PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     'tests/test_ge_beam3_g3c_rehearsal_mutations_static.py',
     PHYSICAL_CORRECTION_ADDENDUM,PHYSICAL_CORRECTION_REVIEW,
     PHYSICAL_CORRECTION_REVISION,PHYSICAL_CORRECTION_REVISION_REVIEW,PHYSICAL_CORRECTION_SUPERSEDED_REVIEW,
+    PHYSICAL_CORRECTION_RECOVERY,PHYSICAL_CORRECTION_RECOVERY_INITIAL_REVIEW,
+    PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW,PHYSICAL_CORRECTION_RECOVERY_REVIEW,
     'scripts/ge_beam3_g3c_correction_lease_binding.py',
     'scripts/ge_beam3_g3c_physical_history_owner.py',PHYSICAL_CORRECTION_TEST}
 PHYSICAL_CORRECTION_CHANGED_PATHS={
@@ -97,6 +116,8 @@ PHYSICAL_CORRECTION_CHANGED_PATHS={
     'tests/test_ge_beam3_g3c_rehearsal_mutations_static.py',
     PHYSICAL_CORRECTION_ADDENDUM,PHYSICAL_CORRECTION_REVIEW,
     PHYSICAL_CORRECTION_REVISION,PHYSICAL_CORRECTION_REVISION_REVIEW,PHYSICAL_CORRECTION_SUPERSEDED_REVIEW,
+    PHYSICAL_CORRECTION_RECOVERY,PHYSICAL_CORRECTION_RECOVERY_INITIAL_REVIEW,
+    PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW,PHYSICAL_CORRECTION_RECOVERY_REVIEW,
     'scripts/ge_beam3_g3c_correction_lease_binding.py',
     'scripts/ge_beam3_g3c_physical_history_owner.py',PHYSICAL_CORRECTION_TEST,
     'scripts/run_ge_beam3_qualification.py','tests/test_ge_beam3_qualification_runner.py'}
@@ -109,6 +130,8 @@ PHYSICAL_INHERITED_FINGERPRINTS={
  'R-PREFIX-C':(('scientific.json',18910,'756fdff456cafd5edcdb74cfeb580fd2248cd14c6a63cc3f609692ead744a8e7'),('receipt.json',13993,'22a7fe753f730d8436ef008e39d23becc4c1b26c03b3b6bd8a2ae78f332b0e9a'),('process.json',21424,'6092e155a02a439b29f480fece584eabb994b08fe934066aafeae009f4b389cc')),
  'R-PREFIX-D':(('scientific.json',19342,'b1ddc241a233d9e4b93748351401f72e168623dd13067159ab8c69b9a1f06414'),('receipt.json',14507,'c7d42b1321d58c1f787278b86595e1429679bd67ed97aa158fa23c4c215e2b64'),('process.json',21433,'6b04c405a87761384bb8ccdb81a847b83a52f1f49baae86ffe859ff5b16797c7'))}
 PHYSICAL_FAILED_GUARDS_FINGERPRINT={'bytes':75379,'sha256':'7fd9a5ce935a5018c9e0656f3ddc56c279fe077399d0891a46025da79dd22903'}
+PHYSICAL_INTERRUPTED_GUARDS_MANIFEST={'files':1039,'bytes':67930103,
+    'sha256':'cdaaf2feeb38ba4e771c55ef66d9ff8ad32536fd9fea98fc2dff812910518ba6'}
 NUMERICAL_PLAN='docs/GE_BEAM3_Q4_AFFINE_NUMERICAL_RECOVERY_CONTRACT.md'
 NUMERICAL_PLAN_SHA='21cec54b2469e291c8f90a2c042e3cf693a14f7bc10efd5111ea842ca65a218c'
 NUMERICAL_REVIEW='docs/reference_cases/ge_beam3_q4_affine_numerical_design_review_v1.json'
@@ -342,6 +365,29 @@ def physical_partition_prerequisite_ids(partition_id):
     ordinal,_=physical_partition_spec(partition_id)
     return list(PHYSICAL_PARTITION_IDS[:ordinal])
 
+def physical_correction_guard_segment_manifest(inventory_rows=None):
+    rows=physical_inventory('rehearsal') if inventory_rows is None else inventory_rows
+    segments=[];covered=[]
+    for segment_id,indices,digest in PHYSICAL_CORRECTION_GUARD_SEGMENTS:
+        if sha256(canonical([rows[index] for index in indices])).hexdigest()!=digest:
+            raise ValueError('correction guard segment assignment authority')
+        segments.append(dict(assignment_sha256=digest,indices=list(indices),segment_id=segment_id))
+        covered.extend(indices)
+    if covered!=list(range(90,234)) or len(covered)!=len(set(covered)):
+        raise ValueError('correction guard segment coverage')
+    value=dict(schema='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARD_SEGMENTS_V1',
+        whole_inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA,
+        partition_manifest_sha256=PHYSICAL_PARTITION_MANIFEST_SHA,segments=segments)
+    if sha256(canonical(value)).hexdigest()!=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA:
+        raise ValueError('correction guard segment manifest authority')
+    return value
+
+def physical_correction_guard_segment_spec(segment_id,inventory_rows=None):
+    manifest=physical_correction_guard_segment_manifest(inventory_rows)
+    for ordinal,row in enumerate(manifest['segments']):
+        if row['segment_id']==segment_id:return ordinal,row
+    raise ValueError('unregistered correction guard segment')
+
 def inventory(lane,gate='b2-core'):
     if gate not in TESTS:raise ValueError('unregistered gate')
     if gate=='g3c-physical':return physical_inventory(lane)
@@ -371,9 +417,12 @@ def verify_review(raw,digest,candidate,rows,gate='b2-core'):
                 correction_design_review_sha256=PHYSICAL_CORRECTION_REVIEW_SHA,
                 correction_revision_sha256=PHYSICAL_CORRECTION_REVISION_SHA,
                 correction_revision_review_sha256=PHYSICAL_CORRECTION_REVISION_REVIEW_SHA,
+                correction_partition_recovery_sha256=PHYSICAL_CORRECTION_RECOVERY_SHA,
+                correction_partition_recovery_review_sha256=PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA,
+                correction_guard_segment_manifest_sha256=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
                 predecessor_commit=PHYSICAL_PREDECESSOR['commit'],
                 predecessor_runtime_sha256=PHYSICAL_PREDECESSOR_RUNTIME_SHA,
-                correction_inheritance_authorized=True)
+                correction_inheritance_authorized=True,correction_partition_recovery_authorized=True)
         if (set(r)!={'decision','findings','reviewer','scope','subject_commit'}
             or r['decision']!='ACCEPTED_G3C_PHYSICAL_IMPLEMENTATION_FOR_BOUNDED_DEVELOPMENT'
             or r['findings'] or r['reviewer'].get('independent') is not True
@@ -429,7 +478,11 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                 'production_qualified':False}):
                 raise ValueError('physical partition design review authority')
         for path,digest in ((PHYSICAL_CORRECTION_REVISION,PHYSICAL_CORRECTION_REVISION_SHA),
-                            (PHYSICAL_CORRECTION_REVISION_REVIEW,PHYSICAL_CORRECTION_REVISION_REVIEW_SHA)):
+                            (PHYSICAL_CORRECTION_REVISION_REVIEW,PHYSICAL_CORRECTION_REVISION_REVIEW_SHA),
+                            (PHYSICAL_CORRECTION_RECOVERY,PHYSICAL_CORRECTION_RECOVERY_SHA),
+                            (PHYSICAL_CORRECTION_RECOVERY_INITIAL_REVIEW,PHYSICAL_CORRECTION_RECOVERY_INITIAL_REVIEW_SHA),
+                            (PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW,PHYSICAL_CORRECTION_RECOVERY_SUPERSEDED_REVIEW_SHA),
+                            (PHYSICAL_CORRECTION_RECOVERY_REVIEW,PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA)):
             if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:
                 raise ValueError('physical correction revision input changed')
         correction_review=environment.strict(read(ROOT/PHYSICAL_CORRECTION_REVIEW).replace(b'\r\n',b'\n'))
@@ -453,7 +506,17 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                 'production_qualified':False,'revision_sha256':PHYSICAL_CORRECTION_REVISION_SHA,
                 'subject_tree':'45d6497608727c155a88d69c38c08cabce426f03'}):
             raise ValueError('physical correction revision review authority')
-        physical_partition_manifest()
+        recovery_review=environment.strict(read(ROOT/PHYSICAL_CORRECTION_RECOVERY_REVIEW).replace(b'\r\n',b'\n'))
+        if (set(recovery_review)!={'decision','findings','reviewer','scope','subject_commit'}
+            or recovery_review['decision']!='ACCEPTED_GE_BEAM3_G3C_PHYSICAL_CORRECTION_PARTITION_RECOVERY_DESIGN_ONLY'
+            or recovery_review['findings'] or recovery_review['reviewer'].get('independent') is not True
+            or recovery_review['subject_commit']!='2f3874f36fd88cecad871605641b6a3fd994153e'
+            or recovery_review['scope']!={'design_sha256':PHYSICAL_CORRECTION_RECOVERY_SHA,
+                'execution_authorized':False,'full_g3c_qualified':False,'production_qualified':False,
+                'segment_manifest_sha256':PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
+                'subject_tree':'c0213c726e324330970ac3271ffaaa69ddba53bb'}):
+            raise ValueError('physical correction recovery review authority')
+        physical_partition_manifest();physical_correction_guard_segment_manifest()
         inventory('local',gate);inventory('smoke',gate);inventory('rehearsal',gate);inventory('formal',gate)
         rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows,gate)
         environment.verify(CAPSULE,CAPSULE_SHA)
@@ -1355,12 +1418,49 @@ def physical_failed_guards(path,predecessor):
         raise ValueError('correction failed incident detail')
     return dict(path=str(path),process=fingerprint(raw))
 
+def physical_interrupted_guards(path):
+    """Validate the closed-world, noncanonical interrupted correction wave."""
+    root=Path(path).resolve()
+    if (root.name!='rehearsal-r-guards-4ae10ae-interrupted-gyj6_g4t'
+        or not root.is_dir() or any((root/name).exists() for name in ('process.json','scientific.json','receipt.json'))):
+        raise ValueError('correction interrupted incident path')
+    expected_nodes={'node-%04d'%index for index in range(90,221)}
+    actual_nodes=set();rows=[];total=0
+    for entry in root.iterdir():
+        if entry.is_symlink() or (hasattr(entry,'is_junction') and entry.is_junction()):
+            raise ValueError('correction interrupted incident reparse')
+        if not entry.is_dir() or entry.name not in expected_nodes:
+            raise ValueError('correction interrupted incident root layout')
+        actual_nodes.add(entry.name)
+    if actual_nodes!=expected_nodes:raise ValueError('correction interrupted incident node inventory')
+    for target in sorted(root.rglob('*'),key=lambda item:item.relative_to(root).as_posix()):
+        if target.is_symlink() or (hasattr(target,'is_junction') and target.is_junction()):
+            raise ValueError('correction interrupted incident reparse')
+        if target.is_dir():continue
+        raw=read(target);total+=len(raw)
+        rows.append(dict(path=target.relative_to(root).as_posix(),bytes=len(raw),sha256=sha256(raw).hexdigest()))
+    descriptor=dict(files=len(rows),bytes=total,sha256=sha256(canonical(rows)).hexdigest())
+    if not exact_json(descriptor,PHYSICAL_INTERRUPTED_GUARDS_MANIFEST):
+        raise ValueError('correction interrupted incident manifest')
+    for index in range(90,218):
+        node=root/('node-%04d'%index)
+        process=environment.strict(read(node/'process.json'))
+        if process.get('status')!='PASSED' or process.get('active_processes')!=0:
+            raise ValueError('correction interrupted incident accepted child layout')
+    for index in range(218,221):
+        node=root/('node-%04d'%index)
+        if set(item.name for item in node.iterdir())!={'lease.json','review.json','stderr.log','stdout.log','worker-attempt.json'}:
+            raise ValueError('correction interrupted incident incomplete child layout')
+    return dict(schema='GE_BEAM3_G3C_PHYSICAL_INTERRUPTED_GUARD_INCIDENT_V1',
+        path=str(root),files=descriptor['files'],bytes=descriptor['bytes'],manifest_sha256=descriptor['sha256'])
+
 
 def physical_validate_runtime_compatibility_record(value,expected,predecessor=None,live=None):
     candidate,inputs,review_raw=expected;live=physical_support().runtime_identity() if live is None else live
     keys={'schema','mode','predecessor','successor','addendum_sha256','design_review_sha256',
           'revision_sha256','revision_review_sha256','unchanged_inputs_sha256',
-          'allowed_changed_paths','self_sha256'}
+          'partition_recovery_sha256','partition_recovery_review_sha256',
+          'guard_segment_manifest_sha256','allowed_changed_paths','self_sha256'}
     if type(value)is not dict or set(value)!=keys:raise ValueError('correction compatibility schema')
     body={key:item for key,item in value.items()if key!='self_sha256'}
     expected_predecessor=dict(commit=PHYSICAL_PREDECESSOR['commit'],tree=PHYSICAL_PREDECESSOR['tree'],
@@ -1375,6 +1475,9 @@ def physical_validate_runtime_compatibility_record(value,expected,predecessor=No
         or value.get('design_review_sha256')!=PHYSICAL_CORRECTION_REVIEW_SHA
         or value.get('revision_sha256')!=PHYSICAL_CORRECTION_REVISION_SHA
         or value.get('revision_review_sha256')!=PHYSICAL_CORRECTION_REVISION_REVIEW_SHA
+        or value.get('partition_recovery_sha256')!=PHYSICAL_CORRECTION_RECOVERY_SHA
+        or value.get('partition_recovery_review_sha256')!=PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA
+        or value.get('guard_segment_manifest_sha256')!=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA
         or not exact_json(value.get('allowed_changed_paths'),sorted(PHYSICAL_CORRECTION_CHANGED_PATHS))
         or value.get('unchanged_inputs_sha256')!=PHYSICAL_CORRECTION_UNCHANGED_INPUTS_SHA
         or value.get('self_sha256')!=sha256(canonical(body)).hexdigest()):
@@ -1407,6 +1510,9 @@ def physical_runtime_compatibility(expected,predecessor):
         addendum_sha256=PHYSICAL_CORRECTION_ADDENDUM_SHA,design_review_sha256=PHYSICAL_CORRECTION_REVIEW_SHA,
         revision_sha256=PHYSICAL_CORRECTION_REVISION_SHA,
         revision_review_sha256=PHYSICAL_CORRECTION_REVISION_REVIEW_SHA,
+        partition_recovery_sha256=PHYSICAL_CORRECTION_RECOVERY_SHA,
+        partition_recovery_review_sha256=PHYSICAL_CORRECTION_RECOVERY_REVIEW_SHA,
+        guard_segment_manifest_sha256=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
         unchanged_inputs_sha256=sha256(canonical(unchanged)).hexdigest(),
         allowed_changed_paths=sorted(PHYSICAL_CORRECTION_CHANGED_PATHS))
     value=dict(body,self_sha256=sha256(canonical(body)).hexdigest())
@@ -1858,10 +1964,316 @@ def execute_physical_correction_guards(args,watchdog,expected):
     print(canonical(process).decode(),flush=True);return 0
 
 
-def physical_validate_correction_union(path,expected,paths,failed_path):
+def physical_correction_segment_receipt(root,base,segment_id,indices,science_raw,prior_paths,incident,interrupted):
+    expected=(base['candidate'],base['inputs'],canonical(base['implementation_review']))
+    ordinal,spec=physical_correction_guard_segment_spec(segment_id,base['inventory'])
+    nodes=[]
+    for index in indices:
+        out=root/f'node-{index:04d}';lease=environment.strict(read(out/'lease.json'))
+        physical_lease_expected(lease,expected,base['review_sha256'])
+        physical_verify_node(out,lease);physical_verify_process(out,lease)
+        nodes.append(dict(assignment_index=index,lease=fingerprint(read(out/'lease.json')),
+            review=fingerprint(read(out/'review.json')),completion=fingerprint(read(out/'completion.json')),
+            process=fingerprint(read(out/'process.json')),science=fingerprint(read(out/'scientific.node.json'))))
+    inherited_ids=('smoke','local','R-HISTORY','R-PREFIX-A','R-PREFIX-B','R-PREFIX-C','R-PREFIX-D')
+    prerequisites=[physical_evidence_descriptor(path,'base' if i<2 else 'partition',identity)
+                   for i,(path,identity) in enumerate(zip(prior_paths[:7],inherited_ids))]
+    prior_segments=[physical_evidence_descriptor(path,'partition',identity)
+                    for path,identity in zip(prior_paths[7:],PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS[:ordinal])]
+    body=dict(schema='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARD_SEGMENT_RECEIPT_V1',
+        candidate=base['candidate'],inherited_candidate=PHYSICAL_PREDECESSOR,lane='rehearsal',
+        partition_id='R-GUARDS',segment_id=segment_id,
+        guard_segment_manifest_sha256=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
+        assignments_sha256=spec['assignment_sha256'],whole_inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA,
+        implementation_review_sha256=base['review_sha256'],inputs_sha256=sha256(canonical(base['inputs'])).hexdigest(),
+        runtime_compatibility=base['runtime_compatibility'],failed_incident=incident,
+        interrupted_incident=interrupted,prerequisites=prerequisites,prior_segments=prior_segments,
+        wave_process=fingerprint(read(root/'process.json')),science=fingerprint(science_raw),nodes=nodes,passed=True)
+    return dict(body,self_sha256=sha256(canonical(body)).hexdigest())
+
+def physical_validate_correction_guard_segment(path,expected,prior_paths,segment_id,failed_path,interrupted_root,stack=(),memo=None):
+    memo={} if memo is None else memo
+    if segment_id in stack:raise ValueError('correction guard segment prerequisite cycle')
+    ordinal,spec=physical_correction_guard_segment_spec(segment_id);indices=spec['indices']
+    if len(prior_paths)!=7+ordinal:raise ValueError('correction guard segment exact prerequisite count')
+    path=Path(path).resolve()
+    if segment_id in memo:
+        accepted_path,value,receipt=memo[segment_id]
+        if path!=accepted_path:raise ValueError('correction guard segment memoized path')
+        return value,receipt
+    if '_context' in memo:
+        predecessor,incident,interrupted,compatibility=memo['_context']
+    else:
+        predecessor,_=physical_correction_predecessor(prior_paths[:7])
+        incident=physical_failed_guards(failed_path,predecessor);interrupted=physical_interrupted_guards(interrupted_root)
+        compatibility=physical_runtime_compatibility(expected,predecessor)
+        memo['_context']=(predecessor,incident,interrupted,compatibility)
+    raw=read(path);value=environment.strict(raw);records=value.get('records')
+    body={key:item for key,item in value.items()if key!='self_sha256'}
+    if (set(value)!={'schema','candidate','inherited_candidate','lane','partition_id','segment_id',
+                    'guard_segment_manifest_sha256','assignments_sha256','whole_inventory_sha256',
+                    'indices','records','passed','terminal','full_g3c_qualified','production_qualified','self_sha256'}
+        or value.get('schema')!='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARD_SEGMENT_AGGREGATE_V1'
+        or value.get('self_sha256')!=sha256(canonical(body)).hexdigest()
+        or not exact_json(value.get('candidate'),expected[0])
+        or not exact_json(value.get('inherited_candidate'),PHYSICAL_PREDECESSOR)
+        or value.get('lane')!='rehearsal' or value.get('partition_id')!='R-GUARDS'
+        or value.get('segment_id')!=segment_id
+        or value.get('guard_segment_manifest_sha256')!=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA
+        or value.get('assignments_sha256')!=spec['assignment_sha256']
+        or value.get('whole_inventory_sha256')!=PHYSICAL_PARTITION_INVENTORY_SHA
+        or not exact_json(value.get('indices'),indices) or type(records)is not list or len(records)!=len(indices)
+        or value.get('passed')is not True
+        or value.get('terminal')!='COMPLETE_GE_BEAM3_G3C_PHYSICAL_CORRECTED_GUARD_SEGMENT_ONLY'
+        or value.get('full_g3c_qualified')is not False or value.get('production_qualified')is not False):
+        raise ValueError('correction guard segment aggregate')
+    inventory_rows=physical_inventory('rehearsal')
+    for index,row in zip(indices,records):
+        science=row.get('science') if type(row)is dict else None
+        if (type(row)is not dict or set(row)!={'assignment_index','science_sha256','science'}
+            or type(row.get('assignment_index'))is not int or row.get('assignment_index')!=index
+            or type(science)is not dict or row.get('science_sha256')!=sha256(canonical(science)).hexdigest()
+            or science.get('schema')!='GE_BEAM3_G3C_PHYSICAL_NODE_SCIENCE_V1'
+            or not exact_json(science.get('candidate'),expected[0]) or science.get('lane')!='rehearsal'
+            or science.get('assignment_index')!=index or not exact_json(science.get('assignment'),inventory_rows[index])
+            or science.get('full_g3c_qualified')is not False or science.get('production_qualified')is not False):
+            raise ValueError('correction guard segment record')
+    receipt=environment.strict(read(path.parent/'receipt.json'));receipt_body={k:v for k,v in receipt.items()if k!='self_sha256'}
+    inherited_ids=('smoke','local','R-HISTORY','R-PREFIX-A','R-PREFIX-B','R-PREFIX-C','R-PREFIX-D')
+    expected_keys={'schema','candidate','inherited_candidate','lane','partition_id','segment_id',
+        'guard_segment_manifest_sha256','assignments_sha256','whole_inventory_sha256',
+        'implementation_review_sha256','inputs_sha256','runtime_compatibility','failed_incident',
+        'interrupted_incident','prerequisites','prior_segments','wave_process','science','nodes','passed','self_sha256'}
+    if (set(receipt)!=expected_keys
+        or receipt.get('schema')!='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARD_SEGMENT_RECEIPT_V1'
+        or not exact_json(receipt.get('candidate'),expected[0])
+        or not exact_json(receipt.get('inherited_candidate'),PHYSICAL_PREDECESSOR)
+        or receipt.get('lane')!='rehearsal' or receipt.get('partition_id')!='R-GUARDS'
+        or receipt.get('segment_id')!=segment_id
+        or receipt.get('guard_segment_manifest_sha256')!=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA
+        or receipt.get('assignments_sha256')!=spec['assignment_sha256']
+        or receipt.get('whole_inventory_sha256')!=PHYSICAL_PARTITION_INVENTORY_SHA
+        or receipt.get('implementation_review_sha256')!=sha256(expected[2]).hexdigest()
+        or receipt.get('inputs_sha256')!=sha256(canonical(expected[1])).hexdigest()
+        or not exact_json(receipt.get('runtime_compatibility'),compatibility)
+        or not exact_json(receipt.get('failed_incident'),incident)
+        or not exact_json(receipt.get('interrupted_incident'),interrupted)
+        or [row.get('identity') if type(row)is dict else None for row in receipt.get('prerequisites',[])]!=list(inherited_ids)
+        or [row.get('identity') if type(row)is dict else None for row in receipt.get('prior_segments',[])]!=list(PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS[:ordinal])
+        or not exact_fingerprint(receipt.get('science'),raw) or receipt.get('passed')is not True
+        or type(receipt.get('nodes'))is not list or len(receipt['nodes'])!=len(indices)
+        or receipt.get('self_sha256')!=sha256(canonical(receipt_body)).hexdigest()):
+        raise ValueError('correction guard segment receipt')
+    for descriptor,actual in zip(receipt['prerequisites'],prior_paths[:7]):
+        if physical_verify_evidence_descriptor(descriptor)!=Path(actual).resolve():
+            raise ValueError('correction guard segment inherited path')
+    for prior_id,descriptor,actual in zip(PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS[:ordinal],receipt['prior_segments'],prior_paths[7:]):
+        prior_path=physical_verify_evidence_descriptor(descriptor)
+        if prior_path!=Path(actual).resolve():raise ValueError('correction guard segment prior path')
+        physical_validate_correction_guard_segment(prior_path,expected,prior_paths[:7]+prior_paths[7:7+PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS.index(prior_id)],
+            prior_id,failed_path,interrupted_root,stack+(segment_id,),memo)
+    physical_closed_world(path.parent,{'process.json','receipt.json','scientific.json'},
+        {'node-%04d'%index for index in indices})
+    process_raw=read(path.parent/'process.json')
+    if not exact_fingerprint(receipt.get('wave_process'),process_raw):raise ValueError('correction guard segment process hash')
+    process=environment.strict(process_raw)
+    if (set(process)!={'schema','lane','partition_id','segment_id','guard_segment_manifest_sha256',
+                      'assignments_sha256','passed','required_nodes','terminal_nodes','elapsed_seconds',
+                      'active_processes','results'}
+        or process.get('schema')!='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARD_SEGMENT_PROCESS_V1'
+        or process.get('lane')!='rehearsal' or process.get('partition_id')!='R-GUARDS'
+        or process.get('segment_id')!=segment_id
+        or process.get('guard_segment_manifest_sha256')!=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA
+        or process.get('assignments_sha256')!=spec['assignment_sha256'] or process.get('passed')is not True
+        or type(process.get('required_nodes'))is not int or process.get('required_nodes')!=len(indices)
+        or type(process.get('terminal_nodes'))is not int or process.get('terminal_nodes')!=len(indices)
+        or type(process.get('active_processes'))is not int or process.get('active_processes')!=0
+        or type(process.get('elapsed_seconds'))is not float or not math.isfinite(process['elapsed_seconds'])
+        or not 0<=process['elapsed_seconds']<1800 or type(process.get('results'))is not dict
+        or set(process['results'])!={str(index) for index in indices}):
+        raise ValueError('correction guard segment process')
+    history_outputs=physical_history_outputs_from_partition(prior_paths[2])
+    for index,node in zip(indices,receipt['nodes']):
+        out=path.parent/f'node-{index:04d}';lease=environment.strict(read(out/'lease.json'))
+        if type(node)is not dict or set(node)!={'assignment_index','lease','review','completion','process','science'} or node.get('assignment_index')!=index:
+            raise ValueError('correction guard segment node order')
+        for key,name in (('lease','lease.json'),('review','review.json'),('completion','completion.json'),
+                         ('process','process.json'),('science','scientific.node.json')):
+            if not exact_fingerprint(node.get(key),read(out/name)):raise ValueError('correction guard segment node hash')
+        physical_lease_expected(lease,expected,sha256(expected[2]).hexdigest())
+        if not exact_json(lease.get('runtime_compatibility'),compatibility):raise ValueError('correction segment node compatibility')
+        physical_join_input_packets(lease,history_outputs);physical_verify_node(out,lease);physical_verify_process(out,lease)
+        if not exact_json(process['results'][str(index)],environment.strict(read(out/'process.json'))):
+            raise ValueError('correction guard segment process DAG')
+        if records[indices.index(index)]['science_sha256']!=node['science']['sha256']:
+            raise ValueError('correction guard segment aggregate DAG')
+    memo[segment_id]=(path,value,receipt)
+    return value,receipt
+
+def execute_physical_correction_guard_segment(args,watchdog,expected):
+    started=time.monotonic();prior_paths=args.prior or [];segment_id=args.guard_segment_id
+    ordinal,spec=physical_correction_guard_segment_spec(segment_id);indices=spec['indices']
+    if len(prior_paths)!=7+ordinal:raise ValueError('correction guard segment exact prerequisite count')
+    predecessor,_=physical_correction_predecessor(prior_paths[:7])
+    incident=physical_failed_guards(args.failed_guards_process,predecessor)
+    interrupted=physical_interrupted_guards(args.interrupted_guards_root)
+    compatibility=physical_runtime_compatibility(expected,predecessor)
+    memo={'_context':(predecessor,incident,interrupted,compatibility)}
+    for prior_id,prior_path in zip(PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS[:ordinal],prior_paths[7:]):
+        prior_ordinal=PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS.index(prior_id)
+        physical_validate_correction_guard_segment(prior_path,expected,prior_paths[:7+prior_ordinal],prior_id,
+            args.failed_guards_process,args.interrupted_guards_root,memo=memo)
+    inventory_rows=physical_inventory('rehearsal')
+    root=Path(tempfile.mkdtemp(prefix='anysolver-g3c-physical-correction-'+segment_id.lower()+'-'));print('DIAGNOSTICS '+str(root),flush=True)
+    base=dict(lane='rehearsal',candidate=expected[0],inputs=expected[1],review_sha256=args.review_sha256,
+        implementation_review=environment.strict(expected[2]),runtime_sha256=physical_support().runtime_identity(),
+        inventory=inventory_rows,runtime_compatibility=compatibility)
+    outputs=physical_history_outputs_from_partition(prior_paths[2]);results={};deadline=started+1800
+    passed=physical_run_phase(root,indices,base,expected[2],watchdog,deadline,outputs,results)
+    if time.monotonic()>=deadline or authority(args.review,args.review_sha256,'g3c-physical')!=expected:passed=False
+    process=dict(schema='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARD_SEGMENT_PROCESS_V1',lane='rehearsal',
+        partition_id='R-GUARDS',segment_id=segment_id,
+        guard_segment_manifest_sha256=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
+        assignments_sha256=spec['assignment_sha256'],passed=passed,required_nodes=len(indices),
+        terminal_nodes=len(results),elapsed_seconds=time.monotonic()-started,
+        active_processes=sum(1 for row in results.values()if row.get('active_processes',0)),
+        results={str(key):results[key] for key in sorted(results)})
+    atomic_canonical(root/'process.json',process,watchdog)
+    if not passed:print(canonical(process).decode(),flush=True);return 1
+    records=[]
+    for index in indices:
+        raw=read(root/f'node-{index:04d}'/'scientific.node.json')
+        records.append(dict(assignment_index=index,science_sha256=sha256(raw).hexdigest(),science=environment.strict(raw)))
+    value=dict(schema='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARD_SEGMENT_AGGREGATE_V1',
+        candidate=expected[0],inherited_candidate=PHYSICAL_PREDECESSOR,lane='rehearsal',partition_id='R-GUARDS',
+        segment_id=segment_id,guard_segment_manifest_sha256=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
+        assignments_sha256=spec['assignment_sha256'],whole_inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA,
+        indices=indices,records=records,passed=True,
+        terminal='COMPLETE_GE_BEAM3_G3C_PHYSICAL_CORRECTED_GUARD_SEGMENT_ONLY',
+        full_g3c_qualified=False,production_qualified=False)
+    value['self_sha256']=sha256(canonical(value)).hexdigest();atomic_canonical(root/'scientific.json',value,watchdog)
+    science_raw=read(root/'scientific.json')
+    atomic_canonical(root/'receipt.json',physical_correction_segment_receipt(root,base,segment_id,indices,science_raw,
+        prior_paths,incident,interrupted),watchdog)
+    physical_validate_correction_guard_segment(root/'scientific.json',expected,prior_paths,segment_id,
+        args.failed_guards_process,args.interrupted_guards_root)
+    print(canonical(process).decode(),flush=True);return 0
+
+def physical_validate_correction_guards(path,expected,prior_paths,failed_path,interrupted_root):
+    predecessor,_=physical_correction_predecessor(prior_paths);incident=physical_failed_guards(failed_path,predecessor)
+    interrupted=physical_interrupted_guards(interrupted_root);compatibility=physical_runtime_compatibility(expected,predecessor)
+    path=Path(path).resolve();raw=read(path);value=environment.strict(raw);records=value.get('records')
+    body={key:item for key,item in value.items()if key!='self_sha256'}
+    if (set(value)!={'schema','candidate','inherited_candidate','lane','partition_id','guard_segment_manifest_sha256',
+                    'whole_inventory_sha256','indices','records','passed','terminal','full_g3c_qualified',
+                    'production_qualified','self_sha256'}
+        or value.get('schema')!='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARDS_AGGREGATE_V2'
+        or value.get('self_sha256')!=sha256(canonical(body)).hexdigest()
+        or not exact_json(value.get('candidate'),expected[0]) or not exact_json(value.get('inherited_candidate'),PHYSICAL_PREDECESSOR)
+        or value.get('lane')!='rehearsal' or value.get('partition_id')!='R-GUARDS'
+        or value.get('guard_segment_manifest_sha256')!=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA
+        or value.get('whole_inventory_sha256')!=PHYSICAL_PARTITION_INVENTORY_SHA
+        or not exact_json(value.get('indices'),list(range(90,234))) or type(records)is not list or len(records)!=144
+        or [row.get('assignment_index') if type(row)is dict else None for row in records]!=list(range(90,234))
+        or value.get('passed')is not True
+        or value.get('terminal')!='COMPLETE_GE_BEAM3_G3C_PHYSICAL_CORRECTED_GUARDS_PARTITION_ONLY'
+        or value.get('full_g3c_qualified')is not False or value.get('production_qualified')is not False):
+        raise ValueError('correction guard union aggregate')
+    receipt=environment.strict(read(path.parent/'receipt.json'));receipt_body={k:v for k,v in receipt.items()if k!='self_sha256'}
+    inherited_ids=('smoke','local','R-HISTORY','R-PREFIX-A','R-PREFIX-B','R-PREFIX-C','R-PREFIX-D')
+    expected_keys={'schema','candidate','inherited_candidate','lane','partition_id','guard_segment_manifest_sha256',
+        'whole_inventory_sha256','implementation_review_sha256','inputs_sha256','runtime_compatibility',
+        'failed_incident','interrupted_incident','prerequisites','segments','union_process','science','passed','self_sha256'}
+    if (set(receipt)!=expected_keys or receipt.get('schema')!='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARDS_RECEIPT_V2'
+        or not exact_json(receipt.get('candidate'),expected[0]) or not exact_json(receipt.get('inherited_candidate'),PHYSICAL_PREDECESSOR)
+        or receipt.get('lane')!='rehearsal' or receipt.get('partition_id')!='R-GUARDS'
+        or receipt.get('guard_segment_manifest_sha256')!=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA
+        or receipt.get('whole_inventory_sha256')!=PHYSICAL_PARTITION_INVENTORY_SHA
+        or receipt.get('implementation_review_sha256')!=sha256(expected[2]).hexdigest()
+        or receipt.get('inputs_sha256')!=sha256(canonical(expected[1])).hexdigest()
+        or not exact_json(receipt.get('runtime_compatibility'),compatibility)
+        or not exact_json(receipt.get('failed_incident'),incident)
+        or not exact_json(receipt.get('interrupted_incident'),interrupted)
+        or [row.get('identity') if type(row)is dict else None for row in receipt.get('prerequisites',[])]!=list(inherited_ids)
+        or [row.get('identity') if type(row)is dict else None for row in receipt.get('segments',[])]!=list(PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS)
+        or not exact_fingerprint(receipt.get('science'),raw) or receipt.get('passed')is not True
+        or receipt.get('self_sha256')!=sha256(canonical(receipt_body)).hexdigest()):
+        raise ValueError('correction guard union receipt')
+    for descriptor,actual in zip(receipt['prerequisites'],prior_paths):
+        if physical_verify_evidence_descriptor(descriptor)!=Path(actual).resolve():raise ValueError('correction guard union inherited path')
+    segment_values=[];segment_paths=[];memo={'_context':(predecessor,incident,interrupted,compatibility)}
+    for ordinal,(segment_id,descriptor) in enumerate(zip(PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS,receipt['segments'])):
+        segment_path=physical_verify_evidence_descriptor(descriptor);segment_paths.append(segment_path)
+        segment_values.append(physical_validate_correction_guard_segment(segment_path,expected,
+            list(prior_paths)+segment_paths[:-1],segment_id,failed_path,interrupted_root,memo=memo)[0])
+    expected_records=[row for segment in segment_values for row in segment['records']]
+    if not exact_json(records,expected_records):raise ValueError('correction guard union segment DAG')
+    process_raw=read(path.parent/'process.json');process=environment.strict(process_raw)
+    if (not exact_fingerprint(receipt.get('union_process'),process_raw)
+        or set(process)!={'schema','lane','partition_id','guard_segment_manifest_sha256','passed',
+                         'required_segments','terminal_segments','elapsed_seconds','active_processes'}
+        or process.get('schema')!='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARDS_PROCESS_V2'
+        or process.get('lane')!='rehearsal' or process.get('partition_id')!='R-GUARDS'
+        or process.get('guard_segment_manifest_sha256')!=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA
+        or process.get('passed')is not True or process.get('required_segments')!=6 or process.get('terminal_segments')!=6
+        or type(process.get('required_segments'))is not int or type(process.get('terminal_segments'))is not int
+        or type(process.get('active_processes'))is not int or process.get('active_processes')!=0
+        or type(process.get('elapsed_seconds'))is not float or not math.isfinite(process['elapsed_seconds'])
+        or not 0<=process['elapsed_seconds']<1800):raise ValueError('correction guard union process')
+    physical_closed_world(path.parent,{'process.json','receipt.json','scientific.json'})
+    return value,receipt
+
+def execute_physical_correction_guard_union(args,watchdog,expected):
+    started=time.monotonic();paths=args.prior or []
+    if len(paths)!=13:raise ValueError('correction guard union exact prerequisite count')
+    predecessor,_=physical_correction_predecessor(paths[:7]);incident=physical_failed_guards(args.failed_guards_process,predecessor)
+    interrupted=physical_interrupted_guards(args.interrupted_guards_root);segments=[]
+    compatibility=physical_runtime_compatibility(expected,predecessor)
+    memo={'_context':(predecessor,incident,interrupted,compatibility)}
+    for ordinal,(segment_id,path) in enumerate(zip(PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS,paths[7:])):
+        segments.append(physical_validate_correction_guard_segment(path,expected,paths[:7+ordinal],segment_id,
+            args.failed_guards_process,args.interrupted_guards_root,memo=memo)[0])
+    records=[row for segment in segments for row in segment['records']]
+    if [row.get('assignment_index') for row in records]!=list(range(90,234)):
+        raise ValueError('correction guard union exact ordering')
+    root=Path(tempfile.mkdtemp(prefix='anysolver-g3c-physical-correction-guards-union-'));print('DIAGNOSTICS '+str(root),flush=True)
+    stage=root/'staged';stage.mkdir()
+    process=dict(schema='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARDS_PROCESS_V2',lane='rehearsal',partition_id='R-GUARDS',
+        guard_segment_manifest_sha256=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,passed=True,
+        required_segments=6,terminal_segments=6,elapsed_seconds=time.monotonic()-started,active_processes=0)
+    atomic_canonical(stage/'process.json',process,watchdog)
+    value=dict(schema='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARDS_AGGREGATE_V2',candidate=expected[0],
+        inherited_candidate=PHYSICAL_PREDECESSOR,lane='rehearsal',partition_id='R-GUARDS',
+        guard_segment_manifest_sha256=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
+        whole_inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA,indices=list(range(90,234)),records=records,passed=True,
+        terminal='COMPLETE_GE_BEAM3_G3C_PHYSICAL_CORRECTED_GUARDS_PARTITION_ONLY',
+        full_g3c_qualified=False,production_qualified=False)
+    value['self_sha256']=sha256(canonical(value)).hexdigest();atomic_canonical(stage/'scientific.json',value,watchdog)
+    inherited_ids=('smoke','local','R-HISTORY','R-PREFIX-A','R-PREFIX-B','R-PREFIX-C','R-PREFIX-D')
+    prerequisites=[physical_evidence_descriptor(path,'base' if i<2 else 'partition',identity)
+                   for i,(path,identity) in enumerate(zip(paths[:7],inherited_ids))]
+    segment_descriptors=[physical_evidence_descriptor(path,'partition',identity)
+                         for path,identity in zip(paths[7:],PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS)]
+    body=dict(schema='GE_BEAM3_G3C_PHYSICAL_CORRECTION_GUARDS_RECEIPT_V2',candidate=expected[0],
+        inherited_candidate=PHYSICAL_PREDECESSOR,lane='rehearsal',partition_id='R-GUARDS',
+        guard_segment_manifest_sha256=PHYSICAL_CORRECTION_GUARD_SEGMENT_MANIFEST_SHA,
+        whole_inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA,
+        implementation_review_sha256=sha256(expected[2]).hexdigest(),inputs_sha256=sha256(canonical(expected[1])).hexdigest(),
+        runtime_compatibility=physical_runtime_compatibility(expected,predecessor),failed_incident=incident,
+        interrupted_incident=interrupted,prerequisites=prerequisites,segments=segment_descriptors,
+        union_process=fingerprint(read(stage/'process.json')),science=fingerprint(read(stage/'scientific.json')),passed=True)
+    receipt=dict(body,self_sha256=sha256(canonical(body)).hexdigest());atomic_canonical(stage/'receipt.json',receipt,watchdog)
+    physical_validate_correction_guards(stage/'scientific.json',expected,paths[:7],args.failed_guards_process,args.interrupted_guards_root)
+    def final_authority():
+        if authority(args.review,args.review_sha256,'g3c-physical')!=expected:raise ValueError('correction guard union final authority')
+    promote_physical_correction_bundle(stage,root,watchdog,final_authority)
+    print(canonical(process).decode(),flush=True);return 0
+
+def physical_validate_correction_union(path,expected,paths,failed_path,interrupted_root):
     predecessor,old_values=physical_correction_predecessor(paths[:7])
     incident=physical_failed_guards(failed_path,predecessor)
-    guards,_=physical_validate_correction_guards(paths[7],expected,paths[:7],failed_path)
+    interrupted=physical_interrupted_guards(interrupted_root)
+    guards,_=physical_validate_correction_guards(paths[7],expected,paths[:7],failed_path,interrupted_root)
     expected_records=[]
     for value in old_values:expected_records.extend(value['records'])
     expected_records.extend(guards['records'])
@@ -1886,6 +2298,7 @@ def physical_validate_correction_union(path,expected,paths,failed_path):
     identities=('smoke','local','R-HISTORY','R-PREFIX-A','R-PREFIX-B','R-PREFIX-C','R-PREFIX-D','R-GUARDS')
     if (set(receipt)!={'schema','candidate','inherited_candidate','lane','inventory_sha256',
                       'implementation_review_sha256','inputs_sha256','runtime_compatibility','failed_incident',
+                      'interrupted_incident',
                       'prerequisites','union_process','science','passed','self_sha256'}
         or receipt.get('schema')!='GE_BEAM3_G3C_PHYSICAL_CORRECTION_UNION_RECEIPT_V1'
         or not exact_json(receipt.get('candidate'),expected[0])
@@ -1895,6 +2308,7 @@ def physical_validate_correction_union(path,expected,paths,failed_path):
         or receipt.get('inputs_sha256')!=sha256(canonical(expected[1])).hexdigest()
         or not exact_json(receipt.get('runtime_compatibility'),physical_runtime_compatibility(expected,predecessor))
         or not exact_json(receipt.get('failed_incident'),incident)
+        or not exact_json(receipt.get('interrupted_incident'),interrupted)
         or type(receipt.get('prerequisites'))is not list or len(receipt['prerequisites'])!=8
         or [row.get('identity') if type(row)is dict else None for row in receipt['prerequisites']]!=list(identities)
         or not exact_fingerprint(receipt.get('science'),raw) or receipt.get('passed')is not True
@@ -1924,7 +2338,8 @@ def execute_physical_correction_union(args,watchdog,expected):
     if len(paths)!=8:raise ValueError('correction union exact prerequisite count')
     predecessor,old_values=physical_correction_predecessor(paths[:7])
     incident=physical_failed_guards(args.failed_guards_process,predecessor)
-    guards,_=physical_validate_correction_guards(paths[7],expected,paths[:7],args.failed_guards_process)
+    interrupted=physical_interrupted_guards(args.interrupted_guards_root)
+    guards,_=physical_validate_correction_guards(paths[7],expected,paths[:7],args.failed_guards_process,args.interrupted_guards_root)
     records=[]
     for value in old_values:records.extend(value['records'])
     records.extend(guards['records'])
@@ -1948,10 +2363,11 @@ def execute_physical_correction_union(args,watchdog,expected):
         inherited_candidate=PHYSICAL_PREDECESSOR,lane='rehearsal',inventory_sha256=PHYSICAL_PARTITION_INVENTORY_SHA,
         implementation_review_sha256=sha256(expected[2]).hexdigest(),inputs_sha256=sha256(canonical(expected[1])).hexdigest(),
         runtime_compatibility=physical_runtime_compatibility(expected,predecessor),failed_incident=incident,
+        interrupted_incident=interrupted,
         prerequisites=prerequisites,union_process=fingerprint(read(stage/'process.json')),
         science=fingerprint(read(stage/'scientific.json')),passed=True)
     receipt=dict(body,self_sha256=sha256(canonical(body)).hexdigest());atomic_canonical(stage/'receipt.json',receipt,watchdog)
-    physical_validate_correction_union(stage/'scientific.json',expected,paths,args.failed_guards_process)
+    physical_validate_correction_union(stage/'scientific.json',expected,paths,args.failed_guards_process,args.interrupted_guards_root)
     def final_authority():
         if authority(args.review,args.review_sha256,'g3c-physical')!=expected:
             raise ValueError('correction union final authority')
@@ -1961,15 +2377,20 @@ def execute_physical_correction_union(args,watchdog,expected):
 def execute_physical(args,watchdog):
     started=time.monotonic();expected=authority(args.review,args.review_sha256,'g3c-physical')
     correction=getattr(args,'inherit_correction',False);failed=getattr(args,'failed_guards_process',None)
+    interrupted=getattr(args,'interrupted_guards_root',None);segment=getattr(args,'guard_segment_id',None)
+    finalize_segments=getattr(args,'finalize_guard_segments',False)
     if correction:
-        if args.lane!='rehearsal' or failed is None:
+        if args.lane!='rehearsal' or failed is None or interrupted is None:
             raise ValueError('correction inheritance rehearsal authority')
-        if args.partition_id=='R-GUARDS' and not args.finalize_partitions:
-            return execute_physical_correction_guards(args,watchdog,expected)
-        if args.partition_id is None and args.finalize_partitions:
+        if args.partition_id=='R-GUARDS' and segment is not None and not finalize_segments and not args.finalize_partitions:
+            return execute_physical_correction_guard_segment(args,watchdog,expected)
+        if args.partition_id=='R-GUARDS' and segment is None and finalize_segments and not args.finalize_partitions:
+            return execute_physical_correction_guard_union(args,watchdog,expected)
+        if args.partition_id is None and segment is None and not finalize_segments and args.finalize_partitions:
             return execute_physical_correction_union(args,watchdog,expected)
         raise ValueError('correction inheritance mode')
-    if failed is not None:raise ValueError('failed incident is correction-only')
+    if failed is not None or interrupted is not None or segment is not None or finalize_segments:
+        raise ValueError('correction arguments are correction-only')
     if args.lane=='formal':raise ValueError('formal physical partition/authorization addendum not frozen')
     if args.lane=='rehearsal':
         if (args.partition_id is None)==(not args.finalize_partitions):
@@ -2760,6 +3181,9 @@ def main():
     parser.add_argument('--finalize-partitions',action='store_true')
     parser.add_argument('--inherit-correction',action='store_true')
     parser.add_argument('--failed-guards-process',type=Path)
+    parser.add_argument('--interrupted-guards-root',type=Path)
+    parser.add_argument('--guard-segment-id',choices=PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS)
+    parser.add_argument('--finalize-guard-segments',action='store_true')
     return execute(parser.parse_args())
 
 if __name__=='__main__':raise SystemExit(main())
