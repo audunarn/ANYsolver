@@ -103,7 +103,9 @@ def recovery_witness(family,trial):
                     np.einsum('i,ijk->jk',st.resultant,st.chart_second)) for st in trial.stations)
         physical_equal(force,trial.physical_chart_force,'Q4 physical station work')
         physical_equal(hessian,trial.physical_chart_hessian,'Q4 physical station Hessian')
-        physical_equal(trial.direct_chart_hessian,trial.schur_chart_hessian,'Q4 full64 Schur')
+        condensed=(trial.direct_chart_hessian
+                   -trial.internal_coupling64.T@trial.internal_inverse64@trial.internal_coupling64)
+        physical_equal(condensed,trial.schur_chart_hessian,'Q4 full64 Schur')
         physical_equal(trial.source_stationary_matrix@trial.source_solution,
                        trial.source_coupling.T,'Q4 source35 stationarity')
         physical_equal(trial.internal_block64@trial.internal_inverse64,np.eye(64),'Q4 right inverse')

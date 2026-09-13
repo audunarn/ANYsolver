@@ -967,3 +967,23 @@ return codes and byte counts. Thirty-one inert runner guards and the two
 standard-library-only owner inventory/schema tests pass. Numerical mechanics
 remains unexecuted pending a clean successor freeze and an independently
 accepted implementation review.
+
+Metadata successor `0755d896ae66ec65e61170939f5799e43def8f2f`, tree
+`d81a7dde8bd3f94bc2cb8b58df2871277c34d60d`, was independently accepted for
+bounded smoke/local/rehearsal development. Its canonical review is 670 bytes,
+SHA-256 `2e5c7475dec1c3c6b79c3b716b271e0fe35188757e78d804cb9e90e34770e4a8`;
+the bound complete input DAG SHA-256 is
+`398c2e9ba586ce9ce0f173c72f3c4f979f493166c03bdd5d66887c393f8ab9cd`.
+
+The first five-history smoke wave is preserved externally as blocked evidence.
+It ended after 102 seconds with histories zero and one passed, history two
+failed, and histories three and four not launched. Root process evidence is
+3841 bytes, SHA-256
+`2cb908937d87ebf108f79c3cd4d0e90af5a1a3cd6efac509c768ebbfaeb0a32c`.
+The failure was a successor witness transcription: it compared the geometric
+direct chart block alone to the condensed physical Hessian. The accepted Q4
+facade and its prior evidence instead establish
+`direct - coupling.T @ inverse @ coupling == Schur == physical Hessian`.
+The correction changes only the private owner witness and its mutation test;
+qualified Q4 mechanics and recovery remain untouched. A new clean freeze and
+independent review are required before any new smoke execution.

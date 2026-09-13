@@ -349,5 +349,8 @@ def test_physical_recovery_witness_guards():
             extra=sum((c.chart_force for c in result.numerical_channels),np.zeros(24))
             if not np.any(extra):raise AssertionError('registered deformed leakage witness is zero')
             with pytest.raises(ValueError):mechanics.recovery_witness('Q4',replace(result,physical_chart_force=result.physical_chart_force+extra))
-            count+=2
+            # The uncondensed direct block contains only the geometric term.
+            # Omitting the independently bound station Schur term must fail.
+            with pytest.raises(ValueError):mechanics.recovery_witness('Q4',replace(result,schur_chart_hessian=result.direct_chart_hessian))
+            count+=3
     record('recovery_witness',mutations=count)
