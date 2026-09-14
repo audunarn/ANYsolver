@@ -141,7 +141,24 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(len(r.inventory('core','q4-affine-numerical')),15)
         self.assertEqual([p.split('::')[-1] for p in r.inventory('smoke','q4-affine-numerical')],
                          [r.NUMERICAL_TESTS[0],r.NUMERICAL_SMOKE])
+        self.assertEqual(len(r.inventory('smoke','g4a-station')),1)
+        self.assertEqual(len(r.inventory('core','g4a-station')),9)
+        self.assertEqual(r.inventory('core','g4a-station'),r.inventory('formal','g4a-station'))
         with self.assertRaises(ValueError):r.inventory('all')
+
+    def test_g4a_adjudication_is_scoped_and_mutation_detecting(self):
+        row=dict(test='G4A_HETEROGENEOUS_SIX_STAGE_TRANSACTION',
+            station_families=['EXACT_ELASTIC','GENERALIZED_ELLIPSOID','PHYSICAL_FIBRE'],
+            accepted_epochs=6,independent_replay=True,atomic_publication=True,
+            physical_fibre_recovery=True,snapshot_sha256='a'*64,production_qualified=False)
+        self.assertEqual(r.g4a_adjudication([row],'formal'),{
+            'terminal':'PROVISIONAL_GO_GE_BEAM3_G4A_STATION_TRANSACTION_ONLY',
+            'g4a_qualified':True,'g4_qualified':False,'production_qualified':False})
+        self.assertEqual(r.g4a_adjudication([row],'smoke')['terminal'],'NOT_ADJUDICATED_SMOKE_ONLY')
+        for key,value in (('accepted_epochs',5),('independent_replay',False),
+                          ('snapshot_sha256','bad'),('production_qualified',True)):
+            changed=copy.deepcopy(row);changed[key]=value
+            with self.assertRaises(ValueError):r.g4a_adjudication([changed],'formal')
 
     def test_physical_registered_inventories_are_exact_and_inert(self):
         inventories={lane:r.inventory(lane,'g3c-physical') for lane in ('local','smoke','rehearsal','formal')}
