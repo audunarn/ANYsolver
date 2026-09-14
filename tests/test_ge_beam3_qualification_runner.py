@@ -144,6 +144,9 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(len(r.inventory('smoke','g4a-station')),1)
         self.assertEqual(len(r.inventory('core','g4a-station')),13)
         self.assertEqual(r.inventory('core','g4a-station'),r.inventory('formal','g4a-station'))
+        self.assertEqual(len(r.inventory('smoke','g4-completion')),1)
+        self.assertEqual(len(r.inventory('core','g4-completion')),26)
+        self.assertEqual(r.inventory('core','g4-completion'),r.inventory('formal','g4-completion'))
         with self.assertRaises(ValueError):r.inventory('all')
 
     def test_g4a_adjudication_is_scoped_and_mutation_detecting(self):
@@ -159,6 +162,25 @@ class GuardTests(unittest.TestCase):
                           ('snapshot_sha256','bad'),('production_qualified',True)):
             changed=copy.deepcopy(row);changed[key]=value
             with self.assertRaises(ValueError):r.g4a_adjudication([changed],'formal')
+
+    def test_g4_completion_adjudication_closes_only_s19_through_s24(self):
+        row=dict(test='G4_COMPLETE_MATERIAL_STATE_CONTROL_AND_RESTART',accepted_epochs=6,
+            station_families=['EXACT_ELASTIC','GENERALIZED_ELLIPSOID','PHYSICAL_FIBRE'],
+            mixed_atomic_publication=True,generalized_connected_history=True,
+            fibre_connected_history=True,force_control=True,displacement_control=True,
+            arc_control=True,load_unload_reversal=True,shell_joint_history=True,
+            accepted_origin_replay=True,authenticated_restart=True,physical_recovery=True,
+            resultant_only_no_invented_fibres=True,checkpoint_sha256='a'*64,
+            production_qualified=False)
+        assert r.g4_adjudication([row],'formal')==dict(
+            terminal='PROVISIONAL_GO_GE_BEAM3_G4_GENERAL_STATIC_MATERIAL_STATE_ONLY',
+            closed_rows=['S19','S20','S21','S22','S23','S24'],g4_qualified=True,
+            g5_qualified=False,production_qualified=False)
+        assert r.g4_adjudication([row],'smoke')['terminal']=='NOT_ADJUDICATED_SMOKE_ONLY'
+        for key,value in (('arc_control',False),('accepted_epochs',5),
+                          ('checkpoint_sha256','bad'),('production_qualified',True)):
+            changed=copy.deepcopy(row);changed[key]=value
+            with self.assertRaises(ValueError):r.g4_adjudication([changed],'formal')
 
     def test_physical_registered_inventories_are_exact_and_inert(self):
         inventories={lane:r.inventory(lane,'g3c-physical') for lane in ('local','smoke','rehearsal','formal')}
