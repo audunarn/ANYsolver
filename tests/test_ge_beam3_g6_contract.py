@@ -103,3 +103,40 @@ def test_closeout_evidence_review_and_status_are_canonical_and_bound():
     assert confirmation["terminal"] == status["terminal"]
     assert confirmation["checks"]["formal_science_byte_identical"] is True
     assert confirmation["production_default_qualified"] is False
+
+
+def test_corrected_consumer_graph_closeout_is_canonical_and_bound():
+    directory = ROOT / "docs/reference_cases"
+    paths = [directory / name for name in (
+        "ge_beam3_g6_confirmation_v2.json",
+        "ge_beam3_g6_confirmation_review_v2.json",
+        "ge_beam3_g6_status_v2.json",
+    )]
+    values = []
+    for path in paths:
+        raw = path.read_bytes().replace(b"\r\n", b"\n")
+        value = _strict(raw)
+        assert raw == (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode()
+        values.append(value)
+    confirmation, review, status = values
+    confirmation_hash = sha256(paths[0].read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    review_hash = sha256(paths[1].read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    assert confirmation_hash == review["scope"]["confirmation_sha256"] == status["confirmation_sha256"]
+    assert review_hash == status["review_sha256"]
+    assert review["findings"] == [] and review["reviewer"]["independent"] is True
+    assert confirmation["consumer_candidates"] == {
+        "anyfem": {
+            "adapter_sha256": "3fc301bc2aac343f0c0c6d2b644a93f08991c55a02b80d2e675698eb7a3b0ab2",
+            "commit": "057ad8a0215853946a685427b7dd77d02b6d0cb6",
+        },
+        "anystructure": {
+            "adapter_sha256": "287c94caca6ef3e59ad8a976d5a015de45485d361b9ec5571855c549d7b427e6",
+            "commit": "917d0d4678aba823865c5911dee04076ccb7d832",
+        },
+    }
+    assert confirmation["archive"]["package"]["complete_sha256"] == (
+        "73b785f5d6c2b5f66512060b18e0a5d5ec053eb03ab8d776d5e511b2b3b7be94"
+    )
+    assert confirmation["archive"]["formal_cycle_1"] == confirmation["archive"]["formal_cycle_2"]
+    assert confirmation["terminal"] == status["terminal"]
+    assert confirmation["production_default_qualified"] is False
