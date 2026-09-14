@@ -16,3 +16,8 @@ legacy-default preservation, and absence from the generic element registry.
 G1--G6 mechanics were not rerun. Their accepted hash DAG remains the scientific
 authority. G7 changes no native operator or state law and makes no default,
 version, tag, or publication change.
+
+Protected-CI rehearsal exposed only successor-inventory and Windows line-ending
+assumptions. Commit `3c714b88c049a475cc7a99dab06d0137c448b070` corrects
+those portable-test boundaries without changing the admitted implementation,
+wheel, consumers, formal outputs, or scientific authority.
