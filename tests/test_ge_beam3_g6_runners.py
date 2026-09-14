@@ -33,6 +33,7 @@ def test_bounded_process_and_scope_guards_are_present():
     assert '["taskkill", "/PID", str(process.pid), "/T", "/F"]' in package_source
     assert 'GE_BEAM3_G6_SCALE_ELEMENTS="1024"' in confirmation_source
     assert 'len(selected) != 8' in confirmation_source
+    assert 'recorder.passed != recorder.collected' in confirmation_source
     assert 'production_default_qualified":False' in confirmation_source
 
 

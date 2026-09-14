@@ -74,14 +74,16 @@ def run(output, revision, package_receipt, package_sha256, lane):
     recorder=Recorder()
     code=pytest.main(["-q", "-p", "no:cacheprovider", "--basetemp", str(output / "pytest"), *selected],
                      plugins=[recorder])
-    if code or recorder.bad or recorder.passed != selected:
+    expected_names = [item.split("::")[-1] for item in selected]
+    if ([item.split("::")[-1] for item in recorder.collected] != expected_names
+            or code or recorder.bad or recorder.passed != recorder.collected):
         raise RuntimeError("G6 scientific inventory failed")
     records=recorder.module.SCIENTIFIC_RECORDS
     from anysolver._ge_beam3_g6_domain import PARITY_DISPOSITIONS, adjudicate
     result=adjudicate(records, parity_rows=dict(PARITY_DISPOSITIONS),
                       installed_artifact=receipt["installed_artifact"])
     science={"schema":"GE_BEAM3_G6_CONFIRMATION_V1", "candidate_commit":revision,
-        "lane":lane, "selected":[item.split("::")[-1] for item in selected], "records":records,
+        "lane":lane, "selected":expected_names, "records":records,
         "adjudication":result, "package_receipt_sha256":package_sha256,
         "production_default_qualified":False}
     write_new(output / "result.json", science)
