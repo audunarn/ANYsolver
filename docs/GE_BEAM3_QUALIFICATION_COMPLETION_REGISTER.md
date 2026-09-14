@@ -1296,3 +1296,46 @@ Next gate: freeze and implement G4 S19--S24 material/state ownership fixtures,
 starting with station-owned elastic/generalized/fibre-plastic adapters and the
 prepare-all atomic transaction.  No exhaustive G3c rerun is needed unless that
 gate changes a G3c-bound operator or restart identity.
+
+## G4a private station transaction closeout
+
+The G4 material/state lane is split into bounded successor gates. G4a covers
+only the private heterogeneous station transaction and atomic publication
+foundation; G4b will own assembled graph/solver behavior and G4c will own
+authenticated restart and accepted-state recovery.
+
+The design freeze is `d494d87c32fb53952e53392ca8d8a959510f70ef`, and its
+independent design review is committed at `6cb1aad7ea564a0acb7af3e44ac92728548d7025`.
+The initial implementation `28a36b5e6fa7fdcb353ba43a511ebeda83a8619d`
+passed its smoke, but its first rehearsal stopped during collection because six
+parameter instances were registered as two source function names. No test ran
+and no scientific aggregate was created. That process evidence is preserved.
+
+The successor `d5783b48103066e5f17ac000b5aece6d3fe8a2bf`, tree
+`0c3c4e3461fd09ba9927fef7dbdd5deb636ef139`, changes only the two runner
+inventory paths and registers all 13 exact pytest nodes. Its 22 contract and
+implementation tests and 55 isolated runner guards pass. Independent
+implementation review SHA-256
+`48fadf884c3875c6b1737dff5b45090b1fe993e3fa0047fb6a5dde92d289b05c`
+has empty findings.
+
+The complete rehearsal and both formal cycles passed with zero active child
+processes. The two formal canonical scientific aggregates are byte-identical:
+2,045 bytes, SHA-256
+`097f679fd6d91eede3061ed137022c67be89547fa12e0ed0471b39b566e5dcc6`.
+Each confirms the exact elastic/generalized/fibre station order, six accepted
+epochs, independent pure-law replay, actual potential/work derivatives,
+prepare-all atomicity and physical-fibre-only fibre recovery. Each complete
+formal wave finished in less than 43 seconds and peaked below 190 MiB.
+
+All process and scientific records are preserved under
+`C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g4a-station-20260914/`.
+Independent closeout adjudication records
+`PROVISIONAL_GO_GE_BEAM3_G4A_STATION_TRANSACTION_ONLY`. This does not close any
+of S19--S24 by itself and does not qualify G4, G5, consumers, installed wheels,
+production use, default routing, release or publication.
+
+Next gate: freeze G4b's assembled history-bearing graph and solver-control
+fixtures, including Newton/line-search/cutback/arc-length publication semantics
+and mixed station families. The completed G3c or G4a cycles need not be rerun
+unless a bound operator or transaction identity changes.
