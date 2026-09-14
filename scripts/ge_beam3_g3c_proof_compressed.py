@@ -199,5 +199,130 @@ def validate(value):
     return json.loads(canonical(value))
 
 
+def _candidate(value):
+    if type(value) is not dict or set(value) != {"commit", "tree"}:
+        raise ValueError("candidate schema")
+    for digest in value.values():
+        if type(digest) is not str or len(digest) != 40 or any(
+                char not in "0123456789abcdef" for char in digest):
+            raise ValueError("candidate identity")
+    return value
+
+
+def aggregate(execution):
+    """Create assignment-neutral evidence from a completed executed basis.
+
+    The numerical coordinator supplies the execution object.  This function
+    neither runs nor imports mechanics and cannot turn an absent result into an
+    executed claim.
+    """
+    if type(execution) is not dict or set(execution) != {
+            "schema", "cycle", "candidate", "manifest_sha256",
+            "histories", "restarts", "prerequisite_receipts"}:
+        raise ValueError("execution schema")
+    if execution["schema"] != "GE_BEAM3_G3C_PROOF_COMPRESSED_EXECUTION_V2":
+        raise ValueError("execution identity")
+    if type(execution["cycle"]) is not int or type(execution["cycle"]) is bool \
+            or execution["cycle"] not in (1, 2):
+        raise ValueError("cycle")
+    candidate = _candidate(execution["candidate"])
+    manifest_value = manifest()
+    if execution["manifest_sha256"] != sha256(canonical(manifest_value)).hexdigest():
+        raise ValueError("manifest association")
+    receipts = execution["prerequisite_receipts"]
+    if type(receipts) is not list or len(receipts) != len(PREREQUISITES):
+        raise ValueError("prerequisite receipt coverage")
+    for actual, (name, digest) in zip(receipts, PREREQUISITES):
+        if not exact(actual, {"name": name, "sha256": digest}):
+            raise ValueError("prerequisite receipt")
+
+    expected_ids = executed_case_ids()
+    histories = execution["histories"]
+    if type(histories) is not list or len(histories) != 25:
+        raise ValueError("executed history coverage")
+    history_by_id = {}
+    for expected_id, row in zip(expected_ids, histories):
+        if type(row) is not dict or set(row) != {
+                "case_id", "events", "history_sha256", "final_sha256",
+                "transport_sha256", "passed"}:
+            raise ValueError("executed history schema")
+        if row["case_id"] != expected_id or row["passed"] is not True:
+            raise ValueError("executed history order")
+        case = next(item for item in cases() if item["case_id"] == expected_id)
+        if type(row["events"]) is not int or row["events"] != case["accepted_stages"]:
+            raise ValueError("executed history events")
+        for key in ("history_sha256", "final_sha256", "transport_sha256"):
+            _sha(row[key])
+        history_by_id[expected_id] = row
+
+    expected_restarts = [(row["case_id"], prefix)
+                         for row in restart_plan() for prefix in row["prefixes"]]
+    restarts = execution["restarts"]
+    if type(restarts) is not list or len(restarts) != 120:
+        raise ValueError("executed restart coverage")
+    restart_by_key = {}
+    for expected_key, row in zip(expected_restarts, restarts):
+        if type(row) is not dict or set(row) != {
+                "case_id", "prefix", "input_sha256", "final_sha256", "passed"}:
+            raise ValueError("executed restart schema")
+        key = (row["case_id"], row["prefix"])
+        if key != expected_key or row["passed"] is not True or key in restart_by_key:
+            raise ValueError("executed restart order")
+        if type(row["prefix"]) is not int or type(row["prefix"]) is bool:
+            raise ValueError("executed restart prefix")
+        _sha(row["input_sha256"]); _sha(row["final_sha256"])
+        if row["final_sha256"] != history_by_id[row["case_id"]]["final_sha256"]:
+            raise ValueError("restart final association")
+        restart_by_key[key] = row
+
+    derivation_by_id = {row["case_id"]: row for row in derivation_plan()}
+    history_records = []
+    for case in cases():
+        derivation = derivation_by_id[case["case_id"]]
+        root = history_by_id[derivation["root_case_id"]]
+        executed_row = history_by_id.get(case["case_id"])
+        body = dict(case_id=case["case_id"], provenance=derivation["provenance"],
+                    root_case_id=derivation["root_case_id"],
+                    holdout_case_id=derivation["holdout_case_id"],
+                    transforms=derivation["transforms"],
+                    root_history_sha256=root["history_sha256"],
+                    root_transport_sha256=root["transport_sha256"],
+                    executed_history_sha256=(None if executed_row is None
+                                             else executed_row["history_sha256"]),
+                    passed=True)
+        body["record_sha256"] = sha256(canonical(body)).hexdigest()
+        history_records.append(body)
+
+    assignment_records = []
+    for assignment in assignment_plan():
+        case_id = assignment["case_id"]
+        derivation = derivation_by_id[case_id]
+        restart = restart_by_key.get((case_id, assignment["prefix"]))
+        provenance = "EXECUTED" if (assignment["kind"] == "history"
+            and case_id in history_by_id) or restart is not None else \
+            "DERIVED_BY_VERIFIED_TRANSPORT"
+        body = dict(assignment_index=assignment["assignment_index"],
+                    kind=assignment["kind"], case_id=case_id,
+                    prefix=assignment["prefix"], provenance=provenance,
+                    history_record_sha256=history_records[
+                        next(index for index, row in enumerate(cases())
+                             if row["case_id"] == case_id)]["record_sha256"],
+                    executed_restart_sha256=(None if restart is None else
+                        sha256(canonical(restart)).hexdigest()),
+                    root_case_id=derivation["root_case_id"], passed=True)
+        body["record_sha256"] = sha256(canonical(body)).hexdigest()
+        assignment_records.append(body)
+
+    value = dict(schema="GE_BEAM3_G3C_PROOF_COMPRESSED_AGGREGATE_V2",
+                 cycle=execution["cycle"], candidate=candidate,
+                 manifest_sha256=execution["manifest_sha256"],
+                 histories=history_records, assignments=assignment_records,
+                 counts=manifest_value["body"]["counts"], passed=True,
+                 terminal="COMPLETE_GE_BEAM3_G3C_PROOF_COMPRESSED_CYCLE_ONLY",
+                 full_g3c_qualified=False, production_qualified=False)
+    value["self_sha256"] = sha256(canonical(value)).hexdigest()
+    return value
+
+
 if __name__ == "__main__":
     print(canonical(validate(manifest())).decode("ascii"), end="")

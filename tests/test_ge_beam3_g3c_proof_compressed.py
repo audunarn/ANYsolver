@@ -12,6 +12,39 @@ PATH = ROOT / "scripts" / "ge_beam3_g3c_proof_compressed.py"
 SPEC = importlib.util.spec_from_file_location("g3c_proof_compressed", PATH)
 PC = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PC)
+CHECKER_PATH = ROOT / "docs" / "reference_cases" / "ge_beam3_g3c_proof_compressed_checker.py"
+CHECKER_SPEC = importlib.util.spec_from_file_location("g3c_proof_compressed_checker", CHECKER_PATH)
+CHECKER = importlib.util.module_from_spec(CHECKER_SPEC)
+CHECKER_SPEC.loader.exec_module(CHECKER)
+
+
+def _digest(label):
+    return sha256(label.encode("ascii")).hexdigest()
+
+
+def _execution(cycle=1):
+    manifest = PC.manifest()
+    histories = []
+    finals = {}
+    by_id = {row["case_id"]: row for row in PC.cases()}
+    for case_id in PC.executed_case_ids():
+        final = _digest("final:" + case_id); finals[case_id] = final
+        histories.append(dict(case_id=case_id,
+            events=by_id[case_id]["accepted_stages"],
+            history_sha256=_digest("history:" + case_id), final_sha256=final,
+            transport_sha256=_digest("transport:" + case_id), passed=True))
+    restarts = []
+    for row in PC.restart_plan():
+        for prefix in row["prefixes"]:
+            restarts.append(dict(case_id=row["case_id"], prefix=prefix,
+                input_sha256=_digest(f'input:{row["case_id"]}:{prefix}'),
+                final_sha256=finals[row["case_id"]], passed=True))
+    return dict(schema="GE_BEAM3_G3C_PROOF_COMPRESSED_EXECUTION_V2",
+        cycle=cycle, candidate={"commit":"1"*40,"tree":"2"*40},
+        manifest_sha256=sha256(PC.canonical(manifest)).hexdigest(),
+        histories=histories, restarts=restarts,
+        prerequisite_receipts=[dict(name=name,sha256=digest)
+                               for name,digest in PC.PREREQUISITES])
 
 
 def test_proof_compressed_inventory_and_order():
@@ -94,6 +127,62 @@ def test_manifest_is_deterministic():
     second = PC.canonical(PC.manifest())
     assert first == second
     assert sha256(first).hexdigest() == sha256(second).hexdigest()
+
+
+def test_assignment_neutral_aggregate_and_independent_checker():
+    aggregate = PC.aggregate(_execution())
+    verification = CHECKER.verify(aggregate)
+    assert verification == {
+        "independently_verified": True, "histories": 375,
+        "assignments": 3825, "executed_histories": 25,
+        "executed_restart_continuations": 120,
+        "full_g3c_qualified": False, "production_qualified": False,
+    }
+    assert sum(row["provenance"] == "EXECUTED"
+               for row in aggregate["histories"]) == 25
+    assert sum(row["provenance"] == "EXECUTED"
+               for row in aggregate["assignments"]) == 145
+
+
+@pytest.mark.parametrize("field", ("history", "restart", "receipt", "cycle", "candidate"))
+def test_execution_evidence_mutations_rejected(field):
+    execution = _execution()
+    if field == "history":
+        execution["histories"][0]["passed"] = False
+    elif field == "restart":
+        execution["restarts"][0]["final_sha256"] = "0" * 64
+    elif field == "receipt":
+        execution["prerequisite_receipts"][0]["sha256"] = "0" * 64
+    elif field == "cycle":
+        execution["cycle"] = 0
+    else:
+        execution["candidate"]["commit"] = "not-a-commit"
+    with pytest.raises(ValueError):
+        PC.aggregate(execution)
+
+
+def test_independent_checker_rejects_derived_claim_relabeling():
+    aggregate = PC.aggregate(_execution())
+    row = next(item for item in aggregate["histories"]
+               if item["provenance"] == "DERIVED_BY_VERIFIED_TRANSPORT")
+    row["provenance"] = "EXECUTED"
+    body = dict(row); body.pop("record_sha256")
+    row["record_sha256"] = sha256(PC.canonical(body)).hexdigest()
+    aggregate_body = dict(aggregate); aggregate_body.pop("self_sha256")
+    aggregate["self_sha256"] = sha256(PC.canonical(aggregate_body)).hexdigest()
+    with pytest.raises(ValueError):
+        CHECKER.verify(aggregate)
+
+
+def test_independent_checker_imports_no_producer_or_mechanics():
+    tree = ast.parse(CHECKER_PATH.read_text(encoding="utf-8"))
+    imports = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imports.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            imports.add((node.module or "").split(".")[0])
+    assert imports <= {"hashlib", "json"}
 
 
 def test_proof_compressed_projection_matches_frozen_source_inventory():
