@@ -10,6 +10,7 @@ from hashlib import sha256
 import importlib
 import json
 from pathlib import Path
+import subprocess
 import sys
 
 
@@ -28,19 +29,40 @@ def file_sha(path: Path) -> str:
     return digest.hexdigest()
 
 
+def git_identity(root: Path) -> tuple[str, str]:
+    root = root.resolve(strict=True)
+    command = ["git", "-c", f"safe.directory={root}", "-C", str(root), "rev-parse"]
+    commit = subprocess.check_output(command + ["HEAD"], text=True).strip()
+    tree = subprocess.check_output(command + ["HEAD^{tree}"], text=True).strip()
+    if len(commit) != 40 or len(tree) != 40:
+        raise RuntimeError("invalid candidate Git identity")
+    return commit, tree
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--site", required=True, type=Path)
     parser.add_argument("--wheel", required=True, type=Path)
-    parser.add_argument("--anyfem-src", required=True, type=Path)
-    parser.add_argument("--anystructure-src", required=True, type=Path)
+    parser.add_argument("--solver-commit", required=True)
+    parser.add_argument("--solver-tree", required=True)
+    parser.add_argument("--anyfem-root", required=True, type=Path)
+    parser.add_argument("--anystructure-root", required=True, type=Path)
+    parser.add_argument("--g6-confirmation", required=True, type=Path)
+    parser.add_argument("--contract", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
 
     site = args.site.resolve(strict=True)
     sys.path.insert(0, str(site))
-    sys.path.append(str(args.anyfem_src.resolve(strict=True)))
-    sys.path.append(str(args.anystructure_src.resolve(strict=True)))
+    anyfem_root = args.anyfem_root.resolve(strict=True)
+    anystructure_root = args.anystructure_root.resolve(strict=True)
+    sys.path.append(str(anyfem_root / "src"))
+    sys.path.append(str(anystructure_root))
+
+    anyfem_commit, anyfem_tree = git_identity(anyfem_root)
+    anystructure_commit, anystructure_tree = git_identity(anystructure_root)
+    if len(args.solver_commit) != 40 or len(args.solver_tree) != 40:
+        raise RuntimeError("invalid frozen solver identity")
 
     import numpy as np
     import anysolver
@@ -122,8 +144,24 @@ def main() -> int:
             "status_name": True,
         },
         "definition_sha256": definition.sha256,
+        "g6_confirmation_file_sha256": file_sha(args.g6_confirmation.resolve(strict=True)),
+        "g7_contract_sha256": file_sha(args.contract.resolve(strict=True)),
+        "harness_sha256": file_sha(Path(__file__).resolve(strict=True)),
         "native_owner_identity": owner.identity,
         "native_profile_id": provenance["native"]["profile_id"],
+        "repository_candidates": {
+            "anyfem": {
+                "adapter_sha256": file_sha(anyfem_root / "src/anyfem/solve/ge_beam3.py"),
+                "commit": anyfem_commit,
+                "tree": anyfem_tree,
+            },
+            "anysolver": {"commit": args.solver_commit, "tree": args.solver_tree},
+            "anystructure": {
+                "adapter_sha256": file_sha(anystructure_root / "anystruct/ge_beam3_optin.py"),
+                "commit": anystructure_commit,
+                "tree": anystructure_tree,
+            },
+        },
         "schema": "B3_GE_G7_INSTALLED_CONFIRMATION_V1",
         "selector": "b3-ge",
         "terminal": "PROVISIONAL_GO_B3_GE_PRODUCTION_OPT_IN",
