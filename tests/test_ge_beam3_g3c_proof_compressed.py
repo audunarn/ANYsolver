@@ -288,3 +288,9 @@ def test_physical_owner_backtracks_only_the_typed_chart_cutback():
     assert any(isinstance(node, ast.Raise) and node.exc is None
                for node in ast.walk(handler))
     assert any(isinstance(node, ast.Continue) for node in ast.walk(handler))
+    backtrack = next(node for node in ast.walk(run) if isinstance(node, ast.For)
+                     and isinstance(node.target, ast.Name) and node.target.id == "cut")
+    assert (isinstance(backtrack.iter, ast.Call)
+            and isinstance(backtrack.iter.func, ast.Name)
+            and backtrack.iter.func.id == "range"
+            and ast.literal_eval(backtrack.iter.args[0]) == 16)

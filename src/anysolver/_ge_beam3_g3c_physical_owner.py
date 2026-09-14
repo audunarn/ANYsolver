@@ -522,7 +522,11 @@ class MixedGraphOwner:
                 self._discard(sandbox); sandbox=None
                 if iteration==24: raise ValueError('graph iteration limit')
                 step=solve(A,-r)
-                for cut in range(9):
+                # Sixteen binary reductions retain the registered Newton
+                # direction while allowing a large KKT step to enter the
+                # admissible rotation chart before testing residual descent.
+                # This is still bounded (at most sixteen trial evaluations).
+                for cut in range(16):
                     check('line_search'); fraction=.5**cut
                     trial=total+fraction*step[:self.size]; multipliers=mu+fraction*step[self.size:]
                     try:
