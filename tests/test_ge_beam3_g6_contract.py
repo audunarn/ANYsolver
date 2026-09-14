@@ -140,3 +140,32 @@ def test_corrected_consumer_graph_closeout_is_canonical_and_bound():
     assert confirmation["archive"]["formal_cycle_1"] == confirmation["archive"]["formal_cycle_2"]
     assert confirmation["terminal"] == status["terminal"]
     assert confirmation["production_default_qualified"] is False
+
+
+def test_final_ci_bound_consumer_graph_closeout_is_canonical_and_bound():
+    directory = ROOT / "docs/reference_cases"
+    paths = [directory / name for name in (
+        "ge_beam3_g6_confirmation_v3.json",
+        "ge_beam3_g6_confirmation_review_v3.json",
+        "ge_beam3_g6_status_v3.json",
+    )]
+    confirmation, review, status = (
+        _strict(path.read_bytes().replace(b"\r\n", b"\n")) for path in paths
+    )
+    for path, value in zip(paths, (confirmation, review, status), strict=True):
+        raw = path.read_bytes().replace(b"\r\n", b"\n")
+        assert raw == (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    confirmation_hash = sha256(paths[0].read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    assert confirmation_hash == review["scope"]["confirmation_sha256"]
+    assert confirmation_hash == status["confirmation_sha256"]
+    assert sha256(paths[1].read_bytes().replace(b"\r\n", b"\n")).hexdigest() == status["review_sha256"]
+    assert confirmation["consumer_candidates"]["anyfem"]["commit"] == (
+        "9e16a5362daf4c9013e61dcc6277ab604e74cde5"
+    )
+    assert confirmation["consumer_candidates"]["anystructure"]["commit"] == (
+        "fcda8325cf7b140171010a14ffa04458e9597676"
+    )
+    assert confirmation["archive"]["formal_cycle_1"] == confirmation["archive"]["formal_cycle_2"]
+    assert confirmation["terminal"] == status["terminal"]
+    assert review["findings"] == []
+    assert confirmation["production_default_qualified"] is False
