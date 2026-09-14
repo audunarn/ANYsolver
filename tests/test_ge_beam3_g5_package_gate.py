@@ -27,3 +27,11 @@ def test_package_gate_declares_bounded_process_tree_termination():
     assert 'timeout=seconds' in source
     assert '["taskkill", "/PID", str(process.pid), "/T", "/F"]' in source
     assert '"OMP_NUM_THREADS"' in source and '"NUMEXPR_NUM_THREADS"' in source
+
+
+def test_package_gate_rejects_workspace_output_before_creating_parent(tmp_path, monkeypatch):
+    output = tmp_path / "missing" / "evidence"
+    monkeypatch.setattr(gate.subprocess, "check_output", lambda *args, **kwargs: b"dirty\n")
+    with pytest.raises(ValueError, match="external package"):
+        gate.run("0" * 40, output)
+    assert not output.exists() and not output.parent.exists()

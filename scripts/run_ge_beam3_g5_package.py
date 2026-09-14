@@ -140,6 +140,7 @@ def run(revision, output):
                                      text=True).strip()
     if revision != actual:
         raise ValueError("exact HEAD revision required")
+    output.parent.mkdir(parents=True, exist_ok=True)
     output.mkdir()
     receipts = []
     commands = (
