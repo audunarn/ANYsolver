@@ -1255,3 +1255,44 @@ checker reconstructs the full 3,825-row assignment order, exact executed basis,
 145 executed assignment dispositions and all counts from literals.  The worker
 writes canonical bytes directly.  Two fresh-process replicas now pass and are
 byte-identical.  No numerical cycle ran under the rejected checker.
+
+The final successor freeze `1ebe7ab0ad77c28d01c58423ebb6e7c218042daa`,
+tree `76538156c6a9cd534fc822d3422321338fe6e096`, preserves the first blocked
+cycle and limits chart-entry recovery to 16 binary backtracks around the exact
+typed `trial chart requires cutback` condition.  Its focused former-failure
+smoke passed.  Twenty-six proof-compression guards and 54 isolated shared-runner
+guards passed; independent implementation review SHA-256
+`fe0500b7f06cc580d2c9890e11f1c27a1dd4ea06b6a816dd299bd2ba7f6292ed`
+has empty findings.
+
+Both complete 100-shard cycles passed and drained with zero active processes.
+Each contains 375 ordered histories, 3,075 accepted events, 3,450 restart
+prefixes and 3,825 assignments.  Exactly 25 histories and 120 fresh restart
+continuations executed; the remaining records are explicitly
+`DERIVED_BY_VERIFIED_TRANSPORT`.  Both canonical scientific aggregates are
+1,792,104 bytes, SHA-256
+`dccb58d0e154785e77dadecee165c130ef5ad85ea52c7742bf5c13d6560dc1ec`.
+Both checker replicas in both cycles are byte-identical at SHA-256
+`e347944775b3cdf48f3d1891856a0be215470e13c01e7c8246bf22696f065180`.
+Process records differ only in permitted external diagnostics and are bound
+separately by the closeout.
+
+All 2,098 raw files are durably preserved under
+`C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g3c-proof-compressed-20260914-1ebe7ab/`.
+Cycle one contains 1,049 files and 25,364,953 bytes with tree-manifest SHA-256
+`3024f401ebd43918e42ba615bfeb58144475f9ff5fb524da9dd8f495ba019bd7`;
+cycle two contains 1,049 files and 25,364,961 bytes with tree-manifest SHA-256
+`f1a5f3e5cee215350f81e1c72ed29f2be3236a29cb20c5bc90b15f645a42b929`.
+Every staged/archive file matched by relative path, byte count and SHA-256.
+
+Independent closeout adjudication records
+`PROVISIONAL_GO_GE_BEAM3_G3C_COMMON_POSE_ELASTIC_GRAPH_ONLY`.  This closes the
+registered private elastic affine graph slice only.  It does not claim generic
+geometry, history-bearing material, G4/G5, installed-wheel, production, default,
+release or publication qualification.  The cycle-local `full_g3c_qualified=false`
+and `production_qualified=false` fields remain unmodified and truthful.
+
+Next gate: freeze and implement G4 S19--S24 material/state ownership fixtures,
+starting with station-owned elastic/generalized/fibre-plastic adapters and the
+prepare-all atomic transaction.  No exhaustive G3c rerun is needed unless that
+gate changes a G3c-bound operator or restart identity.
