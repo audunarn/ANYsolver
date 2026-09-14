@@ -634,8 +634,17 @@ def _shell_contact_candidates(model: "FEModel") -> List[ShellElement]:
 
 def _beam_contact_candidates(model: "FEModel") -> List[Any]:
     from .elements import BeamElement
+    from .ge_beam3_element import GeometricallyExactBeam3D3NElement
 
-    return [element for element in model.mesh.elements.values() if isinstance(element, BeamElement)]
+    # GE-B3 deliberately does not inherit legacy BeamElement.  Admit only the
+    # exact qualified public class; private candidates and subclasses cannot
+    # become contact targets by structural duck typing.
+    return [
+        element
+        for element in model.mesh.elements.values()
+        if isinstance(element, BeamElement)
+        or type(element) is GeometricallyExactBeam3D3NElement
+    ]
 
 
 def _beam_contact_radius(element: Any) -> float:

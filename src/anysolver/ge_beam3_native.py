@@ -22,6 +22,10 @@ from ._ge_beam3_retained_nodal_loading import NodalDeadForces, Program as NodalP
 from ._ge_beam3_retained_translation_control import Program as TranslationProgram
 from ._ge_beam3_retained_fibre_control import TranslationProgram as FibreTranslationProgram
 from ._ge_beam3_spatial_nodal_moments import SpatialNodalMoments
+from ._ge_beam3_g6_domain import (
+    ActivityEpochLease, ConsumerPolicy, GeneralizedInitialField, evaluate_initial_field,
+)
+from ._ge_beam3_pose_joint import RigidPoseJoint as ObjectivePoseJoint
 from ._ge_beam3_p5_seeded.core import canonical as _canonical
 
 SELECTOR = 'ge-beam3-native'
@@ -120,4 +124,6 @@ __all__ = ['SELECTOR', 'PROFILE_ID', 'PROFILE_BYTES', 'PROFILE_SHA256',
            'DistributedPattern', 'DistributedProgram', 'NodalDeadForces',
            'NodalProgram', 'TranslationProgram', 'FibreTranslationProgram',
            'SpatialNodalMoments', 'define_beam', 'create_analysis',
-           'create_coupled_analysis', 'workflow_provenance']
+           'create_coupled_analysis', 'workflow_provenance',
+           'ActivityEpochLease', 'GeneralizedInitialField',
+           'ConsumerPolicy', 'ObjectivePoseJoint', 'evaluate_initial_field']
