@@ -545,9 +545,10 @@ def test_unqualified_routes_fail_closed() -> None:
         "finite_rotation_transient_dynamics",
         "gyroscopic_terms",
         "history_bearing_sections",
-        "linear_transient_dynamics",
         "nonconservative_follower_loads",
     } <= element.capability_gaps
+    assert "linear_transient_dynamics" not in element.capability_gaps
+    assert "transient_algebraic_dynamics" not in element.capability_gaps
 
     curved = _model()
     curved.mesh.set_node_coordinates(12, 1.0, 0.1, 0.0)

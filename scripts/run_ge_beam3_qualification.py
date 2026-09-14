@@ -41,7 +41,8 @@ TESTS={'b2-core':(TEST,'numeric_core'),
        'q4-affine-numerical':('tests/test_ge_beam3_q4_affine_numerical_recovery.py','q4_affine_numerical'),
        'g3c-physical':('tests/test_ge_beam3_g3c_physical_owner.py','physical_owner'),
        'g4a-station':('tests/test_ge_beam3_g4a_station_transaction.py','g4a_station'),
-       'g4-completion':('tests/test_ge_beam3_g4_completion.py','g4_completion')}
+       'g4-completion':('tests/test_ge_beam3_g4_completion.py','g4_completion'),
+       'g5-completion':('tests/test_ge_beam3_g5_completion.py','g5_completion')}
 G4A_BASE='6cb1aad7ea564a0acb7af3e44ac92728548d7025'
 G4A_BASE_TREE='625b375968e83ae905807ae41b044555c3b9438d'
 G4A_PLAN='docs/GE_BEAM3_G4A_STATION_TRANSACTION_CONTRACT.md'
@@ -86,6 +87,22 @@ G4_NODES=(G4_TESTS[0],
 G4_IMPLEMENTATION_PATHS={'src/anysolver/_ge_beam3_g4_completion.py',
     'tests/test_ge_beam3_g4_completion.py','scripts/run_ge_beam3_qualification.py',
     'tests/test_ge_beam3_qualification_runner.py'}
+G5_BASE='0373b8bc0a7c5bbfc4c991cd62d59d718734e24c'
+G5_BASE_TREE='8905b4286c8df5a77b53fbb6721e865838339a91'
+G5_PLAN='docs/GE_BEAM3_G5_INTEGRATION_CLOSURE_CONTRACT.md'
+G5_PLAN_SHA='ff1bf641452987571d2d2e6c55ea349067723e454be1a1cae53c524db993e495'
+G5_TESTS=('test_actual_legacy_b2_reference_routes',
+    'test_actual_legacy_b3_reference_routes',
+    'test_ge_reference_load_inertia_and_combinations',
+    'test_ge_reference_modal_buckling_and_linear_transient',
+    'test_explicit_native_static_restart_recovery_and_provenance',
+    'test_unsupported_routes_fail_closed_before_state_mutation',
+    'test_selector_and_provenance_boundary_remains_additive')
+G5_IMPLEMENTATION_PATHS={'src/anysolver/_ge_beam3_g5_completion.py',
+    'src/anysolver/ge_beam3_element.py','tests/test_ge_beam3_g5_completion.py',
+    'scripts/run_ge_beam3_g5_package.py','tests/test_ge_beam3_g5_package_gate.py',
+    'tests/test_ge_beam3_mixed_p3_optin.py',
+    'scripts/run_ge_beam3_qualification.py','tests/test_ge_beam3_qualification_runner.py'}
 PHYSICAL_BASE='ba4f4d793bb9494f3c116030c99577a1b3ebefe6'
 PHYSICAL_BASE_TREE='47c29d6e5d60dc133544cedade3a11a78ee13b3c'
 PHYSICAL_PLAN='docs/GE_BEAM3_G3C_PHYSICAL_MIXED_OWNER_CONTRACT.md'
@@ -1300,6 +1317,14 @@ def inventory(lane,gate='b2-core'):
         if lane=='smoke':names=names[:1]
         elif lane not in ('core','rehearsal','formal'):raise ValueError('unregistered G4 completion lane')
         return [test_path+'::'+name for name in names]
+    if gate=='g5-completion':
+        names=list(G5_TESTS)
+        tree=ast.parse(read(ROOT/test_path))
+        actual=[n.name for n in tree.body if isinstance(n,ast.FunctionDef) and n.name.startswith('test_')]
+        if actual!=list(G5_TESTS):raise ValueError('registered G5 completion test inventory changed')
+        if lane=='smoke':names=names[:1]
+        elif lane not in ('core','rehearsal','formal'):raise ValueError('unregistered G5 completion lane')
+        return [test_path+'::'+name for name in names]
     contract=environment.strict(read(ROOT/CONTRACT).replace(b'\r\n',b'\n'))
     names=(NUMERICAL_TESTS if gate=='q4-affine-numerical' else AFFINE_TESTS if gate=='q4-affine-exact' else
            Q4_TESTS if gate=='q4-audit' else contract['test_nodes'][inventory_key])
@@ -1354,7 +1379,7 @@ def verify_review(raw,digest,candidate,rows,gate='b2-core'):
         or r['subject_commit']!=candidate['commit']
         or r['scope']!={'scope_id':SCOPE,'gate':gate,'subject_tree':candidate['tree'],
                         'inputs_sha256':sha256(canonical(rows)).hexdigest(),
-                        'contract_sha256':G4_CONTRACT_SHA if gate=='g4-completion' else G4A_CONTRACT_SHA if gate=='g4a-station' else
+                        'contract_sha256':G5_PLAN_SHA if gate=='g5-completion' else G4_CONTRACT_SHA if gate=='g4-completion' else G4A_CONTRACT_SHA if gate=='g4a-station' else
                                          NUMERICAL_PLAN_SHA if gate=='q4-affine-numerical' else AFFINE_PLAN_SHA if gate=='q4-affine-exact' else
                                          Q4_PLAN_SHA if gate=='q4-audit' else CONTRACT_SHA}):
         raise ValueError('implementation review authority')
@@ -1364,6 +1389,17 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
     if gate not in TESTS:raise ValueError('unregistered gate')
     if git('status','--porcelain','--untracked-files=all'):raise ValueError('dirty candidate')
     candidate=dict(commit=git('rev-parse','HEAD'),tree=git('rev-parse','HEAD^{tree}'))
+    if gate=='g5-completion':
+        if git('rev-parse',G5_BASE+'^{tree}')!=G5_BASE_TREE:raise ValueError('G5 base tree')
+        git('merge-base','--is-ancestor',G5_BASE,'HEAD')
+        changed=set(filter(None,git('diff','--name-only',G5_BASE,'HEAD').splitlines()))
+        if changed!=G5_IMPLEMENTATION_PATHS:raise ValueError('G5 completion implementation extent changed')
+        if sha256(read(ROOT/G5_PLAN).replace(b'\r\n',b'\n')).hexdigest()!=G5_PLAN_SHA:
+            raise ValueError('G5 frozen contract changed')
+        inventory('smoke',gate);inventory('core',gate);inventory('rehearsal',gate);inventory('formal',gate)
+        rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows,gate)
+        environment.verify(CAPSULE,CAPSULE_SHA)
+        return candidate,rows,raw
     if gate=='g4-completion':
         if git('rev-parse',G4_BASE+'^{tree}')!=G4_BASE_TREE:raise ValueError('G4 base tree')
         git('merge-base','--is-ancestor',G4_BASE,'HEAD')
@@ -1701,6 +1737,28 @@ def g4_adjudication(records,lane):
         closed_rows=[] if lane=='smoke' else ['S19','S20','S21','S22','S23','S24'],
         g4_qualified=lane!='smoke',g5_qualified=False,production_qualified=False)
 
+def g5_adjudication(records,lane):
+    routes=('LEGACY_B2_REFERENCE_ANALYSIS','LEGACY_B3_REFERENCE_ANALYSIS',
+        'GE_REFERENCE_LOAD_INERTIA','GE_REFERENCE_MODAL_BUCKLING_TRANSIENT',
+        'GE_NATIVE_STATIC_RESTART_RECOVERY','UNSUPPORTED_ROUTES_FAIL_CLOSED',
+        'SELECTOR_AND_PROVENANCE_BOUNDARY')
+    expected=routes[:1] if lane=='smoke' else routes
+    if type(records)is not list or tuple(row.get('route') for row in records)!=expected:
+        raise ValueError('G5 ordered route inventory')
+    for row in records:
+        if (type(row)is not dict or set(row)!={'policy','route','checks','production_qualified','record_sha256'}
+            or row['policy']!='GE_BEAM3_G5_GENERAL_STATIC_INTEGRATION_V1'
+            or row['production_qualified'] is not False or type(row['checks'])is not dict
+            or not row['checks'] or any(value is not True for value in row['checks'].values())):
+            raise ValueError('G5 scientific record')
+        body={key:value for key,value in row.items() if key!='record_sha256'}
+        if row['record_sha256']!=sha256(canonical(body)).hexdigest():raise ValueError('G5 scientific record hash')
+    return dict(terminal=('NOT_ADJUDICATED_SMOKE_ONLY' if lane=='smoke' else
+        'FUNCTIONAL_GE_BEAM3_G5_READY_FOR_INSTALLED_ARTIFACT'),
+        closed_rows=[] if lane=='smoke' else ['S25'],
+        functional_routes_qualified=lane!='smoke',installed_artifact_qualified=False,
+        g5_qualified=False,production_qualified=False)
+
 def job_type():
     # Importlib and sys.modules mutation are not thread-safe.  Physical waves
     # launch three children concurrently, so serialize only this inexpensive
@@ -1747,6 +1805,7 @@ def worker(out,lease_sha):
     if lease['gate']=='q4-affine-exact':scientific['adjudication']=affine_adjudication(records,lease['lane'])
     if lease['gate']=='g4a-station':scientific['adjudication']=g4a_adjudication(records,lease['lane'])
     if lease['gate']=='g4-completion':scientific['adjudication']=g4_adjudication(records,lease['lane'])
+    if lease['gate']=='g5-completion':scientific['adjudication']=g5_adjudication(records,lease['lane'])
     write(out/'scientific.pending.json',scientific)
     write(out/'completion.json',dict(selected=recorder.passed,scientific=fingerprint(read(out/'scientific.pending.json'))))
     print('BEAM CHECKPOINT evidence complete',flush=True)
@@ -4206,7 +4265,7 @@ def execute_guarded(args,watchdog):
             pending=read(out/'scientific.pending.json');science=environment.strict(pending)
             if (completion!={'selected':lease['selected'],'scientific':fingerprint(pending)}
                 or set(science)!=({'schema','gate','lane','candidate','selected','records','full_g3c_qualified','production_qualified'}
-                                  | ({'adjudication'} if lease['gate'] in ('q4-audit','q4-affine-exact','g4a-station','g4-completion') else set()))
+                                  | ({'adjudication'} if lease['gate'] in ('q4-audit','q4-affine-exact','g4a-station','g4-completion','g5-completion') else set()))
                 or science['schema']!='GE_BEAM3_REGISTERED_GATE_SCIENCE_V2' or science['gate']!=lease['gate']
                 or science['lane']!=lease['lane'] or type(science['records']) is not list or not science['records']
                 or science['candidate']!=lease['candidate'] or science['selected']!=lease['selected']
@@ -4219,6 +4278,8 @@ def execute_guarded(args,watchdog):
                 raise ValueError('G4a terminal mismatch')
             if lease['gate']=='g4-completion' and canonical(science['adjudication'])!=canonical(g4_adjudication(science['records'],lease['lane'])):
                 raise ValueError('G4 completion terminal mismatch')
+            if lease['gate']=='g5-completion' and canonical(science['adjudication'])!=canonical(g5_adjudication(science['records'],lease['lane'])):
+                raise ValueError('G5 completion terminal mismatch')
             if authority(args.review,args.review_sha256,args.gate)!=expected:raise ValueError('coordinator final authority')
             if time.monotonic()-wave_start>=1800:raise ValueError('wave deadline')
     except BaseException as exc:

@@ -147,6 +147,9 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(len(r.inventory('smoke','g4-completion')),1)
         self.assertEqual(len(r.inventory('core','g4-completion')),26)
         self.assertEqual(r.inventory('core','g4-completion'),r.inventory('formal','g4-completion'))
+        self.assertEqual(len(r.inventory('smoke','g5-completion')),1)
+        self.assertEqual(len(r.inventory('core','g5-completion')),7)
+        self.assertEqual(r.inventory('core','g5-completion'),r.inventory('formal','g5-completion'))
         with self.assertRaises(ValueError):r.inventory('all')
 
     def test_g4a_adjudication_is_scoped_and_mutation_detecting(self):
@@ -181,6 +184,24 @@ class GuardTests(unittest.TestCase):
                           ('checkpoint_sha256','bad'),('production_qualified',True)):
             changed=copy.deepcopy(row);changed[key]=value
             with self.assertRaises(ValueError):r.g4_adjudication([changed],'formal')
+
+    def test_g5_adjudication_requires_all_ordered_actual_routes(self):
+        routes=('LEGACY_B2_REFERENCE_ANALYSIS','LEGACY_B3_REFERENCE_ANALYSIS',
+            'GE_REFERENCE_LOAD_INERTIA','GE_REFERENCE_MODAL_BUCKLING_TRANSIENT',
+            'GE_NATIVE_STATIC_RESTART_RECOVERY','UNSUPPORTED_ROUTES_FAIL_CLOSED',
+            'SELECTOR_AND_PROVENANCE_BOUNDARY')
+        rows=[]
+        for route in routes:
+            body=dict(policy='GE_BEAM3_G5_GENERAL_STATIC_INTEGRATION_V1',route=route,
+                checks={'passed':True},production_qualified=False)
+            rows.append({**body,'record_sha256':sha256(r.canonical(body)).hexdigest()})
+        result=r.g5_adjudication(rows,'formal')
+        self.assertEqual(result['terminal'],'FUNCTIONAL_GE_BEAM3_G5_READY_FOR_INSTALLED_ARTIFACT')
+        self.assertEqual(result['closed_rows'],['S25'])
+        self.assertFalse(result['g5_qualified'])
+        self.assertEqual(r.g5_adjudication(rows[:1],'smoke')['terminal'],'NOT_ADJUDICATED_SMOKE_ONLY')
+        for changed in (rows[::-1],rows[:-1]):
+            with self.assertRaises(ValueError):r.g5_adjudication(changed,'formal')
 
     def test_physical_registered_inventories_are_exact_and_inert(self):
         inventories={lane:r.inventory(lane,'g3c-physical') for lane in ('local','smoke','rehearsal','formal')}
