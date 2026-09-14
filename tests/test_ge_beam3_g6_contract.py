@@ -78,3 +78,28 @@ def test_contract_preserves_formulation_and_default_boundaries():
     assert contract["terminal_precedence"][-1] == (
         "PROVISIONAL_GO_GE_BEAM3_FULL_LEGACY_DOMAIN_PARITY_OPT_IN"
     )
+
+
+def test_closeout_evidence_review_and_status_are_canonical_and_bound():
+    directory = ROOT / "docs/reference_cases"
+    paths = [directory / name for name in (
+        "ge_beam3_g6_confirmation_v1.json",
+        "ge_beam3_g6_confirmation_review_v1.json",
+        "ge_beam3_g6_status_v1.json",
+    )]
+    values = []
+    for path in paths:
+        raw = path.read_bytes().replace(b"\r\n", b"\n")
+        value = _strict(raw)
+        assert raw == (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode()
+        values.append(value)
+    confirmation, review, status = values
+    confirmation_hash = sha256(paths[0].read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    review_hash = sha256(paths[1].read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    assert confirmation_hash == review["scope"]["confirmation_sha256"] == status["confirmation_sha256"]
+    assert review_hash == status["review_sha256"]
+    assert set(review) == {"decision", "findings", "reviewer", "scope", "subject_commit"}
+    assert review["findings"] == [] and review["reviewer"]["independent"] is True
+    assert confirmation["terminal"] == status["terminal"]
+    assert confirmation["checks"]["formal_science_byte_identical"] is True
+    assert confirmation["production_default_qualified"] is False
