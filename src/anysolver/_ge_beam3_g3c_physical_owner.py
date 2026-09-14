@@ -481,8 +481,18 @@ class MixedGraphOwner:
                 total.reshape(-1,6)[:,:3]=(X@W.T+t)-X
                 for i,qa in enumerate(np.asarray(state['rotations'])):
                     total[6*i+3:6*i+6]+=rotation_log(W@qa.T)
+            # A successful line-search evaluation is already the exact trial
+            # needed by the next Newton iteration.  Keep that one owned
+            # sandbox locally until it is either committed or discarded;
+            # recomputing it used to repeat every element, joint and recovery
+            # evaluation without adding an observation or safety boundary.
+            pending_evaluation=None
             for iteration in range(25):
-                r,A,next_state,sandbox,diagnostics=self._evaluate(total,mu,cmd,origin,check)
+                if pending_evaluation is None:
+                    r,A,next_state,sandbox,diagnostics=self._evaluate(total,mu,cmd,origin,check)
+                else:
+                    r,A,next_state,sandbox,diagnostics=pending_evaluation
+                    pending_evaluation=None
                 if not solve_graph:
                     result=dict(residual=r,tangent=A,candidate=canonical(next_state),
                         diagnostics=diagnostics,production_qualified=False,state_committed=False)
@@ -515,10 +525,13 @@ class MixedGraphOwner:
                 for cut in range(9):
                     check('line_search'); fraction=.5**cut
                     trial=total+fraction*step[:self.size]; multipliers=mu+fraction*step[self.size:]
-                    changed,_,_,sandbox,_=self._evaluate(trial,multipliers,cmd,origin,check)
-                    trial_error=float(np.linalg.norm(changed)); self._discard(sandbox); sandbox=None
+                    changed,trial_A,trial_state,sandbox,trial_diagnostics=self._evaluate(
+                        trial,multipliers,cmd,origin,check)
+                    trial_error=float(np.linalg.norm(changed))
                     if trial_error<error:
+                        pending_evaluation=(changed,trial_A,trial_state,sandbox,trial_diagnostics)
                         total=trial; mu=multipliers; break
+                    self._discard(sandbox); sandbox=None
                 else: raise ValueError('graph line search failed')
             raise ValueError('unreachable graph solve')
         finally:
