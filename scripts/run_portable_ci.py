@@ -76,6 +76,10 @@ PORTABLE_HISTORY_ONLY_NODES = (
     # routing/state tests in this module still run; release metadata is tested
     # independently by test_release_043.py.
     "tests/test_ge_beam3_mixed_p3_optin.py::test_frozen_mechanics_defaults_and_package_metadata_are_unchanged",
+    # The 0.4.3 publication manifest binds the exact released runtime tree.
+    # Later additive runtime modules cannot be reconstructed from the current
+    # checkout, so replay this bridge only with the preserved 0.4.3 artifact.
+    "tests/test_release_043.py::test_publication_manifest_checks_all_accepted_runtime_files",
     # This module replays the immutable V1 opt-in mixed-mesh campaign. Its
     # canonical input intentionally binds the original ``e4-pl-s3`` alias to
     # QualifiedE4PLS3ShellElement, so it cannot be replayed after that public
