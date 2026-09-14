@@ -1,0 +1,68 @@
+{
+  "decision": "ACCEPTED_G2_SCOPED_CONFIRMATION",
+  "findings": [],
+  "reviewer": {
+    "activity": "Independent read-only inspection of formal confirmation, frozen inputs, scientific records, process evidence and durable archive. No edits, evidence regeneration or mechanics rerun.",
+    "identity": "/root/g2_correction_review",
+    "implementation_authorship": "None; independent review guidance only",
+    "independent": true
+  },
+  "scope": {
+    "acceptance_boundary": "Confirms G2 S09-S14 for the private one/two-element exact-elastic constrained owner only. No general-static parity, G3, full beam qualification, public integration, default change or release claim.",
+    "aggregate": {
+      "bytes": 8367,
+      "sha256": "2122104eb2ece955ca8ccbe3d4654578cd3a53e340754bd7fa01c0c3be37f8ff",
+      "terminal": "PROVISIONAL_GO_GE_BEAM3_G2_CONSTRAINED_ELASTIC_STATIC_ONLY"
+    },
+    "archive": {
+      "directory": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g2-confirmation-20260910-e309d97",
+      "formal_copy": "Independently compared all 54 original formal files, including pytest scratch, with the durable formal copy; relative paths, sizes and hashes match exactly.",
+      "manifest_bytes": 137746,
+      "manifest_sha256": "234f6e0b93ab7ceb8ce5d067c5160032cd3d2ffa34aad344762403281150b8ef",
+      "verified_manifest_files": 609
+    },
+    "authority_verification": {
+      "bound_files": 339,
+      "candidate": "Verified exact clean candidate HEAD and tree after formal execution and during independent inspection.",
+      "implementation_review_sha256": "b8bcc18f8f914fe965073ebf4923a10817446bfd63a74b9cbc26164656e706eb",
+      "input_manifest_sha256": "9d82316d34670c64d94ae6c96b5235f478eac0415b837358970b5f95a8cca94a",
+      "review": "Verified canonical five-key accepted implementation review, empty findings, independent reviewer, exact candidate/tree and externally supplied review hash.",
+      "runtime": "Recomputed all bound LF-normalized file hashes, Python executable bytes/version and 317 installed distribution name/version bindings. Canonical current identity equals the frozen manifest."
+    },
+    "cycles": [
+      {
+        "active_processes": 0,
+        "cycle": 1,
+        "elapsed_seconds": 27.61343190000116,
+        "exit_code": 0,
+        "passed_tests": 54,
+        "peak_tree_bytes": 207187968,
+        "verified_passed_phase_records": 162
+      },
+      {
+        "active_processes": 0,
+        "cycle": 2,
+        "elapsed_seconds": 31.375236399999267,
+        "exit_code": 0,
+        "passed_tests": 54,
+        "peak_tree_bytes": 205500416,
+        "verified_passed_phase_records": 162
+      }
+    ],
+    "execution_evidence": "Both cycles match the exact ordered 54-test inventory and every passed setup/call/teardown record, with no missing, duplicate, skipped or failed phases. Verified process records, stdout/stderr size and hash bindings, empty stderr, and all six completed-operation checkpoints in both JSON and raw stdout. Both children satisfy the registered time and memory limits and finish with zero active processes. The reviewed runner enforces one numerical thread and serial bounded process trees without automatic retries.",
+    "publication_verification": "Original aggregate and staged aggregate have identical canonical bytes and refer to the same filesystem object, consistent with the reviewed atomic no-overwrite hard-link publication. No failure evidence or symlinks were found in the formal evidence tree.",
+    "scientific_evidence": {
+      "correction_records_per_cycle": 18,
+      "determinism": "Verified exact registered scientific-record inventories, canonical bytes and aggregate hash bindings. All 18 correction records, development packets, test reports and checkpoint inventories are byte-identical across cycles.",
+      "directional_checks": "All three recorded target-work and actual-Newton derivative steps satisfy 1e-7. Maximum recorded Newton directional error is 5.16983418636172e-08. Both prescribed-target work magnitudes are nonzero and exceed the registered regression threshold.",
+      "packet_bytes": 4232,
+      "packet_schema": "GE_BEAM3_G2_DEVELOPMENT_PACKET_V1",
+      "packet_sha256": "e84747a201b68d23cb4a02eae6d746ad82e268b7bd14f7a441177203e6ef6042",
+      "qualification_label": "The historical development packet retains qualification=false; scoped confirmation is the separate aggregate."
+    },
+    "separate_inventories": "The 36 infrastructure tests and 49 G1 development-regression tests remain separate from the 54 G2 tests in each formal cycle. They are not additional G2 formal passes or replacement accepted G1 evidence. Earlier failed rehearsal evidence remains preserved separately and is not relabeled as successful formal evidence.",
+    "source_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Temp/ge-beam3-g2-formal-e309d97-20260910-v1",
+    "subject_tree": "b2eb030f6e693ad436fbefc4918087d24922f058"
+  },
+  "subject_commit": "e309d977de56ab2dd408cefb796e84173911aa21"
+}

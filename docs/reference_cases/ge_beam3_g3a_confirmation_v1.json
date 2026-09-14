@@ -1,0 +1,337 @@
+{
+  "candidate": "e2b54cf9f61c651139b4bac5f92d5a5683cd8a88",
+  "correction_records": {
+    "cancel-N_BRACED5-entry.json": {
+      "bytes": 151,
+      "sha256": "04f76ca8a17fe123ef5b7c929870507cc75db521be4e7de6e96c5cf059ca0e9f"
+    },
+    "cancel-N_BRACED5-prepublication.json": {
+      "bytes": 329,
+      "sha256": "9d3c0f8fb6ba12b3787fd57d5354de81f73de0bf787a088456ea095a52cae7ed"
+    },
+    "cancel-N_BRANCH3-entry.json": {
+      "bytes": 151,
+      "sha256": "7c100b01354736225e251b7a0d3896119ed1d26c168cd3551ead744563a2153d"
+    },
+    "cancel-N_BRANCH3-prepublication.json": {
+      "bytes": 330,
+      "sha256": "51b14ae759710d79c6129da7ecc55165197b2b047b1c0af05ed28ae1cb423c1b"
+    },
+    "cancel-N_DISJOINT2-entry.json": {
+      "bytes": 151,
+      "sha256": "c1be80ae0508a26c33c7c732e4a2bf0f841741f5635a197436398d62f68b538c"
+    },
+    "cancel-N_DISJOINT2-prepublication.json": {
+      "bytes": 332,
+      "sha256": "2fb4e79c0a7fb9378047b71708f95bda11c712f858a261459109c2f4bae3b154"
+    },
+    "cancel-N_RING4-entry.json": {
+      "bytes": 151,
+      "sha256": "4e1e563c05752d956310ad50c17c04369dac19ca26916768eb98641c03f9c5a3"
+    },
+    "cancel-N_RING4-prepublication.json": {
+      "bytes": 331,
+      "sha256": "42d3f3a218e8eec90d88c240fd148d33dfb87a9313f1fcf926c72bd5575798ab"
+    },
+    "covariance-N_BRACED5-global.json": {
+      "bytes": 4337,
+      "sha256": "1919698e496c09dc85a7c5ec941a58693c98f7cd30c03a4fc4b5c07dd19bc69d"
+    },
+    "covariance-N_BRACED5-renumber.json": {
+      "bytes": 4194,
+      "sha256": "41d2ff9baa53140879e7265a82a9c5cd6a4b5d887b0a4b9b92d97cab2b1ed51a"
+    },
+    "covariance-N_BRACED5-reverse.json": {
+      "bytes": 4276,
+      "sha256": "574a17ae071fd55c405a46fd5236d959cd11784b17e691f76f96bcadfde4e9a6"
+    },
+    "covariance-N_BRANCH3-global.json": {
+      "bytes": 5106,
+      "sha256": "37a652d7b5864a09b48fcd8bb756bcbd278dd200b2c097b385409a48bdd8e9a7"
+    },
+    "covariance-N_BRANCH3-renumber.json": {
+      "bytes": 5141,
+      "sha256": "9eec027380939f8e90dbf52f4f886a860904cd2db0694149847c9d291a6be394"
+    },
+    "covariance-N_BRANCH3-reverse.json": {
+      "bytes": 5108,
+      "sha256": "91306524590901ffbfa5b27ae1fd509a8a9d9e38d8d0969fe644bc61e9a77905"
+    },
+    "covariance-N_DISJOINT2-global.json": {
+      "bytes": 3895,
+      "sha256": "152266c6e1fd3dd51a2d43ca192b9e3f440cb9c3f0d33c9edd1f384dae7e6f9b"
+    },
+    "covariance-N_DISJOINT2-renumber.json": {
+      "bytes": 3489,
+      "sha256": "b80becd4126cb513046edf884b2ea5c7f62d3fd91078348adb69d1b9fbeaea86"
+    },
+    "covariance-N_DISJOINT2-reverse.json": {
+      "bytes": 3652,
+      "sha256": "a7efea62cd089bce3bebe5bcbdb26129b2187a3f3de5f2e7c9a28509df4e3c60"
+    },
+    "covariance-N_RING4-global.json": {
+      "bytes": 3940,
+      "sha256": "bd32983ad0d598853193e4abc38dc48552889477d3431e9d4cf03ae7c0816be7"
+    },
+    "covariance-N_RING4-renumber.json": {
+      "bytes": 3705,
+      "sha256": "7c5870b4b174381f6a44e24267c9257f49de9ed9d1a225c2fe5f164aeade240e"
+    },
+    "covariance-N_RING4-reverse.json": {
+      "bytes": 3883,
+      "sha256": "24adddd59122adebdd340a4dbe6f451b8c7cd4049bc17491beac11d4e1790105"
+    },
+    "poses-N_BRACED5.json": {
+      "bytes": 18377,
+      "sha256": "0e9f25dab921de29267220c16153a3b3ee4be11e4da4720f931112e78e4e80cc"
+    },
+    "poses-N_BRANCH3.json": {
+      "bytes": 17277,
+      "sha256": "991c53740d656dab8d27580fd2999d34421654f3d4dc2eaacd0a943fba11ed4c"
+    },
+    "poses-N_DISJOINT2.json": {
+      "bytes": 13364,
+      "sha256": "89af5d41ddeb5f995f24ddb36d2921a41c5711eb6a48b9a0555ec4987cf596d2"
+    },
+    "poses-N_RING4.json": {
+      "bytes": 16277,
+      "sha256": "8aaa12bc7464b8110286a60eb6459076d7147a4860205ad763b5f27a91011944"
+    },
+    "preflight-adapter_allowlist.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-boolean.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-components.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-cycle_rank.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-element_ids.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-external_dofs.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-extra.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-incidence.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-internal_coordinates.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-missing.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-node_ids.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "preflight-policy.json": {
+      "bytes": 105,
+      "sha256": "8ab3b8e1d6e341cf7f2839bb2fffa4d1fad240e61b59b606dbce7817923fdf5e"
+    },
+    "prepare-N_BRACED5-False.json": {
+      "bytes": 99,
+      "sha256": "06326e77459c49cf6d49fc4bc6f242f9eaae3dfa5147538f8e33d1b0fb2ac34d"
+    },
+    "prepare-N_BRACED5-True.json": {
+      "bytes": 99,
+      "sha256": "83d5bc1c95d4f3fea86defa6edb822d78437aa952deab27392ec12d92be3516e"
+    },
+    "prepare-N_BRANCH3-False.json": {
+      "bytes": 99,
+      "sha256": "60aae7c2d5a2ab1bff5cac3692be8b1a956589cfc78a38f5107d923bae6ea895"
+    },
+    "prepare-N_BRANCH3-True.json": {
+      "bytes": 99,
+      "sha256": "d71b0e5a3b92506d28d8a2b0118cf33a6d5f0ddfcc2edba247bfcf1a972418c0"
+    },
+    "prepare-N_DISJOINT2-False.json": {
+      "bytes": 99,
+      "sha256": "12eff97f3cd845f8191c9e56d8cab297979b30af1cc1fdc24d0ba18ebf157ca7"
+    },
+    "prepare-N_DISJOINT2-True.json": {
+      "bytes": 99,
+      "sha256": "c59d97388dae5762387aec8dbe43303729c102a1cc8cb961592a4d1c61559d5a"
+    },
+    "prepare-N_RING4-False.json": {
+      "bytes": 99,
+      "sha256": "a200c15999727e3adf6670d9697950f8912633b931750e62e206b74e4a942055"
+    },
+    "prepare-N_RING4-True.json": {
+      "bytes": 99,
+      "sha256": "54e4478e3aa8af5cbbef6d634773f6aafe8546548b690356e974fb1e11117408"
+    },
+    "schur-N_BRACED5.json": {
+      "bytes": 8385,
+      "sha256": "9753634262397ec77ad382c834c0b66ef40274062b95fb4767edaac5a9ad03ae"
+    },
+    "schur-N_BRANCH3.json": {
+      "bytes": 6182,
+      "sha256": "80542100192411a50d6c287c37b7eff576f4717eb64d7004cf9a319b66a52da0"
+    },
+    "schur-N_DISJOINT2.json": {
+      "bytes": 4525,
+      "sha256": "a6d1993511d7717d74e4463b75c217ab8585f3b19b39b80bfc38d1282b76556f"
+    },
+    "schur-N_RING4.json": {
+      "bytes": 7011,
+      "sha256": "0f7b8ae8f64570acf8c8f552ac24f73987790eec1c8f53d97e01bc3283cc9c91"
+    },
+    "token-foreign-commit.json": {
+      "bytes": 181,
+      "sha256": "58f351d87921c4d25571e5cb258f1672f8979778ff6c19d35af8fb84faad9d6b"
+    },
+    "token-foreign-discard.json": {
+      "bytes": 181,
+      "sha256": "58f351d87921c4d25571e5cb258f1672f8979778ff6c19d35af8fb84faad9d6b"
+    },
+    "token-foreign-set_state.json": {
+      "bytes": 181,
+      "sha256": "58f351d87921c4d25571e5cb258f1672f8979778ff6c19d35af8fb84faad9d6b"
+    },
+    "token-stale-commit.json": {
+      "bytes": 181,
+      "sha256": "58f351d87921c4d25571e5cb258f1672f8979778ff6c19d35af8fb84faad9d6b"
+    },
+    "token-stale-discard.json": {
+      "bytes": 181,
+      "sha256": "58f351d87921c4d25571e5cb258f1672f8979778ff6c19d35af8fb84faad9d6b"
+    },
+    "token-stale-set_state.json": {
+      "bytes": 181,
+      "sha256": "58f351d87921c4d25571e5cb258f1672f8979778ff6c19d35af8fb84faad9d6b"
+    }
+  },
+  "cycles": 2,
+  "defaults_changed": false,
+  "general_static_parity": false,
+  "inputs_sha256": "626cc36f7b00d51b94cbfd42e239eef2bc0aa1448aafb24c15914a983a3df020",
+  "packet": {
+    "bytes": 21614,
+    "sha256": "5d5f33919b558fee98c3621dc34fb562de1dc13e99754ce277c9b5937d676d65"
+  },
+  "review_sha256": "19f7c4684960ea8b5cc36605981ed1a90d5a038bd082820d031003ba202b58e3",
+  "schema": "GE_BEAM3_G3A_CONFIRMATION_V1",
+  "scope": "G3A_S15_S18_PRIVATE_NATIVE_ELASTIC_GRAPHS_ONLY",
+  "terminal": "PROVISIONAL_GO_GE_BEAM3_G3A_NATIVE_GRAPH_ELASTIC_STATIC_ONLY",
+  "tests": [
+    "tests/test_ge_beam3_g3a_graph.py::test_three_arm_branch_smoke",
+    "tests/test_ge_beam3_g3a_graph.py::test_reference_graph_rigid_spaces_and_sorted_assembly[N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_reference_graph_rigid_spaces_and_sorted_assembly[N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_reference_graph_rigid_spaces_and_sorted_assembly[N_BRACED5]",
+    "tests/test_ge_beam3_g3a_graph.py::test_reference_graph_rigid_spaces_and_sorted_assembly[N_DISJOINT2]",
+    "tests/test_ge_beam3_g3a_graph.py::test_native_load_program_recovery_and_checkpoint[N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_native_load_program_recovery_and_checkpoint[N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_native_load_program_recovery_and_checkpoint[N_BRACED5]",
+    "tests/test_ge_beam3_g3a_graph.py::test_native_load_program_recovery_and_checkpoint[N_DISJOINT2]",
+    "tests/test_ge_beam3_g3a_graph.py::test_noncommuting_shared_pose_and_support_work[N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_noncommuting_shared_pose_and_support_work[N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_full_stationary_schur_nonzero_internal_residual_and_load_work[N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_full_stationary_schur_nonzero_internal_residual_and_load_work[N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_full_stationary_schur_nonzero_internal_residual_and_load_work[N_BRACED5]",
+    "tests/test_ge_beam3_g3a_graph.py::test_full_stationary_schur_nonzero_internal_residual_and_load_work[N_DISJOINT2]",
+    "tests/test_ge_beam3_g3a_graph.py::test_base_dispatch_rejected_before_mutation[False-solve0]",
+    "tests/test_ge_beam3_g3a_graph.py::test_base_dispatch_rejected_before_mutation[False-solve1]",
+    "tests/test_ge_beam3_g3a_graph.py::test_base_dispatch_rejected_before_mutation[True-solve0]",
+    "tests/test_ge_beam3_g3a_graph.py::test_base_dispatch_rejected_before_mutation[True-solve1]",
+    "tests/test_ge_beam3_g3a_graph.py::test_last_element_prepare_failure_retains_complete_graph[False-N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_last_element_prepare_failure_retains_complete_graph[False-N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_last_element_prepare_failure_retains_complete_graph[False-N_BRACED5]",
+    "tests/test_ge_beam3_g3a_graph.py::test_last_element_prepare_failure_retains_complete_graph[False-N_DISJOINT2]",
+    "tests/test_ge_beam3_g3a_graph.py::test_last_element_prepare_failure_retains_complete_graph[True-N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_last_element_prepare_failure_retains_complete_graph[True-N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_last_element_prepare_failure_retains_complete_graph[True-N_BRACED5]",
+    "tests/test_ge_beam3_g3a_graph.py::test_last_element_prepare_failure_retains_complete_graph[True-N_DISJOINT2]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_mutation_rejects_before_work[cache]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_mutation_rejects_before_work[free]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_mutation_rejects_before_work[constraint]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_mutation_rejects_before_work[node]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_mutation_rejects_before_work[section]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_mutation_rejects_before_work[load]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_mutation_rejects_before_work[order]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_mutation_rejects_before_work[callback]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_mutation_rejects_before_work[activity]",
+    "tests/test_ge_beam3_g3a_graph.py::test_reference_multi_rhs_is_ephemeral_and_epoch_isolated",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[global-N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[global-N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[global-N_BRACED5]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[global-N_DISJOINT2]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[renumber-N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[renumber-N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[renumber-N_BRACED5]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[renumber-N_DISJOINT2]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[reverse-N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[reverse-N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[reverse-N_BRACED5]",
+    "tests/test_ge_beam3_g3a_graph.py::test_loaded_graph_covariance[reverse-N_DISJOINT2]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_admission_before_state_work[duplicate_element]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_admission_before_state_work[unknown]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_admission_before_state_work[orphan]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_admission_before_state_work[unsupported]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_admission_before_state_work[midpoint]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_admission_before_state_work[subclass]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_admission_before_state_work[element_bound]",
+    "tests/test_ge_beam3_g3a_graph.py::test_graph_admission_before_state_work[owned]",
+    "tests/test_ge_beam3_g3a_graph.py::test_constraint_bounds_and_bad_native_ties",
+    "tests/test_ge_beam3_g3a_graph.py::test_strict_graph_restart_mutation[graph]",
+    "tests/test_ge_beam3_g3a_graph.py::test_strict_graph_restart_mutation[state]",
+    "tests/test_ge_beam3_g3a_graph.py::test_strict_graph_restart_mutation[history]",
+    "tests/test_ge_beam3_g3a_graph.py::test_strict_graph_restart_mutation[constraints]",
+    "tests/test_ge_beam3_g3a_graph.py::test_strict_graph_restart_mutation[schema]",
+    "tests/test_ge_beam3_g3a_graph.py::test_strict_graph_restart_mutation[hash]",
+    "tests/test_ge_beam3_g3a_graph.py::test_strict_graph_restart_mutation[duplicate]",
+    "tests/test_ge_beam3_g3a_graph.py::test_strict_graph_restart_mutation[nonfinite]",
+    "tests/test_ge_beam3_g3a_graph.py::test_strict_graph_restart_mutation[count]",
+    "tests/test_ge_beam3_g3a_graph.py::test_actual_graph_kkt_directional_operator",
+    "tests/test_ge_beam3_g3a_graph.py::test_native_remote_pose_matches_shared_three_arm_junction",
+    "tests/test_ge_beam3_g3a_graph.py::test_publication_guard_and_fallible_diagnostics_are_atomic[store]",
+    "tests/test_ge_beam3_g3a_graph.py::test_publication_guard_and_fallible_diagnostics_are_atomic[diagnostic]",
+    "tests/test_ge_beam3_g3a_graph.py::test_publication_guard_and_fallible_diagnostics_are_atomic[final_cancel]",
+    "tests/test_ge_beam3_g3a_graph.py::test_exclusive_graph_publication_and_deterministic_development_packet",
+    "tests/test_ge_beam3_g3a_graph.py::test_final_callback_constraint_mutation_is_atomic[False]",
+    "tests/test_ge_beam3_g3a_graph.py::test_final_callback_constraint_mutation_is_atomic[True]",
+    "tests/test_ge_beam3_g3a_graph.py::test_per_graph_cancel_preserves_accepted_prefix[entry-N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_per_graph_cancel_preserves_accepted_prefix[entry-N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_per_graph_cancel_preserves_accepted_prefix[entry-N_BRACED5]",
+    "tests/test_ge_beam3_g3a_graph.py::test_per_graph_cancel_preserves_accepted_prefix[entry-N_DISJOINT2]",
+    "tests/test_ge_beam3_g3a_graph.py::test_per_graph_cancel_preserves_accepted_prefix[prepublication-N_BRANCH3]",
+    "tests/test_ge_beam3_g3a_graph.py::test_per_graph_cancel_preserves_accepted_prefix[prepublication-N_RING4]",
+    "tests/test_ge_beam3_g3a_graph.py::test_per_graph_cancel_preserves_accepted_prefix[prepublication-N_BRACED5]",
+    "tests/test_ge_beam3_g3a_graph.py::test_per_graph_cancel_preserves_accepted_prefix[prepublication-N_DISJOINT2]",
+    "tests/test_ge_beam3_g3a_graph.py::test_braced_graph_issued_token_isolation[commit-stale]",
+    "tests/test_ge_beam3_g3a_graph.py::test_braced_graph_issued_token_isolation[commit-foreign]",
+    "tests/test_ge_beam3_g3a_graph.py::test_braced_graph_issued_token_isolation[discard-stale]",
+    "tests/test_ge_beam3_g3a_graph.py::test_braced_graph_issued_token_isolation[discard-foreign]",
+    "tests/test_ge_beam3_g3a_graph.py::test_braced_graph_issued_token_isolation[set_state-stale]",
+    "tests/test_ge_beam3_g3a_graph.py::test_braced_graph_issued_token_isolation[set_state-foreign]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[policy]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[adapter_allowlist]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[node_ids]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[element_ids]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[components]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[cycle_rank]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[incidence]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[external_dofs]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[internal_coordinates]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[missing]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[extra]",
+    "tests/test_ge_beam3_g3a_graph.py::test_restart_graph_authority_precedes_native_construction[boolean]"
+  ],
+  "tree": "a176826934d95f62f6877ab6ad2cf3dcc16d8666"
+}

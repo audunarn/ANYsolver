@@ -1,0 +1,112 @@
+{
+  "decision": "ACCEPTED_G3A_SCOPED_CONFIRMATION",
+  "findings": [],
+  "reviewer": {
+    "activity": "Independent read-only audit of completed formal cycles, frozen authority, scientific and process evidence, and every durable archive file. No mechanics execution, source edits or evidence regeneration. Only this review document is written in the separate closeout worktree.",
+    "identity": "/root/g2_correction_review",
+    "implementation_authorship": "None; independent review guidance only",
+    "independent": true
+  },
+  "scope": {
+    "acceptance_boundary": "Confirms the frozen G3a S15/native S18 private exact-elastic native graph slice only, including its registered branch, ring, braced and disconnected fixtures and guarded graph ownership/restart behavior. This is not all-G3 closure, G3b/G3c mixed-family admission, general-static parity, full beam qualification, public integration, default activation or release.",
+    "aggregate": {
+      "bytes": 18753,
+      "schema": "GE_BEAM3_G3A_CONFIRMATION_V1",
+      "sha256": "316196254852dd0b8e6495c63735365638756a25727cdcc576a37729dbab2108",
+      "terminal": "PROVISIONAL_GO_GE_BEAM3_G3A_NATIVE_GRAPH_ELASTIC_STATIC_ONLY"
+    },
+    "archive": {
+      "directory": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g3a-confirmation-20260910-e2b54cf",
+      "formal_files": 126,
+      "manifest": "manifest.json",
+      "manifest_bytes": 52536,
+      "manifest_sha256": "78d9cde2ff8544cd9eeb341346522e798b85c3e35307d6de652cc9abdf09c85a",
+      "verification": "Independently checked every unique manifest path, byte count and SHA-256, and confirmed the complete archive file inventory equals the manifest plus the manifest itself. All 126 durable formal files are byte-identical to their original counterparts. The Git closeout aggregate copy is byte-identical to the original aggregate. Historical rehearsals, smokes, regressions, console-labeled observations and reviews remain separate preserved artifacts.",
+      "verified_data_bytes": 2263882,
+      "verified_data_files": 276
+    },
+    "authority": {
+      "bound_input_files": 343,
+      "candidate": "Independently verified exact clean execution HEAD and tree after both cycles and during final inspection.",
+      "implementation_review_bytes": 8236,
+      "implementation_review_sha256": "19f7c4684960ea8b5cc36605981ed1a90d5a038bd082820d031003ba202b58e3",
+      "input_manifest_bytes": 55718,
+      "input_manifest_sha256": "626cc36f7b00d51b94cbfd42e239eef2bc0aa1448aafb24c15914a983a3df020",
+      "installed_distribution_bindings": 317,
+      "verification": "Canonical current identity equals the frozen input manifest, including LF-normalized runtime/test/helper/fixture/contract hashes, Python executable bytes/version and installed distribution versions. The externally hashed canonical five-key implementation review has the exact candidate/tree, accepted decision, independent reviewer and empty findings."
+    },
+    "cycles": [
+      {
+        "active_processes": 0,
+        "cycle": 1,
+        "elapsed_seconds": 382.81749990000026,
+        "exit_code": 0,
+        "passed_phase_reports": 303,
+        "passed_tests": 101,
+        "peak_tree_bytes": 253001728,
+        "process_file": {
+          "bytes": 378,
+          "sha256": "356286b1c30162e347307476b6167c57fd2c86a34f348e80e75e563f043e2f75"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 54968,
+          "sha256": "4a731d6790fd0bc5f1a98c49d0090fe3260b2193ab04d63d3ceb264f3d4e75e0"
+        }
+      },
+      {
+        "active_processes": 0,
+        "cycle": 2,
+        "elapsed_seconds": 383.4320813000013,
+        "exit_code": 0,
+        "passed_phase_reports": 303,
+        "passed_tests": 101,
+        "peak_tree_bytes": 252821504,
+        "process_file": {
+          "bytes": 377,
+          "sha256": "5319fe4ec1977082b8fbea2ab5ac44ef77d1e0f13a986745598fc656e2ff8220"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 54968,
+          "sha256": "f65d0a2d0037feb11cd16eb181f6de636263c393613e98a7c789b5012e98d160"
+        }
+      }
+    ],
+    "execution_evidence": "Both fresh serial cycles satisfy the reviewed one-thread Windows Job process-tree protocol. Each finishes below 600 seconds and 24 GiB with exit 0 and zero active processes; the coordinator's wave bound is satisfied. Verified exact ordered collection and every passed setup/call/teardown report, with no missing, duplicate, skipped or failed phases. Verified process/stdout/stderr hashes and all six completed-operation checkpoints in both JSON and raw stdout. No formal failure artifact or symlink was found.",
+    "publication": "Original aggregate and staged aggregate have identical canonical bytes and are the same filesystem object, consistent with the reviewed staged atomic no-overwrite hard-link publication. The separate formal aggregate, not the historical development packet, carries the scoped terminal.",
+    "review_diagnostics": [
+      "Independent complete formal audit: tool-output chunk ab0a6c.",
+      "Independent durable manifest and all-file copy audit: tool-output chunk 8e1905."
+    ],
+    "scientific_evidence": {
+      "cancellation": "Verified the four prepublication scientific observations in both cycles: nonzero initial KKT residual, repeated converged state, two residuals within 1e-11, actual final-acceptance callback confirmation and successful prefix replay. These are the corrected observations, not the formerly misleading callback-number-two cases.",
+      "checkpoints": {
+        "bytes": 94,
+        "sha256": "ab5f408815adb95f4fa018ada192a17bc2af4c618e6b61cd92244dfe771cc27a"
+      },
+      "determinism": "Verified both exact registered scientific-record inventories, canonical raw bytes and every aggregate hash binding. All 54 supplemental files, the development packet, test reports and checkpoint inventories are byte-identical between cycles, without normalization.",
+      "packet": {
+        "bytes": 21614,
+        "qualification": false,
+        "schema": "GE_BEAM3_G3A_DEVELOPMENT_PACKET_V1",
+        "sha256": "5d5f33919b558fee98c3621dc34fb562de1dc13e99754ce277c9b5937d676d65"
+      },
+      "records_per_cycle": 54,
+      "test_reports": {
+        "bytes": 62605,
+        "sha256": "156619fa0d2e9766429196eaf577d664bf53de66da89f3f550537c9be0bad535"
+      }
+    },
+    "separate_inventories": "The 38 infrastructure tests and separate 49-test G1 and 54-test G2 development regressions are not additional G3a formal passes or replacement accepted G1/G2 evidence. The original 28af8a4 passing rehearsal remains review-blocked historical evidence; it is not relabeled as an accepted formal cycle.",
+    "source_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Temp/ge-beam3-g3a-formal-e2b54cf-20260910",
+    "subject_tree": "a176826934d95f62f6877ab6ad2cf3dcc16d8666"
+  },
+  "subject_commit": "e2b54cf9f61c651139b4bac5f92d5a5683cd8a88"
+}

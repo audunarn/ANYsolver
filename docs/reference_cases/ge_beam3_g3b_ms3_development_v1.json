@@ -1,0 +1,225 @@
+{
+  "archive": {
+    "bytes_excluding_manifest": 62066,
+    "directory": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g3b-ms3-development-20260910-10a16c5",
+    "files": 19,
+    "manifest_sha256": "bdc8d06076e48697b0d6f3805aa720162e38cb4378db2a2c370a826f77ac736b",
+    "original_temp_outputs_retained": true
+  },
+  "inventories": {
+    "g3b_mb2_regression_tests": 25,
+    "g3b_mb3_regression_tests": 40,
+    "g3b_mq4_regression_tests": 42,
+    "g3b_ms3_development_tests": 45
+  },
+  "limits": {
+    "automatic_retry": false,
+    "inactivity_seconds": 120,
+    "memory_bytes": 25769803776,
+    "numerical_threads": 1,
+    "wall_seconds": 600
+  },
+  "next": "M_Q4_WEIGHTED reference-linear interface; then transport and full G3b S18 ownership/restart, independent review and formal confirmation.",
+  "parent": {
+    "commit": "10a16c522e338088cba2d4f40af19169f149c8c9",
+    "tree": "88579f9685553cee59317263cfb7b91693251e0d"
+  },
+  "prior_packet_preservation": {
+    "mb2_byte_identical": true,
+    "mb3_byte_identical": true,
+    "mq4_byte_identical": true,
+    "packets": [
+      {
+        "bytes": 4465,
+        "path": "mb2-25/packet.json",
+        "sha256": "f8b5caa5fa48931ca66688c7bdf36a362886bb5e0ed657af071ca35d8357623b"
+      },
+      {
+        "bytes": 4675,
+        "path": "mb3-40/mb3-packet.json",
+        "sha256": "7bc0525083fb4be09744de3c1e12d29a48662149d22c6c6de550e6e7760c3796"
+      },
+      {
+        "bytes": 13315,
+        "path": "mq4-42/mq4-packet.json",
+        "sha256": "88c30dbf8911cafd7c6d1ed0f0c38d34593b8a487236a4580ffd78e29a817397"
+      }
+    ],
+    "prior_archive": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g3b-mq4-development-20260910-d1a5648"
+  },
+  "runs": [
+    {
+      "label": "smoke1",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 2.3271166999984416,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 202223616,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 1.73,
+      "tests_failed": 0,
+      "tests_passed": 1
+    },
+    {
+      "label": "ms3-45",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 3.130327599999873,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 218886144,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 2.54,
+      "tests_failed": 0,
+      "tests_passed": 45
+    },
+    {
+      "label": "mb2-25",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 3.2321230999987165,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 234790912,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 2.46,
+      "tests_failed": 0,
+      "tests_passed": 25
+    },
+    {
+      "label": "mb3-40",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 3.332746000000043,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 235327488,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 2.64,
+      "tests_failed": 0,
+      "tests_passed": 40
+    },
+    {
+      "label": "mq4-42",
+      "process": {
+        "active_processes": 0,
+        "elapsed_seconds": 3.334620300000097,
+        "kind": "DEVELOPMENT_ONLY_NOT_QUALIFICATION",
+        "peak_tree_bytes": 218079232,
+        "returncode": 0,
+        "status": "PASSED"
+      },
+      "pytest_seconds": 2.76,
+      "tests_failed": 0,
+      "tests_passed": 42
+    }
+  ],
+  "schema": "GE_BEAM3_G3B_M_S3_DEVELOPMENT_RECORD_V1",
+  "scope": {
+    "candidate_class": "S3TranslationReferenceProblem",
+    "defaults_changed": false,
+    "engineering_mode": "REFERENCE_LINEAR_BOTH_FAMILIES",
+    "fixture": "M_S3",
+    "formal_qualification": false,
+    "formulation_changes": false,
+    "free_dofs": 15,
+    "global_dofs": 36,
+    "independent_full_kkt_dimension": 81,
+    "independent_implementation_review": false,
+    "physical_normal": [
+      0,
+      0,
+      1
+    ],
+    "preserved_native_internal_coordinates": 24,
+    "public_routing": false,
+    "restart_supported": false,
+    "shell_class": "NativeParityE4PLS3V2DShellElement",
+    "support_rows": 18,
+    "transaction_owner": false,
+    "translation_tie_rows": 3
+  },
+  "source_bindings_lf": [
+    {
+      "bytes": 12912,
+      "path": "src/anysolver/_ge_beam3_g3b_s3_reference.py",
+      "sha256": "5f55cee1d72136142d76601dc28c6949f05e2fd72ccd98c831990fcca3642593"
+    },
+    {
+      "bytes": 12981,
+      "path": "src/anysolver/_ge_beam3_g3b_q4_reference.py",
+      "sha256": "d6d6c8dfa46b9562075fe38087567a55565c55ea5d016c6bc007dd3ece0b1901"
+    },
+    {
+      "bytes": 13043,
+      "path": "src/anysolver/_ge_beam3_g3b_reference.py",
+      "sha256": "6ea552022921ca4933d4fde51711458f4b91921315d789bcd24f9123a78cc2f3"
+    },
+    {
+      "bytes": 97002,
+      "path": "src/anysolver/e4_pl_s3_v2d_element.py",
+      "sha256": "2187cb8ac71a2292e413f306c331666d6caa2e6102c2ed0a30bcc9ddbf10e560"
+    },
+    {
+      "bytes": 87079,
+      "path": "src/anysolver/e4_pl_s3_v2c_element.py",
+      "sha256": "89d3e26dc7b242bfb15d050f20db8fdbe96fdf4b27f04dba76a5078ff1f27b69"
+    },
+    {
+      "bytes": 28913,
+      "path": "src/anysolver/fe_core.py",
+      "sha256": "375eb484531a9fa160d85297a01d011da5da069044c3c1b517177052a15e7f66"
+    },
+    {
+      "bytes": 3686,
+      "path": "scripts/run_ge_beam3_g3b.py",
+      "sha256": "34b1404e796aeaa16cf2fbc0703359742ed7b78aa656d46e38fba9dc14a82ff2"
+    },
+    {
+      "bytes": 11277,
+      "path": "tests/test_ge_beam3_g3b_mb2.py",
+      "sha256": "d06b4015dbe91f072b9d5b98fb146b9af80460a76c7993ad09330b8951d1b0e0"
+    },
+    {
+      "bytes": 13900,
+      "path": "tests/test_ge_beam3_g3b_mb3.py",
+      "sha256": "4e6bb2c0e211f82aefa0470ff6fcddd152fe34218149fc5051fa6c8a87b4e45d"
+    },
+    {
+      "bytes": 14354,
+      "path": "tests/test_ge_beam3_g3b_mq4.py",
+      "sha256": "d77847ec7fbd3665573473638c0d791824a0f495b76dfd93f770bb0b312b884d"
+    },
+    {
+      "bytes": 15177,
+      "path": "tests/test_ge_beam3_g3b_ms3.py",
+      "sha256": "3a3fa439045bed850d2d2bcc59ae84b15b2a832509fe4213761583706c70bbac"
+    },
+    {
+      "bytes": 4352,
+      "path": "docs/GE_BEAM3_G3B_M_S3_DEVELOPMENT.md",
+      "sha256": "2044be5a7c936663161429ddcba0dd0fd0b6eeb4a98802bd712690eda4cf0c45"
+    },
+    {
+      "bytes": 12973,
+      "path": "docs/reference_cases/ge_beam3_g3_graph_contract_v1.json",
+      "sha256": "dbc54f55b51d67c782844488a0f86ce6bed442c9cc530dbd823ea95f8bf90eb5"
+    },
+    {
+      "bytes": 26455,
+      "path": "docs/reference_cases/ge_beam3_g3_graph_fixtures_v1.json",
+      "sha256": "68a288ec12821740cdd25960b6eb1020f00fec6579fe21ac9dbac5b5c2275e05"
+    },
+    {
+      "bytes": 48265,
+      "path": "docs/reference_cases/e4_pl_s3_v2_bounded_process.py",
+      "sha256": "c5b192c9c3f6ee2c68a42ab4a0cfbcdbe81581381b800c13aacce0bb219a3383"
+    }
+  ],
+  "status": "DEVELOPMENT_SMOKE_PASSED_NOT_G3B_QUALIFICATION"
+}

@@ -283,10 +283,11 @@ class DeletedElementRecord:
 
 def element_fracture_category(element: Any) -> Optional[str]:
     from .elements import BeamElement, ShellElement
+    from .ge_beam3_element import GeometricallyExactBeam3D3NElement
 
     if isinstance(element, ShellElement):
         return "shell"
-    if isinstance(element, BeamElement):
+    if isinstance(element, BeamElement) or type(element) is GeometricallyExactBeam3D3NElement:
         return "beam"
     return None
 

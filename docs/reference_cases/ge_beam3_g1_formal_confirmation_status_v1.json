@@ -1,0 +1,20 @@
+{
+  "defaults_changed": false,
+  "formal_certificate_created": false,
+  "formal_run_count": 0,
+  "next_step": "CORRECT_FREE_DOF_AUTHORITY_AND_FINAL_COMMIT_GUARDS_THEN_INDEPENDENT_REREVIEW",
+  "old_runtime_files_changed": 0,
+  "p1_findings": [
+    "G1-IR-01",
+    "G1-IR-02"
+  ],
+  "qualification_evidence_changed": false,
+  "reason": "INDEPENDENT_IMPLEMENTATION_REVIEW_REJECTED",
+  "review_file": "docs/reference_cases/ge_beam3_g1_independent_review_v1.json",
+  "review_reproduction_count": 2,
+  "review_sha256": "ac6215c5fc6e99eacde04007f2ab383c4d283bcbb1fa30ea93b70bcda4323a91",
+  "schema": "GE_BEAM3_G1_FORMAL_CONFIRMATION_STATUS_V1",
+  "subject_commit": "635888afa6d5f0ed9523f10ed4339670276d61c3",
+  "subject_tree": "bf948f65e9133f2a7b7b481ef6c089ee2eccdc7a",
+  "terminal": "BLOCKED_GE_BEAM3_STATIC_AUTHORITY"
+}

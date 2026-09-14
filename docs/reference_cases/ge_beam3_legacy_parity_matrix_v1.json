@@ -1,0 +1,761 @@
+{
+  "schema": "anysolver.ge-beam3.legacy-parity-matrix.v1",
+  "baseline_commit": "74703a3202251edc0beafb21cd31f52c9304ceb8",
+  "baseline_tree": "64a18a8fe137946ec2f0d4841821a19066a2707f",
+  "baseline_release": "0.4.3",
+  "status": "FROZEN_PLANNING_INVENTORY_NOT_QUALIFICATION",
+  "scientific_tests_run": false,
+  "default_changes": false,
+  "scope": "Legacy B3 is mandatory; shared B2/B3 workflows are in scope, with B2-only or synthetic evidence explicitly separated. GE means accepted native current core, not the older straight ge-beam3 facade.",
+  "rows": [
+    {
+      "id": "P01",
+      "area": "Factory, topology, DOF mapping",
+      "legacy": "B2_B3_IMPLEMENTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "beam selects B2; quadratic_beam selects B3. Native GE uses separate owned factories; generic FEModel parity is not conferred by ge-beam3 (the older straight facade).",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_infrastructure.py::test_public_all_symbols_importable",
+        "tests/test_quadratic_beam_nonlinear.py::test_quadratic_beam_tangent_is_consistent_with_internal_force"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_mixed_p3_optin.py",
+        "tests/test_ge_beam3_public_workflows.py::test_no_alias_or_legacy_fallback_before_construction"
+      ]
+    },
+    {
+      "id": "P02",
+      "area": "Straight geometry, Q2 interpolation and axis conventions",
+      "legacy": "B2_B3_TESTED",
+      "ge": "SCOPED_ACCEPTED",
+      "action": "RETAIN_AND_INTEGRATE",
+      "detail": "Legacy straight-sided B3 and section-axis conventions have direct tests. Native straight/regular-curved definitions are accepted only with physical triad authority; implicit legacy roll must not be copied blindly.",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [
+        "tests/test_beam_axis_conventions.py::test_cantilever_strong_axis_deflection_matches_Iy",
+        "tests/test_quadratic_beam_nonlinear.py::test_quadratic_beam_rejects_curved_midside_geometry"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py::test_public_definition_owner_real_solve_and_restart_unchanged"
+      ]
+    },
+    {
+      "id": "P03",
+      "area": "Reference linear stiffness, rigid modes and slender response",
+      "legacy": "B2_B3_TESTED",
+      "ge": "SCOPED_ACCEPTED",
+      "action": "RETAIN_AND_INTEGRATE",
+      "detail": "Keep existing GE algebra/slenderness acceptance. Integration tests need actual assembly and engineering response; do not demand identical element matrices from different discretizations.",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_element_qualification.py::test_beam_qualification_metrics_cover_two_topologies_orientation_and_mass",
+        "tests/test_beam_axis_conventions.py::test_cantilever_weak_axis_deflection_matches_Iz"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_mixed_p3_optin.py"
+      ]
+    },
+    {
+      "id": "P04",
+      "area": "Standard isotropic sections and coupled SPD section protocol",
+      "legacy": "B2_B3_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Legacy area/Iy/Iz/J/shear factors and external GeneralizedBeamSection protocol are not identical to native ellipsoid/fibre types. Provide explicit elastic/stateful adapters, including physical orientation and mass ownership.",
+      "sources": [
+        "src/anysolver/beam_sections.py"
+      ],
+      "legacy_tests": [
+        "tests/test_generalized_beam_sections.py::test_external_section_protocol_and_mapping_coercion",
+        "tests/test_generalized_beam_sections.py::test_coupled_linear_energy_and_resultant_recovery"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py::test_unknown_section_and_foreign_provenance_rejected"
+      ]
+    },
+    {
+      "id": "P05",
+      "area": "Orthotropy, directional shear, torsion and Hill recovery",
+      "legacy": "B2_B3_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "An anisotropic native resultant law is not automatic parity with the existing orthotropic material/fibre/Hill utilization contract. Map actual constitutive and physical recovery semantics.",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [
+        "tests/test_orthotropic_elements.py::test_quadratic_orthotropic_beam_matches_directional_energy_terms",
+        "tests/test_orthotropic_elements.py::test_orthotropic_beam_fiber_plasticity_uses_x_strength",
+        "tests/test_orthotropic_elements.py::test_beam_hill_equivalent_includes_xz_shear_and_torsion"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_generalized.py"
+      ]
+    },
+    {
+      "id": "P06",
+      "area": "Section eccentricity, mass centre and rotary inertia",
+      "legacy": "B2_B3_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Native physical inertia and one eccentric joint do not establish every legacy section-offset/mass-summary combination.",
+      "sources": [
+        "src/anysolver/mass_properties.py"
+      ],
+      "legacy_tests": [
+        "tests/test_generalized_section_mass_properties.py::test_physical_coupled_beam_mass_sets_mass_com_and_inertia",
+        "tests/test_generalized_section_mass_properties.py::test_beam_section_offset_and_inertia_follow_local_frame_and_reference"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_coupled_modes.py"
+      ]
+    },
+    {
+      "id": "P07",
+      "area": "Generic static assembly, multiple RHS and solver caches",
+      "legacy": "SHARED_ROUTE_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Native model-owned static solutions exist. General FEModel assembly, heterogeneous graph ownership and solver cache contracts must consume the current core explicitly.",
+      "sources": [
+        "src/anysolver/assembly.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_infrastructure.py::test_multiple_rhs_static_solve_matches_individual_solves",
+        "tests/test_fe_solver_infrastructure.py::test_solve_linear_many_uses_revision_signature_for_factorization_cache"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py::test_definition_graph_owns_real_native_model"
+      ]
+    },
+    {
+      "id": "P08",
+      "area": "Partial rotational supports and prescribed motion",
+      "legacy": "B2_TESTED_B3_COVERAGE_GAP",
+      "ge": "GAP",
+      "action": "IMPLEMENT_WITH_B3_BASELINE_TEST",
+      "detail": "Native ordinary supports are homogeneous and rotational triples all fixed or all free. Translation control does not supply general prescribed rotations/partial hinges.",
+      "sources": [
+        "src/anysolver/boundary.py"
+      ],
+      "legacy_tests": [
+        "tests/test_solver_control_contracts.py::test_force_control_ramps_nonzero_prescribed_displacement_by_increment",
+        "tests/test_fe_solver_buckling.py::test_eigenvalue_buckling_returns_euler_column_scale_for_pinned_beam"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py::test_unsupported_boundaries_rejected_during_construction"
+      ]
+    },
+    {
+      "id": "P09",
+      "area": "Affine/multilevel MPC, shared rotations and constraints",
+      "legacy": "B2_TESTED_B3_COVERAGE_GAP",
+      "ge": "GAP",
+      "action": "IMPLEMENT_WITH_B3_BASELINE_TEST",
+      "detail": "Legacy multilevel beam constraints have direct B2 fixtures. Native owners explicitly reject constraint_equations; shared SO(3) rotations require an objective constraint contract.",
+      "sources": [
+        "src/anysolver/constraint_audit.py",
+        "src/anysolver/assembly.py"
+      ],
+      "legacy_tests": [
+        "tests/test_phase2.py::test_multilevel_mpc_cantilever",
+        "tests/test_solver_control_contracts.py::test_general_constraint_equation_uses_common_affine_transformation"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py::test_model_mutation_rejected_before_state_initialization"
+      ]
+    },
+    {
+      "id": "P10",
+      "area": "Mixed sections, beam networks and mixed element models",
+      "legacy": "SHARED_ROUTE_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "One native family per owner, no arbitrary mixed FEModel. Generalized and physical-fibre families and multiple shell connections need shared ownership without fallback.",
+      "sources": [
+        "src/anysolver/fe_core.py"
+      ],
+      "legacy_tests": [
+        "tests/test_generalized_section_api_workflows.py::test_generated_geometry_resolves_named_shell_and_beam_sections",
+        "tests/test_fe_solver_anystructure_fem_mode.py::test_generated_beam_collections_are_additive_not_first_alias_only"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py::test_no_cross_family_workflow_or_legacy_fallback",
+        "tests/test_ge_beam3_public_workflows.py::test_public_coupled_owner_selects_exact_v2_with_real_replay"
+      ]
+    },
+    {
+      "id": "P11",
+      "area": "Nodal force/moment, gravity and load combinations",
+      "legacy": "B2_TESTED_B3_COVERAGE_GAP",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT_WITH_B3_BASELINE_TEST",
+      "detail": "Native nodal/dead-line programmes are scoped. Integrate LoadCase/LoadCombination, density-based gravity, reference measures and reaction accounting; B2 gravity coverage is not B3 proof.",
+      "sources": [
+        "src/anysolver/boundary.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_mass_modal.py::test_load_combination_forwards_material_density_for_gravity",
+        "tests/test_fe_solver_corotational_beam.py::test_corotational_beam_axial_extension_matches_ea_over_l_response"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_analysis_nodal_program.py",
+        "tests/test_ge_beam3_native_distributed.py"
+      ]
+    },
+    {
+      "id": "P12",
+      "area": "General distributed beam loads/couples and follower classes",
+      "legacy": "LEGACY_COVERAGE_UNESTABLISHED",
+      "ge": "PARTIAL",
+      "action": "VERIFY_LEGACY_FIRST",
+      "detail": "Native line/couple programmes exist; frozen inventory does not establish a general legacy distributed/follower BEAM load API. Shell follower-pressure tests do not prove it. Enumerate actual load entry points before expanding the obligation.",
+      "sources": [
+        "src/anysolver/boundary.py"
+      ],
+      "legacy_tests": [
+        "tests/test_follower_pressure.py"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_distributed.py",
+        "tests/test_ge_beam3_native_spatial_couples.py"
+      ]
+    },
+    {
+      "id": "P13",
+      "area": "Von Karman nonlinear force/tangent and P-delta",
+      "legacy": "B2_B3_TESTED",
+      "ge": "SCOPED_ACCEPTED",
+      "action": "RETAIN_AND_INTEGRATE",
+      "detail": "Legacy B3 elastic/fibre tangents and P-delta have direct tests; native operators need general solver integration, not substitution by legacy kinematics.",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [
+        "tests/test_quadratic_beam_nonlinear.py::test_quadratic_beam_tangent_is_consistent_with_internal_force",
+        "tests/test_quadratic_beam_nonlinear.py::test_quadratic_beam_p_delta_amplification_matches_2node_and_theory"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py::test_public_definition_owner_real_solve_and_restart_unchanged"
+      ]
+    },
+    {
+      "id": "P14",
+      "area": "Corotational rigid motion and large-rotation beam response",
+      "legacy": "B2_B3_TESTED",
+      "ge": "SCOPED_ACCEPTED",
+      "action": "RETAIN_AND_INTEGRATE",
+      "detail": "Legacy corotational fibre tests include both topologies. Preserve GE multiplicative rotations and admitted finite static evidence; legacy generalized B3 corotational exception is U02.",
+      "sources": [
+        "src/anysolver/corotational.py"
+      ],
+      "legacy_tests": [
+        "tests/test_corotational.py::test_corotational_fiber_plasticity_matches_von_karman_at_small_rotation",
+        "tests/test_corotational.py::test_quadratic_beams_have_nonlinear_response_and_no_fallback_warning"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py"
+      ]
+    },
+    {
+      "id": "P15",
+      "area": "Physical fibre plasticity and loading/unloading/reversal",
+      "legacy": "B2_B3_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Native physical fibre and resultant laws already support scoped histories. Missing work is external material/section contract parity, cross-family models and normal solver use, not redoing accepted histories.",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [
+        "tests/test_quadratic_beam_nonlinear.py::test_quadratic_beam_fiber_plasticity_matches_2node_reference",
+        "tests/test_material_history_recovery.py::test_unified_recovery_uses_beam_fiber_history_and_labels_mixed_fallback"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_analysis_fibre_translation.py",
+        "tests/test_ge_beam3_native_fibre_restart.py"
+      ]
+    },
+    {
+      "id": "P16",
+      "area": "Initial stress/strain and staged material history",
+      "legacy": "B2_TESTED_B3_COVERAGE_GAP",
+      "ge": "GAP",
+      "action": "IMPLEMENT_WITH_B3_BASELINE_TEST",
+      "detail": "Legacy initial-field admissibility and provenance are tested with beam fibres. General initial-field injection into native owned histories is not accepted by the published API; no checkpoint resealing.",
+      "sources": [
+        "src/anysolver/initial_field_state.py"
+      ],
+      "legacy_tests": [
+        "tests/test_initial_fields_and_staged_history.py::test_self_equilibrated_beam_fiber_stress_persists_and_has_separate_provenance",
+        "tests/test_initial_fields_and_staged_history.py::test_beam_scalar_alpha_restart_broadcasts_to_all_fibers"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py"
+      ]
+    },
+    {
+      "id": "P17",
+      "area": "Newton, line search, force/displacement/arc controls",
+      "legacy": "SHARED_ROUTE_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Dedicated GE drivers exist; unify ordinary dispatch, cutback, affine prescribed motion and accepted state ownership. Generic restart/arc tests use a spring and are explicitly not beam qualification.",
+      "sources": [
+        "src/anysolver/nonlinear_static.py"
+      ],
+      "legacy_tests": [
+        "tests/test_solver_control_contracts.py::test_force_control_restart_holds_supplied_prescribed_state",
+        "tests/test_nonlinear_restart_checkpoint.py::test_arc_length_checkpoint_exact_nonzero_split_continuation"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py::test_failed_native_force_preserves_only_valid_accepted_prefix",
+        "tests/test_ge_beam3_native_arc.py"
+      ]
+    },
+    {
+      "id": "P18",
+      "area": "General restart, serialization, cancellation and rollback",
+      "legacy": "SHARED_ROUTE_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Native authenticated restart/durable replay already works. Integrate general checkpoint/result contracts and establish scalable continuation without weakening old immutable checkpoints. Element.to_dict alone is not a history checkpoint.",
+      "sources": [
+        "src/anysolver/nonlinear_restart.py"
+      ],
+      "legacy_tests": [
+        "tests/test_nonlinear_restart_checkpoint.py::test_checkpoint_rejects_duplicate_nonfinite_hash_and_model_mutation_before_assembly",
+        "tests/test_solver_control_contracts.py::test_progress_observer_can_request_cooperative_cancellation"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_durable_coupled.py::test_cancel_after_commit_returns_prefix_replayable_by_fresh_facade",
+        "tests/test_ge_beam3_public_workflows.py::test_public_definition_owner_real_solve_and_restart_unchanged"
+      ]
+    },
+    {
+      "id": "P19",
+      "area": "Station recovery, fibre stresses and common result objects",
+      "legacy": "B2_B3_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Legacy B3 station histories and weighted resultants are tested. Connect native objective recovery to standard FE results/visualization without inventing stresses for resultant-only sections.",
+      "sources": [
+        "src/anysolver/recovery.py"
+      ],
+      "legacy_tests": [
+        "tests/test_recovery_qualification.py::test_quadratic_beam_history_preserves_stations_and_weighted_resultants",
+        "tests/test_fe_solver_element_quality.py::test_quadratic_beam_axial_stress_recovery_uses_end_nodes",
+        "tests/test_material_history_recovery.py::test_create_fe_result_exposes_history_provenance_and_committed_states"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py"
+      ]
+    },
+    {
+      "id": "P20",
+      "area": "Consistent mass and physical mass summaries",
+      "legacy": "B2_B3_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Retain physical GE internal inertia; do not substitute static Schur reduction for dynamics. General mass assembly and summary protocols need integration.",
+      "sources": [
+        "src/anysolver/matrix_assembly.py"
+      ],
+      "legacy_tests": [
+        "tests/test_generalized_beam_sections.py::test_generalized_section_mass_matrix_overrides_material_geometry",
+        "tests/test_generalized_section_mass_properties.py::test_physical_coupled_beam_mass_sets_mass_com_and_inertia"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py::test_actual_reference_modal_retains_cell_inertia"
+      ]
+    },
+    {
+      "id": "P21",
+      "area": "Nodal point mass and distributed edge mass",
+      "legacy": "B2_TESTED_B3_COVERAGE_GAP",
+      "ge": "GAP",
+      "action": "IMPLEMENT_WITH_B3_BASELINE_TEST",
+      "detail": "Point mass has direct B2 modal tests; native owner rejects point_masses. Distributed edge mass is an API to inventory separately, not established by the point-mass test.",
+      "sources": [
+        "src/anysolver/boundary.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_mass_modal.py::test_point_mass_enters_mass_matrix_and_shifts_frequency"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py::test_model_mutation_rejected_before_state_initialization"
+      ]
+    },
+    {
+      "id": "P22",
+      "area": "Reference and current-rest modal analysis",
+      "legacy": "B2_B3_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Legacy beam qualification and B2 free modes are covered; native scoped reference/current-rest pencils exist. General sparse modal, mixed graphs and mode selection need integration; active-yield states are not silently conservative.",
+      "sources": [
+        "src/anysolver/modal.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_element_qualification.py::test_beam_qualification_metrics_cover_two_topologies_orientation_and_mass",
+        "tests/test_fe_solver_mass_modal.py::test_free_free_beam_modal_solver_identifies_six_rigid_modes"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py::test_actual_reference_modal_retains_cell_inertia",
+        "tests/test_ge_beam3_coupled_modes.py"
+      ]
+    },
+    {
+      "id": "P23",
+      "area": "Geometric stiffness, prestress and eigenvalue buckling",
+      "legacy": "B2_B3_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "B3 Euler and both-topology section Kg tests exist. Native frozen-current buckling is scoped; integrate common prestress consumers and constraints while preserving conservative-state restrictions.",
+      "sources": [
+        "src/anysolver/buckling.py"
+      ],
+      "legacy_tests": [
+        "tests/test_beam_axis_conventions.py::test_euler_column_quadratic_beam",
+        "tests/test_generalized_beam_sections.py::test_generalized_geometric_stiffness_ignores_legacy_section_geometry",
+        "tests/test_generalized_state_recovery.py::test_generalized_beam_recovery_and_prestress_use_committed_von_karman_state"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_coupled_modes.py",
+        "tests/test_ge_beam3_native_buckling.py"
+      ]
+    },
+    {
+      "id": "P24",
+      "area": "Damping, linear transient and prescribed time histories",
+      "legacy": "B2_TESTED_B3_COVERAGE_GAP",
+      "ge": "GAP",
+      "action": "IMPLEMENT_WITH_B3_BASELINE_TEST",
+      "detail": "Legacy Newmark and activity-scaled Rayleigh damping tests exercise B2. Native current-rest modes do not establish transient solver parity; preserve physical internal coordinates.",
+      "sources": [
+        "src/anysolver/dynamics.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_dynamics.py::test_newmark_step_load_matches_axial_sdof_solution",
+        "tests/test_fe_solver_dynamics.py::test_newmark_undamped_free_vibration_conserves_energy",
+        "tests/test_element_activity_integration.py::test_activity_scales_local_matrices_and_invalidates_revision"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py"
+      ]
+    },
+    {
+      "id": "P25",
+      "area": "Finite-velocity finite-rotation dynamics",
+      "legacy": "LEGACY_COVERAGE_UNESTABLISHED",
+      "ge": "GAP",
+      "action": "NEW_CAPABILITY_NOT_PROVEN_LEGACY",
+      "detail": "Legacy transient/contact availability is not proof of objective finite-rotation inertia or gyroscopic terms. Native release excludes this domain. Freeze an independent dynamics extension if the user requires it, rather than relabel legacy tests.",
+      "sources": [
+        "src/anysolver/dynamics.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_dynamics.py",
+        "tests/test_nonlinear_impact_plasticity.py"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py"
+      ]
+    },
+    {
+      "id": "P26",
+      "area": "Beam contact/impact and beam fracture",
+      "legacy": "B2_TESTED_B3_COVERAGE_GAP",
+      "ge": "GAP",
+      "action": "IMPLEMENT_WITH_B3_BASELINE_TEST",
+      "detail": "Opt-in beam-segment contact and beam erosion have explicit B2 fixtures. Need B3 baseline confirmation and native contact/inertia/state integration. Capacity-based damage skips beam targets (U06).",
+      "sources": [
+        "src/anysolver/contact.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_contact.py::test_beam_contact_targets_detect_strike_and_balance",
+        "tests/test_fe_solver_contact.py::test_impact_fracture_erodes_struck_beam_target"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py"
+      ]
+    },
+    {
+      "id": "P27",
+      "area": "Activity, softening and hard deletion",
+      "legacy": "B2_TESTED_B3_COVERAGE_GAP",
+      "ge": "GAP",
+      "action": "IMPLEMENT_WITH_B3_BASELINE_TEST",
+      "detail": "Generated-beam activity scales K/M/C and hard deletion removes contributions without topology deletion. Native owner rejects activity; preserve rollback and accepted-state/provenance semantics.",
+      "sources": [
+        "src/anysolver/activity.py"
+      ],
+      "legacy_tests": [
+        "tests/test_element_activity_integration.py::test_activity_scales_local_matrices_and_invalidates_revision",
+        "tests/test_element_activity_integration.py::test_hard_deletion_keeps_topology_but_removes_contributions"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py::test_model_mutation_rejected_before_state_initialization"
+      ]
+    },
+    {
+      "id": "P28",
+      "area": "General beam-shell joints, eccentric stiffeners and plastic coupling",
+      "legacy": "SHARED_ROUTE_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Legacy generated coupling metadata/MPC routes exist. Accepted GE connection is one owned elastic Q4/S3 plus generalized beam; multiple joints and plastic/fibre-shell coupling remain open.",
+      "sources": [
+        "src/anysolver/mesh_gen.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_anystructure_fem_mode.py::test_generated_beam_shell_coupling_metadata_is_preserved",
+        "tests/test_mesher_improvements.py::test_stiffened_panel_adapter_preserves_neutral_numbering_and_couplings"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py::test_public_coupled_owner_selects_exact_v2_with_real_replay",
+        "tests/test_ge_beam3_durable_coupled.py"
+      ]
+    },
+    {
+      "id": "P29",
+      "area": "Production size, sparse assembly, sessions and reuse",
+      "legacy": "SHARED_ROUTE_TESTED",
+      "ge": "GAP",
+      "action": "IMPLEMENT",
+      "detail": "Native owner caps 16 elements with restricted N32. General sessions/caches exist in legacy framework; no unlimited-size guarantee is inferred. Qualify larger graphs, sparse paths and bounded restart/recovery cost before changing guards.",
+      "sources": [
+        "src/anysolver/analysis_session.py"
+      ],
+      "legacy_tests": [
+        "tests/test_analysis_session.py::test_modal_and_buckling_session_parity",
+        "tests/test_fe_solver_infrastructure.py::test_factorization_cache_reuses_same_matrix_and_separates_changed_values"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py"
+      ]
+    },
+    {
+      "id": "P30",
+      "area": "Scalar/batch dispatch and performance diagnostics",
+      "legacy": "B3_TESTED",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT",
+      "detail": "Legacy B3 batch/scalar equality is directly tested. Release preserved B2/B3 timing baseline, not GE production throughput parity. Native batching is optional if scalar route meets defined application needs.",
+      "sources": [
+        "src/anysolver/nonlinear_performance_batch_b.py"
+      ],
+      "legacy_tests": [
+        "tests/test_nonlinear_performance.py::test_quadratic_beam_batch_matches_scalar_rotated_elements"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_delivery_gate.py"
+      ]
+    },
+    {
+      "id": "P31",
+      "area": "Generated model adapters and application routing",
+      "legacy": "SHARED_ROUTE_TESTED",
+      "ge": "GAP",
+      "action": "IMPLEMENT",
+      "detail": "ANYsolver generated-geometry/ANYstructure-mode tests are not current ANYfem/ANYstructure UI qualification. Freeze sibling-specific adapter/test inventories before their integration; no sibling modifications in this step.",
+      "sources": [
+        "src/anysolver/mesh_gen.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_anystructure_fem_mode.py::test_generated_stiffeners_and_girders_are_created_as_beams",
+        "tests/test_generalized_section_api_workflows.py::test_generated_geometry_resolves_named_shell_and_beam_sections"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py::test_no_alias_or_legacy_fallback_before_construction"
+      ]
+    },
+    {
+      "id": "P32",
+      "area": "Limit points and postbuckling from a genuine loading path",
+      "legacy": "B2_TESTED_B3_COVERAGE_GAP",
+      "ge": "PARTIAL",
+      "action": "IMPLEMENT_WITH_B3_BASELINE_TEST",
+      "detail": "Legacy tests demonstrate stopping near a limit point, not general stable postbuckling. GE signed/seeded unstable branches remain valid but cannot certify a stable from-rest path. Separate continuation parity from a new stable-branch claim.",
+      "sources": [
+        "src/anysolver/arc_length.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_nonlinear_limit_point.py::test_nonlinear_load_stepping_stops_near_eigenvalue_limit_point"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_arc.py"
+      ]
+    },
+    {
+      "id": "U01",
+      "area": "Curved midside legacy B3",
+      "legacy": "LEGACY_REJECTED",
+      "ge": "SCOPED_ACCEPTED",
+      "action": "NO_PARITY_OBLIGATION",
+      "detail": "Legacy B3 rejects curved reference geometry. Native regular curved Q2 is an existing additional capability, not a missing legacy requirement.",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [
+        "tests/test_quadratic_beam_nonlinear.py::test_quadratic_beam_rejects_curved_midside_geometry"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py"
+      ]
+    },
+    {
+      "id": "U02",
+      "area": "Generalized-section corotational legacy B3",
+      "legacy": "LEGACY_REJECTED",
+      "ge": "PARTIAL",
+      "action": "NO_PARITY_OBLIGATION",
+      "detail": "B3 rejects this combination; B2 generalized corotational support does not transfer to B3. Native coupled-section finite rotation may exceed the B3 baseline.",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [
+        "tests/test_generalized_beam_sections.py::test_cross_section_opt_in_and_ambiguous_inputs_fail_closed",
+        "tests/test_generalized_beam_sections.py::test_generalized_beam2_corotational_response_routes_section_coupling"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_generalized.py"
+      ]
+    },
+    {
+      "id": "U03",
+      "area": "Generalized section plus legacy fibre-plasticity option",
+      "legacy": "LEGACY_REJECTED",
+      "ge": "PARTIAL",
+      "action": "NO_PARITY_OBLIGATION",
+      "detail": "Legacy constructors reject mixing generalized_section and fiber_plasticity. Explicit native section laws remain separate; no contradictory combination is required for parity.",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [
+        "tests/test_generalized_beam_sections.py::test_cross_section_opt_in_and_ambiguous_inputs_fail_closed"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_analysis.py::test_no_cross_family_workflow_or_legacy_fallback"
+      ]
+    },
+    {
+      "id": "U04",
+      "area": "Legacy corotational static fracture combination",
+      "legacy": "LEGACY_REJECTED",
+      "ge": "UNESTABLISHED",
+      "action": "NO_PARITY_OBLIGATION",
+      "detail": "The legacy nonlinear-static corotational scope test rejects fracture. This does not erase the separate supported B2 impact-erosion route.",
+      "sources": [
+        "src/anysolver/nonlinear_static.py"
+      ],
+      "legacy_tests": [
+        "tests/test_corotational.py::test_corotational_scope_rejects_bad_kinematics_and_fracture"
+      ],
+      "ge_tests": []
+    },
+    {
+      "id": "U05",
+      "area": "Physical stress from arbitrary generalized resultants; nonspatial mass summary",
+      "legacy": "LEGACY_REJECTED",
+      "ge": "SCOPED_ACCEPTED",
+      "action": "NO_PARITY_OBLIGATION",
+      "detail": "Legacy generalized recovery deliberately lacks physical/von-Mises stress and nonspatial inertia cannot define physical mass summaries. Preserve those distinctions in GE adapters.",
+      "sources": [
+        "src/anysolver/beam_sections.py"
+      ],
+      "legacy_tests": [
+        "tests/test_generalized_beam_sections.py::test_coupled_linear_energy_and_resultant_recovery",
+        "tests/test_generalized_section_mass_properties.py::test_non_spatial_generalized_beam_inertia_fails_scalar_summary"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py"
+      ]
+    },
+    {
+      "id": "U06",
+      "area": "Capacity-based damage for beam contact targets",
+      "legacy": "LEGACY_REJECTED",
+      "ge": "UNESTABLISHED",
+      "action": "NO_PARITY_OBLIGATION",
+      "detail": "Legacy emits an explicit warning that this damage model skips beams. It is distinct from beam fracture/erosion. Do not call shell capacity tests beam qualification.",
+      "sources": [
+        "src/anysolver/contact.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_contact.py::test_capacity_impact_damage_warns_it_skips_beam_contact_targets"
+      ],
+      "ge_tests": []
+    },
+    {
+      "id": "U07",
+      "area": "Inherited compute_internal_forces placeholder",
+      "legacy": "LEGACY_PLACEHOLDER",
+      "ge": "SCOPED_ACCEPTED",
+      "action": "NO_PARITY_OBLIGATION",
+      "detail": "B2/B3 inherit Element.compute_internal_forces returning zeros. Physical force parity must use overridden compute_nonlinear_response, not reproduce the placeholder. Source assertion only; no dedicated legacy regression was found.",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [],
+      "ge_tests": [
+        "tests/test_ge_beam3_native_delivery_gate.py"
+      ]
+    },
+    {
+      "id": "U08",
+      "area": "Hinge/end-release object and thermal load API",
+      "legacy": "LEGACY_COVERAGE_UNESTABLISHED",
+      "ge": "UNESTABLISHED",
+      "action": "VERIFY_LEGACY_FIRST",
+      "detail": "Partial boundary restraints/MPCs are real requirements (P08/P09). A dedicated end-release or thermal-beam API and its B3 tests are not established by this audit. Do not turn generic shell/load tests into a legacy support claim.",
+      "sources": [
+        "src/anysolver/boundary.py"
+      ],
+      "legacy_tests": [
+        "tests/test_solver_control_contracts.py"
+      ],
+      "ge_tests": []
+    },
+    {
+      "id": "U09",
+      "area": "General history checkpoint through Element.to_dict",
+      "legacy": "LEGACY_PLACEHOLDER",
+      "ge": "SCOPED_ACCEPTED",
+      "action": "NO_PARITY_OBLIGATION",
+      "detail": "Element.to_dict exports ID/class/nodes/material only, not nonlinear history or full section definition. Real checkpoint parity belongs to P18.",
+      "sources": [
+        "src/anysolver/elements.py"
+      ],
+      "legacy_tests": [],
+      "ge_tests": [
+        "tests/test_ge_beam3_public_workflows.py"
+      ]
+    },
+    {
+      "id": "U10",
+      "area": "Free dead-prestress pencil without descending geometric operator",
+      "legacy": "LEGACY_REJECTED",
+      "ge": "PARTIAL",
+      "action": "NO_PARITY_OBLIGATION",
+      "detail": "Legacy explicitly rejects a free-free buckling pencil whose geometric operator does not descend to the quotient. Parity must preserve valid-domain rejection, not force eigenvalues from an inadmissible problem.",
+      "sources": [
+        "src/anysolver/buckling.py"
+      ],
+      "legacy_tests": [
+        "tests/test_fe_solver_buckling.py::test_free_free_dead_prestress_fails_closed_when_geometric_operator_does_not_descend"
+      ],
+      "ge_tests": [
+        "tests/test_ge_beam3_coupled_modes.py"
+      ]
+    }
+  ]
+}

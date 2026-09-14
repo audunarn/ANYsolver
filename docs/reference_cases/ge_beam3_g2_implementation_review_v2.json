@@ -1,0 +1,72 @@
+{
+  "decision": "ACCEPTED_G2_IMPLEMENTATION_REVIEW",
+  "findings": [],
+  "reviewer": {
+    "activity": "Independent read-only contract, correction, test, confirmation-runner and development-evidence review, plus one bounded guard/replay reproduction. No edits, commits or formal mechanics execution.",
+    "identity": "/root/g2_correction_review",
+    "implementation_authorship": "None; corrective review guidance only",
+    "independent": true
+  },
+  "scope": {
+    "acceptance_boundary": "Implementation and runner acceptance for proceeding to the separately bound G2 S09-S14 formal confirmation only. This is not formal scientific acceptance, general-static parity, G3 acceptance, public integration, release or qualification.",
+    "candidate_preservation": "Independently verified clean HEAD e309d977de56ab2dd408cefb796e84173911aa21 and tree b2eb030f6e693ad436fbefc4918087d24922f058. The successor differs from c73bf70 only in the confirmation parser, infrastructure tests and serialization-incident document. Runtime, scientific tests and fixtures are unchanged. The original blocked review, original G2 fixtures and accepted G1 result remain unchanged.",
+    "correction_assessment": {
+      "G2-IR-01": "Closed. The exact-type guard rejects non-G1 owners at the first G1 solve entry, before exclusivity, callbacks, evaluation or publication. Independent virgin and accepted-prefix checks covered unbound-base and super-bound dispatch, unchanged state and checkpoint bytes, no active trial, authenticated replay and continued constrained solve. Exact G1 virgin and accepted-prefix solves remain operational.",
+      "G2-IR-02": "Closed. Target-rotation and covariance assertions now use the explicit frozen normalized invariant criterion. A regression rejects default-relative-tolerance-sized errors and nonfinite errors.",
+      "G2-IR-03": "Closed. Two loaded noncommuting target states exercise nonzero prescribed-target work. The test independently reconstructs the spatial Exp Jacobian, verifies actual constraint-Jacobian work and signed chart/spatial support moments, and checks explicit target perturbations at every registered derivative step.",
+      "G2-IR-04": "Closed. Tests explicitly transport constraint values, Jacobians, Hessians and work-dual reactions for selected orientation axes and eccentric relative poses. Supplemental actual-owner tests include genuinely reversed element connectivity with physical node frames distinct from element reference triads, and compare assembled constrained residuals and tangents. Existing S14 now also compares accepted physical rotations."
+    },
+    "curvature_assessment": "The extracted _system method is the operator actually called by G2 solve. Its verification uses nonzero multipliers and chart increments, checks full-residual directional derivatives at every registered step, compares full multiplier and independently reduced nullspace increments with nonzero constraint right-hand side, and establishes that omission of multiplier curvature is observable.",
+    "development_evidence": {
+      "formal_confirmation": "Not executed by this reviewer. Two fresh bounded formal cycles and independent final evidence inspection remain required.",
+      "g1_regression": "Inspected the separate 49-test development pass on runtime unchanged in the successor: 45.2790684 seconds, peak 203710464 bytes, exit 0 and zero active processes. This does not replace accepted G1 evidence.",
+      "infrastructure": "Reviewed 36 infrastructure cases and inspected their passing process evidence: 2.428162 seconds, peak 143613952 bytes, exit 0 and zero active processes. Infrastructure tests are not mechanics passes.",
+      "successor_rehearsal": "Independently validated the exact 54 passed test phase records, all 18 scientific-record hashes, packet hash, canonical frozen-input identity and REHEARSAL_ONLY aggregate. Process duration 27.1042286 seconds, peak 206159872 bytes, exit 0 and zero active processes. No formal aggregate or failure record exists in this fresh rehearsal.",
+      "successor_rehearsal_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Temp/ge-beam3-g2-rehearsal-e309d97-20260910-v1"
+    },
+    "harness_assessment": "Reviewed exact clean candidate/tree and content binding, authenticated five-key independent review, exact ordered setup/call/teardown inventory, completed-operation checkpoints, one-thread Windows Job process-tree limits, serial fresh cycles, no automatic retries, strict native scientific serialization, 18-record inventory and cross-cycle byte equality, failure-without-aggregate behavior, and staged atomic no-overwrite publication. No unresolved blocking runner finding remains.",
+    "intermediate_incident": "The c73bf70 rehearsal passed all 54 tests but its coordinator rejected valid native compact JSON because the parser omitted the serializer's trailing newline. The failed rehearsal remains preserved externally without acceptance aggregate. The successor changes only parser compatibility, synthetic infrastructure fixtures and incident documentation. Independent inspection confirmed that its parser accepts the preserved native packet and all 18 scientific records. A fresh successor rehearsal subsequently completed successfully.",
+    "reproduction_process": {
+      "automatic_retry": false,
+      "child_timeout_seconds": 60,
+      "classification": "DEVELOPMENT_REVIEW_ONLY",
+      "command": "Inline read-only supervisor using docs.reference_cases.e4_pl_s3_v2_bounded_process._ProcessJob",
+      "diagnostics": "Reviewer tool-output chunk 61e79a; no files created",
+      "elapsed_seconds": 5.869101900001624,
+      "exit_code": 0,
+      "final_active_processes": 0,
+      "memory_limit_bytes": 25769803776,
+      "numerical_threads": 1,
+      "peak_tree_bytes": 198881280,
+      "subject": "Executed on c73bf70; Git verified identical runtime and scientific-test contents in reviewed successor e309d97."
+    },
+    "reviewed": [
+      "C:/Github/AGENTS.md",
+      "docs/GE_BEAM3_GENERAL_STATIC_INTEGRATION_CONTRACT.md",
+      "docs/GE_BEAM3_G1A_EXACT_ELASTIC_CONTRACT.md",
+      "docs/GE_BEAM3_G1_STATE_SAFETY_CONFIRMATION.md",
+      "docs/reference_cases/ge_beam3_g1_implementation_review_v2.json",
+      "docs/GE_BEAM3_G2_CONSTRAINT_CONTRACT.md",
+      "docs/GE_BEAM3_G2_CORRECTION_CONFIRMATION.md",
+      "docs/GE_BEAM3_G2_REHEARSAL_SERIALIZATION_INCIDENT.md",
+      "docs/reference_cases/ge_beam3_g2_implementation_review_v1.json",
+      "docs/reference_cases/ge_beam3_g2_fixtures_v1.json",
+      "docs/reference_cases/ge_beam3_g2_confirmation_inventory.json",
+      "docs/reference_cases/ge_beam3_g2_correction_records.json",
+      "src/anysolver/_ge_beam3_g1_analysis.py",
+      "Relevant exact-elastic serialization and numerical-solve helpers",
+      "src/anysolver/_ge_beam3_g2_analysis.py",
+      "src/anysolver/_ge_beam3_g2_constraints.py",
+      "tests/test_ge_beam3_g2_constraints.py",
+      "tests/test_ge_beam3_g2_corrections.py",
+      "tests/test_ge_beam3_g2_confirmation.py",
+      "Relevant supporting G1 fixtures and pytest configuration",
+      "scripts/run_ge_beam3_g2.py",
+      "scripts/confirm_ge_beam3_g2.py",
+      "Windows _ProcessJob launch, accounting, termination and cleanup implementation",
+      "Preserved failed rehearsal and fresh successor rehearsal evidence"
+    ],
+    "subject_tree": "b2eb030f6e693ad436fbefc4918087d24922f058"
+  },
+  "subject_commit": "e309d977de56ab2dd408cefb796e84173911aa21"
+}

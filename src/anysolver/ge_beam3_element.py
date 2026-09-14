@@ -822,7 +822,6 @@ class GeometricallyExactBeam3D3NElement(_CandidateGeBeam3):
     def capability_gaps(self) -> frozenset[str]:
         return frozenset(
             {
-                "buckling",
                 "beam_shell_connection",
                 "contact_state",
                 "conservative_follower_loads",
@@ -834,12 +833,9 @@ class GeometricallyExactBeam3D3NElement(_CandidateGeBeam3):
                 "finite_rotation_transient_dynamics",
                 "gyroscopic_terms",
                 "history_bearing_sections",
-                "linear_transient_dynamics",
                 "mixed_current_state_buckling",
                 "mixed_current_state_modal",
                 "nonconservative_follower_loads",
-                "reference_elastic_prestressed_modal",
-                "transient_algebraic_dynamics",
             }
         )
 

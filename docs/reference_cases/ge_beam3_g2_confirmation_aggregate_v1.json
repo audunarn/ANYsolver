@@ -1,0 +1,146 @@
+{
+  "candidate": "e309d977de56ab2dd408cefb796e84173911aa21",
+  "correction_records": {
+    "actual-owner-global.json": {
+      "bytes": 9196,
+      "sha256": "c400e373549a500b2bb9326ecd791cce9ab5b8ed8d3bfabe7472ee276e3e432e"
+    },
+    "actual-owner-renumber.json": {
+      "bytes": 9621,
+      "sha256": "cf92bae16c6c0af468f13093cbe5064530d8965eff5957ae707d7cc2c65485e1"
+    },
+    "actual-owner-reverse.json": {
+      "bytes": 9604,
+      "sha256": "4ee7eb6b3fc96a746b0af5df99dc27d9801dca448f6cf712fbe7574aeb2acb35"
+    },
+    "bypass-super-False.json": {
+      "bytes": 136,
+      "sha256": "e4eaab21271863e4c2a3b3910bc86e01eed9cc4438b7189a37af7f9bef3eebb1"
+    },
+    "bypass-super-True.json": {
+      "bytes": 135,
+      "sha256": "9d47f5fc65df64dd428aed10a6cfe4123411440ab34a691a23c4971f01bb29af"
+    },
+    "bypass-unbound-False.json": {
+      "bytes": 138,
+      "sha256": "24c57313c1abfd7f94af26ef62775bb9199e302d5ae3ce7ba1858a61abcd9975"
+    },
+    "bypass-unbound-True.json": {
+      "bytes": 137,
+      "sha256": "a5b33aa491b51326be891a17d34dda273380dbb2dbd0bb40c210ebf0faf62e55"
+    },
+    "newton-curvature.json": {
+      "bytes": 7797,
+      "sha256": "b73323e7dcbbbfa1815d3d5d46103e2e627257b3953c5312a7acba3f0210c9a7"
+    },
+    "target-work.json": {
+      "bytes": 978,
+      "sha256": "ca97cf9a4c8897d929f1b51fe14c99f1d50383e10e9a186d8f0935c2c5d1a6ec"
+    },
+    "transport-global-1-0.json": {
+      "bytes": 6600,
+      "sha256": "a52bfcf7b2786ad7a34b28e999d4ab8aab406336fe8e7d16bcbcc6e21f6602cc"
+    },
+    "transport-global-2-2.json": {
+      "bytes": 12538,
+      "sha256": "eca7c52b3db5099e7fa737321ee98f2b25c06b2dbc0191713eb4b643e62282c6"
+    },
+    "transport-global-3-3.json": {
+      "bytes": 16336,
+      "sha256": "06a7320e930a071f3974e54f812df52c14e6cdae2c20e3592f30a84a3095d553"
+    },
+    "transport-renumber-1-0.json": {
+      "bytes": 6616,
+      "sha256": "4771e5a68b5f7a0add80620400fc87e33030dba1a40c16dd3883d17e32112ab1"
+    },
+    "transport-renumber-2-2.json": {
+      "bytes": 12587,
+      "sha256": "3324867a2e255ea2414af55d61edfbed28acfcfa7f197da14761eb1b7f6628b1"
+    },
+    "transport-renumber-3-3.json": {
+      "bytes": 16402,
+      "sha256": "76253fb7e7ea944572932d8d97e0dd394abe2dc771d7879ac1a4e34706fc6a99"
+    },
+    "transport-reverse-1-0.json": {
+      "bytes": 6616,
+      "sha256": "71eb2c813b39dafc13849ab716b3e00940e5708ea321a6695b374653bd9ecbed"
+    },
+    "transport-reverse-2-2.json": {
+      "bytes": 12587,
+      "sha256": "cb44e66cc6f46014b4884427fbf614370de617cb307ab27bdab4c0bdab888203"
+    },
+    "transport-reverse-3-3.json": {
+      "bytes": 16403,
+      "sha256": "329bd513542dfd8d001556ad1468adc4781c59c0989af12f508fc7831641d188"
+    }
+  },
+  "cycles": 2,
+  "defaults_changed": false,
+  "general_static_parity": false,
+  "inputs_sha256": "9d82316d34670c64d94ae6c96b5235f478eac0415b837358970b5f95a8cca94a",
+  "packet": {
+    "bytes": 4232,
+    "sha256": "e84747a201b68d23cb4a02eae6d746ad82e268b7bd14f7a441177203e6ef6042"
+  },
+  "review_sha256": "b8bcc18f8f914fe965073ebf4923a10817446bfd63a74b9cbc26164656e706eb",
+  "schema": "GE_BEAM3_G2_CONFIRMATION_V1",
+  "scope": "G2_S09_S14_PRIVATE_ELASTIC_ONE_OR_TWO_ELEMENTS_ONLY",
+  "terminal": "PROVISIONAL_GO_GE_BEAM3_G2_CONSTRAINED_ELASTIC_STATIC_ONLY",
+  "tests": [
+    "tests/test_ge_beam3_g2_constraints.py::test_S09_exact_nested_affine",
+    "tests/test_ge_beam3_g2_constraints.py::test_S09_invalid_affine[rows0]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S09_invalid_affine[rows1]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S09_invalid_affine[rows2]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S09_invalid_affine[rows3]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S09_invalid_affine[rows4]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S09_invalid_affine[rows5]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S09_invalid_affine[rows6]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S09_invalid_affine[rows7]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S09_prescribed_translation_and_reaction",
+    "tests/test_ge_beam3_g2_constraints.py::test_S10_partial_orientation_derivatives[1]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S10_partial_orientation_derivatives[2]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S10_partial_orientation_derivatives[3]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S11_noncommuting_targets_and_restart",
+    "tests/test_ge_beam3_g2_constraints.py::test_S11_chart_cutback_and_common_rotation",
+    "tests/test_ge_beam3_g2_constraints.py::test_S12_relative_pose_derivatives_and_work",
+    "tests/test_ge_beam3_g2_constraints.py::test_S13_nullspace_and_multiplier_agree",
+    "tests/test_ge_beam3_g2_constraints.py::test_S13_redundant_constraints_reject",
+    "tests/test_ge_beam3_g2_constraints.py::test_S14_numbering_and_global_covariance[global]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S14_numbering_and_global_covariance[renumber]",
+    "tests/test_ge_beam3_g2_constraints.py::test_S14_numbering_and_global_covariance[reverse]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_mutation_and_prepare_failure_preserve_prefix[callback]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_mutation_and_prepare_failure_preserve_prefix[prepare]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_mutation_and_prepare_failure_preserve_prefix[cancel]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_mutation_and_prepare_failure_preserve_prefix[model_load]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_restart_tamper[schema]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_restart_tamper[constraints]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_restart_tamper[control]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_restart_tamper[multipliers]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_restart_tamper[target]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_restart_tamper[state]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_restart_tamper[duplicate]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_restart_tamper[nonfinite]",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_deterministic_packet",
+    "tests/test_ge_beam3_g2_constraints.py::test_g2_contract_and_boundary",
+    "tests/test_ge_beam3_g2_corrections.py::test_inherited_solve_rejects_without_state_change[unbound-False]",
+    "tests/test_ge_beam3_g2_corrections.py::test_inherited_solve_rejects_without_state_change[unbound-True]",
+    "tests/test_ge_beam3_g2_corrections.py::test_inherited_solve_rejects_without_state_change[super-False]",
+    "tests/test_ge_beam3_g2_corrections.py::test_inherited_solve_rejects_without_state_change[super-True]",
+    "tests/test_ge_beam3_g2_corrections.py::test_invariant_rejects_default_rtol_sized_error",
+    "tests/test_ge_beam3_g2_corrections.py::test_prescribed_target_work_at_noncommuting_loaded_states",
+    "tests/test_ge_beam3_g2_corrections.py::test_constraint_rows_pose_and_work_transport[counts0-global]",
+    "tests/test_ge_beam3_g2_corrections.py::test_constraint_rows_pose_and_work_transport[counts0-renumber]",
+    "tests/test_ge_beam3_g2_corrections.py::test_constraint_rows_pose_and_work_transport[counts0-reverse]",
+    "tests/test_ge_beam3_g2_corrections.py::test_constraint_rows_pose_and_work_transport[counts1-global]",
+    "tests/test_ge_beam3_g2_corrections.py::test_constraint_rows_pose_and_work_transport[counts1-renumber]",
+    "tests/test_ge_beam3_g2_corrections.py::test_constraint_rows_pose_and_work_transport[counts1-reverse]",
+    "tests/test_ge_beam3_g2_corrections.py::test_constraint_rows_pose_and_work_transport[counts2-global]",
+    "tests/test_ge_beam3_g2_corrections.py::test_constraint_rows_pose_and_work_transport[counts2-renumber]",
+    "tests/test_ge_beam3_g2_corrections.py::test_constraint_rows_pose_and_work_transport[counts2-reverse]",
+    "tests/test_ge_beam3_g2_corrections.py::test_nonzero_multiplier_actual_newton_curvature_and_nullspace",
+    "tests/test_ge_beam3_g2_corrections.py::test_actual_owner_selected_pose_operator_transport[global]",
+    "tests/test_ge_beam3_g2_corrections.py::test_actual_owner_selected_pose_operator_transport[renumber]",
+    "tests/test_ge_beam3_g2_corrections.py::test_actual_owner_selected_pose_operator_transport[reverse]"
+  ],
+  "tree": "b2eb030f6e693ad436fbefc4918087d24922f058"
+}

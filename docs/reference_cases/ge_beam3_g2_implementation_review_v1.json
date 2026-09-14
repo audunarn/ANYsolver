@@ -1,0 +1,106 @@
+{
+  "decision": "BLOCKED_G2_IMPLEMENTATION_REVIEW",
+  "findings": [
+    {
+      "description": "ConstrainedAnalysis inherits the public G1 solver, while its guard accepts a G2 owner during that solver's execution. Calling ElasticAnalysis.solve(owner, nodal), or the equivalent super-bound method, bypasses every G2 constraint equation and writes a G1-shaped accepted-history entry. This can commit a constraint-violating state and makes the resulting G2 checkpoint non-replayable. The frozen G2 contract explicitly prohibits exposing or using the inherited G1 zero-support solve on a G2 owner.",
+      "file": "src/anysolver/_ge_beam3_g2_analysis.py",
+      "gate": "G2 constraint authority, accepted-state safety and authenticated restart",
+      "id": "G2-IR-01",
+      "line": 19,
+      "observed": "For a virgin straight one-element G2 owner with root affine x offset 0.001, ElasticAnalysis.solve(owner, zeros) returned success with u[0]=0, constraint norm 0.001, both generations advanced to 1, and a five-key G1 history entry. G2 resume rejected the emitted checkpoint with ValueError: G2 accepted-history schema. After a legitimate accepted prefix, the same unsupported route advanced both generations from 1 to 2 and again produced a non-replayable checkpoint.",
+      "priority": "P1",
+      "reproduction": "Construct the registered straight ElasticElement and ConstraintSet, changing the first root affine row's offset to 0.001. For both virgin and legitimately accepted owners, call ElasticAnalysis.solve(owner, np.zeros(18)); inspect owner._constraint_trial, both generations and owner._accepted[-1]; serialize owner.checkpoint(); call ConstrainedAnalysis.resume with the checkpoint's actual SHA-256.",
+      "required_change": "Prevent the G1 solve entry point from operating on a G2 owner before evaluation or publication, while preserving the authorized G1 baseline. Add virgin and accepted-prefix regressions for both unbound-base and super-bound invocation, requiring rejection, unchanged committed bytes/generations/history, no active trial and continued checkpoint replay.",
+      "title": "Reject the inherited unconstrained G1 solve before it commits"
+    },
+    {
+      "description": "The S11 target-frame comparison and all three S14 covariance comparisons specify atol=1e-11 but omit rtol. The installed NumPy implementation defaults rtol to 1e-7, so these assertions can accept errors substantially larger than the frozen normalized invariant limit. In particular, approximately unit target-frame entries can differ by roughly 1e-7 and still pass. This is a verification defect, not evidence that the present numerical results actually exceed the required tolerance.",
+      "file": "tests/test_ge_beam3_g2_constraints.py",
+      "gate": "S11 physical target orientation and S14 covariance acceptance",
+      "id": "G2-IR-02",
+      "line": 146,
+      "observed": "Verified affected assertions at lines 146 and 232-234. Verified installed numpy/testing/_private/utils.py defines assert_allclose with rtol=1e-7 at line 1663 and documents atol + rtol * abs(desired) at line 1678.",
+      "priority": "P2",
+      "required_change": "Enforce the registered dimensionless norm(a-b)/max(1,norm(a),norm(b)) <= 1e-11 criterion explicitly for every invariant comparison, including target rotations and covariance results. Do not rely on an implicit library tolerance.",
+      "title": "Enforce the frozen invariant tolerance in S11 and S14"
+    },
+    {
+      "description": "The frozen G2 contract explicitly requires target-frame prescribed work to be tested through the actual constraint Jacobian. The noncommuting-target test applies zero loads and checks continuation, replay and the final target rotation only. The only prescribed-work assertion in the entire G2 test module checks affine translation control_work_rate. No test establishes nonzero target-motion work, its sign, or the relationship between chart and spatial support moments.",
+      "file": "tests/test_ge_beam3_g2_constraints.py",
+      "gate": "G2 prescribed-orientation work semantics; S10-S11",
+      "id": "G2-IR-03",
+      "line": 139,
+      "observed": "Source inspection found no target-frame work comparison. The target-history solves at lines 142-144 use zero nodal loads; the sole control_work_rate assertion is the affine axial check at line 101.",
+      "priority": "P2",
+      "required_change": "Add an independently derived nonzero prescribed-target virtual-work check using explicit target-frame perturbations and the actual constraint Jacobian. Verify the work sign and chart-to-spatial moment mapping at a nonzero, noncommuting rotation increment using every registered derivative step where numerical verification is used.",
+      "title": "Add the preregistered target-frame work verification"
+    },
+    {
+      "description": "The S14 contract includes constraint-row transport, but the covariance test checks only translations and spatial reaction forces/moments. It never evaluates transported constraint values, Jacobians or their work-dual row mapping, and never compares accepted physical rotations. Its single full identity-axis root orientation support also does not exercise selected-log-axis or relative-pose row transport. Passing this test therefore does not establish the stated G2 constraint covariance obligation.",
+      "file": "tests/test_ge_beam3_g2_constraints.py",
+      "gate": "S14 physical pose and constraint-row covariance",
+      "id": "G2-IR-04",
+      "line": 221,
+      "observed": "The complete comparison loop at lines 230-234 contains only translation, spatial-force and spatial-moment assertions. No constraint-row transport or accepted-rotation assertion follows it.",
+      "priority": "P2",
+      "required_change": "Add independently specified DOF and constraint-row transport comparisons under proper global transformation, node-ID permutation and connectivity reversal. Include accepted physical rotations and the orientation/relative-pose semantics covered by the claimed G2 boundary, with explicit frozen normalization.",
+      "title": "Verify physical rotations and constraint-row transport in S14"
+    }
+  ],
+  "reviewer": {
+    "activity": "Independent read-only contract, source, test and inherited transaction-seam review, plus one bounded development reproduction. No edits, fixes, commits or formal mechanics execution.",
+    "identity": "/root/g2_independent_review",
+    "implementation_authorship": "None",
+    "independent": true
+  },
+  "scope": {
+    "acceptance_boundary": "Review of the private one/two-element exact-elastic G2 constraint implementation and its S09-S14 verification. All findings block proceeding to formal G2 confirmation. This review makes no general-static parity, G3, public integration, release or qualification claim.",
+    "candidate_preservation": "Verified HEAD a474a91e126e6904f613f305deb2e1a1427d02de and subject tree b945ddcb02ed5d17ada718ec69424027195b7055. The subject adds six paths relative to accepted G1 closeout c8408eb509fdd2346f5aec2aa53ed262a3d07e7c; HEAD adds only G2 status/development-result documentation. Git status remained clean. Git emitted access warnings for the user's global ignore file.",
+    "coverage_assessment": "S09 provides meaningful exact affine-expansion and independent axial-equilibrium checks. S10-S12 analytically evaluate constraint derivatives and check all three registered finite-difference steps; the eccentric relative-pose unit fixture has nonzero chart coordinates and nonidentity relative frame. However, the assembled S12 tie is undeformed with axial offset and identity relative frame, while S13 compares a virgin, zero-multiplier system and leaves its returned constraint Hessians unused. These tests do not independently exercise a nonzero multiplier-curvature contribution in the assembled Newton system. This limitation is distinguished from the reproduced state-safety failure; no additional numerical mechanics defect is asserted from it.",
+    "formal_confirmation": "Not executed. The reproduced unsupported-route commit blocks formal confirmation regardless of finding severity; successor corrections and independent re-review are required.",
+    "implementation_assessment": "The normal G2 solve visibly forms the required multiplier residual and curvature tangent, uses committed-base shared rotations, checks rank before assembly, distinguishes chart and spatial reactions, and records target/control/multiplier history for replay. The corrected G1 post-callback and end-of-material-preparation authority guards are reused. These normal-path protections do not reject the inherited G1 solve route.",
+    "reproduction_process": {
+      "automatic_retry": false,
+      "child_timeout_seconds": 60,
+      "classification": "DEVELOPMENT_REVIEW_ONLY",
+      "command": "python -B -c <inline standard-library supervisor using docs.reference_cases.e4_pl_s3_v2_bounded_process._ProcessJob>; one child executes the virgin and accepted-prefix inherited-solve checks.",
+      "diagnostics": "Reviewer tool-output chunk 7f2af7; no diagnostic files created.",
+      "elapsed_seconds": 2.954220699999496,
+      "exit_code": 0,
+      "final_active_processes": 0,
+      "memory_limit_bytes": 25769803776,
+      "numerical_threads": 1,
+      "peak_tree_bytes": 203673600
+    },
+    "reviewed": [
+      "C:/Github/AGENTS.md",
+      "docs/GE_BEAM3_GENERAL_STATIC_INTEGRATION_CONTRACT.md",
+      "docs/reference_cases/ge_beam3_general_static_integration_contract_v1.json",
+      "docs/GE_BEAM3_G2_CONSTRAINT_CONTRACT.md",
+      "docs/reference_cases/ge_beam3_g2_fixtures_v1.json",
+      "docs/GE_BEAM3_G2_STATUS.md",
+      "docs/GE_BEAM3_G1A_EXACT_ELASTIC_CONTRACT.md",
+      "docs/GE_BEAM3_G1_STATUS.md",
+      "docs/GE_BEAM3_G1_STATE_SAFETY_CONFIRMATION.md",
+      "docs/reference_cases/ge_beam3_g1_independent_review_v1.json",
+      "docs/reference_cases/ge_beam3_g1_implementation_review_v2.json",
+      "src/anysolver/_ge_beam3_g2_constraints.py",
+      "src/anysolver/_ge_beam3_g2_analysis.py",
+      "tests/test_ge_beam3_g2_constraints.py",
+      "scripts/run_ge_beam3_g2.py",
+      "src/anysolver/_ge_beam3_g1_elastic.py",
+      "src/anysolver/_ge_beam3_g1_operator.py",
+      "src/anysolver/_ge_beam3_g1_element.py",
+      "src/anysolver/_ge_beam3_g1_analysis.py",
+      "tests/test_ge_beam3_g1_elastic.py",
+      "tests/test_ge_beam3_g1_integration.py",
+      "src/anysolver/_ge_beam3_mixed_ad.py",
+      "src/anysolver/_ge_beam3_p5/chart.py",
+      "src/anysolver/_ge_beam3_p5/arrays.py",
+      "Relevant nonlinear_state material-validation, prepare/commit/discard and nonlinear_static assembly-wrapper seams",
+      "Windows _ProcessJob launch, accounting, termination and cleanup implementation"
+    ],
+    "subject_tree": "b945ddcb02ed5d17ada718ec69424027195b7055"
+  },
+  "subject_commit": "3e89a5e30ba86103bad6c236356d700229d2820f"
+}

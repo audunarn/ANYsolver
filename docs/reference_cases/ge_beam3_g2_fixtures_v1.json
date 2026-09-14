@@ -1,0 +1,152 @@
+{
+  "schema": "GE_BEAM3_G2_FIXTURES_V1",
+  "status": "FROZEN_FIXTURES_NOT_QUALIFICATION",
+  "parent": "c8408eb509fdd2346f5aec2aa53ed262a3d07e7c",
+  "parent_tree": "7880bae8200251836c428ee6008ece4fafbfbe96",
+  "scope": "PRIVATE_ONE_OR_TWO_EXACT_ELASTIC_NATIVE_BEAMS",
+  "scales": {
+    "length": 1,
+    "force": 1,
+    "moment": 1
+  },
+  "coordinates": [
+    [
+      0,
+      0,
+      0
+    ],
+    [
+      0.5,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      0
+    ],
+    [
+      1.5,
+      0,
+      0
+    ],
+    [
+      2,
+      0,
+      0
+    ]
+  ],
+  "section": {
+    "E": 100,
+    "G": 40,
+    "area": 1,
+    "Iy": 0.2,
+    "Iz": 0.3,
+    "J": 0.1,
+    "shear_y": 0.8,
+    "shear_z": 0.7
+  },
+  "second_roll": 0.37,
+  "tip_force": [
+    0.01,
+    -0.02,
+    0.015
+  ],
+  "tip_moment": [
+    0.002,
+    0.003,
+    -0.001
+  ],
+  "prescribed_axial": [
+    0.001,
+    0.002
+  ],
+  "orientation_vectors": [
+    [
+      0.02,
+      -0.01,
+      0.015
+    ],
+    [
+      -0.015,
+      0.02,
+      0.01
+    ]
+  ],
+  "common_rotation": [
+    2.9,
+    -1.2,
+    0.7
+  ],
+  "relative_offset": [
+    1,
+    0.2,
+    -0.1
+  ],
+  "relative_frame_vector": [
+    0.1,
+    -0.05,
+    0.03
+  ],
+  "derivative_steps": [
+    0.0001,
+    0.00001,
+    0.000001
+  ],
+  "affine_nested": [
+    [
+      6,
+      [
+        [
+          12,
+          0.5
+        ],
+        [
+          18,
+          0.5
+        ]
+      ],
+      0.001,
+      0.002
+    ],
+    [
+      12,
+      [
+        [
+          24,
+          0.25
+        ]
+      ],
+      0,
+      0
+    ]
+  ],
+  "limits": {
+    "child_seconds": 600,
+    "wave_seconds": 1800,
+    "inactivity_seconds": 120,
+    "memory_bytes": 25769803776,
+    "threads": 1,
+    "max_children": 3
+  },
+  "tolerances": {
+    "invariant": 1e-11,
+    "directional": 1e-7
+  },
+  "tests": [
+    "test_S09_exact_nested_affine",
+    "test_S09_invalid_affine",
+    "test_S09_prescribed_translation_and_reaction",
+    "test_S10_partial_orientation_derivatives",
+    "test_S11_noncommuting_targets_and_restart",
+    "test_S11_chart_cutback_and_common_rotation",
+    "test_S12_relative_pose_derivatives_and_work",
+    "test_S13_nullspace_and_multiplier_agree",
+    "test_S13_redundant_constraints_reject",
+    "test_S14_numbering_and_global_covariance",
+    "test_g2_mutation_and_prepare_failure_preserve_prefix",
+    "test_g2_restart_tamper",
+    "test_g2_deterministic_packet",
+    "test_g2_contract_and_boundary"
+  ]
+}

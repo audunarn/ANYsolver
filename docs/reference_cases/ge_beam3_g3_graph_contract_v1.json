@@ -1,0 +1,307 @@
+{
+  "allowed_extent": [
+    "docs/GE_BEAM3_G3_GRAPH_JUNCTION_CONTRACT.md",
+    "docs/reference_cases/ge_beam3_g3_graph_fixtures_v1.json",
+    "docs/reference_cases/ge_beam3_g3_graph_contract_v1.json",
+    "scripts/audit_ge_beam3_g3_contract.py",
+    "tests/test_ge_beam3_g3_contract.py"
+  ],
+  "default_changes": false,
+  "implementation_started": false,
+  "mechanics_runs": 0,
+  "mixed_fixture_count": 5,
+  "native_fixture_count": 4,
+  "next_gate": "G3a_NATIVE_GRAPH_IMPLEMENTATION_ONLY",
+  "parent_commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+  "parent_tree": "d0d67ce2e03893a1e9737299972c520aea923ee4",
+  "planned_test_families": 14,
+  "positive_rotational_adapters": 0,
+  "qualification_claim": false,
+  "rotational_rejection_combinations": 28,
+  "schema": "GE_BEAM3_G3_GRAPH_CONTRACT_V1",
+  "source_bindings": [
+    {
+      "blob": "36f4efa83333de48d2b02e775ef7312cf0237b97",
+      "bytes": 20244,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "docs/GE_BEAM3_GENERAL_STATIC_INTEGRATION_CONTRACT.md",
+      "sha256": "ec6c571319f09fd20380579c0d01bec93cd74f877fea4f2f34b377c97a585748",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "31da7e8bbe6a1b35da85caa095d92c3ac2ff9d97",
+      "bytes": 10059,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "docs/reference_cases/ge_beam3_general_static_integration_contract_v1.json",
+      "sha256": "d37ff248efec4be0e36c553ddcdfb49146eda457ecda1003edcf79851dd66dcd",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "fb1471e1d7150c190fcfeb6e579d3be0b2016235",
+      "bytes": 37848,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "docs/GE_BEAM3_LEGACY_PARITY_MATRIX.md",
+      "sha256": "e98bde88ef40e2160670e37900acd63dfa1926ff1ed8a72a7e30d684ef331f75",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "ece066510a5da29135d8d0ec57c13500d7e2cb74",
+      "bytes": 34692,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "docs/reference_cases/ge_beam3_legacy_parity_matrix_v1.json",
+      "sha256": "0d59ef2b7f58635282b6ddbc771b2463e0c22b4f13ba3a9290da50753e19e0e6",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "d5394e8b092ae9d9bc5e5a1634ef7fae18b89613",
+      "bytes": 5597,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "docs/GE_BEAM3_G2_CONSTRAINT_CONTRACT.md",
+      "sha256": "19b183ed42ed635939461c9abb6759d57f6449a929296d496bd9837c5357ef6a",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "f10237989b30afdd8ebde7007e98e6e21672a820",
+      "bytes": 4916,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "docs/GE_BEAM3_G2_CONFIRMATION_STATUS.md",
+      "sha256": "51d31087f528f9a0d736bc8161493570782cab1d0e58e91194f323d40a16e36c",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "a50ff46b17ffdab0c1e3ee66120cb32b946b77bf",
+      "bytes": 7468,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "docs/reference_cases/ge_beam3_g2_implementation_review_v2.json",
+      "sha256": "b8bcc18f8f914fe965073ebf4923a10817446bfd63a74b9cbc26164656e706eb",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "98cfd667f9c7ee5bba4b45e775cc769f44eb4ff7",
+      "bytes": 5020,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "docs/reference_cases/ge_beam3_g2_confirmation_review_v1.json",
+      "sha256": "fd56baf9e1f52b764b23de823c176d1701e204e1e49029cb184791ad96d60f84",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "f47e386908832596cd8c1630e6edaceddb19f852",
+      "bytes": 8367,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "docs/reference_cases/ge_beam3_g2_confirmation_aggregate_v1.json",
+      "sha256": "2122104eb2ece955ca8ccbe3d4654578cd3a53e340754bd7fa01c0c3be37f8ff",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "e56bc74fd702fe9000bd73865c76bfeb7e826c80",
+      "bytes": 17505,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/_ge_beam3_g1_analysis.py",
+      "sha256": "ead8d2209f8c695bfa5cc3cec504a27a2c57ebff5e3e8957321a6420141198b8",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "90698a772e16e2d65d90bfcf52d5459f2d94fe7d",
+      "bytes": 10768,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/_ge_beam3_g1_element.py",
+      "sha256": "7660c93cee517c6387cbab09d1544efaa6540dce3c4d35916788e1fbc356c416",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "7f787771731d5ed8811b04fb7e55d2242589664c",
+      "bytes": 7436,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/_ge_beam3_g1_operator.py",
+      "sha256": "09ca8bfc1abb10778031e25fc1bb1fa5e7194cacf5a6899fd8c3d741ee643711",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "bd4ac56ede623066acd5d231298cb49c4738f974",
+      "bytes": 12035,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/_ge_beam3_g2_analysis.py",
+      "sha256": "b0af46d619f3307fbf315bf3f8f6089edf916fed728be7864ec7f94f492f44a0",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "0b5098e7f220c0f4e2333af56332b9b4cebb7d09",
+      "bytes": 9131,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/_ge_beam3_g2_constraints.py",
+      "sha256": "f5ac892ccd603a9a337bd0bd54c2d559e4578137554d83f341fac5ae185218df",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "aa8c29a8e2b44a0e2a223df04783b0ed998be0b1",
+      "bytes": 12350,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/_ge_beam3_pose_joint.py",
+      "sha256": "69cfb0a71761ab7cad0d62080d81511949e7c920f7f70162bcaba0497b402657",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "8b9cb11faa0ef788b69aef6cf810088e2e9b283d",
+      "bytes": 12295,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/_ge_beam3_shell_joint_trial.py",
+      "sha256": "4c68e98dd316964c8709a4e4c355fb667feb306f9d36156710e6ee6fa9d79116",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "5b6f93b385486b525802913b49bab0c7cd3b63c2",
+      "bytes": 22039,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/_ge_beam3_shell_joint_state.py",
+      "sha256": "e44e1c6a7b04f62683aa3f79e58c2242bb12a8730f8200df59ead5c1c9e9f39a",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "4dfe4212b9ee9947969b087809e72b9973e88e07",
+      "bytes": 244692,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/elements.py",
+      "sha256": "f8c59792947a3c9b84416c61a4d9db98e42926d1bf21e74e736afbf6a9a88b37",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "b0a53a47ca68cf9ff9ab6925fbdfb4f31301344a",
+      "bytes": 293258,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/e4_pl_element.py",
+      "sha256": "7fc46a18046e043512a5fb2c3f61ed0b95b834e4dde764f63c500a885e87ea38",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "8b57778dada6a499c032991e20f3a5fc5c60314e",
+      "bytes": 97002,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/e4_pl_s3_v2d_element.py",
+      "sha256": "2187cb8ac71a2292e413f306c331666d6caa2e6102c2ed0a30bcc9ddbf10e560",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "73b8421dabe2558516ffba7bf3469d0df5ddbb9a",
+      "bytes": 69582,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/assembly.py",
+      "sha256": "81e96cec9c367e73a08029f366ef848dd5065b756d47a46947ef103f48baecf3",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "aa349b3e523edb784b764e91ab215e80f10c1b90",
+      "bytes": 23631,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/constraint_audit.py",
+      "sha256": "cd941e15286f70497a13da21005db723d86194e8b4ee288d0b1c079b4b55a994",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "31f95b57d5041b5e44993102aed8fc44a2e5d9b9",
+      "bytes": 115917,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "src/anysolver/nonlinear_state.py",
+      "sha256": "9a81355dac4ab9d45cdb7f9100b7676cdfa1e842f24031f028e9588e84ecd474",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "4874e92912986dfddb97f3395dfb14a467b30852",
+      "bytes": 7060,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "tests/test_ge_beam3_g1_elastic.py",
+      "sha256": "d3eb06f5c15ac087dc06bceb9d95f49b98eec47973ac4eba9ec9660ce10d47f3",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "0e741e3e9d1cbf404b4d249d6bc355522f2264f1",
+      "bytes": 17695,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "tests/test_ge_beam3_g2_constraints.py",
+      "sha256": "97e0215500195f67c3b2f87d33728a559c12bc1160fc49a04f280ccccb6a889e",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "9ab5f0a1fc3bd4c66ecf546c7c6c11b7de6b0755",
+      "bytes": 13005,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "tests/test_ge_beam3_g2_corrections.py",
+      "sha256": "eb8691b98bb36d1dc68566a31aac1a38fa7c0027a8b7209ad92213fdecf78cce",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "49b563dff036071e7cd38a88c04882ea0e583bdc",
+      "bytes": 14704,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "tests/test_ge_beam3_pose_joint.py",
+      "sha256": "ed98b951ed877f2ce5839b671208616e7ae1dd932405e19953b7f189fbb7f71e",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "375d0632e9538d94f88633f7b7e279010dd7454d",
+      "bytes": 9916,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "tests/test_ge_beam3_shell_joint_trial.py",
+      "sha256": "1a0263a96ff5ed11700a4768d7be4b063c8b1f835df76a46302c9056e961e041",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "3e089126354bcb1097678ba2307e669d7b401b7f",
+      "bytes": 11171,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "tests/test_ge_beam3_shell_joint_state.py",
+      "sha256": "603494bc999ed57c370d37885aa1865627c32419f7408f0161c6d4a0818bcb0a",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "08f23b0a37993f973e8025a4e599cddb67f9ba05",
+      "bytes": 5804,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "tests/test_constraint_audit.py",
+      "sha256": "89ec6ce90fbf5b1956f9d0e2e1b95a36ac19372b91af5e3619dd48ed9c995d4c",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    },
+    {
+      "blob": "3ebd765b39387060ba65f1d976f1ac9881c71fd9",
+      "bytes": 16170,
+      "commit": "d5acb45b0a35d6063d8d075bbb2082c56f26c9e4",
+      "path": "tests/test_generalized_beam_sections.py",
+      "sha256": "2ade92b833d770ba429ba7c7adf708d3fa4e1debd8739c3725246c2d7ffceafc",
+      "tree": "d0d67ce2e03893a1e9737299972c520aea923ee4"
+    }
+  ],
+  "status": "FROZEN_DESIGN_NOT_IMPLEMENTED_OR_QUALIFIED",
+  "terminal_precedence": [
+    "BLOCKED_GE_BEAM3_G3_AUTHORITY",
+    "BLOCKED_GE_BEAM3_G3_PROCESS_OR_EVIDENCE",
+    "NO_GO_GE_BEAM3_G3_STATE_OR_RESTART",
+    "NO_GO_GE_BEAM3_G3_JUNCTION_OR_WORK",
+    "NO_GO_GE_BEAM3_G3_GRAPH_OR_ASSEMBLY",
+    "PROVISIONAL_GO_GE_BEAM3_G3_EXPLICIT_SLICE_ONLY"
+  ],
+  "text_bindings": [
+    {
+      "bytes": 12273,
+      "encoding": "UTF8_LF",
+      "path": "docs/GE_BEAM3_G3_GRAPH_JUNCTION_CONTRACT.md",
+      "sha256": "a5d630e0ee17eab34374e17fbcd2d26d5b347a56a593b0026f0f2709d0cd7274"
+    },
+    {
+      "bytes": 26455,
+      "encoding": "UTF8_LF",
+      "path": "docs/reference_cases/ge_beam3_g3_graph_fixtures_v1.json",
+      "sha256": "68a288ec12821740cdd25960b6eb1020f00fec6579fe21ac9dbac5b5c2275e05"
+    },
+    {
+      "bytes": 12019,
+      "encoding": "UTF8_LF",
+      "path": "scripts/audit_ge_beam3_g3_contract.py",
+      "sha256": "5b6e0681ac0ae52ce1c6e93e8f18a9f01312233d6c2b13674df5f602f0143c2c"
+    },
+    {
+      "bytes": 5786,
+      "encoding": "UTF8_LF",
+      "path": "tests/test_ge_beam3_g3_contract.py",
+      "sha256": "15c3602b80376164c3527639b321a0d14f96dab71eec0f21f65be4b72545ef08"
+    }
+  ]
+}

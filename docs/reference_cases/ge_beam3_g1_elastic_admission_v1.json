@@ -1,0 +1,94 @@
+{
+  "bindings": [
+    {
+      "bytes_utf8_lf": 20244,
+      "commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+      "git_blob": "36f4efa83333de48d2b02e775ef7312cf0237b97",
+      "path": "docs/GE_BEAM3_GENERAL_STATIC_INTEGRATION_CONTRACT.md",
+      "sha256_utf8_lf": "ec6c571319f09fd20380579c0d01bec93cd74f877fea4f2f34b377c97a585748"
+    },
+    {
+      "bytes_utf8_lf": 10059,
+      "commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+      "git_blob": "31da7e8bbe6a1b35da85caa095d92c3ac2ff9d97",
+      "path": "docs/reference_cases/ge_beam3_general_static_integration_contract_v1.json",
+      "sha256_utf8_lf": "d37ff248efec4be0e36c553ddcdfb49146eda457ecda1003edcf79851dd66dcd"
+    },
+    {
+      "bytes_utf8_lf": 9032,
+      "commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+      "git_blob": "29824371d84e2e54b0660a0bcbad23f15a50a10d",
+      "path": "src/anysolver/_ge_beam3_retained_generalized.py",
+      "sha256_utf8_lf": "63b4f16dd9d2a2502e3e7ee0f23a0a5d4145e27797f895d6c1539909d12d1d86"
+    },
+    {
+      "bytes_utf8_lf": 8928,
+      "commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+      "git_blob": "3de27036a4e56c2db03e0e7b44d624dfae60e94a",
+      "path": "src/anysolver/_ge_beam3_generalized_cell.py",
+      "sha256_utf8_lf": "d94ee37e8d281a65b9d5b2e0c4e498080bf5b6461abddfde3d19f85795f39e20"
+    },
+    {
+      "bytes_utf8_lf": 10286,
+      "commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+      "git_blob": "9beb6674ef0ec03fe076577505d15260368efcf7",
+      "path": "src/anysolver/_ge_beam3_generalized_ellipsoid_section.py",
+      "sha256_utf8_lf": "df8ea4f90386f33016245c0ce2f1537023e9e625c50c0bcedf14d241fb48493e"
+    },
+    {
+      "bytes_utf8_lf": 13011,
+      "commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+      "git_blob": "64ddbc5731a9f0ecde63231b7f70fc3d87eda332",
+      "path": "src/anysolver/_ge_beam3_fibre_section.py",
+      "sha256_utf8_lf": "119d6a6b6a4afbdea99486a4ef16fd60cded65aa050da16a763fa22a5fee80bd"
+    },
+    {
+      "bytes_utf8_lf": 11232,
+      "commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+      "git_blob": "a0218c39c1ad931069f58ab525cce719c18b55aa",
+      "path": "src/anysolver/_ge_beam3_native_definition.py",
+      "sha256_utf8_lf": "2e583858b171b69e719dbcb98657ce3196dab36d868eb13ffd3fc5c76fe7c68f"
+    },
+    {
+      "bytes_utf8_lf": 11394,
+      "commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+      "git_blob": "0f31f2036f4043d91c99734faa8a424396d0cb3d",
+      "path": "src/anysolver/_ge_beam3_generalized_static_boundary.py",
+      "sha256_utf8_lf": "212ad0b336a0b10c9d99fd77fc312e5e5360594de65a7fd19247322833001a57"
+    },
+    {
+      "bytes_utf8_lf": 7356,
+      "commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+      "git_blob": "1e0eec11620aae81250c536a351cd8cc0b0ca5cf",
+      "path": "src/anysolver/_ge_beam3_retained_elastic.py",
+      "sha256_utf8_lf": "2605eaa5c8dfd72841afb4e4d945913887e15c3d4fc592ffd61c784d19b5c8e3"
+    },
+    {
+      "bytes_utf8_lf": 6980,
+      "commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+      "git_blob": "892656c03c67bd03e80c59332a0c34fea1993cff",
+      "path": "src/anysolver/_ge_beam3_centered_mixed.py",
+      "sha256_utf8_lf": "b3e3b77953b7194566c0d3cb2afa155301461e0821ed9eb19c625a2691251014"
+    }
+  ],
+  "contract_commit": "51ebc3c07dc218ba7a78eb71c49f3f5fde829587",
+  "evidence_kind": "STATIC_SOURCE_ADMISSION_INSPECTION",
+  "g1_complete": false,
+  "mechanics_changed": false,
+  "next_step": "REVIEW_AND_FREEZE_G1A_EXACT_ELASTIC_EXTENSION_THEN_RESUME_G1",
+  "reason": "EXACT_ELASTIC_EXTENSION_REQUIRED",
+  "schema": "anysolver.ge-beam3.g1-elastic-admission.v1",
+  "scientific_nogo": false,
+  "successor_authorized": false,
+  "terminal": "BLOCKED_GE_BEAM3_STATIC_AUTHORITY",
+  "unexecuted_cases": [
+    "S01",
+    "S02",
+    "S03",
+    "S04",
+    "S05",
+    "S06",
+    "S07",
+    "S08"
+  ]
+}

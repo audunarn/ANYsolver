@@ -1,0 +1,119 @@
+{
+  "archive": {
+    "bytes_excluding_manifest": 34065,
+    "directory": "C:/Users/AudunArnesenNyhus/AppData/Local/ANYrelease/ge-beam3-g3b-mb2-development-20260910-ebd3b20",
+    "files": 18,
+    "manifest_sha256": "ec259c6977f4ee0210f99ac5670d93389c5a2fa85407223dfdbc1cb73bac9245",
+    "original_temp_outputs_retained": true
+  },
+  "inventories": {
+    "g1_elastic_operator_regression_tests": 10,
+    "g3b_mb2_tests": 25
+  },
+  "limits": {
+    "automatic_retry": false,
+    "inactivity_seconds": 120,
+    "memory_bytes": 25769803776,
+    "numerical_threads": 1,
+    "wall_seconds": 600
+  },
+  "next": "Extend M_B3, then explicit qualified shell and weighted reference interfaces; complete G3b S18 owner/restart and independent review before formal execution.",
+  "parent": {
+    "commit": "ebd3b203e4df72186bd82b2f6d7e6609e18685c6",
+    "tree": "0aefccb6e963ccf0defb4b20d7996e744c199357"
+  },
+  "runs": [
+    {
+      "cause": "Test attempted numeric subtraction of unchanged legacy recovery's string yield-criterion label; corrected in test.",
+      "label": "smoke-test-helper-failed",
+      "status": "FAILED",
+      "tests_failed": 1
+    },
+    {
+      "label": "intermediate20",
+      "status": "PASSED",
+      "tests_passed": 20
+    },
+    {
+      "cause": "Test treated FEModel.load_cases list as dictionary; corrected in test.",
+      "label": "mutation-test-helper-failed",
+      "status": "FAILED",
+      "tests_failed": 1,
+      "tests_passed": 24
+    },
+    {
+      "active_processes": 0,
+      "label": "final25",
+      "peak_tree_bytes": 231944192,
+      "pytest_seconds": 2.39,
+      "returncode": 0,
+      "status": "PASSED",
+      "tests_passed": 25,
+      "wrapper_seconds": 3.132498699997086
+    },
+    {
+      "active_processes": 0,
+      "label": "g1-elastic10",
+      "peak_tree_bytes": 199733248,
+      "pytest_seconds": 1.79,
+      "returncode": 0,
+      "status": "PASSED",
+      "tests_passed": 10,
+      "wrapper_seconds": 2.327725899998768
+    }
+  ],
+  "schema": "GE_BEAM3_G3B_M_B2_DEVELOPMENT_RECORD_V1",
+  "scope": {
+    "candidate_class": "B2TranslationReferenceProblem",
+    "defaults_changed": false,
+    "engineering_mode": "REFERENCE_LINEAR_BOTH_FAMILIES",
+    "fixture": "M_B2",
+    "formal_qualification": false,
+    "formulation_changes": false,
+    "global_dofs": 30,
+    "independent_full_kkt_dimension": 69,
+    "independent_implementation_review": false,
+    "preserved_native_internal_coordinates": 24,
+    "public_routing": false,
+    "restart_supported": false,
+    "transaction_owner": false
+  },
+  "source_bindings_lf": [
+    {
+      "bytes": 11673,
+      "path": "src/anysolver/_ge_beam3_g3b_reference.py",
+      "sha256": "3108840d7e6a24530f3decb6ee61d5e7cfb70a0d3bb630908366b77bd89e94d0"
+    },
+    {
+      "bytes": 10655,
+      "path": "tests/test_ge_beam3_g3b_mb2.py",
+      "sha256": "2a668e49716d4ea9eb8187a4e505788f877d4d560ef06dcb39f63033a63ee1a6"
+    },
+    {
+      "bytes": 3327,
+      "path": "scripts/run_ge_beam3_g3b.py",
+      "sha256": "4abbc75d364eb9200dfdba66f180330a3cb479e7ba38011d1c72a64d7db66fd1"
+    },
+    {
+      "bytes": 4433,
+      "path": "docs/GE_BEAM3_G3B_M_B2_DEVELOPMENT.md",
+      "sha256": "76cc4118f305419a22d5f2bf8f82fb847c2e049b4b8face72442475d41a76231"
+    },
+    {
+      "bytes": 26455,
+      "path": "docs/reference_cases/ge_beam3_g3_graph_fixtures_v1.json",
+      "sha256": "68a288ec12821740cdd25960b6eb1020f00fec6579fe21ac9dbac5b5c2275e05"
+    },
+    {
+      "bytes": 12973,
+      "path": "docs/reference_cases/ge_beam3_g3_graph_contract_v1.json",
+      "sha256": "dbc54f55b51d67c782844488a0f86ce6bed442c9cc530dbd823ea95f8bf90eb5"
+    },
+    {
+      "bytes": 48265,
+      "path": "docs/reference_cases/e4_pl_s3_v2_bounded_process.py",
+      "sha256": "c5b192c9c3f6ee2c68a42ab4a0cfbcdbe81581381b800c13aacce0bb219a3383"
+    }
+  ],
+  "status": "DEVELOPMENT_SMOKE_PASSED_NOT_G3B_QUALIFICATION"
+}

@@ -1,0 +1,78 @@
+{
+  "decision": "BLOCKED_G3A_IMPLEMENTATION_REVIEW",
+  "findings": [
+    {
+      "description": "The frozen contract explicitly requires the listed native-graph checks for every native fixture. The implementation tests provide meaningful coverage, but the stationary/Schur comparison runs only N_BRANCH3 and N_BRACED5, leaving N_RING4 and N_DISJOINT2 uncovered. Loaded covariance runs only N_BRACED5, and explicit shared-Q identity across incident elements is checked only for N_BRANCH3. Existing G1/G2 tests and the other G3a checks do not establish these missing graph-specific obligations.",
+      "file": "tests/test_ge_beam3_g3a_graph.py",
+      "gate": "G3a S15 frozen per-fixture verification",
+      "id": "G3A-IR-01",
+      "line": 227,
+      "observed": "The stationary/Schur test parametrization names only N_BRANCH3 and N_BRACED5. test_loaded_graph_covariance constructs N_BRACED5 exclusively. Explicit comparisons between each element's stored nodal rotations and the shared rotation store occur in test_three_arm_branch_smoke.",
+      "priority": "P2",
+      "required_change": "Complete the frozen native-fixture coverage matrix, including stationary/Schur verification with nonzero internal residual for N_RING4 and N_DISJOINT2, physical covariance for the remaining native graphs, and explicit shared-pose/incident-triad checks wherever nodes have multiple incident elements. Preserve the registered equations, scales, tolerances and perturbation sequence.",
+      "title": "Complete the frozen per-graph S15 verification"
+    },
+    {
+      "description": "The graph transaction tests cover useful failure paths but do not fulfill the frozen rollback matrix. Last-element preparation rollback is exercised only on N_BRACED5, while cancellation is exercised on N_BRANCH3. The contract requires cancellation and last-element preparation rollback for every native graph. Additionally, the preregistered N_BRACED5 S18 oracle explicitly includes stale and foreign tokens, but the G3a test module contains no such token tests.",
+      "file": "tests/test_ge_beam3_g3a_graph.py",
+      "gate": "G3a native graph transaction and S18 token safety verification",
+      "id": "G3A-IR-02",
+      "line": 274,
+      "observed": "test_last_element_prepare_failure_retains_complete_graph always constructs N_BRACED5. Cancellation checks construct the default N_BRANCH3 owner. No G3a test exercises stale or foreign issued tokens; the module's only occurrence of 'foreign' is a malformed checkpoint schema string.",
+      "priority": "P2",
+      "required_change": "Add the missing per-graph cancellation/preparation rollback regressions and the frozen N_BRACED5 stale/foreign-token cases. Exercise genuine accepted prefixes and verify unchanged committed bytes, both generations, history and authenticated checkpoint, no residual trial, and continued replay. Keep supporting G1/G2 regression inventories separate.",
+      "title": "Complete the frozen graph rollback and token matrix"
+    }
+  ],
+  "reviewer": {
+    "activity": "Independent read-only contract, source, test and admission/restart review, plus one bounded disposable in-memory reproduction. No edits, commits, fixes, authority generation or formal execution.",
+    "identity": "/root/g2_correction_review",
+    "implementation_authorship": "None",
+    "independent": true
+  },
+  "scope": {
+    "acceptance_boundary": "Review of the private G3a native exact-elastic graph owner against the frozen G3 contract. The identified verification nonconformances block formal execution. No demonstrated mixed-route acceptance, committed-state loss or numerical mechanics defect is asserted. No G3b/G3c, all-G3, general-static parity, public integration, release or qualification claim.",
+    "candidate_preservation": "Independently verified clean HEAD 5a4a4ac6a6e6130153ad7e8eb32a482dacd06129 and tree afa9d6011d467fc16d361d525fd05587692a8a71. Exactly seven paths are added relative to frozen contract e78c1b667694b43141912c1d85f894de2b41a848; no parent-tracked path is modified. Candidate remained clean after reproduction.",
+    "coverage_assessment": "The existing tests meaningfully cover all four reference graph/component inventories, rigid-space dimensions and positive quotient stiffness, sorted assembly, five-step loading/unloading, recovery and replay. They also exercise noncommuting targets, nonzero-multiplier directional derivatives, native remote-pose equivalence, preparation failure and selected mutations. The findings concern specific frozen obligations absent from that coverage, not evidence that the corresponding implementation paths necessarily fail.",
+    "formal_confirmation": "Not executed. No G3a formal confirmation runner exists in the reviewed candidate, and this review grants no runner acceptance. Complete scoped corrections and independent re-review, then freeze and independently review the exact formal runner and inventories before execution.",
+    "implementation_assessment": "The owner is an exact separate NativeGraphAnalysis, not a G1/G2 subclass or nested owner. Admission bounds graph incidence, midpoint ownership and supported component rigid spaces before model/state construction. One native rotation store owns shared poses. Constraint capture retains analytical G2 equations under separate graph bounds. The owner authenticates graph, DOF ordering, topology cache, store identities and scoped loads; material preparation reuses the inherited final authority check. G1/G2 solve dispatch is rejected by exact-type and entry-capability guards. Reference multi-RHS factorization is ephemeral and rejects accepted epochs. No additional demonstrated correctness defect was found in these inspected paths.",
+    "reproduction_process": {
+      "automatic_retry": false,
+      "child_timeout_seconds": 60,
+      "classification": "DEVELOPMENT_REVIEW_ONLY",
+      "command": "Inline standard-library supervisor using docs.reference_cases.e4_pl_s3_v2_bounded_process._ProcessJob; child forwards and counts native initialization during two malformed graph-metadata restore attempts.",
+      "diagnostics": "Reviewer tool-output chunk 1ef8d5. No raw diagnostic files or disposable source files were created.",
+      "elapsed_seconds": 2.8855237000025227,
+      "exit_code": 0,
+      "final_active_processes": 0,
+      "memory_limit_bytes": 25769803776,
+      "numerical_threads": 1,
+      "peak_tree_bytes": 201711616
+    },
+    "restart_metadata_observation": {
+      "classification": "Late validation of inert authority metadata; not demonstrated mixed-route acceptance or committed-state failure",
+      "file": "src/anysolver/_ge_beam3_g3_analysis.py",
+      "line": 335,
+      "observed": "resume constructs the new native owner before comparing its computed inventory with the serialized graph field. With an otherwise valid virgin N_BRANCH3 checkpoint and its recomputed external SHA-256, both graph.policy='MIXED' and a nonempty unregistered adapter_allowlist invoked native initialization for element IDs 1, 2 and 3, then raised ValueError('G3 graph policy/identity mismatch').",
+      "original_state": "The original owner's snapshot and checkpoint remained byte-identical, with no active trial. No mixed element or adapter was invoked.",
+      "recommendation": "Move graph policy/schema/allowlist preflight ahead of native initialization in the successor and add a regression proving early rejection. This observation is distinguished from the blocking coverage findings."
+    },
+    "reviewed": [
+      "C:/Github/AGENTS.md",
+      "docs/GE_BEAM3_G3_GRAPH_JUNCTION_CONTRACT.md",
+      "Relevant authority and fixture entries in docs/reference_cases/ge_beam3_g3_graph_contract_v1.json",
+      "docs/reference_cases/ge_beam3_g3_graph_fixtures_v1.json",
+      "docs/GE_BEAM3_G3A_IMPLEMENTATION_STATUS.md",
+      "Relevant development status entries in docs/reference_cases/ge_beam3_g3a_development_v1.json",
+      "src/anysolver/_ge_beam3_g3_analysis.py",
+      "src/anysolver/_ge_beam3_g3_constraints.py",
+      "src/anysolver/_ge_beam3_g1_element.py",
+      "Inherited G1/G2 ownership, dispatch, assembly, serialization and transaction context",
+      "tests/test_ge_beam3_g3a_graph.py",
+      "tests/test_ge_beam3_g3a_boundary.py",
+      "Inherited Windows bounded-process supervisor"
+    ],
+    "subject_tree": "afa9d6011d467fc16d361d525fd05587692a8a71"
+  },
+  "subject_commit": "5a4a4ac6a6e6130153ad7e8eb32a482dacd06129"
+}
