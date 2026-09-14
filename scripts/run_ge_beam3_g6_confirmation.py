@@ -52,7 +52,7 @@ def run(output, revision, package_receipt, package_sha256, lane):
     if receipt.get("revision") != revision or receipt.get("schema") != "GE_BEAM3_G6_INSTALLED_ARTIFACT_V1":
         raise ValueError("installed-artifact candidate mismatch")
     output.parent.mkdir(parents=True, exist_ok=True); output.mkdir()
-    sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tests")]
+    sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tests"), str(ROOT)]
     os.environ.update(OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1",
                       NUMEXPR_NUM_THREADS="1", GE_BEAM3_G6_SCALE_ELEMENTS="1024")
     import pytest
