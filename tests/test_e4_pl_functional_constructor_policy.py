@@ -110,6 +110,18 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
                 "test_triangular_aliases_and_mixed_q4_t3_assembly",
             ): 3,
             ("tests/test_follower_pressure.py", "_single_shell"): 1,
+            (
+                "tests/test_ge_beam3_g3b_mq4.py",
+                "test_rejection_precedes_both_element_operators",
+            ): 1,
+            (
+                "tests/test_ge_beam3_g3b_ms3.py",
+                "test_rejection_precedes_both_element_operators",
+            ): 1,
+            (
+                "tests/test_ge_beam3_g3b_weighted.py",
+                "test_rejection_precedes_both_element_operators",
+            ): 1,
             ("tests/test_generalized_shell_sections.py", "_model_with_shell"): 1,
             ("tests/test_orthotropic_elements.py", "_shell_topology"): 1,
             (
@@ -135,7 +147,7 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
         }
     )
     assert calls["ShellElement"] == expected_non_q4
-    assert sum(calls["ShellElement"].values()) == 22
+    assert sum(calls["ShellElement"].values()) == sum(expected_non_q4.values())
     expected_qualified_q4 = Counter(
         {
             (
@@ -281,6 +293,8 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
                 "tests/test_e4_pl_transient_authority.py",
                 "_qualified_q4_model",
             ): 1,
+            ("tests/test_ge_beam3_g3b_mq4.py", "parts"): 1,
+            ("tests/test_ge_beam3_g3b_weighted.py", "parts"): 1,
             (
                 "tests/test_mixed_shell_quadrature_grouping.py",
                 "test_direct_qualified_q4_connectivity_change_invalidates_warm_sparsity",
@@ -313,7 +327,9 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
         }
     )
     assert calls["QualifiedE4PLShellElement"] == expected_qualified_q4
-    assert sum(calls["QualifiedE4PLShellElement"].values()) == 54
+    assert sum(calls["QualifiedE4PLShellElement"].values()) == sum(
+        expected_qualified_q4.values()
+    )
 
 
 def test_functional_lane_legacy_q4_calls_are_explicit_and_closed_world() -> None:

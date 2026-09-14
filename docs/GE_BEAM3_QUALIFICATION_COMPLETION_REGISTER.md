@@ -1339,3 +1339,18 @@ Next gate: freeze G4b's assembled history-bearing graph and solver-control
 fixtures, including Newton/line-search/cutback/arc-length publication semantics
 and mixed station families. The completed G3c or G4a cycles need not be rerun
 unless a bound operator or transaction identity changes.
+
+## G7 B3-GE production opt-in admission
+
+The completed G1--G6 evidence is integrated and G7 admits its model-owned native
+workflow under the public name `B3-GE` and exact selector `b3-ge`. Legacy B3
+remains the default; the historical `ge-beam3` facade is neither relabelled nor
+redirected.
+
+The exact 0.4.3 candidate wheel is 1,953,202 bytes, SHA-256
+`64e01fbb4e200a7aecb9204b12574c5137c2b69005a93867e3651291b6c4df64`.
+Two corrected fresh installed-artifact cycles produced identical 1,572-byte
+canonical records, SHA-256
+`e946f048a547104d5d23ae6e926bbdefb1242028d4e9dd833a3d8509a54ee74f`.
+The result is `PROVISIONAL_GO_B3_GE_PRODUCTION_OPT_IN` with no default, version,
+tag, or publication change.

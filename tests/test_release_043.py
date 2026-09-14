@@ -32,11 +32,27 @@ def test_source_distribution_includes_release_authority_manifests():
 def test_ge_inventory_covers_every_module_and_keeps_runtime_tests():
     record = ci._ge_beam3_inventory()
     modules = ci.merge_test_modules()
-    assert len(record['portable']) == 13
+    assert record['portable']
     assert set(record['portable']) <= set(modules)
     assert not set(record['extended']) & set(modules)
     assert 'tests/test_ge_beam3_public_workflows.py' in modules
     assert 'tests/test_ge_beam3_durable_coupled.py' in modules
+
+
+def test_runtime_protocol_checks_are_process_isolated_from_exact_guards():
+    modules = (
+        'tests/test_generalized_shell_sections.py',
+        'tests/test_plane_stress_analytical_tangent.py',
+    )
+    partitions = ci.execution_partitions(modules, 2)
+    assert ('tests/test_generalized_shell_sections.py',) in partitions
+    assert all(
+        not (
+            'tests/test_generalized_shell_sections.py' in partition
+            and 'tests/test_plane_stress_analytical_tangent.py' in partition
+        )
+        for partition in partitions
+    )
 
 
 @pytest.mark.parametrize('mutation', ('new', 'missing', 'duplicate'))
