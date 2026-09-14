@@ -142,7 +142,7 @@ class GuardTests(unittest.TestCase):
         self.assertEqual([p.split('::')[-1] for p in r.inventory('smoke','q4-affine-numerical')],
                          [r.NUMERICAL_TESTS[0],r.NUMERICAL_SMOKE])
         self.assertEqual(len(r.inventory('smoke','g4a-station')),1)
-        self.assertEqual(len(r.inventory('core','g4a-station')),9)
+        self.assertEqual(len(r.inventory('core','g4a-station')),13)
         self.assertEqual(r.inventory('core','g4a-station'),r.inventory('formal','g4a-station'))
         with self.assertRaises(ValueError):r.inventory('all')
 

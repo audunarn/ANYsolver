@@ -54,6 +54,9 @@ G4A_TESTS=('test_six_stage_history_independent_replay_and_capabilities',
     'test_before_and_after_publication_boundaries','test_foreign_stale_replayed_and_reordered_inputs',
     'test_mutated_response_history_and_law_fail_closed','test_concurrent_writer_and_immutable_outputs',
     'test_tangent_and_incremental_work_directional_agreement','test_checker_does_not_import_transaction_owner')
+G4A_NODES=(G4A_TESTS[0],
+    *(G4A_TESTS[1]+'['+str(index)+']' for index in range(3)),
+    *(G4A_TESTS[2]+'['+str(index)+']' for index in range(3)),*G4A_TESTS[3:])
 G4A_IMPLEMENTATION_PATHS={
     'src/anysolver/_ge_beam3_g4a_station_transaction.py',
     'docs/reference_cases/ge_beam3_g4a_station_transaction_checker.py',
@@ -1258,10 +1261,10 @@ def inventory(lane,gate='b2-core'):
     if gate=='g3c-physical':return physical_inventory(lane)
     test_path,inventory_key=TESTS[gate]
     if gate=='g4a-station':
-        names=list(G4A_TESTS)
+        names=list(G4A_NODES)
         tree=ast.parse(read(ROOT/test_path))
         actual=[n.name for n in tree.body if isinstance(n,ast.FunctionDef) and n.name.startswith('test_')]
-        if actual!=names:raise ValueError('registered G4a test inventory changed')
+        if actual!=list(G4A_TESTS):raise ValueError('registered G4a test inventory changed')
         if lane=='smoke':names=names[:1]
         elif lane not in ('core','rehearsal','formal'):raise ValueError('unregistered G4a lane')
         return [test_path+'::'+name for name in names]
