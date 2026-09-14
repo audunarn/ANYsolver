@@ -8,7 +8,7 @@ The frozen ANYsolver wheel is 1,953,202 bytes with SHA-256
 `64e01fbb4e200a7aecb9204b12574c5137c2b69005a93867e3651291b6c4df64`.
 Two fresh installed-target cycles produced byte-identical 1,572-byte records
 with SHA-256
-`eb2672e8bb3440f56c730404eb5b9e34f20553b3737d55b544f8e64a1bcc05d7`.
+`a7ca9f48e9c65816166de3e0d332c3fc46fa1a3a8c101ff29cb32096392a7c6b`.
 They bind the exact ANYsolver, ANYfem, and ANYstructure candidate graph and
 verify native identity, installed origin, schema migration, status naming,
 legacy-default preservation, and absence from the generic element registry.

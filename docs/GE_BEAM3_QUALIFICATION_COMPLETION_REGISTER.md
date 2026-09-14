@@ -1351,6 +1351,6 @@ The exact 0.4.3 candidate wheel is 1,953,202 bytes, SHA-256
 `64e01fbb4e200a7aecb9204b12574c5137c2b69005a93867e3651291b6c4df64`.
 Two corrected fresh installed-artifact cycles produced identical 1,572-byte
 canonical records, SHA-256
-`eb2672e8bb3440f56c730404eb5b9e34f20553b3737d55b544f8e64a1bcc05d7`.
+`a7ca9f48e9c65816166de3e0d332c3fc46fa1a3a8c101ff29cb32096392a7c6b`.
 The result is `PROVISIONAL_GO_B3_GE_PRODUCTION_OPT_IN` with no default, version,
 tag, or publication change.
