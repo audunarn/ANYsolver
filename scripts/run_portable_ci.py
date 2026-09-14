@@ -134,6 +134,10 @@ PORTABLE_MODULE_WEIGHT_OVERRIDES = {
 # leak process-local solver bootstrap state into these production routes.
 PORTABLE_ISOLATED_MODULES = (
     "tests/test_geometry_panel.py",
+    # Python 3.11 can materialize Protocol.__annotations__ during runtime
+    # structural checks. Keep that standard-library cache mutation away from
+    # exact qualified-authority tests in the shared interpreter.
+    "tests/test_generalized_shell_sections.py",
 )
 DEFAULT_WORKERS = 4
 DEFAULT_TIMEOUT_SECONDS = 1_200

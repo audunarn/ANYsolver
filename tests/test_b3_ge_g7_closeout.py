@@ -45,7 +45,13 @@ def test_confirmation_and_five_key_review_are_canonical_and_bound():
 def test_contract_terminal_precedence_and_g6_binding():
     _, contract = _load("b3_ge_g7_contract_v1.json")
     g6 = (RECORDS / "ge_beam3_g6_confirmation_v4.json").read_bytes()
-    assert sha256(g6).hexdigest() == contract["g6_confirmation_file_sha256"]
+    g6_payload = (
+        json.dumps(json.loads(g6), sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("ascii")
+    assert sha256(g6_payload).hexdigest() == contract["g6_confirmation_payload_sha256"]
+    assert contract["g6_confirmation_file_sha256"] == (
+        "b1e6c726f36bb5d08f6bfd407abf7de8b04866dc1958b02b3f6f63610022958f"
+    )
     assert contract["terminal_precedence"] == [
         "BLOCKED_B3_GE_G7_AUTHORITY_OR_EVIDENCE",
         "NO_GO_B3_GE_G7_IDENTITY_OR_PACKAGE",

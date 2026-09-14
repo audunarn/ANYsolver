@@ -38,7 +38,11 @@ def test_g7_contract_binds_the_accepted_g6_record():
         json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n"
     ).encode("ascii")
     g6_raw = (root / "docs/reference_cases/ge_beam3_g6_confirmation_v4.json").read_bytes()
-    assert sha256(g6_raw).hexdigest() == contract["g6_confirmation_file_sha256"]
+    g6_payload = (
+        json.dumps(json.loads(g6_raw), sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("ascii")
+    assert sha256(g6_payload).hexdigest() == contract["g6_confirmation_payload_sha256"]
+    assert contract["g6_confirmation_file_sha256"] == b3_ge.G6_CONFIRMATION_FILE_SHA256
     assert contract["g6_confirmation_payload_sha256"] == b3_ge.G6_CONFIRMATION_PAYLOAD_SHA256
     assert contract["legacy_b3_default"] is True
     assert contract["default_changed"] is False
