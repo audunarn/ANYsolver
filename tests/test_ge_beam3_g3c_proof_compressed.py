@@ -4,6 +4,9 @@ from hashlib import sha256
 import ast
 import importlib.util
 from pathlib import Path
+import os
+import subprocess
+import sys
 
 import pytest
 
@@ -184,6 +187,20 @@ def test_independent_checker_imports_no_producer_or_mechanics():
         elif isinstance(node, ast.ImportFrom):
             imports.add((node.module or "").split(".")[0])
     assert imports <= {"hashlib", "json"}
+
+
+def test_fresh_checker_replicas_are_byte_identical(tmp_path):
+    aggregate=PC.canonical(PC.aggregate(_execution()))
+    (tmp_path / "aggregate.pending.json").write_bytes(aggregate)
+    digest=sha256(aggregate).hexdigest()
+    command=[sys.executable,"-I","-S","-B","-u",
+        str(ROOT / "scripts" / "run_ge_beam3_qualification.py"),
+        "--physical-proof-checker",str(tmp_path),digest]
+    environment=dict(os.environ,PYTHONDONTWRITEBYTECODE="1")
+    first=subprocess.run(command,cwd=ROOT,env=environment,capture_output=True,check=True).stdout
+    second=subprocess.run(command,cwd=ROOT,env=environment,capture_output=True,check=True).stdout
+    assert first == second
+    assert CHECKER.canonical(CHECKER.verify(PC.aggregate(_execution()))) == first
 
 
 def test_proof_compressed_projection_matches_frozen_source_inventory():

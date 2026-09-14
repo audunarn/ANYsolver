@@ -580,6 +580,7 @@ class GuardTests(unittest.TestCase):
             proof_compressed_initial_review_sha256=r.PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW_SHA,
             proof_compressed_measurement_sha256=r.PHYSICAL_PROOF_COMPRESSED_MEASUREMENT_SHA,
             proof_compressed_partition_sha256=r.PHYSICAL_PROOF_COMPRESSED_PARTITION_SHA,
+            proof_compressed_checker_initial_review_sha256=r.PHYSICAL_PROOF_COMPRESSED_CHECKER_INITIAL_REVIEW_SHA,
             proof_compressed_cycle_authorized=True,
             execution_authorized=True,full_g3c_qualified=False,production_qualified=False,
             correction_addendum_sha256=r.PHYSICAL_CORRECTION_ADDENDUM_SHA,

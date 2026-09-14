@@ -1246,3 +1246,12 @@ the measured partition authority.  No cycle ran.  The corrected partition has
 100 shards and caps every replay shard at two contiguous prefixes; its SHA-256
 is `3b41ea2e2e8b4b8feb308261b9d87b9e4ca0283106304f298706705ae41dd3bd`.
 A new clean freeze and review are required before cycle one.
+
+The first corrected-partition checker review was rejected before execution.  It
+found that coherent mutations of the aggregate count object and individual
+assignment kind/prefix fields were not independently reconstructed, and that
+the Windows checker worker emitted noncanonical text newlines.  The successor
+checker reconstructs the full 3,825-row assignment order, exact executed basis,
+145 executed assignment dispositions and all counts from literals.  The worker
+writes canonical bytes directly.  Two fresh-process replicas now pass and are
+byte-identical.  No numerical cycle ran under the rejected checker.

@@ -113,12 +113,14 @@ PHYSICAL_PROOF_COMPRESSED_PLAN_SHA='e6e1932dd0bba2b465306330796e7b64444c13e40c43
 PHYSICAL_PROOF_COMPRESSED_TOOL='scripts/ge_beam3_g3c_proof_compressed.py'
 PHYSICAL_PROOF_COMPRESSED_TOOL_SHA='1b36c7a89a98a75fa17372d09e9540f531e201304a42ab135c99e05d524795c3'
 PHYSICAL_PROOF_COMPRESSED_CHECKER='docs/reference_cases/ge_beam3_g3c_proof_compressed_checker.py'
-PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA='7eba01c90e6bfc1943b531e7016b5b00c23f670ca19c2bf0a91d08fc6e745b38'
+PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA='7045637080093566335a29b68263007ff86e05776aa62ef353aed6dcfc111076'
 PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW='docs/reference_cases/ge_beam3_g3c_proof_compressed_implementation_review_v2.json'
 PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW_SHA='6d84a93df5d1fe99407ed4b4461868f6d360bb5f1498c3dfc16f02f2cffac96b'
 PHYSICAL_PROOF_COMPRESSED_MEASUREMENT='docs/reference_cases/ge_beam3_g3c_proof_compressed_measurement_v2.json'
 PHYSICAL_PROOF_COMPRESSED_MEASUREMENT_SHA='52f2d7769b08559d6d880695dc2d73a438a9e3544d7ac3d5ef4dd824e8780967'
 PHYSICAL_PROOF_COMPRESSED_PARTITION_SHA='3b41ea2e2e8b4b8feb308261b9d87b9e4ca0283106304f298706705ae41dd3bd'
+PHYSICAL_PROOF_COMPRESSED_CHECKER_INITIAL_REVIEW='docs/reference_cases/ge_beam3_g3c_proof_compressed_checker_review_v2_initial.json'
+PHYSICAL_PROOF_COMPRESSED_CHECKER_INITIAL_REVIEW_SHA='a892fd8b0b5ac7459632e1be1c7f7bdd353907241718c469c5dc06cd95fcfec8'
 PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     PHYSICAL_PARTITION_ADDENDUM,PHYSICAL_PARTITION_REVIEW,
     'src/anysolver/_ge_beam3_g3c_physical_owner.py',
@@ -143,6 +145,7 @@ PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
 PHYSICAL_PROOF_COMPRESSED_PATHS={PHYSICAL_PROOF_COMPRESSED_PLAN,
     PHYSICAL_PROOF_COMPRESSED_TOOL,PHYSICAL_PROOF_COMPRESSED_CHECKER,
     PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW,PHYSICAL_PROOF_COMPRESSED_MEASUREMENT,
+    PHYSICAL_PROOF_COMPRESSED_CHECKER_INITIAL_REVIEW,
     'tests/test_ge_beam3_g3c_proof_compressed.py'}
 PHYSICAL_TIMING_GATE_PATHS={
     'docs/reference_cases/ge_beam3_g3c_physical_formal_measurement_review_access_incident_v1.json',
@@ -868,7 +871,7 @@ def physical_proof_checker_worker(root,aggregate_sha):
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     result=module.verify(environment.strict(raw))
     if read(path)!=raw:raise ValueError('compressed aggregate changed during check')
-    print(canonical(result).decode(),flush=True);return 0
+    sys.stdout.buffer.write(canonical(result));sys.stdout.buffer.flush();return 0
 
 def physical_proof_checker_child(root,replica,aggregate_sha,watchdog):
     out=root/f'checker-{replica}';out.mkdir();job=job_type()(MEMORY);watchdog.attach(job);process=None
@@ -1255,6 +1258,7 @@ def verify_review(raw,digest,candidate,rows,gate='b2-core'):
             'proof_compressed_initial_review_sha256':PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW_SHA,
             'proof_compressed_measurement_sha256':PHYSICAL_PROOF_COMPRESSED_MEASUREMENT_SHA,
             'proof_compressed_partition_sha256':PHYSICAL_PROOF_COMPRESSED_PARTITION_SHA,
+            'proof_compressed_checker_initial_review_sha256':PHYSICAL_PROOF_COMPRESSED_CHECKER_INITIAL_REVIEW_SHA,
             'proof_compressed_cycle_authorized':True,
             'execution_authorized':True,'full_g3c_qualified':False,'production_qualified':False}
         if not exact_json(candidate,PHYSICAL_PREDECESSOR):
@@ -1310,6 +1314,8 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                             (PHYSICAL_PROOF_COMPRESSED_CHECKER,PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA),
                             (PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW,PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW_SHA),
                             (PHYSICAL_PROOF_COMPRESSED_MEASUREMENT,PHYSICAL_PROOF_COMPRESSED_MEASUREMENT_SHA),
+                            (PHYSICAL_PROOF_COMPRESSED_CHECKER_INITIAL_REVIEW,
+                             PHYSICAL_PROOF_COMPRESSED_CHECKER_INITIAL_REVIEW_SHA),
                             (PHYSICAL_CORRECTION_ADDENDUM,PHYSICAL_CORRECTION_ADDENDUM_SHA),
                             (PHYSICAL_CORRECTION_REVIEW,PHYSICAL_CORRECTION_REVIEW_SHA),(JOB,JOB_SHA)):
             if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:
