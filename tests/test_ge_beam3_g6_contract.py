@@ -145,9 +145,9 @@ def test_corrected_consumer_graph_closeout_is_canonical_and_bound():
 def test_final_ci_bound_consumer_graph_closeout_is_canonical_and_bound():
     directory = ROOT / "docs/reference_cases"
     paths = [directory / name for name in (
-        "ge_beam3_g6_confirmation_v3.json",
-        "ge_beam3_g6_confirmation_review_v3.json",
-        "ge_beam3_g6_status_v3.json",
+        "ge_beam3_g6_confirmation_v4.json",
+        "ge_beam3_g6_confirmation_review_v4.json",
+        "ge_beam3_g6_status_v4.json",
     )]
     confirmation, review, status = (
         _strict(path.read_bytes().replace(b"\r\n", b"\n")) for path in paths
@@ -163,7 +163,7 @@ def test_final_ci_bound_consumer_graph_closeout_is_canonical_and_bound():
         "9e16a5362daf4c9013e61dcc6277ab604e74cde5"
     )
     assert confirmation["consumer_candidates"]["anystructure"]["commit"] == (
-        "fcda8325cf7b140171010a14ffa04458e9597676"
+        "11e0b0db1c12dda0419ffe95cd50422d587ad90d"
     )
     assert confirmation["archive"]["formal_cycle_1"] == confirmation["archive"]["formal_cycle_2"]
     assert confirmation["terminal"] == status["terminal"]
