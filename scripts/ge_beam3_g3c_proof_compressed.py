@@ -314,7 +314,7 @@ def aggregate(execution):
         assignment_records.append(body)
 
     value = dict(schema="GE_BEAM3_G3C_PROOF_COMPRESSED_AGGREGATE_V2",
-                 cycle=execution["cycle"], candidate=candidate,
+                 candidate=candidate,
                  manifest_sha256=execution["manifest_sha256"],
                  histories=history_records, assignments=assignment_records,
                  counts=manifest_value["body"]["counts"], passed=True,

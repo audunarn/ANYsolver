@@ -30,12 +30,11 @@ def executed_ids():
 
 
 def verify(value):
-    if type(value)is not dict or set(value)!={"schema","cycle","candidate","manifest_sha256",
+    if type(value)is not dict or set(value)!={"schema","candidate","manifest_sha256",
             "histories","assignments","counts","passed","terminal","full_g3c_qualified",
             "production_qualified","self_sha256"}:
         raise ValueError("aggregate schema")
     if (value["schema"]!="GE_BEAM3_G3C_PROOF_COMPRESSED_AGGREGATE_V2"
-        or value["cycle"] not in (1,2) or type(value["cycle"])is bool
         or value["passed"] is not True or value["full_g3c_qualified"] is not False
         or value["production_qualified"] is not False
         or value["terminal"]!="COMPLETE_GE_BEAM3_G3C_PROOF_COMPRESSED_CYCLE_ONLY"):

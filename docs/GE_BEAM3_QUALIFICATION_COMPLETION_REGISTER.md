@@ -1201,3 +1201,33 @@ estimates 88--144 hours for two cycles with planning reserve. Formal dispatch
 is therefore withheld. A separately frozen runtime optimization must preserve
 all 3,825 assignments, fresh-owner restart semantics, tolerances and science;
 MO08 and the independent formal evidence checker also remain open.
+
+## Proof-compressed G3c completion successor
+
+The exhaustive layout is superseded for future execution by a separately
+identified proof-compressed implementation candidate.  It preserves the exact
+375-history, 3,075-event, 3,450-prefix and 3,825-assignment scientific domain,
+but executes a frozen basis of 25 genuine histories and 120 genuine fresh
+restart continuations.  Every other record is explicitly marked
+`DERIVED_BY_VERIFIED_TRANSPORT`; no derived record is represented as an
+executed solve.
+
+The shared runner now constructs a closed 70-shard basis partition, runs no
+more than three children in each separately renewed 1,800-second wave, and
+retains the 600-second child, 24-GiB tree, one-thread and 120-second inactivity
+bounds.  Its standard-library aggregate builder emits the original ordered
+assignment domain only after every basis process reaches a terminal state.
+Two fresh independent checker processes must agree byte-for-byte before the
+pending aggregate can be promoted.  The canonical scientific aggregate omits
+cycle-specific process metadata so accepted cycles one and two can be compared
+byte-for-byte.
+
+The private owner also retains the exact successful line-search evaluation for
+the immediately following Newton iteration.  This removes one duplicate full
+graph evaluation per accepted line-search step without adding a persistent
+cache or changing mechanics, state, recovery or serialized evidence.
+
+This successor is implementation-only and has not executed a numerical smoke,
+basis cycle or formal classification.  Independent implementation review and
+a short three-case before/after measurement remain required before cycle one.
+G4, G5, consumers and installed-wheel parity remain OPEN.

@@ -21,6 +21,7 @@ _JOB_TYPE_LOCK=threading.Lock()
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 import ge_beam3_g3b_environment as environment
+import ge_beam3_g3c_proof_compressed as proof_compressed
 
 SCOPE='GE_BEAM3_BOUNDED_REGISTERED_GATE_V2'
 BASE='8767dbaaf4003daa24369628a1e6e119a642e0bf'
@@ -107,6 +108,12 @@ PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW_SHA='351aec568c44a02b0b78d57bb4056
 PHYSICAL_FORMAL_CORRECTION1_IMPLEMENTATION_REVIEW='docs/reference_cases/ge_beam3_g3c_physical_formal_shard_implementation_review_v1_correction1.json'
 PHYSICAL_FORMAL_CORRECTION1_IMPLEMENTATION_REVIEW_SHA='0348afe2033e85f6ec423f2f18708b4235deed52eea8091b2760d031d9ee6f8c'
 PHYSICAL_FORMAL_MEASUREMENT_CASE_ORDINALS=(0,224,374)
+PHYSICAL_PROOF_COMPRESSED_PLAN='docs/GE_BEAM3_G3C_PROOF_COMPRESSED_COMPLETION_V2.md'
+PHYSICAL_PROOF_COMPRESSED_PLAN_SHA='e6e1932dd0bba2b465306330796e7b64444c13e40c43727875ea9e9fe2dcf8b7'
+PHYSICAL_PROOF_COMPRESSED_TOOL='scripts/ge_beam3_g3c_proof_compressed.py'
+PHYSICAL_PROOF_COMPRESSED_TOOL_SHA='1b36c7a89a98a75fa17372d09e9540f531e201304a42ab135c99e05d524795c3'
+PHYSICAL_PROOF_COMPRESSED_CHECKER='docs/reference_cases/ge_beam3_g3c_proof_compressed_checker.py'
+PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA='7eba01c90e6bfc1943b531e7016b5b00c23f670ca19c2bf0a91d08fc6e745b38'
 PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     PHYSICAL_PARTITION_ADDENDUM,PHYSICAL_PARTITION_REVIEW,
     'src/anysolver/_ge_beam3_g3c_physical_owner.py',
@@ -128,6 +135,17 @@ PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     PHYSICAL_CORRECTION_RECOVERY_IMPL_INITIAL_REVIEW,
     'scripts/ge_beam3_g3c_correction_lease_binding.py',
     'scripts/ge_beam3_g3c_physical_history_owner.py',PHYSICAL_CORRECTION_TEST}
+PHYSICAL_PROOF_COMPRESSED_PATHS={PHYSICAL_PROOF_COMPRESSED_PLAN,
+    PHYSICAL_PROOF_COMPRESSED_TOOL,PHYSICAL_PROOF_COMPRESSED_CHECKER,
+    'tests/test_ge_beam3_g3c_proof_compressed.py'}
+PHYSICAL_TIMING_GATE_PATHS={
+    'docs/reference_cases/ge_beam3_g3c_physical_formal_measurement_review_access_incident_v1.json',
+    'docs/reference_cases/ge_beam3_g3c_physical_formal_measurement_review_v1.json',
+    'docs/reference_cases/ge_beam3_g3c_physical_formal_shard_implementation_review_v1.json'}
+PHYSICAL_TIMING_GATE_HASHES={
+    'docs/reference_cases/ge_beam3_g3c_physical_formal_measurement_review_access_incident_v1.json':'61e1b7b77248c4ac0196319cc7e25e2e58ca247d947ea691b13a42ec29a41ddc',
+    'docs/reference_cases/ge_beam3_g3c_physical_formal_measurement_review_v1.json':'e336032fa338b1f5f727949136aef961dbadc997efc9b289a254f5fcc596cb9e',
+    'docs/reference_cases/ge_beam3_g3c_physical_formal_shard_implementation_review_v1.json':'19dbd054c3b96d5f39b6b79c5dc5c557856b451ab2fd15587438393126bcde15'}
 PHYSICAL_CORRECTION_CHANGED_PATHS={
     'scripts/ge_beam3_g3c_rehearsal_mutations.py',
     'tests/test_ge_beam3_g3c_rehearsal_mutations_static.py',
@@ -400,7 +418,7 @@ def physical_formal_shard(case_ordinal,kind,prefix_start=None,prefix_stop=None):
 
 def physical_formal_partition(shards,mode='measurement'):
     """Validate a closed measured work partition without authorizing execution."""
-    if mode not in ('measurement','formal'):raise ValueError('formal partition mode')
+    if mode not in ('measurement','formal','compressed'):raise ValueError('formal partition mode')
     if type(shards)is not list or not shards:raise ValueError('formal partition shards')
     made=[];seen_history=set();seen_prefix=set();associations=physical_formal_case_associations()
     for ordinal,item in enumerate(shards):
@@ -421,7 +439,17 @@ def physical_formal_partition(shards,mode='measurement'):
         if seen_history!=set(range(375)):raise ValueError('formal producer coverage')
         if seen_prefix!={index for row in associations for index in row['prefix_assignment_indexes']}:
             raise ValueError('formal prefix coverage')
+    if mode=='compressed':
+        case_index={row['case']['case_id']:row for row in associations}
+        expected_history={case_index[case_id]['case_ordinal']
+                          for case_id in proof_compressed.executed_case_ids()}
+        expected_prefix={case_index[row['case_id']]['prefix_assignment_indexes'][prefix]
+                         for row in proof_compressed.restart_plan() for prefix in row['prefixes']}
+        if seen_history!=expected_history or seen_prefix!=expected_prefix:
+            raise ValueError('compressed executed-basis coverage')
     body=dict(schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_PARTITION_V1',mode=mode,shards=made)
+    if mode=='compressed':
+        body['proof_manifest_sha256']=sha256(canonical(proof_compressed.manifest())).hexdigest()
     return dict(body=body,self_sha256=sha256(canonical(body)).hexdigest())
 
 def physical_formal_measurement_partition():
@@ -433,6 +461,22 @@ def physical_formal_measurement_partition():
             shards.append(physical_formal_shard(case_ordinal,'prefix-range',start,stop))
     return physical_formal_partition(shards,'measurement')
 
+def physical_proof_compressed_partition():
+    """Exact 25-history/120-restart successor basis; mechanics still separate."""
+    associations=physical_formal_case_associations()
+    by_id={row['case']['case_id']:row for row in associations};shards=[]
+    restart={row['case_id']:row['prefixes'] for row in proof_compressed.restart_plan()}
+    for case_id in proof_compressed.executed_case_ids():
+        ordinal=by_id[case_id]['case_ordinal']
+        shards.append(physical_formal_shard(ordinal,'history-producer'))
+        prefixes=restart[case_id];start=prefixes[0];previous=start
+        for prefix in prefixes[1:]:
+            if prefix!=previous+1:
+                shards.append(physical_formal_shard(ordinal,'prefix-range',start,previous+1));start=prefix
+            previous=prefix
+        shards.append(physical_formal_shard(ordinal,'prefix-range',start,previous+1))
+    return physical_formal_partition(shards,'compressed')
+
 def physical_formal_common_manifest(candidate,inputs,implementation_review,runtime_sha,partition,cycle=0):
     if (type(candidate)is not dict or set(candidate)!={'commit','tree'}
         or any(type(candidate[k])is not str or len(candidate[k])!=40 for k in candidate)
@@ -442,13 +486,14 @@ def physical_formal_common_manifest(candidate,inputs,implementation_review,runti
         if any(c not in '0123456789abcdef' for c in value):raise ValueError('formal git identity')
     sha_value(runtime_sha)
     if type(cycle)is not int or type(cycle)is bool or cycle not in (0,1,2):raise ValueError('formal cycle')
-    if type(partition)is not dict or partition.get('body',{}).get('mode') not in ('measurement','formal'):
+    if type(partition)is not dict or partition.get('body',{}).get('mode') not in ('measurement','formal','compressed'):
         raise ValueError('formal partition manifest')
     expected_partition=physical_formal_partition(
         [row['assignment'] for row in partition['body'].get('shards',[])],partition['body'].get('mode'))
     if not exact_json(partition,expected_partition):raise ValueError('formal partition changed')
     mode=partition['body']['mode']
     if (mode=='measurement')!=(cycle==0):raise ValueError('formal cycle and mode')
+    if mode=='compressed' and cycle not in (1,2):raise ValueError('compressed cycle')
     cases=physical_support().history_matrix();assignments=physical_inventory('formal')
     body=dict(kind='G3C_PHYSICAL_PRIVATE_DEVELOPMENT',
         schema='GE_BEAM3_G3C_PHYSICAL_FORMAL_COMMON_MANIFEST_V1',mode=mode,cycle=cycle,
@@ -802,6 +847,122 @@ def execute_physical_formal_measurement(args,watchdog,expected):
     write(root/'measurement-process.json',process);print(canonical(process).decode(),flush=True)
     return int(not passed)
 
+def physical_proof_checker_worker(root,aggregate_sha):
+    if not (sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):
+        raise ValueError('isolated compressed checker required')
+    path=root/'aggregate.pending.json';raw=read(path)
+    if sha256(raw).hexdigest()!=aggregate_sha or canonical(environment.strict(raw))!=raw:
+        raise ValueError('compressed checker aggregate authority')
+    checker_path=ROOT/PHYSICAL_PROOF_COMPRESSED_CHECKER
+    if sha256(read(checker_path).replace(b'\r\n',b'\n')).hexdigest()!=PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA:
+        raise ValueError('compressed checker source authority')
+    spec=importlib.util.spec_from_file_location('ge_beam3_g3c_proof_compressed_independent_checker',checker_path)
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    result=module.verify(environment.strict(raw))
+    if read(path)!=raw:raise ValueError('compressed aggregate changed during check')
+    print(canonical(result).decode(),flush=True);return 0
+
+def physical_proof_checker_child(root,replica,aggregate_sha,watchdog):
+    out=root/f'checker-{replica}';out.mkdir();job=job_type()(MEMORY);watchdog.attach(job);process=None
+    try:
+        with (out/'stdout.log').open('xb') as stdout,(out/'stderr.log').open('xb') as stderr:
+            started=time.monotonic();process=job.launch([sys.executable,'-I','-S','-B','-u',
+                str(Path(__file__).resolve()),'--physical-proof-checker',str(root),aggregate_sha],
+                cwd=ROOT,env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1'),stdout=stdout,stderr=stderr)
+            record=monitor(job,process,lambda:((out/'stdout.log').stat().st_size,
+                (out/'stderr.log').stat().st_size),start=started)
+        if record['status']=='PASSED':
+            raw=read(out/'stdout.log');value=environment.strict(raw)
+            if canonical(value)!=raw or value.get('independently_verified') is not True:
+                raise ValueError('compressed checker output')
+            with (root/f'checker-{replica}.json').open('xb') as stream:stream.write(raw)
+    except BaseException as exc:
+        record=dict(status='FAILED_EVIDENCE',exception=type(exc).__name__,active_processes=job.accounting()[1])
+    finally:
+        if job.accounting()[1]:job.terminate()
+        record['active_processes']=job.accounting()[1]
+        if record['active_processes']:record['status']='FAILED_TO_DRAIN'
+        job.close();watchdog.detach(job)
+    return record
+
+def execute_physical_proof_compressed(args,watchdog,expected):
+    """Execute one bounded successor cycle; each three-child batch is a wave."""
+    started=time.monotonic();partition=physical_proof_compressed_partition()
+    runtime=physical_support().runtime_identity()
+    common_value=physical_formal_common_manifest(expected[0],expected[1],environment.strict(expected[2]),
+        runtime,partition,cycle=args.proof_cycle)
+    root=Path(tempfile.mkdtemp(prefix=f'anysolver-g3c-proof-compressed-cycle{args.proof_cycle}-'))
+    print('DIAGNOSTICS '+str(root),flush=True);common_path=root/'common.json';write(common_path,common_value)
+    common=physical_validate_formal_common(environment.strict(read(common_path)))
+    specs=common['partition']['body']['shards'];results={};passed=True;failure=None
+    try:
+        producers=[spec for spec in specs if spec['assignment']['kind']=='history-producer']
+        bindings={spec['shard_id']:dict(packets={}) for spec in producers}
+        for offset in range(0,len(producers),3):
+            watchdog.renew_wave();batch=producers[offset:offset+3];deadline=time.monotonic()+1760
+            for spec,result in zip(batch,physical_formal_measurement_batch(root,common_path,batch,
+                    expected[2],bindings,watchdog,deadline)):
+                results[spec['shard_id']]=result
+            if any(results[spec['shard_id']][0].get('status')!='PASSED' for spec in batch):
+                passed=False;break
+        receipts={}
+        if passed:
+            for spec in producers:
+                out=results[spec['shard_id']][1]
+                body=physical_validate_formal_producer_receipt(out/'producer.receipt.json',common)
+                receipts[spec['assignment']['case_ordinal']]=(packet_descriptor(out/'producer.receipt.json'),body)
+        replays=[spec for spec in specs if spec['assignment']['kind']=='prefix-range']
+        replay_bindings={}
+        if passed:
+            for spec in replays:
+                assignment=spec['assignment'];descriptor,receipt=receipts[assignment['case_ordinal']]
+                packets={f'prefix-{prefix:02d}':receipt['packets'][f'prefix-{prefix:02d}']
+                    for prefix in range(assignment['prefix_start'],assignment['prefix_stop'])}
+                packets['final']=receipt['packets'][f"prefix-{assignment['case']['accepted_stages']:02d}"]
+                replay_bindings[spec['shard_id']]=dict(packets=packets,producer_receipt=descriptor)
+            for offset in range(0,len(replays),3):
+                watchdog.renew_wave();batch=replays[offset:offset+3];deadline=time.monotonic()+1760
+                for spec,result in zip(batch,physical_formal_measurement_batch(root,common_path,batch,
+                        expected[2],replay_bindings,watchdog,deadline)):
+                    results[spec['shard_id']]=result
+                if any(results[spec['shard_id']][0].get('status')!='PASSED' for spec in batch):
+                    passed=False;break
+        if passed and len(results)==len(specs):
+            sciences=[]
+            for spec in specs:
+                out=results[spec['shard_id']][1];lease=environment.strict(read(out/'lease.json'))
+                physical_validate_formal_process(out,lease)
+                sciences.append(physical_validate_formal_shard_science(out,lease,common))
+            union=physical_formal_scientific_union(sciences,common)
+            aggregate=physical_proof_compressed_aggregate(union,common)
+            write(root/'aggregate.pending.json',aggregate);aggregate_sha=sha256(read(root/'aggregate.pending.json')).hexdigest()
+            watchdog.renew_wave()
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                checks=list(pool.map(lambda replica:physical_proof_checker_child(
+                    root,replica,aggregate_sha,watchdog),(1,2)))
+            if any(row.get('status')!='PASSED' for row in checks):raise ValueError('compressed checker process')
+            if read(root/'checker-1.json')!=read(root/'checker-2.json'):
+                raise ValueError('compressed checker disagreement')
+            if authority(args.review,args.review_sha256,'g3c-physical')!=expected:
+                raise ValueError('compressed final authority')
+            os.rename(root/'aggregate.pending.json',root/'scientific.json')
+        else:passed=False
+    except BaseException as exc:
+        passed=False;failure=type(exc).__name__
+    summaries=[]
+    for spec in specs:
+        record,out=results.get(spec['shard_id'],(dict(status='NOT_LAUNCHED'),None))
+        summaries.append(dict(shard_id=spec['shard_id'],status=record.get('status'),
+            elapsed_seconds=record.get('elapsed_seconds'),peak_tree_bytes=record.get('peak_tree_bytes'),
+            active_processes=record.get('active_processes'),output=None if out is None else str(out)))
+    process=dict(schema='GE_BEAM3_G3C_PROOF_COMPRESSED_PROCESS_V2',cycle=args.proof_cycle,
+        candidate=expected[0],partition_sha256=partition['self_sha256'],required_shards=len(specs),
+        terminal_shards=sum(row['status']!='NOT_LAUNCHED' for row in summaries),passed=passed,
+        failure=failure,elapsed_seconds=time.monotonic()-started,
+        active_processes=sum((row['active_processes'] or 0) for row in summaries),shards=summaries,
+        full_g3c_qualified=False,production_qualified=False)
+    write(root/'process.json',process);print(canonical(process).decode(),flush=True);return int(not passed)
+
 def physical_formal_scientific_union(shard_sciences,common):
     """Stdlib-only, order-independent flattening back to assignment records."""
     if type(shard_sciences)is not list or not shard_sciences:raise ValueError('formal shard science inventory')
@@ -910,6 +1071,39 @@ def physical_formal_scientific_union(shard_sciences,common):
         full_g3c_qualified=False,production_qualified=False)
     value['self_sha256']=sha256(canonical(value)).hexdigest();return value
 
+def physical_proof_compressed_aggregate(formal_union,common):
+    """Convert only the exact executed basis into truthful derived evidence."""
+    if (common.get('mode')!='compressed' or common.get('cycle') not in (1,2)
+        or formal_union.get('mode')!='compressed' or formal_union.get('passed') is not True):
+        raise ValueError('compressed aggregate authority')
+    records={row['assignment_index']:row['science']['records'][0]
+             for row in formal_union['records']}
+    associations={row['case']['case_id']:row for row in common['associations']}
+    transports={row['case_id']:row for row in formal_union['transport_records']}
+    histories=[]
+    for case_id in proof_compressed.executed_case_ids():
+        association=associations[case_id];payload=records[association['history_assignment_index']]
+        transport=transports.get(case_id)
+        if transport is None:raise ValueError('compressed transport coverage')
+        histories.append(dict(case_id=case_id,events=association['case']['accepted_stages'],
+            history_sha256=sha256(canonical(payload)).hexdigest(),
+            final_sha256=payload['packets'][-1]['sha256'],
+            transport_sha256=sha256(canonical(transport)).hexdigest(),passed=True))
+    restarts=[]
+    for row in proof_compressed.restart_plan():
+        association=associations[row['case_id']]
+        for prefix in row['prefixes']:
+            payload=records[association['prefix_assignment_indexes'][prefix]]
+            restarts.append(dict(case_id=row['case_id'],prefix=prefix,
+                input_sha256=payload['input_sha256'],final_sha256=payload['final_sha256'],passed=True))
+    execution=dict(schema='GE_BEAM3_G3C_PROOF_COMPRESSED_EXECUTION_V2',cycle=common['cycle'],
+        candidate=common['candidate'],
+        manifest_sha256=sha256(canonical(proof_compressed.manifest())).hexdigest(),
+        histories=histories,restarts=restarts,
+        prerequisite_receipts=[dict(name=name,sha256=digest)
+            for name,digest in proof_compressed.PREREQUISITES])
+    return proof_compressed.aggregate(execution)
+
 def physical_formal_worker(out,lease_sha):
     if not (sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode):
         raise ValueError('isolated formal worker required')
@@ -918,7 +1112,9 @@ def physical_formal_worker(out,lease_sha):
     lease=environment.strict(lease_raw);common_raw=validate_packet_descriptor(lease['common_manifest'])
     common_value=environment.strict(common_raw);common=physical_validate_formal_common(common_value)
     assignment=physical_validate_formal_lease(lease,common)
-    if common['mode']!='measurement' or common['cycle']!=0:
+    if ((common['mode']=='measurement' and common['cycle']!=0)
+        or (common['mode']=='compressed' and common['cycle'] not in (1,2))
+        or common['mode'] not in ('measurement','compressed')):
         raise ValueError('formal execution authorization not frozen')
     if common['runtime_sha256']!=physical_support().runtime_identity():
         raise ValueError('formal runtime authority')
@@ -1045,6 +1241,10 @@ def verify_review(raw,digest,candidate,rows,gate='b2-core'):
             'formal_addendum_sha256':PHYSICAL_FORMAL_ADDENDUM_SHA,
             'formal_design_review_sha256':PHYSICAL_FORMAL_DESIGN_REVIEW_SHA,
             'formal_measurement_authorized':True,'formal_execution_authorized':False,
+            'proof_compressed_plan_sha256':PHYSICAL_PROOF_COMPRESSED_PLAN_SHA,
+            'proof_compressed_tool_sha256':PHYSICAL_PROOF_COMPRESSED_TOOL_SHA,
+            'proof_compressed_checker_sha256':PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA,
+            'proof_compressed_cycle_authorized':True,
             'execution_authorized':True,'full_g3c_qualified':False,'production_qualified':False}
         if not exact_json(candidate,PHYSICAL_PREDECESSOR):
             expected_scope.update(correction_addendum_sha256=PHYSICAL_CORRECTION_ADDENDUM_SHA,
@@ -1083,7 +1283,7 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
             raise ValueError('physical successor base tree')
         git('merge-base','--is-ancestor',PHYSICAL_BASE,'HEAD')
         changed=set(filter(None,git('diff','--name-only',PHYSICAL_BASE,'HEAD').splitlines()))
-        if changed!=PHYSICAL_IMPLEMENTATION_PATHS:
+        if changed!=PHYSICAL_IMPLEMENTATION_PATHS|PHYSICAL_PROOF_COMPRESSED_PATHS|PHYSICAL_TIMING_GATE_PATHS:
             raise ValueError('physical successor implementation extent changed')
         for path,digest in ((PHYSICAL_PLAN,PHYSICAL_PLAN_SHA),(PHYSICAL_DESIGN_REVIEW,PHYSICAL_DESIGN_SHA),
                             (PHYSICAL_PARTITION_ADDENDUM,PHYSICAL_PARTITION_ADDENDUM_SHA),
@@ -1094,10 +1294,16 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                              PHYSICAL_FORMAL_INITIAL_IMPLEMENTATION_REVIEW_SHA),
                             (PHYSICAL_FORMAL_CORRECTION1_IMPLEMENTATION_REVIEW,
                              PHYSICAL_FORMAL_CORRECTION1_IMPLEMENTATION_REVIEW_SHA),
+                            (PHYSICAL_PROOF_COMPRESSED_PLAN,PHYSICAL_PROOF_COMPRESSED_PLAN_SHA),
+                            (PHYSICAL_PROOF_COMPRESSED_TOOL,PHYSICAL_PROOF_COMPRESSED_TOOL_SHA),
+                            (PHYSICAL_PROOF_COMPRESSED_CHECKER,PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA),
                             (PHYSICAL_CORRECTION_ADDENDUM,PHYSICAL_CORRECTION_ADDENDUM_SHA),
                             (PHYSICAL_CORRECTION_REVIEW,PHYSICAL_CORRECTION_REVIEW_SHA),(JOB,JOB_SHA)):
             if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:
                 raise ValueError('physical frozen authority input')
+        for path,digest in PHYSICAL_TIMING_GATE_HASHES.items():
+            if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:
+                raise ValueError('physical timing-gate input changed')
         design=environment.strict(read(ROOT/PHYSICAL_DESIGN_REVIEW).replace(b'\r\n',b'\n'))
         if (set(design)!={'decision','findings','reviewer','scope','subject_commit'}
             or design['decision']!='ACCEPTED_GE_BEAM3_G3C_PHYSICAL_OWNER_CONTRACT_DESIGN_ONLY'
@@ -3047,6 +3253,14 @@ def execute_physical(args,watchdog):
     interrupted=getattr(args,'interrupted_guards_root',None);segment=getattr(args,'guard_segment_id',None)
     finalize_segments=getattr(args,'finalize_guard_segments',False)
     formal_measurement=getattr(args,'physical_formal_measurement',False)
+    proof_cycle=getattr(args,'physical_proof_compressed_cycle',None)
+    if proof_cycle is not None:
+        if (args.lane!='formal' or formal_measurement or correction or failed is not None
+            or interrupted is not None or segment is not None or finalize_segments
+            or args.partition_id is not None or args.finalize_partitions or args.prior):
+            raise ValueError('proof-compressed mode is exclusive')
+        args.proof_cycle=proof_cycle
+        return execute_physical_proof_compressed(args,watchdog,expected)
     if formal_measurement:
         if (args.lane!='formal' or correction or failed is not None or interrupted is not None
             or segment is not None or finalize_segments or args.partition_id is not None
@@ -3145,8 +3359,16 @@ class WaveWatchdog:
     """
     def __init__(self,timer=threading.Timer,exit_process=os._exit):
         self.expired=threading.Event();self.job=None;self.jobs=[];self.exit_process=exit_process
-        self.soft=timer(1780,self.expire);self.hard=timer(1800,self.hard_exit)
+        self._timer=timer;self._arm()
+
+    def _arm(self):
+        self.soft=self._timer(1780,self.expire);self.hard=self._timer(1800,self.hard_exit)
         for t in (self.hard,self.soft):t.daemon=True;t.start()
+
+    def renew_wave(self):
+        """Start a new bounded wave only after every prior tree is drained."""
+        if self.jobs or self.expired.is_set():raise ValueError('cannot renew active or expired wave')
+        self.soft.cancel();self.hard.cancel();self._arm()
 
     def check(self):
         if self.expired.is_set():raise TimeoutError('whole invocation deadline')
@@ -3840,6 +4062,7 @@ def main():
     if len(sys.argv)==4 and sys.argv[1]=='--worker':return worker(Path(sys.argv[2]),sys.argv[3])
     if len(sys.argv)==4 and sys.argv[1]=='--physical-worker':return physical_worker(Path(sys.argv[2]),sys.argv[3])
     if len(sys.argv)==4 and sys.argv[1]=='--physical-formal-worker':return physical_formal_worker(Path(sys.argv[2]),sys.argv[3])
+    if len(sys.argv)==4 and sys.argv[1]=='--physical-proof-checker':return physical_proof_checker_worker(Path(sys.argv[2]),sys.argv[3])
     if len(sys.argv)==5 and sys.argv[1]=='--numerical-node':return numerical_worker(Path(sys.argv[2]),int(sys.argv[3]),sys.argv[4])
     if len(sys.argv)==6 and sys.argv[1]=='--q4-checker':
         return q4_checker(Path(sys.argv[2]),sys.argv[3],sys.argv[4],sys.argv[5])
@@ -3860,6 +4083,7 @@ def main():
     parser.add_argument('--guard-segment-id',choices=PHYSICAL_CORRECTION_GUARD_SEGMENT_IDS)
     parser.add_argument('--finalize-guard-segments',action='store_true')
     parser.add_argument('--physical-formal-measurement',action='store_true')
+    parser.add_argument('--physical-proof-compressed-cycle',type=int,choices=(1,2))
     return execute(parser.parse_args())
 
 if __name__=='__main__':raise SystemExit(main())

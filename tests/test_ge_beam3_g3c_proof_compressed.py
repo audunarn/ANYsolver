@@ -142,6 +142,7 @@ def test_assignment_neutral_aggregate_and_independent_checker():
                for row in aggregate["histories"]) == 25
     assert sum(row["provenance"] == "EXECUTED"
                for row in aggregate["assignments"]) == 145
+    assert PC.canonical(PC.aggregate(_execution(1))) == PC.canonical(PC.aggregate(_execution(2)))
 
 
 @pytest.mark.parametrize("field", ("history", "restart", "receipt", "cycle", "candidate"))
@@ -209,3 +210,45 @@ def test_proof_compressed_projection_matches_frozen_source_inventory():
             assignment_index=index, kind=row["kind"],
             case_id=row["case"]["case_id"], prefix=row.get("prefix")))
     assert projected_assignments == PC.assignment_plan()
+
+
+def test_shared_runner_partition_covers_only_the_frozen_basis():
+    runner_path = ROOT / "scripts" / "run_ge_beam3_qualification.py"
+    runner_spec = importlib.util.spec_from_file_location("g3c_runner_compressed", runner_path)
+    runner = importlib.util.module_from_spec(runner_spec)
+    runner_spec.loader.exec_module(runner)
+    partition = runner.physical_proof_compressed_partition()
+    assert partition["body"]["mode"] == "compressed"
+    assert partition["body"]["proof_manifest_sha256"] == sha256(
+        PC.canonical(PC.manifest())).hexdigest()
+    shards = partition["body"]["shards"]
+    assert len(shards) == 70
+    assert sum(row["assignment"]["kind"] == "history-producer" for row in shards) == 25
+    assert sum(len(row["assignment"].get("assignment_indexes", [])) for row in shards) == 120
+    assert runner.PHYSICAL_PROOF_COMPRESSED_TOOL_SHA == sha256(
+        (ROOT / runner.PHYSICAL_PROOF_COMPRESSED_TOOL).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    assert runner.PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA == sha256(
+        CHECKER_PATH.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def test_shared_runner_renews_only_a_drained_wave():
+    runner_path = ROOT / "scripts" / "run_ge_beam3_qualification.py"
+    runner_spec = importlib.util.spec_from_file_location("g3c_runner_watchdog", runner_path)
+    runner = importlib.util.module_from_spec(runner_spec)
+    runner_spec.loader.exec_module(runner)
+
+    class Timer:
+        def __init__(self, delay, callback):
+            self.delay=delay; self.callback=callback; self.daemon=False
+            self.started=False; self.cancelled=False
+        def start(self): self.started=True
+        def cancel(self): self.cancelled=True
+
+    watchdog=runner.WaveWatchdog(timer=Timer,exit_process=lambda code:None)
+    first=(watchdog.soft,watchdog.hard)
+    watchdog.renew_wave()
+    assert all(timer.cancelled for timer in first)
+    assert watchdog.soft.started and watchdog.hard.started
+    watchdog.jobs.append(object())
+    with pytest.raises(ValueError): watchdog.renew_wave()
+    watchdog.jobs.clear();watchdog.close()
