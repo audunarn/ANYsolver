@@ -1212,7 +1212,7 @@ restart continuations.  Every other record is explicitly marked
 `DERIVED_BY_VERIFIED_TRANSPORT`; no derived record is represented as an
 executed solve.
 
-The shared runner now constructs a closed 70-shard basis partition, runs no
+The shared runner now constructs a closed 100-shard basis partition, runs no
 more than three children in each separately renewed 1,800-second wave, and
 retains the 600-second child, 24-GiB tree, one-thread and 120-second inactivity
 bounds.  Its standard-library aggregate builder emits the original ordered
@@ -1231,3 +1231,18 @@ This successor is implementation-only and has not executed a numerical smoke,
 basis cycle or formal classification.  Independent implementation review and
 a short three-case before/after measurement remain required before cycle one.
 G4, G5, consumers and installed-wheel parity remain OPEN.
+
+The exact three-case/12-shard nonclassifying comparison subsequently passed in
+949.347 seconds with every process drained, versus 1,238.878 seconds for the
+unchanged prior layout.  Wall time fell 23.37%; the heaviest shard fell from
+444 to 319 seconds.  The independently constructed runtime-neutral mechanics
+projection is byte-identical at SHA-256
+`428ad41f16d13f53737c79f32a2f3955b209767945a73f08ae6bf2cdce135f59`.
+The new process record is 4,844 bytes, SHA-256
+`a926feaadf26b69a6d203333aea7b3d8b8d4aeaad794167483bc6d78452a09f4`.
+
+Review of that measurement found the initial six-prefix root grouping exceeded
+the measured partition authority.  No cycle ran.  The corrected partition has
+100 shards and caps every replay shard at two contiguous prefixes; its SHA-256
+is `3b41ea2e2e8b4b8feb308261b9d87b9e4ca0283106304f298706705ae41dd3bd`.
+A new clean freeze and review are required before cycle one.

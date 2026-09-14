@@ -114,6 +114,11 @@ PHYSICAL_PROOF_COMPRESSED_TOOL='scripts/ge_beam3_g3c_proof_compressed.py'
 PHYSICAL_PROOF_COMPRESSED_TOOL_SHA='1b36c7a89a98a75fa17372d09e9540f531e201304a42ab135c99e05d524795c3'
 PHYSICAL_PROOF_COMPRESSED_CHECKER='docs/reference_cases/ge_beam3_g3c_proof_compressed_checker.py'
 PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA='7eba01c90e6bfc1943b531e7016b5b00c23f670ca19c2bf0a91d08fc6e745b38'
+PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW='docs/reference_cases/ge_beam3_g3c_proof_compressed_implementation_review_v2.json'
+PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW_SHA='6d84a93df5d1fe99407ed4b4461868f6d360bb5f1498c3dfc16f02f2cffac96b'
+PHYSICAL_PROOF_COMPRESSED_MEASUREMENT='docs/reference_cases/ge_beam3_g3c_proof_compressed_measurement_v2.json'
+PHYSICAL_PROOF_COMPRESSED_MEASUREMENT_SHA='52f2d7769b08559d6d880695dc2d73a438a9e3544d7ac3d5ef4dd824e8780967'
+PHYSICAL_PROOF_COMPRESSED_PARTITION_SHA='3b41ea2e2e8b4b8feb308261b9d87b9e4ca0283106304f298706705ae41dd3bd'
 PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     PHYSICAL_PARTITION_ADDENDUM,PHYSICAL_PARTITION_REVIEW,
     'src/anysolver/_ge_beam3_g3c_physical_owner.py',
@@ -137,6 +142,7 @@ PHYSICAL_IMPLEMENTATION_PATHS={PHYSICAL_PLAN,PHYSICAL_DESIGN_REVIEW,
     'scripts/ge_beam3_g3c_physical_history_owner.py',PHYSICAL_CORRECTION_TEST}
 PHYSICAL_PROOF_COMPRESSED_PATHS={PHYSICAL_PROOF_COMPRESSED_PLAN,
     PHYSICAL_PROOF_COMPRESSED_TOOL,PHYSICAL_PROOF_COMPRESSED_CHECKER,
+    PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW,PHYSICAL_PROOF_COMPRESSED_MEASUREMENT,
     'tests/test_ge_beam3_g3c_proof_compressed.py'}
 PHYSICAL_TIMING_GATE_PATHS={
     'docs/reference_cases/ge_beam3_g3c_physical_formal_measurement_review_access_incident_v1.json',
@@ -469,10 +475,12 @@ def physical_proof_compressed_partition():
     for case_id in proof_compressed.executed_case_ids():
         ordinal=by_id[case_id]['case_ordinal']
         shards.append(physical_formal_shard(ordinal,'history-producer'))
-        prefixes=restart[case_id];start=prefixes[0];previous=start
+        prefixes=restart[case_id];start=prefixes[0];previous=start;length=1
         for prefix in prefixes[1:]:
-            if prefix!=previous+1:
+            if prefix!=previous+1 or length==2:
                 shards.append(physical_formal_shard(ordinal,'prefix-range',start,previous+1));start=prefix
+                length=1
+            else:length+=1
             previous=prefix
         shards.append(physical_formal_shard(ordinal,'prefix-range',start,previous+1))
     return physical_formal_partition(shards,'compressed')
@@ -1244,6 +1252,9 @@ def verify_review(raw,digest,candidate,rows,gate='b2-core'):
             'proof_compressed_plan_sha256':PHYSICAL_PROOF_COMPRESSED_PLAN_SHA,
             'proof_compressed_tool_sha256':PHYSICAL_PROOF_COMPRESSED_TOOL_SHA,
             'proof_compressed_checker_sha256':PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA,
+            'proof_compressed_initial_review_sha256':PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW_SHA,
+            'proof_compressed_measurement_sha256':PHYSICAL_PROOF_COMPRESSED_MEASUREMENT_SHA,
+            'proof_compressed_partition_sha256':PHYSICAL_PROOF_COMPRESSED_PARTITION_SHA,
             'proof_compressed_cycle_authorized':True,
             'execution_authorized':True,'full_g3c_qualified':False,'production_qualified':False}
         if not exact_json(candidate,PHYSICAL_PREDECESSOR):
@@ -1297,6 +1308,8 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                             (PHYSICAL_PROOF_COMPRESSED_PLAN,PHYSICAL_PROOF_COMPRESSED_PLAN_SHA),
                             (PHYSICAL_PROOF_COMPRESSED_TOOL,PHYSICAL_PROOF_COMPRESSED_TOOL_SHA),
                             (PHYSICAL_PROOF_COMPRESSED_CHECKER,PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA),
+                            (PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW,PHYSICAL_PROOF_COMPRESSED_INITIAL_REVIEW_SHA),
+                            (PHYSICAL_PROOF_COMPRESSED_MEASUREMENT,PHYSICAL_PROOF_COMPRESSED_MEASUREMENT_SHA),
                             (PHYSICAL_CORRECTION_ADDENDUM,PHYSICAL_CORRECTION_ADDENDUM_SHA),
                             (PHYSICAL_CORRECTION_REVIEW,PHYSICAL_CORRECTION_REVIEW_SHA),(JOB,JOB_SHA)):
             if sha256(read(ROOT/path).replace(b'\r\n',b'\n')).hexdigest()!=digest:
@@ -1376,6 +1389,8 @@ def authority(review_path,review_sha,gate='b2-core',*,observation_capture=None):
                 'subject_tree':'c0213c726e324330970ac3271ffaaa69ddba53bb'}):
             raise ValueError('physical correction recovery review authority')
         physical_partition_manifest();physical_correction_guard_segment_manifest();physical_formal_case_associations()
+        if physical_proof_compressed_partition()['self_sha256']!=PHYSICAL_PROOF_COMPRESSED_PARTITION_SHA:
+            raise ValueError('proof-compressed partition authority')
         inventory('local',gate);inventory('smoke',gate);inventory('rehearsal',gate);inventory('formal',gate)
         rows=inputs();raw=read(review_path);verify_review(raw,review_sha,candidate,rows,gate)
         environment.verify(CAPSULE,CAPSULE_SHA)

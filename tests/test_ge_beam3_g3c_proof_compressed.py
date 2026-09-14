@@ -218,13 +218,15 @@ def test_shared_runner_partition_covers_only_the_frozen_basis():
     runner = importlib.util.module_from_spec(runner_spec)
     runner_spec.loader.exec_module(runner)
     partition = runner.physical_proof_compressed_partition()
+    assert partition["self_sha256"] == runner.PHYSICAL_PROOF_COMPRESSED_PARTITION_SHA
     assert partition["body"]["mode"] == "compressed"
     assert partition["body"]["proof_manifest_sha256"] == sha256(
         PC.canonical(PC.manifest())).hexdigest()
     shards = partition["body"]["shards"]
-    assert len(shards) == 70
+    assert len(shards) == 100
     assert sum(row["assignment"]["kind"] == "history-producer" for row in shards) == 25
     assert sum(len(row["assignment"].get("assignment_indexes", [])) for row in shards) == 120
+    assert max(len(row["assignment"].get("assignment_indexes", [])) for row in shards) == 2
     assert runner.PHYSICAL_PROOF_COMPRESSED_TOOL_SHA == sha256(
         (ROOT / runner.PHYSICAL_PROOF_COMPRESSED_TOOL).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
     assert runner.PHYSICAL_PROOF_COMPRESSED_CHECKER_SHA == sha256(
