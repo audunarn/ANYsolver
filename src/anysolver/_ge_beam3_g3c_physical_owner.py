@@ -525,8 +525,18 @@ class MixedGraphOwner:
                 for cut in range(9):
                     check('line_search'); fraction=.5**cut
                     trial=total+fraction*step[:self.size]; multipliers=mu+fraction*step[self.size:]
-                    changed,trial_A,trial_state,sandbox,trial_diagnostics=self._evaluate(
-                        trial,multipliers,cmd,origin,check)
+                    try:
+                        changed,trial_A,trial_state,sandbox,trial_diagnostics=self._evaluate(
+                            trial,multipliers,cmd,origin,check)
+                    except ValueError as exc:
+                        # The chart ceiling is a trial-admissibility boundary,
+                        # not a failure of the accepted state.  Backtracking is
+                        # the registered cutback mechanism.  Catch only this
+                        # exact typed diagnostic; every mechanics, state, and
+                        # authority error remains fatal.
+                        if str(exc)!='trial chart requires cutback': raise
+                        sandbox=None
+                        continue
                     trial_error=float(np.linalg.norm(changed))
                     if trial_error<error:
                         pending_evaluation=(changed,trial_A,trial_state,sandbox,trial_diagnostics)

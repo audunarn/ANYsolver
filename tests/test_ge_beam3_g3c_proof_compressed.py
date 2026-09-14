@@ -271,3 +271,20 @@ def test_shared_runner_renews_only_a_drained_wave():
     watchdog.jobs.append(object())
     with pytest.raises(ValueError): watchdog.renew_wave()
     watchdog.jobs.clear();watchdog.close()
+
+
+def test_physical_owner_backtracks_only_the_typed_chart_cutback():
+    """Freeze the successor's narrow line-search exception boundary."""
+    owner_path = ROOT / "src" / "anysolver" / "_ge_beam3_g3c_physical_owner.py"
+    tree = ast.parse(owner_path.read_text(encoding="utf-8"))
+    run = next(node for node in ast.walk(tree)
+               if isinstance(node, ast.FunctionDef) and node.name == "_run")
+    handlers = [node for node in ast.walk(run) if isinstance(node, ast.ExceptHandler)
+                and isinstance(node.type, ast.Name) and node.type.id == "ValueError"]
+    assert len(handlers) == 1
+    handler = handlers[0]
+    source = ast.get_source_segment(owner_path.read_text(encoding="utf-8"), handler)
+    assert "str(exc)!='trial chart requires cutback'" in source
+    assert any(isinstance(node, ast.Raise) and node.exc is None
+               for node in ast.walk(handler))
+    assert any(isinstance(node, ast.Continue) for node in ast.walk(handler))
