@@ -231,7 +231,6 @@ def _installed_probe(wheel: Path) -> dict[str, Any]:
                 "pip",
                 "install",
                 "--disable-pip-version-check",
-                "--no-deps",
                 "--target",
                 str(site),
                 str(wheel.resolve()),
@@ -263,12 +262,15 @@ print(json.dumps({"installed_origin": True, "legacy_b3_default": True, "name": b
         completed = subprocess.run(
             [sys.executable, "-I", "-c", code, str(site)],
             cwd=temporary,
-            check=True,
+            check=False,
             timeout=TIMEOUT_SECONDS,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
         )
+        if completed.returncode != 0:
+            detail = completed.stderr.strip() or completed.stdout.strip()
+            raise GateError(f"installed-wheel probe failed: {detail}")
         return json.loads(completed.stdout)
 
 
