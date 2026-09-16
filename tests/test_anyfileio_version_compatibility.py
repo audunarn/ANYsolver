@@ -397,7 +397,6 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2",
         "dd954f088a4cb95e267280cc4777b09e16232bd9",
         "27e428188a891705288fef82bab0b166e330aff2",
-        "b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
         "91846898b03fa02b029abde82508eddb981efdc0",
         "2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
         "db73950018e1c87dab0ca618c25c965030ba08ce",
@@ -484,17 +483,17 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         ),
         (
             "audunarn/ANYgeometry",
-            "dd954f088a4cb95e267280cc4777b09e16232bd9",
+            "91846898b03fa02b029abde82508eddb981efdc0",
             ".ecosystem/ANYgeometry",
         ),
         (
             "audunarn/ANYmesh",
-            "27e428188a891705288fef82bab0b166e330aff2",
+            "2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
             ".ecosystem/ANYmesh",
         ),
         (
             "audunarn/ANYfileIO",
-            "b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
+            "db73950018e1c87dab0ca618c25c965030ba08ce",
             ".ecosystem/ANYfileIO",
         ),
     ]
@@ -611,9 +610,9 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
             '            anygeometry-version: "0.4.2"',
             "            anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9",
             "            anygeometry-install: .ecosystem/ANYgeometry",
-            '            anyfileio-version: "0.3.1"',
-            "            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
-            "            anyfileio-install: .ecosystem/ANYfileIO",
+            '            anyfileio-version: "0.3.2"',
+            "            anyfileio-ref: db73950018e1c87dab0ca618c25c965030ba08ce",
+            "            anyfileio-install: ANYfileio==0.3.2",
             '          - anymesher-version: "0.5.0"',
             "            anymesher-ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
             "            anymesher-install: ANYmesher==0.5.0",
@@ -627,15 +626,6 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     )
     assert matrix_rows(fileio_job) == "\n".join(
         (
-            '          - anyfileio-version: "0.3.1"',
-            "            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
-            "            anyfileio-install: .ecosystem/ANYfileIO",
-            '            anymesher-version: "0.4.0"',
-            "            anymesher-ref: 27e428188a891705288fef82bab0b166e330aff2",
-            "            anymesher-install: .ecosystem/ANYmesh",
-            '            anygeometry-version: "0.4.2"',
-            "            anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9",
-            "            anygeometry-install: .ecosystem/ANYgeometry",
             '          - anyfileio-version: "0.3.2"',
             "            anyfileio-ref: db73950018e1c87dab0ca618c25c965030ba08ce",
             "            anyfileio-install: ANYfileio==0.3.2",
@@ -682,17 +672,21 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         )
     )
     for value in (
-        "27e428188a891705288fef82bab0b166e330aff2",
-        "dd954f088a4cb95e267280cc4777b09e16232bd9",
-        "b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
         "2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
         "91846898b03fa02b029abde82508eddb981efdc0",
-        "db73950018e1c87dab0ca618c25c965030ba08ce",
     ):
         assert mesh_job.count(value) == 1
         assert fileio_job.count(value) == 1
+    assert mesh_job.count("db73950018e1c87dab0ca618c25c965030ba08ce") == 2
+    assert fileio_job.count("db73950018e1c87dab0ca618c25c965030ba08ce") == 1
+    for value in (
+        "27e428188a891705288fef82bab0b166e330aff2",
+        "dd954f088a4cb95e267280cc4777b09e16232bd9",
+    ):
+        assert mesh_job.count(value) == 1
+        assert fileio_job.count(value) == 0
     assert mesh_job.count("          - anymesher-version:") == 2
-    assert fileio_job.count("          - anyfileio-version:") == 2
+    assert fileio_job.count("          - anyfileio-version:") == 1
     expected_install = (
         'python -m pip install .ecosystem/ANYmaterial "${{ matrix.anygeometry-install }}" '
         '"${{ matrix.anymesher-install }}" "${{ matrix.anyfileio-install }}"'
