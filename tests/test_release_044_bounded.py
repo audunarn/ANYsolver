@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -75,6 +76,32 @@ def test_publish_workflow_uses_bounded_gate_before_upload() -> None:
     assert "--wheel dist/anysolver-0.4.4-py3-none-any.whl" in workflow
     assert "--sdist dist/anysolver-0.4.4.tar.gz" in workflow
     assert "--expected-commit ${{ github.sha }}" in workflow
+
+
+def test_installed_probe_installs_declared_runtime_dependencies(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[list[str]] = []
+
+    def fake_run(command: list[str], **_: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        if "-c" in command:
+            payload = {
+                "installed_origin": True,
+                "legacy_b3_default": True,
+                "name": "B3-GE",
+                "selector": "b3-ge",
+            }
+            return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+    assert gate._installed_probe(tmp_path / "anysolver-0.4.4-py3-none-any.whl")[
+        "legacy_b3_default"
+    ]
+    assert calls[0][1:5] == ["-m", "pip", "install", "--disable-pip-version-check"]
+    assert "--no-deps" not in calls[0]
+    assert "--target" in calls[0]
 
 
 def test_release_gate_result_serializes_without_nonfinite_values() -> None:
