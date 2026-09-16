@@ -19,7 +19,7 @@ def test_release_043_history_is_preserved_after_successor_release():
     version = next(ast.literal_eval(n.value) for n in tree.body
                    if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name)
                    and t.id == '__version__' for t in n.targets))
-    assert metadata['project']['version'] == version == '0.4.4'
+    assert metadata['project']['version'] == version == '0.4.5'
     assert json.loads((ROOT / 'dependency-licenses.json').read_text())['release'] == version
     assert '## 0.4.3 - 2026-09-09' in (ROOT / 'CHANGELOG.md').read_text()
     assert (ROOT / 'scripts/release_043_runtime.json').is_file()
@@ -100,8 +100,8 @@ def test_publication_manifest_checks_all_accepted_runtime_files():
     """Preserve the immutable 0.4.3 authority without replaying current source.
 
     The 0.4.3 manifest predates the additive G7 runtime.  Reconstructing its
-    wheel from a 0.4.4 checkout would mix authorities, so successor release
-    integrity is covered by ``test_release_044_bounded.py`` instead.
+    wheel from a successor checkout would mix authorities, so successor release
+    integrity is covered by ``test_release_045_bounded.py`` instead.
     """
     manifest = ROOT / 'scripts/release_043_runtime.json'
     record = json.loads(manifest.read_text())

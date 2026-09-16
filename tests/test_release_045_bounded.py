@@ -1,4 +1,4 @@
-"""Bounded ANYsolver 0.4.4 release and repository-cleanup guards."""
+"""Bounded ANYsolver 0.4.5 release and repository-cleanup guards."""
 
 from __future__ import annotations
 
@@ -10,14 +10,14 @@ import pytest
 
 from anysolver import __version__, b3_ge
 from anysolver.elements import QuadraticBeamElement, create_element
-from scripts import verify_release_044 as gate
+from scripts import verify_release_045 as gate
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_release_identity_and_g7_boundary_are_exact() -> None:
-    assert __version__ == gate.VERSION == "0.4.4"
+    assert __version__ == gate.VERSION == "0.4.5"
     records = gate._validate_g7()
     assert set(records) == {"confirmation", "contract", "review", "status"}
     assert b3_ge.SELECTOR == "b3-ge"
@@ -69,12 +69,12 @@ def test_strict_json_rejects_malformed_evidence(tmp_path: Path, payload: str, me
 
 def test_publish_workflow_uses_bounded_gate_before_upload() -> None:
     workflow = (ROOT / ".github/workflows/publish.yml").read_text(encoding="utf-8")
-    command = "python scripts/verify_release_044.py"
+    command = "python scripts/verify_release_045.py"
     upload = "name: python-package-distributions"
     assert workflow.count(command) == 1
     assert workflow.index(command) < workflow.index(upload)
-    assert "--wheel dist/anysolver-0.4.4-py3-none-any.whl" in workflow
-    assert "--sdist dist/anysolver-0.4.4.tar.gz" in workflow
+    assert "--wheel dist/anysolver-0.4.5-py3-none-any.whl" in workflow
+    assert "--sdist dist/anysolver-0.4.5.tar.gz" in workflow
     assert "--expected-commit ${{ github.sha }}" in workflow
 
 
@@ -96,7 +96,7 @@ def test_installed_probe_installs_declared_runtime_dependencies(
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(gate.subprocess, "run", fake_run)
-    assert gate._installed_probe(tmp_path / "anysolver-0.4.4-py3-none-any.whl")[
+    assert gate._installed_probe(tmp_path / "anysolver-0.4.5-py3-none-any.whl")[
         "legacy_b3_default"
     ]
     assert calls[0][1:5] == ["-m", "pip", "install", "--disable-pip-version-check"]
@@ -106,7 +106,7 @@ def test_installed_probe_installs_declared_runtime_dependencies(
 
 def test_release_gate_result_serializes_without_nonfinite_values() -> None:
     sample = {
-        "schema": "ANYSOLVER_0_4_4_BOUNDED_RELEASE_GATE_V1",
+        "schema": "ANYSOLVER_0_4_5_BOUNDED_RELEASE_GATE_V1",
         "terminal": gate.TERMINAL,
     }
     assert json.dumps(sample, sort_keys=True, separators=(",", ":"), allow_nan=False)
