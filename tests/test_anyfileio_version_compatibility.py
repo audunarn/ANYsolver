@@ -397,6 +397,8 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2",
         "dd954f088a4cb95e267280cc4777b09e16232bd9",
         "27e428188a891705288fef82bab0b166e330aff2",
+        "91846898b03fa02b029abde82508eddb981efdc0",
+        "2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
         "b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
     }
     assert set(re.findall(r"\b[0-9a-f]{40}\b", publish)) == {
@@ -481,12 +483,12 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         ),
         (
             "audunarn/ANYgeometry",
-            "dd954f088a4cb95e267280cc4777b09e16232bd9",
+            "91846898b03fa02b029abde82508eddb981efdc0",
             ".ecosystem/ANYgeometry",
         ),
         (
             "audunarn/ANYmesh",
-            "27e428188a891705288fef82bab0b166e330aff2",
+            "2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
             ".ecosystem/ANYmesh",
         ),
         (
@@ -609,6 +611,13 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
             '            anyfileio-version: "0.3.1"',
             "            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
             "            anyfileio-install: .ecosystem/ANYfileIO",
+            '          - anymesher-version: "0.5.0"',
+            "            anymesher-ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
+            '            anygeometry-version: "0.4.3"',
+            "            anygeometry-ref: 91846898b03fa02b029abde82508eddb981efdc0",
+            '            anyfileio-version: "0.3.1"',
+            "            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
+            "            anyfileio-install: .ecosystem/ANYfileIO",
         )
     )
     assert matrix_rows(fileio_job) == "\n".join(
@@ -616,10 +625,10 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
             '          - anyfileio-version: "0.3.1"',
             "            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
             "            anyfileio-install: .ecosystem/ANYfileIO",
-            '            anymesher-version: "0.4.0"',
-            "            anymesher-ref: 27e428188a891705288fef82bab0b166e330aff2",
-            '            anygeometry-version: "0.4.2"',
-            "            anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9",
+            '            anymesher-version: "0.5.0"',
+            "            anymesher-ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
+            '            anygeometry-version: "0.4.3"',
+            "            anygeometry-ref: 91846898b03fa02b029abde82508eddb981efdc0",
         )
     )
 
@@ -659,11 +668,18 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     for value in (
         "27e428188a891705288fef82bab0b166e330aff2",
         "dd954f088a4cb95e267280cc4777b09e16232bd9",
-        "b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
+    ):
+        assert mesh_job.count(value) == 1
+        assert fileio_job.count(value) == 0
+    for value in (
+        "2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
+        "91846898b03fa02b029abde82508eddb981efdc0",
     ):
         assert mesh_job.count(value) == 1
         assert fileio_job.count(value) == 1
-    assert mesh_job.count("          - anymesher-version:") == 1
+    assert mesh_job.count("b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d") == 2
+    assert fileio_job.count("b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d") == 1
+    assert mesh_job.count("          - anymesher-version:") == 2
     assert fileio_job.count("          - anyfileio-version:") == 1
     expected_install = (
         "python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry "
@@ -738,7 +754,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "git+https://" not in ci
     assert ci.count("python -m pip check") == 8
     assert '"ANYmaterial==0.2.0"' in publish
-    assert '"ANYmesher==0.4.0"' in publish
+    assert '"ANYmesher==0.5.0"' in publish
     assert '"ANYfileio==0.3.1"' in publish
     assert "pip install --dry-run --only-binary=:all:" in publish
 
