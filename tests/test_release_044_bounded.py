@@ -44,7 +44,7 @@ def test_release_archive_contains_only_current_user_documents() -> None:
 
 def test_cleanup_retains_only_referenced_authority_plans() -> None:
     plans = sorted((ROOT / "docs/agent_plans").glob("*.md"))
-    assert len(plans) == 119
+    assert len(plans) == 120
     assert (ROOT / "docs/agent_plans/S3_E4_PL_V6W_FINAL_QUALIFICATION_PLAN.md").is_file()
     assert (ROOT / "docs/agent_plans/S4_E4_PL_Q1V_LOCAL_COMPLETION_PLAN.md").is_file()
     assert (ROOT / "docs/agent_plans/GE_BEAM3_VARIATIONAL_SHELL_MAP.md").is_file()
