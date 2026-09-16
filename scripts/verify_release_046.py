@@ -1,4 +1,4 @@
-"""Bounded release gate for the accepted ANYsolver 0.4.5 artifact.
+"""Bounded release gate for the accepted ANYsolver 0.4.6 artifact.
 
 This gate verifies packaging and the already-qualified G7 opt-in boundary.  It
 does not rerun scientific mechanics or broaden the accepted B3-GE scope.
@@ -20,9 +20,9 @@ from zipfile import ZipFile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.4.5"
+VERSION = "0.4.6"
 TIMEOUT_SECONDS = 180
-TERMINAL = "PROVISIONAL_GO_ANYSOLVER_0_4_5_BOUNDED_RELEASE"
+TERMINAL = "PROVISIONAL_GO_ANYSOLVER_0_4_6_BOUNDED_COMPATIBILITY_RELEASE"
 G7_FILES = {
     "contract": (
         "docs/reference_cases/b3_ge_g7_contract_v1.json",
@@ -51,7 +51,7 @@ RELEASE_DOCS = {
     "docs/PERFORMANCE_ARCHITECTURE.md",
     "docs/QUALITY_CONTROL.md",
     "docs/THEORY.md",
-    "docs/releases/ANYsolver_0.4.5.md",
+    "docs/releases/ANYsolver_0.4.6.md",
 }
 
 
@@ -221,7 +221,7 @@ def _validate_sdist(path: Path) -> dict[str, Any]:
 
 
 def _installed_probe(wheel: Path) -> dict[str, Any]:
-    with tempfile.TemporaryDirectory(prefix="anysolver-045-gate-") as raw:
+    with tempfile.TemporaryDirectory(prefix="anysolver-046-gate-") as raw:
         temporary = Path(raw)
         site = temporary / "site"
         subprocess.run(
@@ -243,6 +243,7 @@ def _installed_probe(wheel: Path) -> dict[str, Any]:
             text=True,
         )
         code = r'''import json, pathlib, sys
+from importlib import metadata
 site = pathlib.Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(site))
 import anysolver
@@ -250,14 +251,17 @@ from anysolver import b3_ge
 from anysolver.elements import ELEMENT_TYPES, QuadraticBeamElement, create_element
 origin = pathlib.Path(anysolver.__file__).resolve()
 if site not in origin.parents: raise RuntimeError("installed origin mismatch")
-if anysolver.__version__ != "0.4.5": raise RuntimeError("installed version mismatch")
+if anysolver.__version__ != "0.4.6": raise RuntimeError("installed version mismatch")
+expected = {"ANYfileio":"0.3.2","ANYgeometry":"0.4.3","ANYmaterial":"0.2.0","ANYmesher":"0.5.0"}
+actual = {name:metadata.version(name) for name in expected}
+if actual != expected: raise RuntimeError(f"installed dependency identity mismatch: {actual!r}")
 if b3_ge.SELECTOR != "b3-ge" or b3_ge.NAME != "B3-GE": raise RuntimeError("B3-GE identity mismatch")
 if "b3-ge" in ELEMENT_TYPES: raise RuntimeError("B3-GE entered generic registry")
 if type(create_element("quadratic_beam", 1, [1, 2, 3])) is not QuadraticBeamElement: raise RuntimeError("legacy B3 default changed")
 try: create_element("b3-ge", 2, [1, 2, 3])
 except ValueError: pass
 else: raise RuntimeError("B3-GE became a generic/default route")
-print(json.dumps({"installed_origin": True, "legacy_b3_default": True, "name": b3_ge.NAME, "selector": b3_ge.SELECTOR}, sort_keys=True, separators=(",", ":")))
+print(json.dumps({"dependencies":actual,"installed_origin": True, "legacy_b3_default": True, "name": b3_ge.NAME, "selector": b3_ge.SELECTOR}, sort_keys=True, separators=(",", ":")))
 '''
         completed = subprocess.run(
             [sys.executable, "-I", "-c", code, str(site)],
@@ -293,7 +297,7 @@ def run(wheel: Path, sdist: Path, expected_commit: str) -> dict[str, Any]:
         "g7": g7,
         "installed": installed,
         "runtime_file_count": len(runtime),
-        "schema": "ANYSOLVER_0_4_5_BOUNDED_RELEASE_GATE_V1",
+        "schema": "ANYSOLVER_0_4_6_BOUNDED_COMPATIBILITY_RELEASE_GATE_V1",
         "sdist": sdist_record,
         "terminal": TERMINAL,
         "version": VERSION,

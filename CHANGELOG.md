@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.4.6 - 2026-09-16
+
+- Accept the independently published ANYmesher 0.5 line through the exact
+  dependency bounds `ANYmesher>=0.4,<0.6` and `ANYfileio>=0.3.2,<0.4`.
+- Bind the compatibility release to production ANYmaterial 0.2.0,
+  ANYgeometry 0.4.3, ANYmesher 0.5.0, and ANYfileio 0.3.2 artifacts.
+- Preserve all solver mechanics, B3-GE opt-in behavior, legacy B3 default,
+  and qualified Q4/S3 defaults unchanged.
+
 ## 0.4.5 - 2026-09-16
 
 - Publish the bounded B3-GE opt-in release after correcting the isolated
