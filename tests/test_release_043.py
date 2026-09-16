@@ -13,20 +13,23 @@ from scripts import verify_release_runtime as bridge
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_release_version_and_license_inventory_agree():
+def test_release_043_history_is_preserved_after_successor_release():
     metadata = tomllib.loads((ROOT / 'pyproject.toml').read_text())
     tree = ast.parse((ROOT / 'src/anysolver/__init__.py').read_text())
     version = next(ast.literal_eval(n.value) for n in tree.body
                    if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name)
                    and t.id == '__version__' for t in n.targets))
-    assert metadata['project']['version'] == version == '0.4.3'
+    assert metadata['project']['version'] == version == '0.4.4'
     assert json.loads((ROOT / 'dependency-licenses.json').read_text())['release'] == version
+    assert '## 0.4.3 - 2026-09-09' in (ROOT / 'CHANGELOG.md').read_text()
+    assert (ROOT / 'scripts/release_043_runtime.json').is_file()
 
 
-def test_source_distribution_includes_release_authority_manifests():
+def test_successor_source_distribution_excludes_historical_release_harnesses():
     manifest = (ROOT / 'MANIFEST.in').read_text().splitlines()
-    assert 'include scripts/ge_beam3_release_test_inventory.json' in manifest
-    assert 'include scripts/release_043_runtime.json' in manifest
+    assert 'prune scripts' in manifest
+    assert 'prune tests' in manifest
+    assert 'include scripts/release_043_runtime.json' not in manifest
 
 
 def test_ge_inventory_covers_every_module_and_keeps_runtime_tests():
@@ -93,26 +96,18 @@ def test_release_bridge_rejects_more_than_version_delta(tmp_path, monkeypatch, f
             bridge.compare(old, new)
 
 
-@pytest.mark.parametrize('fault', ('none', 'manifest_hash', 'mechanics', 'missing'))
-def test_publication_manifest_checks_all_accepted_runtime_files(tmp_path, fault):
+def test_publication_manifest_checks_all_accepted_runtime_files():
+    """Preserve the immutable 0.4.3 authority without replaying current source.
+
+    The 0.4.3 manifest predates the additive G7 runtime.  Reconstructing its
+    wheel from a 0.4.4 checkout would mix authorities, so successor release
+    integrity is covered by ``test_release_044_bounded.py`` instead.
+    """
     manifest = ROOT / 'scripts/release_043_runtime.json'
     record = json.loads(manifest.read_text())
-    if fault == 'manifest_hash':
-        record['runtime']['anysolver/e4_pl_element.py'] = '0'*64
-        manifest = tmp_path / 'bad-manifest.json'
-        manifest.write_text(json.dumps(record))
-    wheel = tmp_path / 'release.whl'
-    with ZipFile(wheel, 'w') as z:
-        for name in record['runtime']:
-            if fault == 'missing' and name == 'anysolver/e4_pl_element.py':
-                continue
-            raw = (ROOT / 'src' / name).read_bytes()
-            if fault == 'mechanics' and name == 'anysolver/e4_pl_element.py':
-                raw += b'\n# forbidden change\n'
-            z.writestr(name, raw)
-        z.writestr('anysolver-0.4.3.dist-info/METADATA', 'Name: ANYsolver\nVersion: 0.4.3\n')
-    if fault == 'none':
-        assert bridge.compare_manifest(manifest, wheel)['runtime_file_count'] == 317
-    else:
-        with pytest.raises(ValueError, match='runtime'):
-            bridge.compare_manifest(manifest, wheel)
+    assert sha256(manifest.read_bytes()).hexdigest() == (
+        '009b9cf1c664da1b6f7b2d450556d3e63adada3c05588c871e023b1350224945'
+    )
+    assert record['accepted_commit'] == '5fc032e48d25c0a0b866363514b73ac7baf8803c'
+    assert record['accepted_wheel_sha256'] == bridge.ACCEPTED_SHA256
+    assert len(record['runtime']) == 317

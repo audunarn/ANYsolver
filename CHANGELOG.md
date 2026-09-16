@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.4.4 - 2026-09-16
+
+- Publish the accepted `B3-GE` model-owned geometrically exact beam workflow
+  as an explicit `b3-ge` opt-in. Legacy B3 remains the default for every
+  existing three-node beam route and historical record.
+- Bind the minor release to the accepted G7 production-opt-in evidence and a
+  bounded installed-wheel gate. Qualified Q4/S3 mechanics and defaults are
+  unchanged.
+- Remove unreferenced development notes from the active tree and exclude
+  research plans, raw evidence, tests, and build scripts from release source
+  archives. The complete pre-cleanup tree remains available at the archive tag
+  `archive/anysolver-pre-0.4.4-development-20260916`.
+
 ## 0.4.3 - 2026-09-09
 
 - Add the explicitly selected `ge-beam3` straight mixed beam and the reviewed
