@@ -19,8 +19,8 @@ from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 
-EXPECTED_REQUIREMENT = "ANYfileio>=0.3.1,<0.4"
-EXPECTED_SPECIFIER = SpecifierSet(">=0.3.1,<0.4")
+EXPECTED_REQUIREMENT = "ANYfileio>=0.3.2,<0.4"
+EXPECTED_SPECIFIER = SpecifierSet(">=0.3.2,<0.4")
 RELEVANT_PACKAGES = {
     "anymaterial",
     "anygeometry",
@@ -187,11 +187,11 @@ def _assert_complete_source_graphs(roots: dict[str, str]) -> None:
                 "anyfileio": archives / "fileio-current",
             },
             {
-                "anysolver": "0.4.2",
+                "anysolver": "0.4.6",
                 "anymaterial": "0.2.0",
-                "anygeometry": "0.4.2",
-                "anymesher": "0.4.0",
-                "anyfileio": "0.3.1",
+                "anygeometry": "0.4.3",
+                "anymesher": "0.5.0",
+                "anyfileio": "0.3.2",
             },
         ),
     }
@@ -308,7 +308,7 @@ def test_source_declares_exact_anyfileio_compatibility_range() -> None:
 
 
 def test_fileio_requirement_accepts_canonicalized_specifier_order() -> None:
-    _assert_expected_fileio_requirement("ANYfileio<0.4,>=0.3.1")
+    _assert_expected_fileio_requirement("ANYfileio<0.4,>=0.3.2")
 
 
 def test_current_source_origins_and_complete_graphs() -> None:
@@ -398,6 +398,9 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "dd954f088a4cb95e267280cc4777b09e16232bd9",
         "27e428188a891705288fef82bab0b166e330aff2",
         "b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
+        "91846898b03fa02b029abde82508eddb981efdc0",
+        "2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
+        "db73950018e1c87dab0ca618c25c965030ba08ce",
     }
     assert set(re.findall(r"\b[0-9a-f]{40}\b", publish)) == {
         "11d5960a326750d5838078e36cf38b85af677262",
@@ -452,10 +455,10 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         upload_ref,
     ]
     build_block = job_block(publish, "build")
-    assert build_block.index('python scripts/verify_release_045.py') < build_block.index(upload_ref)
-    assert '--wheel dist/anysolver-0.4.5-py3-none-any.whl' in build_block
-    assert '--sdist dist/anysolver-0.4.5.tar.gz' in build_block
-    assert 'name: release-045-gate' in build_block
+    assert build_block.index('python scripts/verify_release_046.py') < build_block.index(upload_ref)
+    assert '--wheel dist/anysolver-0.4.6-py3-none-any.whl' in build_block
+    assert '--sdist dist/anysolver-0.4.6.tar.gz' in build_block
+    assert 'name: release-046-gate' in build_block
     assert action_sequence(job_block(publish, "testpypi")) == [
         download_ref,
         publish_ref,
@@ -604,11 +607,22 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         (
             '          - anymesher-version: "0.4.0"',
             "            anymesher-ref: 27e428188a891705288fef82bab0b166e330aff2",
+            "            anymesher-install: .ecosystem/ANYmesh",
             '            anygeometry-version: "0.4.2"',
             "            anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9",
+            "            anygeometry-install: .ecosystem/ANYgeometry",
             '            anyfileio-version: "0.3.1"',
             "            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
             "            anyfileio-install: .ecosystem/ANYfileIO",
+            '          - anymesher-version: "0.5.0"',
+            "            anymesher-ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
+            "            anymesher-install: ANYmesher==0.5.0",
+            '            anygeometry-version: "0.4.3"',
+            "            anygeometry-ref: 91846898b03fa02b029abde82508eddb981efdc0",
+            "            anygeometry-install: ANYgeometry==0.4.3",
+            '            anyfileio-version: "0.3.2"',
+            "            anyfileio-ref: db73950018e1c87dab0ca618c25c965030ba08ce",
+            "            anyfileio-install: ANYfileio==0.3.2",
         )
     )
     assert matrix_rows(fileio_job) == "\n".join(
@@ -618,8 +632,19 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
             "            anyfileio-install: .ecosystem/ANYfileIO",
             '            anymesher-version: "0.4.0"',
             "            anymesher-ref: 27e428188a891705288fef82bab0b166e330aff2",
+            "            anymesher-install: .ecosystem/ANYmesh",
             '            anygeometry-version: "0.4.2"',
             "            anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9",
+            "            anygeometry-install: .ecosystem/ANYgeometry",
+            '          - anyfileio-version: "0.3.2"',
+            "            anyfileio-ref: db73950018e1c87dab0ca618c25c965030ba08ce",
+            "            anyfileio-install: ANYfileio==0.3.2",
+            '            anymesher-version: "0.5.0"',
+            "            anymesher-ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
+            "            anymesher-install: ANYmesher==0.5.0",
+            '            anygeometry-version: "0.4.3"',
+            "            anygeometry-ref: 91846898b03fa02b029abde82508eddb981efdc0",
+            "            anygeometry-install: ANYgeometry==0.4.3",
         )
     )
 
@@ -638,7 +663,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
 
     assert probe_environment(mesh_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.4.5"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.6"',
             '          EXPECTED_ANYMATERIAL_VERSION: "0.2.0"',
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",
             "          EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}",
@@ -648,7 +673,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     )
     assert probe_environment(fileio_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.4.5"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.6"',
             '          EXPECTED_ANYMATERIAL_VERSION: "0.2.0"',
             "          EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}",
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",
@@ -660,14 +685,17 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "27e428188a891705288fef82bab0b166e330aff2",
         "dd954f088a4cb95e267280cc4777b09e16232bd9",
         "b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d",
+        "2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
+        "91846898b03fa02b029abde82508eddb981efdc0",
+        "db73950018e1c87dab0ca618c25c965030ba08ce",
     ):
         assert mesh_job.count(value) == 1
         assert fileio_job.count(value) == 1
-    assert mesh_job.count("          - anymesher-version:") == 1
-    assert fileio_job.count("          - anyfileio-version:") == 1
+    assert mesh_job.count("          - anymesher-version:") == 2
+    assert fileio_job.count("          - anyfileio-version:") == 2
     expected_install = (
-        "python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry "
-        '.ecosystem/ANYmesh "${{ matrix.anyfileio-install }}"'
+        'python -m pip install .ecosystem/ANYmaterial "${{ matrix.anygeometry-install }}" '
+        '"${{ matrix.anymesher-install }}" "${{ matrix.anyfileio-install }}"'
     )
     assert mesh_job.count(expected_install) == 1
     assert fileio_job.count(expected_install) == 1
@@ -738,8 +766,9 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert "git+https://" not in ci
     assert ci.count("python -m pip check") == 8
     assert '"ANYmaterial==0.2.0"' in publish
-    assert '"ANYmesher==0.4.0"' in publish
-    assert '"ANYfileio==0.3.1"' in publish
+    assert '"ANYgeometry==0.4.3"' in publish
+    assert '"ANYmesher==0.5.0"' in publish
+    assert '"ANYfileio==0.3.2"' in publish
     assert "pip install --dry-run --only-binary=:all:" in publish
 
 

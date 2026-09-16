@@ -31,14 +31,14 @@
     {
       "distribution": "ANYmesher",
       "licence": "MPL-2.0",
-      "requirement": "ANYmesher>=0.4,<0.5",
+      "requirement": "ANYmesher>=0.4,<0.6",
       "scope": "runtime",
       "status": "not-bundled"
     },
     {
       "distribution": "ANYfileio",
       "licence": "MPL-2.0",
-      "requirement": "ANYfileio>=0.3.1,<0.4",
+      "requirement": "ANYfileio>=0.3.2,<0.4",
       "scope": "runtime",
       "status": "not-bundled"
     },
@@ -87,6 +87,6 @@
   ],
   "project": "ANYsolver",
   "project_licence": "MPL-2.0",
-  "release": "0.4.5",
+  "release": "0.4.6",
   "schema": "anysolver.dependency-licences-v1"
 }
