@@ -33,7 +33,7 @@ jobs:
       - name: Resolve the coordinated release wheels
         run: >-
           python -m pip install --dry-run --only-binary=:all:
-          dist/*.whl ANYmaterial==0.2.0 ANYmesher==0.5.0 ANYfileio==0.3.1
+          dist/*.whl ANYmaterial==0.2.0 ANYmesher==0.4.0 ANYfileio==0.3.1
 
   pytest:
     runs-on: ${{ matrix.os }}
@@ -66,13 +66,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 91846898b03fa02b029abde82508eddb981efdc0
+          ref: dd954f088a4cb95e267280cc4777b09e16232bd9
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d
+          ref: 27e428188a891705288fef82bab0b166e330aff2
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -109,13 +109,6 @@ jobs:
             anymesher-ref: 27e428188a891705288fef82bab0b166e330aff2
             anygeometry-version: "0.4.2"
             anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9
-            anyfileio-version: "0.3.1"
-            anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d
-            anyfileio-install: .ecosystem/ANYfileIO
-          - anymesher-version: "0.5.0"
-            anymesher-ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d
-            anygeometry-version: "0.4.3"
-            anygeometry-ref: 91846898b03fa02b029abde82508eddb981efdc0
             anyfileio-version: "0.3.1"
             anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d
             anyfileio-install: .ecosystem/ANYfileIO
@@ -188,10 +181,10 @@ jobs:
           - anyfileio-version: "0.3.1"
             anyfileio-ref: b48ba51c7b79e6d64b3f99c1fb131b9b602e7e1d
             anyfileio-install: .ecosystem/ANYfileIO
-            anymesher-version: "0.5.0"
-            anymesher-ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d
-            anygeometry-version: "0.4.3"
-            anygeometry-ref: 91846898b03fa02b029abde82508eddb981efdc0
+            anymesher-version: "0.4.0"
+            anymesher-ref: 27e428188a891705288fef82bab0b166e330aff2
+            anygeometry-version: "0.4.2"
+            anygeometry-ref: dd954f088a4cb95e267280cc4777b09e16232bd9
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -271,13 +264,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 91846898b03fa02b029abde82508eddb981efdc0
+          ref: dd954f088a4cb95e267280cc4777b09e16232bd9
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d
+          ref: 27e428188a891705288fef82bab0b166e330aff2
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -338,13 +331,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 91846898b03fa02b029abde82508eddb981efdc0
+          ref: dd954f088a4cb95e267280cc4777b09e16232bd9
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d
+          ref: 27e428188a891705288fef82bab0b166e330aff2
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -384,13 +377,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYgeometry
-          ref: 91846898b03fa02b029abde82508eddb981efdc0
+          ref: dd954f088a4cb95e267280cc4777b09e16232bd9
           path: .ecosystem/ANYgeometry
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: audunarn/ANYmesh
-          ref: 2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d
+          ref: 27e428188a891705288fef82bab0b166e330aff2
           path: .ecosystem/ANYmesh
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262

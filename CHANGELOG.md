@@ -4,9 +4,6 @@
 
 ## 0.4.4 - 2026-09-16
 
-- Extend the qualified runtime band through `ANYmesher 0.5.x`, while retaining
-  `ANYmesher 0.4.x` compatibility. The 0.5.0 endpoint is qualified with
-  `ANYgeometry 0.4.3`; solver mechanics and defaults are unchanged.
 - Publish the accepted `B3-GE` model-owned geometrically exact beam workflow
   as an explicit `b3-ge` opt-in. Legacy B3 remains the default for every
   existing three-node beam route and historical record.

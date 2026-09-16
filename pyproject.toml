@@ -28,7 +28,7 @@ dependencies = [
   "scipy>=1.11",
   "threadpoolctl>=3.5",
   "ANYmaterial>=0.2,<0.3",
-  "ANYmesher>=0.4,<0.6",
+  "ANYmesher>=0.4,<0.5",
   "ANYfileio>=0.3.1,<0.4",
 ]
 

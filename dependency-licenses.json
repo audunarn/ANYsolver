@@ -31,7 +31,7 @@
     {
       "distribution": "ANYmesher",
       "licence": "MPL-2.0",
-      "requirement": "ANYmesher>=0.4,<0.6",
+      "requirement": "ANYmesher>=0.4,<0.5",
       "scope": "runtime",
       "status": "not-bundled"
     },
