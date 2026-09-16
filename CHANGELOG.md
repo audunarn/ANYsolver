@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.4.5 - 2026-09-16
+
+- Publish the bounded B3-GE opt-in release after correcting the isolated
+  installed-wheel gate to install the wheel's declared runtime dependencies.
+- Preserve the failed v0.4.4 GitHub publication attempt as process evidence;
+  no v0.4.4 artifacts reached PyPI.
+- Keep legacy B3 as the default and leave qualified Q4/S3 mechanics and
+  defaults unchanged.
+
 ## 0.4.4 - 2026-09-16
 
 - Publish the accepted `B3-GE` model-owned geometrically exact beam workflow
