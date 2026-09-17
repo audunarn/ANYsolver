@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from pathlib import Path
@@ -48,6 +49,12 @@ Q4_REPLAY_CANONICALIZATION = (
     / "reference_cases"
     / "e4_pl_q4_0_4_2_replay_canonicalization.json"
 )
+QUALIFIED_SHELL_RUNTIME_GUARD_SUCCESSOR = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "qualified_shell_runtime_guard_performance_successor.json"
+)
 
 
 def _strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -87,6 +94,105 @@ def _q4_replay_canonicalization() -> dict[str, object]:
     return payload
 
 
+def _qualified_shell_runtime_guard_successor() -> dict[str, object]:
+    raw = QUALIFIED_SHELL_RUNTIME_GUARD_SUCCESSOR.read_bytes()
+    payload = json.loads(raw, object_pairs_hook=_strict_object)
+    assert raw == (
+        json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+    prior = payload["preserved_evidence"]
+    assert prior["path"] == Q4_REPLAY_CANONICALIZATION.relative_to(ROOT).as_posix()
+    canonicalization = Q4_REPLAY_CANONICALIZATION.read_bytes()
+    assert len(canonicalization) == prior["bytes"]
+    assert hashlib.sha256(canonicalization).hexdigest().upper() == prior["sha256"]
+    _assert_runtime_guard_successor_bindings(payload)
+    report = payload["validation"]["static_performance_report"]
+    report_data = (ROOT / report["path"]).read_bytes()
+    assert len(report_data) == report["bytes"]
+    assert hashlib.sha256(report_data).hexdigest().upper() == report["sha256"]
+    return payload
+
+
+def _assert_runtime_guard_successor_bindings(payload: dict[str, object]) -> None:
+    assert payload["base"] == {
+        "commit": "d04199ac851c0d0f61430c2bc40136582aa8d659",
+        "tree": "605fb200b9b7bfffbeeafeae549c6c2ea34d8930",
+    }
+    change = payload["change"]
+    assert change["commit"] == "c31a223fe63f886a1a9b0b47c926bbe748ad4554"
+    assert change["tree"] == "533729f4529ea02316ade00adcf20f64e4a3a7eb"
+    assert change["e4_pl_element"] == {
+        "current_git_blob": "bd6c0dc2cb3661eb73942fc0fea56e527aa8d0b4",
+        "prior_git_blob": "b0a53a47ca68cf9ff9ab6925fbdfb4f31301344a",
+    }
+    assert change["e4_pl_s3_element"] == {
+        "current_git_blob": "adc6562cbd3fb768d7f0d0ab69011f21ff7c9392",
+        "prior_git_blob": "823b5b0cdc450f7c7f2f2861aefcf4dd2062b99e",
+    }
+    assert change["scope"] == [
+        "context-local trusted operation lease",
+        "full authority validation at capture and finalization",
+        "generation and exact-instance checks inside trusted loops",
+        "guard-cache invalidation on rejected finalization",
+    ]
+    assert payload["qualification_boundary"] == {
+        "default_policy_changed": False,
+        "formulation_ids_changed": False,
+        "mass_policy_changed": False,
+        "mechanics_coefficients_or_operators_changed": False,
+        "numerical_tolerances_changed": False,
+        "prior_evidence_modified": False,
+        "qualified_recovery_changed": False,
+    }
+    assert payload["review"] == {
+        "finding_count": 0,
+        "outcome": "ACCEPT",
+        "scope": "runtime guard performance successor and state-safety regressions",
+    }
+    assert payload["schema"] == (
+        "anysolver.qualified-shell-runtime-guard-performance-successor-v1"
+    )
+    assert payload["terminal"] == (
+        "PASS_QUALIFIED_SHELL_RUNTIME_GUARD_PERFORMANCE_SUCCESSOR"
+    )
+    assert payload["validation"] == {
+        "authority_and_termination_regressions_passed": True,
+        "full_scientific_tests_required": True,
+        "static_performance_report": {
+            "bytes": 4561,
+            "path": "docs/STATIC_RUNTIME_PERFORMANCE.md",
+            "sha256": "CBB92A59FDDDA847AA5953EDAA7A2ED6BE1EA64ED1995D415A59B72831BB31D1",
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    ("section", "field"),
+    (
+        ("base", "commit"),
+        ("base", "tree"),
+        ("change", "commit"),
+        ("change", "tree"),
+        ("qualification_boundary", "mechanics_coefficients_or_operators_changed"),
+        ("review", "outcome"),
+        ("validation", "full_scientific_tests_required"),
+    ),
+)
+def test_runtime_guard_successor_rejects_identity_mutations(
+    section: str, field: str
+) -> None:
+    payload = _qualified_shell_runtime_guard_successor()
+    mutated = copy.deepcopy(payload)
+    mutated[section][field] = "MUTATED"
+    with pytest.raises(AssertionError):
+        _assert_runtime_guard_successor_bindings(mutated)
+
+
+def _git_blob(path: Path) -> str:
+    data = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha1(f"blob {len(data)}\0".encode("ascii") + data).hexdigest()
+
+
 def test_activation_candidate_binds_accepted_v6w_and_unchanged_q4() -> None:
     raw = ACTIVATION.read_bytes()
     payload = json.loads(raw, object_pairs_hook=_strict_object)
@@ -100,21 +206,28 @@ def test_activation_candidate_binds_accepted_v6w_and_unchanged_q4() -> None:
         assert len(data) == record["bytes"]
         assert hashlib.sha256(data).hexdigest().upper() == record["sha256"]
 
-    q4_data = (
-        ROOT / "src" / "anysolver" / "e4_pl_element.py"
-    ).read_bytes().replace(b"\r\n", b"\n")
-    q4_blob = hashlib.sha1(
-        f"blob {len(q4_data)}\0".encode("ascii") + q4_data
-    ).hexdigest()
+    q4_blob = _git_blob(ROOT / "src" / "anysolver" / "e4_pl_element.py")
+    s3_blob = _git_blob(ROOT / "src" / "anysolver" / "e4_pl_s3_element.py")
     hotfix = _q4_replay_hotfix()
     successor = _q4_replay_canonicalization()
+    runtime_successor = _qualified_shell_runtime_guard_successor()
     assert payload["production_boundary"]["q4_mechanics_blob"] == hotfix[
         "source_correction"
     ]["prior_git_blob"]
     assert hotfix["source_correction"]["current_git_blob"] == successor["correction"][
         "prior_e4_pl_element_blob"
     ]
-    assert q4_blob == successor["correction"]["e4_pl_element_blob"]
+    assert successor["correction"]["e4_pl_element_blob"] == runtime_successor[
+        "change"
+    ]["e4_pl_element"]["prior_git_blob"]
+    assert q4_blob == runtime_successor["change"]["e4_pl_element"]["current_git_blob"]
+    assert s3_blob == runtime_successor["change"]["e4_pl_s3_element"][
+        "current_git_blob"
+    ]
+    assert runtime_successor["qualification_boundary"][
+        "mechanics_coefficients_or_operators_changed"
+    ] is False
+    assert runtime_successor["qualification_boundary"]["prior_evidence_modified"] is False
     assert hotfix["qualification_boundary"]["q4_coefficients_or_operators_changed"] is False
     assert payload["production_boundary"]["q4_mechanics_unchanged"] is True
     assert payload["production_boundary"]["publication_authorized"] is False
@@ -142,20 +255,27 @@ def test_integration_repair_preserves_qualification_and_q4_boundary() -> None:
     assert len(activation_data) == activation["bytes"]
     assert hashlib.sha256(activation_data).hexdigest().upper() == activation["sha256"]
 
-    q4_data = (ROOT / "src" / "anysolver" / "e4_pl_element.py").read_bytes()
-    q4_data = q4_data.replace(b"\r\n", b"\n")
-    q4_blob = hashlib.sha1(
-        f"blob {len(q4_data)}\0".encode("ascii") + q4_data
-    ).hexdigest()
+    q4_blob = _git_blob(ROOT / "src" / "anysolver" / "e4_pl_element.py")
+    s3_blob = _git_blob(ROOT / "src" / "anysolver" / "e4_pl_s3_element.py")
     hotfix = _q4_replay_hotfix()
     successor = _q4_replay_canonicalization()
+    runtime_successor = _qualified_shell_runtime_guard_successor()
     assert payload["production_boundary"]["q4_mechanics_blob"] == hotfix[
         "source_correction"
     ]["prior_git_blob"]
     assert hotfix["source_correction"]["current_git_blob"] == successor["correction"][
         "prior_e4_pl_element_blob"
     ]
-    assert q4_blob == successor["correction"]["e4_pl_element_blob"]
+    assert successor["correction"]["e4_pl_element_blob"] == runtime_successor[
+        "change"
+    ]["e4_pl_element"]["prior_git_blob"]
+    assert q4_blob == runtime_successor["change"]["e4_pl_element"]["current_git_blob"]
+    assert s3_blob == runtime_successor["change"]["e4_pl_s3_element"][
+        "current_git_blob"
+    ]
+    assert runtime_successor["qualification_boundary"][
+        "mechanics_coefficients_or_operators_changed"
+    ] is False
     assert hotfix["qualification_boundary"]["s3_evidence_changed"] is False
     assert payload["production_boundary"]["v6w_evidence_changed"] is False
     assert payload["production_boundary"]["s3_linear_stiffness_operator_changed"] is False
