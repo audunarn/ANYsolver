@@ -8,6 +8,7 @@ import hashlib
 import inspect
 from json.encoder import encode_basestring as _JSON_ENCODE_BASESTRING
 import math
+import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -1342,24 +1343,69 @@ def _sparse_eigensolve(
     factorization_cache: Optional[FactorizationCache] = None,
     *,
     _post_factorization_guard: Any = None,
+    use_zero_shift_inverse: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
     n = int(K.shape[0])
     k = min(max(num_modes + 4, num_modes), n - 1)
-    if shift is None:
+    if shift is None and not use_zero_shift_inverse:
         values, vectors = sparse_linalg.eigsh(K.tocsc(), k=k, M=M.tocsc(), which="SM")
         return values, vectors, {"shift_invert": False}
-    shift_matrix = (K - float(shift) * M).tocsc()
+    effective_shift = 0.0 if shift is None else float(shift)
+    shift_matrix = (K - effective_shift * M).tocsc()
     cache = factorization_cache or FactorizationCache(name="modal_shift_invert", max_entries=2)
-    operator, handle = cached_inverse_operator(
-        shift_matrix,
-        MatrixClass.SYMMETRIC_INDEFINITE,
-        cache=cache,
+    factorization_started = time.perf_counter()
+    try:
+        operator, handle = cached_inverse_operator(
+            shift_matrix,
+            (
+                MatrixClass.SPD
+                if shift is None and use_zero_shift_inverse
+                else MatrixClass.SYMMETRIC_INDEFINITE
+            ),
+            cache=cache,
+        )
+    except RuntimeError as exc:
+        factorization_lookup_seconds = float(
+            time.perf_counter() - factorization_started
+        )
+        if shift is not None or not use_zero_shift_inverse:
+            raise
+        if _post_factorization_guard is not None:
+            _post_factorization_guard()
+        # Absence of geometric rigid modes does not prove that K has no
+        # internal mechanism.  Preserve the former singular-safe route when
+        # the optional zero-shift inverse cannot be constructed.
+        values, vectors = sparse_linalg.eigsh(
+            K.tocsc(),
+            k=k,
+            M=M.tocsc(),
+            which="SM",
+        )
+        return values, vectors, {
+            "shift_invert": False,
+            "zero_shift_inverse": False,
+            "zero_shift_inverse_fallback": True,
+            "zero_shift_inverse_failure": str(exc),
+            "factorization_lookup_seconds": factorization_lookup_seconds,
+            "factorization_cache": cache.diagnostics(),
+        }
+    factorization_lookup_seconds = float(
+        time.perf_counter() - factorization_started
     )
     if _post_factorization_guard is not None:
         _post_factorization_guard()
-    values, vectors = sparse_linalg.eigsh(K.tocsc(), k=k, M=M.tocsc(), sigma=float(shift), which="LM", OPinv=operator)
+    values, vectors = sparse_linalg.eigsh(
+        K.tocsc(),
+        k=k,
+        M=M.tocsc(),
+        sigma=effective_shift,
+        which="LM",
+        OPinv=operator,
+    )
     return values, vectors, {
         "shift_invert": True,
+        "zero_shift_inverse": bool(shift is None and use_zero_shift_inverse),
+        "factorization_lookup_seconds": factorization_lookup_seconds,
         "shift_factorization": handle.diagnostics(),
         "factorization_cache": cache.diagnostics(),
     }
@@ -1481,6 +1527,8 @@ def _solve_free_vibration_under_lease(
     current material, geometric, bubble-Schur and objective-PL tangent while
     continuing to use the formulation's consistent reference mass.
     """
+    operation_started = time.perf_counter()
+    phase_timings: Dict[str, float] = {}
     raw_exact_guard = _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD
 
     def exact_guard(
@@ -1689,10 +1737,16 @@ def _solve_free_vibration_under_lease(
                 include_mass_and_descriptor=True,
             )
             reference_operator_authority = True
+    phase_timings["validation"] = float(time.perf_counter() - operation_started)
     model.apply_boundary_conditions()
     exact_guard(model, context="solve_free_vibration boundary conditions")
     current_state_info = None
+    phase_timings["stiffness"] = 0.0
+    phase_timings["mass"] = 0.0
+    phase_timings["geometric_stiffness"] = 0.0
+    phase_timings["constraint_reduction"] = 0.0
     if session is None or current_state:
+        stiffness_started = time.perf_counter()
         if current_state:
             K, current_state_info = current_state_assembler(
                 model,
@@ -1706,15 +1760,25 @@ def _solve_free_vibration_under_lease(
         else:
             K, stiffness_info = assemble_stiffness_matrix(model)
             exact_guard(model, context="solve_free_vibration stiffness assembly")
+        phase_timings["stiffness"] = float(
+            time.perf_counter() - stiffness_started
+        )
+        mass_started = time.perf_counter()
         M, mass_info = assemble_mass_matrix(model)
+        phase_timings["mass"] = float(time.perf_counter() - mass_started)
         exact_guard(model, context="solve_free_vibration mass assembly")
         geometric_info = None
         if prestress_states is not None:
+            geometric_started = time.perf_counter()
             geometric, geometric_info = assemble_geometric_stiffness_matrix(
                 model, normalized_prestress_states
             )
+            phase_timings["geometric_stiffness"] = float(
+                time.perf_counter() - geometric_started
+            )
             exact_guard(model, context="solve_free_vibration geometric assembly")
             K = (K - geometric).tocsr()
+        reduction_started = time.perf_counter()
         zero = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
         K_red, _, T, _, independent_dofs, constraint_info = (
             build_constraint_transformation(K, zero, model)
@@ -1727,30 +1791,47 @@ def _solve_free_vibration_under_lease(
             int(K.shape[0]),
             transformation=T,
         )
+        phase_timings["constraint_reduction"] = float(
+            time.perf_counter() - reduction_started
+        )
         exact_guard(model, context="solve_free_vibration rigid-body basis")
     else:
+        stiffness_started = time.perf_counter()
         stiffness_plan = session.stiffness_plan(model)
+        phase_timings["stiffness"] = float(
+            time.perf_counter() - stiffness_started
+        )
         exact_guard(model, context="solve_free_vibration session stiffness plan")
+        reduction_started = time.perf_counter()
         constraint_plan = session.constraint_plan(stiffness_plan, model)
         exact_guard(model, context="solve_free_vibration session constraint plan")
+        phase_timings["constraint_reduction"] = float(
+            time.perf_counter() - reduction_started
+        )
+        mass_started = time.perf_counter()
         mass_plan = session.mass_plan(model)
         exact_guard(model, context="solve_free_vibration session mass plan")
         K = stiffness_plan.matrix
         M = mass_plan.matrix
         stiffness_info = dict(stiffness_plan.info)
         mass_info = dict(mass_plan.info)
+        M_red, _ = session.reduced_mass(constraint_plan, model)
+        phase_timings["mass"] = float(time.perf_counter() - mass_started)
+        exact_guard(model, context="solve_free_vibration session reduced mass")
         geometric_info = None
         if prestress_states is None:
             K_red = constraint_plan.K_red
         else:
+            geometric_started = time.perf_counter()
             geometric, geometric_info = assemble_geometric_stiffness_matrix(
                 model, normalized_prestress_states
+            )
+            phase_timings["geometric_stiffness"] = float(
+                time.perf_counter() - geometric_started
             )
             exact_guard(model, context="solve_free_vibration geometric assembly")
             K = (K - geometric).tocsr()
             K_red = (constraint_plan.T.T @ K @ constraint_plan.T).tocsr()
-        M_red, _ = session.reduced_mass(constraint_plan, model)
-        exact_guard(model, context="solve_free_vibration session reduced mass")
         T = constraint_plan.T
         independent_dofs = constraint_plan.independent_dofs
         constraint_info = dict(constraint_plan.info)
@@ -1907,6 +1988,7 @@ def _solve_free_vibration_under_lease(
         if current_state or prestress_states is not None
         else None
     )
+    eigen_started = time.perf_counter()
     try:
         sparse_diagnostics: Dict[str, Any] = {}
         descriptor_elements = declared_algebraic_mass_elements(model)
@@ -1980,6 +2062,12 @@ def _solve_free_vibration_under_lease(
                     model,
                     context="solve_free_vibration shift factorization",
                 ),
+                use_zero_shift_inverse=bool(
+                    shift is None
+                    and not current_state
+                    and prestress_states is None
+                    and not Q.shape[1]
+                ),
             )
             solver_kind = "sparse_scipy_eigsh"
     except Exception as exc:
@@ -2019,8 +2107,17 @@ def _solve_free_vibration_under_lease(
         return ModalResult([], num_modes, "failed", constraint_info, nullspace_info, assembly_info, diagnostics, result_case)
 
     cancellation_safe_point(cancellation_token, "modal.after_eigensolve")
+    eigensolve_seconds = float(time.perf_counter() - eigen_started)
+    phase_timings["factorization"] = float(
+        sparse_diagnostics.get("factorization_lookup_seconds", 0.0)
+    )
+    phase_timings["eigen_iterations"] = max(
+        eigensolve_seconds - phase_timings["factorization"],
+        0.0,
+    )
     exact_guard(model, context="solve_free_vibration cancellation after eigensolve")
 
+    recovery_started = time.perf_counter()
     order = np.argsort(np.real(eigenvalues))
     eigenvalues = np.real(eigenvalues[order])
     eigenvectors = np.real(eigenvectors[:, order])
@@ -2131,11 +2228,27 @@ def _solve_free_vibration_under_lease(
         )
 
     status = "ok" if modes else "no_modes"
+    phase_timings["residual_checks_and_mode_recovery"] = float(
+        time.perf_counter() - recovery_started
+    )
+    phase_timings["total"] = float(time.perf_counter() - operation_started)
     diagnostics = {
         "status": status,
         "thread_policy": thread_policy_diagnostics(resource_config),
         "solver": solver_kind,
         **sparse_diagnostics,
+        "phase_timings_seconds": phase_timings,
+        "matrix_diagnostics": {
+            "stiffness_reduced_shape": [int(value) for value in K_sym.shape],
+            "stiffness_reduced_nnz": int(K_sym.nnz),
+            "mass_reduced_nnz": int(M_sym.nnz),
+            "stiffness_reduced_storage_bytes": int(
+                K_sym.data.nbytes + K_sym.indices.nbytes + K_sym.indptr.nbytes
+            ),
+            "mass_reduced_storage_bytes": int(
+                M_sym.data.nbytes + M_sym.indices.nbytes + M_sym.indptr.nbytes
+            ),
+        },
         "max_residual_norm": max((mode.residual_norm for mode in modes), default=0.0),
         "mass_orthogonality_error": _orthogonality_error(modes, M_sym),
         "num_rigid_body_modes": int(sum(1 for mode in modes if mode.is_rigid_body)),

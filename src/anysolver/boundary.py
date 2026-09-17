@@ -8,12 +8,21 @@ for the FE model.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from contextlib import ExitStack
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
 from .matrix_assembly import (
     _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE as _CAPTURE_QUALIFIED_LOAD_RUNTIME_LEASE,
+)
+from .e4_pl_element import (
+    QualifiedE4PLShellElement as _QualifiedE4PLShellElement,
+    _q4_trusted_operation_scope as _Q4_TRUSTED_OPERATION_SCOPE,
+)
+from .e4_pl_s3_element import (
+    QualifiedE4PLS3ShellElement as _QualifiedE4PLS3ShellElement,
+    _s3_trusted_operation_scope as _S3_TRUSTED_OPERATION_SCOPE,
 )
 
 if TYPE_CHECKING:
@@ -48,7 +57,21 @@ def _run_with_qualified_load_runtime_lease(
         lease(proxy, context=f"{context} {stage}")
 
     try:
-        result = operation(require)
+        qualified_elements = tuple(mesh.elements.values())
+        q4_elements = tuple(
+            element
+            for element in qualified_elements
+            if type(element) is _QualifiedE4PLShellElement
+        )
+        s3_elements = tuple(
+            element
+            for element in qualified_elements
+            if type(element) is _QualifiedE4PLS3ShellElement
+        )
+        with ExitStack() as stack:
+            stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
+            stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
+            result = operation(require)
     except BaseException:
         require(stage="exceptional output")
         raise

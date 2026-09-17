@@ -15,6 +15,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 import math
+import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -532,6 +533,8 @@ def _solve_eigenvalue_buckling_under_lease(
     nonconservative pressure patches require a general complex eigenanalysis
     and return an explicit unsupported status.
     """
+    operation_started = time.perf_counter()
+    phase_timings: Dict[str, float] = {}
     raw_exact_guard = _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD
 
     def exact_guard(
@@ -811,16 +814,22 @@ def _solve_eigenvalue_buckling_under_lease(
     if not current_state and bool(reference_elastic_only):
         _require_reference_elastic_s3_states(model, element_states)
 
+    phase_timings["validation"] = float(time.perf_counter() - operation_started)
+
     # Make the solve independent of whether a caller happened to run another
     # constrained analysis first.  Rigid-mode filtering reads the active DOF
     # constraints, so boundary conditions must be applied here explicitly.
+    operator_assembly_started = time.perf_counter()
     model.apply_boundary_conditions()
     exact_guard(
         model,
         context="solve_eigenvalue_buckling boundary conditions",
     )
     current_state_info = None
+    phase_timings["stiffness"] = 0.0
+    phase_timings["geometric_stiffness"] = 0.0
     if current_state:
+        component_started = time.perf_counter()
         K, internal_geometric, current_total, current_state_info = (
             current_state_assembler(
                 model,
@@ -829,6 +838,9 @@ def _solve_eigenvalue_buckling_under_lease(
                 current_state_num_layers,
                 _exact_guard=exact_guard,
             )
+        )
+        phase_timings["stiffness"] = float(
+            time.perf_counter() - component_started
         )
         exact_guard(
             model,
@@ -861,28 +873,51 @@ def _solve_eigenvalue_buckling_under_lease(
         )
         stiffness_plan = None
     elif session is None:
+        stiffness_started = time.perf_counter()
         K, stiffness_info = assemble_stiffness_matrix(model)
+        phase_timings["stiffness"] = float(
+            time.perf_counter() - stiffness_started
+        )
         exact_guard(model, context="solve_eigenvalue_buckling stiffness assembly")
         stiffness_plan = None
+        geometric_started = time.perf_counter()
         KG, geometric_info = assemble_geometric_stiffness_matrix(
             model, element_states
+        )
+        phase_timings["geometric_stiffness"] = float(
+            time.perf_counter() - geometric_started
         )
         exact_guard(model, context="solve_eigenvalue_buckling geometric assembly")
     else:
+        stiffness_started = time.perf_counter()
         stiffness_plan = session.stiffness_plan(model)
+        phase_timings["stiffness"] = float(
+            time.perf_counter() - stiffness_started
+        )
         exact_guard(model, context="solve_eigenvalue_buckling session stiffness plan")
         K = stiffness_plan.matrix
         stiffness_info = dict(stiffness_plan.info)
+        geometric_started = time.perf_counter()
         KG, geometric_info = assemble_geometric_stiffness_matrix(
             model, element_states
         )
+        phase_timings["geometric_stiffness"] = float(
+            time.perf_counter() - geometric_started
+        )
         exact_guard(model, context="solve_eigenvalue_buckling geometric assembly")
+    load_tangent_started = time.perf_counter()
     K_load, load_tangent_info = assemble_external_load_tangent(
         model,
         reference_load_case,
         reference_displacements,
     )
     exact_guard(model, context="solve_eigenvalue_buckling external-load tangent")
+    phase_timings["external_load_tangent"] = float(
+        time.perf_counter() - load_tangent_started
+    )
+    phase_timings["operator_assembly_total"] = float(
+        time.perf_counter() - operator_assembly_started
+    )
     cancellation_safe_point(cancellation_token, "buckling.after_assembly")
     exact_guard(
         model,
@@ -890,6 +925,7 @@ def _solve_eigenvalue_buckling_under_lease(
     )
     zero_load = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
 
+    reduction_started = time.perf_counter()
     if session is None or current_state:
         K_red, _, T, _, independent_dofs, constraint_info = (
             build_constraint_transformation(K, zero_load, model)
@@ -913,6 +949,9 @@ def _solve_eigenvalue_buckling_under_lease(
         / max(float(sparse.linalg.norm(K_load_red)), 1.0)
     )
     KG_red = (KG_red + K_load_red).tocsr()
+    phase_timings["constraint_reduction"] = float(
+        time.perf_counter() - reduction_started
+    )
 
     assembly_info = {
         "stiffness": stiffness_info,
@@ -926,6 +965,10 @@ def _solve_eigenvalue_buckling_under_lease(
         if session is not None and qualified_reference_state:
             assembly_info["analysis_session_state_dependent_bypass_reason"] = (
                 "qualified_reference_prestress_matrices_and_factors_are_not_cacheable"
+            )
+            assembly_info["analysis_session_elastic_inverse_policy"] = (
+                "immutable_elastic_stiffness_factor_may_persist;"
+                "prestress_and_geometric_operators_never_persist"
             )
     if reference_operator_authority_policy_id is not None:
         assembly_info["reference_operator_authority_policy_id"] = (
@@ -1098,6 +1141,7 @@ def _solve_eigenvalue_buckling_under_lease(
         exact_guard(model, context="solve_eigenvalue_buckling output")
         return BucklingResult([], num_modes, "zero_geometric_stiffness", constraint_info, assembly_info, result_case, diagnostics)
 
+    rigid_started = time.perf_counter()
     if session is None or current_state:
         Q_rigid, nullspace_info = build_reduced_rigid_body_modes(
             model,
@@ -1112,6 +1156,9 @@ def _solve_eigenvalue_buckling_under_lease(
             model,
             context="solve_eigenvalue_buckling session rigid-body basis",
         )
+    phase_timings["rigid_mode_preparation"] = float(
+        time.perf_counter() - rigid_started
+    )
     assembly_info["nullspace"] = nullspace_info
 
     # Work with the inverted symmetric pencil KG phi = mu K phi.  Constrained
@@ -1131,6 +1178,9 @@ def _solve_eigenvalue_buckling_under_lease(
     solver_kind = "not_started"
     sparse_error = None
     shift_invert_diagnostics: Dict[str, Any] = {"shift_invert": False}
+    elastic_inverse_diagnostics: Dict[str, Any] = {"elastic_inverse": False}
+    phase_timings["factorization"] = 0.0
+    eigen_started = time.perf_counter()
 
     def _projection_failure(status: str, reason: str) -> BucklingResult:
         diagnostics = {
@@ -1374,7 +1424,71 @@ def _solve_eigenvalue_buckling_under_lease(
     if not Q_rigid.shape[1] and n_red > dense_size_limit and 1 <= k < n_red:
         try:
             if shift_load_factor is None:
-                _, eigenvectors = sparse_linalg.eigsh(KG_sym.tocsc(), k=k, M=K_sym.tocsc(), which="LA")
+                # ARPACK otherwise constructs and discards its own inverse of
+                # the elastic metric.  Make that inverse explicit so an
+                # immutable AnalysisSession can retain the *elastic* factor
+                # across changed prestress states.  Current-state tangents stay
+                # solve-local, and no geometric/prestress factor is persisted.
+                elastic_cache = (
+                    (
+                        None
+                        if current_state
+                        else (
+                            factorization_cache
+                            or (
+                                session.factorization_cache
+                                if session is not None
+                                else None
+                            )
+                        )
+                    )
+                    or FactorizationCache(
+                        name=(
+                            "buckling_current_state_elastic_inverse_transient"
+                            if current_state
+                            else "buckling_elastic_inverse"
+                        ),
+                        max_entries=1,
+                    )
+                )
+                factor_started = time.perf_counter()
+                elastic_inverse, elastic_handle = cached_inverse_operator(
+                    K_sym.tocsc(),
+                    MatrixClass.SPD,
+                    cache=elastic_cache,
+                )
+                phase_timings["factorization"] = float(
+                    time.perf_counter() - factor_started
+                )
+                exact_guard(
+                    model,
+                    context="solve_eigenvalue_buckling elastic factorization",
+                )
+                _, eigenvectors = sparse_linalg.eigsh(
+                    KG_sym.tocsc(),
+                    k=k,
+                    M=K_sym.tocsc(),
+                    Minv=elastic_inverse,
+                    which="LA",
+                )
+                elastic_inverse_diagnostics = {
+                    "elastic_inverse": True,
+                    "elastic_inverse_factorization": elastic_handle.diagnostics(),
+                    "elastic_inverse_cache": elastic_cache.diagnostics(),
+                    "elastic_inverse_persistence": (
+                        "solve_local"
+                        if current_state
+                        else (
+                            "caller_owned_elastic_only"
+                            if factorization_cache is not None
+                            else (
+                                "analysis_session_elastic_only"
+                                if session is not None
+                                else "solve_local"
+                            )
+                        )
+                    ),
+                }
             else:
                 sigma = 1.0 / float(shift_load_factor)
                 shift_matrix = (KG_sym - sigma * K_sym).tocsc()
@@ -1400,10 +1514,14 @@ def _solve_eigenvalue_buckling_under_lease(
                         max_entries=2,
                     )
                 )
+                factor_started = time.perf_counter()
                 operator, handle = cached_inverse_operator(
                     shift_matrix,
                     MatrixClass.SYMMETRIC_INDEFINITE,
                     cache=cache,
+                )
+                phase_timings["factorization"] = float(
+                    time.perf_counter() - factor_started
                 )
                 exact_guard(
                     model,
@@ -1457,12 +1575,18 @@ def _solve_eigenvalue_buckling_under_lease(
         exact_guard(model, context="solve_eigenvalue_buckling output")
         return BucklingResult([], num_modes, "failed", constraint_info, assembly_info, result_case, diagnostics)
 
+    phase_timings["eigen_iterations"] = max(
+        float(time.perf_counter() - eigen_started)
+        - phase_timings["factorization"],
+        0.0,
+    )
     cancellation_safe_point(cancellation_token, "buckling.after_eigensolve")
     exact_guard(
         model,
         context="solve_eigenvalue_buckling cancellation after eigensolve",
     )
 
+    residual_started = time.perf_counter()
     candidates: List[tuple[float, np.ndarray, float, float, float, float]] = []
     rejected: List[Dict[str, Any]] = []
     for i in range(eigenvectors.shape[1]):
@@ -1555,6 +1679,10 @@ def _solve_eigenvalue_buckling_under_lease(
         )
 
     repeated_groups = _assign_repeated_groups(modes, repeated_tolerance)
+    phase_timings["residual_checks_and_mode_recovery"] = float(
+        time.perf_counter() - residual_started
+    )
+    phase_timings["total"] = float(time.perf_counter() - operation_started)
     status = "ok" if modes else "no_positive_modes"
     diagnostics = {
         "status": status,
@@ -1562,7 +1690,20 @@ def _solve_eigenvalue_buckling_under_lease(
         "follower_load_stiffness_included": bool(K_load_red.nnz),
         "follower_tangent_symmetry_error": follower_symmetry_error,
         **shift_invert_diagnostics,
+        **elastic_inverse_diagnostics,
         "sparse_error": sparse_error,
+        "phase_timings_seconds": phase_timings,
+        "matrix_diagnostics": {
+            "elastic_reduced_shape": [int(value) for value in K_sym.shape],
+            "elastic_reduced_nnz": int(K_sym.nnz),
+            "geometric_reduced_nnz": int(KG_sym.nnz),
+            "elastic_reduced_storage_bytes": int(
+                K_sym.data.nbytes + K_sym.indices.nbytes + K_sym.indptr.nbytes
+            ),
+            "geometric_reduced_storage_bytes": int(
+                KG_sym.data.nbytes + KG_sym.indices.nbytes + KG_sym.indptr.nbytes
+            ),
+        },
         "nullspace_rank": int(Q_rigid.shape[1]),
         "nullspace_info": nullspace_info,
         "free_mechanism_handling": "retained" if allow_free_mechanisms else "rigid_body_roots_filtered",

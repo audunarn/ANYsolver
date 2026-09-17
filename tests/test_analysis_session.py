@@ -114,6 +114,29 @@ def test_repeated_static_session_matches_legacy_and_reuses_plans() -> None:
     assert many_info["analysis_session"]["plan_reused"] is True
 
 
+def test_session_reuses_exact_proportional_dead_load_vector() -> None:
+    model = generate_beam_mesh(
+        1.0,
+        num_divisions=2,
+        cross_section={"area": 0.01, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6},
+    )
+    first = LoadCase("first")
+    first.add_nodal_load(3, [100.0, 20.0, 0.0, 0.0, 0.0, 0.0])
+    second = LoadCase("second")
+    second.add_nodal_load(3, [250.0, 50.0, 0.0, 0.0, 0.0, 0.0])
+
+    expected, _ = solve_linear(model, second)
+    with AnalysisSession(model) as session:
+        solve_linear(model, first, session=session)
+        actual, info = solve_linear(model, second, session=session)
+        diagnostics = session.diagnostics()
+
+    np.testing.assert_allclose(actual, expected, rtol=1.0e-11, atol=1.0e-13)
+    assert diagnostics["counters"]["load_vector_builds"] == 1
+    assert diagnostics["counters"]["load_vector_hits"] == 1
+    assert info["assembly"]["load"]["prepared_load_vector_reused"] is True
+
+
 def test_prescribed_value_refresh_reuses_structure_and_factorization() -> None:
     model = _modal_bar()
     load = LoadCase("zero")

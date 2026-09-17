@@ -862,11 +862,14 @@ def solve_linear(
         - "transformation": always use the ordinary reduced solve.
         - "nullspace": always use nullspace augmentation after MPC/fixed reduction.
     """
+    operation_started = time.perf_counter()
     cancellation_safe_point(cancellation_token, "linear_static.start")
     mesh = model.mesh
     dof_manager = mesh.dof_manager
 
     model.apply_boundary_conditions()
+    validation_finished = time.perf_counter()
+    assembly_started = validation_finished
     if session is None:
         K, F, assembly_info = assemble_system(model, load_case)
         K_red, F_red, T, u0, independent_dofs, constraint_info = (
@@ -884,6 +887,7 @@ def solve_linear(
         independent_dofs = constraint_plan.independent_dofs
         constraint_info = dict(constraint_plan.info)
     cancellation_safe_point(cancellation_token, "linear_static.after_assembly")
+    assembly_finished = time.perf_counter()
 
     total_dofs = int(K.shape[0])
     if session is None:
@@ -913,10 +917,18 @@ def solve_linear(
         "nullspace_info": nullspace_info,
         "convergence_info": {},
         "thread_policy": thread_policy_diagnostics(resource_config),
+        "phase_timings_seconds": {
+            "validation": float(validation_finished - operation_started),
+            "assembly_and_reduction": float(assembly_finished - assembly_started),
+        },
     }
     if session is not None:
         solver_info["analysis_session"] = session.diagnostics()
 
+    solve_started_perf = time.perf_counter()
+    solver_info["phase_timings_seconds"]["rigid_mode_preparation"] = float(
+        solve_started_perf - assembly_finished
+    )
     start_time = time.time()
     if use_nullspace:
         q, convergence_info = _solve_nullspace_augmented_system(
@@ -943,12 +955,22 @@ def solve_linear(
         )
     cancellation_safe_point(cancellation_token, "linear_static.after_factorization")
     solver_info["solve_time"] = time.time() - start_time
+    solver_info["phase_timings_seconds"]["factorization_and_solve"] = float(
+        solver_info["solve_time"]
+    )
+    solve_finished_perf = time.perf_counter()
     solver_info["convergence_info"] = convergence_info
     if convergence_info.get("status") != "converged":
         displacement = u0.copy()
     else:
         displacement = reconstruct_full_solution(T, q, u0)
     solver_info["constraint_postcheck"] = constraint_residual_summary(model, displacement)
+    solver_info["phase_timings_seconds"]["reconstruction_and_postcheck"] = float(
+        time.perf_counter() - solve_finished_perf
+    )
+    solver_info["phase_timings_seconds"]["total"] = float(
+        time.perf_counter() - operation_started
+    )
     result_case = make_result_case(
         name=f"linear_static:{getattr(load_case, 'name', 'none')}",
         analysis_type="linear_static",
@@ -960,6 +982,10 @@ def solve_linear(
         warnings=convergence_info.get("warnings", ()),
     )
     solver_info["result_case"] = result_case.to_dict()
+    # Private handoff for application facades that need the exact applied-load
+    # resultant.  It is attached after ResultCase serialization and can be
+    # consumed without assembling the load a second time.
+    solver_info["_assembled_load_vector"] = np.asarray(F, dtype=float)
     emit_progress(
         progress_callback,
         "linear_static_complete",

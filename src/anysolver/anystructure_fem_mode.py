@@ -1296,6 +1296,8 @@ def recover_prestress_from_static_result(
     displacements: np.ndarray,
     *,
     nonlinear_result: Any = None,
+    recovered_stresses: Optional[Mapping[int, Any]] = None,
+    recovery_provenance: Optional[Mapping[str, Any]] = None,
 ) -> Tuple[Dict[int, Dict[str, Any]], Dict[str, Any]]:
     """Recover buckling prestress, retaining Gauss-point and material history.
 
@@ -1306,8 +1308,14 @@ def recover_prestress_from_static_result(
     """
 
     states: Dict[int, Dict[str, Any]] = {}
-    recovery_provenance: Dict[str, Any] | None = None
-    if nonlinear_result is None:
+    provenance_payload: Dict[str, Any] | None = (
+        None
+        if recovery_provenance is None
+        else dict(recovery_provenance)
+    )
+    if recovered_stresses is not None:
+        stresses = recovered_stresses
+    elif nonlinear_result is None:
         stresses = compute_stresses(model, displacements)
     else:
         from .recovery import recover_stress_result
@@ -1319,7 +1327,7 @@ def recover_prestress_from_static_result(
             copy_committed_states=False,
         )
         stresses = recovery.element_stresses
-        recovery_provenance = recovery.provenance.to_dict()
+        provenance_payload = recovery.provenance.to_dict()
     shell_count = 0
     beam_count = 0
     shell_compression = []
@@ -1485,8 +1493,8 @@ def recover_prestress_from_static_result(
         "max_shell_compression_resultant": float(max(shell_compression) if shell_compression else 0.0),
         "max_beam_compression_force": float(max(beam_compression) if beam_compression else 0.0),
     }
-    if recovery_provenance is not None:
-        summary["stress_recovery"] = recovery_provenance
+    if provenance_payload is not None:
+        summary["stress_recovery"] = provenance_payload
     return states, summary
 
 

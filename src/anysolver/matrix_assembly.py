@@ -11,6 +11,7 @@ import hashlib
 import json
 import sys
 import time
+from contextlib import ExitStack
 from operator import itemgetter
 from types import FunctionType, MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
@@ -32,6 +33,7 @@ from .e4_pl_element import (
     QualifiedE4PLShellElement as _QualifiedE4PLShellElement,
     _invalidate_q4_guarded_call_caches as _INVALIDATE_Q4_GUARDED_CACHES,
     _q4_runtime_epoch_manager as _Q4_RUNTIME_EPOCH_MANAGER,
+    _q4_trusted_operation_scope as _Q4_TRUSTED_OPERATION_SCOPE,
     _require_q4_fast_base_authority as _EXACT_Q4_FAST_BASE_AUTHORITY,
     _require_q4_cached_stiffness_runtime_epoch_authority as _EXACT_Q4_CACHED_STIFFNESS_EPOCH_GUARD,
     _require_exact_q4_runtime_authority as _EXACT_Q4_RUNTIME_GUARD,
@@ -52,6 +54,7 @@ from .e4_pl_s3_element import (
     QualifiedE4PLS3ShellElement as _QualifiedE4PLS3ShellElement,
     _invalidate_s3_guarded_call_caches as _INVALIDATE_S3_GUARDED_CACHES,
     _s3_runtime_epoch_manager as _S3_RUNTIME_EPOCH_MANAGER,
+    _s3_trusted_operation_scope as _S3_TRUSTED_OPERATION_SCOPE,
     _require_s3_cached_stiffness_runtime_epoch_authority as _EXACT_S3_CACHED_STIFFNESS_EPOCH_GUARD,
     _require_exact_s3_runtime_authority as _EXACT_S3_RUNTIME_GUARD,
     _require_s3_fast_base_authority as _EXACT_S3_FAST_BASE_AUTHORITY,
@@ -3583,7 +3586,28 @@ def _run_with_qualified_assembly_runtime_lease(
         allow_q4_cached_stiffness=allow_q4_cached_stiffness,
     )
     try:
-        result = operation(lease)
+        mesh = getattr(model, "mesh", None)
+        elements = getattr(mesh, "elements", None)
+        if not isinstance(elements, dict):
+            # Test doubles and deliberately rejected inputs still exercise the
+            # operation/exception precedence owned by the captured lease.
+            result = operation(lease)
+        else:
+            qualified_elements = tuple(elements.values())
+            q4_elements = tuple(
+                element
+                for element in qualified_elements
+                if type(element) is _QualifiedE4PLShellElement
+            )
+            s3_elements = tuple(
+                element
+                for element in qualified_elements
+                if type(element) is _QualifiedE4PLS3ShellElement
+            )
+            with ExitStack() as stack:
+                stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
+                stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
+                result = operation(lease)
     except BaseException as operation_error:
         # A mutation followed by restoration must invalidate the failed call
         # and every derived qualified cache written while it was in flight.

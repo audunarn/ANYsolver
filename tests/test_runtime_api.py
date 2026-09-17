@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from types import SimpleNamespace
 
 import anysolver
@@ -49,6 +50,55 @@ def test_runtime_contract_is_headless_and_builds_geometry() -> None:
     assert "beams" in generated
 
 
+def test_buckling_mode_visualization_uses_displacement_amplitude_without_stress_recovery(
+    monkeypatch,
+) -> None:
+    class Node:
+        def __init__(self) -> None:
+            self.dofs = [0, 1, 2, 3, 4, 5]
+            self.x = 1.0
+            self.y = 2.0
+            self.z = 3.0
+
+        def coords(self):
+            return (self.x, self.y, self.z)
+
+    node = Node()
+    mesh = SimpleNamespace(
+        nodes={1: node},
+        elements={},
+        get_node=lambda node_id: node if int(node_id) == 1 else None,
+        get_element=lambda _element_id: None,
+    )
+    model = SimpleNamespace(mesh=mesh)
+    mode = SimpleNamespace(
+        mode_number=1,
+        load_factor=2.5,
+        mode_shape=np.asarray([3.0, 4.0, 0.0, 0.0, 0.0, 0.0]),
+    )
+
+    def forbidden_stress_recovery(*_args, **_kwargs):
+        raise AssertionError("mode visualization must not recover stresses")
+
+    monkeypatch.setattr(
+        runtime,
+        "_backend_compute_stresses",
+        forbidden_stress_recovery,
+    )
+
+    visualizations = runtime._buckling_mode_visualizations(
+        {"plot_type": "flat", "plot_grid": [[1]], "shells": [], "beams": []},
+        model,
+        SimpleNamespace(modes=(mode,)),
+    )
+
+    assert len(visualizations) == 1
+    shape = visualizations[0]["shape"]
+    assert shape["scalar_label"] == "mode amplitude"
+    assert shape["stress_pa"] == ((5.0,),)
+    assert shape["fields"]["custom_scalar"] == ((5.0,),)
+
+
 def test_runtime_public_api_is_explicit_and_complete() -> None:
     expected = {
         "GeneratedGeometry",
@@ -56,6 +106,7 @@ def test_runtime_public_api_is_explicit_and_complete() -> None:
         "LightweightFEMResult",
         "NormalizedGeometry",
         "RuntimeAnalysisSelection",
+        "RuntimeAnalysisContext",
         "StatusCallback",
         "apply_mode_shape_imperfections",
         "build_generated_geometry",
@@ -249,6 +300,41 @@ def test_runtime_cylinder_smoke() -> None:
     assert result.mesh_info["shells"] > 0
 
 
+def test_runtime_static_only_cylinder_never_enters_eigenvalue_buckling(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    geometry = {
+        "geometry": "cylinder",
+        "length_m": 0.4,
+        "radius_m": 0.2,
+        "thickness_m": 0.01,
+        "has_stiffener": False,
+        "has_girder": False,
+    }
+
+    def forbidden_buckling(*_args, **_kwargs):
+        raise AssertionError("static-only analysis must not call eigenvalue buckling")
+
+    monkeypatch.setattr(runtime, "_backend_solve_buckling", forbidden_buckling)
+
+    result = runtime.run_production_fem(
+        geometry,
+        runtime.LightweightFEMConfig(
+            mesh_fidelity="coarse",
+            runtime_solver="static only",
+            analysis_type="linear static",
+            pressure_pa=1_000.0,
+            include_stiffeners=False,
+            include_girders=False,
+            num_buckling_modes=3,
+        ),
+    )
+
+    assert result.status == "ok"
+    assert result.buckling_factors == ()
+    assert not any("buckling-only" in item.lower() for item in result.diagnostics)
+
+
 def test_runtime_rejects_follower_pressure_outside_nonlinear_static() -> None:
     result = runtime.run_production_fem(
         _flat_geometry(),
@@ -378,6 +464,150 @@ def test_runtime_session_reuse_excludes_state_changing_paths() -> None:
     )
 
 
+def test_runtime_analysis_context_admits_reference_elastic_spectral_only() -> None:
+    spectral = runtime.LightweightFEMConfig(
+        runtime_solver="stepwise",
+        analysis_type="linear eigenvalue",
+        include_end_lids=False,
+    )
+
+    assert runtime._runtime_context_eligible(
+        spectral,
+        {"geometry": "flat panel"},
+    )
+    assert not runtime._runtime_context_eligible(
+        replace(spectral, added_mass_kg=10.0),
+        {"geometry": "flat panel"},
+    )
+    assert not runtime._runtime_context_eligible(
+        replace(spectral, include_end_lids=True),
+        {"geometry": "cylinder"},
+    )
+
+
+def test_runtime_analysis_context_reuses_model_and_factor_for_load_only_change() -> None:
+    geometry = {
+        "geometry": "flat panel",
+        "length_m": 0.4,
+        "width_m": 0.2,
+        "thickness_m": 0.01,
+        "has_stiffener": False,
+        "has_girder": False,
+    }
+    first_config = runtime.LightweightFEMConfig(
+        mesh_fidelity="coarse",
+        runtime_solver="static only",
+        pressure_pa=1_000.0,
+        include_stiffeners=False,
+        include_girders=False,
+    )
+    generated = runtime.build_generated_geometry(geometry, first_config)
+    context = runtime.RuntimeAnalysisContext()
+    try:
+        first = runtime.run_production_fem(
+            geometry,
+            first_config,
+            precomputed_generated_geometry=generated,
+            analysis_context=context,
+        )
+        second = runtime.run_production_fem(
+            geometry,
+            replace(first_config, pressure_pa=2_000.0),
+            precomputed_generated_geometry=generated,
+            analysis_context=context,
+        )
+
+        assert first.status == second.status == "ok"
+        assert second.displacement_max_m == pytest.approx(
+            2.0 * first.displacement_max_m,
+            rel=1.0e-10,
+        )
+        diagnostics = context.diagnostics()
+        assert diagnostics["hits"] == 1
+        assert diagnostics["misses"] == 1
+        assert diagnostics["analysis_session"]["factorization_cache"]["hits"] >= 1
+    finally:
+        context.close()
+
+    assert context.diagnostics()["active"] is False
+
+
+def test_runtime_analysis_context_invalidates_for_structural_change() -> None:
+    geometry = {
+        "geometry": "flat panel",
+        "length_m": 0.4,
+        "width_m": 0.2,
+        "thickness_m": 0.01,
+        "has_stiffener": False,
+        "has_girder": False,
+    }
+    config = runtime.LightweightFEMConfig(
+        mesh_fidelity="coarse",
+        runtime_solver="static only",
+        pressure_pa=1_000.0,
+        include_stiffeners=False,
+        include_girders=False,
+    )
+    generated = runtime.build_generated_geometry(geometry, config)
+    context = runtime.RuntimeAnalysisContext()
+    try:
+        first = runtime.run_production_fem(
+            geometry,
+            config,
+            precomputed_generated_geometry=generated,
+            analysis_context=context,
+        )
+        changed = runtime.run_production_fem(
+            geometry,
+            replace(config, poisson_ratio=0.27),
+            precomputed_generated_geometry=generated,
+            analysis_context=context,
+        )
+
+        assert first.status == changed.status == "ok"
+        diagnostics = context.diagnostics()
+        assert diagnostics["hits"] == 0
+        assert diagnostics["misses"] == 2
+        assert diagnostics["invalidations"] >= 1
+    finally:
+        context.close()
+
+
+def test_runtime_performs_one_shared_recovery_for_accepted_linear_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = 0
+    original = runtime._runtime_display_stresses
+
+    def recording_recovery(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(runtime, "_runtime_display_stresses", recording_recovery)
+    result = runtime.run_production_fem(
+        {
+            "geometry": "flat panel",
+            "length_m": 0.4,
+            "width_m": 0.2,
+            "thickness_m": 0.01,
+            "has_stiffener": False,
+            "has_girder": False,
+        },
+        runtime.LightweightFEMConfig(
+            mesh_fidelity="coarse",
+            runtime_solver="static only",
+            pressure_pa=1_000.0,
+            include_stiffeners=False,
+            include_girders=False,
+        ),
+    )
+
+    assert result.status == "ok"
+    assert calls == 1
+    assert result.prestress_summary["performance"]["shared_recovery_evaluations"] == 1
+
+
 def test_geometric_nonlinear_elastic_runtime_does_not_claim_plastic_history() -> None:
     result = runtime.run_production_fem(
         {
@@ -407,6 +637,7 @@ def test_geometric_nonlinear_elastic_runtime_does_not_claim_plastic_history() ->
         result.prestress_summary["stress_recovery"]["mode"]
         == "material_history"
     )
+    assert result.prestress_summary["performance"]["shared_recovery_evaluations"] == 2
     assert "mixed_reconstruction_peak_von_mises_pa" not in result.prestress_summary
 
 

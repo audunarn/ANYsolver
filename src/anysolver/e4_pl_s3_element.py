@@ -19,6 +19,8 @@ import math
 import sys
 import warnings
 import weakref
+from contextlib import contextmanager
+from contextvars import ContextVar
 from operator import is_ as _operator_is, itemgetter
 from types import MappingProxyType, ModuleType
 from typing import Any, Callable, Dict, Mapping, NamedTuple, Optional, Sequence
@@ -8919,6 +8921,83 @@ _s3_runtime_epoch_manager = make_authority_epoch_manager(
 )
 
 
+def _make_s3_trusted_operation_scope() -> tuple[Any, Any]:
+    """Create the context-local validated fast boundary for S3 operations."""
+
+    active: ContextVar[Any] = ContextVar("qualified_s3_operation", default=None)
+    manager = _s3_runtime_epoch_manager
+
+    class Token:
+        __slots__ = ("generation", "records")
+
+        def __init__(self, generation: int, records: dict[int, tuple[Any, Any]]) -> None:
+            self.generation = generation
+            self.records = records
+
+    @contextmanager
+    def operation(elements: Sequence[Any]) -> Any:
+        owned = tuple(elements)
+        for element in owned:
+            _require_exact_s3_runtime_authority(
+                element,
+                context="qualified S3 trusted operation preflight",
+            )
+        generation = manager.capture_generation()
+        records = {
+            id(element): (element, object.__getattribute__(element, "__dict__"))
+            for element in owned
+        }
+        token = Token(generation, records)
+        marker = active.set(token)
+        try:
+            yield
+        finally:
+            active.reset(marker)
+            try:
+                manager.require_generation(generation)
+                for element in owned:
+                    _require_exact_s3_runtime_authority(
+                        element,
+                        context="qualified S3 trusted operation output",
+                    )
+                    record = records.get(id(element))
+                    if (
+                        record is None
+                        or record[0] is not element
+                        or record[1]
+                        is not object.__getattribute__(element, "__dict__")
+                    ):
+                        raise ValueError(
+                            "qualified S3 trusted operation identity changed"
+                        )
+            except BaseException:
+                for element in owned:
+                    _invalidate_s3_guarded_call_caches(element)
+                raise
+
+    def accepts(element: Any) -> bool:
+        token = active.get()
+        if type(token) is not Token:
+            return False
+        record = token.records.get(id(element))
+        if (
+            record is None
+            or record[0] is not element
+            or record[1] is not object.__getattribute__(element, "__dict__")
+        ):
+            return False
+        manager.require_generation(token.generation)
+        return True
+
+    return operation, accepts
+
+
+(
+    _s3_trusted_operation_scope,
+    _s3_trusted_operation_accepts,
+) = _make_s3_trusted_operation_scope()
+
+
 def _invalidate_s3_guarded_call_caches(element: Any) -> None:
     """Drop every derived cache after a rejected authority lease."""
 
@@ -9350,6 +9429,21 @@ def _bind_s3_exact_quadrature_boundary(method: Any) -> Any:
                 except BaseException:
                     _invalidate_s3_guarded_call_caches(self)
                     raise
+        if _s3_trusted_operation_accepts(self):
+            call_kwargs = dict(kwargs)
+
+            def trusted_post_observation_guard() -> None:
+                if not _s3_trusted_operation_accepts(self):
+                    raise ValueError("qualified S3 trusted operation ended")
+
+            if accepts_post_observation:
+                call_kwargs[post_observation_name] = trusted_post_observation_guard
+            try:
+                return method(self, *args, **call_kwargs)
+            finally:
+                if not _s3_trusted_operation_accepts(self):
+                    _invalidate_s3_guarded_call_caches(self)
+                    raise ValueError("qualified S3 trusted operation changed")
         if method.__name__ == "compute_stiffness_matrix":
             mesh = None
             material = None

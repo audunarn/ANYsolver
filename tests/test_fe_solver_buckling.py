@@ -76,6 +76,56 @@ def test_eigenvalue_buckling_returns_euler_column_scale_for_pinned_beam():
     assert result.result_case["solver_backend"] in {"scipy_superlu", None}
 
 
+def test_supported_unshifted_buckling_reuses_only_elastic_inverse() -> None:
+    model, _, _ = _beam_column_model(num_elements=12)
+    states = {
+        element_id: {"axial_compression": 1.0}
+        for element_id in model.mesh.elements
+    }
+    cache = FactorizationCache(name="buckling_elastic_inverse_test", max_entries=2)
+
+    first = solve_eigenvalue_buckling(
+        model,
+        states,
+        num_modes=3,
+        dense_size_limit=1,
+        factorization_cache=cache,
+    )
+    second = solve_eigenvalue_buckling(
+        model,
+        states,
+        num_modes=3,
+        dense_size_limit=1,
+        factorization_cache=cache,
+    )
+    dense_reference = solve_eigenvalue_buckling(
+        model,
+        states,
+        num_modes=3,
+        dense_size_limit=100,
+    )
+
+    assert first.solver_status == second.solver_status == "ok"
+    assert dense_reference.solver_status == "ok"
+    np.testing.assert_allclose(
+        [mode.load_factor for mode in second.modes],
+        [mode.load_factor for mode in first.modes],
+        rtol=1.0e-11,
+    )
+    np.testing.assert_allclose(
+        [mode.load_factor for mode in second.modes],
+        [mode.load_factor for mode in dense_reference.modes],
+        rtol=1.0e-10,
+    )
+    assert second.diagnostics["elastic_inverse"] is True
+    assert (
+        second.diagnostics["elastic_inverse_persistence"]
+        == "caller_owned_elastic_only"
+    )
+    assert second.diagnostics["elastic_inverse_cache"]["hits"] == 1
+    assert second.diagnostics["max_residual_norm"] < 1.0e-8
+
+
 def test_buckling_applies_model_constraints_independent_of_prior_call_history():
     preapplied_model, _, _ = _beam_column_model(num_elements=8)
     fresh_model, _, _ = _beam_column_model(num_elements=8)
