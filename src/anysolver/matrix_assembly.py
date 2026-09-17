@@ -3604,10 +3604,32 @@ def _run_with_qualified_assembly_runtime_lease(
                 for element in qualified_elements
                 if type(element) is _QualifiedE4PLS3ShellElement
             )
-            with ExitStack() as stack:
-                stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
-                stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
-                result = operation(lease)
+            scoped_operation_error: BaseException | None = None
+            try:
+                with ExitStack() as stack:
+                    stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
+                    stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
+                    try:
+                        result = operation(lease)
+                    except BaseException as exc:
+                        scoped_operation_error = exc
+                        raise
+            except BaseException as scope_error:
+                # Trusted-scope finalization must still run and may detect the
+                # same adversarial mutation.  It must not, however, replace a
+                # more specific operation-time capability rejection with a
+                # generic cleanup AssemblyError.
+                if isinstance(scoped_operation_error, ElementCapabilityError):
+                    if (
+                        scope_error is not scoped_operation_error
+                        and hasattr(scoped_operation_error, "add_note")
+                    ):
+                        scoped_operation_error.add_note(
+                            "qualified trusted scope also rejected cleanup: "
+                            f"{type(scope_error).__name__}: {scope_error}"
+                        )
+                    raise scoped_operation_error
+                raise
     except BaseException as operation_error:
         # A mutation followed by restoration must invalidate the failed call
         # and every derived qualified cache written while it was in flight.
