@@ -424,3 +424,18 @@ def test_load_displacement_array_protocol_is_guarded_before_finite_check(
     with pytest.raises(ElementCapabilityError, match="NUMERICAL_AUTHORITY_MISMATCH"):
         assembler(model, None, ObservedArray())  # type: ignore[operator]
     assert reached == ["array"]
+
+
+def test_trusted_scope_cleanup_termination_outranks_ordinary_operation_error() -> None:
+    assert matrix_assembly_module._scoped_operation_error_has_precedence(
+        ValueError("operation"),
+        RuntimeError("cleanup"),
+    )
+    assert not matrix_assembly_module._scoped_operation_error_has_precedence(
+        ValueError("operation"),
+        KeyboardInterrupt(),
+    )
+    assert matrix_assembly_module._scoped_operation_error_has_precedence(
+        KeyboardInterrupt(),
+        RuntimeError("cleanup"),
+    )

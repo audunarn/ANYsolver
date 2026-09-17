@@ -89,13 +89,14 @@ def _canonical(value: Any) -> str:
 
 
 def _stable_non_descriptor_payload(result: Any) -> dict[str, Any]:
-    """Remove only pre-existing wall-clock assembly observations."""
+    """Remove wall-clock observations from the deterministic science payload."""
 
     payload = result.to_dict()
     for lane in ("stiffness", "mass"):
         info = payload["assembly_info"][lane]
         info.pop("assembly_time", None)
         info.pop("element_times", None)
+    payload["diagnostics"].pop("phase_timings_seconds", None)
     return payload
 
 
@@ -200,6 +201,20 @@ def test_non_descriptor_modal_payload_has_no_descriptor_provenance() -> None:
         "declared_algebraic_mass_certificate",
     }
     assert forbidden.isdisjoint(first.diagnostics)
+    assert set(first.diagnostics["phase_timings_seconds"]) == {
+        "validation",
+        "stiffness",
+        "mass",
+        "geometric_stiffness",
+        "constraint_reduction",
+        "factorization",
+        "eigen_iterations",
+        "residual_checks_and_mode_recovery",
+        "total",
+    }
+    assert all(
+        value >= 0.0 for value in first.diagnostics["phase_timings_seconds"].values()
+    )
     assert _canonical(_stable_non_descriptor_payload(first)) == _canonical(
         _stable_non_descriptor_payload(second)
     )

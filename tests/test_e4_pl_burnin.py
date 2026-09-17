@@ -704,21 +704,33 @@ def test_portable_ci_weights_are_line_ending_independent(
     assert portable_ci._module_weight(module) == lf_weight
 
 
-def test_portable_ci_executes_geometry_panel_in_a_fresh_process(
+def test_portable_ci_executes_process_state_sensitive_modules_in_fresh_processes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     modules = (
         "tests/test_geometry_panel.py",
+        "tests/test_generalized_section_api_workflows.py",
+        "tests/test_generalized_shell_sections.py",
         "tests/test_a.py",
         "tests/test_b.py",
     )
     monkeypatch.setattr(portable_ci, "_module_weight", lambda _module: 1)
     partitions = portable_ci.execution_partitions(modules, 2)
 
-    assert partitions[-1] == ("tests/test_geometry_panel.py",)
+    isolated = tuple(
+        (module,)
+        for module in sorted(
+            {
+                "tests/test_geometry_panel.py",
+                "tests/test_generalized_section_api_workflows.py",
+                "tests/test_generalized_shell_sections.py",
+            }
+        )
+    )
+    assert partitions[-3:] == isolated
     assert all(
-        "tests/test_geometry_panel.py" not in partition
-        for partition in partitions[:-1]
+        set(portable_ci.PORTABLE_ISOLATED_MODULES).isdisjoint(partition)
+        for partition in partitions[:-3]
     )
     assigned = [module for partition in partitions for module in partition]
     assert sorted(assigned) == sorted(modules)

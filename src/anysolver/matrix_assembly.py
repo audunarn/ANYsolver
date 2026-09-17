@@ -3571,6 +3571,18 @@ _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE = (
 )
 
 
+def _scoped_operation_error_has_precedence(
+    operation_error: BaseException,
+    scope_error: BaseException,
+) -> bool:
+    """Keep the first failure unless cleanup raises a termination signal."""
+
+    return (
+        not isinstance(operation_error, Exception)
+        or isinstance(scope_error, Exception)
+    )
+
+
 def _run_with_qualified_assembly_runtime_lease(
     model: "FEModel",
     *,
@@ -3604,10 +3616,39 @@ def _run_with_qualified_assembly_runtime_lease(
                 for element in qualified_elements
                 if type(element) is _QualifiedE4PLS3ShellElement
             )
-            with ExitStack() as stack:
-                stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
-                stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
-                result = operation(lease)
+            scoped_operation_error: BaseException | None = None
+            try:
+                with ExitStack() as stack:
+                    stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
+                    stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
+                    try:
+                        result = operation(lease)
+                    except BaseException as exc:
+                        scoped_operation_error = exc
+                        raise
+            except BaseException as scope_error:
+                # Trusted-scope finalization must still run and may detect the
+                # same adversarial mutation.  It must not, however, replace a
+                # more specific operation-time rejection with a generic
+                # cleanup AssemblyError.  The outer lease still adjudicates
+                # exceptional output and may wrap that original rejection.
+                if (
+                    scoped_operation_error is not None
+                    and _scoped_operation_error_has_precedence(
+                        scoped_operation_error,
+                        scope_error,
+                    )
+                ):
+                    if (
+                        scope_error is not scoped_operation_error
+                        and hasattr(scoped_operation_error, "add_note")
+                    ):
+                        scoped_operation_error.add_note(
+                            "qualified trusted scope also rejected cleanup: "
+                            f"{type(scope_error).__name__}: {scope_error}"
+                        )
+                    raise scoped_operation_error
+                raise
     except BaseException as operation_error:
         # A mutation followed by restoration must invalidate the failed call
         # and every derived qualified cache written while it was in flight.
