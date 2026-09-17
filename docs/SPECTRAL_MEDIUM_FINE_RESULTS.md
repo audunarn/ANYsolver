@@ -1,6 +1,8 @@
 # Medium/fine spectral gate — working results
 
-Status: diagnostic evidence, not an accepted performance optimization.
+Status: successor validation/cancellation optimization accepted for the
+retained medium-panel buckling target. The earlier immutable-name-only
+prototype remains rejected historical evidence.
 Baseline solver `5883ae1d7ad1b5abea3a660cc8feecc7e65c7154`; adapter
 `a377448dc235463b624226dd230f2fdb849acdd0`. Raw records are retained under
 `C:\Github\ANYsolver\.tmp_spectral_medium_fine`.
@@ -93,13 +95,54 @@ whole-route threshold. No seven-pair campaign, ten-mode escalation or installed
 wheel promotion campaign is warranted for this prototype. Independent review
 accepted only the corrected diagnostic harness and unpromoted source prototype.
 
-## Next decision
+## Successor combined gate
+
+The reviewed successor is frozen at
+`114d2cd83b8a7e5c5eacc23bbe20b3f7f902afb2`. It combines call-local live
+namespace-view reuse during qualified lifecycle validation with cheaper trusted
+checks at genuine no-op spectral cancellation checkpoints. It does not cache
+validated values, skip callback boundaries, change mechanics, or include the
+interrupted geometric-coordinate prototype. Parent verification covered 164
+focused authority, mutation, modal and buckling tests. Fresh independent review
+returned `ship` with no findings; its separate 20-test inventory passed.
+
+The three-pair screen reduced median first-analysis time from 9.8380 s to
+9.1388 s (7.11%) and retained time from 5.4710 s to 4.8014 s (12.24%). The
+retained target therefore advanced to the final seven-pair gate.
+
+Final serial seven-pair results, alternating baseline/candidate order:
+
+| Measurement | Baseline median / MAD / p95 | Candidate median / MAD / p95 | Median change |
+| --- | ---: | ---: | ---: |
+| First analysis | 9.8232 / 0.0103 / 10.1364 s | 9.2358 / 0.0644 / 9.3564 s | 5.98% faster |
+| Retained analysis | 5.4830 / 0.0507 / 5.9665 s | 4.8514 / 0.0158 / 4.9157 s | **11.52% faster** |
+
+Maximum sampled tree RSS was 608,718,848 bytes baseline and 608,206,848
+bytes candidate. In all seven pairs, eigenvalues, recorded residuals and every
+stored mode-vector array were exactly identical. Maximum recorded residual was
+2.62e-14.
+
+Bounded retained-route checks found no regression: fine-panel buckling improved
+10.25% retained and 14.18% first-analysis; medium-panel modal improved 21.59%
+retained and 17.29% first-analysis; medium-cylinder buckling improved 5.85%
+retained and 5.92% first-analysis. These are single paired checks, not final
+population timing estimates. Scientific artifacts were exact for each pair.
+
+An isolated wheel was built from the clean frozen commit. Wheel SHA-256:
+`6BC45678A501CCC38D04294EE13BAF91C2F2824963F67DF0CBF4B1BAD5A2CD57`.
+The actual ANYstructure adapter imported ANYsolver from the external install
+target and completed a retained coarse-panel five-mode solve with verified
+repeat consistency.
+
+## Decision and next priority
 
 No mechanics, tolerances, qualifications, defaults or public selectors changed.
-The immutable-name preparation remains isolated on the research branch and is
-not integrated as a performance improvement. The combined validation/geometric
-assembly qualification gate has no accepted implementation winner; no new
-geometric-assembly implementation is claimed.
+The successor is accepted for integration because its retained target clears
+the 10% whole-route threshold, all retained routes improve, and the scientific
+results are unchanged. Its first-analysis medium-panel gain is reported as
+5.98%, not promoted as a separate 10% result. No new geometric-assembly
+implementation is claimed: the interrupted privileged-coordinate prototype was
+removed before the freeze because it lacked its promised mutation tests.
 
 Current panel evidence favors eliminating repeated validation work before
 changing matrix solvers. Geometric assembly is the next measurable target;
@@ -114,9 +157,10 @@ the cylinder modal rigid-mode/unshifted-search path, preserving its admission
 and residual rules; then qualify deeper shared validation/geometric preparation
 on both geometries. Do not select a C++ backend from kernel-only expectations.
 
-This bounded pass is not full performance qualification: fine-cylinder modal
-is deliberately deferred following the unresolved medium route; ten-mode,
-mixed-S3/B3-GE/eccentric-MPC regression breadth, installed wheels and the final
-seven-pair campaign were not executed for the rejected prototype. No combined
-validation/geometric-assembly speedup, default change, publication or merge
-is authorized by these results.
+The next measured target is qualified geometric-coordinate preparation and
+geometric-stiffness assembly, but it must preserve the existing direct-state
+revision in cache keys and prove descriptor/ABA mutation rejection before
+timing. Fine-cylinder modal and ten-mode escalation remain deferred. C++ or a
+new matrix backend is still not justified by the panel evidence; the cylinder
+factor/eigen mix remains the workload where such a backend may later earn a
+separate screen. No default change, version bump or publication is authorized.

@@ -17,6 +17,19 @@ Never interrupt unrelated processes or discard partial evidence.
 - Available numerical stack: NumPy 2.4.3, SciPy 1.16.3, Numba 0.65.0,
   psutil 7.2.2. Bind actual imported paths explicitly in benchmark children.
 - Gate definition: `docs/SPECTRAL_MEDIUM_FINE_GATE.md`.
+- Accepted successor implementation freeze:
+  `114d2cd83b8a7e5c5eacc23bbe20b3f7f902afb2`.
+- Successor verification: 164 parent tests passed; fresh independent review
+  returned `ship` and independently passed 20 targeted tests.
+- Final seven-pair medium-panel gate passed its retained target: 11.52% median
+  improvement with exact eigenvalues, residuals and stored vectors in all
+  pairs. First-analysis improvement was 5.98%.
+- Fine-panel buckling, medium-panel modal and medium-cylinder buckling paired
+  checks all improved; no retained route regressed.
+- External installed wheel SHA-256:
+  `6BC45678A501CCC38D04294EE13BAF91C2F2824963F67DF0CBF4B1BAD5A2CD57`;
+  the actual ANYstructure adapter completed a retained modal smoke from that
+  install target with verified repeat consistency.
 - Frozen prototype/harness: `7321baff6185ebff8750d07755ed042f8aab7e34`.
   Not accepted for integration. Harness failure-safety corrections verified:
   eight tests passed in the parent; focused source/guard suite 116 passed.
@@ -63,16 +76,16 @@ Never interrupt unrelated processes or discard partial evidence.
    correction passes ten harness tests. Cylinder modal diagnostic `04` was
    explicitly stopped before its first mode after several minutes; no success
    result, no retry and no fine-modal escalation. Its process tree is gone.
-2. No further heavy campaign is scheduled. Medium/fine panel modal/buckling
-   and cylinder buckling profiles are complete.
+2. No further heavy campaign is scheduled. The accepted successor is ready for
+   protected integration after committing the evidence update.
 3. Preserve the failed cylinder-modal route and entry-only probe: the latter
    observed unshifted sparse search with zero-shift inverse disabled on a
    13,962-DOF pencil. No modes were calculated by the probe.
 4. Result report and raw-file digest ledger are in
    `SPECTRAL_MEDIUM_FINE_RESULTS.md` and `SPECTRAL_MEDIUM_FINE_EVIDENCE.md`;
-   retain the prototype only as unpromoted work. Next implementation requires deeper
-   validation/geometric preparation or safe cylinder modal acceleration;
-   there is no evidence supporting a new C++ backend yet.
+   retain the first prototype as rejected evidence. Next implementation should
+   qualify geometric preparation or safe cylinder modal acceleration; there is
+   still no evidence supporting a new C++ backend.
 
 All raw outputs use fresh directories; no automatic retry. Parent remains
 responsible for architecture, integration, profile interpretation and acceptance.
