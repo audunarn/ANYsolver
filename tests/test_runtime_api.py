@@ -50,6 +50,55 @@ def test_runtime_contract_is_headless_and_builds_geometry() -> None:
     assert "beams" in generated
 
 
+def test_buckling_mode_visualization_uses_displacement_amplitude_without_stress_recovery(
+    monkeypatch,
+) -> None:
+    class Node:
+        def __init__(self) -> None:
+            self.dofs = [0, 1, 2, 3, 4, 5]
+            self.x = 1.0
+            self.y = 2.0
+            self.z = 3.0
+
+        def coords(self):
+            return (self.x, self.y, self.z)
+
+    node = Node()
+    mesh = SimpleNamespace(
+        nodes={1: node},
+        elements={},
+        get_node=lambda node_id: node if int(node_id) == 1 else None,
+        get_element=lambda _element_id: None,
+    )
+    model = SimpleNamespace(mesh=mesh)
+    mode = SimpleNamespace(
+        mode_number=1,
+        load_factor=2.5,
+        mode_shape=np.asarray([3.0, 4.0, 0.0, 0.0, 0.0, 0.0]),
+    )
+
+    def forbidden_stress_recovery(*_args, **_kwargs):
+        raise AssertionError("mode visualization must not recover stresses")
+
+    monkeypatch.setattr(
+        runtime,
+        "_backend_compute_stresses",
+        forbidden_stress_recovery,
+    )
+
+    visualizations = runtime._buckling_mode_visualizations(
+        {"plot_type": "flat", "plot_grid": [[1]], "shells": [], "beams": []},
+        model,
+        SimpleNamespace(modes=(mode,)),
+    )
+
+    assert len(visualizations) == 1
+    shape = visualizations[0]["shape"]
+    assert shape["scalar_label"] == "mode amplitude"
+    assert shape["stress_pa"] == ((5.0,),)
+    assert shape["fields"]["custom_scalar"] == ((5.0,),)
+
+
 def test_runtime_public_api_is_explicit_and_complete() -> None:
     expected = {
         "GeneratedGeometry",
@@ -412,6 +461,27 @@ def test_runtime_session_reuse_excludes_state_changing_paths() -> None:
     )
     assert not runtime._can_reuse_linear_buckling_session(
         runtime.LightweightFEMConfig(collision_enabled=True)
+    )
+
+
+def test_runtime_analysis_context_admits_reference_elastic_spectral_only() -> None:
+    spectral = runtime.LightweightFEMConfig(
+        runtime_solver="stepwise",
+        analysis_type="linear eigenvalue",
+        include_end_lids=False,
+    )
+
+    assert runtime._runtime_context_eligible(
+        spectral,
+        {"geometry": "flat panel"},
+    )
+    assert not runtime._runtime_context_eligible(
+        replace(spectral, added_mass_kg=10.0),
+        {"geometry": "flat panel"},
+    )
+    assert not runtime._runtime_context_eligible(
+        replace(spectral, include_end_lids=True),
+        {"geometry": "cylinder"},
     )
 
 

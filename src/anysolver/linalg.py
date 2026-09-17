@@ -183,6 +183,24 @@ class SparseSolverBackend:
             ordering=ordering,
             signature=signature,
             factorization_time=time.time() - start,
+            metadata={
+                "matrix_nnz": int(csc.nnz),
+                "factor_nnz": int(solver.L.nnz + solver.U.nnz),
+                "factor_fill_ratio": float(
+                    (solver.L.nnz + solver.U.nnz) / max(int(csc.nnz), 1)
+                ),
+                "factor_storage_bytes": int(
+                    solver.L.data.nbytes
+                    + solver.L.indices.nbytes
+                    + solver.L.indptr.nbytes
+                    + solver.U.data.nbytes
+                    + solver.U.indices.nbytes
+                    + solver.U.indptr.nbytes
+                ),
+                "matrix_storage_bytes": int(
+                    csc.data.nbytes + csc.indices.nbytes + csc.indptr.nbytes
+                ),
+            },
             _solver=solver,
         )
 

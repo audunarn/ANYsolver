@@ -128,12 +128,15 @@ recovery needs it.
 
 `RuntimeAnalysisContext` is the higher-level optional owner used by runtime
 clients such as an ANYstructure FEM window.  It captures a canonical key for
-geometry, topology, sections, formulations, supports, MPCs, activity and
-material settings.  Only load amplitudes are excluded.  Each use also checks
-the live model revision snapshot, so a caller cannot mutate a prepared model
-and silently retain factors.  Ineligible nonlinear, follower, collision,
-transient or history-bearing routes build and release their ordinary model
-state without entering the context.
+geometry, topology, sections, formulations, supports, MPCs, activity, mass and
+material settings.  Only load amplitudes are excluded.  Eligible
+reference-elastic static-plus-buckling runs retain the elastic stiffness and
+its inverse while rebuilding prestress, geometric stiffness and eigenpairs for
+every accepted state.  Each use also checks the live model revision snapshot,
+so a caller cannot mutate a prepared model and silently retain factors.
+Ineligible nonlinear, follower, collision, transient, cylinder lid-gauge or
+history-bearing routes build and release their ordinary model state without
+entering the context.
 
 ## Impact flow
 

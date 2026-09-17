@@ -11,6 +11,9 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from scipy import sparse
+
+import anysolver.modal as modal_module
 
 from anysolver import (
     BoundaryCondition,
@@ -155,6 +158,98 @@ def test_sparse_modal_shift_invert_uses_factorization_cache() -> None:
     assert result.diagnostics["shift_invert"] is True
     assert result.diagnostics["factorization_cache"]["misses"] == 1
     assert cache.diagnostics()["entries"] == 1
+
+
+def test_supported_unshifted_sparse_modal_uses_retained_zero_shift_inverse() -> None:
+    model = FEModel("axial_chain_zero_shift")
+    model.add_material("steel", elastic_modulus=100.0, poisson_ratio=0.3, density=2.0)
+    for i in range(8):
+        model.add_node(i + 1, float(i), 0.0, 0.0)
+    for i in range(7):
+        model.add_element(
+            i + 1,
+            BeamElement(
+                i + 1,
+                [i + 1, i + 2],
+                "steel",
+                {"area": 1.0, "Iy": 1.0e-6, "Iz": 1.0e-6, "J": 1.0e-6},
+            ),
+        )
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "axial_only",
+            list(model.mesh.nodes),
+            {"uy": 0.0, "uz": 0.0, "rx": 0.0, "ry": 0.0, "rz": 0.0},
+        )
+    )
+    model.add_boundary_condition(BoundaryCondition("fix_left", [1], {"ux": 0.0}))
+    cache = FactorizationCache(name="modal_zero_shift_test", max_entries=2)
+
+    first = solve_free_vibration(
+        model,
+        num_modes=3,
+        dense_size_limit=1,
+        factorization_cache=cache,
+    )
+    second = solve_free_vibration(
+        model,
+        num_modes=3,
+        dense_size_limit=1,
+        factorization_cache=cache,
+    )
+    dense_reference = solve_free_vibration(
+        model,
+        num_modes=3,
+        dense_size_limit=100,
+    )
+
+    assert first.solver_status == second.solver_status == "ok"
+    assert dense_reference.solver_status == "ok"
+    np.testing.assert_allclose(second.frequencies_hz, first.frequencies_hz, rtol=1.0e-12)
+    np.testing.assert_allclose(
+        second.frequencies_hz,
+        dense_reference.frequencies_hz,
+        rtol=1.0e-11,
+    )
+    sparse_basis = np.column_stack(
+        [mode.mode_shape for mode in second.modes]
+    )
+    dense_basis = np.column_stack(
+        [mode.mode_shape for mode in dense_reference.modes]
+    )
+    sparse_q, _ = np.linalg.qr(sparse_basis)
+    dense_q, _ = np.linalg.qr(dense_basis)
+    principal_cosines = np.linalg.svd(
+        dense_q.T @ sparse_q,
+        compute_uv=False,
+    )
+    np.testing.assert_allclose(principal_cosines, 1.0, atol=1.0e-10)
+    assert second.diagnostics["zero_shift_inverse"] is True
+    assert second.diagnostics["factorization_cache"]["hits"] == 1
+    assert cache.diagnostics()["entries"] == 1
+    assert second.diagnostics["max_residual_norm"] < 1.0e-9
+
+
+def test_zero_shift_inverse_falls_back_for_constrained_internal_mechanism() -> None:
+    stiffness = sparse.diags(
+        [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+        format="csr",
+    )
+    mass = sparse.identity(10, format="csr")
+
+    values, vectors, diagnostics = modal_module._sparse_eigensolve(
+        stiffness,
+        mass,
+        num_modes=2,
+        shift=None,
+        use_zero_shift_inverse=True,
+    )
+
+    assert diagnostics["zero_shift_inverse_fallback"] is True
+    assert diagnostics["shift_invert"] is False
+    assert np.all(np.isfinite(values))
+    assert vectors.shape == (10, 6)
+    assert np.min(np.abs(values)) < 1.0e-10
 
 
 def test_free_free_beam_modal_solver_identifies_six_rigid_modes() -> None:

@@ -387,9 +387,24 @@ def _runtime_context_key(
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _runtime_context_eligible(config: LightweightFEMConfig) -> bool:
+def _runtime_context_eligible(
+    config: LightweightFEMConfig,
+    geometry: Mapping[str, object] | None = None,
+) -> bool:
+    runtime_choice = _normalized_choice(config.runtime_solver, "stepwise")
+    reference_elastic_spectral = _can_reuse_linear_buckling_session(config)
+    # The cylinder lid gauge is intentionally installed only for the
+    # buckling phase.  Until it has a separate immutable constraint owner, do
+    # not retain that phase-mutated model across analyses.
+    cylinder_gauge_mutation = bool(
+        reference_elastic_spectral
+        and config.include_end_lids
+        and str((geometry or {}).get("geometry", "")).strip().lower()
+        == "cylinder"
+    )
     return bool(
-        _normalized_choice(config.runtime_solver, "stepwise") == "static only"
+        (runtime_choice == "static only" or reference_elastic_spectral)
+        and not cylinder_gauge_mutation
         and not _wants_static_nonlinear_analysis(config)
         and not _wants_capacity_workflow(config)
         and not _wants_tangent_stability_analysis(config)
@@ -406,12 +421,14 @@ def _runtime_context_eligible(config: LightweightFEMConfig) -> bool:
 
 
 class RuntimeAnalysisContext:
-    """Optional owner for repeated linear-static analyses of one model.
+    """Optional owner for repeated reference-elastic analyses of one model.
 
     The context keeps an immutable structural epoch and an AnalysisSession.
-    Load-only changes reuse the model, reduced system and factorization.  Any
-    structural mutation, failed finalization or key mismatch closes the old
-    session before a new model can be captured.
+    Load-only changes reuse the model, reduced system and eligible elastic
+    factorizations for linear static and supported spectral workflows.
+    Prestress-dependent operators are rebuilt for every accepted state.  Any
+    structural or mass mutation, failed finalization or key mismatch closes
+    the old session before a new model can be captured.
     """
 
     def __init__(self) -> None:
@@ -4785,6 +4802,8 @@ def _visualization_from_full_result(
     scalar_label: str = "stress [Pa]",
     stresses_by_element: dict[int, object] | None = None,
     element_scalar_fields: dict[str, dict[int, float]] | None = None,
+    *,
+    recover_stresses_if_missing: bool = True,
 ) -> dict[str, object]:
     grid = generated_geometry.get("plot_grid") or []
     has_custom = bool(generated_geometry.get("shells") or generated_geometry.get("beams"))
@@ -4793,7 +4812,11 @@ def _visualization_from_full_result(
 
     if stresses_by_element is None:
         stresses_by_element = {}
-    if not stresses_by_element and _backend_compute_stresses is not None:
+    if (
+        recover_stresses_if_missing
+        and not stresses_by_element
+        and _backend_compute_stresses is not None
+    ):
         stresses_by_element = _backend_compute_stresses(model, displacements)
     if element_scalar_fields is None:
         element_scalar_fields = {}
@@ -4938,12 +4961,18 @@ def _buckling_mode_visualizations(generated_geometry: dict, model, buckling_resu
         return ()
     modes = []
     for mode in getattr(buckling_result, "modes", []) or []:
+        mode_shape = np.asarray(mode.mode_shape, dtype=float)
+        mode_amplitude_by_node = {
+            int(node_id): float(np.linalg.norm(mode_shape[node.dofs[:3]]))
+            for node_id, node in model.mesh.nodes.items()
+        }
         shape = _visualization_from_full_result(
             generated_geometry,
             model,
-            np.asarray(mode.mode_shape, dtype=float),
-            scalar_by_node={},
+            mode_shape,
+            scalar_by_node=mode_amplitude_by_node,
             scalar_label="mode amplitude",
+            recover_stresses_if_missing=False,
         )
         if not shape:
             continue
@@ -8826,7 +8855,10 @@ def run_production_fem(
         if status_callback: status_callback("Building FE model...")
         if imported_fem_model is not None:
             model = imported_fem_model
-        elif analysis_context is not None and _runtime_context_eligible(config):
+        elif analysis_context is not None and _runtime_context_eligible(
+            config,
+            geometry,
+        ):
             context_key = _runtime_context_key(
                 generated_geometry,
                 config,
@@ -9424,6 +9456,30 @@ def run_production_fem(
     prestress_summary["buckling_solver_status"] = str(getattr(buckling_result, "solver_status", ""))
     prestress_summary["buckling_modes_returned"] = float(len(getattr(buckling_result, "modes", []) or []))
     prestress_summary["buckling_repeated_groups"] = float(((getattr(buckling_result, "diagnostics", {}) or {}).get("num_repeated_mode_groups", 0)) or 0)
+    buckling_diagnostics = dict(
+        getattr(buckling_result, "diagnostics", {}) or {}
+    )
+    prestress_summary["buckling_performance"] = {
+        "solver": str(buckling_diagnostics.get("solver", "")),
+        "phase_timings_seconds": dict(
+            buckling_diagnostics.get("phase_timings_seconds", {}) or {}
+        ),
+        "matrix_diagnostics": dict(
+            buckling_diagnostics.get("matrix_diagnostics", {}) or {}
+        ),
+        "elastic_inverse": bool(
+            buckling_diagnostics.get("elastic_inverse", False)
+        ),
+        "elastic_inverse_factorization": dict(
+            buckling_diagnostics.get("elastic_inverse_factorization", {}) or {}
+        ),
+        "elastic_inverse_cache": dict(
+            buckling_diagnostics.get("elastic_inverse_cache", {}) or {}
+        ),
+        "elastic_inverse_persistence": str(
+            buckling_diagnostics.get("elastic_inverse_persistence", "")
+        ),
+    }
     prestress_summary["buckling_shift_load_factor"] = float(config.buckling_shift_load_factor or 0.0)
     load_factor_range = _buckling_load_factor_range(config)
     if load_factor_range is not None:
@@ -9535,7 +9591,15 @@ def run_production_fem(
             visualization["plastic_strain_label"] = "equiv. engineering plastic strain [-]"
     if isinstance(transient_summary, dict) and transient_summary.get("history"):
         visualization["time_domain"] = transient_summary.get("history")
-    visualization["buckling_modes"] = _buckling_mode_visualizations(generated_geometry, model, buckling_result)
+    mode_visualization_started = time.perf_counter()
+    visualization["buckling_modes"] = _buckling_mode_visualizations(
+        generated_geometry,
+        model,
+        buckling_result,
+    )
+    phase_timings["mode_visualization"] = float(
+        time.perf_counter() - mode_visualization_started
+    )
     phase_timings["result_preparation_and_visualization"] = float(
         time.perf_counter() - result_preparation_started
     )
