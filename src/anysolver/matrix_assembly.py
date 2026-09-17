@@ -12,6 +12,7 @@ import json
 import sys
 import time
 from contextlib import ExitStack
+from dataclasses import dataclass
 from operator import itemgetter
 from types import FunctionType, MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
@@ -5705,6 +5706,26 @@ def _guarded_geometric_state_snapshot(
     )
 
 
+@dataclass(frozen=True)
+class _OwnedGeometricStates:
+    """Solver-private immutable envelope for detached prestress states."""
+
+    values: Mapping[int, Any]
+    element_ids: tuple[int, ...]
+
+
+def _pack_owned_geometric_states(
+    states: Mapping[int, Any],
+) -> _OwnedGeometricStates:
+    """Bind an already-detached canonical state map for one spectral solve."""
+
+    copied = {int(element_id): state for element_id, state in states.items()}
+    return _OwnedGeometricStates(
+        values=MappingProxyType(copied),
+        element_ids=tuple(sorted(copied)),
+    )
+
+
 def _assemble_geometric_stiffness_matrix_under_lease(
     model: "FEModel",
     element_states: Optional[Any] = None,
@@ -5804,6 +5825,15 @@ def _assemble_geometric_stiffness_matrix_under_lease(
 
         if source is None:
             return None
+        if type(source) is _OwnedGeometricStates:
+            state = source.values.get(element_id)
+            internal_input_guard(
+                context=(
+                    "geometric stiffness packed-state lookup for element "
+                    f"{element_id}"
+                )
+            )
+            return state
         if _exact_callable(source):
             try:
                 try:
@@ -5885,6 +5915,19 @@ def _assemble_geometric_stiffness_matrix_under_lease(
         path: str = "state",
     ) -> Any:
         """Detach state with private callback-aware traversal authority."""
+
+        if type(element_states) is _OwnedGeometricStates:
+            # The solver detached this state from caller ownership before
+            # constructing the private immutable envelope.  Re-copying every
+            # nested station value here was the dominant remaining prestress
+            # assembly overhead.
+            internal_input_guard(
+                context=(
+                    "geometric packed-state use for element "
+                    f"{element_id}"
+                )
+            )
+            return state
 
         context = (
             f"geometric state observation for element {element_id} at {path}"
@@ -6369,6 +6412,9 @@ def _assemble_geometric_stiffness_matrix_under_lease(
 
     info["state_source"] = "none" if element_states is None else type(element_states).__name__
     info["diagnostics"]["scalar_element_count"] = int(info["num_elements"] - len(batched_ids))
+    info["diagnostics"]["packed_prestress_state"] = bool(
+        type(element_states) is _OwnedGeometricStates
+    )
     info["diagnostics"]["shell_initial_stress_scope"] = (
         "mindlin_translations_and_director_gradients; no_drilling_or_transverse_normal_stress_terms"
     )

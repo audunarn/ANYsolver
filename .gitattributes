@@ -39,3 +39,5 @@ docs/E4_* text eol=lf
 docs/reference_cases/e4_* text eol=lf
 tests/test_e4_* text eol=lf
 docs/reference_cases/b3_ge_g7_*.json text eol=lf
+docs/reference_cases/qualified_shell_runtime_guard_performance_successor.json text eol=lf
+docs/STATIC_RUNTIME_PERFORMANCE.md text eol=lf

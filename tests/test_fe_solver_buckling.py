@@ -3,12 +3,15 @@ import pytest
 from scipy import linalg, sparse
 
 import anysolver.buckling as buckling_module
-from anysolver.boundary import BoundaryCondition
+from anysolver.boundary import BoundaryCondition, LoadCase
 from anysolver.buckling import solve_eigenvalue_buckling
 from anysolver.elements import BeamElement
 from anysolver.fe_core import FEModel
 from anysolver.linalg import FactorizationCache
-from anysolver.matrix_assembly import assemble_geometric_stiffness_matrix
+from anysolver.matrix_assembly import (
+    _pack_owned_geometric_states,
+    assemble_geometric_stiffness_matrix,
+)
 
 
 def _beam_column_model(num_elements=8):
@@ -48,6 +51,23 @@ def test_beam_geometric_stiffness_is_symmetric_and_scales_with_compression():
     np.testing.assert_allclose(KG_250.toarray(), 2.5 * KG_100.toarray(), rtol=1.0e-13, atol=1.0e-12)
 
 
+def test_owned_prestress_envelope_preserves_geometric_matrix() -> None:
+    model, _, _ = _beam_column_model(num_elements=3)
+    states = {
+        element_id: {"axial_compression": float(element_id)}
+        for element_id in model.mesh.elements
+    }
+
+    scalar, _ = assemble_geometric_stiffness_matrix(model, states)
+    packed, info = assemble_geometric_stiffness_matrix(
+        model,
+        _pack_owned_geometric_states(states),
+    )
+
+    np.testing.assert_allclose(packed.toarray(), scalar.toarray(), rtol=0.0, atol=0.0)
+    assert info["diagnostics"]["packed_prestress_state"] is True
+
+
 def test_negative_axial_force_is_interpreted_as_compression_for_beam_kg():
     model, _, _ = _beam_column_model(num_elements=1)
 
@@ -74,6 +94,17 @@ def test_eigenvalue_buckling_returns_euler_column_scale_for_pinned_beam():
     assert result.diagnostics["max_residual_norm"] < 1.0e-8
     assert result.modes[0].validity_status == "ok"
     assert result.result_case["solver_backend"] in {"scipy_superlu", None}
+    spectral = result.diagnostics["spectral_guard_diagnostics"]
+    assert spectral["residual_batch_columns"] >= result.num_modes_returned
+    assert result.diagnostics["phase_timings_seconds"]["residual_batch"] >= 0.0
+    assert spectral["full_guard_count"] > 0
+    assert spectral["trusted_guard_count"] >= 0
+    assert result.assembly_info["geometric_stiffness"]["diagnostics"][
+        "packed_prestress_state"
+    ] is True
+    assert result.assembly_info["external_load_tangent"]["diagnostics"][
+        "dead_load_zero_tangent_fast_path"
+    ] is True
 
 
 def test_supported_unshifted_buckling_reuses_only_elastic_inverse() -> None:
@@ -124,6 +155,174 @@ def test_supported_unshifted_buckling_reuses_only_elastic_inverse() -> None:
     )
     assert second.diagnostics["elastic_inverse_cache"]["hits"] == 1
     assert second.diagnostics["max_residual_norm"] < 1.0e-8
+
+
+def test_buckling_preserves_external_load_tangent_replacement_seam(
+    monkeypatch,
+) -> None:
+    model, _, _ = _beam_column_model(num_elements=6)
+    states = {
+        element_id: {"axial_compression": 1.0}
+        for element_id in model.mesh.elements
+    }
+    total_dofs = model.mesh.dof_manager.total_dofs
+    replacement = sparse.eye(total_dofs, format="csr", dtype=float) * 1.0e-3
+    calls: list[int] = []
+
+    def replacement_tangent(_model, _case, _displacements):
+        calls.append(1)
+        return replacement, {"matrix_type": "replacement_load_tangent"}
+
+    monkeypatch.setattr(
+        buckling_module,
+        "assemble_external_load_tangent",
+        replacement_tangent,
+    )
+
+    result = solve_eigenvalue_buckling(model, states, num_modes=2)
+
+    assert result.solver_status == "ok"
+    assert calls == [1]
+    assert (
+        result.assembly_info["external_load_tangent"]["matrix_type"]
+        == "replacement_load_tangent"
+    )
+    assert result.diagnostics["follower_load_stiffness_included"] is True
+
+
+def test_dead_load_fast_path_defers_to_load_case_descriptors(monkeypatch) -> None:
+    model, _, _ = _beam_column_model(num_elements=4)
+    states = {
+        element_id: {"axial_compression": 1.0}
+        for element_id in model.mesh.elements
+    }
+    load_case = LoadCase("descriptor_follower")
+    monkeypatch.setattr(
+        LoadCase,
+        "follower_pressure",
+        property(lambda _self: True),
+    )
+
+    result = solve_eigenvalue_buckling(
+        model,
+        states,
+        num_modes=1,
+        reference_load_case=load_case,
+    )
+
+    diagnostics = result.assembly_info["external_load_tangent"]["diagnostics"]
+    assert "dead_load_zero_tangent_fast_path" not in diagnostics
+    assert result.assembly_info["external_load_tangent"][
+        "pressure_configuration"
+    ] == "current"
+
+
+def test_dead_load_fast_path_defers_to_load_case_attribute_hooks(monkeypatch) -> None:
+    model, _, _ = _beam_column_model(num_elements=4)
+    states = {
+        element_id: {"axial_compression": 1.0}
+        for element_id in model.mesh.elements
+    }
+    load_case = LoadCase("hook_follower")
+
+    def hooked_getattribute(self, name):
+        if name == "follower_pressure":
+            return True
+        return object.__getattribute__(self, name)
+
+    monkeypatch.setattr(LoadCase, "__getattribute__", hooked_getattribute)
+
+    result = solve_eigenvalue_buckling(
+        model,
+        states,
+        num_modes=1,
+        reference_load_case=load_case,
+    )
+
+    diagnostics = result.assembly_info["external_load_tangent"]["diagnostics"]
+    assert "dead_load_zero_tangent_fast_path" not in diagnostics
+    assert result.assembly_info["external_load_tangent"][
+        "pressure_configuration"
+    ] == "current"
+
+
+def test_dead_load_fast_path_preserves_dynamic_pressure_surface_diagnostics(
+    monkeypatch,
+) -> None:
+    model, _, _ = _beam_column_model(num_elements=4)
+    states = {
+        element_id: {"axial_compression": 1.0}
+        for element_id in model.mesh.elements
+    }
+    load_case = LoadCase("dynamic_pressure_surface")
+    load_case.pressure_loads[1] = 1.0
+    monkeypatch.setattr(
+        BeamElement,
+        "pressure_surface_policy_id",
+        property(lambda _self: "ELEMENT_NODAL_REFERENCE_SURFACE_V1"),
+        raising=False,
+    )
+
+    result = solve_eigenvalue_buckling(
+        model,
+        states,
+        num_modes=1,
+        reference_load_case=load_case,
+    )
+
+    tangent_info = result.assembly_info["external_load_tangent"]
+    assert "dead_load_zero_tangent_fast_path" not in tangent_info["diagnostics"]
+    assert tangent_info["qualified_s3_pressure_surfaces"] == [
+        {
+            "element_id": 1,
+            "pressure_surface_id": "ELEMENT_NODAL_REFERENCE_SURFACE_V1",
+            "reference_surface_offset": 0.0,
+            "resultant_and_reaction_reference": (
+                "GLOBAL_NODAL_REFERENCE_COORDINATES"
+            ),
+            "section_origin_offset_from_reference": -0.0,
+            "virtual_work": "TRANSLATIONAL_NODAL_REFERENCE_SURFACE_ONLY",
+        }
+    ]
+
+
+def test_dead_load_fast_path_preserves_static_pressure_diagnostics() -> None:
+    model, _, _ = _beam_column_model(num_elements=4)
+    states = {
+        element_id: {"axial_compression": 1.0}
+        for element_id in model.mesh.elements
+    }
+    load_case = LoadCase("static_pressure_surface")
+    load_case.pressure_loads[1] = 1.0
+
+    result = solve_eigenvalue_buckling(
+        model,
+        states,
+        num_modes=1,
+        reference_load_case=load_case,
+    )
+
+    tangent_info = result.assembly_info["external_load_tangent"]
+    assert "dead_load_zero_tangent_fast_path" not in tangent_info["diagnostics"]
+    assert tangent_info["matrix_type"] == "external_load_tangent"
+
+
+def test_dead_load_fast_path_preserves_missing_load_name_failure() -> None:
+    model, _, _ = _beam_column_model(num_elements=4)
+    states = {
+        element_id: {"axial_compression": 1.0}
+        for element_id in model.mesh.elements
+    }
+    load_case = LoadCase("missing_name")
+    del load_case.name
+
+    with pytest.raises(AttributeError):
+        solve_eigenvalue_buckling(
+            model,
+            states,
+            num_modes=1,
+            reference_load_case=load_case,
+        )
 
 
 def test_buckling_applies_model_constraints_independent_of_prior_call_history():
