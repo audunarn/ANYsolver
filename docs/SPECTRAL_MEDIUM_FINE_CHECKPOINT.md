@@ -42,7 +42,18 @@ Never interrupt unrelated processes or discard partial evidence.
 - `/root/harness_failure_safety` (requested Terra/high) completed benchmark
   script/process-control tests: no-error-dialog handling, fatal-log rejection,
   process-tree cleanup and failure tests. No solver source edits.
-- No candidate performance or acceptance claims yet.
+- Three alternating panel pairs completed under `e9fc46e`: prototype rejected
+  for promotion (1.53% first-analysis / 3.60% retained median reductions,
+  below 10%). Factors identical; subspace defect <=3.34e-15. Do not launch
+  the seven-pair or installed-wheel campaign for this prototype.
+- Corrected medium-cylinder buckling timing/profile completed successfully in
+  `baseline-cylinder-medium-buckling-effective-05`: approximately 26 s per
+  full analysis. Fine-cylinder timing/profile also completed successfully:
+  approximately 56 s per full analysis, 2.88 GB sampled peak tree RSS.
+  Terminal session 75668 ended normally. No task-owned benchmark remains.
+- Fresh review `/root/spectral_fixture_rereview` returned SHIP for diagnostic
+  harness/unpromoted prototype only. Requested Terra/high; observed settings
+  unavailable. No accepted performance or production integration claim.
 - Delegated inspection: `/root/profile_fixture_map`, requested
   `gpt-5.6-luna` / `high`; runtime model/effort not independently exposed.
 
@@ -52,10 +63,16 @@ Never interrupt unrelated processes or discard partial evidence.
    correction passes ten harness tests. Cylinder modal diagnostic `04` was
    explicitly stopped before its first mode after several minutes; no success
    result, no retry and no fine-modal escalation. Its process tree is gone.
-2. Complete cylinder and modal medium/fine baselines serially where healthy.
-3. Screen candidate shared validation against baseline with identical harness.
-4. Implement a narrow candidate, screen and verify; inspect complete diff and
-   obtain a fresh independent read-only review before acceptance.
+2. No further heavy campaign is scheduled. Medium/fine panel modal/buckling
+   and cylinder buckling profiles are complete.
+3. Preserve the failed cylinder-modal route and entry-only probe: the latter
+   observed unshifted sparse search with zero-shift inverse disabled on a
+   13,962-DOF pencil. No modes were calculated by the probe.
+4. Result report and raw-file digest ledger are in
+   `SPECTRAL_MEDIUM_FINE_RESULTS.md` and `SPECTRAL_MEDIUM_FINE_EVIDENCE.md`;
+   retain the prototype only as unpromoted work. Next implementation requires deeper
+   validation/geometric preparation or safe cylinder modal acceleration;
+   there is no evidence supporting a new C++ backend yet.
 
 All raw outputs use fresh directories; no automatic retry. Parent remains
 responsible for architecture, integration, profile interpretation and acceptance.
