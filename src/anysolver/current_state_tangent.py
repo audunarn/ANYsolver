@@ -659,6 +659,18 @@ _QUALIFIED_PROFILES = MappingProxyType(
     }
 )
 
+_QUALIFIED_PROFILE_CAPTURED_CLASS_NAMES = MappingProxyType(
+    {
+        formulation_id: frozenset().union(
+            *(
+                frozenset(namespace)
+                for namespace in profile["class_namespace_authority"].values()
+            )
+        )
+        for formulation_id, profile in _QUALIFIED_PROFILES.items()
+    }
+)
+
 
 def _static_mro_attribute(owner: type[Any], name: str) -> Any:
     """Return a class attribute without invoking a runtime-replaced descriptor."""
@@ -676,6 +688,8 @@ def _static_mro_attribute(owner: type[Any], name: str) -> Any:
 def _qualified_profile_api_failure(
     element: Any,
     profile: Mapping[str, Any],
+    *,
+    _captured_class_names: frozenset[str] | None = None,
 ) -> str | None:
     """Return one exact API-authority failure without evaluating mechanics."""
 
@@ -696,11 +710,15 @@ def _qualified_profile_api_failure(
         instance_namespace = {}
     if type(instance_namespace) is not dict:
         return f"{expected_formulation_id}:INSTANCE_NAMESPACE_MISMATCH"
-    captured_class_names = set().union(
-        *(
-            set(namespace)
-            for namespace in profile["class_namespace_authority"].values()
+    captured_class_names = (
+        set().union(
+            *(
+                set(namespace)
+                for namespace in profile["class_namespace_authority"].values()
+            )
         )
+        if _captured_class_names is None
+        else _captured_class_names
     )
     class_data_shadows = tuple(
         sorted(set(instance_namespace).intersection(captured_class_names))
@@ -829,6 +847,11 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
     _profiles: Mapping[str, Mapping[str, Any]] = _QUALIFIED_PROFILES,
     _static_lookup: Any = _static_mro_attribute,
     _profile_failure: Any = _qualified_profile_api_failure,
+    _preparable_profile_failure: Any = _qualified_profile_api_failure,
+    _default_profiles: Mapping[str, Mapping[str, Any]] = _QUALIFIED_PROFILES,
+    _captured_class_names_by_formulation: Mapping[str, frozenset[str]] = (
+        _QUALIFIED_PROFILE_CAPTURED_CLASS_NAMES
+    ),
     _authority_signer: Any = _module_authority_signature,
     _mapping_type: Any = Mapping,
     _capability_error: Any = ElementCapabilityError,
@@ -1062,7 +1085,20 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
             )
     if not failures:
         for element_id, element, profile in candidates:
-            failure = _profile_failure(element, profile)
+            formulation_id = str(profile["formulation_id"])
+            if (
+                _profile_failure is _preparable_profile_failure
+                and profile is _default_profiles.get(formulation_id)
+            ):
+                failure = _profile_failure(
+                    element,
+                    profile,
+                    _captured_class_names=(
+                        _captured_class_names_by_formulation[formulation_id]
+                    ),
+                )
+            else:
+                failure = _profile_failure(element, profile)
             if failure is None:
                 instance_namespace = object.__getattribute__(
                     element,
