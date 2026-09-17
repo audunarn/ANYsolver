@@ -58,12 +58,16 @@ from .elements import ShellElement
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import (
     _run_with_qualified_assembly_runtime_lease,
+    _assemble_geometric_stiffness_matrix_under_lease,
+    _pack_owned_geometric_states,
     assemble_geometric_stiffness_matrix,
     assemble_mass_matrix,
     assemble_stiffness_matrix,
 )
 from .recovery import ResourceConfig, _owned_resource_config_snapshot
 from .threading_policy import resource_threaded, thread_policy_diagnostics
+
+_EXACT_PUBLIC_GEOMETRIC_ASSEMBLER = assemble_geometric_stiffness_matrix
 
 if TYPE_CHECKING:
     from .fe_core import FEModel
@@ -1446,12 +1450,18 @@ def _owned_modal_operation_config(
     rigid_body_frequency_tolerance: Any,
     current_state_num_layers: Any,
     _exact_guard: Any,
+    _trusted_guard: Any,
 ) -> _ModalOperationConfig:
     """Detach scalar modal policy before session or matrix observation."""
 
     def converted(value: Any, converter: Any, name: str) -> Any:
         made = converter(value)
-        _exact_guard(model, context=f"modal {name} conversion")
+        # Exact built-in scalars cannot execute caller code during conversion.
+        # Keep the complete lifecycle guard for subclasses/NumPy scalars, but
+        # use the solve lease's constant-time epoch check for the ordinary hot
+        # path.  The complete guard still brackets the owned configuration.
+        guard = _trusted_guard if type(value) in {bool, int, float} else _exact_guard
+        guard(model, context=f"modal {name} conversion")
         return made
 
     def canonical_int(value: Any, name: str) -> int:
@@ -1529,6 +1539,7 @@ def _solve_free_vibration_under_lease(
     """
     operation_started = time.perf_counter()
     phase_timings: Dict[str, float] = {}
+    guard_counts = {"full": 0, "trusted": 0}
     raw_exact_guard = _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD
 
     def exact_guard(
@@ -1536,9 +1547,36 @@ def _solve_free_vibration_under_lease(
         *,
         context: str,
     ) -> Dict[str, Any]:
+        guard_counts["full"] += 1
         result = raw_exact_guard(observed_model, context=context)
         _qualified_runtime_guard(observed_model, context=context)
         return result
+
+    runtime_namespace = object.__getattribute__(
+        _qualified_runtime_guard,
+        "__dict__",
+    )
+    trusted_runtime_guard = (
+        dict.get(runtime_namespace, "_qualified_trusted_require")
+        if type(runtime_namespace) is dict
+        else None
+    )
+    if trusted_runtime_guard is None and type(runtime_namespace) is dict:
+        trusted_runtime_guard = dict.get(
+            runtime_namespace,
+            "_qualified_trusted_input_require",
+        )
+
+    def trusted_guard(
+        observed_model: "FEModel",
+        *,
+        context: str,
+    ) -> Dict[str, Any]:
+        if trusted_runtime_guard is None or observed_model is not model:
+            return exact_guard(observed_model, context=context)
+        guard_counts["trusted"] += 1
+        trusted_runtime_guard(observed_model, context=context)
+        return qualified_lifecycle_authority
     prestress_authority_guard = _require_qualified_prestress_operator_authority
     snapshot_current_state = _EXACT_CURRENT_STATE_INPUT_SNAPSHOT
     current_state_route_guard = _EXACT_COMMITTED_TANGENT_ROUTE_GUARD
@@ -1560,6 +1598,7 @@ def _solve_free_vibration_under_lease(
         rigid_body_frequency_tolerance=rigid_body_frequency_tolerance,
         current_state_num_layers=current_state_num_layers,
         _exact_guard=exact_guard,
+        _trusted_guard=trusted_guard,
     )
     num_modes = owned_config.num_modes
     shift = owned_config.shift
@@ -1693,6 +1732,7 @@ def _solve_free_vibration_under_lease(
             _exact_guard=exact_guard,
         )
     normalized_prestress_states: Optional[Dict[int, Any]] = None
+    packed_prestress_states: Any = None
     prestress_input_info: Optional[Dict[str, Any]] = None
     qualified_formulation_ids = {
         "E4_PL_QUALIFIED_Q4_HYBRID_V2",
@@ -1727,6 +1767,10 @@ def _solve_free_vibration_under_lease(
             model,
             normalized_prestress_states,
             include_mass_and_descriptor=True,
+            _exact_guard=trusted_guard,
+        )
+        packed_prestress_states = _pack_owned_geometric_states(
+            normalized_prestress_states
         )
         reference_operator_authority = has_qualified_reference_elements
     elif not current_state:
@@ -1735,6 +1779,7 @@ def _solve_free_vibration_under_lease(
                 model,
                 {int(element_id): None for element_id in model.mesh.elements},
                 include_mass_and_descriptor=True,
+                _exact_guard=trusted_guard,
             )
             reference_operator_authority = True
     phase_timings["validation"] = float(time.perf_counter() - operation_started)
@@ -1770,9 +1815,17 @@ def _solve_free_vibration_under_lease(
         geometric_info = None
         if prestress_states is not None:
             geometric_started = time.perf_counter()
-            geometric, geometric_info = assemble_geometric_stiffness_matrix(
-                model, normalized_prestress_states
-            )
+            if assemble_geometric_stiffness_matrix is _EXACT_PUBLIC_GEOMETRIC_ASSEMBLER:
+                geometric, geometric_info = _assemble_geometric_stiffness_matrix_under_lease(
+                    model,
+                    packed_prestress_states,
+                    qualified_runtime_guard=_qualified_runtime_guard,
+                )
+            else:
+                geometric, geometric_info = assemble_geometric_stiffness_matrix(
+                    model,
+                    normalized_prestress_states,
+                )
             phase_timings["geometric_stiffness"] = float(
                 time.perf_counter() - geometric_started
             )
@@ -1823,9 +1876,17 @@ def _solve_free_vibration_under_lease(
             K_red = constraint_plan.K_red
         else:
             geometric_started = time.perf_counter()
-            geometric, geometric_info = assemble_geometric_stiffness_matrix(
-                model, normalized_prestress_states
-            )
+            if assemble_geometric_stiffness_matrix is _EXACT_PUBLIC_GEOMETRIC_ASSEMBLER:
+                geometric, geometric_info = _assemble_geometric_stiffness_matrix_under_lease(
+                    model,
+                    packed_prestress_states,
+                    qualified_runtime_guard=_qualified_runtime_guard,
+                )
+            else:
+                geometric, geometric_info = assemble_geometric_stiffness_matrix(
+                    model,
+                    normalized_prestress_states,
+                )
             phase_timings["geometric_stiffness"] = float(
                 time.perf_counter() - geometric_started
             )
@@ -2121,6 +2182,13 @@ def _solve_free_vibration_under_lease(
     order = np.argsort(np.real(eigenvalues))
     eigenvalues = np.real(eigenvalues[order])
     eigenvectors = np.real(eigenvectors[:, order])
+    residual_batch_started = time.perf_counter()
+    trusted_guard(model, context="solve_free_vibration residual batch preflight")
+    stiffness_vectors = np.asarray(K_sym @ eigenvectors, dtype=float)
+    mass_vectors = np.asarray(M_sym @ eigenvectors, dtype=float)
+    trusted_guard(model, context="solve_free_vibration residual batch output")
+    residual_batch_seconds = float(time.perf_counter() - residual_batch_started)
+    phase_timings["residual_batch"] = residual_batch_seconds
     stiffness_operator_norm = (
         float(sparse_linalg.norm(K_sym)) if descriptor_modal else 0.0
     )
@@ -2137,27 +2205,37 @@ def _solve_free_vibration_under_lease(
 
     modes: List[ModalMode] = []
     descriptor_backward_errors: List[float] = []
-    for value, vector in zip(eigenvalues, eigenvectors.T):
+    for vector_index, (value, vector) in enumerate(zip(eigenvalues, eigenvectors.T)):
         cancellation_safe_point(
             cancellation_token,
             f"modal.recovery:{len(modes) + 1}",
         )
-        exact_guard(
-            model,
-            context="solve_free_vibration cancellation during recovery",
-        )
+        if cancellation_token is not None:
+            exact_guard(
+                model,
+                context="solve_free_vibration cancellation during recovery",
+            )
         if len(modes) >= num_modes:
             break
         if not np.isfinite(value):
             continue
         reduced = np.asarray(vector, dtype=float).reshape(-1)
-        modal_mass = float(reduced @ (M_sym @ reduced))
+        stiffness_vector = stiffness_vectors[:, vector_index]
+        mass_vector = mass_vectors[:, vector_index]
+        modal_mass = float(reduced @ mass_vector)
         if modal_mass <= eigen_tolerance:
             continue
-        reduced = reduced / np.sqrt(modal_mass)
-        reduced = _deterministic_sign(reduced)
-        modal_mass = float(reduced @ (M_sym @ reduced))
-        raw_modal_stiffness = float(reduced @ (K_sym @ reduced))
+        normalization = 1.0 / np.sqrt(modal_mass)
+        reduced = reduced * normalization
+        stiffness_vector = stiffness_vector * normalization
+        mass_vector = mass_vector * normalization
+        signed = _deterministic_sign(reduced)
+        if signed is not reduced:
+            reduced = signed
+            stiffness_vector = -stiffness_vector
+            mass_vector = -mass_vector
+        modal_mass = float(reduced @ mass_vector)
+        raw_modal_stiffness = float(reduced @ stiffness_vector)
         if descriptor_modal:
             # The descriptor solver may obtain the certified finite value from
             # a statically condensed quotient.  Recomputing x^T K x in a
@@ -2192,10 +2270,13 @@ def _solve_free_vibration_under_lease(
             rigid_corr = float(np.max(np.abs(Q.T @ reduced))) if Q.shape[1] else 0.0
         omega = float(np.sqrt(max(eig, 0.0)))
         frequency = omega / (2.0 * np.pi)
-        residual = np.asarray(K_sym @ reduced - eig * (M_sym @ reduced), dtype=float).reshape(-1)
+        residual = np.asarray(
+            stiffness_vector - eig * mass_vector,
+            dtype=float,
+        ).reshape(-1)
         denominator = max(
-            float(np.linalg.norm(K_sym @ reduced))
-            + abs(eig) * float(np.linalg.norm(M_sym @ reduced)),
+            float(np.linalg.norm(stiffness_vector))
+            + abs(eig) * float(np.linalg.norm(mass_vector)),
             1.0,
         )
         if descriptor_modal:
@@ -2238,6 +2319,11 @@ def _solve_free_vibration_under_lease(
         "solver": solver_kind,
         **sparse_diagnostics,
         "phase_timings_seconds": phase_timings,
+        "spectral_guard_diagnostics": {
+            "full_guard_count": int(guard_counts["full"]),
+            "trusted_guard_count": int(guard_counts["trusted"]),
+            "residual_batch_columns": int(eigenvectors.shape[1]),
+        },
         "matrix_diagnostics": {
             "stiffness_reduced_shape": [int(value) for value in K_sym.shape],
             "stiffness_reduced_nnz": int(K_sym.nnz),

@@ -138,6 +138,11 @@ def test_constrained_axial_bar_modal_frequency_matches_sdof_reference() -> None:
     assert result.modes[0].modal_mass == pytest.approx(1.0)
     assert result.diagnostics["max_residual_norm"] < 1.0e-10
     assert result.result_case["analysis_case"]["analysis_type"] == "modal"
+    spectral = result.diagnostics["spectral_guard_diagnostics"]
+    assert spectral["residual_batch_columns"] >= result.num_modes_returned
+    assert result.diagnostics["phase_timings_seconds"]["residual_batch"] >= 0.0
+    assert spectral["full_guard_count"] > 0
+    assert spectral["trusted_guard_count"] >= 0
 
 
 def test_sparse_modal_shift_invert_uses_factorization_cache() -> None:

@@ -209,6 +209,7 @@ def test_non_descriptor_modal_payload_has_no_descriptor_provenance() -> None:
         "constraint_reduction",
         "factorization",
         "eigen_iterations",
+        "residual_batch",
         "residual_checks_and_mode_recovery",
         "total",
     }

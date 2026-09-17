@@ -40,6 +40,8 @@ from .e4_pl_element import QualifiedE4PLShellElement
 from .e4_pl_s3_element import QualifiedE4PLS3ShellElement
 from .linalg import FactorizationCache, MatrixClass, cached_inverse_operator
 from .matrix_assembly import (
+    _assemble_geometric_stiffness_matrix_under_lease,
+    _pack_owned_geometric_states,
     _run_with_qualified_assembly_runtime_lease,
     assemble_external_load_tangent,
     assemble_geometric_stiffness_matrix,
@@ -47,6 +49,9 @@ from .matrix_assembly import (
 )
 from .recovery import ResourceConfig, _owned_resource_config_snapshot
 from .threading_policy import resource_threaded
+
+_EXACT_PUBLIC_GEOMETRIC_ASSEMBLER = assemble_geometric_stiffness_matrix
+_EXACT_PUBLIC_EXTERNAL_LOAD_TANGENT = assemble_external_load_tangent
 
 if TYPE_CHECKING:
     from .analysis_session import AnalysisSession
@@ -86,6 +91,140 @@ def _static_formulation_id(element: Any) -> Optional[str]:
             value = namespace["formulation_id"]
             return value if type(value) is str else None
     return None
+
+
+def _has_dynamic_attribute_semantics(owner: type) -> bool:
+    """Return whether normal instance lookup can execute caller-owned code."""
+
+    for base in type.__getattribute__(owner, "__mro__"):
+        namespace = type.__getattribute__(base, "__dict__")
+        if "__getattr__" in namespace:
+            return True
+        attribute_reader = namespace.get("__getattribute__")
+        if (
+            attribute_reader is not None
+            and attribute_reader is not object.__getattribute__
+        ):
+            return True
+    return False
+
+
+def _try_exact_dead_load_zero_tangent(
+    model: "FEModel",
+    load_case: Optional["LoadCase"],
+    displacements: Optional[np.ndarray],
+    *,
+    exact_guard: Any,
+    trusted_guard: Any,
+) -> Optional[tuple[sparse.csr_matrix, Dict[str, Any]]]:
+    """Return the exact zero tangent for a callback-free dead-load route.
+
+    The public assembly path remains authoritative for follower pressure,
+    qualified-S3 pressure-surface diagnostics, activity controllers, custom
+    load cases and array-like displacement providers.  This narrow route
+    avoids opening a second complete qualified lease when the already-open
+    spectral lease proves that the tangent is identically zero.
+    """
+
+    from .boundary import LoadCase as ExactLoadCase
+
+    exact_guard(model, context="buckling exact dead-load tangent eligibility")
+
+    if load_case is None:
+        load_name = None
+    elif type(load_case) is ExactLoadCase:
+        class_namespace = type.__getattribute__(ExactLoadCase, "__dict__")
+        if (
+            _has_dynamic_attribute_semantics(ExactLoadCase)
+            or "name" in class_namespace
+            or "pressure_loads" in class_namespace
+            or class_namespace.get("follower_pressure") is not False
+        ):
+            # A class-level descriptor or changed default can alter the
+            # authoritative public attribute semantics. Preserve that route.
+            return None
+        instance_namespace = object.__getattribute__(load_case, "__dict__")
+        if (
+            type(instance_namespace) is not dict
+            or type(dict.get(instance_namespace, "name")) is not str
+            or type(dict.get(instance_namespace, "follower_pressure")) is not bool
+            or type(dict.get(instance_namespace, "pressure_loads")) is not dict
+        ):
+            return None
+        load_name = object.__getattribute__(load_case, "name")
+        follower = object.__getattribute__(load_case, "follower_pressure")
+        pressure_loads = object.__getattribute__(load_case, "pressure_loads")
+        if type(follower) is not bool or follower or bool(pressure_loads):
+            return None
+    else:
+        return None
+
+    mesh = object.__getattribute__(model, "mesh")
+    if object.__getattribute__(mesh, "element_activity") is not None:
+        return None
+    elements = object.__getattribute__(mesh, "elements")
+    from .fe_core import _QualifiedStateMapping
+
+    if type(elements) not in {dict, _QualifiedStateMapping}:
+        return None
+    element_values = tuple(dict.values(elements))
+    for element in element_values:
+        owner = type(element)
+        if _has_dynamic_attribute_semantics(owner):
+            return None
+        instance_namespace = object.__getattribute__(element, "__dict__")
+        if type(instance_namespace) is not dict:
+            return None
+        if (
+            "formulation_id" in instance_namespace
+            or "pressure_surface_policy_id" in instance_namespace
+        ):
+            return None
+        for base in type.__getattribute__(owner, "__mro__"):
+            namespace = type.__getattribute__(base, "__dict__")
+            formulation = namespace.get("formulation_id")
+            if "formulation_id" in namespace and type(formulation) is not str:
+                return None
+            if "pressure_surface_policy_id" in namespace:
+                return None
+    if any(
+        type(element) is QualifiedE4PLS3ShellElement
+        or _static_formulation_id(element) == _QUALIFIED_S3_FORMULATION_ID
+        or type.__getattribute__(type(element), "__module__")
+        == "anysolver._ge_beam3_native_fibre_static_element"
+        for element in element_values
+    ):
+        return None
+
+    dof_manager = object.__getattribute__(mesh, "dof_manager")
+    total_dofs = int(object.__getattribute__(dof_manager, "total_dofs"))
+    if displacements is not None:
+        if type(displacements) is not np.ndarray:
+            return None
+        if displacements.shape != (total_dofs,) or not np.all(
+            np.isfinite(displacements)
+        ):
+            return None
+
+    started = time.perf_counter()
+    trusted_guard(model, context="buckling exact dead-load tangent preflight")
+    tangent = sparse.csr_matrix((total_dofs, total_dofs), dtype=float)
+    trusted_guard(model, context="buckling exact dead-load tangent output")
+    return tangent, {
+        "matrix_type": "external_load_tangent",
+        "load_case": load_name,
+        "total_dofs": total_dofs,
+        "num_pressure_elements": 0,
+        "pressure_element_ids": [],
+        "pressure_configuration": "reference",
+        "diagnostics": {
+            "assembled_symmetry_error": 0.0,
+            "element_activity": None,
+            "dead_load_zero_tangent_fast_path": True,
+            "spectral_lease_reused": True,
+        },
+        "assembly_time": float(time.perf_counter() - started),
+    }
 
 
 def _require_reference_elastic_s3_states(
@@ -381,12 +520,14 @@ def _owned_buckling_operation_config(
     current_state_num_layers: Any,
     current_state_load_scale: Any,
     _exact_guard: Any,
+    _trusted_guard: Any,
 ) -> _BucklingOperationConfig:
     """Detach all scalar/range policy before any eigensolver mechanics."""
 
     def converted(value: Any, converter: Any, name: str) -> Any:
         made = converter(value)
-        _exact_guard(model, context=f"buckling {name} conversion")
+        guard = _trusted_guard if type(value) in {bool, int, float} else _exact_guard
+        guard(model, context=f"buckling {name} conversion")
         return made
 
     def canonical_int(value: Any, name: str) -> int:
@@ -535,6 +676,7 @@ def _solve_eigenvalue_buckling_under_lease(
     """
     operation_started = time.perf_counter()
     phase_timings: Dict[str, float] = {}
+    guard_counts = {"full": 0, "trusted": 0}
     raw_exact_guard = _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD
 
     def exact_guard(
@@ -542,9 +684,36 @@ def _solve_eigenvalue_buckling_under_lease(
         *,
         context: str,
     ) -> Dict[str, Any]:
+        guard_counts["full"] += 1
         result = raw_exact_guard(observed_model, context=context)
         _qualified_runtime_guard(observed_model, context=context)
         return result
+
+    runtime_namespace = object.__getattribute__(
+        _qualified_runtime_guard,
+        "__dict__",
+    )
+    trusted_runtime_guard = (
+        dict.get(runtime_namespace, "_qualified_trusted_require")
+        if type(runtime_namespace) is dict
+        else None
+    )
+    if trusted_runtime_guard is None and type(runtime_namespace) is dict:
+        trusted_runtime_guard = dict.get(
+            runtime_namespace,
+            "_qualified_trusted_input_require",
+        )
+
+    def trusted_guard(
+        observed_model: "FEModel",
+        *,
+        context: str,
+    ) -> Dict[str, Any]:
+        if trusted_runtime_guard is None or observed_model is not model:
+            return exact_guard(observed_model, context=context)
+        guard_counts["trusted"] += 1
+        trusted_runtime_guard(observed_model, context=context)
+        return qualified_lifecycle_authority
     normalize_reference_states = _normalize_reference_prestress_states
     reference_authority_guard = _require_reference_prestress_authority
     reference_authority_policy_id = (
@@ -577,6 +746,7 @@ def _solve_eigenvalue_buckling_under_lease(
         current_state_num_layers=current_state_num_layers,
         current_state_load_scale=current_state_load_scale,
         _exact_guard=exact_guard,
+        _trusted_guard=trusted_guard,
     )
     num_modes = owned_config.num_modes
     eigen_tolerance = owned_config.eigen_tolerance
@@ -798,6 +968,7 @@ def _solve_eigenvalue_buckling_under_lease(
             model,
             element_states,
             include_mass_and_descriptor=False,
+            _exact_guard=trusted_guard,
         )
         reference_operator_authority_policy_id = (
             reference_authority_policy_id
@@ -807,12 +978,19 @@ def _solve_eigenvalue_buckling_under_lease(
             model,
             {int(element_id): None for element_id in model.mesh.elements},
             include_mass_and_descriptor=False,
+            _exact_guard=trusted_guard,
         )
         reference_operator_authority_policy_id = (
             reference_authority_policy_id
         )
     if not current_state and bool(reference_elastic_only):
         _require_reference_elastic_s3_states(model, element_states)
+
+    packed_element_states = (
+        _pack_owned_geometric_states(element_states)
+        if type(element_states) is dict
+        else element_states
+    )
 
     phase_timings["validation"] = float(time.perf_counter() - operation_started)
 
@@ -881,9 +1059,17 @@ def _solve_eigenvalue_buckling_under_lease(
         exact_guard(model, context="solve_eigenvalue_buckling stiffness assembly")
         stiffness_plan = None
         geometric_started = time.perf_counter()
-        KG, geometric_info = assemble_geometric_stiffness_matrix(
-            model, element_states
-        )
+        if assemble_geometric_stiffness_matrix is _EXACT_PUBLIC_GEOMETRIC_ASSEMBLER:
+            KG, geometric_info = _assemble_geometric_stiffness_matrix_under_lease(
+                model,
+                packed_element_states,
+                qualified_runtime_guard=_qualified_runtime_guard,
+            )
+        else:
+            KG, geometric_info = assemble_geometric_stiffness_matrix(
+                model,
+                element_states,
+            )
         phase_timings["geometric_stiffness"] = float(
             time.perf_counter() - geometric_started
         )
@@ -898,19 +1084,39 @@ def _solve_eigenvalue_buckling_under_lease(
         K = stiffness_plan.matrix
         stiffness_info = dict(stiffness_plan.info)
         geometric_started = time.perf_counter()
-        KG, geometric_info = assemble_geometric_stiffness_matrix(
-            model, element_states
-        )
+        if assemble_geometric_stiffness_matrix is _EXACT_PUBLIC_GEOMETRIC_ASSEMBLER:
+            KG, geometric_info = _assemble_geometric_stiffness_matrix_under_lease(
+                model,
+                packed_element_states,
+                qualified_runtime_guard=_qualified_runtime_guard,
+            )
+        else:
+            KG, geometric_info = assemble_geometric_stiffness_matrix(
+                model,
+                element_states,
+            )
         phase_timings["geometric_stiffness"] = float(
             time.perf_counter() - geometric_started
         )
         exact_guard(model, context="solve_eigenvalue_buckling geometric assembly")
     load_tangent_started = time.perf_counter()
-    K_load, load_tangent_info = assemble_external_load_tangent(
-        model,
-        reference_load_case,
-        reference_displacements,
-    )
+    dead_load_tangent = None
+    if assemble_external_load_tangent is _EXACT_PUBLIC_EXTERNAL_LOAD_TANGENT:
+        dead_load_tangent = _try_exact_dead_load_zero_tangent(
+            model,
+            reference_load_case,
+            reference_displacements,
+            exact_guard=exact_guard,
+            trusted_guard=trusted_guard,
+        )
+    if dead_load_tangent is None:
+        K_load, load_tangent_info = assemble_external_load_tangent(
+            model,
+            reference_load_case,
+            reference_displacements,
+        )
+    else:
+        K_load, load_tangent_info = dead_load_tangent
     exact_guard(model, context="solve_eigenvalue_buckling external-load tangent")
     phase_timings["external_load_tangent"] = float(
         time.perf_counter() - load_tangent_started
@@ -1587,23 +1793,38 @@ def _solve_eigenvalue_buckling_under_lease(
     )
 
     residual_started = time.perf_counter()
-    candidates: List[tuple[float, np.ndarray, float, float, float, float]] = []
+    real_eigenvectors = np.asarray(np.real(eigenvectors), dtype=float)
+    residual_batch_started = time.perf_counter()
+    trusted_guard(model, context="solve_eigenvalue_buckling residual batch preflight")
+    stiffness_vectors = np.asarray(K_sym @ real_eigenvectors, dtype=float)
+    geometric_vectors = np.asarray(KG_sym @ real_eigenvectors, dtype=float)
+    trusted_guard(model, context="solve_eigenvalue_buckling residual batch output")
+    residual_batch_seconds = float(time.perf_counter() - residual_batch_started)
+    phase_timings["residual_batch"] = residual_batch_seconds
+    candidates: List[
+        tuple[float, np.ndarray, np.ndarray, np.ndarray, float, float, float, float]
+    ] = []
     rejected: List[Dict[str, Any]] = []
-    for i in range(eigenvectors.shape[1]):
+    for i in range(real_eigenvectors.shape[1]):
         cancellation_safe_point(
             cancellation_token,
             f"buckling.root:{i + 1}",
         )
-        exact_guard(
-            model,
-            context="solve_eigenvalue_buckling cancellation during recovery",
-        )
-        reduced_mode = np.asarray(np.real(eigenvectors[:, i]), dtype=float)
+        if cancellation_token is not None:
+            exact_guard(
+                model,
+                context="solve_eigenvalue_buckling cancellation during recovery",
+            )
+        reduced_mode = real_eigenvectors[:, i].copy()
+        stiffness_vector = stiffness_vectors[:, i].copy()
+        geometric_vector = geometric_vectors[:, i].copy()
         mode_norm = float(np.linalg.norm(reduced_mode))
         if not np.isfinite(mode_norm) or mode_norm <= 0.0:
             rejected.append({"root_index": int(i), "reason": "invalid_or_zero_norm"})
             continue
         reduced_mode = reduced_mode / mode_norm
+        stiffness_vector = stiffness_vector / mode_norm
+        geometric_vector = geometric_vector / mode_norm
         if projection_y_vectors is not None:
             y_mode = np.asarray(np.real(projection_y_vectors[:, i]), dtype=np.float64)
             y_mode_norm = float(np.linalg.norm(y_mode))
@@ -1629,8 +1850,8 @@ def _solve_eigenvalue_buckling_under_lease(
                 }
             )
             continue
-        modal_geometric = float(reduced_mode @ (KG_sym @ reduced_mode))
-        modal_stiffness = float(reduced_mode @ (K_sym @ reduced_mode))
+        modal_geometric = float(reduced_mode @ geometric_vector)
+        modal_stiffness = float(reduced_mode @ stiffness_vector)
         if modal_geometric <= eigen_tolerance or modal_stiffness <= 0.0:
             rejected.append(
                 {
@@ -1648,20 +1869,61 @@ def _solve_eigenvalue_buckling_under_lease(
         if not _factor_in_range(rayleigh_value, load_factor_range):
             rejected.append({"root_index": int(i), "reason": "outside_load_factor_range", "load_factor": float(rayleigh_value)})
             continue
-        residual_norm = _mode_residual(K_sym, KG_sym, reduced_mode, rayleigh_value)
-        candidates.append((rayleigh_value, reduced_mode, modal_stiffness, modal_geometric, residual_norm, rigid_body_correlation))
+        residual_vector = stiffness_vector - rayleigh_value * geometric_vector
+        residual_norm = float(
+            np.linalg.norm(residual_vector)
+            / max(
+                float(np.linalg.norm(stiffness_vector))
+                + abs(rayleigh_value) * float(np.linalg.norm(geometric_vector)),
+                1.0,
+            )
+        )
+        candidates.append(
+            (
+                rayleigh_value,
+                reduced_mode,
+                stiffness_vector,
+                geometric_vector,
+                modal_stiffness,
+                modal_geometric,
+                residual_norm,
+                rigid_body_correlation,
+            )
+        )
 
     candidates.sort(key=lambda item: _sort_key(item[0], shift_load_factor))
     modes: List[BucklingMode] = []
-    for mode_number, (value, reduced_mode, _modal_stiffness, _modal_geometric, _residual_norm, rigid_body_correlation) in enumerate(
+    for mode_number, (
+        value,
+        reduced_mode,
+        stiffness_vector,
+        geometric_vector,
+        _modal_stiffness,
+        _modal_geometric,
+        _residual_norm,
+        rigid_body_correlation,
+    ) in enumerate(
         candidates[:num_modes],
         start=1,
     ):
         full_mode = np.asarray(T @ reduced_mode, dtype=float).reshape(-1)
-        full_mode, reduced_mode = _normalize_mode(full_mode, reduced_mode)
-        modal_stiffness = float(reduced_mode @ (K_sym @ reduced_mode))
-        modal_geometric = float(reduced_mode @ (KG_sym @ reduced_mode))
-        residual_norm = _mode_residual(K_sym, KG_sym, reduced_mode, value)
+        scale = float(np.max(np.abs(full_mode))) if full_mode.size else 0.0
+        if scale > 0.0:
+            full_mode = full_mode / scale
+            reduced_mode = reduced_mode / scale
+            stiffness_vector = stiffness_vector / scale
+            geometric_vector = geometric_vector / scale
+        modal_stiffness = float(reduced_mode @ stiffness_vector)
+        modal_geometric = float(reduced_mode @ geometric_vector)
+        residual_vector = stiffness_vector - value * geometric_vector
+        residual_norm = float(
+            np.linalg.norm(residual_vector)
+            / max(
+                float(np.linalg.norm(stiffness_vector))
+                + abs(value) * float(np.linalg.norm(geometric_vector)),
+                1.0,
+            )
+        )
         validity = "ok" if residual_norm <= max(1.0e-6, 100.0 * eigen_tolerance) else "high_residual"
         modes.append(
             BucklingMode(
@@ -1693,6 +1955,11 @@ def _solve_eigenvalue_buckling_under_lease(
         **elastic_inverse_diagnostics,
         "sparse_error": sparse_error,
         "phase_timings_seconds": phase_timings,
+        "spectral_guard_diagnostics": {
+            "full_guard_count": int(guard_counts["full"]),
+            "trusted_guard_count": int(guard_counts["trusted"]),
+            "residual_batch_columns": int(real_eigenvectors.shape[1]),
+        },
         "matrix_diagnostics": {
             "elastic_reduced_shape": [int(value) for value in K_sym.shape],
             "elastic_reduced_nnz": int(K_sym.nnz),
