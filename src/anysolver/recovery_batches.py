@@ -13,6 +13,7 @@ import math
 import sys
 import time
 from collections import OrderedDict
+from contextlib import ExitStack
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Mapping, Sequence, Tuple
@@ -35,6 +36,14 @@ from .materials import elastic_compliance_matrix, material_symmetry
 from .matrix_assembly import (
     AssemblyError,
     _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE as _CAPTURE_QUALIFIED_RECOVERY_RUNTIME_LEASE,
+)
+from .e4_pl_element import (
+    QualifiedE4PLShellElement as _QualifiedE4PLShellElement,
+    _q4_trusted_operation_scope as _Q4_TRUSTED_OPERATION_SCOPE,
+)
+from .e4_pl_s3_element import (
+    QualifiedE4PLS3ShellElement as _QualifiedE4PLS3ShellElement,
+    _s3_trusted_operation_scope as _S3_TRUSTED_OPERATION_SCOPE,
 )
 from .s3_reference_batch import (
     MIN_REFERENCE_S3_RECOVERY_GROUP,
@@ -1349,7 +1358,21 @@ def _run_with_qualified_recovery_runtime_lease(
         require._qualified_recover_captured_beam = recover_captured_beam
 
     try:
-        result = operation(require)
+        qualified_elements = tuple(model.mesh.elements.values())
+        q4_elements = tuple(
+            element
+            for element in qualified_elements
+            if type(element) is _QualifiedE4PLShellElement
+        )
+        s3_elements = tuple(
+            element
+            for element in qualified_elements
+            if type(element) is _QualifiedE4PLS3ShellElement
+        )
+        with ExitStack() as stack:
+            stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
+            stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
+            result = operation(require)
     except BaseException:
         require(stage="exceptional output")
         raise

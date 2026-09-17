@@ -58,6 +58,67 @@ def _constraint_fingerprints(
     return structure, values
 
 
+def _load_case_linear_pattern(load_case: Optional["LoadCase"]) -> tuple[Any, float] | None:
+    """Return an exact proportional-load pattern and its scalar amplitude.
+
+    Only the exact built-in dead-load container is eligible.  Gravity and
+    follower pressure are deliberately excluded because their effective load
+    can depend on mass or current configuration rather than one scalar.
+    """
+
+    if load_case is None:
+        return (("none",), 0.0)
+    from .boundary import LoadCase
+
+    if type(load_case) is not LoadCase or load_case.gravity is not None or load_case.follower_pressure:
+        return None
+
+    numeric_values: list[float] = []
+
+    def array_record(value: Any) -> tuple[tuple[int, ...], tuple[float, ...]]:
+        array = np.asarray(value, dtype=float)
+        if not np.all(np.isfinite(array)):
+            raise ValueError("load case contains non-finite values")
+        values = tuple(float(item) for item in array.reshape(-1))
+        numeric_values.extend(values)
+        return tuple(int(size) for size in array.shape), values
+
+    nodal = tuple(
+        (int(key), *array_record(value))
+        for key, value in sorted(load_case.nodal_loads.items())
+    )
+    element = tuple(
+        (int(key), *array_record(value))
+        for key, value in sorted(load_case.element_loads.items())
+    )
+    pressure_records = []
+    for key, value in sorted(load_case.pressure_loads.items()):
+        shape, values = array_record(value)
+        pressure_records.append((int(key), shape, values))
+    masses = tuple(
+        (int(key), float(value))
+        for key, value in sorted(load_case.added_node_masses.items())
+    )
+    if any(not np.isfinite(value) for _key, value in masses):
+        raise ValueError("load case contains non-finite added masses")
+    amplitude = max((abs(value) for value in numeric_values), default=0.0)
+    if amplitude == 0.0:
+        normalized = lambda values: values
+    else:
+        normalized = lambda values: tuple(float(value / amplitude) for value in values)
+    pattern = (
+        "linear_dead_load_v1",
+        tuple((key, shape, normalized(values)) for key, shape, values in nodal),
+        tuple((key, shape, normalized(values)) for key, shape, values in element),
+        tuple(
+            (key, shape, normalized(values))
+            for key, shape, values in pressure_records
+        ),
+        masses,
+    )
+    return pattern, float(amplitude)
+
+
 def _sparse_nbytes(matrix: Optional[sparse.spmatrix]) -> int:
     if matrix is None:
         return 0
@@ -160,6 +221,7 @@ class AnalysisSession:
         self._constraint: Optional[ConstraintPlan] = None
         self._reduced_mass: Optional[Tuple[Tuple[Any, ...], sparse.csr_matrix]] = None
         self._rigid_modes: Optional[Tuple[Tuple[Any, ...], np.ndarray, Dict[str, Any]]] = None
+        self._load_vectors: "OrderedDict[Tuple[Any, ...], Tuple[np.ndarray, Dict[str, Any]]]" = OrderedDict()
         self._output_plans: "OrderedDict[Tuple[Any, ...], OutputSelectionPlan]" = OrderedDict()
         self._max_output_plans = int(max_output_plans)
         self.factorization_cache = FactorizationCache(
@@ -273,6 +335,7 @@ class AnalysisSession:
             self._constraint = None
             self._reduced_mass = None
             self._rigid_modes = None
+            self._load_vectors.clear()
             self._output_plans.clear()
             self._closed = True
             self._counters["close_count"] += 1
@@ -294,6 +357,7 @@ class AnalysisSession:
                 self._constraint = None
                 self._reduced_mass = None
                 self._rigid_modes = None
+                self._load_vectors.clear()
             start = time.perf_counter()
             matrix, info = assemble_stiffness_matrix(owned)
             plan = StructuralMatrixPlan(matrix.tocsr(), dict(info), key, "stiffness")
@@ -515,7 +579,48 @@ class AnalysisSession:
         with self._lock:
             owned = self._require_model(model)
             stiffness = self.stiffness_plan(owned)
-            load, load_info = assemble_load_vector(owned, load_case)
+            proportional = _load_case_linear_pattern(load_case)
+            load_key = None
+            amplitude = 1.0
+            cached_load = None
+            if proportional is not None:
+                pattern, amplitude = proportional
+                load_key = (
+                    _revision_key(
+                        owned,
+                        "topology",
+                        "geometry",
+                        "material",
+                        "mass",
+                        "activity",
+                    ),
+                    pattern,
+                )
+                cached_load = self._load_vectors.get(load_key)
+            if cached_load is None:
+                load, load_info = assemble_load_vector(owned, load_case)
+                if load_key is not None:
+                    unit_load = (
+                        np.asarray(load, dtype=float).copy()
+                        if amplitude == 0.0
+                        else np.asarray(load, dtype=float) / amplitude
+                    )
+                    self._load_vectors[load_key] = (unit_load, dict(load_info))
+                    self._load_vectors.move_to_end(load_key)
+                    while len(self._load_vectors) > 8:
+                        self._load_vectors.popitem(last=False)
+                        self._counters["load_vector_evictions"] += 1
+                    self._counters["load_vector_builds"] += 1
+            else:
+                unit_load, cached_info = cached_load
+                load = np.asarray(unit_load, dtype=float) * amplitude
+                load_info = {
+                    **cached_info,
+                    "assembly_time": 0.0,
+                    "prepared_load_vector_reused": True,
+                }
+                self._load_vectors.move_to_end(load_key)
+                self._counters["load_vector_hits"] += 1
             constraint = self.constraint_plan(stiffness, owned)
             reduced_load = constraint.reduce_load(stiffness.matrix, load)
             info: Dict[str, Any] = {
@@ -568,6 +673,8 @@ class AnalysisSession:
                 retained += int(self._constraint.u0.nbytes + self._constraint.independent_dofs.nbytes)
             if self._reduced_mass is not None:
                 retained += _sparse_nbytes(self._reduced_mass[1])
+            for load, _info in self._load_vectors.values():
+                retained += int(load.nbytes)
             for plan in self._output_plans.values():
                 retained += _sparse_nbytes(plan.transformation_rows)
                 retained += int(plan.full_dofs.nbytes + plan.prescribed_rows.nbytes)
@@ -582,6 +689,7 @@ class AnalysisSession:
                 "counters": dict(sorted(self._counters.items())),
                 "invalidation_reasons": dict(sorted(self._invalidation_reasons.items())),
                 "output_plan_count": int(len(self._output_plans)),
+                "load_vector_plan_count": int(len(self._load_vectors)),
                 "estimated_retained_bytes": int(retained),
                 "factorization_cache": self.factorization_cache.diagnostics(),
             }

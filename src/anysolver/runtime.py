@@ -7,12 +7,15 @@ own model state into this contract before invoking the solver.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 import collections
+from contextlib import ExitStack
+import hashlib
 import json
 import math
 import os
 import re
+import threading
 import time
 from types import ModuleType
 from typing import Callable, Mapping, Sequence, TypeAlias
@@ -20,6 +23,14 @@ from typing import Callable, Mapping, Sequence, TypeAlias
 import numpy as np
 
 import anysolver as _full_backend
+from .e4_pl_element import (
+    QualifiedE4PLShellElement as _QualifiedE4PLShellElement,
+    _q4_trusted_operation_scope as _Q4_TRUSTED_OPERATION_SCOPE,
+)
+from .e4_pl_s3_element import (
+    QualifiedE4PLS3ShellElement as _QualifiedE4PLS3ShellElement,
+    _s3_trusted_operation_scope as _S3_TRUSTED_OPERATION_SCOPE,
+)
 from .analysis_session import AnalysisSession as _backend_AnalysisSession
 from .arc_length import ArcLengthControl as _backend_arc_length_control
 from .arc_length import solve_static_arc_length as _backend_solve_static_arc_length
@@ -42,6 +53,7 @@ from .nonlinear import solve_nonlinear_load_stepping as _backend_solve_nonlinear
 from .nonlinear_static import solve_static_nonlinear as _backend_solve_static_nonlinear
 from .recovery import recover_stress_result as _recover_stress_result
 from .validation import load_case_resultant as _backend_load_case_resultant
+from .validation import load_vector_resultant as _backend_load_vector_resultant
 
 
 StatusCallback: TypeAlias = Callable[[str], None]
@@ -54,6 +66,7 @@ __all__ = [
     "LightweightFEMResult",
     "NormalizedGeometry",
     "RuntimeAnalysisSelection",
+    "RuntimeAnalysisContext",
     "StatusCallback",
     "apply_mode_shape_imperfections",
     "build_generated_geometry",
@@ -292,6 +305,215 @@ class LightweightFEMResult:
     load_resultant: dict[str, tuple[float, float, float]] = field(default_factory=dict)
     visualization: dict[str, object] = field(default_factory=dict)
     solver_name: str = "ANYsolver lightweight"
+
+
+_RUNTIME_CONTEXT_STRUCTURAL_REVISIONS = (
+    "topology",
+    "geometry",
+    "material",
+    "boundary",
+    "mpc",
+    "activity",
+    "mass",
+)
+
+_RUNTIME_CONTEXT_LOAD_ONLY_FIELDS = frozenset(
+    {
+        "pressure_pa",
+        "load_scale",
+        "pressure_direction",
+        "axial_force_n",
+        "torsional_moment_nm",
+        "shear_force_n",
+        "top_bottom_moment_nm",
+        "plate_edge_x0_load_n_per_m",
+        "plate_edge_x1_load_n_per_m",
+        "plate_edge_y0_load_n_per_m",
+        "plate_edge_y1_load_n_per_m",
+        "cylinder_lower_edge_load_n_per_m",
+        "cylinder_upper_edge_load_n_per_m",
+        "edge_load_components_json",
+        "custom_loads_json",
+        "custom_pressure_pa",
+        "custom_pressure_patches_json",
+        "custom_selected_edge_load_n_per_m",
+        "custom_selected_edge_load_components_json",
+        "stress_percentile",
+        "recovery_history_mode",
+        "recovery_threads",
+        "memory_limit_mb",
+        "solver_type",
+        "runtime_solver",
+        "analysis_type",
+        "buckling_analysis_type",
+        "num_buckling_modes",
+    }
+)
+
+
+def _runtime_context_json_default(value: object) -> object:
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, (set, frozenset, tuple)):
+        return list(value)
+    raise TypeError(f"unsupported runtime-context value: {type(value).__name__}")
+
+
+def _runtime_context_key(
+    generated_geometry: GeneratedGeometry,
+    config: LightweightFEMConfig,
+    material_properties: Mapping[str, object] | None,
+) -> str:
+    structural_config = {
+        item.name: getattr(config, item.name)
+        for item in fields(config)
+        if item.name not in _RUNTIME_CONTEXT_LOAD_ONLY_FIELDS
+    }
+    payload = {
+        "schema": "ANYSOLVER_RUNTIME_ANALYSIS_CONTEXT_V1",
+        "geometry": generated_geometry,
+        "structural_config": structural_config,
+        "material_properties": dict(material_properties or {}),
+    }
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+        default=_runtime_context_json_default,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _runtime_context_eligible(config: LightweightFEMConfig) -> bool:
+    return bool(
+        _normalized_choice(config.runtime_solver, "stepwise") == "static only"
+        and not _wants_static_nonlinear_analysis(config)
+        and not _wants_capacity_workflow(config)
+        and not _wants_tangent_stability_analysis(config)
+        and not config.custom_time_domain_enabled
+        and not config.collision_enabled
+        and not config.imperfection_enabled
+        and not config.follower_pressure
+        and not config.fracture_enabled
+        and abs(float(config.acceleration_x_m_s2 or 0.0)) == 0.0
+        and abs(float(config.acceleration_y_m_s2 or 0.0)) == 0.0
+        and abs(float(config.acceleration_z_m_s2 or 0.0)) == 0.0
+        and abs(float(config.added_mass_kg or 0.0)) == 0.0
+    )
+
+
+class RuntimeAnalysisContext:
+    """Optional owner for repeated linear-static analyses of one model.
+
+    The context keeps an immutable structural epoch and an AnalysisSession.
+    Load-only changes reuse the model, reduced system and factorization.  Any
+    structural mutation, failed finalization or key mismatch closes the old
+    session before a new model can be captured.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.RLock()
+        self._key: str | None = None
+        self._model: object | None = None
+        self._session: _backend_AnalysisSession | None = None
+        self._structural_revisions: tuple[int, ...] | None = None
+        self._hits = 0
+        self._misses = 0
+        self._invalidations = 0
+        self._closed = False
+
+    def _revision_tuple(self, model: object) -> tuple[int, ...]:
+        revisions = model.revision_signature()
+        return tuple(
+            int(revisions.get(name, 0))
+            for name in _RUNTIME_CONTEXT_STRUCTURAL_REVISIONS
+        )
+
+    def acquire(self, key: str, builder: Callable[[], object]) -> tuple[object, _backend_AnalysisSession, bool]:
+        with self._lock:
+            if self._closed:
+                raise RuntimeError("RuntimeAnalysisContext is closed")
+            if self._model is not None and self._key == key:
+                current = self._revision_tuple(self._model)
+                if current != self._structural_revisions:
+                    self._invalidate_locked()
+                else:
+                    self._hits += 1
+                    assert self._session is not None
+                    return self._model, self._session, True
+            if self._model is not None:
+                self._invalidate_locked()
+            model = builder()
+            session = _backend_AnalysisSession(model)
+            self._key = str(key)
+            self._model = model
+            self._session = session
+            self._structural_revisions = self._revision_tuple(model)
+            self._misses += 1
+            return model, session, False
+
+    def finalize(self, model: object) -> None:
+        with self._lock:
+            if model is not self._model:
+                raise ValueError("RuntimeAnalysisContext finalized a foreign model")
+            current = self._revision_tuple(model)
+            if current != self._structural_revisions:
+                self._invalidate_locked()
+                raise ValueError("RuntimeAnalysisContext structural inputs changed")
+
+    def capture_finalized_structure(self, model: object) -> None:
+        """Bind revisions after one-time model preparation on a cache miss."""
+
+        with self._lock:
+            if model is not self._model or self._session is None:
+                raise ValueError("RuntimeAnalysisContext cannot capture a foreign model")
+            self._structural_revisions = self._revision_tuple(model)
+
+    def _invalidate_locked(self) -> None:
+        if self._session is not None:
+            self._session.close()
+        self._key = None
+        self._model = None
+        self._session = None
+        self._structural_revisions = None
+        self._invalidations += 1
+
+    def invalidate(self) -> None:
+        with self._lock:
+            self._invalidate_locked()
+
+    def diagnostics(self) -> dict[str, object]:
+        with self._lock:
+            return {
+                "schema": "ANYSOLVER_RUNTIME_ANALYSIS_CONTEXT_V1",
+                "active": self._model is not None,
+                "hits": int(self._hits),
+                "misses": int(self._misses),
+                "invalidations": int(self._invalidations),
+                "analysis_session": (
+                    {} if self._session is None else self._session.diagnostics()
+                ),
+            }
+
+    def close(self) -> None:
+        with self._lock:
+            if self._closed:
+                return
+            self._invalidate_locked()
+            self._closed = True
+
+    release = close
+
+    def __enter__(self) -> "RuntimeAnalysisContext":
+        if self._closed:
+            raise RuntimeError("RuntimeAnalysisContext is closed")
+        return self
+
+    def __exit__(self, _exc_type, _exc, _traceback) -> None:
+        self.close()
 
 
 def _positive(value: float, fallback: float) -> float:
@@ -4174,6 +4396,34 @@ def _fea_result_import_payload(
     stresses_by_element: dict[int, object] | None,
 ) -> dict[str, object]:
     """Return an INP/FRD-like shell result payload for the FE-results importer."""
+
+    qualified_elements = tuple(model.mesh.elements.values())
+    q4_elements = tuple(
+        element
+        for element in qualified_elements
+        if type(element) is _QualifiedE4PLShellElement
+    )
+    s3_elements = tuple(
+        element
+        for element in qualified_elements
+        if type(element) is _QualifiedE4PLS3ShellElement
+    )
+    with ExitStack() as stack:
+        stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
+        stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
+        return _fea_result_import_payload_under_scope(
+            generated_geometry,
+            model,
+            stresses_by_element,
+        )
+
+
+def _fea_result_import_payload_under_scope(
+    generated_geometry: dict[str, object],
+    model,
+    stresses_by_element: dict[int, object] | None,
+) -> dict[str, object]:
+    """Build the result payload inside a validated shell-operation bracket."""
 
     nodes_payload = []
     for node_id, node in sorted(model.mesh.nodes.items()):
@@ -8282,9 +8532,13 @@ def run_production_fem(
     status_callback: StatusCallback | None = None,
     imported_fem_model: object | None = None,
     precomputed_generated_geometry: GeneratedGeometry | None = None,
+    analysis_context: RuntimeAnalysisContext | None = None,
 ) -> LightweightFEMResult:
     """Run the production FE mesh backend for normalized generated geometry."""
 
+    runtime_started = time.perf_counter()
+    phase_timings: dict[str, float] = {}
+    recovery_evaluations = 0
     if _full_backend is None or _backend_solve_linear is None or _backend_solve_buckling is None or _backend_load_case_resultant is None:
         return LightweightFEMResult(
             status="backend_unavailable",
@@ -8312,6 +8566,9 @@ def run_production_fem(
         generated_geometry = {"geometry": "flat panel", "plot_grid": [], "nodes": nodes, "shells": shells, "beams": beams}
     else:
         generated_geometry = build_generated_geometry(geometry, config)
+    phase_timings["geometry_preparation"] = float(
+        time.perf_counter() - runtime_started
+    )
     material_curve, material_properties = _nonlinear_curve_payload(config, geometry)
     effective_elastic_modulus = float(material_properties.get("E_pa", config.elastic_modulus_pa)) if material_properties else config.elastic_modulus_pa
     effective_yield_stress = float(material_properties.get("sigma_yield", config.yield_stress_pa)) if material_properties else config.yield_stress_pa
@@ -8562,13 +8819,38 @@ def run_production_fem(
 
     model = None
     analysis_session = None
+    context_reused = False
+    context_owned_session = False
+    model_preparation_started = time.perf_counter()
     try:
         if status_callback: status_callback("Building FE model...")
         if imported_fem_model is not None:
             model = imported_fem_model
+        elif analysis_context is not None and _runtime_context_eligible(config):
+            context_key = _runtime_context_key(
+                generated_geometry,
+                config,
+                material_properties,
+            )
+            model, analysis_session, context_reused = analysis_context.acquire(
+                context_key,
+                lambda: _full_backend.build_fe_model_from_generated_geometry(
+                    generated_geometry,
+                    backend_config,
+                ),
+            )
+            context_owned_session = True
+            diagnostics.append(
+                "Runtime analysis context reused the prepared model and factors."
+                if context_reused
+                else "Runtime analysis context captured a prepared model."
+            )
         else:
             model = _full_backend.build_fe_model_from_generated_geometry(generated_geometry, backend_config)
-        _apply_material_curve_to_model(model, material_curve, material_properties)
+        if not context_reused:
+            _apply_material_curve_to_model(model, material_curve, material_properties)
+            if analysis_context is not None and context_owned_session:
+                analysis_context.capture_finalized_structure(model)
         imperfection_info = {}
         if not _wants_capacity_workflow(config):
             imperfection_info = _apply_runtime_imperfection(model, generated_geometry, geometry, config)
@@ -8632,7 +8914,10 @@ def run_production_fem(
                 + str(added_mass_summary["added_mass_nodes"]) + " node(s) at " + str(config.added_mass_location)
                 + "; added to the mass matrix (affects modal/dynamic response)."
             )
-        load_resultant = _backend_load_case_resultant(model, load_case)
+        linear_solve_started = time.perf_counter()
+        phase_timings["model_and_load_preparation"] = float(
+            linear_solve_started - model_preparation_started
+        )
         if config.collision_enabled:
             return _run_collision_response(
                 model,
@@ -8649,7 +8934,7 @@ def run_production_fem(
                 status_callback("Solving reference linear static system...")
             else:
                 status_callback("Solving linear static system...")
-        if _can_reuse_linear_buckling_session(config):
+        if analysis_session is None and _can_reuse_linear_buckling_session(config):
             # Materials, geometry, supports and element state are now final
             # for this immutable linear/buckling sequence.  Keep one bounded
             # session so stiffness, constraints and direct-solver factors are
@@ -8664,8 +8949,20 @@ def run_production_fem(
             allow_unbalanced_free_free=_allow_unbalanced_free_free(config, geometry),
             session=analysis_session,
         )
+        assembled_load_vector = solver_info.pop("_assembled_load_vector", None)
+        load_resultant = (
+            _backend_load_vector_resultant(model, assembled_load_vector)
+            if assembled_load_vector is not None
+            else _backend_load_case_resultant(model, load_case)
+        )
+        phase_timings["linear_system"] = float(
+            time.perf_counter() - linear_solve_started
+        )
     except Exception as exc:
-        if analysis_session is not None:
+        if analysis_context is not None and context_owned_session:
+            analysis_context.invalidate()
+            analysis_session = None
+        elif analysis_session is not None:
             analysis_session.close()
         return LightweightFEMResult(
             status="production_failed",
@@ -8685,7 +8982,10 @@ def run_production_fem(
     diagnostics.append(f"Linear solver backend used: {backend_name}")
 
     if static_status != "converged":
-        if analysis_session is not None:
+        if analysis_context is not None and context_owned_session:
+            analysis_context.invalidate()
+            analysis_session = None
+        elif analysis_session is not None:
             analysis_session.close()
         diagnostics.append("Static solve status: " + static_status)
         return LightweightFEMResult(
@@ -8700,7 +9000,21 @@ def run_production_fem(
             visualization=_visualization_from_full_result(generated_geometry, model, None),
         )
 
-    prestress_states, prestress_summary = _full_backend.recover_prestress_from_static_result(model, displacements)
+    recovery_started = time.perf_counter()
+    (
+        runtime_stresses_by_element,
+        history_element_ids,
+        recovery_provenance,
+    ) = _runtime_display_stresses(model, displacements, None)
+    recovery_evaluations += 1
+    recovery_cache_key = (id(model), id(displacements), id(None))
+    prestress_states, prestress_summary = _full_backend.recover_prestress_from_static_result(
+        model,
+        displacements,
+        recovered_stresses=runtime_stresses_by_element,
+        recovery_provenance=recovery_provenance,
+    )
+    phase_timings["recovery"] = float(time.perf_counter() - recovery_started)
     if imperfection_info:
         prestress_summary["imperfection_status"] = str(imperfection_info.get("status", ""))
         prestress_summary["imperfection_kind"] = str(imperfection_info.get("kind", ""))
@@ -8805,10 +9119,27 @@ def run_production_fem(
                 if nonlinear_static_result.converged:
                     analysis_model = capacity_workflow_result.imperfect_model
                     displacements = np.asarray(nonlinear_static_result.displacements, dtype=float)
+                    (
+                        runtime_stresses_by_element,
+                        history_element_ids,
+                        recovery_provenance,
+                    ) = _runtime_display_stresses(
+                        analysis_model,
+                        displacements,
+                        nonlinear_static_result,
+                    )
+                    recovery_evaluations += 1
+                    recovery_cache_key = (
+                        id(analysis_model),
+                        id(displacements),
+                        id(nonlinear_static_result),
+                    )
                     prestress_states, recovered = _full_backend.recover_prestress_from_static_result(
                         analysis_model,
                         displacements,
                         nonlinear_result=nonlinear_static_result,
+                        recovered_stresses=runtime_stresses_by_element,
+                        recovery_provenance=recovery_provenance,
                     )
                     prestress_summary.update(recovered)
                 prestress_summary["capacity_workflow_status"] = str(capacity_workflow_result.status)
@@ -8948,10 +9279,27 @@ def run_production_fem(
                 )
                 if nonlinear_static_result.converged:
                     displacements = np.asarray(nonlinear_static_result.displacements, dtype=float)
+                    (
+                        runtime_stresses_by_element,
+                        history_element_ids,
+                        recovery_provenance,
+                    ) = _runtime_display_stresses(
+                        model,
+                        displacements,
+                        nonlinear_static_result,
+                    )
+                    recovery_evaluations += 1
+                    recovery_cache_key = (
+                        id(model),
+                        id(displacements),
+                        id(nonlinear_static_result),
+                    )
                     prestress_states, recovered = _full_backend.recover_prestress_from_static_result(
                         model,
                         displacements,
                         nonlinear_result=nonlinear_static_result,
+                        recovered_stresses=runtime_stresses_by_element,
+                        recovery_provenance=recovery_provenance,
                     )
                     recovered.update({key: value for key, value in prestress_summary.items() if str(key).startswith("nonlinear_static")})
                     for key in (
@@ -9004,13 +9352,20 @@ def run_production_fem(
                 diagnostics.append("Ran nonlinear tangent-stability load stepping: " + str(nonlinear_result.status) + ".")
                 if _wants_nonlinear_analysis(config) and nonlinear_result.converged:
                     displacements = np.asarray(nonlinear_result.final_displacements, dtype=float)
+                    recovery_cache_key = None
             except Exception as exc:
                 diagnostics.append("Nonlinear load-step solver failed: " + str(exc))
-    if geometry.get("geometry") == "cylinder" and config.include_end_lids and _add_cylinder_buckling_gauge(model, generated_geometry):
+    if (
+        _wants_eigenvalue_buckling(config)
+        and geometry.get("geometry") == "cylinder"
+        and config.include_end_lids
+        and _add_cylinder_buckling_gauge(model, generated_geometry)
+    ):
         diagnostics.append("Applied buckling-only rigid-body gauge constraints to the lid center nodes.")
     buckling_kwargs = _buckling_solver_kwargs(config)
     if analysis_session is not None:
         buckling_kwargs["session"] = analysis_session
+    buckling_started = time.perf_counter()
     try:
         if capacity_workflow_result is not None:
             buckling_result = capacity_workflow_result.buckling_result
@@ -9024,7 +9379,12 @@ def run_production_fem(
                 status = "skipped by runtime path"
                 diagnostics = ()
             buckling_result = DummyBucklingResult()
-        if not buckling_result.modes and geometry.get("geometry") == "cylinder" and abs(float(effective_pressure)) > 0.0:
+        if (
+            _wants_eigenvalue_buckling(config)
+            and not buckling_result.modes
+            and geometry.get("geometry") == "cylinder"
+            and abs(float(effective_pressure)) > 0.0
+        ):
             pressure_states = _cylinder_pressure_prestress_states(
                 model,
                 float(effective_pressure) * float(config.load_scale),
@@ -9036,7 +9396,7 @@ def run_production_fem(
                     buckling_result = pressure_buckling_result
                     diagnostics.append("Buckling modes use equivalent external-pressure membrane prestress because the full mixed prestress returned no positive modes.")
     finally:
-        if analysis_session is not None:
+        if analysis_session is not None and not context_owned_session:
             session_diagnostics = analysis_session.diagnostics()
             prestress_summary["analysis_session"] = session_diagnostics
             diagnostics.append(
@@ -9045,6 +9405,7 @@ def run_production_fem(
             )
             analysis_session.close()
             analysis_session = None
+    phase_timings["buckling"] = float(time.perf_counter() - buckling_started)
     if capacity_workflow_result is None:
         _record_buckling_mesh_adequacy(model, buckling_result, config, prestress_summary, diagnostics)
     if _wants_nonlinear_buckling(config) and nonlinear_static_factor is not None and float(nonlinear_static_factor) > 0.0:
@@ -9069,10 +9430,24 @@ def run_production_fem(
         prestress_summary["buckling_min_load_factor"] = 0.0 if load_factor_range[0] is None else float(load_factor_range[0])
         prestress_summary["buckling_max_load_factor"] = 0.0 if load_factor_range[1] is None else float(load_factor_range[1])
     prestress_summary["buckling_allow_dense_fallback"] = 1.0 if bool(config.buckling_allow_dense_fallback) else 0.0
+    result_preparation_started = time.perf_counter()
     stress_percentile = min(max(float(config.stress_percentile), 0.0), 100.0)
-    runtime_stresses_by_element, history_element_ids, recovery_provenance = _runtime_display_stresses(
-        analysis_model, displacements, nonlinear_static_result
+    final_recovery_key = (
+        id(analysis_model),
+        id(displacements),
+        id(nonlinear_static_result),
     )
+    if recovery_cache_key != final_recovery_key:
+        (
+            runtime_stresses_by_element,
+            history_element_ids,
+            recovery_provenance,
+        ) = _runtime_display_stresses(
+            analysis_model,
+            displacements,
+            nonlinear_static_result,
+        )
+        recovery_evaluations += 1
     prestress_summary["stress_recovery"] = recovery_provenance
     for warning in recovery_provenance.get("warnings", ()) or ():
         diagnostics.append("Stress recovery: " + str(warning))
@@ -9161,11 +9536,51 @@ def run_production_fem(
     if isinstance(transient_summary, dict) and transient_summary.get("history"):
         visualization["time_domain"] = transient_summary.get("history")
     visualization["buckling_modes"] = _buckling_mode_visualizations(generated_geometry, model, buckling_result)
+    phase_timings["result_preparation_and_visualization"] = float(
+        time.perf_counter() - result_preparation_started
+    )
 
     if not prestress_states:
         diagnostics.append("Prestress recovery returned no element states.")
     if not buckling_factors:
         diagnostics.append("Static solve converged; no positive buckling modes were returned for this load state.")
+
+    if analysis_context is not None and context_owned_session:
+        try:
+            analysis_context.finalize(model)
+        except Exception as exc:
+            return LightweightFEMResult(
+                status="production_failed",
+                stress_max_pa=0.0,
+                stress_p95_pa=0.0,
+                displacement_max_m=0.0,
+                diagnostics=tuple(
+                    diagnostics
+                    + ["Runtime analysis context finalization failed: " + str(exc)]
+                ),
+                solver_name="ANYsolver production FE mesh",
+            )
+        prestress_summary["runtime_analysis_context"] = analysis_context.diagnostics()
+    phase_timings["total"] = float(time.perf_counter() - runtime_started)
+    performance_assembly = dict(solver_info.get("assembly", {}) or {})
+    performance_assembly.pop("element_times", None)
+    for component_name in ("stiffness", "load", "mass"):
+        component = performance_assembly.get(component_name)
+        if isinstance(component, dict):
+            component = dict(component)
+            component.pop("element_times", None)
+            performance_assembly[component_name] = component
+    prestress_summary["performance"] = {
+        "phase_timings_seconds": dict(phase_timings),
+        "linear_solver_phase_timings_seconds": dict(
+            solver_info.get("phase_timings_seconds", {}) or {}
+        ),
+        "assembly": performance_assembly,
+        "thread_policy": dict(solver_info.get("thread_policy", {}) or {}),
+        "backend": backend_name,
+        "prepared_model_cache_hit": bool(context_reused),
+        "shared_recovery_evaluations": int(recovery_evaluations),
+    }
 
     return LightweightFEMResult(
         status="ok",

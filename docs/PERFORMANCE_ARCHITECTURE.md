@@ -29,6 +29,7 @@ could conceal stale state; wrong-model and closed-session use therefore raise.
 | Mesh reference | Mesh | Corotational reference data, contact geometry, large-selection recovery plan. | Relevant mesh/model revision or explicit recovery clear. |
 | Nonlinear state | One static or arc-length solve | Contiguous committed/trial shell history and owned dictionary fallbacks. | Final materialization/solve completion. |
 | Analysis session | Caller | Bounded structural/constraint/output plans and factorization handles for one model. | Revision invalidation, bounded eviction, or `close()`/`release()`. |
+| Runtime analysis context | Runtime client/window | One prepared linear-static model plus its analysis session and exact structural key. | Structural-key/revision mismatch, failed solve, or `close()`/`release()`. |
 | Impact solve | One transient impact call | Tangent handle, contact work arrays, reduced assembly controller, and damage K/M plan. | Policy invalidation or solve completion. |
 | Result | Caller | Public histories, states, contact records, recovery values, and diagnostics. | Caller-controlled. |
 
@@ -91,6 +92,13 @@ references the model and protects internal cache operations with a lock. Load
 values do not enter structural keys, allowing repeated load cases to reuse K,
 T, Kred, and a compatible direct factorization.
 
+For exact proportional built-in dead-load families, the session may also keep
+a bounded unit load-vector plan and scale it for subsequent amplitudes.  The
+key binds every non-amplitude load definition and the live load revision;
+gravity, follower loads and custom callable behavior remain on the ordinary
+assembly path.  Resultant calculation consumes the vector already assembled
+for the solve instead of traversing elements a second time.
+
 Invalidation is dependency-ordered:
 
 ```text
@@ -117,6 +125,15 @@ Linear transient integration stores base/patch load vectors in reduced
 coordinates. Selected history mode retains only requested rows of T/u0 and
 avoids full-vector reconstruction unless full/envelope output or stress
 recovery needs it.
+
+`RuntimeAnalysisContext` is the higher-level optional owner used by runtime
+clients such as an ANYstructure FEM window.  It captures a canonical key for
+geometry, topology, sections, formulations, supports, MPCs, activity and
+material settings.  Only load amplitudes are excluded.  Each use also checks
+the live model revision snapshot, so a caller cannot mutate a prepared model
+and silently retain factors.  Ineligible nonlinear, follower, collision,
+transient or history-bearing routes build and release their ordinary model
+state without entering the context.
 
 ## Impact flow
 
