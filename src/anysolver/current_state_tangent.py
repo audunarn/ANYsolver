@@ -690,12 +690,14 @@ def _qualified_profile_api_failure(
     profile: Mapping[str, Any],
     *,
     _captured_class_names: frozenset[str] | None = None,
+    _static_lookup: Any = _static_mro_attribute,
+    _serialization_static_lookup: Any = None,
 ) -> str | None:
     """Return one exact API-authority failure without evaluating mechanics."""
 
     expected_formulation_id = str(profile["formulation_id"])
     owner = type(element)
-    static_formulation_id = _static_mro_attribute(
+    static_formulation_id = _static_lookup(
         owner, "formulation_id"
     )
     if (
@@ -733,7 +735,7 @@ def _qualified_profile_api_failure(
     for name in ("element_id", "node_ids", "material_name"):
         if name not in instance_namespace:
             return f"{expected_formulation_id}:MISSING_INSTANCE_DATA={name}"
-        if _static_mro_attribute(type(element), name) is not None:
+        if _static_lookup(type(element), name) is not None:
             return f"{expected_formulation_id}:INSTANCE_DATA_CLASS_SHADOW={name}"
     raw_element_id = instance_namespace["element_id"]
     raw_node_ids = instance_namespace["node_ids"]
@@ -747,7 +749,7 @@ def _qualified_profile_api_failure(
         or type(raw_material_name) is not str
     ):
         return f"{expected_formulation_id}:INSTANCE_DATA_VALUE_MISMATCH"
-    if _static_mro_attribute(type(element), "reference_surface_offset") is not None:
+    if _static_lookup(type(element), "reference_surface_offset") is not None:
         return f"{expected_formulation_id}:OFFSET_SCOPE_MISMATCH"
     if profile["family"] in {"qualified_s3", "qualified_s3_v2d"}:
         if "reference_surface_offset" not in instance_namespace:
@@ -760,7 +762,7 @@ def _qualified_profile_api_failure(
         if type(raw_offset) is not float or raw_offset != 0.0:
             return f"{expected_formulation_id}:OFFSET_SCOPE_MISMATCH"
     for name, expected in profile["class_identity"].items():
-        actual = _static_mro_attribute(type(element), str(name))
+        actual = _static_lookup(type(element), str(name))
         if (
             name in instance_namespace
             or type(actual) is not type(expected)
@@ -804,7 +806,7 @@ def _qualified_profile_api_failure(
         sorted(
             str(name)
             for name, expected in critical_apis.items()
-            if _static_mro_attribute(type(element), str(name)) is not expected
+            if _static_lookup(type(element), str(name)) is not expected
         )
     )
     if changed_critical:
@@ -816,7 +818,7 @@ def _qualified_profile_api_failure(
         sorted(
             str(name)
             for name, expected in base_critical_apis.items()
-            if _static_mro_attribute(ShellElement, str(name)) is not expected
+            if _static_lookup(ShellElement, str(name)) is not expected
         )
     )
     if changed_base_critical:
@@ -825,10 +827,15 @@ def _qualified_profile_api_failure(
             + ",".join(changed_base_critical)
         )
     try:
-        profile["serialization_validator"](
-            element,
-            expected_class=profile["element_type"],
-        )
+        if _serialization_static_lookup is None:
+            profile["serialization_validator"](
+                element, expected_class=profile["element_type"],
+            )
+        else:
+            profile["serialization_validator"](
+                element, expected_class=profile["element_type"],
+                _static_lookup=_serialization_static_lookup,
+            )
     except (AttributeError, TypeError, ValueError) as exc:
         return (
             f"{expected_formulation_id}:CONFIGURATION_AUTHORITY={exc}"
@@ -840,6 +847,34 @@ def _qualified_profile_api_failure(
     return None
 
 
+def _call_local_static_lookup() -> Any:
+    """Reuse live namespace views, never previously validated member values.
+
+    Each lookup still reads the current MRO and current dictionary contents.
+    Mapping proxies are live views: additions, removals and replacements remain
+    visible immediately. A changed MRO rebuilds the views. Nothing survives
+    the enclosing lifecycle validation call, and descriptors are never invoked.
+    """
+    views: dict[int, tuple[Any, tuple[Any, ...]]] = {}
+
+    def lookup(owner: type[Any], name: str) -> Any:
+        mro = type.__getattribute__(owner, "__mro__")
+        key = id(owner)
+        record = views.get(key)
+        if record is None or record[0] is not mro:
+            record = (mro, tuple(type.__getattribute__(base, "__dict__") for base in mro))
+            views[key] = record
+        for namespace in record[1]:
+            if name in namespace:
+                value = namespace[name]
+                if isinstance(value, (classmethod, staticmethod)):
+                    return value.__func__
+                return value
+        return None
+
+    return lookup
+
+
 def _require_exact_qualified_component_lifecycle_api_implementation(
     model: "FEModel",
     *,
@@ -849,6 +884,7 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
     _profile_failure: Any = _qualified_profile_api_failure,
     _preparable_profile_failure: Any = _qualified_profile_api_failure,
     _default_profiles: Mapping[str, Mapping[str, Any]] = _QUALIFIED_PROFILES,
+    _lookup_factory: Any = _call_local_static_lookup,
     _captured_class_names_by_formulation: Mapping[str, frozenset[str]] = (
         _QUALIFIED_PROFILE_CAPTURED_CLASS_NAMES
     ),
@@ -1084,6 +1120,7 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
                 )
             )
     if not failures:
+        call_static_lookup = _lookup_factory()
         for element_id, element, profile in candidates:
             formulation_id = str(profile["formulation_id"])
             if (
@@ -1095,6 +1132,12 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
                     profile,
                     _captured_class_names=(
                         _captured_class_names_by_formulation[formulation_id]
+                    ),
+                    _static_lookup=call_static_lookup,
+                    _serialization_static_lookup=(
+                        call_static_lookup
+                        if profile["family"] in {"qualified_q4", "qualified_s3"}
+                        else None
                     ),
                 )
             else:

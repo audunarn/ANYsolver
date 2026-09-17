@@ -62,6 +62,63 @@ def test_captured_class_names_are_exact_for_every_immutable_profile() -> None:
         )
 
 
+def test_live_namespace_lookup_observes_mutation_deletion_and_mro_change() -> None:
+    class First:
+        member = object()
+
+    class Second:
+        member = object()
+
+    class Child(First):
+        pass
+
+    lookup = tangent._call_local_static_lookup()
+    assert lookup(Child, "member") is First.member
+    First.member = object()
+    assert lookup(Child, "member") is First.member
+    Child.member = object()
+    assert lookup(Child, "member") is Child.member
+    del Child.member
+    assert lookup(Child, "member") is First.member
+    Child.__bases__ = (Second,)
+    assert lookup(Child, "member") is Second.member
+    del Second.member
+    assert lookup(Child, "member") is None
+
+
+def test_live_namespace_lookup_does_not_invoke_descriptors() -> None:
+    class Subject:
+        @property
+        def member(self):
+            raise AssertionError("descriptor evaluated")
+
+        @staticmethod
+        def static():
+            raise AssertionError("static method called")
+
+        @classmethod
+        def class_method(cls):
+            raise AssertionError("class method called")
+
+    lookup = tangent._call_local_static_lookup()
+    assert lookup(Subject, "member") is vars(Subject)["member"]
+    for name in ("static", "class_method"):
+        assert lookup(Subject, name) is vars(Subject)[name].__func__
+
+
+@pytest.mark.parametrize("mutate", [None, _delete_material_name, _replace_connectivity,
+                                  _shadow_formulation, _add_callable_override])
+def test_live_lookup_and_serializer_match_original_predicate(mutate) -> None:
+    element = _q4(1)
+    if mutate is not None:
+        mutate(element)
+    profile = tangent._QUALIFIED_PROFILES[tangent.QUALIFIED_Q4_FORMULATION_ID]
+    lookup = tangent._call_local_static_lookup()
+    assert tangent._qualified_profile_api_failure(
+        element, profile, _static_lookup=lookup, _serialization_static_lookup=lookup,
+    ) == tangent._qualified_profile_api_failure(element, profile)
+
+
 @pytest.mark.parametrize(
     "mutate",
     (

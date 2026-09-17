@@ -67,6 +67,9 @@ from .matrix_assembly import (
 from .recovery import ResourceConfig, _owned_resource_config_snapshot
 from .threading_policy import resource_threaded, thread_policy_diagnostics
 
+# Keep a private import-time identity for the genuine optional-token checkpoint.
+# A replacement callback is an observation boundary even when its token is None.
+_EXACT_CANCELLATION_SAFE_POINT = cancellation_safe_point
 _EXACT_PUBLIC_GEOMETRIC_ASSEMBLER = assemble_geometric_stiffness_matrix
 
 if TYPE_CHECKING:
@@ -1523,6 +1526,7 @@ def _solve_free_vibration_under_lease(
     current_state_element_states: Optional[Any] = None,
     current_state_num_layers: int = 5,
     _qualified_runtime_guard: Any = None,
+    _exact_cancellation_safe_point: Any = _EXACT_CANCELLATION_SAFE_POINT,
 ) -> ModalResult:
     """Solve ``K phi = omega^2 M phi`` with the common constraint transform.
 
@@ -1577,6 +1581,17 @@ def _solve_free_vibration_under_lease(
         guard_counts["trusted"] += 1
         trusted_runtime_guard(observed_model, context=context)
         return qualified_lifecycle_authority
+
+    def cancellation_checkpoint(stage: str) -> bool:
+        """Run a checkpoint and report whether it was the known no-op path."""
+
+        checkpoint = cancellation_safe_point
+        checkpoint(cancellation_token, stage)
+        return (
+            cancellation_token is None
+            and checkpoint is _exact_cancellation_safe_point
+        )
+
     prestress_authority_guard = _require_qualified_prestress_operator_authority
     snapshot_current_state = _EXACT_CURRENT_STATE_INPUT_SNAPSHOT
     current_state_route_guard = _EXACT_COMMITTED_TANGENT_ROUTE_GUARD
@@ -1587,8 +1602,10 @@ def _solve_free_vibration_under_lease(
         model,
         context="solve_free_vibration preflight",
     )
-    cancellation_safe_point(cancellation_token, "modal.start")
-    exact_guard(model, context="solve_free_vibration cancellation start")
+    if cancellation_checkpoint("modal.start"):
+        trusted_guard(model, context="solve_free_vibration cancellation start")
+    else:
+        exact_guard(model, context="solve_free_vibration cancellation start")
     owned_config = _owned_modal_operation_config(
         model,
         num_modes=num_modes,
@@ -1898,8 +1915,16 @@ def _solve_free_vibration_under_lease(
         constraint_info = dict(constraint_plan.info)
         Q, nullspace_info = session.rigid_body_modes(constraint_plan, model)
         exact_guard(model, context="solve_free_vibration session rigid-body basis")
-    cancellation_safe_point(cancellation_token, "modal.after_assembly")
-    exact_guard(model, context="solve_free_vibration cancellation after assembly")
+    if cancellation_checkpoint("modal.after_assembly"):
+        trusted_guard(
+            model,
+            context="solve_free_vibration cancellation after assembly",
+        )
+    else:
+        exact_guard(
+            model,
+            context="solve_free_vibration cancellation after assembly",
+        )
 
     assembly_info = {
         "stiffness": stiffness_info,
@@ -2167,7 +2192,9 @@ def _solve_free_vibration_under_lease(
         exact_guard(model, context="solve_free_vibration output")
         return ModalResult([], num_modes, "failed", constraint_info, nullspace_info, assembly_info, diagnostics, result_case)
 
-    cancellation_safe_point(cancellation_token, "modal.after_eigensolve")
+    eigensolve_checkpoint_is_exact_noop = cancellation_checkpoint(
+        "modal.after_eigensolve"
+    )
     eigensolve_seconds = float(time.perf_counter() - eigen_started)
     phase_timings["factorization"] = float(
         sparse_diagnostics.get("factorization_lookup_seconds", 0.0)
@@ -2176,7 +2203,16 @@ def _solve_free_vibration_under_lease(
         eigensolve_seconds - phase_timings["factorization"],
         0.0,
     )
-    exact_guard(model, context="solve_free_vibration cancellation after eigensolve")
+    if eigensolve_checkpoint_is_exact_noop:
+        trusted_guard(
+            model,
+            context="solve_free_vibration cancellation after eigensolve",
+        )
+    else:
+        exact_guard(
+            model,
+            context="solve_free_vibration cancellation after eigensolve",
+        )
 
     recovery_started = time.perf_counter()
     order = np.argsort(np.real(eigenvalues))
@@ -2206,12 +2242,16 @@ def _solve_free_vibration_under_lease(
     modes: List[ModalMode] = []
     descriptor_backward_errors: List[float] = []
     for vector_index, (value, vector) in enumerate(zip(eigenvalues, eigenvectors.T)):
-        cancellation_safe_point(
-            cancellation_token,
-            f"modal.recovery:{len(modes) + 1}",
+        recovery_checkpoint_is_exact_noop = cancellation_checkpoint(
+            f"modal.recovery:{len(modes) + 1}"
         )
-        if cancellation_token is not None:
+        if not recovery_checkpoint_is_exact_noop:
             exact_guard(
+                model,
+                context="solve_free_vibration cancellation during recovery",
+            )
+        else:
+            trusted_guard(
                 model,
                 context="solve_free_vibration cancellation during recovery",
             )
