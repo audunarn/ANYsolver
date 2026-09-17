@@ -3571,6 +3571,18 @@ _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE = (
 )
 
 
+def _scoped_operation_error_has_precedence(
+    operation_error: BaseException,
+    scope_error: BaseException,
+) -> bool:
+    """Keep the first failure unless cleanup raises a termination signal."""
+
+    return (
+        not isinstance(operation_error, Exception)
+        or isinstance(scope_error, Exception)
+    )
+
+
 def _run_with_qualified_assembly_runtime_lease(
     model: "FEModel",
     *,
@@ -3617,9 +3629,16 @@ def _run_with_qualified_assembly_runtime_lease(
             except BaseException as scope_error:
                 # Trusted-scope finalization must still run and may detect the
                 # same adversarial mutation.  It must not, however, replace a
-                # more specific operation-time capability rejection with a
-                # generic cleanup AssemblyError.
-                if isinstance(scoped_operation_error, ElementCapabilityError):
+                # more specific operation-time rejection with a generic
+                # cleanup AssemblyError.  The outer lease still adjudicates
+                # exceptional output and may wrap that original rejection.
+                if (
+                    scoped_operation_error is not None
+                    and _scoped_operation_error_has_precedence(
+                        scoped_operation_error,
+                        scope_error,
+                    )
+                ):
                     if (
                         scope_error is not scoped_operation_error
                         and hasattr(scoped_operation_error, "add_note")
