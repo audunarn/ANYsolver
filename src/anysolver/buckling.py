@@ -50,6 +50,9 @@ from .matrix_assembly import (
 from .recovery import ResourceConfig, _owned_resource_config_snapshot
 from .threading_policy import resource_threaded
 
+# Keep a private import-time identity for the genuine optional-token checkpoint.
+# A replacement callback always requires a full lifecycle validation.
+_EXACT_CANCELLATION_SAFE_POINT = cancellation_safe_point
 _EXACT_PUBLIC_GEOMETRIC_ASSEMBLER = assemble_geometric_stiffness_matrix
 _EXACT_PUBLIC_EXTERNAL_LOAD_TANGENT = assemble_external_load_tangent
 
@@ -656,6 +659,7 @@ def _solve_eigenvalue_buckling_under_lease(
     current_state_num_layers: int = 5,
     current_state_load_scale: float = 1.0,
     _qualified_runtime_guard: Any = None,
+    _exact_cancellation_safe_point: Any = _EXACT_CANCELLATION_SAFE_POINT,
 ) -> BucklingResult:
     """Solve ``K phi = lambda (KG + Kload) phi`` for positive factors.
 
@@ -714,6 +718,17 @@ def _solve_eigenvalue_buckling_under_lease(
         guard_counts["trusted"] += 1
         trusted_runtime_guard(observed_model, context=context)
         return qualified_lifecycle_authority
+
+    def cancellation_checkpoint(stage: str) -> bool:
+        """Run a checkpoint and report whether it was the known no-op path."""
+
+        checkpoint = cancellation_safe_point
+        checkpoint(cancellation_token, stage)
+        return (
+            cancellation_token is None
+            and checkpoint is _exact_cancellation_safe_point
+        )
+
     normalize_reference_states = _normalize_reference_prestress_states
     reference_authority_guard = _require_reference_prestress_authority
     reference_authority_policy_id = (
@@ -728,8 +743,10 @@ def _solve_eigenvalue_buckling_under_lease(
         model,
         context="solve_eigenvalue_buckling preflight",
     )
-    cancellation_safe_point(cancellation_token, "buckling.start")
-    exact_guard(model, context="solve_eigenvalue_buckling cancellation start")
+    if cancellation_checkpoint("buckling.start"):
+        trusted_guard(model, context="solve_eigenvalue_buckling cancellation start")
+    else:
+        exact_guard(model, context="solve_eigenvalue_buckling cancellation start")
     owned_config = _owned_buckling_operation_config(
         model,
         num_modes=num_modes,
@@ -1124,11 +1141,16 @@ def _solve_eigenvalue_buckling_under_lease(
     phase_timings["operator_assembly_total"] = float(
         time.perf_counter() - operator_assembly_started
     )
-    cancellation_safe_point(cancellation_token, "buckling.after_assembly")
-    exact_guard(
-        model,
-        context="solve_eigenvalue_buckling cancellation after assembly",
-    )
+    if cancellation_checkpoint("buckling.after_assembly"):
+        trusted_guard(
+            model,
+            context="solve_eigenvalue_buckling cancellation after assembly",
+        )
+    else:
+        exact_guard(
+            model,
+            context="solve_eigenvalue_buckling cancellation after assembly",
+        )
     zero_load = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
 
     reduction_started = time.perf_counter()
@@ -1786,11 +1808,16 @@ def _solve_eigenvalue_buckling_under_lease(
         - phase_timings["factorization"],
         0.0,
     )
-    cancellation_safe_point(cancellation_token, "buckling.after_eigensolve")
-    exact_guard(
-        model,
-        context="solve_eigenvalue_buckling cancellation after eigensolve",
-    )
+    if cancellation_checkpoint("buckling.after_eigensolve"):
+        trusted_guard(
+            model,
+            context="solve_eigenvalue_buckling cancellation after eigensolve",
+        )
+    else:
+        exact_guard(
+            model,
+            context="solve_eigenvalue_buckling cancellation after eigensolve",
+        )
 
     residual_started = time.perf_counter()
     real_eigenvectors = np.asarray(np.real(eigenvectors), dtype=float)
@@ -1806,12 +1833,16 @@ def _solve_eigenvalue_buckling_under_lease(
     ] = []
     rejected: List[Dict[str, Any]] = []
     for i in range(real_eigenvectors.shape[1]):
-        cancellation_safe_point(
-            cancellation_token,
-            f"buckling.root:{i + 1}",
+        recovery_checkpoint_is_exact_noop = cancellation_checkpoint(
+            f"buckling.root:{i + 1}"
         )
-        if cancellation_token is not None:
+        if not recovery_checkpoint_is_exact_noop:
             exact_guard(
+                model,
+                context="solve_eigenvalue_buckling cancellation during recovery",
+            )
+        else:
+            trusted_guard(
                 model,
                 context="solve_eigenvalue_buckling cancellation during recovery",
             )

@@ -324,6 +324,7 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
                 "test_large_alternating_q4_beam_recovery_has_constant_full_guard_count",
             ): 1,
             ("tests/test_qualified_q4_assembly_authority.py", "_model"): 1,
+            ("tests/test_spectral_validation_preparation.py", "_q4"): 1,
         }
     )
     assert calls["QualifiedE4PLShellElement"] == expected_qualified_q4
