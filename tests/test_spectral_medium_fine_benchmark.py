@@ -12,6 +12,12 @@ from types import SimpleNamespace
 import pytest
 
 
+# Complete process-tree accounting is a research-runner capability. psutil is
+# intentionally not an ANYsolver runtime dependency, so environments without
+# it skip this runner-specific module instead of failing test collection.
+pytest.importorskip("psutil")
+
+
 SCRIPT = Path(__file__).parents[1] / "scripts" / "benchmark_spectral_medium_fine.py"
 SPEC = importlib.util.spec_from_file_location("spectral_gate", SCRIPT)
 assert SPEC and SPEC.loader
