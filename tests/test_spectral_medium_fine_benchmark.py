@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import sys
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -70,6 +72,24 @@ def test_bounded_child_cleans_descendant_after_root_exits(tmp_path: Path) -> Non
     assert not gate.psutil.pid_exists(descendant_pid)
 
 
+def test_fatal_marker_not_hidden_by_long_log_or_chunk_boundary() -> None:
+    data = b"x" * 65530 + b"Windows fatal exception" + b"x" * (2 * 1024**2)
+    assert gate._fatal_log_marker(io.BytesIO(data)) == "windows fatal exception"
+
+
+def test_effective_runtime_loads_keep_explicit_values_and_zero_pressure() -> None:
+    app = SimpleNamespace(_fem_default_top_bottom_moment_nm=30_000_000.0)
+    snapshot = SimpleNamespace(pressure_pa=0.0, top_bottom_moment_nm=12.0,
+                               torsional_moment_nm=3.0, shear_force_n=4.0,
+                               axial_force_n=5.0)
+    assert gate._runtime_load_options(app, snapshot) == {
+        "pressure_pa": 0.0, "top_bottom_moment_nm": 12.0,
+        "torsional_moment_nm": 3.0, "shear_force_n": 4.0, "axial_force_n": 5.0,
+    }
+    snapshot.top_bottom_moment_nm = 0.0
+    assert gate._runtime_load_options(app, snapshot)["top_bottom_moment_nm"] == 30_000_000.0
+
+
 def test_output_directory_must_be_exclusive(tmp_path: Path) -> None:
     occupied = tmp_path / "occupied"
     occupied.mkdir()
@@ -91,3 +111,6 @@ def test_cylinder_snapshot_preserves_loads_without_application_import(monkeypatc
     assert snapshot.pressure_pa == 100_000.0
     assert snapshot.axial_force_n == 0.0
     assert snapshot.top_bottom_moment_nm == 0.0
+    effective = gate._runtime_load_options(app, snapshot)
+    assert effective["pressure_pa"] == 100_000.0
+    assert effective["top_bottom_moment_nm"] == 30_000_000.0

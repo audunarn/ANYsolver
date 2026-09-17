@@ -48,7 +48,10 @@ Never interrupt unrelated processes or discard partial evidence.
 
 ## Next actions
 
-1. Verify and freeze harness failure-safety correction before more profiling.
+1. Failure-safety correction is frozen at `48ecf5f`; successor effective-load
+   correction passes ten harness tests. Cylinder modal diagnostic `04` was
+   explicitly stopped before its first mode after several minutes; no success
+   result, no retry and no fine-modal escalation. Its process tree is gone.
 2. Complete cylinder and modal medium/fine baselines serially where healthy.
 3. Screen candidate shared validation against baseline with identical harness.
 4. Implement a narrow candidate, screen and verify; inspect complete diff and

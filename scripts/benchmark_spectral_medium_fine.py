@@ -101,6 +101,20 @@ def _complete_example_snapshot_inputs(app: Any) -> None:
             setattr(app, name, None)
 
 
+def _runtime_load_options(app: Any, snapshot: Any) -> dict[str, float]:
+    """Mirror RuntimeFEMWindow's effective example loads without creating Tk."""
+    moment = float(snapshot.top_bottom_moment_nm or 0.0)
+    if moment == 0.0:
+        moment = float(vars(app).get("_fem_default_top_bottom_moment_nm", 0.0))
+    return {
+        "pressure_pa": float(snapshot.pressure_pa),
+        "top_bottom_moment_nm": moment,
+        "torsional_moment_nm": float(snapshot.torsional_moment_nm or 0.0),
+        "shear_force_n": float(snapshot.shear_force_n or 0.0),
+        "axial_force_n": float(snapshot.axial_force_n or 0.0),
+    }
+
+
 def _fixture_inputs(adapter_root: Path, solver_root: Path, fixture: str, fidelity: str, modes: int):
     """Build only the real adapter fixture; no synthetic mechanics fixture."""
     sys.path.insert(0, str(solver_root / "src"))
@@ -112,7 +126,7 @@ def _fixture_inputs(adapter_root: Path, solver_root: Path, fixture: str, fidelit
     snapshot = fem_integration.active_line_snapshot(app)
     options = fem_integration.RuntimeFEMOptions(
         mesh_fidelity=fidelity,
-        pressure_pa=float(snapshot.pressure_pa or 100_000.0),
+        **_runtime_load_options(app, snapshot),
         include_stiffeners=True,
         include_girders=True,
         include_end_lids=True,
@@ -409,12 +423,14 @@ def _tree_rss(process: subprocess.Popen[Any], known: dict[int, psutil.Process]) 
 
 def _fatal_log_marker(log: Any) -> str | None:
     log.flush()
-    log.seek(0, os.SEEK_END)
-    log.seek(max(0, log.tell() - 1024 * 1024))
-    text = log.read().decode("utf-8", errors="replace").lower()
-    for marker in ("fatal python error", "windows fatal exception", "fatal exception"):
-        if marker in text:
-            return marker
+    log.seek(0)
+    tail = b""
+    while block := log.read(65536):
+        text = (tail + block).lower()
+        for marker in (b"fatal python error", b"windows fatal exception", b"fatal exception"):
+            if marker in text:
+                return marker.decode("ascii")
+        tail = text[-32:]
     return None
 
 
