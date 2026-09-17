@@ -17,29 +17,40 @@ Never interrupt unrelated processes or discard partial evidence.
 - Available numerical stack: NumPy 2.4.3, SciPy 1.16.3, Numba 0.65.0,
   psutil 7.2.2. Bind actual imported paths explicitly in benchmark children.
 - Gate definition: `docs/SPECTRAL_MEDIUM_FINE_GATE.md`.
-- Harness implemented in `scripts/benchmark_spectral_medium_fine.py`; five
-  process-control/parser tests passed after parent corrections. Not yet accepted.
+- Frozen prototype/harness: `7321baff6185ebff8750d07755ed042f8aab7e34`.
+  Not accepted for integration. Harness failure-safety corrections verified:
+  eight tests passed in the parent; focused source/guard suite 116 passed.
 - Baseline diagnostic outputs: `C:\Github\ANYsolver\.tmp_spectral_medium_fine`.
 - Coarse panel buckling smoke passed with five modes and residuals around 1e-14.
 - Medium panel buckling: first screen cold 9.846 s, retained 5.442 s;
   retained validation 1.263 s and geometric assembly 0.539 s. Separate cProfile
   completed; repeated lifecycle/class inspection dominates. No speedup claim.
-- Fine panel timing completed: cold 18.690 s, retained 11.249 s; separate
-  cProfile still running at this checkpoint. Task terminal session 77088 owns
-  the coordinator; inspect process/checkpoint before resuming or terminating.
-- Only baseline solver source is used by active fine profiling (root checkout).
-- `/root/validation_candidate` (requested Sol/high) owns only
-  `current_state_tangent.py` and `tests/test_spectral_validation_preparation.py`.
-  It is implementing conservative shared validation preparation; do not overlap.
+- Fine panel timing and separate profile completed: cold 18.690 s,
+  retained 11.249 s. Profile covers four analyses, unlike the successor
+  harness that profiles only the final retained analysis.
+- Cylinder fixture initially imported the GUI through absent optional load
+  fields. The harness now supplies their existing absent-value defaults;
+  production adapter/mechanics are unchanged. Coarse corrected smoke passed.
+- Corrected medium-cylinder attempt `baseline-cylinder-medium-buckling-corrected-03`
+  logged a native access violation during asynchronous stack dumping, then
+  failed to exit. Four solve records exist but are NOT accepted evidence.
+  Known worker tree 16552/36120 was terminated; coordinator session 7837
+  ended failed. No `result.json` was promoted. All raw files are preserved.
+  Confirm fresh process status before resuming; do not reuse this directory.
+- `/root/validation_candidate` completed its conservative captured-name
+  preparation and 11 regressions. No live-class authority checks were removed.
+- `/root/harness_failure_safety` (requested Terra/high) completed benchmark
+  script/process-control tests: no-error-dialog handling, fatal-log rejection,
+  process-tree cleanup and failure tests. No solver source edits.
 - No candidate performance or acceptance claims yet.
 - Delegated inspection: `/root/profile_fixture_map`, requested
   `gpt-5.6-luna` / `high`; runtime model/effort not independently exposed.
 
 ## Next actions
 
-1. Finish active fine profile; preserve completed raw records.
-2. Complete cylinder and modal medium/fine baselines serially.
-3. Finish candidate shared-validation work and compare under the same harness.
+1. Verify and freeze harness failure-safety correction before more profiling.
+2. Complete cylinder and modal medium/fine baselines serially where healthy.
+3. Screen candidate shared validation against baseline with identical harness.
 4. Implement a narrow candidate, screen and verify; inspect complete diff and
    obtain a fresh independent read-only review before acceptance.
 

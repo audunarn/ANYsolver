@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import importlib.util
-import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -46,6 +46,30 @@ def test_bounded_child_rejects_memory_limit() -> None:
         gate._run_bounded_child(_child("import time; time.sleep(2)"), process_timeout=2, rss_limit=1)
 
 
+def test_bounded_child_rejects_fatal_log_even_with_zero_exit(tmp_path: Path) -> None:
+    log = tmp_path / "worker.log"
+    with pytest.raises(RuntimeError, match="windows fatal exception"):
+        gate._run_bounded_child(_child("print('Windows fatal exception: access violation')"), process_timeout=2, rss_limit=512 * 1024**2, log_path=log)
+
+
+def test_bounded_child_cleans_descendant_after_root_exits(tmp_path: Path) -> None:
+    pid_file = tmp_path / "descendant.pid"
+    source = (
+        "import pathlib, subprocess, sys, time; "
+        "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)']); "
+        f"pathlib.Path({str(pid_file)!r}).write_text(str(child.pid)); "
+        "time.sleep(0.25)"
+    )
+    with pytest.raises(RuntimeError, match="left descendant"):
+        gate._run_bounded_child(_child(source), process_timeout=2, rss_limit=512 * 1024**2)
+    descendant_pid = int(pid_file.read_text(encoding="utf-8"))
+    for _ in range(20):
+        if not gate.psutil.pid_exists(descendant_pid):
+            break
+        time.sleep(0.05)
+    assert not gate.psutil.pid_exists(descendant_pid)
+
+
 def test_output_directory_must_be_exclusive(tmp_path: Path) -> None:
     occupied = tmp_path / "occupied"
     occupied.mkdir()
@@ -56,7 +80,7 @@ def test_output_directory_must_be_exclusive(tmp_path: Path) -> None:
 
 
 def test_cylinder_snapshot_preserves_loads_without_application_import(monkeypatch) -> None:
-    from anystruct import fem_integration as fem
+    fem = pytest.importorskip("anystruct.fem_integration", reason="ANYstructure adapter is not installed")
     app = fem.example_runtime_app("cylinder")
     gate._complete_example_snapshot_inputs(app)
     def unexpected_application_lookup(self, name):

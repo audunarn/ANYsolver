@@ -24,7 +24,21 @@ import tempfile
 import time
 from typing import Any, Sequence
 
-import psutil
+
+def _disable_windows_error_dialogs() -> None:
+    """Keep a native crash from leaving an unattended WER dialog behind."""
+    if os.name != "nt":
+        return
+    import ctypes
+    # SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX.
+    ctypes.windll.kernel32.SetErrorMode(0x0001 | 0x0002 | 0x8000)
+
+
+# This must precede imports which can load native extensions in the worker.
+if "--_child" in sys.argv:
+    _disable_windows_error_dialogs()
+
+import psutil  # noqa: E402  (child crash-dialog setup must happen first)
 
 
 PROCESS_TIMEOUT_SECONDS = 600
@@ -302,8 +316,8 @@ def _profile_call(args: argparse.Namespace, output: Path) -> dict[str, Any]:
 
 
 def _child(args: argparse.Namespace) -> int:
+    _disable_windows_error_dialogs()
     faulthandler.enable()
-    faulthandler.dump_traceback_later(60, repeat=True)
     output = Path(args.child_output)
     try:
         payload = _profile_call(args, output) if args.profile_child else _run_actual(args, output.parent / "mode_vectors.npz")
@@ -312,58 +326,134 @@ def _child(args: argparse.Namespace) -> int:
     except BaseException as error:
         _write_json(output, {"status": "failed", "error": f"{type(error).__name__}: {error}"})
         return 1
-    finally:
-        faulthandler.cancel_dump_traceback_later()
 
 
-def _terminate_tree(process: subprocess.Popen[Any]) -> None:
-    if os.name == "nt" and process.poll() is None:
-        subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15, check=False)
+def _remember_tree(process: subprocess.Popen[Any], known: dict[int, psutil.Process]) -> None:
+    """Record descendants while the root still exists for later cleanup."""
     try:
         root = psutil.Process(process.pid)
-        processes = root.children(recursive=True) + [root]
-    except psutil.Error:
-        processes = []
+        known[root.pid] = root
+        for item in root.children(recursive=True):
+            known[item.pid] = item
+    except psutil.NoSuchProcess:
+        return
+    except psutil.AccessDenied as error:
+        raise RuntimeError(f"cannot inspect child process tree: {error}") from error
+
+
+def _live_processes(known: dict[int, psutil.Process]) -> list[psutil.Process]:
+    live: list[psutil.Process] = []
+    for item in known.values():
+        try:
+            if item.is_running():
+                live.append(item)
+        except psutil.NoSuchProcess:
+            continue
+        except psutil.AccessDenied as error:
+            raise RuntimeError(f"cannot inspect child process tree: {error}") from error
+    return live
+
+
+def _terminate_tree(process: subprocess.Popen[Any], known: dict[int, psutil.Process] | None = None) -> list[str]:
+    """Best-effort cleanup, returning processes that could not be confirmed gone."""
+    tracked = known if known is not None else {}
+    problems: list[str] = []
+    try:
+        _remember_tree(process, tracked)
+    except RuntimeError as error:
+        problems.append(str(error))
+    if os.name == "nt" and process.poll() is None:
+        try:
+            subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15, check=False)
+        except (subprocess.SubprocessError, OSError) as error:
+            problems.append(f"taskkill failed: {error}")
+    processes = list(tracked.values())
     for child in reversed(processes):
         try: child.terminate()
-        except psutil.Error: pass
-    _, alive = psutil.wait_procs(processes, timeout=3)
+        except psutil.NoSuchProcess: pass
+        except psutil.AccessDenied as error: problems.append(f"cannot terminate {child.pid}: {error}")
+    try:
+        _, alive = psutil.wait_procs(processes, timeout=3)
+    except psutil.Error as error:
+        problems.append(f"cannot wait for child process tree: {error}")
+        alive = processes
     for child in alive:
         try: child.kill()
-        except psutil.Error: pass
+        except psutil.NoSuchProcess: pass
+        except psutil.AccessDenied as error: problems.append(f"cannot kill {child.pid}: {error}")
     try: process.wait(timeout=3)
     except subprocess.TimeoutExpired: pass
+    for child in processes:
+        try:
+            if child.is_running():
+                problems.append(f"surviving process {child.pid}")
+        except psutil.NoSuchProcess:
+            pass
+        except psutil.AccessDenied as error:
+            problems.append(f"cannot confirm process {child.pid} exited: {error}")
+    return problems
 
 
-def _tree_rss(process: subprocess.Popen[Any]) -> int:
-    try:
-        root = psutil.Process(process.pid)
-        return sum(item.memory_info().rss for item in [root, *root.children(recursive=True)] if item.is_running())
-    except psutil.Error:
-        return 0
+def _tree_rss(process: subprocess.Popen[Any], known: dict[int, psutil.Process]) -> int:
+    _remember_tree(process, known)
+    total = 0
+    for item in _live_processes(known):
+        try:
+            total += item.memory_info().rss
+        except psutil.NoSuchProcess:
+            continue
+        except psutil.AccessDenied as error:
+            raise RuntimeError(f"cannot inspect child process tree memory: {error}") from error
+    return total
+
+
+def _fatal_log_marker(log: Any) -> str | None:
+    log.flush()
+    log.seek(0, os.SEEK_END)
+    log.seek(max(0, log.tell() - 1024 * 1024))
+    text = log.read().decode("utf-8", errors="replace").lower()
+    for marker in ("fatal python error", "windows fatal exception", "fatal exception"):
+        if marker in text:
+            return marker
+    return None
 
 
 def _run_bounded_child(command: Sequence[str], *, process_timeout: float = PROCESS_TIMEOUT_SECONDS, rss_limit: int = TREE_RSS_LIMIT_BYTES, log_path: Path | None = None) -> dict[str, Any]:
     """Run one owned child, retaining its peak tree RSS and always cleaning it."""
-    log = log_path.open("xb") if log_path else tempfile.TemporaryFile()
+    log = log_path.open("xb+") if log_path else tempfile.TemporaryFile(mode="w+b")
     process = subprocess.Popen(list(command), stdout=log, stderr=log, env={**os.environ, "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMBA_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"})
     started, peak = time.monotonic(), 0
     reason: str | None = None
+    known: dict[int, psutil.Process] = {}
     try:
         while process.poll() is None:
-            peak = max(peak, _tree_rss(process))
+            peak = max(peak, _tree_rss(process, known))
             if peak > rss_limit: reason = f"tree RSS exceeded {rss_limit} bytes"
             elif time.monotonic() - started > process_timeout: reason = f"child exceeded {process_timeout} seconds"
             if reason:
-                _terminate_tree(process)
+                cleanup = _terminate_tree(process, known)
+                if cleanup:
+                    reason = f"{reason}; cleanup incomplete: {'; '.join(cleanup)}"
                 raise RuntimeError(reason)
             time.sleep(POLL_SECONDS)
+        peak = max(peak, _tree_rss(process, known))
         if process.returncode:
             raise RuntimeError(f"child exited {process.returncode}; see {log_path}")
+        descendants = [item for item in _live_processes(known) if item.pid != process.pid]
+        if descendants:
+            cleanup = _terminate_tree(process, known)
+            detail = f"; cleanup incomplete: {'; '.join(cleanup)}" if cleanup else ""
+            raise RuntimeError(f"child exited but left descendant processes running{detail}")
+        if marker := _fatal_log_marker(log):
+            raise RuntimeError(f"child emitted {marker!r}; see {log_path}")
         return {"wall_seconds": time.monotonic() - started, "peak_tree_rss_bytes": peak}
     finally:
-        if process.poll() is None: _terminate_tree(process)
-        log.close()
+        cleanup = _terminate_tree(process, known)
+        try:
+            log.close()
+        finally:
+            if cleanup:
+                raise RuntimeError(f"child process cleanup incomplete: {'; '.join(cleanup)}")
 
 
 def _coordinator(args: argparse.Namespace) -> int:
