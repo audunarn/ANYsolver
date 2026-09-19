@@ -211,6 +211,85 @@ def test_force_static_checkpoint_round_trip_and_exact_split_continuation() -> No
     )
 
 
+def test_armijo_checkpoint_binds_the_resolved_characteristic_length() -> None:
+    settings = {
+        "profile": "legacy",
+        "line_search": "armijo",
+        "characteristic_length": 1.0,
+    }
+    first_model, first_load = _model()
+    first = solve_static_nonlinear(
+        first_model,
+        first_load,
+        max_load_factor=0.15,
+        num_steps=2,
+        max_iterations=12,
+        tolerance=1.0e-12,
+        convergence_settings=settings,
+        emit_restart_checkpoint=True,
+    )
+    assert first.status == "completed"
+
+    resumed_model, resumed_load = _model()
+    resumed = solve_static_nonlinear(
+        resumed_model,
+        resumed_load,
+        max_load_factor=0.30,
+        num_steps=2,
+        max_iterations=12,
+        tolerance=1.0e-12,
+        convergence_settings=settings,
+        restart_checkpoint=first.restart_checkpoint_bytes(),
+    )
+    assert resumed.status == "completed"
+    assert resumed.info["convergence_settings"]["characteristic_length"] == 1.0
+
+    changed_model, changed_load = _model()
+    with pytest.raises(
+        NonlinearCheckpointError,
+        match="analysis contract is incompatible",
+    ):
+        solve_static_nonlinear(
+            changed_model,
+            changed_load,
+            max_load_factor=0.30,
+            num_steps=2,
+            max_iterations=12,
+            tolerance=1.0e-12,
+            convergence_settings={
+                **settings,
+                "characteristic_length": 2.0,
+            },
+            restart_checkpoint=first.restart_checkpoint_bytes(),
+        )
+
+
+def test_legacy_checkpoint_contract_omits_unused_armijo_scaling() -> None:
+    model, load = _model()
+    contract = nonlinear_static_module._static_restart_analysis_contract(
+        model=model,
+        load_case=load,
+        constant_load_case=None,
+        load_program=None,
+        control_name="force",
+        displacement_control=None,
+        num_layers=5,
+        max_iterations=12,
+        tolerance=1.0e-12,
+        effective_min_step_fraction=1.0 / 1024.0,
+        settings=nonlinear_static_module.NonlinearConvergenceSettings.for_profile(
+            "legacy"
+        ),
+        fracture_config=None,
+        resource_config=None,
+        kinematics="von_karman",
+        resolved_corotational_tangent="not_applicable",
+    )
+
+    convergence_contract = contract["convergence_settings"]
+    assert "characteristic_length" not in convergence_contract
+
+
 def test_displacement_static_checkpoint_exact_split_continuation() -> None:
     full_control = DisplacementControl(node_id=1, dof="ux", target_displacement=0.20)
     half_control = DisplacementControl(node_id=1, dof="ux", target_displacement=0.10)

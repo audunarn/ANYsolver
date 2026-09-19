@@ -575,6 +575,51 @@ print(jit_diagnostics())
 print(nonlinear_performance_status())
 ```
 
+Each nonlinear result also reports analysis-local work in
+`result.info["nonlinear_performance"]`.  The `solver` section counts Newton
+factorizations/solves, rejected full steps, backtracks, residual-to-tangent
+promotions, recoverable trial failures, dead-load projection reuse, and
+accepted-force reaction reuse or fallback reassembly.  These counts include
+failed work and are safe to interpret without subtracting process-wide
+counters.
+
+## Optional Armijo globalization
+
+Force-controlled static beam and shell analyses can select a scaled residual
+merit line search explicitly:
+
+```python
+result = solve_static_nonlinear(
+    model,
+    load,
+    convergence_settings={
+        "profile": "legacy",
+        "line_search": "armijo",
+        # Optional. The reference-node RMS radius is used when omitted.
+        "characteristic_length": 2.5,
+    },
+)
+```
+
+Translational residual rows retain force units. Rotational residual rows are
+divided by the frozen characteristic length before the merit norm is formed.
+Physical convergence still uses the existing unscaled equilibrium residual and
+tolerance. Armijo applies sufficient decrease with coefficient `1e-4`, starts
+at the full Newton step, and uses the configured `line_search_reduction` and
+`max_line_search_cuts` for bounded backtracking.
+
+This mode is opt-in. It currently excludes displacement control, fracture and
+private GE beam programs. Corotational use requires the consistent tangent;
+`corotational_tangent="auto"` selects it automatically. Arc-length continuation
+keeps its existing globalization and controls.
+
+The force-control solver reuses the converged internal-force payload for
+support reactions when its generation remains valid. It falls back to exact
+full-coordinate reassembly when the payload is stale or unavailable. Fixed
+dead-load vectors are projected through the affine constraint transformation
+once per analysis; follower, deletion-dependent and native
+configuration-dependent loads retain current-state evaluation.
+
 Before the first nonlinear solve, the status reports that activation has not
 yet been attempted. Calling the status helper directly does not activate the
 layer.
