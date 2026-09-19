@@ -117,9 +117,41 @@
     },
     "correctness_findings_allowed": 0
   },
+  "revision_qualification": {
+    "runner": "scripts/qualify_nonlinear_static_revisions.py",
+    "baseline_revision": "3499a04fa10c8d2bd5d6b8e401229ac787cb117e",
+    "candidate_identity": "exact committed revision and wheel SHA-256 recorded by the result",
+    "installation_policy": "separate no-dependency target installs from separately built wheels",
+    "execution_policy": "one persistent worker per installed wheel; one warmup per case and revision; seven serial alternating pairs",
+    "thread_settings": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMBA_NUM_THREADS": "1"
+    },
+    "cases": {
+      "declared_nonlinear": "2x2 clamped Q4 shell, 20 kPa fixed pressure, 40 fixed physical increments, line search disabled",
+      "easy_control": "2x2 clamped Q4 shell, 100 Pa fixed pressure, 10 fixed physical increments, line search disabled"
+    },
+    "physical_equivalence": {
+      "status": "completed",
+      "step_count": "exact",
+      "load_factor_absolute_tolerance": 1e-12,
+      "displacement_tolerance": "1e-12 + 1e-10 * scale",
+      "reaction_tolerance": "1e-8 + 1e-10 * scale",
+      "plastic_strain_absolute_tolerance": 1e-12
+    },
+    "acceptance": {
+      "declared_nonlinear_median_reduction_fraction": 0.1,
+      "maximum_easy_control_regression_fraction": 0.05,
+      "physical_equivalence_required": true
+    },
+    "output": "reports/performance/nonlinear_static_revision_qualification.json"
+  },
   "artifacts": {
     "paired_results": "reports/performance/nonlinear_static_performance_convergence.json",
     "paired_reference_results": "reports/performance/nonlinear_static_performance_convergence_reference.json",
-    "results_report": "reports/performance/nonlinear_static_performance_convergence.md"
+    "results_report": "reports/performance/nonlinear_static_performance_convergence.md",
+    "revision_qualification": "reports/performance/nonlinear_static_revision_qualification.json"
   }
 }
