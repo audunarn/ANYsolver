@@ -81,7 +81,9 @@ from .matrix_assembly import (
 from .nonlinear_analysis_diagnostics import (
     capture_nonlinear_analysis_diagnostics,
     record_nonlinear_assembly_execution,
+    record_nonlinear_solver_event,
 )
+from .plasticity import PlaneStressConvergenceError
 from .nonlinear_state import (
     _register_nonlinear_state_cleanup,
     _run_with_nonlinear_state_cleanup,
@@ -358,14 +360,20 @@ class NonlinearConvergenceSettings:
     min_step_fraction: Optional[float] = None
     max_line_search_cuts: int = 16
     line_search_reduction: float = 0.5
+    characteristic_length: Optional[float] = None
 
     def __post_init__(self) -> None:
         profile = str(self.profile).lower()
         line_search = str(self.line_search).lower()
+        object.__setattr__(self, "profile", profile)
+        object.__setattr__(self, "line_search", line_search)
         if profile not in {"legacy", "auto", "balanced", "fast", "robust"}:
             raise ValueError("profile must be one of 'legacy', 'auto', 'balanced', 'fast', or 'robust'")
-        if line_search not in {"never", "rescue", "auto", "always"}:
-            raise ValueError("line_search must be one of 'never', 'rescue', 'auto', or 'always'")
+        if line_search not in {"never", "rescue", "auto", "always", "armijo"}:
+            raise ValueError(
+                "line_search must be one of 'never', 'rescue', 'auto', "
+                "'always', or 'armijo'"
+            )
         if self.fast_iterations <= 0 or self.slow_iterations <= 0:
             raise ValueError("iteration thresholds must be positive")
         if self.growth_factor < 1.0:
@@ -380,6 +388,13 @@ class NonlinearConvergenceSettings:
             raise ValueError("max_line_search_cuts must be positive")
         if not (0.0 < self.line_search_reduction < 1.0):
             raise ValueError("line_search_reduction must be between 0 and 1")
+        if self.characteristic_length is not None and (
+            not np.isfinite(float(self.characteristic_length))
+            or float(self.characteristic_length) <= 0.0
+        ):
+            raise ValueError(
+                "characteristic_length must be finite and positive when supplied"
+            )
 
     @staticmethod
     def for_profile(profile: str) -> "NonlinearConvergenceSettings":
@@ -433,7 +448,57 @@ class NonlinearConvergenceSettings:
             "min_step_fraction": self.min_step_fraction,
             "max_line_search_cuts": int(self.max_line_search_cuts),
             "line_search_reduction": float(self.line_search_reduction),
+            "characteristic_length": self.characteristic_length,
         }
+
+
+def _armijo_characteristic_length(
+    model: "FEModel",
+    requested: Optional[float],
+) -> float:
+    """Resolve one frozen force/moment scaling length for Armijo merit."""
+
+    if requested is not None:
+        return float(requested)
+    coordinates = np.asarray(model.mesh.get_node_coordinates(), dtype=float)
+    if (
+        coordinates.ndim != 2
+        or coordinates.shape[0] == 0
+        or coordinates.shape[1] != 3
+        or not np.all(np.isfinite(coordinates))
+    ):
+        raise ValueError(
+            "Armijo characteristic length requires finite reference node coordinates"
+        )
+    centered = coordinates - np.mean(coordinates, axis=0)
+    value = float(np.sqrt(np.mean(np.sum(centered * centered, axis=1))))
+    if not np.isfinite(value) or value <= np.finfo(float).eps:
+        raise ValueError(
+            "Armijo characteristic length is degenerate; supply an explicit "
+            "positive characteristic_length"
+        )
+    return value
+
+
+def _armijo_residual_weights(
+    model: "FEModel",
+    independent_dofs: np.ndarray,
+    characteristic_length: float,
+) -> np.ndarray:
+    """Map force rows to one and moment rows to inverse length."""
+
+    weights = np.ones(int(independent_dofs.size), dtype=float)
+    inverse_length = 1.0 / float(characteristic_length)
+    manager = model.mesh.dof_manager
+    for reduced_dof, full_dof in enumerate(
+        np.asarray(independent_dofs, dtype=np.intp)
+    ):
+        _node_id, local_index, _name = manager.get_dof_info(int(full_dof))
+        if local_index < 0:
+            raise ValueError("Armijo scaling encountered an unknown independent DOF")
+        if local_index >= 3:
+            weights[reduced_dof] = inverse_length
+    return weights
 
 
 def _coerce_convergence_settings(
@@ -690,6 +755,11 @@ def _static_restart_analysis_contract(
             # target is deliberately not part of the invariant contract.
             "full_row": displacement_control.full_row(model).tolist(),
         }
+    convergence_contract = settings.to_dict()
+    if settings.line_search != "armijo":
+        # Preserve the V1 legacy restart contract byte-for-byte when the new
+        # globalization option is unused.
+        convergence_contract.pop("characteristic_length", None)
     return {
         "schema": "ANYSOLVER_STATIC_RESTART_CONTRACT_V1",
         "control": control_name,
@@ -701,7 +771,7 @@ def _static_restart_analysis_contract(
         "max_iterations": int(max_iterations),
         "tolerance": float(tolerance),
         "effective_min_step_fraction": float(effective_min_step_fraction),
-        "convergence_settings": settings.to_dict(),
+        "convergence_settings": convergence_contract,
         "fracture_config": (
             None if fracture_config is None else fracture_config.to_dict()
         ),
@@ -4769,11 +4839,49 @@ def _solve_static_nonlinear_under_lease(
         )
         for case in specified_load_cases
     )
+    settings = _coerce_convergence_settings(
+        convergence_settings,
+        _post_observation=lambda: exact_guard(
+            model,
+            context="nonlinear static convergence-settings observation",
+        ),
+    )
+    exact_guard(model, context="nonlinear static convergence settings")
+    armijo_requested = settings.line_search == "armijo"
+    if armijo_requested:
+        if control_name != "force":
+            raise ValueError("line_search='armijo' currently requires force control")
+        if fracture_config is not None:
+            raise ValueError(
+                "line_search='armijo' does not yet support fracture or element deletion"
+            )
+        if any(
+            type(element).__module__.startswith("anysolver._ge_beam3_native")
+            for element in model.mesh.elements.values()
+        ):
+            raise ValueError(
+                "line_search='armijo' is outside the private GE beam workflow scope"
+            )
+        if (
+            kinematics == "corotational"
+            and str(corotational_tangent).lower() == "rotated"
+        ):
+            raise ValueError(
+                "line_search='armijo' with corotational kinematics requires "
+                "corotational_tangent='auto' or 'consistent'"
+            )
     from .corotational import resolve_corotational_tangent_mode
 
+    tangent_request = (
+        "consistent"
+        if armijo_requested
+        and kinematics == "corotational"
+        and str(corotational_tangent).lower() == "auto"
+        else corotational_tangent
+    )
     resolved_corotational_tangent = resolve_corotational_tangent_mode(
         kinematics,
-        corotational_tangent,
+        tangent_request,
         follower_pressure=follower_active,
     )
     if kinematics == "corotational":
@@ -4789,14 +4897,6 @@ def _solve_static_nonlinear_under_lease(
             )
     if max_load_factor <= 0.0:
         raise ValueError("max_load_factor must be positive")
-    settings = _coerce_convergence_settings(
-        convergence_settings,
-        _post_observation=lambda: exact_guard(
-            model,
-            context="nonlinear static convergence-settings observation",
-        ),
-    )
-    exact_guard(model, context="nonlinear static convergence settings")
     if kinematics == "corotational" and settings.line_search in {"auto", "rescue"}:
         # Corotational Newton necessarily passes through a large intermediate
         # residual while the element frames rotate toward the new state;
@@ -4811,6 +4911,15 @@ def _solve_static_nonlinear_under_lease(
 
         model = apply_imperfection(model, imperfection, copy_model=True)
         exact_guard(model, context="nonlinear static imperfection observation")
+    if armijo_requested:
+        settings = dataclass_replace(
+            settings,
+            characteristic_length=_armijo_characteristic_length(
+                model,
+                settings.characteristic_length,
+            ),
+        )
+        exact_guard(model, context="nonlinear static Armijo scaling")
     restart_analysis_contract = _static_restart_analysis_contract(
         model=model,
         load_case=load_case,
@@ -4904,8 +5013,21 @@ def _solve_static_nonlinear_under_lease(
     else:
         F_const = np.zeros_like(F_prop)
         constant_load_info = None
-    _, _, T, u0, _, constraint_info = build_constraint_transformation(K0, F_prop, model)
+    _, _, T, u0, independent_dofs, constraint_info = build_constraint_transformation(
+        K0,
+        F_prop,
+        model,
+    )
     exact_guard(model, context="nonlinear static constraint transformation")
+    armijo_weights = (
+        _armijo_residual_weights(
+            model,
+            independent_dofs,
+            float(settings.characteristic_length),
+        )
+        if armijo_requested
+        else None
+    )
     if restored_static_path is not None:
         restored_static_path = _restore_static_path_state(
             validated_restart.path_state,
@@ -4997,6 +5119,49 @@ def _solve_static_nonlinear_under_lease(
             general_tangent = True
             info['equilibrium_tangent'] = 'K_internal-K_spatial_couple_chart_external'
             info['native_spatial_couple_general_matrix'] = True
+    dead_load_projection_eligible = not (
+        follower_active
+        or fracture_config is not None
+        or native_line_model
+        or native_distributed_model
+        or native_generalized_model
+        or native_spatial_couples
+        or native_combined_couples
+        or native_generalized_combined_couples
+    )
+    if dead_load_projection_eligible:
+        F_const_reduced = np.asarray(T.T @ F_const, dtype=float).reshape(-1)
+        F_prop_reduced = np.asarray(T.T @ F_prop, dtype=float).reshape(-1)
+        stage_vectors_reduced = [
+            np.asarray(T.T @ vector, dtype=float).reshape(-1)
+            for vector in stage_vectors
+        ]
+    else:
+        F_const_reduced = None
+        F_prop_reduced = None
+        stage_vectors_reduced = []
+    info["external_load_reduction"] = {
+        "preprojected": bool(dead_load_projection_eligible),
+        "constant_vector": bool(dead_load_projection_eligible),
+        "proportional_vector": bool(
+            dead_load_projection_eligible and load_program is None
+        ),
+        "stage_vector_count": (
+            len(stage_vectors_reduced) if dead_load_projection_eligible else 0
+        ),
+    }
+    info["armijo"] = {
+        "enabled": bool(armijo_requested),
+        "characteristic_length": (
+            float(settings.characteristic_length) if armijo_requested else None
+        ),
+        "residual_scaling": (
+            "translation_force_rotation_moment_over_length"
+            if armijo_requested
+            else None
+        ),
+        "sufficient_decrease": 1.0e-4 if armijo_requested else None,
+    }
     imperfection_provenance: List[Dict[str, Any]] = []
     if imperfection is not None:
         imperfection_provenance = list(getattr(model, "imperfection_metadata", []))
@@ -5550,6 +5715,51 @@ def _solve_static_nonlinear_under_lease(
         )
         return force, load_tangent, factors, active_stage
 
+    def reduced_external_load_at(
+        path_factor: float,
+        displacements: np.ndarray,
+        *,
+        tangent: bool,
+    ) -> Tuple[
+        np.ndarray,
+        Optional[sparse.csr_matrix],
+        Dict[str, float],
+        Optional[str],
+    ]:
+        """Return reduced loads, reusing fixed dead-load projections."""
+
+        if dead_load_projection_eligible and not deleted_element_ids:
+            record_nonlinear_solver_event("dead_load_projection_reuse")
+            assert F_const_reduced is not None
+            if load_program is None:
+                assert F_prop_reduced is not None
+                factors = {"proportional": float(path_factor)}
+                force_reduced = (
+                    F_const_reduced + float(path_factor) * F_prop_reduced
+                )
+                active_stage = None
+            else:
+                factors = load_program.stage_factors(path_factor)
+                force_reduced = F_const_reduced.copy()
+                for stage, vector in zip(
+                    load_program.stages,
+                    stage_vectors_reduced,
+                ):
+                    force_reduced += factors[stage.name] * vector
+                active_stage = load_program.active_stage(path_factor)
+            return force_reduced, None, factors, active_stage
+
+        force, load_tangent, factors, active_stage = external_load_at(
+            path_factor,
+            displacements,
+            tangent=tangent,
+        )
+        force_reduced = np.asarray(T.T @ force, dtype=float).reshape(-1)
+        reduced_tangent = None
+        if tangent and load_tangent is not None and load_tangent.nnz:
+            reduced_tangent = (T.T @ load_tangent @ T).tocsr()
+        return force_reduced, reduced_tangent, factors, active_stage
+
     def external_load_guard(*, context: str) -> Dict[str, Any]:
         """Use the lease for the preassembled affine load path only."""
 
@@ -5878,11 +6088,8 @@ def _solve_static_nonlinear_under_lease(
             return assemble_at(path_factor, *args, **kwargs)
         return _assemble_nonlinear_system(*args, **kwargs)
 
-    def newton_increment(q_start, path_factor, reference, line_search):
-        """One load increment.  Plain full Newton when ``line_search`` is
-        False (the fast path); backtracking-line-search Newton otherwise.
-        Returns (converged, q, states, residual_norm, iterations_used, failure_reason).
-        """
+    def newton_increment(q_start, path_factor, reference, line_search_mode):
+        """Solve one load increment with plain, decrease, or Armijo Newton."""
         nonlocal total_iterations
         cancellation_safe_point(
             cancellation_token,
@@ -5907,16 +6114,15 @@ def _solve_static_nonlinear_under_lease(
             ),
         )
         internal_guard(model, context="nonlinear static force tangent assembly")
-        F_ext, K_ext, _stage_factors, _active_stage = external_load_at(
-            path_factor,
-            u,
-            tangent=True,
+        F_ext_red, K_ext_red, _stage_factors, _active_stage = (
+            reduced_external_load_at(
+                path_factor,
+                u,
+                tangent=True,
+            )
         )
         external_load_guard(context="nonlinear static force external load")
-        residual = (
-            np.asarray(T.T @ F_ext, dtype=float).reshape(-1)
-            - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
-        )
+        residual = F_ext_red - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
         residual_norm = float(np.linalg.norm(residual))
 
         for iteration in range(1, max_iterations + 1):
@@ -5944,27 +6150,78 @@ def _solve_static_nonlinear_under_lease(
                 )
             total_iterations += 1
             if residual_norm <= tolerance * reference:
-                return True, q_trial, trial_states, residual_norm, iteration, None
+                return (
+                    True,
+                    q_trial,
+                    trial_states,
+                    residual_norm,
+                    iteration,
+                    None,
+                    F_int,
+                )
 
-            K_red = ((T.T @ K_T @ T) - (T.T @ K_ext @ T)).tocsr()
+            K_red = (T.T @ K_T @ T).tocsr()
+            if K_ext_red is not None:
+                K_red = (K_red - K_ext_red).tocsr()
+            record_nonlinear_solver_event("linear_factorization")
+            with np.errstate(all="ignore"):
+                handle = factorize(
+                    K_red,
+                    (
+                        MatrixClass.GENERAL
+                        if general_tangent
+                        else MatrixClass.SYMMETRIC_INDEFINITE
+                    ),
+                    signature=f"nonlinear.static_newton:{lam:.16g}:{iteration}",
+                )
+            if handle.status != "ok":
+                detail = (
+                    f"{handle.backend_name}:"
+                    f"{handle.failure_reason or 'factorization_failed'}"
+                )[:240]
+                record_nonlinear_solver_event(
+                    "linear_failure",
+                    failure_reason=detail,
+                )
+                return (
+                    False,
+                    q_start,
+                    committed_states,
+                    residual_norm,
+                    iteration,
+                    "singular_tangent_factorization",
+                    None,
+                )
+            record_nonlinear_solver_event("linear_solve")
             try:
-                with np.errstate(all="ignore"):
-                    handle = factorize(
-                        K_red,
-                        (
-                            MatrixClass.GENERAL
-                            if general_tangent
-                            else MatrixClass.SYMMETRIC_INDEFINITE
-                        ),
-                        signature=f"nonlinear.static_newton:{lam:.16g}:{iteration}",
-                    )
-                    dq = np.asarray(handle.solve(residual), dtype=float).reshape(-1)
-            except Exception:
-                return False, q_start, committed_states, residual_norm, iteration, "singular_tangent_factorization"
+                dq = np.asarray(handle.solve(residual), dtype=float).reshape(-1)
+            except RuntimeError as exc:
+                detail = f"{handle.backend_name}:{type(exc).__name__}:{exc}"[:240]
+                record_nonlinear_solver_event(
+                    "linear_failure",
+                    failure_reason=detail,
+                )
+                return (
+                    False,
+                    q_start,
+                    committed_states,
+                    residual_norm,
+                    iteration,
+                    "singular_tangent_factorization",
+                    None,
+                )
             if np.any(~np.isfinite(dq)):
-                return False, q_start, committed_states, residual_norm, iteration, "nonfinite_newton_increment"
+                return (
+                    False,
+                    q_start,
+                    committed_states,
+                    residual_norm,
+                    iteration,
+                    "nonfinite_newton_increment",
+                    None,
+                )
 
-            if not line_search:
+            if line_search_mode == "none":
                 q_trial = q_trial + dq
                 u = full_displacement(q_trial, path_factor)
                 F_int, K_T, trial_states = assemble_force_system(
@@ -5977,30 +6234,82 @@ def _solve_static_nonlinear_under_lease(
                     corotational_tangent=resolved_corotational_tangent,
                     deleted_element_ids=tuple(deleted_element_ids),
                     residual_stiffness_fraction=(
-                        fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
+                        fracture_config.residual_stiffness_fraction
+                        if fracture_config is not None
+                        else 1.0
                     ),
                 )
-                internal_guard(model, context="nonlinear static force tangent assembly")
-                F_ext, K_ext, _stage_factors, _active_stage = external_load_at(
-                    path_factor,
-                    u,
-                    tangent=True,
+                internal_guard(
+                    model,
+                    context="nonlinear static force tangent assembly",
+                )
+                F_ext_red, K_ext_red, _stage_factors, _active_stage = (
+                    reduced_external_load_at(
+                        path_factor,
+                        u,
+                        tangent=True,
+                    )
                 )
                 external_load_guard(context="nonlinear static force external load")
-                residual = (
-                    np.asarray(T.T @ F_ext, dtype=float).reshape(-1)
-                    - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
-                )
+                residual = F_ext_red - np.asarray(
+                    T.T @ F_int,
+                    dtype=float,
+                ).reshape(-1)
                 residual_norm = float(np.linalg.norm(residual))
                 if not np.isfinite(residual_norm):
-                    return False, q_start, committed_states, residual_norm, iteration, "nonfinite_residual"
+                    return (
+                        False,
+                        q_start,
+                        committed_states,
+                        residual_norm,
+                        iteration,
+                        "nonfinite_residual",
+                        None,
+                    )
                 continue
 
-            # Backtracking line search on the residual norm.  Von Karman
-            # membrane terms can make full Newton steps overshoot violently
-            # when an iterate moves many plate thicknesses at once; halving
-            # until the residual decreases restores global convergence.
-            # Rejected trials skip the tangent assembly (residual only).
+            armijo = line_search_mode == "armijo"
+            if line_search_mode not in {"decrease", "armijo"}:
+                raise ValueError("unknown nonlinear line-search mode")
+            merit = None
+            slope = None
+            if armijo:
+                assert armijo_weights is not None
+                weighted_residual = armijo_weights * residual
+                weighted_model_step = armijo_weights * np.asarray(
+                    K_red @ dq,
+                    dtype=float,
+                ).reshape(-1)
+                merit = 0.5 * float(weighted_residual @ weighted_residual)
+                slope = -float(weighted_residual @ weighted_model_step)
+                if not np.isfinite(merit) or not np.isfinite(slope) or slope >= 0.0:
+                    record_nonlinear_solver_event(
+                        "armijo_non_descent",
+                        failure_reason="armijo_non_descent_direction",
+                    )
+                    return (
+                        False,
+                        q_start,
+                        committed_states,
+                        residual_norm,
+                        iteration,
+                        "armijo_non_descent_direction",
+                        None,
+                    )
+
+            def acceptable(candidate_residual: np.ndarray, candidate_norm: float, alpha: float) -> bool:
+                if not np.isfinite(candidate_norm):
+                    return False
+                if not armijo:
+                    return candidate_norm < residual_norm
+                assert armijo_weights is not None and merit is not None and slope is not None
+                weighted = armijo_weights * candidate_residual
+                candidate_merit = 0.5 * float(weighted @ weighted)
+                return bool(
+                    np.isfinite(candidate_merit)
+                    and candidate_merit <= merit + 1.0e-4 * alpha * slope
+                )
+
             accepted = False
             scale = 1.0
             for trial in range(settings.max_line_search_cuts):
@@ -6014,53 +6323,97 @@ def _solve_static_nonlinear_under_lease(
                 q_candidate = q_trial + scale * dq
                 u = full_displacement(q_candidate, path_factor)
                 with_tangent = trial == 0
-                F_c, K_c, states_c = assemble_force_system(
-                    path_factor,
-                    model,
-                    u,
-                    committed_states,
-                    num_layers,
-                    tangent=with_tangent,
-                    kinematics=kinematics,
-                    corotational_tangent=resolved_corotational_tangent,
-                    deleted_element_ids=tuple(deleted_element_ids),
-                    residual_stiffness_fraction=(
-                        fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
-                    ),
-                )
+                try:
+                    F_c, K_c, states_c = assemble_force_system(
+                        path_factor,
+                        model,
+                        u,
+                        committed_states,
+                        num_layers,
+                        tangent=with_tangent,
+                        kinematics=kinematics,
+                        corotational_tangent=resolved_corotational_tangent,
+                        deleted_element_ids=tuple(deleted_element_ids),
+                        residual_stiffness_fraction=(
+                            fracture_config.residual_stiffness_fraction
+                            if fracture_config is not None
+                            else 1.0
+                        ),
+                    )
+                except PlaneStressConvergenceError as exc:
+                    if not armijo:
+                        raise
+                    _discard_nonlinear_state_candidate(committed_states)
+                    record_nonlinear_solver_event(
+                        "recoverable_trial_failure",
+                        failure_reason=(
+                            f"PlaneStressConvergenceError:{exc}"
+                        )[:240],
+                    )
+                    if trial == 0:
+                        record_nonlinear_solver_event("rejected_full_step")
+                    record_nonlinear_solver_event("backtrack")
+                    scale *= settings.line_search_reduction
+                    continue
                 internal_guard(model, context="nonlinear static line-search assembly")
-                F_ext_c, K_ext_c, _stage_factors, _active_stage = external_load_at(
-                    path_factor,
-                    u,
-                    tangent=with_tangent,
+                F_ext_c_red, K_ext_c_red, _stage_factors, _active_stage = (
+                    reduced_external_load_at(
+                        path_factor,
+                        u,
+                        tangent=with_tangent,
+                    )
                 )
                 external_load_guard(context="nonlinear static line-search load")
-                r_c = (
-                    np.asarray(T.T @ F_ext_c, dtype=float).reshape(-1)
-                    - np.asarray(T.T @ F_c, dtype=float).reshape(-1)
-                )
+                r_c = F_ext_c_red - np.asarray(
+                    T.T @ F_c,
+                    dtype=float,
+                ).reshape(-1)
                 rn_c = float(np.linalg.norm(r_c))
-                if np.isfinite(rn_c) and rn_c < residual_norm:
+                if acceptable(r_c, rn_c, scale):
                     if not with_tangent:
-                        F_c, K_c, states_c = assemble_force_system(
-                            path_factor,
-                            model,
-                            u,
-                            committed_states,
-                            num_layers,
-                            tangent=True,
-                            kinematics=kinematics,
-                            corotational_tangent=resolved_corotational_tangent,
-                            deleted_element_ids=tuple(deleted_element_ids),
-                            residual_stiffness_fraction=(
-                                fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
-                            ),
-                        )
+                        record_nonlinear_solver_event("promotion_evaluation")
+                        residual_only = np.asarray(r_c, dtype=float).copy()
+                        try:
+                            F_c, K_c, states_c = assemble_force_system(
+                                path_factor,
+                                model,
+                                u,
+                                committed_states,
+                                num_layers,
+                                tangent=True,
+                                kinematics=kinematics,
+                                corotational_tangent=resolved_corotational_tangent,
+                                deleted_element_ids=tuple(deleted_element_ids),
+                                residual_stiffness_fraction=(
+                                    fracture_config.residual_stiffness_fraction
+                                    if fracture_config is not None
+                                    else 1.0
+                                ),
+                            )
+                        except PlaneStressConvergenceError as exc:
+                            if not armijo:
+                                raise
+                            _discard_nonlinear_state_candidate(committed_states)
+                            record_nonlinear_solver_event(
+                                "recoverable_trial_failure",
+                                failure_reason=(
+                                    f"PlaneStressConvergenceError:{exc}"
+                                )[:240],
+                            )
+                            record_nonlinear_solver_event("promotion_rejected")
+                            record_nonlinear_solver_event("backtrack")
+                            scale *= settings.line_search_reduction
+                            continue
                         internal_guard(
                             model,
                             context="nonlinear static accepted line-search assembly",
                         )
-                        F_ext_c, K_ext_c, _stage_factors, _active_stage = external_load_at(
+                        (
+                            F_ext_c_red,
+                            K_ext_c_red,
+                            _stage_factors,
+                            _active_stage,
+                        ) = reduced_external_load_at(
                             path_factor,
                             u,
                             tangent=True,
@@ -6068,22 +6421,74 @@ def _solve_static_nonlinear_under_lease(
                         external_load_guard(
                             context="nonlinear static accepted line-search load",
                         )
-                        r_c = (
-                            np.asarray(T.T @ F_ext_c, dtype=float).reshape(-1)
-                            - np.asarray(T.T @ F_c, dtype=float).reshape(-1)
-                        )
+                        r_c = F_ext_c_red - np.asarray(
+                            T.T @ F_c,
+                            dtype=float,
+                        ).reshape(-1)
                         rn_c = float(np.linalg.norm(r_c))
+                        if not np.allclose(
+                            r_c,
+                            residual_only,
+                            rtol=1.0e-10,
+                            atol=1.0e-12 * max(float(reference), 1.0),
+                        ):
+                            record_nonlinear_solver_event(
+                                "promotion_residual_mismatch",
+                                failure_reason="promotion_residual_mismatch",
+                            )
+                            _discard_nonlinear_state_candidate(committed_states)
+                            record_nonlinear_solver_event("promotion_rejected")
+                            record_nonlinear_solver_event("backtrack")
+                            scale *= settings.line_search_reduction
+                            continue
+                        if not acceptable(r_c, rn_c, scale):
+                            _discard_nonlinear_state_candidate(committed_states)
+                            record_nonlinear_solver_event("promotion_rejected")
+                            record_nonlinear_solver_event("backtrack")
+                            scale *= settings.line_search_reduction
+                            continue
                     q_trial = q_candidate
                     F_int, K_T, trial_states = F_c, K_c, states_c
-                    K_ext = K_ext_c
+                    K_ext_red = K_ext_c_red
                     residual, residual_norm = r_c, rn_c
                     accepted = True
                     break
+
+                if not np.isfinite(rn_c):
+                    record_nonlinear_solver_event(
+                        "recoverable_trial_failure",
+                        failure_reason="nonfinite_trial_residual",
+                    )
+                if trial == 0:
+                    record_nonlinear_solver_event("rejected_full_step")
+                _discard_nonlinear_state_candidate(committed_states)
+                record_nonlinear_solver_event("backtrack")
                 scale *= settings.line_search_reduction
             if not accepted:
-                return False, q_start, committed_states, residual_norm, iteration, "line_search_failed"
+                reason = "armijo_line_search_failed" if armijo else "line_search_failed"
+                record_nonlinear_solver_event(
+                    "line_search_failure",
+                    failure_reason=reason,
+                )
+                return (
+                    False,
+                    q_start,
+                    committed_states,
+                    residual_norm,
+                    iteration,
+                    reason,
+                    None,
+                )
 
-        return False, q_start, committed_states, residual_norm, max_iterations, "maximum_iterations_reached"
+        return (
+            False,
+            q_start,
+            committed_states,
+            residual_norm,
+            max_iterations,
+            "maximum_iterations_reached",
+            None,
+        )
 
     force_displacement_history: List[Dict[str, Any]] = (
         copy.deepcopy(restored_static_path["force_displacement_history"])
@@ -6101,6 +6506,8 @@ def _solve_static_nonlinear_under_lease(
         if restored_static_path is not None
         else False
     )
+    reaction_force_reuse_count = 0
+    reaction_force_reassembly_count = 0
 
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
@@ -6124,28 +6531,62 @@ def _solve_static_nonlinear_under_lease(
             lam_trial = min(lam + step_size, target_load_factor, next_stage_boundary)
             attempted_step_size = lam_trial - lam
             u_start = full_displacement(q, lam_trial)
-            F_ext, _K_ext, stage_factors, active_stage = external_load_at(
-                lam_trial,
-                u_start,
-                tangent=False,
+            F_ext_red, _K_ext_red, stage_factors, active_stage = (
+                reduced_external_load_at(
+                    lam_trial,
+                    u_start,
+                    tangent=False,
+                )
             )
             external_load_guard(context="nonlinear static step external load")
-            F_ext_red = np.asarray(T.T @ F_ext, dtype=float).reshape(-1)
             reference = max(float(np.linalg.norm(F_ext_red)), 1.0)
 
             policy = settings.line_search
-            line_search_first = policy == "always" or (
-                policy == "auto" and (force_line_search_next or attempted_step_size > base_step * 1.000001)
+            line_search_first = policy in {"always", "armijo"} or (
+                policy == "auto"
+                and (
+                    force_line_search_next
+                    or attempted_step_size > base_step * 1.000001
+                )
             )
-            converged, q_new, states_new, residual_norm, iterations_used, failure_reason = newton_increment(
-                q, lam_trial, reference, line_search=line_search_first
+            first_mode = (
+                "armijo"
+                if policy == "armijo"
+                else "decrease"
+                if line_search_first
+                else "none"
+            )
+            (
+                converged,
+                q_new,
+                states_new,
+                residual_norm,
+                iterations_used,
+                failure_reason,
+                accepted_force_payload,
+            ) = newton_increment(
+                q,
+                lam_trial,
+                reference,
+                line_search_mode=first_mode,
             )
             line_search_used = bool(line_search_first)
             if not converged and not line_search_first and policy in {"rescue", "auto", "always"}:
                 # Rescue retry with globalized (line-search) Newton before
                 # cutting the load increment.
-                converged, q_new, states_new, residual_norm, extra, failure_reason = newton_increment(
-                    q, lam_trial, reference, line_search=True
+                (
+                    converged,
+                    q_new,
+                    states_new,
+                    residual_norm,
+                    extra,
+                    failure_reason,
+                    accepted_force_payload,
+                ) = newton_increment(
+                    q,
+                    lam_trial,
+                    reference,
+                    line_search_mode="decrease",
                 )
                 iterations_used += extra
                 line_search_used = True
@@ -6167,26 +6608,50 @@ def _solve_static_nonlinear_under_lease(
                 step_index += 1
                 u = full_displacement(q, lam)
                 control_value = float(np.linalg.norm(u))
-                reaction_internal, _unused, _reaction_states = assemble_force_system(
-                    lam,
-                    model,
-                    u,
-                    committed_states,
-                    num_layers,
-                    tangent=False,
-                    deleted_element_ids=tuple(deleted_element_ids),
-                    residual_stiffness_fraction=(
-                        fracture_config.residual_stiffness_fraction
-                        if fracture_config is not None else 1.0
-                    ),
-                    kinematics=kinematics,
-                    corotational_tangent=resolved_corotational_tangent,
-                    require_full_coordinates=True,
+                from .nonlinear_performance_batch_c import (
+                    materialize_full_internal_force,
                 )
-                internal_guard(model, context="nonlinear static reaction assembly")
-                # Reaction recovery is diagnostic-only; do not leave its trial
-                # constitutive state active for the next accepted increment.
-                _discard_nonlinear_state_candidate(committed_states)
+
+                reaction_internal = materialize_full_internal_force(
+                    accepted_force_payload,
+                    model.mesh.dof_manager.total_dofs,
+                )
+                internal_guard(
+                    model,
+                    context="nonlinear static accepted reaction force",
+                )
+                if reaction_internal is None:
+                    reaction_internal, _unused, _reaction_states = (
+                        assemble_force_system(
+                            lam,
+                            model,
+                            u,
+                            committed_states,
+                            num_layers,
+                            tangent=False,
+                            deleted_element_ids=tuple(deleted_element_ids),
+                            residual_stiffness_fraction=(
+                                fracture_config.residual_stiffness_fraction
+                                if fracture_config is not None
+                                else 1.0
+                            ),
+                            kinematics=kinematics,
+                            corotational_tangent=resolved_corotational_tangent,
+                            require_full_coordinates=True,
+                        )
+                    )
+                    internal_guard(
+                        model,
+                        context="nonlinear static reaction assembly",
+                    )
+                    # Reaction recovery is diagnostic-only; do not leave its
+                    # trial constitutive state active for the next increment.
+                    _discard_nonlinear_state_candidate(committed_states)
+                    reaction_force_reassembly_count += 1
+                    record_nonlinear_solver_event("reaction_force_reassembly")
+                else:
+                    reaction_force_reuse_count += 1
+                    record_nonlinear_solver_event("reaction_force_reuse")
                 reaction_external, _unused_tangent, _unused_factors, _unused_stage = (
                     external_load_at(lam, u, tangent=False)
                 )
@@ -6402,6 +6867,18 @@ def _solve_static_nonlinear_under_lease(
                 step_size = next_step
             else:
                 _discard_nonlinear_state_candidate(committed_states)
+                record_nonlinear_solver_event(
+                    "failed_increment",
+                    failure_reason=(
+                        "nonlinear_increment_failed"
+                        if failure_reason is None
+                        else str(failure_reason)
+                    ),
+                )
+                record_nonlinear_solver_event(
+                    "failed_increment_iteration",
+                    count=max(int(iterations_used), 1),
+                )
                 if fracture_config is not None and deleted_element_ids and failure_reason in {
                     "singular_tangent_factorization",
                     "maximum_iterations_reached",
@@ -6472,6 +6949,10 @@ def _solve_static_nonlinear_under_lease(
     info["peak_load_factor"] = max((step.load_factor for step in steps), default=float(lam))
     info["force_displacement_history"] = force_displacement_history
     info["convergence_adaptation"] = convergence_adaptation
+    info["reaction_force_recovery"] = {
+        "accepted_force_reuse_count": int(reaction_force_reuse_count),
+        "full_reassembly_count": int(reaction_force_reassembly_count),
+    }
     info["strain_summary"] = _nonlinear_state_summary(committed_states)
     if fracture_config is not None:
         info["fracture_summary"] = fracture_summary(
