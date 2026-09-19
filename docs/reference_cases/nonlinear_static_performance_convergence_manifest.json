@@ -1,0 +1,118 @@
+{
+  "schema": "anysolver.nonlinear_static.performance_convergence_manifest",
+  "version": 1,
+  "baseline_revision": "3499a04fa10c8d2bd5d6b8e401229ac787cb117e",
+  "candidate_branch": "codex/solver-performance-armijo",
+  "physics_policy": {
+    "element_equations_unchanged": true,
+    "physical_convergence_tolerance_unchanged": true,
+    "material_commit_boundary": "globally_converged_increment_only",
+    "defaults_unchanged": true
+  },
+  "timing_protocol": {
+    "paired_runs": 7,
+    "serial_execution": true,
+    "alternating_pair_order": true,
+    "process_policy": "one warmed process; startup and optional-backend compilation excluded",
+    "baseline": "force guarded reaction reassembly",
+    "candidate": "reuse accepted force for reaction recovery",
+    "thread_policy": "serial samples; OMP_NUM_THREADS=1; other inherited thread variables recorded in the result",
+    "resource_limits": "default solver ResourceConfig; no explicit memory limit",
+    "environment_record": "reports/performance/nonlinear_static_performance_convergence.json",
+    "required_metrics": [
+      "complete_route_wall_seconds",
+      "solver_seconds",
+      "assembly_calls",
+      "tangent_calls",
+      "residual_only_calls",
+      "linear_factorizations",
+      "linear_solves",
+      "backtracks",
+      "promotion_evaluations",
+      "reaction_force_reuse_count",
+      "reaction_force_reassembly_count"
+    ]
+  },
+  "development_cases": [
+    {
+      "id": "clamped_shell_reaction_reuse",
+      "fixture": "scripts/benchmark_nonlinear_static_improvements.py:_shell_case",
+      "purpose": "end-to-end force-control performance and accepted-force reaction reuse on a clamped 2x2 Q4 shell under fixed pressure",
+      "control": "force",
+      "steps": 40,
+      "tolerance": 1e-09,
+      "physical_target": "load factor 1.0 at 20 kPa fixed pressure",
+      "required_outputs": [
+        "displacements",
+        "increment history",
+        "support reactions"
+      ]
+    },
+    {
+      "id": "cubic_hardening_armijo",
+      "fixture": "scripts/benchmark_nonlinear_static_improvements.py:_hardening_case",
+      "purpose": "bounded backtracking and sufficient-decrease work accounting",
+      "control": "force",
+      "steps": 1,
+      "tolerance": 1e-11,
+      "physical_target": "load factor 1.0 at force 2.0"
+    },
+    {
+      "id": "nonsymmetric_follower_pressure",
+      "fixture": "tests/test_follower_pressure.py::test_armijo_accepts_nonsymmetric_follower_pressure_tangent",
+      "purpose": "effective nonsymmetric residual derivative and current follower-load evaluation"
+    }
+  ],
+  "holdouts": [
+    {
+      "id": "plastic_s3_history",
+      "fixture": "tests/test_e4_pl_s3_nonlinear_workflows.py::test_layered_s3_material_history_commits_only_the_accepted_plastic_state"
+    },
+    {
+      "id": "plastic_load_unload_reversal",
+      "fixture": "tests/test_ge_beam3_analysis_fibre_translation.py::test_actual_plastic_load_unload_reversal_matches_original_owner"
+    },
+    {
+      "id": "easy_elastic_beam",
+      "fixture": "tests/test_fe_solver_corotational_beam.py::test_corotational_beam_axial_extension_matches_ea_over_l_response"
+    },
+    {
+      "id": "large_deflection_shell",
+      "fixture": "tests/test_corotational.py::test_corotational_shell_strip_rolls_to_quarter_circle_efficiently"
+    },
+    {
+      "id": "prescribed_motion",
+      "fixture": "tests/test_solver_control_contracts.py::test_force_control_ramps_nonzero_prescribed_displacement_by_increment"
+    },
+    {
+      "id": "weighted_mpc",
+      "fixture": "tests/test_nonlinear_performance_batch_c.py::test_direct_reduced_scatter_matches_full_projection_with_mpc_coefficients"
+    },
+    {
+      "id": "force_restart_split",
+      "fixture": "tests/test_nonlinear_restart_checkpoint.py::test_force_static_checkpoint_round_trip_and_exact_split_continuation"
+    },
+    {
+      "id": "corotational_rigid_rotation",
+      "fixture": "tests/test_fe_solver_corotational_beam.py::test_corotational_beam_large_rigid_rotation_has_zero_internal_force"
+    },
+    {
+      "id": "limit_point_preservation",
+      "fixture": "tests/test_fe_solver_nonlinear_limit_point.py::test_nonlinear_load_stepping_stops_near_eigenvalue_limit_point"
+    }
+  ],
+  "promotion_targets": {
+    "performance_median_reduction_fraction": 0.1,
+    "maximum_easy_case_regression_fraction": 0.05,
+    "convergence_alternatives": {
+      "new_difficult_cases_solved": 2,
+      "failed_work_reduction_fraction": 0.25
+    },
+    "correctness_findings_allowed": 0
+  },
+  "artifacts": {
+    "paired_results": "reports/performance/nonlinear_static_performance_convergence.json",
+    "paired_reference_results": "reports/performance/nonlinear_static_performance_convergence_reference.json",
+    "results_report": "reports/performance/nonlinear_static_performance_convergence.md"
+  }
+}

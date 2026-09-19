@@ -1,0 +1,415 @@
+{
+  "convergence_screen": {
+    "armijo": {
+      "backtracks": 2,
+      "failed_work": {
+        "increment_count": 0,
+        "newton_iterations": 0,
+        "recoverable_trial_failures": 0,
+        "rejected_trial_evaluations": 2
+      },
+      "iterations": 6,
+      "linear_solves": 5,
+      "load_factor": 1.0,
+      "physical_sha256": "f1321c9b91519f498be972c61bd7b7218483239844850a610fe91425c4240865",
+      "rejected_full_steps": 1,
+      "status": "completed",
+      "wall_seconds": 0.01035339999361895
+    },
+    "residual_decrease": {
+      "backtracks": 2,
+      "failed_work": {
+        "increment_count": 0,
+        "newton_iterations": 0,
+        "recoverable_trial_failures": 0,
+        "rejected_trial_evaluations": 2
+      },
+      "iterations": 6,
+      "linear_solves": 5,
+      "load_factor": 1.0,
+      "physical_sha256": "f1321c9b91519f498be972c61bd7b7218483239844850a610fe91425c4240865",
+      "rejected_full_steps": 1,
+      "status": "completed",
+      "wall_seconds": 0.010721200000261888
+    }
+  },
+  "created_utc": "2026-09-19T20:38:27Z",
+  "environment": {
+    "dependencies": {
+      "anysolver": "0.4.6",
+      "numba": "0.65.1",
+      "numpy": "2.4.6",
+      "scipy": "1.17.1"
+    },
+    "nonlinear_performance": {
+      "batch_b": {
+        "description": "in-place isotropic/orthotropic/generalized elastic shell assembly into persistent buffers",
+        "disabled_reason": null,
+        "eligible": true,
+        "installed": true,
+        "parallel_kernel": true
+      },
+      "batch_c": {
+        "active_context_depth": 0,
+        "batch_b_local_kernel_retained": true,
+        "contexts_entered": 19,
+        "cost_gate_skips": 2,
+        "default_activation_threshold": 144,
+        "disabled_reason": null,
+        "eligible": true,
+        "full_coordinate_fallbacks": 0,
+        "installed": true,
+        "last_cost_gate": {
+          "activated": true,
+          "activation_threshold": 144,
+          "estimated_assemblies": 160,
+          "reason": "estimated_assembly_budget_meets_threshold"
+        },
+        "last_fallback_reason": null,
+        "last_plan": {
+          "estimated_map_bytes": 19880,
+          "force_contributions": 60,
+          "mapping_kind": "selector",
+          "reduced_dofs": 30,
+          "reduced_tangent_nnz": 612,
+          "reduction_ratio": 0.5555555555555556,
+          "setup_seconds": 0.0006787000020267442,
+          "tangent_contributions": 900,
+          "tangent_expansion_ratio": 0.390625,
+          "timings": {
+            "assemblies": 145,
+            "builds": 1,
+            "local_response_seconds": 0.19738269998924807,
+            "reduced_force_scatter_seconds": 0.0011886001011589542,
+            "reduced_tangent_scatter_seconds": 0.001266700099222362,
+            "residual_only_assemblies": 0,
+            "total_seconds": 0.20184800009883475
+          },
+          "total_dofs": 54
+        },
+        "map_limit_mb": 512.0,
+        "reduced_assemblies": 2465,
+        "reduced_plan_builds": 17
+      },
+      "cache_policy": {
+        "layer_plan_evictions": 0,
+        "max_layer_plans_per_model": 8
+      },
+      "cached_models": 0,
+      "corotational": {
+        "backend": "numba",
+        "dense_consistent_rotations": 0,
+        "eligible": true,
+        "fallback_reason": null,
+        "fast_path_name": "corotational_direct_3x3_blocks",
+        "force_block_rotations": 0,
+        "jit_enabled": true,
+        "tangent_block_rotations": 0
+      },
+      "diagnostics": {},
+      "installed": true
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "thread_environment": {
+      "MKL_NUM_THREADS": null,
+      "NUMBA_NUM_THREADS": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": null
+    }
+  },
+  "memory_probe": {
+    "baseline": {
+      "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+      "python_traced_peak_bytes": 1050608,
+      "status": "completed"
+    },
+    "candidate": {
+      "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+      "python_traced_peak_bytes": 1050066,
+      "status": "completed"
+    },
+    "scope": "one warmed solve; Python allocations observed by tracemalloc"
+  },
+  "pairs": [
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 0.38492584228515625,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.4848567000008188
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 0.3589651584625244,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.4605987999966601
+      },
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "pair": 1
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 0.366849422454834,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.4635215000016615
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 0.3549020290374756,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.45245129999239
+      },
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "pair": 2
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 0.36957883834838867,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.4678096999996342
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 0.35573697090148926,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.45431590000225697
+      },
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "pair": 3
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 0.36841869354248047,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.4668565000029048
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 0.3527183532714844,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.45124049999867566
+      },
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "pair": 4
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 0.36893463134765625,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.46825750000425614
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 0.36254072189331055,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.46260240000265185
+      },
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "pair": 5
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 0.3753657341003418,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.47367940000549424
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 0.3598670959472656,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.45870629999262746
+      },
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "pair": 6
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 0.3698103427886963,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.467494100012118
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": true,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 0.36024022102355957,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 0.45866109999769833
+      },
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "pair": 7
+    }
+  ],
+  "protocol": {
+    "alternating_pair_order": true,
+    "baseline": "force guarded reaction reassembly",
+    "candidate": "reuse accepted force for reaction recovery",
+    "case": "2x2 clamped Q4 shell under fixed pressure",
+    "repeats": 7,
+    "resource_config": "solver default; no explicit memory or thread limit",
+    "serial": true,
+    "warmup_runs_per_variant": 1
+  },
+  "schema": "anysolver.nonlinear_static.performance_convergence",
+  "summary": {
+    "baseline_median_seconds": 0.4678096999996342,
+    "candidate_median_seconds": 0.45866109999769833,
+    "candidate_over_baseline": 0.9804437573612882,
+    "median_time_change_percent": -1.9556242638711807,
+    "physical_match": true,
+    "reaction_reassembly_eliminated": true
+  },
+  "version": 1
+}

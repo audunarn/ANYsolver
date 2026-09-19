@@ -1,0 +1,390 @@
+{
+  "convergence_screen": {
+    "armijo": {
+      "backtracks": 2,
+      "failed_work": {
+        "increment_count": 0,
+        "newton_iterations": 0,
+        "recoverable_trial_failures": 0,
+        "rejected_trial_evaluations": 2
+      },
+      "iterations": 6,
+      "linear_solves": 5,
+      "load_factor": 1.0,
+      "physical_sha256": "f1321c9b91519f498be972c61bd7b7218483239844850a610fe91425c4240865",
+      "rejected_full_steps": 1,
+      "status": "completed",
+      "wall_seconds": 0.008564000003389083
+    },
+    "residual_decrease": {
+      "backtracks": 2,
+      "failed_work": {
+        "increment_count": 0,
+        "newton_iterations": 0,
+        "recoverable_trial_failures": 0,
+        "rejected_trial_evaluations": 2
+      },
+      "iterations": 6,
+      "linear_solves": 5,
+      "load_factor": 1.0,
+      "physical_sha256": "f1321c9b91519f498be972c61bd7b7218483239844850a610fe91425c4240865",
+      "rejected_full_steps": 1,
+      "status": "completed",
+      "wall_seconds": 0.009213099998305552
+    }
+  },
+  "created_utc": "2026-09-19T20:45:10Z",
+  "environment": {
+    "dependencies": {
+      "anysolver": "0.4.6",
+      "numba": "0.65.1",
+      "numpy": "2.4.6",
+      "scipy": "1.17.1"
+    },
+    "nonlinear_performance": {
+      "batch_b": {
+        "description": "in-place isotropic/orthotropic/generalized elastic shell assembly into persistent buffers",
+        "disabled_reason": null,
+        "eligible": true,
+        "installed": false,
+        "parallel_kernel": true
+      },
+      "batch_c": {
+        "active_context_depth": 0,
+        "batch_b_local_kernel_retained": false,
+        "contexts_entered": 0,
+        "cost_gate_skips": 0,
+        "default_activation_threshold": 144,
+        "disabled_reason": null,
+        "eligible": true,
+        "full_coordinate_fallbacks": 0,
+        "installed": false,
+        "last_cost_gate": null,
+        "last_fallback_reason": null,
+        "last_plan": null,
+        "map_limit_mb": 512.0,
+        "reduced_assemblies": 0,
+        "reduced_plan_builds": 0
+      },
+      "cache_policy": {
+        "layer_plan_evictions": 0,
+        "max_layer_plans_per_model": 8
+      },
+      "cached_models": 0,
+      "corotational": {
+        "backend": "numba",
+        "dense_consistent_rotations": 0,
+        "eligible": true,
+        "fallback_reason": null,
+        "fast_path_name": "corotational_direct_3x3_blocks",
+        "force_block_rotations": 0,
+        "jit_enabled": true,
+        "tangent_block_rotations": 0
+      },
+      "diagnostics": {},
+      "installed": false
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "thread_environment": {
+      "MKL_NUM_THREADS": null,
+      "NUMBA_NUM_THREADS": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": null
+    }
+  },
+  "memory_probe": {
+    "baseline": {
+      "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+      "python_traced_peak_bytes": 3993721,
+      "status": "completed"
+    },
+    "candidate": {
+      "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+      "python_traced_peak_bytes": 2580501,
+      "status": "completed"
+    },
+    "scope": "one warmed solve; Python allocations observed by tracemalloc"
+  },
+  "pairs": [
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 1.2982730865478516,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.401879299999564
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 1.0580153465270996,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.1614187999948626
+      },
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "pair": 1
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 1.2937064170837402,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.398066399997333
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 1.0956544876098633,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.1942820999975083
+      },
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "pair": 2
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 1.2341725826263428,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.3160252999950899
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 1.054107666015625,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.1399579999997513
+      },
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "pair": 3
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 1.283470869064331,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.3734375000058208
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 1.0687463283538818,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.1574362999963341
+      },
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "pair": 4
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 1.284364938735962,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.386126700002933
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 1.0489943027496338,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.1430122000019765
+      },
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "pair": 5
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 1.287501335144043,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.3910419000021648
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 1.129958152770996,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.2300738000049023
+      },
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "pair": 6
+    },
+    {
+      "baseline": {
+        "assembly_calls": 185,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "solver_seconds": 1.2535598278045654,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.3493512999993982
+      },
+      "candidate": {
+        "assembly_calls": 145,
+        "direct_reduced_assembly": false,
+        "iterations": 145,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "73702c16869f31975c1002808b6384c6e68cf26d20fbd07893a7075096b9121f",
+        "reaction_force_reassembly_count": 0,
+        "reaction_force_reuse_count": 40,
+        "solver_seconds": 1.1019155979156494,
+        "status": "completed",
+        "steps": 40,
+        "tangent_assembly_calls": 145,
+        "wall_seconds": 1.1985260999936145
+      },
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "pair": 7
+    }
+  ],
+  "protocol": {
+    "alternating_pair_order": true,
+    "baseline": "force guarded reaction reassembly",
+    "candidate": "reuse accepted force for reaction recovery",
+    "case": "2x2 clamped Q4 shell under fixed pressure",
+    "repeats": 7,
+    "resource_config": "solver default; no explicit memory or thread limit",
+    "serial": true,
+    "warmup_runs_per_variant": 1
+  },
+  "schema": "anysolver.nonlinear_static.performance_convergence",
+  "summary": {
+    "baseline_median_seconds": 1.386126700002933,
+    "candidate_median_seconds": 1.1614187999948626,
+    "candidate_over_baseline": 0.8378879073553703,
+    "median_time_change_percent": -16.211209264462966,
+    "physical_match": true,
+    "reaction_reassembly_eliminated": true
+  },
+  "version": 1
+}
