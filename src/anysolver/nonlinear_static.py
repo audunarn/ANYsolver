@@ -526,6 +526,27 @@ def _armijo_residual_weights(
     return weights
 
 
+def _resolved_corotational_line_search_settings(
+    settings: NonlinearConvergenceSettings,
+    kinematics: str,
+) -> Tuple[NonlinearConvergenceSettings, Optional[str]]:
+    """Resolve the runtime policy without changing legacy V1 fingerprints."""
+
+    if kinematics != "corotational" or str(settings.line_search).lower() not in {
+        "auto",
+        "rescue",
+    }:
+        return settings, None
+    if str(settings.line_search) in {"auto", "rescue"}:
+        # Preserve the established lowercase restart contract, which has
+        # recorded the resolved plain-Newton policy since V1.
+        return dataclass_replace(settings, line_search="never"), None
+    # Older V1 contracts retained valid non-lowercase spelling.  Keep that
+    # spelling in the fingerprint while applying the same case-insensitive
+    # plain-Newton runtime behavior.
+    return settings, "never"
+
+
 def _coerce_convergence_settings(
     value: Optional[
         Union[str, Mapping[str, Any], NonlinearConvergenceSettings]
@@ -4930,7 +4951,11 @@ def _solve_static_nonlinear_under_lease(
         # residual while the element frames rotate toward the new state;
         # residual-norm backtracking rejects that excursion and grinds the
         # increment adaptation.  Plain Newton converges in a few iterations.
-        settings = dataclass_replace(settings, line_search="never")
+        settings, corotational_line_search_override = (
+            _resolved_corotational_line_search_settings(settings, kinematics)
+        )
+    else:
+        corotational_line_search_override = None
     effective_min_step_fraction = settings.min_step_fraction if settings.min_step_fraction is not None else min_step_fraction
 
     start_time = time.time()
@@ -6570,7 +6595,10 @@ def _solve_static_nonlinear_under_lease(
             external_load_guard(context="nonlinear static step external load")
             reference = max(float(np.linalg.norm(F_ext_red)), 1.0)
 
-            policy = str(settings.line_search).lower()
+            policy = (
+                corotational_line_search_override
+                or str(settings.line_search).lower()
+            )
             line_search_first = policy in {"always", "armijo"} or (
                 policy == "auto"
                 and (

@@ -344,6 +344,62 @@ def test_legacy_checkpoint_contract_preserves_valid_setting_casing() -> None:
     assert first.status == resumed.status == "completed"
 
 
+@pytest.mark.parametrize("line_search", ["AUTO", "RESCUE"])
+def test_corotational_uppercase_checkpoint_contract_preserves_v1_fingerprint(
+    line_search: str,
+) -> None:
+    model, load = _model()
+    original = nonlinear_static_module.NonlinearConvergenceSettings(
+        profile="LEGACY",
+        line_search=line_search,
+    )
+    legacy_contract = nonlinear_static_module._static_restart_analysis_contract(
+        model=model,
+        load_case=load,
+        constant_load_case=None,
+        load_program=None,
+        control_name="force",
+        displacement_control=None,
+        num_layers=5,
+        max_iterations=12,
+        tolerance=1.0e-12,
+        effective_min_step_fraction=1.0 / 1024.0,
+        settings=original,
+        fracture_config=None,
+        resource_config=None,
+        kinematics="corotational",
+        resolved_corotational_tangent="consistent",
+    )
+    resolved, runtime_override = (
+        nonlinear_static_module._resolved_corotational_line_search_settings(
+            original,
+            "corotational",
+        )
+    )
+    current_contract = nonlinear_static_module._static_restart_analysis_contract(
+        model=model,
+        load_case=load,
+        constant_load_case=None,
+        load_program=None,
+        control_name="force",
+        displacement_control=None,
+        num_layers=5,
+        max_iterations=12,
+        tolerance=1.0e-12,
+        effective_min_step_fraction=1.0 / 1024.0,
+        settings=resolved,
+        fracture_config=None,
+        resource_config=None,
+        kinematics="corotational",
+        resolved_corotational_tangent="consistent",
+    )
+
+    assert runtime_override == "never"
+    assert resolved is original
+    assert current_contract == legacy_contract
+    assert current_contract["convergence_settings"]["line_search"] == line_search
+
+
 def test_displacement_static_checkpoint_exact_split_continuation() -> None:
     full_control = DisplacementControl(node_id=1, dof="ux", target_displacement=0.20)
     half_control = DisplacementControl(node_id=1, dof="ux", target_displacement=0.10)
