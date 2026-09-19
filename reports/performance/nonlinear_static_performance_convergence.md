@@ -8,6 +8,9 @@ Reviewed candidate code: `7d4da21abf199704871d2c2ef39050ee8cabe81f`
 
 Performance capture source: `32a97fda73369a99f4ce24cc55b0c35224199755`
 
+Immutable-wheel qualification candidate:
+`79fa3343f40e72bc64ae6532768288b6e8583119`
+
 Package version: `0.4.6` (unchanged)
 
 ## Scope
@@ -66,6 +69,33 @@ yield, reverses the load, forces rejected Armijo trials and tangent promotion,
 and compares the committed displacement and plastic history with both an
 unperturbed same-increment oracle and an 80-increment reference.
 
+## Immutable revision qualification
+
+The registered installed-wheel gate compared base `3499a04f` with candidate
+`79fa3343f40e72bc64ae6532768288b6e8583119`. Each revision was built and
+installed separately. Persistent workers excluded startup and one warmup per
+case, then ran seven serial pairs in alternating order with all recorded thread
+limits set to one.
+
+| Case | Base median | Candidate median | Change | Gate |
+|---|---:|---:|---:|---|
+| Declared nonlinear workload | 0.486453 s | 0.465312 s | -4.35% | 10% target not met |
+| Easy elastic control | 0.262814 s | 0.256573 s | -2.37% | 5% regression limit met |
+
+All 14 paired physical comparisons passed. The maximum displacement difference
+was `2.052e-18`, the maximum reaction difference was `1.136e-9`, and load
+factors, step counts and plastic-strain summaries matched. The declared route
+reduced nonlinear assemblies from 185 to 145 and reaction reassemblies from 40
+to zero while keeping 105 factorizations and solves. Traced Python peak memory
+changed from 1,057,064 to 1,047,914 bytes.
+
+The formal terminal is **NO-GO for performance promotion** because the
+registered 10% median reduction was not met. The physical-equivalence and easy
+control gates passed, so the verified implementation remains suitable for
+delivery under the plan's smaller-repeatable-gain allowance. Armijo remains
+opt-in and unpromoted. A preceding identity-incomplete run is retained only as
+a rehearsal and has no authority over this terminal.
+
 ## Verification
 
 - 54 post-review Armijo, reaction-reuse, follower-load and restart tests passed.
@@ -97,4 +127,5 @@ remains unpromoted and unqualified.
 
 - `reports/performance/nonlinear_static_performance_convergence.json`
 - `reports/performance/nonlinear_static_performance_convergence_reference.json`
+- `reports/performance/nonlinear_static_revision_qualification.json`
 - `docs/reference_cases/nonlinear_static_performance_convergence_manifest.json`
