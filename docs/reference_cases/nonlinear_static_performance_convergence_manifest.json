@@ -1,7 +1,7 @@
 {
   "schema": "anysolver.nonlinear_static.performance_convergence_manifest",
   "version": 1,
-  "baseline_revision": "3499a04fa10c8d2bd5d6b8e401229ac787cb117e",
+  "implementation_base_revision": "3499a04fa10c8d2bd5d6b8e401229ac787cb117e",
   "candidate_branch": "codex/solver-performance-armijo",
   "physics_policy": {
     "element_equations_unchanged": true,
@@ -14,8 +14,10 @@
     "serial_execution": true,
     "alternating_pair_order": true,
     "process_policy": "one warmed process; startup and optional-backend compilation excluded",
-    "baseline": "force guarded reaction reassembly",
-    "candidate": "reuse accepted force for reaction recovery",
+    "comparison_scope": "same-revision in-process oracle; this timing screen is not a base-revision comparison",
+    "forced_reassembly_oracle": "disable accepted-force materialization to force guarded reaction reassembly",
+    "candidate": "reuse generation-checked accepted force for reaction recovery",
+    "revision_evidence": "each result JSON records the exact source revision; immutable base/candidate captures are required before any revision-level performance claim",
     "thread_policy": "serial samples; OMP_NUM_THREADS=1; other inherited thread variables recorded in the result",
     "resource_limits": "default solver ResourceConfig; no explicit memory limit",
     "environment_record": "reports/performance/nonlinear_static_performance_convergence.json",
@@ -61,6 +63,11 @@
       "id": "nonsymmetric_follower_pressure",
       "fixture": "tests/test_follower_pressure.py::test_armijo_accepts_nonsymmetric_follower_pressure_tangent",
       "purpose": "effective nonsymmetric residual derivative and current follower-load evaluation"
+    },
+    {
+      "id": "plane_stress_plastic_reversal",
+      "fixture": "tests/test_nonlinear_static_armijo.py::test_armijo_rejected_trials_preserve_plane_stress_plastic_history",
+      "purpose": "rejected Armijo trials and promotion preserve production J2 plane-stress history across loading reversal"
     }
   ],
   "holdouts": [

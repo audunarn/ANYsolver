@@ -365,8 +365,6 @@ class NonlinearConvergenceSettings:
     def __post_init__(self) -> None:
         profile = str(self.profile).lower()
         line_search = str(self.line_search).lower()
-        object.__setattr__(self, "profile", profile)
-        object.__setattr__(self, "line_search", line_search)
         if profile not in {"legacy", "auto", "balanced", "fast", "robust"}:
             raise ValueError("profile must be one of 'legacy', 'auto', 'balanced', 'fast', or 'robust'")
         if line_search not in {"never", "rescue", "auto", "always", "armijo"}:
@@ -455,6 +453,8 @@ class NonlinearConvergenceSettings:
 def _armijo_characteristic_length(
     model: "FEModel",
     requested: Optional[float],
+    *,
+    rotations_present: bool = True,
 ) -> float:
     """Resolve one frozen force/moment scaling length for Armijo merit."""
 
@@ -473,11 +473,36 @@ def _armijo_characteristic_length(
     centered = coordinates - np.mean(coordinates, axis=0)
     value = float(np.sqrt(np.mean(np.sum(centered * centered, axis=1))))
     if not np.isfinite(value) or value <= np.finfo(float).eps:
+        if not rotations_present:
+            # A length scale cancels out when every independent residual row
+            # is translational.  Keep a finite, restart-stable placeholder so
+            # a one-node translational model does not need an irrelevant
+            # user-supplied length.
+            return 1.0
         raise ValueError(
             "Armijo characteristic length is degenerate; supply an explicit "
             "positive characteristic_length"
         )
     return value
+
+
+def _armijo_independent_rotations_present(model: "FEModel") -> bool:
+    """Return whether the validated constraint basis retains a rotation."""
+
+    from .constraint_audit import require_valid_constraints
+
+    audit = require_valid_constraints(model)
+    dependent_dofs = {
+        int(equation.dependent_dof) for equation in audit.equations
+    }
+    manager = model.mesh.dof_manager
+    for full_dof in range(int(manager.total_dofs)):
+        if full_dof in dependent_dofs:
+            continue
+        _node_id, local_index, _name = manager.get_dof_info(full_dof)
+        if local_index >= 3:
+            return True
+    return False
 
 
 def _armijo_residual_weights(
@@ -756,7 +781,7 @@ def _static_restart_analysis_contract(
             "full_row": displacement_control.full_row(model).tolist(),
         }
     convergence_contract = settings.to_dict()
-    if settings.line_search != "armijo":
+    if str(settings.line_search).lower() != "armijo":
         # Preserve the V1 legacy restart contract byte-for-byte when the new
         # globalization option is unused.
         convergence_contract.pop("characteristic_length", None)
@@ -4847,7 +4872,7 @@ def _solve_static_nonlinear_under_lease(
         ),
     )
     exact_guard(model, context="nonlinear static convergence settings")
-    armijo_requested = settings.line_search == "armijo"
+    armijo_requested = str(settings.line_search).lower() == "armijo"
     if armijo_requested:
         if control_name != "force":
             raise ValueError("line_search='armijo' currently requires force control")
@@ -4897,7 +4922,10 @@ def _solve_static_nonlinear_under_lease(
             )
     if max_load_factor <= 0.0:
         raise ValueError("max_load_factor must be positive")
-    if kinematics == "corotational" and settings.line_search in {"auto", "rescue"}:
+    if kinematics == "corotational" and str(settings.line_search).lower() in {
+        "auto",
+        "rescue",
+    }:
         # Corotational Newton necessarily passes through a large intermediate
         # residual while the element frames rotate toward the new state;
         # residual-norm backtracking rejects that excursion and grinds the
@@ -4917,6 +4945,7 @@ def _solve_static_nonlinear_under_lease(
             characteristic_length=_armijo_characteristic_length(
                 model,
                 settings.characteristic_length,
+                rotations_present=_armijo_independent_rotations_present(model),
             ),
         )
         exact_guard(model, context="nonlinear static Armijo scaling")
@@ -6541,7 +6570,7 @@ def _solve_static_nonlinear_under_lease(
             external_load_guard(context="nonlinear static step external load")
             reference = max(float(np.linalg.norm(F_ext_red)), 1.0)
 
-            policy = settings.line_search
+            policy = str(settings.line_search).lower()
             line_search_first = policy in {"always", "armijo"} or (
                 policy == "auto"
                 and (

@@ -1,9 +1,9 @@
 """Paired screen for nonlinear-static reaction reuse and Armijo work.
 
 The timing comparison runs in one warmed process. Pair order alternates and
-the baseline forces the guarded reaction-recovery fallback, so the measured
-difference isolates accepted-force reuse without repeatedly charging Python
-or optional-backend startup.
+the same-revision oracle forces the guarded reaction-recovery fallback, so the
+measured difference isolates accepted-force reuse without repeatedly charging
+Python or optional-backend startup. It is not a revision-to-revision baseline.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ import json
 import os
 import platform
 import statistics
+import subprocess
 import sys
 import time
 import tracemalloc
@@ -196,7 +197,7 @@ def _solve_shell(*, reuse: bool) -> dict[str, Any]:
     solver = performance["solver"]
     recovery = result.info["reaction_force_recovery"]
     return {
-        "wall_seconds": elapsed,
+        "complete_route_wall_seconds": elapsed,
         "solver_seconds": float(result.info.get("solve_time", 0.0)),
         "status": result.status,
         "load_factor": float(result.load_factor),
@@ -208,11 +209,19 @@ def _solve_shell(*, reuse: bool) -> dict[str, Any]:
         ),
         "reaction_force_reassembly_count": int(recovery["full_reassembly_count"]),
         "assembly_calls": int(performance["assembly"]["calls"]),
-        "tangent_assembly_calls": int(performance["assembly"]["tangent_calls"]),
+        "tangent_calls": int(performance["assembly"]["tangent_calls"]),
+        "residual_only_calls": int(
+            performance["assembly"]["residual_only_calls"]
+        ),
         "direct_reduced_assembly": bool(
             performance["direct_reduced_assembly"]["activated"]
         ),
         "linear_solves": int(solver["linear_solves"]),
+        "linear_factorizations": int(solver["linear_factorizations"]),
+        "rejected_full_steps": int(solver["rejected_full_steps"]),
+        "backtracks": int(solver["backtracks"]),
+        "promotion_evaluations": int(solver["promotion_evaluations"]),
+        "failed_work": dict(solver["failed_work"]),
     }
 
 
@@ -228,7 +237,7 @@ def _globalization_case(line_search: str) -> dict[str, Any]:
     elapsed = time.perf_counter() - started
     solver = result.info["nonlinear_performance"]["solver"]
     return {
-        "wall_seconds": elapsed,
+        "complete_route_wall_seconds": elapsed,
         "status": result.status,
         "load_factor": float(result.load_factor),
         "iterations": int(result.info.get("total_newton_iterations", 0)),
@@ -268,6 +277,19 @@ def _dependency_versions() -> dict[str, str | None]:
     return versions
 
 
+def _source_revision() -> str | None:
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
 def _main(args: argparse.Namespace) -> int:
     if args.repeats < 1:
         raise SystemExit("--repeats must be positive")
@@ -276,17 +298,22 @@ def _main(args: argparse.Namespace) -> int:
     _solve_shell(reuse=False)
     _solve_shell(reuse=True)
 
-    samples: dict[str, list[dict[str, Any]]] = {"baseline": [], "candidate": []}
+    oracle_name = "forced_reassembly_oracle"
+    candidate_name = "accepted_force_reuse"
+    samples: dict[str, list[dict[str, Any]]] = {
+        oracle_name: [],
+        candidate_name: [],
+    }
     pairs = []
     implementations: dict[str, Callable[[], dict[str, Any]]] = {
-        "baseline": lambda: _solve_shell(reuse=False),
-        "candidate": lambda: _solve_shell(reuse=True),
+        oracle_name: lambda: _solve_shell(reuse=False),
+        candidate_name: lambda: _solve_shell(reuse=True),
     }
     for pair_index in range(args.repeats):
         order = (
-            ["baseline", "candidate"]
+            [oracle_name, candidate_name]
             if pair_index % 2 == 0
-            else ["candidate", "baseline"]
+            else [candidate_name, oracle_name]
         )
         pair: dict[str, Any] = {"pair": pair_index + 1, "order": order}
         for name in order:
@@ -295,26 +322,26 @@ def _main(args: argparse.Namespace) -> int:
             pair[name] = sample
         pairs.append(pair)
 
-    baseline_time = _median(samples["baseline"], "wall_seconds")
-    candidate_time = _median(samples["candidate"], "wall_seconds")
+    oracle_time = _median(samples[oracle_name], "complete_route_wall_seconds")
+    candidate_time = _median(samples[candidate_name], "complete_route_wall_seconds")
     physical_match = all(
-        baseline["status"] == candidate["status"] == "completed"
-        and baseline["physical_sha256"] == candidate["physical_sha256"]
-        for baseline, candidate in zip(samples["baseline"], samples["candidate"])
+        oracle["status"] == candidate["status"] == "completed"
+        and oracle["physical_sha256"] == candidate["physical_sha256"]
+        for oracle, candidate in zip(samples[oracle_name], samples[candidate_name])
     )
     work_reduction = all(
-        baseline["reaction_force_reassembly_count"] > 0
+        oracle["reaction_force_reassembly_count"] > 0
         and candidate["reaction_force_reassembly_count"] == 0
         and candidate["reaction_force_reuse_count"] > 0
-        for baseline, candidate in zip(samples["baseline"], samples["candidate"])
+        for oracle, candidate in zip(samples[oracle_name], samples[candidate_name])
     )
     convergence = {
         "residual_decrease": _globalization_case("always"),
         "armijo": _globalization_case("armijo"),
     }
     memory = {
-        "baseline": _memory_probe(reuse=False),
-        "candidate": _memory_probe(reuse=True),
+        oracle_name: _memory_probe(reuse=False),
+        candidate_name: _memory_probe(reuse=True),
         "scope": "one warmed solve; Python allocations observed by tracemalloc",
     }
     payload = {
@@ -335,6 +362,7 @@ def _main(args: argparse.Namespace) -> int:
                 )
             },
             "nonlinear_performance": nonlinear_performance_status(),
+            "source_revision": _source_revision(),
         },
         "protocol": {
             "case": "2x2 clamped Q4 shell under fixed pressure",
@@ -343,19 +371,27 @@ def _main(args: argparse.Namespace) -> int:
             "alternating_pair_order": True,
             "warmup_runs_per_variant": 1,
             "resource_config": "solver default; no explicit memory or thread limit",
-            "baseline": "force guarded reaction reassembly",
-            "candidate": "reuse accepted force for reaction recovery",
+            "comparison_scope": (
+                "same-revision in-process oracle; no revision baseline claim"
+            ),
+            "forced_reassembly_oracle": (
+                "accepted-force materialization disabled to force guarded "
+                "reaction reassembly"
+            ),
+            "accepted_force_reuse": (
+                "generation-checked accepted force used for reaction recovery"
+            ),
         },
         "pairs": pairs,
         "memory_probe": memory,
         "summary": {
             "physical_match": physical_match,
             "reaction_reassembly_eliminated": work_reduction,
-            "baseline_median_seconds": baseline_time,
-            "candidate_median_seconds": candidate_time,
-            "candidate_over_baseline": candidate_time / baseline_time,
+            "oracle_median_seconds": oracle_time,
+            "reuse_median_seconds": candidate_time,
+            "reuse_over_oracle": candidate_time / oracle_time,
             "median_time_change_percent": 100.0
-            * (candidate_time / baseline_time - 1.0),
+            * (candidate_time / oracle_time - 1.0),
         },
         "convergence_screen": convergence,
     }

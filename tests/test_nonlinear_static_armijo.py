@@ -7,13 +7,16 @@ from anysolver import nonlinear_performance, nonlinear_static
 from anysolver.boundary import BoundaryCondition, FixedSupport, LoadCase
 from anysolver.elements import Element
 from anysolver.fe_core import FEModel
+from anysolver.material_curves import dnv_c208_steel_curve
 from anysolver.nonlinear_static import (
+    NonlinearLoadProgram,
+    NonlinearLoadStage,
     NonlinearConvergenceSettings,
     _armijo_characteristic_length,
     _armijo_residual_weights,
     solve_static_nonlinear,
 )
-from anysolver.plasticity import PlaneStressConvergenceError
+from anysolver.plasticity import PlaneStressConvergenceError, plane_stress_return_map
 
 
 class _HardeningSpring(Element):
@@ -110,6 +113,88 @@ class _IndefiniteTwoDof(Element):
         return force, matrix if tangent else None, {}
 
 
+class _PlaneStressMaterialPoint(Element):
+    """Axial material point using the production J2 plane-stress update."""
+
+    def __init__(self, element_id: int, node_ids) -> None:
+        super().__init__(element_id, node_ids, "steel")
+        self.modulus = 210.0e9
+        self.poisson = 0.3
+        self.area = 1.0e-4
+        self.length = 1.0
+        self.curve = dnv_c208_steel_curve("S355", 0.01)
+
+    @property
+    def num_nodes(self) -> int:
+        return 2
+
+    @property
+    def dofs_per_node(self) -> int:
+        return 6
+
+    def get_node_coordinates(self, mesh):
+        return np.asarray(
+            [mesh.get_node(node_id).coords() for node_id in self.node_ids],
+            dtype=float,
+        )
+
+    @staticmethod
+    def _matrix(tangent_value: float) -> np.ndarray:
+        matrix = np.zeros((12, 12), dtype=float)
+        matrix[0, 0] = tangent_value
+        matrix[0, 6] = -tangent_value
+        matrix[6, 0] = -tangent_value
+        matrix[6, 6] = tangent_value
+        return matrix
+
+    def compute_stiffness_matrix(self, mesh, material):
+        return self._matrix(self.modulus * self.area / self.length)
+
+    def compute_nonlinear_response(
+        self,
+        mesh,
+        material,
+        u_elem,
+        state=None,
+        num_layers: int = 5,
+        tangent: bool = True,
+    ):
+        displacement = np.asarray(u_elem, dtype=float)
+        strain = np.asarray(
+            [[(displacement[6] - displacement[0]) / self.length, 0.0, 0.0]],
+            dtype=float,
+        )
+        parent = {} if state is None else state
+        plastic_strain = np.asarray(
+            parent.get("plastic_strain", np.zeros((1, 3))),
+            dtype=float,
+        )
+        alpha = np.asarray(parent.get("alpha", np.zeros(1)), dtype=float)
+        stress, algorithmic, new_plastic, new_alpha = plane_stress_return_map(
+            strain,
+            plastic_strain,
+            alpha,
+            self.modulus,
+            self.poisson,
+            self.curve,
+            compute_tangent=tangent,
+        )
+        force_value = float(stress[0, 0]) * self.area
+        force = np.zeros(12, dtype=float)
+        force[0] = -force_value
+        force[6] = force_value
+        stiffness = (
+            self._matrix(float(algorithmic[0, 0, 0]) * self.area / self.length)
+            if tangent
+            else None
+        )
+        return force, stiffness, {
+            "plastic_strain": new_plastic,
+            "alpha": new_alpha,
+            "total_strain": strain,
+        }
+
+
 def _spring_model(*, length: float = 2.0) -> tuple[FEModel, LoadCase]:
     model = FEModel("armijo-hardening-spring")
     model.add_node(1, 0.0, 0.0, 0.0)
@@ -137,6 +222,32 @@ def _armijo_settings(**overrides) -> dict[str, object]:
     }
     settings.update(overrides)
     return settings
+
+
+def _plastic_reversal_model() -> tuple[FEModel, NonlinearLoadProgram]:
+    model = FEModel("armijo-plane-stress-material-point")
+    model.add_material("steel", 210.0e9, 0.3, density=7850.0)
+    model.add_node(1, 0.0, 0.0, 0.0)
+    model.add_node(2, 1.0, 0.0, 0.0)
+    model.add_element(1, _PlaneStressMaterialPoint(1, [1, 2]))
+    model.add_boundary_condition(FixedSupport("fixed", [1]))
+    model.add_boundary_condition(
+        BoundaryCondition(
+            "guide",
+            [2],
+            {"uy": 0.0, "uz": 0.0, "rx": 0.0, "ry": 0.0, "rz": 0.0},
+        )
+    )
+    forward = LoadCase("plastic-forward")
+    forward.add_nodal_load(2, [60_000.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    reverse = LoadCase("plastic-reverse")
+    reverse.add_nodal_load(2, [-90_000.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    return model, NonlinearLoadProgram(
+        (
+            NonlinearLoadStage("forward", forward),
+            NonlinearLoadStage("reverse", reverse),
+        )
+    )
 
 
 def test_armijo_backtracks_and_reports_work() -> None:
@@ -447,3 +558,110 @@ def test_armijo_settings_reject_invalid_length_and_displacement_control() -> Non
             control="displacement",
             convergence_settings=_armijo_settings(),
         )
+
+
+def test_armijo_translation_only_zero_span_does_not_require_length() -> None:
+    model, load = _spring_model(length=0.0)
+
+    result = solve_static_nonlinear(
+        model,
+        load,
+        num_steps=1,
+        max_iterations=20,
+        tolerance=1.0e-12,
+        convergence_settings=_armijo_settings(),
+    )
+
+    assert result.status == "completed"
+    assert result.info["convergence_settings"]["characteristic_length"] == 1.0
+
+
+def test_armijo_rejected_trials_preserve_plane_stress_plastic_history(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_factorize = nonlinear_static.factorize
+
+    class _ScaledHandle:
+        def __init__(self, handle) -> None:
+            self._handle = handle
+            self.status = handle.status
+            self.backend_name = handle.backend_name
+            self.failure_reason = handle.failure_reason
+
+        def solve(self, residual):
+            return 4.0 * np.asarray(self._handle.solve(residual), dtype=float)
+
+    def scaled_factorize(*args, **kwargs):
+        return _ScaledHandle(real_factorize(*args, **kwargs))
+
+    monkeypatch.setattr(nonlinear_static, "factorize", scaled_factorize)
+    armijo_model, armijo_program = _plastic_reversal_model()
+    armijo = solve_static_nonlinear(
+        armijo_model,
+        load_program=armijo_program,
+        num_steps=2,
+        max_iterations=30,
+        tolerance=1.0e-10,
+        convergence_settings=_armijo_settings(),
+    )
+    monkeypatch.setattr(nonlinear_static, "factorize", real_factorize)
+    oracle_model, oracle_program = _plastic_reversal_model()
+    oracle = solve_static_nonlinear(
+        oracle_model,
+        load_program=oracle_program,
+        num_steps=2,
+        max_iterations=30,
+        tolerance=1.0e-10,
+        convergence_settings=_armijo_settings(),
+    )
+    reference_model, reference_program = _plastic_reversal_model()
+    reference = solve_static_nonlinear(
+        reference_model,
+        load_program=reference_program,
+        num_steps=80,
+        max_iterations=30,
+        tolerance=1.0e-10,
+        convergence_settings={"profile": "legacy", "line_search": "never"},
+    )
+
+    assert armijo.status == oracle.status == reference.status == "completed"
+    events = armijo.info["nonlinear_performance"]["solver"]
+    assert events["rejected_full_steps"] >= 1
+    assert events["promotion_evaluations"] >= 1
+    np.testing.assert_allclose(
+        armijo.displacements,
+        oracle.displacements,
+        rtol=2.0e-8,
+        atol=1.0e-12,
+    )
+    np.testing.assert_allclose(
+        armijo.element_states[1]["plastic_strain"],
+        oracle.element_states[1]["plastic_strain"],
+        rtol=2.0e-8,
+        atol=1.0e-12,
+    )
+    np.testing.assert_allclose(
+        armijo.element_states[1]["alpha"],
+        oracle.element_states[1]["alpha"],
+        rtol=2.0e-8,
+        atol=1.0e-12,
+    )
+    np.testing.assert_allclose(
+        armijo.displacements,
+        reference.displacements,
+        rtol=5.0e-4,
+        atol=1.0e-10,
+    )
+    np.testing.assert_allclose(
+        armijo.element_states[1]["plastic_strain"],
+        reference.element_states[1]["plastic_strain"],
+        rtol=2.0e-2,
+        atol=1.0e-10,
+    )
+    np.testing.assert_allclose(
+        armijo.element_states[1]["alpha"],
+        reference.element_states[1]["alpha"],
+        rtol=2.0e-2,
+        atol=1.0e-10,
+    )
+    assert float(np.max(armijo.element_states[1]["alpha"])) > 0.0

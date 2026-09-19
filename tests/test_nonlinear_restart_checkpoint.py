@@ -290,6 +290,60 @@ def test_legacy_checkpoint_contract_omits_unused_armijo_scaling() -> None:
     assert "characteristic_length" not in convergence_contract
 
 
+def test_legacy_checkpoint_contract_preserves_valid_setting_casing() -> None:
+    model, load = _model()
+    settings = nonlinear_static_module.NonlinearConvergenceSettings(
+        profile="LEGACY",
+        line_search="RESCUE",
+    )
+    contract = nonlinear_static_module._static_restart_analysis_contract(
+        model=model,
+        load_case=load,
+        constant_load_case=None,
+        load_program=None,
+        control_name="force",
+        displacement_control=None,
+        num_layers=5,
+        max_iterations=12,
+        tolerance=1.0e-12,
+        effective_min_step_fraction=1.0 / 1024.0,
+        settings=settings,
+        fracture_config=None,
+        resource_config=None,
+        kinematics="von_karman",
+        resolved_corotational_tangent="not_applicable",
+    )
+
+    convergence_contract = contract["convergence_settings"]
+    assert convergence_contract["profile"] == "LEGACY"
+    assert convergence_contract["line_search"] == "RESCUE"
+    assert "characteristic_length" not in convergence_contract
+
+    first = solve_static_nonlinear(
+        model,
+        load,
+        max_load_factor=0.15,
+        num_steps=2,
+        max_iterations=12,
+        tolerance=1.0e-12,
+        convergence_settings=settings,
+        emit_restart_checkpoint=True,
+    )
+    resumed_model, resumed_load = _model()
+    resumed = solve_static_nonlinear(
+        resumed_model,
+        resumed_load,
+        max_load_factor=0.30,
+        num_steps=2,
+        max_iterations=12,
+        tolerance=1.0e-12,
+        convergence_settings=settings,
+        restart_checkpoint=first.restart_checkpoint_bytes(),
+    )
+
+    assert first.status == resumed.status == "completed"
+
+
 def test_displacement_static_checkpoint_exact_split_continuation() -> None:
     full_control = DisplacementControl(node_id=1, dof="ux", target_displacement=0.20)
     half_control = DisplacementControl(node_id=1, dof="ux", target_displacement=0.10)
