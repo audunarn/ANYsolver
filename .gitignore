@@ -25,5 +25,7 @@ reports/performance/*
 !reports/performance/nonlinear_static_performance_convergence.json
 !reports/performance/nonlinear_static_performance_convergence_reference.json
 !reports/performance/nonlinear_static_performance_convergence.md
+!reports/performance/nonlinear_static_revision_qualification.json
 qc_results/
 .pytest_tmp_*/
+.qualification/

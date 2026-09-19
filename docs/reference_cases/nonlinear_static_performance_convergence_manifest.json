@@ -121,6 +121,13 @@
     "runner": "scripts/qualify_nonlinear_static_revisions.py",
     "baseline_revision": "3499a04fa10c8d2bd5d6b8e401229ac787cb117e",
     "candidate_identity": "exact committed revision and wheel SHA-256 recorded by the result",
+    "identity_requirements": [
+      "runner SHA-256",
+      "manifest SHA-256",
+      "installed module paths",
+      "Python platform and version",
+      "ANYsolver, NumPy, SciPy and Numba versions"
+    ],
     "installation_policy": "separate no-dependency target installs from separately built wheels",
     "execution_policy": "one persistent worker per installed wheel; one warmup per case and revision; seven serial alternating pairs",
     "thread_settings": {

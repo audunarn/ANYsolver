@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import os
 import platform
@@ -215,6 +216,10 @@ def _worker_main(site: Path) -> int:
         "module_file": str(Path(anysolver.__file__).resolve()),
         "python": sys.version,
         "platform": platform.platform(),
+        "dependencies": {
+            name: importlib.metadata.version(name)
+            for name in ("anysolver", "numpy", "scipy", "numba")
+        },
         "performance_status": nonlinear_performance_status(),
     }
     print(json.dumps(identity, sort_keys=True), flush=True)
@@ -461,6 +466,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--candidate-revision")
     parser.add_argument("--repeats", type=int, default=7)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--site", type=Path)
     return parser
@@ -487,6 +493,9 @@ def _main(args: argparse.Namespace) -> int:
         raise SystemExit("--repeats must be positive")
 
     output = args.output.resolve()
+    log_dir = (
+        args.log_dir.resolve() if args.log_dir is not None else output.parent
+    )
     workers: dict[str, _Worker] = {}
     started_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     try:
@@ -498,7 +507,7 @@ def _main(args: argparse.Namespace) -> int:
             workers[label] = _start_worker(
                 label,
                 site,
-                output.with_suffix(f".{label}.stderr.log"),
+                log_dir / f"{output.stem}.{label}.stderr.log",
             )
 
         for label in ("baseline", "candidate"):
@@ -601,6 +610,44 @@ def _main(args: argparse.Namespace) -> int:
                 },
                 "resource_limits": "no explicit memory limit",
                 "profiling_separate_from_timing": True,
+                "cases": {
+                    "declared_nonlinear": {
+                        "model": "2x2 clamped Q4 shell",
+                        "pressure_pa": 20000.0,
+                        "physical_increments": 40,
+                        "max_iterations": 20,
+                        "residual_tolerance": 1.0e-9,
+                        "line_search": "never",
+                    },
+                    "easy_control": {
+                        "model": "2x2 clamped Q4 shell",
+                        "pressure_pa": 100.0,
+                        "physical_increments": 10,
+                        "max_iterations": 20,
+                        "residual_tolerance": 1.0e-9,
+                        "line_search": "never",
+                    },
+                },
+                "physical_outputs": [
+                    "displacements",
+                    "increment history",
+                    "support reactions",
+                    "maximum equivalent plastic strain",
+                ],
+            },
+            "authority": {
+                "runner": str(Path(__file__).resolve()),
+                "runner_sha256": _sha256(Path(__file__).resolve()),
+                "manifest": str(
+                    (
+                        Path(__file__).resolve().parents[1]
+                        / "docs/reference_cases/nonlinear_static_performance_convergence_manifest.json"
+                    ).resolve()
+                ),
+                "manifest_sha256": _sha256(
+                    Path(__file__).resolve().parents[1]
+                    / "docs/reference_cases/nonlinear_static_performance_convergence_manifest.json"
+                ),
             },
             "artifacts": {
                 "baseline": {
@@ -608,12 +655,14 @@ def _main(args: argparse.Namespace) -> int:
                     "wheel": str(args.baseline_wheel.resolve()),
                     "wheel_sha256": _sha256(args.baseline_wheel),
                     "worker": workers["baseline"].identity,
+                    "stderr_log": str(workers["baseline"].stderr_path),
                 },
                 "candidate": {
                     "revision": args.candidate_revision,
                     "wheel": str(args.candidate_wheel.resolve()),
                     "wheel_sha256": _sha256(args.candidate_wheel),
                     "worker": workers["candidate"].identity,
+                    "stderr_log": str(workers["candidate"].stderr_path),
                 },
             },
             "cases": cases,
