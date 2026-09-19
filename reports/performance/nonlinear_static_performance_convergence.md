@@ -4,7 +4,7 @@ Date: 2026-09-20
 
 Implementation base: `3499a04fa10c8d2bd5d6b8e401229ac787cb117e`
 
-Reviewed candidate code: `de9b4bb51b8e432b6c32ba8322f384aee2a12bcd`
+Reviewed candidate code: `7d4da21abf199704871d2c2ef39050ee8cabe81f`
 
 Performance capture source: `32a97fda73369a99f4ce24cc55b0c35224199755`
 
@@ -68,7 +68,9 @@ unperturbed same-increment oracle and an 80-increment reference.
 
 ## Verification
 
-- 52 post-review Armijo, reaction-reuse, follower-load and restart tests passed.
+- 54 post-review Armijo, reaction-reuse, follower-load and restart tests passed.
+- 30 additional post-review diagnostics, control-contract, limit-point and
+  state-lifecycle tests passed.
 - Before independent review, 96 broader nonlinear mechanics, corotational,
   prescribed-motion, plastic state-lifecycle and diagnostics tests passed on
   `32a97fda`.
@@ -76,16 +78,20 @@ unperturbed same-increment oracle and an 80-increment reference.
   follower-pressure Armijo solve. It reported the resolved RMS characteristic
   length, two accepted-force reaction reuses, zero reaction reassemblies and a
   completed status.
+- A final wheel built from `7d4da21`, imported from its isolated installation,
+  and completed the translation-only zero-span Armijo regression with frozen
+  characteristic length `1.0` and two backtracks.
 - Source formatting checks and canonical JSON parsing passed.
 
 Two independent reviews examined the complete implementation diff. They found
-no high-severity defect and no mechanics sign error. Four review findings were
-addressed in `de9b4bb`: legacy restart casing is preserved, translation-only
-zero-span Armijo models no longer require an irrelevant length, the real
-plane-stress rejection/reversal test was added, and the evidence was relabeled
-and completed without a revision-performance claim. Independent re-review of
-these corrections is recorded separately from this report. Armijo remains
-unpromoted and unqualified.
+no high-severity defect and no mechanics sign error. Five review findings were
+addressed through `7d4da21`: legacy restart casing, including the corotational
+uppercase V1 edge case, is preserved; translation-only zero-span Armijo models
+no longer require an irrelevant length; the real plane-stress
+rejection/reversal test was added; and the evidence was relabeled and completed
+without a revision-performance claim. Both reviewers re-examined the
+corrections and approved closure with no remaining actionable finding. Armijo
+remains unpromoted and unqualified.
 
 ## Evidence
 
