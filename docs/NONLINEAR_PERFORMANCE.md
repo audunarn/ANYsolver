@@ -603,6 +603,10 @@ result = solve_static_nonlinear(
 
 Translational residual rows retain force units. Rotational residual rows are
 divided by the frozen characteristic length before the merit norm is formed.
+If the independent constraint basis contains no rotational row, a degenerate
+reference-node radius is harmless and the solver records a unit placeholder;
+models with independent rotations still require an explicit positive length
+when that radius is degenerate.
 Physical convergence still uses the existing unscaled equilibrium residual and
 tolerance. Armijo applies sufficient decrease with coefficient `1e-4`, starts
 at the full Newton step, and uses the configured `line_search_reduction` and

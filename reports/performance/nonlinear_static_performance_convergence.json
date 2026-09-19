@@ -111,6 +111,8 @@
     },
     "platform": "Windows-11-10.0.26200-SP0",
     "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "source_revision": "32a97fda73369a99f4ce24cc55b0c35224199755",
+    "source_revision_scope": "historical same-revision feature-isolation capture",
     "thread_environment": {
       "MKL_NUM_THREADS": null,
       "NUMBA_NUM_THREADS": null,
@@ -119,284 +121,439 @@
     }
   },
   "memory_probe": {
-    "baseline": {
-      "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
-      "python_traced_peak_bytes": 1050608,
-      "status": "completed"
-    },
-    "candidate": {
+    "accepted_force_reuse": {
       "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
       "python_traced_peak_bytes": 1050066,
+      "status": "completed"
+    },
+    "forced_reassembly_oracle": {
+      "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+      "python_traced_peak_bytes": 1050608,
       "status": "completed"
     },
     "scope": "one warmed solve; Python allocations observed by tracemalloc"
   },
   "pairs": [
     {
-      "baseline": {
-        "assembly_calls": 185,
-        "direct_reduced_assembly": true,
-        "iterations": 145,
-        "linear_solves": 105,
-        "load_factor": 1.0,
-        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
-        "reaction_force_reassembly_count": 40,
-        "reaction_force_reuse_count": 0,
-        "solver_seconds": 0.38492584228515625,
-        "status": "completed",
-        "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.4848567000008188
-      },
-      "candidate": {
+      "accepted_force_reuse": {
         "assembly_calls": 145,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.4605987999966601,
         "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
         "iterations": 145,
+        "linear_factorizations": 105,
         "linear_solves": 105,
         "load_factor": 1.0,
         "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
         "reaction_force_reassembly_count": 0,
         "reaction_force_reuse_count": 40,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 0,
         "solver_seconds": 0.3589651584625244,
         "status": "completed",
         "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.4605987999966601
+        "tangent_calls": 145
+      },
+      "forced_reassembly_oracle": {
+        "assembly_calls": 185,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.4848567000008188,
+        "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
+        "iterations": 145,
+        "linear_factorizations": 105,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 40,
+        "solver_seconds": 0.38492584228515625,
+        "status": "completed",
+        "steps": 40,
+        "tangent_calls": 145
       },
       "order": [
-        "baseline",
-        "candidate"
+        "forced_reassembly_oracle",
+        "accepted_force_reuse"
       ],
       "pair": 1
     },
     {
-      "baseline": {
-        "assembly_calls": 185,
-        "direct_reduced_assembly": true,
-        "iterations": 145,
-        "linear_solves": 105,
-        "load_factor": 1.0,
-        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
-        "reaction_force_reassembly_count": 40,
-        "reaction_force_reuse_count": 0,
-        "solver_seconds": 0.366849422454834,
-        "status": "completed",
-        "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.4635215000016615
-      },
-      "candidate": {
+      "accepted_force_reuse": {
         "assembly_calls": 145,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.45245129999239,
         "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
         "iterations": 145,
+        "linear_factorizations": 105,
         "linear_solves": 105,
         "load_factor": 1.0,
         "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
         "reaction_force_reassembly_count": 0,
         "reaction_force_reuse_count": 40,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 0,
         "solver_seconds": 0.3549020290374756,
         "status": "completed",
         "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.45245129999239
+        "tangent_calls": 145
+      },
+      "forced_reassembly_oracle": {
+        "assembly_calls": 185,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.4635215000016615,
+        "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
+        "iterations": 145,
+        "linear_factorizations": 105,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 40,
+        "solver_seconds": 0.366849422454834,
+        "status": "completed",
+        "steps": 40,
+        "tangent_calls": 145
       },
       "order": [
-        "candidate",
-        "baseline"
+        "accepted_force_reuse",
+        "forced_reassembly_oracle"
       ],
       "pair": 2
     },
     {
-      "baseline": {
-        "assembly_calls": 185,
-        "direct_reduced_assembly": true,
-        "iterations": 145,
-        "linear_solves": 105,
-        "load_factor": 1.0,
-        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
-        "reaction_force_reassembly_count": 40,
-        "reaction_force_reuse_count": 0,
-        "solver_seconds": 0.36957883834838867,
-        "status": "completed",
-        "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.4678096999996342
-      },
-      "candidate": {
+      "accepted_force_reuse": {
         "assembly_calls": 145,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.45431590000225697,
         "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
         "iterations": 145,
+        "linear_factorizations": 105,
         "linear_solves": 105,
         "load_factor": 1.0,
         "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
         "reaction_force_reassembly_count": 0,
         "reaction_force_reuse_count": 40,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 0,
         "solver_seconds": 0.35573697090148926,
         "status": "completed",
         "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.45431590000225697
+        "tangent_calls": 145
+      },
+      "forced_reassembly_oracle": {
+        "assembly_calls": 185,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.4678096999996342,
+        "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
+        "iterations": 145,
+        "linear_factorizations": 105,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 40,
+        "solver_seconds": 0.36957883834838867,
+        "status": "completed",
+        "steps": 40,
+        "tangent_calls": 145
       },
       "order": [
-        "baseline",
-        "candidate"
+        "forced_reassembly_oracle",
+        "accepted_force_reuse"
       ],
       "pair": 3
     },
     {
-      "baseline": {
-        "assembly_calls": 185,
-        "direct_reduced_assembly": true,
-        "iterations": 145,
-        "linear_solves": 105,
-        "load_factor": 1.0,
-        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
-        "reaction_force_reassembly_count": 40,
-        "reaction_force_reuse_count": 0,
-        "solver_seconds": 0.36841869354248047,
-        "status": "completed",
-        "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.4668565000029048
-      },
-      "candidate": {
+      "accepted_force_reuse": {
         "assembly_calls": 145,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.45124049999867566,
         "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
         "iterations": 145,
+        "linear_factorizations": 105,
         "linear_solves": 105,
         "load_factor": 1.0,
         "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
         "reaction_force_reassembly_count": 0,
         "reaction_force_reuse_count": 40,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 0,
         "solver_seconds": 0.3527183532714844,
         "status": "completed",
         "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.45124049999867566
+        "tangent_calls": 145
+      },
+      "forced_reassembly_oracle": {
+        "assembly_calls": 185,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.4668565000029048,
+        "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
+        "iterations": 145,
+        "linear_factorizations": 105,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 40,
+        "solver_seconds": 0.36841869354248047,
+        "status": "completed",
+        "steps": 40,
+        "tangent_calls": 145
       },
       "order": [
-        "candidate",
-        "baseline"
+        "accepted_force_reuse",
+        "forced_reassembly_oracle"
       ],
       "pair": 4
     },
     {
-      "baseline": {
-        "assembly_calls": 185,
-        "direct_reduced_assembly": true,
-        "iterations": 145,
-        "linear_solves": 105,
-        "load_factor": 1.0,
-        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
-        "reaction_force_reassembly_count": 40,
-        "reaction_force_reuse_count": 0,
-        "solver_seconds": 0.36893463134765625,
-        "status": "completed",
-        "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.46825750000425614
-      },
-      "candidate": {
+      "accepted_force_reuse": {
         "assembly_calls": 145,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.46260240000265185,
         "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
         "iterations": 145,
+        "linear_factorizations": 105,
         "linear_solves": 105,
         "load_factor": 1.0,
         "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
         "reaction_force_reassembly_count": 0,
         "reaction_force_reuse_count": 40,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 0,
         "solver_seconds": 0.36254072189331055,
         "status": "completed",
         "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.46260240000265185
+        "tangent_calls": 145
+      },
+      "forced_reassembly_oracle": {
+        "assembly_calls": 185,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.46825750000425614,
+        "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
+        "iterations": 145,
+        "linear_factorizations": 105,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 40,
+        "solver_seconds": 0.36893463134765625,
+        "status": "completed",
+        "steps": 40,
+        "tangent_calls": 145
       },
       "order": [
-        "baseline",
-        "candidate"
+        "forced_reassembly_oracle",
+        "accepted_force_reuse"
       ],
       "pair": 5
     },
     {
-      "baseline": {
-        "assembly_calls": 185,
-        "direct_reduced_assembly": true,
-        "iterations": 145,
-        "linear_solves": 105,
-        "load_factor": 1.0,
-        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
-        "reaction_force_reassembly_count": 40,
-        "reaction_force_reuse_count": 0,
-        "solver_seconds": 0.3753657341003418,
-        "status": "completed",
-        "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.47367940000549424
-      },
-      "candidate": {
+      "accepted_force_reuse": {
         "assembly_calls": 145,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.45870629999262746,
         "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
         "iterations": 145,
+        "linear_factorizations": 105,
         "linear_solves": 105,
         "load_factor": 1.0,
         "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
         "reaction_force_reassembly_count": 0,
         "reaction_force_reuse_count": 40,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 0,
         "solver_seconds": 0.3598670959472656,
         "status": "completed",
         "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.45870629999262746
+        "tangent_calls": 145
+      },
+      "forced_reassembly_oracle": {
+        "assembly_calls": 185,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.47367940000549424,
+        "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
+        "iterations": 145,
+        "linear_factorizations": 105,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 40,
+        "solver_seconds": 0.3753657341003418,
+        "status": "completed",
+        "steps": 40,
+        "tangent_calls": 145
       },
       "order": [
-        "candidate",
-        "baseline"
+        "accepted_force_reuse",
+        "forced_reassembly_oracle"
       ],
       "pair": 6
     },
     {
-      "baseline": {
-        "assembly_calls": 185,
-        "direct_reduced_assembly": true,
-        "iterations": 145,
-        "linear_solves": 105,
-        "load_factor": 1.0,
-        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
-        "reaction_force_reassembly_count": 40,
-        "reaction_force_reuse_count": 0,
-        "solver_seconds": 0.3698103427886963,
-        "status": "completed",
-        "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.467494100012118
-      },
-      "candidate": {
+      "accepted_force_reuse": {
         "assembly_calls": 145,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.45866109999769833,
         "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
         "iterations": 145,
+        "linear_factorizations": 105,
         "linear_solves": 105,
         "load_factor": 1.0,
         "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
         "reaction_force_reassembly_count": 0,
         "reaction_force_reuse_count": 40,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 0,
         "solver_seconds": 0.36024022102355957,
         "status": "completed",
         "steps": 40,
-        "tangent_assembly_calls": 145,
-        "wall_seconds": 0.45866109999769833
+        "tangent_calls": 145
+      },
+      "forced_reassembly_oracle": {
+        "assembly_calls": 185,
+        "backtracks": 0,
+        "complete_route_wall_seconds": 0.467494100012118,
+        "direct_reduced_assembly": true,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "recoverable_trial_failures": 0,
+          "rejected_trial_evaluations": 0
+        },
+        "iterations": 145,
+        "linear_factorizations": 105,
+        "linear_solves": 105,
+        "load_factor": 1.0,
+        "physical_sha256": "c326d268ef34da561ea4f051b37e2818a2a7594fa89419e86111fbaabf04617d",
+        "promotion_evaluations": 0,
+        "reaction_force_reassembly_count": 40,
+        "reaction_force_reuse_count": 0,
+        "rejected_full_steps": 0,
+        "residual_only_calls": 40,
+        "solver_seconds": 0.3698103427886963,
+        "status": "completed",
+        "steps": 40,
+        "tangent_calls": 145
       },
       "order": [
-        "baseline",
-        "candidate"
+        "forced_reassembly_oracle",
+        "accepted_force_reuse"
       ],
       "pair": 7
     }
   ],
   "protocol": {
+    "accepted_force_reuse": "generation-checked accepted force used for reaction recovery",
     "alternating_pair_order": true,
-    "baseline": "force guarded reaction reassembly",
-    "candidate": "reuse accepted force for reaction recovery",
     "case": "2x2 clamped Q4 shell under fixed pressure",
+    "comparison_scope": "same-revision in-process oracle; no revision baseline claim",
+    "forced_reassembly_oracle": "accepted-force materialization disabled to force guarded reaction reassembly",
     "repeats": 7,
     "resource_config": "solver default; no explicit memory or thread limit",
     "serial": true,
@@ -404,12 +561,14 @@
   },
   "schema": "anysolver.nonlinear_static.performance_convergence",
   "summary": {
-    "baseline_median_seconds": 0.4678096999996342,
-    "candidate_median_seconds": 0.45866109999769833,
-    "candidate_over_baseline": 0.9804437573612882,
     "median_time_change_percent": -1.9556242638711807,
+    "metric_completion": "residual-only calls derived as assembly calls minus tangent calls; zero search/failure work follows from the captured fixed-increment assembly identity",
+    "oracle_median_seconds": 0.4678096999996342,
     "physical_match": true,
-    "reaction_reassembly_eliminated": true
+    "reaction_reassembly_eliminated": true,
+    "reuse_median_seconds": 0.45866109999769833,
+    "reuse_over_oracle": 0.9804437573612882,
+    "revision_performance_claim": false
   },
   "version": 1
 }

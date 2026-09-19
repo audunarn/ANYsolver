@@ -1,10 +1,12 @@
 # Nonlinear static performance and convergence results
 
-Date: 2026-09-19
+Date: 2026-09-20
 
-Baseline: `3499a04fa10c8d2bd5d6b8e401229ac787cb117e`
+Implementation base: `3499a04fa10c8d2bd5d6b8e401229ac787cb117e`
 
-Candidate: `codex/solver-performance-armijo`
+Reviewed candidate code: `de9b4bb51b8e432b6c32ba8322f384aee2a12bcd`
+
+Performance capture source: `32a97fda73369a99f4ce24cc55b0c35224199755`
 
 Package version: `0.4.6` (unchanged)
 
@@ -19,17 +21,23 @@ equations, and defaults are unchanged.
 The paired performance workload is a 2x2 clamped Q4 shell under 20 kPa fixed
 pressure, advanced through 40 physical increments at a residual tolerance of
 `1e-9`. Seven serial pairs ran in alternating order after one warmup per
-variant. The fallback oracle forces full reaction reassembly; the candidate
-uses the accepted-force payload when its generation remains valid.
+variant. The same-revision oracle forces full reaction reassembly; the reuse
+route uses the accepted-force payload when its generation remains valid. This
+isolates the feature within one revision and is not a base-to-candidate timing
+comparison.
 
 Environment: Python 3.14.2, ANYsolver 0.4.6, NumPy 2.4.6, SciPy 1.17.1,
 Numba 0.65.1, Windows 11, `OMP_NUM_THREADS=1`. Other recorded thread variables
 were unset. The JSON artifacts contain every sample, dependency and dispatch
-diagnostic.
+diagnostic and the exact source revision of the completed capture. The samples
+now expose every metric named by the manifest. Residual-only counts are derived
+from the captured assembly identity; zero search and failed-work counts follow
+from the fixed-increment route, where the only oracle residual-only calls are
+the 40 reaction reassemblies and the reuse route has none.
 
 ## Results
 
-| Route | Baseline median | Candidate median | Change | Assemblies | Reaction reassemblies | Physical digest |
+| Route | Forced-reassembly oracle | Accepted-force reuse | Change | Assemblies | Reaction reassemblies | Physical digest |
 |---|---:|---:|---:|---:|---:|---|
 | Installed acceleration enabled | 0.467810 s | 0.458661 s | -1.96% | 185 to 145 | 40 to 0 | exact match |
 | Acceleration disabled reference | 1.386127 s | 1.161419 s | -16.21% | 185 to 145 | 40 to 0 | exact match |
@@ -40,10 +48,11 @@ candidate samples and inactive in the reference run, verifying both dispatch
 routes. The primary traced Python peak changed from 1,050,608 to 1,050,066
 bytes. The reference peak changed from 3,993,721 to 2,580,501 bytes.
 
-The primary production path does not meet the declared 10% median-time target;
-the smaller repeatable gain is retained and reported. The acceleration-disabled
-reference exceeds 10%, but it is not used to overstate the installed accelerated
-result.
+The accelerated feature-isolation screen does not meet the declared 10%
+median-time target. The acceleration-disabled screen exceeds 10%, but neither
+screen supports a revision-level performance claim. A fresh run from
+`de9b4bb` was stopped after ten minutes of cold numerical compilation before
+the first sample; it produced no timing artifact and is not counted here.
 
 The Armijo development screen and the existing residual-decrease search both
 completed the cubic hardening spring with the same physical digest, six Newton
@@ -52,20 +61,31 @@ failed increments. This screen does not meet the Armijo promotion rule because
 it neither adds two difficult solves nor reduces failed work by 25%. Armijo
 therefore remains explicit opt-in and no existing profile selects it.
 
+A post-review production J2 plane-stress material-point test now loads through
+yield, reverses the load, forces rejected Armijo trials and tangent promotion,
+and compares the committed displacement and plastic history with both an
+unperturbed same-increment oracle and an 80-increment reference.
+
 ## Verification
 
-- 49 focused Armijo, reaction-reuse, follower-load and restart tests passed.
-- 96 broader nonlinear mechanics, corotational, prescribed-motion, plastic
-  state-lifecycle and diagnostics tests passed.
+- 52 post-review Armijo, reaction-reuse, follower-load and restart tests passed.
+- Before independent review, 96 broader nonlinear mechanics, corotational,
+  prescribed-motion, plastic state-lifecycle and diagnostics tests passed on
+  `32a97fda`.
 - The built wheel installed into an isolated directory and completed a Q4
   follower-pressure Armijo solve. It reported the resolved RMS characteristic
   length, two accepted-force reaction reuses, zero reaction reassemblies and a
   completed status.
 - Source formatting checks and canonical JSON parsing passed.
 
-No independent reviewer was available in this task. The candidate is ready for
-independent code and mechanics review; this report does not mark Armijo as
-promoted or qualified.
+Two independent reviews examined the complete implementation diff. They found
+no high-severity defect and no mechanics sign error. Four review findings were
+addressed in `de9b4bb`: legacy restart casing is preserved, translation-only
+zero-span Armijo models no longer require an irrelevant length, the real
+plane-stress rejection/reversal test was added, and the evidence was relabeled
+and completed without a revision-performance claim. Independent re-review of
+these corrections is recorded separately from this report. Armijo remains
+unpromoted and unqualified.
 
 ## Evidence
 
