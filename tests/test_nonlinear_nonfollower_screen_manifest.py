@@ -24,10 +24,24 @@ RUNNER_EXECUTION_SHA256 = (
 RUNNER_NORMALIZED_LF_SHA256 = (
     "865f5a26c1010d649a6e070426dac5a2953d48a7214e3d7aba4d94f6df599164"
 )
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+PORTABLE_CONTRACT_HASHES = {
+    "parent_gate": (
+        "5c3b9b1826045610e5a8f4b41ac69d884742faa5ee090922861735aaa9cd7191"
+    ),
+    "runner": RUNNER_NORMALIZED_LF_SHA256,
+    "adjudicator": (
+        "54426021c11af70edcc7d6528ba2fabd93f92050e914c9842901429d5c1be735"
+    ),
+}
+EXECUTION_CONTRACT_HASHES = {
+    "parent_gate": (
+        "5c3b9b1826045610e5a8f4b41ac69d884742faa5ee090922861735aaa9cd7191"
+    ),
+    "runner": RUNNER_EXECUTION_SHA256,
+    "adjudicator": (
+        "54426021c11af70edcc7d6528ba2fabd93f92050e914c9842901429d5c1be735"
+    ),
+}
 
 
 def _sha256_with_lf(path: Path) -> str:
@@ -66,14 +80,11 @@ def test_nonfollower_screen_manifest_freezes_registered_contract() -> None:
     ):
         path = ROOT / contract[path_key]
         assert path.is_file()
-        if path_key == "runner":
-            # The frozen Windows runner contained mixed line endings. Preserve
-            # its exact execution hash while binding the portable LF content
-            # separately so Linux can verify the same source semantics.
-            assert contract[sha_key] == RUNNER_EXECUTION_SHA256
-            assert _sha256_with_lf(path) == RUNNER_NORMALIZED_LF_SHA256
-        else:
-            assert contract[sha_key] == _sha256(path)
+        # Preserve each frozen execution hash while binding the portable LF
+        # content separately. GitHub's Windows checkout may materialize text
+        # files with CRLF even when the registered bytes used LF or mixed EOLs.
+        assert contract[sha_key] == EXECUTION_CONTRACT_HASHES[path_key]
+        assert _sha256_with_lf(path) == PORTABLE_CONTRACT_HASHES[path_key]
 
 
 def test_nonfollower_screen_provenance_matches_manifest_identity() -> None:
