@@ -4,7 +4,6 @@ import copy
 import threading
 
 import numpy as np
-import pytest
 
 from anysolver.mesh_gen import generate_simple_panel_mesh
 from anysolver import nonlinear_static
@@ -220,102 +219,6 @@ def test_cached_assembly_matches_legacy_shell_assembly() -> None:
             states_fast[element_id]["alpha"],
             states_reference[element_id]["alpha"],
         )
-
-
-def test_scoped_element_validation_matches_forced_full_oracle(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    nonlinear_static._ensure_nonlinear_acceleration()
-
-    def assemble(*, force_full: bool):
-        if force_full:
-            monkeypatch.setenv(
-                "FE_SOLVER_FORCE_FULL_NL_ELEMENT_VALIDATION",
-                "1",
-            )
-        else:
-            monkeypatch.delenv(
-                "FE_SOLVER_FORCE_FULL_NL_ELEMENT_VALIDATION",
-                raising=False,
-            )
-        model = _panel_model()
-        rng = np.random.default_rng(20260920)
-        displacement = rng.normal(
-            scale=2.0e-5,
-            size=model.mesh.dof_manager.total_dofs,
-        )
-        return nonlinear_performance._optimized_assemble_nonlinear_system(
-            model,
-            displacement,
-            {},
-            5,
-            tangent=True,
-        )
-
-    scoped = assemble(force_full=False)
-    oracle = assemble(force_full=True)
-
-    np.testing.assert_allclose(scoped[0], oracle[0], rtol=0.0, atol=0.0)
-    np.testing.assert_allclose(
-        scoped[1].toarray(),
-        oracle[1].toarray(),
-        rtol=0.0,
-        atol=0.0,
-    )
-    assert scoped[2].keys() == oracle[2].keys()
-    for element_id in scoped[2]:
-        np.testing.assert_allclose(
-            scoped[2][element_id]["plastic_strain"],
-            oracle[2][element_id]["plastic_strain"],
-            rtol=0.0,
-            atol=0.0,
-        )
-        np.testing.assert_allclose(
-            scoped[2][element_id]["alpha"],
-            oracle[2][element_id]["alpha"],
-            rtol=0.0,
-            atol=0.0,
-        )
-
-
-def test_scoped_element_validation_preserves_primary_failure(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.delenv(
-        "FE_SOLVER_FORCE_FULL_NL_ELEMENT_VALIDATION",
-        raising=False,
-    )
-    model = _panel_model()
-    original = QualifiedE4PLShellElement.compute_nonlinear_response
-
-    def fail_after_transient_mutation() -> None:
-        setattr(
-            QualifiedE4PLShellElement,
-            "compute_nonlinear_response",
-            lambda *_args, **_kwargs: None,
-        )
-        setattr(
-            QualifiedE4PLShellElement,
-            "compute_nonlinear_response",
-            original,
-        )
-        raise RuntimeError("primary nonlinear evaluation failure")
-
-    with pytest.raises(
-        RuntimeError,
-        match="primary nonlinear evaluation failure",
-    ) as failure:
-        nonlinear_performance._run_with_qualified_nonlinear_element_validation(
-            model,
-            context="test nonlinear validation scope",
-            operation=fail_after_transient_mutation,
-        )
-
-    assert any(
-        "trailing qualified-shell validation also failed" in note
-        for note in getattr(failure.value, "__notes__", ())
-    )
-    assert QualifiedE4PLShellElement.compute_nonlinear_response is original
 
 
 def test_mixed_initial_field_shell_batch_accelerates_initialized_elastic_element() -> None:

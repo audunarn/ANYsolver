@@ -33,19 +33,15 @@ import os
 import threading
 import time
 import weakref
-from contextlib import ExitStack
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 from scipy import sparse
 
 from .jit_compiler import njit
 from .initial_field_state import state_has_active_initial_fields
-from .nonlinear_analysis_diagnostics import (
-    record_nonlinear_assembly_execution,
-    record_nonlinear_solver_event,
-)
+from .nonlinear_analysis_diagnostics import record_nonlinear_assembly_execution
 from .nonlinear_element_evaluation import (
     evaluate_nonlinear_element,
     require_legacy_direct_nonlinear_element,
@@ -79,109 +75,6 @@ _INITIAL_FIELD_KEYS = (
     "initial_fiber_stress",
     "initial_fiber_prestrain",
 )
-
-
-def _force_full_nonlinear_element_validation() -> bool:
-    value = os.environ.get("FE_SOLVER_FORCE_FULL_NL_ELEMENT_VALIDATION", "")
-    return str(value).strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _scoped_operation_error_has_precedence(
-    operation_error: BaseException,
-    scope_error: BaseException,
-) -> bool:
-    """Keep the first failure unless cleanup raises a termination signal."""
-
-    return (
-        not isinstance(operation_error, Exception)
-        or isinstance(scope_error, Exception)
-    )
-
-
-def _run_with_qualified_nonlinear_element_validation(
-    model: "FEModel",
-    *,
-    context: str,
-    operation: Callable[[], Any],
-) -> Any:
-    """Bracket one nonlinear assembly with exact qualified-shell validation.
-
-    The existing Q4/S3 trusted-operation scopes perform complete runtime and
-    instance validation at entry and exit. Element calls inside the bracket
-    retain exact identity and monotonic generation checks without repeating
-    the complete boundary scan for every nested formulation method.
-    """
-
-    if _force_full_nonlinear_element_validation():
-        record_nonlinear_solver_event("element_validation_scope_full")
-        return operation()
-
-    elements = getattr(getattr(model, "mesh", None), "elements", None)
-    from .fe_core import _QualifiedStateMapping
-
-    if type(elements) not in {dict, _QualifiedStateMapping}:
-        record_nonlinear_solver_event("element_validation_scope_fallback")
-        return operation()
-
-    from .e4_pl_element import (
-        QualifiedE4PLShellElement,
-        _q4_trusted_operation_scope,
-    )
-    from .e4_pl_s3_element import (
-        QualifiedE4PLS3ShellElement,
-        _s3_trusted_operation_scope,
-    )
-
-    owned = tuple(dict.values(elements))
-    q4_elements = tuple(
-        element
-        for element in owned
-        if type(element) is QualifiedE4PLShellElement
-    )
-    s3_elements = tuple(
-        element
-        for element in owned
-        if type(element) is QualifiedE4PLS3ShellElement
-    )
-    if not q4_elements and not s3_elements:
-        record_nonlinear_solver_event("element_validation_scope_fallback")
-        return operation()
-
-    operation_error: BaseException | None = None
-    try:
-        with ExitStack() as stack:
-            if q4_elements:
-                stack.enter_context(_q4_trusted_operation_scope(q4_elements))
-            if s3_elements:
-                stack.enter_context(_s3_trusted_operation_scope(s3_elements))
-            record_nonlinear_solver_event("element_validation_scope_reuse")
-            try:
-                return operation()
-            except BaseException as exc:
-                operation_error = exc
-                raise
-    except BaseException as scope_error:
-        if scope_error is not operation_error:
-            record_nonlinear_solver_event(
-                "element_validation_scope_invalidation"
-            )
-        if (
-            operation_error is not None
-            and _scoped_operation_error_has_precedence(
-                operation_error,
-                scope_error,
-            )
-        ):
-            if (
-                scope_error is not operation_error
-                and hasattr(operation_error, "add_note")
-            ):
-                operation_error.add_note(
-                    f"{context} trailing qualified-shell validation also "
-                    f"failed: {type(scope_error).__name__}: {scope_error}"
-                )
-            raise operation_error
-        raise
 
 
 def _state_has_initial_fields(state: Any) -> bool:
@@ -1462,39 +1355,27 @@ def _optimized_assemble_nonlinear_system(
             from . import nonlinear_static as _nonlinear_static
 
             assembler = _nonlinear_static._assemble_nonlinear_system
-        return _run_with_qualified_nonlinear_element_validation(
+        return assembler(
             model,
-            context="nonlinear reference assembly",
-            operation=lambda: assembler(
-                model,
-                displacements,
-                committed_states,
-                num_layers,
-                tangent=tangent,
-                deleted_element_ids=deleted,
-                residual_stiffness_fraction=float(
-                    residual_stiffness_fraction
-                ),
-                kinematics=kinematics,
-                corotational_tangent=corotational_tangent,
-                **extra,
-            ),
+            displacements,
+            committed_states,
+            num_layers,
+            tangent=tangent,
+            deleted_element_ids=deleted,
+            residual_stiffness_fraction=float(residual_stiffness_fraction),
+            kinematics=kinematics,
+            corotational_tangent=corotational_tangent,
+            **extra,
         )
     assembly_start = time.perf_counter()
     plan = get_nonlinear_assembly_plan(model, int(num_layers))
     try:
-        result = _run_with_qualified_nonlinear_element_validation(
-            model,
-            context="nonlinear persistent assembly",
-            operation=lambda: plan.assemble(
-                displacements,
-                committed_states,
-                tangent=tangent,
-                deleted_element_ids=deleted,
-                residual_stiffness_fraction=float(
-                    residual_stiffness_fraction
-                ),
-            ),
+        result = plan.assemble(
+            displacements,
+            committed_states,
+            tangent=tangent,
+            deleted_element_ids=deleted,
+            residual_stiffness_fraction=float(residual_stiffness_fraction),
         )
         record_nonlinear_assembly_execution(
             path="persistent_full_coordinate",

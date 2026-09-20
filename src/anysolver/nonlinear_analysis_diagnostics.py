@@ -186,18 +186,6 @@ class _AnalysisPerformanceRecorder:
             "follower_validation_invalidation_count": int(
                 counts.get("follower_validation_invalidation", 0)
             ),
-            "element_validation_scope_reuse_count": int(
-                counts.get("element_validation_scope_reuse", 0)
-            ),
-            "element_validation_scope_full_count": int(
-                counts.get("element_validation_scope_full", 0)
-            ),
-            "element_validation_scope_fallback_count": int(
-                counts.get("element_validation_scope_fallback", 0)
-            ),
-            "element_validation_scope_invalidation_count": int(
-                counts.get("element_validation_scope_invalidation", 0)
-            ),
         }
 
     def _assembly_payload(self) -> Dict[str, Any]:

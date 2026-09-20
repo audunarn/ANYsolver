@@ -580,18 +580,12 @@ def _batch_c_assemble_nonlinear_system(
     # but before this payload recorded ``timings.calls``.
     try:
         with nonlinear_plan._lock:
-            force_reduced, tangent_reduced, trial_states = (
-                _performance._run_with_qualified_nonlinear_element_validation(
-                    model,
-                    context="nonlinear direct-reduced assembly",
-                    operation=lambda: assemble_reduced_system(
-                        nonlinear_plan,
-                        context.reduced_plan,
-                        displacements,
-                        committed_states,
-                        tangent=tangent,
-                    ),
-                )
+            force_reduced, tangent_reduced, trial_states = assemble_reduced_system(
+                nonlinear_plan,
+                context.reduced_plan,
+                displacements,
+                committed_states,
+                tangent=tangent,
             )
             force_payload = _ReducedVectorPayload(
                 force_reduced,
