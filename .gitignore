@@ -22,5 +22,10 @@ reports/performance/*
 !reports/performance/sol_ultra_independent_verification.md
 !reports/performance/sol_ultra_numerical_comparison.json
 !reports/performance/sol_ultra_decision_log.md
+!reports/performance/nonlinear_static_performance_convergence.json
+!reports/performance/nonlinear_static_performance_convergence_reference.json
+!reports/performance/nonlinear_static_performance_convergence.md
+!reports/performance/nonlinear_static_revision_qualification.json
 qc_results/
 .pytest_tmp_*/
+.qualification/

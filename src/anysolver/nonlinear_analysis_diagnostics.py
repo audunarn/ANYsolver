@@ -43,6 +43,8 @@ class _AnalysisPerformanceRecorder:
     corotational_force_block_rotations: int = 0
     corotational_tangent_block_rotations: int = 0
     corotational_dense_consistent_rotations: int = 0
+    solver_event_counts: Counter[str] = field(default_factory=Counter)
+    solver_failure_reason_counts: Counter[str] = field(default_factory=Counter)
     _lock: threading.RLock = field(default_factory=threading.RLock, repr=False)
 
     def record_nested_analysis(self) -> None:
@@ -119,6 +121,57 @@ class _AnalysisPerformanceRecorder:
             self.corotational_force_block_rotations += int(force_blocks)
             self.corotational_tangent_block_rotations += int(tangent_blocks)
             self.corotational_dense_consistent_rotations += int(dense_consistent)
+
+    def record_solver_event(
+        self,
+        *,
+        event: str,
+        count: int = 1,
+        failure_reason: Optional[str] = None,
+    ) -> None:
+        made_count = int(count)
+        if made_count <= 0:
+            return
+        with self._lock:
+            self.solver_event_counts[str(event)] += made_count
+            if failure_reason:
+                self.solver_failure_reason_counts[str(failure_reason)] += made_count
+
+    def _solver_payload(self) -> Dict[str, Any]:
+        with self._lock:
+            counts = dict(sorted(self.solver_event_counts.items()))
+            failure_counts = dict(
+                sorted(self.solver_failure_reason_counts.items())
+            )
+        return {
+            "event_counts": counts,
+            "failure_reason_counts": failure_counts,
+            "linear_factorizations": int(counts.get("linear_factorization", 0)),
+            "linear_solves": int(counts.get("linear_solve", 0)),
+            "rejected_full_steps": int(counts.get("rejected_full_step", 0)),
+            "backtracks": int(counts.get("backtrack", 0)),
+            "promotion_evaluations": int(counts.get("promotion_evaluation", 0)),
+            "recoverable_trial_failures": int(
+                counts.get("recoverable_trial_failure", 0)
+            ),
+            "failed_increments": int(counts.get("failed_increment", 0)),
+            "failed_work": {
+                "increment_count": int(counts.get("failed_increment", 0)),
+                "newton_iterations": int(
+                    counts.get("failed_increment_iteration", 0)
+                ),
+                "rejected_trial_evaluations": int(counts.get("backtrack", 0)),
+                "recoverable_trial_failures": int(
+                    counts.get("recoverable_trial_failure", 0)
+                ),
+            },
+            "reaction_force_reuse_count": int(
+                counts.get("reaction_force_reuse", 0)
+            ),
+            "reaction_force_reassembly_count": int(
+                counts.get("reaction_force_reassembly", 0)
+            ),
+        }
 
     def _assembly_payload(self) -> Dict[str, Any]:
         with self._lock:
@@ -287,6 +340,7 @@ class _AnalysisPerformanceRecorder:
             "nested_analysis_count": nested_analysis_count,
             "assembly": self._assembly_payload(),
             "direct_reduced_assembly": direct_reduced,
+            "solver": self._solver_payload(),
             "hill48": self._hill48_payload(),
             "corotational": self._corotational_payload(info),
         }
@@ -359,6 +413,22 @@ def record_corotational_analysis_execution(
         )
 
 
+def record_nonlinear_solver_event(
+    event: str,
+    *,
+    count: int = 1,
+    failure_reason: Optional[str] = None,
+) -> None:
+    """Record one solver/globalization event in active analyses."""
+
+    for recorder in _active_recorders():
+        recorder.record_solver_event(
+            event=event,
+            count=count,
+            failure_reason=failure_reason,
+        )
+
+
 def capture_nonlinear_analysis_diagnostics(func: F) -> F:
     """Attach task/thread-local performance diagnostics to a solver result."""
 
@@ -392,4 +462,5 @@ __all__ = [
     "record_corotational_analysis_execution",
     "record_hill48_analysis_execution",
     "record_nonlinear_assembly_execution",
+    "record_nonlinear_solver_event",
 ]

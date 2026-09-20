@@ -424,6 +424,46 @@ def test_nonlinear_solver_uses_direct_reduced_assembly(monkeypatch) -> None:
     assert direct["activated"] is True
     assert direct["fallback_reason"] is None
     assert direct["assembly_count"] == status["reduced_assemblies"]
+    assert result.info["reaction_force_recovery"] == {
+        "accepted_force_reuse_count": len(result.steps),
+        "full_reassembly_count": 0,
+    }
+    solver = performance["solver"]
+    assert solver["reaction_force_reuse_count"] == len(result.steps)
+    assert solver["reaction_force_reassembly_count"] == 0
+
+
+@pytest.mark.skipif(
+    not JIT_ENABLED,
+    reason=f"Batch C installation requires Numba ({JIT_DISABLED_REASON})",
+)
+def test_force_control_reaction_reuse_falls_back_when_payload_is_stale(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("FE_SOLVER_BATCH_C_MIN_ESTIMATED_ASSEMBLIES", "0")
+    monkeypatch.setattr(
+        nonlinear_performance_batch_c,
+        "materialize_full_internal_force",
+        lambda *_args, **_kwargs: None,
+    )
+    model, load = _spring_model()
+    result = solve_static_nonlinear(
+        model,
+        load_case=load,
+        max_load_factor=0.25,
+        num_steps=2,
+        max_iterations=8,
+        tolerance=1.0e-10,
+    )
+
+    assert result.status == "completed"
+    assert result.info["reaction_force_recovery"] == {
+        "accepted_force_reuse_count": 0,
+        "full_reassembly_count": len(result.steps),
+    }
+    solver = result.info["nonlinear_performance"]["solver"]
+    assert solver["reaction_force_reuse_count"] == 0
+    assert solver["reaction_force_reassembly_count"] == len(result.steps)
 
 
 @pytest.mark.skipif(

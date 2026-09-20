@@ -242,6 +242,31 @@ def test_nonlinear_static_uses_follower_pressure_effective_tangent() -> None:
     ] == pytest.approx(0.013745211987271156, rel=2.0e-5)
 
 
+def test_armijo_accepts_nonsymmetric_follower_pressure_tangent() -> None:
+    model, centre_node = _clamped_pressure_plate()
+    load = LoadCase("armijo_follower", follower_pressure=True)
+    for element_id in model.mesh.elements:
+        load.add_pressure_load(int(element_id), 2.0e4)
+
+    result = solve_static_nonlinear(
+        model,
+        load,
+        num_steps=2,
+        max_iterations=25,
+        tolerance=1.0e-7,
+        convergence_settings={
+            "profile": "legacy",
+            "line_search": "armijo",
+        },
+    )
+
+    assert result.status == "completed"
+    assert result.info["equilibrium_tangent"] == "K_internal-K_external"
+    assert result.info["armijo"]["enabled"] is True
+    assert result.info["external_load_reduction"]["preprojected"] is False
+    assert result.displacements[model.mesh.get_node(centre_node).dofs[2]] > 0.0
+
+
 def test_corotational_follower_pressure_selects_consistent_tangent() -> None:
     model, centre_node = _clamped_pressure_plate()
     load = LoadCase("follower", follower_pressure=True)
