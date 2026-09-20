@@ -137,3 +137,34 @@ def test_scalar_fast_path_preserves_errors_and_nonfinite_propagation() -> None:
     np.testing.assert_array_equal(
         np.isnan(actual.hessian), np.isnan(expected[2])
     )
+
+
+@pytest.mark.parametrize(
+    ("value", "gradient", "hessian", "scalar"),
+    [
+        (1.0, (math.inf, 1.0), ((2.0, 0.0), (0.0, 3.0)), 2.0),
+        (1.0, (1.0, 2.0), ((math.inf, 0.0), (0.0, 3.0)), 2.0),
+        (1.0, (1.0, 2.0), ((2.0, 0.0), (0.0, 3.0)), math.inf),
+        (1.0, (1.0, 2.0), ((2.0, 0.0), (0.0, 3.0)), math.nan),
+    ],
+)
+def test_scalar_multiplication_preserves_all_nonfinite_generic_paths(
+    value: float,
+    gradient: tuple[float, ...],
+    hessian: tuple[tuple[float, ...], ...],
+    scalar: float,
+) -> None:
+    source = s3._SecondOrderJet(
+        value,
+        np.asarray(gradient, dtype=float),
+        np.asarray(hessian, dtype=float),
+    )
+    constant = s3._SecondOrderJet.constant(scalar, source.gradient.size)
+    with np.errstate(invalid="ignore"):
+        actual = source * scalar
+        expected = _generic_multiply(source, constant)
+    assert actual.value == expected[0] or (
+        math.isnan(actual.value) and math.isnan(expected[0])
+    )
+    np.testing.assert_array_equal(actual.gradient, expected[1])
+    np.testing.assert_array_equal(actual.hessian, expected[2])
