@@ -1,0 +1,81 @@
+{
+  "adjudicator": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\scripts\\adjudicate_nonlinear_nonfollower_screen_v2.py",
+  "adjudicator_sha256": "ea0f675de53579e195f15abbd18a25b6118e4edf09f080478c0282b5bfcb036e",
+  "criteria": {
+    "aggregate_definition": "sum of per-case median complete-route seconds",
+    "aggregate_reduction_fraction": 0.05,
+    "aggregate_route_pass": false,
+    "baseline_aggregate_seconds": 17.11503640000592,
+    "candidate_aggregate_seconds": 17.096876000025077,
+    "case_reduction_fraction": 0.05,
+    "improved_case_route_pass": false,
+    "improved_cases": [],
+    "maximum_case_regression_fraction": 0.05,
+    "minimum_improved_case_count": 2,
+    "observed_aggregate_reduction_fraction": 0.0010610786653563172,
+    "observed_case_medians_seconds": {
+      "easy_elastic_shell_control": {
+        "baseline_median_seconds": 0.464559600019129,
+        "candidate_median_seconds": 0.5223799000086728
+      },
+      "large_deflection_shell_holdout": {
+        "baseline_median_seconds": 6.269169499981217,
+        "candidate_median_seconds": 6.426567799993791
+      },
+      "plastic_s3_reversal_holdout": {
+        "baseline_median_seconds": 10.351749199995538,
+        "candidate_median_seconds": 10.117089000006672
+      },
+      "prescribed_mpc_beam_holdout": {
+        "baseline_median_seconds": 0.02955810001003556,
+        "candidate_median_seconds": 0.030839300015941262
+      }
+    },
+    "observed_case_reduction_fraction": {
+      "easy_elastic_shell_control": -0.12446260929095644,
+      "large_deflection_shell_holdout": -0.025106722670849013,
+      "plastic_s3_reversal_holdout": 0.022668651979026632,
+      "prescribed_mpc_beam_holdout": -0.043345140772604124
+    },
+    "regression_failures": {
+      "easy_elastic_shell_control": -0.12446260929095644
+    },
+    "work_mismatches": []
+  },
+  "decision": {
+    "case_regression_limit": "FAIL",
+    "completeness": "PASS",
+    "mechanics": "PASS",
+    "next_action": "RETAIN_OR_REJECT_COMPONENT_WITHOUT_PROMOTION",
+    "performance_route": "FAIL",
+    "screen": "FAIL",
+    "work_equivalence": "PASS"
+  },
+  "identity": {
+    "baseline_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+    "baseline_tree": "c8515ee19b6924be7c17ca9490452f1d81f5f31b",
+    "baseline_wheel_sha256": "4512f1172f446922272fdb6e34f77175755351f7c91fc9ca2bddacc30623792c",
+    "build_provenance_sha256": "3f07dee584e573af598f912e516031fee70735a044ffd52b7779b6917f6f6300",
+    "candidate_revision": "019838840d0f6c4d0d7c718df45ee3f68a609623",
+    "candidate_tree": "986e8cb83e92c96a80fbe0f1c588aaac9a8febe6",
+    "candidate_wheel_sha256": "562585e4107847e9cfb4757c7e1c84ca3cad9b01d9a0710cc05d16c29d3f84e1",
+    "manifest_sha256": "368ce9456186cffc605f1f692118f93db7c98e00af5590668f91fc2ef0b846ae",
+    "raw_evidence_sha256": "c9082649ba84d2bca5db0122c8b613fa9c773793beb6c976dd9162950438eca0",
+    "runner_sha256": "5764f1104f23272ca3103df50f1655c0aa6ca6701f930ee324313bd10e752d13"
+  },
+  "schema": "anysolver.nonlinear_static.nonfollower_screen_adjudication",
+  "validated_execution": {
+    "alternating_order": true,
+    "case_inventory": [
+      "easy_elastic_shell_control",
+      "large_deflection_shell_holdout",
+      "plastic_s3_reversal_holdout",
+      "prescribed_mpc_beam_holdout"
+    ],
+    "installed_regressions": "PASS",
+    "pairs_per_case": 3,
+    "physical_comparison_count": 12,
+    "successful_sample_count": 24
+  },
+  "version": 2
+}

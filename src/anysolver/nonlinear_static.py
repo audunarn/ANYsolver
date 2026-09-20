@@ -71,6 +71,7 @@ from .linalg import MatrixClass, factorize
 from .initial_field_state import state_has_active_initial_fields
 from .jit_compiler import numba_thread_scope
 from .matrix_assembly import (
+    _assemble_external_load_system_under_lease,
     _run_with_qualified_assembly_runtime_lease,
     _scatter_element_matrix,
     _triplets_to_csr,
@@ -1125,6 +1126,8 @@ def _weighted_external_load_system(
     displacements: np.ndarray,
     *,
     tangent: bool,
+    qualified_runtime_guard: Any = None,
+    reuse_component_lifecycle_validation: bool = False,
 ) -> Tuple[np.ndarray, Optional[sparse.csr_matrix]]:
     """Assemble a weighted external force and its displacement derivative."""
     total_dofs = model.mesh.dof_manager.total_dofs
@@ -1134,12 +1137,28 @@ def _weighted_external_load_system(
         factor = float(raw_factor)
         if load_case is None or factor == 0.0:
             continue
-        vector, case_tangent, _info = assemble_external_load_system(
-            model,
-            load_case,
-            displacements,
-            tangent=tangent,
-        )
+        if reuse_component_lifecycle_validation:
+            if qualified_runtime_guard is None:
+                raise RuntimeError(
+                    "reused component validation requires an active runtime guard"
+                )
+            vector, case_tangent, _info = (
+                _assemble_external_load_system_under_lease(
+                    model,
+                    load_case,
+                    displacements,
+                    tangent=tangent,
+                    qualified_runtime_guard=qualified_runtime_guard,
+                    reuse_component_lifecycle_validation=True,
+                )
+            )
+        else:
+            vector, case_tangent, _info = assemble_external_load_system(
+                model,
+                load_case,
+                displacements,
+                tangent=tangent,
+            )
         force += factor * vector
         if tangent and case_tangent is not None and case_tangent.nnz:
             load_tangent = load_tangent + factor * case_tangent
@@ -5204,6 +5223,53 @@ def _solve_static_nonlinear_under_lease(
             len(stage_vectors_reduced) if dead_load_projection_eligible else 0
         ),
     }
+    force_full_follower_validation = (
+        os.environ.get("FE_SOLVER_DISABLE_FOLLOWER_VALIDATION_REUSE", "0")
+        == "1"
+    )
+    from .boundary import LoadCase as _BuiltInLoadCase
+
+    follower_load_cases: List[Optional["LoadCase"]] = [
+        constant_load_case,
+        load_case,
+    ]
+    if load_program is not None:
+        follower_load_cases.extend(
+            stage.load_case for stage in load_program.stages
+        )
+    exact_builtin_follower_loads = all(
+        case is None or type(case) is _BuiltInLoadCase
+        for case in follower_load_cases
+    )
+    follower_validation_reuse_eligible = bool(
+        follower_active
+        and exact_qualified_internal_fast_path
+        and model is lease_model
+        and exact_builtin_follower_loads
+        and fracture_config is None
+        and not force_full_follower_validation
+    )
+    if not follower_active:
+        follower_validation_fallback_reason = "follower_pressure_inactive"
+    elif force_full_follower_validation:
+        follower_validation_fallback_reason = "forced_full_validation"
+    elif not exact_qualified_internal_fast_path:
+        follower_validation_fallback_reason = "model_not_exactly_qualified"
+    elif model is not lease_model:
+        follower_validation_fallback_reason = "solver_owned_model_copy"
+    elif not exact_builtin_follower_loads:
+        follower_validation_fallback_reason = "custom_load_case"
+    elif fracture_config is not None:
+        follower_validation_fallback_reason = "fracture_active"
+    else:
+        follower_validation_fallback_reason = None
+    info["follower_load_validation"] = {
+        "reuse_eligible": follower_validation_reuse_eligible,
+        "forced_full_validation": force_full_follower_validation,
+        "fallback_reason": follower_validation_fallback_reason,
+        "force_and_tangent_evaluation": "current_state_every_required_evaluation",
+        "cache_persistence": "analysis_local_nonserializable",
+    }
     info["armijo"] = {
         "enabled": bool(armijo_requested),
         "characteristic_length": (
@@ -5704,6 +5770,29 @@ def _solve_static_nonlinear_under_lease(
             return case
         return filtered_load_case_for_deleted_elements(case, deleted_element_ids)
 
+    def full_follower_validation_guard(*, context: str) -> None:
+        try:
+            exact_guard(model, context=context)
+        except Exception:
+            record_nonlinear_solver_event(
+                "follower_validation_invalidation"
+            )
+            raise
+        record_nonlinear_solver_event("follower_validation_full")
+
+    def reused_follower_validation_guard(
+        observed_model: "FEModel",
+        *,
+        context: str,
+    ) -> Dict[str, Any]:
+        try:
+            return internal_guard(observed_model, context=context)
+        except Exception:
+            record_nonlinear_solver_event(
+                "follower_validation_invalidation"
+            )
+            raise
+
     def external_load_at(
         path_factor: float,
         displacements: np.ndarray,
@@ -5761,12 +5850,47 @@ def _solve_static_nonlinear_under_lease(
                 for stage in load_program.stages
             )
             active_stage = load_program.active_stage(path_factor)
-        force, load_tangent = _weighted_external_load_system(
-            model,
-            weighted_cases,
-            displacements,
-            tangent=tangent,
-        )
+        if follower_validation_reuse_eligible:
+            full_follower_validation_guard(
+                context="nonlinear follower external-load evaluation preflight"
+            )
+            evaluation_failure: Optional[BaseException] = None
+            try:
+                force, load_tangent = _weighted_external_load_system(
+                    model,
+                    weighted_cases,
+                    displacements,
+                    tangent=tangent,
+                    qualified_runtime_guard=reused_follower_validation_guard,
+                    reuse_component_lifecycle_validation=True,
+                )
+            except BaseException as exc:
+                evaluation_failure = exc
+                raise
+            finally:
+                try:
+                    full_follower_validation_guard(
+                        context=(
+                            "nonlinear follower external-load evaluation output"
+                        )
+                    )
+                except Exception as validation_failure:
+                    if evaluation_failure is None:
+                        raise
+                    evaluation_failure.add_note(
+                        "Trailing follower-load lifecycle validation also "
+                        f"failed: {validation_failure!r}"
+                    )
+            record_nonlinear_solver_event("follower_validation_reuse")
+        else:
+            if follower_active:
+                record_nonlinear_solver_event("follower_validation_fallback")
+            force, load_tangent = _weighted_external_load_system(
+                model,
+                weighted_cases,
+                displacements,
+                tangent=tangent,
+            )
         return force, load_tangent, factors, active_stage
 
     def reduced_external_load_at(

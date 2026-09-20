@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from scipy import sparse
 
+from anysolver import nonlinear_static
 from anysolver.arc_length import ArcLengthControl, solve_static_arc_length
 from anysolver.boundary import BoundaryCondition, FixedSupport, LoadCase
 from anysolver.buckling import solve_eigenvalue_buckling
@@ -22,6 +23,7 @@ from anysolver.elements import (
 )
 from anysolver.fe_core import FEModel
 from anysolver.matrix_assembly import (
+    AssemblyError,
     assemble_external_load_tangent,
     assemble_geometric_stiffness_matrix,
     assemble_load_vector,
@@ -218,6 +220,12 @@ def test_nonlinear_static_uses_follower_pressure_effective_tangent() -> None:
     assert result.status == "completed"
     assert result.info["follower_pressure"] is True
     assert result.info["equilibrium_tangent"] == "K_internal-K_external"
+    optimized_validation = result.info["nonlinear_performance"]["solver"]
+    assert optimized_validation["follower_validation_reuse_count"] > 0
+    assert optimized_validation["follower_validation_full_count"] == (
+        2 * optimized_validation["follower_validation_reuse_count"]
+    )
+    assert optimized_validation["follower_validation_fallback_count"] == 0
     assert result.displacements[model.mesh.get_node(centre_node).dofs[2]] == pytest.approx(
         0.013869955023377319,
         rel=2.0e-5,
@@ -240,6 +248,183 @@ def test_nonlinear_static_uses_follower_pressure_effective_tangent() -> None:
     assert legacy_result.displacements[
         legacy_model.mesh.get_node(legacy_centre).dofs[2]
     ] == pytest.approx(0.013745211987271156, rel=2.0e-5)
+    assert legacy_result.info["nonlinear_performance"]["solver"][
+        "follower_validation_fallback_count"
+    ] > 0
+
+
+def test_follower_validation_reuse_matches_forced_full_oracle(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def solve_case(*, force_full: bool):
+        if force_full:
+            monkeypatch.setenv(
+                "FE_SOLVER_DISABLE_FOLLOWER_VALIDATION_REUSE",
+                "1",
+            )
+        else:
+            monkeypatch.delenv(
+                "FE_SOLVER_DISABLE_FOLLOWER_VALIDATION_REUSE",
+                raising=False,
+            )
+        model, _centre_node = _clamped_pressure_plate()
+        load = LoadCase("follower-validation", follower_pressure=True)
+        for element_id in model.mesh.elements:
+            load.add_pressure_load(int(element_id), 2.0e4)
+        return solve_static_nonlinear(
+            model,
+            load,
+            num_steps=2,
+            max_iterations=25,
+            tolerance=1.0e-7,
+            record_increment_snapshots=True,
+            emit_restart_checkpoint=True,
+        )
+
+    optimized = solve_case(force_full=False)
+    oracle = solve_case(force_full=True)
+
+    assert optimized.status == oracle.status == "completed"
+    assert optimized.load_factor == oracle.load_factor
+    np.testing.assert_allclose(
+        optimized.displacements,
+        oracle.displacements,
+        rtol=1.0e-12,
+        atol=1.0e-12,
+    )
+    assert len(optimized.steps) == len(oracle.steps)
+    for optimized_step, oracle_step in zip(optimized.steps, oracle.steps):
+        assert optimized_step.load_factor == oracle_step.load_factor
+        assert optimized_step.support_reactions == pytest.approx(
+            oracle_step.support_reactions,
+            rel=1.0e-12,
+            abs=1.0e-10,
+        )
+    assert len(optimized.snapshots) == len(oracle.snapshots)
+    for optimized_snapshot, oracle_snapshot in zip(
+        optimized.snapshots,
+        oracle.snapshots,
+    ):
+        np.testing.assert_allclose(
+            optimized_snapshot.displacements,
+            oracle_snapshot.displacements,
+            rtol=1.0e-12,
+            atol=1.0e-12,
+        )
+    assert optimized.restart_checkpoint is not None
+    assert oracle.restart_checkpoint is not None
+    assert optimized.restart_checkpoint["checkpoint_sha256"] == (
+        oracle.restart_checkpoint["checkpoint_sha256"]
+    )
+
+    optimized_solver = optimized.info["nonlinear_performance"]["solver"]
+    oracle_solver = oracle.info["nonlinear_performance"]["solver"]
+    assert optimized_solver["follower_validation_reuse_count"] > 0
+    assert optimized_solver["follower_validation_fallback_count"] == 0
+    assert oracle_solver["follower_validation_reuse_count"] == 0
+    assert oracle_solver["follower_validation_fallback_count"] > 0
+    assert oracle.info["follower_load_validation"]["fallback_reason"] == (
+        "forced_full_validation"
+    )
+
+
+def test_follower_validation_reuse_rejects_generation_change(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _centre_node = _clamped_pressure_plate()
+    load = LoadCase("follower-mutation", follower_pressure=True)
+    for element_id in model.mesh.elements:
+        load.add_pressure_load(int(element_id), 2.0e4)
+
+    original_assembler = (
+        nonlinear_static._assemble_external_load_system_under_lease
+    )
+    mutated = False
+
+    def mutate_then_assemble(*args, **kwargs):
+        nonlocal mutated
+        if not mutated:
+            mutated = True
+            model.add_node(10_000, 2.0, 2.0, 2.0)
+        return original_assembler(*args, **kwargs)
+
+    observed_events: list[str] = []
+    original_record_event = nonlinear_static.record_nonlinear_solver_event
+
+    def record_event(event: str, **kwargs) -> None:
+        observed_events.append(event)
+        original_record_event(event, **kwargs)
+
+    monkeypatch.setattr(
+        nonlinear_static,
+        "_assemble_external_load_system_under_lease",
+        mutate_then_assemble,
+    )
+    monkeypatch.setattr(
+        nonlinear_static,
+        "record_nonlinear_solver_event",
+        record_event,
+    )
+
+    with pytest.raises(ValueError, match="authority"):
+        solve_static_nonlinear(
+            model,
+            load,
+            num_steps=1,
+            max_iterations=5,
+            tolerance=1.0e-7,
+        )
+    assert "follower_validation_invalidation" in observed_events
+
+
+def test_follower_validation_reuse_checks_failed_evaluation_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _centre_node = _clamped_pressure_plate()
+    load = LoadCase("follower-failed-mutation", follower_pressure=True)
+    for element_id in model.mesh.elements:
+        load.add_pressure_load(int(element_id), 2.0e4)
+
+    def mutate_then_fail(*args, **kwargs):
+        model.add_node(10_000, 2.0, 2.0, 2.0)
+        raise RuntimeError("follower evaluation failed after mutation")
+
+    observed_events: list[str] = []
+    original_record_event = nonlinear_static.record_nonlinear_solver_event
+
+    def record_event(event: str, **kwargs) -> None:
+        observed_events.append(event)
+        original_record_event(event, **kwargs)
+
+    monkeypatch.setattr(
+        nonlinear_static,
+        "_assemble_external_load_system_under_lease",
+        mutate_then_fail,
+    )
+    monkeypatch.setattr(
+        nonlinear_static,
+        "record_nonlinear_solver_event",
+        record_event,
+    )
+
+    with pytest.raises(AssemblyError) as exc_info:
+        solve_static_nonlinear(
+            model,
+            load,
+            num_steps=1,
+            max_iterations=5,
+            tolerance=1.0e-7,
+        )
+    assert "follower_validation_invalidation" in observed_events
+    operation_failure = exc_info.value.__cause__
+    assert isinstance(operation_failure, RuntimeError)
+    assert "follower evaluation failed after mutation" in str(
+        operation_failure
+    )
+    assert any(
+        "Trailing follower-load lifecycle validation also failed" in note
+        for note in operation_failure.__notes__
+    )
 
 
 def test_armijo_accepts_nonsymmetric_follower_pressure_tangent() -> None:

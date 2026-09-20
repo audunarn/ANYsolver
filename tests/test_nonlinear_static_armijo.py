@@ -465,6 +465,7 @@ def test_armijo_trial_budget_exhaustion_returns_to_cutback(
         "newton_iterations": 1,
         "rejected_trial_evaluations": 2,
         "recoverable_trial_failures": 0,
+        "follower_validation_invalidations": 0,
     }
 
 

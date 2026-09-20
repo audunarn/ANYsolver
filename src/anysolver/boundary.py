@@ -754,6 +754,52 @@ class LoadCase:
         )
 
 
+def _assemble_builtin_load_vector_under_existing_lease(
+    load_case: LoadCase,
+    mesh: "FEMesh",
+    dof_manager: "DOFManager",
+    material_getter: Optional[Callable[[str], "Material"]] = None,
+    displacements: Optional[np.ndarray] = None,
+    element_activity: Optional[object] = None,
+    *,
+    qualified_runtime_guard: Callable[..., None],
+) -> np.ndarray:
+    """Run the exact built-in load case under a caller-owned runtime lease."""
+
+    if type(load_case) is not LoadCase:
+        raise TypeError("existing load lease requires the exact built-in LoadCase")
+    qualified_elements = tuple(mesh.elements.values())
+    qualified_runtime_guard(stage="built-in load element observation")
+    q4_elements = tuple(
+        element
+        for element in qualified_elements
+        if type(element) is _QualifiedE4PLShellElement
+    )
+    s3_elements = tuple(
+        element
+        for element in qualified_elements
+        if type(element) is _QualifiedE4PLS3ShellElement
+    )
+    try:
+        with ExitStack() as stack:
+            stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
+            stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
+            result = LoadCase._get_load_vector_under_lease(
+                load_case,
+                mesh,
+                dof_manager,
+                material_getter,
+                displacements,
+                element_activity,
+                qualified_runtime_guard=qualified_runtime_guard,
+            )
+    except BaseException:
+        qualified_runtime_guard(stage="built-in load exceptional output")
+        raise
+    qualified_runtime_guard(stage="built-in load output")
+    return result
+
+
 @dataclass
 class InPlaneLoad:
     """

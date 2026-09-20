@@ -2,9 +2,10 @@
 
 The coordinator executes one bounded worker at a time.  Each worker imports an
 explicit installed wheel, performs one unmeasured warm solve, and then records
-one complete-route sample.  Baseline/candidate order alternates within every
-pair.  Armijo comparisons use the candidate wheel with the same physical
-increments and tangent policy as the residual-decrease method.
+the preregistered complete-route timing observation.  Baseline/candidate order
+alternates within every pair.  Armijo comparisons use the candidate wheel with
+the same physical increments and tangent policy as the residual-decrease
+method.
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 
 THREAD_ENV = {
@@ -462,6 +463,48 @@ def _physical_observables(
     }
 
 
+def _aggregate_timing_repetitions(
+    samples: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Return one sample whose timings are medians of equivalent routes."""
+    if not samples:
+        raise ValueError("timing repetition inventory is empty")
+    physical_hashes = {
+        str(sample["physical_sha256"]) for sample in samples
+    }
+    work_hashes = {
+        _json_digest(sample["work"]) for sample in samples
+    }
+    if len(physical_hashes) != 1:
+        raise RuntimeError(
+            "timing repetitions produced different physical results"
+        )
+    if len(work_hashes) != 1:
+        raise RuntimeError(
+            "timing repetitions produced different solver work"
+        )
+    route_seconds = [
+        float(sample["complete_route_wall_seconds"]) for sample in samples
+    ]
+    solver_seconds = [float(sample["solver_seconds"]) for sample in samples]
+    aggregate = dict(samples[-1])
+    aggregate["complete_route_wall_seconds"] = float(
+        statistics.median(route_seconds)
+    )
+    aggregate["solver_seconds"] = float(statistics.median(solver_seconds))
+    aggregate["timing_repetitions"] = {
+        "count": len(samples),
+        "aggregation": "median",
+        "route_seconds": route_seconds,
+        "solver_seconds": solver_seconds,
+        "physical_sha256": next(iter(physical_hashes)),
+        "work_sha256": next(iter(work_hashes)),
+        "physical_match": True,
+        "work_match": True,
+    }
+    return aggregate
+
+
 def _worker_sample(site: Path, spec: Mapping[str, Any], method: str) -> dict[str, Any]:
     sys.path.insert(0, str(site.resolve()))
 
@@ -527,77 +570,102 @@ def _worker_sample(site: Path, spec: Mapping[str, Any], method: str) -> dict[str
             solve_seconds,
         )
 
+    def measured_sample() -> dict[str, Any]:
+        reset()
+        result, _model, probes, route_seconds, solve_seconds = solve_once()
+        observables = _physical_observables(result, spec, probes)
+        solver = (
+            result.info.get("nonlinear_performance", {}).get("solver", {})
+            if isinstance(result.info, Mapping)
+            else {}
+        )
+        recovery = (
+            result.info.get("reaction_force_recovery", {})
+            if isinstance(result.info, Mapping)
+            else {}
+        )
+        failed_work = solver.get("failed_work", {})
+        if not isinstance(failed_work, Mapping):
+            failed_work = {}
+        failed_work_units = sum(
+            int(failed_work.get(name, 0))
+            for name in (
+                "newton_iterations",
+                "rejected_trial_evaluations",
+                "recoverable_trial_failures",
+            )
+        )
+        return {
+            "complete_route_wall_seconds": float(route_seconds),
+            "solver_seconds": float(solve_seconds),
+            "status": str(result.status),
+            "load_factor": float(result.load_factor),
+            "steps": len(result.steps),
+            "iterations": int(
+                result.info.get("total_newton_iterations", 0)
+            ),
+            "work": {
+                **{name: int(value) for name, value in counters.items()},
+                "rejected_full_steps": int(
+                    solver.get("rejected_full_steps", 0)
+                ),
+                "backtracks": int(solver.get("backtracks", 0)),
+                "promotion_evaluations": int(
+                    solver.get("promotion_evaluations", 0)
+                ),
+                "failed_increment_count": int(
+                    failed_work.get("increment_count", 0)
+                ),
+                "failed_newton_iterations": int(
+                    failed_work.get("newton_iterations", 0)
+                ),
+                "failed_rejected_trial_evaluations": int(
+                    failed_work.get("rejected_trial_evaluations", 0)
+                ),
+                "failed_recoverable_trial_failures": int(
+                    failed_work.get("recoverable_trial_failures", 0)
+                ),
+                "failed_work_units": failed_work_units,
+                "reaction_force_reuse_count": int(
+                    recovery.get("accepted_force_reuse_count", 0)
+                ),
+                "reaction_force_reassembly_count": int(
+                    recovery.get("full_reassembly_count", 0)
+                ),
+            },
+            "physical": observables,
+            "physical_sha256": _json_digest(observables),
+            "dispatch": nonlinear_performance_status(),
+            "identity": {
+                "anysolver_version": importlib.metadata.version("anysolver"),
+                "anysolver_module": str(Path(anysolver.__file__).resolve()),
+                "numpy_version": np.__version__,
+                "python": platform.python_version(),
+                "platform": platform.platform(),
+            },
+        }
+
     reset()
     print(json.dumps({"event": "warm_start"}), flush=True)
     solve_once()
     print(json.dumps({"event": "warm_complete"}), flush=True)
-    reset()
-    print(json.dumps({"event": "measured_start"}), flush=True)
-    result, _model, probes, route_seconds, solve_seconds = solve_once()
-    observables = _physical_observables(result, spec, probes)
-    solver = (
-        result.info.get("nonlinear_performance", {}).get("solver", {})
-        if isinstance(result.info, Mapping)
-        else {}
-    )
-    recovery = (
-        result.info.get("reaction_force_recovery", {})
-        if isinstance(result.info, Mapping)
-        else {}
-    )
-    failed_work = solver.get("failed_work", {})
-    if not isinstance(failed_work, Mapping):
-        failed_work = {}
-    failed_work_units = sum(
-        int(failed_work.get(name, 0))
-        for name in (
-            "newton_iterations",
-            "rejected_trial_evaluations",
-            "recoverable_trial_failures",
+    timing_repetitions = int(spec.get("timing_repetitions", 1))
+    if timing_repetitions < 1:
+        raise ValueError("timing_repetitions must be positive")
+    measured_samples = []
+    for repetition in range(timing_repetitions):
+        print(
+            json.dumps(
+                {
+                    "event": "measured_start",
+                    "repetition": repetition + 1,
+                    "repetitions": timing_repetitions,
+                }
+            ),
+            flush=True,
         )
-    )
-    sample = {
-        "complete_route_wall_seconds": float(route_seconds),
-        "solver_seconds": float(solve_seconds),
-        "status": str(result.status),
-        "load_factor": float(result.load_factor),
-        "steps": len(result.steps),
-        "iterations": int(result.info.get("total_newton_iterations", 0)),
-        "work": {
-            **{name: int(value) for name, value in counters.items()},
-            "rejected_full_steps": int(solver.get("rejected_full_steps", 0)),
-            "backtracks": int(solver.get("backtracks", 0)),
-            "promotion_evaluations": int(solver.get("promotion_evaluations", 0)),
-            "failed_increment_count": int(failed_work.get("increment_count", 0)),
-            "failed_newton_iterations": int(
-                failed_work.get("newton_iterations", 0)
-            ),
-            "failed_rejected_trial_evaluations": int(
-                failed_work.get("rejected_trial_evaluations", 0)
-            ),
-            "failed_recoverable_trial_failures": int(
-                failed_work.get("recoverable_trial_failures", 0)
-            ),
-            "failed_work_units": failed_work_units,
-            "reaction_force_reuse_count": int(
-                recovery.get("accepted_force_reuse_count", 0)
-            ),
-            "reaction_force_reassembly_count": int(
-                recovery.get("full_reassembly_count", 0)
-            ),
-        },
-        "physical": observables,
-        "physical_sha256": _json_digest(observables),
-        "dispatch": nonlinear_performance_status(),
-        "identity": {
-            "anysolver_version": importlib.metadata.version("anysolver"),
-            "anysolver_module": str(Path(anysolver.__file__).resolve()),
-            "numpy_version": np.__version__,
-            "python": platform.python_version(),
-            "platform": platform.platform(),
-        },
-    }
-    return sample
+        measured_samples.append(measured_sample())
+    return _aggregate_timing_repetitions(measured_samples)
 
 
 def _worker_main(args: argparse.Namespace) -> int:
@@ -679,6 +747,7 @@ def _run_bounded_worker(
     ]
     env = os.environ.copy()
     env.update(THREAD_ENV)
+    env["NUMBA_CACHE_DIR"] = str((site / "_numba_cache").resolve())
     log_path.parent.mkdir(parents=True, exist_ok=True)
     started = time.perf_counter()
     phase_started = started
@@ -1070,6 +1139,7 @@ def _run_installed_regressions(
     root = Path(__file__).resolve().parents[1]
     env = os.environ.copy()
     env.update(THREAD_ENV)
+    env["NUMBA_CACHE_DIR"] = str((site / "_numba_cache").resolve())
     env["PYTHONPATH"] = str(site.resolve())
     identity_test = log_path.parent / "test_installed_identity.py"
     expected_site = str(site.resolve())
@@ -1092,7 +1162,7 @@ def _run_installed_regressions(
                 "pytest",
                 "-q",
                 "-c",
-                "NUL",
+                "docs/reference_cases/qualification_empty_pytest.ini",
                 str(identity_test.resolve()),
                 *tests,
             ],
@@ -1652,30 +1722,49 @@ def _coordinator(args: argparse.Namespace) -> int:
         case["complete"] and case["physical_match"]
         for case in result["performance"].values()
     )
-    easy_id = str(manifest["acceptance"]["easy_control_case"])
-    nonlinear_ids = [
-        case_id for case_id in result["performance"] if case_id != easy_id
-    ]
-    nonlinear_reductions = [
-        result["performance"][case_id]["summary"]["median_reduction_fraction"]
-        for case_id in nonlinear_ids
-        if result["performance"][case_id]["summary"] is not None
-    ]
-    representative_reduction = (
-        float(statistics.median(nonlinear_reductions))
-        if len(nonlinear_reductions) == len(nonlinear_ids)
-        else float("nan")
-    )
-    easy_reduction = (
-        result["performance"][easy_id]["summary"]["median_reduction_fraction"]
-        if result["performance"][easy_id]["summary"] is not None
-        else float("nan")
-    )
-    performance_pass = (
-        performance_complete
-        and representative_reduction >= float(manifest["acceptance"]["performance_median_reduction_fraction"])
-        and easy_reduction >= -float(manifest["acceptance"]["maximum_easy_regression_fraction"])
-    )
+    if manifest.get("execution_mode") == "component_screen":
+        target_id = str(manifest["acceptance"]["target_case"])
+        if list(result["performance"]) != [target_id]:
+            raise ValueError("component screen must contain only its registered target case")
+        target_summary = result["performance"][target_id]["summary"]
+        representative_reduction = (
+            float(target_summary["median_reduction_fraction"])
+            if target_summary is not None
+            else float("nan")
+        )
+        easy_reduction = float("nan")
+        performance_pass = (
+            performance_complete
+            and representative_reduction
+            >= float(manifest["acceptance"]["target_case_reduction_fraction"])
+        )
+    else:
+        easy_id = str(manifest["acceptance"]["easy_control_case"])
+        nonlinear_ids = [
+            case_id for case_id in result["performance"] if case_id != easy_id
+        ]
+        nonlinear_reductions = [
+            result["performance"][case_id]["summary"]["median_reduction_fraction"]
+            for case_id in nonlinear_ids
+            if result["performance"][case_id]["summary"] is not None
+        ]
+        representative_reduction = (
+            float(statistics.median(nonlinear_reductions))
+            if len(nonlinear_reductions) == len(nonlinear_ids)
+            else float("nan")
+        )
+        easy_reduction = (
+            result["performance"][easy_id]["summary"]["median_reduction_fraction"]
+            if result["performance"][easy_id]["summary"] is not None
+            else float("nan")
+        )
+        performance_pass = (
+            performance_complete
+            and representative_reduction
+            >= float(manifest["acceptance"]["performance_median_reduction_fraction"])
+            and easy_reduction
+            >= -float(manifest["acceptance"]["maximum_easy_regression_fraction"])
+        )
     armijo_decision = _adjudicate_armijo(
         convergence=result["convergence"],
         convergence_repeats=convergence_repeats,

@@ -11,6 +11,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "docs/reference_cases/nonlinear_static_representative_manifest.json"
+FOLLOWER_MANIFEST = (
+    ROOT
+    / "docs/reference_cases/nonlinear_static_follower_validation_manifest.json"
+)
 RUNNER = ROOT / "scripts/qualify_nonlinear_representative.py"
 
 
@@ -37,6 +41,25 @@ def test_manifest_freezes_inventory_limits_and_acceptance() -> None:
     assert set(manifest["convergence_case_ids"]) < set(case_ids)
     assert manifest["acceptance"]["performance_median_reduction_fraction"] == 0.10
     assert manifest["acceptance"]["maximum_easy_regression_fraction"] == 0.05
+
+
+def test_follower_manifest_amplifies_only_the_short_mpc_timing_case() -> None:
+    manifest = json.loads(FOLLOWER_MANIFEST.read_text(encoding="utf-8"))
+    assert manifest["version"] == 2
+    repetitions = {
+        str(case["id"]): int(case.get("timing_repetitions", 1))
+        for case in manifest["performance_cases"]
+    }
+    assert repetitions == {
+        "easy_elastic_shell_control": 1,
+        "large_deflection_shell_holdout": 1,
+        "plastic_s3_reversal_holdout": 1,
+        "prescribed_mpc_beam_holdout": 25,
+        "nonsymmetric_follower_shell_holdout": 1,
+    }
+    assert "identical physical and work hashes" in manifest["execution"][
+        "short_case_timing_aggregation"
+    ]
 
 
 @pytest.mark.parametrize(
@@ -124,6 +147,31 @@ def test_physical_comparison_rejects_changed_increment_path() -> None:
     right = json.loads(json.dumps(left))
     right["physical"]["steps"][0]["load_factor"] = 0.9
     assert module._compare_physics(left, right)["numerical_match"] is False
+
+
+def test_timing_repetitions_use_median_and_require_equivalent_work() -> None:
+    module = _runner_module()
+    samples = [
+        {
+            "complete_route_wall_seconds": route,
+            "solver_seconds": solver,
+            "physical_sha256": "physics",
+            "work": {"iterations": 32},
+            "status": "completed",
+        }
+        for route, solver in ((0.4, 0.3), (0.2, 0.1), (0.3, 0.2))
+    ]
+    result = module._aggregate_timing_repetitions(samples)
+    assert result["complete_route_wall_seconds"] == pytest.approx(0.3)
+    assert result["solver_seconds"] == pytest.approx(0.2)
+    assert result["timing_repetitions"]["count"] == 3
+    assert result["timing_repetitions"]["physical_match"] is True
+    assert result["timing_repetitions"]["work_match"] is True
+
+    changed = json.loads(json.dumps(samples))
+    changed[-1]["work"]["iterations"] = 33
+    with pytest.raises(RuntimeError, match="different solver work"):
+        module._aggregate_timing_repetitions(changed)
 
 
 def test_identity_validation_rejects_stale_wheel(tmp_path: Path) -> None:

@@ -1,0 +1,40 @@
+{
+  "schema": "anysolver.nonlinear_static.combined_s3_component_failure",
+  "version": 1,
+  "decision": "NO-GO",
+  "terminal_rule": "component_screen_fail",
+  "candidate_revision": "89bd4623a8ae0cb9c95317bdf31ac5fbd91a2e0f",
+  "candidate_tree": "e0d84314d0f84a7974d8b94934678a0cb66a9d76",
+  "candidate_wheel_sha256": "301b91bf52cb224e0ea0c2e897e616f250b11cfa9ca5d9d6c9d4739de2f17c66",
+  "baseline_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+  "baseline_tree": "c8515ee19b6924be7c17ca9490452f1d81f5f31b",
+  "baseline_wheel_sha256": "ce891bf14073a02313d5508047df22f13ddfcebd70ff4e77f65e33709b132884",
+  "campaign": {
+    "started_utc": "2026-09-20T23:10:01Z",
+    "completed_utc": "2026-09-20T23:25:01Z",
+    "runner_exit_code": 1,
+    "terminal_phase": "installed_regressions",
+    "terminal_reason": "timeout",
+    "installed_regression_bound_seconds": 900,
+    "installed_test_progress": "21 tests reached pytest's 100% progress marker, but the process did not terminate and produced no passing exit status",
+    "performance_samples_recorded": 0,
+    "formal_campaign_started": false
+  },
+  "evidence": {
+    "raw": "docs/reference_cases/nonlinear_static_combined_s3_component_v3_failed_raw.json",
+    "raw_sha256": "c22aaaaf254ef7046f0b969508ac3b31eea13b8d8c65065f1616bb9fbdabc34a",
+    "installed_regression_log": "docs/reference_cases/nonlinear_static_combined_s3_component_v3_failed_installed_regressions.log",
+    "installed_regression_log_sha256": "2536b2e7bb1fc2881b4fa974c9c60a1e7e7bc1efce80b767426601413932a525",
+    "runner_report": "docs/reference_cases/nonlinear_static_combined_s3_component_v3_failed_report.md",
+    "runner_report_sha256": "7430b05dc7851b26bf227f47e51e649eadcbed5b5d4f2379823351be7975304d"
+  },
+  "required_action": {
+    "preserve_failed_evidence": true,
+    "revert_s3_product_commits": [
+      "89bd4623a8ae0cb9c95317bdf31ac5fbd91a2e0f",
+      "4e0dad44a90237329d1eef9f411d46baf8e0c1a8"
+    ],
+    "keep_pr_57_draft": true,
+    "merge_to_main": false
+  }
+}
