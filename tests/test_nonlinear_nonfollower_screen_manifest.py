@@ -18,15 +18,21 @@ PROVENANCE = (
     / "performance"
     / "nonlinear_static_nonfollower_screen_build_provenance.json"
 )
+RUNNER_EXECUTION_SHA256 = (
+    "5764f1104f23272ca3103df50f1655c0aa6ca6701f930ee324313bd10e752d13"
+)
+RUNNER_NORMALIZED_LF_SHA256 = (
+    "865f5a26c1010d649a6e070426dac5a2953d48a7214e3d7aba4d94f6df599164"
+)
 
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _sha256_with_crlf(path: Path) -> str:
+def _sha256_with_lf(path: Path) -> str:
     normalized = path.read_bytes().replace(b"\r\n", b"\n")
-    return hashlib.sha256(normalized.replace(b"\n", b"\r\n")).hexdigest()
+    return hashlib.sha256(normalized).hexdigest()
 
 
 def test_nonfollower_screen_manifest_freezes_registered_contract() -> None:
@@ -60,13 +66,14 @@ def test_nonfollower_screen_manifest_freezes_registered_contract() -> None:
     ):
         path = ROOT / contract[path_key]
         assert path.is_file()
-        observed_hashes = {_sha256(path)}
         if path_key == "runner":
-            # The frozen campaign ran from the Windows checkout. Git converts
-            # this pre-existing source file to LF on Linux CI, so also compare
-            # the exact CRLF execution representation bound by the manifest.
-            observed_hashes.add(_sha256_with_crlf(path))
-        assert contract[sha_key] in observed_hashes
+            # The frozen Windows runner contained mixed line endings. Preserve
+            # its exact execution hash while binding the portable LF content
+            # separately so Linux can verify the same source semantics.
+            assert contract[sha_key] == RUNNER_EXECUTION_SHA256
+            assert _sha256_with_lf(path) == RUNNER_NORMALIZED_LF_SHA256
+        else:
+            assert contract[sha_key] == _sha256(path)
 
 
 def test_nonfollower_screen_provenance_matches_manifest_identity() -> None:

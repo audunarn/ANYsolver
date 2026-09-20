@@ -33,7 +33,10 @@ def _json_digest(value: object) -> str:
 
 
 def _sample(seconds: float, *, work: int = 4) -> dict[str, object]:
-    physical = {"result": [1.0, 2.0]}
+    physical = {
+        "result": [1.0, 2.0],
+        "family_checks": {"completed": True, "target": True},
+    }
     work_payload = {"assembly_calls": work}
     return {
         "ok": True,
@@ -110,6 +113,7 @@ def _fixture(
         "source_trees": {"baseline": "baseline-tree", "candidate": "candidate-tree"},
         "execution": {"performance_pairs": 3},
         "performance_cases": [{"id": case_id} for case_id in case_ids],
+        "required_regressions": ["tests/test_registered.py::test_registered"],
         "screen_contract": {"runner_sha256": runner_sha256},
         "screen_acceptance": {
             "case_reduction_fraction": 0.05,
@@ -154,7 +158,11 @@ def _fixture(
                 "NUMBA_NUM_THREADS": "1",
             },
         },
-        "installed_regressions": {"ok": True, "exit_code": 0},
+        "installed_regressions": {
+            "ok": True,
+            "exit_code": 0,
+            "tests": ["tests/test_registered.py::test_registered"],
+        },
         "performance": {
             case_id: _case(reduction)
             for case_id, reduction in zip(case_ids, reductions)
@@ -231,6 +239,42 @@ def test_strict_adjudicator_rejects_wheel_identity_change(tmp_path: Path) -> Non
     _write_json(evidence, payload)
 
     with pytest.raises(ValueError, match="candidate_wheel_sha256"):
+        _adjudicate_fixture(evidence, manifest, provenance)
+
+
+def test_strict_adjudicator_rejects_changed_physics_with_stale_match_flag(
+    tmp_path: Path,
+) -> None:
+    evidence, manifest, provenance = _fixture(
+        tmp_path,
+        [0.06, 0.05, 0.0, 0.0],
+    )
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    candidate = payload["performance"]["case_0"]["pairs"][0]["candidate"]
+    candidate["physical"]["result"][0] = 99.0
+    changed_digest = _json_digest(candidate["physical"])
+    candidate["physical_sha256"] = changed_digest
+    candidate["timing_repetitions"]["physical_sha256"] = changed_digest
+    _write_json(evidence, payload)
+
+    with pytest.raises(ValueError, match="physical digest equality"):
+        _adjudicate_fixture(evidence, manifest, provenance)
+
+
+def test_strict_adjudicator_rejects_substituted_installed_regression(
+    tmp_path: Path,
+) -> None:
+    evidence, manifest, provenance = _fixture(
+        tmp_path,
+        [0.06, 0.05, 0.0, 0.0],
+    )
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    payload["installed_regressions"]["tests"] = [
+        "tests/test_other.py::test_other"
+    ]
+    _write_json(evidence, payload)
+
+    with pytest.raises(ValueError, match="installed regression inventory"):
         _adjudicate_fixture(evidence, manifest, provenance)
 
 

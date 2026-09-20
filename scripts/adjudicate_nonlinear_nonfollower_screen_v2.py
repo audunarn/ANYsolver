@@ -230,6 +230,11 @@ def adjudicate(
         raise ValueError("installed regression evidence is missing")
     _require_equal("installed regressions ok", installed.get("ok"), True)
     _require_equal("installed regressions exit code", installed.get("exit_code"), 0)
+    _require_equal(
+        "installed regression inventory",
+        installed.get("tests"),
+        manifest["required_regressions"],
+    )
     _require_equal("raw failures", evidence.get("failures"), [])
 
     performance = evidence.get("performance")
@@ -281,6 +286,22 @@ def adjudicate(
                     sample=sample,
                     timing_repetitions=timing_repetitions,
                 )
+                family_checks = sample["physical"].get("family_checks")
+                if not isinstance(family_checks, Mapping) or not family_checks:
+                    raise ValueError(
+                        f"{case_id} pair {pair_index} {label} family checks "
+                        "are missing"
+                    )
+                if not all(value is True for value in family_checks.values()):
+                    raise ValueError(
+                        f"{case_id} pair {pair_index} {label} family checks "
+                        "did not all pass"
+                    )
+            _require_equal(
+                f"{case_id} pair {pair_index} physical digest equality",
+                pair["candidate"]["physical_sha256"],
+                pair["baseline"]["physical_sha256"],
+            )
             comparison = pair.get("physical_comparison")
             if not isinstance(comparison, Mapping):
                 raise ValueError(

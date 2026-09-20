@@ -1,6 +1,6 @@
 {
   "adjudicator": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\scripts\\adjudicate_nonlinear_nonfollower_screen_v2.py",
-  "adjudicator_sha256": "6d28b3f11898d08213648a8d4d421eedecd71d04234c955597514c3feb813454",
+  "adjudicator_sha256": "ea0f675de53579e195f15abbd18a25b6118e4edf09f080478c0282b5bfcb036e",
   "criteria": {
     "aggregate_definition": "sum of per-case median complete-route seconds",
     "aggregate_reduction_fraction": 0.05,
