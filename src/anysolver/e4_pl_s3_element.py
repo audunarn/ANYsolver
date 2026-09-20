@@ -1656,7 +1656,14 @@ class _SecondOrderJet:
         return _SecondOrderJet.constant(float(other), self.gradient.size)
 
     def __add__(self, other: Any) -> "_SecondOrderJet":
-        made = self._coerce(other)
+        if not isinstance(other, _SecondOrderJet):
+            scalar = float(other)
+            return _SecondOrderJet(
+                self.value + scalar,
+                self.gradient.copy(),
+                self.hessian.copy(),
+            )
+        made = other
         return _SecondOrderJet(
             self.value + made.value,
             self.gradient + made.gradient,
@@ -1669,13 +1676,37 @@ class _SecondOrderJet:
         return _SecondOrderJet(-self.value, -self.gradient, -self.hessian)
 
     def __sub__(self, other: Any) -> "_SecondOrderJet":
+        if not isinstance(other, _SecondOrderJet):
+            scalar = float(other)
+            return _SecondOrderJet(
+                self.value - scalar,
+                self.gradient.copy(),
+                self.hessian.copy(),
+            )
         return self + (-self._coerce(other))
 
     def __rsub__(self, other: Any) -> "_SecondOrderJet":
+        if not isinstance(other, _SecondOrderJet):
+            scalar = float(other)
+            return _SecondOrderJet(
+                scalar + (-self.value),
+                -self.gradient,
+                -self.hessian,
+            )
         return self._coerce(other) + (-self)
 
     def __mul__(self, other: Any) -> "_SecondOrderJet":
-        made = self._coerce(other)
+        if not isinstance(other, _SecondOrderJet):
+            scalar = float(other)
+            if math.isfinite(self.value):
+                return _SecondOrderJet(
+                    self.value * scalar,
+                    self.gradient * scalar,
+                    self.hessian * scalar,
+                )
+            made = _SecondOrderJet.constant(scalar, self.gradient.size)
+        else:
+            made = other
         return _SecondOrderJet(
             self.value * made.value,
             self.gradient * made.value + made.gradient * self.value,
