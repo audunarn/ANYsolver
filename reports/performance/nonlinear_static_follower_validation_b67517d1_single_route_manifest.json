@@ -1,6 +1,6 @@
 {
   "schema": "anysolver.nonlinear_static.representative_manifest",
-  "version": 2,
+  "version": 1,
   "experiment": "follower_component_lifecycle_validation_reuse",
   "baseline_revision": "26d35bcad1b5ac6ae693c09d283cc3a918aa650c",
   "candidate_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
@@ -16,8 +16,7 @@
     "warmups_per_sample": 1,
     "terminal_resource_failure_policy": "warm and measured solves each receive the per-solve bound; one warm timeout, measured timeout, memory-limit, or campaign-budget result is conclusive for that revision and case and stops remaining pairs",
     "numerical_threads": 1,
-    "timing_scope": "complete model construction and solve after one same-process warm solve; cases may preregister multiple independent measured routes whose median is the worker sample",
-    "short_case_timing_aggregation": "prescribed_mpc_beam_holdout uses the median of 25 independent complete routes per worker; every route must have identical physical and work hashes"
+    "timing_scope": "complete model construction and solve after one same-process warm solve"
   },
   "resource_limits": {
     "per_solve_timeout_seconds": 900,
@@ -104,7 +103,6 @@
       "num_steps": 12,
       "max_iterations": 30,
       "tolerance": 1e-07,
-      "timing_repetitions": 25,
       "physical_target": "completed affine prescribed-motion path with weighted axial constraints"
     },
     {
