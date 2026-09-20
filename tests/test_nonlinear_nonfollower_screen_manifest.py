@@ -24,6 +24,11 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _sha256_with_crlf(path: Path) -> str:
+    normalized = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(normalized.replace(b"\n", b"\r\n")).hexdigest()
+
+
 def test_nonfollower_screen_manifest_freezes_registered_contract() -> None:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
 
@@ -55,7 +60,13 @@ def test_nonfollower_screen_manifest_freezes_registered_contract() -> None:
     ):
         path = ROOT / contract[path_key]
         assert path.is_file()
-        assert contract[sha_key] == _sha256(path)
+        observed_hashes = {_sha256(path)}
+        if path_key == "runner":
+            # The frozen campaign ran from the Windows checkout. Git converts
+            # this pre-existing source file to LF on Linux CI, so also compare
+            # the exact CRLF execution representation bound by the manifest.
+            observed_hashes.add(_sha256_with_crlf(path))
+        assert contract[sha_key] in observed_hashes
 
 
 def test_nonfollower_screen_provenance_matches_manifest_identity() -> None:

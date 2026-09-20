@@ -25,3 +25,11 @@ The shared validation-scope component is rejected and was removed by revert
 commit `39ef01e2`. It does not advance to the existing seven-pair formal gate.
 The earlier follower-validation implementation and its preserved evidence are
 unchanged; its formal promotion result remains NO-GO.
+
+Independent review found that the first offline adjudicator trusted stored
+summaries and did not authenticate every runner/tree/wheel provenance field.
+The raw campaign was unaffected. The strict version 2 adjudicator now verifies
+all identities, exactly three alternating pairs per case, 24 successful
+samples, 12 bound physical comparisons, installed regressions, and exact work
+equality before recomputing every median from raw pair samples. It reproduces
+the same screen **FAIL** and rejection decision.
