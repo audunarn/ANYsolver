@@ -1160,7 +1160,7 @@ def _run_installed_regressions(
                 "pytest",
                 "-q",
                 "-c",
-                "NUL",
+                "pyproject.toml",
                 str(identity_test.resolve()),
                 *tests,
             ],

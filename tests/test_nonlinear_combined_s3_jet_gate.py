@@ -12,6 +12,12 @@ GATE = (
     / "reference_cases"
     / "nonlinear_static_combined_s3_jet_gate.json"
 )
+CORRECTION = (
+    ROOT
+    / "docs"
+    / "reference_cases"
+    / "nonlinear_static_combined_s3_harness_correction_v2.json"
+)
 
 
 def _sha256_with_lf(path: Path) -> str:
@@ -62,7 +68,15 @@ def test_combined_s3_gate_binds_inputs_before_product_work() -> None:
     for key, expected in portable_hashes.items():
         path = ROOT / bound[key]
         assert path.is_file()
-        assert _sha256_with_lf(path) == expected
+        observed = _sha256_with_lf(path)
+        if key != "runner":
+            assert observed == expected
+            continue
+        correction = json.loads(CORRECTION.read_text(encoding="utf-8"))
+        assert correction["failed_attempt"]["performance_samples_recorded"] == 0
+        assert correction["correction"]["old_runner_lf_sha256"] == expected
+        assert correction["correction"]["new_runner_lf_sha256"] == observed
+        assert all(correction["unchanged_authority"].values())
 
 
 def test_combined_s3_gate_freezes_promotion_thresholds() -> None:

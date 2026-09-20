@@ -1,0 +1,38 @@
+{
+  "schema": "anysolver.nonlinear_static.qualification_harness_correction",
+  "version": 2,
+  "registered_at_utc": "2026-09-20T22:24:00Z",
+  "parent_gate": "docs/reference_cases/nonlinear_static_combined_s3_jet_gate.json",
+  "scope": "installed-regression pytest configuration path only",
+  "failed_attempt": {
+    "raw_path": "C:/Github/ANYsolver/.qualification/combined-s3/component-v1/raw.json",
+    "raw_sha256": "c828829d0218d0ee4f5ae88ff13d3003028aef71c52c9acf8b6ca49be71f1e57",
+    "terminal_phase": "installed_regressions",
+    "performance_samples_recorded": 0,
+    "preservation": "immutable; remains a failed setup attempt"
+  },
+  "finding": {
+    "platform": "Windows with Python 3.14.2 and pytest 9.0.3",
+    "original_argument": "pytest -c NUL",
+    "observed_failure": "pytest treated the Windows device path as a collection root and raised PermissionError before collecting the registered tests",
+    "product_relation": "none; no solver was timed and no candidate behavior was observed"
+  },
+  "correction": {
+    "runner": "scripts/qualify_nonlinear_representative.py",
+    "old_runner_execution_sha256": "5764f1104f23272ca3103df50f1655c0aa6ca6701f930ee324313bd10e752d13",
+    "old_runner_lf_sha256": "865f5a26c1010d649a6e070426dac5a2953d48a7214e3d7aba4d94f6df599164",
+    "new_runner_execution_sha256": "ae1bc3cb775883b6ffb21921fd184c68de3d1c38dc1cb090193e3d342ef89424",
+    "new_runner_lf_sha256": "b8619d0cfb956087315726b92f0045f3498528862cf281a71f5ff301fe72880a",
+    "change": "replace the Windows NUL pytest configuration with the repository pyproject.toml; test inventory, installed-site identity test, timeout, environment, worker code, timing order, and result handling are unchanged"
+  },
+  "unchanged_authority": {
+    "candidate_and_baseline_wheels": true,
+    "cases_and_physical_inputs": true,
+    "pair_counts_and_alternation": true,
+    "warmup_and_timing_scope": true,
+    "resource_limits": true,
+    "acceptance_thresholds": true,
+    "terminal_rules": true
+  },
+  "retry_authority": "rerun the complete component campaign into a new v2 output directory; do not reuse or overwrite any v1 artifact"
+}
