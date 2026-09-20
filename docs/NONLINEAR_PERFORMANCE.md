@@ -596,6 +596,13 @@ mixed/generic models, solver-owned model copies, and fracture solves retain
 the full validation route.  Qualification can force that oracle route by
 setting `FE_SOLVER_DISABLE_FOLLOWER_VALIDATION_REUSE=1` before the solve.
 
+Qualified Q4 and S3 nonlinear local-response assemblies reuse their existing
+trusted-operation boundary within one assembly. Complete element/runtime
+validation still runs at entry and exit, and each nested call checks the exact
+instance and authority generation. Set
+`FE_SOLVER_FORCE_FULL_NL_ELEMENT_VALIDATION=1` before a solve to retain the
+per-call validation oracle.
+
 ## Optional Armijo globalization
 
 Force-controlled static beam and shell analyses can select a scaled residual

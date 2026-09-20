@@ -8,6 +8,7 @@ from typing import Any, Dict
 from anysolver.corotational_performance import note_dense_consistent_rotation
 from anysolver.nonlinear_analysis_diagnostics import (
     capture_nonlinear_analysis_diagnostics,
+    record_nonlinear_solver_event,
 )
 from anysolver.vectorized_hill48 import record_hill48_execution
 
@@ -15,6 +16,15 @@ from anysolver.vectorized_hill48 import record_hill48_execution
 @dataclass
 class _DummyResult:
     info: Dict[str, Any] = field(default_factory=dict)
+
+
+@capture_nonlinear_analysis_diagnostics
+def _element_validation_diagnostic_probe() -> _DummyResult:
+    record_nonlinear_solver_event("element_validation_scope_reuse", count=3)
+    record_nonlinear_solver_event("element_validation_scope_full")
+    record_nonlinear_solver_event("element_validation_scope_fallback", count=2)
+    record_nonlinear_solver_event("element_validation_scope_invalidation")
+    return _DummyResult()
 
 
 @capture_nonlinear_analysis_diagnostics
@@ -66,3 +76,14 @@ def test_analysis_diagnostics_are_isolated_between_concurrent_threads() -> None:
         ]
         == 1
     )
+
+
+def test_element_validation_scope_diagnostics_are_reported() -> None:
+    solver = _element_validation_diagnostic_probe().info[
+        "nonlinear_performance"
+    ]["solver"]
+
+    assert solver["element_validation_scope_reuse_count"] == 3
+    assert solver["element_validation_scope_full_count"] == 1
+    assert solver["element_validation_scope_fallback_count"] == 2
+    assert solver["element_validation_scope_invalidation_count"] == 1
