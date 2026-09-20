@@ -23,6 +23,7 @@ from anysolver.elements import (
 )
 from anysolver.fe_core import FEModel
 from anysolver.matrix_assembly import (
+    AssemblyError,
     assemble_external_load_tangent,
     assemble_geometric_stiffness_matrix,
     assemble_load_vector,
@@ -374,6 +375,56 @@ def test_follower_validation_reuse_rejects_generation_change(
             tolerance=1.0e-7,
         )
     assert "follower_validation_invalidation" in observed_events
+
+
+def test_follower_validation_reuse_checks_failed_evaluation_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _centre_node = _clamped_pressure_plate()
+    load = LoadCase("follower-failed-mutation", follower_pressure=True)
+    for element_id in model.mesh.elements:
+        load.add_pressure_load(int(element_id), 2.0e4)
+
+    def mutate_then_fail(*args, **kwargs):
+        model.add_node(10_000, 2.0, 2.0, 2.0)
+        raise RuntimeError("follower evaluation failed after mutation")
+
+    observed_events: list[str] = []
+    original_record_event = nonlinear_static.record_nonlinear_solver_event
+
+    def record_event(event: str, **kwargs) -> None:
+        observed_events.append(event)
+        original_record_event(event, **kwargs)
+
+    monkeypatch.setattr(
+        nonlinear_static,
+        "_assemble_external_load_system_under_lease",
+        mutate_then_fail,
+    )
+    monkeypatch.setattr(
+        nonlinear_static,
+        "record_nonlinear_solver_event",
+        record_event,
+    )
+
+    with pytest.raises(AssemblyError) as exc_info:
+        solve_static_nonlinear(
+            model,
+            load,
+            num_steps=1,
+            max_iterations=5,
+            tolerance=1.0e-7,
+        )
+    assert "follower_validation_invalidation" in observed_events
+    operation_failure = exc_info.value.__cause__
+    assert isinstance(operation_failure, RuntimeError)
+    assert "follower evaluation failed after mutation" in str(
+        operation_failure
+    )
+    assert any(
+        "Trailing follower-load lifecycle validation also failed" in note
+        for note in operation_failure.__notes__
+    )
 
 
 def test_armijo_accepts_nonsymmetric_follower_pressure_tangent() -> None:

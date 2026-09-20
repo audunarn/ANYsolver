@@ -5854,17 +5854,33 @@ def _solve_static_nonlinear_under_lease(
             full_follower_validation_guard(
                 context="nonlinear follower external-load evaluation preflight"
             )
-            force, load_tangent = _weighted_external_load_system(
-                model,
-                weighted_cases,
-                displacements,
-                tangent=tangent,
-                qualified_runtime_guard=reused_follower_validation_guard,
-                reuse_component_lifecycle_validation=True,
-            )
-            full_follower_validation_guard(
-                context="nonlinear follower external-load evaluation output"
-            )
+            evaluation_failure: Optional[BaseException] = None
+            try:
+                force, load_tangent = _weighted_external_load_system(
+                    model,
+                    weighted_cases,
+                    displacements,
+                    tangent=tangent,
+                    qualified_runtime_guard=reused_follower_validation_guard,
+                    reuse_component_lifecycle_validation=True,
+                )
+            except BaseException as exc:
+                evaluation_failure = exc
+                raise
+            finally:
+                try:
+                    full_follower_validation_guard(
+                        context=(
+                            "nonlinear follower external-load evaluation output"
+                        )
+                    )
+                except Exception as validation_failure:
+                    if evaluation_failure is None:
+                        raise
+                    evaluation_failure.add_note(
+                        "Trailing follower-load lifecycle validation also "
+                        f"failed: {validation_failure!r}"
+                    )
             record_nonlinear_solver_event("follower_validation_reuse")
         else:
             if follower_active:
