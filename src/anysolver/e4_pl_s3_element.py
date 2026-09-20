@@ -1698,12 +1698,7 @@ class _SecondOrderJet:
     def __mul__(self, other: Any) -> "_SecondOrderJet":
         if not isinstance(other, _SecondOrderJet):
             scalar = float(other)
-            if (
-                math.isfinite(self.value)
-                and math.isfinite(scalar)
-                and bool(np.all(np.isfinite(self.gradient)))
-                and bool(np.all(np.isfinite(self.hessian)))
-            ):
+            if math.isfinite(self.value):
                 return _SecondOrderJet(
                     self.value * scalar,
                     self.gradient * scalar,
