@@ -1,0 +1,104 @@
+{
+  "schema": "anysolver.nonlinear_static.nonfollower_profile_gate",
+  "version": 1,
+  "gate": "shared_nonfollower_hotspot_selection",
+  "registered_at_utc": "2026-09-20T18:00:00Z",
+  "purpose": "Select and screen a mechanics-preserving optimization that can improve at least two representative non-follower workloads before repeating the formal representative qualification.",
+  "authority": {
+    "execution": "approved in the active task on 2026-09-20",
+    "product_implementation": "approved after this diagnostic gate selects an eligible hotspot",
+    "promotion": "not authorized by this gate; the existing formal representative acceptance remains controlling"
+  },
+  "candidate": {
+    "revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+    "tree": "c8515ee19b6924be7c17ca9490452f1d81f5f31b",
+    "wheel_sha256": "4512f1172f446922272fdb6e34f77175755351f7c91fc9ca2bddacc30623792c",
+    "installed_site_relative_to_baseline_checkout": ".tmp_follower_validation_gate/install-run4/candidate"
+  },
+  "bound_inputs": {
+    "representative_manifest": "docs/reference_cases/nonlinear_static_follower_validation_manifest.json",
+    "representative_manifest_sha256": "ae2e0e3aef093203c32975819717f651569c3cacbba661be0a97f5ebf5bca071",
+    "build_provenance": "reports/performance/nonlinear_static_follower_validation_build_provenance.json",
+    "build_provenance_sha256": "36cd87293626366464f0221d57e2dc33c9fdc3a165c6f0e7c71a103a07e024e2",
+    "campaign_runner": "scripts/qualify_nonlinear_representative.py",
+    "campaign_runner_sha256": "5764f1104f23272ca3103df50f1655c0aa6ca6701f930ee324313bd10e752d13",
+    "case_builder_sha256": "f1cf32fb23e544b2d83672ec7c790d07ae944ede6ea9de857f7fd06fffae2933",
+    "profile_runner": "scripts/profile_nonlinear_representative.py",
+    "profile_runner_sha256": "379fc4e9bbb2c705942f9a941b0ccc9ec3afe4f5a399ec15fbfe0a8feda72e77"
+  },
+  "inventory": {
+    "profile_case_ids": [
+      "easy_elastic_shell_control",
+      "large_deflection_shell_holdout",
+      "plastic_s3_reversal_holdout",
+      "prescribed_mpc_beam_holdout"
+    ],
+    "excluded_target_case_id": "nonsymmetric_follower_shell_holdout",
+    "profiles_per_case": 1,
+    "unprofiled_warm_solves_per_case": 1,
+    "top_entries_per_profile": 80
+  },
+  "execution": {
+    "serial": true,
+    "numerical_threads": 1,
+    "acceleration": "installed default with nonlinear acceleration initialized before warmup",
+    "profiler": "cProfile deterministic call profiler",
+    "timing_use": "diagnostic attribution only; profiled wall time is not formal performance evidence",
+    "exclusive_output_directory_relative_to_baseline_checkout": ".tmp_follower_validation_gate/nonfollower-profile-gate-v1"
+  },
+  "resource_limits": {
+    "per_case_wall_seconds": 900,
+    "process_tree_memory_bytes": 8589934592,
+    "gate_wall_seconds": 3600
+  },
+  "completion": {
+    "required_profiles": 4,
+    "required_status": "completed",
+    "exact_case_inventory": true,
+    "installed_module_identity_required": true,
+    "bound_hashes_required": true,
+    "partial_or_malformed_outputs_are_noncanonical": true
+  },
+  "hotspot_selection": {
+    "required_case_reach": 2,
+    "eligible_if": "a production function or coherent call path accounts for at least 5% of profiled solve wall time in each of two non-follower cases, or at least 10% of the combined large-deflection and plastic profiled wall time and is present in one additional non-follower case",
+    "ranking": "prefer shared leaf self-time and repeated setup, projection, assembly, state-copy, or validation work that can be removed without changing physical evaluation count",
+    "required_evidence": [
+      "per-case inclusive and self time",
+      "call counts",
+      "shared semantic path",
+      "estimated affected representative cases",
+      "correctness and state-lifetime risks"
+    ],
+    "ineligible_changes": [
+      "element equations",
+      "physical tolerances",
+      "convergence definitions",
+      "supported domains",
+      "public defaults",
+      "reduced physical evaluation count without an existing equivalence guard"
+    ]
+  },
+  "implementation_screen": {
+    "performance_pairs": 3,
+    "serial": true,
+    "alternating_order": true,
+    "same_installed-wheel_and_physical-equivalence_contract": true,
+    "advance_if": "at least two non-follower cases each improve by 5% or more, or the four-case aggregate complete-route time improves by 5% or more, with no case regression beyond 5% and all physical/work predicates passing",
+    "smaller_gain_policy": "a smaller repeatable gain may be retained only as an explicitly reported component of a combined candidate; it does not advance alone"
+  },
+  "formal_gate": {
+    "manifest": "docs/reference_cases/nonlinear_static_follower_validation_manifest.json",
+    "performance_pairs": 7,
+    "representative_median_reduction_fraction": 0.10,
+    "maximum_case_regression_fraction": 0.05,
+    "physical_equivalence_required": true,
+    "criteria_change_after_observation": false
+  },
+  "terminal_rules": {
+    "profile_complete": "SELECT_ELIGIBLE_HOTSPOT_OR_RECORD_NO_ELIGIBLE_HOTSPOT",
+    "screen_pass": "ADVANCE_COMBINED_CANDIDATE_TO_EXISTING_FORMAL_GATE",
+    "screen_fail": "RETAIN_OR_REJECT_COMPONENT_WITHOUT_PROMOTION",
+    "formal_result": "USE_EXISTING_REPRESENTATIVE_ADJUDICATION_WITHOUT_THRESHOLD_CHANGES"
+  }
+}
