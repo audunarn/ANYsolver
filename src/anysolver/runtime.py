@@ -3672,27 +3672,30 @@ def _flat_generated_geometry(geometry: dict, config: LightweightFEMConfig) -> di
     )
     edge_nodes = _flat_shell_edge_node_ids(nodes, shells, length, width)
     boundary_nodes = sorted({node for values in edge_nodes.values() for node in values})
-    if config.custom_load_bc_enabled:
+    # Boundary construction is independent of the load-source policy.  In
+    # particular, enabling custom loads must not bypass the per-edge DOF grid
+    # shown on the Boundary conditions tab.
+    boundary_map = _boundary_constraint_map(config)
+    edge_supports = _custom_bc_segment_supports(nodes, config, length, width)
+    custom_nullspace = bool(config.custom_load_bc_enabled and config.custom_use_nullspace_projection)
+    if custom_nullspace:
+        supports = []
+    elif boundary_map:
+        supports = _whole_boundary_constraint_supports(
+            {key: list(edge_nodes.get(key, [])) for key in _FLAT_EDGE_KEYS},
+            config, exclude_dofs_by_node=_edge_support_dofs_by_node(edge_supports))
+    elif config.custom_load_bc_enabled and _has_custom_support(config):
+        # Preserve legacy custom-support selections when loading an older
+        # saved model that has no per-edge boundary map.
         supports = _custom_flat_supports(node_id, rows, cols, config, edge_nodes=edge_nodes)
-        supports.extend(_custom_bc_segment_supports(nodes, config, length, width))
+    elif bool(getattr(config, "boundary_auto_supports", True)):
+        supports = _flat_supports(boundary_nodes, node_id, rows, cols, config, geometry, edge_nodes=edge_nodes)
     else:
-        # Whole-boundary per-DOF constraints govern when any DOF is selected;
-        # otherwise the automatic supports apply (unless auto is switched off,
-        # giving a free boundary).  Selected-edge segments are always additive.
-        boundary_map = _boundary_constraint_map(config)
-        edge_supports = _custom_bc_segment_supports(nodes, config, length, width)
-        if boundary_map:
-            supports = _whole_boundary_constraint_supports(
-                {key: list(edge_nodes.get(key, [])) for key in _FLAT_EDGE_KEYS},
-                config, exclude_dofs_by_node=_edge_support_dofs_by_node(edge_supports))
-        elif bool(getattr(config, "boundary_auto_supports", True)):
-            supports = _flat_supports(boundary_nodes, node_id, rows, cols, config, geometry, edge_nodes=edge_nodes)
-        else:
-            supports = []
-        supports.extend(edge_supports)
-        supports.extend(_symmetry_supports(nodes, config))
-        if not boundary_map:
-            supports.extend(_enforced_displacement_supports(nodes, config, "flat", exclude_node_ids=set(boundary_nodes)))
+        supports = []
+    supports.extend(edge_supports)
+    supports.extend(_symmetry_supports(nodes, config))
+    if not boundary_map and not config.custom_load_bc_enabled:
+        supports.extend(_enforced_displacement_supports(nodes, config, "flat", exclude_node_ids=set(boundary_nodes)))
     return {
         "name": "ANYsolverFlatPanelFullMesh",
         "thickness_regions": thickness_region_info,
@@ -4218,37 +4221,36 @@ def _cylinder_generated_geometry(geometry: dict, config: LightweightFEMConfig) -
         start_node_id=max(_node_lookup(nodes), default=0) + 1,
         exclude_base_node_ids=rigid_lid_ring_nodes,
     )
-    if config.custom_load_bc_enabled:
+    # As for flat panels, boundary construction must not depend on whether the
+    # Loads tab is replacing or adding to imported loads.
+    boundary_map = _boundary_constraint_map(config)
+    edge_supports = _custom_bc_segment_supports(nodes, config, length, circumference, radius=radius)
+    custom_nullspace = bool(config.custom_load_bc_enabled and config.custom_use_nullspace_projection)
+    if custom_nullspace:
+        supports = []
+    elif boundary_map:
+        if custom_lid_support_nodes is not None:
+            cyl_edge_map = {"lower": list(custom_lid_support_nodes[0]), "upper": list(custom_lid_support_nodes[1])}
+        else:
+            cyl_edge_map = {"lower": list(start_ring), "upper": list(end_ring)}
+        supports = _whole_boundary_constraint_supports(
+            cyl_edge_map, config, exclude_dofs_by_node=_edge_support_dofs_by_node(edge_supports))
+    elif config.custom_load_bc_enabled and _has_custom_support(config):
+        # Legacy saved custom-support choices remain supported when no new
+        # per-edge DOF map is present.
         if custom_lid_support_nodes is not None:
             supports = _custom_cylinder_lid_reference_supports(
-                custom_lid_support_nodes[0],
-                custom_lid_support_nodes[1],
-                config,
-            )
+                custom_lid_support_nodes[0], custom_lid_support_nodes[1], config)
         else:
             supports = _custom_cylinder_supports(start_ring, end_ring, config)
-    else:
-        # Whole-boundary per-DOF constraints on the model boundary (the lid
-        # reference nodes when end lids are present, otherwise both end rings)
-        # when any DOF is selected; otherwise the automatic end supports.
-        # Selected-edge segments are always additive.
-        boundary_map = _boundary_constraint_map(config)
-        edge_supports = _custom_bc_segment_supports(nodes, config, length, circumference, radius=radius)
-        if boundary_map:
-            if custom_lid_support_nodes is not None:
-                cyl_edge_map = {"lower": list(custom_lid_support_nodes[0]), "upper": list(custom_lid_support_nodes[1])}
-            else:
-                cyl_edge_map = {"lower": list(start_ring), "upper": list(end_ring)}
-            supports = _whole_boundary_constraint_supports(
-                cyl_edge_map, config, exclude_dofs_by_node=_edge_support_dofs_by_node(edge_supports))
-        elif not bool(getattr(config, "boundary_auto_supports", True)):
-            supports = []
-        elif custom_lid_support_nodes is not None:
-            supports.extend(_cylinder_lid_boundary_supports(custom_lid_support_nodes[0], custom_lid_support_nodes[1], config))
-        supports.extend(edge_supports)
-        supports.extend(_symmetry_supports(nodes, config))
-        if not boundary_map:
-            supports.extend(_enforced_displacement_supports(nodes, config, "cylinder"))
+    elif not bool(getattr(config, "boundary_auto_supports", True)):
+        supports = []
+    elif custom_lid_support_nodes is not None:
+        supports.extend(_cylinder_lid_boundary_supports(custom_lid_support_nodes[0], custom_lid_support_nodes[1], config))
+    supports.extend(edge_supports)
+    supports.extend(_symmetry_supports(nodes, config))
+    if not boundary_map and not config.custom_load_bc_enabled:
+        supports.extend(_enforced_displacement_supports(nodes, config, "cylinder"))
     return {
         "name": "ANYsolverCylinderFullMesh",
         "thickness_regions": thickness_region_info,
@@ -8703,7 +8705,7 @@ def run_production_fem(
                 values=", ".join(f"{t * 1000.0:.1f}" for t in _thickness_info.get("thicknesses_m", ())),
             )
         )
-    if config.custom_load_bc_enabled and _custom_bc_segments(config):
+    if _custom_bc_segments(config):
         diagnostics.append(
             "Applied {count} selected-edge boundary condition segment(s).".format(
                 count=len(_custom_bc_segments(config))
@@ -8711,14 +8713,15 @@ def run_production_fem(
         )
     if config.include_end_lids and geometry.get("geometry") == "cylinder":
         diagnostics.append("Applied stress-free rigid top/bottom lid diaphragms at cylinder ends.")
-    if (not config.custom_load_bc_enabled) and geometry.get("geometry") != "cylinder":
-        _support_boundary_map = _boundary_constraint_map(config)
-        if _support_boundary_map:
-            diagnostics.append(
-                "Applied per-edge DOF constraints from the Boundary Conditions tab ("
-                + str(len(_support_boundary_map)) + " edge spec(s)); automatic edge supports are bypassed."
-            )
-        elif bool(getattr(config, "boundary_auto_supports", True)):
+    _support_boundary_specs = _boundary_edge_constraints(config)
+    _custom_nullspace = bool(config.custom_load_bc_enabled and config.custom_use_nullspace_projection)
+    if _support_boundary_specs and not _custom_nullspace:
+        diagnostics.append(
+            "Applied per-edge DOF constraints from the Boundary Conditions tab ("
+            + str(len(_support_boundary_specs)) + " edge spec(s)); automatic edge supports are bypassed."
+        )
+    elif (not config.custom_load_bc_enabled) and geometry.get("geometry") != "cylinder":
+        if bool(getattr(config, "boundary_auto_supports", True)):
             diagnostics.append(
                 "Auto-set: no edge DOF is constrained, so automatic well-posed edge supports were applied "
                 "(from line properties, defaulting to simply supported edges when unspecified)."
@@ -9111,6 +9114,7 @@ def run_production_fem(
     nonlinear_factor = None
     nonlinear_static_factor = None
     nonlinear_static_result = None
+    runtime_result_status = "ok"
     plastic_strain_by_node: dict[int, float] = {}
     if _wants_capacity_workflow(config):
         if status_callback: status_callback("Solving nonlinear capacity workflow...")
@@ -9220,6 +9224,8 @@ def run_production_fem(
             unavailable_message = "Incremental geometric/material nonlinear static solver is unavailable in this backend."
         if not solver_available:
             diagnostics.append(unavailable_message)
+            prestress_summary["nonlinear_static_status"] = "unavailable"
+            runtime_result_status = "nonlinear_static_failed"
         else:
             try:
                 nonlinear_resource_config = None
@@ -9357,7 +9363,11 @@ def run_production_fem(
                         if key in prestress_summary:
                             recovered[key] = prestress_summary[key]
                     prestress_summary = recovered
+                else:
+                    runtime_result_status = "nonlinear_static_failed"
             except Exception as exc:
+                prestress_summary["nonlinear_static_status"] = "failed"
+                runtime_result_status = "nonlinear_static_failed"
                 diagnostics.append("Incremental nonlinear static solver failed: " + str(exc))
 
     if _wants_tangent_stability_analysis(config) and capacity_workflow_result is None:
@@ -9607,7 +9617,12 @@ def run_production_fem(
     if not prestress_states:
         diagnostics.append("Prestress recovery returned no element states.")
     if not buckling_factors:
-        diagnostics.append("Static solve converged; no positive buckling modes were returned for this load state.")
+        if runtime_result_status == "ok":
+            diagnostics.append("Static solve converged; no positive buckling modes were returned for this load state.")
+        else:
+            diagnostics.append(
+                "The reference linear static solve converged, but the requested nonlinear static solve did not complete."
+            )
 
     if analysis_context is not None and context_owned_session:
         try:
@@ -9647,7 +9662,7 @@ def run_production_fem(
     }
 
     return LightweightFEMResult(
-        status="ok",
+        status=runtime_result_status,
         stress_max_pa=float(stress_stats["max"]),
         stress_p95_pa=float(stress_stats["percentile"]),
         displacement_max_m=_max_translation(analysis_model, displacements),
