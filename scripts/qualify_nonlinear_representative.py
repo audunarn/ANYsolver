@@ -747,6 +747,7 @@ def _run_bounded_worker(
     ]
     env = os.environ.copy()
     env.update(THREAD_ENV)
+    env["NUMBA_CACHE_DIR"] = str((site / "_numba_cache").resolve())
     log_path.parent.mkdir(parents=True, exist_ok=True)
     started = time.perf_counter()
     phase_started = started
@@ -1138,6 +1139,7 @@ def _run_installed_regressions(
     root = Path(__file__).resolve().parents[1]
     env = os.environ.copy()
     env.update(THREAD_ENV)
+    env["NUMBA_CACHE_DIR"] = str((site / "_numba_cache").resolve())
     env["PYTHONPATH"] = str(site.resolve())
     identity_test = log_path.parent / "test_installed_identity.py"
     expected_site = str(site.resolve())
@@ -1160,7 +1162,7 @@ def _run_installed_regressions(
                 "pytest",
                 "-q",
                 "-c",
-                "pyproject.toml",
+                "docs/reference_cases/qualification_empty_pytest.ini",
                 str(identity_test.resolve()),
                 *tests,
             ],
@@ -1720,30 +1722,49 @@ def _coordinator(args: argparse.Namespace) -> int:
         case["complete"] and case["physical_match"]
         for case in result["performance"].values()
     )
-    easy_id = str(manifest["acceptance"]["easy_control_case"])
-    nonlinear_ids = [
-        case_id for case_id in result["performance"] if case_id != easy_id
-    ]
-    nonlinear_reductions = [
-        result["performance"][case_id]["summary"]["median_reduction_fraction"]
-        for case_id in nonlinear_ids
-        if result["performance"][case_id]["summary"] is not None
-    ]
-    representative_reduction = (
-        float(statistics.median(nonlinear_reductions))
-        if len(nonlinear_reductions) == len(nonlinear_ids)
-        else float("nan")
-    )
-    easy_reduction = (
-        result["performance"][easy_id]["summary"]["median_reduction_fraction"]
-        if result["performance"][easy_id]["summary"] is not None
-        else float("nan")
-    )
-    performance_pass = (
-        performance_complete
-        and representative_reduction >= float(manifest["acceptance"]["performance_median_reduction_fraction"])
-        and easy_reduction >= -float(manifest["acceptance"]["maximum_easy_regression_fraction"])
-    )
+    if manifest.get("execution_mode") == "component_screen":
+        target_id = str(manifest["acceptance"]["target_case"])
+        if list(result["performance"]) != [target_id]:
+            raise ValueError("component screen must contain only its registered target case")
+        target_summary = result["performance"][target_id]["summary"]
+        representative_reduction = (
+            float(target_summary["median_reduction_fraction"])
+            if target_summary is not None
+            else float("nan")
+        )
+        easy_reduction = float("nan")
+        performance_pass = (
+            performance_complete
+            and representative_reduction
+            >= float(manifest["acceptance"]["target_case_reduction_fraction"])
+        )
+    else:
+        easy_id = str(manifest["acceptance"]["easy_control_case"])
+        nonlinear_ids = [
+            case_id for case_id in result["performance"] if case_id != easy_id
+        ]
+        nonlinear_reductions = [
+            result["performance"][case_id]["summary"]["median_reduction_fraction"]
+            for case_id in nonlinear_ids
+            if result["performance"][case_id]["summary"] is not None
+        ]
+        representative_reduction = (
+            float(statistics.median(nonlinear_reductions))
+            if len(nonlinear_reductions) == len(nonlinear_ids)
+            else float("nan")
+        )
+        easy_reduction = (
+            result["performance"][easy_id]["summary"]["median_reduction_fraction"]
+            if result["performance"][easy_id]["summary"] is not None
+            else float("nan")
+        )
+        performance_pass = (
+            performance_complete
+            and representative_reduction
+            >= float(manifest["acceptance"]["performance_median_reduction_fraction"])
+            and easy_reduction
+            >= -float(manifest["acceptance"]["maximum_easy_regression_fraction"])
+        )
     armijo_decision = _adjudicate_armijo(
         convergence=result["convergence"],
         convergence_repeats=convergence_repeats,

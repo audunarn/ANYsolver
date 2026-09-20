@@ -16,7 +16,7 @@ CORRECTION = (
     ROOT
     / "docs"
     / "reference_cases"
-    / "nonlinear_static_combined_s3_harness_correction_v2.json"
+    / "nonlinear_static_combined_s3_harness_correction_v3.json"
 )
 
 
@@ -73,7 +73,8 @@ def test_combined_s3_gate_binds_inputs_before_product_work() -> None:
             assert observed == expected
             continue
         correction = json.loads(CORRECTION.read_text(encoding="utf-8"))
-        assert correction["failed_attempt"]["performance_samples_recorded"] == 0
+        assert correction["prior_attempts"]["v1"]["performance_samples_recorded"] == 0
+        assert correction["prior_attempts"]["v2"]["canonical_campaign_executed"] is False
         assert correction["correction"]["old_runner_lf_sha256"] == expected
         assert correction["correction"]["new_runner_lf_sha256"] == observed
         assert all(correction["unchanged_authority"].values())
@@ -111,3 +112,48 @@ def test_combined_s3_gate_limits_product_scope() -> None:
     ]
     assert "in-place jet arithmetic" in candidate["excluded_changes"]
     assert "Numba jet kernels" in candidate["excluded_changes"]
+
+
+def test_corrected_execution_manifests_bind_exact_inventories() -> None:
+    component = json.loads(
+        (
+            ROOT
+            / "docs/reference_cases/nonlinear_static_combined_s3_component_manifest_v2.json"
+        ).read_text(encoding="utf-8")
+    )
+    formal = json.loads(
+        (
+            ROOT
+            / "docs/reference_cases/nonlinear_static_combined_s3_formal_manifest_v2.json"
+        ).read_text(encoding="utf-8")
+    )
+    candidate = "89bd4623a8ae0cb9c95317bdf31ac5fbd91a2e0f"
+    candidate_tree = "e0d84314d0f84a7974d8b94934678a0cb66a9d76"
+    candidate_wheel = (
+        "301b91bf52cb224e0ea0c2e897e616f250b11cfa9ca5d9d6c9d4739de2f17c66"
+    )
+    for manifest in (component, formal):
+        assert manifest["candidate_revision"] == candidate
+        assert manifest["source_trees"]["candidate"] == candidate_tree
+        assert manifest["wheel_sha256"]["candidate"] == candidate_wheel
+        assert "tests/test_e4_pl_s3_jet_scalar_fastpath.py" in manifest[
+            "required_regressions"
+        ]
+        assert any(
+            "test_values_jacobian_and_hessian_match_directional_finite_differences"
+            in item
+            for item in manifest["required_regressions"]
+        )
+        assert any(
+            "test_canonical_s3_restart_matches_the_ordered_two_stage_path" in item
+            for item in manifest["required_regressions"]
+        )
+
+    assert component["execution_mode"] == "component_screen"
+    assert [case["id"] for case in component["performance_cases"]] == [
+        "plastic_s3_reversal_holdout"
+    ]
+    assert component["execution"]["performance_pairs"] == 3
+    assert formal["execution_mode"] == "representative"
+    assert len(formal["performance_cases"]) == 5
+    assert formal["execution"]["performance_pairs"] == 7
