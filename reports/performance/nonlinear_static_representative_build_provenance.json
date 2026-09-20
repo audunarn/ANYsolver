@@ -1,0 +1,19 @@
+{
+  "schema": "anysolver.nonlinear_static.representative_build_provenance",
+  "version": 1,
+  "campaign_revision": "909929ee2ba6b5ec47c50d9cce988dbe5f3e8af5",
+  "baseline_revision": "3499a04fa10c8d2bd5d6b8e401229ac787cb117e",
+  "candidate_revision": "0a56c2c118ffbdea65f749df1a533d99350f26fe",
+  "baseline_tree": "c5e7d9ec898aab00a0c4edceb3167b4c14cb7ec8",
+  "candidate_tree": "2a33b69abbbe71b6a2eb7ec85cbeda9cb18d5cef",
+  "baseline_archive": ".qualification-representative/inputs/baseline-3499a04f.zip",
+  "candidate_archive": ".qualification-representative/inputs/candidate-0a56c2c1.zip",
+  "baseline_archive_sha256": "436a6e88d79e28bc047e90376c0fa9ac94390a719e4358500ecca0167545cdc4",
+  "candidate_archive_sha256": "5b17b14987544fed438ca6270224898821c75bb6975ebc224f2c58dfc062d24c",
+  "baseline_wheel": ".qualification-representative/wheels/baseline/anysolver-0.4.6-py3-none-any.whl",
+  "candidate_wheel": ".qualification-representative/wheels/candidate/anysolver-0.4.6-py3-none-any.whl",
+  "baseline_wheel_sha256": "56747a1ddf366462fdc2a939ab745a71c880a647d15da63ed23e652c62f69f97",
+  "candidate_wheel_sha256": "eea68a24a28fb37b7394ebaadf73b9412834afcdfd394f6a4eb774de06db0d0d",
+  "build_command": "python -m build --wheel --no-isolation from exact git archives",
+  "build_python": "3.13.9"
+}
