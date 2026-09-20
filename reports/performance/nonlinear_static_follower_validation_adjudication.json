@@ -1,27 +1,25 @@
 {
   "criteria": {
     "maximum_non_target_regression_fraction": 0.05,
-    "non_target_failures": {
-      "prescribed_mpc_beam_holdout": -0.06790278694192714
-    },
+    "non_target_failures": {},
     "non_target_observed_reduction_fraction": {
-      "easy_elastic_shell_control": 0.03152250995321909,
-      "large_deflection_shell_holdout": -0.0018765059934356032,
-      "plastic_s3_reversal_holdout": -0.016247243893726,
-      "prescribed_mpc_beam_holdout": -0.06790278694192714
+      "easy_elastic_shell_control": 0.013663172670860382,
+      "large_deflection_shell_holdout": -0.007788367410031573,
+      "plastic_s3_reversal_holdout": 0.001280057919924931,
+      "prescribed_mpc_beam_holdout": 0.026975961613383614
     },
-    "non_target_pass": false,
-    "representative_median_reduction_fraction": -0.009061874943580801,
+    "non_target_pass": true,
+    "representative_median_reduction_fraction": 0.014128009766654273,
     "representative_performance_decision": "NO-GO",
     "target_case": "nonsymmetric_follower_shell_holdout",
-    "target_observed_reduction_fraction": 0.8240780693789042,
+    "target_observed_reduction_fraction": 0.831310123243379,
     "target_pass": true,
     "target_required_reduction_fraction": 0.1
   },
   "decision": {
     "completeness": "PASS",
     "mechanics": "PASS",
-    "non_target_regression": "FAIL",
+    "non_target_regression": "PASS",
     "promotion": "NO-GO",
     "retention": "RETAIN_EXPERIMENTAL",
     "target_performance": "PASS"
@@ -31,9 +29,9 @@
     "baseline_wheel_sha256": "9a91e6b72702b14302fc440f9539213bbaa0204d1812304cd53f64fc9b1e4e36",
     "candidate_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
     "candidate_wheel_sha256": "4512f1172f446922272fdb6e34f77175755351f7c91fc9ca2bddacc30623792c",
-    "manifest_sha256": "339c72b08ab97dcfc23d97642ad7f93f8a778837ad7902982ca2177fbf6d721e",
-    "raw_evidence_sha256": "2c43d43887d520fb6c1581dafb2727f8f6b64a5d6566dc039bff70b161c05ddf",
-    "runner_sha256": "6f677fdf43e6e4b449d32cdf8a0a31ef38f3f923388a631c5c617eba4c4f6552"
+    "manifest_sha256": "ae2e0e3aef093203c32975819717f651569c3cacbba661be0a97f5ebf5bca071",
+    "raw_evidence_sha256": "0eafe512774a9cde13c2aaa9e9e4d6a4412d9c47b6e91904088f5a83890a7e62",
+    "runner_sha256": "5764f1104f23272ca3103df50f1655c0aa6ca6701f930ee324313bd10e752d13"
   },
   "schema": "anysolver.nonlinear_static.follower_validation_adjudication",
   "version": 1
