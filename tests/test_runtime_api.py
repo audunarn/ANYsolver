@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import json
 from types import SimpleNamespace
 
 import anysolver
@@ -48,6 +49,74 @@ def test_runtime_contract_is_headless_and_builds_geometry() -> None:
     assert generated["nodes"]
     assert generated["shells"]
     assert "beams" in generated
+
+
+@pytest.mark.parametrize("include_end_lids", [False, True])
+def test_custom_load_mode_keeps_cylinder_per_edge_dof_constraints(
+    include_end_lids: bool,
+) -> None:
+    geometry = {
+        "geometry": "cylinder",
+        "radius_m": 2.0,
+        "length_m": 5.0,
+        "thickness_m": 0.012,
+        "has_stiffener": False,
+        "has_girder": False,
+    }
+    fixed_dofs = {dof: 0.0 for dof in ("ux", "uy", "uz", "rx", "ry", "rz")}
+    config = runtime.LightweightFEMConfig(
+        mesh_fidelity="coarse",
+        include_end_lids=include_end_lids,
+        custom_load_bc_enabled=True,
+        custom_loads_add_to_imported=False,
+        custom_use_nullspace_projection=False,
+        boundary_constraint_json=json.dumps({"lower": fixed_dofs}),
+        edge_load_components_json=json.dumps({"upper": {"fx": 100_000.0}}),
+    )
+
+    generated = runtime.build_generated_geometry(geometry, config)
+    supports = [
+        support
+        for support in generated["supports"]
+        if str(support["name"]).startswith("whole_boundary_dof_constraint")
+    ]
+
+    assert len(supports) == 1
+    assert supports[0]["constraints"] == fixed_dofs
+    coords = {
+        int(node["id"]): tuple(float(value) for value in node["coords"])
+        for node in generated["nodes"]
+    }
+    assert all(abs(coords[int(node_id)][2]) < 1.0e-12 for node_id in supports[0]["node_ids"])
+    expected_count = 1 if include_end_lids else len(set(generated["plot_grid"][0]))
+    assert len(supports[0]["node_ids"]) == expected_count
+
+
+def test_custom_load_mode_keeps_flat_per_edge_dof_constraints() -> None:
+    fixed_dofs = {dof: 0.0 for dof in ("ux", "uy", "uz", "rx", "ry", "rz")}
+    config = runtime.LightweightFEMConfig(
+        mesh_fidelity="coarse",
+        custom_load_bc_enabled=True,
+        custom_loads_add_to_imported=False,
+        custom_use_nullspace_projection=False,
+        boundary_constraint_json=json.dumps({"x0": fixed_dofs}),
+        edge_load_components_json=json.dumps({"x1": {"fx": 100_000.0}}),
+    )
+
+    generated = runtime.build_generated_geometry(_flat_geometry(), config)
+    supports = [
+        support
+        for support in generated["supports"]
+        if str(support["name"]).startswith("whole_boundary_dof_constraint")
+    ]
+
+    assert len(supports) == 1
+    assert supports[0]["constraints"] == fixed_dofs
+    coords = {
+        int(node["id"]): tuple(float(value) for value in node["coords"])
+        for node in generated["nodes"]
+    }
+    assert all(abs(coords[int(node_id)][0]) < 1.0e-12 for node_id in supports[0]["node_ids"])
 
 
 def test_buckling_mode_visualization_uses_displacement_amplitude_without_stress_recovery(
@@ -298,6 +367,25 @@ def test_runtime_cylinder_smoke() -> None:
     assert result.status == "ok"
     assert result.mesh_info["nodes"] > 0
     assert result.mesh_info["shells"] > 0
+
+
+def test_requested_nonlinear_failure_is_not_reported_as_ok(monkeypatch) -> None:
+    def fail_nonlinear(*_args, **_kwargs):
+        raise RuntimeError("synthetic nonlinear failure")
+
+    monkeypatch.setattr(runtime, "_backend_solve_static_nonlinear", fail_nonlinear)
+    result = runtime.run_production_fem(
+        _flat_geometry(),
+        runtime.LightweightFEMConfig(
+            mesh_fidelity="coarse",
+            pressure_pa=10_000.0,
+            analysis_type="geom. + material nonlinear static",
+        ),
+    )
+
+    assert result.status == "nonlinear_static_failed"
+    assert result.prestress_summary["nonlinear_static_status"] == "failed"
+    assert any("synthetic nonlinear failure" in message for message in result.diagnostics)
 
 
 def test_runtime_static_only_cylinder_never_enters_eigenvalue_buckling(
