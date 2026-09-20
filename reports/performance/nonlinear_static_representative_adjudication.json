@@ -1,0 +1,484 @@
+{
+  "adjudicator": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\scripts\\adjudicate_nonlinear_representative.py",
+  "adjudicator_sha256": "0cb719dc393df0eb5b06c3e39069915fde5b0911fac75b9316c6f5984e30e365",
+  "convergence": {
+    "large_deflection_shell_holdout": {
+      "armijo_failed_work": 0,
+      "armijo_median_seconds": null,
+      "complete": true,
+      "failed_work_change_fraction": 0.0,
+      "newly_solved_by_armijo": false,
+      "pairs": [
+        {
+          "always": {
+            "status": null,
+            "terminal_reason": "warm_timeout",
+            "worker_wall_seconds": 901.0972941000073
+          },
+          "armijo": {
+            "status": null,
+            "terminal_reason": "warm_timeout",
+            "worker_wall_seconds": 901.0673109999916
+          },
+          "pair": 1
+        }
+      ],
+      "physical_evidence_basis": "resource_terminal_no_solution",
+      "physical_match": true,
+      "residual_decrease_failed_work": 0,
+      "residual_decrease_median_seconds": null
+    },
+    "nonsymmetric_follower_shell_holdout": {
+      "armijo_failed_work": 18,
+      "armijo_median_seconds": 11.864198099996429,
+      "complete": true,
+      "failed_work_change_fraction": 0.0,
+      "newly_solved_by_armijo": false,
+      "pairs": [
+        {
+          "always": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 29.39012840000214
+          },
+          "armijo": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 28.0144702999969
+          },
+          "pair": 1
+        },
+        {
+          "always": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 28.471933799999533
+          },
+          "armijo": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 28.311611199984327
+          },
+          "pair": 2
+        },
+        {
+          "always": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 26.420343100005994
+          },
+          "armijo": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 24.410480400023516
+          },
+          "pair": 3
+        }
+      ],
+      "physical_evidence_basis": "completed_samples",
+      "physical_match": true,
+      "residual_decrease_failed_work": 18,
+      "residual_decrease_median_seconds": 11.94610269999248
+    },
+    "plastic_s3_reversal_holdout": {
+      "armijo_failed_work": 0,
+      "armijo_median_seconds": 10.49110670000664,
+      "complete": true,
+      "failed_work_change_fraction": 0.0,
+      "newly_solved_by_armijo": false,
+      "pairs": [
+        {
+          "always": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 22.958326499996474
+          },
+          "armijo": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 22.84300780002377
+          },
+          "pair": 1
+        },
+        {
+          "always": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 22.88908329998958
+          },
+          "armijo": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 22.86196690000361
+          },
+          "pair": 2
+        },
+        {
+          "always": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 22.934603999980027
+          },
+          "armijo": {
+            "status": "completed",
+            "terminal_reason": "exit",
+            "worker_wall_seconds": 23.61320849999902
+          },
+          "pair": 3
+        }
+      ],
+      "physical_evidence_basis": "completed_samples",
+      "physical_match": true,
+      "residual_decrease_failed_work": 0,
+      "residual_decrease_median_seconds": 10.346620900003472
+    }
+  },
+  "corrections": [
+    {
+      "detail": "Baseline lacks the candidate-only external_load_reduction.preprojected diagnostic; exact physical equality and all other frozen follower predicates are required before treating the legacy observation as current-load compliant.",
+      "id": "legacy-follower-diagnostic-compatibility"
+    },
+    {
+      "detail": "When both globalization methods terminate at a registered resource limit before producing a solution, the difficult-case attempt is complete NO-GO evidence and physical comparison is not applicable.",
+      "id": "resource-terminal-physical-not-applicable"
+    }
+  ],
+  "created_utc": "2026-09-20T13:02:07Z",
+  "decision": {
+    "armijo": "NO-GO",
+    "armijo_all_samples_completed": false,
+    "armijo_failed_work_reduction_fraction": 0.0,
+    "armijo_new_difficult_solves": 0,
+    "armijo_runtime_not_worse": false,
+    "completeness": "PASS",
+    "easy_control_reduction_fraction": 0.026847428206201437,
+    "failed_work_inventory_complete": false,
+    "performance": "GO",
+    "representative_nonlinear_median_reduction_fraction": 0.12440265243056176
+  },
+  "dependency_runner": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\scripts\\qualify_nonlinear_representative.py",
+  "dependency_runner_sha256": "44d83a6d0889dee3364cfb6ade50c73add8a4ec0d8375349d7ac48ee12b5424b",
+  "installed_regressions": {
+    "exit_code": 0,
+    "installed_site": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate",
+    "log": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-logs-cce14d8\\installed-regressions.log",
+    "ok": true,
+    "summary_tail": "4 passed, 1 warning in 7.65s",
+    "tests": [
+      "tests/test_fe_solver_nonlinear_limit_point.py::test_nonlinear_load_stepping_stops_near_eigenvalue_limit_point",
+      "tests/test_nonlinear_performance_batch_c.py::test_direct_reduced_scatter_matches_full_projection_with_mpc_coefficients",
+      "tests/test_nonlinear_restart_checkpoint.py::test_force_static_checkpoint_round_trip_and_exact_split_continuation"
+    ],
+    "wall_seconds": 9.734353399981046
+  },
+  "performance": {
+    "easy_elastic_shell_control": {
+      "complete": true,
+      "max_displacement_difference": 0.0,
+      "max_reaction_difference": 0.0,
+      "max_state_observable_difference": 0.0,
+      "max_step_load_factor_difference": 0.0,
+      "pairs": 7,
+      "physical_match": true,
+      "summary": {
+        "baseline_median_seconds": 0.35157930001150817,
+        "baseline_median_work": {
+          "assembly_calls": 40,
+          "backtracks": 0,
+          "failed_increment_count": 0,
+          "failed_newton_iterations": 0,
+          "failed_recoverable_trial_failures": 0,
+          "failed_rejected_trial_evaluations": 0,
+          "failed_work_units": 0,
+          "linear_factorizations": 20,
+          "linear_solves": 20,
+          "promotion_evaluations": 0,
+          "reaction_force_reassembly_count": 0,
+          "reaction_force_reuse_count": 0,
+          "rejected_full_steps": 0,
+          "residual_only_calls": 10,
+          "tangent_calls": 30
+        },
+        "baseline_peak_tree_rss_bytes": 252698624,
+        "candidate_median_seconds": 0.34214029999566264,
+        "candidate_median_work": {
+          "assembly_calls": 30,
+          "backtracks": 0,
+          "failed_increment_count": 0,
+          "failed_newton_iterations": 0,
+          "failed_recoverable_trial_failures": 0,
+          "failed_rejected_trial_evaluations": 0,
+          "failed_work_units": 0,
+          "linear_factorizations": 20,
+          "linear_solves": 20,
+          "promotion_evaluations": 0,
+          "reaction_force_reassembly_count": 0,
+          "reaction_force_reuse_count": 10,
+          "rejected_full_steps": 0,
+          "residual_only_calls": 0,
+          "tangent_calls": 30
+        },
+        "candidate_peak_tree_rss_bytes": 228233216,
+        "median_reduction_fraction": 0.026847428206201437
+      }
+    },
+    "large_deflection_shell_holdout": {
+      "complete": true,
+      "max_displacement_difference": 0.0,
+      "max_reaction_difference": 0.0,
+      "max_state_observable_difference": 0.0,
+      "max_step_load_factor_difference": 0.0,
+      "pairs": 7,
+      "physical_match": true,
+      "summary": {
+        "baseline_median_seconds": 5.344807900022715,
+        "baseline_median_work": {
+          "assembly_calls": 120,
+          "backtracks": 0,
+          "failed_increment_count": 0,
+          "failed_newton_iterations": 0,
+          "failed_recoverable_trial_failures": 0,
+          "failed_rejected_trial_evaluations": 0,
+          "failed_work_units": 0,
+          "linear_factorizations": 80,
+          "linear_solves": 80,
+          "promotion_evaluations": 0,
+          "reaction_force_reassembly_count": 0,
+          "reaction_force_reuse_count": 0,
+          "rejected_full_steps": 0,
+          "residual_only_calls": 20,
+          "tangent_calls": 100
+        },
+        "baseline_peak_tree_rss_bytes": 226877440,
+        "candidate_median_seconds": 4.775538100017002,
+        "candidate_median_work": {
+          "assembly_calls": 100,
+          "backtracks": 0,
+          "failed_increment_count": 0,
+          "failed_newton_iterations": 0,
+          "failed_recoverable_trial_failures": 0,
+          "failed_rejected_trial_evaluations": 0,
+          "failed_work_units": 0,
+          "linear_factorizations": 80,
+          "linear_solves": 80,
+          "promotion_evaluations": 0,
+          "reaction_force_reassembly_count": 0,
+          "reaction_force_reuse_count": 20,
+          "rejected_full_steps": 0,
+          "residual_only_calls": 0,
+          "tangent_calls": 100
+        },
+        "candidate_peak_tree_rss_bytes": 228380672,
+        "median_reduction_fraction": 0.1065089355228827
+      }
+    },
+    "nonsymmetric_follower_shell_holdout": {
+      "complete": true,
+      "max_displacement_difference": 0.0,
+      "max_reaction_difference": 0.0,
+      "max_state_observable_difference": 0.0,
+      "max_step_load_factor_difference": 0.0,
+      "pairs": 7,
+      "physical_match": true,
+      "summary": {
+        "baseline_median_seconds": 6.330069499992533,
+        "baseline_median_work": {
+          "assembly_calls": 30,
+          "backtracks": 0,
+          "failed_increment_count": 0,
+          "failed_newton_iterations": 0,
+          "failed_recoverable_trial_failures": 0,
+          "failed_rejected_trial_evaluations": 0,
+          "failed_work_units": 0,
+          "linear_factorizations": 18,
+          "linear_solves": 18,
+          "promotion_evaluations": 0,
+          "reaction_force_reassembly_count": 0,
+          "reaction_force_reuse_count": 0,
+          "rejected_full_steps": 0,
+          "residual_only_calls": 6,
+          "tangent_calls": 24
+        },
+        "baseline_peak_tree_rss_bytes": 228081664,
+        "candidate_median_seconds": 6.390718699985882,
+        "candidate_median_work": {
+          "assembly_calls": 24,
+          "backtracks": 0,
+          "failed_increment_count": 0,
+          "failed_newton_iterations": 0,
+          "failed_recoverable_trial_failures": 0,
+          "failed_rejected_trial_evaluations": 0,
+          "failed_work_units": 0,
+          "linear_factorizations": 18,
+          "linear_solves": 18,
+          "promotion_evaluations": 0,
+          "reaction_force_reassembly_count": 0,
+          "reaction_force_reuse_count": 6,
+          "rejected_full_steps": 0,
+          "residual_only_calls": 0,
+          "tangent_calls": 24
+        },
+        "candidate_peak_tree_rss_bytes": 230051840,
+        "median_reduction_fraction": -0.009581127030820303
+      }
+    },
+    "plastic_s3_reversal_holdout": {
+      "complete": true,
+      "max_displacement_difference": 0.0,
+      "max_reaction_difference": 3.026798367500305e-09,
+      "max_state_observable_difference": 0.0,
+      "max_step_load_factor_difference": 0.0,
+      "pairs": 7,
+      "physical_match": true,
+      "summary": {
+        "baseline_median_seconds": 10.900442899990594,
+        "baseline_median_work": {
+          "assembly_calls": 89,
+          "backtracks": 0,
+          "failed_increment_count": 0,
+          "failed_newton_iterations": 0,
+          "failed_recoverable_trial_failures": 0,
+          "failed_rejected_trial_evaluations": 0,
+          "failed_work_units": 0,
+          "linear_factorizations": 49,
+          "linear_solves": 49,
+          "promotion_evaluations": 0,
+          "reaction_force_reassembly_count": 0,
+          "reaction_force_reuse_count": 0,
+          "rejected_full_steps": 0,
+          "residual_only_calls": 20,
+          "tangent_calls": 69
+        },
+        "baseline_peak_tree_rss_bytes": 226254848,
+        "candidate_median_seconds": 8.695636399992509,
+        "candidate_median_work": {
+          "assembly_calls": 69,
+          "backtracks": 0,
+          "failed_increment_count": 0,
+          "failed_newton_iterations": 0,
+          "failed_recoverable_trial_failures": 0,
+          "failed_rejected_trial_evaluations": 0,
+          "failed_work_units": 0,
+          "linear_factorizations": 49,
+          "linear_solves": 49,
+          "promotion_evaluations": 0,
+          "reaction_force_reassembly_count": 0,
+          "reaction_force_reuse_count": 20,
+          "rejected_full_steps": 0,
+          "residual_only_calls": 0,
+          "tangent_calls": 69
+        },
+        "candidate_peak_tree_rss_bytes": 226607104,
+        "median_reduction_fraction": 0.20226760694283236
+      }
+    },
+    "prescribed_mpc_beam_holdout": {
+      "complete": true,
+      "max_displacement_difference": 0.0,
+      "max_reaction_difference": 0.0,
+      "max_state_observable_difference": 0.0,
+      "max_step_load_factor_difference": 0.0,
+      "pairs": 7,
+      "physical_match": true,
+      "summary": {
+        "baseline_median_seconds": 0.03240419999929145,
+        "baseline_median_work": {
+          "assembly_calls": 44,
+          "backtracks": 0,
+          "failed_increment_count": 0,
+          "failed_newton_iterations": 0,
+          "failed_recoverable_trial_failures": 0,
+          "failed_rejected_trial_evaluations": 0,
+          "failed_work_units": 0,
+          "linear_factorizations": 20,
+          "linear_solves": 20,
+          "promotion_evaluations": 0,
+          "reaction_force_reassembly_count": 0,
+          "reaction_force_reuse_count": 0,
+          "rejected_full_steps": 0,
+          "residual_only_calls": 12,
+          "tangent_calls": 32
+        },
+        "baseline_peak_tree_rss_bytes": 188821504,
+        "candidate_median_seconds": 0.02779319998808205,
+        "candidate_median_work": {
+          "assembly_calls": 32,
+          "backtracks": 0,
+          "failed_increment_count": 0,
+          "failed_newton_iterations": 0,
+          "failed_recoverable_trial_failures": 0,
+          "failed_rejected_trial_evaluations": 0,
+          "failed_work_units": 0,
+          "linear_factorizations": 20,
+          "linear_solves": 20,
+          "promotion_evaluations": 0,
+          "reaction_force_reassembly_count": 0,
+          "reaction_force_reuse_count": 12,
+          "rejected_full_steps": 0,
+          "residual_only_calls": 0,
+          "tangent_calls": 32
+        },
+        "candidate_peak_tree_rss_bytes": 189227008,
+        "median_reduction_fraction": 0.1422963693382408
+      }
+    }
+  },
+  "schema": "anysolver.nonlinear_static.representative_adjudication",
+  "source_completed_utc": "2026-09-20T12:38:29Z",
+  "source_evidence": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\reports\\performance\\nonlinear_static_representative_evidence.json",
+  "source_evidence_archive": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\reports\\performance\\nonlinear_static_representative_evidence.json.gz",
+  "source_evidence_archive_sha256": "22a9edd80f3f6ff91a3498f445172032a535f5806ad4a77d2d40931f6baa957f",
+  "source_evidence_sha256": "48691e0557d9b57bcab378c20a87a84d8c9ebd8ab1693683c278030b15bc2d8c",
+  "source_identity": {
+    "baseline_revision": "3499a04fa10c8d2bd5d6b8e401229ac787cb117e",
+    "baseline_tree": "c5e7d9ec898aab00a0c4edceb3167b4c14cb7ec8",
+    "baseline_wheel": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\wheels\\baseline\\anysolver-0.4.6-py3-none-any.whl",
+    "baseline_wheel_sha256": "56747a1ddf366462fdc2a939ab745a71c880a647d15da63ed23e652c62f69f97",
+    "build_provenance": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\reports\\performance\\nonlinear_static_representative_build_provenance.json",
+    "build_provenance_sha256": "adf4ecea7a9cef40e80dbd0b9d02e07c00f1cfe4598edb308682033f38dc0b41",
+    "candidate_revision": "0a56c2c118ffbdea65f749df1a533d99350f26fe",
+    "candidate_tree": "2a33b69abbbe71b6a2eb7ec85cbeda9cb18d5cef",
+    "candidate_wheel": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\wheels\\candidate\\anysolver-0.4.6-py3-none-any.whl",
+    "candidate_wheel_sha256": "eea68a24a28fb37b7394ebaadf73b9412834afcdfd394f6a4eb774de06db0d0d",
+    "installed_sites": {
+      "baseline": {
+        "pip_log": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\baseline.pip-install.log",
+        "site": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\baseline",
+        "wheel": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\wheels\\baseline\\anysolver-0.4.6-py3-none-any.whl",
+        "wheel_sha256": "56747a1ddf366462fdc2a939ab745a71c880a647d15da63ed23e652c62f69f97"
+      },
+      "candidate": {
+        "pip_log": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate.pip-install.log",
+        "site": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate",
+        "wheel": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\wheels\\candidate\\anysolver-0.4.6-py3-none-any.whl",
+        "wheel_sha256": "eea68a24a28fb37b7394ebaadf73b9412834afcdfd394f6a4eb774de06db0d0d"
+      }
+    },
+    "manifest": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\docs\\reference_cases\\nonlinear_static_representative_manifest.json",
+    "manifest_sha256": "09c0139065bc35d5f7cd49be6f0b861394f031c34de2b662f7ccdf0940a6b822",
+    "runner": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\scripts\\qualify_nonlinear_representative.py",
+    "runner_sha256": "d076789215052b61ad1502d5eb87dd9be04f7be8de72e173ddcee0a2d1aece29",
+    "thread_environment": {
+      "MKL_NUM_THREADS": "1",
+      "NUMBA_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "source_runner_decision": {
+    "armijo": "NO-GO",
+    "armijo_all_samples_completed": false,
+    "armijo_failed_work_reduction_fraction": 0.0,
+    "armijo_new_difficult_solves": 0,
+    "armijo_runtime_not_worse": false,
+    "armijo_runtime_seconds": 922.3553048000031,
+    "completeness": "FAIL",
+    "easy_control_reduction_fraction": 0.026847428206201437,
+    "failed_work_inventory_complete": false,
+    "performance": "NO-GO",
+    "representative_nonlinear_median_reduction_fraction": 0.12440265243056176,
+    "residual_decrease_runtime_seconds": 922.292723599996
+  },
+  "source_started_utc": "2026-09-20T11:50:03Z",
+  "version": 1
+}

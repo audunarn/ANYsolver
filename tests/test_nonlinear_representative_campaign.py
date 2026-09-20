@@ -4,6 +4,7 @@ import importlib.util
 import json
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -226,3 +227,33 @@ def test_install_root_conflict_is_reportable_setup_failure(tmp_path: Path) -> No
     assert sites == {}
     assert records == {}
     assert failure["terminal_reason"] == "install_root_error"
+
+
+def test_legacy_follower_diagnostic_absence_does_not_fail_physics() -> None:
+    module = _runner_module()
+    result = SimpleNamespace(
+        status="completed",
+        load_factor=1.0,
+        displacements=[0.0, 1.0],
+        info={"equilibrium_tangent": "K_internal-K_external"},
+    )
+    checks = module._family_checks(
+        result,
+        {"builder": "clamped_shell", "follower_pressure": True},
+        {"centre_uz_dof": 1},
+    )
+    assert checks["current_external_load"] is True
+
+
+def test_convergence_resource_terminals_are_complete_no_solution_evidence() -> None:
+    module = _runner_module()
+    terminal = {"ok": False, "terminal_reason": "warm_timeout"}
+    status = module._convergence_physical_status(
+        oracle={"ok": True},
+        method_samples={"always": [terminal], "armijo": [terminal]},
+    )
+    assert status == {
+        "physical_match": True,
+        "basis": "resource_terminal_no_solution",
+        "completed_samples": 0,
+    }

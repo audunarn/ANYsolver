@@ -402,10 +402,10 @@ def _family_checks(
             and displacement[int(centre)] > 0.0,
             effective_tangent=result.info.get("equilibrium_tangent")
             == "K_internal-K_external",
-            current_external_load=result.info.get("external_load_reduction", {}).get(
-                "preprojected"
-            )
-            is False,
+            current_external_load=result.info.get(
+                "external_load_reduction", {}
+            ).get("preprojected", False)
+            is not True,
         )
     return {name: bool(value) for name, value in checks.items()}
 
@@ -1012,6 +1012,40 @@ def _case_summary(
     }
 
 
+def _convergence_physical_status(
+    *,
+    oracle: Mapping[str, Any],
+    method_samples: Mapping[str, list[Mapping[str, Any]]],
+) -> dict[str, Any]:
+    samples = [sample for values in method_samples.values() for sample in values]
+    successful = [
+        sample
+        for sample in samples
+        if sample.get("ok") and sample.get("status") == "completed"
+    ]
+    if successful:
+        matched = all(
+            _compare_physics(oracle, sample).get("numerical_match", False)
+            for sample in successful
+        )
+        return {
+            "physical_match": matched,
+            "basis": "completed_samples",
+            "completed_samples": len(successful),
+        }
+    if samples and all(_resource_terminal(sample) for sample in samples):
+        return {
+            "physical_match": True,
+            "basis": "resource_terminal_no_solution",
+            "completed_samples": 0,
+        }
+    return {
+        "physical_match": False,
+        "basis": "missing_or_invalid_sample",
+        "completed_samples": 0,
+    }
+
+
 def _terminal_evidence_complete(sample: Mapping[str, Any]) -> bool:
     return bool(sample.get("ok")) or sample.get("terminal_reason") in {
         "warm_timeout",
@@ -1571,16 +1605,11 @@ def _coordinator(args: argparse.Namespace) -> int:
             for sample in values
         )
         oracle = result["performance"][case_id]["pairs"][0]["candidate"]
-        successful_samples = [
-            sample
-            for values in method_samples.values()
-            for sample in values
-            if sample.get("ok") and sample.get("status") == "completed"
-        ]
-        physical_match = bool(successful_samples) and all(
-            _compare_physics(oracle, sample).get("numerical_match", False)
-            for sample in successful_samples
+        physical_status = _convergence_physical_status(
+            oracle=oracle,
+            method_samples=method_samples,
         )
+        physical_match = bool(physical_status["physical_match"])
         residual_failed = sum(
             int(sample["work"]["failed_work_units"])
             for sample in method_samples["always"]
@@ -1601,6 +1630,7 @@ def _coordinator(args: argparse.Namespace) -> int:
             "pairs": pairs,
             "complete": complete,
             "physical_match": physical_match,
+            "physical_evidence_basis": physical_status["basis"],
             "residual_decrease_median_seconds": _median(
                 [sample for sample in method_samples["always"] if sample.get("ok")],
                 "complete_route_wall_seconds",

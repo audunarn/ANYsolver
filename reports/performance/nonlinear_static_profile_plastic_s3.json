@@ -1,0 +1,386 @@
+{
+  "case": "plastic_s3_reversal_holdout",
+  "identity": {
+    "anysolver_module": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\__init__.py",
+    "anysolver_version": "0.4.6",
+    "build_case_sha256": "f1cf32fb23e544b2d83672ec7c790d07ae944ede6ea9de857f7fd06fffae2933",
+    "build_provenance_sha256": "adf4ecea7a9cef40e80dbd0b9d02e07c00f1cfe4598edb308682033f38dc0b41",
+    "campaign_runner": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\scripts\\qualify_nonlinear_representative.py",
+    "campaign_runner_sha256": "44d83a6d0889dee3364cfb6ade50c73add8a4ec0d8375349d7ac48ee12b5424b",
+    "candidate_revision": "0a56c2c118ffbdea65f749df1a533d99350f26fe",
+    "candidate_wheel_sha256": "eea68a24a28fb37b7394ebaadf73b9412834afcdfd394f6a4eb774de06db0d0d",
+    "manifest_sha256": "09c0139065bc35d5f7cd49be6f0b861394f031c34de2b662f7ccdf0940a6b822"
+  },
+  "load_factor": 2.0,
+  "profile": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\profiles\\plastic_s3.prof",
+  "profile_primitive_calls": 29354629,
+  "profile_total_calls": 30422515,
+  "profile_total_seconds": 15.095091100000001,
+  "profiled_solve_wall_seconds": 15.100432600011118,
+  "schema": "anysolver.nonlinear_static.representative_profile",
+  "status": "completed",
+  "steps": 20,
+  "top_cumulative": [
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.1003696,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_performance_batch_c.py",
+      "function": "wrapper",
+      "line": 260,
+      "primitive_calls": 1,
+      "total_seconds": 6.5000000000000004e-06
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.100363100000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_performance_batch_c.py",
+      "function": "_run_with_context",
+      "line": 206,
+      "primitive_calls": 1,
+      "total_seconds": 2.02e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.1003109,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "solve_static_nonlinear",
+      "line": 7105,
+      "primitive_calls": 1,
+      "total_seconds": 1.9600000000000002e-05
+    },
+    {
+      "calls": 4,
+      "cumulative_seconds": 15.0943605,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\matrix_assembly.py",
+      "function": "_run_with_qualified_assembly_runtime_lease",
+      "line": 3587,
+      "primitive_calls": 1,
+      "total_seconds": 8.82e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.0934813,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "operation",
+      "line": 7148,
+      "primitive_calls": 1,
+      "total_seconds": 2.9800000000000003e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.093451300000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_state.py",
+      "function": "_run_with_nonlinear_state_cleanup",
+      "line": 261,
+      "primitive_calls": 1,
+      "total_seconds": 1.3000000000000001e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.093435500000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\threading_policy.py",
+      "function": "wrapped",
+      "line": 408,
+      "primitive_calls": 1,
+      "total_seconds": 1.74e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.0931501,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_analysis_diagnostics.py",
+      "function": "wrapped",
+      "line": 435,
+      "primitive_calls": 1,
+      "total_seconds": 9.31e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.092884300000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "_solve_static_nonlinear_under_lease",
+      "line": 4583,
+      "primitive_calls": 1,
+      "total_seconds": 0.0020498
+    },
+    {
+      "calls": 20,
+      "cumulative_seconds": 14.415707600000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "newton_increment",
+      "line": 6145,
+      "primitive_calls": 20,
+      "total_seconds": 0.0025134000000000003
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 14.373490100000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "assemble_force_system",
+      "line": 6130,
+      "primitive_calls": 69,
+      "total_seconds": 0.00034040000000000003
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 14.373016100000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_performance_batch_c.py",
+      "function": "_batch_c_assemble_nonlinear_system",
+      "line": 495,
+      "primitive_calls": 69,
+      "total_seconds": 0.00035840000000000004
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 14.372315400000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_performance.py",
+      "function": "_optimized_assemble_nonlinear_system",
+      "line": 1328,
+      "primitive_calls": 69,
+      "total_seconds": 0.0007917
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 14.329489400000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_performance_batch_b.py",
+      "function": "_batch_b_plan_assemble",
+      "line": 811,
+      "primitive_calls": 69,
+      "total_seconds": 0.0037534
+    },
+    {
+      "calls": 571,
+      "cumulative_seconds": 14.272673600000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "guarded",
+      "line": 9409,
+      "primitive_calls": 148,
+      "total_seconds": 0.0042515
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 14.239013600000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_element_evaluation.py",
+      "function": "evaluate_nonlinear_element",
+      "line": 42,
+      "primitive_calls": 69,
+      "total_seconds": 0.0007740000000000001
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 14.194014600000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "compute_nonlinear_response",
+      "line": 7433,
+      "primitive_calls": 69,
+      "total_seconds": 0.0072921
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 11.6368214,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_solve_native_bubble_equilibrium",
+      "line": 2841,
+      "primitive_calls": 69,
+      "total_seconds": 0.004471200000000001
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 11.6219491,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "physical_builder",
+      "line": 7488,
+      "primitive_calls": 69,
+      "total_seconds": 0.0005784000000000001
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 11.6213142,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_native_layered_uncondensed_response_components",
+      "line": 3231,
+      "primitive_calls": 69,
+      "total_seconds": 0.0385467
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 11.524686500000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_native_station_kinematics",
+      "line": 3081,
+      "primitive_calls": 69,
+      "total_seconds": 0.009537700000000001
+    },
+    {
+      "calls": 483,
+      "cumulative_seconds": 11.5142684,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_native_incremental_strain_jets",
+      "line": 2701,
+      "primitive_calls": 483,
+      "total_seconds": 0.041492
+    },
+    {
+      "calls": 667437,
+      "cumulative_seconds": 8.549206100000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "__mul__",
+      "line": 1677,
+      "primitive_calls": 667437,
+      "total_seconds": 4.081011
+    },
+    {
+      "calls": 3381,
+      "cumulative_seconds": 7.8198717,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_native_point_incremental_covariants",
+      "line": 2556,
+      "primitive_calls": 3381,
+      "total_seconds": 0.129029
+    },
+    {
+      "calls": 84732,
+      "cumulative_seconds": 4.2293475,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_jet_dot",
+      "line": 1843,
+      "primitive_calls": 84732,
+      "total_seconds": 0.3411483
+    },
+    {
+      "calls": 1335909,
+      "cumulative_seconds": 3.3023226,
+      "file": "C:\\Python\\Python313\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "function": "outer",
+      "line": 909,
+      "primitive_calls": 1335909,
+      "total_seconds": 2.7834821
+    },
+    {
+      "calls": 51129,
+      "cumulative_seconds": 3.2446896,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_jet_linear_combination",
+      "line": 1831,
+      "primitive_calls": 51129,
+      "total_seconds": 0.21881330000000002
+    },
+    {
+      "calls": 483,
+      "cumulative_seconds": 3.2109069000000003,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_native_source_increment_jets",
+      "line": 2441,
+      "primitive_calls": 483,
+      "total_seconds": 0.0586223
+    },
+    {
+      "calls": 46128,
+      "cumulative_seconds": 2.2225443,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\~",
+      "function": "<built-in method builtins.sum>",
+      "line": 0,
+      "primitive_calls": 46128,
+      "total_seconds": 0.08416660000000001
+    },
+    {
+      "calls": 2139,
+      "cumulative_seconds": 2.0710856,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_jet_rodrigues_matrix",
+      "line": 1861,
+      "primitive_calls": 2139,
+      "total_seconds": 0.047206000000000005
+    },
+    {
+      "calls": 140,
+      "cumulative_seconds": 1.5613899,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "validate_model_bound_nonlinear_state",
+      "line": 6610,
+      "primitive_calls": 140,
+      "total_seconds": 0.0008016000000000001
+    },
+    {
+      "calls": 140,
+      "cumulative_seconds": 1.5597374000000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_validate_model_bound_nonlinear_state_core",
+      "line": 6480,
+      "primitive_calls": 140,
+      "total_seconds": 0.0017459
+    },
+    {
+      "calls": 723327,
+      "cumulative_seconds": 1.4829967000000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "__add__",
+      "line": 1658,
+      "primitive_calls": 723327,
+      "total_seconds": 0.9400637000000001
+    },
+    {
+      "calls": 3618,
+      "cumulative_seconds": 1.3030233,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "canonical_sha256",
+      "line": 1335,
+      "primitive_calls": 3618,
+      "total_seconds": 0.0080937
+    },
+    {
+      "calls": 3689,
+      "cumulative_seconds": 1.2900687000000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "canonical_json_bytes",
+      "line": 1265,
+      "primitive_calls": 3689,
+      "total_seconds": 0.0061012
+    },
+    {
+      "calls": 730938,
+      "cumulative_seconds": 1.1843675,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "_canonical_value",
+      "line": 1233,
+      "primitive_calls": 8330,
+      "total_seconds": 0.7328434
+    },
+    {
+      "calls": 2084145,
+      "cumulative_seconds": 1.1129116000000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "__init__",
+      "line": 1627,
+      "primitive_calls": 2084145,
+      "total_seconds": 0.698374
+    },
+    {
+      "calls": 628659,
+      "cumulative_seconds": 0.9928898,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "constant",
+      "line": 1637,
+      "primitive_calls": 628659,
+      "total_seconds": 0.32691030000000004
+    },
+    {
+      "calls": 2346,
+      "cumulative_seconds": 0.9399279,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_jet_matrix_times_constant",
+      "line": 1895,
+      "primitive_calls": 2346,
+      "total_seconds": 0.014589800000000002
+    },
+    {
+      "calls": 141,
+      "cumulative_seconds": 0.9269401,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "validate_committed_s3_state",
+      "line": 4139,
+      "primitive_calls": 141,
+      "total_seconds": 0.015562900000000001
+    }
+  ],
+  "version": 1
+}

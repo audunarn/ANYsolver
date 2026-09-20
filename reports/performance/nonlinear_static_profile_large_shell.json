@@ -1,0 +1,386 @@
+{
+  "case": "large_deflection_shell_holdout",
+  "identity": {
+    "anysolver_module": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\__init__.py",
+    "anysolver_version": "0.4.6",
+    "build_case_sha256": "f1cf32fb23e544b2d83672ec7c790d07ae944ede6ea9de857f7fd06fffae2933",
+    "build_provenance_sha256": "adf4ecea7a9cef40e80dbd0b9d02e07c00f1cfe4598edb308682033f38dc0b41",
+    "campaign_runner": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\scripts\\qualify_nonlinear_representative.py",
+    "campaign_runner_sha256": "44d83a6d0889dee3364cfb6ade50c73add8a4ec0d8375349d7ac48ee12b5424b",
+    "candidate_revision": "0a56c2c118ffbdea65f749df1a533d99350f26fe",
+    "candidate_wheel_sha256": "eea68a24a28fb37b7394ebaadf73b9412834afcdfd394f6a4eb774de06db0d0d",
+    "manifest_sha256": "09c0139065bc35d5f7cd49be6f0b861394f031c34de2b662f7ccdf0940a6b822"
+  },
+  "load_factor": 1.0,
+  "profile": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\profiles\\large_shell.prof",
+  "profile_primitive_calls": 20717690,
+  "profile_total_calls": 21094275,
+  "profile_total_seconds": 11.037871299999974,
+  "profiled_solve_wall_seconds": 11.039629399980186,
+  "schema": "anysolver.nonlinear_static.representative_profile",
+  "status": "completed",
+  "steps": 20,
+  "top_cumulative": [
+    {
+      "calls": 1,
+      "cumulative_seconds": 11.0395634,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_performance_batch_c.py",
+      "function": "wrapper",
+      "line": 260,
+      "primitive_calls": 1,
+      "total_seconds": 6.900000000000001e-06
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 11.039556500000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_performance_batch_c.py",
+      "function": "_run_with_context",
+      "line": 206,
+      "primitive_calls": 1,
+      "total_seconds": 2.4200000000000002e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 11.039491100000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "solve_static_nonlinear",
+      "line": 7105,
+      "primitive_calls": 1,
+      "total_seconds": 2.18e-05
+    },
+    {
+      "calls": 3,
+      "cumulative_seconds": 11.0302591,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\matrix_assembly.py",
+      "function": "_run_with_qualified_assembly_runtime_lease",
+      "line": 3587,
+      "primitive_calls": 1,
+      "total_seconds": 0.0001238
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 11.023014,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "operation",
+      "line": 7148,
+      "primitive_calls": 1,
+      "total_seconds": 1.32e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 11.0230007,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_state.py",
+      "function": "_run_with_nonlinear_state_cleanup",
+      "line": 261,
+      "primitive_calls": 1,
+      "total_seconds": 8.900000000000001e-06
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 11.0229911,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\threading_policy.py",
+      "function": "wrapped",
+      "line": 408,
+      "primitive_calls": 1,
+      "total_seconds": 1.2100000000000001e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 11.0227169,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_analysis_diagnostics.py",
+      "function": "wrapped",
+      "line": 435,
+      "primitive_calls": 1,
+      "total_seconds": 0.00010200000000000001
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 11.022510800000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "_solve_static_nonlinear_under_lease",
+      "line": 4583,
+      "primitive_calls": 1,
+      "total_seconds": 0.0033364
+    },
+    {
+      "calls": 20,
+      "cumulative_seconds": 10.2731182,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "newton_increment",
+      "line": 6145,
+      "primitive_calls": 20,
+      "total_seconds": 0.0083979
+    },
+    {
+      "calls": 100,
+      "cumulative_seconds": 10.1676394,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "assemble_force_system",
+      "line": 6130,
+      "primitive_calls": 100,
+      "total_seconds": 0.0006665
+    },
+    {
+      "calls": 100,
+      "cumulative_seconds": 10.166251,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_performance_batch_c.py",
+      "function": "_batch_c_assemble_nonlinear_system",
+      "line": 495,
+      "primitive_calls": 100,
+      "total_seconds": 0.000671
+    },
+    {
+      "calls": 100,
+      "cumulative_seconds": 10.1655156,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_performance.py",
+      "function": "_optimized_assemble_nonlinear_system",
+      "line": 1328,
+      "primitive_calls": 100,
+      "total_seconds": 0.0007337
+    },
+    {
+      "calls": 100,
+      "cumulative_seconds": 10.164681700000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "_assemble_nonlinear_system",
+      "line": 1484,
+      "primitive_calls": 100,
+      "total_seconds": 0.0009782
+    },
+    {
+      "calls": 100,
+      "cumulative_seconds": 10.1637035,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "_assemble_nonlinear_system_unchecked",
+      "line": 1149,
+      "primitive_calls": 100,
+      "total_seconds": 0.0258904
+    },
+    {
+      "calls": 1200,
+      "cumulative_seconds": 10.0806363,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\corotational.py",
+      "function": "corotational_element_response",
+      "line": 273,
+      "primitive_calls": 1200,
+      "total_seconds": 0.021676900000000002
+    },
+    {
+      "calls": 1200,
+      "cumulative_seconds": 5.2987394000000005,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\corotational.py",
+      "function": "_consistent_corotational_tangent",
+      "line": 591,
+      "primitive_calls": 1200,
+      "total_seconds": 0.0033127
+    },
+    {
+      "calls": 1200,
+      "cumulative_seconds": 5.2954267,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\corotational.py",
+      "function": "_consistent_corotational_tangent_components",
+      "line": 527,
+      "primitive_calls": 1200,
+      "total_seconds": 0.1164139
+    },
+    {
+      "calls": 1200,
+      "cumulative_seconds": 4.7442720000000005,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\corotational.py",
+      "function": "_rotation_sensitivity",
+      "line": 485,
+      "primitive_calls": 1200,
+      "total_seconds": 0.1080239
+    },
+    {
+      "calls": 30012,
+      "cumulative_seconds": 4.5122806,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\corotational.py",
+      "function": "_shell_center_frame",
+      "line": 145,
+      "primitive_calls": 30012,
+      "total_seconds": 0.062435500000000005
+    },
+    {
+      "calls": 28800,
+      "cumulative_seconds": 4.380772100000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\corotational.py",
+      "function": "_rigid_rotation_for_state",
+      "line": 477,
+      "primitive_calls": 28800,
+      "total_seconds": 0.07075920000000001
+    },
+    {
+      "calls": 10923,
+      "cumulative_seconds": 4.378072,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "guarded",
+      "line": 7282,
+      "primitive_calls": 1233,
+      "total_seconds": 0.030589
+    },
+    {
+      "calls": 1200,
+      "cumulative_seconds": 4.3270692,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "compute_nonlinear_response",
+      "line": 5696,
+      "primitive_calls": 1200,
+      "total_seconds": 0.020945000000000002
+    },
+    {
+      "calls": 30024,
+      "cumulative_seconds": 4.2634107000000006,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "_local_frame_and_derivatives",
+      "line": 2994,
+      "primitive_calls": 30024,
+      "total_seconds": 0.5199217
+    },
+    {
+      "calls": 1200,
+      "cumulative_seconds": 3.5489152,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "_qualified_linear_correction",
+      "line": 5642,
+      "primitive_calls": 1200,
+      "total_seconds": 0.011492200000000001
+    },
+    {
+      "calls": 156777,
+      "cumulative_seconds": 2.6636009,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\elements.py",
+      "function": "guarded",
+      "line": 3662,
+      "primitive_calls": 92445,
+      "total_seconds": 0.1362008
+    },
+    {
+      "calls": 1209,
+      "cumulative_seconds": 2.5365201,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "compute_stiffness_matrix",
+      "line": 5591,
+      "primitive_calls": 1209,
+      "total_seconds": 0.006070000000000001
+    },
+    {
+      "calls": 2421,
+      "cumulative_seconds": 2.2040955,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "_bind_qualified_component_guard",
+      "line": 5261,
+      "primitive_calls": 2421,
+      "total_seconds": 0.0097779
+    },
+    {
+      "calls": 90063,
+      "cumulative_seconds": 1.7533216,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\elements.py",
+      "function": "_run_post_observation_guard",
+      "line": 120,
+      "primitive_calls": 90063,
+      "total_seconds": 0.022370300000000003
+    },
+    {
+      "calls": 10752,
+      "cumulative_seconds": 1.7385050000000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "require",
+      "line": 6740,
+      "primitive_calls": 10752,
+      "total_seconds": 0.0060911
+    },
+    {
+      "calls": 10752,
+      "cumulative_seconds": 1.7312720000000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "boundary_guard",
+      "line": 7273,
+      "primitive_calls": 10752,
+      "total_seconds": 0.010615900000000001
+    },
+    {
+      "calls": 19368,
+      "cumulative_seconds": 1.5942254,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "recheck",
+      "line": 5270,
+      "primitive_calls": 19368,
+      "total_seconds": 0.0062196000000000005
+    },
+    {
+      "calls": 3642,
+      "cumulative_seconds": 1.3953821000000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\elements.py",
+      "function": "_shell_elastic_material_cache_fingerprint",
+      "line": 547,
+      "primitive_calls": 3642,
+      "total_seconds": 0.008036
+    },
+    {
+      "calls": 33651,
+      "cumulative_seconds": 1.1850966,
+      "file": "C:\\Python\\Python313\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "function": "cross",
+      "line": 1567,
+      "primitive_calls": 33651,
+      "total_seconds": 0.41625340000000005
+    },
+    {
+      "calls": 2400,
+      "cumulative_seconds": 1.1625689000000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\elements.py",
+      "function": "compute_nonlinear_response",
+      "line": 2872,
+      "primitive_calls": 2400,
+      "total_seconds": 0.2532749
+    },
+    {
+      "calls": 30024,
+      "cumulative_seconds": 1.1252264,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\elements.py",
+      "function": "_local_frame_and_derivatives",
+      "line": 1899,
+      "primitive_calls": 30024,
+      "total_seconds": 0.504405
+    },
+    {
+      "calls": 10752,
+      "cumulative_seconds": 1.0550407000000002,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "runtime_guard",
+      "line": 7184,
+      "primitive_calls": 10752,
+      "total_seconds": 0.013078300000000001
+    },
+    {
+      "calls": 10752,
+      "cumulative_seconds": 1.0220263,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "formulation_class_guard",
+      "line": 7110,
+      "primitive_calls": 10752,
+      "total_seconds": 0.20102140000000002
+    },
+    {
+      "calls": 38556,
+      "cumulative_seconds": 0.9251746000000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\elements.py",
+      "function": "_guarded_observe_attribute",
+      "line": 129,
+      "primitive_calls": 38556,
+      "total_seconds": 0.0161853
+    },
+    {
+      "calls": 31290,
+      "cumulative_seconds": 0.8303634000000001,
+      "file": "C:\\Github\\ANYsolver\\.worktrees\\nonlinear-representative-evidence\\.qualification-representative\\formal-sites-cce14d8\\candidate\\anysolver\\e4_pl_element.py",
+      "function": "_characteristic_length",
+      "line": 1942,
+      "primitive_calls": 31290,
+      "total_seconds": 0.0398545
+    }
+  ],
+  "version": 1
+}
