@@ -157,3 +157,26 @@ def test_corrected_execution_manifests_bind_exact_inventories() -> None:
     assert formal["execution_mode"] == "representative"
     assert len(formal["performance_cases"]) == 5
     assert formal["execution"]["performance_pairs"] == 7
+
+
+def test_failed_component_evidence_is_immutable_and_terminal() -> None:
+    record = json.loads(
+        (
+            ROOT
+            / "docs/reference_cases/nonlinear_static_combined_s3_component_v3_failure.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert record["decision"] == "NO-GO"
+    assert record["terminal_rule"] == "component_screen_fail"
+    assert record["campaign"]["performance_samples_recorded"] == 0
+    assert record["campaign"]["formal_campaign_started"] is False
+    assert record["required_action"]["merge_to_main"] is False
+    for key, hash_key in (
+        ("raw", "raw_sha256"),
+        ("installed_regression_log", "installed_regression_log_sha256"),
+        ("runner_report", "runner_report_sha256"),
+    ):
+        path = ROOT / record["evidence"][key]
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == record["evidence"][
+            hash_key
+        ]
