@@ -12,7 +12,7 @@
     "pr_57_merge_allowed": false,
     "main_modified": false
   },
-  "retained_branch_head": "fdb371e777d6f9d495bd5171b47c900e568c8198",
+  "post_revert_head": "fdb371e777d6f9d495bd5171b47c900e568c8198",
   "retained_follower_product_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
   "accepted_main_revision": "26d35bcad1b5ac6ae693c09d283cc3a918aa650c",
   "accepted_main_remote_revision": "26d35bcad1b5ac6ae693c09d283cc3a918aa650c"
