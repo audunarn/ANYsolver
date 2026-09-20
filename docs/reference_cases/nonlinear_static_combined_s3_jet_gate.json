@@ -1,0 +1,135 @@
+{
+  "schema": "anysolver.nonlinear_static.combined_s3_jet_gate",
+  "version": 1,
+  "gate": "combined_follower_and_s3_scalar_jet_optimization",
+  "registered_at_utc": "2026-09-20T21:39:34Z",
+  "authority": {
+    "implementation": "approved by the user in the active task on 2026-09-20",
+    "promotion": "merge only after every registered screen, formal performance, mechanics, review, and CI criterion passes",
+    "criteria_change_after_product_edit": false
+  },
+  "accepted_main": {
+    "revision": "26d35bcad1b5ac6ae693c09d283cc3a918aa650c",
+    "tree": "26b2e4002d16b22b0e8d90a879e68c94b68ddccf",
+    "wheel_sha256": "6879ca073bbcc9e4daf4a715ec2f3f360a433e2fffd4539486d2e8fd8a4d3a1a",
+    "wheel_build": "git archive of the registered revision followed by python -m build --wheel --no-isolation"
+  },
+  "retained_follower_parent": {
+    "product_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+    "product_tree": "c8515ee19b6924be7c17ca9490452f1d81f5f31b",
+    "wheel_sha256": "ce891bf14073a02313d5508047df22f13ddfcebd70ff4e77f65e33709b132884",
+    "evidence_branch_head": "61ec97231d5be4f320e331eec4fcbc1e5fc42e29",
+    "evidence_branch_tree": "1117704443b539ac8787845c2e7b76ee68a4b318"
+  },
+  "bound_inputs": {
+    "representative_manifest": "docs/reference_cases/nonlinear_static_follower_validation_manifest.json",
+    "representative_manifest_sha256": "ae2e0e3aef093203c32975819717f651569c3cacbba661be0a97f5ebf5bca071",
+    "runner": "scripts/qualify_nonlinear_representative.py",
+    "runner_execution_sha256": "5764f1104f23272ca3103df50f1655c0aa6ca6701f930ee324313bd10e752d13",
+    "runner_lf_sha256": "865f5a26c1010d649a6e070426dac5a2953d48a7214e3d7aba4d94f6df599164",
+    "reference_adjudicator": "scripts/adjudicate_nonlinear_representative.py",
+    "reference_adjudicator_execution_sha256": "d82a925670ee197c52f9b77481f2b779cd6793c26a7355bd3eb83eb29ed1dd89",
+    "reference_adjudicator_lf_sha256": "0cb719dc393df0eb5b06c3e39069915fde5b0911fac75b9316c6f5984e30e365"
+  },
+  "environment": {
+    "platform": "Windows x86_64",
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "threadpoolctl": "3.6.0",
+    "anymaterial": "0.2.0",
+    "thread_environment": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMBA_NUM_THREADS": "1"
+    }
+  },
+  "candidate_definition": {
+    "base": "the retained follower product tree",
+    "file": "src/anysolver/e4_pl_s3_element.py",
+    "type": "private SecondOrderJet scalar arithmetic specialization",
+    "required_changes": [
+      "direct scalar addition and reverse addition",
+      "direct scalar subtraction and reverse subtraction",
+      "direct scalar multiplication without zero-valued outer products",
+      "direct scalar division after preserving variable and zero-divisor errors",
+      "independently owned gradient and Hessian arrays in every scalar result"
+    ],
+    "preserved_paths": [
+      "the existing Jet-by-Jet formulas and evaluation order",
+      "unary jet functions and objective-frame construction",
+      "element equations and material integration",
+      "public APIs, defaults, checkpoint formats, and package version"
+    ],
+    "excluded_changes": [
+      "fused jet arrays",
+      "in-place jet arithmetic",
+      "Numba jet kernels",
+      "tangent lagging",
+      "globalization changes",
+      "physical tolerance changes"
+    ]
+  },
+  "component_screen": {
+    "baseline": "retained_follower_parent",
+    "case_id": "plastic_s3_reversal_holdout",
+    "performance_pairs": 3,
+    "serial": true,
+    "alternating_order": true,
+    "warmups_per_sample": 1,
+    "minimum_route_reduction_fraction": 0.15,
+    "physical_equivalence_required": true,
+    "exact_solver_work_required": true,
+    "installed_regressions_required": true,
+    "advance_only_if_all_pass": true
+  },
+  "formal_gate": {
+    "baseline": "accepted_main",
+    "performance_case_ids": [
+      "easy_elastic_shell_control",
+      "large_deflection_shell_holdout",
+      "plastic_s3_reversal_holdout",
+      "prescribed_mpc_beam_holdout",
+      "nonsymmetric_follower_shell_holdout"
+    ],
+    "performance_pairs": 7,
+    "serial": true,
+    "alternating_order": true,
+    "warmups_per_sample": 1,
+    "mpc_complete_routes_per_sample": 25,
+    "representative_metric": "median of per-case median reduction fractions over the four non-easy cases",
+    "minimum_representative_reduction_fraction": 0.10,
+    "minimum_plastic_s3_reduction_fraction": 0.15,
+    "minimum_follower_target_reduction_fraction": 0.10,
+    "maximum_case_regression_fraction": 0.05,
+    "physical_equivalence_required": true,
+    "exact_solver_work_required": true,
+    "installed_regressions_required": true,
+    "armijo_requalification": false
+  },
+  "physical_equivalence": {
+    "status": "completed",
+    "step_count": "exact",
+    "increment_load_factor_absolute_tolerance": 1e-12,
+    "displacement_tolerance": "1e-12 + 1e-10 * scale",
+    "reaction_tolerance": "1e-8 + 1e-10 * scale",
+    "plastic_history_absolute_tolerance": 1e-12,
+    "state_observable_tolerance": "1e-12 + 1e-10 * scale",
+    "snapshot_equivalence_required": true,
+    "restart_equivalence_required": true,
+    "family_predicates_required": true
+  },
+  "resource_limits": {
+    "per_solve_timeout_seconds": 900,
+    "worker_startup_timeout_seconds": 120,
+    "process_tree_memory_bytes": 8589934592,
+    "campaign_wall_budget_seconds": 14400
+  },
+  "terminal_rules": {
+    "component_screen_fail": "preserve evidence, revert the S3 product commit, and keep PR 57 draft",
+    "formal_gate_fail": "preserve candidate and evidence, revert the S3 product commit, and keep PR 57 draft",
+    "all_gates_pass": "complete independent reviews and CI, mark PR 57 ready, merge it, and synchronize clean main",
+    "criteria_change_after_observation": false
+  }
+}
