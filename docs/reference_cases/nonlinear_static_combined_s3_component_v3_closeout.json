@@ -1,0 +1,19 @@
+{
+  "schema": "anysolver.nonlinear_static.combined_s3_component_closeout",
+  "version": 1,
+  "decision": "NO-GO",
+  "failure_record": "docs/reference_cases/nonlinear_static_combined_s3_component_v3_failure.json",
+  "terminal_actions": {
+    "candidate_followup_revert_commit": "2a37f905",
+    "candidate_initial_revert_commit": "fdb371e777d6f9d495bd5171b47c900e568c8198",
+    "s3_product_file_matches_retained_follower_revision": true,
+    "candidate_fastpath_test_removed": true,
+    "formal_campaign_started": false,
+    "pr_57_merge_allowed": false,
+    "main_modified": false
+  },
+  "retained_branch_head": "fdb371e777d6f9d495bd5171b47c900e568c8198",
+  "retained_follower_product_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+  "accepted_main_revision": "26d35bcad1b5ac6ae693c09d283cc3a918aa650c",
+  "accepted_main_remote_revision": "26d35bcad1b5ac6ae693c09d283cc3a918aa650c"
+}

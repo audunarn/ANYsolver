@@ -180,3 +180,17 @@ def test_failed_component_evidence_is_immutable_and_terminal() -> None:
         assert hashlib.sha256(path.read_bytes()).hexdigest() == record["evidence"][
             hash_key
         ]
+
+    closeout = json.loads(
+        (
+            ROOT
+            / "docs/reference_cases/nonlinear_static_combined_s3_component_v3_closeout.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert closeout["decision"] == "NO-GO"
+    assert closeout["terminal_actions"][
+        "s3_product_file_matches_retained_follower_revision"
+    ] is True
+    assert closeout["terminal_actions"]["candidate_fastpath_test_removed"] is True
+    assert closeout["terminal_actions"]["pr_57_merge_allowed"] is False
+    assert closeout["terminal_actions"]["main_modified"] is False
