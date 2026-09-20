@@ -1,0 +1,16 @@
+{
+  "schema": "anysolver.nonlinear_static.nonfollower_screen_build_provenance",
+  "version": 1,
+  "baseline_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+  "candidate_revision": "019838840d0f6c4d0d7c718df45ee3f68a609623",
+  "baseline_tree": "c8515ee19b6924be7c17ca9490452f1d81f5f31b",
+  "candidate_tree": "986e8cb83e92c96a80fbe0f1c588aaac9a8febe6",
+  "baseline_wheel": ".tmp_follower_validation_gate/candidate_b67517d_wheel/anysolver-0.4.6-py3-none-any.whl",
+  "candidate_wheel": ".tmp_follower_validation_gate/nonfollower_screen_v1/candidate_wheel/anysolver-0.4.6-py3-none-any.whl",
+  "baseline_wheel_sha256": "4512f1172f446922272fdb6e34f77175755351f7c91fc9ca2bddacc30623792c",
+  "candidate_wheel_sha256": "562585e4107847e9cfb4757c7e1c84ca3cad9b01d9a0710cc05d16c29d3f84e1",
+  "baseline_build_provenance": "reports/performance/nonlinear_static_follower_validation_build_provenance.json",
+  "baseline_build_provenance_sha256": "36cd87293626366464f0221d57e2dc33c9fdc3a165c6f0e7c71a103a07e024e2",
+  "build_command": "python -m build --wheel --outdir <exclusive output directory> from exact clean git worktree",
+  "build_python": "3.14.2"
+}
