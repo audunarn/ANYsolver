@@ -1,0 +1,746 @@
+{
+  "case": "plastic_s3_reversal_holdout",
+  "identity": {
+    "anysolver_module": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\__init__.py",
+    "anysolver_version": "0.4.6",
+    "build_case_sha256": "f1cf32fb23e544b2d83672ec7c790d07ae944ede6ea9de857f7fd06fffae2933",
+    "build_provenance_sha256": "36cd87293626366464f0221d57e2dc33c9fdc3a165c6f0e7c71a103a07e024e2",
+    "campaign_runner": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\scripts\\qualify_nonlinear_representative.py",
+    "campaign_runner_sha256": "5764f1104f23272ca3103df50f1655c0aa6ca6701f930ee324313bd10e752d13",
+    "candidate_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+    "candidate_wheel_sha256": "4512f1172f446922272fdb6e34f77175755351f7c91fc9ca2bddacc30623792c",
+    "manifest_sha256": "ae2e0e3aef093203c32975819717f651569c3cacbba661be0a97f5ebf5bca071"
+  },
+  "load_factor": 2.0,
+  "profile": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\nonfollower-profile-gate-v1\\plastic_s3_reversal_holdout.prof",
+  "profile_primitive_calls": 29160745,
+  "profile_total_calls": 30228543,
+  "profile_total_seconds": 15.775355000000003,
+  "profiled_solve_wall_seconds": 15.781042799993884,
+  "schema": "anysolver.nonlinear_static.representative_profile",
+  "status": "completed",
+  "steps": 20,
+  "top_cumulative": [
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.780886100000002,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_performance_batch_c.py",
+      "function": "wrapper",
+      "line": 260,
+      "primitive_calls": 1,
+      "total_seconds": 8.6e-06
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.7808775,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_performance_batch_c.py",
+      "function": "_run_with_context",
+      "line": 206,
+      "primitive_calls": 1,
+      "total_seconds": 4.7300000000000005e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.7806092,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "solve_static_nonlinear",
+      "line": 7229,
+      "primitive_calls": 1,
+      "total_seconds": 2.7000000000000002e-05
+    },
+    {
+      "calls": 4,
+      "cumulative_seconds": 15.773819800000002,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\matrix_assembly.py",
+      "function": "_run_with_qualified_assembly_runtime_lease",
+      "line": 3587,
+      "primitive_calls": 1,
+      "total_seconds": 0.0001061
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.7728169,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "operation",
+      "line": 7272,
+      "primitive_calls": 1,
+      "total_seconds": 3.2200000000000003e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.7727844,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_state.py",
+      "function": "_run_with_nonlinear_state_cleanup",
+      "line": 261,
+      "primitive_calls": 1,
+      "total_seconds": 4.8400000000000004e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.7727321,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\threading_policy.py",
+      "function": "wrapped",
+      "line": 408,
+      "primitive_calls": 1,
+      "total_seconds": 1.95e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.7723755,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_analysis_diagnostics.py",
+      "function": "wrapped",
+      "line": 450,
+      "primitive_calls": 1,
+      "total_seconds": 0.00024910000000000004
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 15.771944000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "_solve_static_nonlinear_under_lease",
+      "line": 4602,
+      "primitive_calls": 1,
+      "total_seconds": 0.0022831
+    },
+    {
+      "calls": 20,
+      "cumulative_seconds": 15.052723700000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "newton_increment",
+      "line": 6269,
+      "primitive_calls": 20,
+      "total_seconds": 0.003261
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 15.001792400000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "assemble_force_system",
+      "line": 6254,
+      "primitive_calls": 69,
+      "total_seconds": 0.0005339
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 15.0011323,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_performance_batch_c.py",
+      "function": "_batch_c_assemble_nonlinear_system",
+      "line": 495,
+      "primitive_calls": 69,
+      "total_seconds": 0.00040490000000000003
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 15.000291500000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_performance.py",
+      "function": "_optimized_assemble_nonlinear_system",
+      "line": 1328,
+      "primitive_calls": 69,
+      "total_seconds": 0.0009189000000000001
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 14.953926300000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_performance_batch_b.py",
+      "function": "_batch_b_plan_assemble",
+      "line": 811,
+      "primitive_calls": 69,
+      "total_seconds": 0.004253300000000001
+    },
+    {
+      "calls": 571,
+      "cumulative_seconds": 14.9019858,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "guarded",
+      "line": 9409,
+      "primitive_calls": 148,
+      "total_seconds": 0.0051471
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 14.866460600000002,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_element_evaluation.py",
+      "function": "evaluate_nonlinear_element",
+      "line": 42,
+      "primitive_calls": 69,
+      "total_seconds": 0.0008208
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 14.8179923,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "compute_nonlinear_response",
+      "line": 7433,
+      "primitive_calls": 69,
+      "total_seconds": 0.0088836
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 12.2038586,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_solve_native_bubble_equilibrium",
+      "line": 2841,
+      "primitive_calls": 69,
+      "total_seconds": 0.0047517
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 12.187560600000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "physical_builder",
+      "line": 7488,
+      "primitive_calls": 69,
+      "total_seconds": 0.0006748
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 12.186831600000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_native_layered_uncondensed_response_components",
+      "line": 3231,
+      "primitive_calls": 69,
+      "total_seconds": 0.0409165
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 12.0781886,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_native_station_kinematics",
+      "line": 3081,
+      "primitive_calls": 69,
+      "total_seconds": 0.012002700000000002
+    },
+    {
+      "calls": 483,
+      "cumulative_seconds": 12.065232700000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_native_incremental_strain_jets",
+      "line": 2701,
+      "primitive_calls": 483,
+      "total_seconds": 0.051846300000000005
+    },
+    {
+      "calls": 667437,
+      "cumulative_seconds": 8.8058413,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "__mul__",
+      "line": 1677,
+      "primitive_calls": 667437,
+      "total_seconds": 4.0962149000000005
+    },
+    {
+      "calls": 3381,
+      "cumulative_seconds": 8.2404648,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_native_point_incremental_covariants",
+      "line": 2556,
+      "primitive_calls": 3381,
+      "total_seconds": 0.13997700000000002
+    },
+    {
+      "calls": 84732,
+      "cumulative_seconds": 4.479352700000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_jet_dot",
+      "line": 1843,
+      "primitive_calls": 84732,
+      "total_seconds": 0.3534119
+    },
+    {
+      "calls": 1335909,
+      "cumulative_seconds": 3.4342487000000004,
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "function": "outer",
+      "line": 909,
+      "primitive_calls": 1335909,
+      "total_seconds": 2.8977547
+    },
+    {
+      "calls": 51129,
+      "cumulative_seconds": 3.3831802000000004,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_jet_linear_combination",
+      "line": 1831,
+      "primitive_calls": 51129,
+      "total_seconds": 0.231245
+    },
+    {
+      "calls": 483,
+      "cumulative_seconds": 3.2868408000000002,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_native_source_increment_jets",
+      "line": 2441,
+      "primitive_calls": 483,
+      "total_seconds": 0.0659478
+    },
+    {
+      "calls": 46128,
+      "cumulative_seconds": 2.2408417000000003,
+      "file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\~",
+      "function": "<built-in method builtins.sum>",
+      "line": 0,
+      "primitive_calls": 46128,
+      "total_seconds": 0.0879042
+    },
+    {
+      "calls": 2139,
+      "cumulative_seconds": 2.059035,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_jet_rodrigues_matrix",
+      "line": 1861,
+      "primitive_calls": 2139,
+      "total_seconds": 0.0509488
+    },
+    {
+      "calls": 723327,
+      "cumulative_seconds": 1.6133218,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "__add__",
+      "line": 1658,
+      "primitive_calls": 723327,
+      "total_seconds": 1.0041982
+    },
+    {
+      "calls": 140,
+      "cumulative_seconds": 1.5739012000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "validate_model_bound_nonlinear_state",
+      "line": 6610,
+      "primitive_calls": 140,
+      "total_seconds": 0.0011355
+    },
+    {
+      "calls": 140,
+      "cumulative_seconds": 1.5714105,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_validate_model_bound_nonlinear_state_core",
+      "line": 6480,
+      "primitive_calls": 140,
+      "total_seconds": 0.0021884
+    },
+    {
+      "calls": 3618,
+      "cumulative_seconds": 1.3006677,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "canonical_sha256",
+      "line": 1335,
+      "primitive_calls": 3618,
+      "total_seconds": 0.010062600000000001
+    },
+    {
+      "calls": 3689,
+      "cumulative_seconds": 1.2849171000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "canonical_json_bytes",
+      "line": 1265,
+      "primitive_calls": 3689,
+      "total_seconds": 0.0070942
+    },
+    {
+      "calls": 2084145,
+      "cumulative_seconds": 1.2389277,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "__init__",
+      "line": 1627,
+      "primitive_calls": 2084145,
+      "total_seconds": 0.7774904
+    },
+    {
+      "calls": 730938,
+      "cumulative_seconds": 1.1600548000000002,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "_canonical_value",
+      "line": 1233,
+      "primitive_calls": 8330,
+      "total_seconds": 0.6889167
+    },
+    {
+      "calls": 628659,
+      "cumulative_seconds": 1.0969852,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "constant",
+      "line": 1637,
+      "primitive_calls": 628659,
+      "total_seconds": 0.3709603
+    },
+    {
+      "calls": 2346,
+      "cumulative_seconds": 0.9951515000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_jet_matrix_times_constant",
+      "line": 1895,
+      "primitive_calls": 2346,
+      "total_seconds": 0.016676200000000002
+    },
+    {
+      "calls": 1411947,
+      "cumulative_seconds": 0.9724059,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_coerce",
+      "line": 1653,
+      "primitive_calls": 1411947,
+      "total_seconds": 0.31822290000000003
+    },
+    {
+      "calls": 141,
+      "cumulative_seconds": 0.9396132,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "validate_committed_s3_state",
+      "line": 4139,
+      "primitive_calls": 141,
+      "total_seconds": 0.0174038
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 0.8682095000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_validated_native_nonlinear_trial",
+      "line": 7087,
+      "primitive_calls": 69,
+      "total_seconds": 0.0063699
+    },
+    {
+      "calls": 72864,
+      "cumulative_seconds": 0.8137549000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "<genexpr>",
+      "line": 1909,
+      "primitive_calls": 72864,
+      "total_seconds": 0.032724300000000005
+    },
+    {
+      "calls": 77004,
+      "cumulative_seconds": 0.7395909,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "<genexpr>",
+      "line": 1877,
+      "primitive_calls": 77004,
+      "total_seconds": 0.022040200000000003
+    },
+    {
+      "calls": 7020472,
+      "cumulative_seconds": 0.6876179,
+      "file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\~",
+      "function": "<built-in method numpy.asarray>",
+      "line": 0,
+      "primitive_calls": 7020472,
+      "total_seconds": 0.6876179
+    },
+    {
+      "calls": 69,
+      "cumulative_seconds": 0.6555117,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_objective_pl_energy_response",
+      "line": 2010,
+      "primitive_calls": 69,
+      "total_seconds": 0.0164527
+    },
+    {
+      "calls": 231,
+      "cumulative_seconds": 0.6158539000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "_state_integrity_sha256",
+      "line": 1418,
+      "primitive_calls": 231,
+      "total_seconds": 0.0016953
+    },
+    {
+      "calls": 5685426,
+      "cumulative_seconds": 0.6145147000000001,
+      "file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\~",
+      "function": "<built-in method builtins.isinstance>",
+      "line": 0,
+      "primitive_calls": 5682828,
+      "total_seconds": 0.473644
+    },
+    {
+      "calls": 85,
+      "cumulative_seconds": 0.5408253000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\current_state_tangent.py",
+      "function": "guard",
+      "line": 1177,
+      "primitive_calls": 85,
+      "total_seconds": 0.0003479
+    },
+    {
+      "calls": 85,
+      "cumulative_seconds": 0.5404774,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\current_state_tangent.py",
+      "function": "_require_exact_qualified_component_lifecycle_api_implementation",
+      "line": 878,
+      "primitive_calls": 85,
+      "total_seconds": 0.0236232
+    },
+    {
+      "calls": 141,
+      "cumulative_seconds": 0.5191549000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "build_state_identity",
+      "line": 3108,
+      "primitive_calls": 141,
+      "total_seconds": 0.0043888
+    },
+    {
+      "calls": 282,
+      "cumulative_seconds": 0.5052287000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "formulation_fingerprint",
+      "line": 2468,
+      "primitive_calls": 282,
+      "total_seconds": 0.0008735
+    },
+    {
+      "calls": 70,
+      "cumulative_seconds": 0.46833400000000003,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "exact_guard",
+      "line": 4664,
+      "primitive_calls": 70,
+      "total_seconds": 0.00020050000000000002
+    },
+    {
+      "calls": 262905,
+      "cumulative_seconds": 0.43968310000000005,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "signature",
+      "line": 195,
+      "primitive_calls": 23630,
+      "total_seconds": 0.29037670000000004
+    },
+    {
+      "calls": 2139,
+      "cumulative_seconds": 0.4331222,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_jet_rodrigues_coefficients",
+      "line": 1778,
+      "primitive_calls": 2139,
+      "total_seconds": 0.017220700000000002
+    },
+    {
+      "calls": 1284317,
+      "cumulative_seconds": 0.3908646,
+      "file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\~",
+      "function": "<built-in method numpy.zeros>",
+      "line": 0,
+      "primitive_calls": 1284317,
+      "total_seconds": 0.3908646
+    },
+    {
+      "calls": 2685621,
+      "cumulative_seconds": 0.3601185,
+      "file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\~",
+      "function": "<method 'ravel' of 'numpy.ndarray' objects>",
+      "line": 0,
+      "primitive_calls": 2685621,
+      "total_seconds": 0.3601185
+    },
+    {
+      "calls": 19527,
+      "cumulative_seconds": 0.29830890000000004,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "__truediv__",
+      "line": 1690,
+      "primitive_calls": 19527,
+      "total_seconds": 0.0128074
+    },
+    {
+      "calls": 282,
+      "cumulative_seconds": 0.2882285,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "formulation_fingerprint_payload",
+      "line": 2351,
+      "primitive_calls": 282,
+      "total_seconds": 0.0056039
+    },
+    {
+      "calls": 23764,
+      "cumulative_seconds": 0.28711010000000003,
+      "file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\~",
+      "function": "<built-in method builtins.sorted>",
+      "line": 0,
+      "primitive_calls": 22574,
+      "total_seconds": 0.0211468
+    },
+    {
+      "calls": 90,
+      "cumulative_seconds": 0.2573672,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "seal_committed_s3_state",
+      "line": 1423,
+      "primitive_calls": 90,
+      "total_seconds": 0.0010719
+    },
+    {
+      "calls": 5559,
+      "cumulative_seconds": 0.24395170000000002,
+      "file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\~",
+      "function": "<method 'extend' of 'list' objects>",
+      "line": 0,
+      "primitive_calls": 5559,
+      "total_seconds": 0.0029084000000000002
+    },
+    {
+      "calls": 85,
+      "cumulative_seconds": 0.23953880000000002,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\current_state_tangent.py",
+      "function": "<genexpr>",
+      "line": 998,
+      "primitive_calls": 85,
+      "total_seconds": 0.0153396
+    },
+    {
+      "calls": 935,
+      "cumulative_seconds": 0.2304932,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\current_state_tangent.py",
+      "function": "<genexpr>",
+      "line": 1029,
+      "primitive_calls": 935,
+      "total_seconds": 0.015009300000000001
+    },
+    {
+      "calls": 17388,
+      "cumulative_seconds": 0.19876960000000002,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "<genexpr>",
+      "line": 2501,
+      "primitive_calls": 17388,
+      "total_seconds": 0.0093492
+    },
+    {
+      "calls": 552,
+      "cumulative_seconds": 0.18692830000000002,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_validate_native_physical_trial",
+      "line": 2316,
+      "primitive_calls": 552,
+      "total_seconds": 0.0374757
+    },
+    {
+      "calls": 3693,
+      "cumulative_seconds": 0.18215820000000002,
+      "file": "C:\\Python\\Python314\\Lib\\json\\__init__.py",
+      "function": "dumps",
+      "line": 185,
+      "primitive_calls": 3693,
+      "total_seconds": 0.0061116
+    },
+    {
+      "calls": 3693,
+      "cumulative_seconds": 0.17471940000000002,
+      "file": "C:\\Python\\Python314\\Lib\\json\\encoder.py",
+      "function": "encode",
+      "line": 185,
+      "primitive_calls": 3693,
+      "total_seconds": 0.0045769
+    },
+    {
+      "calls": 210,
+      "cumulative_seconds": 0.1739406,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_model_bound_nonlinear_context",
+      "line": 6410,
+      "primitive_calls": 210,
+      "total_seconds": 0.0016267
+    },
+    {
+      "calls": 4594,
+      "cumulative_seconds": 0.1710431,
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "function": "cross",
+      "line": 1567,
+      "primitive_calls": 4594,
+      "total_seconds": 0.06119840000000001
+    },
+    {
+      "calls": 3693,
+      "cumulative_seconds": 0.16862880000000002,
+      "file": "C:\\Python\\Python314\\Lib\\json\\encoder.py",
+      "function": "iterencode",
+      "line": 207,
+      "primitive_calls": 3693,
+      "total_seconds": 0.16862880000000002
+    },
+    {
+      "calls": 424,
+      "cumulative_seconds": 0.1613984,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "state_field_manifest_fingerprint",
+      "line": 1376,
+      "primitive_calls": 424,
+      "total_seconds": 0.0002583
+    },
+    {
+      "calls": 966,
+      "cumulative_seconds": 0.15597840000000002,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "_covariant_inplane_to_cartesian",
+      "line": 2673,
+      "primitive_calls": 966,
+      "total_seconds": 0.0185302
+    },
+    {
+      "calls": 318908,
+      "cumulative_seconds": 0.1294477,
+      "file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\<frozen abc>",
+      "function": "__instancecheck__",
+      "line": 117,
+      "primitive_calls": 318908,
+      "total_seconds": 0.042736
+    },
+    {
+      "calls": 1112,
+      "cumulative_seconds": 0.12121630000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "reconstruct_director_triad",
+      "line": 2910,
+      "primitive_calls": 1112,
+      "total_seconds": 0.0146844
+    },
+    {
+      "calls": 422,
+      "cumulative_seconds": 0.11995120000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "qualified_s3_triangle_frame",
+      "line": 2742,
+      "primitive_calls": 422,
+      "total_seconds": 0.0253365
+    },
+    {
+      "calls": 281,
+      "cumulative_seconds": 0.11576,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_state.py",
+      "function": "resolved_material_descriptor",
+      "line": 1782,
+      "primitive_calls": 281,
+      "total_seconds": 0.0021897
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 0.1156785,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\nonlinear_static.py",
+      "function": "_owned_nonlinear_load_program",
+      "line": 4295,
+      "primitive_calls": 1,
+      "total_seconds": 3.77e-05
+    },
+    {
+      "calls": 34155,
+      "cumulative_seconds": 0.1123341,
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\fromnumeric.py",
+      "function": "all",
+      "line": 2548,
+      "primitive_calls": 34155,
+      "total_seconds": 0.0175319
+    },
+    {
+      "calls": 16905,
+      "cumulative_seconds": 0.11206310000000001,
+      "file": "C:\\Github\\ANYsolver\\.tmp_follower_validation_gate\\install-run4\\candidate\\anysolver\\e4_pl_s3_element.py",
+      "function": "__sub__",
+      "line": 1671,
+      "primitive_calls": 16905,
+      "total_seconds": 0.0155274
+    }
+  ],
+  "version": 1
+}
