@@ -66,3 +66,5 @@ def test_summary_detects_physics_or_work_differences() -> None:
     )
     assert result["physical_match"] is False
     assert result["work_match"] is False
+    assert result["route_seconds"]["baseline"]["q1"] == 1.0
+    assert result["route_seconds"]["baseline"]["q3"] == 1.0

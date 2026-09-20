@@ -37,14 +37,20 @@ def _distribution(values: Sequence[float]) -> dict[str, float | int]:
     ordered = sorted(samples)
     median = float(statistics.median(ordered))
     deviations = [abs(value - median) for value in ordered]
-    quartiles = statistics.quantiles(ordered, n=4, method="inclusive")
+    if len(ordered) > 1:
+        quartiles = statistics.quantiles(ordered, n=4, method="inclusive")
+        q1 = float(quartiles[0])
+        q3 = float(quartiles[2])
+    else:
+        q1 = ordered[0]
+        q3 = ordered[0]
     mean = float(statistics.mean(ordered))
     return {
         "count": len(ordered),
         "minimum": ordered[0],
-        "q1": float(quartiles[0]),
+        "q1": q1,
         "median": median,
-        "q3": float(quartiles[2]),
+        "q3": q3,
         "maximum": ordered[-1],
         "mean": mean,
         "stdev": (
