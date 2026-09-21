@@ -2,6 +2,9 @@
 
 Status: **G0 IN PROGRESS; no new mixed capability qualified.**
 
+The bounded footprint candidate equations and their open mechanics questions
+are recorded in `B3_GE_E4_PL_G0_FOOTPRINT_MECHANICS.md`.
+
 This registration implements the first gate of the user-approved complete
 development programme. Its terminal outcome is one full release only after
 G0–G6 pass. An elastic or point-only milestone is not a release substitute.
