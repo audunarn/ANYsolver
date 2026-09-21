@@ -1384,3 +1384,30 @@ cases. The reviewer retained the lack of independently measured
 peak memory and external launcher attestation. F02 and G0B remain
 OPEN until full coupled physical torque, transverse shear, finite
 rotation and attachment evidence pass.
+
+F03-K0 v2, D1 v1 and K1 v1 are preserved as distinct bounded diagnostics
+under `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/`; their source,
+results and reviews are recorded in the corresponding versioned F03
+documents. K0 found row dependence and physical failures in the proposed
+larger spaces; D1 isolated a finite-difference plateau and open forward
+parity under severe conditioning; K1 identified full-row-rank reduced
+spaces but unsupported trace modes. None selected a line multiplier law.
+
+F03-K2P v1 was registered at
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-k2p-v1-registration.json`
+against clean isolated source `0e248a02363653fd9efa9c9ad9137d007a6dc66e`,
+its predecessor evidence, environment, exact 26-mesh/two-basis/two-load
+inventory and 7200 s/8 GiB sampled child-RSS limits. The reviewed source
+manifest is `B3_GE_E4_PL_G0_F03_K2P_MANIFEST.md`. One supervised execution
+completed all 52 candidates and 104 load responses in 94.94 s with 350.7
+MB sampled peak child RSS; raw JSONL, child logs and attestation are in
+the `f03-k2p-v1` evidence family. The independent audit matched identities,
+hashes, load vectors, inventory and balances. One Q4 `N_b=8,N_s=64`
+P1-shell-grid smooth response exceeded the frozen forward-parity limit;
+P1-beam at the 1:8 ratio reach showed near-zero shell motion under nonzero
+load, a possible locking failure. The immutable outcomes and independent
+adjudication are documented in `B3_GE_E4_PL_G0_F03_K2P_V1_RESULTS.md` and
+`B3_GE_E4_PL_G0_F03_K2P_POSTEXEC_REVIEW_V1.md`. K2P is a completed planar
+fixed-load **diagnostic**, not K2 norm-scaled stability, the six-channel
+F03 line-law acceptance or G0B closure. No multiplier space is selected;
+G1 remains barred by the unresolved G0 foundation.
