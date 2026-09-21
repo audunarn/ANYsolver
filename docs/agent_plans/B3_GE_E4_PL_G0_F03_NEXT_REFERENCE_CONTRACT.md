@@ -211,3 +211,12 @@ next F03 work needs an independently converged, physically compatible
 loaded reference **and** a derived mesh-local trace/dual norm and
 stability criterion. Do not move this candidate into production while
 those prerequisites and six-channel coupling mechanics remain open.
+
+The subsequent unregistered classical loaded-field diagnostic is
+`B3_GE_E4_PL_G0_F03_LOADED_FIELD_DIAGNOSTIC_V1.md`. It restores the
+zero-endpoint distributed-load particular to the comparator's beam
+interior. Coarse off-station gaps change materially, but the point ties
+are all at beam nodes, so nodal solutions and the failed convergence
+trend are unchanged. Its trigonometric gaps are sampled lower bounds,
+not certified maxima. This does not establish the independent physical
+target, select a line space, or change the F03/G0B gate state.
