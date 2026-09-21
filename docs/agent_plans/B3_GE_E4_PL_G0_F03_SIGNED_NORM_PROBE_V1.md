@@ -3,7 +3,7 @@
 21 September 2026. **Exploratory operator-adapted stability diagnostic,
 not a G0B inf-sup proof.** Freeze six joint refinement cases
 `Nb=Ns=4,8,16` and the reciprocal adverse reaches `Nb=8,Ns=1,64` for
-each Q4 and S3-V2D, twelve meshes in total. Evaluate the existing K4
+each Q4 and S3-V2D, ten meshes in total. Evaluate the existing K4
 channel-adapted rows and the distinctly assembled local dual/P0 rows on
 each mesh. All source-backed tests use one BLAS thread, the integration
 worktree's ANYsolver import and an explicit ignored Numba cache. Keep raw
@@ -41,3 +41,8 @@ refinements and ratios, physical response, and the full eccentric
 six-channel formulation. Failure or decay is diagnostic; success is only
 a necessary bounded screen. The prior K4 and local-dual results remain
 unaltered whatever this probe finds.
+
+Post-execution editorial correction: the original sentence called the
+explicit `6 + 4` inventory twelve meshes. It is **ten**, exactly as the
+committed runner's `CASES` and untouched raw manifest declare. No missing
+case, changed runner, replacement registration or rerun is implied.
