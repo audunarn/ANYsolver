@@ -29,6 +29,10 @@ class CandidateSingular(Exception):
     """Typed singular multiplier candidate, distinct from execution failure."""
 
 
+class PrimalNotAdmissible(Exception):
+    """Typed failure of the retained primal elimination block."""
+
+
 def knots(*arrays):
     values = np.concatenate([np.asarray(a, dtype=float) for a in arrays])
     result = np.unique(np.round(values, 14))
@@ -359,8 +363,14 @@ def exact_partition(beam: Fixture, shell: ShellPanel, c: sparse.csr_matrix):
     cp, cr = c[:, :np_].toarray(), c[:, np_:].toarray()
     kpp, kpr, krp, krr = k[:np_, :np_], k[:np_, np_:], k[np_:, :np_], k[np_:, np_:]
     sr_scale = sq[np_:]
-    factor = linalg.lu_factor((sr_scale[:,None]*krr)*sr_scale[None,:],
-                              check_finite=True)
+    import warnings
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('error',linalg.LinAlgWarning)
+            factor = linalg.lu_factor((sr_scale[:,None]*krr)*sr_scale[None,:],
+                                      check_finite=True)
+    except (linalg.LinAlgError,linalg.LinAlgWarning) as exc:
+        raise PrimalNotAdmissible('scaled native Krr cannot be factored') from exc
     def solve_rr(rhs):
         return sr_scale[:,None]*linalg.lu_solve(
             factor, sr_scale[:,None]*np.atleast_2d(rhs).reshape(len(krr),-1))
@@ -476,12 +486,13 @@ def solve_exact(beam: Fixture, shell: ShellPanel, coupling: Coupling,
                 asymmetry = float(np.linalg.norm(matrix-matrix.T)/
                                   max(np.linalg.norm(matrix),1e-30))
                 if asymmetry <= 1e-10:
-                    values = linalg.eigvalsh(matrix,coupling.mass,
-                                            check_finite=True)
+                    values,vectors = linalg.eigh(matrix,coupling.mass,
+                                                  check_finite=True)
                     normalized = values*(210e9*.07)
                     return {'skew':asymmetry,
                             'dimensionless_eigen':normalized.tolist(),
                             'floor':float(normalized[0]),
+                            'minimum_mode_coefficients':vectors[:,0].tolist(),
                             'negative_count':int(np.count_nonzero(normalized < -1e-10)),
                             'near_zero_count':int(np.count_nonzero(
                                 np.abs(normalized) <= 1e-10))}
@@ -623,13 +634,29 @@ def screen_mesh(n_beam: int, n_shell: int, topology: str):
     result['pose_probes'] = pose
     for space in spaces(beam,shell):
         coupling = assemble(beam,shell,space)
+        reference = reference_consistency(beam,shell,coupling)
         case = {'space':space.name, 'basis_dimension':space.dimension,
                 'basis_knots':space.basis_knots.tolist(),
                 'integration_knots':coupling.integration_knots.tolist(),
                 'quadrature':coupling.quadrature_error,
-                'reference_consistency':reference_consistency(
-                    beam,shell,coupling),
+                'reference_consistency':reference,
                 'loads':{}}
+        try:
+            rank_context = candidate_rank_context(beam,shell,coupling)
+        except linalg.LinAlgError as failure:
+            case['rank_failure'] = {'type':type(failure).__name__,
+                                    'message':str(failure)}
+            case['loads'] = {kind:{'status':'CONSTRAINT_MASS_INVALID'}
+                             for kind in ('smooth','alternating')}
+            result['cases'].append(case)
+            continue
+        case['rank_context'] = rank_context
+        if rank_context['row_rank'] < rank_context['rows']:
+            case['loads'] = {kind:{'status':'CONSTRAINT_RANK_LOSS',
+                                   'rank_context':rank_context}
+                             for kind in ('smooth','alternating')}
+            result['cases'].append(case)
+            continue
         for kind,load in (('smooth',coupling.load_smooth),
                           ('alternating',coupling.load_alternating)):
             try:
@@ -642,10 +669,19 @@ def screen_mesh(n_beam: int, n_shell: int, topology: str):
                                                    solution,kind)
                 measure.update(physical)
                 measure['support_balance'] = balance
-                measure['status'] = 'DIAGNOSTIC_ONLY'
+                measure['status'] = restricted_disposition(
+                    measure,rank_context,reference,pose,balance)
             except (linalg.LinAlgError,linalg.LinAlgWarning,
                     CandidateSingular) as failure:
-                measure = {'status':'NUMERICAL_CANDIDATE_FAILURE',
+                measure = {'status':('KKT_SINGULAR_OR_ILL_CONDITIONED'
+                                     if isinstance(failure,CandidateSingular)
+                                     else 'NUMERICAL_CANDIDATE_FAILURE'),
+                           'rank_context':rank_context,
+                           'failure_type':type(failure).__name__,
+                           'failure':str(failure)}
+            except PrimalNotAdmissible as failure:
+                measure = {'status':'PRIMAL_NOT_ADMISSIBLE',
+                           'rank_context':rank_context,
                            'failure_type':type(failure).__name__,
                            'failure':str(failure)}
             case['loads'][kind] = measure
@@ -691,10 +727,16 @@ def physical_support_balance(beam: Fixture, shell: ShellPanel,
     applied = wrench(load)
     supports = wrench(reaction)
     residual = applied+supports
+    shell_energy = .5*float(q_all[:n_shell]@(
+        shell.stiffness@q_all[:n_shell]))
     return {'applied_wrench':applied.tolist(),
             'support_wrench':supports.tolist(),
-            'normalized_balance':float(np.linalg.norm(residual)/
-                    max(np.linalg.norm(applied),np.linalg.norm(supports),1e-30)),
+            'active_physical_shell_energy_j':shell_energy,
+            'normalized_force_balance':float(np.linalg.norm(residual[:2])/
+                    max(np.linalg.norm(applied[:2]),
+                        np.linalg.norm(supports[:2]),1e6)),
+            'normalized_moment_balance':float(abs(residual[2])/
+                    max(abs(applied[2]),abs(supports[2]),1e6)),
             'max_free_residual':float(np.max(np.abs(r_all[np.setdiff1d(
                 np.arange(len(r_all)),fixed)])))}
 
@@ -716,6 +758,199 @@ def reference_consistency(beam: Fixture, shell: ShellPanel,
     return {'stations':len(translations),
             'max_translation_m':max(translations),
             'max_rotation_rad':max(rotations)}
+
+
+def candidate_rank_context(beam: Fixture, shell: ShellPanel,
+                           coupling: Coupling):
+    """Retain rank evidence even when the subsequent KKT factorization fails."""
+    sq,_ = scales(beam,shell,coupling.matrix.shape[0])
+    lower = linalg.cholesky(coupling.mass,lower=True,check_finite=True)
+    whitened = linalg.solve_triangular(
+        lower,coupling.matrix.toarray()*sq[None,:],lower=True)
+    row_singular = linalg.svdvals(whitened)
+    trace_singular = linalg.svdvals(coupling.trace_factor*sq[None,:])
+    def rank(singular):
+        return int(np.count_nonzero(singular > 1e-10*singular[0]))
+    return {'rows':int(coupling.matrix.shape[0]),
+            'row_rank':rank(row_singular),
+            'trace_rank':rank(trace_singular),
+            'trace_minus_row_rank':rank(trace_singular)-rank(row_singular),
+            'minimum_mass_whitened_row_ratio':float(
+                row_singular[-1]/row_singular[0])}
+
+
+def complete_inventory(on_mesh=None):
+    """All 18 physical meshes, five spaces and two registered loads.
+
+    This calculates diagnostic rows only. The caller must bind source,
+    dependencies, resources and immutable execution evidence beforehand.
+    """
+    rows = []
+    for topology in ('Q4','S3-V2D'):
+        for ratio in (.5,1.,2.):
+            for n in (4,8,16):
+                row = screen_mesh(n,int(n*ratio),topology)
+                rows.append(row)
+                if on_mesh is not None:
+                    on_mesh(row)
+    trends = []
+    for topology in ('Q4','S3-V2D'):
+        for ratio in (.5,1.,2.):
+            triple = [next(row for row in rows
+                           if row['shell']['topology'] == topology
+                           and row['beam_half_cells'] == n
+                           and row['shell']['n_s'] == int(n*ratio))
+                      for n in (4,8,16)]
+            for name in SPACES:
+                candidates = [next(c for c in row['cases']
+                                   if c['space'] == name) for row in triple]
+                smooth = [c['loads']['smooth'] for c in candidates]
+                alternating = [c['loads']['alternating'] for c in candidates]
+                def values(solutions, key):
+                    if any(key not in item for item in solutions):
+                        return None
+                    result = [float(item[key]) for item in solutions]
+                    return result if all(np.isfinite(result)) else None
+                pointwise = values(smooth,'max_pointwise_gap')
+                oscillation = None
+                if all('oscillation_by_channel' in item for item in alternating):
+                    oscillation = [max(item['oscillation_by_channel'])
+                                   for item in alternating]
+                    if not all(np.isfinite(oscillation)):
+                        oscillation = None
+                beta = None
+                if all('floor' in item.get('physical_schur',{}) for item in smooth):
+                    beta = [float(item['physical_schur']['floor'])
+                            for item in smooth]
+                    if not all(np.isfinite(beta)):
+                        beta = None
+                local_statuses = {'smooth':[item['status'] for item in smooth],
+                                  'alternating':[item['status'] for item in alternating]}
+                complete_local = all(
+                    status == 'RESTRICTED_LOCAL_SCREEN_PASS_PENDING_TRENDS'
+                    for statuses in local_statuses.values() for status in statuses)
+                decreasing = (beta is not None and beta[0] > 0
+                              and beta[1] <= .5*beta[0]
+                              and beta[2] <= .5*beta[1])
+                stuck_gap = (pointwise is not None and pointwise[0] > 0
+                             and pointwise[1] >= .99*pointwise[0]
+                             and pointwise[2] >= .99*pointwise[1])
+                growing_oscillation = (
+                    oscillation is not None and oscillation[0] > 0
+                    and oscillation[1] >= 2*oscillation[0]
+                    and oscillation[2] >= 2*oscillation[1])
+                disposition = ('INCOMPLETE_OR_LOCAL_FAILURE'
+                               if not complete_local else
+                               'ZERO_BASELINE_TREND_UNDEFINED'
+                               if any(series is None or series[0] <= 0
+                                      for series in (beta,pointwise,oscillation)) else
+                               'MECHANICS_REVIEW_REQUIRED'
+                               if stuck_gap or growing_oscillation else
+                               'DECAYING_PHYSICAL_FLOOR'
+                               if decreasing else 'INCONCLUSIVE_TREND')
+                trends.append({'topology':topology,'ratio':ratio,
+                               'space':name,'beam_half_cells':[4,8,16],
+                               'local_statuses':local_statuses,
+                               'physical_only_floor':beta,
+                               'smooth_max_pointwise_gap':pointwise,
+                               'alternating_max_channel_oscillation':oscillation,
+                               'decaying_physical_floor':bool(decreasing),
+                               'nondecreasing_pointwise_gap':bool(stuck_gap),
+                               'growing_alternating_oscillation':bool(growing_oscillation),
+                               'disposition':disposition})
+    status_counts = {}
+    for row in rows:
+        for candidate in row['cases']:
+            for measurement in candidate['loads'].values():
+                status = measurement['status']
+                status_counts[status] = status_counts.get(status,0)+1
+    any_local = status_counts.get(
+        'RESTRICTED_LOCAL_SCREEN_PASS_PENDING_TRENDS',0) > 0
+    return {'status':('PLANAR_SCREEN_HAS_LOCAL_PASSES_NOT_F03_ACCEPTANCE'
+                      if any_local else
+                      'PLANAR_SCREEN_NO_LOCAL_PASS_NOT_F03_ACCEPTANCE'),
+            'status_counts':status_counts,
+            'mesh_count':len(rows),'candidate_count':sum(len(r['cases'])
+                for r in rows),'load_rows':sum(len(c['loads'])
+                for r in rows for c in r['cases']),
+            'meshes':rows,'trends':trends}
+
+
+def restricted_disposition(measure: dict, context: dict,
+                           reference: dict, probes: list[dict],
+                           balance: dict) -> str:
+    """Local planar-screen predicates; no F03/G0 acceptance or space choice."""
+    required = ('cond_krr','ke_min_eigen_ratio','skew_k','skew_krr',
+                'skew_ke','scaled_kkt_singular_ratio','scaled_solution_parity',
+                'scaled_free_equilibrium','normalized_weak_residual',
+                'assembled_work_quadrature_error')
+    diagnostic_values = ([measure.get(k,np.nan) for k in required]
+        +list(measure['quadrature_error'].values())
+        +[context['minimum_mass_whitened_row_ratio'],
+          reference['max_translation_m'],reference['max_rotation_rad'],
+          balance['normalized_force_balance'],
+          balance['normalized_moment_balance'],
+          balance['active_physical_shell_energy_j'],
+          measure.get('max_pointwise_gap',np.nan),
+          measure.get('normalized_l2_gap',np.nan),
+          measure.get('assembled_work_quadrature_error',np.nan)]
+        +list(measure.get('oscillation_by_channel',(np.nan,)))
+        +list(measure.get('derivative_part',(np.nan,)))
+        +list(measure.get('jump_part',(np.nan,)))
+        +[v for row in measure.get('four_point_gap_field_m',((np.nan,),))
+          for v in row])
+    for probe in probes:
+        diagnostic_values.append(probe['host_weight_error'])
+        if 'derivative' in probe:
+            diagnostic_values.extend((
+                probe['derivative']['scaled_relative_error'],
+                probe['work']['normalized_gradient_error'],
+                probe['unrestricted_rigid']['finite_gap'],
+                probe['unrestricted_affine']['finite_gap']))
+    if not all(np.isfinite(value) for value in diagnostic_values):
+        return 'INVALID_NONFINITE_DIAGNOSTIC'
+    if context['row_rank'] != context['rows']:
+        return 'CONSTRAINT_RANK_LOSS'
+    if (measure.get('cond_krr',np.inf) >= 1e16
+            or measure.get('ke_min_eigen_ratio',-np.inf) <= 1e-12
+            or any(measure.get(n,np.inf) > 1e-10
+                   for n in ('skew_k','skew_krr','skew_ke'))):
+        return 'PRIMAL_NOT_ADMISSIBLE'
+    if measure.get('scaled_kkt_singular_ratio',0.) <= 1e-12:
+        return 'KKT_SINGULAR_OR_ILL_CONDITIONED'
+    physical_spectrum = measure.get('physical_schur',{})
+    exact_spectrum = measure.get('exact_signed_schur',{})
+    if ('floor' not in physical_spectrum
+            or not np.isfinite(physical_spectrum['floor'])
+            or physical_spectrum['floor'] <= 1e-12
+            or 'dimensionless_eigen' not in exact_spectrum
+            or not all(np.isfinite(v) for v in
+                physical_spectrum['dimensionless_eigen']
+                + exact_spectrum['dimensionless_eigen'])):
+        return 'MECHANICS_REVIEW_REQUIRED'
+    thresholds = (
+        (reference['max_translation_m'],1e-12),
+        (reference['max_rotation_rad'],1e-12),
+        (measure.get('scaled_solution_parity',np.inf),1e-10),
+        (measure.get('scaled_free_equilibrium',np.inf),1e-9),
+        (measure.get('normalized_weak_residual',np.inf),1e-10),
+        (measure.get('assembled_work_quadrature_error',np.inf),1e-10),
+        (balance['normalized_force_balance'],1e-8),
+        (balance['normalized_moment_balance'],1e-8),
+    )
+    if any(not np.isfinite(value) or value > limit for value,limit in thresholds):
+        return 'RESTRICTED_MECHANICS_FAIL'
+    if (any(not np.isfinite(error) or error > 1e-10
+            for error in measure['quadrature_error'].values())
+            or any(probe.get('host_weight_error',np.inf) > 1e-12
+                   for probe in probes)
+            or any(probe['derivative']['scaled_relative_error'] > 1e-10
+                   or probe['work']['normalized_gradient_error'] > 1e-10
+                   or probe['unrestricted_rigid']['finite_gap'] > 1e-10
+                   or probe['unrestricted_affine']['finite_gap'] > 1e-10
+                   for probe in probes if 'derivative' in probe)):
+        return 'RESTRICTED_MECHANICS_FAIL'
+    return 'RESTRICTED_LOCAL_SCREEN_PASS_PENDING_TRENDS'
 
 
 if __name__ == '__main__':

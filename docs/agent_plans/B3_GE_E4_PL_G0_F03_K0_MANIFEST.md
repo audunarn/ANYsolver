@@ -331,7 +331,18 @@ nonzero physical scales; positive \(K_e\);
 zero scaled constraint row-rank loss; normalized
 free equilibrium \(\le10^{-9}\), normalized
 weak residual \(\le10^{-10}\), relative work
-error \(\le10^{-10}\). A beta-like
+error \(\le10^{-10}\). The dimensionless
+physical-only generalized Schur floor must exceed
+\(10^{-12}\) for a limited local screen pass; a smaller
+or nonpositive floor requires mechanics review and cannot
+qualify a supported physical line mode. Normalize total
+force balance by the larger of applied and support force
+norms and \(f_0 L_0=10^6\) N; normalize total moment
+about the common origin separately by the larger of
+applied and support moment magnitudes and
+\(f_0 L_0^2=10^6\) N m. Both must be \(\le10^{-8}\),
+including the alternating load with zero net applied
+force. A beta-like
 physical-only floor falling by at least twofold
 on both size doublings at fixed mesh ratio is
 flagged DECAYING, not selected. Alternating-load
@@ -347,10 +358,42 @@ advancing G1.
 
 ## Freeze and execution requirements still pending
 
+The restricted inventory is Q4/S3-V2D × nominal
+beam:shell half-cell ratios 2:1, 1:1, 1:2 ×
+\(N_b=4,8,16\): 18 physical meshes, five candidate
+spaces and two loads each, hence 90 space cases and
+180 load rows. A local numerical screen pass remains
+`RESTRICTED_LOCAL_SCREEN_PASS_PENDING_TRENDS`.
+An all-failed inventory is `PLANAR_SCREEN_NO_LOCAL_PASS_NOT_F03_ACCEPTANCE`;
+some local passes yield
+`PLANAR_SCREEN_HAS_LOCAL_PASSES_NOT_F03_ACCEPTANCE`.
+Trend rows preserve the six local statuses and classify
+missing/failed triples separately. A successful process
+exit means only that the registered diagnostic inventory
+was completed, never that F03 or G0 passed.
+
+Execute only through the one-shot supervisor, which
+creates exclusive stdout/stderr logs, enforces an external
+wall timeout, samples child-process RSS every 0.1 s,
+records its actual exit code and hashes the closed raw
+JSONL and logs in a separate attestation. The child
+fsyncs every mesh row; a partial or absent terminal is
+an aborted registration and is never retried under the
+same identity. The wall bound is external and hard for
+this single child process. RSS is sampled and therefore
+does not capture an instantaneous unsampled peak;
+the child checks its own observed maximum cooperatively
+after each mesh and before success. A complete-screen
+attestation requires exactly 18 fsynced meshes, one
+eligible terminal, zero observed process exit and no
+resource violation. Freeze both executor and supervisor
+hashes, and run the latter with the exact registered
+source checkout and single-thread numerical pools.
+
 Before executing, bind the exact native/shell/helper
 source hashes, reviewer findings, runner hash, dependency
 versions, supported sparse backend, hardware, one-thread
-settings, time/peak-memory limits, immutable cold
+settings, external wall and sampled RSS limits, immutable cold
 evidence path and process-exit provenance. The first
 run must not begin while this section or any
 fixture/normalization definition is unresolved.
