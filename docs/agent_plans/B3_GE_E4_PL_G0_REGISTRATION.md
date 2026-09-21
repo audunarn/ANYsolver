@@ -1208,3 +1208,98 @@ parity to identical laws, the reviewer confirmed its wording finding
 resolved. Reviewed final programme SHA-256 is
 a253940a817116b107dfd9eb23075bdc670ef70f53953f8c917a5abab36edacf.
 This is a contract review, not an F09 equation proof or G0B pass.
+
+F09-L-v1 local *linear* physical-flexibility feasibility proof is
+registered before runner execution. It is a mathematical prototype
+under scripts/probe_b3_ge_e4_pl_g0_b2_linear_flexibility.py, not a
+new product operator or a substitute for later assembly/graph tests.
+Use the existing six basic B rows, a stable positive modal factor for
+each of axial, torsion and both symmetric/antisymmetric bending
+pairs, and the independent unfloored physical Timoshenko stiffness
+entry for a single-node transverse displacement. For the scalar cases:
+(S0) E=210e9, nu=.3, L=2.4, A=.012, Iy=2.3e-6,
+Iz=3.7e-6, J=8e-7, ky=.81, kz=.76, comparing with public
+BeamElement only where its equations agree; (S1) E=1, nu=0, L=1,
+A=1e-14, Iy=Iz=J=1e-12, ky=kz=1; (S2) E=1,
+nu=0, L=1, A=2^-80, Iy=Iz=J=1, ky=kz=1.
+For each, excite right-end y and z translations u=.01 with the
+opposite end fixed and all other coordinates zero. Report positive
+nonzero energy and its relative discrepancy to a separate rational
+evaluation of k=12EI/[L^3(1+12EI/(GAks L^2))]. Require relative
+error <=1e-12 using the nonzero physical energy as denominator,
+and report the historical public floor mismatch as a diagnostic
+without treating it as a failed new-operator predicate.
+Check six rigid modes through B and the six positive modal factors;
+in the extreme case do not infer a numerical graph rank from the
+rounded dense 12x12 matrix. Independently reconstruct scalar
+station resultants through H(x), check integrated complementary
+work against b dot q and directional force/tangent work in S0.
+For a separate coupled generalized SPD 6x6 case take L=2,
+S with diagonal (10,7,9,3,2,4) and symmetric entries S[0,4]=.4,
+S[1,5]=.3, S[2,3]=-.2. Compare a three-point H(x) flexibility
+integration against an independently expanded polynomial integral,
+relative <=1e-12; require positive six-basic rank, physical
+work, symmetric K and a finite-difference force derivative
+relative <=1e-6 on a registered smooth vector. Negative cases
+must reject zero/negative/nonfinite scalar rigidities and a
+non-SPD generalized S with typed validation, never produce a
+positive floor in place of a rejected physical input.
+The output records input vectors, scales, all case measurements,
+failure details and bounded conclusion. Only all registered local
+predicates passing yields PREPARATORY_LINEAR_OPERATOR_FEASIBLE;
+even then F09, mixed attachments, mass, prestress, installed
+qualification and G0B remain OPEN. Use source-root imports from
+integration HEAD f1d1734cc1a72862ebb5956db48b47a64303236c,
+Python 3.14.2, numpy 2.4.6, scipy 1.17.1, one thread,
+disabled bytecode and isolated cache. The first cold full log
+will be g0b-f09-linear-local-v1.log under the ignored evidence
+root with a 120-second/2-GiB envelope. Freeze runner SHA-256
+and independent review any formula/fixture defects before first
+execution. Preserve a failed run under its existing identity.
+
+F09-L-v1 pre-execution review found a tautological non-SPD rejection,
+missing S0 directional work/tangent checks, missing old-floor
+diagnostics, incomplete generalized rank and output details. These
+were corrected before any runner execution. A subsequent review
+found the historical public-energy ratio incorrectly gated candidate
+passing; it is now diagnostic only. The independent reviewer
+read-only checked those final corrections and reported no remaining
+finding within this bounded runner review. The frozen runner SHA-256
+before first execution is
+e7bb2741b631ac6ff7141b080db5b1af101e056a280ad93087509eddb062c530.
+The script carries no production operator identity; its locally
+checked formulas and any result cannot close F09 without new
+installed assembly and mechanics evidence.
+
+F09-L-v1 executed once after pre-execution review, with source import
+verified inside the integration worktree, Python 3.14.2, numpy 2.4.6,
+scipy 1.17.1 and the registered one-thread settings. Full raw log
+C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/
+g0b-f09-linear-local-v1.log has SHA-256
+cff76eec04ed41b67f646d3ed14d06bbd4af00ff18943cc6ca7598109fd7c8b0.
+The observed origin and runner exits were zero and all three scalar
+cases plus coupled generalized and four typed negatives were present.
+The runner reported PREPARATORY_LINEAR_OPERATOR_FEASIBLE: S0 public
+matrix difference 2.60e-19, S0 energy derivative relative
+4.59e-12 and tangent-action relative 2.96e-12; generalized
+polynomial/Gauss flexibility relative 1.08e-16 and force
+directional relative 2.40e-12. As separate diagnostics, public
+to physical y-energy ratios are 184.6923 at A=1e-14 and
+2.417851639229e12 at A=2^-80. Full vectors, station resultants,
+work scales and negative error details are in the log. The
+120-second/2-GiB envelope was registered; this brief execution
+did not separately measure or enforce peak memory. It is a
+preparatory local proof only, pending independent raw-evidence
+audit; no product operator, attachment graph, mass, buckling,
+installed candidate or F09 qualification has passed.
+
+Independent F09-L-v1 post-execution read-only review is recorded at
+docs/agent_plans/B3_GE_E4_PL_G0_F09_LINEAR_REVIEW_V1.md, SHA-256
+11f9dfcbaa651a6f0276241a7ec280fd6dcb5a8f44e889cabf3bccf502fa3c14.
+It recomputed the immutable log and runner hashes, checked all scalar,
+generalized, negative and recorded numerical predicates, and accepted
+the local PREPARATORY predicate result with zero missing or failed
+rows. It explicitly found no independent elapsed or peak-memory
+attestation in the raw log, and did not accept F09, G0B or the
+assembled operator. Preserve that distinction in any later evidence
+reuse.
