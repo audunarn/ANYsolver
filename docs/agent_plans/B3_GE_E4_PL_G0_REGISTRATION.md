@@ -320,6 +320,40 @@ finite position footprint. It does not qualify its transverse-shear response,
 rigid counterpart, different element topology, multi-footprint overlap or
 production state/chart handling. The original single-node drill no-go remains.
 
+F04 rigid-footprint *candidate feasibility* registration: use the same four
+square reference nodes and beam reference position `(0,0,.2)`. For each node
+the exact material correspondence is
+`c_i=R_b.T@(r_i-r_b)-(r_i0-r_b0)` with one 3-vector multiplier. Form
+`sum(lambda_i*c_i)` with beam left-multiplicative finite rotations and
+unconstrained shell director rotations. At reference choose tangential
+material multipliers `lambda_i=-cross(z,r_i0)/sum(|r_j0,xy|**2)` and require
+net shell force zero, shell normal moment `-1`, beam normal moment `+1`,
+reference gaps <= `1e-12`, and zero direct shell-rotation gradient.
+At deformed shell positions `0.01*sin(i+.3)` over 12 translation slots and
+beam translation `(.02,-.01,.03)`/rotation `(.04,-.03,.05)`, use the same
+nonzero multipliers, compare value/gradient/Hessian directional action to
+independent SciPy matrix rotations and finite differences as in the
+distributing candidate. Require first error <= `1e-7`, second errors
+<= `1e-5`, Hessian skew <= `1e-10`, and objective gap under a common rigid
+motion <= `1e-10`. With bounded local rotation-to-translation support matrix
+`[-skew(r_i0-r_b0)]` using positions projected to the footprint plane,
+require rank 3 for four corners and rank 2 for three collinear points.
+This is a rigid region idealization and deliberately restricts the patch;
+its distinct physical behavior from the distributing candidate needs a
+coupled shell response test later.
+
+F04 rigid candidate `g0b-f04-rigid-v1` passed the registered bounded proof:
+reference gaps zero, shell moment `-1`, beam moment `+1`, net shell force and
+direct shell-rotation gradient zero; first-variation relative error
+`2.22e-11`, second-variation errors `8.22e-10` and `2.47e-9`, objective
+gap error `8.45e-16`. Four noncollinear corners had local rotational rank
+3; the collinear control had rank 2. Raw SHA-256
+`0342b5c855096be07c2ec85c0254cf91bba58175950ca98dadf52001aae0853c`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f04-rigid-v1.log`.
+This proves neither coupled shell response nor independent full F04 acceptance;
+the rigid and distributing functionals must still be compared in an actual
+assembled shell model and reviewed for shear/locking/topology.
+
 For F03 reject rank loss, high-frequency interface modes, locking, failed
 patch/work checks and a norm-scaled stability measure that decays under the
 registered refinement sequence. Among passing candidates use the lowest
