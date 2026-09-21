@@ -280,6 +280,46 @@ direction, not F02 acceptance. The exact finite-rotation work functional,
 independent shear, thickness/refinement, mixed-mesh and attachment tests are
 still required.
 
+F04 distributing-pose *candidate feasibility* registration: take a flat
+four-node square at `(-.5,-.5,0),(.5,-.5,0),(.5,.5,0),(-.5,.5,0)` and a beam
+reference position at `(0,0,.2)` with identity frame. The shell-side position
+is the arithmetic centroid; its frame is the proper equal-weight Procrustes
+fit of the four current shell positions to the reference footprint. Use the
+existing second-order fit jets and objective relative-pose law to form
+`lambda_t*c_t+lambda_R*c_R`. Shell nodal rotational variables are present but
+do not enter this *position-based candidate*; they remain free. Reference
+constraints must vanish within `1e-12`.
+
+At reference, apply only unit `lambda_Rz`. Require the shell footprint
+force resultant <= `1e-10`, shell moment about the centroid `-1` within
+`1e-10`, beam moment `+1` within `1e-10`, and zero derivative with respect
+to every shell rotation. At a nonzero configuration use shell translations
+`0.01*sin(i+0.3)` over the 12 translational slots, beam translation
+`(.02,-.01,.03)`, beam incremental rotation `(.04,-.03,.05)`, and multipliers
+`(.6,-.3,.5,-.2,.7,-.4)`. Compare jet potential and first variation with
+an independently computed SciPy Procrustes/rotation-log potential by central
+differences at `h=2e-6`, and its directional second variation at
+`h=2e-4,1e-4` using a unit sine direction. Require relative first-variation
+error <= `1e-7` and second-variation error <= `1e-5` for both steps, where
+the denominator is `max(1,|reference|)`; require Hessian relative skew
+<= `1e-10`. Verify constraints under common rigid motion within `1e-10`.
+This only probes one distributing pose map. Rigid footprint, shell shear,
+mixed Q4/S3 patches, support degeneracy, refinement and full F04 remain open.
+
+F04 distributing-pose candidate `g0b-f04-distributing-v1` passed its bounded
+checks: a unit beam-normal moment caused zero net shell force, shell
+position-force moment `-1`, beam moment `+1`, and **zero direct shell rotation
+gradient**. The reference gap was zero; the independent SciPy potential
+first-variation relative error was `1.86e-11`; directional second-variation
+errors were `1.09e-9` and `5.68e-10`; common-rigid-motion gap error was
+`4.28e-16`. Raw SHA-256
+`b88da33d969af1afa15abf297271781df3a1289c1f2dd798e285b40701d74601`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f04-distributing-v1.log`.
+This is a plausible differentiable physical moment-transfer map based on a
+finite position footprint. It does not qualify its transverse-shear response,
+rigid counterpart, different element topology, multi-footprint overlap or
+production state/chart handling. The original single-node drill no-go remains.
+
 For F03 reject rank loss, high-frequency interface modes, locking, failed
 patch/work checks and a norm-scaled stability measure that decays under the
 registered refinement sequence. Among passing candidates use the lowest
