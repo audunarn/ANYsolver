@@ -246,3 +246,20 @@ provides **no** converged independent target. A next comparison must
 define endpoint mechanics, refine mortar as well as beam and shell,
 and verify a stable physical image norm and continuous gap. The pilot
 does not select a native test span or close F03/G0B.
+
+The preregistered three-axis classical variational refinement at source
+`1f123848` is adjudicated in
+`B3_GE_E4_PL_G0_F03_VARIATIONAL_REFINEMENT_V2_RESULTS.md`, with its
+exclusive raw root `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-variational-refinement-v2/`.
+All 96 cases completed with sound finite-system balances, but the
+provisional physical screen failed: at fixed 128 beam subcells the
+terminal mortar 16→32 tip changes 2.18–8.75%, P0/P1 differ 2.09–5.90%,
+and the smooth sampled gap lower bound at mortar 32 is .211–.242 U.
+Separate shell length/width controls also exceed 1%. Beam 128→256
+refinement alone is small and does not remove those discrepancies.
+This comparison cannot supply an independently converged target or
+select a native weak line. The next G0B work still requires a justified
+physical reachable-image trace lifting/norm, explicit endpoint law,
+continuous-gap and matched-idealization reference, followed by native
+six-channel eccentric torque/shear qualification. F03/G0B remain open;
+G1 production work is barred.

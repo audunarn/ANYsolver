@@ -1477,6 +1477,17 @@ length/width and root-policy response differences. It is not a
 physically converged target or native beam/shell acceptance. F03 and
 G0B remain open and G1 product integration remains barred.
 
+The follow-on three-axis classical line refinement was frozen at
+`1f123848`, then completed its 96-case one-time inventory at
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-variational-refinement-v2/`.
+Its source-bound adjudication in
+`B3_GE_E4_PL_G0_F03_VARIATIONAL_REFINEMENT_V2_RESULTS.md` finds all
+finite-model numerical checks passing but the registered provisional
+physical screen failing: P0/P1, terminal mortar and separate shell
+responses remain material, and smooth pointwise sampled gap lower
+bounds exceed the threshold. No converged independent physical target
+or native line-law selection follows. F03/G0B remain open, G1 barred.
+
 F05 Q4 fixed-predecessor diagnostic source/contract were frozen at
 `3314633` after independent pre-execution review. The one-time result
 at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f05-q4-v1/`
