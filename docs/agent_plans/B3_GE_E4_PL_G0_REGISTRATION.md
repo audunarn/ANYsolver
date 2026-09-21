@@ -4,6 +4,10 @@ Status: **G0 IN PROGRESS; no new mixed capability qualified.**
 
 The bounded footprint candidate equations and their open mechanics questions
 are recorded in `B3_GE_E4_PL_G0_FOOTPRINT_MECHANICS.md`.
+An independent review at commit `5e1cad6` found two P1 proof defects and
+two P2 scope gaps; its immutable findings are in
+`B3_GE_E4_PL_G0_FOOTPRINT_REVIEW_V1.md`. The original diagnostics stay
+unchanged and do not close F04.
 
 This registration implements the first gate of the user-approved complete
 development programme. Its terminal outcome is one full release only after
@@ -328,6 +332,28 @@ finite position footprint. It does not qualify its transverse-shear response,
 rigid counterpart, different element topology, multi-footprint overlap or
 production state/chart handling. The original single-node drill no-go remains.
 
+Register corrected `g0b-f04-distributing-v2` in response to independent P1:
+use the same reference and deformed `trial()` fixture and nonzero multipliers
+as v1. Apply the common rotation `Exp(.8,-.4,.6)` and translation `(2,-3,1)`
+to actual shell and beam positions; independently recompute the Procrustes
+fit from the transformed shell points, while the jet evaluator independently
+refits those changed input points. Re-express the transformed beam rotation
+in its actual additive chart. Require material pose gaps and potential
+within `1e-10`, translational force covariance within relative `1e-10`,
+and full physical force/moment balance and spatial beam-moment covariance
+within normalized `1e-10`, converting the beam coordinate covector using
+the actual left-Exp differential. Do not replace v1 output. This resolves
+only the P1 proof issue, not the full shell/line mechanics.
+
+The versioned distributing v2 diagnostic passed: independently refitted
+material gaps `5.16e-16`, potential discrepancy `1.56e-16`, translational
+force covariance `3.65e-16`, spatial beam-moment covariance `1.94e-16`,
+and complete physical wrench balance `1.25e-15`. Log SHA-256
+`9c7fe7f4390c018abdadb004ab5fd07ec234ab5d930d628f6d1648e526d01708`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f04-distributing-v2.log`.
+The independent P1 proof defect is addressed for this bounded fixture; P2
+scope findings remain open.
+
 F04 rigid-footprint *candidate feasibility* registration: use the same four
 square reference nodes and beam reference position `(0,0,.2)`. For each node
 the exact material correspondence is
@@ -361,6 +387,27 @@ at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f04-rigid-v1.log`.
 This proves neither coupled shell response nor independent full F04 acceptance;
 the rigid and distributing functionals must still be compared in an actual
 assembled shell model and reviewed for shear/locking/topology.
+
+Register corrected `g0b-f04-rigid-rank-v2` in response to independent P1:
+at bounded footprint points use the complete spatial rigid displacement
+Jacobian with rows `[I,-skew(X_i-b_0)]`. Use the v1 square (rank six), an
+offset collinear three-point line `(-.5,.2,.3),(0,.2,.3),(.5,.2,.3)` with
+beam origin `(0,0,.2)` (rank five), three coincident points at
+`(.2,.1,.3)` (rank three), and a curved noncollinear three-point arc
+`(-.5,.25,0),(0,0,0),(.5,.25,0)` (rank six). Report the rotation-block rank
+also to expose the false-positive offset-line case. Normalize translation
+and rotation columns by this fixture's characteristic length `1`, use
+relative singular threshold `1e-10`, and verify a unit null vector for
+each deficient case has residual <= `1e-10`. No v1 log is overwritten.
+
+The versioned rigid-rank v2 diagnostic passed: square and curved supports
+had full rank six, offset collinear rank five despite rotation block rank
+three, and coincident rank three. Deficient null residuals were <= `5.01e-16`.
+Log SHA-256 `f6fd2c21ce9828c79790ddcd8b1cb44e3ec164275e250ab0f434fb17625af312`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f04-rigid-rank-v2.log`.
+Use the complete six-column Jacobian and rank-after-translation test in
+future preflight, with physical scaling; the original rotation-only check
+is retained solely as evidence of the defect, not as admission authority.
 
 F04 assembled small-strain distinction, registered before execution:
 reuse the F02 flat `[-1,1]^2`, `n=8,16`, Q4/S3-V2D, `.07`-thick physical
@@ -397,6 +444,51 @@ registered refinement sequence. Among passing candidates use the lowest
 multiplier dimension, with sparsity and measured cost as tie-breakers. If none
 passes, G0B fails. The exact norm, perturbation plateau, quadrature and case
 inputs must be pinned in the case manifest before F03 is run.
+
+F03-S **preparatory scalar trace experiment**, registered before execution,
+is deliberately narrower than F03 acceptance. On `s in [0,1]`, use a shell
+Q4/S3 straight edge with continuous piecewise-linear position interpolation
+and a native B3 reference centerline with the existing three-node quadratic
+Lagrange interpolation (`p2_shape_functions` on `[-1,1]`). Offset the beam
+reference axis by `.2` in normal direction and subtract that fixed offset,
+so the scalar translational reference gap is zero. Use shell/beam element
+counts `(N,Nr)` and `(Nr,N)` for `N=4,8,16`, `r=1,2,4,8`, deduplicating
+the `r=1` case; all knots at uniform fractions. Split integration at the
+union of both meshes' boundaries. Four-point Gauss-Legendre integrates the
+polynomial work exactly in each split segment.
+
+Compare five multiplier candidates: discontinuous P0 on the union
+segmentation; continuous P1 on shell knots, beam knots, and union knots;
+and an elementwise biorthogonal dual assembled on union knots with local
+functions `(2N_left-N_right, 2N_right-N_left)`. Calculate
+`B_ij=int(mu_i*(N_b,-N_s)_j) ds`, trace Gram
+`H=diag(int N_b.T N_b,int N_s.T N_s)`, multiplier Gram
+`M_mu=int mu.T mu`, and physical difference Gram
+`G=int (N_b,-N_s).T(N_b,-N_s)`. Report ranks using relative singular
+threshold `1e-10`, the nonzero singular-value floor of
+`M_mu^-1/2 B H^-1/2`, and unresolved difference dimensions
+`rank(G)-rank(B)`. Require reference, common constant and common affine
+patch weak gaps <= `1e-12`; record candidates with row-rank loss and
+unresolved modes. These are dimensionless scalar L2 norms on a unit line.
+There is no production acceptance threshold for this preparatory test: the
+full vector/rotation trace, actual beam/shell stiffness, exact multiplier
+stability, locking, shear and refinement response still determine F03.
+
+F03-S execution `g0b-f03-scalar-v1` produced 105 candidate rows over 21
+mesh pairs, all with patch errors <= `8.97e-17` and no multiplier row-rank
+loss. Every weak candidate left physical scalar difference modes unresolved;
+their mechanical admissibility cannot be inferred from row rank alone.
+For union-grid P0 with shell eight times finer than beam, the norm-scaled
+nonzero singular floor fell `0.0849 -> 0.0425 -> 0.0213` over `N=4,8,16`.
+This refinement decay is a concrete warning against that candidate in this
+direction. P1 candidates had nonzero floors >= approximately `1` in the
+tested scalar norm, but also unresolved modes; their vector/rotation and
+coupled-stiffness behavior is untested. Complete raw JSON SHA-256
+`7a1a58cd33bc6998ea16fb0bb2c24d06e647996ced1c31e1900fc2168af32a85`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f03-scalar-v1.json`;
+summary log SHA-256
+`ac8c23b903b01f3c61c773061dd7fd3f1326504e516301a0af07ac8edf9bd73b`.
+F03 remains unresolved and no multiplier space is selected.
 
 F05 initial **diagnostic** case, pinned before its first execution: an S3-V2D
 triangle at `(0,0,0)`, `(1.2,0.05,0)`, `(0.2,0.95,0)`, thickness `0.018`,
