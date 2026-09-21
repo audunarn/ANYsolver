@@ -60,3 +60,11 @@ Independent read-only mechanics review supplied the native 24-dimensional
 count, the kernel argument, the signed-block caveat, and the specific
 adverse cases. It proposed **no evidence-supported new space**. G1
 production integration therefore remains barred by G0B.
+
+The subsequent independent membrane suboperator screen is recorded in
+`B3_GE_E4_PL_G0_F03_MEMBRANE_REFERENCE_SCREEN_V1.md`. S3's in-plane block
+matches an independently assembled constant-strain triangle, while E4-PL's
+stationary-condensed Q4 differs materially from a classical bilinear Q4 at
+fixed mesh. A standard Q4 or CPS4 result may be an independently converged
+continuum comparator, but not a same-discrete-operator replacement. This
+changes the required reference construction; it does not select a line law.
