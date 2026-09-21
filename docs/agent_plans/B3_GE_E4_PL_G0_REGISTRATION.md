@@ -148,6 +148,9 @@ three comparisons; this diagnostic does not change the original outcome.
 The correction and regression are committed in isolated ANYfileIO branch
 `codex/b3-coupling-calculix-parser` at
 `d2dab8c4152d266d2d60dc47925cda6831492288` (44 impacted tests passed).
+The sibling's full source suite subsequently passed `197/197` with one
+existing duplicate-zip-member fixture warning; that is source regression,
+not installed artifact qualification.
 
 Register `g0a-calculix-smoke-v2` as a new execution because the parser
 dependency changed. The existing plate model, ccx archive/executable, thread
@@ -216,6 +219,66 @@ infinite modes, full equation residual `2.13e-16`, constraint residual
 `0`. Raw log `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f07-v1.log`
 has SHA-256 `aa62b1ac74977c9a4747f6b4b969c0ce21f26e3bc2b505bb896ccf6f22932cd6`.
 This does not close the real mixed modal design or G0B review.
+
+F02 initial *negative-control diagnostic* registration: use one planar Q4
+unit square and one planar S3-V2D unit right triangle, `E=210e9`, `nu=0.3`,
+thickness `0.07`, normal `(0,0,1)`. Query each existing elastic element's
+`compute_stiffness_components` at the reference state. Compare quadratic
+energies for a unit normal-axis nodal rotation only at node 1 using the
+reported `physical`, `numerical` and `total` matrices. Also report the same
+channels for a rigid in-plane rotation field with nodal translations
+`(-y,x,0)` and all nodal `rz=1`. No tuning or disabled stabilization is
+allowed. This diagnoses whether a point port would mistake numerical drilling
+completion for physical normal torque. The result chooses no production pose
+or support policy by itself; F02 still requires a resolved footprint and
+thickness/refinement/shear checks.
+
+F02 negative control `g0b-f02-drill-v1` found **zero physical quadratic
+stiffness** for a single-node normal-axis rotation in both planar elements.
+Q4's numerical channel was `589649038.4615384` and S3-V2D's was
+`471153846.15384614` in the fixture's units; each equals total stiffness.
+Rigid in-plane motion showed only approximately `1e-6` roundoff in the energy
+quadratic form. Raw log SHA-256 is
+`a0240efad70398803a033dc6f4f50fee6bcc0b979674bceb36b72fbfa700d402`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f02-drill-v1.log`.
+This is a diagnostic **no-go for claiming physical beam-normal torque from a
+single planar shell node's drill coordinate**. It is not a failure of either
+standalone qualified shell element. F02 remains unresolved until a derived
+resolved footprint/trace and shell thinning/refinement/shear evidence show
+physical moment transfer without relying on this completion. A point pose
+law may still serve admitted directional loads, but full physical torque at
+an isolated point cannot be advertised from this diagnostic.
+
+F02 physical-footprint *scalar diagnostic* registration: on `[-1,1]^2`,
+assemble an `n x n` flat shell grid with `n=8,16`, unit spacing ratio and
+thickness `.07`, `E=210e9`, `nu=.3`. Compare Q4 cells and S3-V2D diagonal
+triangles separately. Clamp only in-plane translations on the outer boundary.
+Impose on all nodes in the square footprint `|x|,|y|<=.25` the in-plane
+translation field `u=(-y,x)` for one radian of rotation about its center.
+Assemble only each element's reported `physical` in-plane submatrix, solve
+free translations, and recover the footprint moment
+`M_z=sum(-y*R_x+x*R_y)` and quadratic energy `u.T K u/2`. Require finite,
+positive torque and `M_z≈2E` at each mesh/formulation, relative error
+`<=1e-8`; report refinement behaviour without claiming convergence at two
+levels. This demonstrates a *possible* physical torque path through membrane
+strain when the connection covers an area. It does not prove a finite-rotation
+footprint map, independent director shear, exact multiplier stability, or a
+qualified beam/shell model. No production footprint choice follows alone.
+
+The registered footprint diagnostic `g0b-f02-footprint-v1` passed this narrow
+check. At `n=8,16`, Q4 physical membrane torque was respectively
+`7.766515398e9`, `7.388116721e9`; S3-V2D torque was `9.213851274e9`,
+`7.964385201e9`. Each was positive, and external torque equalled twice
+strain energy to relative error <= `2.6e-16` with free equilibrium residual
+<= `1.8e-15`. Raw output SHA-256
+`869e4e4b18811c0f418a61e5182e2a84826ba83885f289644e0439ce9edcce55`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f02-footprint-v1.log`.
+The sizeable two-level S3 difference does not establish convergence or an
+admissible interface. A finite region has a physical membrane torque path,
+while the isolated nodal drill negative control has none; this is a design
+direction, not F02 acceptance. The exact finite-rotation work functional,
+independent shear, thickness/refinement, mixed-mesh and attachment tests are
+still required.
 
 For F03 reject rank loss, high-frequency interface modes, locking, failed
 patch/work checks and a norm-scaled stability measure that decays under the
