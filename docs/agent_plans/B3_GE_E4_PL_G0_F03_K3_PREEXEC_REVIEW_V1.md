@@ -15,15 +15,23 @@ hypothesis; individual candidate results and adverse reciprocal cases
 remain visible.
 
 Review requested explicit source binding and an independent raw inventory
-check before consuming the registration. The runner now binds K2L's
-registration, raw record and attestation hashes, its nested predecessor
-source identity, and the five K3 design/execution files. The supervisor
+check before consuming the registration. The runner binds K2L's frozen
+historical registration identity, raw record and attestation hashes; it
+checks every predecessor source-file hash against the present files and binds a
+new clean candidate source/environment identity plus the five K3
+design/execution files. A new source commit must never be represented as
+the old K2L execution identity. The supervisor
 reconstructs each P0 knot sequence from the registered mesh counts, checks
 the exact ordered 26-mesh/two-space inventory, zero-or-two load grammar,
 one-sided traction stations, parent/child status consistency, forward
 parity status, and terminal counts. The pre-registration smoke covered
 coarse Q4, matching Q4, and fine S3 cases; smoke results are not frozen
 qualification evidence.
+
+The independent read-only review also checked the K2L, K2P, D1, K1,
+and K0 evidence chains against their nested recorded hashes. The runner
+actively binds the K2L registration, raw record, and attestation; nested
+historical evidence files are not dynamically rehashed by K3.
 
 This diagnostic has no independent physical response oracle and does not
 resolve the native yaw-jump graph norm, shell drilling/director/shear

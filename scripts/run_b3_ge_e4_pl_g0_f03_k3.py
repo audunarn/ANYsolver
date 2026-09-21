@@ -10,8 +10,7 @@ import time
 import traceback
 
 from probe_b3_ge_e4_pl_g0_f03_k3 import LOADS, MESHES, NAMES, STATIONS, screen_mesh
-from run_b3_ge_e4_pl_g0_f03_k0 import EVIDENCE_ROOT, MemoryMonitor, ROOT, sha256
-from run_b3_ge_e4_pl_g0_f03_k2l import identity as k2l_identity
+from run_b3_ge_e4_pl_g0_f03_k0 import EVIDENCE_ROOT, MemoryMonitor, ROOT, actual_identity, sha256
 
 
 GATE='G0_F03_K3_P0_V1'
@@ -32,7 +31,23 @@ PROTOCOL={'meshes':[list(item) for item in MESHES],
 
 def identity():
     predecessor='f03-k2l-v1'
-    return {'predecessor_source':k2l_identity(),
+    previous=json.loads((EVIDENCE_ROOT/(predecessor+'-registration.json')).read_text(encoding='utf-8'))
+    if previous['gate'] != 'G0_F03_K2L_V1' or previous['status'] != 'FROZEN':
+        raise ValueError('K3 requires the frozen K2L predecessor')
+    source=previous['identity']
+    cursor=source
+    while cursor:
+        for key,hashes in cursor.items():
+            if key.endswith('source_sha256') and isinstance(hashes,dict):
+                if any(sha256(ROOT/name) != digest for name,digest in hashes.items()):
+                    raise ValueError('K3 predecessor source changed')
+        if 'base' in cursor:
+            hashes=cursor['base']['source_sha256']
+            if any(sha256(ROOT/name) != digest for name,digest in hashes.items()):
+                raise ValueError('K3 native predecessor source changed')
+        cursor=cursor.get('predecessor_source')
+    return {'candidate_base':actual_identity(),
+            'predecessor_identity':source,
             'predecessor_evidence_sha256':{
                 'registration':sha256(EVIDENCE_ROOT/(predecessor+'-registration.json')),
                 'raw':sha256(EVIDENCE_ROOT/predecessor/'raw.jsonl'),
@@ -49,8 +64,7 @@ def verify(registration,observed,evidence):
             or registration.get('evidence_directory') != str(evidence)
             or evidence.parent != EVIDENCE_ROOT or evidence.exists()):
         raise ValueError('frozen K3 registration or cold evidence mismatch')
-    base=observed['predecessor_source']['predecessor_source'][
-        'predecessor_source']['predecessor_source']['base']
+    base=observed['candidate_base']
     if base['total_memory_bytes'] < LIMITS['sampled_rss_limit_bytes']:
         raise ValueError('RSS limit exceeds physical memory')
 
