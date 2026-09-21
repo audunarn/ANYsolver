@@ -1411,3 +1411,31 @@ adjudication are documented in `B3_GE_E4_PL_G0_F03_K2P_V1_RESULTS.md` and
 fixed-load **diagnostic**, not K2 norm-scaled stability, the six-channel
 F03 line-law acceptance or G0B closure. No multiplier space is selected;
 G1 remains barred by the unresolved G0 foundation.
+
+F03-K2L v1 native-image rank diagnosis was registered once against
+clean isolated source `6acd349daa69054bdbfb4b1ea5a7304fb46523aa`.
+The registration and immutable evidence family are under
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-k2l-v1*`.
+Its external supervisor completed 26 meshes and 78 ordered candidate
+rows in 113.97 s, sampled peak child RSS 255,545,344 bytes, with
+zero reported resource violations. Independent review matched the
+registration/source/predecessor hashes, full spectra against K1 and
+serialized projected spectra. The algebraic count of independent shell
+restrictions after quotienting the native beam image is three for
+P1-beam at every mesh. For Q4 `N_b=8,N_s=1`, independent trace
+reconstruction proves those rows annihilate the entire fitted shell
+attachment trace; unloaded SPD shell equilibrium then gives zero shell
+motion in that discrete model, explaining the adverse K2P observation.
+S3-V2D and refined Q4 preserve nonzero admissible traces despite the
+same count. This is not a uniform locking theorem, an interface-space
+selection or F03/G0B acceptance. See the versioned K2L results and
+postexecution review documents.
+
+The separate independent K2 norm review records a further foundational
+issue: native B3 cell yaw may jump between half-cells, so a continuous
+`H^(1/2)` trace theorem does not yet justify the proposed `H^(-1/2)`
+multiplier norm. The exact signed retained saddle operator requires
+its own positive graph norm and stability test. The complete
+metre/millimetre transformation, independent physical reference and
+six-channel eccentric/shear/torque derivation remain open. G1 is still
+barred by G0B.
