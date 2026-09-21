@@ -60,6 +60,13 @@ physical scales, nonzero denominators, unit transforms and numerical
 tolerances in a single-use registration. No failure may be relabelled
 as an ordinary converged response.
 
+An unregistered one/two-member root-clamped tip-shear exploration
+subsequently matched its analytic cantilever formula even at
+`A=2^-80`; see `B3_GE_E4_PL_G0_F09_GRAPH_EXPLORATION.md`. The formal
+graph gate must test harder mixed/rotated/attached responses and a
+high-precision oracle rather than presuming all binary64 sparse
+factorizations fail at that ratio.
+
 Minimum matrix: well-conditioned scalar S0, old-floor-active and
 old-threshold S1, extreme S2, unequal bending/shear axes, scalar
 axis reversal and rotation; coupled generalized SPD, near-bound SPD
