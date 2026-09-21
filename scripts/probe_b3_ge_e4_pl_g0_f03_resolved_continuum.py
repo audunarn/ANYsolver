@@ -363,7 +363,7 @@ def main():
     parser.add_argument('--n-beam', type=int, required=True)
     parser.add_argument('--load', choices=('smooth', 'sine'), required=True)
     args = parser.parse_args()
-    if not 1 <= args.n_shell <= 64 or not 2 <= args.n_y <= 32 or not 2 <= args.n_beam <= 64:
+    if not 1 <= args.n_shell <= 64 or not 2 <= args.n_y <= 64 or not 2 <= args.n_beam <= 64:
         raise ValueError('bounded mesh inventory required')
     self_check()
     print(json.dumps(solve(args.topology, args.n_shell, args.n_beam, args.load, args.n_y),
