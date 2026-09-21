@@ -403,7 +403,7 @@ def solve_exact(beam: Fixture, shell: ShellPanel, coupling: Coupling,
         raise CandidateSingular(str(exc)) from exc
     xr = solve_rr(load[np_:])[:,0]
     rhs_reduced = np.r_[load[:np_]-k[:np_,np_:]@xr, -cr@xr]
-    reduced = np.block(((ke, cu), (cl, -sr)))
+    reduced = np.block([[ke, cu], [cl, -sr]])
     reduced_scale = np.r_[sq[:np_],sl]
     reduced_scaled = (reduced_scale[:,None]*reduced)*reduced_scale[None,:]
     solution = reduced_scale*linalg.solve(reduced_scaled,
