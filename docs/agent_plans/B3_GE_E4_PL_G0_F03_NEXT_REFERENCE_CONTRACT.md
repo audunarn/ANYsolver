@@ -303,3 +303,14 @@ This does not prove a uniform physical stability bound or its absence.
 Investigate the declining full-system mode against a separately justified
 physical norm and matched loaded response before any line-law selection.
 F03/G0B stay open and G1 barred.
+
+The next independent loaded-reference construction and its *pre-registration*
+endpoint/trace checks are specified in
+`B3_GE_E4_PL_G0_F03_INDEPENDENT_LOADED_REFERENCE_DESIGN.md`. Its direct
+root-translation rows are provisional because point evaluation on a 2D
+shell is not automatically bounded in the continuum H¹ energy norm.
+The exact 52-combination/104-solve proposed refinement inventory is not
+yet frozen for execution; first derive the endpoint law, independently
+implement the operators and certify the continuous-gap bound. An adverse
+preflight requires revising the formulation, not executing a weaker
+reference as if it were converged.
