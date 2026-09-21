@@ -105,3 +105,9 @@ tip responses approach each other, but smooth loading and off-station yaw
 gaps are not yet converged under the tested joint x/y/beam refinement.
 Treat algebraic balance and small tied-station gaps as necessary, not as
 proof of physical line attachment adequacy.
+
+An independent continuously integrated *finite spring* sensitivity screen
+is preserved in `B3_GE_E4_PL_G0_F03_CONTINUOUS_PENALTY_V1.md`. It has
+sparse local traces and balanced work, but stiffness and mesh refinement
+materially change the tip response. It cannot replace the production exact
+multiplier or establish a physical reference by parameter tuning.
