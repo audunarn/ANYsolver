@@ -146,3 +146,17 @@ scale on fine shell meshes. Coarse signed-load improvement did not persist
 under shell refinement. Do not select this span from its rank or from the
 coarse response. The independent physical target and signed retained norm
 requirements in items 1–2 above remain unchanged; G0B remains open.
+
+Two independent signed/trace norm diagnostics now sharpen item 2 without
+closing it. `B3_GE_E4_PL_G0_F03_SIGNED_NORM_V1_RESULTS.md` retains the
+exact native signed block and induced multiplier term: both K4 and local
+dual have positive finite floors, but their operator-adapted constraint
+floors roughly halve and signed KKT floors roughly quarter on three
+joint mesh doublings. `B3_GE_E4_PL_G0_F03_BROKEN_TRACE_V1_RESULTS.md`
+adds a broken physical trace graph with explicit cell-yaw jumps; its
+finite-mesh continuity upper bound rises from about 80 to 124 on the
+finest joint level. Fixed-beam shell-only refinement is nearly flat.
+These are not uniform physical stability proofs or a line-law selection.
+Next derive and test the actual dual of a mesh-local broken/jump trace
+space, norm equivalence, mode shapes and physical response against an
+independently converged reference before registering another F03 candidate.
