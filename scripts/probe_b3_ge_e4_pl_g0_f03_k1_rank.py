@@ -48,6 +48,17 @@ class RankSpace:
             result[i:i+2]=(1.-t,t)
         return result
 
+    def derivative(self, s: float, *, side: str = 'left') -> np.ndarray:
+        knots=self.basis_knots
+        if side not in ('left','right'):
+            raise ValueError('invalid side')
+        i=int(np.clip(np.searchsorted(knots,s,side=side)-1,0,len(knots)-2))
+        result=np.zeros(self.dimension)
+        if not self.name.startswith('p0-'):
+            h=knots[i+1]-knots[i]
+            result[i:i+2]=(-1./h,1./h)
+        return result
+
 
 def candidate_spaces(beam,shell) -> tuple[RankSpace,...]:
     nb=beam.n_half_cells
