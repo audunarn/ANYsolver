@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 0.4.7 - 2026-09-21
+
+- Speed up representative static analysis and retained-load solves through
+  qualified preparation and reuse; the recorded complete-route medians improve
+  3.98x and 19.85x respectively on the declared static workload.
+- Reduce repeated spectral validation work while preserving cancellation and
+  mutation guards. Retained medium-panel buckling improves 11.52% in the
+  seven-pair gate, with identical modes and residuals.
+- Improve nonlinear static work accounting, accepted-force reaction recovery,
+  fixed dead-load projection, and trial-tangent promotion checks. The frozen
+  representative nonlinear gate records a 12.44% median improvement across
+  non-easy cases with passing physical comparisons.
+- Provide an opt-in Armijo residual line search for supported force-controlled
+  beam/shell analyses. Its separate convergence promotion gate was NO-GO: it
+  did not add difficult solves or reduce failed work, so no convergence benefit
+  is claimed; existing defaults remain unchanged.
+- Preserve runtime constraint and nonlinear failure details in the generated-
+  geometry facade when forwarding locally edited models.
+- Keep qualified element equations, physical tolerances, defaults, and
+  coordinated ecosystem dependency bounds unchanged.
+
 ## 0.4.6 - 2026-09-16
 
 - Accept the independently published ANYmesher 0.5 line through the exact

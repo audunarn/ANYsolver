@@ -187,7 +187,7 @@ def _assert_complete_source_graphs(roots: dict[str, str]) -> None:
                 "anyfileio": archives / "fileio-current",
             },
             {
-                "anysolver": "0.4.6",
+                "anysolver": "0.4.7",
                 "anymaterial": "0.2.0",
                 "anygeometry": "0.4.3",
                 "anymesher": "0.5.0",
@@ -454,10 +454,10 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         upload_ref,
     ]
     build_block = job_block(publish, "build")
-    assert build_block.index('python scripts/verify_release_046.py') < build_block.index(upload_ref)
-    assert '--wheel dist/anysolver-0.4.6-py3-none-any.whl' in build_block
-    assert '--sdist dist/anysolver-0.4.6.tar.gz' in build_block
-    assert 'name: release-046-gate' in build_block
+    assert build_block.index('python scripts/verify_release_047.py') < build_block.index(upload_ref)
+    assert '--wheel dist/anysolver-0.4.7-py3-none-any.whl' in build_block
+    assert '--sdist dist/anysolver-0.4.7.tar.gz' in build_block
+    assert 'name: release-047-gate' in build_block
     assert action_sequence(job_block(publish, "testpypi")) == [
         download_ref,
         publish_ref,
@@ -653,7 +653,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
 
     assert probe_environment(mesh_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.4.6"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.7"',
             '          EXPECTED_ANYMATERIAL_VERSION: "0.2.0"',
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",
             "          EXPECTED_ANYGEOMETRY_VERSION: ${{ matrix.anygeometry-version }}",
@@ -663,7 +663,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     )
     assert probe_environment(fileio_job) == "\n".join(
         (
-            '          EXPECTED_ANYSOLVER_VERSION: "0.4.6"',
+            '          EXPECTED_ANYSOLVER_VERSION: "0.4.7"',
             '          EXPECTED_ANYMATERIAL_VERSION: "0.2.0"',
             "          EXPECTED_ANYFILEIO_VERSION: ${{ matrix.anyfileio-version }}",
             "          EXPECTED_ANYMESHER_VERSION: ${{ matrix.anymesher-version }}",
