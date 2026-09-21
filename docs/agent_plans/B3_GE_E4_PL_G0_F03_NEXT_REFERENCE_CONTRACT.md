@@ -306,11 +306,13 @@ F03/G0B stay open and G1 barred.
 
 The next independent loaded-reference construction and its *pre-registration*
 endpoint/trace checks are specified in
-`B3_GE_E4_PL_G0_F03_INDEPENDENT_LOADED_REFERENCE_DESIGN.md`. Its direct
-root-translation rows are provisional because point evaluation on a 2D
-shell is not automatically bounded in the continuum H¹ energy norm.
-The exact 52-combination/104-solve proposed refinement inventory is not
-yet frozen for execution; first derive the endpoint law, independently
-implement the operators and certify the continuous-gap bound. An adverse
-preflight requires revising the formulation, not executing a weaker
-reference as if it were converged.
+`B3_GE_E4_PL_G0_F03_INDEPENDENT_LOADED_REFERENCE_DESIGN.md`. The
+`B3_GE_E4_PL_G0_F03_ENDPOINT_CAPACITY.md` derivation rejects a separate
+exact root point row for the classical two-dimensional shell energy
+space; the primary comparator now uses the weak line integral, and a
+physical finite root footprint would be a distinct model. The corrected
+48-combination/96-solve proposed refinement inventory is not yet frozen
+for execution. First independently implement the operators, certify
+continuous-gap bounds, and freeze an endpoint-aware physical measure.
+An adverse preflight requires revising the formulation, not executing a
+weaker reference as if it were converged.
