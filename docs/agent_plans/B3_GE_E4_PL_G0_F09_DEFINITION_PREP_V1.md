@@ -59,3 +59,18 @@ original exact-axis-only motion and nonindependent energy comparison; the
 motion test now includes an oblique rotation, while the energy limitation
 remains explicit. Fixed absolute balance thresholds in this unit test are
 not the F09 registration's physical scales or tolerances.
+
+An independent rational force-method oracle was added for the unrotated,
+right-angle two-member generalized cantilever. It integrates the terminal
+cut force and moment `M_tip + (r_tip-r_cut) × F_tip` in the prescribed local
+frames; constant sectional compliance makes the energy integrand quadratic,
+so three-station Simpson integration is exact. The oracle uses neither the
+operator's basic map nor its tangent or graph assembly. Six terminal unit
+wrenches and one combined wrench agree with graph energy in the focused
+test. The resulting complete focused set passed **21/21 in 1.74 s**.
+Independent read-only mechanics review verified cut-wrench signs and the
+half-energy factor. Its observation that one combined energy cannot check
+all section channels prompted the six additional basis loads. The oracle
+still covers one well-conditioned geometry and common declared section;
+weak-shear, unit transforms, station work, admitted range, installed artifacts
+and full F09 remain to be qualified.
