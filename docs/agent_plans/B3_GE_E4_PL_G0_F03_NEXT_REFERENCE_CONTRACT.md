@@ -172,3 +172,16 @@ beam-side mode concern but is not a mesh-local physical dual, uniform
 proof or cure for the observed gaps. The independent converged response,
 local norm derivation, mode interpretation and six-channel connection
 work above remain prerequisites; F03/G0B remain open.
+
+The independent classical comparator received a versioned sparse-trace
+refinement through 128 panel-width and beam cells; see
+`B3_GE_E4_PL_G0_F03_RESOLVED_SPARSE_V5_RESULTS.md`. All sixteen cases
+completed and the four 64-cell anchors reproduced v4 to roundoff.
+Preregistered comparator convergence nevertheless fails: Q4 smooth
+96→128 tip changes 1.403%, beam energy 11.258%, scaled gap is 3.075%
+of tip, and the width-cross control changes tip 1.032%; S3 smooth gap
+is 2.246% and width-cross tip 1.622%. Even sine beam energy remains
+mesh-sensitive. The finite-station classical comparison therefore
+does not supply the independently converged and mechanically matched
+F03 response target. Preserve its complete evidence and do not infer
+native B3/E4-PL line-law acceptance from its algebraic balance.
