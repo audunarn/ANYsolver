@@ -71,6 +71,11 @@ def test_publish_workflow_uses_bounded_gate_before_upload() -> None:
     assert "--expected-commit ${{ github.sha }}" in workflow
 
 
+def test_full_ci_can_be_dispatched_for_a_release_branch() -> None:
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    assert "  pull_request:\n  workflow_dispatch:\n" in workflow
+
+
 def test_installed_probe_installs_declared_runtime_dependencies(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
