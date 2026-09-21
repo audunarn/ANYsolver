@@ -154,6 +154,11 @@ The correction and regression are committed in isolated ANYfileIO branch
 The sibling's full source suite subsequently passed `197/197` with one
 existing duplicate-zip-member fixture warning; that is source regression,
 not installed artifact qualification.
+The complete captured rerun log is
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/anyfileio-full-v2.log`,
+SHA-256 `ea9dbe0b8071266a5c63c2026cc8cbf62d65198a24bd645c02bcd53f39409ce5`;
+exit code 0, `197 passed, 1 warning` in 2.64 seconds. The earlier uncaptured
+full-suite check is not used as immutable gate evidence.
 
 Register `g0a-calculix-smoke-v2` as a new execution because the parser
 dependency changed. The existing plate model, ccx archive/executable, thread
