@@ -44,3 +44,18 @@ adversarial weak modes, frame changes, unit changes, station work and support
 reactions. Resolve physical mass/geometry semantics before F12/B14 and public
 profile admission. F03's line multiplier choice remains unresolved and bars
 the production G1 route regardless of this preparatory B2 work.
+
+An additional unregistered two-member, noncollinear elbow test then exercised
+the owned definition with a coupled generalized section and sparse assembly.
+The complete focused set passed 20/20 in 1.25 s. This test checks free
+equilibrium, root force and moment about the root, strain energy versus
+external work, and coordinate covariance under both an exact-axis and an
+oblique rigid rotation with an origin shift. Its dense covariance expression
+uses the same local operator;
+it is a consistency check, **not an independent high-precision response
+oracle or a production sparse-assembly qualification**. Independent read-only
+review found no graph scatter or wrench-sign defect and identified the
+original exact-axis-only motion and nonindependent energy comparison; the
+motion test now includes an oblique rotation, while the energy limitation
+remains explicit. Fixed absolute balance thresholds in this unit test are
+not the F09 registration's physical scales or tolerances.
