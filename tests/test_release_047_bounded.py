@@ -29,6 +29,13 @@ def test_release_identity_and_g7_boundary_are_exact() -> None:
         create_element("b3-ge", 2, [1, 2, 3])
 
 
+def test_evidence_hash_uses_committed_text_across_checkout_line_endings() -> None:
+    assert gate._normalized_evidence_bytes(b"one\r\ntwo\r\n") == b"one\ntwo\n"
+    assert gate._normalized_evidence_bytes(b"one\ntwo\n") == b"one\ntwo\n"
+    with pytest.raises(gate.GateError, match="unsupported evidence line ending"):
+        gate._normalized_evidence_bytes(b"one\rtwo\n")
+
+
 def test_release_archive_contains_only_current_user_documents() -> None:
     manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8").splitlines()
     included_docs = {

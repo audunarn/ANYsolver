@@ -30,15 +30,15 @@ PERFORMANCE_FILES = {
     ),
     "spectral": (
         "docs/SPECTRAL_MEDIUM_FINE_RESULTS.md",
-        "89f1e32f580cbe4dddad9994fdea5f0c101fbfe4f9e352615b586c2af8a0bb02",
+        "2f1a375c46a906e42bbe0467adca8fa21ae07a8f1f523b091cd3642a8898382d",
     ),
     "nonlinear": (
         "reports/performance/nonlinear_static_representative_adjudication.json",
-        "4fab02974d4c815759a85920fc8a16a9c92149d2bc3643e08a6f76fd8d303593",
+        "596c3f9f677bd75d0f0cd16d177fa69bd94bf603d1dad4e7ca6a41c0fbff1f2c",
     ),
     "nonlinear_review": (
         "reports/performance/nonlinear_static_representative_independent_review.md",
-        "02b1b7e509d880837af18585a1d1972278de5ddfa13318b70a6209aa71aef94e",
+        "4026d7260c842673a2ba3f52f629a0034a77fd9776fb333e1603134edf297619",
     ),
 }
 G7_FILES = {
@@ -154,7 +154,7 @@ def _validate_g7() -> dict[str, dict[str, Any]]:
 def _validate_performance_evidence() -> dict[str, dict[str, Any]]:
     records: dict[str, dict[str, Any]] = {}
     for name, (relative, expected_hash) in PERFORMANCE_FILES.items():
-        raw = (ROOT / relative).read_bytes()
+        raw = _normalized_evidence_bytes((ROOT / relative).read_bytes())
         digest = sha256(raw).hexdigest()
         if digest != expected_hash:
             raise GateError(f"accepted {name} evidence hash mismatch")
@@ -168,6 +168,14 @@ def _validate_performance_evidence() -> dict[str, dict[str, Any]]:
     if not all(case.get("physical_match") for case in report["performance"].values()):
         raise GateError("nonlinear physical comparisons are incomplete")
     return records
+
+
+def _normalized_evidence_bytes(raw: bytes) -> bytes:
+    """Hash committed text equally on LF and Windows CRLF checkouts."""
+    normalized = raw.replace(b"\r\n", b"\n")
+    if b"\r" in normalized:
+        raise GateError("unsupported evidence line ending")
+    return normalized
 
 
 def _git_identity(expected_commit: str) -> tuple[str, str]:
