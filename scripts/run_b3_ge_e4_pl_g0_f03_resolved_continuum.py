@@ -33,8 +33,9 @@ def main():
                     loads=('smooth', 'sine'),
                     limitations=('classical rather than E4 Q4',
                                  'conventional rather than native retained beam',
-                                 'exact nodal beam stiffness with affine load/trace',
+                                 'homogeneous exact-static beam fields, approximate distributed load',
                                  'station collocation rather than line mortar',
+                                 'sampled off-station gap is a lower bound',
                                  'no fully converged continuum target'))
     (args.root/'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True)+'\n',
                                            encoding='utf-8')

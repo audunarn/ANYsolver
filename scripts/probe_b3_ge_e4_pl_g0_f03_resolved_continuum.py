@@ -2,10 +2,9 @@
 
 The panel uses classical Q4 or CST plane stress. A conventional
 two-node Timoshenko beam has physical (u,v,theta) nodes, unlike the native
-retained B3 operator. Its stiffness is statically exact for nodal values;
-its line load and trace use piecewise-affine nodal positions/rotations,
-not the exact interior Timoshenko fields. Finite station constraints use a
-four-sample proper-fit trace; they are not the sought continuous mortar law.
+retained B3 operator. Stiffness, equivalent line load and station traces
+use its homogeneous exact-static interior field. This is still a finite
+station collocation, not the sought continuous mortar line law.
 """
 
 from __future__ import annotations
@@ -84,6 +83,38 @@ def beam(n: int):
     return k, np.arange(3, 3*(n+1))
 
 
+def beam_segment_pose(x: float, h: float, nodal: np.ndarray):
+    """Homogeneous Timoshenko field and its derivatives from endpoint data.
+
+    EI*theta''=-V, V=kGA*(v'-theta), with constant shear V. Distributed
+    loads enter through virtual work against these homogeneous test fields;
+    the missing particular solution converges under beam refinement.
+    """
+    u0, v0, theta0, u1, v1, theta1 = nodal
+    delta_theta = theta1-theta0
+    shear = ((v1-v0)-h*(theta0+theta1)/2) / (
+        h**3/(12*E*INERTIA)+h/(G*SHEAR_AREA))
+    u = (1-x/h)*u0 + (x/h)*u1
+    theta = theta0 + delta_theta*x/h + shear*(h*x-x*x)/(2*E*INERTIA)
+    v = (v0 + theta0*x + delta_theta*x*x/(2*h) + shear*(
+        h*x*x/(4*E*INERTIA)-x**3/(6*E*INERTIA)+x/(G*SHEAR_AREA)))
+    theta_prime = delta_theta/h + shear*(h-2*x)/(2*E*INERTIA)
+    return np.array((u, v, theta)), theta_prime, shear
+
+
+def beam_trace(s: float, n: int):
+    """Exact-static field map at a material station, global 3-by-3(n+1)."""
+    h = 1/n
+    i = min(int(np.floor(s*n + 1e-11)), n-1)
+    x = s-i*h
+    out = np.zeros((3, 3*(n+1)))
+    for local in range(6):
+        basis = np.zeros(6)
+        basis[local] = 1.
+        out[:, 3*i+local] = beam_segment_pose(x, h, basis)[0]
+    return out
+
+
 def _host(x, y, n: int, n_y: int, topology: str):
     """Return independent physical interpolation on the structured panel."""
     nx = 2*n
@@ -117,7 +148,7 @@ def shell_trace(s: float, n: int, n_y: int, topology: str, node_count: int):
 
 
 def gap_knots(n_shell: int, n_y: int, n_beam: int, topology: str):
-    """All discrete affine-trace breaks; maxima occur at these stations."""
+    """All shell/beam field breaks for a bounded gap search grid."""
     dx = 1/n_shell
     knots = [i/n_beam for i in range(n_beam+1)]
     for ox, y in OFFSETS:
@@ -132,7 +163,7 @@ def gap_knots(n_shell: int, n_y: int, n_beam: int, topology: str):
 
 
 def load_vector(n: int, kind: str):
-    """Virtual-work-consistent load for the affine nodal position trace."""
+    """Virtual-work-consistent load for the exact-static beam test field."""
     f = np.zeros(3*(n+1))
     stations, weights = np.polynomial.legendre.leggauss(8)
     for i in range(n):
@@ -144,8 +175,8 @@ def load_vector(n: int, kind: str):
                 q = 1e6*np.sin(2*np.pi*s)
             else:
                 raise ValueError('unknown load')
-            f[3*i+1] += weight*(1-xi)/2*q/(2*n)
-            f[3*i+4] += weight*(1+xi)/2*q/(2*n)
+            shape = beam_trace(s, n)[1]
+            f += weight*q/(2*n)*shape
     return f
 
 
@@ -158,6 +189,29 @@ def self_check():
     expected = 1/(3*E*INERTIA) + 1/(G*SHEAR_AREA)
     if not np.isclose(tip[1], expected, rtol=2e-12):
         raise AssertionError('Timoshenko cantilever flexibility identity')
+    h = .375
+    sample = np.array((.1, -.2, .03, .11, -.19, -.05))
+    left, _, _ = beam_segment_pose(0., h, sample)
+    right, _, _ = beam_segment_pose(h, h, sample)
+    if not np.allclose(np.r_[left, right], sample, rtol=0, atol=3e-16):
+        raise AssertionError('beam exact-static field endpoint interpolation')
+    # Independent integrated elastic-energy identity for an arbitrary pose.
+    sample_energy = 0.
+    stations, weights = np.polynomial.legendre.leggauss(5)
+    for xi, weight in zip(stations, weights):
+        _, theta_prime, shear = beam_segment_pose(h*(xi+1)/2, h, sample)
+        sample_energy += weight*h/2*(E*INERTIA*theta_prime**2
+                                     + shear**2/(G*SHEAR_AREA))
+    # Compare with the independently formed one-element bending matrix.
+    phi = 12*E*INERTIA/(G*SHEAR_AREA*h*h)
+    flex = E*INERTIA/(h**3*(1+phi))*np.array((
+        (12,6*h,-12,6*h),
+        (6*h,(4+phi)*h*h,-6*h,(2-phi)*h*h),
+        (-12,-6*h,12,-6*h),
+        (6*h,(2-phi)*h*h,-6*h,(4+phi)*h*h)))
+    expected_energy = sample[[1,2,4,5]]@flex@sample[[1,2,4,5]]
+    if not np.isclose(sample_energy, expected_energy, rtol=1e-12):
+        raise AssertionError('beam exact-static field energy identity')
     for topology in ('Q4', 'S3-V2D'):
         points, _, _ = panel(2, 4, topology)
         for s in (0., .125, .35, .875, 1.):
@@ -183,8 +237,7 @@ def solve(topology: str, n_shell: int, n_beam: int, kind: str, n_y: int = 2):
     for i in range(n_beam+1):
         s = i/n_beam
         t = shell_trace(s, n_shell, n_y, topology, len(points))
-        b = np.zeros((3, kb.shape[0]))
-        b[:, 3*i:3*i+3] = np.eye(3)
+        b = beam_trace(s, n_beam)
         cs.append(t)
         cb.append(b)
     c_shell, c_beam = np.vstack(cs), np.vstack(cb)
@@ -220,8 +273,10 @@ def solve(topology: str, n_shell: int, n_beam: int, kind: str, n_y: int = 2):
     gap = c@u
     reaction_shell = ks@us - c_shell.T@lam - fs
     reaction_beam = kb@ub + c_beam.T@lam - fb
-    shell_trace_work = float(-lam@(c_shell@us))
-    beam_trace_work = float(lam@(c_beam@ub))
+    # Actual interface force applied to each domain is -C_domain.T*lambda;
+    # C_shell=-trace, C_beam=+trace in the KKT residual convention.
+    shell_interface_work = float(lam@(c_shell@us))
+    beam_interface_work = float(-lam@(c_beam@ub))
     shell_fixed = np.setdiff1d(np.arange(ks.shape[0]), sf)
     beam_fixed = np.setdiff1d(np.arange(kb.shape[0]), bf)
     shell_force = np.array([reaction_shell[shell_fixed[axis::2]].sum()
@@ -232,31 +287,51 @@ def solve(topology: str, n_shell: int, n_beam: int, kind: str, n_y: int = 2):
                        points[i, 1]*reaction_shell[2*i]
                        for i in range(len(points)) if 2*i in shell_fixed)
     support_moment = shell_moment + reaction_beam[2]
-    external_moment = sum((i/n_beam)*fb[3*i+1]
+    external_moment = sum((i/n_beam)*fb[3*i+1]+fb[3*i+2]
                           for i in range(n_beam+1))
     work = float(loads@u)
     se = float(us@ks@us/2)
     be = float(ub@kb@ub/2)
     probes = []
     continuous_gap = np.zeros(3)
-    for s in gap_knots(n_shell, n_y, n_beam, topology):
+    # The exact-static beam trace is cubic/quadratic within a cell, while
+    # the shell trace is piecewise affine. Search interval endpoints and
+    # fitted polynomial stationary points, independently checking the fit.
+    # These floating-point extrema are estimates, not certified enclosures.
+    breaks = gap_knots(n_shell, n_y, n_beam, topology)
+    search_stations = np.unique(np.concatenate((breaks,
+        np.concatenate([np.linspace(a, b, 17) for a, b in zip(breaks[:-1], breaks[1:])]))))
+    def gap_at(s):
         pose = shell_trace(float(s), n_shell, n_y, topology, len(points))@us
-        i = min(int(np.floor(s*n_beam + 1e-11)), n_beam-1)
-        t = s*n_beam-i
-        beam_pose = (1-t)*ub[3*i:3*i+3]+t*ub[3*i+3:3*i+6]
-        continuous_gap = np.maximum(continuous_gap, np.abs(beam_pose-pose))
+        return beam_trace(float(s), n_beam)@ub - pose
+
+    nodes = np.array((0., 1/3, 2/3, 1.))
+    vandermonde = np.vander(nodes, 4, increasing=True)
+    extrema_stations = list(breaks)
+    interpolation_error = 0.
+    for a, b in zip(breaks[:-1], breaks[1:]):
+        coefficients = np.linalg.solve(vandermonde,
+                                       np.array([gap_at(a+(b-a)*t) for t in nodes]))
+        interpolation_error = max(interpolation_error, float(np.max(np.abs(
+            gap_at((a+b)/2) - np.array((1., .5, .25, .125))@coefficients))))
+        for component in range(3):
+            polynomial = coefficients[:, component]
+            for root in np.roots((3*polynomial[3], 2*polynomial[2], polynomial[1])):
+                if abs(root.imag) < 1e-10 and 0 < root.real < 1:
+                    extrema_stations.append(float(a+(b-a)*root.real))
+    for s in search_stations:
+        continuous_gap = np.maximum(continuous_gap, np.abs(gap_at(s)))
+    extrema_gap = np.max(np.abs([gap_at(s) for s in extrema_stations]), axis=0)
     for s in (0., .125, .25, .375, .5, .625, .75, .875, 1.):
         pose = shell_trace(s, n_shell, n_y, topology, len(points))@us
-        i = min(int(s*n_beam), n_beam-1)
-        t = s*n_beam-i
-        beam_pose = (1-t)*ub[3*i:3*i+3]+t*ub[3*i+3:3*i+6]
+        beam_pose = beam_trace(s, n_beam)@ub
         probes.append(dict(s=s, shell=[float(v) for v in pose],
                            beam=[float(v) for v in beam_pose],
                            gap=[float(v) for v in beam_pose-pose]))
     return dict(topology=topology, n_shell=n_shell, n_y=n_y,
                 n_beam=n_beam, load=kind,
-                model='CLASSICAL_PLANE_STRESS_AFFINE_TRACE_TIMOSHENKO_FINITE_COLLOCATION',
-                beam_interior_idealization='EXACT_STATIC_NODAL_STIFFNESS_AFFINE_LOAD_AND_TRACE',
+                model='CLASSICAL_PLANE_STRESS_EXACT_STATIC_TIMOSHENKO_FINITE_COLLOCATION',
+                beam_interior_idealization='HOMOGENEOUS_EXACT_STATIC_TEST_FIELD',
                 coordinate_scale=coordinate_scale, gap_scale=gap_scale,
                 work_scale_j=work_scale,
                 shell_nodes=len(points), beam_nodes=n_beam+1,
@@ -267,13 +342,16 @@ def solve(topology: str, n_shell: int, n_beam: int, kind: str, n_y: int = 2):
                 support_force_n=[float(v) for v in support_force],
                 support_moment_z_nm=float(support_moment),
                 shell_energy_j=se, beam_energy_j=be, external_work_j=work,
-                shell_trace_work_j=shell_trace_work,
-                beam_trace_work_j=beam_trace_work,
+                shell_interface_work_j=shell_interface_work,
+                beam_interface_work_j=beam_interface_work,
                 energy_balance_relative=float(abs(work-2*(se+be))/max(abs(work), 1)),
                 equilibrium_relative=float(np.linalg.norm(eq)/max(np.linalg.norm(loads), 1)),
                 constraint_absolute=float(np.max(np.abs(gap))),
-                discrete_gap_knots=len(gap_knots(n_shell, n_y, n_beam, topology)),
-                discrete_affine_max_gap_components=[float(v) for v in continuous_gap],
+                discrete_gap_knots=len(breaks), gap_search_stations=len(search_stations),
+                sampled_max_gap_lower_bound_components=[float(v) for v in continuous_gap],
+                polynomial_extrema_station_count=len(extrema_stations),
+                polynomial_gap_extrema_estimate_components=[float(v) for v in extrema_gap],
+                max_polynomial_fit_midpoint_error=float(interpolation_error),
                 station_probes=probes)
 
 
