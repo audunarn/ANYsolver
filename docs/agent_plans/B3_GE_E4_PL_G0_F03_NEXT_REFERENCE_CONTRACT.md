@@ -185,3 +185,15 @@ mesh-sensitive. The finite-station classical comparison therefore
 does not supply the independently converged and mechanically matched
 F03 response target. Preserve its complete evidence and do not infer
 native B3/E4-PL line-law acceptance from its algebraic balance.
+
+The reviewed `B3_GE_E4_PL_G0_F03_WEAK_MODE_V1_RESULTS.md` reconstructs
+the signed normalized KKT's weakest mode rather than inferring its cause
+from a scalar floor. At joint 16/16 the mode is roughly 99.9% retained
+in that norm, with opposing positive/negative retained action and
+alternating yaw-row coefficients. The multiplier component is tiny;
+the separately weakest signed Schur eigenvalue stays positive, about
+.41 K4 and .57 local dual. This suggests a signed retained/high-frequency
+mode mechanism but does not identify a physical loaded instability or
+prove that alternation caused the decline. A changed *local test span*
+still needs derived work/rank arguments and direct adverse-response and
+stability falsification; mere K4 reweighting remains insufficient.
