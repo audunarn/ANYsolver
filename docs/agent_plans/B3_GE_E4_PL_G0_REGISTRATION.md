@@ -209,6 +209,73 @@ the extraction seam; the bounded contexts' global dense arrays, repeated
 model guards and 120-second deadline are not reusable production assembly.
 F08 has not yet passed a local dense/sparse parity experiment for both families.
 
+F08-S **preparatory extraction-seam experiment**, registered before execution:
+use two connected native retained elements for each of generalized and physical
+axial/biaxial fibre families, with curved reference axes, the admitted fixed
+root and nonzero proportional load at a virgin accepted predecessor. Assemble
+each existing native `evaluate` local residual and tangent independently into
+CSR with explicit local-to-global slots, retaining 24 internal coordinates per
+element. For generalized elements include actual distributed line work, native
+cell couples and `spatial_jacobian`; for fibre elements include the actual
+nodal load. Compare against the unchanged bounded dense Context assembly,
+with max absolute difference <= `1e-9` and normalized Frobenius/vector
+difference <= `1e-11` in residual and tangent. Record dimensions, `nnz`,
+retained counts, response/history identity and equilibrium/compatibility
+metrics; require finite data, shared-node contributions and element-local
+internal blocks. This establishes only the reusable local-operator seam, not
+plastic branch coverage, production sparse assembly, mixed-family admission,
+removal of prototype caps, or G1/G3 acceptance. Any discrepancy remains a
+failed diagnostic; do not change the dense oracle to match the sparse gather.
+
+The initial F08-S script checks response residual identity but omits the
+registered constitutive history comparison. Keep that v1 evidence and execute
+a versioned v2 on the same frozen two-element cases. V2 checks canonical
+candidate history and complete material-response bytes against the oracle,
+and recomputes the equilibrium/compatibility metrics from sparse residuals
+with the context's frozen scales. The same numerical tolerances and limits
+apply. V1 alone cannot close even this preparatory diagnostic.
+
+F08-S execution: the first invocation failed during fixture import because
+the repository root was absent from `PYTHONPATH`, before either mechanical
+case ran. Preserve its log SHA-256
+`6a60248b295511874651ea0f073394b19500a987e8cf1a6a1e38ac063303284f`.
+The corrected v1 invocation passed (log SHA-256
+`262532dc4005342eed1a695ac6941fb0b5c8fa327ff5974326b5c7e8deba63c6`),
+but did not check the registered history identity. The v2 invocation passed,
+with zero residual and tangent differences for both 78-coordinate connected
+two-element cases (48 retained coordinates), `nnz=664` generalized and
+`nnz=636` physical fibre. Complete candidate history and material-response
+bytes matched, and scaled metrics matched the bounded dense oracle. V2 log
+SHA-256 `0b7f1234c4e6fc04df6060be5e947d9cdebd1f404ed7b081ef62b2dcab456ae6`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f08-local-sparse-v2.log`.
+The fixed execution environment used Python with the integration root and
+`src` on `PYTHONPATH`, bytecode disabled, and an isolated Numba cache under
+the same evidence root. The v2 command was
+`python scripts/probe_b3_ge_e4_pl_g0_local_sparse_seam_v2.py`; its dependencies
+were Python 3.14.2, NumPy 2.4.6, SciPy 1.17.1 on Windows 11 build 26200.
+The original and v2 source SHA-256 hashes were respectively
+`448a843465f00ff839071cae034398f599a3b552c8da0739897747a5dff141ed`
+and `eab2f58f6b8642452367ad770d7300bfa20dd12c2ee7334d1a08d7f8b7d44c88`.
+Exit status was zero. This is a local seam diagnosis
+at a virgin predecessor and nonzero load, not qualified plastic or sparse
+mixed-shell assembly.
+
+Independent read-only F08-S audit matched all three preserved log hashes and
+the case inventory. It accepted the narrow COO/CSR scatter versus dense
+indexing comparison, **not** an independent constitutive/tangent oracle: the
+two paths deliberately use the same native local evaluator and generalized
+load and chart corrections. Re-evaluating history at virgin state checks
+determinism, not active-plastic correctness. Both compatibility metrics were
+zero, despite nonzero equilibrium residual from applied loads. The probe
+hardcodes its reported 48 retained coordinates and does not assert every
+internal/cross-cell block. It materializes a dense comparison matrix, so it
+does not prove production scaling. Next F08 check must use accepted loaded
+and deformed predecessors for each family, fixed histories and origins,
+nonzero retained rotations/resultants and compatibility perturbations,
+including smooth active branches, derivative checks and block-inventory
+assertions. Full mixed sparse assembly and lifecycle remain separate G1/G3
+requirements. No independent reviewer accepted F08 or G0B.
+
 F07 bounded descriptor case, registered before execution: physical coordinates
 `(x_1,x_2)` have diagonal mass `(2,1)`; a drill-like algebraic coordinate
 `z` has zero inertia. In coordinate order `(x_1,x_2,z)`, use
@@ -489,6 +556,15 @@ at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f03-scalar-v1.json`;
 summary log SHA-256
 `ac8c23b903b01f3c61c773061dd7fd3f1326504e516301a0af07ac8edf9bd73b`.
 F03 remains unresolved and no multiplier space is selected.
+
+An independent read-only review found no arithmetic or interpolation defect
+in F03-S and matched its raw-data hash. It confirmed exact union-interval
+integration and L2 normalization, and cautioned that unresolved scalar trace
+modes do not by themselves imply mechanically unstable modes. The P0 decay
+warning applies to the tested refinement direction only. Full vector/rotation
+trace mechanics, physical shell stiffness, work, inf-sup, torque, shear and
+thinning remain mandatory before selecting a multiplier space. F03 remains
+open; `diagnostic_pass` labels only the registered scalar calculation.
 
 F05 initial **diagnostic** case, pinned before its first execution: an S3-V2D
 triangle at `(0,0,0)`, `(1.2,0.05,0)`, `(0.2,0.95,0)`, thickness `0.018`,
