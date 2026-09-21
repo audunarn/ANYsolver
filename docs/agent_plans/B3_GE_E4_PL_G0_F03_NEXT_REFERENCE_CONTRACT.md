@@ -119,3 +119,11 @@ four-sample position and yaw removes beam shear and bending on each
 overlay interval. Independent mechanics review checked the derivation and
 its load/native-formulation limits. Do not use strong coefficient tying
 as the replacement physical oracle; seek a stable weak span instead.
+
+The distinct coarse P1-beam weak space received its first complete
+physical screen in `B3_GE_E4_PL_G0_F03_COARSE_P1_V1.md`. Its 15-row native
+KKT is locally well solved for Q4/S3 and both signed loads, but fixed-beam
+pointwise gaps remain about half the displacement scale after shell-only
+refinement. Independent review rejected space selection from its rank or
+equilibrium evidence. Historical K3 already covered P0-beam; an
+unexecuted duplicate P0 runner was removed without consuming a new run.
