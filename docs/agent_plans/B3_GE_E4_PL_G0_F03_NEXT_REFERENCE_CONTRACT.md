@@ -220,3 +220,16 @@ are all at beam nodes, so nodal solutions and the failed convergence
 trend are unchanged. Its trigonometric gaps are sampled lower bounds,
 not certified maxima. This does not establish the independent physical
 target, select a line space, or change the F03/G0B gate state.
+
+The registered mesh-local broken endpoint Riesz diagnostic is
+`B3_GE_E4_PL_G0_F03_LOCAL_TRACE_NORM_V1_RESULTS.md`. Ten cases passed
+algebraic/source checks, but the ambient test dual `F R⁻¹ Fᵀ` differs
+increasingly from the physically reachable-image dual `C G⁺ Cᵀ`:
+maximum generalized ratios grow from roughly 124–153 at joint 4/4 to
+2,182–2,586 at 16/16. The three graph cutoffs agree. Thus a sparse,
+mesh-local norm *assembly* alone does not justify this ambient dual as
+the physical multiplier norm. The next derivation needs a stable local
+lifting for the reachable trace image (or a justified equivalent),
+besides the independent loaded target and six-channel tests. These
+finite spectra neither prove asymptotic instability nor select K4 or
+the local-dual line space. F03/G0B remain open.

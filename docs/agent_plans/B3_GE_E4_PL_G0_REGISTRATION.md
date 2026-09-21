@@ -1452,6 +1452,21 @@ improvement. **F03 remains IN_PROGRESS, G0B is not PASSED, and G1
 product integration remains barred.** The registered full six-channel
 and independent physical-reference requirements are unchanged.
 
+Subsequent exploratory F03 checks preserve that decision. The
+unregistered classical distributed-load interior correction is recorded
+in `B3_GE_E4_PL_G0_F03_LOADED_FIELD_DIAGNOSTIC_V1.md`; it changes
+off-station gaps and energy but not the comparator's nonconverged nodal
+response. The registered source-frozen local broken trace norm at
+`86da576` completed ten cases at
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-local-trace-norm-v1/`.
+Its independently audited result is
+`B3_GE_E4_PL_G0_F03_LOCAL_TRACE_NORM_V1_RESULTS.md`. The sparse local
+Riesz form reproduces the earlier graph and constraints, but its
+ambient test dual is increasingly nonequivalent to the reachable-image
+dual under joint refinement. This does not select a line law or close
+F03/G0B; a justified reachable trace lifting and independent physical
+target remain prerequisites.
+
 F05 Q4 fixed-predecessor diagnostic source/contract were frozen at
 `3314633` after independent pre-execution review. The one-time result
 at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f05-q4-v1/`
