@@ -1,0 +1,256 @@
+"""Experimental straight-reference B2 elastic force-flexibility operator.
+
+This local operator has no public dispatch, assembly, mass, geometric stiffness,
+or qualification claim.  Coordinates are local [u,v,w,rx,ry,rz] at each node;
+section resultants/strains are [N,Vy,Vz,T,My,Mz].  Exact rational arithmetic
+retains weak shear modes until the requested binary64 output is rounded.
+"""
+
+from dataclasses import dataclass
+from fractions import Fraction
+import math
+
+import numpy as np
+
+
+OPERATOR_ID = "B2_PHYSICAL_FLEXIBILITY_LINEAR_V1"
+
+
+class RepresentabilityError(ValueError):
+    """A nonzero physical result cannot be represented in binary64."""
+
+
+def _positive(value):
+    if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+        raise ValueError("positive finite nonboolean physical input required")
+    return Fraction(float(value))
+
+
+def _float(value):
+    try:
+        result = float(value)
+    except OverflowError as exc:
+        raise RepresentabilityError("physical B2 output overflow") from exc
+    if not math.isfinite(result) or (value != 0 and result == 0):
+        raise RepresentabilityError("physical B2 output overflow or underflow")
+    return result
+
+
+def _array(value):
+    array = np.asarray(value, dtype=object)
+    return np.array([_float(item) for item in array.flat], dtype=float).reshape(array.shape)
+
+
+def _inverse_spd(matrix):
+    """Exact LDL and inverse; provisional normalized conditioning admission."""
+    n = len(matrix)
+    diagonal = [matrix[i][i] for i in range(n)]
+    if any(d <= 0 for d in diagonal):
+        raise ValueError("positive-definite physical section/flexibility required")
+    lower = [[Fraction(int(i == j)) for j in range(n)] for i in range(n)]
+    pivots = []
+    for j in range(n):
+        pivot = matrix[j][j] - sum(lower[j][k]**2 * pivots[k] for k in range(j))
+        if pivot <= 0:
+            raise ValueError("positive-definite physical section/flexibility required")
+        # This private oracle does not establish a production conditioning range.
+        if pivot / diagonal[j] < Fraction(1, 10**12):
+            raise RepresentabilityError("ill-conditioned normalized physical section/flexibility")
+        pivots.append(pivot)
+        for i in range(j + 1, n):
+            lower[i][j] = (matrix[i][j] - sum(
+                lower[i][k] * pivots[k] * lower[j][k] for k in range(j)
+            )) / pivot
+    columns = []
+    for column in range(n):
+        y = []
+        for i in range(n):
+            y.append(Fraction(int(i == column)) - sum(lower[i][k] * y[k] for k in range(i)))
+        z = [y[i] / pivots[i] for i in range(n)]
+        x = [Fraction(0)] * n
+        for i in range(n - 1, -1, -1):
+            x[i] = z[i] - sum(lower[k][i] * x[k] for k in range(i + 1, n))
+        columns.append(x)
+    return [[columns[j][i] for j in range(n)] for i in range(n)]
+
+
+def _basic(length):
+    B = [[Fraction(0) for _ in range(12)] for _ in range(6)]
+    B[0][0], B[0][6] = -1, 1
+    B[1][3], B[1][9] = -1, 1
+    for row, rotation in ((2, 4), (3, 10)):
+        B[row][2], B[row][8], B[row][rotation] = -1 / length, 1 / length, 1
+    for row, rotation in ((4, 5), (5, 11)):
+        B[row][1], B[row][7], B[row][rotation] = 1 / length, -1 / length, 1
+    return B
+
+
+def _interpolation(length, station):
+    t = station / length
+    H = [[Fraction(0) for _ in range(6)] for _ in range(6)]
+    H[0][0] = H[3][1] = 1
+    H[2][2] = H[2][3] = 1 / length
+    H[4][2], H[4][3] = t - 1, t
+    H[1][4] = H[1][5] = -1 / length
+    H[5][4], H[5][5] = t - 1, t
+    return H
+
+
+def _multiply(matrix, vector):
+    return [sum(a * b for a, b in zip(row, vector)) for row in matrix]
+
+
+def _flexibility(length, compliance):
+    # H(t) is affine: the exact integral uses endpoint values and their cross terms.
+    h0, h1 = _interpolation(length, Fraction(0)), _interpolation(length, length)
+    result = [[Fraction(0) for _ in range(6)] for _ in range(6)]
+    for i in range(6):
+        for j in range(6):
+            result[i][j] = length * sum(
+                compliance[a][b] * (
+                    h0[a][i]*h0[b][j]/3 + h1[a][i]*h1[b][j]/3
+                    + (h0[a][i]*h1[b][j] + h1[a][i]*h0[b][j])/6
+                ) for a in range(6) for b in range(6)
+            )
+    return result
+
+
+@dataclass(frozen=True)
+class LinearSection:
+    stiffness: tuple[tuple[float, ...], ...]
+    kind: str
+    operator_id: str = OPERATOR_ID
+
+    def __post_init__(self):
+        if self.operator_id != OPERATOR_ID or self.kind not in ("isotropic_scalar", "elastic_generalized"):
+            raise ValueError("explicit physical linear B2 section identity required")
+        try:
+            data = np.asarray(self.stiffness, dtype=float)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("finite 6x6 physical section required") from exc
+        if data.shape != (6, 6) or not np.isfinite(data).all() or not np.array_equal(data, data.T):
+            raise ValueError("finite symmetric 6x6 physical section required")
+        if self.kind == "isotropic_scalar" and np.count_nonzero(data - np.diag(np.diag(data))):
+            raise ValueError("isotropic scalar section cannot contain coupling")
+        _inverse_spd([[Fraction(v) for v in row] for row in data])
+        # Own the descriptor even when a caller supplied mutable nested lists.
+        object.__setattr__(self, "stiffness", tuple(tuple(float(v) for v in row) for row in data))
+
+    @classmethod
+    def isotropic(cls, *, E, nu, area, Iy, Iz, J, ky, kz):
+        e, a, iy, iz, j, y, z = map(_positive, (E, area, Iy, Iz, J, ky, kz))
+        if type(nu) not in (int, float) or not math.isfinite(nu) or not -1 < nu < .5:
+            raise ValueError("physical isotropic Poisson ratio required")
+        g = e / (2 * (1 + Fraction(float(nu))))
+        values = [e*a, g*a*y, g*a*z, g*j, e*iy, e*iz]
+        # Do not hide unrepresentable physical section data behind a floor.
+        diagonal = [_float(value) for value in values]
+        return cls(tuple(tuple(diagonal[i] if i == j else 0.0 for j in range(6))
+                         for i in range(6)), "isotropic_scalar")
+
+    @classmethod
+    def generalized(cls, stiffness):
+        try:
+            data = np.asarray(stiffness, dtype=float)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("finite 6x6 generalized section required") from exc
+        if data.shape != (6, 6) or not np.isfinite(data).all() or not np.array_equal(data, data.T):
+            raise ValueError("finite symmetric 6x6 generalized section required")
+        return cls(tuple(tuple(float(v) for v in row) for row in data), "elastic_generalized")
+
+
+@dataclass(frozen=True)
+class LocalResponse:
+    energy: float
+    force: np.ndarray
+    tangent: np.ndarray
+    basic_force: np.ndarray
+    resultants: np.ndarray
+    strains: np.ndarray
+    stations: np.ndarray
+    operator_id: str = OPERATOR_ID
+    production_qualified: bool = False
+
+
+class LinearOperator:
+    """Physical local tangent and station response; independent of public B2."""
+
+    __slots__ = ("length", "section", "_stiffness", "_compliance", "_B",
+                 "_modal", "_basic_inverse", "_sealed")
+
+    def __setattr__(self, name, value):
+        if getattr(self, "_sealed", False):
+            raise AttributeError("physical B2 operator is immutable")
+        object.__setattr__(self, name, value)
+
+    def __delattr__(self, name):
+        if getattr(self, "_sealed", False):
+            raise AttributeError("physical B2 operator is immutable")
+        object.__delattr__(self, name)
+
+    def __init__(self, length, section: LinearSection):
+        self.length = _positive(length)
+        if not isinstance(section, LinearSection) or section.operator_id != OPERATOR_ID:
+            raise ValueError("explicit physical linear B2 section required")
+        self.section = section
+        self._stiffness = tuple(tuple(Fraction(value) for value in row) for row in section.stiffness)
+        self._compliance = tuple(tuple(row) for row in _inverse_spd(self._stiffness))
+        self._B = tuple(tuple(row) for row in _basic(self.length))
+        if section.kind == "isotropic_scalar":
+            s = [self._stiffness[i][i] for i in range(6)]
+            kp_y = 1 / (self.length/(6*s[4]) + 2/(s[2]*self.length))
+            kp_z = 1 / (self.length/(6*s[5]) + 2/(s[1]*self.length))
+            self._modal = (s[0]/self.length, s[3]/self.length,
+                           kp_y, 2*s[4]/self.length, kp_z, 2*s[5]/self.length)
+            for value in self._modal:
+                _float(value)
+        else:
+            self._basic_inverse = tuple(tuple(row) for row in _inverse_spd(
+                _flexibility(self.length, self._compliance)))
+        self._sealed = True
+
+    @property
+    def basic_matrix(self):
+        return _array(self._B)
+
+    @property
+    def modal_stiffness(self):
+        return None if self.section.kind != "isotropic_scalar" else _array(self._modal)
+
+    def _basic_action(self, basic):
+        if self.section.kind != "isotropic_scalar":
+            return _multiply(self._basic_inverse, basic)
+        ka, kt, kp_y, km_y, kp_z, km_z = self._modal
+        q = [ka*basic[0], kt*basic[1]]
+        for i, kp, km in ((2, kp_y, km_y), (4, kp_z, km_z)):
+            plus = kp*(basic[i]+basic[i+1])/2
+            minus = km*(basic[i]-basic[i+1])/2
+            q.extend((plus+minus, plus-minus))
+        return q
+
+    def evaluate(self, displacement, *, stations=(0.0, 0.5, 1.0)):
+        try:
+            u = np.asarray(displacement, dtype=float)
+            x = np.asarray(stations, dtype=float)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("finite local coordinates and stations required") from exc
+        if u.shape != (12,) or not np.isfinite(u).all():
+            raise ValueError("twelve finite local coordinates required")
+        if x.ndim != 1 or not np.isfinite(x).all() or np.any((x < 0) | (x > 1)):
+            raise ValueError("stations must be finite normalized coordinates in [0,1]")
+        basic = _multiply(self._B, [Fraction(float(v)) for v in u])
+        q = self._basic_action(basic)
+        force = [sum(self._B[j][i]*q[j] for j in range(6)) for i in range(12)]
+        # Apply to each unit coordinate before rounding; no rounded dense
+        # subtraction is used to recover the weak symmetric bending mode.
+        tangent = [[sum(self._B[j][i]*self._basic_action([self._B[k][column] for k in range(6)])[j]
+                        for j in range(6)) for column in range(12)] for i in range(12)]
+        resultants, strains = [], []
+        for t in x:
+            resultant = _multiply(_interpolation(self.length, self.length*Fraction(float(t))), q)
+            resultants.append(resultant)
+            strains.append(_multiply(self._compliance, resultant))
+        return LocalResponse(
+            _float(sum(b*v for b, v in zip(basic, q))/2), _array(force), _array(tangent),
+            _array(q), _array(resultants), _array(strains), np.array(x, dtype=float, copy=True),
+        )
