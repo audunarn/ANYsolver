@@ -127,3 +127,22 @@ pointwise gaps remain about half the displacement scale after shell-only
 refinement. Independent review rejected space selection from its rank or
 equilibrium evidence. Historical K3 already covered P0-beam; an
 unexecuted duplicate P0 runner was removed without consuming a new run.
+
+Stock CalculiX B31/CPS is executable as a *different* mixed idealization:
+the 12-case three-level external inventory and independent review are
+recorded in `B3_GE_E4_PL_G0_F03_CCX_B31_REFINEMENT_V1_RESULTS.md`.
+Smooth tips are nonmonotone and signed-load tips still move materially.
+The width mesh, B31 shear/section law, finite station ties, yaw, reaction
+and continuous gap are not a converged native physical target. Its raw
+stored input-byte hashes are distinct from the generator's LF content
+hashes, as adjudicated without altering the original records.
+
+The local discontinuous biorthogonal-translation/P0-yaw weak span was
+falsified on four adverse planar meshes after independent pre-execution
+review; see `B3_GE_E4_PL_G0_F03_LOCAL_DUAL_V1_RESULTS.md`. It is genuinely
+different from K4's assembled row span, with full native rank and accurate
+equilibrium, but fixed-beam smooth gaps remain around half the displacement
+scale on fine shell meshes. Coarse signed-load improvement did not persist
+under shell refinement. Do not select this span from its rank or from the
+coarse response. The independent physical target and signed retained norm
+requirements in items 1–2 above remain unchanged; G0B remains open.
