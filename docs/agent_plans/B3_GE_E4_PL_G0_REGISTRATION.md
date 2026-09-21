@@ -1451,3 +1451,16 @@ span and accurate work, but no convincing physical-gap or signed-floor
 improvement. **F03 remains IN_PROGRESS, G0B is not PASSED, and G1
 product integration remains barred.** The registered full six-channel
 and independent physical-reference requirements are unchanged.
+
+F05 Q4 fixed-predecessor diagnostic source/contract were frozen at
+`3314633` after independent pre-execution review. The one-time result
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f05-q4-v1/`
+passed two 24-coordinate derivative directions at three step sizes with
+sampled plastic-active masks stable, unchanged sealed predecessor and
+active plastic updating. The independent raw-evidence audit matched the
+source and nine module hashes and agreed with the limited conclusion;
+see `B3_GE_E4_PL_G0_F05_Q4_PULLBACK_V1_RESULTS.md` for raw identities and
+errors. This complements the previous S3 local check but does not admit
+the elastic-only variational adapter to plasticity or close F05/G0B.
+Mixed assembly, attachment work, lifecycle and mechanics review remain
+required; G1 remains barred.
