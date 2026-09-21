@@ -365,7 +365,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     ci_header, ci_jobs = ci.split("jobs:\n", maxsplit=1)
     assert ci_header == (
         "name: Tests\n\non:\n  push:\n    branches: [main]\n"
-        "  pull_request:\n\n"
+        "  pull_request:\n  workflow_dispatch:\n\n"
     )
     assert re.findall(r"(?m)^  ([a-z0-9-]+):\n", ci_jobs) == [
         "license",
@@ -701,7 +701,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
 
     assert job_preamble(job_block(publish, "dependency-gate")) == (
         "  dependency-gate:\n"
-        "    name: Verify sibling releases on target index\n"
+        "    name: Verify production sibling releases\n"
         "    runs-on: ubuntu-latest\n"
     )
     assert job_preamble(job_block(publish, "build")) == (
@@ -733,10 +733,8 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     )
 
     dependency_job = job_block(publish, "dependency-gate")
-    assert dependency_job.count(
-        "TARGET_INDEX_URL: ${{ github.event_name == 'release' && "
-        "'https://pypi.org/simple' || 'https://test.pypi.org/simple' }}"
-    ) == 1
+    assert "TARGET_INDEX_URL" not in dependency_job
+    assert "--index-url https://pypi.org/simple" in dependency_job
     testpypi_job = job_block(publish, "testpypi")
     pypi_job = job_block(publish, "pypi")
     assert testpypi_job.count(
