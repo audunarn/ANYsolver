@@ -31,8 +31,8 @@ discrete field; they are not rigorous floating-point enclosures or gaps in
 the full distributed-load particular field.
 
 At fixed `N_s=64,N_y=32`, refining the beam from 8 to 64 elements moves
-Q4 smooth tip displacement from `3.08762e-5` to `3.03765e-5 m` and yaw-gap
-estimate from `4.54157e-5` to `6.63228e-6 rad`. At fixed `N_s=64,N_b=64`,
+Q4 smooth tip displacement from `3.08762e-5` to `3.03397e-5 m` and yaw-gap
+estimate from `4.54157e-5` to `2.66509e-6 rad`. At fixed `N_s=64,N_b=64`,
 refining width from 32 to 64 moves tip displacement back to `3.11584e-5 m`
 and the yaw-gap estimate to `3.48964e-6 rad`. This nonmonotone interaction
 requires further resolution, not extrapolation to a target.
