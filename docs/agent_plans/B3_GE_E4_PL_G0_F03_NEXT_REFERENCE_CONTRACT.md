@@ -111,3 +111,11 @@ is preserved in `B3_GE_E4_PL_G0_F03_CONTINUOUS_PENALTY_V1.md`. It has
 sparse local traces and balanced work, but stiffness and mesh refinement
 materially change the tip response. It cannot replace the production exact
 multiplier or establish a physical reference by parameter tuning.
+
+`B3_GE_E4_PL_G0_F03_STRONG_TRACE_INCOMPATIBILITY.md` derives a local
+finite-space no-go: for the homogeneous exact-static conventional beam
+field, exact polynomial-coefficient equality to the affine Q4/S3
+four-sample position and yaw removes beam shear and bending on each
+overlay interval. Independent mechanics review checked the derivation and
+its load/native-formulation limits. Do not use strong coefficient tying
+as the replacement physical oracle; seek a stable weak span instead.
