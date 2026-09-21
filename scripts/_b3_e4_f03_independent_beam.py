@@ -9,6 +9,7 @@ use the same trial field, including the later interface and line loads.
 from __future__ import annotations
 
 import numpy as np
+from scipy import sparse
 
 
 E = 210e9
@@ -18,6 +19,27 @@ AREA = .01
 SHEAR_AREA = .008
 INERTIA = 8.333333333333333e-6
 SECTION = np.diag((E*AREA, E*INERTIA, G*SHEAR_AREA))
+
+
+def dof_count(elements: int) -> int:
+    if not isinstance(elements,int) or not 1<=elements<=512:
+        raise ValueError('unsupported reference beam element count')
+    return 6*elements+4
+
+
+def element_dofs(elements: int, index: int) -> np.ndarray:
+    if not 0<=index<elements:
+        raise ValueError('beam element index outside definition')
+    u=2*elements+1
+    v=2*(elements+1)
+    return np.array((2*index,2*index+1,2*index+2,
+                     u+2*index,u+2*index+1,u+2*index+2,u+2*index+3,
+                     u+v+2*index,u+v+2*index+1,u+v+2*index+2),dtype=int)
+
+
+def root_dofs(elements: int) -> np.ndarray:
+    dof_count(elements)
+    return np.array((0,2*elements+1,4*elements+3),dtype=int)
 
 
 def fields(xi: float, length: float) -> tuple[np.ndarray, np.ndarray]:
@@ -70,4 +92,41 @@ def load(length: float, left: float, kind: str, order: int = 16) -> np.ndarray:
         q = 1e6*(1+.25*np.cos(2*np.pi*s)) if kind=='smooth' else 1e6*np.sin(2*np.pi*s)
         n, _ = fields(xi, length)
         result += length*weight/2*q*n[1]
+    return result
+
+
+def assembled_stiffness(elements: int) -> sparse.csr_matrix:
+    count=dof_count(elements)
+    rows=[]; cols=[]; values=[]
+    length=1/elements
+    local=stiffness(length)
+    for index in range(elements):
+        ids=element_dofs(elements,index)
+        rows.extend(np.repeat(ids,len(ids)))
+        cols.extend(np.tile(ids,len(ids)))
+        values.extend(local.ravel())
+    result=sparse.coo_matrix((values,(rows,cols)),shape=(count,count)).tocsr()
+    result.sum_duplicates()
+    return result
+
+
+def assembled_load(elements: int, kind: str, order: int = 16) -> np.ndarray:
+    count=dof_count(elements)
+    result=np.zeros(count)
+    for index in range(elements):
+        result[element_dofs(elements,index)]+=load(1/elements,index/elements,kind,order)
+    return result
+
+
+def trace(elements: int, s: float) -> sparse.csr_matrix:
+    count=dof_count(elements)
+    if not np.isfinite(s) or not 0<=s<=1:
+        raise ValueError('beam trace outside material interval')
+    index=min(int(s*elements),elements-1)
+    n,_=fields(s*elements-index,1/elements)
+    ids=element_dofs(elements,index)
+    rows,local=np.nonzero(n)
+    result=sparse.coo_matrix((n[rows,local],(rows,ids[local])),
+                             shape=(3,count)).tocsr()
+    result.sum_duplicates()
     return result

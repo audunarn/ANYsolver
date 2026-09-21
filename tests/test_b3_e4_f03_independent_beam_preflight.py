@@ -84,3 +84,33 @@ def test_quadratic_shear_virtual_work_and_rigid_nullspace():
         assert np.linalg.norm(k@mode)/(np.linalg.norm(k)*np.linalg.norm(mode))<1e-14
     eig=np.linalg.eigvalsh(k)
     assert np.count_nonzero(np.abs(eig)<=1e-10*eig[-1])==3
+
+
+def test_multielement_continuity_root_and_global_load_work():
+    elements=8
+    count=beam.dof_count(elements)
+    u=2*elements+1
+    v=2*(elements+1)
+    translation=np.zeros(count)
+    translation[u+0:u+v:2]=1
+    rotation=np.zeros(count)
+    rotation[u+0:u+v:2]=np.arange(elements+1)/elements
+    rotation[u+1:u+v:2]=1
+    rotation[u+v:]=1
+    axial=np.zeros(count); axial[:u]=1
+    np.testing.assert_array_equal(beam.root_dofs(elements),[0,u,u+v])
+    k=beam.assembled_stiffness(elements)
+    scale=np.sqrt(k.multiply(k).sum())
+    for mode in (translation,rotation,axial):
+        assert np.linalg.norm(k@mode)/(scale*np.linalg.norm(mode))<1e-14
+    for boundary in range(1,elements):
+        s=boundary/elements
+        left=beam.trace(elements,s-1e-10)
+        exact=beam.trace(elements,s)
+        right=beam.trace(elements,s+1e-10)
+        np.testing.assert_allclose(exact@rotation,[0,s,1],rtol=1e-12,atol=1e-12)
+        assert np.linalg.norm((left-right)@rotation)<1e-9
+    for kind,force,moment in (('smooth',1e6,5e5),('sine',0.,-1e6/(2*np.pi))):
+        f=beam.assembled_load(elements,kind)
+        np.testing.assert_allclose(translation@f,force,rtol=0,atol=1e-7)
+        np.testing.assert_allclose(rotation@f,moment,rtol=0,atol=1e-7)
