@@ -276,6 +276,60 @@ including smooth active branches, derivative checks and block-inventory
 assertions. Full mixed sparse assembly and lifecycle remain separate G1/G3
 requirements. No independent reviewer accepted F08 or G0B.
 
+F08-D **deformed-predecessor follow-up**, registered before execution: use
+the same two connected curved native generalized and physical-fibre models.
+Complete their first accepted nonzero force target with the existing bounded
+drivers, then create a deterministic unaccepted trial from that predecessor
+with a small nonzero step on free physical and retained coordinates. Hold
+accepted constitutive histories fixed as the origin for every repeated local
+evaluation. Require nonzero nodal/cell rotation and retained resultants in
+the trial, nonzero scaled compatibility, and unchanged accepted predecessor
+and origin bytes. Gather local contributions into CSR independently of the
+bounded context's dense scatter, including distributed generalized loads and
+fibre nodal loads. Compare complete residual/tangent and frozen-scale metrics
+at <= `1e-9` max absolute, <= `1e-11` normalized difference; compare candidate
+histories and material bytes exactly. Check that local retained and
+shared-node blocks are present. Record any driver failure honestly rather
+than manufacturing an accepted state. This follow-up still does not establish
+independent material differentiation, active plasticity, a scalable owner, or
+mixed-shell coupling; those require their own evidence.
+
+The F08-D v1 run recorded exact CSR/dense parity for accepted-predecessor
+trials, but independent review found a defect in its *block-inventory test*:
+local slots have 18 physical plus 24 retained coordinates, while the script
+tested blocks starting at 24. The claimed physical/retained coupling was not
+established by that assertion. Preserve v1 and run F08-D v2 on the same
+frozen fixture with explicit `[:18,18:]`, `[18:,:18]`, and `[18:,18:]`
+nonzero blocks for each element, nonzero contributions from both elements to
+the six shared physical coordinates, and zero assembled coupling between
+their disjoint retained slots. The parity, immutable-origin and numerical
+tolerances remain unchanged. This still does not qualify active plasticity
+or a production sparse owner.
+
+F08-D execution: v1 passed CSR/dense parity at two genuine first-target
+accepted predecessors after a controlled unaccepted perturbation. Its block
+inventory is superseded by v2 as above. The v1 script/log SHA-256 are
+`14e3747ade81a0d604061c8db468a7da67b6731e4ed5c9a3bd05e6fa8763d79f`
+and `164a7c91ad9519a42c8c94380f84e3f460b5078cf415ba431a90755e10348d40`.
+V2 passed the corrected local 18+24 split, both elements' shared physical
+contributions, and zero off-element retained coupling. Both 78-coordinate
+cases had `nnz=1149` and exact CSR/dense residual and tangent agreement;
+their scaled compatibility gaps were `0.0009506228022117389` and
+`0.0009550188984136697`. The accepted states and material origins remained
+unchanged. V2 script/log SHA-256 are
+`6adf65f57c5208e901efb94ac2d36f3b59ca11466a9156a5300741847e352cbb`
+and `9b230b2dd0a9d77c5ad27fd274516269038e14d5eb02d5c3b8b0b0d5cc0cd175`.
+The log is `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f08-deformed-v2.log`;
+the command used the registered root+`src` Python environment and
+`python scripts/probe_b3_ge_e4_pl_g0_local_sparse_deformed_v2.py` on the same
+Python/NumPy/SciPy installation. Exit status was zero. These deterministic
+same-operator comparisons do not prove an independent directional derivative,
+active plasticity, resource scaling, or any mixed-shell capability.
+Independent read-only review matched the v2 log hash, confirmed that the
+corrected assertions actually execute through the wrapped gather, and found
+no remaining block-inventory defect in these fixtures. It did not accept F08,
+G0B, or broader material/scaling claims.
+
 F07 bounded descriptor case, registered before execution: physical coordinates
 `(x_1,x_2)` have diagonal mass `(2,1)`; a drill-like algebraic coordinate
 `z` has zero inertia. In coordinate order `(x_1,x_2,z)`, use
