@@ -160,3 +160,15 @@ These are not uniform physical stability proofs or a line-law selection.
 Next derive and test the actual dual of a mesh-local broken/jump trace
 space, norm equivalence, mode shapes and physical response against an
 independently converged reference before registering another F03 candidate.
+
+The subsequent registered `B3_GE_E4_PL_G0_F03_TRACE_DUAL_V1_RESULTS.md`
+computes an exact **discrete-image** dual using a global pseudoinverse of
+the broken trace graph. Ten bounded cases and all three graph-eigenvalue
+cutoffs completed with consistent source-bound evidence. In that norm,
+the full signed KKT floor drops from about .26 to .035 on joint
+4/4→16/16 refinement for both spaces and shell types, while it stays
+around .11 under fixed-beam shell-only refinement. This sharpens the
+beam-side mode concern but is not a mesh-local physical dual, uniform
+proof or cure for the observed gaps. The independent converged response,
+local norm derivation, mode interpretation and six-channel connection
+work above remain prerequisites; F03/G0B remain open.
