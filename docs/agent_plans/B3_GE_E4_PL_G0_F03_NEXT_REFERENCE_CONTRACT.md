@@ -279,3 +279,15 @@ uniform theorem or a new accepted line law. Derive the stable H1 and
 broken-yaw bound and executable sparse/local realization; continue
 the separate independent loaded-response and six-channel mechanics
 requirements. F03/G0B remain open and G1 remains barred.
+
+The reviewed planar shell-port bound in
+`B3_GE_E4_PL_G0_F03_SHELL_PORT_LIFT_BOUND.md` is conditional on the
+straight native trace and registered rooted row laws. Its bounded
+banded/diagonal implementation check is recorded in
+`B3_GE_E4_PL_G0_F03_BANDED_MOMENT_V3_RESULTS.md`: ten native K4/local-dual
+cases agree with the independent dense oracle and five synthetic systems
+show linear explicit-array storage. Earlier v1/v2 diagnostic failures
+remain separate adverse evidence. The next acceptance work still needs
+signed constrained stability, an independently converged matched
+physical loaded reference, and the full eccentric six-channel
+work/torque/shear response. No F03/G0B closure or G1 entry follows.

@@ -1530,3 +1530,17 @@ raw root `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f06-loaded-rebase-v
 **F06 remains IN_PROGRESS:** no actual coupled owner rebase, restart in
 the changed chart, multi-step state transport, or large noncommuting
 loaded path has been implemented or accepted. F03/G0B still bar G1.
+
+The F03 shell-port planar moment implementation check has three distinct
+versioned roots. V1 (`b3a70d1`) failed all ten native setup checks at a
+combined diagnostic predicate; v2 (`9834116`) recorded zero native-root
+coupling but failed an inverted cross-block metric. Their adverse results
+are retained in the v1/v2 result files and immutable roots. Independently
+reviewed v3 (`a61dee5`) corrected only that metric and completed all ten
+native and five synthetic cases within the registered limits. Exact
+source, raw hashes, error extrema and limits are recorded in
+`B3_GE_E4_PL_G0_F03_BANDED_MOMENT_V3_RESULTS.md`. This is bounded
+planar moment parity and synthetic linear-storage evidence, not a
+production line-law selection. Independent loaded response, signed KKT
+stability and full six-channel mechanics are still required. **F03/G0B
+remain open and G1 barred.**
