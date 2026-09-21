@@ -68,3 +68,11 @@ stationary-condensed Q4 differs materially from a classical bilinear Q4 at
 fixed mesh. A standard Q4 or CPS4 result may be an independently converged
 continuum comparator, but not a same-discrete-operator replacement. This
 changes the required reference construction; it does not select a line law.
+
+The CalculiX U1 beam-only execution feasibility record is
+`B3_GE_E4_PL_G0_F03_CCX_U1_FEASIBILITY_V1.md`. U1 tip translation approaches
+an analytical Timoshenko target over five meshes, but no mixed deck has run
+and the exploratory nodal `RF` output is not a verified support reaction.
+The external route remains an auxiliary comparator until its coupled
+idealization, balance, energies, gap and joint-refinement evidence are
+executed and reviewed.
