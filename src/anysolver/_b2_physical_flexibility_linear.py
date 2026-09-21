@@ -20,6 +20,10 @@ class RepresentabilityError(ValueError):
     """A nonzero physical result cannot be represented in binary64."""
 
 
+class ConditioningAdmissionError(ValueError):
+    """A private local conditioning screen rejected otherwise valid data."""
+
+
 def _positive(value):
     if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
         raise ValueError("positive finite nonboolean physical input required")
@@ -55,7 +59,7 @@ def _inverse_spd(matrix):
             raise ValueError("positive-definite physical section/flexibility required")
         # This private oracle does not establish a production conditioning range.
         if pivot / diagonal[j] < Fraction(1, 10**12):
-            raise RepresentabilityError("ill-conditioned normalized physical section/flexibility")
+            raise ConditioningAdmissionError("ill-conditioned normalized physical section/flexibility")
         pivots.append(pivot)
         for i in range(j + 1, n):
             lower[i][j] = (matrix[i][j] - sum(
@@ -120,6 +124,8 @@ class LinearSection:
     stiffness: tuple[tuple[float, ...], ...]
     kind: str
     operator_id: str = OPERATOR_ID
+    # E, nu, area, Iy, Iz, J, ky, kz; absent for a generalized 6x6 law.
+    scalar_parameters: tuple[float, ...] | None = None
 
     def __post_init__(self):
         if self.operator_id != OPERATOR_ID or self.kind not in ("isotropic_scalar", "elastic_generalized"):
@@ -132,6 +138,22 @@ class LinearSection:
             raise ValueError("finite symmetric 6x6 physical section required")
         if self.kind == "isotropic_scalar" and np.count_nonzero(data - np.diag(np.diag(data))):
             raise ValueError("isotropic scalar section cannot contain coupling")
+        if self.kind == "isotropic_scalar":
+            values = self.scalar_parameters
+            if values is None or len(values) != 8:
+                raise ValueError("isotropic scalar source parameters required")
+            E, nu, area, Iy, Iz, J, ky, kz = values
+            e, a, iy, iz, j, y, z = map(_positive, (E, area, Iy, Iz, J, ky, kz))
+            if type(nu) not in (int, float) or not math.isfinite(nu) or not -1 < nu < .5:
+                raise ValueError("physical isotropic Poisson ratio required")
+            g = e / (2 * (1 + Fraction(float(nu))))
+            expected = [_float(value) for value in
+                        (e*a, g*a*y, g*a*z, g*j, e*iy, e*iz)]
+            if not np.array_equal(np.diag(data), expected):
+                raise ValueError("scalar stiffness does not match source parameters")
+            object.__setattr__(self, "scalar_parameters", tuple(float(v) for v in values))
+        elif self.scalar_parameters is not None:
+            raise ValueError("generalized stiffness has no scalar source parameters")
         _inverse_spd([[Fraction(v) for v in row] for row in data])
         # Own the descriptor even when a caller supplied mutable nested lists.
         object.__setattr__(self, "stiffness", tuple(tuple(float(v) for v in row) for row in data))
@@ -146,7 +168,8 @@ class LinearSection:
         # Do not hide unrepresentable physical section data behind a floor.
         diagonal = [_float(value) for value in values]
         return cls(tuple(tuple(diagonal[i] if i == j else 0.0 for j in range(6))
-                         for i in range(6)), "isotropic_scalar")
+                         for i in range(6)), "isotropic_scalar",
+                   scalar_parameters=(E, nu, area, Iy, Iz, J, ky, kz))
 
     @classmethod
     def generalized(cls, stiffness):

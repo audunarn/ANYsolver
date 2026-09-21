@@ -6,7 +6,8 @@ import numpy as np
 import pytest
 
 from anysolver._b2_physical_flexibility_linear import (
-    LinearOperator, LinearSection, OPERATOR_ID, RepresentabilityError,
+    ConditioningAdmissionError, LinearOperator, LinearSection,
+    OPERATOR_ID, RepresentabilityError,
 )
 
 
@@ -122,6 +123,25 @@ def test_owned_operator_definition_cannot_change_cached_mechanics():
     assert operator.section.stiffness[0][0] == 10.
 
 
+def test_scalar_provenance_is_owned_and_cannot_relabel_diagonal_stiffness():
+    scalar_section = scalar().section
+    assert scalar_section.scalar_parameters == (1., 0., 1e-14, 1e-12,
+                                                2e-12, 3e-12, .8, .6)
+    params = list(scalar_section.scalar_parameters)
+    direct = LinearSection(scalar_section.stiffness, "isotropic_scalar",
+                           scalar_parameters=params)
+    params[2] = 1.
+    assert direct.scalar_parameters == scalar_section.scalar_parameters
+    with pytest.raises(ValueError, match="source parameters required"):
+        LinearSection(scalar_section.stiffness, "isotropic_scalar")
+    with pytest.raises(ValueError, match="does not match"):
+        LinearSection(scalar_section.stiffness, "isotropic_scalar",
+                      scalar_parameters=(1., 0., 1., 1e-12, 2e-12, 3e-12, .8, .6))
+    with pytest.raises(ValueError, match="no scalar source"):
+        LinearSection(tuple(tuple(row) for row in np.eye(6)), "elastic_generalized",
+            scalar_parameters=scalar_section.scalar_parameters)
+
+
 def test_explicit_input_and_representability_negatives():
     with pytest.raises(ValueError, match="positive"):
         scalar(0)
@@ -129,7 +149,7 @@ def test_explicit_input_and_representability_negatives():
         LinearSection.isotropic(E=1, nu=.5, area=1, Iy=1, Iz=1, J=1, ky=1, kz=1)
     with pytest.raises(ValueError, match="positive-definite"):
         LinearSection.generalized(np.diag([1., 1., 1., 1., 1., -1.]))
-    with pytest.raises(RepresentabilityError, match="ill-conditioned"):
+    with pytest.raises(ConditioningAdmissionError, match="ill-conditioned"):
         S = np.eye(6)
         S[0, 1] = S[1, 0] = 1 - 1e-14
         LinearSection.generalized(S)
