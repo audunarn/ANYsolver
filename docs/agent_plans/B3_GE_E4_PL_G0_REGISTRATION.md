@@ -1544,3 +1544,15 @@ planar moment parity and synthetic linear-storage evidence, not a
 production line-law selection. Independent loaded response, signed KKT
 stability and full six-channel mechanics are still required. **F03/G0B
 remain open and G1 barred.**
+
+The one-time graph-scaled signed-KKT v1 diagnostic was frozen at `c4dd736`
+and independently pre-reviewed. All ten native Q4/S3 cases completed under
+the registered root and limits; independent post-run audit matched all
+source/predecessor identities and thresholds. The full signed KKT floor
+declines across 4/4→8/8→16/16 to about `.0345` for both K4 and local-dual,
+although constraint β remains `.45–.47` at the final joint mesh and the
+signed Schur remains positive. See
+`B3_GE_E4_PL_G0_F03_SIGNED_GRAPH_V1_RESULTS.md` for immutable hashes and
+all extrema. This is an adverse finite trend under a *diagnostic* graph
+norm, not an accepted uniform stability claim or a physical failure proof.
+Neither multiplier space is selected. F03/G0B remain open; G1 barred.

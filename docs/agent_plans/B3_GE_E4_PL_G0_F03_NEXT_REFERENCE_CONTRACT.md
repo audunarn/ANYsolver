@@ -291,3 +291,15 @@ remain separate adverse evidence. The next acceptance work still needs
 signed constrained stability, an independently converged matched
 physical loaded reference, and the full eccentric six-channel
 work/torque/shear response. No F03/G0B closure or G1 entry follows.
+
+The subsequent graph-scaled *signed* retained KKT diagnostic is adjudicated
+in `B3_GE_E4_PL_G0_F03_SIGNED_GRAPH_V1_RESULTS.md`. It preserves the signed
+native internal block in the operator and Schur and checks both multiplier
+spaces against the reachable shell-port norm. All ten finite planar meshes
+pass numerical/source/resource checks. Its normalized complete KKT floor
+declines on joint refinement to about `.0345` at Nb 16 in both topologies;
+positive constraint β and signed Schur remain nonzero at those meshes.
+This does not prove a uniform physical stability bound or its absence.
+Investigate the declining full-system mode against a separately justified
+physical norm and matched loaded response before any line-law selection.
+F03/G0B stay open and G1 barred.
