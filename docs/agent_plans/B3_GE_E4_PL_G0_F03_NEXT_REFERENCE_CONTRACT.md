@@ -263,3 +263,19 @@ physical reachable-image trace lifting/norm, explicit endpoint law,
 continuous-gap and matched-idealization reference, followed by native
 six-channel eccentric torque/shear qualification. F03/G0B remain open;
 G1 production work is barred.
+
+The subsequent source-frozen supported shell-port lifting diagnostic is
+adjudicated in `B3_GE_E4_PL_G0_F03_SHELL_PORT_LIFT_V1_RESULTS.md`.
+It corrects the beam-only root-zero assumption: the fixed beam root
+coexists with a freely translating physical four-sample shell pose at
+attachment start. Two actual supported shell fields supply the root
+ports, while native free translations and retained cell yaw preserve
+K4/local-dual row moments through an oblique lift. All ten bounded
+cases pass root, moment, idempotence and restricted-dual checks. The
+largest adjacent joint-doubling growth is 1.358× for reachable/port
+dual and 1.061× for lift energy, below the registered 2× screen.
+This is finite evidence for further local lifting analysis, not a
+uniform theorem or a new accepted line law. Derive the stable H1 and
+broken-yaw bound and executable sparse/local realization; continue
+the separate independent loaded-response and six-channel mechanics
+requirements. F03/G0B remain open and G1 remains barred.

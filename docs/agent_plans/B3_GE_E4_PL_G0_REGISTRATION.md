@@ -1488,6 +1488,18 @@ responses remain material, and smooth pointwise sampled gap lower
 bounds exceed the threshold. No converged independent physical target
 or native line-law selection follows. F03/G0B remain open, G1 barred.
 
+The separately registered supported shell-port lifting diagnostic was
+frozen at `424e914` and completed ten source-matched cases at
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-shell-port-lift-v1/`.
+The independently reviewed
+`B3_GE_E4_PL_G0_F03_SHELL_PORT_LIFT_V1_RESULTS.md` records physical
+shell translation ports at the beam-root station, exact existing
+K4/local-dual moments, and a finite reachable-dual/energy growth
+screen below its registered adverse threshold. This supports further
+derivation of a bounded local lift, but does not cure the failed
+independent loaded response, prove uniform stability, or select a
+production line law. F03/G0B remain open and G1 barred.
+
 F05 Q4 fixed-predecessor diagnostic source/contract were frozen at
 `3314633` after independent pre-execution review. The one-time result
 at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f05-q4-v1/`
