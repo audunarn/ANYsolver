@@ -357,6 +357,35 @@ This proves neither coupled shell response nor independent full F04 acceptance;
 the rigid and distributing functionals must still be compared in an actual
 assembled shell model and reviewed for shear/locking/topology.
 
+F04 assembled small-strain distinction, registered before execution:
+reuse the F02 flat `[-1,1]^2`, `n=8,16`, Q4/S3-V2D, `.07`-thick physical
+in-plane shell stiffness and outer in-plane supports. For rigid coupling,
+prescribe every footprint node's translation `(-y,x)` at unit beam-normal
+rotation, as in F02. For distributing coupling, keep footprint translations
+free but impose just the uniform-weight mean translations `(0,0)` and
+mean rotational work coordinate
+`sum_i(-y_i u_xi+x_i u_yi)/sum_i(x_i**2+y_i**2)=1` by exact bounded
+Lagrange multipliers. The multiplier associated with the last equation is
+the generalized beam-normal moment; its work equals twice equilibrium
+strain energy for unit rotation. Require both moments finite positive,
+distributing moment strictly below rigid moment in each case, relative
+constraint error <= `1e-10`, free equilibrium residual <= `1e-10`, and
+relative work discrepancies <= `1e-10`. Report both mesh levels; two levels
+do not support a convergence assertion. This is a linear scalar response
+test of physical distinction, not the finite-rotation production law.
+
+The assembled `g0b-f04-distinction-v1` diagnostic passed. Distributing
+footprint torque is below rigid torque in all four Q4/S3-V2D and `n=8,16`
+cases: respectively `7.5001e9 < 7.7665e9`,
+`6.6407e9 < 7.3881e9`, `8.7728e9 < 9.2139e9`, and
+`7.0168e9 < 7.9644e9`. Constraint, free-equilibrium and work discrepancies
+were below `3.2e-15` in their registered normalized measures. Raw SHA-256
+`79aa977dca11f06dc0d2fbb2e4202bdbd988b7b26a1be4c4d9765bf8b713bf1f`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f04-distinction-v1.log`.
+The two candidates are physically distinct in this linear membrane setting.
+They remain experimental pending finite-rotation coupled shells, directors,
+thinning, convergence and topology tests.
+
 For F03 reject rank loss, high-frequency interface modes, locking, failed
 patch/work checks and a norm-scaled stability measure that decays under the
 registered refinement sequence. Among passing candidates use the lowest
