@@ -761,6 +761,77 @@ F03 or G0B: native nodal rotations/retained stress, right-half and midpoint
 traces, integrated multiplier fields, shell stiffness/directors and
 refinement are still missing.
 
+F03-P **physical shell two-rail line-response screen**, registered before
+execution: flat `[-1,1] x [-0.5,0.5]` panel, Q4 and diagonal S3-V2D meshes
+with `(n,n)` cells at `n=4,8,16`, elastic `E=210e9`, `nu=0.3`, thickness
+`0.07`. Clamp only outer-edge in-plane translations and assemble each
+existing shell element's reported **physical** stiffness in the in-plane
+subspace; no numerical drilling channel is used for the solve. For material
+line `s∈[-0.4,0.4]` apply a unit normal-axis multiplier density through
+the first variation of the four-point position fit at `(s±0.2,±0.25)`.
+Split quadrature at sample host boundaries and integrate with four Gauss
+points per interval, maintaining fixed physical rail spacing. Require total
+line force <= `1e-8` in the line-load normalization, moment about origin
+`-0.8` within `1e-8`, finite positive free compliance and
+`f·u=2E` for the linear elastic work on the solved displacement within
+`1e-8` relative, free
+equilibrium <= `1e-8` normalized, and no shell rotation force. Report all
+three mesh levels and Q4/S3 differences; **do not infer convergence or
+select an interface** from positive compliance. This is shell-only response
+to the candidate line-traction distribution, without native B3 stiffness,
+exact multipliers, a full KKT, transverse shear or physical thickness sweep.
+
+F03-P v1's `work_error` output uses a unit absolute denominator even though
+the solved compliance is of order `1e-11`; that predicate cannot establish
+the registered **relative** work tolerance. Preserve v1 and run v2 on the
+same frozen cases, requiring
+`|f·u-2E|/max(|f·u|,|2E|,1e-30)<=1e-8` and recording it explicitly.
+All other acceptance checks and case definitions remain unchanged.
+
+Independent review of F03-P found the physical-channel assembly and rail
+quadrature appropriate to these flat fixtures, and independently spotted
+the v1 relative-work defect. It also observed that the y rails coincide
+with mesh lines at all three refinements, so this does not test an off-grid
+Q4/S3 trace difference. F03-P v3 is registered to preserve v1/v2 and add
+an explicit support-reaction oracle on the same six cases: rebuild the line
+load, solve the physical in-plane system, recover reactions at the fixed
+outer edge, and require their resultant to cancel the applied line force
+within `1e-8` and their moment about the same origin to be `+0.8` within
+`1e-8`. Check the v2 relative work criterion in the same run. The
+three-level compliance inventory must be reported, not labeled converged.
+
+F03-P v1/v2/v3 ran all six shells on the registered Windows/Python
+environment with `PYTHONPATH` root+`src` and isolated Numba cache; each
+invocation exited zero. Q4 compliances at `n=4,8,16` were
+`3.847831080770938e-11`, `3.895386226805186e-11`,
+`3.913767918911468e-11`; S3-V2D values were
+`2.967042090717884e-11`, `3.573143380537812e-11`,
+`3.8129342288740314e-11`. V2 enforced actual relative work errors <=
+`4.98e-16`. V3 explicitly recovered fixed support reactions: maximum
+force-resultant imbalance `6.92e-16`, support moment `+0.8` within
+`2.56e-15`, free residual <= `1.36e-15`, and unchanged response inventory.
+The v1/v2/v3 source SHA-256 are respectively
+`ea36eb4450b854382f3888510aa819cf46332290a68bc19d43620f8e0443f88c`,
+`c05e172ca075658036a3f0a10ed5b2895e450b2ab1dcf91ec31e4e5d1d5776ea`,
+`37fa2cf35ffa315d56a6b3fe375c1350c0c4ab058f8f67df6a7b158ec8e79f9c`;
+log SHA-256 are
+`ebccb26905f5d2ea352f4508958c9281e36bba8345c0ada5cd0c9900eed395ff`,
+`9ce779589e582d96805fca4f1228398236b9178fa180af45c7ace06d7125215b`,
+`9a6dc7d2ac7013386f9174802cf7641d0fac383cf181e26502ddcfda40ee4cf9`.
+The final raw log is
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f03-physical-line-v3.log`;
+the final command was
+`python scripts/probe_b3_ge_e4_pl_g0_physical_line_v3.py`. The finer Q4
+and S3 compliances still differ and this screen does not establish
+convergence, stability of exact multipliers, or shell transverse shear.
+Independent read-only review matched the v2/v3 hashes, confirmed the new
+relative-work and signed-reaction predicates execute in all six cases, and
+found no remaining predicate flaw for these fixtures. It noted that the
+reaction recomputation shares the stiffness and shape formulas; it is not
+an independent shell constitutive oracle. Rails lie on mesh lines, so the
+off-grid Q4/S3 mapping contrast, full KKT, shear/thinning, and mechanical
+interface stability remain open. No F03 or G0B acceptance.
+
 An independent read-only review found no arithmetic or interpolation defect
 in F03-S and matched its raw-data hash. It confirmed exact union-interval
 integration and L2 normalization, and cautioned that unresolved scalar trace
