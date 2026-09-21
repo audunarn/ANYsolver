@@ -90,3 +90,11 @@ solve can have excellent balance and full constraint row rank while locking
 the coarse Q4 physical response almost completely. Its affine beam load
 and trace are not the exact interior field. The continuum-reference and
 signed-stability prerequisites above remain open.
+
+The follow-up homogeneous exact-static Timoshenko-field screen is recorded
+separately in `B3_GE_E4_PL_G0_F03_RESOLVED_CONTINUUM_SCREEN_V3.md`.
+Virtual-work-consistent beam loads and interior station poses remove the
+v1/v2 affine-field inconsistency, but Q4's coarse fixed-beam reach still
+locks and joint refinement has not converged. Finite collocation remains a
+different attachment law. This is exploratory reference work, not a new
+F03 candidate or G0 pass.
