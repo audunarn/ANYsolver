@@ -76,3 +76,9 @@ and the exploratory nodal `RF` output is not a verified support reaction.
 The external route remains an auxiliary comparator until its coupled
 idealization, balance, energies, gap and joint-refinement evidence are
 executed and reviewed.
+
+The first coupled stock CalculiX 2.23 U1+CPS attempt then failed in
+preprocessing, as preserved in `B3_GE_E4_PL_G0_F03_CCX_MIXED_FAILURE_V1.md`.
+It produced no displacement or coupling evidence. A new external route
+requires its own corrected executable identity or a distinct validated
+idealization; the failed source/deck/result must not be overwritten.
