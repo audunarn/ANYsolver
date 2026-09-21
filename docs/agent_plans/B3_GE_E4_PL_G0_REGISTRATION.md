@@ -611,6 +611,57 @@ summary log SHA-256
 `ac8c23b903b01f3c61c773061dd7fd3f1326504e516301a0af07ac8edf9bd73b`.
 F03 remains unresolved and no multiplier space is selected.
 
+F03-B **native lifted beam trace prerequisite**, registered before its first
+execution: use one straight and one curved centered native generalized B3
+reference with three nodes, two retained half-cell rotations, nonzero
+perturbed positions/high-low pairs, and a nonzero spatial reference line
+force. At four Gauss points per half-cell integrate the displacement of
+`r_h=I_c(x+x_low)+U_c*(r0-I_c X)` by an independently written NumPy/SciPy
+route. Compare its work to the unchanged native retained line-work operator,
+its 24-component gradient to centered differences at `h=2e-6`, and its
+directional Hessian to two second-difference steps `2e-4,1e-4`. Require
+absolute work <= `1e-11`, normalized gradient <= `1e-7`, normalized Hessian
+action <= `1e-5`, zero gradients on the nine nodal rotation and 18 retained
+stress coordinates, and exact reference position reconstruction at sampled
+stations <= `1e-12`. A straight half-cell has zero geometric lift; a curved
+one must exhibit nonzero `U_c`-to-translation work. No Q2 current-position
+shortcut, shell pose, multiplier-space choice or G0 acceptance follows from
+this beam-only comparator.
+
+F03-B v1 invocation failed before mechanics because the fixture supplied an
+unnormalized `(position_high, position_low)` pair, which the existing native
+operator correctly rejected. Preserve that failure. V2 keeps the same
+physical fixture and thresholds but normalizes each pair with the existing
+compensated `split_sum` before calling the native operator. The independent
+station integration retains its original physical sum; compare both to check
+that normalization does not change the mechanical quantity. No weakening of
+the native validation is permitted.
+
+F03-B v2 passed for straight and curved references. Independently integrated
+lifted-line work differed by at most `2.02e-18`; normalized finite-difference
+gradient errors were at most `7.36e-12` and two-step directional Hessian
+errors at most `2.14e-9`. Reference reconstruction was at most `2.78e-17`;
+the curved case had nonzero cell-rotation force `0.021478670173039602`,
+while the straight case had zero lift contribution. Nodal-rotation and
+retained-stress gradient rows were zero. The v1 fixture-rejection log/script
+SHA-256 are `f53a6cc282e3d5546188ab9b335f26d3f9f761342c1f0046e99d9f75547eb1b7`
+and `5246e881404e96ab1c82e580c087e1e8b718ba2276308a06ec20a7ca31d909cd`.
+The v2 passing log/script SHA-256 are
+`064a9ef50bbf73fc87705bb1a20d876733f90cc7a0b1c32f2a7024b0b766a388`
+and `a4bcefdead0bdd27df0d19a41756d4c46f8e956780264c8739aa78d9f70f3ad6`.
+The log is `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f03-lifted-trace-v2.log`;
+command `python scripts/probe_b3_ge_e4_pl_g0_lifted_trace_v2.py` used the
+registered root+`src` Python environment and exited zero. This establishes
+the native beam translational trace prerequisite only. It does not select or
+qualify the shell-side trace, any multiplier space, or G0B.
+Independent read-only F03-B review matched both log hashes and found no
+arithmetic, normalization or chart-order defect. It noted that the comparator
+shares the reference `half_cell_lift` and Jacobian and integrates one fixed
+spatial force; a total-work agreement can hide station cancellation, while
+one small-valued directional Hessian does not establish the full mixed block.
+Broaden force components and independent directions before claiming the
+complete vector trace derivative. No reviewer accepted F03 or G0B.
+
 An independent read-only review found no arithmetic or interpolation defect
 in F03-S and matched its raw-data hash. It confirmed exact union-interval
 integration and L2 normalization, and cautioned that unresolved scalar trace
