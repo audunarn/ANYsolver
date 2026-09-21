@@ -17,6 +17,7 @@ include docs/PERFORMANCE_ARCHITECTURE.md
 include docs/QUALITY_CONTROL.md
 include docs/THEORY.md
 include docs/releases/ANYsolver_0.4.6.md
+include docs/releases/ANYsolver_0.4.7.md
 prune reports
 prune scripts
 prune tests

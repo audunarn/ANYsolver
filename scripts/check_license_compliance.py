@@ -19,7 +19,7 @@ EXPECTED_LICENSE_SHA256 = (
     "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
 )
 EXPECTED_PROJECT_LICENSE = "MPL-2.0"
-EXPECTED_RELEASE = "0.4.6"
+EXPECTED_RELEASE = "0.4.7"
 REQUIRED_NOTICE_FILES = {"LICENSE", "COPYRIGHT", "THIRD_PARTY_NOTICES.md"}
 REQUIRED_SDIST_FILES = REQUIRED_NOTICE_FILES | {
     "LICENSING.md",
@@ -151,6 +151,8 @@ def validate_repository(root: Path = ROOT) -> None:
     if "licensed under the Mozilla Public\nLicense 2.0" not in readme:
         errors.append("README MPL-2.0 statement is missing")
     changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
+    if "## 0.4.7 - 2026-09-21" not in changelog:
+        errors.append("0.4.7 changelog section is missing")
     if "## 0.4.6 - 2026-09-16" not in changelog:
         errors.append("0.4.6 changelog section is missing")
     if "## 0.4.3 - 2026-09-09" not in changelog:

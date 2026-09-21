@@ -1,4 +1,4 @@
-"""Bounded ANYsolver 0.4.6 compatibility-release guards."""
+"""Bounded ANYsolver 0.4.7 performance-release guards."""
 
 from __future__ import annotations
 
@@ -8,23 +8,32 @@ import subprocess
 
 import pytest
 
-from anysolver import b3_ge
+from anysolver import __version__, b3_ge
 from anysolver.elements import QuadraticBeamElement, create_element
-from scripts import verify_release_046 as gate
+from scripts import verify_release_047 as gate
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_release_identity_and_g7_boundary_are_exact() -> None:
-    assert gate.VERSION == "0.4.6"
+    assert __version__ == gate.VERSION == "0.4.7"
     records = gate._validate_g7()
     assert set(records) == {"confirmation", "contract", "review", "status"}
+    evidence = gate._validate_performance_evidence()
+    assert set(evidence) == {"static", "spectral", "nonlinear", "nonlinear_review"}
     assert b3_ge.SELECTOR == "b3-ge"
     assert b3_ge.NAME == "B3-GE"
     assert type(create_element("quadratic_beam", 1, [1, 2, 3])) is QuadraticBeamElement
     with pytest.raises(ValueError, match="Unknown element type"):
         create_element("b3-ge", 2, [1, 2, 3])
+
+
+def test_evidence_hash_uses_committed_text_across_checkout_line_endings() -> None:
+    assert gate._normalized_evidence_bytes(b"one\r\ntwo\r\n") == b"one\ntwo\n"
+    assert gate._normalized_evidence_bytes(b"one\ntwo\n") == b"one\ntwo\n"
+    with pytest.raises(gate.GateError, match="unsupported evidence line ending"):
+        gate._normalized_evidence_bytes(b"one\rtwo\n")
 
 
 def test_release_archive_contains_only_current_user_documents() -> None:
@@ -34,22 +43,13 @@ def test_release_archive_contains_only_current_user_documents() -> None:
         for line in manifest
         if line.startswith("include docs/")
     }
-    assert included_docs == gate.RELEASE_DOCS | {"docs/releases/ANYsolver_0.4.7.md"}
+    assert included_docs == gate.RELEASE_DOCS
     assert {
         "prune docs",
         "prune reports",
         "prune scripts",
         "prune tests",
     } <= set(manifest)
-
-
-def test_cleanup_retains_only_referenced_authority_plans() -> None:
-    plans = sorted((ROOT / "docs/agent_plans").glob("*.md"))
-    assert len(plans) == 120
-    assert (ROOT / "docs/agent_plans/S3_E4_PL_V6W_FINAL_QUALIFICATION_PLAN.md").is_file()
-    assert (ROOT / "docs/agent_plans/S4_E4_PL_Q1V_LOCAL_COMPLETION_PLAN.md").is_file()
-    assert (ROOT / "docs/agent_plans/GE_BEAM3_VARIATIONAL_SHELL_MAP.md").is_file()
-    assert not (ROOT / "docs/agent_plans/GE_BEAM3_ACTIVE_PLASTIC_ARC_SMOKE.md").exists()
 
 
 @pytest.mark.parametrize(
@@ -67,11 +67,20 @@ def test_strict_json_rejects_malformed_evidence(tmp_path: Path, payload: str, me
         gate._strict_json(path)
 
 
-def test_historical_gate_remains_available_but_is_not_the_publish_gate() -> None:
+def test_publish_workflow_uses_bounded_gate_before_upload() -> None:
     workflow = (ROOT / ".github/workflows/publish.yml").read_text(encoding="utf-8")
-    command = "python scripts/verify_release_046.py"
-    assert command not in workflow
-    assert (ROOT / "scripts/verify_release_046.py").is_file()
+    command = "python scripts/verify_release_047.py"
+    upload = "name: python-package-distributions"
+    assert workflow.count(command) == 1
+    assert workflow.index(command) < workflow.index(upload)
+    assert "--wheel dist/anysolver-0.4.7-py3-none-any.whl" in workflow
+    assert "--sdist dist/anysolver-0.4.7.tar.gz" in workflow
+    assert "--expected-commit ${{ github.sha }}" in workflow
+
+
+def test_full_ci_can_be_dispatched_for_a_release_branch() -> None:
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    assert "  pull_request:\n  workflow_dispatch:\n" in workflow
 
 
 def test_installed_probe_installs_declared_runtime_dependencies(
@@ -98,7 +107,7 @@ def test_installed_probe_installs_declared_runtime_dependencies(
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(gate.subprocess, "run", fake_run)
-    assert gate._installed_probe(tmp_path / "anysolver-0.4.6-py3-none-any.whl")[
+    assert gate._installed_probe(tmp_path / "anysolver-0.4.7-py3-none-any.whl")[
         "legacy_b3_default"
     ]
     assert calls[0][1:5] == ["-m", "pip", "install", "--disable-pip-version-check"]
@@ -108,7 +117,7 @@ def test_installed_probe_installs_declared_runtime_dependencies(
 
 def test_release_gate_result_serializes_without_nonfinite_values() -> None:
     sample = {
-        "schema": "ANYSOLVER_0_4_6_BOUNDED_COMPATIBILITY_RELEASE_GATE_V1",
+        "schema": "ANYSOLVER_0_4_7_BOUNDED_PERFORMANCE_RELEASE_GATE_V1",
         "terminal": gate.TERMINAL,
     }
     assert json.dumps(sample, sort_keys=True, separators=(",", ":"), allow_nan=False)

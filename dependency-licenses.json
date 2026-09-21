@@ -87,6 +87,6 @@
   ],
   "project": "ANYsolver",
   "project_licence": "MPL-2.0",
-  "release": "0.4.6",
+  "release": "0.4.7",
   "schema": "anysolver.dependency-licences-v1"
 }
