@@ -98,3 +98,10 @@ v1/v2 affine-field inconsistency, but Q4's coarse fixed-beam reach still
 locks and joint refinement has not converged. Finite collocation remains a
 different attachment law. This is exploratory reference work, not a new
 F03 candidate or G0 pass.
+
+The unregistered joint/one-sided classical continuum v4 refinement is
+preserved in `B3_GE_E4_PL_G0_F03_RESOLVED_REFINEMENT_V4.md`. Signed sine
+tip responses approach each other, but smooth loading and off-station yaw
+gaps are not yet converged under the tested joint x/y/beam refinement.
+Treat algebraic balance and small tied-station gaps as necessary, not as
+proof of physical line attachment adequacy.
