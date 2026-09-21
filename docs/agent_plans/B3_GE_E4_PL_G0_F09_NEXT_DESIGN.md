@@ -67,6 +67,14 @@ graph gate must test harder mixed/rotated/attached responses and a
 high-precision oracle rather than presuming all binary64 sparse
 factorizations fail at that ratio.
 
+The private owned member/metadata definition is now recorded in
+`B3_GE_E4_PL_G0_F09_DEFINITION_PREP_V1.md`. This closes only preparatory
+identity, frame, input-ownership and algebraic PSD questions. It does not
+settle whether an arbitrary 6×6 PSD matrix is physically realizable as a
+rigid-section mass, or how optional mass and geometric records transform
+under reversed connectivity. Those semantics must be frozen before modes,
+buckling or advertised physical B2 profile admission.
+
 Minimum matrix: well-conditioned scalar S0, old-floor-active and
 old-threshold S1, extreme S2, unequal bending/shear axes, scalar
 axis reversal and rotation; coupled generalized SPD, near-bound SPD
