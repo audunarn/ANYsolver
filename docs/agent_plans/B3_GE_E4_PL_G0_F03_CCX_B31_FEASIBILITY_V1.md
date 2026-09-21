@@ -9,7 +9,9 @@ one CPU thread, and the source-identified generator
 
 Exclusive raw root:
 `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-ccx-b31-mixed-q4-ns2-nb4-smooth-v1/`.
-Deck SHA-256 `3a9074fb6a12fa5ce4877c0b14eca14158ae5230e9da24bc6d78791eb2cc13ad`;
+Generated LF deck-content SHA-256 `3a9074fb6a12fa5ce4877c0b14eca14158ae5230e9da24bc6d78791eb2cc13ad`;
+stored CRLF `b31mixed.inp` SHA-256
+`06bdea2e4280b0c74b7830b4b30b73d84a1fb0bd188505e99cbadab2251b6cd8`;
 DAT `0ebaa1a9d8ab9c71384bce52281cd184ebc2a0c118b87449b336826830c55ea1`;
 result record `8e6eba4118a5607d42f36e3f12a135f00FDB43D795BCB3AD7FEC9465B536795B`.
 The raw stdout, stderr, status, FRD, solver files and deck are retained there.
