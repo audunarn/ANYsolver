@@ -1439,3 +1439,15 @@ its own positive graph norm and stability test. The complete
 metre/millimetre transformation, independent physical reference and
 six-channel eccentric/shear/torque derivation remain open. G1 is still
 barred by G0B.
+
+Later F03 diagnostics are indexed in
+`B3_GE_E4_PL_G0_F03_NEXT_REFERENCE_CONTRACT.md` with immutable result
+documents and raw roots. The registered two-cell yaw moment candidate
+at source `b1d3f1e` completed ten cases and forty load solves at
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-macro-yaw-v1/`.
+Its independently reviewed result is
+`B3_GE_E4_PL_G0_F03_MACRO_YAW_V1_RESULTS.md`: distinct full/native-rank
+span and accurate work, but no convincing physical-gap or signed-floor
+improvement. **F03 remains IN_PROGRESS, G0B is not PASSED, and G1
+product integration remains barred.** The registered full six-channel
+and independent physical-reference requirements are unchanged.

@@ -197,3 +197,17 @@ mode mechanism but does not identify a physical loaded instability or
 prove that alternation caused the decline. A changed *local test span*
 still needs derived work/rank arguments and direct adverse-response and
 stability falsification; mere K4 reweighting remains insufficient.
+
+The registered two-cell yaw moment experiment is adjudicated in
+`B3_GE_E4_PL_G0_F03_MACRO_YAW_V1_RESULTS.md`. All ten meshes have a
+genuinely distinct full/native-rank constraint span, exact local pairing,
+quadrature and multiplier work. It nevertheless leaves the adverse
+smooth-load gap about `.476U` at Q4 fixed-beam 8/64 and the joint
+signed KKT floor about `.035` at 16/16; its floor is slightly worse than
+K4 in every case. Independent review agrees this is a falsification,
+not a selectable local mortar or proof of instability. Stop varying
+local yaw moments solely to optimize this norm-dependent floor. The
+next F03 work needs an independently converged, physically compatible
+loaded reference **and** a derived mesh-local trace/dual norm and
+stability criterion. Do not move this candidate into production while
+those prerequisites and six-channel coupling mechanics remain open.
