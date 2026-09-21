@@ -1303,3 +1303,84 @@ rows. It explicitly found no independent elapsed or peak-memory
 attestation in the raw log, and did not accept F09, G0B or the
 assembled operator. Preserve that distinction in any later evidence
 reuse.
+
+F02-R-v1 physical membrane-footprint refinement/thickness diagnostic is
+registered before execution as a follow-up to the two-level
+g0b-f02-footprint-v1, without reopening that evidence. Use the same
+flat [-1,1]^2 Q4 or diagonal S3-V2D shell grid, E=210e9, nu=.3,
+physical in-plane stiffness channel only, outer in-plane translation
+supports and footprint node values u=(-y,x) on |x|,|y|<=.25.
+Cross each n=8,16,32 with t=.035,.07 for twelve cases. Compare
+physical shell torque sum(-y R_x+x R_y) with twice the energy and
+check free residual relative to constrained reaction, both <=1e-8.
+Require positive finite torques and ratio M(t=.07)/M(t=.035)
+within 1e-10 of 2 at every matching n/formulation, using ratio
+to the nonzero thin torque. Record footprint node counts, mesh
+sizes, all torques/energies, free/constraint residuals and
+successive refinement differences at fixed physical footprint.
+Do not require monotonic convergence or claim a continuum limit
+from these three meshes; the footprint-node Dirichlet idealization
+is itself resolution-dependent. This is an in-plane physical
+torque/thickness screen only: no E4-PL director or transverse
+shear preservation, finite-rotation attachment, drill audit,
+coupled beam reaction or F02 pass follows. A failed case remains
+evidence and is not removed by changing the support or footprint.
+Use scripts/probe_b3_ge_e4_pl_g0_f02_refinement.py from the isolated
+integration source, one thread, disabled bytecode, Python 3.14.2,
+numpy 2.4.6, scipy 1.17.1, and an exclusive cold log
+g0b-f02-refinement-v1.log under the ignored evidence root.
+Register the final runner SHA and review the case implementation
+before first execution; envelope 600 seconds/8 GiB, not a
+measured performance workload.
+
+F02-R-v1 independent pre-execution review found that the initial
+runner halved the registered absolute thickness-ratio tolerance and
+omitted the constrained-reaction denominator. Both were corrected
+before execution: compare abs(M_thick/M_thin - 2) directly with
+1e-10 and record/check finite free and constrained norms.
+The reviewer rechecked these corrections without executing the
+runner. Freeze final runner SHA-256
+e02548f4eb3c6259d0fb1036318abc5e79e718ad88e15fef3c74063bc20bc890
+before the first run.
+
+F02-R-v1 executed once with source import from the isolated worktree.
+Full raw log at C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/
+g0b-f02-refinement-v1.log has SHA-256
+a7bf86e9f2c999cdfe804b67c170af548daf87d661f8111fd085f0ae37df9e16.
+The observed launcher exit was zero; elapsed time 16.1163 s.
+All twelve Q4/S3-V2D x n=8/16/32 x t=.035/.07 cases reported
+PREPARATORY_MEMBRANE_REFINEMENT_PASS. Maximum work-relative error
+was 1.456e-15, free equilibrium relative 6.123e-15 and
+absolute thickness-ratio error 3.997e-15. At t=.07 the physical
+Q4 moments for n=8/16/32 were respectively 7.766515398e9,
+7.388116721e9 and 7.204981418e9; S3-V2D moments were
+9.213851274e9, 7.964385201e9 and 7.444489186e9. The
+successive differences decrease on these three levels, but
+neither an asymptotic limit nor shear/director behavior follows.
+Peak memory was not measured. Pending independent raw-evidence
+audit, F02 and G0B remain OPEN.
+
+Independent next-experiment review of the still-open F03 foundation is
+docs/agent_plans/B3_GE_E4_PL_G0_F03_NEXT_REVIEW_V1.md, SHA-256
+e7c5a8468dc8690984543c12e0d33b2794f1c17ccfcd4ce7a87e4655d250dec5.
+Its recommendation is F03-K0: assemble native retained B3 and physical
+Q4/S3 stiffness with an exact planar multiplier KKT on an 18-mesh,
+five-space bounded matrix, then assess work-scaled rank, inf-sup,
+patch, gaps and oscillations. This memo is a recommendation, not an
+execution registration or production selection. Before any F03-K0
+run freeze the actual native section/support/loads, candidate bases,
+metric norms and source graph as specified in the review. Full
+six-channel, 1:8 reciprocal, curved, director/shear and thickness
+qualification remains outstanding.
+
+Independent F02-R-v1 post-execution raw-evidence audit is
+docs/agent_plans/B3_GE_E4_PL_G0_F02_REFINEMENT_REVIEW_V1.md,
+SHA-256
+7fb6d174e627bd41de32dcb2bb73973e3c5994c4d082ffd499baa37887e01d92.
+It independently matched runner/log identities, all twelve rows,
+ten comparisons and four refinement values, accepting the
+**preparatory membrane-only predicates** with zero missing or failed
+cases. The reviewer retained the lack of independently measured
+peak memory and external launcher attestation. F02 and G0B remain
+OPEN until full coupled physical torque, transverse shear, finite
+rotation and attachment evidence pass.
