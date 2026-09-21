@@ -233,3 +233,16 @@ lifting for the reachable trace image (or a justified equivalent),
 besides the independent loaded target and six-channel tests. These
 finite spectra neither prove asymptotic instability nor select K4 or
 the local-dual line space. F03/G0B remain open.
+
+The new independent classical variational line comparison is adjudicated
+in `B3_GE_E4_PL_G0_F03_VARIATIONAL_LINE_V1_RESULTS.md`. All 32 cases
+passed finite algebraic work/balance/resource checks, but P0/P1 tips
+differ by 11.8–12.5% in the matched four-subcell cases; beam-subcell
+and shell-width/length changes remain material, and 26/32 sampled
+physical gap lower bounds exceed `.05 U`. Tying the root versus omitting
+that station changes smooth tips by about 22 µm. This reveals a finite
+support/line-law ambiguity in earlier collocation comparisons and
+provides **no** converged independent target. A next comparison must
+define endpoint mechanics, refine mortar as well as beam and shell,
+and verify a stable physical image norm and continuous gap. The pilot
+does not select a native test span or close F03/G0B.

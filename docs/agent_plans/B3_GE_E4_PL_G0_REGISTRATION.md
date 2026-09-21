@@ -1467,6 +1467,16 @@ dual under joint refinement. This does not select a line law or close
 F03/G0B; a justified reachable trace lifting and independent physical
 target remain prerequisites.
 
+The source-frozen independent classical variational line pilot at
+`0003a91` completed its 32-case supervised inventory at
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-variational-line-v1/`.
+The independently audited
+`B3_GE_E4_PL_G0_F03_VARIATIONAL_LINE_V1_RESULTS.md` records all
+numerical balances passing but material P0/P1, beam-subcell, shell
+length/width and root-policy response differences. It is not a
+physically converged target or native beam/shell acceptance. F03 and
+G0B remain open and G1 product integration remains barred.
+
 F05 Q4 fixed-predecessor diagnostic source/contract were frozen at
 `3314633` after independent pre-execution review. The one-time result
 at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f05-q4-v1/`
