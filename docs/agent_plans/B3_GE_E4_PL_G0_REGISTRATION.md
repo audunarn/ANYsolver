@@ -1464,3 +1464,21 @@ errors. This complements the previous S3 local check but does not admit
 the elastic-only variational adapter to plasticity or close F05/G0B.
 Mixed assembly, attachment work, lifecycle and mechanics review remain
 required; G1 remains barred.
+
+F06 loaded-chart diagnostic v1 failed during transitive test-fixture
+import before creating its evidence root; see
+`B3_GE_E4_PL_G0_F06_V1_SETUP_INCIDENT.md`. The self-contained v2 ran
+four cases; both S3 cases passed but both Q4 cases failed a conflated
+candidate-state guard. Its preserved evidence is adjudicated in
+`B3_GE_E4_PL_G0_F06_LOADED_REBASE_V2_RESULTS.md` without calling Q4
+either passing or physically defective. Reviewed v3 source at
+`b2fd0af` separates Q4's virgin elastic state from nonzero loaded
+shell response and keeps nonzero S3 layer checks. All four v3 cases
+passed the bounded numerical chart-description parity, with maximum
+registered error `3.70e-17`; independent raw-evidence audit matched
+source/artifact hashes and accepted checkpoint invariance. See
+`B3_GE_E4_PL_G0_F06_LOADED_REBASE_V3_RESULTS.md` and the immutable
+raw root `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f06-loaded-rebase-v3/`.
+**F06 remains IN_PROGRESS:** no actual coupled owner rebase, restart in
+the changed chart, multi-step state transport, or large noncommuting
+loaded path has been implemented or accepted. F03/G0B still bar G1.
