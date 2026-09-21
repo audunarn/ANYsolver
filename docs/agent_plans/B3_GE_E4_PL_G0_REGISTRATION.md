@@ -194,6 +194,29 @@ the extraction seam; the bounded contexts' global dense arrays, repeated
 model guards and 120-second deadline are not reusable production assembly.
 F08 has not yet passed a local dense/sparse parity experiment for both families.
 
+F07 bounded descriptor case, registered before execution: physical coordinates
+`(x_1,x_2)` have diagonal mass `(2,1)`; a drill-like algebraic coordinate
+`z` has zero inertia. In coordinate order `(x_1,x_2,z)`, use
+`K=[[3,-1,0.2],[-1,4,0.1],[0.2,0.1,2]]` and exact constraint
+`c=x_1-x_2=0` with one zero-inertia multiplier. Compare the finite generalized
+eigenpair of the 4x4 KKT pencil `(A,B)` (the multiplier sign convention is
+`A=[[K,C.T],[C,0]]`, `B=diag(2,1,0,0)`) to independent static elimination
+`x_1=x_2=a`, `z=-0.15a`: `lambda=(5-0.3**2/2)/3=1.6516666666666666`.
+Pass requires exactly one finite physical mode, the other three generalized
+eigenvalues infinite, relative eigenvalue error <= `1e-12`, scaled full
+equation and constraint residual <= `1e-12`, and modal physical mass > 0.
+Also check that a sparse KKT factorization of `(A-lambda_test*B)` at
+`lambda_test=1.0` yields the same finite static response as a dense solve
+within `1e-12`. This is a small design proof only, not coupled modal admission
+or verification of real beam retained-variable inertia.
+
+F07 `g0b-f07-v1` passed: one finite mode at `1.6516666666666662`, three
+infinite modes, full equation residual `2.13e-16`, constraint residual
+`3.33e-16`, physical modal mass `1.5` and sparse/dense shifted-solve error
+`0`. Raw log `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f07-v1.log`
+has SHA-256 `aa62b1ac74977c9a4747f6b4b969c0ce21f26e3bc2b505bb896ccf6f22932cd6`.
+This does not close the real mixed modal design or G0B review.
+
 For F03 reject rank loss, high-frequency interface modes, locking, failed
 patch/work checks and a norm-scaled stability measure that decays under the
 registered refinement sequence. Among passing candidates use the lowest
