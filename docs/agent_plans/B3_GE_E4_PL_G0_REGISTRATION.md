@@ -901,3 +901,310 @@ mechanics review must resolve port work, shell drill/shear, exact multiplier
 stability, plastic tangent, and massless-variable handling before G0B closes.
 No product code is edited before this initial registration. Product work
 cannot begin until the G0 mechanical choices and case contracts are frozen.
+
+## Revised B2/GE programme amendment, 21 September 2026
+
+The governing complete contract is B3_GE_E4_PL_B2_COMPLETE_PROGRAMME.md
+(revision 3). This amendment retains all original experiments, failed runs,
+logs, hashes and review dispositions. It adds the separately selected
+B2_E4_PL_FAST_LINEAR_V1 profile, B01-B18 verification families and F09-F13
+G0 proofs without relabeling any F01-F08 diagnostic as accepted mechanics.
+The original GE profile and all V01-V28, G0-G6, external, scale and consumer
+obligations remain mandatory. One complete release follows all gates; the
+attached proposal's staged subset release is not this programme's policy.
+
+After the restart, read-only Git inspection found clean local main and
+integration worktrees at be41a77a62e1cd7e1767bda6e955253af0819f91 and
+d831fd889cf06db8641a3751150224bf81d77c5d respectively. A fresh
+git ls-remote observation returned remote main
+be41a77a62e1cd7e1767bda6e955253af0819f91. This observation updates
+repository identity only; it does not qualify product or dependency artifacts.
+The ANYfileIO parser correction remains on isolated branch
+codex/b3-coupling-calculix-parser at
+d2dab8c4152d266d2d60dc47925cda6831492288. Do not treat the original
+failed CalculiX smoke or the corrected parser diagnostic as a completed
+mixed external comparison.
+
+G0A must inventory public B2 scalar/generalized sections, shear, mass,
+geometric stiffness, supported material/kinematic dispatch, historical
+nodal/interpolated MPCs, AnalysisSession and solve_linear_many baseline
+cases, costs and cache semantics. Establish same-law installed 0.4.7
+baseline time/memory for shell-dominated and beam-rich controls before
+comparing a new neutral facade. The B2 controls use existing session reuse;
+fresh-session repetition is a separately labeled user-workflow comparison.
+Freeze actual supported combinations and negative requests, including
+corotational-plus-fibre dispatch. No B2 source-only observation creates a
+qualification claim.
+
+F09 public B2 mechanics/trace; F10 new point/line/footprint reference
+linearization; F11 affine-versus-constrained-system solution and reaction;
+F12 reference-buckling attachment prestress; and F13 immutable ownership,
+batch reuse, mutation invalidation and selective recovery are G0B proofs
+before B2 production integration. Each needs its own versioned case
+registration with exact inputs, limits, physical or independent oracle,
+runner, environment, evidence path and terminal rule before first execution.
+No private physical B2 successor identity is silently substituted for the
+public B2 operator. A failure or a full-domain physical mismatch remains
+visible; revise the formulation under independent review instead of reducing
+an admitted domain merely to obtain a pass.
+
+G0A-B2 source preservation inventory v1 is frozen to the following ten
+existing test functions (14 collected instances after the existing
+parametrizations). Use the source worktree's src first on PYTHONPATH, disable
+bytecode, use the isolated Numba cache and run python -m pytest -q with
+these exact function selectors in one invocation:
+
+    tests/test_generalized_beam_sections.py::test_beam2_diagonal_generalized_section_matches_legacy_timoshenko
+    tests/test_generalized_beam_sections.py::test_generalized_section_mass_matrix_overrides_material_geometry
+    tests/test_generalized_beam_sections.py::test_generalized_von_karman_tangent_matches_central_difference
+    tests/test_generalized_beam_sections.py::test_generalized_beam2_corotational_response_routes_section_coupling
+    tests/test_generalized_beam_sections.py::test_generalized_geometric_stiffness_ignores_legacy_section_geometry
+    tests/test_generalized_beam_sections.py::test_generalized_wagner_term_requires_explicit_geometric_metadata
+    tests/test_constraint_audit.py::test_valid_eccentric_beam_shell_coupling_is_feasible
+    tests/test_analysis_session.py::test_repeated_static_session_matches_legacy_and_reuses_plans
+    tests/test_analysis_session.py::test_prescribed_value_refresh_reuses_structure_and_factorization
+    tests/test_analysis_session.py::test_mpc_structure_change_invalidates_constraint_and_factorization_plans
+
+Preserve full stdout/stderr and exit code at
+C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0a-b2-source-v1.log
+and record its SHA-256. Pass requires exit zero, 14/14 collected
+instances passing and verified import from this worktree. This is a
+source baseline and never proof of new B2 line/footprint mechanics,
+installed compatibility, runtime overhead or F09-F13.
+
+F03-P-v4 off-grid physical shell screen is registered before execution.
+Keep the accepted n=4,8,16 flat shell meshes, material E=210e9,
+nu=.3, thickness=.07, outer in-plane supports, s in [-.4,.4],
+four-point Gauss rule and four sample x offsets (-.2,+.2,+.2,-.2).
+Move both rail y coordinates from +/- .25 to +/- .23; this puts each
+rail strictly inside shell cells at all three meshes. Re-evaluate the
+four-sample proper-fit derivative at the shifted *reference* positions.
+Independently form the analytic infinitesimal normal-axis moment gradient:
+for a unit reference moment, each shell sample receives
+(+y,-x)/sum_i(x_i**2+y_i**2). Confirm its force sum is zero and its
+moment about the origin is -1 to 1e-12, and confirm agreement with the
+existing AD pose gradient to 1e-10. Intersect integration segments with
+all shell x edges shifted by each sample dx; for S3 additionally split
+at the diagonal crossing xi=eta for each fixed rail and traversed host
+cell. Use midpoint-exact integration of the resulting piecewise-linear
+shape weights as an independent load-vector check against four-point
+Gauss on each segment; relative load-vector error <=1e-12. Require at
+least one nontrivial S3 diagonal split.
+
+For each of six Q4/S3 x n cases, require finite positive compliance,
+applied force sum <=1e-8, applied moment -0.8 within 1e-8,
+outer-support force balance <=1e-8, support moment +0.8 within
+1e-8, free-equilibrium residual <=1e-8 and
+|f.u-u.K.u|/max(|f.u|,|u.K.u|,1e-30)<=1e-8.
+Report full responses, matrix nnz, number of hosts and diagonal splits.
+The exact new runner is scripts/probe_b3_ge_e4_pl_g0_physical_line_offgrid.py
+and raw evidence path is
+C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f03-physical-line-offgrid-v1.log.
+Bind its source SHA-256 and observed Python/dependency/thread settings
+before execution. This is a *preparatory shell-only* off-grid comparison,
+not full F03 or G0B acceptance. Preserve a failed result; any correction
+uses a new script/evidence version and reviewed amendment.
+
+F03-P-v4 pre-execution review/correction, with no scientific run consumed:
+an independent read-only reviewer confirmed the analytical gradient sign,
+S3 diagonal segmentation and midpoint exactness, and found three
+registration-to-runner gaps. The runner now checks the **absolute**
+Euclidean free residual, emits the complete applied-load, displacement
+and support-reaction vectors and twice the strain energy in each of the
+six JSON rows, and binds its imported helper as an input. Support balance
+and work equality from the same solved K are algebraic checks rather than
+independent constitutive oracles. The independently constructed reference
+moment gradient and midpoint-versus-Gauss load vector are the distinct
+checks of the line-load preparation. This bounded screen cannot close
+torque/shear/full-KKT or a multiplier-space decision.
+
+F03-P-v4 final preregistered source identities before first execution:
+
+    candidate script SHA-256:
+    01ecd1804ba2e5b555fb06a0c12d2e82fb73e1aad06bf04f7981bd351cac9fa9
+    imported prior physical-line helper SHA-256:
+    ea36eb4450b854382f3888510aa819cf46332290a68bc19d43620f8e0443f88c
+    imported variational-shell helper SHA-256:
+    958cbf00f62e8af87724f909b793fa24391e02e3a0a2a5d5d62f05e9f1168320
+    imported mixed-AD helper SHA-256:
+    c71cea89056ccb671d37d3169085844b7012e7fa8b7d78545dfc45fadaec105b
+
+The remaining anysolver element/mesh/mechanics source is identified by the
+unchanged integration HEAD d831fd889cf06db8641a3751150224bf81d77c5d.
+Source-only local import resolved to
+C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/src/anysolver/__init__.py.
+Observed interpreter is Python 3.14.2 (MSC v.1944 x64), numpy 2.4.6,
+scipy 1.17.1 and numba 0.65.1. Execute with PYTHONPATH equal to the
+integration root and its src, PYTHONDONTWRITEBYTECODE=1, the existing
+ignored root qualification Numba cache, OMP/OPENBLAS/MKL/NUMBA threads
+set to one. The case is serial with a 600-second/24-GiB upper resource
+envelope, isolated from timed benchmark jobs. Capture full stdout/stderr
+and observed exit without truncation in the cold registered v1 log.
+
+G0A-B2 source v1 executed the frozen ten selectors as 14 collected
+instances: **14 passed**, pytest exit zero in 2.44 seconds. Import with
+the same source path and isolated cache resolved to this integration
+worktree's src/anysolver/__init__.py. The raw log is
+C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0a-b2-source-v1.log,
+SHA-256 7b8dce0345428278ec9441ac993cef6604fe1c20454ef07923028415475e7de5.
+This establishes a source preservation baseline only; the separate
+installed baseline, performance manifest, new attachments and all F09-F13
+remain open.
+
+F03-P-v4 executed once with Python exit zero and six complete JSON rows
+at C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/
+g0b-f03-physical-line-offgrid-v1.log, SHA-256
+db9bde0fc43e913263a732202dd399722fc6673ec7cb4906e500d44e2780d2f1.
+The maximum exact-midpoint versus four-point-Gauss relative vector
+error is 4.005e-16, maximum absolute free residual 1.584e-15,
+and each applied/support moment is -0.8/+0.8 within the registered
+1e-8. The S3 rows have 8, 12 and 26 interior diagonal splits at
+n=4,8,16 respectively. Q4 compliance is
+(3.521492e-11,3.606762e-11,3.713187e-11) and S3 compliance is
+(2.729479e-11,3.319129e-11,3.626251e-11), rounded here; exact
+values and complete vectors remain in the log. All six shell-only
+predicates passed. This supplies the missing off-grid mapping screen,
+not coupled beam/shell convergence, shear, mortar stability or F03
+acceptance. Independent evidence review is recorded below.
+
+F09-S public scalar B2 physical-range witness is a bounded preregistered
+diagnostic, not the full F09 trace/section proof. Construct one public
+two-node BeamElement with length L=1, E=1, nu=0, A varying as below,
+Iy=Iz=J=1e-12, ky=kz=1 and no generalized/private B2 operator.
+For each local transverse direction y and z, fix the left end and
+all but the right transverse translation u=0.01; use the applicable
+diagonal entry of the public local 12x12 stiffness to obtain energy.
+Independently compute the ordinary no-floor Timoshenko entry
+k=12 EI/[L^3(1+12 EI/(G A k_s L^2))] with G=E/[2(1+nu)],
+and its energy 0.5 k u^2. Record both nonzero physical-scale
+energies, their relative discrepancy, positive finite values and
+the stiffness ratio for A=1e-14, 2e-12 and 1e-10, in both directions.
+The first is the shear-floor witness: expect public/physical energy
+ratio >100, showing the existing scalar public law differs materially
+from the physical formula. The controls at/above the old denominator
+floor require relative discrepancy <=1e-12. All six rows must be
+present; a missing/error row is a diagnostic failure, not permission
+to restrict the B2 admission domain. The public B2 implementation
+and old tests remain unchanged. Result disposition is
+BOUNDED_PHYSICAL_RANGE_MISMATCH if the witness and controls satisfy
+these predicates; it explicitly does not qualify the new B2 route.
+Freeze the source runner hash and environment before its first run,
+using scripts/probe_b3_ge_e4_pl_g0_b2_scalar_floor.py and cold raw
+C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f09-scalar-floor-v1.log.
+Preserve any failure/correction as a separate versioned run.
+
+F09-S pre-execution source identity is
+scripts/probe_b3_ge_e4_pl_g0_b2_scalar_floor.py SHA-256
+02d23f9d47300e4c7eef06bf3f8c8772230c1587a32997400cae86e7441a6457.
+The public B2 mechanics file src/anysolver/elements.py SHA-256 is
+32967dd7cf4ee47d2439d4833844e0c10886c2880768f218d468844d9da671b9;
+Material is sourced from src/anysolver/fe_core.py SHA-256
+c142b04c44c3b09d12b79c133c19e1c486f2ca1f5f6bf22348a3cfc5a0c897f1.
+Remaining imported code is identified by integration HEAD d831fd88.
+Use the source-root PYTHONPATH, Python 3.14.2, numpy 2.4.6,
+scipy 1.17.1, numba 0.65.1, disabled bytecode and the ignored
+qualification Numba cache. Set OMP/OPENBLAS/MKL/NUMBA threads to one.
+Preserve complete output and observed launcher exit as separate bound
+evidence; this small deterministic diagnostic has a 120-second and
+2-GiB resource envelope. Do not relabel its expected physical
+mismatch as success of the new B2 attachment profile.
+
+F03-P-v4 independent review is
+docs/agent_plans/B3_GE_E4_PL_G0_OFFGRID_REVIEW_V1.md SHA-256
+e0486f26c5c70745392c014c15ecce47f34b8c1fea3afd9ccb67b10f90c68cb7.
+The reviewer independently matched all five source/log hashes,
+recomputed physical vector sums/moments/compliance, and accepted the
+**narrow numerical predicates** for this preparatory off-grid screen.
+It also found that the raw JSON log alone does not independently
+establish launcher exit or environment. The tool response for this
+thread observed process exit zero, but no separate immutable launcher
+record was captured, so report exit/environment as observed/reported,
+not independently evidenced from that log. Preserve the log; do not
+rerun its consumed v1 request to repair provenance. F03 and G0B
+remain OPEN and no physical line law is selected.
+
+F09-S-v1 executed once with tool-observed launcher exit zero. The cold
+raw log at C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/
+g0b-f09-scalar-floor-v1.log has SHA-256
+b40a3f764622fbe45569745f16cc315cc772f299c11ef6a3b95017796cbaaf6aa.
+Its six rows meet the registered bounded diagnostic predicates and
+report BOUNDED_PHYSICAL_RANGE_MISMATCH. At A=1e-14, both transverse
+directions give public energy 4.615384615384616e-17 and independent
+no-floor Timoshenko energy 2.498958767180342e-19, a public/physical
+ratio of 184.6923076923077. At A=2e-12 and 1e-10, both controls
+match the no-floor expression exactly at printed precision. The
+launcher exit is observed in this thread's tool response; the JSON
+artifact itself does not independently attest to process exit or
+environment. This mismatch is a new-workflow mechanics issue, not a
+pass for F09 or B2 qualification. Preserve historical public B2
+semantics; a separately identified physical B2 operator or a reviewed
+correction with explicit compatibility treatment must be derived,
+tested over a declared domain, and independently reviewed before
+selecting the new B2 profile. F09 and G0B remain OPEN.
+
+G0A-B2 installed preservation v1 is registered before execution.
+Use the existing isolated installed-047 environment and the verified
+release wheel SHA-256
+99c30875ec602d26b5f1ba8b3fb858ced95acefdd01d4ecf3274470ca8bf9307.
+From the neutral C:/Github/ANYsolver/.qualification/b3-ge-e4-pl
+directory invoke its Scripts/python.exe -m pytest on the same ten
+absolute test function selectors listed above, with -c selecting a
+new neutral minimal pytest.ini and -o pythonpath= to prevent the
+integration source import. Disable bytecode, set OMP/OPENBLAS/MKL/
+NUMBA threads to one, and use the ignored qualification Numba cache.
+Use a fresh basetemp under the evidence root. Separately require an
+import-origin/version check resolving ANYsolver 0.4.7 inside the
+installed-047 Lib/site-packages; preserve its output with pytest's
+complete stdout/stderr and observed process exits at
+g0a-b2-installed-v1.log. A test command failure remains a failure,
+and the installation must not be replaced after the run. Pass only
+if origin/version match, all 14 collected instances pass, and pytest
+exits zero within 600 seconds and 24 GiB. This is installed historical
+behavior preservation, not a new physical B2 acceptance or performance
+comparison.
+
+G0A-B2 installed preservation v1 executed once: origin resolved to
+C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/installed-047/
+Lib/site-packages/anysolver/__init__.py with metadata version 0.4.7;
+the ten selectors collected **14 passed** in 1.58 seconds.
+Both origin and pytest launcher exits recorded zero. Complete combined
+output and exit markers are in g0a-b2-installed-v1.log, SHA-256
+3dcddbd430bc56a3a830c5a84327fcabc12c5ba0cae18909ec2f03709150bc74;
+the neutral pytest configuration has SHA-256
+48c34b6fa4aeccb60bac0e728b8e7f811756a9ea91bcb7a8f63816e4cecf7ecd.
+This satisfies the registered historical installed B2 preservation
+selection. It does not resolve the physical-range F09-S mismatch,
+establish a performance baseline, or qualify any new coupling route.
+
+F09 mechanics decision, programme revision 4: the original revision 3
+intent to reuse the public scalar B2 mechanics for the new linear
+attachment profile cannot establish the physical-range contract in the
+registered F09-S-v1 witness. The independent bounded review at
+docs/agent_plans/B3_GE_E4_PL_G0_B2_OPERATOR_REVIEW_V1.md
+(SHA-256 c8ef253327899efa9caddeae645d9aff7f2ee93b508b271623f23bb36941f73b)
+recomputed the mismatch and recommends a distinct opt-in physical
+linear operator, not a silent change to BeamElement or import of a
+private nonlinear adapter. The governing programme is amended to
+B2_PHYSICAL_FLEXIBILITY_LINEAR_V1 inside
+B2_E4_PL_FAST_LINEAR_V1. The original F09 public-parity wording above
+remains historical registration evidence; new F09 cases compare the
+physical force-flexibility law with independent nonzero-energy
+oracles, including shear-soft and coupled generalized data. Existing
+public B2 law and workflows receive separate installed preservation
+checks, and parity is required only where equations agree. The
+programme amendment itself, scalar/generalized equations, section
+metadata, range and negative admissions require independent review
+before a production F09 candidate execution. No F09 candidate runner
+or product operator is yet registered or executed, and F09 remains
+OPEN. This changes no B3-GE requirement or final one-release policy.
+
+Independent read-only review checked programme revision 4 against the
+F09-S result and the prior operator memo. It found the separately
+identified physical flexibility law, historical preservation,
+F09/F12/B02/B14/B15 distinctions and unchanged G0-G6 scope coherent,
+with one G1 wording clarification. After the G1 text explicitly
+excluded the old floor-bearing stiffness dispatch and scoped exact
+parity to identical laws, the reviewer confirmed its wording finding
+resolved. Reviewed final programme SHA-256 is
+a253940a817116b107dfd9eb23075bdc670ef70f53953f8c917a5abab36edacf.
+This is a contract review, not an F09 equation proof or G0B pass.
