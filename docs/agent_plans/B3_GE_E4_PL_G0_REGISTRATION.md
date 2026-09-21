@@ -662,6 +662,105 @@ one small-valued directional Hessian does not establish the full mixed block.
 Broaden force components and independent directions before claiming the
 complete vector trace derivative. No reviewer accepted F03 or G0B.
 
+F03-V **bounded full-vector station prerequisite**, registered before
+execution: use a two-cell flat and a mildly curved shell strip with x nodes
+`(-1,0,1)` and y rails `(-0.5,0.5)`, represented once by two Q4 cells and
+once by four S3-V2D triangles. The centerline native B3 has matching x
+nodes, a signed normal offset `+0.2`, and its reference geometry/frames and
+actual half-cell lift; test station `s=-0.25` with a two-rail fit at
+`s±0.2`, `y=±0.25`. Precompute host Q4 bilinear/S3 barycentric weights and
+the reference proper fit. The shell pose is the fit of four interpolated
+current sample positions, not an independent drill rotation. Beam pose uses
+the native lifted position and `U_c R0(s)` section frame. Derive `e0,A0`
+from these validated reference poses. At reference require six gaps <=
+`1e-12` and zero shell rotation gradient under a beam-normal moment; test
+finite shell force and moment balance. At a registered nonzero displacement,
+retained cell rotation and six multipliers, compare all six vector gaps and
+work to an independent SciPy rotation/Procrustes implementation at <=
+`1e-10`, first derivative to centered differences at `h=2e-6` within
+`1e-7` normalized, two directional Hessian quadratic forms at
+`h=2e-4,1e-4` within `1e-5`, and coordinate Hessian skew <= `1e-10`.
+Re-fit the transformed samples under a nontrivial common rigid motion and
+require gap/work invariance <= `1e-10`; check wrench balance about a common
+origin within `1e-8`. This is one station in one native half-cell: it does
+not select line multipliers, prove mesh convergence, shell shear, production
+assembly or material/cancellation lifecycle. An exact same-method AD
+derivative is insufficient without the independent geometric oracle.
+
+F03-V v1 geometric station probe passed four registered Q4/S3-V2D x
+flat/curved fixtures. Max reference gap was `2.35e-16`, max value/gap errors
+`2.43e-16`/`4.76e-16`, max normalized first-derivative error `3.35e-11`,
+max two-step directional Hessian error `6.06e-9`, max Hessian skew `6.78e-17`,
+max common-motion error `9.66e-16`, and max wrench imbalance `4.76e-16`.
+Shell nodal rotation gradient under the reference beam-normal moment was
+exactly zero. The test uses manually constructed Q4 bilinear and S3
+barycentric surface shape maps and the native centered beam geometry/lift;
+it does **not** evaluate shell element stiffness or a line integral. Script
+SHA-256 `f9483e66621b11a244de1134553e4efd52133f56e9f4becfadf3a906f2bc04bd`
+and log SHA-256 `9fc983c79a8946c6450fd40d52d2b4ecd2703ffcdf2dcb6fc1fb743d60debf5c`;
+the authoritative raw log
+is `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f03-vector-station-v1.log`.
+The command `python scripts/probe_b3_ge_e4_pl_g0_vector_station.py` used
+the registered root+`src` Python environment and exited zero. The full F03
+multiplier selection, mechanical shell response, thickness/shear and mesh
+convergence remain open.
+
+Independent read-only review found the vector station's native half-cell
+position, shape weights, fit derivative pullback, objective reference law,
+SciPy refit, and spatial wrench conversion consistent in the frozen cases.
+It identified a description error: the reference torque in v1 was **global
+z**, not the local normal of the curved shell, because the reference fit
+maps its point set to itself and has identity frame. V1 is kept as the
+global-z check. F03-V v2 keeps its four cases and tolerances, chooses the
+physical shell normal from the cross product of the reference axial and
+transverse rail vectors (positive upward orientation), asserts the curved
+normal differs from global z, and repeats the reference torque transfer
+test. V1/v2 contain six shell nodes, three beam nodal translations, two
+retained cell rotations and six multipliers, **not** nine native beam nodal
+rotation and 18 retained-stress variables. They exercise one station in the
+left half only; right-half/midpoint and actual constitutive shell response
+remain pending. No F03 selection or G0B acceptance.
+
+F03-V v2 passed the corrected reference-torque check in all four fixtures.
+The curved physical normal has in-plane tilt `0.05989229072794672` while the
+flat normal tilt is zero; max reference torque imbalance was `6.92e-16`.
+Other v1 geometric checks ran unchanged. Script SHA-256
+`48eed445a61816930e62b9826854089a04b0ed5b45c94f44a9d45ed966fb8ed9`,
+log SHA-256
+`1b078d78f0d99fcb26bc16933e8f9b8f76e7d35d44d66cf56b531fc9a420ecce`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f03-vector-station-v2.log`.
+The command `python scripts/probe_b3_ge_e4_pl_g0_vector_station_v2.py` used
+the same registered Python environment and exited zero. This remains a
+single-station geometry/work proof, not mechanical line qualification.
+
+Independent review confirmed the v2 normal is physically tilted and the
+original station checks still execute. It found that v2 tested only the sum
+of shell and beam reference moments, which does not establish *unit* torque
+transfer in the chosen direction. F03-V v3, registered before execution,
+keeps the four fixtures and requires at reference with a unit multiplier
+about the computed rail normal `n`: `||M_shell+n||<=1e-10`,
+`||M_beam-n||<=1e-10`, and shell force resultant <= `1e-10` for each
+topology/curvature. The v2 wrapper uses the returned frame slot only to
+select the moment axis; `e0,A0` remain tied to the proper reference fit.
+This does not add stiffness or alter the connection definition.
+
+F03-V v3 passed all four original geometry/derivative/objectivity cases plus
+the signed physical-normal torque checks. Maximum shell force resultant was
+`1.68e-16`; shell signed unit-moment discrepancy was `5.71e-16` and beam
+signed unit-moment discrepancy `1.27e-16`. Script SHA-256
+`6087d16a41a125b2b5d9add566b049fd9f990a11a796939efa32d4cda5875000`,
+log SHA-256 `e337d04b54749b3c0577ec296edd8c309ae3d5c6dfa72190a39dbb299bb54d0f`
+at `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f03-vector-station-v3.log`.
+Command `python scripts/probe_b3_ge_e4_pl_g0_vector_station_v3.py` used the
+same environment and exited zero. This verifies only a signed geometric
+moment path at one station; it does not show a physical stiffness or a stable
+exact line constraint under refinement.
+Independent read-only review confirmed the v3 signed-axis assertion and
+that all four earlier geometry checks rerun. The reviewer did not accept
+F03 or G0B: native nodal rotations/retained stress, right-half and midpoint
+traces, integrated multiplier fields, shell stiffness/directors and
+refinement are still missing.
+
 An independent read-only review found no arithmetic or interpolation defect
 in F03-S and matched its raw-data hash. It confirmed exact union-interval
 integration and L2 normalization, and cautioned that unresolved scalar trace
