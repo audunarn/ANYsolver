@@ -32,6 +32,7 @@ from probe_b3_ge_e4_pl_g0_f03_kkt import complete_inventory
 
 
 ROOT = Path(__file__).resolve().parents[1]
+EVIDENCE_ROOT = ROOT.parents[1] / '.qualification' / 'b3-ge-e4-pl'
 SOURCES = (
     'scripts/supervise_b3_ge_e4_pl_g0_f03_k0.py',
     'scripts/run_b3_ge_e4_pl_g0_f03_k0.py',
@@ -81,11 +82,16 @@ def actual_identity() -> dict:
     return {'candidate_commit':head,'source_sha256':source_hashes,
             'tracked_solver_source_tree_sha256':source_tree.hexdigest(),
             'imported_anysolver':str(imported),
+            'source_anysolver_version':anysolver.__version__,
+            'numba_cache_directory':os.environ.get('NUMBA_CACHE_DIR'),
+            'pythonpath':os.environ.get('PYTHONPATH'),
             'python_executable':str(Path(sys.executable).resolve()),
             'python_version':platform.python_version(),
             'packages':{'anysolver':importlib.metadata.version('anysolver'),
                         'numpy':numpy.__version__,
                         'scipy':scipy.__version__,
+                        'numba':importlib.metadata.version('numba'),
+                        'llvmlite':importlib.metadata.version('llvmlite'),
                         'psutil':psutil.__version__,
                         'threadpoolctl':importlib.metadata.version('threadpoolctl')},
             'loaded_threadpools':pools,
@@ -115,7 +121,7 @@ def verify_registration(registration: dict, identity: dict, evidence: Path):
         raise ValueError('invalid frozen resource limits')
     if (str(evidence) != registration.get('evidence_directory')
             or evidence.exists()
-            or evidence.parent != ROOT / '.qualification' / 'b3-ge-e4-pl'):
+            or evidence.parent != EVIDENCE_ROOT):
         raise ValueError('new exact evidence directory within registered root required')
     if any(identity['threads'][name] != '1' for name in THREADS[:4]):
         raise ValueError('F03-K0 requires four explicit one-thread settings')

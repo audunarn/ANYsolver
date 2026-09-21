@@ -1,6 +1,6 @@
 # F03-K0: native B3 / physical E4-PL exact-multiplier screen
 
-Status: **DRAFT, NOT FROZEN, NOT EXECUTED.** This is a bounded G0
+Status: **READY FOR ONE-SHOT REGISTRATION, NOT EXECUTED.** This is a bounded G0
 diagnostic to reject or prioritize multiplier spaces. It cannot select
 the production line law or close F03/G0B. The governing plan and
 registration retain the complete six-channel, curved, thinning,
@@ -356,7 +356,7 @@ its limited mechanical checks, F03 remains
 failed/open for formulation revision rather than
 advancing G1.
 
-## Freeze and execution requirements still pending
+## One-shot registration and execution boundary
 
 The restricted inventory is Q4/S3-V2D × nominal
 beam:shell half-cell ratios 2:1, 1:1, 1:2 ×
@@ -390,13 +390,46 @@ resource violation. Freeze both executor and supervisor
 hashes, and run the latter with the exact registered
 source checkout and single-thread numerical pools.
 
-Before executing, bind the exact native/shell/helper
-source hashes, reviewer findings, runner hash, dependency
-versions, supported sparse backend, hardware, one-thread
-settings, external wall and sampled RSS limits, immutable cold
-evidence path and process-exit provenance. The first
-run must not begin while this section or any
-fixture/normalization definition is unresolved.
+Before executing, create exactly one exclusive frozen JSON
+registration for `G0_F03_K0_V1`. Bind the clean integration
+commit, all runner/fixture/product source hashes plus a
+deterministic tracked ANYsolver source-tree hash, reviewer
+findings, actual import location, source and distribution
+versions, Python and numerical dependencies, loaded BLAS
+backend/threadpool records, OS/CPU/memory, all thread
+settings, and the exact new evidence directory. The
+supervisor and child verify that identity before execution;
+the child rechecks source and registration before success.
+
+The designated Windows screen uses Python 3.14.2, NumPy
+2.4.6, SciPy 1.17.1, Numba 0.65.1, llvmlite 0.47.0,
+psutil 7.2.2 and threadpoolctl 3.6.0 on the registered
+32-logical-CPU/136,522,502,144-byte host. The source
+package is 0.4.7; the existing installed distribution
+metadata is 0.4.6, explicitly recorded while importing
+`anysolver` from this exact source checkout. This is a
+**source-backed G0 diagnostic**, not installed-wheel
+qualification or a claim about the installed 0.4.6 code.
+Freeze `PYTHONPATH` to this checkout's `src` and
+`NUMBA_CACHE_DIR` to the dedicated ignored cache under
+`C:\Github\ANYsolver\.qualification\b3-ge-e4-pl`.
+Set `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`,
+`MKL_NUM_THREADS`, `NUMEXPR_NUM_THREADS` to `1` before
+import, leave other backend variables unset or set to `1`,
+and require every loaded numerical threadpool to report
+one thread. Record the actual OpenBLAS DLL identities.
+
+The exact v1 registered output directory is
+`C:\Github\ANYsolver\.qualification\b3-ge-e4-pl\f03-k0-v1`.
+Use external wall limit **7200 s** and sampled child-process
+RSS limit **8 GiB (8,589,934,592 bytes)**. These are
+resource bounds for the complete 18-mesh diagnostic,
+not a per-case performance acceptance target. The exact
+source commit and registration SHA-256 are filled only
+after the reviewed runner is committed. Preserve the
+registration, raw partial rows, stdout/stderr and supervisor
+attestation even if it aborts. Do not restart a consumed
+v1 execution to make a failed case disappear.
 Keep the native Context's actual 120-second local guard:
 construct each fixture within its bound, never tamper
 with its start time, and distinguish later sparse-solve
@@ -404,4 +437,6 @@ resource limits from operator-evaluation guard failures.
 Independent review must adjudicate the induced
 multiplier block, units and whether the restricted
 planar limit legitimately tests the selected physical
-line law. This draft has no execution authority.
+line law. The registration plus reviewed one-shot
+supervisor supplies execution authority only for this
+restricted diagnostic. It cannot close F03 or G0B.
