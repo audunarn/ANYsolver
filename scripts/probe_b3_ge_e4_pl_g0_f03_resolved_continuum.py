@@ -2,8 +2,10 @@
 
 The panel uses classical Q4 or CST plane stress. A conventional
 two-node Timoshenko beam has physical (u,v,theta) nodes, unlike the native
-retained B3 operator. Exact, finite station constraints use a four-sample
-proper-fit trace; they are not the sought continuous line mortar law.
+retained B3 operator. Its stiffness is statically exact for nodal values;
+its line load and trace use piecewise-affine nodal positions/rotations,
+not the exact interior Timoshenko fields. Finite station constraints use a
+four-sample proper-fit trace; they are not the sought continuous mortar law.
 """
 
 from __future__ import annotations
@@ -115,7 +117,7 @@ def shell_trace(s: float, n: int, n_y: int, topology: str, node_count: int):
 
 
 def gap_knots(n_shell: int, n_y: int, n_beam: int, topology: str):
-    """All piecewise-affine trace breaks; maxima occur at these stations."""
+    """All discrete affine-trace breaks; maxima occur at these stations."""
     dx = 1/n_shell
     knots = [i/n_beam for i in range(n_beam+1)]
     for ox, y in OFFSETS:
@@ -130,7 +132,7 @@ def gap_knots(n_shell: int, n_y: int, n_beam: int, topology: str):
 
 
 def load_vector(n: int, kind: str):
-    """Virtual-work-consistent line load on piecewise-linear beam positions."""
+    """Virtual-work-consistent load for the affine nodal position trace."""
     f = np.zeros(3*(n+1))
     stations, weights = np.polynomial.legendre.leggauss(8)
     for i in range(n):
@@ -187,12 +189,30 @@ def solve(topology: str, n_shell: int, n_beam: int, kind: str, n_y: int = 2):
         cb.append(b)
     c_shell, c_beam = np.vstack(cs), np.vstack(cb)
     c = sparse.csr_matrix(np.hstack((-c_shell[:, sf], c_beam[:, bf])))
-    full = sparse.bmat(((matrices, c.T), (c, None)), format='csc')
-    rhs = np.r_[loads, np.zeros(c.shape[0])]
+    # Bounded row-space diagnostic only. This is not a signed KKT inf-sup
+    # result or a production dense operation; rows are normalized after the
+    # physical one-metre moment/translation choice.
+    gram = (c@c.T).toarray()
+    row_norm = np.sqrt(np.diag(gram))
+    gram /= row_norm[:, None]*row_norm[None, :]
+    gram_spectrum = np.linalg.eigvalsh(gram)
+    row_gram_ratio = float(max(0., gram_spectrum[0])/gram_spectrum[-1])
+    # Physical coordinates use a common 1e-5 m/rad perturbation scale (the
+    # characteristic length is one metre). Force and moment both use 1e6
+    # N/Nm; consequently work is 10 J and physical multiplier=1e6*dual.
+    # This is a dual-consistent congruence, not a stiffness alteration.
+    coordinate_scale = 1e-5
+    work_scale = 10.
+    gap_scale = 1e-5
+    full = sparse.bmat(((matrices*(coordinate_scale**2/work_scale),
+                         c.T*(coordinate_scale/gap_scale)),
+                        (c*(coordinate_scale/gap_scale), None)), format='csc')
+    rhs = np.r_[loads*(coordinate_scale/work_scale), np.zeros(c.shape[0])]
     solution = spsolve(full, rhs)
     if not np.all(np.isfinite(solution)):
         raise AssertionError('singular or nonfinite coupled result')
-    u, lam = solution[:len(loads)], solution[len(loads):]
+    u = solution[:len(loads)]*coordinate_scale
+    lam = solution[len(loads):]*(work_scale/gap_scale)
     us = np.zeros(ks.shape[0])
     ub = np.zeros(kb.shape[0])
     us[sf], ub[bf] = u[:len(sf)], u[len(sf):]
@@ -200,6 +220,8 @@ def solve(topology: str, n_shell: int, n_beam: int, kind: str, n_y: int = 2):
     gap = c@u
     reaction_shell = ks@us - c_shell.T@lam - fs
     reaction_beam = kb@ub + c_beam.T@lam - fb
+    shell_trace_work = float(-lam@(c_shell@us))
+    beam_trace_work = float(lam@(c_beam@ub))
     shell_fixed = np.setdiff1d(np.arange(ks.shape[0]), sf)
     beam_fixed = np.setdiff1d(np.arange(kb.shape[0]), bf)
     shell_force = np.array([reaction_shell[shell_fixed[axis::2]].sum()
@@ -233,19 +255,25 @@ def solve(topology: str, n_shell: int, n_beam: int, kind: str, n_y: int = 2):
                            gap=[float(v) for v in beam_pose-pose]))
     return dict(topology=topology, n_shell=n_shell, n_y=n_y,
                 n_beam=n_beam, load=kind,
-                model='CLASSICAL_PLANE_STRESS_EXACT_STATIC_TIMOSHENKO_FINITE_COLLOCATION',
+                model='CLASSICAL_PLANE_STRESS_AFFINE_TRACE_TIMOSHENKO_FINITE_COLLOCATION',
+                beam_interior_idealization='EXACT_STATIC_NODAL_STIFFNESS_AFFINE_LOAD_AND_TRACE',
+                coordinate_scale=coordinate_scale, gap_scale=gap_scale,
+                work_scale_j=work_scale,
                 shell_nodes=len(points), beam_nodes=n_beam+1,
                 multiplier_rows=c.shape[0], matrix_nnz=full.nnz,
+                row_normalized_constraint_gram_eigen_ratio=row_gram_ratio,
                 load_y_total=float(fb[1::3].sum()),
                 load_moment_z_nm=float(external_moment),
                 support_force_n=[float(v) for v in support_force],
                 support_moment_z_nm=float(support_moment),
                 shell_energy_j=se, beam_energy_j=be, external_work_j=work,
+                shell_trace_work_j=shell_trace_work,
+                beam_trace_work_j=beam_trace_work,
                 energy_balance_relative=float(abs(work-2*(se+be))/max(abs(work), 1)),
                 equilibrium_relative=float(np.linalg.norm(eq)/max(np.linalg.norm(loads), 1)),
                 constraint_absolute=float(np.max(np.abs(gap))),
-                certified_gap_knots=len(gap_knots(n_shell, n_y, n_beam, topology)),
-                certified_max_gap_components=[float(v) for v in continuous_gap],
+                discrete_gap_knots=len(gap_knots(n_shell, n_y, n_beam, topology)),
+                discrete_affine_max_gap_components=[float(v) for v in continuous_gap],
                 station_probes=probes)
 
 

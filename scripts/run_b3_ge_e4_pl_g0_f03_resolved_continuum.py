@@ -29,9 +29,11 @@ def main():
                     numpy=numpy.__version__, scipy=scipy.__version__,
                     topology=('Q4', 'S3-V2D'), n_shell=(2, 4, 8, 16),
                     n_y=('fixed_2', 'joint_2n_shell'), n_beam='2n_shell',
+                    fixed_beam_reach=dict(n_beam=8, n_shell=(1, 8, 64), n_y=2),
                     loads=('smooth', 'sine'),
                     limitations=('classical rather than E4 Q4',
                                  'conventional rather than native retained beam',
+                                 'exact nodal beam stiffness with affine load/trace',
                                  'station collocation rather than line mortar',
                                  'no fully converged continuum target'))
     (args.root/'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True)+'\n',
@@ -47,6 +49,12 @@ def main():
                         stream.write(json.dumps(result, sort_keys=True, allow_nan=False)+'\n')
                         stream.flush()
                         count += 1
+            for n in manifest['fixed_beam_reach']['n_shell']:
+                for load in manifest['loads']:
+                    result = solve(topology, n, 8, load, 2)
+                    stream.write(json.dumps(result, sort_keys=True, allow_nan=False)+'\n')
+                    stream.flush()
+                    count += 1
     digest = hashlib.sha256((args.root/'records.jsonl').read_bytes()).hexdigest()
     result = dict(records=count, records_sha256=digest, root=str(args.root),
                   status='EXPLORATORY_NOT_QUALIFIED')
