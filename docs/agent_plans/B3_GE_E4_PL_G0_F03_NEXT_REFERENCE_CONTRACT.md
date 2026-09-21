@@ -82,3 +82,11 @@ preprocessing, as preserved in `B3_GE_E4_PL_G0_F03_CCX_MIXED_FAILURE_V1.md`.
 It produced no displacement or coupling evidence. A new external route
 requires its own corrected executable identity or a distinct validated
 idealization; the failed source/deck/result must not be overwritten.
+
+The independent classical-membrane/Timoshenko exploratory response and
+its v1/v2 numerical limitations are preserved in
+`B3_GE_E4_PL_G0_F03_RESOLVED_CONTINUUM_SCREEN_V2.md`. A scaled collocation
+solve can have excellent balance and full constraint row rank while locking
+the coarse Q4 physical response almost completely. Its affine beam load
+and trace are not the exact interior field. The continuum-reference and
+signed-stability prerequisites above remain open.
