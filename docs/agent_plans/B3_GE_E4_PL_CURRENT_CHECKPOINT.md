@@ -10,6 +10,7 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 - Latest bounded assembly/probe source: `66b6e109516296bbf8c4ff4155f2aa96c3701d1a`.
 - Latest bounded sparse-numerical/recovery source: `ade088e99e3108969baf70b27e7f7cc450351229`.
 - Latest factor/integration connection source: `126a4eb1122d4b36b7651d54d73c4b32fa139ead`.
+- Latest sparse state/rank source: `7b017d08c29aaf4845e2fb71967d8b1bfb3859ec`.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -144,6 +145,18 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
     report `B3_GE_E4_PL_G0_F03_FACTOR_INTEGRATION_PROOFS_V1_RESULTS.md`.
     Closed 22-file proof root `f03-factor-integration-proof-v1`, inventory SHA:
     `64ae0becbe72c8a949233e8be3c127c75697287f18f68a09e23476accab93868`.
+14. Sparse physical/scaled state binding and root/free-slope rank at
+    `7b017d08`: 30 distinct synthetic tests pass (state12, rank16,
+    connection2), with independent final review closed. Full H/b bit parity,
+    exact D interval and saved physical/action bounds are checked. Exact
+    Gram/Sylvester enclosures certify port rank without adding a slope
+    constraint or numerical eigensolve. A failed saved action now has an
+    explicit FAILED label; the original misleading label and four initial
+    rank test-fixture failures are recorded. Five raw logs remain preserved.
+    No physical reference equilibrium or native element evaluation ran.
+    See `B3_GE_E4_PL_G0_F03_STATE_RANK_PROOFS_V1_RESULTS.md`. Closed root
+    `f03-state-rank-proof-v1` has 14 bound files plus inventory, SHA:
+    `31bafde0e254091e46f538ab525e9d00c425322633b58c93dbe0fd9ec5a49d6c`.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -215,14 +228,15 @@ Their raw archive is `.qualification/b3-ge-e4-pl/f03-local-operator-proof-v1`
 (39 bound files plus inventory); it is closed and must not be extended.
 The sparse eliminated-primal assembly, exact nested transfer and bounded
 manufactured work identities are now implemented and independently reviewed.
-The latest closed proof root is `f03-factor-integration-proof-v1` (22 bound files
+The latest closed proof root is `f03-state-rank-proof-v1` (14 bound files
 plus inventory); it must not be extended. The scaled candidate solve,
 streamed interval condition certificate, supplied-factor sparse positivity
 proof and complete polynomial/cosine work recovery are now implemented and
 reviewed on synthetic/manufactured inputs. A bounded actual sparse factor
 producer and integration perturbation verification are now connected too.
-The exact next action is physical scaling/state binding, three-root/free-slope
-rank admission, separate shell/beam integration, stationarity and physical
+Physical scaling/state binding and three-root/free-slope rank admission are
+implemented and independently reviewed on synthetic inputs. The exact next
+action is trace/operator binding, separate shell/beam integration, stationarity and physical
 work/reaction checks, followed by saved archives and independent adjudication.
 Then complete and independently review a frozen numerical protocol and new
 registration. No scientific case family or certificate method is selected.
@@ -256,7 +270,7 @@ can be pessimistic. Compare/select before registration, never as a fallback
 after a failed scientific bound. No automatic uniform/global-degree run.
 
 No scientific process is active. Both specialists finished the current
-factor/integration implementation and independent reviews. Parent owns the
+state/rank implementation and independent reviews. Parent owns the
 next physical numerical-admission and saved-protocol work. The accepted proofs grant no scientific execution
 authority. Current sources and tests are committed; the results/checkpoint
 commit preserves the restart boundary.
