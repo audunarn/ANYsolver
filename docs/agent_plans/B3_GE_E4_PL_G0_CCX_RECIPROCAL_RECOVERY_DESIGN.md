@@ -104,3 +104,23 @@ tip. Verify that the printed displacement at the expanded beam tip is work
 conjugate to the applied `*CLOAD`. Only then register a new paired support
 wrench series. Neither failed nor passed exploratory smoke evidence qualifies
 E01/E02 or a native B3-GE/E4-PL comparison.
+
+A new source-frozen, one-case comparator then split the two equal isotropic
+square B31 sections with orthogonal local directions at node 47. This creates
+one rotational knot while preserving the physical square-section geometry;
+its expanded joint constraints are **new**, so it cannot retroactively repair
+the failed comparator. The registered rigid-x patch passed: one increment,
+exactly one knot at node 47, and all 48 original-node translations match
+the rigid field with maximum absolute component error `1.893939e-18 m`
+against the predeclared `5e-11 m` limit. The independent raw-file review
+found no warnings or integrity failures. This qualifies only that narrow
+kinematic patch. The next admission test must check all rigid directions and
+the work-conjugate tip displacement before another full wrench series.
+
+In the exact 2.23 `gen3dforc.f`, lines 879–892, an unknotted B31 tip's
+translational load generates the constraint `sum(U_corner) - 4 U_tip = 0`.
+The source archive member SHA-256 is
+`4585a7c01eb4b20667a99a5778154e4286c1fdd83d17ae8026d45598947ce7f5`.
+A separately registered nonrigid support-motion case should compare the
+expanded corner mean to the printed tip displacement and the load's
+virtual work. The rigid patch alone cannot discriminate this mapping.
