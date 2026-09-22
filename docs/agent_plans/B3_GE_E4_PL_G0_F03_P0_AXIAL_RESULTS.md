@@ -14,6 +14,11 @@ Raw cases and their receipt are at
 (receipt SHA-256 `c8e516834b6822edd787a886e27be80690978b88c30db9dfd820f1609d697c8c`).
 The previous classical P1 axial patch adjudication is separately preserved
 with SHA-256 `290621987a79011f0607d7b771f8f323b7cce9d0a04090077ac35ca43ac0436f`.
+The read-only independent evidence review found no identity or registered
+terminal blocker; it did not reassemble or rerun the matrices. Its decision
+is recorded at
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-p0-axial-adjudication-v1/adjudication.json`
+(SHA-256 `93a4a94ef52cc2761dedc442de8486e3f8d909a505a864025e3e70a33b5e65bd`).
 
 | Topology | Nm=8 beta bracket | Nm=16 beta bracket | Nm=32 beta bracket |
 |---|---:|---:|---:|
