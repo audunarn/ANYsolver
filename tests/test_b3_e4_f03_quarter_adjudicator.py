@@ -196,3 +196,12 @@ def test_case_receipt_binds_all_six_raw_files(tmp_path):
         with pytest.raises(AssertionError):
             adjudicator._checked_case(registration,tmp_path,case)
         (root/filename).write_bytes(original)
+
+
+def test_case_check_rejects_changed_adjudicator_before_reading_case(tmp_path):
+    registration=tmp_path/'registration.json'
+    registration.write_text(json.dumps(dict(adjudicator_sha256='wrong')),
+                            encoding='utf-8')
+    with pytest.raises(AssertionError):
+        adjudicator.check_case(registration,tmp_path,
+                               adjudicator.case_name(*adjudicator.CASES[0]))

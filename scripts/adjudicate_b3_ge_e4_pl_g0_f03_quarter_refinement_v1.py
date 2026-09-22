@@ -450,6 +450,7 @@ def _checked_case(registration: Path, evidence: Path, case: tuple) -> dict:
 
 def check_case(registration: Path, evidence: Path, name: str) -> dict:
     registered=json.loads(registration.read_text(encoding='utf-8'))
+    assert registered['adjudicator_sha256']==_sha(Path(__file__))
     mapping={case_name(*case):case for case in CASES}
     if name not in mapping or registered['cases']!=list(mapping):
         raise ValueError('unregistered case check request')
