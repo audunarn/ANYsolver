@@ -6,6 +6,7 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 
 - Worktree: `C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling`.
 - Branch: `codex/b3-ge-e4-pl-integration`.
+- Latest bounded operator source: `7cb7b77491ef3343b72a231a6bb443e0474ddec1`.
 - Last executed source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -93,6 +94,18 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
    All 46 integrated checks passed; the 34/28 final affected checks also
    passed (overlapping inventories). All 13 raw development logs, including
    initial failures, and pre/post reviews are sealed with the evidence.
+10. Local classical operator foundation at `7cb7b774`: 79 distinct current
+    synthetic checks pass across final affected groups (30 foundation,
+    19 corrected norm/cross-method, 30 unchanged Decimal oracle). Independent
+    reviews accepted the bounded foundation and separately authored oracle.
+    The earlier 75-pass run missed Duffy-weight underflow; the independent
+    probe, two red regression tests and all fixes are preserved. Exact pad
+    moments, membrane patches, C0 trace continuity, free root slope, shared
+    ownership/resource guards and full piecewise Green norm are implemented.
+    Zero new equilibria/native operations; physical HOLD remains. See
+    `B3_GE_E4_PL_G0_F03_LOCAL_OPERATOR_PROOFS_V1_RESULTS.md`. New immutable
+    39-file proof inventory SHA:
+    `b26d4595f6b883d76ad9f2c66cb04f822e3cd8c9b97997ac2cce1f30c870206a`.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -158,22 +171,33 @@ The local-reference mechanics foundation and its limitations passed
 independent review. Draft SHA:
 `36ce310a99df390fa95c83fd2e346315fb46cc795665f6e5de1ba747ddb4bc3b`;
 see `B3_GE_E4_PL_G0_F03_LOCAL_REFERENCE_DESIGN_REVIEW.md`.
-The exact next action is a concrete implementation/numerical contract for
-`B3_GE_E4_PL_G0_F03_LOCAL_REFERENCE_DESIGN_DRAFT.md`, followed by bounded
-synthetic operator proofs before any new scientific registration.
+The operator contract and bounded synthetic proofs are now accepted; see
+`B3_GE_E4_PL_G0_F03_LOCAL_OPERATOR_CONTRACT.md` and its results report.
+Their raw archive is `.qualification/b3-ge-e4-pl/f03-local-operator-proof-v1`
+(39 bound files plus inventory); it is closed and must not be extended.
+The exact next action is the eliminated-primal shell/trace-beam bilinear
+form and three-root KKT assembly, with manufactured adjoint-work,
+stress-jump and support-reaction identities checked independently. Then
+complete the numerical protocol and registration for a declared conforming
+nested reference family. No scientific case family is yet frozen.
 Preserve the same physical operator, held J/gamma, three root
 constraints/free slope, signed reaction and full-functional criteria.
 Mesh/degree inventories, integration, conditioning, resource and convergence
 gates remain to be resolved before any new scientific registration. In
-particular: preserve positive exact intervals whose endpoints collapse in
-binary64, prove hanging-node conformity, qualify the complete piecewise
-functional norm, and bound footprint incidence/nnz/fill/workspace growth.
+particular: preserve the implemented positive exact intervals whose endpoints
+collapse in binary64, retain shared tensor conformity, and bound actual
+footprint incidence/nnz/fill/workspace growth. Hanging nodes remain outside
+the new helper's scope and require their own conformity proof if introduced.
+The complete piecewise norm is synthetically checked; its input bounds and
+active normal-weight guard must remain part of numerical admission.
 Piecewise displacement fields need internal stress-jump terms; this must
 be derived and checked independently rather than reusing the smooth-only
 residual identity. No automatic global-degree or uniform-refinement run.
 
-No scientific process is active. Both specialists finished the spatial
-work and local-reference design review. Parent owns the next concrete
-contract and integration. The design review grants no execution authority.
+No scientific process is active. Both specialists finished their independent
+operator/contract reviews. Parent owns the next bounded assembly and
+numerical protocol. The accepted proofs grant no scientific execution
+authority. Current sources and tests are committed; the results/checkpoint
+commit preserves the restart boundary.
 All consumed diagnostic sources and completed inventories stay frozen.
 No release approval is being exercised. Keep main unchanged during G0.
