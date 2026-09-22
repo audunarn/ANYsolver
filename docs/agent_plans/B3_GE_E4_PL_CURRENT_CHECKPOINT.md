@@ -1,9 +1,9 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
 **RESUMED — 22 September 2026.** The user resumed from
-`B3_GE_E4_PL_PAUSE_20260922_SIGNED_NORM.md`. The two recorded red signed-norm
-regressions are fixed and the affected local suite passes; independent review
-and immutable evidence are still required before this component is accepted.
+`B3_GE_E4_PL_PAUSE_20260922_SIGNED_NORM.md`. The signed-norm component is now
+implemented, independently reviewed and closed with corrected immutable
+evidence. Complete saved-recovery composition is the active next work.
 
 22 September 2026. User authorized continued implementation with increased
 effort. The active goal remains the complete programme; **G0B is open and
@@ -204,6 +204,15 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
     `B3_GE_E4_PL_G0_F03_SAVED_RECOVERY_COMPONENT_PROOFS_V1_RESULTS.md`.
     Closed root `f03-saved-recovery-component-proof-v1` has18 bound files plus
     inventory, SHA `3d738d67a08da8dacfe51c8dc6d23756de0625329f3e0f3c304675279a78e856`.
+18. Signed raw norm observation and saved 48/64 binding at `8bb018f7`: 62
+    affected tests pass, including literal finite-channel total overflow at
+    both orders. The historical strict wrapper matched130/130 successful
+    dictionaries bitwise and five historical failure contracts exactly.
+    Independent source/mechanics and corrected-archive review found no issue.
+    The initial provenance-deficient v1 archive is preserved as FAILED_EVIDENCE;
+    corrected closed root `f03-signed-norm-proof-v2` has19 bound files plus
+    inventory, SHA `6f01c6fc91fd16034c2813ba77be637db1e6278de582273e9025eb9bc1e35926`.
+    See `B3_GE_E4_PL_G0_F03_SIGNED_NORM_COMPONENT_PROOF_V2_RESULTS.md`.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -295,11 +304,10 @@ The original recovery's unavailable-P1 status remains unchanged; the separate
 helper reports its own family. Owned density/cosine/atom binding and partition,
 total/line-only bands, saved support routes, raw shift checks and the complete
 local scaled virtual-work inventory are now independently reviewed components.
-The exact next action is the signed raw norm observation seam in
-`B3_GE_E4_PL_G0_F03_NORM_OBSERVATION_NEXT_CONTRACT.md`, preserving finite peer
-channels, negative values and the historical strict wrapper's arithmetic and
-failures. Then bind saved48/64 norm/validity observations and compose all
-numerical/interface/work/norm components over one owned saved snapshot.
+The signed raw norm observation seam and saved48/64 binding are now complete.
+The exact next action is to compose all numerical/interface/work/norm
+components over one owned saved q/eta snapshot, without treating any component
+status as cached authority or repeating a scientific equilibrium solve.
 Full protocol remains controlled by
 `B3_GE_E4_PL_G0_F03_RECOVERY_ADMISSION_NEXT_CONTRACT.md`. Any independently
 archived lift root/tip observations need explicit binding; present SavedWork
@@ -340,10 +348,9 @@ All-column certification has quadratic evidence/work; triangular comparison
 can be pessimistic. Compare/select before registration, never as a fallback
 after a failed scientific bound. No automatic uniform/global-degree run.
 
-No scientific process is active. Both specialists finished the current
-saved interface/work implementation and independent reviews. Parent owns the
-next signed norm observation seam, complete saved-recovery composition and
-saved-protocol work. The accepted proofs grant no scientific execution
+No scientific process is active. The saved interface/work/norm component
+implementations and independent reviews are complete. Parent owns complete
+saved-recovery composition and saved-protocol work. The accepted proofs grant no scientific execution
 authority. Current sources and tests are committed; the results/checkpoint
 commit preserves the restart boundary.
 All consumed diagnostic sources and completed inventories stay frozen.
