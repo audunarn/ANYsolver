@@ -1,5 +1,10 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**RESUMED — 22 September 2026.** The user resumed from
+`B3_GE_E4_PL_PAUSE_20260922_SIGNED_NORM.md`. The two recorded red signed-norm
+regressions are fixed and the affected local suite passes; independent review
+and immutable evidence are still required before this component is accepted.
+
 22 September 2026. User authorized continued implementation with increased
 effort. The active goal remains the complete programme; **G0B is open and
 G1 is barred**. This is a continuity checkpoint, not a pause or completion.

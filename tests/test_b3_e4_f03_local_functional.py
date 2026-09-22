@@ -2,6 +2,7 @@
 from fractions import Fraction
 import math
 
+import numpy as np
 import pytest
 
 from scripts import _b3_e4_f03_local_functional as f
@@ -26,6 +27,25 @@ def _one_channel(polys,cuts=(Z,O),channel=0,atoms=None,cosine=(Z,Z,Z)):
         row[channel]=tuple(poly)
         rows.append(tuple(row))
     return _functional(cuts,tuple(rows),cosine,atoms)
+
+
+def _all_channels():
+    rows=(((O,Z,Z,Z,Z,Z),)*3,)
+    return _functional(polys=rows)
+
+
+def _assert_bitwise_equal(first,second):
+    if isinstance(first,float):
+        assert isinstance(second,float)
+        assert np.float64(first).tobytes()==np.float64(second).tobytes()
+    elif isinstance(first,(tuple,list)):
+        assert type(second) is type(first) and len(second)==len(first)
+        for a,b in zip(first,second):_assert_bitwise_equal(a,b)
+    elif isinstance(first,dict):
+        assert second.keys()==first.keys()
+        for key in first:_assert_bitwise_equal(first[key],second[key])
+    else:
+        assert first==second
 
 
 def test_constant_riesz_and_free_endpoint_green_atoms():
@@ -191,6 +211,96 @@ def test_exact_union_max_4095_intervals_without_input_cap_bypass():
     assert result.cuts[0]==Z and result.cuts[-1]==O
     with pytest.raises(ValueError,match='inventory'):
         f.Functional(result.cuts,result.coefficients,result.cosine,result.atoms)
+
+
+@pytest.mark.parametrize('order',(48,64))
+def test_successful_strict_wrapper_is_bitwise_raw_legacy_projection(order):
+    value=_functional(
+        polys=(((Fraction(2),Fraction(3),Fraction(-1),Z,Z,Z),
+                (O,Z,Z,Z,Z,Z),(Z,Fraction(2),Z,Z,Z,Z)),),
+        cosine=(Fraction(1,4),Fraction(-1,5),Fraction(1,7)),
+        atoms=((Fraction(5),Z,Fraction(2)),(Z,Fraction(-3),Fraction(4))))
+    raw=f.norm_observation_at_order(value,order)
+    keys=('order','squared_norm','channels','diagonal','offdiagonal',
+          'atom_cross','atom_gram','sum_abs_terms','cancellation_ratio',
+          'exact_zero','intervals')
+    expected={key:raw[key] for key in keys}
+    _assert_bitwise_equal(f.norm_at_order(value,order),expected)
+
+
+def test_raw_negative_channel_remains_visible_and_strict_wrapper_rejects(monkeypatch):
+    original=f._observed_fsum
+    def injected(values,stage,reason,channel=None):
+        if stage=='channel_total' and channel==0:return -1.
+        return original(values,stage,reason,channel)
+    monkeypatch.setattr(f,'_observed_fsum',injected)
+    raw=f.norm_observation_at_order(_all_channels())
+    assert raw['channels'][0]==-1. and raw['squared_norm']>0
+    assert raw['channel_finite']==(True,True,True)
+    assert raw['channel_nonnegative']==(False,True,True)
+    assert not raw['admissible']
+    assert any(x['stage']=='channel_nonnegative' and x['channel']==0
+               for x in raw['failures'])
+    with pytest.raises(ValueError,match='negative Green channel'):
+        f.norm_at_order(_all_channels())
+
+
+def test_raw_unavailable_channel_preserves_completed_finite_peers(monkeypatch):
+    original=f._observed_fsum
+    def injected(values,stage,reason,channel=None):
+        if stage=='density_interaction' and channel==1:
+            raise f._ObservationArithmetic(stage,'injected overflow',channel)
+        return original(values,stage,reason,channel)
+    monkeypatch.setattr(f,'_observed_fsum',injected)
+    raw=f.norm_observation_at_order(_all_channels())
+    assert raw['channels'][0] is not None and raw['channels'][2] is not None
+    assert raw['channels'][1] is None and raw['squared_norm'] is None
+    assert raw['channel_finite']==(True,False,True)
+    assert raw['failures']==({'stage':'density_interaction',
+                              'reason':'injected overflow','channel':1},)
+    with pytest.raises(ValueError,match='injected overflow'):
+        f.norm_at_order(_all_channels())
+
+
+def test_raw_total_overflow_preserves_all_finite_channels(monkeypatch):
+    original=f._observed_fsum
+    def injected(values,stage,reason,channel=None):
+        if stage=='total_sum':
+            raise f._ObservationArithmetic(stage,'injected total overflow',channel)
+        return original(values,stage,reason,channel)
+    monkeypatch.setattr(f,'_observed_fsum',injected)
+    raw=f.norm_observation_at_order(_all_channels())
+    assert all(value is not None and math.isfinite(value) for value in raw['channels'])
+    assert raw['squared_norm'] is None and not raw['total_finite']
+    assert raw['failures'][-1]=={'stage':'total_sum',
+                                'reason':'injected total overflow','channel':None}
+    with pytest.raises(ValueError,match='injected total overflow'):
+        f.norm_at_order(_all_channels())
+
+
+def test_raw_nonzero_exact_channel_computed_as_zero_is_rejected(monkeypatch):
+    original=f._observed_fsum
+    def injected(values,stage,reason,channel=None):
+        if stage=='channel_total' and channel==0:return 0.
+        return original(values,stage,reason,channel)
+    monkeypatch.setattr(f,'_observed_fsum',injected)
+    raw=f.norm_observation_at_order(_one_channel(((O,Z,Z,Z,Z,Z),)))
+    assert raw['channels']==[0.,0.,0.]
+    assert raw['channel_nonzero_valid']==(False,True,True)
+    assert not raw['admissible']
+    with pytest.raises(ValueError,match='nonzero exact channel has zero'):
+        f.norm_at_order(_one_channel(((O,Z,Z,Z,Z,Z),)))
+
+
+def test_raw_observer_does_not_hide_programming_errors(monkeypatch):
+    original=f._observed_fsum
+    def injected(values,stage,reason,channel=None):
+        if stage=='density_interaction' and channel==0:
+            raise RuntimeError('programming failure')
+        return original(values,stage,reason,channel)
+    monkeypatch.setattr(f,'_observed_fsum',injected)
+    with pytest.raises(RuntimeError,match='programming failure'):
+        f.norm_observation_at_order(_all_channels())
 
 
 @pytest.mark.parametrize('limit',('individual','aggregate'))

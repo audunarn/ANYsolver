@@ -210,11 +210,42 @@ def _checked_float(value: Fraction,name: str) -> float:
     return result
 
 
-def norm_at_order(functional: Functional,order: int=48) -> dict:
-    """Full-H1 Green squared norm and signed contributions at fixed order.
+class _ObservationArithmetic(ArithmeticError):
+    """An identified floating observation failed after valid input admission."""
 
-    Channels are force-conjugate after physical moment/ell conversion.
-    No value is clipped, symmetrized or renamed as an FE approximation.
+    def __init__(self,stage: str,reason: str,channel: int|None=None):
+        super().__init__(reason)
+        self.stage=stage
+        self.reason=reason
+        self.channel=channel
+
+
+def _observed_fsum(values,stage: str,reason: str,channel: int|None=None) -> float:
+    """Sum one admitted observation without hiding an unavailable result."""
+    terms=tuple(float(value) for value in values)
+    if not all(math.isfinite(value) for value in terms):
+        raise _ObservationArithmetic(stage,reason,channel)
+    try:
+        result=math.fsum(terms)
+    except OverflowError as exc:
+        raise _ObservationArithmetic(stage,reason,channel) from exc
+    # The finite precheck deliberately excludes fsum's mixed-infinity
+    # ValueError.  Such a ValueError therefore remains an unexpected error.
+    if not math.isfinite(result):
+        raise _ObservationArithmetic(stage,reason,channel)
+    return result
+
+
+def _failure(exc: _ObservationArithmetic) -> dict:
+    return {'stage':exc.stage,'reason':exc.reason,'channel':exc.channel}
+
+
+def norm_observation_at_order(functional: Functional,order: int=48) -> dict:
+    """Raw signed full-H1 Green observation at one fixed quadrature order.
+
+    Valid input/geometry errors still raise.  Identified floating failures are
+    reported per channel so completed peer measurements remain available.
+    Missing numerical values are ``None``; no replacement value is invented.
     """
     if not isinstance(functional,Functional) or type(order) is not int or order not in (48,64):
         raise ValueError('functional and fixed Green quadrature order required')
@@ -224,7 +255,12 @@ def norm_at_order(functional: Functional,order: int=48) -> dict:
                 'diagonal':zeros.copy(),'offdiagonal':zeros.copy(),
                 'atom_cross':zeros.copy(),'atom_gram':zeros.copy(),
                 'sum_abs_terms':zeros.copy(),'cancellation_ratio':zeros.copy(),
-                'exact_zero':True,'intervals':len(functional.coefficients)}
+                'exact_zero':True,'intervals':len(functional.coefficients),
+                'channel_finite':(True,True,True),
+                'channel_nonnegative':(True,True,True),
+                'channel_nonzero_valid':(True,True,True),
+                'total_finite':True,'total_nonnegative':True,
+                'admissible':True,'failures':()}
     nodes,weights=leggauss(order)
     u=(nodes+1)/2;w=weights/2
     uv=u[:,None]*u[None,:]
@@ -233,6 +269,8 @@ def norm_at_order(functional: Functional,order: int=48) -> dict:
     offdiag=[[] for _ in range(3)]
     ps=[[] for _ in range(3)];qs=[[] for _ in range(3)]
     prefixes=[_Compensated() for _ in range(3)]
+    channel_available=[True]*3
+    failures=[]
     scale=(ONE,ONE,ONE/ELL)
     for a_exact,b_exact,rows in zip(functional.cuts,functional.cuts[1:],
                                     functional.coefficients):
@@ -254,60 +292,145 @@ def norm_at_order(functional: Functional,order: int=48) -> dict:
         if active and np.any(jac<np.finfo(np.float64).tiny):
             raise ValueError('active Duffy weighted Jacobian underflows or is subnormal')
         for channel in range(3):
+            if not channel_available[channel]:
+                continue
             amp=functional.cosine[channel]*scale[channel]
             poly=tuple(v*scale[channel] for v in rows[channel])
             fu=_density(poly,amp,a,delta,u)
             fuv=_density(poly,amp,a,delta,uv)
             if not np.all(np.isfinite(fu)) or not np.all(np.isfinite(fuv)):
-                raise ValueError('nonfinite local density')
-            p_i=delta*math.fsum((float(z) for z in w*fu*p_kernel))
-            q_i=delta*math.fsum((float(z) for z in w*fu*q_kernel))
-            d_i=math.fsum(float(z) for z in
-                          (jac*green*fu[:,None]*fuv).flat)
-            o_i=2*q_i*prefixes[channel].value/sinh1
-            if not all(math.isfinite(v) for v in (p_i,q_i,d_i,o_i)):
-                raise ValueError('nonfinite Green density interaction')
+                exc=_ObservationArithmetic('density_evaluation',
+                                           'nonfinite local density',channel)
+                failures.append(_failure(exc));channel_available[channel]=False
+                continue
+            try:
+                p_i=delta*_observed_fsum(w*fu*p_kernel,'density_interaction',
+                                         'nonfinite Green density interaction',channel)
+                q_i=delta*_observed_fsum(w*fu*q_kernel,'density_interaction',
+                                         'nonfinite Green density interaction',channel)
+                d_i=_observed_fsum((jac*green*fu[:,None]*fuv).flat,
+                                   'density_interaction',
+                                   'nonfinite Green density interaction',channel)
+                o_i=2*q_i*prefixes[channel].value/sinh1
+                if not all(math.isfinite(v) for v in (p_i,q_i,d_i,o_i)):
+                    raise _ObservationArithmetic('density_interaction',
+                                                 'nonfinite Green density interaction',
+                                                 channel)
+            except _ObservationArithmetic as exc:
+                failures.append(_failure(exc));channel_available[channel]=False
+                continue
             diagonal[channel].append(d_i);offdiag[channel].append(o_i)
             ps[channel].append(p_i);qs[channel].append(q_i)
             prefixes[channel].add(p_i)
-    diag=[];off=[];cross=[];gram=[];totals=[];abs_terms=[];ratios=[]
+            if not math.isfinite(prefixes[channel].value):
+                exc=_ObservationArithmetic('density_interaction',
+                                           'nonfinite Green density interaction',channel)
+                failures.append(_failure(exc));channel_available[channel]=False
+    diag=[None]*3;off=[None]*3;cross=[None]*3;gram=[None]*3
+    totals=[None]*3;abs_terms=[None]*3;ratios=[None]*3
+    channel_finite=[False]*3
+    channel_nonnegative=[False]*3
+    channel_nonzero_valid=[False]*3
     for channel in range(3):
+        if not channel_available[channel]:
+            continue
         root=_checked_float(functional.atoms[0][channel]*scale[channel],
                             'root atom')
         tip=_checked_float(functional.atoms[1][channel]*scale[channel],
                            'tip atom')
         if (root!=0 and root*root==0) or (tip!=0 and tip*tip==0):
-            raise ValueError('endpoint Green atom square underflows binary64')
-        p=math.fsum(ps[channel]);q=math.fsum(qs[channel])
-        d=math.fsum(diagonal[channel]);o=math.fsum(offdiag[channel])
-        ac=2*(root*q+tip*p)/sinh1
-        ag=((root*root+tip*tip)*cosh1+2*root*tip)/sinh1
-        total=math.fsum((d,o,ac,ag))
-        if not all(math.isfinite(v) for v in (d,o,ac,ag,total)):
-            raise ValueError('nonfinite Green channel norm')
+            exc=_ObservationArithmetic('atom_gram',
+                                       'endpoint Green atom square underflows binary64',
+                                       channel)
+            failures.append(_failure(exc));continue
+        try:
+            p=_observed_fsum(ps[channel],'channel_reduction',
+                             'nonfinite Green channel norm',channel)
+            q=_observed_fsum(qs[channel],'channel_reduction',
+                             'nonfinite Green channel norm',channel)
+            d=_observed_fsum(diagonal[channel],'channel_reduction',
+                             'nonfinite Green channel norm',channel)
+            o=_observed_fsum(offdiag[channel],'channel_reduction',
+                             'nonfinite Green channel norm',channel)
+            ac=2*(root*q+tip*p)/sinh1
+            ag=((root*root+tip*tip)*cosh1+2*root*tip)/sinh1
+            total=_observed_fsum((d,o,ac,ag),'channel_total',
+                                 'nonfinite Green channel norm',channel)
+            if not all(math.isfinite(v) for v in (d,o,ac,ag)):
+                raise _ObservationArithmetic('channel_total',
+                                             'nonfinite Green channel norm',channel)
+        except _ObservationArithmetic as exc:
+            failures.append(_failure(exc));continue
+        diag[channel]=d;off[channel]=o;cross[channel]=ac;gram[channel]=ag
+        totals[channel]=total;channel_finite[channel]=True
+        channel_nonnegative[channel]=total>=0
         if total<0:
-            raise ValueError('negative Green channel squared norm')
-        if total==0 and (functional.cosine[channel]!=0 or
+            failures.append({'stage':'channel_nonnegative',
+                             'reason':'negative Green channel squared norm',
+                             'channel':channel})
+        exact_nonzero=(functional.cosine[channel]!=0 or
                 any(v!=0 for row in functional.coefficients
                     for v in row[channel]) or
-                any(atom[channel]!=0 for atom in functional.atoms)):
-            raise ValueError('nonzero exact channel has zero computed Green norm')
-        magnitude=(math.fsum(abs(v) for v in diagonal[channel])+
-                   math.fsum(abs(v) for v in offdiag[channel])+abs(ac)+abs(ag))
-        ratio=magnitude/max(total,NORM_FLOOR_SQUARED)
-        if not math.isfinite(magnitude) or not math.isfinite(ratio):
-            raise ValueError('nonfinite Green cancellation metadata')
-        diag.append(d);off.append(o);cross.append(ac);gram.append(ag)
-        totals.append(total);abs_terms.append(magnitude)
-        ratios.append(ratio)
-    squared=math.fsum(totals)
-    if not math.isfinite(squared) or squared<0:
-        raise ValueError('invalid Green total squared norm')
+                any(atom[channel]!=0 for atom in functional.atoms))
+        channel_nonzero_valid[channel]=not (total==0 and exact_nonzero)
+        if not channel_nonzero_valid[channel]:
+            failures.append({'stage':'channel_nonzero',
+                             'reason':'nonzero exact channel has zero computed Green norm',
+                             'channel':channel})
+        try:
+            magnitude=(_observed_fsum((abs(v) for v in diagonal[channel]),
+                                      'cancellation_metadata',
+                                      'nonfinite Green cancellation metadata',channel)+
+                       _observed_fsum((abs(v) for v in offdiag[channel]),
+                                      'cancellation_metadata',
+                                      'nonfinite Green cancellation metadata',channel)+
+                       abs(ac)+abs(ag))
+            ratio=magnitude/max(total,NORM_FLOOR_SQUARED)
+            if not math.isfinite(magnitude) or not math.isfinite(ratio):
+                raise _ObservationArithmetic('cancellation_metadata',
+                                             'nonfinite Green cancellation metadata',
+                                             channel)
+        except _ObservationArithmetic as exc:
+            failures.append(_failure(exc));continue
+        abs_terms[channel]=magnitude;ratios[channel]=ratio
+    squared=None;total_finite=False;total_nonnegative=False
+    if all(channel_finite):
+        try:
+            squared=_observed_fsum(totals,'total_sum',
+                                   'invalid Green total squared norm',None)
+            total_finite=True;total_nonnegative=squared>=0
+            if not total_nonnegative:
+                failures.append({'stage':'total_nonnegative',
+                                 'reason':'invalid Green total squared norm',
+                                 'channel':None})
+        except _ObservationArithmetic as exc:
+            failures.append(_failure(exc))
+    admissible=(not failures and all(channel_finite) and
+                all(channel_nonnegative) and all(channel_nonzero_valid) and
+                total_finite and total_nonnegative)
     return {'order':order,'squared_norm':squared,'channels':totals,
             'diagonal':diag,'offdiagonal':off,'atom_cross':cross,
             'atom_gram':gram,'sum_abs_terms':abs_terms,
             'cancellation_ratio':ratios,'exact_zero':False,
-            'intervals':len(functional.coefficients)}
+            'intervals':len(functional.coefficients),
+            'channel_finite':tuple(channel_finite),
+            'channel_nonnegative':tuple(channel_nonnegative),
+            'channel_nonzero_valid':tuple(channel_nonzero_valid),
+            'total_finite':total_finite,'total_nonnegative':total_nonnegative,
+            'admissible':admissible,'failures':tuple(failures)}
+
+
+def norm_at_order(functional: Functional,order: int=48) -> dict:
+    """Strict historical wrapper around the signed raw observation."""
+    raw=norm_observation_at_order(functional,order)
+    if not raw['admissible']:
+        raise ValueError(raw['failures'][0]['reason'])
+    return {'order':raw['order'],'squared_norm':raw['squared_norm'],
+            'channels':raw['channels'],'diagonal':raw['diagonal'],
+            'offdiagonal':raw['offdiagonal'],'atom_cross':raw['atom_cross'],
+            'atom_gram':raw['atom_gram'],'sum_abs_terms':raw['sum_abs_terms'],
+            'cancellation_ratio':raw['cancellation_ratio'],
+            'exact_zero':raw['exact_zero'],'intervals':raw['intervals']}
 
 
 def squared_norm(functional: Functional) -> dict:
