@@ -94,8 +94,12 @@ def _positive_down(value):
 
 
 def _sqrt(value, upper):
-    candidate = float(_up(math.sqrt(value)) if upper else
-                      _positive_down(math.sqrt(value)))
+    if not math.isfinite(value) or value < 0:
+        raise ArithmeticError('finite nonnegative square-root domain required')
+    root = math.sqrt(value)
+    if not math.isfinite(root) or root < 0:
+        raise ArithmeticError('finite nonnegative square-root response required')
+    candidate = float(_up(root) if upper else _positive_down(root))
     square = Fraction(candidate)**2
     target = Fraction(float(value))
     if (square < target) if upper else (square > target):

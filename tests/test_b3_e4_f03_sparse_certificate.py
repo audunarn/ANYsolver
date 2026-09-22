@@ -169,3 +169,9 @@ def test_inaccurate_square_root_cannot_create_an_invalid_enclosure(monkeypatch, 
     monkeypatch.setattr(s.math, 'sqrt', lambda value: factor*actual(value))
     with pytest.raises(ArithmeticError, match='exact scalar'):
         s._sqrt(2., upper)
+
+
+def test_negative_upper_square_root_cannot_pass_squared_check(monkeypatch):
+    monkeypatch.setattr(s.math, 'sqrt', lambda value: -2.)
+    with pytest.raises(ArithmeticError, match='square-root'):
+        s._sqrt(2., True)

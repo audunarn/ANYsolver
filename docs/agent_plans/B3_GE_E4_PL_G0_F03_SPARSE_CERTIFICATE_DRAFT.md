@@ -20,8 +20,10 @@ BLAS or sparse multiplication kernel. Empty rows are retained. The residual
 The premise is IEEE binary64 elementary arithmetic with gradual underflow.
 A runtime check detects observed FTZ/DAZ behaviour in the used elementary
 operations. Every square-root endpoint additionally passes an exact scalar
-rational squared-inequality check against its binary64 input endpoint; an
-inaccurate library root fails instead of creating a false enclosure. No
+rational squared-inequality check against its binary64 input endpoint, with
+explicit finite nonnegative domain and response checks. A library result
+that violates the enclosure fails; an inaccurate but conservative positive
+result can remain a valid bound. No
 matrix-level rational multiplication is introduced by that scalar check.
 Platform qualification must bind the elementary arithmetic premise if this
 method is selected. Nonfinite endpoints and overflowing intermediates fail explicitly.
