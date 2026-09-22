@@ -16,7 +16,8 @@ _STEP = re.compile(r"^\s*1\s+1\s+1\s+\d+\s+([\d.Ee+-]+)\s+([\d.Ee+-]+)\s+([\d.Ee
 
 
 def parse_completed_response(stdout: str, status: str, dat: str,
-                             *, tip_node: int = 48) -> dict:
+                             *, tip_node: int = 48,
+                             require_nonzero_tip: bool = True) -> dict:
     """Require one complete linear step and 48 finite nodal translations.
 
     The printed values have about seven decimal digits. Any later balance,
@@ -58,7 +59,7 @@ def parse_completed_response(stdout: str, status: str, dat: str,
     if set(nodes) != set(range(1, 49)) or tip_node != 48:
         raise ValueError("incomplete or unexpected displacement inventory")
     tip = nodes[tip_node]
-    if not any(abs(v) > 1e-15 for v in tip):
+    if require_nonzero_tip and not any(abs(v) > 1e-15 for v in tip):
         raise ValueError("zero tip response in loaded canary")
     return dict(accepted_steps=1, printed_nodes=48, tip_translation_m=tip,
                 tip_rotation_rad=rotations.get(tip_node),

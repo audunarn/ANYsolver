@@ -41,6 +41,16 @@ def test_six_coordinate_beam_row_is_preserved():
     assert parsed["printed_six_coordinate_nodes"] == [48]
 
 
+def test_zero_tip_allowed_only_for_unloaded_influence_response():
+    zero = dat_rows().replace("4.800000E-06", "0.000000E+00")
+    zero = zero.replace("4.700000E-06", "0.000000E+00")
+    # Other nodes can still move under a prescribed boundary motion.
+    assert parse_completed_response("Job finished", STATUS, zero,
+                                    require_nonzero_tip=False)["tip_translation_m"] == (0., 0., 0.)
+    with pytest.raises(ValueError, match="zero tip"):
+        parse_completed_response("Job finished", STATUS, zero)
+
+
 @pytest.mark.parametrize("stdout,status,dat,reason", [
     ("Job finished\nERROR", STATUS, dat_rows(), "cleanly"),
     ("Job finished", STATUS.replace("0.100000E+01", "0.900000E+00"), dat_rows(),
