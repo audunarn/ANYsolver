@@ -102,27 +102,45 @@ def _payload(
     limits: FractionLimits,
 ) -> bytes:
     total = _validate_values(values, specs, limits)
-    document = {
-        "schema": SCHEMA,
-        "total_bits": total,
-        "arrays": [
-            {
-                "name": spec.name,
-                "shape": list(spec.shape),
-                "values": [
-                    [format(value.numerator, "x"), format(value.denominator, "x")]
-                    for value in values[spec.name]
-                ],
-            }
-            for spec in specs
-        ],
-    }
-    payload = (json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n").encode(
-        "ascii"
-    )
-    if len(payload) > limits.max_bytes:
-        raise ValueError("F03 fraction group exceeds byte limit")
-    return payload
+    output = bytearray()
+
+    def add(value: str) -> None:
+        encoded = value.encode("ascii")
+        if len(output) + len(encoded) > limits.max_bytes:
+            raise ValueError("F03 fraction group exceeds byte limit")
+        output.extend(encoded)
+
+    add('{"arrays":[')
+    for array_index, spec in enumerate(specs):
+        if array_index:
+            add(",")
+        add('{"name":"' + spec.name + '","shape":[')
+        for shape_index, dimension in enumerate(spec.shape):
+            if shape_index:
+                add(",")
+            add(str(dimension))
+        add('],"values":[')
+        for value_index, value in enumerate(values[spec.name]):
+            if value_index:
+                add(",")
+            add('["' + _hex_integer(value.numerator) + '","')
+            add(_hex_integer(value.denominator) + '"]')
+        add("]}")
+    add('],"schema":"' + SCHEMA + '","total_bits":' + str(total) + "}\n")
+    return bytes(output)
+
+
+def _hex_integer(value: int) -> str:
+    return format(value, "x")
+
+
+def _encoded_bit_length(value: str) -> int:
+    digits = value[1:] if value.startswith("-") else value
+    return 4 * (len(digits) - 1) + int(digits[0], 16).bit_length()
+
+
+def _fraction(numerator: str, denominator: str) -> Fraction:
+    return Fraction(int(numerator, 16), int(denominator, 16))
 
 
 def write_group(
@@ -162,11 +180,13 @@ def read_group(
         or set(document) != {"schema", "total_bits", "arrays"}
         or document["schema"] != SCHEMA
         or type(document["total_bits"]) is not int
+        or not 0 <= document["total_bits"] <= limits.max_total_bits
         or type(document["arrays"]) is not list
         or len(document["arrays"]) != len(specs)
     ):
         raise ValueError("invalid F03 fraction-group document inventory")
     values = {}
+    total = 0
     for item, spec in zip(document["arrays"], specs):
         if (
             type(item) is not dict
@@ -190,12 +210,18 @@ def read_group(
                 or len(pair[1]) > (limits.max_fraction_bits + 3) // 4
             ):
                 raise ValueError("invalid canonical F03 fraction encoding")
-            value = Fraction(int(pair[0], 16), int(pair[1], 16))
+            numerator_bits = _encoded_bit_length(pair[0])
+            denominator_bits = _encoded_bit_length(pair[1])
+            if max(numerator_bits, denominator_bits) > limits.max_fraction_bits:
+                raise ValueError("F03 individual fraction bit limit exceeded")
+            total += numerator_bits + denominator_bits
+            if total > limits.max_total_bits:
+                raise ValueError("F03 cumulative fraction bit limit exceeded")
+            value = _fraction(pair[0], pair[1])
             if pair != [format(value.numerator, "x"), format(value.denominator, "x")]:
                 raise ValueError("noncanonical F03 fraction encoding")
             decoded.append(value)
         values[spec.name] = tuple(decoded)
-    total = _validate_values(values, specs, limits)
     if document["total_bits"] != total or _payload(values, specs, limits) != payload:
         raise ValueError("stale or noncanonical F03 fraction-group payload")
     return values

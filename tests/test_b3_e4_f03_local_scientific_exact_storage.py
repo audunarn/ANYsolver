@@ -58,6 +58,49 @@ def test_missing_extra_wrong_count_type_and_bit_limits_rejected(values, tmp_path
         )
 
 
+def test_byte_limit_stops_streaming_before_remaining_fraction_encoding(values, tmp_path, monkeypatch):
+    observed = []
+    original = storage._hex_integer
+
+    def record(value):
+        observed.append(value)
+        return original(value)
+
+    monkeypatch.setattr(storage, "_hex_integer", record)
+    with pytest.raises(ValueError, match="byte"):
+        storage.write_group(
+            tmp_path / "small.json", values, SPECS,
+            limits=storage.FractionLimits(16, 128, 1024, 90),
+        )
+    assert len(observed) < 2 * sum(spec.count for spec in SPECS)
+
+
+def test_reader_rejects_cumulative_bits_before_remaining_fraction_construction(
+    values, tmp_path, monkeypatch,
+):
+    path = tmp_path / "exact.json"
+    storage.write_group(path, values, SPECS, limits=LIMITS)
+    document = json.loads(path.read_text("ascii"))
+    document["total_bits"] = 2
+    path.write_bytes(
+        (json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n").encode("ascii")
+    )
+    observed = []
+    original = storage._fraction
+
+    def record(numerator, denominator):
+        observed.append((numerator, denominator))
+        return original(numerator, denominator)
+
+    monkeypatch.setattr(storage, "_fraction", record)
+    with pytest.raises(ValueError, match="cumulative"):
+        storage.read_group(
+            path, SPECS,
+            limits=storage.FractionLimits(16, 128, 2, 16_384),
+        )
+    assert len(observed) < sum(spec.count for spec in SPECS)
+
+
 def _rewrite(path, mutate):
     value = json.loads(path.read_text("ascii"))
     mutate(value)
