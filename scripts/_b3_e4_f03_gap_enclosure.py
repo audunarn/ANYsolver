@@ -1,4 +1,4 @@
-"""Exact-rational Bernstein bounds for bounded classical F03 gap fields.
+"""Exact-rational Bernstein bounds for classical F03 gap fields.
 
 Each stored finite binary input is interpreted as an exact rational number.
 The piecewise polynomial FE field is reconstructed from those inputs rather
@@ -143,11 +143,11 @@ def gap_bounds(model: shell.Panel, n_beam: int, n_mortar: int,
                ) -> tuple[tuple[float,float],...]:
     """Exact-field absolute component lower/upper bounds, outward floats.
 
-    This is deliberately restricted to small preflight models. Lower bounds
-    are attained endpoint/midpoint values; upper bounds use the convex hull
-    of Bernstein coefficients on every subdivided reference-host interval.
+    Lower bounds are attained endpoint/midpoint values; upper bounds use the
+    convex hull of Bernstein coefficients. Branches whose upper bound is
+    already below an attained global value need no further subdivision.
     """
-    if (model.n_s>8 or model.n_y>16 or n_beam>16 or n_mortar>8 or
+    if (model.n_s>128 or model.n_y>64 or n_beam>512 or n_mortar>64 or
             not isinstance(depth,int) or not 0<=depth<=12 or
             np.shape(qs)!=(model.dof_count,) or
             np.shape(qb)!=(beam.dof_count(n_beam),) or
@@ -174,15 +174,21 @@ def gap_bounds(model: shell.Panel, n_beam: int, n_mortar: int,
                 samples[channel].append(gap[channel])
         for channel in range(3):
             coefficients=_bernstein(tuple(samples[channel]))
-            pending=[coefficients]
-            for _ in range(depth):
-                pending=[half for segment in pending
-                         for half in _subdivide(segment)]
-            for segment in pending:
+            pending=[(coefficients,0)]
+            while pending:
+                segment,level=pending.pop()
                 lower[channel]=max(lower[channel],abs(segment[0]),
                                    abs(segment[3]))
-                upper[channel]=max(upper[channel],
-                                   abs(min(segment)),abs(max(segment)))
+                bound=max(abs(min(segment)),abs(max(segment)))
+                if bound<=lower[channel]:
+                    continue
+                if level<depth:
+                    left,right=_subdivide(segment)
+                    pending.append((left,level+1))
+                    pending.append((right,level+1))
+                else:
+                    upper[channel]=max(upper[channel],bound)
+    upper=[max(lo,hi) for lo,hi in zip(lower,upper)]
     result=[]
     for lo,hi in zip(lower,upper):
         try:
@@ -191,6 +197,8 @@ def gap_bounds(model: shell.Panel, n_beam: int, n_mortar: int,
             raise ValueError('rational gap bound exceeds finite output range') from exc
         if not math.isfinite(low) or not math.isfinite(high):
             raise ValueError('rational gap bound exceeds finite output range')
-        result.append((max(0.,math.nextafter(low,-math.inf)),
-                       math.nextafter(high,math.inf)))
+        outward_high=math.nextafter(high,math.inf)
+        if not math.isfinite(outward_high):
+            raise ValueError('outward rational gap bound exceeds finite output range')
+        result.append((max(0.,math.nextafter(low,-math.inf)),outward_high))
     return tuple(result)
