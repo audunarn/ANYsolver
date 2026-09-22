@@ -8,6 +8,7 @@ linear symmetric tangent and exact work-conjugate prescribed coordinates.
 from __future__ import annotations
 
 import hashlib
+import math
 
 import generate_b3_e4_ccx_3d_footprint_feasibility as base
 
@@ -55,6 +56,19 @@ def support_motion(group: str, component: int, signed_delta: float) -> dict[tupl
     return motion
 
 
+def checked_boundary_token(token: str) -> str:
+    """Guard the actual 20-character numeric field parsed by CalculiX."""
+    if len(token) > 20:
+        raise ValueError("CalculiX prescribed value exceeds 20 characters")
+    try:
+        value = float(token)
+    except ValueError as exc:
+        raise ValueError("invalid CalculiX prescribed value") from exc
+    if not math.isfinite(value):
+        raise ValueError("nonfinite CalculiX prescribed value")
+    return token
+
+
 def build_influence_deck(group: str, component: int, signed_delta: float) -> str:
     """Replace only original supports and tip load in a validated canary deck."""
     motion = support_motion(group, component, signed_delta)
@@ -64,7 +78,9 @@ def build_influence_deck(group: str, component: int, signed_delta: float) -> str
     location = lines.index("*BOUNDARY")
     if lines[location+1:location+3] != ["PanelEnds,1,3", "BeamRoot,1,6"]:
         raise ValueError("source support inventory changed")
-    boundary = [f"{node},{dof},{dof},{value:.17g}"
+    # CalculiX boundarys.f reads only textpart(4)(1:20); a .17g token such
+    # as 1.0000000000000001e-05 loses its exponent and fails preprocessing.
+    boundary = [f"{node},{dof},{dof},{checked_boundary_token(f'{value:.12g}')}"
                 for (node,dof),value in sorted(motion.items())]
     del lines[location:location+3]
     load = ["*CLOAD", "48,2,1000"]
@@ -79,7 +95,9 @@ def build_influence_deck(group: str, component: int, signed_delta: float) -> str
     deck = "\n".join(lines)+"\n"
     if (deck.count("*STEP\n") != 1 or deck.count("*EQUATION\n") != 12 or
             deck.count("*BOUNDARY\n") != 1 or "*CLOAD" in deck or
-            len(boundary) != 36 or deck.index("*BOUNDARY\n") < deck.index("*STEP\n")):
+            len(boundary) != 36 or
+            any(len(row.rsplit(",",1)[1]) > 20 for row in boundary) or
+            deck.index("*BOUNDARY\n") < deck.index("*STEP\n")):
         raise ValueError("influence deck inventory changed")
     return deck
 

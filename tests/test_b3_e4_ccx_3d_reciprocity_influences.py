@@ -20,7 +20,7 @@ def test_signed_influence_decks_preserve_only_admitted_model(group, component):
     decks = [influence.build_influence_deck(group, component, sign*influence.DELTA)
              for sign in (-1,1)]
     assert len(set(decks)) == 2
-    for deck in decks:
+    for sign, deck in zip((-1,1),decks):
         assert deck.count("*STEP\n") == 1
         assert deck.count("*EQUATION\n") == 12
         assert "*CLOAD" not in deck
@@ -35,6 +35,13 @@ def test_signed_influence_decks_preserve_only_admitted_model(group, component):
         assert len({(int(row[0]),int(row[1])) for row in rows}) == 36
         assert all(row[1] == row[2] and len(row) == 4 for row in rows)
         assert all(np.isfinite(float(row[3])) for row in rows)
+        assert all(len(row[3]) <= 20 and float(row[3][:20]) == float(row[3])
+                   for row in rows)
+        intended = influence.support_motion(group, component,
+                                             sign*influence.DELTA)
+        assert all(float(row[3]) == pytest.approx(
+            intended[(int(row[0]),int(row[1]))], rel=0, abs=1e-16)
+            for row in rows)
         # Remove the step support rows and restore the original model-level
         # homogeneous cards and force: every other line must be identical.
         restored = deck.replace("*STATIC\n*BOUNDARY\n"+boundary,
@@ -80,3 +87,7 @@ def test_rejects_unfrozen_amplitudes_and_invalid_modes():
         influence.build_influence_deck("shell",0,2e-5)
     with pytest.raises(ValueError, match="group"):
         influence.case_name("other",0,influence.DELTA)
+    assert len(f"{influence.DELTA:.17g}") > 20
+    with pytest.raises(ValueError, match="20 characters"):
+        influence.checked_boundary_token(f"{influence.DELTA:.17g}")
+    assert influence.checked_boundary_token("1e-05") == "1e-05"

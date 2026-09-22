@@ -64,3 +64,14 @@ execution. Pure algebraic tests check work conjugacy, both signs, exact
 step-level support inventory and unchanged deck remainder. Printed DAT
 translation precision, unreported beam rotations and MPC expansion remain
 explicit limits.
+
+The first registered root-rotation smoke (source `4677ac39`, case record
+`ccx-3d-root-rotation-smoke-cases-v1`) failed during boundary-card parsing,
+before an increment. Its 22-character prescribed value
+`1.0000000000000001e-05` exceeded the 20-character numeric field consumed
+by CalculiX's boundary reader. This is an input encoding failure, not
+evidence for or against rotational support or reciprocal recovery. Preserve
+the failed record. A corrected source writes at most 12 significant digits,
+checks each field's width and finiteness, and checks its round trip against
+the intended motion. Any new smoke has a separate registration and output
+identity; the original run cannot be retried or relabelled.
