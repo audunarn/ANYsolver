@@ -1,9 +1,11 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**RESUMED — 22 September 2026.** The user resumed from
+**ACTIVE — 23 September 2026.** The user resumed from
 `B3_GE_E4_PL_PAUSE_20260922_SIGNED_NORM.md`. The signed-norm component is now
 implemented, independently reviewed and closed with corrected immutable
-evidence. Complete saved-recovery composition is the active next work.
+evidence. The complete saved-recovery composition is also implemented,
+independently reviewed and closed with corrected immutable evidence. A frozen
+scientific numerical protocol and new registration are the active next work.
 
 22 September 2026. User authorized continued implementation with increased
 effort. The active goal remains the complete programme; **G0B is open and
@@ -19,6 +21,8 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 - Latest sparse trace/equilibrium source: `a858e787d86e6f8e3a65e16f5268ce68fa53c8a1`.
 - Latest certified Action/Q1 recovery source: `5be7447fc47b2b216238d15f020b406c7028d165`.
 - Latest saved interface/work component source: `5acfd119b576237db4b104d4e56c1e4af93ebb81`.
+- Latest signed-norm component source: `8bb018f73f837d25ef4f0d4bd94d9d3a824f0387`.
+- Latest saved-recovery composition source: `271d88d094bc89e2fce4fdc23a4b5df2cce68d4b`.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -213,6 +217,16 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
     corrected closed root `f03-signed-norm-proof-v2` has19 bound files plus
     inventory, SHA `6f01c6fc91fd16034c2813ba77be637db1e6278de582273e9025eb9bc1e35926`.
     See `B3_GE_E4_PL_G0_F03_SIGNED_NORM_COMPONENT_PROOF_V2_RESULTS.md`.
+19. Saved numerical/interface/work/norm composition at `271d88d0`: 94 affected
+    tests pass and the independent source/mechanics/archive review has no
+    findings. One owned q/eta snapshot binds all four component authorities,
+    complete compiled topology and every saved identity. Deep nested resource
+    guards run before component entry; the fixed work is three recoveries, two
+    norm observations and zero solves/factorizations. The initial v1 archive is
+    preserved as `FAILED_EVIDENCE`; corrected closed root
+    `f03-saved-recovery-composition-v2` has 29 evidence files plus inventory,
+    SHA `1e8ad63fe2396d4a6d18b22ae8bf34ad211a6603adb8966c542167f4a837bd3e`.
+    See `B3_GE_E4_PL_G0_F03_SAVED_RECOVERY_COMPOSITION_V2_RESULTS.md`.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -304,10 +318,11 @@ The original recovery's unavailable-P1 status remains unchanged; the separate
 helper reports its own family. Owned density/cosine/atom binding and partition,
 total/line-only bands, saved support routes, raw shift checks and the complete
 local scaled virtual-work inventory are now independently reviewed components.
-The signed raw norm observation seam and saved48/64 binding are now complete.
-The exact next action is to compose all numerical/interface/work/norm
-components over one owned saved q/eta snapshot, without treating any component
-status as cached authority or repeating a scientific equilibrium solve.
+The signed raw norm observation seam, saved48/64 binding and complete saved
+numerical/interface/work/norm composition are now complete. The exact next
+action is to freeze and independently review the numerical protocol and a new
+one-use scientific registration without changing the physical operator or
+reusing any consumed execution authority.
 Full protocol remains controlled by
 `B3_GE_E4_PL_G0_F03_RECOVERY_ADMISSION_NEXT_CONTRACT.md`. Any independently
 archived lift root/tip observations need explicit binding; present SavedWork
