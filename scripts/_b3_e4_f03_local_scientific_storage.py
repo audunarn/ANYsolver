@@ -165,6 +165,10 @@ def read_group(
             or len(names) != len(set(names))
             or sum(info.file_size for info in infos) > max_raw_bytes
             or any(
+                info.file_size > spec.nbytes + MAX_HEADER_BYTES
+                for spec, info in zip(specs, infos)
+            )
+            or any(
                 info.compress_type != zipfile.ZIP_STORED
                 or info.compress_size != info.file_size
                 or info.flag_bits & 0x1
@@ -174,7 +178,7 @@ def read_group(
             raise ValueError("invalid F03 evidence group ZIP inventory or size")
         for spec, info in zip(specs, infos):
             member = group.read(info)
-            if len(member) != info.file_size or len(member) > spec.nbytes + MAX_HEADER_BYTES:
+            if len(member) != info.file_size:
                 raise ValueError("invalid bounded F03 NPY member size")
             stream = io.BytesIO(member)
             version = np.lib.format.read_magic(stream)

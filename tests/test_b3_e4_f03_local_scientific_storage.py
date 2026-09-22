@@ -116,6 +116,21 @@ def test_wrong_header_rejected_before_array_allocation(arrays, tmp_path, monkeyp
         storage.read_group(altered, SPECS, max_raw_bytes=100_000)
 
 
+def test_oversized_member_rejected_before_member_read(arrays, tmp_path, monkeypatch):
+    valid = tmp_path / "valid.npz"
+    storage.write_group(valid, arrays, SPECS, max_raw_bytes=100_000)
+    members = _members(valid)
+    members[0] = (members[0][0], b"x" * 50_000)
+    altered = tmp_path / "oversized-member.npz"
+    _write(altered, members)
+    monkeypatch.setattr(
+        storage.zipfile.ZipFile, "read",
+        lambda *a, **k: pytest.fail("member size must reject before payload read"),
+    )
+    with pytest.raises(ValueError, match="inventory|size"):
+        storage.read_group(altered, SPECS, max_raw_bytes=100_000)
+
+
 def test_raw_and_compressed_bounds_checked_before_load(arrays, tmp_path, monkeypatch):
     path = tmp_path / "group.npz"
     storage.write_group(path, arrays, SPECS, max_raw_bytes=100_000)
