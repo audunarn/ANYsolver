@@ -9,6 +9,7 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 - Latest bounded operator source: `7cb7b77491ef3343b72a231a6bb443e0474ddec1`.
 - Latest bounded assembly/probe source: `66b6e109516296bbf8c4ff4155f2aa96c3701d1a`.
 - Latest bounded sparse-numerical/recovery source: `ade088e99e3108969baf70b27e7f7cc450351229`.
+- Latest factor/integration connection source: `126a4eb1122d4b36b7651d54d73c4b32fa139ead`.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -132,6 +133,17 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
     See `B3_GE_E4_PL_G0_F03_LOCAL_NUMERICAL_PROOFS_V1_RESULTS.md`. The closed
     23-file proof archive `f03-local-numerical-proof-v1` inventory SHA is
     `43f9a1c950acc315c6fed28548f5f6e40a822b934d566ae5f4eb6b1185817100`.
+13. Actual sparse factor production and integration connection at `126a4eb1`:
+    33 distinct current synthetic tests pass (producer19, integration12,
+    connection2), with independent final review closed. Native sparse arrays
+    and unordered columns are safely normalized without value arithmetic.
+    Full-K positivity, one candidate solve and saved-column verification
+    are connected on synthetic inputs. Root C normalization is restored;
+    the full alternate-solution error bound now includes primary residual.
+    The separate historical integration diagnostic remains. See the results
+    report `B3_GE_E4_PL_G0_F03_FACTOR_INTEGRATION_PROOFS_V1_RESULTS.md`.
+    Closed 22-file proof root `f03-factor-integration-proof-v1`, inventory SHA:
+    `64ae0becbe72c8a949233e8be3c127c75697287f18f68a09e23476accab93868`.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -203,13 +215,15 @@ Their raw archive is `.qualification/b3-ge-e4-pl/f03-local-operator-proof-v1`
 (39 bound files plus inventory); it is closed and must not be extended.
 The sparse eliminated-primal assembly, exact nested transfer and bounded
 manufactured work identities are now implemented and independently reviewed.
-The latest closed proof root is `f03-local-numerical-proof-v1` (23 bound files
+The latest closed proof root is `f03-factor-integration-proof-v1` (22 bound files
 plus inventory); it must not be extended. The scaled candidate solve,
 streamed interval condition certificate, supplied-factor sparse positivity
 proof and complete polynomial/cosine work recovery are now implemented and
-reviewed on synthetic/manufactured inputs. The exact next action is a bounded
-sparse positivity-factor producer and the connected numerical acceptance,
-integration/rank/work checks, saved-state bindings and independent adjudicator.
+reviewed on synthetic/manufactured inputs. A bounded actual sparse factor
+producer and integration perturbation verification are now connected too.
+The exact next action is physical scaling/state binding, three-root/free-slope
+rank admission, separate shell/beam integration, stationarity and physical
+work/reaction checks, followed by saved archives and independent adjudication.
 Then complete and independently review a frozen numerical protocol and new
 registration. No scientific case family or certificate method is selected.
 The <=64 exact-rational probe remains a synthetic oracle, never a dense
@@ -228,16 +242,22 @@ The complete piecewise norm is synthetically checked; its input bounds and
 active normal-weight guard must remain part of numerical admission.
 The stress-jump and support-lift signs are independently verified on bounded
 manufactured fields; retain them in the general recovered-field implementation.
-Numerical-admission design is in `B3_GE_E4_PL_G0_F03_LOCAL_NUMERICAL_ADMISSION_DRAFT.md`:
+The controlling correction is `B3_GE_E4_PL_G0_F03_SPARSE_INTEGRATION_ERRATUM.md`:
+root C uses max(1,Frobenius norm); the historical integration-only sensitivity
+is distinct from the full saved-state alternate error, which includes the
+certified primary residual. Both retain separate 1e-6 gates and are null when
+alpha>=1. This supersedes incompatible root/bound paragraphs of the older
+SPARSE_INTEGRATION_CHECKS and LOCAL_NUMERICAL_ADMISSION drafts.
+Other numerical-admission design remains in `B3_GE_E4_PL_G0_F03_LOCAL_NUMERICAL_ADMISSION_DRAFT.md`:
 same held energy-diagonal scaling, full stored H, true condition upper bound,
 safe backward denominator, explicit positivity/integration/resource checks.
 All-column certification has quadratic evidence/work; triangular comparison
 can be pessimistic. Compare/select before registration, never as a fallback
 after a failed scientific bound. No automatic uniform/global-degree run.
 
-No scientific process is active. Both specialists finished their independent
-assembly/work/prolongation/certificate reviews. Parent owns the next scalable
-numerical implementation and recovery/protocol work. The accepted proofs grant no scientific execution
+No scientific process is active. Both specialists finished the current
+factor/integration implementation and independent reviews. Parent owns the
+next physical numerical-admission and saved-protocol work. The accepted proofs grant no scientific execution
 authority. Current sources and tests are committed; the results/checkpoint
 commit preserves the restart boundary.
 All consumed diagnostic sources and completed inventories stay frozen.
