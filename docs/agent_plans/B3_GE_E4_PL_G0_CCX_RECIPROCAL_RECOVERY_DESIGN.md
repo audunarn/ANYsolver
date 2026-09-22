@@ -75,3 +75,32 @@ the failed record. A corrected source writes at most 12 significant digits,
 checks each field's width and finiteness, and checks its round trip against
 the intended motion. Any new smoke has a separate registration and output
 identity; the original run cannot be retried or relabelled.
+
+The corrected root-rotation smoke v2 passed its narrow terminal, but the
+separately registered 24-case reciprocal series v2 **failed** its physical
+wrench screen. All 24 cases completed and paired responses were odd. Total
+force and global z moment closed, but the recovered global x moment was
+`-193.2416 N m` instead of `+100 N m`. Superposing three saved support
+influences into a rigid global x rotation gave tip `u_y=+1.932416e-6 m`
+instead of `-1e-6 m`; a footprint interior node likewise missed its rigid
+transverse motion. This is a rigid-body patch failure, not printed rounding.
+
+The 12 footprint MPCs use rotational DOFs at beam interior node 47. The
+saved CalculiX expansion trace reports no knot at that node. The bundled
+2.23 manual (section 10.3.6, PDF page index 696) prohibits rotational MPC
+terms at nodes without a knot. The official 2.23 source archive
+`ccx_2.23.src.tar.bz2` (SHA-256 `9c88385c10fb04f5dc6c4e98027a51bedd8aee3920e05190d6c1dd08357d6e7`)
+confirms `gen3dmpc.f` remaps rotational terms to a rotational knot node only
+when `rig(node) != 0` (lines 47–75); otherwise the expanded beam path uses
+the unremapped direction (lines 290–331). `gen3dnor.f` creates a knot only
+when multiple expanded normals occur (line 830). This is a strong source-
+consistent explanation, not proof of a unique error mechanism.
+
+Preserve the failed series and registration. Before repeating reciprocal
+recovery, derive a mechanically valid connector for the exact B31/S4
+expansion, register a **new** source/deck, and require direct rigid x/y/z
+motion at all physical nodes, including interior footprint nodes and the
+tip. Verify that the printed displacement at the expanded beam tip is work
+conjugate to the applied `*CLOAD`. Only then register a new paired support
+wrench series. Neither failed nor passed exploratory smoke evidence qualifies
+E01/E02 or a native B3-GE/E4-PL comparison.
