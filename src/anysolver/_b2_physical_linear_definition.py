@@ -13,7 +13,9 @@ import math
 
 import numpy as np
 
-from ._b2_physical_flexibility_linear import LinearOperator, LinearSection
+from ._b2_physical_flexibility_linear import (
+    LinearOperator, LinearSection, RepresentabilityError,
+)
 
 
 PROFILE_ID = "B2_E4_PL_FAST_LINEAR_V1"
@@ -106,6 +108,18 @@ class GeometricMetadata:
 
 
 @dataclass(frozen=True)
+class GlobalLinearTrace:
+    """Owned global point reference, pose, and global-coordinate pullback."""
+
+    stations: np.ndarray
+    reference_points_m: np.ndarray
+    pose: np.ndarray
+    jacobian: np.ndarray
+    profile_id: str = PROFILE_ID
+    production_qualified: bool = False
+
+
+@dataclass(frozen=True)
 class PhysicalB2Member:
     """A straight, explicitly oriented member with owned source identity."""
 
@@ -176,3 +190,27 @@ class PhysicalB2Member:
 
     def local_operator(self) -> LinearOperator:
         return LinearOperator(self.length_m, self.section)
+
+    def trace_global(self, displacement, *, stations=(0.0, 0.5, 1.0),
+                     offset_local_m=(0.0, 0.0, 0.0)) -> GlobalLinearTrace:
+        """Private physical station port in the declared global nodal basis."""
+        try:
+            u = np.asarray(displacement, dtype=float)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("twelve finite global coordinates required") from exc
+        if u.shape != (12,) or not np.isfinite(u).all():
+            raise ValueError("twelve finite global coordinates required")
+        frame = self.local_frame_rows()
+        transform = self.local_dof_map()
+        local = self.local_operator().trace(
+            transform@u, stations=stations, offset_local_m=offset_local_m)
+        six = np.zeros((6, 6))
+        six[:3, :3] = six[3:, 3:] = frame.T
+        with np.errstate(over="ignore", invalid="ignore", under="ignore"):
+            points = local.reference_points@frame + np.asarray(self.reference_points_m[0])
+            pose = local.pose@six.T
+            jacobian = np.einsum("ab,nbc,cd->nad", six, local.jacobian, transform)
+        if not all(np.isfinite(v).all() for v in (points, pose, jacobian)):
+            raise RepresentabilityError("global physical B2 trace is not representable")
+        return GlobalLinearTrace(local.stations.copy(), points.copy(), pose.copy(),
+                                 jacobian.copy())

@@ -112,8 +112,9 @@ def _flexibility(length, compliance):
         for j in range(6):
             result[i][j] = length * sum(
                 compliance[a][b] * (
-                    h0[a][i]*h0[b][j]/3 + h1[a][i]*h1[b][j]/3
-                    + (h0[a][i]*h1[b][j] + h1[a][i]*h0[b][j])/6
+                    h0[a][i]*h0[b][j]*Fraction(1, 3)
+                    + h1[a][i]*h1[b][j]*Fraction(1, 3)
+                    + (h0[a][i]*h1[b][j] + h1[a][i]*h0[b][j])*Fraction(1, 6)
                 ) for a in range(6) for b in range(6)
             )
     return result
@@ -195,11 +196,37 @@ class LocalResponse:
     production_qualified: bool = False
 
 
+@dataclass(frozen=True)
+class LinearTrace:
+    """Owned local reference points, offset poses, and their nodal derivatives."""
+
+    stations: np.ndarray
+    reference_points: np.ndarray
+    pose: np.ndarray
+    jacobian: np.ndarray
+    operator_id: str = OPERATOR_ID
+    production_qualified: bool = False
+
+
+def _pose_polynomials(length, e0, e1, nodal):
+    """Exact coefficients in normalized station t, ordered [u,v,w,rx,ry,rz]."""
+    zero = Fraction(0)
+    result = [[zero]*4 for _ in range(6)]
+    result[0] = [nodal[0], length*e0[0], length*e1[0]/2, zero]
+    for row, strain in ((3, 3), (4, 4), (5, 5)):
+        result[row] = [nodal[row], length*e0[strain], length*e1[strain]/2, zero]
+    result[1] = [nodal[1], length*(e0[1]+nodal[5]),
+                 length*(e1[1]+length*e0[5])/2, length**2*e1[5]/6]
+    result[2] = [nodal[2], length*(e0[2]-nodal[4]),
+                 length*(e1[2]-length*e0[4])/2, -length**2*e1[4]/6]
+    return result
+
+
 class LinearOperator:
     """Physical local tangent and station response; independent of public B2."""
 
     __slots__ = ("length", "section", "_stiffness", "_compliance", "_B",
-                 "_modal", "_basic_inverse", "_sealed")
+                 "_modal", "_basic_inverse", "_trace_polynomials", "_sealed")
 
     def __setattr__(self, name, value):
         if getattr(self, "_sealed", False):
@@ -230,6 +257,21 @@ class LinearOperator:
         else:
             self._basic_inverse = tuple(tuple(row) for row in _inverse_spd(
                 _flexibility(self.length, self._compliance)))
+        h0 = _interpolation(self.length, Fraction(0))
+        h1 = _interpolation(self.length, self.length)
+        coefficients = [[[Fraction(0) for _ in range(4)] for _ in range(12)]
+                        for _ in range(6)]
+        for column in range(12):
+            nodal = [Fraction(int(i == column)) for i in range(12)]
+            q = self._basic_action(_multiply(self._B, nodal))
+            e0 = _multiply(self._compliance, _multiply(h0, q))
+            e1 = _multiply(self._compliance, _multiply(
+                [[h1[i][j]-h0[i][j] for j in range(6)] for i in range(6)], q))
+            pose = _pose_polynomials(self.length, e0, e1, nodal)
+            for row in range(6):
+                coefficients[row][column] = pose[row]
+        self._trace_polynomials = tuple(tuple(tuple(poly) for poly in row)
+                                        for row in coefficients)
         self._sealed = True
 
     @property
@@ -250,6 +292,45 @@ class LinearOperator:
             minus = km*(basic[i]-basic[i+1])/2
             q.extend((plus+minus, plus-minus))
         return q
+
+    def trace(self, displacement, *, stations=(0.0, 0.5, 1.0),
+              offset_local_m=(0.0, 0.0, 0.0)):
+        """Private small-rotation physical pose and exact offset-point pullback."""
+        try:
+            u = np.asarray(displacement, dtype=float)
+            x = np.asarray(stations, dtype=float)
+            offset = np.asarray(offset_local_m, dtype=float)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("finite local coordinates, stations and offset required") from exc
+        if u.shape != (12,) or not np.isfinite(u).all():
+            raise ValueError("twelve finite local coordinates required")
+        if x.ndim != 1 or not np.isfinite(x).all() or np.any((x < 0) | (x > 1)):
+            raise ValueError("stations must be finite normalized coordinates in [0,1]")
+        if offset.shape != (3,) or not np.isfinite(offset).all():
+            raise ValueError("three finite local offset coordinates required")
+        d = [Fraction(float(value)) for value in offset]
+        nodal = [Fraction(float(value)) for value in u]
+        points, poses, maps = [], [], []
+        for station in x:
+            t = Fraction(float(station))
+            center = [[sum(coefficient*t**degree for degree, coefficient in enumerate(poly))
+                       for poly in row] for row in self._trace_polynomials]
+            # The point displacement is r + theta cross d. Its force
+            # pullback therefore includes the offset's d cross F moment.
+            for row, rotational, sign in ((0, (4, 5), (d[2], -d[1])),
+                                          (1, (5, 3), (d[0], -d[2])),
+                                          (2, (3, 4), (d[1], -d[0]))):
+                center[row] = [value + sign[0]*center[rotational[0]][col]
+                               + sign[1]*center[rotational[1]][col]
+                               for col, value in enumerate(center[row])]
+            maps.append(center)
+            poses.append(_multiply(center, nodal))
+            points.append([self.length*t+d[0], d[1], d[2]])
+        n = len(x)
+        return LinearTrace(np.array(x, dtype=float, copy=True),
+                           _array(np.asarray(points, dtype=object).reshape(n, 3)),
+                           _array(np.asarray(poses, dtype=object).reshape(n, 6)),
+                           _array(np.asarray(maps, dtype=object).reshape(n, 6, 12)))
 
     def evaluate(self, displacement, *, stations=(0.0, 0.5, 1.0)):
         try:
