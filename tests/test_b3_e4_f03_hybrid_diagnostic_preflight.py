@@ -24,6 +24,7 @@ import _b3_e4_f03_independent_shell as shell
 import _b3_e4_f03_kkt_scaling as scaling
 import _b3_e4_f03_loaded_preflight as loaded
 import b3_e4_f03_resource_preflight as runner
+import adjudicate_b3_ge_e4_pl_g0_f03_stiffness_trace_v1 as adjudicate
 
 
 @pytest.mark.parametrize('stiffness_topology',('Q4','CST-CB'))
@@ -116,3 +117,16 @@ def test_payload_archive_validation_preserves_failure_as_invalid(monkeypatch):
     monkeypatch.setattr(np,'load',lambda path,**kwargs: (_ for _ in ()).throw(EOFError()))
     assert not runner._valid_state_payload(directory,[record],mesh,'P1')
     assert not runner._valid_state_payload(directory,[record,record],mesh,'P1')
+
+
+def test_adjudicator_port_quarters_split_at_mortar_hat_kinks():
+    nm=8
+    lam=np.zeros(3*(nm+1))
+    lam[3*1+1]=100.
+    lam[3*1+2]=20.
+    quarters=np.asarray(adjudicate._port_quarters(lam,nm))
+    h=1/nm
+    np.testing.assert_allclose(quarters[0],
+                               (0.,100*h,100*h*h+20*h*line.YAW_LENGTH),
+                               rtol=1e-13,atol=1e-13)
+    np.testing.assert_allclose(quarters[1:],0.,atol=1e-13)
