@@ -28,13 +28,15 @@ def overlay(model: shell.Panel, n_beam: int, n_mortar: int) -> np.ndarray:
     for dx,dy in shell.OFFSETS:
         for i in range(nx+1):
             knots.append(-.5+i/model.n_s-dx)
-        if model.topology=='CST':
+        if model.topology in ('CST','CST-CB'):
             # At fixed sample y, every BL→TR diagonal is one x crossing.
             j=min(max(int(np.floor((dy+.5)*model.n_y-1e-12)),0),model.n_y-1)
             y0=-.5+j/model.n_y
             fraction=(dy-y0)*model.n_y
             for i in range(nx):
-                knots.append(-.5+(i+fraction)/model.n_s-dx)
+                diagonal=(1-fraction if model.topology=='CST-CB' and (i+j)%2
+                          else fraction)
+                knots.append(-.5+(i+diagonal)/model.n_s-dx)
     ordered=sorted(min(max(float(value),0.),1.) for value in knots
                    if np.isfinite(value) and -1e-12<=value<=1+1e-12)
     result=[0.]

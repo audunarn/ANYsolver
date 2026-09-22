@@ -44,7 +44,9 @@ class Panel:
 
 def panel(n_s: int, n_y: int, topology: str) -> Panel:
     if (not isinstance(n_s,int) or not isinstance(n_y,int) or
-            not 1<=n_s<=128 or not 2<=n_y<=64 or topology not in ('Q4','CST')):
+            not 1<=n_s<=128 or not 2<=n_y<=64 or
+            topology not in ('Q4','CST','CST-CB') or
+            (topology=='CST-CB' and n_y%2)):
         raise ValueError('unsupported bounded classical panel definition')
     nx=2*n_s
     nodes=np.array([(-.5+i/n_s,-.5+j/n_y)
@@ -59,6 +61,8 @@ def panel(n_s: int, n_y: int, topology: str) -> Panel:
             tr=tl+1
             if topology=='Q4':
                 elements.append((bl,br,tr,tl))
+            elif topology=='CST-CB' and (i+j)%2:
+                elements.extend(((bl,br,tl),(br,tr,tl)))
             else:
                 # Fixed BL-to-TR diagonal; both triangles are CCW.
                 elements.extend(((bl,br,tr),(bl,tr,tl)))
@@ -96,7 +100,7 @@ def shape(coordinates: np.ndarray, topology: str,
         if determinant<=0:
             raise ValueError('inverted Q4 host')
         return n,dn@np.linalg.inv(jac),determinant
-    if topology!='CST':
+    if topology not in ('CST','CST-CB'):
         raise ValueError('unknown plane-stress host')
     if coordinates.shape!=(3,2) or not np.all(np.isfinite(coordinates)):
         raise ValueError('CST host must have three finite physical nodes')
@@ -167,7 +171,10 @@ def sample(model: Panel, x: float, y: float) -> tuple[tuple[int,...],np.ndarray]
     else:
         xx=(x-model.nodes[bl,0])*model.n_s
         yy=(y-model.nodes[bl,1])*model.n_y
-        indices=(bl,br,tr) if yy<=xx else (bl,tr,tl)
+        if model.topology=='CST-CB' and (i+j)%2:
+            indices=(bl,br,tl) if xx+yy<=1 else (br,tr,tl)
+        else:
+            indices=(bl,br,tr) if yy<=xx else (bl,tr,tl)
     weights,_,_=shape(model.nodes[list(indices)],model.topology,(x,y))
     if abs(float(np.sum(weights))-1)>1e-12 or np.min(weights)<-1e-10:
         raise ValueError('invalid shell sample host interpolation')

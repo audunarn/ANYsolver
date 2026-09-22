@@ -317,7 +317,7 @@ def _supervise(mesh: inventory.Mesh, topology: str, law: str,
 def main() -> int:
     parser=argparse.ArgumentParser()
     parser.add_argument('--mesh',type=_mesh,required=True)
-    parser.add_argument('--topology',choices=('Q4','CST'),required=True)
+    parser.add_argument('--topology',choices=('Q4','CST','CST-CB'),required=True)
     parser.add_argument('--law',choices=('P0','P1'),required=True)
     parser.add_argument('--output',type=Path)
     parser.add_argument('--solve',action='store_true',

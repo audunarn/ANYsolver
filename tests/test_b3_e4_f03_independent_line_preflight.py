@@ -16,7 +16,7 @@ import _b3_e4_f03_independent_coupled as coupled
 import _b3_e4_f03_independent_shell as shell
 
 
-@pytest.mark.parametrize('topology', ['Q4', 'CST'])
+@pytest.mark.parametrize('topology', ['Q4', 'CST', 'CST-CB'])
 def test_overlay_splits_every_host_and_interpolation_boundary(topology):
     model=shell.panel(5, 10, topology)
     knots=line.overlay(model, 8, 4)
@@ -55,7 +55,7 @@ def _rigid_fields(model, n_beam, tx, ty, omega):
     return qs,qb
 
 
-@pytest.mark.parametrize('topology', ['Q4', 'CST'])
+@pytest.mark.parametrize('topology', ['Q4', 'CST', 'CST-CB'])
 @pytest.mark.parametrize('law', ['P0', 'P1'])
 def test_segmented_weak_work_quadrature_rigid_patch_and_row_rank(topology,law):
     model=shell.panel(5,10,topology)

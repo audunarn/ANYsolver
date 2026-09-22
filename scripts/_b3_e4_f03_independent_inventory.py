@@ -57,7 +57,7 @@ def cases() -> tuple[Case,...]:
 
 def structural_counts(mesh: Mesh, topology: str, law: str) -> dict[str,int]:
     """Combinatorial upper-size estimate, not measured resource usage."""
-    if topology not in ('Q4','CST') or law not in ('P0','P1'):
+    if topology not in ('Q4','CST','CST-CB') or law not in ('P0','P1'):
         raise ValueError('unknown reference formulation')
     nodes=(2*mesh.n_s+1)*(mesh.n_y+1)
     shell_elements=(2 if topology=='Q4' else 4)*mesh.n_s*mesh.n_y

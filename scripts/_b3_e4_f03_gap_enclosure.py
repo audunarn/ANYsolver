@@ -44,7 +44,11 @@ def _host(model: shell.Panel, s: Fraction, offset: tuple[float,float],
     bl=j*(nx+1)+i; br=bl+1; tl=bl+nx+1; tr=tl+1
     if model.topology=='Q4':
         return bl,br,tr,tl
-    lower=(x-xs[i])*(ys[j+1]-ys[j]) >= (y-ys[j])*(xs[i+1]-xs[i])
+    dx=xs[i+1]-xs[i]; dy=ys[j+1]-ys[j]
+    if model.topology=='CST-CB' and (i+j)%2:
+        lower=(x-xs[i])*dy+(y-ys[j])*dx <= dx*dy
+        return (bl,br,tl) if lower else (br,tr,tl)
+    lower=(x-xs[i])*dy >= (y-ys[j])*dx
     return (bl,br,tr) if lower else (bl,tr,tl)
 
 
@@ -63,9 +67,12 @@ def exact_overlay(model: shell.Panel, n_beam: int, n_mortar: int
         j=min(max(bisect_right(ys,y)-1,0),len(ys)-2)
         for x in xs:
             knots.add(x-dx)
-        if model.topology=='CST':
-            for x0,x1 in zip(xs[:-1],xs[1:]):
-                crossing=x0+(y-ys[j])*(x1-x0)/(ys[j+1]-ys[j])
+        if model.topology in ('CST','CST-CB'):
+            for i,(x0,x1) in enumerate(zip(xs[:-1],xs[1:])):
+                fraction=(y-ys[j])/(ys[j+1]-ys[j])
+                if model.topology=='CST-CB' and (i+j)%2:
+                    fraction=1-fraction
+                crossing=x0+fraction*(x1-x0)
                 knots.add(crossing-dx)
     ordered=tuple(sorted(k for k in knots if 0<=k<=1))
     for a,b in zip(ordered[:-1],ordered[1:]):
