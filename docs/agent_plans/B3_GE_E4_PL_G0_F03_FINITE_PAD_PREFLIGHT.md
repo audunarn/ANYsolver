@@ -56,9 +56,16 @@ load partition, and four beam-side physical-quarter resultants without
 claiming response convergence. The integrated L² gap is not a pointwise
 enclosure or endpoint certificate. A supervised case exit, however clean,
 does not accept a physical reference or close G0B.
-Three runner failure-path tests cover spawn failure receipt, premature final
-adjudication, and corrupted child output; the combined focused suite passes
-64 tests after these additions.
+Four runner path tests cover spawn failure receipt, premature final
+adjudication, corrupted child output, and a valid final decision. The
+combined focused suite passes 65 tests after these additions.
+
+The initial source-frozen `f03-area-feasibility-v1` registration at
+`0c74d6c0` completed four supervised cases. Its final adjudication raised
+`TypeError` because a local reaction variable shadowed the evidence-root
+path; **no v1 acceptance decision exists**. Preserve its original raw
+cases and `adjudication_failure.json`. The corrected runner requires a new
+source identity and registration; v1 must not be relabeled or rerun.
 
 The 36 new focused tests pass: rigid motions at the line ends and an
 interior station; a general affine shear; a Q4 bilinear second-moment

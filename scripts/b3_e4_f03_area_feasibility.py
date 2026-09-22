@@ -329,15 +329,15 @@ def adjudicate(root: Path) -> bool:
                      (scaling.M0 if j==2 else scaling.F0)+
                      (1. if j==1 else .5 if j==2 else 0.)
                      for j in range(3)]
-            root=[values['beam_root_elastic_wrench'][j]+
-                  values['beam_root_port_wrench'][j]-
-                  values['beam_root_load_wrench'][j] for j in range(3)]
+            root_partition=[values['beam_root_elastic_wrench'][j]+
+                            values['beam_root_port_wrench'][j]-
+                            values['beam_root_load_wrench'][j] for j in range(3)]
             if (not math.isclose(energy,values['energy_scaled'],
                                  rel_tol=1e-10,abs_tol=1e-12) or
                     any(not math.isclose(balance[j],values['balance_scaled'][j],
                                          rel_tol=1e-10,abs_tol=1e-12)
                         for j in range(3)) or
-                    any(not math.isclose(root[j],support[2][j],
+                    any(not math.isclose(root_partition[j],support[2][j],
                                          rel_tol=1e-10,abs_tol=1e-5)
                         for j in range(3))):
                 raise ValueError('raw energy, support balance or root partition disagrees')
