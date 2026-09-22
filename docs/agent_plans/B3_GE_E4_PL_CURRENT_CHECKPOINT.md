@@ -12,6 +12,7 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 - Latest factor/integration connection source: `126a4eb1122d4b36b7651d54d73c4b32fa139ead`.
 - Latest sparse state/rank source: `7b017d08c29aaf4845e2fb71967d8b1bfb3859ec`.
 - Latest sparse trace/equilibrium source: `a858e787d86e6f8e3a65e16f5268ce68fa53c8a1`.
+- Latest certified Action/Q1 recovery source: `5be7447fc47b2b216238d15f020b406c7028d165`.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -171,7 +172,20 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
     inventory, SHA `e331f76e9ae76ed23558fb7824a3e3a0e9b79ade5a2d6ee5dae5f617f998dc33`.
     The reviewed next recovery contract provides a certified-Action design,
     raw versus represented moment/load balance distinctions and an admissible
-    Q1 support-lift derivation; their executable implementation remains open.
+    Q1 support-lift derivation; executable proof was completed subsequently
+    in item16, without changing that historical record.
+16. Certified Action enclosures and supplemental Q1/Qp support recovery at
+    `5be7447f`: 32 distinct checks pass (enclosure21, support9, connection2),
+    with independent final source/mechanics review. Complete exact interval
+    normalization precedes fixed-order Taylor enclosure. Q1 dual support
+    routes, true nodal lift shifts, physical versus represented moment balance
+    and actual versus nominal load integrals are explicit. A manufactured
+    nonequilibrium residual is rejected despite matching work identities.
+    All16 logs, including collection/implementation/guard/resource-fixture
+    failures, are preserved. No physical equilibrium or native evaluation ran.
+    See `B3_GE_E4_PL_G0_F03_RECOVERY_ENCLOSURE_PROOFS_V1_RESULTS.md`.
+    Closed root `f03-recovery-enclosure-proof-v1` has26 bound files plus
+    inventory, SHA `861a6b02b09fead9b6af8af0c2efc6123c91da097a5688caa15f0369c431c1db`.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -243,8 +257,12 @@ Their raw archive is `.qualification/b3-ge-e4-pl/f03-local-operator-proof-v1`
 (39 bound files plus inventory); it is closed and must not be extended.
 The sparse eliminated-primal assembly, exact nested transfer and bounded
 manufactured work identities are now implemented and independently reviewed.
-The latest closed proof root is `f03-trace-equilibrium-proof-v1` (18 bound files
-plus inventory); it must not be extended. The scaled candidate solve,
+The latest closed proof root is `f03-recovery-enclosure-proof-v1` (26 bound files
+plus inventory); it must not be extended. Its source is `5be7447f` and its
+inventory SHA is `861a6b02b09fead9b6af8af0c2efc6123c91da097a5688caa15f0369c431c1db`.
+See `B3_GE_E4_PL_G0_F03_RECOVERY_ENCLOSURE_PROOFS_V1_RESULTS.md` for the
+32 distinct focused passes, preserved failures and final independent review.
+The scaled candidate solve,
 streamed interval condition certificate, supplied-factor sparse positivity
 proof and complete polynomial/cosine work recovery are now implemented and
 reviewed on synthetic/manufactured inputs. A bounded actual sparse factor
@@ -252,20 +270,26 @@ producer and integration perturbation verification are now connected too.
 Physical scaling/state binding, three-root/free-slope rank, exact trace
 binding, separate shell/beam integration and numerical stationarity/energy
 checks are implemented and independently reviewed on synthetic/manufactured
-inputs. The exact next action is the certified Action comparison layer and
-physical recovery admission described in
-`B3_GE_E4_PL_G0_F03_RECOVERY_ADMISSION_NEXT_CONTRACT.md`, followed by complete
-saved archives and independent adjudication. Implement the reviewed Q1
-support-lift family and its independent route/shift tests before replacing
-the current unavailable-P1 status. Preserve raw physical moment balance
+inputs. Certified Action comparisons and the supplemental Q1 support-lift
+family now have independent executable proof, including route/shift checks.
+The original recovery's unavailable-P1 status remains unchanged; the separate
+helper reports its own family. The exact next action is complete owned
+saved-recovery admission under
+`B3_GE_E4_PL_G0_F03_RECOVERY_ADMISSION_NEXT_CONTRACT.md`: density/cosine/atom
+binding and partition, total/line-only bands, saved support routes and raw
+shift acceptance, complete scaled virtual-work inventory and signed 48/64
+full-functional checks. Then complete saved archives and independent
+adjudication. Preserve raw physical moment balance
 alongside the represented gamma identity, and nominal alongside actual
 held-frequency load integrals. Do not remove a predicted physical defect.
 Then complete and independently review a frozen numerical protocol and new
 registration. No scientific case family or certificate method is selected.
 The <=64 exact-rational probe remains a synthetic oracle, never a dense
 scientific fallback. Factor peak memory needs external supervision; streamed
-inverse columns still require 8*N*N raw saved bytes. p1 support lifts remain
-unavailable; Decimal cosine displays are not certified error bounds.
+inverse columns still require 8*N*N raw saved bytes. Supplemental Q1 support
+recovery is now available on bounded manufactured inputs, not yet qualified
+on scientific cases. Decimal cosine displays remain noncertified; use the
+separate fixed-order enclosure for acceptance and preserve unresolved bounds.
 Preserve the same physical operator, held J/gamma, three root
 constraints/free slope, signed reaction and full-functional criteria.
 Mesh/degree inventories, integration, conditioning, resource and convergence
@@ -292,8 +316,8 @@ can be pessimistic. Compare/select before registration, never as a fallback
 after a failed scientific bound. No automatic uniform/global-degree run.
 
 No scientific process is active. Both specialists finished the current
-trace/equilibrium implementation and independent reviews. Parent owns the
-next physical numerical-admission and saved-protocol work. The accepted proofs grant no scientific execution
+Action/Q1 recovery implementation and independent reviews. Parent owns the
+next complete saved-recovery admission and saved-protocol work. The accepted proofs grant no scientific execution
 authority. Current sources and tests are committed; the results/checkpoint
 commit preserves the restart boundary.
 All consumed diagnostic sources and completed inventories stay frozen.
