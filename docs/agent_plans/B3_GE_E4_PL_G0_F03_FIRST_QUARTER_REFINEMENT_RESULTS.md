@@ -97,12 +97,21 @@ defective shell trace or select a multiplier space. Preserve the
 unresolved 1% independent-reference screen and the full G0B acceptance
 criteria.
 
-Before another execution, register a fixed `(128,64,64)` four-cell
-stiffness/trace operator isolation with both natural corners and both
-crossed combinations, using the same load, beam, multiplier and physical
-stations. Include manufactured nonaffine interpolation and an independent
-physical-reference check, retaining the root elastic/direct/external
-split and support/port bands. Separately budget and register an Nm64→128
-resolution comparison before fixing a multiplier policy. The review is a
-design recommendation, not authority to run those cases or claim a
-corrected formulation.
+The independently reviewed four-cell stiffness/trace operator isolation
+at Ny32 and Ny64 was **already executed** under the prior frozen F03
+registration. Its adjudication is
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-stiffness-trace-adjudication-v1/adjudication.json`,
+SHA-256 `d1f5c3b1c406b74e884e37219751b7d47e99d78e47055673c27a7cf73d70649f`.
+Its natural controls match the historical and present controls on all 23
+signed channels. At Ny64, its symmetric left-support force effects were
+`−2,451.203 N` from trace and `+3,594.320 N` from stiffness; neither
+is a continuum error attribution. Reuse that immutable result for
+fixed-mesh attribution; do not repeat its crossed solves without a
+changed input or unresolved check. The independent reviewer recommended
+the same isolation in principle, but this existing evidence satisfies
+that narrow diagnostic. The next work should bind the two evidence sets
+explicitly, improve the independently matched physical-reference route,
+and separately budget/register Nm64→128 resolution before fixing a
+multiplier policy. Additional longitudinal and transverse convergence
+remain open. This is a design direction, not execution authority or a
+corrected-formulation claim.
