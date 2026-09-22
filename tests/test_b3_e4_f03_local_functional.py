@@ -278,6 +278,23 @@ def test_raw_total_overflow_preserves_all_finite_channels(monkeypatch):
         f.norm_at_order(_all_channels())
 
 
+@pytest.mark.parametrize('order',(48,64))
+def test_real_finite_channel_sum_overflow_preserves_channels(order):
+    amplitude=Fraction.from_float(8.3e153)
+    value=_functional(atoms=((amplitude,amplitude,Z),(Z,Z,Z)))
+    raw=f.norm_observation_at_order(value,order)
+    assert raw['channel_finite']==(True,True,True)
+    assert raw['channels'][0]==raw['channels'][1]>0 and raw['channels'][2]==0.
+    assert all(math.isfinite(item) for item in raw['channels'])
+    with pytest.raises(OverflowError):math.fsum(raw['channels'])
+    assert raw['squared_norm'] is None and not raw['total_finite']
+    assert raw['failures']==({'stage':'total_sum',
+                              'reason':'invalid Green total squared norm',
+                              'channel':None},)
+    with pytest.raises(ValueError,match='invalid Green total squared norm'):
+        f.norm_at_order(value,order)
+
+
 def test_raw_nonzero_exact_channel_computed_as_zero_is_rejected(monkeypatch):
     original=f._observed_fsum
     def injected(values,stage,reason,channel=None):
