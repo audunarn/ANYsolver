@@ -135,10 +135,18 @@ Do not automatically add uniform refinement, change
 tolerances, drop P1, relabel any HOLD, or promote a production space.
 Native full-vector/shear/drilling and all other G0 foundations remain open.
 
-The exact next action is to complete the implementation contract for
-`B3_GE_E4_PL_G0_F03_SPATIAL_RESIDUAL_DESIGN.md`, implement the independent
-saved-state study and its synthetic tests, obtain code/mechanics review,
-and only then freeze/register a new execution. The design was independently
+The spatial residual implementation is now prepared: fixed material and
+geometry constants, independent tensor-Legendre fields, direct monomial
+test traces, three work routes, raw-integral checks and the supervised
+saved-state runner. All 46 integrated synthetic/mock tests passed; log
+`.pytest_cache/spatial-integrated-d9b69c6464c0407ca784bac1bf7630f4.log`.
+Review findings on physical scaling, finite arithmetic, local wrench
+binding, functional ownership and output validation were fixed and
+fault-tested. Final full-runner review is pending at this checkpoint.
+
+The exact next action is to finish independent execution review of
+`B3_GE_E4_PL_G0_F03_SPATIAL_RESIDUAL_PROTOCOL.md`, freeze its source and
+register/run the new three-case execution once. The design was independently
 accepted as a foundation by finite_pad_axis_review, SHA
 `de19c34fc19c713593ecd2d8a4bdd269ab35338900f93b80fdcf7e4aee5ed7f1`.
 It grants no numerical execution or production-space acceptance by itself.
@@ -146,15 +154,15 @@ It grants no numerical execution or production-space acceptance by itself.
 Use the original n12/n16/n24 q/eta and exact represented pose polynomials.
 The design fixes45 geometry-derived rectangles, signed area-adjoint and
 root/tip atoms,18 supported tests, six edge lifts, and48/64 quadrature.
-Before registration finish exact material/scaling constants, cosine
-conventions, complete cell/edge/one-sided schemas, resources and failure
-precedence. Preserve independent work routes and the gamma factor.
+The implementation protocol fixes material/scaling constants, cosine
+conventions, complete cell/edge/one-sided schemas, resources, work counts
+and failure precedence. Preserve independent work routes and the gamma factor.
 Strong-residual maps are descriptive; large/growing residuals alone
 neither quantify physical error nor disprove energy-space convergence.
 No spatial study has been registered or run yet.
 
-No scientific process is active. Both specialists finished their bounded
-implementation/design/review work. Parent owns the next contract and
-integration. No concurrent writer owns source or completed evidence.
+No scientific process is active. The implementation specialist finished;
+the independent specialist is reviewing the final runner and protocol.
+Parent owns source freeze, registration, evidence and integration.
 All consumed diagnostic sources and completed inventories stay frozen.
 No release approval is being exercised. Keep main unchanged during G0.
