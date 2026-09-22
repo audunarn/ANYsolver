@@ -8,6 +8,7 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 - Branch: `codex/b3-ge-e4-pl-integration`.
 - Latest bounded operator source: `7cb7b77491ef3343b72a231a6bb443e0474ddec1`.
 - Latest bounded assembly/probe source: `66b6e109516296bbf8c4ff4155f2aa96c3701d1a`.
+- Latest bounded sparse-numerical/recovery source: `ade088e99e3108969baf70b27e7f7cc450351229`.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -119,6 +120,18 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
     See `B3_GE_E4_PL_G0_F03_LOCAL_ASSEMBLY_PROOFS_V1_RESULTS.md`. New closed
     26-file archive `f03-local-assembly-proof-v1` inventory SHA:
     `d02087acd268b0c55cf173582ff0d08a79d20cf71b9b4f7cbb1cc1fd4bfdbf46`.
+12. Sparse numerical building blocks and full classical recovery at
+    `ade088e9`: 48 distinct current tests pass (interval certificate22,
+    scaled sparse8, positivity6, recovery12); independent final review is
+    closed for the bounded batch. The mocked negative-square-root regression
+    failed before correction; the initial source and all ten raw logs are
+    retained. Exact scalar root guards, sparse full-residual positivity,
+    physical dual scaling and polynomial/cosine work recovery are verified.
+    Six p>=2 support lift residual actions are implemented; p1 lifts remain
+    unavailable. No physical reference equilibrium or native evaluation ran.
+    See `B3_GE_E4_PL_G0_F03_LOCAL_NUMERICAL_PROOFS_V1_RESULTS.md`. The closed
+    23-file proof archive `f03-local-numerical-proof-v1` inventory SHA is
+    `43f9a1c950acc315c6fed28548f5f6e40a822b934d566ae5f4eb6b1185817100`.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -190,15 +203,19 @@ Their raw archive is `.qualification/b3-ge-e4-pl/f03-local-operator-proof-v1`
 (39 bound files plus inventory); it is closed and must not be extended.
 The sparse eliminated-primal assembly, exact nested transfer and bounded
 manufactured work identities are now implemented and independently reviewed.
-The latest closed proof root is `f03-local-assembly-proof-v1` (26 bound files
-plus inventory); it must not be extended. The exact next action is the
-scaled sparse solve and a defensible sparse positivity/condition certificate
-with bounded saved verification data. The <=64 exact-rational comparison is
-only a synthetic probe and must not become a dense scientific fallback.
-Extend recovery/work verification from constant line densities plus atoms
-to the complete recovered polynomial/cosine functional and physical support
-reactions. Then complete and independently review a frozen numerical protocol
-and registration. No scientific case family or certificate method is selected.
+The latest closed proof root is `f03-local-numerical-proof-v1` (23 bound files
+plus inventory); it must not be extended. The scaled candidate solve,
+streamed interval condition certificate, supplied-factor sparse positivity
+proof and complete polynomial/cosine work recovery are now implemented and
+reviewed on synthetic/manufactured inputs. The exact next action is a bounded
+sparse positivity-factor producer and the connected numerical acceptance,
+integration/rank/work checks, saved-state bindings and independent adjudicator.
+Then complete and independently review a frozen numerical protocol and new
+registration. No scientific case family or certificate method is selected.
+The <=64 exact-rational probe remains a synthetic oracle, never a dense
+scientific fallback. Factor peak memory needs external supervision; streamed
+inverse columns still require 8*N*N raw saved bytes. p1 support lifts remain
+unavailable; Decimal cosine displays are not certified error bounds.
 Preserve the same physical operator, held J/gamma, three root
 constraints/free slope, signed reaction and full-functional criteria.
 Mesh/degree inventories, integration, conditioning, resource and convergence
