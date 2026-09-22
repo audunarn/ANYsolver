@@ -6,8 +6,8 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 
 - Worktree: `C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling`.
 - Branch: `codex/b3-ge-e4-pl-integration`.
-- Last executed source: `d0b6d0902360210f78e06b45f7bbabb030ea4022`
-  (exact saved-pose diagnostic). Last equilibrium source remains
+- Last executed source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
+  (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
   correction nor saved-only audit changed a mathematical operator.
 - Main was observed clean at `be41a77a62e1cd7e1767bda6e955253af0819f91`,
@@ -81,13 +81,25 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
    `e7f0b5c8a8a403d7785ddba793e8061628b8b1b163ba4251338b63c3f0e5de0a`.
    All29 integrated synthetic/mock tests and the five affected final
    runner mocks passed (overlapping inventories); raw logs are preserved.
+9. Spatial residual diagnostic at `59753d97`: 3/3 cases PASSED, exit 0.
+   Independent postreview accepted integrity and descriptive localization,
+   reproducing all 126 metrics and canonical summaries with no field/rule
+   rerun. Largest metric `1.1651611328125e-13` against `1e-10`.
+   The complete serial run took 21.5181126 s, with maximum sampled child
+   RSS 105,488,384 bytes. Zero new equilibria or native element operations.
+   See `B3_GE_E4_PL_G0_F03_SPATIAL_RESIDUAL_V1_RESULTS.md`.
+   Completed 35-file inventory SHA:
+   `43a9e2f5064f87b4e32f5e36e6158ae70fd6e0a01617765e5af5c1c3516bcbc7`.
+   All 46 integrated checks passed; the 34/28 final affected checks also
+   passed (overlapping inventories). All 13 raw development logs, including
+   initial failures, and pre/post reviews are sealed with the evidence.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
 `f03-endpoint-comparison-v1`, `f03-analytical-norm-v1`, and
 `f03-joint-refinement-v1`, `f03-variational-attribution-v1`, and
 `f03-primal-ritz-v1`, `f03-primal-saved-audit-v1`, and
-`f03-primal-exact-pose-v1`. Reports retain their
+`f03-primal-exact-pose-v1`, and `f03-spatial-residual-v1`. Reports retain their
 registration/adjudication hashes; raw reviews and execution provenance
 are saved with the latest roots. All these executions are consumed.
 Do not overwrite, retry or relabel them. Earlier failed/aborted evidence
@@ -135,34 +147,33 @@ Do not automatically add uniform refinement, change
 tolerances, drop P1, relabel any HOLD, or promote a production space.
 Native full-vector/shear/drilling and all other G0 foundations remain open.
 
-The spatial residual implementation is now prepared: fixed material and
-geometry constants, independent tensor-Legendre fields, direct monomial
-test traces, three work routes, raw-integral checks and the supervised
-saved-state runner. All 46 integrated synthetic/mock tests passed; log
-`.pytest_cache/spatial-integrated-d9b69c6464c0407ca784bac1bf7630f4.log`.
-Review findings on physical scaling, finite arithmetic, local wrench
-binding, functional ownership and output validation were fixed and
-fault-tested. Final full-runner review is pending at this checkpoint.
+The completed spatial study localizes persistent defects near root pads
+(cells 12/30) and right supported/free corners. Its volume-squared totals
+are 21.69397, 17.02412, 11.53795 and free-edge-squared totals are 0.0264247,
+0.00961514, 0.00454445 for n12/n16/n24. At n24, rightmost free-edge segments
+contain 85.4% of that squared edge defect. These are descriptive measures,
+not physical-error percentages, acceptance bounds or production-space choices.
 
-The exact next action is to finish independent execution review of
-`B3_GE_E4_PL_G0_F03_SPATIAL_RESIDUAL_PROTOCOL.md`, freeze its source and
-register/run the new three-case execution once. The design was independently
-accepted as a foundation by finite_pad_axis_review, SHA
-`de19c34fc19c713593ecd2d8a4bdd269ab35338900f93b80fdcf7e4aee5ed7f1`.
-It grants no numerical execution or production-space acceptance by itself.
+The local-reference mechanics foundation and its limitations passed
+independent review. Draft SHA:
+`36ce310a99df390fa95c83fd2e346315fb46cc795665f6e5de1ba747ddb4bc3b`;
+see `B3_GE_E4_PL_G0_F03_LOCAL_REFERENCE_DESIGN_REVIEW.md`.
+The exact next action is a concrete implementation/numerical contract for
+`B3_GE_E4_PL_G0_F03_LOCAL_REFERENCE_DESIGN_DRAFT.md`, followed by bounded
+synthetic operator proofs before any new scientific registration.
+Preserve the same physical operator, held J/gamma, three root
+constraints/free slope, signed reaction and full-functional criteria.
+Mesh/degree inventories, integration, conditioning, resource and convergence
+gates remain to be resolved before any new scientific registration. In
+particular: preserve positive exact intervals whose endpoints collapse in
+binary64, prove hanging-node conformity, qualify the complete piecewise
+functional norm, and bound footprint incidence/nnz/fill/workspace growth.
+Piecewise displacement fields need internal stress-jump terms; this must
+be derived and checked independently rather than reusing the smooth-only
+residual identity. No automatic global-degree or uniform-refinement run.
 
-Use the original n12/n16/n24 q/eta and exact represented pose polynomials.
-The design fixes45 geometry-derived rectangles, signed area-adjoint and
-root/tip atoms,18 supported tests, six edge lifts, and48/64 quadrature.
-The implementation protocol fixes material/scaling constants, cosine
-conventions, complete cell/edge/one-sided schemas, resources, work counts
-and failure precedence. Preserve independent work routes and the gamma factor.
-Strong-residual maps are descriptive; large/growing residuals alone
-neither quantify physical error nor disprove energy-space convergence.
-No spatial study has been registered or run yet.
-
-No scientific process is active. The implementation specialist finished;
-the independent specialist is reviewing the final runner and protocol.
-Parent owns source freeze, registration, evidence and integration.
+No scientific process is active. Both specialists finished the spatial
+work and local-reference design review. Parent owns the next concrete
+contract and integration. The design review grants no execution authority.
 All consumed diagnostic sources and completed inventories stay frozen.
 No release approval is being exercised. Keep main unchanged during G0.
