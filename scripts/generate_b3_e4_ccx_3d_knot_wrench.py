@@ -23,10 +23,14 @@ def _replace_supports(deck:str,motion:dict[tuple[int,int],float],
     cards="*BOUNDARY\n"+"\n".join(rows)+"\n"
     if load:
         cards+="*CLOAD\n48,2,1000\n"
-    result=head+cards+"*NODE PRINT,NSET=AllNodes\n"+rest
+    # The original B31 tip coordinate need not be reconstructed the same way
+    # without a CLOAD. Read the expanded four-corner work coordinate instead.
+    output=rest.replace("*END STEP\n","*NODE FILE,OUTPUT=3D\nU\n*END STEP\n")
+    result=head+cards+"*NODE PRINT,NSET=AllNodes\n"+output
     if (result.count("*BOUNDARY\n")!=1 or result.count("*EQUATION\n")!=12 or
             result.count("*BEAM SECTION")!=2 or
-            result.count("*CLOAD\n")!=int(load)):
+            result.count("*CLOAD\n")!=int(load) or
+            result.count("*NODE FILE,OUTPUT=3D\n")!=1):
         raise ValueError("knot wrench deck inventory changed")
     return result
 

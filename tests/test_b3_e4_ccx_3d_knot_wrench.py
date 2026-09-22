@@ -33,7 +33,7 @@ def test_loaded_baseline_has_same_knot_model_and_zero_supports():
     assert not any(_inventory(baseline).values())
     assert baseline.count("*EQUATION\n")==12
     assert baseline.count("*BEAM SECTION")==2
-    assert "*NODE FILE" not in baseline
+    assert baseline.count("*NODE FILE,OUTPUT=3D\nU\n")==1
 
 
 @pytest.mark.parametrize("group",("shell","beam"))
