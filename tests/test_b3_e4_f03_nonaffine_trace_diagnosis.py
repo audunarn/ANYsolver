@@ -144,7 +144,7 @@ def test_affine_exactness_and_nonaffine_refinement(topology):
 
 
 @pytest.mark.parametrize("ny", (16,32,64))
-@pytest.mark.parametrize("ns", (64,128))
+@pytest.mark.parametrize("ns", (32,64,128))
 @pytest.mark.parametrize("topology", ("Q4", "CST-CB"))
 def test_hand_located_host_crossings_at_loaded_resolutions(topology,ns,ny):
     """No overlay-derived breakpoint is used for these one-sided checks."""
@@ -180,6 +180,30 @@ def test_hand_located_host_crossings_at_loaded_resolutions(topology,ns,ny):
                 host_left = shell.sample(model,s-step+dx,dy)[0]
                 host_right = shell.sample(model,s+step+dx,dy)[0]
                 assert host_left != host_right
+
+
+@pytest.mark.parametrize("topology", ("Q4", "CST-CB"))
+@pytest.mark.parametrize("nm", (16, 32, 64))
+def test_ns32_ny64_overlay_resolves_fixed_first_quarter_bands(topology, nm):
+    model = shell.panel(32, 64, topology)
+    native = line.overlay(model, 512, nm)
+    bands = np.arange(9)/32
+    union = np.unique(np.r_[native, bands])
+    assert union[0] == 0 and union[-1] == 1
+    for edge in bands:
+        assert np.min(np.abs(union-edge)) < 1e-14
+    if nm == 16:
+        # Odd band edges bisect P1 cells, even though the Nb=512 beam knots
+        # happen to include every 1/32 band edge in this frozen fixture.
+        assert all(abs(edge*nm-round(edge*nm)) == .5 for edge in bands[1::2])
+        assert all(np.min(np.abs(native-edge)) < 1e-14 for edge in bands[1::2])
+    for a, b in zip(union[:-1], union[1:]):
+        left, right = a+.25*(b-a), a+.75*(b-a)
+        assert b > a
+        assert min(int(left*512),511) == min(int(right*512),511)
+        assert min(int(left*nm),nm-1) == min(int(right*nm),nm-1)
+        for dx, dy in shell.OFFSETS:
+            assert shell.sample(model,left+dx,dy)[0] == shell.sample(model,right+dx,dy)[0]
 
 
 @pytest.mark.parametrize("topology", ("Q4", "CST-CB"))
