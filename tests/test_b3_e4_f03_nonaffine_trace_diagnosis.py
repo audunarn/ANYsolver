@@ -17,12 +17,12 @@ import _b3_e4_f03_independent_line as line
 import _b3_e4_f03_independent_shell as shell
 
 
-U0 = 1e-3
+AMPLITUDE = 1e-3
 
 
 def _field(x, y):
     # Coordinates are metres divided by L0=W0=1 m.
-    return U0 * (x*x + .4*x*y*y)
+    return AMPLITUDE * (x*x + .4*x*y*y)
 
 
 def _nodal(model):
@@ -38,17 +38,21 @@ def _independent_sample(model, x, y, q):
     """
     i = min(max(int(np.floor((x + .5)*model.n_s)), 0), 2*model.n_s-1)
     j = min(max(int(np.floor((y + .5)*model.n_y)), 0), model.n_y-1)
-    cell = j*2*model.n_s+i
     x0 = -.5+i/model.n_s
     y0 = -.5+j/model.n_y
     a = (x-x0)*model.n_s
     b = (y-y0)*model.n_y
+    bl = j*(2*model.n_s+1)+i
+    br = bl+1
+    tl = bl+2*model.n_s+1
+    tr = tl+1
     if model.topology == "Q4":
-        ids = model.elements[cell]
+        ids = (bl,br,tr,tl)
         weights = np.array(((1-a)*(1-b), a*(1-b), a*b, (1-a)*b))
         deriv = model.n_s*np.array((-(1-b), 1-b, b, -b))
     else:
-        candidates = model.elements[2*cell:2*cell+2]
+        candidates = ((bl,br,tl),(br,tr,tl)) if (i+j)%2 else (
+            (bl,br,tr),(bl,tr,tl))
         for ids in candidates:
             xyz = model.nodes[list(ids)]
             basis = np.column_stack((np.ones(3), xyz))
@@ -137,6 +141,45 @@ def test_affine_exactness_and_nonaffine_refinement(topology):
     assert all(np.isfinite(energies)) and min(energies) > 0
     assert errors[0] > errors[1] > errors[2] > 0
     assert errors[2] < .3*errors[0]
+
+
+@pytest.mark.parametrize("ny", (16,32,64))
+@pytest.mark.parametrize("ns", (64,128))
+@pytest.mark.parametrize("topology", ("Q4", "CST-CB"))
+def test_hand_located_host_crossings_at_loaded_resolutions(topology,ns,ny):
+    """No overlay-derived breakpoint is used for these one-sided checks."""
+    model = shell.panel(ns,ny,topology)
+    q = _nodal(model)
+    for dx,dy in shell.OFFSETS:
+        j = int(np.floor((dy+.5)*ny))
+        fraction = (dy+.5)*ny-j
+        assert 0 < fraction < 1
+        for i in (int(.75*ns),ns,int(1.25*ns)):
+            crossings = (0.,) if topology == "Q4" else (
+                0., (1-fraction if (i+j)%2 else fraction))
+            for crossing in crossings:
+                # crossing=0 is an x-grid boundary; the second, if present,
+                # is the diagonal defined by the documented checkerboard.
+                s = -.5+(i+crossing)/ns-dx
+                assert 0 < s < 1
+                step = min(1e-7, .01*min(fraction,1-fraction)/ns)
+                left = shell.pose(model,s-step)@q
+                at = shell.pose(model,s)@q
+                right = shell.pose(model,s+step)@q
+                expected_left, slope_left = _independent_pose(model,s-step/2,q)
+                expected_right, slope_right = _independent_pose(model,s+step/2,q)
+                np.testing.assert_allclose((left+at)/2,expected_left,
+                                           rtol=0,atol=2e-12)
+                np.testing.assert_allclose((right+at)/2,expected_right,
+                                           rtol=0,atol=2e-12)
+                np.testing.assert_allclose((at-left)/step,slope_left,
+                                           rtol=2e-6,atol=2e-9)
+                np.testing.assert_allclose((right-at)/step,slope_right,
+                                           rtol=2e-6,atol=2e-9)
+                # The target host must change on the hand-computed boundary.
+                host_left = shell.sample(model,s-step+dx,dy)[0]
+                host_right = shell.sample(model,s+step+dx,dy)[0]
+                assert host_left != host_right
 
 
 @pytest.mark.parametrize("topology", ("Q4", "CST-CB"))
