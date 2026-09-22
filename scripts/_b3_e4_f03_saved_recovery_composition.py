@@ -197,6 +197,7 @@ def _preflight(grid,matrices,vectors,exact,saved_interface,saved_work,
     if (binding_envelope>min(sb.max_nnz,bb.max_combined_nnz) or
             h.nnz+binding_envelope>bb.max_combined_nnz):
         raise ValueError('saved composition nested binding envelope exceeds budget')
+    sparse_common._workspace(n+3,n+3,binding_envelope,1,sb)
     binding_workspace=1024*(h.nnz+binding_envelope+10*(n+3))+2*bb.max_total_bits
     equilibrium_workspace=1024*(6*six_upper+12*(n+3))+2*eb.max_total_bits
     if (binding_workspace>bb.max_python_work_bytes or
@@ -236,10 +237,16 @@ def _preflight(grid,matrices,vectors,exact,saved_interface,saved_work,
                    local*local*768+active*3*(grid.p+3)*768+
                    rb.trace_budget.max_trace_integer_bits//8)
         return operations,workspace
-    for rb in (ib.recovery_budget,wb.support_budget.recovery_budget):
+    recovery_budgets=(ib.recovery_budget,wb.support_budget.recovery_budget)
+    for rb in recovery_budgets:
         recovery_operations,recovery_workspace=recovery_envelope(rb)
         if (recovery_operations>rb.max_operations or recovery_workspace>rb.max_work_bytes):
             raise ValueError('saved composition nested recovery envelope exceeds budget')
+        tb=rb.trace_budget;trace_bits=3*active*(grid.p+3)
+        trace_workspace=768*3*active*(grid.p+3)+tb.max_trace_integer_bits//8
+        if (active>tb.max_trace_dofs or trace_bits>tb.max_trace_integer_bits or
+                trace_workspace>tb.max_work_bytes):
+            raise ValueError('saved composition nested trace envelope exceeds budget')
     support_operations=(len(grid.rectangles)*local*(local+24)*32+
                         ni*max(1,active)*(grid.p+3)*96)
     support_workspace=(768*(12*local*len(grid.rectangles)+ni*360+grid.free_dofs)+
@@ -248,9 +255,15 @@ def _preflight(grid,matrices,vectors,exact,saved_interface,saved_work,
             support_workspace>wb.support_budget.max_work_bytes):
         raise ValueError('saved composition nested support envelope exceeds budget')
     exact_bits=sum(recovery._bits(value) for value in exact)
-    if (exact_bits>wb.support_budget.recovery_budget.max_integer_bits or
-            exact_bits>wb.support_budget.max_integer_bits):
+    recovery_state_bits=exact_bits+sum(recovery._bits(value) for value in grid.station_cuts)
+    if any(recovery_state_bits>rb.max_integer_bits for rb in recovery_budgets):
         raise ValueError('saved composition exact state exceeds nested integer budget')
+    fraction_bits=2*recovery.BITS
+    support_symbolic=(160*(1+8*ni)*fraction_bits+
+        (6*ni*3*6+ni*3*6)*fraction_bits+
+        (n+3+len(grid.station_cuts)+6)*fraction_bits)
+    if support_symbolic>wb.support_budget.max_integer_bits:
+        raise ValueError('saved composition support symbolic storage exceeds budget')
     operations=(ib.max_aggregate_operations+wb.max_aggregate_operations+nb.max_operations+
         ib.recovery_budget.max_operations+2*wb.support_budget.recovery_budget.max_operations+
         wb.support_budget.max_operations)

@@ -189,6 +189,40 @@ def test_every_nested_resource_preflight_stops_all_components(monkeypatch):
         with pytest.raises(ValueError,match='saved composition'):_verify(args,budget=budget)
 
 
+def test_deep_nested_resource_guards_stop_all_components(monkeypatch):
+    args=_case();g=args[0];active=max(map(len,g.trace_incidence))
+    trace_bits=3*active*(g.p+3)
+    trace_workspace=768*3*active*(g.p+3)+RB.trace_budget.max_trace_integer_bits//8
+    def forbidden(*values,**options):pytest.fail('component started after deep preflight failure')
+    for module,name in ((equilibrium,'verify_equilibrium'),(interface,'verify_interface'),
+                        (work,'verify_work'),(norm,'verify_norm')):
+        monkeypatch.setattr(module,name,forbidden)
+    def interface_recovery(value):
+        return replace(CB,interface_budget=replace(IB,recovery_budget=value))
+    def work_recovery(value):
+        return replace(CB,work_budget=replace(WB,support_budget=replace(SB,
+            recovery_budget=value)))
+    trace_variants=(
+        replace(RB.trace_budget,max_trace_dofs=active-1),
+        replace(RB.trace_budget,max_trace_integer_bits=trace_bits-1),
+        replace(RB.trace_budget,max_work_bytes=trace_workspace-1),
+    )
+    budgets=[]
+    for trace_budget in trace_variants:
+        budgets.extend((interface_recovery(replace(RB,trace_budget=trace_budget)),
+                        work_recovery(replace(RB,trace_budget=trace_budget))))
+    budgets.extend((
+        interface_recovery(replace(RB,max_integer_bits=122)),
+        work_recovery(replace(RB,max_integer_bits=122)),
+        replace(CB,work_budget=replace(WB,
+            support_budget=replace(SB,max_integer_bits=1000))),
+        replace(CB,equilibrium_budget=replace(EB,binding_budget=replace(BB,
+            sparse_budget=replace(SP,max_work_bytes=6500)))),
+    ))
+    for budget in budgets:
+        with pytest.raises(ValueError):_verify(args,budget=budget)
+
+
 def test_partition_mismatch_is_rejected_before_components(monkeypatch):
     args=list(_case());saved=args[15];ni=len(saved.cuts)-1
     args[15]=replace(saved,cuts=tuple(F(i*i,ni*ni) for i in range(ni+1)))
