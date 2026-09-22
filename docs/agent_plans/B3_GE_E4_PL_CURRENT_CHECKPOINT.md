@@ -6,7 +6,7 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 
 - Worktree: `C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling`.
 - Branch: `codex/b3-ge-e4-pl-integration`.
-- Last implementation commit: `707cb39d65ec17e8f4a3794d0f2e52eaa7712666`;
+- Last executed implementation commit: `f8f8e851e3ce24885005381d9b64873026baa314`;
   subsequent documentation commits do not change the evaluated operators.
 - Main was observed clean at `be41a77a62e1cd7e1767bda6e955253af0819f91`,
   version 0.4.7. No product promotion or publication occurred.
@@ -43,11 +43,17 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
    accepted the evidence and retained HOLD on mechanics, reproducing all
    saved spectra, physical-force recovery and trend predicates without
    structural or norm-constructor reruns.
+5. Saved-state variational attribution at `f8f8e85`: all three Q4
+   middle/fine family checks passed, with no equilibrium or Schur solve.
+   Independent review accepted raw integrity and bounded interpretation.
+   See `B3_GE_E4_PL_G0_F03_VARIATIONAL_ATTRIBUTION_V1_RESULTS.md`.
+   The continuous eliminated-primal derivation also passed independent
+   mechanics review; that acceptance is not numerical qualification.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
 `f03-endpoint-comparison-v1`, `f03-analytical-norm-v1`, and
-`f03-joint-refinement-v1`. Reports retain their
+`f03-joint-refinement-v1`, and `f03-variational-attribution-v1`. Reports retain their
 registration/adjudication hashes; raw reviews and execution provenance
 are saved with the latter two roots. All these executions are consumed.
 Do not overwrite, retry or relabel them. Earlier failed/aborted evidence
@@ -64,19 +70,28 @@ unsettled. Hybrid/enriched fine tips nearly coincide while terminal-band
 force/moment differs about10%. P1 remains much further from endpoint
 spaces. All finite Schur modes are positive; no continuum stability claim.
 
-The independently recommended next action is a new registered saved-state
-variational attribution: verify Q4 middle/fine prolongation, then split
-potential-energy change into shell/beam energy-distance, constraint-
-mismatch work and residual work. Use matrix actions; no equilibrium rerun.
-Do not assume CST-CB nesting. In parallel derive the continuous primal
-reference b=A us with the original supports, proving trace/energy domain,
-equivalence, work and reaction recovery before a separate higher-order/
-Ritz implementation or execution. Details/formula are in the joint-results
-report. This does not replace required executed external comparisons.
+The attribution identity is now verified. Enriched's potential change is
+mostly shell energy distance (0.77136 J), with beam distance 0.01472 J and
+small net constraint work 0.00003296 J. This is a discrete-state split,
+not causal continuum-error attribution; cancellation and endpoint error
+remain possible. P1 and hybrid have substantial negative constraint work.
+
+The next bounded implementation is the independently derived continuous
+primal reference b=A us, using a separate polynomial Ritz evaluator,
+independent rectangular-pad moments, the original three root constraints
+and physical reaction recovery. No native FE/host-clipping/multiplier
+assembly is reused as the reference algorithm. Review and register the
+basis/quadrature/conditioning/resource sequence before scientific solves.
+No primal reference scientific execution has occurred at this checkpoint.
+This does not replace required executed external comparisons.
 Do not automatically add uniform refinement, change
 tolerances, drop P1, relabel any HOLD, or promote a production space.
 Native full-vector/shear/drilling and all other G0 foundations remain open.
 
-No scientific processes are active at this checkpoint. Specialist workers
-finished their bounded work; no shared-file edits are outstanding from them.
+No scientific processes are active at this checkpoint. Bounded work in
+progress: `/root/f03_port_mechanics` owns the new primal Ritz operator and
+its focused tests; `/root/finite_pad_axis_review` owns the proposed
+independent numerical contract. Parent owns integration, runner and
+registration. Check current dirty files before resuming; no concurrent
+worker owns existing source or completed evidence.
 No release approval is being exercised. Keep main unchanged during G0.
