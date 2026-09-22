@@ -133,6 +133,11 @@ applicable. The new protocol distinguishes the original full saved-action
 metric from the replayed derivative submetric and freezes rational
 encoding limits. Spatial residual analysis is a later, separate diagnostic.
 No actual three-state execution has been registered or performed yet.
+The independent Fraction operator, attribution checks and supervised
+runner are implemented. The integrated29 synthetic/mock tests passed;
+independent review corrections cover bounded serialization, exact
+represented geometry, and exact copying of inherited evidence. Final
+scoped review and the clean source freeze precede the registered run.
 
 No registered scientific process is active. Parent owns the new protocol,
 runner and evidence; f03_port_mechanics owns only the new exact-pose module
