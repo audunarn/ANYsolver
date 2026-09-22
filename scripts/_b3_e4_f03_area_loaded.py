@@ -33,10 +33,18 @@ class PreflightResult:
     external_work_j: float
     interface_work_j: float
     gap_l2_m: float
+    fixed_scale_gap: float
+    motion_scale_gap: float
+    motion_rms_m: float
     free_residual_scaled: float
     weak_gap_scaled: float
     balance_scaled: tuple[float,float,float]
     support_wrenches: tuple[tuple[float,float,float],...]
+    shell_station_displacements_m: tuple[tuple[float,float,float],...]
+    beam_root_elastic_wrench: tuple[float,float,float]
+    beam_root_port_wrench: tuple[float,float,float]
+    beam_root_load_wrench: tuple[float,float,float]
+    beam_port_quarter_wrenches: tuple[tuple[float,float,float],...]
     kkt_dimension: int
     kkt_nnz: int
 
@@ -52,24 +60,54 @@ def _edge_wrench(model: shell.Panel, residual: np.ndarray,
 
 def _gap(model: shell.Panel, n_beam: int, n_mortar: int,
          halfwidth: float, qs: np.ndarray, qb: np.ndarray,
-         order: int = 8) -> float:
+         order: int = 8) -> tuple[float,float]:
     knots=area.overlay(model,n_beam,n_mortar,halfwidth)
     roots,weights=np.polynomial.legendre.leggauss(order)
     squared=0.
+    motion_squared=0.
     for left,right in zip(knots[:-1],knots[1:]):
         for root,weight in zip(roots,weights):
             s=(left+right)/2+(right-left)*root/2
-            g=beam.trace(n_beam,s)@qb-port.pose(model,s,halfwidth)@qs
-            g[2]*=original.YAW_LENGTH
-            squared+=(right-left)*weight/2*float(g@g)
-    return math.sqrt(max(squared,0.))
+            pb=beam.trace(n_beam,s)@qb
+            ps=port.pose(model,s,halfwidth)@qs
+            pb[2]*=original.YAW_LENGTH
+            ps[2]*=original.YAW_LENGTH
+            g=pb-ps
+            measure=(right-left)*weight/2
+            squared+=measure*float(g@g)
+            motion_squared+=measure*float((pb@pb+ps@ps)/2)
+    return math.sqrt(max(squared,0.)),math.sqrt(max(motion_squared,0.))
+
+
+def _port_quarters(lam: np.ndarray, n_mortar: int, law: str
+                   ) -> tuple[tuple[float,float,float],...]:
+    """Independent beam-side multiplier resultants per physical quarter."""
+    roots,weights=np.polynomial.legendre.leggauss(4)
+    result=[]
+    for quarter in range(4):
+        a,b=quarter/4,(quarter+1)/4
+        bounds=np.unique(np.r_[a,b,
+            np.arange(n_mortar+1)/n_mortar])
+        bounds=bounds[(bounds>=a)&(bounds<=b)]
+        wrench=np.zeros(3)
+        for left,right in zip(bounds[:-1],bounds[1:]):
+            for root,weight in zip(roots,weights):
+                s=(left+right)/2+(right-left)*root/2
+                density=np.zeros(3)
+                for index,value in original.mortar_tests(n_mortar,law,s):
+                    density+=value*lam[3*index:3*index+3]
+                wrench+=(right-left)*weight/2*np.array((
+                    density[0],density[1],
+                    s*density[1]+original.YAW_LENGTH*density[2]))
+        result.append(tuple(map(float,wrench)))
+    return tuple(result)
 
 
 def solve(n_s: int, n_y: int, n_beam: int, n_mortar: int,
           topology: str, law: str, loading: str,
           halfwidth: float) -> PreflightResult:
-    if (not 1<=n_s<=4 or not 2<=n_y<=8 or
-            not 1<=n_beam<=8 or not 1<=n_mortar<=4 or
+    if (not 1<=n_s<=8 or not 2<=n_y<=16 or
+            not 1<=n_beam<=16 or not 1<=n_mortar<=8 or
             loading not in ("smooth","sine")):
         raise ValueError("outside finite-pad loaded preflight envelope")
     model=shell.panel(n_s,n_y,topology)
@@ -116,17 +154,38 @@ def solve(n_s: int, n_y: int, n_beam: int, n_mortar: int,
     weak_scale=scaling.U0*np.repeat(multiplier_measure,3)
     free_error=float(np.max(np.abs(residual[free])/free_scale))
     weak_error=float(np.max(np.abs(weak)/weak_scale))
-    gap=_gap(model,n_beam,n_mortar,halfwidth,qs,qb)
+    gap,motion=_gap(model,n_beam,n_mortar,halfwidth,qs,qb)
+    fixed_gap=gap/scaling.U0
+    motion_gap=gap/max(motion,.1*scaling.U0)
     tip=beam.trace(n_beam,1.)@qb
     tip=(float(tip[0]),float(tip[1]),
          float(original.YAW_LENGTH*tip[2]))
+    stations=[]
+    for s in (.25,.5,.75):
+        p=port.pose(model,s,halfwidth)@qs
+        stations.append((float(p[0]),float(p[1]),
+                         float(original.YAW_LENGTH*p[2])))
+    root=beam.root_dofs(n_beam)
+    root_elastic=tuple(map(float,(kb@qb)[root]))
+    root_port=tuple(map(float,(cb.T@lam)[root]))
+    root_load=tuple(map(float,f[model.dof_count+root]))
+    quarters=_port_quarters(lam,n_mortar,law)
     all_values=(shell_energy,beam_energy,work,interface,gap,free_error,
-                weak_error,*balance,*tip,*(v for group in wrenches for v in group))
+                motion,fixed_gap,motion_gap,weak_error,*balance,*tip,
+                *(v for group in wrenches for v in group),
+                *(v for group in stations for v in group),
+                *root_elastic,*root_port,*root_load,
+                *(v for group in quarters for v in group))
     if not np.all(np.isfinite(all_values)):
         raise ValueError("nonfinite finite-pad preflight result")
     if abs(2*(shell_energy+beam_energy)+interface-work)>1e-8*scaling.E0:
         raise ValueError("finite-pad energy identity failed")
+    if not np.allclose(np.asarray(root_elastic)+np.asarray(root_port)-
+                       np.asarray(root_load),wrenches[2],rtol=1e-10,atol=1e-5):
+        raise ValueError("beam-root physical wrench partition failed")
     return PreflightResult(topology,law,loading,halfwidth,tip,shell_energy,
-                           beam_energy,work,interface,gap,free_error,
-                           weak_error,balance,wrenches,scaled.matrix.shape[0],
+                           beam_energy,work,interface,gap,fixed_gap,motion_gap,
+                           motion,free_error,weak_error,balance,wrenches,
+                           tuple(stations),root_elastic,root_port,root_load,
+                           quarters,scaled.matrix.shape[0],
                            scaled.matrix.nnz)

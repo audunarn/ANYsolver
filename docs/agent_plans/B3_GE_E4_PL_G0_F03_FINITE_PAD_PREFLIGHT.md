@@ -34,6 +34,32 @@ systems with the existing work-conjugate diagonal KKT scaling and
 recovers physical support wrenches, energy, weak gap and a separate
 continuous-field L² gap.
 
+The next bounded feasibility experiment declares `a=.05 m` before examining
+its response: the classical reference beam has area `.01 m²` and bending
+inertia `8.333333333333333e-6 m⁴`, corresponding to a nominal `.1 m` square.
+Four *separate* `.1 × .1 m` material patches are an illustrative connection
+geometry with `.04 m²` total interface area, not a consequence of the beam
+section or a real weld detail. This changes the physical model. The `.05 m`
+choice must remain fixed for the experiment and may not be tuned to resolve
+the adverse four-point reference results. The previous `.04 m` preflight
+remains a test geometry.
+
+The experimental runner `b3_e4_f03_area_feasibility.py` registers exact
+source and environment identities before execution, supervises two bounded
+mesh sizes per Q4/CST-CB topology with P1 and smooth load, and preserves
+per-case raw output. Its terminal mesh is `(Ns,Ny,Nb,Nm)=(8,16,16,8)`;
+each case has a 900-second limit and a 100-ms-sampled child-process RSS cap
+of 8 GiB and runs single-threaded. The supervisor does not measure an
+instantaneous or process-tree peak. Only algebraic balance, compatibility, and energy have
+pass limits. It reports signed tip, three shell stations, root elastic/port/
+load partition, and four beam-side physical-quarter resultants without
+claiming response convergence. The integrated L² gap is not a pointwise
+enclosure or endpoint certificate. A supervised case exit, however clean,
+does not accept a physical reference or close G0B.
+Three runner failure-path tests cover spawn failure receipt, premature final
+adjudication, and corrupted child output; the combined focused suite passes
+64 tests after these additions.
+
 The 36 new focused tests pass: rigid motions at the line ends and an
 interior station; a general affine shear; a Q4 bilinear second-moment
 identity; signed force, origin moment and virtual work; an analytic
