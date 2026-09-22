@@ -1,4 +1,5 @@
 from pathlib import Path
+import struct
 import zipfile
 
 import numpy as np
@@ -34,6 +35,18 @@ def test_strict_group_roundtrip_owns_arrays(arrays, tmp_path):
         storage.write_group(path, arrays, SPECS, max_raw_bytes=100_000)
 
 
+def test_writer_preflight_guarantees_its_own_size_bound_and_reader_acceptance(tmp_path):
+    rng = np.random.default_rng(123)
+    value = rng.integers(0, 256, size=1_000_000, dtype=np.uint8)
+    specs = (storage.ArraySpec("noise", value.shape, np.dtype("|u1")),)
+    bound = value.nbytes + storage.MAX_ZIP_MEMBER_OVERHEAD
+    path = tmp_path / "noise.npz"
+    storage.write_group(path, {"noise": value}, specs, max_raw_bytes=bound)
+    assert path.stat().st_size <= bound
+    restored = storage.read_group(path, specs, max_raw_bytes=bound)
+    np.testing.assert_array_equal(restored["noise"], value)
+
+
 def test_missing_extra_wrong_shape_dtype_nonfinite_and_alias_rejected(arrays, tmp_path):
     invalid = []
     missing = dict(arrays); missing.pop("flags"); invalid.append(missing)
@@ -45,6 +58,18 @@ def test_missing_extra_wrong_shape_dtype_nonfinite_and_alias_rejected(arrays, tm
     for index, value in enumerate(invalid):
         with pytest.raises(ValueError):
             storage.write_group(tmp_path / f"bad-{index}.npz", value, SPECS, max_raw_bytes=100_000)
+
+
+def test_complete_value_and_alias_preflight_precedes_ownership_copy(arrays, tmp_path, monkeypatch):
+    monkeypatch.setattr(storage, "_owned", lambda *a, **k: pytest.fail("must preflight first"))
+    wrong = dict(arrays)
+    wrong["flags"] = np.zeros(3, dtype="|b1")
+    with pytest.raises(ValueError, match="flags"):
+        storage.write_group(tmp_path / "wrong.npz", wrong, SPECS, max_raw_bytes=100_000)
+    aliased = dict(arrays)
+    aliased["indices"] = arrays["matrix"].view("<i8").reshape(-1)[:3]
+    with pytest.raises(ValueError, match="aliased"):
+        storage.write_group(tmp_path / "aliased.npz", aliased, SPECS, max_raw_bytes=100_000)
 
 
 def _members(path: Path):
@@ -67,12 +92,12 @@ def test_duplicate_missing_extra_and_reordered_zip_members_rejected(arrays, tmp_
     for index, value in enumerate(variants):
         path = tmp_path / f"inventory-{index}.npz"
         _write(path, value)
-        with pytest.raises(ValueError, match="inventory"):
+        with pytest.raises(ValueError, match="inventory|central-directory"):
             storage.read_group(path, SPECS, max_raw_bytes=100_000)
     duplicate = tmp_path / "duplicate.npz"
     with pytest.warns(UserWarning):
         _write(duplicate, members + [members[0]])
-    with pytest.raises(ValueError, match="inventory"):
+    with pytest.raises(ValueError, match="inventory|central-directory"):
         storage.read_group(duplicate, SPECS, max_raw_bytes=100_000)
 
 
@@ -100,6 +125,14 @@ def test_raw_and_compressed_bounds_checked_before_load(arrays, tmp_path, monkeyp
     monkeypatch.setattr(storage.zipfile, "ZipFile", lambda *a, **k: pytest.fail("size must reject first"))
     with pytest.raises(ValueError, match="compressed-byte"):
         storage.read_group(path, SPECS, max_raw_bytes=15_000)
+
+
+def test_central_directory_count_rejected_before_zipfile_allocation(monkeypatch):
+    # Validly placed EOCD shape, but an impossible registered member count.
+    payload = struct.pack("<4s4H2LH", b"PK\x05\x06", 0, 0, 5000, 5000, 0, 0, 0)
+    monkeypatch.setattr(storage.zipfile, "ZipFile", lambda *a, **k: pytest.fail("preflight first"))
+    with pytest.raises(ValueError, match="central-directory"):
+        storage._preflight_central_directory(payload, len(SPECS))
 
 
 @pytest.mark.parametrize("name,shape,dtype,finite", [
