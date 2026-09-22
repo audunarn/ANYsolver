@@ -106,8 +106,10 @@ For each case:
 4. Stream every inverse column from that same factor in blocks of at most four,
    save every binary64 column once, and independently verify `I-HY` including
    zero-target rows.
-5. Require `condition_2_upper <= 1e10` and primary relative backward error
-   `<=1e-8`.
+5. Require `condition_2_upper <= 1e10` and
+   `amplified_backward_upper = condition_2_upper * backward_error_upper <=1e-8`.
+   Preserve the raw backward error as a diagnostic; it does not replace the
+   amplified gate.
 6. Reuse the saved inverse columns for alternate-integration verification. No
    factor or solve is available to the saved-only adjudicator.
 
@@ -126,13 +128,27 @@ max_KKT_factor_nnz = 2,171,202
 max_inverse_evidence_bytes_per_case = 17,357,832
 ```
 
-The primal positivity producer may retain at most 2,162,370 L/U entries and
-67,108,864 bytes of canonical factor arrays. The exact verifier caps product
+These caps apply to the scaled KKT system, inverse-column certificate and
+integration check. The primal positivity factor route has a distinct sparse
+validation budget because each native L or U factor is validated before the
+combined factor cap:
+
+```text
+factor_validation_max_order = 1,470
+factor_validation_max_nnz_per_factor = 2,162,370
+factor_validation_max_block_columns = 1
+factor_validation_max_work_bytes = 277,536,256
+```
+
+The factor producer may retain at most 2,162,370 combined L/U entries and
+67,108,864 bytes of canonical factor arrays. Both the distinct validation
+budget and combined factor limits are bound separately. The exact verifier caps product
 paths at 50,000,000, residual entries at 300,000, individual Fractions at
 16,384 bits, cumulative rational bits at 100,000,000, and its declared
-Python workspace at 4,294,967,296 bytes. A preflight or observed cap failure is
-`FAILED_EXECUTION`; a completed but unresolved/failed positivity or condition
-certificate is `FAILED_NUMERICAL_SCREEN`. Neither authorizes another method.
+Python workspace at 4,294,967,296 bytes. A preflight or observed resource-cap
+failure is `FAILED_EXECUTION`; an explicit completed predicate failure is
+`FAILED_NUMERICAL_SCREEN`; and a returned `HOLD` remains
+`UNRESOLVED_NUMERICAL_SCREEN`. None authorizes another method.
 
 The exact numerical runner must test all budget inequalities before the
 corresponding allocation or loop. Native factorization remains externally
@@ -160,6 +176,24 @@ The producer writes owned arrays and exact schemas once; the adjudicator loads
 only those arrays and may not import a factorization or solve route. A digest
 binds evidence but does not establish physics.
 
+The solve-free numerical replay inventory is exact and mandatory:
+
+- Primary and alternate shell, beam and root sparse blocks and physical load
+  vectors, with shapes, formats, explicit entries and hashes.
+- Primary scaling `D,R`; primary and alternate scaled `Kbar,Cbar,H,b`
+  identities; and all assembly/integration diagnostics.
+- The candidate `z,q,eta` and saved `H_z` action.
+- The positivity input `Kbar`, owned `L,U`, diagonal, native row/column maps,
+  inverse gather, producer settings and every canonical hash.
+- Every inverse block with start column, full shape, dtype, byte count and
+  hash; starts must form one contiguous complete 0..N inventory.
+- The 27 indexed trace-port operators/actions, root/tip/free-slope operators,
+  exact prolongations, and complete saved interface/work/norm records.
+
+The adjudicator reconstructs all permitted checks only from these artifacts.
+Missing, duplicated, reordered, stale or extra numerical evidence is
+`FAILED_EVIDENCE`, never a request to factor or solve again.
+
 ## 6. Physical settling screen
 
 Retain the 45 signed scalar observables used by the earlier reference:
@@ -183,14 +217,16 @@ For each nested transition, independently verify prolongation, nonnegative
 energy distance, nondecreasing Ritz energy within `1e-10*E0`, and the nested
 energy identity defect at most `1e-10`. The complete signed-functional
 difference uses the saved 48/64 norm route; require resolution at most `1e-10`,
-relative difference at most 1% for both transitions in each chain, and the
-last absolute norm difference not to exceed the preceding difference plus
-10 N.
+relative difference
+`norm(diff)/max(norm(first),norm(second),1000 N)` at most 1% for both
+transitions in each chain, and the last absolute `norm(diff)` not to exceed the
+preceding absolute `norm(diff)` plus 10 N.
 
 Also compare `Q1_L2` with `Q2_L1`. Require all 45 signed scalar differences at
 most 1% under the same floors and the full-functional relative difference at
-most 1%. This cross-family check is not a nesting identity or convergence
-order estimate.
+most 1%, using the same
+`norm(diff)/max(norm(first),norm(second),1000 N)` denominator. This
+cross-family check is not a nesting identity or convergence order estimate.
 
 `PASSED_BOUNDED_LOCAL_REFERENCE_SCREEN` requires every numerical, mechanical,
 saved, nested-chain and cross-family predicate above. A pass remains bounded
@@ -229,9 +265,13 @@ Apply this precedence:
 3. `FAILED_NUMERICAL_SCREEN` for a completed case with any condition,
    positivity, integration, trace/rank, equilibrium, recovery, work, norm or
    physical-balance predicate failure.
-4. `UNRESOLVED_LOCAL_REFERENCE` when every case is numerically valid but the
+4. `UNRESOLVED_NUMERICAL_SCREEN` when execution and evidence are complete but
+   any condition, positivity, integration, trace/rank, saved-Action or norm
+   authority returns `HOLD` or `HOLD_UNRESOLVED`, including an unavailable
+   bound. A hold is not relabelled as an explicit numerical failure.
+5. `UNRESOLVED_LOCAL_REFERENCE` when every case is numerically valid but the
    settling/cross-family screen does not pass.
-5. `PASSED_BOUNDED_LOCAL_REFERENCE_SCREEN` only when every registered predicate
+6. `PASSED_BOUNDED_LOCAL_REFERENCE_SCREEN` only when every registered predicate
    passes.
 
 Preserve every failed and aborted output. Independent postexecution code and
