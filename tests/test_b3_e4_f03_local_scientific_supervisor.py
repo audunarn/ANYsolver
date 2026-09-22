@@ -1,0 +1,184 @@
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+from scripts import _b3_e4_f03_local_scientific_supervisor as supervisor
+
+
+class FakePsutilProcess:
+    def __init__(self, pid, rss, children=()):
+        self.pid = pid
+        self._rss = rss
+        self._children = list(children)
+        self.alive = True
+        self.killed = 0
+
+    def children(self, recursive=True):
+        assert recursive is True
+        result = []
+        pending = list(self._children)
+        while pending:
+            child = pending.pop(0)
+            result.append(child)
+            pending.extend(child._children)
+        return result
+
+    def memory_info(self):
+        return SimpleNamespace(rss=self._rss)
+
+    def is_running(self):
+        return self.alive
+
+    def status(self):
+        return "running" if self.alive else "stopped"
+
+    def kill(self):
+        self.killed += 1
+        self.alive = False
+
+
+class FakePopen:
+    def __init__(self, pid=10, polls=(None, 0)):
+        self.pid = pid
+        self._polls = list(polls)
+        self._last = None
+        self.kwargs = None
+        self.killed = 0
+
+    def launch(self, *args, **kwargs):
+        self.kwargs = kwargs
+        return self
+
+    def poll(self):
+        if self._polls:
+            self._last = self._polls.pop(0)
+        return self._last
+
+    def wait(self, timeout=None):
+        assert timeout == 10.0
+        return -9 if self.killed else (0 if self._last is None else self._last)
+
+    def kill(self):
+        self.killed += 1
+        self._last = -9
+
+
+class Clock:
+    def __init__(self, values):
+        self.values = iter(values)
+
+    def __call__(self):
+        return next(self.values)
+
+
+def _run(tmp_path, root, fake, *, limits, clock):
+    output = (tmp_path / "out").open("x")
+    error = (tmp_path / "err").open("x")
+    try:
+        return supervisor.supervise(
+            ("python", "child.py"),
+            cwd=tmp_path,
+            environment=supervisor.frozen_thread_environment({"A": "B"}),
+            stdout=output,
+            stderr=error,
+            limits=limits,
+            popen=fake.launch,
+            process_factory=lambda pid: root,
+            monotonic=clock,
+            sleep=lambda seconds: None,
+        )
+    finally:
+        output.close()
+        error.close()
+
+
+def test_completed_tree_accounts_root_and_descendant_rss(tmp_path, monkeypatch):
+    child = FakePsutilProcess(11, 200)
+    root = FakePsutilProcess(10, 300, (child,))
+    fake = FakePopen(polls=(None, 0))
+    monkeypatch.setattr(supervisor.psutil, "wait_procs", lambda *a, **k: ([], []))
+    receipt = _run(
+        tmp_path, root, fake,
+        limits=supervisor.SupervisorLimits(10, 1_000),
+        clock=Clock((0.0, 0.1, 0.2, 0.3)),
+    )
+    assert receipt.reason == "orphaned_descendants"
+    assert receipt.sampled_peak_tree_rss_bytes == 500
+    assert receipt.observed_pids == (10, 11)
+    assert receipt.terminated_pids == (11,)
+    assert child.killed == 1 and root.killed == 0
+    assert all(fake.kwargs["env"][name] == "1" for name in supervisor.THREADS)
+
+
+def test_rss_limit_terminates_complete_observed_tree(tmp_path, monkeypatch):
+    grandchild = FakePsutilProcess(12, 400)
+    child = FakePsutilProcess(11, 300, (grandchild,))
+    root = FakePsutilProcess(10, 500, (child,))
+    fake = FakePopen(polls=(None,))
+    monkeypatch.setattr(supervisor.psutil, "wait_procs", lambda *a, **k: ([], []))
+    receipt = _run(
+        tmp_path, root, fake,
+        limits=supervisor.SupervisorLimits(10, 1_000),
+        clock=Clock((0.0, 0.1, 0.2)),
+    )
+    assert receipt.reason == "rss_limit"
+    assert receipt.sampled_peak_tree_rss_bytes == 1_200
+    assert receipt.terminated_pids == (10, 11, 12)
+    assert all(process.killed == 1 for process in (root, child, grandchild))
+
+
+def test_time_limit_terminates_tree_and_preserves_reason(tmp_path, monkeypatch):
+    child = FakePsutilProcess(11, 1)
+    root = FakePsutilProcess(10, 1, (child,))
+    fake = FakePopen(polls=(None,))
+    monkeypatch.setattr(supervisor.psutil, "wait_procs", lambda *a, **k: ([], []))
+    receipt = _run(
+        tmp_path, root, fake,
+        limits=supervisor.SupervisorLimits(1, 1_000),
+        clock=Clock((0.0, 2.0, 3.0)),
+    )
+    assert receipt.reason == "time_limit"
+    assert receipt.terminated_pids == (10, 11)
+
+
+def test_launch_failure_has_no_started_process(tmp_path):
+    output = (tmp_path / "out").open("x")
+    error = (tmp_path / "err").open("x")
+    try:
+        receipt = supervisor.supervise(
+            ("python", "child.py"), cwd=tmp_path, environment={},
+            stdout=output, stderr=error,
+            popen=lambda *a, **k: (_ for _ in ()).throw(OSError("no launch")),
+            monotonic=Clock((0.0, 0.1)), sleep=lambda seconds: None,
+        )
+    finally:
+        output.close(); error.close()
+    assert receipt.reason == "launch_failure"
+    assert receipt.exit_code is None
+    assert receipt.observed_pids == receipt.terminated_pids == ()
+    assert receipt.failure == "OSError: no launch"
+
+
+def test_programming_and_cancellation_failures_are_not_receipt_failures(tmp_path):
+    for failure in (AssertionError("bug"), KeyboardInterrupt()):
+        output = (tmp_path / f"out-{type(failure).__name__}").open("x")
+        error = (tmp_path / f"err-{type(failure).__name__}").open("x")
+        try:
+            with pytest.raises(type(failure)):
+                supervisor.supervise(
+                    ("python", "child.py"), cwd=tmp_path, environment={},
+                    stdout=output, stderr=error,
+                    popen=lambda *a, _failure=failure, **k: (_ for _ in ()).throw(_failure),
+                    monotonic=Clock((0.0,)), sleep=lambda seconds: None,
+                )
+        finally:
+            output.close(); error.close()
+
+
+@pytest.mark.parametrize("seconds,rss,poll", [
+    (0, 1, 0.1), (1, 0, 0.1), (1, 1, 0), (float("nan"), 1, 0.1),
+])
+def test_invalid_limits_rejected(seconds, rss, poll):
+    with pytest.raises(ValueError):
+        supervisor.SupervisorLimits(seconds, rss, poll)
