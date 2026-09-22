@@ -5,7 +5,9 @@
 implemented, independently reviewed and closed with corrected immutable
 evidence. The complete saved-recovery composition is also implemented,
 independently reviewed and closed with corrected immutable evidence. A frozen
-scientific numerical protocol and new registration are the active next work.
+scientific numerical protocol is independently reviewed, and its bounded
+runner foundation is implemented and independently reviewed. Exact saved
+evidence schemas, the producer and solve-free adjudicator are active next work.
 
 22 September 2026. User authorized continued implementation with increased
 effort. The active goal remains the complete programme; **G0B is open and
@@ -23,6 +25,8 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 - Latest saved interface/work component source: `5acfd119b576237db4b104d4e56c1e4af93ebb81`.
 - Latest signed-norm component source: `8bb018f73f837d25ef4f0d4bd94d9d3a824f0387`.
 - Latest saved-recovery composition source: `271d88d094bc89e2fce4fdc23a4b5df2cce68d4b`.
+- Latest reviewed local-scientific protocol source: `363d325b`.
+- Latest reviewed runner-foundation source: `9f4a6be0`.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -227,6 +231,17 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
     `f03-saved-recovery-composition-v2` has 29 evidence files plus inventory,
     SHA `1e8ad63fe2396d4a6d18b22ae8bf34ad211a6603adb8966c542167f4a837bd3e`.
     See `B3_GE_E4_PL_G0_F03_SAVED_RECOVERY_COMPOSITION_V2_RESULTS.md`.
+20. Local-scientific runner foundation at `9f4a6be0`: the exact five-case
+    topology/resource inventory, inverse archive plan, process-tree
+    supervision, exclusive lifecycle receipts and bounded array storage are
+    implemented. The final affected suite passes 83 tests. Independent review
+    found and verified corrections for fabricated preflights, resource
+    binding, detached descendants, root-PID ownership, bounded receipt reads,
+    ZIP size/mutation paths and every validation-before-allocation issue. The
+    final review has no findings. This is `IMPLEMENTED_NOT_QUALIFIED`; it
+    assembled and solved no scientific case and grants no registration or
+    execution authority. See
+    `B3_GE_E4_PL_G0_F03_LOCAL_SCIENTIFIC_RUNNER_FOUNDATION_V1_RESULTS.md`.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -363,9 +378,13 @@ All-column certification has quadratic evidence/work; triangular comparison
 can be pessimistic. Compare/select before registration, never as a fallback
 after a failed scientific bound. No automatic uniform/global-degree run.
 
-No scientific process is active. The saved interface/work/norm component
-implementations and independent reviews are complete. Parent owns complete
-saved-recovery composition and saved-protocol work. The accepted proofs grant no scientific execution
+No scientific process is active. The saved interface/work/norm components,
+complete composition, protocol and runner foundation are independently
+reviewed. The exact next action is to implement the evidence-group schemas and
+exclusively writing case producer, then the solve-free adjudicator and top-level
+one-use coordinator. Registration remains barred until those pieces, bounded
+lifecycle/replay tests, preflight demonstrations and independent review pass on
+a clean committed source. The accepted proofs grant no scientific execution
 authority. Current sources and tests are committed; the results/checkpoint
 commit preserves the restart boundary.
 All consumed diagnostic sources and completed inventories stay frozen.
