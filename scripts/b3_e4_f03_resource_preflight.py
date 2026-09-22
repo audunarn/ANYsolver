@@ -29,11 +29,12 @@ import _b3_e4_f03_independent_beam as beam
 import _b3_e4_f03_independent_inventory as inventory
 import _b3_e4_f03_independent_line as line
 import _b3_e4_f03_independent_shell as shell
+import _b3_e4_f03_kkt_scaling as scaling
 
 
 SOURCES=(Path(__file__),
          Path(beam.__file__),Path(inventory.__file__),
-         Path(line.__file__),Path(shell.__file__))
+         Path(line.__file__),Path(shell.__file__),Path(scaling.__file__))
 MAX_RSS=8*1024**3
 MAX_SECONDS=900
 F0=1e6
@@ -58,7 +59,7 @@ def _mesh(value: str) -> inventory.Mesh:
 
 
 def _child(mesh: inventory.Mesh, topology: str, law: str,
-           manifest_path: Path, solve: bool) -> None:
+           manifest_path: Path, solve: bool, scaled: bool) -> None:
     begun=time.perf_counter()
     process=psutil.Process()
     manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
@@ -66,6 +67,7 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
         raise ValueError('child source hashes differ from supervisor manifest')
     if (vars(mesh)!=manifest['mesh'] or topology!=manifest['topology'] or
             law!=manifest['law'] or solve!=manifest['solve'] or
+            scaled!=manifest['scaled'] or
             manifest['loading']!=('smooth' if solve else None) or
             manifest['scales']!=dict(force_newton=F0,moment_newton_metre=M0,
                                      displacement_metre=U0)):
@@ -112,16 +114,30 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
         # displacements or interpret a physical response before registration.
         load=beam.assembled_load(mesh.n_beam,'smooth')
         force=np.r_[np.zeros(model.dof_count),load]
-        rhs=np.r_[force[free],np.zeros(c.shape[0])]
-        factors=splu(a)
+        physical_rhs=np.r_[force[free],np.zeros(c.shape[0])]
+        if scaled:
+            transformed=scaling.build(k,c,force,free,model.dof_count,
+                                      mesh.n_beam,mesh.n_mortar,law)
+            solve_matrix=transformed.matrix; rhs=transformed.rhs
+            phase('scaled_kkt',scaled_nnz=solve_matrix.nnz,
+                  scaled_dimension=solve_matrix.shape[0])
+        else:
+            solve_matrix=a; rhs=physical_rhs
+        factors=splu(solve_matrix)
         phase('factorized',l_nnz=factors.L.nnz,u_nnz=factors.U.nnz,
-              factor_nnz=factors.L.nnz+factors.U.nnz)
+              factor_nnz=factors.L.nnz+factors.U.nnz,
+              diagonal_scaling=scaled)
         solution=factors.solve(rhs)
         if not np.all(np.isfinite(solution)):
             phase('linear_solve',solution_finite=False,
                   scaled_free_residual_max=None,scaled_weak_residual_max=None)
             raise ValueError('nonfinite factorized reference response')
-        residual=a@solution-rhs
+        if scaled:
+            physical_q,physical_lambda=transformed.recover(solution)
+            physical=np.r_[physical_q,physical_lambda]
+        else:
+            physical=solution
+        residual=a@physical-physical_rhs
         nfree=len(free)
         local=free-model.dof_count
         u=2*mesh.n_beam+1
@@ -135,18 +151,29 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
             measure[[0,-1]]*=.5
         weak_scale=U0*np.repeat(measure,3)
         weak_max=float(np.max(np.abs(residual[nfree:])/weak_scale))
+        equation=float(np.linalg.norm(solve_matrix@solution-rhs)/
+                       max(np.linalg.norm(rhs),1.))
         phase('linear_solve',solution_finite=True,
+              dimensionless_equation_residual=(equation if scaled and np.isfinite(equation)
+                                               else None),
+              mixed_unit_algebraic_residual=(equation if not scaled and
+                                             np.isfinite(equation) else None),
               scaled_free_residual_max=free_max if np.isfinite(free_max) else None,
               scaled_weak_residual_max=weak_max if np.isfinite(weak_max) else None)
-        if (not np.isfinite(free_max) or not np.isfinite(weak_max) or
+        if (not np.isfinite(equation) or not np.isfinite(free_max) or
+                not np.isfinite(weak_max) or
                 free_max>1e-8 or weak_max>1e-9):
-            raise ValueError(f'large scaled KKT residual: free={free_max}, weak={weak_max}')
+            raise ValueError(f'large scaled KKT residual: equation={equation}, '
+                             f'free={free_max}, weak={weak_max}')
     if _hashes()!=manifest['sources']:
         raise ValueError('child source changed during assembly')
 
 
 def _supervise(mesh: inventory.Mesh, topology: str, law: str,
-               directory: Path, solve: bool = False) -> int:
+               directory: Path, solve: bool = False,
+               scaled: bool = False) -> int:
+    if scaled and not solve:
+        raise ValueError('diagonal scaling requires a solve probe')
     checkout=Path(__file__).resolve().parents[1]
     def git(*args: str) -> str:
         return subprocess.run(('git',*args),cwd=checkout,check=True,
@@ -165,14 +192,17 @@ def _supervise(mesh: inventory.Mesh, topology: str, law: str,
              '--expected-manifest',str(manifest_path.resolve())]
     if solve:
         command.append('--solve')
+    if scaled:
+        command.append('--scaled')
     environment=os.environ.copy()
     environment.update(OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='1',
                        MKL_NUM_THREADS='1',NUMEXPR_NUM_THREADS='1',
                        PYTHONDONTWRITEBYTECODE='1')
-    manifest=dict(purpose=('factorization F03 classical resource preflight' if solve
+    manifest=dict(purpose=('scaled factorization F03 classical resource preflight'
+                           if scaled else 'factorization F03 classical resource preflight' if solve
                            else 'assembly-only F03 classical resource preflight'),
                   mesh=vars(mesh),topology=topology,law=law,
-                  solve=solve,loading='smooth' if solve else None,
+                  solve=solve,scaled=scaled,loading='smooth' if solve else None,
                   scales=dict(force_newton=F0,moment_newton_metre=M0,
                               displacement_metre=U0),
                   assembly_identity=(f'{topology}-{law}-Ns{mesh.n_s}-Ny{mesh.n_y}-'
@@ -268,17 +298,21 @@ def main() -> int:
     parser.add_argument('--output',type=Path)
     parser.add_argument('--solve',action='store_true',
                         help='also factor and solve a smooth-load algebraic system')
+    parser.add_argument('--scaled',action='store_true',
+                        help='use congruent dimensionless KKT scaling with --solve')
     parser.add_argument('--child',action='store_true',help=argparse.SUPPRESS)
     parser.add_argument('--expected-manifest',type=Path,help=argparse.SUPPRESS)
     args=parser.parse_args()
     if args.child:
         if args.expected_manifest is None:
             parser.error('--expected-manifest is required for child')
-        _child(args.mesh,args.topology,args.law,args.expected_manifest,args.solve)
+        _child(args.mesh,args.topology,args.law,args.expected_manifest,
+               args.solve,args.scaled)
         return 0
     if args.output is None:
         parser.error('--output is required for supervised execution')
-    return _supervise(args.mesh,args.topology,args.law,args.output,args.solve)
+    return _supervise(args.mesh,args.topology,args.law,args.output,
+                      args.solve,args.scaled)
 
 
 if __name__=='__main__':
