@@ -27,12 +27,13 @@ them would weaken the existing independent factory rebind and is outside this
 batch. The composition performs zero equilibrium solves or factorizations and
 exactly two norm observations.
 
-Every returned identity is independently recomputed. Cross-binding covers all
-sparse numerical operands, numerical `q,eta`, the interface grid/state and
-saved record, the work grid/state/saved record, exact recovery q/eta/cuts, and
-the interface-functional-to-norm identity. Domain-specific hashes are not
-compared with one another and a passing component status cannot waive a failed
-identity.
+Every returned identity is independently recomputed. The canonical snapshot
+binds every compiled-grid coordinate, rectangle, execution map and incidence
+map, as well as every sparse numerical operand, vector and saved record.
+Cross-binding covers numerical `q,eta`, the interface grid/state and saved
+record, the work grid/state/saved record, exact recovery q/eta/cuts, and the
+interface-functional-to-norm identity. Domain-specific hashes are not compared
+with one another and a passing component status cannot waive a failed identity.
 
 Status precedence is:
 

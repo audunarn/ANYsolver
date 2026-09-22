@@ -114,6 +114,20 @@ def _verify(args,**kwargs):
     return composition.verify_composition(*args,budget=kwargs.pop('budget',CB),**kwargs)
 
 
+def _replace_interface(result,**updates):
+    replacement=object.__new__(interface.InterfaceResult)
+    for name in result.__dataclass_fields__:
+        object.__setattr__(replacement,name,updates.get(name,getattr(result,name)))
+    return replacement
+
+
+def _replace_grid(result,**updates):
+    replacement=object.__new__(grid.CompiledGrid)
+    for name in result.__dataclass_fields__:
+        object.__setattr__(replacement,name,updates.get(name,getattr(result,name)))
+    return replacement
+
+
 def test_complete_composition_passes_and_reports_fixed_work_counts(monkeypatch):
     args=_case();recoveries=observations=0
     original_recover=rec.recover;original_observe=rec.functional.norm_observation_at_order
@@ -131,7 +145,20 @@ def test_complete_composition_passes_and_reports_fixed_work_counts(monkeypatch):
     assert observations==result['diagnostics']['norm_evaluations']==2
     assert result['diagnostics']['equilibrium_solves']==0
     assert result['diagnostics']['factorizations']==0
+    assert result['diagnostics']['actual_comparisons']<=result['diagnostics']['comparisons']
+    assert result['canonical_saved_sha256s']['compiled_grid']==composition._hash_grid(args[0])
     with pytest.raises(TypeError):result['cross_bindings']['recovery_q']=False
+
+
+def test_compiled_grid_identity_binds_execution_and_incidence_maps():
+    value=_case()[0];baseline=composition._hash_grid(value)
+    full_to_free=value.full_to_free.copy();full_to_free[0]+=1
+    root=value.root_incidence.copy();root[0]+=1
+    trace=list(value.trace_incidence);changed=trace[0].copy();changed[0]+=1;trace[0]=changed
+    for candidate in (_replace_grid(value,full_to_free=full_to_free),
+                      _replace_grid(value,root_incidence=root),
+                      _replace_grid(value,trace_incidence=tuple(trace))):
+        assert composition._hash_grid(candidate)!=baseline
 
 
 def test_aggregate_preflight_stops_every_component(monkeypatch):
@@ -142,6 +169,34 @@ def test_aggregate_preflight_stops_every_component(monkeypatch):
         monkeypatch.setattr(module,name,forbidden)
     with pytest.raises(ValueError,match='owned/workspace envelope'):
         _verify(args,budget=replace(CB,max_owned_bytes=1))
+
+
+def test_every_nested_resource_preflight_stops_all_components(monkeypatch):
+    args=_case()
+    def forbidden(*values,**options):pytest.fail('component started after nested preflight failure')
+    for module,name in ((equilibrium,'verify_equilibrium'),(interface,'verify_interface'),
+                        (work,'verify_work'),(norm,'verify_norm')):
+        monkeypatch.setattr(module,name,forbidden)
+    budgets=(
+        replace(CB,equilibrium_budget=replace(EB,max_six_block_nnz=1)),
+        replace(CB,interface_budget=replace(IB,max_comparisons=1)),
+        replace(CB,work_budget=replace(WB,max_comparisons=1)),
+        replace(CB,norm_budget=replace(NB,max_operations=1)),
+        replace(CB,work_budget=replace(WB,
+            support_budget=replace(SB,max_operations=1))),
+    )
+    for budget in budgets:
+        with pytest.raises(ValueError,match='saved composition'):_verify(args,budget=budget)
+
+
+def test_partition_mismatch_is_rejected_before_components(monkeypatch):
+    args=list(_case());saved=args[15];ni=len(saved.cuts)-1
+    args[15]=replace(saved,cuts=tuple(F(i*i,ni*ni) for i in range(ni+1)))
+    def forbidden(*values,**options):pytest.fail('component started after partition mismatch')
+    for module,name in ((equilibrium,'verify_equilibrium'),(interface,'verify_interface'),
+                        (work,'verify_work'),(norm,'verify_norm')):
+        monkeypatch.setattr(module,name,forbidden)
+    with pytest.raises(ValueError,match='degree or partition mismatch'):_verify(tuple(args))
 
 
 def test_retained_workspace_cap_is_checked_before_components(monkeypatch):
@@ -156,16 +211,18 @@ def test_retained_workspace_cap_is_checked_before_components(monkeypatch):
 
 
 def test_caller_mutation_during_first_component_cannot_change_later_bindings(monkeypatch):
-    args=list(_case());external_q=args[10];external_density=args[14].density
+    args=list(_case());external_shell=args[1];external_q=args[10];external_eta=args[11]
     original=equilibrium.verify_equilibrium
     def hostile(*values,**options):
-        external_q[:]=99.;external_density.setflags(write=False)
+        external_shell.data[:]=123.;external_q[:]=99.;external_eta[:]=-77.
         return original(*values,**options)
     monkeypatch.setattr(equilibrium,'verify_equilibrium',hostile)
     result=_verify(tuple(args))
     assert result['status']=='COMPONENT_CHECKS_PASSED'
     assert all(result['cross_bindings'].values())
+    assert (external_shell.data==123.).all()
     assert (external_q==99.).all()
+    assert (external_eta==-77.).all()
 
 
 def test_norm_receives_exact_interface_owned_functional(monkeypatch):
@@ -203,6 +260,60 @@ def test_passing_component_status_cannot_waive_stale_identity(monkeypatch):
     result=_verify(args)
     assert result['status']=='COMPOSITION_FAILED'
     assert not result['cross_bindings']['numerical_q']
+
+
+@pytest.mark.parametrize('component',('interface','work','norm'))
+def test_passing_saved_component_cannot_waive_stale_identity(monkeypatch,component):
+    args=_case()
+    if component=='interface':
+        original=interface.verify_interface
+        def stale(*values,**options):
+            result=original(*values,**options);identities=dict(result.input_sha256)
+            identities['saved_interface']='0'*64
+            return _replace_interface(result,input_sha256=identities,status='PASSED')
+        monkeypatch.setattr(interface,'verify_interface',stale)
+        failed_key='interface_saved'
+    elif component=='work':
+        original=work.verify_work
+        def stale(*values,**options):
+            result=original(*values,**options)
+            return {**result,'input_sha256':'0'*64,'status':'PASSED'}
+        monkeypatch.setattr(work,'verify_work',stale)
+        failed_key='work_state_saved'
+    else:
+        original=norm.verify_norm
+        def stale(*values,**options):
+            result=dict(original(*values,**options))
+            result.update(input_sha256='0'*64,status='PASSED')
+            return result
+        monkeypatch.setattr(norm,'verify_norm',stale)
+        failed_key='norm_functional_saved'
+    result=_verify(args)
+    assert result['status']=='COMPOSITION_FAILED'
+    assert not result['cross_bindings'][failed_key]
+
+
+def test_passing_interface_cannot_substitute_an_unbound_functional(monkeypatch):
+    args=_case();original=interface.verify_interface
+    def stale(*values,**options):
+        result=original(*values,**options);value=result.saved_functional
+        altered=rec.functional.Functional(value.cuts,value.coefficients,
+            (value.cosine[0]+1,*value.cosine[1:]),value.atoms)
+        return _replace_interface(result,saved_functional=altered,status='PASSED')
+    monkeypatch.setattr(interface,'verify_interface',stale)
+    result=_verify(args)
+    assert result['status']=='COMPOSITION_FAILED'
+    assert not result['cross_bindings']['functional_chain']
+
+
+def test_component_reported_work_counts_are_enforced(monkeypatch):
+    args=_case();original=work.verify_work
+    def misreported(*values,**options):
+        result=original(*values,**options);diagnostics=dict(result['diagnostics'])
+        diagnostics['state_recoveries']=1
+        return {**result,'diagnostics':diagnostics}
+    monkeypatch.setattr(work,'verify_work',misreported)
+    with pytest.raises(ArithmeticError,match='work count'):_verify(args)
 
 
 def test_corrupted_saved_norm_dominates_as_composition_failure():
