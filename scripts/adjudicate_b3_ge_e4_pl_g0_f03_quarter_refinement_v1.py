@@ -35,6 +35,16 @@ CASES=tuple((ns,ny,nm,topology) for ns,ny,nm in TRIPLES
 Y_EDGES=(-.5,-.25,0.,.25,.5)
 S_EDGES=tuple(i/32 for i in range(9))
 CENTERS=tuple((i+.5)/32 for i in range(8))
+HISTORICAL=(
+    ((128,32,64,'Q4'),'f03-classical-cst-cb-y32-q4-v1',
+     '0402d1452613801896e45b201a4aeddff00666a3ed22d3d4f9b78c127ac18e43'),
+    ((128,32,64,'CST-CB'),'f03-classical-cst-cb-y32-v1',
+     'f9522121ba077c4fe36b6cbd5bfbd5b9ef6544fe0ac942f4df9f49fcbe2e16a6'),
+    ((128,64,64,'Q4'),'f03-classical-cst-cb-upper-q4-v1',
+     '1ac115f9e18dfedde87663b67735880be2c26aa3a2ea124fa9eeac682bbc3757'),
+    ((128,64,64,'CST-CB'),'f03-classical-cst-cb-upper-v1',
+     'b0b01d74271f6c02f7dc664aaea5af9cf4e5a7a7e9a2414f840dc708c4fd38b3'),
+)
 
 
 def case_name(ns: int, ny: int, nm: int, topology: str) -> str:
@@ -110,7 +120,9 @@ def _verify(base: Path, registered: dict, case: tuple) -> tuple[dict,np.ndarray]
     assert (root/'stderr.log').stat().st_size==0
     assert manifest['threads']==registered['threads']
     assert phases[0]['threads']==manifest['threads']
-    assert all(p['num_threads']==1 for p in phases[0]['threadpools'])
+    assert phases[0]['threadpools']==registered['threadpools']
+    assert phases[0]['threadpools'] and all(
+        p['num_threads']==1 for p in phases[0]['threadpools'])
     assert phases[0]['modules']==registered['module_paths']
     o=phases[-1]
     assert o['free_force_scaled_max']<=1e-8
@@ -353,6 +365,109 @@ def _finite(value) -> bool:
     return True
 
 
+def _historical_vector(o: dict) -> np.ndarray:
+    return np.asarray([o['shell_energy_joule'],o['beam_energy_joule'],
+                       *o['beam_tip_displacement_metre'],
+                       *(v for station in o['shell_station_displacements_metre']
+                         for v in station),
+                       *(v for wrench in o['support_wrenches'] for v in wrench)],dtype=float)
+
+
+def _historical_compare(evidence: Path, new: dict,
+                        old_name: str, old_hash: str) -> dict:
+    old_root=evidence/old_name
+    m,p,r=_read(old_root)
+    assert _sha(old_root/'manifest.json')==old_hash
+    assert r['reason']=='process_exit' and r['exit_code']==0
+    assert [item['phase'] for item in p]==[
+        'identity','panel','shell_stiffness','beam_stiffness','coupling',
+        'unfactorized_kkt','scaled_kkt','factorized','linear_solve',
+        'loaded_observables']
+    assert (not m['source_dirty'] and
+            m['sources']==p[0]['sources']==r['post_source_hashes'])
+    a=_historical_vector(new['observed']); b=_historical_vector(p[-1])
+    assert len(a)==len(b)==23 and np.all(np.isfinite(a)) and np.all(np.isfinite(b))
+    floors=np.array([.001*scaling.E0]*2+[.1*scaling.U0]*12+
+                    [(.01*scaling.M0 if i%3==2 else .01*scaling.F0)
+                     for i in range(9)])
+    ratios=np.abs(a-b)/np.maximum(np.abs(b),floors)
+    assert float(np.max(ratios))<=1e-8
+    g2=new['observed']['fixed_scale_gap']-p[-1]['fixed_scale_gap']
+    gm=new['observed']['motion_scale_gap']-p[-1]['motion_scale_gap']
+    assert abs(g2)<=1e-10 and abs(gm)<=1e-10
+    return dict(new_name=new['name'],new_manifest_sha256=new['manifest_sha256'],
+                historical_name=old_name,historical_manifest_sha256=old_hash,
+                historical_phases_sha256=_sha(old_root/'phases.jsonl'),
+                historical_result_sha256=_sha(old_root/'result.json'),
+                max_normalized_23_channel_difference=float(np.max(ratios)),
+                g2_difference=float(g2),gmotion_difference=float(gm))
+
+
+def parity(registration: Path, evidence: Path) -> dict:
+    """Stop-rule parity after six natural controls; no new solve or relabeling."""
+    registered=json.loads(registration.read_text(encoding='utf-8'))
+    assert registered['cases']==[case_name(*case) for case in CASES]
+    assert registered['runner_source_hashes']==runner._hashes()
+    assert registered['adjudicator_sha256']==_sha(Path(__file__))
+    comparisons=[]
+    controls=[]; verified={}
+    for case in CASES[:6]:
+        receipt=_checked_case(registration,evidence,case)
+        entry,q=_verify(evidence,registered,case)
+        verified[entry['name']]=entry
+        controls.append(dict(name=entry['name'],
+                             manifest_sha256=entry['manifest_sha256'],
+                             check_sha256=_sha(evidence/f'f03-quarter-check-{entry["name"]}'/
+                                               'case_check.json')))
+    for case,old_name,old_hash in HISTORICAL:
+        new_entry=verified[case_name(*case)]
+        comparisons.append(_historical_compare(evidence,new_entry,old_name,old_hash))
+    return dict(status='PARITY_ACCEPTED_DIAGNOSTIC_ONLY',
+                timestamp_utc=datetime.now(timezone.utc).isoformat(),
+                execution_head=registered['execution_head'],
+                registration_sha256=_sha(registration),
+                adjudicator_sha256=_sha(Path(__file__)),controls=controls,
+                comparisons=comparisons)
+
+
+def _checked_case(registration: Path, evidence: Path, case: tuple) -> dict:
+    root=evidence/f'f03-quarter-check-{case_name(*case)}'
+    check=json.loads((root/'case_check.json').read_text(encoding='utf-8'))
+    assert check['status']=='CASE_CHECK_ACCEPTED_DIAGNOSTIC_ONLY'
+    assert check['name']==case_name(*case)
+    assert check['registration_sha256']==_sha(registration)
+    assert check['adjudicator_sha256']==_sha(Path(__file__))
+    case_root=evidence/case_name(*case)
+    for name,filename in (('manifest_sha256','manifest.json'),
+                          ('payload_sha256','solved_state.npz'),
+                          ('phases_sha256','phases.jsonl'),
+                          ('result_sha256','result.json'),
+                          ('stderr_sha256','stderr.log'),
+                          ('rss_sha256','rss.jsonl')):
+        assert check[name]==_sha(case_root/filename)
+    return check
+
+
+def check_case(registration: Path, evidence: Path, name: str) -> dict:
+    registered=json.loads(registration.read_text(encoding='utf-8'))
+    mapping={case_name(*case):case for case in CASES}
+    if name not in mapping or registered['cases']!=list(mapping):
+        raise ValueError('unregistered case check request')
+    entry,q=_verify(evidence,registered,mapping[name])
+    return dict(status='CASE_CHECK_ACCEPTED_DIAGNOSTIC_ONLY',name=name,
+                timestamp_utc=datetime.now(timezone.utc).isoformat(),
+                execution_head=registered['execution_head'],
+                registration_sha256=_sha(registration),
+                adjudicator_sha256=_sha(Path(__file__)),
+                manifest_sha256=entry['manifest_sha256'],
+                payload_sha256=entry['payload_sha256'],
+                phases_sha256=_sha(evidence/name/'phases.jsonl'),
+                result_sha256=_sha(evidence/name/'result.json'),
+                stderr_sha256=_sha(evidence/name/'stderr.log'),
+                rss_sha256=_sha(evidence/name/'rss.jsonl'),
+                free_scaled=entry['free_scaled'],weak_scaled=entry['weak_scaled'])
+
+
 def adjudicate(registration: Path, evidence: Path, output: Path) -> dict:
     registered=json.loads(registration.read_text(encoding='utf-8'))
     assert registered['cases']==[case_name(*case) for case in CASES]
@@ -360,11 +475,32 @@ def adjudicate(registration: Path, evidence: Path, output: Path) -> dict:
     assert registered['adjudicator_sha256']==_sha(Path(__file__))
     assert registered['limits']==dict(max_rss_bytes=8*1024**3,max_seconds=900)
     assert all(v=='1' for v in registered['threads'].values())
-    entries={}; states={}
+    parity_root=evidence/'f03-quarter-refinement-parity-v1'/'parity.json'
+    parity_result=json.loads(parity_root.read_text(encoding='utf-8'))
+    assert parity_result['status']=='PARITY_ACCEPTED_DIAGNOSTIC_ONLY'
+    assert parity_result['execution_head']==registered['execution_head']
+    assert parity_result['registration_sha256']==_sha(registration)
+    assert parity_result['adjudicator_sha256']==_sha(Path(__file__))
+    assert len(parity_result['comparisons'])==4
+    assert [item['name'] for item in parity_result['controls']]==[
+        case_name(*case) for case in CASES[:6]]
+    entries={}; states={}; receipt_hashes={}
     for case in CASES:
+        _checked_case(registration,evidence,case)
         entry,q=_verify(evidence,registered,case)
         entries[entry['name']]=entry
         states[entry['name']]=q
+        receipt_hashes[entry['name']]=_sha(
+            evidence/f'f03-quarter-check-{entry["name"]}'/'case_check.json')
+    expected_controls=[dict(name=case_name(*case),
+                            manifest_sha256=entries[case_name(*case)]['manifest_sha256'],
+                            check_sha256=receipt_hashes[case_name(*case)])
+                       for case in CASES[:6]]
+    assert parity_result['controls']==expected_controls
+    expected_comparisons=[_historical_compare(
+        evidence,entries[case_name(*case)],old_name,old_hash)
+        for case,old_name,old_hash in HISTORICAL]
+    assert parity_result['comparisons']==expected_comparisons
     contrasts={}; crossings={}
     channels={name:_channels(entry) for name,entry in entries.items()}
     for ns,ny,nm in TRIPLES:
@@ -387,7 +523,9 @@ def adjudicate(registration: Path, evidence: Path, output: Path) -> dict:
                 registration_sha256=_sha(registration),
                 adjudicator_sha256=_sha(Path(__file__)),
                 inventory=len(entries),entries=entries,contrasts=contrasts,
-                sweeps=_sweeps(channels),crossings=crossings)
+                sweeps=_sweeps(channels),crossings=crossings,
+                case_check_sha256=receipt_hashes,
+                parity_sha256=_sha(parity_root))
     if not _finite(answer):
         raise ValueError('nonfinite adjudication output')
     return answer
@@ -398,15 +536,21 @@ def main() -> int:
     parser.add_argument('--registration',type=Path,required=True)
     parser.add_argument('--evidence-root',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
+    mode=parser.add_mutually_exclusive_group()
+    mode.add_argument('--parity-only',action='store_true')
+    mode.add_argument('--check-case',choices=[case_name(*case) for case in CASES])
     args=parser.parse_args()
     args.output.mkdir(parents=True,exist_ok=False)
     try:
-        result=adjudicate(args.registration,args.evidence_root,args.output)
+        result=(check_case(args.registration,args.evidence_root,args.check_case)
+                if args.check_case else parity(args.registration,args.evidence_root)
+                if args.parity_only else adjudicate(args.registration,args.evidence_root,args.output))
         result['registration_path']=str(args.registration.resolve())
-        (args.output/'adjudication.json').write_text(json.dumps(result,indent=2,sort_keys=True,
-                                                              allow_nan=False),
+        path=args.output/('case_check.json' if args.check_case else
+                          'parity.json' if args.parity_only else 'adjudication.json')
+        path.write_text(json.dumps(result,indent=2,sort_keys=True,allow_nan=False),
                                                      encoding='utf-8')
-        print(json.dumps(dict(status=result['status'],inventory=result['inventory'],
+        print(json.dumps(dict(status=result['status'],inventory=result.get('inventory'),
                               output=str(args.output.resolve()))))
         return 0
     except Exception:

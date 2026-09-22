@@ -1,5 +1,6 @@
 """Bounded independent port integration and crossing preflight for F03."""
 
+import json
 from pathlib import Path
 from dataclasses import fields
 import sys
@@ -45,6 +46,7 @@ def test_ns32_first_quarter_crossing_sides_are_bounded(nm):
     cb=shell.panel(32,64,'CST-CB')
     q=np.zeros(cb.dof_count)
     crossings=adjudicator._crossings(cb,nm,q,q)
+    json.dumps(crossings,allow_nan=False)
     assert crossings
     assert {item['branch'] for item in crossings}=={'rising','falling'}
     assert {item['sample'] for item in crossings}=={0,1,2,3}
@@ -154,3 +156,43 @@ def test_signed_channel_inventory_and_all_three_adjacent_sweeps():
             assert row['q4_change'][field]==change
             assert row['cb_change'][field]==2*change
             assert row['signed_pair_change'][field]==change
+
+
+def test_historical_parity_vector_has_exact_twenty_three_signed_channels():
+    observed=dict(shell_energy_joule=1.,beam_energy_joule=2.,
+                  beam_tip_displacement_metre=(3.,4.,5.),
+                  shell_station_displacements_metre=((6.,7.,8.),
+                                                    (9.,10.,11.),
+                                                    (12.,13.,14.)),
+                  support_wrenches=((15.,16.,17.),(18.,19.,20.),
+                                    (21.,22.,23.)))
+    np.testing.assert_array_equal(adjudicator._historical_vector(observed),
+                                  np.arange(1,24))
+
+
+def test_case_receipt_binds_all_six_raw_files(tmp_path):
+    case=adjudicator.CASES[0]
+    name=adjudicator.case_name(*case)
+    registration=tmp_path/'registration.json'
+    registration.write_text('{}',encoding='utf-8')
+    root=tmp_path/name
+    root.mkdir()
+    mapping=dict(manifest_sha256='manifest.json',payload_sha256='solved_state.npz',
+                 phases_sha256='phases.jsonl',result_sha256='result.json',
+                 stderr_sha256='stderr.log',rss_sha256='rss.jsonl')
+    check=dict(status='CASE_CHECK_ACCEPTED_DIAGNOSTIC_ONLY',name=name,
+               registration_sha256=adjudicator._sha(registration),
+               adjudicator_sha256=adjudicator._sha(Path(adjudicator.__file__)))
+    for key,filename in mapping.items():
+        (root/filename).write_bytes(filename.encode())
+        check[key]=adjudicator._sha(root/filename)
+    receipt=tmp_path/f'f03-quarter-check-{name}'
+    receipt.mkdir()
+    (receipt/'case_check.json').write_text(json.dumps(check),encoding='utf-8')
+    assert adjudicator._checked_case(registration,tmp_path,case)==check
+    for filename in mapping.values():
+        original=(root/filename).read_bytes()
+        (root/filename).write_bytes(original+b' changed')
+        with pytest.raises(AssertionError):
+            adjudicator._checked_case(registration,tmp_path,case)
+        (root/filename).write_bytes(original)
