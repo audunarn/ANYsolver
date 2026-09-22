@@ -20,7 +20,7 @@ def plan():
 
 
 def receipt(reason="completed"):
-    return supervisor.SupervisionReceipt(reason, 0, 1.5, 1024, (10, 11), (), None)
+    return supervisor.SupervisionReceipt(reason, 0, 10, 1.5, 1024, (10, 11), (), None)
 
 
 def test_exclusive_start_and_terminal_roundtrip(plan, tmp_path):
@@ -48,7 +48,7 @@ def test_launch_failure_terminal_explicitly_has_no_start(plan, tmp_path):
     directory = tmp_path / plan.case_id
     directory.mkdir()
     failed = supervisor.SupervisionReceipt(
-        "launch_failure", None, 0.1, 0, (), (), "OSError: launch",
+        "launch_failure", None, None, 0.1, 0, (), (), "OSError: launch",
     )
     lifecycle.write_terminal(directory, plan, REGISTRATION, failed)
     terminal, _ = lifecycle.read_terminal(directory, plan, REGISTRATION)
@@ -63,6 +63,14 @@ def test_launched_child_without_start_is_preserved_as_incomplete(plan, tmp_path)
     terminal, _ = lifecycle.read_terminal(directory, plan, REGISTRATION)
     assert terminal["start_sha256"] is None
     assert terminal["reason"] == "time_limit"
+
+
+def test_terminal_cannot_consume_start_from_another_process(plan, tmp_path):
+    directory = tmp_path / plan.case_id
+    directory.mkdir()
+    lifecycle.write_start(directory, plan, REGISTRATION, 999)
+    with pytest.raises(ValueError, match="own"):
+        lifecycle.write_terminal(directory, plan, REGISTRATION, receipt())
 
 
 def _rewrite(path: Path, change):

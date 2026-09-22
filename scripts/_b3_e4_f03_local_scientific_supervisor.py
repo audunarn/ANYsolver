@@ -56,6 +56,7 @@ SCIENTIFIC_LIMITS = SupervisorLimits(1_800.0, 6 * 1024**3, 0.1)
 class SupervisionReceipt:
     reason: str
     exit_code: int | None
+    root_pid: int | None
     elapsed_seconds: float
     sampled_peak_tree_rss_bytes: int
     observed_pids: tuple[int, ...]
@@ -74,6 +75,8 @@ class SupervisionReceipt:
         if (
             self.reason not in allowed
             or (self.exit_code is not None and type(self.exit_code) is not int)
+            or (self.root_pid is not None and (type(self.root_pid) is not int or self.root_pid <= 0))
+            or (self.reason == "launch_failure") != (self.root_pid is None)
             or not isinstance(self.elapsed_seconds, (int, float))
             or not math.isfinite(float(self.elapsed_seconds))
             or self.elapsed_seconds < 0
@@ -193,6 +196,7 @@ def supervise(
     reason = "supervisor_failure"
     failure = None
     exit_code = None
+    root_pid = None
     peak = 0
     tracked: dict[int, object] = {}
     terminated: set[int] = set()
@@ -206,6 +210,9 @@ def supervise(
             stderr=stderr,
             creationflags=flags,
         )
+        root_pid = int(process.pid)
+        if root_pid <= 0:
+            raise ValueError("invalid launched process identity")
         root = process_factory(process.pid)
         while True:
             peak = max(peak, _tree_sample(root, tracked))
@@ -252,6 +259,7 @@ def supervise(
     return SupervisionReceipt(
         reason,
         exit_code,
+        root_pid,
         elapsed,
         peak,
         tuple(sorted(tracked)),

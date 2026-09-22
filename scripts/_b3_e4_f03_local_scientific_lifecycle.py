@@ -42,9 +42,10 @@ def _write_new(path: Path, value: object) -> str:
 
 def _read_exact(path: Path, keys: set[str]) -> tuple[dict, str]:
     path = Path(path)
-    if path.stat().st_size > MAX_RECEIPT_BYTES:
+    with path.open("rb") as stream:
+        payload = stream.read(MAX_RECEIPT_BYTES + 1)
+    if len(payload) > MAX_RECEIPT_BYTES:
         raise ValueError("F03 lifecycle receipt exceeds declared bound")
-    payload = path.read_bytes()
     try:
         value = json.loads(payload.decode("ascii"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -60,7 +61,7 @@ START_KEYS = {
 }
 TERMINAL_KEYS = {
     "schema", "case_id", "source_commit", "registration_sha256", "plan_sha256",
-    "start_sha256", "reason", "exit_code", "elapsed_seconds",
+    "start_sha256", "reason", "exit_code", "root_pid", "elapsed_seconds",
     "sampled_peak_tree_rss_bytes", "observed_pids", "terminated_pids", "failure",
 }
 
@@ -144,7 +145,9 @@ def write_terminal(
     start_path = directory / "start.json"
     start_digest = None
     if start_path.exists():
-        _, start_digest = read_start(directory, plan, registration_sha256)
+        start, start_digest = read_start(directory, plan, registration_sha256)
+        if receipt.root_pid != start["pid"]:
+            raise ValueError("F03 terminal process does not own its start marker")
     elif receipt.reason != "launch_failure":
         # A launched child that did not emit its first marker is preserved as
         # a terminal execution failure; absence is explicit in the receipt.
@@ -158,6 +161,7 @@ def write_terminal(
         "start_sha256": start_digest,
         "reason": receipt.reason,
         "exit_code": receipt.exit_code,
+        "root_pid": receipt.root_pid,
         "elapsed_seconds": float(receipt.elapsed_seconds),
         "sampled_peak_tree_rss_bytes": receipt.sampled_peak_tree_rss_bytes,
         "observed_pids": list(receipt.observed_pids),
@@ -186,7 +190,7 @@ def read_terminal(
         raise ValueError("stale F03 terminal receipt")
     try:
         receipt = supervisor.SupervisionReceipt(
-            value["reason"], value["exit_code"], value["elapsed_seconds"],
+            value["reason"], value["exit_code"], value["root_pid"], value["elapsed_seconds"],
             value["sampled_peak_tree_rss_bytes"], tuple(value["observed_pids"]),
             tuple(value["terminated_pids"]), value["failure"],
         )
@@ -194,11 +198,13 @@ def read_terminal(
         raise ValueError("invalid F03 terminal supervision payload") from exc
     start_path = Path(directory) / "start.json"
     if start_path.exists():
-        _, start_digest = read_start(directory, plan, registration_sha256)
+        start, start_digest = read_start(directory, plan, registration_sha256)
         if not isinstance(value["start_sha256"], str) or not hmac.compare_digest(
             value["start_sha256"], start_digest
         ):
             raise ValueError("F03 terminal receipt did not consume its start marker")
+        if receipt.root_pid != start["pid"]:
+            raise ValueError("F03 terminal process does not own its start marker")
     elif value["start_sha256"] is not None:
         raise ValueError("F03 terminal receipt cites a missing start marker")
     return value, digest
