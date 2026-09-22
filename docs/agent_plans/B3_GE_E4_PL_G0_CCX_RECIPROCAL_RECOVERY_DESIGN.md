@@ -89,7 +89,7 @@ The 12 footprint MPCs use rotational DOFs at beam interior node 47. The
 saved CalculiX expansion trace reports no knot at that node. The bundled
 2.23 manual (section 10.3.6, PDF page index 696) prohibits rotational MPC
 terms at nodes without a knot. The official 2.23 source archive
-`ccx_2.23.src.tar.bz2` (SHA-256 `9c88385c10fb04f5dc6c4e98027a51bedd8aee3920e05190d6c1dd08357d6e7`)
+`ccx_2.23.src.tar.bz2` (SHA-256 `9c88385c10fb04f5dc6c4e98027a51bebdd8aee3920e05190d6c1dd08357d6e7`)
 confirms `gen3dmpc.f` remaps rotational terms to a rotational knot node only
 when `rig(node) != 0` (lines 47–75); otherwise the expanded beam path uses
 the unremapped direction (lines 290–331). `gen3dnor.f` creates a knot only
