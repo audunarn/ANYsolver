@@ -58,7 +58,7 @@ def _mesh(value: str) -> inventory.Mesh:
     except (TypeError,ValueError) as exc:
         raise argparse.ArgumentTypeError('mesh must be Ns,Ny,Nb,Nm') from exc
     if (not 1<=result.n_s<=128 or not 2<=result.n_y<=64 or
-            not 1<=result.n_beam<=512 or not 1<=result.n_mortar<=64):
+            not 1<=result.n_beam<=512 or not 1<=result.n_mortar<=128):
         raise argparse.ArgumentTypeError('reference mesh outside resource envelope')
     return result
 

@@ -56,7 +56,7 @@ def exact_overlay(model: shell.Panel, n_beam: int, n_mortar: int
                   ) -> tuple[Fraction,...]:
     """All exact branches of the rational field, including CST diagonals."""
     beam.dof_count(n_beam)
-    if not isinstance(n_mortar,int) or not 1<=n_mortar<=64:
+    if not isinstance(n_mortar,int) or not 1<=n_mortar<=128:
         raise ValueError('unsupported exact mortar resolution')
     xs,ys=_axes(model)
     knots={Fraction(0),Fraction(1)}
@@ -154,7 +154,7 @@ def gap_bounds(model: shell.Panel, n_beam: int, n_mortar: int,
     convex hull of Bernstein coefficients. Branches whose upper bound is
     already below an attained global value need no further subdivision.
     """
-    if (model.n_s>128 or model.n_y>64 or n_beam>512 or n_mortar>64 or
+    if (model.n_s>128 or model.n_y>64 or n_beam>512 or n_mortar>128 or
             not isinstance(depth,int) or not 0<=depth<=12 or
             np.shape(qs)!=(model.dof_count,) or
             np.shape(qb)!=(beam.dof_count(n_beam),) or

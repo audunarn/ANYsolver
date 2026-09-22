@@ -49,7 +49,7 @@ def build(k: sparse.spmatrix, c: sparse.spmatrix, f: np.ndarray,
             free.ndim!=1 or len(free)==0 or
             np.any(free<0) or np.any(free>=k.shape[0]) or
             np.any(np.diff(free)<=0) or law not in ('P0','P1') or
-            not 1<=n_mortar<=64 or
+            not 1<=n_mortar<=128 or
             c.shape[0]!=3*(n_mortar+(law=='P1'))):
         raise ValueError('invalid classical KKT scaling layout')
     local=free-shell_dofs

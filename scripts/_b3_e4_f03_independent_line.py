@@ -19,7 +19,7 @@ YAW_LENGTH = .46
 def overlay(model: shell.Panel, n_beam: int, n_mortar: int) -> np.ndarray:
     """Reference breaks of beam, multiplier and every shell sample host."""
     beam.dof_count(n_beam)
-    if not isinstance(n_mortar,int) or not 1<=n_mortar<=64:
+    if not isinstance(n_mortar,int) or not 1<=n_mortar<=128:
         raise ValueError('unsupported mortar resolution')
     knots=[0.,1.]
     knots.extend(i/n_beam for i in range(1,n_beam))
