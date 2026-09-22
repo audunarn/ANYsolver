@@ -37,13 +37,21 @@ S_EDGES=tuple(i/32 for i in range(9))
 CENTERS=tuple((i+.5)/32 for i in range(8))
 HISTORICAL=(
     ((128,32,64,'Q4'),'f03-classical-cst-cb-y32-q4-v1',
-     '0402d1452613801896e45b201a4aeddff00666a3ed22d3d4f9b78c127ac18e43'),
+     '0402d1452613801896e45b201a4aeddff00666a3ed22d3d4f9b78c127ac18e43',
+     '8c67b884b28188c1d2a8ae71e112b4dca658b4e9c62e98c550edea701e503b9a',
+     '1cff1981302191f3935055f7ec2b14da1084dd92693b48839232f66681844f9d'),
     ((128,32,64,'CST-CB'),'f03-classical-cst-cb-y32-v1',
-     'f9522121ba077c4fe36b6cbd5bfbd5b9ef6544fe0ac942f4df9f49fcbe2e16a6'),
+     'f9522121ba077c4fe36b6cbd5bfbd5b9ef6544fe0ac942f4df9f49fcbe2e16a6',
+     'ab1c93fbdea8e9e61ff1107476809e6ad235403305161690ac9f7694dfb37315',
+     '4bb5d72a96f10c64fcfbef13bb05388e8adf09e8c838d1a405c53494b081ab4f'),
     ((128,64,64,'Q4'),'f03-classical-cst-cb-upper-q4-v1',
-     '1ac115f9e18dfedde87663b67735880be2c26aa3a2ea124fa9eeac682bbc3757'),
+     '1ac115f9e18dfedde87663b67735880be2c26aa3a2ea124fa9eeac682bbc3757',
+     'aaedeaf149e12854ad29aa506d0b868a3dda561fa513a304418e50ffefa2589a',
+     '60d757d8ce78711a1507d0ce02a21d410b3104f3a57d4a23605021f3471de333'),
     ((128,64,64,'CST-CB'),'f03-classical-cst-cb-upper-v1',
-     'b0b01d74271f6c02f7dc664aaea5af9cf4e5a7a7e9a2414f840dc708c4fd38b3'),
+     'b0b01d74271f6c02f7dc664aaea5af9cf4e5a7a7e9a2414f840dc708c4fd38b3',
+     '107773e348dc5bfe5cd41e6e6cec0e40dcb93adf1441e01f466bf38d33ecf4a2',
+     '6343b7c58bc6338b9a3a742bc27fafbeaf0743399a7a659e19a480a7fcc5e483'),
 )
 
 
@@ -253,17 +261,22 @@ def _verify(base: Path, registered: dict, case: tuple) -> tuple[dict,np.ndarray]
 
 
 def _crossings(model: shell.Panel, nm: int,
-               qc: np.ndarray, qq: np.ndarray) -> list[dict]:
+               qc: np.ndarray, qq: np.ndarray) -> dict:
     assert model.topology=='CST-CB'
     overlay=line.overlay(model,512,nm)
     q4_model=shell.panel(model.n_s,model.n_y,'Q4')
-    result=[]
+    result=[]; endpoint_skips=[]
     for sample,(dx,dy) in enumerate(shell.OFFSETS):
         j=min(max(int(np.floor((dy+.5)*model.n_y-1e-12)),0),model.n_y-1)
         fraction=(dy-(-.5+j/model.n_y))*model.n_y
         for i in range(2*model.n_s):
             crossing=(1-fraction if (i+j)%2 else fraction)
             sc=-.5+(i+crossing)/model.n_s-dx
+            if abs(sc)<2e-12 or abs(sc-.25)<2e-12:
+                endpoint_skips.append(dict(sample=sample,
+                                           branch='falling' if (i+j)%2 else 'rising',
+                                           s=sc,endpoint=0. if abs(sc)<2e-12 else .25))
+                continue
             if not 0<sc<.25:
                 continue
             p=int(np.searchsorted(overlay,sc))
@@ -298,7 +311,7 @@ def _crossings(model: shell.Panel, nm: int,
                                q4_pose_left=q4[0].tolist(),q4_pose_right=q4[-1].tolist(),
                                q4_derivative_left=q4_derivative[0].tolist(),
                                q4_derivative_right=q4_derivative[1].tolist()))
-    return result
+    return dict(evaluated=result,endpoint_skips=endpoint_skips)
 
 
 def _channels(entry: dict) -> dict[str,float]:
@@ -365,6 +378,31 @@ def _finite(value) -> bool:
     return True
 
 
+def _assert_registered_inputs(registered: dict) -> None:
+    assert registered['cases']==[case_name(*case) for case in CASES]
+    assert registered['runner_source_hashes']==runner._hashes()
+    assert registered['adjudicator_sha256']==_sha(Path(__file__))
+    assert registered['historical_comparators']==[
+        dict(case=list(case),root=name,manifest_sha256=manifest,
+             phases_sha256=phases,result_sha256=result)
+        for case,name,manifest,phases,result in HISTORICAL]
+    dependency_hashes=registered['dependency_file_sha256']
+    assert dependency_hashes and all(_sha(Path(path))==digest
+                                     for path,digest in dependency_hashes.items())
+    preflight=registered['preflight']
+    log=Path(preflight['log_path'])
+    receipt=Path(preflight['receipt_path'])
+    assert _sha(log)==preflight['log_sha256']
+    assert _sha(receipt)==preflight['receipt_sha256']
+    observed=json.loads(receipt.read_text(encoding='utf-8'))
+    assert (observed['execution_head']==registered['execution_head'] and
+            observed['command']==preflight['command'] and
+            observed['exit_code']==0 and
+            observed['passed_tests']==preflight['passed_tests'] and
+            observed['log_sha256']==preflight['log_sha256'])
+    assert f"{preflight['passed_tests']} passed" in log.read_text(encoding='utf-8')
+
+
 def _historical_vector(o: dict) -> np.ndarray:
     return np.asarray([o['shell_energy_joule'],o['beam_energy_joule'],
                        *o['beam_tip_displacement_metre'],
@@ -374,10 +412,13 @@ def _historical_vector(o: dict) -> np.ndarray:
 
 
 def _historical_compare(evidence: Path, new: dict,
-                        old_name: str, old_hash: str) -> dict:
+                        old_name: str, old_hash: str,
+                        phases_hash: str, result_hash: str) -> dict:
     old_root=evidence/old_name
-    m,p,r=_read(old_root)
     assert _sha(old_root/'manifest.json')==old_hash
+    assert _sha(old_root/'phases.jsonl')==phases_hash
+    assert _sha(old_root/'result.json')==result_hash
+    m,p,r=_read(old_root)
     assert r['reason']=='process_exit' and r['exit_code']==0
     assert [item['phase'] for item in p]==[
         'identity','panel','shell_stiffness','beam_stiffness','coupling',
@@ -397,8 +438,8 @@ def _historical_compare(evidence: Path, new: dict,
     assert abs(g2)<=1e-10 and abs(gm)<=1e-10
     return dict(new_name=new['name'],new_manifest_sha256=new['manifest_sha256'],
                 historical_name=old_name,historical_manifest_sha256=old_hash,
-                historical_phases_sha256=_sha(old_root/'phases.jsonl'),
-                historical_result_sha256=_sha(old_root/'result.json'),
+                historical_phases_sha256=phases_hash,
+                historical_result_sha256=result_hash,
                 max_normalized_23_channel_difference=float(np.max(ratios)),
                 g2_difference=float(g2),gmotion_difference=float(gm))
 
@@ -406,9 +447,7 @@ def _historical_compare(evidence: Path, new: dict,
 def parity(registration: Path, evidence: Path) -> dict:
     """Stop-rule parity after six natural controls; no new solve or relabeling."""
     registered=json.loads(registration.read_text(encoding='utf-8'))
-    assert registered['cases']==[case_name(*case) for case in CASES]
-    assert registered['runner_source_hashes']==runner._hashes()
-    assert registered['adjudicator_sha256']==_sha(Path(__file__))
+    _assert_registered_inputs(registered)
     comparisons=[]
     controls=[]; verified={}
     for case in CASES[:6]:
@@ -419,9 +458,10 @@ def parity(registration: Path, evidence: Path) -> dict:
                              manifest_sha256=entry['manifest_sha256'],
                              check_sha256=_sha(evidence/f'f03-quarter-check-{entry["name"]}'/
                                                'case_check.json')))
-    for case,old_name,old_hash in HISTORICAL:
+    for case,old_name,old_hash,phases_hash,result_hash in HISTORICAL:
         new_entry=verified[case_name(*case)]
-        comparisons.append(_historical_compare(evidence,new_entry,old_name,old_hash))
+        comparisons.append(_historical_compare(
+            evidence,new_entry,old_name,old_hash,phases_hash,result_hash))
     return dict(status='PARITY_ACCEPTED_DIAGNOSTIC_ONLY',
                 timestamp_utc=datetime.now(timezone.utc).isoformat(),
                 execution_head=registered['execution_head'],
@@ -450,7 +490,7 @@ def _checked_case(registration: Path, evidence: Path, case: tuple) -> dict:
 
 def check_case(registration: Path, evidence: Path, name: str) -> dict:
     registered=json.loads(registration.read_text(encoding='utf-8'))
-    assert registered['adjudicator_sha256']==_sha(Path(__file__))
+    _assert_registered_inputs(registered)
     mapping={case_name(*case):case for case in CASES}
     if name not in mapping or registered['cases']!=list(mapping):
         raise ValueError('unregistered case check request')
@@ -471,9 +511,7 @@ def check_case(registration: Path, evidence: Path, name: str) -> dict:
 
 def adjudicate(registration: Path, evidence: Path, output: Path) -> dict:
     registered=json.loads(registration.read_text(encoding='utf-8'))
-    assert registered['cases']==[case_name(*case) for case in CASES]
-    assert registered['runner_source_hashes']==runner._hashes()
-    assert registered['adjudicator_sha256']==_sha(Path(__file__))
+    _assert_registered_inputs(registered)
     assert registered['limits']==dict(max_rss_bytes=8*1024**3,max_seconds=900)
     assert all(v=='1' for v in registered['threads'].values())
     parity_root=evidence/'f03-quarter-refinement-parity-v1'/'parity.json'
@@ -499,8 +537,8 @@ def adjudicate(registration: Path, evidence: Path, output: Path) -> dict:
                        for case in CASES[:6]]
     assert parity_result['controls']==expected_controls
     expected_comparisons=[_historical_compare(
-        evidence,entries[case_name(*case)],old_name,old_hash)
-        for case,old_name,old_hash in HISTORICAL]
+        evidence,entries[case_name(*case)],old_name,old_hash,phases_hash,result_hash)
+        for case,old_name,old_hash,phases_hash,result_hash in HISTORICAL]
     assert parity_result['comparisons']==expected_comparisons
     contrasts={}; crossings={}
     channels={name:_channels(entry) for name,entry in entries.items()}

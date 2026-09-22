@@ -45,9 +45,11 @@ def test_first_quarter_physical_port_bands_match_independent_polynomials(nm,topo
 def test_ns32_first_quarter_crossing_sides_are_bounded(nm):
     cb=shell.panel(32,64,'CST-CB')
     q=np.zeros(cb.dof_count)
-    crossings=adjudicator._crossings(cb,nm,q,q)
-    json.dumps(crossings,allow_nan=False)
+    report=adjudicator._crossings(cb,nm,q,q)
+    json.dumps(report,allow_nan=False)
+    crossings=report['evaluated']
     assert crossings
+    assert all(item['endpoint'] in (0.,.25) for item in report['endpoint_skips'])
     assert {item['branch'] for item in crossings}=={'rising','falling'}
     assert {item['sample'] for item in crossings}=={0,1,2,3}
     for item in crossings:
@@ -117,7 +119,7 @@ def test_nonaffine_rising_and_falling_crossing_derivatives_are_independent():
     q=np.zeros(model.dof_count)
     x,y=model.nodes.T
     q[1::2]=1e-3*(x*x+.4*x*y*y)
-    crossings=adjudicator._crossings(model,16,q,q)
+    crossings=adjudicator._crossings(model,16,q,q)['evaluated']
     checked=set()
     for item in crossings:
         if item['branch'] in checked:
@@ -170,6 +172,18 @@ def test_historical_parity_vector_has_exact_twenty_three_signed_channels():
                                   np.arange(1,24))
 
 
+def test_historical_parity_rejects_changed_raw_phases_before_comparison(tmp_path):
+    old=tmp_path/'historical'
+    old.mkdir()
+    for name,content in (('manifest.json','{}'),('phases.jsonl','{}\n'),
+                         ('result.json','{}')):
+        (old/name).write_text(content,encoding='utf-8')
+    with pytest.raises(AssertionError):
+        adjudicator._historical_compare(
+            tmp_path,{},'historical',adjudicator._sha(old/'manifest.json'),
+            'wrong',adjudicator._sha(old/'result.json'))
+
+
 def test_case_receipt_binds_all_six_raw_files(tmp_path):
     case=adjudicator.CASES[0]
     name=adjudicator.case_name(*case)
@@ -200,7 +214,10 @@ def test_case_receipt_binds_all_six_raw_files(tmp_path):
 
 def test_case_check_rejects_changed_adjudicator_before_reading_case(tmp_path):
     registration=tmp_path/'registration.json'
-    registration.write_text(json.dumps(dict(adjudicator_sha256='wrong')),
+    registration.write_text(json.dumps(dict(
+        cases=[adjudicator.case_name(*case) for case in adjudicator.CASES],
+        runner_source_hashes=adjudicator.runner._hashes(),
+        adjudicator_sha256='wrong')),
                             encoding='utf-8')
     with pytest.raises(AssertionError):
         adjudicator.check_case(registration,tmp_path,
