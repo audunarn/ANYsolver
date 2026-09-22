@@ -6,8 +6,9 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 
 - Worktree: `C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling`.
 - Branch: `codex/b3-ge-e4-pl-integration`.
-- Last executed implementation commit: `f8f8e851e3ce24885005381d9b64873026baa314`;
-  subsequent documentation commits do not change the evaluated operators.
+- Last executed implementation commit: `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`.
+  The subsequent JSON-comparator correction changes no mathematical
+  operator or acceptance threshold.
 - Main was observed clean at `be41a77a62e1cd7e1767bda6e955253af0819f91`,
   version 0.4.7. No product promotion or publication occurred.
 - Controlling programme: `B3_GE_E4_PL_B2_COMPLETE_PROGRAMME.md`, revision 4.
@@ -51,19 +52,25 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
    mechanics review; that acceptance is not numerical qualification.
 6. The independent polynomial Ritz reference, exact root constraints,
    physical recovery, continuous Green norm, bounded archive and five-level
-   execution harness are implemented but not scientifically executed.
+   execution harness were frozen at `e7908c1a` and all five registered
+   equilibria completed. Canonical adjudication is **FAILED_EVIDENCE** due
+   to a Python/NumPy numeric-type comparison after JSON serialization.
    The first integrated unit run passed51 checks. Following independent
    findings,23 focused operator/check tests and48 affected integration tests
    passed. These are overlapping test inventories, not summed coverage.
-   Independent preregistration review granted GO contingent on a clean
-   source freeze. No reference convergence or G0B acceptance is implied.
+   Independent postreview verified215 arrays and exact numerical metric
+   parity, but retained two saved-action failures and unresolved physical
+   settling. The comparator is corrected;25 affected tests and independent
+   scoped code review passed. See `B3_GE_E4_PL_G0_F03_PRIMAL_RITZ_V1_RESULTS.md`.
+   No reference convergence or G0B acceptance is implied.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
 `f03-endpoint-comparison-v1`, `f03-analytical-norm-v1`, and
-`f03-joint-refinement-v1`, and `f03-variational-attribution-v1`. Reports retain their
+`f03-joint-refinement-v1`, `f03-variational-attribution-v1`, and
+`f03-primal-ritz-v1`. Reports retain their
 registration/adjudication hashes; raw reviews and execution provenance
-are saved with the latter two roots. All these executions are consumed.
+are saved with the latest roots. All these executions are consumed.
 Do not overwrite, retry or relabel them. Earlier failed/aborted evidence
 remains intact, including finite-pad feasibility v1's adjudication failure.
 
@@ -84,26 +91,31 @@ small net constraint work 0.00003296 J. This is a discrete-state split,
 not causal continuum-error attribution; cancellation and endpoint error
 remain possible. P1 and hybrid have substantial negative constraint work.
 
-The next action is a clean source freeze of the independently reviewed
-continuous primal reference b=A us, then the single-use
-five-level execution in `B3_GE_E4_PL_G0_F03_PRIMAL_RITZ_PROTOCOL.md`.
-The independent reviewer draft remains preserved alongside it. Exact
-levels are n=4,8,12,16,24; each has one canonical equilibrium and an
-assembly-only integration crosscheck. Child limits are900s/8GiB sampled
-RSS, with3600s launch cutoff. Planned root is
-`.qualification/b3-ge-e4-pl/f03-primal-ritz-v1`, not yet consumed.
-No native FE/host-clipping/multiplier assembly is used as the reference
-algorithm. Failed settling leaves the reference unresolved; no automatic
-degree extension is authorized. No primal reference scientific execution
-has occurred at this checkpoint.
+The primal reference root `.qualification/b3-ge-e4-pl/f03-primal-ritz-v1`
+is now consumed: n=4,8,12,16,24, five equilibria,10 integration assemblies,
+60.9037s overall and220.77MiB maximum sampled child RSS. Original
+registration/adjudication and all36 completed evidence files are preserved.
+
+The next action is a new, separately registered **saved-evidence audit**
+after freezing the comparator correction. Bind the original source,
+registration, failed decision and every raw artifact. No equilibrium,
+assembly, changed threshold, overwritten decision or canonical rerun is
+allowed. Retain the original FAILED_EVIDENCE and reproduced n16/n24
+saved-action failures (1.49057e-11 and1.15333e-10 against1e-11).
+Their only failing component is transverse b'' at s=1; endpoint
+amplification of projection roundoff is plausible, not a waiver.
+Independent diagnostic settling also fails: last energy changes4.52%,
+2.60%, and full-functional changes2.87%,3.16%; only16/45 scalar sequences
+pass. The reference is not ready for FE-as-reference comparisons.
+No automatic degree extension or physical rerun is authorized by this
+checkpoint. Diagnose and review the next numerical formulation before
+any new scientific registration.
 This does not replace required executed external comparisons.
 Do not automatically add uniform refinement, change
 tolerances, drop P1, relabel any HOLD, or promote a production space.
 Native full-vector/shear/drilling and all other G0 foundations remain open.
 
-No scientific processes are active at this checkpoint. The implementation
-worker has completed its bounded edits. `/root/finite_pad_axis_review`
-accepted the final corrections; parent owns integration and execution.
-Fourteen new primal source/test/protocol files and this checkpoint await
-the clean source freeze. No concurrent writer owns completed evidence.
+No scientific processes are active at this checkpoint. Both specialist
+workers completed their bounded work and reviews. Parent owns the next
+read-only audit. No concurrent writer owns source or completed evidence.
 No release approval is being exercised. Keep main unchanged during G0.

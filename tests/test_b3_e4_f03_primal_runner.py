@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import sys
 
+import numpy as np
 import pytest
 
 _scripts = Path(__file__).resolve().parents[1]/'scripts'
@@ -129,6 +130,18 @@ def test_missing_case_prevents_canonical_adjudication(tmp_path, monkeypatch):
 
 def test_bind_metrics_rejects_values_shapes_and_boolean_substitution():
     for first, second in (({'a': 1.}, {'a': 2.}), ([1.], [1., 2.]), (True, 1), (float('nan'), 0.)):
+        with pytest.raises(ValueError):
+            runner.bind_metrics(first, second)
+
+
+def test_json_roundtrip_preserves_numpy_real_semantics_and_names_failure_path():
+    metrics = {'details': {'perturbation_delta': np.float64(1.234567890123e-12)},
+               'checks': {'value': .25}, 'observables': {'nullable': None}}
+    runner.bind_metrics(json.loads(json.dumps(metrics)), metrics)
+    changed = json.loads(json.dumps(metrics)); changed['checks']['value'] = .5
+    with pytest.raises(ValueError, match='metrics/checks/value'):
+        runner.bind_metrics(changed, metrics)
+    for first, second in ((True, np.float64(1)), (np.float64(1), True)):
         with pytest.raises(ValueError):
             runner.bind_metrics(first, second)
 

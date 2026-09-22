@@ -1,8 +1,8 @@
 """Bounded unit checks for the independently assembled Ritz evidence audit."""
 
 import sys
-from pathlib import Path
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -28,6 +28,10 @@ def test_tiny_canonical_crosscheck_and_saved_audit_without_assembly(monkeypatch)
     monkeypatch.setattr(ritz,'assemble',no_second_case)
     monkeypatch.setattr(ritz,'solve',no_second_case)
     assert checks.verify_saved(arrays,3)==result
+    # Actual computed metrics include NumPy real scalars, which JSON reloads
+    # as Python floats. The evidence comparison must preserve their value.
+    from b3_e4_f03_primal_ritz import bind_metrics
+    bind_metrics(json.loads(json.dumps(result,allow_nan=False)),result)
 
 
 def test_saved_actions_inconsistency_and_strict_owned_inventory():

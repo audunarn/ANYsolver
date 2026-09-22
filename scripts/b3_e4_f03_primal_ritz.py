@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import math
+from numbers import Real
 import os
 from pathlib import Path
 import sys
@@ -115,24 +116,24 @@ def child(root, name):
     print(json.dumps(observable_event(directory, name, CASES[name], False)), flush=True)
 
 
-def bind_metrics(first, second):
+def bind_metrics(first, second, path='metrics'):
     """Compare pure recomputation without hiding inventory or boolean changes."""
     if isinstance(second, dict):
         if not isinstance(first, dict) or set(first) != set(second):
-            raise ValueError('recomputed reference metric inventory changed')
+            raise ValueError(f'recomputed reference metric inventory changed: {path}')
         for name in second:
-            bind_metrics(first[name], second[name])
+            bind_metrics(first[name], second[name], path+'/'+str(name))
     elif isinstance(second, list):
         if not isinstance(first, list) or len(first) != len(second):
-            raise ValueError('recomputed reference metric shape changed')
-        for a, b in zip(first, second):
-            bind_metrics(a, b)
-    elif type(second) in (float, int):
-        if (type(first) not in (float, int) or not math.isfinite(first)
+            raise ValueError(f'recomputed reference metric shape changed: {path}')
+        for i, (a, b) in enumerate(zip(first, second)):
+            bind_metrics(a, b, path+'/'+str(i))
+    elif isinstance(second, Real) and not isinstance(second, bool):
+        if (not isinstance(first, Real) or isinstance(first, bool) or not math.isfinite(first)
                 or not math.isfinite(second) or not math.isclose(first, second, rel_tol=1e-12, abs_tol=1e-12)):
-            raise ValueError('reference metric differs from saved actions')
+            raise ValueError(f'reference metric differs from saved actions: {path}')
     elif type(first) is not type(second) or first != second:
-        raise ValueError('reference metric value changed')
+        raise ValueError(f'reference metric value changed: {path}')
 
 
 def verify_case(root, name, manifest):
