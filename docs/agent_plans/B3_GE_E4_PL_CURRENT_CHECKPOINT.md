@@ -96,8 +96,11 @@ is now consumed: n=4,8,12,16,24, five equilibria,10 integration assemblies,
 60.9037s overall and220.77MiB maximum sampled child RSS. Original
 registration/adjudication and all36 completed evidence files are preserved.
 
-The next action is a new, separately registered **saved-evidence audit**
-after freezing the comparator correction. Bind the original source,
+The next action is the separately registered **saved-evidence audit** in
+`B3_GE_E4_PL_G0_F03_PRIMAL_SAVED_AUDIT_PROTOCOL.md`. The runner and21
+mock-only tests are implemented; all21 passed after receipt-validation
+and thread-count review fixes. Independent code
+review and a clean source freeze precede its single execution. Bind the original source,
 registration, failed decision and every raw artifact. No equilibrium,
 assembly, changed threshold, overwritten decision or canonical rerun is
 allowed. Retain the original FAILED_EVIDENCE and reproduced n16/n24
@@ -115,7 +118,15 @@ Do not automatically add uniform refinement, change
 tolerances, drop P1, relabel any HOLD, or promote a production space.
 Native full-vector/shear/drilling and all other G0 foundations remain open.
 
-No scientific processes are active at this checkpoint. Both specialist
-workers completed their bounded work and reviews. Parent owns the next
-read-only audit. No concurrent writer owns source or completed evidence.
+The follow-on mechanics draft is
+`B3_GE_E4_PL_G0_F03_PRIMAL_NEXT_DIAGNOSTIC_DRAFT.md`. It proposes exact
+rational reconstruction of the three saved n12/n16/n24 states, with
+separate floating evaluation, coefficient and direct-action discrepancies.
+It preserves represented geometry and its non-unit yaw factor where
+applicable. Spatial residual analysis is a later, separate diagnostic;
+the draft authorizes no numerical execution or new approximation space.
+
+No scientific processes are active at this checkpoint. Parent owns the
+saved-only audit; the independent reviewer owns its review and the
+follow-on mechanics draft. No worker owns completed evidence.
 No release approval is being exercised. Keep main unchanged during G0.
