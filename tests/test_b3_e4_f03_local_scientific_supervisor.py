@@ -38,6 +38,11 @@ class FakePsutilProcess:
         self.alive = False
 
 
+class InterruptingProcess(FakePsutilProcess):
+    def memory_info(self):
+        raise KeyboardInterrupt()
+
+
 class FakePopen:
     def __init__(self, pid=10, polls=(None, 0)):
         self.pid = pid
@@ -125,6 +130,36 @@ def test_rss_limit_terminates_complete_observed_tree(tmp_path, monkeypatch):
     assert receipt.reason == "rss_limit"
     assert receipt.sampled_peak_tree_rss_bytes == 1_200
     assert receipt.terminated_pids == (10, 11, 12)
+    assert all(process.killed == 1 for process in (root, child, grandchild))
+
+
+def test_detached_observed_descendant_remains_in_rss_accounting():
+    grandchild = FakePsutilProcess(12, 400)
+    child = FakePsutilProcess(11, 100, (grandchild,))
+    root = FakePsutilProcess(10, 100, (child,))
+    tracked = {}
+    assert supervisor._tree_sample(root, tracked) == 600
+    root._children.clear()
+    child.alive = False
+    grandchild._rss = 1_200
+    assert supervisor._tree_sample(root, tracked) == 1_300
+    assert tuple(tracked) == (10, 11, 12)
+
+
+def test_cancellation_during_live_sampling_retains_and_kills_discovered_tree(
+    tmp_path, monkeypatch,
+):
+    grandchild = FakePsutilProcess(12, 100)
+    child = InterruptingProcess(11, 100, (grandchild,))
+    root = FakePsutilProcess(10, 100, (child,))
+    fake = FakePopen(polls=(None,))
+    monkeypatch.setattr(supervisor.psutil, "wait_procs", lambda *a, **k: ([], []))
+    with pytest.raises(KeyboardInterrupt):
+        _run(
+            tmp_path, root, fake,
+            limits=supervisor.SupervisorLimits(10, 1_000),
+            clock=Clock((0.0, 0.1)),
+        )
     assert all(process.killed == 1 for process in (root, child, grandchild))
 
 

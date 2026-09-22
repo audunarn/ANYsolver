@@ -102,23 +102,32 @@ def frozen_thread_environment(source: Mapping[str, str] | None = None) -> dict[s
 
 
 def _tree_sample(root, tracked: dict[int, object]) -> int:
-    processes = [root]
+    # Retain every process once observed.  A worker can outlive an intermediate
+    # parent and disappear from a later root.children() result while remaining
+    # part of the owned tree that must be accounted and terminated.
+    root_pid = int(root.pid)
+    if root_pid <= 0:
+        raise ValueError("invalid supervised root process identity")
+    tracked.setdefault(root_pid, root)
     try:
-        processes.extend(root.children(recursive=True))
+        discovered = root.children(recursive=True)
     except psutil.NoSuchProcess:
-        pass
-    current: dict[int, object] = {}
+        discovered = ()
+    # Populate cleanup ownership before any memory query can fail or be
+    # cancelled.  Existing Process objects retain their original PID identity.
+    for process in discovered:
+        pid = int(process.pid)
+        if pid <= 0:
+            raise ValueError("invalid supervised descendant process identity")
+        tracked.setdefault(pid, process)
     total = 0
-    for process in processes:
+    for process in tuple(tracked.values()):
         try:
-            pid = int(process.pid)
-            if pid <= 0 or pid in current:
+            if not _running(process):
                 continue
             total += int(process.memory_info().rss)
-            current[pid] = process
         except psutil.NoSuchProcess:
             continue
-    tracked.update(current)
     return total
 
 
