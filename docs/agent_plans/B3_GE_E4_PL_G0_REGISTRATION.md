@@ -1556,3 +1556,19 @@ signed Schur remains positive. See
 all extrema. This is an adverse finite trend under a *diagnostic* graph
 norm, not an accepted uniform stability claim or a physical failure proof.
 Neither multiplier space is selected. F03/G0B remain open; G1 barred.
+
+The separately registered F03 first-quarter natural refinement diagnostic
+was frozen at `79702439` and completed fourteen serial Q4/CST-CB cases
+over transverse, longitudinal and multiplier sweeps. All supervised
+roots, per-case reconstruction receipts, and six-control historical
+parity passed; the full adjudicator recorded
+`DIAGNOSTIC_ACCEPTED_G0B_OPEN`. Independent mechanics review found
+material fine-step changes in all three sweep directions, a
+nonmonotone longitudinal topology contrast, and elastic as well as
+direct-port contributions to the beam-root difference. The loaded
+diagonal slope jumps are an interpolation signature, not a causal
+physical-reference result. The signed results, hashes, preserved
+preflight setup failures and recommended next experiment are in
+`B3_GE_E4_PL_G0_F03_FIRST_QUARTER_REFINEMENT_RESULTS.md` and its
+versioned external evidence. The adverse Ny64 draft 1% screen remains
+open. **No line space is selected; F03/G0B remain open and G1 barred.**
