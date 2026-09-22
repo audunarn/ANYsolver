@@ -6,9 +6,10 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 
 - Worktree: `C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling`.
 - Branch: `codex/b3-ge-e4-pl-integration`.
-- Last executed implementation commit: `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`.
-  The subsequent JSON-comparator correction changes no mathematical
-  operator or acceptance threshold.
+- Last executed source: `c8b2f78d3ace4e23ed8f636fd6b474ef250ccda6`
+  (saved-only audit). Last equilibrium source remains
+  `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
+  correction nor saved-only audit changed a mathematical operator.
 - Main was observed clean at `be41a77a62e1cd7e1767bda6e955253af0819f91`,
   version 0.4.7. No product promotion or publication occurred.
 - Controlling programme: `B3_GE_E4_PL_B2_COMPLETE_PROGRAMME.md`, revision 4.
@@ -63,12 +64,20 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
    settling. The comparator is corrected;25 affected tests and independent
    scoped code review passed. See `B3_GE_E4_PL_G0_F03_PRIMAL_RITZ_V1_RESULTS.md`.
    No reference convergence or G0B acceptance is implied.
+7. The registered saved-only audit at `c8b2f78d` completed5/5 children
+   with zero new equilibria/assemblies. Integrity PASSED; canonical status
+   **FAILED_NUMERICAL_SCREEN**, exit1, retaining n16/n24 action failures.
+   Independent postreview accepted integrity with numerical/physical HOLD.
+   All21 focused mock tests passed after review fixes. See
+   `B3_GE_E4_PL_G0_F03_PRIMAL_SAVED_AUDIT_V1_RESULTS.md`. The new32-file
+   immutable inventory SHA is
+   `5073230a813bf9acef534d756ac05fb7deb29d1f7cf7caae507db94afc99014d`.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
 `f03-endpoint-comparison-v1`, `f03-analytical-norm-v1`, and
 `f03-joint-refinement-v1`, `f03-variational-attribution-v1`, and
-`f03-primal-ritz-v1`. Reports retain their
+`f03-primal-ritz-v1`, and `f03-primal-saved-audit-v1`. Reports retain their
 registration/adjudication hashes; raw reviews and execution provenance
 are saved with the latest roots. All these executions are consumed.
 Do not overwrite, retry or relabel them. Earlier failed/aborted evidence
@@ -96,14 +105,9 @@ is now consumed: n=4,8,12,16,24, five equilibria,10 integration assemblies,
 60.9037s overall and220.77MiB maximum sampled child RSS. Original
 registration/adjudication and all36 completed evidence files are preserved.
 
-The next action is the separately registered **saved-evidence audit** in
-`B3_GE_E4_PL_G0_F03_PRIMAL_SAVED_AUDIT_PROTOCOL.md`. The runner and21
-mock-only tests are implemented; all21 passed after receipt-validation
-and thread-count review fixes. Independent code
-review and a clean source freeze precede its single execution. Bind the original source,
-registration, failed decision and every raw artifact. No equilibrium,
-assembly, changed threshold, overwritten decision or canonical rerun is
-allowed. Retain the original FAILED_EVIDENCE and reproduced n16/n24
+The saved-evidence audit is complete and consumed. Its32-file inventory
+and the original36-file parent inventory are frozen. Retain the original
+FAILED_EVIDENCE and the audit's FAILED_NUMERICAL_SCREEN with n16/n24
 saved-action failures (1.49057e-11 and1.15333e-10 against1e-11).
 Their only failing component is transverse b'' at s=1; endpoint
 amplification of projection roundoff is plausible, not a waiver.
@@ -118,15 +122,20 @@ Do not automatically add uniform refinement, change
 tolerances, drop P1, relabel any HOLD, or promote a production space.
 Native full-vector/shear/drilling and all other G0 foundations remain open.
 
-The follow-on mechanics draft is
+The next action is implementation and independent review of
+`B3_GE_E4_PL_G0_F03_PRIMAL_EXACT_POSE_PROTOCOL.md`, then one registered
+three-case saved-state representation diagnostic. The mechanics draft is
 `B3_GE_E4_PL_G0_F03_PRIMAL_NEXT_DIAGNOSTIC_DRAFT.md`. It proposes exact
 rational reconstruction of the three saved n12/n16/n24 states, with
 separate floating evaluation, coefficient and direct-action discrepancies.
 It preserves represented geometry and its non-unit yaw factor where
-applicable. Spatial residual analysis is a later, separate diagnostic;
-the draft authorizes no numerical execution or new approximation space.
+applicable. The new protocol distinguishes the original full saved-action
+metric from the replayed derivative submetric and freezes rational
+encoding limits. Spatial residual analysis is a later, separate diagnostic.
+No actual three-state execution has been registered or performed yet.
 
-No scientific processes are active at this checkpoint. Parent owns the
-saved-only audit; the independent reviewer owns its review and the
-follow-on mechanics draft. No worker owns completed evidence.
+No registered scientific process is active. Parent owns the new protocol,
+runner and evidence; f03_port_mechanics owns only the new exact-pose module
+and synthetic tests. finite_pad_axis_review supplies independent review.
+No worker owns completed evidence. The previous audit source stays frozen.
 No release approval is being exercised. Keep main unchanged during G0.
