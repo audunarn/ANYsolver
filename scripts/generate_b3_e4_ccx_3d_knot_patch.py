@@ -10,8 +10,12 @@ import generate_b3_e4_ccx_3d_footprint_feasibility as base
 import generate_b3_e4_ccx_3d_reciprocity_influences as old
 
 
-def build_knot_rigid_x_deck() -> str:
-    """Prescribe one global x-axis rigid motion at all 36 support coordinates."""
+def build_knot_rigid_deck(component: int, signed_delta: float) -> str:
+    """Prescribe a reference rigid translation or rotation at all supports."""
+    if type(component) is not int or not 0 <= component < 6:
+        raise ValueError("invalid global rigid mode")
+    if signed_delta not in (-old.DELTA,old.DELTA):
+        raise ValueError("only the frozen signed amplitude is admitted")
     original = base.build_deck(1, "force_y")
     base.validate_deck(original, 1, "force_y")
     lines = original.splitlines()
@@ -41,9 +45,16 @@ def build_knot_rigid_x_deck() -> str:
     if lines[i:i+2] != ["*CLOAD", "48,2,1000"]:
         raise ValueError("original applied load changed")
     del lines[i:i+2]
-    motion = old.support_motion("shell", 3, old.DELTA)
-    motion[(old.BEAM_ROOT,2)] = -base.ECCENTRICITY*old.DELTA
-    motion[(old.BEAM_ROOT,4)] = old.DELTA
+    motion = old.support_motion("shell",component,signed_delta)
+    root = old.support_coordinates()[old.BEAM_ROOT]
+    if component < 3:
+        motion[(old.BEAM_ROOT,component+1)] = signed_delta
+    else:
+        axis = tuple(float(i == component-3) for i in range(3))
+        field = old._cross(axis,root)
+        for direction in range(3):
+            motion[(old.BEAM_ROOT,direction+1)] = signed_delta*field[direction]
+        motion[(old.BEAM_ROOT,component+1)] = signed_delta
     rows = [f"{node},{dof},{dof},{old.checked_boundary_token(f'{value:.12g}')}"
             for (node,dof),value in sorted(motion.items())]
     i = lines.index("*STATIC")
@@ -54,3 +65,8 @@ def build_knot_rigid_x_deck() -> str:
             "*CLOAD" in deck or deck.index("*BOUNDARY\n") < deck.index("*STEP\n")):
         raise ValueError("knot patch deck inventory changed")
     return deck
+
+
+def build_knot_rigid_x_deck() -> str:
+    """Preserve the exact first registered positive x-rotation deck."""
+    return build_knot_rigid_deck(3,old.DELTA)

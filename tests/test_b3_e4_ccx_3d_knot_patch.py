@@ -1,5 +1,6 @@
 """Inert deck checks for the separately identified CalculiX knot diagnostic."""
 
+import hashlib
 import sys
 from pathlib import Path
 
@@ -58,3 +59,33 @@ def test_knot_patch_changes_only_sections_and_rigid_support_field():
                                           "*NSET,NSET=BeamRoot\n46\n"
                                           "*BOUNDARY\nPanelEnds,1,3\nBeamRoot,1,6\n")
     assert reconstructed == original
+    assert hashlib.sha256(deck.encode("ascii")).hexdigest() == (
+        "a599b9db8f6ba77a0a3c0e67620986aa46d1e2828c36c27664b1322344e3ca59")
+
+
+@pytest.mark.parametrize("component", range(6))
+@pytest.mark.parametrize("sign",(-1,1))
+def test_all_rigid_support_modes_have_reference_spatial_field(component,sign):
+    delta=sign*old.DELTA
+    deck=knot.build_knot_rigid_deck(component,delta)
+    rows=[line.split(",") for line in deck.split("*BOUNDARY\n",1)[1]
+          .split("*NODE PRINT",1)[0].splitlines()]
+    assert len(rows)==36
+    values={(int(a),int(b)):float(d) for a,b,c,d in rows}
+    assert len(values)==36
+    assert all(b==c and len(d)<=20 for a,b,c,d in rows)
+    assert deck.count("*BEAM SECTION")==2 and deck.count("*EQUATION\n")==12
+    assert "*CLOAD" not in deck
+    for node,xyz in old.support_coordinates().items():
+        if component<3:
+            u=tuple(delta*float(i==component) for i in range(3))
+        else:
+            axis=tuple(float(i==component-3) for i in range(3))
+            u=tuple(delta*x for x in old._cross(axis,xyz))
+        for direction in range(3):
+            if (node,direction+1) in values:
+                assert values[node,direction+1]==pytest.approx(u[direction],rel=0,abs=1e-16)
+        if node==old.BEAM_ROOT:
+            for direction in range(3,6):
+                expected=delta if direction==component else 0.
+                assert values[node,direction+1]==pytest.approx(expected,rel=0,abs=1e-16)
