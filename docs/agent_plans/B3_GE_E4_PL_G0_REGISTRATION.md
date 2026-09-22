@@ -1572,3 +1572,24 @@ preflight setup failures and recommended next experiment are in
 `B3_GE_E4_PL_G0_F03_FIRST_QUARTER_REFINEMENT_RESULTS.md` and its
 versioned external evidence. The adverse Ny64 draft 1% screen remains
 open. **No line space is selected; F03/G0B remain open and G1 barred.**
+
+The new CalculiX 2.23 three-dimensional square-section footprint
+comparator at `290904f1f69ebbb5c4613fe110b158840f8c5f1e` passed a
+separately registered 25-case *external-only* support-wrench screen.
+The loaded tip force is work-conjugate to the mean of four expanded
+beam-tip corners; unloaded reciprocal cases recover that mean directly
+from full-step FRD data rather than assuming the original B31 tip DAT
+coordinate has the same reconstruction without a tip load. Independent
+raw adjudication found total force `(0, -1000.0005, 0) N` and moment
+`(100.00006, 0, -999.99975) Nm` about the origin, within the frozen
+normalized `1e-4` balance limit. The registration, 25 raw cases and
+adjudication reside in the separate
+`ccx-3d-knot-wrench-registration-v1`, `ccx-3d-knot-wrench-cases-v1`
+and `ccx-3d-knot-wrench-adjudication-v1` directories under
+`.qualification/b3-ge-e4-pl/`;
+adjudication SHA-256 is
+`e9c7d083dfcbd8b53bfff4b75e41c38a83a0c01b719f60d642d173a7a3148796`.
+The earlier no-knot wrench failure remains preserved. This establishes
+numerical wrench recovery of an external comparator, not native
+beam/shell agreement or a converged physical line-coupling target.
+**F03/G0B remain open and G1 remains barred.**
