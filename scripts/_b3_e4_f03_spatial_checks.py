@@ -448,7 +448,7 @@ def adjudicate_record(record,n):
             'rigid_wrench':(area_wrench-trace_wrench).tolist(),
             'global_reaction_balance':(reactions.sum(axis=0)+trace_wrench).tolist(),
             'divergence_theorem':(r['cell_residual_wrenches'].sum(axis=0)-area_wrench-
-                r['free_wrenches'].sum(axis=0)-r['support_wrenches'].sum(axis=0)).tolist()}
+                (r['free_wrenches'].sum(axis=0)+r['support_wrenches'].sum(axis=0))).tolist()}
     summaries['signed_quadrature_differences']={}
     for key in RULE_SHAPES:
         floor=(WRENCH_SCALE if 'wrenches' in key else

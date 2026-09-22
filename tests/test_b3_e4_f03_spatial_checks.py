@@ -37,6 +37,23 @@ def test_all_three_work_routes_and_reactions_on_manufactured_state(raw):
         np.testing.assert_array_equal(
             decision['summaries']['signed_quadrature_differences'][key],
             np.array(raw['rules']['48'][key])-np.array(raw['rules']['64'][key]))
+    for order in ('48','64'):
+        r={k:np.array(v) for k,v in raw['rules'][order].items()}
+        summary=decision['summaries'][order]
+        reactions=np.array(summary['reactions'])
+        area=np.array(summary['area_wrench']);trace=np.array(summary['trace_wrench'])
+        boundary=(r['support_work'].sum(axis=0)[3:9]+
+                  r['free_work'].sum(axis=0)[3:9]-
+                  r['cell_volume_work'].sum(axis=0)[3:9]).reshape(2,3)/checks.RIGID_SCALE
+        expected={'reaction_identity':reactions-boundary,
+                  'rigid_wrench':area-trace,
+                  'global_reaction_balance':reactions.sum(axis=0)-(-trace),
+                  'divergence_theorem':(r['cell_residual_wrenches'].sum(axis=0)-area)-
+                      (r['free_wrenches'].sum(axis=0)+r['support_wrenches'].sum(axis=0))}
+        for key,value in expected.items():
+            np.testing.assert_array_equal(np.array(
+                summary['signed_physical_differences'][key]).view(np.uint64),
+                value.view(np.uint64))
 
 
 @pytest.mark.parametrize('field,index',[
