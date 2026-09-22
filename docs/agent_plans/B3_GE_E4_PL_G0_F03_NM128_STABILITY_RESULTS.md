@@ -10,6 +10,8 @@ open. The B3-GE/E4-PL multi-element objective and B2 option are unchanged.
 - Single-use registration: `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-nm128-stability-registration-v1/registration.json`, SHA-256 `b22e8a637312df848cacc4d6d67f77736a20217187c0914304029e3cb0317fc6`.
 - Raw cases: `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-nm128-stability-cases-v1/`.
 - Partial read-only adjudication: `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-nm128-stability-stop-v1/adjudication.json`, SHA-256 `334d98bd59ae209c0f82adf750eef6badab0fc222368f9256c83710848057067`.
+- Post-hoc mode description from the saved Q4 Schur payloads only:
+  `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-nm128-stability-mode-diagnostic-v1/report.json`, SHA-256 `d25e2733bda00f2ea78811260c1103e4982bfef94729e4d5082add68ade1c709`.
 - Independent code and mechanics reviews checked registration before execution and
   verified all three preserved case receipts afterward. The registration and raw
   case directories are immutable; no retry or replacement is authorized by this
@@ -34,6 +36,14 @@ the corresponding generalized minimum falls by about 71.3%. This is an adverse
 finite-mesh trend for the frozen classical P1 and discrete H-minus-one-half norm,
 not a continuum conclusion or a native B3-GE/E4-PL result. The full four-case
 adjudicator cannot pass with the failed and missing cases.
+
+A post-hoc lowest-vector description suggests a mesh-scale mode in the first
+translation channel: after discarding nodal amplitudes below 5% of that
+channel's maximum, the number of sign changes rises from 37 to 110 as Nm
+doubles. The first ten generalized minima form a cluster; an individual
+eigenvector can rotate in that cluster. This descriptive result is neither a
+registered acceptance check nor proof of which formulation component causes
+the adverse trend.
 
 ## Interpretation and next mechanical work
 
