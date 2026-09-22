@@ -27,6 +27,8 @@ def test_plan_roundtrip_and_complete_single_use_inverse_stream(records, tmp_path
     assert restored.inverse_blocks[0].start == 0
     assert restored.inverse_blocks[-1].start + restored.inverse_blocks[-1].columns == 1473
     assert sum(block.bytes for block in restored.inverse_blocks) == 17_357_832
+    assert restored.raw_archive_bytes == 512 * 1024**2
+    assert restored.resource_limits == cases.resource_contract()
     assert len(restored.members) == len(set(restored.members))
     with pytest.raises(FileExistsError):
         archive.write_plan(path, plan)
@@ -84,6 +86,8 @@ def test_manifest_missing_extra_reordered_blocks_and_names_rejected(records):
     reordered = dict(value); reordered["inverse_blocks"] = list(reversed(value["inverse_blocks"])); mutations.append(reordered)
     renamed = json.loads(json.dumps(value)); renamed["inverse_blocks"][0]["name"] = "inverse/stale.npy"; mutations.append(renamed)
     groups = dict(value); groups["group_members"] = value["group_members"][:-1]; mutations.append(groups)
+    resources = json.loads(json.dumps(value)); resources["resource_limits"]["raw_archive_bytes"] += 1; mutations.append(resources)
+    raw_cap = dict(value); raw_cap["raw_archive_bytes"] += 1; mutations.append(raw_cap)
     for mutation in mutations:
         payload = (json.dumps(mutation, sort_keys=True, separators=(",", ":")) + "\n").encode("ascii")
         with pytest.raises(ValueError):

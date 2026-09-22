@@ -17,7 +17,7 @@ from scripts import _b3_e4_f03_local_scientific_cases as cases
 
 
 SCHEMA = "f03_local_scientific_archive_plan_v1"
-MAX_PLAN_BYTES = 8 * 1024**2
+MAX_PLAN_BYTES = cases.ARCHIVE_PLAN_BYTES
 BLOCK_COLUMNS = 4
 COMMIT = re.compile(r"[0-9a-f]{40}")
 
@@ -68,6 +68,8 @@ class CaseArchivePlan:
     topology_sha256: str
     inventory_sha256: str
     kkt_order: int
+    resource_limits: tuple[tuple[str, int], ...]
+    raw_archive_bytes: int
     inverse_blocks: tuple[InverseBlock, ...]
     group_members: tuple[str, ...]
 
@@ -85,6 +87,18 @@ class CaseArchivePlan:
             )
             or type(self.kkt_order) is not int
             or self.kkt_order <= 0
+            or type(self.resource_limits) is not tuple
+            or any(
+                type(item) is not tuple
+                or len(item) != 2
+                or type(item[0]) is not str
+                or type(item[1]) is not int
+                or item[1] <= 0
+                for item in self.resource_limits
+            )
+            or self.resource_limits != cases.resource_contract()
+            or type(self.raw_archive_bytes) is not int
+            or self.raw_archive_bytes != cases.ARCHIVE_BYTES
             or type(self.inverse_blocks) is not tuple
             or type(self.group_members) is not tuple
             or self.group_members != GROUP_MEMBERS
@@ -128,6 +142,8 @@ def make_case_plan(
         record.topology_sha256,
         inventory,
         order,
+        cases.resource_contract(),
+        cases.ARCHIVE_BYTES,
         blocks,
         GROUP_MEMBERS,
     )
@@ -143,6 +159,8 @@ def _payload(plan: CaseArchivePlan) -> bytes:
         "topology_sha256": plan.topology_sha256,
         "inventory_sha256": plan.inventory_sha256,
         "kkt_order": plan.kkt_order,
+        "resource_limits": {name: value for name, value in plan.resource_limits},
+        "raw_archive_bytes": plan.raw_archive_bytes,
         "group_members": list(plan.group_members),
         "inverse_blocks": [
             {"start": block.start, "columns": block.columns, "rows": block.rows,
@@ -174,9 +192,14 @@ def _decode(payload: bytes) -> CaseArchivePlan:
         raise ValueError("invalid F03 archive plan JSON") from exc
     if set(value) != {
         "schema", "source_commit", "case_id", "topology_sha256", "inventory_sha256",
-        "kkt_order", "group_members", "inverse_blocks",
-    } or type(value["inverse_blocks"]) is not list:
+        "kkt_order", "resource_limits", "raw_archive_bytes", "group_members", "inverse_blocks",
+    } or type(value["inverse_blocks"]) is not list or type(value["resource_limits"]) is not dict:
         raise ValueError("invalid F03 archive plan inventory")
+    if set(value["resource_limits"]) != {name for name, _ in cases.resource_contract()}:
+        raise ValueError("invalid F03 archive resource inventory")
+    resource_limits = tuple(
+        (name, value["resource_limits"][name]) for name, _ in cases.resource_contract()
+    )
     blocks = []
     for item in value["inverse_blocks"]:
         if type(item) is not dict or set(item) != {"start", "columns", "rows", "bytes", "name"}:
@@ -188,7 +211,7 @@ def _decode(payload: bytes) -> CaseArchivePlan:
     return CaseArchivePlan(
         value["schema"], value["source_commit"], value["case_id"],
         value["topology_sha256"], value["inventory_sha256"], value["kkt_order"],
-        tuple(blocks), tuple(value["group_members"]),
+        resource_limits, value["raw_archive_bytes"], tuple(blocks), tuple(value["group_members"]),
     )
 
 

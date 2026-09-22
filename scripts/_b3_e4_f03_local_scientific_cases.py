@@ -20,7 +20,21 @@ from scripts import _b3_e4_f03_sparse_certificate as certificate
 SCHEMA = "f03_local_scientific_cases_v1"
 GRAPH_PREFLIGHT_BYTES = 256 * 1024**2
 ARCHIVE_BYTES = 512 * 1024**2
+ARCHIVE_PLAN_BYTES = 8 * 1024**2
+MAX_INCIDENCE_ENTRIES = 1_000_000
 INVERSE_EVIDENCE_BYTES = 37_068_136
+MAX_KKT_FACTOR_NNZ = 2_171_202
+MAX_INVERSE_EVIDENCE_BYTES_PER_CASE = 17_357_832
+MAX_COMBINED_FACTOR_NNZ = 2_162_370
+MAX_CANONICAL_FACTOR_BYTES = 67_108_864
+MAX_EXACT_PRODUCT_PATHS = 50_000_000
+MAX_EXACT_RESIDUAL_ENTRIES = 300_000
+MAX_EXACT_FRACTION_BITS = 16_384
+MAX_EXACT_CUMULATIVE_BITS = 100_000_000
+MAX_EXACT_PYTHON_WORKSPACE_BYTES = 4_294_967_296
+MAX_SECONDS_PER_CASE = 1_800
+MAX_RSS_BYTES_PER_CASE = 6 * 1024**3
+LAUNCH_CUTOFF_SECONDS = 7_200
 
 ASSEMBLY_BUDGET = assembly.AssemblyBudget(
     max_trace_dofs=280,
@@ -40,6 +54,43 @@ FACTOR_VALIDATION_BUDGET = certificate.SparseBudget(
     max_block_columns=1,
     max_work_bytes=277_536_256,
 )
+
+
+def resource_contract() -> tuple[tuple[str, int], ...]:
+    """Complete ordered resource envelope bound by plans and registration."""
+    return (
+        ("graph_preflight_bytes", GRAPH_PREFLIGHT_BYTES),
+        ("raw_archive_bytes", ARCHIVE_BYTES),
+        ("archive_plan_bytes", ARCHIVE_PLAN_BYTES),
+        ("max_incidence_entries", MAX_INCIDENCE_ENTRIES),
+        ("assembly_max_trace_dofs", ASSEMBLY_BUDGET.max_trace_dofs),
+        ("assembly_max_triplets", ASSEMBLY_BUDGET.max_triplets),
+        ("assembly_max_trace_integer_bits", ASSEMBLY_BUDGET.max_trace_integer_bits),
+        ("assembly_max_work_bytes", ASSEMBLY_BUDGET.max_work_bytes),
+        ("system_max_order", SYSTEM_BUDGET.max_order),
+        ("system_max_nnz", SYSTEM_BUDGET.max_nnz),
+        ("system_max_block_columns", SYSTEM_BUDGET.max_block_columns),
+        ("system_max_work_bytes", SYSTEM_BUDGET.max_work_bytes),
+        ("factor_validation_max_order", FACTOR_VALIDATION_BUDGET.max_order),
+        ("factor_validation_max_nnz", FACTOR_VALIDATION_BUDGET.max_nnz),
+        ("factor_validation_max_block_columns", FACTOR_VALIDATION_BUDGET.max_block_columns),
+        ("factor_validation_max_work_bytes", FACTOR_VALIDATION_BUDGET.max_work_bytes),
+        ("max_kkt_factor_nnz", MAX_KKT_FACTOR_NNZ),
+        ("max_inverse_evidence_bytes_per_case", MAX_INVERSE_EVIDENCE_BYTES_PER_CASE),
+        ("max_combined_factor_nnz", MAX_COMBINED_FACTOR_NNZ),
+        ("max_canonical_factor_bytes", MAX_CANONICAL_FACTOR_BYTES),
+        ("max_exact_product_paths", MAX_EXACT_PRODUCT_PATHS),
+        ("max_exact_residual_entries", MAX_EXACT_RESIDUAL_ENTRIES),
+        ("max_exact_fraction_bits", MAX_EXACT_FRACTION_BITS),
+        ("max_exact_cumulative_bits", MAX_EXACT_CUMULATIVE_BITS),
+        ("max_exact_python_workspace_bytes", MAX_EXACT_PYTHON_WORKSPACE_BYTES),
+        ("max_seconds_per_case", MAX_SECONDS_PER_CASE),
+        ("max_rss_bytes_per_case", MAX_RSS_BYTES_PER_CASE),
+        ("launch_cutoff_seconds", LAUNCH_CUTOFF_SECONDS),
+        ("thread_cap", 1),
+        ("supervisor_poll_milliseconds", 100),
+        ("complete_inverse_evidence_bytes", INVERSE_EVIDENCE_BYTES),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,7 +156,7 @@ CROSS_FAMILY_COMPARISONS = (
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, init=False)
 class CasePreflight:
     schema: str
     case: ScientificCase
@@ -115,7 +166,10 @@ class CasePreflight:
     dense_factor_bound_bytes: int
     assembly_workspace_bytes: int
 
-    def __post_init__(self):
+    def __init__(self, *args, **kwargs):
+        raise TypeError("CasePreflight requires topology-only preflight factory")
+
+    def _validate(self):
         if (
             self.schema != SCHEMA
             or type(self.case) is not ScientificCase
@@ -133,6 +187,29 @@ class CasePreflight:
             )
         ):
             raise ValueError("invalid F03 scientific case preflight")
+
+
+def _case_preflight(
+    case: ScientificCase,
+    topology_sha256: str,
+    graph_storage_bound_bytes: int,
+    one_csc_bound_bytes: int,
+    dense_factor_bound_bytes: int,
+    assembly_workspace_bytes: int,
+) -> CasePreflight:
+    result = object.__new__(CasePreflight)
+    for name, value in (
+        ("schema", SCHEMA),
+        ("case", case),
+        ("topology_sha256", topology_sha256),
+        ("graph_storage_bound_bytes", graph_storage_bound_bytes),
+        ("one_csc_bound_bytes", one_csc_bound_bytes),
+        ("dense_factor_bound_bytes", dense_factor_bound_bytes),
+        ("assembly_workspace_bytes", assembly_workspace_bytes),
+    ):
+        object.__setattr__(result, name, value)
+    result._validate()
+    return result
 
 
 def midpoint_refine(cuts: tuple[Fraction, ...], levels: int) -> tuple[Fraction, ...]:
@@ -170,7 +247,7 @@ def compile_case(case: ScientificCase):
         midpoint_refine(tuple(contract.X_CUTS), case.level),
         midpoint_refine(tuple(contract.Y_CUTS), case.level),
         case.degree,
-        max_incidence_entries=1_000_000,
+        max_incidence_entries=MAX_INCIDENCE_ENTRIES,
     )
 
 
@@ -204,12 +281,11 @@ def preflight_case(case: ScientificCase) -> CasePreflight:
     if (
         case.kkt_order > SYSTEM_BUDGET.max_order
         or case.kkt_nnz > SYSTEM_BUDGET.max_nnz
-        or case.inverse_evidence_bytes > 17_357_832
+        or case.inverse_evidence_bytes > MAX_INVERSE_EVIDENCE_BYTES_PER_CASE
         or work["workspace_estimate_bytes"] > ASSEMBLY_BUDGET.max_work_bytes
     ):
         raise ValueError(f"frozen F03 case exceeds protocol budget: {case.case_id}")
-    return CasePreflight(
-        SCHEMA,
+    return _case_preflight(
         case,
         composition._hash_grid(grid),
         graph["graph_storage_bound_bytes"],
@@ -233,10 +309,11 @@ def preflight_inventory() -> tuple[CasePreflight, ...]:
 def inventory_sha256(records: tuple[CasePreflight, ...]) -> str:
     if type(records) is not tuple or len(records) != len(CASES):
         raise ValueError("complete ordered F03 preflight inventory required")
+    fresh = tuple(preflight_case(case) for case in CASES)
+    if records != fresh:
+        raise ValueError("stale, fabricated or reordered F03 preflight inventory")
     digest = hashlib.sha256(b"F03_LOCAL_SCIENTIFIC_CASES_V1\0")
     for expected, record in zip(CASES, records):
-        if type(record) is not CasePreflight or record.case != expected:
-            raise ValueError("stale or reordered F03 preflight inventory")
         for value in (
             record.case.case_id,
             str(record.case.degree),
@@ -253,4 +330,8 @@ def inventory_sha256(records: tuple[CasePreflight, ...]) -> str:
         ):
             encoded = value.encode("ascii")
             digest.update(len(encoded).to_bytes(4, "little") + encoded)
+    for name, value in resource_contract():
+        encoded = name.encode("ascii")
+        digest.update(len(encoded).to_bytes(4, "little") + encoded)
+        digest.update(value.to_bytes(8, "little"))
     return digest.hexdigest()
