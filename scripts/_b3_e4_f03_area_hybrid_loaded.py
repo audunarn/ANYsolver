@@ -11,7 +11,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from copy import deepcopy
+from hashlib import sha256
 import math
+from pathlib import Path
 
 import numpy as np
 from scipy import sparse
@@ -27,6 +29,7 @@ import _b3_e4_f03_independent_line as original
 import _b3_e4_f03_independent_shell as shell
 import _b3_e4_f03_kkt_scaling as scaling
 import _b3_e4_f03_trace_dual as trace_dual
+import _b3_e4_f03_trace_dual_exact as trace_dual_exact
 
 
 def _layout(n_s: int, n_y: int, n_beam: int, n_mortar: int,
@@ -85,9 +88,50 @@ def _quarter_wrenches(line_lam: np.ndarray, atoms: np.ndarray,
     return line_wrenches.tolist(),physical.tolist()
 
 
+def analytic_norm_identity(n_mortar: int, family: str) -> dict:
+    """Pure source/normalization identity used by analytic solve and audit."""
+    info=trace_dual_exact.metadata(n_mortar,family)
+    return {
+        'kind':'piecewise_analytic_full_H1_free_endpoint',
+        'implementation':Path(trace_dual_exact.__file__).name,
+        'source_sha256':sha256(Path(trace_dual_exact.__file__).read_bytes()).hexdigest(),
+        'normalized_rows':True,
+        'L0_m':1.,
+        'series_terms':info.series_terms,
+        'series_function_tail_bound':info.series_function_tail_bound,
+        'selected_enriched_rows':list(info.selected_enriched_rows),
+        'row_measures':list(info.row_measures),
+        'channels':['x','y','ell*yaw'],
+        'yaw_length_m':original.YAW_LENGTH,
+    }
+
+
+def _copied_saved_states(saved_states: dict[str,np.ndarray], families: dict,
+                         full_dofs: int, fixed: np.ndarray) -> dict[str,np.ndarray]:
+    """Check exact physical layouts and own the arrays before any diagnostic."""
+    expected={f'{family}_{field}' for family in families for field in ('q','lambda')}
+    if not isinstance(saved_states,dict) or set(saved_states)!=expected:
+        raise ValueError('saved states require exactly six named physical arrays')
+    copied={}
+    for family,(cs,_,_) in families.items():
+        for field,length in (('q',full_dofs),('lambda',cs.shape[0])):
+            key=f'{family}_{field}'
+            value=saved_states[key]
+            if (not isinstance(value,np.ndarray) or value.dtype!=np.float64 or
+                    value.shape!=(length,) or not np.all(np.isfinite(value))):
+                raise ValueError(f'invalid saved physical state {key}')
+            copied[key]=value.copy()
+        if np.any(copied[f'{family}_q'][fixed]!=0.):
+            raise ValueError(f'nonzero fixed displacement in saved {family} state')
+    return copied
+
+
 def solve_case(n_s: int, n_y: int, n_beam: int, n_mortar: int,
                topology: str, halfwidth: float = .05, *,
-               family_sink: Callable[[str,dict,np.ndarray,np.ndarray],None] | None = None
+               family_sink: Callable[[str,dict,np.ndarray,np.ndarray],None] | None = None,
+               norm_source: str = 'fe32_64',
+               saved_states: dict[str,np.ndarray] | None = None,
+               stability_sink: Callable[[str,np.ndarray,np.ndarray],None] | None = None
                ) -> tuple[dict,dict[str,np.ndarray]]:
     """One bounded smooth-load P1/hybrid/enriched diagnostic comparison.
 
@@ -95,9 +139,17 @@ def solve_case(n_s: int, n_y: int, n_beam: int, n_mortar: int,
     Returned states contain physical full-coordinate q and physical row
     multipliers in each family's actual row order. A family sink receives
     independent copies after each family completes, preserving partial
-    diagnostics if a later family fails.
+    diagnostics if a later family fails. The explicitly selected analytic_h1
+    path changes only the independent auxiliary norm, not equilibrium. The
+    opt-in saved_states path recomputes physical observables without solving
+    equilibrium; it is a diagnostic reconstruction, not a restart product.
+    The analytic-only stability_sink receives owned Schur and Gram matrices.
     """
     _layout(n_s,n_y,n_beam,n_mortar,topology,halfwidth)
+    if norm_source not in ('fe32_64','analytic_h1'):
+        raise ValueError('unsupported independent trace norm source')
+    if stability_sink is not None and norm_source!='analytic_h1':
+        raise ValueError('stability matrix capture requires analytic_h1 norm')
     model=shell.panel(n_s,n_y,topology)
     ks=shell.stiffness(model)
     kb=beam.assembled_stiffness(n_beam)
@@ -119,6 +171,8 @@ def solve_case(n_s: int, n_y: int, n_beam: int, n_mortar: int,
                     sparse.vstack((cb_p1,cb_end),format='csr'),
                     np.r_[np.repeat(p1_measure,3),np.ones(6)]),
     }
+    saved=(_copied_saved_states(saved_states,families,len(f),fixed)
+           if saved_states is not None else None)
     c_p1=sparse.hstack((-cs_p1,cb_p1),format='csr')
     base=scaling.build(k,c_p1,f,free,model.dof_count,n_beam,n_mortar,'P1')
     d=base.physical_coordinate_scale
@@ -153,17 +207,38 @@ def solve_case(n_s: int, n_y: int, n_beam: int, n_mortar: int,
                 if (constraint.shape!=reference.shape or
                         maximum>1e-12*(1+reference_max)):
                     raise ValueError('P1 sparse scaling parity failed')
-            gram32=trace_dual.dual_gram(n_mortar,family,32)
-            gram64=trace_dual.dual_gram(n_mortar,family,64)
-            diagnostic,g3=stability.diagnose(primal,constraint,gram32,gram64)
-            matrix,load=stability.normalized_kkt(primal,constraint,rhs)
-            solution=splu(matrix).solve(load)
-            if not np.all(np.isfinite(solution)):
-                raise ValueError('nonfinite family KKT solution')
-            q=np.zeros(len(f))
-            q[free]=d*solution[:nfree]
-            muhat=solution[nfree:]
-            lam=scaling.E0/(scaling.U0*measures)*muhat
+            if norm_source=='fe32_64':
+                gram32=trace_dual.dual_gram(n_mortar,family,32)
+                gram64=trace_dual.dual_gram(n_mortar,family,64)
+                diagnostic,g3=stability.diagnose(primal,constraint,gram32,gram64)
+            else:
+                scalar_gram=trace_dual_exact.dual_gram(
+                    n_mortar,family,normalized=True)
+                identity=analytic_norm_identity(n_mortar,family)
+                diagnostic,g3=stability.diagnose_analytic(
+                    primal,constraint,scalar_gram,norm_identity=identity,
+                    matrix_sink=(lambda s,g: stability_sink(family,s,g))
+                    if stability_sink is not None else None)
+            if saved is None:
+                matrix,load=stability.normalized_kkt(primal,constraint,rhs)
+                solution=splu(matrix).solve(load)
+                if not np.all(np.isfinite(solution)):
+                    raise ValueError('nonfinite family KKT solution')
+                q=np.zeros(len(f))
+                q[free]=d*solution[:nfree]
+                muhat=solution[nfree:]
+                lam=scaling.E0/(scaling.U0*measures)*muhat
+            else:
+                q=saved[f'{family}_q'].copy()
+                lam=saved[f'{family}_lambda'].copy()
+                qhat=q[free]/d
+                muhat=lam*(scaling.U0*measures/scaling.E0)
+                normalized_residual=primal@qhat+constraint.T@muhat-rhs
+                if (not np.all(np.isfinite(qhat)) or
+                        not np.all(np.isfinite(muhat)) or
+                        not np.all(np.isfinite(normalized_residual)) or
+                        not np.all(np.isfinite(constraint@qhat))):
+                    raise ValueError('nonfinite reconstructed normalized state')
             qs=q[:model.dof_count]
             qb=q[model.dof_count:]
             residual=k@q+c.T@lam-f
@@ -261,6 +336,11 @@ def solve_case(n_s: int, n_y: int, n_beam: int, n_mortar: int,
             raise
     order=max(0.,energies['enriched']-energies['P1'],
               energies['enriched']-energies['hybrid'])/scaling.E0
-    return ({'topology':topology,'mesh':[n_s,n_y,n_beam,n_mortar],
-             'halfwidth_m':halfwidth,'families':results,
-             'enriched_energy_order_scaled':float(order)},states)
+    data={'topology':topology,'mesh':[n_s,n_y,n_beam,n_mortar],
+          'halfwidth_m':halfwidth,'families':results,
+          'enriched_energy_order_scaled':float(order)}
+    if norm_source=='analytic_h1':
+        data['norm_source']=norm_source
+    if saved is not None:
+        data['equilibrium_source']='saved_states'
+    return data,states

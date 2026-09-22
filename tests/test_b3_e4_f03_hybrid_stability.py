@@ -56,3 +56,49 @@ def test_nonpositive_or_asymmetric_norm_is_not_repaired():
     for gram in (np.diag((1.,-1.)),np.array(((1.,.5),(0.,1.)))):
         with pytest.raises((ValueError,linalg.LinAlgError)):
             stability.diagnose(k,c,gram,gram)
+
+
+def test_analytic_norm_uses_same_sparse_schur_without_fe_delta():
+    primal=sparse.diags((2.,3.,4.,6.,8.,10.),format='csr')
+    constraint=sparse.csr_matrix(np.c_[np.eye(3),-np.eye(3)])
+    identity={'kind':'piecewise_analytic_full_H1_free_endpoint',
+              'normalized_rows':True,'source_sha256':'a'*64,
+              'row_measures':[1.], 'selected_enriched_rows':[0]}
+    captured=[]
+    analytic,gram=stability.diagnose_analytic(
+        primal,constraint,np.ones((1,1)),norm_identity=identity,
+        matrix_sink=lambda s,g: captured.append((s,g)))
+    legacy,legacy_gram=stability.diagnose(
+        primal,constraint,np.ones((1,1)),np.ones((1,1)))
+    np.testing.assert_allclose(analytic['generalized_eigenvalues'],
+                               legacy['generalized_eigenvalues'],rtol=1e-14)
+    np.testing.assert_array_equal(gram,legacy_gram)
+    assert analytic['norm_source']=='analytic_h1'
+    assert analytic['auxiliary_status']=='PIECEWISE_ANALYTIC_FLOATING'
+    assert 'auxiliary_squared_norm_change' not in analytic
+    assert 'norm_source' not in legacy
+    assert 'norm_identity' not in legacy
+    assert len(captured)==1
+    schur,saved_gram=captured[0]
+    np.testing.assert_allclose(linalg.eigvalsh(schur,saved_gram),
+                               analytic['generalized_eigenvalues'],rtol=1e-14)
+    assert not np.shares_memory(gram,saved_gram)
+    saved_gram[0,0]=np.nan
+    schur[0,0]=np.nan
+    assert np.all(np.isfinite(gram))
+    assert np.all(np.isfinite(analytic['generalized_eigenvalues']))
+    identity['row_measures'][0]=42.
+    assert analytic['norm_identity']['row_measures']==[1.]
+
+
+def test_analytic_norm_rejects_bad_gram_or_identity():
+    primal=sparse.eye(6,format='csr'); constraint=primal.copy()
+    identity={'kind':'piecewise_analytic_full_H1_free_endpoint',
+              'normalized_rows':True,'source_sha256':'b'*64,
+              'row_measures':[1.,1.]}
+    for gram in (np.diag((1.,-1.)),np.array(((1.,.5),(0.,1.)))):
+        with pytest.raises((ValueError,linalg.LinAlgError)):
+            stability.diagnose_analytic(primal,constraint,gram,norm_identity=identity)
+    with pytest.raises(ValueError,match='identity'):
+        stability.diagnose_analytic(primal,constraint,np.eye(2),
+                                   norm_identity={**identity,'normalized_rows':False})
