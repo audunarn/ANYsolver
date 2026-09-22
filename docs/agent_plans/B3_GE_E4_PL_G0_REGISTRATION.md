@@ -1593,3 +1593,12 @@ The earlier no-knot wrench failure remains preserved. This establishes
 numerical wrench recovery of an external comparator, not native
 beam/shell agreement or a converged physical line-coupling target.
 **F03/G0B remain open and G1 remains barred.**
+
+The separate bounded **finite-area distributing port** preflight is
+documented in `B3_GE_E4_PL_G0_F03_FINITE_PAD_PREFLIGHT.md`. It preserves
+the adverse four-point reference, derives a fixed-physical-area
+shell-side pose and P0/P1 weak work, and passes small Q4/CST-CB coupled
+balance tests under independent mechanics review. Its `.04 m` example
+pad halfwidth is not a selected engineering connection. No first-quarter
+refinement, 1% physical reference, native six-channel acceptance or
+G0B closure follows from those small tests; G1 remains barred.
