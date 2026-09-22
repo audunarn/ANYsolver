@@ -149,19 +149,28 @@ def test_supervisor_preserves_failure_when_phase_json_is_not_a_record(
     monkeypatch.setattr(runner.subprocess,'run',git_command)
     monkeypatch.setattr(runner.subprocess,'Popen',Child)
     monkeypatch.setattr(runner.psutil,'Process',lambda pid: object())
-    out=tmp_path/'failure'
+    out=tmp_path/'q4-nm64'
     registered=tmp_path/'registration.json'
     path=Path(runner.__file__).resolve()
     commands=[[sys.executable,str(path),'--case',name,'--output',
-               str((tmp_path/name if name!='q4-nm64' else out).resolve()),
+               str((tmp_path/name).resolve()),
                '--registration',str(registered.resolve())] for name in runner.CASES]
     registered.write_text(json.dumps(dict(
+        kind='F03_NM128_SUPPORTED_STABILITY_V1',
         execution_head='frozen',cases=list(runner.CASES),
         runner_source_hashes=runner._hashes(),runner_path=str(path),
         python_executable=sys.executable,commands=commands,
         limits=dict(max_rss_bytes=runner.MAX_RSS,max_seconds=runner.MAX_SECONDS),
         adjudicator_sha256=adjudicator._sha(Path(adjudicator.__file__)),
         dependency_file_sha256={str(path):hashlib.sha256(path.read_bytes()).hexdigest()},
+        runtime=dict(python=sys.version,numpy=runner.np.__version__,
+                     scipy=runner.scipy.__version__,
+                     psutil=runner.psutil.__version__,
+                     platform=runner.platform.platform()),
+        module_paths={name:str(Path(module.__file__).resolve())
+                      for name,module in (('numpy',runner.np),
+                                          ('scipy',runner.scipy),
+                                          ('psutil',runner.psutil))},
         threads=dict.fromkeys(('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS',
                                'MKL_NUM_THREADS','NUMEXPR_NUM_THREADS'),'1'))))
     assert runner._supervise('q4-nm64',out,registered)==1

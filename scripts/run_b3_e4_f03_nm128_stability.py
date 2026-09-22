@@ -47,7 +47,12 @@ def _record(value: dict) -> None:
 
 def _child(case: str,manifest_path: Path) -> int:
     registered=json.loads(manifest_path.read_text(encoding='utf-8'))
+    registration_path=Path(registered['registration_path'])
+    qualification=json.loads(registration_path.read_text(encoding='utf-8'))
     if (_hashes()!=registered['sources'] or case!=registered['case'] or
+            qualification['runner_source_hashes']!=registered['sources'] or
+            hashlib.sha256(registration_path.read_bytes()).hexdigest()!=
+                registered['registration_sha256'] or
             any(os.environ.get(key)!=value for key,value in
                 registered['threads'].items())):
         raise ValueError('source, case or thread identity changed')
@@ -92,11 +97,17 @@ def _supervise(case: str,directory: Path,
     expected=[sys.executable,str(Path(__file__).resolve()),'--case',case,
               '--output',str(directory.resolve()),'--registration',
               str(registration_path)]
-    if (registered['execution_head']!=head or
+    expected_commands=[
+        [sys.executable,str(Path(__file__).resolve()),'--case',name,
+         '--output',str((directory.parent/name).resolve()),'--registration',
+         str(registration_path)] for name in CASES]
+    if (registered['kind']!='F03_NM128_SUPPORTED_STABILITY_V1' or
+            registered['execution_head']!=head or
             registered['cases']!=list(CASES) or
             registered['runner_source_hashes']!=sources or
             registered['runner_path']!=str(Path(__file__).resolve()) or
             registered['python_executable']!=sys.executable or
+            registered['commands']!=expected_commands or
             registered['commands'][list(CASES).index(case)]!=expected or
             registered['limits']!=dict(max_rss_bytes=MAX_RSS,
                                        max_seconds=MAX_SECONDS) or
@@ -120,12 +131,24 @@ def _supervise(case: str,directory: Path,
               'MKL_NUM_THREADS','NUMEXPR_NUM_THREADS')}
     if threads!=registered['threads']:
         raise ValueError('registered thread settings changed')
+    if registered['runtime']!=dict(python=sys.version,numpy=np.__version__,
+                                   scipy=scipy.__version__,
+                                   psutil=psutil.__version__,
+                                   platform=platform.platform()):
+        raise ValueError('registered runtime changed')
+    if registered['module_paths']!={name:str(Path(module.__file__).resolve())
+                                    for name,module in (('numpy',np),
+                                    ('scipy',scipy),('psutil',psutil))}:
+        raise ValueError('registered module paths changed')
     directory.mkdir(parents=True,exist_ok=False)
     manifest=dict(kind='F03_NM128_SUPPORTED_STABILITY_V1',case=case,
                   mesh=dict(n_s=128,n_y=64,n_beam=512,
                             n_mortar=CASES[case][1]),
                   topology=CASES[case][0],source_commit=head,
                   source_dirty=False,sources=sources,threads=threads,
+                  registration_path=str(registration_path),
+                  registration_sha256=hashlib.sha256(
+                      registration_path.read_bytes()).hexdigest(),
                   command=command,
                   limits=dict(max_rss_bytes=MAX_RSS,max_seconds=MAX_SECONDS),
                   python=sys.version,numpy=np.__version__,

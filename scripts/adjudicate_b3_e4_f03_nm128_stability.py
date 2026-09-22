@@ -61,6 +61,9 @@ def _case(root: Path,registered: dict,name: str) -> dict:
         str((root/'manifest.json').resolve())],'child command changed')
     _require(manifest['source_commit']==registered['execution_head'] and
              manifest['source_dirty'] is False,'source identity changed')
+    _require(manifest['registration_path']==str(registered['_registration_path']) and
+             manifest['registration_sha256']==registered['_registration_sha256'],
+             'registration identity changed')
     _require(manifest['sources']==registered['runner_source_hashes']==runner._hashes(),
              'source hashes changed')
     _require(manifest['limits']==registered['limits']==dict(
@@ -185,6 +188,8 @@ def _case(root: Path,registered: dict,name: str) -> dict:
 
 def adjudicate(registration: Path,evidence: Path) -> dict:
     registered=json.loads(registration.read_text(encoding='utf-8'))
+    registered['_registration_path']=registration.resolve()
+    registered['_registration_sha256']=_sha(registration)
     _require(registered['cases']==list(runner.CASES),'case inventory changed')
     _require(registered['adjudicator_sha256']==_sha(Path(__file__)),
              'adjudicator source changed')
