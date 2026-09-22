@@ -7,7 +7,8 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 - Worktree: `C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling`.
 - Branch: `codex/b3-ge-e4-pl-integration`.
 - Latest bounded operator source: `7cb7b77491ef3343b72a231a6bb443e0474ddec1`.
-- Last executed source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
+- Latest bounded assembly/probe source: `66b6e109516296bbf8c4ff4155f2aa96c3701d1a`.
+- Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
   correction nor saved-only audit changed a mathematical operator.
@@ -106,6 +107,18 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
     `B3_GE_E4_PL_G0_F03_LOCAL_OPERATOR_PROOFS_V1_RESULTS.md`. New immutable
     39-file proof inventory SHA:
     `b26d4595f6b883d76ad9f2c66cb04f822e3cd8c9b97997ac2cce1f30c870206a`.
+11. Sparse classical assembly and exact-transfer/work/numerical probes at
+    `66b6e109`: 37 distinct current tests pass (assembly10, transfer6,
+    work7, condition14), with independent final source/mechanics review.
+    Sparse global KKT assembly performs no physical solve. Exact P preserves
+    full sparse membrane/beam/root/load operators on admitted nested spaces.
+    Work identities cover constant line densities and both atoms. Two
+    condition-bound methods have a <=64 synthetic exact-Fraction prototype;
+    neither scientific method is selected. Five malformed sparse-buffer
+    regressions failed before validation was fixed; all raw logs remain.
+    See `B3_GE_E4_PL_G0_F03_LOCAL_ASSEMBLY_PROOFS_V1_RESULTS.md`. New closed
+    26-file archive `f03-local-assembly-proof-v1` inventory SHA:
+    `d02087acd268b0c55cf173582ff0d08a79d20cf71b9b4f7cbb1cc1fd4bfdbf46`.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -175,11 +188,17 @@ The operator contract and bounded synthetic proofs are now accepted; see
 `B3_GE_E4_PL_G0_F03_LOCAL_OPERATOR_CONTRACT.md` and its results report.
 Their raw archive is `.qualification/b3-ge-e4-pl/f03-local-operator-proof-v1`
 (39 bound files plus inventory); it is closed and must not be extended.
-The exact next action is the eliminated-primal shell/trace-beam bilinear
-form and three-root KKT assembly, with manufactured adjoint-work,
-stress-jump and support-reaction identities checked independently. Then
-complete the numerical protocol and registration for a declared conforming
-nested reference family. No scientific case family is yet frozen.
+The sparse eliminated-primal assembly, exact nested transfer and bounded
+manufactured work identities are now implemented and independently reviewed.
+The latest closed proof root is `f03-local-assembly-proof-v1` (26 bound files
+plus inventory); it must not be extended. The exact next action is the
+scaled sparse solve and a defensible sparse positivity/condition certificate
+with bounded saved verification data. The <=64 exact-rational comparison is
+only a synthetic probe and must not become a dense scientific fallback.
+Extend recovery/work verification from constant line densities plus atoms
+to the complete recovered polynomial/cosine functional and physical support
+reactions. Then complete and independently review a frozen numerical protocol
+and registration. No scientific case family or certificate method is selected.
 Preserve the same physical operator, held J/gamma, three root
 constraints/free slope, signed reaction and full-functional criteria.
 Mesh/degree inventories, integration, conditioning, resource and convergence
@@ -190,13 +209,18 @@ footprint incidence/nnz/fill/workspace growth. Hanging nodes remain outside
 the new helper's scope and require their own conformity proof if introduced.
 The complete piecewise norm is synthetically checked; its input bounds and
 active normal-weight guard must remain part of numerical admission.
-Piecewise displacement fields need internal stress-jump terms; this must
-be derived and checked independently rather than reusing the smooth-only
-residual identity. No automatic global-degree or uniform-refinement run.
+The stress-jump and support-lift signs are independently verified on bounded
+manufactured fields; retain them in the general recovered-field implementation.
+Numerical-admission design is in `B3_GE_E4_PL_G0_F03_LOCAL_NUMERICAL_ADMISSION_DRAFT.md`:
+same held energy-diagonal scaling, full stored H, true condition upper bound,
+safe backward denominator, explicit positivity/integration/resource checks.
+All-column certification has quadratic evidence/work; triangular comparison
+can be pessimistic. Compare/select before registration, never as a fallback
+after a failed scientific bound. No automatic uniform/global-degree run.
 
 No scientific process is active. Both specialists finished their independent
-operator/contract reviews. Parent owns the next bounded assembly and
-numerical protocol. The accepted proofs grant no scientific execution
+assembly/work/prolongation/certificate reviews. Parent owns the next scalable
+numerical implementation and recovery/protocol work. The accepted proofs grant no scientific execution
 authority. Current sources and tests are committed; the results/checkpoint
 commit preserves the restart boundary.
 All consumed diagnostic sources and completed inventories stay frozen.
