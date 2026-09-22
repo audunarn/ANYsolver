@@ -11,6 +11,7 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 - Latest bounded sparse-numerical/recovery source: `ade088e99e3108969baf70b27e7f7cc450351229`.
 - Latest factor/integration connection source: `126a4eb1122d4b36b7651d54d73c4b32fa139ead`.
 - Latest sparse state/rank source: `7b017d08c29aaf4845e2fb71967d8b1bfb3859ec`.
+- Latest sparse trace/equilibrium source: `a858e787d86e6f8e3a65e16f5268ce68fa53c8a1`.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -157,6 +158,20 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
     See `B3_GE_E4_PL_G0_F03_STATE_RANK_PROOFS_V1_RESULTS.md`. Closed root
     `f03-state-rank-proof-v1` has 14 bound files plus inventory, SHA:
     `31bafde0e254091e46f538ab525e9d00c425322633b58c93dbe0fd9ec5a49d6c`.
+15. Sparse exact trace binding and numerical equilibrium checks at
+    `a858e787` (trace first saved at `22d99107`): 34 distinct tests pass
+    (trace20, equilibrium13, connected candidate1), with independent final
+    source/mechanics review. Exact extraction binds all27 station operators
+    and actions plus direct root/tip/free-slope consistency. Numerical gates
+    use actual rounded six-block scaling, separate physical shell/beam work
+    and one owned snapshot throughout binding and metrics. Four regression
+    failures before correction are preserved with all eight raw logs.
+    See `B3_GE_E4_PL_G0_F03_TRACE_EQUILIBRIUM_PROOFS_V1_RESULTS.md`.
+    Closed root `f03-trace-equilibrium-proof-v1` has18 bound files plus
+    inventory, SHA `e331f76e9ae76ed23558fb7824a3e3a0e9b79ade5a2d6ee5dae5f617f998dc33`.
+    The reviewed next recovery contract provides a certified-Action design,
+    raw versus represented moment/load balance distinctions and an admissible
+    Q1 support-lift derivation; their executable implementation remains open.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -228,16 +243,23 @@ Their raw archive is `.qualification/b3-ge-e4-pl/f03-local-operator-proof-v1`
 (39 bound files plus inventory); it is closed and must not be extended.
 The sparse eliminated-primal assembly, exact nested transfer and bounded
 manufactured work identities are now implemented and independently reviewed.
-The latest closed proof root is `f03-state-rank-proof-v1` (14 bound files
+The latest closed proof root is `f03-trace-equilibrium-proof-v1` (18 bound files
 plus inventory); it must not be extended. The scaled candidate solve,
 streamed interval condition certificate, supplied-factor sparse positivity
 proof and complete polynomial/cosine work recovery are now implemented and
 reviewed on synthetic/manufactured inputs. A bounded actual sparse factor
 producer and integration perturbation verification are now connected too.
-Physical scaling/state binding and three-root/free-slope rank admission are
-implemented and independently reviewed on synthetic inputs. The exact next
-action is trace/operator binding, separate shell/beam integration, stationarity and physical
-work/reaction checks, followed by saved archives and independent adjudication.
+Physical scaling/state binding, three-root/free-slope rank, exact trace
+binding, separate shell/beam integration and numerical stationarity/energy
+checks are implemented and independently reviewed on synthetic/manufactured
+inputs. The exact next action is the certified Action comparison layer and
+physical recovery admission described in
+`B3_GE_E4_PL_G0_F03_RECOVERY_ADMISSION_NEXT_CONTRACT.md`, followed by complete
+saved archives and independent adjudication. Implement the reviewed Q1
+support-lift family and its independent route/shift tests before replacing
+the current unavailable-P1 status. Preserve raw physical moment balance
+alongside the represented gamma identity, and nominal alongside actual
+held-frequency load integrals. Do not remove a predicted physical defect.
 Then complete and independently review a frozen numerical protocol and new
 registration. No scientific case family or certificate method is selected.
 The <=64 exact-rational probe remains a synthetic oracle, never a dense
@@ -270,7 +292,7 @@ can be pessimistic. Compare/select before registration, never as a fallback
 after a failed scientific bound. No automatic uniform/global-degree run.
 
 No scientific process is active. Both specialists finished the current
-state/rank implementation and independent reviews. Parent owns the
+trace/equilibrium implementation and independent reviews. Parent owns the
 next physical numerical-admission and saved-protocol work. The accepted proofs grant no scientific execution
 authority. Current sources and tests are committed; the results/checkpoint
 commit preserves the restart boundary.
