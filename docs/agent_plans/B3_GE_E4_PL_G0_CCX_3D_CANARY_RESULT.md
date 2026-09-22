@@ -43,6 +43,20 @@ seven-digit DAT output cannot establish the required connection-gap
 tolerance. No energy, torque, thickness/refinement, section-idealization,
 native B3-GE/B2/E4-PL agreement, or nonlinear result has been accepted.
 
+A read-only diagnostic parsed the three `RF` columns in this saved DAT and
+summed global-y values over the declared fixed shell-end nodes
+`{1,9,10,18,19,27,28,36,37,45}` and beam root `46`. It gives about
+`-8.87503 N`, far from the `-1000 N` total physical support resultant
+required by the applied load. The all-node sum is about `+8.1e-5 N`.
+This falsifies a naive identification of those printed rows with complete
+support reactions for this MPC model; it does **not** falsify equilibrium
+of the solved model. The [CalculiX *NODE PRINT documentation](https://www.dhondt.de/ccx_2.11.pdf)
+describes `RF` as external forces that can include applied loads and omit
+MPC-induced forces. That older manual informs this caution; the 2.23
+output itself is the direct observation. A supported section/interface
+recovery or independent virtual-work derivative must be established before
+using this solver for the required balance comparison.
+
 Next, derive and test support/interface wrench recovery for this external
 idealization, then register three or more refined E01/E02 comparisons with
 matched native sections and connection meaning. If those idealizations
