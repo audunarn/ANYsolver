@@ -6,8 +6,8 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 
 - Worktree: `C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling`.
 - Branch: `codex/b3-ge-e4-pl-integration`.
-- Last executed source: `c8b2f78d3ace4e23ed8f636fd6b474ef250ccda6`
-  (saved-only audit). Last equilibrium source remains
+- Last executed source: `d0b6d0902360210f78e06b45f7bbabb030ea4022`
+  (exact saved-pose diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
   correction nor saved-only audit changed a mathematical operator.
 - Main was observed clean at `be41a77a62e1cd7e1767bda6e955253af0819f91`,
@@ -72,12 +72,22 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
    `B3_GE_E4_PL_G0_F03_PRIMAL_SAVED_AUDIT_V1_RESULTS.md`. The new32-file
    immutable inventory SHA is
    `5073230a813bf9acef534d756ac05fb7deb29d1f7cf7caae507db94afc99014d`.
+8. Exact saved-pose attribution at `d0b6d090`:3/3 cases PASSED, exit0;
+   independent review accepted diagnostic integrity and attribution.
+   Coefficient reconstruction explains the endpoint discrepancy; floating
+   evaluation and direct action are much smaller. Original failures and
+   physical HOLD remain. See `B3_GE_E4_PL_G0_F03_PRIMAL_EXACT_POSE_V1_RESULTS.md`.
+   Its25-file immutable inventory SHA is
+   `e7f0b5c8a8a403d7785ddba793e8061628b8b1b163ba4251338b63c3f0e5de0a`.
+   All29 integrated synthetic/mock tests and the five affected final
+   runner mocks passed (overlapping inventories); raw logs are preserved.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
 `f03-endpoint-comparison-v1`, `f03-analytical-norm-v1`, and
 `f03-joint-refinement-v1`, `f03-variational-attribution-v1`, and
-`f03-primal-ritz-v1`, and `f03-primal-saved-audit-v1`. Reports retain their
+`f03-primal-ritz-v1`, `f03-primal-saved-audit-v1`, and
+`f03-primal-exact-pose-v1`. Reports retain their
 registration/adjudication hashes; raw reviews and execution provenance
 are saved with the latest roots. All these executions are consumed.
 Do not overwrite, retry or relabel them. Earlier failed/aborted evidence
@@ -109,8 +119,11 @@ The saved-evidence audit is complete and consumed. Its32-file inventory
 and the original36-file parent inventory are frozen. Retain the original
 FAILED_EVIDENCE and the audit's FAILED_NUMERICAL_SCREEN with n16/n24
 saved-action failures (1.49057e-11 and1.15333e-10 against1e-11).
-Their only failing component is transverse b'' at s=1; endpoint
-amplification of projection roundoff is plausible, not a waiver.
+Their only failing component is transverse b'' at s=1. Exact independent
+reconstruction now attributes it to the saved coefficient route, while
+retaining all floating arithmetic and exact endpoint triangle bounds.
+This does not identify every operation inside that reconstruction or
+waive either failure. The exact diagnostic changed no saved state.
 Independent diagnostic settling also fails: last energy changes4.52%,
 2.60%, and full-functional changes2.87%,3.16%; only16/45 scalar sequences
 pass. The reference is not ready for FE-as-reference comparisons.
@@ -122,25 +135,26 @@ Do not automatically add uniform refinement, change
 tolerances, drop P1, relabel any HOLD, or promote a production space.
 Native full-vector/shear/drilling and all other G0 foundations remain open.
 
-The next action is implementation and independent review of
-`B3_GE_E4_PL_G0_F03_PRIMAL_EXACT_POSE_PROTOCOL.md`, then one registered
-three-case saved-state representation diagnostic. The mechanics draft is
-`B3_GE_E4_PL_G0_F03_PRIMAL_NEXT_DIAGNOSTIC_DRAFT.md`. It proposes exact
-rational reconstruction of the three saved n12/n16/n24 states, with
-separate floating evaluation, coefficient and direct-action discrepancies.
-It preserves represented geometry and its non-unit yaw factor where
-applicable. The new protocol distinguishes the original full saved-action
-metric from the replayed derivative submetric and freezes rational
-encoding limits. Spatial residual analysis is a later, separate diagnostic.
-No actual three-state execution has been registered or performed yet.
-The independent Fraction operator, attribution checks and supervised
-runner are implemented. The integrated29 synthetic/mock tests passed;
-independent review corrections cover bounded serialization, exact
-represented geometry, and exact copying of inherited evidence. Final
-scoped review and the clean source freeze precede the registered run.
+The exact next action is to complete the implementation contract for
+`B3_GE_E4_PL_G0_F03_SPATIAL_RESIDUAL_DESIGN.md`, implement the independent
+saved-state study and its synthetic tests, obtain code/mechanics review,
+and only then freeze/register a new execution. The design was independently
+accepted as a foundation by finite_pad_axis_review, SHA
+`de19c34fc19c713593ecd2d8a4bdd269ab35338900f93b80fdcf7e4aee5ed7f1`.
+It grants no numerical execution or production-space acceptance by itself.
 
-No registered scientific process is active. Parent owns the new protocol,
-runner and evidence; f03_port_mechanics owns only the new exact-pose module
-and synthetic tests. finite_pad_axis_review supplies independent review.
-No worker owns completed evidence. The previous audit source stays frozen.
+Use the original n12/n16/n24 q/eta and exact represented pose polynomials.
+The design fixes45 geometry-derived rectangles, signed area-adjoint and
+root/tip atoms,18 supported tests, six edge lifts, and48/64 quadrature.
+Before registration finish exact material/scaling constants, cosine
+conventions, complete cell/edge/one-sided schemas, resources and failure
+precedence. Preserve independent work routes and the gamma factor.
+Strong-residual maps are descriptive; large/growing residuals alone
+neither quantify physical error nor disprove energy-space convergence.
+No spatial study has been registered or run yet.
+
+No scientific process is active. Both specialists finished their bounded
+implementation/design/review work. Parent owns the next contract and
+integration. No concurrent writer owns source or completed evidence.
+All consumed diagnostic sources and completed inventories stay frozen.
 No release approval is being exercised. Keep main unchanged during G0.
