@@ -89,3 +89,25 @@ def test_quarter_sum_equals_independent_beam_rigid_virtual_work():
 def test_invalid_small_model_is_explicitly_rejected():
     with pytest.raises(ValueError):
         loaded.solve(128,64,512,64,"Q4","P1","smooth",.04)
+
+
+def test_owned_state_payload_reconstructs_tip_and_weak_gap():
+    captured=[]
+    result=loaded.solve(2,4,4,2,"Q4","P1","smooth",.05,
+                        state_sink=lambda q,lam:captured.append((q,lam)))
+    assert len(captured)==1
+    q,lam=captured[0]
+    assert q.flags.owndata and lam.flags.owndata
+    assert not np.shares_memory(q,lam)
+    model=shell.panel(2,4,"Q4")
+    cs,cb,_=area.coupling(model,4,2,"P1",.05)
+    assert q.shape==(model.dof_count+beam.dof_count(4),)
+    assert lam.shape==(9,)
+    qs,qb=q[:model.dof_count],q[model.dof_count:]
+    assert np.max(np.abs(cb@qb-cs@qs))<1e-13
+    tip=beam.trace(4,1.)@qb
+    tip[2]*=loaded.original.YAW_LENGTH
+    np.testing.assert_array_equal(tip,result.displacement_tip_m)
+    q[:]=np.nan
+    lam[:]=np.nan
+    assert np.all(np.isfinite(result.displacement_tip_m))

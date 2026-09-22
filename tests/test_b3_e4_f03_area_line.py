@@ -92,6 +92,17 @@ def test_moving_pad_overlay_contains_shell_and_mortar_events():
         area.overlay(model,4,2,0.)
 
 
+def test_axis_diagnostic_envelope_has_distinct_mortar_and_beam_knots():
+    model=shell.panel(8,16,"Q4")
+    knots=area.overlay(model,32,16,.05)
+    assert knots[0]==0 and knots[-1]==1
+    assert np.all(np.diff(knots)>0)
+    for value in (1/32,1/16,15/16):
+        assert np.min(np.abs(knots-value))<1e-12
+    with pytest.raises(ValueError,match='mortar count'):
+        area.overlay(model,32,17,.05)
+
+
 def test_independent_nonconstant_multiplier_moments():
     model=shell.panel(3,6,"Q4")
     halfwidth=.04

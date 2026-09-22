@@ -20,12 +20,14 @@ import platform
 import subprocess
 import sys
 import time
+import zipfile
 
 import psutil
 
 
 HERE=Path(__file__).resolve().parent
 ROOT=HERE.parent
+RUNNER=Path(__file__).resolve()
 SOURCES=tuple(HERE/name for name in (
     'b3_e4_f03_area_feasibility.py',
     '_b3_e4_f03_area_loaded.py',
@@ -48,6 +50,19 @@ THREADS=('OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS',
          'NUMEXPR_NUM_THREADS','VECLIB_MAXIMUM_THREADS')
 LIMITS={'free_residual_scaled':1e-8,'weak_gap_scaled':1e-9,
         'balance_scaled_absolute_max':1e-8,'energy_scaled':1e-8}
+KIND='experimental-classical-finite-pad-feasibility-v1'
+SCOPE='resource and algebraic screen; all physical channels diagnostic only; G0B stays open'
+TERMINAL='case failure remains in immutable evidence; no retries in this registration'
+PHYSICAL_MODEL={
+    'description':'four separate 0.1 m square material pads, 0.1 m matching the declared classical beam section width; separate idealization from four-point comparator',
+    'halfwidth_m':HALFWIDTH_M,
+    'pad_centers_m':[[dx,dy] for dx in (-.2,.2) for dy in (-.23,.23)],
+    'beam_section_area_m2':.01,
+    'beam_section_width_m':.1,
+    'load':'smooth', 'mortar':'P1',
+    'equivalence_claim':'none: beam section dimensions alone do not establish connection geometry'}
+PARITY_REFERENCE: dict[str,str]={}
+CAPTURE_STATE=False
 
 
 def _hashes() -> dict[str,str]:
@@ -89,6 +104,26 @@ def _registration_hash(root: Path) -> str:
     return digest
 
 
+def _observable_event(directory: Path, name: str, spec: dict,
+                      capture_state: bool) -> dict:
+    event={'phase':'observables','case':name,
+           'sha256':hashlib.sha256((directory/'observables.json').read_bytes()).hexdigest()}
+    if capture_state:
+        import numpy as np
+        path=directory/'solved_state.npz'
+        with np.load(path,allow_pickle=False) as saved:
+            if set(saved.files)!={'physical_q','physical_lambda'}:
+                raise ValueError('unexpected solved-state arrays')
+            q=saved['physical_q']; lam=saved['physical_lambda']
+        count=2*(2*spec['n_s']+1)*(spec['n_y']+1)+6*spec['n_beam']+4
+        if (q.shape!=(count,) or lam.shape!=(3*(spec['n_mortar']+1),) or
+                q.dtype!=np.dtype('float64') or lam.dtype!=np.dtype('float64') or
+                not np.all(np.isfinite(q)) or not np.all(np.isfinite(lam))):
+            raise ValueError('invalid solved-state shape, type or finite values')
+        event['state_sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
+    return event
+
+
 def _identity() -> dict:
     return {'head':_head(),'accepted_main':_accepted_main(),
             'sources':_hashes(),'dependencies':_versions(),
@@ -106,25 +141,20 @@ def register(root: Path) -> None:
         raise ValueError('diagnostic evidence must reside under ignored qualification root') from exc
     root.mkdir(parents=True,exist_ok=False)
     _json_new(root/'registration.json',{
-        'kind':'experimental-classical-finite-pad-feasibility-v1',
+        'kind':KIND,
         'created_utc':datetime.now(timezone.utc).isoformat(),
         'identity':identity,
-        'physical_model':{
-            'description':'four separate 0.1 m square material pads, 0.1 m matching the declared classical beam section width; separate idealization from four-point comparator',
-            'halfwidth_m':HALFWIDTH_M,
-            'pad_centers_m':[[dx,dy] for dx in (-.2,.2) for dy in (-.23,.23)],
-            'beam_section_area_m2':.01,
-            'beam_section_width_m':.1,
-            'load':'smooth', 'mortar':'P1',
-            'equivalence_claim':'none: beam section dimensions alone do not establish connection geometry'},
+        'physical_model':PHYSICAL_MODEL,
         'cases':{name:{'topology':v[0],'n_s':v[1],'n_y':v[2],
                        'n_beam':v[3],'n_mortar':v[4]}
                  for name,v in CASES.items()},
+        'parity_reference':PARITY_REFERENCE,
+        'capture_state':CAPTURE_STATE,
         'threads':{name:'1' for name in THREADS},
         'limits':{'seconds_per_case':MAX_SECONDS,
                   'rss_bytes_per_case':MAX_RSS_BYTES,'numerical':LIMITS},
-        'scope':'resource and algebraic screen; all physical channels diagnostic only; G0B stays open',
-        'terminal':'case failure remains in immutable evidence; no retries in this registration'})
+        'scope':SCOPE,
+        'terminal':TERMINAL})
     (root/'registration.sha256').write_text(
         hashlib.sha256((root/'registration.json').read_bytes()).hexdigest()+'\n',
         encoding='ascii')
@@ -137,24 +167,20 @@ def _registered(root: Path) -> dict:
                           'n_beam':v[3],'n_mortar':v[4]}
                     for name,v in CASES.items()}
     if (set(manifest)!={'kind','created_utc','identity','physical_model',
-                       'cases','threads','limits','scope','terminal'} or
-            manifest['kind']!='experimental-classical-finite-pad-feasibility-v1' or
+                       'cases','parity_reference','capture_state','threads',
+                       'limits','scope','terminal'} or
+            manifest['kind']!=KIND or
             not datetime.fromisoformat(manifest['created_utc']).tzinfo or
-            manifest['scope']!='resource and algebraic screen; all physical channels diagnostic only; G0B stays open' or
-            manifest['terminal']!='case failure remains in immutable evidence; no retries in this registration' or
+            manifest['scope']!=SCOPE or manifest['terminal']!=TERMINAL or
             manifest['identity']!=_identity() or
             manifest['threads']!={name:'1' for name in THREADS} or
             manifest['limits']!={'seconds_per_case':MAX_SECONDS,
                                 'rss_bytes_per_case':MAX_RSS_BYTES,
                                 'numerical':LIMITS} or
             manifest['cases']!=expected_cases or
-            manifest['physical_model']!={
-                'description':'four separate 0.1 m square material pads, 0.1 m matching the declared classical beam section width; separate idealization from four-point comparator',
-                'halfwidth_m':HALFWIDTH_M,
-                'pad_centers_m':[[dx,dy] for dx in (-.2,.2) for dy in (-.23,.23)],
-                'beam_section_area_m2':.01,'beam_section_width_m':.1,
-                'load':'smooth','mortar':'P1',
-                'equivalence_claim':'none: beam section dimensions alone do not establish connection geometry'}):
+            manifest['parity_reference']!=PARITY_REFERENCE or
+            manifest['capture_state'] is not CAPTURE_STATE or
+            manifest['physical_model']!=PHYSICAL_MODEL):
         raise ValueError('registered source, environment or protocol changed')
     return manifest
 
@@ -173,9 +199,12 @@ def child(root: Path, name: str) -> None:
     print(json.dumps({'phase':'identity','case':name,'identity':_identity(),
                       'registration_sha256':_registration_hash(root),
                       'threadpools':pools}),flush=True)
+    captured=[]
     result=loaded.solve(spec['n_s'],spec['n_y'],spec['n_beam'],
                         spec['n_mortar'],spec['topology'],'P1','smooth',
-                        HALFWIDTH_M)
+                        HALFWIDTH_M,
+                        state_sink=(lambda q,lam:captured.append((q,lam)))
+                        if manifest['capture_state'] else None)
     data=asdict(result)
     data['energy_scaled']=abs(2*(result.shell_energy_j+result.beam_energy_j)+
                               result.interface_work_j-result.external_work_j)/loaded.scaling.E0
@@ -184,8 +213,13 @@ def child(root: Path, name: str) -> None:
                                        result.weak_gap_scaled)):
         raise ValueError('nonfinite feasibility metrics')
     _json_new(root/name/'observables.json',data)
-    print(json.dumps({'phase':'observables','case':name,
-                      'sha256':hashlib.sha256((root/name/'observables.json').read_bytes()).hexdigest()}),
+    if manifest['capture_state']:
+        if len(captured)!=1:
+            raise ValueError('expected exactly one owned solved state')
+        with (root/name/'solved_state.npz').open('xb') as stream:
+            np.savez_compressed(stream,physical_q=captured[0][0],
+                                physical_lambda=captured[0][1])
+    print(json.dumps(_observable_event(root/name,name,spec,manifest['capture_state'])),
           flush=True)
 
 
@@ -207,7 +241,7 @@ def execute(root: Path, name: str) -> bool:
     try:
         with (directory/'stdout.jsonl').open('x',encoding='utf-8') as out, \
                 (directory/'stderr.txt').open('x',encoding='utf-8') as err:
-            process=subprocess.Popen((sys.executable,str(Path(__file__).resolve()),
+            process=subprocess.Popen((sys.executable,str(RUNNER),
                                       '--child','--root',str(root),'--case',name),
                                      cwd=ROOT,env=env,stdout=out,stderr=err)
             watched=psutil.Process(process.pid)
@@ -256,9 +290,10 @@ def execute(root: Path, name: str) -> bool:
                     events[0].get('registration_sha256')==registered_digest and
                     all(pool.get('num_threads')==1 for pool in
                         events[0].get('threadpools',[])) and
-                    events[1].get('phase')=='observables' and
-                    events[1].get('case')==name and
-                    events[1].get('sha256')==digest and digest is not None and
+                    events[1]==_observable_event(directory,name,
+                                                manifest['cases'][name],
+                                                manifest.get('capture_state',False)) and
+                    digest is not None and
                     _identity()==manifest['identity'] and
                     sampled_peak<=MAX_RSS_BYTES and elapsed<=MAX_SECONDS
                     else 'identity_phase_or_process_failure')
@@ -267,7 +302,8 @@ def execute(root: Path, name: str) -> bool:
         failure=f'{type(exc).__name__}: {exc}'
     summary={'reason':reason,'exit_code':code,'elapsed_seconds':elapsed,
              'sampled_peak_rss_bytes':sampled_peak,
-             'phases':[event.get('phase') for event in events],
+             'phases':[event.get('phase') for event in events
+                       if isinstance(event,dict)],
              'registration_sha256':registered_digest,
              'failure':failure,
              'observables_sha256':digest}
@@ -311,7 +347,9 @@ def adjudicate(root: Path) -> bool:
                     not isinstance(events[0].get('threadpools'),list) or
                     any(pool.get('num_threads')!=1 for pool in
                         events[0]['threadpools']) or
-                    events[1]!={'phase':'observables','case':name,'sha256':digest} or
+                    events[1]!=_observable_event(directory,name,
+                                                manifest['cases'][name],
+                                                manifest.get('capture_state',False)) or
                     summary['observables_sha256']!=digest):
                 raise ValueError('raw child identity, thread or hash mismatch')
             values=json.loads(path.read_text(encoding='utf-8'))
@@ -353,7 +391,12 @@ def adjudicate(root: Path) -> bool:
                                       all(measurements[k]<=v for k,v in LIMITS.items())
                                       else 'FAILED_ALGEBRAIC_SCREEN'),
                             'measurements':measurements}
-        except (OSError,ValueError,KeyError,TypeError,IndexError,AttributeError) as exc:
+            if (name in manifest.get('parity_reference',{}) and
+                    digest!=manifest['parity_reference'][name]):
+                decision[name]['status']='FAILED_BASELINE_PARITY'
+                decision[name]['expected_observables_sha256']=manifest['parity_reference'][name]
+        except (OSError,ValueError,KeyError,TypeError,IndexError,AttributeError,
+                EOFError,zipfile.BadZipFile) as exc:
             decision[name]={'status':'FAILED_EVIDENCE',
                             'reason':f'{type(exc).__name__}: {exc}'}
     _json_new(root/'adjudication.json',{

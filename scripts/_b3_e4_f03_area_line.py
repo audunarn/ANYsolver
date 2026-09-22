@@ -21,7 +21,7 @@ def overlay(model: shell.Panel, n_beam: int, n_mortar: int,
             halfwidth: float) -> np.ndarray:
     """Split moving pad edges at shell cell and triangle-diagonal events."""
     beam.dof_count(n_beam)
-    if not isinstance(n_mortar,int) or not 1<=n_mortar<=8:
+    if not isinstance(n_mortar,int) or not 1<=n_mortar<=16:
         raise ValueError("bounded mortar count required")
     if not math.isfinite(halfwidth) or not 1e-4<=halfwidth<=.2:
         raise ValueError("fixed physical pad halfwidth required")

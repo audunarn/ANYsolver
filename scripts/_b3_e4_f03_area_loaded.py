@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
+from typing import Callable
 
 import numpy as np
 from scipy import sparse
@@ -105,9 +106,11 @@ def _port_quarters(lam: np.ndarray, n_mortar: int, law: str
 
 def solve(n_s: int, n_y: int, n_beam: int, n_mortar: int,
           topology: str, law: str, loading: str,
-          halfwidth: float) -> PreflightResult:
-    if (not 1<=n_s<=8 or not 2<=n_y<=16 or
-            not 1<=n_beam<=16 or not 1<=n_mortar<=8 or
+          halfwidth: float,
+          state_sink: Callable[[np.ndarray,np.ndarray],None] | None = None
+          ) -> PreflightResult:
+    if (not 1<=n_s<=16 or not 2<=n_y<=32 or
+            not 1<=n_beam<=32 or not 1<=n_mortar<=16 or
             loading not in ("smooth","sine")):
         raise ValueError("outside finite-pad loaded preflight envelope")
     model=shell.panel(n_s,n_y,topology)
@@ -183,6 +186,8 @@ def solve(n_s: int, n_y: int, n_beam: int, n_mortar: int,
     if not np.allclose(np.asarray(root_elastic)+np.asarray(root_port)-
                        np.asarray(root_load),wrenches[2],rtol=1e-10,atol=1e-5):
         raise ValueError("beam-root physical wrench partition failed")
+    if state_sink is not None:
+        state_sink(q.copy(),lam.copy())
     return PreflightResult(topology,law,loading,halfwidth,tip,shell_energy,
                            beam_energy,work,interface,gap,fixed_gap,motion_gap,
                            motion,free_error,weak_error,balance,wrenches,
