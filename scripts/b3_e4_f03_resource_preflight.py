@@ -18,6 +18,7 @@ import platform
 import subprocess
 import sys
 import time
+import zipfile
 
 import numpy as np
 import psutil
@@ -62,9 +63,56 @@ def _mesh(value: str) -> inventory.Mesh:
     return result
 
 
+def _state_phases(topology: str, trace_topology: str) -> list[str]:
+    phases=['identity','panel']
+    if topology!=trace_topology:
+        phases.append('trace_panel')
+    return phases+['shell_stiffness','beam_stiffness','coupling',
+                   'unfactorized_kkt','scaled_kkt','factorized','linear_solve',
+                   'state_payload','loaded_observables']
+
+
+def _valid_state_phases(records: list[dict], topology: str,
+                        trace_topology: str) -> bool:
+    return [record.get('phase') for record in records]==_state_phases(
+        topology,trace_topology)
+
+
+def _valid_state_payload(directory: Path, records: list[dict],
+                         mesh: inventory.Mesh, law: str) -> bool:
+    payload_records=[record for record in records if record.get('phase')=='state_payload']
+    payload_path=directory/'solved_state.npz'
+    if len(payload_records)!=1 or not payload_path.is_file():
+        return False
+    try:
+        record=payload_records[0]
+        if (record.get('path')!=payload_path.name or
+                hashlib.sha256(payload_path.read_bytes()).hexdigest()!=record.get('sha256')):
+            return False
+        with np.load(payload_path,allow_pickle=False) as saved:
+            q=saved['physical_q']; lam=saved['physical_lambda']
+        return bool(q.shape==(2*(2*mesh.n_s+1)*(mesh.n_y+1)+
+                              beam.dof_count(mesh.n_beam),) and
+                    lam.shape==(3*(mesh.n_mortar+(law=='P1')),) and
+                    q.dtype==np.dtype('float64') and
+                    lam.dtype==np.dtype('float64') and
+                    record.get('q_shape')==list(q.shape) and
+                    record.get('lambda_shape')==list(lam.shape) and
+                    record.get('q_dtype')=='float64' and
+                    record.get('lambda_dtype')=='float64' and
+                    q.flags.c_contiguous and lam.flags.c_contiguous and
+                    np.all(np.isfinite(q)) and np.all(np.isfinite(lam)) and
+                    hashlib.sha256(q.tobytes()).hexdigest()==record.get('q_sha256') and
+                    hashlib.sha256(lam.tobytes()).hexdigest()==record.get('lambda_sha256'))
+    except (OSError,ValueError,KeyError,EOFError,TypeError,IndexError,
+            zipfile.BadZipFile):
+        return False
+
+
 def _child(mesh: inventory.Mesh, topology: str, law: str,
            manifest_path: Path, solve: bool, scaled: bool,
-           loaded_probe: bool) -> None:
+           loaded_probe: bool, trace_topology: str | None = None,
+           state_payload: bool = False) -> None:
     begun=time.perf_counter()
     process=psutil.Process()
     manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
@@ -74,6 +122,8 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
             law!=manifest['law'] or solve!=manifest['solve'] or
             scaled!=manifest['scaled'] or
             loaded_probe!=manifest['loaded_probe'] or
+            (trace_topology or topology)!=manifest['trace_topology'] or
+            state_payload!=manifest['state_payload'] or
             manifest['loading']!=('smooth' if solve else None) or
             manifest['scales']!=dict(force_newton=F0,moment_newton_metre=M0,
                                      displacement_metre=U0)):
@@ -99,11 +149,20 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
         raise ValueError('observed child thread pool is not single-threaded')
     model=shell.panel(mesh.n_s,mesh.n_y,topology)
     phase('panel',**inventory.structural_counts(mesh,topology,law))
+    trace_model=(model if trace_topology is None or trace_topology==topology else
+                 shell.panel(mesh.n_s,mesh.n_y,trace_topology))
+    if (not np.array_equal(model.nodes,trace_model.nodes) or
+            not np.array_equal(model.supported,trace_model.supported) or
+            model.dof_count!=trace_model.dof_count):
+        raise ValueError('mixed trace panel must have identical numbered nodes and supports')
+    if trace_model is not model:
+        phase('trace_panel',trace_topology=trace_model.topology,
+              trace_elements=len(trace_model.elements))
     ks=shell.stiffness(model)
     phase('shell_stiffness',shell_nnz=ks.nnz)
     kb=beam.assembled_stiffness(mesh.n_beam)
     phase('beam_stiffness',beam_nnz=kb.nnz)
-    cs,cb,knots=line.coupling(model,mesh.n_beam,mesh.n_mortar,law)
+    cs,cb,knots=line.coupling(trace_model,mesh.n_beam,mesh.n_mortar,law)
     phase('coupling',shell_trace_nnz=cs.nnz,beam_trace_nnz=cb.nnz,
           overlay_intervals=len(knots)-1)
     c=sparse.hstack((-cs,cb),format='csr')
@@ -173,8 +232,20 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
                              f'free={free_max}, weak={weak_max}')
         if loaded_probe:
             qfree,lam=transformed.recover(solution)
+            if state_payload:
+                full_q=np.zeros(k.shape[0],dtype=np.float64)
+                full_q[free]=qfree
+                payload=manifest_path.parent/'solved_state.npz'
+                np.savez(payload,physical_q=full_q,
+                         physical_lambda=np.ascontiguousarray(lam,dtype=np.float64))
+                phase('state_payload',path=payload.name,
+                      sha256=hashlib.sha256(payload.read_bytes()).hexdigest(),
+                      q_shape=list(full_q.shape),lambda_shape=list(lam.shape),
+                      q_dtype=str(full_q.dtype),lambda_dtype=str(lam.dtype),
+                      q_sha256=hashlib.sha256(full_q.tobytes()).hexdigest(),
+                      lambda_sha256=hashlib.sha256(np.ascontiguousarray(lam).tobytes()).hexdigest())
             observables=loaded.recover_solved(
-                model,mesh.n_beam,mesh.n_mortar,law,8,
+                trace_model,mesh.n_beam,mesh.n_mortar,law,8,
                 ks,kb,cs,cb,k,c,force,free,qfree,lam)
             phase('loaded_observables',**asdict(observables))
             if (not all(np.isfinite(observables.global_balance_scaled)) or
@@ -188,11 +259,21 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
 
 def _supervise(mesh: inventory.Mesh, topology: str, law: str,
                directory: Path, solve: bool = False,
-               scaled: bool = False, loaded_probe: bool = False) -> int:
+               scaled: bool = False, loaded_probe: bool = False,
+               trace_topology: str | None = None,
+               state_payload: bool = False) -> int:
     if scaled and not solve:
         raise ValueError('diagonal scaling requires a solve probe')
     if loaded_probe and not (solve and scaled):
         raise ValueError('loaded preflight requires scaled solve and supervisor')
+    if trace_topology not in (None,'Q4','CST-CB'):
+        raise ValueError('unadmitted diagnostic trace topology')
+    if state_payload and topology not in ('Q4','CST-CB'):
+        raise ValueError('diagnostic payload is restricted to Q4/CST-CB')
+    if state_payload and not loaded_probe:
+        raise ValueError('solved-state payload requires loaded probe')
+    if trace_topology not in (None,topology) and not state_payload:
+        raise ValueError('mixed operator diagnostic requires solved-state payload')
     checkout=Path(__file__).resolve().parents[1]
     def git(*args: str) -> str:
         return subprocess.run(('git',*args),cwd=checkout,check=True,
@@ -200,8 +281,8 @@ def _supervise(mesh: inventory.Mesh, topology: str, law: str,
     commit=git('rev-parse','HEAD')
     dirty=git('status','--porcelain')
     proposed=mesh in inventory.meshes()
-    if proposed and dirty:
-        raise ValueError('proposed inventory resource probe requires clean frozen source')
+    if (proposed or state_payload) and dirty:
+        raise ValueError('inventory or solved-state probe requires clean frozen source')
     directory.mkdir(parents=True,exist_ok=False)
     sources=_hashes()
     manifest_path=directory/'manifest.json'
@@ -215,20 +296,29 @@ def _supervise(mesh: inventory.Mesh, topology: str, law: str,
         command.append('--scaled')
     if loaded_probe:
         command.append('--loaded-probe')
+    if trace_topology is not None:
+        command.extend(('--trace-topology',trace_topology))
+    if state_payload:
+        command.append('--state-payload')
     environment=os.environ.copy()
     environment.update(OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='1',
                        MKL_NUM_THREADS='1',NUMEXPR_NUM_THREADS='1',
                        PYTHONDONTWRITEBYTECODE='1')
-    manifest=dict(purpose=('loaded F03 classical resource preflight' if loaded_probe
+    manifest=dict(purpose=('diagnostic stiffness/trace partition with solved state'
+                           if state_payload else
+                           'loaded F03 classical resource preflight' if loaded_probe
                            else 'scaled factorization F03 classical resource preflight'
                            if scaled else 'factorization F03 classical resource preflight' if solve
                            else 'assembly-only F03 classical resource preflight'),
                   mesh=vars(mesh),topology=topology,law=law,
+                  trace_topology=trace_topology or topology,
+                  state_payload=state_payload,
                   solve=solve,scaled=scaled,loaded_probe=loaded_probe,
                   loading='smooth' if solve else None,
                   scales=dict(force_newton=F0,moment_newton_metre=M0,
                               displacement_metre=U0),
-                  assembly_identity=(f'{topology}-{law}-Ns{mesh.n_s}-Ny{mesh.n_y}-'
+                  assembly_identity=(f'{topology}-trace-{trace_topology or topology}-'
+                                     f'{law}-Ns{mesh.n_s}-Ny{mesh.n_y}-'
                                      f'Nb{mesh.n_beam}-Nm{mesh.n_mortar}'),
                   proposed_inventory_mesh=proposed,
                   source_commit=commit,source_dirty=bool(dirty),
@@ -284,11 +374,16 @@ def _supervise(mesh: inventory.Mesh, topology: str, law: str,
         peak=max([peak]+[record.get('rss_bytes',0) for record in records])
         elapsed=time.monotonic()-begun
         if reason=='process_exit':
+            payload_valid=(not state_payload or
+                           _valid_state_payload(directory,records,mesh,law))
+            phases_valid=(not state_payload or
+                          _valid_state_phases(records,topology,trace_topology or topology))
             if peak>MAX_RSS:
                 reason='rss_limit'
             elif elapsed>MAX_SECONDS:
                 reason='time_limit'
-            elif (exit_code!=0 or malformed or len(identities)!=1 or
+            elif (exit_code!=0 or malformed or not payload_valid or
+                  not phases_valid or len(identities)!=1 or
                   identities[0].get('sources')!=sources or
                   identities[0].get('threads')!=manifest['threads'] or
                   any(pool.get('num_threads')!=1 for pool in
@@ -326,6 +421,10 @@ def main() -> int:
                         help='use congruent dimensionless KKT scaling with --solve')
     parser.add_argument('--loaded-probe',action='store_true',
                         help='recover full loaded observables under the supervisor')
+    parser.add_argument('--trace-topology',choices=('Q4','CST-CB'),
+                        help='diagnostic-only trace panel, separate from shell stiffness')
+    parser.add_argument('--state-payload',action='store_true',
+                        help='preserve solved physical q and signed lambda for independent audit')
     parser.add_argument('--child',action='store_true',help=argparse.SUPPRESS)
     parser.add_argument('--expected-manifest',type=Path,help=argparse.SUPPRESS)
     args=parser.parse_args()
@@ -333,12 +432,14 @@ def main() -> int:
         if args.expected_manifest is None:
             parser.error('--expected-manifest is required for child')
         _child(args.mesh,args.topology,args.law,args.expected_manifest,
-               args.solve,args.scaled,args.loaded_probe)
+               args.solve,args.scaled,args.loaded_probe,
+               args.trace_topology,args.state_payload)
         return 0
     if args.output is None:
         parser.error('--output is required for supervised execution')
     return _supervise(args.mesh,args.topology,args.law,args.output,
-                      args.solve,args.scaled,args.loaded_probe)
+                      args.solve,args.scaled,args.loaded_probe,
+                      args.trace_topology,args.state_payload)
 
 
 if __name__=='__main__':
