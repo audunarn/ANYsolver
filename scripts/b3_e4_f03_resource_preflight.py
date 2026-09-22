@@ -1,14 +1,15 @@
 """Single-case assembly resource probe for the proposed classical F03 set.
 
-This executes no physical qualification comparison. The optional solve path
-measures one sparse factorization and checks its dimensionally scaled
-equations without interpreting its physical response. A supervisor preserves
+This executes no physical qualification comparison. The optional loaded path
+records full classical response diagnostics as a resource and balance screen;
+they are not acceptance of a physical reference. A supervisor preserves
 partial phases and stops its owned child at the preflight time/RSS envelope.
 """
 
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 import hashlib
 import json
 import os
@@ -30,11 +31,14 @@ import _b3_e4_f03_independent_inventory as inventory
 import _b3_e4_f03_independent_line as line
 import _b3_e4_f03_independent_shell as shell
 import _b3_e4_f03_kkt_scaling as scaling
+import _b3_e4_f03_loaded_preflight as loaded
+import _b3_e4_f03_gap_enclosure as enclosure
 
 
 SOURCES=(Path(__file__),
          Path(beam.__file__),Path(inventory.__file__),
-         Path(line.__file__),Path(shell.__file__),Path(scaling.__file__))
+         Path(line.__file__),Path(shell.__file__),Path(scaling.__file__),
+         Path(loaded.__file__),Path(enclosure.__file__))
 MAX_RSS=8*1024**3
 MAX_SECONDS=900
 F0=1e6
@@ -59,7 +63,8 @@ def _mesh(value: str) -> inventory.Mesh:
 
 
 def _child(mesh: inventory.Mesh, topology: str, law: str,
-           manifest_path: Path, solve: bool, scaled: bool) -> None:
+           manifest_path: Path, solve: bool, scaled: bool,
+           loaded_probe: bool) -> None:
     begun=time.perf_counter()
     process=psutil.Process()
     manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
@@ -68,6 +73,7 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
     if (vars(mesh)!=manifest['mesh'] or topology!=manifest['topology'] or
             law!=manifest['law'] or solve!=manifest['solve'] or
             scaled!=manifest['scaled'] or
+            loaded_probe!=manifest['loaded_probe'] or
             manifest['loading']!=('smooth' if solve else None) or
             manifest['scales']!=dict(force_newton=F0,moment_newton_metre=M0,
                                      displacement_metre=U0)):
@@ -78,7 +84,7 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
     def phase(name: str, **counts: int | float | bool | None) -> None:
         print(json.dumps(dict(phase=name,elapsed_seconds=time.perf_counter()-begun,
                               rss_bytes=process.memory_info().rss,**counts),
-                         sort_keys=True),flush=True)
+                         sort_keys=True,allow_nan=False),flush=True)
 
     pools=threadpool_info()
     print(json.dumps(dict(phase='identity',sources=_hashes(),
@@ -110,8 +116,8 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
     phase('unfactorized_kkt',kkt_nnz=a.nnz,kkt_dimension=a.shape[0],
           physical_free=len(free),multiplier_rows=c.shape[0])
     if solve:
-        # This is an algebraic factorization/resource probe. Do not export
-        # displacements or interpret a physical response before registration.
+        # The optional loaded route records physical observables for resource
+        # feasibility only; full reference acceptance remains unregistered.
         load=beam.assembled_load(mesh.n_beam,'smooth')
         force=np.r_[np.zeros(model.dof_count),load]
         physical_rhs=np.r_[force[free],np.zeros(c.shape[0])]
@@ -165,15 +171,28 @@ def _child(mesh: inventory.Mesh, topology: str, law: str,
                 free_max>1e-8 or weak_max>1e-9):
             raise ValueError(f'large scaled KKT residual: equation={equation}, '
                              f'free={free_max}, weak={weak_max}')
+        if loaded_probe:
+            qfree,lam=transformed.recover(solution)
+            observables=loaded.recover_solved(
+                model,mesh.n_beam,mesh.n_mortar,law,8,
+                ks,kb,cs,cb,k,c,force,free,qfree,lam)
+            phase('loaded_observables',**asdict(observables))
+            if (not all(np.isfinite(observables.global_balance_scaled)) or
+                    max(abs(value) for value in observables.global_balance_scaled)>1e-8 or
+                    abs(observables.energy_identity_joule)/scaling.E0>1e-8 or
+                    abs(observables.interface_work_joule)/scaling.E0>1e-8):
+                raise ValueError('large loaded classical physical balance discrepancy')
     if _hashes()!=manifest['sources']:
         raise ValueError('child source changed during assembly')
 
 
 def _supervise(mesh: inventory.Mesh, topology: str, law: str,
                directory: Path, solve: bool = False,
-               scaled: bool = False) -> int:
+               scaled: bool = False, loaded_probe: bool = False) -> int:
     if scaled and not solve:
         raise ValueError('diagonal scaling requires a solve probe')
+    if loaded_probe and not (solve and scaled):
+        raise ValueError('loaded preflight requires scaled solve and supervisor')
     checkout=Path(__file__).resolve().parents[1]
     def git(*args: str) -> str:
         return subprocess.run(('git',*args),cwd=checkout,check=True,
@@ -194,15 +213,19 @@ def _supervise(mesh: inventory.Mesh, topology: str, law: str,
         command.append('--solve')
     if scaled:
         command.append('--scaled')
+    if loaded_probe:
+        command.append('--loaded-probe')
     environment=os.environ.copy()
     environment.update(OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='1',
                        MKL_NUM_THREADS='1',NUMEXPR_NUM_THREADS='1',
                        PYTHONDONTWRITEBYTECODE='1')
-    manifest=dict(purpose=('scaled factorization F03 classical resource preflight'
+    manifest=dict(purpose=('loaded F03 classical resource preflight' if loaded_probe
+                           else 'scaled factorization F03 classical resource preflight'
                            if scaled else 'factorization F03 classical resource preflight' if solve
                            else 'assembly-only F03 classical resource preflight'),
                   mesh=vars(mesh),topology=topology,law=law,
-                  solve=solve,scaled=scaled,loading='smooth' if solve else None,
+                  solve=solve,scaled=scaled,loaded_probe=loaded_probe,
+                  loading='smooth' if solve else None,
                   scales=dict(force_newton=F0,moment_newton_metre=M0,
                               displacement_metre=U0),
                   assembly_identity=(f'{topology}-{law}-Ns{mesh.n_s}-Ny{mesh.n_y}-'
@@ -273,7 +296,8 @@ def _supervise(mesh: inventory.Mesh, topology: str, law: str,
                   not identities[0].get('modules') or
                   post_hashes!=sources or not records or
                   records[-1].get('phase')!=
-                  ('linear_solve' if solve else 'unfactorized_kkt')):
+                  ('loaded_observables' if loaded_probe else
+                   'linear_solve' if solve else 'unfactorized_kkt')):
                 reason='identity_or_phase_failure'
         result=dict(reason=reason,exit_code=exit_code,
                     elapsed_seconds=elapsed,
@@ -300,6 +324,8 @@ def main() -> int:
                         help='also factor and solve a smooth-load algebraic system')
     parser.add_argument('--scaled',action='store_true',
                         help='use congruent dimensionless KKT scaling with --solve')
+    parser.add_argument('--loaded-probe',action='store_true',
+                        help='recover full loaded observables under the supervisor')
     parser.add_argument('--child',action='store_true',help=argparse.SUPPRESS)
     parser.add_argument('--expected-manifest',type=Path,help=argparse.SUPPRESS)
     args=parser.parse_args()
@@ -307,12 +333,12 @@ def main() -> int:
         if args.expected_manifest is None:
             parser.error('--expected-manifest is required for child')
         _child(args.mesh,args.topology,args.law,args.expected_manifest,
-               args.solve,args.scaled)
+               args.solve,args.scaled,args.loaded_probe)
         return 0
     if args.output is None:
         parser.error('--output is required for supervised execution')
     return _supervise(args.mesh,args.topology,args.law,args.output,
-                      args.solve,args.scaled)
+                      args.solve,args.scaled,args.loaded_probe)
 
 
 if __name__=='__main__':

@@ -101,12 +101,46 @@ def evaluate(n_s: int, n_y: int, n_beam: int, n_mortar: int,
     transformed=scaling.build(k,c,f,free,model.dof_count,n_beam,n_mortar,law)
     solved=splu(transformed.matrix).solve(transformed.rhs)
     qfree,lam=transformed.recover(solved)
+    return recover_solved(model,n_beam,n_mortar,law,depth,
+                          ks,kb,cs,cb,k,c,f,free,qfree,lam)
+
+
+def recover_solved(model: shell.Panel, n_beam: int, n_mortar: int,
+                   law: str, depth: int,
+                   ks: sparse.spmatrix, kb: sparse.spmatrix,
+                   cs: sparse.spmatrix, cb: sparse.spmatrix,
+                   k: sparse.spmatrix, c: sparse.spmatrix,
+                   f: np.ndarray, free: np.ndarray,
+                   qfree: np.ndarray, lam: np.ndarray) -> LoadedObservables:
+    """Recover a solved physical KKT state; large use needs a supervisor.
+
+    Callers at inventory size must enforce external time/RSS/source guards.
+    This function never performs a factorization or commits qualification.
+    """
+    if (not isinstance(depth,int) or not 0<=depth<=12 or
+            law not in ('P0','P1') or
+            np.shape(qfree)!=(len(free),) or
+            np.shape(lam)!=(3*(n_mortar+(law=='P1')), ) or
+            k.shape!=(model.dof_count+beam.dof_count(n_beam),)*2 or
+            c.shape!=(len(lam),k.shape[0]) or
+            ks.shape!=(model.dof_count,)*2 or
+            kb.shape!=(beam.dof_count(n_beam),)*2 or
+            cs.shape!=(len(lam),model.dof_count) or
+            cb.shape!=(len(lam),beam.dof_count(n_beam)) or
+            f.shape!=(k.shape[0],)):
+        raise ValueError('invalid solved classical recovery layout')
+    if (not np.all(np.isfinite(qfree)) or not np.all(np.isfinite(lam))):
+        raise ValueError('nonfinite solved classical recovery state')
     q=np.zeros(k.shape[0]); q[free]=qfree
     qs=q[:model.dof_count]; qb=q[model.dof_count:]
     residual=(k@q+c.T@lam-f)[free]
     full_residual=k@q+c.T@lam-f
     weak=c@q
-    moment=transformed.angular_free_mask
+    beam_local=free-model.dof_count
+    beam_u=2*n_beam+1; beam_v=2*(n_beam+1)
+    moment=(beam_local>=beam_u+beam_v) | (
+        (beam_local>=beam_u)&(beam_local<beam_u+beam_v)&
+        ((beam_local-beam_u)%2==1))
     force_scales=np.where(moment,scaling.M0,scaling.F0)
     measure=np.full(n_mortar+(law=='P1'),scaling.L0/n_mortar)
     if law=='P1':
@@ -141,8 +175,8 @@ def evaluate(n_s: int, n_y: int, n_beam: int, n_mortar: int,
         pose=shell.pose(model,s)@qs
         stations.append((float(pose[0]),float(pose[1]),
                          float(line.YAW_LENGTH*pose[2])))
-    nx=2*n_s
-    left=np.array([j*(nx+1) for j in range(n_y+1)],dtype=int)
+    nx=2*model.n_s
+    left=np.array([j*(nx+1) for j in range(model.n_y+1)],dtype=int)
     right=left+nx
     left_wrench=_wrench(full_residual,model.nodes,left)
     right_wrench=_wrench(full_residual,model.nodes,right)
@@ -171,8 +205,12 @@ def evaluate(n_s: int, n_y: int, n_beam: int, n_mortar: int,
     values=(shell_energy,beam_energy,external_work,interface_work,
             shell_interface_work,beam_interface_work,
             integrated,motion_rms,g2,gmotion,*tip,*applied,*balance,
+            2*(shell_energy+beam_energy)+interface_work-external_work,
+            float(np.max(np.abs(residual)/force_scales)),
+            float(np.max(np.abs(weak)/weak_scales)),
             *(item for wrench in wrenches for item in wrench),
-            *(item for station in stations for item in station))
+            *(item for station in stations for item in station),
+            *(item for bound in bounds for item in bound))
     if not all(np.isfinite(values)):
         raise ValueError('nonfinite loaded classical observables')
     return LoadedObservables(

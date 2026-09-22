@@ -89,6 +89,16 @@ def test_tip_yaw_is_physical_length_scaled_not_raw_rotation():
     actual=loaded.evaluate(2,3,nb,2,'Q4','P1','smooth')
     np.testing.assert_allclose(actual.beam_tip_displacement_metre,expected,
                                rtol=1e-7,atol=1e-9)
+    recovered=loaded.recover_solved(
+        model,nb,2,'P1',8,ks,kb,cs,cb,k,c,f,free,
+        solved[:len(free)],solved[len(free):])
+    for field in ('shell_energy_joule','beam_energy_joule',
+                  'integrated_gap_metre','fixed_scale_gap','motion_scale_gap',
+                  'free_force_scaled_max','weak_gap_scaled_max'):
+        np.testing.assert_allclose(getattr(recovered,field),getattr(actual,field),
+                                   rtol=1e-6,atol=1e-8)
+    np.testing.assert_allclose(recovered.support_wrenches,actual.support_wrenches,
+                               rtol=1e-7,atol=1e-5)
     residual=k@full+c.T@solved[len(free):]-f
     nx=2*model.n_s
     for edge,wrench in ((0,actual.support_wrenches[0]),
@@ -129,6 +139,12 @@ def test_constant_displaced_traces_give_hand_gap_and_motion(topology):
     np.testing.assert_allclose(np.sqrt(motion_sq),
                                np.sqrt((beam_u**2+shell_u**2)/2),
                                rtol=1e-12,atol=1e-16)
+
+
+def test_nonfinite_derived_observable_cannot_enter_evidence(monkeypatch):
+    monkeypatch.setattr(line,'integrated_gap',lambda *args,**kwargs: float('nan'))
+    with pytest.raises(ValueError,match='nonfinite loaded classical observables'):
+        loaded.evaluate(2,3,4,2,'Q4','P1','smooth')
 
 
 @pytest.mark.parametrize('kwargs',(
