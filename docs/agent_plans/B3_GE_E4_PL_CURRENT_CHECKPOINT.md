@@ -49,6 +49,14 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
    See `B3_GE_E4_PL_G0_F03_VARIATIONAL_ATTRIBUTION_V1_RESULTS.md`.
    The continuous eliminated-primal derivation also passed independent
    mechanics review; that acceptance is not numerical qualification.
+6. The independent polynomial Ritz reference, exact root constraints,
+   physical recovery, continuous Green norm, bounded archive and five-level
+   execution harness are implemented but not scientifically executed.
+   The first integrated unit run passed51 checks. Following independent
+   findings,23 focused operator/check tests and48 affected integration tests
+   passed. These are overlapping test inventories, not summed coverage.
+   Independent preregistration review granted GO contingent on a clean
+   source freeze. No reference convergence or G0B acceptance is implied.
 
 Raw roots under `.qualification/b3-ge-e4-pl/` are respectively
 `f03-area-axis-v1`, `f03-area-axis-analysis-v1`,
@@ -76,22 +84,26 @@ small net constraint work 0.00003296 J. This is a discrete-state split,
 not causal continuum-error attribution; cancellation and endpoint error
 remain possible. P1 and hybrid have substantial negative constraint work.
 
-The next bounded implementation is the independently derived continuous
-primal reference b=A us, using a separate polynomial Ritz evaluator,
-independent rectangular-pad moments, the original three root constraints
-and physical reaction recovery. No native FE/host-clipping/multiplier
-assembly is reused as the reference algorithm. Review and register the
-basis/quadrature/conditioning/resource sequence before scientific solves.
-No primal reference scientific execution has occurred at this checkpoint.
+The next action is a clean source freeze of the independently reviewed
+continuous primal reference b=A us, then the single-use
+five-level execution in `B3_GE_E4_PL_G0_F03_PRIMAL_RITZ_PROTOCOL.md`.
+The independent reviewer draft remains preserved alongside it. Exact
+levels are n=4,8,12,16,24; each has one canonical equilibrium and an
+assembly-only integration crosscheck. Child limits are900s/8GiB sampled
+RSS, with3600s launch cutoff. Planned root is
+`.qualification/b3-ge-e4-pl/f03-primal-ritz-v1`, not yet consumed.
+No native FE/host-clipping/multiplier assembly is used as the reference
+algorithm. Failed settling leaves the reference unresolved; no automatic
+degree extension is authorized. No primal reference scientific execution
+has occurred at this checkpoint.
 This does not replace required executed external comparisons.
 Do not automatically add uniform refinement, change
 tolerances, drop P1, relabel any HOLD, or promote a production space.
 Native full-vector/shear/drilling and all other G0 foundations remain open.
 
-No scientific processes are active at this checkpoint. Bounded work in
-progress: `/root/f03_port_mechanics` owns the new primal Ritz operator and
-its focused tests; `/root/finite_pad_axis_review` owns the proposed
-independent numerical contract. Parent owns integration, runner and
-registration. Check current dirty files before resuming; no concurrent
-worker owns existing source or completed evidence.
+No scientific processes are active at this checkpoint. The implementation
+worker has completed its bounded edits. `/root/finite_pad_axis_review`
+accepted the final corrections; parent owns integration and execution.
+Fourteen new primal source/test/protocol files and this checkpoint await
+the clean source freeze. No concurrent writer owns completed evidence.
 No release approval is being exercised. Keep main unchanged during G0.
