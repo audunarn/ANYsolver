@@ -35,11 +35,12 @@ def _finite_float(value: Fraction, name: str) -> float:
 
 def _display(action: recovery.Action) -> float:
     try:
-        value = float(action.decimal_value())
+        decimal = action.decimal_value()
+        value = float(decimal)
     except (ArithmeticError, OverflowError) as exc:
         raise ValueError("unrepresentable saved-interface Action") from exc
-    if not math.isfinite(value):
-        raise ValueError("nonfinite saved-interface Action")
+    if not math.isfinite(value) or (decimal != 0 and value == 0.0):
+        raise ValueError("nonfinite or underflowed saved-interface Action")
     return value
 
 

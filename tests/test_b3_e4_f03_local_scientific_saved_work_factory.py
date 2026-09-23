@@ -146,6 +146,12 @@ def test_factory_rejects_underflowed_lift_coefficient(monkeypatch):
         factory.produce_saved_work(grid, recovered, budget=budget)
 
 
+def test_action_display_rejects_nonzero_underflow():
+    tiny = recovery.Action(Fraction(1, 10**400))
+    with pytest.raises(ValueError, match="underflowed saved-work Action"):
+        factory._display(tiny)
+
+
 def test_factory_returns_owned_immutable_saved_arrays():
     grid, _, _, recovered, budget = _case()
     value = factory.produce_saved_work(grid, recovered, budget=budget).saved

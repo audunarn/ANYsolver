@@ -37,11 +37,12 @@ def _finite_float(value: Fraction, name: str) -> float:
 
 def _display(action: recovery.Action) -> float:
     try:
-        observed = float(action.decimal_value())
+        decimal = action.decimal_value()
+        observed = float(decimal)
     except (ArithmeticError, OverflowError) as exc:
         raise ValueError("unrepresentable saved-work Action") from exc
-    if not math.isfinite(observed):
-        raise ValueError("nonfinite saved-work Action")
+    if not math.isfinite(observed) or (decimal != 0 and observed == 0.0):
+        raise ValueError("nonfinite or underflowed saved-work Action")
     return observed
 
 

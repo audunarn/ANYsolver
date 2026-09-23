@@ -130,6 +130,12 @@ def test_factory_enforces_nested_action_total_bits_before_decimal_display(monkey
         factory.produce_saved_interface(recovered, budget=rejected)
 
 
+def test_action_display_rejects_nonzero_underflow():
+    tiny = factory.recovery.Action(Fraction(1, 10**400))
+    with pytest.raises(ValueError, match="underflowed saved-interface Action"):
+        factory._display(tiny)
+
+
 def test_factory_rejects_wrong_input_before_observation(monkeypatch):
     _, _, _, _, budget = _recovered()
     monkeypatch.setattr(
