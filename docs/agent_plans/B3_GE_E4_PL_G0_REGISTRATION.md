@@ -1357,8 +1357,9 @@ Q4 moments for n=8/16/32 were respectively 7.766515398e9,
 9.213851274e9, 7.964385201e9 and 7.444489186e9. The
 successive differences decrease on these three levels, but
 neither an asymptotic limit nor shear/director behavior follows.
-Peak memory was not measured. Pending independent raw-evidence
-audit, F02 and G0B remain OPEN.
+Peak memory was not measured. Independent raw-evidence audit accepted only
+the preparatory membrane torque/thickness predicates; see
+`B3_GE_E4_PL_G0_F02_REFINEMENT_V1_AUDIT.md`. F02 and G0B remain OPEN.
 
 Independent next-experiment review of the still-open F03 foundation is
 docs/agent_plans/B3_GE_E4_PL_G0_F03_NEXT_REVIEW_V1.md, SHA-256

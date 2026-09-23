@@ -426,7 +426,7 @@ def _compute_case(
             for block, indexed_block in zip(plan.inverse_blocks, inverse_index.blocks):
                 if block.start != indexed_block.start:
                     raise ValueError("F03 inverse index order disagrees with plan")
-                yield inverse_storage.read_block(snapshot, plan, block.start)
+                yield block.start, inverse_storage.read_block(snapshot, plan, block.start)
 
         integrated = integration.verify_integration(
             scaled.h, scaled.h_alternate, scaled.b, scaled.b_alternate, scaled.z,

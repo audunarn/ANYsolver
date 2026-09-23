@@ -155,6 +155,10 @@ def _install_complete_archive_mocks(
         first = list(source)
         assert list(source) == []
         assert len(first) == len(plan.inverse_blocks)
+        for (start, values), block in zip(first, plan.inverse_blocks):
+            assert start == block.start
+            assert isinstance(values, np.ndarray)
+            assert values.shape == (plan.kkt_order, block.columns)
         events.append("integration")
         return {
             "status": "NUMERICAL_PERTURBATION_PASSED", "failures": (),
