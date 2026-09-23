@@ -1,5 +1,28 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — Q6 X0 certificate feasibility, G0B still open.** The
+isolated integration branch contains the evidence and arithmetic commits through
+`65c4fe2504ec629a48368fab20d1a8520d641a3a`;
+main remains untouched. A new unregistered fixed-Q6 three-grid protocol and
+shape contract are committed. The original Python inverse-column interval
+loop proved too costly for the proposed 900-second case limit. A compiled
+arithmetic counterpart matched the scalar bounds bitwise in bounded tests
+and on one actual X0 block. A **complete X0 diagnostic** then verified all
+3,289 inverse columns in 823 blocks; reported condition upper bound was
+`6.246e5`, amplified backward-error upper bound `7.459e-10`, 293.01 seconds
+and 326.9 MB sampled peak process-tree RSS. The 86.5 MB inverse is retained
+locally, ignored by Git, with a committed SHA-256 and receipt. The earlier
+unreceipted attempt remains preserved as aborted evidence. See
+`B3_GE_E4_PL_G0_F03_Q6_X0_CERT_FEASIBILITY_20260924.md` and the linked raw
+records. Independent read-only review accepted **only diagnostic feasibility**:
+compiled-kernel soundness and full-block parity, source/wheel/dependency
+identity, saved-only replay, independent primal positivity and physical-case
+adjudication, plus X1/X2 budgets and certificates remain. No scientific
+registration has been minted; F03/G0B are open and G1 barred. The affected
+focused suite passed 48 tests. Next: close the arithmetic review and resource
+envelope, then build/review the one-use installed-artifact producer and
+adjudicator before any formal three-grid execution.
+
 **24 September 2026 — active G0B checkpoint.** The latest F03 evidence was
 committed at `7cc6673e78928f4a57b9e7877e2f17645952492c` on the isolated
 integration branch; main is untouched. The fixed-Q6 X0→X1→X2 h pilot now has saved-state
