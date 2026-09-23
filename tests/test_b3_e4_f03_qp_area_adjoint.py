@@ -77,6 +77,13 @@ def test_dead_load_and_root_atom_have_physical_area_density(p):
     np.testing.assert_allclose(pushed.line_wrench(),
                                (-eta[0], F0-eta[1], F0/2-gamma*eta[2]),
                                rtol=0, atol=2e-10*max(1., F0))
+    quarters = [(a/4, (a+1)/4) for a in range(4)]
+    np.testing.assert_allclose(
+        sum((pushed.band_wrench(left, right) for left, right in quarters)),
+        pushed.line_wrench(), rtol=0, atol=2e-10*max(1., F0))
+    np.testing.assert_allclose(
+        pushed.band_wrench(0., 1., include_atoms=False),
+        (0., F0, F0/2), rtol=0, atol=2e-10*max(1., F0))
     x, y = trace.offsets[0]
     without_atom = FinitePadAreaAdjoint(trace, q, np.zeros(3))
     difference = pushed.area_force(x, y)-without_atom.area_force(x, y)
@@ -110,6 +117,26 @@ def test_area_push_preserves_force_moment_and_nonrigid_virtual_work():
     z = 3e-5*rng.normal(size=2*trace.n)
     eta = np.array((1.3e4, -8.2e3, 2.1e3))
     pushed = FinitePadAreaAdjoint(trace, q, eta)
+    quarter_wrenches = [pushed.band_wrench(i/4, (i+1)/4)
+                        for i in range(4)]
+    np.testing.assert_allclose(np.sum(quarter_wrenches, axis=0),
+                               pushed.line_wrench(), rtol=0, atol=2e-8)
+    mean_x = np.mean([ox for ox, _ in trace.offsets])
+    mean_y = np.mean([oy for _, oy in trace.offsets])
+    gamma = np.mean([ox*ox+oy*oy+2*trace.a**2/3
+                     for ox, oy in trace.offsets])/trace.j
+    for index, (left, right) in enumerate(
+            ((0., .25), (.25, .5), (.75, 1.))):
+        allocated = (pushed.band_wrench(left, right)-
+                     pushed.band_wrench(left, right,
+                                        include_atoms=False))
+        atom = pushed.atoms[0] if index == 0 else (
+            pushed.atoms[1] if index == 2 else np.zeros(3))
+        endpoint = 1 if index == 2 else 0
+        expected = np.array((atom[0], atom[1],
+                             (endpoint+mean_x)*atom[1]-mean_y*atom[0]
+                             +gamma*atom[2]))
+        np.testing.assert_allclose(allocated, expected, rtol=0, atol=2e-8)
     shell = PiecewiseQpShellRecovery(trace)
     z_coeff = shell.coefficients(z)
     area_wrench = np.zeros(3)

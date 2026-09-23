@@ -106,9 +106,13 @@ class FinitePadAreaAdjoint:
         return np.array([self._area_force(float(x), float(y), cache)
                          for x, y in xy], dtype=float).reshape((-1, 2))
 
-    def line_wrench(self) -> np.ndarray:
-        """Integrated physical Fx, Fy, and origin Mz before the area push."""
-        ix, iy, itheta, sidy, _ = self.integrated_line(0., 1.)
+    def band_wrench(self, left: float, right: float, *,
+                    include_atoms: bool = True) -> np.ndarray:
+        """Signed beam-station Fx, Fy, origin Mz, with endpoint atoms once."""
+        if (not 0. <= left < right <= 1. or
+                not isinstance(include_atoms, bool)):
+            raise ValueError("invalid physical station band")
+        ix, iy, itheta, sidy, _ = self.integrated_line(left, right)
         geometric_j = sum(ox*ox+oy*oy+2*self.trace.a**2/3
                           for ox, oy in self.trace.offsets)/len(self.trace.offsets)
         gamma = geometric_j/self.trace.j
@@ -116,8 +120,16 @@ class FinitePadAreaAdjoint:
         mean_y = sum(oy for _, oy in self.trace.offsets)/len(self.trace.offsets)
         wrench = np.array((ix, iy,
                            sidy+mean_x*iy-mean_y*ix+gamma*itheta))
-        for endpoint, atom in enumerate(self.atoms):
-            wrench += (atom[0], atom[1],
-                       (endpoint+mean_x)*atom[1]-mean_y*atom[0]
-                       +gamma*atom[2])
+        if include_atoms:
+            for endpoint, atom in enumerate(self.atoms):
+                if (endpoint == 0 and left != 0.) or (
+                        endpoint == 1 and right != 1.):
+                    continue
+                wrench += (atom[0], atom[1],
+                           (endpoint+mean_x)*atom[1]-mean_y*atom[0]
+                           +gamma*atom[2])
         return wrench
+
+    def line_wrench(self) -> np.ndarray:
+        """Integrated physical Fx, Fy, and origin Mz before the area push."""
+        return self.band_wrench(0., 1.)
