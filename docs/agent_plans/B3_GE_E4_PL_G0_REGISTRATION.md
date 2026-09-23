@@ -1542,9 +1542,15 @@ state transport or large noncommuting loaded path had been implemented.
 The synthetic F06 v4 owner now issues a loaded S3 rebase and directly
 restores its rebased and successor snapshots; preparatory checks and
 independent code/mechanics review are recorded in
-`B3_GE_E4_PL_G0_F06_OWNED_REBASE_V4_PREPARATORY.md`. A frozen run with
-physical scales and raw parity measures remains necessary. Broader F06
-cases remain unimplemented. **F06 stays IN_PROGRESS; F03/G0B bar G1.**
+`B3_GE_E4_PL_G0_F06_OWNED_REBASE_V4_PREPARATORY.md`. Its separately
+registered one-use curved S3 run at `77f787da` completed within the frozen
+limits, and the raw-value candidate screen passed 550 checks with zero
+failures. Independent postrun audit concurred with that bounded disposition;
+see `B3_GE_E4_PL_G0_F06_V4_S3_SCIENTIFIC_RESULTS.md` and its immutable
+evidence root. The receipt retains `qualification_accepted=false`. Q4,
+beam-chart transport, larger loaded rotations, repeated rebases and mixed
+owner integration remain unimplemented. **F06 stays IN_PROGRESS;
+F03/G0B bar G1.**
 
 The F03 shell-port planar moment implementation check has three distinct
 versioned roots. V1 (`b3a70d1`) failed all ten native setup checks at a
