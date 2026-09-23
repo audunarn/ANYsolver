@@ -190,7 +190,24 @@ def adjudicate_case(
     )
     with evidence_index.materialized_snapshot(
         directory, plan, evidence,
+        (("start.json", start_sha256), ("terminal.json", terminal_sha256)),
     ) as snapshot:
+        retained_terminal, retained_terminal_sha256 = lifecycle.read_terminal(
+            snapshot, plan, registration_sha256,
+        )
+        retained_start, retained_start_sha256 = lifecycle.read_start(
+            snapshot, plan, registration_sha256,
+        )
+        if (
+            retained_terminal != terminal
+            or retained_terminal_sha256 != terminal_sha256
+            or retained_start != start
+            or retained_start_sha256 != start_sha256
+        ):
+            raise ValueError("F03 retained lifecycle evidence disagrees with source read")
+        terminal = retained_terminal
+        terminal_sha256 = retained_terminal_sha256
+        start_sha256 = retained_start_sha256
         indexed, numerical_sha256 = numerical_index.read_index(
             snapshot / "numerical_index.json", plan,
         )

@@ -573,6 +573,7 @@ def materialized_snapshot(
     directory: Path,
     plan: archive.CaseArchivePlan,
     index: EvidenceIndex,
+    retained_members: tuple[tuple[str, str], ...] = (),
 ):
     """Yield a private byte-exact snapshot while retaining source handles.
 
@@ -583,25 +584,59 @@ def materialized_snapshot(
     the complete context, so a receipt can only be built from the indexed bytes.
     """
     directory = Path(directory)
-    if type(plan) is not archive.CaseArchivePlan or type(index) is not EvidenceIndex:
+    if (
+        type(plan) is not archive.CaseArchivePlan
+        or type(index) is not EvidenceIndex
+        or type(retained_members) is not tuple
+        or (retained_members and (
+            len(retained_members) != 2
+            or any(type(item) is not tuple or len(item) != 2 for item in retained_members)
+            or tuple(item[0] for item in retained_members)
+                != ("start.json", "terminal.json")
+            or retained_members[0][1] != index.start_sha256
+            or any(not _digest(item[1]) for item in retained_members)
+        ))
+    ):
         raise ValueError("validated F03 plan and evidence index required")
     names = expected_members(plan)
     if tuple(item.name for item in index.members) != names:
         raise ValueError("F03 evidence snapshot inventory disagrees with plan")
+    retained_names = tuple(name for name, _ in retained_members)
+    source_names = names + retained_names
     maximum = plan.raw_archive_bytes - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
-    with _snapshot(directory, names, maximum) as (identities, streams):
+    infrastructure = frozenset(("plan.zip", "evidence_index.json", "case_receipt.json"))
+    with _snapshot(
+        directory, source_names, maximum + 2 * 64 * 1024,
+        infrastructure=infrastructure,
+    ) as (identities, streams):
+        evidence_count = len(names)
         observed = _index_from_snapshot(
             plan, index.registration_sha256, index.start_sha256,
-            identities, streams,
+            identities[:evidence_count], streams[:evidence_count],
         )
         if observed != index:
             raise ValueError("F03 retained evidence snapshot disagrees with index")
+        for (name, digest), identity, stream in zip(
+            retained_members, identities[evidence_count:], streams[evidence_count:],
+        ):
+            if identity.name != name or _hash_open(stream, identity) != digest:
+                raise ValueError("F03 retained lifecycle member disagrees with identity")
         with tempfile.TemporaryDirectory(
             prefix="f03-adjudication-snapshot-", dir=directory.parent,
         ) as temporary:
             snapshot = Path(temporary)
-            for member, identity, stream in zip(index.members, identities, streams):
-                target = _path(snapshot, member.name)
+            expectations = tuple(
+                (item.name, item.bytes, item.sha256) for item in index.members
+            ) + tuple(
+                (name, identity.bytes, digest)
+                for (name, digest), identity in zip(
+                    retained_members, identities[evidence_count:],
+                )
+            )
+            for (name, expected_bytes, expected_digest), identity, stream in zip(
+                expectations, identities, streams,
+            ):
+                target = _path(snapshot, name)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 stream.seek(0)
                 digest = hashlib.sha256()
@@ -616,17 +651,24 @@ def materialized_snapshot(
                         copied += len(block)
                     if stream.read(1):
                         raise ValueError("F03 retained evidence member grew while copying")
-                if copied != member.bytes or digest.hexdigest() != member.sha256:
+                if copied != expected_bytes or digest.hexdigest() != expected_digest:
                     raise ValueError("F03 materialized evidence member disagrees with index")
             with _snapshot(
-                snapshot, names, maximum, infrastructure=frozenset(),
+                snapshot, source_names, maximum + 2 * 64 * 1024,
+                infrastructure=frozenset(),
             ) as (copied_identities, copied_streams):
                 copied_index = _index_from_snapshot(
                     plan, index.registration_sha256, index.start_sha256,
-                    copied_identities, copied_streams,
+                    copied_identities[:evidence_count], copied_streams[:evidence_count],
                 )
                 if copied_index != index:
                     raise ValueError("F03 materialized evidence snapshot disagrees with index")
+                for (name, digest), identity, stream in zip(
+                    retained_members, copied_identities[evidence_count:],
+                    copied_streams[evidence_count:],
+                ):
+                    if identity.name != name or _hash_open(stream, identity) != digest:
+                        raise ValueError("F03 materialized lifecycle member disagrees with identity")
                 yield snapshot
 
 

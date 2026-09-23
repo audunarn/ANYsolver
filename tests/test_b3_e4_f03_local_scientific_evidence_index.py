@@ -1,4 +1,5 @@
 import json
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -57,6 +58,32 @@ def test_materialized_snapshot_retains_the_exact_indexed_member_bytes(plan, tmp_
         if first.drive:
             with pytest.raises(PermissionError):
                 first.write_bytes(b"changed")
+
+
+def test_materialized_snapshot_binds_start_and_terminal_receipts(plan, tmp_path):
+    directory = tmp_path / "lifecycle-materialized"
+    _populate(directory, plan)
+    start = b"start receipt\n"
+    terminal = b"terminal receipt\n"
+    (directory / "start.json").write_bytes(start)
+    (directory / "terminal.json").write_bytes(terminal)
+    start_sha256 = hashlib.sha256(start).hexdigest()
+    terminal_sha256 = hashlib.sha256(terminal).hexdigest()
+    written, _ = evidence.write_index(
+        directory, plan, REGISTRATION, start_sha256,
+    )
+    retained = (("start.json", start_sha256), ("terminal.json", terminal_sha256))
+    with evidence.materialized_snapshot(
+        directory, plan, written, retained,
+    ) as snapshot:
+        assert (snapshot / "start.json").read_bytes() == start
+        assert (snapshot / "terminal.json").read_bytes() == terminal
+    with pytest.raises(ValueError, match="lifecycle"):
+        with evidence.materialized_snapshot(
+            directory, plan, written,
+            (("start.json", start_sha256), ("terminal.json", "d" * 64)),
+        ):
+            pass
 
 
 def test_missing_changed_and_stale_identity_rejected(plan, tmp_path):
