@@ -18,6 +18,9 @@ MAX_INTERVALS = 128
 MAX_DEGREE = 8
 CHECK_FLOOR = (1000.)**2
 CHECK_TOLERANCE = 1e-10
+# The prescribed squared-term floor permits up to 1e-4 absolute 48/64
+# disagreement when both compared terms are near zero. Passing this check
+# alone is not a scientific error bound on a recovered Qp functional.
 
 
 class GreenQuadratureDisagreement(ArithmeticError):
@@ -119,6 +122,16 @@ class GreenNorm:
     atom_atoms: np.ndarray
     density_order_discrepancy: np.ndarray
     cross_order_discrepancy: np.ndarray
+
+    def __post_init__(self):
+        # A frozen dataclass does not freeze ndarray storage. Own every
+        # diagnostic so a caller cannot mutate a reported result in place.
+        for field in ("squared_channels", "density_density", "density_atoms",
+                      "atom_atoms", "density_order_discrepancy",
+                      "cross_order_discrepancy"):
+            value = np.array(getattr(self, field), dtype=np.float64, copy=True)
+            value.setflags(write=False)
+            object.__setattr__(self, field, value)
 
 
 def _rule(order):

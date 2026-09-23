@@ -145,3 +145,16 @@ def test_bounded_shape_and_nonfinite_or_quadrature_failures(monkeypatch):
     with pytest.raises(gf.NonfiniteGreenResponse):
         gf.norm_squared(f)
     monkeypatch.setattr(gf, "_terms", terms)
+
+
+def test_norm_diagnostics_own_read_only_arrays():
+    result = gf.norm_squared(functional([0., 1.], np.ones((1, 1, 3))))
+    zero = gf.norm_squared(functional([0., 1.], np.zeros((1, 1, 3))))
+    for record in (result, zero):
+        for field in ("squared_channels", "density_density", "density_atoms",
+                      "atom_atoms", "density_order_discrepancy",
+                      "cross_order_discrepancy"):
+            with pytest.raises(ValueError, match="read-only"):
+                getattr(record, field)[0] = 999.
+    assert result.squared_channels[0] == pytest.approx(1.)
+    assert zero.squared_total == 0.
