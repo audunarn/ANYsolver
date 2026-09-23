@@ -60,13 +60,18 @@ def _endpoint_actions(
 
 def _quadrature_band(
     value: recovery.Recovery, left: Fraction, right: Fraction, order: int,
+    rule: tuple[np.ndarray, np.ndarray],
 ) -> np.ndarray:
     """Observe one band directly from exact local density coefficients."""
     if order not in (48, 64):
         raise ValueError("fixed saved-interface quadrature order required")
-    nodes, weights = leggauss(order)
-    nodes = (nodes + 1.0) / 2.0
-    weights = weights / 2.0
+    nodes, weights = rule
+    if (
+        type(nodes) is not np.ndarray or type(weights) is not np.ndarray
+        or nodes.dtype != np.float64 or weights.dtype != np.float64
+        or nodes.shape != (order,) or weights.shape != (order,)
+    ):
+        raise ValueError("owned saved-interface quadrature rule required")
     total = np.zeros(3, dtype=np.float64)
     for (a, b), density in zip(
         zip(value.cuts, value.cuts[1:]), value.interface.coefficients,
@@ -118,6 +123,72 @@ def _quadrature_band(
     return total
 
 
+def _quadrature_rule(order: int) -> tuple[np.ndarray, np.ndarray]:
+    nodes, weights = leggauss(order)
+    return (
+        np.ascontiguousarray((nodes + 1.0) / 2.0, dtype=np.float64),
+        np.ascontiguousarray(weights / 2.0, dtype=np.float64),
+    )
+
+
+def _resource_requirements(
+    value: recovery.Recovery, budget: interface.InterfaceBudget,
+) -> tuple[int, int, int]:
+    intervals = len(value.cuts) - 1
+    exact = (
+        value.cuts
+        + value.interface.cosine
+        + tuple(item for row in value.interface.atoms for item in row)
+        + tuple(
+            item
+            for block in value.interface.coefficients
+            for row in block
+            for item in row
+        )
+    )
+    if any(type(item) is not Fraction for item in exact):
+        raise ValueError("exact saved-interface Recovery inventory required")
+    bit_sizes = tuple(
+        item.numerator.bit_length() + item.denominator.bit_length()
+        for item in exact
+    )
+    if any(
+        item.numerator.bit_length() > budget.action_budget.max_fraction_bits
+        or item.denominator.bit_length() > budget.action_budget.max_fraction_bits
+        for item in exact
+    ):
+        raise ValueError("saved-interface producer fraction bit budget exceeded")
+    # Per band: three total Actions, three endpoint Actions and three
+    # line-only differences.  The bound charges each of those 72 Action
+    # constructions at the declared total-bit envelope.
+    action_constructions = len(interface.BANDS) * 9
+    aggregate_bits = sum(bit_sizes) + (
+        action_constructions * budget.action_budget.max_total_bits
+    )
+    quadrature_operations = (
+        len(interface.BANDS) * intervals * (48 + 64) * 48
+    )
+    exact_action_operations = len(interface.BANDS) * intervals * 3 * 6 * 64
+    decimal_operations = len(interface.BANDS) * 6 * 120 * 6 * 32
+    operations = quadrature_operations + exact_action_operations + decimal_operations
+
+    fraction_slot = 512 + (2 * budget.action_budget.max_fraction_bits + 7) // 8
+    exact_storage = len(exact) * fraction_slot
+    live_action_storage = 8 * (1 + 8 * intervals) * fraction_slot
+    decimal_scratch = 120 * 12 * 512
+    gauss_scratch = 2 * (64 * 64 * 8 * 32 + 64 * 8 * 16)
+    retained_numeric = (
+        intervals * 3 * POLYNOMIAL_COEFFICIENTS * 16
+        + 2 * 64 * 3 * 8
+        + 7 * len(interface.BANDS) * 3 * 8
+    )
+    workspace = (
+        exact_storage + live_action_storage + decimal_scratch
+        + gauss_scratch + retained_numeric
+    )
+    return operations, aggregate_bits, workspace
+
+
 def produce_saved_interface(
     value: recovery.Recovery, *, budget: interface.InterfaceBudget,
 ) -> interface.SavedInterface:
@@ -127,16 +198,15 @@ def produce_saved_interface(
     intervals = len(value.cuts) - 1
     if intervals <= 0 or intervals > budget.max_intervals:
         raise ValueError("saved-interface producer interval budget exceeded")
-    operations = len(interface.BANDS) * intervals * (48 + 64) * 48
-    workspace = (
-        intervals * 3 * POLYNOMIAL_COEFFICIENTS * 16
-        + 2 * 64 * 3 * 8
-        + 7 * len(interface.BANDS) * 3 * 8
-    )
+    operations, aggregate_bits, workspace = _resource_requirements(value, budget)
     if operations > budget.max_aggregate_operations:
         raise ValueError("saved-interface producer operation budget exceeded")
+    if aggregate_bits > budget.max_aggregate_bits:
+        raise ValueError("saved-interface producer aggregate bit budget exceeded")
     if workspace > budget.max_work_bytes:
         raise ValueError("saved-interface producer workspace budget exceeded")
+
+    rules = {order: _quadrature_rule(order) for order in (48, 64)}
 
     density = np.asarray(
         [[[_finite_float(item, "density coefficient") for item in row]
@@ -162,8 +232,8 @@ def produce_saved_interface(
         endpoints = _endpoint_actions(value, left, right)
         analytic.append([_display(item) for item in actions])
         line.append([_display(item - endpoint) for item, endpoint in zip(actions, endpoints)])
-        observed48.append(_quadrature_band(value, left, right, 48))
-        observed64.append(_quadrature_band(value, left, right, 64))
+        observed48.append(_quadrature_band(value, left, right, 48, rules[48]))
+        observed64.append(_quadrature_band(value, left, right, 64, rules[64]))
     return interface.SavedInterface(
         value.cuts,
         density,

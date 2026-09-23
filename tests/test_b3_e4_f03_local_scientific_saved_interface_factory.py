@@ -30,9 +30,9 @@ def test_factory_produces_three_real_routes_and_verifier_roundtrip(monkeypatch):
     calls = []
     original = factory._quadrature_band
 
-    def observed(value, left, right, order):
+    def observed(value, left, right, order, rule):
         calls.append((left, right, order))
-        return original(value, left, right, order)
+        return original(value, left, right, order, rule)
 
     monkeypatch.setattr(factory, "_quadrature_band", observed)
     saved = factory.produce_saved_interface(recovered, budget=budget)
@@ -77,7 +77,9 @@ def test_factory_owns_all_arrays():
     assert all(not item.flags.writeable for item in arrays)
 
 
-@pytest.mark.parametrize("leaf", ("max_intervals", "max_aggregate_operations", "max_work_bytes"))
+@pytest.mark.parametrize(
+    "leaf", ("max_intervals", "max_aggregate_operations", "max_aggregate_bits"),
+)
 def test_factory_resource_failure_precedes_numerical_observation(monkeypatch, leaf):
     _, _, _, recovered, budget = _recovered()
     rejected = replace(budget, **{leaf: 1})
@@ -86,6 +88,34 @@ def test_factory_resource_failure_precedes_numerical_observation(monkeypatch, le
     )
     with pytest.raises(ValueError, match="producer .* budget"):
         factory.produce_saved_interface(recovered, budget=rejected)
+
+
+def test_factory_workspace_boundary_precedes_actions_and_quadrature(monkeypatch):
+    _, _, _, recovered, budget = _recovered()
+    _, _, required = factory._resource_requirements(recovered, budget)
+    rejected = replace(budget, max_work_bytes=required - 1)
+    monkeypatch.setattr(
+        factory.recovery, "band", lambda *args: pytest.fail("Action work preceded preflight"),
+    )
+    monkeypatch.setattr(
+        factory, "_quadrature_rule", lambda *args: pytest.fail("Gauss work preceded preflight"),
+    )
+    with pytest.raises(ValueError, match="workspace budget"):
+        factory.produce_saved_interface(recovered, budget=rejected)
+
+
+def test_factory_builds_each_quadrature_rule_once(monkeypatch):
+    _, _, _, recovered, budget = _recovered()
+    calls = []
+    original = factory._quadrature_rule
+
+    def observed(order):
+        calls.append(order)
+        return original(order)
+
+    monkeypatch.setattr(factory, "_quadrature_rule", observed)
+    factory.produce_saved_interface(recovered, budget=budget)
+    assert calls == [48, 64]
 
 
 def test_factory_rejects_wrong_input_before_observation(monkeypatch):
