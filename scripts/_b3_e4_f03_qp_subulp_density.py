@@ -8,6 +8,7 @@ not itself certify the complete functional or a scientific comparison.
 from __future__ import annotations
 
 from decimal import Decimal, localcontext
+from fractions import Fraction
 
 import numpy as np
 
@@ -16,6 +17,35 @@ from scripts._b3_e4_f03_primal_ritz import F0, SECTION
 
 def _d(value):
     return Decimal.from_float(float(value))
+
+
+def audit_represented_crossings(oracle):
+    """Return exact binary64 event audit; reject a displaced interior event.
+
+    The event builder subtracts rounded geometry in binary64. Fraction
+    arithmetic checks whether that subtraction preserves its *exact*
+    crossing coordinate. An interior discrepancy would invalidate a fixed
+    polynomial interval even if it is less than one ulp.
+    """
+    interior = set()
+    boundary_max = Fraction(0)
+    for edge in oracle.x:
+        for ox, _ in oracle.offsets:
+            for boundary in (ox-oracle.a, ox+oracle.a):
+                represented = edge-boundary
+                exact = Fraction.from_float(edge)-Fraction.from_float(boundary)
+                exact_inside = Fraction(0) < exact < Fraction(1)
+                represented_inside = 0. < represented < 1.
+                if exact_inside != represented_inside:
+                    raise ArithmeticError("rounded crossing changes beam-domain inventory")
+                if exact_inside:
+                    interior.add(represented)
+                    if exact != Fraction.from_float(represented):
+                        raise ArithmeticError("rounded interior crossing changes station partition")
+                elif represented in (0., 1.):
+                    boundary_max = max(boundary_max,
+                        abs(exact-Fraction.from_float(represented)))
+    return len(interior), float(boundary_max)
 
 
 def _moment(low, high, count):
@@ -56,7 +86,38 @@ def _legendre(z, degree):
     return values
 
 
-def _density(oracle, coefficients, station):
+def _nodal_coefficients(oracle, q):
+    """Independently reconstruct exact-Decimal cell polynomials from nodes."""
+    values = np.asarray(q, dtype=np.float64)
+    if (values.shape != (2*oracle.n,) or not np.isfinite(values).all()):
+        raise ValueError("invalid nodal state for sub-ulp reconstruction")
+    fields = values.reshape(2, oracle.nx, oracle.ny)
+    p = oracle.p
+    nodes = [2*Decimal(a)/p-1 for a in range(p+1)]
+    vander = [[Decimal(1) if i == 0 else t**i
+               for i in range(p+1)] for t in nodes]
+    components = []
+    for field in fields:
+        cells = []
+        for ix in range(len(oracle.x)-1):
+            row = []
+            for iy in range(len(oracle.y)-1):
+                block = [[_d(field[ix*p+a, iy*p+b])
+                          for b in range(p+1)] for a in range(p+1)]
+                ycoeff = [[item[0] for item in _solve(vander,
+                          [[block[a][b]] for b in range(p+1)])]
+                          for a in range(p+1)]
+                xcoeff = [[item[0] for item in _solve(vander,
+                          [[ycoeff[a][k]] for a in range(p+1)])]
+                          for k in range(p+1)]
+                row.append([[xcoeff[k][i] for k in range(p+1)]
+                            for i in range(p+1)])
+            cells.append(row)
+        components.append(cells)
+    return components
+
+
+def _density(oracle, coefficients, station, *, return_kinematics=False):
     """Polynomial section density; cosine is intentionally omitted."""
     p = oracle.p
     xs, ys = tuple(map(_d, oracle.x)), tuple(map(_d, oracle.y))
@@ -135,14 +196,34 @@ def _density(oracle, coefficients, station):
                       -re[1]+le[1]-re[5]+le[5])/j
     pose, first, second = ([v/area for v in row]
                            for row in (pose, first, second))
+    if return_kinematics:
+        return pose, first, second
     ea, ei, ga = map(_d, np.diag(SECTION))
     return (ea*second[0],
             ga*(second[1]-first[2])+_d(F0),
             ei*second[2]+ga*(first[1]-pose[2]))
 
 
+def exact_endpoint_resultant(oracle, cell_coefficients, station,
+                             *, precision=120):
+    """Section resultant from the rounded physical geometry at s=0 or 1."""
+    if station not in (0., 1.):
+        raise ValueError("only physical beam endpoints are supported")
+    with localcontext() as ctx:
+        ctx.prec = precision
+        cc = [[[[[_d(v) for v in row] for row in plane]
+                 for plane in component_i] for component_i in component]
+              for component in cell_coefficients]
+        pose, first, _ = _density(oracle, cc, _d(station),
+                                  return_kinematics=True)
+        ea, ei, ga = map(_d, np.diag(SECTION))
+        return np.asarray([float(ea*first[0]),
+                           float(ga*(first[1]-pose[2])),
+                           float(ei*first[2])])
+
+
 def reconstruct_subulp_polynomial(oracle, cell_coefficients, left, right,
-                                  degree, *, precision=90):
+                                  degree, *, precision=90, nodal_state=None):
     """Return Legendre coefficients and held-point Decimal fit defect.
 
     Refuse an exact geometric crossing inside the represented interval: one
@@ -163,9 +244,12 @@ def reconstruct_subulp_polynomial(oracle, cell_coefficients, left, right,
                     crossing = _d(x)-_d(boundary)
                     if l < crossing < r:
                         raise ArithmeticError("unrepresented crossing inside sub-ulp interval")
-        cc = [[[[[_d(v) for v in row] for row in plane]
-                 for plane in component_i] for component_i in component]
-              for component in cell_coefficients]
+        if nodal_state is None:
+            cc = [[[[[_d(v) for v in row] for row in plane]
+                     for plane in component_i] for component_i in component]
+                  for component in cell_coefficients]
+        else:
+            cc = _nodal_coefficients(oracle, nodal_state)
         n = degree+1
         nodes = [Decimal(-1)+Decimal(2*i+1)/n for i in range(n)]
         points = [l+(z+1)*(r-l)/2 for z in nodes]

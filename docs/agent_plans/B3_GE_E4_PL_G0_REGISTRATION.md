@@ -1733,4 +1733,30 @@ no mechanics blocker within that algebraic scope. A second blended
 support-lifting extension passed the affected p1 reaction-invariance
 check; higher-order extensions are not yet rerun. Neither result is a
 continuum-error estimate or a physical refinement pass. The complete
-functional and its Qp density conversion remain open, as does F03/G0B.
+functional and its Qp density conversion were still open at that step,
+as were F03/G0B.
+
+The subsequent standalone piecewise Green functional, Qp density
+conversion and finite one-sided-fallback diagnostic are preparatory only.
+The fallback has three one-ulp rows per default-grid degree; its two
+endpoint choices do not enclose an unknown interior polynomial. A separate
+Decimal extension at `02ff44ea` reconstructs these rows from physical
+cell polynomials, checks held high-precision points and preserves the
+unchanged cosine and endpoint atoms. The combined focused functional
+suite passed 35/35 at that commit. Follow-up exact nodal-Vandermonde and
+Fraction crossing checks passed 13 focused tests. Independent mechanics
+review found no preparatory formula blocker. All ten interior crossing
+locations match the represented binary64 events exactly on the frozen
+default grid; the sole tip-boundary shift is `2^-53`. For unregistered
+solved Q1/Q2/Q3 states, the independent nodal coefficient defect was at
+most `3.50e-16` normalized and exact-geometry endpoint-resultant defect
+at most `4.92e-17` normalized. These checks share the Decimal density
+mechanics and are not a separate scientific qualification.
+
+The same unregistered solved states give complete-functional Q1→Q2 and
+Q2→Q3 relative changes `6.279584%` and `1.114597%`. Both exceed the
+proposed 1% settling criterion; the draft Q1/Q2/Q3 gate must not be
+registered as a likely passing scientific sequence. A better-resolved
+systematic h/p sequence, whole-route resource screen, frozen runner and
+adjudicator, independent execution review and one-use registration remain
+needed. **F03/G0B remain open; G1 remains barred.**

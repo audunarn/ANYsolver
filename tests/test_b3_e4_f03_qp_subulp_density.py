@@ -13,7 +13,8 @@ from scripts._b3_e4_f03_qp_functional_conversion import (
 )
 from scripts._b3_e4_f03_qp_piecewise_moment_oracle import PiecewisePadMomentOracle
 from scripts._b3_e4_f03_qp_subulp_density import (
-    _d, _density, reconstruct_subulp_polynomial,
+    _d, _density, audit_represented_crossings,
+    reconstruct_subulp_polynomial,
 )
 
 
@@ -67,3 +68,31 @@ def test_crossing_inside_an_interval_is_rejected():
     with pytest.raises(ArithmeticError, match="crossing"):
         reconstruct_subulp_polynomial(oracle, oracle.coefficients(q),
                                       .55, .65, 3)
+
+
+def test_default_event_locations_have_no_interior_binary64_shift():
+    trace = FinitePadQpTrace(1)
+    oracle = PiecewisePadMomentOracle(1, x=trace.x, y=trace.y,
+        offsets=trace.offsets, halfwidth=trace.a, j=trace.j)
+    count, boundary_shift = audit_represented_crossings(oracle)
+    assert count == len(trace.station_breakpoints())-2
+    assert boundary_shift == 2.**-53
+
+
+def test_nodal_reconstruction_is_independent_of_float_cell_coefficients():
+    trace = FinitePadQpTrace(2)
+    oracle = PiecewisePadMomentOracle(2, x=trace.x, y=trace.y,
+        offsets=trace.offsets, halfwidth=trace.a, j=trace.j)
+    q = np.random.default_rng(113).normal(size=2*trace.n)*2e-4
+    coefficients = oracle.coefficients(q)
+    left, right = trace.station_intervals()[5]
+    baseline, _ = reconstruct_subulp_polynomial(oracle, coefficients,
+        left, right, 4, nodal_state=q)
+    perturbed = coefficients.copy()
+    perturbed[0] += 1e-4
+    independent, _ = reconstruct_subulp_polynomial(oracle, perturbed,
+        left, right, 4, nodal_state=q)
+    dependent, _ = reconstruct_subulp_polynomial(oracle, perturbed,
+        left, right, 4)
+    np.testing.assert_array_equal(baseline, independent)
+    assert np.max(np.abs(baseline-dependent)) > 1.

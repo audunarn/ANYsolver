@@ -6,7 +6,9 @@ import pytest
 from scripts._b3_e4_f03_conforming_qp_trace import FinitePadQpTrace
 from scripts._b3_e4_f03_qp_piecewise_functional import norm_squared
 from scripts._b3_e4_f03_qp_precise_functional import (
-    HELD_TOLERANCE, PRECISION_TOLERANCE, from_qp_recovery_precise,
+    ENDPOINT_TOLERANCE, HELD_TOLERANCE, NODAL_TOLERANCE,
+    PRECISION_TOLERANCE,
+    from_qp_recovery_precise,
 )
 
 
@@ -22,7 +24,11 @@ def test_precise_conversion_replaces_only_three_unresolved_rows(degree):
     base, precise = audit.base.functional, audit.functional
     assert audit.repaired_indices == (5, 8, 10)
     assert audit.max_precision_defect <= PRECISION_TOLERANCE
-    assert audit.max_held_defect/1e6 <= HELD_TOLERANCE
+    assert audit.max_held_defect/min((1e6, 1e6*.46)) <= HELD_TOLERANCE
+    assert audit.max_nodal_defect <= NODAL_TOLERANCE
+    assert audit.exact_interior_crossings == len(trace.station_breakpoints())-2
+    assert audit.max_boundary_crossing_shift <= np.finfo(float).eps
+    assert audit.max_endpoint_defect <= ENDPOINT_TOLERANCE
     np.testing.assert_array_equal(precise.breaks, base.breaks)
     np.testing.assert_array_equal(precise.cosine, base.cosine)
     np.testing.assert_array_equal(precise.atoms, base.atoms)

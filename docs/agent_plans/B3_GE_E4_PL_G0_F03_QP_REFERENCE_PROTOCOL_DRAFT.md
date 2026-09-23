@@ -11,9 +11,17 @@ attachment and cannot by itself close F03 or G0B.
 one-use scientific gate. The unregistered solved-state preparation with
 high-precision one-ulp coefficient recovery gave full-functional pair
 changes of `6.279584%` (Q1→Q2) and `1.114597%` (Q2→Q3). Both exceed the
-proposed 1% limit. The coefficient route passed focused numerical checks,
-but independent review and default-grid end-to-end work/resource checks
-remain pending. Select and freeze a genuinely better-resolved h/p sequence
+proposed 1% limit. The coefficient route passed focused numerical checks.
+Independent mechanics review found no preparatory formula blocker, but
+default-grid end-to-end work/resource checks remain pending. Subsequent
+independent Decimal reconstruction from the nodal state agrees with the
+float-cell-coefficient path at most `3.50e-16` normalized on the solved
+Q1/Q2/Q3 states. Exact Fraction arithmetic finds no displaced interior
+event on this frozen grid; the one `2^-53` tip-boundary discrepancy changes
+the independently evaluated endpoint resultant at most `4.92e-17`
+normalized. Both routes share the same Decimal density mechanics, so a
+separately implemented high-precision mechanics oracle remains desirable.
+Select and freeze a genuinely better-resolved h/p sequence
 under a later version of this draft; retain these exploratory results and
 the earlier failed Ritz evidence. Do not relax the physical criterion.
 

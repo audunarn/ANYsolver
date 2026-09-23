@@ -286,5 +286,20 @@ not a continuum-error estimate or a physical settling result.
 Six edge reactions now have two different interior extensions: boundary
 node liftings and linearly blended liftings with identical support traces.
 The affected custom p1 solved-state test passed their work invariance
-check; p2/p3 have not been rerun after this addition. The continuous
-full-functional norm and measured physical p/h trends remain open.
+check; p2/p3 have not been rerun after this addition.
+
+The separate piecewise Green functional and Qp density conversion now
+support a preparatory complete-functional comparison. The default grid's
+three one-ulp intervals per degree cannot be fitted with binary64 interior
+samples. A Decimal cell-polynomial extension reconstructs them at 90 and
+120 digits; exact nodal-Vandermonde reconstruction and Fraction crossing
+audits supply separate coefficient and event-location checks. The frozen
+default grid has ten exact interior crossing locations and one `2^-53`
+tip-boundary discrepancy; solved-state endpoint resultants agree at most
+`4.92e-17` normalized. Independent mechanics review found no bounded
+preparatory blocker, but a separate high-precision mechanics oracle and
+registered end-to-end qualification remain absent. The unregistered
+solved Q1→Q2 and Q2→Q3 complete-functional distances are `6.279584%`
+and `1.114597%`. They do not meet the draft 1% settling criterion, so
+the Q1/Q2/Q3 gate must be revised before registration. The earlier
+failed Ritz evidence remains untouched. **F03/G0B remain open; G1 barred.**
