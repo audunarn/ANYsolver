@@ -20,6 +20,7 @@ def plan():
 
 def _write_all(directory: Path, plan):
     directory.mkdir()
+    inverse.prepare_directory(directory)
     expected = {}
     for block in plan.inverse_blocks:
         value = (
@@ -54,6 +55,7 @@ def test_complete_inverse_stream_roundtrip_and_index(plan, tmp_path):
 def test_block_shape_start_nonfinite_and_duplicate_rejected(plan, tmp_path):
     directory = tmp_path / "bad-block"
     directory.mkdir()
+    inverse.prepare_directory(directory)
     block = plan.inverse_blocks[0]
     with pytest.raises(ValueError, match="unplanned"):
         inverse.write_block(directory, plan, 1, np.zeros((block.rows, block.columns)))
@@ -96,7 +98,7 @@ def test_header_shape_dtype_and_size_are_exact(plan, tmp_path):
     block = plan.inverse_blocks[0]
     path = inverse._path(directory, block)
     np.save(path, np.zeros((block.rows, block.columns), dtype=np.float32), allow_pickle=False)
-    with pytest.raises(ValueError, match="header"):
+    with pytest.raises(ValueError, match="size|header"):
         inverse.read_block(directory, plan, block.start)
 
 

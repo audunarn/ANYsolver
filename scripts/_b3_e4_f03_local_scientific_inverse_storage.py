@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import hashlib
 import io
 import json
-import math
+import os
 from pathlib import Path
 
 import numpy as np
@@ -111,18 +111,37 @@ def write_block(
         raise ValueError("finite native float64 F03 inverse block required")
     canonical = np.asarray(value, dtype="<f8").copy()
     path = _path(directory, block)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("xb") as stream:
-        np.lib.format.write_array(stream, canonical, allow_pickle=False)
-        if stream.tell() > block.bytes + storage.MAX_HEADER_BYTES:
-            raise ValueError("written F03 inverse block exceeds exact bound")
+    with evidence._open_directory_no_follow(path.parent):
+        with path.open("xb") as stream:
+            np.lib.format.write_array(stream, canonical, allow_pickle=False)
+            if stream.tell() > block.bytes + storage.MAX_HEADER_BYTES:
+                raise ValueError("written F03 inverse block exceeds exact bound")
     return path
+
+
+def prepare_directory(directory: Path) -> Path:
+    directory = Path(directory)
+    with evidence._open_directory_no_follow(directory):
+        inverse = directory / "inverse"
+        inverse.mkdir()
+    with evidence._open_directory_no_follow(inverse):
+        pass
+    return inverse
 
 
 def _read_block_payload(path: Path, block: archive.InverseBlock) -> tuple[bytes, int]:
     maximum = block.bytes + storage.MAX_HEADER_BYTES
     with evidence._open_no_follow(path) as stream:
+        info = os.fstat(stream.fileno())
+        identity = evidence._FileIdentity(
+            block.name, info.st_size, info.st_dev, info.st_ino,
+            info.st_mtime_ns, info.st_ctime_ns,
+        )
+        if not evidence._same_file(info, identity) or not block.bytes < info.st_size <= maximum:
+            raise ValueError("F03 inverse block file identity or size is invalid")
         payload = stream.read(maximum + 1)
+        if not evidence._same_file(os.fstat(stream.fileno()), identity):
+            raise ValueError("F03 inverse block changed while reading")
     if len(payload) > maximum:
         raise ValueError("F03 inverse block exceeds exact bound")
     stream = io.BytesIO(payload)
@@ -167,18 +186,24 @@ def make_index(directory: Path, plan: archive.CaseArchivePlan) -> InverseIndex:
         raise ValueError("validated F03 archive plan required")
     inverse = Path(directory) / "inverse"
     names = tuple(Path(block.name).name for block in plan.inverse_blocks)
-    tree = evidence._tree(inverse, names, frozenset())
+    maximum = sum(block.bytes + storage.MAX_HEADER_BYTES for block in plan.inverse_blocks)
+    with evidence._snapshot(inverse, names, maximum, frozenset()) as (identities, streams):
+        return _index_from_snapshot(plan, identities, streams)
+
+
+def _index_from_snapshot(plan, identities, streams) -> InverseIndex:
+    if len(identities) != len(plan.inverse_blocks) or len(streams) != len(identities):
+        raise ValueError("incomplete F03 inverse snapshot")
     records = []
-    for block, name in zip(plan.inverse_blocks, names):
-        identity = tree.get(name)
-        if identity is None:
-            raise ValueError("missing F03 inverse block")
-        if not block.bytes < identity.bytes <= block.bytes + storage.MAX_HEADER_BYTES:
-            raise ValueError("F03 inverse block file size disagrees with plan")
-        digest = evidence._hash_member(inverse / name, identity)
+    for block, identity, stream in zip(plan.inverse_blocks, identities, streams):
+        if (
+            identity.name != Path(block.name).name
+            or not block.bytes < identity.bytes <= block.bytes + storage.MAX_HEADER_BYTES
+        ):
+            raise ValueError("F03 inverse block file size or order disagrees with plan")
         records.append(BlockRecord(
             block.start, block.columns, block.rows, block.bytes, identity.bytes,
-            block.name, digest,
+            block.name, evidence._hash_open(stream, identity),
         ))
     return InverseIndex(
         SCHEMA, plan.case_id, plan.source_commit, _plan_sha256(plan),
@@ -219,10 +244,16 @@ def _payload(index: InverseIndex) -> bytes:
 
 
 def write_index(directory: Path, plan: archive.CaseArchivePlan) -> tuple[InverseIndex, str]:
-    index = make_index(directory, plan)
-    payload = _payload(index)
-    with (Path(directory) / "inverse_index.json").open("xb") as stream:
-        stream.write(payload)
+    directory = Path(directory)
+    inverse = directory / "inverse"
+    names = tuple(Path(block.name).name for block in plan.inverse_blocks)
+    maximum = sum(block.bytes + storage.MAX_HEADER_BYTES for block in plan.inverse_blocks)
+    with evidence._snapshot(inverse, names, maximum, frozenset()) as (identities, streams):
+        index = _index_from_snapshot(plan, identities, streams)
+        payload = _payload(index)
+        with evidence._open_directory_no_follow(directory):
+            with (directory / "inverse_index.json").open("xb") as output:
+                output.write(payload)
     return index, hashlib.sha256(payload).hexdigest()
 
 
@@ -260,13 +291,33 @@ def _decode(payload: bytes) -> InverseIndex:
 
 
 def read_index(directory: Path, plan: archive.CaseArchivePlan) -> tuple[InverseIndex, str]:
-    path = Path(directory) / "inverse_index.json"
-    with evidence._open_no_follow(path) as stream:
-        payload = stream.read(MAX_INDEX_BYTES + 1)
-    if len(payload) > MAX_INDEX_BYTES:
-        raise ValueError("F03 inverse index exceeds declared bound")
-    index = _decode(payload)
-    expected = make_index(directory, plan)
-    if _payload(index) != _payload(expected):
-        raise ValueError("stale or mismatched F03 inverse index")
+    directory = Path(directory)
+    path = directory / "inverse_index.json"
+    inverse = directory / "inverse"
+    names = tuple(Path(block.name).name for block in plan.inverse_blocks)
+    maximum = sum(block.bytes + storage.MAX_HEADER_BYTES for block in plan.inverse_blocks)
+    with evidence._open_directory_no_follow(directory):
+        with evidence._open_no_follow(path) as stream:
+            info = os.fstat(stream.fileno())
+            identity = evidence._FileIdentity(
+                "inverse_index.json", info.st_size, info.st_dev, info.st_ino,
+                info.st_mtime_ns, info.st_ctime_ns,
+            )
+            if not evidence._same_file(info, identity) or identity.bytes > MAX_INDEX_BYTES:
+                raise ValueError("F03 inverse index identity or size is invalid")
+            payload = stream.read(MAX_INDEX_BYTES + 1)
+            if len(payload) != identity.bytes:
+                raise ValueError("F03 inverse index changed while reading")
+            index = _decode(payload)
+            with evidence._snapshot(
+                inverse, names, maximum, frozenset(),
+            ) as (identities, streams):
+                expected = _index_from_snapshot(plan, identities, streams)
+                if _payload(index) != _payload(expected):
+                    raise ValueError("stale or mismatched F03 inverse index")
+                if not evidence._same_file(os.fstat(stream.fileno()), identity):
+                    raise ValueError("F03 inverse index changed during verification")
+                with evidence._open_no_follow(path) as final:
+                    if not evidence._same_file(os.fstat(final.fileno()), identity):
+                        raise ValueError("F03 inverse index changed after verification")
     return index, hashlib.sha256(payload).hexdigest()

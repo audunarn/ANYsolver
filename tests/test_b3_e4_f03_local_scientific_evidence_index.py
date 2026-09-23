@@ -120,9 +120,9 @@ def test_complete_archive_cap_reserves_index_and_receipt(plan, tmp_path, monkeyp
     observed = {}
     original = evidence._preflight
 
-    def record(root, names, limit):
+    def record(root, names, limit, infrastructure=evidence.INFRASTRUCTURE):
         observed["limit"] = limit
-        return original(root, names, limit)
+        return original(root, names, limit, infrastructure)
 
     monkeypatch.setattr(evidence, "_preflight", record)
     evidence.make_index(directory, plan, REGISTRATION, START)

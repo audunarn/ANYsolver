@@ -203,10 +203,11 @@ def _tree(
 
 def _preflight(
     directory: Path, names: tuple[str, ...], max_total_bytes: int,
+    infrastructure: frozenset[str] = INFRASTRUCTURE,
 ) -> tuple[_FileIdentity, ...]:
     if type(max_total_bytes) is not int or max_total_bytes <= 0:
         raise ValueError("positive F03 evidence byte limit required")
-    observed = _tree(directory, names)
+    observed = _tree(directory, names, infrastructure)
     if any(name not in observed for name in names):
         raise ValueError("missing F03 evidence member file")
     identities = []
@@ -323,15 +324,16 @@ def _hash_open(stream, identity: _FileIdentity) -> str:
 @contextmanager
 def _snapshot(
     directory: Path, names: tuple[str, ...], max_total_bytes: int,
+    infrastructure: frozenset[str] = INFRASTRUCTURE,
 ):
     directory = Path(directory)
     with ExitStack() as stack:
         stack.enter_context(_open_directory_no_follow(directory))
-        for name in sorted(_allowed_directories(names, INFRASTRUCTURE)):
+        for name in sorted(_allowed_directories(names, infrastructure)):
             path = directory.joinpath(*PurePosixPath(name).parts)
             if path.exists():
                 stack.enter_context(_open_directory_no_follow(path))
-        identities = _preflight(directory, names, max_total_bytes)
+        identities = _preflight(directory, names, max_total_bytes, infrastructure)
         streams = tuple(
             stack.enter_context(_open_no_follow(_path(directory, identity.name)))
             for identity in identities
