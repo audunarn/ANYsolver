@@ -315,9 +315,24 @@ def test_unregistered_pilot_reports_raw_scaled_metrics_and_identity(tmp_path):
         assert row["sha256"] == metric["checkpoint_sha256"][name]
     assert value["metrics_sha256"] == __import__("hashlib").sha256(
         canonical(metric)).hexdigest()
-    assert metric["scope"] == "G0_SYNTHETIC_MEASUREMENT_NOT_QUALIFICATION"
+    assert metric["schema"] == "G0_F06_CURVED_S3_V4_SCIENTIFIC_MEASUREMENT_V1"
+    assert metric["scope"] == "G0_S3_OWNED_REBASE_MEASUREMENT_NOT_ADJUDICATED"
+    assert metric["effective_environment"]["python_executable"]
+    assert metric["effective_environment"]["anysolver_import"]
+    assert "numba_cache_dir" in metric["effective_environment"]
+    assert set(metric["effective_environment"]["python_environment"]) == {
+        "PYTHONPATH", "PYTHONNOUSERSITE"}
+    if __import__("sys").platform == "win32":
+        assert metric["effective_environment"]["pywin32_version"]
+        assert metric["effective_environment"]["win32job_import"]
+    else:
+        assert metric["effective_environment"]["pywin32_version"] is None
+        assert metric["effective_environment"]["win32job_import"] is None
+    assert metric["effective_environment"]["numba_version"]
+    assert metric["effective_environment"]["llvmlite_version"]
+    assert "blas" in metric["effective_environment"]
     assert len(metric["source_commit"]) == 40
-    assert len(metric["source_sha256"]) >= 6
+    assert len(metric["source_sha256"]) == 25
     assert {"src/anysolver/_ge_beam3_native_generalized_element.py",
             "src/anysolver/_ge_beam3_generalized_ellipsoid_section.py",
             "src/anysolver/_ge_beam3_generalized_static_boundary.py"} <= set(
@@ -329,9 +344,13 @@ def test_unregistered_pilot_reports_raw_scaled_metrics_and_identity(tmp_path):
         "rehashed_zero_residual", "stale_successor_commit",
         "cancel_rebase_before_commit", "cancel_successor_before_commit"}
     assert all(row["status"] == "REJECTED" for row in metric["negative_checks"].values())
-    assert metric["negative_checks"]["cancel_rebase_before_commit"]["head_sha256"] is None
-    assert metric["negative_checks"]["cancel_successor_before_commit"]["head_sha256"] == (
-        metric["checkpoint_sha256"]["rebase"])
+    for name, row in metric["negative_checks"].items():
+        assert row["before_head_sha256"] == row["after_head_sha256"], name
+        assert row["before_generation"] == row["after_generation"], name
+    assert metric["negative_checks"]["cancel_rebase_before_commit"][
+        "after_head_sha256"] is None
+    assert metric["negative_checks"]["cancel_successor_before_commit"][
+        "after_head_sha256"] == metric["checkpoint_sha256"]["rebase"]
     assert all(row["status"] == "MATCHED" and
         row["direct_state_sha256"] == row["audited_state_sha256"]
         for row in metric["optional_replay_audit"].values())
@@ -347,7 +366,15 @@ def test_unregistered_pilot_reports_raw_scaled_metrics_and_identity(tmp_path):
             assert row["floor"] > 0. and row["normalization_scale"] >= row["floor"]
             assert np.isfinite(row["absolute_difference"])
             assert np.isfinite(row["normalized_difference"])
+            if name in ("shell_rotation", "beam_rotation"):
+                assert np.asarray(row["left_frames"]).shape == np.asarray(
+                    row["right_frames"]).shape
+            else:
+                assert np.asarray(row["left_values"]).shape == np.asarray(
+                    row["right_values"]).shape
         samples = metric["tangent_fd"][cursor]["samples"]
+        assert np.asarray(metric["tangent_fd"][cursor]["direction_spatial"]).shape == (
+            np.asarray(metric["tangent_fd"][cursor]["direction_chart"]).shape)
         assert [row["step_size"] for row in samples] == [2.e-3, 1.e-3, 5.e-4, 2.5e-4]
         assert samples[-1]["assembled_scaled"]["normalized_difference"] < 1.e-7
         mixed_errors = [row["assembled_scaled"]["normalized_difference"] for row in samples]
@@ -376,6 +403,7 @@ def test_unregistered_pilot_reports_raw_scaled_metrics_and_identity(tmp_path):
             assert np.isfinite(split[low]["maximum"]["normalized_difference"])
         for side in ("control", "rebased"):
             component = metric["component_fd"][cursor][side]
+            assert len(component["direction_shell_chart"]) == len(component["direction_shell"])
             assert [row["step_size"] for row in component["samples"]] == [
                 2.e-3, 1.e-3, 5.e-4, 2.5e-4]
             assert all(np.isfinite(row["normalized_difference"])

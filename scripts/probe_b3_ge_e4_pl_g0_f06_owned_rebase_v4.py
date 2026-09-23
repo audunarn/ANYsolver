@@ -12,6 +12,8 @@ from pathlib import Path
 from threading import Lock
 from time import perf_counter
 import argparse
+import os
+import platform
 import subprocess
 import sys
 
@@ -73,7 +75,8 @@ def _metric(left, right, floor_name):
     left_norm, right_norm = float(np.linalg.norm(x)), float(np.linalg.norm(y))
     absolute = float(np.linalg.norm(x-y))
     scale = max(floor, left_norm, right_norm)
-    return dict(unit=unit, floor=floor, left_norm=left_norm,
+    return dict(unit=unit, floor=floor, left_values=x.tolist(), right_values=y.tolist(),
+        left_norm=left_norm,
         right_norm=right_norm, absolute_difference=absolute,
         normalization_scale=scale, normalized_difference=absolute/scale)
 
@@ -119,7 +122,11 @@ def _rotation_metric(left, right, reference):
     left_norm = float(np.linalg.norm(_rotation_angles(left, reference)))
     right_norm = float(np.linalg.norm(_rotation_angles(right, reference)))
     scale = max(floor, left_norm, right_norm)
-    return dict(unit=unit, floor=floor, left_norm=left_norm,
+    return dict(unit=unit, floor=floor,
+        left_frames=np.asarray(left, dtype=float).tolist(),
+        right_frames=np.asarray(right, dtype=float).tolist(),
+        reference_frames=np.asarray(reference, dtype=float).tolist(),
+        left_norm=left_norm,
         right_norm=right_norm, absolute_difference=raw,
         normalization_scale=scale, normalized_difference=raw/scale)
 
@@ -789,7 +796,8 @@ def _fd_metrics(prototype, predecessor, state, cursor):
             gap_translation=_metric(expected[-6:-3], observed[-6:-3],
                 "gap_translation"),
             gap_rotation=_metric(expected[-3:], observed[-3:], "gap_rotation")))
-    return dict(direction_shell_norm=float(np.linalg.norm(spatial[:a.shell_count])),
+    return dict(direction_spatial=spatial.tolist(), direction_chart=chart.tolist(),
+        direction_shell_norm=float(np.linalg.norm(spatial[:a.shell_count])),
         direction_beam_retained_norm=float(np.linalg.norm(spatial[a.shell_count:-6])),
         direction_multiplier_norm=float(np.linalg.norm(spatial[-6:])),
         samples=rows)
@@ -880,6 +888,7 @@ def _component_fd(prototype, predecessor, state, cursor):
             dead_external_couple=_metric(np.zeros_like(external_fd[:, 3:]),
                 external_fd[:, 3:], "moment")))
     return dict(direction_shell=shell_spatial_direction.tolist(),
+        direction_shell_chart=shell_chart_direction.tolist(),
         direction_beam_retained=beam_direction.tolist(),
         direction_joint_port=port_direction.tolist(),
         direction_multiplier=spatial[-6:].tolist(),
@@ -978,6 +987,41 @@ def _fixed_reference_balance(owner, state, loaded, cursor):
         moment_reference_scaled=float(np.linalg.norm(moment))/reference_moment)
 
 
+def _effective_environment():
+    """Observe the actual child process using the supervisor's field layout."""
+    import importlib.metadata
+    import anysolver
+    import psutil
+    import scipy
+    import threadpoolctl
+    if sys.platform == "win32":
+        import win32job
+        pywin32_version = importlib.metadata.version("pywin32")
+        win32job_import = str(Path(win32job.__file__).resolve())
+    else:
+        pywin32_version = None
+        win32job_import = None
+
+    keys = ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+        "NUMBA_NUM_THREADS", "VECLIB_MAXIMUM_THREADS")
+    return dict(python_executable=str(Path(sys.executable).resolve()),
+        python_version=sys.version.split()[0],
+        numpy_version=np.__version__, scipy_version=scipy.__version__,
+        anysolver_import=str(Path(anysolver.__file__).resolve()),
+        psutil_version=psutil.__version__,
+        threadpoolctl_version=threadpoolctl.__version__,
+        pywin32_version=pywin32_version,
+        win32job_import=win32job_import,
+        numba_version=importlib.metadata.version("numba"),
+        llvmlite_version=importlib.metadata.version("llvmlite"),
+        platform=platform.platform(),
+        numba_cache_dir=os.environ.get("NUMBA_CACHE_DIR"),
+        python_environment={key: os.environ.get(key)
+            for key in ("PYTHONPATH", "PYTHONNOUSERSITE")},
+        thread_environment={key: os.environ.get(key) for key in keys},
+        blas=threadpoolctl.threadpool_info())
+
+
 def _pilot_sources():
     names = ("scripts/probe_b3_ge_e4_pl_g0_f06_owned_rebase_v4.py",
         "tests/test_b3_e4_f06_owned_rebase_v4.py",
@@ -997,7 +1041,13 @@ def _pilot_sources():
         "src/anysolver/_ge_beam3_generalized_static_boundary.py",
         "src/anysolver/_ge_beam3_p5/algebra.py",
         "src/anysolver/_ge_beam3_p5_seeded/core.py",
-        "src/anysolver/e4_pl_s3_v2d_element.py")
+        "src/anysolver/e4_pl_s3_v2d_element.py",
+        "src/anysolver/control.py",
+        "src/anysolver/_native_reference_modal.py",
+        "src/anysolver/_ge_beam3_native_generalized_loading.py",
+        "src/anysolver/_ge_beam3_native_line_loading.py",
+        "src/anysolver/_ge_beam3_centered_reference.py",
+        "src/anysolver/fe_core.py")
     return {name: _hash((ROOT/name).read_bytes()) for name in names}
 
 
@@ -1015,44 +1065,55 @@ class _PilotCancelAt(CancellationToken):
 def _negative_checks(prefix, rebased, successor, completed_owner):
     """Disposable hash, semantic and stale-head rejection observations."""
     results = {}
-    def rejected(name, expected, action):
+    def rejected(name, expected, owner, action):
+        before = (owner.head_sha256, owner.generation)
         try:
             action()
         except ValueError as error:
             if expected not in str(error):
                 raise RuntimeError(f"F06 pilot {name} rejected for a different reason") from error
+            after = (owner.head_sha256, owner.generation)
+            if after != before:
+                raise RuntimeError(f"F06 pilot {name} advanced accepted head") from error
             results[name] = dict(status="REJECTED", type=type(error).__name__,
-                reason=str(error))
+                reason=str(error), before_head_sha256=before[0],
+                before_generation=before[1], after_head_sha256=after[0],
+                after_generation=after[1])
         else:
             raise RuntimeError(f"F06 pilot {name} unexpectedly accepted")
+    bad_hash_owner = OwnedRebasePrototype()
     rejected("bad_external_hash", "external F06 prototype checkpoint hash",
-        lambda: OwnedRebasePrototype().restore(rebased.checkpoint,
+        bad_hash_owner, lambda: bad_hash_owner.restore(rebased.checkpoint,
             expected_sha256="0"*64))
     anchor = decode(rebased.checkpoint)
     anchor["anchor"][1][0][0] += .01
     anchor["rebased_state"]["anchor"][1][0][0] += .01
     anchor["rebased_state_sha256"] = _hash(canonical(anchor["rebased_state"]))
     raw_anchor = canonical(anchor)
+    anchor_owner = OwnedRebasePrototype()
     rejected("rehashed_anchor", "rebase event mismatch",
-        lambda: OwnedRebasePrototype().restore(raw_anchor,
+        anchor_owner, lambda: anchor_owner.restore(raw_anchor,
             expected_sha256=_hash(raw_anchor)))
     history = decode(successor.checkpoint)
     history["successor"]["state"]["shell_history"]["layer_stress"][0][0] += 1.e-4
     raw_history = canonical(history)
+    history_owner = OwnedRebasePrototype()
     rejected("rehashed_successor_history", "shell history disagreement",
-        lambda: OwnedRebasePrototype().restore(raw_history,
+        history_owner, lambda: history_owner.restore(raw_history,
             expected_sha256=_hash(raw_history)))
     zero = decode(successor.checkpoint)
     zero["successor"]["residual"] = [0.]*len(zero["successor"]["residual"])
     zero["successor"]["metric"] = 0.
     raw_zero = canonical(zero)
+    zero_owner = OwnedRebasePrototype()
     rejected("rehashed_zero_residual", "residual disagreement",
-        lambda: OwnedRebasePrototype().restore(raw_zero,
+        zero_owner, lambda: zero_owner.restore(raw_zero,
             expected_sha256=_hash(raw_zero)))
     rejected("stale_successor_commit", "stale successor predecessor",
-        lambda: completed_owner.continue_loaded(rebased.checkpoint,
+        completed_owner, lambda: completed_owner.continue_loaded(rebased.checkpoint,
             expected_sha256=rebased.checkpoint_sha256))
     cancel_rebase = OwnedRebasePrototype()
+    before_cancel_rebase = (cancel_rebase.head_sha256, cancel_rebase.generation)
     try:
         cancel_rebase.rebase(prefix.checkpoint,
             expected_sha256=_hash(prefix.checkpoint),
@@ -1062,10 +1123,17 @@ def _negative_checks(prefix, rebased, successor, completed_owner):
             raise RuntimeError("F06 cancelled rebase advanced accepted head") from error
         results["cancel_rebase_before_commit"] = dict(status="REJECTED",
             type=type(error).__name__, reason=str(error),
-            head_sha256=None, generation=None)
+            before_head_sha256=before_cancel_rebase[0],
+            before_generation=before_cancel_rebase[1],
+            after_head_sha256=cancel_rebase.head_sha256,
+            after_generation=cancel_rebase.generation)
     else:
         raise RuntimeError("F06 pilot cancelled rebase unexpectedly accepted")
     cancel_successor = OwnedRebasePrototype()
+    cancel_successor.restore(rebased.checkpoint,
+        expected_sha256=rebased.checkpoint_sha256)
+    before_cancel_successor = (cancel_successor.head_sha256,
+        cancel_successor.generation)
     try:
         cancel_successor.continue_loaded(rebased.checkpoint,
             expected_sha256=rebased.checkpoint_sha256,
@@ -1076,7 +1144,10 @@ def _negative_checks(prefix, rebased, successor, completed_owner):
             raise RuntimeError("F06 cancelled successor changed predecessor head") from error
         results["cancel_successor_before_commit"] = dict(status="REJECTED",
             type=type(error).__name__, reason=str(error),
-            head_sha256=cancel_successor.head_sha256, generation=1)
+            before_head_sha256=before_cancel_successor[0],
+            before_generation=before_cancel_successor[1],
+            after_head_sha256=cancel_successor.head_sha256,
+            after_generation=cancel_successor.generation)
     else:
         raise RuntimeError("F06 pilot cancelled successor unexpectedly accepted")
     return results
@@ -1092,6 +1163,7 @@ def _control_state(control, assembly):
 def measure_pilot(*, checkpoint_dir=None):
     """Collect raw preparatory metrics; no registration or gate receipt."""
     started = perf_counter()
+    effective_environment = _effective_environment()
     source = OwnedRebasePrototype()
     prefix = source.legacy_prefix()
     if prefix.status != "paused" or prefix.state.cursor != 2:
@@ -1204,8 +1276,11 @@ def measure_pilot(*, checkpoint_dir=None):
         for name, raw in checkpoints.items():
             with (directory/sidecars[name]["file"]).open("xb") as stream:
                 stream.write(raw)
-    payload = dict(schema="G0_F06_CURVED_S3_V4_UNREGISTERED_PILOT_METRICS_V1",
-        scope="G0_SYNTHETIC_MEASUREMENT_NOT_QUALIFICATION",
+    if _effective_environment() != effective_environment:
+        raise ValueError("F06 child process environment changed during measurement")
+    payload = dict(schema="G0_F06_CURVED_S3_V4_SCIENTIFIC_MEASUREMENT_V1",
+        scope="G0_S3_OWNED_REBASE_MEASUREMENT_NOT_ADJUDICATED",
+        effective_environment=effective_environment,
         source_commit=subprocess.check_output(("git", "rev-parse", "HEAD"),
             cwd=ROOT, text=True).strip(), source_sha256=_pilot_sources(),
         targets=TARGETS,
