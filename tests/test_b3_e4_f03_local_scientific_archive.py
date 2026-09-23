@@ -28,7 +28,7 @@ def test_plan_roundtrip_and_complete_single_use_inverse_stream(records, tmp_path
     assert restored.inverse_blocks[-1].start + restored.inverse_blocks[-1].columns == 1473
     assert sum(block.bytes for block in restored.inverse_blocks) == 17_357_832
     assert restored.raw_archive_bytes == 512 * 1024**2
-    assert restored.resource_limits == cases.resource_contract()
+    assert restored.resource_limits == archive.resource_contract()
     assert len(restored.members) == len(set(restored.members))
     with pytest.raises(FileExistsError):
         archive.write_plan(path, plan)

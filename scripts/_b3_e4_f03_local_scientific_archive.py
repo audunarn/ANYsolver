@@ -14,6 +14,7 @@ import re
 import zipfile
 
 from scripts import _b3_e4_f03_local_scientific_cases as cases
+from scripts import _b3_e4_f03_local_scientific_budgets as budgets
 
 
 SCHEMA = "f03_local_scientific_archive_plan_v1"
@@ -39,6 +40,11 @@ GROUP_MEMBERS = (
     "evidence_index.json",
     "case_receipt.json",
 )
+
+
+def resource_contract() -> tuple[tuple[str, int], ...]:
+    """Complete archive-bound producer and adjudicator resource identity."""
+    return cases.resource_contract() + budgets.resource_contract()
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,7 +105,7 @@ class CaseArchivePlan:
                 or item[1] <= 0
                 for item in self.resource_limits
             )
-            or self.resource_limits != cases.resource_contract()
+            or self.resource_limits != resource_contract()
             or type(self.raw_archive_bytes) is not int
             or self.raw_archive_bytes != cases.ARCHIVE_BYTES
             or type(self.inverse_blocks) is not tuple
@@ -145,7 +151,7 @@ def make_case_plan(
         record.topology_sha256,
         inventory,
         order,
-        cases.resource_contract(),
+        resource_contract(),
         cases.ARCHIVE_BYTES,
         blocks,
         GROUP_MEMBERS,
@@ -198,10 +204,10 @@ def _decode(payload: bytes) -> CaseArchivePlan:
         "kkt_order", "resource_limits", "raw_archive_bytes", "group_members", "inverse_blocks",
     } or type(value["inverse_blocks"]) is not list or type(value["resource_limits"]) is not dict:
         raise ValueError("invalid F03 archive plan inventory")
-    if set(value["resource_limits"]) != {name for name, _ in cases.resource_contract()}:
+    if set(value["resource_limits"]) != {name for name, _ in resource_contract()}:
         raise ValueError("invalid F03 archive resource inventory")
     resource_limits = tuple(
-        (name, value["resource_limits"][name]) for name, _ in cases.resource_contract()
+        (name, value["resource_limits"][name]) for name, _ in resource_contract()
     )
     blocks = []
     for item in value["inverse_blocks"]:
