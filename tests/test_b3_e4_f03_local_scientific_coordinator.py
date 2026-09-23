@@ -243,6 +243,10 @@ def test_one_case_writes_terminal_before_failure_closure(monkeypatch, tmp_path):
     def supervised(argv, **kwargs):
         assert argv[-1] == DIGEST
         assert registration.REGISTRATION_TOKEN not in argv
+        assert not (directory / "stdout.log").exists()
+        assert not (directory / "stderr.log").exists()
+        kwargs["stdout"].write(b"captured stdout")
+        kwargs["stderr"].write(b"captured stderr")
         events.append("launch")
         return terminal
 
@@ -260,6 +264,8 @@ def test_one_case_writes_terminal_before_failure_closure(monkeypatch, tmp_path):
     assert events == ["launch", "terminal", "closure"]
     assert (directory / "stdout.log").exists()
     assert (directory / "stderr.log").exists()
+    assert (directory / "stdout.log").read_bytes() == b"captured stdout"
+    assert (directory / "stderr.log").read_bytes() == b"captured stderr"
 
 
 def test_typed_cancellation_closes_case_and_propagates(monkeypatch, tmp_path):
@@ -287,3 +293,27 @@ def test_typed_cancellation_closes_case_and_propagates(monkeypatch, tmp_path):
         )
     assert events == ["terminal", "closure"]
     assert (directory / "stdout.log").exists()
+
+
+def test_log_write_failure_preserves_typed_cancellation(monkeypatch, tmp_path):
+    value, record, directory = _one_case_value(tmp_path)
+    monkeypatch.setattr(coordinator.archive, "read_plan", lambda *args: SimpleNamespace())
+    monkeypatch.setattr(coordinator.adjudicator, "_verify_registered_plan_bytes",
+                        lambda *args: None)
+    monkeypatch.setattr(coordinator.lifecycle, "plan_sha256", lambda *args: DIGEST)
+    receipt = supervisor.SupervisionReceipt(
+        "cancelled", None, 123, 1.0, 1024, (123,), (123,), "KeyboardInterrupt",
+    )
+
+    def cancelled(*args, **kwargs):
+        (directory / "stdout.log").write_bytes(b"unexpected competing file")
+        kwargs["stderr"].write(b"cancelled after useful diagnostic")
+        raise supervisor.SupervisionCancelled(receipt)
+
+    monkeypatch.setattr(coordinator.supervisor, "supervise", cancelled)
+    with pytest.raises(supervisor.SupervisionCancelled) as captured:
+        coordinator._run_one(
+            tmp_path, value, DIGEST, record, (record,), budgets.make_scientific_budgets(),
+        )
+    assert isinstance(captured.value.__cause__, FileExistsError)
+    assert (directory / "stderr.log").read_bytes() == b"cancelled after useful diagnostic"

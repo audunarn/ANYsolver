@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import hashlib
+import io
 import os
 import json
 from pathlib import Path
@@ -287,25 +288,49 @@ def _run_one(
         raise ValueError("F03 child thread settings changed")
     stdout_path = run_root.joinpath(*command.stdout_path.split("/"))
     stderr_path = run_root.joinpath(*command.stderr_path.split("/"))
-    with stdout_path.open("xb") as stdout, stderr_path.open(
-        "xb"
-    ) as stderr:
+    # The child inventories its case directory before the supervisor finishes.
+    # Keep the bounded streams private until then: an open Windows log writer
+    # cannot be reopened by the child's no-follow evidence scanner.
+    stdout = io.BytesIO()
+    stderr = io.BytesIO()
+
+    def write_logs() -> None:
+        first_error = None
+        for path, stream in ((stdout_path, stdout), (stderr_path, stderr)):
+            try:
+                payload = stream.getvalue()
+                if len(payload) > supervisor.LOG_BYTES_PER_STREAM:
+                    raise ValueError("F03 captured log exceeds byte cap")
+                with path.open("xb") as target:
+                    target.write(payload)
+            except (OSError, ValueError) as exc:
+                if first_error is None:
+                    first_error = exc
+        if first_error is not None:
+            raise first_error
+
+    try:
         if launch_deadline is not None and monotonic() >= launch_deadline:
             raise LaunchCutoff("F03 serial launch cutoff reached before child start")
+        terminal = supervisor.supervise(
+            launched_argv,
+            cwd=Path(command.working_directory),
+            environment=environment,
+            stdout=stdout, stderr=stderr,
+            limits=supervisor.SCIENTIFIC_LIMITS,
+            launch_deadline=launch_deadline,
+            log_byte_limit=supervisor.LOG_BYTES_PER_STREAM,
+        )
+    except BaseException as exc:
         try:
-            terminal = supervisor.supervise(
-                launched_argv,
-                cwd=Path(command.working_directory),
-                environment=environment,
-                stdout=stdout, stderr=stderr,
-                limits=supervisor.SCIENTIFIC_LIMITS,
-                launch_deadline=launch_deadline,
-                log_byte_limit=supervisor.LOG_BYTES_PER_STREAM,
-            )
-        except supervisor.SupervisionCancelled as exc:
+            write_logs()
+        except (OSError, ValueError) as log_error:
+            raise exc from log_error
+        if isinstance(exc, supervisor.SupervisionCancelled):
             lifecycle.write_terminal(directory, plan, digest, exc.receipt)
             adjudicator.close_failed_case(directory, plan, digest)
-            raise
+        raise
+    write_logs()
     lifecycle.write_terminal(directory, plan, digest, terminal)
     # A changed source cannot be used to interpret the just-written evidence.
     if _preflight(run_root, digest) != value:
