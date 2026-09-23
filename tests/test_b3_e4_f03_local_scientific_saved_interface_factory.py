@@ -118,6 +118,18 @@ def test_factory_builds_each_quadrature_rule_once(monkeypatch):
     assert calls == [48, 64]
 
 
+def test_factory_enforces_nested_action_total_bits_before_decimal_display(monkeypatch):
+    _, _, _, recovered, budget = _recovered()
+    action = replace(budget.action_budget, max_total_bits=1)
+    rejected = replace(budget, action_budget=action)
+    monkeypatch.setattr(
+        factory, "_display",
+        lambda *args: pytest.fail("decimal display preceded nested Action admission"),
+    )
+    with pytest.raises(ValueError, match="nested Action total-bit budget"):
+        factory.produce_saved_interface(recovered, budget=rejected)
+
+
 def test_factory_rejects_wrong_input_before_observation(monkeypatch):
     _, _, _, _, budget = _recovered()
     monkeypatch.setattr(

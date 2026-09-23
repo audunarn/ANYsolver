@@ -43,6 +43,31 @@ def _display(action: recovery.Action) -> float:
     return value
 
 
+def _admit_actions(
+    actions: tuple[recovery.Action, ...], budget: interface.InterfaceBudget,
+) -> None:
+    nested = budget.action_budget
+    for action in actions:
+        fractions = (action.rational,) + tuple(
+            item
+            for left, right, polynomial in action.cosine_terms
+            for item in (left, right, *polynomial)
+        )
+        if len(fractions) > nested.max_operations:
+            raise ValueError("saved-interface nested Action operation budget exceeded")
+        if any(
+            item.numerator.bit_length() > nested.max_fraction_bits
+            or item.denominator.bit_length() > nested.max_fraction_bits
+            for item in fractions
+        ):
+            raise ValueError("saved-interface nested Action fraction budget exceeded")
+        if sum(
+            item.numerator.bit_length() + item.denominator.bit_length()
+            for item in fractions
+        ) > nested.max_total_bits:
+            raise ValueError("saved-interface nested Action total-bit budget exceeded")
+
+
 def _endpoint_actions(
     value: recovery.Recovery, left: Fraction, right: Fraction,
 ) -> tuple[recovery.Action, recovery.Action, recovery.Action]:
@@ -230,8 +255,12 @@ def produce_saved_interface(
     for left, right in interface.BANDS:
         actions = recovery.band(value, left, right)
         endpoints = _endpoint_actions(value, left, right)
+        line_actions = tuple(
+            item - endpoint for item, endpoint in zip(actions, endpoints)
+        )
+        _admit_actions(actions + endpoints + line_actions, budget)
         analytic.append([_display(item) for item in actions])
-        line.append([_display(item - endpoint) for item, endpoint in zip(actions, endpoints)])
+        line.append([_display(item) for item in line_actions])
         observed48.append(_quadrature_band(value, left, right, 48, rules[48]))
         observed64.append(_quadrature_band(value, left, right, 64, rules[64]))
     return interface.SavedInterface(
