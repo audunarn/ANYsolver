@@ -84,8 +84,8 @@ def _number(value):
     return float(value)
 
 
-def _pack(observations):
-    # Internal adapter only; the verifier never produces or replaces saved evidence.
+def pack_observations(observations):
+    """Own one fixed ordered pair of raw 48/64 observations."""
     if len(observations)!=2 or tuple(x['order'] for x in observations)!=ORDERS:
         raise ValueError('fixed ordered 48/64 observations required')
     for item in observations:
@@ -105,6 +105,33 @@ def _pack(observations):
         np.array([x['exact_zero'] for x in observations],dtype=np.bool_),
         tuple(tuple((r['stage'],r['channel'],r['reason']) for r in x['failures'])
               for x in observations))
+
+
+# Historical tests and bounded composition helpers use this private spelling.
+_pack=pack_observations
+
+
+def _preflight_observation(value,*,budget):
+    if type(value) is not green.Functional or type(budget) is not NormBudget:
+        raise ValueError('owned Functional and explicit norm budget required')
+    ni=len(value.cuts)-1
+    if ni>budget.max_intervals:raise ValueError('norm interval budget exceeded')
+    count=len(value.cuts)+ni*18+9
+    bits=sum(v.numerator.bit_length()+v.denominator.bit_length()
+             for values in (value.cuts,value.cosine,*value.atoms,
+                 *(p for row in value.coefficients for p in row)) for v in values)
+    if bits>budget.max_integer_bits:raise ValueError('norm integer inventory budget exceeded')
+    operations=2*3*ni*(64**2*96+64*96)+16384
+    workspace=2*count*(512+(2*green.INPUT_INTEGER_BITS+7)//8)+64**2*8*96+ni*3*8*256+65536
+    if operations>budget.max_operations or workspace>budget.max_work_bytes:
+        raise ValueError('norm work or workspace budget exceeded')
+    owned=green.Functional(value.cuts,value.coefficients,value.cosine,value.atoms)
+    return owned,bits,operations,workspace
+
+
+def preflight_observation(value,*,budget):
+    """Validate and own a Functional before fixed-order numerical work."""
+    return _preflight_observation(value,budget=budget)[0]
 
 
 def _numeric_parity(first,second):
@@ -176,24 +203,14 @@ def _freeze(value):
 def verify_norm(value,saved,*,budget):
     if type(value) is not green.Functional or type(saved) is not SavedNorm or type(budget) is not NormBudget:
         raise ValueError('owned Functional, SavedNorm and explicit norm budget required')
+    value,bits,operations,workspace=_preflight_observation(value,budget=budget)
     ni=len(value.cuts)-1
-    if ni>budget.max_intervals:raise ValueError('norm interval budget exceeded')
-    count=len(value.cuts)+ni*18+9
-    bits=sum(v.numerator.bit_length()+v.denominator.bit_length()
-             for values in (value.cuts,value.cosine,*value.atoms,
-                 *(p for row in value.coefficients for p in row)) for v in values)
-    if bits>budget.max_integer_bits:raise ValueError('norm integer inventory budget exceeded')
-    operations=2*3*ni*(64**2*96+64*96)+16384
-    workspace=2*count*(512+(2*green.INPUT_INTEGER_BITS+7)//8)+64**2*8*96+ni*3*8*256+65536
-    if operations>budget.max_operations or workspace>budget.max_work_bytes:
-        raise ValueError('norm work or workspace budget exceeded')
-    value=green.Functional(value.cuts,value.coefficients,value.cosine,value.atoms)
     saved=SavedNorm(**{name:getattr(saved,name) for name in saved.__dataclass_fields__})
     # No catches here: unexpected, geometry and input failures remain distinct.
     observations=tuple(green.norm_observation_at_order(value,order) for order in ORDERS)
     if any(type(x['intervals']) is not int or x['intervals']!=ni for x in observations):
         raise ValueError('raw norm interval identity mismatch')
-    measured=_pack(observations)
+    measured=pack_observations(observations)
     parity=_same(measured,saved)
     deltas=[]
     for channel in range(3):
