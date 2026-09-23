@@ -1537,9 +1537,14 @@ registered error `3.70e-17`; independent raw-evidence audit matched
 source/artifact hashes and accepted checkpoint invariance. See
 `B3_GE_E4_PL_G0_F06_LOADED_REBASE_V3_RESULTS.md` and the immutable
 raw root `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/g0b-f06-loaded-rebase-v3/`.
-**F06 remains IN_PROGRESS:** no actual coupled owner rebase, restart in
-the changed chart, multi-step state transport, or large noncommuting
-loaded path has been implemented or accepted. F03/G0B still bar G1.
+At v3, no actual coupled owner rebase, changed-chart restart, multi-step
+state transport or large noncommuting loaded path had been implemented.
+The synthetic F06 v4 owner now issues a loaded S3 rebase and directly
+restores its rebased and successor snapshots; preparatory checks and
+independent code/mechanics review are recorded in
+`B3_GE_E4_PL_G0_F06_OWNED_REBASE_V4_PREPARATORY.md`. A frozen run with
+physical scales and raw parity measures remains necessary. Broader F06
+cases remain unimplemented. **F06 stays IN_PROGRESS; F03/G0B bar G1.**
 
 The F03 shell-port planar moment implementation check has three distinct
 versioned roots. V1 (`b3a70d1`) failed all ten native setup checks at a
