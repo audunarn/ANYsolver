@@ -194,3 +194,59 @@ station intervals themselves retain their weight but use a limiting
 binary64 evaluation, not an exact polynomial integral. An exact rational
 breakpoint implementation would be stronger. No F03 multiplier space is
 selected and G0B remains open.
+
+The subsequent generic `Qp` trace at `61e6f655` covers `p=1,2,3` with
+shared nodes, represented crossing intervals and one-sided derivatives.
+Its combined Q1/Qp trace tests passed **24/24**. The Qp energy candidate at
+`79d1f6a1`, with numerical return gates at `34519ce2`, uses sparse
+tensor-cell shell energy, mapped beam energy, three root rows, and
+per-interval 4/6, 5/7 or 6/8 beam-order comparisons and 48/64 load
+comparisons. Its eight focused tests passed; three affected guard tests
+passed after the final nonnegative-metric change. Independent read-only
+review found no mechanics or numerical-return blocker for the bounded,
+unmodified `assemble()` to `solve()` path. The Qp solve now rejects
+excessive scaled equilibrium, root-compatibility and energy/work defects.
+
+The Qp tests establish p1 parity with the separate Q1 implementation and
+exercise p2/p3 random piecewise fields on a small custom grid. They do
+not independently reconstruct the finite-pad beam trace for arbitrary
+piecewise fields. Default 9-by-5 p2 and p3 assembly/solve completed as
+unregistered exploratory checks, not a resource or physical acceptance
+run. No accepted p-refinement sequence, physical reaction/functional
+recovery, external comparison, native multiplier selection or G0B closure
+follows. Qp operator records remain preparatory and are not immutable
+provenance certificates against caller mutation.
+
+An independent bounded piecewise Qp pad-moment oracle at `465e2383`
+reconstructs each cell in centered local polynomial coordinates and
+integrates clipped rectangles analytically. Its combined focused suite
+passed **25/25** tests over p1–p3, the default and two custom grids,
+random piecewise fields, pose and first/second derivative work, and a
+changed represented `J`. Independent read-only review found no blocker
+for this *operator* comparison. It samples selected crossing events,
+and finite-precision monomial differences can lose digits on one-ulp
+slivers; it is not an exact-rational or physical-convergence proof.
+
+Preparatory signed recovery now has a beam-side distribution at `bf60e02c`
+with its tighter virtual-work test at `85947596`, and a cellwise shell
+Green-identity recovery at `40962eb8`. The beam tests cover custom p1–p3
+and default p1–p2 and require a scaled signed work defect at most `1e-10`;
+31 focused and related tests passed. Shell tests cover custom-grid p1–p3,
+separately retaining volume, supported/free outer-edge, and interior-jump
+channels; 34 focused and adjacent tests passed. Independent read-only
+mechanics review found no sign, unit, work, or boundary-normal blocker,
+within those bounded scopes.
+
+The separate finite-pad area-adjoint candidate pushes the recovered line
+density and root/tip atoms over the four physical pad squares. Its custom
+p1 nonrigid virtual-work and force/moment check, p1–p3 zero-field/dead-load
+checks, shifted-pad moment check, and fixed 48/64-point cosine comparisons
+passed four preparatory tests. Independent read-only review found no
+physical formula or sign blocker for the p1 nonrigid work scope. This
+preparatory suite took about 17 seconds with batched repeated-x station
+integrals and fixed reduced area rules whose observed work agreement met
+its bounded test limit; higher-order nonrigid
+area work and resource behavior
+remain untested. These checks do not yet construct the complete coupled
+spatial residual or physical support reaction, and do not establish
+refinement settling, F03, G0B or native interface acceptance.

@@ -1669,3 +1669,36 @@ was tightened at `0a68a8fa` after independent review; the combined focused
 suite passes 23 tests. It is restricted to the unmodified assembled-operator
 path, has no systematic physical settling or scientific registration, and
 does not select a native line law. **F03/G0B remain open and G1 barred.**
+
+The generic conforming Qp trace `61e6f655` adds p=1,2,3 shared-node
+finite-pad pose/derivatives; its combined trace suite passed 24 focused
+tests. Sparse Qp shell/beam energy at `79d1f6a1` and gated candidate
+return at `34519ce2` passed eight focused tests, with three affected
+guard tests after the final change. Independent read-only review found no
+mechanics or algebraic-return blocker for the unmodified preparatory
+path. Default-grid p2/p3 assembly and solve completed as unregistered
+exploratory diagnostics. Arbitrary piecewise finite-pad trace needs a
+separate independent oracle, and no physical p-refinement, reaction or
+functional recovery, resource qualification or scientific gate has run.
+**F03/G0B remain open; G1 remains barred.**
+
+The separate centered-polynomial piecewise Qp pad-moment oracle at
+`465e2383` independently reconstructs finite-pad pose and first/second
+station derivatives for random p1–p3 nodal fields. Its combined focused
+suite passed 25 tests and an independent read-only mechanics review found
+no blocker for the bounded operator claim. Selected crossing events and
+floating one-ulp slivers remain numerical evidence limits. No physical
+refinement or native line-law conclusion follows; **F03/G0B stay open.**
+
+The bounded preparatory Qp beam-side and shell-side recoveries at
+`bf60e02c`, `85947596`, and `40962eb8` passed their focused work and
+Green-identity checks (31 beam-related and 34 shell-related tests). A
+separate physical finite-pad area-adjoint candidate passes four focused
+tests, including p1 nonrigid work, p1–p3 zero-field load/atom checks,
+physical force/moment and 48/64-point cosine comparison. Independent
+read-only mechanics review found no sign or work-conjugacy blocker in
+these bounded claims. Full coupled spatial residual, six supported-edge
+reactions, physical p/h settling, resource qualification and native
+attachment selection remain unimplemented or unqualified. The recovery
+contract is explicitly a draft, not a new scientific registration.
+**F03/G0B remain open; G1 remains barred.**
