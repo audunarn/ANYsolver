@@ -133,6 +133,25 @@ def test_valid_nonpositive_diagonal_hold_is_preserved_for_adjudication():
     assert checked.positivity_candidate_reason == producer.reason
 
 
+@pytest.mark.parametrize('factor', ('lower', 'upper'))
+def test_saved_factor_structure_is_rechecked_after_producer_rebinding(factor):
+    value = _evidence()
+    proof = value.positivity
+    if factor == 'lower':
+        changed = proof.lower.tolil()
+        changed[0, 1] = 0.25
+        proof = replace(proof, lower=changed.tocsr())
+        reason = 'lower factor'
+    else:
+        changed = proof.upper.tolil()
+        changed[1, 0] = 0.25
+        proof = replace(proof, upper=changed.tocsr())
+        reason = 'upper factor'
+    changed_value = replace(value, positivity=proof)
+    with pytest.raises(ValueError, match=reason):
+        replay.verify_numerical_binding(_producer(changed_value), changed_value)
+
+
 def test_replay_binding_result_rejects_mutable_or_noncanonical_hashes():
     with pytest.raises(ValueError, match='canonical'):
         replay.ReplayBinding('CANDIDATE_CREATED', None, *(['ab' * 32] * 3), ['ab' * 32])

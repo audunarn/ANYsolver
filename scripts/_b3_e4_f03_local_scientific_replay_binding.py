@@ -75,6 +75,31 @@ def _same_sparse(first: object, second: object) -> bool:
     )
 
 
+def _verify_factor_structure(lower: object, upper: object) -> None:
+    """Re-establish the bounded structural contract of the saved LU factors."""
+    if (
+        type(lower) is not sparse.csr_matrix
+        or type(upper) is not sparse.csr_matrix
+        or lower.shape != upper.shape
+        or lower.shape[0] != lower.shape[1]
+    ):
+        raise ValueError("square canonical F03 positivity factors required")
+    for row in range(lower.shape[0]):
+        left, right = lower.indptr[row:row + 2]
+        indices = lower.indices[left:right]
+        values = lower.data[left:right]
+        diagonal = values[indices == row]
+        if (
+            np.any(indices > row)
+            or diagonal.shape != (1,)
+            or diagonal[0] != 1.0
+        ):
+            raise ValueError("saved F03 lower factor is not unit triangular")
+        left, right = upper.indptr[row:row + 2]
+        if np.any(upper.indices[left:right] < row):
+            raise ValueError("saved F03 upper factor is not triangular")
+
+
 def verify_numerical_binding(
     producer: numerical_index.PositivityProducerRecord,
     value: numerical_index.NumericalEvidence,
@@ -88,6 +113,7 @@ def verify_numerical_binding(
     scaled = value.scaled
     proof = value.positivity
     numerical_index._verify_positivity_record(proof, producer)
+    _verify_factor_structure(proof.lower, proof.upper)
     if not _same_sparse(proof.kbar, scaled.kbar):
         raise ValueError("F03 positivity matrix disagrees with primary scaled stiffness")
     n = scaled.kbar.shape[0]
