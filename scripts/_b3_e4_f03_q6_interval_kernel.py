@@ -12,6 +12,13 @@ from scipy import sparse
 
 
 @numba.njit(cache=False, fastmath=False)
+def _compiled_arithmetic_signature():
+    sub = np.nextafter(0., 1.)
+    normal = 2.2250738585072014e-308
+    return sub, sub+sub, normal*.5, np.nextafter(0., -np.inf)
+
+
+@numba.njit(cache=False, fastmath=False)
 def _csr_bounds(indptr, indices, data, block):
     n, width = block.shape
     low = np.zeros((n, width), dtype=np.float64)
@@ -40,4 +47,12 @@ def compiled_product_bounds(matrix: sparse.csr_matrix,
             block.shape[0] != matrix.shape[1] or block.ndim != 2 or
             not np.isfinite(matrix.data).all() or not np.isfinite(block).all()):
         raise ValueError("finite CSR and float64 inverse block required")
-    return _csr_bounds(matrix.indptr, matrix.indices, matrix.data, block)
+    sub = np.nextafter(0., 1.)
+    normal = np.finfo(np.float64).tiny
+    if _compiled_arithmetic_signature() != (sub, sub+sub, normal*.5,
+                                             np.nextafter(0., -np.inf)):
+        raise ArithmeticError("compiled gradual-underflow arithmetic required")
+    low, high = _csr_bounds(matrix.indptr, matrix.indices, matrix.data, block)
+    if not np.isfinite(low).all() or not np.isfinite(high).all():
+        raise ArithmeticError("nonfinite compiled interval enclosure")
+    return low, high

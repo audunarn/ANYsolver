@@ -3,6 +3,7 @@
 import numpy as np
 from fractions import Fraction
 from scipy import sparse
+import pytest
 
 from scripts._b3_e4_f03_q6_interval_kernel import compiled_product_bounds
 from scripts._b3_e4_f03_sparse_certificate import (
@@ -66,3 +67,9 @@ def test_subnormal_cancellation_and_mixed_scale_bounds_exact_products():
                          for col in range(h.shape[1])), Fraction(0))
             assert Fraction.from_float(float(low[row, channel])) <= exact
             assert exact <= Fraction.from_float(float(high[row, channel]))
+
+
+def test_compiled_interval_product_rejects_overflow():
+    matrix = sparse.csr_matrix(np.array([[1e308]]))
+    with pytest.raises(ArithmeticError, match="nonfinite"):
+        compiled_product_bounds(matrix, np.array([[2.]]))

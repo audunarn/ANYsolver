@@ -65,8 +65,12 @@ Numba/compiler identities, and a saved-only replay. Its child can overwrite
 its own files if invoked directly. It checks positive diagonal but does not
 perform the independent primal-positivity or full physical Q6 adjudication.
 The compiled arithmetic passed additional exact-rational enclosure tests on
-bounded subnormal, cancellation and mixed-scale cases; exceptional arithmetic
-and full-X0-block parity still require review and coverage.
+bounded subnormal, cancellation and mixed-scale cases. After the diagnostic,
+the kernel gained an explicit compiled FTZ/DAZ signature check and nonfinite
+output rejection; **the full X0 run used the archived pre-guard kernel**, not
+this later hardening. Overflow rejection and full-X0-block parity still
+require independent review and broader coverage. The exact kernel and
+certificate sources from the full run are archived in its evidence directory.
 
 ## Decision and next work
 
