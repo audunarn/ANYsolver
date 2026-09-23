@@ -115,6 +115,10 @@ def _little_float_copy(value: np.ndarray) -> np.ndarray:
     return np.asarray(value, dtype="<f8").copy()
 
 
+def _native_float_copy(value: np.ndarray) -> np.ndarray:
+    return np.asarray(value, dtype=np.float64).copy()
+
+
 def _check_saved_structure(
     arrays: dict[str, np.ndarray],
     spec: SparseSpec,
@@ -152,7 +156,7 @@ def _construct_matrix(
     cls = sparse.csr_matrix if spec.format == "csr" else sparse.csc_matrix
     value = cls(
         (
-            arrays[spec.name + "_data"].copy(),
+            _native_float_copy(arrays[spec.name + "_data"]),
             arrays[spec.name + "_indices"].copy(),
             arrays[spec.name + "_indptr"].copy(),
         ),

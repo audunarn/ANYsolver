@@ -93,6 +93,15 @@ def test_float_serialization_converts_values_to_little_endian_owned_storage():
     np.testing.assert_array_equal(result, np.array([1.25, -3.5], dtype="<f8"))
 
 
+def test_float_reconstruction_converts_canonical_values_to_native_owned_storage():
+    opposite = ">f8" if np.little_endian else "<f8"
+    source = np.array([1.25, -3.5], dtype=opposite)
+    result = storage._native_float_copy(source)
+    assert result.dtype == np.dtype(np.float64)
+    assert result.flags.owndata
+    np.testing.assert_array_equal(result, np.array([1.25, -3.5], dtype=np.float64))
+
+
 @pytest.mark.parametrize("name,shape,nnz,fmt", [
     ("Bad", (1, 1), 0, "csr"),
     ("good", (0, 1), 0, "csr"),
