@@ -56,6 +56,14 @@ def test_full_sparse_scaling_and_saved_state_pass_with_owned_hashes():
     assert saved==result['input_sha256']['H']
 
 
+def test_overlap_uses_actual_kkt_pattern_for_admission():
+    data=_fixture()
+    budget=_budget(sparse_budget=shared.SparseBudget(32,10,3,2_000_000))
+    assert data[0].nnz+data[1].nnz+2*data[2].nnz==12
+    assert data[5].nnz==9
+    assert binding.verify_binding(*data[:10],h_z=data[10],budget=budget)['status']=='BINDING_PASSED'
+
+
 def test_missing_action_is_explicit_partial_and_incorrect_action_holds():
     data=_fixture()
     partial=binding.verify_binding(*data[:10],budget=_budget())

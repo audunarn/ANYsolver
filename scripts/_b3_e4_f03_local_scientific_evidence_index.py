@@ -30,6 +30,7 @@ INFRASTRUCTURE = frozenset(
     ("start.json", "terminal.json", "plan.zip", "evidence_index.json", "case_receipt.json",
      "stdout.log", "stderr.log")
 )
+EMPTY_RETAINED_LOGS = frozenset(("stdout.log", "stderr.log"))
 LIFECYCLE_BYTES = 2 * 64 * 1024
 
 
@@ -235,7 +236,7 @@ def _preflight(
     total = 0
     for name in names:
         identity = observed[name]
-        if identity.bytes <= 0:
+        if identity.bytes <= 0 and name not in EMPTY_RETAINED_LOGS:
             raise ValueError(f"invalid F03 evidence member file: {name}")
         total += identity.bytes
         if total > max_total_bytes:
@@ -255,7 +256,7 @@ def _identities_from_observed(
     total = 0
     for name in names:
         identity = observed[name]
-        if identity.bytes <= 0:
+        if identity.bytes <= 0 and name not in EMPTY_RETAINED_LOGS:
             raise ValueError(f"invalid F03 evidence member file: {name}")
         total += identity.bytes
         if total > max_total_bytes:
@@ -598,10 +599,10 @@ def materialized_snapshot(
         or type(index) is not EvidenceIndex
         or type(retained_members) is not tuple
         or (retained_members and (
-            len(retained_members) != 2
+            len(retained_members) != 4
             or any(type(item) is not tuple or len(item) != 2 for item in retained_members)
             or tuple(item[0] for item in retained_members)
-                != ("start.json", "terminal.json")
+                != ("start.json", "terminal.json", "stdout.log", "stderr.log")
             or retained_members[0][1] != index.start_sha256
             or any(not _digest(item[1]) for item in retained_members)
         ))
@@ -612,9 +613,8 @@ def materialized_snapshot(
         raise ValueError("F03 evidence snapshot inventory disagrees with plan")
     retained_names = tuple(name for name, _ in retained_members)
     source_names = names + retained_names
-    maximum = _evidence_limit(plan)
-    infrastructure = frozenset(("plan.zip", "evidence_index.json", "case_receipt.json",
-                               "stdout.log", "stderr.log"))
+    maximum = (_evidence_limit(plan) + 2 * cases.LOG_BYTES_PER_STREAM)
+    infrastructure = frozenset(("plan.zip", "evidence_index.json", "case_receipt.json"))
     with _snapshot(
         directory, source_names, maximum + LIFECYCLE_BYTES,
         infrastructure=infrastructure,

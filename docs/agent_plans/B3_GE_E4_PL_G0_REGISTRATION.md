@@ -1594,6 +1594,20 @@ numerical wrench recovery of an external comparator, not native
 beam/shell agreement or a converged physical line-coupling target.
 **F03/G0B remain open and G1 remains barred.**
 
+The 23 September one-use local-scientific attempts A, B, and C are preserved
+under distinct `f03-local-scientific-20260923-{a,b,c}` roots in
+`C:/Github/ANYsolver/.perf2-worktrees/`. Their immutable registration and
+aggregate hashes, exact first failures, and candidate identities are recorded
+in the three matching `B3_GE_E4_PL_G0_F03_SCIENTIFIC_ATTEMPT_*.md` files.
+All three aggregate dispositions are `FAILED_EVIDENCE`; none is a passed
+scientific or physical-reference screen. Candidate snapshot and sparse-union
+fixes are `IMPLEMENTED_NOT_QUALIFIED` pending a clean committed source and new
+registration. The measured exact-arithmetic work and a proposed, unapproved
+resource-contract amendment are in
+`B3_GE_E4_PL_G0_F03_RESOURCE_AMENDMENT_PROPOSAL_V1.md`. The frozen A/B/C
+limits and results are unchanged. **F03 remains IN_PROGRESS, G0B remains open,
+and G1 remains barred.**
+
 The separate bounded **finite-area distributing port** preflight is
 documented in `B3_GE_E4_PL_G0_F03_FINITE_PAD_PREFLIGHT.md`. It preserves
 the adverse four-point reference, derives a fixed-physical-area

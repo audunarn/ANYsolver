@@ -107,7 +107,8 @@ def _install_complete_archive_mocks(
         adjudicator.lifecycle, "read_terminal",
         lambda *args: ({"reason": "completed", "exit_code": 0,
                        "start_sha256": DIGEST, "root_pid": 7,
-                       "observed_pids": [7]}, DIGEST),
+                       "observed_pids": [7], "stdout_log_sha256": DIGEST,
+                       "stderr_log_sha256": DIGEST}, DIGEST),
     )
     monkeypatch.setattr(
         adjudicator.lifecycle, "read_start",

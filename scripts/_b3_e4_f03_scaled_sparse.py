@@ -79,11 +79,13 @@ def prepare(shell, beam, root, force, budget, *, reference=None):
     if kb.shape != (n, n) or cc.shape != (3, n) or n+3 > budget.max_order:
         raise ValueError('matching primal blocks and exactly three root rows required')
     force = check._vector(force, n, 'physical force')
-    # Upper bounds checked before sparse addition/KKT construction.
-    if ks.nnz+kb.nnz+2*cc.nnz > budget.max_nnz:
-        raise ValueError('combined sparse pattern envelope exceeds budget')
-    check._workspace(n+3, n+3, ks.nnz+kb.nnz+2*cc.nnz, 1, budget)
+    # Reserve for the input sum before constructing it. Its union can be
+    # smaller than the sum of input counts when shell/beam patterns overlap.
+    input_upper = ks.nnz+kb.nnz+2*cc.nnz
+    check._workspace(n+3, n+3, input_upper, 1, budget)
     stiffness = ks+kb
+    if stiffness.nnz+2*cc.nnz > budget.max_nnz:
+        raise ValueError('combined sparse pattern envelope exceeds budget')
     diagonal = stiffness.diagonal()
     if not np.isfinite(diagonal).all() or np.any(diagonal <= 0):
         raise ValueError('strictly positive finite supported stiffness diagonal required')
@@ -102,6 +104,8 @@ def prepare(shell, beam, root, force, budget, *, reference=None):
     if (not np.isfinite(fbar).all() or np.any((force != 0) & (fbar == 0))):
         raise ArithmeticError('nonfinite/underflowed nonzero scaled load')
     matrix = sparse.bmat(((kbar, cbar.T), (cbar, None)), format='csc')
+    if matrix.nnz > budget.max_nnz:
+        raise ValueError('combined sparse pattern envelope exceeds budget')
     rhs = np.r_[fbar, np.zeros(3)]
     result = object.__new__(ScaledSystem)
     metadata = {'physical_dofs': n, 'root_multipliers': 3, 'matrix_nnz': matrix.nnz,

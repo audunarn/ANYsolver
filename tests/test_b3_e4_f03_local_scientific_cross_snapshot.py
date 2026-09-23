@@ -72,7 +72,8 @@ def _mock_snapshot(monkeypatch, tmp_path, *, stale_on_exit=False, venv_child=Fal
         cross.lifecycle, "read_terminal",
         lambda *a: ({"reason": "completed", "exit_code": 0,
                     "start_sha256": DIGEST, "root_pid": 7,
-                    "observed_pids": [7]}, DIGEST),
+                    "observed_pids": [7], "stdout_log_sha256": DIGEST,
+                    "stderr_log_sha256": DIGEST}, DIGEST),
     )
     calls = [0]
 

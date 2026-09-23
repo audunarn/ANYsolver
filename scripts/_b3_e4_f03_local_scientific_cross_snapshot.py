@@ -214,7 +214,9 @@ def open_case_snapshot(
         raise ValueError("F03 replayed evidence index identity mismatch")
     with evidence_index.materialized_snapshot(
         directory, plan, index,
-        (("start.json", start_sha256), ("terminal.json", terminal_sha256)),
+        (("start.json", start_sha256), ("terminal.json", terminal_sha256),
+         ("stdout.log", terminal["stdout_log_sha256"]),
+         ("stderr.log", terminal["stderr_log_sha256"])),
     ) as snapshot:
         if (
             lifecycle.read_start(snapshot, plan, registration_sha256) != (start, start_sha256)

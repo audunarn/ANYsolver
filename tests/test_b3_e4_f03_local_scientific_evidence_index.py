@@ -65,23 +65,33 @@ def test_materialized_snapshot_binds_start_and_terminal_receipts(plan, tmp_path)
     _populate(directory, plan)
     start = b"start receipt\n"
     terminal = b"terminal receipt\n"
+    stdout = b""
+    stderr = b"retained diagnostic\n"
     (directory / "start.json").write_bytes(start)
     (directory / "terminal.json").write_bytes(terminal)
+    (directory / "stdout.log").write_bytes(stdout)
+    (directory / "stderr.log").write_bytes(stderr)
     start_sha256 = hashlib.sha256(start).hexdigest()
     terminal_sha256 = hashlib.sha256(terminal).hexdigest()
     written, _ = evidence.write_index(
         directory, plan, REGISTRATION, start_sha256,
     )
-    retained = (("start.json", start_sha256), ("terminal.json", terminal_sha256))
+    retained = (("start.json", start_sha256), ("terminal.json", terminal_sha256),
+                ("stdout.log", hashlib.sha256(stdout).hexdigest()),
+                ("stderr.log", hashlib.sha256(stderr).hexdigest()))
     with evidence.materialized_snapshot(
         directory, plan, written, retained,
     ) as snapshot:
         assert (snapshot / "start.json").read_bytes() == start
         assert (snapshot / "terminal.json").read_bytes() == terminal
+        assert (snapshot / "stdout.log").read_bytes() == stdout
+        assert (snapshot / "stderr.log").read_bytes() == stderr
     with pytest.raises(ValueError, match="lifecycle"):
         with evidence.materialized_snapshot(
             directory, plan, written,
-            (("start.json", start_sha256), ("terminal.json", "d" * 64)),
+            (("start.json", start_sha256), ("terminal.json", "d" * 64),
+             ("stdout.log", hashlib.sha256(stdout).hexdigest()),
+             ("stderr.log", hashlib.sha256(stderr).hexdigest())),
         ):
             pass
 

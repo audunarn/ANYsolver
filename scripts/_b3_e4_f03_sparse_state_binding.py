@@ -155,11 +155,9 @@ def verify_binding(k_shell,k_beam,c_root,f,d,h,b,q,eta,z,*,h_z=None,
     # Check the complete upper allocation envelope before native sparse sum,
     # transpose or block construction. This is a working-set estimate, not RSS.
     envelope=int(ks.nnz+kb.nnz+2*cc.nnz)
-    if envelope>min(sb.max_nnz,budget.max_combined_nnz):
-        raise ValueError('physical sparse KKT envelope exceeds budget')
     shared._workspace(n+3,n+3,envelope,1,sb)
     observed=shared.validate_sparse(h,sb)
-    if observed.shape!=(n+3,n+3) or observed.nnz+envelope>budget.max_combined_nnz:
+    if observed.shape!=(n+3,n+3):
         raise ValueError('supplied scaled KKT inventory exceeds budget')
     estimate=1024*(observed.nnz+envelope+10*(n+3))+2*budget.max_total_bits
     if estimate>budget.max_python_work_bytes:
@@ -176,6 +174,11 @@ def verify_binding(k_shell,k_beam,c_root,f,d,h,b,q,eta,z,*,h_z=None,
     stiffness=ks+kb
     if stiffness.nnz>envelope:
         raise ArithmeticError('sparse sum exceeded preflight inventory')
+    actual_envelope=stiffness.nnz+2*cc.nnz
+    if actual_envelope>min(sb.max_nnz,budget.max_combined_nnz):
+        raise ValueError('physical sparse KKT envelope exceeds budget')
+    if observed.nnz+actual_envelope>budget.max_combined_nnz:
+        raise ValueError('supplied scaled KKT inventory exceeds budget')
     diagonal=stiffness.diagonal()
     if not np.isfinite(diagonal).all() or np.any(diagonal<=0):
         raise ValueError('positive finite physical stiffness diagonal required')

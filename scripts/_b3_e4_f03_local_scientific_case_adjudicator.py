@@ -374,7 +374,9 @@ def _compute_case(
     )
     with evidence_index.materialized_snapshot(
         directory, plan, evidence,
-        (("start.json", start_sha256), ("terminal.json", terminal_sha256)),
+        (("start.json", start_sha256), ("terminal.json", terminal_sha256),
+         ("stdout.log", terminal["stdout_log_sha256"]),
+         ("stderr.log", terminal["stderr_log_sha256"])),
     ) as snapshot:
         retained_terminal, retained_terminal_sha256 = lifecycle.read_terminal(
             snapshot, plan, registration_sha256,

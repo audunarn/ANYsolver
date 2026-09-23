@@ -134,3 +134,15 @@ def test_invalid_blocks_and_diagonal_are_rejected():
         s.prepare(ks, kb, root, f, replace(BUDGET, max_nnz=90))
     with pytest.raises(ValueError, match='force'):
         s.prepare(ks, kb, root, np.full(9, np.nan), BUDGET)
+
+
+def test_overlapping_input_patterns_use_actual_combined_nnz():
+    shell = sparse.diags(np.full(9, 2*c.E0/c.U0**2), format='csr')
+    beam = sparse.diags(np.full(9, c.E0/c.U0**2), format='csr')
+    root = sparse.csr_matrix(np.ones((3, 9)))
+    force = np.ones(9)*c.F0
+    assert shell.nnz+beam.nnz+2*root.nnz == 72
+    result = s.prepare(shell, beam, root, force, replace(BUDGET, max_nnz=65))
+    assert result.matrix.nnz == 63
+    with pytest.raises(ValueError, match='pattern envelope'):
+        s.prepare(shell, beam, root, force, replace(BUDGET, max_nnz=62))
