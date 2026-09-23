@@ -145,3 +145,11 @@ The projection does not itself expose the cellwise strong residual field or
 combine it with free-edge tractions and interior jumps. Those explicit
 spatial channels, default-grid and area-order checks, and registered
 physical p/h evidence remain required before any F03 decision.
+
+The subsequent preparatory spatial wrapper exposes the cellwise
+`div(T)+f_mu` point field and shell outer/jump fields, and combines their
+signed virtual-work channels. Its p1 custom-grid random-field test
+passes only after a 6/8-point x area-order check; the lower x4 nodal
+default missed the stricter random-lifting work check. This does not
+supersede the need for p2/p3/default-grid area-order evidence, physical
+refinement, or a one-use registered scientific run.

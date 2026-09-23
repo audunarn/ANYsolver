@@ -1700,8 +1700,8 @@ read-only mechanics review found no sign or work-conjugacy blocker in
 these bounded claims. At this area-only step, full coupled spatial
 residual, six supported-edge reactions, physical p/h settling, resource
 qualification and native attachment selection remain unimplemented or
-unqualified. The recovery
-contract is explicitly a draft, not a new scientific registration.
+unqualified. The recovery contract is explicitly a draft, not a new
+scientific registration.
 **F03/G0B remain open; G1 remains barred.**
 
 The subsequent bounded Qp nodal projection combines the recovered
@@ -1710,8 +1710,18 @@ the full shell nodal operator, six shell-edge liftings and the separate
 beam-root reaction. Custom p1–p3 solved-state tests passed 3/3 in
 268.16 seconds total before the area-point streaming change; the
 affected p1 test passed afterward in 27.66 seconds. Independent
-read-only mechanics review found no
-blocker for this nodal algebraic scope. Cellwise physical residual,
+read-only mechanics review found no blocker for this nodal algebraic
+scope. Cellwise physical residual,
 combined edge-jump/traction channels, default-grid and area-order
 checks, physical p/h settling and scientific resource qualification
 remain open. **F03/G0B remain open; G1 remains barred.**
+
+The preparatory spatial wrapper now exposes the pointwise cell residual,
+physical outer-edge tractions and interior jumps and combines signed
+work with supported-edge liftings. One custom-grid p1 random-field test
+passed using an explicit 6/8-point x area-order comparison at a `2e-10`
+scaled load/wrench limit. The lower x4 projector produced about `4.2e-9`
+relative random-lift work error against the stricter `2e-9` diagnostic
+limit; this was not treated as a pass or tolerance relaxation. Higher
+orders, default grid, systematic physical settling and independent
+scientific registration remain pending. **F03/G0B remain open; G1 barred.**

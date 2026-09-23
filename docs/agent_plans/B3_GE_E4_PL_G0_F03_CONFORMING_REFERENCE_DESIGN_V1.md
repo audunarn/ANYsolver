@@ -256,9 +256,21 @@ and global area/line wrenches. Custom p1–p3 solved-state tests passed
 **3/3** in 268.16 seconds total before the area-point streaming change;
 the affected p1 test passed afterward in 27.66 seconds. The checks
 include 48/64 line projection agreement and represented-`J` moment
-balance. Independent read-only
-mechanics review found no blocker for that *nodal* scope. This is a
+balance. Independent read-only mechanics review found no blocker for
+that *nodal* scope. This is a
 costly preparatory test, not a general resource bound. Default-grid
 nodal recovery, area-order convergence, explicit cellwise
 `div(T)+f_mu`, combined free-edge and interior-jump residual fields,
 physical p/h settling and scientific registration remain open.
+
+A further preparatory spatial wrapper exposes `r_K=div(T)+f_mu`, physical
+outer-edge tractions and interior jumps, and combines their signed work
+with supported-edge reaction liftings. Its p1 custom-grid random-field
+test passed **1/1**. The wrapper requires its own area-order check at
+`p+5` versus `p+7` points in x before accepting work; p1 used 6/8 and
+met a `2e-10` scaled projected-load/wrench comparison. The earlier
+`p+3` default nodal projector exceeded a stricter `2e-9` random-lift
+work check by about `4.2e-9`, even though its solved-state case passed;
+that observed failure is a quadrature diagnostic, not a relaxed
+tolerance. The spatial wrapper's checked order does not establish
+p2/p3 or default-grid spatial accuracy, nor physical refinement.
