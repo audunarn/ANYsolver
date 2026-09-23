@@ -6,6 +6,7 @@ equilibrium solve.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +16,9 @@ from scripts import _b3_e4_f03_local_scientific_storage as storage
 from scripts import _b3_e4_f03_saved_interface_checks as interface
 from scripts import _b3_e4_f03_saved_norm_checks as norm
 from scripts import _b3_e4_f03_saved_work_checks as work
+
+
+MAX_NORM_FAILURE_BYTES = 64 * 1024
 
 
 def _case(value: cases.ScientificCase) -> cases.ScientificCase:
@@ -61,6 +65,10 @@ def norm_specs() -> tuple[storage.ArraySpec, ...]:
         storage.ArraySpec("channel_flags", (2, 3, 3), np.dtype("|b1"), finite=False),
         storage.ArraySpec("total_flags", (2, 3), np.dtype("|b1"), finite=False),
         storage.ArraySpec("exact_zero", (2,), np.dtype("|b1"), finite=False),
+        storage.ArraySpec(
+            "failures_json", (MAX_NORM_FAILURE_BYTES,), np.dtype("|u1"), finite=False,
+        ),
+        storage.ArraySpec("failures_length", (1,), np.dtype("<i8")),
     )
 
 
@@ -108,13 +116,68 @@ def _native_arrays(
         raise ValueError("invalid saved F03 component inventory")
     for spec in specs:
         storage._check_array(arrays[spec.name], spec)
+        if spec.dtype.kind == "f" and np.isinf(arrays[spec.name]).any():
+            raise ValueError(f"infinite saved F03 component array: {spec.name}")
     return {
-        spec.name: np.asarray(
-            arrays[spec.name],
-            dtype=np.float64 if spec.dtype.kind == "f" else spec.dtype,
-        ).copy()
+        spec.name: _native_copy(arrays[spec.name], spec)
         for spec in specs
     }
+
+
+def _native_copy(value: np.ndarray, spec: storage.ArraySpec) -> np.ndarray:
+    return np.asarray(
+        value, dtype=np.float64 if spec.dtype.kind == "f" else spec.dtype,
+    ).copy()
+
+
+def _failure_payload(failures: tuple) -> bytes:
+    try:
+        payload = (
+            json.dumps(failures, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+            + "\n"
+        ).encode("ascii")
+    except (TypeError, ValueError, UnicodeEncodeError) as exc:
+        raise ValueError("invalid saved F03 norm failure metadata") from exc
+    if len(payload) > MAX_NORM_FAILURE_BYTES:
+        raise ValueError("saved F03 norm failure metadata exceeds bound")
+    return payload
+
+
+def _failure_arrays(failures: tuple) -> dict[str, np.ndarray]:
+    # The SavedNorm constructor is the authority for record shape and bounds.
+    probe = norm.SavedNorm(
+        np.zeros((2, 3)), np.zeros(2), np.zeros((2, 3, 6)),
+        np.zeros((2, 3, 3), dtype=np.bool_), np.zeros((2, 3), dtype=np.bool_),
+        np.zeros(2, dtype=np.bool_), failures,
+    )
+    payload = _failure_payload(probe.failures)
+    buffer = np.zeros(MAX_NORM_FAILURE_BYTES, dtype=np.uint8)
+    buffer[:len(payload)] = np.frombuffer(payload, dtype=np.uint8)
+    return {
+        "failures_json": buffer,
+        "failures_length": np.array([len(payload)], dtype="<i8"),
+    }
+
+
+def _decode_failures(arrays: dict[str, np.ndarray]) -> tuple:
+    length = arrays["failures_length"]
+    data = arrays["failures_json"]
+    if (
+        length.shape != (1,)
+        or type(length[0].item()) is not int
+        or not 0 < int(length[0]) <= MAX_NORM_FAILURE_BYTES
+        or np.any(data[int(length[0]):] != 0)
+    ):
+        raise ValueError("invalid saved F03 norm failure envelope")
+    payload = data[:int(length[0])].tobytes()
+    try:
+        value = json.loads(payload.decode("ascii"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("invalid saved F03 norm failure JSON") from exc
+    failures = tuple(tuple(tuple(record) for record in group) for group in value)
+    if _failure_payload(failures) != payload:
+        raise ValueError("noncanonical saved F03 norm failure metadata")
+    return failures
 
 
 def write_interface(path: Path, value: interface.SavedInterface, case: cases.ScientificCase) -> None:
@@ -170,14 +233,20 @@ def write_norm(path: Path, value: norm.SavedNorm) -> None:
     if type(value) is not norm.SavedNorm:
         raise ValueError("validated saved F03 norm required")
     specs = norm_specs()
+    base_specs = specs[:-2]
+    arrays = _canonical_arrays(value, base_specs)
+    arrays.update(_failure_arrays(value.failures))
     storage.write_group(
-        path, _canonical_arrays(value, specs), specs, max_raw_bytes=group_bound(specs),
+        path, arrays, specs, max_raw_bytes=group_bound(specs),
     )
 
 
-def read_norm(path: Path, failures: tuple) -> norm.SavedNorm:
+def read_norm(path: Path) -> norm.SavedNorm:
     specs = norm_specs()
     arrays = _native_arrays(
         storage.read_group(path, specs, max_raw_bytes=group_bound(specs)), specs,
     )
-    return norm.SavedNorm(**arrays, failures=failures)
+    failures = _decode_failures(arrays)
+    return norm.SavedNorm(
+        **{spec.name: arrays[spec.name] for spec in specs[:-2]}, failures=failures,
+    )

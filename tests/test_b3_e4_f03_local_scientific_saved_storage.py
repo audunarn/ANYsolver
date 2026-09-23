@@ -88,8 +88,8 @@ def test_interface_and_work_roundtrip_from_frozen_topology(case, tmp_path):
 def test_norm_roundtrip_preserves_nan_flags_and_explicit_failures(tmp_path):
     source = _norm()
     saved.write_norm(tmp_path / "saved_norm.npz", source)
-    restored = saved.read_norm(tmp_path / "saved_norm.npz", source.failures)
-    for spec in saved.norm_specs():
+    restored = saved.read_norm(tmp_path / "saved_norm.npz")
+    for spec in saved.norm_specs()[:-2]:
         observed = getattr(restored, spec.name)
         expected = getattr(source, spec.name)
         if spec.dtype.kind == "f":
@@ -97,6 +97,18 @@ def test_norm_roundtrip_preserves_nan_flags_and_explicit_failures(tmp_path):
         else:
             np.testing.assert_array_equal(observed, expected)
     assert restored.failures == source.failures
+
+
+def test_norm_failure_metadata_changes_archive_and_needs_no_caller_input(tmp_path):
+    first = _norm()
+    second = _norm()
+    object.__setattr__(second, "failures", ((), (("other", 1, "different"),)))
+    one = tmp_path / "one.npz"
+    two = tmp_path / "two.npz"
+    saved.write_norm(one, first)
+    saved.write_norm(two, second)
+    assert one.read_bytes() != two.read_bytes()
+    assert saved.read_norm(two).failures == second.failures
 
 
 def test_topology_mismatch_alias_and_infinity_rejected_before_storage(tmp_path):
@@ -116,7 +128,7 @@ def test_topology_mismatch_alias_and_infinity_rejected_before_storage(tmp_path):
 
 
 def test_canonical_and_native_conversion_are_value_preserving():
-    specs = saved.norm_specs()
+    specs = saved.norm_specs()[:-2]
     source = _norm()
     arrays = saved._canonical_arrays(source, specs)
     assert all(value.dtype == spec.dtype for spec, value in zip(specs, arrays.values()))
@@ -125,3 +137,20 @@ def test_canonical_and_native_conversion_are_value_preserving():
         value.dtype == (np.dtype(np.float64) if spec.dtype.kind == "f" else spec.dtype)
         for spec, value in zip(specs, native.values())
     )
+
+
+def test_hostile_infinity_rejected_before_first_native_copy(tmp_path, monkeypatch):
+    source = _norm()
+    specs = saved.norm_specs()
+    arrays = saved._canonical_arrays(source, specs[:-2])
+    arrays.update(saved._failure_arrays(source.failures))
+    arrays["channels"][0, 0] = np.inf
+    from scripts import _b3_e4_f03_local_scientific_storage as raw
+    raw.write_group(
+        tmp_path / "hostile.npz", arrays, specs, max_raw_bytes=saved.group_bound(specs),
+    )
+    monkeypatch.setattr(
+        saved, "_native_copy", lambda *a, **k: pytest.fail("must reject before copy"),
+    )
+    with pytest.raises(ValueError, match="infinite"):
+        saved.read_norm(tmp_path / "hostile.npz")

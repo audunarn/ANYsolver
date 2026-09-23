@@ -6,6 +6,7 @@ or decide a scientific result.
 """
 from __future__ import annotations
 
+from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
 import ctypes
 import hashlib
@@ -148,9 +149,11 @@ def _path(directory: Path, name: str) -> Path:
     return directory.joinpath(*parts)
 
 
-def _allowed_directories(names: tuple[str, ...]) -> frozenset[str]:
+def _allowed_directories(
+    names: tuple[str, ...], infrastructure: frozenset[str],
+) -> frozenset[str]:
     result = set()
-    for name in (*names, *INFRASTRUCTURE):
+    for name in (*names, *infrastructure):
         parts = PurePosixPath(name).parts[:-1]
         for count in range(1, len(parts) + 1):
             result.add(PurePosixPath(*parts[:count]).as_posix())
@@ -158,13 +161,15 @@ def _allowed_directories(names: tuple[str, ...]) -> frozenset[str]:
 
 
 def _tree(
-    directory: Path, names: tuple[str, ...],
+    directory: Path, names: tuple[str, ...], infrastructure: frozenset[str] = INFRASTRUCTURE,
 ) -> dict[str, _FileIdentity]:
     root_info = os.lstat(directory)
     if not stat.S_ISDIR(root_info.st_mode) or _is_reparse(root_info):
         raise ValueError("ordinary F03 evidence directory required")
-    allowed_files = set(names) | set(INFRASTRUCTURE)
-    allowed_directories = _allowed_directories(names)
+    if type(infrastructure) is not frozenset or any(type(name) is not str for name in infrastructure):
+        raise ValueError("exact F03 infrastructure inventory required")
+    allowed_files = set(names) | set(infrastructure)
+    allowed_directories = _allowed_directories(names, infrastructure)
     result = {}
 
     def visit(current: Path, relative: PurePosixPath) -> None:
@@ -252,31 +257,136 @@ def _open_no_follow(path: Path):
     return os.fdopen(descriptor, "rb")
 
 
-def _hash_member(path: Path, identity: _FileIdentity) -> str:
+@contextmanager
+def _open_directory_no_follow(path: Path):
+    path = Path(path)
+    if os.name != "nt":
+        flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        descriptor = os.open(path, flags)
+        try:
+            info = os.fstat(descriptor)
+            if not stat.S_ISDIR(info.st_mode):
+                raise ValueError("ordinary F03 evidence directory required")
+            yield descriptor
+        finally:
+            os.close(descriptor)
+        return
+    import msvcrt
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    create = kernel32.CreateFileW
+    create.argtypes = (
+        ctypes.c_wchar_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p,
+        ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p,
+    )
+    create.restype = ctypes.c_void_p
+    handle = create(
+        str(path), 0, 0x00000001, None, 3,
+        0x00200000 | 0x02000000, None,
+    )
+    invalid = ctypes.c_void_p(-1).value
+    if handle == invalid:
+        error = ctypes.get_last_error()
+        raise OSError(error, os.strerror(error), str(path))
+    try:
+        descriptor = msvcrt.open_osfhandle(handle, os.O_RDONLY | getattr(os, "O_BINARY", 0))
+    except BaseException:
+        kernel32.CloseHandle(ctypes.c_void_p(handle))
+        raise
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISDIR(info.st_mode) or _is_reparse(info):
+            raise ValueError("ordinary F03 evidence directory required")
+        yield descriptor
+    finally:
+        os.close(descriptor)
+
+
+def _hash_open(stream, identity: _FileIdentity) -> str:
+    if not _same_file(os.fstat(stream.fileno()), identity):
+        raise ValueError("F03 evidence member changed before hashing")
+    stream.seek(0)
     digest = hashlib.sha256()
     observed = 0
+    while observed < identity.bytes:
+        block = stream.read(min(CHUNK_BYTES, identity.bytes - observed))
+        if not block:
+            raise ValueError("truncated F03 evidence member")
+        observed += len(block)
+        digest.update(block)
+    if stream.read(1):
+        raise ValueError("F03 evidence member grew while hashing")
+    if not _same_file(os.fstat(stream.fileno()), identity):
+        raise ValueError("F03 evidence member changed while hashing")
+    return digest.hexdigest()
+
+
+@contextmanager
+def _snapshot(
+    directory: Path, names: tuple[str, ...], max_total_bytes: int,
+):
+    directory = Path(directory)
+    with ExitStack() as stack:
+        stack.enter_context(_open_directory_no_follow(directory))
+        for name in sorted(_allowed_directories(names, INFRASTRUCTURE)):
+            path = directory.joinpath(*PurePosixPath(name).parts)
+            if path.exists():
+                stack.enter_context(_open_directory_no_follow(path))
+        identities = _preflight(directory, names, max_total_bytes)
+        streams = tuple(
+            stack.enter_context(_open_no_follow(_path(directory, identity.name)))
+            for identity in identities
+        )
+        for stream, identity in zip(streams, identities):
+            if not _same_file(os.fstat(stream.fileno()), identity):
+                raise ValueError("F03 evidence inventory changed before snapshot")
+        try:
+            yield identities, streams
+        except BaseException:
+            raise
+        else:
+            for stream, identity in zip(streams, identities):
+                if not _same_file(os.fstat(stream.fileno()), identity):
+                    raise ValueError("F03 evidence inventory changed during snapshot")
+            for identity in identities:
+                with _open_no_follow(_path(directory, identity.name)) as stream:
+                    if not _same_file(os.fstat(stream.fileno()), identity):
+                        raise ValueError("F03 evidence inventory changed after snapshot")
+
+
+def _hash_member(path: Path, identity: _FileIdentity) -> str:
     with _open_no_follow(path) as stream:
-        info = os.fstat(stream.fileno())
-        if not _same_file(info, identity):
-            raise ValueError("F03 evidence member changed before hashing")
-        while observed < identity.bytes:
-            block = stream.read(min(CHUNK_BYTES, identity.bytes - observed))
-            if not block:
-                raise ValueError("truncated F03 evidence member")
-            observed += len(block)
-            digest.update(block)
-        if stream.read(1):
-            raise ValueError("F03 evidence member grew while hashing")
-        if not _same_file(os.fstat(stream.fileno()), identity):
-            raise ValueError("F03 evidence member changed while hashing")
+        digest = _hash_open(stream, identity)
     with _open_no_follow(path) as stream:
         if not _same_file(os.fstat(stream.fileno()), identity):
             raise ValueError("F03 evidence member changed after hashing")
-    return digest.hexdigest()
+    return digest
 
 
 def _plan_sha256(plan: archive.CaseArchivePlan) -> str:
     return hashlib.sha256(archive._payload(plan)).hexdigest()
+
+
+def _index_from_snapshot(
+    plan: archive.CaseArchivePlan,
+    registration_sha256: str,
+    start_sha256: str,
+    identities: tuple[_FileIdentity, ...],
+    streams: tuple,
+) -> EvidenceIndex:
+    names = expected_members(plan)
+    if tuple(item.name for item in identities) != names or len(streams) != len(names):
+        raise ValueError("invalid complete F03 evidence snapshot")
+    members = tuple(
+        EvidenceMember(
+            name, _kind(name), identity.bytes, _hash_open(stream, identity),
+        )
+        for name, identity, stream in zip(names, identities, streams)
+    )
+    return EvidenceIndex(
+        SCHEMA, plan.case_id, plan.source_commit, registration_sha256,
+        _plan_sha256(plan), start_sha256, plan.inventory_sha256, plan.topology_sha256,
+        sum(item.bytes for item in identities), members,
+    )
 
 
 def make_index(
@@ -292,28 +402,10 @@ def make_index(
         raise ValueError("F03 evidence directory required")
     names = expected_members(plan)
     evidence_limit = plan.raw_archive_bytes - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
-    identities = _preflight(directory, names, evidence_limit)
-    members = tuple(
-        EvidenceMember(
-            name,
-            _kind(name),
-            identity.bytes,
-            _hash_member(_path(directory, name), identity),
+    with _snapshot(directory, names, evidence_limit) as (identities, streams):
+        return _index_from_snapshot(
+            plan, registration_sha256, start_sha256, identities, streams,
         )
-        for name, identity in zip(names, identities)
-    )
-    return EvidenceIndex(
-        SCHEMA,
-        plan.case_id,
-        plan.source_commit,
-        registration_sha256,
-        _plan_sha256(plan),
-        start_sha256,
-        plan.inventory_sha256,
-        plan.topology_sha256,
-        sum(item.bytes for item in identities),
-        members,
-    )
 
 
 def _payload(index: EvidenceIndex) -> bytes:
@@ -353,10 +445,18 @@ def write_index(
     registration_sha256: str,
     start_sha256: str,
 ) -> tuple[EvidenceIndex, str]:
-    index = make_index(directory, plan, registration_sha256, start_sha256)
-    payload = _payload(index)
-    with (Path(directory) / "evidence_index.json").open("xb") as stream:
-        stream.write(payload)
+    if not _digest(registration_sha256) or not _digest(start_sha256):
+        raise ValueError("exact F03 registration and start identities required")
+    directory = Path(directory)
+    names = expected_members(plan)
+    evidence_limit = plan.raw_archive_bytes - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
+    with _snapshot(directory, names, evidence_limit) as (identities, streams):
+        index = _index_from_snapshot(
+            plan, registration_sha256, start_sha256, identities, streams,
+        )
+        payload = _payload(index)
+        with (directory / "evidence_index.json").open("xb") as output:
+            output.write(payload)
     return index, hashlib.sha256(payload).hexdigest()
 
 
@@ -395,25 +495,31 @@ def read_index(
     registration_sha256: str,
     start_sha256: str,
 ) -> tuple[EvidenceIndex, str]:
-    path = Path(directory) / "evidence_index.json"
-    tree = _tree(Path(directory), expected_members(plan))
-    identity = tree.get("evidence_index.json")
-    if identity is None or identity.bytes > MAX_INDEX_BYTES:
-        raise ValueError("F03 evidence index exceeds declared bound")
-    with _open_no_follow(path) as stream:
-        if not _same_file(os.fstat(stream.fileno()), identity):
-            raise ValueError("F03 evidence index changed before reading")
-        payload = stream.read(MAX_INDEX_BYTES + 1)
-        if not _same_file(os.fstat(stream.fileno()), identity):
-            raise ValueError("F03 evidence index changed while reading")
-    if len(payload) != identity.bytes or len(payload) > MAX_INDEX_BYTES:
-        raise ValueError("F03 evidence index exceeds declared bound")
-    with _open_no_follow(path) as stream:
-        if not _same_file(os.fstat(stream.fileno()), identity):
-            raise ValueError("F03 evidence index changed after reading")
-    index = _decode(payload)
-    expected = make_index(directory, plan, registration_sha256, start_sha256)
-    if _payload(index) != _payload(expected):
-        raise ValueError("stale or mismatched F03 evidence index")
-    digest = hashlib.sha256(payload).hexdigest()
-    return index, digest
+    directory = Path(directory)
+    path = directory / "evidence_index.json"
+    names = expected_members(plan)
+    evidence_limit = plan.raw_archive_bytes - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
+    with _open_directory_no_follow(directory):
+        tree = _tree(directory, names)
+        identity = tree.get("evidence_index.json")
+        if identity is None or identity.bytes > MAX_INDEX_BYTES:
+            raise ValueError("F03 evidence index exceeds declared bound")
+        with _open_no_follow(path) as index_stream:
+            if not _same_file(os.fstat(index_stream.fileno()), identity):
+                raise ValueError("F03 evidence index changed before reading")
+            payload = index_stream.read(MAX_INDEX_BYTES + 1)
+            if len(payload) != identity.bytes or len(payload) > MAX_INDEX_BYTES:
+                raise ValueError("F03 evidence index exceeds declared bound")
+            index = _decode(payload)
+            with _snapshot(directory, names, evidence_limit) as (identities, streams):
+                expected = _index_from_snapshot(
+                    plan, registration_sha256, start_sha256, identities, streams,
+                )
+                if _payload(index) != _payload(expected):
+                    raise ValueError("stale or mismatched F03 evidence index")
+                if not _same_file(os.fstat(index_stream.fileno()), identity):
+                    raise ValueError("F03 evidence index changed during verification")
+                with _open_no_follow(path) as final_index:
+                    if not _same_file(os.fstat(final_index.fileno()), identity):
+                        raise ValueError("F03 evidence index changed after verification")
+    return index, hashlib.sha256(payload).hexdigest()
