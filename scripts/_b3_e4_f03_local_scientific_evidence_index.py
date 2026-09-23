@@ -7,6 +7,7 @@ or decide a scientific result.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import ctypes
 import hashlib
 import json
 import os
@@ -14,13 +15,18 @@ from pathlib import Path, PurePosixPath
 import stat
 
 from scripts import _b3_e4_f03_local_scientific_archive as archive
+from scripts import _b3_e4_f03_local_scientific_cases as cases
 
 
 SCHEMA = "f03_local_scientific_evidence_index_v1"
-MAX_INDEX_BYTES = 1024 * 1024
+MAX_INDEX_BYTES = cases.EVIDENCE_INDEX_BYTES
+MAX_CASE_RECEIPT_BYTES = cases.CASE_RECEIPT_BYTES
 CHUNK_BYTES = 1024 * 1024
 DIGEST = frozenset("0123456789abcdef")
 EXCLUDED = frozenset(("evidence_index.json", "case_receipt.json"))
+INFRASTRUCTURE = frozenset(
+    ("start.json", "terminal.json", "plan.zip", "evidence_index.json", "case_receipt.json")
+)
 
 
 def _digest(value: object) -> bool:
@@ -94,6 +100,33 @@ class EvidenceIndex:
             raise ValueError("invalid F03 evidence index")
 
 
+@dataclass(frozen=True, slots=True)
+class _FileIdentity:
+    name: str
+    bytes: int
+    device: int
+    inode: int
+    modified_ns: int
+    changed_ns: int
+
+
+def _is_reparse(info: os.stat_result) -> bool:
+    mask = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    return bool(getattr(info, "st_file_attributes", 0) & mask)
+
+
+def _same_file(info: os.stat_result, identity: _FileIdentity) -> bool:
+    return (
+        stat.S_ISREG(info.st_mode)
+        and not _is_reparse(info)
+        and info.st_size == identity.bytes
+        and info.st_dev == identity.device
+        and info.st_ino == identity.inode
+        and info.st_mtime_ns == identity.modified_ns
+        and info.st_ctime_ns == identity.changed_ns
+    )
+
+
 def expected_members(plan: archive.CaseArchivePlan) -> tuple[str, ...]:
     if type(plan) is not archive.CaseArchivePlan:
         raise ValueError("validated F03 archive plan required")
@@ -115,39 +148,130 @@ def _path(directory: Path, name: str) -> Path:
     return directory.joinpath(*parts)
 
 
+def _allowed_directories(names: tuple[str, ...]) -> frozenset[str]:
+    result = set()
+    for name in (*names, *INFRASTRUCTURE):
+        parts = PurePosixPath(name).parts[:-1]
+        for count in range(1, len(parts) + 1):
+            result.add(PurePosixPath(*parts[:count]).as_posix())
+    return frozenset(result)
+
+
+def _tree(
+    directory: Path, names: tuple[str, ...],
+) -> dict[str, _FileIdentity]:
+    root_info = os.lstat(directory)
+    if not stat.S_ISDIR(root_info.st_mode) or _is_reparse(root_info):
+        raise ValueError("ordinary F03 evidence directory required")
+    allowed_files = set(names) | set(INFRASTRUCTURE)
+    allowed_directories = _allowed_directories(names)
+    result = {}
+
+    def visit(current: Path, relative: PurePosixPath) -> None:
+        with os.scandir(current) as entries:
+            for entry in entries:
+                info = entry.stat(follow_symlinks=False)
+                name = (relative / entry.name).as_posix()
+                if entry.is_symlink() or _is_reparse(info):
+                    raise ValueError(f"linked or reparse F03 evidence path: {name}")
+                if stat.S_ISDIR(info.st_mode):
+                    if name not in allowed_directories:
+                        raise ValueError(f"extra F03 evidence directory: {name}")
+                    visit(Path(entry.path), relative / entry.name)
+                elif stat.S_ISREG(info.st_mode):
+                    if name not in allowed_files or name in result:
+                        raise ValueError(f"extra or duplicate F03 evidence file: {name}")
+                    with _open_no_follow(Path(entry.path)) as stream:
+                        handle_info = os.fstat(stream.fileno())
+                    if not stat.S_ISREG(handle_info.st_mode) or _is_reparse(handle_info):
+                        raise ValueError(f"linked or reparse F03 evidence path: {name}")
+                    result[name] = _FileIdentity(
+                        name, handle_info.st_size, handle_info.st_dev, handle_info.st_ino,
+                        handle_info.st_mtime_ns, handle_info.st_ctime_ns,
+                    )
+                else:
+                    raise ValueError(f"unsupported F03 evidence file type: {name}")
+
+    visit(directory, PurePosixPath())
+    return result
+
+
+def _preflight(
+    directory: Path, names: tuple[str, ...], max_total_bytes: int,
+) -> tuple[_FileIdentity, ...]:
+    if type(max_total_bytes) is not int or max_total_bytes <= 0:
+        raise ValueError("positive F03 evidence byte limit required")
+    observed = _tree(directory, names)
+    if any(name not in observed for name in names):
+        raise ValueError("missing F03 evidence member file")
+    identities = []
+    total = 0
+    for name in names:
+        identity = observed[name]
+        if identity.bytes <= 0:
+            raise ValueError(f"invalid F03 evidence member file: {name}")
+        total += identity.bytes
+        if total > max_total_bytes:
+            raise ValueError("F03 evidence inventory exceeds archive byte limit")
+        identities.append(identity)
+    return tuple(identities)
+
+
 def _sizes(
     directory: Path, names: tuple[str, ...], max_total_bytes: int,
 ) -> tuple[int, ...]:
-    if type(max_total_bytes) is not int or max_total_bytes <= 0:
-        raise ValueError("positive F03 evidence byte limit required")
-    sizes = []
-    total = 0
-    for name in names:
-        info = _path(directory, name).lstat()
-        if not stat.S_ISREG(info.st_mode) or info.st_size <= 0:
-            raise ValueError(f"invalid F03 evidence member file: {name}")
-        total += info.st_size
-        if total > max_total_bytes:
-            raise ValueError("F03 evidence inventory exceeds archive byte limit")
-        sizes.append(info.st_size)
-    return tuple(sizes)
+    return tuple(item.bytes for item in _preflight(directory, names, max_total_bytes))
 
 
-def _hash_member(path: Path, expected_bytes: int) -> str:
+def _open_no_follow(path: Path):
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    if os.name != "nt":
+        return os.fdopen(os.open(path, flags), "rb")
+    # OPEN_REPARSE_POINT prevents the final component from being followed.
+    import msvcrt
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    create = kernel32.CreateFileW
+    create.argtypes = (
+        ctypes.c_wchar_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p,
+        ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p,
+    )
+    create.restype = ctypes.c_void_p
+    handle = create(
+        str(path), 0x80000000, 0x00000001, None, 3,
+        0x00200000 | 0x08000000, None,
+    )
+    invalid = ctypes.c_void_p(-1).value
+    if handle == invalid:
+        error = ctypes.get_last_error()
+        raise OSError(error, os.strerror(error), str(path))
+    try:
+        descriptor = msvcrt.open_osfhandle(handle, flags)
+    except BaseException:
+        kernel32.CloseHandle(ctypes.c_void_p(handle))
+        raise
+    return os.fdopen(descriptor, "rb")
+
+
+def _hash_member(path: Path, identity: _FileIdentity) -> str:
     digest = hashlib.sha256()
     observed = 0
-    with path.open("rb") as stream:
+    with _open_no_follow(path) as stream:
         info = os.fstat(stream.fileno())
-        if not stat.S_ISREG(info.st_mode) or info.st_size != expected_bytes:
+        if not _same_file(info, identity):
             raise ValueError("F03 evidence member changed before hashing")
-        while observed < expected_bytes:
-            block = stream.read(min(CHUNK_BYTES, expected_bytes - observed))
+        while observed < identity.bytes:
+            block = stream.read(min(CHUNK_BYTES, identity.bytes - observed))
             if not block:
                 raise ValueError("truncated F03 evidence member")
             observed += len(block)
             digest.update(block)
         if stream.read(1):
             raise ValueError("F03 evidence member grew while hashing")
+        if not _same_file(os.fstat(stream.fileno()), identity):
+            raise ValueError("F03 evidence member changed while hashing")
+    with _open_no_follow(path) as stream:
+        if not _same_file(os.fstat(stream.fileno()), identity):
+            raise ValueError("F03 evidence member changed after hashing")
     return digest.hexdigest()
 
 
@@ -167,15 +291,16 @@ def make_index(
     if not directory.is_dir():
         raise ValueError("F03 evidence directory required")
     names = expected_members(plan)
-    sizes = _sizes(directory, names, plan.raw_archive_bytes)
+    evidence_limit = plan.raw_archive_bytes - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
+    identities = _preflight(directory, names, evidence_limit)
     members = tuple(
         EvidenceMember(
             name,
             _kind(name),
-            size,
-            _hash_member(_path(directory, name), size),
+            identity.bytes,
+            _hash_member(_path(directory, name), identity),
         )
-        for name, size in zip(names, sizes)
+        for name, identity in zip(names, identities)
     )
     return EvidenceIndex(
         SCHEMA,
@@ -186,7 +311,7 @@ def make_index(
         start_sha256,
         plan.inventory_sha256,
         plan.topology_sha256,
-        sum(sizes),
+        sum(item.bytes for item in identities),
         members,
     )
 
@@ -271,10 +396,21 @@ def read_index(
     start_sha256: str,
 ) -> tuple[EvidenceIndex, str]:
     path = Path(directory) / "evidence_index.json"
-    with path.open("rb") as stream:
-        payload = stream.read(MAX_INDEX_BYTES + 1)
-    if len(payload) > MAX_INDEX_BYTES:
+    tree = _tree(Path(directory), expected_members(plan))
+    identity = tree.get("evidence_index.json")
+    if identity is None or identity.bytes > MAX_INDEX_BYTES:
         raise ValueError("F03 evidence index exceeds declared bound")
+    with _open_no_follow(path) as stream:
+        if not _same_file(os.fstat(stream.fileno()), identity):
+            raise ValueError("F03 evidence index changed before reading")
+        payload = stream.read(MAX_INDEX_BYTES + 1)
+        if not _same_file(os.fstat(stream.fileno()), identity):
+            raise ValueError("F03 evidence index changed while reading")
+    if len(payload) != identity.bytes or len(payload) > MAX_INDEX_BYTES:
+        raise ValueError("F03 evidence index exceeds declared bound")
+    with _open_no_follow(path) as stream:
+        if not _same_file(os.fstat(stream.fileno()), identity):
+            raise ValueError("F03 evidence index changed after reading")
     index = _decode(payload)
     expected = make_index(directory, plan, registration_sha256, start_sha256)
     if _payload(index) != _payload(expected):

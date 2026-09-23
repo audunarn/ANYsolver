@@ -44,7 +44,7 @@ def test_missing_changed_and_stale_identity_rejected(plan, tmp_path):
     missing = tmp_path / "missing"
     _populate(missing, plan)
     missing.joinpath(*Path(evidence.expected_members(plan)[3]).parts).unlink()
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(ValueError, match="missing"):
         evidence.write_index(missing, plan, REGISTRATION, START)
 
     changed = tmp_path / "changed"
@@ -81,6 +81,28 @@ def test_extra_reordered_duplicate_and_noncanonical_index_rejected(plan, tmp_pat
             evidence.read_index(directory, plan, REGISTRATION, START)
 
 
+def test_extra_physical_file_and_directory_are_rejected(plan, tmp_path):
+    for name in ("rogue.npz", "rogue/extra.npy"):
+        directory = tmp_path / name.replace("/", "-")
+        _populate(directory, plan)
+        path = directory.joinpath(*Path(name).parts)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"rogue")
+        with pytest.raises(ValueError, match="extra"):
+            evidence.write_index(directory, plan, REGISTRATION, START)
+
+
+def test_member_identity_change_is_rejected_before_hash(plan, tmp_path):
+    directory = tmp_path / "identity"
+    _populate(directory, plan)
+    names = evidence.expected_members(plan)
+    identity = evidence._preflight(directory, names, plan.raw_archive_bytes)[0]
+    path = directory.joinpath(*Path(identity.name).parts)
+    path.write_bytes(b"replacement-with-different-identity")
+    with pytest.raises(ValueError, match="changed"):
+        evidence._hash_member(path, identity)
+
+
 def test_total_bound_rejects_before_first_hash(plan, tmp_path, monkeypatch):
     directory = tmp_path / "bounded"
     _populate(directory, plan)
@@ -90,6 +112,25 @@ def test_total_bound_rejects_before_first_hash(plan, tmp_path, monkeypatch):
     )
     with pytest.raises(ValueError, match="byte limit"):
         evidence._sizes(directory, names, len(names) - 1)
+
+
+def test_complete_archive_cap_reserves_index_and_receipt(plan, tmp_path, monkeypatch):
+    directory = tmp_path / "reserve"
+    _populate(directory, plan)
+    observed = {}
+    original = evidence._preflight
+
+    def record(root, names, limit):
+        observed["limit"] = limit
+        return original(root, names, limit)
+
+    monkeypatch.setattr(evidence, "_preflight", record)
+    evidence.make_index(directory, plan, REGISTRATION, START)
+    assert observed["limit"] == (
+        plan.raw_archive_bytes
+        - evidence.MAX_INDEX_BYTES
+        - evidence.MAX_CASE_RECEIPT_BYTES
+    )
 
 
 def test_index_size_bound_precedes_json_decode(plan, tmp_path, monkeypatch):
