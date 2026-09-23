@@ -30,6 +30,7 @@ GROUP_MEMBERS = (
     "ports.npz",
     "numerical_index.json",
     "prolongations.npz",
+    "prolongation_weights.json",
     "saved_interface.npz",
     "saved_work.npz",
     "saved_norm.npz",
