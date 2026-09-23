@@ -471,6 +471,7 @@ def _tuple_floats(value, count, *, optional=False):
 def _decode(
     payload: bytes, plan: archive.CaseArchivePlan, registration_sha256: str,
     bindings: AdjudicationBindings | None = None,
+    *, inventory_only: bool = False,
 ) -> CaseReceipt:
     if type(payload) is not bytes or len(payload) > MAX_BYTES:
         raise ValueError("invalid bounded F03 case receipt payload")
@@ -530,6 +531,12 @@ def _decode(
         raw["terminal_exit_code"], raw["status"], predicates, work, settling, functional,
         tuple(raw["reasons"]),
     )
+    if inventory_only:
+        if bindings is not None:
+            raise ValueError("inventory-only F03 receipt cannot use adjudication bindings")
+        bindings = (AdjudicationBindings(receipt.settling, receipt.functional)
+                    if receipt.settling is not None and receipt.functional is not None
+                    else None)
     if _payload(receipt, plan, registration_sha256, bindings) != payload:
         raise ValueError("noncanonical F03 case receipt encoding")
     return receipt
@@ -539,13 +546,34 @@ def read_receipt(
     directory: Path, plan: archive.CaseArchivePlan, registration_sha256: str,
     bindings: AdjudicationBindings | None = None,
 ) -> tuple[CaseReceipt, str]:
+    return _read_receipt(directory, plan, registration_sha256, bindings)
+
+
+def read_receipt_inventory(
+    directory: Path, plan: archive.CaseArchivePlan, registration_sha256: str,
+) -> tuple[CaseReceipt, str]:
+    """Check canonical sealed identity without repeating numerical adjudication.
+
+    A complete receipt self-binds its saved observations here.  Scientific
+    acceptance still requires read_receipt with independently replayed bindings.
+    """
+    return _read_receipt(directory, plan, registration_sha256, None,
+                         inventory_only=True)
+
+
+def _read_receipt(
+    directory: Path, plan: archive.CaseArchivePlan, registration_sha256: str,
+    bindings: AdjudicationBindings | None,
+    *, inventory_only: bool = False,
+) -> tuple[CaseReceipt, str]:
     directory = Path(directory)
     path = directory / "case_receipt.json"
     with evidence._open_no_follow(path) as stream:
         payload = stream.read(MAX_BYTES + 1)
     if len(payload) > MAX_BYTES:
         raise ValueError("F03 case receipt exceeds declared bound")
-    value = _decode(payload, plan, registration_sha256, bindings)
+    value = _decode(payload, plan, registration_sha256, bindings,
+                    inventory_only=inventory_only)
     terminal, terminal_digest = lifecycle.read_terminal(directory, plan, registration_sha256)
     start_path = directory / "start.json"
     start_digest = (

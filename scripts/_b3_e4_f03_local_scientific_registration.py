@@ -17,6 +17,7 @@ import stat
 
 from scripts import _b3_e4_f03_local_scientific_archive as archive
 from scripts import _b3_e4_f03_local_scientific_cases as cases
+from scripts import _b3_e4_f03_local_scientific_cross_math as cross_math
 from scripts import _b3_e4_f03_local_scientific_evidence_index as evidence_index
 from scripts import _b3_e4_f03_local_scientific_lifecycle as lifecycle
 from scripts import _b3_e4_f03_local_scientific_supervisor as supervisor
@@ -35,6 +36,7 @@ SOURCE_ROLES = (
     ("registration", "scripts/_b3_e4_f03_local_scientific_registration.py"),
     ("coordinator", "scripts/_b3_e4_f03_local_scientific_coordinator.py"),
     ("aggregate", "scripts/_b3_e4_f03_local_scientific_aggregate.py"),
+    ("aggregate_receipt", "scripts/_b3_e4_f03_local_scientific_aggregate_receipt.py"),
     ("cross_snapshot", "scripts/_b3_e4_f03_local_scientific_cross_snapshot.py"),
     ("cross_math", "scripts/_b3_e4_f03_local_scientific_cross_math.py"),
     ("cross_bundle", "scripts/_b3_e4_f03_local_scientific_cross_bundle.py"),
@@ -67,6 +69,20 @@ def process_contract() -> tuple[tuple[str, str], ...]:
         ("supervisor_poll_seconds", "0.1"),
         ("serial_launch_cutoff_seconds", "7200"),
         ("raw_archive_bytes_per_case", str(cases.ARCHIVE_BYTES)),
+    )
+
+
+def resource_contract() -> tuple[tuple[str, int], ...]:
+    """Case evidence and cross-comparator resource ceilings for one run."""
+    return archive.resource_contract() + (
+        ("cross_union_intervals", cross_math.MAX_UNION_INTERVALS),
+        ("cross_functional_integer_bits", cross_math.MAX_FUNCTIONAL_BITS),
+        ("cross_functional_operations", cross_math.MAX_FUNCTIONAL_OPERATIONS),
+        ("cross_functional_workspace_bytes", cross_math.MAX_FUNCTIONAL_WORK_BYTES),
+        ("cross_matrix_nnz", cross_math.MAX_MATRIX_NNZ),
+        ("cross_case_nnz", cross_math.MAX_CASE_NNZ),
+        ("cross_product_paths", cross_math.MAX_PRODUCT_PATHS),
+        ("cross_matrix_workspace_bytes", cross_math.MAX_MATRIX_WORK_BYTES),
     )
 
 
@@ -332,7 +348,7 @@ class Registration:
             or type(self.hardware) is not HardwareIdentity
             or self.threads != thread_contract()
             or self.process_limits != process_contract()
-            or self.resource_limits != archive.resource_contract()
+            or self.resource_limits != resource_contract()
             or self.tolerances != tolerance_contract()
             or type(self.cases) is not tuple
             or any(type(item) is not CaseBinding for item in self.cases)
@@ -514,7 +530,7 @@ def decode(encoded: bytes) -> Registration:
         value["inventory_sha256"], sources, runtime, packages, hardware,
         _pairs(value["threads"], thread_contract(), "thread", str),
         _pairs(value["process_limits"], process_contract(), "process", str),
-        _pairs(value["resource_limits"], archive.resource_contract(), "resource", int),
+        _pairs(value["resource_limits"], resource_contract(), "resource", int),
         _pairs(value["tolerances"], tolerance_contract(), "tolerance", str),
         bound_cases, commands, tuple(value["terminal_precedence"]),
     )

@@ -89,7 +89,7 @@ def _registration(root: Path):
         tuple(package_identities),
         registration.HardwareIdentity("host", "Windows", "AMD64", "CPU", 8, 16 * 1024**3),
         registration.thread_contract(), registration.process_contract(),
-        archive.resource_contract(), registration.tolerance_contract(),
+        registration.resource_contract(), registration.tolerance_contract(),
         bindings, commands, registration.TERMINAL_PRECEDENCE,
     )
 

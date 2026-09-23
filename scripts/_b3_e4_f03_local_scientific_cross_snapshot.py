@@ -47,6 +47,10 @@ class CaseSnapshot:
     prolongation: object
     rederived_prolongation: object
 
+    @property
+    def prolongation_sha256(self) -> str | None:
+        return exact_prolongation_sha256(self.prolongation)
+
     def case_data(self) -> cross_math.CaseData:
         if self.receipt.settling is None or self.receipt.functional is None:
             raise ValueError("passing F03 case lacks settled observations")
@@ -58,6 +62,26 @@ class CaseSnapshot:
             primary.root, primary.load, ports.samples, ports.root, ports.tip,
             ports.free_slope,
         )
+
+
+def exact_prolongation_sha256(value: transfer.ExactProlongation | None) -> str | None:
+    """Hash dimensions, ordered indices and exact rational interpolation."""
+    if value is None:
+        return None
+    if type(value) is not transfer.ExactProlongation:
+        raise ValueError("validated exact F03 prolongation required")
+    digest = hashlib.sha256(b"f03-exact-prolongation-v1\0")
+    for number in (value.source_dofs, value.target_dofs,
+                   len(value.weights), value.integer_bits):
+        digest.update(int(number).to_bytes(8, "little", signed=False))
+    for array in (value.rows, value.columns):
+        digest.update(np.asarray(array, dtype="<i8").tobytes(order="C"))
+    for weight in value.weights:
+        for number in (weight.numerator, weight.denominator):
+            encoded = str(number).encode("ascii")
+            digest.update(len(encoded).to_bytes(8, "little"))
+            digest.update(encoded)
+    return digest.hexdigest()
 
 
 def _verified_prolongation(case: cases.ScientificCase, saved: object):

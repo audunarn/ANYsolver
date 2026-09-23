@@ -213,12 +213,15 @@ def test_frozen_topology_rederivation_rejects_changed_exact_interpolation():
     saved, rebuilt = cross._verified_prolongation(case, expected)
     assert saved is expected
     assert np.array_equal(rebuilt.rows, expected.rows)
+    assert cross.exact_prolongation_sha256(saved) == cross.exact_prolongation_sha256(rebuilt)
+    assert cross.exact_prolongation_sha256(None) is None
     changed = object.__new__(transfer.ExactProlongation)
     for name in expected.__dataclass_fields__:
         object.__setattr__(changed, name, getattr(expected, name))
     rows = np.array(expected.rows, copy=True)
     rows[0] += 1
     object.__setattr__(changed, "rows", rows)
+    assert cross.exact_prolongation_sha256(changed) != cross.exact_prolongation_sha256(expected)
     with pytest.raises(ValueError, match="disagrees with frozen topology"):
         cross._verified_prolongation(case, changed)
 

@@ -214,6 +214,10 @@ def test_complete_read_closes_all_saved_identity_readers(plan, tmp_path, monkeyp
     monkeypatch.setattr(receipt.inverse_storage, "read_index", lambda *args: (None, DIGEST))
     restored, _ = receipt.read_receipt(directory, plan, DIGEST, bindings)
     assert restored == value
+    inventoried, _ = receipt.read_receipt_inventory(directory, plan, DIGEST)
+    assert inventoried == value
+    with pytest.raises(ValueError, match="work"):
+        receipt.read_receipt(directory, plan, DIGEST)
     monkeypatch.setattr(
         receipt.numerical_index, "read_index", lambda *args: (None, "cd" * 32),
     )
