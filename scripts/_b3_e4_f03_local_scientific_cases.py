@@ -23,6 +23,7 @@ ARCHIVE_BYTES = 512 * 1024**2
 ARCHIVE_PLAN_BYTES = 8 * 1024**2
 EVIDENCE_INDEX_BYTES = 1024**2
 CASE_RECEIPT_BYTES = 1024**2
+INVERSE_INDEX_BYTES = 1024**2
 MAX_INCIDENCE_ENTRIES = 1_000_000
 INVERSE_EVIDENCE_BYTES = 37_068_136
 MAX_KKT_FACTOR_NNZ = 2_171_202
@@ -66,6 +67,7 @@ def resource_contract() -> tuple[tuple[str, int], ...]:
         ("archive_plan_bytes", ARCHIVE_PLAN_BYTES),
         ("evidence_index_bytes", EVIDENCE_INDEX_BYTES),
         ("case_receipt_bytes", CASE_RECEIPT_BYTES),
+        ("inverse_index_bytes", INVERSE_INDEX_BYTES),
         ("max_incidence_entries", MAX_INCIDENCE_ENTRIES),
         ("assembly_max_trace_dofs", ASSEMBLY_BUDGET.max_trace_dofs),
         ("assembly_max_triplets", ASSEMBLY_BUDGET.max_triplets),

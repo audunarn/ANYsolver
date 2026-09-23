@@ -24,6 +24,7 @@ def test_exact_five_case_inventory_and_resource_arithmetic():
     assert resources["raw_archive_bytes"] == 512 * 1024**2
     assert resources["evidence_index_bytes"] == 1024**2
     assert resources["case_receipt_bytes"] == 1024**2
+    assert resources["inverse_index_bytes"] == 1024**2
     assert resources["factor_validation_max_work_bytes"] == (
         128 * 2_162_370 + 128 * (1_470 + 1_470 + 2) + 256 * 1_470
     ) == 277_536_256
