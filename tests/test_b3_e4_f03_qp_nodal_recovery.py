@@ -8,7 +8,8 @@ from scripts._b3_e4_f03_conforming_qp_trace import FinitePadQpTrace
 from scripts._b3_e4_f03_primal_ritz import F0
 from scripts._b3_e4_f03_qp_area_adjoint import FinitePadAreaAdjoint
 from scripts._b3_e4_f03_qp_nodal_recovery import (
-    assemble_line_nodal_load, recover_nodal, support_liftings,
+    assemble_line_nodal_load, distributed_support_liftings,
+    recover_nodal, support_liftings,
 )
 from scripts._b3_e4_f03_qp_shell_recovery import PiecewiseQpShellRecovery
 
@@ -40,8 +41,11 @@ def test_nodal_projection_and_support_work(p):
     assert wrench_gap <= 2e-9, wrench_gap
 
     lifts = support_liftings(trace)
+    distributed = distributed_support_liftings(trace)
     shell = PiecewiseQpShellRecovery(trace)
     support = np.setdiff1d(np.arange(2*trace.n), trace.free_columns)
+    full_residual = recovered.shell_nodal_force-recovered.area_nodal_load
+    assert np.max(np.abs((distributed-lifts)@full_residual))/F0 <= 2e-9
     for index, lift in enumerate(lifts):
         green = shell.integration_by_parts(q, lift)
         work_reaction = green.total-recovered.area_nodal_load@lift

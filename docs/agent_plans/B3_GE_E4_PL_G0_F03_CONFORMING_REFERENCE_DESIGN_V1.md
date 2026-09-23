@@ -274,3 +274,17 @@ work check by about `4.2e-9`, even though its solved-state case passed;
 that observed failure is a quadrature diagnostic, not a relaxed
 tolerance. The spatial wrapper's checked order does not establish
 p2/p3 or default-grid spatial accuracy, nor physical refinement.
+
+A separate preparatory nested-space check evaluates each coarse cell
+polynomial on the finer shared nodes. Custom-grid p1→p2, p1→p3 and
+p2→p3 pose/derivative, energy, root, tip and load embedding checks,
+plus the two adjacent solved Galerkin energy identities, passed **4/4**
+focused tests. Independent read-only mechanics review found no blocker
+for floating-point space inclusion and energy orthogonality. This is
+not a continuum-error estimate or a physical settling result.
+
+Six edge reactions now have two different interior extensions: boundary
+node liftings and linearly blended liftings with identical support traces.
+The affected custom p1 solved-state test passed their work invariance
+check; p2/p3 have not been rerun after this addition. The continuous
+full-functional norm and measured physical p/h trends remain open.

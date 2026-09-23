@@ -1725,3 +1725,12 @@ relative random-lift work error against the stricter `2e-9` diagnostic
 limit; this was not treated as a pass or tolerance relaxation. Higher
 orders, default grid, systematic physical settling and independent
 scientific registration remain pending. **F03/G0B remain open; G1 barred.**
+
+The next preparatory Qp nested-space check passed 4/4 custom-grid tests
+for p1→p2, p1→p3 and p2→p3 floating-point field/action embedding and
+adjacent solved energy orthogonality. Independent read-only review found
+no mechanics blocker within that algebraic scope. A second blended
+support-lifting extension passed the affected p1 reaction-invariance
+check; higher-order extensions are not yet rerun. Neither result is a
+continuum-error estimate or a physical refinement pass. The complete
+functional and its Qp density conversion remain open, as does F03/G0B.

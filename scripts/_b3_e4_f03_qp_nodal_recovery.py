@@ -144,6 +144,20 @@ def support_liftings(trace: FinitePadQpTrace) -> np.ndarray:
     return lifts
 
 
+def distributed_support_liftings(trace: FinitePadQpTrace) -> np.ndarray:
+    """Six blended edge liftings with the same physical support traces."""
+    xx, yy = np.meshgrid(trace.nodes_x, trace.nodes_y, indexing="ij")
+    left = (trace.x[-1]-xx)/(trace.x[-1]-trace.x[0])
+    right = (xx-trace.x[0])/(trace.x[-1]-trace.x[0])
+    lifts = np.zeros((6, 2*trace.n))
+    for edge, chi in enumerate((left, right)):
+        lifts[3*edge, :trace.n] = chi.ravel()
+        lifts[3*edge+1, trace.n:] = chi.ravel()
+        lifts[3*edge+2, :trace.n] = (-chi*yy).ravel()
+        lifts[3*edge+2, trace.n:] = (chi*xx).ravel()
+    return lifts
+
+
 def recover_nodal(adjoint: FinitePadAreaAdjoint) -> NodalQpRecovery:
     """Recover nodal balance and six physical supported-edge works."""
     trace = adjoint.trace
