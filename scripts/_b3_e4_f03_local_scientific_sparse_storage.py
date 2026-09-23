@@ -105,10 +105,62 @@ def encode(
     arrays = {}
     for spec in specs:
         value = matrices[spec.name]
-        arrays[spec.name + "_data"] = np.frombuffer(value.data.tobytes(), dtype="<f8")
+        arrays[spec.name + "_data"] = _little_float_copy(value.data)
         arrays[spec.name + "_indices"] = np.asarray(value.indices, dtype="<i8").copy()
         arrays[spec.name + "_indptr"] = np.asarray(value.indptr, dtype="<i8").copy()
     return arrays
+
+
+def _little_float_copy(value: np.ndarray) -> np.ndarray:
+    return np.asarray(value, dtype="<f8").copy()
+
+
+def _check_saved_structure(
+    arrays: dict[str, np.ndarray],
+    spec: SparseSpec,
+    expected_by_name: dict[str, storage.ArraySpec],
+) -> None:
+    data = arrays[spec.name + "_data"]
+    indices = arrays[spec.name + "_indices"]
+    indptr = arrays[spec.name + "_indptr"]
+    for value, expected_spec in zip(
+        (data, indices, indptr),
+        (
+            expected_by_name[spec.name + "_data"],
+            expected_by_name[spec.name + "_indices"],
+            expected_by_name[spec.name + "_indptr"],
+        ),
+    ):
+        storage._check_array(value, expected_spec)
+    if (
+        indptr[0] != 0
+        or indptr[-1] != spec.nnz
+        or np.any(indptr < 0)
+        or np.any(indptr[1:] < indptr[:-1])
+        or np.any(indices < 0)
+        or np.any(indices >= spec.inner)
+    ):
+        raise ValueError(f"invalid saved F03 sparse structure: {spec.name}")
+    for left, right in zip(indptr, indptr[1:]):
+        if np.any(indices[int(left) + 1:int(right)] <= indices[int(left):int(right) - 1]):
+            raise ValueError(f"invalid saved F03 sparse structure: {spec.name}")
+
+
+def _construct_matrix(
+    arrays: dict[str, np.ndarray], spec: SparseSpec,
+):
+    cls = sparse.csr_matrix if spec.format == "csr" else sparse.csc_matrix
+    value = cls(
+        (
+            arrays[spec.name + "_data"].copy(),
+            arrays[spec.name + "_indices"].copy(),
+            arrays[spec.name + "_indptr"].copy(),
+        ),
+        shape=spec.shape,
+        copy=False,
+    )
+    _check_matrix(value, spec)
+    return value
 
 
 def decode(
@@ -121,34 +173,7 @@ def decode(
     result = {}
     expected_by_name = {item.name: item for item in expected}
     for spec in specs:
-        data = arrays[spec.name + "_data"]
-        indices = arrays[spec.name + "_indices"]
-        indptr = arrays[spec.name + "_indptr"]
-        for value, expected_spec in zip(
-            (data, indices, indptr),
-            (
-                expected_by_name[spec.name + "_data"],
-                expected_by_name[spec.name + "_indices"],
-                expected_by_name[spec.name + "_indptr"],
-            ),
-        ):
-            storage._check_array(value, expected_spec)
-        if (
-            indptr[0] != 0
-            or indptr[-1] != spec.nnz
-            or np.any(indptr < 0)
-            or np.any(indptr[1:] < indptr[:-1])
-            or np.any(indices < 0)
-            or np.any(indices >= spec.inner)
-        ):
-            raise ValueError(f"invalid saved F03 sparse structure: {spec.name}")
-        for left, right in zip(indptr, indptr[1:]):
-            if np.any(indices[int(left) + 1:int(right)] <= indices[int(left):int(right) - 1]):
-                raise ValueError(f"invalid saved F03 sparse structure: {spec.name}")
-        cls = sparse.csr_matrix if spec.format == "csr" else sparse.csc_matrix
-        value = cls(
-            (data.copy(), indices.copy(), indptr.copy()), shape=spec.shape, copy=False,
-        )
-        _check_matrix(value, spec)
-        result[spec.name] = value
+        _check_saved_structure(arrays, spec, expected_by_name)
+    for spec in specs:
+        result[spec.name] = _construct_matrix(arrays, spec)
     return result

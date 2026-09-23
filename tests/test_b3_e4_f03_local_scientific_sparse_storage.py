@@ -74,6 +74,25 @@ def test_all_matrix_validation_precedes_first_ownership_copy(matrices, monkeypat
     monkeypatch.setattr(np, "frombuffer", original)
 
 
+def test_all_saved_structures_validate_before_first_matrix_construction(matrices, monkeypatch):
+    arrays = storage.encode(matrices, SPECS)
+    arrays["root_indptr"][-1] -= 1
+    monkeypatch.setattr(
+        storage, "_construct_matrix",
+        lambda *a, **k: pytest.fail("must validate the complete group first"),
+    )
+    with pytest.raises(ValueError, match="root"):
+        storage.decode(arrays, SPECS)
+
+
+def test_float_serialization_converts_values_to_little_endian_owned_storage():
+    source = np.array([1.25, -3.5], dtype=">f8")
+    result = storage._little_float_copy(source)
+    assert result.dtype == np.dtype("<f8")
+    assert result.flags.owndata
+    np.testing.assert_array_equal(result, np.array([1.25, -3.5], dtype="<f8"))
+
+
 @pytest.mark.parametrize("name,shape,nnz,fmt", [
     ("Bad", (1, 1), 0, "csr"),
     ("good", (0, 1), 0, "csr"),
