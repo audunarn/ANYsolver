@@ -517,3 +517,5 @@ prerequisites are cross-case adjudication, followed by the serial one-use
 coordinator and its preflight/review gate. Read-only case replay is now
 independently reviewed, as recorded in
 `B3_GE_E4_PL_G0_F03_READ_ONLY_REPLAY_RESULTS.md`; it did not launch a case.
+The exact cross-case implementation boundary is saved in
+`B3_GE_E4_PL_G0_F03_CROSS_CASE_NEXT.md`.
