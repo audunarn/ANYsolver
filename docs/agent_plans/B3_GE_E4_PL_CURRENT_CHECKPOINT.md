@@ -10,8 +10,10 @@ runner foundation is implemented and independently reviewed. The primary
 solve-free numerical, inverse, port, exact-prolongation and saved-component
 schemas are now committed. Composition-summary, physical-balance and the
 adjudicator-bound per-case receipt schemas are committed and independently
-reviewed. The exclusively-writing producer, solve-free adjudicator and
-top-level one-use coordinator remain active next work.
+reviewed. Canonical replay budgets, saved numerical semantic binding and the
+solve-free single-case adjudicator are committed and independently reviewed.
+The exclusively-writing producer and top-level one-use coordinator remain
+active next work.
 
 22 September 2026. User authorized continued implementation with increased
 effort. The active goal remains the complete programme; **G0B is open and
@@ -56,6 +58,27 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
   evidence/lifecycle suite passed 129 tests before final hardening; the final
   affected suite passed 55 tests and the closure reviewer passed 29 focused
   tests without findings. This remains unexecuted infrastructure.
+- Latest independently reviewed scientific replay budget source: `5f5d72e4`.
+  All 123 ordered positive scalar budget leaves are archive-bound, and all
+  five registered cases pass topology-only replay preflight. The largest
+  registered equilibrium and composition envelopes remain within their
+  declared 4 GiB exact-work limits; the separate supervisor cap remains
+  6 GiB RSS. No scientific operator was evaluated.
+- Latest independently reviewed numerical replay binding sources:
+  `758f7375` with factor-structure closure `bfe9bd2b`. The saved positivity
+  matrix, factors, maps, diagonal and root scale are bound to the producer and
+  scaled evidence. Unit-lower/upper structure is re-established before a
+  candidate or valid HOLD can be admitted. The closure suite passed 42 tests.
+- Latest independently reviewed solve-free case-adjudicator sources:
+  `e0a7e4ef`, retained-evidence closure `74e591c8`, and retained-lifecycle
+  closure `597b1217`. All indexed semantic members plus exact start/terminal
+  receipts are held and materialized from verified source handles during
+  replay. Inverse blocks are consumed once; every numerical predicate, saved
+  composition, balance, work count and final evidence identity is bound before
+  the exclusive case receipt is written. The broad affected suite passed 212
+  tests; final independent closure passed 47 focused tests with no findings.
+  This is implemented infrastructure only and grants no scientific execution
+  or registration authority.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -408,8 +431,9 @@ can be pessimistic. Compare/select before registration, never as a fallback
 after a failed scientific bound. No automatic uniform/global-degree run.
 
 No scientific process is active. The saved interface/work/norm components,
-complete composition, protocol, runner foundation and numerical evidence
-schemas through `eccbfe2f` are independently reviewed. The numerical schema
+complete composition, protocol, runner foundation, numerical evidence and
+solve-free adjudication path through `597b1217` are independently reviewed.
+The numerical schema
 review closed two P1 findings: native factors are CSR end to end and the
 Q1_L0-to-Q2_L0 transfer is present. The resulting focused inventory passed
 172 tests; the corrected composition/balance addition passed 133 focused
@@ -419,9 +443,17 @@ archive/lifecycle checks and their closure review passed 17 checks without
 findings. The independently reviewed case receipt at `103cf51e` passed 218
 broad saved-evidence/lifecycle tests and 51 focused review tests. The saved
 balance adjudication at `6d355713`/`f7a680d8` is independently closed. The
-exact next action is to add the solve-free adjudicator, exclusively-writing case
-producer and top-level one-use coordinator. Registration remains barred until
-those pieces, bounded
+exact next action is the exclusively-writing child case producer. It must write
+`start.json` before topology/model construction, perform the two frozen
+assemblies and scalings, exactly one positivity factorization and one KKT
+factorization/candidate solve, stream each planned inverse block once, build
+the canonical saved components and indexes, and write `evidence_index.json`
+last. It must never supervise, retry, write terminal/receipt files, register or
+adjudicate. A bounded plan-envelope read and reviewed production factories for
+ports and saved interface/work/norm observations are prerequisites. The later
+top-level one-use coordinator owns immutable registration, serial supervised
+launch, terminal receipts, adjudication and aggregate disposition.
+Registration remains barred until those pieces, bounded
 lifecycle/replay tests, preflight demonstrations and independent review pass on
 a clean committed source. The accepted proofs grant no scientific execution
 authority. Current product/schema sources are committed; this checkpoint text
