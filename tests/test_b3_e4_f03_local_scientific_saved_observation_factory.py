@@ -83,6 +83,11 @@ def test_factory_components_roundtrip_and_support_balance(tmp_path):
     assert len(snapshot.action_sha256s) > 0
 
 
+def test_result_is_factory_only():
+    with pytest.raises(TypeError, match="validated factory"):
+        factory.ProducedSavedObservations()
+
+
 @pytest.mark.parametrize(
     "leaf", ("max_aggregate_operations", "max_aggregate_bits", "max_owned_bytes", "max_work_bytes"),
 )

@@ -17,7 +17,7 @@ from scripts import _b3_e4_f03_saved_recovery_composition as composition
 from scripts import _b3_e4_f03_saved_work_checks as work
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, init=False)
 class ProducedSavedObservations:
     recovery: recovery.Recovery
     interface: interface.SavedInterface
@@ -26,18 +26,44 @@ class ProducedSavedObservations:
     support: support.SupportResult
     diagnostics: object
 
-    def __post_init__(self):
-        expected = (
-            (self.recovery, recovery.Recovery),
-            (self.interface, interface.SavedInterface),
-            (self.work, work.SavedWork),
-            (self.norm, norm.SavedNorm),
-            (self.support, support.SupportResult),
-        )
-        if any(type(value) is not kind for value, kind in expected):
-            raise ValueError("complete validated F03 saved-observation bundle required")
-        if type(self.diagnostics) is not MappingProxyType:
-            raise ValueError("immutable F03 saved-observation diagnostics required")
+    def __init__(self, *args, **kwargs):
+        raise TypeError("ProducedSavedObservations requires validated factory")
+
+
+def _result(
+    recovered: recovery.Recovery,
+    saved_interface: interface.SavedInterface,
+    saved_work: work.SavedWork,
+    saved_norm: norm.SavedNorm,
+    supported: support.SupportResult,
+    diagnostics: MappingProxyType,
+) -> ProducedSavedObservations:
+    expected = (
+        (recovered, recovery.Recovery),
+        (saved_interface, interface.SavedInterface),
+        (saved_work, work.SavedWork),
+        (saved_norm, norm.SavedNorm),
+        (supported, support.SupportResult),
+    )
+    if any(type(value) is not kind for value, kind in expected):
+        raise ValueError("complete validated F03 saved-observation bundle required")
+    if (
+        type(diagnostics) is not MappingProxyType
+        or recovered.q != supported.q or recovered.eta != supported.eta
+        or recovered.cuts != supported.cuts
+        or saved_interface.cuts != recovered.cuts
+        or saved_work.cuts != recovered.cuts
+        or saved_work.lift_family != supported.lift_family
+    ):
+        raise ValueError("inconsistent common-state F03 saved-observation bundle")
+    result = object.__new__(ProducedSavedObservations)
+    for name, value in (
+        ("recovery", recovered), ("interface", saved_interface),
+        ("work", saved_work), ("norm", saved_norm),
+        ("support", supported), ("diagnostics", diagnostics),
+    ):
+        object.__setattr__(result, name, value)
+    return result
 
 
 def _owned_bytes(
@@ -166,7 +192,7 @@ def produce_saved_observations(
         "owned_byte_envelope": owned,
         "workspace_envelope_bytes": workspace,
     })
-    return ProducedSavedObservations(
+    return _result(
         recovered, saved_interface, produced_work.saved, saved_norm,
         produced_work.support, diagnostics,
     )
