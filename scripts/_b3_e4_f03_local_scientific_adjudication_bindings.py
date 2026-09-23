@@ -19,6 +19,7 @@ from scripts import _b3_e4_f03_local_grid as topology
 from scripts import _b3_e4_f03_local_scientific_case_receipt as receipt
 from scripts import _b3_e4_f03_saved_interface_checks as interface
 from scripts import _b3_e4_f03_saved_norm_checks as norm
+from scripts import _b3_e4_f03_saved_recovery_composition as composition
 from scripts import _b3_e4_f03_saved_work_checks as work
 
 
@@ -90,13 +91,14 @@ def _interface_comparisons(value: interface.InterfaceResult, name: str) -> tuple
 
 
 def settling_record(
-    composed: Mapping,
+    composed: composition.CompositionResult,
     grid: topology.CompiledGrid,
     saved_interface: interface.SavedInterface,
     saved_work: work.SavedWork,
 ) -> receipt.SettlingRecord:
     """Extract the frozen 45 signed observables from one verified composition."""
-    composed = _mapping(composed, "composition")
+    if type(composed) is not composition.CompositionResult:
+        raise ValueError("factory-owned immutable F03 composition result required")
     components = _mapping(composed.get("components"), "composition component")
     if set(components) != {"numerical", "interface", "work", "norm"}:
         raise ValueError("complete F03 composition component inventory required")
@@ -188,9 +190,12 @@ def _optional_values(value: np.ndarray) -> tuple[float | None, ...]:
     return tuple(None if np.isnan(item) else float(item) for item in value.flat)
 
 
-def functional_record(composed: Mapping, saved: norm.SavedNorm) -> receipt.FunctionalRecord:
+def functional_record(
+    composed: composition.CompositionResult, saved: norm.SavedNorm,
+) -> receipt.FunctionalRecord:
     """Snapshot the exact verified 48/64 saved-norm observation inventory."""
-    composed = _mapping(composed, "composition")
+    if type(composed) is not composition.CompositionResult:
+        raise ValueError("factory-owned immutable F03 composition result required")
     components = _mapping(composed.get("components"), "composition component")
     normed = _mapping(components.get("norm"), "norm component")
     canonical = _mapping(composed.get("canonical_saved_sha256s"), "canonical saved identity")
@@ -219,7 +224,7 @@ def functional_record(composed: Mapping, saved: norm.SavedNorm) -> receipt.Funct
 
 
 def make_bindings(
-    composed: Mapping,
+    composed: composition.CompositionResult,
     grid: topology.CompiledGrid,
     saved_interface: interface.SavedInterface,
     saved_work: work.SavedWork,

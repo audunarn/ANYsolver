@@ -1,6 +1,7 @@
 """Compose bounded saved F03 component evidence over one owned state."""
 from __future__ import annotations
 
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 import hashlib
 from types import MappingProxyType
@@ -43,6 +44,30 @@ class CompositionBudget:
                 ('max_owned_bytes','max_comparisons','max_aggregate_operations',
                  'max_aggregate_bits','max_work_bytes'))):
             raise ValueError('explicit positive saved-composition budgets required')
+
+
+@dataclass(frozen=True,slots=True,init=False,eq=False)
+class CompositionResult(Mapping):
+    """Factory-owned immutable result of one complete composition replay."""
+    _data:object
+
+    def __init__(self,*args,**kwargs):
+        raise TypeError('CompositionResult requires verify_composition')
+
+    def __getitem__(self,key):
+        return self._data[key]
+
+    def __iter__(self) -> Iterator:
+        return iter(self._data)
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+
+def _result(value:dict) -> CompositionResult:
+    result=object.__new__(CompositionResult)
+    object.__setattr__(result,'_data',_freeze(value))
+    return result
 
 
 def _freeze(value):
@@ -388,7 +413,7 @@ def verify_composition(grid,k_shell,k_beam,k_shell_plus,k_beam_plus,c_root,
     canonical_saved={'compiled_grid':_hash_grid(grid),**saved_hashes,
                       'work_state_saved':work_identity,
                       'norm_functional_saved':norm_identity}
-    return _freeze(dict(scope=SCOPE,status=status,reasons=tuple(reasons),
+    return _result(dict(scope=SCOPE,status=status,reasons=tuple(reasons),
         canonical_snapshot_sha256=snapshot,canonical_saved_sha256s=canonical_saved,
         component_statuses=statuses,cross_bindings=cross,diagnostics=diagnostics,
         components={'numerical':numerical,'interface':iface,

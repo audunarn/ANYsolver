@@ -139,6 +139,7 @@ def test_complete_composition_passes_and_reports_fixed_work_counts(monkeypatch):
     monkeypatch.setattr(rec,'recover',counted_recover)
     monkeypatch.setattr(rec.functional,'norm_observation_at_order',counted_observe)
     result=_verify(args)
+    assert type(result) is composition.CompositionResult
     assert result['status']=='COMPONENT_CHECKS_PASSED'
     assert all(result['cross_bindings'].values())
     assert set(result['component_statuses'].values())=={'NUMERICAL_MECHANICAL_CHECKS_PASSED','PASSED'}
@@ -178,7 +179,7 @@ def test_receipt_binding_rejects_broken_norm_chain_and_band_inventory():
     canonical=dict(result['canonical_saved_sha256s'])
     canonical['norm_functional_saved']='cd'*32
     broken['canonical_saved_sha256s']=canonical
-    with pytest.raises(ValueError,match='identity chain'):
+    with pytest.raises(ValueError,match='factory-owned immutable'):
         adjudication.functional_record(broken,args[-1])
     interface_result=result['components']['interface']
     damaged=_replace_interface(interface_result,comparisons=tuple(
@@ -187,7 +188,7 @@ def test_receipt_binding_rejects_broken_norm_chain_and_band_inventory():
     ))
     broken=dict(result);components=dict(result['components']);components['interface']=damaged
     broken['components']=components
-    with pytest.raises(ValueError,match='interface comparison inventory'):
+    with pytest.raises(ValueError,match='factory-owned immutable'):
         adjudication.settling_record(broken,args[0],args[-3],args[-2])
     original_interface=args[-3]
     atoms=original_interface.atoms.copy();atoms[0,0]+=1.0
@@ -210,6 +211,21 @@ def test_receipt_binding_rejects_broken_norm_chain_and_band_inventory():
     )
     with pytest.raises(ValueError,match='identity chain'):
         adjudication.functional_record(result,altered_norm)
+
+
+def test_copied_composition_cannot_forge_receipt_enclosures_or_energy():
+    args=_case();result=_verify(args)
+    forged=dict(result);components=dict(result['components'])
+    worked=dict(components['work']);comparisons=dict(worked['comparisons'])
+    edge=dict(comparisons['edge_route1/0']);bounded=dict(edge['enclosure'])
+    bounded.update(lower=F(-10**30),upper=F(10**30),input_sha256='aa'*32)
+    edge['enclosure']=bounded;comparisons['edge_route1/0']=edge
+    worked['comparisons']=comparisons;components['work']=worked
+    numerical=dict(components['numerical']);raw=dict(numerical['raw'])
+    raw['physical_shell_work_exact']+=F(123456789)
+    numerical['raw']=raw;components['numerical']=numerical;forged['components']=components
+    with pytest.raises(ValueError,match='factory-owned immutable'):
+        adjudication.make_bindings(forged,args[0],args[-3],args[-2],args[-1])
 
 
 def test_compiled_grid_identity_binds_execution_and_incidence_maps():
