@@ -1,0 +1,105 @@
+{
+  "status": "UNREGISTERED_ACTUAL_Q6_H_IDENTITY",
+  "source": "saved X0/X1/X2 states reassembled",
+  "assembly_times_s": [
+    87.8913479000039,
+    153.07754299999215,
+    259.5868053000013
+  ],
+  "sampled_peak_rss_bytes": 204619776,
+  "cases": {
+    "X0": {
+      "free_state_sha256": "cbfabb1c953c222996962f9cb946cdbe743c7c12c9f7c045bb43292a482f95ab",
+      "shell_energy_j": 10.331320254305984,
+      "beam_energy_j": 0.2676387612980029,
+      "external_work_j": 21.197918031201223,
+      "tip_pose": [
+        -2.1383528733169574e-19,
+        2.7498848549558784e-05,
+        -2.0261197858860133e-05
+      ],
+      "root_reaction_physical": [
+        9.049314969626467e-09,
+        -770920.3617126165,
+        -168617.38732525473
+      ],
+      "signed_shell_energy_defect_scaled": 0.0,
+      "signed_beam_energy_defect_scaled": 0.0,
+      "signed_work_defect_scaled": 0.0,
+      "signed_tip_defect_scaled": 0.0,
+      "free_equilibrium_scaled": 4.67176444224933e-15,
+      "root_compatibility_scaled": 2.4591362445610437e-15,
+      "shell_nnz": 392348,
+      "beam_nnz": 941584
+    },
+    "X1": {
+      "free_state_sha256": "afb695e4bd058d9a42b7b683508863f9bbf52a602346fc10d85bab5bfdfefa28",
+      "shell_energy_j": 10.33263154196952,
+      "beam_energy_j": 0.2673606081967603,
+      "external_work_j": 21.199984300318228,
+      "tip_pose": [
+        -7.279520262711665e-19,
+        2.7500046417797924e-05,
+        -2.026257936515872e-05
+      ],
+      "root_reaction_physical": [
+        -1.2681777101065287e-08,
+        -770901.958987173,
+        -168601.13360118607
+      ],
+      "signed_shell_energy_defect_scaled": 0.0,
+      "signed_beam_energy_defect_scaled": 0.0,
+      "signed_work_defect_scaled": 0.0,
+      "signed_tip_defect_scaled": 0.0,
+      "free_equilibrium_scaled": 3.89632344691751e-15,
+      "root_compatibility_scaled": 1.8527757151501704e-15,
+      "shell_nnz": 531164,
+      "beam_nnz": 1694224
+    },
+    "X2": {
+      "free_state_sha256": "1ef091d6c13c5d93283af797dfd894f7989f9c0c45b87ccd271c4301f39d592c",
+      "shell_energy_j": 10.332934751720947,
+      "beam_energy_j": 0.2673673918634608,
+      "external_work_j": 21.200604287156523,
+      "tip_pose": [
+        -3.364135279447038e-19,
+        2.7501146706459375e-05,
+        -2.0262948275985757e-05
+      ],
+      "root_reaction_physical": [
+        3.12907942492222e-09,
+        -770905.0072314333,
+        -168603.1128764356
+      ],
+      "signed_shell_energy_defect_scaled": 0.0,
+      "signed_beam_energy_defect_scaled": 0.0,
+      "signed_work_defect_scaled": 0.0,
+      "signed_tip_defect_scaled": 0.0,
+      "free_equilibrium_scaled": 4.327637117897847e-15,
+      "root_compatibility_scaled": 1.027287845002671e-15,
+      "shell_nnz": 716252,
+      "beam_nnz": 2616208
+    }
+  },
+  "identities": {
+    "X0_to_X1": {
+      "coarse_energy": 10.59895901560336,
+      "fine_energy": 10.599992150163118,
+      "difference_energy": 0.0010331345600875274,
+      "defect_scaled": 4.836578273298421e-15,
+      "load_embedding_scaled": 7.833733661755107e-16,
+      "root_embedding_scaled": 3.1770485315834695e-18,
+      "tip_embedding_scaled": 5.551115123125783e-17
+    },
+    "X1_to_X2": {
+      "coarse_energy": 10.599992150163118,
+      "fine_energy": 10.600302143583818,
+      "difference_energy": 0.00030999341347890666,
+      "defect_scaled": 1.0615064205236893e-13,
+      "load_embedding_scaled": 6.789235840187759e-16,
+      "root_embedding_scaled": 1.0224726612208772e-17,
+      "tip_embedding_scaled": 1.1102230246251565e-16
+    }
+  },
+  "qualification_status": "F03_G0B_OPEN"
+}
