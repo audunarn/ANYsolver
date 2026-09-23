@@ -1,6 +1,8 @@
 # F02-R-v1 independent raw-evidence audit
 
-23 September 2026. The independent reviewer inspected the preserved
+23 September 2026. This is a second, corroborating independent read-only
+review of the same evidence; the earlier 21 September review is retained in
+`B3_GE_E4_PL_G0_F02_REFINEMENT_REVIEW_V1.md`. The reviewer inspected the preserved
 `g0b-f02-refinement-v1.log` without rerunning the case. Its SHA-256 is
 `a7bf86e9f2c999cdfe804b67c170af548daf87d661f8111fd085f0ae37df9e16`;
 the frozen runner SHA-256 is
