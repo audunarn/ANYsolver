@@ -12,6 +12,7 @@ import io
 import json
 from pathlib import Path
 import re
+import struct
 import zipfile
 
 from scripts import _b3_e4_f03_local_scientific_cases as cases
@@ -231,6 +232,27 @@ def _read_plan_payload(path: Path) -> bytes:
         container = stream.read(MAX_PLAN_BYTES + 1)
     if len(container) > MAX_PLAN_BYTES:
         raise ValueError("F03 archive plan exceeds declared bound")
+    tail_start = max(0, len(container) - (65_535 + 22))
+    offset = container.rfind(b"PK\x05\x06", tail_start)
+    if offset < 0 or len(container) - offset < 22:
+        raise ValueError("missing bounded F03 archive plan ZIP end record")
+    signature, disk, central_disk, disk_entries, entries, size, start, comment = (
+        struct.unpack("<4s4H2LH", container[offset:offset + 22])
+    )
+    if (
+        signature != b"PK\x05\x06"
+        or disk != 0
+        or central_disk != 0
+        or disk_entries != 2
+        or entries != 2
+        or comment != 0
+        or offset + 22 != len(container)
+        or size > 2 * 1024
+        or start + size != offset
+        or any(value in (0xFFFF, 0xFFFFFFFF)
+               for value in (disk_entries, entries, size, start))
+    ):
+        raise ValueError("invalid bounded F03 archive plan central directory")
     try:
         with zipfile.ZipFile(io.BytesIO(container)) as zipped:
             infos = zipped.infolist()

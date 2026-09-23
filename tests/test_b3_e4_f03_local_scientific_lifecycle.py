@@ -105,3 +105,31 @@ def test_corrupt_noncanonical_and_oversize_receipts_rejected(plan, tmp_path, mon
     monkeypatch.setattr(lifecycle, "MAX_RECEIPT_BYTES", 2)
     with pytest.raises(ValueError, match="bound"):
         lifecycle.read_start(directory, plan, REGISTRATION)
+
+
+def test_child_plan_order_writes_start_before_inventory_and_preserves_stale_failure(
+    tmp_path, monkeypatch,
+):
+    initial = cases.preflight_inventory()
+    record = initial[0]
+    directory = tmp_path / "ordered-child"
+    directory.mkdir()
+    path = directory / "plan.zip"
+    archive.write_plan(path, archive.make_case_plan(record, initial, SOURCE))
+    envelope = archive.read_plan_envelope(path)
+    lifecycle.write_start(directory, envelope, REGISTRATION, 123)
+    assert (directory / "start.json").is_file()
+
+    original = cases.preflight_inventory
+    def after_start():
+        assert (directory / "start.json").is_file()
+        return original()
+    monkeypatch.setattr(cases, "preflight_inventory", after_start)
+    records = cases.preflight_inventory()
+    assert archive.read_plan(path, records[0], records, SOURCE) == envelope
+
+    path.unlink()
+    archive.write_plan(path, archive.make_case_plan(records[1], records, SOURCE))
+    with pytest.raises(ValueError, match="stale|mismatched"):
+        archive.read_plan(path, records[0], records, SOURCE)
+    assert (directory / "start.json").is_file()

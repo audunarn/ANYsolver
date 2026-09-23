@@ -162,3 +162,16 @@ def test_archive_bound_checked_before_zip_open(records, tmp_path, monkeypatch):
     monkeypatch.setattr(zipfile, "ZipFile", lambda *a, **k: pytest.fail("bound must reject first"))
     with pytest.raises(ValueError, match="bound"):
         archive.read_plan(path, records[0], records, SOURCE)
+
+
+def test_central_directory_member_bound_precedes_zipfile_allocation(tmp_path, monkeypatch):
+    path = tmp_path / "many-members.zip"
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as output:
+        for index in range(1000):
+            output.writestr(f"empty-{index}", b"")
+    monkeypatch.setattr(
+        archive.zipfile, "ZipFile",
+        lambda *args, **kwargs: pytest.fail("ZipFile allocated before EOCD preflight"),
+    )
+    with pytest.raises(ValueError, match="central directory"):
+        archive.read_plan_envelope(path)
