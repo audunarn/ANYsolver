@@ -18,8 +18,16 @@ from scipy.sparse.linalg import MatrixRankWarning, spsolve
 
 from scripts._b3_e4_f03_conforming_q1_trace import FinitePadQ1Trace
 from scripts._b3_e4_f03_primal_ritz import (
-    E0, F0, PLANE, SECTION, THICKNESS, U0, YAW_LENGTH,
+    E0, F0, L0, PLANE, SECTION, THICKNESS, U0, YAW_LENGTH,
 )
+
+
+# These are algebraic guards for the nominal 96-DOF Q1 preflight only.  They
+# are not F03 acceptance limits or evidence of physical mesh convergence.
+_QUADRATURE_RELATIVE_LIMIT = 1.e-10
+_LOAD_SCALED_LIMIT = 1.e-10
+_SHELL_EIGENVALUE_LIMIT = 1.e-10
+_ROOT_RANK_RATIO_LIMIT = 1.e-10
 
 
 @dataclass(frozen=True)
@@ -129,7 +137,8 @@ def assemble(trace: FinitePadQ1Trace | None = None, *,
 
     Four points integrate Q1 beam energy exactly on each fixed-incidence
     interval.  Six points and the prescribed 48/64 load pair check that
-    independently; neither discrepancy is an acceptance threshold.
+    independently.  The bounded solve requires both checks to pass its
+    preparatory algebraic limits; those limits do not judge convergence.
     """
     if beam_order not in (4, 6) or load_order not in (48, 64):
         raise ValueError("unsupported bounded Q1 quadrature")
@@ -169,17 +178,55 @@ def scaled_root_singular_values(operators: Q1Operators) -> np.ndarray:
                          displacement_scale[None, :], compute_uv=False)
 
 
+def scaled_pose_derivative_singular_values(operators: Q1Operators,
+                                           displacement_scale: np.ndarray) -> np.ndarray:
+    """Dimensionless six-row root pose/derivative independence witness."""
+    pose, derivative, _ = operators.trace.matrices(0.)
+    columns = operators.free_columns
+    row_scale = np.diag((1/U0, 1/U0, YAW_LENGTH/U0))
+    stacked = np.vstack((row_scale@pose[:, columns],
+                         L0*row_scale@derivative[:, columns]))
+    return np.linalg.svd(stacked*displacement_scale[None, :],
+                         compute_uv=False)
+
+
 def solve(operators: Q1Operators):
-    """One bounded candidate solve; caller must not interpret it as convergence."""
+    """One bounded candidate solve after algebraic preflight, not convergence."""
+    if (not np.isfinite(operators.beam_discrepancy_relative) or
+            not np.isfinite(operators.load_discrepancy_scaled) or
+            operators.beam_discrepancy_relative < 0 or
+            operators.load_discrepancy_scaled < 0 or
+            operators.beam_discrepancy_relative > _QUADRATURE_RELATIVE_LIMIT or
+            operators.load_discrepancy_scaled > _LOAD_SCALED_LIMIT):
+        raise ValueError("Q1 beam/load quadrature comparison missing or excessive")
     stiffness = operators.shell_stiffness+operators.beam_stiffness
     diagonal = stiffness.diagonal()
     if np.any(diagonal <= 0) or not np.isfinite(diagonal).all():
         raise ValueError("nonpositive Q1 energy diagonal")
     d = np.sqrt(E0/diagonal)
+    shell_scaled = d[:, None]*operators.shell_stiffness.toarray()*d[None, :]/E0
+    if not np.isfinite(shell_scaled).all():
+        raise ValueError("nonfinite scaled Q1 shell energy")
+    if (np.linalg.norm(shell_scaled-shell_scaled.T) >
+            1.e-12*max(1., np.linalg.norm(shell_scaled))):
+        raise ValueError("asymmetric Q1 shell energy")
+    shell_minimum = float(np.linalg.eigvalsh(shell_scaled)[0])
+    if shell_minimum <= _SHELL_EIGENVALUE_LIMIT:
+        raise ValueError("Q1 shell lacks positive energy on admitted fields")
+    beam_asymmetry = sparse.linalg.norm(operators.beam_stiffness-
+                                        operators.beam_stiffness.T)
+    if (not math.isfinite(beam_asymmetry) or beam_asymmetry >
+            1.e-12*max(1., sparse.linalg.norm(operators.beam_stiffness))):
+        raise ValueError("asymmetric Q1 beam energy")
     root_scale = np.diag((1/U0, 1/U0, YAW_LENGTH/U0))
     singulars = scaled_root_singular_values(operators)
-    if singulars[-1] <= 1.e-10*singulars[0]:
+    if (not np.isfinite(singulars).all() or
+            singulars[-1] <= _ROOT_RANK_RATIO_LIMIT*singulars[0]):
         raise ValueError("Q1 root rows lack three independent conditions")
+    six_singulars = scaled_pose_derivative_singular_values(operators, d)
+    if (not np.isfinite(six_singulars).all() or
+            six_singulars[-1] <= _ROOT_RANK_RATIO_LIMIT*six_singulars[0]):
+        raise ValueError("Q1 root pose/derivative rows lack six independent channels")
     scaled_stiffness = sparse.diags(d)@stiffness@sparse.diags(d)/E0
     scaled_root = root_scale@operators.root_constraint@np.diag(d)
     saddle = sparse.bmat(((scaled_stiffness, sparse.csr_matrix(scaled_root.T)),
@@ -204,6 +251,8 @@ def solve(operators: Q1Operators):
         "root_compatibility_scaled": float(np.max(np.abs(root_scale@operators.root_constraint@q))),
         "equilibrium_scaled": float(np.max(np.abs(d*residual/E0))),
         "root_singular_values": singulars,
+        "root_pose_derivative_singular_values": six_singulars,
+        "scaled_shell_min_eigenvalue": shell_minimum,
         "tip_pose": operators.tip_pose@q,
         "root_reaction_physical": -multiplier,
         "shell_nnz": operators.shell_stiffness.nnz,

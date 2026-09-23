@@ -1,10 +1,12 @@
 """Bounded mechanics checks for the unregistered conforming Q1 candidate."""
 
+from dataclasses import replace
 import math
 
 import numpy as np
 import pytest
 from numpy.polynomial.legendre import leggauss
+from scipy import sparse
 
 from scripts._b3_e4_f03_conforming_q1_energy import (
     _station_rule, assemble, scaled_root_singular_values, solve,
@@ -179,8 +181,9 @@ def test_dimensionless_root_rank_and_bounded_solve(operators):
     total = metrics["shell_energy_j"]+metrics["beam_energy_j"]
     assert abs(2*total-metrics["external_work_j"]) < 1.e-10*E0
     assert metrics["shell_nnz"] < operators.dof_count**2
-    # A unit root-y lifting measures the support force in the primal
-    # residual.  The physical support reaction is the negative multiplier.
+    # Algebraic sign convention only: a unit root-y lifting measures the
+    # signed residual, so the root reaction is the negative multiplier.
+    # This is not independent physical support-reaction recovery.
     root = operators.root_constraint
     lifting = root.T@np.linalg.solve(root@root.T, np.array((0., 1., 0.)))
     assert np.allclose(root@lifting, (0., 1., 0.), atol=1.e-12)
@@ -189,6 +192,47 @@ def test_dimensionless_root_rank_and_bounded_solve(operators):
     assert np.isclose(support_y, -multiplier[1], rtol=1.e-10, atol=1.e-6)
     assert np.isclose(support_y, metrics["root_reaction_physical"][1],
                       rtol=1.e-10, atol=1.e-6)
+
+
+def test_solve_rejects_missing_nonfinite_or_excessive_comparison(operators):
+    unchecked = assemble(compare_quadrature=False)
+    with pytest.raises(ValueError, match="quadrature comparison"):
+        solve(unchecked)
+    for changes in (
+        {"beam_discrepancy_relative": float("inf")},
+        {"load_discrepancy_scaled": float("nan")},
+        {"beam_discrepancy_relative": 1.e-6},
+        {"load_discrepancy_scaled": 1.e-6},
+    ):
+        with pytest.raises(ValueError, match="quadrature comparison"):
+            solve(replace(operators, **changes))
+
+
+def test_solve_rejects_indefinite_shell_even_with_positive_diagonal(operators):
+    diagonal = operators.shell_stiffness.diagonal()
+    direction = np.sqrt(diagonal)
+    indefinite = (sparse.diags(diagonal) -
+                  sparse.csr_matrix(2*np.outer(direction, direction)/len(diagonal)))
+    assert np.all(indefinite.diagonal() > 0)
+    with pytest.raises(ValueError, match="shell lacks positive energy"):
+        solve(replace(operators, shell_stiffness=indefinite))
+
+
+def test_solve_rejects_asymmetric_shell(operators):
+    asymmetric = operators.shell_stiffness.tolil(copy=True)
+    asymmetric[0, 1] += 1.e6
+    with pytest.raises(ValueError, match="asymmetric Q1 shell"):
+        solve(replace(operators, shell_stiffness=asymmetric.tocsr()))
+
+
+def test_solve_rejects_lost_root_derivative_channels(operators):
+    class LostDerivative:
+        def matrices(self, station):
+            pose, derivative, second = operators.trace.matrices(station)
+            return pose, np.zeros_like(derivative), second
+
+    with pytest.raises(ValueError, match="six independent channels"):
+        solve(replace(operators, trace=LostDerivative()))
 
 
 def test_represented_single_ulp_interval_keeps_weight(operators):
