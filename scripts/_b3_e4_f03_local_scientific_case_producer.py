@@ -157,25 +157,17 @@ def _produce_prolongation(case: cases.ScientificCase, grid):
     )
 
 
-def produce_case(
+def _produce_started_case(
     directory: Path,
+    envelope: archive.CaseArchivePlan,
+    start_sha256: str,
     record: cases.CasePreflight,
     records: tuple[cases.CasePreflight, ...],
     source_commit: str,
     registration_sha256: str,
 ) -> ProducedCase:
-    """Produce one frozen case exactly once, leaving partial evidence on error.
-
-    The bounded plan envelope is the only input read before ``start.json`` is
-    created.  Full inventory, topology and resource validation intentionally
-    follow that marker, so every attempt that begins model work is consumed.
-    """
+    """Continue one already-consumed attempt; callers own the start boundary."""
     directory = Path(directory)
-    envelope = archive.read_plan_envelope(directory / "plan.zip")
-    start_sha256 = lifecycle.write_start(
-        directory, envelope, registration_sha256, os.getpid(),
-    )
-
     # First validate the exact envelope that consumed the attempt.  Then
     # re-read the file and require canonical byte identity, so neither a stale
     # first plan nor a replacement second plan can inherit the other's marker.
@@ -343,4 +335,61 @@ def produce_case(
         numerical_index_sha256,
         evidence_index_sha256,
         evidence.total_bytes,
+    )
+
+
+def produce_case(
+    directory: Path,
+    record: cases.CasePreflight,
+    records: tuple[cases.CasePreflight, ...],
+    source_commit: str,
+    registration_sha256: str,
+) -> ProducedCase:
+    """Produce one supplied frozen case once, leaving partial evidence on error.
+
+    The bounded plan envelope is the only input read before ``start.json`` is
+    created. Full inventory, topology and resource validation intentionally
+    follow that marker, so every attempt that begins model work is consumed.
+    """
+    directory = Path(directory)
+    envelope = archive.read_plan_envelope(directory / "plan.zip")
+    start_sha256 = lifecycle.write_start(
+        directory, envelope, registration_sha256, os.getpid(),
+    )
+    return _produce_started_case(
+        directory,
+        envelope,
+        start_sha256,
+        record,
+        records,
+        source_commit,
+        registration_sha256,
+    )
+
+
+def produce_registered_case(
+    directory: Path,
+    source_commit: str,
+    registration_sha256: str,
+) -> ProducedCase:
+    """Child-process route that constructs the frozen inventory after start."""
+    directory = Path(directory)
+    envelope = archive.read_plan_envelope(directory / "plan.zip")
+    start_sha256 = lifecycle.write_start(
+        directory, envelope, registration_sha256, os.getpid(),
+    )
+    records = cases.preflight_inventory()
+    matches = tuple(
+        record for record in records if record.case.case_id == envelope.case_id
+    )
+    if len(matches) != 1:
+        raise ValueError("plan case is absent from frozen F03 inventory")
+    return _produce_started_case(
+        directory,
+        envelope,
+        start_sha256,
+        matches[0],
+        records,
+        source_commit,
+        registration_sha256,
     )

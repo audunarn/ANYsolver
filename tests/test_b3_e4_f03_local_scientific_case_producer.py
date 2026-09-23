@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from scipy import sparse
 
+from scripts import _b3_e4_f03_local_scientific_case_entry as case_entry
 from scripts import _b3_e4_f03_local_scientific_case_producer as producer
 from scripts import _b3_e4_f03_scaled_sparse as scaled_sparse
 from scripts import _b3_e4_f03_sparse_factor_candidate as factor_candidate
@@ -373,6 +374,38 @@ def test_second_attempt_stops_at_exclusive_start_marker(tmp_path, monkeypatch):
     assert tuple(harness.events[len(before):]) == (
         "read:plan-envelope", "write:start.json",
     )
+
+
+def test_process_route_builds_inventory_only_after_exclusive_start(tmp_path, monkeypatch):
+    harness = _harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        producer.cases,
+        "preflight_inventory",
+        lambda: harness.events.append("cases:preflight-inventory") or harness.records,
+    )
+    result = producer.produce_registered_case(tmp_path, SOURCE, DIGEST_A)
+    assert result.case_id == "q1_l0"
+    assert harness.events[:4] == [
+        "read:plan-envelope",
+        "write:start.json",
+        "cases:preflight-inventory",
+        "validate:retained-envelope",
+    ]
+
+
+def test_process_entry_forwards_only_registered_child_inputs(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        case_entry.producer,
+        "produce_registered_case",
+        lambda *args: calls.append(args),
+    )
+    assert case_entry.main((
+        "--directory", str(tmp_path),
+        "--source-commit", SOURCE,
+        "--registration-sha256", DIGEST_A,
+    )) == 0
+    assert calls == [(tmp_path, SOURCE, DIGEST_A)]
 
 
 @pytest.mark.parametrize(
