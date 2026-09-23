@@ -128,6 +128,17 @@ def _same_file(info: os.stat_result, identity: _FileIdentity) -> bool:
     )
 
 
+def _same_directory(info: os.stat_result, retained: os.stat_result) -> bool:
+    return (
+        stat.S_ISDIR(info.st_mode)
+        and stat.S_ISDIR(retained.st_mode)
+        and not _is_reparse(info)
+        and not _is_reparse(retained)
+        and info.st_dev == retained.st_dev
+        and info.st_ino == retained.st_ino
+    )
+
+
 def expected_members(plan: archive.CaseArchivePlan) -> tuple[str, ...]:
     if type(plan) is not archive.CaseArchivePlan:
         raise ValueError("validated F03 archive plan required")
@@ -328,11 +339,13 @@ def _snapshot(
 ):
     directory = Path(directory)
     with ExitStack() as stack:
-        stack.enter_context(_open_directory_no_follow(directory))
+        root_descriptor = stack.enter_context(_open_directory_no_follow(directory))
+        directories = [(directory, root_descriptor, os.fstat(root_descriptor))]
         for name in sorted(_allowed_directories(names, infrastructure)):
             path = directory.joinpath(*PurePosixPath(name).parts)
             if path.exists():
-                stack.enter_context(_open_directory_no_follow(path))
+                descriptor = stack.enter_context(_open_directory_no_follow(path))
+                directories.append((path, descriptor, os.fstat(descriptor)))
         identities = _preflight(directory, names, max_total_bytes, infrastructure)
         streams = tuple(
             stack.enter_context(_open_no_follow(_path(directory, identity.name)))
@@ -349,10 +362,17 @@ def _snapshot(
             for stream, identity in zip(streams, identities):
                 if not _same_file(os.fstat(stream.fileno()), identity):
                     raise ValueError("F03 evidence inventory changed during snapshot")
+            for path, descriptor, retained in directories:
+                current = os.stat(path, follow_symlinks=False)
+                if (
+                    not _same_directory(os.fstat(descriptor), retained)
+                    or not _same_directory(current, retained)
+                ):
+                    raise ValueError("F03 evidence directory changed during snapshot")
+            observed = _tree(directory, names, infrastructure)
             for identity in identities:
-                with _open_no_follow(_path(directory, identity.name)) as stream:
-                    if not _same_file(os.fstat(stream.fileno()), identity):
-                        raise ValueError("F03 evidence inventory changed after snapshot")
+                if observed.get(identity.name) != identity:
+                    raise ValueError("F03 evidence inventory changed after snapshot")
 
 
 def _hash_member(path: Path, identity: _FileIdentity) -> str:

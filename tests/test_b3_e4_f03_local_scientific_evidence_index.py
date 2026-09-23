@@ -103,6 +103,21 @@ def test_member_identity_change_is_rejected_before_hash(plan, tmp_path):
         evidence._hash_member(path, identity)
 
 
+def test_file_created_during_snapshot_is_rejected(plan, tmp_path, monkeypatch):
+    directory = tmp_path / "late-extra"
+    _populate(directory, plan)
+    original = evidence._index_from_snapshot
+
+    def create_extra(*args, **kwargs):
+        result = original(*args, **kwargs)
+        (directory / "rogue.npy").write_bytes(b"rogue")
+        return result
+
+    monkeypatch.setattr(evidence, "_index_from_snapshot", create_extra)
+    with pytest.raises(ValueError, match="extra"):
+        evidence.make_index(directory, plan, REGISTRATION, START)
+
+
 def test_total_bound_rejects_before_first_hash(plan, tmp_path, monkeypatch):
     directory = tmp_path / "bounded"
     _populate(directory, plan)

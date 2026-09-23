@@ -100,6 +100,8 @@ def test_header_shape_dtype_and_size_are_exact(plan, tmp_path):
     np.save(path, np.zeros((block.rows, block.columns), dtype=np.float32), allow_pickle=False)
     with pytest.raises(ValueError, match="size|header"):
         inverse.read_block(directory, plan, block.start)
+    with pytest.raises(ValueError, match="size|header"):
+        inverse.write_index(directory, plan)
 
 
 def _rewrite(path: Path, mutate):

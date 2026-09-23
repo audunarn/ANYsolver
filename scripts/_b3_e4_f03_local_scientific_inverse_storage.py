@@ -168,6 +168,48 @@ def _read_block_payload(path: Path, block: archive.InverseBlock) -> tuple[bytes,
     return payload, offset
 
 
+def _validate_open_block(stream, identity, block: archive.InverseBlock) -> None:
+    maximum = block.bytes + storage.MAX_HEADER_BYTES
+    if (
+        not evidence._same_file(os.fstat(stream.fileno()), identity)
+        or not block.bytes < identity.bytes <= maximum
+    ):
+        raise ValueError("F03 inverse block file identity or size is invalid")
+    stream.seek(0)
+    payload = stream.read(maximum + 1)
+    if len(payload) != identity.bytes or len(payload) > maximum:
+        raise ValueError("F03 inverse block exceeds exact bound")
+    if not evidence._same_file(os.fstat(stream.fileno()), identity):
+        raise ValueError("F03 inverse block changed while validating")
+    encoded = io.BytesIO(payload)
+    try:
+        version = np.lib.format.read_magic(encoded)
+    except ValueError as exc:
+        raise ValueError("invalid F03 inverse NPY magic") from exc
+    reader = {
+        (1, 0): np.lib.format.read_array_header_1_0,
+        (2, 0): np.lib.format.read_array_header_2_0,
+    }.get(version)
+    if reader is None:
+        raise ValueError("unsupported F03 inverse NPY header version")
+    shape, fortran, dtype = reader(encoded, max_header_size=storage.MAX_HEADER_BYTES)
+    offset = encoded.tell()
+    if (
+        shape != (block.rows, block.columns)
+        or fortran
+        or dtype != np.dtype("<f8")
+        or offset > storage.MAX_HEADER_BYTES
+        or len(payload) - offset != block.bytes
+    ):
+        raise ValueError("F03 inverse NPY header disagrees with exact plan")
+    values = np.frombuffer(
+        payload, dtype="<f8", count=block.rows * block.columns, offset=offset,
+    )
+    if not np.isfinite(values).all():
+        raise ValueError("nonfinite F03 inverse block")
+    stream.seek(0)
+
+
 def read_block(
     directory: Path, plan: archive.CaseArchivePlan, start: int,
 ) -> np.ndarray:
@@ -201,6 +243,7 @@ def _index_from_snapshot(plan, identities, streams) -> InverseIndex:
             or not block.bytes < identity.bytes <= block.bytes + storage.MAX_HEADER_BYTES
         ):
             raise ValueError("F03 inverse block file size or order disagrees with plan")
+        _validate_open_block(stream, identity, block)
         records.append(BlockRecord(
             block.start, block.columns, block.rows, block.bytes, identity.bytes,
             block.name, evidence._hash_open(stream, identity),
