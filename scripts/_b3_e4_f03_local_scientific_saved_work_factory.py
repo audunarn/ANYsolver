@@ -48,12 +48,16 @@ def _display(action: recovery.Action) -> float:
 def _admit_actions(actions: tuple[recovery.Action, ...], budget: work.WorkBudget) -> None:
     nested = budget.action_budget
     for action in actions:
+        terms = len(action.cosine_terms)
         fractions = (action.rational,) + tuple(
             item
             for left, right, polynomial in action.cosine_terms
             for item in (left, right, *polynomial)
         )
-        if len(fractions) > nested.max_operations:
+        decimal_operations = max(1, terms) * 120 * 6 * 32
+        if terms > nested.max_intervals:
+            raise ValueError("saved-work nested Action interval budget exceeded")
+        if len(fractions) + decimal_operations > nested.max_operations:
             raise ValueError("saved-work nested Action operation budget exceeded")
         if any(
             item.numerator.bit_length() > nested.max_fraction_bits
@@ -66,6 +70,14 @@ def _admit_actions(actions: tuple[recovery.Action, ...], budget: work.WorkBudget
             for item in fractions
         ) > nested.max_total_bits:
             raise ValueError("saved-work nested Action total-bit budget exceeded")
+        fraction_slot = 512 + (2 * nested.max_fraction_bits + 7) // 8
+        action_workspace = (
+            len(fractions) * fraction_slot
+            + max(1, terms) * 6 * fraction_slot
+            + 120 * 12 * 512
+        )
+        if action_workspace > nested.max_work_bytes:
+            raise ValueError("saved-work nested Action workspace budget exceeded")
 
 
 def _exact_inventory(value: recovery.Recovery) -> tuple[Fraction, ...]:
@@ -106,7 +118,9 @@ def _resource_requirements(
     displayed_actions = 22
     aggregate_bits = input_bits + displayed_actions * action_budget.max_total_bits
     quadrature_operations = virtual_tests * intervals * 48 * 192
-    decimal_operations = displayed_actions * 120 * 6 * 32
+    decimal_operations = (
+        displayed_actions * max(1, action_budget.max_intervals) * 120 * 6 * 32
+    )
     operations = (
         budget.support_budget.max_operations
         + budget.support_budget.recovery_budget.max_operations
@@ -268,7 +282,10 @@ def produce_saved_work(
         value.cuts,
         supported.lift_family,
         np.asarray([
-            support.lift_pose(value.cuts, side, channel, grid.p)
+            [[
+                [_finite_float(item, "lift coefficient") for item in polynomial]
+                for polynomial in row
+            ] for row in support.lift_pose(value.cuts, side, channel, grid.p)]
             for side in ("left", "right") for channel in range(3)
         ], dtype=np.float64),
         np.asarray([

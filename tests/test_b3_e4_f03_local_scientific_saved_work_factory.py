@@ -106,6 +106,46 @@ def test_factory_enforces_nested_action_bits_before_display(monkeypatch):
         factory.produce_saved_work(grid, recovered, budget=rejected)
 
 
+@pytest.mark.parametrize(
+    "leaf,match", (
+        ("max_intervals", "interval"),
+        ("max_operations", "operation"),
+        ("max_work_bytes", "workspace"),
+    ),
+)
+def test_factory_enforces_nested_action_work_before_display(monkeypatch, leaf, match):
+    grid, _, _, recovered, budget = _case()
+    action = replace(budget.action_budget, **{leaf: 1})
+    rejected = replace(budget, action_budget=action)
+    monkeypatch.setattr(
+        factory, "_display",
+        lambda *args: pytest.fail("display preceded nested Action work admission"),
+    )
+    with pytest.raises(ValueError, match=f"nested Action {match} budget"):
+        factory.produce_saved_work(grid, recovered, budget=rejected)
+
+
+def test_factory_rejects_underflowed_lift_coefficient(monkeypatch):
+    grid, _, _, recovered, budget = _case()
+    original_support = factory.support.support_recovery
+    original_lift = factory.support.lift_pose
+
+    def tiny_lift(*args, **kwargs):
+        rows = [[list(polynomial) for polynomial in row]
+                for row in original_lift(*args, **kwargs)]
+        rows[0][0][0] = Fraction(1, 10**400)
+        return tuple(tuple(tuple(polynomial) for polynomial in row) for row in rows)
+
+    def supported(*args, **kwargs):
+        result = original_support(*args, **kwargs)
+        monkeypatch.setattr(factory.support, "lift_pose", tiny_lift)
+        return result
+
+    monkeypatch.setattr(factory.support, "support_recovery", supported)
+    with pytest.raises(ValueError, match="underflowed saved-work lift coefficient"):
+        factory.produce_saved_work(grid, recovered, budget=budget)
+
+
 def test_factory_returns_owned_immutable_saved_arrays():
     grid, _, _, recovered, budget = _case()
     value = factory.produce_saved_work(grid, recovered, budget=budget).saved
