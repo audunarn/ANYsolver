@@ -8,9 +8,10 @@ independently reviewed and closed with corrected immutable evidence. A frozen
 scientific numerical protocol is independently reviewed, and its bounded
 runner foundation is implemented and independently reviewed. The primary
 solve-free numerical, inverse, port, exact-prolongation and saved-component
-schemas are now committed. Composition-summary and physical-balance schemas
-are committed and under independent review. The exclusively-writing producer,
-solve-free adjudicator and case receipt remain active next work.
+schemas are now committed. Composition-summary, physical-balance and the
+adjudicator-bound per-case receipt schemas are committed and independently
+reviewed. The exclusively-writing producer, solve-free adjudicator and
+top-level one-use coordinator remain active next work.
 
 22 September 2026. User authorized continued implementation with increased
 effort. The active goal remains the complete programme; **G0B is open and
@@ -41,6 +42,12 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
   `de962e9f`. Both quadrature routes, fixed scales, primary scale reuse,
   producer work/nnz counts and all five exact trace-bit maxima are bound inside
   `numerical_index.json`; no extra archive member was introduced.
+- Latest independently reviewed case-receipt source: `103cf51e`. The complete
+  45-channel scale vector is frozen, reported observations require exact
+  solve-free adjudicator bindings, binary64 signs are retained, and functional
+  pass/failure layouts are coherent. The broad saved-evidence/lifecycle suite
+  passed 218 tests; independent closure review passed 51 focused tests without
+  findings. This remains unexecuted infrastructure, not scientific evidence.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -401,9 +408,11 @@ Q1_L0-to-Q2_L0 transfer is present. The resulting focused inventory passed
 archive and lifecycle tests; independent closure review passed 32 focused
 checks without findings. The assembly/scaling diagnostics passed 135 focused
 archive/lifecycle checks and their closure review passed 17 checks without
-findings. The exact next action is to implement `case_receipt.json`, then add
-the exclusively-writing case producer, solve-free adjudicator and top-level
-one-use coordinator. Registration remains barred until those pieces, bounded
+findings. The independently reviewed case receipt at `103cf51e` passed 218
+broad saved-evidence/lifecycle tests and 51 focused review tests. The exact
+next action is to add the solve-free adjudicator, exclusively-writing case
+producer and top-level one-use coordinator. Registration remains barred until
+those pieces, bounded
 lifecycle/replay tests, preflight demonstrations and independent review pass on
 a clean committed source. The accepted proofs grant no scientific execution
 authority. Current product/schema sources are committed; this checkpoint text
