@@ -14,6 +14,7 @@ from scripts import _b3_e4_f03_local_scientific_evidence_index as evidence_index
 from scripts import _b3_e4_f03_local_scientific_numerical_storage as numerical
 from scripts import _b3_e4_f03_local_scientific_port_storage as ports
 from scripts import _b3_e4_f03_local_scientific_sparse_storage as sparse_storage
+from scripts import _b3_e4_f03_sparse_factor_candidate as factor_candidate
 
 
 SCHEMA = "f03_local_scientific_numerical_index_v1"
@@ -26,19 +27,21 @@ def _digest(value: object) -> bool:
 
 
 @dataclass(frozen=True, slots=True)
-class ProducerRecord:
+class KKTProducerRecord:
     ordering: str
     pivot_threshold: float
     equilibration: bool
     symmetric_mode: bool
     iterative_refinement: str
-    primal_factorizations: int
-    kkt_factorizations: int
-    physical_rhs_solves: int
-    inverse_solve_calls: int
-    inverse_rhs_columns: int
+    factorization_count: int
+    factor_nnz: int
+    candidate_rhs_solves: int
+    certificate_solve_calls: int
+    certificate_rhs_attempted: int
+    certificate_rhs_completed: int
     recovery_factorizations: int
     recovery_solves: int
+    qualification_status: str
     status: str
     reason: str
 
@@ -55,26 +58,128 @@ class ProducerRecord:
             or any(
                 type(value) is not int or value < 0
                 for value in (
-                    self.primal_factorizations, self.kkt_factorizations,
-                    self.physical_rhs_solves, self.inverse_solve_calls,
-                    self.inverse_rhs_columns, self.recovery_factorizations,
-                    self.recovery_solves,
+                    self.factorization_count, self.factor_nnz,
+                    self.candidate_rhs_solves, self.certificate_solve_calls,
+                    self.certificate_rhs_attempted, self.certificate_rhs_completed,
+                    self.recovery_factorizations, self.recovery_solves,
                 )
             )
+            or self.factorization_count != 1
+            or self.factor_nnz <= 0
+            or self.candidate_rhs_solves != 1
+            or self.certificate_solve_calls <= 0
+            or self.certificate_rhs_attempted <= 0
+            or self.certificate_rhs_completed != self.certificate_rhs_attempted
+            or self.recovery_factorizations != 0
+            or self.recovery_solves != 0
+            or self.qualification_status != "NOT_QUALIFIED"
             or self.status != "SUCCEEDED"
             or self.reason != "completed"
         ):
-            raise ValueError("invalid frozen F03 numerical producer record")
+            raise ValueError("invalid frozen F03 KKT producer record")
 
 
-def successful_producer(plan: archive.CaseArchivePlan) -> ProducerRecord:
+def kkt_producer(
+    plan: archive.CaseArchivePlan,
+    work: object,
+    *,
+    status: str,
+    reason: str,
+) -> KKTProducerRecord:
     if type(plan) is not archive.CaseArchivePlan:
         raise ValueError("validated F03 archive plan required")
-    return ProducerRecord(
+    try:
+        raw = dict(work)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("exact F03 KKT producer work record required") from exc
+    keys = {
+        "factorizations", "factor_nnz", "candidate_rhs_solves",
+        "certificate_solve_calls", "certificate_rhs_attempted",
+        "certificate_rhs_completed", "qualification_status",
+    }
+    if set(raw) != keys:
+        raise ValueError("invalid F03 KKT producer work inventory")
+    record = KKTProducerRecord(
         "COLAMD", 1.0, False, False, "NOREFINE",
-        1, 1, 1, len(plan.inverse_blocks), plan.kkt_order, 0, 0,
-        "SUCCEEDED", "completed",
+        raw["factorizations"], raw["factor_nnz"], raw["candidate_rhs_solves"],
+        raw["certificate_solve_calls"], raw["certificate_rhs_attempted"],
+        raw["certificate_rhs_completed"], 0, 0, raw["qualification_status"],
+        status, reason,
     )
+    if (
+        record.factor_nnz > cases.MAX_KKT_FACTOR_NNZ
+        or record.certificate_solve_calls != len(plan.inverse_blocks)
+        or record.certificate_rhs_attempted != plan.kkt_order
+        or record.certificate_rhs_completed != plan.kkt_order
+    ):
+        raise ValueError("F03 KKT producer work disagrees with frozen plan")
+    return record
+
+
+def successful_kkt_producer(
+    plan: archive.CaseArchivePlan, factor_nnz: int,
+) -> KKTProducerRecord:
+    return kkt_producer(
+        plan,
+        {
+            "factorizations": 1,
+            "factor_nnz": factor_nnz,
+            "candidate_rhs_solves": 1,
+            "certificate_solve_calls": len(plan.inverse_blocks),
+            "certificate_rhs_attempted": plan.kkt_order,
+            "certificate_rhs_completed": plan.kkt_order,
+            "qualification_status": "NOT_QUALIFIED",
+        },
+        status="SUCCEEDED",
+        reason="completed",
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class PositivityProducerRecord:
+    ordering: str
+    pivot_threshold: float
+    equilibration: bool
+    symmetric_mode: bool
+    iterative_refinement: str
+    factor_preparation: str
+    factorization_count: int
+    rhs_solve_count: int
+    factor_nnz: int
+    factor_storage_bytes: int
+    status: str
+    reason: str | None
+    qualification_status: str
+    matrix_sha256: str
+    lower_sha256: str
+    upper_sha256: str
+
+    def __post_init__(self):
+        if (
+            self.ordering != "MMD_AT_PLUS_A"
+            or type(self.pivot_threshold) is not float
+            or self.pivot_threshold != 0.0
+            or type(self.equilibration) is not bool
+            or self.equilibration
+            or type(self.symmetric_mode) is not bool
+            or not self.symmetric_mode
+            or self.iterative_refinement != "NOREFINE"
+            or self.factor_preparation != "validated stable index permutation; no value arithmetic"
+            or self.factorization_count != 1
+            or self.rhs_solve_count != 0
+            or type(self.factor_nnz) is not int
+            or not 0 < self.factor_nnz <= cases.MAX_COMBINED_FACTOR_NNZ
+            or type(self.factor_storage_bytes) is not int
+            or not 0 < self.factor_storage_bytes <= cases.MAX_CANONICAL_FACTOR_BYTES
+            or self.status not in ("CANDIDATE_CREATED", "HOLD")
+            or (self.reason is not None and (type(self.reason) is not str or not self.reason))
+            or (self.status == "CANDIDATE_CREATED") != (self.reason is None)
+            or self.qualification_status != "NOT_QUALIFIED"
+            or any(not _digest(value) for value in (
+                self.matrix_sha256, self.lower_sha256, self.upper_sha256,
+            ))
+        ):
+            raise ValueError("invalid frozen F03 positivity producer record")
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,7 +203,8 @@ class NumericalIndex:
     scaled: numerical.ScaledCounts
     positivity: numerical.PositivityCounts
     port_counts: ports.PortCounts
-    producer: ProducerRecord
+    kkt_producer: KKTProducerRecord
+    positivity_producer: PositivityProducerRecord
     objects: tuple[ObjectDigest, ...]
 
     def __post_init__(self):
@@ -114,7 +220,8 @@ class NumericalIndex:
             or type(self.scaled) is not numerical.ScaledCounts
             or type(self.positivity) is not numerical.PositivityCounts
             or type(self.port_counts) is not ports.PortCounts
-            or type(self.producer) is not ProducerRecord
+            or type(self.kkt_producer) is not KKTProducerRecord
+            or type(self.positivity_producer) is not PositivityProducerRecord
             or type(self.objects) is not tuple
             or tuple(item.name for item in self.objects) != _object_names()
             or any(type(item) is not ObjectDigest for item in self.objects)
@@ -191,26 +298,60 @@ def _hash_array(value: np.ndarray) -> str:
     return _hash_parts("dense_c", value.shape, canonical.dtype.str, (canonical,))
 
 
-def _counts(value: NumericalEvidence):
+def positivity_producer(
+    value: numerical.PositivityEvidence, metadata: object,
+) -> PositivityProducerRecord:
+    if type(value) is not numerical.PositivityEvidence:
+        raise ValueError("typed F03 positivity evidence required")
+    try:
+        raw = dict(metadata)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("exact F03 positivity producer metadata required") from exc
+    fields = tuple(PositivityProducerRecord.__dataclass_fields__)
+    if set(raw) != set(fields):
+        raise ValueError("invalid F03 positivity producer metadata inventory")
+    record = PositivityProducerRecord(**{name: raw[name] for name in fields})
+    if (
+        record.factor_nnz != value.lower.nnz + value.upper.nnz
+        or record.matrix_sha256 != factor_candidate._digest_owned(value.kbar)
+        or record.lower_sha256 != factor_candidate._digest_owned(value.lower)
+        or record.upper_sha256 != factor_candidate._digest_owned(value.upper)
+    ):
+        raise ValueError("F03 positivity producer hashes or factor count disagree")
+    return record
+
+
+def successful_positivity_producer(
+    value: numerical.PositivityEvidence,
+) -> PositivityProducerRecord:
+    metadata = {
+        "ordering": "MMD_AT_PLUS_A",
+        "pivot_threshold": 0.0,
+        "equilibration": False,
+        "symmetric_mode": True,
+        "iterative_refinement": "NOREFINE",
+        "factor_preparation": "validated stable index permutation; no value arithmetic",
+        "factorization_count": 1,
+        "rhs_solve_count": 0,
+        "factor_nnz": value.lower.nnz + value.upper.nnz,
+        "factor_storage_bytes": factor_candidate._bytes(value.lower) + factor_candidate._bytes(value.upper),
+        "status": "CANDIDATE_CREATED",
+        "reason": None,
+        "qualification_status": "NOT_QUALIFIED",
+        "matrix_sha256": factor_candidate._digest_owned(value.kbar),
+        "lower_sha256": factor_candidate._digest_owned(value.lower),
+        "upper_sha256": factor_candidate._digest_owned(value.upper),
+    }
+    return positivity_producer(value, metadata)
+
+
+def _counts(value: NumericalEvidence, case: cases.ScientificCase):
     if type(value) is not NumericalEvidence:
         raise ValueError("typed complete F03 numerical evidence required")
-    primary = numerical.OperatorCounts(
-        value.operator_primary.shell.nnz, value.operator_primary.beam.nnz,
-        value.operator_primary.root.nnz,
-    )
-    alternate = numerical.OperatorCounts(
-        value.operator_alternate.shell.nnz, value.operator_alternate.beam.nnz,
-        value.operator_alternate.root.nnz,
-    )
-    scaled = numerical.ScaledCounts(
-        value.scaled.kbar.nnz, value.scaled.cbar.nnz, value.scaled.h.nnz,
-        value.scaled.kbar_alternate.nnz, value.scaled.cbar_alternate.nnz,
-        value.scaled.h_alternate.nnz,
-    )
-    positivity = numerical.PositivityCounts(
-        value.positivity.kbar.nnz, value.positivity.lower.nnz,
-        value.positivity.upper.nnz,
-    )
+    primary = numerical._operator_counts(value.operator_primary, case)
+    alternate = numerical._operator_counts(value.operator_alternate, case)
+    scaled = numerical._scaled_counts(value.scaled, case)
+    positivity = numerical._positivity_counts(value.positivity, case)
     port_matrices, _ = ports._validate(value.port_evidence)
     port_counts = ports.PortCounts(
         tuple(port_matrices[f"port_{index:02d}"].nnz for index in range(ports.PORTS)),
@@ -255,23 +396,38 @@ def _digests(value: NumericalEvidence, case: cases.ScientificCase, counts) -> tu
 def build_index(
     plan: archive.CaseArchivePlan,
     value: NumericalEvidence,
-    producer: ProducerRecord,
+    kkt_producer: KKTProducerRecord,
+    positivity_producer_record: PositivityProducerRecord,
 ) -> NumericalIndex:
-    if type(plan) is not archive.CaseArchivePlan or type(producer) is not ProducerRecord:
-        raise ValueError("validated F03 plan and producer record required")
+    if (
+        type(plan) is not archive.CaseArchivePlan
+        or type(kkt_producer) is not KKTProducerRecord
+        or type(positivity_producer_record) is not PositivityProducerRecord
+    ):
+        raise ValueError("validated F03 plan and producer records required")
     case = cases.case_by_id(plan.case_id)
-    counts = _counts(value)
+    counts = _counts(value, case)
     numerical.operator_specs(case, counts[0])
     numerical.operator_specs(case, counts[1])
     numerical.scaled_specs(case, counts[2])
     numerical.positivity_specs(case, counts[3])
     ports.port_specs(case, counts[4])
-    if producer != successful_producer(plan):
-        raise ValueError("F03 numerical producer record disagrees with frozen plan")
+    if (
+        kkt_producer.factorization_count != 1
+        or kkt_producer.factor_nnz > cases.MAX_KKT_FACTOR_NNZ
+        or kkt_producer.candidate_rhs_solves != 1
+        or kkt_producer.certificate_solve_calls != len(plan.inverse_blocks)
+        or kkt_producer.certificate_rhs_attempted != plan.kkt_order
+        or kkt_producer.certificate_rhs_completed != plan.kkt_order
+        or positivity_producer(value.positivity, _count_payload(positivity_producer_record))
+            != positivity_producer_record
+    ):
+        raise ValueError("F03 numerical producer records disagree with frozen plan or evidence")
     return NumericalIndex(
         SCHEMA, plan.case_id, plan.source_commit,
         hashlib.sha256(archive._payload(plan)).hexdigest(),
-        *counts, producer, _digests(value, case, counts),
+        *counts, kkt_producer, positivity_producer_record,
+        _digests(value, case, counts),
     )
 
 
@@ -294,7 +450,10 @@ def _payload(index: NumericalIndex) -> bytes:
             "positivity": _count_payload(index.positivity),
             "ports": _count_payload(index.port_counts),
         },
-        "producer": _count_payload(index.producer),
+        "producers": {
+            "kkt": _count_payload(index.kkt_producer),
+            "positivity": _count_payload(index.positivity_producer),
+        },
         "objects": [{"name": item.name, "sha256": item.sha256} for item in index.objects],
     }
     payload = (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode("ascii")
@@ -325,7 +484,7 @@ def _decode(payload: bytes, plan: archive.CaseArchivePlan) -> NumericalIndex:
         raise ValueError("invalid F03 numerical index JSON") from exc
     _exact_dict(
         value,
-        ("schema", "case_id", "source_commit", "plan_sha256", "counts", "producer", "objects"),
+        ("schema", "case_id", "source_commit", "plan_sha256", "counts", "producers", "objects"),
         "index",
     )
     counts = _exact_dict(
@@ -344,7 +503,11 @@ def _decode(payload: bytes, plan: archive.CaseArchivePlan) -> NumericalIndex:
     if type(port_raw["ports"]) is not list:
         raise ValueError("invalid F03 numerical port count inventory")
     port_counts = ports.PortCounts(tuple(port_raw["ports"]), port_raw["root"], port_raw["tip"], port_raw["free_slope"])
-    producer = construct(ProducerRecord, value["producer"], "producer")
+    producers = _exact_dict(value["producers"], ("kkt", "positivity"), "producer")
+    kkt_producer = construct(KKTProducerRecord, producers["kkt"], "KKT producer")
+    positivity_record = construct(
+        PositivityProducerRecord, producers["positivity"], "positivity producer",
+    )
     if type(value["objects"]) is not list:
         raise ValueError("invalid F03 numerical object inventory")
     objects = tuple(
@@ -353,7 +516,8 @@ def _decode(payload: bytes, plan: archive.CaseArchivePlan) -> NumericalIndex:
     )
     index = NumericalIndex(
         value["schema"], value["case_id"], value["source_commit"], value["plan_sha256"],
-        primary, alternate, scaled, positivity, port_counts, producer, objects,
+        primary, alternate, scaled, positivity, port_counts,
+        kkt_producer, positivity_record, objects,
     )
     case = cases.case_by_id(plan.case_id)
     numerical.operator_specs(case, primary)
@@ -365,7 +529,12 @@ def _decode(payload: bytes, plan: archive.CaseArchivePlan) -> NumericalIndex:
         index.case_id != plan.case_id
         or index.source_commit != plan.source_commit
         or index.plan_sha256 != hashlib.sha256(archive._payload(plan)).hexdigest()
-        or index.producer != successful_producer(plan)
+        or index.kkt_producer.factorization_count != 1
+        or index.kkt_producer.factor_nnz > cases.MAX_KKT_FACTOR_NNZ
+        or index.kkt_producer.candidate_rhs_solves != 1
+        or index.kkt_producer.certificate_solve_calls != len(plan.inverse_blocks)
+        or index.kkt_producer.certificate_rhs_attempted != plan.kkt_order
+        or index.kkt_producer.certificate_rhs_completed != plan.kkt_order
         or _payload(index) != payload
     ):
         raise ValueError("stale or noncanonical F03 numerical index")
@@ -392,6 +561,8 @@ def read_saved(directory: Path, plan: archive.CaseArchivePlan) -> tuple[Numerica
         numerical.read_positivity(directory / "positivity.npz", case, index.positivity),
         ports.read_ports(directory / "ports.npz", case, index.port_counts),
     )
-    if build_index(plan, value, index.producer) != index:
+    if build_index(
+        plan, value, index.kkt_producer, index.positivity_producer,
+    ) != index:
         raise ValueError("mismatched F03 saved numerical object digest")
     return index, value

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
+from scipy import sparse
 
 from scripts import _b3_e4_f03_local_primal_assembly as assembly
 from scripts import _b3_e4_f03_local_scientific_cases as cases
@@ -99,6 +100,52 @@ def _case(value: cases.ScientificCase) -> cases.ScientificCase:
 
 def _assembly_limits(case: cases.ScientificCase) -> dict:
     return assembly.preflight(cases.compile_case(_case(case)), cases.ASSEMBLY_BUDGET)
+
+
+def _operator_counts(value: OperatorEvidence, case: cases.ScientificCase) -> OperatorCounts:
+    case = _case(case)
+    if (
+        type(value) is not OperatorEvidence
+        or type(value.shell) is not sparse.csr_matrix
+        or value.shell.shape != (case.physical_dofs, case.physical_dofs)
+        or type(value.beam) is not sparse.csr_matrix
+        or value.beam.shape != (case.physical_dofs, case.physical_dofs)
+        or type(value.root) is not sparse.csr_matrix
+        or value.root.shape != (3, case.physical_dofs)
+    ):
+        raise ValueError("typed canonical F03 operator evidence required")
+    return OperatorCounts(value.shell.nnz, value.beam.nnz, value.root.nnz)
+
+
+def _scaled_counts(value: ScaledEvidence, case: cases.ScientificCase) -> ScaledCounts:
+    case = _case(case)
+    n, order = case.physical_dofs, case.kkt_order
+    expected = (
+        (value.kbar, sparse.csr_matrix, (n, n)),
+        (value.cbar, sparse.csr_matrix, (3, n)),
+        (value.h, sparse.csc_matrix, (order, order)),
+        (value.kbar_alternate, sparse.csr_matrix, (n, n)),
+        (value.cbar_alternate, sparse.csr_matrix, (3, n)),
+        (value.h_alternate, sparse.csc_matrix, (order, order)),
+    ) if type(value) is ScaledEvidence else ()
+    if len(expected) != 6 or any(type(item) is not cls or item.shape != shape for item, cls, shape in expected):
+        raise ValueError("typed canonical F03 scaled evidence required")
+    return ScaledCounts(*(item.nnz for item, _, _ in expected))
+
+
+def _positivity_counts(
+    value: PositivityEvidence, case: cases.ScientificCase,
+) -> PositivityCounts:
+    case = _case(case)
+    n = case.physical_dofs
+    expected = (
+        (value.kbar, sparse.csr_matrix),
+        (value.lower, sparse.csc_matrix),
+        (value.upper, sparse.csc_matrix),
+    ) if type(value) is PositivityEvidence else ()
+    if len(expected) != 3 or any(type(item) is not cls or item.shape != (n, n) for item, cls in expected):
+        raise ValueError("typed canonical F03 positivity evidence required")
+    return PositivityCounts(*(item.nnz for item, _ in expected))
 
 
 def operator_specs(
@@ -271,9 +318,7 @@ def _read(
 def write_operators(
     path: Path, value: OperatorEvidence, case: cases.ScientificCase,
 ) -> OperatorCounts:
-    if type(value) is not OperatorEvidence:
-        raise ValueError("typed F03 operator evidence required")
-    counts = OperatorCounts(value.shell.nnz, value.beam.nnz, value.root.nnz)
+    counts = _operator_counts(value, case)
     sparse_specs, arrays = operator_specs(case, counts)
     _write(path, value, sparse_specs, arrays)
     return counts
@@ -290,12 +335,7 @@ def read_operators(
 def write_scaled(
     path: Path, value: ScaledEvidence, case: cases.ScientificCase,
 ) -> ScaledCounts:
-    if type(value) is not ScaledEvidence:
-        raise ValueError("typed F03 scaled evidence required")
-    counts = ScaledCounts(
-        value.kbar.nnz, value.cbar.nnz, value.h.nnz,
-        value.kbar_alternate.nnz, value.cbar_alternate.nnz, value.h_alternate.nnz,
-    )
+    counts = _scaled_counts(value, case)
     sparse_specs, arrays = scaled_specs(case, counts)
     _write(path, value, sparse_specs, arrays)
     return counts
@@ -312,9 +352,7 @@ def read_scaled(
 def write_positivity(
     path: Path, value: PositivityEvidence, case: cases.ScientificCase,
 ) -> PositivityCounts:
-    if type(value) is not PositivityEvidence:
-        raise ValueError("typed F03 positivity evidence required")
-    counts = PositivityCounts(value.kbar.nnz, value.lower.nnz, value.upper.nnz)
+    counts = _positivity_counts(value, case)
     sparse_specs, arrays = positivity_specs(case, counts)
     _write(path, value, sparse_specs, arrays)
     return counts

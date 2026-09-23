@@ -10,6 +10,8 @@ from scripts import _b3_e4_f03_local_scientific_numerical_index as index_storage
 from scripts import _b3_e4_f03_local_scientific_numerical_storage as numerical
 from scripts import _b3_e4_f03_local_scientific_port_storage as ports
 from scripts import _b3_e4_f03_sparse_trace_binding as trace
+from scripts import _b3_e4_f03_sparse_certificate as certificate
+from scripts import _b3_e4_f03_sparse_factor_candidate as factor_candidate
 
 
 CASE = cases.CASES[0]
@@ -85,12 +87,18 @@ def _write_groups(directory, value):
     ports.write_ports(directory / "ports.npz", value.port_evidence, CASE)
 
 
+def _producers(plan, value):
+    return (
+        index_storage.successful_kkt_producer(plan, value.scaled.h.nnz),
+        index_storage.successful_positivity_producer(value.positivity),
+    )
+
+
 def test_index_is_self_describing_and_saved_only_hashes_replay(plan, tmp_path):
     directory = tmp_path / "complete"
     source = _evidence()
     _write_groups(directory, source)
-    producer = index_storage.successful_producer(plan)
-    index = index_storage.build_index(plan, source, producer)
+    index = index_storage.build_index(plan, source, *_producers(plan, source))
     digest = index_storage.write_index(directory / "numerical_index.json", index)
     restored, observed = index_storage.read_index(directory / "numerical_index.json", plan)
     loaded_index, loaded = index_storage.read_saved(directory, plan)
@@ -106,7 +114,7 @@ def test_object_mutation_is_rejected_by_saved_only_replay(plan, tmp_path):
     directory = tmp_path / "mutated"
     source = _evidence()
     _write_groups(directory, source)
-    index = index_storage.build_index(plan, source, index_storage.successful_producer(plan))
+    index = index_storage.build_index(plan, source, *_producers(plan, source))
     index_storage.write_index(directory / "numerical_index.json", index)
     (directory / "operators_alternate.npz").unlink()
     numerical.write_operators(directory / "operators_alternate.npz", _operators(2.0), CASE)
@@ -117,7 +125,7 @@ def test_object_mutation_is_rejected_by_saved_only_replay(plan, tmp_path):
 def test_noncanonical_or_stale_index_is_rejected(plan, tmp_path):
     directory = tmp_path / "bad-index"
     source = _evidence()
-    index = index_storage.build_index(plan, source, index_storage.successful_producer(plan))
+    index = index_storage.build_index(plan, source, *_producers(plan, source))
     path = directory / "numerical_index.json"
     directory.mkdir()
     index_storage.write_index(path, index)
@@ -129,13 +137,39 @@ def test_noncanonical_or_stale_index_is_rejected(plan, tmp_path):
 
 
 def test_frozen_producer_settings_and_counts_are_enforced(plan):
-    producer = index_storage.successful_producer(plan)
-    assert producer.ordering == "COLAMD"
-    assert producer.inverse_rhs_columns == plan.kkt_order
-    assert producer.inverse_solve_calls == len(plan.inverse_blocks)
+    source = _evidence()
+    kkt, positivity = _producers(plan, source)
+    assert kkt.ordering == "COLAMD"
+    assert kkt.certificate_rhs_completed == plan.kkt_order
+    assert kkt.certificate_solve_calls == len(plan.inverse_blocks)
+    assert positivity.ordering == "MMD_AT_PLUS_A"
+    assert positivity.symmetric_mode
+    assert positivity.matrix_sha256 == index_storage.factor_candidate._digest_owned(
+        source.positivity.kbar,
+    )
     with pytest.raises(ValueError):
-        index_storage.ProducerRecord(
-            "NATURAL", 1.0, False, False, "NOREFINE",
-            1, 1, 1, len(plan.inverse_blocks), plan.kkt_order, 0, 0,
-            "SUCCEEDED", "completed",
+        index_storage.KKTProducerRecord(
+            "NATURAL", 1.0, False, False, "NOREFINE", 1, 1, 1,
+            len(plan.inverse_blocks), plan.kkt_order, plan.kkt_order, 0, 0,
+            "NOT_QUALIFIED", "SUCCEEDED", "completed",
         )
+
+
+def test_actual_positivity_candidate_metadata_and_native_hashes_are_preserved():
+    matrix = sparse.diags(np.arange(2.0, 6.0), format="csr")
+    sparse_budget = certificate.SparseBudget(4, 16, 1, 4096)
+    candidate = factor_candidate.produce(
+        matrix, factor_candidate.FactorBudget(sparse_budget, 32, 4096),
+    )
+    value = numerical.PositivityEvidence(
+        candidate.matrix, candidate.lower, candidate.upper, candidate.diagonal,
+        candidate.row_map, candidate.column_map,
+        np.asarray(candidate.permutation, dtype=np.int64),
+    )
+    record = index_storage.positivity_producer(value, candidate.metadata)
+    assert record.ordering == "MMD_AT_PLUS_A"
+    assert record.pivot_threshold == 0.0
+    assert record.symmetric_mode
+    assert record.matrix_sha256 == candidate.metadata["matrix_sha256"]
+    assert record.lower_sha256 == candidate.metadata["lower_sha256"]
+    assert record.upper_sha256 == candidate.metadata["upper_sha256"]
