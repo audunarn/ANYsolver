@@ -12,8 +12,10 @@ schemas are now committed. Composition-summary, physical-balance and the
 adjudicator-bound per-case receipt schemas are committed and independently
 reviewed. Canonical replay budgets, saved numerical semantic binding and the
 solve-free single-case adjudicator are committed and independently reviewed.
-The exclusively-writing producer and top-level one-use coordinator remain
-active next work.
+The bounded plan-envelope reader and the port, saved-interface, saved-work,
+saved-norm and common-state saved-observation production factories are also
+committed and independently reviewed. The exclusively-writing child producer
+and top-level one-use coordinator remain active next work.
 
 22 September 2026. User authorized continued implementation with increased
 effort. The active goal remains the complete programme; **G0B is open and
@@ -79,6 +81,30 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
   tests; final independent closure passed 47 focused tests with no findings.
   This is implemented infrastructure only and grants no scientific execution
   or registration authority.
+- Latest independently reviewed plan-envelope preflight source: `dd3056d8`.
+  It proves the bounded two-member ZIP envelope before `ZipFile` allocation,
+  retains canonical plan bytes, and preserves `start.json` when full
+  post-start validation fails. The closure suite and independent review each
+  passed 21 focused tests without findings.
+- Latest independently reviewed port producer sources: `85ab7883` with
+  resource-envelope closure `e5aec919`. The factory emits the ordered 27
+  trace ports, caches each referenced exact interval once, owns all CSR/action
+  evidence, and charges the frozen 88*N trace and workspace envelope before
+  extraction. Independent closure passed 35 focused tests without findings.
+- Latest independently reviewed saved-observation producer sources:
+  saved interface `d0b159b7` with resource and nested-Action closures through
+  `cb452be8`; signed norm `deedeed5`; saved work `80c20747` with conversion,
+  resource and display closures through `a134190a`; and the common-state
+  bundle `751f7ae5` with factory-only state binding `46dc032b`. The interface
+  retains separate analytic, 48-point and 64-point band routes; work retains
+  one support result and an independent 48-point virtual-work route; norm
+  retains raw 48/64 observations and identified unavailable values. Exact
+  Action/Fraction work, nonzero conversion underflow, array ownership and
+  outer/nested resource limits are enforced. Final independent reviews have
+  no findings. The final affected suite passed 158 tests in 76.40 seconds.
+  These factories perform two state recoveries including the support rebound,
+  one support recovery, 16 band observations, two norm observations, and zero
+  equilibrium solves or factorizations.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -443,20 +469,21 @@ archive/lifecycle checks and their closure review passed 17 checks without
 findings. The independently reviewed case receipt at `103cf51e` passed 218
 broad saved-evidence/lifecycle tests and 51 focused review tests. The saved
 balance adjudication at `6d355713`/`f7a680d8` is independently closed. The
-exact next action is the exclusively-writing child case producer. It must write
+bounded plan-envelope and evidence-production prerequisites are now complete
+and independently reviewed. The exact next action is the exclusively-writing
+child case producer. It must write
 `start.json` before topology/model construction, perform the two frozen
 assemblies and scalings, exactly one positivity factorization and one KKT
 factorization/candidate solve, stream each planned inverse block once, build
 the canonical saved components and indexes, and write `evidence_index.json`
 last. It must never supervise, retry, write terminal/receipt files, register or
-adjudicate. A bounded plan-envelope read and reviewed production factories for
-ports and saved interface/work/norm observations are prerequisites. The later
-top-level one-use coordinator owns immutable registration, serial supervised
-launch, terminal receipts, adjudication and aggregate disposition.
-Registration remains barred until those pieces, bounded
-lifecycle/replay tests, preflight demonstrations and independent review pass on
-a clean committed source. The accepted proofs grant no scientific execution
-authority. Current product/schema sources are committed; this checkpoint text
-records the restart boundary.
+adjudicate. The later top-level one-use coordinator owns immutable
+registration, serial supervised launch, terminal receipts, adjudication and
+aggregate disposition. Registration remains barred until the child producer
+and later coordinator pass their bounded lifecycle/replay tests, preflight
+demonstrations and independent reviews on clean committed sources. The
+accepted proofs grant no scientific execution authority. Current
+product/schema sources are committed; this checkpoint text records the
+restart boundary.
 All consumed diagnostic sources and completed inventories stay frozen.
 No release approval is being exercised. Keep main unchanged during G0.
