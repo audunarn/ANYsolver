@@ -104,7 +104,7 @@ def verify_child_context(
     ):
         raise ValueError("F03 child directory, source, or registration mismatch")
     start, _ = lifecycle.read_start(directory, envelope, registration_sha256)
-    if start["pid"] != os.getpid():
+    if start["pid"] != os.getpid() or start["parent_pid"] != os.getppid():
         raise ValueError("F03 child does not own its start marker")
     records = cases.preflight_inventory()
     bound = value.cases[tuple(item.case_id for item in value.cases).index(envelope.case_id)]

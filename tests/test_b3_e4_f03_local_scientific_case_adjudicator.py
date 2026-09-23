@@ -61,7 +61,9 @@ def test_positivity_hold_never_attempts_to_invent_a_proof():
     assert value.reasons == ("native maps differ",)
 
 
-def _install_complete_archive_mocks(monkeypatch, tmp_path, *, mutate_final=False):
+def _install_complete_archive_mocks(
+    monkeypatch, tmp_path, *, mutate_final=False, venv_child=False,
+):
     records = cases.preflight_inventory()
     record = records[0]
     plan = archive.make_case_plan(record, records, SOURCE)
@@ -104,10 +106,13 @@ def _install_complete_archive_mocks(monkeypatch, tmp_path, *, mutate_final=False
     monkeypatch.setattr(
         adjudicator.lifecycle, "read_terminal",
         lambda *args: ({"reason": "completed", "exit_code": 0,
-                       "start_sha256": DIGEST, "root_pid": 7}, DIGEST),
+                       "start_sha256": DIGEST, "root_pid": 7,
+                       "observed_pids": [7]}, DIGEST),
     )
     monkeypatch.setattr(
-        adjudicator.lifecycle, "read_start", lambda *args: ({"pid": 7}, DIGEST),
+        adjudicator.lifecycle, "read_start",
+        lambda *args: ({"pid": 11 if venv_child else 7,
+                        "parent_pid": 7 if venv_child else 5}, DIGEST),
     )
     evidence_calls = iter(((observed, DIGEST), (final, DIGEST)))
     monkeypatch.setattr(adjudicator.evidence_index, "read_index", lambda *args: next(evidence_calls))
@@ -195,11 +200,12 @@ def _install_complete_archive_mocks(monkeypatch, tmp_path, *, mutate_final=False
     return records, record, plan, case_dir, starts, written, events
 
 
+@pytest.mark.parametrize("venv_child", [False, True])
 def test_complete_saved_only_route_consumes_inverse_stream_once_and_writes_exclusively(
-    monkeypatch, tmp_path,
+    monkeypatch, tmp_path, venv_child,
 ):
     records, record, plan, case_dir, starts, written, events = _install_complete_archive_mocks(
-        monkeypatch, tmp_path,
+        monkeypatch, tmp_path, venv_child=venv_child,
     )
     value, digest = adjudicator.adjudicate_case(
         case_dir, record, records, SOURCE, DIGEST, budgets.make_scientific_budgets(),

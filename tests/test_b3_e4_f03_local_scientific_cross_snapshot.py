@@ -38,7 +38,7 @@ def _passing_receipt(plan):
     )
 
 
-def _mock_snapshot(monkeypatch, tmp_path, *, stale_on_exit=False):
+def _mock_snapshot(monkeypatch, tmp_path, *, stale_on_exit=False, venv_child=False):
     records = cases.preflight_inventory()
     record = records[0]
     plan = archive.make_case_plan(record, records, SOURCE)
@@ -64,12 +64,15 @@ def _mock_snapshot(monkeypatch, tmp_path, *, stale_on_exit=False):
     monkeypatch.setattr(cross.adjudicator, "_verify_registered_plan_bytes", lambda *a: seen.append("plan"))
     monkeypatch.setattr(cross.archive, "read_plan", lambda *a: plan)
     monkeypatch.setattr(
-        cross.lifecycle, "read_start", lambda *a: ({"pid": 7}, DIGEST),
+        cross.lifecycle, "read_start",
+        lambda *a: ({"pid": 11 if venv_child else 7,
+                     "parent_pid": 7 if venv_child else 5}, DIGEST),
     )
     monkeypatch.setattr(
         cross.lifecycle, "read_terminal",
         lambda *a: ({"reason": "completed", "exit_code": 0,
-                    "start_sha256": DIGEST, "root_pid": 7}, DIGEST),
+                    "start_sha256": DIGEST, "root_pid": 7,
+                    "observed_pids": [7]}, DIGEST),
     )
     calls = [0]
 
@@ -97,9 +100,12 @@ def _mock_snapshot(monkeypatch, tmp_path, *, stale_on_exit=False):
     return directory, record, records, value, saved, functional, seen
 
 
-def test_snapshot_retains_one_read_for_comparison_and_rechecks_on_exit(monkeypatch, tmp_path):
+@pytest.mark.parametrize("venv_child", [False, True])
+def test_snapshot_retains_one_read_for_comparison_and_rechecks_on_exit(
+    monkeypatch, tmp_path, venv_child,
+):
     directory, record, records, value, saved, functional, seen = _mock_snapshot(
-        monkeypatch, tmp_path,
+        monkeypatch, tmp_path, venv_child=venv_child,
     )
     with cross.open_case_snapshot(
         directory, record, records, SOURCE, DIGEST, value, DIGEST,

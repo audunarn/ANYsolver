@@ -19,8 +19,8 @@ from scripts import _b3_e4_f03_local_scientific_evidence_index as evidence_index
 from scripts import _b3_e4_f03_local_scientific_supervisor as supervisor
 
 
-START_SCHEMA = "f03_local_scientific_start_v1"
-TERMINAL_SCHEMA = "f03_local_scientific_terminal_v1"
+START_SCHEMA = "f03_local_scientific_start_v2"
+TERMINAL_SCHEMA = "f03_local_scientific_terminal_v2"
 DIGEST = re.compile(r"[0-9a-f]{64}")
 MAX_RECEIPT_BYTES = 64 * 1024
 
@@ -61,7 +61,7 @@ def _read_exact(path: Path, keys: set[str]) -> tuple[dict, str]:
 
 START_KEYS = {
     "schema", "case_id", "source_commit", "registration_sha256", "plan_sha256",
-    "inventory_sha256", "topology_sha256", "pid",
+    "inventory_sha256", "topology_sha256", "pid", "parent_pid",
 }
 TERMINAL_KEYS = {
     "schema", "case_id", "source_commit", "registration_sha256", "plan_sha256",
@@ -69,6 +69,25 @@ TERMINAL_KEYS = {
     "sampled_peak_tree_rss_bytes", "observed_pids", "terminated_pids", "failure",
     "stdout_log_bytes", "stdout_log_sha256", "stderr_log_bytes", "stderr_log_sha256",
 }
+
+
+def _owns_start(start: dict, root_pid: int | None, observed_pids: tuple[int, ...] | list[int]) -> bool:
+    if (type(start) is not dict
+            or type(start.get("pid")) is not int or start["pid"] <= 0
+            or type(start.get("parent_pid")) is not int or start["parent_pid"] <= 0
+            or (root_pid is not None and (type(root_pid) is not int or root_pid <= 0))
+            or type(observed_pids) not in (tuple, list)
+            or any(type(pid) is not int or pid <= 0 for pid in observed_pids)):
+        raise ValueError("validated F03 terminal process inventory required")
+    return (start["pid"] == root_pid or start["pid"] in observed_pids
+            or start["parent_pid"] == root_pid)
+
+
+def terminal_owns_start(terminal: dict, start: dict) -> bool:
+    """Accept the registered launcher or an observed child interpreter."""
+    if type(terminal) is not dict or type(terminal.get("observed_pids")) is not list:
+        raise ValueError("validated F03 terminal process inventory required")
+    return _owns_start(start, terminal.get("root_pid"), terminal["observed_pids"])
 
 
 def _log_identity(directory: Path, name: str) -> tuple[int, str]:
@@ -111,15 +130,20 @@ def write_start(
     plan: archive.CaseArchivePlan,
     registration_sha256: str,
     pid: int,
+    parent_pid: int | None = None,
 ) -> str:
     """Create the child marker after envelope validation and before model work."""
     directory = Path(directory)
+    if parent_pid is None:
+        parent_pid = os.getppid()
     if (
         not directory.is_dir()
         or type(plan) is not archive.CaseArchivePlan
         or DIGEST.fullmatch(registration_sha256) is None
         or type(pid) is not int
         or pid <= 0
+        or type(parent_pid) is not int
+        or parent_pid <= 0
         or (directory / "terminal.json").exists()
     ):
         raise ValueError("validated F03 start-marker inputs required")
@@ -132,6 +156,7 @@ def write_start(
         "inventory_sha256": plan.inventory_sha256,
         "topology_sha256": plan.topology_sha256,
         "pid": pid,
+        "parent_pid": parent_pid,
     }
     return _write_new(directory / "start.json", value)
 
@@ -157,6 +182,8 @@ def read_start(
         any(value[name] != expected[name] for name in expected)
         or type(value["pid"]) is not int
         or value["pid"] <= 0
+        or type(value["parent_pid"]) is not int
+        or value["parent_pid"] <= 0
     ):
         raise ValueError("stale or invalid F03 start marker")
     return value, digest
@@ -180,7 +207,7 @@ def write_terminal(
     start_digest = None
     if start_path.exists():
         start, start_digest = read_start(directory, plan, registration_sha256)
-        if receipt.root_pid != start["pid"]:
+        if not _owns_start(start, receipt.root_pid, receipt.observed_pids):
             raise ValueError("F03 terminal process does not own its start marker")
     elif receipt.reason != "launch_failure":
         # A launched child that did not emit its first marker is preserved as
@@ -249,7 +276,7 @@ def read_terminal(
             value["start_sha256"], start_digest
         ):
             raise ValueError("F03 terminal receipt did not consume its start marker")
-        if receipt.root_pid != start["pid"]:
+        if not terminal_owns_start(value, start):
             raise ValueError("F03 terminal process does not own its start marker")
     elif value["start_sha256"] is not None:
         raise ValueError("F03 terminal receipt cites a missing start marker")

@@ -28,6 +28,23 @@ def test_sparse_encode_decode_roundtrip_and_owned_arrays(matrices):
         assert not np.shares_memory(restored[name].indptr, arrays[name + "_indptr"])
 
 
+def test_empty_outer_rows_or_columns_do_not_wrap_previous_slice():
+    shell = sparse.csr_matrix(np.array([
+        [0., 0., 0.], [1., 2., 0.], [0., 0., 3.],
+    ]))
+    root = sparse.csc_matrix(np.array([
+        [0., 4., 0.], [0., 0., 5.],
+    ]))
+    specs = (
+        storage.SparseSpec("shell", (3, 3), 3, "csr"),
+        storage.SparseSpec("root", (2, 3), 2, "csc"),
+    )
+    arrays = storage.encode({"shell": shell, "root": root}, specs)
+    restored = storage.decode(arrays, specs)
+    np.testing.assert_array_equal(restored["shell"].toarray(), shell.toarray())
+    np.testing.assert_array_equal(restored["root"].toarray(), root.toarray())
+
+
 def test_sparse_specs_expand_to_exact_array_schema():
     values = storage.array_specs(SPECS)
     assert tuple(spec.name for spec in values) == (

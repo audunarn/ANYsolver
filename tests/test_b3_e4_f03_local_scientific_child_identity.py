@@ -65,7 +65,9 @@ def _context(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(identity.registration, "read_registration", lambda *args: (value, DIGEST))
     monkeypatch.setattr(identity, "verify_loaded_sources", lambda *_: None)
-    monkeypatch.setattr(identity.lifecycle, "read_start", lambda *args: ({"pid": os.getpid()}, DIGEST))
+    monkeypatch.setattr(identity.lifecycle, "read_start", lambda *args: (
+        {"pid": os.getpid(), "parent_pid": os.getppid()}, DIGEST,
+    ))
     monkeypatch.setattr(identity, "observed_git", lambda *args: (SOURCE, True))
     monkeypatch.setattr(identity.threadpoolctl, "threadpool_info", lambda: [{"num_threads": 1}])
     for name, setting in value.threads:
@@ -82,7 +84,14 @@ def test_child_identity_rejects_stale_registration_and_start(tmp_path, monkeypat
     directory, plan, _, _ = _context(tmp_path, monkeypatch)
     with pytest.raises(ValueError, match="registration mismatch"):
         identity.verify_child_context(directory, plan, SOURCE, "c" * 64)
-    monkeypatch.setattr(identity.lifecycle, "read_start", lambda *args: ({"pid": os.getpid() + 1}, DIGEST))
+    monkeypatch.setattr(identity.lifecycle, "read_start", lambda *args: (
+        {"pid": os.getpid() + 1, "parent_pid": os.getppid()}, DIGEST,
+    ))
+    with pytest.raises(ValueError, match="start marker"):
+        identity.verify_child_context(directory, plan, SOURCE, DIGEST)
+    monkeypatch.setattr(identity.lifecycle, "read_start", lambda *args: (
+        {"pid": os.getpid(), "parent_pid": os.getppid() + 1}, DIGEST,
+    ))
     with pytest.raises(ValueError, match="start marker"):
         identity.verify_child_context(directory, plan, SOURCE, DIGEST)
 

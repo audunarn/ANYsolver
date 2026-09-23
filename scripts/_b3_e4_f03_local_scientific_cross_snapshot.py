@@ -199,7 +199,7 @@ def open_case_snapshot(
     if (
         terminal["reason"] != "completed" or terminal["exit_code"] != 0
         or terminal["start_sha256"] != start_sha256
-        or terminal["root_pid"] != start["pid"]
+        or not lifecycle.terminal_owns_start(terminal, start)
         or replayed_receipt.start_sha256 != start_sha256
         or replayed_receipt.terminal_sha256 != terminal_sha256
     ):

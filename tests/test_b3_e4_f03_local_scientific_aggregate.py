@@ -55,7 +55,8 @@ def _receipt(plan, status="PASSED_CASE_NUMERICAL_SCREEN"):
 
 
 def _fixture(monkeypatch, *, missing=None, incomplete=None,
-             numerical=None, replay_error=None, chain_pass=True):
+             numerical=None, replay_error=None, chain_pass=True,
+             venv_child=False):
     records = cases.preflight_inventory()
     plans = {record.case.case_id: archive.make_case_plan(record, records, SOURCE)
              for record in records}
@@ -81,10 +82,11 @@ def _fixture(monkeypatch, *, missing=None, incomplete=None,
     monkeypatch.setattr(aggregate.lifecycle, "read_terminal", lambda path, *_: (
         {"reason": "timeout" if path.name == incomplete else "completed",
          "exit_code": -1 if path.name == incomplete else 0,
-         "start_sha256": DIGEST, "root_pid": 7}, DIGEST,
+         "start_sha256": DIGEST, "root_pid": 7, "observed_pids": [7]}, DIGEST,
     ))
     monkeypatch.setattr(aggregate.lifecycle, "read_start",
-                        lambda *a: ({"pid": 7}, DIGEST))
+                        lambda *a: ({"pid": 11 if venv_child else 7,
+                                     "parent_pid": 7 if venv_child else 5}, DIGEST))
 
     def read_digest(path):
         if path.name == missing:
@@ -145,8 +147,11 @@ def _adjudicate(tmp_path):
     )
 
 
-def test_all_five_cases_are_replayed_before_cross_comparison(monkeypatch, tmp_path):
-    calls = _fixture(monkeypatch)
+@pytest.mark.parametrize("venv_child", [False, True])
+def test_all_five_cases_are_replayed_before_cross_comparison(
+    monkeypatch, tmp_path, venv_child,
+):
+    calls = _fixture(monkeypatch, venv_child=venv_child)
     result = _adjudicate(tmp_path)
     assert result.status == "PASSED_BOUNDED_LOCAL_REFERENCE_SCREEN"
     assert result.chain is not None and result.chain.passed

@@ -365,7 +365,7 @@ def _compute_case(
         terminal["reason"] != "completed"
         or terminal["exit_code"] != 0
         or terminal["start_sha256"] != start_sha256
-        or terminal["root_pid"] != start["pid"]
+        or not lifecycle.terminal_owns_start(terminal, start)
     ):
         raise ValueError("complete successful F03 lifecycle required for numerical adjudication")
 

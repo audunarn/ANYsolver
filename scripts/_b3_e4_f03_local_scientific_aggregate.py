@@ -129,7 +129,7 @@ def _inventory_one(
             )
             if (
                 terminal["start_sha256"] != start_sha256
-                or terminal["root_pid"] != start["pid"]
+                or not lifecycle.terminal_owns_start(terminal, start)
             ):
                 raise ValueError("F03 successful lifecycle disagrees with start marker")
             retained, retained_sha256 = case_receipt.read_receipt_inventory(

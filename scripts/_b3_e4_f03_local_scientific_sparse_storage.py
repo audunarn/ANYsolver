@@ -89,7 +89,10 @@ def _check_matrix(value, spec: SparseSpec) -> None:
     ):
         raise ValueError(f"invalid canonical F03 sparse matrix: {spec.name}")
     for left, right in zip(value.indptr, value.indptr[1:]):
-        if np.any(value.indices[int(left) + 1:int(right)] <= value.indices[int(left):int(right) - 1]):
+        if int(right) - int(left) > 1 and np.any(
+            value.indices[int(left) + 1:int(right)]
+            <= value.indices[int(left):int(right) - 1]
+        ):
             raise ValueError(f"invalid canonical F03 sparse matrix: {spec.name}")
 
 
@@ -146,7 +149,10 @@ def _check_saved_structure(
     ):
         raise ValueError(f"invalid saved F03 sparse structure: {spec.name}")
     for left, right in zip(indptr, indptr[1:]):
-        if np.any(indices[int(left) + 1:int(right)] <= indices[int(left):int(right) - 1]):
+        if int(right) - int(left) > 1 and np.any(
+            indices[int(left) + 1:int(right)]
+            <= indices[int(left):int(right) - 1]
+        ):
             raise ValueError(f"invalid saved F03 sparse structure: {spec.name}")
 
 

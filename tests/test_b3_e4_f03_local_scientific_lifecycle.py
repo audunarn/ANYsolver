@@ -119,6 +119,38 @@ def test_terminal_cannot_consume_start_from_another_process(plan, tmp_path):
         lifecycle.write_terminal(directory, plan, REGISTRATION, receipt())
 
 
+def test_terminal_accepts_observed_python_child_of_venv_launcher(plan, tmp_path):
+    directory = tmp_path / plan.case_id
+    _mkdir_with_logs(directory)
+    lifecycle.write_start(directory, plan, REGISTRATION, 11)
+    digest = lifecycle.write_terminal(directory, plan, REGISTRATION, receipt())
+    _, observed = lifecycle.read_terminal(directory, plan, REGISTRATION)
+    assert observed == digest
+
+
+def test_terminal_accepts_fast_python_child_recording_launcher_parent(plan, tmp_path):
+    directory = tmp_path / plan.case_id
+    _mkdir_with_logs(directory)
+    lifecycle.write_start(directory, plan, REGISTRATION, 11, parent_pid=10)
+    fast = supervisor.SupervisionReceipt(
+        "completed", 1, 10, 0.01, 1024, (10,), (), None,
+    )
+    digest = lifecycle.write_terminal(directory, plan, REGISTRATION, fast)
+    _, observed = lifecycle.read_terminal(directory, plan, REGISTRATION)
+    assert observed == digest
+
+
+def test_terminal_rejects_unobserved_nonchild_even_if_start_exists(plan, tmp_path):
+    directory = tmp_path / plan.case_id
+    _mkdir_with_logs(directory)
+    lifecycle.write_start(directory, plan, REGISTRATION, 11, parent_pid=12)
+    unrelated = supervisor.SupervisionReceipt(
+        "completed", 1, 10, 0.01, 1024, (10,), (), None,
+    )
+    with pytest.raises(ValueError, match="own"):
+        lifecycle.write_terminal(directory, plan, REGISTRATION, unrelated)
+
+
 def _rewrite(path: Path, change):
     value = json.loads(path.read_text("ascii"))
     change(value)
