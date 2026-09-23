@@ -30,9 +30,15 @@ def _preflight(
 ) -> None:
     if not isinstance(grid, topology.CompiledGrid) or type(budget) is not trace.TraceBindingBudget:
         raise ValueError("validated F03 grid and trace budget required")
-    active = max((len(value) for value in grid.trace_incidence), default=0)
-    input_nnz = len(trace.KEYS) * 3 * active
-    workspace = input_nnz * (8 + 8 + 8) + len(trace.KEYS) * 3 * 8
+    # This is the frozen case-preflight envelope.  It deliberately charges
+    # cached exact traces, their bit allowance, all returned CSR copies,
+    # actions, and the owned state rather than estimating only visible nnz.
+    input_nnz = 88 * grid.free_dofs
+    workspace = (
+        1024 * (input_nnz + 32 * grid.free_dofs)
+        + 2 * budget.max_total_bits
+        + 9 * budget.trace_budget.max_work_bytes
+    )
     if (
         grid.free_dofs > budget.sparse_budget.max_order
         or input_nnz > budget.max_input_nnz

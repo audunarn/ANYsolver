@@ -76,6 +76,26 @@ def test_factory_resource_failure_precedes_trace_extraction(monkeypatch):
         )
 
 
+def test_factory_rejects_workspace_just_below_frozen_envelope_before_trace(monkeypatch):
+    grid = cases.compile_case(CASE)
+    budget = budgets.make_scientific_budgets().trace
+    input_nnz = 88 * grid.free_dofs
+    required = (
+        1024 * (input_nnz + 32 * grid.free_dofs)
+        + 2 * budget.max_total_bits
+        + 9 * budget.trace_budget.max_work_bytes
+    )
+    rejected = replace(budget, max_work_bytes=required - 1)
+    monkeypatch.setattr(
+        factory.assembly, "trace_interval",
+        lambda *args: pytest.fail("trace extraction preceded workspace preflight"),
+    )
+    with pytest.raises(ValueError, match="resource budget"):
+        factory.produce_port_evidence(
+            grid, np.zeros(grid.free_dofs), budget=rejected,
+        )
+
+
 @pytest.mark.parametrize("mutation", ("dtype", "shape", "nonfinite", "strided"))
 def test_factory_rejects_noncanonical_state_before_work(monkeypatch, mutation):
     grid = cases.compile_case(CASE)
