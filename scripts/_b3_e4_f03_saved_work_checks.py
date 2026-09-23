@@ -229,8 +229,13 @@ def verify_work(grid,q,eta,saved,*,budget):
         check(f'virtual/{number}/saved',defect,saved.virtual_defects[channel,index],c.Q_E0,WORK_LIMIT)
         check(f'virtual/{number}/zero',defect,0.,c.Q_E0,WORK_LIMIT)
     if len(keys)!=nv:raise ArithmeticError('virtual inventory incomplete')
+    balance_actions=(*result.force_balance_actual,*result.force_balance_nominal,
+        result.physical_moment_defect,result.predicted_physical_moment_defect,
+        result.represented_moment_identity,result.rigid_yaw_functional,
+        *result.actual_load,*result.nominal_load,*result.load_actual_minus_nominal)
     return dict(status=_status(comparisons,parity),scope=SCOPE,input_sha256=_identity(grid,value,saved),
         comparisons=comparisons,lift_chart_bit_parity=parity,virtual_keys=tuple(keys),
+        balance_actions=balance_actions,
         physical_moment_defect=result.physical_moment_defect,
         predicted_physical_moment_defect=result.predicted_physical_moment_defect,
         load_actual_minus_nominal=result.load_actual_minus_nominal,

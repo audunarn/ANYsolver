@@ -12,6 +12,8 @@ from scripts import _b3_e4_f03_local_primal_assembly as assembly
 from scripts import _b3_e4_f03_local_recovery as rec
 from scripts import _b3_e4_f03_local_support_recovery as support
 from scripts import _b3_e4_f03_local_scientific_adjudication_bindings as adjudication
+from scripts import _b3_e4_f03_local_scientific_balance_adjudication as balance_adjudication
+from scripts import _b3_e4_f03_local_scientific_result_storage as result_storage
 from scripts import _b3_e4_f03_saved_interface_checks as interface
 from scripts import _b3_e4_f03_saved_norm_checks as norm
 from scripts import _b3_e4_f03_saved_recovery_composition as composition
@@ -226,6 +228,62 @@ def test_copied_composition_cannot_forge_receipt_enclosures_or_energy():
     numerical['raw']=raw;components['numerical']=numerical;forged['components']=components
     with pytest.raises(ValueError,match='factory-owned immutable'):
         adjudication.make_bindings(forged,args[0],args[-3],args[-2],args[-1])
+
+
+def test_saved_balance_adjudication_reuses_composed_actions_without_recovery(monkeypatch):
+    args=_case();result=_verify(args)
+    q=tuple(F.from_float(float(value)) for value in args[10])
+    eta=tuple(F.from_float(float(value)) for value in args[11])
+    recovered=rec.recover(args[0],q,eta,RB)
+    supported=support.support_recovery(args[0],recovered,SB)
+    snapshot=result_storage.balance_snapshot(supported,args[-3])
+    monkeypatch.setattr(rec,'recover',lambda *a,**k: pytest.fail('repeated recovery'))
+    monkeypatch.setattr(support,'support_recovery',lambda *a,**k: pytest.fail('repeated support recovery'))
+    checked=balance_adjudication.verify_balance(result,args[-3],snapshot)
+    assert checked.status=='PASSED' and not checked.reasons
+    assert checked.action_sha256s==snapshot.action_sha256s
+    assert not checked.display_values_are_acceptance_evidence
+
+
+def test_saved_balance_adjudication_rejects_stale_actions_and_arrays():
+    args=_case();result=_verify(args)
+    q=tuple(F.from_float(float(value)) for value in args[10])
+    eta=tuple(F.from_float(float(value)) for value in args[11])
+    recovered=rec.recover(args[0],q,eta,RB)
+    supported=support.support_recovery(args[0],recovered,SB)
+    snapshot=result_storage.balance_snapshot(supported,args[-3])
+    stale_actions=result_storage.BalanceSnapshot(
+        snapshot.display_values,('ab'*32,)+snapshot.action_sha256s[1:],
+        snapshot.endpoint_atoms,snapshot.total_bands,snapshot.line_bands,
+    )
+    with pytest.raises(ValueError,match='Action identities'):
+        balance_adjudication.verify_balance(result,args[-3],stale_actions)
+    atoms=snapshot.endpoint_atoms.copy();atoms[0,0]+=1.0
+    stale_arrays=result_storage.BalanceSnapshot(
+        snapshot.display_values,snapshot.action_sha256s,atoms,
+        snapshot.total_bands,snapshot.line_bands,
+    )
+    with pytest.raises(ValueError,match='balance arrays'):
+        balance_adjudication.verify_balance(result,args[-3],stale_arrays)
+
+
+def test_saved_balance_adjudication_result_requires_canonical_action_hashes():
+    invalid=('G'*64,)+('ab'*32,)*(len(result_storage.BALANCE_ACTION_NAMES)-1)
+    with pytest.raises(ValueError,match='invalid F03 balance adjudication'):
+        balance_adjudication.BalanceAdjudication('PASSED',(),invalid)
+
+
+@pytest.mark.parametrize(('changed','expected','reason'),(
+    ({},'PASSED',None),
+    ({'force_actual/1':'HOLD_UNRESOLVED'},'HOLD_UNRESOLVED','unresolved: force_actual/1'),
+    ({'moment_actual':'FAILED','moment_nominal':'HOLD_UNRESOLVED'},'FAILED','failed: moment_actual'),
+))
+def test_balance_comparison_terminal_status_mapping(changed,expected,reason):
+    comparisons={name:{'status':'PASSED'} for name in balance_adjudication.BALANCE_COMPARISONS}
+    for name,status in changed.items(): comparisons[name]={'status':status}
+    status,reasons=balance_adjudication._adjudicate_comparisons(comparisons)
+    assert status==expected
+    assert (not reasons) if reason is None else reason in reasons[0]
 
 
 def test_compiled_grid_identity_binds_execution_and_incidence_maps():
