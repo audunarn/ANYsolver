@@ -23,7 +23,13 @@ def _summary():
             ("interface", "PASSED"), ("work", "PASSED"), ("norm", "PASSED"),
         ),
         tuple((name, True) for name in saved.CROSS_NAMES),
-        tuple((name, index) for index, name in enumerate(saved.DIAGNOSTIC_NAMES)),
+        tuple((name, {
+            "comparisons": 10, "operation_envelope": 100, "integer_bit_envelope": 100,
+            "workspace_envelope_bytes": 100, "owned_snapshot_bytes": 100,
+            "six_block_preflight_upper": 100, "actual_comparisons": 8,
+            "recovery_recomputations": 3, "norm_evaluations": 2,
+            "equilibrium_solves": 0, "factorizations": 0,
+        }[name]) for name in saved.DIAGNOSTIC_NAMES),
     )
 
 
@@ -38,7 +44,8 @@ def _composition_result():
         "component_statuses": dict(value.component_statuses),
         "cross_bindings": dict(value.cross_bindings),
         "diagnostics": dict(value.diagnostics),
-        "components": {"unpersisted": "adjudicator recomputes these"},
+        "components": {name: {"unpersisted": "adjudicator recomputes this"}
+                       for name in saved.COMPONENT_NAMES},
     }
 
 
@@ -82,9 +89,33 @@ def test_composition_rejects_reordered_or_invented_contract_fields():
     value["cross_bindings"] = dict(reversed(tuple(value["cross_bindings"].items())))
     with pytest.raises(ValueError, match="noncanonical"):
         saved.composition_summary(value)
+
+
+@pytest.mark.parametrize("mutation", (
+    lambda value: value["cross_bindings"].__setitem__(saved.CROSS_NAMES[0], False),
+    lambda value: value["component_statuses"].__setitem__("work", "FAILED"),
+    lambda value: value["component_statuses"].__setitem__("norm", "HOLD_UNRESOLVED"),
+    lambda value: value["diagnostics"].__setitem__("factorizations", 1),
+    lambda value: value["diagnostics"].__setitem__("equilibrium_solves", 1),
+    lambda value: value["diagnostics"].__setitem__("recovery_recomputations", 2),
+    lambda value: value["diagnostics"].__setitem__("norm_evaluations", 1),
+))
+def test_composition_rejects_contradictory_pass_and_work_claims(mutation):
+    value = _composition_result()
+    mutation(value)
+    with pytest.raises(ValueError, match="inconsistent"):
+        saved.composition_summary(value)
     value = _composition_result()
     value["extra"] = True
     with pytest.raises(ValueError, match="inventory"):
+        saved.composition_summary(value)
+    value = _composition_result()
+    value["reasons"] = []
+    with pytest.raises(ValueError, match="inventory"):
+        saved.composition_summary(value)
+    value = _composition_result()
+    value["components"] = {"numerical": {}}
+    with pytest.raises(ValueError, match="noncanonical"):
         saved.composition_summary(value)
 
 
@@ -112,7 +143,7 @@ def test_balance_factory_roundtrip_binds_actions_atoms_and_bands(tmp_path):
     path = tmp_path / "balances.npz"
     saved.write_balances(path, value)
     restored = saved.read_balances(path)
-    np.testing.assert_array_equal(restored.values, value.values)
+    np.testing.assert_array_equal(restored.display_values, value.display_values)
     np.testing.assert_array_equal(restored.endpoint_atoms, value.endpoint_atoms)
     np.testing.assert_array_equal(restored.total_bands, value.total_bands)
     np.testing.assert_array_equal(restored.line_bands, value.line_bands)
@@ -127,14 +158,14 @@ def test_balance_factory_roundtrip_binds_actions_atoms_and_bands(tmp_path):
 def test_balance_snapshot_rejects_alias_shape_hash_and_nonfinite_data():
     value = saved.balance_snapshot(_support(), _interface())
     with pytest.raises(ValueError):
-        saved.BalanceSnapshot(value.values[:-1], value.action_sha256s,
+        saved.BalanceSnapshot(value.display_values[:-1], value.action_sha256s,
                               value.endpoint_atoms, value.total_bands, value.line_bands)
     bad = list(value.action_sha256s)
     bad[0] = "0"
     with pytest.raises(ValueError, match="SHA"):
-        saved.BalanceSnapshot(value.values, tuple(bad), value.endpoint_atoms,
+        saved.BalanceSnapshot(value.display_values, tuple(bad), value.endpoint_atoms,
                               value.total_bands, value.line_bands)
-    nonfinite = value.values.copy(); nonfinite[0] = np.nan
+    nonfinite = value.display_values.copy(); nonfinite[0] = np.nan
     with pytest.raises(ValueError, match="balance"):
         saved.BalanceSnapshot(nonfinite, value.action_sha256s, value.endpoint_atoms,
                               value.total_bands, value.line_bands)

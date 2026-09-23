@@ -125,6 +125,34 @@ class CompositionSummary:
         if any(type(value) is not int or value < 0 or value > np.iinfo(np.int64).max
                for _, value in self.diagnostics):
             raise ValueError("invalid F03 composition diagnostic")
+        statuses = dict(self.component_statuses)
+        if (
+            statuses["numerical"] not in ("NUMERICAL_MECHANICAL_CHECKS_PASSED", "HOLD")
+            or any(statuses[name] not in ("PASSED", "FAILED", "HOLD_UNRESOLVED")
+                   for name in ("interface", "work", "norm"))
+        ):
+            raise ValueError("component-specific F03 status required")
+        cross = dict(self.cross_bindings)
+        expected = (
+            "COMPOSITION_FAILED" if (not all(cross.values()) or
+                any(statuses[name] == "FAILED" for name in ("interface", "work", "norm")))
+            else "HOLD_NUMERICAL" if statuses["numerical"] == "HOLD"
+            else "HOLD_UNRESOLVED" if any(
+                statuses[name] == "HOLD_UNRESOLVED" for name in ("interface", "work", "norm")
+            )
+            else "COMPONENT_CHECKS_PASSED"
+        )
+        diagnostics = dict(self.diagnostics)
+        if (
+            self.status != expected
+            or (self.status == "COMPONENT_CHECKS_PASSED") != (not self.reasons)
+            or diagnostics["actual_comparisons"] > diagnostics["comparisons"]
+            or diagnostics["recovery_recomputations"] != 3
+            or diagnostics["norm_evaluations"] != 2
+            or diagnostics["equilibrium_solves"] != 0
+            or diagnostics["factorizations"] != 0
+        ):
+            raise ValueError("inconsistent F03 composition result or work inventory")
 
 
 def composition_summary(value: object) -> CompositionSummary:
@@ -137,14 +165,19 @@ def composition_summary(value: object) -> CompositionSummary:
         "canonical_saved_sha256s", "component_statuses", "cross_bindings",
         "diagnostics", "components",
     }
-    if set(raw) != required or raw["scope"] != "SAVED_RECOVERY_COMPONENT_COMPOSITION_ONLY":
+    if (
+        set(raw) != required
+        or raw["scope"] != "SAVED_RECOVERY_COMPONENT_COMPOSITION_ONLY"
+        or type(raw["reasons"]) is not tuple
+    ):
         raise ValueError("invalid saved F03 composition result inventory")
+    _ordered(raw["components"], COMPONENT_NAMES, "composition component")
     saved = _ordered(raw["canonical_saved_sha256s"], SAVED_HASH_NAMES, "saved hash")
     statuses = _ordered(raw["component_statuses"], COMPONENT_NAMES, "component status")
     cross = _ordered(raw["cross_bindings"], CROSS_NAMES, "cross binding")
     diagnostics = _ordered(raw["diagnostics"], DIAGNOSTIC_NAMES, "composition diagnostic")
     return CompositionSummary(
-        raw["status"], tuple(raw["reasons"]), raw["canonical_snapshot_sha256"],
+        raw["status"], raw["reasons"], raw["canonical_snapshot_sha256"],
         tuple(zip(SAVED_HASH_NAMES, saved)), tuple(zip(COMPONENT_NAMES, statuses)),
         tuple(zip(CROSS_NAMES, cross)), tuple(zip(DIAGNOSTIC_NAMES, diagnostics)),
     )
@@ -213,7 +246,7 @@ def read_composition(path: Path) -> CompositionSummary:
 
 @dataclass(frozen=True, slots=True)
 class BalanceSnapshot:
-    values: np.ndarray
+    display_values: np.ndarray
     action_sha256s: tuple[str, ...]
     endpoint_atoms: np.ndarray
     total_bands: np.ndarray
@@ -221,7 +254,7 @@ class BalanceSnapshot:
 
     def __post_init__(self):
         arrays = (
-            (self.values, (len(BALANCE_ACTION_NAMES),)),
+            (self.display_values, (len(BALANCE_ACTION_NAMES),)),
             (self.endpoint_atoms, (2, 3)),
             (self.total_bands, (8, 3)),
             (self.line_bands, (8, 3)),
@@ -238,7 +271,7 @@ class BalanceSnapshot:
             np.frombuffer(value.tobytes(order="C"), dtype="<f8").reshape(shape)
             for value, shape in arrays
         )
-        for name, value in zip(("values", "endpoint_atoms", "total_bands", "line_bands"), owned):
+        for name, value in zip(("display_values", "endpoint_atoms", "total_bands", "line_bands"), owned):
             object.__setattr__(self, name, value)
 
 
@@ -253,6 +286,9 @@ def balance_snapshot(value: support.SupportResult, saved: interface.SavedInterfa
     )
     if len(actions) != len(BALANCE_ACTION_NAMES):
         raise ArithmeticError("incomplete F03 physical-balance action inventory")
+    # These are review displays only.  The exact Action identities below are
+    # the persisted evidence binding; the solve-free adjudicator reconstructs
+    # and certifies the Actions instead of accepting these rounded numbers.
     values = np.asarray([float(item.decimal_value()) for item in actions], dtype="<f8")
     hashes = tuple(enclosure._identity(item.rational, item.cosine_terms) for item in actions)
     return BalanceSnapshot(
@@ -265,7 +301,7 @@ def balance_snapshot(value: support.SupportResult, saved: interface.SavedInterfa
 
 def balance_specs() -> tuple[storage.ArraySpec, ...]:
     return (
-        storage.ArraySpec("values", (len(BALANCE_ACTION_NAMES),), np.dtype("<f8")),
+        storage.ArraySpec("display_values", (len(BALANCE_ACTION_NAMES),), np.dtype("<f8")),
         storage.ArraySpec("action_hashes", (len(BALANCE_ACTION_NAMES), 32), np.dtype("|u1")),
         storage.ArraySpec("endpoint_atoms", (2, 3), np.dtype("<f8")),
         storage.ArraySpec("total_bands", (8, 3), np.dtype("<f8")),
@@ -277,7 +313,8 @@ def write_balances(path: Path, value: BalanceSnapshot) -> None:
     if type(value) is not BalanceSnapshot:
         raise ValueError("validated F03 physical-balance snapshot required")
     arrays = {
-        "values": value.values, "action_hashes": np.stack([_hash_bytes(v) for v in value.action_sha256s]),
+        "display_values": value.display_values,
+        "action_hashes": np.stack([_hash_bytes(v) for v in value.action_sha256s]),
         "endpoint_atoms": value.endpoint_atoms, "total_bands": value.total_bands,
         "line_bands": value.line_bands,
     }
@@ -287,6 +324,6 @@ def write_balances(path: Path, value: BalanceSnapshot) -> None:
 def read_balances(path: Path) -> BalanceSnapshot:
     arrays = storage.read_group(path, balance_specs(), max_raw_bytes=MAX_GROUP_BYTES)
     return BalanceSnapshot(
-        arrays["values"], tuple(_hash_text(value) for value in arrays["action_hashes"]),
+        arrays["display_values"], tuple(_hash_text(value) for value in arrays["action_hashes"]),
         arrays["endpoint_atoms"], arrays["total_bands"], arrays["line_bands"],
     )
