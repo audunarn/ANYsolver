@@ -140,8 +140,8 @@ def _positivity_counts(
     n = case.physical_dofs
     expected = (
         (value.kbar, sparse.csr_matrix),
-        (value.lower, sparse.csc_matrix),
-        (value.upper, sparse.csc_matrix),
+        (value.lower, sparse.csr_matrix),
+        (value.upper, sparse.csr_matrix),
     ) if type(value) is PositivityEvidence else ()
     if len(expected) != 3 or any(type(item) is not cls or item.shape != (n, n) for item, cls in expected):
         raise ValueError("typed canonical F03 positivity evidence required")
@@ -238,8 +238,8 @@ def positivity_specs(
     n = case.physical_dofs
     sparse_specs = (
         sparse_storage.SparseSpec("kbar", (n, n), counts.kbar, "csr"),
-        sparse_storage.SparseSpec("lower", (n, n), counts.lower, "csc"),
-        sparse_storage.SparseSpec("upper", (n, n), counts.upper, "csc"),
+        sparse_storage.SparseSpec("lower", (n, n), counts.lower, "csr"),
+        sparse_storage.SparseSpec("upper", (n, n), counts.upper, "csr"),
     )
     arrays = (
         storage.ArraySpec("diagonal", (n,), np.dtype("<f8")),

@@ -13,11 +13,7 @@ from scripts import _b3_e4_f03_local_scientific_exact_storage as exact_storage
 from scripts import _b3_e4_f03_local_scientific_storage as storage
 
 
-PREDECESSOR = {
-    "Q1_L1": "Q1_L0",
-    "Q1_L2": "Q1_L1",
-    "Q2_L1": "Q2_L0",
-}
+PREDECESSOR = {target: source for source, target in cases.NESTED_TRANSITIONS}
 
 
 def _case(value: cases.ScientificCase) -> cases.ScientificCase:

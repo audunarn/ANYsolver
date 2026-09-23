@@ -52,7 +52,7 @@ def _scaled():
 
 
 def _positivity():
-    identity = sparse.eye(N, format="csc")
+    identity = sparse.eye(N, format="csr")
     order = np.arange(N, dtype=np.int64)
     return numerical.PositivityEvidence(
         sparse.eye(N, format="csr"), identity, identity.copy(), np.ones(N),
@@ -155,11 +155,14 @@ def test_frozen_producer_settings_and_counts_are_enforced(plan):
         )
 
 
-def test_actual_positivity_candidate_metadata_and_native_hashes_are_preserved():
-    matrix = sparse.diags(np.arange(2.0, 6.0), format="csr")
-    sparse_budget = certificate.SparseBudget(4, 16, 1, 4096)
+def test_actual_positivity_candidate_metadata_and_native_hashes_are_preserved(tmp_path):
+    matrix = sparse.diags(
+        (-np.ones(N - 1), np.full(N, 4.0), -np.ones(N - 1)),
+        (-1, 0, 1), format="csr",
+    )
+    sparse_budget = certificate.SparseBudget(N, 2_000, 1, 16 * 1024**2)
     candidate = factor_candidate.produce(
-        matrix, factor_candidate.FactorBudget(sparse_budget, 32, 4096),
+        matrix, factor_candidate.FactorBudget(sparse_budget, 10_000, 1024**2),
     )
     value = numerical.PositivityEvidence(
         candidate.matrix, candidate.lower, candidate.upper, candidate.diagonal,
@@ -173,6 +176,10 @@ def test_actual_positivity_candidate_metadata_and_native_hashes_are_preserved():
     assert record.matrix_sha256 == candidate.metadata["matrix_sha256"]
     assert record.lower_sha256 == candidate.metadata["lower_sha256"]
     assert record.upper_sha256 == candidate.metadata["upper_sha256"]
+    path = tmp_path / "actual-positivity.npz"
+    counts = numerical.write_positivity(path, value, CASE)
+    restored = numerical.read_positivity(path, CASE, counts)
+    index_storage._verify_positivity_record(restored, record)
     stale = dict(candidate.metadata)
     stale["factor_storage_bytes"] += 1
     with pytest.raises(ValueError, match="storage"):

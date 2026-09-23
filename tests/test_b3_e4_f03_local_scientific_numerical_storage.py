@@ -43,7 +43,7 @@ def _scaled():
 
 
 def _positivity():
-    identity = sparse.eye(N, format="csc")
+    identity = sparse.eye(N, format="csr")
     order = np.arange(N, dtype=np.int64)
     return saved.PositivityEvidence(
         sparse.eye(N, format="csr"), identity, identity.copy(), np.ones(N),
@@ -93,7 +93,7 @@ def test_exact_group_shapes_and_formats():
     positivity, arrays = saved.positivity_specs(
         CASE, saved.PositivityCounts(N, N, N),
     )
-    assert tuple(spec.format for spec in positivity) == ("csr", "csc", "csc")
+    assert tuple(spec.format for spec in positivity) == ("csr", "csr", "csr")
     assert tuple(spec.dtype for spec in arrays) == (
         np.dtype("<f8"), np.dtype("<i8"), np.dtype("<i8"), np.dtype("<i8"),
     )
