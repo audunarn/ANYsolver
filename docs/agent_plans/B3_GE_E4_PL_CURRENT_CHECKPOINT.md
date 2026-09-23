@@ -1,5 +1,20 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — active G0B checkpoint.** The latest F03 evidence was
+committed at `7cc6673e78928f4a57b9e7877e2f17645952492c` on the isolated
+integration branch; main is untouched. The fixed-Q6 X0→X1→X2 h pilot now has saved-state
+binding, actual-case nested Ritz identities, all-eight physical band/atom
+checks, a bounded one-ulp contribution, and an X2 spatial/support-work audit.
+Independent read-only review closed the three findings in the strengthened
+v2/v3 audits. See
+`B3_GE_E4_PL_G0_F03_QP_H_ADDITIONAL_EVIDENCE_20260924.md` and its linked
+raw outputs. This is **unregistered preparatory source-level evidence**;
+F03/G0B remain open and G1 remains barred. The next step is an exact-source
+one-use scientific registration and supervised installed-artifact rerun of
+all X0/X1/X2 cases, after freezing dependencies, budgets, full-route checks,
+and independent pre-execution review. The failed earlier Qp screens and
+resource abort remain preserved.
+
 **23 September 2026 cross-case component checkpoint.** The solve-free
 cross-case arithmetic, retained snapshot reader and five-case pairing adapter
 are committed at `1d4648be2a8754909a2324d53fe772443e85c4f3` and
