@@ -1611,6 +1611,13 @@ resource-contract amendment are in
 limits and results are unchanged. **F03 remains IN_PROGRESS, G0B remains open,
 and G1 remains barred.**
 
+A later clean-source read-only diagnostic of attempt-C `Q1_L0` passed all
+11 saved-case numerical predicates under the original budgets after fixing
+the inverse-block reader contract. Its artifact, independent hash audit and
+strictly limited disposition are in
+`B3_GE_E4_PL_G0_F03_Q1_L0_READONLY_DIAGNOSTIC.md`. The consumed attempt C
+remains `FAILED_EVIDENCE`; this does not close F03 or G0B.
+
 The separate bounded **finite-area distributing port** preflight is
 documented in `B3_GE_E4_PL_G0_F03_FINITE_PAD_PREFLIGHT.md`. It preserves
 the adverse four-point reference, derives a fixed-physical-area
