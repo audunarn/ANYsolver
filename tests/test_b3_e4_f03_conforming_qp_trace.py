@@ -29,7 +29,9 @@ def _physical_pose(trace, station, ux, uy):
     return result/trace.area
 
 
-@pytest.mark.parametrize("degree,expected", [(1, 96), (2, 374), (3, 832)])
+@pytest.mark.parametrize("degree,expected", [
+    (1, 96), (2, 374), (3, 832), (4, 1470), (5, 2288),
+])
 def test_shared_nodes_essential_edges_and_exact_polynomial_work(degree, expected):
     trace = FinitePadQpTrace(degree)
     assert len(trace.free_columns) == expected
@@ -48,7 +50,7 @@ def test_shared_nodes_essential_edges_and_exact_polynomial_work(degree, expected
     assert abs(wrench@pose-q@(matrix.T@wrench)) < 3e-13
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
 def test_rigid_gain_root_rank_and_derivative_plateau(degree):
     trace = FinitePadQpTrace(degree)
     jgeom = sum(dx*dx+dy*dy+2*trace.a**2/3
@@ -66,7 +68,9 @@ def test_rigid_gain_root_rank_and_derivative_plateau(degree):
     singular = np.linalg.svd(np.diag((1., 1., .46, 1., 1., .46))@rows,
         compute_uv=False)
     assert singular[-1] > 1e-4*singular[0]
-    h = 1e-5
+    # Q4/Q5 curvature increases the O(h²) truncation term; the measured
+    # 1e-5, 5e-6, 2.5e-6 plateau supports the smaller high-order step.
+    h = 1e-5 if degree <= 3 else 2.5e-6
     lm = trace.matrices(s-h)
     rm = trace.matrices(s+h)
     assert np.linalg.norm((rm[0]-lm[0])/(2*h)-a1) < 2e-7
@@ -117,7 +121,7 @@ def test_near_duplicate_represented_events_retain_measure_and_sides():
 
 def test_bad_geometry_and_degree():
     with pytest.raises(ValueError, match="degree"):
-        FinitePadQpTrace(4)
+        FinitePadQpTrace(6)
     with pytest.raises(ValueError, match="leaves"):
         FinitePadQpTrace(2, halfwidth=.3)
     with pytest.raises(ValueError, match="station"):

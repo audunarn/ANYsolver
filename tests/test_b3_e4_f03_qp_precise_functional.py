@@ -15,7 +15,7 @@ from scripts._b3_e4_f03_qp_precise_functional import (
 ETA = np.array((1.6e5, -2.2e5, 7.1e4))
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
 def test_precise_conversion_replaces_only_three_unresolved_rows(degree):
     trace = FinitePadQpTrace(degree)
     q = np.random.default_rng(900+degree).normal(size=2*trace.n)*2e-4

@@ -1,6 +1,7 @@
 """Signed cell/edge/jump work checks for the classical Qp reference."""
 
 import numpy as np
+import pytest
 
 from scripts._b3_e4_f03_conforming_qp_trace import FinitePadQpTrace
 from scripts._b3_e4_f03_primal_ritz import E0
@@ -15,8 +16,9 @@ X = (-.5, -.12, .29, .81, 1.5)
 Y = (-.5, -.08, .18, .5)
 
 
-def test_signed_cell_boundary_jump_and_support_work():
-    trace = FinitePadQpTrace(1, x=X, y=Y)
+@pytest.mark.parametrize("p", (1, 4, 5))
+def test_signed_cell_boundary_jump_and_support_work(p):
+    trace = FinitePadQpTrace(p, x=X, y=Y)
     rng = np.random.default_rng(7073)
     q = 2e-5*rng.normal(size=2*trace.n)
     z = 3e-5*rng.normal(size=2*trace.n)

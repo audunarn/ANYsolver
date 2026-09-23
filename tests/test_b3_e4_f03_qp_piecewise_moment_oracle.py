@@ -26,7 +26,7 @@ def _nodes(oracle):
     return np.meshgrid((*x, oracle.x[-1]), (*y, oracle.y[-1]), indexing="ij")
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
 @pytest.mark.parametrize("grid", GRIDS)
 def test_piecewise_random_fields_and_one_sided_events(degree, grid):
     x, y = grid
@@ -64,15 +64,18 @@ def test_piecewise_random_fields_and_one_sided_events(degree, grid):
         actual = tuple(matrix@q for matrix in trace.matrices(station, side=side))
         expected = oracle.evaluate(coeff, station, side=side)
         # Local t,v powers are integrated exactly. The allowances cover the
-        # Q3 Vandermonde solve and subtraction of nearby edge/area moments;
-        # the second derivative has the larger cancellation factor.
+        # Vandermonde solve and subtraction of nearby edge/area moments;
+        # the second derivative has the larger cancellation factor. For Q4/5
+        # the relative guard follows the measured tensor-Vandermonde condition.
+        roundoff = (0. if degree <= 3 else 2*np.finfo(float).eps*
+                    np.linalg.cond(oracle._vandermonde))
         for order, tolerance in enumerate((2e-12, 5e-12, 2e-11)):
             np.testing.assert_allclose(actual[order], expected[order],
-                                       rtol=0, atol=tolerance,
+                                       rtol=roundoff, atol=tolerance,
                                        err_msg=f"p={degree}, s={station}, side={side}, order={order}")
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
 @pytest.mark.parametrize("j", (REPRESENTED_J, 1.07*REPRESENTED_J))
 def test_physical_yaw_work_and_represented_gamma(degree, j):
     trace = FinitePadQpTrace(degree, j=j)
@@ -102,7 +105,7 @@ def test_physical_yaw_work_and_represented_gamma(degree, j):
 
 def test_bounded_geometry_and_input():
     with pytest.raises(ValueError, match="degree"):
-        PiecewisePadMomentOracle(4)
+        PiecewisePadMomentOracle(6)
     oracle = PiecewisePadMomentOracle(3)
     with pytest.raises(ValueError, match="q must"):
         oracle.coefficients(np.zeros(2*oracle.n-1))

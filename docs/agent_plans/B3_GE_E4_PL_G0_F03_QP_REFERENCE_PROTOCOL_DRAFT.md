@@ -25,6 +25,15 @@ Select and freeze a genuinely better-resolved h/p sequence
 under a later version of this draft; retain these exploratory results and
 the earlier failed Ritz evidence. Do not relax the physical criterion.
 
+A subsequent unregistered Q3/Q4/Q5 screen is promising: its full-functional
+adjacent changes are `0.2937464%` and `0.1205903%`. The separate
+[high-order screen](B3_GE_E4_PL_G0_F03_QP_HIGH_ORDER_SCREEN_20260923.md)
+records source tests and the expensive custom-grid spatial check. It has
+not exercised the complete signed-scalar, energy, reaction, band-wrench,
+default-grid spatial, restart or per-case resource inventory. A revised
+protocol may select Q3/Q4/Q5 only after those prerequisites and reviews;
+the Q1/Q2/Q3 case inventory below is retained as the failed draft proposal.
+
 ## Candidate and case inventory to freeze
 
 Use the original flat panel, material constants, beam section, smooth

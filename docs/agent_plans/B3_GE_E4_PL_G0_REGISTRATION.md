@@ -1760,3 +1760,16 @@ registered as a likely passing scientific sequence. A better-resolved
 systematic h/p sequence, whole-route resource screen, frozen runner and
 adjudicator, independent execution review and one-use registration remain
 needed. **F03/G0B remain open; G1 remains barred.**
+
+The subsequent unregistered Q3/Q4/Q5 higher-order screen at the same
+default physical grid gives complete-functional adjacent changes of
+`0.2937464%` and `0.1205903%`. Focused high-order checks passed for
+trace/oracle, signed beam recovery, precise one-ulp conversion, small-grid
+energy/KKT, area load/atom and custom-grid spatial work. The latter
+three-case suite took `1141.81 s` without per-case timing; this is a
+resource concern, not a qualified bound. Exact source/test inventories,
+earlier preparatory failures and remaining work are recorded in
+`B3_GE_E4_PL_G0_F03_QP_HIGH_ORDER_SCREEN_20260923.md`. Other physical
+settling quantities, default-grid spatial route, registered resources,
+independent execution review and one-use authority remain open.
+**F03/G0B remain open; G1 remains barred.**

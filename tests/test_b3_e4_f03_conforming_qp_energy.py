@@ -92,11 +92,11 @@ def test_p1_separately_assembled_q1_matrix_load_and_solve():
     assert result["work_identity_scaled"] < 1e-10
 
 
-@pytest.mark.parametrize("p", (2, 3))
+@pytest.mark.parametrize("p", (2, 3, 4, 5))
 def test_piecewise_random_fields_against_independent_shell_and_dense_beam_oracles(p, monkeypatch):
     trace = FinitePadQpTrace(p, x=(-.5, 0., 1., 1.5), y=(-.5, 0., .5))
     operators = assemble(trace)
-    assert operators.dof_count < 128
+    assert operators.dof_count < 320
     assert operators.shell_stiffness.nnz < operators.dof_count**2
     assert operators.beam_stiffness.nnz < operators.dof_count**2
     assert operators.beam_discrepancy_relative < 1e-10

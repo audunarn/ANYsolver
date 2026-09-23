@@ -41,7 +41,7 @@ def recover_interface(
     """
     if not isinstance(trace, FinitePadQpTrace):
         raise TypeError("a finite-pad Qp trace is required")
-    if (2*trace.n > 896 or len(trace.free_columns) > 832 or
+    if (2*trace.n > 2392 or len(trace.free_columns) > 2288 or
             len(trace.station_intervals()) > 128):
         raise ValueError("outside bounded Qp reference recovery")
     q = np.asarray(q, dtype=float)

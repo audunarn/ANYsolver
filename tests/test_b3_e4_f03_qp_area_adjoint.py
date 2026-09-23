@@ -44,7 +44,7 @@ def _area_rule(trace):
                     yield x, y, wx*wy*(xr-xl)*(yt-yb)/4
 
 
-@pytest.mark.parametrize("p", (1, 2, 3))
+@pytest.mark.parametrize("p", (1, 2, 3, 4, 5))
 def test_dead_load_and_root_atom_have_physical_area_density(p):
     trace = FinitePadQpTrace(p, x=X, y=Y)
     q = np.zeros(2*trace.n)

@@ -303,3 +303,12 @@ solved Q1→Q2 and Q2→Q3 complete-functional distances are `6.279584%`
 and `1.114597%`. They do not meet the draft 1% settling criterion, so
 the Q1/Q2/Q3 gate must be revised before registration. The earlier
 failed Ritz evidence remains untouched. **F03/G0B remain open; G1 barred.**
+
+The later preparatory Q3/Q4/Q5 extension brings the adjacent
+complete-functional changes below 1% (`0.2937464%`, `0.1205903%`),
+without proving the other physical-output or resource predicates. The
+[high-order screen](B3_GE_E4_PL_G0_F03_QP_HIGH_ORDER_SCREEN_20260923.md)
+records the separate source checks and a costly custom-grid spatial suite.
+A revised one-use protocol still requires a frozen complete-route inventory,
+per-case resource measurements, all signed physical settling checks, and
+independent review. **F03/G0B remain open; G1 barred.**

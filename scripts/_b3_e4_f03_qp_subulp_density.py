@@ -230,7 +230,7 @@ def reconstruct_subulp_polynomial(oracle, cell_coefficients, left, right,
     polynomial would then be invalid even though no binary64 point resolves
     the change of host cell.
     """
-    if not (0 <= left < right <= 1 and 1 <= degree <= 5 and precision >= 60):
+    if not (0 <= left < right <= 1 and 1 <= degree <= 7 and precision >= 60):
         raise ValueError("invalid bounded sub-ulp reconstruction request")
     if np.asarray(cell_coefficients).shape != (2, len(oracle.x)-1,
             len(oracle.y)-1, oracle.p+1, oracle.p+1):

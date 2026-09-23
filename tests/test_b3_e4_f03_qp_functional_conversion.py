@@ -35,7 +35,7 @@ def represented_density(functional, interval, fractions):
     return polynomial+np.cos(2*np.pi*s)[:, None]*functional.cosine
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
 @pytest.mark.parametrize("custom", (False, True))
 def test_qp_fit_preserves_intervals_and_validates_held_points(degree, custom):
     trace, q = state(degree, custom)
@@ -70,7 +70,7 @@ def test_qp_fit_preserves_intervals_and_validates_held_points(degree, custom):
     assert np.max(norm.cross_order_discrepancy) <= 1e-10
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
 def test_total_virtual_work_matches_direct_density_and_endpoint_atoms(degree):
     trace, q = state(degree, True)  # all intervals are sampleable
     f = from_qp_recovery(trace, q, ETA).functional

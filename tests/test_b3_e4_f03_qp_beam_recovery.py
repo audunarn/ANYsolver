@@ -8,6 +8,9 @@ import pytest
 from scripts._b3_e4_f03_conforming_qp_trace import FinitePadQpTrace
 from scripts._b3_e4_f03_primal_ritz import E0, F0, SECTION
 from scripts._b3_e4_f03_qp_beam_recovery import recover_interface
+from scripts._b3_e4_f03_qp_functional_conversion import (
+    NORMALIZATION, _section_density,
+)
 from scripts._b3_e4_f03_qp_piecewise_moment_oracle import (
     PiecewisePadMomentOracle, REPRESENTED_J,
 )
@@ -23,6 +26,8 @@ CUSTOM_Y = (-.5, -.31, -.09, .11, .31, .5)
     (3, True, REPRESENTED_J),
     (1, False, REPRESENTED_J),
     (2, False, REPRESENTED_J),
+    (4, False, REPRESENTED_J),
+    (5, False, REPRESENTED_J),
 ])
 def test_signed_virtual_work_with_physical_endpoint_atoms(degree, custom, j):
     x, y = (CUSTOM_X, CUSTOM_Y) if custom else (None, None)
@@ -143,3 +148,21 @@ def test_recovery_rejects_invalid_physical_state():
         recover_interface(trace, q, eta, np.array([float("nan")]))
     with pytest.raises(ValueError, match="side"):
         recover_interface(trace, q, eta, np.array([.5]), sides=("left", "right"))
+
+
+@pytest.mark.parametrize("degree", (4, 5))
+def test_every_default_high_order_crossing_has_direct_one_sided_density(degree):
+    trace = FinitePadQpTrace(degree)
+    oracle = PiecewisePadMomentOracle(degree, x=trace.x, y=trace.y,
+        offsets=trace.offsets, halfwidth=trace.a, j=trace.j)
+    q = np.random.default_rng(732+degree).normal(size=2*trace.n)*2e-4
+    q[np.setdiff1d(np.arange(2*trace.n), trace.free_columns)] = 0.
+    coeff = oracle.coefficients(q)
+    eta = np.array((1.6e5, -2.2e5, 7.1e4))
+    assert len(trace.station_breakpoints()[1:-1]) == 10
+    for station in trace.station_breakpoints()[1:-1]:
+        for side in ("left", "right"):
+            actual = recover_interface(trace, q, eta,
+                np.array((station,)), sides=side)["density"][0]
+            expected = _section_density(oracle, coeff, station, side)
+            assert np.max(np.abs(actual-expected)/NORMALIZATION) < 1e-10
