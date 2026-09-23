@@ -203,9 +203,16 @@ def _numerical_virtual(
     endpoint1 = np.asarray([
         _finite_float(sum(row), "tip test value") for row in rows[-1]
     ])
-    terms[0] += np.asarray(value.interface.atoms, dtype=np.float64)[0] @ endpoint0
-    terms[0] += np.asarray(value.interface.atoms, dtype=np.float64)[1] @ endpoint1
-    terms[3] = np.asarray(value.eta, dtype=np.float64) @ endpoint0
+    atoms = np.asarray([
+        [_finite_float(item, "endpoint atom") for item in row]
+        for row in value.interface.atoms
+    ], dtype=np.float64)
+    eta = np.asarray([
+        _finite_float(item, "support multiplier") for item in value.eta
+    ], dtype=np.float64)
+    terms[0] += atoms[0] @ endpoint0
+    terms[0] += atoms[1] @ endpoint1
+    terms[3] = eta @ endpoint0
     if not np.all(np.isfinite(terms)):
         raise ValueError("nonfinite saved-work virtual observation")
     return terms
