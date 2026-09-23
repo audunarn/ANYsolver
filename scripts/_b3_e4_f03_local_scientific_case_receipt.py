@@ -10,6 +10,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import struct
 
 from scripts import _b3_e4_f03_local_scientific_archive as archive
 from scripts import _b3_e4_f03_local_scientific_cases as cases
@@ -17,6 +18,7 @@ from scripts import _b3_e4_f03_local_scientific_evidence_index as evidence
 from scripts import _b3_e4_f03_local_scientific_lifecycle as lifecycle
 from scripts import _b3_e4_f03_local_scientific_inverse_storage as inverse_storage
 from scripts import _b3_e4_f03_local_scientific_numerical_index as numerical_index
+from scripts import _b3_e4_f03_spatial_contract as spatial
 
 
 SCHEMA = "f03_local_scientific_case_receipt_v1"
@@ -44,13 +46,25 @@ SETTLING_NAMES = (
     "root_reaction_x", "root_reaction_y", "root_reaction_moment",
     "left_edge_force_x", "left_edge_force_y", "left_edge_moment",
     "right_edge_force_x", "right_edge_force_y", "right_edge_moment",
-    "tip_pose_x", "tip_pose_y", "tip_pose_rotation",
+    "tip_pose_x", "tip_pose_y", "tip_pose_scaled_rotation",
     "shell_energy", "beam_energy", "total_energy",
     "root_atom_force_x", "root_atom_force_y", "root_atom_moment",
     "tip_atom_force_x", "tip_atom_force_y", "tip_atom_moment",
     *(f"band_{band}_{component}" for band in range(8)
       for component in ("force_x", "force_y", "moment")),
 )
+_WRENCH_SCALES = (float(spatial.F0), float(spatial.F0),
+                   float(spatial.F0 * spatial.L0))
+_POSE_SCALES = (float(spatial.U0),) * 3
+_ENERGY_SCALES = (float(spatial.E0),) * 3
+SETTLING_SCALES = (
+    *_WRENCH_SCALES, *_WRENCH_SCALES, *_WRENCH_SCALES,
+    *_POSE_SCALES, *_ENERGY_SCALES,
+    *_WRENCH_SCALES, *_WRENCH_SCALES,
+    *(_WRENCH_SCALES * 8),
+)
+if len(SETTLING_SCALES) != len(SETTLING_NAMES):
+    raise AssertionError("F03 settling scale inventory is incomplete")
 
 
 def _digest(value: object) -> bool:
@@ -59,6 +73,18 @@ def _digest(value: object) -> bool:
 
 def _optional_digest(value: object) -> bool:
     return value is None or _digest(value)
+
+
+def _float_identity(first: float | None, second: float | None) -> bool:
+    if first is None or second is None:
+        return first is second
+    return struct.pack(">d", first) == struct.pack(">d", second)
+
+
+def _float_tuple_identity(first: tuple, second: tuple) -> bool:
+    return len(first) == len(second) and all(
+        _float_identity(left, right) for left, right in zip(first, second)
+    )
 
 
 def _reasons(value: object, *, allow_empty: bool) -> tuple[str, ...]:
@@ -115,11 +141,11 @@ class SettlingRecord:
         if any(type(value) is not float or not math.isfinite(value)
                for row in (self.values, self.lower, self.upper, self.scales) for value in row):
             raise ValueError("finite binary64 F03 settling observations required")
-        if any(scale <= 0 for scale in self.scales) or any(
+        if self.scales != SETTLING_SCALES or any(
             low > value or value > high
             for value, low, high in zip(self.values, self.lower, self.upper)
         ):
-            raise ValueError("invalid F03 settling enclosure or scale")
+            raise ValueError("invalid F03 settling enclosure or frozen scale")
         if any(not _digest(value) for value in self.source_sha256s):
             raise ValueError("canonical F03 settling source identities required")
 
@@ -171,6 +197,66 @@ class FunctionalRecord:
                     or type(record[2]) is not str or not record[2]
                 ):
                     raise ValueError("invalid F03 functional failure record")
+
+    @property
+    def numerically_admissible(self) -> bool:
+        numbers = (*self.channels, *self.totals, *self.components)
+        if (
+            any(value is None for value in numbers)
+            or not all(self.channel_flags)
+            or not all(self.total_flags)
+            or any(self.failures)
+        ):
+            return False
+        channels = self.channels
+        totals = self.totals
+        if any(value < 0.0 for value in (*channels, *totals)):
+            return False
+        for order, exact_zero in enumerate(self.exact_zero):
+            total = totals[order]
+            if (exact_zero and total != 0.0) or (not exact_zero and total == 0.0):
+                return False
+        return True
+
+
+@dataclass(frozen=True, slots=True)
+class AdjudicationBindings:
+    """Observations reconstructed by the solve-free adjudicator.
+
+    This object is deliberately external to ``CaseReceipt``.  The receipt may
+    report observations, but it cannot nominate the observations against which
+    it is checked.
+    """
+
+    settling: SettlingRecord
+    functional: FunctionalRecord
+
+    def __post_init__(self):
+        if type(self.settling) is not SettlingRecord or type(self.functional) is not FunctionalRecord:
+            raise ValueError("complete solve-free F03 adjudication bindings required")
+
+
+def _settling_identity(first: SettlingRecord, second: SettlingRecord) -> bool:
+    return (
+        _float_tuple_identity(first.values, second.values)
+        and _float_tuple_identity(first.lower, second.lower)
+        and _float_tuple_identity(first.upper, second.upper)
+        and _float_tuple_identity(first.scales, second.scales)
+        and first.source_sha256s == second.source_sha256s
+    )
+
+
+def _functional_identity(first: FunctionalRecord, second: FunctionalRecord) -> bool:
+    return (
+        first.functional_sha256 == second.functional_sha256
+        and _float_tuple_identity(first.channels, second.channels)
+        and _float_tuple_identity(first.totals, second.totals)
+        and _float_tuple_identity(first.components, second.components)
+        and first.channel_flags == second.channel_flags
+        and first.total_flags == second.total_flags
+        and first.exact_zero == second.exact_zero
+        and first.failures == second.failures
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -246,6 +332,7 @@ def _expected_status(predicates: tuple[PredicateRecord, ...], terminal_reason: s
 
 def validate_receipt(
     value: CaseReceipt, plan: archive.CaseArchivePlan, registration_sha256: str,
+    bindings: AdjudicationBindings | None = None,
 ) -> CaseReceipt:
     if (
         type(value) is not CaseReceipt or type(plan) is not archive.CaseArchivePlan
@@ -276,7 +363,21 @@ def validate_receipt(
         or (value.status == "PASSED_CASE_NUMERICAL_SCREEN") != (not value.reasons)
         or (evidence_complete and (any(item is None for item in identities)
                                    or value.evidence_total_bytes is None))
-        or (complete and (value.settling is None or value.functional is None))
+        or (complete and (
+            type(bindings) is not AdjudicationBindings
+            or type(value.settling) is not SettlingRecord
+            or type(value.functional) is not FunctionalRecord
+            or not _settling_identity(value.settling, bindings.settling)
+            or not _functional_identity(value.functional, bindings.functional)
+        ))
+        or (not complete and bindings is not None)
+        or (not complete and (value.settling is not None or value.functional is not None))
+        or (complete and not value.functional.numerically_admissible
+            and dispositions["composition"] != "FAILED")
+        or (complete and not value.functional.numerically_admissible
+            and not any(value.functional.failures))
+        or (value.status == "PASSED_CASE_NUMERICAL_SCREEN"
+            and not value.functional.numerically_admissible)
         or (value.evidence_total_bytes is not None
             and value.evidence_total_bytes > plan.raw_archive_bytes)
         or (complete and work != {
@@ -300,8 +401,9 @@ def validate_receipt(
 
 def _payload(
     value: CaseReceipt, plan: archive.CaseArchivePlan, registration_sha256: str,
+    bindings: AdjudicationBindings | None = None,
 ) -> bytes:
-    validate_receipt(value, plan, registration_sha256)
+    validate_receipt(value, plan, registration_sha256, bindings)
     document = {
         "schema": value.schema, "case_id": value.case_id,
         "source_commit": value.source_commit,
@@ -346,12 +448,12 @@ def _payload(
 
 def write_receipt(
     directory: Path, value: CaseReceipt, plan: archive.CaseArchivePlan,
-    registration_sha256: str,
+    registration_sha256: str, bindings: AdjudicationBindings | None = None,
 ) -> str:
     directory = Path(directory)
     if not directory.is_dir():
         raise ValueError("existing F03 case directory required")
-    payload = _payload(value, plan, registration_sha256)
+    payload = _payload(value, plan, registration_sha256, bindings)
     path = directory / "case_receipt.json"
     with path.open("xb") as stream:
         stream.write(payload)
@@ -366,6 +468,7 @@ def _tuple_floats(value, count, *, optional=False):
 
 def _decode(
     payload: bytes, plan: archive.CaseArchivePlan, registration_sha256: str,
+    bindings: AdjudicationBindings | None = None,
 ) -> CaseReceipt:
     if type(payload) is not bytes or len(payload) > MAX_BYTES:
         raise ValueError("invalid bounded F03 case receipt payload")
@@ -425,13 +528,14 @@ def _decode(
         raw["terminal_exit_code"], raw["status"], predicates, work, settling, functional,
         tuple(raw["reasons"]),
     )
-    if _payload(receipt, plan, registration_sha256) != payload:
+    if _payload(receipt, plan, registration_sha256, bindings) != payload:
         raise ValueError("noncanonical F03 case receipt encoding")
     return receipt
 
 
 def read_receipt(
     directory: Path, plan: archive.CaseArchivePlan, registration_sha256: str,
+    bindings: AdjudicationBindings | None = None,
 ) -> tuple[CaseReceipt, str]:
     directory = Path(directory)
     path = directory / "case_receipt.json"
@@ -439,7 +543,7 @@ def read_receipt(
         payload = stream.read(MAX_BYTES + 1)
     if len(payload) > MAX_BYTES:
         raise ValueError("F03 case receipt exceeds declared bound")
-    value = _decode(payload, plan, registration_sha256)
+    value = _decode(payload, plan, registration_sha256, bindings)
     terminal, terminal_digest = lifecycle.read_terminal(directory, plan, registration_sha256)
     start_path = directory / "start.json"
     start_digest = (
