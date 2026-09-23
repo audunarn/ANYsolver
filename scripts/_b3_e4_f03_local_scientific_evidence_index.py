@@ -27,8 +27,17 @@ CHUNK_BYTES = 1024 * 1024
 DIGEST = frozenset("0123456789abcdef")
 EXCLUDED = frozenset(("evidence_index.json", "case_receipt.json"))
 INFRASTRUCTURE = frozenset(
-    ("start.json", "terminal.json", "plan.zip", "evidence_index.json", "case_receipt.json")
+    ("start.json", "terminal.json", "plan.zip", "evidence_index.json", "case_receipt.json",
+     "stdout.log", "stderr.log")
 )
+LIFECYCLE_BYTES = 2 * 64 * 1024
+
+
+def _evidence_limit(plan: archive.CaseArchivePlan) -> int:
+    # This reserves every non-indexed file under the complete 512 MiB cap.
+    return (plan.raw_archive_bytes - cases.ARCHIVE_PLAN_BYTES - LIFECYCLE_BYTES
+            - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
+            - 2 * cases.LOG_BYTES_PER_STREAM)
 
 
 def _digest(value: object) -> bool:
@@ -561,7 +570,7 @@ def make_index(
     if not directory.is_dir():
         raise ValueError("F03 evidence directory required")
     names = expected_members(plan)
-    evidence_limit = plan.raw_archive_bytes - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
+    evidence_limit = _evidence_limit(plan)
     with _snapshot(directory, names, evidence_limit) as (identities, streams):
         return _index_from_snapshot(
             plan, registration_sha256, start_sha256, identities, streams,
@@ -603,10 +612,11 @@ def materialized_snapshot(
         raise ValueError("F03 evidence snapshot inventory disagrees with plan")
     retained_names = tuple(name for name, _ in retained_members)
     source_names = names + retained_names
-    maximum = plan.raw_archive_bytes - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
-    infrastructure = frozenset(("plan.zip", "evidence_index.json", "case_receipt.json"))
+    maximum = _evidence_limit(plan)
+    infrastructure = frozenset(("plan.zip", "evidence_index.json", "case_receipt.json",
+                               "stdout.log", "stderr.log"))
     with _snapshot(
-        directory, source_names, maximum + 2 * 64 * 1024,
+        directory, source_names, maximum + LIFECYCLE_BYTES,
         infrastructure=infrastructure,
     ) as (identities, streams):
         evidence_count = len(names)
@@ -654,7 +664,7 @@ def materialized_snapshot(
                 if copied != expected_bytes or digest.hexdigest() != expected_digest:
                     raise ValueError("F03 materialized evidence member disagrees with index")
             with _snapshot(
-                snapshot, source_names, maximum + 2 * 64 * 1024,
+                snapshot, source_names, maximum + LIFECYCLE_BYTES,
                 infrastructure=frozenset(),
             ) as (copied_identities, copied_streams):
                 copied_index = _index_from_snapshot(
@@ -713,7 +723,7 @@ def write_index(
         raise ValueError("exact F03 registration and start identities required")
     directory = Path(directory)
     names = expected_members(plan)
-    evidence_limit = plan.raw_archive_bytes - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
+    evidence_limit = _evidence_limit(plan)
     with _snapshot(directory, names, evidence_limit) as (identities, streams):
         index = _index_from_snapshot(
             plan, registration_sha256, start_sha256, identities, streams,
@@ -762,7 +772,7 @@ def read_index(
     directory = Path(directory)
     path = directory / "evidence_index.json"
     names = expected_members(plan)
-    evidence_limit = plan.raw_archive_bytes - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
+    evidence_limit = _evidence_limit(plan)
     with _open_directory_no_follow(directory):
         tree = _tree(directory, names)
         identity = tree.get("evidence_index.json")

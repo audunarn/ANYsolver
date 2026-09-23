@@ -68,6 +68,9 @@ def process_contract() -> tuple[tuple[str, str], ...]:
         ("child_tree_rss_bytes", str(6 * 1024**3)),
         ("supervisor_poll_seconds", "0.1"),
         ("serial_launch_cutoff_seconds", "7200"),
+        ("stdout_log_bytes_per_case", str(supervisor.LOG_BYTES_PER_STREAM)),
+        ("stderr_log_bytes_per_case", str(supervisor.LOG_BYTES_PER_STREAM)),
+        ("log_drain_shutdown_seconds", str(supervisor.LOG_DRAIN_SECONDS)),
         ("raw_archive_bytes_per_case", str(cases.ARCHIVE_BYTES)),
     )
 
@@ -565,6 +568,7 @@ def _verify_plan_archives(directory: Path, value: Registration) -> None:
     records = cases.preflight_inventory()
     if cases.inventory_sha256(records) != value.inventory_sha256:
         raise ValueError("stale F03 registration preflight inventory")
+    _owned_directory(directory / "cases")
     for bound, record in zip(value.cases, records):
         case_dir = directory / "cases" / bound.case_id
         _owned_directory(case_dir)

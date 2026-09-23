@@ -12,10 +12,12 @@ import math
 import os
 from pathlib import Path
 import subprocess
+from threading import Event, Lock, Thread
 import time
 from typing import Callable, IO, Mapping, Sequence
 
 import psutil
+from scripts import _b3_e4_f03_local_scientific_cases as cases
 
 
 THREADS = (
@@ -25,6 +27,12 @@ THREADS = (
     "NUMEXPR_NUM_THREADS",
     "VECLIB_MAXIMUM_THREADS",
 )
+LOG_BYTES_PER_STREAM = cases.LOG_BYTES_PER_STREAM
+LOG_DRAIN_SECONDS = 5.0
+
+
+class LaunchCutoff(Exception):
+    """The serial deadline passed before Popen was invoked."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +79,7 @@ class SupervisionReceipt:
             "launch_failure",
             "supervisor_failure",
             "orphaned_descendants",
+            "output_limit",
             "cancelled",
         }
         if (
@@ -196,6 +205,8 @@ def supervise(
     process_factory: Callable[[int], object] = psutil.Process,
     monotonic: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
+    launch_deadline: float | None = None,
+    log_byte_limit: int | None = None,
 ) -> SupervisionReceipt:
     """Run one command once and account for its observed process tree."""
     if (
@@ -209,6 +220,14 @@ def supervise(
         or not hasattr(stdout, "write")
         or not hasattr(stderr, "write")
         or type(limits) is not SupervisorLimits
+        or (launch_deadline is not None and (
+            isinstance(launch_deadline, bool)
+            or not isinstance(launch_deadline, (int, float))
+            or not math.isfinite(float(launch_deadline))
+        ))
+        or (log_byte_limit is not None and (
+            type(log_byte_limit) is not int or not 0 < log_byte_limit <= LOG_BYTES_PER_STREAM
+        ))
     ):
         raise ValueError("validated process-tree supervision inputs required")
     begun = monotonic()
@@ -222,16 +241,59 @@ def supervise(
     tracked: dict[int, object] = {}
     terminated: set[int] = set()
     interruption: KeyboardInterrupt | None = None
+    log_overflow = Event()
+    overflowing_streams: set[str] = set()
+    log_errors: list[str] = []
+    drain_threads: list[Thread] = []
+    log_buffers = {"stdout": bytearray(), "stderr": bytearray()}
+    log_lock = Lock()
+    log_stop = Event()
+
+    def drain(pipe, label: str) -> None:
+        remaining = log_byte_limit
+        try:
+            while block := pipe.read(64 * 1024):
+                with log_lock:
+                    if log_stop.is_set():
+                        break
+                    amount = min(len(block), remaining)
+                    if amount:
+                        log_buffers[label].extend(block[:amount])
+                        remaining -= amount
+                if amount != len(block):
+                    overflowing_streams.add(label)
+                    log_overflow.set()
+        except (OSError, ValueError) as exc:
+            log_errors.append(f"{label}: {type(exc).__name__}: {exc}")
+            log_overflow.set()
+        finally:
+            try:
+                pipe.close()
+            except (OSError, ValueError):
+                pass
+
     try:
         flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
+        if launch_deadline is not None and monotonic() >= launch_deadline:
+            raise LaunchCutoff("F03 serial launch cutoff reached before Popen")
         process = popen(
             tuple(command),
             cwd=cwd,
             env=dict(environment),
-            stdout=stdout,
-            stderr=stderr,
+            stdout=subprocess.PIPE if log_byte_limit is not None else stdout,
+            stderr=subprocess.PIPE if log_byte_limit is not None else stderr,
             creationflags=flags,
         )
+        if log_byte_limit is not None:
+            if process.stdout is None or process.stderr is None:
+                raise ValueError("F03 supervised process lacks output pipes")
+            for pipe, label in (
+                (process.stdout, "stdout"),
+                (process.stderr, "stderr"),
+            ):
+                worker = Thread(target=drain, args=(pipe, label), daemon=True)
+                worker.start()
+                drain_threads.append(worker)
         root_pid = int(process.pid)
         if root_pid <= 0:
             raise ValueError("invalid launched process identity")
@@ -240,6 +302,10 @@ def supervise(
             peak = max(peak, _tree_sample(root, tracked))
             elapsed = monotonic() - begun
             code = process.poll()
+            if log_overflow.is_set():
+                reason = "supervisor_failure" if log_errors else "output_limit"
+                failure = "; ".join(log_errors) if log_errors else "F03 child log byte limit exceeded"
+                break
             if peak > limits.rss_bytes:
                 reason = "rss_limit"
                 break
@@ -258,7 +324,7 @@ def supervise(
                     reason = "completed"
                 break
             sleep(float(limits.poll_seconds))
-        if reason in {"rss_limit", "time_limit"}:
+        if reason in {"rss_limit", "time_limit", "output_limit", "supervisor_failure"}:
             _terminate(tuple(tracked.values()), record=terminated)
     except (OSError, psutil.Error, subprocess.SubprocessError) as exc:
         reason = "launch_failure" if process is None else "supervisor_failure"
@@ -342,6 +408,44 @@ def supervise(
                 except (OSError, psutil.Error, subprocess.SubprocessError) as exc:
                     cleanup_error(exc)
                     break
+    # Drainers only touch bounded memory.  A descendant retaining a pipe may
+    # delay EOF, but cannot mutate a log after this receipt is sealed.
+    drain_deadline = time.monotonic() + LOG_DRAIN_SECONDS
+    for worker in drain_threads:
+        while worker.is_alive() and time.monotonic() < drain_deadline:
+            try:
+                worker.join(timeout=0.2)
+            except KeyboardInterrupt as exc:
+                if interruption is None:
+                    interruption = exc
+                    reason = "cancelled"
+                    failure = "KeyboardInterrupt during F03 log drain"
+    if any(worker.is_alive() for worker in drain_threads):
+        if interruption is None:
+            reason = "supervisor_failure"
+        failure = f"{failure}; F03 log drain exceeded shutdown cap" if failure else "F03 log drain exceeded shutdown cap"
+    with log_lock:
+        log_stop.set()
+        captured_stdout = bytes(log_buffers["stdout"])
+        captured_stderr = bytes(log_buffers["stderr"])
+    if log_byte_limit is not None:
+        try:
+            stdout.write(captured_stdout)
+            stderr.write(captured_stderr)
+            stdout.flush()
+            stderr.flush()
+        except (OSError, ValueError) as exc:
+            if interruption is None:
+                reason = "supervisor_failure"
+            detail = f"F03 log write: {type(exc).__name__}: {exc}"
+            failure = f"{failure}; {detail}" if failure else detail
+    if log_errors:
+        reason = "supervisor_failure" if interruption is None else "cancelled"
+        detail = "; ".join(log_errors)
+        failure = f"{failure}; {detail}" if failure else detail
+    elif log_overflow.is_set() and reason == "completed":
+        reason = "output_limit"
+        failure = "F03 child log byte limit exceeded: " + ", ".join(sorted(overflowing_streams))
     elapsed = max(0.0, float(monotonic() - begun))
     receipt = SupervisionReceipt(
         reason,

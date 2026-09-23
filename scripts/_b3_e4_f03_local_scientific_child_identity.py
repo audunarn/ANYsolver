@@ -13,6 +13,7 @@ import platform
 import socket
 import subprocess
 import sys
+import tomllib
 
 import psutil
 import threadpoolctl
@@ -41,6 +42,32 @@ def observed_package(name: str) -> tuple[str, str]:
     return importlib.metadata.version(name), str(Path(spec.origin).resolve())
 
 
+def candidate_anysolver_origin(repository_root: str) -> Path:
+    """The source-backed F03 route must import the registered candidate."""
+    return Path(repository_root).resolve() / "src" / "anysolver" / "__init__.py"
+
+
+def candidate_anysolver_version(repository_root: str) -> str:
+    with (Path(repository_root).resolve() / "pyproject.toml").open("rb") as stream:
+        project = tomllib.load(stream)["project"]
+    version = project["version"]
+    if type(version) is not str or not version:
+        raise ValueError("F03 candidate ANYsolver version is invalid")
+    return version
+
+
+def verify_loaded_sources(repository_root: str) -> None:
+    expected = Path(repository_root).resolve() / "scripts"
+    if Path(__file__).resolve() != expected / Path(__file__).name:
+        raise ValueError("F03 child identity code is outside registered source")
+    for name, module in tuple(sys.modules.items()):
+        if not name.startswith("scripts."):
+            continue
+        location = getattr(module, "__file__", None)
+        if location is not None and not Path(location).resolve().is_relative_to(expected):
+            raise ValueError(f"F03 child loaded module is outside registered source: {name}")
+
+
 def observed_git(repository_root: str) -> tuple[str, bool]:
     def command(*args: str) -> str:
         completed = subprocess.run(
@@ -67,6 +94,7 @@ def verify_child_context(
     value, observed_sha256 = registration.read_registration(
         run_root, registration_sha256,
     )
+    verify_loaded_sources(value.repository_root)
     expected_dir = registration.case_directory(value.run_root, envelope.case_id)
     if (
         observed_sha256 != registration_sha256
@@ -98,6 +126,10 @@ def verify_child_context(
         version, origin = observed_package(package.name)
         if version != package.version or Path(origin).resolve() != Path(package.origin).resolve():
             raise ValueError(f"F03 child package identity mismatch: {package.name}")
+        if (package.name == "ANYsolver"
+                and (Path(origin).resolve() != candidate_anysolver_origin(value.repository_root)
+                     or version != candidate_anysolver_version(value.repository_root))):
+            raise ValueError("F03 child ANYsolver origin/version disagrees with candidate")
     if observed_hardware() != value.hardware:
         raise ValueError("F03 child hardware identity mismatch")
     commit, clean = observed_git(value.repository_root)

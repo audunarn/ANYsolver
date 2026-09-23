@@ -1,9 +1,83 @@
 from pathlib import Path
+import sys
+import time
+from threading import Event
 from types import SimpleNamespace
 
 import pytest
 
 from scripts import _b3_e4_f03_local_scientific_supervisor as supervisor
+
+
+def test_launch_deadline_prevents_popen(tmp_path):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("child launched after cutoff")
+
+    with (tmp_path / "out").open("wb") as out, (tmp_path / "err").open("wb") as err:
+        with pytest.raises(supervisor.LaunchCutoff):
+            supervisor.supervise(
+                (sys.executable, "-c", "pass"), cwd=tmp_path, environment={},
+                stdout=out, stderr=err, popen=forbidden,
+                monotonic=lambda: 2.0, launch_deadline=1.0,
+                log_byte_limit=4096,
+            )
+
+
+def test_real_child_output_cap_is_terminal_failure(tmp_path):
+    with (tmp_path / "out").open("wb") as out, (tmp_path / "err").open("wb") as err:
+        receipt = supervisor.supervise(
+            (sys.executable, "-c", "import sys; sys.stdout.buffer.write(b'x'*100000); sys.stdout.flush()"),
+            cwd=tmp_path, environment=supervisor.frozen_thread_environment(),
+            stdout=out, stderr=err,
+            limits=supervisor.SupervisorLimits(10, 512 * 1024**2),
+            launch_deadline=time.monotonic() + 10, log_byte_limit=4096,
+        )
+    assert receipt.reason == "output_limit"
+    assert (tmp_path / "out").stat().st_size == 4096
+    assert (tmp_path / "err").stat().st_size == 0
+
+
+def test_pipe_handle_left_open_cannot_mutate_logs_after_receipt(tmp_path, monkeypatch):
+    released = Event()
+    first_read = Event()
+
+    class HeldPipe:
+        def __init__(self, prefix=b""):
+            self.prefix = prefix
+
+        def read(self, count):
+            if self.prefix:
+                result = self.prefix
+                self.prefix = b""
+                first_read.set()
+                return result
+            released.wait()
+            return b""
+
+        def close(self):
+            pass
+
+    fake = FakePopen(polls=(0,))
+    fake.stdout = HeldPipe(b"captured prefix")
+    fake.stderr = HeldPipe()
+    poll = fake.poll
+    fake.poll = lambda: (first_read.wait(1.0), poll())[1]
+    root = FakePsutilProcess(10, 100)
+    monkeypatch.setattr(supervisor, "LOG_DRAIN_SECONDS", 0.05)
+    with (tmp_path / "out").open("wb") as out, (tmp_path / "err").open("wb") as err:
+        receipt = supervisor.supervise(
+            (sys.executable, "-c", "pass"), cwd=tmp_path, environment={},
+            stdout=out, stderr=err, popen=fake.launch,
+            process_factory=lambda pid: root,
+            limits=supervisor.SupervisorLimits(10, 1024),
+            log_byte_limit=4096,
+        )
+    assert receipt.reason == "supervisor_failure"
+    assert "log drain exceeded shutdown cap" in receipt.failure
+    assert (tmp_path / "out").read_bytes() == b"captured prefix"
+    released.set()
+    assert (tmp_path / "out").read_bytes() == b"captured prefix"
+    assert (tmp_path / "err").stat().st_size == 0
 
 
 class FakePsutilProcess:

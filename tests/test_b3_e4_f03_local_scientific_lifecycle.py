@@ -23,9 +23,15 @@ def receipt(reason="completed"):
     return supervisor.SupervisionReceipt(reason, 0, 10, 1.5, 1024, (10, 11), (), None)
 
 
+def _mkdir_with_logs(directory: Path) -> None:
+    directory.mkdir()
+    (directory / "stdout.log").write_bytes(b"")
+    (directory / "stderr.log").write_bytes(b"")
+
+
 def test_exclusive_start_and_terminal_roundtrip(plan, tmp_path):
     directory = tmp_path / plan.case_id
-    directory.mkdir()
+    _mkdir_with_logs(directory)
     start_digest = lifecycle.write_start(directory, plan, REGISTRATION, 10)
     start, observed_start = lifecycle.read_start(directory, plan, REGISTRATION)
     assert observed_start == start_digest
@@ -38,6 +44,9 @@ def test_exclusive_start_and_terminal_roundtrip(plan, tmp_path):
         lifecycle.write_start(directory, plan, REGISTRATION, 10)
     with pytest.raises(FileExistsError):
         lifecycle.write_terminal(directory, plan, REGISTRATION, receipt())
+    (directory / "stdout.log").write_bytes(b"late output")
+    with pytest.raises(ValueError, match="changed F03 stdout.log|log identity changed"):
+        lifecycle.read_terminal(directory, plan, REGISTRATION)
     with pytest.raises(ValueError, match="identity"):
         lifecycle.read_start(directory, plan, "bad")
     with pytest.raises(ValueError, match="identity"):
@@ -46,7 +55,7 @@ def test_exclusive_start_and_terminal_roundtrip(plan, tmp_path):
 
 def test_launch_failure_terminal_explicitly_has_no_start(plan, tmp_path):
     directory = tmp_path / plan.case_id
-    directory.mkdir()
+    _mkdir_with_logs(directory)
     failed = supervisor.SupervisionReceipt(
         "launch_failure", None, None, 0.1, 0, (), (), "OSError: launch",
     )
@@ -58,7 +67,7 @@ def test_launch_failure_terminal_explicitly_has_no_start(plan, tmp_path):
 
 def test_prelaunch_cancellation_terminal_has_no_start(plan, tmp_path):
     directory = tmp_path / plan.case_id
-    directory.mkdir()
+    _mkdir_with_logs(directory)
     cancelled = supervisor.SupervisionReceipt(
         "cancelled", None, None, 0.1, 0, (), (), "KeyboardInterrupt",
     )
@@ -82,7 +91,7 @@ def test_prelaunch_receipts_reject_impossible_process_evidence():
 
 def test_live_cancellation_terminal_consumes_start(plan, tmp_path):
     directory = tmp_path / plan.case_id
-    directory.mkdir()
+    _mkdir_with_logs(directory)
     start_digest = lifecycle.write_start(directory, plan, REGISTRATION, 10)
     cancelled = supervisor.SupervisionReceipt(
         "cancelled", -9, 10, 0.1, 100, (10, 11), (10, 11), "KeyboardInterrupt",
@@ -95,7 +104,7 @@ def test_live_cancellation_terminal_consumes_start(plan, tmp_path):
 
 def test_launched_child_without_start_is_preserved_as_incomplete(plan, tmp_path):
     directory = tmp_path / plan.case_id
-    directory.mkdir()
+    _mkdir_with_logs(directory)
     lifecycle.write_terminal(directory, plan, REGISTRATION, receipt("time_limit"))
     terminal, _ = lifecycle.read_terminal(directory, plan, REGISTRATION)
     assert terminal["start_sha256"] is None
@@ -104,7 +113,7 @@ def test_launched_child_without_start_is_preserved_as_incomplete(plan, tmp_path)
 
 def test_terminal_cannot_consume_start_from_another_process(plan, tmp_path):
     directory = tmp_path / plan.case_id
-    directory.mkdir()
+    _mkdir_with_logs(directory)
     lifecycle.write_start(directory, plan, REGISTRATION, 999)
     with pytest.raises(ValueError, match="own"):
         lifecycle.write_terminal(directory, plan, REGISTRATION, receipt())
@@ -120,7 +129,7 @@ def _rewrite(path: Path, change):
 
 def test_stale_extra_and_unconsumed_markers_rejected(plan, tmp_path):
     directory = tmp_path / plan.case_id
-    directory.mkdir()
+    _mkdir_with_logs(directory)
     lifecycle.write_start(directory, plan, REGISTRATION, 10)
     lifecycle.write_terminal(directory, plan, REGISTRATION, receipt())
     _rewrite(directory / "terminal.json", lambda value: value.update(start_sha256="0" * 64))

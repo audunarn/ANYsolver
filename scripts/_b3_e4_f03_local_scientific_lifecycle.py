@@ -8,10 +8,14 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 from pathlib import Path
 import re
+import stat
 
 from scripts import _b3_e4_f03_local_scientific_archive as archive
+from scripts import _b3_e4_f03_local_scientific_cases as cases
+from scripts import _b3_e4_f03_local_scientific_evidence_index as evidence_index
 from scripts import _b3_e4_f03_local_scientific_supervisor as supervisor
 
 
@@ -63,7 +67,37 @@ TERMINAL_KEYS = {
     "schema", "case_id", "source_commit", "registration_sha256", "plan_sha256",
     "start_sha256", "reason", "exit_code", "root_pid", "elapsed_seconds",
     "sampled_peak_tree_rss_bytes", "observed_pids", "terminated_pids", "failure",
+    "stdout_log_bytes", "stdout_log_sha256", "stderr_log_bytes", "stderr_log_sha256",
 }
+
+
+def _log_identity(directory: Path, name: str) -> tuple[int, str]:
+    path = Path(directory) / name
+    info = path.lstat()
+    if (not stat.S_ISREG(info.st_mode) or evidence_index._is_reparse(info)
+            or info.st_nlink != 1 or info.st_size > cases.LOG_BYTES_PER_STREAM):
+        raise ValueError(f"invalid bounded F03 {name} file")
+    digest = hashlib.sha256()
+    with evidence_index._open_no_follow(path) as stream:
+        opened = os.fstat(stream.fileno())
+        if not evidence_index._same_file(opened, evidence_index._FileIdentity(
+            name, info.st_size, info.st_dev, info.st_ino, info.st_mtime_ns, info.st_ctime_ns,
+        )):
+            raise ValueError(f"changed F03 {name} file")
+        count = 0
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            count += len(block)
+            if count > cases.LOG_BYTES_PER_STREAM:
+                raise ValueError(f"F03 {name} exceeds byte cap")
+            digest.update(block)
+        if count != info.st_size or os.fstat(stream.fileno()).st_size != info.st_size:
+            raise ValueError(f"changed F03 {name} file")
+    after = path.lstat()
+    if (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns) != (
+        info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns,
+    ):
+        raise ValueError(f"changed F03 {name} file")
+    return count, digest.hexdigest()
 
 
 def plan_sha256(plan: archive.CaseArchivePlan) -> str:
@@ -152,6 +186,8 @@ def write_terminal(
         # A launched child that did not emit its first marker is preserved as
         # a terminal execution failure; absence is explicit in the receipt.
         start_digest = None
+    stdout_count, stdout_digest = _log_identity(directory, "stdout.log")
+    stderr_count, stderr_digest = _log_identity(directory, "stderr.log")
     value = {
         "schema": TERMINAL_SCHEMA,
         "case_id": plan.case_id,
@@ -167,6 +203,10 @@ def write_terminal(
         "observed_pids": list(receipt.observed_pids),
         "terminated_pids": list(receipt.terminated_pids),
         "failure": receipt.failure,
+        "stdout_log_bytes": stdout_count,
+        "stdout_log_sha256": stdout_digest,
+        "stderr_log_bytes": stderr_count,
+        "stderr_log_sha256": stderr_digest,
     }
     return _write_new(directory / "terminal.json", value)
 
@@ -188,6 +228,12 @@ def read_terminal(
     }
     if any(value[name] != expected[name] for name in expected):
         raise ValueError("stale F03 terminal receipt")
+    for name in ("stdout", "stderr"):
+        count, observed = _log_identity(directory, f"{name}.log")
+        if (value[f"{name}_log_bytes"] != count
+                or type(value[f"{name}_log_sha256"]) is not str
+                or not hmac.compare_digest(value[f"{name}_log_sha256"], observed)):
+            raise ValueError(f"F03 terminal {name} log identity changed")
     try:
         receipt = supervisor.SupervisionReceipt(
             value["reason"], value["exit_code"], value["root_pid"], value["elapsed_seconds"],

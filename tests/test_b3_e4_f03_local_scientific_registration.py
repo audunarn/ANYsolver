@@ -2,6 +2,7 @@
 from dataclasses import replace
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -111,6 +112,21 @@ def test_registration_roundtrip_is_canonical_and_exclusive(tmp_path):
     assert tuple(item.case_id for item in value.cases) == tuple(
         item.case_id for item in cases.CASES
     )
+
+
+def test_registration_reader_rejects_shared_cases_junction(tmp_path):
+    value = _registration(tmp_path)
+    run_root = tmp_path / "registration"
+    digest = registration.write_registration(run_root, value)
+    cases_dir = run_root / "cases"
+    relocated = tmp_path / "relocated-cases"
+    cases_dir.rename(relocated)
+    try:
+        os.symlink(relocated, cases_dir, target_is_directory=True)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"directory symlink creation unavailable: {exc}")
+    with pytest.raises(ValueError, match="owned directory"):
+        registration.read_registration(run_root, digest)
 
 
 def test_registered_limits_match_current_executable_checks():

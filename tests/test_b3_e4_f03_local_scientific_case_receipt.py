@@ -174,6 +174,8 @@ def test_read_rejects_noncanonical_or_extra_json(plan, tmp_path):
 
 def test_read_receipt_closes_actual_launch_failure_lifecycle(plan, tmp_path):
     directory = tmp_path / "failed"; directory.mkdir()
+    (directory / "stdout.log").write_bytes(b"")
+    (directory / "stderr.log").write_bytes(b"")
     terminal_digest = lifecycle.write_terminal(
         directory, plan, DIGEST,
         supervisor.SupervisionReceipt(

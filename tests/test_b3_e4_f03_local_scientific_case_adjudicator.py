@@ -342,6 +342,8 @@ def _failure_case(tmp_path, *, reason="launch_failure", exit_code=None, with_sta
     plan = archive.make_case_plan(records[0], records, SOURCE)
     directory = tmp_path / reason
     directory.mkdir()
+    (directory / "stdout.log").write_bytes(b"")
+    (directory / "stderr.log").write_bytes(b"")
     root_pid = 731 if with_start else None
     if with_start:
         lifecycle.write_start(directory, plan, DIGEST, root_pid)

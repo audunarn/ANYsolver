@@ -23,9 +23,23 @@ def _context(tmp_path, monkeypatch):
     run_root = tmp_path / "run"
     case_dir = run_root / "cases" / "Q1_L0"
     source_root.mkdir()
+    version = identity.observed_package("ANYsolver")[0]
+    (source_root / "pyproject.toml").write_text(
+        f"[project]\nname = 'ANYsolver'\nversion = '{version}'\n", encoding="ascii",
+    )
+    solver_origin = source_root / "src" / "anysolver" / "__init__.py"
+    solver_origin.parent.mkdir(parents=True)
+    solver_origin.write_text("__version__ = '0.4.7'\n", encoding="ascii")
     case_dir.mkdir(parents=True)
     records = cases.preflight_inventory()
     plan = archive.make_case_plan(records[0], records, SOURCE)
+    original_observed_package = identity.observed_package
+
+    def observed_package(name):
+        version, origin = original_observed_package(name)
+        return version, str(solver_origin) if name == "ANYsolver" else origin
+
+    monkeypatch.setattr(identity, "observed_package", observed_package)
     packages = tuple(
         SimpleNamespace(name=name, version=version, origin=origin)
         for name in registration.PACKAGE_NAMES
@@ -50,6 +64,7 @@ def _context(tmp_path, monkeypatch):
         threads=registration.thread_contract(),
     )
     monkeypatch.setattr(identity.registration, "read_registration", lambda *args: (value, DIGEST))
+    monkeypatch.setattr(identity, "verify_loaded_sources", lambda *_: None)
     monkeypatch.setattr(identity.lifecycle, "read_start", lambda *args: ({"pid": os.getpid()}, DIGEST))
     monkeypatch.setattr(identity, "observed_git", lambda *args: (SOURCE, True))
     monkeypatch.setattr(identity.threadpoolctl, "threadpool_info", lambda: [{"num_threads": 1}])
@@ -93,6 +108,21 @@ def test_child_identity_rejects_runtime_package_and_hardware_changes(tmp_path, m
     hardware["logical_cpus"] += 1
     value.hardware = SimpleNamespace(**hardware)
     with pytest.raises(ValueError, match="hardware identity"):
+        identity.verify_child_context(directory, plan, SOURCE, DIGEST)
+
+
+def test_child_rejects_external_anysolver_even_if_registration_matches(tmp_path, monkeypatch):
+    directory, plan, _, value = _context(tmp_path, monkeypatch)
+    external = tmp_path / "external_anysolver.py"
+    external.write_text("external\n", encoding="ascii")
+    package = value.packages[0]
+    value.packages = (SimpleNamespace(name="ANYsolver", version=package.version,
+                                      origin=str(external)), *value.packages[1:])
+    observed = identity.observed_package
+    monkeypatch.setattr(identity, "observed_package",
+                        lambda name: (package.version, str(external))
+                        if name == "ANYsolver" else observed(name))
+    with pytest.raises(ValueError, match="origin/version disagrees"):
         identity.verify_child_context(directory, plan, SOURCE, DIGEST)
 
 

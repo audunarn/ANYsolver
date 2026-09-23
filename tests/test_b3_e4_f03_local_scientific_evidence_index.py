@@ -189,9 +189,46 @@ def test_complete_archive_cap_reserves_index_and_receipt(plan, tmp_path, monkeyp
     evidence.make_index(directory, plan, REGISTRATION, START)
     assert observed["limit"] == (
         plan.raw_archive_bytes
+        - cases.ARCHIVE_PLAN_BYTES
+        - evidence.LIFECYCLE_BYTES
         - evidence.MAX_INDEX_BYTES
         - evidence.MAX_CASE_RECEIPT_BYTES
+        - 2 * cases.LOG_BYTES_PER_STREAM
     )
+
+
+def test_empty_logs_are_admitted_as_coordinator_infrastructure(plan, tmp_path):
+    directory = tmp_path / "logs"
+    _populate(directory, plan)
+    for name in ("stdout.log", "stderr.log"):
+        (directory / name).write_bytes(b"")
+    index, _ = evidence.write_index(directory, plan, REGISTRATION, START)
+    assert all(item.name not in {"stdout.log", "stderr.log"} for item in index.members)
+
+
+def test_complete_cap_counts_both_logs_at_evidence_boundary(plan):
+    names = evidence.expected_members(plan)
+    observed = {}
+    for name in names:
+        size = 1
+        observed[name] = evidence._FileIdentity(name, size, 1, 1, 0, 0)
+    limit = evidence._evidence_limit(plan)
+    first_science = next(name for name in names if not name.endswith(".log"))
+    base = sum(identity.bytes for identity in observed.values())
+    observed[first_science] = evidence._FileIdentity(
+        first_science, 1 + limit - base, 1, 1, 0, 0,
+    )
+    exact = evidence._identities_from_observed(observed, names, limit)
+    assert sum(item.bytes for item in exact) + (
+        cases.ARCHIVE_PLAN_BYTES + evidence.LIFECYCLE_BYTES
+        + evidence.MAX_INDEX_BYTES + evidence.MAX_CASE_RECEIPT_BYTES
+        + 2 * cases.LOG_BYTES_PER_STREAM
+    ) == plan.raw_archive_bytes
+    observed[first_science] = evidence._FileIdentity(
+        first_science, observed[first_science].bytes + 1, 1, 1, 0, 0,
+    )
+    with pytest.raises(ValueError, match="byte limit"):
+        evidence._identities_from_observed(observed, names, limit)
 
 
 def test_index_size_bound_precedes_json_decode(plan, tmp_path, monkeypatch):
