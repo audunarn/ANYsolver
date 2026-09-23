@@ -1,4 +1,8 @@
-"""Bounded synthetic checks for the separate curved-Q4 F06 candidate."""
+"""Bounded synthetic checks for the separate curved-Q4 F06 candidate.
+
+Q4 restoration replays the embedded legacy two-step prefix, then directly
+decodes the rebased and successor snapshots without replaying those events.
+"""
 
 from hashlib import sha256
 import os
@@ -18,6 +22,7 @@ from anysolver.control import CancellationToken, SolveCancelled
 from scripts.probe_b3_ge_e4_pl_g0_f06_q4_owned_rebase_v1 import (
     Q4OwnedRebaseCandidate, SCHEMA,
 )
+from scripts.probe_b3_ge_e4_pl_g0_f06_loaded_rebase_v3 import shell_spatial
 
 
 def _hash(raw):
@@ -60,15 +65,22 @@ def test_q4_owner_rebase_direct_restore_and_changed_successor(loaded, monkeypatc
     assert np.count_nonzero(rebase.state.shell_u.reshape(-1, 6)[:, 3:]) == 0
 
     fresh = Q4OwnedRebaseCandidate()
-    monkeypatch.setattr(fresh.owner, "_restore", lambda *args, **kwargs:
-        pytest.fail("normal Q4 restore replayed the legacy owner"))
+    legacy_restore = fresh.owner._restore
+    replayed_bases = []
+    def validate_legacy_base(raw, expected_sha256, cancellation_token=None):
+        assert raw == original and expected_sha256 == _hash(original)
+        replayed_bases.append(raw)
+        return legacy_restore(raw, expected_sha256, cancellation_token)
+    monkeypatch.setattr(fresh.owner, "_restore", validate_legacy_base)
     restored = fresh.restore(rebase.checkpoint,
         expected_sha256=rebase.checkpoint_sha256)
+    assert len(replayed_bases) == 1
     assert canonical(restored.descriptor()) == canonical(rebase.state.descriptor())
     assert fresh.head_sha256 == rebase.checkpoint_sha256 and fresh.generation == 1
 
     changed = fresh.continue_loaded(rebase.checkpoint,
         expected_sha256=rebase.checkpoint_sha256)
+    assert len(replayed_bases) == 2
     assert changed.status == "ACCEPTED_LOADED_CURSOR_3"
     assert changed.state.cursor == 3 and fresh.generation == 2
     assert fresh.head_sha256 == changed.checkpoint_sha256
@@ -96,12 +108,48 @@ def test_q4_owner_rebase_direct_restore_and_changed_successor(loaded, monkeypatc
     assert np.linalg.norm(old.current_positions-new.current_positions) < 1.e-8
     assert np.linalg.norm(old.rotations-new.rotations) < 1.e-8
     assert np.linalg.norm(control.state.mechanical.positions-direct.mechanical.positions) < 1.e-8
-    _, control_residual, _, _ = source.owner._evaluate(control.state,
+    assert np.linalg.norm(control.state.mechanical.resultants-direct.mechanical.resultants) < 1.e-8
+    control_response, control_residual, _, _ = source.owner._evaluate(control.state,
         control.state.mechanical, control.state.shell_u,
         control.state.multipliers, 3)
-    _, rebased_residual = resumed._anchored_evaluate(restored,
+    rebased_response, rebased_residual = resumed._anchored_evaluate(restored,
         direct.mechanical, direct.shell_u, direct.multipliers, 3)
     assert np.linalg.norm(control_residual-rebased_residual) < 1.e-8
+    assert np.linalg.norm(control_response.constraints-rebased_response.constraints) < 1.e-8
+    _, _, old_work, _ = shell_spatial(a, decode(control.state.shell_origin),
+        old, control.state.shell_u)
+    _, _, new_work, _ = shell_spatial(a, decode(direct.shell_origin),
+        new, direct.shell_u)
+    assert abs(old_work-new_work) < 1.e-8
+
+
+@pytest.mark.parametrize("mutation", ("policy", "definition", "initial", "record"))
+def test_q4_rejects_consistently_rehashed_legacy_base(loaded, mutation):
+    _, prefix = loaded
+    source = Q4OwnedRebaseCandidate()
+    rebase = source.rebase(prefix.checkpoint,
+        expected_sha256=_hash(prefix.checkpoint))
+    event = decode(rebase.checkpoint)
+    base = decode(prefix.checkpoint)
+    if mutation == "policy":
+        base["policy"] = "tampered-policy"
+    elif mutation == "definition":
+        base["definition"]["targets"][0] += .01
+    elif mutation == "initial":
+        base["initial"]["cursor"] = 1
+    else:
+        base["records"][0]["metric"] += .01
+        body = {key: value for key, value in base["records"][0].items()
+            if key != "record_sha256"}
+        base["records"][0]["record_sha256"] = _hash(canonical(body))
+    base_raw = canonical(base)
+    event["base_checkpoint"] = base_raw.decode("ascii")
+    event["base_sha256"] = _hash(base_raw)
+    event_raw = canonical(event)
+    candidate = Q4OwnedRebaseCandidate()
+    with pytest.raises(ValueError, match="checkpoint|binding|replay|disagreement"):
+        candidate.restore(event_raw, expected_sha256=_hash(event_raw))
+    assert candidate.head_sha256 is None and candidate.generation is None
 
 
 def test_q4_owner_rejects_stale_and_foreign_checkpoints(loaded):
@@ -147,6 +195,7 @@ def test_q4_rehashed_anchor_and_successor_are_rejected(loaded):
 
     bad_anchor = decode(rebase.checkpoint)
     bad_anchor["rebased_state"]["anchor"][1][0][0] += .01
+    bad_anchor["anchor"][1][0][0] += .01
     bad_anchor["rebased_state_sha256"] = _hash(canonical(bad_anchor["rebased_state"]))
     bad_anchor_raw = canonical(bad_anchor)
     with pytest.raises(ValueError, match="rebase event"):

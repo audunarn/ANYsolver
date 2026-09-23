@@ -3,6 +3,11 @@
 This G0-only prototype has its own schema and owner identity. It reuses the
 S3 prototype transaction mechanics but applies the Q4 virgin elastic history
 policy; no scientific registration or product authority is implied.
+
+Restoration replays and validates the embedded two-step legacy prefix through
+its ordinary owner. Only the rebased and successor snapshots are restored
+directly. A replay-free overall restore claim requires separately trusted
+accepted-base provenance and is outside this candidate.
 """
 
 from __future__ import annotations
@@ -107,6 +112,14 @@ class Q4OwnedRebaseCandidate(OwnedRebasePrototype):
         base_raw = value["base_checkpoint"].encode("ascii")
         if value["base_state_sha256"] != _hash(canonical(value["base_state"])):
             raise ValueError("F06 captured base state hash mismatch")
+        # The embedded base hash can itself be consistently rewritten. Full
+        # legacy acceptance checks bind policy, definition, genesis, and both
+        # issued records before the Q4 snapshots are decoded directly.
+        accepted, records = self.owner._restore(base_raw, value["base_sha256"],
+            cancellation_token)
+        if (accepted.cursor != 2 or len(records) != 2 or
+                canonical(accepted.descriptor()) != canonical(value["base_state"])):
+            raise ValueError("F06 Q4 embedded legacy base acceptance mismatch")
         base = self._captured_base(base_raw, value["base_sha256"], value["base_state"])
         state = self._snapshot_state(value["rebased_state"])
         if (canonical(value["anchor"]) != canonical(state.anchor) or
