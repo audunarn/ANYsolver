@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import stat
+import tempfile
 
 from scripts import _b3_e4_f03_local_scientific_archive as archive
 from scripts import _b3_e4_f03_local_scientific_cases as cases
@@ -565,6 +566,68 @@ def make_index(
         return _index_from_snapshot(
             plan, registration_sha256, start_sha256, identities, streams,
         )
+
+
+@contextmanager
+def materialized_snapshot(
+    directory: Path,
+    plan: archive.CaseArchivePlan,
+    index: EvidenceIndex,
+):
+    """Yield a private byte-exact snapshot while retaining source handles.
+
+    Path-based semantic readers must not reopen mutable archive paths after an
+    index check.  This context verifies and retains the indexed source handles,
+    copies those exact bytes into an exclusive sibling directory, and verifies
+    the private copy again after replay.  The source inventory is held open for
+    the complete context, so a receipt can only be built from the indexed bytes.
+    """
+    directory = Path(directory)
+    if type(plan) is not archive.CaseArchivePlan or type(index) is not EvidenceIndex:
+        raise ValueError("validated F03 plan and evidence index required")
+    names = expected_members(plan)
+    if tuple(item.name for item in index.members) != names:
+        raise ValueError("F03 evidence snapshot inventory disagrees with plan")
+    maximum = plan.raw_archive_bytes - MAX_INDEX_BYTES - MAX_CASE_RECEIPT_BYTES
+    with _snapshot(directory, names, maximum) as (identities, streams):
+        observed = _index_from_snapshot(
+            plan, index.registration_sha256, index.start_sha256,
+            identities, streams,
+        )
+        if observed != index:
+            raise ValueError("F03 retained evidence snapshot disagrees with index")
+        with tempfile.TemporaryDirectory(
+            prefix="f03-adjudication-snapshot-", dir=directory.parent,
+        ) as temporary:
+            snapshot = Path(temporary)
+            for member, identity, stream in zip(index.members, identities, streams):
+                target = _path(snapshot, member.name)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                stream.seek(0)
+                digest = hashlib.sha256()
+                copied = 0
+                with target.open("xb") as output:
+                    while copied < identity.bytes:
+                        block = stream.read(min(CHUNK_BYTES, identity.bytes - copied))
+                        if not block:
+                            raise ValueError("truncated F03 retained evidence member")
+                        output.write(block)
+                        digest.update(block)
+                        copied += len(block)
+                    if stream.read(1):
+                        raise ValueError("F03 retained evidence member grew while copying")
+                if copied != member.bytes or digest.hexdigest() != member.sha256:
+                    raise ValueError("F03 materialized evidence member disagrees with index")
+            with _snapshot(
+                snapshot, names, maximum, infrastructure=frozenset(),
+            ) as (copied_identities, copied_streams):
+                copied_index = _index_from_snapshot(
+                    plan, index.registration_sha256, index.start_sha256,
+                    copied_identities, copied_streams,
+                )
+                if copied_index != index:
+                    raise ValueError("F03 materialized evidence snapshot disagrees with index")
+                yield snapshot
 
 
 def _payload(index: EvidenceIndex) -> bytes:

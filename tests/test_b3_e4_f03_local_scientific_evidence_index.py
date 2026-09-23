@@ -40,6 +40,25 @@ def test_index_roundtrip_binds_exact_order_plan_start_and_member_bytes(plan, tmp
         evidence.write_index(directory, plan, REGISTRATION, START)
 
 
+def test_materialized_snapshot_retains_the_exact_indexed_member_bytes(plan, tmp_path):
+    directory = tmp_path / "materialized"
+    _populate(directory, plan)
+    written, _ = evidence.write_index(directory, plan, REGISTRATION, START)
+    with evidence.materialized_snapshot(directory, plan, written) as snapshot:
+        assert snapshot.parent == directory.parent
+        assert snapshot != directory
+        for member in written.members:
+            source = directory.joinpath(*Path(member.name).parts)
+            retained = snapshot.joinpath(*Path(member.name).parts)
+            assert retained.read_bytes() == source.read_bytes()
+        # Retained read handles deny mutation on Windows and the context also
+        # verifies every member identity on normal exit.
+        first = snapshot.joinpath(*Path(written.members[0].name).parts)
+        if first.drive:
+            with pytest.raises(PermissionError):
+                first.write_bytes(b"changed")
+
+
 def test_missing_changed_and_stale_identity_rejected(plan, tmp_path):
     missing = tmp_path / "missing"
     _populate(missing, plan)

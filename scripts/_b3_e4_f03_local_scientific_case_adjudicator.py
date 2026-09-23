@@ -188,109 +188,120 @@ def adjudicate_case(
     evidence, evidence_sha256 = evidence_index.read_index(
         directory, plan, registration_sha256, start_sha256,
     )
-    indexed, numerical_sha256 = numerical_index.read_index(
-        directory / "numerical_index.json", plan,
-    )
-    saved_index, saved = numerical_index.read_saved(directory, plan)
-    if saved_index != indexed:
-        raise ValueError("F03 saved numerical evidence changed after index verification")
-    _, inverse_sha256 = inverse_storage.read_index(directory, plan)
-    # The nested/cross-family transfer evidence is part of every case archive;
-    # it is structurally validated here and consumed by later inventory gates.
-    prolongation_storage.read(directory, case)
-    saved_interface = saved_storage.read_interface(directory / "saved_interface.npz", case)
-    saved_work = saved_storage.read_work(directory / "saved_work.npz", case)
-    saved_norm = saved_storage.read_norm(directory / "saved_norm.npz")
-    saved_summary = result_storage.read_composition(directory / "saved_composition.npz")
-    saved_balances = result_storage.read_balances(directory / "balances.npz")
-
-    bound = replay_binding.verify_numerical_binding(indexed.positivity_producer, saved)
-    primary, alternate, scaled, proof, ports = (
-        saved.operator_primary, saved.operator_alternate, saved.scaled,
-        saved.positivity, saved.port_evidence,
-    )
-
-    def inverse_blocks():
-        for block in plan.inverse_blocks:
-            yield inverse_storage.read_block(directory, plan, block.start)
-
-    integrated = integration.verify_integration(
-        scaled.h, scaled.h_alternate, scaled.b, scaled.b_alternate, scaled.z,
-        inverse_blocks(), case.physical_dofs, budget=budgets.integration,
-    )
-    positive = None
-    if bound.positivity_candidate_status == "CANDIDATE_CREATED":
-        positive = positivity.certify_positive(
-            proof.kbar, proof.lower, proof.diagonal,
-            tuple(int(value) for value in proof.inverse_gather),
-            budget=budgets.positivity,
+    with evidence_index.materialized_snapshot(
+        directory, plan, evidence,
+    ) as snapshot:
+        indexed, numerical_sha256 = numerical_index.read_index(
+            snapshot / "numerical_index.json", plan,
         )
-    state = state_binding.verify_binding(
-        primary.shell, primary.beam, primary.root, primary.load,
-        scaled.d, scaled.h, scaled.b, scaled.q, scaled.eta, scaled.z,
-        h_z=scaled.h_z, budget=budgets.binding,
-    )
-    ranked = rank.verify_root_rank(
-        primary.root, ports.free_slope, scaled.d, budget=budgets.rank,
-    )
-    traced = trace.verify_trace_binding(
-        grid, scaled.q, scaled.d, ports.samples, ports.root, ports.tip,
-        ports.free_slope, budget=budgets.trace,
-    )
-    equilibrated = equilibrium.verify_equilibrium(
-        primary.shell, primary.beam, alternate.shell, alternate.beam,
-        primary.root, primary.load, scaled.d, scaled.h, scaled.b,
-        scaled.q, scaled.eta, scaled.z, scaled.h_z,
-        budget=budgets.equilibrium,
-    )
-    composed = composition.verify_composition(
-        grid, primary.shell, primary.beam, alternate.shell, alternate.beam,
-        primary.root, primary.load, scaled.d, scaled.h, scaled.b,
-        scaled.q, scaled.eta, scaled.z, scaled.h_z,
-        saved_interface, saved_work, saved_norm, budget=budgets.composition,
-    )
-    if result_storage.composition_summary(composed) != saved_summary:
-        raise ValueError("F03 saved composition summary disagrees with replay")
-    balanced = balance.verify_balance(composed, saved_interface, saved_balances)
-    bindings = binding_records.make_bindings(
-        composed, grid, saved_interface, saved_work, saved_norm,
-    )
+        saved_index, saved = numerical_index.read_saved(snapshot, plan)
+        if saved_index != indexed:
+            raise ValueError("F03 saved numerical evidence changed after index verification")
+        inverse_index, inverse_sha256 = inverse_storage.read_index(snapshot, plan)
+        # The nested/cross-family transfer evidence is part of every case archive;
+        # it is structurally validated here and consumed by later inventory gates.
+        prolongation_storage.read(snapshot, case)
+        saved_interface = saved_storage.read_interface(
+            snapshot / "saved_interface.npz", case,
+        )
+        saved_work = saved_storage.read_work(snapshot / "saved_work.npz", case)
+        saved_norm = saved_storage.read_norm(snapshot / "saved_norm.npz")
+        saved_summary = result_storage.read_composition(
+            snapshot / "saved_composition.npz",
+        )
+        saved_balances = result_storage.read_balances(snapshot / "balances.npz")
 
-    # Re-open the complete evidence snapshot after every semantic read and
-    # require the same canonical index and digest before writing a receipt.
-    final_evidence, final_evidence_sha256 = evidence_index.read_index(
-        directory, plan, registration_sha256, start_sha256,
-    )
-    if final_evidence != evidence or final_evidence_sha256 != evidence_sha256:
-        raise ValueError("F03 evidence changed during solve-free adjudication")
+        bound = replay_binding.verify_numerical_binding(
+            indexed.positivity_producer, saved,
+        )
+        primary, alternate, scaled, proof, ports = (
+            saved.operator_primary, saved.operator_alternate, saved.scaled,
+            saved.positivity, saved.port_evidence,
+        )
 
-    predicates = (
-        _record("evidence", "PASSED"),
-        _record("execution", "PASSED"),
-        _condition_record(integrated["primary_certificate"]),
-        _positivity_record(bound, positive),
-        _status_record("state_scaling", state, "BINDING_PASSED", "FAILED"),
-        _rank_record(ranked),
-        _status_record("trace", traced, "TRACE_BINDING_PASSED", "FAILED"),
-        _status_record(
-            "equilibrium_energy", equilibrated,
-            "NUMERICAL_MECHANICAL_CHECKS_PASSED", "HOLD",
-        ),
-        _status_record(
-            "integration", integrated,
-            "NUMERICAL_PERTURBATION_PASSED", "HOLD",
-        ),
-        _composition_record(composed),
-        _balance_record(balanced),
-    )
-    value = receipt.CaseReceipt(
-        receipt.SCHEMA, plan.case_id, plan.source_commit, registration_sha256,
-        lifecycle.plan_sha256(plan), start_sha256, terminal_sha256,
-        evidence_sha256, numerical_sha256, inverse_sha256,
-        evidence.total_bytes, terminal["reason"], terminal["exit_code"],
-        _case_status(predicates), predicates, _work(plan),
-        bindings.settling, bindings.functional, _case_reasons(predicates),
-    )
+        def inverse_blocks():
+            for block, indexed_block in zip(plan.inverse_blocks, inverse_index.blocks):
+                if block.start != indexed_block.start:
+                    raise ValueError("F03 inverse index order disagrees with plan")
+                yield inverse_storage.read_block(snapshot, plan, block.start)
+
+        integrated = integration.verify_integration(
+            scaled.h, scaled.h_alternate, scaled.b, scaled.b_alternate, scaled.z,
+            inverse_blocks(), case.physical_dofs, budget=budgets.integration,
+        )
+        positive = None
+        if bound.positivity_candidate_status == "CANDIDATE_CREATED":
+            positive = positivity.certify_positive(
+                proof.kbar, proof.lower, proof.diagonal,
+                tuple(int(value) for value in proof.inverse_gather),
+                budget=budgets.positivity,
+            )
+        state = state_binding.verify_binding(
+            primary.shell, primary.beam, primary.root, primary.load,
+            scaled.d, scaled.h, scaled.b, scaled.q, scaled.eta, scaled.z,
+            h_z=scaled.h_z, budget=budgets.binding,
+        )
+        ranked = rank.verify_root_rank(
+            primary.root, ports.free_slope, scaled.d, budget=budgets.rank,
+        )
+        traced = trace.verify_trace_binding(
+            grid, scaled.q, scaled.d, ports.samples, ports.root, ports.tip,
+            ports.free_slope, budget=budgets.trace,
+        )
+        equilibrated = equilibrium.verify_equilibrium(
+            primary.shell, primary.beam, alternate.shell, alternate.beam,
+            primary.root, primary.load, scaled.d, scaled.h, scaled.b,
+            scaled.q, scaled.eta, scaled.z, scaled.h_z,
+            budget=budgets.equilibrium,
+        )
+        composed = composition.verify_composition(
+            grid, primary.shell, primary.beam, alternate.shell, alternate.beam,
+            primary.root, primary.load, scaled.d, scaled.h, scaled.b,
+            scaled.q, scaled.eta, scaled.z, scaled.h_z,
+            saved_interface, saved_work, saved_norm, budget=budgets.composition,
+        )
+        if result_storage.composition_summary(composed) != saved_summary:
+            raise ValueError("F03 saved composition summary disagrees with replay")
+        balanced = balance.verify_balance(composed, saved_interface, saved_balances)
+        bindings = binding_records.make_bindings(
+            composed, grid, saved_interface, saved_work, saved_norm,
+        )
+
+        # Re-open the complete source evidence while the retained handles are
+        # still live and require the same canonical identity before receipt.
+        final_evidence, final_evidence_sha256 = evidence_index.read_index(
+            directory, plan, registration_sha256, start_sha256,
+        )
+        if final_evidence != evidence or final_evidence_sha256 != evidence_sha256:
+            raise ValueError("F03 evidence changed during solve-free adjudication")
+
+        predicates = (
+            _record("evidence", "PASSED"),
+            _record("execution", "PASSED"),
+            _condition_record(integrated["primary_certificate"]),
+            _positivity_record(bound, positive),
+            _status_record("state_scaling", state, "BINDING_PASSED", "FAILED"),
+            _rank_record(ranked),
+            _status_record("trace", traced, "TRACE_BINDING_PASSED", "FAILED"),
+            _status_record(
+                "equilibrium_energy", equilibrated,
+                "NUMERICAL_MECHANICAL_CHECKS_PASSED", "HOLD",
+            ),
+            _status_record(
+                "integration", integrated,
+                "NUMERICAL_PERTURBATION_PASSED", "HOLD",
+            ),
+            _composition_record(composed),
+            _balance_record(balanced),
+        )
+        value = receipt.CaseReceipt(
+            receipt.SCHEMA, plan.case_id, plan.source_commit, registration_sha256,
+            lifecycle.plan_sha256(plan), start_sha256, terminal_sha256,
+            evidence_sha256, numerical_sha256, inverse_sha256,
+            evidence.total_bytes, terminal["reason"], terminal["exit_code"],
+            _case_status(predicates), predicates, _work(plan),
+            bindings.settling, bindings.functional, _case_reasons(predicates),
+        )
     digest = receipt.write_receipt(
         directory, value, plan, registration_sha256, bindings,
     )

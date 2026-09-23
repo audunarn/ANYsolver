@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from types import SimpleNamespace
 
 import numpy as np
@@ -61,6 +62,8 @@ def _install_complete_archive_mocks(monkeypatch, tmp_path, *, mutate_final=False
     plan = archive.make_case_plan(record, records, SOURCE)
     case_dir = tmp_path / "case"
     case_dir.mkdir()
+    snapshot_dir = tmp_path / "retained-snapshot"
+    snapshot_dir.mkdir()
     grid = object()
     saved_interface = object()
     saved_work = object()
@@ -102,9 +105,20 @@ def _install_complete_archive_mocks(monkeypatch, tmp_path, *, mutate_final=False
     )
     evidence_calls = iter(((observed, DIGEST), (final, DIGEST)))
     monkeypatch.setattr(adjudicator.evidence_index, "read_index", lambda *args: next(evidence_calls))
+    @contextmanager
+    def retained(*args):
+        events.append("snapshot_enter")
+        yield snapshot_dir
+        events.append("snapshot_exit")
+    monkeypatch.setattr(adjudicator.evidence_index, "materialized_snapshot", retained)
     monkeypatch.setattr(adjudicator.numerical_index, "read_index", lambda *args: (numerical, DIGEST))
     monkeypatch.setattr(adjudicator.numerical_index, "read_saved", lambda *args: (numerical, saved))
-    monkeypatch.setattr(adjudicator.inverse_storage, "read_index", lambda *args: (object(), DIGEST))
+    inverse_index = SimpleNamespace(
+        blocks=tuple(SimpleNamespace(start=block.start) for block in plan.inverse_blocks),
+    )
+    monkeypatch.setattr(
+        adjudicator.inverse_storage, "read_index", lambda *args: (inverse_index, DIGEST),
+    )
     monkeypatch.setattr(adjudicator.prolongation_storage, "read", lambda *args: None)
     monkeypatch.setattr(adjudicator.saved_storage, "read_interface", lambda *args: saved_interface)
     monkeypatch.setattr(adjudicator.saved_storage, "read_work", lambda *args: saved_work)
@@ -118,6 +132,7 @@ def _install_complete_archive_mocks(monkeypatch, tmp_path, *, mutate_final=False
 
     starts = []
     def read_block(directory, value, start):
+        assert directory == snapshot_dir
         starts.append(start)
         block = next(item for item in value.inverse_blocks if item.start == start)
         return np.zeros((value.kkt_order, block.columns))
@@ -185,7 +200,7 @@ def test_complete_saved_only_route_consumes_inverse_stream_once_and_writes_exclu
     )
     assert digest == DIGEST
     assert starts == [block.start for block in plan.inverse_blocks]
-    assert events == ["integration", "positivity"]
+    assert events == ["snapshot_enter", "integration", "positivity", "snapshot_exit"]
     assert len(written) == 1
     assert tuple(item.name for item in value.predicates) == receipt.PREDICATE_NAMES
     assert all(item.disposition == "PASSED" for item in value.predicates)
