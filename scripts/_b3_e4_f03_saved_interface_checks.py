@@ -126,6 +126,14 @@ def _hash_saved(saved):
     return digest.hexdigest()
 
 
+def saved_identity(saved):
+    """Return the canonical identity of one owned saved-interface record."""
+    if type(saved) is not SavedInterface:
+        raise ValueError('validated saved interface required')
+    owned=SavedInterface(**{name:getattr(saved,name) for name in saved.__dataclass_fields__})
+    return _hash_saved(owned)
+
+
 def _hash_state(grid,q,eta):
     digest=hashlib.sha256(b'F03_INTERFACE_STATE_GRID_V1\0')
     digest.update(int(grid.p).to_bytes(1,'little'))

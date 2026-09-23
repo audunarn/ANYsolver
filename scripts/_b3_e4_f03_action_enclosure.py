@@ -160,6 +160,14 @@ def enclose(action,*,budget):
                     'quadrature_evaluations':0,'equilibrium_solves':0}}
 
 
+def action_identity(action):
+    """Return the canonical identity of one validated represented Action."""
+    if type(action) is not recovery.Action:
+        raise ValueError('validated exact Action required')
+    owned=recovery.Action(action.rational,action.cosine_terms)
+    return _identity(owned.rational,owned.cosine_terms)
+
+
 def _scalar(value,name):
     if type(value) is F:return recovery._rational(value)
     if type(value) in (float,np.float64) and math.isfinite(value):return F.from_float(float(value))

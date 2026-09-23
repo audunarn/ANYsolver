@@ -216,6 +216,8 @@ class FunctionalRecord:
             total = totals[order]
             if (exact_zero and total != 0.0) or (not exact_zero and total == 0.0):
                 return False
+            if not _float_identity(math.fsum(channels[3 * order:3 * order + 3]), total):
+                return False
         return True
 
 

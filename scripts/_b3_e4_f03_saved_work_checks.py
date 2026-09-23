@@ -141,6 +141,14 @@ def _identity(grid,value,saved):
     return digest.hexdigest()
 
 
+def input_identity(grid,value,saved):
+    """Bind one compiled grid/state to an owned saved-work record."""
+    if (type(grid) is not topology.CompiledGrid or type(value) is not rec.Recovery
+            or type(saved) is not SavedWork):
+        raise ValueError('compiled grid, Recovery and SavedWork required')
+    return _identity(grid,value,saved)
+
+
 def verify_work(grid,q,eta,saved,*,budget):
     """Recompute from one owned state; validate every saved work field and gate."""
     if (type(grid) is not topology.CompiledGrid or type(saved) is not SavedWork or

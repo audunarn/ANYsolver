@@ -111,6 +111,13 @@ def test_owned_action_input_and_binary64_saved_value():
     assert bound.compare_saved(action,value,1.,1e-12,budget=BUDGET)['status']=='PASSED'
 
 
+def test_public_action_identity_matches_enclosure_without_evaluation():
+    action=recovery.Action(F(7,11),((F(0),F(1),(F(1),F(-2))),))
+    assert bound.action_identity(action)==bound.enclose(action,budget=BUDGET)['input_sha256']
+    with pytest.raises(ValueError,match='Action'):
+        bound.action_identity(F(7,11))
+
+
 @pytest.mark.parametrize('change',[
     {'max_fraction_bits':1},{'max_total_bits':1},{'max_operations':1},
     {'max_work_bytes':1},{'max_intervals':1}])

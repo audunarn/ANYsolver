@@ -11,6 +11,7 @@ from scripts import _b3_e4_f03_local_grid as grid
 from scripts import _b3_e4_f03_local_primal_assembly as assembly
 from scripts import _b3_e4_f03_local_recovery as rec
 from scripts import _b3_e4_f03_local_support_recovery as support
+from scripts import _b3_e4_f03_local_scientific_adjudication_bindings as adjudication
 from scripts import _b3_e4_f03_saved_interface_checks as interface
 from scripts import _b3_e4_f03_saved_norm_checks as norm
 from scripts import _b3_e4_f03_saved_recovery_composition as composition
@@ -148,6 +149,67 @@ def test_complete_composition_passes_and_reports_fixed_work_counts(monkeypatch):
     assert result['diagnostics']['actual_comparisons']<=result['diagnostics']['comparisons']
     assert result['canonical_saved_sha256s']['compiled_grid']==composition._hash_grid(args[0])
     with pytest.raises(TypeError):result['cross_bindings']['recovery_q']=False
+
+
+def test_solve_free_receipt_bindings_capture_exact_sources_without_more_work(monkeypatch):
+    args=_case();result=_verify(args)
+    def forbidden(*values,**options):
+        pytest.fail('receipt binding repeated a scientific evaluation')
+    monkeypatch.setattr(rec,'recover',forbidden)
+    monkeypatch.setattr(rec.functional,'norm_observation_at_order',forbidden)
+    bindings=adjudication.make_bindings(result,args[0],args[-3],args[-2],args[-1])
+    settling=bindings.settling;functional_record=bindings.functional
+    assert len(settling.values)==len(settling.lower)==len(settling.upper)==45
+    assert settling.scales==adjudication.receipt.SETTLING_SCALES
+    assert all(low<=value<=high for value,low,high in
+               zip(settling.values,settling.lower,settling.upper))
+    assert settling.values[3:9]==tuple(float(value) for value in args[-2].edge_route1)
+    assert settling.values[15:21]==tuple(float(value) for value in args[-3].atoms.flat)
+    assert settling.values[21:]==tuple(float(value) for value in args[-3].band_analytic.flat)
+    assert functional_record.functional_sha256==result['components']['norm']['input_sha256']
+    assert functional_record.numerically_admissible
+    assert result['diagnostics']['recovery_recomputations']==3
+    assert result['diagnostics']['norm_evaluations']==2
+
+
+def test_receipt_binding_rejects_broken_norm_chain_and_band_inventory():
+    args=_case();result=_verify(args)
+    broken=dict(result)
+    canonical=dict(result['canonical_saved_sha256s'])
+    canonical['norm_functional_saved']='cd'*32
+    broken['canonical_saved_sha256s']=canonical
+    with pytest.raises(ValueError,match='identity chain'):
+        adjudication.functional_record(broken,args[-1])
+    interface_result=result['components']['interface']
+    damaged=_replace_interface(interface_result,comparisons=tuple(
+        item for item in interface_result.comparisons
+        if not (item['name']=='recovered_band_analytic' and item['index']==23)
+    ))
+    broken=dict(result);components=dict(result['components']);components['interface']=damaged
+    broken['components']=components
+    with pytest.raises(ValueError,match='interface comparison inventory'):
+        adjudication.settling_record(broken,args[0],args[-3],args[-2])
+    original_interface=args[-3]
+    atoms=original_interface.atoms.copy();atoms[0,0]+=1.0
+    altered_interface=interface.SavedInterface(
+        original_interface.cuts,original_interface.density,original_interface.cosine,
+        atoms,original_interface.band_analytic,original_interface.band48,
+        original_interface.band64,original_interface.line_band_analytic,
+    )
+    with pytest.raises(ValueError,match='saved-interface identity chain'):
+        adjudication.settling_record(result,args[0],altered_interface,args[-2])
+    shell_work=args[-2].shell_work.copy();shell_work[0]+=1.0
+    altered_work=replace(args[-2],shell_work=shell_work)
+    with pytest.raises(ValueError,match='saved-work identity chain'):
+        adjudication.settling_record(result,args[0],args[-3],altered_work)
+    original_norm=args[-1];channels=original_norm.channels.copy();channels[0,0]+=1.0
+    altered_norm=norm.SavedNorm(
+        channels,original_norm.totals,original_norm.components,
+        original_norm.channel_flags,original_norm.total_flags,
+        original_norm.exact_zero,original_norm.failures,
+    )
+    with pytest.raises(ValueError,match='identity chain'):
+        adjudication.functional_record(result,altered_norm)
 
 
 def test_compiled_grid_identity_binds_execution_and_incidence_maps():

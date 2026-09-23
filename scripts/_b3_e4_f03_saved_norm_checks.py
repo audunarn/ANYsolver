@@ -158,6 +158,15 @@ def _hash(value,saved):
     return h.hexdigest()
 
 
+def input_identity(value,saved):
+    """Bind one owned Functional and saved 48/64 observation record."""
+    if type(value) is not green.Functional or type(saved) is not SavedNorm:
+        raise ValueError('owned Functional and SavedNorm required')
+    owned_value=green.Functional(value.cuts,value.coefficients,value.cosine,value.atoms)
+    owned_saved=SavedNorm(**{name:getattr(saved,name) for name in saved.__dataclass_fields__})
+    return _hash(owned_value,owned_saved)
+
+
 def _freeze(value):
     if isinstance(value,dict):return MappingProxyType({k:_freeze(v) for k,v in value.items()})
     if isinstance(value,(tuple,list)):return tuple(_freeze(v) for v in value)

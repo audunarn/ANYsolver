@@ -68,7 +68,7 @@ def _settling():
 
 def _functional():
     return receipt.FunctionalRecord(
-        DIGEST, (1.0,) * 6, (1.0,) * 2, (1.0,) * 36,
+        DIGEST, (1.0,) * 6, (3.0,) * 2, (1.0,) * 36,
         (True,) * 18, (True,) * 6, (False,) * 2, ((), ()),
     )
 
