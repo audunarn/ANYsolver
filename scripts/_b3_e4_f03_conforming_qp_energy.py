@@ -26,6 +26,7 @@ _QUADRATURE_RELATIVE_LIMIT = 1.e-10
 _LOAD_SCALED_LIMIT = 1.e-10
 _SHELL_EIGENVALUE_LIMIT = 1.e-10
 _ROOT_RANK_RATIO_LIMIT = 1.e-10
+_SOLUTION_NUMERICAL_LIMIT = 1.e-10
 _MAX_FREE_DOFS = 832
 _MAX_STATION_INTERVALS = 128
 
@@ -173,6 +174,18 @@ def _scaled_root_singular_values(operators: QpOperators,
     return np.linalg.svd(root, compute_uv=False), np.linalg.svd(stacked, compute_uv=False)
 
 
+def _require_solution_checks(root_compatibility_scaled: float,
+                             equilibrium_scaled: float,
+                             work_identity_scaled: float) -> None:
+    """Numerical return guards, not scientific physical acceptance limits."""
+    for name, value in (("root compatibility", root_compatibility_scaled),
+                        ("equilibrium", equilibrium_scaled),
+                        ("energy/work identity", work_identity_scaled)):
+        if (not math.isfinite(value) or value < 0 or
+                value > _SOLUTION_NUMERICAL_LIMIT):
+            raise ValueError(f"Qp {name} numerical check failed")
+
+
 def solve(operators: QpOperators):
     """Solve one bounded candidate only after quadrature, energy and rank gates."""
     if (not np.isfinite(operators.beam_discrepancy_relative) or
@@ -227,12 +240,20 @@ def solve(operators: QpOperators):
     q = d*result[:-3]
     multiplier = E0*root_scale@result[-3:]
     residual = stiffness@q+operators.root_constraint.T@multiplier-operators.load
+    shell_energy = float(q@shell@q/2)
+    beam_energy = float(q@beam@q/2)
+    external_work = float(operators.load@q)
+    root_compatibility = float(np.max(np.abs(root_scale@operators.root_constraint@q)))
+    equilibrium = float(np.max(np.abs(d*residual/E0)))
+    work_identity = abs(2*(shell_energy+beam_energy)-external_work)/E0
+    _require_solution_checks(root_compatibility, equilibrium, work_identity)
     return q, multiplier, {
-        "shell_energy_j": float(q@shell@q/2),
-        "beam_energy_j": float(q@beam@q/2),
-        "external_work_j": float(operators.load@q),
-        "root_compatibility_scaled": float(np.max(np.abs(root_scale@operators.root_constraint@q))),
-        "equilibrium_scaled": float(np.max(np.abs(d*residual/E0))),
+        "shell_energy_j": shell_energy,
+        "beam_energy_j": beam_energy,
+        "external_work_j": external_work,
+        "root_compatibility_scaled": root_compatibility,
+        "equilibrium_scaled": equilibrium,
+        "work_identity_scaled": work_identity,
         "root_singular_values": singulars,
         "root_pose_derivative_singular_values": six_singulars,
         "scaled_shell_min_eigenvalue": shell_minimum,

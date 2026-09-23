@@ -7,14 +7,15 @@ import numpy as np
 import pytest
 from numpy.polynomial.legendre import leggauss
 
+import scripts._b3_e4_f03_conforming_qp_energy as qp_energy
 from scripts._b3_e4_f03_conforming_q1_energy import (
     assemble as assemble_q1, solve as solve_q1,
 )
 from scripts._b3_e4_f03_conforming_qp_energy import (
-    _station_rule, assemble, solve,
+    _require_solution_checks, _station_rule, assemble, solve,
 )
 from scripts._b3_e4_f03_conforming_qp_trace import FinitePadQpTrace
-from scripts._b3_e4_f03_primal_ritz import F0, PLANE, SECTION, THICKNESS
+from scripts._b3_e4_f03_primal_ritz import E0, F0, PLANE, SECTION, THICKNESS
 
 
 def _basis(p, t):
@@ -88,10 +89,11 @@ def test_p1_separately_assembled_q1_matrix_load_and_solve():
     assert np.allclose(result["tip_pose"], result1["tip_pose"], rtol=1e-9, atol=1e-12)
     assert result["root_compatibility_scaled"] < 1e-8
     assert result["equilibrium_scaled"] < 1e-8
+    assert result["work_identity_scaled"] < 1e-10
 
 
 @pytest.mark.parametrize("p", (2, 3))
-def test_piecewise_random_fields_against_independent_shell_and_dense_beam_oracles(p):
+def test_piecewise_random_fields_against_independent_shell_and_dense_beam_oracles(p, monkeypatch):
     trace = FinitePadQpTrace(p, x=(-.5, 0., 1., 1.5), y=(-.5, 0., .5))
     operators = assemble(trace)
     assert operators.dof_count < 128
@@ -112,11 +114,37 @@ def test_piecewise_random_fields_against_independent_shell_and_dense_beam_oracle
     assert result["scaled_shell_min_eigenvalue"] > 1e-10
     assert result["root_compatibility_scaled"] < 1e-8
     assert result["equilibrium_scaled"] < 1e-8
+    assert result["work_identity_scaled"] < 1e-10
     if p == 2:
         duplicate = operators.root_constraint.copy()
         duplicate[2] = duplicate[1]
         with pytest.raises(ValueError, match="three independent"):
             solve(replace(operators, root_constraint=duplicate))
+        # Finite but incorrect factor responses must never be reported as a
+        # candidate. The two perturbations isolate equilibrium and root rows.
+        with monkeypatch.context() as patch:
+            patch.setattr(qp_energy, "spsolve", lambda matrix, rhs: np.zeros_like(rhs))
+            with pytest.raises(ValueError, match="equilibrium numerical"):
+                solve(operators)
+        displacement_scale = np.sqrt(E0/(operators.shell_stiffness+
+                                          operators.beam_stiffness).diagonal())
+        index = int(np.argmax(np.abs(operators.root_constraint[0]*displacement_scale)))
+        wrong = np.zeros(operators.dof_count+3)
+        wrong[index] = 1.
+        with monkeypatch.context() as patch:
+            patch.setattr(qp_energy, "spsolve", lambda matrix, rhs: wrong.copy())
+            with pytest.raises(ValueError, match="root compatibility numerical"):
+                solve(operators)
+
+
+@pytest.mark.parametrize("values,failed", [
+    ((2e-10, 0., 0.), "root compatibility"),
+    ((0., 2e-10, 0.), "equilibrium"),
+    ((0., 0., 2e-10), "energy/work identity"),
+])
+def test_numerical_return_guards_reject_finite_wrong_metrics(values, failed):
+    with pytest.raises(ValueError, match=failed):
+        _require_solution_checks(*values)
 
 
 def test_missing_comparison_rejected_before_factorization():
