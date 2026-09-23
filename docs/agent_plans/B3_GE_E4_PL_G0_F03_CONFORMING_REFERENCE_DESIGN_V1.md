@@ -171,10 +171,26 @@ scaled root pose/derivative rows. The last focused run passed **15/15**
 tests. Independent read-only mechanics review found no blocker for this
 *preparatory trace* scope after corrections.
 
-This helper is not the complete design preflight: it has no shell or beam
-energy assembly, no independent polynomial derivative oracle, no
-equilibrium solve, no physical convergence study, and no registered
-scientific execution. Its near-edge floating-point snap is applied only
-at declared represented crossing stations to resolve one-ulp closure;
-an exact rational breakpoint implementation would be stronger. No F03
-multiplier space is selected and G0B remains open.
+The separate `_b3_e4_f03_conforming_q1_energy.py` candidate then assembles
+sparse shell and mapped beam energy, three root rows and the smooth load,
+and performs one bounded saddle-point solve. Its 4/6-point beam and
+48/64-point load comparisons are per station interval. The corrected
+solve requires finite small comparison differences, positive scaled shell
+energy, symmetric blocks and six scaled root pose/derivative rows before
+factorization. The combined trace/energy focused suite passed **23/23**
+tests. Independent read-only review found no mechanics sign or scatter
+error in the normal `assemble()` to `solve()` path.
+
+These two helpers are not the complete design preflight: they have no
+independent polynomial derivative oracle, no independent support-reaction
+recovery, no systematic refinement or physical convergence study, and no
+registered scientific execution. Their operator records are preparatory,
+not immutable provenance certificates: replacing a matrix, load or root
+row after assembly can decouple a stored comparison from the problem
+solved. Only the unmodified `assemble()` to `solve()` path was reviewed.
+The trace's near-edge floating-point snap is applied only at declared
+represented crossing stations to resolve one-ulp closure; the one-ulp
+station intervals themselves retain their weight but use a limiting
+binary64 evaluation, not an exact polynomial integral. An exact rational
+breakpoint implementation would be stronger. No F03 multiplier space is
+selected and G0B remains open.

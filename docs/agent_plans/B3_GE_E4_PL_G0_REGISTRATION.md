@@ -1662,8 +1662,10 @@ is not a solution-error or convergence certificate. The reviewed
 `B3_GE_E4_PL_G0_F03_CONFORMING_REFERENCE_DESIGN_V1.md` now specifies a
 locally supported Qp candidate without changing the physical finite-pad
 law, three root constraints or frozen acceptance criteria. A bounded Q1
-trace-only helper passes 15 preparatory algebraic tests, including a
-separate cell-moment/work oracle and scaled six-row root check. It has no
-energy assembly, equilibrium solve, physical settling or scientific
-registration. **No F03 line space is selected; F03/G0B remain open and G1
-barred.**
+trace helper passes 15 preparatory algebraic tests, including a separate
+cell-moment/work oracle and scaled six-row root check. A subsequent
+Q1-only sparse shell/beam energy and bounded saddle candidate at `ca19838b`
+was tightened at `0a68a8fa` after independent review; the combined focused
+suite passes 23 tests. It is restricted to the unmodified assembled-operator
+path, has no systematic physical settling or scientific registration, and
+does not select a native line law. **F03/G0B remain open and G1 barred.**
