@@ -78,7 +78,7 @@ def write_start(
     registration_sha256: str,
     pid: int,
 ) -> str:
-    """Create the child's marker before model construction or allocation."""
+    """Create the child marker after envelope validation and before model work."""
     directory = Path(directory)
     if (
         not directory.is_dir()

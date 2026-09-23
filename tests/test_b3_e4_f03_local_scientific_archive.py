@@ -34,8 +34,33 @@ def test_plan_roundtrip_and_complete_single_use_inverse_stream(records, tmp_path
         archive.write_plan(path, plan)
 
 
-def _rewrite(path: Path, members: list[tuple[str, bytes]]):
-    with zipfile.ZipFile(path, "w") as output:
+def test_plan_envelope_precedes_topology_inventory_construction(records, tmp_path, monkeypatch):
+    record = records[2]
+    plan = archive.make_case_plan(record, records, SOURCE)
+    path = tmp_path / "plan-envelope.zip"
+    archive.write_plan(path, plan)
+    with monkeypatch.context() as guarded:
+        guarded.setattr(
+            archive, "make_case_plan",
+            lambda *args: pytest.fail("full plan verification before start marker"),
+        )
+        guarded.setattr(
+            cases, "preflight_inventory",
+            lambda: pytest.fail("case inventory construction before start marker"),
+        )
+        guarded.setattr(
+            cases, "compile_case",
+            lambda *args: pytest.fail("topology construction before start marker"),
+        )
+        assert archive.read_plan_envelope(path) == plan
+    with pytest.raises(ValueError, match="stale|mismatched"):
+        archive.validate_plan(plan, record, records, "b" * 40)
+    with pytest.raises(ValueError, match="stale|mismatched"):
+        archive.validate_plan(plan, records[0], records, SOURCE)
+
+
+def _rewrite(path: Path, members: list[tuple[str, bytes]], *, compression=zipfile.ZIP_STORED):
+    with zipfile.ZipFile(path, "w", compression=compression) as output:
         for name, payload in members:
             output.writestr(name, payload)
 
@@ -75,6 +100,42 @@ def test_stale_source_case_topology_and_inventory_rejected(records, tmp_path):
         archive.read_plan(path, records[0], records, SOURCE)
     with pytest.raises(ValueError):
         archive.make_case_plan(record, tuple(reversed(records)), SOURCE)
+
+
+def test_envelope_rejects_noncanonical_json_and_unsupported_compression(records, tmp_path):
+    plan = archive.make_case_plan(records[0], records, SOURCE)
+    value = json.loads(archive._payload(plan))
+    noncanonical = json.dumps(value, indent=2).encode("ascii")
+    digest = hashlib.sha256(noncanonical).hexdigest().encode("ascii") + b"\n"
+    path = tmp_path / "noncanonical.zip"
+    _rewrite(
+        path, [("plan.json", noncanonical), ("plan.sha256", digest)],
+        compression=zipfile.ZIP_DEFLATED,
+    )
+    with pytest.raises(ValueError, match="noncanonical"):
+        archive.read_plan_envelope(path)
+
+    stored = tmp_path / "stored.zip"
+    _rewrite(
+        stored,
+        [("plan.json", archive._payload(plan)),
+         ("plan.sha256", hashlib.sha256(archive._payload(plan)).hexdigest().encode("ascii") + b"\n")],
+    )
+    with pytest.raises(ValueError, match="ZIP inventory"):
+        archive.read_plan_envelope(stored)
+
+
+def test_envelope_rejects_nonobject_json_with_matching_digest(records, tmp_path):
+    payload = b"[]\n"
+    path = tmp_path / "list.zip"
+    _rewrite(
+        path,
+        [("plan.json", payload),
+         ("plan.sha256", hashlib.sha256(payload).hexdigest().encode("ascii") + b"\n")],
+        compression=zipfile.ZIP_DEFLATED,
+    )
+    with pytest.raises(ValueError, match="inventory"):
+        archive.read_plan_envelope(path)
 
 
 def test_manifest_missing_extra_reordered_blocks_and_names_rejected(records):

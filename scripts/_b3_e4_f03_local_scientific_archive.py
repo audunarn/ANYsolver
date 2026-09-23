@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import hmac
+import io
 import json
 from pathlib import Path
 import re
@@ -199,7 +200,7 @@ def _decode(payload: bytes) -> CaseArchivePlan:
         value = json.loads(payload.decode("ascii"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ValueError("invalid F03 archive plan JSON") from exc
-    if set(value) != {
+    if type(value) is not dict or set(value) != {
         "schema", "source_commit", "case_id", "topology_sha256", "inventory_sha256",
         "kkt_order", "resource_limits", "raw_archive_bytes", "group_members", "inverse_blocks",
     } or type(value["inverse_blocks"]) is not list or type(value["resource_limits"]) is not dict:
@@ -224,31 +225,74 @@ def _decode(payload: bytes) -> CaseArchivePlan:
     )
 
 
+def _read_plan_payload(path: Path) -> bytes:
+    path = Path(path)
+    with path.open("rb") as stream:
+        container = stream.read(MAX_PLAN_BYTES + 1)
+    if len(container) > MAX_PLAN_BYTES:
+        raise ValueError("F03 archive plan exceeds declared bound")
+    try:
+        with zipfile.ZipFile(io.BytesIO(container)) as zipped:
+            infos = zipped.infolist()
+            if (
+                len(infos) != 2
+                or [item.filename for item in infos] != ["plan.json", "plan.sha256"]
+                or any(item.is_dir() or item.flag_bits & 1 for item in infos)
+                or any(item.compress_type != zipfile.ZIP_DEFLATED for item in infos)
+                or sum(item.file_size for item in infos) > MAX_PLAN_BYTES
+                or any(item.compress_size < 0 or item.file_size < 0 for item in infos)
+                or infos[1].file_size != 65
+            ):
+                raise ValueError("invalid F03 archive plan ZIP inventory")
+            with zipped.open(infos[0]) as stream:
+                payload = stream.read(MAX_PLAN_BYTES + 1)
+            with zipped.open(infos[1]) as stream:
+                stated = stream.read(66)
+    except (zipfile.BadZipFile, zipfile.LargeZipFile, RuntimeError,
+            NotImplementedError) as exc:
+        raise ValueError("invalid bounded F03 archive plan ZIP") from exc
+    if len(payload) != infos[0].file_size or len(stated) != 65:
+        raise ValueError("F03 archive plan member exceeds declared bound")
+    actual = hashlib.sha256(payload).hexdigest().encode("ascii") + b"\n"
+    if not hmac.compare_digest(stated, actual):
+        raise ValueError("F03 archive plan digest mismatch")
+    return payload
+
+
+def read_plan_envelope(
+    path: Path,
+) -> CaseArchivePlan:
+    """Read the bounded plan before topology/model construction.
+
+    This validates only the canonical archive envelope and frozen scalar case
+    identity needed to create the child start marker.  ``read_plan`` must be
+    called after the marker to verify topology and complete inventory hashes.
+    """
+    payload = _read_plan_payload(path)
+    plan = _decode(payload)
+    if _payload(plan) != payload:
+        raise ValueError("noncanonical F03 archive plan encoding")
+    return plan
+
+
+def validate_plan(
+    plan: CaseArchivePlan,
+    record: cases.CasePreflight,
+    records: tuple[cases.CasePreflight, ...],
+    source_commit: str,
+) -> CaseArchivePlan:
+    if type(plan) is not CaseArchivePlan or type(record) is not cases.CasePreflight:
+        raise ValueError("admitted F03 archive plan and preflight record required")
+    expected = make_case_plan(record, records, source_commit)
+    if not hmac.compare_digest(_payload(plan), _payload(expected)):
+        raise ValueError("stale or mismatched F03 archive plan")
+    return plan
+
+
 def read_plan(
     path: Path,
     record: cases.CasePreflight,
     records: tuple[cases.CasePreflight, ...],
     source_commit: str,
 ) -> CaseArchivePlan:
-    path = Path(path)
-    if path.stat().st_size > MAX_PLAN_BYTES:
-        raise ValueError("F03 archive plan exceeds declared bound")
-    with zipfile.ZipFile(path) as archive:
-        infos = archive.infolist()
-        if (
-            len(infos) != 2
-            or [item.filename for item in infos] != ["plan.json", "plan.sha256"]
-            or sum(item.file_size for item in infos) > MAX_PLAN_BYTES
-            or any(item.compress_size < 0 or item.file_size < 0 for item in infos)
-        ):
-            raise ValueError("invalid F03 archive plan ZIP inventory")
-        payload = archive.read("plan.json")
-        stated = archive.read("plan.sha256")
-    actual = hashlib.sha256(payload).hexdigest().encode("ascii") + b"\n"
-    if not hmac.compare_digest(stated, actual):
-        raise ValueError("F03 archive plan digest mismatch")
-    plan = _decode(payload)
-    expected = make_case_plan(record, records, source_commit)
-    if plan != expected:
-        raise ValueError("stale or mismatched F03 archive plan")
-    return plan
+    return validate_plan(read_plan_envelope(path), record, records, source_commit)
