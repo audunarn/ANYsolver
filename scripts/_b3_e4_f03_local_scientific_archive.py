@@ -34,6 +34,7 @@ GROUP_MEMBERS = (
     "saved_norm.npz",
     "saved_composition.npz",
     "balances.npz",
+    "evidence_index.json",
     "case_receipt.json",
 )
 
