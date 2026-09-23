@@ -133,13 +133,13 @@ def test_complete_archive_cap_reserves_index_and_receipt(plan, tmp_path, monkeyp
     directory = tmp_path / "reserve"
     _populate(directory, plan)
     observed = {}
-    original = evidence._preflight
+    original = evidence._identities_from_observed
 
-    def record(root, names, limit, infrastructure=evidence.INFRASTRUCTURE):
+    def record(found, names, limit):
         observed["limit"] = limit
-        return original(root, names, limit, infrastructure)
+        return original(found, names, limit)
 
-    monkeypatch.setattr(evidence, "_preflight", record)
+    monkeypatch.setattr(evidence, "_identities_from_observed", record)
     evidence.make_index(directory, plan, REGISTRATION, START)
     assert observed["limit"] == (
         plan.raw_archive_bytes

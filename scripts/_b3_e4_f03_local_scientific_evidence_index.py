@@ -234,6 +234,26 @@ def _preflight(
     return tuple(identities)
 
 
+def _identities_from_observed(
+    observed: dict[str, _FileIdentity], names: tuple[str, ...], max_total_bytes: int,
+) -> tuple[_FileIdentity, ...]:
+    if type(max_total_bytes) is not int or max_total_bytes <= 0:
+        raise ValueError("positive F03 evidence byte limit required")
+    if any(name not in observed for name in names):
+        raise ValueError("missing F03 evidence member file")
+    identities = []
+    total = 0
+    for name in names:
+        identity = observed[name]
+        if identity.bytes <= 0:
+            raise ValueError(f"invalid F03 evidence member file: {name}")
+        total += identity.bytes
+        if total > max_total_bytes:
+            raise ValueError("F03 evidence inventory exceeds archive byte limit")
+        identities.append(identity)
+    return tuple(identities)
+
+
 def _sizes(
     directory: Path, names: tuple[str, ...], max_total_bytes: int,
 ) -> tuple[int, ...]:
@@ -267,6 +287,13 @@ def _open_no_follow(path: Path):
         kernel32.CloseHandle(ctypes.c_void_p(handle))
         raise
     return os.fdopen(descriptor, "rb")
+
+
+def _open_relative_no_follow(descriptor: int, name: str):
+    if os.name == "nt" or type(name) is not str or not name or "/" in name or "\\" in name:
+        raise ValueError("valid POSIX F03 evidence member name required")
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    return os.fdopen(os.open(name, flags, dir_fd=descriptor), "rb")
 
 
 @contextmanager
@@ -313,6 +340,92 @@ def _open_directory_no_follow(path: Path):
         os.close(descriptor)
 
 
+@contextmanager
+def _open_directory_relative(descriptor: int, name: str):
+    if os.name == "nt" or type(name) is not str or not name or "/" in name or "\\" in name:
+        raise ValueError("valid POSIX F03 evidence directory name required")
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    child = os.open(name, flags, dir_fd=descriptor)
+    try:
+        info = os.fstat(child)
+        if not stat.S_ISDIR(info.st_mode) or _is_reparse(info):
+            raise ValueError("ordinary F03 evidence directory required")
+        yield child
+    finally:
+        os.close(child)
+
+
+def _tree_from_open_directories(
+    directory: Path,
+    names: tuple[str, ...],
+    infrastructure: frozenset[str],
+    directories: dict[str, tuple[Path, int]],
+) -> dict[str, _FileIdentity]:
+    if os.name == "nt":
+        return _tree(directory, names, infrastructure)
+    allowed_files = set(names) | set(infrastructure)
+    allowed_directories = _allowed_directories(names, infrastructure)
+    result = {}
+
+    def visit(relative: PurePosixPath) -> None:
+        key = relative.as_posix() if relative.parts else ""
+        descriptor = directories[key][1]
+        for entry_name in os.listdir(descriptor):
+            info = os.stat(entry_name, dir_fd=descriptor, follow_symlinks=False)
+            name = (relative / entry_name).as_posix()
+            if stat.S_ISLNK(info.st_mode) or _is_reparse(info):
+                raise ValueError(f"linked or reparse F03 evidence path: {name}")
+            if stat.S_ISDIR(info.st_mode):
+                if name not in allowed_directories or name not in directories:
+                    raise ValueError(f"extra F03 evidence directory: {name}")
+                child_info = os.fstat(directories[name][1])
+                if not _same_directory(info, child_info):
+                    raise ValueError(f"changed F03 evidence directory: {name}")
+                visit(relative / entry_name)
+            elif stat.S_ISREG(info.st_mode):
+                if name not in allowed_files or name in result:
+                    raise ValueError(f"extra or duplicate F03 evidence file: {name}")
+                with _open_relative_no_follow(descriptor, entry_name) as stream:
+                    handle_info = os.fstat(stream.fileno())
+                if (
+                    not stat.S_ISREG(handle_info.st_mode)
+                    or _is_reparse(handle_info)
+                    or handle_info.st_dev != info.st_dev
+                    or handle_info.st_ino != info.st_ino
+                ):
+                    raise ValueError(f"changed F03 evidence member: {name}")
+                result[name] = _FileIdentity(
+                    name, handle_info.st_size, handle_info.st_dev, handle_info.st_ino,
+                    handle_info.st_mtime_ns, handle_info.st_ctime_ns,
+                )
+            else:
+                raise ValueError(f"unsupported F03 evidence file type: {name}")
+
+    visit(PurePosixPath())
+    return result
+
+
+def _open_snapshot_member(
+    directory: Path,
+    identity: _FileIdentity,
+    directories: dict[str, tuple[Path, int]],
+):
+    if os.name == "nt":
+        return _open_no_follow(_path(directory, identity.name))
+    parts = PurePosixPath(identity.name).parts
+    parent = PurePosixPath(*parts[:-1]).as_posix() if len(parts) > 1 else ""
+    return _open_relative_no_follow(directories[parent][1], parts[-1])
+
+
+def _stable_directory(first: os.stat_result, second: os.stat_result) -> bool:
+    return (
+        _same_directory(first, second)
+        and first.st_mtime_ns == second.st_mtime_ns
+        and first.st_ctime_ns == second.st_ctime_ns
+        and first.st_nlink == second.st_nlink
+    )
+
+
 def _hash_open(stream, identity: _FileIdentity) -> str:
     if not _same_file(os.fstat(stream.fileno()), identity):
         raise ValueError("F03 evidence member changed before hashing")
@@ -340,15 +453,35 @@ def _snapshot(
     directory = Path(directory)
     with ExitStack() as stack:
         root_descriptor = stack.enter_context(_open_directory_no_follow(directory))
-        directories = [(directory, root_descriptor, os.fstat(root_descriptor))]
-        for name in sorted(_allowed_directories(names, infrastructure)):
+        directories = {"": (directory, root_descriptor)}
+        allowed_directories = sorted(
+            _allowed_directories(names, infrastructure),
+            key=lambda value: (len(PurePosixPath(value).parts), value),
+        )
+        for name in allowed_directories:
             path = directory.joinpath(*PurePosixPath(name).parts)
-            if path.exists():
-                descriptor = stack.enter_context(_open_directory_no_follow(path))
-                directories.append((path, descriptor, os.fstat(descriptor)))
-        identities = _preflight(directory, names, max_total_bytes, infrastructure)
+            parts = PurePosixPath(name).parts
+            parent = PurePosixPath(*parts[:-1]).as_posix() if len(parts) > 1 else ""
+            if parent not in directories:
+                continue
+            try:
+                if os.name == "nt":
+                    if not path.exists():
+                        continue
+                    descriptor = stack.enter_context(_open_directory_no_follow(path))
+                else:
+                    descriptor = stack.enter_context(
+                        _open_directory_relative(directories[parent][1], parts[-1])
+                    )
+            except FileNotFoundError:
+                continue
+            except OSError as exc:
+                raise ValueError(f"invalid F03 evidence directory: {name}") from exc
+            directories[name] = (path, descriptor)
+        observed = _tree_from_open_directories(directory, names, infrastructure, directories)
+        identities = _identities_from_observed(observed, names, max_total_bytes)
         streams = tuple(
-            stack.enter_context(_open_no_follow(_path(directory, identity.name)))
+            stack.enter_context(_open_snapshot_member(directory, identity, directories))
             for identity in identities
         )
         for stream, identity in zip(streams, identities):
@@ -362,14 +495,18 @@ def _snapshot(
             for stream, identity in zip(streams, identities):
                 if not _same_file(os.fstat(stream.fileno()), identity):
                     raise ValueError("F03 evidence inventory changed during snapshot")
-            for path, descriptor, retained in directories:
+            before = {name: os.fstat(item[1]) for name, item in directories.items()}
+            observed = _tree_from_open_directories(
+                directory, names, infrastructure, directories,
+            )
+            after = {name: os.fstat(item[1]) for name, item in directories.items()}
+            for name, (path, descriptor) in directories.items():
                 current = os.stat(path, follow_symlinks=False)
                 if (
-                    not _same_directory(os.fstat(descriptor), retained)
-                    or not _same_directory(current, retained)
+                    not _stable_directory(before[name], after[name])
+                    or not _same_directory(current, after[name])
                 ):
                     raise ValueError("F03 evidence directory changed during snapshot")
-            observed = _tree(directory, names, infrastructure)
             for identity in identities:
                 if observed.get(identity.name) != identity:
                     raise ValueError("F03 evidence inventory changed after snapshot")

@@ -102,3 +102,14 @@ def test_missing_reordered_metadata_and_late_nonfinite_action_rejected_before_sp
     )
     with pytest.raises(ValueError, match="ordered"):
         saved.write_ports(tmp_path / "nonfinite.npz", source, CASE)
+
+
+def test_malformed_late_matrix_rejected_before_action_stack(tmp_path, monkeypatch):
+    source = _evidence()
+    malformed = saved.PortEvidence(source.samples, source.root, source.tip, object())
+    monkeypatch.setattr(
+        saved.np, "stack",
+        lambda *a, **k: pytest.fail("all matrices must validate before action allocation"),
+    )
+    with pytest.raises(ValueError, match="CSR"):
+        saved.write_ports(tmp_path / "malformed.npz", malformed, CASE)

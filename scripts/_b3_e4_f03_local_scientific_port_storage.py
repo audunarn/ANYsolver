@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
+from scipy import sparse
 
 from scripts import _b3_e4_f03_local_scientific_cases as cases
 from scripts import _b3_e4_f03_local_scientific_sparse_storage as sparse_storage
@@ -74,7 +75,7 @@ def port_specs(
     return matrices, (storage.ArraySpec("actions", (PORTS, 3), np.dtype("<f8")),)
 
 
-def _validate(value: PortEvidence) -> tuple[dict[str, object], np.ndarray]:
+def _validate(value: PortEvidence) -> tuple[dict[str, object], tuple[np.ndarray, ...]]:
     if (
         type(value) is not PortEvidence
         or type(value.samples) is not tuple
@@ -92,12 +93,26 @@ def _validate(value: PortEvidence) -> tuple[dict[str, object], np.ndarray]:
             or sample.action.shape != (3,)
             or not sample.action.flags.c_contiguous
             or not np.isfinite(sample.action).all()
+            or type(sample.operator) is not sparse.csr_matrix
         ):
             raise ValueError("ordered finite F03 trace-port action inventory required")
         matrices[f"port_{index:02d}"] = sample.operator
         actions.append(sample.action)
+    if any(type(matrix) is not sparse.csr_matrix for matrix in (value.root, value.tip, value.free_slope)):
+        raise ValueError("canonical CSR F03 trace-port matrix inventory required")
     matrices.update(root=value.root, tip=value.tip, free_slope=value.free_slope)
-    return matrices, np.stack(actions)
+    shapes = {
+        **{f"port_{index:02d}": (3, value.samples[index].operator.shape[1]) for index in range(PORTS)},
+        "root": (3, value.samples[0].operator.shape[1]),
+        "tip": (3, value.samples[0].operator.shape[1]),
+        "free_slope": (1, value.samples[0].operator.shape[1]),
+    }
+    if any(
+        type(matrix) is not sparse.csr_matrix or matrix.shape != shapes[name]
+        for name, matrix in matrices.items()
+    ):
+        raise ValueError("canonical CSR F03 trace-port matrix inventory required")
+    return matrices, tuple(actions)
 
 
 def write_ports(
@@ -111,6 +126,7 @@ def write_ports(
     sparse_specs, array_specs = port_specs(case, counts)
     for spec in sparse_specs:
         sparse_storage._check_matrix(matrices[spec.name], spec)
+    actions = np.stack(actions)
     encoded = sparse_storage.encode(matrices, sparse_specs)
     encoded["actions"] = np.asarray(actions, dtype="<f8").copy()
     specs = sparse_storage.array_specs(sparse_specs) + array_specs

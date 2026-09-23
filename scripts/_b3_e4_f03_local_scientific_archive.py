@@ -28,6 +28,7 @@ GROUP_MEMBERS = (
     "positivity.npz",
     "inverse_index.json",
     "ports.npz",
+    "numerical_index.json",
     "prolongations.npz",
     "saved_interface.npz",
     "saved_work.npz",
