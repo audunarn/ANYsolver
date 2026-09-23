@@ -6,8 +6,11 @@ implemented, independently reviewed and closed with corrected immutable
 evidence. The complete saved-recovery composition is also implemented,
 independently reviewed and closed with corrected immutable evidence. A frozen
 scientific numerical protocol is independently reviewed, and its bounded
-runner foundation is implemented and independently reviewed. Exact saved
-evidence schemas, the producer and solve-free adjudicator are active next work.
+runner foundation is implemented and independently reviewed. The primary
+solve-free numerical, inverse, port, exact-prolongation and saved-component
+schemas are now committed. Composition-summary and physical-balance schemas
+are committed and under independent review. The exclusively-writing producer,
+solve-free adjudicator and case receipt remain active next work.
 
 22 September 2026. User authorized continued implementation with increased
 effort. The active goal remains the complete programme; **G0B is open and
@@ -27,6 +30,13 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
 - Latest saved-recovery composition source: `271d88d094bc89e2fce4fdc23a4b5df2cce68d4b`.
 - Latest reviewed local-scientific protocol source: `363d325b`.
 - Latest reviewed runner-foundation source: `9f4a6be0`.
+- Latest independently reviewed numerical-evidence schema source: `eccbfe2f`.
+  This includes actual CSR factor round-trip, producer-native hashes/storage
+  accounting and all four frozen nested transitions.
+- Latest independently reviewed composition/balance evidence schema source:
+  `5d12da1c`. The first review's P1/P2 findings
+  were corrected by enforcing composition/work invariants and labeling rounded
+  balance numbers as display-only while retaining exact Action identities.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -379,13 +389,19 @@ can be pessimistic. Compare/select before registration, never as a fallback
 after a failed scientific bound. No automatic uniform/global-degree run.
 
 No scientific process is active. The saved interface/work/norm components,
-complete composition, protocol and runner foundation are independently
-reviewed. The exact next action is to implement the evidence-group schemas and
-exclusively writing case producer, then the solve-free adjudicator and top-level
+complete composition, protocol, runner foundation and numerical evidence
+schemas through `eccbfe2f` are independently reviewed. The numerical schema
+review closed two P1 findings: native factors are CSR end to end and the
+Q1_L0-to-Q2_L0 transfer is present. The resulting focused inventory passed
+172 tests; the corrected composition/balance addition passed 133 focused
+archive and lifecycle tests; independent closure review passed 32 focused
+checks without findings. The exact next action is to finish assembly/scaling
+diagnostics and `case_receipt.json`, then add
+the exclusively-writing case producer, solve-free adjudicator and top-level
 one-use coordinator. Registration remains barred until those pieces, bounded
 lifecycle/replay tests, preflight demonstrations and independent review pass on
 a clean committed source. The accepted proofs grant no scientific execution
-authority. Current sources and tests are committed; the results/checkpoint
-commit preserves the restart boundary.
+authority. Current product/schema sources are committed; this checkpoint text
+records the restart boundary.
 All consumed diagnostic sources and completed inventories stay frozen.
 No release approval is being exercised. Keep main unchanged during G0.
