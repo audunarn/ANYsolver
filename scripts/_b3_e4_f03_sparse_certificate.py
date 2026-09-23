@@ -186,7 +186,8 @@ def _residual_abs(low, high, target):
     return np.maximum(np.abs(_down(target-high)), np.abs(_up(target-low)))
 
 
-def certificate_a(matrix, inverse_blocks, budget, *, b=None, z=None):
+def certificate_a(matrix, inverse_blocks, budget, *, b=None, z=None,
+                  interval_kernel='scalar'):
     """Verify every supplied inverse column once, in contiguous block order.
 
     ``inverse_blocks`` yields ``(start_column, float64[N,width])``. It may
@@ -195,6 +196,13 @@ def certificate_a(matrix, inverse_blocks, budget, *, b=None, z=None):
     identities belong to the enclosing future scientific protocol.
     """
     h = validate_sparse(matrix, budget)
+    if interval_kernel == 'scalar':
+        product_bounds = _product_bounds
+    elif interval_kernel == 'compiled_experimental':
+        from scripts._b3_e4_f03_q6_interval_kernel import compiled_product_bounds
+        product_bounds = compiled_product_bounds
+    else:
+        raise ValueError('unknown interval-product kernel')
     n = h.shape[0]
     _workspace(n, n, h.nnz, min(n, budget.max_block_columns), budget)
     if (b is None) != (z is None):
@@ -221,7 +229,7 @@ def certificate_a(matrix, inverse_blocks, budget, *, b=None, z=None):
             if not np.isfinite(y).all():
                 raise ValueError('finite inverse block required')
             width = y.shape[1]
-            low, high = _product_bounds(h, y)
+            low, high = product_bounds(h, y)
             target = np.zeros((n, width))
             target[np.arange(cursor, cursor+width), np.arange(width)] = 1.
             error = _residual_abs(low, high, target)
@@ -237,6 +245,7 @@ def certificate_a(matrix, inverse_blocks, budget, *, b=None, z=None):
             raise ValueError('incomplete inverse-column inventory')
         yi, ei = float(max(yrows)), float(max(erows))
         output = {'method': 'STREAMED_INVERSE_COLUMNS_INTERVAL_V1',
+            'interval_kernel': interval_kernel,
             'matrix_order': n, 'matrix_nnz': h.nnz, 'inverse_columns': cursor,
             'inverse_blocks': blocks, 'raw_inverse_evidence_bytes': 8*n*n,
             'matrix_one_upper': h1, 'matrix_infinity_upper': hi,
@@ -255,7 +264,7 @@ def certificate_a(matrix, inverse_blocks, budget, *, b=None, z=None):
             inverse_two_upper=inverse_two, condition_two_upper=condition,
             condition_limit=1e10, amplified_backward_limit=1e-8)
         if b is not None:
-            low, high = _product_bounds(h, z[:, None])
+            low, high = product_bounds(h, z[:, None])
             residual_abs = _residual_abs(low, high, b[:, None])
             residual_upper = _norm2(residual_abs)[1]
             zl, zu = _norm2(z)

@@ -47,12 +47,12 @@ def refined_x2() -> tuple[float, ...]:
 def run(degree: int, grid: str = "x1") -> dict:
     if degree not in (4, 5, 6):
         raise ValueError("pilot degree must be Q4, Q5 or Q6")
-    if grid not in ("x1", "x2") or (grid == "x2" and degree != 6):
-        raise ValueError("X2 pilot requires fixed Q6")
-    x = refined_x() if grid == "x1" else refined_x2()
+    if grid not in ("x0", "x1", "x2") or (grid in ("x0", "x2") and degree != 6):
+        raise ValueError("X0 and X2 pilots require fixed Q6")
+    x = None if grid == "x0" else refined_x() if grid == "x1" else refined_x2()
     trace = FinitePadQpTrace(degree, x=x)
-    expected = (13, 17) if grid == "x1" else (17, 25)
-    if (len(x), len(trace.station_intervals())) != expected:
+    expected = {"x0": (10, 11), "x1": (13, 17), "x2": (17, 25)}[grid]
+    if (len(trace.x), len(trace.station_intervals())) != expected:
         raise ArithmeticError("predeclared pilot grid or crossing count changed")
     elapsed = {}
     start = perf_counter()
@@ -86,12 +86,13 @@ def run(degree: int, grid: str = "x1") -> dict:
     norm = norm_squared(precise.functional)
     elapsed["functional_s"] = perf_counter() - start
     return {
-        "status": ("UNREGISTERED_NESTED_X_PILOT" if grid == "x1" else
-                   "UNREGISTERED_NESTED_X2_PILOT"),
+        "status": {"x0": "UNREGISTERED_NESTED_X0_PILOT",
+                   "x1": "UNREGISTERED_NESTED_X_PILOT",
+                   "x2": "UNREGISTERED_NESTED_X2_PILOT"}[grid],
         "grid": grid,
         "degree": degree,
-        "x": x,
-        "x_hex": [coordinate.hex() for coordinate in x],
+        "x": trace.x,
+        "x_hex": [coordinate.hex() for coordinate in trace.x],
         "y": trace.y,
         "y_hex": [coordinate.hex() for coordinate in trace.y],
         "station_intervals": trace.station_intervals(),
@@ -142,7 +143,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("degree", type=int, choices=(4, 5, 6))
     parser.add_argument("output", type=Path)
-    parser.add_argument("--grid", choices=("x1", "x2"), default="x1")
+    parser.add_argument("--grid", choices=("x0", "x1", "x2"), default="x1")
     arguments = parser.parse_args()
     record = run(arguments.degree, arguments.grid)
     arguments.output.write_text(json.dumps(record, indent=2) + "\n",

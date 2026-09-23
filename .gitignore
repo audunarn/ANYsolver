@@ -29,3 +29,5 @@ reports/performance/*
 qc_results/
 .pytest_tmp_*/
 .qualification/
+# Raw local Q6 certificate feasibility archive; hash and receipt are versioned.
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X0_FULL_CERT_20260924/inverse_float64.bin

@@ -1,12 +1,13 @@
-"""Preparatory X2 Q6 complete area, nodal and signed spatial work audit.
+"""Preparatory Q6 X0/X1/X2 area, nodal and signed spatial work audit.
 
-This consumes the saved unregistered X2 state. It is not a scientific gate,
+This consumes a saved unregistered Q6 state. It is not a scientific gate,
 and its source-level timing is not installed-artifact qualification.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import threading
@@ -23,7 +24,7 @@ from scripts._b3_e4_f03_qp_nodal_recovery import (
     distributed_support_liftings, recover_nodal, support_liftings,
 )
 from scripts._b3_e4_f03_qp_spatial_recovery import SpatialQpRecovery
-from scripts.b3_e4_f03_qp_nested_x_pilot import refined_x2
+from scripts.b3_e4_f03_qp_nested_x_pilot import refined_x, refined_x2
 
 
 def _sample_memory(stop, maximum):
@@ -35,13 +36,24 @@ def _sample_memory(stop, maximum):
 
 
 def run(path):
-    row = json.loads(Path(path).read_text(encoding="utf-8"))
-    trace = FinitePadQpTrace(6, x=refined_x2())
-    if (row["status"] != "UNREGISTERED_NESTED_X2_PILOT" or
+    source_bytes = Path(path).read_bytes()
+    row = json.loads(source_bytes)
+    grid = row.get("grid")
+    if grid not in ("x0", "x1", "x2"):
+        raise ValueError("unsupported fixed-Q6 spatial grid")
+    x = None if grid == "x0" else refined_x() if grid == "x1" else refined_x2()
+    trace = FinitePadQpTrace(6, x=x)
+    statuses = {"x0": "UNREGISTERED_NESTED_X0_PILOT",
+                "x1": "UNREGISTERED_NESTED_X_PILOT",
+                "x2": "UNREGISTERED_NESTED_X2_PILOT"}
+    counts = {"x0": (3286, 3410), "x1": (4402, 4526),
+              "x2": (5890, 6014)}
+    if (row["status"] != statuses[grid] or
             row["degree"] != 6 or
             row["x_hex"] != [x.hex() for x in trace.x] or
-            row["y_hex"] != [y.hex() for y in trace.y]):
-        raise ValueError("incompatible X2 Q6 state")
+            row["y_hex"] != [y.hex() for y in trace.y] or
+            (row["dof_count"], row["physical_coordinates"]) != counts[grid]):
+        raise ValueError("incompatible fixed-Q6 state")
     q = np.zeros(2*trace.n)
     q[trace.free_columns] = row["free_state"]
     eta = np.array(row["root_multiplier"])
@@ -103,11 +115,13 @@ def run(path):
                 numerical["global_shell_balance_scaled"] > 2e-9 or
                 numerical["beam_root_reaction_defect_scaled"] > 2e-9 or
                 numerical["maximum_spatial_work_defect_scaled"] > 2e-9):
-            raise ArithmeticError("X2 Q6 spatial or physical balance check failed")
+            raise ArithmeticError("Q6 spatial or physical balance check failed")
     finally:
         stop.set()
         sampler.join(timeout=2.)
-    return {"status": "UNREGISTERED_X2_Q6_SPATIAL_AUDIT",
+    return {"status": "UNREGISTERED_Q6_SPATIAL_AUDIT",
+            "grid": grid,
+            "input_sha256": hashlib.sha256(source_bytes).hexdigest(),
             "numerical": numerical,
             "elapsed": elapsed,
             "sampled_peak_rss_bytes": maximum[0],
