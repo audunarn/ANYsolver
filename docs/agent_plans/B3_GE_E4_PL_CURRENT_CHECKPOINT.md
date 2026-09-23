@@ -15,7 +15,8 @@ solve-free single-case adjudicator are committed and independently reviewed.
 The bounded plan-envelope reader and the port, saved-interface, saved-work,
 saved-norm and common-state saved-observation production factories are also
 committed and independently reviewed. The exclusively-writing child producer
-and top-level one-use coordinator remain active next work.
+is now committed and independently reviewed. The top-level one-use
+coordinator is the active next work.
 
 22 September 2026. User authorized continued implementation with increased
 effort. The active goal remains the complete programme; **G0B is open and
@@ -105,6 +106,16 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
   These factories perform two state recoveries including the support rebound,
   one support recovery, 16 band observations, two norm observations, and zero
   equilibrium solves or factorizations.
+- Latest independently reviewed child case producer source:
+  `2b4f2e84742973854fcadd7927ff833a8ba05eaf`. It writes `start.json`
+  before topology construction, validates the retained envelope and the
+  canonical post-start reread, performs exactly two frozen assemblies and
+  scalings, one KKT factor/candidate solve, one positivity factorization and
+  one inverse stream, then writes `evidence_index.json` last. The parent broad
+  affected suite passed 208 tests in 69.61 seconds; independent review passed
+  21 focused and 135 bounded dependency tests with no remaining findings.
+  No registered case was launched. See
+  `B3_GE_E4_PL_G0_F03_LOCAL_SCIENTIFIC_CASE_PRODUCER_RESULTS.md`.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -469,21 +480,16 @@ archive/lifecycle checks and their closure review passed 17 checks without
 findings. The independently reviewed case receipt at `103cf51e` passed 218
 broad saved-evidence/lifecycle tests and 51 focused review tests. The saved
 balance adjudication at `6d355713`/`f7a680d8` is independently closed. The
-bounded plan-envelope and evidence-production prerequisites are now complete
-and independently reviewed. The exact next action is the exclusively-writing
-child case producer. It must write
-`start.json` before topology/model construction, perform the two frozen
-assemblies and scalings, exactly one positivity factorization and one KKT
-factorization/candidate solve, stream each planned inverse block once, build
-the canonical saved components and indexes, and write `evidence_index.json`
-last. It must never supervise, retry, write terminal/receipt files, register or
-adjudicate. The later top-level one-use coordinator owns immutable
-registration, serial supervised launch, terminal receipts, adjudication and
-aggregate disposition. Registration remains barred until the child producer
-and later coordinator pass their bounded lifecycle/replay tests, preflight
-demonstrations and independent reviews on clean committed sources. The
-accepted proofs grant no scientific execution authority. Current
-product/schema sources are committed; this checkpoint text records the
-restart boundary.
+bounded plan-envelope, evidence-production prerequisites and exclusively
+writing child producer are now complete and independently reviewed. The exact
+next action is the top-level one-use coordinator. It owns immutable
+registration, serial supervised launch, terminal receipts, solve-free
+adjudication and aggregate disposition. It must invoke the child only once per
+registered case, preserve every partial result, and never retry a consumed
+attempt. Registration remains barred until the coordinator passes its bounded
+lifecycle/replay tests, preflight demonstrations and independent review on
+clean committed sources. The accepted proofs grant no scientific execution
+authority. Current product/schema sources are committed; this checkpoint text
+records the restart boundary.
 All consumed diagnostic sources and completed inventories stay frozen.
 No release approval is being exercised. Keep main unchanged during G0.
