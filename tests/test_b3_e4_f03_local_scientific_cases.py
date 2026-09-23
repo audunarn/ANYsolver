@@ -103,3 +103,23 @@ def test_preflight_is_topology_only(monkeypatch):
     monkeypatch.setattr(assembly, "assemble", lambda *a, **k: pytest.fail("must not assemble"))
     records = scientific.preflight_inventory()
     assert len(records) == 5
+
+
+def test_frozen_trace_bit_maxima_match_exact_factory_and_bind_resources():
+    import scripts._b3_e4_f03_local_primal_assembly as assembly
+
+    observed = {
+        case.case_id: max(
+            assembly.trace_interval(
+                scientific.compile_case(case), index, scientific.ASSEMBLY_BUDGET,
+            ).integer_bits
+            for index in range(case.station_intervals)
+        )
+        for case in scientific.CASES
+    }
+    assert observed == scientific.MAX_TRACE_INTEGER_BITS_BY_CASE
+    resources = dict(scientific.resource_contract())
+    assert all(
+        resources[f"{case_id.lower()}_trace_integer_bits"] == value
+        for case_id, value in observed.items()
+    )

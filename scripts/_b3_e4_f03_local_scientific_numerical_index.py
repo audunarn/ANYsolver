@@ -100,6 +100,7 @@ def assembly_producer(
         ))
         or record.beam_order != case.degree + 3 + int(alternate)
         or record.load_order != (64 if alternate else 48)
+        or record.max_trace_integer_bits != cases.MAX_TRACE_INTEGER_BITS_BY_CASE[case.case_id]
     ):
         raise ValueError("F03 assembly producer record disagrees with saved operators or case")
     return record
@@ -774,6 +775,10 @@ def _decode(payload: bytes, plan: archive.CaseArchivePlan) -> NumericalIndex:
         or index.assembly_alternate.beam_order != case.degree + 4
         or index.assembly_primary.load_order != 48
         or index.assembly_alternate.load_order != 64
+        or index.assembly_primary.max_trace_integer_bits
+            != cases.MAX_TRACE_INTEGER_BITS_BY_CASE[case.case_id]
+        or index.assembly_alternate.max_trace_integer_bits
+            != cases.MAX_TRACE_INTEGER_BITS_BY_CASE[case.case_id]
         or index.scaling_primary.matrix_nnz != scaled.h
         or index.scaling_alternate.matrix_nnz != scaled.h_alternate
         or index.scaling_primary.physical_dofs != case.physical_dofs

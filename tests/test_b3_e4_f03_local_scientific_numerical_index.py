@@ -99,7 +99,8 @@ def _producers(plan, value):
             root_nnz=operator.root.nnz, shell_evaluations=len(grid.rectangles),
             trace_evaluations=CASE.station_intervals,
             beam_evaluations=CASE.station_intervals,
-            load_evaluations=CASE.station_intervals, max_trace_integer_bits=1,
+            load_evaluations=CASE.station_intervals,
+            max_trace_integer_bits=cases.MAX_TRACE_INTEGER_BITS_BY_CASE[CASE.case_id],
             beam_order=CASE.degree + 3 + int(alternate),
             load_order=64 if alternate else 48,
             factorization_count=0, equilibrium_count=0,
@@ -201,6 +202,11 @@ def test_assembly_and_scaling_records_reject_stale_routes_and_scale_reuse(plan):
         index_storage.build_index(
             plan, source, replace(assembly_primary, load_order=64), assembly_alternate,
             scaling_primary, scaling_alternate, kkt, positivity,
+        )
+    with pytest.raises(ValueError, match="disagree"):
+        index_storage.build_index(
+            plan, source, replace(assembly_primary, max_trace_integer_bits=1),
+            assembly_alternate, scaling_primary, scaling_alternate, kkt, positivity,
         )
     with pytest.raises(ValueError, match="disagree"):
         index_storage.build_index(

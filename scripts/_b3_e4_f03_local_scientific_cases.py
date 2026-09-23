@@ -76,6 +76,8 @@ def resource_contract() -> tuple[tuple[str, int], ...]:
         ("assembly_max_trace_dofs", ASSEMBLY_BUDGET.max_trace_dofs),
         ("assembly_max_triplets", ASSEMBLY_BUDGET.max_triplets),
         ("assembly_max_trace_integer_bits", ASSEMBLY_BUDGET.max_trace_integer_bits),
+        *((f"{case_id.lower()}_trace_integer_bits", value)
+          for case_id, value in MAX_TRACE_INTEGER_BITS_BY_CASE.items()),
         ("assembly_max_work_bytes", ASSEMBLY_BUDGET.max_work_bytes),
         ("system_max_order", SYSTEM_BUDGET.max_order),
         ("system_max_nnz", SYSTEM_BUDGET.max_nnz),
@@ -153,6 +155,17 @@ CASES = (
     ScientificCase("Q2_L0", 2, 0, 9, 5, 374, 377, 9, 108, 29_388, 75_492),
     ScientificCase("Q2_L1", 2, 1, 18, 10, 1_470, 1_473, 23, 280, 234_772, 852_000),
 )
+
+# Deterministic maxima produced by the already-reviewed exact trace factory.
+# They are frozen here so solve-free evidence replay need not reconstruct any
+# trace or assembly operator merely to validate producer diagnostics.
+MAX_TRACE_INTEGER_BITS_BY_CASE = {
+    "Q1_L0": 43_526,
+    "Q1_L1": 101_918,
+    "Q1_L2": 203_292,
+    "Q2_L0": 197_432,
+    "Q2_L1": 522_014,
+}
 
 NESTED_TRANSITIONS = (
     ("Q1_L0", "Q1_L1"),
