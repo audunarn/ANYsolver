@@ -15,7 +15,7 @@ from anysolver._ge_beam3_p5_seeded.core import canonical
 os.environ.setdefault("NUMBA_CACHE_DIR", str(Path(tempfile.gettempdir()) / "f06_v4_numba"))
 
 from scripts.probe_b3_ge_e4_pl_g0_f06_owned_rebase_v4 import (
-    OwnedRebasePrototype, physical_tangent,
+    OwnedRebasePrototype, measure_pilot, physical_tangent,
 )
 from scripts.probe_b3_ge_e4_pl_g0_f06_loaded_rebase_v3 import numeric_state, shell_spatial
 from anysolver._ge_beam3_shell_joint_state import decode
@@ -302,3 +302,39 @@ def test_rejected_and_cancelled_rebase_leave_v1_prefix_replayable(base):
     resumed = OwnedRebasePrototype().owner.solve(checkpoint=prefix.checkpoint,
         expected_sha256=sha, stop_after=3)
     assert resumed.status == "completed" and resumed.state.cursor == 3
+
+
+def test_unregistered_pilot_reports_raw_scaled_metrics_and_identity():
+    value = measure_pilot()
+    metric = value["metrics"]
+    assert value["metrics_sha256"] == __import__("hashlib").sha256(
+        canonical(metric)).hexdigest()
+    assert metric["scope"] == "G0_SYNTHETIC_MEASUREMENT_NOT_QUALIFICATION"
+    assert len(metric["source_commit"]) == 40
+    assert len(metric["source_sha256"]) >= 6
+    assert metric["targets"] == (.5, 1., .75)
+    assert metric["runtime_seconds"]["total"] > 0.
+    assert set(metric["negative_checks"]) == {
+        "bad_external_hash", "rehashed_anchor", "rehashed_successor_history",
+        "rehashed_zero_residual", "stale_successor_commit"}
+    assert all(row["status"] == "REJECTED" for row in metric["negative_checks"].values())
+    for cursor in ("cursor_2", "cursor_3"):
+        paired = metric["paired"][cursor]
+        for name in ("shell_translation", "beam_translation", "shell_rotation",
+                     "beam_rotation", "shell_force", "shell_moment",
+                     "shell_layer_strain", "shell_layer_stress",
+                     "support_force", "support_moment", "shell_work",
+                     "gap_translation", "gap_rotation", "free_solver_residual",
+                     "physical_tangent_direction"):
+            row = paired[name]
+            assert row["floor"] > 0. and row["normalization_scale"] >= row["floor"]
+            assert np.isfinite(row["absolute_difference"])
+            assert np.isfinite(row["normalized_difference"])
+        samples = metric["tangent_fd"][cursor]["samples"]
+        assert [row["step_size"] for row in samples] == [2.e-3, 1.e-3, 5.e-4, 2.5e-4]
+        assert samples[-1]["assembled_scaled"]["normalized_difference"] < 1.e-7
+    for name in ("beam_rotation", "support_force", "support_moment",
+                 "shell_work", "multiplier_force"):
+        assert metric["cursor_3_changes"][name]["absolute_difference"] > 1.e-8
+    assert metric["cursor_3_balance"]["force"]["normalized"] < 1.e-8
+    assert metric["cursor_3_balance"]["moment"]["normalized"] < 1.e-8

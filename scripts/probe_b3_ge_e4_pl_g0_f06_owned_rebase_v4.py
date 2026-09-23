@@ -10,6 +10,9 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 from threading import Lock
+from time import perf_counter
+import argparse
+import subprocess
 import sys
 
 import numpy as np
@@ -33,6 +36,19 @@ from scripts.probe_b3_ge_e4_pl_g0_f06_loaded_rebase_v3 import fixture, shell_spa
 
 SCHEMA = "G0_F06_CURVED_S3_OWNED_REBASE_PROTOTYPE_V1"
 TARGETS = (.5, 1., .75)
+PILOT_FLOORS = {
+    "translation": (1.e-8, "length"),
+    "rotation": (1.e-9, "radian"),
+    "force": (1.e-10, "force"),
+    "moment": (1.e-10, "moment"),
+    "work": (1.e-12, "force_length"),
+    "strain": (1.e-12, "dimensionless_strain"),
+    "stress": (1.e-10, "force_per_area"),
+    "gap_translation": (1.e-10, "length"),
+    "gap_rotation": (1.e-10, "radian"),
+    "solver_scaled_residual": (1.e-12, "mixed_solver_scale"),
+    "tangent_fd": (1.e-10, "scaled_directional_residual"),
+}
 
 
 def _hash(raw: bytes) -> str:
@@ -47,6 +63,43 @@ def _near(a, b, label, tolerance=1.e-9):
         raise ValueError(f"F06 {label} physical disagreement")
 
 
+def _metric(left, right, floor_name):
+    """Retain raw norms and the declared same-unit pilot normalization."""
+    x, y = np.asarray(left, dtype=float), np.asarray(right, dtype=float)
+    if x.shape != y.shape or not np.isfinite(x).all() or not np.isfinite(y).all():
+        raise ValueError("F06 pilot metric shape/nonfinite disagreement")
+    floor, unit = PILOT_FLOORS[floor_name]
+    left_norm, right_norm = float(np.linalg.norm(x)), float(np.linalg.norm(y))
+    absolute = float(np.linalg.norm(x-y))
+    scale = max(floor, left_norm, right_norm)
+    return dict(unit=unit, floor=floor, left_norm=left_norm,
+        right_norm=right_norm, absolute_difference=absolute,
+        normalization_scale=scale, normalized_difference=absolute/scale)
+
+
+def _rotation_angles(left, right):
+    a, b = np.asarray(left, dtype=float), np.asarray(right, dtype=float)
+    if a.shape != b.shape or a.ndim != 3 or a.shape[1:] != (3, 3):
+        raise ValueError("F06 pilot rotation frame shape mismatch")
+    relative = a@np.swapaxes(b, -1, -2)
+    sine = np.linalg.norm(np.stack((relative[:, 2, 1]-relative[:, 1, 2],
+        relative[:, 0, 2]-relative[:, 2, 0],
+        relative[:, 1, 0]-relative[:, 0, 1]), axis=1), axis=1)/2.
+    cosine = np.clip((np.trace(relative, axis1=-2, axis2=-1)-1.)/2., -1., 1.)
+    return np.arctan2(sine, cosine)
+
+
+def _rotation_metric(left, right, reference):
+    floor, unit = PILOT_FLOORS["rotation"]
+    raw = float(np.linalg.norm(_rotation_angles(left, right)))
+    left_norm = float(np.linalg.norm(_rotation_angles(left, reference)))
+    right_norm = float(np.linalg.norm(_rotation_angles(right, reference)))
+    scale = max(floor, left_norm, right_norm)
+    return dict(unit=unit, floor=floor, left_norm=left_norm,
+        right_norm=right_norm, absolute_difference=raw,
+        normalization_scale=scale, normalized_difference=raw/scale)
+
+
 def physical_tangent(response, u, count):
     """Columns in left-spatial shell increments; other columns unchanged."""
     p = np.eye(count)
@@ -54,6 +107,26 @@ def physical_tangent(response, u, count):
         _, jac, _ = _exp_terms(row[3:])
         p[6*i+3:6*i+6, 6*i+3:6*i+6] = jac
     return np.linalg.solve(p.T, response.tangent.T).T
+
+
+def _pilot_direction(assembly, shell_u):
+    """Fixed nonzero shell, beam/retained and multiplier physical direction."""
+    spatial = np.zeros(assembly.count)
+    rows = spatial[:assembly.shell_count].reshape(-1, 6)
+    rows[1] = (.13, -.09, .07, .31, -.23, .17)
+    rows[2] = (-.08, .12, -.04, -.19, .29, .11)
+    beam = spatial[assembly.shell_count:-6]
+    for index, dof in enumerate(assembly.beam.free[:9]):
+        beam[dof] = .11*np.sin(index+1)
+    for index, dof in enumerate(assembly.beam.free[-8:]):
+        beam[dof] = .07*np.cos(index+1)
+    spatial[-6:] = (.09, -.06, .04, -.03, .05, -.02)
+    spatial /= np.linalg.norm(spatial)
+    chart = spatial.copy()
+    for index, row in enumerate(shell_u.reshape(-1, 6)):
+        sl = slice(6*index+3, 6*index+6)
+        chart[sl] = np.linalg.solve(_exp_terms(row[3:])[1], spatial[sl])
+    return spatial, chart
 
 
 def _check_tangent_directions(old, old_u, new, new_u, count):
@@ -504,26 +577,277 @@ class OwnedRebasePrototype:
             self._lock.release()
 
 
-def main():
-    """Run only the disposable curved-S3 prototype; emit no gate receipt."""
+def _paired_metrics(control_owner, control, prototype, rebased, cursor):
+    a = control_owner.assembly
+    n = len(a.coordinates)
+    identity = np.tile(np.eye(3), (n, 1, 1))
+    old_kin = deformation(np.asarray(a.coordinates), control.shell_u, identity)
+    new_kin = deformation(np.asarray(a.coordinates), rebased.shell_u, rebased.anchor)
+    old_trial, old_residual, _, _ = control_owner._evaluate(control,
+        control.mechanical, control.shell_u, control.multipliers, cursor)
+    new_trial, new_residual = prototype._anchored_evaluate(rebased,
+        rebased.mechanical, rebased.shell_u, rebased.multipliers, cursor)
+    old_shell = shell_spatial(a, decode(control.shell_origin), old_kin,
+        control.shell_u)
+    new_shell = shell_spatial(a, decode(rebased.shell_origin), new_kin,
+        rebased.shell_u)
+    old_beam = a.beam.assemble(control.mechanical, TARGETS[cursor-1],
+        control.beam_origins)[0]
+    new_beam = a.beam.assemble(rebased.mechanical, TARGETS[cursor-1],
+        rebased.beam_origins)[0]
+    old_history, new_history = decode(control.shell_history), decode(rebased.shell_history)
+    virtual = np.linspace(-.03, .05, a.beam.nodal_count)
+    spatial, _ = _pilot_direction(a, rebased.shell_u)
+    old_tangent = physical_tangent(old_trial, control.shell_u, a.count)@spatial
+    new_tangent = physical_tangent(new_trial, rebased.shell_u, a.count)@spatial
+    fixed = np.setdiff1d(np.arange(a.count), np.asarray(control_owner.free))
+    if not np.array_equal(fixed, np.arange(6)):
+        raise ValueError("F06 pilot requires exact six-DOF shell support")
+    old_shell_rows = old_residual[:a.shell_count].reshape(-1, 6)
+    new_shell_rows = new_residual[:a.shell_count].reshape(-1, 6)
+    beam_slice = slice(a.shell_count, a.shell_count+a.beam.nodal_count)
+    old_beam_rows = old_residual[beam_slice].reshape(-1, 6)
+    new_beam_rows = new_residual[beam_slice].reshape(-1, 6)
+    return dict(
+        shell_translation=_metric(old_kin.current_positions, new_kin.current_positions,
+            "translation"),
+        beam_translation=_metric(control.mechanical.positions, rebased.mechanical.positions,
+            "translation"),
+        shell_rotation=_rotation_metric(old_kin.rotations, new_kin.rotations, identity),
+        beam_rotation=_rotation_metric(control.mechanical.nodal_frames,
+            rebased.mechanical.nodal_frames, a.beam.reference_frames),
+        shell_force=_metric(old_shell_rows[:, :3], new_shell_rows[:, :3], "force"),
+        shell_moment=_metric(old_shell_rows[:, 3:], new_shell_rows[:, 3:], "moment"),
+        beam_nodal_force=_metric(old_beam_rows[:, :3], new_beam_rows[:, :3], "force"),
+        beam_nodal_moment=_metric(old_beam_rows[:, 3:], new_beam_rows[:, 3:], "moment"),
+        native_beam_mixed_residual=_metric(old_beam/a.beam.scale,
+            new_beam/a.beam.scale, "solver_scaled_residual"),
+        support_force=_metric(old_residual[fixed[:3]], new_residual[fixed[:3]], "force"),
+        support_moment=_metric(old_residual[fixed[3:]], new_residual[fixed[3:]], "moment"),
+        shell_work={**_metric([old_shell[2]], [new_shell[2]], "work"),
+            "left_value": float(old_shell[2]), "right_value": float(new_shell[2])},
+        beam_nodal_virtual_work={**_metric(
+            [old_beam[:a.beam.nodal_count]@virtual],
+            [new_beam[:a.beam.nodal_count]@virtual], "work"),
+            "virtual_direction_norm": float(np.linalg.norm(virtual))},
+        shell_layer_strain=_metric(old_history["layer_strain"],
+            new_history["layer_strain"], "strain"),
+        shell_layer_stress=_metric(old_history["layer_stress"],
+            new_history["layer_stress"], "stress"),
+        gap_translation=_metric(old_trial.constraints[:3], new_trial.constraints[:3],
+            "gap_translation"),
+        gap_rotation=_metric(old_trial.constraints[3:], new_trial.constraints[3:],
+            "gap_rotation"),
+        free_solver_residual=_metric(
+            (old_residual/control_owner.scale)[list(control_owner.free)],
+            (new_residual/prototype.owner.scale)[list(prototype.owner.free)],
+            "solver_scaled_residual"),
+        full_solver_residual=_metric(old_residual/control_owner.scale,
+            new_residual/prototype.owner.scale, "solver_scaled_residual"),
+        physical_tangent_direction=_metric(old_tangent/control_owner.scale,
+            new_tangent/prototype.owner.scale, "tangent_fd"),
+        accepted_shell_history_equal=bool(control.shell_history == rebased.shell_history),
+        accepted_beam_history_equal=bool(canonical(control.beam_histories) ==
+            canonical(rebased.beam_histories)),
+    )
+
+
+def _fd_metrics(prototype, predecessor, state, cursor):
+    """Raw FD plateau for the actual mixed anchored assembly."""
+    a = prototype.owner.assembly
+    spatial, chart = _pilot_direction(a, state.shell_u)
+    response, _ = prototype._anchored_evaluate(predecessor, state.mechanical,
+        state.shell_u, state.multipliers, cursor)
+    expected = physical_tangent(response, state.shell_u, a.count)@spatial
+    rows = []
+    beam_start = a.shell_count
+    beam_end = beam_start+a.beam.nodal_count
+    for step in (2.e-3, 1.e-3, 5.e-4, 2.5e-4):
+        forward = a.beam.advance(state.mechanical, step*chart[a.shell_count:-6])
+        backward = a.beam.advance(state.mechanical, -step*chart[a.shell_count:-6])
+        _, plus = prototype._anchored_evaluate(predecessor, forward,
+            state.shell_u+step*chart[:a.shell_count],
+            state.multipliers+step*chart[-6:], cursor)
+        _, minus = prototype._anchored_evaluate(predecessor, backward,
+            state.shell_u-step*chart[:a.shell_count],
+            state.multipliers-step*chart[-6:], cursor)
+        observed = (plus-minus)/(2*step)
+        es = expected[:a.shell_count].reshape(-1, 6)
+        os_ = observed[:a.shell_count].reshape(-1, 6)
+        eb = expected[beam_start:beam_end].reshape(-1, 6)
+        ob = observed[beam_start:beam_end].reshape(-1, 6)
+        rows.append(dict(step_size=step,
+            assembled_scaled=_metric(expected/prototype.owner.scale,
+                observed/prototype.owner.scale, "tangent_fd"),
+            shell_force=_metric(es[:, :3], os_[:, :3], "force"),
+            shell_moment=_metric(es[:, 3:], os_[:, 3:], "moment"),
+            beam_nodal_force=_metric(eb[:, :3], ob[:, :3], "force"),
+            beam_nodal_moment=_metric(eb[:, 3:], ob[:, 3:], "moment"),
+            retained_mixed=_metric(expected[beam_end:-6]/prototype.owner.scale[beam_end:-6],
+                observed[beam_end:-6]/prototype.owner.scale[beam_end:-6],
+                "tangent_fd"),
+            gap_translation=_metric(expected[-6:-3], observed[-6:-3],
+                "gap_translation"),
+            gap_rotation=_metric(expected[-3:], observed[-3:], "gap_rotation")))
+    return dict(direction_shell_norm=float(np.linalg.norm(spatial[:a.shell_count])),
+        direction_beam_retained_norm=float(np.linalg.norm(spatial[a.shell_count:-6])),
+        direction_multiplier_norm=float(np.linalg.norm(spatial[-6:])),
+        samples=rows)
+
+
+def _pilot_sources():
+    names = ("scripts/probe_b3_ge_e4_pl_g0_f06_owned_rebase_v4.py",
+        "scripts/probe_b3_ge_e4_pl_g0_f06_loaded_rebase_v3.py",
+        "src/anysolver/_ge_beam3_shell_joint_state.py",
+        "src/anysolver/_ge_beam3_shell_joint_trial.py",
+        "src/anysolver/_ge_beam3_g3c_local_shell.py",
+        "src/anysolver/_ge_beam3_coupled_beam_subdomain.py")
+    return {name: _hash((ROOT/name).read_bytes()) for name in names}
+
+
+def _negative_checks(prefix, rebased, successor, completed_owner):
+    """Disposable hash, semantic and stale-head rejection observations."""
+    results = {}
+    def rejected(name, expected, action):
+        try:
+            action()
+        except ValueError as error:
+            if expected not in str(error):
+                raise RuntimeError(f"F06 pilot {name} rejected for a different reason") from error
+            results[name] = dict(status="REJECTED", type=type(error).__name__,
+                reason=str(error))
+        else:
+            raise RuntimeError(f"F06 pilot {name} unexpectedly accepted")
+    rejected("bad_external_hash", "external F06 prototype checkpoint hash",
+        lambda: OwnedRebasePrototype().restore(rebased.checkpoint,
+            expected_sha256="0"*64))
+    anchor = decode(rebased.checkpoint)
+    anchor["anchor"][1][0][0] += .01
+    anchor["rebased_state"]["anchor"][1][0][0] += .01
+    anchor["rebased_state_sha256"] = _hash(canonical(anchor["rebased_state"]))
+    raw_anchor = canonical(anchor)
+    rejected("rehashed_anchor", "rebase event mismatch",
+        lambda: OwnedRebasePrototype().restore(raw_anchor,
+            expected_sha256=_hash(raw_anchor)))
+    history = decode(successor.checkpoint)
+    history["successor"]["state"]["shell_history"]["layer_stress"][0][0] += 1.e-4
+    raw_history = canonical(history)
+    rejected("rehashed_successor_history", "shell history disagreement",
+        lambda: OwnedRebasePrototype().restore(raw_history,
+            expected_sha256=_hash(raw_history)))
+    zero = decode(successor.checkpoint)
+    zero["successor"]["residual"] = [0.]*len(zero["successor"]["residual"])
+    zero["successor"]["metric"] = 0.
+    raw_zero = canonical(zero)
+    rejected("rehashed_zero_residual", "residual disagreement",
+        lambda: OwnedRebasePrototype().restore(raw_zero,
+            expected_sha256=_hash(raw_zero)))
+    rejected("stale_successor_commit", "stale successor predecessor",
+        lambda: completed_owner.continue_loaded(rebased.checkpoint,
+            expected_sha256=rebased.checkpoint_sha256))
+    return results
+
+
+def measure_pilot():
+    """Collect raw preparatory metrics; no registration or gate receipt."""
+    started = perf_counter()
     source = OwnedRebasePrototype()
     prefix = source.legacy_prefix()
     if prefix.status != "paused" or prefix.state.cursor != 2:
         raise RuntimeError(f"loaded F06 seed failed: {prefix.status}: {prefix.failure}")
+    prefix_seconds = perf_counter()-started
     rebased = source.rebase(prefix.checkpoint, expected_sha256=_hash(prefix.checkpoint))
     fresh = OwnedRebasePrototype()
     restored = fresh.restore(rebased.checkpoint,
         expected_sha256=rebased.checkpoint_sha256)
+    rebase_seconds = perf_counter()-started-prefix_seconds
     successor = fresh.continue_loaded(rebased.checkpoint,
         expected_sha256=rebased.checkpoint_sha256)
     replayed = OwnedRebasePrototype().restore(successor.checkpoint,
         expected_sha256=successor.checkpoint_sha256)
     if restored.cursor != 2 or replayed.cursor != 3:
         raise RuntimeError("F06 prototype replay cursor disagreement")
-    print(canonical(dict(scope="G0_SYNTHETIC_NOT_QUALIFICATION",
-        rebase_status=rebased.status, successor_status=successor.status,
-        target=TARGETS[2], rebase_sha256=rebased.checkpoint_sha256,
-        successor_sha256=successor.checkpoint_sha256)).decode("ascii"))
+    successor_seconds = perf_counter()-started-prefix_seconds-rebase_seconds
+    control = source.owner.solve(checkpoint=prefix.checkpoint,
+        expected_sha256=_hash(prefix.checkpoint), stop_after=3)
+    if control.status != "completed" or control.state.cursor != 3:
+        raise RuntimeError(f"F06 pilot control failed: {control.status}: {control.failure}")
+    a = fresh.owner.assembly
+    paired = dict(cursor_2=_paired_metrics(source.owner, prefix.state,
+        fresh, restored, 2), cursor_3=_paired_metrics(source.owner, control.state,
+        fresh, successor.state, 3))
+    tangent_fd = dict(cursor_2=_fd_metrics(fresh, restored, restored, 2),
+        cursor_3=_fd_metrics(fresh, restored, successor.state, 3))
+    _, loaded_2 = fresh._anchored_evaluate(restored, restored.mechanical,
+        restored.shell_u, restored.multipliers, 2)
+    _, loaded_3 = fresh._anchored_evaluate(successor.state, successor.state.mechanical,
+        successor.state.shell_u, successor.state.multipliers, 3)
+    kin2 = deformation(np.asarray(a.coordinates), restored.shell_u, restored.anchor)
+    kin3 = deformation(np.asarray(a.coordinates), successor.state.shell_u,
+        successor.state.anchor)
+    work2 = shell_spatial(a, decode(restored.shell_origin), kin2, restored.shell_u)[2]
+    work3 = shell_spatial(a, decode(successor.state.shell_origin), kin3,
+        successor.state.shell_u)[2]
+    applied = TARGETS[2]*fresh.owner.forces.reshape(-1, 6)[-1, :3]
+    force_balance = loaded_3[:3]+applied
+    moment_balance = (loaded_3[3:6]+np.cross(kin3.current_positions[0],
+        loaded_3[:3])+np.cross(successor.state.mechanical.positions[-1], applied))
+    force_scale = max(PILOT_FLOORS["force"][0], float(np.linalg.norm(loaded_3[:3])),
+        float(np.linalg.norm(applied)))
+    moment_scale = max(PILOT_FLOORS["moment"][0], float(np.linalg.norm(loaded_3[3:6])))
+    changes = dict(
+        beam_rotation=_rotation_metric(restored.mechanical.nodal_frames,
+            successor.state.mechanical.nodal_frames, a.beam.reference_frames),
+        support_force=_metric(loaded_2[:3], loaded_3[:3], "force"),
+        support_moment=_metric(loaded_2[3:6], loaded_3[3:6], "moment"),
+        shell_work={**_metric([work2], [work3], "work"),
+            "cursor_2_value": float(work2), "cursor_3_value": float(work3)},
+        multiplier_force=_metric(restored.multipliers[:3],
+            successor.state.multipliers[:3], "force"),
+        multiplier_moment=_metric(restored.multipliers[3:],
+            successor.state.multipliers[3:], "moment"))
+    balance = dict(force=dict(raw_norm=float(np.linalg.norm(force_balance)),
+        physical_scale=force_scale,
+        normalized=float(np.linalg.norm(force_balance))/force_scale),
+        moment=dict(raw_norm=float(np.linalg.norm(moment_balance)),
+        physical_scale=moment_scale,
+        normalized=float(np.linalg.norm(moment_balance))/moment_scale))
+    negatives = _negative_checks(prefix, rebased, successor, fresh)
+    measurement_seconds = perf_counter()-started-prefix_seconds-rebase_seconds-successor_seconds
+    payload = dict(schema="G0_F06_CURVED_S3_V4_UNREGISTERED_PILOT_METRICS_V1",
+        scope="G0_SYNTHETIC_MEASUREMENT_NOT_QUALIFICATION",
+        source_commit=subprocess.check_output(("git", "rev-parse", "HEAD"),
+            cwd=ROOT, text=True).strip(), source_sha256=_pilot_sources(),
+        targets=TARGETS,
+        provisional_floors={key: dict(value=value, unit=unit)
+            for key, (value, unit) in PILOT_FLOORS.items()},
+        checkpoint_sha256=dict(base=_hash(prefix.checkpoint),
+            rebase=rebased.checkpoint_sha256, successor=successor.checkpoint_sha256,
+            control=_hash(control.checkpoint)),
+        statuses=dict(base=prefix.status, rebase=rebased.status,
+            successor=successor.status, control=control.status),
+        paired=paired, tangent_fd=tangent_fd,
+        cursor_3_changes=changes, cursor_3_balance=balance,
+        negative_checks=negatives,
+        runtime_seconds=dict(base=prefix_seconds, rebase_and_restore=rebase_seconds,
+            successor_and_restore=successor_seconds, measurement=measurement_seconds,
+            total=perf_counter()-started),
+        production_qualified=False)
+    return dict(metrics_sha256=_hash(canonical(payload)), metrics=payload)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Unregistered F06 v4 G0 measurement pilot")
+    parser.add_argument("--output", type=Path,
+        help="optional new file for the canonical pilot JSON; existing files are never replaced")
+    args = parser.parse_args(argv)
+    raw = canonical(measure_pilot())
+    if args.output is None:
+        sys.stdout.buffer.write(raw)
+    else:
+        with args.output.open("xb") as stream:
+            stream.write(raw)
+        print(str(args.output.resolve()))
 
 
 if __name__ == "__main__":
