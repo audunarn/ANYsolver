@@ -15,7 +15,7 @@ from anysolver._ge_beam3_p5_seeded.core import canonical
 os.environ.setdefault("NUMBA_CACHE_DIR", str(Path(tempfile.gettempdir()) / "f06_v4_numba"))
 
 from scripts.probe_b3_ge_e4_pl_g0_f06_owned_rebase_v4 import (
-    OwnedRebasePrototype, measure_pilot, physical_tangent,
+    OwnedRebasePrototype, main, measure_pilot, physical_tangent,
 )
 from scripts.probe_b3_ge_e4_pl_g0_f06_loaded_rebase_v3 import numeric_state, shell_spatial
 from anysolver._ge_beam3_shell_joint_state import decode
@@ -304,20 +304,37 @@ def test_rejected_and_cancelled_rebase_leave_v1_prefix_replayable(base):
     assert resumed.status == "completed" and resumed.state.cursor == 3
 
 
-def test_unregistered_pilot_reports_raw_scaled_metrics_and_identity():
-    value = measure_pilot()
+def test_unregistered_pilot_reports_raw_scaled_metrics_and_identity(tmp_path):
+    value = measure_pilot(checkpoint_dir=tmp_path)
     metric = value["metrics"]
+    assert metric["checkpoint_sidecars_written"] is True
+    for name, row in metric["checkpoint_sidecars"].items():
+        raw = (tmp_path / row["file"]).read_bytes()
+        assert row["byte_count"] == len(raw)
+        assert row["sha256"] == __import__("hashlib").sha256(raw).hexdigest()
+        assert row["sha256"] == metric["checkpoint_sha256"][name]
     assert value["metrics_sha256"] == __import__("hashlib").sha256(
         canonical(metric)).hexdigest()
     assert metric["scope"] == "G0_SYNTHETIC_MEASUREMENT_NOT_QUALIFICATION"
     assert len(metric["source_commit"]) == 40
     assert len(metric["source_sha256"]) >= 6
+    assert {"src/anysolver/_ge_beam3_native_generalized_element.py",
+            "src/anysolver/_ge_beam3_generalized_ellipsoid_section.py",
+            "src/anysolver/_ge_beam3_generalized_static_boundary.py"} <= set(
+                metric["source_sha256"])
     assert metric["targets"] == (.5, 1., .75)
     assert metric["runtime_seconds"]["total"] > 0.
     assert set(metric["negative_checks"]) == {
         "bad_external_hash", "rehashed_anchor", "rehashed_successor_history",
-        "rehashed_zero_residual", "stale_successor_commit"}
+        "rehashed_zero_residual", "stale_successor_commit",
+        "cancel_rebase_before_commit", "cancel_successor_before_commit"}
     assert all(row["status"] == "REJECTED" for row in metric["negative_checks"].values())
+    assert metric["negative_checks"]["cancel_rebase_before_commit"]["head_sha256"] is None
+    assert metric["negative_checks"]["cancel_successor_before_commit"]["head_sha256"] == (
+        metric["checkpoint_sha256"]["rebase"])
+    assert all(row["status"] == "MATCHED" and
+        row["direct_state_sha256"] == row["audited_state_sha256"]
+        for row in metric["optional_replay_audit"].values())
     for cursor in ("cursor_2", "cursor_3"):
         paired = metric["paired"][cursor]
         for name in ("shell_translation", "beam_translation", "shell_rotation",
@@ -333,8 +350,79 @@ def test_unregistered_pilot_reports_raw_scaled_metrics_and_identity():
         samples = metric["tangent_fd"][cursor]["samples"]
         assert [row["step_size"] for row in samples] == [2.e-3, 1.e-3, 5.e-4, 2.5e-4]
         assert samples[-1]["assembled_scaled"]["normalized_difference"] < 1.e-7
+        mixed_errors = [row["assembled_scaled"]["normalized_difference"] for row in samples]
+        assert mixed_errors[0] > mixed_errors[1] > mixed_errors[2] > mixed_errors[3]
+        assert all(metric["tangent_fd"][cursor][key] > 0. for key in (
+            "direction_shell_norm", "direction_beam_retained_norm", "direction_multiplier_norm"))
+        for kind in ("strain", "stress"):
+            layer = paired["shell_layer_maxima"][kind]
+            assert layer["index_names"] == ("integration_station", "layer", "component")
+            assert layer["maximum"]["normalized_difference"] < 1.e-9
+        beam = paired["beam_section_response"]
+        assert len(beam["station_identity"]) == 2
+        assert all(len(row["stations"]) == 8 for row in beam["station_identity"])
+        assert len(beam["retained_resultants"]["component_labels"]) == 18
+        for kind in ("retained_resultants", "section_strain", "section_resultants"):
+            assert beam[kind]["maximum"]["normalized_difference"] < 1.e-9
+        split = beam["section_split"]
+        assert set(split) == {"strain_high", "strain_low", "resultant_high", "resultant_low"}
+        for field, high, low in (("section_strain", "strain_high", "strain_low"),
+                ("section_resultants", "resultant_high", "resultant_low")):
+            for side_values in ("left_values", "right_values"):
+                h, l = np.asarray(split[high][side_values]), np.asarray(split[low][side_values])
+                assert h.shape == l.shape == (2, 8, 6)
+                assert np.array_equal(h+l, np.asarray(beam[field][side_values]))
+            assert np.isfinite(split[high]["maximum"]["normalized_difference"])
+            assert np.isfinite(split[low]["maximum"]["normalized_difference"])
+        for side in ("control", "rebased"):
+            component = metric["component_fd"][cursor][side]
+            assert [row["step_size"] for row in component["samples"]] == [
+                2.e-3, 1.e-3, 5.e-4, 2.5e-4]
+            assert all(np.isfinite(row["normalized_difference"])
+                for row in component["samples"][-1].values() if isinstance(row, dict))
+            assert component["samples"][-1]["dead_external_force"]["absolute_difference"] == 0.
+            assert component["samples"][-1]["dead_external_couple"]["absolute_difference"] == 0.
+            assert component["external_operator_scope"] == "SHARED_CONSTANT_DEAD_LOAD_CALL_PATH"
+            for key, row in component["samples"][-1].items():
+                if not isinstance(row, dict):
+                    continue
+                errors = [sample[key]["normalized_difference"] for sample in component["samples"]]
+                assert errors[-1] <= 1.e-6
+                if errors[0] > 1.e-9:
+                    assert errors[0] > errors[1] > errors[2]
+                else:
+                    assert max(errors) <= 1.e-9
+            work = metric["interface_work"][cursor][side]
+            assert set(work["variations"]) == {"shell_only", "beam_only", "mixed"}
+            assert len(work["compatible_rigid_zero_work"]) == 6
+            assert all(row["samples"][-1]["reference_scaled_error"] < 1.e-8
+                for row in work["variations"].values())
+            assert all(row["reference_scaled_work"] < 1.e-8
+                for row in work["compatible_rigid_zero_work"].values())
+            balance = metric["fixed_reference_balance"][cursor][side]
+            reference_force = np.sqrt(5.)*1.e-4
+            assert balance["reference_length"] == 1.
+            assert balance["reference_force"] == reference_force
+            assert balance["reference_moment"] == reference_force
+            assert np.allclose(balance["force_closure"],
+                np.asarray(balance["support_force"])+balance["applied_force"], atol=1.e-18)
+            assert np.allclose(balance["moment_closure"],
+                np.asarray(balance["support_moment"])+
+                np.cross(balance["support_position"], balance["support_force"])+
+                np.cross(balance["tip_position"], balance["applied_force"]), atol=1.e-18)
+            assert balance["force_reference_scaled"] < 1.e-8
+            assert balance["moment_reference_scaled"] < 1.e-8
     for name in ("beam_rotation", "support_force", "support_moment",
                  "shell_work", "multiplier_force"):
         assert metric["cursor_3_changes"][name]["absolute_difference"] > 1.e-8
     assert metric["cursor_3_balance"]["force"]["normalized"] < 1.e-8
     assert metric["cursor_3_balance"]["moment"]["normalized"] < 1.e-8
+    for name, lower in (("beam_rotation", 5.e-4), ("support_force", 2.e-5),
+            ("support_moment", 5.e-5), ("shell_work", 1.e-7),
+            ("multiplier_force", 2.e-5)):
+        assert metric["cursor_3_changes"][name]["absolute_difference"] > lower
+
+
+def test_candidate_output_directory_is_exclusive(tmp_path):
+    with pytest.raises(FileExistsError):
+        main(["--output-dir", str(tmp_path)])
