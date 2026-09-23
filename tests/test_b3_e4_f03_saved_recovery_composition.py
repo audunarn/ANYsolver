@@ -271,6 +271,9 @@ def test_saved_balance_adjudication_result_requires_canonical_action_hashes():
     invalid=('G'*64,)+('ab'*32,)*(len(result_storage.BALANCE_ACTION_NAMES)-1)
     with pytest.raises(ValueError,match='invalid F03 balance adjudication'):
         balance_adjudication.BalanceAdjudication('PASSED',(),invalid)
+    aliased=['ab'*32]*len(result_storage.BALANCE_ACTION_NAMES)
+    with pytest.raises(ValueError,match='invalid F03 balance adjudication'):
+        balance_adjudication.BalanceAdjudication('PASSED',(),aliased)
 
 
 @pytest.mark.parametrize(('changed','expected','reason'),(

@@ -31,6 +31,7 @@ class BalanceAdjudication:
             self.status not in ("PASSED", "FAILED", "HOLD_UNRESOLVED")
             or type(self.reasons) is not tuple
             or any(type(value) is not str or not value for value in self.reasons)
+            or type(self.action_sha256s) is not tuple
             or len(self.action_sha256s) != len(storage.BALANCE_ACTION_NAMES)
             or any(
                 type(value) is not str
