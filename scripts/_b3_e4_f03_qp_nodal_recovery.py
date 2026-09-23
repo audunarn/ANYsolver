@@ -81,7 +81,7 @@ def assemble_area_nodal_load(adjoint: FinitePadAreaAdjoint, *,
     trace = adjoint.trace
     x_order = trace.p+3 if x_order is None else x_order
     y_order = trace.p+1 if y_order is None else y_order
-    if (x_order < trace.p+2 or x_order > 12 or
+    if (x_order < trace.p+2 or x_order > 14 or
             y_order < trace.p+1 or y_order > 10):
         raise ValueError("unsupported bounded area quadrature order")
     load = np.zeros(2*trace.n)

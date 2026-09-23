@@ -306,9 +306,19 @@ failed Ritz evidence remains untouched. **F03/G0B remain open; G1 barred.**
 
 The later preparatory Q3/Q4/Q5 extension brings the adjacent
 complete-functional changes below 1% (`0.2937464%`, `0.1205903%`),
-without proving the other physical-output or resource predicates. The
+but Q3→Q4 later failed 1% on beam energy, root/tip section resultants,
+tip atom and a near-root band wrench. The
 [high-order screen](B3_GE_E4_PL_G0_F03_QP_HIGH_ORDER_SCREEN_20260923.md)
 records the separate source checks and a costly custom-grid spatial suite.
-A revised one-use protocol still requires a frozen complete-route inventory,
+A Q4/Q5/Q6 successor must first pass preparatory resource and mechanics
+checks. A revised one-use protocol still requires a frozen complete-route inventory,
 per-case resource measurements, all signed physical settling checks, and
 independent review. **F03/G0B remain open; G1 barred.**
+
+The subsequent [Q6 h-pilot result](B3_GE_E4_PL_G0_F03_QP_H_PILOT_RESULT_20260923.md)
+records a passing *draft* settling screen over fixed-Q6 X0→X1→X2, while
+retaining the failed default-grid and X1 p screens. This is exploratory
+classical-reference evidence. State binding, actual-case h identities,
+complete spatial/resource checks and one-use registration are still
+required, and native coupling feasibility is still a separate G0B
+obligation. **F03/G0B remain open; G1 barred.**

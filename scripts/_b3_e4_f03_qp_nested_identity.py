@@ -27,18 +27,24 @@ class NestedIdentity:
 
 
 def _same_physics(coarse: FinitePadQpTrace, fine: FinitePadQpTrace) -> bool:
-    return (coarse.p < fine.p and coarse.x == fine.x and
-            coarse.y == fine.y and coarse.offsets == fine.offsets and
+    p_nested = (coarse.p < fine.p and coarse.x == fine.x and
+                coarse.y == fine.y)
+    h_nested = (coarse.p == fine.p and coarse.y == fine.y and
+                coarse.x[0] == fine.x[0] and
+                coarse.x[-1] == fine.x[-1] and
+                len(coarse.x) < len(fine.x) and
+                all(edge in fine.x for edge in coarse.x))
+    return ((p_nested or h_nested) and coarse.offsets == fine.offsets and
             coarse.a == fine.a and coarse.j == fine.j)
 
 
 def prolongate(coarse: FinitePadQpTrace, fine: FinitePadQpTrace,
                q: np.ndarray) -> np.ndarray:
-    """Evaluate the same continuous cell polynomial on finer Qp nodes."""
+    """Evaluate the same continuous cell polynomial on nested p or x nodes."""
     if (not isinstance(coarse, FinitePadQpTrace) or
             not isinstance(fine, FinitePadQpTrace) or
             not _same_physics(coarse, fine)):
-        raise ValueError("nested Qp levels must share physical rectangles and pads")
+        raise ValueError("nested Qp levels must share physical geometry and pads")
     source = np.asarray(q, dtype=float)
     if source.shape != (2*coarse.n,) or not np.isfinite(source).all():
         raise ValueError("invalid coarse full nodal field")

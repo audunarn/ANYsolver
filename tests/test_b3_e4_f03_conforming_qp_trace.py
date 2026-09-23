@@ -30,7 +30,7 @@ def _physical_pose(trace, station, ux, uy):
 
 
 @pytest.mark.parametrize("degree,expected", [
-    (1, 96), (2, 374), (3, 832), (4, 1470), (5, 2288),
+    (1, 96), (2, 374), (3, 832), (4, 1470), (5, 2288), (6, 3286),
 ])
 def test_shared_nodes_essential_edges_and_exact_polynomial_work(degree, expected):
     trace = FinitePadQpTrace(degree)
@@ -50,7 +50,7 @@ def test_shared_nodes_essential_edges_and_exact_polynomial_work(degree, expected
     assert abs(wrench@pose-q@(matrix.T@wrench)) < 3e-13
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5, 6))
 def test_rigid_gain_root_rank_and_derivative_plateau(degree):
     trace = FinitePadQpTrace(degree)
     jgeom = sum(dx*dx+dy*dy+2*trace.a**2/3
@@ -121,7 +121,7 @@ def test_near_duplicate_represented_events_retain_measure_and_sides():
 
 def test_bad_geometry_and_degree():
     with pytest.raises(ValueError, match="degree"):
-        FinitePadQpTrace(6)
+        FinitePadQpTrace(7)
     with pytest.raises(ValueError, match="leaves"):
         FinitePadQpTrace(2, halfwidth=.3)
     with pytest.raises(ValueError, match="station"):

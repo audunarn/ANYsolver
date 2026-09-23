@@ -22,12 +22,12 @@ REPRESENTED_J = .2**2 + .23**2 + 2*HALFWIDTH**2/3
 
 
 class PiecewisePadMomentOracle:
-    """Physical pad moments of a shared-node Qp field, for p=1..5."""
+    """Physical pad moments of a shared-node Qp field, for p=1..6."""
 
     def __init__(self, p, x=None, y=None, offsets=OFFSETS,
                  halfwidth=HALFWIDTH, j=REPRESENTED_J):
-        if isinstance(p, bool) or not isinstance(p, numbers.Integral) or p not in (1, 2, 3, 4, 5):
-            raise ValueError("degree must be in 1..5")
+        if isinstance(p, bool) or not isinstance(p, numbers.Integral) or p not in (1, 2, 3, 4, 5, 6):
+            raise ValueError("degree must be in 1..6")
         self.p = int(p)
         self.offsets = tuple((float(dx), float(dy)) for dx, dy in offsets)
         self.a, self.j = float(halfwidth), float(j)

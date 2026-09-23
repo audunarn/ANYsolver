@@ -18,7 +18,7 @@ from scripts._b3_e4_f03_qp_subulp_density import (
 )
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5, 6))
 def test_subulp_polynomial_is_stable_and_checks_held_points(degree):
     trace = FinitePadQpTrace(degree)
     oracle = PiecewisePadMomentOracle(degree, x=trace.x, y=trace.y,
@@ -41,7 +41,7 @@ def test_subulp_polynomial_is_stable_and_checks_held_points(degree):
         assert np.max(np.abs(coarse[1:])) > 0.
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5, 6))
 def test_decimal_density_matches_separate_float_oracle_away_from_events(degree):
     trace = FinitePadQpTrace(degree)
     oracle = PiecewisePadMomentOracle(degree, x=trace.x, y=trace.y,

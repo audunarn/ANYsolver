@@ -21,12 +21,12 @@ J = .2**2 + .23**2 + 2*HALFWIDTH**2/3
 
 
 class FinitePadQpTrace:
-    """Dense, bounded trace oracle for shared tensor Qp nodes, p in 1..5."""
+    """Dense, bounded trace oracle for shared tensor Qp nodes, p in 1..6."""
 
     def __init__(self, p, x=None, y=None, offsets=OFFSETS,
                  halfwidth=HALFWIDTH, j=J):
-        if isinstance(p, bool) or not isinstance(p, numbers.Integral) or p not in (1, 2, 3, 4, 5):
-            raise ValueError("Qp degree must be in 1..5")
+        if isinstance(p, bool) or not isinstance(p, numbers.Integral) or p not in (1, 2, 3, 4, 5, 6):
+            raise ValueError("Qp degree must be in 1..6")
         self.p = int(p)
         self.offsets = tuple((float(dx), float(dy)) for dx, dy in offsets)
         self.a, self.j = float(halfwidth), float(j)

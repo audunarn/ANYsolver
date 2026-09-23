@@ -65,3 +65,34 @@ def test_solved_nested_energy_identity_and_same_physics_rejection():
     with pytest.raises(ValueError, match="share physical"):
         prolongate(traces[0], FinitePadQpTrace(2, x=X, y=Y,
                    j=1.01*traces[0].j), np.zeros(2*traces[0].n))
+
+
+def test_q6_nested_x_preserves_pose_work_and_ritz_identity():
+    coarse_x = (-.5, 0., 1.5)
+    fine_x = (-.5, -.25, 0., .75, 1.5)
+    y = (-.5, 0., .5)
+    coarse = FinitePadQpTrace(6, x=coarse_x, y=y)
+    fine = FinitePadQpTrace(6, x=fine_x, y=y)
+    rng = np.random.default_rng(6601)
+    q = rng.normal(size=2*coarse.n)*1e-5
+    q[np.setdiff1d(np.arange(2*coarse.n), coarse.free_columns)] = 0.
+    embedded = prolongate(coarse, fine, q)
+    for station in (0., .137, .43, .9, 1.):
+        for original, refined in zip(coarse.matrices(station),
+                                     fine.matrices(station)):
+            np.testing.assert_allclose(original@q, refined@embedded,
+                                       rtol=1e-10, atol=1e-11)
+    coarse_operator, fine_operator = assemble(coarse), assemble(fine)
+    qc, _, _ = solve(coarse_operator)
+    qf, _, _ = solve(fine_operator)
+    identity = evaluate_nested_identity(coarse_operator, fine_operator,
+                                        qc, qf)
+    assert identity.fine_energy >= identity.coarse_energy-1e-10*E0
+    assert identity.defect_scaled <= 1e-10
+    assert identity.load_embedding_scaled <= 1e-10
+    assert identity.root_embedding_scaled <= 1e-10
+    assert identity.tip_embedding_scaled <= 1e-10
+    with pytest.raises(ValueError, match="share physical"):
+        prolongate(coarse, FinitePadQpTrace(6, x=(-.5, .1, 1.5), y=y), q)
+    with pytest.raises(ValueError, match="share physical"):
+        prolongate(coarse, FinitePadQpTrace(6, x=(-.6, -.5, 0., 1.5), y=y), q)

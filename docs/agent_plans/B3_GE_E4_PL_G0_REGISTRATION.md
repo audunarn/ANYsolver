@@ -1770,6 +1770,34 @@ three-case suite took `1141.81 s` without per-case timing; this is a
 resource concern, not a qualified bound. Exact source/test inventories,
 earlier preparatory failures and remaining work are recorded in
 `B3_GE_E4_PL_G0_F03_QP_HIGH_ORDER_SCREEN_20260923.md`. Other physical
-settling quantities, default-grid spatial route, registered resources,
+settling quantities were subsequently screened: Q3→Q4 beam energy,
+root/tip sections, tip atom and a near-root band fail the proposed 1%
+rule. Q4→Q5 passes 1% on checked signed quantities. The raw values are
+preserved separately. A Q4/Q5/Q6 successor requires its own feasibility
+and resource screen. Default-grid spatial route, registered resources,
 independent execution review and one-use authority remain open.
 **F03/G0B remain open; G1 remains barred.**
+
+The subsequent unregistered Q6 screen solved the 3,286-free-coordinate
+default-grid model and recovered a finite precise functional. All 49
+checked signed scalar components are within 1% on Q4→Q5 and Q5→Q6,
+but the registered-draft absolute-change condition is violated by
+the Fy component of two required bands: `[0.5,0.75]` and
+`[1/32,1/16]`. The complete figures and raw arrays are preserved in
+`B3_GE_E4_PL_G0_F03_QP_P6_SCREEN_20260923.md` and its linked JSON.
+Q6 lacks its own full operator/spatial/resource qualification; no
+scientific one-use run was registered or executed. **F03/G0B remain
+open; G1 remains barred.**
+
+Two further unregistered, predeclared x-grid pilots are preserved in
+`B3_GE_E4_PL_G0_F03_QP_H_PILOT_RESULT_20260923.md`. X1 Q4/Q5/Q6
+failed the unchanged absolute-change rule on quarter-2 physical origin
+moment. Fixed-Q6 X0→X1→X2 then passed the draft 49-signed-component and
+complete-functional settling rules, with independent reconstruction of
+three vulnerable physical bands. The Q6 h-nesting identity passed on a
+bounded model; actual-case identity, complete area/spatial/support work,
+all-band independent recovery, state-bound adjudication, installed
+verification, sampled memory and frozen one-use source/environment
+registration remain outstanding. The stored `eta` is the beam-root
+multiplier; the physical root reaction is `−eta`. No X0/X1/X2 result is
+formal acceptance. **F03/G0B remain open; G1 remains barred.**

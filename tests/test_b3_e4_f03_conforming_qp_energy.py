@@ -92,11 +92,11 @@ def test_p1_separately_assembled_q1_matrix_load_and_solve():
     assert result["work_identity_scaled"] < 1e-10
 
 
-@pytest.mark.parametrize("p", (2, 3, 4, 5))
+@pytest.mark.parametrize("p", (2, 3, 4, 5, 6))
 def test_piecewise_random_fields_against_independent_shell_and_dense_beam_oracles(p, monkeypatch):
     trace = FinitePadQpTrace(p, x=(-.5, 0., 1., 1.5), y=(-.5, 0., .5))
     operators = assemble(trace)
-    assert operators.dof_count < 320
+    assert operators.dof_count < 450
     assert operators.shell_stiffness.nnz < operators.dof_count**2
     assert operators.beam_stiffness.nnz < operators.dof_count**2
     assert operators.beam_discrepancy_relative < 1e-10
@@ -155,7 +155,7 @@ def test_missing_comparison_rejected_before_factorization():
 
 
 def test_resource_inventory_rejects_oversized_grid_before_assembly():
-    trace = FinitePadQpTrace(3, x=np.linspace(-.5, 1.5, 25),
+    trace = FinitePadQpTrace(3, x=np.linspace(-.5, 1.5, 29),
                              y=np.linspace(-.5, .5, 13))
     with pytest.raises(ValueError, match="resource inventory"):
         assemble(trace)

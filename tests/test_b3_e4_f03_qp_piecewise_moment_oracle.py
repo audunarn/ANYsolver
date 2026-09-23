@@ -26,7 +26,7 @@ def _nodes(oracle):
     return np.meshgrid((*x, oracle.x[-1]), (*y, oracle.y[-1]), indexing="ij")
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5, 6))
 @pytest.mark.parametrize("grid", GRIDS)
 def test_piecewise_random_fields_and_one_sided_events(degree, grid):
     x, y = grid
@@ -46,9 +46,13 @@ def test_piecewise_random_fields_and_one_sided_events(degree, grid):
                 powers = np.outer(t**np.arange(degree+1),
                                   v**np.arange(degree+1))
                 index = (i*degree+a)*oracle.ny+k*degree+b
+                # Q6 tensor reconstruction adds sub-picounit absolute
+                # roundoff for unit-scale random nodal fields.
+                nodal_atol = 1e-12 if degree == 6 else 2e-13
                 np.testing.assert_allclose(
                     np.einsum("cik,ik->c", coeff[:, i, k], powers),
-                    (q[index], q[oracle.n+index]), rtol=0, atol=2e-13)
+                    (q[index], q[oracle.n+index]), rtol=0,
+                    atol=nodal_atol)
 
     events = trace.station_breakpoints()
     ordinary = (.137, .413, .779)
@@ -75,7 +79,7 @@ def test_piecewise_random_fields_and_one_sided_events(degree, grid):
                                        err_msg=f"p={degree}, s={station}, side={side}, order={order}")
 
 
-@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5))
+@pytest.mark.parametrize("degree", (1, 2, 3, 4, 5, 6))
 @pytest.mark.parametrize("j", (REPRESENTED_J, 1.07*REPRESENTED_J))
 def test_physical_yaw_work_and_represented_gamma(degree, j):
     trace = FinitePadQpTrace(degree, j=j)
@@ -100,12 +104,15 @@ def test_physical_yaw_work_and_represented_gamma(degree, j):
     for order, tolerance in enumerate((2e-12, 5e-12, 2e-11)):
         direct_work = wrench@direct[order]
         matrix_work = random_q@(matrices[order].T@wrench)
-        assert abs(direct_work-matrix_work) < tolerance
+        # The random-field work is O(1e2) at Q6. Retain the absolute
+        # low-order limit and add a 1e-13 relative roundoff allowance.
+        assert abs(direct_work-matrix_work) < max(
+            tolerance, 1e-13*max(abs(direct_work), abs(matrix_work)))
 
 
 def test_bounded_geometry_and_input():
     with pytest.raises(ValueError, match="degree"):
-        PiecewisePadMomentOracle(6)
+        PiecewisePadMomentOracle(7)
     oracle = PiecewisePadMomentOracle(3)
     with pytest.raises(ValueError, match="q must"):
         oracle.coefficients(np.zeros(2*oracle.n-1))

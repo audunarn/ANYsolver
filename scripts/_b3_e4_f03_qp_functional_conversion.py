@@ -83,8 +83,8 @@ def from_qp_recovery(trace: FinitePadQpTrace, q, eta) -> ConversionAudit:
     if not isinstance(trace, FinitePadQpTrace):
         raise TypeError("a finite-pad Qp trace is required")
     intervals = trace.station_intervals()
-    if (len(intervals) > MAX_INTERVALS or 2*trace.n > 2392 or
-            len(trace.free_columns) > 2288):
+    if (len(intervals) > MAX_INTERVALS or 2*trace.n > 6014 or
+            len(trace.free_columns) > 5890):
         raise ValueError("outside bounded Qp functional conversion")
     q = np.asarray(q, dtype=np.float64)
     eta = np.asarray(eta, dtype=np.float64)

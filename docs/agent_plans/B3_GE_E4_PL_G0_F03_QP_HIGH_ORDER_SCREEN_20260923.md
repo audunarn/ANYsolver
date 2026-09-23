@@ -29,8 +29,20 @@ The complete-functional distance was `1804.3383263607025 N` or
 `0.2937464%` for Q3→Q4, and `739.6035620365935 N` or `0.1205903%`
 for Q4→Q5, normalized by the larger operand norm or 1000 N. Both are
 below the proposed 1% physical limit, and the second is smaller. This
-does **not** establish the other required signed scalar, reaction,
-energy, spatial or band-wrench settling conditions.
+did **not** establish the other required signed scalar, reaction, energy,
+spatial or band-wrench settling conditions.
+
+A later unregistered signed-output screen preserved its raw Q3/Q4/Q5
+values in [the scalar record](B3_GE_E4_PL_G0_F03_QP_HIGH_ORDER_SCALARS_20260923.json).
+It found Q3→Q4 failures of the proposed 1% per-quantity rule: beam energy
+`1.8199%`, root section resultant `1.5760%`, tip section resultant and tip
+atom `2.0057%`, and the `[1/32,1/16]` band wrench `1.4880%`. The largest
+Q4→Q5 error in those named families was `0.7783%`, and all checked
+Q4→Q5 tip/energy/reaction/section/atom/line/quarter/endpoint-band
+quantities were below 1%. This remains a preparatory screen; a complete
+physical and absolute-change adjudication has not been made. **Q3/Q4/Q5
+must not be registered as the passing sequence.** The natural successor
+to investigate is Q4/Q5/Q6, subject to resource and mechanics checks.
 
 Focused source checks performed after the bound change:
 
@@ -49,7 +61,7 @@ The high-order float parity test has an explicit roundoff allowance
 the derivative check uses the measured finite-difference plateau at
 `h=2.5e-6` for Q4/Q5. Neither changes a scientific acceptance tolerance.
 
-Before registering Q3/Q4/Q5, freeze exact source and case identities,
+Before registering any higher-order successor, freeze exact source and case identities,
 exercise the complete default-grid physical output inventory and two
 support liftings, measure per-case full-route time/RSS under a bounded
 supervisor, retain raw output, verify the 1% signed-scalar and absolute-
