@@ -132,6 +132,186 @@ def _work(plan: archive.CaseArchivePlan) -> receipt.WorkRecord:
     return receipt.WorkRecord(tuple((name, values[name]) for name in receipt.WORK_NAMES))
 
 
+def _zero_work() -> receipt.WorkRecord:
+    return receipt.WorkRecord(tuple((name, 0) for name in receipt.WORK_NAMES))
+
+
+def _saved_producer_work(index, plan: archive.CaseArchivePlan) -> receipt.WorkRecord:
+    kkt = index.kkt_producer
+    positive = index.positivity_producer
+    values = {
+        "producer_kkt_factorizations": kkt.factorization_count,
+        "producer_positivity_factorizations": positive.factorization_count,
+        "producer_candidate_rhs_solves": kkt.candidate_rhs_solves,
+        "producer_certificate_solve_calls": kkt.certificate_solve_calls,
+        "producer_certificate_rhs_attempted": kkt.certificate_rhs_attempted,
+        "producer_certificate_rhs_completed": kkt.certificate_rhs_completed,
+        "producer_recovery_factorizations": kkt.recovery_factorizations,
+        "producer_recovery_solves": kkt.recovery_solves,
+        "replay_factorizations": 0,
+        "replay_equilibrium_solves": 0,
+        "replay_recovery_recomputations": 0,
+        "replay_norm_evaluations": 0,
+    }
+    value = receipt.WorkRecord(
+        tuple((name, values[name]) for name in receipt.WORK_NAMES),
+    )
+    if (
+        kkt.certificate_solve_calls != len(plan.inverse_blocks)
+        or kkt.certificate_rhs_attempted != plan.kkt_order
+        or kkt.certificate_rhs_completed != plan.kkt_order
+    ):
+        raise ValueError("saved F03 producer work disagrees with plan")
+    return value
+
+
+def _bounded_failure_reason(value: object, fallback: str) -> str:
+    reason = value if type(value) is str and value else fallback
+    if len(reason) > 2048:
+        reason = reason[:2048]
+    return reason
+
+
+def _failed_predicates(
+    *, evidence_reason: str | None, execution_reason: str | None,
+) -> tuple[receipt.PredicateRecord, ...]:
+    if evidence_reason is not None:
+        return tuple(
+            _record(
+                name,
+                "FAILED" if name == "evidence" else "NOT_EVALUATED",
+                (evidence_reason,) if name == "evidence" else
+                ("not evaluated after evidence failure",),
+            )
+            for name in receipt.PREDICATE_NAMES
+        )
+    if execution_reason is None:
+        raise ValueError("explicit F03 execution failure reason required")
+    return tuple(
+        _record(
+            name,
+            "PASSED" if name == "evidence" else
+            "FAILED" if name == "execution" else "NOT_EVALUATED",
+            (execution_reason,) if name == "execution" else
+            ("not evaluated after execution failure",)
+            if name not in ("evidence", "execution") else (),
+        )
+        for name in receipt.PREDICATE_NAMES
+    )
+
+
+def close_failed_case(
+    directory: Path,
+    plan: archive.CaseArchivePlan,
+    registration_sha256: str,
+    *,
+    evidence_failure: str | None = None,
+) -> tuple[receipt.CaseReceipt, str]:
+    """Write one canonical failure receipt without replaying mechanics.
+
+    A supplied ``evidence_failure`` has precedence over otherwise readable
+    evidence. Without it, complete indexed evidence is retained and an
+    unsuccessful terminal lifecycle is classified as execution failure.
+    """
+    directory = Path(directory)
+    if not directory.is_dir() or type(plan) is not archive.CaseArchivePlan:
+        raise ValueError("validated F03 failure-closure inputs required")
+    terminal, terminal_sha256 = lifecycle.read_terminal(
+        directory, plan, registration_sha256,
+    )
+    start_sha256 = None
+    if (directory / "start.json").exists():
+        _, start_sha256 = lifecycle.read_start(
+            directory, plan, registration_sha256,
+        )
+
+    evidence_sha256 = None
+    numerical_sha256 = None
+    inverse_sha256 = None
+    evidence_total_bytes = None
+    indexed = None
+    observed_failure = evidence_failure
+    if observed_failure is None:
+        if start_sha256 is None:
+            observed_failure = "registered child did not create a start marker"
+        else:
+            try:
+                evidence, evidence_sha256 = evidence_index.read_index(
+                    directory, plan, registration_sha256, start_sha256,
+                )
+                indexed, numerical_sha256 = numerical_index.read_index(
+                    directory / "numerical_index.json", plan,
+                )
+                _, inverse_sha256 = inverse_storage.read_index(directory, plan)
+                evidence_total_bytes = evidence.total_bytes
+            except (OSError, ValueError) as exc:
+                observed_failure = _bounded_failure_reason(
+                    f"{type(exc).__name__}: {exc}",
+                    "incomplete or invalid F03 evidence",
+                )
+                evidence_sha256 = numerical_sha256 = inverse_sha256 = None
+                evidence_total_bytes = None
+                indexed = None
+
+    if observed_failure is not None:
+        observed_failure = _bounded_failure_reason(
+            observed_failure, "F03 evidence did not pass",
+        )
+        predicates = _failed_predicates(
+            evidence_reason=observed_failure, execution_reason=None,
+        )
+        work = _zero_work()
+        evidence_sha256 = numerical_sha256 = inverse_sha256 = None
+        evidence_total_bytes = None
+    else:
+        if terminal["reason"] == "completed" and terminal["exit_code"] == 0:
+            raise ValueError("successful F03 lifecycle requires full adjudication")
+        execution_reason = _bounded_failure_reason(
+            terminal.get("failure"),
+            f"terminal reason={terminal['reason']}; exit_code={terminal['exit_code']}",
+        )
+        predicates = _failed_predicates(
+            evidence_reason=None, execution_reason=execution_reason,
+        )
+        work = _saved_producer_work(indexed, plan)
+
+    status = receipt._expected_status(
+        predicates, terminal["reason"], terminal["exit_code"],
+    )
+    reasons = tuple(
+        f"{item.name}: {reason}"
+        for item in predicates
+        if item.disposition != "PASSED"
+        for reason in item.reasons
+        if item.disposition != "NOT_EVALUATED"
+    )
+    value = receipt.CaseReceipt(
+        receipt.SCHEMA,
+        plan.case_id,
+        plan.source_commit,
+        registration_sha256,
+        lifecycle.plan_sha256(plan),
+        start_sha256,
+        terminal_sha256,
+        evidence_sha256,
+        numerical_sha256,
+        inverse_sha256,
+        evidence_total_bytes,
+        terminal["reason"],
+        terminal["exit_code"],
+        status,
+        predicates,
+        work,
+        None,
+        None,
+        reasons,
+    )
+    digest = receipt.write_receipt(
+        directory, value, plan, registration_sha256,
+    )
+    return value, digest
+
+
 def _case_status(predicates: tuple[receipt.PredicateRecord, ...]) -> str:
     return receipt._expected_status(predicates, "completed", 0)
 

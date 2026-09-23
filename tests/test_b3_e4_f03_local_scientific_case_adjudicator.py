@@ -11,7 +11,9 @@ from scripts import _b3_e4_f03_local_scientific_budgets as budgets
 from scripts import _b3_e4_f03_local_scientific_case_adjudicator as adjudicator
 from scripts import _b3_e4_f03_local_scientific_case_receipt as receipt
 from scripts import _b3_e4_f03_local_scientific_cases as cases
+from scripts import _b3_e4_f03_local_scientific_lifecycle as lifecycle
 from scripts import _b3_e4_f03_local_scientific_replay_binding as replay
+from scripts import _b3_e4_f03_local_scientific_supervisor as supervisor
 
 
 DIGEST = "ab" * 32
@@ -238,3 +240,139 @@ def test_missing_plan_or_terminal_failure_cannot_write_receipt(monkeypatch, tmp_
             case_dir, records[0], records, SOURCE, DIGEST,
             budgets.make_scientific_budgets(),
         )
+
+
+def _failure_case(tmp_path, *, reason="launch_failure", exit_code=None, with_start=False):
+    records = cases.preflight_inventory()
+    plan = archive.make_case_plan(records[0], records, SOURCE)
+    directory = tmp_path / reason
+    directory.mkdir()
+    root_pid = 731 if with_start else None
+    if with_start:
+        lifecycle.write_start(directory, plan, DIGEST, root_pid)
+    lifecycle.write_terminal(
+        directory, plan, DIGEST,
+        supervisor.SupervisionReceipt(
+            reason, exit_code, root_pid, 0.25, 4096,
+            (root_pid,) if root_pid is not None else (),
+            (root_pid,) if root_pid is not None else (),
+            f"synthetic {reason}",
+        ),
+    )
+    return plan, directory
+
+
+def _complete_evidence_mocks(monkeypatch, plan):
+    kkt = SimpleNamespace(
+        factorization_count=1,
+        candidate_rhs_solves=1,
+        certificate_solve_calls=len(plan.inverse_blocks),
+        certificate_rhs_attempted=plan.kkt_order,
+        certificate_rhs_completed=plan.kkt_order,
+        recovery_factorizations=0,
+        recovery_solves=0,
+    )
+    positive = SimpleNamespace(factorization_count=1)
+    indexed = SimpleNamespace(kkt_producer=kkt, positivity_producer=positive)
+    monkeypatch.setattr(
+        adjudicator.evidence_index, "read_index",
+        lambda *args: (SimpleNamespace(total_bytes=1234), DIGEST),
+    )
+    monkeypatch.setattr(
+        adjudicator.numerical_index, "read_index",
+        lambda *args: (indexed, DIGEST),
+    )
+    monkeypatch.setattr(
+        adjudicator.inverse_storage, "read_index", lambda *args: (object(), DIGEST),
+    )
+
+
+def test_failure_factory_closes_launch_failure_as_failed_evidence(tmp_path):
+    plan, directory = _failure_case(tmp_path)
+    value, digest = adjudicator.close_failed_case(
+        directory, plan, DIGEST,
+        evidence_failure="registered child could not be launched",
+    )
+    assert len(digest) == 64
+    assert value.status == "FAILED_EVIDENCE"
+    assert value.predicates[0].disposition == "FAILED"
+    assert all(item.disposition == "NOT_EVALUATED" for item in value.predicates[1:])
+    assert all(count == 0 for _, count in value.work.values)
+    restored, restored_digest = receipt.read_receipt(directory, plan, DIGEST)
+    assert (restored, restored_digest) == (value, digest)
+    with pytest.raises(FileExistsError):
+        adjudicator.close_failed_case(
+            directory, plan, DIGEST,
+            evidence_failure="second closure is forbidden",
+        )
+
+
+def test_failure_factory_missing_archive_precedes_execution_failure(tmp_path):
+    plan, directory = _failure_case(
+        tmp_path, reason="time_limit", exit_code=-9, with_start=True,
+    )
+    value, _ = adjudicator.close_failed_case(directory, plan, DIGEST)
+    assert value.status == "FAILED_EVIDENCE"
+    assert value.predicates[0].disposition == "FAILED"
+    assert value.predicates[1].disposition == "NOT_EVALUATED"
+    assert "evidence index" in value.predicates[0].reasons[0]
+
+
+def test_failure_factory_retains_complete_evidence_for_execution_failure(
+    monkeypatch, tmp_path,
+):
+    plan, directory = _failure_case(
+        tmp_path, reason="time_limit", exit_code=-9, with_start=True,
+    )
+    _complete_evidence_mocks(monkeypatch, plan)
+    value, _ = adjudicator.close_failed_case(directory, plan, DIGEST)
+    assert value.status == "FAILED_EXECUTION"
+    assert value.predicates[0].disposition == "PASSED"
+    assert value.predicates[1].disposition == "FAILED"
+    assert all(item.disposition == "NOT_EVALUATED" for item in value.predicates[2:])
+    assert value.evidence_total_bytes == 1234
+    assert value.evidence_index_sha256 == DIGEST
+    assert value.work.as_dict()["producer_kkt_factorizations"] == 1
+    assert value.work.as_dict()["replay_recovery_recomputations"] == 0
+
+
+def test_explicit_evidence_failure_has_precedence_without_reading_archive(
+    monkeypatch, tmp_path,
+):
+    plan, directory = _failure_case(
+        tmp_path, reason="time_limit", exit_code=-9, with_start=True,
+    )
+    monkeypatch.setattr(
+        adjudicator.evidence_index, "read_index",
+        lambda *args: pytest.fail("archive read after explicit evidence failure"),
+    )
+    value, _ = adjudicator.close_failed_case(
+        directory, plan, DIGEST, evidence_failure="supervisor integrity failure",
+    )
+    assert value.status == "FAILED_EVIDENCE"
+    assert value.evidence_index_sha256 is None
+
+
+def test_failure_factory_rejects_successful_lifecycle(monkeypatch, tmp_path):
+    plan, directory = _failure_case(
+        tmp_path, reason="completed", exit_code=0, with_start=True,
+    )
+    _complete_evidence_mocks(monkeypatch, plan)
+    with pytest.raises(ValueError, match="requires full adjudication"):
+        adjudicator.close_failed_case(directory, plan, DIGEST)
+    assert not (directory / "case_receipt.json").exists()
+
+
+def test_failure_factory_does_not_classify_programming_or_memory_faults(
+    monkeypatch, tmp_path,
+):
+    plan, directory = _failure_case(
+        tmp_path, reason="time_limit", exit_code=-9, with_start=True,
+    )
+    monkeypatch.setattr(
+        adjudicator.evidence_index, "read_index",
+        lambda *args: (_ for _ in ()).throw(MemoryError("synthetic exhaustion")),
+    )
+    with pytest.raises(MemoryError, match="synthetic exhaustion"):
+        adjudicator.close_failed_case(directory, plan, DIGEST)
+    assert not (directory / "case_receipt.json").exists()
