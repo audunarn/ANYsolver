@@ -147,6 +147,8 @@ class PositivityProducerRecord:
     rhs_solve_count: int
     factor_nnz: int
     factor_storage_bytes: int
+    lower_index_itemsize: int
+    upper_index_itemsize: int
     status: str
     reason: str | None
     qualification_status: str
@@ -165,12 +167,18 @@ class PositivityProducerRecord:
             or not self.symmetric_mode
             or self.iterative_refinement != "NOREFINE"
             or self.factor_preparation != "validated stable index permutation; no value arithmetic"
+            or type(self.factorization_count) is not int
             or self.factorization_count != 1
+            or type(self.rhs_solve_count) is not int
             or self.rhs_solve_count != 0
             or type(self.factor_nnz) is not int
             or not 0 < self.factor_nnz <= cases.MAX_COMBINED_FACTOR_NNZ
             or type(self.factor_storage_bytes) is not int
             or not 0 < self.factor_storage_bytes <= cases.MAX_CANONICAL_FACTOR_BYTES
+            or type(self.lower_index_itemsize) is not int
+            or self.lower_index_itemsize not in (4, 8)
+            or type(self.upper_index_itemsize) is not int
+            or self.upper_index_itemsize not in (4, 8)
             or self.status not in ("CANDIDATE_CREATED", "HOLD")
             or (self.reason is not None and (type(self.reason) is not str or not self.reason))
             or (self.status == "CANDIDATE_CREATED") != (self.reason is None)
@@ -308,17 +316,42 @@ def positivity_producer(
     except (TypeError, ValueError) as exc:
         raise ValueError("exact F03 positivity producer metadata required") from exc
     fields = tuple(PositivityProducerRecord.__dataclass_fields__)
-    if set(raw) != set(fields):
+    native_fields = tuple(
+        name for name in fields
+        if name not in ("lower_index_itemsize", "upper_index_itemsize")
+    )
+    if set(raw) != set(native_fields):
         raise ValueError("invalid F03 positivity producer metadata inventory")
-    record = PositivityProducerRecord(**{name: raw[name] for name in fields})
+    record = PositivityProducerRecord(
+        **{name: raw[name] for name in native_fields},
+        lower_index_itemsize=value.lower.indices.dtype.itemsize,
+        upper_index_itemsize=value.upper.indices.dtype.itemsize,
+    )
+    _verify_positivity_record(value, record)
+    return record
+
+
+def _native_factor_bytes(matrix, index_itemsize: int) -> int:
+    return 8 * matrix.nnz + index_itemsize * (matrix.nnz + matrix.shape[0] + 1)
+
+
+def _verify_positivity_record(
+    value: numerical.PositivityEvidence,
+    record: PositivityProducerRecord,
+) -> None:
+    if type(value) is not numerical.PositivityEvidence or type(record) is not PositivityProducerRecord:
+        raise ValueError("typed F03 positivity evidence and producer record required")
     if (
         record.factor_nnz != value.lower.nnz + value.upper.nnz
+        or record.factor_storage_bytes != (
+            _native_factor_bytes(value.lower, record.lower_index_itemsize)
+            + _native_factor_bytes(value.upper, record.upper_index_itemsize)
+        )
         or record.matrix_sha256 != factor_candidate._digest_owned(value.kbar)
         or record.lower_sha256 != factor_candidate._digest_owned(value.lower)
         or record.upper_sha256 != factor_candidate._digest_owned(value.upper)
     ):
-        raise ValueError("F03 positivity producer hashes or factor count disagree")
-    return record
+        raise ValueError("F03 positivity producer hashes, count or storage disagree")
 
 
 def successful_positivity_producer(
@@ -419,10 +452,9 @@ def build_index(
         or kkt_producer.certificate_solve_calls != len(plan.inverse_blocks)
         or kkt_producer.certificate_rhs_attempted != plan.kkt_order
         or kkt_producer.certificate_rhs_completed != plan.kkt_order
-        or positivity_producer(value.positivity, _count_payload(positivity_producer_record))
-            != positivity_producer_record
     ):
         raise ValueError("F03 numerical producer records disagree with frozen plan or evidence")
+    _verify_positivity_record(value.positivity, positivity_producer_record)
     return NumericalIndex(
         SCHEMA, plan.case_id, plan.source_commit,
         hashlib.sha256(archive._payload(plan)).hexdigest(),

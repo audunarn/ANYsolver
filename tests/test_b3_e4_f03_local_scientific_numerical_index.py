@@ -173,3 +173,11 @@ def test_actual_positivity_candidate_metadata_and_native_hashes_are_preserved():
     assert record.matrix_sha256 == candidate.metadata["matrix_sha256"]
     assert record.lower_sha256 == candidate.metadata["lower_sha256"]
     assert record.upper_sha256 == candidate.metadata["upper_sha256"]
+    stale = dict(candidate.metadata)
+    stale["factor_storage_bytes"] += 1
+    with pytest.raises(ValueError, match="storage"):
+        index_storage.positivity_producer(value, stale)
+    boolean = dict(candidate.metadata)
+    boolean["factorization_count"] = True
+    with pytest.raises(ValueError):
+        index_storage.positivity_producer(value, boolean)
