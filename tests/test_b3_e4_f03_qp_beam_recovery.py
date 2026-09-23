@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from scripts._b3_e4_f03_conforming_qp_trace import FinitePadQpTrace
-from scripts._b3_e4_f03_primal_ritz import F0, SECTION
+from scripts._b3_e4_f03_primal_ritz import E0, F0, SECTION
 from scripts._b3_e4_f03_qp_beam_recovery import recover_interface
 from scripts._b3_e4_f03_qp_piecewise_moment_oracle import (
     PiecewisePadMomentOracle, REPRESENTED_J,
@@ -20,7 +20,9 @@ CUSTOM_Y = (-.5, -.31, -.09, .11, .31, .5)
 @pytest.mark.parametrize("degree,custom,j", [
     (1, True, REPRESENTED_J),
     (2, True, 1.07*REPRESENTED_J),
+    (3, True, REPRESENTED_J),
     (1, False, REPRESENTED_J),
+    (2, False, REPRESENTED_J),
 ])
 def test_signed_virtual_work_with_physical_endpoint_atoms(degree, custom, j):
     x, y = (CUSTOM_X, CUSTOM_Y) if custom else (None, None)
@@ -72,7 +74,13 @@ def test_signed_virtual_work_with_physical_endpoint_atoms(degree, custom, j):
                              moment*w_first[2])
         load_work += weight*F0*(1.+.25*math.cos(2.*math.pi*s))*w_pose[1]
     rhs = load_work-beam_work-eta@root_w
-    assert abs(lhs-rhs) <= 3e-7*max(1., abs(rhs), abs(beam_work))
+    # E0=F0*U0 is the declared physical absolute floor. Scale by the two
+    # sides of the identity, rather than a potentially cancelling component.
+    signed_defect = lhs-rhs
+    work_scale = max(E0, abs(lhs), abs(rhs))
+    assert abs(signed_defect)/work_scale <= 1e-10, (
+        f"p={degree}, custom={custom}, signed defect={signed_defect:.17e}, "
+        f"scale={work_scale:.17e}")
 
     root_q = oracle.evaluate(q_coeff, 0., side="right")
     tip_q = oracle.evaluate(q_coeff, 1., side="left")
