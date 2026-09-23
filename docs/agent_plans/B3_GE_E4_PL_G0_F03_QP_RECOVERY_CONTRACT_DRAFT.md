@@ -133,3 +133,15 @@ Before any one-use physical study, freeze exact source, case inventory,
 normalization, absolute floors, quadrature, time/RSS limits, raw arrays,
 adjudication and independent review. The older failed Ritz and F03
 registrations remain immutable.
+
+## Preparatory implementation boundary
+
+The current bounded nodal projection compares the finite-pad area load
+with a separately integrated line distribution on every Qp nodal
+coordinate and recovers six shell-edge work reactions plus the distinct
+beam-root reaction. Custom-grid p1–p3 solved-state tests passed before
+the area-point streaming change; the affected p1 case passed afterward.
+The projection does not itself expose the cellwise strong residual field or
+combine it with free-edge tractions and interior jumps. Those explicit
+spatial channels, default-grid and area-order checks, and registered
+physical p/h evidence remain required before any F03 decision.

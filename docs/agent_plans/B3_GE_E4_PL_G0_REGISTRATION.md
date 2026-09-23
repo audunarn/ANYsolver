@@ -1697,8 +1697,21 @@ separate physical finite-pad area-adjoint candidate passes four focused
 tests, including p1 nonrigid work, p1–p3 zero-field load/atom checks,
 physical force/moment and 48/64-point cosine comparison. Independent
 read-only mechanics review found no sign or work-conjugacy blocker in
-these bounded claims. Full coupled spatial residual, six supported-edge
-reactions, physical p/h settling, resource qualification and native
-attachment selection remain unimplemented or unqualified. The recovery
+these bounded claims. At this area-only step, full coupled spatial
+residual, six supported-edge reactions, physical p/h settling, resource
+qualification and native attachment selection remain unimplemented or
+unqualified. The recovery
 contract is explicitly a draft, not a new scientific registration.
 **F03/G0B remain open; G1 remains barred.**
+
+The subsequent bounded Qp nodal projection combines the recovered
+finite-pad area push with an independent 48/64-point line projection,
+the full shell nodal operator, six shell-edge liftings and the separate
+beam-root reaction. Custom p1–p3 solved-state tests passed 3/3 in
+268.16 seconds total before the area-point streaming change; the
+affected p1 test passed afterward in 27.66 seconds. Independent
+read-only mechanics review found no
+blocker for this nodal algebraic scope. Cellwise physical residual,
+combined edge-jump/traction channels, default-grid and area-order
+checks, physical p/h settling and scientific resource qualification
+remain open. **F03/G0B remain open; G1 remains barred.**

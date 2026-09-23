@@ -245,8 +245,20 @@ passed four preparatory tests. Independent read-only review found no
 physical formula or sign blocker for the p1 nonrigid work scope. This
 preparatory suite took about 17 seconds with batched repeated-x station
 integrals and fixed reduced area rules whose observed work agreement met
-its bounded test limit; higher-order nonrigid
-area work and resource behavior
-remain untested. These checks do not yet construct the complete coupled
-spatial residual or physical support reaction, and do not establish
-refinement settling, F03, G0B or native interface acceptance.
+its bounded test limit. Physical settling, F03, G0B and native interface
+acceptance do not follow.
+
+The bounded nodal projection assembles the physical pad-area load on all
+shared Qp coordinates and compares it with the independently integrated
+line density and atoms. It returns the shell-side nodal residual, six
+physical supported-edge work reactions, the distinct beam-root reaction,
+and global area/line wrenches. Custom p1–p3 solved-state tests passed
+**3/3** in 268.16 seconds total before the area-point streaming change;
+the affected p1 test passed afterward in 27.66 seconds. The checks
+include 48/64 line projection agreement and represented-`J` moment
+balance. Independent read-only
+mechanics review found no blocker for that *nodal* scope. This is a
+costly preparatory test, not a general resource bound. Default-grid
+nodal recovery, area-order convergence, explicit cellwise
+`div(T)+f_mu`, combined free-edge and interior-jump residual fields,
+physical p/h settling and scientific registration remain open.
