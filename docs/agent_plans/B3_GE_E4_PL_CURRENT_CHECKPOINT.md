@@ -48,6 +48,14 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
   pass/failure layouts are coherent. The broad saved-evidence/lifecycle suite
   passed 218 tests; independent closure review passed 51 focused tests without
   findings. This remains unexecuted infrastructure, not scientific evidence.
+- Latest independently reviewed saved-balance adjudication sources:
+  `6d355713` with immutability closure `f7a680d8`. The adjudicator reuses the
+  factory-owned composition Actions, binds all 14 exact Action identities and
+  saved interface arrays, treats rounded display values as non-authoritative,
+  and performs no recovery, norm, solve or factor work. The broad affected
+  evidence/lifecycle suite passed 129 tests before final hardening; the final
+  affected suite passed 55 tests and the closure reviewer passed 29 focused
+  tests without findings. This remains unexecuted infrastructure.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -409,8 +417,9 @@ archive and lifecycle tests; independent closure review passed 32 focused
 checks without findings. The assembly/scaling diagnostics passed 135 focused
 archive/lifecycle checks and their closure review passed 17 checks without
 findings. The independently reviewed case receipt at `103cf51e` passed 218
-broad saved-evidence/lifecycle tests and 51 focused review tests. The exact
-next action is to add the solve-free adjudicator, exclusively-writing case
+broad saved-evidence/lifecycle tests and 51 focused review tests. The saved
+balance adjudication at `6d355713`/`f7a680d8` is independently closed. The
+exact next action is to add the solve-free adjudicator, exclusively-writing case
 producer and top-level one-use coordinator. Registration remains barred until
 those pieces, bounded
 lifecycle/replay tests, preflight demonstrations and independent review pass on
