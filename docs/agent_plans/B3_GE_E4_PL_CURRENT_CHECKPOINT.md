@@ -37,6 +37,10 @@ G1 is barred**. This is a continuity checkpoint, not a pause or completion.
   `5d12da1c`. The first review's P1/P2 findings
   were corrected by enforcing composition/work invariants and labeling rounded
   balance numbers as display-only while retaining exact Action identities.
+- Latest independently reviewed assembly/scaling diagnostics source:
+  `de962e9f`. Both quadrature routes, fixed scales, primary scale reuse,
+  producer work/nnz counts and all five exact trace-bit maxima are bound inside
+  `numerical_index.json`; no extra archive member was introduced.
 - Last scientific diagnostic source: `59753d97964795bbe0599c8fa02d44170b2fa8a4`
   (saved-state spatial residual diagnostic). Last equilibrium source remains
   `e7908c1ad3dcff1cf9bc957ba8fd0fe1fe49b5b5`. Neither the comparator
@@ -395,8 +399,9 @@ review closed two P1 findings: native factors are CSR end to end and the
 Q1_L0-to-Q2_L0 transfer is present. The resulting focused inventory passed
 172 tests; the corrected composition/balance addition passed 133 focused
 archive and lifecycle tests; independent closure review passed 32 focused
-checks without findings. The exact next action is to finish assembly/scaling
-diagnostics and `case_receipt.json`, then add
+checks without findings. The assembly/scaling diagnostics passed 135 focused
+archive/lifecycle checks and their closure review passed 17 checks without
+findings. The exact next action is to implement `case_receipt.json`, then add
 the exclusively-writing case producer, solve-free adjudicator and top-level
 one-use coordinator. Registration remains barred until those pieces, bounded
 lifecycle/replay tests, preflight demonstrations and independent review pass on
