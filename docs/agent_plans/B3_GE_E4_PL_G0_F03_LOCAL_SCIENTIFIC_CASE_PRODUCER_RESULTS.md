@@ -1,7 +1,9 @@
 # F03 local scientific child producer results
 
-**Date:** 23 September 2026  
-**Status:** `IMPLEMENTED_NOT_QUALIFIED`  
+**Date:** 23 September 2026
+
+**Status:** `IMPLEMENTED_NOT_QUALIFIED`
+
 **Reviewed source:** `2b4f2e84742973854fcadd7927ff833a8ba05eaf`
 
 ## Result
