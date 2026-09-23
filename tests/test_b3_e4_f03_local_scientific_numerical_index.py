@@ -1,3 +1,4 @@
+from dataclasses import replace
 import json
 
 import numpy as np
@@ -12,6 +13,8 @@ from scripts import _b3_e4_f03_local_scientific_port_storage as ports
 from scripts import _b3_e4_f03_sparse_trace_binding as trace
 from scripts import _b3_e4_f03_sparse_certificate as certificate
 from scripts import _b3_e4_f03_sparse_factor_candidate as factor_candidate
+from scripts import _b3_e4_f03_local_primal_assembly as assembly
+from scripts import _b3_e4_f03_spatial_contract as spatial
 
 
 CASE = cases.CASES[0]
@@ -88,7 +91,37 @@ def _write_groups(directory, value):
 
 
 def _producers(plan, value):
+    grid = cases.compile_case(CASE)
+    def assembled(operator, alternate):
+        metadata = assembly.preflight(grid, cases.ASSEMBLY_BUDGET)
+        metadata.update(
+            shell_nnz=operator.shell.nnz, beam_nnz=operator.beam.nnz,
+            root_nnz=operator.root.nnz, shell_evaluations=len(grid.rectangles),
+            trace_evaluations=CASE.station_intervals,
+            beam_evaluations=CASE.station_intervals,
+            load_evaluations=CASE.station_intervals, max_trace_integer_bits=1,
+            beam_order=CASE.degree + 3 + int(alternate),
+            load_order=64 if alternate else 48,
+            factorization_count=0, equilibrium_count=0,
+        )
+        return index_storage.assembly_producer(
+            CASE, operator, metadata, alternate=alternate,
+        )
+    def scaled(primary):
+        matrix = value.scaled.h if primary else value.scaled.h_alternate
+        metadata = {
+            "physical_dofs": N, "root_multipliers": 3, "matrix_nnz": matrix.nnz,
+            "energy_scale": float(spatial.E0),
+            "displacement_scale": float(spatial.U0), "length_scale": 0.46,
+            "primary_scaling": primary, "qualification_status": "NOT_QUALIFIED",
+        }
+        return index_storage.scaling_producer(
+            CASE, value.scaled, metadata, primary=primary,
+        )
     return (
+        assembled(value.operator_primary, False),
+        assembled(value.operator_alternate, True),
+        scaled(True), scaled(False),
         index_storage.successful_kkt_producer(plan, value.scaled.h.nnz),
         index_storage.successful_positivity_producer(value.positivity),
     )
@@ -138,7 +171,12 @@ def test_noncanonical_or_stale_index_is_rejected(plan, tmp_path):
 
 def test_frozen_producer_settings_and_counts_are_enforced(plan):
     source = _evidence()
-    kkt, positivity = _producers(plan, source)
+    assembly_primary, assembly_alternate, scaling_primary, scaling_alternate, kkt, positivity = _producers(plan, source)
+    assert assembly_primary.load_order == 48
+    assert assembly_alternate.load_order == 64
+    assert scaling_primary.primary_scaling
+    assert not scaling_alternate.primary_scaling
+    assert scaling_primary.diagonal_sha256 == scaling_alternate.diagonal_sha256
     assert kkt.ordering == "COLAMD"
     assert kkt.certificate_rhs_completed == plan.kkt_order
     assert kkt.certificate_solve_calls == len(plan.inverse_blocks)
@@ -153,6 +191,29 @@ def test_frozen_producer_settings_and_counts_are_enforced(plan):
             len(plan.inverse_blocks), plan.kkt_order, plan.kkt_order, 0, 0,
             "NOT_QUALIFIED", "SUCCEEDED", "completed",
         )
+
+
+def test_assembly_and_scaling_records_reject_stale_routes_and_scale_reuse(plan):
+    source = _evidence()
+    records = _producers(plan, source)
+    assembly_primary, assembly_alternate, scaling_primary, scaling_alternate, kkt, positivity = records
+    with pytest.raises(ValueError, match="disagree"):
+        index_storage.build_index(
+            plan, source, replace(assembly_primary, load_order=64), assembly_alternate,
+            scaling_primary, scaling_alternate, kkt, positivity,
+        )
+    with pytest.raises(ValueError, match="disagree"):
+        index_storage.build_index(
+            plan, source, assembly_primary, assembly_alternate,
+            scaling_primary, replace(scaling_alternate, diagonal_sha256="cd" * 32),
+            kkt, positivity,
+        )
+    metadata = dict(assembly_primary.__dict__) if hasattr(assembly_primary, "__dict__") else {
+        name: getattr(assembly_primary, name) for name in assembly_primary.__dataclass_fields__
+    }
+    metadata = dict(reversed(tuple(metadata.items())))
+    with pytest.raises(ValueError, match="noncanonical"):
+        index_storage.assembly_producer(CASE, source.operator_primary, metadata, alternate=False)
 
 
 def test_actual_positivity_candidate_metadata_and_native_hashes_are_preserved(tmp_path):

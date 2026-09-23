@@ -14,6 +14,9 @@ from scripts import _b3_e4_f03_local_scientific_evidence_index as evidence_index
 from scripts import _b3_e4_f03_local_scientific_numerical_storage as numerical
 from scripts import _b3_e4_f03_local_scientific_port_storage as ports
 from scripts import _b3_e4_f03_local_scientific_sparse_storage as sparse_storage
+from scripts import _b3_e4_f03_local_primal_assembly as assembly
+from scripts import _b3_e4_f03_scaled_sparse as scaled_sparse
+from scripts import _b3_e4_f03_spatial_contract as spatial
 from scripts import _b3_e4_f03_sparse_factor_candidate as factor_candidate
 
 
@@ -24,6 +27,144 @@ DIGEST = frozenset("0123456789abcdef")
 
 def _digest(value: object) -> bool:
     return type(value) is str and len(value) == 64 and set(value) <= DIGEST
+
+
+@dataclass(frozen=True, slots=True)
+class AssemblyProducerRecord:
+    shell_triplets: int
+    beam_triplets: int
+    root_triplets_envelope: int
+    triplets_envelope: int
+    workspace_estimate_bytes: int
+    max_active_trace_dofs: int
+    station_intervals: int
+    physical_dofs: int
+    root_multipliers: int
+    scope: str
+    shell_nnz: int
+    beam_nnz: int
+    root_nnz: int
+    shell_evaluations: int
+    trace_evaluations: int
+    beam_evaluations: int
+    load_evaluations: int
+    max_trace_integer_bits: int
+    beam_order: int
+    load_order: int
+    factorization_count: int
+    equilibrium_count: int
+
+    def __post_init__(self):
+        integers = tuple(
+            getattr(self, name) for name in self.__dataclass_fields__ if name != "scope"
+        )
+        if (
+            any(type(value) is not int or value < 0 for value in integers)
+            or self.scope != "bounded assembly preflight; no factorization or RSS guarantee"
+            or self.shell_triplets <= 0 or self.beam_triplets <= 0
+            or self.root_triplets_envelope <= 0 or self.triplets_envelope <= 0
+            or self.workspace_estimate_bytes <= 0 or self.physical_dofs <= 0
+            or self.root_multipliers != 3 or self.station_intervals <= 0
+            or self.factorization_count != 0 or self.equilibrium_count != 0
+        ):
+            raise ValueError("invalid frozen F03 assembly producer record")
+
+
+def assembly_producer(
+    case: cases.ScientificCase,
+    value: numerical.OperatorEvidence,
+    metadata: object,
+    *,
+    alternate: bool,
+) -> AssemblyProducerRecord:
+    if type(case) is not cases.ScientificCase or case not in cases.CASES or type(alternate) is not bool:
+        raise ValueError("frozen F03 case and assembly route required")
+    try:
+        raw = dict(metadata)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("exact F03 assembly producer metadata required") from exc
+    fields = tuple(AssemblyProducerRecord.__dataclass_fields__)
+    if tuple(raw) != fields:
+        raise ValueError("noncanonical F03 assembly producer inventory")
+    record = AssemblyProducerRecord(**raw)
+    grid = cases.compile_case(case)
+    expected = assembly.preflight(grid, cases.ASSEMBLY_BUDGET)
+    counts = numerical._operator_counts(value, case)
+    if (
+        any(getattr(record, name) != expected[name] for name in expected)
+        or (record.shell_nnz, record.beam_nnz, record.root_nnz)
+            != (counts.shell, counts.beam, counts.root)
+        or record.shell_evaluations != len(grid.rectangles)
+        or any(getattr(record, name) != case.station_intervals for name in (
+            "trace_evaluations", "beam_evaluations", "load_evaluations"
+        ))
+        or record.beam_order != case.degree + 3 + int(alternate)
+        or record.load_order != (64 if alternate else 48)
+    ):
+        raise ValueError("F03 assembly producer record disagrees with saved operators or case")
+    return record
+
+
+@dataclass(frozen=True, slots=True)
+class ScalingProducerRecord:
+    physical_dofs: int
+    root_multipliers: int
+    matrix_nnz: int
+    energy_scale: float
+    displacement_scale: float
+    length_scale: float
+    primary_scaling: bool
+    qualification_status: str
+    diagonal_sha256: str
+    root_scale_sha256: str
+
+    def __post_init__(self):
+        if (
+            type(self.physical_dofs) is not int or self.physical_dofs <= 0
+            or type(self.root_multipliers) is not int or self.root_multipliers != 3
+            or type(self.matrix_nnz) is not int or self.matrix_nnz <= 0
+            or any(type(value) is not float for value in (
+                self.energy_scale, self.displacement_scale, self.length_scale
+            ))
+            or (self.energy_scale, self.displacement_scale, self.length_scale)
+                != (float(spatial.E0), float(spatial.U0), 0.46)
+            or type(self.primary_scaling) is not bool
+            or self.qualification_status != "NOT_QUALIFIED"
+            or not _digest(self.diagonal_sha256) or not _digest(self.root_scale_sha256)
+        ):
+            raise ValueError("invalid frozen F03 scaling producer record")
+
+
+def scaling_producer(
+    case: cases.ScientificCase,
+    value: numerical.ScaledEvidence,
+    metadata: object,
+    *,
+    primary: bool,
+) -> ScalingProducerRecord:
+    if type(case) is not cases.ScientificCase or case not in cases.CASES or type(primary) is not bool:
+        raise ValueError("frozen F03 case and scaling route required")
+    try:
+        raw = dict(metadata)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("exact F03 scaling producer metadata required") from exc
+    native = (
+        "physical_dofs", "root_multipliers", "matrix_nnz", "energy_scale",
+        "displacement_scale", "length_scale", "primary_scaling", "qualification_status",
+    )
+    if tuple(raw) != native:
+        raise ValueError("noncanonical F03 scaling producer inventory")
+    record = ScalingProducerRecord(
+        **raw, diagonal_sha256=_hash_array(value.d), root_scale_sha256=_hash_array(value.r),
+    )
+    matrix = value.h if primary else value.h_alternate
+    if (
+        record.physical_dofs != case.physical_dofs
+        or record.matrix_nnz != matrix.nnz
+        or record.primary_scaling is not primary
+    ):
+        raise ValueError("F03 scaling producer record disagrees with saved scaled state")
+    return record
 
 
 @dataclass(frozen=True, slots=True)
@@ -211,6 +352,10 @@ class NumericalIndex:
     scaled: numerical.ScaledCounts
     positivity: numerical.PositivityCounts
     port_counts: ports.PortCounts
+    assembly_primary: AssemblyProducerRecord
+    assembly_alternate: AssemblyProducerRecord
+    scaling_primary: ScalingProducerRecord
+    scaling_alternate: ScalingProducerRecord
     kkt_producer: KKTProducerRecord
     positivity_producer: PositivityProducerRecord
     objects: tuple[ObjectDigest, ...]
@@ -228,6 +373,10 @@ class NumericalIndex:
             or type(self.scaled) is not numerical.ScaledCounts
             or type(self.positivity) is not numerical.PositivityCounts
             or type(self.port_counts) is not ports.PortCounts
+            or type(self.assembly_primary) is not AssemblyProducerRecord
+            or type(self.assembly_alternate) is not AssemblyProducerRecord
+            or type(self.scaling_primary) is not ScalingProducerRecord
+            or type(self.scaling_alternate) is not ScalingProducerRecord
             or type(self.kkt_producer) is not KKTProducerRecord
             or type(self.positivity_producer) is not PositivityProducerRecord
             or type(self.objects) is not tuple
@@ -429,11 +578,19 @@ def _digests(value: NumericalEvidence, case: cases.ScientificCase, counts) -> tu
 def build_index(
     plan: archive.CaseArchivePlan,
     value: NumericalEvidence,
+    assembly_primary: AssemblyProducerRecord,
+    assembly_alternate: AssemblyProducerRecord,
+    scaling_primary: ScalingProducerRecord,
+    scaling_alternate: ScalingProducerRecord,
     kkt_producer: KKTProducerRecord,
     positivity_producer_record: PositivityProducerRecord,
 ) -> NumericalIndex:
     if (
         type(plan) is not archive.CaseArchivePlan
+        or type(assembly_primary) is not AssemblyProducerRecord
+        or type(assembly_alternate) is not AssemblyProducerRecord
+        or type(scaling_primary) is not ScalingProducerRecord
+        or type(scaling_alternate) is not ScalingProducerRecord
         or type(kkt_producer) is not KKTProducerRecord
         or type(positivity_producer_record) is not PositivityProducerRecord
     ):
@@ -445,6 +602,16 @@ def build_index(
     numerical.scaled_specs(case, counts[2])
     numerical.positivity_specs(case, counts[3])
     ports.port_specs(case, counts[4])
+    assembly_producer(case, value.operator_primary, _count_payload(assembly_primary), alternate=False)
+    assembly_producer(case, value.operator_alternate, _count_payload(assembly_alternate), alternate=True)
+    observed_scaling_primary = scaling_producer(case, value.scaled, {
+        name: getattr(scaling_primary, name) for name in tuple(ScalingProducerRecord.__dataclass_fields__)[:-2]
+    }, primary=True)
+    observed_scaling_alternate = scaling_producer(case, value.scaled, {
+        name: getattr(scaling_alternate, name) for name in tuple(ScalingProducerRecord.__dataclass_fields__)[:-2]
+    }, primary=False)
+    if observed_scaling_primary != scaling_primary or observed_scaling_alternate != scaling_alternate:
+        raise ValueError("F03 scaling producer hashes disagree with saved scaled state")
     if (
         kkt_producer.factorization_count != 1
         or kkt_producer.factor_nnz > cases.MAX_KKT_FACTOR_NNZ
@@ -458,7 +625,8 @@ def build_index(
     return NumericalIndex(
         SCHEMA, plan.case_id, plan.source_commit,
         hashlib.sha256(archive._payload(plan)).hexdigest(),
-        *counts, kkt_producer, positivity_producer_record,
+        *counts, assembly_primary, assembly_alternate, scaling_primary,
+        scaling_alternate, kkt_producer, positivity_producer_record,
         _digests(value, case, counts),
     )
 
@@ -483,6 +651,10 @@ def _payload(index: NumericalIndex) -> bytes:
             "ports": _count_payload(index.port_counts),
         },
         "producers": {
+            "assembly_primary": _count_payload(index.assembly_primary),
+            "assembly_alternate": _count_payload(index.assembly_alternate),
+            "scaling_primary": _count_payload(index.scaling_primary),
+            "scaling_alternate": _count_payload(index.scaling_alternate),
             "kkt": _count_payload(index.kkt_producer),
             "positivity": _count_payload(index.positivity_producer),
         },
@@ -535,7 +707,22 @@ def _decode(payload: bytes, plan: archive.CaseArchivePlan) -> NumericalIndex:
     if type(port_raw["ports"]) is not list:
         raise ValueError("invalid F03 numerical port count inventory")
     port_counts = ports.PortCounts(tuple(port_raw["ports"]), port_raw["root"], port_raw["tip"], port_raw["free_slope"])
-    producers = _exact_dict(value["producers"], ("kkt", "positivity"), "producer")
+    producers = _exact_dict(value["producers"], (
+        "assembly_primary", "assembly_alternate", "scaling_primary",
+        "scaling_alternate", "kkt", "positivity",
+    ), "producer")
+    assembly_primary = construct(
+        AssemblyProducerRecord, producers["assembly_primary"], "primary assembly producer",
+    )
+    assembly_alternate = construct(
+        AssemblyProducerRecord, producers["assembly_alternate"], "alternate assembly producer",
+    )
+    scaling_primary = construct(
+        ScalingProducerRecord, producers["scaling_primary"], "primary scaling producer",
+    )
+    scaling_alternate = construct(
+        ScalingProducerRecord, producers["scaling_alternate"], "alternate scaling producer",
+    )
     kkt_producer = construct(KKTProducerRecord, producers["kkt"], "KKT producer")
     positivity_record = construct(
         PositivityProducerRecord, producers["positivity"], "positivity producer",
@@ -549,6 +736,7 @@ def _decode(payload: bytes, plan: archive.CaseArchivePlan) -> NumericalIndex:
     index = NumericalIndex(
         value["schema"], value["case_id"], value["source_commit"], value["plan_sha256"],
         primary, alternate, scaled, positivity, port_counts,
+        assembly_primary, assembly_alternate, scaling_primary, scaling_alternate,
         kkt_producer, positivity_record, objects,
     )
     case = cases.case_by_id(plan.case_id)
@@ -557,6 +745,8 @@ def _decode(payload: bytes, plan: archive.CaseArchivePlan) -> NumericalIndex:
     numerical.scaled_specs(case, scaled)
     numerical.positivity_specs(case, positivity)
     ports.port_specs(case, port_counts)
+    expected_preflight = assembly.preflight(cases.compile_case(case), cases.ASSEMBLY_BUDGET)
+    grid = cases.compile_case(case)
     if (
         index.case_id != plan.case_id
         or index.source_commit != plan.source_commit
@@ -567,6 +757,31 @@ def _decode(payload: bytes, plan: archive.CaseArchivePlan) -> NumericalIndex:
         or index.kkt_producer.certificate_solve_calls != len(plan.inverse_blocks)
         or index.kkt_producer.certificate_rhs_attempted != plan.kkt_order
         or index.kkt_producer.certificate_rhs_completed != plan.kkt_order
+        or any(getattr(index.assembly_primary, name) != expected_preflight[name]
+               for name in expected_preflight)
+        or any(getattr(index.assembly_alternate, name) != expected_preflight[name]
+               for name in expected_preflight)
+        or (index.assembly_primary.shell_nnz, index.assembly_primary.beam_nnz,
+            index.assembly_primary.root_nnz) != (primary.shell, primary.beam, primary.root)
+        or (index.assembly_alternate.shell_nnz, index.assembly_alternate.beam_nnz,
+            index.assembly_alternate.root_nnz) != (alternate.shell, alternate.beam, alternate.root)
+        or index.assembly_primary.shell_evaluations != len(grid.rectangles)
+        or index.assembly_alternate.shell_evaluations != len(grid.rectangles)
+        or any(getattr(record, name) != case.station_intervals
+               for record in (index.assembly_primary, index.assembly_alternate)
+               for name in ("trace_evaluations", "beam_evaluations", "load_evaluations"))
+        or index.assembly_primary.beam_order != case.degree + 3
+        or index.assembly_alternate.beam_order != case.degree + 4
+        or index.assembly_primary.load_order != 48
+        or index.assembly_alternate.load_order != 64
+        or index.scaling_primary.matrix_nnz != scaled.h
+        or index.scaling_alternate.matrix_nnz != scaled.h_alternate
+        or index.scaling_primary.physical_dofs != case.physical_dofs
+        or index.scaling_alternate.physical_dofs != case.physical_dofs
+        or not index.scaling_primary.primary_scaling
+        or index.scaling_alternate.primary_scaling
+        or index.scaling_primary.diagonal_sha256 != index.scaling_alternate.diagonal_sha256
+        or index.scaling_primary.root_scale_sha256 != index.scaling_alternate.root_scale_sha256
         or _payload(index) != payload
     ):
         raise ValueError("stale or noncanonical F03 numerical index")
@@ -594,7 +809,9 @@ def read_saved(directory: Path, plan: archive.CaseArchivePlan) -> tuple[Numerica
         ports.read_ports(directory / "ports.npz", case, index.port_counts),
     )
     if build_index(
-        plan, value, index.kkt_producer, index.positivity_producer,
+        plan, value, index.assembly_primary, index.assembly_alternate,
+        index.scaling_primary, index.scaling_alternate,
+        index.kkt_producer, index.positivity_producer,
     ) != index:
         raise ValueError("mismatched F03 saved numerical object digest")
     return index, value
