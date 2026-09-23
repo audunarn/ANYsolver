@@ -39,6 +39,7 @@ class DirectRecoveryMismatch(ArithmeticError):
 @dataclass(frozen=True)
 class ConversionAudit:
     functional: PiecewiseFunctional
+    right_limit_functional: PiecewiseFunctional
     max_oracle_fit_defect: float
     max_direct_recovery_defect: float
     max_atom_defect: float
@@ -46,7 +47,9 @@ class ConversionAudit:
     no_binary64_interior_intervals: int
     fallback_total_width: float
     max_fallback_endpoint_spread: float
-    # This count marks an approximation, never an exactness certificate.
+    fallback_indices: tuple[int, ...]
+    # Both coefficient choices are pointwise limiting approximations. Their
+    # norms do not enclose the unsampled p+2 interior polynomial.
 
 
 def _section_density(oracle, coefficients, station, side):
@@ -100,6 +103,8 @@ def from_qp_recovery(trace: FinitePadQpTrace, q, eta) -> ConversionAudit:
     max_fit = max_direct = max_spread = 0.
     fallback = no_interior = 0
     fallback_width = 0.
+    fallback_indices = []
+    right_rows = {}
     for i, (left, right) in enumerate(intervals):
         # Even a one-ulp represented interval occupies its own row and width.
         if np.nextafter(left, np.inf) >= right:
@@ -107,6 +112,7 @@ def from_qp_recovery(trace: FinitePadQpTrace, q, eta) -> ConversionAudit:
         stations = _fit_stations(left, right, fit_nodes)
         if stations is None:
             fallback += 1
+            fallback_indices.append(i)
             fallback_width += right-left
             first = _section_density(oracle, cell_coefficients, left, "right")
             last = _section_density(oracle, cell_coefficients, right, "left")
@@ -120,6 +126,7 @@ def from_qp_recovery(trace: FinitePadQpTrace, q, eta) -> ConversionAudit:
             # approximation; no polynomial order is invented from duplicate
             # floating-point samples.
             line_coefficients[i, 0] = first-np.cos(2*np.pi*left)*cosine
+            right_rows[i] = last-np.cos(2*np.pi*right)*cosine
             continue
         sampled = np.array([_section_density(oracle, cell_coefficients,
                            float(s), "right") for s in stations])
@@ -131,6 +138,7 @@ def from_qp_recovery(trace: FinitePadQpTrace, q, eta) -> ConversionAudit:
             # Independent degree validation is unavailable. Replace the
             # solved fit with the declared one-sided approximation.
             fallback += 1
+            fallback_indices.append(i)
             fallback_width += right-left
             first = _section_density(oracle, cell_coefficients, left, "right")
             last = _section_density(oracle, cell_coefficients, right, "left")
@@ -138,6 +146,7 @@ def from_qp_recovery(trace: FinitePadQpTrace, q, eta) -> ConversionAudit:
                 float(np.max(np.abs(first-last)/NORMALIZATION)))
             line_coefficients[i] = 0.
             line_coefficients[i, 0] = first-np.cos(2*np.pi*left)*cosine
+            right_rows[i] = last-np.cos(2*np.pi*right)*cosine
             continue
         predicted = np.moveaxis(legval(2*HELD_FRACTIONS-1,
             line_coefficients[i]), 0, -1)
@@ -164,6 +173,10 @@ def from_qp_recovery(trace: FinitePadQpTrace, q, eta) -> ConversionAudit:
         raise DirectRecoveryMismatch(
             f"direct density/atom defects {max_direct:.17e}/{max_atom:.17e} "
             f"exceed {FIT_TOLERANCE:.1e}")
+    right_coefficients = line_coefficients.copy()
+    for i, row in right_rows.items():
+        right_coefficients[i, 0] = row
     return ConversionAudit(PiecewiseFunctional(breaks, line_coefficients,
+        cosine, atoms), PiecewiseFunctional(breaks, right_coefficients,
         cosine, atoms), max_fit, max_direct, max_atom, fallback,
-        no_interior, fallback_width, max_spread)
+        no_interior, fallback_width, max_spread, tuple(fallback_indices))
