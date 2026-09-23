@@ -1,5 +1,15 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**23 September 2026 cross-case component checkpoint.** The solve-free
+cross-case arithmetic, retained snapshot reader and five-case pairing adapter
+are committed at `1d4648be2a8754909a2324d53fe772443e85c4f3` and
+independently reviewed with no remaining findings. The affected suite passed
+88 tests, with one Windows symlink-privilege skip. See
+`B3_GE_E4_PL_G0_F03_CROSS_COMPONENT_RESULTS.md`. The aggregate inventory,
+exclusive receipt and serial coordinator remain unimplemented; no scientific
+registration or execution occurred. G0B remains open and G1 barred. The
+previous failed physical-settling evidence is unchanged.
+
 **ACTIVE — 23 September 2026.** The user resumed from
 `B3_GE_E4_PL_PAUSE_20260922_SIGNED_NORM.md`. The signed-norm component is now
 implemented, independently reviewed and closed with corrected immutable
