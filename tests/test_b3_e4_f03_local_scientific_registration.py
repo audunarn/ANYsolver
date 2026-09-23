@@ -232,8 +232,23 @@ def test_registration_rejects_filesystem_alias_of_source_as_run_root(tmp_path):
         commands=tuple(replace(command, working_directory=alias)
                        for command in value.commands),
     )
-    with pytest.raises(ValueError, match="roots must be distinct"):
+    with pytest.raises(ValueError, match="roots must be separate"):
         registration.write_registration(tmp_path / "registration", changed)
+
+
+def test_registration_requires_run_archive_outside_source_checkout(tmp_path):
+    value = _registration(tmp_path)
+    nested = Path(value.repository_root) / "run"
+    nested.mkdir()
+    changed = replace(
+        value, run_root=str(nested),
+        commands=tuple(replace(command, argv=registration.child_argv(
+            value.runtime.executable, str(nested), command.case_id,
+            value.source_commit,
+        )) for command in value.commands),
+    )
+    with pytest.raises(ValueError, match="roots must be separate"):
+        registration.write_registration(nested, changed)
 
 
 @pytest.mark.parametrize("path", (

@@ -496,13 +496,13 @@ No release approval is being exercised. Keep main unchanged during G0.
 
 ## 23 September 2026 registration prerequisite
 
-The canonical F03 registration schema and bounded synthetic tests are now
-implemented and independently reviewed, as recorded in
-`B3_GE_E4_PL_G0_F03_REGISTRATION_SCHEMA_RESULTS.md`. The reviewer closed three
-identity/path findings. The schema has not been used to register or launch a
-scientific case. The next coordinator prerequisite is child-side verification
-of source/runtime/package/thread/plan identity after its exclusive start
-marker and before numerical work. Typed cancellation, read-only case replay,
-cross-case adjudication and the serial coordinator remain open. Do not create
-the one-use scientific registration until these prerequisites pass their
-bounded tests and independent reviews on clean committed source.
+The canonical F03 registration schema and bounded synthetic tests are
+independently reviewed, as recorded in
+`B3_GE_E4_PL_G0_F03_REGISTRATION_SCHEMA_RESULTS.md`. The child-side identity
+checks are independently reviewed in
+`B3_GE_E4_PL_G0_F03_CHILD_IDENTITY_RESULTS.md`; one untracked-source finding
+was closed. Neither batch registered or launched a scientific case. Typed
+cancellation, read-only case replay, cross-case adjudication and the serial
+coordinator remain open. Do not create the one-use scientific registration
+until these prerequisites pass bounded tests and independent reviews on clean
+committed source.

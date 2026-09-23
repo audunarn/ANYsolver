@@ -17,6 +17,7 @@ from scripts import _b3_e4_f03_local_primal_assembly as assembly
 from scripts import _b3_e4_f03_local_scientific_archive as archive
 from scripts import _b3_e4_f03_local_scientific_budgets as budgets
 from scripts import _b3_e4_f03_local_scientific_cases as cases
+from scripts import _b3_e4_f03_local_scientific_child_identity as child_identity
 from scripts import _b3_e4_f03_local_scientific_evidence_index as evidence_index
 from scripts import _b3_e4_f03_local_scientific_inverse_storage as inverse_storage
 from scripts import _b3_e4_f03_local_scientific_lifecycle as lifecycle
@@ -378,7 +379,9 @@ def produce_registered_case(
     start_sha256 = lifecycle.write_start(
         directory, envelope, registration_sha256, os.getpid(),
     )
-    records = cases.preflight_inventory()
+    records = child_identity.verify_child_context(
+        directory, envelope, source_commit, registration_sha256,
+    )
     matches = tuple(
         record for record in records if record.case.case_id == envelope.case_id
     )

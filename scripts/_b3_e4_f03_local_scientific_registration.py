@@ -36,6 +36,7 @@ SOURCE_ROLES = (
     ("coordinator", "scripts/_b3_e4_f03_local_scientific_coordinator.py"),
     ("aggregate", "scripts/_b3_e4_f03_local_scientific_aggregate.py"),
     ("case_entry", "scripts/_b3_e4_f03_local_scientific_case_entry.py"),
+    ("child_identity", "scripts/_b3_e4_f03_local_scientific_child_identity.py"),
     ("case_producer", "scripts/_b3_e4_f03_local_scientific_case_producer.py"),
     ("case_adjudicator", "scripts/_b3_e4_f03_local_scientific_case_adjudicator.py"),
     ("case_receipt", "scripts/_b3_e4_f03_local_scientific_case_receipt.py"),
@@ -45,7 +46,7 @@ SOURCE_ROLES = (
     ("cases", "scripts/_b3_e4_f03_local_scientific_cases.py"),
     ("budgets", "scripts/_b3_e4_f03_local_scientific_budgets.py"),
 )
-PACKAGE_NAMES = ("ANYsolver", "numpy", "psutil", "scipy")
+PACKAGE_NAMES = ("ANYsolver", "numpy", "psutil", "scipy", "threadpoolctl")
 TERMINAL_PRECEDENCE = (
     "FAILED_EVIDENCE",
     "FAILED_EXECUTION",
@@ -531,8 +532,14 @@ def _verify_run_roots(directory: Path, value: Registration) -> None:
     _owned_directory(directory)
     source = Path(value.repository_root)
     _owned_directory(source)
-    if source.resolve() == directory.resolve():
-        raise ValueError("F03 source and run roots must be distinct")
+    source_resolved = source.resolve()
+    run_resolved = directory.resolve()
+    if (
+        source_resolved == run_resolved
+        or run_resolved.is_relative_to(source_resolved)
+        or source_resolved.is_relative_to(run_resolved)
+    ):
+        raise ValueError("F03 source and run roots must be separate")
 
 
 def _verify_plan_archives(directory: Path, value: Registration) -> None:

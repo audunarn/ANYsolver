@@ -379,17 +379,32 @@ def test_second_attempt_stops_at_exclusive_start_marker(tmp_path, monkeypatch):
 def test_process_route_builds_inventory_only_after_exclusive_start(tmp_path, monkeypatch):
     harness = _harness(monkeypatch, tmp_path)
     monkeypatch.setattr(
-        producer.cases,
-        "preflight_inventory",
-        lambda: harness.events.append("cases:preflight-inventory") or harness.records,
+        producer.child_identity,
+        "verify_child_context",
+        lambda *args: harness.events.append("identity:verify-child") or harness.records,
     )
     result = producer.produce_registered_case(tmp_path, SOURCE, DIGEST_A)
     assert result.case_id == "q1_l0"
     assert harness.events[:4] == [
         "read:plan-envelope",
         "write:start.json",
-        "cases:preflight-inventory",
+        "identity:verify-child",
         "validate:retained-envelope",
+    ]
+
+
+def test_process_route_identity_failure_consumes_start_before_model_work(
+    tmp_path, monkeypatch,
+):
+    harness = _harness(monkeypatch, tmp_path)
+    def reject(*args):
+        harness.events.append("identity:reject")
+        raise ValueError("stale registered runtime")
+    monkeypatch.setattr(producer.child_identity, "verify_child_context", reject)
+    with pytest.raises(ValueError, match="stale registered runtime"):
+        producer.produce_registered_case(tmp_path, SOURCE, DIGEST_A)
+    assert harness.events == [
+        "read:plan-envelope", "write:start.json", "identity:reject",
     ]
 
 
