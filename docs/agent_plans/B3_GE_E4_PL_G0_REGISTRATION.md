@@ -1304,6 +1304,14 @@ attestation in the raw log, and did not accept F09, G0B or the
 assembled operator. Preserve that distinction in any later evidence
 reuse.
 
+The two-point unregistered B2 mixed-elbow conditioning diagnostic is
+preserved in `B3_GE_E4_PL_G0_F09_ADVERSE_CONDITIONING_DIAGNOSTIC.md` with
+its raw JSON and an independent read-only mechanics/code review. A moderate
+sample resolves accurately, while an extreme tiny-area sample exposes a
+large binary64 sparse forward error despite an accurate exact solve of the
+rounded assembled operator. This is adverse evidence only; it does not set
+an F09 admission range or close F09/G0B.
+
 F02-R-v1 physical membrane-footprint refinement/thickness diagnostic is
 registered before execution as a follow-up to the two-level
 g0b-f02-footprint-v1, without reopening that evidence. Use the same
