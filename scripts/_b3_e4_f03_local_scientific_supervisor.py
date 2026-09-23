@@ -71,12 +71,15 @@ class SupervisionReceipt:
             "launch_failure",
             "supervisor_failure",
             "orphaned_descendants",
+            "cancelled",
         }
         if (
             self.reason not in allowed
             or (self.exit_code is not None and type(self.exit_code) is not int)
             or (self.root_pid is not None and (type(self.root_pid) is not int or self.root_pid <= 0))
-            or (self.reason == "launch_failure") != (self.root_pid is None)
+            or (self.root_pid is None and self.reason not in {"launch_failure", "cancelled"})
+            or (self.reason == "launch_failure" and self.root_pid is not None)
+            or (self.root_pid is None and self.exit_code is not None)
             or not isinstance(self.elapsed_seconds, (int, float))
             or not math.isfinite(float(self.elapsed_seconds))
             or self.elapsed_seconds < 0
@@ -87,9 +90,23 @@ class SupervisionReceipt:
             or any(type(pid) is not int or pid <= 0 for pid in self.observed_pids + self.terminated_pids)
             or tuple(sorted(set(self.observed_pids))) != self.observed_pids
             or tuple(sorted(set(self.terminated_pids))) != self.terminated_pids
+            or (self.root_pid is None and (
+                self.sampled_peak_tree_rss_bytes != 0
+                or self.observed_pids or self.terminated_pids
+            ))
             or (self.failure is not None and type(self.failure) is not str)
         ):
             raise ValueError("invalid F03 process-tree supervision receipt")
+
+
+class SupervisionCancelled(KeyboardInterrupt):
+    """Cooperative cancellation with the retained process-tree receipt."""
+
+    def __init__(self, receipt: SupervisionReceipt):
+        if type(receipt) is not SupervisionReceipt or receipt.reason != "cancelled":
+            raise ValueError("cancelled F03 supervision receipt required")
+        self.receipt = receipt
+        super().__init__("F03 process-tree supervision cancelled")
 
 
 def frozen_thread_environment(source: Mapping[str, str] | None = None) -> dict[str, str]:
@@ -141,7 +158,9 @@ def _running(process) -> bool:
         return False
 
 
-def _terminate(processes: Sequence[object]) -> tuple[int, ...]:
+def _terminate(
+    processes: Sequence[object], *, record: set[int] | None = None,
+) -> tuple[int, ...]:
     terminated: set[int] = set()
     unique = {int(process.pid): process for process in processes if int(process.pid) > 0}
     # Callers provide root before recursively discovered descendants.  Reverse
@@ -153,6 +172,8 @@ def _terminate(processes: Sequence[object]) -> tuple[int, ...]:
         try:
             process.kill()
             terminated.add(pid)
+            if record is not None:
+                record.add(pid)
         except psutil.NoSuchProcess:
             continue
     if unique:
@@ -200,6 +221,7 @@ def supervise(
     peak = 0
     tracked: dict[int, object] = {}
     terminated: set[int] = set()
+    interruption: KeyboardInterrupt | None = None
     try:
         flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
         process = popen(
@@ -231,32 +253,97 @@ def supervise(
                 )
                 if live_descendants:
                     reason = "orphaned_descendants"
-                    terminated.update(_terminate(live_descendants))
+                    _terminate(live_descendants, record=terminated)
                 else:
                     reason = "completed"
                 break
             sleep(float(limits.poll_seconds))
         if reason in {"rss_limit", "time_limit"}:
-            terminated.update(_terminate(tuple(tracked.values())))
+            _terminate(tuple(tracked.values()), record=terminated)
     except (OSError, psutil.Error, subprocess.SubprocessError) as exc:
         reason = "launch_failure" if process is None else "supervisor_failure"
         failure = f"{type(exc).__name__}: {exc}"
-        if tracked:
-            terminated.update(_terminate(tuple(tracked.values())))
+    except KeyboardInterrupt as exc:
+        interruption = exc
+        reason = "cancelled"
+        failure = "KeyboardInterrupt"
     finally:
         if process is not None:
-            try:
-                if process.poll() is None:
-                    if root is not None:
-                        terminated.update(_terminate((root, *tracked.values())))
-                    else:
+            def cleanup_error(exc: Exception) -> None:
+                nonlocal reason, failure
+                if interruption is None:
+                    reason = "supervisor_failure"
+                detail = f"{type(exc).__name__}: {exc}"
+                failure = f"{failure}; cleanup {detail}" if failure else detail
+
+            def close_owned_process() -> None:
+                nonlocal root, exit_code
+
+                def owned_state() -> bool | None:
+                    try:
+                        return process.poll() is None
+                    except (OSError, subprocess.SubprocessError) as exc:
+                        cleanup_error(exc)
+                        return None  # ownership unknown; use only the Popen handle
+
+                # Reacquire solely for descendant discovery while the exact
+                # Popen handle still owns a live root. Never kill a newly
+                # acquired PID through psutil; root termination uses Popen.
+                if root is None and root_pid is not None and owned_state() is True:
+                    try:
+                        candidate = process_factory(root_pid)
+                        if int(candidate.pid) != root_pid:
+                            raise ValueError("reacquired F03 process PID disagrees")
+                        if owned_state() is True:
+                            root = candidate
+                            tracked.setdefault(root_pid, root)
+                    except (OSError, psutil.Error) as exc:
+                        cleanup_error(exc)
+                if reason != "completed" and root is not None and owned_state() is True:
+                    try:
+                        discovered = tuple(root.children(recursive=True))
+                        if owned_state() is True:
+                            for child in discovered:
+                                tracked.setdefault(int(child.pid), child)
+                    except (OSError, psutil.Error) as exc:
+                        cleanup_error(exc)
+                if reason != "completed":
+                    try:
+                        _terminate(tuple(
+                            item for pid, item in tracked.items() if pid != root_pid
+                        ), record=terminated)
+                    except (OSError, psutil.Error) as exc:
+                        cleanup_error(exc)
+                if owned_state() is not False:
+                    try:
                         process.kill()
-                exit_code = int(process.wait(timeout=10.0))
-            except (OSError, psutil.Error, subprocess.SubprocessError) as exc:
-                reason = "supervisor_failure"
-                failure = f"{type(exc).__name__}: {exc}"
+                        if root_pid is not None:
+                            terminated.add(root_pid)
+                    except (OSError, subprocess.SubprocessError) as exc:
+                        cleanup_error(exc)
+                try:
+                    exit_code = int(process.wait(timeout=10.0))
+                except (OSError, subprocess.SubprocessError) as exc:
+                    cleanup_error(exc)
+
+            # A second Ctrl-C during cleanup must not erase the first
+            # cancellation or abandon an already discovered process tree.
+            for attempt in range(2):
+                try:
+                    close_owned_process()
+                    break
+                except KeyboardInterrupt as exc:
+                    if interruption is None:
+                        interruption = exc
+                        reason = "cancelled"
+                        failure = "KeyboardInterrupt"
+                    else:
+                        failure = f"{failure}; cleanup KeyboardInterrupt"
+                except (OSError, psutil.Error, subprocess.SubprocessError) as exc:
+                    cleanup_error(exc)
+                    break
     elapsed = max(0.0, float(monotonic() - begun))
-    return SupervisionReceipt(
+    receipt = SupervisionReceipt(
         reason,
         exit_code,
         root_pid,
@@ -266,3 +353,6 @@ def supervise(
         tuple(sorted(terminated)),
         failure,
     )
+    if interruption is not None:
+        raise SupervisionCancelled(receipt) from interruption
+    return receipt

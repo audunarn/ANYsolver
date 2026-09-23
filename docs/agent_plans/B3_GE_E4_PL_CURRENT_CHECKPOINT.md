@@ -501,8 +501,17 @@ independently reviewed, as recorded in
 `B3_GE_E4_PL_G0_F03_REGISTRATION_SCHEMA_RESULTS.md`. The child-side identity
 checks are independently reviewed in
 `B3_GE_E4_PL_G0_F03_CHILD_IDENTITY_RESULTS.md`; one untracked-source finding
-was closed. Neither batch registered or launched a scientific case. Typed
-cancellation, read-only case replay, cross-case adjudication and the serial
-coordinator remain open. Do not create the one-use scientific registration
+was closed. Neither batch registered or launched a scientific case. Read-only
+case replay, cross-case adjudication and the serial coordinator remain open.
+Do not create the one-use scientific registration
 until these prerequisites pass bounded tests and independent reviews on clean
 committed source.
+
+## 23 September 2026 typed-cancellation prerequisite
+
+The process-tree supervisor now carries cancellation in a validated typed
+receipt, with independent closure review and 55 passing affected tests.
+`B3_GE_E4_PL_G0_F03_TYPED_CANCELLATION_RESULTS.md` records the scope and
+closed findings. It was not a scientific execution. The next coordinator
+prerequisites are read-only case replay and cross-case adjudication, followed
+by the serial one-use coordinator and its preflight/review gate.

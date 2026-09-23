@@ -56,6 +56,43 @@ def test_launch_failure_terminal_explicitly_has_no_start(plan, tmp_path):
     assert terminal["reason"] == "launch_failure"
 
 
+def test_prelaunch_cancellation_terminal_has_no_start(plan, tmp_path):
+    directory = tmp_path / plan.case_id
+    directory.mkdir()
+    cancelled = supervisor.SupervisionReceipt(
+        "cancelled", None, None, 0.1, 0, (), (), "KeyboardInterrupt",
+    )
+    lifecycle.write_terminal(directory, plan, REGISTRATION, cancelled)
+    terminal, _ = lifecycle.read_terminal(directory, plan, REGISTRATION)
+    assert terminal["reason"] == "cancelled"
+    assert terminal["start_sha256"] is None
+
+
+def test_prelaunch_receipts_reject_impossible_process_evidence():
+    for reason in ("launch_failure", "cancelled"):
+        for peak, observed, terminated in (
+            (1, (), ()), (0, (10,), ()), (0, (), (10,)),
+        ):
+            with pytest.raises(ValueError, match="supervision receipt"):
+                supervisor.SupervisionReceipt(
+                    reason, None, None, 0.1, peak, observed, terminated,
+                    "KeyboardInterrupt",
+                )
+
+
+def test_live_cancellation_terminal_consumes_start(plan, tmp_path):
+    directory = tmp_path / plan.case_id
+    directory.mkdir()
+    start_digest = lifecycle.write_start(directory, plan, REGISTRATION, 10)
+    cancelled = supervisor.SupervisionReceipt(
+        "cancelled", -9, 10, 0.1, 100, (10, 11), (10, 11), "KeyboardInterrupt",
+    )
+    lifecycle.write_terminal(directory, plan, REGISTRATION, cancelled)
+    terminal, _ = lifecycle.read_terminal(directory, plan, REGISTRATION)
+    assert terminal["reason"] == "cancelled"
+    assert terminal["start_sha256"] == start_digest
+
+
 def test_launched_child_without_start_is_preserved_as_incomplete(plan, tmp_path):
     directory = tmp_path / plan.case_id
     directory.mkdir()

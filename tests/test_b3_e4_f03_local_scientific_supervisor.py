@@ -43,6 +43,11 @@ class InterruptingProcess(FakePsutilProcess):
         raise KeyboardInterrupt()
 
 
+class DeniedChildrenProcess(FakePsutilProcess):
+    def children(self, recursive=True):
+        raise supervisor.psutil.AccessDenied(self.pid)
+
+
 class FakePopen:
     def __init__(self, pid=10, polls=(None, 0)):
         self.pid = pid
@@ -154,13 +159,239 @@ def test_cancellation_during_live_sampling_retains_and_kills_discovered_tree(
     root = FakePsutilProcess(10, 100, (child,))
     fake = FakePopen(polls=(None,))
     monkeypatch.setattr(supervisor.psutil, "wait_procs", lambda *a, **k: ([], []))
-    with pytest.raises(KeyboardInterrupt):
+    with pytest.raises(supervisor.SupervisionCancelled) as caught:
         _run(
             tmp_path, root, fake,
             limits=supervisor.SupervisorLimits(10, 1_000),
             clock=Clock((0.0, 0.1)),
         )
-    assert all(process.killed == 1 for process in (root, child, grandchild))
+    receipt = caught.value.receipt
+    assert receipt.reason == "cancelled"
+    assert receipt.root_pid == 10
+    assert receipt.observed_pids == (10, 11, 12)
+    assert receipt.terminated_pids == (10, 11, 12)
+    assert receipt.failure == "KeyboardInterrupt"
+    assert fake.killed == child.killed == grandchild.killed == 1
+
+
+def test_cancellation_kills_observed_descendant_after_root_exit(tmp_path, monkeypatch):
+    child = InterruptingProcess(11, 100)
+    root = FakePsutilProcess(10, 100, (child,))
+    root.alive = False
+    fake = FakePopen(polls=(0,))
+    monkeypatch.setattr(supervisor.psutil, "wait_procs", lambda *a, **k: ([], []))
+    with pytest.raises(supervisor.SupervisionCancelled) as caught:
+        _run(
+            tmp_path, root, fake,
+            limits=supervisor.SupervisorLimits(10, 1_000),
+            clock=Clock((0.0, 0.1)),
+        )
+    assert caught.value.receipt.terminated_pids == (11,)
+    assert child.killed == 1
+
+
+def test_second_interrupt_during_cleanup_retries_owned_tree(tmp_path, monkeypatch):
+    child = InterruptingProcess(11, 100)
+    root = FakePsutilProcess(10, 100, (child,))
+    fake = FakePopen(polls=(None,))
+    monkeypatch.setattr(supervisor.psutil, "wait_procs", lambda *a, **k: ([], []))
+    original = supervisor._terminate
+    calls = 0
+
+    def interrupt_once(processes, *, record=None):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise KeyboardInterrupt()
+        return original(processes, record=record)
+
+    monkeypatch.setattr(supervisor, "_terminate", interrupt_once)
+    with pytest.raises(supervisor.SupervisionCancelled) as caught:
+        _run(
+            tmp_path, root, fake,
+            limits=supervisor.SupervisorLimits(10, 1_000),
+            clock=Clock((0.0, 0.1)),
+        )
+    assert calls >= 2
+    assert caught.value.receipt.terminated_pids == (10, 11)
+    assert caught.value.receipt.failure == "KeyboardInterrupt; cleanup KeyboardInterrupt"
+    assert child.killed == fake.killed == 1
+
+
+def test_second_interrupt_after_descendant_kills_retains_pid_accounting(
+    tmp_path, monkeypatch,
+):
+    child = InterruptingProcess(11, 100)
+    root = FakePsutilProcess(10, 100, (child,))
+    fake = FakePopen(polls=(None,))
+    waits = 0
+
+    def interrupt_wait_once(*args, **kwargs):
+        nonlocal waits
+        waits += 1
+        if waits == 1:
+            raise KeyboardInterrupt()
+        return ([], [])
+
+    monkeypatch.setattr(supervisor.psutil, "wait_procs", interrupt_wait_once)
+    with pytest.raises(supervisor.SupervisionCancelled) as caught:
+        _run(
+            tmp_path, root, fake,
+            limits=supervisor.SupervisorLimits(10, 1_000),
+            clock=Clock((0.0, 0.1)),
+        )
+    assert caught.value.receipt.terminated_pids == (10, 11)
+    assert waits == 2
+    assert child.killed == fake.killed == 1
+
+
+def test_cancellation_before_process_factory_returns_reacquires_tree(tmp_path, monkeypatch):
+    child = FakePsutilProcess(11, 100)
+    root = FakePsutilProcess(10, 100, (child,))
+    fake = FakePopen(polls=(None,))
+    monkeypatch.setattr(supervisor.psutil, "wait_procs", lambda *a, **k: ([], []))
+    calls = 0
+
+    def factory(pid):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise KeyboardInterrupt()
+        return root
+
+    output = (tmp_path / "out").open("x")
+    error = (tmp_path / "err").open("x")
+    try:
+        with pytest.raises(supervisor.SupervisionCancelled) as caught:
+            supervisor.supervise(
+                ("python", "child.py"), cwd=tmp_path, environment={},
+                stdout=output, stderr=error,
+                popen=fake.launch, process_factory=factory,
+                monotonic=Clock((0.0, 0.1)), sleep=lambda seconds: None,
+            )
+    finally:
+        output.close(); error.close()
+    assert calls == 2
+    assert caught.value.receipt.observed_pids == (10, 11)
+    assert caught.value.receipt.terminated_pids == (10, 11)
+    assert fake.killed == child.killed == 1
+
+
+def test_direct_root_kill_is_counted_when_psutil_root_unavailable(tmp_path):
+    fake = FakePopen(polls=(None,))
+    calls = 0
+
+    def factory(pid):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise KeyboardInterrupt()
+        raise supervisor.psutil.NoSuchProcess(pid)
+
+    output = (tmp_path / "out").open("x")
+    error = (tmp_path / "err").open("x")
+    try:
+        with pytest.raises(supervisor.SupervisionCancelled) as caught:
+            supervisor.supervise(
+                ("python", "child.py"), cwd=tmp_path, environment={},
+                stdout=output, stderr=error,
+                popen=fake.launch, process_factory=factory,
+                monotonic=Clock((0.0, 0.1)), sleep=lambda seconds: None,
+            )
+    finally:
+        output.close(); error.close()
+    assert caught.value.receipt.root_pid == 10
+    assert caught.value.receipt.terminated_pids == (10,)
+    assert fake.killed == 1
+
+
+def test_cleanup_discovery_denial_still_kills_and_waits_for_owned_root(tmp_path):
+    root = DeniedChildrenProcess(10, 100)
+    fake = FakePopen(polls=(None,))
+    calls = 0
+
+    def factory(pid):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise KeyboardInterrupt()
+        return root
+
+    output = (tmp_path / "out").open("x")
+    error = (tmp_path / "err").open("x")
+    try:
+        with pytest.raises(supervisor.SupervisionCancelled) as caught:
+            supervisor.supervise(
+                ("python", "child.py"), cwd=tmp_path, environment={},
+                stdout=output, stderr=error,
+                popen=fake.launch, process_factory=factory,
+                monotonic=Clock((0.0, 0.1)), sleep=lambda seconds: None,
+            )
+    finally:
+        output.close(); error.close()
+    assert caught.value.receipt.reason == "cancelled"
+    assert caught.value.receipt.terminated_pids == (10,)
+    assert "AccessDenied" in caught.value.receipt.failure
+    assert fake.killed == 1
+
+
+def test_exited_root_is_not_reacquired_by_reused_pid(tmp_path):
+    fake = FakePopen(polls=(0,))
+    calls = 0
+
+    def factory(pid):
+        nonlocal calls
+        calls += 1
+        raise KeyboardInterrupt()
+
+    output = (tmp_path / "out").open("x")
+    error = (tmp_path / "err").open("x")
+    try:
+        with pytest.raises(supervisor.SupervisionCancelled) as caught:
+            supervisor.supervise(
+                ("python", "child.py"), cwd=tmp_path, environment={},
+                stdout=output, stderr=error,
+                popen=fake.launch, process_factory=factory,
+                monotonic=Clock((0.0, 0.1)), sleep=lambda seconds: None,
+            )
+    finally:
+        output.close(); error.close()
+    assert calls == 1
+    assert fake.killed == 0
+    assert caught.value.receipt.terminated_pids == ()
+
+
+def test_poll_error_does_not_authorize_pid_reacquisition(tmp_path):
+    fake = FakePopen(polls=(None,))
+    factory_calls = 0
+
+    def factory(pid):
+        nonlocal factory_calls
+        factory_calls += 1
+        if factory_calls == 1:
+            raise KeyboardInterrupt()
+        raise AssertionError("replacement process must not be acquired")
+
+    def broken_poll():
+        raise OSError("ownership status unavailable")
+
+    fake.poll = broken_poll
+    output = (tmp_path / "out").open("x")
+    error = (tmp_path / "err").open("x")
+    try:
+        with pytest.raises(supervisor.SupervisionCancelled) as caught:
+            supervisor.supervise(
+                ("python", "child.py"), cwd=tmp_path, environment={},
+                stdout=output, stderr=error,
+                popen=fake.launch, process_factory=factory,
+                monotonic=Clock((0.0, 0.1)), sleep=lambda seconds: None,
+            )
+    finally:
+        output.close(); error.close()
+    assert factory_calls == 1
+    assert fake.killed == 1
+    assert caught.value.receipt.terminated_pids == (10,)
+    assert "OSError" in caught.value.receipt.failure
 
 
 def test_time_limit_terminates_tree_and_preserves_reason(tmp_path, monkeypatch):
@@ -195,8 +426,8 @@ def test_launch_failure_has_no_started_process(tmp_path):
     assert receipt.failure == "OSError: no launch"
 
 
-def test_programming_and_cancellation_failures_are_not_receipt_failures(tmp_path):
-    for failure in (AssertionError("bug"), KeyboardInterrupt()):
+def test_programming_failure_is_not_a_receipt_failure(tmp_path):
+    for failure in (AssertionError("bug"),):
         output = (tmp_path / f"out-{type(failure).__name__}").open("x")
         error = (tmp_path / f"err-{type(failure).__name__}").open("x")
         try:
@@ -209,6 +440,26 @@ def test_programming_and_cancellation_failures_are_not_receipt_failures(tmp_path
                 )
         finally:
             output.close(); error.close()
+
+
+def test_prelaunch_cancellation_has_typed_receipt_and_no_process(tmp_path):
+    output = (tmp_path / "out").open("x")
+    error = (tmp_path / "err").open("x")
+    try:
+        with pytest.raises(supervisor.SupervisionCancelled) as caught:
+            supervisor.supervise(
+                ("python", "child.py"), cwd=tmp_path, environment={},
+                stdout=output, stderr=error,
+                popen=lambda *a, **k: (_ for _ in ()).throw(KeyboardInterrupt()),
+                monotonic=Clock((0.0, 0.1)), sleep=lambda seconds: None,
+            )
+    finally:
+        output.close(); error.close()
+    receipt = caught.value.receipt
+    assert receipt.reason == "cancelled"
+    assert receipt.root_pid is receipt.exit_code is None
+    assert receipt.observed_pids == receipt.terminated_pids == ()
+    assert receipt.failure == "KeyboardInterrupt"
 
 
 @pytest.mark.parametrize("seconds,rss,poll", [

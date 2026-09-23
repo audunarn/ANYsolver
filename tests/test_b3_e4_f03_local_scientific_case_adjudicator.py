@@ -253,7 +253,7 @@ def _failure_case(tmp_path, *, reason="launch_failure", exit_code=None, with_sta
     lifecycle.write_terminal(
         directory, plan, DIGEST,
         supervisor.SupervisionReceipt(
-            reason, exit_code, root_pid, 0.25, 4096,
+            reason, exit_code, root_pid, 0.25, 4096 if root_pid is not None else 0,
             (root_pid,) if root_pid is not None else (),
             (root_pid,) if root_pid is not None else (),
             f"synthetic {reason}",
