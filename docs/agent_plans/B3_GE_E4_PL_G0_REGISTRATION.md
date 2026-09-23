@@ -1547,9 +1547,15 @@ registered one-use curved S3 run at `77f787da` completed within the frozen
 limits, and the raw-value candidate screen passed 550 checks with zero
 failures. Independent postrun audit concurred with that bounded disposition;
 see `B3_GE_E4_PL_G0_F06_V4_S3_SCIENTIFIC_RESULTS.md` and its immutable
-evidence root. The receipt retains `qualification_accepted=false`. Q4,
-beam-chart transport, larger loaded rotations, repeated rebases and mixed
-owner integration remain unimplemented. **F06 stays IN_PROGRESS;
+evidence root. The receipt retains `qualification_accepted=false`. A separate
+curved-Q4 preparatory candidate at `445e6dbf` and validation repair at
+`5d507bef` passed nine focused synthetic checks; independent read-only
+review found no blocker for that bounded preparatory scope. Q4 restores
+replay the embedded two-step legacy prefix to verify policy, definition,
+genesis and accepted records, then restore the rebase/successor snapshots
+directly. Q4 has no one-use scientific registration and makes no overall
+replay-free restore claim. Beam-chart transport, larger loaded rotations,
+repeated rebases and mixed-owner integration remain unimplemented. **F06 stays IN_PROGRESS;
 F03/G0B bar G1.**
 
 The F03 shell-port planar moment implementation check has three distinct
@@ -1646,3 +1652,18 @@ balance tests under independent mechanics review. Its `.04 m` example
 pad halfwidth is not a selected engineering connection. No first-quarter
 refinement, 1% physical reference, native six-channel acceptance or
 G0B closure follows from those small tests; G1 remains barred.
+
+The later independent classical four-pad primal Ritz n12/n16/n24
+reference did not establish physical settling, and its saved-action audit
+retains n16/n24 numerical failures. The separately registered spatial
+residual diagnostic passed its 126 numerical identity checks and localized
+unresolved strong residual near attachment pads and support corners; it
+is not a solution-error or convergence certificate. The reviewed
+`B3_GE_E4_PL_G0_F03_CONFORMING_REFERENCE_DESIGN_V1.md` now specifies a
+locally supported Qp candidate without changing the physical finite-pad
+law, three root constraints or frozen acceptance criteria. A bounded Q1
+trace-only helper passes 15 preparatory algebraic tests, including a
+separate cell-moment/work oracle and scaled six-row root check. It has no
+energy assembly, equilibrium solve, physical settling or scientific
+registration. **No F03 line space is selected; F03/G0B remain open and G1
+barred.**
