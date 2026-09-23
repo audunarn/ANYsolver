@@ -6,7 +6,11 @@ Missing or incomplete lifecycle evidence raises before a receipt is written.
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
+import os
 from pathlib import Path
+import stat
 
 from scripts import _b3_e4_f03_local_scientific_adjudication_bindings as binding_records
 from scripts import _b3_e4_f03_local_scientific_archive as archive
@@ -330,15 +334,15 @@ def _case_reasons(predicates: tuple[receipt.PredicateRecord, ...]) -> tuple[str,
     return values
 
 
-def adjudicate_case(
+def _compute_case(
     directory: Path,
     record: cases.CasePreflight,
     records: tuple[cases.CasePreflight, ...],
     source_commit: str,
     registration_sha256: str,
     budgets: budget_contract.ScientificAdjudicationBudgets,
-) -> tuple[receipt.CaseReceipt, str]:
-    """Replay one complete case and exclusively write its closure receipt."""
+) -> tuple[receipt.CaseReceipt, receipt.AdjudicationBindings, archive.CaseArchivePlan]:
+    """Recompute one complete case solely from retained saved evidence."""
     directory = Path(directory)
     fresh = cases.preflight_inventory()
     budget_contract.require_scientific_budgets(budgets)
@@ -499,7 +503,78 @@ def adjudicate_case(
             _case_status(predicates), predicates, _work(plan),
             bindings.settling, bindings.functional, _case_reasons(predicates),
         )
+    return value, bindings, plan
+
+
+def adjudicate_case(
+    directory: Path,
+    record: cases.CasePreflight,
+    records: tuple[cases.CasePreflight, ...],
+    source_commit: str,
+    registration_sha256: str,
+    budgets: budget_contract.ScientificAdjudicationBudgets,
+) -> tuple[receipt.CaseReceipt, str]:
+    """Replay a complete case and exclusively write its closure receipt."""
+    value, bindings, plan = _compute_case(
+        directory, record, records, source_commit, registration_sha256, budgets,
+    )
     digest = receipt.write_receipt(
         directory, value, plan, registration_sha256, bindings,
     )
     return value, digest
+
+
+def replay_case(
+    directory: Path,
+    record: cases.CasePreflight,
+    records: tuple[cases.CasePreflight, ...],
+    source_commit: str,
+    registration_sha256: str,
+    budgets: budget_contract.ScientificAdjudicationBudgets,
+    *,
+    plan_archive_sha256: str,
+) -> tuple[receipt.CaseReceipt, str]:
+    """Read-only independent recomputation against the sealed case receipt."""
+    plan_path = Path(directory) / "plan.zip"
+    _verify_registered_plan_bytes(plan_path, plan_archive_sha256)
+    value, bindings, plan = _compute_case(
+        directory, record, records, source_commit, registration_sha256, budgets,
+    )
+    retained, digest = receipt.read_receipt(
+        directory, plan, registration_sha256, bindings,
+    )
+    if retained != value:
+        raise ValueError("F03 saved case receipt disagrees with independent replay")
+    if archive.read_plan(
+        plan_path, record, records, source_commit,
+    ) != plan:
+        raise ValueError("F03 case plan changed during independent replay")
+    _verify_registered_plan_bytes(plan_path, plan_archive_sha256)
+    return retained, digest
+
+
+def _verify_registered_plan_bytes(path: Path, expected_sha256: str) -> None:
+    if not receipt._digest(expected_sha256):
+        raise ValueError("registered F03 plan archive digest required")
+    info = path.lstat()
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or info.st_nlink != 1
+        or info.st_size > archive.MAX_PLAN_BYTES
+        or (hasattr(info, "st_file_attributes") and info.st_file_attributes & 0x400)
+    ):
+        raise ValueError("F03 plan archive requires a bounded owned regular file")
+    with evidence_index._open_no_follow(path) as stream:
+        opened = os.fstat(stream.fileno())
+        if (
+            opened.st_dev != info.st_dev
+            or opened.st_ino != info.st_ino
+            or opened.st_size != info.st_size
+        ):
+            raise ValueError("F03 plan archive changed during open")
+        encoded = stream.read(archive.MAX_PLAN_BYTES + 1)
+    if (
+        len(encoded) != info.st_size
+        or not hmac.compare_digest(hashlib.sha256(encoded).hexdigest(), expected_sha256)
+    ):
+        raise ValueError("F03 registered plan archive byte identity mismatch")

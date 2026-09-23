@@ -513,5 +513,7 @@ The process-tree supervisor now carries cancellation in a validated typed
 receipt, with independent closure review and 55 passing affected tests.
 `B3_GE_E4_PL_G0_F03_TYPED_CANCELLATION_RESULTS.md` records the scope and
 closed findings. It was not a scientific execution. The next coordinator
-prerequisites are read-only case replay and cross-case adjudication, followed
-by the serial one-use coordinator and its preflight/review gate.
+prerequisites are cross-case adjudication, followed by the serial one-use
+coordinator and its preflight/review gate. Read-only case replay is now
+independently reviewed, as recorded in
+`B3_GE_E4_PL_G0_F03_READ_ONLY_REPLAY_RESULTS.md`; it did not launch a case.

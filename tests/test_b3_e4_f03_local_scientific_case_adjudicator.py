@@ -1,5 +1,8 @@
 from contextlib import contextmanager
+import hashlib
+import io
 from types import SimpleNamespace
+import zipfile
 
 import numpy as np
 import pytest
@@ -64,6 +67,7 @@ def _install_complete_archive_mocks(monkeypatch, tmp_path, *, mutate_final=False
     plan = archive.make_case_plan(record, records, SOURCE)
     case_dir = tmp_path / "case"
     case_dir.mkdir()
+    archive.write_plan(case_dir / "plan.zip", plan)
     snapshot_dir = tmp_path / "retained-snapshot"
     snapshot_dir.mkdir()
     grid = object()
@@ -208,6 +212,97 @@ def test_complete_saved_only_route_consumes_inverse_stream_once_and_writes_exclu
     assert all(item.disposition == "PASSED" for item in value.predicates)
     assert value.work.as_dict()["replay_factorizations"] == 0
     assert value.work.as_dict()["replay_equilibrium_solves"] == 0
+
+
+def test_read_only_case_replay_recomputes_and_matches_sealed_receipt(
+    monkeypatch, tmp_path,
+):
+    records, record, plan, case_dir, starts, written, events = _install_complete_archive_mocks(
+        monkeypatch, tmp_path,
+    )
+    created = []
+
+    def make_receipt(*args):
+        value = SimpleNamespace(arguments=args, predicates=args[14], work=args[15])
+        created.append(value)
+        return value
+
+    monkeypatch.setattr(adjudicator.receipt, "CaseReceipt", make_receipt)
+    monkeypatch.setattr(
+        adjudicator.receipt, "read_receipt",
+        lambda *args: (created[-1], DIGEST),
+    )
+    value, digest = adjudicator.replay_case(
+        case_dir, record, records, SOURCE, DIGEST, budgets.make_scientific_budgets(),
+        plan_archive_sha256=hashlib.sha256((case_dir / "plan.zip").read_bytes()).hexdigest(),
+    )
+    assert (value, digest) == (created[0], DIGEST)
+    assert starts == [block.start for block in plan.inverse_blocks]
+    assert events == ["snapshot_enter", "integration", "positivity", "snapshot_exit"]
+    assert written == []
+
+
+def test_read_only_case_replay_rejects_changed_receipt(monkeypatch, tmp_path):
+    records, record, _, case_dir, _, written, _ = _install_complete_archive_mocks(
+        monkeypatch, tmp_path,
+    )
+    monkeypatch.setattr(
+        adjudicator.receipt, "read_receipt", lambda *args: (object(), DIGEST),
+    )
+    with pytest.raises(ValueError, match="independent replay"):
+        adjudicator.replay_case(
+            case_dir, record, records, SOURCE, DIGEST,
+            budgets.make_scientific_budgets(),
+            plan_archive_sha256=hashlib.sha256((case_dir / "plan.zip").read_bytes()).hexdigest(),
+        )
+    assert written == []
+
+
+def test_read_only_case_replay_rejects_changed_plan(monkeypatch, tmp_path):
+    records, record, plan, case_dir, _, written, _ = _install_complete_archive_mocks(
+        monkeypatch, tmp_path,
+    )
+    created = []
+    monkeypatch.setattr(
+        adjudicator.receipt, "CaseReceipt",
+        lambda *args: created.append(SimpleNamespace(arguments=args)) or created[-1],
+    )
+    monkeypatch.setattr(
+        adjudicator.receipt, "read_receipt", lambda *args: (created[-1], DIGEST),
+    )
+    plans = iter((plan, object()))
+    monkeypatch.setattr(adjudicator.archive, "read_plan", lambda *args: next(plans))
+    with pytest.raises(ValueError, match="plan changed"):
+        adjudicator.replay_case(
+            case_dir, record, records, SOURCE, DIGEST,
+            budgets.make_scientific_budgets(),
+            plan_archive_sha256=hashlib.sha256((case_dir / "plan.zip").read_bytes()).hexdigest(),
+        )
+    assert written == []
+
+
+def test_read_only_replay_rejects_same_payload_rezipped_plan(monkeypatch, tmp_path):
+    records, record, _, case_dir, _, written, _ = _install_complete_archive_mocks(
+        monkeypatch, tmp_path,
+    )
+    path = case_dir / "plan.zip"
+    original = path.read_bytes()
+    with zipfile.ZipFile(io.BytesIO(original)) as zipped:
+        members = tuple((name, zipped.read(name)) for name in ("plan.json", "plan.sha256"))
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
+        for name, payload in members:
+            info = zipfile.ZipInfo(name, date_time=(2026, 9, 23, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            zipped.writestr(info, payload)
+    assert path.read_bytes() != original
+    assert archive._read_plan_payload(path) == members[0][1]
+    with pytest.raises(ValueError, match="archive byte identity"):
+        adjudicator.replay_case(
+            case_dir, record, records, SOURCE, DIGEST,
+            budgets.make_scientific_budgets(),
+            plan_archive_sha256=hashlib.sha256(original).hexdigest(),
+        )
+    assert written == []
 
 
 def test_final_evidence_snapshot_change_prevents_receipt(monkeypatch, tmp_path):
