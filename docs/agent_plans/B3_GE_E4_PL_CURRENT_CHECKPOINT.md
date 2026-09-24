@@ -697,3 +697,33 @@ independently reviewed, as recorded in
 `B3_GE_E4_PL_G0_F03_READ_ONLY_REPLAY_RESULTS.md`; it did not launch a case.
 The exact cross-case implementation boundary is saved in
 `B3_GE_E4_PL_G0_F03_CROSS_CASE_NEXT.md`.
+
+## 24 September 2026 current F03 diagnostic checkpoint
+
+The reviewed support-row candidate source is `7dd70e72`, and evidence was
+recorded at `11f4a39a` on the isolated integration branch; accepted main
+remains untouched. The complete
+current result is
+`B3_GE_E4_PL_G0_F03_Q6_X2_SUPPORT_REUSE_RESULT_20260924.md`, with raw
+tracked receipts and locally retained, Git-ignored numerical archives.
+There is no active scientific process, no one-use formal registration, and
+no release action.
+
+The saved X0/X1/X2 Q6 state-component bounds are recorded in
+`B3_GE_E4_PL_G0_F03_Q6_THREE_GRID_COMPONENT_BOUNDS_20260924.md`.
+They apply to exact mappings through stored binary physical scales and do
+not settle derived physical observables. The source-level X2 reuse run
+completed in 2,082.77 s, with spatial audit 63.20 s shorter than preserved
+V1 in one comparison. The physical and spatial outputs agree within the
+reported tiny summation differences, and independent read-only review found
+no unresolved issue in that comparison. Unaffected phases varied; no
+repeatable complete-route speedup is established. The draft 1,800 s
+resource envelope remains unmet by 282.77 s. The run is unregistered and
+not installed-artifact qualification.
+
+The next decision is prospective: finish explicit error propagation to
+every registered physical functional, resolve native line/port moment and
+stability mechanics, and freeze/review a feasible installed scientific
+resource protocol before any one-use case registration. Do not describe
+this classical Q6 diagnostic as G0B or native F03 acceptance. G0B remains
+open and G1 remains barred.
