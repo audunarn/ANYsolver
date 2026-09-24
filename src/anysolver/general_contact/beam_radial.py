@@ -17,6 +17,7 @@ from .core import ContactDefinition, ContactSolverSettings, ContactValidationRep
 
 
 PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_FIXED_RADIAL_LINE_PENALTY_STATIC_DEV_V0"
+PROFILE_MOVING = "CLASSICAL_B2_B3_ROUND_TUBE_PRESCRIBED_RADIAL_LINE_PENALTY_STATIC_DEV_V0"
 _GAUSS_8 = np.polynomial.legendre.leggauss(8)
 _GAUSS_16 = np.polynomial.legendre.leggauss(16)
 
@@ -74,6 +75,7 @@ def validate_beam_radial_contact(model, definition: ContactDefinition,
         ), PROFILE)
     surface, body, interaction = (definition.surfaces[0], definition.rigid_bodies[0],
                                   definition.interactions[0])
+    profile = PROFILE_MOVING if body.path_translation is not None else PROFILE
     controls = ContactSolverSettings() if settings is None else settings
     if controls.pair_motion != "general":
         issues.append("radial beam contact requires pair_motion='general'")
@@ -81,8 +83,8 @@ def validate_beam_radial_contact(model, definition: ContactDefinition,
         issues.append("radial beam contact requires explicit line_integration_relative_tolerance")
     if surface.beam_radius is None or surface.side != "midsurface" or surface.beam_end_caps != "none":
         issues.append("radial beam contact requires explicit round radius and no endpoint caps")
-    if body.kind not in {"sphere", "cylinder"} or body.path_translation is not None:
-        issues.append("radial beam profile requires a fixed sphere or infinite cylinder")
+    if body.kind not in {"sphere", "cylinder"}:
+        issues.append("radial beam profile requires a sphere or infinite cylinder")
     if (interaction.surface, interaction.target) != (surface.name, body.name):
         issues.append("radial beam interaction must name its beam and obstacle")
     if (interaction.normal_law != "penalty" or interaction.normal_stiffness is not None
@@ -118,7 +120,7 @@ def validate_beam_radial_contact(model, definition: ContactDefinition,
     if (surface.beam_radius is not None and body.radius is not None
             and interaction.gap_tolerance >= surface.beam_radius + body.radius):
         issues.append("radial beam gap tolerance must be smaller than combined radius")
-    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE)
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
 def _curve_coefficients(positions: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -186,7 +188,12 @@ class _BeamRadialManager:
         self.definition = definition
         self.profile = report.profile
         self.kind = definition.rigid_bodies[0].kind
-        self.point = np.asarray(definition.rigid_bodies[0].point, dtype=float)
+        self.reference_point = np.asarray(definition.rigid_bodies[0].point, dtype=float)
+        self.point = self.reference_point.copy()
+        translation = definition.rigid_bodies[0].path_translation
+        self.path_translation = (np.zeros(3) if translation is None
+                                 else np.asarray(translation, dtype=float))
+        self.path_factor = 0.0
         axis = definition.rigid_bodies[0].normal
         self.projector = (np.eye(3) if self.kind == "sphere" else
                           np.eye(3) - np.outer(axis, axis))
@@ -366,18 +373,39 @@ class _BeamRadialManager:
         )
         return force, stiffness, result
 
-    def _swept_admissible(self, start: np.ndarray, end: np.ndarray) -> bool:
+    def point_at(self, factor: float) -> np.ndarray:
+        value = float(factor)
+        if not np.isfinite(value) or value < 0.0:
+            raise ValueError("radial tool path factor must be finite and nonnegative")
+        point = self.reference_point + value * self.path_translation
+        if not np.all(np.isfinite(point)):
+            raise ValueError("radial tool path position is nonfinite")
+        return point
+
+    def set_path_factor(self, factor: float) -> None:
+        self.point = self.point_at(factor)
+        self.path_factor = float(factor)
+
+    def _swept_admissible(self, start: np.ndarray, end: np.ndarray,
+                         start_factor: float | None = None,
+                         end_factor: float | None = None) -> bool:
+        first_factor = self.path_factor if start_factor is None else float(start_factor)
+        last_factor = self.path_factor if end_factor is None else float(end_factor)
+        first_point = self.point_at(first_factor)
+        last_point = self.point_at(last_factor)
         for cell in self.cells:
             first = self._positions(cell, start)
             last = self._positions(cell, end)
-            speed = (max(float(np.linalg.norm(delta)) for delta in last - first)
+            relative_delta = (last - first) - (last_point - first_point)
+            speed = (max(float(np.linalg.norm(delta)) for delta in relative_delta)
                      if len(first) == 2 else
-                     sum(float(np.linalg.norm(delta)) for delta in last - first))
+                     sum(float(np.linalg.norm(delta)) for delta in relative_delta))
 
             def gap_at(factor: float) -> float:
                 positions = first + factor * (last - first)
                 self._check_positions(positions)
-                return _minimum_gap(positions, self.point,
+                point = first_point + factor * (last_point - first_point)
+                return _minimum_gap(positions, point,
                                     self.projector, self.radius)
 
             initial_gap = gap_at(0.0)
@@ -405,9 +433,10 @@ class _BeamRadialManager:
         return True
 
     def swept_increment_admissible(self, start: np.ndarray, end: np.ndarray,
-                                   _start_factor: float, _end_factor: float) -> bool:
+                                   start_factor: float, end_factor: float) -> bool:
         result = self._swept_admissible(np.asarray(start, dtype=float).reshape(-1),
-                                       np.asarray(end, dtype=float).reshape(-1))
+                                       np.asarray(end, dtype=float).reshape(-1),
+                                       start_factor, end_factor)
         if not result:
             self.swept_trial_cutbacks += 1
         return result
@@ -425,6 +454,24 @@ class _BeamRadialManager:
             fraction *= 0.5
         return 0.0
 
+    def tool_work_increment(self, start: np.ndarray, end: np.ndarray,
+                            start_factor: float, end_factor: float) -> float:
+        if not np.any(self.path_translation):
+            return 0.0
+        previous_factor = self.path_factor
+        try:
+            self.set_path_factor(start_factor)
+            first_force = np.asarray(self.evaluate(start, tangent=False)[2].rigid_force)
+            self.set_path_factor(end_factor)
+            last_force = np.asarray(self.evaluate(end, tangent=False)[2].rigid_force)
+        finally:
+            self.set_path_factor(previous_factor)
+        motion = (float(end_factor) - float(start_factor)) * self.path_translation
+        work = float(0.5 * (first_force + last_force) @ motion)
+        if not np.isfinite(work):
+            raise ValueError("radial beam tool work is nonfinite")
+        return work
+
     def restart_contract(self) -> dict[str, object]:
         surface, body, interaction = (self.definition.surfaces[0],
                                       self.definition.rigid_bodies[0],
@@ -437,7 +484,9 @@ class _BeamRadialManager:
             "body": {"name": body.name, "kind": body.kind,
                      "point": list(body.point), "normal": (
                          None if body.normal is None else list(body.normal)),
-                     "radius": body.radius},
+                     "radius": body.radius,
+                     **({"path_translation": list(body.path_translation)}
+                        if body.path_translation is not None else {})},
             "interaction": {"name": interaction.name, "surface": interaction.surface,
                             "target": interaction.target,
                             "normal_law": interaction.normal_law,
