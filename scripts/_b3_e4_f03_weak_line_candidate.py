@@ -96,6 +96,7 @@ class ReferenceKKT:
     energy_scale: float
     scaled_system: np.ndarray
     segment_count: int
+    shell_support_policy: str
 
 
 def segments(shell: FlatE4TrialPanel, beam: Fixture,
@@ -188,17 +189,24 @@ def integrate_weak_line(
 def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                            space: LineMultiplierSpace, *,
                            order: int = 4,
-                           shell_port: str = "rail") -> ReferenceKKT:
+                           shell_port: str = "rail",
+                           shell_support_policy: str = "legacy_three_left_nodes"
+                           ) -> ReferenceKKT:
     """Assemble a bounded zero-multiplier shell/B3/weak-line KKT oracle.
 
-    The shell and beam are at their flat virgin reference; shell x=-.5 and
-    native beam root coordinates are fixed. This is a small full-matrix
-    derivation check, not a sparse production assembly or stability result.
+    The shell and beam are at their flat virgin reference. The historical
+    default fixes all six coordinates at three left-edge shell nodes.
+    ``both_xy_edges`` fixes in-plane coordinates at both complete x edges,
+    plus out-of-plane coordinates on the left edge to remove rigid modes.
+    This is a small full-matrix derivation check, not production assembly.
     """
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
     if shell_port not in ("rail", "local_translation"):
         raise ValueError("unknown bounded shell pose port")
+    if shell_support_policy not in ("legacy_three_left_nodes",
+                                    "both_xy_edges"):
+        raise ValueError("unknown bounded shell support policy")
     pose_map = (pose_from_e4_total if shell_port == "rail" else
                 pose_from_e4_total_local_translation)
     reference_trace = (reference_spatial_trace if shell_port == "rail" else
@@ -244,9 +252,19 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                 constraint[6*row:6*row+6] += (
                     half*gauss_weight*basis_value*derivative)
     nx = 2*shell.panel.n_s
-    clamped_shell_nodes = (0, nx+1, 2*(nx+1))
-    clamped_shell = {6*node+axis for node in clamped_shell_nodes
-                     for axis in range(6)}
+    if shell_support_policy == "legacy_three_left_nodes":
+        clamped_shell_nodes = (0, nx+1, 2*(nx+1))
+        clamped_shell = {6*node+axis for node in clamped_shell_nodes
+                         for axis in range(6)}
+    else:
+        clamped_shell = {
+            6*(j*(nx+1)+i)+axis
+            for j in range(shell.panel.n_y+1)
+            for i in (0, nx) for axis in (0, 1)}
+        clamped_shell.update({
+            6*(j*(nx+1))+axis
+            for j in range(shell.panel.n_y+1)
+            for axis in (2, 3, 4)})
     fixed_beam = {shell_size+index for index in beam.context.fixed}
     free = np.array([index for index in range(shell_size+beam_size)
                      if index not in clamped_shell and index not in fixed_beam],
@@ -277,4 +295,4 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                      coordinate_scale[None, :])/energy_scale
     return ReferenceKKT(primal, constraint, free, system,
                         coordinate_scale, energy_scale,
-                        scaled_system, len(edges)-1)
+                        scaled_system, len(edges)-1, shell_support_policy)

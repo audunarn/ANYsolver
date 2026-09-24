@@ -53,14 +53,17 @@ def sinusoidal_axial_density_load(beam, *, amplitude_n_per_m=1e5):
 def one_case(topology: str, intervals: int, kind: str, *,
              shell_port: str = "rail",
              load_kind: str = "torsion", n_s: int = 4,
-             native_half_cells: int = 16) -> dict:
+             native_half_cells: int = 16,
+             n_y: int = 2,
+             shell_support_policy: str = "legacy_three_left_nodes") -> dict:
     """Solve a bounded torsion or alternating axial case at one resolution."""
-    shell = FlatE4TrialPanel(make_shell(n_s, topology))
+    shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y))
     beam = build(native_half_cells)
     space = LineMultiplierSpace(
         kind, tuple(np.linspace(0., 1., intervals+1)))
     kkt = assemble_reference_kkt(
-        shell, beam, space, shell_port=shell_port)
+        shell, beam, space, shell_port=shell_port,
+        shell_support_policy=shell_support_policy)
     pose_map = (pose_from_e4_total if shell_port == "rail" else
                 pose_from_e4_total_local_translation)
     shell_size = 6*shell.panel.node_count
@@ -90,7 +93,17 @@ def one_case(topology: str, intervals: int, kind: str, *,
     multipliers = physical_solution[free_count:]
     physical_residual = (kkt.primal_tangent@full+
                          kkt.constraint_jacobian.T@multipliers-load)
+    shell_fixed = np.ones(shell_size, dtype=bool)
+    shell_fixed[kkt.free_primal[kkt.free_primal < shell_size]] = False
+    shell_reaction_fx = float(np.sum(
+        physical_residual[:shell_size:6][shell_fixed[0::6]]))
+    beam_root_reaction_fx = float(physical_residual[shell_size])
     shell_total = full[:shell_size]
+    shell_inplane = shell_total.reshape(-1, 6)[:, :2].ravel()
+    shell_physical_inplane_energy = float(
+        .5*shell_inplane@(shell.panel.stiffness@ shell_inplane))
+    shell_full_energy = float(.5*shell_total@kkt.primal_tangent[
+        :shell_size, :shell_size]@shell_total)
     beam_state = beam.context.advance(
         beam.context.initial.mechanical, full[shell_size:])
     shell_reference = np.zeros(shell_size)
@@ -124,9 +137,11 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "topology": topology,
         "kind": kind,
         "shell_port": shell_port,
+        "shell_support_policy": shell_support_policy,
         "load_kind": load_kind,
         "intervals": intervals,
         "shell_host_intervals": n_s,
+        "shell_transverse_intervals": n_y,
         "native_half_cells": native_half_cells,
         "shell_elements": shell.panel.element_count,
         "native_elements": beam.n_half_cells//2,
@@ -140,8 +155,18 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "applied_axial_first_moment_n_m": float(np.dot(
             np.arange(native_half_cells+1)/native_half_cells,
             load[shell_size:shell_size+beam.context.nodal_count:6])),
-        "shell_energy_j": float(.5*shell_total@kkt.primal_tangent[
-            :shell_size, :shell_size]@shell_total),
+        "shell_energy_j": shell_full_energy,
+        "shell_physical_inplane_energy_j": shell_physical_inplane_energy,
+        "shell_full_minus_physical_inplane_energy_j": float(
+            shell_full_energy-shell_physical_inplane_energy),
+        "beam_energy_j": float(.5*full[shell_size:]@
+                               kkt.primal_tangent[shell_size:, shell_size:]@
+                               full[shell_size:]),
+        "shell_reaction_fx_n": shell_reaction_fx,
+        "beam_root_reaction_fx_n": beam_root_reaction_fx,
+        "global_axial_balance_n": float(
+            shell_reaction_fx+beam_root_reaction_fx+
+            np.sum(load[shell_size:shell_size+beam.context.nodal_count:6])),
         "gap_l2_m": float(np.sqrt(np.trapezoid(gaps*gaps, dx=1./128))),
         "gap_max_m": float(np.max(gaps)),
         "gap_axial_l2_m": float(np.sqrt(np.trapezoid(
@@ -161,6 +186,13 @@ def main() -> None:
     parser.add_argument("--paired-refinement", action="store_true")
     parser.add_argument("--paired-shell-intervals", type=int,
                         choices=(1, 2, 4, 8), nargs="+")
+    parser.add_argument("--shell-transverse-intervals", type=int,
+                        choices=(2, 4, 8), default=2)
+    parser.add_argument("--kind", choices=("piecewise_constant",
+                                           "continuous_linear", "dual_linear"))
+    parser.add_argument("--shell-support-policy",
+                        choices=("legacy_three_left_nodes", "both_xy_edges"),
+                        default="legacy_three_left_nodes")
     parser.add_argument("--sinusoidal-axial-density", action="store_true")
     arguments = parser.parse_args()
     if arguments.axial_wave and arguments.sinusoidal_axial_density:
@@ -174,6 +206,8 @@ def main() -> None:
     kinds = ("piecewise_constant", "continuous_linear")
     if arguments.include_dual:
         kinds += ("dual_linear",)
+    if arguments.kind is not None:
+        kinds = (arguments.kind,)
     paired_sizes = arguments.paired_shell_intervals or (1, 2, 4)
     grids = ((n_s, 4*n_s, n_s) for n_s in paired_sizes) if (
         arguments.paired_refinement) else ((4, 16, intervals)
@@ -181,13 +215,17 @@ def main() -> None:
     grids = tuple(grids)
     rows = [one_case(topology, intervals, kind, shell_port=shell_port,
                      load_kind=load_kind, n_s=n_s,
-                     native_half_cells=native_half_cells)
+                     native_half_cells=native_half_cells,
+                     n_y=arguments.shell_transverse_intervals,
+                     shell_support_policy=arguments.shell_support_policy)
             for topology in ("Q4", "S3-V2D")
             for kind in kinds
             for n_s, native_half_cells, intervals in grids]
     print(json.dumps({"status": "UNREGISTERED_DIAGNOSTIC",
                       "screen": "paired_refinement" if arguments.paired_refinement
                       else "fixed_primal",
+                      "shell_transverse_intervals": arguments.shell_transverse_intervals,
+                      "shell_support_policy": arguments.shell_support_policy,
                       "shell_port": shell_port, "load_kind": load_kind,
                       "cases": rows},
                      indent=2, sort_keys=True))

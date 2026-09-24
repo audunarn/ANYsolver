@@ -1,5 +1,64 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — F03 support-matched axial reference diagnosis.**
+The earlier native weak-line KKT deliberately fixed all six coordinates
+at only **three left-edge shell nodes**; its prior loaded/rank screens
+therefore did not share the two supported x edges of the independent
+classical comparator or the support statement in the planar shell fixture.
+For transverse grids above two rows, additional left-edge nodes were
+free as well. All those historical JSON results remain unchanged and
+retain their actual `legacy_three_left_nodes` interpretation. Their
+response trends cannot be re-labelled as a both-edge convergence study.
+
+A separately selected `both_xy_edges` policy now fixes in-plane coordinates
+on every node at both x ends and fixes left-edge z/rx/ry to remove the
+out-of-plane rigid modes, leaving shell rz free. The old default was
+verified to reproduce four saved numerical outputs **exactly**. The
+native shell fixture now admits 2/4/8 transverse rows; the explicit
+two-row source arrays, supports, breakpoints and sample maps retain the
+pre-change hashes `c0541e35…` (Q4) and `dfa344d2…` (S3-V2D).
+Nine direct grid/support tests passed. An independently assembled
+classical axial load was also checked against its analytic resultant
+and first moment without importing the native load builder.
+
+An unregistered comparator ran **12** Q4/classical-Q4 and S3-V2D/CST
+cases at shell host counts 4/8 and transverse counts 2/4/8, with a
+fixed `10^5 sin(2 pi s) N/m` line density, equivalent section constants,
+four-sample rail, P1 interval count equal to shell host count, and the
+explicit both-edge in-plane supports. At `(n_s,n_y)=(4,2)`, the native
+S3/CST tip difference is `0.516%`; the prior left-only native tip was
+about four times the both-edge result. At `(8,8)`, Q4/classical-Q4 and
+S3/CST tip differences are `0.915%` and `0.950%`. The corresponding
+shell-reaction differences are `0.739%` and `1.672%`, and shell-energy
+differences `0.730%` and `1.672%`. Both separate solvers satisfy their
+small algebraic/balance residuals. Native and classical beam-only axial
+tips agree to floating precision, and S3's physical membrane block
+matches the independent CST block; the complete E4 trial tangent and
+the classical beam interior/three-channel trace remain distinct laws.
+At `(8,8)`, a post-screen recovery check finds that full E4 shell energy
+exceeds its physical in-plane contribution by `1.6555%` (Q4) and
+`1.5398%` (S3-V2D). Removing that difference alone does not reconcile
+the independently assembled shell energy; material/trace and
+discretization effects still require attribution.
+No 1% cross-solver acceptance is claimed for all observables, and neither
+an external solver nor a converged continuum target is supplied here.
+
+The four earlier-support transverse cases are retained as
+`B3_GE_E4_PL_F03_LEGACY_TRANSVERSE_NS4_NY{4,8}_{RAIL,LOCAL}_V1.json`;
+the support-matched comparison is in
+`B3_GE_E4_PL_F03_MATCHED_AXIAL_{NS4,NS8_NY2_4,NS8_NY8}_V1.json`.
+The latter was produced with `python -B -m
+scripts.b3_e4_f03_matched_axial_reference_screen` and explicit
+`--shell-host-intervals`/`--transverse-intervals` values. All seven
+copied files were parsed and compared with their source outputs.
+The combined focused pytest run passed **98 tests**, including the new
+comparator, transverse-grid host invariance, retained transverse-load
+control, and existing shell/weak-line checks. This is Level-A
+diagnosis under the adopted risk-proportionate policy. **F03/G0B remain
+open; G1 remains barred.** Next, isolate full E4 tangent/trace effects
+on reactions and energy, then assess signed stability, physical torque,
+shear and mesh ratios before any space or shell-port selection.
+
 **24 September 2026 — fourth axial loaded resolution level.** The bounded
 private E4 trial and native B3 fixture now admit 8 shell host intervals
 and 32 native half-cells for the same straight, elastic diagnostic; no

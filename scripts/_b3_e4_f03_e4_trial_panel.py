@@ -45,7 +45,7 @@ class FlatE4TrialPanel:
             self.model.add_node(node, *coordinates)
         nx = 2*panel.n_s
         self.elements = []
-        for j in range(2):
+        for j in range(panel.n_y):
             for i in range(nx):
                 a = 1+j*(nx+1)+i
                 b, d = a+1, a+nx+1
@@ -78,6 +78,7 @@ class FlatE4TrialPanel:
         return dict(
             policy="F03_BOUNDED_FLAT_E4_TRIAL_PANEL_V1",
             topology=self.panel.topology, n_s=self.panel.n_s,
+            **({"n_y": self.panel.n_y} if self.panel.n_y != 2 else {}),
             thickness=self.panel.thickness,
             node_count=self.panel.node_count,
             element_count=self.panel.element_count,

@@ -42,6 +42,7 @@ class ShellPanel:
     node_count: int
     element_count: int
     thickness: float = .07
+    n_y: int = 2
 
     @property
     def dof_count(self) -> int:
@@ -59,12 +60,13 @@ class ShellPanel:
         """Physical Q4 bilinear or diagonally split S3 barycentric host."""
         nx = self.x_interval_count
         dx = 1.0 / self.n_s
+        dy = 1.0 / self.n_y
         # At exact edges choose the cell to the left/below.  Both hosts give
         # identical continuous shape traces there; the choice is deterministic.
         i = int(np.clip(np.ceil((x + .5) / dx) - 1, 0, nx - 1))
-        j = int(np.clip(np.ceil((y + .5) / .5) - 1, 0, 1))
+        j = int(np.clip(np.ceil((y + .5) / dy) - 1, 0, self.n_y - 1))
         xi = (x - (-.5 + i * dx)) / dx
-        eta = (y - (-.5 + j * .5)) / .5
+        eta = (y - (-.5 + j * dy)) / dy
         if not (-1e-12 <= xi <= 1 + 1e-12 and
                 -1e-12 <= eta <= 1 + 1e-12):
             raise ValueError("sample is outside its shell cell")
@@ -118,7 +120,8 @@ class ShellPanel:
         dx = 1.0 / self.n_s
         candidates = [0.0, 1.0]
         for ox, y in _SAMPLE_OFFSETS:
-            eta = (y + .5) / .5 if y < 0 else y / .5
+            eta = (y + .5) * self.n_y
+            eta -= np.floor(eta)
             for i in range(self.x_interval_count + 1):
                 edge = -.5 + i * dx
                 candidates.append(edge - ox)
@@ -132,7 +135,7 @@ class ShellPanel:
     def diagnostics(self) -> dict:
         """Mesh and actual reference-sample host counts for audit output."""
         return dict(topology=self.topology, n_s=self.n_s,
-                    x_intervals=self.x_interval_count, y_intervals=2,
+                    x_intervals=self.x_interval_count, y_intervals=self.n_y,
                     nodes=self.node_count, elements=self.element_count,
                     dofs=self.dof_count, free_dofs=self.free_count,
                     supported_dofs=self.dof_count-self.free_count,
@@ -140,17 +143,20 @@ class ShellPanel:
                     shell_knots=len(self.breakpoints()))
 
 
-def make_shell(n_s: int, topology: str, *, thickness: float = .07) -> ShellPanel:
-    """Assemble actual E4-PL physical in-plane element blocks on a 2-row grid.
+def make_shell(n_s: int, topology: str, *, thickness: float = .07,
+               n_y: int = 2) -> ShellPanel:
+    """Assemble actual E4-PL physical in-plane blocks on a bounded grid.
 
     x spans [-.5, 1.5] in steps of 1/n_s; y spans [-.5, .5] in
-    two rows.  Only both x-end edges have ux and uy fixed; the
+    n_y rows. Only both x-end edges have ux and uy fixed; the
     long top and bottom rails remain free to deform and transfer
     the transverse physical torque arm. Nodal out-of-plane and
     rotational coordinates never enter the assembled membrane matrix.
     """
     if isinstance(n_s, bool) or not isinstance(n_s, (int, np.integer)) or n_s < 1:
         raise ValueError("n_s must be a positive integer")
+    if isinstance(n_y, bool) or not isinstance(n_y, int) or n_y not in (2, 4, 8):
+        raise ValueError("n_y must be 2, 4, or 8 in this bounded fixture")
     if topology not in ("Q4", "S3-V2D"):
         raise ValueError("topology must be Q4 or S3-V2D")
     if (isinstance(thickness, bool) or
@@ -159,7 +165,7 @@ def make_shell(n_s: int, topology: str, *, thickness: float = .07) -> ShellPanel
         raise ValueError("finite positive shell thickness required")
     nx = 2 * int(n_s)
     x_coords = np.linspace(-.5, 1.5, nx + 1)
-    y_coords = (-.5, 0., .5)
+    y_coords = np.linspace(-.5, .5, n_y + 1)
     mesh = FEMesh()
     for j, y in enumerate(y_coords):
         for i, x in enumerate(x_coords):
@@ -167,7 +173,7 @@ def make_shell(n_s: int, topology: str, *, thickness: float = .07) -> ShellPanel
     material = Material("steel", 210e9, .3, density=7850.)
     rows, cols, values = [], [], []
     element_count = 0
-    for j in range(2):
+    for j in range(n_y):
         for i in range(nx):
             a = 1 + j * (nx+1) + i
             b, d = a+1, a+nx+1
@@ -190,11 +196,11 @@ def make_shell(n_s: int, topology: str, *, thickness: float = .07) -> ShellPanel
                         rows.append(global_row)
                         cols.append(global_col)
                         values.append(block[local_row, local_col])
-    node_count = 3 * (nx+1)
+    node_count = (n_y+1) * (nx+1)
     stiffness = sparse.coo_matrix(
         (values, (rows, cols)), shape=(2*node_count, 2*node_count)).tocsr()
     free = np.array([2*(j*(nx+1)+i)+axis
-                     for j in range(3) for i in range(1, nx)
+                     for j in range(n_y+1) for i in range(1, nx)
                      for axis in (0, 1)], dtype=int)
     return ShellPanel(int(n_s), topology, stiffness, free, node_count,
-                      element_count, float(thickness))
+                      element_count, float(thickness), n_y)

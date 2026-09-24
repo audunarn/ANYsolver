@@ -57,18 +57,18 @@ def physical_shell_stiffness(panel: ShellPanel) -> sparse.csr_matrix:
     """
     if (not isinstance(panel, ShellPanel) or panel.topology not in
             ("Q4", "S3-V2D") or not 1 <= panel.n_s <= 8 or
-            panel.node_count != 3*(2*panel.n_s+1) or
-            panel.element_count != (4 if panel.topology == "Q4" else 8)*panel.n_s):
+            panel.node_count != (panel.n_y+1)*(2*panel.n_s+1) or
+            panel.element_count != (2 if panel.topology == "Q4" else 4)*panel.n_s*panel.n_y):
         raise ValueError("bounded Q4/S3 F03 shell panel required")
     nx = 2*panel.n_s
     mesh = FEMesh()
-    for j, y in enumerate((-.5, 0., .5)):
+    for j, y in enumerate(np.linspace(-.5, .5, panel.n_y+1)):
         for i in range(nx+1):
             mesh.add_node(1+j*(nx+1)+i, -.5+i/panel.n_s, y, 0.)
     material = Material("steel", 210e9, .3, density=7850.)
     rows, columns, values = [], [], []
     element_id = 0
-    for j in range(2):
+    for j in range(panel.n_y):
         for i in range(nx):
             a = 1+j*(nx+1)+i
             b, d = a+1, a+nx+1

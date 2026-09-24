@@ -56,6 +56,20 @@ def test_distributed_load_resultants_and_quadrature():
         np.testing.assert_allclose(assembled[2:],0,rtol=0,atol=1e-10)
 
 
+def test_axial_sine_density_has_independent_resultant_and_moment():
+    for elements in (2, 4, 8, 16):
+        load=beam.assembled_load(elements,'axial_sine')
+        load_fine=beam.assembled_load(elements,'axial_sine',order=24)
+        axial_count=2*elements+1
+        np.testing.assert_allclose(load,load_fine,rtol=0,atol=1e-8)
+        np.testing.assert_allclose(load[axial_count:],0,rtol=0,atol=1e-11)
+        np.testing.assert_allclose(np.sum(load[:axial_count]),0,
+                                   rtol=0,atol=1e-8)
+        stations=np.linspace(0.,1.,axial_count)
+        np.testing.assert_allclose(stations@load[:axial_count],
+                                   -1e5/(2*np.pi),rtol=1e-12)
+
+
 def test_quadratic_shear_virtual_work_and_rigid_nullspace():
     length=.43
     k=beam.stiffness(length)

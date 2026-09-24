@@ -33,11 +33,12 @@ def reference_nodes(panel: ShellPanel) -> np.ndarray:
     """The flat +Z source mesh used by the bounded F03 shell diagnostics."""
     if (not isinstance(panel, ShellPanel) or panel.topology not in
             ("Q4", "S3-V2D") or not 1 <= panel.n_s <= 8 or
-            panel.node_count != 3*(2*panel.n_s+1)):
+            panel.node_count != (panel.n_y+1)*(2*panel.n_s+1)):
         raise ValueError("bounded flat F03 Q4/S3 panel required")
     nx = 2*panel.n_s
     return np.array([(-.5+i/panel.n_s, y, 0.)
-                     for y in (-.5, 0., .5) for i in range(nx+1)])
+                     for y in np.linspace(-.5, .5, panel.n_y+1)
+                     for i in range(nx+1)])
 
 
 def pose(panel: ShellPanel, station: float, positions: np.ndarray,

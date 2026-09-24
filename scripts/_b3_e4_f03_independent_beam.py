@@ -79,8 +79,8 @@ def stiffness(length: float) -> np.ndarray:
 
 
 def load(length: float, left: float, kind: str, order: int = 16) -> np.ndarray:
-    """Consistent distributed transverse load through the same v field."""
-    if (kind not in ('smooth', 'sine') or order < 2 or
+    """Consistent distributed transverse or axial load through the field."""
+    if (kind not in ('smooth', 'sine', 'axial_sine') or order < 2 or
             not np.isfinite(left) or left < 0 or left+length > 1+1e-12 or
             not np.isfinite(length) or length <= 0):
         raise ValueError('unsupported reference load or quadrature order')
@@ -89,9 +89,11 @@ def load(length: float, left: float, kind: str, order: int = 16) -> np.ndarray:
     for root, weight in zip(roots, weights):
         xi = float((root+1)/2)
         s = left+length*xi
-        q = 1e6*(1+.25*np.cos(2*np.pi*s)) if kind=='smooth' else 1e6*np.sin(2*np.pi*s)
+        q = (1e6*(1+.25*np.cos(2*np.pi*s)) if kind=='smooth' else
+             1e5*np.sin(2*np.pi*s) if kind=='axial_sine' else
+             1e6*np.sin(2*np.pi*s))
         n, _ = fields(xi, length)
-        result += length*weight/2*q*n[1]
+        result += length*weight/2*q*n[0 if kind=='axial_sine' else 1]
     return result
 
 
