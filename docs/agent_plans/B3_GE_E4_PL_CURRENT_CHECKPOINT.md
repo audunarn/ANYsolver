@@ -1,5 +1,20 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — F03 axial channel separated by domain and norm.** An
+independent unit axial-bar calculation shows that alternating P0 load
+compliance divided by the existing H^-1/2 norm falls with refinement even
+for a stable bar. A new native shell-row/SVD and shell-only positive-norm
+screen finds numerical rank loss at eight multiplier intervals on the
+fixed four-host-interval shell panel for Q4 rail/local and S3 local; S3 rail
+remains full rank but has small shell-only minima. One interval per shell host has
+full shell-row rank across all 24 paired Q4/S3, P0/P1 and rail/local cases,
+yet several shell-only quotients remain small or decrease. See the
+[attribution report and immutable raw inventories](B3_GE_E4_PL_F03_AXIAL_CHANNEL_ATTRIBUTION_V2.md).
+The bar oracle passed 5/5 pytest tests; four native checks passed directly,
+while local pytest collection for that module stalled. The observations
+neither select a multiplier space nor revise G0B acceptance. F03/G0B remain
+open, G1 barred.
+
 **24 September 2026 — native F03 positive-norm attribution.** A bounded
 48-case screen replaced the signed inverse of the indefinite native retained
 primal tangent with its positive spectral absolute **as a diagnostic norm**;

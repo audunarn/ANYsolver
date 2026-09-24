@@ -108,6 +108,12 @@ def one_case(topology: str, n_s: int, kind: str, *,
     length_m = 1.
     moment_to_force = np.tile(
         np.r_[np.ones(3), np.full(3, length_m)], space.count)
+    shell_row_singulars = linalg.svdvals(
+        moment_to_force[:, None]*scaled_rows[:, :shell_free],
+        check_finite=True)
+    shell_rank_tolerance = 1e-10*shell_row_singulars[0]
+    shell_row_rank = int(np.count_nonzero(
+        shell_row_singulars > shell_rank_tolerance))
     force_compliance = ((moment_to_force[:, None]*compliance)*
                         moment_to_force[None, :])
     if kind == "piecewise_constant":
@@ -124,6 +130,37 @@ def one_case(topology: str, n_s: int, kind: str, *,
         scaled_compliance, dual_upper, check_finite=True)
     with_lower = linalg.eigh(
         scaled_compliance, dual_lower, eigvals_only=True, check_finite=True)
+    if absolute_primal:
+        scaled_shell_compliance = (reference_stiffness_n_per_m*
+            ((moment_to_force[:, None]*shell_compliance)*
+             moment_to_force[None, :]))
+        scaled_beam_compliance = (reference_stiffness_n_per_m*
+            ((moment_to_force[:, None]*beam_compliance)*
+             moment_to_force[None, :]))
+        shell_only, shell_vectors = linalg.eigh(
+            scaled_shell_compliance, dual_upper, check_finite=True)
+        beam_only = linalg.eigh(scaled_beam_compliance, dual_upper,
+                                eigvals_only=True, check_finite=True)
+        if (shell_only[0] < -1e-8 or beam_only[0] < -1e-8 or
+                with_upper[0] < shell_only[0]+beam_only[0]-1e-8):
+            raise ArithmeticError("absolute-primal domain spectrum inconsistent")
+        shell_only_minimum = float(shell_only[0])
+        beam_only_minimum = float(beam_only[0])
+        shell_zero = shell_only <= 1e-8*max(1., abs(shell_only[-1]))
+        shell_zero_count = int(np.count_nonzero(shell_zero))
+        shell_subspace = (shell_vectors[:, shell_zero] if shell_zero_count else
+                          shell_vectors[:, :1]).reshape(space.count, 6, -1)
+        shell_channel_fractions = [float(sum(
+            shell_subspace[:, channel, column]@upper@
+            shell_subspace[:, channel, column]
+            for column in range(shell_subspace.shape[2]))/
+            shell_subspace.shape[2]) for channel in range(6)]
+        if abs(sum(shell_channel_fractions)-1.) > 1e-8:
+            raise ArithmeticError("shell-only subspace dual normalization lost")
+    else:
+        shell_only_minimum = beam_only_minimum = None
+        shell_zero_count = None
+        shell_channel_fractions = None
     minimum_mode = vectors[:, 0].reshape(space.count, 6)
     minimum_force_mode = moment_to_force*vectors[:, 0]
     shell_mode_quotient = float(reference_stiffness_n_per_m*
@@ -170,6 +207,14 @@ def one_case(topology: str, n_s: int, kind: str, *,
             signs[:-1]*signs[1:] < 0)),
         "minimum_mode_shell_quotient": shell_mode_quotient,
         "minimum_mode_beam_quotient": beam_mode_quotient,
+        "shell_row_rank": shell_row_rank,
+        "shell_row_count": len(shell_row_singulars),
+        "shell_row_minimum_singular": float(shell_row_singulars[-1]),
+        "shell_row_rank_relative_tolerance": 1e-10,
+        "minimum_shell_only_quotient_lower": shell_only_minimum,
+        "minimum_beam_only_quotient_lower": beam_only_minimum,
+        "shell_only_zero_mode_count": shell_zero_count,
+        "shell_only_minimum_subspace_channel_fractions": shell_channel_fractions,
     }
 
 
@@ -178,6 +223,8 @@ def main() -> None:
     parser.add_argument("--fixed-primal", action="store_true")
     parser.add_argument("--local-translation", action="store_true")
     parser.add_argument("--absolute-primal", action="store_true")
+    parser.add_argument("--multiplier-intervals-per-shell", type=int,
+                        choices=(1, 2), default=2)
     arguments = parser.parse_args()
     fixed = arguments.fixed_primal
     shell_port = "local_translation" if arguments.local_translation else "rail"
@@ -189,7 +236,9 @@ def main() -> None:
                 for kind in ("piecewise_constant", "continuous_linear")
                 for intervals in (2, 4, 8)]
     else:
-        rows = [one_case(topology, n_s, kind, shell_port=shell_port,
+        rows = [one_case(topology, n_s, kind,
+                         n_intervals=arguments.multiplier_intervals_per_shell*n_s,
+                         shell_port=shell_port,
                          absolute_primal=arguments.absolute_primal)
                 for topology in ("Q4", "S3-V2D")
                 for kind in ("piecewise_constant", "continuous_linear")
@@ -199,6 +248,8 @@ def main() -> None:
                       "shell_port": shell_port,
                       "primal_metric": ("spectral_absolute" if
                                         arguments.absolute_primal else "signed"),
+                      "multiplier_intervals_per_shell":
+                          arguments.multiplier_intervals_per_shell,
                       "cases": rows}, indent=2, sort_keys=True))
 
 
