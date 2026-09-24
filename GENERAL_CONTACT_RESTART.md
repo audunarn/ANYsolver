@@ -21,6 +21,7 @@ Continue implementing the user's C0–C9 ANYsolver general-contact plan. The iso
 - Preserved exploratory failure: exact S3 first-touch geometry initially yielded two wrong-signed micrometre gaps and one singular trial from roundoff. Orientation and closed-side zero-gap handling were corrected before the passing runs. No acceptance threshold was changed.
 - C1 is incomplete. Next: a candidate-pose common-refinement formulation with relative finite sliding and projection/boundary derivatives, then augmented normal enforcement, analytic rigid shapes, warped Q4 qualification and the full sliding/separation/recontact handoff. Keep numerical and independent-review gates intact. No owned process is running.
 - Post-checkpoint geometry work added `current_planar_shell_face` for trial small-rotation Q4/S3 physical skins. Relative sliding changes projected overlap and an opened pair can reoverlap; current warped Q4 faces reject. Ten overlap tests passed. This geometry adapter is not yet connected to the pair force law, which still rejects relative lateral motion.
+- Commit `eaf27548` records that trial-pose adapter. A further internal smooth-branch overlap-area translation derivative now integrates clipped polygon-edge contributions; 12 focused geometry tests pass after moving one finite-difference oracle away from a shared-edge kink. That exploratory test failure was a derivative-at-transition test defect, not a changed mechanics threshold. The moving-domain pressure/gap derivatives and coupled sliding law are still open.
 
 ## Prospective policy transition
 

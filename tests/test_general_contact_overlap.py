@@ -9,6 +9,7 @@ from anysolver.general_contact.overlap import (
     PlanarFace,
     current_planar_shell_face,
     planar_projected_overlap,
+    planar_overlap_translation_gradient,
     reference_shell_face,
 )
 
@@ -187,3 +188,46 @@ def test_current_s3_skin_uses_rotated_material_offset():
     face = current_planar_shell_face(model, 1, 1, "top", displacement)
     assert face.corners[:, 0] == pytest.approx((0.007, 1.007, 0.007))
     assert face.corners[:, 2] == pytest.approx((0.09, 0.09, 0.09))
+
+
+def test_projected_overlap_boundary_derivative_matches_independent_area_difference():
+    integration = _face((1, 1), ((0, 0), (1, 0), (1, 1), (0, 1)))
+    target = _face((2, 1), ((0.5, 0.25), (1.5, 0.25),
+                             (1.5, 1.25), (0.5, 1.25)))
+    gradient = planar_overlap_translation_gradient(integration, target)
+    np.testing.assert_allclose(gradient, (0.75, 0.5, 0.0), atol=1e-12)
+    direction = np.array((0.3, -0.4, 0.0))
+    h = 1.0e-6
+    plus = PlanarFace((1, 1), integration.corners + h * direction)
+    minus = PlanarFace((1, 1), integration.corners - h * direction)
+    numerical = (planar_projected_overlap(plus, target).area
+                 - planar_projected_overlap(minus, target).area) / (2.0 * h)
+    assert numerical == pytest.approx(float(gradient @ direction), rel=1e-8)
+    distant = _face((2, 2), ((2, 0), (3, 0), (3, 1), (2, 1)))
+    np.testing.assert_array_equal(
+        planar_overlap_translation_gradient(integration, distant),
+        np.zeros(3),
+    )
+
+
+def test_q4_s3_overlap_boundary_derivative_is_rigid_frame_covariant():
+    square = _face((1, 1), ((0, 0), (1, 0), (1, 1), (0, 1)))
+    triangle = _face((2, 1), ((0.5, 0.1), (1.5, 0.1), (0.5, 1.1)))
+    gradient = planar_overlap_translation_gradient(square, triangle)
+    h = 1.0e-6
+    direction = np.array((0.3, 0.2, 0.0))
+    plus = PlanarFace((1, 1), square.corners + h * direction)
+    minus = PlanarFace((1, 1), square.corners - h * direction)
+    numerical = (planar_projected_overlap(plus, triangle).area
+                 - planar_projected_overlap(minus, triangle).area) / (2.0 * h)
+    assert numerical == pytest.approx(float(gradient @ direction), rel=1e-8)
+    rotation = np.array(((0.0, -1.0, 0.0),
+                         (0.0, 0.0, -1.0),
+                         (1.0, 0.0, 0.0)))
+    shift = np.array((1.0, -2.0, 3.0))
+    rotated_square = PlanarFace((1, 1), square.corners @ rotation.T + shift)
+    rotated_triangle = PlanarFace((2, 1), triangle.corners @ rotation.T + shift)
+    np.testing.assert_allclose(
+        planar_overlap_translation_gradient(rotated_square, rotated_triangle),
+        rotation @ gradient, atol=1e-12,
+    )

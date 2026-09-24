@@ -193,6 +193,53 @@ def planar_projected_overlap(integration: PlanarFace, target: PlanarFace,
     )
 
 
+def planar_overlap_translation_gradient(integration: PlanarFace,
+                                        target: PlanarFace) -> np.ndarray:
+    """Differentiate overlap area for a tangential translation of one face.
+
+    This is the smooth-branch polygon boundary derivative, expressed in global
+    coordinates. At zero area or a topology transition the derivative is not
+    unique; this routine returns zero at zero area. It is an internal geometry
+    ingredient, not a complete contact residual or tangent.
+    """
+
+    overlap = planar_projected_overlap(integration, target)
+    if overlap is None:
+        return np.zeros(3, dtype=float)
+    source = _to_frame(integration.corners, overlap.origin,
+                       overlap.tangent, overlap.binormal)
+    clip = _to_frame(target.corners, overlap.origin,
+                     overlap.tangent, overlap.binormal)
+    if _signed_area(clip) < 0.0:
+        clip = clip[::-1].copy()
+    span = max(float(np.max(np.linalg.norm(source - source[0], axis=1))),
+               float(np.max(np.linalg.norm(clip - clip[0], axis=1))))
+    area_tolerance = 1.0e-12 * span * span
+    gradient = np.zeros(2, dtype=float)
+    for index, start in enumerate(source):
+        edge = source[(index + 1) % len(source)] - start
+        lower, upper = 0.0, 1.0
+        for clip_index, clip_start in enumerate(clip):
+            clip_edge = clip[(clip_index + 1) % len(clip)] - clip_start
+            distance = _cross2(clip_edge, start - clip_start)
+            slope = _cross2(clip_edge, edge)
+            if abs(slope) <= area_tolerance:
+                if distance < -area_tolerance:
+                    lower, upper = 1.0, 0.0
+                    break
+                continue
+            crossing = -distance / slope
+            if slope > 0.0:
+                lower = max(lower, crossing)
+            else:
+                upper = min(upper, crossing)
+            if lower >= upper:
+                break
+        if upper > lower:
+            gradient += (upper - lower) * np.array((edge[1], -edge[0]))
+    return gradient[0] * overlap.tangent + gradient[1] * overlap.binormal
+
+
 def reference_shell_face(model: object, body_id: int, element_id: int,
                          side: str) -> PlanarFace:
     """Read the qualified formulation's physical reference skin.

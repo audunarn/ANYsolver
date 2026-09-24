@@ -42,7 +42,9 @@ An internal trial-pose adapter can now recompute planar Q4/S3 physical faces
 and projected overlap under relative sliding. The coupled pair law in this
 profile still uses its fixed reference overlap and rejects relative lateral
 motion. Candidate-pose overlap alone does not establish the moving-domain
-residual or tangent.
+residual or tangent. The internal geometry kernel also computes the
+smooth-branch overlap-area derivative from clipped face edges. Shared-edge
+and topology transitions need one-sided treatment in the later coupled law.
 
 ## Discrete pair law
 
