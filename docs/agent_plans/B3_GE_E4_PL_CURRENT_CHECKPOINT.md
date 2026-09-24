@@ -1,58 +1,32 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current state and decision, 24 September 2026 (policy 2026-09-24.2):**
-Select a defensible native six-channel shell port and exact line multiplier
-space. The classical axial comparator remains unsettled in transverse
-order, but further global axial refinement will not decide the native
-connection. A planar signed KKT check separates the n16 negative retained
-branch from a Q4 fine-host shell/trace branch; neither it nor the earlier
-axial compliance quotient ranks spaces. A 36-case *native six-channel*
-torque/tip-z-force screen at beam:shell-host ratios 8:1, 1:1 and 1:4 has
-exact balance/work but strongly nonmonotone physical responses (Q4 P1
-tip-z displacement `19.21→31.47→4.17 µm`). Both meshes
-change along this path, so it proves neither locking nor convergence.
-The earlier constant-shear patch admits physical shell shear, and the
-drilling-free torque replay matches bounded native responses; neither
-supplies an independently converged loaded torque/shear target.
-An analytic twist patch matches Q4/S3 physical shell energy and line-Mx
-work, but the S3 four-sample rail produces `50→2.5→1.25 µm` line-z
-interpolation error relative to the analytic field across three meshes;
-the existing local origin removes it for this field.
-At the same 1:1 P1 loaded tip-z case, changing only the origin shifts
-Q4/S3 tip motion by `-6.37%/-8.07%` and changes support reactions.
-Thus the patch favors local interpolation for that field, but does not
-select a loaded shell port.
-The executed 3D CalculiX canary has a different eccentric footprint,
-section, load and support contract and cannot serve as a native line
-torque/shear reference. Classical axial, Q6/finite-pad and native evidence
-remain separate.
-An independently assembled transverse plate/beam reference now matches
-the flat physical inputs, but its matched-order 8→10 tip-z/twist still
-changes `+11.63%/+5.91%` and its condition rises to `4.91e11`;
-it is not yet a loaded target for native acceptance.
+**Current decision, 24 September 2026 (policy 2026-09-24.2):** Select a
+defensible native six-channel shell pose and exact line multiplier. The
+bounded independent plate/beam comparator matches the declared flat
+geometry, coefficients, left-edge/root supports and tip loads, but is not
+yet a converged physical target. Its local spline trial shows that P1
+line10 needs more beam modes than line4: beam8→12 changes twist by 49%,
+while beam12→16 changes it by only 0.32%. At fixed beam16, plate-y4→8
+still changes twist by 4.35%; the shell energy increase is spread across
+the width rather than concentrated solely at the four-sample rail.
+The same native Q4 problem passes force/moment/work checks. One-axis
+mesh-ratio paths show coarse shell hosts dominate the 8:1 endpoint and
+coarse beams enlarge the 1:8 gaps. Small gaps, full row rank and a falling
+positive-energy reference quotient do not select a multiplier. The
+historical Q6/finite-pad, classical axial, and native six-channel evidence
+retain distinct physical contracts; the 3D CalculiX canary is not a
+matched native line oracle.
 
-**Remaining uncertainty and action:** Establish a physically matched,
-*converged* loaded torque/shear reference (geometry, section resultants,
-supports, loads, connection work). Stop raising the independent global
-polynomial order; pursue a local/resolved reference representation and
-its conditioning before another broad native response sweep. A bounded
-work-scaled subspace/host-patch check can distinguish physical Q4
-in-plane compliance from four-sample-port or norm effects; its outcome
-determines whether the shell field or port contract needs revision.
-Any subsequent mesh-ratio run must vary one mesh at a time and cover the
-required reciprocal 1:8 case. No multiplier is selected from small gaps,
-residuals or a spectral quotient. Raw latest evidence is
-`B3_GE_E4_PL_F03_SIGNED_FLOOR_MODE_V2.json`,
-`B3_GE_E4_PL_F03_SIGNED_MODE_{Q4,S3}_B8_S64_V2.json`, and the
-`B3_GE_E4_PL_F03_NATIVE_TORQUE_SHEAR_RATIO_{V1,CONTROL_V2}.jsonl`
-inventories, plus `B3_GE_E4_PL_F03_ANALYTIC_TWIST_PATCH_V1.json`,
-`B3_GE_E4_PL_F03_ANALYTIC_TWIST_PORT_COMPARISON_V2.json` and
-`B3_GE_E4_PL_F03_NATIVE_TIP_Z_LOCAL_PORT_V1.jsonl`.
-Formal F03 authority is unconsumed; G0B is open and G1 barred.
-The prospective process update adds no gate or authority and leaves all
-frozen evidence, failures and scientific criteria intact.
+**Remaining uncertainty and next action:** Diagnose why the independent
+transverse shell response continues to change with plate-y resolution,
+then compare the native shell at the *same full-left support*, load and
+line definition before deciding rail versus local pose or P0/P1/dual
+space. Avoid more global classical axial refinement. Preserve the
+registered stability, work, patch and mesh-ratio criteria. Formal F03
+authority is unconsumed; G0B remains open and G1 barred. The raw roots
+and their limits are inventoried in the decision-oriented section below.
 
-**Current transverse-partition decision, 24 September 2026:** A systematic
+**Historical transverse-partition decision, 24 September 2026:** A systematic
 midpoint split of all three y intervals (six elements) passed 18 focused
 checks and two bounded runs, but it did not improve order-to-order physical
 stability at equal coordinate count. Its degree8→12 beam-energy change
@@ -1749,3 +1723,151 @@ data. Raw roots are `B3_GE_E4_PL_F03_INDEPENDENT_TRANSVERSE_JOINT_V1.jsonl`,
 `B3_GE_E4_PL_F03_INDEPENDENT_TRANSVERSE_ONE_AXIS_V1.jsonl` (failed
 line-only case preserved), and
 `B3_GE_E4_PL_F03_INDEPENDENT_TRANSVERSE_MATCHED10_V1.jsonl`.
+
+Next representation question: is the slow loaded response tied to the
+global trial basis rather than the declared plate/beam/line mechanics?
+Add a local, clamped cubic-spline trial option to the same independent
+variational model, keeping geometry, constitutive coefficients, root/left
+support, rail/local pose functionals and loads fixed. Integrate each
+knot span and every shifted shell-sample/beam/multiplier overlay segment.
+First verify partition/support and analytic patch identities plus row
+rank; then compare nested 2→4→8 plate/beam elements with 4→8→16 P1 line
+intervals, two loads and both origins. If the local representation settles
+while global polynomials do not, continue with one-axis and holdout
+checks; if it does not, inspect physical gap, line rank and independent
+formulation rather than simply increasing order. This is one bounded
+development comparison, not acceptance or a new qualification package.
+
+Local cubic splines preserve the analytical plate/beam patches and full
+line-row rank on common `(plate-x,plate-y,beam; P1 intervals)` grids
+`(2,2,2;4)`, `(4,4,4;6)`, `(8,8,8;10)` for both shell origins. The planned
+8/16 endpoint has dependent rows for both origins, and even 4/8 is
+dependent for the local origin. The first attempted sweep aborted at that
+guard; its six completed rows remain in `...LOCAL_SPLINE_TRANSVERSE_V1.jsonl`.
+The rank-valid 12-case V2 shows tip-z motion `12.4→18.5→26.2 µm` (rail)
+and `12.5→18.5→25.3 µm` (local); tip twist is `4.36→5.89→6.78 µrad`
+under the separate torque load. Both responses still move materially, so
+V2 is a diagnostic, not a converged native target or multiplier selection.
+
+Next discriminating check holds plate-x, beam and P1 line resolution fixed
+at `(8,8,4)` and varies only transverse plate intervals `2,4,8`; then
+holds all trial resolutions at 8 and varies P1 line intervals `4,6,10`.
+These separate transverse representability from line-row effects. If
+transverse changes dominate, improve the plate reference before native
+comparison; if line changes dominate, examine weak-line stability and gap
+modes before choosing a space. If neither settles, inspect the physical
+model and trace rather than launch a larger blind refinement.
+
+The one-axis spline check found only `+0.8%` rail tip-z and `+4.1%`
+tip-twist changes over transverse intervals 2→8 at fixed x/beam 8 and
+P1 line 4. At fixed trial 8, P1 line 4→10 instead changes rail tip-z
+`39.64→26.19 µm` and twist `11.71→6.78 µrad`; local tip-z changes
+`44.77→25.28 µm`. Smaller pointwise gaps and full row rank do not
+select the larger multiplier space. Against a native Q4, eight-beam-element,
+left-supported, P1 screen with the same nominal flat geometry, section
+resultants, loads and four-sample work, the spline reference at transverse
+intervals 2 differs by only `-0.04%` in torque tip rotation and `+4–5%`
+in tip-z at P1 line 4. At P1 line 10 it is `35–39%` stiffer in those
+responses. This points to line/trial resolution compatibility, not a
+qualified continuum target. The older native ratio inventory uses a
+different `both_xy_edges` support policy; do not combine its numbers with
+this left-supported comparison as if they were the same problem.
+
+Next native mesh-ratio question: with P1 line 4, identical left support,
+loads, shell thickness and section, does separately changing beam or shell
+resolution preserve the torque/tip-z response or expose a host/beam ratio
+effect? Execute a bounded one-axis grid around `(n_s=4,n_half=16)`, with
+`n_s=2,4,8` at fixed beam and `n_half=4,8,16` at fixed shell, then a
+fixed-shell path to the required 1:8 ratio. A stable response would permit
+a focused line-space comparison; strong one-axis changes would require a
+physical mode/port analysis before choosing the multiplier. This does not
+consume formal F03 authority or qualify a space.
+
+The one-axis native Q4 grid confirms different controlling errors. At P1
+line 4 and fixed 8 native beam elements, shell-host intervals 2→4→8 give
+rail tip-z `21.41→37.32→39.62 µm`; the shell-2 `8:1` endpoint is much
+stiffer (`5.34 µm`) and beam refinement near that endpoint barely changes
+it. At fixed shell-host 8, beam:shell ratios 1:8→1:4→1:2 give torque
+tip rotation `14.99→11.97→11.39 µrad` and tip-z gaps `4.33→2.11→1.44
+µm`. The extreme endpoints are underresolved in different domains; a
+combined endpoint comparison is not a convergence test. This is fixed P1
+line 4, left-edge/root supports, not the historical both-edges ratio set.
+
+The independent *positive-energy* spline model permits a physically scaled
+H^(-1/2)-dual line diagnostic, unlike the native retained saddle tangent.
+At x/beam 8, y2 and P1 intervals 4→6→10, its minimum normalized
+compliance quotient falls rail `2.664→1.560→0.061` and local
+`5.109→1.627→0.064`; the weakest mode is nearly all alternating z-force
+density. The rows remain full rank, yet the decline and loaded-response
+shift preclude selecting a space from rank, gap or one quotient alone.
+Next resolve whether the 35–39% independent/native disagreement at line 10
+is merely reference x/beam underresolution: hold plate-y=2 and line
+4/6/10, raise only local-spline plate-x and beam elements 8→12, retain
+both origins and loads. If the fine-line disagreement persists with small
+8→12 response change, investigate the shell/beam trace and constraint
+mode; if it shrinks materially, the reference still needs convergence.
+
+It shrinks: x/beam 8→12 at fixed plate-y2 and P1 line10 changes
+independent rail tip-z `22.77→36.17 µm` (+58.8%) and torque tip-rx
+`5.86→8.72 µrad` (+48.9%); local tip-z changes +78.8%. At line4 the
+same x/beam change is only +0.4–1.8%. The apparent fine-line disagreement
+was substantially an underresolved independent trial space, so no
+line-instability verdict follows from the earlier weak mode alone. Next
+one-axis split at line10: compare `(plate-x,beam)=(12,8),(8,12)` with
+the saved `(8,8),(12,12)` cases. If one direction controls, refine that
+reference operator and inspect its interface modes; if both matter, treat
+the response as joint trace-resolution dependence. Do not infer a native
+multiplier choice from this reference until its loaded response settles.
+
+The line10 split isolates the beam trial as the dominant source: at
+plate-x8, beam 8→12 raises rail tip-z `22.77→35.61 µm` and torque
+tip-rx `5.86→8.63 µrad`; plate-x 8→12 with beam fixed8 changes them
+only to `24.83 µm` and `5.92 µrad`. Local-origin results agree on this
+attribution. Pointwise gaps grow when beam modes are added, so the tiny
+gap at beam8 was overconstraint by inadequate trial resolution, not proof
+of superior line accuracy. Native B3 internal kinematics have a different
+approximation space from an equal count of classical Timoshenko elements.
+One final bounded beam-only 12→16 check at fixed plate-x12, plate-y2,
+line10 and a line4 control will determine whether this independent loaded
+reference is settling. If line10 still shifts materially, stop and analyze
+the beam/line approximation rather than continue mesh escalation.
+
+At fixed plate-x12, plate-y2 and P1 line10, beam12→16 changes the loaded
+independent tip-z by +0.31% rail/+0.53% local and torque tip-rx by +0.32%; the
+line4 control changes negligibly. The beam representation is settling on
+this bounded check. Before using line10 as a physical comparator, isolate
+the remaining transverse plate resolution: at plate-x12/beam16/line10,
+compare plate-y2,4,8. If y4→8 is small, move to a matched native y-refined
+check with explicitly identical full-left supports; if material, stop this
+reference comparison and inspect the rail/plate transverse field. Do not
+compare a y-refined native model using the historical three-node support
+shortcut, because that would change the boundary-value problem.
+
+The transverse stop check did not show a decreasing twist change:
+plate-y2→4→8 at fixed x12/beam16/P1 line10 gives rail/local torque
+tip-rx `8.751→9.059→9.453 µrad`. Rail tip-z is
+`36.28→36.83→37.18 µm`, local `37.91→38.97→39.61 µm`.
+Under the torque load, integrated plate energy rises
+`0.000293→0.000309→0.000329 J`; three transverse bands divided at
+`y=±0.23 m` retain approximately 28.5% / 42.9% / 28.5% of the energy.
+The bending/shear integration reproduces the assembled shell energy.
+This does not expose a narrow rail-only concentration or provide a
+converged shell target. Stop the spline refinement sequence here.
+
+Development decision: retain rail and local poses as candidates; neither
+P1 line10 nor a different multiplier is selected. The local origin exactly
+removes the analytic twist-patch positional error, but its loaded tip-z
+response and axial coupling differ, so that patch alone cannot decide.
+Before a native y-refined comparison, the bounded diagnostic must support
+an explicit full-left-edge clamp for every transverse row; the historical
+`legacy_three_left_nodes` policy ceases to represent the same support when
+`n_y>2`. Compare physical fields/work and use a correctly normed stability
+assessment along with loads and gaps. New raw files are
+`B3_GE_E4_PL_F03_LOCAL_SPLINE_{TRANSVERSE_V1,TRANSVERSE_V2,ONE_AXIS_V1,
+MATCHED_Y2_V1,XBEAM12_V1,LINE10_ONE_AXIS_V1,BEAM16_STOP_V1,Y_STOP_V1}.jsonl`,
+`B3_GE_E4_PL_F03_NATIVE_{MATCHED_TRANSVERSE_V1,ONE_AXIS_RATIO_V1,
+RATIO_RECIPROCAL_V1}.jsonl`, `B3_GE_E4_PL_F03_INDEPENDENT_SPD_INTERFACE_V1.jsonl`,
+and `B3_GE_E4_PL_F03_TRANSVERSE_ENERGY_BANDS_V1.jsonl`. V1 transverse
+contains six completed rows before the recorded rank abort; V2 is the
+revised, rank-valid run. These are development diagnostics, not G0B
+qualification or a formal F03 execution.

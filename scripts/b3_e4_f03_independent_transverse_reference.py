@@ -12,6 +12,7 @@ from functools import lru_cache
 
 import numpy as np
 from numpy.polynomial.legendre import Legendre, leggauss
+from scipy.interpolate import BSpline
 
 
 E = 210e9
@@ -39,11 +40,52 @@ def _polynomial(order: int) -> tuple[Legendre, Legendre]:
     return polynomial, polynomial.deriv()
 
 
-def plate_basis(nx: int, ny: int, x: float, y: float
+@lru_cache(None)
+def _spline(elements: int, left: float, right: float
+            ) -> tuple[BSpline, BSpline, np.ndarray]:
+    """Open cubic basis; its first function is removed at a rooted edge."""
+    edges = np.linspace(left, right, elements + 1)
+    knots = np.r_[np.full(4, left), edges[1:-1], np.full(4, right)]
+    values = BSpline(knots, np.eye(elements + 3), 3, extrapolate=False)
+    return values, values.derivative(), edges
+
+
+def _quadrature(order: int, edges: np.ndarray):
+    for left, right in zip(edges[:-1], edges[1:]):
+        yield from zip(*_gauss(order, float(left), float(right)))
+
+
+def _line_edges(cell: int, intervals: int, nx: int, nb: int,
+                basis: str) -> np.ndarray:
+    left, right = cell/intervals, (cell+1)/intervals
+    if basis == "global":
+        return np.array((left, right))
+    xedges = _spline(nx, -.5, 1.5)[2]
+    bedges = _spline(nb, 0., 1.)[2]
+    stations = [left, right]
+    for ox, _ in SAMPLES:
+        stations.extend(float(x-ox) for x in xedges if left < x-ox < right)
+    stations.extend(float(s) for s in bedges if left < s < right)
+    stations.extend(float(s) for s in xedges if left < s < right)
+    return np.unique(np.round(stations, 14))
+
+
+def plate_basis(nx: int, ny: int, x: float, y: float, *,
+                basis: str = "global"
                 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Supported tensor trial X*Pi(2X-1)*Pj(2y), X=(x+.5)/2."""
+    """Supported tensor trial: global Legendre or rooted local cubic."""
     if not (-.5 <= x <= 1.5 and -.5 <= y <= .5):
         raise ValueError("plate station outside declared geometry")
+    if basis == "spline":
+        bx, dbx, _ = _spline(nx, -.5, 1.5)
+        by, dby, _ = _spline(ny, -.5, .5)
+        px, dpx = bx(x)[1:], dbx(x)[1:]
+        py, dpy = by(y), dby(y)
+        return (np.outer(px, py).ravel(),
+                np.outer(dpx, py).ravel(),
+                np.outer(px, dpy).ravel())
+    if basis != "global":
+        raise ValueError("global or spline trial basis required")
     X = (x + .5) / 2
     px = np.array([_polynomial(i)[0](2*X-1) for i in range(nx)])
     dpx = np.array([_polynomial(i)[1](2*X-1) for i in range(nx)])
@@ -55,10 +97,11 @@ def plate_basis(nx: int, ny: int, x: float, y: float
     return value, dx, dy
 
 
-def plate_strain_rows(nx: int, ny: int, x: float, y: float
+def plate_strain_rows(nx: int, ny: int, x: float, y: float, *,
+                      basis: str = "global"
                       ) -> tuple[np.ndarray, np.ndarray]:
     """Curvatures [kx,ky,kxy] and engineering shears [gxz,gyz]."""
-    v, dx, dy = plate_basis(nx, ny, x, y)
+    v, dx, dy = plate_basis(nx, ny, x, y, basis=basis)
     n = len(v)
     bending = np.zeros((3, 3*n))
     shear = np.zeros((2, 3*n))
@@ -75,42 +118,53 @@ def plate_strain_rows(nx: int, ny: int, x: float, y: float
     return bending, shear
 
 
-def beam_basis(nb: int, s: float) -> tuple[np.ndarray, np.ndarray]:
-    """Rooted independent w/rx/ry fields s*Pi(2s-1)."""
+def beam_basis(nb: int, s: float, *, basis: str = "global"
+               ) -> tuple[np.ndarray, np.ndarray]:
+    """Rooted independent w/rx/ry fields, global or local cubic."""
     if not 0 <= s <= 1:
         raise ValueError("beam station outside [0,1]")
+    if basis == "spline":
+        b, db, _ = _spline(nb, 0., 1.)
+        return b(s)[1:], db(s)[1:]
+    if basis != "global":
+        raise ValueError("global or spline trial basis required")
     p = np.array([_polynomial(i)[0](2*s-1) for i in range(nb)])
     dp = np.array([_polynomial(i)[1](2*s-1) for i in range(nb)])
     return s*p, p+2*s*dp
 
 
-def beam_strain_rows(nb: int, s: float) -> np.ndarray:
+def beam_strain_rows(nb: int, s: float, *, basis: str = "global"
+                     ) -> np.ndarray:
     """[twist rate, bending rate, transverse shear]."""
-    v, dv = beam_basis(nb, s)
-    result = np.zeros((3, 3*nb))
-    result[0, nb:2*nb] = dv
-    result[1, 2*nb:] = dv
-    result[2, :nb] = dv
-    result[2, 2*nb:] = v
+    v, dv = beam_basis(nb, s, basis=basis)
+    n = len(v)
+    result = np.zeros((3, 3*n))
+    result[0, n:2*n] = dv
+    result[1, 2*n:] = dv
+    result[2, :n] = dv
+    result[2, 2*n:] = v
     return result
 
 
 def _orders(nx: int, ny: int, nb: int, intervals: int) -> None:
-    if any(type(x) is not int or not 2 <= x <= 12
-           for x in (nx, ny, nb, intervals)):
-        raise ValueError("bounded integer orders/intervals 2 through 12 required")
+    if (any(type(x) is not int or not 2 <= x <= 16
+            for x in (nx, ny, nb)) or
+            type(intervals) is not int or not 2 <= intervals <= 24):
+        raise ValueError("bounded element orders 2-16 and line intervals 2-24 required")
 
 
-def shell_trace(nx: int, ny: int, s: float, origin: str) -> np.ndarray:
+def shell_trace(nx: int, ny: int, s: float, origin: str, *,
+                basis: str = "global") -> np.ndarray:
     """Linearized [z,rx,ry] trace of the declared material rail or center."""
     if origin not in ("rail", "local"):
         raise ValueError("rail or local shell origin required")
-    n = nx*ny
+    n = len(plate_basis(nx, ny, s, 0., basis=basis)[0])
     result = np.zeros((3, 3*n))
-    values = [plate_basis(nx, ny, s+ox, y)[0] for ox, y in SAMPLES]
+    values = [plate_basis(nx, ny, s+ox, y, basis=basis)[0]
+              for ox, y in SAMPLES]
     mean = np.mean(values, axis=0)
     result[0, :n] = (mean if origin == "rail" else
-                     plate_basis(nx, ny, s, 0.)[0])
+                     plate_basis(nx, ny, s, 0., basis=basis)[0])
     result[1, n:2*n] = mean
     result[2, 2*n:] = mean
     return result
@@ -123,7 +177,8 @@ def _gauss(order: int, left: float, right: float):
 
 
 def assemble(nx: int, ny: int, nb: int, intervals: int, *,
-             origin: str = "rail", multiplier: str = "p1"
+             origin: str = "rail", multiplier: str = "p1",
+             basis: str = "global"
              ) -> tuple[np.ndarray, np.ndarray, np.ndarray,
                         np.ndarray, np.ndarray, np.ndarray]:
     """Independent plate/beam energies and exact weak-line KKT blocks."""
@@ -135,26 +190,34 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
     # dependent, whatever the shell's transverse polynomial order.
     trace_dimension = max(nx, nb)+1
     multiplier_dimension = intervals if multiplier == "p0" else intervals+1
-    if multiplier_dimension > trace_dimension:
+    if basis == "global" and multiplier_dimension > trace_dimension:
         raise ValueError("line multiplier rows exceed the polynomial trace image")
-    ns, nbeam = 3*nx*ny, 3*nb
+    ns = 3*len(plate_basis(nx, ny, 0., 0., basis=basis)[0])
+    beam_n = len(beam_basis(nb, 0., basis=basis)[0])
+    nbeam = 3*beam_n
     ks = np.zeros((ns, ns))
     kb = np.zeros((nbeam, nbeam))
     cb = BENDING_D * np.array(((1., NU, 0.),
                                (NU, 1., 0.),
                                (0., 0., 2*(1-NU))))
     cs = SHEAR_K*np.eye(2)
-    xq, xw = _gauss(max(2*nx+4, 12), -.5, 1.5)
-    yq, yw = _gauss(max(2*ny+4, 12), -.5, .5)
-    for x, wx in zip(xq, xw):
-        for y, wy in zip(yq, yw):
-            b, g = plate_strain_rows(nx, ny, float(x), float(y))
+    xedges = (_spline(nx, -.5, 1.5)[2] if basis == "spline" else
+              np.array((-.5, 1.5)))
+    yedges = (_spline(ny, -.5, .5)[2] if basis == "spline" else
+              np.array((-.5, .5)))
+    xorder = 5 if basis == "spline" else max(2*nx+4, 12)
+    yorder = 5 if basis == "spline" else max(2*ny+4, 12)
+    for x, wx in _quadrature(xorder, xedges):
+        for y, wy in _quadrature(yorder, yedges):
+            b, g = plate_strain_rows(nx, ny, float(x), float(y), basis=basis)
             ks += wx*wy*(b.T@cb@b + g.T@cs@g)
-    sq, sw = _gauss(max(2*nb+4, 12), 0., 1.)
+    sedges = (_spline(nb, 0., 1.)[2] if basis == "spline" else
+              np.array((0., 1.)))
     beam_constitutive = np.diag((G*BEAM_J, E*BEAM_I,
                                  G*BEAM_SHEAR_AREA))
-    for s, weight in zip(sq, sw):
-        b = beam_strain_rows(nb, float(s))
+    for s, weight in _quadrature(
+            5 if basis == "spline" else max(2*nb+4, 12), sedges):
+        b = beam_strain_rows(nb, float(s), basis=basis)
         kb += weight*(b.T@beam_constitutive@b)
     nm = intervals if multiplier == "p0" else intervals+1
     c = np.zeros((3*nm, ns+nbeam))
@@ -162,14 +225,16 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
     first_moments = np.zeros(nm)
     for cell in range(intervals):
         left, right = cell/intervals, (cell+1)/intervals
-        points, weights = _gauss(max(2*max(nx, ny, nb)+4, 12), left, right)
-        for s, weight in zip(points, weights):
+        edges = _line_edges(cell, intervals, nx, nb, basis)
+        for s, weight in _quadrature(
+                6 if basis == "spline" else max(2*max(nx, ny, nb)+4, 12),
+                edges):
             s = float(s)
-            value, _ = beam_basis(nb, s)
+            value, _ = beam_basis(nb, s, basis=basis)
             beam_trace = np.zeros((3, nbeam))
             for channel in range(3):
-                beam_trace[channel, channel*nb:(channel+1)*nb] = value
-            trace = np.column_stack((-shell_trace(nx, ny, s, origin),
+                beam_trace[channel, channel*beam_n:(channel+1)*beam_n] = value
+            trace = np.column_stack((-shell_trace(nx, ny, s, origin, basis=basis),
                                      beam_trace))
             local = ((1.,) if multiplier == "p0" else
                      ((right-s)/(right-left), (s-left)/(right-left)))
@@ -178,19 +243,23 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
                 c[3*row:3*row+3] += weight*phi*trace
                 moments[row] += weight*phi
                 first_moments[row] += weight*phi*s
+    if basis == "spline" and np.linalg.matrix_rank(c) < len(c):
+        raise ValueError("line multiplier rows exceed the spline trace image")
     return ks, kb, c, moments, first_moments, beam_constitutive
 
 
 def solve(nx: int, ny: int, nb: int, intervals: int, *,
           origin: str = "rail", multiplier: str = "p1",
-          tip_force_z: float = 1000., tip_torque_x: float = 0.) -> dict:
+          tip_force_z: float = 1000., tip_torque_x: float = 0.,
+          basis: str = "global") -> dict:
     """Solve a bounded flat reference and recover work-conjugate reactions."""
     ks, kb, c, moments, first, _ = assemble(
-        nx, ny, nb, intervals, origin=origin, multiplier=multiplier)
+        nx, ny, nb, intervals, origin=origin, multiplier=multiplier,
+        basis=basis)
     ns, nbeam = len(ks), len(kb)
-    n = nb
+    n = nbeam//3
     f = np.zeros(ns+nbeam)
-    tip, _ = beam_basis(nb, 1.)
+    tip, _ = beam_basis(nb, 1., basis=basis)
     f[ns:ns+n] = tip_force_z*tip
     f[ns+n:ns+2*n] = tip_torque_x*tip
     k = np.zeros((ns+nbeam, ns+nbeam))
@@ -213,13 +282,15 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
     gap_rotation_squared = 0.
     for cell in range(intervals):
         left, right = cell/intervals, (cell+1)/intervals
-        points, weights = _gauss(max(2*max(nx,ny,nb)+6, 16), left, right)
-        for s, weight in zip(points, weights):
+        edges = _line_edges(cell, intervals, nx, nb, basis)
+        for s, weight in _quadrature(
+                8 if basis == "spline" else max(2*max(nx,ny,nb)+6, 16),
+                edges):
             s = float(s)
-            b, _ = beam_basis(nb, s)
-            beam_pose = np.array([b@q[ns+i*nb:ns+(i+1)*nb]
+            b, _ = beam_basis(nb, s, basis=basis)
+            beam_pose = np.array([b@q[ns+i*n:ns+(i+1)*n]
                                   for i in range(3)])
-            gap = beam_pose-shell_trace(nx, ny, s, origin)@q[:ns]
+            gap = beam_pose-shell_trace(nx, ny, s, origin, basis=basis)@q[:ns]
             gap_squared += weight*float(gap@gap)
             gap_z_squared += weight*float(gap[0]**2)
             gap_rotation_squared += weight*float(gap[1:]@gap[1:])
@@ -230,12 +301,12 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
     beam_mx = float(moments@lam[:, 1]-tip_torque_x)
     shell_my = float(first@lam[:, 0]-moments@lam[:, 2])
     beam_my = float(-first@lam[:, 0]+moments@lam[:, 2]+tip_force_z)
-    tip_pose = np.array([tip@q[ns+i*nb:ns+(i+1)*nb]
+    tip_pose = np.array([tip@q[ns+i*n:ns+(i+1)*n]
                          for i in range(3)])
     return {
         "model":"independent_flat_RM_plate_Timoshenko_beam",
         "nx":nx, "ny":ny, "nb":nb, "line_intervals":intervals,
-        "origin":origin, "multiplier":multiplier,
+        "origin":origin, "multiplier":multiplier, "basis":basis,
         "tip_force_z_n":tip_force_z, "tip_torque_x_n_m":tip_torque_x,
         "tip_z_m":float(tip_pose[0]), "tip_rx_rad":float(tip_pose[1]),
         "tip_ry_rad":float(tip_pose[2]),

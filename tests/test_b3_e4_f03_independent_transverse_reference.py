@@ -119,3 +119,57 @@ def test_line_resolution_rejects_dependent_rows_and_exposes_weak_null_mode():
          for i in range(3)] for s in stations])
     assert np.sqrt(np.trapezoid(np.sum(physical_gap**2, axis=1),
                                 stations)) > 1e-6
+
+
+def test_local_spline_support_and_analytical_plate_beam_patches():
+    nx = ny = nb = 2
+    kappa = .001
+    xs = np.linspace(-.3, 1.4, nx+2)
+    ys = np.linspace(-.5, .5, ny+3)
+    points = [(x, y) for x in xs for y in ys]
+    collocation = np.array([plate_basis(nx, ny, x, y, basis="spline")[0]
+                            for x, y in points])
+    q = np.zeros(3*len(collocation))
+    xlocal = lambda x: x+.5
+    target = (lambda x, y: kappa*xlocal(x)**2*y,
+              lambda x, y: kappa*xlocal(x)**2,
+              lambda x, y: -2*kappa*xlocal(x)*y)
+    for channel, field in enumerate(target):
+        q[channel*len(points):(channel+1)*len(points)] = np.linalg.solve(
+            collocation, [field(x, y) for x, y in points])
+    np.testing.assert_allclose(plate_basis(nx, ny, -.5, .13,
+                                           basis="spline")[0], 0.)
+    for x, y in ((-.3, -.21), (.27, .11), (1.21, .35)):
+        bending, shear = plate_strain_rows(nx, ny, x, y, basis="spline")
+        np.testing.assert_allclose(shear@q, 0., atol=1e-14)
+        np.testing.assert_allclose(bending@q,
+                                   (2*kappa*y, 0., 2*kappa*xlocal(x)),
+                                   atol=1e-14)
+    ks, kb, _, _, _, _ = assemble(nx, ny, nb, 4, basis="spline")
+    expected = BENDING_D*kappa**2*(1+32*(1-.3))/3
+    np.testing.assert_allclose(.5*q@ks@q, expected, rtol=1e-12)
+
+    stations = np.linspace(.1, 1., nb+2)
+    bm = np.array([beam_basis(nb, s, basis="spline")[0] for s in stations])
+    bq = np.zeros(3*len(stations))
+    bq[len(stations):2*len(stations)] = np.linalg.solve(
+        bm, kappa*stations)
+    np.testing.assert_allclose(beam_basis(nb, 0., basis="spline")[0], 0.)
+    for s in (.13, .57, .91):
+        np.testing.assert_allclose(beam_strain_rows(nb, s, basis="spline")@bq,
+                                   (kappa, 0., 0.), atol=1e-14)
+    np.testing.assert_allclose(.5*bq@kb@bq, .5*G*BEAM_J*kappa**2,
+                               rtol=1e-12)
+
+
+def test_local_spline_line_rank_limits_are_explicit():
+    for origin in ("rail", "local"):
+        for n, intervals in ((2, 4), (4, 6), (8, 10)):
+            _, _, c, moments, first, _ = assemble(
+                n, n, n, intervals, basis="spline", origin=origin)
+            assert np.linalg.matrix_rank(c) == len(c)
+            np.testing.assert_allclose(sum(moments), 1., atol=1e-14)
+            np.testing.assert_allclose(sum(first), .5, atol=1e-14)
+    for origin, intervals in (("rail", 16), ("local", 12)):
+        with pytest.raises(ValueError, match="exceed the spline trace image"):
+            assemble(8, 8, 8, intervals, basis="spline", origin=origin)
