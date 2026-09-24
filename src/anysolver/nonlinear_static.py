@@ -7370,6 +7370,9 @@ def solve_static_nonlinear(
             raise TypeError("contact must be a ContactDefinition")
         if contact_settings is not None and type(contact_settings) is not ContactSolverSettings:
             raise TypeError("contact_settings must be ContactSolverSettings")
+        if any(surface.beam_radius is not None for surface in contact.surfaces):
+            if str(kinematics).lower() != "von_karman":
+                raise ValueError("round classical beam-plane contact currently requires von_karman kinematics")
         if (len(contact.rigid_bodies) == 1
                 and contact.rigid_bodies[0].kind in {"sphere", "cylinder"}
                 and (kinematics != "von_karman"
@@ -7468,13 +7471,14 @@ def solve_static_nonlinear(
                 summary_payload = summary.to_dict()
                 summary_payload.update(
                     normal_law="penalty",
-                    normal_stiffness=contact_manager.stiffness,
                     gap_tolerance=contact_manager.gap_tolerance,
                     maximum_candidate_pairs=(
                         contact_manager.settings.maximum_candidate_pairs
                     ),
                     swept_trial_cutbacks=contact_manager.swept_trial_cutbacks,
                 )
+                if not hasattr(contact_manager, "end_caps"):
+                    summary_payload["normal_stiffness"] = contact_manager.stiffness
                 if (hasattr(contact_manager, "path_translation")
                         and np.any(contact_manager.path_translation)):
                     increments = result.info.get("force_displacement_history", [])

@@ -31,6 +31,8 @@ class ContactSurface:
     name: str
     element_ids: tuple[int, ...]
     side: str = "midsurface"
+    beam_radius: float | None = None
+    beam_end_caps: str = "none"
 
     def __post_init__(self) -> None:
         if any(type(value) is not int or value <= 0 for value in self.element_ids):
@@ -40,6 +42,17 @@ class ContactSurface:
             raise ValueError("contact surface requires a name and unique element IDs")
         if self.side not in {"midsurface", "top", "bottom"}:
             raise ValueError("shell side must be midsurface, top, or bottom")
+        if self.beam_radius is not None:
+            radius = float(self.beam_radius)
+            if not np.isfinite(radius) or radius <= 0.0:
+                raise ValueError("beam contact radius must be finite and positive")
+            if self.side != "midsurface":
+                raise ValueError("round beam contact does not use a shell side")
+            object.__setattr__(self, "beam_radius", radius)
+        if self.beam_end_caps not in {"none", "hemisphere"}:
+            raise ValueError("beam_end_caps must be none or hemisphere")
+        if self.beam_radius is None and self.beam_end_caps != "none":
+            raise ValueError("beam end caps require an explicit beam radius")
         object.__setattr__(self, "element_ids", ids)
 
 
@@ -106,20 +119,28 @@ class ContactInteraction:
     name: str
     surface: str
     target: str
-    normal_stiffness: float
+    normal_stiffness: float | None
     gap_tolerance: float
     normal_law: str = "penalty"
+    line_stiffness: float | None = None
+    endpoint_stiffness: float | None = None
 
     def __post_init__(self) -> None:
         if not self.name or not self.surface or not self.target:
             raise ValueError("contact interaction needs a name and two participants")
         if self.normal_law not in {"penalty", "augmented"}:
             raise ValueError("normal_law must be penalty or augmented")
-        for name in ("normal_stiffness", "gap_tolerance"):
+        for name in ("normal_stiffness", "line_stiffness", "endpoint_stiffness"):
+            if getattr(self, name) is None:
+                continue
             value = float(getattr(self, name))
             if not np.isfinite(value) or value <= 0.0:
                 raise ValueError(f"{name} must be finite and positive")
             object.__setattr__(self, name, value)
+        tolerance = float(self.gap_tolerance)
+        if not np.isfinite(tolerance) or tolerance <= 0.0:
+            raise ValueError("gap_tolerance must be finite and positive")
+        object.__setattr__(self, "gap_tolerance", tolerance)
 
 
 @dataclass(frozen=True)
@@ -232,6 +253,19 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
     if analysis_control not in {"force", "displacement"}:
         return ContactValidationReport("invalid", ("analysis_control must be force or displacement",))
+    if any(surface.beam_radius is not None for surface in definition.surfaces):
+        from .beam_plane import validate_beam_plane_contact
+
+        return validate_beam_plane_contact(model, definition, settings)
+    if any(item.line_stiffness is not None or item.endpoint_stiffness is not None
+           for item in definition.interactions):
+        return ContactValidationReport("invalid", (
+            "line and endpoint stiffness are admitted only for declared round beam contact",
+        ))
+    if any(item.normal_stiffness is None for item in definition.interactions):
+        return ContactValidationReport("invalid", (
+            "shell contact requires explicit normal_stiffness in pressure-law units",
+        ))
     if any(item.normal_law == "augmented" for item in definition.interactions):
         if (settings is None or settings.pair_motion != "restricted_sliding"
                 or settings.pressure_tolerance is None
@@ -658,7 +692,11 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
         if not report.valid:
             raise ValueError("unsupported augmented contact: " + "; ".join(report.issues))
     if definition.rigid_bodies:
-        if (len(definition.rigid_bodies) == 1
+        if any(surface.beam_radius is not None for surface in definition.surfaces):
+            from .beam_plane import _BeamPlaneManager
+
+            manager = _BeamPlaneManager(model, definition, settings, initial_displacement)
+        elif (len(definition.rigid_bodies) == 1
                 and definition.rigid_bodies[0].kind in {"sphere", "cylinder"}):
             from .sphere import _SphereShellManager
 
