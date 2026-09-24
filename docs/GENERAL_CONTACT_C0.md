@@ -106,5 +106,5 @@ independent review or registered engineering qualification. It must remain
 labelled **implemented and locally tested**.
 
 A separate [prescribed translating-plane development profile](GENERAL_CONTACT_C1_RIGID_MOTION.md)
-uses force control and binds its linear tool path to restart. It does not
+uses force or prescribed displacement control and binds its linear tool path to restart. It does not
 change the fixed C0 capability or its evidence status.

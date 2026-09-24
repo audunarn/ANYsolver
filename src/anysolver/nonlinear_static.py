@@ -3782,6 +3782,30 @@ def _solve_static_displacement_control(
     target_scale = max(abs(target_increment), abs(target_total), 1.0e-9)
     info["displacement_control_initial_value"] = initial_control
 
+    from .general_contact.core import active_contact_manager
+
+    contact_manager = active_contact_manager()
+    moving_tool = bool(
+        contact_manager is not None
+        and hasattr(contact_manager, "path_translation")
+        and np.any(contact_manager.path_translation)
+    )
+    motion_factor = 0.0
+    if moving_tool:
+        if target_total == 0.0:
+            raise ValueError("moving rigid-tool displacement control needs a nonzero target")
+        motion_factor = initial_control / target_total
+        if not -1.0e-12 <= motion_factor <= 1.0 + 1.0e-12:
+            raise ValueError("initial controlled displacement is outside the rigid-tool path")
+        motion_factor = min(1.0, max(0.0, motion_factor))
+        contact_manager.set_path_factor(motion_factor)
+        initial_contact = contact_manager.evaluate(
+            np.asarray(T @ q + u0, dtype=float).reshape(-1), tangent=False,
+        )[2]
+        if not initial_contact.gap_tolerance_met:
+            raise ValueError("committed moving-tool pose exceeds the contact gap tolerance")
+        info["contact_path_parameter"] = "controlled_displacement_fraction"
+
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
         for local_step_index in range(1, num_steps + 1):
@@ -3800,6 +3824,17 @@ def _solve_static_displacement_control(
             residual_norm = float("inf")
             constraint_error = float("inf")
             states_new = committed_states
+
+            next_motion_factor = target / target_total if moving_tool else motion_factor
+            if moving_tool:
+                start_u = np.asarray(T @ q_step_start + u0, dtype=float).reshape(-1)
+                if not contact_manager.swept_increment_admissible(
+                    start_u, start_u, motion_factor, next_motion_factor,
+                ):
+                    failure_reason = "contact_gap_exceeded"
+                    status = "contact_gap_exceeded"
+                    break
+                contact_manager.set_path_factor(next_motion_factor)
 
             for iteration in range(1, max_iterations + 1):
                 cancellation_safe_point(
@@ -3931,6 +3966,8 @@ def _solve_static_displacement_control(
                 _discard_nonlinear_state_candidate(committed_states)
                 q = q_step_start
                 lam = lam_step_start
+                if moving_tool:
+                    contact_manager.set_path_factor(motion_factor)
                 status = (
                     "contact_gap_exceeded"
                     if failure_reason == "contact_gap_exceeded"
@@ -3938,12 +3975,31 @@ def _solve_static_displacement_control(
                 )
                 break
 
+            contact_tool_work_increment = 0.0
+            if moving_tool:
+                end_u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
+                start_u = np.asarray(T @ q_step_start + u0, dtype=float).reshape(-1)
+                if not contact_manager.swept_increment_admissible(
+                    start_u, end_u, motion_factor, next_motion_factor,
+                ):
+                    _discard_nonlinear_state_candidate(committed_states)
+                    q = q_step_start
+                    lam = lam_step_start
+                    contact_manager.set_path_factor(motion_factor)
+                    failure_reason = "contact_gap_exceeded"
+                    status = "contact_gap_exceeded"
+                    break
+                contact_tool_work_increment = contact_manager.tool_work_increment(
+                    start_u, end_u, motion_factor, next_motion_factor,
+                )
+
             committed_states = _commit_nonlinear_state_candidate(
                 committed_states,
                 states_new,
                 model=model,
                 accepted_displacements=np.asarray(T @ q + u0, dtype=float).reshape(-1),
             )
+            motion_factor = next_motion_factor
             u = np.asarray(T @ q + u0, dtype=float).reshape(-1)
             current = float(row_red @ q + row_u0)
             reaction_internal, _unused, _reaction_states = _assemble_nonlinear_system(
@@ -4005,6 +4061,9 @@ def _solve_static_displacement_control(
                     "constraint_error": constraint_error,
                     "iterations": iteration,
                     "active_stage": active_stage,
+                    **({"contact_path_factor": motion_factor,
+                        "contact_tool_work_increment": contact_tool_work_increment}
+                       if moving_tool else {}),
                     "support_reactions": {
                         name: list(values)
                         for name, values in support_reactions.items()
@@ -4068,6 +4127,8 @@ def _solve_static_displacement_control(
     info["last_converged_load_factor"] = float(lam)
     info["peak_load_factor"] = max((step.load_factor for step in steps), default=float(lam))
     info["force_displacement_history"] = history
+    if moving_tool:
+        info["contact_path_factor"] = motion_factor
     info["strain_summary"] = _nonlinear_state_summary(committed_states)
     info["total_newton_iterations"] = total_iterations
     info["solve_time"] = time.time() - start_time
@@ -7315,10 +7376,12 @@ def solve_static_nonlinear(
                      or corotational_tangent != "auto")):
             raise ValueError("radial rigid contact currently admits von_karman kinematics only")
         if any(body.path_translation is not None for body in contact.rigid_bodies):
-            if str(control).lower() != "force" or load_program is not None:
-                raise ValueError("prescribed rigid-tool translation currently requires force control without a load program")
+            if str(control).lower() not in {"force", "displacement"} or load_program is not None:
+                raise ValueError("prescribed rigid-tool translation requires force or displacement control without a load program")
             if str(kinematics).lower() != "von_karman":
                 raise ValueError("prescribed rigid-tool translation currently requires von_karman kinematics")
+            if str(control).lower() == "displacement" and initial_displacements is not None:
+                raise ValueError("moving rigid-tool displacement control requires a fresh or checkpointed initial state")
         if fracture_config is not None or imperfection is not None:
             raise ValueError("contact with fracture or imperfection is not yet admitted")
         if not contact.rigid_bodies:
@@ -7393,11 +7456,14 @@ def solve_static_nonlinear(
             from .general_contact.core import contact_scope
 
             with contact_scope(
-                model, contact, contact_settings, initial_displacements
+                model, contact, contact_settings, initial_displacements,
+                analysis_control=str(control).lower(),
             ) as contact_manager:
                 result = run_solver()
                 if hasattr(contact_manager, "set_path_factor"):
-                    contact_manager.set_path_factor(result.load_factor)
+                    contact_manager.set_path_factor(
+                        result.info.get("contact_path_factor", result.load_factor)
+                    )
                 summary = contact_manager.evaluate(result.displacements, tangent=False)[2]
                 summary_payload = summary.to_dict()
                 summary_payload.update(

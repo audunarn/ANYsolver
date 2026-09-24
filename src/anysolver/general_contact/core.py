@@ -221,7 +221,8 @@ class ContactResults:
 
 
 def validate_general_contact(model: FEModel, definition: ContactDefinition,
-                             settings: ContactSolverSettings | None = None) -> ContactValidationReport:
+                             settings: ContactSolverSettings | None = None,
+                             *, analysis_control: str = "force") -> ContactValidationReport:
     """Report every unsupported feature before contact changes the solve."""
 
     issues: list[str] = []
@@ -229,6 +230,8 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if analysis_control not in {"force", "displacement"}:
+        return ContactValidationReport("invalid", ("analysis_control must be force or displacement",))
     if any(item.normal_law == "augmented" for item in definition.interactions):
         if (settings is None or settings.pair_motion != "restricted_sliding"
                 or settings.pressure_tolerance is None
@@ -260,7 +263,14 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             and definition.rigid_bodies[0].kind in {"sphere", "cylinder"}):
         from .sphere import validate_sphere_shell_contact
 
-        return validate_sphere_shell_contact(model, definition, settings)
+        report = validate_sphere_shell_contact(model, definition, settings)
+        if (analysis_control == "displacement"
+                and definition.rigid_bodies[0].path_translation is not None):
+            return ContactValidationReport(
+                report.status, report.issues,
+                report.profile.replace("_FORCE_STATIC_DEV_V0", "_DISPLACEMENT_STATIC_DEV_V0"),
+            )
+        return report
     if settings is not None and settings.pair_motion != "guided":
         return ContactValidationReport("invalid", ("rigid plane requires guided pair_motion",))
     surface_by_name = {surface.name: surface for surface in definition.surfaces}
@@ -308,6 +318,8 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
               definition.rigid_bodies[0].path_translation is not None)
     profile = (_MOVING_PLANE_PROFILE if moving else
                _S3_PLANE_PROFILE if contains_s3 else _Q4_PLANE_PROFILE)
+    if moving and analysis_control == "displacement":
+        profile = profile.replace("_FORCE_STATIC_DEV_V0", "_DISPLACEMENT_STATIC_DEV_V0")
     return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
@@ -636,7 +648,8 @@ def suspend_contact() -> Iterator[None]:
 def contact_scope(model: FEModel, definition: ContactDefinition,
                    settings: ContactSolverSettings | None = None,
                    initial_displacement: np.ndarray | None = None,
-                   *, allow_augmented: bool = False) -> Iterator[object]:
+                   *, allow_augmented: bool = False,
+                   analysis_control: str = "force") -> Iterator[object]:
     settings = ContactSolverSettings() if settings is None else settings
     if any(item.normal_law == "augmented" for item in definition.interactions):
         if not allow_augmented:
@@ -671,6 +684,13 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
             from .pair import _PlanarShellPairManager
 
             manager = _PlanarShellPairManager(model, definition, settings, initial_displacement)
+    if analysis_control == "displacement" and definition.rigid_bodies:
+        report = validate_general_contact(
+            model, definition, settings, analysis_control=analysis_control,
+        )
+        if not report.valid:
+            raise ValueError("unsupported displacement contact: " + "; ".join(report.issues))
+        manager.profile = report.profile
     token = _ACTIVE_CONTACT.set(manager)
     try:
         yield manager

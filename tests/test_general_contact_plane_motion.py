@@ -7,7 +7,8 @@ import pytest
 
 from anysolver import (
     BoundaryCondition, ContactDefinition, ContactInteraction,
-    ContactSolverSettings, ContactSurface, LoadCase, NonlinearConvergenceSettings,
+    ContactSolverSettings, ContactSurface, DisplacementControl, LoadCase,
+    NonlinearConvergenceSettings,
     RigidContactBody, create_shell_element, solve_static_nonlinear,
     validate_general_contact,
 )
@@ -217,3 +218,84 @@ def test_moving_plane_force_path_work_and_restart():
     with pytest.raises(ValueError, match="restart|incompatible|contract"):
         solve(1.0, 8, checkpoint=half.to_restart_checkpoint(),
               contact=changed_motion)
+
+
+def test_moving_plane_displacement_path_uses_control_fraction_and_records_work():
+    model, definition, settings = _moving_plane()
+    report = validate_general_contact(
+        model, definition, settings, analysis_control="displacement",
+    )
+    assert report.valid and "DISPLACEMENT_STATIC" in report.profile
+    model.add_boundary_condition(BoundaryCondition(
+        "guide", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition("normal_anchor", (1,),
+                                                    {"uz": 0.0}))
+    load = LoadCase("upward_control_load")
+    load.add_nodal_load(2, forces=(0.0, 0.0, 1.0))
+    def solve(checkpoint=None):
+        return solve_static_nonlinear(
+            model, load, contact=definition, contact_settings=settings,
+            control="displacement",
+            displacement_control=DisplacementControl(
+                node_id=2, dof="uz", target_displacement=0.001,
+            ),
+            num_steps=4, max_iterations=18, emit_restart_checkpoint=True,
+            restart_checkpoint=checkpoint,
+        )
+
+    result = solve()
+    assert result.status == "completed", result.failure_reason
+    summary = result.info["general_contact"]
+    assert summary["profile"] == report.profile
+    assert summary["gap_tolerance_met"]
+    assert summary["rigid_tool_position"][2] == pytest.approx(0.001)
+    assert summary["rigid_contact_work_trapezoid"] < 0.0
+    assert result.info["contact_path_parameter"] == "controlled_displacement_fraction"
+    assert result.info["contact_path_factor"] == pytest.approx(1.0)
+    assert [step["contact_path_factor"] for step in
+            result.info["force_displacement_history"]] == pytest.approx(
+                [0.25, 0.5, 0.75, 1.0],
+            )
+    assert result.restart_checkpoint["version"] == 2
+    resumed = solve(result.to_restart_checkpoint())
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, result.displacements,
+                               rtol=1.0e-8, atol=1.0e-10)
+    assert resumed.info["general_contact"]["rigid_tool_position"][2] == pytest.approx(0.001)
+    assert resumed.info["general_contact"]["rigid_contact_work_trapezoid"] == pytest.approx(
+        summary["rigid_contact_work_trapezoid"], rel=1.0e-8, abs=1.0e-12,
+    )
+
+
+def test_moving_plane_displacement_path_rejects_uncertified_sweep():
+    model, definition, settings = _moving_plane()
+    fast = replace(definition, rigid_bodies=(replace(
+        definition.rigid_bodies[0], path_translation=(0.0, 0.0, 0.03),
+    ),))
+    model.add_boundary_condition(BoundaryCondition(
+        "guide", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition("normal_anchor", (1,),
+                                                    {"uz": 0.0}))
+    load = LoadCase("upward_control_load")
+    load.add_nodal_load(2, forces=(0.0, 0.0, 1.0))
+    result = solve_static_nonlinear(
+        model, load, contact=fast, contact_settings=settings,
+        control="displacement",
+        displacement_control=DisplacementControl(
+            node_id=2, dof="uz", target_displacement=0.001,
+        ),
+        num_steps=1, max_iterations=12,
+    )
+    assert result.status == "contact_gap_exceeded", (
+        result.info.get("contact_path_factor"), result.load_factor,
+        result.info.get("stop_reason"), result.info.get("control"),
+        len(result.info.get("force_displacement_history", [])),
+        result.info.get("general_contact"),
+    )
+    assert result.info["contact_path_factor"] == 0.0
+    assert result.info["general_contact"]["rigid_tool_position"][2] == pytest.approx(-0.002)
+    assert result.info["general_contact"]["swept_trial_cutbacks"] > 0

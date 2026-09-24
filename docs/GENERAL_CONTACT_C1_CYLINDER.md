@@ -36,7 +36,7 @@ side rejection, swept crossing and split/restart.
 
 This fixed profile does not admit finite cylinder caps; a separate linear
 [prescribed translation profile](GENERAL_CONTACT_C1_RIGID_MOTION.md) is
-available for force control. This fixed profile does not admit
+available for force or prescribed displacement control. This fixed profile does not admit
 free rigid-body motion, friction, augmentation, warped Q4, finite shell
 rotation, automatic pairing or impact. The Q4/S3 pressure space can still
 miss a spot smaller than its resolved support; a separate represented-gap

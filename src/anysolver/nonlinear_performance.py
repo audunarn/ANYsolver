@@ -1468,8 +1468,11 @@ def _solve_static_displacement_control_block(
         context="nonlinear displacement-control block preflight",
     )
 
+    from .general_contact.core import active_contact_manager
+
     checkpoint_path = (
-        restart_analysis_contract is not None
+        active_contact_manager() is not None
+        or restart_analysis_contract is not None
         or float(initial_load_factor) != 0.0
         or int(step_index_offset) != 0
         or bool(initial_steps)
@@ -1477,9 +1480,8 @@ def _solve_static_displacement_control_block(
         or int(initial_total_iterations) != 0
     )
     if checkpoint_path:
-        # Checkpoint continuation has one authoritative implementation.  Do
-        # not let first-use acceleration substitute a second path-state
-        # machine with subtly different commit/retry semantics.
+        # Contact and checkpoint continuation use one transaction-aware path.
+        # The block solver does not own contact gap, sweep, or tool history.
         solver = _ORIGINAL_DISPLACEMENT_SOLVER
         if solver is None:
             raise RuntimeError(

@@ -1,4 +1,4 @@
-"""Prescribed radial-tool translation through force-controlled static contact."""
+"""Prescribed radial-tool translation through nonlinear static contact."""
 
 from dataclasses import replace
 
@@ -7,7 +7,8 @@ import pytest
 
 from anysolver import (
     BoundaryCondition, ContactDefinition, ContactInteraction,
-    ContactSolverSettings, ContactSurface, LoadCase, NonlinearConvergenceSettings,
+    ContactSolverSettings, ContactSurface, DisplacementControl, LoadCase,
+    NonlinearConvergenceSettings,
     RigidContactBody,
     create_shell_element, solve_static_nonlinear, validate_general_contact,
 )
@@ -131,11 +132,6 @@ def test_moving_sphere_swept_through_crossing_and_admission():
     assert stopped.status == "contact_gap_exceeded"
     assert stopped.load_factor == 0.0
     assert stopped.info["general_contact"]["swept_trial_cutbacks"] > 0
-    with pytest.raises(ValueError, match="requires force control"):
-        solve_static_nonlinear(
-            model, LoadCase("none"), contact=definition,
-            contact_settings=settings, control="displacement",
-        )
     plane = replace(definition, rigid_bodies=(RigidContactBody(
         "tool", "plane", (0.0, 0.0, 0.0),
         normal=(0.0, 0.0, 1.0), path_translation=(0.0, 0.0, 0.001),
@@ -218,3 +214,34 @@ def test_moving_cylinder_force_path():
     np.testing.assert_allclose(summary["shell_force"],
                                -np.asarray(summary["rigid_force"]), atol=1.0e-9)
     assert result.restart_checkpoint["version"] == 2
+
+
+def test_moving_sphere_displacement_path_uses_control_fraction():
+    model, definition, settings = _moving_sphere()
+    report = validate_general_contact(
+        model, definition, settings, analysis_control="displacement",
+    )
+    assert report.valid and "DISPLACEMENT_STATIC" in report.profile
+    model.add_boundary_condition(BoundaryCondition(
+        "guide", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition("normal_anchor", (1,),
+                                                    {"uz": 0.0}))
+    load = LoadCase("downward_control_load")
+    load.add_nodal_load(2, forces=(0.0, 0.0, -1.0))
+    result = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        control="displacement",
+        displacement_control=DisplacementControl(
+            node_id=2, dof="uz", target_displacement=-0.0002,
+        ),
+        num_steps=4, max_iterations=18, emit_restart_checkpoint=True,
+    )
+    assert result.status == "completed", result.failure_reason
+    summary = result.info["general_contact"]
+    assert summary["profile"] == report.profile
+    assert summary["gap_tolerance_met"]
+    assert summary["rigid_tool_position"][2] == pytest.approx(4.999)
+    assert summary["rigid_contact_work_trapezoid"] < 0.0
+    assert result.info["contact_path_factor"] == pytest.approx(1.0)

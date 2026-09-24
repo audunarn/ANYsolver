@@ -73,7 +73,7 @@ the discrete pressure-resolution boundary without changing penalty stiffness.
 
 This fixed profile does not admit sphere motion; a separate linear
 [prescribed translation profile](GENERAL_CONTACT_C1_RIGID_MOTION.md) is
-available for force control. This fixed profile does not admit a free rigid body, augmented
+available for force or prescribed displacement control. This fixed profile does not admit a free rigid body, augmented
 enforcement, friction, warped Q4, shell finite rotation, impact or automatic
 pairing. A sphere contact spot smaller than the pressure/geometry resolution
 can be missed by the weighted law; the independent gap check rejects an
