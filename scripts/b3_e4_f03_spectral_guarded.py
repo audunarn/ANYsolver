@@ -21,27 +21,35 @@ MAX_RSS = 8*1024**3
 MAX_SECONDS = 300
 SOURCES = ("b3_e4_f03_spectral_guarded.py",
            "b3_e4_f03_spectral_axial_reference.py",
+           "_b3_e4_f03_segmented_y.py",
            "_b3_e4_f03_independent_beam.py")
 
 
 def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--nx",type=int,required=True)
-    parser.add_argument("--ny",type=int,required=True)
+    transverse=parser.add_mutually_exclusive_group(required=True)
+    transverse.add_argument("--ny",type=int)
+    transverse.add_argument("--segmented-degree",type=int)
     parser.add_argument("--beam",type=int,required=True)
     parser.add_argument("--mortar",type=int,required=True)
     parser.add_argument("--root",type=Path,required=True)
     args=parser.parse_args()
-    if not (1<=args.nx<=128 and 1<=args.ny<=64
+    ny=args.ny if args.ny is not None else 3*args.segmented_degree+1
+    if not (1<=args.nx<=128 and 1<=ny<=64
             and 1<=args.beam<=512 and 1<=args.mortar<=256):
         parser.error("case exceeds the bounded exploratory envelope")
+    if args.segmented_degree is not None and not 1<=args.segmented_degree<=16:
+        parser.error("segmented transverse degree exceeds the bounded envelope")
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     source_dir=Path(__file__).resolve().parent
     command=[sys.executable,"-B",str(source_dir/
               "b3_e4_f03_spectral_axial_reference.py"),
-             "--nx",str(args.nx),"--ny",str(args.ny),
+             "--nx",str(args.nx),
              "--beam",str(args.beam),"--mortar",str(args.mortar)]
+    command.extend(["--ny",str(ny)] if args.segmented_degree is None else
+                   ["--segmented-degree",str(args.segmented_degree)])
     environment=os.environ.copy()
     environment.update(OPENBLAS_NUM_THREADS="1",OMP_NUM_THREADS="1",
                        MKL_NUM_THREADS="1",NUMBA_NUM_THREADS="1")
@@ -51,7 +59,8 @@ def main() -> int:
                                                 text=True).strip(),
         source_sha256={name:hashlib.sha256((source_dir/name).read_bytes()).hexdigest()
                        for name in SOURCES},
-        nx=args.nx,ny=args.ny,beam=args.beam,mortar=args.mortar,
+        nx=args.nx,ny=ny,segmented_degree=args.segmented_degree,
+        beam=args.beam,mortar=args.mortar,
         command=command,threads=1,sampled_rss_limit_bytes=MAX_RSS,
         wall_limit_seconds=MAX_SECONDS,sampling_seconds=.1,
         python=platform.python_version(),numpy=np.__version__,
@@ -106,8 +115,14 @@ def main() -> int:
             if (result["status"]!="UNREGISTERED_SPECTRAL_AXIAL_REFERENCE_DIAGNOSTIC"
                     or (result["shell_modes_x"],result["shell_modes_y"],
                         result["beam_elements"],result["multiplier_intervals"])
-                       !=(args.nx,args.ny,args.beam,args.mortar)):
+                       !=(args.nx,ny,args.beam,args.mortar)):
                 raise ValueError("spectral child identity mismatch")
+            if args.segmented_degree is not None and (
+                    result.get("transverse_basis")!="C0_THREE_INTERVAL_LOBATTO"
+                    or result.get("transverse_degree")!=args.segmented_degree):
+                raise ValueError("segmented transverse identity mismatch")
+            if args.segmented_degree is None and "transverse_basis" in result:
+                raise ValueError("unexpected transverse basis identity")
             (root/"result.json").write_text(
                 json.dumps(result,indent=2,sort_keys=True)+"\n",encoding="utf-8")
             status["status"]="EXPLORATORY_COMPLETE"

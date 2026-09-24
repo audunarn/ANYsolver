@@ -1,5 +1,17 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**Current decision, 24 September 2026:** The optional interface-aligned
+classical-shell y basis and 14 guarded axial screens are retained in
+`B3_GE_E4_PL_F03_SEGMENTED_AXIAL_V1.md`. Transverse order settles rapidly,
+but longitudinal, beam and line-resolution effects still interact; no
+physical reference or native line law is accepted. F03/G0B remain open and
+G1 barred. The detailed chronological evidence follows below.
+
+At matched beam512/mortar256 resolution, the finest segmented screen
+still differs from the retained Q4 n256 comparator by 2.12% in beam
+energy and 3.34% in root axial magnitude. This reinforces the need for
+a physical convergence and interface-stability diagnosis before F03.
+
 **24 September 2026 — independent F03 spectral-shell axial diagnosis.**
 A Fourier-sine/Legendre plane-stress shell and separately assembled P1
 four-sample line were coupled to the independent classical beam under
@@ -1515,3 +1527,39 @@ problem's axial mechanics, which the torsion-only screen concealed.
 The 100 kN amplitude is a diagnostic linear load, not an accepted physical
 limit or a matched reference. No candidate is selected; external/independent
 physical response and interface-stability interpretation remain necessary.
+
+## Pause checkpoint — 2026-09-24
+
+Implementation is paused at user request. The integration worktree is
+`C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling`, branch
+`codex/b3-ge-e4-pl-integration`, HEAD `42b6d069`. One untracked, unfinished
+file is owned by this task: `scripts/_b3_e4_f03_segmented_y.py`. It is an
+interface-aware transverse basis prototype with breaks at `y=-0.23,0.23`;
+it has not been tested, connected to the spectral solver, or used as
+qualification evidence. Preserve it on resume and first check its algebra
+and ownership before any loaded run. The completed independent spectral
+diagnosis is documented in `B3_GE_E4_PL_F03_SPECTRAL_AXIAL_V1.md` and commit
+`42b6d069`; do not repeat it without changed inputs or a concrete concern.
+
+F03/G0B remain open and G1 barred. No line multiplier or shell pose is
+selected. Formal F03 execution authority remains unconsumed; existing raw
+evidence and failures remain immutable. Apply
+`ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1` prospectively, preserving
+the scientific and qualification contract. No owned active process is known
+at this pause. Do not start implementation again until requested.
+
+## Resumed development — segmented transverse diagnostic, 2026-09-24
+
+The user resumed work. The paused prototype is now an optional, isolated
+three-interval classical-shell y basis aligned with the attachment material
+lines at `±0.23 m`; the global-basis result was replayed unchanged. Nine
+focused mechanics checks passed, and 14/14 serial guarded segmented screens
+completed within their limits. The complete compact finding and raw-root
+inventory are in `B3_GE_E4_PL_F03_SEGMENTED_AXIAL_V1.md`. At fixed nx64,
+beam128, mortar128, p12→16 changes beam energy by 0.0098%, but changing
+mortar128→256 still changes it by 3.89%, and nx96→128 at mortar256 by 1.71%.
+The efficient transverse basis does not settle the x/beam/multiplier
+interaction. The next technical action is a physically matched convergence
+and interface-stability diagnosis; no native pose or multiplier selection
+follows from this screen. Formal F03 authority remains unconsumed, F03/G0B
+open, and G1 barred. Existing historical evidence is unchanged.
