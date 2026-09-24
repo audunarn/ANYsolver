@@ -838,7 +838,7 @@ support elimination and work-conjugate scaling. The line's weak derivative
 agrees with that KKT Jacobian; Q4/S3 and both multiplier candidates solve
 the bounded loaded system with small scaled and physical residuals.
 
-Focused weak-line/KKT tests passed **20/20**, including six common rigid-mode
+Focused weak-line/KKT tests passed **24/24**, including six common rigid-mode
 constraints and the physical-residual assertion. The neighboring E4 trial,
 point-work, finite-pose and spatial-port
 suite passed **81/81** before that assertion; no product mechanics changed
@@ -864,3 +864,6 @@ the physical-multiplier support residual and closes global force and moment
 balance about a common origin, with a nonzero shell support share. Independent
 review confirmed the residual sign and retained-coordinate treatment. Local
 traction balance, refinement, S3 torque and full F03 stability remain open.
+The same small KKT route also executes on a second Q4/S3 mesh with eight
+native half-cells and four multiplier intervals for both P0/P1 candidates;
+this two-size execution check is not a convergence or inf-sup result.

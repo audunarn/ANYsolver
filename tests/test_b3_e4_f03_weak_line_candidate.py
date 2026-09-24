@@ -357,3 +357,26 @@ def test_q4_torque_reaches_physical_shell_without_drilling_completion():
     np.testing.assert_allclose(shell_moment+beam_moment,
                                (-100., 0., 0.), atol=1e-7)
     assert abs(shell_moment[0]) > 1e-4
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+@pytest.mark.parametrize("kind", ("piecewise_constant", "continuous_linear"))
+def test_extended_mesh_reference_kkt_executes_without_shape_or_rank_loss(
+        topology, kind):
+    shell = FlatE4TrialPanel(make_shell(2, topology))
+    beam = build(8)
+    space = LineMultiplierSpace(kind, (0., .25, .5, .75, 1.))
+    kkt = assemble_reference_kkt(shell, beam, space)
+    assert kkt.system.shape[0] > 200
+    shell_size = 6*shell.panel.node_count
+    load = np.zeros(shell_size+beam.context.count)
+    load[shell_size+6*beam.n_half_cells+2] = 1000.
+    count = len(kkt.free_primal)
+    rhs = np.r_[load[kkt.free_primal]*
+                kkt.coordinate_scale[:count]/kkt.energy_scale,
+                np.zeros(6*space.count)]
+    solution = np.linalg.solve(kkt.scaled_system, rhs)
+    assert np.linalg.norm(kkt.scaled_system@solution-rhs) < 1e-9
+    physical = kkt.coordinate_scale*solution
+    assert np.linalg.norm(kkt.constraint_jacobian[:, kkt.free_primal]@
+                          physical[:count]) < 1e-9
