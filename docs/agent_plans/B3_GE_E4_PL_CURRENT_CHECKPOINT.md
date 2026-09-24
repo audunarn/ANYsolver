@@ -13,17 +13,18 @@ plate/beam comparator isolated beam-versus-line resolution but did not
 settle as a loaded shell target. Native one-axis paths show underresolved
 shell hosts at 8:1 and underresolved beam traces at 1:8.
 
-**Remaining uncertainty and next action:** A fixed fine-mesh screen found
-P0, P1 and dual-linear rows all full-rank, but their loaded responses
-remain different and move with line resolution. Resolve the physically
-scaled native interface modes with its retained indefinite variables,
-then compare physical response against a genuinely matched torque/shear
-reference before selecting a multiplier. Retain the rail origin as a
-diagnostic comparator and keep six-channel, classical axial and
-Q6/finite-pad evidence distinct. Small gaps, rank and a spectral
-quotient cannot select a space. Formal F03 authority remains unconsumed,
-G0B open and G1 barred. Details and raw roots are inventoried below;
-no global axial refinement is planned.
+**Remaining uncertainty and next action:** Exact retained-variable
+condensation shows the fine-line transverse weak mode is alternating Fz
+and over 90% beam-supported. Doubling native beam half-cells 16→32 at
+fixed P1 line10 still changes loaded torque/tip-z by about 5%; this
+ratio is not settled for multiplier selection. Examine the native beam
+trace's physical approximation and obtain a genuinely matched
+torque/shear target before comparing P0/P1/dual under the registered
+stability and mesh-ratio criteria. Retain rail as a diagnostic and keep
+six-channel, classical axial and Q6/finite-pad evidence distinct. Rank,
+small gaps and a quotient alone cannot select a space. Formal F03
+authority remains unconsumed, G0B open and G1 barred. Details and raw
+roots are below; no global axial refinement is planned.
 
 **Historical transverse-partition decision, 24 September 2026:** A systematic
 midpoint split of all three y intervals (six elements) passed 18 focused
@@ -1964,3 +1965,60 @@ actual associated trace/work, coupled to a matched external/resolved
 torque/shear response. The signed Schur or absolute-primal quotient alone
 does not supply the required inf-sup or locking verdict. Raw root:
 `B3_GE_E4_PL_F03_NATIVE_LOCAL_SPACE_SCREEN_V1.jsonl`.
+
+Next algebraic uncertainty: B3's retained native block is indefinite,
+so a direct positive-energy norm on the full primal vector is invalid.
+On a small local-center case, exact block elimination of retained
+coordinates yields a positive physical Schur stiffness and reproduces
+the full multiplier action to `5.7e-15` relative error; the retained
+block has both positive and negative eigenvalues. Test whether that
+decomposition remains valid and positive for the fixed fine native
+P0/P1/dual line4/line10 cases. If it does, separate physical trace
+compliance from the retained direct multiplier term and interpret their
+norm-scaled modes alongside the saved loaded responses. If the physical
+block or direct term loses the required sign/rank, do not force a
+positive-energy inf-sup interpretation; return to the mixed saddle
+formulation. This is a bounded diagnostic, not a multiplier selection.
+
+The six fine local-center cases passed exact retained-coordinate
+condensation: full versus condensed interface action differs by at most
+`3.7e-13` relative; the reduced coordinate block has positive minimum
+eigenvalue while the retained block has 144 negative modes. The
+H^(-1/2)-dual minimum quotient falls with line refinement in every space,
+but all six minimum vectors are alternating **Fx** densities with
+negligible direct-retained share. That minimum is not the physical
+torque/tip-z mode sought here, and no line-space verdict follows.
+Next restrict the same exact condensed action to transverse `Fz/Mx/My`
+multiplier channels, report the normed mode and physical/retained work
+split, then compare its trend with the saved loaded work/gaps. If the
+transverse mode weakens with refinement, inspect actual trace and beam
+representation before selecting a space; if stable, proceed to matched
+physical reference and mesh-ratio checks. Do not refine the axial minimum.
+Raw root: `B3_GE_E4_PL_F03_NATIVE_CONDENSED_INTERFACE_V1.jsonl`.
+
+The transverse-only normalized minimum falls from `9.58→0.72` for P0,
+`7.02→0.70` for P1 and `7.18→0.72` for dual as line intervals 4→10.
+At line10 it is a nearly pure alternating Fz density in all three:
+the native beam accounts for 90–92% of its work, the shell 4.5–5.9%,
+and the direct retained term 2.9–3.7%. At line4 the shell and beam
+shares are each roughly 40–57%. This exact-condensation result points
+to a beam-trace/line-resolution dependency, not an axial or Q4 drilling
+mode; it remains a finite-dimensional diagnostic, not an inf-sup proof.
+Next change only native beam half-cells 16→32 on the fixed local-center
+Q4 x8/y8, P1 line10 setup under the two saved loads. If responses move
+materially, reject the present beam/line ratio as a basis for space
+selection; if they stabilize, advance the matched physical reference
+and one-axis mesh-ratio checks. Stop at this bounded increment.
+Raw root: `B3_GE_E4_PL_F03_NATIVE_TRANSVERSE_INTERFACE_V1.jsonl`.
+
+The bounded 16→32 native half-cell check did not settle P1 line10:
+center-origin torque tip-rx changed `9.969→9.439 µrad` (-5.31%) and
+tip-z `41.85→39.79 µm` (-4.92%) at fixed Q4 x8/y8 and full-left
+support. The torque gap L2 rose slightly while the tip-z gap fell;
+work and global balance remained small. Do not infer that a smaller gap
+or the transverse quotient establishes the correct line space. Stop
+this refinement path as declared. The next mechanics work must identify
+the beam station trace's relevant modes and compare a matched physical
+torque/shear reference, then re-evaluate candidate spaces within the
+registered mesh-ratio and stability envelope. Raw root:
+`B3_GE_E4_PL_F03_NATIVE_BEAM32_LINE10_V1.jsonl`.
