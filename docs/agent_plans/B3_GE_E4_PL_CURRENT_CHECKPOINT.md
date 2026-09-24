@@ -727,3 +727,12 @@ stability mechanics, and freeze/review a feasible installed scientific
 resource protocol before any one-use case registration. Do not describe
 this classical Q6 diagnostic as G0B or native F03 acceptance. G0B remains
 open and G1 remains barred.
+
+## 24 September 2026 native station-port diagnostic
+
+The bounded six-channel native retained half-cell station port and its
+independently reviewed tests are recorded in
+`B3_GE_E4_PL_G0_F03_NATIVE_SPATIAL_PORT_RESULT_20260924.md`. It closes a
+kinematic proof seam only. The next mechanics boundary is the shell-side
+six-channel trace and then the relative-pose line law and coupled stability
+checks. G0B remains open; no scientific registration was consumed.
