@@ -71,7 +71,21 @@ failure passed in `c1-warped-q4-plane-local2.txt` (8 focused geometry/work
 tests including the skin checks).
 
 The kernel holds the reference director fixed inside a linearized increment.
-It has no current-pose independent gap certificate, swept-path rule, contact
-state transaction or public solve routing. Warped Q4 remains rejected by
-`validate_general_contact`; the local kernel is not an accepted contact
-capability.
+The matching `certify_linearized_plane_gap` now bounds the represented pose
+(r+Nu+z_{\rm side}[d+(N\theta)\times d]). Its cell lower bound combines
+the exact corner minimum of the bilinear translated midsurface, the earlier
+varying-director bound and a convex-hull bound on interpolated nodal
+rotation. `certify_linearized_swept_plane_gap` checks both endpoints of a
+linear coordinate and plane-translation path; the represented gap is affine
+in path fraction at each material point, so those endpoint lower bounds
+contain the whole path. Resource limits fail explicitly. An independent
+dense current-pose oracle, zero-increment reference equivalence, rigid-mode
+check and sampled interior path passed in
+`c1-warped-q4-current-gap-local2.txt` (10 geometry/work tests).
+
+This is still a linearized model using the reference director. It has no
+global static contact owner, transaction/restart route or demonstrated
+compatibility with the qualified Q4's coupled nonlinear displacement and
+rotation equations. The endpoint argument does not apply to finite SO(3)
+director motion. Warped Q4 remains rejected by `validate_general_contact`;
+the local kernel is not an accepted contact capability.

@@ -32,6 +32,13 @@ class WarpedQ4GapCertificate:
     accuracy: float
 
 
+@dataclass(frozen=True)
+class WarpedQ4SweptGapCertificate:
+    conservative_lower_gap: float
+    start: WarpedQ4GapCertificate
+    end: WarpedQ4GapCertificate
+
+
 class WarpedQ4Skin:
     """Evaluate one physical Q4 side using the accepted varying-frame route."""
 
@@ -132,14 +139,34 @@ class WarpedQ4Skin:
             self, plane_point: np.ndarray, plane_normal: np.ndarray, *,
             accuracy: float, maximum_cells: int, maximum_depth: int,
             ) -> WarpedQ4GapCertificate:
-        """Bound the minimum physical reference-skin gap to an analytic plane.
+        """Bound the undeformed physical reference-skin gap to a plane."""
+
+        return self.certify_linearized_plane_gap(
+            np.zeros((4, 6)), plane_point, plane_normal,
+            accuracy=accuracy, maximum_cells=maximum_cells,
+            maximum_depth=maximum_depth,
+        )
+
+    def certify_linearized_plane_gap(
+            self, nodal_coordinates: np.ndarray,
+            plane_point: np.ndarray, plane_normal: np.ndarray, *,
+            accuracy: float, maximum_cells: int, maximum_depth: int,
+            ) -> WarpedQ4GapCertificate:
+        """Bound the represented small-rotation skin gap to an analytic plane.
 
         The Q4 midsurface projection is bilinear, so its minimum over a
         parametric rectangle occurs at a corner. Its unnormalized normal is
         affine in the two parameters. A lower bound on its norm therefore
         bounds variation of the unit physical director throughout each cell.
+        The interpolated nodal rotation is bilinear and lies in the convex
+        hull of its four cell-corner values.
         """
 
+        coordinates = np.asarray(nodal_coordinates, dtype=float)
+        if coordinates.shape != (4, 6) or not np.all(np.isfinite(coordinates)):
+            raise ValueError("linearized Q4 gap needs four finite six-DOF rows")
+        displaced_midsurface = self.reference + coordinates[:, :3]
+        rotations = coordinates[:, 3:]
         point = np.asarray(plane_point, dtype=float)
         normal = np.asarray(plane_normal, dtype=float)
         if (point.shape != (3,) or normal.shape != (3,)
@@ -163,7 +190,8 @@ class WarpedQ4Skin:
 
         point_dot = float(normal @ point)
         scale = max(float(np.max(np.abs(self.reference))),
-                    float(np.max(np.abs(point))), abs(self.offset), 1.0)
+                    float(np.max(np.abs(point))),
+                    float(np.max(np.abs(coordinates))), abs(self.offset), 1.0)
         roundoff = 256.0 * np.finfo(float).eps * scale
         minimum_sampled = float("inf")
         minimum_lower = float("inf")
@@ -175,15 +203,26 @@ class WarpedQ4Skin:
             if cells_checked > maximum_cells:
                 raise MemoryError("warped Q4 gap cell budget exhausted")
             centre_xi, centre_eta = 0.5 * (xi0 + xi1), 0.5 * (eta0 + eta1)
-            corners = tuple(at(xi, eta) for xi in (xi0, xi1)
-                            for eta in (eta0, eta1))
             centre = at(centre_xi, centre_eta)
-            sampled = min(float(normal @ sample.position) - point_dot
-                          for sample in (*corners, centre))
+            parametric_corners = tuple((xi, eta) for xi in (xi0, xi1)
+                                       for eta in (eta0, eta1))
+
+            def field(xi: float, eta: float):
+                shape = np.asarray(self.element.compute_shape_functions(xi, eta)[0])
+                rotation = shape @ rotations
+                sample = at(xi, eta)
+                position = (sample.position + shape @ coordinates[:, :3]
+                            + self.offset * np.cross(rotation, sample.director))
+                return shape, rotation, position
+
+            corner_fields = tuple(field(xi, eta) for xi, eta in parametric_corners)
+            centre_field = field(centre_xi, centre_eta)
+            sampled = min(float(normal @ entry[2]) - point_dot
+                          for entry in (*corner_fields, centre_field))
             minimum_sampled = min(minimum_sampled, sampled)
             midsurface_min = min(
-                float(normal @ (sample.position - self.offset * sample.director))
-                for sample in corners
+                float(normal @ (entry[0] @ displaced_midsurface))
+                for entry in corner_fields
             )
             _shape, derivative_xi, derivative_eta = self.element.compute_shape_functions(
                 centre_xi, centre_eta,
@@ -201,8 +240,20 @@ class WarpedQ4Skin:
                 lower = float("-inf")
             else:
                 director_variation = variation / minimum_cross_norm
-                lower = (midsurface_min + self.offset * float(normal @ centre.director)
-                         - abs(self.offset) * director_variation - point_dot - roundoff)
+                centre_rotation = centre_field[1]
+                rotation_variation = max(
+                    float(np.linalg.norm(entry[1] - centre_rotation))
+                    for entry in corner_fields
+                )
+                reference_director = centre.director
+                director_field = (reference_director
+                                  + np.cross(centre_rotation, reference_director))
+                field_variation = (
+                    (1.0 + float(np.linalg.norm(centre_rotation))) * director_variation
+                    + rotation_variation
+                )
+                lower = (midsurface_min + self.offset * float(normal @ director_field)
+                         - abs(self.offset) * field_variation - point_dot - roundoff)
             if lower >= minimum_sampled - accuracy:
                 minimum_lower = min(minimum_lower, lower)
                 continue
@@ -218,4 +269,34 @@ class WarpedQ4Skin:
         return WarpedQ4GapCertificate(
             float(minimum_sampled), float(minimum_lower), cells_checked,
             float(accuracy),
+        )
+
+    def certify_linearized_swept_plane_gap(
+            self, start_coordinates: np.ndarray,
+            end_coordinates: np.ndarray,
+            start_plane_point: np.ndarray,
+            end_plane_point: np.ndarray,
+            plane_normal: np.ndarray, *, accuracy: float,
+            maximum_cells: int, maximum_depth: int,
+            ) -> WarpedQ4SweptGapCertificate:
+        """Certify an affine coordinate and plane-translation increment.
+
+        At each material parameter, the represented gap is affine along this
+        path. The minimum along time is therefore at one of its endpoints.
+        This statement does not extend to finite SO(3) director paths.
+        """
+
+        start = self.certify_linearized_plane_gap(
+            start_coordinates, start_plane_point, plane_normal,
+            accuracy=accuracy, maximum_cells=maximum_cells,
+            maximum_depth=maximum_depth,
+        )
+        end = self.certify_linearized_plane_gap(
+            end_coordinates, end_plane_point, plane_normal,
+            accuracy=accuracy, maximum_cells=maximum_cells,
+            maximum_depth=maximum_depth,
+        )
+        return WarpedQ4SweptGapCertificate(
+            min(start.conservative_lower_gap, end.conservative_lower_gap),
+            start, end,
         )
