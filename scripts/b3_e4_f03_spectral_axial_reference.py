@@ -306,9 +306,13 @@ def solve(nx: int, ny: int, n_beam: int, n_mortar: int,
                      "not formal F03 assessment"),
     )
     if y_basis is not None:
-        result["transverse_basis"]="C0_THREE_INTERVAL_LOBATTO"
+        result["transverse_basis"]=("C0_THREE_INTERVAL_LOBATTO"
+                                    if y_basis.subdivisions==1 else
+                                    "C0_SIX_INTERVAL_LOBATTO")
         result["transverse_degree"]=y_basis.degree
-        result["transverse_breaks_m"]=(-.5,-.23,.23,.5)
+        result["transverse_breaks_m"]=y_basis.breaks
+        if y_basis.subdivisions!=1:
+            result["transverse_subdivisions"]=y_basis.subdivisions
         result["limitations"]=("classical planar Fourier/segmented-polynomial shell",
                                *result["limitations"][1:])
     if x_basis is not None:
@@ -326,6 +330,7 @@ def main() -> None:
     parser.add_argument("--segmented-x-degree",type=int)
     parser.add_argument("--ny",type=int)
     parser.add_argument("--segmented-degree",type=int)
+    parser.add_argument("--y-subdivisions",type=int,choices=(1,2),default=1)
     parser.add_argument("--beam",type=int)
     parser.add_argument("--mortar",type=int)
     parser.add_argument("--resolution-suite",action="store_true")
@@ -333,7 +338,7 @@ def main() -> None:
     if args.resolution_suite:
         if any(value is not None for value in (args.nx,args.ny,args.beam,
                                                 args.mortar,args.segmented_degree,
-                                                args.segmented_x_degree)):
+                                                args.segmented_x_degree)) or args.y_subdivisions!=1:
             parser.error("resolution suite does not take single-case options")
         cases=((24,8,128,64),(32,12,128,64),
                (48,16,128,32),(48,16,128,64),(48,16,128,128),
@@ -347,10 +352,12 @@ def main() -> None:
             parser.error("specify exactly one of nx and segmented-x-degree")
         if (args.ny is None)==(args.segmented_degree is None):
             parser.error("specify exactly one of ny and segmented-degree")
+        if args.ny is not None and args.y_subdivisions!=1:
+            parser.error("y subdivisions require segmented transverse basis")
         x_basis=(None if args.segmented_x_degree is None else
                  SegmentedXBasis(args.segmented_x_degree))
         y_basis=(None if args.segmented_degree is None else
-                 SegmentedYBasis(args.segmented_degree))
+                 SegmentedYBasis(args.segmented_degree,args.y_subdivisions))
         nx=args.nx if x_basis is None else x_basis.size
         ny=args.ny if y_basis is None else y_basis.size
         output=solve(nx,ny,args.beam,args.mortar,y_basis,x_basis)

@@ -1,6 +1,18 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current transverse-order decision, 24 September 2026:** At fixed x24,
+**Current transverse-partition decision, 24 September 2026:** A systematic
+midpoint split of all three y intervals (six elements) passed 18 focused
+checks and two bounded runs, but it did not improve order-to-order physical
+stability at equal coordinate count. Its degree8→12 beam-energy change
+is +1.383%, versus +0.860% for the three-interval degree16→24 sequence;
+root-force changes are -0.948% versus -0.568%. Full evidence is in
+`B3_GE_E4_PL_F03_TRANSVERSE_MIDPOINT_SPLIT_V6.md`. Do not select this
+partition as a convergence remedy or infer a continuum target from either
+sequence. Next focus on the underlying regularity/localization and native
+signed multiplier/torque formulation. Formal F03 authority remains
+unconsumed; F03/G0B remain open and G1 barred.
+
+**Earlier transverse-order decision, 24 September 2026:** At fixed x24,
 beam512 and P1 line1024, y-degree 12→16→20→24 raises beam energy by
 1.000%, 0.540% and 0.317% on successive steps; root-force magnitude
 falls by 0.688%, 0.362% and 0.206%. The guarded source/results are in

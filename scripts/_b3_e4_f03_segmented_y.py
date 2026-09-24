@@ -1,8 +1,8 @@
 """Continuous spectral-element transverse basis aligned to F03 sample lines.
 
-The three physical intervals meet at y=+-0.23 m. Displacement is continuous
-there while its transverse derivative may jump under line traction. This is
-an exploratory classical-shell basis, not a native E4-PL element.
+The base physical intervals meet at y=+-0.23 m. Optional midpoint splitting
+preserves those material lines. Displacement is continuous while transverse
+derivatives may jump. This is a classical-shell basis, not E4-PL.
 """
 
 from __future__ import annotations
@@ -15,13 +15,21 @@ BREAKS = (-.5, -.23, .23, .5)
 
 
 class SegmentedYBasis:
-    """Three conforming Gauss-Lobatto spectral elements of common degree."""
+    """Conforming Lobatto elements, optionally with midpoint h refinement."""
 
-    __slots__ = ("degree", "_local_nodes", "_coefficients", "_global_nodes")
+    __slots__ = ("degree", "subdivisions", "_breaks", "_local_nodes",
+                 "_coefficients", "_global_nodes")
 
-    def __init__(self, degree: int):
+    def __init__(self, degree: int, subdivisions: int = 1):
         if type(degree) is not int or not 1 <= degree <= 24:
             raise ValueError("bounded segmented transverse degree required")
+        if type(subdivisions) is not int or subdivisions not in (1,2):
+            raise ValueError("bounded transverse subdivision required")
+        breaks = [BREAKS[0]]
+        for a,b in zip(BREAKS[:-1],BREAKS[1:]):
+            if subdivisions == 2:
+                breaks.append((a+b)/2)
+            breaks.append(b)
         interior = (legendre.Legendre.basis(degree).deriv().roots()
                     if degree > 1 else np.empty(0))
         local = np.r_[-1., interior, 1.]
@@ -29,10 +37,12 @@ class SegmentedYBasis:
             raise ValueError("invalid Lobatto transverse nodes")
         coefficient = np.linalg.inv(legendre.legvander(local, degree))
         nodes = []
-        for segment, (a,b) in enumerate(zip(BREAKS[:-1],BREAKS[1:])):
+        for segment, (a,b) in enumerate(zip(breaks[:-1],breaks[1:])):
             physical = a+(local+1)*(b-a)/2
             nodes.extend(physical if segment == 0 else physical[1:])
         self.degree = degree
+        self.subdivisions = subdivisions
+        self._breaks = tuple(float(v) for v in breaks)
         self._local_nodes = tuple(float(x) for x in local)
         self._coefficients = tuple(tuple(float(v) for v in row)
                                    for row in coefficient)
@@ -40,7 +50,11 @@ class SegmentedYBasis:
 
     @property
     def size(self) -> int:
-        return 3*self.degree+1
+        return 3*self.subdivisions*self.degree+1
+
+    @property
+    def breaks(self) -> tuple[float,...]:
+        return self._breaks
 
     @property
     def nodes(self) -> tuple[float,...]:
@@ -55,10 +69,11 @@ class SegmentedYBasis:
         return values,derivatives
 
     def values(self, y: float) -> np.ndarray:
-        if not np.isfinite(y) or not BREAKS[0] <= y <= BREAKS[-1]:
+        if not np.isfinite(y) or not self._breaks[0] <= y <= self._breaks[-1]:
             raise ValueError("transverse sample outside reference panel")
-        segment = min(max(int(np.searchsorted(BREAKS,y,side="right")-1),0),2)
-        a,b = BREAKS[segment:segment+2]
+        segment = min(max(int(np.searchsorted(self._breaks,y,side="right")-1),0),
+                      len(self._breaks)-2)
+        a,b = self._breaks[segment:segment+2]
         t = np.array([2*(y-a)/(b-a)-1])
         local,_ = self._evaluation(t)
         result = np.zeros(self.size)
@@ -66,14 +81,14 @@ class SegmentedYBasis:
         return result
 
     def matrices(self) -> tuple[np.ndarray,np.ndarray,np.ndarray]:
-        """Physical ∫NN, ∫N'N', and ∫NN' over the three intervals."""
+        """Physical ∫NN, ∫N'N', and ∫NN' over the admitted intervals."""
         n=self.size
         mass=np.zeros((n,n))
         derivative=np.zeros((n,n))
         mixed=np.zeros((n,n))
         roots,weights=legendre.leggauss(self.degree+2)
         values,dvalues=self._evaluation(roots)
-        for segment,(a,b) in enumerate(zip(BREAKS[:-1],BREAKS[1:])):
+        for segment,(a,b) in enumerate(zip(self._breaks[:-1],self._breaks[1:])):
             length=b-a
             ids=np.arange(segment*self.degree,segment*self.degree+self.degree+1)
             mass[np.ix_(ids,ids)] += length/2*(values.T*weights)@values

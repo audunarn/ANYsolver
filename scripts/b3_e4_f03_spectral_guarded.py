@@ -34,12 +34,16 @@ def main() -> int:
     transverse=parser.add_mutually_exclusive_group(required=True)
     transverse.add_argument("--ny",type=int)
     transverse.add_argument("--segmented-degree",type=int)
+    parser.add_argument("--y-subdivisions",type=int,choices=(1,2),default=1)
     parser.add_argument("--beam",type=int,required=True)
     parser.add_argument("--mortar",type=int,required=True)
     parser.add_argument("--root",type=Path,required=True)
     args=parser.parse_args()
+    if args.ny is not None and args.y_subdivisions!=1:
+        parser.error("y subdivisions require segmented transverse basis")
     nx=args.nx if args.nx is not None else 5*args.segmented_x_degree-1
-    ny=args.ny if args.ny is not None else 3*args.segmented_degree+1
+    ny=(args.ny if args.ny is not None else
+        3*args.y_subdivisions*args.segmented_degree+1)
     x_limit=128 if args.segmented_x_degree is None else 160
     y_limit=64 if args.segmented_degree is None else 80
     if not (1<=nx<=x_limit and 1<=ny<=y_limit
@@ -60,6 +64,8 @@ def main() -> int:
                    ["--segmented-x-degree",str(args.segmented_x_degree)])
     command.extend(["--ny",str(ny)] if args.segmented_degree is None else
                    ["--segmented-degree",str(args.segmented_degree)])
+    if args.y_subdivisions!=1:
+        command.extend(["--y-subdivisions",str(args.y_subdivisions)])
     environment=os.environ.copy()
     environment.update(OPENBLAS_NUM_THREADS="1",OMP_NUM_THREADS="1",
                        MKL_NUM_THREADS="1",NUMBA_NUM_THREADS="1")
@@ -70,6 +76,7 @@ def main() -> int:
         source_sha256={name:hashlib.sha256((source_dir/name).read_bytes()).hexdigest()
                        for name in SOURCES},
         nx=nx,ny=ny,segmented_degree=args.segmented_degree,
+        y_subdivisions=args.y_subdivisions,
         segmented_x_degree=args.segmented_x_degree,
         beam=args.beam,mortar=args.mortar,
         command=command,threads=1,sampled_rss_limit_bytes=MAX_RSS,
@@ -136,9 +143,15 @@ def main() -> int:
                 raise ValueError("segmented longitudinal identity mismatch")
             if args.segmented_x_degree is None and "longitudinal_basis" in result:
                 raise ValueError("unexpected longitudinal basis identity")
+            expected_y_basis=("C0_THREE_INTERVAL_LOBATTO"
+                              if args.y_subdivisions==1 else
+                              "C0_SIX_INTERVAL_LOBATTO")
             if args.segmented_degree is not None and (
-                    result.get("transverse_basis")!="C0_THREE_INTERVAL_LOBATTO"
-                    or result.get("transverse_degree")!=args.segmented_degree):
+                    result.get("transverse_basis")!=expected_y_basis
+                    or result.get("transverse_degree")!=args.segmented_degree
+                    or (args.y_subdivisions!=1 and
+                        result.get("transverse_subdivisions")
+                        !=args.y_subdivisions)):
                 raise ValueError("segmented transverse identity mismatch")
             if args.segmented_degree is None and "transverse_basis" in result:
                 raise ValueError("unexpected transverse basis identity")

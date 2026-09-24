@@ -3,24 +3,27 @@
 import math
 
 import numpy as np
+import pytest
 from numpy.polynomial import legendre
 
-from scripts._b3_e4_f03_segmented_y import BREAKS, SegmentedYBasis
+from scripts._b3_e4_f03_segmented_y import SegmentedYBasis
 from scripts import b3_e4_f03_spectral_axial_reference as spectral
 
 
-def test_segmented_basis_is_continuous_complete_and_owns_results():
-    for degree in (1, 2, 4, 8, 16, 20, 24):
-        basis = SegmentedYBasis(degree)
+@pytest.mark.parametrize("subdivisions",(1,2))
+def test_segmented_basis_is_continuous_complete_and_owns_results(subdivisions):
+    degrees=(1,2,4,8,16,20,24) if subdivisions==1 else (1,2,4,8,12)
+    for degree in degrees:
+        basis = SegmentedYBasis(degree,subdivisions)
         nodes = np.asarray(basis.nodes)
         np.testing.assert_allclose(
             np.array([basis.values(y) for y in nodes]), np.eye(basis.size),
             atol=2e-13)
-        for y in np.r_[np.linspace(-.5, .5, 23), BREAKS]:
+        for y in np.r_[np.linspace(-.5, .5, 23), basis.breaks]:
             values = basis.values(float(y))
             np.testing.assert_allclose(values.sum(), 1., atol=3e-14)
             np.testing.assert_allclose(values@nodes, y, atol=3e-14)
-        for y in BREAKS[1:-1]:
+        for y in basis.breaks[1:-1]:
             np.testing.assert_allclose(basis.values(y-1e-12),
                                        basis.values(y+1e-12), atol=2e-9)
         borrowed = basis.values(0.)
@@ -28,8 +31,9 @@ def test_segmented_basis_is_continuous_complete_and_owns_results():
         assert not np.any(basis.values(0.) == 42.)
 
 
-def test_segmented_mass_and_gradient_match_independent_physical_quadrature():
-    basis = SegmentedYBasis(5)
+@pytest.mark.parametrize("subdivisions",(1,2))
+def test_segmented_mass_and_gradient_match_independent_physical_quadrature(subdivisions):
+    basis = SegmentedYBasis(5,subdivisions)
     rng = np.random.default_rng(4)
     a, b = rng.normal(size=(2, basis.size))
     mass, gradient, mixed = basis.matrices()
@@ -37,7 +41,7 @@ def test_segmented_mass_and_gradient_match_independent_physical_quadrature():
     integrals = np.zeros(3)
     # Differentiate the scalar interpolant numerically within each smooth
     # segment; this avoids using the basis's derivative implementation.
-    for lo, hi in zip(BREAKS[:-1], BREAKS[1:]):
+    for lo, hi in zip(basis.breaks[:-1], basis.breaks[1:]):
         for root, weight in zip(roots, weights):
             y = (lo+hi)/2+(hi-lo)*root/2
             measure = (hi-lo)*weight/2
@@ -57,9 +61,10 @@ def test_segmented_mass_and_gradient_match_independent_physical_quadrature():
     assert np.linalg.eigvalsh(mass)[0] > 0.
 
 
-def test_segmented_shell_energy_matches_direct_strain_integration():
+@pytest.mark.parametrize("subdivisions",(1,2))
+def test_segmented_shell_energy_matches_direct_strain_integration(subdivisions):
     nx = 3
-    basis = SegmentedYBasis(3)
+    basis = SegmentedYBasis(3,subdivisions)
     ny = basis.size
     rng = np.random.default_rng(7)
     q = rng.normal(size=2*nx*ny)*.01
@@ -72,7 +77,7 @@ def test_segmented_shell_energy_matches_direct_strain_integration():
         k = np.arange(1, nx+1)
         sx = np.sin(k*math.pi*x/2)
         dx = k*math.pi/2*np.cos(k*math.pi*x/2)
-        for lo, hi in zip(BREAKS[:-1], BREAKS[1:]):
+        for lo, hi in zip(basis.breaks[:-1], basis.breaks[1:]):
             for ty, wy in zip(roots_y, weights_y):
                 y = (lo+hi)/2+(hi-lo)*ty/2
                 py = basis.values(y)
@@ -86,8 +91,9 @@ def test_segmented_shell_energy_matches_direct_strain_integration():
     np.testing.assert_allclose(assembled, energy, rtol=2e-9)
 
 
-def test_segmented_pose_samples_shared_interfaces_and_edge_moments():
-    basis = SegmentedYBasis(2)
+@pytest.mark.parametrize("subdivisions",(1,2))
+def test_segmented_pose_samples_shared_interfaces_and_edge_moments(subdivisions):
+    basis = SegmentedYBasis(2,subdivisions)
     nx, ny = 2, basis.size
     q = np.zeros(2*nx*ny)
     # A linear-y field at every x mode must yield the direct four-sample law.
@@ -105,9 +111,10 @@ def test_segmented_pose_samples_shared_interfaces_and_edge_moments():
     np.testing.assert_allclose(first@basis.nodes, 1/12, atol=2e-15)
 
 
-def test_segmented_line_virtual_work_matches_direct_sample_integration():
+@pytest.mark.parametrize("subdivisions",(1,2))
+def test_segmented_line_virtual_work_matches_direct_sample_integration(subdivisions):
     nx = 3
-    basis = SegmentedYBasis(2)
+    basis = SegmentedYBasis(2,subdivisions)
     ny = basis.size
     n_beam, n_mortar = 4, 3
     rng = np.random.default_rng(11)
