@@ -64,6 +64,12 @@ explain why a 20 µm physical gap budget on that coarse face is much smaller
 than its pressure-sampling scale. More penalty stiffness cannot resolve a
 contact spot that the pressure space has not activated; shell and contact
 resolution must be studied separately.
+An additional 40 mm square development control holds the physical sphere and
+10 µm uniform approach fixed while changing one Q4 face to a 4×4 Q4 mesh.
+Both geometries have a negative physical gap inside the 20 µm budget. The
+coarse face has zero active pressure coefficients and zero contact force;
+the refined mesh has active pressure and nonzero force. This demonstrates
+the discrete pressure-resolution boundary without changing penalty stiffness.
 
 This profile does not admit sphere motion, a free rigid body, augmented
 enforcement, friction, warped Q4, shell finite rotation, impact or automatic

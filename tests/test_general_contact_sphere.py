@@ -59,6 +59,40 @@ def _s3_sphere():
                                                     maximum_shell_tilt=0.05)
 
 
+def _square_sphere_patch(segments: int):
+    model = FEModel(f"sphere_patch_{segments}")
+    model.add_material("elastic", 1.0e5, 0.3, density=1.0)
+    coordinates = np.linspace(-0.02, 0.02, segments + 1)
+    for row, y in enumerate(coordinates):
+        for column, x in enumerate(coordinates):
+            model.add_node(row * (segments + 1) + column + 1,
+                           float(x), float(y), -0.01)
+    element_ids = []
+    for row in range(segments):
+        for column in range(segments):
+            lower = row * (segments + 1) + column + 1
+            element_id = row * segments + column + 1
+            model.add_element(element_id, create_shell_element(
+                element_id,
+                (lower, lower + 1, lower + segments + 2,
+                 lower + segments + 1),
+                "elastic", thickness=0.02,
+            ))
+            element_ids.append(element_id)
+    definition = ContactDefinition(
+        surfaces=(ContactSurface("skin", tuple(element_ids), side="top"),),
+        rigid_bodies=(RigidContactBody(
+            "ball", "sphere", (0.0, 0.0, 5.0), radius=5.0,
+        ),),
+        interactions=(ContactInteraction(
+            "sphere_skin", "skin", "ball", 1.0e7, 2.0e-5,
+        ),),
+    )
+    settings = ContactSolverSettings(pair_motion="general",
+                                     maximum_shell_tilt=0.05)
+    return model, definition, settings
+
+
 def test_sphere_q4_work_tangent_drill_and_wrench_balance():
     model, definition, settings = _q4_sphere()
     assert validate_general_contact(model, definition, settings).valid
@@ -200,6 +234,23 @@ def test_sphere_uncertified_trial_path_is_shortened(monkeypatch):
     assert manager.swept_trial_cutbacks == 1
     assert original_certificate(start, fraction * end,
                                 manager.gap_tolerance)[0] >= -manager.gap_tolerance
+
+
+def test_sphere_pressure_resolution_requires_shell_mesh_refinement():
+    observed = []
+    for segments in (1, 4):
+        model, definition, settings = _square_sphere_patch(segments)
+        manager = _SphereShellManager(model, definition, settings)
+        displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+        for node_id in range(1, (segments + 1) ** 2 + 1):
+            displacement[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = 1.0e-5
+        residual, _tangent, result = manager.evaluate(displacement, tangent=False)
+        assert result.minimum_gap < 0.0
+        assert result.gap_tolerance_met
+        observed.append((np.linalg.norm(residual), result.active_pressure_dofs))
+    assert observed[0] == (0.0, 0)
+    assert observed[1][0] > 0.0
+    assert observed[1][1] > 0
 
 
 def test_sphere_contact_spot_slides_across_two_q4_faces():
