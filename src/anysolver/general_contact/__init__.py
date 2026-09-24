@@ -10,6 +10,11 @@ from .core import (
     RigidContactBody,
     validate_general_contact,
 )
+from .static_path import (
+    ContactPathControl,
+    ContactPathProgram,
+    solve_static_contact_path,
+)
 
 __all__ = [
     "ContactDefinition",
@@ -20,4 +25,7 @@ __all__ = [
     "ContactValidationReport",
     "RigidContactBody",
     "validate_general_contact",
+    "ContactPathControl",
+    "ContactPathProgram",
+    "solve_static_contact_path",
 ]

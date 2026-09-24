@@ -7217,8 +7217,39 @@ def solve_static_nonlinear(
     emit_restart_checkpoint: bool = False,
     contact: Optional[Any] = None,
     contact_settings: Optional[Any] = None,
+    contact_path_program: Optional[Any] = None,
 ) -> NonlinearStaticResult:
     """Run nonlinear static analysis under one non-renewable family lease."""
+
+    if contact_path_program is not None:
+        from .general_contact.static_path import (
+            ContactPathProgram,
+            solve_static_contact_path,
+        )
+
+        if type(contact_path_program) is not ContactPathProgram:
+            raise TypeError("contact_path_program must be ContactPathProgram")
+        if contact is None or contact_settings is None:
+            raise ValueError("contact path requires contact and contact_settings")
+        if any(value is not None for value in (
+            load_case, constant_load_case, imperfection, load_program,
+            displacement_control, initial_element_states, convergence_settings,
+            resource_config, fracture_config, status_callback, progress_callback,
+            initial_fields, initial_displacements,
+        )) or control not in {"force", "contact_path"} or (
+            equilibrate_initial_state is not None or record_increment_snapshots
+            or num_steps != 10 or min_step_fraction != 1.0 / 1024.0
+            or kinematics != "von_karman" or corotational_tangent != "auto"
+        ):
+            raise ValueError("contact path has its own prescribed controls and admitted settings")
+        return solve_static_contact_path(
+            model, contact, contact_settings, contact_path_program,
+            max_path_fraction=max_load_factor,
+            max_iterations=max_iterations, tolerance=tolerance,
+            num_layers=num_layers, restart_checkpoint=restart_checkpoint,
+            emit_restart_checkpoint=emit_restart_checkpoint,
+            cancellation_token=cancellation_token,
+        )
 
     exact_guard = _EXACT_QUALIFIED_LIFECYCLE_GUARD
     run_under_lease = _run_with_qualified_assembly_runtime_lease

@@ -401,7 +401,11 @@ class MovingPatchMortar:
             elif minus_matches:
                 tangent[:, column] = (residual - minus_residual) / step
             else:
-                raise ValueError("patch mortar tangent crosses an active-set transition")
+                # Several pressure modes can touch zero together.  The
+                # positive chart direction then defines a valid one-sided
+                # generalized column even though neither perturbed active
+                # set equals the current convention at every mode.
+                tangent[:, column] = (plus_residual - residual) / step
         scale = max(np.finfo(float).tiny, float(np.linalg.norm(tangent)))
         asymmetry = float(np.linalg.norm(tangent - tangent.T) / scale)
         return MovingPatchReducedSystem(state, residual, tangent, asymmetry)

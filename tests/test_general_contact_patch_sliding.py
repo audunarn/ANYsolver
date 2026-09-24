@@ -10,6 +10,9 @@ from anysolver import (
 )
 from anysolver.fe_core import FEModel
 from anysolver.general_contact.patch_sliding import _RestrictedSlidingPatchFEManager
+from anysolver.general_contact.static_path import (
+    ContactPathControl, ContactPathProgram,
+)
 
 
 def _q4_against_two_s3():
@@ -188,6 +191,101 @@ def test_q4_s3_patch_opens_and_recontacts_from_static_checkpoints():
     )
     assert reclosed_summary["gap_tolerance_met"]
     assert len(reclosed.steps) == 6
+
+
+def test_q4_s3_patch_combines_press_slide_open_and_recontact():
+    model, definition, settings = _q4_against_two_s3()
+    model.add_boundary_condition(BoundaryCondition(
+        "lower_fixed", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "upper_guide", (5, 6, 7, 8),
+        {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+    ))
+    master = int(model.mesh.dof_manager.get_node_dofs(5)[0])
+    for node in (6, 7, 8):
+        slave = int(model.mesh.dof_manager.get_node_dofs(node)[0])
+        model.add_constraint_equation(
+            terms=((slave, 1.0), (master, -1.0)),
+            source_id=f"upper_uniform_x_{node}",
+        )
+    program = ContactPathProgram(
+        controls=(
+            ContactPathControl.node(5, "ux"),
+            ContactPathControl(tuple((node, "uz", 0.25)
+                                     for node in (5, 6, 7, 8))),
+        ),
+        waypoints=((0.0, 0.0), (0.0, -5.0e-7),
+                   (0.1, -5.0e-7), (0.1, 1.0e-6),
+                   (0.1, -5.0e-7)),
+        steps_per_segment=1,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program,
+        max_iterations=15, emit_restart_checkpoint=True,
+    )
+    assert result.status == "completed", (
+        result.failure_reason, result.info.get("general_contact"),
+    )
+    assert len(result.steps) == 4
+    assert result.info["general_contact"]["gap_tolerance_met"]
+    assert result.info["general_contact"]["integration_force"][2] > 0.0
+    history = result.info["force_displacement_history"]
+    assert history[0]["contact"]["integration_force"][2] > 0.0
+    assert history[1]["contact"]["current_overlap_area"] == pytest.approx(0.81)
+    assert history[2]["contact"]["active_pressure_dofs"] == 0
+    assert history[2]["contact"]["conservative_lower_gap"] > 0.0
+    assert history[3]["contact"]["integration_force"][2] > 0.0
+    half = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program,
+        max_load_factor=0.5, max_iterations=15,
+        emit_restart_checkpoint=True,
+    )
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program,
+        max_iterations=15, restart_checkpoint=half.to_restart_checkpoint(),
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, result.displacements,
+                               rtol=1e-7, atol=1e-9)
+    from dataclasses import replace
+
+    altered = replace(
+        program,
+        waypoints=(*program.waypoints[:-1], (0.1, -6.0e-7)),
+    )
+    with pytest.raises(ValueError, match="analysis contract is incompatible"):
+        solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=altered,
+            max_iterations=15,
+            restart_checkpoint=half.to_restart_checkpoint(),
+        )
+
+
+def test_contact_path_rejects_unadmitted_public_controls():
+    model, definition, settings = _q4_against_two_s3()
+    program = ContactPathProgram(
+        controls=(ContactPathControl.node(5, "ux"),
+                  ContactPathControl.node(5, "uz")),
+        waypoints=((0.0, 0.0), (0.0, -1.0e-7)),
+        steps_per_segment=1,
+    )
+    with pytest.raises(ValueError, match="admitted settings"):
+        solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, num_steps=2,
+        )
+    with pytest.raises(ValueError, match="admitted settings"):
+        solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, kinematics="corotational",
+        )
 
 
 def _two_s3_integration_faces(*, lower_bounds=(0.2, 1.2, 0.1, 1.1)):
