@@ -26,6 +26,7 @@ from scripts._b3_e4_f03_local_scientific_supervisor import (
 )
 from scripts._b3_e4_f03_qp_h_contract import CASES, CASE_COUNTS, minimum_inverse_bytes, trace_for_case
 from scripts._b3_e4_f03_sparse_certificate import SparseBudget, certificate_a
+from scripts._b3_e4_f03_q6_system_archive import write_system
 
 
 _CASE_NNZ = {"X0": 1200496, "X1": 2034304, "X2": 3102845}
@@ -77,6 +78,11 @@ def child(output: Path, case_id: str) -> None:
                   options={"Equil": False, "IterRefine": "NOREFINE"})
     rhs = np.r_[d*operators.load/E0, np.zeros(3)]
     kkt_hash = _kkt_sha256(matrix, rhs)
+    system_archive = write_system(
+        output / "scaled_system.npz", matrix, rhs, d,
+        E0*np.diag(root_scale))
+    if system_archive["kkt_rhs_sha256"] != kkt_hash:
+        raise ArithmeticError("Q6 scaled-system archive identity mismatch")
     state = factor.solve(rhs)
     factor_s = perf_counter() - factor_start
     inverse_path = output / "inverse_float64.bin"
@@ -132,6 +138,8 @@ def child(output: Path, case_id: str) -> None:
         "inverse_archive_sha256": inverse_hash,
         "candidate_state_sha256": hashlib.sha256(candidate_bytes).hexdigest(),
         "scaled_kkt_rhs_sha256": kkt_hash,
+        "scaled_system_archive_bytes": system_archive["bytes"],
+        "scaled_system_archive_sha256": system_archive["sha256"],
         "certificate": certificate,
         "scientific_registration": False,
     }

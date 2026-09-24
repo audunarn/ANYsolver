@@ -1,5 +1,17 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — Q6 X0 saved-only replay.** A bounded archive now
+preserves the canonical scaled KKT matrix/RHS and physical coordinate scales
+beside the inverse columns. A supervised X0 source run completed in 297.28 s
+at 328.5 MB sampled peak RSS; a separate saved-only replay completed in
+196.33 s at 256.9 MB and reproduced the certificate exactly, without
+assembly, factorization or solve. Archive and evidence hashes matched;
+parent and child source hashes matched; focused tests passed 50/50. See
+`B3_GE_E4_PL_G0_F03_Q6_X0_SAVED_REPLAY_RESULT_20260924.md`. This is
+unregistered source-level reproducibility using the same experimental
+interval kernel, not independent arithmetic proof or installed qualification.
+F03/G0B remain open and G1 barred.
+
 **24 September 2026 — patched Q6 X2 resource rehearsal.** The full X2
 certificate, bound physical recovery and spatial audit completed after the
 interval-kernel safety/edge changes in 1,411.19 seconds at 688.8 MB sampled

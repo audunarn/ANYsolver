@@ -151,10 +151,21 @@ def read_group(
     *,
     max_raw_bytes: int,
 ) -> dict[str, np.ndarray]:
+    _validate_specs(specs, max_raw_bytes)
+    return read_group_payload(_snapshot(Path(path), max_raw_bytes), specs,
+                              max_raw_bytes=max_raw_bytes)
+
+
+def read_group_payload(
+    payload: bytes,
+    specs: tuple[ArraySpec, ...],
+    *,
+    max_raw_bytes: int,
+) -> dict[str, np.ndarray]:
     expected = _validate_specs(specs, max_raw_bytes)
-    path = Path(path)
+    if type(payload) is not bytes or not 0 < len(payload) <= max_raw_bytes:
+        raise ValueError("invalid bounded F03 evidence payload")
     arrays = {}
-    payload = _snapshot(path, max_raw_bytes)
     _preflight_central_directory(payload, len(specs))
     with zipfile.ZipFile(io.BytesIO(payload)) as group:
         infos = group.infolist()
