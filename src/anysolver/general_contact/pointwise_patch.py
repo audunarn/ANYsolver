@@ -23,6 +23,7 @@ from .patch_mortar import MovingPatchMortar
 class PointwisePatchState:
     overlap_area: float
     overlapping_pairs: int
+    candidate_pairs: int
     integration_triangles: int
     active_quadrature_area: float
     energy: float
@@ -105,131 +106,133 @@ class PointwisePatchPenalty(MovingPatchMortar):
         pairs = triangles_checked = 0
         minimum_vertex_gap = float("inf")
 
-        for face_a, moved_a in zip(self.source_faces, moved[0]):
+        candidates = self._candidate_indices(source_translation, target_translation)
+        for source, target in candidates:
+            face_a, moved_a = self.source_faces[source], moved[0][source]
+            face_b, moved_b = self.target_faces[target], moved[1][target]
             source_rows = np.asarray([self.source_index[node] for node in face_a.node_ids])
             source_heights = heights[0][source_rows]
-            for face_b, moved_b in zip(self.target_faces, moved[1]):
-                target_rows = np.asarray([self.target_index[node] for node in face_b.node_ids])
-                target_heights = heights[1][target_rows]
-                overlap = planar_projected_overlap(moved_a, moved_b)
-                if overlap is None:
-                    continue
-                if _has_shared_edge_transition(moved_a, moved_b, overlap):
-                    raise ValueError("pointwise shared-edge transition needs a one-sided derivative")
-                pairs += 1
-                overlap_area += overlap.area
-                polygon = overlap.polygon
-                if (triangles_checked + len(polygon) * 4**self.integration_subdivisions
-                        > self.maximum_integration_triangles):
-                    raise MemoryError("pointwise contact integration triangle limit exceeded")
-                centre = np.mean(polygon, axis=0)
-                columns = np.r_[source_rows, source_count + target_rows]
+            target_rows = np.asarray([self.target_index[node] for node in face_b.node_ids])
+            target_heights = heights[1][target_rows]
+            overlap = planar_projected_overlap(moved_a, moved_b)
+            if overlap is None:
+                continue
+            if _has_shared_edge_transition(moved_a, moved_b, overlap):
+                raise ValueError("pointwise shared-edge transition needs a one-sided derivative")
+            pairs += 1
+            overlap_area += overlap.area
+            polygon = overlap.polygon
+            if (triangles_checked + len(polygon) * 4**self.integration_subdivisions
+                    > self.maximum_integration_triangles):
+                raise MemoryError("pointwise contact integration triangle limit exceeded")
+            centre = np.mean(polygon, axis=0)
+            columns = np.r_[source_rows, source_count + target_rows]
 
-                def gap_at(point):
-                    shape_a = overlap.shape_values(moved_a, point)
-                    shape_b = overlap.shape_values(moved_b, point)
-                    return float(self.normal @ (
-                        shape_a @ moved_a.corners - shape_b @ moved_b.corners
-                    ) + shape_a @ source_heights - shape_b @ target_heights)
+            def gap_at(point):
+                shape_a = overlap.shape_values(moved_a, point)
+                shape_b = overlap.shape_values(moved_b, point)
+                return float(self.normal @ (
+                    shape_a @ moved_a.corners - shape_b @ moved_b.corners
+                ) + shape_a @ source_heights - shape_b @ target_heights)
 
-                minimum_vertex_gap = min(minimum_vertex_gap,
-                                         *(gap_at(point) for point in polygon))
-                for index, corner in enumerate(polygon):
-                    following = polygon[(index + 1) % len(polygon)]
-                    coarse = (centre, corner, following)
-                    for triangle in _subtriangles(coarse, self.integration_subdivisions):
-                        triangles_checked += 1
-                        area = 0.5 * float(np.linalg.norm(np.cross(
-                            triangle[1] - triangle[0], triangle[2] - triangle[0],
-                        )))
-                        if area <= 0.0:
+            minimum_vertex_gap = min(minimum_vertex_gap,
+                                     *(gap_at(point) for point in polygon))
+            for index, corner in enumerate(polygon):
+                following = polygon[(index + 1) % len(polygon)]
+                coarse = (centre, corner, following)
+                for triangle in _subtriangles(coarse, self.integration_subdivisions):
+                    triangles_checked += 1
+                    area = 0.5 * float(np.linalg.norm(np.cross(
+                        triangle[1] - triangle[0], triangle[2] - triangle[0],
+                    )))
+                    if area <= 0.0:
+                        continue
+                    for point, weight in _triangle_samples(triangle, area):
+                        shape_a, gradient_a = overlap.shape_values_and_gradient(moved_a, point)
+                        shape_b, gradient_b = overlap.shape_values_and_gradient(moved_b, point)
+                        gap = gap_at(point)
+                        closure = min(gap, 0.0)
+                        if closure == 0.0:
                             continue
-                        for point, weight in _triangle_samples(triangle, area):
-                            shape_a, gradient_a = overlap.shape_values_and_gradient(moved_a, point)
-                            shape_b, gradient_b = overlap.shape_values_and_gradient(moved_b, point)
-                            gap = gap_at(point)
-                            closure = min(gap, 0.0)
-                            if closure == 0.0:
-                                continue
-                            local_gradient = np.r_[shape_a, -shape_b]
-                            global_gradient = np.zeros(dof_count)
-                            global_gradient[columns] = local_gradient
-                            pressure = self.stiffness * closure
-                            energy += 0.5 * weight * pressure * closure
-                            normal_force[columns] += weight * pressure * local_gradient
-                            normal_tangent[np.ix_(columns, columns)] += (
-                                weight * self.stiffness
-                                * np.outer(local_gradient, local_gradient)
+                        local_gradient = np.r_[shape_a, -shape_b]
+                        global_gradient = np.zeros(dof_count)
+                        global_gradient[columns] = local_gradient
+                        pressure = self.stiffness * closure
+                        energy += 0.5 * weight * pressure * closure
+                        normal_force[columns] += weight * pressure * local_gradient
+                        normal_tangent[np.ix_(columns, columns)] += (
+                            weight * self.stiffness
+                            * np.outer(local_gradient, local_gradient)
+                        )
+                        active_area += weight
+                        gap_gradient_a = -(
+                            (source_heights + moved_a.corners @ self.normal) @ gradient_a
+                        )
+                        gap_gradient_b = (
+                            (target_heights + moved_b.corners @ self.normal) @ gradient_b
+                        )
+                        source_translation_force += weight * pressure * gap_gradient_a
+                        target_translation_force += weight * pressure * gap_gradient_b
+                        source_local_tangent[source_rows] += (
+                            weight * pressure * shape_a[:, None] * gap_gradient_a
+                        )
+                        target_local_tangent[target_rows] += (
+                            weight * pressure * shape_b[:, None] * gap_gradient_b
+                        )
+                        source_gradient_tangent = np.zeros((3, dof_count))
+                        target_gradient_tangent = np.zeros((3, dof_count))
+                        source_gradient_tangent[:, source_rows] = -gradient_a.T
+                        target_gradient_tangent[:, source_count + target_rows] = gradient_b.T
+                        source_density_tangent = (
+                            self.stiffness * np.outer(gap_gradient_a, global_gradient)
+                            + pressure * source_gradient_tangent
+                        )
+                        target_density_tangent = (
+                            self.stiffness * np.outer(gap_gradient_b, global_gradient)
+                            + pressure * target_gradient_tangent
+                        )
+                        for local_index, row in enumerate(source_rows):
+                            source_local_height_tangent[row] += (
+                                weight * shape_a[local_index] * source_density_tangent
                             )
-                            active_area += weight
-                            gap_gradient_a = -(
-                                (source_heights + moved_a.corners @ self.normal) @ gradient_a
+                        for local_index, row in enumerate(target_rows):
+                            target_local_height_tangent[row] += (
+                                weight * shape_b[local_index] * target_density_tangent
                             )
-                            gap_gradient_b = (
-                                (target_heights + moved_b.corners @ self.normal) @ gradient_b
-                            )
-                            source_translation_force += weight * pressure * gap_gradient_a
-                            target_translation_force += weight * pressure * gap_gradient_b
-                            source_local_tangent[source_rows] += (
-                                weight * pressure * shape_a[:, None] * gap_gradient_a
-                            )
-                            target_local_tangent[target_rows] += (
-                                weight * pressure * shape_b[:, None] * gap_gradient_b
-                            )
-                            source_gradient_tangent = np.zeros((3, dof_count))
-                            target_gradient_tangent = np.zeros((3, dof_count))
-                            source_gradient_tangent[:, source_rows] = -gradient_a.T
-                            target_gradient_tangent[:, source_count + target_rows] = gradient_b.T
-                            source_density_tangent = (
-                                self.stiffness * np.outer(gap_gradient_a, global_gradient)
-                                + pressure * source_gradient_tangent
-                            )
-                            target_density_tangent = (
-                                self.stiffness * np.outer(gap_gradient_b, global_gradient)
-                                + pressure * target_gradient_tangent
-                            )
-                            for local_index, row in enumerate(source_rows):
-                                source_local_height_tangent[row] += (
-                                    weight * shape_a[local_index] * source_density_tangent
-                                )
-                            for local_index, row in enumerate(target_rows):
-                                target_local_height_tangent[row] += (
-                                    weight * shape_b[local_index] * target_density_tangent
-                                )
 
-                for point, weighted_outward in _boundary_quadrature(moved_a, moved_b, overlap):
-                    closure = min(gap_at(point), 0.0)
-                    boundary_force = 0.5 * self.stiffness * closure**2 * weighted_outward
-                    source_translation_force += boundary_force
-                    shape_a = overlap.shape_values(moved_a, point)
-                    source_local_tangent[source_rows] += shape_a[:, None] * boundary_force
-                    shape_b = overlap.shape_values(moved_b, point)
-                    gap_gradient = np.zeros(dof_count)
-                    gap_gradient[columns] = np.r_[shape_a, -shape_b]
-                    boundary_tangent = self.stiffness * closure * np.outer(
-                        weighted_outward, gap_gradient,
-                    )
-                    for local_index, row in enumerate(source_rows):
-                        source_local_height_tangent[row] += shape_a[local_index] * boundary_tangent
-                for point, weighted_outward in _boundary_quadrature(moved_b, moved_a, overlap):
-                    closure = min(gap_at(point), 0.0)
-                    boundary_force = 0.5 * self.stiffness * closure**2 * weighted_outward
-                    target_translation_force += boundary_force
-                    shape_b = overlap.shape_values(moved_b, point)
-                    target_local_tangent[target_rows] += shape_b[:, None] * boundary_force
-                    shape_a = overlap.shape_values(moved_a, point)
-                    gap_gradient = np.zeros(dof_count)
-                    gap_gradient[columns] = np.r_[shape_a, -shape_b]
-                    boundary_tangent = self.stiffness * closure * np.outer(
-                        weighted_outward, gap_gradient,
-                    )
-                    for local_index, row in enumerate(target_rows):
-                        target_local_height_tangent[row] += shape_b[local_index] * boundary_tangent
+            for point, weighted_outward in _boundary_quadrature(moved_a, moved_b, overlap):
+                closure = min(gap_at(point), 0.0)
+                boundary_force = 0.5 * self.stiffness * closure**2 * weighted_outward
+                source_translation_force += boundary_force
+                shape_a = overlap.shape_values(moved_a, point)
+                source_local_tangent[source_rows] += shape_a[:, None] * boundary_force
+                shape_b = overlap.shape_values(moved_b, point)
+                gap_gradient = np.zeros(dof_count)
+                gap_gradient[columns] = np.r_[shape_a, -shape_b]
+                boundary_tangent = self.stiffness * closure * np.outer(
+                    weighted_outward, gap_gradient,
+                )
+                for local_index, row in enumerate(source_rows):
+                    source_local_height_tangent[row] += shape_a[local_index] * boundary_tangent
+            for point, weighted_outward in _boundary_quadrature(moved_b, moved_a, overlap):
+                closure = min(gap_at(point), 0.0)
+                boundary_force = 0.5 * self.stiffness * closure**2 * weighted_outward
+                target_translation_force += boundary_force
+                shape_b = overlap.shape_values(moved_b, point)
+                target_local_tangent[target_rows] += shape_b[:, None] * boundary_force
+                shape_a = overlap.shape_values(moved_a, point)
+                gap_gradient = np.zeros(dof_count)
+                gap_gradient[columns] = np.r_[shape_a, -shape_b]
+                boundary_tangent = self.stiffness * closure * np.outer(
+                    weighted_outward, gap_gradient,
+                )
+                for local_index, row in enumerate(target_rows):
+                    target_local_height_tangent[row] += shape_b[local_index] * boundary_tangent
 
         source_translation_force += float(np.sum(normal_force[:source_count])) * self.normal
         target_translation_force += float(np.sum(normal_force[source_count:])) * self.normal
         return PointwisePatchState(
-            overlap_area, pairs, triangles_checked, active_area, energy,
+            overlap_area, pairs, len(candidates), triangles_checked, active_area, energy,
             normal_force, normal_tangent,
             source_translation_force, target_translation_force,
             source_local_tangent, target_local_tangent,

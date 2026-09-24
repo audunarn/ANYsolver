@@ -162,6 +162,30 @@ universal stiffness prescription or evidence of asymptotic convergence.
 The full nonmatching slide, separation and recontact handoff and the main
 plan's refinement, independent-review and package gates remain open.
 
+## Projected patch search
+
+The restricted planar patch profiles now use a deterministic two-dimensional
+AABB tree on the target's physical reference faces. Candidate queries move
+the source footprint by the current relative tangential translation. The
+same candidates feed mortar or pointwise integration, independent gap
+certification, and the mortar lateral-force transport. Polygon overlap still
+decides whether contact exists. The reported `candidate_pairs` counts AABB
+pairs processed at the current pose; `overlapping_pairs` counts pairs with
+positive projected polygon overlap. An actual candidate limit fails without
+discarding pairs. The patch's normal-coordinate limit remains separate.
+
+Exhaustive small-scene comparisons covered translated grids and a rotated
+contact plane. The affected 36-test patch suite passed on this source in
+`C:\ANYworkspaceWork\general-contact-evidence\c1-patch-broadphase-affected1.txt`.
+One search-only sparse-box measurement at 10³/10⁴/10⁵ features observed
+tree builds of 0.0059/0.0902/0.9591 s and 1,000 local queries of
+0.1015/0.1248/0.1449 s. The process RSS snapshots increased by roughly
+0.14/2.50/18.75 MB during those builds. Raw inputs and measurements are
+`benchmark_patch_broadphase.py` and `c1-patch-broadphase-search-only1.json`
+in the evidence directory. These are search-kernel measurements for sparse
+scenes, not complete solver timing, peak-memory, dense-contact, or general
+complexity evidence.
+
 ## Separate pointwise penalty verification route
 
 Set `normal_discretization="pointwise_penalty"` in `ContactSolverSettings`

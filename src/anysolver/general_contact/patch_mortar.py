@@ -21,6 +21,7 @@ from .moving import (
     certify_moving_mortar_gap,
 )
 from .overlap import PlanarFace, planar_projected_overlap
+from .patch_broadphase import PatchAABBTree, projected_face_boxes
 
 
 @dataclass(frozen=True)
@@ -89,13 +90,7 @@ class MovingPatchMortar:
         if (type(maximum_candidate_pairs) is not int
                 or maximum_candidate_pairs < 1):
             raise ValueError("maximum_candidate_pairs must be a positive integer")
-        self.candidate_pairs = len(self.source_faces) * len(self.target_faces)
-        if self.candidate_pairs > maximum_candidate_pairs:
-            raise MemoryError("contact candidate limit exceeded; no pair was discarded")
-        intra_pairs = sum(len(faces) * (len(faces) - 1) // 2
-                          for faces in (self.source_faces, self.target_faces))
-        if intra_pairs > maximum_candidate_pairs:
-            raise MemoryError("patch topology validation pair limit exceeded")
+        self.maximum_candidate_pairs = maximum_candidate_pairs
         direction = np.asarray(normal, dtype=float)
         if direction.shape != (3,) or not np.all(np.isfinite(direction)):
             raise ValueError("contact normal must be a finite 3-vector")
@@ -121,6 +116,18 @@ class MovingPatchMortar:
         self.target_index = {node: index for index, node in
                              enumerate(self.target_node_ids)}
         self._validate_reference_geometry()
+        self.source_boxes, self.tangent, self.binormal = projected_face_boxes(
+            self.source_faces, self.normal,
+        )
+        self.target_boxes, _, _ = projected_face_boxes(
+            self.target_faces, self.normal,
+        )
+        self.target_tree = PatchAABBTree(self.target_boxes)
+        self.search_padding = 256.0 * np.finfo(float).eps * max(
+            float(np.max(np.abs(self.source_boxes))),
+            float(np.max(np.abs(self.target_boxes))), 1.0,
+        )
+        self.candidate_pairs = len(self._candidate_indices(np.zeros(3), np.zeros(3)))
 
     def _validate_reference_geometry(self) -> None:
         all_faces = (*self.source_faces, *self.target_faces)
@@ -144,10 +151,32 @@ class MovingPatchMortar:
                     prior = positions.setdefault(node, corner)
                     if float(np.linalg.norm(prior - corner)) > 1.0e-10 * scale:
                         raise ValueError(f"{name} node {node} has inconsistent physical corners")
+            boxes, _, _ = projected_face_boxes(faces, self.normal)
+            tree = PatchAABBTree(boxes)
+            candidates = 0
             for index, first in enumerate(faces):
-                for second in faces[index + 1:]:
-                    if planar_projected_overlap(first.geometry, second.geometry) is not None:
+                for other in tree.query(boxes[index]):
+                    if other <= index:
+                        continue
+                    candidates += 1
+                    if candidates > self.maximum_candidate_pairs:
+                        raise MemoryError("patch topology validation pair limit exceeded")
+                    if planar_projected_overlap(first.geometry, faces[other].geometry) is not None:
                         raise ValueError(f"{name} patch faces overlap each other")
+
+    def _candidate_indices(self, source_translation: np.ndarray,
+                           target_translation: np.ndarray) -> tuple[tuple[int, int], ...]:
+        relative = np.asarray(source_translation) - np.asarray(target_translation)
+        displacement = np.array((relative @ self.tangent,
+                                 relative @ self.binormal))
+        pairs: list[tuple[int, int]] = []
+        for source, box in enumerate(self.source_boxes):
+            moved = box + np.r_[displacement, displacement]
+            for target in self.target_tree.query(moved, padding=self.search_padding):
+                pairs.append((source, target))
+                if len(pairs) > self.maximum_candidate_pairs:
+                    raise MemoryError("contact candidate limit exceeded; no pair was discarded")
+        return tuple(pairs)
 
     def _fields(self, source_translation: np.ndarray,
                 target_translation: np.ndarray,
@@ -191,27 +220,29 @@ class MovingPatchMortar:
         overlap_area = 0.0
         minimum_vertex_gap = float("inf")
         overlapping_pairs = 0
-        for face_a, moved_a in zip(self.source_faces, moved[0]):
+        candidates = self._candidate_indices(source_translation, target_translation)
+        for source, target in candidates:
+            face_a, moved_a = self.source_faces[source], moved[0][source]
+            face_b, moved_b = self.target_faces[target], moved[1][target]
             rows = np.asarray([self.source_index[node] for node in face_a.node_ids])
-            for face_b, moved_b in zip(self.target_faces, moved[1]):
-                target_columns = np.asarray([
-                    source_count + self.target_index[node]
-                    for node in face_b.node_ids
-                ])
-                local = _moving_pair_integrals(
-                    moved_a, moved_b, self.normal,
-                    heights[0][rows], heights[1][target_columns - source_count],
-                )
-                if local.overlap_area <= 0.0:
-                    continue
-                overlapping_pairs += 1
-                overlap_area += local.overlap_area
-                minimum_vertex_gap = min(minimum_vertex_gap,
-                                         local.minimum_vertex_gap)
-                support[rows] += local.support
-                weighted_gap[rows] += local.weighted_gap
-                columns = np.r_[rows, target_columns]
-                gradient[np.ix_(rows, columns)] += local.gap_gradient
+            target_columns = np.asarray([
+                source_count + self.target_index[node]
+                for node in face_b.node_ids
+            ])
+            local = _moving_pair_integrals(
+                moved_a, moved_b, self.normal,
+                heights[0][rows], heights[1][target_columns - source_count],
+            )
+            if local.overlap_area <= 0.0:
+                continue
+            overlapping_pairs += 1
+            overlap_area += local.overlap_area
+            minimum_vertex_gap = min(minimum_vertex_gap,
+                                     local.minimum_vertex_gap)
+            support[rows] += local.support
+            weighted_gap[rows] += local.weighted_gap
+            columns = np.r_[rows, target_columns]
+            gradient[np.ix_(rows, columns)] += local.gap_gradient
         active_support = support > 0.0
         scale = max(float(np.max(np.linalg.norm(
             face.geometry.corners - face.geometry.corners[0], axis=1
@@ -243,7 +274,7 @@ class MovingPatchMortar:
             pressure_rank = 0
             pressure_gradient_condition = None
         return MovingPatchMortarState(
-            overlap_area, overlapping_pairs, self.candidate_pairs,
+            overlap_area, overlapping_pairs, len(candidates),
             self.source_node_ids, self.target_node_ids,
             support, weighted_gap, normalized, gradient, energy,
             residual, tangent, minimum_vertex_gap, pressure_rank,
@@ -295,41 +326,43 @@ class MovingPatchMortar:
         overlap_pairs = 0
         triangles = 0
         methods: set[str] = set()
-        for face_a, moved_a in zip(self.source_faces, moved[0]):
+        for source, target in self._candidate_indices(
+                source_translation, target_translation):
+            face_a, moved_a = self.source_faces[source], moved[0][source]
+            face_b, moved_b = self.target_faces[target], moved[1][target]
             rows = np.asarray([self.source_index[node] for node in face_a.node_ids])
-            for face_b, moved_b in zip(self.target_faces, moved[1]):
-                columns = np.asarray([self.target_index[node]
-                                      for node in face_b.node_ids])
-                certificate = certify_moving_mortar_gap(
-                    moved_a, moved_b, self.normal,
-                    np.zeros(3), np.zeros(3),
-                    heights[0][rows], heights[1][columns],
-                    gap_tolerance=gap_tolerance,
-                    maximum_triangles=max(
-                        1, min(maximum_triangles_per_pair,
-                               maximum_total_triangles - triangles),
-                    ),
+            columns = np.asarray([self.target_index[node]
+                                  for node in face_b.node_ids])
+            certificate = certify_moving_mortar_gap(
+                moved_a, moved_b, self.normal,
+                np.zeros(3), np.zeros(3),
+                heights[0][rows], heights[1][columns],
+                gap_tolerance=gap_tolerance,
+                maximum_triangles=max(
+                    1, min(maximum_triangles_per_pair,
+                           maximum_total_triangles - triangles),
+                ),
+            )
+            if certificate.method == "empty":
+                continue
+            methods.add(certificate.method)
+            overlap_pairs += 1
+            triangles += certificate.triangles_checked
+            if triangles > maximum_total_triangles:
+                return MovingPatchGapCertificate(
+                    minimum_sampled, float("-inf"), False,
+                    overlap_pairs, triangles, True, tuple(sorted(methods)),
                 )
-                if certificate.method == "empty":
-                    continue
-                methods.add(certificate.method)
-                overlap_pairs += 1
-                triangles += certificate.triangles_checked
-                if triangles > maximum_total_triangles:
-                    return MovingPatchGapCertificate(
-                        minimum_sampled, float("-inf"), False,
-                        overlap_pairs, triangles, True, tuple(sorted(methods)),
-                    )
-                minimum_sampled = min(minimum_sampled,
-                                      certificate.minimum_sampled_gap)
-                conservative_lower = min(conservative_lower,
-                                         certificate.conservative_lower_gap)
-                tolerance_met = tolerance_met and certificate.tolerance_met
-                if certificate.conservative_lower_gap == float("-inf"):
-                    return MovingPatchGapCertificate(
-                        minimum_sampled, float("-inf"), False,
-                        overlap_pairs, triangles, True, tuple(sorted(methods)),
-                    )
+            minimum_sampled = min(minimum_sampled,
+                                  certificate.minimum_sampled_gap)
+            conservative_lower = min(conservative_lower,
+                                     certificate.conservative_lower_gap)
+            tolerance_met = tolerance_met and certificate.tolerance_met
+            if certificate.conservative_lower_gap == float("-inf"):
+                return MovingPatchGapCertificate(
+                    minimum_sampled, float("-inf"), False,
+                    overlap_pairs, triangles, True, tuple(sorted(methods)),
+                )
         return MovingPatchGapCertificate(
             minimum_sampled, conservative_lower,
             tolerance_met, overlap_pairs, triangles, False,
@@ -360,19 +393,21 @@ class MovingPatchMortar:
         dm_b = np.zeros((count, 3))
         dW_a = np.zeros((count, 3))
         dW_b = np.zeros((count, 3))
-        for face_a, moved_a in zip(self.source_faces, moved[0]):
+        for source, target in self._candidate_indices(
+                source_translation, target_translation):
+            face_a, moved_a = self.source_faces[source], moved[0][source]
+            face_b, moved_b = self.target_faces[target], moved[1][target]
             rows = np.asarray([self.source_index[node] for node in face_a.node_ids])
-            for face_b, moved_b in zip(self.target_faces, moved[1]):
-                columns = np.asarray([self.target_index[node]
-                                      for node in face_b.node_ids])
-                transport = _moving_pair_transport(
-                    moved_a, moved_b, self.normal,
-                    heights[0][rows], heights[1][columns],
-                )
-                dm_a[rows] += transport.source_support_derivative
-                dm_b[rows] += transport.target_support_derivative
-                dW_a[rows] += transport.source_weighted_gap_derivative
-                dW_b[rows] += transport.target_weighted_gap_derivative
+            columns = np.asarray([self.target_index[node]
+                                  for node in face_b.node_ids])
+            transport = _moving_pair_transport(
+                moved_a, moved_b, self.normal,
+                heights[0][rows], heights[1][columns],
+            )
+            dm_a[rows] += transport.source_support_derivative
+            dm_b[rows] += transport.target_support_derivative
+            dW_a[rows] += transport.source_weighted_gap_derivative
+            dW_b[rows] += transport.target_weighted_gap_derivative
         multiplier = self._owned_multiplier(multiplier_estimate)
         shifted = state.normalized_gap - multiplier / self.stiffness
         closed = (state.support > 0.0) & (shifted < 0.0)
@@ -432,63 +467,65 @@ class MovingPatchMortar:
             source_translation, target_translation,
             source_normal_dofs, target_normal_dofs,
         )
-        for face_a, moved_a in zip(self.source_faces, moved[0]):
+        for source, target in self._candidate_indices(
+                source_translation, target_translation):
+            face_a, moved_a = self.source_faces[source], moved[0][source]
+            face_b, moved_b = self.target_faces[target], moved[1][target]
             rows = np.asarray([self.source_index[node] for node in face_a.node_ids])
             height_a = heights[0][rows]
             pressure_a = pressure[rows]
             coefficient_a = support_coefficient[rows]
-            for face_b, moved_b in zip(self.target_faces, moved[1]):
-                columns = np.asarray([self.target_index[node]
-                                      for node in face_b.node_ids])
-                height_b = heights[1][columns]
-                overlap = planar_projected_overlap(moved_a, moved_b)
-                if overlap is None:
+            columns = np.asarray([self.target_index[node]
+                                  for node in face_b.node_ids])
+            height_b = heights[1][columns]
+            overlap = planar_projected_overlap(moved_a, moved_b)
+            if overlap is None:
+                continue
+            if _has_shared_edge_transition(moved_a, moved_b, overlap):
+                raise ValueError("shared-edge overlap transition needs a one-sided derivative")
+
+            def local_fields(point):
+                shape_a, gradient_a = overlap.shape_values_and_gradient(moved_a, point)
+                shape_b, gradient_b = overlap.shape_values_and_gradient(moved_b, point)
+                gap = float(self.normal @ (
+                    shape_a @ moved_a.corners - shape_b @ moved_b.corners
+                ) + shape_a @ height_a - shape_b @ height_b)
+                return shape_a, gradient_a, shape_b, gradient_b, gap
+
+            polygon = overlap.polygon
+            centre = np.mean(polygon, axis=0)
+            for index, corner in enumerate(polygon):
+                following = polygon[(index + 1) % len(polygon)]
+                area = 0.5 * float(np.linalg.norm(np.cross(
+                    corner - centre, following - centre,
+                )))
+                if area <= 0.0:
                     continue
-                if _has_shared_edge_transition(moved_a, moved_b, overlap):
-                    raise ValueError("shared-edge overlap transition needs a one-sided derivative")
-
-                def local_fields(point):
-                    shape_a, gradient_a = overlap.shape_values_and_gradient(moved_a, point)
-                    shape_b, gradient_b = overlap.shape_values_and_gradient(moved_b, point)
-                    gap = float(self.normal @ (
-                        shape_a @ moved_a.corners - shape_b @ moved_b.corners
-                    ) + shape_a @ height_a - shape_b @ height_b)
-                    return shape_a, gradient_a, shape_b, gradient_b, gap
-
-                polygon = overlap.polygon
-                centre = np.mean(polygon, axis=0)
-                for index, corner in enumerate(polygon):
-                    following = polygon[(index + 1) % len(polygon)]
-                    area = 0.5 * float(np.linalg.norm(np.cross(
-                        corner - centre, following - centre,
-                    )))
-                    if area <= 0.0:
-                        continue
-                    for point, weight in _triangle_samples(
-                            (centre, corner, following), area):
-                        shape_a, gradient_a, shape_b, gradient_b, gap = local_fields(point)
-                        gradient_gap_a = -(
-                            (height_a + moved_a.corners @ self.normal) @ gradient_a
-                        )
-                        gradient_gap_b = (
-                            (height_b + moved_b.corners @ self.normal) @ gradient_b
-                        )
-                        pressure_at_point = float(pressure_a @ shape_a)
-                        source_density = (
-                            -(pressure_a * gap + coefficient_a) @ gradient_a
-                            + pressure_at_point * gradient_gap_a
-                        )
-                        target_density = pressure_at_point * gradient_gap_b
-                        source_forces[rows] += weight * shape_a[:, None] * source_density
-                        target_forces[columns] += weight * shape_b[:, None] * target_density
-                for point, weighted_outward in _boundary_quadrature(moved_a, moved_b, overlap):
-                    shape_a, _gradient_a, _shape_b, _gradient_b, gap = local_fields(point)
-                    scalar = float((pressure_a * gap + coefficient_a) @ shape_a)
-                    source_forces[rows] += shape_a[:, None] * scalar * weighted_outward
-                for point, weighted_outward in _boundary_quadrature(moved_b, moved_a, overlap):
-                    shape_a, _gradient_a, shape_b, _gradient_b, gap = local_fields(point)
-                    scalar = float((pressure_a * gap + coefficient_a) @ shape_a)
-                    target_forces[columns] += shape_b[:, None] * scalar * weighted_outward
+                for point, weight in _triangle_samples(
+                        (centre, corner, following), area):
+                    shape_a, gradient_a, shape_b, gradient_b, gap = local_fields(point)
+                    gradient_gap_a = -(
+                        (height_a + moved_a.corners @ self.normal) @ gradient_a
+                    )
+                    gradient_gap_b = (
+                        (height_b + moved_b.corners @ self.normal) @ gradient_b
+                    )
+                    pressure_at_point = float(pressure_a @ shape_a)
+                    source_density = (
+                        -(pressure_a * gap + coefficient_a) @ gradient_a
+                        + pressure_at_point * gradient_gap_a
+                    )
+                    target_density = pressure_at_point * gradient_gap_b
+                    source_forces[rows] += weight * shape_a[:, None] * source_density
+                    target_forces[columns] += weight * shape_b[:, None] * target_density
+            for point, weighted_outward in _boundary_quadrature(moved_a, moved_b, overlap):
+                shape_a, _gradient_a, _shape_b, _gradient_b, gap = local_fields(point)
+                scalar = float((pressure_a * gap + coefficient_a) @ shape_a)
+                source_forces[rows] += shape_a[:, None] * scalar * weighted_outward
+            for point, weighted_outward in _boundary_quadrature(moved_b, moved_a, overlap):
+                shape_a, _gradient_a, shape_b, _gradient_b, gap = local_fields(point)
+                scalar = float((pressure_a * gap + coefficient_a) @ shape_a)
+                target_forces[columns] += shape_b[:, None] * scalar * weighted_outward
         return source_forces, target_forces
 
     def reduced_system(self, source_translation: np.ndarray,

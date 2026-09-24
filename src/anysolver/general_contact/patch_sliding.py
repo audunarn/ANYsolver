@@ -626,7 +626,7 @@ class _RestrictedSlidingPatchFEManager:
                 maximum_algorithmic_pressure = 0.0
         result = _SlidingPatchResults(
             self.profile, state.overlap_area,
-            state.overlapping_pairs, self.patch.candidate_pairs,
+            state.overlapping_pairs, state.candidate_pairs,
             pressure_rank, active_pressure_dofs,
             certificate.minimum_sampled_gap,
             certificate.conservative_lower_gap,
