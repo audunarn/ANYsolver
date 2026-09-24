@@ -7,6 +7,7 @@ from anysolver import create_shell_element
 from anysolver.fe_core import FEModel
 from anysolver.general_contact.overlap import (
     PlanarFace,
+    current_planar_shell_face,
     planar_projected_overlap,
     reference_shell_face,
 )
@@ -130,3 +131,59 @@ def test_reference_shell_adapter_uses_s3_material_offset_and_physical_director()
     assert reference_shell_face(model, 8, 2, "top").corners[:, 2] == pytest.approx(
         (0.1,) * 4
     )
+
+
+def test_current_physical_faces_track_relative_sliding_and_recontact():
+    model = FEModel("trial_shell_overlap")
+    model.add_material("elastic", 1.0e5, 0.3)
+    square = ((0, 0), (1, 0), (1, 1), (0, 1))
+    for node_id, (x, y, z) in enumerate(
+        (*((x, y, 0.0) for x, y in square),
+         *((x, y, 0.05) for x, y in square)), 1
+    ):
+        model.add_node(node_id, x, y, z)
+    model.add_element(1, create_shell_element(
+        1, (1, 2, 3, 4), "elastic", thickness=0.05,
+    ))
+    model.add_element(2, create_shell_element(
+        2, (5, 6, 7, 8), "elastic", thickness=0.05,
+    ))
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+    target = current_planar_shell_face(model, 2, 1, "top", displacement)
+    for shift, expected_area in ((0.0, 1.0), (0.5, 0.5), (1.1, None),
+                                 (0.25, 0.75)):
+        for node_id in (5, 6, 7, 8):
+            displacement[model.mesh.dof_manager.get_node_dofs(node_id)[0]] = shift
+        integration = current_planar_shell_face(
+            model, 1, 2, "bottom", displacement
+        )
+        overlap = planar_projected_overlap(integration, target)
+        if expected_area is None:
+            assert overlap is None
+        else:
+            assert overlap is not None
+            assert overlap.area == pytest.approx(expected_area)
+    displacement[:] = 0.0
+    displacement[model.mesh.dof_manager.get_node_dofs(8)[2]] = 0.01
+    with pytest.raises(ValueError, match="planar"):
+        current_planar_shell_face(model, 1, 2, "bottom", displacement)
+
+
+def test_current_s3_skin_uses_rotated_material_offset():
+    model = FEModel("trial_s3_skin")
+    model.add_material("elastic", 1.0e5, 0.3)
+    for node_id, (x, y) in enumerate(((0, 0), (1, 0), (0, 1)), 1):
+        model.add_node(node_id, x, y, 0.0)
+    model.add_element(1, create_shell_element(
+        1, (1, 2, 3), "elastic", formulation="e4-pl-s3-v2d",
+        thickness=0.2, reference_normal=(0, 0, 1),
+        reference_surface_offset=0.03,
+    ))
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node_id in (1, 2, 3):
+        dofs = model.mesh.dof_manager.get_node_dofs(node_id)
+        displacement[dofs[2]] = 0.02
+        displacement[dofs[4]] = 0.1
+    face = current_planar_shell_face(model, 1, 1, "top", displacement)
+    assert face.corners[:, 0] == pytest.approx((0.007, 1.007, 0.007))
+    assert face.corners[:, 2] == pytest.approx((0.09, 0.09, 0.09))

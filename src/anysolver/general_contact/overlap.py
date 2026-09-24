@@ -227,3 +227,39 @@ def reference_shell_face(model: object, body_id: int, element_id: int,
     else:
         offset = 0.5 * float(element.thickness) * coordinate
     return PlanarFace((int(body_id), int(element_id)), reference + offset * director)
+
+
+def current_planar_shell_face(model: object, body_id: int, element_id: int,
+                              side: str, displacement: np.ndarray) -> PlanarFace:
+    """Map a trial small-rotation shell skin to its current planar polygon.
+
+    This internal geometry adapter keeps the original Q4/S3 interpolation
+    identity. A warped current Q4 is rejected by ``PlanarFace`` until the
+    separate varying-frame contact route is admitted.
+    """
+
+    from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
+
+    reference_face = reference_shell_face(model, body_id, element_id, side)
+    element = model.mesh.elements[element_id]
+    u = np.asarray(displacement, dtype=float).reshape(-1)
+    if u.size != model.mesh.dof_manager.total_dofs or not np.all(np.isfinite(u)):
+        raise ValueError("contact trial displacement has invalid size or nonfinite values")
+    dofs = np.asarray(
+        [model.mesh.dof_manager.get_node_dofs(int(node_id))[:6]
+         for node_id in element.node_ids], dtype=np.intp,
+    )
+    director = element.physical_reference_director
+    if director is None:
+        reference = np.asarray(element.get_node_coordinates(model.mesh), dtype=float)
+        director = np.cross(reference[1] - reference[0],
+                            reference[-1] - reference[0])
+        director /= np.linalg.norm(director)
+    coordinate = {"bottom": -1.0, "midsurface": 0.0, "top": 1.0}[side]
+    if element.formulation_id == s3_id:
+        offset = float(element.material_surface_offset_from_reference(coordinate))
+    else:
+        offset = 0.5 * coordinate * float(element.thickness)
+    current = (reference_face.corners + u[dofs[:, :3]]
+               + offset * np.cross(u[dofs[:, 3:]], director))
+    return PlanarFace(reference_face.feature_id, current)

@@ -38,6 +38,12 @@ The present all-pairs overlap search has an explicit candidate limit and
 raises a resource error rather than dropping contact. It is a development
 kernel, not the deterministic hierarchy required for production C1.
 
+An internal trial-pose adapter can now recompute planar Q4/S3 physical faces
+and projected overlap under relative sliding. The coupled pair law in this
+profile still uses its fixed reference overlap and rejects relative lateral
+motion. Candidate-pose overlap alone does not establish the moving-domain
+residual or tangent.
+
 ## Discrete pair law
 
 The common-refinement polygon of each projected pair is integrated on the
