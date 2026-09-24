@@ -41,7 +41,7 @@ def main() -> int:
     nx=args.nx if args.nx is not None else 5*args.segmented_x_degree-1
     ny=args.ny if args.ny is not None else 3*args.segmented_degree+1
     if not (1<=nx<=128 and 1<=ny<=64
-            and 1<=args.beam<=512 and 1<=args.mortar<=512):
+            and 1<=args.beam<=512 and 1<=args.mortar<=1024):
         parser.error("case exceeds the bounded exploratory envelope")
     if (args.segmented_x_degree is not None
             and not 1<=args.segmented_x_degree<=24):

@@ -1,6 +1,15 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current line-resolution decision, 24 September 2026:** The separately
+**Current line-resolution decision, 24 September 2026:** The fixed-space
+1024-interval P1 probe is preserved in
+`B3_GE_E4_PL_F03_DOUBLE_SEGMENTED_LINE1024_V3.md`. From 512→1024 line
+intervals, beam energy changes -0.356%, root-force magnitude +0.115%,
+and tip magnitude +0.0154%. This is a useful settling trend in one
+classical axial comparator, not a qualified physical target or native
+line-space selection. Formal F03 authority remains unconsumed; F03/G0B
+remain open and G1 barred.
+
+**Earlier 512-line decision, 24 September 2026:** The separately
 preserved double-segmented 512-interval P1 diagnostic is recorded in
 `B3_GE_E4_PL_F03_DOUBLE_SEGMENTED_LINE512_V2.md`. At fixed shell and beam
 spaces, 256→512 intervals still changes beam energy -0.900% and root-force
