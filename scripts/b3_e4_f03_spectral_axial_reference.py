@@ -121,7 +121,7 @@ def coupling(nx: int, ny: int, n_beam: int, n_mortar: int,
              y_basis: SegmentedYBasis | None = None,
              x_basis: SegmentedXBasis | None = None
              ) -> tuple[sparse.csr_matrix,sparse.csr_matrix]:
-    if (not 1<=n_beam<=512 or not 1<=n_mortar<=256
+    if (not 1<=n_beam<=512 or not 1<=n_mortar<=512
             or not 4<=order<=16):
         raise ValueError("bounded spectral line resolution required")
     rows=3*(n_mortar+1)

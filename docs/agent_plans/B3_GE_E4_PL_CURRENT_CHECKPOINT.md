@@ -1,6 +1,14 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current decision, 24 September 2026:** The optional longitudinal and
+**Current line-resolution decision, 24 September 2026:** The separately
+preserved double-segmented 512-interval P1 diagnostic is recorded in
+`B3_GE_E4_PL_F03_DOUBLE_SEGMENTED_LINE512_V2.md`. At fixed shell and beam
+spaces, 256→512 intervals still changes beam energy -0.900% and root-force
+magnitude +0.409%; the trend improves but does not establish a physical
+reference or signed stability. Formal F03 authority remains unconsumed;
+F03/G0B remain open and G1 barred.
+
+**Earlier double-segmented decision, 24 September 2026:** The optional longitudinal and
 transverse interface-aligned classical shell is recorded in
 `B3_GE_E4_PL_F03_DOUBLE_SEGMENTED_AXIAL_V1.md` with eight bounded runs and
 13 passing affected tests. It greatly reduces apparent x-basis error but
