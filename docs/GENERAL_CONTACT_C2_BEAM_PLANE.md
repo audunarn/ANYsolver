@@ -70,8 +70,10 @@ A narrow B3 interval case admits a declared 10 µm gap budget
 budget stops before the last increment. This is a controlled sensitivity
 check, not mesh or regularization convergence.
 
-This slice does not yet admit line-to-shell or line-to-line pairs, finite
-sliding between curved bodies, native B3-GE, friction, corotational structural
+This plane profile does not admit line-to-shell pairs or beam pairs. A
+separate [two-cell B2/B2 development profile](GENERAL_CONTACT_C2_BEAM_PAIR.md)
+handles distributed line-to-line contact. Both profiles still lack general
+finite sliding between curved bodies, native B3-GE, friction, corotational structural
 kinematics, a moving plane, automatic search or measured beam-pair scale.
 The `none` cap policy supplies no end-on point force. A complete C2 delivery
 requires physical endpoint and near-parallel pair cases, mesh and enforcement

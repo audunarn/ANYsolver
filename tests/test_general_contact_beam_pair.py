@@ -59,6 +59,8 @@ def test_parallel_pair_has_analytic_line_work_balanced_wrench_and_tangent():
     assert result.contact_energy == pytest.approx(0.005, rel=1.0e-9)
     np.testing.assert_allclose(result.beam_a_force, -np.asarray(result.beam_b_force),
                                atol=1.0e-9)
+    np.testing.assert_allclose(result.beam_a_moment,
+                               -np.asarray(result.beam_b_moment), atol=1.0e-9)
     assert result.beam_a_force[1] == pytest.approx(-10.0, rel=1.0e-8)
     assert result.maximum_integration_relative_error <= 1.0e-7
     np.testing.assert_allclose(tangent.toarray(), tangent.toarray().T, atol=1.0e-7)
@@ -88,6 +90,8 @@ def test_crossing_pair_uses_distributed_potential_and_detects_swept_crossing():
     assert result.contact_energy == pytest.approx(independent_energy, rel=1.0e-6)
     np.testing.assert_allclose(result.beam_a_force, -np.asarray(result.beam_b_force),
                                atol=1.0e-8)
+    np.testing.assert_allclose(result.beam_a_moment,
+                               -np.asarray(result.beam_b_moment), atol=1.0e-8)
     direction = np.zeros_like(trial)
     direction[model.mesh.dof_manager.get_node_dofs(1)[0]] = 0.3
     direction[model.mesh.dof_manager.get_node_dofs(2)[2]] = -0.2
