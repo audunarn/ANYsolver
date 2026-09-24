@@ -966,3 +966,20 @@ positive-primal inf-sup quotient used for a coercive elastic displacement
 space. The trend is a reason to inspect weak modes and matched physical
 response, not proof of locking, instability or continuum failure. The new
 P1 dual-norm checks passed **7/7**. F03/G0B remain open; G1 barred.
+
+A V2 follow-up held the finest physical Q4/S3-V2D mesh and 16 native
+half-cells fixed while varying only 2, 4 or 8 multiplier intervals; its
+versioned raw result is
+`B3_GE_E4_PL_F03_NATIVE_LINE_COMPLIANCE_DIAGNOSTIC_V2.json`. The minimum
+quotient for Q4 P0 was `0.7981, 0.3503, 0.1748`; Q4 P1 was
+`0.3933, 0.2165, 0.1192`. S3-V2D gives the same trend within the shown
+precision. The minimum generalized eigenvector is numerically pure axial
+`Fx` in all 12 flat-reference cases. Its dominant coefficients alternate
+sign at every neighboring P0 cell or P1 node (1/3/7 changes for P0 and
+2/4/8 for P1). This localizes the descending quotient to high-frequency
+axial multiplier modes, **not** to the torsional load channel used in the
+earlier response screen. It does not by itself prove a continuum inf-sup
+failure: the native primal tangent is indefinite and the finite support,
+trace norm, and physical convergence still need a reviewed interpretation.
+Do not choose a coarse space solely by discarding these modes or claim
+that a basis change into a dual space repairs the span. F03/G0B remain open.

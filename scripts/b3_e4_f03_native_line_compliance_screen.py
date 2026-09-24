@@ -8,6 +8,7 @@ or a qualification decision for a multiplier space.
 
 from __future__ import annotations
 
+import argparse
 import json
 
 import numpy as np
@@ -22,9 +23,11 @@ from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_reference_kkt)
 
 
-def one_case(topology: str, n_s: int, kind: str) -> dict:
+def one_case(topology: str, n_s: int, kind: str, *,
+             n_intervals: int | None = None) -> dict:
     """Return full-retained compliance eigenvalues on a fixed paired grid."""
-    n_intervals = 2*n_s
+    if n_intervals is None:
+        n_intervals = 2*n_s
     shell = FlatE4TrialPanel(make_shell(n_s, topology))
     beam = build(4*n_s)
     space = LineMultiplierSpace(
@@ -65,10 +68,20 @@ def one_case(topology: str, n_s: int, kind: str) -> dict:
     # reference number. It is held fixed across this screen, not fitted.
     reference_stiffness_n_per_m = 210e9*.07
     scaled_compliance = reference_stiffness_n_per_m*force_compliance
-    with_upper = linalg.eigh(
-        scaled_compliance, dual_upper, eigvals_only=True, check_finite=True)
+    with_upper, vectors = linalg.eigh(
+        scaled_compliance, dual_upper, check_finite=True)
     with_lower = linalg.eigh(
         scaled_compliance, dual_lower, eigvals_only=True, check_finite=True)
+    minimum_mode = vectors[:, 0].reshape(space.count, 6)
+    channel_fractions = np.array([
+        minimum_mode[:, channel]@upper@minimum_mode[:, channel]
+        for channel in range(6)])
+    if abs(float(np.sum(channel_fractions))-1.) > 1e-8:
+        raise ArithmeticError("minimum mode lost dual normalization")
+    strongest = int(np.argmax(channel_fractions))
+    coefficients = minimum_mode[:, strongest]
+    signs = np.sign(coefficients[
+        np.abs(coefficients) > 1e-8*np.max(np.abs(coefficients))])
     return {
         "topology": topology,
         "n_s": n_s,
@@ -87,15 +100,30 @@ def one_case(topology: str, n_s: int, kind: str) -> dict:
         "minimum_quotient_upper": float(with_lower[0]),
         "maximum_quotient_lower": float(with_upper[-1]),
         "maximum_quotient_upper": float(with_lower[-1]),
+        "minimum_mode_channel_fractions": [float(x) for x in channel_fractions],
+        "minimum_mode_dominant_channel": (
+            "Fx", "Fy", "Fz", "Mx", "My", "Mz")[strongest],
+        "minimum_mode_dominant_sign_changes": int(np.count_nonzero(
+            signs[:-1]*signs[1:] < 0)),
     }
 
 
 def main() -> None:
-    rows = [one_case(topology, n_s, kind)
-            for topology in ("Q4", "S3-V2D")
-            for kind in ("piecewise_constant", "continuous_linear")
-            for n_s in (1, 2, 4)]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--fixed-primal", action="store_true")
+    fixed = parser.parse_args().fixed_primal
+    if fixed:
+        rows = [one_case(topology, 4, kind, n_intervals=intervals)
+                for topology in ("Q4", "S3-V2D")
+                for kind in ("piecewise_constant", "continuous_linear")
+                for intervals in (2, 4, 8)]
+    else:
+        rows = [one_case(topology, n_s, kind)
+                for topology in ("Q4", "S3-V2D")
+                for kind in ("piecewise_constant", "continuous_linear")
+                for n_s in (1, 2, 4)]
     print(json.dumps({"status": "UNREGISTERED_COMPLIANCE_DIAGNOSTIC",
+                      "screen": "fixed_primal" if fixed else "paired_refinement",
                       "cases": rows}, indent=2, sort_keys=True))
 
 
