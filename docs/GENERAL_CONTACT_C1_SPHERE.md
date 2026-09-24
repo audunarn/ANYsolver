@@ -57,6 +57,13 @@ reached the adaptive gap-certificate resource limit at the tolerance
 boundary. A separate high-stiffness exploration was stopped after excessive
 runtime. Neither is an accepted numerical result; both motivate tighter
 geometry and pressure-space resolution before admitting small contact spots.
+For its 0.2 m Q4 face at zero approach, the nearest 4×4 Gauss point has a
+0.23117 mm sphere gap; the quadrature mean gap is 0.66660 mm. These values
+come directly from the analytic sphere distance and Gauss coordinates. They
+explain why a 20 µm physical gap budget on that coarse face is much smaller
+than its pressure-sampling scale. More penalty stiffness cannot resolve a
+contact spot that the pressure space has not activated; shell and contact
+resolution must be studied separately.
 
 This profile does not admit sphere motion, a free rigid body, augmented
 enforcement, friction, warped Q4, shell finite rotation, impact or automatic
