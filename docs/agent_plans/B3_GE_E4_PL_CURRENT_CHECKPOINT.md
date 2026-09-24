@@ -1,6 +1,16 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current separate-order decision, 24 September 2026:** At fixed beam512
+**Current transverse-order decision, 24 September 2026:** At fixed x24,
+beam512 and P1 line1024, y-degree 12→16→20→24 raises beam energy by
+1.000%, 0.540% and 0.317% on successive steps; root-force magnitude
+falls by 0.688%, 0.362% and 0.206%. The guarded source/results are in
+`B3_GE_E4_PL_F03_TRANSVERSE_ORDER_V5.md`. Sampled child RSS reaches
+5.699 GiB at degree 24. Further global y-order increase approaches the
+8 GiB envelope; next compare a local transverse partition without
+changing the physical operator. No reference or line law is selected.
+Formal F03 authority is unconsumed; F03/G0B remain open and G1 barred.
+
+**Earlier separate-order decision, 24 September 2026:** At fixed beam512
 and P1 line1024, x-degree 24→32 changes beam energy only -0.0163%, but
 y-degree 12→16 changes it **+0.9996%** and root-force magnitude -0.688%.
 The bounded source/results are preserved in

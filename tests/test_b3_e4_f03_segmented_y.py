@@ -10,7 +10,7 @@ from scripts import b3_e4_f03_spectral_axial_reference as spectral
 
 
 def test_segmented_basis_is_continuous_complete_and_owns_results():
-    for degree in (1, 2, 4, 8, 16):
+    for degree in (1, 2, 4, 8, 16, 20, 24):
         basis = SegmentedYBasis(degree)
         nodes = np.asarray(basis.nodes)
         np.testing.assert_allclose(

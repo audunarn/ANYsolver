@@ -20,7 +20,7 @@ class SegmentedYBasis:
     __slots__ = ("degree", "_local_nodes", "_coefficients", "_global_nodes")
 
     def __init__(self, degree: int):
-        if type(degree) is not int or not 1 <= degree <= 16:
+        if type(degree) is not int or not 1 <= degree <= 24:
             raise ValueError("bounded segmented transverse degree required")
         interior = (legendre.Legendre.basis(degree).deriv().roots()
                     if degree > 1 else np.empty(0))

@@ -41,13 +41,14 @@ def main() -> int:
     nx=args.nx if args.nx is not None else 5*args.segmented_x_degree-1
     ny=args.ny if args.ny is not None else 3*args.segmented_degree+1
     x_limit=128 if args.segmented_x_degree is None else 160
-    if not (1<=nx<=x_limit and 1<=ny<=64
+    y_limit=64 if args.segmented_degree is None else 80
+    if not (1<=nx<=x_limit and 1<=ny<=y_limit
             and 1<=args.beam<=512 and 1<=args.mortar<=1024):
         parser.error("case exceeds the bounded exploratory envelope")
     if (args.segmented_x_degree is not None
             and not 1<=args.segmented_x_degree<=32):
         parser.error("segmented longitudinal degree exceeds the bounded envelope")
-    if args.segmented_degree is not None and not 1<=args.segmented_degree<=16:
+    if args.segmented_degree is not None and not 1<=args.segmented_degree<=24:
         parser.error("segmented transverse degree exceeds the bounded envelope")
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)

@@ -78,7 +78,8 @@ def shell_stiffness(nx: int, ny: int,
                     x_basis: SegmentedXBasis | None = None) -> np.ndarray:
     """Independent tensor-product plane-stress Galerkin stiffness."""
     x_limit=128 if x_basis is None else 160
-    if not 1<=nx<=x_limit or not 1<=ny<=64:
+    y_limit=64 if y_basis is None else 80
+    if not 1<=nx<=x_limit or not 1<=ny<=y_limit:
         raise ValueError("bounded spectral shell order required")
     if y_basis is not None and ny!=y_basis.size:
         raise ValueError("transverse basis size does not match shell layout")
