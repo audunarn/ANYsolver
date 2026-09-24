@@ -15,10 +15,12 @@ from anysolver.general_contact.static_path import (
 )
 
 
-def _q4_against_two_s3():
+def _q4_against_two_s3(*, lower_x_shift=0.0):
     model = FEModel("mixed_patch_local")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
-    lower = ((0.2, 0.1), (1.2, 0.1), (1.2, 1.1), (0.2, 1.1))
+    lower = tuple((x + lower_x_shift, y) for x, y in (
+        (0.2, 0.1), (1.2, 0.1), (1.2, 1.1), (0.2, 1.1),
+    ))
     upper = ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
     for node, (x, y) in enumerate(lower, 1):
         model.add_node(node, x, y, 0.0)
@@ -266,6 +268,54 @@ def test_q4_s3_patch_combines_press_slide_open_and_recontact():
             max_iterations=15,
             restart_checkpoint=half.to_restart_checkpoint(),
         )
+
+
+def test_q4_s3_patch_activates_from_initially_disjoint_overlap():
+    model, definition, settings = _q4_against_two_s3(lower_x_shift=1.0)
+    guided = validate_general_contact(model, definition, ContactSolverSettings())
+    assert not guided.valid
+    assert "no projected reference overlap" in "; ".join(guided.issues)
+    assert validate_general_contact(model, definition, settings).valid
+    model.add_boundary_condition(BoundaryCondition(
+        "lower_fixed", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "upper_guide", (5, 6, 7, 8),
+        {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+    ))
+    master = int(model.mesh.dof_manager.get_node_dofs(5)[0])
+    for node in (6, 7, 8):
+        slave = int(model.mesh.dof_manager.get_node_dofs(node)[0])
+        model.add_constraint_equation(
+            terms=((slave, 1.0), (master, -1.0)),
+            source_id=f"first_approach_upper_x_{node}",
+        )
+    program = ContactPathProgram(
+        controls=(
+            ContactPathControl.node(5, "ux"),
+            ContactPathControl(tuple((node, "uz", 0.25)
+                                     for node in (5, 6, 7, 8))),
+        ),
+        waypoints=((0.0, 0.0), (0.5, -5.0e-7)),
+        steps_per_segment=1,
+    )
+    manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
+    initial = manager.evaluate(
+        np.zeros(model.mesh.dof_manager.total_dofs), tangent=False,
+    )[2]
+    assert initial.current_overlap_area == 0.0
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+    )
+    assert result.status == "completed", (
+        result.failure_reason, result.info.get("general_contact"),
+    )
+    contact = result.info["general_contact"]
+    assert contact["current_overlap_area"] > 0.0
+    assert contact["active_pressure_dofs"] > 0
+    assert contact["gap_tolerance_met"]
 
 
 def test_contact_path_rejects_unadmitted_public_controls():

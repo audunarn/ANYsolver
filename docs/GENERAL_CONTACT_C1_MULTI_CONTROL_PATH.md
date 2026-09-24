@@ -16,6 +16,8 @@ restricted-sliding Q4/S3 shell pair. The analysis
 uses the existing structural residual, candidate material transactions and
 contact manager, then commits only accepted increments. Each accepted step
 reports the target, generalized reactions, contact forces and gap check.
+An [initially disjoint planar patch](GENERAL_CONTACT_C1_FIRST_APPROACH.md)
+can enter overlap during the prescribed path.
 
 The program and contact definitions bind a version-2 checkpoint. A run
 stopped at a registered step fraction can resume the same path; changing a

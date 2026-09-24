@@ -111,7 +111,9 @@ def _reference_pair_normal(model, integration, faces_a, faces_b) -> np.ndarray:
     return normal
 
 
-def validate_planar_shell_pair(model, definition: ContactDefinition) -> ContactValidationReport:
+def validate_planar_shell_pair(model, definition: ContactDefinition, *,
+                               require_reference_overlap: bool = True,
+                               ) -> ContactValidationReport:
     issues, parts = _definition_parts(model, definition)
     profile = _profile_for_pair(model, definition)
     if parts is not None:
@@ -157,8 +159,9 @@ def validate_planar_shell_pair(model, definition: ContactDefinition) -> ContactV
                                for face in faces)
                 if distance > 1.0e-10 * scale:
                     issues.append(f"guided surface {name} must occupy one physical plane")
-            if not any(planar_projected_overlap(a, b) is not None
-                       for a in faces_a for b in faces_b):
+            if (require_reference_overlap and
+                    not any(planar_projected_overlap(a, b) is not None
+                            for a in faces_a for b in faces_b)):
                 issues.append("the pair has no projected reference overlap")
         except ValueError as exc:
             issues.append(str(exc))

@@ -3,6 +3,7 @@
 Run from the repository root with the installed package on Python's path:
     python examples/general_contact_mixed_path.py
     python examples/general_contact_mixed_path.py --augmented
+    python examples/general_contact_mixed_path.py --first-approach
 """
 
 from __future__ import annotations
@@ -19,10 +20,13 @@ from anysolver import (
 from anysolver.fe_core import FEModel
 
 
-def main(*, augmented: bool = False) -> None:
+def main(*, augmented: bool = False, first_approach: bool = False) -> None:
     model = FEModel("restricted_mixed_patch_sliding_example")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
-    lower = ((0.2, 0.1), (1.2, 0.1), (1.2, 1.1), (0.2, 1.1))
+    lower_x_shift = 1.0 if first_approach else 0.0
+    lower = tuple((x + lower_x_shift, y) for x, y in (
+        (0.2, 0.1), (1.2, 0.1), (1.2, 1.1), (0.2, 1.1),
+    ))
     upper = ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
     for node, (x, y) in enumerate(lower, 1):
         model.add_node(node, x, y, 0.0)
@@ -77,6 +81,7 @@ def main(*, augmented: bool = False) -> None:
                                       for node in (5, 6, 7, 8)))),
         ),
         waypoints=(((0.0, 0.0), (0.0, -5.0e-7)) if augmented else
+                   ((0.0, 0.0), (0.5, -5.0e-7)) if first_approach else
                    ((0.0, 0.0), (0.0, -5.0e-7),
                     (0.1, -5.0e-7), (0.1, 1.0e-6),
                     (0.1, -5.0e-7))),
@@ -113,5 +118,9 @@ def main(*, augmented: bool = False) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--augmented", action="store_true")
-    main(augmented=parser.parse_args().augmented)
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--augmented", action="store_true")
+    modes.add_argument("--first-approach", action="store_true")
+    arguments = parser.parse_args()
+    main(augmented=arguments.augmented,
+         first_approach=arguments.first_approach)

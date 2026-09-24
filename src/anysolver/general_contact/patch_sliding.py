@@ -32,7 +32,9 @@ def validate_restricted_sliding_patch(
         model, definition: ContactDefinition,
         settings: ContactSolverSettings | None = None,
         ) -> ContactValidationReport:
-    report = validate_planar_shell_pair(model, definition)
+    report = validate_planar_shell_pair(
+        model, definition, require_reference_overlap=False,
+    )
     issues = list(report.issues)
     if len(definition.surfaces) == 2 and all(
         len(surface.element_ids) == 1 for surface in definition.surfaces
