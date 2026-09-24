@@ -178,11 +178,14 @@ def _gauss(order: int, left: float, right: float):
 
 def assemble(nx: int, ny: int, nb: int, intervals: int, *,
              origin: str = "rail", multiplier: str = "p1",
-             basis: str = "global"
+             basis: str = "global", thickness: float = THICKNESS
              ) -> tuple[np.ndarray, np.ndarray, np.ndarray,
                         np.ndarray, np.ndarray, np.ndarray]:
     """Independent plate/beam energies and exact weak-line KKT blocks."""
     _orders(nx, ny, nb, intervals)
+    if (isinstance(thickness, bool) or not np.isfinite(thickness) or
+            thickness <= 0.):
+        raise ValueError("finite positive shell thickness required")
     if multiplier not in ("p0", "p1"):
         raise ValueError("P0 or continuous P1 multiplier required")
     # Each scalar line trace is a single polynomial of degree at most
@@ -197,10 +200,12 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
     nbeam = 3*beam_n
     ks = np.zeros((ns, ns))
     kb = np.zeros((nbeam, nbeam))
-    cb = BENDING_D * np.array(((1., NU, 0.),
+    bending_d = E*thickness**3/(12*(1-NU**2))
+    shear_k = (5/6)*G*thickness
+    cb = bending_d * np.array(((1., NU, 0.),
                                (NU, 1., 0.),
                                (0., 0., 2*(1-NU))))
-    cs = SHEAR_K*np.eye(2)
+    cs = shear_k*np.eye(2)
     xedges = (_spline(nx, -.5, 1.5)[2] if basis == "spline" else
               np.array((-.5, 1.5)))
     yedges = (_spline(ny, -.5, .5)[2] if basis == "spline" else
@@ -251,11 +256,11 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
 def solve(nx: int, ny: int, nb: int, intervals: int, *,
           origin: str = "rail", multiplier: str = "p1",
           tip_force_z: float = 1000., tip_torque_x: float = 0.,
-          basis: str = "global") -> dict:
+          basis: str = "global", thickness: float = THICKNESS) -> dict:
     """Solve a bounded flat reference and recover work-conjugate reactions."""
     ks, kb, c, moments, first, _ = assemble(
         nx, ny, nb, intervals, origin=origin, multiplier=multiplier,
-        basis=basis)
+        basis=basis, thickness=thickness)
     ns, nbeam = len(ks), len(kb)
     n = nbeam//3
     f = np.zeros(ns+nbeam)
@@ -307,6 +312,7 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
         "model":"independent_flat_RM_plate_Timoshenko_beam",
         "nx":nx, "ny":ny, "nb":nb, "line_intervals":intervals,
         "origin":origin, "multiplier":multiplier, "basis":basis,
+        "shell_thickness_m":thickness,
         "tip_force_z_n":tip_force_z, "tip_torque_x_n_m":tip_torque_x,
         "tip_z_m":float(tip_pose[0]), "tip_rx_rad":float(tip_pose[1]),
         "tip_ry_rad":float(tip_pose[2]),

@@ -21,6 +21,7 @@ from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     pose_from_e4_total, reference_nodes)
 from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_translation)
+from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_reference_kkt)
@@ -56,9 +57,11 @@ def one_case(topology: str, intervals: int, kind: str, *,
              load_kind: str = "torsion", n_s: int = 4,
              native_half_cells: int = 16,
              n_y: int = 2,
+             thickness: float = .07,
              shell_support_policy: str = "legacy_three_left_nodes") -> dict:
     """Solve a bounded torsion or alternating axial case at one resolution."""
-    shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y))
+    shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y,
+                                       thickness=thickness))
     beam = build(native_half_cells)
     space = LineMultiplierSpace(
         kind, tuple(np.linspace(0., 1., intervals+1)))
@@ -111,6 +114,12 @@ def one_case(topology: str, intervals: int, kind: str, *,
     shell_support[~shell_fixed] = 0.
     shell_support = shell_support.reshape(-1, 6)
     shell_reference_nodes = reference_nodes(shell.panel)
+    shell_interface = (kkt.constraint_jacobian[:, :shell_size].T@
+                       multipliers).reshape(-1, 6)
+    shell_interface_torque_x = float(np.sum(
+        shell_interface[:, 3]+shell_reference_nodes[:, 1]*shell_interface[:, 2]
+        -shell_reference_nodes[:, 2]*shell_interface[:, 1]))
+    shell_interface_force_z = float(np.sum(shell_interface[:, 2]))
     shell_reaction_mx = float(np.sum(
         shell_support[:, 3]+shell_reference_nodes[:, 1]*shell_support[:, 2]
         -shell_reference_nodes[:, 2]*shell_support[:, 1]))
@@ -138,6 +147,18 @@ def one_case(topology: str, intervals: int, kind: str, *,
         .5*shell_inplane@(shell.panel.stiffness@ shell_inplane))
     shell_full_energy = float(.5*shell_total@kkt.primal_tangent[
         :shell_size, :shell_size]@shell_total)
+    shell_physical_energy = float(
+        .5*shell_total@(physical_shell_stiffness(shell.panel)@shell_total))
+    shell_component_physical_energy = 0.
+    shell_numerical_energy = 0.
+    for _, nodes, element in shell.elements:
+        components = element.compute_stiffness_components(
+            shell.model.mesh, shell.model.get_material("steel"))
+        local = shell_total.reshape(-1, 6)[np.asarray(nodes)-1].ravel()
+        shell_component_physical_energy += float(
+            .5*local@components["physical"]@local)
+        shell_numerical_energy += float(
+            .5*local@components["numerical"]@local)
     beam_energy = float(.5*full[shell_size:]@
                         kkt.primal_tangent[shell_size:, shell_size:]@
                         full[shell_size:])
@@ -179,6 +200,7 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "intervals": intervals,
         "shell_host_intervals": n_s,
         "shell_transverse_intervals": n_y,
+        "shell_thickness_m": shell.panel.thickness,
         "native_half_cells": native_half_cells,
         "shell_elements": shell.panel.element_count,
         "native_elements": beam.n_half_cells//2,
@@ -195,6 +217,15 @@ def one_case(topology: str, intervals: int, kind: str, *,
             np.arange(native_half_cells+1)/native_half_cells,
             load[shell_size:shell_size+beam.context.nodal_count:6])),
         "shell_energy_j": shell_full_energy,
+        "shell_physical_energy_j": shell_physical_energy,
+        "shell_component_physical_energy_j": shell_component_physical_energy,
+        "shell_numerical_energy_j": shell_numerical_energy,
+        "shell_component_closure_error_j": float(
+            shell_full_energy-shell_component_physical_energy-
+            shell_numerical_energy),
+        "shell_numerical_energy_fraction": (
+            shell_numerical_energy/shell_full_energy
+            if shell_full_energy != 0. else None),
         "shell_physical_inplane_energy_j": shell_physical_inplane_energy,
         "shell_full_minus_physical_inplane_energy_j": float(
             shell_full_energy-shell_physical_inplane_energy),
@@ -208,11 +239,17 @@ def one_case(topology: str, intervals: int, kind: str, *,
             np.sum(load[shell_size:shell_size+beam.context.nodal_count:6])),
         "applied_torque_x_n_m": applied_torque_x,
         "shell_support_reaction_torque_x_n_m": shell_reaction_mx,
+        "shell_interface_torque_x_n_m": shell_interface_torque_x,
+        "shell_support_minus_interface_torque_x_n_m": float(
+            shell_reaction_mx-shell_interface_torque_x),
         "beam_root_reaction_torque_x_n_m": beam_root_reaction_mx,
         "global_torque_x_balance_n_m": float(
             shell_reaction_mx+beam_root_reaction_mx+applied_torque_x),
         "applied_force_z_n": applied_force_z,
         "shell_support_reaction_fz_n": shell_reaction_fz,
+        "shell_interface_fz_n": shell_interface_force_z,
+        "shell_support_minus_interface_fz_n": float(
+            shell_reaction_fz-shell_interface_force_z),
         "beam_root_reaction_fz_n": beam_root_reaction_fz,
         "global_force_z_balance_n": float(
             shell_reaction_fz+beam_root_reaction_fz+applied_force_z),

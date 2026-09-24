@@ -96,3 +96,38 @@ def test_physical_twist_patch_energy_and_torque_work(topology, n_s, n_y):
                                         applied_line_torque)
         for s in stations], stations)
     np.testing.assert_allclose(virtual_work, 50.*kappa, rtol=1e-12)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+@pytest.mark.parametrize("thickness", (.035, .0175))
+def test_thinner_shell_physical_twist_and_shear_scaling(topology, thickness):
+    panel = make_shell(4, topology, n_y=4, thickness=thickness)
+    nodes = reference_nodes(panel)
+    stiffness = physical_shell_stiffness(panel)
+    kappa = .001
+    twist = np.zeros((panel.node_count, 6))
+    twist[:, 2] = kappa*nodes[:, 0]*nodes[:, 1]
+    twist[:, 3] = kappa*nodes[:, 0]
+    twist[:, 4] = -kappa*nodes[:, 1]
+    bending_d = 210e9*thickness**3/(12*(1-.3**2))
+    np.testing.assert_allclose(
+        .5*twist.ravel()@(stiffness@twist.ravel()),
+        2*bending_d*(1-.3)*kappa**2, rtol=1e-10)
+
+    gamma = .02
+    shear = np.zeros_like(twist)
+    shear[:, 2] = gamma*nodes[:, 0]
+    shear_factor = 1.
+    if topology == "S3-V2D":
+        trial = FlatE4TrialPanel(panel)
+        factors = np.array([
+            element.compute_stiffness_components(
+                trial.model.mesh, trial.model.get_material("steel"))["phi_squared"]
+            for _, _, element in trial.elements])
+        np.testing.assert_allclose(factors, factors[0], rtol=1e-12)
+        shear_factor = factors[0]
+    shear_modulus = 210e9/(2*(1+.3))
+    np.testing.assert_allclose(
+        .5*shear.ravel()@(stiffness@shear.ravel()),
+        .5*(5/6)*shear_modulus*thickness*2.*gamma**2*shear_factor,
+        rtol=1e-10)

@@ -18,6 +18,12 @@ pointwise bond is sensitive to *plate* resolution while fixed-plate beam
 refinement leaves torque/shear response unchanged. This narrows the next
 mechanics work to shell-side trace representability and a physical
 reference, without declaring the formulation failed.
+Loaded Q4/S3 torque and shear states have zero directly evaluated
+numerical shell-component work at the tested thicknesses; physical
+components reconstruct assembled energy. Native support torque equals
+the actual interface-wrench resultant. Under one isolated shell mesh
+refinement, the thin-shell reaction difference from the independent
+model narrows but does not vanish. Stop brute-force resolution sweeps.
 
 **Remaining uncertainty and next discriminating action:** Establish an
 independent torque/shear target with the same physical geometry, load,
@@ -30,10 +36,11 @@ B31 rejects the generalized section. A paired refinement on that route
 also reached the unchanged 120 s limit for both torque and shear. Do not
 repeat it at greater cost under this authority. These are execution and
 idealization diagnostics, not the matched target. The next bounded
-derivation should test the shell trace's physical torque/shear work and
-admissible modes against a resolved, section-matched reference. If that
-agrees and a registered joint refinement stabilizes, assess P0 over the
-required mesh ratios; otherwise revise the pose or interface space before
+derivation should establish a resolved, section-matched physical
+torque/shear reference and a shell-trace/interface stability argument,
+including reaction partition and thickness. If those agree and a
+registered joint refinement stabilizes, assess P0 over the required
+mesh ratios; otherwise revise the pose or interface space before
 selecting one. Keep the
 classical axial, historical Q6/finite-pad and native six-channel results
 separate. Rank, small gaps or a quotient alone cannot select a space.
@@ -2229,3 +2236,58 @@ recoverable section-matched physical reference. Do not add line rows or
 raise global axial order to manufacture a smaller gap. P0 remains only
 a development candidate. Formal F03 authority is unconsumed, G0B open
 and G1 barred.
+
+**Loaded shell work and thin-shell reaction audit, 24 September 2026.**
+Existing physical Q4/S3 twist and transverse-shear patches already show
+finite-width torque work without using the drilling coordinate, and an
+admissible nonzero transverse-shear field. The new loaded audit at Q4
+and S3 x4/y4, native half16, P0 m4, local-center pose and full-left
+support evaluates each element's declared `physical` and `numerical`
+stiffness components directly. For separate +100 Nm tip torque and
++1000 N tip-z force at shell thickness `.07 m`, numerical-component
+energy is exactly zero in all four cases. Physical plus numerical
+components reconstruct assembled shell energy within `3e-14 J`.
+The initial subtraction-only V1 remains preserved; V2 is the direct
+component result. Raw roots:
+`B3_GE_E4_PL_F03_NATIVE_TORQUE_SHEAR_ENERGY_ATTRIBUTION_V1.jsonl`
+and `..._V2.jsonl`.
+
+For +100 Nm torque at `.035` and `.0175 m`, both Q4 and S3 retain zero
+numerical-component work and positive physical work. The thinner-shell
+analytic physical twist (bending `t³`) and transverse-shear (`t`, with
+the admitted S3 relaxation factor) patches pass. Q4 tip-rx rises
+`14.071→37.827→64.283 µrad` as thickness `.07→.035→.0175 m`,
+approaching the bare native beam's `74.286 µrad`. S3 gives
+`14.268→38.589→64.813 µrad`. This supports physical torque transfer
+on these bounded cases; it does not qualify line stability or thinning
+convergence. Raw root:
+`B3_GE_E4_PL_F03_NATIVE_TORQUE_THICKNESS_ATTRIBUTION_V1.jsonl`.
+
+The native constraint-transpose shell-interface torque matches the
+independently recovered shell support torque within `1.3e-10 N·m`
+across Q4/S3 and all three thicknesses. The shell reaction changes
+sign as the shell thins, while the beam-root reaction compensates;
+this is an actual discrete load path, not a reaction-recovery error.
+Raw root: `B3_GE_E4_PL_F03_NATIVE_INTERFACE_TORQUE_AUDIT_V1.jsonl`.
+
+At matched plate x4/y4, beam8 and P0 m4, the independent transverse
+model's thin-shell tip-rx differs from native Q4 by about 2.4% at
+`.035 m` and 3.2% at `.0175 m`, but its shell support-torque share
+differs much more: Q4 versus independent is `4.14` versus `10.18 N·m`
+at `.035 m` and `6.85` versus `17.52 N·m` at `.0175 m`. At fixed
+beam/P0 and `.0175 m`, one shell-only refinement x4/y4→x8/y8 reduces
+that absolute support-torque difference from `10.67` to `3.18 N·m`;
+Q4/S3 fine values are `2.86/2.67 N·m`, independent `6.05 N·m`.
+The difference narrows but does not establish a converged physical
+reaction partition. Do not score small resultants by relative error
+alone or infer a line-space decision from tip rotation. Raw roots:
+`B3_GE_E4_PL_F03_INDEPENDENT_TORQUE_THICKNESS_V1.jsonl`,
+`B3_GE_E4_PL_F03_NATIVE_THIN_SHELL_XY8_V1.jsonl`, and
+`B3_GE_E4_PL_F03_INDEPENDENT_THIN_SHELL_XY8_V1.jsonl`.
+
+Next establish a resolved physical reference with explicit section,
+director/shear, connection and reaction conventions, then assess the
+shell trace's interface modes and P0 policy at the registered mesh
+ratios. No drilling-penalty tuning, extra global axial order, or
+larger CalculiX collocation run follows from this audit. Formal F03
+authority remains unconsumed; G0B is open and G1 barred.
