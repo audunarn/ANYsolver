@@ -36,6 +36,22 @@ _SECONDS = 2400.
 _RSS_BYTES = 2*1024**3
 
 
+def _recovery_source_hashes() -> dict[str, str]:
+    functions = {
+        "spatial_source_sha256": (spatial_run,
+                                  "b3_e4_f03_qp_nested_x2_spatial.py"),
+        "nodal_source_sha256": (spatial_run.__globals__["recover_nodal"],
+                                "_b3_e4_f03_qp_nodal_recovery.py"),
+    }
+    result = {}
+    for name, (function, filename) in functions.items():
+        path = Path(function.__code__.co_filename)
+        if path.name != filename:
+            raise ValueError("unexpected Q6 recovery source path")
+        result[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+
 def _write(path: Path, value: dict) -> bytes:
     payload = (json.dumps(value, indent=2)+"\n").encode("utf-8")
     with path.open("xb") as stream:
@@ -55,9 +71,11 @@ def _read(path: Path, cap: int) -> tuple[dict, str]:
 
 
 def child(output: Path) -> None:
+    recovery_sources = _recovery_source_hashes()
     _write(output / "start.json", {
         "status": "UNREGISTERED_Q6_X2_SHARED_ASSEMBLY_STARTED",
         "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        **recovery_sources,
         "python_executable": sys.executable,
         "thread_environment": {name: os.environ.get(name) for name in
             ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
@@ -116,7 +134,9 @@ def child(output: Path) -> None:
         raise ArithmeticError("shared X2 physical route repeated assembly")
 
     started = perf_counter()
-    spatial = spatial_run(output / "physical.json")
+    spatial = spatial_run(output / "physical.json", operators=operators)
+    if _recovery_source_hashes() != recovery_sources:
+        raise ArithmeticError("Q6 recovery source changed during diagnostic")
     assert_unchanged()
     validate_spatial_payload("X2", hashlib.sha256(physical_bytes).hexdigest(),
                              spatial)
@@ -138,6 +158,8 @@ def child(output: Path) -> None:
         "physical_sha256": hashlib.sha256(physical_bytes).hexdigest(),
         "spatial_sha256": hashlib.sha256(spatial_bytes).hexdigest(),
         "shared_assembly": True,
+        "reused_free_shell_for_spatial_recovery": True,
+        **recovery_sources,
         "operator_fingerprint_sha256": operator_hash,
         "operator_unchanged_after_each_phase": True,
         "physical_recovery_uses_certificate_candidate": True,

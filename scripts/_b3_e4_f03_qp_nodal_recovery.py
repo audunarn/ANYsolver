@@ -10,9 +10,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from scipy import sparse
 
 from scripts._b3_e4_f03_conforming_qp_energy import _shell
 from scripts._b3_e4_f03_conforming_qp_trace import FinitePadQpTrace
+from scripts._b3_e4_f03_primal_ritz import PLANE, THICKNESS
 from scripts._b3_e4_f03_qp_area_adjoint import FinitePadAreaAdjoint
 from scripts._b3_e4_f03_qp_beam_recovery import recover_interface
 from scripts._b3_e4_f03_qp_shell_recovery import PiecewiseQpShellRecovery
@@ -158,13 +160,71 @@ def distributed_support_liftings(trace: FinitePadQpTrace) -> np.ndarray:
     return lifts
 
 
-def recover_nodal(adjoint: FinitePadAreaAdjoint) -> NodalQpRecovery:
+def _shell_force_with_free_matrix(trace: FinitePadQpTrace, q: np.ndarray,
+                                  free_stiffness: sparse.csr_matrix) -> np.ndarray:
+    """Reuse Kff and evaluate only the two supported-edge row actions.
+
+    This is a preparatory Qp recovery path. The support-row quadrature is
+    separately compared with full shell assembly on bounded test models.
+    """
+    free = trace.free_columns
+    if (not sparse.isspmatrix_csr(free_stiffness) or
+            free_stiffness.shape != (len(free), len(free)) or
+            not np.isfinite(free_stiffness.data).all() or
+            q.shape != (2*trace.n,) or not np.isfinite(q).all()):
+        raise ValueError("incompatible free shell recovery operator")
+    support = np.setdiff1d(np.arange(2*trace.n), free)
+    if np.any(q[support] != 0):
+        raise ValueError("supported Qp coordinates must vanish")
+    force = np.zeros(2*trace.n)
+    force[free] = free_stiffness@q[free]
+    roots, weights = np.polynomial.legendre.leggauss(trace.p+1)
+    m = (trace.p+1)**2
+    for i in sorted({0, len(trace.x)-2}):
+        hx = trace.x[i+1]-trace.x[i]
+        for k, (yb, yt) in enumerate(zip(trace.y, trace.y[1:])):
+            hy = yt-yb
+            nodes = np.array([(i*trace.p+a)*trace.ny+k*trace.p+b
+                              for a in range(trace.p+1)
+                              for b in range(trace.p+1)])
+            local = np.r_[nodes, trace.n+nodes]
+            supported = np.flatnonzero(np.isin(local, support))
+            if not len(supported):
+                continue
+            stiffness = np.zeros((2*m, 2*m))
+            for gx, wx in zip(roots, weights):
+                tx = (gx+1)/2
+                bx = np.array([basis(tx) for basis, _ in trace._basis])
+                dbx = np.array([derivative(tx)/hx
+                                for _, derivative in trace._basis])
+                for gy, wy in zip(roots, weights):
+                    ty = (gy+1)/2
+                    by = np.array([basis(ty) for basis, _ in trace._basis])
+                    dby = np.array([derivative(ty)/hy
+                                    for _, derivative in trace._basis])
+                    dx, dy = np.outer(dbx, by).ravel(), np.outer(bx, dby).ravel()
+                    bmat = np.zeros((3, 2*m))
+                    bmat[0, :m], bmat[1, m:] = dx, dy
+                    bmat[2, :m], bmat[2, m:] = dy, dx
+                    stiffness += (wx*wy*hx*hy*THICKNESS/4)*(
+                        bmat.T@PLANE@bmat)
+            force[local[supported]] += stiffness[supported, :]@q[local]
+    return force
+
+
+def recover_nodal(adjoint: FinitePadAreaAdjoint, *,
+                  free_shell_stiffness: sparse.csr_matrix | None = None
+                  ) -> NodalQpRecovery:
     """Recover nodal balance and six physical supported-edge works."""
     trace = adjoint.trace
     area_load, area_wrench = assemble_area_nodal_load(adjoint)
     line_load = assemble_line_nodal_load(adjoint)
-    full_shell = _shell(trace, np.arange(2*trace.n))
-    shell_force = full_shell@adjoint.q
+    if free_shell_stiffness is None:
+        full_shell = _shell(trace, np.arange(2*trace.n))
+        shell_force = full_shell@adjoint.q
+    else:
+        shell_force = _shell_force_with_free_matrix(
+            trace, adjoint.q, free_shell_stiffness)
     residual = shell_force-area_load
     support = np.setdiff1d(np.arange(2*trace.n), trace.free_columns)
     lifts = support_liftings(trace)

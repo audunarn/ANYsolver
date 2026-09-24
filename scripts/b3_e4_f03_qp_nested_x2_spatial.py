@@ -17,6 +17,7 @@ import numpy as np
 import psutil
 
 from scripts._b3_e4_f03_conforming_qp_trace import FinitePadQpTrace
+from scripts._b3_e4_f03_conforming_qp_energy import QpOperators
 from scripts._b3_e4_f03_primal_ritz import E0, F0, YAW_LENGTH
 from scripts._b3_e4_f03_qp_precise_functional import from_qp_recovery_precise
 from scripts._b3_e4_f03_qp_precise_line_adjoint import PreciseLineAreaAdjoint
@@ -35,7 +36,7 @@ def _sample_memory(stop, maximum):
     maximum[0] = max(maximum[0], process.memory_info().rss)
 
 
-def run(path):
+def run(path, *, operators: QpOperators | None = None):
     source_bytes = Path(path).read_bytes()
     row = json.loads(source_bytes)
     grid = row.get("grid")
@@ -43,6 +44,17 @@ def run(path):
         raise ValueError("unsupported fixed-Q6 spatial grid")
     x = None if grid == "x0" else refined_x() if grid == "x1" else refined_x2()
     trace = FinitePadQpTrace(6, x=x)
+    if operators is not None:
+        if not isinstance(operators, QpOperators):
+            raise ValueError("shared Q6 shell operator required")
+        owned = operators.trace
+        if (owned.p != trace.p or owned.x != trace.x or
+                owned.y != trace.y or owned.offsets != trace.offsets or
+                owned.a != trace.a or owned.j != trace.j or
+                not np.array_equal(operators.free_columns,
+                                   trace.free_columns)):
+            raise ValueError("shared Q6 shell operator does not match spatial trace")
+        trace = owned
     statuses = {"x0": "UNREGISTERED_NESTED_X0_PILOT",
                 "x1": "UNREGISTERED_NESTED_X_PILOT",
                 "x2": "UNREGISTERED_NESTED_X2_PILOT"}
@@ -69,7 +81,9 @@ def run(path):
     try:
         elapsed = {}
         start = perf_counter()
-        nodal = recover_nodal(adjoint)
+        nodal = recover_nodal(
+            adjoint, free_shell_stiffness=(None if operators is None else
+                                           operators.shell_stiffness))
         elapsed["nodal_recovery_s"] = perf_counter()-start
         print(f"nodal recovery: {elapsed['nodal_recovery_s']:.3f} s", flush=True)
         start = perf_counter()

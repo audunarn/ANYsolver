@@ -11,6 +11,9 @@ from scripts._b3_e4_f03_qp_operator_identity import fingerprint
 from scripts.b3_e4_f03_q6_full_certificate_feasibility import child as certificate_child
 from scripts.b3_e4_f03_q6_positivity_feasibility import child as positivity_child
 from scripts.b3_e4_f03_qp_nested_x_pilot import run as physical_run
+from scripts.b3_e4_f03_qp_nested_x2_spatial import run as spatial_run
+from scripts.b3_e4_f03_q6_x2_shared_assembly_rehearsal import (
+    _recovery_source_hashes)
 
 
 @pytest.mark.parametrize("runner", [certificate_child, positivity_child])
@@ -25,6 +28,22 @@ def test_physical_route_rejects_wrong_shared_operators():
     wrong = SimpleNamespace(trace=FinitePadQpTrace(1))
     with pytest.raises(ValueError, match="shared physical operators"):
         physical_run(6, "x2", operators=wrong)
+
+
+def test_spatial_route_rejects_wrong_shared_operators(tmp_path):
+    state = tmp_path / "state.json"
+    state.write_text('{"grid":"x0"}', encoding="utf-8")
+    with pytest.raises(ValueError, match="shared Q6 shell operator required"):
+        spatial_run(state, operators=SimpleNamespace(trace=FinitePadQpTrace(1)))
+    wrong = assemble(FinitePadQpTrace(1))
+    with pytest.raises(ValueError, match="does not match spatial trace"):
+        spatial_run(state, operators=wrong)
+
+
+def test_shared_runner_pins_both_recovery_sources():
+    hashes = _recovery_source_hashes()
+    assert set(hashes) == {"spatial_source_sha256", "nodal_source_sha256"}
+    assert all(len(value) == 64 for value in hashes.values())
 
 
 def test_operator_fingerprint_detects_numerical_mutation():
