@@ -190,10 +190,11 @@ def test_q4_s3_patch_opens_and_recontacts_from_static_checkpoints():
     assert len(reclosed.steps) == 6
 
 
-def test_two_s3_integration_faces_share_four_material_pressure_nodes():
+def _two_s3_integration_faces(*, lower_bounds=(0.2, 1.2, 0.1, 1.1)):
     model = FEModel("s3_integration_patch_local")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
-    lower = ((0.2, 0.1), (1.2, 0.1), (1.2, 1.1), (0.2, 1.1))
+    x0, x1, y0, y1 = lower_bounds
+    lower = ((x0, y0), (x1, y0), (x1, y1), (x0, y1))
     upper = ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
     for node, (x, y) in enumerate(lower, 1):
         model.add_node(node, x, y, 0.0)
@@ -219,6 +220,11 @@ def test_two_s3_integration_faces_share_four_material_pressure_nodes():
     settings = ContactSolverSettings(
         pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
     )
+    return model, definition, settings
+
+
+def test_two_s3_integration_faces_share_four_material_pressure_nodes():
+    model, definition, settings = _two_s3_integration_faces()
     report = validate_general_contact(model, definition, settings)
     assert report.valid, report.issues
     manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
@@ -233,3 +239,57 @@ def test_two_s3_integration_faces_share_four_material_pressure_nodes():
     assert summary.integration_force[2] == pytest.approx(0.72, rel=1e-7)
     assert summary.target_force[2] == pytest.approx(-0.72, rel=1e-7)
     assert summary.gap_tolerance_met
+
+
+@pytest.mark.parametrize("edge", (1.0, 0.8))
+def test_two_s3_integration_faces_complete_consistent_uniform_press(edge):
+    model, definition, settings = _two_s3_integration_faces(
+        lower_bounds=(-0.1, edge if edge < 1.0 else 1.1, -0.1, 1.1),
+    )
+    weights = (
+        edge / 2 - edge**3 / 6,
+        edge**3 / 6,
+        edge**2 / 2 - edge**3 / 6,
+        edge / 2 - edge**2 / 2 + edge**3 / 6,
+    )
+    assert sum(weights) == pytest.approx(edge)
+    manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
+    trial = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node in (5, 6, 7, 8):
+        trial[model.mesh.dof_manager.get_node_dofs(node)[2]] = (
+            -0.4 / (1.0e6 * edge)
+        )
+    contact_force, _tangent, local = manager.evaluate(trial, tangent=False)
+    assert local.gap_tolerance_met
+    for node, weight in zip((5, 6, 7, 8), weights):
+        dof = model.mesh.dof_manager.get_node_dofs(node)[2]
+        assert -contact_force[dof] == pytest.approx(
+            0.4 * weight / edge, rel=1e-6,
+        )
+    model.add_boundary_condition(BoundaryCondition(
+        "lower_fixed", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "upper_guide", (5, 6, 7, 8),
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    # Integrate the two piecewise-linear S3 bases over 0 <= x <= edge,
+    # 0 <= y <= 1. This analytical load oracle does not call contact code.
+    load = LoadCase("uniform_press")
+    for node, weight in zip((5, 6, 7, 8), weights):
+        load.add_nodal_load(node, forces=(0.0, 0.0, -0.4 * weight / edge))
+    result = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=1, max_iterations=12,
+    )
+    assert result.status == "completed", (
+        result.failure_reason, result.load_factor, result.info.get("general_contact"),
+    )
+    summary = result.info["general_contact"]
+    assert summary["pressure_rank"] == 4
+    assert summary["overlapping_pairs"] == 2
+    assert summary["current_overlap_area"] == pytest.approx(edge)
+    assert summary["gap_tolerance_met"]
+    assert summary["integration_force"][2] == pytest.approx(0.4, rel=1e-5)
+    assert summary["target_force"][2] == pytest.approx(-0.4, rel=1e-5)

@@ -53,14 +53,29 @@ active pressure and a positive certified gap; the recontact force matched
 the initial closed state. These are separate local paths, not yet one
 combined slide–separate–recontact qualification case. Two S3 integration
 faces share four pressure nodes and passed a local physical force/rank check.
-A coupled S3 integration-side exploratory run was interrupted after exceeding
-the bounded development check time; that orientation has no coupled
-completion evidence.
+Their full and partial-overlap coupled uniform-pressure cases then completed
+with independently integrated nodal loads. An earlier uneven-load
+exploratory solve was interrupted after exceeding its bounded check time;
+its convergence remains unresolved.
 
 This profile has no general in-plane shell deformation or rotation, warped
 Q4, exact coincident-edge transition derivative, augmentation, friction,
 self-contact, initial disjoint-patch event activation or dynamic response.
 Q4/S3 mixed partial-contact and pressure-space stability remain unresolved.
+Uniform-pressure checks do not establish pressure-space stability under
+partial activation.
+
+One exploratory partial-contact resolution sequence holds the Q4/S3 geometry
+and total 0.4 N load fixed while refining the Q4 integration patch. At
+1 MPa/m with the declared 10 µm gap budget, one Q4 face stopped at 50% load
+and a 2×2 Q4 patch reached 62.5%. With a relaxed 1 mm diagnostic budget,
+the full-load conservative gaps were about −15.17 µm for 2×2 and −13.38 µm
+for 4×4. A 4×4 patch at 4 MPa/m completed full load under the original
+10 µm budget with a −7.92 µm conservative lower bound and balanced ±0.4 N
+normal forces. The latter is a focused local regression, not a frozen
+qualification case; the relaxed runs are diagnostics. Mesh, enforcement and
+integration convergence remain to be established separately.
+
 The full nonmatching slide, separation and recontact handoff and the main
 plan's refinement, independent-review and package gates remain open.
 
