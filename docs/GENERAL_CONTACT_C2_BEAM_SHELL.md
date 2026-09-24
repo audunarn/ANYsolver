@@ -64,3 +64,31 @@ Full C2 still requires general beam–shell segmentation and physical boundaries
 multi-cell beam topology, B3/beam pairs, moving rigid tools, refinement,
 resource measurements and independent review. C1 paired-shell pressure-space
 acceptance also remains open.
+
+## Planar shell patch seam slice
+
+The separate `CLASSICAL_B2_ROUND_TUBE_PLANAR_SHELL_PATCH_LINE_PENALTY_STATIC_DEV_V0`
+profile admits one B2 cell over 2–64 conforming, coplanar S3 V2D or qualified
+Q4 faces. The faces must share material node IDs at every internal seam, have
+one connected convex exterior, a continuous physical skin and one common skin
+lever. The shell nodes undergo only common translation, with fixed rotations.
+All other material, normal-law, stiffness, gap, radius and no-cap restrictions
+above apply.
+
+The actual straight B2 line is clipped against each current convex face.
+The resulting disjoint reference-line intervals integrate through the original
+S3/Q4 face interpolation. An exactly seam-aligned line has one deterministic
+owner, selected by stable face ID. The exterior edges alone receive the
+radius-covering clearance test. The two beam endpoints conservatively certify
+that clearance along the straight current centreline and the admitted linear
+trial path. An uncovered interval, nonconforming topology, overlap, nonconvex
+exterior, incompatible orientation or discontinuous skin fails explicitly.
+The tangent acts on B2 translations and common shell translation, the admitted
+motion manifold; it does not admit individual shell rotations or warping.
+
+Run [the patch seam example](../examples/general_contact_round_beam_shell_patch.py).
+`tests/test_general_contact_beam_shell_patch.py` checks the independent
+constant-gap line potential, paired global wrench, seam partition, slide,
+exterior-rim rejection, tangent, static route and restart. This is local
+development evidence. General curved line–surface contact, nonconvex patches,
+physical rims, beam caps, multi-cell beams and qualification remain open.

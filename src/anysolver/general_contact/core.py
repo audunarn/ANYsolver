@@ -751,9 +751,15 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
         surface.beam_radius is not None for surface in definition.surfaces
     ):
         if any(surface.beam_radius is None for surface in definition.surfaces):
-            from .beam_shell import _BeamShellManager
+            if any(surface.beam_radius is None and len(surface.element_ids) > 1
+                   for surface in definition.surfaces):
+                from .beam_shell_patch import _BeamShellPatchManager
 
-            manager = _BeamShellManager(model, definition, settings, initial_displacement)
+                manager = _BeamShellPatchManager(model, definition, settings, initial_displacement)
+            else:
+                from .beam_shell import _BeamShellManager
+
+                manager = _BeamShellManager(model, definition, settings, initial_displacement)
         else:
             from .beam_pair import _BeamPairManager
 

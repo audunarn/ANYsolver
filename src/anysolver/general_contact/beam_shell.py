@@ -22,6 +22,7 @@ _GAUSS_8 = np.polynomial.legendre.leggauss(8)
 _GAUSS_16 = np.polynomial.legendre.leggauss(16)
 PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_S3_INTERIOR_LINE_PENALTY_STATIC_DEV_V0"
 PROFILE_Q4 = "CLASSICAL_B2_B3_ROUND_TUBE_Q4_INTERIOR_LINE_PENALTY_STATIC_DEV_V0"
+PROFILE_PATCH = "CLASSICAL_B2_ROUND_TUBE_PLANAR_SHELL_PATCH_LINE_PENALTY_STATIC_DEV_V0"
 
 
 @dataclass(frozen=True)
@@ -148,7 +149,9 @@ class InteriorBeamShellLine:
         return minimum
 
     def evaluate(self, beam_positions: np.ndarray,
-                 shell_positions: np.ndarray) -> InteriorBeamShellState:
+                 shell_positions: np.ndarray, *,
+                 integration_window: tuple[float, float] | None = None,
+                 check_rim: bool = True) -> InteriorBeamShellState:
         beam = np.asarray(beam_positions, dtype=float)
         shell_points = np.asarray(shell_positions, dtype=float)
         if (beam.shape != self.reference.shape
@@ -158,15 +161,24 @@ class InteriorBeamShellLine:
             raise ValueError("beam-shell trial positions have invalid size or nonfinite values")
         shell = PlanarFace(self.shell_reference.feature_id, shell_points)
         normal, tangent, binormal, polygon_xy, projector = self._frame(shell)
-        minimum_rim = self._inside_clearance(
+        minimum_rim = (self._inside_clearance(
             _bezier_controls(beam), shell.corners[0], normal,
             tangent, binormal, polygon_xy,
-        )
+        ) if check_rim else float("inf"))
         coefficients = _gap_coefficients(
             (beam - shell.corners[0]) @ normal - self.radius
         )
         minimum_gap = _minimum_polynomial(coefficients)
         intervals = _active_intervals(coefficients)
+        if integration_window is not None:
+            window_left, window_right = integration_window
+            if not (-1.0 <= window_left < window_right <= 1.0):
+                raise ValueError("beam-shell integration window must lie within the beam cell")
+            intervals = tuple(
+                (max(left, window_left), min(right, window_right))
+                for left, right in intervals
+                if min(right, window_right) > max(left, window_left)
+            )
         beam_force = np.zeros_like(beam)
         shell_force = np.zeros_like(shell_points)
         energy = 0.0
@@ -251,6 +263,10 @@ def validate_beam_shell_contact(model, definition: ContactDefinition,
         ), PROFILE)
     beam, shell = beams[0], shells[0]
     interaction = definition.interactions[0]
+    if len(shell.element_ids) > 1:
+        from .beam_shell_patch import validate_beam_shell_patch_contact
+
+        return validate_beam_shell_patch_contact(model, definition, controls)
     if len(beam.element_ids) != 1 or len(shell.element_ids) != 1:
         issues.append("interior beam-shell profile admits one cell and one face")
     if controls.pair_motion != "general":
@@ -473,7 +489,7 @@ class _BeamShellManager:
         tangent_matrix = None
         if tangent:
             beam_columns = sorted(set(map(int, self.beam_dofs[:, :3].ravel())))
-            if len(self.shell_ids) == 4:
+            if len(self.shell_ids) == 4 or getattr(self, "shell_common_translation_only", False):
                 # A single Q4-node perturbation would warp the face. The
                 # admitted Q4 motion has only three collective translation
                 # directions; distribute each collective derivative equally
