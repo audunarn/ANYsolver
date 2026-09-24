@@ -1,5 +1,37 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**Current state and decision, 24 September 2026 (policy 2026-09-24.2):**
+Select a defensible native six-channel shell port and exact line multiplier
+space. The classical axial comparator remains unsettled in transverse
+order, but further global axial refinement will not decide the native
+connection. A planar signed KKT check separates the n16 negative retained
+branch from a Q4 fine-host shell/trace branch; neither it nor the earlier
+axial compliance quotient ranks spaces. A 36-case *native six-channel*
+torque/tip-z-force screen at beam:shell-host ratios 8:1, 1:1 and 1:4 has
+exact balance/work but strongly nonmonotone physical responses (Q4 P1
+tip-z displacement `19.21→31.47→4.17 µm`). Both meshes
+change along this path, so it proves neither locking nor convergence.
+The executed 3D CalculiX canary has a different eccentric footprint,
+section, load and support contract and cannot serve as a native line
+torque/shear reference. Classical axial, Q6/finite-pad and native evidence
+remain separate.
+
+**Remaining uncertainty and action:** Establish a physically matched
+loaded torque/shear reference (geometry, section resultants, supports,
+loads, connection work) before another broad response sweep. A bounded
+work-scaled subspace/host-patch check can distinguish physical Q4
+in-plane compliance from four-sample-port or norm effects; its outcome
+determines whether the shell field or port contract needs revision.
+Any subsequent mesh-ratio run must vary one mesh at a time and cover the
+required reciprocal 1:8 case. No multiplier is selected from small gaps,
+residuals or a spectral quotient. Raw latest evidence is
+`B3_GE_E4_PL_F03_SIGNED_FLOOR_MODE_V2.json`,
+`B3_GE_E4_PL_F03_SIGNED_MODE_{Q4,S3}_B8_S64_V2.json`, and the
+`B3_GE_E4_PL_F03_NATIVE_TORQUE_SHEAR_RATIO_{V1,CONTROL_V2}.jsonl`
+inventories. Formal F03 authority is unconsumed; G0B is open and G1 barred.
+The prospective process update adds no gate or authority and leaves all
+frozen evidence, failures and scientific criteria intact.
+
 **Current transverse-partition decision, 24 September 2026:** A systematic
 midpoint split of all three y intervals (six elements) passed 18 focused
 checks and two bounded runs, but it did not improve order-to-order physical

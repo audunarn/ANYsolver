@@ -29,7 +29,7 @@ def relative(a, b):
     return float(np.linalg.norm(a-b)/max(np.linalg.norm(b), np.finfo(float).tiny))
 
 
-def measure(topology, n_beam, n_shell):
+def measure(topology, n_beam, n_shell, *, observe_modes=False):
     beam, shell = build(n_beam), make_shell(n_shell, topology)
     n_p = shell.free_count + len(beam.physical)
     spaces = {s.name:s for s in candidate_spaces(beam, shell)}
@@ -175,7 +175,10 @@ def measure(topology, n_beam, n_shell):
         if block_skew > 1e-9:
             raise ValueError(f'{name} signed KKT nonsymmetric: {block_skew}')
         kb = linalg.svdvals(block)
-        eb = linalg.eigvalsh(block, check_finite=True)
+        if observe_modes:
+            eb, ub = linalg.eigh(block, check_finite=True)
+        else:
+            eb = linalg.eigvalsh(block, check_finite=True)
         eig_zero = 1e-10*float(np.max(np.abs(eb)))
         schur_zero = 1e-10*float(np.max(np.abs(es)))
         rhs = np.sin(np.arange(len(block), dtype=float)+1.)
@@ -204,6 +207,82 @@ def measure(topology, n_beam, n_shell):
             'signed_kkt_skew':block_skew,
             'signed_kkt_equation_residual':equation_residual,
         }
+        if observe_modes:
+            indices = np.argsort(np.abs(eb))[:min(6,len(eb))]
+            nearest = int(indices[0])
+            mode = ub[:,nearest]
+            eigen_residual = float(np.linalg.norm(
+                block @ mode - eb[nearest]*mode))
+            if (eigen_residual > 1e-9 or
+                    abs(abs(eb[nearest])-kb[-1]) > 1e-8*max(kb[-1],1e-15)):
+                raise ValueError('signed KKT mode/equation mismatch')
+            primal = mode[:len(k)]
+            dual = mode[len(k):]
+            raw_dual = ins @ dual
+            raw_primal = ih @ primal
+            factored_primal = transform @ raw_primal
+            physical_part = float(factored_primal[:n_p] @ ke @
+                                  factored_primal[:n_p])
+            retained_absolute_part = float(factored_primal[n_p:] @
+                                           absolute_arr @ factored_primal[n_p:])
+            retained_signed_part = float(factored_primal[n_p:] @ arr @
+                                         factored_primal[n_p:])
+            h0_part = float(raw_primal @ h0 @ raw_primal)
+            graph_part = float(raw_primal @ g @ raw_primal)
+            if (abs(h0_part+graph_part-primal@primal) > 1e-8 or
+                    abs(physical_part+retained_absolute_part-h0_part) > 1e-8 or
+                    abs(physical_part+retained_signed_part-
+                        primal@ah@primal) > 1e-8):
+                raise ValueError('signed KKT mode primal-norm decomposition failed')
+            nearby_dual = ins @ ub[len(k):,indices]
+            channel_subspace_power = np.array([
+                np.linalg.norm(nearby_dual[channel*n_beam:
+                                           (channel+1)*n_beam])**2
+                for channel in range(3)])
+            channel_subspace_power /= max(float(np.sum(channel_subspace_power)),
+                                          np.finfo(float).tiny)
+            largest = max(float(np.max(np.abs(raw_dual))),
+                          np.finfo(float).tiny)
+            channel_profiles = []
+            for channel in range(3):
+                coefficients = raw_dual[channel*n_beam:(channel+1)*n_beam]
+                normalized = coefficients/largest
+                significant = normalized[np.abs(normalized)>1e-8]
+                channel_profiles.append({
+                    'normalized_coefficients':normalized.tolist(),
+                    'normalized_l2':float(np.linalg.norm(normalized)),
+                    'sign_changes':int(np.count_nonzero(
+                        significant[1:]*significant[:-1]<0)),
+                })
+            out['spaces'][name]['lowest_mode_observation'] = {
+                'signed_eigenvalue':float(eb[nearest]),
+                'smallest_absolute_eigenvalues':
+                    np.abs(eb[indices]).tolist(),
+                'signed_nearby_eigenvalues':eb[indices].tolist(),
+                'eigen_equation_residual':eigen_residual,
+                'primal_h_coordinate_share':float(primal@primal),
+                'multiplier_n_coordinate_share':float(dual@dual),
+                'primal_h0_contribution':h0_part,
+                'primal_trace_graph_contribution':graph_part,
+                'physical_schur_positive_contribution':physical_part,
+                'retained_absolute_contribution':retained_absolute_part,
+                'retained_signed_contribution':retained_signed_part,
+                'signed_primal_operator_rayleigh':float(primal@ah@primal),
+                'normalized_constraint_action_l2':float(np.linalg.norm(bh@primal)),
+                'six_mode_raw_multiplier_channel_power_shares_x_y_yaw':
+                    channel_subspace_power.tolist(),
+                'work_scaled_primal_coordinate_l2':{
+                    'shell':float(np.linalg.norm(
+                        raw_primal[:shell.free_count])),
+                    'beam_physical':float(np.linalg.norm(
+                        raw_primal[shell.free_count:n_p])),
+                    'beam_retained':float(np.linalg.norm(raw_primal[n_p:])),
+                },
+                'raw_multiplier_row_profiles_x_y_yaw':channel_profiles,
+                'interpretation_limit':
+                    'single eigenvector is unstable if nearby modes cluster; '
+                    'raw coefficient magnitudes are not physical channel norms',
+            }
     return out
 
 
@@ -212,10 +291,12 @@ def main():
     parser.add_argument('--topology', choices=('Q4','S3-V2D'), required=True)
     parser.add_argument('--n-beam', type=int, required=True)
     parser.add_argument('--n-shell', type=int, required=True)
+    parser.add_argument('--observe-modes', action='store_true')
     args = parser.parse_args()
     if (args.n_beam,args.n_shell) not in ((4,4),(8,8),(16,16),(8,1),(8,64)):
         parser.error('unregistered native mesh')
-    print(json.dumps(measure(args.topology,args.n_beam,args.n_shell),
+    print(json.dumps(measure(args.topology,args.n_beam,args.n_shell,
+                             observe_modes=args.observe_modes),
                      sort_keys=True, allow_nan=False))
 
 

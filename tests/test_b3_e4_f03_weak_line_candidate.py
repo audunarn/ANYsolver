@@ -474,3 +474,18 @@ def test_extended_mesh_reference_kkt_executes_without_shape_or_rank_loss(
     physical = kkt.coordinate_scale*solution
     assert np.linalg.norm(kkt.constraint_jacobian[:, kkt.free_primal]@
                           physical[:count]) < 1e-9
+
+
+def test_transverse_tip_force_has_physical_support_wrench_and_work_balance():
+    from scripts.b3_e4_f03_weak_line_resolution_screen import one_case
+
+    result = one_case(
+        "Q4", 4, "continuous_linear", load_kind="transverse_force_z",
+        n_s=2, native_half_cells=4, shell_support_policy="both_xy_edges")
+    assert result["applied_force_z_n"] == 1000.
+    assert result["applied_moment_y_about_origin_n_m"] == -1000.
+    assert result["beam_tip_uz_m"] > 0.
+    assert result["shell_full_minus_physical_inplane_energy_j"] > 0.
+    assert abs(result["global_force_z_balance_n"]) < 1e-7
+    assert abs(result["global_moment_y_balance_n_m"]) < 1e-7
+    assert abs(result["global_work_error_j"]) < 1e-8

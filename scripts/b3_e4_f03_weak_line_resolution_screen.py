@@ -69,9 +69,12 @@ def one_case(topology: str, intervals: int, kind: str, *,
                 pose_from_e4_total_local_translation)
     shell_size = 6*shell.panel.node_count
     tip_rx = shell_size+6*beam.n_half_cells+3
+    tip_uz = shell_size+6*beam.n_half_cells+2
     load = np.zeros(shell_size+beam.context.count)
     if load_kind == "torsion":
         load[tip_rx] = 100.
+    elif load_kind == "transverse_force_z":
+        load[tip_uz] = 1000.
     elif load_kind == "axial_wave":
         positions = (beam.context.initial.mechanical.positions+
                      beam.context.initial.mechanical.position_low)
@@ -106,14 +109,25 @@ def one_case(topology: str, intervals: int, kind: str, *,
     shell_reaction_mx = float(np.sum(
         shell_support[:, 3]+shell_reference_nodes[:, 1]*shell_support[:, 2]
         -shell_reference_nodes[:, 2]*shell_support[:, 1]))
+    shell_reaction_fz = float(np.sum(shell_support[:, 2]))
+    shell_reaction_my = float(np.sum(
+        shell_support[:, 4]+shell_reference_nodes[:, 2]*shell_support[:, 0]
+        -shell_reference_nodes[:, 0]*shell_support[:, 2]))
     beam_root_reaction_mx = float(physical_residual[shell_size+3])
+    beam_root_reaction_fz = float(physical_residual[shell_size+2])
+    beam_root_reaction_my = float(physical_residual[shell_size+4])
     applied_torque_x = float(load[tip_rx])
+    applied_force_z = float(load[tip_uz])
+    applied_moment_y = -applied_force_z  # tip at reference x=1 m, z=0
     shell_total = full[:shell_size]
     shell_inplane = shell_total.reshape(-1, 6)[:, :2].ravel()
     shell_physical_inplane_energy = float(
         .5*shell_inplane@(shell.panel.stiffness@ shell_inplane))
     shell_full_energy = float(.5*shell_total@kkt.primal_tangent[
         :shell_size, :shell_size]@shell_total)
+    beam_energy = float(.5*full[shell_size:]@
+                        kkt.primal_tangent[shell_size:, shell_size:]@
+                        full[shell_size:])
     beam_state = beam.context.advance(
         beam.context.initial.mechanical, full[shell_size:])
     shell_reference = np.zeros(shell_size)
@@ -156,6 +170,7 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "shell_elements": shell.panel.element_count,
         "native_elements": beam.n_half_cells//2,
         "tip_rx_rad": float(full[tip_rx]),
+        "beam_tip_uz_m": float(full[tip_uz]),
         "beam_tip_ux_m": float(beam_nodal[-1, 0]),
         "beam_max_abs_ux_m": float(np.max(np.abs(beam_nodal[:, 0]))),
         "shell_max_abs_ux_m": float(np.max(np.abs(
@@ -169,9 +184,9 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "shell_physical_inplane_energy_j": shell_physical_inplane_energy,
         "shell_full_minus_physical_inplane_energy_j": float(
             shell_full_energy-shell_physical_inplane_energy),
-        "beam_energy_j": float(.5*full[shell_size:]@
-                               kkt.primal_tangent[shell_size:, shell_size:]@
-                               full[shell_size:]),
+        "beam_energy_j": beam_energy,
+        "global_work_error_j": float(
+            2*(shell_full_energy+beam_energy)-full@load),
         "shell_reaction_fx_n": shell_reaction_fx,
         "beam_root_reaction_fx_n": beam_root_reaction_fx,
         "global_axial_balance_n": float(
@@ -182,6 +197,16 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "beam_root_reaction_torque_x_n_m": beam_root_reaction_mx,
         "global_torque_x_balance_n_m": float(
             shell_reaction_mx+beam_root_reaction_mx+applied_torque_x),
+        "applied_force_z_n": applied_force_z,
+        "shell_support_reaction_fz_n": shell_reaction_fz,
+        "beam_root_reaction_fz_n": beam_root_reaction_fz,
+        "global_force_z_balance_n": float(
+            shell_reaction_fz+beam_root_reaction_fz+applied_force_z),
+        "applied_moment_y_about_origin_n_m": applied_moment_y,
+        "shell_support_reaction_my_about_origin_n_m": shell_reaction_my,
+        "beam_root_reaction_my_about_origin_n_m": beam_root_reaction_my,
+        "global_moment_y_balance_n_m": float(
+            shell_reaction_my+beam_root_reaction_my+applied_moment_y),
         "gap_l2_m": float(np.sqrt(np.trapezoid(gaps*gaps, dx=1./128))),
         "gap_max_m": float(np.max(gaps)),
         "gap_axial_l2_m": float(np.sqrt(np.trapezoid(
@@ -209,14 +234,17 @@ def main() -> None:
                         choices=("legacy_three_left_nodes", "both_xy_edges"),
                         default="legacy_three_left_nodes")
     parser.add_argument("--sinusoidal-axial-density", action="store_true")
+    parser.add_argument("--transverse-force-z", action="store_true")
     arguments = parser.parse_args()
-    if arguments.axial_wave and arguments.sinusoidal_axial_density:
-        parser.error("select only one axial load")
+    if sum((arguments.axial_wave, arguments.sinusoidal_axial_density,
+            arguments.transverse_force_z)) > 1:
+        parser.error("select only one diagnostic load")
     if arguments.paired_shell_intervals and not arguments.paired_refinement:
         parser.error("paired shell intervals require paired refinement")
     shell_port = ("local_translation" if arguments.local_translation
                   else "rail")
-    load_kind = ("sinusoidal_axial_density" if arguments.sinusoidal_axial_density
+    load_kind = ("transverse_force_z" if arguments.transverse_force_z else
+                 "sinusoidal_axial_density" if arguments.sinusoidal_axial_density
                  else "axial_wave" if arguments.axial_wave else "torsion")
     kinds = ("piecewise_constant", "continuous_linear")
     if arguments.include_dual:
