@@ -22,6 +22,8 @@ from .overlap import reference_shell_face
 
 PROFILE = "Q4_S3_FIXED_SPHERE_PENALTY_MORTAR_STATIC_DEV_V0"
 CYLINDER_PROFILE = "Q4_S3_FIXED_INFINITE_CYLINDER_PENALTY_MORTAR_STATIC_DEV_V0"
+MOVING_SPHERE_PROFILE = "Q4_S3_TRANSLATING_SPHERE_PENALTY_MORTAR_FORCE_STATIC_DEV_V0"
+MOVING_CYLINDER_PROFILE = "Q4_S3_TRANSLATING_INFINITE_CYLINDER_PENALTY_MORTAR_FORCE_STATIC_DEV_V0"
 
 
 class _GapCertificateLimitError(MemoryError):
@@ -107,7 +109,12 @@ def validate_sphere_shell_contact(model, definition: ContactDefinition,
                     for node in model.mesh.elements[element_id].node_ids}
         if len(node_ids) > controls.maximum_patch_normal_dofs:
             issues.append(f"{obstacle} pressure-node resource limit exceeded")
-    profile = CYLINDER_PROFILE if obstacle == "cylinder" else PROFILE
+    moving = parts is not None and parts[1].path_translation is not None
+    profile = (
+        MOVING_CYLINDER_PROFILE if obstacle == "cylinder" and moving else
+        CYLINDER_PROFILE if obstacle == "cylinder" else
+        MOVING_SPHERE_PROFILE if moving else PROFILE
+    )
     return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
@@ -263,7 +270,11 @@ class _SphereShellManager:
         surface, body, interaction = _sphere_parts(model, definition)[1]
         self.side = surface.side
         self.kind = body.kind
-        self.center = np.asarray(body.point, dtype=float)
+        self.reference_center = np.asarray(body.point, dtype=float)
+        self.path_translation = (np.zeros(3) if body.path_translation is None
+                                 else np.asarray(body.path_translation, dtype=float))
+        self.path_factor = 0.0
+        self.center = self.reference_center.copy()
         self.radius = float(body.radius)
         self.axis = (None if body.kind == "sphere" else
                      np.asarray(body.normal, dtype=float))
@@ -306,6 +317,8 @@ class _SphereShellManager:
             "body": {"name": body.name, "kind": body.kind,
                      "center": list(body.point),
                      **({"axis": list(body.normal)} if body.kind == "cylinder" else {}),
+                     **({"path_translation": list(body.path_translation)}
+                        if body.path_translation is not None else {}),
                      "radius": body.radius},
             "interaction": {"name": interaction.name,
                             "normal_stiffness": interaction.normal_stiffness,
@@ -318,8 +331,23 @@ class _SphereShellManager:
                          "maximum_shell_tilt": self.settings.maximum_shell_tilt},
         }
 
-    def _project(self, points: np.ndarray) -> np.ndarray:
-        return (np.asarray(points, dtype=float) - self.center) @ self.metric
+    def center_at(self, factor: float) -> np.ndarray:
+        value = float(factor)
+        if not np.isfinite(value) or value < 0.0:
+            raise ValueError("rigid-tool path factor must be finite and nonnegative")
+        center = self.reference_center + value * self.path_translation
+        if not np.all(np.isfinite(center)):
+            raise ValueError("rigid-tool path position is nonfinite")
+        return center
+
+    def set_path_factor(self, factor: float) -> None:
+        self.center = self.center_at(factor)
+        self.path_factor = float(factor)
+
+    def _project(self, points: np.ndarray,
+                 center: np.ndarray | None = None) -> np.ndarray:
+        origin = self.center if center is None else center
+        return (np.asarray(points, dtype=float) - origin) @ self.metric
 
     def _check_tilt(self, u: np.ndarray) -> None:
         for face in self.faces:
@@ -328,7 +356,8 @@ class _SphereShellManager:
             if float(np.max(np.linalg.norm(tilt, axis=1))) > self.settings.maximum_shell_tilt:
                 raise ValueError(f"{self.kind} shell tilt exceeds the admitted small-rotation limit")
 
-    def _check_side(self, u: np.ndarray) -> None:
+    def _check_side(self, u: np.ndarray,
+                    center: np.ndarray | None = None) -> None:
         sign = 1.0 if self.side == "top" else -1.0
         for face in self.faces:
             parameters = ((1.0 / 3.0, 1.0 / 3.0) if len(face.node_ids) == 3
@@ -338,7 +367,7 @@ class _SphereShellManager:
             director = face.director + np.cross(rotation, face.director)
             outward = sign * director
             position = face.point(parameters, u)
-            if float((-self._project(position)) @ outward) <= 0.0:
+            if float((-self._project(position, center)) @ outward) <= 0.0:
                 raise ValueError(
                     f"{self.kind} lies behind selected {self.side} side of face {face.element_id}"
                 )
@@ -409,7 +438,12 @@ class _SphereShellManager:
                     )
 
     def _certify_gap(self, start: np.ndarray, end: np.ndarray | None,
-                     tolerance: float) -> tuple[float, float, int]:
+                     tolerance: float, *, start_factor: float | None = None,
+                     end_factor: float | None = None) -> tuple[float, float, int]:
+        start_center = (self.center if start_factor is None else
+                        self.center_at(start_factor))
+        end_center = (self.center if end_factor is None else
+                      self.center_at(end_factor))
         self._check_tilt(start)
         self._check_geometry(start)
         if end is not None:
@@ -433,10 +467,13 @@ class _SphereShellManager:
                     )
                 parameter_samples = (*cell, tuple(np.mean(cell, axis=0)))
                 vertices = np.asarray([face.point(point, start) for point in cell])
+                radial_vertices = self._project(vertices, start_center)
                 if end is not None:
-                    vertices = np.vstack((vertices,
-                                          [face.point(point, end) for point in cell]))
-                radial_vertices = self._project(vertices)
+                    end_vertices = np.asarray([face.point(point, end)
+                                               for point in cell])
+                    radial_vertices = np.vstack((
+                        radial_vertices, self._project(end_vertices, end_center),
+                    ))
                 lower_corner = np.min(radial_vertices, axis=0)
                 upper_corner = np.max(radial_vertices, axis=0)
                 closest = np.maximum(lower_corner,
@@ -444,14 +481,14 @@ class _SphereShellManager:
                 lower = float(np.linalg.norm(closest) - self.radius)
                 start_samples = self._project(np.asarray([
                     face.point(point, start) for point in parameter_samples
-                ]))
+                ]), start_center)
                 if end is None:
                     gaps = np.linalg.norm(start_samples, axis=1) - self.radius
                     minimum_sampled = min(minimum_sampled, float(np.min(gaps)))
                 else:
                     end_samples = self._project(np.asarray([
                         face.point(point, end) for point in parameter_samples
-                    ]))
+                    ]), end_center)
                     motion = end_samples - start_samples
                     squared = np.einsum("ij,ij->i", motion, motion)
                     parameter = np.zeros(len(parameter_samples))
@@ -609,3 +646,46 @@ class _SphereShellManager:
                 upper = middle
         self.swept_trial_cutbacks += 1
         return max(0.0, 0.98 * lower)
+
+    def swept_increment_admissible(self, start: np.ndarray, end: np.ndarray,
+                                   start_factor: float,
+                                   end_factor: float) -> bool:
+        if not np.any(self.path_translation):
+            return True
+        first_center = self.center_at(start_factor)
+        last_center = self.center_at(end_factor)
+        self._check_side(start, first_center)
+        try:
+            self._check_side(end, last_center)
+        except ValueError:
+            self.swept_trial_cutbacks += 1
+            return False
+        try:
+            lower = self._certify_gap(
+                start, end, self.gap_tolerance,
+                start_factor=start_factor, end_factor=end_factor,
+            )[0]
+        except _GapCertificateLimitError:
+            lower = -float("inf")
+        if lower >= -self.gap_tolerance:
+            return True
+        self.swept_trial_cutbacks += 1
+        return False
+
+    def tool_work_increment(self, start: np.ndarray, end: np.ndarray,
+                            start_factor: float, end_factor: float) -> float:
+        if not np.any(self.path_translation):
+            return 0.0
+        previous_factor = self.path_factor
+        try:
+            self.set_path_factor(start_factor)
+            first_force = np.asarray(self.evaluate(start, tangent=False)[2].rigid_force)
+            self.set_path_factor(end_factor)
+            last_force = np.asarray(self.evaluate(end, tangent=False)[2].rigid_force)
+        finally:
+            self.set_path_factor(previous_factor)
+        motion = (float(end_factor) - float(start_factor)) * self.path_translation
+        work = float(0.5 * (first_force + last_force) @ motion)
+        if not np.isfinite(work):
+            raise ValueError("rigid-tool contact work is nonfinite")
+        return work

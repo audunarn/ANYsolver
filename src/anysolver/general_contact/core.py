@@ -49,6 +49,7 @@ class RigidContactBody:
     point: tuple[float, float, float]
     normal: tuple[float, float, float] | None = None
     radius: float | None = None
+    path_translation: tuple[float, float, float] | None = None
 
     def __post_init__(self) -> None:
         point = np.asarray(self.point, dtype=float)
@@ -57,6 +58,14 @@ class RigidContactBody:
         if point.shape != (3,) or not np.all(np.isfinite(point)):
             raise ValueError("rigid contact point must contain three finite values")
         object.__setattr__(self, "point", tuple(float(x) for x in point))
+        if self.path_translation is not None:
+            translation = np.asarray(self.path_translation, dtype=float)
+            if translation.shape != (3,) or not np.all(np.isfinite(translation)):
+                raise ValueError("rigid contact path translation must contain three finite values")
+            object.__setattr__(self, "path_translation", (
+                None if not np.any(translation) else
+                tuple(float(x) for x in translation)
+            ))
         if self.kind == "sphere":
             if self.normal is not None or self.radius is None:
                 raise ValueError("rigid sphere requires a radius and no plane normal")
@@ -251,6 +260,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         from .sphere import validate_sphere_shell_contact
 
         return validate_sphere_shell_contact(model, definition, settings)
+    if any(body.path_translation is not None for body in definition.rigid_bodies):
+        return ContactValidationReport("invalid", (
+            "prescribed rigid-plane motion is not admitted by the guided profile",
+        ))
     if settings is not None and settings.pair_motion != "guided":
         return ContactValidationReport("invalid", ("rigid plane requires guided pair_motion",))
     surface_by_name = {surface.name: surface for surface in definition.surfaces}

@@ -6171,6 +6171,11 @@ def _solve_static_nonlinear_under_lease(
     def assemble_force_system(path_factor, *args, **kwargs):
         # Private load-aware candidate only; all existing formulations retain
         # their original assembler and load semantics.
+        from .general_contact.core import active_contact_manager
+
+        contact_manager = active_contact_manager()
+        if contact_manager is not None and hasattr(contact_manager, "set_path_factor"):
+            contact_manager.set_path_factor(path_factor)
         if native_generalized_model:
             from ._ge_beam3_native_generalized_program import assemble_at
             return assemble_at(path_factor, *args, **kwargs)
@@ -6195,6 +6200,18 @@ def _solve_static_nonlinear_under_lease(
         )
         q_trial = q_start.copy()
         u = full_displacement(q_trial, path_factor)
+        from .general_contact.core import active_contact_manager
+
+        contact_manager = active_contact_manager()
+        if (contact_manager is not None
+                and hasattr(contact_manager, "swept_increment_admissible")
+                and not contact_manager.swept_increment_admissible(
+                    full_displacement(q_start, lam), u, lam, path_factor,
+                )):
+            return (
+                False, q_start, committed_states, float("inf"), 0,
+                "contact_gap_exceeded", None,
+            )
         F_int, K_T, trial_states = assemble_force_system(
             path_factor,
             model,
@@ -6251,6 +6268,21 @@ def _solve_static_nonlinear_under_lease(
                 if contact_manager is not None and not contact_manager.evaluate(
                     u, tangent=False
                 )[2].gap_tolerance_met:
+                    return (
+                        False,
+                        q_start,
+                        committed_states,
+                        residual_norm,
+                        iteration,
+                        "contact_gap_exceeded",
+                        None,
+                    )
+                if (contact_manager is not None
+                        and hasattr(contact_manager, "swept_increment_admissible")
+                        and not contact_manager.swept_increment_admissible(
+                            full_displacement(q_start, lam), u,
+                            lam, path_factor,
+                        )):
                     return (
                         False,
                         q_start,
@@ -6723,6 +6755,17 @@ def _solve_static_nonlinear_under_lease(
                 line_search_used = True
 
             if converged:
+                from .general_contact.core import active_contact_manager
+
+                contact_manager = active_contact_manager()
+                contact_tool_work_increment = 0.0
+                if (contact_manager is not None
+                        and hasattr(contact_manager, "tool_work_increment")):
+                    contact_tool_work_increment = contact_manager.tool_work_increment(
+                        full_displacement(q, lam),
+                        full_displacement(q_new, lam_trial),
+                        lam, lam_trial,
+                    )
                 q = q_new
                 lam = lam_trial
                 committed_states = _commit_nonlinear_state_candidate(
@@ -6907,6 +6950,10 @@ def _solve_static_nonlinear_under_lease(
                             name: list(values)
                             for name, values in support_reactions.items()
                         },
+                        **({"contact_tool_work_increment": contact_tool_work_increment}
+                           if contact_manager is not None
+                           and hasattr(contact_manager, "tool_work_increment")
+                           and np.any(contact_manager.path_translation) else {}),
                     }
                 )
                 if record_increment_snapshots:
@@ -7267,6 +7314,9 @@ def solve_static_nonlinear(
                 and (kinematics != "von_karman"
                      or corotational_tangent != "auto")):
             raise ValueError("radial rigid contact currently admits von_karman kinematics only")
+        if any(body.path_translation is not None for body in contact.rigid_bodies):
+            if str(control).lower() != "force" or load_program is not None:
+                raise ValueError("prescribed rigid-tool translation currently requires force control without a load program")
         if fracture_config is not None or imperfection is not None:
             raise ValueError("contact with fracture or imperfection is not yet admitted")
         if not contact.rigid_bodies:
@@ -7344,6 +7394,8 @@ def solve_static_nonlinear(
                 model, contact, contact_settings, initial_displacements
             ) as contact_manager:
                 result = run_solver()
+                if hasattr(contact_manager, "set_path_factor"):
+                    contact_manager.set_path_factor(result.load_factor)
                 summary = contact_manager.evaluate(result.displacements, tangent=False)[2]
                 summary_payload = summary.to_dict()
                 summary_payload.update(
@@ -7355,6 +7407,18 @@ def solve_static_nonlinear(
                     ),
                     swept_trial_cutbacks=contact_manager.swept_trial_cutbacks,
                 )
+                if (hasattr(contact_manager, "path_translation")
+                        and np.any(contact_manager.path_translation)):
+                    increments = result.info.get("force_displacement_history", [])
+                    tool_work = float(sum(
+                        float(item.get("contact_tool_work_increment", 0.0))
+                        for item in increments
+                    ))
+                    summary_payload.update(
+                        rigid_tool_position=contact_manager.center.tolist(),
+                        rigid_contact_work_trapezoid=tool_work,
+                        prescribed_actuator_work_trapezoid=-tool_work,
+                    )
                 result.info["general_contact"] = summary_payload
                 return result
         from .general_contact.core import suspend_contact
