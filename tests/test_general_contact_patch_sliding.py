@@ -65,6 +65,12 @@ def test_q4_against_two_s3_faces_uses_physical_offsets_and_shared_pressure():
     assert summary.integration_force[2] == pytest.approx(0.72, rel=1e-7)
     assert summary.target_force[2] == pytest.approx(-0.72, rel=1e-7)
     assert summary.gap_tolerance_met
+    assert summary.minimum_positive_support_m2 > 0.0
+    assert summary.maximum_positive_support_m2 >= summary.minimum_positive_support_m2
+    assert summary.pressure_gradient_condition >= 1.0
+    assert summary.minimum_weighted_gap_m == pytest.approx(-1.0e-6, abs=1.0e-10)
+    assert summary.maximum_algorithmic_pressure_Pa == pytest.approx(1.0)
+    assert summary.weighted_to_physical_gap_span_m == pytest.approx(0.0, abs=1.0e-10)
     assert sum(force[model.mesh.dof_manager.get_node_dofs(node)[2]]
                for node in (5, 6, 7, 8)) == pytest.approx(-0.72)
     model.add_boundary_condition(BoundaryCondition(
@@ -239,6 +245,7 @@ def test_q4_s3_patch_combines_press_slide_open_and_recontact():
     assert history[1]["contact"]["current_overlap_area"] == pytest.approx(0.81)
     assert history[2]["contact"]["active_pressure_dofs"] == 0
     assert history[2]["contact"]["conservative_lower_gap"] > 0.0
+    assert history[2]["contact"]["maximum_algorithmic_pressure_Pa"] == 0.0
     assert history[3]["contact"]["integration_force"][2] > 0.0
     half = solve_static_nonlinear(
         model, contact=definition, contact_settings=settings,
@@ -305,6 +312,10 @@ def test_q4_s3_patch_activates_from_initially_disjoint_overlap():
         np.zeros(model.mesh.dof_manager.total_dofs), tangent=False,
     )[2]
     assert initial.current_overlap_area == 0.0
+    assert initial.minimum_positive_support_m2 is None
+    assert initial.pressure_gradient_condition is None
+    assert initial.minimum_weighted_gap_m is None
+    assert initial.maximum_algorithmic_pressure_Pa == 0.0
     result = solve_static_nonlinear(
         model, contact=definition, contact_settings=settings,
         contact_path_program=program, max_iterations=18,

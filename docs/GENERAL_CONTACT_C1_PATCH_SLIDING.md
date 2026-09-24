@@ -38,6 +38,16 @@ and exhaustive face-pair loop are development limitations. Frictionless
 penalty contact has no committed contact history; the version-2 restart
 contract binds the contact definitions and numerical controls.
 
+The result also reports the smallest and largest positive nodal pressure
+support areas, the supported gap-gradient condition estimate, the most
+negative normalized weighted gap, the largest *algorithmic* nodal pressure,
+and the span from weighted to independently bounded physical gap. These are
+resolution diagnostics, not physical shell stress or an automatic stability
+pass. A rank-deficient or empty supported gradient reports no condition
+estimate. Local small-cut modes can carry pressure even when an integrated
+reaction balances; a small reaction residual alone does not resolve the
+physical gap.
+
 The coupled local Q4/two-Q4 target case was pressed to 0.4 N, moved 0.1 m
 laterally across the internal target face boundary, and restarted from half
 load. Its selected faces have 0.05 m structural thickness, 1 MPa/m normal

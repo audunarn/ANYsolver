@@ -97,6 +97,12 @@ class _SlidingPatchResults:
     tangent_asymmetry: float | None
     normal_law: str = "penalty"
     multiplier_norm: float = 0.0
+    minimum_positive_support_m2: float | None = None
+    maximum_positive_support_m2: float | None = None
+    pressure_gradient_condition: float | None = None
+    minimum_weighted_gap_m: float | None = None
+    maximum_algorithmic_pressure_Pa: float = 0.0
+    weighted_to_physical_gap_span_m: float | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -106,6 +112,12 @@ class _SlidingPatchResults:
             "candidate_pairs": self.candidate_pairs,
             "pressure_rank": self.pressure_rank,
             "active_pressure_dofs": self.active_pressure_dofs,
+            "minimum_positive_support_m2": self.minimum_positive_support_m2,
+            "maximum_positive_support_m2": self.maximum_positive_support_m2,
+            "pressure_gradient_condition": self.pressure_gradient_condition,
+            "minimum_weighted_gap_m": self.minimum_weighted_gap_m,
+            "maximum_algorithmic_pressure_Pa": self.maximum_algorithmic_pressure_Pa,
+            "weighted_to_physical_gap_span_m": self.weighted_to_physical_gap_span_m,
             "minimum_sampled_gap": self.minimum_sampled_gap,
             "conservative_lower_gap": self.conservative_lower_gap,
             "gap_tolerance_met": self.gap_tolerance_met,
@@ -410,6 +422,19 @@ class _RestrictedSlidingPatchFEManager:
                 ) - force[nodal_dofs[3:]]
             body_forces.append(tuple(float(value) for value in total_force))
             body_moments.append(tuple(float(value) for value in total_moment))
+        supported = state.support > 0.0
+        if np.any(supported):
+            minimum_support = float(np.min(state.support[supported]))
+            maximum_support = float(np.max(state.support[supported]))
+            minimum_weighted_gap = float(np.min(state.normalized_gap[supported]))
+            gap_span = minimum_weighted_gap - certificate.conservative_lower_gap
+            maximum_algorithmic_pressure = float(np.max(np.maximum(
+                0.0, self.normal_multipliers[supported]
+                - self.stiffness * state.normalized_gap[supported],
+            )))
+        else:
+            minimum_support = maximum_support = minimum_weighted_gap = gap_span = None
+            maximum_algorithmic_pressure = 0.0
         result = _SlidingPatchResults(
             self.profile, state.overlap_area,
             state.overlapping_pairs, state.candidate_pairs,
@@ -426,5 +451,7 @@ class _RestrictedSlidingPatchFEManager:
             state.energy, body_forces[0], body_forces[1],
             body_moments[0], body_moments[1], asymmetry,
             self.normal_law, float(np.linalg.norm(self.normal_multipliers)),
+            minimum_support, maximum_support, state.pressure_gradient_condition,
+            minimum_weighted_gap, maximum_algorithmic_pressure, gap_span,
         )
         return force, stiffness, result

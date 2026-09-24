@@ -50,6 +50,7 @@ class MovingPatchMortarState:
     normal_tangent: np.ndarray
     minimum_vertex_gap: float
     pressure_rank: int
+    pressure_gradient_condition: float | None
 
 
 @dataclass(frozen=True)
@@ -231,13 +232,19 @@ class MovingPatchMortar:
             pressure_rank = int(np.count_nonzero(
                 singular > singular[0] * 1.0e-10
             ))
+            pressure_gradient_condition = (
+                float(singular[0] / singular[-1])
+                if pressure_rank == len(singular) and singular[-1] > 0.0 else None
+            )
         else:
             pressure_rank = 0
+            pressure_gradient_condition = None
         return MovingPatchMortarState(
             overlap_area, overlapping_pairs, self.candidate_pairs,
             self.source_node_ids, self.target_node_ids,
             support, weighted_gap, normalized, gradient, energy,
             residual, tangent, minimum_vertex_gap, pressure_rank,
+            pressure_gradient_condition,
         )
 
     def _owned_multiplier(self, estimate: np.ndarray | None) -> np.ndarray:
