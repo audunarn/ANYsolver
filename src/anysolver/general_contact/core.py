@@ -17,6 +17,10 @@ from typing import TYPE_CHECKING, Iterator
 import numpy as np
 from scipy import sparse
 
+
+_Q4_PLANE_PROFILE = "PLANAR_Q4_RIGID_PLANE_PENALTY_MORTAR_V1"
+_S3_PLANE_PROFILE = "PLANAR_Q4_S3_RIGID_PLANE_PENALTY_MORTAR_V0"
+
 if TYPE_CHECKING:
     from anysolver.fe_core import FEModel
 
@@ -163,6 +167,9 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition) -> C
                        definition.interactions))) != (1, 1, 1):
         issues.append("this profile requires exactly one surface, one plane, and one interaction")
     from anysolver.e4_pl_element import FORMULATION_ID as q4_formulation
+    from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_formulation
+
+    contains_s3 = False
 
     for surface in definition.surfaces:
         for element_id in surface.element_ids:
@@ -170,8 +177,18 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition) -> C
             if element is None:
                 issues.append(f"surface {surface.name}: missing element {element_id}")
                 continue
-            if getattr(element, "formulation_id", None) != q4_formulation:
-                issues.append(f"surface {surface.name}: element {element_id} is not qualified Q4")
+            formulation = getattr(element, "formulation_id", None)
+            if formulation not in {q4_formulation, s3_formulation}:
+                issues.append(f"surface {surface.name}: element {element_id} is not admitted Q4/S3")
+                continue
+            if formulation == s3_formulation:
+                contains_s3 = True
+                try:
+                    from .overlap import reference_shell_face
+
+                    reference_shell_face(model, 1, element_id, surface.side)
+                except ValueError as exc:
+                    issues.append(f"surface {surface.name}: {exc}")
                 continue
             coordinates = np.asarray(element.get_node_coordinates(model.mesh), dtype=float)
             diagonal = max(float(np.linalg.norm(coordinates[i] - coordinates[j]))
@@ -185,7 +202,8 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition) -> C
     for interaction in definition.interactions:
         if interaction.surface not in surface_by_name or interaction.target not in rigid_by_name:
             issues.append(f"interaction {interaction.name}: missing surface or rigid body")
-    return ContactValidationReport("invalid" if issues else "ok", tuple(issues))
+    profile = _S3_PLANE_PROFILE if contains_s3 else _Q4_PLANE_PROFILE
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
 class _PlanarQ4PlaneManager:
@@ -197,6 +215,7 @@ class _PlanarQ4PlaneManager:
             raise ValueError("unsupported general contact: " + "; ".join(report.issues))
         self.model = model
         self.definition = definition
+        self.profile = report.profile
         settings = ContactSolverSettings() if settings is None else settings
         self.settings = settings
         interaction = definition.interactions[0]
@@ -224,26 +243,42 @@ class _PlanarQ4PlaneManager:
         cols: list[int] = []
         data: list[float] = []
         self.patches = []
+        contact_length_scale = 0.0
+        from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_formulation
+
         for element_id in surface.element_ids:
             element = model.mesh.elements[element_id]
             reference = np.asarray(element.get_node_coordinates(model.mesh), dtype=float)
+            contact_length_scale = max(
+                contact_length_scale,
+                float(np.max(np.linalg.norm(reference - reference[0], axis=1))),
+            )
             dofs = np.asarray(
                 [model.mesh.dof_manager.get_node_dofs(int(node_id))[:6]
                  for node_id in element.node_ids], dtype=np.intp
             )
-            normal = np.cross(reference[1] - reference[0], reference[3] - reference[0])
+            normal = np.cross(reference[1] - reference[0], reference[-1] - reference[0])
             normal /= np.linalg.norm(normal)
-            provided_director = getattr(element, "reference_normal", None)
-            if provided_director is not None:
-                normal = np.asarray(provided_director, dtype=float)
-            normal = float(getattr(element, "director_polarity", 1)) * normal
-            offset = {"midsurface": 0.0, "top": 0.5, "bottom": -0.5}[surface.side]
-            offset *= float(element.thickness)
+            director = element.physical_reference_director
+            if director is not None:
+                normal = np.asarray(director, dtype=float)
+            coordinate = {"midsurface": 0.0, "top": 1.0, "bottom": -1.0}[surface.side]
+            if element.formulation_id == s3_formulation:
+                offset = float(element.material_surface_offset_from_reference(coordinate))
+            else:
+                offset = 0.5 * coordinate * float(element.thickness)
             local_gap_gradient = np.r_[self.normal, offset * np.cross(normal, self.normal)]
             weights = []
             shapes = []
             for local, weight in zip(element.gauss_points, element.gauss_weights):
-                N, dxi, deta = element.compute_shape_functions(float(local[0]), float(local[1]))
+                if element.formulation_id == s3_formulation:
+                    N, dxi, deta = element.compute_native_surface_shape_functions(
+                        float(local[0]), float(local[1])
+                    )
+                else:
+                    N, dxi, deta = element.compute_shape_functions(
+                        float(local[0]), float(local[1])
+                    )
                 jacobian = float(np.linalg.norm(np.cross(dxi @ reference, deta @ reference)))
                 if not np.isfinite(jacobian) or jacobian <= 0.0:
                     raise ValueError(f"contact element {element_id} has invalid reference measure")
@@ -260,7 +295,7 @@ class _PlanarQ4PlaneManager:
                 pressure_row = pressure_index[int(node_id_a)]
                 support[pressure_row] += float(element_support[a])
                 reference_weighted_gap[pressure_row] += float(overlap[a] @ reference_gap)
-                for i in range(4):
+                for i in range(len(element.node_ids)):
                     for component in range(6):
                         coefficient = float(overlap[a, i] * local_gap_gradient[component])
                         if coefficient:
@@ -272,6 +307,10 @@ class _PlanarQ4PlaneManager:
         if np.any(support <= 0.0):
             raise ValueError("contact pressure support must be positive")
         self.support = support
+        reference_weighted_gap[
+            np.abs(reference_weighted_gap)
+            <= 256.0 * np.finfo(float).eps * contact_length_scale * support
+        ] = 0.0
         self.reference_weighted_gap = reference_weighted_gap
         self.gap_gradient = sparse.coo_matrix(
             (data, (rows, cols)), shape=(len(node_ids), n_dof)
@@ -295,7 +334,7 @@ class _PlanarQ4PlaneManager:
         """Bind the state-free C0 penalty law to a versioned static checkpoint."""
 
         return {
-            "profile": "PLANAR_Q4_RIGID_PLANE_PENALTY_MORTAR_V1",
+            "profile": self.profile,
             "surfaces": [
                 {"name": item.name, "element_ids": list(item.element_ids),
                  "side": item.side}
@@ -372,7 +411,7 @@ class _PlanarQ4PlaneManager:
         moment_tuple = tuple(float(-x) for x in shell_moment)
         rigid_moment_tuple = tuple(float(x) for x in shell_moment)
         results = ContactResults(
-            "PLANAR_Q4_RIGID_PLANE_PENALTY_MORTAR_V1",
+            self.profile,
             minimum_gap,
             energy,
             shell_tuple,
