@@ -1,5 +1,28 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — bounded shell-block attribution after support matching.**
+An unregistered diagnostic retained the native B3, six-channel weak line,
+rail port, both-edge support and fixed axial density, then replaced only
+the E4 shell in-plane tangent block with the separately assembled physical
+membrane block. This hybrid is **not** a valid alternative mechanical
+formulation: its other E4 blocks and cross terms remain unchanged. The
+unmodified branch reproduced all three saved native observables exactly
+in all **12** matched Q4/S3, 4/8-by-2/4/8 cases. The block difference was
+`7.90–8.58%` in Frobenius norm. Substitution changed the beam-tip response
+by `1.38–14.57%` and increased its absolute discrepancy from the separate
+classical comparator in **all 12** cases; the largest scaled algebraic
+residual was `4.93e-17`. Thus the earlier near agreement cannot be
+attributed to equality of the full E4 and classical shell operators, and
+the membrane block cannot simply be swapped into an otherwise native KKT.
+Two six-case raw outputs are
+`B3_GE_E4_PL_F03_SHELL_BLOCK_SENSITIVITY_NS{4,8}_V1.json`; the runner is
+`python -B -m scripts.b3_e4_f03_shell_tangent_attribution` with the
+corresponding host count. Five focused tests passed, including exact
+unmodified-solution comparisons. This is Level-A sensitivity evidence;
+it neither selects a line space nor closes F03/G0B. Next resolve the
+physical line torque/shear response and norm-scaled signed stability on
+support-matched, mesh-ratio cases before a production mechanics choice.
+
 **24 September 2026 — F03 support-matched axial reference diagnosis.**
 The earlier native weak-line KKT deliberately fixed all six coordinates
 at only **three left-edge shell nodes**; its prior loaded/rank screens
