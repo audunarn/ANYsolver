@@ -736,3 +736,10 @@ independently reviewed tests are recorded in
 kinematic proof seam only. The next mechanics boundary is the shell-side
 six-channel trace and then the relative-pose line law and coupled stability
 checks. G0B remains open; no scientific registration was consumed.
+
+The matching bounded flat-reference shell spatial port is recorded in
+`B3_GE_E4_PL_G0_F03_SHELL_SPATIAL_LINEAR_PORT_RESULT_20260924.md`.
+It uses actual Q4/S3 physical stiffness and excludes numerical drilling
+completion. Native and shell port seams are now checked separately, but
+finite shell pose, relative-pose curvature, exact line multipliers, and
+coupled stability remain unresolved. G1 remains barred.
