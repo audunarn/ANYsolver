@@ -135,6 +135,19 @@ output are `tests/test_general_contact_patch_refinement.py` and
 This is a single preserved-pose integration check; it does not establish
 coupled response convergence or integration accuracy at other geometries.
 
+At the same 4×4 model, a second check reconstructed the 0.4 N external
+nodal loading from the source-square face weights. It assembled the existing
+shell structural force and tangent, but solved the free normal coordinates
+with contact force and Jacobian from the independent clipped-cell integrator.
+Starting 5% away from the ordinary solver pose, the separate equilibrium
+solve converged in two iterations: maximum force residual was
+2.02×10⁻¹¹ relative to 0.4 N and maximum normal-displacement difference
+was 9.13×10⁻¹¹ relative. The raw record is
+`C:\ANYworkspaceWork\general-contact-evidence\c1-independent-coupled-response1.txt`.
+This cross-check uses the same structural idealization and one mesh. It does
+not establish structural mesh convergence, pressure-space stability or
+enforcement convergence.
+
 The full nonmatching slide, separation and recontact handoff and the main
 plan's refinement, independent-review and package gates remain open.
 

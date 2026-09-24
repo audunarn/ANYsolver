@@ -11,6 +11,7 @@ from anysolver import (
 )
 from anysolver.fe_core import FEModel
 from anysolver.general_contact.patch_sliding import _RestrictedSlidingPatchFEManager
+from anysolver.nonlinear_static import _assemble_nonlinear_system_unchecked
 
 
 @pytest.fixture(scope="module")
@@ -231,3 +232,70 @@ def test_accepted_q4_s3_pose_contact_integration_has_independent_error_budget(
           f"{support_error:.3e}, weighted gap={weighted_gap_error:.3e}, "
           f"gradient={gradient_error:.3e}, force={force_error:.3e}, "
           f"moment={max(moment_errors):.3e}, energy={energy_error:.3e}")
+
+
+def test_q4_s3_coupled_response_against_independent_contact_equilibrium(
+    accepted_patch_pose,
+):
+    model, definition, settings, result = accepted_patch_pose
+    assert result.status == "completed"
+    manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
+    patch = manager.patch
+    normal_z = float(patch.normal[2])
+    assert abs(normal_z) == pytest.approx(1.0)
+    source_ids = patch.source_node_ids
+    source_count = len(source_ids)
+    free = np.asarray([
+        model.mesh.dof_manager.get_node_dofs(node)[2] for node in source_ids
+    ], dtype=np.intp)
+    external = np.zeros(model.mesh.dof_manager.total_dofs)
+    incidence = {node: 0 for node in source_ids}
+    for face in patch.source_faces:
+        for node in face.node_ids:
+            incidence[node] += 1
+    for index, node in enumerate(source_ids):
+        external[free[index]] = -0.4 * incidence[node] / (
+            4 * len(patch.source_faces)
+        )
+    assert np.sum(external[free]) == pytest.approx(-0.4)
+
+    displacement = np.zeros_like(result.displacements)
+    displacement[free] = 1.05 * result.displacements[free]
+    residual_ratio = float("inf")
+    for iteration in range(12):
+        structural_force, structural_tangent, _trial = (
+            _assemble_nonlinear_system_unchecked(
+                model, displacement, {}, 5, tangent=True,
+                kinematics="von_karman",
+            )
+        )
+        q = np.r_[np.zeros(6), normal_z * displacement[free],
+                  np.zeros(len(patch.target_node_ids))]
+        _area, support, weighted_gap, gradient = (
+            _independent_triangle_overlap_integrals(patch, q, 16)
+        )
+        active = support > 0.0
+        normalized = np.zeros(source_count)
+        normalized[active] = weighted_gap[active] / support[active]
+        closed = active & (normalized < 0.0)
+        compression = np.minimum(normalized, 0.0)
+        contact_force = gradient.T @ (patch.stiffness * compression)
+        contact_tangent = (patch.stiffness * gradient[closed].T
+                           @ np.diag(1.0 / support[closed]) @ gradient[closed])
+        residual = (structural_force[free] + normal_z * contact_force[:source_count]
+                    - external[free])
+        residual_ratio = float(np.max(np.abs(residual))) / 0.4
+        if residual_ratio <= 1.0e-6:
+            break
+        tangent = structural_tangent[np.ix_(free, free)].toarray()
+        tangent += contact_tangent[:source_count, :source_count]
+        displacement[free] -= np.linalg.solve(tangent, residual)
+    assert residual_ratio <= 1.0e-6
+    displacement_error = (
+        np.max(np.abs(displacement[free] - result.displacements[free]))
+        / max(np.max(np.abs(result.displacements[free])), 1.0e-12)
+    )
+    assert displacement_error <= 0.001
+    print(f"independent coupled equilibrium: {iteration + 1} iterations, "
+          f"force residual={residual_ratio:.3e}, "
+          f"displacement error={displacement_error:.3e}")
