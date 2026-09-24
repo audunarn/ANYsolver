@@ -43,6 +43,19 @@ def test_q4_s3_partial_overlap_has_the_analytical_area():
     centroid = np.mean(overlap.polygon, axis=0)
     assert sum(overlap.shape_values(square, centroid)) == pytest.approx(1.0)
     assert sum(overlap.shape_values(triangle, centroid)) == pytest.approx(1.0)
+    for face in (square, triangle):
+        values, gradient = overlap.shape_values_and_gradient(face, centroid)
+        np.testing.assert_allclose(values, overlap.shape_values(face, centroid),
+                                   atol=1e-12)
+        np.testing.assert_allclose(np.sum(gradient, axis=0), 0.0, atol=1e-12)
+        direction = 0.3 * overlap.tangent - 0.2 * overlap.binormal
+        h = 1.0e-6
+        finite_difference = (
+            overlap.shape_values(face, centroid + h * direction)
+            - overlap.shape_values(face, centroid - h * direction)
+        ) / (2.0 * h)
+        np.testing.assert_allclose(finite_difference, gradient @ direction,
+                                   rtol=1e-7, atol=1e-9)
 
 
 def test_s3_s3_partial_overlap_has_the_analytical_area():

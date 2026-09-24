@@ -50,6 +50,11 @@ constant-gap penalty potential through its complete moving overlap, including
 the overlap-area Hessian. It provides an analytical reference for the later
 deformable-shell residual and tangent; it is not routed through the public
 pair solver.
+An internal moving Q1/P1 pressure state now computes positive support,
+weighted gaps and both-body normal work on one current common-refinement
+polygon. Its normal tangent is complete at fixed tangential translations.
+Its reported vertex gap is a sample, not a certified physical minimum for a
+nonuniform bilinear gap; the full geometric gap check remains a C1 gate.
 
 ## Discrete pair law
 

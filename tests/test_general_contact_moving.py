@@ -3,7 +3,10 @@
 import numpy as np
 import pytest
 
-from anysolver.general_contact.moving import TranslatedPairMortar
+from anysolver.general_contact.moving import (
+    TranslatedPairMortar,
+    moving_mortar_state,
+)
 from anysolver.general_contact.overlap import PlanarFace
 
 
@@ -84,3 +87,79 @@ def test_translated_nonmatching_patch_and_candidate_budget():
         TranslatedPairMortar(source, targets,
                              np.array((0.0, 0.0, 1.0)), 1.0e6,
                              maximum_candidate_pairs=1)
+
+
+def test_moving_q1_pressure_reproduces_constant_gap_and_both_body_work():
+    source = _square((1, 1), 0.0, 0.0)
+    target = _square((2, 1), 0.5, 0.25)
+    zero = np.zeros(3)
+    source_height = np.full(4, -1.0e-4)
+    target_height = np.zeros(4)
+    state = moving_mortar_state(
+        source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+        zero, zero, source_height, target_height,
+    )
+    assert state.overlap_area == pytest.approx(0.375)
+    assert np.sum(state.support) == pytest.approx(state.overlap_area)
+    np.testing.assert_allclose(state.normalized_gap, -1.0e-4, atol=1e-12)
+    assert state.energy == pytest.approx(0.001875)
+    assert np.sum(state.normal_residual[:4]) == pytest.approx(-37.5)
+    assert np.sum(state.normal_residual[4:]) == pytest.approx(37.5)
+    assert state.minimum_vertex_gap == pytest.approx(-1.0e-4)
+    direction = np.array((0.1, -0.2, 0.3, 0.05,
+                          -0.1, 0.2, -0.05, 0.15))
+    h = 1.0e-6
+    def trial(fraction):
+        return moving_mortar_state(
+            source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+            zero, zero,
+            source_height + fraction * direction[:4],
+            target_height + fraction * direction[4:],
+        )
+    plus, minus = trial(h), trial(-h)
+    assert ((plus.energy - minus.energy) / (2.0 * h)
+            == pytest.approx(float(state.normal_residual @ direction), rel=1e-8))
+    np.testing.assert_allclose(
+        (plus.normal_residual - minus.normal_residual) / (2.0 * h),
+        state.normal_tangent @ direction,
+        rtol=1e-7, atol=1e-7,
+    )
+
+
+def test_moving_p1_q1_partial_gap_uses_independent_physical_vertex_check():
+    source = PlanarFace((1, 1), np.asarray(
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0))
+    ))
+    target = _square((2, 1), 0.0, 0.0)
+    zero = np.zeros(3)
+    state = moving_mortar_state(
+        source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+        np.array((0.2, 0.0, 0.0)), zero,
+        np.array((-1.0e-4, 0.0, 0.0)), np.zeros(4),
+    )
+    assert state.overlap_area > 0.0
+    assert state.minimum_vertex_gap < 0.0
+    assert state.energy > 0.0
+    assert np.all(state.support > 0.0)
+    assert np.sum(state.normal_residual[:3]) == pytest.approx(
+        -np.sum(state.normal_residual[3:])
+    )
+
+
+def test_moving_pressure_energy_matches_translation_boundary_control():
+    source = _square((1, 1), 0.0, 0.0)
+    target = _square((2, 1), 0.5, 0.25)
+    control = TranslatedPairMortar((source,), (target,),
+                                   np.array((0.0, 0.0, 1.0)), 1.0e6)
+    direction = np.array((0.3, -0.2, 0.0))
+    def energy(shift):
+        return moving_mortar_state(
+            source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+            shift * direction, np.zeros(3),
+            np.full(4, -1.0e-4), np.zeros(4),
+        ).energy
+    h = 1.0e-6
+    reference = control.evaluate(np.array((0.0, 0.0, -1.0e-4)), np.zeros(3))
+    assert energy(0.0) == pytest.approx(reference.energy)
+    assert ((energy(h) - energy(-h)) / (2.0 * h)
+            == pytest.approx(float(reference.source_residual @ direction), rel=1e-8))
