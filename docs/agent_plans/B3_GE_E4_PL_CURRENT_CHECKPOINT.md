@@ -12,6 +12,12 @@ cannot resolve. Stop further line escalation. Bare native beam stiffness
 is exact at 16/32 half-cells in the registered simple loads; the station
 port has the expected `h²` position and `h` rotation orders. These facts
 point to a connection-resolution question, not bare-beam convergence.
+An independently assembled transverse plate/beam spline model follows
+the same paired P0 torque trend within 1.6%. Its exact finite-space
+pointwise bond is sensitive to *plate* resolution while fixed-plate beam
+refinement leaves torque/shear response unchanged. This narrows the next
+mechanics work to shell-side trace representability and a physical
+reference, without declaring the formulation failed.
 
 **Remaining uncertainty and next discriminating action:** Establish an
 independent torque/shear target with the same physical geometry, load,
@@ -23,10 +29,12 @@ its beam-rotation monitor is unvalidated. S4/U1 failed in CalculiX and
 B31 rejects the generalized section. A paired refinement on that route
 also reached the unchanged 120 s limit for both torque and shear. Do not
 repeat it at greater cost under this authority. These are execution and
-idealization diagnostics, not the matched target. If a matched target and joint
-shell/beam/line refinement agree within the frozen criteria, assess P0
-stability and locking over the required mesh ratios; otherwise revise the
-pose, connection or reference route before selecting a space. Keep the
+idealization diagnostics, not the matched target. The next bounded
+derivation should test the shell trace's physical torque/shear work and
+admissible modes against a resolved, section-matched reference. If that
+agrees and a registered joint refinement stabilizes, assess P0 over the
+required mesh ratios; otherwise revise the pose or interface space before
+selecting one. Keep the
 classical axial, historical Q6/finite-pad and native six-channel results
 separate. Rank, small gaps or a quotient alone cannot select a space.
 Formal F03 authority is unconsumed, G0B open and G1 barred.
@@ -2156,3 +2164,68 @@ S4/B31 collocation route is not viable as the required reference within
 its declared execution envelope. The next reference action must change
 the route, resolving beam section/twist representation and line work
 while retaining the physical problem and frozen acceptance criteria.
+
+**Native paired P0 and independent transverse decision, 24 September
+2026.** With local-center pose, full-left/root supports and matched
+geometry/resultants, the native Q4 paired `(shell x, shell y, beam
+half-cells, P0 intervals)` grids `(2,2,8,2)`, `(4,4,16,4)` and
+`(8,8,32,8)` give +100 Nm tip-rx `18.247→14.071→11.679 µrad`
+and +1000 N tip-z `36.971→45.510→45.195 µm`. Work/wrench residuals
+remain small, but torque is not settled. Raw root:
+`B3_GE_E4_PL_F03_NATIVE_P0_PAIRED_PHYSICAL_V1.jsonl`.
+
+On the fixed finest x8/beam-half32/P0-m8 grid, changing shell-y
+2→4→8 gives torque `11.033→11.849→11.679 µrad`; the large paired
+torque trend is not explained by this width sweep alone. At fixed
+x8/y8/beam-half32, P0 m4→8→16 gives `14.438→11.679→9.659 µrad`.
+The m4→8 and m8→16 changes are both material despite smaller gaps.
+Raw roots:
+`B3_GE_E4_PL_F03_NATIVE_P0_TORQUE_Y_AXIS_V1.jsonl`,
+`B3_GE_E4_PL_F03_NATIVE_P0_FINE_LINE4_V1.jsonl`, and the earlier
+aligned-line file. Stop fixed-grid P0 line escalation.
+
+The independent Reissner–Mindlin plate/Timoshenko spline model uses the
+same transverse geometry, section resultants, supports and local-center
+line-pose *definition*, with separately implemented element and trace
+operators. At paired grids `(plate x,y,beam elements,P0 intervals)`
+`(2,2,4,2)`, `(4,4,8,4)`, `(8,8,16,8)`, it gives torque
+`18.272→14.084→11.495 µrad` and tip-z
+`38.741→46.802→44.551 µm`. Against the corresponding native grid,
+torque differs about `0.14%`, `0.09%`, `−1.57%`; force response differs
+about `+4.79%`, `+2.84%`, `−1.42%`. At fixed finest independent trial
+space, P0 m4/8/16 torque is `14.389/11.495/9.378 µrad`, following
+the native `14.438/11.679/9.659 µrad` trend. This independently
+confirms the observed discrete weak-line behavior; it does not prove
+continuum accuracy, full six-channel mechanics or external agreement.
+Raw roots: `B3_GE_E4_PL_F03_INDEPENDENT_P0_PAIRED_TRANSVERSE_V1.jsonl`
+and `B3_GE_E4_PL_F03_INDEPENDENT_P0_FINE_LINE_V1.jsonl`.
+
+A four-point-per-piece cubic trace-image construction then imposed the
+*pointwise* bond in each fixed independent spline trial space. Two
+relative rank tolerances (`1e-9`, `1e-11`) give identical ranks and
+responses; holdout trace gaps are about `1e-21 m` at the declared 1 m
+rotation scale. This exact finite-space bond is **not** a continuum
+target: on paired plate/beam grids its torque is
+`3.884→5.574→6.534 µrad` and tip-z
+`12.442→17.305→21.308 µm`, so it is not yet mesh settled. At fixed
+fine plate x8/y8, varying beam spline elements 4→8→16 leaves both
+responses unchanged to displayed precision; at fixed beam16, plate
+2/2→4/4→8/8 reproduces the moving sequence. Thus plate trace
+representability, rather than beam trial resolution, controls the
+finite-space pointwise-bond response. This does not by itself prove
+locking or reject the formulation. The first one-axis attempt stopped
+before any solve because an unrelated temporary P0 mortar exceeded its
+trace rank; its failure is retained and the corrected V2 discards that
+temporary mortar. Raw roots:
+`B3_GE_E4_PL_F03_INDEPENDENT_EXACT_TRACE_V1.jsonl`,
+`B3_GE_E4_PL_F03_INDEPENDENT_EXACT_TRACE_V2.jsonl`,
+`B3_GE_E4_PL_F03_INDEPENDENT_EXACT_TRACE_ONE_AXIS_V1.jsonl`, and
+`B3_GE_E4_PL_F03_INDEPENDENT_EXACT_TRACE_ONE_AXIS_V2.jsonl`.
+
+Next derive and independently check which shell-side pose/trace modes
+can transfer physical torque and transverse shear without numerical
+drilling or unintended shear constraints, then obtain an independently
+recoverable section-matched physical reference. Do not add line rows or
+raise global axial order to manufacture a smaller gap. P0 remains only
+a development candidate. Formal F03 authority is unconsumed, G0B open
+and G1 barred.
