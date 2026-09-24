@@ -169,9 +169,10 @@ def _matrix_norms(matrix):
 
 def _product_bounds(matrix, block):
     """Explicit per-entry interval arithmetic, independent of sparse @."""
-    n, width = block.shape
-    low, high = np.zeros((n, width)), np.zeros((n, width))
-    for row in range(n):
+    rows = matrix.shape[0]
+    width = block.shape[1]
+    low, high = np.zeros((rows, width)), np.zeros((rows, width))
+    for row in range(rows):
         start, end = matrix.indptr[row:row+2]
         for col, v in zip(matrix.indices[start:end], matrix.data[start:end]):
             if v == 0:

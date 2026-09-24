@@ -1,5 +1,15 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — Q6 arithmetic edge correction.** An independent audit
+identified missing runtime-subnormal exact-oracle coverage. The new test also
+found a valid rectangular CSR input that crashed the compiled helper; the row
+bound and pre-Numba structure checks are fixed. Runtime FTZ/DAZ-sensitive
+operations and exact-Fraction amplified-subnormal/cancellation/overflow tests
+now pass with the affected certificate suite (28/28). See
+`B3_GE_E4_PL_G0_F03_Q6_INTERVAL_KERNEL_EDGE_REVIEW_20260924.md`. Formal
+compiled arithmetic review, saved-only replay and installed identities remain
+open. F03/G0B are open and G1 barred.
+
 **24 September 2026 — X2 scaled KKT/RHS identity bound.** A fresh source-level
 rehearsal canonicalized and hashed the full scaled sparse KKT matrix and RHS
 in both the certificate and independently reassembled physical recovery path.

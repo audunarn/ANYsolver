@@ -73,3 +73,39 @@ def test_compiled_interval_product_rejects_overflow():
     matrix = sparse.csr_matrix(np.array([[1e308]]))
     with pytest.raises(ArithmeticError, match="nonfinite"):
         compiled_product_bounds(matrix, np.array([[2.]]))
+
+
+def test_compiled_interval_product_rejects_invalid_csr_before_numba():
+    matrix = sparse.csr_matrix(np.array([[1.]]))
+    matrix.indices[0] = 1
+    with pytest.raises(ValueError, match="CSR structure"):
+        compiled_product_bounds(matrix, np.array([[1.]]))
+    with pytest.raises(ValueError, match="float64 inverse block"):
+        compiled_product_bounds(sparse.eye(1, format="csr"), np.array(1.))
+
+
+def test_compiled_interval_exact_rational_adversarial_rows():
+    sub = np.nextafter(0., np.inf)
+    maximum = np.finfo(np.float64).max
+    cases = (
+        ([sub], [2.**350]),
+        ([-sub], [2.**350]),
+        ([sub], [.5]),
+        ([-sub], [.5]),
+        ([sub, -sub], [2.**350, 2.**350]),
+        ([maximum/4, maximum/4, -maximum/4], [1., 1., 1.]),
+        ([1e100, -1e100, 1e-100, -1e-100]*32, [1.]*128),
+    )
+    for values, multipliers in cases:
+        matrix = sparse.csr_matrix(np.asarray(values)[None, :])
+        block = np.asarray(multipliers, dtype=np.float64)[:, None]
+        low, high = compiled_product_bounds(matrix, block)
+        scalar_low, scalar_high = _product_bounds(matrix, block)
+        assert np.array_equal(low.view(np.uint64), scalar_low.view(np.uint64))
+        assert np.array_equal(high.view(np.uint64), scalar_high.view(np.uint64))
+        exact = sum((Fraction.from_float(float(value)) *
+                     Fraction.from_float(float(multiplier))
+                     for value, multiplier in zip(values, multipliers)),
+                    Fraction(0))
+        assert Fraction.from_float(float(low[0, 0])) <= exact
+        assert exact <= Fraction.from_float(float(high[0, 0]))
