@@ -13,6 +13,7 @@ from anysolver.general_contact import (
 )
 from anysolver.general_contact.beam_shell_patch import _BeamShellPatchManager
 from anysolver.general_contact.beam_shell_patch import _patch_windows
+from anysolver.general_contact.overlap import PlanarFace
 
 
 def _patch_model():
@@ -122,6 +123,19 @@ def test_exact_seam_line_has_one_stable_owner_and_nonconforming_patch_fails():
     assert faces[windows[0][0]].feature_id == faces[::-1][reversed_windows[0][0]].feature_id
     with pytest.raises(ValueError, match="rim|connected|nonmanifold"):
         _patch_windows(faces, (ids[0], (9, 7, 8, 5)), line, 0.02)
+
+    third = PlanarFace((2, 4), np.array((
+        (1.0, -1.0, 0.01), (2.0, -1.0, 0.01),
+        (2.0, 1.0, 0.01), (1.0, 1.0, 0.01),
+    )))
+    across_three = np.array(((-0.5, 0.0, 0.025), (1.5, 0.0, 0.025)))
+    windows, rim = _patch_windows(
+        (*faces, third), (*ids, (7, 9, 10, 8)), across_three, 0.02,
+    )
+    np.testing.assert_allclose(windows, ((0, -1.0, -0.5),
+                                         (1, -0.5, 0.5),
+                                         (2, 0.5, 1.0)), atol=1.0e-12)
+    assert rim == pytest.approx(0.5)
 
 
 def test_patch_static_route_and_restart():

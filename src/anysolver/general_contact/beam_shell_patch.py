@@ -180,6 +180,7 @@ def validate_beam_shell_patch_contact(model, definition: ContactDefinition,
             _patch_windows(faces, node_ids, beam_reference,
                            settings.beam_shell_rim_clearance)
             levers = []
+            side_normals = []
             from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
 
             for eid in shell.element_ids:
@@ -190,9 +191,13 @@ def validate_beam_shell_patch_contact(model, definition: ContactDefinition,
                     director = np.cross(corners[1] - corners[0], corners[-1] - corners[0])
                     director /= np.linalg.norm(director)
                 sign = 1.0 if shell.side == "top" else -1.0
+                side_normals.append(sign * np.asarray(director, dtype=float))
                 offset = (element.material_surface_offset_from_reference(sign)
                           if element.formulation_id == s3_id else sign * element.thickness / 2.0)
                 levers.append(float(offset) * np.asarray(director, dtype=float))
+            if any(float(normal @ side_normals[0]) < 1.0 - 1.0e-10
+                   for normal in side_normals[1:]):
+                issues.append("patch faces need one continuous physical side orientation")
             if any(np.linalg.norm(lever - levers[0]) > 1.0e-10 * max(1.0, np.linalg.norm(levers[0]))
                    for lever in levers[1:]):
                 issues.append("patch faces need one common physical skin lever")
