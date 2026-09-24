@@ -18,11 +18,15 @@ from time import perf_counter
 
 import numpy as np
 
-from scripts._b3_e4_f03_conforming_qp_energy import assemble
+from scripts._b3_e4_f03_conforming_qp_energy import (
+    assemble, E0, U0, YAW_LENGTH)
 from scripts._b3_e4_f03_local_scientific_supervisor import (
     SupervisorLimits, frozen_thread_environment, supervise,
 )
 from scripts._b3_e4_f03_qp_operator_identity import fingerprint
+from scripts._b3_e4_f03_q6_observable_bound import bound_q6_observables
+from scripts._b3_e4_f03_q6_saved_state_bound import evaluate_saved
+from scripts._b3_e4_f03_q6_system_archive import read_system
 from scripts._b3_e4_f03_qp_h_contract import (
     trace_for_case, validate_case_payload, validate_spatial_payload,
 )
@@ -52,6 +56,24 @@ def _recovery_source_hashes() -> dict[str, str]:
     return result
 
 
+def _observable_source_hashes() -> dict[str, str]:
+    functions = {
+        "observable_bound_source_sha256": (bound_q6_observables,
+                                           "_b3_e4_f03_q6_observable_bound.py"),
+        "saved_state_bound_source_sha256": (evaluate_saved,
+                                            "_b3_e4_f03_q6_saved_state_bound.py"),
+        "system_archive_source_sha256": (read_system,
+                                         "_b3_e4_f03_q6_system_archive.py"),
+    }
+    result = {}
+    for name, (function, filename) in functions.items():
+        path = Path(function.__code__.co_filename)
+        if path.name != filename:
+            raise ValueError("unexpected Q6 observable-bound source path")
+        result[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+
 def _write(path: Path, value: dict) -> bytes:
     payload = (json.dumps(value, indent=2)+"\n").encode("utf-8")
     with path.open("xb") as stream:
@@ -72,10 +94,12 @@ def _read(path: Path, cap: int) -> tuple[dict, str]:
 
 def child(output: Path) -> None:
     recovery_sources = _recovery_source_hashes()
+    observable_sources = _observable_source_hashes()
     _write(output / "start.json", {
         "status": "UNREGISTERED_Q6_X2_SHARED_ASSEMBLY_STARTED",
         "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         **recovery_sources,
+        **observable_sources,
         "python_executable": sys.executable,
         "thread_environment": {name: os.environ.get(name) for name in
             ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
@@ -134,6 +158,29 @@ def child(output: Path) -> None:
         raise ArithmeticError("shared X2 physical route repeated assembly")
 
     started = perf_counter()
+    state_bound = evaluate_saved(certificate_dir)
+    _, _, displacement_scale, multiplier_scale, _ = read_system(
+        certificate_dir / "scaled_system.npz",
+        order=certificate["kkt_order"], nnz=certificate["kkt_nnz"],
+        archive_sha256=certificate["scaled_system_archive_sha256"],
+        kkt_rhs_sha256=certificate["scaled_kkt_rhs_sha256"])
+    stiffness = operators.shell_stiffness + operators.beam_stiffness
+    if (not np.array_equal(displacement_scale,
+                           np.sqrt(E0/stiffness.diagonal())) or
+            not np.array_equal(multiplier_scale,
+                               E0*np.array([1/U0, 1/U0, YAW_LENGTH/U0])) or
+            hashlib.sha256((displacement_scale*state[:-3]).tobytes()).hexdigest()
+            != physical["free_state_sha256"]):
+        raise ArithmeticError("Q6 physical observable scales/state mismatch")
+    observable_bound = bound_q6_observables(
+        operators, displacement_scale, multiplier_scale, state,
+        state_bound["scaled_state_component_error_upper"], physical)
+    if _observable_source_hashes() != observable_sources:
+        raise ArithmeticError("Q6 observable-bound source changed during diagnostic")
+    assert_unchanged()
+    observable_bound_s = perf_counter()-started
+
+    started = perf_counter()
     spatial = spatial_run(output / "physical.json", operators=operators)
     if _recovery_source_hashes() != recovery_sources:
         raise ArithmeticError("Q6 recovery source changed during diagnostic")
@@ -148,6 +195,7 @@ def child(output: Path) -> None:
         "certificate_seconds": certificate_s,
         "positivity_seconds": positivity_s,
         "physical_seconds": physical_s,
+        "observable_bound_seconds": observable_bound_s,
         "spatial_seconds": spatial_s,
         "total_child_seconds": perf_counter()-begun,
         "certificate_measurement_sha256": certificate_hash,
@@ -160,9 +208,11 @@ def child(output: Path) -> None:
         "shared_assembly": True,
         "reused_free_shell_for_spatial_recovery": True,
         **recovery_sources,
+        **observable_sources,
         "operator_fingerprint_sha256": operator_hash,
         "operator_unchanged_after_each_phase": True,
         "physical_recovery_uses_certificate_candidate": True,
+        "linear_observable_bound": observable_bound,
         "diagnostic_kkt_certificate": certificate["certificate"]["status"],
         "diagnostic_shell_positivity": positivity["proof"]["status"],
         "scientific_registration": False,

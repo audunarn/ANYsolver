@@ -1,5 +1,23 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — Q6 linear observable bound diagnostic.** Added an
+exact-represented rational propagation of the saved scaled-state certificate
+to tip pose, external work and root multipliers, including the discrepancy
+between the exact represented candidate map and the reported binary64 value.
+The X2 source-process check reassembled the existing operator in 324.63 s,
+matched its saved displacement scaling and candidate physical-state hash,
+and returned a 1.03e-14 m upper error for tip vertical displacement,
+9.75e-9 J for external work and 6.21e-4 N for the largest root-force
+component. The [raw diagnostic](B3_GE_E4_PL_G0_F03_Q6_X2_LINEAR_OBSERVABLE_DIAGNOSTIC_20260924.json)
+records all seven channels and source hashes. Focused tests passed 25/25
+with a workspace-owned temporary directory, followed by 8/8 targeted tests
+after adding source-identity checks. Initial test attempts had temporary-
+directory access errors; the affected tests passed when rerun. This result
+only bounds linear recovery from represented Q6 operators; energy, interface
+functionals, discretization error, physical settling, installed identity and
+native F03 mechanics remain open. It does not amend the earlier 2,258.19 s
+resource overrun, close F03/G0B or permit G1.
+
 **24 September 2026 — X2 combined shared-assembly diagnostic.** One source
 process assembled Q6 X2 once, then completed the KKT certificate, shell
 positivity, physical recovery and spatial audit. Exit 0 took 2,258.19 s at

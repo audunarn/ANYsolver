@@ -13,7 +13,7 @@ from scripts.b3_e4_f03_q6_positivity_feasibility import child as positivity_chil
 from scripts.b3_e4_f03_qp_nested_x_pilot import run as physical_run
 from scripts.b3_e4_f03_qp_nested_x2_spatial import run as spatial_run
 from scripts.b3_e4_f03_q6_x2_shared_assembly_rehearsal import (
-    _recovery_source_hashes)
+    _observable_source_hashes, _recovery_source_hashes)
 
 
 @pytest.mark.parametrize("runner", [certificate_child, positivity_child])
@@ -43,6 +43,14 @@ def test_spatial_route_rejects_wrong_shared_operators(tmp_path):
 def test_shared_runner_pins_both_recovery_sources():
     hashes = _recovery_source_hashes()
     assert set(hashes) == {"spatial_source_sha256", "nodal_source_sha256"}
+    assert all(len(value) == 64 for value in hashes.values())
+
+
+def test_shared_runner_pins_observable_bound_sources():
+    hashes = _observable_source_hashes()
+    assert set(hashes) == {
+        "observable_bound_source_sha256", "saved_state_bound_source_sha256",
+        "system_archive_source_sha256"}
     assert all(len(value) == 64 for value in hashes.values())
 
 

@@ -1,0 +1,41 @@
+{
+  "status": "UNREGISTERED_SAVED_X2_OBSERVABLE_DIAGNOSTIC",
+  "date": "2026-09-24",
+  "base_revision": "8d93d6b9eedadf18e59adfae554e2685f2a5bcec",
+  "python": "3.14.2",
+  "source_process": true,
+  "supervised_resource_receipt": false,
+  "installed_artifact_identity": false,
+  "assembly_seconds": 324.6330663000008,
+  "operator_fingerprint_sha256": "fdc4634ee0477636c5bbe4b24585aee94d93b1f01fdb06f63a5767cfac64bb2c",
+  "candidate_state_sha256": "036ed6d3d28e5ee30c1e35cd319db42e1dfb6e0535102cea91e47913165012ed",
+  "physical_sha256": "845c8b7af935b68dd40292ba8d96dae0497744426685e913dfe283699bbb5062",
+  "observable_bound_source_sha256": "ce28e43480486059997b99260f49347655e6c67b086f140b1089c08f0582b37e",
+  "saved_state_bound_source_sha256": "0045bb0d0aa196b70061725a32e8c8d2371ea7a3a0e373f281b647155fe8bd6a",
+  "system_archive_source_sha256": "54e6e0fe17aa541e3bb3cb1d82607b7ee2f5ec23b0e99abe035865316d0f0cd3",
+  "scaled_state_component_error_upper": 6.202021901144683e-10,
+  "observable_order": [
+    "tip_ux_m", "tip_uy_m", "tip_yaw_rad", "external_work_j",
+    "root_fx_n", "root_fy_n", "root_mz_nm"
+  ],
+  "state_propagation_upper": [
+    9.998593947805282e-15, 1.0274752489137822e-14,
+    4.6118399421995866e-14, 9.746817012183655e-09,
+    0.0006202021901144684, 0.0006202021901144684,
+    0.00028529300745265546
+  ],
+  "reported_rounding_upper": [
+    8.828503694766598e-24, 8.570544977421737e-21,
+    1.1101944798546368e-20, 7.761195631740206e-16,
+    1.8907418176337213e-25, 1.3571366253017916e-12,
+    1.2805756455236407e-11
+  ],
+  "total_error_upper": [
+    9.998593956633786e-15, 1.02747610596828e-14,
+    4.611841052394066e-14, 9.746817788303219e-09,
+    0.0006202021901144684, 0.000620202191471605,
+    0.0002852930202584119
+  ],
+  "scope": "exact linear recovery from represented binary64 inputs",
+  "scientific_registration": false
+}
