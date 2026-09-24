@@ -1,5 +1,20 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — three-grid Q6 saved-input feasibility.** Fixed X0/X1/X2
+source certificate and saved-only replay routes all completed serially under
+supervision. Each replay matched the full source certificate exactly from
+the saved scaled system, candidate and inverse columns; all six receipts,
+archive hashes and parent/child source identities checked. Source elapsed
+times were 297.28/527.75/927.41 s, replay times 196.33/374.57/671.62 s.
+See `B3_GE_E4_PL_G0_F03_Q6_THREE_GRID_SAVED_REPLAY_RESULT_20260924.md`.
+An independent conditional review found no local compiled arithmetic
+counterexample and verified the tested FTZ/DAZ guard modes; see
+`B3_GE_E4_PL_G0_F03_Q6_INTERVAL_ARITHMETIC_REVIEW_20260924.md`.
+All results remain unregistered source-process diagnostics. Installed identity,
+physical-observable error bounds, primal positivity, full physical settling,
+native interface mechanics and formal independent review remain open.
+F03/G0B remain open and G1 barred.
+
 **24 September 2026 — Q6 X0 saved-only replay.** A bounded archive now
 preserves the canonical scaled KKT matrix/RHS and physical coordinate scales
 beside the inverse columns. A supervised X0 source run completed in 297.28 s

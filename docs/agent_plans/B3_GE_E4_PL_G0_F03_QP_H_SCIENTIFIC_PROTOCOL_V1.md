@@ -2,6 +2,13 @@
 
 **24 September 2026. Reviewed draft for implementation; not yet a registrable scientific protocol. No registration has been minted and no scientific case has been launched under it.** This gate asks whether the classical, conforming finite-pad Q6 reference has a settled three-level physical response. It does not select a native line multiplier, qualify B3-GE/E4-PL/B2 coupling, close F03/G0B, or permit G1. The failed default-grid and X1 p-screens remain failed evidence. Supervised full inverse-column **source-process diagnostics** now exist for X0/X1/X2, but numerical soundness, integrated resources, one frozen installed identity and independent replay remain unresolved; Section 4 states the blocking work.
 
+**24 September source-diagnostic update:** [X0/X1/X2 saved-input replays](B3_GE_E4_PL_G0_F03_Q6_THREE_GRID_SAVED_REPLAY_RESULT_20260924.md)
+now reproduce all three complete certificate dictionaries from archived scaled
+systems and inverse columns. They use the same experimental compiled kernel,
+so the independent scientific replay and installed identity called for above
+remain unresolved. The [conditional local arithmetic review](B3_GE_E4_PL_G0_F03_Q6_INTERVAL_ARITHMETIC_REVIEW_20260924.md)
+does not change that status.
+
 ## Fixed model and case inventory
 
 Run exactly three **fresh** cases with one code path, degree Q6, identical default y-grid, four finite pads, represented `J`, section, loading, supports, physical scales and numerical limits. The x-rules were recorded before the X2 result:
