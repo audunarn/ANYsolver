@@ -31,11 +31,12 @@ def bound_components(matrix, rhs: np.ndarray, state: np.ndarray,
                      inverse_infinity_upper: float,
                      displacement_scale: np.ndarray,
                      multiplier_scale: np.ndarray) -> dict:
-    """Bound every physical state component using a certified inverse norm.
+    """Bound exact saved-scale mappings using a certified inverse norm.
 
     The interval product and residual use the same experimental arithmetic
     kernel as the archived Q6 KKT certificate. The inverse bound is supplied
-    by that certificate, not recomputed here.
+    by that certificate, not recomputed here. Separately rounded physical
+    recovery arithmetic is outside this bound.
     """
     n = matrix.shape[0]
     if (matrix.shape != (n, n) or n <= 3 or rhs.shape != (n,) or

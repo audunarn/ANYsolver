@@ -25,7 +25,9 @@ The state bound uses
 `||H⁻¹||∞` upper bound `47208.948820244725`. It then applies the saved
 positive displacement and multiplier scales componentwise. The two root force
 channels and one root moment channel retain distinct units. It covers the
-saved physical coordinate and root-multiplier components only. It does **not**
+saved physical coordinate and root-multiplier components under exact
+application of the stored binary scales only. It does **not** include rounding
+in the separately implemented physical recovery computation, and it does not
 bound derived tip/station poses, interface work, energies, all signed response
 channels, or errors in the mathematical discretization. These observables
 still require explicit sensitivity/error propagation and independently settled
@@ -35,7 +37,7 @@ draft envelope.
 
 The source is
 [`scripts/_b3_e4_f03_q6_saved_state_bound.py`](../../scripts/_b3_e4_f03_q6_saved_state_bound.py),
-SHA-256 `0b10bed8e092d2a7fbc5ae3df0dfdd4f9df870608002504d9d6313f7b0b27683`.
+SHA-256 `0045bb0d0aa196b70061725a32e8c8d2371ea7a3a0e373f281b647155fe8bd6a`.
 The existing compiled interval kernel SHA-256 is
 `4736322960b64aaf1e1aba74a030c4f480c135cd1f9a207dc295dbcb43635185`.
 The saved candidate SHA-256 is

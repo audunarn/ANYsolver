@@ -27,7 +27,9 @@ Focused tests passed **15/15** on the three locally retained archives and
 small known-solution/invalid-bound cases.
 
 These bounds isolate numerical error in the saved scaled KKT state under the
-experimental certificate assumptions. They say nothing about discretization
+experimental certificate assumptions and exact application of stored binary
+physical scales. Rounding in the separate recovery computation is not
+included. They say nothing about discretization
 error, full signed physical functionals, interface stability, physical
 reference agreement or G0 acceptance. The X2 shared-assembly resource
 overrun remains unchanged. Further work should propagate bounds to the
