@@ -790,3 +790,15 @@ eccentricity, as recorded in
 Four focused cases passed and independent mechanics review found no issue.
 This is not a weak line or authenticated material trial. Those remain the
 next G0B mechanics boundary; G1 remains barred.
+
+The next bounded seam evaluates actual four/eight-element Q4 and S3-V2D E4
+elastic corotational responses from one frozen virgin predecessor and the
+same total coordinates as the shell pose. Its result is recorded in
+`B3_GE_E4_PL_G0_F03_E4_MULTI_ELEMENT_TRIAL_RESULT_20260924.md`.
+The focused suite passed 22 cases; combined neighboring diagnostics passed
+64. Independent review found and then verified fixes for mutable definition
+guards, with no remaining finding in the declared scope. This is a small
+dense G0 oracle, not a committed owner or plastic trial. The next mechanics
+boundary is a fixed-host segmented six-channel weak line with exact
+multiplier spaces and full coupled KKT stability. No one-use scientific
+registration was consumed. G0B remains open; G1 remains barred.
