@@ -21,7 +21,8 @@ from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     pose_from_e4_total, reference_nodes)
 from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_translation,
-    pose_from_e4_total_local_director)
+    pose_from_e4_total_local_director,
+    pose_from_e4_total_local_frame)
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
@@ -60,7 +61,7 @@ def one_case(topology: str, intervals: int, kind: str, *,
              n_y: int = 2,
              thickness: float = .07,
              shell_support_policy: str = "legacy_three_left_nodes") -> dict:
-    """Solve a bounded torsion or alternating axial case at one resolution."""
+    """Solve one bounded six-channel load at fixed reference resolution."""
     shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y,
                                        thickness=thickness))
     beam = build(native_half_cells)
@@ -71,13 +72,17 @@ def one_case(topology: str, intervals: int, kind: str, *,
         shell_support_policy=shell_support_policy)
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
-                "local_director": pose_from_e4_total_local_director}[shell_port]
+                "local_director": pose_from_e4_total_local_director,
+                "local_frame": pose_from_e4_total_local_frame}[shell_port]
     shell_size = 6*shell.panel.node_count
     tip_rx = shell_size+6*beam.n_half_cells+3
+    tip_rz = shell_size+6*beam.n_half_cells+5
     tip_uz = shell_size+6*beam.n_half_cells+2
     load = np.zeros(shell_size+beam.context.count)
     if load_kind == "torsion":
         load[tip_rx] = 100.
+    elif load_kind == "yaw_torque_z":
+        load[tip_rz] = 100.
     elif load_kind == "shell_force_couple_x":
         sample = shell.panel.sample_weights(1.)
         y = np.array([-.23, -.23, .23, .23])
@@ -122,6 +127,9 @@ def one_case(topology: str, intervals: int, kind: str, *,
         shell_interface[:, 3]+shell_reference_nodes[:, 1]*shell_interface[:, 2]
         -shell_reference_nodes[:, 2]*shell_interface[:, 1]))
     shell_interface_force_z = float(np.sum(shell_interface[:, 2]))
+    shell_interface_mz = float(np.sum(
+        shell_interface[:, 5]+shell_reference_nodes[:, 0]*shell_interface[:, 1]
+        -shell_reference_nodes[:, 1]*shell_interface[:, 0]))
     shell_reaction_mx = float(np.sum(
         shell_support[:, 3]+shell_reference_nodes[:, 1]*shell_support[:, 2]
         -shell_reference_nodes[:, 2]*shell_support[:, 1]))
@@ -129,9 +137,13 @@ def one_case(topology: str, intervals: int, kind: str, *,
     shell_reaction_my = float(np.sum(
         shell_support[:, 4]+shell_reference_nodes[:, 2]*shell_support[:, 0]
         -shell_reference_nodes[:, 0]*shell_support[:, 2]))
+    shell_reaction_mz = float(np.sum(
+        shell_support[:, 5]+shell_reference_nodes[:, 0]*shell_support[:, 1]
+        -shell_reference_nodes[:, 1]*shell_support[:, 0]))
     beam_root_reaction_mx = float(physical_residual[shell_size+3])
     beam_root_reaction_fz = float(physical_residual[shell_size+2])
     beam_root_reaction_my = float(physical_residual[shell_size+4])
+    beam_root_reaction_mz = float(physical_residual[shell_size+5])
     shell_load = load[:shell_size].reshape(-1, 6)
     applied_torque_x = float(load[tip_rx]+np.sum(
         shell_load[:, 3]+shell_reference_nodes[:, 1]*shell_load[:, 2]
@@ -140,6 +152,9 @@ def one_case(topology: str, intervals: int, kind: str, *,
     applied_moment_y = float(-load[tip_uz]+np.sum(
         shell_load[:, 4]+shell_reference_nodes[:, 2]*shell_load[:, 0]
         -shell_reference_nodes[:, 0]*shell_load[:, 2]))
+    applied_moment_z = float(load[tip_rz]+np.sum(
+        shell_load[:, 5]+shell_reference_nodes[:, 0]*shell_load[:, 1]
+        -shell_reference_nodes[:, 1]*shell_load[:, 0]))
     shell_total = full[:shell_size]
     sample_z = shell.panel.sample_weights(1.)@shell_total.reshape(-1, 6)[:, 2]
     sample_y = np.array([-.23, -.23, .23, .23])
@@ -207,6 +222,7 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "shell_elements": shell.panel.element_count,
         "native_elements": beam.n_half_cells//2,
         "tip_rx_rad": float(full[tip_rx]),
+        "tip_rz_rad": float(full[tip_rz]),
         "shell_tip_z_antisymmetric_slope_rad": shell_tip_z_slope,
         "beam_tip_uz_m": float(full[tip_uz]),
         "beam_tip_ux_m": float(beam_nodal[-1, 0]),
@@ -260,6 +276,12 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "beam_root_reaction_my_about_origin_n_m": beam_root_reaction_my,
         "global_moment_y_balance_n_m": float(
             shell_reaction_my+beam_root_reaction_my+applied_moment_y),
+        "applied_moment_z_about_origin_n_m": applied_moment_z,
+        "shell_support_reaction_mz_about_origin_n_m": shell_reaction_mz,
+        "shell_interface_mz_about_origin_n_m": shell_interface_mz,
+        "beam_root_reaction_mz_about_origin_n_m": beam_root_reaction_mz,
+        "global_moment_z_balance_n_m": float(
+            shell_reaction_mz+beam_root_reaction_mz+applied_moment_z),
         "gap_l2_m": float(np.sqrt(np.trapezoid(gaps*gaps, dx=1./128))),
         "gap_max_m": float(np.max(gaps)),
         "gap_axial_l2_m": float(np.sqrt(np.trapezoid(

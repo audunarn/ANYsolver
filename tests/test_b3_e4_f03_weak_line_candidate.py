@@ -13,7 +13,8 @@ from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     pose_from_e4_total, reference_nodes)
 from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_translation,
-    pose_from_e4_total_local_director)
+    pose_from_e4_total_local_director,
+    pose_from_e4_total_local_frame)
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_weak_line_candidate import (
@@ -91,7 +92,7 @@ def test_reference_joint_varies_along_rigidly_rotated_shell(topology):
     ("S3-V2D", "dual_linear"),
 ))
 @pytest.mark.parametrize("shell_port", (
-    "rail", "local_translation", "local_director"))
+    "rail", "local_translation", "local_director", "local_frame"))
 def test_segmented_line_directional_work_matches_direct_potential(
         topology, kind, shell_port):
     shell = FlatE4TrialPanel(make_shell(1, topology))
@@ -125,9 +126,10 @@ def test_segmented_line_directional_work_matches_direct_potential(
         base_state, beam_first, beam_second, shell_port=shell_port)
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
-                "local_director": pose_from_e4_total_local_director}[shell_port]
+                "local_director": pose_from_e4_total_local_director,
+                "local_frame": pose_from_e4_total_local_frame}[shell_port]
 
-    edges = segments(shell, beam, space)
+    edges = segments(shell, beam, space, shell_port=shell_port)
     points, weights = np.polynomial.legendre.leggauss(4)
 
     def direct_quantities(first_factor, second_factor):
@@ -492,3 +494,31 @@ def test_transverse_tip_force_has_physical_support_wrench_and_work_balance():
     assert abs(result["global_force_z_balance_n"]) < 1e-7
     assert abs(result["global_moment_y_balance_n_m"]) < 1e-7
     assert abs(result["global_work_error_j"]) < 1e-8
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_local_frame_yaw_load_recovers_actual_interface_moment(topology):
+    from scripts.b3_e4_f03_weak_line_resolution_screen import one_case
+
+    result = one_case(
+        topology, 2, "piecewise_constant", shell_port="local_frame",
+        load_kind="yaw_torque_z", n_s=2, n_y=2,
+        native_half_cells=4, shell_support_policy="full_left_edge")
+    assert result["applied_moment_z_about_origin_n_m"] == pytest.approx(100.)
+    assert result["tip_rz_rad"] > 0.
+    assert result["shell_component_physical_energy_j"] > 0.
+    assert result["shell_numerical_energy_j"] >= 0.
+    assert abs(result["global_moment_z_balance_n_m"]) < 1e-8
+    assert abs(result["shell_support_reaction_mz_about_origin_n_m"]-
+               result["shell_interface_mz_about_origin_n_m"]) < 1e-8
+    assert abs(result["global_work_error_j"]) < 1e-8
+
+
+def test_local_frame_segments_odd_shell_hosts_before_quadrature():
+    shell = FlatE4TrialPanel(make_shell(3, "Q4"))
+    beam = build(4)
+    space = LineMultiplierSpace("piecewise_constant", (0., 1.))
+    edges = segments(shell, beam, space, shell_port="local_frame")
+    for center_host_edge in (1/6, .5, 5/6):
+        assert np.min(np.abs(edges-center_host_edge)) < 1e-13
+    assert np.min(np.diff(edges)) > 1e-12

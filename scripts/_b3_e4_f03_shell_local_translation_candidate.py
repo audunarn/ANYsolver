@@ -104,3 +104,79 @@ def reference_spatial_trace_local_director(
     result[3, 3::6] = weights
     result[4, 4::6] = weights
     return result
+
+
+def local_material_gradient_weights(
+        panel: ShellPanel, station: float) -> np.ndarray:
+    """One-sided physical x/y derivatives in the deterministic line host.
+
+    Q4 and S3 fields are C0, so their derivatives need not agree across an
+    element edge. This returns the host selected by ``ShellPanel._shape``;
+    weak-line integration must split at every center-line host boundary.
+    """
+    local_weights(panel, station)  # Validate panel, station, and center host.
+    dx, dy = 1./panel.n_s, 1./panel.n_y
+    i = int(np.clip(np.ceil((station+.5)/dx)-1, 0,
+                    panel.x_interval_count-1))
+    j = int(np.clip(np.ceil(.5/dy)-1, 0, panel.n_y-1))
+    xi = (station-(-.5+i*dx))/dx
+    eta = (.5-j*dy)/dy
+    indices, _ = panel._shape(float(station), 0.)
+    if panel.topology == "Q4":
+        dxi = np.array((-(1-eta), 1-eta, eta, -eta))
+        deta = np.array((-(1-xi), -xi, xi, 1-xi))
+    elif eta <= xi:
+        dxi = np.array((-1., 1., 0.))
+        deta = np.array((0., -1., 1.))
+    else:
+        dxi = np.array((0., 1., -1.))
+        deta = np.array((-1., 0., 1.))
+    result = np.zeros((2, panel.node_count))
+    result[0, indices] = dxi/dx
+    result[1, indices] = deta/dy
+    return result
+
+
+def reference_spatial_trace_local_frame(
+        panel: ShellPanel, station: float) -> np.ndarray:
+    """Flat-reference local director plus local polar material yaw candidate.
+
+    The yaw is half the in-plane displacement curl. It has no drilling
+    column. This bounded operator is not yet a qualified finite pose.
+    """
+    result = reference_spatial_trace_local_director(panel, station)
+    gradient = local_material_gradient_weights(panel, station)
+    result[5, 0::6] = -.5*gradient[1]
+    result[5, 1::6] = .5*gradient[0]
+    return result
+
+
+def pose_from_e4_total_local_frame(
+        panel: ShellPanel, station: float,
+        total_u: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Finite local material point, physical director and polar tangent frame.
+
+    The tangents are piecewise element gradients. A line integral using this
+    candidate must split at their reference host boundaries. This is a G0
+    diagnostic, not a selected production shell/beam connection.
+    """
+    weights = local_weights(panel, station)
+    gradients = local_material_gradient_weights(panel, station)
+    return pose_from_e4_total(
+        panel, station, total_u,
+        _origin_weights=weights,
+        _director_weights=weights,
+        _planar_weights=gradients)
+
+
+def directional_pose_from_e4_total_local_frame(
+        panel: ShellPanel, station: float, total_u: np.ndarray,
+        first: np.ndarray, second: np.ndarray) -> DirectionalPose:
+    """Owned first and mixed second derivatives of the local finite frame."""
+    weights = local_weights(panel, station)
+    gradients = local_material_gradient_weights(panel, station)
+    return directional_pose_from_e4_total(
+        panel, station, total_u, first, second,
+        _origin_weights=weights,
+        _director_weights=weights,
+        _planar_weights=gradients)

@@ -43,7 +43,10 @@ def reference_nodes(panel: ShellPanel) -> np.ndarray:
 
 def pose(panel: ShellPanel, station: float, positions: np.ndarray,
          directors: np.ndarray, *,
-         _director_weights: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray]:
+         _director_weights: np.ndarray | None = None,
+         _origin_weights: np.ndarray | None = None,
+         _planar_weights: np.ndarray | None = None
+         ) -> tuple[np.ndarray, np.ndarray]:
     """Return material-sample centroid and proper finite spatial frame.
 
     Inputs are current global nodal positions and unit physical directors.
@@ -57,12 +60,32 @@ def pose(panel: ShellPanel, station: float, positions: np.ndarray,
             not np.isfinite(x).all() or not np.isfinite(d).all() or
             np.max(np.abs(np.linalg.norm(d, axis=1)-1.)) > 1e-10):
         raise ValueError("finite current nodes and unit physical directors required")
-    weights = panel.sample_weights(station)
-    samples = weights@x
-    centroid = samples.mean(axis=0)
-    centered = samples-centroid
-    a = centered.T@_OFFSETS[:, 0]
-    b = centered.T@_OFFSETS[:, 1]
+    weights = (panel.sample_weights(station) if
+               (_origin_weights is None or _planar_weights is None or
+                _director_weights is None) else None)
+    samples = weights@x if weights is not None else None
+    if _origin_weights is None:
+        centroid = samples.mean(axis=0)
+    else:
+        origin_weights = np.asarray(_origin_weights, dtype=float)
+        if (origin_weights.shape != (panel.node_count,) or
+                not np.isfinite(origin_weights).all() or
+                abs(float(np.sum(origin_weights))-1.) > 1e-12):
+            raise ValueError("finite normalized shell origin weights required")
+        centroid = origin_weights@x
+    if _planar_weights is None:
+        centered = samples-samples.mean(axis=0)
+        a = centered.T@_OFFSETS[:, 0]
+        b = centered.T@_OFFSETS[:, 1]
+        scale_x, scale_y = _SECOND_X, _SECOND_Y
+    else:
+        planar_weights = np.asarray(_planar_weights, dtype=float)
+        if (planar_weights.shape != (2, panel.node_count) or
+                not np.isfinite(planar_weights).all() or
+                np.max(np.abs(np.sum(planar_weights, axis=1))) > 1e-12):
+            raise ValueError("finite shell material-gradient weights required")
+        a, b = planar_weights@x
+        scale_x = scale_y = 1.
     director_weights = (weights.mean(axis=0) if _director_weights is None else
                         np.asarray(_director_weights, dtype=float))
     if (director_weights.shape != (panel.node_count,) or
@@ -83,12 +106,12 @@ def pose(panel: ShellPanel, station: float, positions: np.ndarray,
     projected = chart[:, :2].T@np.column_stack((a, b))
     signed_area = float(np.linalg.det(projected))
     if (not np.isfinite(signed_area) or
-            signed_area <= 1e-8*_SECOND_X*_SECOND_Y):
+            signed_area <= 1e-8*scale_x*scale_y):
         raise ValueError("degenerate material rail orientation")
     trace = float(projected[0, 0]+projected[1, 1])
     spin = float(projected[1, 0]-projected[0, 1])
     norm = float(np.hypot(trace, spin))
-    if not np.isfinite(norm) or norm <= 1e-8*(_SECOND_X+_SECOND_Y):
+    if not np.isfinite(norm) or norm <= 1e-8*(scale_x+scale_y):
         raise ValueError("singular material rail planar fit")
     c, s = trace/norm, spin/norm
     frame = chart@np.array(((c, -s, 0.), (s, c, 0.), (0., 0., 1.)))
@@ -106,7 +129,9 @@ def reference_tangent(panel: ShellPanel, station: float) -> np.ndarray:
 
 def pose_from_e4_total(panel: ShellPanel, station: float,
                        total_u: np.ndarray, *,
-                       _director_weights: np.ndarray | None = None
+                       _director_weights: np.ndarray | None = None,
+                       _origin_weights: np.ndarray | None = None,
+                       _planar_weights: np.ndarray | None = None
                        ) -> tuple[np.ndarray, np.ndarray]:
     """Evaluate this candidate from flat-panel E4 additive total coordinates.
 
@@ -123,7 +148,9 @@ def pose_from_e4_total(panel: ShellPanel, station: float,
     directors = np.array([rotation_matrix_from_vector(theta)[:, 2]
                           for theta in nodal[:, 3:]])
     return pose(panel, station, positions, directors,
-                _director_weights=_director_weights)
+                _director_weights=_director_weights,
+                _origin_weights=_origin_weights,
+                _planar_weights=_planar_weights)
 
 
 @dataclass(frozen=True)
@@ -142,7 +169,9 @@ def directional_pose(panel: ShellPanel, station: float,
                      positions: np.ndarray, directors: np.ndarray,
                      first: np.ndarray, second: np.ndarray, *,
                      _total_rotations: np.ndarray | None = None,
-                     _director_weights: np.ndarray | None = None) -> DirectionalPose:
+                     _director_weights: np.ndarray | None = None,
+                     _origin_weights: np.ndarray | None = None,
+                     _planar_weights: np.ndarray | None = None) -> DirectionalPose:
     """Differentiate the finite port in two actual spatial-left directions.
 
     Each nodal director follows ``Exp(epsilon*w1+eta*w2) @ director``.
@@ -152,7 +181,10 @@ def directional_pose(panel: ShellPanel, station: float,
     """
     x, d = np.asarray(positions, dtype=float), np.asarray(directors, dtype=float)
     u, v = np.asarray(first, dtype=float), np.asarray(second, dtype=float)
-    pose(panel, station, x, d, _director_weights=_director_weights)
+    pose(panel, station, x, d,
+         _director_weights=_director_weights,
+         _origin_weights=_origin_weights,
+         _planar_weights=_planar_weights)
     if (u.shape != (panel.node_count, 6) or
             v.shape != (panel.node_count, 6) or
             not np.isfinite(u).all() or not np.isfinite(v).all()):
@@ -172,16 +204,34 @@ def directional_pose(panel: ShellPanel, station: float,
                     for j in range(3)]
             origin = [zero, zero, 1.+zero]
         director_jets.append(ad.matvec(ad.so3_exp(spin), origin))
-    weights = panel.sample_weights(station)
-    samples = [[sum((weights[k, i]*nodes[i][j]
+    weights = (panel.sample_weights(station) if
+               (_origin_weights is None or _planar_weights is None or
+                _director_weights is None) else None)
+    samples = ([[sum((weights[k, i]*nodes[i][j]
                      for i in range(panel.node_count)), zero)
-                for j in range(3)] for k in range(4)]
-    center = [sum((sample[j] for sample in samples), zero)/4.
-              for j in range(3)]
-    a = [sum(((samples[k][j]-center[j])*_OFFSETS[k, 0]
-              for k in range(4)), zero) for j in range(3)]
-    b = [sum(((samples[k][j]-center[j])*_OFFSETS[k, 1]
-              for k in range(4)), zero) for j in range(3)]
+                 for j in range(3)] for k in range(4)]
+               if weights is not None else None)
+    if _origin_weights is None:
+        center = [sum((sample[j] for sample in samples), zero)/4.
+                  for j in range(3)]
+    else:
+        center = [sum((_origin_weights[i]*nodes[i][j]
+                       for i in range(panel.node_count)), zero)
+                  for j in range(3)]
+    if _planar_weights is None:
+        sample_center = [sum((sample[j] for sample in samples), zero)/4.
+                         for j in range(3)]
+        a = [sum(((samples[k][j]-sample_center[j])*_OFFSETS[k, 0]
+                  for k in range(4)), zero) for j in range(3)]
+        b = [sum(((samples[k][j]-sample_center[j])*_OFFSETS[k, 1]
+                  for k in range(4)), zero) for j in range(3)]
+    else:
+        a = [sum((_planar_weights[0, i]*nodes[i][j]
+                  for i in range(panel.node_count)), zero)
+             for j in range(3)]
+        b = [sum((_planar_weights[1, i]*nodes[i][j]
+                  for i in range(panel.node_count)), zero)
+             for j in range(3)]
     director_weights = (weights.mean(axis=0) if _director_weights is None else
                         np.asarray(_director_weights, dtype=float))
     director_sum = [sum((director_weights[i]*director_jets[i][j]
@@ -204,7 +254,10 @@ def directional_pose(panel: ShellPanel, station: float,
     yaw = [[c, -s, zero], [s, c, zero], [zero, zero, 1.+zero]]
     frame = ad.matmul(chart, yaw)
     numeric_center, numeric_frame = pose(
-        panel, station, x, d, _director_weights=_director_weights)
+        panel, station, x, d,
+        _director_weights=_director_weights,
+        _origin_weights=_origin_weights,
+        _planar_weights=_planar_weights)
     if (np.max(np.abs([entry.value for entry in center]-numeric_center)) > 1e-11 or
             np.max(np.abs([[entry.value for entry in row] for row in frame]-
                           numeric_frame)) > 1e-11):
@@ -225,7 +278,9 @@ def directional_pose(panel: ShellPanel, station: float,
 def directional_pose_from_e4_total(
         panel: ShellPanel, station: float, total_u: np.ndarray,
         first: np.ndarray, second: np.ndarray, *,
-        _director_weights: np.ndarray | None = None) -> DirectionalPose:
+        _director_weights: np.ndarray | None = None,
+        _origin_weights: np.ndarray | None = None,
+        _planar_weights: np.ndarray | None = None) -> DirectionalPose:
     """Pull this candidate through the existing additive total-rotation chart.
 
     The state-owner authority and constitutive trial remain outside this
@@ -242,4 +297,6 @@ def directional_pose_from_e4_total(
                           for theta in nodal[:, 3:]])
     return directional_pose(panel, station, positions, directors,
                             first, second, _total_rotations=nodal[:, 3:],
-                            _director_weights=_director_weights)
+                            _director_weights=_director_weights,
+                            _origin_weights=_origin_weights,
+                            _planar_weights=_planar_weights)

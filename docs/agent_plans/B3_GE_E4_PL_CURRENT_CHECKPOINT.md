@@ -1,6 +1,54 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
 **Current state and decision, 25 September 2026 (policy 2026-09-24.2):**
+The bounded local-material-frame candidate now takes shell position and
+physical director at the actual line point and obtains yaw from the polar
+fit of one-sided Q4/S3 material tangents. It removes the *fixed*
+longitudinal averaging zeros found in the earlier rail and local-director
+variants. Common rigid motion, actual finite-chart first/second variations,
+reference tangent, weak-line work, explicit C0 host splitting and admissible
+transverse shear pass focused checks. It is still only a G0 candidate:
+the 0.4 m yaw wave remains substantially under-resolved on the tested
+mesh, fixed-mesh P0 line refinement changes loaded yaw rotation about 38%,
+and 4.9–5.7% of loaded yaw shell energy is from the existing numerical
+component. Positive physical energy and correct moment balance do not by
+themselves establish a stable or physically accurate bond. Next obtain an
+independent physical yaw/torque/shear reference with matching section,
+geometry, supports and connection meaning; study the numerical-energy
+partition and norm-scaled interface response under registered joint
+refinement and required mesh ratios. Do not select the pose or multiplier
+space before mechanics review and G0B acceptance. Keep classical axial,
+historical Q6/finite-pad and native six-channel evidence separate. Formal
+F03 authority remains unconsumed, G0B open and G1 barred.
+
+**Bounded local-frame evidence, 25 September 2026:** The local reference
+yaw is `0.5(∂uy/∂x−∂ux/∂y)` and has no numerical drilling column; director
+tilt is interpolated independently of the shell surface normal. Q4 and
+S3 x16/y8 give `0.681` of the exact local-polar virtual work for the
+previously cancelled 0.4 m in-plane wave; the earlier finite rail gave
+approximately zero. The local candidate's x4→x8→x16 ratios are
+`0.033→0.213→0.681`, so this is recovery of a continuum local-work
+channel, not mesh convergence. A common rigid-motion patch is exact to
+`7e-17`; finite first/mixed-second variations and the flat-reference
+trace agree with independent differences on Q4/S3. One-sided C0 tangent
+jumps are explicit; the weak integral splits at center-line host edges,
+including odd shell grids.
+
+For a 100 Nm beam-tip yaw couple on Q4 x16/y8, beam8, P0 line intervals
+2→4, the local-frame tip yaw is `6.676→4.141 µrad`, shell support moment
+`−111.146→−98.822 Nm`, and numerical shell-energy fraction
+`5.15→4.86%`. S3 gives `6.644→4.102 µrad`,
+`−111.429→−99.074 Nm`, and `5.45→5.68%`. The physical shell energy is
+positive; actual interface and support moments agree within `4e-11 Nm`,
+global moment balance within `4e-11 Nm`, and energy-work closure is at
+roundoff in these runs. These small residuals do not settle resolution,
+stabilization sensitivity or external physical agreement. The affected
+five-file mechanics suite passed `140/140`; a subsequent odd-grid
+segmentation regression passed `1/1`. All work remains exploratory;
+defaults, product source, frozen evidence and scientific criteria are
+unchanged.
+
+**Earlier checkpoint, 25 September 2026:**
 The fixed-longitudinal-width four-sample frame cannot yet be accepted as
 the *local bonded-line* shell pose. Its flat-reference director transfer
 has gain `cos(0.2k)` for a director wave of wavenumber `k`, and its yaw

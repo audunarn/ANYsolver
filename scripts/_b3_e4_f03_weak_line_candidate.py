@@ -25,8 +25,10 @@ from scripts._b3_e4_f03_shell_finite_pose_candidate import pose_from_e4_total
 from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_translation,
     pose_from_e4_total_local_director,
+    pose_from_e4_total_local_frame,
     reference_spatial_trace_local_translation,
-    reference_spatial_trace_local_director)
+    reference_spatial_trace_local_director,
+    reference_spatial_trace_local_frame)
 from scripts._b3_e4_f03_shell_spatial_linear_port import reference_spatial_trace
 
 
@@ -102,13 +104,22 @@ class ReferenceKKT:
 
 
 def segments(shell: FlatE4TrialPanel, beam: Fixture,
-             space: LineMultiplierSpace) -> np.ndarray:
+             space: LineMultiplierSpace, *,
+             shell_port: str = "rail") -> np.ndarray:
     """Split at shell hosts, native half-cells, and multiplier knots."""
     if not isinstance(shell, FlatE4TrialPanel) or not isinstance(beam, Fixture):
         raise TypeError("bounded E4 and native B3 fixtures required")
     shell.guard()
     beam.context.guard()
-    sites = np.r_[shell.panel.breakpoints(),
+    if shell_port == "local_frame":
+        shell_sites = -.5+np.arange(shell.panel.x_interval_count+1)/shell.panel.n_s
+        shell_sites = shell_sites[(shell_sites >= 0.) & (shell_sites <= 1.)]
+        shell_sites = np.r_[0., shell_sites, 1.]
+    elif shell_port in ("rail", "local_translation", "local_director"):
+        shell_sites = shell.panel.breakpoints()
+    else:
+        raise ValueError("unknown bounded shell pose port")
+    sites = np.r_[shell_sites,
                   np.arange(beam.n_half_cells+1)/beam.n_half_cells,
                   space.knots]
     edges = np.unique(np.round(sites, 14))
@@ -135,18 +146,20 @@ def integrate_weak_line(
     """
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
-    if shell_port not in ("rail", "local_translation", "local_director"):
+    if shell_port not in ("rail", "local_translation", "local_director",
+                          "local_frame"):
         raise ValueError("unknown bounded shell pose port")
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
-                "local_director": pose_from_e4_total_local_director}[shell_port]
+                "local_director": pose_from_e4_total_local_director,
+                "local_frame": pose_from_e4_total_local_frame}[shell_port]
     if type(order) is not int or order not in (2, 3, 4, 5):
         raise ValueError("bounded Gauss order 2 through 5 required")
     coefficients = np.asarray(multipliers, dtype=float)
     if (coefficients.shape != (space.count, 6) or
             not np.isfinite(coefficients).all()):
         raise ValueError("finite six-vector multiplier coefficients required")
-    edges = segments(shell, beam, space)
+    edges = segments(shell, beam, space, shell_port=shell_port)
     # Both calls validate complete vectors and predecessor/definition identity.
     shell.evaluate(shell_reference_total, .5)
     shell_trial = shell.evaluate(shell_total, .5)
@@ -206,21 +219,24 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
     """
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
-    if shell_port not in ("rail", "local_translation", "local_director"):
+    if shell_port not in ("rail", "local_translation", "local_director",
+                          "local_frame"):
         raise ValueError("unknown bounded shell pose port")
     if shell_support_policy not in ("legacy_three_left_nodes",
                                     "full_left_edge", "both_xy_edges"):
         raise ValueError("unknown bounded shell support policy")
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
-                "local_director": pose_from_e4_total_local_director}[shell_port]
+                "local_director": pose_from_e4_total_local_director,
+                "local_frame": pose_from_e4_total_local_frame}[shell_port]
     reference_trace = {
         "rail": reference_spatial_trace,
         "local_translation": reference_spatial_trace_local_translation,
-        "local_director": reference_spatial_trace_local_director}[shell_port]
+        "local_director": reference_spatial_trace_local_director,
+        "local_frame": reference_spatial_trace_local_frame}[shell_port]
     if type(order) is not int or order not in (2, 3, 4, 5):
         raise ValueError("bounded Gauss order 2 through 5 required")
-    edges = segments(shell, beam, space)
+    edges = segments(shell, beam, space, shell_port=shell_port)
     shell_size = 6*shell.panel.node_count
     beam_size = beam.context.count
     shell_trial = shell.evaluate(np.zeros(shell_size), .5)
