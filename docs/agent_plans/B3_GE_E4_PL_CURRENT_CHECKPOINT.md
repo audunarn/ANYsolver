@@ -1,6 +1,81 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
 **Current state and decision, 24 September 2026 (policy 2026-09-24.2):**
+Keep the finite-width shell director/center material line as the native
+development candidate; do not select a multiplier space. On a fixed beam
+and P0 line, Q4 shell refinement brings the independently assembled
+Reissner–Mindlin/Timoshenko transverse tip response close to the native
+response, while a remaining reaction-partition difference is unresolved.
+At fixed refined shell and beam, doubling P0 line intervals changes
+torque rotation about 23% in *both* formulations. Continuous P1 and
+dual-linear candidates also remain line-sensitive. Full row rank and
+small work residuals therefore do not establish interface stability.
+For nested P0/P1 spaces, a smaller tip compliance after adding weak
+constraints is expected on a fixed elastic mesh; the observed drop is
+unresolved resolution sensitivity, not by itself instability.
+The decision sought is a physically stable native six-channel connection,
+not another classical axial digit. Next distinguish line-space/interface
+resolution from a shell-trace or physical-reference mismatch using a
+section-, geometry-, support-, and load-matched torque/shear reference and
+a norm-scaled, physically interpreted mesh-ratio study. If physical
+quantities stabilize over joint refinement and the required ratios,
+advance the selected candidate to formal F03 review; otherwise revise the
+trace, interface space, or resolution policy. Keep the classical axial and
+historical Q6/finite-pad evidence separate. Formal F03 authority remains
+unconsumed; G0B remains open and G1 barred.
+
+**Bounded torque/shear decision evidence (same date):** Source branch
+`97d70e24`; diagnostic scripts are from this worktree. Python 3.14.2,
+NumPy 2.4.6, SciPy 1.17.1 imported `anysolver` from the main checkout;
+`git diff main HEAD` lists only B2 files under `src/anysolver`, so the B3/E4
+operators used here are unchanged. These are unregistered developmental
+diagnostics, not installed-artifact or external qualification. Both models
+use the flat x=[−0.5,1.5], y=[−0.5,0.5] panel, clamped left shell edge,
+rooted beam, E=210 GPa, nu=0.3, t=0.07 m, matching declared generalized
+beam stiffnesses, a center material-line pose, 100 Nm beam-tip torque or
+1000 N beam-tip transverse force, and exact weak line constraints. The
+independent model uses a spline plate/beam basis and is not an identical
+discrete E4/native-B3 operator or an external solver.
+
+At eight native beam half-cells and two P0 intervals, the native-minus-
+independent relative differences were:
+
+| Q4 shell x/y cells | Torque tip rotation | Torque shell reaction | Transverse tip displacement | Transverse shell reaction |
+|---|---:|---:|---:|---:|
+| 4/2 | −1.45% | −0.05% | −25.52% | +40.90% |
+| 8/2 | −0.59% | +0.09% | −6.83% | +11.60% |
+| 16/2 | −0.31% | +0.09% | −2.51% | +4.93% |
+| 16/4 | +0.05% | +1.51% | −1.00% | +2.79% |
+| 16/8 | −0.66% | +0.79% | −0.63% | +2.41% |
+
+On x16/y8, beam8, P0 intervals 2→4, native torque tip rotation changed
+18.795→14.438 microrad and independent changed 18.920→14.534 microrad;
+native transverse tip changed 51.382→48.852 micrometres and independent
+51.707→49.019 micrometres. Shell torque reactions changed −56.725→−53.148
+Nm native and −56.278→−52.431 Nm independent; transverse shell reactions
+changed 1556.24→1407.38 N native and 1519.64→1346.56 N independent.
+Native six-channel rows were full rank for both P0 resolutions (12/12 and
+24/24) in the complete, shell-only, and beam-only matrices. These ranks
+are algebraic diagnostics, not norm-scaled inf-sup constants.
+
+On that fixed native mesh, continuous P1 torque tip rotation changed
+15.139→12.543 microrad and dual-linear changed 13.937→12.348 microrad
+for line intervals 2→4; corresponding transverse tips changed
+49.497→47.573 and 49.093→47.823 micrometres. The independently
+assembled continuous-P1 model changed torque 15.037→11.892 microrad and
+transverse tip 49.193→45.926 micrometres. All solves had small equilibrium
+and energy-work residuals. Neither candidate is selected from these
+fixed-mesh differences. The reciprocal coarse-mesh probe also found that
+an x2-shell/beam8 pairing differs strongly in transverse response while
+an x16-shell/beam4 pairing agrees closely; those ratios confound shell
+resolution and are not the required mesh-ratio qualification.
+The existing exact finite-spline pointwise-bond diagnostic is itself
+plate-resolution sensitive, so its smaller gap cannot be used as a
+converged physical target. The present loaded comparisons and algebraic
+rank checks remain distinct from the required norm-scaled stability and
+joint-refinement assessment.
+
+**Earlier checkpoint, 24 September 2026:**
 Use the shell center material line and finite-width director frame as the
 native *development candidate*. P0 leads the line-space investigation,
 but no multiplier space or connection law is qualified. At fixed Q4 x8/y8
