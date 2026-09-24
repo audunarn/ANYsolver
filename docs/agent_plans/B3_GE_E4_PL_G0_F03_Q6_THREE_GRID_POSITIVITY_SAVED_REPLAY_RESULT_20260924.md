@@ -63,9 +63,11 @@ native interface mechanics. No G0 acceptance or speedup is claimed.
 
 There is a separate **integrated resource concern**. X2 positivity source
 reported approximately 300 s in assembly and 539 s in proof. The earlier
-patched-kernel integrated X2 diagnostic took approximately 1,411 s. Adding
-the standalone proof time to that route suggests approximately 1,950 s,
-above the draft 1,800 s per-case envelope even if assembly is shared. This
-is an inference from separate runs, not an integrated measurement. A
-shared-assembly installed rehearsal with frozen inputs and limits is needed
-before asserting the complete physical route fits.
+patched-kernel integrated X2 diagnostic took approximately 1,411 s, including
+approximately 235 s of duplicate physical assembly. Reusing the certificate
+assembly for positivity alone suggests approximately 1,950 s total. Reusing
+that same assembly for physical recovery as well suggests approximately
+1,715 s, leaving only about 85 s under the draft 1,800 s case envelope.
+These are estimates from separate runs, not an integrated measurement or a
+frozen scientific budget. A shared-assembly installed rehearsal with frozen
+inputs and limits is needed before asserting the complete route fits.

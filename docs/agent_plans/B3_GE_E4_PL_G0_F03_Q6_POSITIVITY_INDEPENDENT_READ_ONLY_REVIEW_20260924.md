@@ -31,10 +31,12 @@ Remaining findings:
    one-use scientific registration remain pending.
 3. Signed physical-observable error propagation and full native interface
    mechanics remain outside this positivity diagnostic.
-4. The full integrated X2 resource envelope is unmeasured. Separately adding
-   the X2 proof time to the earlier integrated route suggests a possible
-   1,800-second limit overrun; this is a scheduling estimate, not a measured
-   failure or a license to relax the limit.
+4. The full integrated X2 resource envelope is unmeasured. Adding the X2
+   positivity proof to the earlier integrated route projects about 1,950 s
+   if physical recovery still assembles separately. Reusing that physical
+   assembly as well projects about 1,715 s, leaving a narrow margin below
+   the draft 1,800 s limit. These are scheduling estimates, not a measured
+   pass or failure and not a license to relax the limit.
 
 **Decision:** Accept the narrow source-level three-grid saved-matrix
 positivity *feasibility* finding only. Keep F03/G0B open and G1 barred.

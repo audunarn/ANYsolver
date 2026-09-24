@@ -15,8 +15,9 @@ propagation, native mechanics and formal review remain. F03/G0B remain open;
 G1 is barred. The first failed X0 and unarchived second X0 attempts remain
 preserved as evidence. Independent read-only review of all saved bytes and
 receipts found no remaining saved-matrix proof issue, but the full installed
-route is not timed; separate X2 timings suggest a possible draft 1,800-second
-envelope overrun. See
+route is not timed. Separate X2 timings project about 1,950 s with duplicate
+physical assembly or 1,715 s if it too is shared, leaving little margin under
+the draft 1,800-second envelope. See
 `B3_GE_E4_PL_G0_F03_Q6_POSITIVITY_INDEPENDENT_READ_ONLY_REVIEW_20260924.md`.
 
 **24 September 2026 — three-grid Q6 saved-input feasibility.** Fixed X0/X1/X2
