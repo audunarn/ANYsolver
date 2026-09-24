@@ -1,4 +1,4 @@
-"""Resource-bounded exploratory 64/128/256-grid classical F03 comparison.
+"""Resource-bounded exploratory classical F03 resolution comparison.
 
 The child owns one sparse solve. Raw stdout, stderr, status and sampled RSS
 stay in a new output directory even if the case fails or exceeds the limit.
@@ -35,7 +35,8 @@ SOURCE = (
 CHILD_CODE = (
     "import json,sys; "
     "from scripts.b3_e4_f03_classical_axial_refinement import one_case; "
-    "print(json.dumps(one_case(sys.argv[1],int(sys.argv[2]),equilibrate=True),"
+    "print(json.dumps(one_case(sys.argv[1],int(sys.argv[2]),equilibrate=True,"
+    "beam_elements=int(sys.argv[3]),mortar_intervals=int(sys.argv[4])),"
     "sort_keys=True,allow_nan=False))"
 )
 
@@ -44,13 +45,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--topology", required=True, choices=("Q4", "CST"))
     parser.add_argument("--n", required=True, type=int, choices=(64, 128, 256))
+    parser.add_argument("--beam-elements", type=int)
+    parser.add_argument("--mortar-intervals", type=int)
     parser.add_argument("--root", required=True, type=Path)
     args = parser.parse_args()
+    n_beam = 2*args.n if args.beam_elements is None else args.beam_elements
+    n_mortar = args.n if args.mortar_intervals is None else args.mortar_intervals
+    if not 1 <= n_beam <= 512 or not 1 <= n_mortar <= 256:
+        parser.error("beam and mortar resolutions exceed bounded comparator")
     root = args.root.resolve()
     root.mkdir(parents=True, exist_ok=False)
     source_dir = Path(__file__).resolve().parent
     command = [sys.executable, "-B", "-c", CHILD_CODE,
-               args.topology, str(args.n)]
+               args.topology, str(args.n), str(n_beam), str(n_mortar)]
     environment = os.environ.copy()
     environment.update(OPENBLAS_NUM_THREADS="1", OMP_NUM_THREADS="1",
                        MKL_NUM_THREADS="1", NUMBA_NUM_THREADS="1")
@@ -60,7 +67,8 @@ def main() -> int:
             ["git", "rev-parse", "HEAD"], text=True).strip(),
         source_sha256={name: hashlib.sha256((source_dir/name).read_bytes()).hexdigest()
                        for name in SOURCE},
-        topology=args.topology, n=args.n, command=command,
+        topology=args.topology, n=args.n, beam_elements=n_beam,
+        mortar_intervals=n_mortar, command=command,
         sampled_rss_limit_bytes=MAX_RSS, wall_limit_seconds=MAX_SECONDS,
         memory_sampling_seconds=.1, threads=1,
         python=platform.python_version(), numpy=np.__version__,
@@ -121,6 +129,8 @@ def main() -> int:
             if (result["status"] != "UNREGISTERED_CLASSICAL_AXIAL_REFERENCE_DIAGNOSTIC"
                     or result["topology"] != args.topology
                     or result["shell_hosts"] != args.n
+                    or result["beam_elements"] != n_beam
+                    or result["multiplier_intervals"] != n_mortar
                     or result["numerical_solver"] !=
                     "symmetric_row_equilibration_6_passes"):
                 raise ValueError("child result identity mismatch")

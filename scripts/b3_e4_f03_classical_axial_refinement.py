@@ -22,15 +22,21 @@ import _b3_e4_f03_independent_line as line
 import _b3_e4_f03_independent_shell as shell
 
 
-def one_case(topology: str, n: int, *, equilibrate: bool = False) -> dict:
+def one_case(topology: str, n: int, *, equilibrate: bool = False,
+             beam_elements: int | None = None,
+             mortar_intervals: int | None = None) -> dict:
     if topology not in ("Q4", "CST") or n not in (8, 16, 32, 64, 128, 256):
         raise ValueError("bounded classical axial refinement required")
+    n_beam = 2*n if beam_elements is None else beam_elements
+    n_mortar = n if mortar_intervals is None else mortar_intervals
+    if (not isinstance(n_beam, int) or not 1 <= n_beam <= 512
+            or not isinstance(n_mortar, int) or not 1 <= n_mortar <= 256):
+        raise ValueError("bounded beam and mortar resolutions required")
     began = time.perf_counter()
     model = shell.panel(n, n, topology)
-    n_beam = 2*n
-    result = coupled.solve(model, n_beam, n, "P1", "axial_sine",
+    result = coupled.solve(model, n_beam, n_mortar, "P1", "axial_sine",
                            equilibrate=equilibrate)
-    gap = line.integrated_gap(model, n_beam, n, result.shell, result.beam)
+    gap = line.integrated_gap(model, n_beam, n_mortar, result.shell, result.beam)
     shell_reaction = float(np.sum(result.shell_reactions[0::2]))
     beam_reaction = float(result.beam_reactions[0])
     tip = float(result.beam[2*n_beam])
@@ -48,7 +54,7 @@ def one_case(topology: str, n: int, *, equilibrate: bool = False) -> dict:
                           else "raw_sparse_direct"),
         topology=topology, shell_hosts=n, shell_transverse_intervals=n,
         shell_elements=len(model.elements), shell_nodes=len(model.nodes),
-        beam_elements=n_beam, multiplier_intervals=n,
+        beam_elements=n_beam, multiplier_intervals=n_mortar,
         physical_load="q_x(s)=1e5 sin(2 pi s) N/m, s in [0,1] m",
         shell_support="both x edges ux/uy fixed",
         beam_root="u,v,theta fixed",

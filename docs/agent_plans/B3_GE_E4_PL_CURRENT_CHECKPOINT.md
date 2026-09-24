@@ -1,5 +1,34 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — independent classical axial resolution isolation.**
+The guarded comparator now permits separate bounded beam and continuous-P1
+line resolutions, leaving its previous `2n` beam / `n` line default
+unchanged. Seven new serial child solves completed: Q4 `n=128` with line
+intervals 64/256 at 256 beam elements and beam elements 128/512 at 128
+line intervals; CST `n=128` with line intervals 64/256 at 256 beam
+elements; and Q4 `n=256` with 128 line intervals at 512 beam elements.
+All used the same equilibrated independent classical laws, load and
+supports. The largest sampled child RSS was `1.808 GB`; the longest wall
+time was `63.7 s`. Each new root records source hashes, parameters, raw
+output, parsed result, status and limits.
+
+At fixed Q4 `n=128`, changing 128→256 line intervals changes shell
+reaction by `2.64%` and beam energy by `4.08%`; changing 256→512 beam
+elements changes them by only `0.0122%` and `0.0290%`. CST `n=128` line
+128→256 changes reaction by `1.78%` and beam energy by `3.06%`. At Q4
+`n=256`, changing line 128→256 still changes reaction by `1.18%` and
+beam energy by `2.04%`. Conversely, along the paired Q4 `n=128→256`
+physical and line refinement, shell reaction changes `4.22%` and beam
+energy `7.35%`. All cases have small algebraic/weak residuals and
+quadratic work discrepancy; those checks do not resolve the physical
+discretization sensitivity. The line density is consequential, while
+the beam mesh is not the dominant source on this slice. No continuum
+target, mortar stability acceptance or native-line selection follows.
+This remains independent classical Level-A diagnosis. **F03/G0B remain
+open and G1 barred.** The next mechanics decision requires a bounded
+signed-stability and physical-torque/trace reference, with an explicit
+line-resolution policy; these axial results alone cannot establish it.
+
 **24 September 2026 — guarded classical axial n=128/256 continuation.**
 The same independent Q4/CST membrane, quadratic/Hermite beam and
 three-channel P1 weak-line comparator was extended to joint `n=128` and
