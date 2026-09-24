@@ -29,6 +29,19 @@ line. Do not run another finer classical axial refinement absent a new
 decision-relevant hypothesis. G0B remains open, G1 barred and formal F03
 execution authority unconsumed.
 
+**Bounded transverse diagnosis:** On Q4 x8/y4, native beam-8 and fixed
+strip, P0-2→P0-4→P0-8 changes tip z under `1000 N` from
+`46.857→43.740→42.021 µm` and tip rx under `100 Nm` from
+`18.977→14.410→11.467 µrad`; the independently assembled physical
+plate/beam model changes `49.974→46.885→44.335 µm` and
+`19.219→14.635→11.371 µrad`. S3 follows the same ordering. Native Q4/S3
+reference constraint matrices at Gauss orders 2–5 agree to about `3e-16`
+relative, so quadrature order does not explain this spread. No numerical
+shell completion energy appears in these transverse cases. This is a
+line-resolution sensitivity in the finite-strip diagnostic, not evidence
+that the finer answer is more physical or that P0 is stable. Full native
+six-channel norm-scaled modes, mesh ratios and convergence remain open.
+
 **Current checks:** The new finite-strip tests pass `8/8` by direct
 single-thread invocation; previous independent transverse and yaw tests
 pass `12/12` and `5/5`, and two new independent strip mean/load/yaw checks
