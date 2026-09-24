@@ -35,3 +35,10 @@ packaging smoke check, not release qualification.
 Unsupported contact combinations fail in validation or solver preflight.
 The exact admitted C0 profile and its limitations are in
 [GENERAL_CONTACT_C0.md](GENERAL_CONTACT_C0.md).
+
+The restricted sliding development candidate at source `9dcd1866` was built
+and run from an isolated installed wheel (SHA-256
+`2e5f21be6b16e660724780ad8d4b89934462d8086c6e3f0d91261a1ab85cb6c3`).
+The installed example output is retained at
+`C:\ANYworkspaceWork\general-contact-evidence\c1-restricted-sliding-example-installed.txt`.
+This smoke check does not promote any C1 row to independent acceptance or release.
