@@ -172,7 +172,9 @@ class MovingPatchMortar:
     def evaluate(self, source_translation: np.ndarray,
                  target_translation: np.ndarray,
                  source_normal_dofs: np.ndarray,
-                 target_normal_dofs: np.ndarray) -> MovingPatchMortarState:
+                 target_normal_dofs: np.ndarray,
+                 *, multiplier_estimate: np.ndarray | None = None,
+                 ) -> MovingPatchMortarState:
         moved, heights = self._fields(
             source_translation, target_translation,
             source_normal_dofs, target_normal_dofs,
@@ -214,8 +216,10 @@ class MovingPatchMortar:
         weighted_gap[np.abs(weighted_gap) <= roundoff * support] = 0.0
         normalized = np.zeros(source_count)
         normalized[active_support] = weighted_gap[active_support] / support[active_support]
-        active_gap = np.minimum(normalized, 0.0)
-        closed = active_support & (normalized <= 0.0)
+        multiplier = self._owned_multiplier(multiplier_estimate)
+        shifted_gap = normalized - multiplier / self.stiffness
+        active_gap = np.minimum(shifted_gap, 0.0)
+        closed = active_support & (shifted_gap <= 0.0)
         energy = 0.5 * self.stiffness * float(support @ (active_gap * active_gap))
         residual = gradient.T @ (self.stiffness * active_gap)
         tangent = np.zeros((source_count + target_count, source_count + target_count))
@@ -235,6 +239,27 @@ class MovingPatchMortar:
             support, weighted_gap, normalized, gradient, energy,
             residual, tangent, minimum_vertex_gap, pressure_rank,
         )
+
+    def _owned_multiplier(self, estimate: np.ndarray | None) -> np.ndarray:
+        if estimate is None:
+            return np.zeros(len(self.source_node_ids))
+        values = np.asarray(estimate, dtype=float)
+        if (values.shape != (len(self.source_node_ids),)
+                or not np.all(np.isfinite(values)) or np.any(values < 0.0)):
+            raise ValueError("normal multiplier estimate must be finite, nonnegative and match pressure nodes")
+        return values.copy()
+
+    def projected_multiplier(self, state: MovingPatchMortarState,
+                             estimate: np.ndarray) -> np.ndarray:
+        """Projected AL update on the fixed material pressure-node space."""
+
+        old = self._owned_multiplier(estimate)
+        updated = np.zeros_like(old)
+        supported = state.support > 0.0
+        updated[supported] = np.maximum(
+            0.0, old[supported] - self.stiffness * state.normalized_gap[supported]
+        )
+        return updated
 
     def certify_gap(self, source_translation: np.ndarray,
                     target_translation: np.ndarray,
@@ -305,12 +330,14 @@ class MovingPatchMortar:
                              target_translation: np.ndarray,
                              source_normal_dofs: np.ndarray,
                              target_normal_dofs: np.ndarray,
+                             *, multiplier_estimate: np.ndarray | None = None,
                              ) -> tuple[np.ndarray, np.ndarray]:
         """Differentiate the globally normalized pressure potential."""
 
         state = self.evaluate(
             source_translation, target_translation,
             source_normal_dofs, target_normal_dofs,
+            multiplier_estimate=multiplier_estimate,
         )
         if state.overlap_area == 0.0:
             return np.zeros(3), np.zeros(3)
@@ -336,17 +363,21 @@ class MovingPatchMortar:
                 dm_b[rows] += transport.target_support_derivative
                 dW_a[rows] += transport.source_weighted_gap_derivative
                 dW_b[rows] += transport.target_weighted_gap_derivative
-        closed = (state.support > 0.0) & (state.normalized_gap < 0.0)
-        pressure = self.stiffness * state.normalized_gap[closed]
+        multiplier = self._owned_multiplier(multiplier_estimate)
+        shifted = state.normalized_gap - multiplier / self.stiffness
+        closed = (state.support > 0.0) & (shifted < 0.0)
+        pressure = self.stiffness * shifted[closed]
+        support_coefficient = (
+            -0.5 * self.stiffness * state.normalized_gap[closed] ** 2
+            + 0.5 * multiplier[closed] ** 2 / self.stiffness
+        )
         source_tangent = np.sum(
             pressure[:, None] * dW_a[closed]
-            - 0.5 * self.stiffness * state.normalized_gap[closed, None] ** 2
-            * dm_a[closed], axis=0,
+            + support_coefficient[:, None] * dm_a[closed], axis=0,
         )
         target_tangent = np.sum(
             pressure[:, None] * dW_b[closed]
-            - 0.5 * self.stiffness * state.normalized_gap[closed, None] ** 2
-            * dm_b[closed], axis=0,
+            + support_coefficient[:, None] * dm_b[closed], axis=0,
         )
         source_normal = float(np.sum(state.normal_residual[:count])) * self.normal
         target_normal = float(np.sum(state.normal_residual[count:])) * self.normal
@@ -356,7 +387,9 @@ class MovingPatchMortar:
                        target_translation: np.ndarray,
                        source_normal_dofs: np.ndarray,
                        target_normal_dofs: np.ndarray,
-                       *, difference_step: float) -> MovingPatchReducedSystem:
+                       *, difference_step: float,
+                       multiplier_estimate: np.ndarray | None = None,
+                       ) -> MovingPatchReducedSystem:
         """Differentiate the global-pressure residual on a smooth branch."""
 
         step = float(difference_step)
@@ -368,20 +401,24 @@ class MovingPatchMortar:
         heights_b = np.asarray(target_normal_dofs, dtype=float).reshape(-1)
         values = np.r_[source, target, heights_a, heights_b]
         split = 6 + len(heights_a)
+        multiplier = self._owned_multiplier(multiplier_estimate)
 
         def evaluate_at(current: np.ndarray):
             translation_a, translation_b = current[:3], current[3:6]
             height_a, height_b = current[6:split], current[split:]
             state = self.evaluate(
                 translation_a, translation_b, height_a, height_b,
+                multiplier_estimate=multiplier,
             )
             force_a, force_b = self.translation_residual(
                 translation_a, translation_b, height_a, height_b,
+                multiplier_estimate=multiplier,
             )
             return state, np.r_[force_a, force_b, state.normal_residual]
 
         state, residual = evaluate_at(values)
-        active = (state.support > 0.0) & (state.normalized_gap <= 0.0)
+        active = ((state.support > 0.0)
+                  & (state.normalized_gap - multiplier / self.stiffness <= 0.0))
         tangent = np.zeros((len(values), len(values)))
         for column in range(len(values)):
             delta = np.zeros_like(values)
@@ -389,9 +426,9 @@ class MovingPatchMortar:
             plus_state, plus_residual = evaluate_at(values + delta)
             minus_state, minus_residual = evaluate_at(values - delta)
             plus_active = ((plus_state.support > 0.0)
-                           & (plus_state.normalized_gap <= 0.0))
+                           & (plus_state.normalized_gap - multiplier / self.stiffness <= 0.0))
             minus_active = ((minus_state.support > 0.0)
-                            & (minus_state.normalized_gap <= 0.0))
+                            & (minus_state.normalized_gap - multiplier / self.stiffness <= 0.0))
             plus_matches = np.array_equal(plus_active, active)
             minus_matches = np.array_equal(minus_active, active)
             if plus_matches and minus_matches:

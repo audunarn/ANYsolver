@@ -26,9 +26,10 @@ profile has a 10,000-step resource cap.
 The current admission is planar Q4/S3, von Karman kinematics, elastic
 isotropic materials, fixed actual rotations, one tangential translation per
 patch, frictionless penalty contact and two or three translational control
-rows. There is no adaptive path-step cutback, arbitrary callback motion,
-friction, augmentation, warped Q4, physical shell rotation or dynamic
-response. The public `solve_static_nonlinear` entry point dispatches this
+rows. The separately selected [augmented path](GENERAL_CONTACT_C1_AUGMENTED_PATH.md)
+uses the same restricted geometry. There is no adaptive path-step cutback,
+arbitrary callback motion, friction, warped Q4, physical shell rotation or
+dynamic response. The public `solve_static_nonlinear` entry point dispatches this
 explicit path to its dedicated owner; unrelated historical controls retain
 their route. The numerical path is locally tested, not independently accepted.
 

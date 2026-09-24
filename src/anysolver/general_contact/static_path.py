@@ -52,6 +52,7 @@ from .core import (
 
 
 PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_CONTACT_PATH_DEV_V0"
+AUGMENTED_PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_AUGMENTED_PATH_DEV_V0"
 _DOF = {"ux": 0, "uy": 1, "uz": 2}
 
 
@@ -154,6 +155,8 @@ def solve_static_contact_path(
         raise ValueError("unsupported contact path: " + "; ".join(report.issues))
     if definition.rigid_bodies or settings.pair_motion != "restricted_sliding":
         raise ValueError("contact path currently requires a deformable shell pair")
+    augmented = definition.interactions[0].normal_law == "augmented"
+    profile = AUGMENTED_PROFILE if augmented else PROFILE
     from anymaterial.isotropic import IsotropicMaterial
 
     for element in model.mesh.elements.values():
@@ -176,11 +179,12 @@ def solve_static_contact_path(
 
     def operation(_lease):
         def run():
-            with contact_scope(model, definition, settings) as manager:
+            with contact_scope(model, definition, settings,
+                               allow_augmented=augmented) as manager:
                 contract = {
                     "schema": "ANYSOLVER_STATIC_RESTART_CONTRACT_V2",
                     "control": "contact_path",
-                    "profile": PROFILE,
+                    "profile": profile,
                     "general_contact": manager.restart_contract(),
                     "program": program.contract(),
                     "num_layers": num_layers,
@@ -214,7 +218,7 @@ def solve_static_contact_path(
                 if np.any(np.abs(controls @ u0) > 1.0e-12):
                     raise ValueError("contact path requires zero reference control offsets")
                 reactions = rows.T
-                info = {"control": "contact_path", "profile": PROFILE,
+                info = {"control": "contact_path", "profile": profile,
                         "general_contact_profile": manager.profile}
                 accepted_step = 0
                 multipliers = np.zeros(len(program.controls))
@@ -232,6 +236,8 @@ def solve_static_contact_path(
                     expected_keys = {"mode", "accepted_step", "multipliers",
                                      "reduced_coordinates", "steps", "history",
                                      "total_iterations", "terminal_status"}
+                    if augmented:
+                        expected_keys.add("normal_multipliers")
                     if set(state) != expected_keys or state["mode"] != "contact_path":
                         raise ValueError("contact path checkpoint state is incompatible")
                     if state["terminal_status"] != "completed":
@@ -259,8 +265,12 @@ def solve_static_contact_path(
                     history = copy.deepcopy(state["history"])
                     total_iterations = int(state["total_iterations"])
                     if (len(previous_steps) != accepted_step or
-                            len(history) != accepted_step or total_iterations < 0):
+                             len(history) != accepted_step or total_iterations < 0):
                         raise ValueError("contact path checkpoint history is incomplete")
+                    if augmented:
+                        manager.set_normal_multipliers(
+                            np.asarray(state["normal_multipliers"], dtype=float)
+                        )
                     committed_states = validated.element_states
                 if accepted_step > requested_step:
                     raise ValueError("contact path checkpoint is beyond requested target")
@@ -283,63 +293,94 @@ def solve_static_contact_path(
                                             f"contact_path.step:{step}")
                     start_q = q.copy()
                     start_multipliers = multipliers.copy()
+                    start_normal_multipliers = manager.normal_multipliers.copy() if augmented else None
                     target = program.target_at(step)
                     candidate_states = committed_states
-                    for iteration in range(1, max_iterations + 1):
-                        cancellation_safe_point(cancellation_token,
-                                                f"contact_path.step:{step}.iteration:{iteration}")
-                        total_iterations += 1
-                        u = np.asarray(T @ q + u0).reshape(-1)
-                        internal, tangent, trial = _assemble_nonlinear_system(
-                            model, u, committed_states, num_layers,
-                            kinematics="von_karman",
+                    normal_multiplier_change = 0.0
+                    augmentation_limit = (settings.maximum_augmentations
+                                          if augmented else 1)
+                    for augmentation in range(1, augmentation_limit + 1):
+                        cancellation_safe_point(
+                            cancellation_token,
+                            f"contact_path.step:{step}.augmentation:{augmentation}",
                         )
-                        residual = (reactions @ multipliers
-                                    - np.asarray(T.T @ internal).reshape(-1))
-                        constraint = target - rows @ q
-                        residual_norm = float(np.linalg.norm(residual))
-                        constraint_norm = float(np.max(np.abs(constraint)))
-                        force_scale = max(1.0, float(np.linalg.norm(
-                            reactions @ multipliers)))
-                        if (residual_norm <= tolerance * force_scale and
-                                constraint_norm <= tolerance * scale):
-                            certificate = manager.evaluate(u, tangent=False)[2]
-                            if not certificate.gap_tolerance_met:
+                        equilibrated = False
+                        for iteration in range(1, max_iterations + 1):
+                            cancellation_safe_point(
+                                cancellation_token,
+                                f"contact_path.step:{step}.augmentation:{augmentation}.iteration:{iteration}",
+                            )
+                            total_iterations += 1
+                            u = np.asarray(T @ q + u0).reshape(-1)
+                            internal, tangent, trial = _assemble_nonlinear_system(
+                                model, u, committed_states, num_layers,
+                                kinematics="von_karman",
+                            )
+                            residual = (reactions @ multipliers
+                                        - np.asarray(T.T @ internal).reshape(-1))
+                            constraint = target - rows @ q
+                            residual_norm = float(np.linalg.norm(residual))
+                            constraint_norm = float(np.max(np.abs(constraint)))
+                            force_scale = max(1.0, float(np.linalg.norm(
+                                reactions @ multipliers)))
+                            if (residual_norm <= tolerance * force_scale and
+                                    constraint_norm <= tolerance * scale):
+                                certificate = manager.evaluate(u, tangent=False)[2]
+                                candidate_states = trial
+                                equilibrated = True
+                                break
+                            reduced_tangent = (T.T @ tangent @ T).tocsr()
+                            matrix = sparse.bmat([
+                                [reduced_tangent, sparse.csr_matrix(-reactions)],
+                                [sparse.csr_matrix(rows),
+                                 sparse.csr_matrix((len(rows), len(rows)))],
+                            ], format="csr")
+                            rhs = np.r_[residual, constraint]
+                            try:
+                                delta = np.asarray(factorize(
+                                    matrix, MatrixClass.GENERAL,
+                                    signature=f"contact_path:{step}:{augmentation}:{iteration}",
+                                ).solve(rhs)).reshape(-1)
+                            except Exception:
+                                failure_reason = "singular_contact_path_tangent"
+                                break
+                            if not np.all(np.isfinite(delta)):
+                                failure_reason = "nonfinite_contact_path_increment"
+                                break
+                            proposed = np.asarray(T @ (q + delta[:len(q)]) + u0).reshape(-1)
+                            fraction = manager.admissible_step_fraction(u, proposed)
+                            if fraction <= 1.0e-12:
                                 failure_reason = "contact_gap_exceeded"
                                 break
-                            candidate_states = trial
+                            q += fraction * delta[:len(q)]
+                            multipliers += fraction * delta[len(q):]
+                        if failure_reason is not None:
                             break
-                        reduced_tangent = (T.T @ tangent @ T).tocsr()
-                        matrix = sparse.bmat([
-                            [reduced_tangent, sparse.csr_matrix(-reactions)],
-                            [sparse.csr_matrix(rows),
-                             sparse.csr_matrix((len(rows), len(rows)))],
-                        ], format="csr")
-                        rhs = np.r_[residual, constraint]
-                        try:
-                            delta = np.asarray(factorize(
-                                matrix, MatrixClass.GENERAL,
-                                signature=f"contact_path:{step}:{iteration}",
-                            ).solve(rhs)).reshape(-1)
-                        except Exception:
-                            failure_reason = "singular_contact_path_tangent"
+                        if not equilibrated:
+                            failure_reason = "maximum_iterations_reached"
                             break
-                        if not np.all(np.isfinite(delta)):
-                            failure_reason = "nonfinite_contact_path_increment"
+                        if augmented:
+                            projected = manager.projected_normal_multipliers(u)
+                            normal_multiplier_change = float(np.max(np.abs(
+                                projected - manager.normal_multipliers
+                            )))
+                            if (normal_multiplier_change <= settings.pressure_tolerance
+                                    and certificate.gap_tolerance_met):
+                                break
+                            manager.set_normal_multipliers(projected)
+                        elif certificate.gap_tolerance_met:
                             break
-                        proposed = np.asarray(T @ (q + delta[:len(q)]) + u0).reshape(-1)
-                        fraction = manager.admissible_step_fraction(u, proposed)
-                        if fraction <= 1.0e-12:
+                        else:
                             failure_reason = "contact_gap_exceeded"
                             break
-                        q += fraction * delta[:len(q)]
-                        multipliers += fraction * delta[len(q):]
                     else:
-                        failure_reason = "maximum_iterations_reached"
+                        failure_reason = "maximum_augmentations_reached"
                     if failure_reason is not None:
                         _discard_nonlinear_state_candidate(committed_states)
                         q = start_q
                         multipliers = start_multipliers
+                        if augmented:
+                            manager.set_normal_multipliers(start_normal_multipliers)
                         status = "stopped_at_limit" if previous_steps else "diverged"
                         break
                     accepted_u = np.asarray(T @ q + u0).reshape(-1)
@@ -363,6 +404,8 @@ def solve_static_contact_path(
                         "reaction_generalized": multipliers.tolist(),
                         "residual_norm": residual_norm,
                         "constraint_error": constraint_norm,
+                        "augmentation_iterations": augmentation,
+                        "normal_multiplier_change": normal_multiplier_change,
                         "contact": certificate.to_dict(),
                     }
                     history.append(record)
@@ -382,14 +425,15 @@ def solve_static_contact_path(
                 finished_states = _materialize_final_nonlinear_states(
                     committed_states, info,
                 )
-                finished_states = _finalize_nonlinear_element_states(
-                    model, final_u, finished_states, num_layers,
-                    kinematics="von_karman",
-                )
-                finished_states = _seal_final_qualified_q4_states(
-                    model, final_u, finished_states, num_layers, info,
-                    kinematics="von_karman",
-                )
+                if previous_steps:
+                    finished_states = _finalize_nonlinear_element_states(
+                        model, final_u, finished_states, num_layers,
+                        kinematics="von_karman",
+                    )
+                    finished_states = _seal_final_qualified_q4_states(
+                        model, final_u, finished_states, num_layers, info,
+                        kinematics="von_karman",
+                    )
                 info.update({
                     "failure_reason": failure_reason,
                     "status_category": status,
@@ -401,7 +445,7 @@ def solve_static_contact_path(
                         "total_steps": program.total_steps,
                         "targets": program.target_at(accepted_step).tolist(),
                         "reaction_generalized": multipliers.tolist(),
-                        "profile": PROFILE,
+                        "profile": profile,
                     },
                     "general_contact": manager.evaluate(final_u, tangent=False)[2].to_dict(),
                 })
@@ -420,6 +464,8 @@ def solve_static_contact_path(
                             "history": history,
                             "total_iterations": total_iterations,
                             "terminal_status": status,
+                            **({"normal_multipliers": manager.normal_multipliers.tolist()}
+                               if augmented else {}),
                         },
                     )
                 return NonlinearStaticResult(

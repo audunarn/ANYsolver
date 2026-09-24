@@ -77,8 +77,8 @@ class ContactInteraction:
     def __post_init__(self) -> None:
         if not self.name or not self.surface or not self.target:
             raise ValueError("contact interaction needs a name and two participants")
-        if self.normal_law != "penalty":
-            raise ValueError("only the penalty specialization is implemented")
+        if self.normal_law not in {"penalty", "augmented"}:
+            raise ValueError("normal_law must be penalty or augmented")
         for name in ("normal_stiffness", "gap_tolerance"):
             value = float(getattr(self, name))
             if not np.isfinite(value) or value <= 0.0:
@@ -112,6 +112,8 @@ class ContactSolverSettings:
     sliding_difference_step: float | None = None
     maximum_gap_triangles: int = 10_000
     maximum_patch_normal_dofs: int = 256
+    maximum_augmentations: int = 12
+    pressure_tolerance: float | None = None
 
     def __post_init__(self) -> None:
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
@@ -127,6 +129,12 @@ class ContactSolverSettings:
             raise ValueError("maximum_gap_triangles must be a positive integer")
         if type(self.maximum_patch_normal_dofs) is not int or self.maximum_patch_normal_dofs < 1:
             raise ValueError("maximum_patch_normal_dofs must be a positive integer")
+        if type(self.maximum_augmentations) is not int or self.maximum_augmentations < 1:
+            raise ValueError("maximum_augmentations must be a positive integer")
+        if self.pressure_tolerance is not None and (
+            not np.isfinite(self.pressure_tolerance) or self.pressure_tolerance <= 0.0
+        ):
+            raise ValueError("pressure_tolerance must be finite and positive")
         if self.pair_motion == "restricted_sliding" and self.sliding_difference_step is None:
             raise ValueError("restricted sliding requires an explicit sliding_difference_step")
         if self.pair_motion == "guided" and self.sliding_difference_step is not None:
@@ -179,6 +187,15 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if any(item.normal_law == "augmented" for item in definition.interactions):
+        if (settings is None or settings.pair_motion != "restricted_sliding"
+                or settings.pressure_tolerance is None
+                or definition.rigid_bodies
+                or len(definition.surfaces) != 2
+                or not any(len(item.element_ids) > 1 for item in definition.surfaces)):
+            return ContactValidationReport("invalid", (
+                "augmented law requires a multi-face restricted shell pair and explicit pressure_tolerance",
+            ))
     if not definition.rigid_bodies:
         if settings is not None and settings.pair_motion == "restricted_sliding":
             if len(definition.surfaces) == 2 and any(
@@ -506,9 +523,16 @@ def suspend_contact() -> Iterator[None]:
 
 @contextmanager
 def contact_scope(model: FEModel, definition: ContactDefinition,
-                  settings: ContactSolverSettings | None = None,
-                  initial_displacement: np.ndarray | None = None) -> Iterator[object]:
+                   settings: ContactSolverSettings | None = None,
+                   initial_displacement: np.ndarray | None = None,
+                   *, allow_augmented: bool = False) -> Iterator[object]:
     settings = ContactSolverSettings() if settings is None else settings
+    if any(item.normal_law == "augmented" for item in definition.interactions):
+        if not allow_augmented:
+            raise ValueError("augmented contact requires the contact path analysis owner")
+        report = validate_general_contact(model, definition, settings)
+        if not report.valid:
+            raise ValueError("unsupported augmented contact: " + "; ".join(report.issues))
     if definition.rigid_bodies:
         if settings.pair_motion != "guided":
             raise ValueError("rigid contact does not support pair_motion")

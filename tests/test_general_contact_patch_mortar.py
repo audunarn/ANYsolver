@@ -117,6 +117,61 @@ def test_patch_normal_work_tangent_gap_and_resource_limits():
         )
 
 
+def test_fixed_augmented_multiplier_work_and_projected_update():
+    source, _whole, left, right = _patches()
+    patch = MovingPatchMortar(
+        (source,), (left, right), np.array((0.0, 0.0, 1.0)), 1.0e6,
+    )
+    multiplier = np.array((30.0, 40.0, 50.0, 60.0))
+    source_heights = np.array((-1.0e-4, -1.1e-4, -0.9e-4, -1.2e-4))
+    target_heights = np.zeros(6)
+    source_translation = np.array((0.17, 0.05, 0.0))
+    zero = np.zeros(3)
+
+    def trial(shift, heights):
+        return patch.evaluate(
+            source_translation + shift, zero, heights, target_heights,
+            multiplier_estimate=multiplier,
+        )
+
+    state = trial(zero, source_heights)
+    np.testing.assert_allclose(
+        patch.projected_multiplier(state, multiplier),
+        multiplier - 1.0e6 * state.normalized_gap,
+    )
+    height_direction = np.array((0.2, -0.1, 0.3, -0.2))
+    h = 1.0e-7
+    height_work = (
+        trial(zero, source_heights + h * height_direction).energy
+        - trial(zero, source_heights - h * height_direction).energy
+    ) / (2.0 * h)
+    assert height_work == pytest.approx(
+        float(state.normal_residual[:4] @ height_direction), rel=1.0e-6,
+    )
+    plus_height = trial(zero, source_heights + h * height_direction)
+    minus_height = trial(zero, source_heights - h * height_direction)
+    np.testing.assert_allclose(
+        (plus_height.normal_residual - minus_height.normal_residual) / (2.0 * h),
+        state.normal_tangent[:, :4] @ height_direction,
+        rtol=1.0e-6, atol=1.0e-7,
+    )
+    translation_direction = np.array((0.3, -0.2, 0.0))
+    force, _ = patch.translation_residual(
+        source_translation, zero, source_heights, target_heights,
+        multiplier_estimate=multiplier,
+    )
+    translation_work = (
+        trial(h * translation_direction, source_heights).energy
+        - trial(-h * translation_direction, source_heights).energy
+    ) / (2.0 * h)
+    assert translation_work == pytest.approx(
+        float(force @ translation_direction), rel=1.0e-5, abs=1.0e-8,
+    )
+    opened = trial(zero, np.full(4, 1.0e-3))
+    np.testing.assert_array_equal(patch.projected_multiplier(opened, multiplier),
+                                  np.zeros(4))
+
+
 def test_moving_overlap_transfers_support_without_new_pressure_unknowns():
     source, _whole, left, right = _patches()
     patch = MovingPatchMortar(

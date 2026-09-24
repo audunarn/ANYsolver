@@ -15,6 +15,7 @@ from .patch_mortar import MovingPatchMortar, PatchFace
 
 
 PROFILE = "PLANAR_Q4_S3_PATCH_RESTRICTED_SLIDING_MORTAR_DEV_V0"
+AUGMENTED_PROFILE = "PLANAR_Q4_S3_PATCH_RESTRICTED_SLIDING_AUGMENTED_MORTAR_DEV_V0"
 
 
 def _patch_faces(model, surface, body_id: int) -> tuple[PatchFace, ...]:
@@ -57,8 +58,11 @@ def validate_restricted_sliding_patch(
             )
         except (ValueError, MemoryError) as exc:
             issues.append(str(exc))
+    profile = (AUGMENTED_PROFILE if any(
+        item.normal_law == "augmented" for item in definition.interactions
+    ) else PROFILE)
     return ContactValidationReport(
-        "invalid" if issues else "ok", tuple(issues), PROFILE,
+        "invalid" if issues else "ok", tuple(issues), profile,
     )
 
 
@@ -89,6 +93,8 @@ class _SlidingPatchResults:
     integration_moment: tuple[float, float, float]
     target_moment: tuple[float, float, float]
     tangent_asymmetry: float | None
+    normal_law: str = "penalty"
+    multiplier_norm: float = 0.0
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -104,7 +110,11 @@ class _SlidingPatchResults:
             "gap_triangles_checked": self.gap_triangles_checked,
             "gap_check_method": self.gap_check_method,
             "gap_resource_exhausted": self.gap_resource_exhausted,
-            "penalty_energy": self.penalty_energy,
+            "penalty_energy": (self.penalty_energy if self.normal_law == "penalty"
+                               else None),
+            "algorithmic_contact_potential": self.penalty_energy,
+            "normal_law": self.normal_law,
+            "multiplier_norm": self.multiplier_norm,
             "integration_force": list(self.integration_force),
             "target_force": list(self.target_force),
             "integration_moment": list(self.integration_moment),
@@ -128,8 +138,9 @@ class _RestrictedSlidingPatchFEManager:
         integration, target, interaction, _source_nodes, _target_nodes = parts
         self.model = model
         self.definition = definition
-        self.profile = PROFILE
+        self.profile = report.profile
         self.stiffness = interaction.normal_stiffness
+        self.normal_law = interaction.normal_law
         self.gap_tolerance = interaction.gap_tolerance
         self.difference_step = self.settings.sliding_difference_step
         if self.difference_step is None:
@@ -147,6 +158,7 @@ class _RestrictedSlidingPatchFEManager:
             maximum_candidate_pairs=self.settings.maximum_candidate_pairs,
             maximum_normal_dofs=self.settings.maximum_patch_normal_dofs,
         )
+        self.normal_multipliers = np.zeros(len(self.patch.source_node_ids))
         self.node_ids = (self.patch.source_node_ids, self.patch.target_node_ids)
         self.node_dofs = tuple(
             np.asarray([model.mesh.dof_manager.get_node_dofs(node)[:6]
@@ -311,7 +323,7 @@ class _RestrictedSlidingPatchFEManager:
         return max(0.0, 0.98 * lower)
 
     def restart_contract(self) -> dict[str, object]:
-        return {
+        contract = {
             "profile": self.profile,
             "surfaces": [
                 {"name": item.name, "element_ids": list(item.element_ids),
@@ -333,6 +345,26 @@ class _RestrictedSlidingPatchFEManager:
                 "maximum_gap_triangles": self.settings.maximum_gap_triangles,
             },
         }
+        if self.normal_law == "augmented":
+            contract["settings"]["maximum_augmentations"] = self.settings.maximum_augmentations
+            contract["settings"]["pressure_tolerance"] = self.settings.pressure_tolerance
+        return contract
+
+    def set_normal_multipliers(self, estimate: np.ndarray) -> None:
+        if self.normal_law != "augmented":
+            raise ValueError("normal multipliers require augmented contact")
+        self.normal_multipliers = self.patch._owned_multiplier(estimate)
+
+    def projected_normal_multipliers(self, displacement: np.ndarray) -> np.ndarray:
+        if self.normal_law != "augmented":
+            raise ValueError("normal multiplier update requires augmented contact")
+        q = self._reduced_pose(displacement)
+        split = self.height_offsets[1]
+        state = self.patch.evaluate(
+            q[:3], q[3:6], q[6:split], q[split:],
+            multiplier_estimate=self.normal_multipliers,
+        )
+        return self.patch.projected_multiplier(state, self.normal_multipliers)
 
     def evaluate(self, displacement: np.ndarray, *, tangent: bool = True):
         q = self._reduced_pose(displacement)
@@ -342,6 +374,7 @@ class _RestrictedSlidingPatchFEManager:
             reduced = self.patch.reduced_system(
                 q[:3], q[3:6], q[6:split], q[split:],
                 difference_step=self.difference_step,
+                multiplier_estimate=self.normal_multipliers,
             )
             state = reduced.state
             reduced_force = reduced.residual
@@ -349,9 +382,13 @@ class _RestrictedSlidingPatchFEManager:
                          @ self.work_map).tocsr()
             asymmetry = reduced.relative_tangent_asymmetry
         else:
-            state = self.patch.evaluate(q[:3], q[3:6], q[6:split], q[split:])
+            state = self.patch.evaluate(
+                q[:3], q[3:6], q[6:split], q[split:],
+                multiplier_estimate=self.normal_multipliers,
+            )
             source, target = self.patch.translation_residual(
                 q[:3], q[3:6], q[6:split], q[split:],
+                multiplier_estimate=self.normal_multipliers,
             )
             reduced_force = np.r_[source, target, state.normal_residual]
             stiffness = None
@@ -372,11 +409,12 @@ class _RestrictedSlidingPatchFEManager:
             body_forces.append(tuple(float(value) for value in total_force))
             body_moments.append(tuple(float(value) for value in total_moment))
         result = _SlidingPatchResults(
-            PROFILE, state.overlap_area,
+            self.profile, state.overlap_area,
             state.overlapping_pairs, state.candidate_pairs,
             state.pressure_rank,
             int(np.count_nonzero((state.support > 0.0)
-                                 & (state.normalized_gap < 0.0))),
+                                 & (state.normalized_gap - self.normal_multipliers
+                                    / self.stiffness < 0.0))),
             certificate.minimum_sampled_gap,
             certificate.conservative_lower_gap,
             certificate.tolerance_met,
@@ -385,5 +423,6 @@ class _RestrictedSlidingPatchFEManager:
             certificate.resource_exhausted,
             state.energy, body_forces[0], body_forces[1],
             body_moments[0], body_moments[1], asymmetry,
+            self.normal_law, float(np.linalg.norm(self.normal_multipliers)),
         )
         return force, stiffness, result

@@ -2,11 +2,13 @@
 
 Run from the repository root with the installed package on Python's path:
     python examples/general_contact_mixed_path.py
+    python examples/general_contact_mixed_path.py --augmented
 """
 
 from __future__ import annotations
 
 import json
+import argparse
 
 from anysolver import (
     BoundaryCondition, ContactDefinition, ContactInteraction,
@@ -17,7 +19,7 @@ from anysolver import (
 from anysolver.fe_core import FEModel
 
 
-def main() -> None:
+def main(*, augmented: bool = False) -> None:
     model = FEModel("restricted_mixed_patch_sliding_example")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
     lower = ((0.2, 0.1), (1.2, 0.1), (1.2, 1.1), (0.2, 1.1))
@@ -56,10 +58,13 @@ def main() -> None:
         rigid_bodies=(),
         interactions=(ContactInteraction(
             "patch_pair", "upper_bottom", "lower_top", 1.0e6, 6.0e-6,
+            normal_law="augmented" if augmented else "penalty",
         ),),
     )
     settings = ContactSolverSettings(
         pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
+        pressure_tolerance=1.0e-5 if augmented else None,
+        maximum_augmentations=20 if augmented else 12,
     )
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
@@ -67,13 +72,15 @@ def main() -> None:
     program = ContactPathProgram(
         controls=(
             ContactPathControl.node(5, "ux"),
-            ContactPathControl(tuple((node, "uz", 0.25)
-                                     for node in (5, 6, 7, 8))),
+            (ContactPathControl.node(5, "uz") if augmented else
+             ContactPathControl(tuple((node, "uz", 0.25)
+                                      for node in (5, 6, 7, 8)))),
         ),
-        waypoints=((0.0, 0.0), (0.0, -5.0e-7),
-                   (0.1, -5.0e-7), (0.1, 1.0e-6),
-                   (0.1, -5.0e-7)),
-        steps_per_segment=1,
+        waypoints=(((0.0, 0.0), (0.0, -5.0e-7)) if augmented else
+                   ((0.0, 0.0), (0.0, -5.0e-7),
+                    (0.1, -5.0e-7), (0.1, 1.0e-6),
+                    (0.1, -5.0e-7))),
+        steps_per_segment=2 if augmented else 1,
     )
     result = solve_static_nonlinear(
         model, contact=definition, contact_settings=settings,
@@ -86,6 +93,7 @@ def main() -> None:
     print(json.dumps({
         "profile": result.info["contact_path"]["profile"],
         "status": result.status,
+        "normal_law": summary["normal_law"],
         "accepted_steps": len(result.steps),
         "phase_contact": [
             {
@@ -93,6 +101,7 @@ def main() -> None:
                 "active_pressure_dofs": record["contact"]["active_pressure_dofs"],
                 "lower_gap_m": record["contact"]["conservative_lower_gap"],
                 "normal_force_N": record["contact"]["integration_force"][2],
+                "augmentation_iterations": record["augmentation_iterations"],
             }
             for record in result.info["force_displacement_history"]
         ],
@@ -103,4 +112,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--augmented", action="store_true")
+    main(augmented=parser.parse_args().augmented)

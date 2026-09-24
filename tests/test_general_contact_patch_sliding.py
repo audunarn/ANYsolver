@@ -288,6 +288,119 @@ def test_contact_path_rejects_unadmitted_public_controls():
         )
 
 
+def test_augmented_law_requires_path_owner_and_pressure_tolerance():
+    from dataclasses import replace
+
+    model, definition, settings = _q4_against_two_s3()
+    definition = replace(
+        definition,
+        interactions=(replace(definition.interactions[0], normal_law="augmented"),),
+    )
+    assert not validate_general_contact(model, definition, settings).valid
+    settings = replace(settings, pressure_tolerance=1.0e-5)
+    report = validate_general_contact(model, definition, settings)
+    assert report.valid
+    assert "AUGMENTED" in report.profile
+    with pytest.raises(ValueError, match="requires the contact path analysis owner"):
+        solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            num_steps=1,
+        )
+
+
+def _augmented_patch_path(*, averaged_normal: bool):
+    from dataclasses import replace
+
+    model, definition, settings = _q4_against_two_s3()
+    model.add_boundary_condition(BoundaryCondition(
+        "lower_fixed", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "upper_guide", (5, 6, 7, 8),
+        {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+    ))
+    master = int(model.mesh.dof_manager.get_node_dofs(5)[0])
+    for node in (6, 7, 8):
+        slave = int(model.mesh.dof_manager.get_node_dofs(node)[0])
+        model.add_constraint_equation(
+            terms=((slave, 1.0), (master, -1.0)),
+            source_id=f"augmented_upper_x_{node}",
+        )
+    definition = replace(
+        definition,
+        interactions=(replace(definition.interactions[0], normal_law="augmented"),),
+    )
+    settings = replace(settings, pressure_tolerance=1.0e-5,
+                       maximum_augmentations=20)
+    program = ContactPathProgram(
+        controls=(
+            ContactPathControl.node(5, "ux"),
+            (ContactPathControl(tuple((node, "uz", 0.25)
+                                      for node in (5, 6, 7, 8)))
+             if averaged_normal else ContactPathControl.node(5, "uz")),
+        ),
+        waypoints=((0.0, 0.0), (0.0, -5.0e-7)),
+        steps_per_segment=1 if averaged_normal else 2,
+    )
+    return model, definition, settings, program
+
+
+def test_q4_s3_patch_augmented_press_uses_fixed_multiplier_equilibrium():
+    model, definition, settings, program = _augmented_patch_path(
+        averaged_normal=False,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=15,
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "completed", (
+        result.failure_reason, result.info.get("force_displacement_history"),
+    )
+    record = result.info["force_displacement_history"][-1]
+    assert max(item["augmentation_iterations"]
+               for item in result.info["force_displacement_history"]) >= 2
+    assert record["normal_multiplier_change"] <= settings.pressure_tolerance
+    assert record["contact"]["normal_law"] == "augmented"
+    assert record["contact"]["gap_tolerance_met"]
+    assert record["contact"]["active_pressure_dofs"] > 0
+    assert record["contact"]["integration_force"][2] > 0.0
+    assert record["contact"]["multiplier_norm"] > 0.0
+    assert result.restart_checkpoint["version"] == 2
+    half = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_load_factor=0.5,
+        max_iterations=15, emit_restart_checkpoint=True,
+    )
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=15,
+        restart_checkpoint=half.to_restart_checkpoint(),
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, result.displacements,
+                               rtol=1.0e-7, atol=1.0e-9)
+
+
+def test_q4_s3_augmented_forced_penetration_fails_without_committing():
+    model, definition, settings, program = _augmented_patch_path(
+        averaged_normal=True,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=15,
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "diverged"
+    assert result.failure_reason == "maximum_augmentations_reached"
+    assert result.steps == []
+    assert result.restart_checkpoint is None
+    np.testing.assert_allclose(result.displacements, 0.0, atol=0.0)
+    assert result.info["general_contact"]["multiplier_norm"] == 0.0
+
+
 def _two_s3_integration_faces(*, lower_bounds=(0.2, 1.2, 0.1, 1.1)):
     model = FEModel("s3_integration_patch_local")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
