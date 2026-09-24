@@ -12,6 +12,7 @@ from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     pose_from_e4_total, reference_nodes)
 from scripts._b3_e4_f03_shell_trace import make_shell
+from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_reference_kkt, integrate_weak_line,
     segments)
@@ -283,3 +284,56 @@ def test_reference_line_annihilates_six_common_rigid_modes(topology):
             beam_rotation[start+3:start+6] = basis
         assert np.linalg.norm(coupling@np.r_[
             shell_rotation.ravel(), beam_rotation]) < 2e-12
+
+
+def test_q4_torque_reaches_physical_shell_without_drilling_completion():
+    panel = make_shell(1, "Q4")
+    shell = FlatE4TrialPanel(panel)
+    beam = build(4)
+    space = LineMultiplierSpace("piecewise_constant", (0., .5, 1.))
+    kkt = assemble_reference_kkt(shell, beam, space)
+    shell_size = 6*panel.node_count
+    tip_rx = shell_size+6*beam.n_half_cells+3
+    load = np.zeros(shell_size+beam.context.count)
+    load[tip_rx] = 100.
+
+    def solve(system, free, scale):
+        count = len(free)
+        rhs = np.r_[load[free]*scale[:count]/kkt.energy_scale,
+                    np.zeros(6*space.count)]
+        scaled = scale[:, None]*system*scale[None, :]/kkt.energy_scale
+        solution = scale*np.linalg.solve(scaled, rhs)
+        full = np.zeros(len(load))
+        full[free] = solution[:count]
+        return full
+
+    full_response = solve(kkt.system, kkt.free_primal,
+                          kkt.coordinate_scale)
+    physical = physical_shell_stiffness(panel).toarray()
+    physical_primal = kkt.primal_tangent.copy()
+    physical_primal[:shell_size, :shell_size] = physical
+    # A drilling-free physical shell has no independent rz coordinates.
+    # The objective line's yaw comes from physical in-plane translations.
+    free = np.array([index for index in kkt.free_primal
+                     if not (index < shell_size and index % 6 == 5)])
+    keep = np.isin(kkt.free_primal, free)
+    rows = kkt.constraint_jacobian[:, free]
+    physical_system = np.block([
+        [physical_primal[np.ix_(free, free)], rows.T],
+        [rows, np.zeros((len(rows), len(rows)))],
+    ])
+    scale = np.r_[kkt.coordinate_scale[:len(kkt.free_primal)][keep],
+                  kkt.coordinate_scale[len(kkt.free_primal):]]
+    physical_response = solve(physical_system, free, scale)
+    shell_energy = .5*physical_response[:shell_size]@physical@(
+        physical_response[:shell_size])
+    assert shell_energy > 1e-6
+    assert abs(physical_response[tip_rx]) > 1e-7
+    np.testing.assert_allclose(physical_response[tip_rx],
+                               full_response[tip_rx], rtol=1e-8, atol=1e-12)
+    physical_shell_dofs = np.array([
+        index for index in range(shell_size) if index % 6 != 5])
+    np.testing.assert_allclose(physical_response[physical_shell_dofs],
+                               full_response[physical_shell_dofs],
+                               rtol=1e-8, atol=1e-12)
+    assert np.linalg.norm(rows@physical_response[free]) < 1e-9

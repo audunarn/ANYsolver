@@ -838,7 +838,7 @@ support elimination and work-conjugate scaling. The line's weak derivative
 agrees with that KKT Jacobian; Q4/S3 and both multiplier candidates solve
 the bounded loaded system with small scaled and physical residuals.
 
-Focused weak-line/KKT tests passed **19/19**, including six common rigid-mode
+Focused weak-line/KKT tests passed **20/20**, including six common rigid-mode
 constraints and the physical-residual assertion. The neighboring E4 trial,
 point-work, finite-pose and spatial-port
 suite passed **81/81** before that assertion; no product mechanics changed
@@ -851,3 +851,13 @@ physical torque/load response, multiplier-space selection, nonzero-multiplier
 geometric stiffness, or accepted coupled state. Those and the remaining
 G0B foundation are the next integrated questions. No formal F03 run or
 one-use authority was consumed; G1 remains barred.
+
+A further bounded Q4 torque comparator applies 100 Nm at the native B3 tip
+and solves the same reference line KKT using either the ordinary E4 tangent
+or a separately assembled physical-only shell block with independent shell
+drilling coordinates removed. It finds nonzero physical shell strain energy
+and matching non-drilling shell response. Independent mechanics review found
+no hidden circularity for that narrow existence result. Because both solves
+share the line constraint and native B3 kernel, this is not an independent
+physical-response oracle; support wrench balance, refinement, S3 torque and
+full F03 stability remain open.
