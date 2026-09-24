@@ -48,6 +48,8 @@ class DirectionalJointWork:
 
     potential: float
     constraints: np.ndarray
+    constraints_first: np.ndarray
+    constraints_second: np.ndarray
     first: float
     second: float
     mixed: float
@@ -114,4 +116,6 @@ def directional_point_work(
              gradient@curved)
     return DirectionalJointWork(
         float(evaluation.potential), evaluation.constraints.copy(),
+        evaluation.constraint_jacobian@du,
+        evaluation.constraint_jacobian@dv,
         float(gradient@du), float(gradient@dv), float(mixed))

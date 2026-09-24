@@ -821,3 +821,32 @@ trial and native B3 station ports; it is not a formal F03 assessment run.
 No amendment is needed for that exploratory slice. Any change to a frozen
 F03 formal procedure or criterion requires a prospective task-owner amendment.
 The implementation goal remains paused at `201188851322a1c9d867a1b76f396add1d3b756d`.
+
+## 24 September 2026 resumed F03 integrated development slice
+
+The user explicitly resumed the programme under policy
+`ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1` revision `2026-09-24.1`.
+The bounded line diagnostic now integrates the objective six-channel joint
+work over fixed shell-host, native half-cell, and multiplier-knot segments.
+It evaluates the E4 elastic trial and shell pose from one total-coordinate
+vector, and native B3 station poses from one retained trial state.
+Piecewise-constant and continuous-linear multiplier spaces are *candidates*,
+not selections.
+The diagnostic also assembles a small dense zero-multiplier reference KKT
+from the E4 and B3 tangents and the weak constraint Jacobian, with physical
+support elimination and work-conjugate scaling. The line's weak derivative
+agrees with that KKT Jacobian; Q4/S3 and both multiplier candidates solve
+the bounded loaded system with small scaled and physical residuals.
+
+Focused weak-line/KKT tests passed **17/17** after the final physical-residual
+assertion. The neighboring E4 trial, point-work, finite-pose and spatial-port
+suite passed **81/81** before that assertion; no product mechanics changed
+afterward. Independent read-only mechanics review found no correctness
+blocker in the declared small flat virgin scope. Its request for a varying
+reference-correspondence test was addressed with a rigidly rotated shell;
+shell-host breakpoints are now directly checked. The review explicitly
+did not establish quadrature convergence, mesh-independent inf-sup,
+physical torque/load response, multiplier-space selection, nonzero-multiplier
+geometric stiffness, or accepted coupled state. Those and the remaining
+G0B foundation are the next integrated questions. No formal F03 run or
+one-use authority was consumed; G1 remains barred.

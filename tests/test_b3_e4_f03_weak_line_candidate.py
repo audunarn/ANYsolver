@@ -1,0 +1,252 @@
+"""Segmented six-channel weak work from actual E4 and native B3 ports."""
+
+import numpy as np
+import pytest
+from scipy.spatial.transform import Rotation
+
+from anysolver._ge_beam3_pose_joint import RigidPoseJoint
+
+from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
+from scripts._b3_e4_f03_native_fixture import build
+from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
+from scripts._b3_e4_f03_shell_finite_pose_candidate import (
+    pose_from_e4_total, reference_nodes)
+from scripts._b3_e4_f03_shell_trace import make_shell
+from scripts._b3_e4_f03_weak_line_candidate import (
+    LineMultiplierSpace, assemble_reference_kkt, integrate_weak_line,
+    segments)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+@pytest.mark.parametrize("kind", ("piecewise_constant", "continuous_linear"))
+@pytest.mark.parametrize("eccentricity", (0., .11))
+def test_segmented_reference_gap_and_multiplier_work(
+        topology, kind, eccentricity):
+    shell = FlatE4TrialPanel(make_shell(1, topology))
+    beam = build(4)
+    space = LineMultiplierSpace(kind, (0., .5, 1.))
+    reference = np.zeros((shell.panel.node_count, 6))
+    reference[:, 2] = -eccentricity
+    coefficients = np.arange(1, 6*space.count+1, dtype=float).reshape(-1, 6)
+    zeros_shell = np.zeros_like(reference)
+    zeros_beam = np.zeros(beam.context.count)
+    result = integrate_weak_line(
+        shell, beam, space, coefficients, reference.ravel(),
+        reference.ravel(), zeros_shell, zeros_shell,
+        beam.context.initial.mechanical, zeros_beam, zeros_beam)
+    np.testing.assert_allclose(result.weak_constraints, 0.,
+                               rtol=0, atol=3e-13)
+    assert result.potential == pytest.approx(0., abs=3e-12)
+    assert result.potential == pytest.approx(
+        np.sum(coefficients*result.weak_constraints), abs=3e-12)
+    assert result.first == pytest.approx(0., abs=3e-12)
+    assert result.second == pytest.approx(0., abs=3e-12)
+    assert result.quadrature_count == 4*result.segment_count
+    assert result.segment_count >= beam.n_half_cells
+    assert len(result.shell_trial.candidate_states) == shell.panel.element_count
+    np.testing.assert_allclose(result.shell_trial.residual, 0.,
+                               rtol=0, atol=1e-4)
+    edges = segments(shell, beam, space)
+    assert set(np.round(space.knots, 14)).issubset(set(edges))
+    assert set(np.round(np.arange(5)/4, 14)).issubset(set(edges))
+    assert set(np.round(shell.panel.breakpoints(), 14)).issubset(set(edges))
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_reference_joint_varies_along_rigidly_rotated_shell(topology):
+    shell = FlatE4TrialPanel(make_shell(1, topology))
+    beam = build(4)
+    space = LineMultiplierSpace("continuous_linear", (0., 1.))
+    angle = np.array((0., .17, 0.))
+    rotation = Rotation.from_rotvec(angle).as_matrix()
+    nodes = reference_nodes(shell.panel)
+    reference = np.zeros((shell.panel.node_count, 6))
+    reference[:, :3] = nodes@rotation.T-nodes
+    reference[:, 3:] = angle
+    shell_direction = np.zeros_like(reference)
+    beam_direction = np.zeros(beam.context.count)
+    coefficients = np.arange(1, 13, dtype=float).reshape(2, 6)
+    result = integrate_weak_line(
+        shell, beam, space, coefficients, reference.ravel(),
+        reference.ravel(), shell_direction, shell_direction,
+        beam.context.initial.mechanical, beam_direction, beam_direction)
+    np.testing.assert_allclose(result.weak_constraints, 0.,
+                               rtol=0, atol=3e-13)
+    assert result.potential == pytest.approx(0., abs=3e-12)
+    shell_a = pose_from_e4_total(shell.panel, .2, reference.ravel())[0]
+    shell_b = pose_from_e4_total(shell.panel, .8, reference.ravel())[0]
+    beam_a = beam.pose(.2)[0]
+    beam_b = beam.pose(.8)[0]
+    assert np.linalg.norm((beam_a-shell_a)-(beam_b-shell_b)) > .05
+
+
+@pytest.mark.parametrize("topology,kind", (
+    ("Q4", "piecewise_constant"),
+    ("S3-V2D", "continuous_linear"),
+))
+def test_segmented_line_directional_work_matches_direct_potential(
+        topology, kind):
+    shell = FlatE4TrialPanel(make_shell(1, topology))
+    beam = build(4)
+    space = LineMultiplierSpace(kind, (0., .5, 1.))
+    reference = np.zeros((shell.panel.node_count, 6))
+    reference[:, 2] = -.07
+    rng = np.random.default_rng(3972)
+    current = reference+rng.normal(size=reference.shape)*.002
+    shell_first = rng.normal(size=reference.shape)*.02
+    shell_second = rng.normal(size=reference.shape)*.02
+    beam_base = np.zeros(beam.context.count)
+    beam_base[6:12] = (.001, -.002, .0015, .01, -.007, .004)
+    beam_base[beam.context.nodal_count+3:beam.context.nodal_count+6] = (
+        .012, -.008, .006)
+    base_state = beam.context.advance(
+        beam.context.initial.mechanical, beam_base)
+    beam_first = np.zeros_like(beam_base)
+    beam_second = np.zeros_like(beam_base)
+    beam_first[6:12] = (.02, -.01, .015, .03, -.02, .01)
+    beam_first[beam.context.nodal_count+3:beam.context.nodal_count+6] = (
+        .04, -.03, .02)
+    beam_second[12:18] = (-.015, .02, -.01, -.02, .01, .025)
+    beam_second[beam.context.nodal_count+6:beam.context.nodal_count+9] = (
+        -.02, .03, -.01)
+    coefficients = np.arange(1, 6*space.count+1, dtype=float).reshape(-1, 6)
+    coefficients = np.sin(coefficients)*21.
+    result = integrate_weak_line(
+        shell, beam, space, coefficients, reference.ravel(),
+        current.ravel(), shell_first, shell_second,
+        base_state, beam_first, beam_second)
+
+    edges = segments(shell, beam, space)
+    points, weights = np.polynomial.legendre.leggauss(4)
+
+    def direct_quantities(first_factor, second_factor):
+        shell_total = (current+first_factor*shell_first+
+                       second_factor*shell_second).ravel()
+        beam_step = first_factor*beam_first+second_factor*beam_second
+        state = beam.context.advance(base_state, beam_step)
+        total = 0.
+        weak = np.zeros((space.count, 6))
+        for left, right in zip(edges[:-1], edges[1:]):
+            half, center = .5*(right-left), .5*(left+right)
+            for point, weight in zip(points, weights):
+                station = center+half*point
+                element, cell, fraction, _ = beam._locate(station)
+                port = NativeHalfCellSpatialPort(
+                    beam.context, element, cell, fraction)
+                shell_ref = pose_from_e4_total(
+                    shell.panel, station, reference.ravel())
+                high_ref, low_ref, beam_frame_ref = port.pose_pair(
+                    beam.context.initial.mechanical)
+                joint = RigidPoseJoint(
+                    np.array((shell_ref[0], high_ref+low_ref)),
+                    np.array((shell_ref[1], beam_frame_ref)))
+                shell_position, shell_frame = pose_from_e4_total(
+                    shell.panel, station, shell_total)
+                high, low, beam_frame = port.pose_pair(state)
+                multiplier = space.values(station)@coefficients
+                work = joint.evaluate(
+                    np.array((shell_position, high)),
+                    np.array((shell_frame, beam_frame)), multiplier,
+                    position_low=np.array((np.zeros(3), low)))
+                total += half*weight*work.potential
+                weak += (half*weight*space.values(station)[:, None]*
+                         work.constraints[None, :])
+        return total, weak
+
+    assert result.potential == pytest.approx(direct_quantities(0., 0.)[0],
+                                             abs=2e-11)
+    assert result.potential == pytest.approx(
+        np.sum(coefficients*result.weak_constraints), abs=2e-11)
+    assert result.first == pytest.approx(
+        np.sum(coefficients*result.weak_first), abs=2e-10)
+    assert result.second == pytest.approx(
+        np.sum(coefficients*result.weak_second), abs=2e-10)
+    h = 1e-5
+    first_plus = direct_quantities(h, 0.)
+    first_minus = direct_quantities(-h, 0.)
+    second_plus = direct_quantities(0., h)
+    second_minus = direct_quantities(0., -h)
+    np.testing.assert_allclose(
+        (result.first, result.second),
+        ((first_plus[0]-first_minus[0])/(2*h),
+         (second_plus[0]-second_minus[0])/(2*h)),
+        rtol=8e-7, atol=1e-8)
+    np.testing.assert_allclose(result.weak_first,
+                               (first_plus[1]-first_minus[1])/(2*h),
+                               rtol=8e-7, atol=2e-9)
+    np.testing.assert_allclose(result.weak_second,
+                               (second_plus[1]-second_minus[1])/(2*h),
+                               rtol=8e-7, atol=2e-9)
+    h = 2e-3
+    observed = (direct_quantities(h, h)[0]-direct_quantities(h, -h)[0]-
+                direct_quantities(-h, h)[0]+direct_quantities(-h, -h)[0])/(4*h*h)
+    np.testing.assert_allclose(result.mixed, observed,
+                               rtol=3e-5, atol=5e-7)
+
+
+def test_invalid_line_space_and_multiplier_rejected():
+    with pytest.raises(ValueError, match="valid fixed"):
+        LineMultiplierSpace("piecewise_constant", (0., .5, .5, 1.))
+    shell = FlatE4TrialPanel(make_shell(1, "Q4"))
+    beam = build(4)
+    space = LineMultiplierSpace("piecewise_constant", (0., .5, 1.))
+    total = np.zeros(6*shell.panel.node_count)
+    shell_direction = np.zeros((shell.panel.node_count, 6))
+    beam_direction = np.zeros(beam.context.count)
+    with pytest.raises(ValueError, match="multiplier coefficients"):
+        integrate_weak_line(
+            shell, beam, space, np.zeros((1, 6)), total, total,
+            shell_direction, shell_direction,
+            beam.context.initial.mechanical, beam_direction,
+            beam_direction)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+@pytest.mark.parametrize("kind", ("piecewise_constant", "continuous_linear"))
+def test_reference_kkt_matches_weak_derivative_and_scaled_solve(
+        topology, kind):
+    shell = FlatE4TrialPanel(make_shell(1, topology))
+    beam = build(4)
+    space = LineMultiplierSpace(kind, (0., .5, 1.))
+    kkt = assemble_reference_kkt(shell, beam, space)
+    rng = np.random.default_rng(1138)
+    shell_direction = rng.normal(size=(shell.panel.node_count, 6))*.001
+    beam_direction = rng.normal(size=beam.context.count)*.001
+    beam_direction[list(beam.context.fixed)] = 0.
+    for node in (0, 2*shell.panel.n_s+1, 2*(2*shell.panel.n_s+1)):
+        shell_direction[node] = 0.
+    zeros_shell = np.zeros_like(shell_direction)
+    zeros_beam = np.zeros_like(beam_direction)
+    multipliers = np.zeros((space.count, 6))
+    weak = integrate_weak_line(
+        shell, beam, space, multipliers,
+        zeros_shell.ravel(), zeros_shell.ravel(),
+        shell_direction, zeros_shell,
+        beam.context.initial.mechanical,
+        beam_direction, zeros_beam)
+    direction = np.r_[shell_direction.ravel(), beam_direction]
+    np.testing.assert_allclose(
+        kkt.constraint_jacobian@direction,
+        weak.weak_first.ravel(), rtol=2e-11, atol=2e-12)
+    assert np.linalg.norm(kkt.scaled_system-kkt.scaled_system.T) <= (
+        1e-10*np.linalg.norm(kkt.scaled_system))
+
+    shell_size = 6*shell.panel.node_count
+    full_load = np.zeros(shell_size+beam.context.count)
+    full_load[shell_size+6*beam.n_half_cells+2] = 1000.
+    free_count = len(kkt.free_primal)
+    rhs = np.r_[full_load[kkt.free_primal]*
+                kkt.coordinate_scale[:free_count]/kkt.energy_scale,
+                np.zeros(6*space.count)]
+    solution = np.linalg.solve(kkt.scaled_system, rhs)
+    scaled_residual = kkt.scaled_system@solution-rhs
+    assert np.linalg.norm(scaled_residual) <= 1e-9*max(1., np.linalg.norm(rhs))
+    physical = kkt.coordinate_scale*solution
+    physical_rhs = np.r_[full_load[kkt.free_primal],
+                         np.zeros(6*space.count)]
+    physical_residual = kkt.system@physical-physical_rhs
+    assert np.linalg.norm(physical_residual) <= (
+        1e-10*max(1., np.linalg.norm(physical_rhs)))
+    gaps = kkt.constraint_jacobian[:, kkt.free_primal]@physical[:free_count]
+    assert np.linalg.norm(gaps) <= 1e-9
+    assert np.isfinite(physical).all()
