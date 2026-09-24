@@ -1,5 +1,18 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — X2 combined shared-assembly diagnostic.** One source
+process assembled Q6 X2 once, then completed the KKT certificate, shell
+positivity, physical recovery and spatial audit. Exit 0 took 2,258.19 s at
+692,072,448 B sampled peak RSS, exceeding the draft 1,800 s case envelope
+by 458.19 s. The physical state, signed outputs, functional, KKT/shell hashes
+and spatial results matched prior X2 diagnostics; a tiny iterative eigenvalue
+estimate differed. Exact V1 runner source is archived against its attempt
+hash. An operator-content fingerprint was added **after** this run for a V2
+diagnostic; V1 does not gain that check retroactively. See
+`B3_GE_E4_PL_G0_F03_Q6_X2_SHARED_ASSEMBLY_RESULT_20260924.md`. This is a
+measured resource overrun of the draft envelope, not a formal scientific
+failure. F03/G0B remain open; G1 barred.
+
 **24 September 2026 — three-grid Q6 primal-positivity saved replay.** An
 experimental sparse congruence-residual certificate completed on fixed
 X0/X1/X2 grids. All three original scaled shell matrices report strict

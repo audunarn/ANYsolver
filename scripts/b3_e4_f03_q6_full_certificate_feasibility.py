@@ -37,7 +37,7 @@ _CASE_WORK_BYTES = {"X0": 256*1024**2, "X1": 384*1024**2,
 _CASE_SECONDS = {"X0": 900., "X1": 900., "X2": 1200.}
 
 
-def child(output: Path, case_id: str) -> None:
+def child(output: Path, case_id: str, *, operators=None) -> None:
     if case_id not in CASES:
         raise ValueError("fixed Q6 grid required")
     with (output / "start.json").open("x", encoding="utf-8") as stream:
@@ -51,7 +51,16 @@ def child(output: Path, case_id: str) -> None:
              "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS")},
         }, indent=2) + "\n")
     start = perf_counter()
-    operators = assemble(trace_for_case(case_id))
+    expected_trace = trace_for_case(case_id)
+    if operators is None:
+        operators = assemble(expected_trace)
+    elif (operators.trace.p != expected_trace.p or
+          operators.trace.x != expected_trace.x or
+          operators.trace.y != expected_trace.y or
+          operators.trace.offsets != expected_trace.offsets or
+          operators.trace.a != expected_trace.a or
+          operators.trace.j != expected_trace.j):
+        raise ValueError("shared Q6 certificate operators do not match grid")
     assembly_s = perf_counter() - start
     stiffness = operators.shell_stiffness + operators.beam_stiffness
     diagonal = stiffness.diagonal()

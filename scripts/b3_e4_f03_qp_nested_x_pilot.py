@@ -45,7 +45,7 @@ def refined_x2() -> tuple[float, ...]:
 
 
 def run(degree: int, grid: str = "x1", *, candidate_state=None,
-        expected_kkt_sha256: str | None = None) -> dict:
+        expected_kkt_sha256: str | None = None, operators=None) -> dict:
     if degree not in (4, 5, 6):
         raise ValueError("pilot degree must be Q4, Q5 or Q6")
     if grid not in ("x0", "x1", "x2") or (grid in ("x0", "x2") and degree != 6):
@@ -57,7 +57,13 @@ def run(degree: int, grid: str = "x1", *, candidate_state=None,
         raise ArithmeticError("predeclared pilot grid or crossing count changed")
     elapsed = {}
     start = perf_counter()
-    operators = assemble(trace)
+    if operators is None:
+        operators = assemble(trace)
+    elif (operators.trace.p != trace.p or operators.trace.x != trace.x or
+          operators.trace.y != trace.y or
+          operators.trace.offsets != trace.offsets or
+          operators.trace.a != trace.a or operators.trace.j != trace.j):
+        raise ValueError("shared physical operators do not match pilot grid")
     elapsed["assembly_s"] = perf_counter() - start
     start = perf_counter()
     free_q, eta, result = solve(
