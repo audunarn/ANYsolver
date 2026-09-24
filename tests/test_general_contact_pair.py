@@ -9,6 +9,7 @@ from anysolver import (
     ContactInteraction,
     ContactSolverSettings,
     ContactSurface,
+    DisplacementControl,
     LoadCase,
     create_shell_element,
     solve_static_nonlinear,
@@ -131,6 +132,24 @@ def test_guided_pair_potential_tangent_and_swept_limit():
     assert fraction == pytest.approx(0.98e-3)
     assert manager.evaluate(fraction * excessive, tangent=False)[2].gap_tolerance_met
     assert np.linalg.norm(force) > 0.0
+
+
+def test_guided_pair_displacement_control_recovers_target_reaction():
+    model, load, definition, upper_nodes = _guided_pair(split_target=True)
+    result = solve_static_nonlinear(
+        model, load, contact=definition, kinematics="von_karman",
+        control="displacement",
+        displacement_control=DisplacementControl(
+            node_id=upper_nodes[0], dof="uz", target_displacement=-4.0e-7,
+        ),
+        num_steps=1, max_iterations=12,
+    )
+    assert result.status == "completed", result.failure_reason
+    assert result.load_factor == pytest.approx(1.0, rel=1e-6)
+    summary = result.info["general_contact"]
+    assert summary["integration_force"][2] == pytest.approx(0.4, rel=1e-6)
+    assert summary["target_force"][2] == pytest.approx(-0.4, rel=1e-6)
+    assert result.steps[-1].support_reactions["lower"][2] == pytest.approx(0.4)
 
 
 def test_partial_projected_overlap_transfers_equal_opposite_resultants():

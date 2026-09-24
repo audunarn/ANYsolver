@@ -24,8 +24,9 @@ or admit finite sliding. The public validator reports the exact profile
   shell rotational coordinates, although finite rotations are outside this
   profile.
 - One frictionless penalty interaction under `von_karman` nonlinear static
-  analysis. `normal_stiffness` is pressure per gap (Pa/m); `gap_tolerance` is
-  a positive length in metres. Initial physical penetration is rejected.
+  force or displacement control. `normal_stiffness` is pressure per gap
+  (Pa/m); `gap_tolerance` is a positive length in metres. Initial physical
+  penetration is rejected.
 - Version-2 static checkpoints bind the pair definition, law, settings and
   structural model. They carry an empty physical contact state for this
   frictionless penalty profile. Q4/Q4 and S3/Q4 continuations have local
