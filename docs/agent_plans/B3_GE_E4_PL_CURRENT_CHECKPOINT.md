@@ -20,8 +20,10 @@ compared with the native centerline law. The executed CalculiX S4/B31
 probe transfers a physical shell force couple and transverse force, but
 uses a rectangular beam section, nodal collocation and a different shell;
 its beam-rotation monitor is unvalidated. S4/U1 failed in CalculiX and
-B31 rejects the generalized section. Those runs are execution/idealization
-diagnostics, not the matched target. If a matched target and joint
+B31 rejects the generalized section. A paired refinement on that route
+also reached the unchanged 120 s limit for both torque and shear. Do not
+repeat it at greater cost under this authority. These are execution and
+idealization diagnostics, not the matched target. If a matched target and joint
 shell/beam/line refinement agree within the frozen criteria, assess P0
 stability and locking over the required mesh ratios; otherwise revise the
 pose, connection or reference route before selecting a space. Keep the
@@ -2137,3 +2139,20 @@ the native root is
 Next investigate a reference route with independently recoverable beam
 torsion and calibrated section/shear properties; do not relabel these
 partial matches as the mandatory external comparison.
+
+The one-step S4/B31 collocation refinement meant to distinguish a
+narrowing coarse discrepancy from a persistent route problem did not
+produce a numerical comparison: both x8/y4 shell, eight-beam-element
+cases timed out at the unchanged 120 s bound. The runner's timeout
+recorder then raised `TypeError` while trying to write already-text
+stdout as bytes. The decks and solver files were retained, and accurate
+`timeout_recovery.json` receipts were added without rerunning. The
+recorder now handles text and bytes, with a focused test. The exclusive
+roots are `f03-ccx-s4-b31rect-shell-couple-refine-v1` and
+`f03-ccx-s4-b31rect-centerline-shear-refine-v1` under
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/`. No refined physical
+result exists, and the coarse discrepancy cannot be extrapolated. This
+S4/B31 collocation route is not viable as the required reference within
+its declared execution envelope. The next reference action must change
+the route, resolving beam section/twist representation and line work
+while retaining the physical problem and frozen acceptance criteria.

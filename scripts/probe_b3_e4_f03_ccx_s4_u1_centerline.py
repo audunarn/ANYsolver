@@ -27,6 +27,11 @@ def _number(value: float) -> str:
     return f"{value:.17g}"
 
 
+def _timeout_text(value: str | bytes | None) -> str:
+    return (value.decode("utf-8", errors="replace") if isinstance(value, bytes)
+            else value or "")
+
+
 def _pose_rows(panel, station: float, beam_node: int):
     center_ids, center_weights = panel._shape(station, 0.)
     sample_weights = panel.sample_weights(station)
@@ -216,8 +221,10 @@ def main() -> int:
         (args.root/"stderr.log").write_text(run.stderr, encoding="utf-8")
         status = {"exit_code": run.returncode, "failure": None}
     except subprocess.TimeoutExpired as exc:
-        (args.root/"stdout.log").write_bytes(exc.stdout or b"")
-        (args.root/"stderr.log").write_bytes(exc.stderr or b"")
+        (args.root/"stdout.log").write_text(
+            _timeout_text(exc.stdout), encoding="utf-8")
+        (args.root/"stderr.log").write_text(
+            _timeout_text(exc.stderr), encoding="utf-8")
         status = {"exit_code": None, "failure": "TIMEOUT_120_SECONDS"}
     dat = args.root/"centerline.dat"
     if status["exit_code"] == 0:

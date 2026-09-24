@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from scripts.probe_b3_e4_f03_ccx_s4_u1_centerline import deck
+from scripts.probe_b3_e4_f03_ccx_s4_u1_centerline import _timeout_text, deck
 from scripts.b3_e4_f03_weak_line_resolution_screen import one_case
 
 
@@ -71,3 +71,9 @@ def test_shell_force_couple_has_100_nm_and_native_balance():
     assert native["applied_torque_x_n_m"] == pytest.approx(100.)
     assert abs(native["global_torque_x_balance_n_m"]) < 1e-8
     assert abs(native["global_force_z_balance_n"]) < 1e-8
+
+
+def test_timeout_output_preserves_text_and_bytes():
+    assert _timeout_text("partial output") == "partial output"
+    assert _timeout_text(b"partial output") == "partial output"
+    assert _timeout_text(None) == ""
