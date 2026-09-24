@@ -17,6 +17,7 @@ import numpy as np
 from .overlap import (
     PlanarFace,
     _cross2,
+    _q4_shape,
     _signed_area,
     _to_frame,
     planar_overlap_translation_derivatives,
@@ -136,6 +137,39 @@ class MovingMortarState:
     minimum_vertex_gap: float
 
 
+@dataclass(frozen=True)
+class MovingGapCertificate:
+    minimum_sampled_gap: float
+    conservative_lower_gap: float
+    tolerance_met: bool
+    triangles_checked: int
+
+
+_TRIANGLE_RULE = (
+    ((1.0/3.0, 1.0/3.0, 1.0/3.0), 0.225),
+    ((0.059715871789770, 0.470142064105115, 0.470142064105115),
+     0.132394152788506),
+    ((0.470142064105115, 0.059715871789770, 0.470142064105115),
+     0.132394152788506),
+    ((0.470142064105115, 0.470142064105115, 0.059715871789770),
+     0.132394152788506),
+    ((0.797426985353087, 0.101286507323456, 0.101286507323456),
+     0.125939180544827),
+    ((0.101286507323456, 0.797426985353087, 0.101286507323456),
+     0.125939180544827),
+    ((0.101286507323456, 0.101286507323456, 0.797426985353087),
+     0.125939180544827),
+)
+
+
+def _triangle_samples(triangle: tuple[np.ndarray, np.ndarray, np.ndarray],
+                      area: float):
+    for bary, relative_weight in _TRIANGLE_RULE:
+        point = sum(coefficient * vertex
+                    for coefficient, vertex in zip(bary, triangle))
+        yield point, area * relative_weight
+
+
 def moving_mortar_state(source_face: PlanarFace, target_face: PlanarFace,
                         normal: np.ndarray, stiffness: float,
                         source_translation: np.ndarray,
@@ -201,16 +235,12 @@ def moving_mortar_state(source_face: PlanarFace, target_face: PlanarFace,
         if area <= 0.0:
             continue
         triangle = (centroid, corner, following)
-        for bary in ((2.0/3.0, 1.0/6.0, 1.0/6.0),
-                     (1.0/6.0, 2.0/3.0, 1.0/6.0),
-                     (1.0/6.0, 1.0/6.0, 2.0/3.0)):
-            point = sum(weight * vertex for weight, vertex in zip(bary, triangle))
+        for point, weight in _triangle_samples(triangle, area):
             shape_a = overlap.shape_values(moved_a, point)
             shape_b = overlap.shape_values(moved_b, point)
             gap = float(direction @ (
                 shape_a @ moved_a.corners - shape_b @ moved_b.corners
             ) + shape_a @ height_a - shape_b @ height_b)
-            weight = area / 3.0
             support += weight * shape_a
             weighted_gap += weight * shape_a * gap
             gradient[:, :rows] += weight * np.outer(shape_a, shape_a)
@@ -241,6 +271,139 @@ def moving_mortar_state(source_face: PlanarFace, target_face: PlanarFace,
         overlap.area, support, weighted_gap, normalized_gap, energy,
         residual, tangent, minimum_vertex_gap,
     )
+
+
+def _height_lipschitz(face: PlanarFace, heights: np.ndarray, overlap) -> float:
+    xy = _to_frame(face.corners, overlap.origin,
+                   overlap.tangent, overlap.binormal)
+    if len(face.corners) == 3:
+        _, gradient = overlap.shape_values_and_gradient(
+            face, np.mean(face.corners, axis=0)
+        )
+        return float(np.linalg.norm(heights @ gradient))
+    minimum_determinant = float("inf")
+    maximum_jacobian_norm = 0.0
+    maximum_height_derivative = 0.0
+    determinant_sign = None
+    for natural in ((-1.0, -1.0), (1.0, -1.0),
+                    (1.0, 1.0), (-1.0, 1.0)):
+        _shape, derivatives = _q4_shape(np.asarray(natural))
+        jacobian = derivatives @ xy
+        determinant = float(np.linalg.det(jacobian))
+        sign = np.sign(determinant)
+        if determinant_sign is None:
+            determinant_sign = sign
+        if sign != determinant_sign or determinant == 0.0:
+            raise ValueError("projected Q4 Jacobian changes sign")
+        minimum_determinant = min(minimum_determinant, abs(determinant))
+        maximum_jacobian_norm = max(maximum_jacobian_norm,
+                                    float(np.linalg.norm(jacobian)))
+        maximum_height_derivative = max(
+            maximum_height_derivative,
+            float(np.linalg.norm(derivatives @ heights)),
+        )
+    return (maximum_jacobian_norm / minimum_determinant
+            * maximum_height_derivative)
+
+
+def certify_moving_mortar_gap(
+        source_face: PlanarFace, target_face: PlanarFace,
+        normal: np.ndarray, source_translation: np.ndarray,
+        target_translation: np.ndarray,
+        source_normal_dofs: np.ndarray, target_normal_dofs: np.ndarray,
+        *, gap_tolerance: float, maximum_triangles: int,
+        ) -> MovingGapCertificate:
+    """Bound the represented normal gap over a moving convex overlap.
+
+    A global shape-gradient bound limits unsampled gap variation in each
+    triangle. Longest-edge subdivision continues until every lower bound meets
+    the dimensional tolerance, a sampled violation is found, or the declared
+    resource budget is exhausted. Failure to certify is never a passing gap.
+    """
+
+    tolerance = float(gap_tolerance)
+    if not np.isfinite(tolerance) or tolerance <= 0.0:
+        raise ValueError("gap_tolerance must be finite and positive")
+    if type(maximum_triangles) is not int or maximum_triangles < 1:
+        raise ValueError("maximum_triangles must be a positive integer")
+    direction = np.asarray(normal, dtype=float)
+    if direction.shape != (3,) or not np.all(np.isfinite(direction)):
+        raise ValueError("contact normal must be a finite 3-vector")
+    magnitude = float(np.linalg.norm(direction))
+    if magnitude <= 0.0:
+        raise ValueError("contact normal must be nonzero")
+    direction = direction / magnitude
+    translations = (np.asarray(source_translation, dtype=float),
+                    np.asarray(target_translation, dtype=float))
+    heights = (np.asarray(source_normal_dofs, dtype=float),
+               np.asarray(target_normal_dofs, dtype=float))
+    for name, face, translation, values in zip(
+        ("source", "target"), (source_face, target_face), translations, heights
+    ):
+        if (translation.shape != (3,) or values.shape != (len(face.corners),)
+                or not np.all(np.isfinite(translation))
+                or not np.all(np.isfinite(values))):
+            raise ValueError(f"moving mortar {name} field has invalid size or nonfinite values")
+        face_normal = np.cross(face.corners[1] - face.corners[0],
+                               face.corners[-1] - face.corners[0])
+        face_normal /= np.linalg.norm(face_normal)
+        if abs(float(face_normal @ direction)) < 1.0 - 1.0e-10:
+            raise ValueError(f"moving mortar {name} face must be parallel to the contact plane")
+    moved_a = PlanarFace(source_face.feature_id,
+                         source_face.corners + translations[0])
+    moved_b = PlanarFace(target_face.feature_id,
+                         target_face.corners + translations[1])
+    heights_a, heights_b = heights
+    overlap = planar_projected_overlap(moved_a, moved_b)
+    if overlap is None:
+        return MovingGapCertificate(float("inf"), float("inf"), True, 0)
+    lipschitz = (_height_lipschitz(moved_a, heights_a, overlap)
+                 + _height_lipschitz(moved_b, heights_b, overlap))
+
+    def gap(point: np.ndarray) -> float:
+        shape_a = overlap.shape_values(moved_a, point)
+        shape_b = overlap.shape_values(moved_b, point)
+        return float(direction @ (
+            shape_a @ moved_a.corners - shape_b @ moved_b.corners
+        ) + shape_a @ heights_a - shape_b @ heights_b)
+
+    polygon = overlap.polygon
+    centre = np.mean(polygon, axis=0)
+    pending = [
+        (centre, polygon[index], polygon[(index + 1) % len(polygon)])
+        for index in range(len(polygon))
+    ]
+    minimum_sampled = float("inf")
+    conservative_lower = float("inf")
+    checked = 0
+    while pending:
+        if checked >= maximum_triangles:
+            return MovingGapCertificate(
+                minimum_sampled, float("-inf"), False, checked,
+            )
+        triangle = pending.pop()
+        checked += 1
+        values = tuple(gap(point) for point in triangle)
+        minimum_sampled = min(minimum_sampled, *values)
+        edges = (
+            float(np.linalg.norm(triangle[1] - triangle[0])),
+            float(np.linalg.norm(triangle[2] - triangle[1])),
+            float(np.linalg.norm(triangle[0] - triangle[2])),
+        )
+        longest = max(edges)
+        bound = min(values) - lipschitz * longest
+        if minimum_sampled < -tolerance:
+            return MovingGapCertificate(minimum_sampled, bound, False, checked)
+        if bound >= -tolerance:
+            conservative_lower = min(conservative_lower, bound)
+            continue
+        index = int(np.argmax(edges))
+        first, second = ((0, 1), (1, 2), (2, 0))[index]
+        remaining = 3 - first - second
+        midpoint = 0.5 * (triangle[first] + triangle[second])
+        pending.append((triangle[first], midpoint, triangle[remaining]))
+        pending.append((midpoint, triangle[second], triangle[remaining]))
+    return MovingGapCertificate(minimum_sampled, conservative_lower, True, checked)
 
 
 def _boundary_quadrature(subject: PlanarFace, clip_face: PlanarFace,
@@ -292,6 +455,34 @@ def _boundary_quadrature(subject: PlanarFace, clip_face: PlanarFace,
     return samples
 
 
+def _has_shared_edge_transition(source: PlanarFace, target: PlanarFace,
+                                overlap) -> bool:
+    """Detect positive-length coincident boundaries with nonunique transport."""
+
+    first = _to_frame(source.corners, overlap.origin,
+                      overlap.tangent, overlap.binormal)
+    second = _to_frame(target.corners, overlap.origin,
+                       overlap.tangent, overlap.binormal)
+    scale = max(float(np.max(np.linalg.norm(first - first[0], axis=1))),
+                float(np.max(np.linalg.norm(second - second[0], axis=1))))
+    area_tolerance = 1.0e-12 * scale * scale
+    length_tolerance = 1.0e-12 * scale
+    for index, start in enumerate(first):
+        edge = first[(index + 1) % len(first)] - start
+        length = float(np.linalg.norm(edge))
+        axis = edge / length
+        for other_index, other_start in enumerate(second):
+            other_edge = second[(other_index + 1) % len(second)] - other_start
+            if (abs(_cross2(edge, other_edge)) > area_tolerance
+                    or abs(_cross2(edge, other_start - start)) > area_tolerance):
+                continue
+            extent = sorted((float((other_start - start) @ axis),
+                             float((other_start + other_edge - start) @ axis)))
+            if min(length, extent[1]) - max(0.0, extent[0]) > length_tolerance:
+                return True
+    return False
+
+
 def moving_mortar_translation_residual(
         source_face: PlanarFace, target_face: PlanarFace,
         normal: np.ndarray, stiffness: float,
@@ -321,6 +512,8 @@ def moving_mortar_translation_residual(
     moved_b = PlanarFace(target_face.feature_id,
                          target_face.corners + np.asarray(target_translation))
     overlap = planar_projected_overlap(moved_a, moved_b)
+    if _has_shared_edge_transition(moved_a, moved_b, overlap):
+        raise ValueError("shared-edge overlap transition needs a one-sided derivative")
     heights_a = np.asarray(source_normal_dofs, dtype=float)
     heights_b = np.asarray(target_normal_dofs, dtype=float)
     rows = len(heights_a)
@@ -338,10 +531,7 @@ def moving_mortar_translation_residual(
         if area <= 0.0:
             continue
         triangle = (centroid, corner, following)
-        for bary in ((2.0/3.0, 1.0/6.0, 1.0/6.0),
-                     (1.0/6.0, 2.0/3.0, 1.0/6.0),
-                     (1.0/6.0, 1.0/6.0, 2.0/3.0)):
-            point = sum(weight * vertex for weight, vertex in zip(bary, triangle))
+        for point, weight in _triangle_samples(triangle, area):
             shape_a, gradient_a = overlap.shape_values_and_gradient(moved_a, point)
             shape_b, gradient_b = overlap.shape_values_and_gradient(moved_b, point)
             gap = float(direction @ (
@@ -349,7 +539,6 @@ def moving_mortar_translation_residual(
             ) + shape_a @ heights_a - shape_b @ heights_b)
             grad_gap_a = -(heights_a @ gradient_a)
             grad_gap_b = heights_b @ gradient_b
-            weight = area / 3.0
             dm_a -= weight * gradient_a
             dW_a += weight * (-gradient_a * gap
                               + shape_a[:, None] * grad_gap_a)

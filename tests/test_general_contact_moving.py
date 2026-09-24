@@ -8,6 +8,7 @@ from anysolver.general_contact.moving import (
     moving_mortar_state,
     moving_mortar_translation_residual,
     moving_mortar_reduced_system,
+    certify_moving_mortar_gap,
 )
 from anysolver.general_contact.overlap import PlanarFace
 
@@ -271,3 +272,60 @@ def test_reduced_moving_tangent_couples_sliding_and_nodal_normal_fields():
         (residual(h) - residual(-h)) / (2.0 * h),
         system.tangent @ direction, rtol=1.0e-5, atol=1.0e-5,
     )
+
+
+def test_moving_gap_certificate_distinguishes_pass_violation_and_budget():
+    source = _square((1, 1), 0.0, 0.0)
+    target = _square((2, 1), 0.5, 0.25)
+    zero = np.zeros(3)
+    normal = np.array((0.0, 0.0, 1.0))
+    accepted = certify_moving_mortar_gap(
+        source, target, normal, zero, zero,
+        np.full(4, -4.0e-7), np.zeros(4),
+        gap_tolerance=1.0e-6, maximum_triangles=16,
+    )
+    assert accepted.tolerance_met
+    assert accepted.minimum_sampled_gap == pytest.approx(-4.0e-7)
+    assert accepted.conservative_lower_gap >= -1.0e-6
+    violated = certify_moving_mortar_gap(
+        source, target, normal, zero, zero,
+        np.full(4, -4.0e-6), np.zeros(4),
+        gap_tolerance=1.0e-6, maximum_triangles=16,
+    )
+    assert not violated.tolerance_met
+    assert violated.minimum_sampled_gap < -1.0e-6
+    exhausted = certify_moving_mortar_gap(
+        source, target, normal, zero, zero,
+        np.full(4, -4.0e-7), np.zeros(4),
+        gap_tolerance=1.0e-6, maximum_triangles=1,
+    )
+    assert not exhausted.tolerance_met
+    assert exhausted.conservative_lower_gap == float("-inf")
+
+
+def test_moving_gap_certificate_bounds_independent_bilinear_samples():
+    source = _square((1, 1), 0.0, 0.0)
+    target = _square((2, 1), 0.5, 0.25)
+    source_heights = np.array((-0.4, -0.9, -0.2, -0.7)) * 1.0e-4
+    target_heights = np.array((0.1, -0.2, 0.3, 0.0)) * 1.0e-4
+    result = certify_moving_mortar_gap(
+        source, target, np.array((0.0, 0.0, 1.0)),
+        np.zeros(3), np.zeros(3), source_heights, target_heights,
+        gap_tolerance=1.0e-3, maximum_triangles=64,
+    )
+
+    def bilinear(values, x, y):
+        return ((1.0 - x) * (1.0 - y) * values[0]
+                + x * (1.0 - y) * values[1]
+                + x * y * values[2]
+                + (1.0 - x) * y * values[3])
+
+    dense_minimum = min(
+        bilinear(source_heights, x, y)
+        - bilinear(target_heights, x - 0.5, y - 0.25)
+        for x in np.linspace(0.5, 1.0, 51)
+        for y in np.linspace(0.25, 1.0, 51)
+    )
+    assert result.tolerance_met
+    assert result.conservative_lower_gap <= dense_minimum + 1.0e-12
+    assert result.minimum_sampled_gap >= dense_minimum - 1.0e-12

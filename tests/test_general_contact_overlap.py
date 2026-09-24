@@ -11,6 +11,7 @@ from anysolver.general_contact.overlap import (
     planar_projected_overlap,
     planar_overlap_translation_gradient,
     planar_overlap_translation_derivatives,
+    swept_planar_overlap_interval,
     reference_shell_face,
 )
 
@@ -261,3 +262,45 @@ def test_q4_s3_overlap_boundary_derivative_is_rigid_frame_covariant():
     )
     np.testing.assert_allclose(rotated_hessian, rotation @ hessian @ rotation.T,
                                atol=1e-12)
+
+
+def test_swept_overlap_detects_a_crossing_missed_by_both_endpoints():
+    source = _face((1, 1), ((0, 0), (1, 0), (1, 1), (0, 1)))
+    target = _face((2, 1), ((2, 0), (3, 0), (3, 1), (2, 1)))
+    zero = np.zeros(3)
+    travel = np.array((4.0, 0.0, 0.0))
+    assert planar_projected_overlap(source, target) is None
+    assert planar_projected_overlap(
+        PlanarFace(source.feature_id, source.corners + travel), target
+    ) is None
+    interval = swept_planar_overlap_interval(
+        source, target, zero, travel, zero, zero,
+    )
+    assert interval == pytest.approx((0.25, 0.75))
+    for fraction in (0.0, 0.2, 0.3, 0.5, 0.7, 0.8, 1.0):
+        moved = PlanarFace(source.feature_id, source.corners + fraction * travel)
+        overlap = planar_projected_overlap(moved, target)
+        assert (overlap is not None) == (0.25 < fraction < 0.75)
+    assert swept_planar_overlap_interval(
+        source, target, zero, np.array((-1.0, 0.0, 0.0)), zero, zero,
+    ) is None
+
+
+def test_swept_overlap_interval_is_rigid_frame_invariant():
+    source = _face((1, 1), ((0, 0), (1, 0), (0, 1)))
+    target = _face((2, 1), ((2, 0), (3, 0), (2, 1)))
+    zero = np.zeros(3)
+    travel = np.array((4.0, 0.0, 0.0))
+    reference = swept_planar_overlap_interval(
+        source, target, zero, travel, zero, zero,
+    )
+    rotation = np.array(((0.0, -1.0, 0.0),
+                         (0.0, 0.0, -1.0),
+                         (1.0, 0.0, 0.0)))
+    shift = np.array((1.0, -2.0, 3.0))
+    moved_source = PlanarFace(source.feature_id, source.corners @ rotation.T + shift)
+    moved_target = PlanarFace(target.feature_id, target.corners @ rotation.T + shift)
+    observed = swept_planar_overlap_interval(
+        moved_source, moved_target, zero, rotation @ travel, zero, zero,
+    )
+    assert observed == pytest.approx(reference)

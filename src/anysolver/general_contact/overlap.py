@@ -275,6 +275,67 @@ def planar_overlap_translation_derivatives(integration: PlanarFace,
     return basis @ gradient, basis @ hessian @ basis.T
 
 
+def swept_planar_overlap_interval(
+        source: PlanarFace, target: PlanarFace,
+        source_start: np.ndarray, source_end: np.ndarray,
+        target_start: np.ndarray, target_end: np.ndarray,
+        ) -> tuple[float, float] | None:
+    """Bound every projected overlap time along two linear translations.
+
+    Convex separating-axis inequalities are affine along this path. The
+    closed interval includes edge-touch events; callers decide whether its
+    interior has positive area and how to subdivide the mechanical step.
+    """
+
+    motions = tuple(np.asarray(value, dtype=float) for value in
+                    (source_start, source_end, target_start, target_end))
+    if any(value.shape != (3,) or not np.all(np.isfinite(value))
+           for value in motions):
+        raise ValueError("swept face translations must be finite 3-vectors")
+    normal = np.cross(source.corners[1] - source.corners[0],
+                      source.corners[-1] - source.corners[0])
+    normal /= np.linalg.norm(normal)
+    target_normal = np.cross(target.corners[1] - target.corners[0],
+                             target.corners[-1] - target.corners[0])
+    target_normal /= np.linalg.norm(target_normal)
+    if abs(float(normal @ target_normal)) < 1.0 - 1.0e-10:
+        raise ValueError("swept planar faces must be parallel")
+    tangent = source.corners[1] - source.corners[0]
+    tangent /= np.linalg.norm(tangent)
+    binormal = np.cross(normal, tangent)
+    origin = source.corners[0]
+    source_xy = _to_frame(source.corners + motions[0], origin, tangent, binormal)
+    target_xy = _to_frame(target.corners + motions[2], origin, tangent, binormal)
+    relative_velocity = (motions[1] - motions[0]) - (motions[3] - motions[2])
+    velocity_xy = np.array((relative_velocity @ tangent,
+                            relative_velocity @ binormal))
+    lower, upper = 0.0, 1.0
+    for polygon in (source_xy, target_xy):
+        for index, start in enumerate(polygon):
+            edge = polygon[(index + 1) % len(polygon)] - start
+            axis = np.array((edge[1], -edge[0]))
+            first = source_xy @ axis
+            second = target_xy @ axis
+            motion = float(velocity_xy @ axis)
+            inequalities = (
+                (float(np.max(first) - np.min(second)), motion),
+                (float(np.max(second) - np.min(first)), -motion),
+            )
+            for value, slope in inequalities:
+                if abs(slope) <= np.finfo(float).eps * max(1.0, abs(value)):
+                    if value < 0.0:
+                        return None
+                    continue
+                crossing = -value / slope
+                if slope > 0.0:
+                    lower = max(lower, crossing)
+                else:
+                    upper = min(upper, crossing)
+                if lower > upper:
+                    return None
+    return max(0.0, lower), min(1.0, upper)
+
+
 def reference_shell_face(model: object, body_id: int, element_id: int,
                          side: str) -> PlanarFace:
     """Read the qualified formulation's physical reference skin.
