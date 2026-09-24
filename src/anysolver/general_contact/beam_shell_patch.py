@@ -1,4 +1,4 @@
-"""B2 line contact on a conforming convex patch of planar physical shell faces.
+"""B2/B3 line contact on a conforming convex patch of planar shell faces.
 
 Material node IDs own seams. The only clearance boundary is the patch exterior;
 the contact line is partitioned into disjoint intervals before face integration.
@@ -12,8 +12,9 @@ import numpy as np
 
 from .beam_shell import (
     PROFILE_PATCH, InteriorBeamShellLine, InteriorBeamShellState,
-    _BeamShellManager, validate_beam_shell_contact,
+    _BeamShellManager, _beam_shape, _bezier_controls, validate_beam_shell_contact,
 )
+from .beam_plane import _gap_coefficients
 from .core import ContactDefinition, ContactSolverSettings, ContactValidationReport
 from .overlap import PlanarFace, reference_shell_face
 
@@ -22,7 +23,7 @@ def _patch_windows(faces: tuple[PlanarFace, ...],
                    face_node_ids: tuple[tuple[int, ...], ...],
                    beam: np.ndarray, rim_clearance: float,
                    ) -> tuple[tuple[tuple[int, float, float], ...], float]:
-    """Certify a convex conforming patch and partition one straight B2 line."""
+    """Certify a convex patch and partition a B2/B3 projected curve."""
     first = faces[0].corners
     origin = first[0]
     tangent = first[1] - origin
@@ -83,8 +84,8 @@ def _patch_windows(faces: tuple[PlanarFace, ...],
                               for a, b in boundary)
     if abs(area_sum - boundary_area) > 1.0e-9 * scale * scale:
         raise ValueError("beam-shell patch faces overlap or leave an uncovered region")
-    projected_beam = np.column_stack(((beam - origin) @ tangent,
-                                      (beam - origin) @ binormal))
+    projected_beam = np.column_stack(((_bezier_controls(beam) - origin) @ tangent,
+                                      (_bezier_controls(beam) - origin) @ binormal))
     minimum_rim = float("inf")
     for left, right in boundary:
         corner = points[left]
@@ -99,6 +100,54 @@ def _patch_windows(faces: tuple[PlanarFace, ...],
             minimum_rim = min(minimum_rim, inward)
     if minimum_rim < rim_clearance - tolerance:
         raise ValueError("beam-shell curve approaches an unadmitted physical rim")
+
+    if len(beam) == 3:
+        beam_xy = np.column_stack(((beam - origin) @ tangent,
+                                   (beam - origin) @ binormal))
+        cuts = [-1.0, 1.0]
+        for xy in face_xy:
+            for corner, nxt in zip(xy, np.roll(xy, -1, axis=0)):
+                edge = nxt - corner
+                signed = tuple(float(np.linalg.det(np.stack((edge, point - corner))))
+                               for point in beam_xy)
+                a, b, c = _gap_coefficients(signed)
+                coefficient_scale = max(abs(a), abs(b), abs(c))
+                if coefficient_scale == 0.0:
+                    continue
+                if abs(a) > 64.0 * np.finfo(float).eps * coefficient_scale:
+                    roots = np.roots((a, b, c))
+                elif abs(b) > 64.0 * np.finfo(float).eps * coefficient_scale:
+                    roots = np.roots((b, c))
+                else:
+                    continue
+                for root in roots:
+                    if abs(float(np.imag(root))) <= 1.0e-12:
+                        xi = float(np.real(root))
+                        if -1.0 + 1.0e-12 < xi < 1.0 - 1.0e-12:
+                            cuts.append(xi)
+        cuts.sort()
+        unique_cuts = [cuts[0]]
+        for cut in cuts[1:]:
+            if cut - unique_cuts[-1] > 1.0e-12:
+                unique_cuts.append(cut)
+        windows = []
+        for left, right in zip(unique_cuts[:-1], unique_cuts[1:]):
+            middle = 0.5 * (left + right)
+            point = _beam_shape(middle, 3) @ beam_xy
+            owners = []
+            for index, xy in enumerate(face_xy):
+                if all(float(np.linalg.det(np.stack((nxt - corner, point - corner))))
+                       >= -tolerance * float(np.linalg.norm(nxt - corner))
+                       for corner, nxt in zip(xy, np.roll(xy, -1, axis=0))):
+                    owners.append(index)
+            if not owners:
+                raise ValueError("beam-shell patch curve projection is not fully covered")
+            owner = min(owners, key=lambda i: faces[i].feature_id)
+            if windows and windows[-1][0] == owner and abs(windows[-1][2] - left) < 1.0e-12:
+                windows[-1] = (owner, windows[-1][1], right)
+            else:
+                windows.append((owner, left, right))
+        return tuple(windows), minimum_rim
 
     raw = []
     for index, xy in enumerate(face_xy):
@@ -157,12 +206,14 @@ def validate_beam_shell_patch_contact(model, definition: ContactDefinition,
     if len(shell.element_ids) < 2 or len(shell.element_ids) > 64:
         issues.append("patch profile admits 2 to 64 shell faces")
     if len(beam.element_ids) != 1:
-        issues.append("patch profile admits one classical B2 cell")
+        issues.append("patch profile admits one classical B2/B3 cell")
     else:
-        from anysolver.elements import BeamElement
+        from anysolver.elements import BeamElement, QuadraticBeamElement
 
-        if type(model.mesh.elements.get(beam.element_ids[0])) is not BeamElement:
-            issues.append("patch profile admits an exact classical B2 element")
+        if type(model.mesh.elements.get(beam.element_ids[0])) not in {
+            BeamElement, QuadraticBeamElement,
+        }:
+            issues.append("patch profile admits an exact classical B2/B3 element")
     for element_id in shell.element_ids:
         single = replace(shell, element_ids=(element_id,))
         report = validate_beam_shell_contact(

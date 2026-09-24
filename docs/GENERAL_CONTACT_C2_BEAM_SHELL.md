@@ -67,28 +67,32 @@ acceptance also remains open.
 
 ## Planar shell patch seam slice
 
-The separate `CLASSICAL_B2_ROUND_TUBE_PLANAR_SHELL_PATCH_LINE_PENALTY_STATIC_DEV_V0`
-profile admits one B2 cell over 2–64 conforming, coplanar S3 V2D or qualified
+The separate `CLASSICAL_B2_B3_ROUND_TUBE_PLANAR_SHELL_PATCH_LINE_PENALTY_STATIC_DEV_V0`
+profile admits one B2 or B3 cell over 2–64 conforming, coplanar S3 V2D or qualified
 Q4 faces. The faces must share material node IDs at every internal seam, have
 one connected convex exterior, a continuous physical skin and one common skin
 lever. The shell nodes undergo only common translation, with fixed rotations.
 All other material, normal-law, stiffness, gap, radius and no-cap restrictions
 above apply.
 
-The actual straight B2 line is clipped against each current convex face.
+The actual B2 line is clipped against each current convex face. For B3, exact
+roots of the quadratic signed distance to each face edge cut the deformed
+curve into owned intervals; this admits repeated crossings of one seam. The
+quadratic Bézier control hull provides conservative exterior-rim clearance.
 The resulting disjoint reference-line intervals integrate through the original
 S3/Q4 face interpolation. An exactly seam-aligned line has one deterministic
 owner, selected by stable face ID. The exterior edges alone receive the
-radius-covering clearance test. The two beam endpoints conservatively certify
-that clearance along the straight current centreline and the admitted linear
-trial path. An uncovered interval, nonconforming topology, overlap, nonconvex
+radius-covering clearance test. B2 endpoints or B3 Bézier controls certify
+that clearance along the current centreline and admitted linear trial path.
+An uncovered interval, nonconforming topology, overlap, nonconvex
 exterior, incompatible orientation or discontinuous skin fails explicitly.
-The tangent acts on B2 translations and common shell translation, the admitted
+The tangent acts on B2/B3 translations and common shell translation, the admitted
 motion manifold; it does not admit individual shell rotations or warping.
 
-Run [the patch seam example](../examples/general_contact_round_beam_shell_patch.py).
+Run [the patch seam example](../examples/general_contact_round_beam_shell_patch.py),
+using `--b3` for the quadratic beam route.
 `tests/test_general_contact_beam_shell_patch.py` checks the independent
-constant-gap line potential, paired global wrench, seam partition, slide,
-exterior-rim rejection, tangent, static route and restart. This is local
+constant-gap line potential, paired global wrench, B2/B3 seam partition,
+re-entrant B3 curve, slide, exterior-rim rejection, tangent, static route and restart. This is local
 development evidence. General curved line–surface contact, nonconvex patches,
 physical rims, beam caps, multi-cell beams and qualification remain open.

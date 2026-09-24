@@ -1,39 +1,49 @@
-"""B2 round beam pressing across the internal seam of two planar Q4 faces.
+"""B2 or B3 round beam pressing across an internal planar Q4 seam.
 
 Run after installing ANYsolver: python examples/general_contact_round_beam_shell_patch.py
+Pass --b3 for the quadratic beam route.
 All dimensions use SI units. This is a development example, not qualification.
 """
+
+import argparse
 
 from anysolver import (
     BoundaryCondition, ContactDefinition, ContactInteraction,
     ContactSolverSettings, ContactSurface, LoadCase, create_shell_element,
     solve_static_nonlinear, validate_general_contact,
 )
-from anysolver.elements import BeamElement
+from anysolver.elements import BeamElement, QuadraticBeamElement
 from anysolver.fe_core import FEModel
 
 
-def main() -> None:
+def main(*, b3: bool = False) -> None:
     model = FEModel("beam_across_internal_shell_seam")
     model.add_material("elastic", 1.0e3, 0.3, density=1.0)
+    beam_points = (((-0.5, 0.0, 0.025), (0.0, 0.0, 0.025), (0.5, 0.0, 0.025))
+                   if b3 else ((-0.5, 0.0, 0.025), (0.5, 0.0, 0.025)))
+    shell_start = len(beam_points) + 1
+    left = tuple(range(shell_start, shell_start + 4))
+    right = (shell_start + 1, shell_start + 4,
+             shell_start + 5, shell_start + 2)
+    shell_nodes = tuple(range(shell_start, shell_start + 6))
     for node, point in enumerate((
-        (-0.5, 0.0, 0.025), (0.5, 0.0, 0.025),
+        *beam_points,
         (-1.0, -1.0, 0.0), (0.0, -1.0, 0.0),
         (0.0, 1.0, 0.0), (-1.0, 1.0, 0.0),
         (1.0, -1.0, 0.0), (1.0, 1.0, 0.0),
     ), 1):
         model.add_node(node, *point)
-    model.add_element(1, BeamElement(
-        1, [1, 2], "elastic",
+    model.add_element(1, (QuadraticBeamElement if b3 else BeamElement)(
+        1, list(range(1, shell_start)), "elastic",
         {"area": 1.0e-3, "Iy": 1.0e-4, "Iz": 1.0e-4, "J": 1.0e-4},
     ))
-    for eid, nodes in ((2, (3, 4, 5, 6)), (3, (4, 7, 8, 5))):
+    for eid, nodes in ((2, left), (3, right)):
         model.add_element(eid, create_shell_element(
             eid, nodes, "elastic", thickness=0.02, formulation="e4-pl",
             reference_normal=(0, 0, 1),
         ))
     model.add_boundary_condition(BoundaryCondition(
-        "fixed_skin", (3, 4, 5, 6, 7, 8),
+        "fixed_skin", shell_nodes,
         {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
     ))
     model.add_boundary_condition(BoundaryCondition(
@@ -41,11 +51,11 @@ def main() -> None:
         {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
     ))
     model.add_boundary_condition(BoundaryCondition(
-        "guided_beam_tip", (2,),
+        "guided_beam_tip", tuple(range(2, shell_start)),
         {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
     ))
     load = LoadCase("press_across_seam")
-    load.add_nodal_load(2, forces=(0.0, 0.0, -1.0))
+    load.add_nodal_load(shell_start - 1, forces=(0.0, 0.0, -0.1 if b3 else -1.0))
     definition = ContactDefinition(
         surfaces=(ContactSurface("tube", (1,), beam_radius=0.01),
                   ContactSurface("skin", (2, 3), side="top")),
@@ -66,6 +76,7 @@ def main() -> None:
     result = solve_static_nonlinear(
         model, load, contact=definition, contact_settings=settings,
         kinematics="von_karman", num_steps=2, max_iterations=12,
+        tolerance=1.0e-8 if b3 else 1.0e-6,
         emit_restart_checkpoint=True,
     )
     if result.status != "completed":
@@ -80,4 +91,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--b3", action="store_true", help="use a quadratic B3 cell")
+    main(b3=parser.parse_args().b3)

@@ -2,9 +2,11 @@
 
 import numpy as np
 import pytest
+from scipy.integrate import quad
 
 from anysolver import (
-    BoundaryCondition, FEModel, LoadCase, BeamElement, create_shell_element,
+    BoundaryCondition, FEModel, LoadCase, BeamElement, QuadraticBeamElement,
+    create_shell_element,
     solve_static_nonlinear,
 )
 from anysolver.general_contact import (
@@ -57,6 +59,46 @@ def _closed(model):
     for node in (1, 2):
         trial[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.006
     return trial
+
+
+def _curved_patch_model(*, crossing_reference=False):
+    model = FEModel("curved_b3_across_shell_seam_twice")
+    model.add_material("elastic", 1.0e3, 0.3, density=1.0)
+    beam_points = (((-0.5, 0.0, 0.025), (0.0, 0.0, 0.025), (0.5, 0.0, 0.025))
+                   if crossing_reference else
+                   ((-0.01, -0.5, 0.025), (-0.01, 0.0, 0.025),
+                    (-0.01, 0.5, 0.025)))
+    for node, point in enumerate((
+        *beam_points,
+        (-1.0, -1.0, 0.0), (0.0, -1.0, 0.0),
+        (0.0, 1.0, 0.0), (-1.0, 1.0, 0.0),
+        (1.0, -1.0, 0.0), (1.0, 1.0, 0.0),
+    ), 1):
+        model.add_node(node, *point)
+    model.add_element(1, QuadraticBeamElement(
+        1, [1, 2, 3], "elastic",
+        {"area": 1.0e-3, "Iy": 1.0e-4, "Iz": 1.0e-4, "J": 1.0e-4},
+    ))
+    for eid, nodes in ((2, (4, 5, 6, 7)), (3, (5, 8, 9, 6))):
+        model.add_element(eid, create_shell_element(
+            eid, nodes, "elastic", thickness=0.02,
+            formulation="e4-pl", reference_normal=(0, 0, 1),
+        ))
+    definition = ContactDefinition(
+        surfaces=(ContactSurface("tube", (1,), beam_radius=0.01),
+                  ContactSurface("skin", (2, 3), side="top")),
+        rigid_bodies=(),
+        interactions=(ContactInteraction(
+            "line_skin", "tube", "skin", None, 0.002,
+            line_stiffness=1.0e4,
+        ),),
+    )
+    settings = ContactSolverSettings(
+        pair_motion="general", beam_shell_rim_clearance=0.02,
+        beam_shell_difference_step=1.0e-8,
+        line_integration_relative_tolerance=1.0e-8,
+    )
+    return model, definition, settings
 
 
 def test_internal_seam_partitions_constant_gap_line_without_double_counting():
@@ -136,6 +178,85 @@ def test_exact_seam_line_has_one_stable_owner_and_nonconforming_patch_fails():
                                          (1, -0.5, 0.5),
                                          (2, 0.5, 1.0)), atol=1.0e-12)
     assert rim == pytest.approx(0.5)
+
+
+def test_curved_b3_crosses_internal_seam_twice_with_exact_line_work():
+    model, definition, settings = _curved_patch_model()
+    report = validate_general_contact(model, definition, settings)
+    assert report.valid, report.issues
+    manager = _BeamShellPatchManager(model, definition, settings)
+    trial = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node in (1, 2, 3):
+        trial[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.006
+    trial[model.mesh.dof_manager.get_node_dofs(2)[0]] = 0.02
+    _, tangent, result = manager.evaluate(trial)
+    assert result.minimum_gap == pytest.approx(-0.001)
+    assert result.line_contact_energy == pytest.approx(0.005, rel=1.0e-11)
+    assert result.beam_force[2] == pytest.approx(10.0)
+    assert result.shell_force[2] == pytest.approx(-10.0)
+    assert result.active_intervals == 3
+    np.testing.assert_allclose(np.asarray(result.beam_moment) + result.shell_moment,
+                               np.zeros(3), atol=1.0e-10)
+    direction = np.zeros_like(trial)
+    direction[model.mesh.dof_manager.get_node_dofs(2)[0]] = 1.0
+    step = 1.0e-7
+    plus = manager.evaluate(trial + step * direction, tangent=False)[0]
+    minus = manager.evaluate(trial - step * direction, tangent=False)[0]
+    np.testing.assert_allclose((plus - minus) / (2 * step), tangent @ direction,
+                               rtol=1.0e-5, atol=1.0e-6)
+    varying = trial.copy()
+    varying[model.mesh.dof_manager.get_node_dofs(2)[2]] -= 0.0002
+    varied = manager.evaluate(varying, tangent=False)[2]
+    independent, _ = quad(
+        lambda xi: 0.5 * 1.0e4 * (-0.001 - 0.0002 * (1.0 - xi * xi)) ** 2 * 0.5,
+        -1.0, 1.0, epsabs=1.0e-14,
+    )
+    assert varied.line_contact_energy == pytest.approx(independent, rel=1.0e-10)
+    escaped = trial.copy()
+    escaped[model.mesh.dof_manager.get_node_dofs(2)[0]] = 0.8
+    with pytest.raises(ValueError, match="rim"):
+        manager.evaluate(escaped, tangent=False)
+
+
+def test_b3_patch_coupled_static_and_restart():
+    model, definition, settings = _curved_patch_model(crossing_reference=True)
+    model.add_boundary_condition(BoundaryCondition(
+        "shell_fixed", (4, 5, 6, 7, 8, 9),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "beam_root", (1,),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "beam_guides", (2, 3),
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    load = LoadCase("press_b3_across_seam")
+    load.add_nodal_load(3, forces=(0.0, 0.0, -0.1))
+    full = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=2, max_iterations=12,
+        tolerance=1.0e-8,
+    )
+    assert full.status == "completed", (full.failure_reason, full.info.get("general_contact"))
+    assert full.info["general_contact"]["gap_tolerance_met"]
+    half = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=2, max_iterations=12,
+        tolerance=1.0e-8,
+        max_load_factor=0.5, emit_restart_checkpoint=True,
+    )
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=2, max_iterations=12,
+        tolerance=1.0e-8,
+        restart_checkpoint=half.to_restart_checkpoint(),
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, full.displacements,
+                               rtol=1.0e-7, atol=1.0e-9)
 
 
 def test_patch_static_route_and_restart():
