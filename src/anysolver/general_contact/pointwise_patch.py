@@ -30,6 +30,10 @@ class PointwisePatchState:
     normal_tangent: np.ndarray
     source_translation_residual: np.ndarray
     target_translation_residual: np.ndarray
+    source_local_tangent_residual: np.ndarray
+    target_local_tangent_residual: np.ndarray
+    source_local_tangent_height_derivative: np.ndarray
+    target_local_tangent_height_derivative: np.ndarray
     minimum_vertex_gap: float
 
 
@@ -93,6 +97,10 @@ class PointwisePatchPenalty(MovingPatchMortar):
         normal_tangent = np.zeros((dof_count, dof_count))
         source_translation_force = np.zeros(3)
         target_translation_force = np.zeros(3)
+        source_local_tangent = np.zeros((source_count, 3))
+        target_local_tangent = np.zeros((len(self.target_node_ids), 3))
+        source_local_height_tangent = np.zeros((source_count, 3, dof_count))
+        target_local_height_tangent = np.zeros((len(self.target_node_ids), 3, dof_count))
         energy = overlap_area = active_area = 0.0
         pairs = triangles_checked = 0
         minimum_vertex_gap = float("inf")
@@ -144,6 +152,8 @@ class PointwisePatchPenalty(MovingPatchMortar):
                             if closure == 0.0:
                                 continue
                             local_gradient = np.r_[shape_a, -shape_b]
+                            global_gradient = np.zeros(dof_count)
+                            global_gradient[columns] = local_gradient
                             pressure = self.stiffness * closure
                             energy += 0.5 * weight * pressure * closure
                             normal_force[columns] += weight * pressure * local_gradient
@@ -160,17 +170,61 @@ class PointwisePatchPenalty(MovingPatchMortar):
                             )
                             source_translation_force += weight * pressure * gap_gradient_a
                             target_translation_force += weight * pressure * gap_gradient_b
+                            source_local_tangent[source_rows] += (
+                                weight * pressure * shape_a[:, None] * gap_gradient_a
+                            )
+                            target_local_tangent[target_rows] += (
+                                weight * pressure * shape_b[:, None] * gap_gradient_b
+                            )
+                            source_gradient_tangent = np.zeros((3, dof_count))
+                            target_gradient_tangent = np.zeros((3, dof_count))
+                            source_gradient_tangent[:, source_rows] = -gradient_a.T
+                            target_gradient_tangent[:, source_count + target_rows] = gradient_b.T
+                            source_density_tangent = (
+                                self.stiffness * np.outer(gap_gradient_a, global_gradient)
+                                + pressure * source_gradient_tangent
+                            )
+                            target_density_tangent = (
+                                self.stiffness * np.outer(gap_gradient_b, global_gradient)
+                                + pressure * target_gradient_tangent
+                            )
+                            for local_index, row in enumerate(source_rows):
+                                source_local_height_tangent[row] += (
+                                    weight * shape_a[local_index] * source_density_tangent
+                                )
+                            for local_index, row in enumerate(target_rows):
+                                target_local_height_tangent[row] += (
+                                    weight * shape_b[local_index] * target_density_tangent
+                                )
 
                 for point, weighted_outward in _boundary_quadrature(moved_a, moved_b, overlap):
                     closure = min(gap_at(point), 0.0)
-                    source_translation_force += (
-                        0.5 * self.stiffness * closure**2 * weighted_outward
+                    boundary_force = 0.5 * self.stiffness * closure**2 * weighted_outward
+                    source_translation_force += boundary_force
+                    shape_a = overlap.shape_values(moved_a, point)
+                    source_local_tangent[source_rows] += shape_a[:, None] * boundary_force
+                    shape_b = overlap.shape_values(moved_b, point)
+                    gap_gradient = np.zeros(dof_count)
+                    gap_gradient[columns] = np.r_[shape_a, -shape_b]
+                    boundary_tangent = self.stiffness * closure * np.outer(
+                        weighted_outward, gap_gradient,
                     )
+                    for local_index, row in enumerate(source_rows):
+                        source_local_height_tangent[row] += shape_a[local_index] * boundary_tangent
                 for point, weighted_outward in _boundary_quadrature(moved_b, moved_a, overlap):
                     closure = min(gap_at(point), 0.0)
-                    target_translation_force += (
-                        0.5 * self.stiffness * closure**2 * weighted_outward
+                    boundary_force = 0.5 * self.stiffness * closure**2 * weighted_outward
+                    target_translation_force += boundary_force
+                    shape_b = overlap.shape_values(moved_b, point)
+                    target_local_tangent[target_rows] += shape_b[:, None] * boundary_force
+                    shape_a = overlap.shape_values(moved_a, point)
+                    gap_gradient = np.zeros(dof_count)
+                    gap_gradient[columns] = np.r_[shape_a, -shape_b]
+                    boundary_tangent = self.stiffness * closure * np.outer(
+                        weighted_outward, gap_gradient,
                     )
+                    for local_index, row in enumerate(target_rows):
+                        target_local_height_tangent[row] += shape_b[local_index] * boundary_tangent
 
         source_translation_force += float(np.sum(normal_force[:source_count])) * self.normal
         target_translation_force += float(np.sum(normal_force[source_count:])) * self.normal
@@ -178,6 +232,8 @@ class PointwisePatchPenalty(MovingPatchMortar):
             overlap_area, pairs, triangles_checked, active_area, energy,
             normal_force, normal_tangent,
             source_translation_force, target_translation_force,
+            source_local_tangent, target_local_tangent,
+            source_local_height_tangent, target_local_height_tangent,
             minimum_vertex_gap,
         )
 

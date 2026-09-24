@@ -117,6 +117,38 @@ def test_patch_normal_work_tangent_gap_and_resource_limits():
         )
 
 
+def test_local_mortar_lateral_forces_preserve_translation_work():
+    source = PatchFace(_quad((1, 1), 0.0, 1.0), (1, 2, 3, 4))
+    target = PatchFace(_quad((2, 1), -0.2, 0.7, -0.1, 1.2), (5, 6, 7, 8))
+    patch = MovingPatchMortar(
+        (source,), (target,), np.array((0.0, 0.0, 1.0)), 1.0e6,
+    )
+    zero = np.zeros(3)
+    source_height = np.array((-1.0e-4, -1.2e-4, -0.8e-4, -1.1e-4))
+    target_height = np.array((0.0, 1.0e-5, -5.0e-6, 5.0e-6))
+    for multiplier in (None, np.array((1.0, 2.0, 3.0, 4.0))):
+        state = patch.evaluate(zero, zero, source_height, target_height,
+                               multiplier_estimate=multiplier)
+        source, target = patch.translation_residual(
+            zero, zero, source_height, target_height,
+            multiplier_estimate=multiplier,
+        )
+        source_local, target_local = patch.local_tangential_residual(
+            zero, zero, source_height, target_height,
+            multiplier_estimate=multiplier,
+        )
+        np.testing.assert_allclose(
+            np.sum(source_local, axis=0),
+            source - np.sum(state.normal_residual[:4]) * patch.normal,
+            atol=1.0e-10,
+        )
+        np.testing.assert_allclose(
+            np.sum(target_local, axis=0),
+            target - np.sum(state.normal_residual[4:]) * patch.normal,
+            atol=1.0e-10,
+        )
+
+
 def test_fixed_augmented_multiplier_work_and_projected_update():
     source, _whole, left, right = _patches()
     patch = MovingPatchMortar(

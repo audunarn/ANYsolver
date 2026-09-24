@@ -40,6 +40,28 @@ def test_uniform_closure_has_exact_area_force_and_boundary_work():
         -0.5 * 1.0e6 * 1.0e-8, abs=1.0e-12,
     )
     np.testing.assert_allclose(
+        np.sum(state.source_local_tangent_residual, axis=0),
+        state.source_translation_residual
+        - np.sum(state.normal_residual[:4]) * patch.normal,
+        atol=1.0e-11,
+    )
+    np.testing.assert_allclose(
+        np.sum(state.target_local_tangent_residual, axis=0),
+        state.target_translation_residual
+        - np.sum(state.normal_residual[4:]) * patch.normal,
+        atol=1.0e-11,
+    )
+    source_xy = patch.source_faces[0].geometry.corners
+    target_xy = patch.target_faces[0].geometry.corners
+    local_moment = sum(
+        np.cross(point, force)[2]
+        for point, force in zip(source_xy, state.source_local_tangent_residual)
+    ) + sum(
+        np.cross(point, force)[2]
+        for point, force in zip(target_xy, state.target_local_tangent_residual)
+    )
+    assert local_moment == pytest.approx(0.0, abs=1.0e-11)
+    np.testing.assert_allclose(
         state.source_translation_residual + state.target_translation_residual,
         np.zeros(3), atol=1.0e-11,
     )
@@ -73,6 +95,18 @@ def test_normal_work_and_tangent_on_smooth_active_branch():
     np.testing.assert_allclose(
         (plus.normal_residual - minus.normal_residual) / (2 * step),
         state.normal_tangent @ direction, rtol=1.0e-6, atol=1.0e-7,
+    )
+    np.testing.assert_allclose(
+        (plus.source_local_tangent_residual - minus.source_local_tangent_residual)
+        / (2 * step),
+        np.einsum("ijk,k->ij", state.source_local_tangent_height_derivative,
+                  direction), rtol=1.0e-5, atol=1.0e-7,
+    )
+    np.testing.assert_allclose(
+        (plus.target_local_tangent_residual - minus.target_local_tangent_residual)
+        / (2 * step),
+        np.einsum("ijk,k->ij", state.target_local_tangent_height_derivative,
+                  direction), rtol=1.0e-5, atol=1.0e-7,
     )
     for axis in (0, 1):
         shift = np.zeros(3)

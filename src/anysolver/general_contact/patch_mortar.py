@@ -13,8 +13,11 @@ from dataclasses import dataclass
 import numpy as np
 
 from .moving import (
+    _boundary_quadrature,
+    _has_shared_edge_transition,
     _moving_pair_integrals,
     _moving_pair_transport,
+    _triangle_samples,
     certify_moving_mortar_gap,
 )
 from .overlap import PlanarFace, planar_projected_overlap
@@ -389,6 +392,102 @@ class MovingPatchMortar:
         source_normal = float(np.sum(state.normal_residual[:count])) * self.normal
         target_normal = float(np.sum(state.normal_residual[count:])) * self.normal
         return source_tangent + source_normal, target_tangent + target_normal
+
+    def local_tangential_residual(
+            self, source_translation: np.ndarray,
+            target_translation: np.ndarray,
+            source_normal_dofs: np.ndarray,
+            target_normal_dofs: np.ndarray,
+            *, multiplier_estimate: np.ndarray | None = None,
+            ) -> tuple[np.ndarray, np.ndarray]:
+        """Distribute mortar overlap work at material face nodes.
+
+        Summing either side's nodal vectors recovers the existing rigid patch
+        translation residual tangent to the plane. This is a physical force
+        map for the restricted shell profile, not a new pressure basis.
+        """
+
+        state = self.evaluate(
+            source_translation, target_translation,
+            source_normal_dofs, target_normal_dofs,
+            multiplier_estimate=multiplier_estimate,
+        )
+        source_forces = np.zeros((len(self.source_node_ids), 3))
+        target_forces = np.zeros((len(self.target_node_ids), 3))
+        if state.overlap_area == 0.0:
+            return source_forces, target_forces
+        multiplier = self._owned_multiplier(multiplier_estimate)
+        shifted = state.normalized_gap - multiplier / self.stiffness
+        closed = (state.support > 0.0) & (shifted < 0.0)
+        pressure = np.zeros(len(self.source_node_ids))
+        support_coefficient = np.zeros_like(pressure)
+        pressure[closed] = self.stiffness * shifted[closed]
+        support_coefficient[closed] = (
+            -0.5 * self.stiffness * state.normalized_gap[closed] ** 2
+            + 0.5 * multiplier[closed] ** 2 / self.stiffness
+        )
+        moved, heights = self._fields(
+            source_translation, target_translation,
+            source_normal_dofs, target_normal_dofs,
+        )
+        for face_a, moved_a in zip(self.source_faces, moved[0]):
+            rows = np.asarray([self.source_index[node] for node in face_a.node_ids])
+            height_a = heights[0][rows]
+            pressure_a = pressure[rows]
+            coefficient_a = support_coefficient[rows]
+            for face_b, moved_b in zip(self.target_faces, moved[1]):
+                columns = np.asarray([self.target_index[node]
+                                      for node in face_b.node_ids])
+                height_b = heights[1][columns]
+                overlap = planar_projected_overlap(moved_a, moved_b)
+                if overlap is None:
+                    continue
+                if _has_shared_edge_transition(moved_a, moved_b, overlap):
+                    raise ValueError("shared-edge overlap transition needs a one-sided derivative")
+
+                def local_fields(point):
+                    shape_a, gradient_a = overlap.shape_values_and_gradient(moved_a, point)
+                    shape_b, gradient_b = overlap.shape_values_and_gradient(moved_b, point)
+                    gap = float(self.normal @ (
+                        shape_a @ moved_a.corners - shape_b @ moved_b.corners
+                    ) + shape_a @ height_a - shape_b @ height_b)
+                    return shape_a, gradient_a, shape_b, gradient_b, gap
+
+                polygon = overlap.polygon
+                centre = np.mean(polygon, axis=0)
+                for index, corner in enumerate(polygon):
+                    following = polygon[(index + 1) % len(polygon)]
+                    area = 0.5 * float(np.linalg.norm(np.cross(
+                        corner - centre, following - centre,
+                    )))
+                    if area <= 0.0:
+                        continue
+                    for point, weight in _triangle_samples(
+                            (centre, corner, following), area):
+                        shape_a, gradient_a, shape_b, gradient_b, gap = local_fields(point)
+                        gradient_gap_a = -(
+                            (height_a + moved_a.corners @ self.normal) @ gradient_a
+                        )
+                        gradient_gap_b = (
+                            (height_b + moved_b.corners @ self.normal) @ gradient_b
+                        )
+                        pressure_at_point = float(pressure_a @ shape_a)
+                        source_density = (
+                            -(pressure_a * gap + coefficient_a) @ gradient_a
+                            + pressure_at_point * gradient_gap_a
+                        )
+                        target_density = pressure_at_point * gradient_gap_b
+                        source_forces[rows] += weight * shape_a[:, None] * source_density
+                        target_forces[columns] += weight * shape_b[:, None] * target_density
+                for point, weighted_outward in _boundary_quadrature(moved_a, moved_b, overlap):
+                    shape_a, _gradient_a, _shape_b, _gradient_b, gap = local_fields(point)
+                    scalar = float((pressure_a * gap + coefficient_a) @ shape_a)
+                    source_forces[rows] += shape_a[:, None] * scalar * weighted_outward
+                for point, weighted_outward in _boundary_quadrature(moved_b, moved_a, overlap):
+                    shape_a, _gradient_a, shape_b, _gradient_b, gap = local_fields(point)
+                    scalar = float((pressure_a * gap + coefficient_a) @ shape_a)
+                    target_forces[columns] += shape_b[:, None] * scalar * weighted_outward
+        return source_forces, target_forces
 
     def reduced_system(self, source_translation: np.ndarray,
                        target_translation: np.ndarray,

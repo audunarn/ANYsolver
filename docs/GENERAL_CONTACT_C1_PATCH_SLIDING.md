@@ -16,6 +16,8 @@ nodes of the integration patch. Splitting the target into faces does not add
 pressure unknowns. Current projected overlaps are integrated face by face,
 then support and weighted gap are accumulated before the frictionless penalty
 law is applied. Both patches receive residual and tangent contributions.
+Lateral overlap work is integrated over physical faces and distributed to
+their material nodes; the patch-wide translation resultant is preserved.
 Physical top and bottom skins and offset couples use the admitted shell
 formulation's conventions. `normal_stiffness` has units Pa/m; `gap_tolerance`
 and `sliding_difference_step` are lengths in metres.
@@ -104,22 +106,24 @@ The primal-pressure mortar remains the default.
 `maximum_pointwise_triangles` is a hard resource limit. The result reports
 the number of integration triangles and quadrature-estimated active area.
 The physical gap still uses the separate conservative certificate. The
-translation force includes moving-overlap boundary work and the reduced
-tangent is checked on smooth branches. Projected-boundary transitions must
-be subdivided along the load path.
+translation force includes moving-overlap boundary work and is distributed
+to physical face nodes. The mapped tangent is checked on smooth branches.
+Projected-boundary transitions must be subdivided along the load path.
 
 In one exploratory 6×6 Q4/S3 partial-contact comparison at 0.4 N and
 4 MPa/m, the certified physical lower gap improved from −9.620 µm with
 the default mortar law to −7.355 µm with the pointwise law. Depth-two to
 depth-three quadrature changed accepted-pose energy by 2.02×10⁻⁶ relative
 and normal reaction by 6.63×10⁻⁵ relative. This is a development comparison,
-not pressure-space acceptance or a mesh-convergence result. The patch-wide
-translation force map still leaves a net z moment of about 1.01×10⁻⁶ N·m
-in that case, above the registered normalized wrench target. Local
-tangential force distribution and its tangent remain required before
-engineering acceptance. The physical-offset rotation couple for lateral
-contact forces is included in both patch laws; it resolved the x/y moment
-defect identified in this comparison.
+not pressure-space acceptance or a mesh-convergence result. An initial
+patch-wide distribution of lateral force failed the registered wrench
+target. Both patch laws now distribute lateral overlap work at physical
+face nodes and include shell-offset rotation couples. Rechecking the saved
+pointwise pose gave a normalized net moment of 2.21×10⁻⁹; re-solving the
+same 6×6 mortar case retained its −9.620 µm gap and balanced the integrated
+body moments to about 9.2×10⁻¹¹ N·m in x/y and roundoff in z. These
+development checks resolve that measured wrench defect. Partial-contact
+pressure stability, broader geometry and independent acceptance remain open.
 
 Focused checks are in `tests/test_general_contact_patch_mortar.py`,
 `tests/test_general_contact_pair.py` and

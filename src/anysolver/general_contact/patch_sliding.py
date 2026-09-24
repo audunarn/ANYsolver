@@ -251,6 +251,7 @@ class _RestrictedSlidingPatchFEManager:
                         )
                     surface_levers[key] = lever
         projection = np.eye(3) - np.outer(self.normal, self.normal)
+        self.surface_levers = surface_levers
         reduced_count = 6 + sum(len(ids) for ids in self.node_ids)
         self.height_offsets = (6, 6 + len(self.node_ids[0]))
         rows: list[int] = []
@@ -429,47 +430,157 @@ class _RestrictedSlidingPatchFEManager:
         )
         return self.patch.projected_multiplier(state, self.normal_multipliers)
 
+    def _local_full_force(self, normal_residual: np.ndarray,
+                          local_tangential: tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+        """Map local tangential and normal work to authoritative shell DOFs."""
+
+        reduced_normal = np.r_[np.zeros(6), normal_residual]
+        force = np.asarray(self.work_map.T @ reduced_normal).reshape(-1)
+        for body, (ids, dofs, local) in enumerate(zip(
+            self.node_ids, self.node_dofs, local_tangential,
+        )):
+            for index, (node, nodal_dofs) in enumerate(zip(ids, dofs)):
+                force[nodal_dofs[:3]] += local[index]
+                force[nodal_dofs[3:]] += np.cross(
+                    self.surface_levers[(body, node)], local[index],
+                )
+        return force
+
+    def _pointwise_full_force(self, state) -> np.ndarray:
+        return self._local_full_force(
+            state.normal_residual,
+            (state.source_local_tangent_residual,
+             state.target_local_tangent_residual),
+        )
+
+    def _mortar_full_force(self, q: np.ndarray, state) -> np.ndarray:
+        split = self.height_offsets[1]
+        local = self.patch.local_tangential_residual(
+            q[:3], q[3:6], q[6:split], q[split:],
+            multiplier_estimate=self.normal_multipliers,
+        )
+        return self._local_full_force(state.normal_residual, local)
+
+    def _mortar_full_tangent(self, q: np.ndarray, state,
+                             force: np.ndarray) -> sparse.csr_matrix:
+        """Differentiate the mapped mortar residual at fixed multiplier."""
+
+        split = self.height_offsets[1]
+        derivative = np.zeros((len(force), len(q)))
+        multiplier = self.normal_multipliers.copy()
+        active = ((state.support > 0.0)
+                  & (state.normalized_gap - multiplier / self.stiffness <= 0.0))
+
+        def evaluate_at(values):
+            trial = self.patch.evaluate(
+                values[:3], values[3:6], values[6:split], values[split:],
+                multiplier_estimate=multiplier,
+            )
+            local_force = self._mortar_full_force(values, trial)
+            trial_active = ((trial.support > 0.0)
+                            & (trial.normalized_gap - multiplier / self.stiffness <= 0.0))
+            return trial, trial_active, local_force
+
+        for column in range(len(q)):
+            perturbation = np.zeros_like(q)
+            perturbation[column] = self.difference_step
+            plus, plus_active, plus_force = evaluate_at(q + perturbation)
+            minus, minus_active, minus_force = evaluate_at(q - perturbation)
+            plus_matches = (np.array_equal(plus_active, active)
+                            and plus.overlapping_pairs == state.overlapping_pairs)
+            minus_matches = (np.array_equal(minus_active, active)
+                             and minus.overlapping_pairs == state.overlapping_pairs)
+            if plus_matches and minus_matches:
+                derivative[:, column] = (
+                    plus_force - minus_force
+                ) / (2.0 * self.difference_step)
+            elif plus_matches:
+                derivative[:, column] = (
+                    plus_force - force
+                ) / self.difference_step
+            elif minus_matches:
+                derivative[:, column] = (
+                    force - minus_force
+                ) / self.difference_step
+            else:
+                derivative[:, column] = (
+                    plus_force - force
+                ) / self.difference_step
+        return (sparse.csr_matrix(derivative) @ self.work_map).tocsr()
+
+    def _pointwise_full_tangent(self, q: np.ndarray, state) -> sparse.csr_matrix:
+        """Differentiate the local force map along admitted restricted motion."""
+
+        count = self.model.mesh.dof_manager.total_dofs
+        derivative = np.zeros((count, len(q)))
+        normal_map = self.work_map.T.tocsr()[:, 6:]
+        derivative[:, 6:] = np.asarray(normal_map @ state.normal_tangent)
+        for body, (ids, dofs, local_derivative) in enumerate(zip(
+            self.node_ids, self.node_dofs,
+            (state.source_local_tangent_height_derivative,
+             state.target_local_tangent_height_derivative),
+        )):
+            for index, (node, nodal_dofs) in enumerate(zip(ids, dofs)):
+                contribution = local_derivative[index]
+                derivative[nodal_dofs[:3], 6:] += contribution
+                lever = self.surface_levers[(body, node)]
+                derivative[nodal_dofs[3:], 6:] += np.cross(
+                    lever[:, None], contribution, axis=0,
+                )
+        split = self.height_offsets[1]
+        for column in range(6):
+            perturbation = np.zeros_like(q)
+            perturbation[column] = self.difference_step
+            plus = self.patch.evaluate(
+                (q + perturbation)[:3], (q + perturbation)[3:6],
+                (q + perturbation)[6:split], (q + perturbation)[split:],
+            )
+            minus = self.patch.evaluate(
+                (q - perturbation)[:3], (q - perturbation)[3:6],
+                (q - perturbation)[6:split], (q - perturbation)[split:],
+            )
+            if (plus.overlapping_pairs != state.overlapping_pairs
+                    or minus.overlapping_pairs != state.overlapping_pairs
+                    or plus.integration_triangles != state.integration_triangles
+                    or minus.integration_triangles != state.integration_triangles):
+                raise ValueError("pointwise projection transition needs path subdivision")
+            derivative[:, column] = (
+                self._pointwise_full_force(plus)
+                - self._pointwise_full_force(minus)
+            ) / (2.0 * self.difference_step)
+        return (sparse.csr_matrix(derivative) @ self.work_map).tocsr()
+
     def evaluate(self, displacement: np.ndarray, *, tangent: bool = True):
         q = self._reduced_pose(displacement)
         split = self.height_offsets[1]
         certificate = self._certificate(q, self.gap_tolerance)
-        if tangent:
-            if self.pointwise:
-                reduced = self.patch.reduced_system(
-                    q[:3], q[3:6], q[6:split], q[split:],
-                    difference_step=self.difference_step,
-                )
+        if self.pointwise:
+            state = self.patch.evaluate(q[:3], q[3:6], q[6:split], q[split:])
+            force = self._pointwise_full_force(state)
+            if tangent:
+                stiffness = self._pointwise_full_tangent(q, state)
+                tangent_scale = max(np.finfo(float).tiny, float(sparse.linalg.norm(stiffness)))
+                asymmetry = float(sparse.linalg.norm(stiffness - stiffness.T) / tangent_scale)
             else:
-                reduced = self.patch.reduced_system(
-                    q[:3], q[3:6], q[6:split], q[split:],
-                    difference_step=self.difference_step,
-                    multiplier_estimate=self.normal_multipliers,
-                )
-            state = reduced.state
-            reduced_force = reduced.residual
-            stiffness = (self.work_map.T @ sparse.csr_matrix(reduced.tangent)
-                         @ self.work_map).tocsr()
-            asymmetry = reduced.relative_tangent_asymmetry
+                stiffness = None
+                asymmetry = None
+        elif tangent:
+            state = self.patch.evaluate(
+                q[:3], q[3:6], q[6:split], q[split:],
+                multiplier_estimate=self.normal_multipliers,
+            )
+            force = self._mortar_full_force(q, state)
+            stiffness = self._mortar_full_tangent(q, state, force)
+            tangent_scale = max(np.finfo(float).tiny, float(sparse.linalg.norm(stiffness)))
+            asymmetry = float(sparse.linalg.norm(stiffness - stiffness.T) / tangent_scale)
         else:
-            if self.pointwise:
-                state = self.patch.evaluate(
-                    q[:3], q[3:6], q[6:split], q[split:],
-                )
-                source = state.source_translation_residual
-                target = state.target_translation_residual
-            else:
-                state = self.patch.evaluate(
-                    q[:3], q[3:6], q[6:split], q[split:],
-                    multiplier_estimate=self.normal_multipliers,
-                )
-                source, target = self.patch.translation_residual(
-                    q[:3], q[3:6], q[6:split], q[split:],
-                    multiplier_estimate=self.normal_multipliers,
-                )
-            reduced_force = np.r_[source, target, state.normal_residual]
+            state = self.patch.evaluate(
+                q[:3], q[3:6], q[6:split], q[split:],
+                multiplier_estimate=self.normal_multipliers,
+            )
+            force = self._mortar_full_force(q, state)
             stiffness = None
             asymmetry = None
-        force = np.asarray(self.work_map.T @ reduced_force).reshape(-1)
         u = np.asarray(displacement, dtype=float).reshape(-1)
         body_forces = []
         body_moments = []

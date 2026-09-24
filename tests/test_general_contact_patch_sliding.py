@@ -178,6 +178,35 @@ def test_patch_lateral_force_uses_physical_shell_offset_couple(discretization):
     net_moment = np.asarray(summary.integration_moment) + summary.target_moment
     np.testing.assert_allclose(net_force, np.zeros(3), atol=1.0e-10)
     np.testing.assert_allclose(net_moment[:2], np.zeros(2), atol=1.0e-9)
+    np.testing.assert_allclose(net_moment, np.zeros(3), atol=1.0e-9)
+
+
+@pytest.mark.parametrize("discretization", ("primal_mortar", "pointwise_penalty"))
+def test_patch_local_force_map_has_consistent_admitted_tangent(discretization):
+    model, definition, _settings = _q4_against_two_s3()
+    settings = ContactSolverSettings(
+        pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
+        normal_discretization=discretization,
+        pointwise_integration_subdivisions=1,
+    )
+    manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+    direction = np.zeros_like(displacement)
+    for node, normal_direction in zip((5, 6, 7, 8), (0.1, -0.1, 0.2, -0.2)):
+        dofs = model.mesh.dof_manager.get_node_dofs(node)
+        displacement[dofs[0]] = 0.02
+        displacement[dofs[2]] = -1.0e-6
+        direction[dofs[0]] = 0.2
+        direction[dofs[2]] = normal_direction
+    force, tangent, _summary = manager.evaluate(displacement)
+    assert tangent is not None
+    step = 1.0e-8
+    plus = manager.evaluate(displacement + step * direction, tangent=False)[0]
+    minus = manager.evaluate(displacement - step * direction, tangent=False)[0]
+    numerical = (plus - minus) / (2 * step)
+    np.testing.assert_allclose(numerical, tangent @ direction,
+                               rtol=1.0e-5, atol=1.0e-5)
+    assert np.linalg.norm(force) > 0.0
 
 
 def test_q4_against_two_s3_faces_slides_and_restarts():
