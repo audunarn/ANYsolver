@@ -13,15 +13,17 @@ plate/beam comparator isolated beam-versus-line resolution but did not
 settle as a loaded shell target. Native one-axis paths show underresolved
 shell hosts at 8:1 and underresolved beam traces at 1:8.
 
-**Remaining uncertainty and next action:** Choose and qualify the exact
-P0/P1/dual line space with the center-material-point pose, work and
-physical-response checks, correctly scaled interface stability, and a
-matched torque/shear reference. Retain the rail origin as a diagnostic
-comparator and preserve the existing six-channel, classical axial and
-Q6/finite-pad evidence as distinct contracts. No space is selected from
-small gaps, rank or a spectral quotient. Formal F03 authority remains
-unconsumed, G0B open and G1 barred. The detailed decisions and raw roots
-are inventoried below; no global axial refinement is planned.
+**Remaining uncertainty and next action:** A fixed fine-mesh screen found
+P0, P1 and dual-linear rows all full-rank, but their loaded responses
+remain different and move with line resolution. Resolve the physically
+scaled native interface modes with its retained indefinite variables,
+then compare physical response against a genuinely matched torque/shear
+reference before selecting a multiplier. Retain the rail origin as a
+diagnostic comparator and keep six-channel, classical axial and
+Q6/finite-pad evidence distinct. Small gaps, rank and a spectral
+quotient cannot select a space. Formal F03 authority remains unconsumed,
+G0B open and G1 barred. Details and raw roots are inventoried below;
+no global axial refinement is planned.
 
 **Historical transverse-partition decision, 24 September 2026:** A systematic
 midpoint split of all three y intervals (six elements) passed 18 focused
@@ -1934,3 +1936,31 @@ diagnostic finite-width-average connection. This is not an accepted
 shell pose, multiplier or production line law. The new raw roots are
 `B3_GE_E4_PL_F03_NATIVE_{MATCHED_Y_LINE10_V1,FULL_LEFT_X8_Y8_V1,
 S3_FULL_LEFT_PORT_V1,FINE_AXIAL_PORT_V1}.jsonl`.
+
+Next line-space uncertainty: at fixed Q4 x8/y8, native 16 half-cells,
+full-left support and the center-material-point pose, do P0, P1 and
+the existing dual-linear candidate show compatible physical torque and
+tip-z responses as line intervals increase 4→10, or do they impose
+different effective constraints? Run the 12 bounded combinations with
+the same loads, verify work/wrench residuals and sampled gaps, and
+check row rank separately. Agreement would permit a norm-scaled
+interface-mode/stability comparison before choosing the least costly
+admissible space; disagreement would require a mode/trace diagnosis.
+This screen cannot select a space from gaps or a quotient alone.
+
+The fixed Q4 x8/y8, B3 16-half-cell, full-left, center-origin screen
+found full row rank in all six P0/P1/dual-by-interval combinations.
+At P1 line intervals 4→10, tip torque rotation changes
+`11.956→9.969 µrad` and tip-z `45.85→41.85 µm`.
+At line10 the P0/P1/dual torque values are
+`10.988/9.969/9.784 µrad`, and tip-z values are
+`44.49/41.85/41.25 µm`; the gap L2 similarly changes but is not
+an accuracy selector. All 12 loaded cases retain small global
+work/wrench residuals. Physical response has not settled uniformly
+among spaces. Do not promote P1 or dual merely because their gaps are
+smaller than P0. The next discriminating analysis is a native retained-
+variable interface mode with a stated physical multiplier norm and
+actual associated trace/work, coupled to a matched external/resolved
+torque/shear response. The signed Schur or absolute-primal quotient alone
+does not supply the required inf-sup or locking verdict. Raw root:
+`B3_GE_E4_PL_F03_NATIVE_LOCAL_SPACE_SCREEN_V1.jsonl`.
