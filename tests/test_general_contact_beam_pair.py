@@ -206,3 +206,35 @@ def test_pair_limits_fail_explicitly_without_dropping_contact():
     collapsed[model.mesh.dof_manager.get_node_dofs(2)[0]] = -1.0
     with pytest.raises(ValueError, match="zero or invalid length"):
         manager.evaluate(collapsed)
+
+
+def test_pair_force_control_and_split_restart_match_full_path():
+    model, definition, settings = _pair(crossing=True)
+    model.add_boundary_condition(BoundaryCondition(
+        "a_fixed", (1, 2),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "b_root", (3,),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    load = LoadCase("tip_force")
+    load.add_nodal_load(4, forces=(0.0, 0.0, -0.01))
+    common = dict(contact=definition, contact_settings=settings,
+                  max_iterations=20)
+    full = solve_static_nonlinear(model, load, num_steps=8, **common)
+    assert full.status == "completed", full.failure_reason
+    assert full.info["general_contact"]["gap_tolerance_met"]
+    assert full.info["general_contact"]["active_source_intervals"] >= 2
+    half = solve_static_nonlinear(
+        model, load, num_steps=4, max_load_factor=0.5,
+        emit_restart_checkpoint=True, **common,
+    )
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, load, num_steps=4, max_load_factor=1.0,
+        restart_checkpoint=half.to_restart_checkpoint(), **common,
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, full.displacements,
+                               rtol=1.0e-6, atol=1.0e-8)
