@@ -46,10 +46,16 @@ was 0.81 m² and the normal forces balanced at ±0.4 N. These are development
 checks, not registered qualification results. The earlier 1 µm run stopped
 at `contact_gap_exceeded` near 0.301 load factor; that evidence is retained.
 An additional Q4 integration/two-S3 target case completed coupled pressing
-at 0.4 N. Two S3 integration faces share four pressure nodes and passed a
-local physical force/rank check. A coupled S3 integration-side exploratory
-run was interrupted after exceeding the bounded development check time;
-that orientation has no coupled completion evidence.
+at 0.4 N, a 0.1 m lateral path across the S3 patch and split/restart. A
+separate normal-displacement path pressed, opened and recontacted the same
+Q4/S3 pair through three checkpoint continuations. The opened state had no
+active pressure and a positive certified gap; the recontact force matched
+the initial closed state. These are separate local paths, not yet one
+combined slide–separate–recontact qualification case. Two S3 integration
+faces share four pressure nodes and passed a local physical force/rank check.
+A coupled S3 integration-side exploratory run was interrupted after exceeding
+the bounded development check time; that orientation has no coupled
+completion evidence.
 
 This profile has no general in-plane shell deformation or rotation, warped
 Q4, exact coincident-edge transition derivative, augmentation, friction,
@@ -58,6 +64,8 @@ Q4/S3 mixed partial-contact and pressure-space stability remain unresolved.
 The full nonmatching slide, separation and recontact handoff and the main
 plan's refinement, independent-review and package gates remain open.
 
-Focused checks are in `tests/test_general_contact_patch_mortar.py` and
-`tests/test_general_contact_pair.py`. Run
-`examples/general_contact_patch_sliding.py` for the coupled lateral path.
+Focused checks are in `tests/test_general_contact_patch_mortar.py`,
+`tests/test_general_contact_pair.py` and
+`tests/test_general_contact_patch_sliding.py`. Run
+`examples/general_contact_patch_sliding.py` for Q4/Q4 or
+`examples/general_contact_mixed_patch_sliding.py` for Q4/S3 lateral motion.

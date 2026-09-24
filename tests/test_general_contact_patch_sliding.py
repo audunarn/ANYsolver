@@ -5,14 +5,14 @@ import pytest
 
 from anysolver import (
     BoundaryCondition, ContactDefinition, ContactInteraction,
-    ContactSolverSettings, ContactSurface, LoadCase, create_shell_element,
-    solve_static_nonlinear, validate_general_contact,
+    ContactSolverSettings, ContactSurface, DisplacementControl, LoadCase,
+    create_shell_element, solve_static_nonlinear, validate_general_contact,
 )
 from anysolver.fe_core import FEModel
 from anysolver.general_contact.patch_sliding import _RestrictedSlidingPatchFEManager
 
 
-def test_q4_against_two_s3_faces_uses_physical_offsets_and_shared_pressure():
+def _q4_against_two_s3():
     model = FEModel("mixed_patch_local")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
     lower = ((0.2, 0.1), (1.2, 0.1), (1.2, 1.1), (0.2, 1.1))
@@ -41,6 +41,11 @@ def test_q4_against_two_s3_faces_uses_physical_offsets_and_shared_pressure():
     settings = ContactSolverSettings(
         pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
     )
+    return model, definition, settings
+
+
+def test_q4_against_two_s3_faces_uses_physical_offsets_and_shared_pressure():
+    model, definition, settings = _q4_against_two_s3()
     report = validate_general_contact(model, definition, settings)
     assert report.valid, report.issues
     manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
@@ -78,6 +83,111 @@ def test_q4_against_two_s3_faces_uses_physical_offsets_and_shared_pressure():
     coupled = result.info["general_contact"]
     assert coupled["gap_tolerance_met"]
     assert coupled["integration_force"][2] == pytest.approx(0.4, rel=1e-5)
+
+
+def test_q4_against_two_s3_faces_slides_and_restarts():
+    model, definition, settings = _q4_against_two_s3()
+    model.add_boundary_condition(BoundaryCondition(
+        "lower_fixed", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "upper_lateral_guide", (5, 6, 7, 8),
+        {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+    ))
+    master = int(model.mesh.dof_manager.get_node_dofs(5)[0])
+    for node in (6, 7, 8):
+        slave = int(model.mesh.dof_manager.get_node_dofs(node)[0])
+        model.add_constraint_equation(
+            terms=((slave, 1.0), (master, -1.0)),
+            source_id=f"upper_uniform_x_{node}",
+        )
+    press = LoadCase("press")
+    for node in (5, 6, 7, 8):
+        press.add_nodal_load(node, forces=(0.0, 0.0, -0.1))
+    drive = LoadCase("drive")
+    drive.add_nodal_load(5, forces=(1.0, 0.0, 0.0))
+    options = dict(
+        constant_load_case=press, contact=definition,
+        contact_settings=settings, kinematics="von_karman",
+        control="displacement",
+        displacement_control=DisplacementControl(
+            node_id=5, dof="ux", target_displacement=0.1,
+        ),
+        num_steps=2, max_iterations=12,
+    )
+    result = solve_static_nonlinear(model, drive, **options)
+    assert result.status == "completed", (
+        result.failure_reason, result.load_factor, result.info.get("general_contact"),
+    )
+    summary = result.info["general_contact"]
+    assert summary["current_overlap_area"] == pytest.approx(0.81)
+    assert summary["overlapping_pairs"] == 2
+    assert summary["gap_tolerance_met"]
+    assert summary["integration_force"][2] == pytest.approx(0.4, rel=1e-5)
+    half = solve_static_nonlinear(
+        model, drive, **options,
+        max_load_factor=0.5, emit_restart_checkpoint=True,
+    )
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, drive, **options,
+        max_load_factor=1.0,
+        restart_checkpoint=half.to_restart_checkpoint(),
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(
+        resumed.displacements, result.displacements, rtol=1e-7, atol=1e-9,
+    )
+
+
+def test_q4_s3_patch_opens_and_recontacts_from_static_checkpoints():
+    model, definition, settings = _q4_against_two_s3()
+    model.add_boundary_condition(BoundaryCondition(
+        "lower_fixed", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "upper_normal_guide", (5, 6, 7, 8),
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    press = LoadCase("press")
+    for node in (5, 6, 7, 8):
+        press.add_nodal_load(node, forces=(0.0, 0.0, -0.1))
+
+    def stage(target, checkpoint=None):
+        return solve_static_nonlinear(
+            model, press, contact=definition, contact_settings=settings,
+            kinematics="von_karman", control="displacement",
+            displacement_control=DisplacementControl(
+                node_id=5, dof="uz", target_displacement=target,
+            ),
+            num_steps=2, max_iterations=12,
+            restart_checkpoint=checkpoint, emit_restart_checkpoint=True,
+        )
+
+    closed = stage(-1.0e-6)
+    assert closed.status == "completed", closed.failure_reason
+    closed_summary = closed.info["general_contact"]
+    assert closed_summary["integration_force"][2] > 0.0
+    assert closed_summary["gap_tolerance_met"]
+    opened = stage(1.0e-6, closed.to_restart_checkpoint())
+    assert opened.status == "completed", (
+        opened.failure_reason, opened.info.get("general_contact"),
+    )
+    open_summary = opened.info["general_contact"]
+    assert open_summary["active_pressure_dofs"] == 0
+    assert open_summary["conservative_lower_gap"] > 0.0
+    reclosed = stage(-1.0e-6, opened.to_restart_checkpoint())
+    assert reclosed.status == "completed", (
+        reclosed.failure_reason, reclosed.info.get("general_contact"),
+    )
+    reclosed_summary = reclosed.info["general_contact"]
+    assert reclosed_summary["integration_force"][2] == pytest.approx(
+        closed_summary["integration_force"][2], rel=1e-5,
+    )
+    assert reclosed_summary["gap_tolerance_met"]
+    assert len(reclosed.steps) == 6
 
 
 def test_two_s3_integration_faces_share_four_material_pressure_nodes():
