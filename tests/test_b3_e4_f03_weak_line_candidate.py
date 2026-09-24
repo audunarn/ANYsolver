@@ -250,3 +250,36 @@ def test_reference_kkt_matches_weak_derivative_and_scaled_solve(
     gaps = kkt.constraint_jacobian[:, kkt.free_primal]@physical[:free_count]
     assert np.linalg.norm(gaps) <= 1e-9
     assert np.isfinite(physical).all()
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_reference_line_annihilates_six_common_rigid_modes(topology):
+    shell = FlatE4TrialPanel(make_shell(1, topology))
+    beam = build(4)
+    space = LineMultiplierSpace("continuous_linear", (0., .5, 1.))
+    coupling = assemble_reference_kkt(shell, beam, space).constraint_jacobian
+    shell_nodes = reference_nodes(shell.panel)
+    beam_nodes = (beam.context.initial.mechanical.positions+
+                  beam.context.initial.mechanical.position_low)
+    for axis in range(3):
+        basis = np.eye(3)[axis]
+        shell_translation = np.zeros((shell.panel.node_count, 6))
+        beam_translation = np.zeros(beam.context.count)
+        shell_translation[:, axis] = 1.
+        beam_translation[axis:beam.context.nodal_count:6] = 1.
+        assert np.linalg.norm(coupling@np.r_[
+            shell_translation.ravel(), beam_translation]) < 2e-12
+
+        shell_rotation = np.zeros_like(shell_translation)
+        beam_rotation = np.zeros_like(beam_translation)
+        shell_rotation[:, :3] = np.cross(basis, shell_nodes)
+        shell_rotation[:, 3:] = basis
+        for node, position in enumerate(beam_nodes):
+            beam_rotation[6*node:6*node+3] = np.cross(basis, position)
+            beam_rotation[6*node+3:6*node+6] = basis
+        for element in range(beam.n_half_cells//2):
+            start = beam.context.nodal_count+24*element
+            beam_rotation[start:start+3] = basis
+            beam_rotation[start+3:start+6] = basis
+        assert np.linalg.norm(coupling@np.r_[
+            shell_rotation.ravel(), beam_rotation]) < 2e-12

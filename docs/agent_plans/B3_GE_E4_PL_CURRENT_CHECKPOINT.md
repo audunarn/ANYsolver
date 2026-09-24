@@ -838,8 +838,9 @@ support elimination and work-conjugate scaling. The line's weak derivative
 agrees with that KKT Jacobian; Q4/S3 and both multiplier candidates solve
 the bounded loaded system with small scaled and physical residuals.
 
-Focused weak-line/KKT tests passed **17/17** after the final physical-residual
-assertion. The neighboring E4 trial, point-work, finite-pose and spatial-port
+Focused weak-line/KKT tests passed **19/19**, including six common rigid-mode
+constraints and the physical-residual assertion. The neighboring E4 trial,
+point-work, finite-pose and spatial-port
 suite passed **81/81** before that assertion; no product mechanics changed
 afterward. Independent read-only mechanics review found no correctness
 blocker in the declared small flat virgin scope. Its request for a varying
