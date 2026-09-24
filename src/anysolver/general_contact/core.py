@@ -761,9 +761,14 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
 
                 manager = _BeamShellManager(model, definition, settings, initial_displacement)
         else:
-            from .beam_pair import _BeamPairManager
+            if any(len(surface.element_ids) > 1 for surface in definition.surfaces):
+                from .beam_chain_pair import _BeamChainPairManager
 
-            manager = _BeamPairManager(model, definition, settings, initial_displacement)
+                manager = _BeamChainPairManager(model, definition, settings, initial_displacement)
+            else:
+                from .beam_pair import _BeamPairManager
+
+                manager = _BeamPairManager(model, definition, settings, initial_displacement)
     elif definition.rigid_bodies:
         if any(surface.beam_radius is not None for surface in definition.surfaces):
             if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {

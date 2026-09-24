@@ -17,6 +17,7 @@ from .core import ContactDefinition, ContactSolverSettings, ContactValidationRep
 
 
 PROFILE = "CLASSICAL_B2_B2_ROUND_TUBE_DISTRIBUTED_PAIR_PENALTY_STATIC_DEV_V0"
+PROFILE_CHAIN = "CLASSICAL_B2_CHAIN_ROUND_TUBE_NEAREST_DISTRIBUTED_PAIR_STATIC_DEV_V0"
 _GAUSS_8 = np.polynomial.legendre.leggauss(8)
 _GAUSS_16 = np.polynomial.legendre.leggauss(16)
 
@@ -70,6 +71,11 @@ class _BeamPairResults:
 def validate_beam_pair_contact(model, definition: ContactDefinition,
                                settings: ContactSolverSettings | None = None
                                ) -> ContactValidationReport:
+    if (len(definition.surfaces) == 2
+            and any(len(surface.element_ids) > 1 for surface in definition.surfaces)):
+        from .beam_chain_pair import validate_beam_chain_pair_contact
+
+        return validate_beam_chain_pair_contact(model, definition, settings)
     issues: list[str] = []
     if tuple(map(len, (definition.surfaces, definition.rigid_bodies,
                        definition.interactions))) != (2, 0, 1):
