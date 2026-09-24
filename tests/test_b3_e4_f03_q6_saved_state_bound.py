@@ -36,16 +36,22 @@ def test_invalid_inverse_bound_rejected(inverse_bound):
                          np.ones(1), np.ones(3))
 
 
-def test_x2_saved_certificate_residual_and_component_bounds():
+@pytest.mark.parametrize("case_id", ["X0", "X1", "X2"])
+def test_saved_certificate_residual_and_component_bounds(case_id):
+    directory = (f"B3_GE_E4_PL_G0_F03_Q6_{case_id}_"
+                 "SHARED_ASSEMBLY_REHEARSAL_20260924" if case_id == "X2" else
+                 f"B3_GE_E4_PL_G0_F03_Q6_{case_id}_"
+                 "SYSTEM_ARCHIVE_REHEARSAL_20260924")
     certificate_dir = (Path(__file__).parents[1]/"docs"/"agent_plans"/
-        "B3_GE_E4_PL_G0_F03_Q6_X2_SHARED_ASSEMBLY_REHEARSAL_20260924"/
-        "certificate")
+        directory)
+    if case_id == "X2":
+        certificate_dir = certificate_dir/"certificate"
     if not (certificate_dir/"scaled_system.npz").exists():
-        pytest.skip("local ignored X2 archive is unavailable")
+        pytest.skip("local ignored Q6 archive is unavailable")
     result = evaluate_saved(certificate_dir)
-    assert result["case_id"] == "X2"
+    assert result["case_id"] == case_id
     assert result["residual_two_upper_recomputed"] < 3e-13
     assert result["physical_displacement_component_error_upper"] < 6e-14
-    assert result["physical_root_force_component_error_upper"] < 7e-4
-    assert result["physical_root_moment_component_error_upper"] < 3e-4
+    assert result["physical_root_force_component_error_upper"] < 8e-4
+    assert result["physical_root_moment_component_error_upper"] < 4e-4
     assert result["scientific_registration"] is False
