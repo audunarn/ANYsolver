@@ -47,21 +47,32 @@ class RigidContactBody:
     name: str
     kind: str
     point: tuple[float, float, float]
-    normal: tuple[float, float, float]
+    normal: tuple[float, float, float] | None = None
+    radius: float | None = None
 
     def __post_init__(self) -> None:
         point = np.asarray(self.point, dtype=float)
+        if not self.name or self.kind not in {"plane", "sphere"}:
+            raise ValueError("rigid contact body must name a plane or sphere")
+        if point.shape != (3,) or not np.all(np.isfinite(point)):
+            raise ValueError("rigid contact point must contain three finite values")
+        object.__setattr__(self, "point", tuple(float(x) for x in point))
+        if self.kind == "sphere":
+            if self.normal is not None or self.radius is None:
+                raise ValueError("rigid sphere requires a radius and no plane normal")
+            radius = float(self.radius)
+            if not np.isfinite(radius) or radius <= 0.0:
+                raise ValueError("rigid sphere radius must be finite and positive")
+            object.__setattr__(self, "radius", radius)
+            return
+        if self.radius is not None or self.normal is None:
+            raise ValueError("rigid plane requires a normal and no sphere radius")
         normal = np.asarray(self.normal, dtype=float)
-        if not self.name or self.kind != "plane":
-            raise ValueError("this contact profile requires a named rigid plane")
-        if point.shape != (3,) or normal.shape != (3,) or not (
-            np.all(np.isfinite(point)) and np.all(np.isfinite(normal))
-        ):
-            raise ValueError("plane point and normal must contain three finite values")
+        if normal.shape != (3,) or not np.all(np.isfinite(normal)):
+            raise ValueError("plane normal must contain three finite values")
         length = float(np.linalg.norm(normal))
         if length <= 0.0:
             raise ValueError("plane normal must be nonzero")
-        object.__setattr__(self, "point", tuple(float(x) for x in point))
         object.__setattr__(self, "normal", tuple(float(x) for x in normal / length))
 
 
@@ -114,12 +125,13 @@ class ContactSolverSettings:
     maximum_patch_normal_dofs: int = 256
     maximum_augmentations: int = 12
     pressure_tolerance: float | None = None
+    maximum_shell_tilt: float | None = None
 
     def __post_init__(self) -> None:
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
             raise ValueError("maximum_candidate_pairs must be a positive integer")
-        if self.pair_motion not in {"guided", "restricted_sliding"}:
-            raise ValueError("pair_motion must be guided or restricted_sliding")
+        if self.pair_motion not in {"guided", "restricted_sliding", "general"}:
+            raise ValueError("pair_motion must be guided, restricted_sliding or general")
         if self.sliding_difference_step is not None and (
             not np.isfinite(self.sliding_difference_step)
             or self.sliding_difference_step <= 0.0
@@ -135,6 +147,11 @@ class ContactSolverSettings:
             not np.isfinite(self.pressure_tolerance) or self.pressure_tolerance <= 0.0
         ):
             raise ValueError("pressure_tolerance must be finite and positive")
+        if self.maximum_shell_tilt is not None and (
+            not np.isfinite(self.maximum_shell_tilt)
+            or self.maximum_shell_tilt <= 0.0
+        ):
+            raise ValueError("maximum_shell_tilt must be finite and positive")
         if self.pair_motion == "restricted_sliding" and self.sliding_difference_step is None:
             raise ValueError("restricted sliding requires an explicit sliding_difference_step")
         if self.pair_motion == "guided" and self.sliding_difference_step is not None:
@@ -197,6 +214,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                 "augmented law requires a multi-face restricted shell pair and explicit pressure_tolerance",
             ))
     if not definition.rigid_bodies:
+        if settings is not None and settings.pair_motion == "general":
+            return ContactValidationReport("invalid", (
+                "general pair_motion currently requires an analytic rigid sphere",
+            ))
         if settings is not None and settings.pair_motion == "restricted_sliding":
             if len(definition.surfaces) == 2 and any(
                 len(surface.element_ids) > 1 for surface in definition.surfaces
@@ -210,8 +231,13 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         from .pair import validate_planar_shell_pair
 
         return validate_planar_shell_pair(model, definition)
+    if (len(definition.rigid_bodies) == 1
+            and definition.rigid_bodies[0].kind == "sphere"):
+        from .sphere import validate_sphere_shell_contact
+
+        return validate_sphere_shell_contact(model, definition, settings)
     if settings is not None and settings.pair_motion != "guided":
-        return ContactValidationReport("invalid", ("rigid contact does not support pair_motion",))
+        return ContactValidationReport("invalid", ("rigid plane requires guided pair_motion",))
     surface_by_name = {surface.name: surface for surface in definition.surfaces}
     rigid_by_name = {body.name: body for body in definition.rigid_bodies}
     if tuple(map(len, (definition.surfaces, definition.rigid_bodies,
@@ -534,9 +560,16 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
         if not report.valid:
             raise ValueError("unsupported augmented contact: " + "; ".join(report.issues))
     if definition.rigid_bodies:
-        if settings.pair_motion != "guided":
-            raise ValueError("rigid contact does not support pair_motion")
-        manager = _PlanarQ4PlaneManager(model, definition, settings, initial_displacement)
+        if (len(definition.rigid_bodies) == 1
+                and definition.rigid_bodies[0].kind == "sphere"):
+            from .sphere import _SphereShellManager
+
+            manager = _SphereShellManager(model, definition, settings,
+                                          initial_displacement)
+        else:
+            if settings.pair_motion != "guided":
+                raise ValueError("rigid plane requires guided pair_motion")
+            manager = _PlanarQ4PlaneManager(model, definition, settings, initial_displacement)
     else:
         if settings.pair_motion == "restricted_sliding":
             if len(definition.surfaces) == 2 and any(
