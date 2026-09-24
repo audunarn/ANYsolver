@@ -14,6 +14,14 @@ change along this path, so it proves neither locking nor convergence.
 The earlier constant-shear patch admits physical shell shear, and the
 drilling-free torque replay matches bounded native responses; neither
 supplies an independently converged loaded torque/shear target.
+An analytic twist patch matches Q4/S3 physical shell energy and line-Mx
+work, but the S3 four-sample rail produces `50→2.5→1.25 µm` line-z
+interpolation error relative to the analytic field across three meshes;
+the existing local origin removes it for this field.
+At the same 1:1 P1 loaded tip-z case, changing only the origin shifts
+Q4/S3 tip motion by `-6.37%/-8.07%` and changes support reactions.
+Thus the patch favors local interpolation for that field, but does not
+select a loaded shell port.
 The executed 3D CalculiX canary has a different eccentric footprint,
 section, load and support contract and cannot serve as a native line
 torque/shear reference. Classical axial, Q6/finite-pad and native evidence
@@ -31,7 +39,10 @@ residuals or a spectral quotient. Raw latest evidence is
 `B3_GE_E4_PL_F03_SIGNED_FLOOR_MODE_V2.json`,
 `B3_GE_E4_PL_F03_SIGNED_MODE_{Q4,S3}_B8_S64_V2.json`, and the
 `B3_GE_E4_PL_F03_NATIVE_TORQUE_SHEAR_RATIO_{V1,CONTROL_V2}.jsonl`
-inventories. Formal F03 authority is unconsumed; G0B is open and G1 barred.
+inventories, plus `B3_GE_E4_PL_F03_ANALYTIC_TWIST_PATCH_V1.json`,
+`B3_GE_E4_PL_F03_ANALYTIC_TWIST_PORT_COMPARISON_V2.json` and
+`B3_GE_E4_PL_F03_NATIVE_TIP_Z_LOCAL_PORT_V1.jsonl`.
+Formal F03 authority is unconsumed; G0B is open and G1 barred.
 The prospective process update adds no gate or authority and leaves all
 frozen evidence, failures and scientific criteria intact.
 

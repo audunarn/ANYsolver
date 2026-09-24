@@ -8,7 +8,11 @@ from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     pose_from_e4_total, reference_nodes)
-from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
+from scripts._b3_e4_f03_shell_local_translation_candidate import (
+    reference_spatial_trace_local_translation)
+from scripts._b3_e4_f03_shell_spatial_linear_port import (
+    physical_shell_stiffness, reference_spatial_trace,
+    reference_wrench_pullback)
 from scripts._b3_e4_f03_shell_trace import make_shell
 
 
@@ -57,3 +61,38 @@ def test_bonded_trace_admits_nonzero_transverse_shear(topology, n_y):
     geometric_normal = np.array((-gamma, 0., 1.))
     geometric_normal /= np.linalg.norm(geometric_normal)
     assert np.linalg.norm(shell_frame[:, 2]-geometric_normal) > .01
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+@pytest.mark.parametrize("n_s,n_y", ((2, 2), (4, 4), (8, 8)))
+def test_physical_twist_patch_energy_and_torque_work(topology, n_s, n_y):
+    panel = make_shell(n_s, topology, n_y=n_y)
+    kappa = .001
+    xyz = reference_nodes(panel)
+    shell = np.zeros((panel.node_count, 6))
+    shell[:, 2] = kappa*xyz[:, 0]*xyz[:, 1]
+    shell[:, 3] = kappa*xyz[:, 0]
+    shell[:, 4] = -kappa*xyz[:, 1]
+    shell = shell.ravel()
+
+    d = 210e9*panel.thickness**3/(12*(1-.3**2))
+    expected_energy = 2*d*(1-.3)*kappa**2
+    actual_energy = .5*shell@(physical_shell_stiffness(panel)@shell)
+    np.testing.assert_allclose(actual_energy, expected_energy, rtol=1e-10)
+
+    stations = np.linspace(0., 1., 129)
+    applied_line_torque = np.array((0., 0., 0., 100., 0., 0.))
+    rotations = np.array([
+        (reference_spatial_trace(panel, float(s))@shell)[3]
+        for s in stations])
+    np.testing.assert_allclose(rotations, kappa*stations, atol=1e-16)
+    local = np.array([
+        reference_spatial_trace_local_translation(panel, float(s))@shell
+        for s in stations])
+    np.testing.assert_allclose(local[:, 2], 0., atol=1e-16)
+    np.testing.assert_allclose(local[:, 3], kappa*stations, atol=1e-16)
+    virtual_work = np.trapezoid([
+        shell@reference_wrench_pullback(panel, float(s),
+                                        applied_line_torque)
+        for s in stations], stations)
+    np.testing.assert_allclose(virtual_work, 50.*kappa, rtol=1e-12)
