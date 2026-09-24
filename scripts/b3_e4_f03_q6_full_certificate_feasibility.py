@@ -106,6 +106,14 @@ def child(output: Path, case_id: str) -> None:
         inverse_hash = hashlib.file_digest(stream, "sha256").hexdigest()
     if blocks_completed != (order+3)//4 or certificate["inverse_columns"] != order:
         raise ArithmeticError("incomplete Q6 inverse stream")
+    if not np.isfinite(state).all():
+        raise ArithmeticError("nonfinite Q6 certificate candidate")
+    candidate_bytes = (json.dumps({
+        "case_id": case_id,
+        "scaled_kkt_state": state.tolist(),
+    }, indent=2) + "\n").encode("utf-8")
+    with (output / "candidate_state.json").open("xb") as stream:
+        stream.write(candidate_bytes)
     result = {
         "status": "UNREGISTERED_Q6_FULL_CERTIFICATE_FEASIBILITY",
         "case_id": case_id,
@@ -119,6 +127,7 @@ def child(output: Path, case_id: str) -> None:
         "certificate_seconds": certificate_s,
         "inverse_archive_bytes": inverse_path.stat().st_size,
         "inverse_archive_sha256": inverse_hash,
+        "candidate_state_sha256": hashlib.sha256(candidate_bytes).hexdigest(),
         "certificate": certificate,
         "scientific_registration": False,
     }

@@ -15,7 +15,7 @@ from scripts._b3_e4_f03_conforming_qp_energy import (
     _require_solution_checks, _station_rule, assemble, solve,
 )
 from scripts._b3_e4_f03_conforming_qp_trace import FinitePadQpTrace
-from scripts._b3_e4_f03_primal_ritz import E0, F0, PLANE, SECTION, THICKNESS
+from scripts._b3_e4_f03_primal_ritz import E0, F0, PLANE, SECTION, THICKNESS, U0, YAW_LENGTH
 
 
 def _basis(p, t):
@@ -90,6 +90,19 @@ def test_p1_separately_assembled_q1_matrix_load_and_solve():
     assert result["root_compatibility_scaled"] < 1e-8
     assert result["equilibrium_scaled"] < 1e-8
     assert result["work_identity_scaled"] < 1e-10
+    d = np.sqrt(E0/(generic.shell_stiffness+generic.beam_stiffness).diagonal())
+    root_scale = np.diag((1/U0, 1/U0, YAW_LENGTH/U0))
+    saved = np.r_[q/d, np.linalg.solve(E0*root_scale, reaction)]
+    recovered_q, recovered_reaction, recovered = solve(
+        generic, candidate_state=saved)
+    assert np.allclose(recovered_q, q, rtol=2e-15, atol=0.)
+    assert np.allclose(recovered_reaction, reaction, rtol=2e-15, atol=1e-9)
+    assert np.allclose(recovered["tip_pose"], result["tip_pose"],
+                       rtol=2e-15, atol=1e-14)
+    with pytest.raises(ValueError, match="KKT dimension"):
+        solve(generic, candidate_state=saved[:-1])
+    with pytest.raises(ValueError, match="equilibrium numerical"):
+        solve(generic, candidate_state=np.zeros_like(saved))
 
 
 @pytest.mark.parametrize("p", (2, 3, 4, 5, 6))

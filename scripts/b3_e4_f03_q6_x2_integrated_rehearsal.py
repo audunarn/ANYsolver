@@ -15,6 +15,8 @@ from pathlib import Path
 import sys
 from time import perf_counter
 
+import numpy as np
+
 from scripts._b3_e4_f03_local_scientific_supervisor import (
     SupervisorLimits, frozen_thread_environment, supervise,
 )
@@ -56,8 +58,19 @@ def child(output: Path) -> None:
         certificate = json.load(stream)
     if certificate["certificate"]["status"] != "CERTIFIED_WITHIN_LIMIT":
         raise ArithmeticError("X2 certificate diagnostic did not pass")
+    candidate_bytes = (certificate_dir / "candidate_state.json").read_bytes()
+    candidate_hash = hashlib.sha256(candidate_bytes).hexdigest()
+    if candidate_hash != certificate["candidate_state_sha256"]:
+        raise ArithmeticError("certificate candidate state hash mismatch")
+    candidate = json.loads(candidate_bytes)
+    if candidate.get("case_id") != "X2":
+        raise ValueError("certificate candidate grid mismatch")
+    candidate_state = np.asarray(candidate.get("scaled_kkt_state"), dtype=np.float64)
+    if (candidate_state.shape != (certificate["kkt_order"],) or
+            not np.isfinite(candidate_state).all()):
+        raise ValueError("invalid certificate candidate state")
     started = perf_counter()
-    physical = physical_run(6, "x2")
+    physical = physical_run(6, "x2", candidate_state=candidate_state)
     physical_bytes = _write_new(output / "physical.json", physical)
     # Validate the actual JSON boundary: the producer uses tuples for grids,
     # while the durable case schema owns JSON list representations.
@@ -73,6 +86,7 @@ def child(output: Path) -> None:
         "status": "UNREGISTERED_X2_INTEGRATED_RESOURCE_REHEARSAL",
         "certificate_measurement_sha256": hashlib.sha256(
             (certificate_dir / "measurement.json").read_bytes()).hexdigest(),
+        "candidate_state_sha256": candidate_hash,
         "physical_sha256": hashlib.sha256(physical_bytes).hexdigest(),
         "spatial_sha256": hashlib.sha256(spatial_bytes).hexdigest(),
         "certificate_seconds": certificate_s,
@@ -80,6 +94,7 @@ def child(output: Path) -> None:
         "spatial_seconds": spatial_s,
         "total_child_seconds": perf_counter() - begun,
         "duplicate_assembly": True,
+        "physical_recovery_uses_certificate_candidate": True,
         "scientific_registration": False,
     })
 

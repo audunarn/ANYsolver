@@ -1,5 +1,20 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — X2 certificate candidate bound to physical recovery.**
+The next source-level X2 rehearsal used the certificate's saved 5,893-coordinate
+scaled KKT candidate as the physical pilot state, rather than a separate solve.
+Its supervised process completed in 1,426.95 seconds at 691.8 MB sampled peak
+RSS. The saved physical state and observables exactly matched the earlier V2
+independent-solve pilot; all record hashes and spatial diagnostic limits passed.
+Affected mechanics tests passed 39/39. See
+`B3_GE_E4_PL_G0_F03_Q6_X2_BOUND_STATE_RESULT_20260924.md`. This resolves only
+the source-wrapper state-transfer gap. Independent review found that the
+certificate and physical paths still assemble their KKT matrix/RHS separately;
+their identities must be bound before the certificate enclosure applies to
+reported physical observables. Independent replay, installed identity, primal
+positivity and three-grid adjudication remain open. F03/G0B remain open;
+G1 remains barred.
+
 **24 September 2026 — three-grid numerical feasibility and X2 integrated
 resource rehearsal.** The isolated integration branch now contains full
 source-process inverse-column diagnostics for fixed Q6 X0/X1/X2: 293/519/907

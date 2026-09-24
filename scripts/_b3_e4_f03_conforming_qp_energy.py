@@ -186,8 +186,8 @@ def _require_solution_checks(root_compatibility_scaled: float,
             raise ValueError(f"Qp {name} numerical check failed")
 
 
-def solve(operators: QpOperators):
-    """Solve one bounded candidate only after quadrature, energy and rank gates."""
+def solve(operators: QpOperators, *, candidate_state=None):
+    """Solve or validate one candidate after quadrature, energy and rank gates."""
     if (not np.isfinite(operators.beam_discrepancy_relative) or
             not np.isfinite(operators.load_discrepancy_scaled) or
             operators.beam_discrepancy_relative < 0 or
@@ -229,12 +229,17 @@ def solve(operators: QpOperators):
                           (sparse.csr_matrix(scaled_root), sparse.csr_matrix((3, 3)))),
                          format="csc")
     rhs = np.r_[d*operators.load/E0, np.zeros(3)]
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", MatrixRankWarning)
-        try:
-            result = spsolve(saddle, rhs)
-        except MatrixRankWarning as exc:
-            raise ValueError("singular Qp saddle factorization") from exc
+    if candidate_state is None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", MatrixRankWarning)
+            try:
+                result = spsolve(saddle, rhs)
+            except MatrixRankWarning as exc:
+                raise ValueError("singular Qp saddle factorization") from exc
+    else:
+        result = np.asarray(candidate_state, dtype=np.float64)
+        if result.shape != (operators.dof_count + 3,):
+            raise ValueError("Qp candidate state has wrong KKT dimension")
     if not np.isfinite(result).all():
         raise ValueError("nonfinite Qp saddle solution")
     q = d*result[:-3]
