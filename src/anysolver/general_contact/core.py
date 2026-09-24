@@ -172,6 +172,9 @@ class ContactSolverSettings:
     maximum_augmentations: int = 12
     pressure_tolerance: float | None = None
     maximum_shell_tilt: float | None = None
+    line_integration_relative_tolerance: float | None = None
+    maximum_line_subdivisions: int = 8
+    maximum_swept_subdivisions: int = 14
 
     def __post_init__(self) -> None:
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
@@ -198,6 +201,15 @@ class ContactSolverSettings:
             or self.maximum_shell_tilt <= 0.0
         ):
             raise ValueError("maximum_shell_tilt must be finite and positive")
+        if self.line_integration_relative_tolerance is not None and (
+            not np.isfinite(self.line_integration_relative_tolerance)
+            or self.line_integration_relative_tolerance <= 0.0
+        ):
+            raise ValueError("line_integration_relative_tolerance must be finite and positive")
+        for name in ("maximum_line_subdivisions", "maximum_swept_subdivisions"):
+            value = getattr(self, name)
+            if type(value) is not int or value < 1:
+                raise ValueError(f"{name} must be a positive integer")
         if self.pair_motion == "restricted_sliding" and self.sliding_difference_step is None:
             raise ValueError("restricted sliding requires an explicit sliding_difference_step")
         if self.pair_motion == "guided" and self.sliding_difference_step is not None:
@@ -254,9 +266,13 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
     if analysis_control not in {"force", "displacement"}:
         return ContactValidationReport("invalid", ("analysis_control must be force or displacement",))
     if any(surface.beam_radius is not None for surface in definition.surfaces):
-        from .beam_plane import validate_beam_plane_contact
+        if definition.rigid_bodies:
+            from .beam_plane import validate_beam_plane_contact
 
-        return validate_beam_plane_contact(model, definition, settings)
+            return validate_beam_plane_contact(model, definition, settings)
+        from .beam_pair import validate_beam_pair_contact
+
+        return validate_beam_pair_contact(model, definition, settings)
     if any(item.line_stiffness is not None or item.endpoint_stiffness is not None
            for item in definition.interactions):
         return ContactValidationReport("invalid", (
@@ -691,7 +707,13 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
         report = validate_general_contact(model, definition, settings)
         if not report.valid:
             raise ValueError("unsupported augmented contact: " + "; ".join(report.issues))
-    if definition.rigid_bodies:
+    if not definition.rigid_bodies and any(
+        surface.beam_radius is not None for surface in definition.surfaces
+    ):
+        from .beam_pair import _BeamPairManager
+
+        manager = _BeamPairManager(model, definition, settings, initial_displacement)
+    elif definition.rigid_bodies:
         if any(surface.beam_radius is not None for surface in definition.surfaces):
             from .beam_plane import _BeamPlaneManager
 
