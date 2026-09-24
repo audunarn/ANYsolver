@@ -26,10 +26,16 @@ The executed 3D CalculiX canary has a different eccentric footprint,
 section, load and support contract and cannot serve as a native line
 torque/shear reference. Classical axial, Q6/finite-pad and native evidence
 remain separate.
+An independently assembled transverse plate/beam reference now matches
+the flat physical inputs, but its matched-order 8→10 tip-z/twist still
+changes `+11.63%/+5.91%` and its condition rises to `4.91e11`;
+it is not yet a loaded target for native acceptance.
 
-**Remaining uncertainty and action:** Establish a physically matched
-loaded torque/shear reference (geometry, section resultants, supports,
-loads, connection work) before another broad response sweep. A bounded
+**Remaining uncertainty and action:** Establish a physically matched,
+*converged* loaded torque/shear reference (geometry, section resultants,
+supports, loads, connection work). Stop raising the independent global
+polynomial order; pursue a local/resolved reference representation and
+its conditioning before another broad native response sweep. A bounded
 work-scaled subspace/host-patch check can distinguish physical Q4
 in-plane compliance from four-sample-port or norm effects; its outcome
 determines whether the shell field or port contract needs revision.
@@ -1667,3 +1673,79 @@ interaction. The next technical action is a physically matched convergence
 and interface-stability diagnosis; no native pose or multiplier selection
 follows from this screen. Formal F03 authority remains unconsumed, F03/G0B
 open, and G1 barred. Existing historical evidence is unchanged.
+
+## Decision-oriented transverse reference slice — 2026-09-24
+
+Question: can an independently assembled Reissner–Mindlin plate and
+Timoshenko beam, with the native fixture's physical geometry, transverse
+section resultants, support constraints, tip-z force/tip-x torque and
+declared rail/local line work, give a settling *loaded* comparator? The
+competing explanations are native port/line sensitivity versus ordinary
+physical discretization error. Build one self-contained out-of-plane
+variational reference (w, rx, ry plus beam w, rx, ry), verify its analytic
+twist and shear patches, virtual work, equilibrium and row rank, then run
+exactly three joint polynomial/line levels `(4,4,4,4)`, `(6,6,6,6)`,
+`(8,8,8,8)` for rail/local origins and separate `+1000 N` tip-z and
+`+100 N m` tip-x loads (12 solves, one thread). These are polynomial
+orders and line intervals, not shell/beam element ratios; several axes
+change together. A settling result may guide a native comparison after
+independent mechanics review; a nonsettling result
+requires diagnosing this reference rather than treating either native
+port as validated. The flat out-of-plane subsystem cannot qualify the
+complete eccentric six-channel law, nonlinear response or G0B by itself.
+Do not extend the classical axial sequence for this question. Keep the
+existing 8 GiB/900 s-per-case resource envelope and formal F03 authority
+unconsumed.
+
+The 12-case independent transverse joint screen passed its stated
+algebraic/work/resource checks, but rail tip-z displacement changes
+`11.44→19.57→21.69 µm` and rail tip twist changes
+`4.548→5.828→6.267 µrad` on levels 4→6→8. The tiny weak/pointwise
+gaps do not establish a converged response. The matrix condition also
+rises from about `7.5e7` to `2.6e10`. Before higher joint order, use the
+level-6 rail model and increase *one axis at a time*: plate `(nx,ny)`
+to `(8,8)`, beam `nb` to 8, or line intervals to 8, for each of the
+two loads (six solves). If plate change dominates, inspect/refine the
+independent shell physics; if beam dominates, inspect beam fields; if
+line dominates, revisit interface resolution; if none does, investigate
+interactions/conditioning. This is diagnosis, not a new acceptance
+criterion or formal F03 run.
+
+The one-axis diagnostic stopped at the first failed check and preserves
+five completed cases plus the failure. At the `(6,6,6,6)` rail anchor,
+plate-order 8 changes tip-z/twist by about +10.9%/+7.6%; beam-order 8
+changes them by about +89.8%/+69.3% while permitting a `0.98 µm` loaded
+gap despite zero weak rows. Raising only P1 line intervals 6→8 gives
+27 rows of rank 21, a `3.91e21` scaled KKT condition, and no trustworthy
+line-response comparison. This is exact polynomial trace-dimension
+dependence, not evidence of a native formulation failure. The research
+reference now rejects overresolved rows explicitly; a focused null-mode
+test confirms underresolved rows can miss nonzero physical gaps. The
+failed raw remains `B3_GE_E4_PL_F03_INDEPENDENT_TRANSVERSE_ONE_AXIS_V1.jsonl`.
+
+Next bounded decision: at *matched* plate/beam/P1-line degree 10, run
+rail/local and the two fixed loads (four solves). If n8→10 physical
+responses remain material or conditioning degrades, stop global degree
+increase and improve the independent basis/constraint design; if they
+settle, proceed to one-axis and holdout checks with independent mechanics
+review before considering a native comparison. This is not a new
+qualification threshold, nor authorization to repeat the prior failed
+line-only case.
+
+The matched-order-10 four-case screen passed its stated algebraic/work
+and resource checks, but 8→10 still changes rail/local tip-z by
+`+11.63%/+10.91%` and tip twist by `+5.91%`; condition reaches
+`4.91e11`. The reference therefore remains **not converged**. The
+line image is exactly polynomial of degree at most `max(nx,nb)`;
+P1 intervals above that degree are redundant, while fewer rows permit
+high-order physical gaps. This explains the one-axis failure and why
+tiny weak/pointwise gaps at matched degree cannot prove physical
+accuracy. Stop global-degree escalation. Retain the self-contained
+reference and analytic tests as independent operator evidence, then
+consider a local/resolved representation that can separate connection
+localization from global basis conditioning. Do not compare it to native
+responses as a qualified target or select rail/local/P0/P1 from these
+data. Raw roots are `B3_GE_E4_PL_F03_INDEPENDENT_TRANSVERSE_JOINT_V1.jsonl`,
+`B3_GE_E4_PL_F03_INDEPENDENT_TRANSVERSE_ONE_AXIS_V1.jsonl` (failed
+line-only case preserved), and
+`B3_GE_E4_PL_F03_INDEPENDENT_TRANSVERSE_MATCHED10_V1.jsonl`.
