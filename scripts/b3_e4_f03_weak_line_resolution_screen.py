@@ -26,8 +26,9 @@ from scripts._b3_e4_f03_weak_line_candidate import (
 
 
 def one_case(topology: str, intervals: int, kind: str, *,
-             shell_port: str = "rail") -> dict:
-    """Solve the same +100 Nm torsion case at one multiplier resolution."""
+             shell_port: str = "rail",
+             load_kind: str = "torsion") -> dict:
+    """Solve a bounded torsion or alternating axial case at one resolution."""
     shell = FlatE4TrialPanel(make_shell(4, topology))
     beam = build(16)
     space = LineMultiplierSpace(
@@ -39,7 +40,16 @@ def one_case(topology: str, intervals: int, kind: str, *,
     shell_size = 6*shell.panel.node_count
     tip_rx = shell_size+6*beam.n_half_cells+3
     load = np.zeros(shell_size+beam.context.count)
-    load[tip_rx] = 100.
+    if load_kind == "torsion":
+        load[tip_rx] = 100.
+    elif load_kind == "axial_wave":
+        positions = (beam.context.initial.mechanical.positions+
+                     beam.context.initial.mechanical.position_low)
+        axial = 1e5*np.sin(8*np.pi*positions[:, 0])
+        axial[np.abs(axial) < 1e-8] = 0.
+        load[shell_size:shell_size+beam.context.nodal_count:6] = axial
+    else:
+        raise ValueError("unknown bounded line load kind")
     free_count = len(kkt.free_primal)
     rhs = np.r_[load[kkt.free_primal]*
                 kkt.coordinate_scale[:free_count]/kkt.energy_scale,
@@ -57,6 +67,7 @@ def one_case(topology: str, intervals: int, kind: str, *,
         beam.context.initial.mechanical, full[shell_size:])
     shell_reference = np.zeros(shell_size)
     gap_norms = []
+    axial_gaps = []
     for station in np.linspace(0., 1., 129):
         element, cell, fraction, _ = beam._locate(float(station))
         port = NativeHalfCellSpatialPort(
@@ -76,19 +87,33 @@ def one_case(topology: str, intervals: int, kind: str, *,
             np.array((shell_frame, beam_frame)), np.zeros(6),
             position_low=np.array((np.zeros(3), beam_low))).constraints
         gap_norms.append(float(np.linalg.norm(np.r_[gap[:3], gap[3:]*1.])))
+        axial_gaps.append(float(gap[0]))
     gaps = np.asarray(gap_norms)
+    axial_gap = np.asarray(axial_gaps)
+    beam_nodal = full[
+        shell_size:shell_size+beam.context.nodal_count].reshape(-1, 6)
     return {
         "topology": topology,
         "kind": kind,
         "shell_port": shell_port,
+        "load_kind": load_kind,
         "intervals": intervals,
         "shell_elements": shell.panel.element_count,
         "native_elements": beam.n_half_cells//2,
         "tip_rx_rad": float(full[tip_rx]),
+        "beam_tip_ux_m": float(beam_nodal[-1, 0]),
+        "beam_max_abs_ux_m": float(np.max(np.abs(beam_nodal[:, 0]))),
+        "shell_max_abs_ux_m": float(np.max(np.abs(
+            full[:shell_size].reshape(-1, 6)[:, 0]))),
+        "applied_axial_force_n": float(np.sum(
+            load[shell_size:shell_size+beam.context.nodal_count:6])),
         "shell_energy_j": float(.5*shell_total@kkt.primal_tangent[
             :shell_size, :shell_size]@shell_total),
         "gap_l2_m": float(np.sqrt(np.trapezoid(gaps*gaps, dx=1./128))),
         "gap_max_m": float(np.max(gaps)),
+        "gap_axial_l2_m": float(np.sqrt(np.trapezoid(
+            axial_gap*axial_gap, dx=1./128))),
+        "gap_axial_max_m": float(np.max(np.abs(axial_gap))),
         "scaled_equilibrium_residual": float(np.linalg.norm(scaled_residual)),
         "free_primal_residual_mixed_l2": float(np.linalg.norm(
             physical_residual[kkt.free_primal])),
@@ -98,14 +123,19 @@ def one_case(topology: str, intervals: int, kind: str, *,
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--local-translation", action="store_true")
-    shell_port = ("local_translation" if parser.parse_args().local_translation
+    parser.add_argument("--axial-wave", action="store_true")
+    arguments = parser.parse_args()
+    shell_port = ("local_translation" if arguments.local_translation
                   else "rail")
-    rows = [one_case(topology, intervals, kind, shell_port=shell_port)
+    load_kind = "axial_wave" if arguments.axial_wave else "torsion"
+    rows = [one_case(topology, intervals, kind, shell_port=shell_port,
+                     load_kind=load_kind)
             for topology in ("Q4", "S3-V2D")
             for kind in ("piecewise_constant", "continuous_linear")
             for intervals in (2, 4, 8)]
     print(json.dumps({"status": "UNREGISTERED_DIAGNOSTIC",
-                      "shell_port": shell_port, "cases": rows},
+                      "shell_port": shell_port, "load_kind": load_kind,
+                      "cases": rows},
                      indent=2, sort_keys=True))
 
 

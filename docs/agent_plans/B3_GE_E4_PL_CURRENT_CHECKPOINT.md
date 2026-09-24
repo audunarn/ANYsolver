@@ -1024,3 +1024,22 @@ in the sampled gap L2 is about 1.2%. Thus improved compliance quotient
 does not imply an equivalent physical response or a correct line law.
 The needed matched physical target, thickness/refinement interpretation,
 and production trace/multiplier choice remain open; F03/G0B stay open.
+
+The identified axial channel was then loaded directly on the same finest
+mesh with a self-equilibrated `100 kN × sin(8πx)` nodal beam `Fx` pattern;
+the loaded reference-linearized KKT and 129-station gaps were evaluated
+for both shell origins, Q4/S3, P0/P1 and 2/4/8 intervals. The 12-case
+rail and local raw inventories are respectively
+`B3_GE_E4_PL_F03_WEAK_LINE_RESOLUTION_DIAGNOSTIC_V3.json` and
+`B3_GE_E4_PL_F03_WEAK_LINE_RESOLUTION_DIAGNOSTIC_V4.json`. Net applied
+axial force is zero and maximum scaled algebraic residual is below
+`2.0e-16`. At eight intervals, changing rail to local origin raises the
+maximum beam `|ux|` from `1.978e-6` to `4.209e-6` m for Q4 P0 (+112.8%)
+and from `2.123e-6` to `4.643e-6` m for Q4 P1 (+118.7%); S3-V2D changes
+by +70.9% and +80.4%. The axial gap L2 does not improve uniformly:
+Q4 P0 rises 54.4%, while Q4 P1 rises 4.0% at eight intervals. These
+large response changes confirm that the local-origin change affects the
+problem's axial mechanics, which the torsion-only screen concealed.
+The 100 kN amplitude is a diagnostic linear load, not an accepted physical
+limit or a matched reference. No candidate is selected; external/independent
+physical response and interface-stability interpretation remain necessary.
