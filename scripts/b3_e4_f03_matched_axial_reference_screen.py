@@ -28,7 +28,7 @@ from scripts.b3_e4_f03_weak_line_resolution_screen import one_case
 
 def compare(topology: str, n_s: int, n_y: int) -> dict:
     """Solve independent and native systems from the same stated inputs."""
-    if topology not in ("Q4", "S3-V2D") or n_s not in (4, 8) or n_y not in (2, 4, 8):
+    if topology not in ("Q4", "S3-V2D") or n_s not in (2, 4, 8) or n_y not in (2, 4, 8):
         raise ValueError("bounded axial comparison grid required")
     if not (classical_beam.E == E and
             classical_beam.AREA == AREA and
@@ -78,7 +78,7 @@ def compare(topology: str, n_s: int, n_y: int) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--shell-host-intervals", type=int,
-                        choices=(4, 8), default=4)
+                        choices=(2, 4, 8), default=4)
     parser.add_argument("--transverse-intervals", type=int, nargs="+",
                         choices=(2, 4, 8), default=(2, 4, 8))
     args = parser.parse_args()

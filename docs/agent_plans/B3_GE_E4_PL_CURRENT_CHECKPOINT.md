@@ -1,5 +1,51 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — three-level support-matched joint refinement.**
+The bounded flat fixture now has an unregistered common-support screen at
+joint `(n_s,n_y,n_half_cells)=(2,2,8),(4,4,16),(8,8,32)` for Q4 and
+S3-V2D, piecewise-constant/P0, continuous-P1 and dual-P1 multipliers,
+and two fixed physical loads: `10^5 sin(2 pi s) N/m` native axial line
+density and `100 N m` tip torque. There are **36** native cases (18 per
+load); the continuous-P1 axial cases also have a separately assembled
+classical Q4/CST and quadratic-beam comparison. Both models use the
+declared two shell x-edge in-plane supports; their discrete shell, beam
+and trace laws remain distinct. This is a joint mesh change, not the
+required full beam:shell ratio, thickness, stability or external-reference
+qualification.
+
+All six native topology/space axial tip sequences change sign from the
+coarse to middle grid; so do both classical continuous-P1 axial sequences.
+On the middle-to-fine step, native axial tip changes by `8.94–129.17%`
+across the six topology/space combinations. The corresponding torsion
+tip changes by `13.30–18.25%`, while recovered shell-support torque
+continues to fall. At the fine Q4 grid the shell carries `34.35 N m`
+(P0), `13.96 N m` (continuous P1) or `7.43 N m` (dual P1) of the
+`100 N m` applied torque. S3-V2D gives `33.62`, `13.43`, and `6.91 N m`.
+Maximum pointwise gaps decrease with joint refinement, but the finest
+torque gaps still range from about `0.49` to `1.69 µm` by space. The
+new 24 P0/dual cases have scaled algebraic residual at most `2.28e-16`,
+axial balance error at most `7.94e-11 N`, and torque balance error at
+most `9.74e-11 N m`; these do not establish physical convergence.
+
+The new coarse classical/native comparison is
+`B3_GE_E4_PL_F03_MATCHED_AXIAL_NS2_V1.json`. The new P1 torsion endpoints
+are `B3_GE_E4_PL_F03_MATCHED_TORSION_NS{2_NY2,8_NY8}_V1.json`.
+The other 12 raw outputs are
+`B3_GE_E4_PL_F03_JOINT_{AXIAL,TORSION}_{P0,DUAL}_NS{2,4,8}_NY{2,4,8}_V1.json`,
+with matching host/transverse counts in each filename. Existing P1 middle
+torsion and P1 middle/fine axial files were reused without rewriting them.
+The exact runners are `scripts.b3_e4_f03_weak_line_resolution_screen`
+with explicit paired host, transverse count, kind, both-edge support and
+axial-density flags as applicable, and
+`scripts.b3_e4_f03_matched_axial_reference_screen` for the coarse
+classical comparison. Nine focused tests passed after the bounded
+comparator was extended to `n_s=2`. This is Level-A development
+evidence. **No line space or shell port is selected; F03/G0B remain open
+and G1 barred.** The next high-value work is a compatible physical
+torque/line reference and the registered beam:shell mesh-ratio and
+norm-scaled stability checks; another small equilibrium residual on
+these grids cannot make the selection.
+
 **24 September 2026 — support-matched reference torsion diagnostic.**
 With both shell x edges supported, a fixed `100 N m` native B3 tip torque,
 continuous-P1 weak line, four shell hosts and 16 native half-cells, the

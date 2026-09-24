@@ -26,4 +26,4 @@ def test_s3_cst_same_support_comparison_is_balanced_and_finite():
 
 def test_comparator_rejects_unsupported_grid():
     with pytest.raises(ValueError, match="bounded axial comparison grid"):
-        compare("S3-V2D", 2, 2)
+        compare("S3-V2D", 1, 2)
