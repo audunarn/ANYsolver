@@ -1,6 +1,16 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current line-resolution decision, 24 September 2026:** The fixed-space
+**Current separate-order decision, 24 September 2026:** At fixed beam512
+and P1 line1024, x-degree 24→32 changes beam energy only -0.0163%, but
+y-degree 12→16 changes it **+0.9996%** and root-force magnitude -0.688%.
+The bounded source/results are preserved in
+`B3_GE_E4_PL_F03_DOUBLE_SEGMENTED_SEPARATE_ORDER_V4.md`. The former
+appearance of transverse convergence at coarser line resolution is not
+a general physical reference. Next isolate higher y order within the
+same resource limit. Formal F03 authority remains unconsumed; F03/G0B
+remain open and G1 barred.
+
+**Earlier 1024-line decision, 24 September 2026:** The fixed-space
 1024-interval P1 probe is preserved in
 `B3_GE_E4_PL_F03_DOUBLE_SEGMENTED_LINE1024_V3.md`. From 512→1024 line
 intervals, beam energy changes -0.356%, root-force magnitude +0.115%,

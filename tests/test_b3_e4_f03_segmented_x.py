@@ -9,7 +9,7 @@ from scripts import b3_e4_f03_spectral_axial_reference as spectral
 
 
 def test_segmented_longitudinal_basis_has_shared_nodes_and_fixed_edges():
-    for degree in (1,2,4,8,16,24):
+    for degree in (1,2,4,8,16,24,32):
         basis=SegmentedXBasis(degree)
         nodes=np.asarray(basis.nodes)
         np.testing.assert_allclose(

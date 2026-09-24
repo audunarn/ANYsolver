@@ -19,7 +19,7 @@ class SegmentedXBasis:
     __slots__ = ("degree", "_coefficients", "_nodes")
 
     def __init__(self, degree: int):
-        if type(degree) is not int or not 1 <= degree <= 24:
+        if type(degree) is not int or not 1 <= degree <= 32:
             raise ValueError("bounded segmented longitudinal degree required")
         interior = (legendre.Legendre.basis(degree).deriv().roots()
                     if degree > 1 else np.empty(0))
