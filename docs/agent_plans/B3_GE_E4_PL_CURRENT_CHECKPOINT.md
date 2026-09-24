@@ -1,5 +1,14 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — patched Q6 X2 resource rehearsal.** The full X2
+certificate, bound physical recovery and spatial audit completed after the
+interval-kernel safety/edge changes in 1,411.19 seconds at 688.8 MB sampled
+peak RSS. The inverse, candidate and KKT/RHS hashes and all saved signed and
+functional outputs matched the earlier KKT-bound rehearsal. This supports
+source-level feasibility for the patched code, not a speedup or formal
+installed gate. See `B3_GE_E4_PL_G0_F03_Q6_X2_KERNEL_PATCH_RESULT_20260924.md`.
+F03/G0B remain open and G1 barred.
+
 **24 September 2026 — Q6 arithmetic edge correction.** An independent audit
 identified missing runtime-subnormal exact-oracle coverage. The new test also
 found a valid rectangular CSR input that crashed the compiled helper; the row
