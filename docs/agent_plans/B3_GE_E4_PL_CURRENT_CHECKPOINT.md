@@ -1,5 +1,33 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — fourth axial loaded resolution level.** The bounded
+private E4 trial and native B3 fixture now admit 8 shell host intervals
+and 32 native half-cells for the same straight, elastic diagnostic; no
+public/product admission changed. The fixed physical density from the
+preceding entry was evaluated at one multiplier interval per shell host
+for P0, continuous P1 and dual P1 on Q4/S3 and both shell origins.
+All **12** added cases completed. The largest scaled KKT residual is
+`1.49e-16`, the axial resultant error is below `6.83e-13 N`, and the
+analytic first-moment error is below `1.82e-12 N m`.
+
+From four to eight shell hosts, Q4/S3 **rail continuous-P1** tip motions
+change by `1.18%`/`0.53%`; rail P0 still changes by `23.67%`/`23.47%`,
+and rail dual P1 by `3.63%`/`2.81%`. The **local-origin continuous-P1**
+changes are `1.70%`/`3.32%`; its Q4/S3 finest tips remain about
+`-1.345`/`-1.195 µm`. Pointwise gaps decrease, but small gaps and
+equilibrium residuals do not establish a settled physical response.
+The transverse shell grid stayed at two rows, the rail and local origins
+are distinct physical maps, and no matched independent displacement target
+was executed. This is not a full joint-refinement or multiplier-stability
+claim. Raw outputs are
+`B3_GE_E4_PL_F03_PHYSICAL_DENSITY_EXTENDED_{RAIL,LOCAL}_V1.json` here;
+the command adds `--paired-shell-intervals 8` to the preceding paired
+runner, with the applicable shell-origin flag. Both outputs were parsed
+and compared semantically with their source files. **No line space is
+selected; F03/G0B stay open and G1 barred.** The next decisive work is a
+matched physical reference and transverse/mesh-ratio response, not a
+smaller algebraic residual on the same strip.
+
 **24 September 2026 — mesh-consistent loaded F03 resolution diagnostic.**
 The earlier axial-wave screen placed the same signed force at each beam
 node, so changing beam resolution would change the applied physical load.

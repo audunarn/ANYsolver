@@ -159,10 +159,14 @@ def main() -> None:
     parser.add_argument("--axial-wave", action="store_true")
     parser.add_argument("--include-dual", action="store_true")
     parser.add_argument("--paired-refinement", action="store_true")
+    parser.add_argument("--paired-shell-intervals", type=int,
+                        choices=(1, 2, 4, 8), nargs="+")
     parser.add_argument("--sinusoidal-axial-density", action="store_true")
     arguments = parser.parse_args()
     if arguments.axial_wave and arguments.sinusoidal_axial_density:
         parser.error("select only one axial load")
+    if arguments.paired_shell_intervals and not arguments.paired_refinement:
+        parser.error("paired shell intervals require paired refinement")
     shell_port = ("local_translation" if arguments.local_translation
                   else "rail")
     load_kind = ("sinusoidal_axial_density" if arguments.sinusoidal_axial_density
@@ -170,7 +174,8 @@ def main() -> None:
     kinds = ("piecewise_constant", "continuous_linear")
     if arguments.include_dual:
         kinds += ("dual_linear",)
-    grids = ((n_s, 4*n_s, n_s) for n_s in (1, 2, 4)) if (
+    paired_sizes = arguments.paired_shell_intervals or (1, 2, 4)
+    grids = ((n_s, 4*n_s, n_s) for n_s in paired_sizes) if (
         arguments.paired_refinement) else ((4, 16, intervals)
                                           for intervals in (2, 4, 8))
     grids = tuple(grids)

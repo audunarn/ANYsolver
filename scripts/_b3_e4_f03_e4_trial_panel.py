@@ -36,7 +36,7 @@ class FlatE4TrialPanel:
 
     def __init__(self, panel: ShellPanel):
         if (not isinstance(panel, ShellPanel) or panel.topology not in
-                ("Q4", "S3-V2D") or not 1 <= panel.n_s <= 4):
+                ("Q4", "S3-V2D") or not 1 <= panel.n_s <= 8):
             raise ValueError("bounded Q4/S3 F03 trial panel required")
         self.panel = panel
         self.model = FEModel("f03-flat-e4-material-trial")

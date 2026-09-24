@@ -176,8 +176,8 @@ def _sparse_native_assembly(context):
 
 def build(n_half_cells: int) -> Fixture:
     """Construct and assemble an actual virgin elastic retained B3 chain."""
-    if type(n_half_cells) is not int or n_half_cells not in (4, 8, 16):
-        raise ValueError('n_half_cells must be exactly 4, 8, or 16')
+    if type(n_half_cells) is not int or n_half_cells not in (4, 8, 16, 32):
+        raise ValueError('n_half_cells must be exactly 4, 8, 16, or 32')
     n_elements = n_half_cells // 2
     h = 1 / n_half_cells
     model = FEModel(f'f03-native-virgin-{n_half_cells}')

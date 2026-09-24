@@ -8,7 +8,7 @@ from scripts.b3_e4_f03_weak_line_resolution_screen import (
     sinusoidal_axial_density_load)
 
 
-@pytest.mark.parametrize("native_half_cells", (4, 8, 16))
+@pytest.mark.parametrize("native_half_cells", (4, 8, 16, 32))
 def test_sine_density_has_analytic_resultant_and_linear_virtual_work(
         native_half_cells):
     beam = build(native_half_cells)
