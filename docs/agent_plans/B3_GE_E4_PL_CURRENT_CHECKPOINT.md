@@ -1,5 +1,120 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**Latest decision, 25 September 2026:** The local polar-frame pose restores
+yaw work, and a physically matched independent membrane/beam model follows
+the native yaw and transverse torque/shear trends. Line resolution remains
+the dominant yaw sensitivity; changing beam resolution or removing E4
+numerical completion has a much smaller effect. A C1 boundary-layer
+witness gives fixed zero-width yaw with physical shell energy tending to
+zero. Independent mechanics review confirmed the continuum trace issue. The
+next decision is whether the strict zero-width six-channel line needs a
+different energy-continuous pose or a declared finite-width connection.
+No multiplier is selected. Keep classical axial, historical Q6/finite-pad
+and native six-channel claims distinct. Formal F03 authority remains
+unconsumed, G0B open and G1 barred.
+
+**New bounded evidence (development only):** Independent/native Q4 tip yaw
+on joint shell/beam/P0-line levels x4/y2/4/2, x8/y4/8/4 and x16/y8/16/8
+is `6.197/6.810`, `3.730/3.958`, `2.330/2.485 µrad`. Both support moments
+approach about `−98 Nm`. The independent physical H^(-1/2) minimum quotient
+falls `1.029→0.578→0.343`, but its minimum mode is axial; the yaw-only
+lower quotient falls `684.5→276.2→136.5`. These finite-dimensional values
+do not prove locking or select a line space. At fixed Q4 x8/y4/P0-4,
+native B3 element counts 2→4→8 give yaw `4.334→3.958→3.844 µrad`;
+P0-2→P0-4 at fixed beam changes yaw by about 39%. Q4 P0/P1/dual yaw is
+`3.958/2.528/2.241 µrad`, S3 `3.922/2.492/2.195 µrad` on the matched
+fixed case; the independent model has the same ordering. Smaller gaps do
+not establish accuracy. Q4 native/independent transverse tip z is
+`47.81/50.86 µm` and beam-axis torque tip rx `16.18/15.64 µrad`; S3 gives
+`49.77/50.86 µm` and `16.10/15.64 µrad`. Removing E4 numerical
+completion in a native-beam/physical-shell in-plane solve changes yaw by
+only 0.2–0.3% across Q4/S3 and P0/P1/dual.
+
+For the supported C1 field `ux=A(x+0.5)d φ(y/d)`, `uy=0`,
+`φ(t)=t(1−t²)²` on `|t|≤1`, centerline yaw is `−A/2` while physical
+membrane energy is `O(d)`. At `A=1e−4` and widths `0.2,0.1,0.05,0.025 m`,
+yaw is always `−5e−5 rad` and energies are
+`12.348,6.138,3.065,1.532 J`. This challenges a strict zero-width
+normal-gradient trace, not a finite-width strip. The required full mesh
+ratios, six-channel stability, mixed meshes and formal acceptance remain
+outstanding. Earlier sections below are preserved as historical decisions.
+
+**Independent mechanics check:** A separate read-only reviewer confirmed
+that the C1 boundary-layer witness makes the strict zero-width normal-gradient
+yaw unbounded against physical H1 membrane energy. Even a constant P0
+moment multiplier detects the fixed yaw. This is a continuum trace objection
+to this local-frame candidate, not proof of a discrete KKT failure or a
+programme-level impossibility. A finite-width alternative must average
+gradients over area or use suitable displacement traces/differences; merely
+sampling a point gradient on another zero-width line retains the defect.
+Width and connection meaning must be explicit, with no reliance on drilling
+completion. The next bounded derivation should test a physical finite-width
+strip connection for yaw plus local director/shear, without longitudinal
+averaging zeros. Candidate work/derivatives and independent physical response
+must pass before a multiplier-space selection or formal F03 assessment.
+
+**Checks and reproduction:** Run
+`python -m scripts.b3_e4_f03_local_frame_joint_screen` with optional
+`--spaces`, `--transverse`, `--beam-ratio` or `--physical-only` for the
+bounded comparisons. The new independent-yaw module also has a direct CLI.
+Its first three focused pytest checks passed `3/3`. After adding the native
+physical-only and boundary-layer assertions, a pytest invocation remained
+CPU-active without output for over ten minutes and was stopped as an
+incomplete check, not counted as a pass. All five test functions then passed
+by direct single-thread invocation in 5.3 s. No product or frozen evidence
+was changed.
+
+**Current decision-oriented investigation, 25 September 2026:** Decide
+whether the local polar-frame line can advance to a formal interface-space
+assessment. The measured yaw sensitivity may come from under-resolved physical
+membrane bending/shear, the weak multiplier space, or shell numerical energy.
+The next bounded check compares the same flat geometry, full left-edge support,
+100 Nm tip yaw moment, generalized beam section and local centerline pose
+against an independently assembled in-plane membrane/Timoshenko Ritz model at
+two line resolutions. If the response and resolution trend agree, advance the
+norm-scaled P0/P1/dual and mesh-ratio assessment; if they differ materially,
+diagnose the constitutive/trace or stabilization source before selection. This
+is exploratory Level A work, not acceptance. Existing F03 authority and all
+G0B criteria remain unchanged.
+
+**Next bounded discriminator:** On the same physical Q4 panel/beam/line
+family, jointly increase shell x/y, beam and P0 line resolution through
+`(4,2,4,2)`, `(8,4,8,4)`, `(16,8,16,8)` in `(shell-x, shell-y,
+beam-half-cell, line-interval)` counts. The independent model uses its own
+rooted spline counts at the same physical resolutions. This distinguishes a
+fixed-primal trace saturation from a persistent joint-refinement problem.
+A leveling physical response with noncollapsing properly scaled interface
+stability would support formal space comparison; continuing drift or a
+vanishing stability measure would require revisiting the trace/space before
+selection. The three-channel independent norm cannot qualify the native
+six-channel mixed saddle system by itself.
+
+**Joint-resolution result and next question:** The three physical levels
+give independent/native tip yaw in µrad `6.197/6.810`, `3.730/3.958`,
+`2.330/2.485`. Shell support Mz approaches about `−98 Nm` in both; native
+numerical shell-energy fraction rises `3.5→4.4→6.0%`. The independent
+physical H^(-1/2) minimum quotient falls `1.029→0.578→0.343`, but its
+minimum mode is axial, as in historical native diagnostics. The yaw-only
+lower quotient is `684.5→276.2→136.5`; the L2-based quotient also falls.
+These finite-dimensional values do not prove locking, a continuum inf-sup
+failure, or a suitable line space. The next fixed-physical-mesh comparison
+puts P0, continuous P1 and dual P1 under the same yaw couple on Q4/S3.
+If P1/dual yield identical primal states, treat dual as a basis change,
+not a resolution cure; if they differ, inspect basis/integration parity.
+Compare physical response, numerical energy and balance alongside algebraic
+rank, then decide whether to revise pose/interface resolution or prepare a
+formal stability assessment. Do not add further axial refinement by default.
+
+**Next mesh-ratio discriminator:** Keep Q4 shell x8/y4, P0 interval count
+four, geometry, supports and tip yaw couple fixed. Vary native B3 element
+count `2,4,8` (half-cell count `4,8,16`) and independent spline beam count
+the same half-cell values. If the yaw response barely changes, the large
+P0 line-resolution effect is not a beam-discretization artifact and work
+should concentrate on shell trace/interface policy. If it changes strongly,
+inspect beam station interpolation and line segmentation before judging the
+multiplier. This diagnostic covers beam:shell ratios 1:2, 1:1 and 2:1;
+the required 1:4, 1:8 and reciprocals remain formal G0B work.
+
 **Current state and decision, 25 September 2026 (policy 2026-09-24.2):**
 The bounded local-material-frame candidate now takes shell position and
 physical director at the actual line point and obtains yaw from the polar
