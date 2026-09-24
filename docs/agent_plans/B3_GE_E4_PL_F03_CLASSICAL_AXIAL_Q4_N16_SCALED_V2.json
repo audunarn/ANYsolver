@@ -1,0 +1,64 @@
+{
+  "algebraic_residual_ratio": 1.0474319703817669e-14,
+  "beam_elements": 32,
+  "beam_energy_j": 0.00043248452227204686,
+  "beam_root": "u,v,theta fixed",
+  "beam_root_reaction_fx_n": -8417.325344021867,
+  "beam_tip_axial_m": -3.1192256286787285e-07,
+  "distinct_from_native": [
+    "classical Q4/CST membrane",
+    "quadratic/Hermite Timoshenko beam",
+    "three-channel P1 weak line"
+  ],
+  "elapsed_seconds": 0.4320395999966422,
+  "energy_work_relative_error": 4.012713129859648e-15,
+  "external_work_j": 0.009510751263902238,
+  "gap_l2_m": 3.839814578301602e-09,
+  "global_axial_balance_n": 1.4006218407303095e-10,
+  "multiplier_intervals": 16,
+  "numerical_solver": "symmetric_row_equilibration_6_passes",
+  "physical_load": "q_x(s)=1e5 sin(2 pi s) N/m, s in [0,1] m",
+  "shell_elements": 512,
+  "shell_energy_j": 0.004322891109679053,
+  "shell_hosts": 16,
+  "shell_nodes": 561,
+  "shell_reaction_fx_n": 8417.325344022007,
+  "shell_support": "both x edges ux/uy fixed",
+  "shell_transverse_intervals": 16,
+  "station_fields": [
+    {
+      "axial_gap_m": -4.016243806101262e-08,
+      "beam_axial_m": 0.0,
+      "shell_axial_m": 4.016243806101262e-08,
+      "station": 0.0
+    },
+    {
+      "axial_gap_m": 2.5067423238954606e-10,
+      "beam_axial_m": 3.13143756439415e-08,
+      "shell_axial_m": 3.1063701411551955e-08,
+      "station": 0.25
+    },
+    {
+      "axial_gap_m": -6.850474637573357e-11,
+      "beam_axial_m": -1.545785504460133e-07,
+      "shell_axial_m": -1.5451004569963757e-07,
+      "station": 0.5
+    },
+    {
+      "axial_gap_m": 1.0618169029541227e-10,
+      "beam_axial_m": -3.0654775953584016e-07,
+      "shell_axial_m": -3.066539412261356e-07,
+      "station": 0.75
+    },
+    {
+      "axial_gap_m": -2.1190818029197592e-09,
+      "beam_axial_m": -3.1192256286787285e-07,
+      "shell_axial_m": -3.098034810649531e-07,
+      "station": 1.0
+    }
+  ],
+  "status": "UNREGISTERED_CLASSICAL_AXIAL_REFERENCE_DIAGNOSTIC",
+  "topology": "Q4",
+  "weak_compatibility_ratio": 3.333924333878897e-16,
+  "weak_gap_l2": 1.690467951295239e-23
+}

@@ -1,5 +1,40 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — larger independent classical axial reference, still
+unsettled.** The separately assembled Q4/CST plane-stress, quadratic/Hermite
+Timoshenko beam, three-channel continuous-P1 weak-line comparator was
+extended from joint `n=8` to `n=16,32,64` with the same both-edge supports
+and fixed `10^5 sin(2 pi s) N/m` load. Its `n=8` tip, shell reaction,
+shell/beam energies and integrated gap reproduce the previously saved
+classical outputs **exactly**. The unscaled sparse KKT became poorly
+conditioned at `n=64`: its weak-row norm was about `1.2e-11` and the
+CST work discrepancy reached `1.00e-4` relative. Those raw V1 results
+are retained, not used as a converged target.
+
+An optional six-pass symmetric row equilibration changes only the
+independent solver's numerical coordinates. It preserves small-grid
+physical solutions within verified numerical tolerances; two focused
+parity tests and the full **22-test** affected comparator suite pass.
+The eight equilibrated V2 cases (`n=8,16,32,64`, Q4/CST) have weak-row
+norm at most `2.26e-23`, algebraic residual ratio below `1e-13`, and
+quadratic work discrepancy below `7e-14` relative. The `n=64` raw and
+equilibrated tip values differ by at most `0.006%`; the much larger raw
+work error is a numerical warning, not a change of mechanical model.
+
+Even on the equilibrated route, the `n=32→64` axial-tip magnitude changes
+by about `1.85%` (Q4) and `1.94%` (CST); shell energy changes by more
+than `4%`, and shell support reaction reverses its previous refinement
+direction. Q4/CST tip values at `n=64` are close, but that agreement is
+insufficient to declare a converged continuum target or qualify native
+B3-GE/E4-PL. Raw files are
+`B3_GE_E4_PL_F03_CLASSICAL_AXIAL_{Q4,CST}_N{8,16,32,64}_V1.json` and
+corresponding `_SCALED_V2.json`, produced by
+`scripts.b3_e4_f03_classical_axial_refinement` with explicit topology,
+size and `--equilibrated` for V2. These are Level-A development runs;
+peak process memory was not measured. A further resource-bounded joint
+refinement and the independent physical torque/trace reference remain
+needed. **F03/G0B stay open and G1 barred.**
+
 **24 September 2026 — admissible bonded transverse-shear patch.**
 A flat-shell field `w=0.02 x` with unchanged physical directors and a
 matching native B3 station field gives coincident shell/beam positions

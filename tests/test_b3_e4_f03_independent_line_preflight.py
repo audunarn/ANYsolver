@@ -170,3 +170,19 @@ def test_small_loaded_saddle_equilibrium_work_and_global_balance(topology,law,lo
                   np.sum(r_beam[u+1:u+v:2])+np.sum(r_beam[u+v:]))
     np.testing.assert_allclose(total_y+force,0,rtol=0,atol=2e-5)
     np.testing.assert_allclose(total_moment+moment,0,rtol=0,atol=2e-5)
+
+
+@pytest.mark.parametrize('topology', ['Q4', 'CST'])
+def test_symmetric_equilibration_preserves_classical_weak_line_solution(topology):
+    model=shell.panel(4,4,topology)
+    raw=coupled.solve(model,8,4,'P1','axial_sine')
+    scaled=coupled.solve(model,8,4,'P1','axial_sine',equilibrate=True)
+    np.testing.assert_allclose(scaled.shell,raw.shell,rtol=1e-7,atol=1e-13)
+    np.testing.assert_allclose(scaled.beam,raw.beam,rtol=1e-7,atol=1e-13)
+    np.testing.assert_allclose(scaled.shell_energy,raw.shell_energy,rtol=1e-8)
+    np.testing.assert_allclose(scaled.beam_energy,raw.beam_energy,rtol=1e-8)
+    assert scaled.algebraic_residual_ratio<1e-10
+    assert np.linalg.norm(scaled.weak_gap)<1e-14
+    np.testing.assert_allclose(
+        2*(scaled.shell_energy+scaled.beam_energy),
+        scaled.external_work,rtol=1e-9)

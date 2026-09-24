@@ -1,0 +1,61 @@
+{
+  "algebraic_residual_ratio": 2.5818391858926335e-15,
+  "beam_elements": 16,
+  "beam_energy_j": 0.00048045672027763624,
+  "beam_root": "u,v,theta fixed",
+  "beam_root_reaction_fx_n": -7473.894253739196,
+  "beam_tip_axial_m": -2.966752586817681e-07,
+  "distinct_from_native": [
+    "classical Q4/CST membrane",
+    "quadratic/Hermite Timoshenko beam",
+    "three-channel P1 weak line"
+  ],
+  "elapsed_seconds": 0.2760401000014099,
+  "external_work_j": 0.00901526513176765,
+  "gap_l2_m": 1.0397457189286806e-08,
+  "global_axial_balance_n": -1.3642420526593924e-11,
+  "multiplier_intervals": 8,
+  "physical_load": "q_x(s)=1e5 sin(2 pi s) N/m, s in [0,1] m",
+  "shell_elements": 256,
+  "shell_energy_j": 0.004027175845606256,
+  "shell_hosts": 8,
+  "shell_nodes": 153,
+  "shell_reaction_fx_n": 7473.894253739182,
+  "shell_support": "both x edges ux/uy fixed",
+  "shell_transverse_intervals": 8,
+  "station_fields": [
+    {
+      "axial_gap_m": -7.06371121517452e-08,
+      "beam_axial_m": 0.0,
+      "shell_axial_m": 7.06371121517452e-08,
+      "station": 0.0
+    },
+    {
+      "axial_gap_m": 7.361512357312908e-09,
+      "beam_axial_m": 3.919808024772125e-08,
+      "shell_axial_m": 3.183656789040834e-08,
+      "station": 0.25
+    },
+    {
+      "axial_gap_m": 8.947799499630689e-10,
+      "beam_axial_m": -1.3800516762205993e-07,
+      "shell_axial_m": -1.38899947572023e-07,
+      "station": 0.5
+    },
+    {
+      "axial_gap_m": -1.2876205144550717e-09,
+      "beam_axial_m": -2.8083998212228864e-07,
+      "shell_axial_m": -2.7955236160783357e-07,
+      "station": 0.75
+    },
+    {
+      "axial_gap_m": -6.362572147130124e-09,
+      "beam_axial_m": -2.966752586817681e-07,
+      "shell_axial_m": -2.90312686534638e-07,
+      "station": 1.0
+    }
+  ],
+  "status": "UNREGISTERED_CLASSICAL_AXIAL_REFERENCE_DIAGNOSTIC",
+  "topology": "CST",
+  "weak_compatibility_ratio": 2.3691546736168318e-12
+}

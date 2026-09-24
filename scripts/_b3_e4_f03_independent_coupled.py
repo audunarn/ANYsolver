@@ -33,9 +33,9 @@ class Solution:
 
 
 def solve(model: shell.Panel, n_beam: int, n_mortar: int,
-          law: str, loading: str) -> Solution:
+          law: str, loading: str, *, equilibrate: bool = False) -> Solution:
     """Solve one explicitly small constrained saddle system from fresh parts."""
-    if model.n_s>8 or model.n_y>16 or n_beam>16 or n_mortar>8:
+    if model.n_s>64 or model.n_y>64 or n_beam>128 or n_mortar>64:
         raise ValueError('only bounded derivation preflight systems admitted')
     ks=shell.stiffness(model)
     kb=beam.assembled_stiffness(n_beam)
@@ -48,7 +48,20 @@ def solve(model: shell.Panel, n_beam: int, n_mortar: int,
     a=sparse.bmat(((k[free,:][:,free],c[:,free].T),
                    (c[:,free],None)),format='csc')
     right=np.r_[f[free],np.zeros(c.shape[0])]
-    result=spsolve(a,right)
+    if equilibrate:
+        diagonal=np.ones(a.shape[0])
+        scaled=a.tocsr()
+        for _ in range(6):
+            rowmax=np.asarray(abs(scaled).max(axis=1).toarray()).ravel()
+            if not np.all(np.isfinite(rowmax)) or np.any(rowmax<=0.):
+                raise ValueError('invalid mixed-system row equilibration')
+            step=1/np.sqrt(rowmax)
+            diagonal*=step
+            transform=sparse.diags(step,format='csr')
+            scaled=(transform@scaled@transform).tocsr()
+        result=diagonal*spsolve(scaled.tocsc(),diagonal*right)
+    else:
+        result=spsolve(a,right)
     if not np.all(np.isfinite(result)):
         raise ValueError('nonfinite independent coupled preflight response')
     q=np.zeros(k.shape[0]); q[free]=result[:len(free)]

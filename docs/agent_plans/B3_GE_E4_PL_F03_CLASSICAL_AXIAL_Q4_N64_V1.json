@@ -1,0 +1,63 @@
+{
+  "algebraic_residual_ratio": 6.791110596762305e-14,
+  "beam_elements": 128,
+  "beam_energy_j": 0.0004269327037666632,
+  "beam_root": "u,v,theta fixed",
+  "beam_root_reaction_fx_n": -8641.950642807833,
+  "beam_tip_axial_m": -3.3089273217948647e-07,
+  "distinct_from_native": [
+    "classical Q4/CST membrane",
+    "quadratic/Hermite Timoshenko beam",
+    "three-channel P1 weak line"
+  ],
+  "elapsed_seconds": 3.107166800000414,
+  "energy_work_relative_error": 2.9216519659343566e-06,
+  "external_work_j": 0.010397667472776108,
+  "gap_l2_m": 6.150077082892983e-10,
+  "global_axial_balance_n": 4.019966581836343e-10,
+  "multiplier_intervals": 64,
+  "physical_load": "q_x(s)=1e5 sin(2 pi s) N/m, s in [0,1] m",
+  "shell_elements": 8192,
+  "shell_energy_j": 0.004771885843438584,
+  "shell_hosts": 64,
+  "shell_nodes": 8385,
+  "shell_reaction_fx_n": 8641.950642808235,
+  "shell_support": "both x edges ux/uy fixed",
+  "shell_transverse_intervals": 64,
+  "station_fields": [
+    {
+      "axial_gap_m": -1.117052361423316e-08,
+      "beam_axial_m": 0.0,
+      "shell_axial_m": 1.117052361423316e-08,
+      "station": 0.0
+    },
+    {
+      "axial_gap_m": -6.126402560362998e-12,
+      "beam_axial_m": 4.3303675849075085e-08,
+      "shell_axial_m": 4.330980225163545e-08,
+      "station": 0.25
+    },
+    {
+      "axial_gap_m": -4.804596068230184e-11,
+      "beam_axial_m": -1.6238353608392484e-07,
+      "shell_axial_m": -1.6233549012324253e-07,
+      "station": 0.5
+    },
+    {
+      "axial_gap_m": 9.533691660381616e-13,
+      "beam_axial_m": -3.303449497958055e-07,
+      "shell_axial_m": -3.3034590316497153e-07,
+      "station": 0.75
+    },
+    {
+      "axial_gap_m": -7.514931840184037e-10,
+      "beam_axial_m": -3.3089273217948647e-07,
+      "shell_axial_m": -3.3014123899546807e-07,
+      "station": 1.0
+    }
+  ],
+  "status": "UNREGISTERED_CLASSICAL_AXIAL_REFERENCE_DIAGNOSTIC",
+  "topology": "Q4",
+  "weak_compatibility_ratio": 0.0004560744891406422,
+  "weak_gap_l2": 1.2586516872945521e-11
+}
