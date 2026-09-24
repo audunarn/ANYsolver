@@ -15,7 +15,7 @@ from anysolver import (
     validate_general_contact,
 )
 from anysolver.fe_core import FEModel
-from anysolver.general_contact.pair import _PlanarQ4PairManager
+from anysolver.general_contact.pair import _PlanarShellPairManager
 
 
 def _guided_pair(*, split_target=False, target_shift=0.0,
@@ -102,7 +102,7 @@ def test_guided_pair_solve_balances_both_shells_and_matches_scalar_reference(spl
 
 def test_guided_pair_potential_tangent_and_swept_limit():
     model, _load, definition, upper_nodes = _guided_pair()
-    manager = _PlanarQ4PairManager(model, definition)
+    manager = _PlanarShellPairManager(model, definition)
     displacement = np.zeros(model.mesh.dof_manager.total_dofs)
     for node_id in upper_nodes:
         displacement[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -3.0e-7
@@ -135,7 +135,7 @@ def test_guided_pair_potential_tangent_and_swept_limit():
 
 def test_partial_projected_overlap_transfers_equal_opposite_resultants():
     model, _load, definition, upper_nodes = _guided_pair(target_shift=0.5)
-    manager = _PlanarQ4PairManager(model, definition)
+    manager = _PlanarShellPairManager(model, definition)
     displacement = np.zeros(model.mesh.dof_manager.total_dofs)
     for node_id in upper_nodes:
         displacement[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -5.0e-7
@@ -153,7 +153,7 @@ def test_tilted_physical_skins_transfer_offset_force_couples():
     director = np.asarray((0.1, 0.0, 1.0), dtype=float)
     director /= np.linalg.norm(director)
     model, _load, definition, upper_nodes = _guided_pair(director=director)
-    manager = _PlanarQ4PairManager(model, definition)
+    manager = _PlanarShellPairManager(model, definition)
     displacement = np.zeros(model.mesh.dof_manager.total_dofs)
     for node_id in upper_nodes:
         displacement[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -1.0e-4
@@ -171,9 +171,124 @@ def test_tilted_physical_skins_transfer_offset_force_couples():
     )
 
 
+def _guided_mixed_pair(source_kind, target_kind, *, director=None):
+    model = FEModel("guided_mixed_shell_pair")
+    model.add_material("elastic", 1.0e5, 0.3, density=1.0)
+    shape_xy = {"Q4": ((0, 0), (1, 0), (1, 1), (0, 1)),
+                "S3": ((0, 0), (1, 0), (0, 1))}
+    target_reference_top = 0.025 if target_kind == "Q4" else 0.015
+    source_reference_bottom = -0.025 if source_kind == "Q4" else -0.035
+    source_offset = ((target_reference_top - source_reference_bottom)
+                     * (np.asarray(director, dtype=float)
+                        if director is not None else np.array((0.0, 0.0, 1.0))))
+    target_nodes = tuple(range(1, len(shape_xy[target_kind]) + 1))
+    source_nodes = tuple(range(len(target_nodes) + 1,
+                               len(target_nodes) + len(shape_xy[source_kind]) + 1))
+    for node_id, (x, y) in zip(target_nodes, shape_xy[target_kind]):
+        model.add_node(node_id, x, y, 0.0)
+    for node_id, (x, y) in zip(source_nodes, shape_xy[source_kind]):
+        model.add_node(node_id, *(np.asarray((x, y, 0.0)) + source_offset))
+    for element_id, nodes, kind in ((1, target_nodes, target_kind),
+                                    (2, source_nodes, source_kind)):
+        options = ({"formulation": "e4-pl-s3-v2d",
+                    "reference_normal": (0, 0, 1) if director is None else director,
+                    "reference_surface_offset": 0.01}
+                   if kind == "S3" else
+                   ({"reference_normal": director} if director is not None else {}))
+        model.add_element(element_id, create_shell_element(
+            element_id, nodes, "elastic", thickness=0.05, **options,
+        ))
+    model.add_boundary_condition(BoundaryCondition(
+        "target_fixed", target_nodes,
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "source_guided", source_nodes,
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    load = LoadCase("press_source")
+    for node_id in source_nodes:
+        load.add_nodal_load(node_id, forces=(0.0, 0.0, -0.1))
+    definition = ContactDefinition(
+        surfaces=(ContactSurface("source", (2,), side="bottom"),
+                  ContactSurface("target", (1,), side="top")),
+        rigid_bodies=(),
+        interactions=(ContactInteraction("pair", "source", "target", 1.0e6, 1.0e-6),),
+    )
+    return model, load, definition, source_nodes
+
+
+@pytest.mark.parametrize("source_kind,target_kind", (
+    ("S3", "Q4"), ("Q4", "S3"), ("S3", "S3"),
+))
+def test_guided_mixed_shell_pair_has_physical_offsets_and_balanced_forces(
+        source_kind, target_kind):
+    model, _load, definition, source_nodes = _guided_mixed_pair(
+        source_kind, target_kind
+    )
+    report = validate_general_contact(model, definition)
+    assert report.valid, report.issues
+    assert report.profile == "PLANAR_Q4_S3_PAIR_NORMAL_TRANSLATION_PENALTY_MORTAR_V0"
+    manager = _PlanarShellPairManager(model, definition)
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node_id in source_nodes:
+        displacement[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -1.0e-6
+    _force, tangent, summary = manager.evaluate(displacement)
+    assert summary.minimum_gap == pytest.approx(-1.0e-6)
+    assert summary.reference_overlap_area == pytest.approx(
+        0.5 if "S3" in (source_kind, target_kind) else 1.0
+    )
+    assert summary.integration_force[2] == pytest.approx(0.5)
+    assert summary.target_force[2] == pytest.approx(-0.5)
+    np.testing.assert_allclose(
+        np.asarray(summary.integration_moment) + np.asarray(summary.target_moment),
+        0.0, atol=1e-10,
+    )
+    direction = np.zeros_like(displacement)
+    for node_id in source_nodes:
+        direction[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = 1.0
+    h = 1.0e-8
+    plus = manager.evaluate(displacement + h * direction, tangent=False)[0]
+    minus = manager.evaluate(displacement - h * direction, tangent=False)[0]
+    np.testing.assert_allclose((plus - minus) / (2.0 * h), tangent @ direction,
+                               rtol=1.0e-7, atol=1.0e-8)
+
+
+def test_guided_s3_source_solves_through_static_route():
+    model, load, definition, _source_nodes = _guided_mixed_pair("S3", "Q4")
+    result = solve_static_nonlinear(
+        model, load, contact=definition, kinematics="von_karman",
+        num_steps=1, max_iterations=12,
+    )
+    assert result.status == "completed", result.failure_reason
+    summary = result.info["general_contact"]
+    assert summary["integration_force"][2] == pytest.approx(0.3, abs=1e-8)
+    assert summary["target_force"][2] == pytest.approx(-0.3, abs=1e-8)
+    assert summary["minimum_gap"] == pytest.approx(-6.0e-7, abs=1e-9)
+
+
+def test_s3_reference_surface_offset_contributes_contact_couple():
+    director = np.asarray((0.1, 0.0, 1.0), dtype=float)
+    director /= np.linalg.norm(director)
+    model, _load, definition, source_nodes = _guided_mixed_pair(
+        "S3", "Q4", director=director
+    )
+    manager = _PlanarShellPairManager(model, definition)
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node_id in source_nodes:
+        displacement[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -1.0e-6
+    residual, _tangent, summary = manager.evaluate(displacement)
+    source_couple_y = -sum(
+        residual[model.mesh.dof_manager.get_node_dofs(node_id)[4]]
+        for node_id in source_nodes
+    )
+    assert summary.integration_force[2] == pytest.approx(0.5)
+    assert source_couple_y == pytest.approx(0.5 * 0.035 * director[0])
+
+
 def test_guided_pair_rejects_nonuniform_or_lateral_motion_and_restart():
     model, load, definition, upper_nodes = _guided_pair()
-    manager = _PlanarQ4PairManager(model, definition)
+    manager = _PlanarShellPairManager(model, definition)
     displacement = np.zeros(model.mesh.dof_manager.total_dofs)
     displacement[model.mesh.dof_manager.get_node_dofs(upper_nodes[0])[2]] = -1.0e-5
     with pytest.raises(ValueError, match="uniform normal translation"):
@@ -193,7 +308,7 @@ def test_guided_pair_rejects_nonuniform_or_lateral_motion_and_restart():
         split_target=True
     )
     with pytest.raises(MemoryError, match="candidate limit"):
-        _PlanarQ4PairManager(
+        _PlanarShellPairManager(
             split_model, split_definition,
             ContactSolverSettings(maximum_candidate_pairs=1),
         )

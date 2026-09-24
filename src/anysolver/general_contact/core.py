@@ -154,9 +154,9 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition) -> C
     if type(definition) is not ContactDefinition:
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if not definition.rigid_bodies:
-        from .pair import validate_planar_q4_pair
+        from .pair import validate_planar_shell_pair
 
-        return validate_planar_q4_pair(model, definition)
+        return validate_planar_shell_pair(model, definition)
     surface_by_name = {surface.name: surface for surface in definition.surfaces}
     rigid_by_name = {body.name: body for body in definition.rigid_bodies}
     if tuple(map(len, (definition.surfaces, definition.rigid_bodies,
@@ -438,9 +438,9 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
     if definition.rigid_bodies:
         manager = _PlanarQ4PlaneManager(model, definition, settings, initial_displacement)
     else:
-        from .pair import _PlanarQ4PairManager
+        from .pair import _PlanarShellPairManager
 
-        manager = _PlanarQ4PairManager(model, definition, settings, initial_displacement)
+        manager = _PlanarShellPairManager(model, definition, settings, initial_displacement)
     token = _ACTIVE_CONTACT.set(manager)
     try:
         yield manager

@@ -1,4 +1,4 @@
-"""Exploratory planar Q4 pair mortar under guided normal translation.
+"""Exploratory planar Q4/S3 pair mortar under guided normal translation.
 
 The projected reference overlap is fixed in this narrow development profile.
 Candidate kinematics are checked so that the fixed overlap remains exact: each
@@ -18,11 +18,13 @@ from .overlap import PlanarFace, planar_projected_overlap, reference_shell_face
 
 
 PROFILE = "PLANAR_Q4_PAIR_NORMAL_TRANSLATION_PENALTY_MORTAR_V0"
+S3_PROFILE = "PLANAR_Q4_S3_PAIR_NORMAL_TRANSLATION_PENALTY_MORTAR_V0"
 _MAX_VALIDATION_CANDIDATES = 100_000
 
 
 @dataclass(frozen=True)
 class _PairResults:
+    profile: str
     minimum_gap: float
     penalty_energy: float
     integration_force: tuple[float, float, float]
@@ -35,7 +37,7 @@ class _PairResults:
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "profile": PROFILE,
+            "profile": self.profile,
             "minimum_gap": self.minimum_gap,
             "penalty_energy": self.penalty_energy,
             "integration_force": list(self.integration_force),
@@ -63,12 +65,13 @@ def _definition_parts(model, definition: ContactDefinition):
     integration = surfaces[interaction.surface]
     target = surfaces[interaction.target]
     from anysolver.e4_pl_element import FORMULATION_ID as q4_id
+    from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
 
     for surface in (integration, target):
         for element_id in surface.element_ids:
             element = model.mesh.elements.get(element_id)
-            if element is None or getattr(element, "formulation_id", None) != q4_id:
-                issues.append(f"surface {surface.name}: element {element_id} is not qualified Q4")
+            if element is None or getattr(element, "formulation_id", None) not in {q4_id, s3_id}:
+                issues.append(f"surface {surface.name}: element {element_id} is not admitted Q4/S3")
     if issues:
         return issues, None
     integration_nodes = {int(node) for element_id in integration.element_ids
@@ -80,13 +83,14 @@ def _definition_parts(model, definition: ContactDefinition):
     return issues, (integration, target, interaction, integration_nodes, target_nodes)
 
 
-def validate_planar_q4_pair(model, definition: ContactDefinition) -> ContactValidationReport:
+def validate_planar_shell_pair(model, definition: ContactDefinition) -> ContactValidationReport:
     issues, parts = _definition_parts(model, definition)
+    profile = _profile_for_pair(model, definition)
     if parts is not None:
         integration, target, _interaction, _source_nodes, _target_nodes = parts
         if len(integration.element_ids) * len(target.element_ids) > _MAX_VALIDATION_CANDIDATES:
             issues.append("guided pair exceeds the validation candidate budget")
-            return ContactValidationReport("invalid", tuple(issues), PROFILE)
+            return ContactValidationReport("invalid", tuple(issues), profile)
         try:
             faces_a = [reference_shell_face(model, 1, element_id, integration.side)
                        for element_id in integration.element_ids]
@@ -113,10 +117,19 @@ def validate_planar_q4_pair(model, definition: ContactDefinition) -> ContactVali
                 issues.append("the pair has no projected reference overlap")
         except ValueError as exc:
             issues.append(str(exc))
-    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE)
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
-class _PlanarQ4PairManager:
+def _profile_for_pair(model, definition: ContactDefinition) -> str:
+    from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
+
+    if any(getattr(model.mesh.elements.get(element_id), "formulation_id", None) == s3_id
+           for surface in definition.surfaces for element_id in surface.element_ids):
+        return S3_PROFILE
+    return PROFILE
+
+
+class _PlanarShellPairManager:
     def __init__(self, model, definition: ContactDefinition,
                  settings: ContactSolverSettings | None = None,
                  initial_displacement: np.ndarray | None = None):
@@ -126,11 +139,12 @@ class _PlanarQ4PairManager:
                     * len(definition.surfaces[1].element_ids)
                 > self.settings.maximum_candidate_pairs):
             raise MemoryError("contact candidate limit exceeded; no pair was discarded")
-        report = validate_planar_q4_pair(model, definition)
+        report = validate_planar_shell_pair(model, definition)
         if not report.valid:
             raise ValueError("unsupported guided shell pair: " + "; ".join(report.issues))
         self.model = model
         self.definition = definition
+        self.profile = report.profile
         self.stiffness = definition.interactions[0].normal_stiffness
         self.gap_tolerance = definition.interactions[0].gap_tolerance
         self.swept_trial_cutbacks = 0
@@ -156,10 +170,27 @@ class _PlanarQ4PairManager:
         separation = np.mean(self.faces_a[0].corners, axis=0) - np.mean(
             self.faces_b[0].corners, axis=0
         )
-        if float(separation @ normal) < 0.0:
+        separation_tolerance = 256.0 * np.finfo(float).eps * max(
+            float(np.linalg.norm(self.faces_a[0].corners[1] - self.faces_a[0].corners[0])),
+            float(np.linalg.norm(self.faces_b[0].corners[1] - self.faces_b[0].corners[0])),
+        )
+        signed_separation = float(separation @ normal)
+        if signed_separation < -separation_tolerance:
             normal = -normal
+        elif abs(signed_separation) <= separation_tolerance and integration.side != "midsurface":
+            source_element = model.mesh.elements[self.faces_a[0].feature_id[1]]
+            director = source_element.physical_reference_director
+            if director is None:
+                director = normal
+            preferred = np.asarray(director, dtype=float)
+            if integration.side == "top":
+                preferred = -preferred
+            if float(preferred @ normal) < 0.0:
+                normal = -normal
         self.normal = normal
         self.face_gradients = {}
+        from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
+
         for face, side in (
             *((face, integration.side) for face in self.faces_a),
             *((face, target.side) for face in self.faces_b),
@@ -171,15 +202,17 @@ class _PlanarQ4PairManager:
                 director = np.cross(reference[1] - reference[0],
                                     reference[-1] - reference[0])
                 director /= np.linalg.norm(director)
-            offset = 0.5 * float(element.thickness) * {
-                "bottom": -1.0, "midsurface": 0.0, "top": 1.0,
-            }[side]
+            coordinate = {"bottom": -1.0, "midsurface": 0.0, "top": 1.0}[side]
+            if element.formulation_id == s3_id:
+                offset = float(element.material_surface_offset_from_reference(coordinate))
+            else:
+                offset = 0.5 * float(element.thickness) * coordinate
             self.face_gradients[face.feature_id] = np.r_[
                 normal, offset * np.cross(director, normal)
             ]
         self.reference_scale = max(
-            1.0, *(float(np.linalg.norm(face.corners - face.corners[0]))
-                   for face in (*self.faces_a, *self.faces_b))
+            *(float(np.max(np.linalg.norm(face.corners - face.corners[0], axis=1)))
+              for face in (*self.faces_a, *self.faces_b))
         )
         self.motion_tolerance = 256.0 * np.finfo(float).eps * self.reference_scale
         n_dof = model.mesh.dof_manager.total_dofs
@@ -238,6 +271,8 @@ class _PlanarQ4PairManager:
                             source_shape @ source.corners
                             - target_shape @ destination.corners
                         ))
+                        if abs(reference_gap) <= self.motion_tolerance:
+                            reference_gap = 0.0
                         weight = triangle_area / 3.0
                         self.samples.append((reference_gap, source_shape, target_shape,
                                              source_dofs, destination_dofs,
@@ -266,6 +301,8 @@ class _PlanarQ4PairManager:
                         source_shape @ source.corners
                         - target_shape @ destination.corners
                     ))
+                    if abs(reference_gap) <= self.motion_tolerance:
+                        reference_gap = 0.0
                     self.samples.append((reference_gap, source_shape, target_shape,
                                          source_dofs, destination_dofs,
                                          source_gradient, target_gradient))
@@ -353,6 +390,7 @@ class _PlanarQ4PairManager:
                 ) + (-force[dofs[3:]])
         minimum_gap = self._minimum_gap(u)
         result = _PairResults(
+            self.profile,
             minimum_gap, energy,
             tuple(float(value) for value in source_force),
             tuple(float(value) for value in target_force),
@@ -379,4 +417,4 @@ class _PlanarQ4PairManager:
         return max(0.0, 0.98 * fraction)
 
     def restart_contract(self) -> dict[str, object]:
-        return {"profile": PROFILE, "restart_admitted": False}
+        return {"profile": self.profile, "restart_admitted": False}
