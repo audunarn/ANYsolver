@@ -743,3 +743,34 @@ It uses actual Q4/S3 physical stiffness and excludes numerical drilling
 completion. Native and shell port seams are now checked separately, but
 finite shell pose, relative-pose curvature, exact line multipliers, and
 coupled stability remain unresolved. G1 remains barred.
+
+## 24 September 2026 restart pause — finite shell pose candidate
+
+User requested pause for app restart. The isolated integration branch is at
+`5736f071e63c65f4ac51883e5ecfcbaf719a2c69`; accepted main is untouched.
+There are uncommitted edits in
+`scripts/_b3_e4_f03_shell_finite_pose_candidate.py` and
+`tests/test_b3_e4_f03_shell_finite_pose_candidate.py`, plus this checkpoint.
+The director-constrained four-sample finite pose passed 10 focused tests before
+the last edit. Independent read-only mechanics review found no defect within
+its bounded flat-panel domain and identified production gaps: E4 trial-state
+binding and drill chart pullback, layer-specific eccentric samples, chart
+transport, exact derivatives and line/KKT stability. The last edit added
+second-order directional automatic differentiation and tests; those changes
+have **not been run or reviewed**. Resume by inspecting the dirty worktree,
+running the new focused test, fixing any failures, then obtaining independent
+review before recording this candidate as G0 evidence. No scientific process
+or one-use registration is active; G0B remains open and G1 remains barred.
+
+## 24 September 2026 resumed finite-pose diagnostic
+
+The unverified derivative edit above was tested, strengthened with all-column
+reference checks, and independently reviewed. The finite pose was corrected
+from an unconstrained fit that leaked shear-induced spin to a
+director-constrained planar fit. The bounded result and exact remaining
+boundaries are recorded in
+`B3_GE_E4_PL_G0_F03_FINITE_SHELL_POSE_CANDIDATE_RESULT_20260924.md`.
+The candidate and related F03 spatial diagnostics passed 89 focused tests.
+The next work is binding this physical port to actual E4 Q4/S3-V2D trial
+states and coordinate charts, then deriving the relative-pose line potential
+and full coupled KKT. G0B remains open; G1 remains barred.
