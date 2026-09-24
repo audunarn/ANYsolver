@@ -1,5 +1,18 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — B2 F09 mixed weak-shear graph diagnostic.**
+A separate exact Castigliano oracle was compared with the private physical
+B2 operator assembled into one- and two-member sparse root-clamped graphs.
+All four mixed six-component tip-wrench cases, including area `2^-80 m²`
+with weak axial/shear loads and order-one couples, matched tip, grouped
+support balance and energy to floating precision. The largest tip-channel
+relative difference is `2.23e-16`; 27 affected private tests passed.
+Source, raw result and scope are in
+`B3_GE_E4_PL_G0_F09_MIXED_GRAPH_V1.md` and its JSONL. This is a narrow
+feasibility result, not a conditioning envelope or F09 acceptance. The
+mandatory B3-GE/E4-PL line foundation remains the main G0B blocker;
+F03 and F09 are both open, and G1 remains barred.
+
 **24 September 2026 — independent classical axial resolution isolation.**
 The guarded comparator now permits separate bounded beam and continuous-P1
 line resolutions, leaving its previous `2n` beam / `n` line default
