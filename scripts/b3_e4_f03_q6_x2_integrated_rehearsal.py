@@ -70,7 +70,9 @@ def child(output: Path) -> None:
             not np.isfinite(candidate_state).all()):
         raise ValueError("invalid certificate candidate state")
     started = perf_counter()
-    physical = physical_run(6, "x2", candidate_state=candidate_state)
+    physical = physical_run(
+        6, "x2", candidate_state=candidate_state,
+        expected_kkt_sha256=certificate["scaled_kkt_rhs_sha256"])
     physical_bytes = _write_new(output / "physical.json", physical)
     # Validate the actual JSON boundary: the producer uses tuples for grids,
     # while the durable case schema owns JSON list representations.
@@ -87,6 +89,7 @@ def child(output: Path) -> None:
         "certificate_measurement_sha256": hashlib.sha256(
             (certificate_dir / "measurement.json").read_bytes()).hexdigest(),
         "candidate_state_sha256": candidate_hash,
+        "scaled_kkt_rhs_sha256": certificate["scaled_kkt_rhs_sha256"],
         "physical_sha256": hashlib.sha256(physical_bytes).hexdigest(),
         "spatial_sha256": hashlib.sha256(spatial_bytes).hexdigest(),
         "certificate_seconds": certificate_s,

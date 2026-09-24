@@ -1,5 +1,19 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — X2 scaled KKT/RHS identity bound.** A fresh source-level
+rehearsal canonicalized and hashed the full scaled sparse KKT matrix and RHS
+in both the certificate and independently reassembled physical recovery path.
+The hashes matched, the saved certificate state drove recovery, and the full
+numerical/physical/spatial route completed in 1,423.57 seconds at 688.7 MB
+sampled peak RSS. Physical state and observables exactly matched the prior
+bound-state rehearsal. The affected suite passed 40/40. Independent read-only
+review accepted this narrow scaled-system identity transfer. See
+`B3_GE_E4_PL_G0_F03_Q6_X2_KKT_BOUND_RESULT_20260924.md`. Compiled-certificate
+arithmetic, physical-observable error propagation, geometry/scaling identity,
+installed artifacts, saved-only replay, three-grid adjudication, primal
+positivity and native interface mechanics remain open. F03/G0B remain open;
+G1 is barred.
+
 **24 September 2026 — X2 certificate candidate bound to physical recovery.**
 The next source-level X2 rehearsal used the certificate's saved 5,893-coordinate
 scaled KKT candidate as the physical pilot state, rather than a separate solve.

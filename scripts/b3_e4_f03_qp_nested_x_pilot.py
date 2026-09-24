@@ -44,7 +44,8 @@ def refined_x2() -> tuple[float, ...]:
     return tuple(sorted(set(first).union(midpoints)))
 
 
-def run(degree: int, grid: str = "x1", *, candidate_state=None) -> dict:
+def run(degree: int, grid: str = "x1", *, candidate_state=None,
+        expected_kkt_sha256: str | None = None) -> dict:
     if degree not in (4, 5, 6):
         raise ValueError("pilot degree must be Q4, Q5 or Q6")
     if grid not in ("x0", "x1", "x2") or (grid in ("x0", "x2") and degree != 6):
@@ -59,7 +60,9 @@ def run(degree: int, grid: str = "x1", *, candidate_state=None) -> dict:
     operators = assemble(trace)
     elapsed["assembly_s"] = perf_counter() - start
     start = perf_counter()
-    free_q, eta, result = solve(operators, candidate_state=candidate_state)
+    free_q, eta, result = solve(
+        operators, candidate_state=candidate_state,
+        expected_kkt_sha256=expected_kkt_sha256)
     elapsed["solve_s"] = perf_counter() - start
     q = np.zeros(2 * trace.n)
     q[operators.free_columns] = free_q

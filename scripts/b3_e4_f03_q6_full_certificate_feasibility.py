@@ -18,7 +18,9 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import splu
 
-from scripts._b3_e4_f03_conforming_qp_energy import assemble, E0, U0, YAW_LENGTH
+from scripts._b3_e4_f03_conforming_qp_energy import (
+    _kkt_sha256, assemble, E0, U0, YAW_LENGTH,
+)
 from scripts._b3_e4_f03_local_scientific_supervisor import (
     SupervisorLimits, frozen_thread_environment, supervise,
 )
@@ -74,6 +76,7 @@ def child(output: Path, case_id: str) -> None:
     factor = splu(matrix, permc_spec="COLAMD", diag_pivot_thresh=1.,
                   options={"Equil": False, "IterRefine": "NOREFINE"})
     rhs = np.r_[d*operators.load/E0, np.zeros(3)]
+    kkt_hash = _kkt_sha256(matrix, rhs)
     state = factor.solve(rhs)
     factor_s = perf_counter() - factor_start
     inverse_path = output / "inverse_float64.bin"
@@ -128,6 +131,7 @@ def child(output: Path, case_id: str) -> None:
         "inverse_archive_bytes": inverse_path.stat().st_size,
         "inverse_archive_sha256": inverse_hash,
         "candidate_state_sha256": hashlib.sha256(candidate_bytes).hexdigest(),
+        "scaled_kkt_rhs_sha256": kkt_hash,
         "certificate": certificate,
         "scientific_registration": False,
     }

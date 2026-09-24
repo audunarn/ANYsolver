@@ -7,6 +7,7 @@ evidence, a native interface law, or a convergence/qualification result.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import math
 import warnings
 
@@ -186,7 +187,32 @@ def _require_solution_checks(root_compatibility_scaled: float,
             raise ValueError(f"Qp {name} numerical check failed")
 
 
-def solve(operators: QpOperators, *, candidate_state=None):
+def _kkt_sha256(matrix: sparse.spmatrix, rhs: np.ndarray) -> str:
+    """Hash a canonical scaled KKT system, including its right-hand side."""
+    canonical = matrix.tocsc(copy=True)
+    canonical.sum_duplicates()
+    canonical.eliminate_zeros()
+    canonical.sort_indices()
+    vector = np.asarray(rhs, dtype=np.float64)
+    if (canonical.shape[0] != canonical.shape[1] or
+            vector.shape != (canonical.shape[0],) or
+            not np.isfinite(canonical.data).all() or
+            not np.isfinite(vector).all()):
+        raise ValueError("invalid Qp KKT fingerprint input")
+    digest = hashlib.sha256(b"F03_QP_SCALED_KKT_RHS_V1\0")
+    for array, kind in ((canonical.shape, "<i8"),
+                        (canonical.indptr, "<i8"),
+                        (canonical.indices, "<i8"),
+                        (canonical.data, "<f8"),
+                        (vector, "<f8")):
+        data = np.asarray(array, dtype=kind)
+        digest.update(np.asarray([data.size], dtype="<i8").tobytes())
+        digest.update(data.tobytes(order="C"))
+    return digest.hexdigest()
+
+
+def solve(operators: QpOperators, *, candidate_state=None,
+          expected_kkt_sha256: str | None = None):
     """Solve or validate one candidate after quadrature, energy and rank gates."""
     if (not np.isfinite(operators.beam_discrepancy_relative) or
             not np.isfinite(operators.load_discrepancy_scaled) or
@@ -229,6 +255,9 @@ def solve(operators: QpOperators, *, candidate_state=None):
                           (sparse.csr_matrix(scaled_root), sparse.csr_matrix((3, 3)))),
                          format="csc")
     rhs = np.r_[d*operators.load/E0, np.zeros(3)]
+    if expected_kkt_sha256 is not None:
+        if _kkt_sha256(saddle, rhs) != expected_kkt_sha256:
+            raise ValueError("Qp certified KKT matrix/RHS identity mismatch")
     if candidate_state is None:
         with warnings.catch_warnings():
             warnings.simplefilter("error", MatrixRankWarning)

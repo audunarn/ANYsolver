@@ -6,13 +6,14 @@ import math
 import numpy as np
 import pytest
 from numpy.polynomial.legendre import leggauss
+from scipy import sparse
 
 import scripts._b3_e4_f03_conforming_qp_energy as qp_energy
 from scripts._b3_e4_f03_conforming_q1_energy import (
     assemble as assemble_q1, solve as solve_q1,
 )
 from scripts._b3_e4_f03_conforming_qp_energy import (
-    _require_solution_checks, _station_rule, assemble, solve,
+    _kkt_sha256, _require_solution_checks, _station_rule, assemble, solve,
 )
 from scripts._b3_e4_f03_conforming_qp_trace import FinitePadQpTrace
 from scripts._b3_e4_f03_primal_ritz import E0, F0, PLANE, SECTION, THICKNESS, U0, YAW_LENGTH
@@ -99,10 +100,36 @@ def test_p1_separately_assembled_q1_matrix_load_and_solve():
     assert np.allclose(recovered_reaction, reaction, rtol=2e-15, atol=1e-9)
     assert np.allclose(recovered["tip_pose"], result["tip_pose"],
                        rtol=2e-15, atol=1e-14)
+    scaled_root = root_scale@generic.root_constraint@np.diag(d)
+    scaled_stiffness = sparse.diags(d)@(
+        generic.shell_stiffness+generic.beam_stiffness)@sparse.diags(d)/E0
+    kkt = sparse.bmat(((scaled_stiffness, sparse.csr_matrix(scaled_root.T)),
+                       (sparse.csr_matrix(scaled_root), sparse.csr_matrix((3, 3)))),
+                      format="csc")
+    rhs = np.r_[d*generic.load/E0, np.zeros(3)]
+    expected_hash = _kkt_sha256(kkt, rhs)
+    checked_q, checked_reaction, _ = solve(
+        generic, candidate_state=saved, expected_kkt_sha256=expected_hash)
+    assert np.allclose(checked_q, q, rtol=2e-15, atol=0.)
+    assert np.allclose(checked_reaction, reaction, rtol=2e-15, atol=1e-9)
     with pytest.raises(ValueError, match="KKT dimension"):
         solve(generic, candidate_state=saved[:-1])
     with pytest.raises(ValueError, match="equilibrium numerical"):
         solve(generic, candidate_state=np.zeros_like(saved))
+    with pytest.raises(ValueError, match="identity mismatch"):
+        solve(generic, candidate_state=saved, expected_kkt_sha256="0"*64)
+
+
+def test_kkt_fingerprint_canonicalizes_storage_and_binds_rhs():
+    matrix = sparse.coo_matrix((np.array([1., 2., 3.]),
+                                (np.array([0, 0, 1]), np.array([0, 0, 1]))),
+                               shape=(2, 2))
+    canonical = sparse.diags([3., 3.], format="csc")
+    rhs = np.array([1., 2.])
+    assert _kkt_sha256(matrix, rhs) == _kkt_sha256(canonical, rhs)
+    assert _kkt_sha256(matrix, rhs) != _kkt_sha256(canonical, [1., 2.0001])
+    assert _kkt_sha256(matrix, rhs) != _kkt_sha256(
+        sparse.diags([3., 3.0001], format="csr"), rhs)
 
 
 @pytest.mark.parametrize("p", (2, 3, 4, 5, 6))
