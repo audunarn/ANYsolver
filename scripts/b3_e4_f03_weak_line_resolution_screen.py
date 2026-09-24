@@ -25,12 +25,38 @@ from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_reference_kkt)
 
 
+def sinusoidal_axial_density_load(beam, *, amplitude_n_per_m=1e5):
+    """Integrate one fixed physical line density through native station work."""
+    if (isinstance(amplitude_n_per_m, (bool, str)) or
+            not isinstance(amplitude_n_per_m,
+                           (int, float, np.integer, np.floating)) or
+            not np.isfinite(amplitude_n_per_m) or
+            amplitude_n_per_m <= 0.):
+        raise ValueError("positive finite axial line-load amplitude required")
+    points, weights = np.polynomial.legendre.leggauss(8)
+    load = np.zeros(beam.context.count)
+    for half_cell in range(beam.n_half_cells):
+        left = half_cell/beam.n_half_cells
+        right = (half_cell+1)/beam.n_half_cells
+        for point, weight in zip(points, weights):
+            station = (left+right)/2+(right-left)*point/2
+            element, cell, fraction, _ = beam._locate(float(station))
+            port = NativeHalfCellSpatialPort(
+                beam.context, element, cell, fraction)
+            wrench = np.array((amplitude_n_per_m*np.sin(2*np.pi*station),
+                               0., 0., 0., 0., 0.))
+            load += (right-left)*weight/2*port.pullback(
+                beam.context.initial.mechanical, wrench)
+    return load
+
+
 def one_case(topology: str, intervals: int, kind: str, *,
              shell_port: str = "rail",
-             load_kind: str = "torsion") -> dict:
+             load_kind: str = "torsion", n_s: int = 4,
+             native_half_cells: int = 16) -> dict:
     """Solve a bounded torsion or alternating axial case at one resolution."""
-    shell = FlatE4TrialPanel(make_shell(4, topology))
-    beam = build(16)
+    shell = FlatE4TrialPanel(make_shell(n_s, topology))
+    beam = build(native_half_cells)
     space = LineMultiplierSpace(
         kind, tuple(np.linspace(0., 1., intervals+1)))
     kkt = assemble_reference_kkt(
@@ -48,6 +74,8 @@ def one_case(topology: str, intervals: int, kind: str, *,
         axial = 1e5*np.sin(8*np.pi*positions[:, 0])
         axial[np.abs(axial) < 1e-8] = 0.
         load[shell_size:shell_size+beam.context.nodal_count:6] = axial
+    elif load_kind == "sinusoidal_axial_density":
+        load[shell_size:] = sinusoidal_axial_density_load(beam)
     else:
         raise ValueError("unknown bounded line load kind")
     free_count = len(kkt.free_primal)
@@ -98,6 +126,8 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "shell_port": shell_port,
         "load_kind": load_kind,
         "intervals": intervals,
+        "shell_host_intervals": n_s,
+        "native_half_cells": native_half_cells,
         "shell_elements": shell.panel.element_count,
         "native_elements": beam.n_half_cells//2,
         "tip_rx_rad": float(full[tip_rx]),
@@ -106,6 +136,9 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "shell_max_abs_ux_m": float(np.max(np.abs(
             full[:shell_size].reshape(-1, 6)[:, 0]))),
         "applied_axial_force_n": float(np.sum(
+            load[shell_size:shell_size+beam.context.nodal_count:6])),
+        "applied_axial_first_moment_n_m": float(np.dot(
+            np.arange(native_half_cells+1)/native_half_cells,
             load[shell_size:shell_size+beam.context.nodal_count:6])),
         "shell_energy_j": float(.5*shell_total@kkt.primal_tangent[
             :shell_size, :shell_size]@shell_total),
@@ -125,19 +158,31 @@ def main() -> None:
     parser.add_argument("--local-translation", action="store_true")
     parser.add_argument("--axial-wave", action="store_true")
     parser.add_argument("--include-dual", action="store_true")
+    parser.add_argument("--paired-refinement", action="store_true")
+    parser.add_argument("--sinusoidal-axial-density", action="store_true")
     arguments = parser.parse_args()
+    if arguments.axial_wave and arguments.sinusoidal_axial_density:
+        parser.error("select only one axial load")
     shell_port = ("local_translation" if arguments.local_translation
                   else "rail")
-    load_kind = "axial_wave" if arguments.axial_wave else "torsion"
+    load_kind = ("sinusoidal_axial_density" if arguments.sinusoidal_axial_density
+                 else "axial_wave" if arguments.axial_wave else "torsion")
     kinds = ("piecewise_constant", "continuous_linear")
     if arguments.include_dual:
         kinds += ("dual_linear",)
+    grids = ((n_s, 4*n_s, n_s) for n_s in (1, 2, 4)) if (
+        arguments.paired_refinement) else ((4, 16, intervals)
+                                          for intervals in (2, 4, 8))
+    grids = tuple(grids)
     rows = [one_case(topology, intervals, kind, shell_port=shell_port,
-                     load_kind=load_kind)
+                     load_kind=load_kind, n_s=n_s,
+                     native_half_cells=native_half_cells)
             for topology in ("Q4", "S3-V2D")
             for kind in kinds
-            for intervals in (2, 4, 8)]
+            for n_s, native_half_cells, intervals in grids]
     print(json.dumps({"status": "UNREGISTERED_DIAGNOSTIC",
+                      "screen": "paired_refinement" if arguments.paired_refinement
+                      else "fixed_primal",
                       "shell_port": shell_port, "load_kind": load_kind,
                       "cases": rows},
                      indent=2, sort_keys=True))

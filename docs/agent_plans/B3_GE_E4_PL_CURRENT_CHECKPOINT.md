@@ -1,5 +1,43 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — mesh-consistent loaded F03 resolution diagnostic.**
+The earlier axial-wave screen placed the same signed force at each beam
+node, so changing beam resolution would change the applied physical load.
+A separate optional load now integrates the fixed reference density
+`q_x(s)=10^5 sin(2 pi s) N/m` through the native station-work pullback.
+For native half-cell counts 4, 8 and 16, four direct checks verify the
+independently integrated exact nodal-hat loads, zero resultant, the analytic
+first moment `-10^5/(2 pi) N m`, no transverse or retained-coordinate force
+on this straight fixture, and invalid-amplitude rejection. The existing load
+option and default grid are preserved.
+
+Two unregistered paired screens use shell host intervals 1/2/4, native
+half-cells 4/8/16 and one multiplier interval per host, for P0, continuous
+P1 and dual P1 on Q4/S3 and both rail/local shell origins. All **36**
+cases have the same first moment within `3.64e-12 N m`, zero resultant
+within `2.73e-12 N` and scaled algebraic residual below `5.31e-17`.
+The beam-tip response is still not settled: Q4 rail continuous-P1 changes
+from `-0.317` to `-0.806 µm` between the last two grids; Q4 local
+continuous-P1 changes from `-0.884` to `-1.322 µm`. At the finest grid,
+the Q4/S3 local continuous-P1 tips differ by about 14%. These are
+physical-response discrepancies despite small weak residuals, not evidence
+for a selected multiplier space or a converged continuum target. The
+two complete raw outputs are
+`B3_GE_E4_PL_F03_PHYSICAL_DENSITY_PAIRED_{RAIL,LOCAL}_V1.json` here;
+the command is `python -B -m
+scripts.b3_e4_f03_weak_line_resolution_screen --paired-refinement
+--sinusoidal-axial-density --include-dual`, with `--local-translation`
+for the second output. The saved JSON was parsed and checked against the
+source output. After those screens, only the amplitude type guard was
+tightened; the accepted `10^5 N/m` load arithmetic was unchanged and its
+focused checks were rerun. This remains Level-A work under the adopted
+philosophy.
+The existing independent classical comparator has a different beam and
+shell law and is not silently treated as a direct native target.
+**F03/G0B remain open; G1 remains barred.** The next result must resolve
+the loaded-response discrepancy against a physically matched reference
+or a justified joint-refinement limit before any multiplier selection.
+
 **24 September 2026 — F03 biorthogonal dual-P1 development candidate.**
 From parent `1e18bb053a6a59becf9e1e6f96ea94b30e94f944`, added the local
 dual basis `psi_L=2N_L-N_R`, `psi_R=2N_R-N_L` to the bounded weak-line and
