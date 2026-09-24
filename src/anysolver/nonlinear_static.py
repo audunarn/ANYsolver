@@ -806,7 +806,7 @@ def _static_restart_analysis_contract(
         # Preserve the V1 legacy restart contract byte-for-byte when the new
         # globalization option is unused.
         convergence_contract.pop("characteristic_length", None)
-    return {
+    contract = {
         "schema": "ANYSOLVER_STATIC_RESTART_CONTRACT_V1",
         "control": control_name,
         "load_case": load_case_descriptor(load_case),
@@ -827,6 +827,13 @@ def _static_restart_analysis_contract(
         "kinematics": str(kinematics),
         "corotational_tangent": str(resolved_corotational_tangent),
     }
+    from .general_contact.core import active_contact_manager
+
+    contact_manager = active_contact_manager()
+    if contact_manager is not None:
+        contract["schema"] = "ANYSOLVER_STATIC_RESTART_CONTRACT_V2"
+        contract["general_contact"] = contact_manager.restart_contract()
+    return contract
 
 
 def _static_step_from_restart(value: Any) -> NonlinearStaticStep:
@@ -1503,7 +1510,7 @@ def _assemble_nonlinear_system(
     """
 
     try:
-        return _assemble_nonlinear_system_unchecked(
+        F_int, K_T, states = _assemble_nonlinear_system_unchecked(
             model,
             displacements,
             committed_states,
@@ -1516,6 +1523,17 @@ def _assemble_nonlinear_system(
             corotational_tangent=corotational_tangent,
             require_full_coordinates=require_full_coordinates,
         )
+        from .general_contact.core import active_contact_manager
+
+        contact_manager = active_contact_manager()
+        if contact_manager is not None:
+            contact_force, contact_tangent, _ = contact_manager.evaluate(
+                displacements, tangent=tangent
+            )
+            F_int = np.asarray(F_int, dtype=float) + contact_force
+            if tangent:
+                K_T = K_T + contact_tangent
+        return F_int, K_T, states
     except BaseException:
         _discard_nonlinear_state_candidate(committed_states)
         raise
@@ -3850,6 +3868,14 @@ def _solve_static_displacement_control(
                 )
 
                 if residual_norm <= tolerance * reference and constraint_error <= tolerance * target_scale:
+                    from .general_contact.core import active_contact_manager
+
+                    contact_manager = active_contact_manager()
+                    if contact_manager is not None and not contact_manager.evaluate(
+                        u, tangent=False
+                    )[2].gap_tolerance_met:
+                        failure_reason = "contact_gap_exceeded"
+                        break
                     states_new = trial_states
                     break
 
@@ -3885,6 +3911,17 @@ def _solve_static_displacement_control(
                 if np.any(~np.isfinite(delta)):
                     failure_reason = "nonfinite_augmented_solution"
                     break
+                from .general_contact.core import active_contact_manager
+
+                contact_manager = active_contact_manager()
+                if contact_manager is not None:
+                    candidate_u = np.asarray(T @ (q + delta[:-1]) + u0,
+                                             dtype=float).reshape(-1)
+                    fraction = contact_manager.admissible_step_fraction(u, candidate_u)
+                    if fraction <= 1.0e-12:
+                        failure_reason = "contact_gap_exceeded"
+                        break
+                    delta *= fraction
                 q += delta[:-1]
                 lam += float(delta[-1])
             else:
@@ -3894,7 +3931,11 @@ def _solve_static_displacement_control(
                 _discard_nonlinear_state_candidate(committed_states)
                 q = q_step_start
                 lam = lam_step_start
-                status = "stopped_at_limit" if steps else "diverged"
+                status = (
+                    "contact_gap_exceeded"
+                    if failure_reason == "contact_gap_exceeded"
+                    else "stopped_at_limit" if steps else "diverged"
+                )
                 break
 
             committed_states = _commit_nonlinear_state_candidate(
@@ -6204,6 +6245,21 @@ def _solve_static_nonlinear_under_lease(
                 )
             total_iterations += 1
             if residual_norm <= tolerance * reference:
+                from .general_contact.core import active_contact_manager
+
+                contact_manager = active_contact_manager()
+                if contact_manager is not None and not contact_manager.evaluate(
+                    u, tangent=False
+                )[2].gap_tolerance_met:
+                    return (
+                        False,
+                        q_start,
+                        committed_states,
+                        residual_norm,
+                        iteration,
+                        "contact_gap_exceeded",
+                        None,
+                    )
                 return (
                     True,
                     q_trial,
@@ -6274,6 +6330,24 @@ def _solve_static_nonlinear_under_lease(
                     "nonfinite_newton_increment",
                     None,
                 )
+
+            from .general_contact.core import active_contact_manager
+
+            contact_manager = active_contact_manager()
+            if contact_manager is not None:
+                candidate_u = full_displacement(q_trial + dq, path_factor)
+                fraction = contact_manager.admissible_step_fraction(u, candidate_u)
+                if fraction <= 1.0e-12:
+                    return (
+                        False,
+                        q_start,
+                        committed_states,
+                        residual_norm,
+                        iteration,
+                        "contact_gap_exceeded",
+                        None,
+                    )
+                dq *= fraction
 
             if line_search_mode == "none":
                 q_trial = q_trial + dq
@@ -6964,8 +7038,16 @@ def _solve_static_nonlinear_under_lease(
                     }
                 )
                 if step_size < min_step:
-                    status = "stopped_at_limit" if steps else "diverged"
-                    info["failure_reason"] = "minimum_load_increment_reached"
+                    contact_gap_failure = failure_reason == "contact_gap_exceeded"
+                    status = (
+                        "contact_gap_exceeded"
+                        if contact_gap_failure
+                        else "stopped_at_limit" if steps else "diverged"
+                    )
+                    info["failure_reason"] = (
+                        "contact_gap_exceeded"
+                        if contact_gap_failure else "minimum_load_increment_reached"
+                    )
                     info["first_failed_load_factor"] = float(lam_trial)
                     info["first_failed_step_size"] = float(attempted_step_size)
                     info["first_failed_iteration_reason"] = failure_reason
@@ -7133,6 +7215,8 @@ def solve_static_nonlinear(
     record_increment_snapshots: bool = False,
     restart_checkpoint: Optional[Any] = None,
     emit_restart_checkpoint: bool = False,
+    contact: Optional[Any] = None,
+    contact_settings: Optional[Any] = None,
 ) -> NonlinearStaticResult:
     """Run nonlinear static analysis under one non-renewable family lease."""
 
@@ -7140,6 +7224,25 @@ def solve_static_nonlinear(
     run_under_lease = _run_with_qualified_assembly_runtime_lease
     own_resource_config = _owned_resource_config_snapshot
     solve_under_lease = _solve_static_nonlinear_under_lease
+    if contact is not None:
+        from .general_contact import ContactDefinition, ContactSolverSettings
+
+        if type(contact) is not ContactDefinition:
+            raise TypeError("contact must be a ContactDefinition")
+        if contact_settings is not None and type(contact_settings) is not ContactSolverSettings:
+            raise TypeError("contact_settings must be ContactSolverSettings")
+        if fracture_config is not None or imperfection is not None:
+            raise ValueError("contact with fracture or imperfection is not yet admitted")
+        if str(kinematics).lower() == "corotational":
+            if any(surface.side != "midsurface" for surface in contact.surfaces):
+                raise ValueError("offset shell contact is admitted with von_karman kinematics only")
+            if restart_checkpoint is not None or emit_restart_checkpoint:
+                raise ValueError("corotational contact restart is not yet admitted")
+            if corotational_tangent == "rotated":
+                raise ValueError("contact requires the consistent corotational tangent")
+            corotational_tangent = "consistent"
+    elif contact_settings is not None:
+        raise ValueError("contact_settings requires contact")
     exact_guard(
         model,
         context="solve_static_nonlinear preflight",
@@ -7161,38 +7264,64 @@ def solve_static_nonlinear(
             post_observation=post_observation,
         )
 
-        return _run_with_nonlinear_state_cleanup(
-            solve_under_lease,
-            model,
-            load_case=load_case,
-            constant_load_case=constant_load_case,
-            max_load_factor=max_load_factor,
-            num_steps=num_steps,
-            max_iterations=max_iterations,
-            tolerance=tolerance,
-            num_layers=num_layers,
-            min_step_fraction=min_step_fraction,
-            imperfection=imperfection,
-            load_program=load_program,
-            control=control,
-            displacement_control=displacement_control,
-            initial_element_states=initial_element_states,
-            convergence_settings=convergence_settings,
-            resource_config=owned_resource_config,
-            fracture_config=fracture_config,
-            kinematics=kinematics,
-            corotational_tangent=corotational_tangent,
-            status_callback=status_callback,
-            progress_callback=progress_callback,
-            initial_fields=initial_fields,
-            initial_displacements=initial_displacements,
-            equilibrate_initial_state=equilibrate_initial_state,
-            cancellation_token=cancellation_token,
-            record_increment_snapshots=record_increment_snapshots,
-            restart_checkpoint=restart_checkpoint,
-            emit_restart_checkpoint=emit_restart_checkpoint,
-            _qualified_runtime_guard=lease,
-        )
+        def run_solver() -> NonlinearStaticResult:
+            return _run_with_nonlinear_state_cleanup(
+                solve_under_lease,
+                model,
+                load_case=load_case,
+                constant_load_case=constant_load_case,
+                max_load_factor=max_load_factor,
+                num_steps=num_steps,
+                max_iterations=max_iterations,
+                tolerance=tolerance,
+                num_layers=num_layers,
+                min_step_fraction=min_step_fraction,
+                imperfection=imperfection,
+                load_program=load_program,
+                control=control,
+                displacement_control=displacement_control,
+                initial_element_states=initial_element_states,
+                convergence_settings=convergence_settings,
+                resource_config=owned_resource_config,
+                fracture_config=fracture_config,
+                kinematics=kinematics,
+                corotational_tangent=corotational_tangent,
+                status_callback=status_callback,
+                progress_callback=progress_callback,
+                initial_fields=initial_fields,
+                initial_displacements=initial_displacements,
+                equilibrate_initial_state=equilibrate_initial_state,
+                cancellation_token=cancellation_token,
+                record_increment_snapshots=record_increment_snapshots,
+                restart_checkpoint=restart_checkpoint,
+                emit_restart_checkpoint=emit_restart_checkpoint,
+                _qualified_runtime_guard=lease,
+            )
+
+        if contact is not None:
+            from .general_contact.core import contact_scope
+
+            with contact_scope(
+                model, contact, contact_settings, initial_displacements
+            ) as contact_manager:
+                result = run_solver()
+                summary = contact_manager.evaluate(result.displacements, tangent=False)[2]
+                summary_payload = summary.to_dict()
+                summary_payload.update(
+                    normal_law="penalty",
+                    normal_stiffness=contact_manager.stiffness,
+                    gap_tolerance=contact_manager.gap_tolerance,
+                    maximum_candidate_pairs=(
+                        contact_manager.settings.maximum_candidate_pairs
+                    ),
+                    swept_trial_cutbacks=contact_manager.swept_trial_cutbacks,
+                )
+                result.info["general_contact"] = summary_payload
+                return result
+        from .general_contact.core import suspend_contact
+
+        with suspend_contact():
+            return run_solver()
 
     return run_under_lease(
         model,

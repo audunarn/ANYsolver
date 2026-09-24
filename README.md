@@ -120,6 +120,7 @@ and release gates.
 | Continuation | Bounded Crisfield-style spherical arc-length tracing through a first limit point and a guarded descending branch, including current-area follower pressure and its load tangent. |
 | Dynamics | Newmark or HHT-alpha implicit transient response, Rayleigh damping, prescribed shell pressure patches, selected/envelope history storage, and memory preflight. |
 | Impact/contact | One rigid sphere with frictionless penalty contact against shells and opt-in beam-axis segments; event substepping, Aitken relaxation, nonlinear material response, and engineering damage/erosion options. |
+| General-contact prototype | Opt-in planar qualified Q4 against a fixed rigid plane in nonlinear static analysis; [C0 profile and limitations](docs/GENERAL_CONTACT_C0.md) and [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md). Engineering acceptance remains open. |
 | Imperfections | Stress-free eigenmode, member-bow, plate-wave, flange-twist, explicit, and composite imperfection fields. |
 | Initial fields | Element-local shell membrane/bending stress or membrane/curvature prestrain, arbitrary configured beam-fiber stress/prestrain distributions, zero-external-load equilibration, admissibility checks, and provenance kept separate from geometric imperfections. |
 | Workflows | Normalized generated geometry to static/prestress/buckling; traceable static-to-buckling-to-imperfect nonlinear-capacity workflow. |

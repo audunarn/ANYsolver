@@ -1345,7 +1345,10 @@ def _optimized_assemble_nonlinear_system(
         committed_states,
         deleted,
     )
-    if extra or kinematics != "von_karman" or deleted_s3_reference:
+    from .general_contact.core import active_contact_manager
+
+    if (active_contact_manager() is not None or extra
+            or kinematics != "von_karman" or deleted_s3_reference):
         # The assembly plan encodes the von Karman element response; other
         # kinematics and per-element scale options use the scalar reference
         # assembler. Immutable initial fields are handled by exact per-element

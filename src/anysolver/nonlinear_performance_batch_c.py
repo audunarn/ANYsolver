@@ -508,7 +508,14 @@ def _batch_c_assemble_nonlinear_system(
     corotational_tangent = str(
         extra.pop("corotational_tangent", "rotated")
     )
-    if require_full_coordinates or deleted_tuple or extra or kinematics != "von_karman":
+    # Direct reduced assembly returns a residual/tangent without visiting the
+    # reference assembler's contact-contributor hook.  Keep contact candidates
+    # on that transactional full-coordinate path until a reduced contact
+    # assembly is derived and checked against it.
+    from .general_contact.core import active_contact_manager
+
+    if (active_contact_manager() is not None or require_full_coordinates
+            or deleted_tuple or extra or kinematics != "von_karman"):
         # The reduced-assembly plan encodes the default von Karman element
         # response; erosion, per-element stiffness scales, corotational
         # kinematics take the full reference path. Immutable initial fields

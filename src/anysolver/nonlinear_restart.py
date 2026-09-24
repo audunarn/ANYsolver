@@ -30,6 +30,8 @@ from .element_capabilities import ElementCapabilityError
 
 NONLINEAR_CHECKPOINT_SCHEMA = "ANYSOLVER_NONLINEAR_CHECKPOINT_V1"
 NONLINEAR_CHECKPOINT_VERSION = 1
+NONLINEAR_CONTACT_CHECKPOINT_SCHEMA = "ANYSOLVER_NONLINEAR_CHECKPOINT_V2"
+NONLINEAR_CONTACT_CHECKPOINT_VERSION = 2
 NONLINEAR_CHECKPOINT_INTEGRITY_ID = "SHA256_CANONICAL_JSON_EXCLUDING_SELF_V1"
 QUALIFIED_CHECKPOINT_LIFECYCLE_POLICY_ID = (
     "EXACT_Q4_S3_ACTIVE_OR_DELETED_SEAL_NO_FAILED_DOWNGRADE_V1"
@@ -50,6 +52,7 @@ _CHECKPOINT_KEYS = {
     "path_state",
     _CHECKPOINT_HASH_KEY,
 }
+_CONTACT_CHECKPOINT_KEYS = _CHECKPOINT_KEYS | {"contact_state"}
 
 
 class NonlinearCheckpointError(ValueError):
@@ -764,9 +767,20 @@ def create_nonlinear_checkpoint(
             raise NonlinearCheckpointError(
                 "checkpoint qualified element API authority changed during activity serialization"
             ) from exc
+    contact_enabled = (
+        kind == "static"
+        and normalized_analysis_contract.get("schema")
+        == "ANYSOLVER_STATIC_RESTART_CONTRACT_V2"
+    )
     payload: Dict[str, Any] = {
-        "schema": NONLINEAR_CHECKPOINT_SCHEMA,
-        "version": NONLINEAR_CHECKPOINT_VERSION,
+        "schema": (
+            NONLINEAR_CONTACT_CHECKPOINT_SCHEMA
+            if contact_enabled else NONLINEAR_CHECKPOINT_SCHEMA
+        ),
+        "version": (
+            NONLINEAR_CONTACT_CHECKPOINT_VERSION
+            if contact_enabled else NONLINEAR_CHECKPOINT_VERSION
+        ),
         "integrity_id": NONLINEAR_CHECKPOINT_INTEGRITY_ID,
         "analysis_kind": kind,
         "model_fingerprint": model_configuration_fingerprint(
@@ -797,6 +811,11 @@ def create_nonlinear_checkpoint(
             _guard_model=model,
         ),
     }
+    if contact_enabled:
+        # The C0 penalty profile has no physical contact history. Future
+        # friction or augmentation profiles must serialize their committed
+        # state here rather than borrowing material or path-state slots.
+        payload["contact_state"] = {}
     payload[_CHECKPOINT_HASH_KEY] = _sha256(payload)
     made = _normalize_json(payload)
     # Producer and consumer share one fail-closed lifecycle boundary.  A
@@ -850,16 +869,32 @@ def load_nonlinear_checkpoint(
     if not isinstance(payload, dict):
         raise NonlinearCheckpointError("checkpoint root must be a JSON object")
     keys = set(payload)
-    if keys != _CHECKPOINT_KEYS:
-        missing = sorted(_CHECKPOINT_KEYS - keys)
-        extra = sorted(keys - _CHECKPOINT_KEYS)
+    version = payload.get("version")
+    if type(version) is not int:
+        raise NonlinearCheckpointError("unsupported nonlinear checkpoint version")
+    expected_keys = (
+        _CONTACT_CHECKPOINT_KEYS
+        if version == NONLINEAR_CONTACT_CHECKPOINT_VERSION
+        else _CHECKPOINT_KEYS
+    )
+    if keys != expected_keys:
+        missing = sorted(expected_keys - keys)
+        extra = sorted(keys - expected_keys)
         raise NonlinearCheckpointError(
             f"checkpoint keys are invalid; missing={missing}, extra={extra}"
         )
-    if payload["schema"] != NONLINEAR_CHECKPOINT_SCHEMA:
+    if payload["schema"] not in {
+        NONLINEAR_CHECKPOINT_SCHEMA,
+        NONLINEAR_CONTACT_CHECKPOINT_SCHEMA,
+    }:
         raise NonlinearCheckpointError("unsupported nonlinear checkpoint schema")
-    if payload["version"] != NONLINEAR_CHECKPOINT_VERSION:
+    if (payload["schema"], payload["version"]) not in {
+        (NONLINEAR_CHECKPOINT_SCHEMA, NONLINEAR_CHECKPOINT_VERSION),
+        (NONLINEAR_CONTACT_CHECKPOINT_SCHEMA, NONLINEAR_CONTACT_CHECKPOINT_VERSION),
+    }:
         raise NonlinearCheckpointError("unsupported nonlinear checkpoint version")
+    if version == NONLINEAR_CONTACT_CHECKPOINT_VERSION and type(payload["contact_state"]) is not dict:
+        raise NonlinearCheckpointError("contact state must be a JSON object")
     if payload["integrity_id"] != NONLINEAR_CHECKPOINT_INTEGRITY_ID:
         raise NonlinearCheckpointError("unsupported nonlinear checkpoint integrity policy")
     claimed = payload[_CHECKPOINT_HASH_KEY]
@@ -930,6 +965,15 @@ def validate_nonlinear_checkpoint(
     )
     if type(normalized_analysis_contract) is not dict:
         raise NonlinearCheckpointError("analysis_contract must be a JSON object")
+    contact_enabled = (
+        str(analysis_kind) == "static"
+        and normalized_analysis_contract.get("schema")
+        == "ANYSOLVER_STATIC_RESTART_CONTRACT_V2"
+    )
+    if contact_enabled != (payload["version"] == NONLINEAR_CONTACT_CHECKPOINT_VERSION):
+        raise NonlinearCheckpointError("checkpoint contact schema is incompatible")
+    if contact_enabled and payload["contact_state"] != {}:
+        raise NonlinearCheckpointError("this contact profile has no committed contact history")
     observed_analysis_fingerprint = analysis_configuration_fingerprint(
         normalized_analysis_contract
     )

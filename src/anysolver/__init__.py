@@ -243,6 +243,16 @@ from .contact import (
     solve_transient_sphere_impact,
     validate_contact_configuration,
 )
+from .general_contact import (
+    ContactDefinition,
+    ContactInteraction,
+    ContactResults,
+    ContactSolverSettings,
+    ContactSurface,
+    ContactValidationReport,
+    RigidContactBody,
+    validate_general_contact,
+)
 from .fracture import (
     DeletedElementRecord,
     ElementDeletionConfig,
@@ -694,6 +704,14 @@ __all__ = [
     "recommend_sphere_contact_penalty",
     "solve_transient_sphere_impact",
     "validate_contact_configuration",
+    "ContactDefinition",
+    "ContactInteraction",
+    "ContactResults",
+    "ContactSolverSettings",
+    "ContactSurface",
+    "ContactValidationReport",
+    "RigidContactBody",
+    "validate_general_contact",
     "DeletedElementRecord",
     "ElementDeletionConfig",
     "FractureConfig",
