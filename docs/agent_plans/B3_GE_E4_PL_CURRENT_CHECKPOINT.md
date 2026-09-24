@@ -946,3 +946,23 @@ evidence, but the endpoint count differs from P0 and neither a matched
 physical solution nor a norm-scaled interface stability bound is available.
 Do not infer that P1 or P0 is more accurate or suitable for production.
 The formal F03 run and G0B remain open; G1 is barred.
+
+An additional unregistered native six-channel compliance screen uses the
+complete retained B3 tangent and the same E4 trace, with force/moment
+conversion at a fixed 1 m characteristic length and an independently checked
+Neumann-cosine H^(-1/2) dual norm for both P0 and P1. Source:
+`scripts/b3_e4_f03_native_line_compliance_screen.py`; immutable V1 raw rows:
+`B3_GE_E4_PL_F03_NATIVE_LINE_COMPLIANCE_DIAGNOSTIC_V1.json`. On paired
+`n_s=1,2,4` meshes with 2, 4 and 8 multiplier intervals, the minimum
+dimensionless compliance quotient is Q4 P0 `0.6255, 0.3024, 0.1748`, Q4 P1
+`0.2310, 0.1624, 0.1192`, S3-V2D P0 `0.6368, 0.3035, 0.1769`, and
+S3-V2D P1 `0.2394, 0.1685, 0.1194`. Every finite matrix is positive in
+this quotient, but the minima fall with this paired refinement. Maximum
+scaled linear-solve residual is `8.74e-13`, Schur relative skew `5.49e-14`,
+and the cosine tail-Gram relative bracket `9.15e-8`. The native supported
+primal tangent has 36, 72 and 144 negative retained modes on the three
+grids. Thus `C K^-1 C^T` is an interface *compliance* diagnostic, not the
+positive-primal inf-sup quotient used for a coercive elastic displacement
+space. The trend is a reason to inspect weak modes and matched physical
+response, not proof of locking, instability or continuum failure. The new
+P1 dual-norm checks passed **7/7**. F03/G0B remain open; G1 barred.
