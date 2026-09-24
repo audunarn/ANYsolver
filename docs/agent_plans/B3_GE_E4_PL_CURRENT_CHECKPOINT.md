@@ -1,5 +1,27 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — three-grid numerical feasibility and X2 integrated
+resource rehearsal.** The isolated integration branch now contains full
+source-process inverse-column diagnostics for fixed Q6 X0/X1/X2: 293/519/907
+seconds, 327/470/691 MB sampled process-tree RSS, complete 3,289/4,405/5,893
+column inventories and reported condition/backward bounds within inherited
+limits. X2 **exceeded** the earlier 900-second per-case proposal. A first
+integrated X2 rehearsal failed after its certificate and physical solve at
+the JSON tuple/list evidence boundary; its logs and receipt remain preserved.
+The corrected V2 source-level route completed numerical, physical and spatial
+work in 1,435.91 seconds at 688.7 MB sampled peak RSS under a predeclared
+1,800-second/2 GiB rehearsal envelope. The physical free-state hash, signed
+bands and functional norm exactly repeated the earlier X2 pilot. See
+`B3_GE_E4_PL_G0_F03_Q6_THREE_GRID_CERT_FEASIBILITY_20260924.md` and
+`B3_GE_E4_PL_G0_F03_Q6_X2_INTEGRATED_REHEARSAL_RESULT_20260924.md`.
+This remains **unregistered source-level evidence**, with duplicate assembly
+and no binding between the certificate candidate and saved physical state.
+Independent numerical soundness, installed-artifact identity, saved-only
+replay, primal positivity, three-grid physical adjudication, and native
+interface mechanics remain open. F03/G0B remain open; G1 is barred. Next:
+bind one certified and physically recovered state, then exercise the complete
+installed route and independent review before scientific registration.
+
 **24 September 2026 — Q6 X0 certificate feasibility, G0B still open.** The
 isolated integration branch contains the evidence and arithmetic commits through
 `65c4fe2504ec629a48368fab20d1a8520d641a3a`;
