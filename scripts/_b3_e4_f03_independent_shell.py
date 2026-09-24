@@ -44,7 +44,7 @@ class Panel:
 
 def panel(n_s: int, n_y: int, topology: str) -> Panel:
     if (not isinstance(n_s,int) or not isinstance(n_y,int) or
-            not 1<=n_s<=128 or not 2<=n_y<=64 or
+            not 1<=n_s<=256 or not 2<=n_y<=256 or
             topology not in ('Q4','CST','CST-CB') or
             (topology=='CST-CB' and n_y%2)):
         raise ValueError('unsupported bounded classical panel definition')

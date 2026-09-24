@@ -129,7 +129,7 @@ def test_segmented_weak_work_quadrature_rigid_patch_and_row_rank(topology,law):
 
 def test_invalid_mortar_definitions_reject_explicitly():
     model=shell.panel(3,6,'Q4')
-    for count in (0,129):
+    for count in (0,257):
         with pytest.raises(ValueError,match='mortar'):
             line.overlay(model,4,count)
     with pytest.raises(ValueError,match='mortar'):

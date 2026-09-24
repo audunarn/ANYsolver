@@ -1,5 +1,36 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — guarded classical axial n=128/256 continuation.**
+The same independent Q4/CST membrane, quadratic/Hermite beam and
+three-channel P1 weak-line comparator was extended to joint `n=128` and
+`n=256` with optional six-pass symmetric equilibration. A child-process
+runner preserved each manifest, raw stdout/stderr, parsed result and
+status, while sampling child RSS every `0.1 s` against `8 GiB` and
+enforcing a `300 s` wall limit. A guarded Q4 `n=64` canary reproduced
+all six selected saved physical/numerical fields **exactly** before the
+larger runs. Both `n=128` and both `n=256` cases completed. Sampled peak
+RSS was at most `437.5 MB` at `n=128` and `1.833 GB` at `n=256`; the
+longest recorded wall time was `60.8 s`. These are sampled child working
+sets, not hard peak or whole-process-tree memory measurements.
+
+The `n=128→256` tip changes shrink to `0.141%` Q4 and `0.257%` CST,
+and the two finest-tip values are close. Yet shell-support force changes
+by `4.22%`/`3.42%`, shell energy by `1.82%`/`1.72%`, and beam energy by
+`7.35%`/`6.76%`. Continuous integrated gaps decrease, while the largest
+`n=256` algebraic residual ratio is `1.29e-12`, weak-row norm is below
+`7e-24`, and quadratic work discrepancy is below `2.1e-12` relative.
+Therefore tip agreement alone cannot establish the resolved response,
+and no continuum target is adopted. The exact raw roots are
+`B3_GE_E4_PL_F03_CLASSICAL_{Q4,CST}_N{128,256}_GUARDED_V1` under this
+directory; the Q4 `n=64` guard parity root is retained too. Admission
+bounds were widened between the `n=128` and `n=256` runs, with no change
+to the element, trace, load, support or solve equations; each manifest
+records its actual source hashes. The next diagnostic should vary line
+resolution at fixed physical meshes and, separately, beam/shell
+resolution. This is Level-A independent-classical evidence, still
+different from native six-channel B3-GE/E4-PL and not an executed
+external-solver comparison. **F03/G0B remain open and G1 barred.**
+
 **24 September 2026 — larger independent classical axial reference, still
 unsettled.** The separately assembled Q4/CST plane-stress, quadratic/Hermite
 Timoshenko beam, three-channel continuous-P1 weak-line comparator was

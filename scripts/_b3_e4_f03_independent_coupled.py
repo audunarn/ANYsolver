@@ -35,7 +35,7 @@ class Solution:
 def solve(model: shell.Panel, n_beam: int, n_mortar: int,
           law: str, loading: str, *, equilibrate: bool = False) -> Solution:
     """Solve one explicitly small constrained saddle system from fresh parts."""
-    if model.n_s>64 or model.n_y>64 or n_beam>128 or n_mortar>64:
+    if model.n_s>256 or model.n_y>256 or n_beam>512 or n_mortar>256:
         raise ValueError('only bounded derivation preflight systems admitted')
     ks=shell.stiffness(model)
     kb=beam.assembled_stiffness(n_beam)

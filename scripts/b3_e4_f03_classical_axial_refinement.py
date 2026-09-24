@@ -23,7 +23,7 @@ import _b3_e4_f03_independent_shell as shell
 
 
 def one_case(topology: str, n: int, *, equilibrate: bool = False) -> dict:
-    if topology not in ("Q4", "CST") or n not in (8, 16, 32, 64):
+    if topology not in ("Q4", "CST") or n not in (8, 16, 32, 64, 128, 256):
         raise ValueError("bounded classical axial refinement required")
     began = time.perf_counter()
     model = shell.panel(n, n, topology)
