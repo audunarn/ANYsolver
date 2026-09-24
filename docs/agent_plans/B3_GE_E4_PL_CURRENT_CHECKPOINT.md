@@ -871,6 +871,26 @@ within the test tolerance. This establishes only the flat, virgin, fixed-
 thickness comparator with mesh-tied P0 spaces. Local traction balance,
 thinning, physical convergence, distorted geometry and full F03 stability
 remain open.
+
+The flat diagnostic fixture now admits an explicit positive shell thickness
+and passes it consistently to the in-plane, full E4 trial, and physical-only
+assemblies. A three-thickness screen (`0.07`, `0.035`, `0.0175` m) on the
+middle mesh with four P0 intervals produced tip `rx` values of
+`1.36526e-5`, `3.48877e-5`, `6.07916e-5` rad for Q4 and
+`1.41260e-5`, `3.82636e-5`, `6.45397e-5` rad for S3-V2D. The separate
+bare native-beam solve gives `7.42857e-5` rad. Every coupled case has
+positive physical shell energy, a small scaled KKT residual, and total
+support moment `-100 Nm` about the beam axis. This is a finite-range
+thinning trend toward the bare beam, not proof of the zero-thickness limit.
+The shell's support moment was nonmonotone and changed sign: Q4
+`-49.28`, `+19.79`, `+20.93` Nm; S3-V2D `-51.87`, `-0.25`, `+5.15` Nm.
+An initial diagnostic assertion that shell energy, then shell support-moment
+magnitude, must decrease monotonically failed on both topologies; those
+assumptions are invalid for this load-controlled, statically indeterminate
+connection. The revised check uses tip compliance relative to the bare beam
+and global moment balance. The five affected diagnostic files passed
+**89/89** tests. Thickness convergence, local interface transfer and the
+physical external target remain open; F03/G0B remain open and G1 barred.
 The same small KKT route also executes on three Q4/S3 mesh sizes with 4,
 8 and 16 native half-cells and matching 2, 4 and 8 multiplier intervals
 for both P0/P1 candidates. This execution check is not a convergence or

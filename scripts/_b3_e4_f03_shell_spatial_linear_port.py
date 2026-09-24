@@ -81,7 +81,8 @@ def physical_shell_stiffness(panel: ShellPanel) -> sparse.csr_matrix:
                     element_id, list(nodes), "steel",
                     formulation=("e4-pl" if panel.topology == "Q4"
                                  else "e4-pl-s3-v2d"),
-                    thickness=.07, reference_normal=(0., 0., 1.))
+                    thickness=panel.thickness,
+                    reference_normal=(0., 0., 1.))
                 physical = np.asarray(
                     element.compute_stiffness_components(mesh, material)["physical"])
                 dofs = np.array([6*(node-1)+axis

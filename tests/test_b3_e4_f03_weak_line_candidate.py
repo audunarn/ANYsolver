@@ -364,6 +364,64 @@ def test_torque_reaches_physical_shell_without_drilling_completion(
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_shell_thinning_moves_torque_response_toward_bare_beam(topology):
+    beam = build(8)
+    space = LineMultiplierSpace(
+        "piecewise_constant", (0., .25, .5, .75, 1.))
+    beam_load = np.zeros(beam.context.count)
+    beam_tip_rx = 6*beam.n_half_cells+3
+    beam_load[beam_tip_rx] = 100.
+    beam_free = np.array([index for index in range(beam.context.count)
+                          if index not in beam.context.fixed])
+    bare_beam = np.zeros_like(beam_load)
+    bare_beam[beam_free] = np.linalg.solve(
+        beam.tangent.toarray()[np.ix_(beam_free, beam_free)],
+        beam_load[beam_free])
+    bare_tip = float(bare_beam[beam_tip_rx])
+    tip_rotations = []
+    for thickness in (.07, .035, .0175):
+        panel = make_shell(2, topology, thickness=thickness)
+        shell = FlatE4TrialPanel(panel)
+        kkt = assemble_reference_kkt(shell, beam, space)
+        shell_size = 6*panel.node_count
+        tip_rx = shell_size+6*beam.n_half_cells+3
+        load = np.zeros(shell_size+beam.context.count)
+        load[tip_rx] = 100.
+        free_count = len(kkt.free_primal)
+        rhs = np.r_[load[kkt.free_primal]*
+                    kkt.coordinate_scale[:free_count]/kkt.energy_scale,
+                    np.zeros(6*space.count)]
+        scaled_solution = np.linalg.solve(kkt.scaled_system, rhs)
+        physical_solution = kkt.coordinate_scale*scaled_solution
+        full = np.zeros(len(load))
+        full[kkt.free_primal] = physical_solution[:free_count]
+        multipliers = physical_solution[free_count:]
+        physical = physical_shell_stiffness(panel).toarray()
+        shell_u = full[:shell_size]
+        tip_rotations.append(float(full[tip_rx]))
+        shell_energy = float(.5*shell_u@physical@shell_u)
+        residual = (kkt.primal_tangent@full+
+                    kkt.constraint_jacobian.T@multipliers-load)
+        shell_residual = residual[:shell_size].reshape(-1, 6)
+        beam_residual = residual[
+            shell_size:shell_size+beam.context.nodal_count].reshape(-1, 6)
+        shell_moment = np.sum(
+            shell_residual[:, 3:]+np.cross(
+                reference_nodes(panel), shell_residual[:, :3]), axis=0)
+        beam_positions = (beam.context.initial.mechanical.positions+
+                          beam.context.initial.mechanical.position_low)
+        beam_moment = np.sum(
+            beam_residual[:, 3:]+np.cross(
+                beam_positions, beam_residual[:, :3]), axis=0)
+        assert np.linalg.norm(kkt.scaled_system@scaled_solution-rhs) < 1e-9
+        assert shell_energy > 0.
+        np.testing.assert_allclose(shell_moment+beam_moment,
+                                   (-100., 0., 0.), atol=1e-7)
+    assert all(a < b for a, b in zip(tip_rotations, tip_rotations[1:])), tip_rotations
+    assert 0. < tip_rotations[0] < tip_rotations[-1] < bare_tip
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
 @pytest.mark.parametrize("kind", ("piecewise_constant", "continuous_linear"))
 @pytest.mark.parametrize("n_s,n_half_cells", ((2, 8), (4, 16)))
 def test_extended_mesh_reference_kkt_executes_without_shape_or_rank_loss(

@@ -58,7 +58,8 @@ class FlatE4TrialPanel:
                         eid, list(nodes), "steel",
                         formulation=("e4-pl" if panel.topology == "Q4"
                                      else "e4-pl-s3-v2d"),
-                        thickness=.07, reference_normal=(0., 0., 1.))
+                        thickness=panel.thickness,
+                        reference_normal=(0., 0., 1.))
                     self.model.add_element(eid, element)
                     self.elements.append((eid, nodes, element))
         material = self.model.get_material("steel")
@@ -77,6 +78,7 @@ class FlatE4TrialPanel:
         return dict(
             policy="F03_BOUNDED_FLAT_E4_TRIAL_PANEL_V1",
             topology=self.panel.topology, n_s=self.panel.n_s,
+            thickness=self.panel.thickness,
             node_count=self.panel.node_count,
             element_count=self.panel.element_count,
             nodes=[(node, self.model.mesh.nodes[node].id,

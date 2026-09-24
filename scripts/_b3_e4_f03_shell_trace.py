@@ -41,6 +41,7 @@ class ShellPanel:
     free: np.ndarray
     node_count: int
     element_count: int
+    thickness: float = .07
 
     @property
     def dof_count(self) -> int:
@@ -139,7 +140,7 @@ class ShellPanel:
                     shell_knots=len(self.breakpoints()))
 
 
-def make_shell(n_s: int, topology: str) -> ShellPanel:
+def make_shell(n_s: int, topology: str, *, thickness: float = .07) -> ShellPanel:
     """Assemble actual E4-PL physical in-plane element blocks on a 2-row grid.
 
     x spans [-.5, 1.5] in steps of 1/n_s; y spans [-.5, .5] in
@@ -152,6 +153,10 @@ def make_shell(n_s: int, topology: str) -> ShellPanel:
         raise ValueError("n_s must be a positive integer")
     if topology not in ("Q4", "S3-V2D"):
         raise ValueError("topology must be Q4 or S3-V2D")
+    if (isinstance(thickness, bool) or
+            not isinstance(thickness, (int, float, np.integer, np.floating)) or
+            not np.isfinite(thickness) or thickness <= 0.):
+        raise ValueError("finite positive shell thickness required")
     nx = 2 * int(n_s)
     x_coords = np.linspace(-.5, 1.5, nx + 1)
     y_coords = (-.5, 0., .5)
@@ -174,7 +179,7 @@ def make_shell(n_s: int, topology: str) -> ShellPanel:
                 shell = create_shell_element(
                     element_count, list(nodes), "steel",
                     formulation="e4-pl" if topology == "Q4" else "e4-pl-s3-v2d",
-                    thickness=.07, reference_normal=(0., 0., 1.))
+                    thickness=float(thickness), reference_normal=(0., 0., 1.))
                 physical = np.asarray(
                     shell.compute_stiffness_components(mesh, material)["physical"])
                 local = [6*k+axis for k in range(len(nodes)) for axis in (0, 1)]
@@ -191,4 +196,5 @@ def make_shell(n_s: int, topology: str) -> ShellPanel:
     free = np.array([2*(j*(nx+1)+i)+axis
                      for j in range(3) for i in range(1, nx)
                      for axis in (0, 1)], dtype=int)
-    return ShellPanel(int(n_s), topology, stiffness, free, node_count, element_count)
+    return ShellPanel(int(n_s), topology, stiffness, free, node_count,
+                      element_count, float(thickness))
