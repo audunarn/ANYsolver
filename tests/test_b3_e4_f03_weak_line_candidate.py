@@ -361,13 +361,15 @@ def test_q4_torque_reaches_physical_shell_without_drilling_completion():
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
 @pytest.mark.parametrize("kind", ("piecewise_constant", "continuous_linear"))
+@pytest.mark.parametrize("n_s,n_half_cells", ((2, 8), (4, 16)))
 def test_extended_mesh_reference_kkt_executes_without_shape_or_rank_loss(
-        topology, kind):
-    shell = FlatE4TrialPanel(make_shell(2, topology))
-    beam = build(8)
-    space = LineMultiplierSpace(kind, (0., .25, .5, .75, 1.))
+        topology, kind, n_s, n_half_cells):
+    shell = FlatE4TrialPanel(make_shell(n_s, topology))
+    beam = build(n_half_cells)
+    space = LineMultiplierSpace(
+        kind, tuple(np.linspace(0., 1., 2*n_s+1)))
     kkt = assemble_reference_kkt(shell, beam, space)
-    assert kkt.system.shape[0] > 200
+    assert kkt.system.shape[0] > 100*n_s
     shell_size = 6*shell.panel.node_count
     load = np.zeros(shell_size+beam.context.count)
     load[shell_size+6*beam.n_half_cells+2] = 1000.

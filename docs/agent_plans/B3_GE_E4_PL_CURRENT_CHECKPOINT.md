@@ -838,7 +838,7 @@ support elimination and work-conjugate scaling. The line's weak derivative
 agrees with that KKT Jacobian; Q4/S3 and both multiplier candidates solve
 the bounded loaded system with small scaled and physical residuals.
 
-Focused weak-line/KKT tests passed **24/24**, including six common rigid-mode
+Focused weak-line/KKT tests passed **28/28**, including six common rigid-mode
 constraints and the physical-residual assertion. The neighboring E4 trial,
 point-work, finite-pose and spatial-port
 suite passed **81/81** before that assertion; no product mechanics changed
@@ -864,6 +864,43 @@ the physical-multiplier support residual and closes global force and moment
 balance about a common origin, with a nonzero shell support share. Independent
 review confirmed the residual sign and retained-coordinate treatment. Local
 traction balance, refinement, S3 torque and full F03 stability remain open.
-The same small KKT route also executes on a second Q4/S3 mesh with eight
-native half-cells and four multiplier intervals for both P0/P1 candidates;
-this two-size execution check is not a convergence or inf-sup result.
+The same small KKT route also executes on three Q4/S3 mesh sizes with 4,
+8 and 16 native half-cells and matching 2, 4 and 8 multiplier intervals
+for both P0/P1 candidates. This execution check is not a convergence or
+inf-sup result.
+
+An unregistered Level-A torsion screen held the flat 1 m native beam, 0.07 m
+shell, left shell clamp, beam-root clamp, +100 Nm beam-tip `rx` load and
+four-point segmented Gauss rule fixed. On shell resolutions `n_s=1,2,4`
+with native half-cells `4,8,16`, the P0 tip rotation (rad) was:
+
+| Shell | P0 intervals 2,4,8 tied to mesh | P0 intervals fixed at 2 |
+|---|---|---|
+| Q4 | `1.67254e-5`, `1.36526e-5`, `1.08545e-5` | `1.67254e-5`, `1.82472e-5`, `1.84406e-5` |
+| S3-V2D | `1.71980e-5`, `1.41260e-5`, `1.10481e-5` | `1.71980e-5`, `1.87112e-5`, `1.85652e-5` |
+
+At the *same* finest physical mesh (Q4 16 or S3-V2D 32 elements, eight
+native B3 elements), nested P0 spaces produced these raw outputs. The
+relative-pose gap is sampled at 129 equally spaced stations, with rotations
+scaled by 1 m. The final column is the smallest singular value of a chosen
+work-congruence-scaled algebraic KKT, **not** an inf-sup measure.
+
+| Shell | P0 intervals | Tip `rx` rad | Shell physical J | Shell support `Mx` Nm | Gap L2 m | Gap max m | Scaled algebraic min singular |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Q4 | 2 | `1.844058809813e-5` | `3.211551421236e-4` | `-56.2649454614` | `2.759511673074e-6` | `7.800093159069e-6` | `3.003224994536e-6` |
+| Q4 | 4 | `1.387728678255e-5` | `3.348266975556e-4` | `-50.4942851897` | `1.080867442640e-6` | `3.213590378424e-6` | `2.631012149539e-6` |
+| Q4 | 8 | `1.085451133077e-5` | `3.090653695304e-4` | `-27.0449263450` | `3.749723651701e-7` | `9.481218349173e-7` | `1.969073935270e-6` |
+| S3-V2D | 2 | `1.856522608128e-5` | `3.279103708090e-4` | `-57.2532629379` | `2.763342752369e-6` | `7.806516716772e-6` | `3.043007881325e-6` |
+| S3-V2D | 4 | `1.408074327543e-5` | `3.469217307510e-4` | `-52.7902713832` | `1.090182833072e-6` | `3.237044224545e-6` | `2.707126745865e-6` |
+| S3-V2D | 8 | `1.104809661623e-5` | `3.201529944956e-4` | `-31.3330159916` | `3.750010327881e-7` | `9.629215417814e-7` | `1.989278282796e-6` |
+
+These are descriptive development outputs from the diagnostic functions,
+not acceptance thresholds or a matched external comparison.
+
+Independent mechanics interpretation found strong multiplier-resolution
+sensitivity in this tip observable. More P0 rows reduce off-station gaps but
+also stiffen the response; the screen cannot distinguish coarse-space slip
+from fine-space locking or identify a physical limit. Next compare against a
+matched independent torsion target, examine a physically norm-scaled
+interface-stability measure, and test the continuous/dual candidates across
+the required mesh ratios. The formal F03 run and G0B remain open.
