@@ -782,3 +782,11 @@ It matches the selected Q4/S3-V2D generic corotational rotation convention;
 it does not authenticate an E4 material trial. Combined focused diagnostics
 passed 92 tests. The next boundary is the validated coupled trial and
 relative-pose multiplier curvature.
+
+The point-level relative-pose multiplier curvature is now checked with
+native B3 and flat E4 shell station maps at zero and nonzero reference
+eccentricity, as recorded in
+`B3_GE_E4_PL_G0_F03_COUPLED_POINT_WORK_RESULT_20260924.md`.
+Four focused cases passed and independent mechanics review found no issue.
+This is not a weak line or authenticated material trial. Those remain the
+next G0B mechanics boundary; G1 remains barred.
