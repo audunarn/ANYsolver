@@ -45,6 +45,11 @@ motion. Candidate-pose overlap alone does not establish the moving-domain
 residual or tangent. The internal geometry kernel also computes the
 smooth-branch overlap-area derivative from clipped face edges. Shared-edge
 and topology transitions need one-sided treatment in the later coupled law.
+An internal rigid-translation control differentiates the corresponding
+constant-gap penalty potential through its complete moving overlap, including
+the overlap-area Hessian. It provides an analytical reference for the later
+deformable-shell residual and tangent; it is not routed through the public
+pair solver.
 
 ## Discrete pair law
 

@@ -10,6 +10,7 @@ from anysolver.general_contact.overlap import (
     current_planar_shell_face,
     planar_projected_overlap,
     planar_overlap_translation_gradient,
+    planar_overlap_translation_derivatives,
     reference_shell_face,
 )
 
@@ -214,6 +215,11 @@ def test_q4_s3_overlap_boundary_derivative_is_rigid_frame_covariant():
     square = _face((1, 1), ((0, 0), (1, 0), (1, 1), (0, 1)))
     triangle = _face((2, 1), ((0.5, 0.1), (1.5, 0.1), (0.5, 1.1)))
     gradient = planar_overlap_translation_gradient(square, triangle)
+    derivative_gradient, hessian = planar_overlap_translation_derivatives(
+        square, triangle
+    )
+    np.testing.assert_allclose(derivative_gradient, gradient, atol=1e-12)
+    np.testing.assert_allclose(hessian, hessian.T, atol=1e-12)
     h = 1.0e-6
     direction = np.array((0.3, 0.2, 0.0))
     plus = PlanarFace((1, 1), square.corners + h * direction)
@@ -221,6 +227,12 @@ def test_q4_s3_overlap_boundary_derivative_is_rigid_frame_covariant():
     numerical = (planar_projected_overlap(plus, triangle).area
                  - planar_projected_overlap(minus, triangle).area) / (2.0 * h)
     assert numerical == pytest.approx(float(gradient @ direction), rel=1e-8)
+    gradient_difference = (
+        planar_overlap_translation_gradient(plus, triangle)
+        - planar_overlap_translation_gradient(minus, triangle)
+    ) / (2.0 * h)
+    np.testing.assert_allclose(gradient_difference, hessian @ direction,
+                               rtol=1e-7, atol=1e-9)
     rotation = np.array(((0.0, -1.0, 0.0),
                          (0.0, 0.0, -1.0),
                          (1.0, 0.0, 0.0)))
@@ -231,3 +243,8 @@ def test_q4_s3_overlap_boundary_derivative_is_rigid_frame_covariant():
         planar_overlap_translation_gradient(rotated_square, rotated_triangle),
         rotation @ gradient, atol=1e-12,
     )
+    _rotated_gradient, rotated_hessian = planar_overlap_translation_derivatives(
+        rotated_square, rotated_triangle
+    )
+    np.testing.assert_allclose(rotated_hessian, rotation @ hessian @ rotation.T,
+                               atol=1e-12)

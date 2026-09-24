@@ -203,9 +203,21 @@ def planar_overlap_translation_gradient(integration: PlanarFace,
     ingredient, not a complete contact residual or tangent.
     """
 
+    return planar_overlap_translation_derivatives(integration, target)[0]
+
+
+def planar_overlap_translation_derivatives(integration: PlanarFace,
+                                           target: PlanarFace
+                                           ) -> tuple[np.ndarray, np.ndarray]:
+    """Return area gradient and Hessian for a smooth tangential translation.
+
+    Branch ownership is fixed while differentiating each clipped edge
+    interval. A caller must use one-sided checks at overlap-topology changes.
+    """
+
     overlap = planar_projected_overlap(integration, target)
     if overlap is None:
-        return np.zeros(3, dtype=float)
+        return np.zeros(3, dtype=float), np.zeros((3, 3), dtype=float)
     source = _to_frame(integration.corners, overlap.origin,
                        overlap.tangent, overlap.binormal)
     clip = _to_frame(target.corners, overlap.origin,
@@ -216,9 +228,12 @@ def planar_overlap_translation_gradient(integration: PlanarFace,
                float(np.max(np.linalg.norm(clip - clip[0], axis=1))))
     area_tolerance = 1.0e-12 * span * span
     gradient = np.zeros(2, dtype=float)
+    hessian = np.zeros((2, 2), dtype=float)
     for index, start in enumerate(source):
         edge = source[(index + 1) % len(source)] - start
         lower, upper = 0.0, 1.0
+        lower_derivative = np.zeros(2, dtype=float)
+        upper_derivative = np.zeros(2, dtype=float)
         for clip_index, clip_start in enumerate(clip):
             clip_edge = clip[(clip_index + 1) % len(clip)] - clip_start
             distance = _cross2(clip_edge, start - clip_start)
@@ -229,15 +244,23 @@ def planar_overlap_translation_gradient(integration: PlanarFace,
                     break
                 continue
             crossing = -distance / slope
+            crossing_derivative = np.array((clip_edge[1], -clip_edge[0])) / slope
             if slope > 0.0:
-                lower = max(lower, crossing)
+                if crossing > lower:
+                    lower = crossing
+                    lower_derivative = crossing_derivative
             else:
-                upper = min(upper, crossing)
+                if crossing < upper:
+                    upper = crossing
+                    upper_derivative = crossing_derivative
             if lower >= upper:
                 break
         if upper > lower:
-            gradient += (upper - lower) * np.array((edge[1], -edge[0]))
-    return gradient[0] * overlap.tangent + gradient[1] * overlap.binormal
+            outward = np.array((edge[1], -edge[0]))
+            gradient += (upper - lower) * outward
+            hessian += np.outer(outward, upper_derivative - lower_derivative)
+    basis = np.column_stack((overlap.tangent, overlap.binormal))
+    return basis @ gradient, basis @ hessian @ basis.T
 
 
 def reference_shell_face(model: object, body_id: int, element_id: int,
