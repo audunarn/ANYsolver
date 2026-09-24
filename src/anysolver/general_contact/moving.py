@@ -16,6 +16,9 @@ import numpy as np
 
 from .overlap import (
     PlanarFace,
+    _cross2,
+    _signed_area,
+    _to_frame,
     planar_overlap_translation_derivatives,
     planar_projected_overlap,
 )
@@ -238,3 +241,216 @@ def moving_mortar_state(source_face: PlanarFace, target_face: PlanarFace,
         overlap.area, support, weighted_gap, normalized_gap, energy,
         residual, tangent, minimum_vertex_gap,
     )
+
+
+def _boundary_quadrature(subject: PlanarFace, clip_face: PlanarFace,
+                         overlap) -> list[tuple[np.ndarray, np.ndarray]]:
+    """Return (point, outward-normal times line weight) on clipped edges."""
+
+    subject_xy = _to_frame(subject.corners, overlap.origin,
+                           overlap.tangent, overlap.binormal)
+    clip_xy = _to_frame(clip_face.corners, overlap.origin,
+                        overlap.tangent, overlap.binormal)
+    if _signed_area(subject_xy) < 0.0:
+        subject_xy = subject_xy[::-1].copy()
+    if _signed_area(clip_xy) < 0.0:
+        clip_xy = clip_xy[::-1].copy()
+    span = max(float(np.max(np.linalg.norm(subject_xy - subject_xy[0], axis=1))),
+               float(np.max(np.linalg.norm(clip_xy - clip_xy[0], axis=1))))
+    tolerance = 1.0e-12 * span * span
+    gauss = (-np.sqrt(3.0 / 5.0), 0.0, np.sqrt(3.0 / 5.0))
+    weights = (5.0 / 9.0, 8.0 / 9.0, 5.0 / 9.0)
+    samples = []
+    for index, start in enumerate(subject_xy):
+        edge = subject_xy[(index + 1) % len(subject_xy)] - start
+        lower, upper = 0.0, 1.0
+        for clip_index, clip_start in enumerate(clip_xy):
+            clip_edge = clip_xy[(clip_index + 1) % len(clip_xy)] - clip_start
+            distance = _cross2(clip_edge, start - clip_start)
+            slope = _cross2(clip_edge, edge)
+            if abs(slope) <= tolerance:
+                if distance < -tolerance:
+                    lower, upper = 1.0, 0.0
+                    break
+                continue
+            crossing = -distance / slope
+            if slope > 0.0:
+                lower = max(lower, crossing)
+            else:
+                upper = min(upper, crossing)
+            if lower >= upper:
+                break
+        if upper <= lower:
+            continue
+        outward = edge[1] * overlap.tangent - edge[0] * overlap.binormal
+        for abscissa, weight in zip(gauss, weights):
+            fraction = 0.5 * (lower + upper + (upper - lower) * abscissa)
+            xy = start + fraction * edge
+            point = (overlap.origin + xy[0] * overlap.tangent
+                     + xy[1] * overlap.binormal)
+            samples.append((point, 0.5 * (upper - lower) * weight * outward))
+    return samples
+
+
+def moving_mortar_translation_residual(
+        source_face: PlanarFace, target_face: PlanarFace,
+        normal: np.ndarray, stiffness: float,
+        source_translation: np.ndarray, target_translation: np.ndarray,
+        source_normal_dofs: np.ndarray, target_normal_dofs: np.ndarray,
+        ) -> tuple[np.ndarray, np.ndarray]:
+    """Differentiate the moving pressure-space potential by transport.
+
+    This includes shape changes at fixed spatial points and motion of both
+    polygon boundaries. The current integration rule is fixed; smooth-branch
+    projection derivatives are represented by the shape gradients. Boundary
+    integration has its own finite three-point line rule and must be refined
+    before engineering qualification.
+    """
+
+    state = moving_mortar_state(
+        source_face, target_face, normal, stiffness,
+        source_translation, target_translation,
+        source_normal_dofs, target_normal_dofs,
+    )
+    if state.overlap_area == 0.0:
+        return np.zeros(3), np.zeros(3)
+    direction = np.asarray(normal, dtype=float)
+    direction = direction / np.linalg.norm(direction)
+    moved_a = PlanarFace(source_face.feature_id,
+                         source_face.corners + np.asarray(source_translation))
+    moved_b = PlanarFace(target_face.feature_id,
+                         target_face.corners + np.asarray(target_translation))
+    overlap = planar_projected_overlap(moved_a, moved_b)
+    heights_a = np.asarray(source_normal_dofs, dtype=float)
+    heights_b = np.asarray(target_normal_dofs, dtype=float)
+    rows = len(heights_a)
+    dm_a = np.zeros((rows, 3))
+    dm_b = np.zeros((rows, 3))
+    dW_a = np.zeros((rows, 3))
+    dW_b = np.zeros((rows, 3))
+    polygon = overlap.polygon
+    centroid = np.mean(polygon, axis=0)
+    for index, corner in enumerate(polygon):
+        following = polygon[(index + 1) % len(polygon)]
+        area = 0.5 * float(np.linalg.norm(
+            np.cross(corner - centroid, following - centroid)
+        ))
+        if area <= 0.0:
+            continue
+        triangle = (centroid, corner, following)
+        for bary in ((2.0/3.0, 1.0/6.0, 1.0/6.0),
+                     (1.0/6.0, 2.0/3.0, 1.0/6.0),
+                     (1.0/6.0, 1.0/6.0, 2.0/3.0)):
+            point = sum(weight * vertex for weight, vertex in zip(bary, triangle))
+            shape_a, gradient_a = overlap.shape_values_and_gradient(moved_a, point)
+            shape_b, gradient_b = overlap.shape_values_and_gradient(moved_b, point)
+            gap = float(direction @ (
+                shape_a @ moved_a.corners - shape_b @ moved_b.corners
+            ) + shape_a @ heights_a - shape_b @ heights_b)
+            grad_gap_a = -(heights_a @ gradient_a)
+            grad_gap_b = heights_b @ gradient_b
+            weight = area / 3.0
+            dm_a -= weight * gradient_a
+            dW_a += weight * (-gradient_a * gap
+                              + shape_a[:, None] * grad_gap_a)
+            dW_b += weight * shape_a[:, None] * grad_gap_b
+    for point, weighted_outward in _boundary_quadrature(moved_a, moved_b, overlap):
+        shape_a = overlap.shape_values(moved_a, point)
+        shape_b = overlap.shape_values(moved_b, point)
+        gap = float(direction @ (
+            shape_a @ moved_a.corners - shape_b @ moved_b.corners
+        ) + shape_a @ heights_a - shape_b @ heights_b)
+        dm_a += np.outer(shape_a, weighted_outward)
+        dW_a += gap * np.outer(shape_a, weighted_outward)
+    for point, weighted_outward in _boundary_quadrature(moved_b, moved_a, overlap):
+        shape_a = overlap.shape_values(moved_a, point)
+        shape_b = overlap.shape_values(moved_b, point)
+        gap = float(direction @ (
+            shape_a @ moved_a.corners - shape_b @ moved_b.corners
+        ) + shape_a @ heights_a - shape_b @ heights_b)
+        dm_b += np.outer(shape_a, weighted_outward)
+        dW_b += gap * np.outer(shape_a, weighted_outward)
+    closed = (state.support > 0.0) & (state.normalized_gap < 0.0)
+    pressure = float(stiffness) * state.normalized_gap[closed]
+    source_tangent = np.sum(
+        pressure[:, None] * dW_a[closed]
+        - 0.5 * float(stiffness) * state.normalized_gap[closed, None] ** 2
+        * dm_a[closed], axis=0,
+    )
+    target_tangent = np.sum(
+        pressure[:, None] * dW_b[closed]
+        - 0.5 * float(stiffness) * state.normalized_gap[closed, None] ** 2
+        * dm_b[closed], axis=0,
+    )
+    source_normal = float(np.sum(state.normal_residual[:rows])) * direction
+    target_normal = float(np.sum(state.normal_residual[rows:])) * direction
+    return source_tangent + source_normal, target_tangent + target_normal
+
+
+@dataclass(frozen=True)
+class MovingMortarReducedSystem:
+    state: MovingMortarState
+    residual: np.ndarray
+    tangent: np.ndarray
+    relative_tangent_asymmetry: float
+
+
+def moving_mortar_reduced_system(
+        source_face: PlanarFace, target_face: PlanarFace,
+        normal: np.ndarray, stiffness: float,
+        source_translation: np.ndarray, target_translation: np.ndarray,
+        source_normal_dofs: np.ndarray, target_normal_dofs: np.ndarray,
+        *, difference_step: float) -> MovingMortarReducedSystem:
+    """Differentiate the restricted moving mortar residual on a smooth branch.
+
+    The first derivative uses transport of current pressure-space integrals;
+    its tangent is a centred directional differentiation of that residual.
+    This bounded control is not a deformable-shell tangent or public solver
+    profile. The caller declares a dimensional perturbation and must refine
+    it for its scale before using the result as evidence.
+    """
+
+    step = float(difference_step)
+    if not np.isfinite(step) or step <= 0.0:
+        raise ValueError("difference_step must be finite and positive")
+    source = np.asarray(source_translation, dtype=float).reshape(3)
+    target = np.asarray(target_translation, dtype=float).reshape(3)
+    heights_a = np.asarray(source_normal_dofs, dtype=float).reshape(-1)
+    heights_b = np.asarray(target_normal_dofs, dtype=float).reshape(-1)
+    variables = np.r_[source, target, heights_a, heights_b]
+    split = 6 + len(heights_a)
+
+    def evaluate_at(values: np.ndarray):
+        translation_a = values[:3]
+        translation_b = values[3:6]
+        normal_a = values[6:split]
+        normal_b = values[split:]
+        state = moving_mortar_state(
+            source_face, target_face, normal, stiffness,
+            translation_a, translation_b, normal_a, normal_b,
+        )
+        residual_a, residual_b = moving_mortar_translation_residual(
+            source_face, target_face, normal, stiffness,
+            translation_a, translation_b, normal_a, normal_b,
+        )
+        return state, np.r_[residual_a, residual_b, state.normal_residual]
+
+    base_state, residual = evaluate_at(variables)
+    tangent = np.zeros((len(variables), len(variables)), dtype=float)
+    base_active = (base_state.support > 0.0) & (base_state.normalized_gap <= 0.0)
+    for column in range(len(variables)):
+        delta = np.zeros_like(variables)
+        delta[column] = step
+        plus_state, plus_residual = evaluate_at(variables + delta)
+        minus_state, minus_residual = evaluate_at(variables - delta)
+        if (not np.array_equal(
+                (plus_state.support > 0.0) & (plus_state.normalized_gap <= 0.0),
+                base_active)
+                or not np.array_equal(
+                    (minus_state.support > 0.0) & (minus_state.normalized_gap <= 0.0),
+                    base_active)):
+            raise ValueError("moving mortar tangent crosses an active-set transition")
+        tangent[:, column] = (plus_residual - minus_residual) / (2.0 * step)
+    scale = max(np.finfo(float).tiny, float(np.linalg.norm(tangent)))
+    asymmetry = float(np.linalg.norm(tangent - tangent.T) / scale)
+    return MovingMortarReducedSystem(base_state, residual, tangent, asymmetry)

@@ -55,6 +55,12 @@ weighted gaps and both-body normal work on one current common-refinement
 polygon. Its normal tangent is complete at fixed tangential translations.
 Its reported vertex gap is a sample, not a certified physical minimum for a
 nonuniform bilinear gap; the full geometric gap check remains a C1 gate.
+The moving-domain translation residual includes pressure-basis motion and
+clipped source/target boundary terms. A restricted smooth-branch tangent is
+formed from that residual with an explicitly dimensioned difference step.
+This establishes a translation and nodal-normal control only; shell in-plane
+deformation, varying directors, multiple face support transfer and static
+solver assembly remain open.
 
 ## Discrete pair law
 

@@ -6,6 +6,8 @@ import pytest
 from anysolver.general_contact.moving import (
     TranslatedPairMortar,
     moving_mortar_state,
+    moving_mortar_translation_residual,
+    moving_mortar_reduced_system,
 )
 from anysolver.general_contact.overlap import PlanarFace
 
@@ -163,3 +165,109 @@ def test_moving_pressure_energy_matches_translation_boundary_control():
     assert energy(0.0) == pytest.approx(reference.energy)
     assert ((energy(h) - energy(-h)) / (2.0 * h)
             == pytest.approx(float(reference.source_residual @ direction), rel=1e-8))
+    source_residual, target_residual = moving_mortar_translation_residual(
+        source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+        np.zeros(3), np.zeros(3),
+        np.full(4, -1.0e-4), np.zeros(4),
+    )
+    np.testing.assert_allclose(source_residual, reference.source_residual,
+                               rtol=1e-9, atol=1e-9)
+    np.testing.assert_allclose(target_residual, -source_residual, atol=1e-9)
+
+
+def test_moving_nonuniform_gap_transport_matches_energy_change():
+    source = _square((1, 1), 0.0, 0.0)
+    target = _square((2, 1), 0.5, 0.25)
+    source_heights = np.array((-2.0e-4, -1.0e-4, -1.5e-4, -2.5e-4))
+    target_heights = np.array((0.0, 0.25e-4, -0.1e-4, 0.15e-4))
+    zero = np.zeros(3)
+    source_residual, target_residual = moving_mortar_translation_residual(
+        source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+        zero, zero, source_heights, target_heights,
+    )
+    np.testing.assert_allclose(source_residual + target_residual,
+                               0.0, atol=1e-7)
+    direction = np.array((0.3, -0.2, 0.0))
+    h = 1.0e-6
+    def energy(shift_source, shift_target):
+        return moving_mortar_state(
+            source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+            shift_source, shift_target, source_heights, target_heights,
+        ).energy
+    source_difference = (energy(h * direction, zero)
+                         - energy(-h * direction, zero)) / (2.0 * h)
+    target_difference = (energy(zero, h * direction)
+                         - energy(zero, -h * direction)) / (2.0 * h)
+    assert source_difference == pytest.approx(float(source_residual @ direction),
+                                              rel=1e-5)
+    assert target_difference == pytest.approx(float(target_residual @ direction),
+                                              rel=1e-5)
+
+
+def test_moving_translation_normal_cross_derivatives_are_consistent():
+    source = _square((1, 1), 0.0, 0.0)
+    target = _square((2, 1), 0.5, 0.25)
+    source_heights = np.array((-2.0e-4, -1.0e-4, -1.5e-4, -2.5e-4))
+    target_heights = np.array((0.0, 0.25e-4, -0.1e-4, 0.15e-4))
+    zero = np.zeros(3)
+    unit_x = np.array((1.0, 0.0, 0.0))
+    unit_height = np.array((1.0, 0.0, 0.0, 0.0))
+    h = 1.0e-7
+    force_plus = moving_mortar_translation_residual(
+        source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+        zero, zero, source_heights + h * unit_height, target_heights,
+    )[0][0]
+    force_minus = moving_mortar_translation_residual(
+        source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+        zero, zero, source_heights - h * unit_height, target_heights,
+    )[0][0]
+    normal_plus = moving_mortar_state(
+        source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+        h * unit_x, zero, source_heights, target_heights,
+    ).normal_residual[0]
+    normal_minus = moving_mortar_state(
+        source, target, np.array((0.0, 0.0, 1.0)), 1.0e6,
+        -h * unit_x, zero, source_heights, target_heights,
+    ).normal_residual[0]
+    assert ((force_plus - force_minus) / (2.0 * h)
+            == pytest.approx((normal_plus - normal_minus) / (2.0 * h), rel=1e-5))
+
+
+def test_reduced_moving_tangent_couples_sliding_and_nodal_normal_fields():
+    source = _square((1, 1), 0.0, 0.0)
+    target = _square((2, 1), 0.5, 0.25)
+    heights_a = np.array((-2.0e-4, -1.0e-4, -1.5e-4, -2.5e-4))
+    heights_b = np.array((0.0, 0.25e-4, -0.1e-4, 0.15e-4))
+    zero = np.zeros(3)
+    normal = np.array((0.0, 0.0, 1.0))
+    system = moving_mortar_reduced_system(
+        source, target, normal, 1.0e6,
+        zero, zero, heights_a, heights_b,
+        difference_step=1.0e-7,
+    )
+    assert system.tangent.shape == (14, 14)
+    assert system.relative_tangent_asymmetry < 1.0e-5
+    finer = moving_mortar_reduced_system(
+        source, target, normal, 1.0e6,
+        zero, zero, heights_a, heights_b,
+        difference_step=2.0e-8,
+    )
+    np.testing.assert_allclose(finer.tangent, system.tangent,
+                               rtol=1.0e-5, atol=1.0e-4)
+    direction = np.array((0.3, -0.2, 0.1, -0.15, 0.2, -0.05,
+                          0.1, -0.1, 0.2, -0.2, -0.1, 0.05, -0.15, 0.1))
+    h = 2.0e-8
+    def residual(fraction):
+        variables = np.r_[zero, zero, heights_a, heights_b] + fraction * direction
+        ta, tb = variables[:3], variables[3:6]
+        ha, hb = variables[6:10], variables[10:]
+        state = moving_mortar_state(source, target, normal, 1.0e6,
+                                    ta, tb, ha, hb)
+        fa, fb = moving_mortar_translation_residual(
+            source, target, normal, 1.0e6, ta, tb, ha, hb,
+        )
+        return np.r_[fa, fb, state.normal_residual]
+    np.testing.assert_allclose(
+        (residual(h) - residual(-h)) / (2.0 * h),
+        system.tangent @ direction, rtol=1.0e-5, atol=1.0e-5,
+    )
