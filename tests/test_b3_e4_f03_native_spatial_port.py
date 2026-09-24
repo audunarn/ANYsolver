@@ -63,6 +63,43 @@ def test_straight_native_port_matches_existing_planar_trace():
             fixture.planar_trace_jacobian(station), rtol=0, atol=1e-14)
 
 
+@pytest.mark.parametrize("half_cells", (8, 16, 32))
+def test_straight_station_trace_has_analytical_position_and_twist_order(
+        half_cells):
+    fixture = build(half_cells)
+    context = fixture.context
+    initial = context.initial.mechanical
+    curvature, twist_rate = 1e-4, 1e-5
+    delta = np.zeros(context.count)
+    x = initial.positions[:, 0]+initial.position_low[:, 0]
+    delta[2:context.nodal_count:6] = .5*curvature*x*x
+    for half in range(half_cells):
+        element, cell = divmod(half, 2)
+        delta[context.nodal_count+24*element+3*cell] = (
+            twist_rate*(half+.5)/half_cells)
+    trial = context.advance(initial, delta)
+    points, weights = np.polynomial.legendre.leggauss(5)
+    h = 1/half_cells
+    position_error_sq = rotation_error_sq = 0.
+    for half in range(half_cells):
+        element, cell = divmod(half, 2)
+        for point, weight in zip(points, weights):
+            fraction = (point+1)/2
+            station = (half+fraction)*h
+            port = NativeHalfCellSpatialPort(context, element, cell, fraction)
+            high, low, frame = port.pose_pair(trial)
+            z = high[2]+low[2]
+            rx = Rotation.from_matrix(frame).as_rotvec()[0]
+            position_error_sq += (h*weight/2)*(
+                z-.5*curvature*station**2)**2
+            rotation_error_sq += (h*weight/2)*(
+                rx-twist_rate*station)**2
+    np.testing.assert_allclose(np.sqrt(position_error_sq),
+                               curvature*h*h/np.sqrt(120), rtol=1e-9)
+    np.testing.assert_allclose(np.sqrt(rotation_error_sq),
+                               twist_rate*h/np.sqrt(12), rtol=1e-9)
+
+
 def test_curved_pre_rotated_port_first_second_and_work_variations():
     context, reference = _curved_context()
     original = context.initial.mechanical

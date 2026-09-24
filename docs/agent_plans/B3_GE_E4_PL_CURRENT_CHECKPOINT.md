@@ -13,18 +13,20 @@ plate/beam comparator isolated beam-versus-line resolution but did not
 settle as a loaded shell target. Native one-axis paths show underresolved
 shell hosts at 8:1 and underresolved beam traces at 1:8.
 
-**Remaining uncertainty and next action:** Exact retained-variable
-condensation shows the fine-line transverse weak mode is alternating Fz
-and over 90% beam-supported. Doubling native beam half-cells 16→32 at
-fixed P1 line10 still changes loaded torque/tip-z by about 5%; this
-ratio is not settled for multiplier selection. Examine the native beam
-trace's physical approximation and obtain a genuinely matched
-torque/shear target before comparing P0/P1/dual under the registered
-stability and mesh-ratio criteria. Retain rail as a diagnostic and keep
-six-channel, classical axial and Q6/finite-pad evidence distinct. Rank,
-small gaps and a quotient alone cannot select a space. Formal F03
-authority remains unconsumed, G0B open and G1 barred. Details and raw
-roots are below; no global axial refinement is planned.
+**Remaining uncertainty and next action:** P0 is the leading *development*
+line-space candidate at the local-center pose: on the same fine shell and
+P0/P1/dual line10 comparison, doubling beam half-cells changes P0
+torque/tip-z by −0.18%/−1.11%, versus about −5% for P1 and −7% for
+dual. Bare native beam stiffness is exact at both resolutions; the
+coupled difference is at the station trace/line interface. The port's
+smooth-field error has the expected `h²` position and `h` rotation
+orders. P0 still changes with line resolution and has no qualified
+matched torque/shear target. Check physical patch and mesh-ratio
+stability before selecting any space. Retain rail as a diagnostic and
+keep six-channel, classical axial and Q6/finite-pad evidence distinct.
+Rank, small gaps and a quotient alone cannot select a space. Formal
+F03 authority remains unconsumed, G0B open and G1 barred. Details and
+raw roots are below; no global axial refinement is planned.
 
 **Historical transverse-partition decision, 24 September 2026:** A systematic
 midpoint split of all three y intervals (six elements) passed 18 focused
@@ -2022,3 +2024,55 @@ the beam station trace's relevant modes and compare a matched physical
 torque/shear reference, then re-evaluate candidate spaces within the
 registered mesh-ratio and stability envelope. Raw root:
 `B3_GE_E4_PL_F03_NATIVE_BEAM32_LINE10_V1.jsonl`.
+
+Next station-port question: does the straight native six-channel port
+approximate a known smooth beam centerline and twist at the expected
+half-cell order, or is its actual state/chart mapping inconsistent?
+Construct a trial with exact quadratic nodal z positions and linear
+retained-cell twist sampled at half-cell midpoints. Integrated position
+error should scale as `h²`, rotation error as `h`, with analytically
+known coefficients. Check 8/16/32 half-cells using the actual pose and
+chart operations. Exact scaling would support a trace-resolution
+policy or a separately derived higher-order station port; failure
+would require correcting the current port before line-space work.
+This is a kinematic patch, not a coupled accuracy or G0B pass.
+
+The actual state/chart station patch passes 3/3 grids: a quadratic
+transverse position has exact RMS interpolation error
+`|κ|h²/sqrt(120)`, and a linear twist sampled by retained cell frames
+has exact RMS error `|β|h/sqrt(12)`. Thus the port is low-order as
+defined, without an observed implementation inconsistency. The patch
+alone cannot attribute the coupled ~5% beam-doubling effect, because
+the global beam operator and weak line also change their interaction.
+Next compare uncoupled native retained beam tip-z and torque at 16/32
+half-cells against the same generalized-section beam references. If
+those are stable, focus on the line trace/multiplier interaction; if
+they move materially, resolve native beam convergence first. Keep
+coupled and bare-beam physical questions distinct.
+
+The uncoupled native B3 solves at 16 and 32 half-cells agree with the
+declared generalized-section references to roundoff: 100 Nm gives
+`74.285714 µrad`, and 1000 N gives `192.023810 µm`, with negligible
+free residuals and work error. The coupled ~5% change is therefore an
+interface/station-trace effect, not bare-beam stiffness convergence.
+Next compare P0 and dual-linear at the same 32-half-cell endpoint, with
+the saved 16-half-cell and P1 results. If all spaces shift similarly,
+focus on the station-port/line-resolution law; if one is materially
+less sensitive, carry it forward only as a candidate for physical
+reference and stability checks. No space is qualified by this screen.
+Raw root: `B3_GE_E4_PL_F03_BARE_NATIVE_BEAM_16_32_V1.jsonl`.
+
+The four additional 32-half-cell native solves separate the spaces at
+fixed Q4 x8/y8, local-center position, full-left support and ten line
+intervals. Compared with 16 half-cells, P0 torque/tip-z changes
+`−0.18%/−1.11%`; P1 changes `−5.31%/−4.92%`; dual-linear changes
+`−7.69%/−6.77%`. All retain small work/balance errors, while sampled
+gaps move in different directions. This supports carrying the lowest-
+dimensional P0 as the leading *development* line-space candidate and
+rejects using either P1 or dual's smaller gaps as promotion evidence.
+It does not establish P0 mesh-independent stability or physical
+accuracy: at fixed 16 half-cells, P0 line4→10 still changed loaded
+torque substantially. Next use one-axis shell/beam/line physical checks
+and a genuinely matched torque/shear reference at the declared center
+material line; no further blind beam doubling is warranted.
+Raw root: `B3_GE_E4_PL_F03_NATIVE_BEAM32_SPACES_V1.jsonl`.
