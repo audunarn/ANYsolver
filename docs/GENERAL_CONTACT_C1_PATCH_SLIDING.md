@@ -50,6 +50,14 @@ estimate. Local small-cut modes can carry pressure even when an integrated
 reaction balances; a small reaction residual alone does not resolve the
 physical gap.
 
+`pressure_gradient_condition` uses **all supported rows of the unscaled gap
+gradient**. It is not the condition number of the active contact tangent.
+At one fixed affine opening pose, this field grew from 372 at 4×4 to 40,254
+at 6×6 and 69,675 at 10×10, while the active gradient scaled by the square
+root of each support had conditions 10, 15 and 28. Use the former as a
+small-cut warning, not by itself as proof that the equilibrium linear system
+needs a new preconditioner.
+
 The coupled local Q4/two-Q4 target case was pressed to 0.4 N, moved 0.1 m
 laterally across the internal target face boundary, and restarted from half
 load. Its selected faces have 0.05 m structural thickness, 1 MPa/m normal
@@ -87,6 +95,19 @@ for 4×4. A 4×4 patch at 4 MPa/m completed full load under the original
 normal forces. The latter is a focused local regression, not a frozen
 qualification case; the relaxed runs are diagnostics. Mesh, enforcement and
 integration convergence remain to be established separately.
+
+An independent fixed-pose oracle clips the known triangular Q4/S3 overlap
+by an affine opening gap and integrates pointwise penalty force and first
+moments exactly. With 4 MPa/m regularization, Q4-pressure mortar force error
+fell from 8.64% at 4×4 to 5.80% at 6×6, 2.32% at 10×10 and 1.33% at 12×12;
+the 12×12 first-moment errors were below 2%. This is a focused local
+resolution check in
+`tests/test_general_contact_patch_pressure_resolution.py`, not a coupled
+mesh-convergence or engineering-acceptance claim. Putting pressure on the
+coarse S3 side reduced the raw condition but increased the force error to
+13.6% on the 6×6 opening pose. A corresponding coupled role-exchange solve
+was stopped after a bounded run without a mechanics result; it is not counted
+as a failure of the pressure law.
 
 The full nonmatching slide, separation and recontact handoff and the main
 plan's refinement, independent-review and package gates remain open.
