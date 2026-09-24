@@ -196,6 +196,7 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
 
     The shell and beam are at their flat virgin reference. The historical
     default fixes all six coordinates at three left-edge shell nodes.
+    ``full_left_edge`` fixes all six coordinates at every left-edge node.
     ``both_xy_edges`` fixes in-plane coordinates at both complete x edges,
     plus out-of-plane coordinates on the left edge to remove rigid modes.
     This is a small full-matrix derivation check, not production assembly.
@@ -205,7 +206,7 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
     if shell_port not in ("rail", "local_translation"):
         raise ValueError("unknown bounded shell pose port")
     if shell_support_policy not in ("legacy_three_left_nodes",
-                                    "both_xy_edges"):
+                                    "full_left_edge", "both_xy_edges"):
         raise ValueError("unknown bounded shell support policy")
     pose_map = (pose_from_e4_total if shell_port == "rail" else
                 pose_from_e4_total_local_translation)
@@ -256,6 +257,11 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
         clamped_shell_nodes = (0, nx+1, 2*(nx+1))
         clamped_shell = {6*node+axis for node in clamped_shell_nodes
                          for axis in range(6)}
+    elif shell_support_policy == "full_left_edge":
+        clamped_shell = {
+            6*j*(nx+1)+axis
+            for j in range(shell.panel.n_y+1)
+            for axis in range(6)}
     else:
         clamped_shell = {
             6*(j*(nx+1)+i)+axis

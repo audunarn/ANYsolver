@@ -1,30 +1,27 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current decision, 24 September 2026 (policy 2026-09-24.2):** Select a
-defensible native six-channel shell pose and exact line multiplier. The
-bounded independent plate/beam comparator matches the declared flat
-geometry, coefficients, left-edge/root supports and tip loads, but is not
-yet a converged physical target. Its local spline trial shows that P1
-line10 needs more beam modes than line4: beam8→12 changes twist by 49%,
-while beam12→16 changes it by only 0.32%. At fixed beam16, plate-y4→8
-still changes twist by 4.35%; the shell energy increase is spread across
-the width rather than concentrated solely at the four-sample rail.
-The same native Q4 problem passes force/moment/work checks. One-axis
-mesh-ratio paths show coarse shell hosts dominate the 8:1 endpoint and
-coarse beams enlarge the 1:8 gaps. Small gaps, full row rank and a falling
-positive-energy reference quotient do not select a multiplier. The
-historical Q6/finite-pad, classical axial, and native six-channel evidence
-retain distinct physical contracts; the 3D CalculiX canary is not a
-matched native line oracle.
+**Current decision, 24 September 2026 (policy 2026-09-24.2):** Carry the
+shell position at the declared center material line, with the existing
+finite-width director frame, as the preferred *development candidate*.
+For non-affine axial motion, the rail-average origin is a different
+physical connection: a quadratic patch places it over 30 µm from the
+center material point, and a self-equilibrated native axial load changes
+beam motion by 54% between ports. Both Q4 and S3-V2D show about a 9–10%
+rail/local tip-z difference on the same fine flat mesh. These results
+identify the choice; they do not qualify it. The independent local-spline
+plate/beam comparator isolated beam-versus-line resolution but did not
+settle as a loaded shell target. Native one-axis paths show underresolved
+shell hosts at 8:1 and underresolved beam traces at 1:8.
 
-**Remaining uncertainty and next action:** Diagnose why the independent
-transverse shell response continues to change with plate-y resolution,
-then compare the native shell at the *same full-left support*, load and
-line definition before deciding rail versus local pose or P0/P1/dual
-space. Avoid more global classical axial refinement. Preserve the
-registered stability, work, patch and mesh-ratio criteria. Formal F03
-authority is unconsumed; G0B remains open and G1 barred. The raw roots
-and their limits are inventoried in the decision-oriented section below.
+**Remaining uncertainty and next action:** Choose and qualify the exact
+P0/P1/dual line space with the center-material-point pose, work and
+physical-response checks, correctly scaled interface stability, and a
+matched torque/shear reference. Retain the rail origin as a diagnostic
+comparator and preserve the existing six-channel, classical axial and
+Q6/finite-pad evidence as distinct contracts. No space is selected from
+small gaps, rank or a spectral quotient. Formal F03 authority remains
+unconsumed, G0B open and G1 barred. The detailed decisions and raw roots
+are inventoried below; no global axial refinement is planned.
 
 **Historical transverse-partition decision, 24 September 2026:** A systematic
 midpoint split of all three y intervals (six elements) passed 18 focused
@@ -1871,3 +1868,69 @@ and `B3_GE_E4_PL_F03_TRANSVERSE_ENERGY_BANDS_V1.jsonl`. V1 transverse
 contains six completed rows before the recorded rank abort; V2 is the
 revised, rank-valid run. These are development diagnostics, not G0B
 qualification or a formal F03 execution.
+
+Next matched-native transverse question: does E4-PL Q4 at the same
+flat geometry, full-left clamp, B3 root support, P1 line10 and separate
+100 Nm/1000 N loads show the independent plate's y2→4→8 response trend?
+The new `full_left_edge` diagnostic policy has exact free-set and KKT
+parity with the historical three-node clamp at y2, and explicitly fixes
+all left-edge coordinates at higher y resolution. A similar native
+trend would point to a real shell-resolution requirement before port
+selection; a different trend would direct analysis to the E4 plate or
+shell-pose trace. Preserve P0/P1/dual choice as open either way.
+
+The native Q4 result differs in convergence trend from the independent
+plate: at P1 line10 and full-left support, shell-y4→8 changes native
+torque tip-rx `9.687→9.727 µrad` (+0.40%) and rail/local tip-z by
++0.65%/+0.76%. The independent y4→8 twist change is +4.35%.
+Thus the independent plate is not a qualified loaded native oracle, even
+though its coefficients and boundary-value definitions are matched.
+Next discriminate native port dependence by changing only shell-x
+resolution from `n_s=4` to 8 with beam16 half-cells, shell-y8, P1 line10,
+full-left support and the same two loads. If rail/local loaded differences
+decay, keep both as discretization candidates pending axial and stability
+checks; if they persist, require a separate physical pose/trace decision.
+
+They persist after shell-x refinement: with y8, P1 line10, beam16
+half-cells and full-left support, Q4 `n_s=4→8` changes rail tip-z
+`35.35→38.12 µm` (+7.85%) and local `35.44→41.85 µm` (+18.07%).
+The rail/local difference reopens from 0.27% to 9.78% at the fine x mesh,
+while torque tip rotation changes +2.49% and is common to both origins.
+All four solves retain small equation/work and global wrench residuals.
+Before choosing a port, repeat only the tip-z distinction on S3-V2D at
+the same two x levels. A similar Q4/S3 trend implicates the trace/pose
+definition; a different trend points to shell interpolation/host mapping.
+Neither result alone qualifies a multiplier or G0B.
+
+S3-V2D reproduces the qualitative Q4 pattern at the same full-left
+setup: local versus rail tip-z is -1.36% at `n_s=4` and +9.10% at
+`n_s=8`; Q4 is +0.27% and +9.78%. Similarity across topologies makes
+a Q4-only artifact unlikely, but neither gap nor compliance identifies
+the correct pose. The analytic twist patch favors local positional
+interpolation for that field. One final same-mesh, self-equilibrated
+axial-density loading on the fine Q4 mesh distinguishes whether that
+candidate also avoids a large axial response change. A large change
+would require axial work/trace analysis before prioritization; a small
+change would justify carrying local forward as a *development candidate*,
+not accepted mechanics.
+
+The axial cross-check is large and physically interpretable. At the
+identical Q4 x8/y8, native 16-half-cell, P1 line10, full-left setup, a
+zero-net `100 kN/m × sin(2πs)` beam density gives maximum beam |ux|
+`0.918 µm` for rail and `1.522 µm` for local (+65.7%); tip ux is
+`-0.918` versus `-1.415 µm` (+54.1% in magnitude). Shell energy is
+`0.00814` versus `0.01615 J`, and axial gap L2 is `0.00157` versus
+`0.00829 µm`; both retain small global balance/work errors. A center
+material point must follow displacement at `(s,0)`, whereas the rail
+origin averages `(s±0.2,±0.23)` and filters a y-invariant sinusoidal
+axial field by `cos(0.4π)≈0.309` before host interpolation. A separate
+Q4/S3 quadratic-field test verifies that the local pose follows an exact
+center mesh node while the rail origin differs by over 30 µm. This
+explains why the two ports should not be treated as interchangeable
+numerical variants. For the declared centerline bonded material
+correspondence, prioritize local translation with the finite-width
+director frame as the G0B development candidate; rail remains a
+diagnostic finite-width-average connection. This is not an accepted
+shell pose, multiplier or production line law. The new raw roots are
+`B3_GE_E4_PL_F03_NATIVE_{MATCHED_Y_LINE10_V1,FULL_LEFT_X8_Y8_V1,
+S3_FULL_LEFT_PORT_V1,FINE_AXIAL_PORT_V1}.jsonl`.

@@ -85,6 +85,31 @@ def test_explicit_both_edges_supports_all_in_plane_edge_coordinates():
             shell, beam, space, shell_support_policy="unknown")
 
 
+def test_full_left_edge_matches_legacy_at_two_y_intervals_and_scales_with_rows():
+    from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
+    from scripts._b3_e4_f03_native_fixture import build
+    from scripts._b3_e4_f03_weak_line_candidate import (
+        LineMultiplierSpace, assemble_reference_kkt)
+    beam = build(4)
+    space = LineMultiplierSpace("piecewise_constant", (0., 1.))
+    for n_y in (2, 4):
+        shell = FlatE4TrialPanel(make_shell(1, "Q4", n_y=n_y))
+        legacy = assemble_reference_kkt(shell, beam, space)
+        full = assemble_reference_kkt(
+            shell, beam, space, shell_support_policy="full_left_edge")
+        if n_y == 2:
+            np.testing.assert_array_equal(full.free_primal, legacy.free_primal)
+            np.testing.assert_allclose(full.scaled_system,
+                                       legacy.scaled_system, rtol=0, atol=0)
+        nx = 2*shell.panel.n_s
+        free = set(full.free_primal)
+        for j in range(n_y+1):
+            for axis in range(6):
+                assert 6*j*(nx+1)+axis not in free
+        if n_y == 4:
+            assert len(legacy.free_primal)-len(full.free_primal) == 12
+
+
 def test_transverse_grid_mutation_invalidates_owned_trial():
     from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
     shell = FlatE4TrialPanel(make_shell(1, "Q4", n_y=4))

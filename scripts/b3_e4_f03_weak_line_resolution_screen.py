@@ -231,7 +231,8 @@ def main() -> None:
     parser.add_argument("--kind", choices=("piecewise_constant",
                                            "continuous_linear", "dual_linear"))
     parser.add_argument("--shell-support-policy",
-                        choices=("legacy_three_left_nodes", "both_xy_edges"),
+                        choices=("legacy_three_left_nodes", "full_left_edge",
+                                 "both_xy_edges"),
                         default="legacy_three_left_nodes")
     parser.add_argument("--sinusoidal-axial-density", action="store_true")
     parser.add_argument("--transverse-force-z", action="store_true")
