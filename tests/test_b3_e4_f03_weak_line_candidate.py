@@ -286,8 +286,9 @@ def test_reference_line_annihilates_six_common_rigid_modes(topology):
             shell_rotation.ravel(), beam_rotation]) < 2e-12
 
 
-def test_q4_torque_reaches_physical_shell_without_drilling_completion():
-    panel = make_shell(1, "Q4")
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_torque_reaches_physical_shell_without_drilling_completion(topology):
+    panel = make_shell(1, topology)
     shell = FlatE4TrialPanel(panel)
     beam = build(4)
     space = LineMultiplierSpace("piecewise_constant", (0., .5, 1.))
