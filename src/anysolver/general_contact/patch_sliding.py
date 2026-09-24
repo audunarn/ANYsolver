@@ -458,6 +458,7 @@ class _RestrictedSlidingPatchFEManager:
         local = self.patch.local_tangential_residual(
             q[:3], q[3:6], q[6:split], q[split:],
             multiplier_estimate=self.normal_multipliers,
+            state=state,
         )
         return self._local_full_force(state.normal_residual, local)
 

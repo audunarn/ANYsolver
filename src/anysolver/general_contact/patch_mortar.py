@@ -399,6 +399,7 @@ class MovingPatchMortar:
             source_normal_dofs: np.ndarray,
             target_normal_dofs: np.ndarray,
             *, multiplier_estimate: np.ndarray | None = None,
+            state: MovingPatchMortarState | None = None,
             ) -> tuple[np.ndarray, np.ndarray]:
         """Distribute mortar overlap work at material face nodes.
 
@@ -407,11 +408,12 @@ class MovingPatchMortar:
         map for the restricted shell profile, not a new pressure basis.
         """
 
-        state = self.evaluate(
-            source_translation, target_translation,
-            source_normal_dofs, target_normal_dofs,
-            multiplier_estimate=multiplier_estimate,
-        )
+        if state is None:
+            state = self.evaluate(
+                source_translation, target_translation,
+                source_normal_dofs, target_normal_dofs,
+                multiplier_estimate=multiplier_estimate,
+            )
         source_forces = np.zeros((len(self.source_node_ids), 3))
         target_forces = np.zeros((len(self.target_node_ids), 3))
         if state.overlap_area == 0.0:
