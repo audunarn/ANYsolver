@@ -20,7 +20,8 @@ from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     pose_from_e4_total, reference_nodes)
 from scripts._b3_e4_f03_shell_local_translation_candidate import (
-    pose_from_e4_total_local_translation)
+    pose_from_e4_total_local_translation,
+    pose_from_e4_total_local_director)
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
@@ -68,8 +69,9 @@ def one_case(topology: str, intervals: int, kind: str, *,
     kkt = assemble_reference_kkt(
         shell, beam, space, shell_port=shell_port,
         shell_support_policy=shell_support_policy)
-    pose_map = (pose_from_e4_total if shell_port == "rail" else
-                pose_from_e4_total_local_translation)
+    pose_map = {"rail": pose_from_e4_total,
+                "local_translation": pose_from_e4_total_local_translation,
+                "local_director": pose_from_e4_total_local_director}[shell_port]
     shell_size = 6*shell.panel.node_count
     tip_rx = shell_size+6*beam.n_half_cells+3
     tip_uz = shell_size+6*beam.n_half_cells+2

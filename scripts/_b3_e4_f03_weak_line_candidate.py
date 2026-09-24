@@ -24,7 +24,9 @@ from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import pose_from_e4_total
 from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_translation,
-    reference_spatial_trace_local_translation)
+    pose_from_e4_total_local_director,
+    reference_spatial_trace_local_translation,
+    reference_spatial_trace_local_director)
 from scripts._b3_e4_f03_shell_spatial_linear_port import reference_spatial_trace
 
 
@@ -133,10 +135,11 @@ def integrate_weak_line(
     """
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
-    if shell_port not in ("rail", "local_translation"):
+    if shell_port not in ("rail", "local_translation", "local_director"):
         raise ValueError("unknown bounded shell pose port")
-    pose_map = (pose_from_e4_total if shell_port == "rail" else
-                pose_from_e4_total_local_translation)
+    pose_map = {"rail": pose_from_e4_total,
+                "local_translation": pose_from_e4_total_local_translation,
+                "local_director": pose_from_e4_total_local_director}[shell_port]
     if type(order) is not int or order not in (2, 3, 4, 5):
         raise ValueError("bounded Gauss order 2 through 5 required")
     coefficients = np.asarray(multipliers, dtype=float)
@@ -203,15 +206,18 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
     """
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
-    if shell_port not in ("rail", "local_translation"):
+    if shell_port not in ("rail", "local_translation", "local_director"):
         raise ValueError("unknown bounded shell pose port")
     if shell_support_policy not in ("legacy_three_left_nodes",
                                     "full_left_edge", "both_xy_edges"):
         raise ValueError("unknown bounded shell support policy")
-    pose_map = (pose_from_e4_total if shell_port == "rail" else
-                pose_from_e4_total_local_translation)
-    reference_trace = (reference_spatial_trace if shell_port == "rail" else
-                       reference_spatial_trace_local_translation)
+    pose_map = {"rail": pose_from_e4_total,
+                "local_translation": pose_from_e4_total_local_translation,
+                "local_director": pose_from_e4_total_local_director}[shell_port]
+    reference_trace = {
+        "rail": reference_spatial_trace,
+        "local_translation": reference_spatial_trace_local_translation,
+        "local_director": reference_spatial_trace_local_director}[shell_port]
     if type(order) is not int or order not in (2, 3, 4, 5):
         raise ValueError("bounded Gauss order 2 through 5 required")
     edges = segments(shell, beam, space)

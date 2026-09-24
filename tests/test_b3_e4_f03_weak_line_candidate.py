@@ -12,7 +12,8 @@ from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     pose_from_e4_total, reference_nodes)
 from scripts._b3_e4_f03_shell_local_translation_candidate import (
-    pose_from_e4_total_local_translation)
+    pose_from_e4_total_local_translation,
+    pose_from_e4_total_local_director)
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_weak_line_candidate import (
@@ -89,7 +90,8 @@ def test_reference_joint_varies_along_rigidly_rotated_shell(topology):
     ("Q4", "dual_linear"),
     ("S3-V2D", "dual_linear"),
 ))
-@pytest.mark.parametrize("shell_port", ("rail", "local_translation"))
+@pytest.mark.parametrize("shell_port", (
+    "rail", "local_translation", "local_director"))
 def test_segmented_line_directional_work_matches_direct_potential(
         topology, kind, shell_port):
     shell = FlatE4TrialPanel(make_shell(1, topology))
@@ -121,8 +123,9 @@ def test_segmented_line_directional_work_matches_direct_potential(
         shell, beam, space, coefficients, reference.ravel(),
         current.ravel(), shell_first, shell_second,
         base_state, beam_first, beam_second, shell_port=shell_port)
-    pose_map = (pose_from_e4_total if shell_port == "rail" else
-                pose_from_e4_total_local_translation)
+    pose_map = {"rail": pose_from_e4_total,
+                "local_translation": pose_from_e4_total_local_translation,
+                "local_director": pose_from_e4_total_local_director}[shell_port]
 
     edges = segments(shell, beam, space)
     points, weights = np.polynomial.legendre.leggauss(4)

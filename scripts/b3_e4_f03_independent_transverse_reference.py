@@ -154,10 +154,12 @@ def _orders(nx: int, ny: int, nb: int, intervals: int) -> None:
 
 
 def shell_trace(nx: int, ny: int, s: float, origin: str, *,
-                basis: str = "global") -> np.ndarray:
-    """Linearized [z,rx,ry] trace of the declared material rail or center."""
+                basis: str = "global", director: str = "rail") -> np.ndarray:
+    """Linearized [z,rx,ry] trace of the declared material point/director."""
     if origin not in ("rail", "local"):
         raise ValueError("rail or local shell origin required")
+    if director not in ("rail", "local"):
+        raise ValueError("rail or local shell director required")
     n = len(plate_basis(nx, ny, s, 0., basis=basis)[0])
     result = np.zeros((3, 3*n))
     values = [plate_basis(nx, ny, s+ox, y, basis=basis)[0]
@@ -165,8 +167,10 @@ def shell_trace(nx: int, ny: int, s: float, origin: str, *,
     mean = np.mean(values, axis=0)
     result[0, :n] = (mean if origin == "rail" else
                      plate_basis(nx, ny, s, 0., basis=basis)[0])
-    result[1, n:2*n] = mean
-    result[2, 2*n:] = mean
+    director_values = (mean if director == "rail" else
+                       plate_basis(nx, ny, s, 0., basis=basis)[0])
+    result[1, n:2*n] = director_values
+    result[2, 2*n:] = director_values
     return result
 
 
@@ -178,7 +182,8 @@ def _gauss(order: int, left: float, right: float):
 
 def assemble(nx: int, ny: int, nb: int, intervals: int, *,
              origin: str = "rail", multiplier: str = "p1",
-             basis: str = "global", thickness: float = THICKNESS
+             basis: str = "global", thickness: float = THICKNESS,
+             director: str = "rail"
              ) -> tuple[np.ndarray, np.ndarray, np.ndarray,
                         np.ndarray, np.ndarray, np.ndarray]:
     """Independent plate/beam energies and exact weak-line KKT blocks."""
@@ -239,7 +244,8 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
             beam_trace = np.zeros((3, nbeam))
             for channel in range(3):
                 beam_trace[channel, channel*beam_n:(channel+1)*beam_n] = value
-            trace = np.column_stack((-shell_trace(nx, ny, s, origin, basis=basis),
+            trace = np.column_stack((-shell_trace(
+                nx, ny, s, origin, basis=basis, director=director),
                                      beam_trace))
             local = ((1.,) if multiplier == "p0" else
                      ((right-s)/(right-left), (s-left)/(right-left)))
@@ -256,11 +262,12 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
 def solve(nx: int, ny: int, nb: int, intervals: int, *,
           origin: str = "rail", multiplier: str = "p1",
           tip_force_z: float = 1000., tip_torque_x: float = 0.,
-          basis: str = "global", thickness: float = THICKNESS) -> dict:
+          basis: str = "global", thickness: float = THICKNESS,
+          director: str = "rail") -> dict:
     """Solve a bounded flat reference and recover work-conjugate reactions."""
     ks, kb, c, moments, first, _ = assemble(
         nx, ny, nb, intervals, origin=origin, multiplier=multiplier,
-        basis=basis, thickness=thickness)
+        basis=basis, thickness=thickness, director=director)
     ns, nbeam = len(ks), len(kb)
     n = nbeam//3
     f = np.zeros(ns+nbeam)
@@ -295,7 +302,9 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
             b, _ = beam_basis(nb, s, basis=basis)
             beam_pose = np.array([b@q[ns+i*n:ns+(i+1)*n]
                                   for i in range(3)])
-            gap = beam_pose-shell_trace(nx, ny, s, origin, basis=basis)@q[:ns]
+            gap = beam_pose-shell_trace(
+                nx, ny, s, origin, basis=basis,
+                director=director)@q[:ns]
             gap_squared += weight*float(gap@gap)
             gap_z_squared += weight*float(gap[0]**2)
             gap_rotation_squared += weight*float(gap[1:]@gap[1:])
@@ -311,7 +320,8 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
     return {
         "model":"independent_flat_RM_plate_Timoshenko_beam",
         "nx":nx, "ny":ny, "nb":nb, "line_intervals":intervals,
-        "origin":origin, "multiplier":multiplier, "basis":basis,
+        "origin":origin, "director":director,
+        "multiplier":multiplier, "basis":basis,
         "shell_thickness_m":thickness,
         "tip_force_z_n":tip_force_z, "tip_torque_x_n_m":tip_torque_x,
         "tip_z_m":float(tip_pose[0]), "tip_rx_rad":float(tip_pose[1]),

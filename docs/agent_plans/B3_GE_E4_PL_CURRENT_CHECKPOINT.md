@@ -1,6 +1,67 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current state and decision, 24 September 2026 (policy 2026-09-24.2):**
+**Current state and decision, 25 September 2026 (policy 2026-09-24.2):**
+The fixed-longitudinal-width four-sample frame cannot yet be accepted as
+the *local bonded-line* shell pose. Its flat-reference director transfer
+has gain `cos(0.2k)` for a director wave of wavenumber `k`, and its yaw
+transfer contains a `sin(0.2k)/(0.2k)` factor for a tangential in-plane
+wave. Both have
+finite physical-wavelength zeros. Q4 and S3 checks find positive physical
+shell energy but nearly zero corresponding line virtual work, with no
+numerical drilling contribution to the director case. This is a pose-map
+work issue, not proof of a global instability. A finite footprint may
+legitimately have nonlocal averaging, but that is a separately declared
+connection law. A bounded local-material-point/director alternative
+removes the director zero and passes actual-chart work/derivative checks;
+its inherited yaw fit still has the second zero. Thus it is also not a
+selected six-channel line law. P0, P1 and dual-space resolution questions
+remain independent and open. Next derive a genuinely local objective
+six-channel shell orientation from the physical director and admissible
+material tangents, resolve Q4/S3 boundary and transverse-shear behavior,
+then repeat loaded work, norm-scaled stability and required mesh ratios.
+Preserve the matched torque/shear reference and obtain independent mechanics
+review before selection. Formal F03 authority is unconsumed, G0B open and
+G1 barred.
+
+**Bounded pose-map evidence, 25 September 2026:** The original four-sample
+map uses x offsets `±0.2 m` and y offsets `±0.23 m`. For an imposed
+physical director rotation `rx=A sin(2.5πx)` (wavelength `0.8 m`), its
+director trace is `[rx(s−a)+rx(s+a)]/2` with `a=0.2 m`, hence gain
+`cos(ka)=0`. For an in-plane field `uy=A sin(kx)` with no `ux`, the
+four-sample fit's yaw is
+`a[uy(s+a)−uy(s−a)]/[2(a²+b²)]`, where `b=0.23 m`.
+Its gain relative to the local gradient `∂uy/∂x` is
+`[a²/(a²+b²)] sin(ka)/(ka)`; the local infinitesimal polar spin for this
+field is half that gradient. Both conventions have the same zero at
+`ka=π`. The earlier shorthand `sinc` refers to `sin(ka)/(ka)`.
+On Q4 and S3 x16/y8 with director amplitude `A=1e-4 rad`,
+the integrated line torque-work ratio relative to the local physical
+director is `−0.0001815`; both shells have positive physical energy
+(Q4 `20.724 J`, S3 `11.384 J`) and zero numerical shell-component energy.
+The added local-director variant gives a `0.9235` work ratio on this mesh,
+while retaining the four-sample in-plane yaw fit. For a tangential
+displacement `uy=(1e-4/5π) sin(5πx)` (wavelength `0.4 m`), that yaw fit
+has analytic sinc gain zero and measured local-spin work ratio `−0.0007781`
+on both topologies, again with positive physical membrane energy.
+The Q4/S3 x4→x8→x16 trace responses move toward the analytic director
+transfer, so the cancellation is not cured by shell refinement.
+
+The existing weak-line oracle now admits the local-director diagnostic
+without changing its defaults. It retains local position and physical
+director, the existing proper-fit yaw, exact reference consistency and
+owned first/second derivatives. At Q4 x16/y8, beam8, P0 intervals 2→4,
+native local-director torque tip rotation is `21.132→17.159 µrad` and
+independent spline plate/beam is `20.826→16.699 µrad`; native transverse
+tip is `53.756→51.481 µm` and independent is `54.031→51.621 µm`.
+Native S3 gives `21.096→17.003 µrad` and `54.169→51.912 µm`.
+Q4/S3 loaded shell numerical energy is zero and work/equilibrium residuals
+are small. The local-director alternative improves one work contract but
+does not remove fixed-mesh line sensitivity or the yaw blind mode; none of
+these bounded comparisons qualifies a multiplier or external agreement.
+The affected existing and new mechanics tests passed `88/88`, followed by
+`8/8` focused local-director checks after the yaw regression test was added.
+
+**Earlier checkpoint, 24 September 2026 (policy 2026-09-24.2):**
 Keep the finite-width shell director/center material line as the native
 development candidate; do not select a multiplier space. On a fixed beam
 and P0 line, Q4 shell refinement brings the independently assembled

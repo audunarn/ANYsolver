@@ -173,3 +173,17 @@ def test_local_spline_line_rank_limits_are_explicit():
     for origin, intervals in (("rail", 16), ("local", 12)):
         with pytest.raises(ValueError, match="exceed the spline trace image"):
             assemble(8, 8, 8, intervals, basis="spline", origin=origin)
+
+
+def test_independent_local_director_has_center_work_and_same_position():
+    nx, ny, station = 3, 2, .37
+    count = len(plate_basis(nx, ny, station, 0.)[0])
+    q = np.zeros(3*count)
+    # In the rooted global basis, 2*X*(1+P1)=4*X²=(x+.5)².
+    q[count+0] = q[count+ny] = 2.
+    rail = shell_trace(nx, ny, station, "local", director="rail")
+    local = shell_trace(nx, ny, station, "local", director="local")
+    np.testing.assert_array_equal(rail[0], local[0])
+    np.testing.assert_allclose(local[1]@q, (station+.5)**2, atol=1e-14)
+    np.testing.assert_allclose(rail[1]@q, (station+.5)**2+.2**2,
+                               atol=1e-14)

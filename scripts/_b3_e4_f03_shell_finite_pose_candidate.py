@@ -42,7 +42,8 @@ def reference_nodes(panel: ShellPanel) -> np.ndarray:
 
 
 def pose(panel: ShellPanel, station: float, positions: np.ndarray,
-         directors: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+         directors: np.ndarray, *,
+         _director_weights: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray]:
     """Return material-sample centroid and proper finite spatial frame.
 
     Inputs are current global nodal positions and unit physical directors.
@@ -62,7 +63,13 @@ def pose(panel: ShellPanel, station: float, positions: np.ndarray,
     centered = samples-centroid
     a = centered.T@_OFFSETS[:, 0]
     b = centered.T@_OFFSETS[:, 1]
-    director = weights.mean(axis=0)@d
+    director_weights = (weights.mean(axis=0) if _director_weights is None else
+                        np.asarray(_director_weights, dtype=float))
+    if (director_weights.shape != (panel.node_count,) or
+            not np.isfinite(director_weights).all() or
+            abs(float(np.sum(director_weights))-1.) > 1e-12):
+        raise ValueError("finite normalized shell director weights required")
+    director = director_weights@d
     length = float(np.linalg.norm(director))
     if not np.isfinite(length) or length <= 1e-8:
         raise ValueError("cancelled shell director field")
@@ -98,7 +105,9 @@ def reference_tangent(panel: ShellPanel, station: float) -> np.ndarray:
 
 
 def pose_from_e4_total(panel: ShellPanel, station: float,
-                       total_u: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+                       total_u: np.ndarray, *,
+                       _director_weights: np.ndarray | None = None
+                       ) -> tuple[np.ndarray, np.ndarray]:
     """Evaluate this candidate from flat-panel E4 additive total coordinates.
 
     This mirrors the nodal ``Exp(total_u[3:6])`` used by the existing
@@ -113,7 +122,8 @@ def pose_from_e4_total(panel: ShellPanel, station: float,
     positions = nodes+nodal[:, :3]
     directors = np.array([rotation_matrix_from_vector(theta)[:, 2]
                           for theta in nodal[:, 3:]])
-    return pose(panel, station, positions, directors)
+    return pose(panel, station, positions, directors,
+                _director_weights=_director_weights)
 
 
 @dataclass(frozen=True)
@@ -131,7 +141,8 @@ class DirectionalPose:
 def directional_pose(panel: ShellPanel, station: float,
                      positions: np.ndarray, directors: np.ndarray,
                      first: np.ndarray, second: np.ndarray, *,
-                     _total_rotations: np.ndarray | None = None) -> DirectionalPose:
+                     _total_rotations: np.ndarray | None = None,
+                     _director_weights: np.ndarray | None = None) -> DirectionalPose:
     """Differentiate the finite port in two actual spatial-left directions.
 
     Each nodal director follows ``Exp(epsilon*w1+eta*w2) @ director``.
@@ -141,7 +152,7 @@ def directional_pose(panel: ShellPanel, station: float,
     """
     x, d = np.asarray(positions, dtype=float), np.asarray(directors, dtype=float)
     u, v = np.asarray(first, dtype=float), np.asarray(second, dtype=float)
-    pose(panel, station, x, d)  # Validate the same finite chart and inputs.
+    pose(panel, station, x, d, _director_weights=_director_weights)
     if (u.shape != (panel.node_count, 6) or
             v.shape != (panel.node_count, 6) or
             not np.isfinite(u).all() or not np.isfinite(v).all()):
@@ -171,8 +182,9 @@ def directional_pose(panel: ShellPanel, station: float,
               for k in range(4)), zero) for j in range(3)]
     b = [sum(((samples[k][j]-center[j])*_OFFSETS[k, 1]
               for k in range(4)), zero) for j in range(3)]
-    mean_weights = weights.mean(axis=0)
-    director_sum = [sum((mean_weights[i]*director_jets[i][j]
+    director_weights = (weights.mean(axis=0) if _director_weights is None else
+                        np.asarray(_director_weights, dtype=float))
+    director_sum = [sum((director_weights[i]*director_jets[i][j]
                          for i in range(panel.node_count)), zero)
                     for j in range(3)]
     director_length = ad.sqrt(ad.dot(director_sum, director_sum))
@@ -191,7 +203,8 @@ def directional_pose(panel: ShellPanel, station: float,
     c, s = trace/length, spin/length
     yaw = [[c, -s, zero], [s, c, zero], [zero, zero, 1.+zero]]
     frame = ad.matmul(chart, yaw)
-    numeric_center, numeric_frame = pose(panel, station, x, d)
+    numeric_center, numeric_frame = pose(
+        panel, station, x, d, _director_weights=_director_weights)
     if (np.max(np.abs([entry.value for entry in center]-numeric_center)) > 1e-11 or
             np.max(np.abs([[entry.value for entry in row] for row in frame]-
                           numeric_frame)) > 1e-11):
@@ -211,7 +224,8 @@ def directional_pose(panel: ShellPanel, station: float,
 
 def directional_pose_from_e4_total(
         panel: ShellPanel, station: float, total_u: np.ndarray,
-        first: np.ndarray, second: np.ndarray) -> DirectionalPose:
+        first: np.ndarray, second: np.ndarray, *,
+        _director_weights: np.ndarray | None = None) -> DirectionalPose:
     """Pull this candidate through the existing additive total-rotation chart.
 
     The state-owner authority and constitutive trial remain outside this
@@ -227,4 +241,5 @@ def directional_pose_from_e4_total(
     directors = np.array([rotation_matrix_from_vector(theta)[:, 2]
                           for theta in nodal[:, 3:]])
     return directional_pose(panel, station, positions, directors,
-                            first, second, _total_rotations=nodal[:, 3:])
+                            first, second, _total_rotations=nodal[:, 3:],
+                            _director_weights=_director_weights)
