@@ -178,6 +178,8 @@ class ContactSolverSettings:
     normal_discretization: str = "primal_mortar"
     pointwise_integration_subdivisions: int = 2
     maximum_pointwise_triangles: int = 10_000
+    beam_shell_rim_clearance: float | None = None
+    beam_shell_difference_step: float | None = None
 
     def __post_init__(self) -> None:
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
@@ -191,6 +193,16 @@ class ContactSolverSettings:
             raise ValueError("pointwise_integration_subdivisions must be an integer from 0 to 20")
         if type(self.maximum_pointwise_triangles) is not int or self.maximum_pointwise_triangles < 1:
             raise ValueError("maximum_pointwise_triangles must be a positive integer")
+        if self.beam_shell_rim_clearance is not None and (
+            not np.isfinite(self.beam_shell_rim_clearance)
+            or self.beam_shell_rim_clearance <= 0.0
+        ):
+            raise ValueError("beam_shell_rim_clearance must be finite and positive")
+        if self.beam_shell_difference_step is not None and (
+            not np.isfinite(self.beam_shell_difference_step)
+            or self.beam_shell_difference_step <= 0.0
+        ):
+            raise ValueError("beam_shell_difference_step must be finite and positive")
         if self.sliding_difference_step is not None and (
             not np.isfinite(self.sliding_difference_step)
             or self.sliding_difference_step <= 0.0
@@ -294,6 +306,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             from .beam_plane import validate_beam_plane_contact
 
             return validate_beam_plane_contact(model, definition, settings)
+        if any(surface.beam_radius is None for surface in definition.surfaces):
+            from .beam_shell import validate_beam_shell_contact
+
+            return validate_beam_shell_contact(model, definition, settings)
         from .beam_pair import validate_beam_pair_contact
 
         return validate_beam_pair_contact(model, definition, settings)
@@ -734,9 +750,14 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
     if not definition.rigid_bodies and any(
         surface.beam_radius is not None for surface in definition.surfaces
     ):
-        from .beam_pair import _BeamPairManager
+        if any(surface.beam_radius is None for surface in definition.surfaces):
+            from .beam_shell import _BeamShellManager
 
-        manager = _BeamPairManager(model, definition, settings, initial_displacement)
+            manager = _BeamShellManager(model, definition, settings, initial_displacement)
+        else:
+            from .beam_pair import _BeamPairManager
+
+            manager = _BeamPairManager(model, definition, settings, initial_displacement)
     elif definition.rigid_bodies:
         if any(surface.beam_radius is not None for surface in definition.surfaces):
             if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {
