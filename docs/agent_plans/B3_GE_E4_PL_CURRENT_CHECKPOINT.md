@@ -983,3 +983,17 @@ failure: the native primal tangent is indefinite and the finite support,
 trace norm, and physical convergence still need a reviewed interpretation.
 Do not choose a coarse space solely by discarding these modes or claim
 that a basis change into a dual space repairs the span. F03/G0B remain open.
+
+The V3 fixed-primal follow-up decomposes the same minimum-mode compliance
+into shell and native-beam blocks without changing the mode or norm; raw
+values are preserved in
+`B3_GE_E4_PL_F03_NATIVE_LINE_COMPLIANCE_DIAGNOSTIC_V3.json`. For Q4 P0,
+the shell contribution falls `0.2148 → 0.1116 → 0.0651` and the beam
+contribution falls `0.5833 → 0.2387 → 0.1096` over 2/4/8 intervals.
+For Q4 P1 the corresponding sequences are
+`0.1389 → 0.1040 → 0.0683` and
+`0.2543 → 0.1125 → 0.0509`; S3-V2D is similar. Each pair sums to the
+minimum quotient within the checked arithmetic tolerance. Both domains
+lose compliance in the alternating axial mode. The shell finite-window
+trace is therefore not the sole observed contributor; this split does not
+establish a causal continuum explanation or a valid multiplier selection.

@@ -46,6 +46,14 @@ def one_case(topology: str, n_s: int, kind: str, *,
         scaled_tangent@inverse_action-scaled_rows.T)/np.linalg.norm(
             scaled_rows)
     compliance = scaled_rows@inverse_action/kkt.energy_scale
+    shell_free = int(np.count_nonzero(free < 6*shell.panel.node_count))
+    shell_compliance = (scaled_rows[:, :shell_free]@
+                        inverse_action[:shell_free])/kkt.energy_scale
+    beam_compliance = (scaled_rows[:, shell_free:]@
+                       inverse_action[shell_free:])/kkt.energy_scale
+    if np.linalg.norm(compliance-shell_compliance-beam_compliance) > (
+            1e-10*np.linalg.norm(compliance)):
+        raise ArithmeticError("native interface domain split inconsistent")
     skew = np.linalg.norm(compliance-compliance.T)/np.linalg.norm(compliance)
     if skew > 1e-8 or solve_residual > 1e-8:
         raise ArithmeticError("native interface compliance solve inconsistent")
@@ -73,6 +81,14 @@ def one_case(topology: str, n_s: int, kind: str, *,
     with_lower = linalg.eigh(
         scaled_compliance, dual_lower, eigvals_only=True, check_finite=True)
     minimum_mode = vectors[:, 0].reshape(space.count, 6)
+    minimum_force_mode = moment_to_force*vectors[:, 0]
+    shell_mode_quotient = float(reference_stiffness_n_per_m*
+        minimum_force_mode@shell_compliance@minimum_force_mode)
+    beam_mode_quotient = float(reference_stiffness_n_per_m*
+        minimum_force_mode@beam_compliance@minimum_force_mode)
+    if abs(shell_mode_quotient+beam_mode_quotient-with_upper[0]) > (
+            1e-8*max(1., abs(with_upper[0]))):
+        raise ArithmeticError("native minimum-mode work split inconsistent")
     channel_fractions = np.array([
         minimum_mode[:, channel]@upper@minimum_mode[:, channel]
         for channel in range(6)])
@@ -105,6 +121,8 @@ def one_case(topology: str, n_s: int, kind: str, *,
             "Fx", "Fy", "Fz", "Mx", "My", "Mz")[strongest],
         "minimum_mode_dominant_sign_changes": int(np.count_nonzero(
             signs[:-1]*signs[1:] < 0)),
+        "minimum_mode_shell_quotient": shell_mode_quotient,
+        "minimum_mode_beam_quotient": beam_mode_quotient,
     }
 
 
