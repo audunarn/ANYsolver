@@ -45,6 +45,11 @@ regularization and a declared 6 µm development gap budget. The final overlap
 was 0.81 m² and the normal forces balanced at ±0.4 N. These are development
 checks, not registered qualification results. The earlier 1 µm run stopped
 at `contact_gap_exceeded` near 0.301 load factor; that evidence is retained.
+An additional Q4 integration/two-S3 target case completed coupled pressing
+at 0.4 N. Two S3 integration faces share four pressure nodes and passed a
+local physical force/rank check. A coupled S3 integration-side exploratory
+run was interrupted after exceeding the bounded development check time;
+that orientation has no coupled completion evidence.
 
 This profile has no general in-plane shell deformation or rotation, warped
 Q4, exact coincident-edge transition derivative, augmentation, friction,
