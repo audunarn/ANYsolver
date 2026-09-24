@@ -9,6 +9,7 @@ from anysolver.general_contact.moving import (
     moving_mortar_translation_residual,
     moving_mortar_reduced_system,
     certify_moving_mortar_gap,
+    bound_swept_moving_mortar_gap,
 )
 from anysolver.general_contact.overlap import PlanarFace
 
@@ -329,3 +330,31 @@ def test_moving_gap_certificate_bounds_independent_bilinear_samples():
     assert result.tolerance_met
     assert result.conservative_lower_gap <= dense_minimum + 1.0e-12
     assert result.minimum_sampled_gap >= dense_minimum - 1.0e-12
+
+
+def test_swept_gap_bound_detects_clear_to_clear_crossing():
+    source = _square((1, 1), 0.0, 0.0)
+    target = _square((2, 1), 0.0, 0.0)
+    source_start = np.array((-2.0, 0.0, -1.0e-4))
+    source_end = np.array((2.0, 0.0, -1.0e-4))
+    zero = np.zeros(3)
+    heights = np.zeros(4)
+    crossing = bound_swept_moving_mortar_gap(
+        source, target, np.array((0.0, 0.0, 1.0)),
+        source_start, source_end, zero, zero,
+        heights, heights, heights, heights,
+        gap_tolerance=1.0e-6,
+    )
+    assert crossing.overlap_interval == pytest.approx((0.25, 0.75))
+    assert crossing.conservative_lower_gap == pytest.approx(-1.0e-4)
+    assert not crossing.tolerance_certified
+
+    separated = bound_swept_moving_mortar_gap(
+        source, target, np.array((0.0, 0.0, 1.0)),
+        source_start + np.array((0.0, 0.0, 2.0e-4)),
+        source_end + np.array((0.0, 0.0, 2.0e-4)), zero, zero,
+        heights, heights, heights, heights,
+        gap_tolerance=1.0e-6,
+    )
+    assert separated.tolerance_certified
+    assert separated.conservative_lower_gap == pytest.approx(1.0e-4)

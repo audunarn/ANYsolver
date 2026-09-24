@@ -15,6 +15,7 @@ from scipy import sparse
 
 from .core import ContactDefinition, ContactSolverSettings
 from .moving import (
+    bound_swept_moving_mortar_gap,
     certify_moving_mortar_gap,
     moving_mortar_reduced_system,
     moving_mortar_state,
@@ -169,6 +170,19 @@ class _RestrictedSlidingPairFEManager:
             if float(np.max(np.linalg.norm(u[dofs[:, 3:]], axis=1))) > 256.0 * np.finfo(float).eps:
                 raise ValueError("restricted sliding requires fixed shell rotations")
         return np.asarray(self.work_map @ u).reshape(-1)
+
+    def swept_trial_bound(self, start: np.ndarray, end: np.ndarray):
+        """Diagnose the represented linear trial path without admitting it."""
+
+        first = self._reduced_pose(start)
+        last = self._reduced_pose(end)
+        split = self.height_offsets[1]
+        return bound_swept_moving_mortar_gap(
+            *self.faces, self.normal,
+            first[:3], last[:3], first[3:6], last[3:6],
+            first[6:split], last[6:split], first[split:], last[split:],
+            gap_tolerance=self.gap_tolerance,
+        )
 
     def evaluate(self, displacement: np.ndarray, *, tangent: bool = True):
         q = self._reduced_pose(displacement)

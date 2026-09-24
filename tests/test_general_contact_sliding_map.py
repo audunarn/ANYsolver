@@ -100,6 +100,25 @@ def test_restricted_sliding_reports_uncertified_physical_gap():
     assert not summary.to_dict()["minimum_gap_certified"]
 
 
+def test_restricted_sliding_swept_bound_finds_hidden_overlap():
+    model, definition, _direction = _two_q4_faces()
+    manager = _RestrictedSlidingPairFEManager(
+        model, definition, difference_step=1.0e-7
+    )
+    start = np.zeros(model.mesh.dof_manager.total_dofs)
+    end = np.zeros_like(start)
+    for node_id in (5, 6, 7, 8):
+        dofs = model.mesh.dof_manager.get_node_dofs(node_id)
+        start[dofs[0]] = -2.0
+        end[dofs[0]] = 2.0
+        start[dofs[2]] = -2.0e-3
+        end[dofs[2]] = -2.0e-3
+    bound = manager.swept_trial_bound(start, end)
+    assert bound.overlap_interval == pytest.approx((0.25, 0.75))
+    assert not bound.tolerance_certified
+    assert bound.conservative_lower_gap == pytest.approx(-2.0e-3)
+
+
 def test_restricted_sliding_preserves_physical_offset_virtual_couple():
     director = np.asarray((0.1, 0.0, 1.0), dtype=float)
     director /= np.linalg.norm(director)

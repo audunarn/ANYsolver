@@ -22,6 +22,7 @@ from .overlap import (
     _to_frame,
     planar_overlap_translation_derivatives,
     planar_projected_overlap,
+    swept_planar_overlap_interval,
 )
 
 
@@ -143,6 +144,84 @@ class MovingGapCertificate:
     conservative_lower_gap: float
     tolerance_met: bool
     triangles_checked: int
+
+
+@dataclass(frozen=True)
+class MovingSweptGapBound:
+    overlap_interval: tuple[float, float] | None
+    conservative_lower_gap: float
+    tolerance_certified: bool
+
+
+def bound_swept_moving_mortar_gap(
+        source_face: PlanarFace, target_face: PlanarFace,
+        normal: np.ndarray,
+        source_start: np.ndarray, source_end: np.ndarray,
+        target_start: np.ndarray, target_end: np.ndarray,
+        source_heights_start: np.ndarray, source_heights_end: np.ndarray,
+        target_heights_start: np.ndarray, target_heights_end: np.ndarray,
+        *, gap_tolerance: float) -> MovingSweptGapBound:
+    """Certify a linear trial path against missed projected overlap.
+
+    For each time in the swept overlap interval, the physical gap is at least
+    plane separation plus the lowest source nodal height minus the highest
+    target nodal height. Its minimum over the interval occurs at an endpoint:
+    it is the minimum of affine source/target nodal-pair differences. A failed
+    bound means unresolved, not confirmed penetration. Event subdivision is
+    still required before this path can enter the nonlinear solver.
+    """
+
+    tolerance = float(gap_tolerance)
+    if not np.isfinite(tolerance) or tolerance <= 0.0:
+        raise ValueError("gap_tolerance must be finite and positive")
+    direction = np.asarray(normal, dtype=float)
+    if direction.shape != (3,) or not np.all(np.isfinite(direction)):
+        raise ValueError("contact normal must be a finite 3-vector")
+    magnitude = float(np.linalg.norm(direction))
+    if magnitude <= 0.0:
+        raise ValueError("contact normal must be nonzero")
+    direction = direction / magnitude
+    translations = tuple(np.asarray(value, dtype=float) for value in (
+        source_start, source_end, target_start, target_end,
+    ))
+    heights = tuple(np.asarray(value, dtype=float) for value in (
+        source_heights_start, source_heights_end,
+        target_heights_start, target_heights_end,
+    ))
+    if (any(value.shape != (3,) or not np.all(np.isfinite(value))
+            for value in translations)
+            or any(value.shape != (size,) or not np.all(np.isfinite(value))
+                   for value, size in zip(heights, (
+                       len(source_face.corners), len(source_face.corners),
+                       len(target_face.corners), len(target_face.corners),
+                   )))):
+        raise ValueError("swept moving mortar fields have invalid size or nonfinite values")
+    for face in (source_face, target_face):
+        face_normal = np.cross(face.corners[1] - face.corners[0],
+                               face.corners[-1] - face.corners[0])
+        face_normal /= np.linalg.norm(face_normal)
+        if abs(float(face_normal @ direction)) < 1.0 - 1.0e-10:
+            raise ValueError("swept moving mortar face must be parallel to contact plane")
+    interval = swept_planar_overlap_interval(
+        source_face, target_face, *translations,
+    )
+    if interval is None:
+        return MovingSweptGapBound(None, float("inf"), True)
+
+    reference_gap = float((source_face.corners[0] - target_face.corners[0])
+                          @ direction)
+    bounds = []
+    for time in interval:
+        source_translation = (1.0 - time) * translations[0] + time * translations[1]
+        target_translation = (1.0 - time) * translations[2] + time * translations[3]
+        source_height = (1.0 - time) * heights[0] + time * heights[1]
+        target_height = (1.0 - time) * heights[2] + time * heights[3]
+        bounds.append(
+            reference_gap + float((source_translation - target_translation) @ direction)
+            + float(np.min(source_height)) - float(np.max(target_height))
+        )
+    lower = min(bounds)
+    return MovingSweptGapBound(interval, lower, lower >= -tolerance)
 
 
 _TRIANGLE_RULE = (
