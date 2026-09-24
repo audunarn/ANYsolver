@@ -43,3 +43,12 @@ and run from an isolated installed wheel (SHA-256
 The installed example output is retained at
 `C:\ANYworkspaceWork\general-contact-evidence\c1-quadratic-example-installed.txt`.
 This smoke check does not promote any C1 row to independent acceptance or release.
+
+The multi-face patch candidate at source `1ab13962` passed 81 affected local
+tests, then ran its lateral example from an isolated installed wheel (SHA-256
+`c02feb2ae8490db23cf6c0680d4f9f8ec5fdf2e7275378eddc57a3e04e064fd3`).
+The test and package outputs are retained under
+`C:\ANYworkspaceWork\general-contact-evidence` as
+`c1-patch-regression2.txt`, `wheel-1ab13962-build.txt`,
+`wheel-1ab13962-install.txt` and `c1-patch-example-installed.txt`.
+This remains local development and package smoke evidence.
