@@ -904,3 +904,18 @@ from fine-space locking or identify a physical limit. Next compare against a
 matched independent torsion target, examine a physically norm-scaled
 interface-stability measure, and test the continuous/dual candidates across
 the required mesh ratios. The formal F03 run and G0B remain open.
+
+The same finest physical mesh was then held fixed for a 12-case P0/P1
+resolution screen using the actual coupled linear KKT and 129-station
+nonlinear relative-pose gap recovery. Source:
+`scripts/b3_e4_f03_weak_line_resolution_screen.py`; raw outputs:
+`B3_GE_E4_PL_F03_WEAK_LINE_RESOLUTION_DIAGNOSTIC_V1.csv`. Q4 P1 tip `rx`
+falls from `1.45677e-5` to `9.43760e-6` rad as intervals increase from
+2 to 8; S3-V2D P1 falls from `1.46932e-5` to `8.97584e-6` rad. At eight
+intervals, P1 is 13.1% below P0 for Q4 and 18.8% below P0 for S3-V2D,
+while its sampled gap L2 is smaller. The free physical and scaled algebraic
+residuals are small in all 12 solves. This comparison adds continuous P1
+evidence, but the endpoint count differs from P0 and neither a matched
+physical solution nor a norm-scaled interface stability bound is available.
+Do not infer that P1 or P0 is more accurate or suitable for production.
+The formal F03 run and G0B remain open; G1 is barred.
