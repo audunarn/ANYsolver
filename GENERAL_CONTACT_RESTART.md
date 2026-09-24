@@ -2,7 +2,7 @@
 
 ## Objective and ownership
 
-Continue implementing the user's C0–C9 ANYsolver general-contact plan. The isolated worktree is `C:\ANYworkspaceWork\ANYsolver-general-contact`, branch `codex/general-contact-core`; the original `C:\Github\ANYsolver` checkout was not edited. C0 is committed as `31e60277` (`Add opt-in planar shell contact prototype`). No PR, merge or publication occurred. Keep concurrent repository work untouched.
+Continue implementing the user's C0–C9 ANYsolver general-contact plan. The isolated worktree is `C:\ANYworkspaceWork\ANYsolver-general-contact`, branch `codex/general-contact-core`; the last contact-code commit covered here is `926a0ace`. The original `C:\Github\ANYsolver` checkout was not edited. No PR, merge or publication occurred. Keep concurrent repository work untouched.
 
 ## Completed C0 slice and evidence
 
@@ -12,16 +12,14 @@ Continue implementing the user's C0–C9 ANYsolver general-contact plan. The iso
 - A disposable wheel built from committed C0 code has SHA-256 `1d192e7b13171465928eac9156ece96bbedb4bcc1a0c895611594543c1980f66`. The isolated installed copy ran the guided plate example; output is `C:\ANYworkspaceWork\general-contact-evidence\installed-example-current.txt`.
 - Known limit: corotational contact restart remains rejected because its Q4 committed-state binding failed validation in an exploratory run; no-contact schema v1 is preserved. Free shell normal translation after opening lacks a dedicated rigid-mechanism diagnostic.
 
-## C1 guided-pair development state
+## C1 development state
 
-- Internal planar Q4/S3 projected-overlap kernel: `src/anysolver/general_contact/overlap.py`; Q4/S3 and S3/S3 geometry checks passed (8 tests after face-scale fix). These geometry checks do not admit S3 coupled contact.
-- Exploratory guided planar Q4/Q4 pair kernel in `src/anysolver/general_contact/pair.py` and static integration hooks in `core.py` and `nonlinear_static.py`. Fixed reference overlap; only uniform facewise normal translation; penalty law; both-body residual/tangent and physical offset couples. No finite sliding, augmentation or pair restart. The 6 focused pair tests passed, including the tilted-director couple check.
-- Runnable nonmatching Q4/Q4 pair example and limits are `examples/general_contact_guided_pair.py` and `docs/GENERAL_CONTACT_C1_GUIDED_PAIR.md`. The example completed with 0.4 N opposing forces and -0.4 micrometre gap from the checkout source. This is a local development check, not installed-package or engineering qualification.
-- The Q4/Q4 slice was committed as `ecd93305`; affected C0/C1 checks passed: 30 tests in `C:\ANYworkspaceWork\general-contact-evidence\c1-guided-pair-check1.txt`.
-- Current post-commit edits admit guided S3 V2D pairs using its physical director and reference-surface offset. First-touch reference gaps are snapped only within the geometric roundoff tolerance to keep the closed-side tangent active. An exploratory run failed with two wrong-signed micrometre gaps and one singular S3 trial before the orientation and roundoff corrections; the corrected affected run passed 35 tests in `C:\ANYworkspaceWork\general-contact-evidence\c1-guided-s3-check1.txt`. The final S3 directional-tangent addition passed all 11 pair tests.
-- Further post-commit work checks physical side facing and allows a common lateral translation without relative slip. The 12 pair tests passed after these changes.
-- State-free guided pair restart now uses the version-2 checkpoint contract and binds pair definitions and settings. Q4/Q4 and S3/Q4 split continuations and changed-law rejection passed (2 focused restart cases in 83.49 seconds). The combined affected set passed 38 tests in `C:\ANYworkspaceWork\general-contact-evidence\c1-guided-restart-check1.txt`. A Q4/Q4 displacement-control reaction check also passed after that run. The next action is source review and local commit. Do not claim C1 accepted or complete.
-- Additional uncommitted S3 V2D rigid-plane adapter uses its physical director, reference-surface offset and P1 pressure. Three focused checks passed; the example produced 0.3 N reaction and -0.6 micrometre gap. The Q4 plane profile identity remains unchanged. The combined affected C0/C1 contact suite passed 42 tests in `C:\ANYworkspaceWork\general-contact-evidence\c1-s3-plane-check1.txt`. Review and local commit are next.
+- Commits `ecd93305`, `0958ff43`, `b235d361`, `c930cd94` and `926a0ace` add planar Q4/S3 projected overlap, a guided paired-shell mortar slice, S3 V2D physical offsets, state-free pair checkpoint continuation, displacement-control coverage and S3 rigid-plane contact.
+- The guided pair uses fixed reference overlap and permits facewise uniform normal translation plus common tangential motion. Relative sliding, shell rotation and warped Q4 are rejected. Q4/Q4 and S3/Q4 coupled force/restart cases pass; Q4/S3 and S3/S3 have local force-map checks. Physical sides must face one another. Pair forces and moments balance, including offset couples.
+- Runnable examples are `examples/general_contact_guided_pair.py` (0.4 N, -0.4 micrometre gap) and `examples/general_contact_s3_plane.py` (0.3 N, -0.6 micrometre gap). Exact limits are `docs/GENERAL_CONTACT_C1_GUIDED_PAIR.md` and `docs/GENERAL_CONTACT_C1_S3_PLANE.md`. The earlier Q4 plane example remains valid.
+- Evidence: 30 affected tests after the first pair slice (`c1-guided-pair-check1.txt`); 35 after S3 pair mapping (`c1-guided-s3-check1.txt`); 38 after pair restart (`c1-guided-restart-check1.txt`); 42 after S3 plane integration (`c1-s3-plane-check1.txt`), all in `C:\ANYworkspaceWork\general-contact-evidence`. These are local development checks, not independent qualification or installed-package verification for the new C1 code.
+- Preserved exploratory failure: exact S3 first-touch geometry initially yielded two wrong-signed micrometre gaps and one singular trial from roundoff. Orientation and closed-side zero-gap handling were corrected before the passing runs. No acceptance threshold was changed.
+- C1 is incomplete. Next: a candidate-pose common-refinement formulation with relative finite sliding and projection/boundary derivatives, then augmented normal enforcement, analytic rigid shapes, warped Q4 qualification and the full sliding/separation/recontact handoff. Keep numerical and independent-review gates intact. No owned process is running.
 
 ## Prospective policy transition
 
