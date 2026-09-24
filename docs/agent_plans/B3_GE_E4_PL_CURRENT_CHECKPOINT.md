@@ -1,5 +1,24 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — three-grid Q6 primal-positivity saved replay.** An
+experimental sparse congruence-residual certificate completed on fixed
+X0/X1/X2 grids. All three original scaled shell matrices report strict
+positive-quadratic-form sufficient bounds; separate replay from archived
+matrices, factors, scales and complete inverse columns reproduced each proof
+exactly. Source times were 262/441/841 s with sampled peak RSS 295/390/548 MB;
+replay times were 161/308/568 s with 267/348/487 MB. All six supervisor
+receipts are exit-zero and the affected tests passed 62/62. See
+`B3_GE_E4_PL_G0_F03_Q6_THREE_GRID_POSITIVITY_SAVED_REPLAY_RESULT_20260924.md`.
+This is unregistered source-level feasibility of archived scaled matrices;
+independent physical-assembly binding, installed identity, observable error
+propagation, native mechanics and formal review remain. F03/G0B remain open;
+G1 is barred. The first failed X0 and unarchived second X0 attempts remain
+preserved as evidence. Independent read-only review of all saved bytes and
+receipts found no remaining saved-matrix proof issue, but the full installed
+route is not timed; separate X2 timings suggest a possible draft 1,800-second
+envelope overrun. See
+`B3_GE_E4_PL_G0_F03_Q6_POSITIVITY_INDEPENDENT_READ_ONLY_REVIEW_20260924.md`.
+
 **24 September 2026 — three-grid Q6 saved-input feasibility.** Fixed X0/X1/X2
 source certificate and saved-only replay routes all completed serially under
 supervision. Each replay matched the full source certificate exactly from
