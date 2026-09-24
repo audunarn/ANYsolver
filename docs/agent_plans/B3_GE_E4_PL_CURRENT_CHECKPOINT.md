@@ -1,5 +1,28 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — support-matched reference torsion diagnostic.**
+With both shell x edges supported, a fixed `100 N m` native B3 tip torque,
+continuous-P1 weak line, four shell hosts and 16 native half-cells, the
+Q4 and S3-V2D fixtures completed at 2/4/8 transverse shell intervals.
+At the flat reference, recovered shell-support moments include both nodal
+moment and the `r × F` lever arm. The shell carries `31.51–35.84 N m`
+of the reaction torque and the beam root the remainder. All six total
+torque balances are within `5.70e-11 N m`; shell-plus-beam quadratic
+work matches half the applied tip work within `2.68e-13` relative.
+Across 2 to 8 transverse intervals, the Q4/S3 beam-tip twist changes by
+about `3.46%`/`1.86%`. The maximum pointwise connection gap remains
+about `1.18e-6 m`; transverse refinement alone does not close it.
+These observations establish transfer and balance only for this bounded
+reference-state fixture. They do not establish torque accuracy, drilling
+independence, thickness behaviour, line stability or longitudinal
+convergence. The three raw outputs are
+`B3_GE_E4_PL_F03_MATCHED_TORSION_NS4_NY{2,4,8}_V1.json`, produced with
+`scripts.b3_e4_f03_weak_line_resolution_screen` and its explicit paired
+host, line-space, support and transverse-grid flags. Two new torque/work
+checks and nine combined focused tests passed. **F03/G0B remain open and
+G1 barred.** The next mechanics decision needs longitudinal and thickness
+sensitivity, weak-line gaps, and a physical torque/trace reference.
+
 **24 September 2026 — bounded shell-block attribution after support matching.**
 An unregistered diagnostic retained the native B3, six-channel weak line,
 rail port, both-edge support and fixed axial density, then replaced only

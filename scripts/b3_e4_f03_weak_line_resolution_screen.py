@@ -17,7 +17,8 @@ from anysolver._ge_beam3_pose_joint import RigidPoseJoint
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
-from scripts._b3_e4_f03_shell_finite_pose_candidate import pose_from_e4_total
+from scripts._b3_e4_f03_shell_finite_pose_candidate import (
+    pose_from_e4_total, reference_nodes)
 from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_translation)
 from scripts._b3_e4_f03_shell_trace import make_shell
@@ -98,6 +99,15 @@ def one_case(topology: str, intervals: int, kind: str, *,
     shell_reaction_fx = float(np.sum(
         physical_residual[:shell_size:6][shell_fixed[0::6]]))
     beam_root_reaction_fx = float(physical_residual[shell_size])
+    shell_support = physical_residual[:shell_size].copy()
+    shell_support[~shell_fixed] = 0.
+    shell_support = shell_support.reshape(-1, 6)
+    shell_reference_nodes = reference_nodes(shell.panel)
+    shell_reaction_mx = float(np.sum(
+        shell_support[:, 3]+shell_reference_nodes[:, 1]*shell_support[:, 2]
+        -shell_reference_nodes[:, 2]*shell_support[:, 1]))
+    beam_root_reaction_mx = float(physical_residual[shell_size+3])
+    applied_torque_x = float(load[tip_rx])
     shell_total = full[:shell_size]
     shell_inplane = shell_total.reshape(-1, 6)[:, :2].ravel()
     shell_physical_inplane_energy = float(
@@ -167,6 +177,11 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "global_axial_balance_n": float(
             shell_reaction_fx+beam_root_reaction_fx+
             np.sum(load[shell_size:shell_size+beam.context.nodal_count:6])),
+        "applied_torque_x_n_m": applied_torque_x,
+        "shell_support_reaction_torque_x_n_m": shell_reaction_mx,
+        "beam_root_reaction_torque_x_n_m": beam_root_reaction_mx,
+        "global_torque_x_balance_n_m": float(
+            shell_reaction_mx+beam_root_reaction_mx+applied_torque_x),
         "gap_l2_m": float(np.sqrt(np.trapezoid(gaps*gaps, dx=1./128))),
         "gap_max_m": float(np.max(gaps)),
         "gap_axial_l2_m": float(np.sqrt(np.trapezoid(
