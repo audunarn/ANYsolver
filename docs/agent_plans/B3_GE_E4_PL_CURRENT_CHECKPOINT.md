@@ -1,6 +1,15 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current decision, 24 September 2026:** The optional interface-aligned
+**Current decision, 24 September 2026:** The optional longitudinal and
+transverse interface-aligned classical shell is recorded in
+`B3_GE_E4_PL_F03_DOUBLE_SEGMENTED_AXIAL_V1.md` with eight bounded runs and
+13 passing affected tests. It greatly reduces apparent x-basis error but
+does not settle the line: mortar128→256 still changes beam energy by 1.95%
+and root-force magnitude by 1.20% at fixed x/y/beam spaces. No physical
+target, native shell pose or multiplier space is accepted. F03/G0B remain
+open and G1 barred. Prior diagnostics and their failures remain intact.
+
+**Earlier transverse-basis decision, 24 September 2026:** The optional interface-aligned
 classical-shell y basis and 14 guarded axial screens are retained in
 `B3_GE_E4_PL_F03_SEGMENTED_AXIAL_V1.md`. Transverse order settles rapidly,
 but longitudinal, beam and line-resolution effects still interact; no

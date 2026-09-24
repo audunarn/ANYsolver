@@ -22,12 +22,15 @@ MAX_SECONDS = 300
 SOURCES = ("b3_e4_f03_spectral_guarded.py",
            "b3_e4_f03_spectral_axial_reference.py",
            "_b3_e4_f03_segmented_y.py",
+           "_b3_e4_f03_segmented_x.py",
            "_b3_e4_f03_independent_beam.py")
 
 
 def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--nx",type=int,required=True)
+    longitudinal=parser.add_mutually_exclusive_group(required=True)
+    longitudinal.add_argument("--nx",type=int)
+    longitudinal.add_argument("--segmented-x-degree",type=int)
     transverse=parser.add_mutually_exclusive_group(required=True)
     transverse.add_argument("--ny",type=int)
     transverse.add_argument("--segmented-degree",type=int)
@@ -35,10 +38,14 @@ def main() -> int:
     parser.add_argument("--mortar",type=int,required=True)
     parser.add_argument("--root",type=Path,required=True)
     args=parser.parse_args()
+    nx=args.nx if args.nx is not None else 5*args.segmented_x_degree-1
     ny=args.ny if args.ny is not None else 3*args.segmented_degree+1
-    if not (1<=args.nx<=128 and 1<=ny<=64
+    if not (1<=nx<=128 and 1<=ny<=64
             and 1<=args.beam<=512 and 1<=args.mortar<=256):
         parser.error("case exceeds the bounded exploratory envelope")
+    if (args.segmented_x_degree is not None
+            and not 1<=args.segmented_x_degree<=24):
+        parser.error("segmented longitudinal degree exceeds the bounded envelope")
     if args.segmented_degree is not None and not 1<=args.segmented_degree<=16:
         parser.error("segmented transverse degree exceeds the bounded envelope")
     root=args.root.resolve()
@@ -46,8 +53,9 @@ def main() -> int:
     source_dir=Path(__file__).resolve().parent
     command=[sys.executable,"-B",str(source_dir/
               "b3_e4_f03_spectral_axial_reference.py"),
-             "--nx",str(args.nx),
              "--beam",str(args.beam),"--mortar",str(args.mortar)]
+    command.extend(["--nx",str(nx)] if args.segmented_x_degree is None else
+                   ["--segmented-x-degree",str(args.segmented_x_degree)])
     command.extend(["--ny",str(ny)] if args.segmented_degree is None else
                    ["--segmented-degree",str(args.segmented_degree)])
     environment=os.environ.copy()
@@ -59,7 +67,8 @@ def main() -> int:
                                                 text=True).strip(),
         source_sha256={name:hashlib.sha256((source_dir/name).read_bytes()).hexdigest()
                        for name in SOURCES},
-        nx=args.nx,ny=ny,segmented_degree=args.segmented_degree,
+        nx=nx,ny=ny,segmented_degree=args.segmented_degree,
+        segmented_x_degree=args.segmented_x_degree,
         beam=args.beam,mortar=args.mortar,
         command=command,threads=1,sampled_rss_limit_bytes=MAX_RSS,
         wall_limit_seconds=MAX_SECONDS,sampling_seconds=.1,
@@ -115,8 +124,16 @@ def main() -> int:
             if (result["status"]!="UNREGISTERED_SPECTRAL_AXIAL_REFERENCE_DIAGNOSTIC"
                     or (result["shell_modes_x"],result["shell_modes_y"],
                         result["beam_elements"],result["multiplier_intervals"])
-                       !=(args.nx,ny,args.beam,args.mortar)):
+                       !=(nx,ny,args.beam,args.mortar)):
                 raise ValueError("spectral child identity mismatch")
+            if args.segmented_x_degree is not None and (
+                    result.get("longitudinal_basis")
+                    !="C0_FIVE_INTERVAL_LOBATTO_SUPPORTED"
+                    or result.get("longitudinal_degree")
+                    !=args.segmented_x_degree):
+                raise ValueError("segmented longitudinal identity mismatch")
+            if args.segmented_x_degree is None and "longitudinal_basis" in result:
+                raise ValueError("unexpected longitudinal basis identity")
             if args.segmented_degree is not None and (
                     result.get("transverse_basis")!="C0_THREE_INTERVAL_LOBATTO"
                     or result.get("transverse_degree")!=args.segmented_degree):

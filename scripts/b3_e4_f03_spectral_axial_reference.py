@@ -23,6 +23,7 @@ from scipy.sparse.linalg import spsolve
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _b3_e4_f03_independent_beam as beam
 from _b3_e4_f03_segmented_y import SegmentedYBasis
+from _b3_e4_f03_segmented_x import SegmentedXBasis
 
 
 E = 210e9
@@ -37,11 +38,17 @@ YAW_LENGTH = .46
 
 
 def _basis(nx: int, ny: int, x: float, y: float,
-           y_basis: SegmentedYBasis | None = None) -> np.ndarray:
+           y_basis: SegmentedYBasis | None = None,
+           x_basis: SegmentedXBasis | None = None) -> np.ndarray:
     if not -.5 <= x <= 1.5 or not -.5 <= y <= .5:
         raise ValueError("spectral shell sample outside panel")
-    k=np.arange(1,nx+1,dtype=float)
-    sx=np.sin(k*np.pi*(x+.5)/2)
+    if x_basis is None:
+        k=np.arange(1,nx+1,dtype=float)
+        sx=np.sin(k*np.pi*(x+.5)/2)
+    else:
+        sx=x_basis.values(x)
+        if len(sx)!=nx:
+            raise ValueError("longitudinal basis size does not match shell layout")
     py=(legendre.legvander(2*y,ny-1).ravel() if y_basis is None
         else y_basis.values(y))
     if len(py)!=ny:
@@ -50,14 +57,15 @@ def _basis(nx: int, ny: int, x: float, y: float,
 
 
 def shell_pose(nx: int, ny: int, s: float,
-               y_basis: SegmentedYBasis | None = None) -> np.ndarray:
+               y_basis: SegmentedYBasis | None = None,
+               x_basis: SegmentedXBasis | None = None) -> np.ndarray:
     """Independent four-point translation/proper-fit yaw linearization."""
     if not 0<=s<=1:
         raise ValueError("attachment parameter outside material interval")
     m=nx*ny
     result=np.zeros((3,2*m))
     for dx,dy in OFFSETS:
-        values=_basis(nx,ny,s+dx,dy,y_basis)
+        values=_basis(nx,ny,s+dx,dy,y_basis,x_basis)
         result[0,:m]+=.25*values
         result[1,m:]+=.25*values
         result[2,:m]+=-dy/YAW_DENOMINATOR*values
@@ -66,20 +74,26 @@ def shell_pose(nx: int, ny: int, s: float,
 
 
 def shell_stiffness(nx: int, ny: int,
-                    y_basis: SegmentedYBasis | None = None) -> np.ndarray:
+                    y_basis: SegmentedYBasis | None = None,
+                    x_basis: SegmentedXBasis | None = None) -> np.ndarray:
     """Independent tensor-product plane-stress Galerkin stiffness."""
     if not 1<=nx<=128 or not 1<=ny<=64:
         raise ValueError("bounded spectral shell order required")
     if y_basis is not None and ny!=y_basis.size:
         raise ValueError("transverse basis size does not match shell layout")
-    roots,weights=legendre.leggauss(4*nx+20)
-    x=roots+1  # physical x+0.5 on the two-metre supported interval
-    k=np.arange(1,nx+1,dtype=float)[:,None]
-    sx=np.sin(k*np.pi*x[None,:]/2)
-    dx=k*np.pi/2*np.cos(k*np.pi*x[None,:]/2)
-    x00=(sx*weights)@sx.T
-    xdd=(dx*weights)@dx.T
-    xd0=(dx*weights)@sx.T
+    if x_basis is None:
+        roots,weights=legendre.leggauss(4*nx+20)
+        x=roots+1  # physical x+0.5 on the two-metre supported interval
+        k=np.arange(1,nx+1,dtype=float)[:,None]
+        sx=np.sin(k*np.pi*x[None,:]/2)
+        dx=k*np.pi/2*np.cos(k*np.pi*x[None,:]/2)
+        x00=(sx*weights)@sx.T
+        xdd=(dx*weights)@dx.T
+        xd0=(dx*weights)@sx.T
+    else:
+        if nx!=x_basis.size:
+            raise ValueError("longitudinal basis size does not match shell layout")
+        x00,xdd,xd0=x_basis.matrices()
     x0d=xd0.T
 
     if y_basis is None:
@@ -104,7 +118,8 @@ def shell_stiffness(nx: int, ny: int,
 
 def coupling(nx: int, ny: int, n_beam: int, n_mortar: int,
              order: int = 12,
-             y_basis: SegmentedYBasis | None = None
+             y_basis: SegmentedYBasis | None = None,
+             x_basis: SegmentedXBasis | None = None
              ) -> tuple[sparse.csr_matrix,sparse.csr_matrix]:
     if (not 1<=n_beam<=512 or not 1<=n_mortar<=256
             or not 4<=order<=16):
@@ -113,7 +128,9 @@ def coupling(nx: int, ny: int, n_beam: int, n_mortar: int,
     cs=np.zeros((rows,2*nx*ny))
     cb=np.zeros((rows,beam.dof_count(n_beam)))
     knots=np.unique(np.r_[np.linspace(0,1,n_beam+1),
-                          np.linspace(0,1,n_mortar+1)])
+                          np.linspace(0,1,n_mortar+1),
+                          [] if x_basis is None else
+                          x_basis.crossing_stations(OFFSETS)])
     roots,weights=legendre.leggauss(order)
     scale=np.array((1.,1.,YAW_LENGTH))
     for left,right in zip(knots[:-1],knots[1:]):
@@ -122,7 +139,7 @@ def coupling(nx: int, ny: int, n_beam: int, n_mortar: int,
             measure=(right-left)*weight/2
             cell=min(int(s*n_mortar),n_mortar-1)
             xi=s*n_mortar-cell
-            shell_rows=scale[:,None]*shell_pose(nx,ny,s,y_basis)
+            shell_rows=scale[:,None]*shell_pose(nx,ny,s,y_basis,x_basis)
             beam_rows=scale[:,None]*beam.trace(n_beam,s).toarray()
             for index,test in ((cell,1-xi),(cell+1,xi)):
                 sl=slice(3*index,3*index+3)
@@ -133,14 +150,18 @@ def coupling(nx: int, ny: int, n_beam: int, n_mortar: int,
 
 def _shell_edge_wrench(nx: int, ny: int, q: np.ndarray,
                        side: int,
-                       y_basis: SegmentedYBasis | None = None
+                       y_basis: SegmentedYBasis | None = None,
+                       x_basis: SegmentedXBasis | None = None
                        ) -> tuple[float,float,float]:
     """Truncated-field edge stress traction about the global origin."""
     m=nx*ny
     u=q[:m].reshape(nx,ny)
     v=q[m:].reshape(nx,ny)
-    k=np.arange(1,nx+1,dtype=float)
-    edge_derivative=k*np.pi/2*(1 if side==0 else (-1.)**k)
+    if x_basis is None:
+        k=np.arange(1,nx+1,dtype=float)
+        edge_derivative=k*np.pi/2*(1 if side==0 else (-1.)**k)
+    else:
+        edge_derivative=x_basis.edge_derivatives(side)
     normal=-1. if side==0 else 1.
     if y_basis is None:
         zeroth=np.zeros(ny); zeroth[0]=1.
@@ -174,30 +195,34 @@ def _interface_wrench(lam: np.ndarray, n_mortar: int) -> np.ndarray:
 
 def _physical_gap(nx: int, ny: int, n_beam: int,
                   qs: np.ndarray, qb: np.ndarray,
-                  y_basis: SegmentedYBasis | None = None
+                  y_basis: SegmentedYBasis | None = None,
+                  x_basis: SegmentedXBasis | None = None
                   ) -> tuple[float,float]:
     """Quadrature L2 gap and a sampled pointwise lower bound."""
     roots,weights=legendre.leggauss(12)
     squared=0.
     maximum=0.
     scale=np.array((1.,1.,YAW_LENGTH))
-    for cell in range(n_beam):
-        left=cell/n_beam
-        right=(cell+1)/n_beam
+    knots=np.unique(np.r_[np.linspace(0,1,n_beam+1),
+                          [] if x_basis is None else
+                          x_basis.crossing_stations(OFFSETS)])
+    for left,right in zip(knots[:-1],knots[1:]):
         for root,weight in zip(roots,weights):
             s=float((left+right)/2+(right-left)*root/2)
-            gap=scale*(beam.trace(n_beam,s)@qb-shell_pose(nx,ny,s,y_basis)@qs)
+            gap=scale*(beam.trace(n_beam,s)@qb
+                       -shell_pose(nx,ny,s,y_basis,x_basis)@qs)
             squared+=(right-left)*weight/2*float(gap@gap)
             maximum=max(maximum,float(np.max(np.abs(gap))))
     return float(np.sqrt(max(squared,0.))),maximum
 
 
 def solve(nx: int, ny: int, n_beam: int, n_mortar: int,
-          y_basis: SegmentedYBasis | None = None) -> dict:
+          y_basis: SegmentedYBasis | None = None,
+          x_basis: SegmentedXBasis | None = None) -> dict:
     started=time.perf_counter()
-    ks=shell_stiffness(nx,ny,y_basis)
+    ks=shell_stiffness(nx,ny,y_basis,x_basis)
     kb=beam.assembled_stiffness(n_beam)
-    cs,cb=coupling(nx,ny,n_beam,n_mortar,y_basis=y_basis)
+    cs,cb=coupling(nx,ny,n_beam,n_mortar,y_basis=y_basis,x_basis=x_basis)
     shell_dofs=ks.shape[0]
     k=sparse.block_diag((sparse.csr_matrix(ks),kb),format="csr")
     c=sparse.hstack((-cs,cb),format="csr")
@@ -228,10 +253,10 @@ def solve(nx: int, ny: int, n_beam: int, n_mortar: int,
     qb=q[shell_dofs:]
     residual=k@q+c.T@lam-f
     beam_root=residual[supported]
-    shell_left=_shell_edge_wrench(nx,ny,qs,0,y_basis)
-    shell_right=_shell_edge_wrench(nx,ny,qs,1,y_basis)
+    shell_left=_shell_edge_wrench(nx,ny,qs,0,y_basis,x_basis)
+    shell_right=_shell_edge_wrench(nx,ny,qs,1,y_basis,x_basis)
     interface=_interface_wrench(lam,n_mortar)
-    gap_l2,gap_sampled_max=_physical_gap(nx,ny,n_beam,qs,qb,y_basis)
+    gap_l2,gap_sampled_max=_physical_gap(nx,ny,n_beam,qs,qb,y_basis,x_basis)
     work=float(f@q)
     shell_energy=float(.5*qs@(ks@qs))
     beam_energy=float(.5*qb@(kb@qb))
@@ -243,7 +268,7 @@ def solve(nx: int, ny: int, n_beam: int, n_mortar: int,
     stations=[]
     for station in (.25,.5,.75):
         stations.append(dict(s=station,
-            shell_pose=(shell_pose(nx,ny,station,y_basis)@qs).tolist(),
+            shell_pose=(shell_pose(nx,ny,station,y_basis,x_basis)@qs).tolist(),
             beam_pose=(beam.trace(n_beam,station)@qb).tolist()))
     result=dict(
         status="UNREGISTERED_SPECTRAL_AXIAL_REFERENCE_DIAGNOSTIC",
@@ -284,12 +309,19 @@ def solve(nx: int, ny: int, n_beam: int, n_mortar: int,
         result["transverse_breaks_m"]=(-.5,-.23,.23,.5)
         result["limitations"]=("classical planar Fourier/segmented-polynomial shell",
                                *result["limitations"][1:])
+    if x_basis is not None:
+        result["longitudinal_basis"]="C0_FIVE_INTERVAL_LOBATTO_SUPPORTED"
+        result["longitudinal_degree"]=x_basis.degree
+        result["longitudinal_breaks_m"]=(-.5,-.2,.2,.8,1.2,1.5)
+        result["limitations"]=("classical planar segmented-polynomial shell",
+                               *result["limitations"][1:])
     return result
 
 
 def main() -> None:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--nx",type=int)
+    parser.add_argument("--segmented-x-degree",type=int)
     parser.add_argument("--ny",type=int)
     parser.add_argument("--segmented-degree",type=int)
     parser.add_argument("--beam",type=int)
@@ -298,7 +330,8 @@ def main() -> None:
     args=parser.parse_args()
     if args.resolution_suite:
         if any(value is not None for value in (args.nx,args.ny,args.beam,
-                                                args.mortar,args.segmented_degree)):
+                                                args.mortar,args.segmented_degree,
+                                                args.segmented_x_degree)):
             parser.error("resolution suite does not take single-case options")
         cases=((24,8,128,64),(32,12,128,64),
                (48,16,128,32),(48,16,128,64),(48,16,128,128),
@@ -306,14 +339,19 @@ def main() -> None:
         output=dict(suite="UNREGISTERED_SPECTRAL_AXIAL_RESOLUTION_V1",
                     cases=[solve(*case) for case in cases])
     else:
-        if any(value is None for value in (args.nx,args.beam,args.mortar)):
-            parser.error("nx, beam and mortar are required")
+        if any(value is None for value in (args.beam,args.mortar)):
+            parser.error("beam and mortar are required")
+        if (args.nx is None)==(args.segmented_x_degree is None):
+            parser.error("specify exactly one of nx and segmented-x-degree")
         if (args.ny is None)==(args.segmented_degree is None):
             parser.error("specify exactly one of ny and segmented-degree")
+        x_basis=(None if args.segmented_x_degree is None else
+                 SegmentedXBasis(args.segmented_x_degree))
         y_basis=(None if args.segmented_degree is None else
                  SegmentedYBasis(args.segmented_degree))
+        nx=args.nx if x_basis is None else x_basis.size
         ny=args.ny if y_basis is None else y_basis.size
-        output=solve(args.nx,ny,args.beam,args.mortar,y_basis)
+        output=solve(nx,ny,args.beam,args.mortar,y_basis,x_basis)
     print(json.dumps(output,indent=2,sort_keys=True,allow_nan=False))
 
 
