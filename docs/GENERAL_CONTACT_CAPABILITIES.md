@@ -8,6 +8,7 @@ impact API has a separate contract. Status terms are deliberately distinct:
 | Profile and geometry | Analysis and lifecycle | Status | Evidence and dependency |
 |---|---|---|---|
 | Planar qualified E4-PL Q4 skin against one fixed rigid plane; midsurface/top/bottom; frictionless penalty mortar | Nonlinear static force or displacement control; version-2 penalty checkpoint under von Karman kinematics | Implemented, locally tested | `tests/test_general_contact_plane.py`, `examples/general_contact_planar_plate.py`; corotational restart, independent review and registered numerical qualification open |
+| Explicit planar Q4/Q4 pair with fixed projected overlap; physical midsurface/top/bottom; guided uniform normal translation only | Von Karman nonlinear static frictionless penalty; no pair restart | Implemented, locally tested exploratory slice | `tests/test_general_contact_pair.py`, `tests/test_general_contact_overlap.py`, `examples/general_contact_guided_pair.py`; see [guided pair limits](GENERAL_CONTACT_C1_GUIDED_PAIR.md) |
 | Q4/S3 shell pairs, nonmatching overlap, finite sliding, augmented normal law, analytic obstacles | Nonlinear static and restart | Open | C1; paired-shell formulation and state work required |
 | B2/B3 round centreline tubes | Static frictionless contact | Open | C2 |
 | Straight/curved native B3-GE contact with retained internal coordinates | Native static owner | Open | C3 |
@@ -18,9 +19,9 @@ impact API has a separate contract. Status terms are deliberately distinct:
 | Native and coupled impact | Common-stage transient contact | Open | C8; requires C7 |
 | ANYfem/ANYstructure adapters, representative workflows and scale evidence | Installed applications | Open | C9 |
 
-The C0 working branch is `codex/general-contact-core`, started from ANYsolver
-`be41a77a62e1cd7e1767bda6e955253af0819f91`. The source is currently
-uncommitted. A disposable C0 candidate wheel built from this worktree as
+The working branch is `codex/general-contact-core`, started from ANYsolver
+`be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as
+`31e60277`. A disposable C0 candidate wheel built from that commit as
 `anysolver-0.4.7-py3-none-any.whl` (SHA-256
 `1d192e7b13171465928eac9156ece96bbedb4bcc1a0c895611594543c1980f66`)
 and its isolated installed copy ran the guided-plate example with the expected

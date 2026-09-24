@@ -153,6 +153,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition) -> C
     issues: list[str] = []
     if type(definition) is not ContactDefinition:
         return ContactValidationReport("invalid", ("ContactDefinition required",))
+    if not definition.rigid_bodies:
+        from .pair import validate_planar_q4_pair
+
+        return validate_planar_q4_pair(model, definition)
     surface_by_name = {surface.name: surface for surface in definition.surfaces}
     rigid_by_name = {body.name: body for body in definition.rigid_bodies}
     if tuple(map(len, (definition.surfaces, definition.rigid_bodies,
@@ -189,7 +193,7 @@ class _PlanarQ4PlaneManager:
                  settings: ContactSolverSettings | None = None,
                  initial_displacement: np.ndarray | None = None):
         report = validate_general_contact(model, definition)
-        if not report.valid:
+        if not report.valid or not definition.rigid_bodies:
             raise ValueError("unsupported general contact: " + "; ".join(report.issues))
         self.model = model
         self.definition = definition
@@ -407,12 +411,12 @@ class _PlanarQ4PlaneManager:
         return max(0.0, 0.98 * fraction)
 
 
-_ACTIVE_CONTACT: ContextVar[_PlanarQ4PlaneManager | None] = ContextVar(
+_ACTIVE_CONTACT: ContextVar[object | None] = ContextVar(
     "anysolver_general_contact", default=None
 )
 
 
-def active_contact_manager() -> _PlanarQ4PlaneManager | None:
+def active_contact_manager() -> object | None:
     return _ACTIVE_CONTACT.get()
 
 
@@ -430,8 +434,13 @@ def suspend_contact() -> Iterator[None]:
 @contextmanager
 def contact_scope(model: FEModel, definition: ContactDefinition,
                   settings: ContactSolverSettings | None = None,
-                  initial_displacement: np.ndarray | None = None) -> Iterator[_PlanarQ4PlaneManager]:
-    manager = _PlanarQ4PlaneManager(model, definition, settings, initial_displacement)
+                  initial_displacement: np.ndarray | None = None) -> Iterator[object]:
+    if definition.rigid_bodies:
+        manager = _PlanarQ4PlaneManager(model, definition, settings, initial_displacement)
+    else:
+        from .pair import _PlanarQ4PairManager
+
+        manager = _PlanarQ4PairManager(model, definition, settings, initial_displacement)
     token = _ACTIVE_CONTACT.set(manager)
     try:
         yield manager

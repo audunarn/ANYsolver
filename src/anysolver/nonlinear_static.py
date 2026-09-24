@@ -7233,6 +7233,11 @@ def solve_static_nonlinear(
             raise TypeError("contact_settings must be ContactSolverSettings")
         if fracture_config is not None or imperfection is not None:
             raise ValueError("contact with fracture or imperfection is not yet admitted")
+        if not contact.rigid_bodies:
+            if str(kinematics).lower() != "von_karman":
+                raise ValueError("guided shell-pair contact requires von_karman kinematics")
+            if restart_checkpoint is not None or emit_restart_checkpoint:
+                raise ValueError("guided shell-pair contact restart is not yet admitted")
         if str(kinematics).lower() == "corotational":
             if any(surface.side != "midsurface" for surface in contact.surfaces):
                 raise ValueError("offset shell contact is admitted with von_karman kinematics only")
