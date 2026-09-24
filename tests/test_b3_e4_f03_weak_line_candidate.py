@@ -305,10 +305,10 @@ def test_q4_torque_reaches_physical_shell_without_drilling_completion():
         solution = scale*np.linalg.solve(scaled, rhs)
         full = np.zeros(len(load))
         full[free] = solution[:count]
-        return full
+        return full, solution[count:]
 
-    full_response = solve(kkt.system, kkt.free_primal,
-                          kkt.coordinate_scale)
+    full_response, full_multipliers = solve(
+        kkt.system, kkt.free_primal, kkt.coordinate_scale)
     physical = physical_shell_stiffness(panel).toarray()
     physical_primal = kkt.primal_tangent.copy()
     physical_primal[:shell_size, :shell_size] = physical
@@ -324,7 +324,7 @@ def test_q4_torque_reaches_physical_shell_without_drilling_completion():
     ])
     scale = np.r_[kkt.coordinate_scale[:len(kkt.free_primal)][keep],
                   kkt.coordinate_scale[len(kkt.free_primal):]]
-    physical_response = solve(physical_system, free, scale)
+    physical_response, _ = solve(physical_system, free, scale)
     shell_energy = .5*physical_response[:shell_size]@physical@(
         physical_response[:shell_size])
     assert shell_energy > 1e-6
@@ -337,3 +337,23 @@ def test_q4_torque_reaches_physical_shell_without_drilling_completion():
                                full_response[physical_shell_dofs],
                                rtol=1e-8, atol=1e-12)
     assert np.linalg.norm(rows@physical_response[free]) < 1e-9
+
+    support_residual = (kkt.primal_tangent@full_response+
+                        kkt.constraint_jacobian.T@full_multipliers-load)
+    assert np.linalg.norm(support_residual[kkt.free_primal]) < 1e-7
+    shell_residual = support_residual[:shell_size].reshape(-1, 6)
+    beam_residual = support_residual[
+        shell_size:shell_size+beam.context.nodal_count].reshape(-1, 6)
+    shell_positions = reference_nodes(panel)
+    beam_positions = (beam.context.initial.mechanical.positions+
+                      beam.context.initial.mechanical.position_low)
+    shell_force = shell_residual[:, :3].sum(axis=0)
+    beam_force = beam_residual[:, :3].sum(axis=0)
+    shell_moment = np.sum(shell_residual[:, 3:]+np.cross(
+        shell_positions, shell_residual[:, :3]), axis=0)
+    beam_moment = np.sum(beam_residual[:, 3:]+np.cross(
+        beam_positions, beam_residual[:, :3]), axis=0)
+    np.testing.assert_allclose(shell_force+beam_force, 0., atol=1e-7)
+    np.testing.assert_allclose(shell_moment+beam_moment,
+                               (-100., 0., 0.), atol=1e-7)
+    assert abs(shell_moment[0]) > 1e-4

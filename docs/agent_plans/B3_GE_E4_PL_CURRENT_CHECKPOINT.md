@@ -859,5 +859,8 @@ drilling coordinates removed. It finds nonzero physical shell strain energy
 and matching non-drilling shell response. Independent mechanics review found
 no hidden circularity for that narrow existence result. Because both solves
 share the line constraint and native B3 kernel, this is not an independent
-physical-response oracle; support wrench balance, refinement, S3 torque and
-full F03 stability remain open.
+physical-response oracle. The same 100 Nm reference case now also recovers
+the physical-multiplier support residual and closes global force and moment
+balance about a common origin, with a nonzero shell support share. Independent
+review confirmed the residual sign and retained-coordinate treatment. Local
+traction balance, refinement, S3 torque and full F03 stability remain open.
