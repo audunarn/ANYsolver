@@ -802,3 +802,22 @@ dense G0 oracle, not a committed owner or plastic trial. The next mechanics
 boundary is a fixed-host segmented six-channel weak line with exact
 multiplier spaces and full coupled KKT stability. No one-use scientific
 registration was consumed. G0B remains open; G1 remains barred.
+
+## 24 September 2026 prospective ecosystem-policy transition
+
+Adopt `ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1`, revision
+`2026-09-24.1`, from
+`C:/Github/ANYopenSoft/governance/ECOSYSTEM_PHILOSOPHY.md` (SHA-256
+`92e458e1c3d1c252fdc22c2f1d90c2ffb976601e67a59545d162ec3d6110468d`).
+For future unregistered Level-A exploration, consolidate per-helper
+administrative dossiers and repeated full reviews into this living record,
+reproducible focused checks, and review of consequential assumptions. Retain
+the complete G0–G6 scientific and release gates, frozen F03 registrations,
+consumed one-use authorities, explicit no-run boundaries, protected evidence,
+resource limits, installed-artifact and external-reference requirements.
+The next permitted integrated development slice, once this task is resumed,
+is fixed-host segmented six-channel weak-line work using the committed E4
+trial and native B3 station ports; it is not a formal F03 assessment run.
+No amendment is needed for that exploratory slice. Any change to a frozen
+F03 formal procedure or criterion requires a prospective task-owner amendment.
+The implementation goal remains paused at `201188851322a1c9d867a1b76f396add1d3b756d`.
