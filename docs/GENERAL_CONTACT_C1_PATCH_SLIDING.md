@@ -109,6 +109,17 @@ coarse S3 side reduced the raw condition but increased the force error to
 was stopped after a bounded run without a mechanics result; it is not counted
 as a failure of the pressure law.
 
+On a separate 12×12 Q4-integration coupled partial-contact case, the solver
+completed at 0.4 N in 551 seconds with a −8.615 µm independent lower gap
+under the unchanged 10 µm budget. The gap and integrated first moment moved
+toward a stable value across 6×6, 10×10 and 12×12, but contact potential was
+nonmonotone. This is a development trend, not coupled response convergence.
+At the fixed opening pose, refining the S3 pressure side to 16 subdivisions
+per edge lowered its force and first-moment errors against the same oracle
+to about 0.95%; its response and the 12×12 Q4-pressure response differed by
+less than 2%. The role check is local and uses explicit diagnostic resource
+caps. Coupled role exchange and independent acceptance remain open.
+
 The full nonmatching slide, separation and recontact handoff and the main
 plan's refinement, independent-review and package gates remain open.
 
