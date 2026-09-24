@@ -120,6 +120,21 @@ to about 0.95%; its response and the 12×12 Q4-pressure response differed by
 less than 2%. The role check is local and uses explicit diagnostic resource
 caps. Coupled role exchange and independent acceptance remain open.
 
+At one accepted coupled 4×4 Q4 bottom-skin/S3 top-skin pose under 0.4 N,
+an independent 16×16 tensor-Gauss integration of each analytically clipped
+triangle/square cell found 0.28125 m² overlap. It did not call the production
+overlap or mortar integration routines. Normalized maximum differences were
+2.22×10⁻¹⁶ for nodal support, 4.49×10⁻¹⁵ for weighted gap (scaled by
+area×10 µm), 2.22×10⁻¹⁶ for the gap gradient, 3.43×10⁻¹⁴ for nodal normal
+force (scaled by 0.4 N), and 1.06×10⁻¹⁴ for integrated moments (scaled by
+0.4 N·m). Contact-potential relative difference was 7.09×10⁻¹⁶. A 12×12
+oracle agreed with the 16×16 oracle. The force and moment integration
+differences meet the registered 0.2% local budget. The focused test and raw
+output are `tests/test_general_contact_patch_refinement.py` and
+`C:\ANYworkspaceWork\general-contact-evidence\c1-accepted-pose-integration-oracle-final.txt`.
+This is a single preserved-pose integration check; it does not establish
+coupled response convergence or integration accuracy at other geometries.
+
 The full nonmatching slide, separation and recontact handoff and the main
 plan's refinement, independent-review and package gates remain open.
 

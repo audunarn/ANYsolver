@@ -1,6 +1,8 @@
-"""Coupled nonmatching Q4/S3 partial-contact resolution control."""
+"""Coupled nonmatching Q4/S3 partial-contact resolution controls."""
 
+import numpy as np
 import pytest
+from numpy.polynomial.legendre import leggauss
 
 from anysolver import (
     BoundaryCondition, ContactDefinition, ContactInteraction,
@@ -8,9 +10,11 @@ from anysolver import (
     solve_static_nonlinear, validate_general_contact,
 )
 from anysolver.fe_core import FEModel
+from anysolver.general_contact.patch_sliding import _RestrictedSlidingPatchFEManager
 
 
-def test_refined_q4_patch_on_s3_meets_declared_pointwise_gap_budget():
+@pytest.fixture(scope="module")
+def accepted_patch_pose():
     divisions = 4
     model = FEModel("partial_q4_s3_patch_refinement")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
@@ -76,6 +80,13 @@ def test_refined_q4_patch_on_s3_meets_declared_pointwise_gap_budget():
         kinematics="von_karman", num_steps=1, max_iterations=12,
         min_step_fraction=0.1,
     )
+    return model, definition, settings, result
+
+
+def test_refined_q4_patch_on_s3_meets_declared_pointwise_gap_budget(
+    accepted_patch_pose,
+):
+    _model, _definition, _settings, result = accepted_patch_pose
     assert result.status == "completed", (
         result.failure_reason, result.load_factor, result.info.get("general_contact"),
     )
@@ -90,3 +101,133 @@ def test_refined_q4_patch_on_s3_meets_declared_pointwise_gap_budget():
     assert result.steps[-1].support_reactions["target_fixed"][2] == pytest.approx(
         0.4, rel=1e-6,
     )
+
+
+def _independent_triangle_overlap_integrals(patch, q, order):
+    """Tensor Gauss over the known unit-triangle/square intersection.
+
+    This oracle clips horizontal strips analytically. It does not use the
+    production polygon clipping, common-refinement or triangle quadrature.
+    """
+    abscissae, weights = leggauss(order)
+    source_count = len(patch.source_node_ids)
+    target_count = len(patch.target_node_ids)
+    support = np.zeros(source_count)
+    weighted_gap = np.zeros(source_count)
+    gradient = np.zeros((source_count, source_count + target_count))
+    area = 0.0
+    source_heights = q[6:6 + source_count]
+    target_heights = q[6 + source_count:]
+    target_face = patch.target_faces[0]
+    target_columns = np.asarray([
+        patch.target_index[node] for node in target_face.node_ids
+    ])
+    target_xy = target_face.geometry.corners[:, :2] + q[3:5]
+    assert np.allclose(target_xy, ((0.0, 0.0), (1.0, 0.0), (0.0, 1.0)))
+    target_z = target_face.geometry.corners[0, 2] + q[5]
+    for face in patch.source_faces:
+        corners = face.geometry.corners
+        rows = np.asarray([patch.source_index[node] for node in face.node_ids])
+        x0, x1 = float(corners[0, 0] + q[0]), float(corners[1, 0] + q[0])
+        y0, y1 = float(corners[0, 1] + q[1]), float(corners[3, 1] + q[1])
+        assert x0 < x1 and y0 < y1
+        x_left, x_right = max(x0, 0.0), min(x1, 1.0 - max(y0, 0.0))
+        if x_left >= x_right:
+            continue
+        for xa, xb in ((x_left, min(x_right, 1.0 - y1)),
+                       (max(x_left, 1.0 - y1), x_right)):
+            if xa >= xb:
+                continue
+            for gx, wx in zip(abscissae, weights):
+                x = xa + 0.5 * (gx + 1.0) * (xb - xa)
+                upper = min(y1, 1.0 - x)
+                lower = max(y0, 0.0)
+                if upper <= lower:
+                    continue
+                for gy, wy in zip(abscissae, weights):
+                    y = lower + 0.5 * (gy + 1.0) * (upper - lower)
+                    xi = (x - x0) / (x1 - x0)
+                    eta = (y - y0) / (y1 - y0)
+                    source_shape = np.array(((1 - xi) * (1 - eta),
+                                             xi * (1 - eta), xi * eta,
+                                             (1 - xi) * eta))
+                    target_shape = np.array((1 - x - y, x, y))
+                    assert np.min(source_shape) >= -1e-12
+                    assert np.min(target_shape) >= -1e-12
+                    weight = wx * wy * (xb - xa) * (upper - lower) / 4.0
+                    gap = (float(patch.normal[2]) *
+                           (float(corners[0, 2] + q[2]) - target_z)
+                           + source_shape @ source_heights[rows]
+                           - target_shape @ target_heights[target_columns])
+                    area += weight
+                    support[rows] += weight * source_shape
+                    weighted_gap[rows] += weight * source_shape * gap
+                    gradient[np.ix_(rows, rows)] += (
+                        weight * np.outer(source_shape, source_shape)
+                    )
+                    gradient[np.ix_(rows, source_count + target_columns)] -= (
+                        weight * np.outer(source_shape, target_shape)
+                    )
+    return area, support, weighted_gap, gradient
+
+
+def test_accepted_q4_s3_pose_contact_integration_has_independent_error_budget(
+    accepted_patch_pose,
+):
+    model, definition, settings, result = accepted_patch_pose
+    assert result.status == "completed"
+    manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
+    q = manager._reduced_pose(result.displacements)
+    source_count = len(manager.patch.source_node_ids)
+    state = manager.patch.evaluate(
+        q[:3], q[3:6], q[6:6 + source_count], q[6 + source_count:]
+    )
+    control = _independent_triangle_overlap_integrals(manager.patch, q, 12)
+    refined = _independent_triangle_overlap_integrals(manager.patch, q, 16)
+    for earlier, later in zip(control, refined):
+        np.testing.assert_allclose(earlier, later, rtol=2e-12, atol=2e-13)
+    area, support, weighted_gap, gradient = refined
+    assert area == pytest.approx(0.28125, abs=1e-12)
+    np.testing.assert_allclose(state.support, support, rtol=2e-12, atol=2e-13)
+    np.testing.assert_allclose(state.weighted_gap, weighted_gap,
+                               rtol=2e-12, atol=2e-13)
+    np.testing.assert_allclose(state.gap_gradient, gradient,
+                               rtol=2e-12, atol=2e-13)
+    active = support > 0
+    gap = np.zeros_like(support)
+    gap[active] = weighted_gap[active] / support[active]
+    closed_gap = np.minimum(gap, 0.0)
+    stiffness = manager.patch.stiffness
+    energy = 0.5 * stiffness * float(support @ (closed_gap * closed_gap))
+    residual = gradient.T @ (stiffness * closed_gap)
+    force_scale = 0.4
+    force_error = np.max(np.abs(state.normal_residual - residual)) / force_scale
+    energy_error = abs(state.energy - energy) / max(energy, 1e-12)
+    support_error = np.max(np.abs(state.support - support)) / area
+    weighted_gap_error = np.max(np.abs(state.weighted_gap - weighted_gap)) / (
+        area * 1.0e-5
+    )
+    gradient_error = np.max(np.abs(state.gap_gradient - gradient)) / area
+    assert energy_error <= 0.002
+    assert force_error <= 0.002
+    moment_errors = []
+    for faces, offset, count in ((manager.patch.source_faces, 0, source_count),
+                                 (manager.patch.target_faces, source_count,
+                                  len(manager.patch.target_node_ids))):
+        points = {}
+        for face in faces:
+            points.update(zip(face.node_ids, face.geometry.corners))
+        ids = (manager.patch.source_node_ids if offset == 0
+               else manager.patch.target_node_ids)
+        xy = np.asarray([points[node][:2] for node in ids])
+        actual = state.normal_residual[offset:offset + count]
+        expected = residual[offset:offset + count]
+        moment_actual = np.array((xy[:, 1] @ actual, -xy[:, 0] @ actual))
+        moment_expected = np.array((xy[:, 1] @ expected, -xy[:, 0] @ expected))
+        moment_error = np.max(np.abs(moment_actual - moment_expected)) / force_scale
+        moment_errors.append(moment_error)
+        assert moment_error <= 0.002
+    print(f"accepted-pose area={area:.12g} m^2; normalized support="
+          f"{support_error:.3e}, weighted gap={weighted_gap_error:.3e}, "
+          f"gradient={gradient_error:.3e}, force={force_error:.3e}, "
+          f"moment={max(moment_errors):.3e}, energy={energy_error:.3e}")
