@@ -13,8 +13,11 @@ or admit finite sliding. The public validator reports the exact profile
   pairs, nonmatching meshes and partial projected overlap are supported at
   the reference pose. Each named surface must occupy one physical plane.
 - Each face may move only by a uniform translation along the common fixed
-  normal. Shell rotations and lateral movement are rejected at candidate
-  evaluation. Boundary conditions must enforce these restrictions.
+  normal, plus a common tangential translation of both bodies. Relative
+  lateral movement and shell rotations are rejected at candidate evaluation.
+  Boundary conditions must enforce these restrictions.
+- Physical top/bottom sides must face the opposing surface. An outward-facing
+  side selection fails validation; a midsurface has no outward-side test.
 - Physical top, bottom and midsurface selections use each formulation's
   reference director and fixed thickness. S3 V2D also uses its declared
   reference-surface offset. Offset force couples are assembled on the actual
@@ -23,8 +26,12 @@ or admit finite sliding. The public validator reports the exact profile
 - One frictionless penalty interaction under `von_karman` nonlinear static
   analysis. `normal_stiffness` is pressure per gap (Pa/m); `gap_tolerance` is
   a positive length in metres. Initial physical penetration is rejected.
-- Pair contact restart, augmented enforcement, self-contact, warped Q4,
-  finite sliding and shell rims are still unavailable.
+- Version-2 static checkpoints bind the pair definition, law, settings and
+  structural model. They carry an empty physical contact state for this
+  frictionless penalty profile. Q4/Q4 and S3/Q4 continuations have local
+  restart checks.
+- Augmented enforcement, self-contact, warped Q4, finite sliding and shell
+  rims are still unavailable.
 
 The present all-pairs overlap search has an explicit candidate limit and
 raises a resource error rather than dropping contact. It is a development
@@ -47,7 +54,8 @@ Pi_c     = (k/2) sum_a m_a min(gbar_a, 0)^2
 The residual and tangent differentiate that same potential with respect to
 both shell bodies. The integration and target forces are equal and opposite.
 For the admitted fixed overlap, the gap is affine in the permitted normal
-translations. Independent polygon-vertex gap checks and analytic trial-step
+translations. A common lateral translation leaves the pair contact work
+unchanged. Independent polygon-vertex gap checks and analytic trial-step
 limiting enforce the requested gap budget. The pressure-space constraint is
 weak; a later C1 profile must qualify partial contact and resolution under
 finite sliding.
@@ -63,4 +71,4 @@ Focused geometry and pair checks are in `tests/test_general_contact_overlap.py`
 and `tests/test_general_contact_pair.py`. The coupled static check currently
 uses S3 on the integration side against Q4; the other mixed combinations have
 local force-map checks. Independent review, registered mesh/enforcement
-qualification, restart, and the C1 finite-sliding handoff remain open.
+qualification and the C1 finite-sliding handoff remain open.

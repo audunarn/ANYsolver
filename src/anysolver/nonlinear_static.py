@@ -7236,8 +7236,6 @@ def solve_static_nonlinear(
         if not contact.rigid_bodies:
             if str(kinematics).lower() != "von_karman":
                 raise ValueError("guided shell-pair contact requires von_karman kinematics")
-            if restart_checkpoint is not None or emit_restart_checkpoint:
-                raise ValueError("guided shell-pair contact restart is not yet admitted")
         if str(kinematics).lower() == "corotational":
             if any(surface.side != "midsurface" for surface in contact.surfaces):
                 raise ValueError("offset shell contact is admitted with von_karman kinematics only")

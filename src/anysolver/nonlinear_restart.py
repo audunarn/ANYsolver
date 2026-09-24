@@ -812,9 +812,9 @@ def create_nonlinear_checkpoint(
         ),
     }
     if contact_enabled:
-        # The C0 penalty profile has no physical contact history. Future
-        # friction or augmentation profiles must serialize their committed
-        # state here rather than borrowing material or path-state slots.
+        # Admitted frictionless penalty profiles have no physical contact
+        # history. Future friction or augmentation profiles must serialize
+        # their committed state here, not in material or path-state slots.
         payload["contact_state"] = {}
     payload[_CHECKPOINT_HASH_KEY] = _sha256(payload)
     made = _normalize_json(payload)

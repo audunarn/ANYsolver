@@ -171,6 +171,30 @@ def test_tilted_physical_skins_transfer_offset_force_couples():
     )
 
 
+def test_common_lateral_translation_preserves_pair_contact_work():
+    model, _load, definition, upper_nodes = _guided_pair()
+    manager = _PlanarShellPairManager(model, definition)
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node_id in upper_nodes:
+        displacement[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -5.0e-7
+    reference_force, reference_tangent, reference = manager.evaluate(displacement)
+    moved = displacement.copy()
+    for node_id in manager.node_dofs:
+        dofs = model.mesh.dof_manager.get_node_dofs(node_id)
+        moved[dofs[0]] += 0.2
+        moved[dofs[1]] -= 0.1
+    moved_force, moved_tangent, translated = manager.evaluate(moved)
+    np.testing.assert_allclose(moved_force, reference_force, atol=1e-10)
+    np.testing.assert_allclose((moved_tangent - reference_tangent).toarray(),
+                               0.0, atol=1e-10)
+    assert translated.minimum_gap == pytest.approx(reference.minimum_gap)
+    assert translated.penalty_energy == pytest.approx(reference.penalty_energy)
+    np.testing.assert_allclose(
+        np.asarray(translated.integration_moment) + np.asarray(translated.target_moment),
+        0.0, atol=1e-10,
+    )
+
+
 def _guided_mixed_pair(source_kind, target_kind, *, director=None):
     model = FEModel("guided_mixed_shell_pair")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
@@ -286,7 +310,7 @@ def test_s3_reference_surface_offset_contributes_contact_couple():
     assert source_couple_y == pytest.approx(0.5 * 0.035 * director[0])
 
 
-def test_guided_pair_rejects_nonuniform_or_lateral_motion_and_restart():
+def test_guided_pair_rejects_nonuniform_or_relative_lateral_motion():
     model, load, definition, upper_nodes = _guided_pair()
     manager = _PlanarShellPairManager(model, definition)
     displacement = np.zeros(model.mesh.dof_manager.total_dofs)
@@ -301,9 +325,15 @@ def test_guided_pair_rejects_nonuniform_or_lateral_motion_and_restart():
     displacement[model.mesh.dof_manager.get_node_dofs(upper_nodes[0])[3]] = 1.0e-5
     with pytest.raises(ValueError, match="fixed shell rotations"):
         manager.evaluate(displacement)
-    with pytest.raises(ValueError, match="guided shell-pair contact restart"):
-        solve_static_nonlinear(model, load, contact=definition,
-                               emit_restart_checkpoint=True)
+    outward_definition = ContactDefinition(
+        surfaces=(ContactSurface("source", (2,), side="bottom"),
+                  ContactSurface("target", (1,), side="bottom")),
+        rigid_bodies=(),
+        interactions=(ContactInteraction("pair", "source", "target", 1.0e6, 1.0e-6),),
+    )
+    outward_report = validate_general_contact(model, outward_definition)
+    assert not outward_report.valid
+    assert any("faces away" in issue for issue in outward_report.issues)
     split_model, _split_load, split_definition, _split_upper = _guided_pair(
         split_target=True
     )
@@ -311,4 +341,49 @@ def test_guided_pair_rejects_nonuniform_or_lateral_motion_and_restart():
         _PlanarShellPairManager(
             split_model, split_definition,
             ContactSolverSettings(maximum_candidate_pairs=1),
+        )
+
+
+@pytest.mark.parametrize("source_kind", ("Q4", "S3"))
+def test_guided_pair_restart_matches_continuation_and_binds_contact_law(source_kind):
+    if source_kind == "Q4":
+        model, load, definition, _upper_nodes = _guided_pair(split_target=True)
+    else:
+        model, load, definition, _upper_nodes = _guided_mixed_pair("S3", "Q4")
+    common = dict(contact=definition, kinematics="von_karman",
+                  num_steps=1, max_iterations=12)
+    half = solve_static_nonlinear(
+        model, load, max_load_factor=0.5,
+        emit_restart_checkpoint=True, **common,
+    )
+    assert half.status == "completed", half.failure_reason
+    assert half.restart_checkpoint["version"] == 2
+    assert half.restart_checkpoint["contact_state"] == {}
+    resumed = solve_static_nonlinear(
+        model, load, max_load_factor=1.0,
+        restart_checkpoint=half.to_restart_checkpoint(), **common,
+    )
+    full = solve_static_nonlinear(
+        model, load, contact=definition, kinematics="von_karman",
+        num_steps=2, max_iterations=12,
+    )
+    assert resumed.status == full.status == "completed"
+    np.testing.assert_allclose(resumed.displacements, full.displacements,
+                               rtol=1e-8, atol=1e-10)
+    assert resumed.info["general_contact"]["integration_force"] == pytest.approx(
+        full.info["general_contact"]["integration_force"], abs=1e-8
+    )
+    interaction = definition.interactions[0]
+    changed = ContactDefinition(
+        surfaces=definition.surfaces, rigid_bodies=(),
+        interactions=(ContactInteraction(
+            interaction.name, interaction.surface, interaction.target,
+            2.0e6, interaction.gap_tolerance,
+        ),),
+    )
+    with pytest.raises(ValueError, match="analysis contract is incompatible"):
+        solve_static_nonlinear(
+            model, load, contact=changed, kinematics="von_karman",
+            num_steps=1, max_iterations=12, max_load_factor=1.0,
+            restart_checkpoint=half.to_restart_checkpoint(),
         )

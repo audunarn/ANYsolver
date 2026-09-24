@@ -83,6 +83,34 @@ def _definition_parts(model, definition: ContactDefinition):
     return issues, (integration, target, interaction, integration_nodes, target_nodes)
 
 
+def _reference_pair_normal(model, integration, faces_a, faces_b) -> np.ndarray:
+    normal = np.cross(faces_a[0].corners[1] - faces_a[0].corners[0],
+                      faces_a[0].corners[-1] - faces_a[0].corners[0])
+    normal /= np.linalg.norm(normal)
+    separation = np.mean(faces_a[0].corners, axis=0) - np.mean(
+        faces_b[0].corners, axis=0
+    )
+    scale = max(
+        float(np.max(np.linalg.norm(face.corners - face.corners[0], axis=1)))
+        for face in (faces_a[0], faces_b[0])
+    )
+    tolerance = 256.0 * np.finfo(float).eps * scale
+    signed_separation = float(separation @ normal)
+    if signed_separation < -tolerance:
+        normal = -normal
+    elif abs(signed_separation) <= tolerance and integration.side != "midsurface":
+        source_element = model.mesh.elements[faces_a[0].feature_id[1]]
+        director = source_element.physical_reference_director
+        if director is None:
+            director = normal
+        preferred = np.asarray(director, dtype=float)
+        if integration.side == "top":
+            preferred = -preferred
+        if float(preferred @ normal) < 0.0:
+            normal = -normal
+    return normal
+
+
 def validate_planar_shell_pair(model, definition: ContactDefinition) -> ContactValidationReport:
     issues, parts = _definition_parts(model, definition)
     profile = _profile_for_pair(model, definition)
@@ -104,6 +132,23 @@ def validate_planar_shell_pair(model, definition: ContactDefinition) -> ContactV
             if any(abs(float(other @ normal)) < 1.0 - 1.0e-10
                    for other in normals):
                 issues.append("guided pair faces must be parallel")
+            normal = _reference_pair_normal(model, integration, faces_a, faces_b)
+            for surface, faces, expected_sign in (
+                (integration, faces_a, -1.0), (target, faces_b, 1.0),
+            ):
+                if surface.side == "midsurface":
+                    continue
+                side_sign = -1.0 if surface.side == "bottom" else 1.0
+                for face in faces:
+                    element = model.mesh.elements[face.feature_id[1]]
+                    director = element.physical_reference_director
+                    if director is None:
+                        director = np.cross(face.corners[1] - face.corners[0],
+                                            face.corners[-1] - face.corners[0])
+                        director /= np.linalg.norm(director)
+                    if expected_sign * side_sign * float(np.asarray(director) @ normal) <= 0.0:
+                        issues.append(f"surface {surface.name}: physical side faces away from its pair")
+                        break
             for name, faces in ((integration.name, faces_a), (target.name, faces_b)):
                 origin = faces[0].corners[0]
                 scale = max(float(np.max(np.linalg.norm(face.corners - face.corners[0], axis=1)))
@@ -164,30 +209,7 @@ class _PlanarShellPairManager:
                         for element_id in integration.element_ids]
         self.faces_b = [reference_shell_face(model, 2, element_id, target.side)
                         for element_id in target.element_ids]
-        normal = np.cross(self.faces_a[0].corners[1] - self.faces_a[0].corners[0],
-                          self.faces_a[0].corners[-1] - self.faces_a[0].corners[0])
-        normal /= np.linalg.norm(normal)
-        separation = np.mean(self.faces_a[0].corners, axis=0) - np.mean(
-            self.faces_b[0].corners, axis=0
-        )
-        separation_tolerance = 256.0 * np.finfo(float).eps * max(
-            float(np.linalg.norm(self.faces_a[0].corners[1] - self.faces_a[0].corners[0])),
-            float(np.linalg.norm(self.faces_b[0].corners[1] - self.faces_b[0].corners[0])),
-        )
-        signed_separation = float(separation @ normal)
-        if signed_separation < -separation_tolerance:
-            normal = -normal
-        elif abs(signed_separation) <= separation_tolerance and integration.side != "midsurface":
-            source_element = model.mesh.elements[self.faces_a[0].feature_id[1]]
-            director = source_element.physical_reference_director
-            if director is None:
-                director = normal
-            preferred = np.asarray(director, dtype=float)
-            if integration.side == "top":
-                preferred = -preferred
-            if float(preferred @ normal) < 0.0:
-                normal = -normal
-        self.normal = normal
+        self.normal = _reference_pair_normal(model, integration, self.faces_a, self.faces_b)
         self.face_gradients = {}
         from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
 
@@ -208,7 +230,7 @@ class _PlanarShellPairManager:
             else:
                 offset = 0.5 * float(element.thickness) * coordinate
             self.face_gradients[face.feature_id] = np.r_[
-                normal, offset * np.cross(director, normal)
+                self.normal, offset * np.cross(director, self.normal)
             ]
         self.reference_scale = max(
             *(float(np.max(np.linalg.norm(face.corners - face.corners[0], axis=1)))
@@ -334,14 +356,17 @@ class _PlanarShellPairManager:
         u = np.asarray(displacement, dtype=float).reshape(-1)
         if u.size != self.model.mesh.dof_manager.total_dofs or not np.all(np.isfinite(u)):
             raise ValueError("contact displacement has invalid size or nonfinite values")
+        common_tangent = None
         for face_dofs in self.motion_faces:
             movement = u[face_dofs[:, :3]]
             normal_movement = movement @ self.normal
             tangent_movement = movement - normal_movement[:, None] * self.normal
-            if (float(np.max(np.linalg.norm(tangent_movement, axis=1)))
+            if common_tangent is None:
+                common_tangent = tangent_movement[0]
+            if (float(np.max(np.linalg.norm(tangent_movement - common_tangent, axis=1)))
                     > self.motion_tolerance
                     or float(np.ptp(normal_movement)) > self.motion_tolerance):
-                raise ValueError("guided pair profile requires uniform normal translation of each face")
+                raise ValueError("guided pair profile requires uniform normal translation of each face and common tangential motion")
             rotations = u[face_dofs[:, 3:]]
             if float(np.max(np.linalg.norm(rotations, axis=1))) > 256.0 * np.finfo(float).eps:
                 raise ValueError("guided pair profile requires fixed shell rotations")
@@ -417,4 +442,21 @@ class _PlanarShellPairManager:
         return max(0.0, 0.98 * fraction)
 
     def restart_contract(self) -> dict[str, object]:
-        return {"profile": self.profile, "restart_admitted": False}
+        return {
+            "profile": self.profile,
+            "surfaces": [
+                {"name": item.name, "element_ids": list(item.element_ids),
+                 "side": item.side}
+                for item in self.definition.surfaces
+            ],
+            "interactions": [
+                {"name": item.name, "surface": item.surface,
+                 "target": item.target, "normal_stiffness": item.normal_stiffness,
+                 "gap_tolerance": item.gap_tolerance,
+                 "normal_law": item.normal_law}
+                for item in self.definition.interactions
+            ],
+            "settings": {
+                "maximum_candidate_pairs": self.settings.maximum_candidate_pairs,
+            },
+        }
