@@ -13,8 +13,9 @@ from dataclasses import dataclass
 import numpy as np
 from scipy import sparse
 
-from .core import ContactDefinition, ContactSolverSettings
+from .core import ContactDefinition, ContactSolverSettings, ContactValidationReport
 from .moving import (
+    MovingSweptGapBound,
     bound_swept_moving_mortar_gap,
     certify_moving_mortar_gap,
     moving_mortar_reduced_system,
@@ -26,6 +27,16 @@ from .pair import _definition_parts, _reference_pair_normal, validate_planar_she
 
 
 PROFILE = "PLANAR_Q4_S3_PAIR_RESTRICTED_SLIDING_MORTAR_DEV_V0"
+
+
+def validate_restricted_sliding_pair(model, definition: ContactDefinition) -> ContactValidationReport:
+    report = validate_planar_shell_pair(model, definition)
+    issues = list(report.issues)
+    if len(definition.surfaces) == 2 and any(
+        len(surface.element_ids) != 1 for surface in definition.surfaces
+    ):
+        issues.append("restricted sliding requires one face per surface")
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE)
 
 
 @dataclass(frozen=True)
@@ -66,9 +77,11 @@ class _RestrictedSlidingPairFEManager:
 
     def __init__(self, model, definition: ContactDefinition,
                  settings: ContactSolverSettings | None = None,
-                 *, difference_step: float, maximum_gap_triangles: int = 10_000):
+                 *, difference_step: float | None = None,
+                 maximum_gap_triangles: int | None = None,
+                 initial_displacement: np.ndarray | None = None):
         self.settings = ContactSolverSettings() if settings is None else settings
-        report = validate_planar_shell_pair(model, definition)
+        report = validate_restricted_sliding_pair(model, definition)
         if not report.valid:
             raise ValueError("unsupported sliding pair: " + "; ".join(report.issues))
         _issues, parts = _definition_parts(model, definition)
@@ -77,11 +90,19 @@ class _RestrictedSlidingPairFEManager:
             raise ValueError("restricted sliding owner currently needs one face per surface")
         self.model = model
         self.definition = definition
+        self.profile = PROFILE
         self.stiffness = interaction.normal_stiffness
         self.gap_tolerance = interaction.gap_tolerance
-        self.difference_step = float(difference_step)
+        self.swept_trial_cutbacks = 0
+        selected_step = (self.settings.sliding_difference_step
+                         if difference_step is None else difference_step)
+        if selected_step is None:
+            raise ValueError("restricted sliding requires an explicit difference_step")
+        self.difference_step = float(selected_step)
         if not np.isfinite(self.difference_step) or self.difference_step <= 0.0:
             raise ValueError("difference_step must be finite and positive")
+        if maximum_gap_triangles is None:
+            maximum_gap_triangles = self.settings.maximum_gap_triangles
         if type(maximum_gap_triangles) is not int or maximum_gap_triangles < 1:
             raise ValueError("maximum_gap_triangles must be a positive integer")
         self.maximum_gap_triangles = maximum_gap_triangles
@@ -156,6 +177,20 @@ class _RestrictedSlidingPairFEManager:
         scale = max(float(np.max(np.linalg.norm(face.corners - face.corners[0], axis=1)))
                     for face in self.faces)
         self.motion_tolerance = 256.0 * np.finfo(float).eps * scale
+        initial = (np.zeros(n_dof) if initial_displacement is None
+                   else np.asarray(initial_displacement, dtype=float).reshape(-1))
+        initial_q = self._reduced_pose(initial)
+        split = self.height_offsets[1]
+        certificate = certify_moving_mortar_gap(
+            *self.faces, self.normal,
+            initial_q[:3], initial_q[3:6], initial_q[6:split], initial_q[split:],
+            gap_tolerance=self.motion_tolerance,
+            maximum_triangles=self.maximum_gap_triangles,
+        )
+        if certificate.minimum_sampled_gap < -self.motion_tolerance:
+            raise ValueError("restricted sliding has unresolved initial penetration")
+        if not certificate.tolerance_met:
+            raise ValueError("restricted sliding initial gap could not be certified")
 
     def _reduced_pose(self, displacement: np.ndarray) -> np.ndarray:
         u = np.asarray(displacement, dtype=float).reshape(-1)
@@ -177,12 +212,74 @@ class _RestrictedSlidingPairFEManager:
         first = self._reduced_pose(start)
         last = self._reduced_pose(end)
         split = self.height_offsets[1]
-        return bound_swept_moving_mortar_gap(
+        global_bound = bound_swept_moving_mortar_gap(
             *self.faces, self.normal,
             first[:3], last[:3], first[3:6], last[3:6],
             first[6:split], last[6:split], first[split:], last[split:],
             gap_tolerance=self.gap_tolerance,
         )
+        if global_bound.tolerance_certified:
+            return global_bound
+        relative_motion = ((last[:3] - last[3:6])
+                           - (first[:3] - first[3:6]))
+        tangent_motion = relative_motion - self.normal * float(relative_motion @ self.normal)
+        if np.any(tangent_motion != 0.0):
+            return global_bound
+        certificates = tuple(
+            certify_moving_mortar_gap(
+                *self.faces, self.normal,
+                pose[:3], pose[3:6], pose[6:split], pose[split:],
+                gap_tolerance=self.gap_tolerance,
+                maximum_triangles=self.maximum_gap_triangles,
+            )
+            for pose in (first, last)
+        )
+        if not all(item.tolerance_met for item in certificates):
+            return global_bound
+        return MovingSweptGapBound(
+            global_bound.overlap_interval,
+            min(item.conservative_lower_gap for item in certificates),
+            True,
+        )
+
+    def admissible_step_fraction(self, start: np.ndarray, end: np.ndarray) -> float:
+        if self.swept_trial_bound(start, end).tolerance_certified:
+            return 1.0
+        first = np.asarray(start, dtype=float).reshape(-1)
+        last = np.asarray(end, dtype=float).reshape(-1)
+        lower, upper = 0.0, 1.0
+        for _ in range(30):
+            middle = 0.5 * (lower + upper)
+            candidate = first + middle * (last - first)
+            if self.swept_trial_bound(first, candidate).tolerance_certified:
+                lower = middle
+            else:
+                upper = middle
+        self.swept_trial_cutbacks += 1
+        return max(0.0, 0.98 * lower)
+
+    def restart_contract(self) -> dict[str, object]:
+        return {
+            "profile": self.profile,
+            "surfaces": [
+                {"name": item.name, "element_ids": list(item.element_ids),
+                 "side": item.side}
+                for item in self.definition.surfaces
+            ],
+            "interactions": [
+                {"name": item.name, "surface": item.surface,
+                 "target": item.target, "normal_stiffness": item.normal_stiffness,
+                 "gap_tolerance": item.gap_tolerance,
+                 "normal_law": item.normal_law}
+                for item in self.definition.interactions
+            ],
+            "settings": {
+                "pair_motion": self.settings.pair_motion,
+                "maximum_candidate_pairs": self.settings.maximum_candidate_pairs,
+                "sliding_difference_step": self.difference_step,
+                "maximum_gap_triangles": self.maximum_gap_triangles,
+            },
+        }
 
     def evaluate(self, displacement: np.ndarray, *, tangent: bool = True):
         q = self._reduced_pose(displacement)

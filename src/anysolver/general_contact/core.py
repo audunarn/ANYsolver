@@ -105,13 +105,29 @@ class ContactDefinition:
 
 @dataclass(frozen=True)
 class ContactSolverSettings:
-    """Reserved controls for the contact analysis, versioned with its profile."""
+    """Explicit resource and restricted-pair controls, versioned with the profile."""
 
     maximum_candidate_pairs: int = 100_000
+    pair_motion: str = "guided"
+    sliding_difference_step: float | None = None
+    maximum_gap_triangles: int = 10_000
 
     def __post_init__(self) -> None:
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
             raise ValueError("maximum_candidate_pairs must be a positive integer")
+        if self.pair_motion not in {"guided", "restricted_sliding"}:
+            raise ValueError("pair_motion must be guided or restricted_sliding")
+        if self.sliding_difference_step is not None and (
+            not np.isfinite(self.sliding_difference_step)
+            or self.sliding_difference_step <= 0.0
+        ):
+            raise ValueError("sliding_difference_step must be finite and positive")
+        if type(self.maximum_gap_triangles) is not int or self.maximum_gap_triangles < 1:
+            raise ValueError("maximum_gap_triangles must be a positive integer")
+        if self.pair_motion == "restricted_sliding" and self.sliding_difference_step is None:
+            raise ValueError("restricted sliding requires an explicit sliding_difference_step")
+        if self.pair_motion == "guided" and self.sliding_difference_step is not None:
+            raise ValueError("sliding_difference_step requires restricted_sliding pair_motion")
 
 
 @dataclass(frozen=True)
@@ -151,16 +167,25 @@ class ContactResults:
         }
 
 
-def validate_general_contact(model: FEModel, definition: ContactDefinition) -> ContactValidationReport:
+def validate_general_contact(model: FEModel, definition: ContactDefinition,
+                             settings: ContactSolverSettings | None = None) -> ContactValidationReport:
     """Report every unsupported feature before contact changes the solve."""
 
     issues: list[str] = []
     if type(definition) is not ContactDefinition:
         return ContactValidationReport("invalid", ("ContactDefinition required",))
+    if settings is not None and type(settings) is not ContactSolverSettings:
+        return ContactValidationReport("invalid", ("ContactSolverSettings required",))
     if not definition.rigid_bodies:
+        if settings is not None and settings.pair_motion == "restricted_sliding":
+            from .sliding import validate_restricted_sliding_pair
+
+            return validate_restricted_sliding_pair(model, definition)
         from .pair import validate_planar_shell_pair
 
         return validate_planar_shell_pair(model, definition)
+    if settings is not None and settings.pair_motion != "guided":
+        return ContactValidationReport("invalid", ("rigid contact does not support pair_motion",))
     surface_by_name = {surface.name: surface for surface in definition.surfaces}
     rigid_by_name = {body.name: body for body in definition.rigid_bodies}
     if tuple(map(len, (definition.surfaces, definition.rigid_bodies,
@@ -474,12 +499,22 @@ def suspend_contact() -> Iterator[None]:
 def contact_scope(model: FEModel, definition: ContactDefinition,
                   settings: ContactSolverSettings | None = None,
                   initial_displacement: np.ndarray | None = None) -> Iterator[object]:
+    settings = ContactSolverSettings() if settings is None else settings
     if definition.rigid_bodies:
+        if settings.pair_motion != "guided":
+            raise ValueError("rigid contact does not support pair_motion")
         manager = _PlanarQ4PlaneManager(model, definition, settings, initial_displacement)
     else:
-        from .pair import _PlanarShellPairManager
+        if settings.pair_motion == "restricted_sliding":
+            from .sliding import _RestrictedSlidingPairFEManager
 
-        manager = _PlanarShellPairManager(model, definition, settings, initial_displacement)
+            manager = _RestrictedSlidingPairFEManager(
+                model, definition, settings, initial_displacement=initial_displacement,
+            )
+        else:
+            from .pair import _PlanarShellPairManager
+
+            manager = _PlanarShellPairManager(model, definition, settings, initial_displacement)
     token = _ACTIVE_CONTACT.set(manager)
     try:
         yield manager

@@ -214,7 +214,8 @@ def test_common_lateral_translation_preserves_pair_contact_work():
     )
 
 
-def _guided_mixed_pair(source_kind, target_kind, *, director=None):
+def _guided_mixed_pair(source_kind, target_kind, *, director=None,
+                       source_shift=(0.0, 0.0)):
     model = FEModel("guided_mixed_shell_pair")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
     shape_xy = {"Q4": ((0, 0), (1, 0), (1, 1), (0, 1)),
@@ -230,7 +231,9 @@ def _guided_mixed_pair(source_kind, target_kind, *, director=None):
     for node_id, (x, y) in zip(target_nodes, shape_xy[target_kind]):
         model.add_node(node_id, x, y, 0.0)
     for node_id, (x, y) in zip(source_nodes, shape_xy[source_kind]):
-        model.add_node(node_id, *(np.asarray((x, y, 0.0)) + source_offset))
+        model.add_node(node_id, *(np.asarray((
+            x + source_shift[0], y + source_shift[1], 0.0,
+        )) + source_offset))
     for element_id, nodes, kind in ((1, target_nodes, target_kind),
                                     (2, source_nodes, source_kind)):
         options = ({"formulation": "e4-pl-s3-v2d",
@@ -308,6 +311,73 @@ def test_guided_s3_source_solves_through_static_route():
     assert summary["integration_force"][2] == pytest.approx(0.3, abs=1e-8)
     assert summary["target_force"][2] == pytest.approx(-0.3, abs=1e-8)
     assert summary["minimum_gap"] == pytest.approx(-6.0e-7, abs=1e-9)
+
+
+def test_restricted_sliding_s3_source_solves_with_physical_offset():
+    model, load, original, source_nodes = _guided_mixed_pair(
+        "S3", "Q4", source_shift=(0.15, 0.1),
+    )
+    contact = ContactDefinition(
+        surfaces=original.surfaces, rigid_bodies=(),
+        interactions=(ContactInteraction(
+            "pair", "source", "target", 1.0e6, 1.0e-5,
+        ),),
+    )
+    settings = ContactSolverSettings(
+        pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
+    )
+    report = validate_general_contact(model, contact, settings)
+    assert report.valid, report.issues
+    result = solve_static_nonlinear(
+        model, load, contact=contact, contact_settings=settings,
+        kinematics="von_karman", num_steps=1, max_iterations=12,
+    )
+    assert result.status == "completed", (
+        result.failure_reason, result.info.get("general_contact"),
+    )
+    summary = result.info["general_contact"]
+    assert 0.0 < summary["current_overlap_area"] < 0.5
+    assert summary["gap_tolerance_met"]
+    expected_force = 0.1 * len(source_nodes)
+    assert summary["integration_force"][2] == pytest.approx(expected_force, rel=1e-5)
+    assert summary["target_force"][2] == pytest.approx(-expected_force, rel=1e-5)
+
+
+def test_restricted_swept_bound_uses_fixed_overlap_endpoint_certificate():
+    from anysolver.general_contact.moving import bound_swept_moving_mortar_gap
+    from anysolver.general_contact.sliding import _RestrictedSlidingPairFEManager
+
+    model, _load, original, source_nodes = _guided_mixed_pair(
+        "Q4", "S3", source_shift=(0.15, 0.1),
+    )
+    contact = ContactDefinition(
+        surfaces=original.surfaces, rigid_bodies=(),
+        interactions=(ContactInteraction(
+            "pair", "source", "target", 1.0e6, 1.0e-5,
+        ),),
+    )
+    settings = ContactSolverSettings(
+        pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
+    )
+    manager = _RestrictedSlidingPairFEManager(model, contact, settings)
+    start = np.zeros(model.mesh.dof_manager.total_dofs)
+    end = start.copy()
+    for node, height in zip(source_nodes, (-1.0e-6, -1.0e-6,
+                                           -3.0e-5, -1.0e-6)):
+        end[model.mesh.dof_manager.get_node_dofs(node)[2]] = height
+    split = manager.height_offsets[1]
+    first = manager._reduced_pose(start)
+    last = manager._reduced_pose(end)
+    coarse = bound_swept_moving_mortar_gap(
+        *manager.faces, manager.normal,
+        first[:3], last[:3], first[3:6], last[3:6],
+        first[6:split], last[6:split], first[split:], last[split:],
+        gap_tolerance=manager.gap_tolerance,
+    )
+    assert not coarse.tolerance_certified
+    refined = manager.swept_trial_bound(start, end)
+    assert refined.tolerance_certified
+    assert refined.conservative_lower_gap >= -manager.gap_tolerance
 
 
 def test_s3_reference_surface_offset_contributes_contact_couple():

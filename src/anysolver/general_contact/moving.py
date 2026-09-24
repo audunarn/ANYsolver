@@ -1,11 +1,9 @@
-"""Translation-space control for moving planar mortar overlap.
+"""Moving planar mortar control with fixed rotations and nodal normal fields.
 
-This kernel is an internal, restricted derivative control. Each selected
-physical patch translates rigidly without rotation or deformation. Its scalar
-gap is therefore constant on every overlap polygon, so the nonnegative P1/Q1
-primal mortar penalty potential reduces exactly to overlap area times the
-scalar normal penalty energy. The result is not the deformable-shell force
-map needed for C1 admission.
+The public restricted-sliding development profile uses this candidate-pose
+overlap, transported primal pressure field, and bounded trial-path geometry.
+It does not represent arbitrary in-plane shell deformation or a complete C1
+finite-sliding formulation.
 """
 
 from __future__ import annotations
@@ -672,7 +670,9 @@ def moving_mortar_reduced_system(
     """Differentiate the restricted moving mortar residual on a smooth branch.
 
     The first derivative uses transport of current pressure-space integrals;
-    its tangent is a centred directional differentiation of that residual.
+    its tangent is a centred directional differentiation on a smooth branch.
+    At an active-set boundary, use the one-sided derivative that retains the
+    base active set. If neither side retains it, reject the ambiguous column.
     This bounded control is not a deformable-shell tangent or public solver
     profile. The caller declares a dimensional perturbation and must refine
     it for its scale before using the result as evidence.
@@ -711,14 +711,20 @@ def moving_mortar_reduced_system(
         delta[column] = step
         plus_state, plus_residual = evaluate_at(variables + delta)
         minus_state, minus_residual = evaluate_at(variables - delta)
-        if (not np.array_equal(
-                (plus_state.support > 0.0) & (plus_state.normalized_gap <= 0.0),
-                base_active)
-                or not np.array_equal(
-                    (minus_state.support > 0.0) & (minus_state.normalized_gap <= 0.0),
-                    base_active)):
+        plus_active = ((plus_state.support > 0.0)
+                       & (plus_state.normalized_gap <= 0.0))
+        minus_active = ((minus_state.support > 0.0)
+                        & (minus_state.normalized_gap <= 0.0))
+        plus_matches = np.array_equal(plus_active, base_active)
+        minus_matches = np.array_equal(minus_active, base_active)
+        if plus_matches and minus_matches:
+            tangent[:, column] = (plus_residual - minus_residual) / (2.0 * step)
+        elif plus_matches:
+            tangent[:, column] = (plus_residual - residual) / step
+        elif minus_matches:
+            tangent[:, column] = (residual - minus_residual) / step
+        else:
             raise ValueError("moving mortar tangent crosses an active-set transition")
-        tangent[:, column] = (plus_residual - minus_residual) / (2.0 * step)
     scale = max(np.finfo(float).tiny, float(np.linalg.norm(tangent)))
     asymmetry = float(np.linalg.norm(tangent - tangent.T) / scale)
     return MovingMortarReducedSystem(base_state, residual, tangent, asymmetry)

@@ -119,6 +119,18 @@ def test_restricted_sliding_swept_bound_finds_hidden_overlap():
     assert bound.conservative_lower_gap == pytest.approx(-2.0e-3)
 
 
+def test_restricted_sliding_rejects_initial_overclosure():
+    model, definition, _direction = _two_q4_faces()
+    initial = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node in (5, 6, 7, 8):
+        initial[model.mesh.dof_manager.get_node_dofs(node)[2]] = -1.0e-5
+    with pytest.raises(ValueError, match="initial penetration"):
+        _RestrictedSlidingPairFEManager(
+            model, definition, difference_step=1.0e-7,
+            initial_displacement=initial,
+        )
+
+
 def test_restricted_sliding_preserves_physical_offset_virtual_couple():
     director = np.asarray((0.1, 0.0, 1.0), dtype=float)
     director /= np.linalg.norm(director)
