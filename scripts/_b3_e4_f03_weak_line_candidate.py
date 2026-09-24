@@ -22,6 +22,9 @@ from scripts._b3_e4_f03_e4_trial_panel import (
 from scripts._b3_e4_f03_native_fixture import Fixture, SECTION_DIAGONAL
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import pose_from_e4_total
+from scripts._b3_e4_f03_shell_local_translation_candidate import (
+    pose_from_e4_total_local_translation,
+    reference_spatial_trace_local_translation)
 from scripts._b3_e4_f03_shell_spatial_linear_port import reference_spatial_trace
 
 
@@ -112,7 +115,8 @@ def integrate_weak_line(
         shell_reference_total: np.ndarray, shell_total: np.ndarray,
         shell_first: np.ndarray, shell_second: np.ndarray,
         beam_state: Mechanical, beam_first: np.ndarray,
-        beam_second: np.ndarray, *, order: int = 4) -> WeakLineWork:
+        beam_second: np.ndarray, *, order: int = 4,
+        shell_port: str = "rail") -> WeakLineWork:
     """Integrate exact multiplier work and its physical directional Hessian.
 
     The reference joint is captured separately at every material station.
@@ -122,6 +126,10 @@ def integrate_weak_line(
     """
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
+    if shell_port not in ("rail", "local_translation"):
+        raise ValueError("unknown bounded shell pose port")
+    pose_map = (pose_from_e4_total if shell_port == "rail" else
+                pose_from_e4_total_local_translation)
     if type(order) is not int or order not in (2, 3, 4, 5):
         raise ValueError("bounded Gauss order 2 through 5 required")
     coefficients = np.asarray(multipliers, dtype=float)
@@ -146,7 +154,7 @@ def integrate_weak_line(
             element, cell, fraction, _ = beam._locate(station)
             port = NativeHalfCellSpatialPort(
                 beam.context, element, cell, fraction)
-            shell_ref_position, shell_ref_frame = pose_from_e4_total(
+            shell_ref_position, shell_ref_frame = pose_map(
                 shell.panel, station, shell_reference_total)
             beam_high, beam_low, beam_frame = port.pose_pair(
                 beam.context.initial.mechanical)
@@ -156,7 +164,8 @@ def integrate_weak_line(
             local = directional_point_work(
                 joint, shell.panel, station, shell_total,
                 shell_first, shell_second, port, beam_state,
-                beam_first, beam_second, basis@coefficients)
+                beam_first, beam_second, basis@coefficients,
+                shell_port=shell_port)
             measure = half*gauss_weight
             potential += measure*local.potential
             weak += measure*basis[:, None]*local.constraints[None, :]
@@ -172,7 +181,8 @@ def integrate_weak_line(
 
 def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                            space: LineMultiplierSpace, *,
-                           order: int = 4) -> ReferenceKKT:
+                           order: int = 4,
+                           shell_port: str = "rail") -> ReferenceKKT:
     """Assemble a bounded zero-multiplier shell/B3/weak-line KKT oracle.
 
     The shell and beam are at their flat virgin reference; shell x=-.5 and
@@ -181,6 +191,12 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
     """
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
+    if shell_port not in ("rail", "local_translation"):
+        raise ValueError("unknown bounded shell pose port")
+    pose_map = (pose_from_e4_total if shell_port == "rail" else
+                pose_from_e4_total_local_translation)
+    reference_trace = (reference_spatial_trace if shell_port == "rail" else
+                       reference_spatial_trace_local_translation)
     if type(order) is not int or order not in (2, 3, 4, 5):
         raise ValueError("bounded Gauss order 2 through 5 required")
     edges = segments(shell, beam, space)
@@ -200,7 +216,7 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
             element, cell, fraction, _ = beam._locate(station)
             port = NativeHalfCellSpatialPort(
                 beam.context, element, cell, fraction)
-            shell_position, shell_frame = pose_from_e4_total(
+            shell_position, shell_frame = pose_map(
                 shell.panel, station, shell_zero)
             beam_high, beam_low, beam_frame = port.pose_pair(
                 beam.context.initial.mechanical)
@@ -215,7 +231,7 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                 raise ValueError("nonzero virgin weak-line reference gap")
             derivative = np.column_stack((
                 evaluation.constraint_jacobian[:, :6]@
-                reference_spatial_trace(shell.panel, station),
+                reference_trace(shell.panel, station),
                 evaluation.constraint_jacobian[:, 6:]@port.tangent(
                     beam.context.initial.mechanical)))
             for row, basis_value in enumerate(space.values(station)):

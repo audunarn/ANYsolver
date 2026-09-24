@@ -7,6 +7,7 @@ linearized responses are descriptive, not a stability or accuracy gate.
 
 from __future__ import annotations
 
+import argparse
 import json
 
 import numpy as np
@@ -17,18 +18,24 @@ from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import pose_from_e4_total
+from scripts._b3_e4_f03_shell_local_translation_candidate import (
+    pose_from_e4_total_local_translation)
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_reference_kkt)
 
 
-def one_case(topology: str, intervals: int, kind: str) -> dict:
+def one_case(topology: str, intervals: int, kind: str, *,
+             shell_port: str = "rail") -> dict:
     """Solve the same +100 Nm torsion case at one multiplier resolution."""
     shell = FlatE4TrialPanel(make_shell(4, topology))
     beam = build(16)
     space = LineMultiplierSpace(
         kind, tuple(np.linspace(0., 1., intervals+1)))
-    kkt = assemble_reference_kkt(shell, beam, space)
+    kkt = assemble_reference_kkt(
+        shell, beam, space, shell_port=shell_port)
+    pose_map = (pose_from_e4_total if shell_port == "rail" else
+                pose_from_e4_total_local_translation)
     shell_size = 6*shell.panel.node_count
     tip_rx = shell_size+6*beam.n_half_cells+3
     load = np.zeros(shell_size+beam.context.count)
@@ -54,14 +61,14 @@ def one_case(topology: str, intervals: int, kind: str) -> dict:
         element, cell, fraction, _ = beam._locate(float(station))
         port = NativeHalfCellSpatialPort(
             beam.context, element, cell, fraction)
-        shell_ref_position, shell_ref_frame = pose_from_e4_total(
+        shell_ref_position, shell_ref_frame = pose_map(
             shell.panel, float(station), shell_reference)
         beam_ref_high, beam_ref_low, beam_ref_frame = port.pose_pair(
             beam.context.initial.mechanical)
         joint = RigidPoseJoint(
             np.array((shell_ref_position, beam_ref_high+beam_ref_low)),
             np.array((shell_ref_frame, beam_ref_frame)))
-        shell_position, shell_frame = pose_from_e4_total(
+        shell_position, shell_frame = pose_map(
             shell.panel, float(station), shell_total)
         beam_high, beam_low, beam_frame = port.pose_pair(beam_state)
         gap = joint.evaluate(
@@ -73,6 +80,7 @@ def one_case(topology: str, intervals: int, kind: str) -> dict:
     return {
         "topology": topology,
         "kind": kind,
+        "shell_port": shell_port,
         "intervals": intervals,
         "shell_elements": shell.panel.element_count,
         "native_elements": beam.n_half_cells//2,
@@ -88,11 +96,16 @@ def one_case(topology: str, intervals: int, kind: str) -> dict:
 
 
 def main() -> None:
-    rows = [one_case(topology, intervals, kind)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--local-translation", action="store_true")
+    shell_port = ("local_translation" if parser.parse_args().local_translation
+                  else "rail")
+    rows = [one_case(topology, intervals, kind, shell_port=shell_port)
             for topology in ("Q4", "S3-V2D")
             for kind in ("piecewise_constant", "continuous_linear")
             for intervals in (2, 4, 8)]
-    print(json.dumps({"status": "UNREGISTERED_DIAGNOSTIC", "cases": rows},
+    print(json.dumps({"status": "UNREGISTERED_DIAGNOSTIC",
+                      "shell_port": shell_port, "cases": rows},
                      indent=2, sort_keys=True))
 
 

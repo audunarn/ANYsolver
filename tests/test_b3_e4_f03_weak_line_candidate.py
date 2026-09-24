@@ -11,6 +11,8 @@ from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     pose_from_e4_total, reference_nodes)
+from scripts._b3_e4_f03_shell_local_translation_candidate import (
+    pose_from_e4_total_local_translation)
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_weak_line_candidate import (
@@ -85,8 +87,9 @@ def test_reference_joint_varies_along_rigidly_rotated_shell(topology):
     ("Q4", "piecewise_constant"),
     ("S3-V2D", "continuous_linear"),
 ))
+@pytest.mark.parametrize("shell_port", ("rail", "local_translation"))
 def test_segmented_line_directional_work_matches_direct_potential(
-        topology, kind):
+        topology, kind, shell_port):
     shell = FlatE4TrialPanel(make_shell(1, topology))
     beam = build(4)
     space = LineMultiplierSpace(kind, (0., .5, 1.))
@@ -115,7 +118,9 @@ def test_segmented_line_directional_work_matches_direct_potential(
     result = integrate_weak_line(
         shell, beam, space, coefficients, reference.ravel(),
         current.ravel(), shell_first, shell_second,
-        base_state, beam_first, beam_second)
+        base_state, beam_first, beam_second, shell_port=shell_port)
+    pose_map = (pose_from_e4_total if shell_port == "rail" else
+                pose_from_e4_total_local_translation)
 
     edges = segments(shell, beam, space)
     points, weights = np.polynomial.legendre.leggauss(4)
@@ -134,14 +139,14 @@ def test_segmented_line_directional_work_matches_direct_potential(
                 element, cell, fraction, _ = beam._locate(station)
                 port = NativeHalfCellSpatialPort(
                     beam.context, element, cell, fraction)
-                shell_ref = pose_from_e4_total(
+                shell_ref = pose_map(
                     shell.panel, station, reference.ravel())
                 high_ref, low_ref, beam_frame_ref = port.pose_pair(
                     beam.context.initial.mechanical)
                 joint = RigidPoseJoint(
                     np.array((shell_ref[0], high_ref+low_ref)),
                     np.array((shell_ref[1], beam_frame_ref)))
-                shell_position, shell_frame = pose_from_e4_total(
+                shell_position, shell_frame = pose_map(
                     shell.panel, station, shell_total)
                 high, low, beam_frame = port.pose_pair(state)
                 multiplier = space.values(station)@coefficients
@@ -204,12 +209,13 @@ def test_invalid_line_space_and_multiplier_rejected():
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
 @pytest.mark.parametrize("kind", ("piecewise_constant", "continuous_linear"))
+@pytest.mark.parametrize("shell_port", ("rail", "local_translation"))
 def test_reference_kkt_matches_weak_derivative_and_scaled_solve(
-        topology, kind):
+        topology, kind, shell_port):
     shell = FlatE4TrialPanel(make_shell(1, topology))
     beam = build(4)
     space = LineMultiplierSpace(kind, (0., .5, 1.))
-    kkt = assemble_reference_kkt(shell, beam, space)
+    kkt = assemble_reference_kkt(shell, beam, space, shell_port=shell_port)
     rng = np.random.default_rng(1138)
     shell_direction = rng.normal(size=(shell.panel.node_count, 6))*.001
     beam_direction = rng.normal(size=beam.context.count)*.001
@@ -224,7 +230,7 @@ def test_reference_kkt_matches_weak_derivative_and_scaled_solve(
         zeros_shell.ravel(), zeros_shell.ravel(),
         shell_direction, zeros_shell,
         beam.context.initial.mechanical,
-        beam_direction, zeros_beam)
+        beam_direction, zeros_beam, shell_port=shell_port)
     direction = np.r_[shell_direction.ravel(), beam_direction]
     np.testing.assert_allclose(
         kkt.constraint_jacobian@direction,
@@ -254,11 +260,14 @@ def test_reference_kkt_matches_weak_derivative_and_scaled_solve(
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-def test_reference_line_annihilates_six_common_rigid_modes(topology):
+@pytest.mark.parametrize("shell_port", ("rail", "local_translation"))
+def test_reference_line_annihilates_six_common_rigid_modes(
+        topology, shell_port):
     shell = FlatE4TrialPanel(make_shell(1, topology))
     beam = build(4)
     space = LineMultiplierSpace("continuous_linear", (0., .5, 1.))
-    coupling = assemble_reference_kkt(shell, beam, space).constraint_jacobian
+    coupling = assemble_reference_kkt(
+        shell, beam, space, shell_port=shell_port).constraint_jacobian
     shell_nodes = reference_nodes(shell.panel)
     beam_nodes = (beam.context.initial.mechanical.positions+
                   beam.context.initial.mechanical.position_low)

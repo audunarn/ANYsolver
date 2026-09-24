@@ -997,3 +997,30 @@ minimum quotient within the checked arithmetic tolerance. Both domains
 lose compliance in the alternating axial mode. The shell finite-window
 trace is therefore not the sole observed contributor; this split does not
 establish a causal continuum explanation or a valid multiplier selection.
+
+A separate G0 local-translation pose candidate now places the shell-side
+origin at the interpolated material midsurface point `(x=s,y=0)` while
+retaining the existing finite-width director/proper-fit frame. Its full
+additive-coordinate first and mixed second variations are carried through
+the objective point work and segmented line; the small reference KKT uses
+the matching local trace. Q4/S3 finite line derivatives, KKT/weak-derivative
+agreement, and six rigid modes pass; the two affected diagnostic suites
+passed **47/47** tests. This is an alternate candidate, not a change to the
+selected shell pose (none has been selected).
+Six additional Q4/S3 finite-rigid-motion checks passed on three meshes,
+including origin shifts and stations at host boundaries.
+
+On the fixed finest physical mesh, its raw compliance results are in
+`B3_GE_E4_PL_F03_NATIVE_LINE_COMPLIANCE_DIAGNOSTIC_V4.json`. At eight
+multiplier intervals the minimum quotient rises from rail to local origin:
+Q4 P0 `0.1748 → 0.2188`, Q4 P1 `0.1192 → 0.2020`, S3-V2D P0
+`0.1769 → 0.2138`, and S3-V2D P1 `0.1194 → 0.1764`. The alternating axial
+minimum remains, and its quotient still decreases as intervals are added.
+The matching +100 Nm loaded screen is preserved in
+`B3_GE_E4_PL_F03_WEAK_LINE_RESOLUTION_DIAGNOSTIC_V2.json`. All six Q4 tip
+rotations are unchanged to reported precision; S3-V2D changes by 0.18% to
+10.01% (largest at P1 with eight intervals). The largest relative change
+in the sampled gap L2 is about 1.2%. Thus improved compliance quotient
+does not imply an equivalent physical response or a correct line law.
+The needed matched physical target, thickness/refinement interpretation,
+and production trace/multiplier choice remain open; F03/G0B stay open.

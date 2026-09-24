@@ -17,6 +17,9 @@ from anysolver._ge_beam3_retained_generalized_state import Mechanical
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     directional_pose_from_e4_total, pose_from_e4_total)
+from scripts._b3_e4_f03_shell_local_translation_candidate import (
+    directional_pose_from_e4_total_local_translation,
+    pose_from_e4_total_local_translation)
 from scripts._b3_e4_f03_shell_trace import ShellPanel
 
 
@@ -61,7 +64,8 @@ def directional_point_work(
         shell_first: np.ndarray, shell_second: np.ndarray,
         beam_port: NativeHalfCellSpatialPort, beam_state: Mechanical,
         beam_first: np.ndarray, beam_second: np.ndarray,
-        multipliers: np.ndarray) -> DirectionalJointWork:
+        multipliers: np.ndarray, *,
+        shell_port: str = "rail") -> DirectionalJointWork:
     """Pull the joint's chart Hessian through both actual station maps.
 
     Shell directions are additive total E4 coordinates. Beam directions are
@@ -82,8 +86,16 @@ def directional_point_work(
             not all(np.isfinite(a).all() for a in
                     (shell_u, shell_v, beam_u, beam_v))):
         raise ValueError("finite complete shell and beam directions required")
-    shell_position, shell_frame = pose_from_e4_total(shell, station, shell_total)
-    shell_d = directional_pose_from_e4_total(
+    if shell_port == "rail":
+        pose_map = pose_from_e4_total
+        derivative_map = directional_pose_from_e4_total
+    elif shell_port == "local_translation":
+        pose_map = pose_from_e4_total_local_translation
+        derivative_map = directional_pose_from_e4_total_local_translation
+    else:
+        raise ValueError("unknown bounded shell pose port")
+    shell_position, shell_frame = pose_map(shell, station, shell_total)
+    shell_d = derivative_map(
         shell, station, shell_total, shell_u, shell_v)
     beam_high, beam_low, beam_frame = beam_port.pose_pair(beam_state)
     beam_jacobian = beam_port.tangent(beam_state)

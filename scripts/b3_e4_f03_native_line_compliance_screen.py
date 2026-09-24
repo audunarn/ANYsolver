@@ -24,7 +24,8 @@ from scripts._b3_e4_f03_weak_line_candidate import (
 
 
 def one_case(topology: str, n_s: int, kind: str, *,
-             n_intervals: int | None = None) -> dict:
+             n_intervals: int | None = None,
+             shell_port: str = "rail") -> dict:
     """Return full-retained compliance eigenvalues on a fixed paired grid."""
     if n_intervals is None:
         n_intervals = 2*n_s
@@ -32,7 +33,8 @@ def one_case(topology: str, n_s: int, kind: str, *,
     beam = build(4*n_s)
     space = LineMultiplierSpace(
         kind, tuple(np.linspace(0., 1., n_intervals+1)))
-    kkt = assemble_reference_kkt(shell, beam, space)
+    kkt = assemble_reference_kkt(
+        shell, beam, space, shell_port=shell_port)
     free = kkt.free_primal
     n_free = len(free)
     tangent = kkt.primal_tangent[np.ix_(free, free)]
@@ -103,6 +105,7 @@ def one_case(topology: str, n_s: int, kind: str, *,
         "n_s": n_s,
         "native_half_cells": beam.n_half_cells,
         "kind": kind,
+        "shell_port": shell_port,
         "multiplier_intervals": n_intervals,
         "free_primal": n_free,
         "multiplier_rows": len(rows),
@@ -129,19 +132,24 @@ def one_case(topology: str, n_s: int, kind: str, *,
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixed-primal", action="store_true")
-    fixed = parser.parse_args().fixed_primal
+    parser.add_argument("--local-translation", action="store_true")
+    arguments = parser.parse_args()
+    fixed = arguments.fixed_primal
+    shell_port = "local_translation" if arguments.local_translation else "rail"
     if fixed:
-        rows = [one_case(topology, 4, kind, n_intervals=intervals)
+        rows = [one_case(topology, 4, kind, n_intervals=intervals,
+                         shell_port=shell_port)
                 for topology in ("Q4", "S3-V2D")
                 for kind in ("piecewise_constant", "continuous_linear")
                 for intervals in (2, 4, 8)]
     else:
-        rows = [one_case(topology, n_s, kind)
+        rows = [one_case(topology, n_s, kind, shell_port=shell_port)
                 for topology in ("Q4", "S3-V2D")
                 for kind in ("piecewise_constant", "continuous_linear")
                 for n_s in (1, 2, 4)]
     print(json.dumps({"status": "UNREGISTERED_COMPLIANCE_DIAGNOSTIC",
                       "screen": "fixed_primal" if fixed else "paired_refinement",
+                      "shell_port": shell_port,
                       "cases": rows}, indent=2, sort_keys=True))
 
 
