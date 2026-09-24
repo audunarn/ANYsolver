@@ -1,5 +1,25 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — admissible bonded transverse-shear patch.**
+A flat-shell field `w=0.02 x` with unchanged physical directors and a
+matching native B3 station field gives coincident shell/beam positions
+and frames at five stations, while the shell geometric midsurface normal
+is tilted relative to the unchanged director. The physical-shell
+quadratic shear energy is positive. On Q4 it matches the independently
+computed `0.5 (5/6) G t A gamma²` constant-shear result to `1e-12`
+relative for 2/4/8 transverse intervals. On S3-V2D it matches that
+unrelaxed result times the element's documented `phi_squared` MIN3
+factor; on the joint 2/4/8 grids this factor is approximately
+`0.05703`, `0.19480`, `0.49179`. Thus the candidate line kinematics do
+not force an independent shell director to the geometric normal or
+exclude this nonzero transverse-shear mode. S3's physical shear energy
+also changes strongly with mesh under its existing MIN3 relaxation;
+that known law must be considered when interpreting cross-mesh loaded
+torque response. Six focused kinematic/energy checks passed. This is a
+patch and formulation-attribution result, not loaded shear convergence,
+an interface stability proof or a physical torque reference. F03/G0B
+remain open and G1 barred.
+
 **24 September 2026 — drilling-independent reference torque replay.**
 The existing small KKT torque test was extended, without changing product
 mechanics, to the support-matched 4-by-4 and 8-by-8 shell grids for Q4 and
