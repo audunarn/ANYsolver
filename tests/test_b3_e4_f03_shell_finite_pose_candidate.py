@@ -4,8 +4,11 @@ import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
 
+from anysolver._ge_beam3_pose_joint import _exp_terms
+
 from scripts._b3_e4_f03_shell_finite_pose_candidate import (
-    directional_pose, pose, reference_nodes, reference_tangent)
+    directional_pose, directional_pose_from_e4_total, pose,
+    pose_from_e4_total, reference_nodes, reference_tangent)
 from scripts._b3_e4_f03_shell_trace import make_shell
 
 
@@ -187,3 +190,60 @@ def test_every_reference_coordinate_column_matches_independent_trace(topology):
         observed = np.r_[result.position_first, angular]
         np.testing.assert_allclose(observed, trace[:, column],
                                    rtol=0, atol=2e-14)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_additive_e4_total_chart_first_and_second_variations(topology):
+    panel = make_shell(2, topology)
+    nodes = reference_nodes(panel)
+    total = np.zeros((panel.node_count, 6))
+    total[:, 0] = .02*nodes[:, 1]
+    total[:, 2] = .04*nodes[:, 0]
+    total[:, 3] = .17+.02*nodes[:, 0]
+    total[:, 4] = -.08
+    total[:, 5] = .06
+    rng = np.random.default_rng(1904)
+    first = rng.normal(size=total.shape)*.04
+    second = rng.normal(size=total.shape)*.04
+    analytic = directional_pose_from_e4_total(
+        panel, .37, total.ravel(), first, second)
+
+    def moved(a, b):
+        return pose_from_e4_total(
+            panel, .37, (total+a*first+b*second).ravel())
+
+    h = 1e-5
+    plus, minus = moved(h, 0.), moved(-h, 0.)
+    np.testing.assert_allclose(analytic.position_first,
+                               (plus[0]-minus[0])/(2*h),
+                               rtol=2e-7, atol=2e-9)
+    np.testing.assert_allclose(analytic.frame_first,
+                               (plus[1]-minus[1])/(2*h),
+                               rtol=2e-7, atol=2e-9)
+    h = 2e-3
+    pp, pm, mp, mm = (moved(h, h), moved(h, -h),
+                      moved(-h, h), moved(-h, -h))
+    np.testing.assert_allclose(analytic.position_mixed,
+        (pp[0]-pm[0]-mp[0]+mm[0])/(4*h*h), rtol=2e-5, atol=2e-8)
+    np.testing.assert_allclose(analytic.frame_mixed,
+        (pp[1]-pm[1]-mp[1]+mm[1])/(4*h*h), rtol=2e-5, atol=2e-8)
+
+
+def test_additive_chart_physical_drill_is_not_naive_rz_column():
+    panel = make_shell(2, "Q4")
+    total = np.zeros((panel.node_count, 6))
+    total[:, 3:] = (.36, -.21, .1)
+    direction = np.zeros_like(total)
+    theta = total[0, 3:]
+    current = Rotation.from_rotvec(theta).apply((0., 0., 1.))
+    _rotation, left_map, _derivative = _exp_terms(theta)
+    direction[:, 3:] = np.linalg.solve(left_map, current)
+    result = directional_pose_from_e4_total(
+        panel, .37, total.ravel(), direction, np.zeros_like(direction))
+    assert np.linalg.norm(result.position_first) < 1e-13
+    assert np.linalg.norm(result.frame_first) < 1e-12
+    naive_rz = np.zeros_like(direction)
+    naive_rz[:, 5] = 1.
+    naive = directional_pose_from_e4_total(
+        panel, .37, total.ravel(), naive_rz, np.zeros_like(direction))
+    assert np.linalg.norm(naive.frame_first) > 1e-3

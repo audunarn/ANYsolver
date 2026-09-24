@@ -774,3 +774,11 @@ The candidate and related F03 spatial diagnostics passed 89 focused tests.
 The next work is binding this physical port to actual E4 Q4/S3-V2D trial
 states and coordinate charts, then deriving the relative-pose line potential
 and full coupled KKT. G0B remains open; G1 remains barred.
+
+The flat +Z additive-total E4 coordinate adapter and its reviewed chart
+derivatives are separately recorded in
+`B3_GE_E4_PL_G0_F03_E4_ADDITIVE_POSE_ADAPTER_RESULT_20260924.md`.
+It matches the selected Q4/S3-V2D generic corotational rotation convention;
+it does not authenticate an E4 material trial. Combined focused diagnostics
+passed 92 tests. The next boundary is the validated coupled trial and
+relative-pose multiplier curvature.

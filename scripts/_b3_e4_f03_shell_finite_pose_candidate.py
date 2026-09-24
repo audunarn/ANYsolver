@@ -13,6 +13,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from anysolver import _ge_beam3_mixed_ad as ad
+from anysolver.corotational import rotation_matrix_from_vector
 
 from scripts._b3_e4_f03_shell_spatial_linear_port import reference_spatial_trace
 from scripts._b3_e4_f03_shell_trace import ShellPanel, _SAMPLE_OFFSETS
@@ -95,6 +96,25 @@ def reference_tangent(panel: ShellPanel, station: float) -> np.ndarray:
     return reference_spatial_trace(panel, station)
 
 
+def pose_from_e4_total(panel: ShellPanel, station: float,
+                       total_u: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Evaluate this candidate from flat-panel E4 additive total coordinates.
+
+    This mirrors the nodal ``Exp(total_u[3:6])`` used by the existing
+    corotational shell pullback. It does not authenticate an E4 trial or its
+    material predecessor, and is limited to this flat +Z panel.
+    """
+    nodes = reference_nodes(panel)
+    values = np.asarray(total_u, dtype=float)
+    if values.shape != (6*panel.node_count,) or not np.isfinite(values).all():
+        raise ValueError("finite complete flat E4 total coordinates required")
+    nodal = values.reshape(-1, 6)
+    positions = nodes+nodal[:, :3]
+    directors = np.array([rotation_matrix_from_vector(theta)[:, 2]
+                          for theta in nodal[:, 3:]])
+    return pose(panel, station, positions, directors)
+
+
 @dataclass(frozen=True)
 class DirectionalPose:
     """Owned first and mixed second spatial-pose matrix variations."""
@@ -109,12 +129,14 @@ class DirectionalPose:
 
 def directional_pose(panel: ShellPanel, station: float,
                      positions: np.ndarray, directors: np.ndarray,
-                     first: np.ndarray, second: np.ndarray) -> DirectionalPose:
+                     first: np.ndarray, second: np.ndarray, *,
+                     _total_rotations: np.ndarray | None = None) -> DirectionalPose:
     """Differentiate the finite port in two actual spatial-left directions.
 
     Each nodal director follows ``Exp(epsilon*w1+eta*w2) @ director``.
-    This is a physical spatial variation, not an additive E4 rotation-chart
-    pullback or the Hessian of the relative-pose Log constraint.
+    This is a physical spatial variation, not the Hessian of the
+    relative-pose Log constraint. The internal total-rotation option below
+    is used only by the explicit additive-E4 adapter.
     """
     x, d = np.asarray(positions, dtype=float), np.asarray(directors, dtype=float)
     u, v = np.asarray(first, dtype=float), np.asarray(second, dtype=float)
@@ -131,9 +153,13 @@ def directional_pose(panel: ShellPanel, station: float,
         nodes.append([ad.Jet2.constant(x[i, j], 2)+
                       epsilon*u[i, j]+eta*v[i, j] for j in range(3)])
         spin = [epsilon*u[i, j+3]+eta*v[i, j+3] for j in range(3)]
-        director_jets.append(ad.matvec(
-            ad.so3_exp(spin), [ad.Jet2.constant(d[i, j], 2)
-                               for j in range(3)]))
+        if _total_rotations is None:
+            origin = [ad.Jet2.constant(d[i, j], 2) for j in range(3)]
+        else:
+            spin = [ad.Jet2.constant(_total_rotations[i, j], 2)+spin[j]
+                    for j in range(3)]
+            origin = [zero, zero, 1.+zero]
+        director_jets.append(ad.matvec(ad.so3_exp(spin), origin))
     weights = panel.sample_weights(station)
     samples = [[sum((weights[k, i]*nodes[i][j]
                      for i in range(panel.node_count)), zero)
@@ -180,3 +206,24 @@ def directional_pose(panel: ShellPanel, station: float,
         matrix(0), matrix(1),
         np.array([[entry.hessian[0, 1] for entry in row]
                   for row in frame]))
+
+
+def directional_pose_from_e4_total(
+        panel: ShellPanel, station: float, total_u: np.ndarray,
+        first: np.ndarray, second: np.ndarray) -> DirectionalPose:
+    """Pull this candidate through the existing additive total-rotation chart.
+
+    The state-owner authority and constitutive trial remain outside this
+    diagnostic. A physical drill is not a single ``rz`` coordinate column
+    once the director tilts; the full chart derivative is retained here.
+    """
+    nodes = reference_nodes(panel)
+    values = np.asarray(total_u, dtype=float)
+    if values.shape != (6*panel.node_count,) or not np.isfinite(values).all():
+        raise ValueError("finite complete flat E4 total coordinates required")
+    nodal = values.reshape(-1, 6)
+    positions = nodes+nodal[:, :3]
+    directors = np.array([rotation_matrix_from_vector(theta)[:, 2]
+                          for theta in nodal[:, 3:]])
+    return directional_pose(panel, station, positions, directors,
+                            first, second, _total_rotations=nodal[:, 3:])
