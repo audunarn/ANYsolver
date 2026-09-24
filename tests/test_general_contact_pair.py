@@ -17,10 +17,12 @@ from anysolver import (
 )
 from anysolver.fe_core import FEModel
 from anysolver.general_contact.pair import _PlanarShellPairManager
+from anysolver.general_contact.patch_sliding import _RestrictedSlidingPatchFEManager
 
 
 def _guided_pair(*, split_target=False, target_shift=0.0,
-                 director=None):
+                 target_y_shift=0.0,
+                 director=None, lateral_free=False):
     model = FEModel("guided_shell_pair")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
     if split_target:
@@ -39,7 +41,7 @@ def _guided_pair(*, split_target=False, target_shift=0.0,
                      if director is not None else np.array((0.0, 0.0, 1.0)))
     upper_positions = tuple(tuple(np.asarray((x, y, 0.0)) + offset)
                             for x, y in ((0, 0), (1, 0), (1, 1), (0, 1)))
-    lower_positions = tuple((x + target_shift, y, z)
+    lower_positions = tuple((x + target_shift, y + target_y_shift, z)
                             for x, y, z in lower_positions)
     for node_id, position in enumerate((*lower_positions, *upper_positions), 1):
         model.add_node(node_id, *position)
@@ -59,7 +61,8 @@ def _guided_pair(*, split_target=False, target_shift=0.0,
     ))
     model.add_boundary_condition(BoundaryCondition(
         "guide", upper_nodes,
-        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+        {name: 0.0 for name in (("uy", "rx", "ry", "rz") if lateral_free
+                                 else ("ux", "uy", "rx", "ry", "rz"))},
     ))
     load = LoadCase("push_upper_shell")
     for node_id in upper_nodes:
@@ -74,6 +77,98 @@ def _guided_pair(*, split_target=False, target_shift=0.0,
         ),),
     )
     return model, load, definition, upper_nodes
+
+
+def test_restricted_sliding_patch_runs_through_nonlinear_static_and_restart():
+    from dataclasses import replace
+
+    model, load, definition, _upper_nodes = _guided_pair(
+        split_target=True, target_shift=0.2, target_y_shift=0.1,
+    )
+    definition = replace(
+        definition,
+        interactions=(replace(definition.interactions[0], gap_tolerance=6.0e-6),),
+    )
+    settings = ContactSolverSettings(
+        pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
+    )
+    report = validate_general_contact(model, definition, settings)
+    assert report.valid, report.issues
+    assert "PATCH" in report.profile
+    manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
+    assert len(manager.patch.target_faces) == 2
+    result = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        num_steps=1, max_iterations=12, kinematics="von_karman",
+    )
+    assert result.status == "completed", (
+        result.failure_reason, result.load_factor, result.info.get("general_contact"),
+    )
+    summary = result.info["general_contact"]
+    assert summary["overlapping_pairs"] == 2
+    assert summary["current_overlap_area"] == pytest.approx(0.72)
+    assert summary["integration_force"][2] == pytest.approx(0.4, rel=1e-5)
+    assert summary["target_force"][2] == pytest.approx(-0.4, rel=1e-5)
+    assert summary["gap_tolerance_met"]
+    half = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        num_steps=1, max_iterations=12, kinematics="von_karman",
+        max_load_factor=0.5, emit_restart_checkpoint=True,
+    )
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        num_steps=1, max_iterations=12, kinematics="von_karman",
+        max_load_factor=1.0,
+        restart_checkpoint=half.to_restart_checkpoint(),
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(
+        resumed.displacements, result.displacements, rtol=1e-7, atol=1e-9,
+    )
+
+
+def test_restricted_sliding_patch_follows_lateral_displacement_path():
+    from dataclasses import replace
+
+    model, press, definition, upper_nodes = _guided_pair(
+        split_target=True, target_shift=0.2, target_y_shift=0.1,
+        lateral_free=True,
+    )
+    definition = replace(
+        definition,
+        interactions=(replace(definition.interactions[0], gap_tolerance=6.0e-6),),
+    )
+    master = int(model.mesh.dof_manager.get_node_dofs(upper_nodes[0])[0])
+    for node in upper_nodes[1:]:
+        slave = int(model.mesh.dof_manager.get_node_dofs(node)[0])
+        model.add_constraint_equation(
+            terms=((slave, 1.0), (master, -1.0)),
+            source_id=f"upper_uniform_x_{node}",
+        )
+    drive = LoadCase("lateral_drive")
+    drive.add_nodal_load(upper_nodes[0], forces=(1.0, 0.0, 0.0))
+    settings = ContactSolverSettings(
+        pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
+    )
+    result = solve_static_nonlinear(
+        model, drive, constant_load_case=press,
+        contact=definition, contact_settings=settings,
+        control="displacement",
+        displacement_control=DisplacementControl(
+            node_id=upper_nodes[0], dof="ux", target_displacement=0.1,
+        ),
+        num_steps=2, max_iterations=12, kinematics="von_karman",
+    )
+    assert result.status == "completed", (
+        result.failure_reason, result.load_factor, result.info.get("general_contact"),
+    )
+    summary = result.info["general_contact"]
+    assert summary["overlapping_pairs"] == 2
+    assert summary["current_overlap_area"] == pytest.approx(0.81)
+    assert summary["integration_force"][2] == pytest.approx(0.4, rel=1e-5)
+    assert summary["target_force"][2] == pytest.approx(-0.4, rel=1e-5)
+    assert summary["gap_tolerance_met"]
 
 
 @pytest.mark.parametrize("split_target", (False, True))

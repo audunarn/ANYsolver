@@ -111,6 +111,7 @@ class ContactSolverSettings:
     pair_motion: str = "guided"
     sliding_difference_step: float | None = None
     maximum_gap_triangles: int = 10_000
+    maximum_patch_normal_dofs: int = 256
 
     def __post_init__(self) -> None:
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
@@ -124,6 +125,8 @@ class ContactSolverSettings:
             raise ValueError("sliding_difference_step must be finite and positive")
         if type(self.maximum_gap_triangles) is not int or self.maximum_gap_triangles < 1:
             raise ValueError("maximum_gap_triangles must be a positive integer")
+        if type(self.maximum_patch_normal_dofs) is not int or self.maximum_patch_normal_dofs < 1:
+            raise ValueError("maximum_patch_normal_dofs must be a positive integer")
         if self.pair_motion == "restricted_sliding" and self.sliding_difference_step is None:
             raise ValueError("restricted sliding requires an explicit sliding_difference_step")
         if self.pair_motion == "guided" and self.sliding_difference_step is not None:
@@ -178,6 +181,12 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
     if not definition.rigid_bodies:
         if settings is not None and settings.pair_motion == "restricted_sliding":
+            if len(definition.surfaces) == 2 and any(
+                len(surface.element_ids) > 1 for surface in definition.surfaces
+            ):
+                from .patch_sliding import validate_restricted_sliding_patch
+
+                return validate_restricted_sliding_patch(model, definition, settings)
             from .sliding import validate_restricted_sliding_pair
 
             return validate_restricted_sliding_pair(model, definition)
@@ -506,9 +515,14 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
         manager = _PlanarQ4PlaneManager(model, definition, settings, initial_displacement)
     else:
         if settings.pair_motion == "restricted_sliding":
-            from .sliding import _RestrictedSlidingPairFEManager
+            if len(definition.surfaces) == 2 and any(
+                len(surface.element_ids) > 1 for surface in definition.surfaces
+            ):
+                from .patch_sliding import _RestrictedSlidingPatchFEManager as manager_type
+            else:
+                from .sliding import _RestrictedSlidingPairFEManager as manager_type
 
-            manager = _RestrictedSlidingPairFEManager(
+            manager = manager_type(
                 model, definition, settings, initial_displacement=initial_displacement,
             )
         else:

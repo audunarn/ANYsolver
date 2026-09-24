@@ -138,6 +138,15 @@ class MovingMortarState:
 
 
 @dataclass(frozen=True)
+class MovingPairIntegrals:
+    overlap_area: float
+    support: np.ndarray
+    weighted_gap: np.ndarray
+    gap_gradient: np.ndarray
+    minimum_vertex_gap: float
+
+
+@dataclass(frozen=True)
 class MovingGapCertificate:
     minimum_sampled_gap: float
     conservative_lower_gap: float
@@ -249,6 +258,53 @@ def _triangle_samples(triangle: tuple[np.ndarray, np.ndarray, np.ndarray],
         yield point, area * relative_weight
 
 
+def _moving_pair_integrals(
+        moved_a: PlanarFace, moved_b: PlanarFace, direction: np.ndarray,
+        height_a: np.ndarray, height_b: np.ndarray) -> MovingPairIntegrals:
+    """Integrate one geometric pair before global pressure normalization."""
+
+    overlap = planar_projected_overlap(moved_a, moved_b)
+    rows = len(moved_a.corners)
+    columns = rows + len(moved_b.corners)
+    support = np.zeros(rows, dtype=float)
+    weighted_gap = np.zeros(rows, dtype=float)
+    gradient = np.zeros((rows, columns), dtype=float)
+    if overlap is None:
+        return MovingPairIntegrals(
+            0.0, support, weighted_gap, gradient, float("inf"),
+        )
+    polygon = overlap.polygon
+    centroid = np.mean(polygon, axis=0)
+    for index, corner in enumerate(polygon):
+        following = polygon[(index + 1) % len(polygon)]
+        area = 0.5 * float(np.linalg.norm(
+            np.cross(corner - centroid, following - centroid)
+        ))
+        if area <= 0.0:
+            continue
+        triangle = (centroid, corner, following)
+        for point, weight in _triangle_samples(triangle, area):
+            shape_a = overlap.shape_values(moved_a, point)
+            shape_b = overlap.shape_values(moved_b, point)
+            gap = float(direction @ (
+                shape_a @ moved_a.corners - shape_b @ moved_b.corners
+            ) + shape_a @ height_a - shape_b @ height_b)
+            support += weight * shape_a
+            weighted_gap += weight * shape_a * gap
+            gradient[:, :rows] += weight * np.outer(shape_a, shape_a)
+            gradient[:, rows:] -= weight * np.outer(shape_a, shape_b)
+    minimum_vertex_gap = float("inf")
+    for point in polygon:
+        shape_a = overlap.shape_values(moved_a, point)
+        shape_b = overlap.shape_values(moved_b, point)
+        minimum_vertex_gap = min(minimum_vertex_gap, float(direction @ (
+            shape_a @ moved_a.corners - shape_b @ moved_b.corners
+        ) + shape_a @ height_a - shape_b @ height_b))
+    return MovingPairIntegrals(
+        overlap.area, support, weighted_gap, gradient, minimum_vertex_gap,
+    )
+
+
 def moving_mortar_state(source_face: PlanarFace, target_face: PlanarFace,
                         normal: np.ndarray, stiffness: float,
                         source_translation: np.ndarray,
@@ -293,37 +349,14 @@ def moving_mortar_state(source_face: PlanarFace, target_face: PlanarFace,
                          source_face.corners + translation_a)
     moved_b = PlanarFace(target_face.feature_id,
                          target_face.corners + translation_b)
-    overlap = planar_projected_overlap(moved_a, moved_b)
+    integrals = _moving_pair_integrals(
+        moved_a, moved_b, direction, height_a, height_b,
+    )
     rows = len(source_face.corners)
     columns = rows + len(target_face.corners)
-    support = np.zeros(rows, dtype=float)
-    weighted_gap = np.zeros(rows, dtype=float)
-    gradient = np.zeros((rows, columns), dtype=float)
-    if overlap is None:
-        return MovingMortarState(
-            0.0, support, weighted_gap, support.copy(), 0.0,
-            np.zeros(columns), np.zeros((columns, columns)), float("inf"),
-        )
-    polygon = overlap.polygon
-    centroid = np.mean(polygon, axis=0)
-    for index, corner in enumerate(polygon):
-        following = polygon[(index + 1) % len(polygon)]
-        area = 0.5 * float(np.linalg.norm(
-            np.cross(corner - centroid, following - centroid)
-        ))
-        if area <= 0.0:
-            continue
-        triangle = (centroid, corner, following)
-        for point, weight in _triangle_samples(triangle, area):
-            shape_a = overlap.shape_values(moved_a, point)
-            shape_b = overlap.shape_values(moved_b, point)
-            gap = float(direction @ (
-                shape_a @ moved_a.corners - shape_b @ moved_b.corners
-            ) + shape_a @ height_a - shape_b @ height_b)
-            support += weight * shape_a
-            weighted_gap += weight * shape_a * gap
-            gradient[:, :rows] += weight * np.outer(shape_a, shape_a)
-            gradient[:, rows:] -= weight * np.outer(shape_a, shape_b)
+    support = integrals.support
+    weighted_gap = integrals.weighted_gap
+    gradient = integrals.gap_gradient
     active_support = support > 0.0
     normalized_gap = np.zeros(rows, dtype=float)
     scale = max(float(np.max(np.linalg.norm(moved_a.corners - moved_a.corners[0], axis=1))),
@@ -339,16 +372,9 @@ def moving_mortar_state(source_face: PlanarFace, target_face: PlanarFace,
     if np.any(closed):
         tangent = (penalty * gradient[closed].T
                    @ np.diag(1.0 / support[closed]) @ gradient[closed])
-    minimum_vertex_gap = float("inf")
-    for point in polygon:
-        shape_a = overlap.shape_values(moved_a, point)
-        shape_b = overlap.shape_values(moved_b, point)
-        minimum_vertex_gap = min(minimum_vertex_gap, float(direction @ (
-            shape_a @ moved_a.corners - shape_b @ moved_b.corners
-        ) + shape_a @ height_a - shape_b @ height_b))
     return MovingMortarState(
-        overlap.area, support, weighted_gap, normalized_gap, energy,
-        residual, tangent, minimum_vertex_gap,
+        integrals.overlap_area, support, weighted_gap, normalized_gap, energy,
+        residual, tangent, integrals.minimum_vertex_gap,
     )
 
 
@@ -573,44 +599,29 @@ def _has_shared_edge_transition(source: PlanarFace, target: PlanarFace,
     return False
 
 
-def moving_mortar_translation_residual(
-        source_face: PlanarFace, target_face: PlanarFace,
-        normal: np.ndarray, stiffness: float,
-        source_translation: np.ndarray, target_translation: np.ndarray,
-        source_normal_dofs: np.ndarray, target_normal_dofs: np.ndarray,
-        ) -> tuple[np.ndarray, np.ndarray]:
-    """Differentiate the moving pressure-space potential by transport.
+@dataclass(frozen=True)
+class MovingPairTransport:
+    source_support_derivative: np.ndarray
+    target_support_derivative: np.ndarray
+    source_weighted_gap_derivative: np.ndarray
+    target_weighted_gap_derivative: np.ndarray
 
-    This includes shape changes at fixed spatial points and motion of both
-    polygon boundaries. The current integration rule is fixed; smooth-branch
-    projection derivatives are represented by the shape gradients. Boundary
-    integration has its own finite three-point line rule and must be refined
-    before engineering qualification.
-    """
 
-    state = moving_mortar_state(
-        source_face, target_face, normal, stiffness,
-        source_translation, target_translation,
-        source_normal_dofs, target_normal_dofs,
-    )
-    if state.overlap_area == 0.0:
-        return np.zeros(3), np.zeros(3)
-    direction = np.asarray(normal, dtype=float)
-    direction = direction / np.linalg.norm(direction)
-    moved_a = PlanarFace(source_face.feature_id,
-                         source_face.corners + np.asarray(source_translation))
-    moved_b = PlanarFace(target_face.feature_id,
-                         target_face.corners + np.asarray(target_translation))
-    overlap = planar_projected_overlap(moved_a, moved_b)
-    if _has_shared_edge_transition(moved_a, moved_b, overlap):
-        raise ValueError("shared-edge overlap transition needs a one-sided derivative")
-    heights_a = np.asarray(source_normal_dofs, dtype=float)
-    heights_b = np.asarray(target_normal_dofs, dtype=float)
+def _moving_pair_transport(
+        moved_a: PlanarFace, moved_b: PlanarFace, direction: np.ndarray,
+        heights_a: np.ndarray, heights_b: np.ndarray) -> MovingPairTransport:
+    """Transport local support and weighted gap before pressure coupling."""
+
     rows = len(heights_a)
     dm_a = np.zeros((rows, 3))
     dm_b = np.zeros((rows, 3))
     dW_a = np.zeros((rows, 3))
     dW_b = np.zeros((rows, 3))
+    overlap = planar_projected_overlap(moved_a, moved_b)
+    if overlap is None:
+        return MovingPairTransport(dm_a, dm_b, dW_a, dW_b)
+    if _has_shared_edge_transition(moved_a, moved_b, overlap):
+        raise ValueError("shared-edge overlap transition needs a one-sided derivative")
     polygon = overlap.polygon
     centroid = np.mean(polygon, axis=0)
     for index, corner in enumerate(polygon):
@@ -627,8 +638,8 @@ def moving_mortar_translation_residual(
             gap = float(direction @ (
                 shape_a @ moved_a.corners - shape_b @ moved_b.corners
             ) + shape_a @ heights_a - shape_b @ heights_b)
-            grad_gap_a = -(heights_a @ gradient_a)
-            grad_gap_b = heights_b @ gradient_b
+            grad_gap_a = -((heights_a + moved_a.corners @ direction) @ gradient_a)
+            grad_gap_b = (heights_b + moved_b.corners @ direction) @ gradient_b
             dm_a -= weight * gradient_a
             dW_a += weight * (-gradient_a * gap
                               + shape_a[:, None] * grad_gap_a)
@@ -649,17 +660,52 @@ def moving_mortar_translation_residual(
         ) + shape_a @ heights_a - shape_b @ heights_b)
         dm_b += np.outer(shape_a, weighted_outward)
         dW_b += gap * np.outer(shape_a, weighted_outward)
+    return MovingPairTransport(dm_a, dm_b, dW_a, dW_b)
+
+
+def moving_mortar_translation_residual(
+        source_face: PlanarFace, target_face: PlanarFace,
+        normal: np.ndarray, stiffness: float,
+        source_translation: np.ndarray, target_translation: np.ndarray,
+        source_normal_dofs: np.ndarray, target_normal_dofs: np.ndarray,
+        ) -> tuple[np.ndarray, np.ndarray]:
+    """Differentiate the moving pressure-space potential by transport.
+
+    This includes shape changes at fixed spatial points and motion of both
+    polygon boundaries. Boundary integration has a finite three-point line
+    rule and requires refinement before engineering qualification.
+    """
+
+    state = moving_mortar_state(
+        source_face, target_face, normal, stiffness,
+        source_translation, target_translation,
+        source_normal_dofs, target_normal_dofs,
+    )
+    if state.overlap_area == 0.0:
+        return np.zeros(3), np.zeros(3)
+    direction = np.asarray(normal, dtype=float)
+    direction = direction / np.linalg.norm(direction)
+    moved_a = PlanarFace(source_face.feature_id,
+                         source_face.corners + np.asarray(source_translation))
+    moved_b = PlanarFace(target_face.feature_id,
+                         target_face.corners + np.asarray(target_translation))
+    transport = _moving_pair_transport(
+        moved_a, moved_b, direction,
+        np.asarray(source_normal_dofs, dtype=float),
+        np.asarray(target_normal_dofs, dtype=float),
+    )
+    rows = len(source_normal_dofs)
     closed = (state.support > 0.0) & (state.normalized_gap < 0.0)
     pressure = float(stiffness) * state.normalized_gap[closed]
     source_tangent = np.sum(
-        pressure[:, None] * dW_a[closed]
+        pressure[:, None] * transport.source_weighted_gap_derivative[closed]
         - 0.5 * float(stiffness) * state.normalized_gap[closed, None] ** 2
-        * dm_a[closed], axis=0,
+        * transport.source_support_derivative[closed], axis=0,
     )
     target_tangent = np.sum(
-        pressure[:, None] * dW_b[closed]
+        pressure[:, None] * transport.target_weighted_gap_derivative[closed]
         - 0.5 * float(stiffness) * state.normalized_gap[closed, None] ** 2
-        * dm_b[closed], axis=0,
+        * transport.target_support_derivative[closed], axis=0,
     )
     source_normal = float(np.sum(state.normal_residual[:rows])) * direction
     target_normal = float(np.sum(state.normal_residual[rows:])) * direction
