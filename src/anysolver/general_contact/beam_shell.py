@@ -1,10 +1,9 @@
 """Interior classical round-beam line contact on one physical shell face.
 
-The first solver admission is deliberately restricted to an S3 face whose
-nodes undergo common translation. This kernel also accepts a planar Q4 for
-local verification; rim/corner contact and a warped current Q4 are separate
-capabilities. A Bézier hull check proves that the whole B2/B3 centreline
-projection stays inside the declared face clearance.
+The first solver admissions are restricted to a planar S3 or Q4 face whose
+nodes undergo common translation. Rim/corner contact and a warped current Q4
+are separate capabilities. A Bézier hull check proves that the whole B2/B3
+centreline projection stays inside the declared face clearance.
 """
 
 from __future__ import annotations
@@ -22,6 +21,7 @@ from .overlap import PlanarFace, ProjectedOverlap, reference_shell_face
 _GAUSS_8 = np.polynomial.legendre.leggauss(8)
 _GAUSS_16 = np.polynomial.legendre.leggauss(16)
 PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_S3_INTERIOR_LINE_PENALTY_STATIC_DEV_V0"
+PROFILE_Q4 = "CLASSICAL_B2_B3_ROUND_TUBE_Q4_INTERIOR_LINE_PENALTY_STATIC_DEV_V0"
 
 
 @dataclass(frozen=True)
@@ -272,8 +272,10 @@ def validate_beam_shell_contact(model, definition: ContactDefinition,
             or interaction.line_stiffness is None
             or interaction.endpoint_stiffness is not None):
         issues.append("beam-shell interaction requires directed line penalty and no other stiffness")
+    profile = PROFILE
     if len(beam.element_ids) == 1 and len(shell.element_ids) == 1:
         from anysolver.elements import BeamElement, QuadraticBeamElement
+        from anysolver.e4_pl_element import FORMULATION_ID as q4_id
         from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
         from anymaterial import IsotropicMaterial
 
@@ -292,8 +294,11 @@ def validate_beam_shell_contact(model, definition: ContactDefinition,
                     or material.yield_stress != 0.0
                     or material.hardening_curve is not None):
                 issues.append("beam-shell source needs an isotropic elastic material")
-        if getattr(shell_element, "formulation_id", None) != s3_id:
-            issues.append("interior beam-shell development profile admits S3 V2D only")
+        shell_formulation = getattr(shell_element, "formulation_id", None)
+        if shell_formulation == q4_id:
+            profile = PROFILE_Q4
+        if shell_formulation not in {q4_id, s3_id}:
+            issues.append("interior beam-shell profile admits qualified planar Q4 or S3 V2D")
         else:
             material = model.materials.get(shell_element.material_name)
             if (type(material) is not IsotropicMaterial
@@ -308,7 +313,7 @@ def validate_beam_shell_contact(model, definition: ContactDefinition,
             set(beam_element.node_ids) & set(shell_element.node_ids)
         ):
             issues.append("beam-shell participants must not share material nodes")
-    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE)
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
 @dataclass(frozen=True)
@@ -400,7 +405,13 @@ class _BeamShellManager:
         sign = 1.0 if shell.side == "top" else -1.0
         side_normal = sign * np.asarray(director, dtype=float)
         coordinate = sign
-        offset = float(shell_element.material_surface_offset_from_reference(coordinate))
+        from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
+
+        offset = (
+            float(shell_element.material_surface_offset_from_reference(coordinate))
+            if shell_element.formulation_id == s3_id else
+            0.5 * coordinate * float(shell_element.thickness)
+        )
         self.shell_lever = offset * np.asarray(director, dtype=float)
         self.kernel = InteriorBeamShellLine(
             self.beam_reference, self.shell_reference, side_normal,
@@ -461,14 +472,27 @@ class _BeamShellManager:
         force, state = self._assemble(u, enforce_motion=True)
         tangent_matrix = None
         if tangent:
-            touched = sorted(set(map(int, np.r_[self.beam_dofs[:, :3].ravel(),
-                                                 self.shell_dofs.ravel()])))
+            beam_columns = sorted(set(map(int, self.beam_dofs[:, :3].ravel())))
+            if len(self.shell_ids) == 4:
+                # A single Q4-node perturbation would warp the face. The
+                # admitted Q4 motion has only three collective translation
+                # directions; distribute each collective derivative equally
+                # so the matrix acts exactly on that tangent space.
+                column_groups = [(column,) for column in beam_columns]
+                column_groups += [
+                    tuple(map(int, self.shell_dofs[:, axis]))
+                    for axis in range(3)
+                ]
+            else:
+                touched = sorted(set(map(int, np.r_[self.beam_dofs[:, :3].ravel(),
+                                                     self.shell_dofs.ravel()])))
+                column_groups = [(column,) for column in touched]
             rows = []
             columns = []
             values = []
-            for column in touched:
+            for group in column_groups:
                 perturbation = np.zeros_like(u)
-                perturbation[column] = self.difference_step
+                perturbation[list(group)] = self.difference_step
                 plus_force, plus = self._assemble(u + perturbation, enforce_motion=False)
                 minus_force, minus = self._assemble(u - perturbation, enforce_motion=False)
                 if (plus.active_intervals == state.active_intervals
@@ -481,9 +505,11 @@ class _BeamShellManager:
                 else:
                     raise ValueError("beam-shell active interval transition needs path subdivision")
                 nonzero = np.flatnonzero(derivative)
-                rows.extend(int(row) for row in nonzero)
-                columns.extend([column] * len(nonzero))
-                values.extend(float(derivative[row]) for row in nonzero)
+                for column in group:
+                    rows.extend(int(row) for row in nonzero)
+                    columns.extend([column] * len(nonzero))
+                    values.extend(float(derivative[row]) / len(group)
+                                  for row in nonzero)
             tangent_matrix = sparse.coo_matrix(
                 (values, (rows, columns)), shape=(len(u), len(u)),
             ).tocsr()

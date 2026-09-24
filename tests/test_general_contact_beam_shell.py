@@ -124,6 +124,34 @@ def test_bottom_side_and_common_rigid_transform_preserve_line_work():
                                atol=1.0e-10)
 
 
+def test_planar_q4_uses_original_bilinear_face_for_line_work():
+    face = PlanarFace((2, 1), np.array((
+        (-1.0, -1.0, 0.0), (2.0, -1.0, 0.0),
+        (2.0, 2.0, 0.0), (-1.0, 2.0, 0.0),
+    )))
+    beam = np.array(((0.0, 0.0, 0.2), (0.5, 0.0, 0.2)))
+    kernel = InteriorBeamShellLine(
+        beam, face, np.array((0.0, 0.0, 1.0)),
+        radius=0.1, line_stiffness=1000.0, rim_clearance=0.2,
+        integration_relative_tolerance=1.0e-9, maximum_subdivisions=5,
+    )
+    current = beam.copy()
+    current[:, 2] = 0.09
+    state = kernel.evaluate(current, face.corners)
+    assert state.energy == pytest.approx(0.025)
+    assert state.minimum_gap == pytest.approx(-0.01)
+    # Choose an affine out-of-plane perturbation; a warped Q4 is outside
+    # this development profile and is checked separately.
+    direction = np.array(((0.1, -0.1, 0.2), (-0.1, 0.2, -0.05),
+                          (0.02, -0.03, -0.3), (-0.02, 0.03, -0.05)))
+    step = 1.0e-7
+    plus = kernel.evaluate(current, face.corners + step * direction).energy
+    minus = kernel.evaluate(current, face.corners - step * direction).energy
+    assert (plus - minus) / (2 * step) == pytest.approx(
+        float(np.sum(state.shell_residual * direction)), rel=1.0e-6,
+    )
+
+
 def _coupled_model():
     model = FEModel("interior_round_beam_shell")
     model.add_material("elastic", 1.0e3, 0.3, density=1.0)
@@ -146,6 +174,40 @@ def _coupled_model():
             ContactSurface("tube", (1,), beam_radius=0.01),
             ContactSurface("skin", (2,), side="top"),
         ),
+        rigid_bodies=(),
+        interactions=(ContactInteraction(
+            "line_skin", "tube", "skin", None, 0.002,
+            line_stiffness=1.0e4,
+        ),),
+    )
+    settings = ContactSolverSettings(
+        pair_motion="general", beam_shell_rim_clearance=0.02,
+        beam_shell_difference_step=1.0e-8,
+        line_integration_relative_tolerance=1.0e-8,
+    )
+    return model, definition, settings
+
+
+def _coupled_q4_model():
+    model = FEModel("interior_round_beam_q4")
+    model.add_material("elastic", 1.0e3, 0.3, density=1.0)
+    for node, point in enumerate((
+        (0.0, 0.0, 0.025), (0.5, 0.0, 0.025),
+        (-1.0, -1.0, 0.0), (2.0, -1.0, 0.0),
+        (2.0, 2.0, 0.0), (-1.0, 2.0, 0.0),
+    ), 1):
+        model.add_node(node, *point)
+    model.add_element(1, BeamElement(
+        1, [1, 2], "elastic",
+        {"area": 1.0e-3, "Iy": 1.0e-4, "Iz": 1.0e-4, "J": 1.0e-4},
+    ))
+    model.add_element(2, create_shell_element(
+        2, (3, 4, 5, 6), "elastic", thickness=0.02,
+        formulation="e4-pl", reference_normal=(0, 0, 1),
+    ))
+    definition = ContactDefinition(
+        surfaces=(ContactSurface("tube", (1,), beam_radius=0.01),
+                  ContactSurface("skin", (2,), side="top")),
         rigid_bodies=(),
         interactions=(ContactInteraction(
             "line_skin", "tube", "skin", None, 0.002,
@@ -296,6 +358,79 @@ def test_interior_beam_shell_static_route():
     assert resumed.status == "completed", resumed.failure_reason
     np.testing.assert_allclose(resumed.displacements, result.displacements,
                                rtol=1.0e-7, atol=1.0e-9)
+
+
+def test_planar_q4_interior_static_route_restart_and_warp_rejection():
+    model, definition, settings = _coupled_q4_model()
+    report = validate_general_contact(model, definition, settings)
+    assert report.valid, report.issues
+    assert "Q4_INTERIOR" in report.profile
+    manager = _BeamShellManager(model, definition, settings)
+    trial = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node in (1, 2):
+        trial[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.006
+    force, tangent, summary = manager.evaluate(trial)
+    assert summary.minimum_gap == pytest.approx(-0.001)
+    assert summary.beam_force[2] == pytest.approx(5.0)
+    assert summary.shell_force[2] == pytest.approx(-5.0)
+    direction = np.zeros_like(trial)
+    direction[model.mesh.dof_manager.get_node_dofs(2)[2]] = 1.0
+    step = 1.0e-7
+    plus = manager.evaluate(trial + step * direction, tangent=False)[0]
+    minus = manager.evaluate(trial - step * direction, tangent=False)[0]
+    np.testing.assert_allclose(
+        (plus - minus) / (2 * step), tangent @ direction,
+        rtol=1.0e-5, atol=1.0e-6,
+    )
+    common_shell = np.zeros_like(trial)
+    for node in (3, 4, 5, 6):
+        common_shell[model.mesh.dof_manager.get_node_dofs(node)[2]] = 1.0
+    plus = manager.evaluate(trial + step * common_shell, tangent=False)[0]
+    minus = manager.evaluate(trial - step * common_shell, tangent=False)[0]
+    np.testing.assert_allclose(
+        (plus - minus) / (2 * step), tangent @ common_shell,
+        rtol=1.0e-5, atol=1.0e-6,
+    )
+    model.add_boundary_condition(BoundaryCondition(
+        "shell_fixed", (3, 4, 5, 6),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "beam_root", (1,),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "beam_tip_guide", (2,),
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    load = LoadCase("press_beam_into_q4")
+    load.add_nodal_load(2, forces=(0.0, 0.0, -1.0))
+    full = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=2, max_iterations=12,
+    )
+    assert full.status == "completed", full.failure_reason
+    half = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=2, max_iterations=12,
+        max_load_factor=0.5, emit_restart_checkpoint=True,
+    )
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=2, max_iterations=12,
+        max_load_factor=1.0, restart_checkpoint=half.to_restart_checkpoint(),
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, full.displacements,
+                               rtol=1.0e-7, atol=1.0e-9)
+
+    warped_model, warped_definition, warped_settings = _coupled_q4_model()
+    warped_model.mesh.nodes[5].z += 1.0e-3
+    warped = validate_general_contact(warped_model, warped_definition,
+                                      warped_settings)
+    assert not warped.valid
+    assert any("planar" in issue for issue in warped.issues)
 
 
 def test_b3_s3_interior_manager_uses_quadratic_curve_and_rejects_nonuniform_shell_motion():

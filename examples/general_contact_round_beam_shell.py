@@ -1,8 +1,11 @@
-"""One round B2 centreline contacting the physical top skin of an S3 shell.
+"""One round B2 centreline contacting a physical S3 or planar Q4 shell skin.
 
 Run with ``python examples/general_contact_round_beam_shell.py`` after installing
-ANYsolver and its normal dependencies. Lengths are metres and forces newtons.
+ANYsolver and its normal dependencies. Pass ``--q4`` for the planar Q4 route.
+Lengths are metres and forces newtons.
 """
+
+import argparse
 
 from anysolver import (
     BoundaryCondition, ContactDefinition, ContactInteraction,
@@ -14,12 +17,22 @@ from anysolver.fe_core import FEModel
 
 
 def main(*, line_stiffness: float = 1.0e4,
-         gap_tolerance: float = 0.002) -> None:
-    model = FEModel("round_beam_on_s3_skin")
+         gap_tolerance: float = 0.002,
+         shell_kind: str = "s3") -> None:
+    if shell_kind not in {"s3", "q4"}:
+        raise ValueError("shell_kind must be s3 or q4")
+    model = FEModel(f"round_beam_on_{shell_kind}_skin")
     model.add_material("elastic", 1.0e3, 0.3, density=1.0)
+    shell_points = (
+        ((-1.0, -1.0, 0.0), (2.0, -1.0, 0.0), (-1.0, 2.0, 0.0))
+        if shell_kind == "s3" else
+        ((-1.0, -1.0, 0.0), (2.0, -1.0, 0.0),
+         (2.0, 2.0, 0.0), (-1.0, 2.0, 0.0))
+    )
+    shell_nodes = tuple(range(3, 3 + len(shell_points)))
     for identifier, coordinates in enumerate((
         (0.0, 0.0, 0.025), (0.5, 0.0, 0.025),
-        (-1.0, -1.0, 0.0), (2.0, -1.0, 0.0), (-1.0, 2.0, 0.0),
+        *shell_points,
     ), 1):
         model.add_node(identifier, *coordinates)
     model.add_element(1, BeamElement(
@@ -27,12 +40,13 @@ def main(*, line_stiffness: float = 1.0e4,
         {"area": 1.0e-3, "Iy": 1.0e-4, "Iz": 1.0e-4, "J": 1.0e-4},
     ))
     model.add_element(2, create_shell_element(
-        2, (3, 4, 5), "elastic", thickness=0.02,
-        formulation="e4-pl-s3-v2d", reference_normal=(0, 0, 1),
-        reference_surface_offset=0.0,
+        2, shell_nodes, "elastic", thickness=0.02,
+        formulation=("e4-pl-s3-v2d" if shell_kind == "s3" else "e4-pl"),
+        reference_normal=(0, 0, 1),
+        **({"reference_surface_offset": 0.0} if shell_kind == "s3" else {}),
     ))
     model.add_boundary_condition(BoundaryCondition(
-        "fixed_skin", (3, 4, 5),
+        "fixed_skin", shell_nodes,
         {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
     ))
     model.add_boundary_condition(BoundaryCondition(
@@ -85,4 +99,7 @@ def main(*, line_stiffness: float = 1.0e4,
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--q4", action="store_true", help="use a planar Q4 skin")
+    arguments = parser.parse_args()
+    main(shell_kind="q4" if arguments.q4 else "s3")
