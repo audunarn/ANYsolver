@@ -29,6 +29,9 @@ from scripts._b3_e4_f03_sparse_certificate import SparseBudget, certificate_a
 _CASE_NNZ = {"X0": 1200496, "X1": 2034304, "X2": 3102845}
 _CASE_WORK_BYTES = {"X0": 256*1024**2, "X1": 384*1024**2,
                     "X2": 512*1024**2}
+# X2 is a resource-envelope diagnostic: X0/X1 full costs project close to
+# 900 s at X2. A 1200 s observation cap does not revise any scientific gate.
+_CASE_SECONDS = {"X0": 900., "X1": 900., "X2": 1200.}
 
 
 def child(output: Path, case_id: str) -> None:
@@ -138,7 +141,7 @@ def parent(output: Path, case_id: str) -> None:
             "case_id": case_id,
             "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             "argv": command,
-            "seconds_limit": 900.,
+            "seconds_limit": _CASE_SECONDS[case_id],
             "tree_rss_bytes_limit": 2*1024**3,
             "stream_bytes_limit": 8*1024**2,
             "inverse_archive_bytes": minimum_inverse_bytes(case_id),
@@ -149,7 +152,7 @@ def parent(output: Path, case_id: str) -> None:
             command,
             cwd=workdir, environment=frozen_thread_environment(),
             stdout=stdout, stderr=stderr,
-            limits=SupervisorLimits(900., 2*1024**3),
+            limits=SupervisorLimits(_CASE_SECONDS[case_id], 2*1024**3),
             log_byte_limit=8*1024**2,
         )
     with (output / "receipt.json").open("x", encoding="utf-8") as stream:
