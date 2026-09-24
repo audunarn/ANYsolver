@@ -1,5 +1,22 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — independent F03 spectral-shell axial diagnosis.**
+A Fourier-sine/Legendre plane-stress shell and separately assembled P1
+four-sample line were coupled to the independent classical beam under
+the support-matched axial load. Four analytic/direct-integration checks
+passed; a seven-case resolution suite and nine resource-bounded higher
+order solves completed. Longitudinal response begins to settle, but
+transverse and multiplier resolution still change root force and beam
+energy materially. At 64 longitudinal modes, y-order 48→64 changes
+root force `1.04%` and beam energy `2.93%`; at fixed shell order, line
+32→64→128 changes beam energy `11.28%` then `8.16%`. Weak rows near
+`1e-22` coexist with a sampled physical gap at least `1.26%` of tip
+motion on the largest transverse case. The
+[spectral diagnostic report](B3_GE_E4_PL_F03_SPECTRAL_AXIAL_V1.md) retains raw identities, limitations
+and the next interface-aware transverse-basis decision. It does not
+establish a physical target or select a line law. **F03/G0B stay open;
+G1 remains barred.**
+
 **24 September 2026 — B2 F09 mixed weak-shear graph diagnostic.**
 A separate exact Castigliano oracle was compared with the private physical
 B2 operator assembled into one- and two-member sparse root-clamped graphs.
