@@ -7,7 +7,7 @@ from scripts.b3_e4_f03_independent_transverse_reference import (
 )
 from scripts.b3_e4_f03_independent_yaw_reference import (
     E, I, assemble, interface_stability, local_yaw_trace_boundary_layer,
-    shell_local_trace, solve,
+    shell_local_trace, shell_strip_trace, solve,
 )
 from scripts.b3_e4_f03_local_frame_joint_screen import physical_only_yaw
 
@@ -79,3 +79,31 @@ def test_zero_width_local_normal_gradient_is_not_energy_bounded():
     assert all(right["physical_membrane_energy_j"]
                < .51*left["physical_membrane_energy_j"]
                for left, right in zip(witnesses[:-1], witnesses[1:]))
+
+
+def test_finite_strip_yaw_is_area_average_and_stability_is_channel_aware():
+    nx = ny = 2
+    station = .37
+    points = [(x, y) for x in np.linspace(-.3, 1.4, nx+2)
+              for y in np.linspace(-.5, .5, ny+3)]
+    collocation = np.array([
+        plate_basis(nx, ny, x, y, basis="spline")[0]
+        for x, y in points])
+    uy = np.linalg.solve(collocation,
+                         [(x+.5)**3 for x, _ in points])
+    q = np.r_[np.zeros_like(uy), uy]
+    expected = 1.5*((station+.5)**2+.2**2/3)
+    np.testing.assert_allclose(
+        shell_strip_trace(nx, ny, station)[2]@q, expected,
+        atol=2e-14)
+    assert abs(shell_local_trace(nx, ny, station)[2]@q-expected) > .01
+
+    result = solve(8, 4, 8, 4, trace_kind="strip_020_023")
+    assert result["tip_rz_rad"] > 0.
+    assert abs(result["work_error_j"]) < 1e-12
+    assert abs(result["global_moment_balance_n_m"]) < 1e-9
+    spectrum = interface_stability(8, 4, 8, 4,
+                                   trace_kind="strip_020_023")
+    assert spectrum["rank"] == spectrum["rows"]
+    assert spectrum["lowest_mode_channel_l2"][0] > .99
+    assert spectrum["single_channel_beta_min_ux_uy_yaw"][2] > 0.

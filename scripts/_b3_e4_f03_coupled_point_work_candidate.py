@@ -24,6 +24,8 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_translation,
     pose_from_e4_total_local_director,
     pose_from_e4_total_local_frame)
+from scripts._b3_e4_f03_shell_strip_pose_candidate import (
+    directional_pose_from_e4_total_strip, pose_from_e4_total_strip)
 from scripts._b3_e4_f03_shell_trace import ShellPanel
 
 
@@ -102,6 +104,12 @@ def directional_point_work(
     elif shell_port == "local_frame":
         pose_map = pose_from_e4_total_local_frame
         derivative_map = directional_pose_from_e4_total_local_frame
+    elif shell_port == "physical_strip_020_023":
+        pose_map = lambda p, s, u: pose_from_e4_total_strip(
+            p, s, u, half_length=.2, half_width=.23)
+        derivative_map = lambda p, s, u, a, b: (
+            directional_pose_from_e4_total_strip(
+                p, s, u, a, b, half_length=.2, half_width=.23))
     else:
         raise ValueError("unknown bounded shell pose port")
     shell_position, shell_frame = pose_map(shell, station, shell_total)

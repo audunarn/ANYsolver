@@ -100,18 +100,57 @@ def shell_local_trace(nx: int, ny: int, s: float) -> np.ndarray:
     return rows
 
 
-def _line_edges(nx: int, nb: int, intervals: int) -> np.ndarray:
+def shell_strip_trace(nx: int, ny: int, s: float, *,
+                      half_length: float = .2,
+                      half_width: float = .23) -> np.ndarray:
+    """Independent physical area mean of [ux,uy,polar yaw] on one strip."""
+    if (not 0. <= s <= 1. or not .05 <= half_length <= .25 or
+            not .05 <= half_width <= .25):
+        raise ValueError("bounded finite material strip required")
+    x0, x1 = s-half_length, s+half_length
+    y0, y1 = -half_width, half_width
+    xknots = _spline(nx, -.5, 1.5)[2]
+    yknots = _spline(ny, -.5, .5)[2]
+    xedges = np.r_[x0, xknots[(x0 < xknots) & (xknots < x1)], x1]
+    yedges = np.r_[y0, yknots[(y0 < yknots) & (yknots < y1)], y1]
+    n = len(plate_basis(nx, ny, s, 0., basis="spline")[0])
+    mean = np.zeros(n)
+    gx = np.zeros(n)
+    gy = np.zeros(n)
+    for x, wx in _quadrature(4, xedges):
+        for y, wy in _quadrature(4, yedges):
+            value, dx, dy = plate_basis(
+                nx, ny, float(x), float(y), basis="spline")
+            mean += wx*wy*value
+            gx += wx*wy*dx
+            gy += wx*wy*dy
+    area = 4*half_length*half_width
+    rows = np.zeros((3, 2*n))
+    rows[0, :n] = mean/area
+    rows[1, n:] = mean/area
+    rows[2, :n] = -.5*gy/area
+    rows[2, n:] = .5*gx/area
+    return rows
+
+
+def _line_edges(nx: int, nb: int, intervals: int, *,
+                trace_kind: str = "local") -> np.ndarray:
     """Split weak integrals at every spline or multiplier breakpoint."""
-    return np.unique(np.r_[np.linspace(0., 1., intervals+1),
-                           _spline(nx, -.5, 1.5)[2],
+    xknots = _spline(nx, -.5, 1.5)[2]
+    moving = (np.r_[xknots-.2, xknots+.2]
+              if trace_kind == "strip_020_023" else np.array(()))
+    return np.unique(np.r_[np.linspace(0., 1., intervals+1), xknots, moving,
                            _spline(nb, 0., 1.)[2]].clip(0., 1.))
 
 
 def assemble(nx: int, ny: int, nb: int, intervals: int, *,
-             kind: str = "p0", thickness: float = THICKNESS
+             kind: str = "p0", thickness: float = THICKNESS,
+             trace_kind: str = "local"
              ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Independently assemble physical plate, beam and line constraint."""
     _validate(nx, ny, nb, intervals, kind)
+    if trace_kind not in ("local", "strip_020_023"):
+        raise ValueError("local or declared physical-strip trace required")
     if (isinstance(thickness, bool) or not np.isfinite(thickness)
             or thickness <= 0.):
         raise ValueError("finite positive thickness required")
@@ -133,14 +172,16 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
     nrows = intervals if kind == "p0" else intervals+1
     constraints = np.zeros((3*nrows, ns+nbeam))
     moments = np.zeros((nrows, 2))
-    edges = _line_edges(nx, nb, intervals)
+    edges = _line_edges(nx, nb, intervals, trace_kind=trace_kind)
     for left, right in zip(edges[:-1], edges[1:]):
         if right-left < 1e-13:
             continue
         cell = min(int(np.floor((left+right)*.5*intervals)), intervals-1)
         c_left, c_right = cell/intervals, (cell+1)/intervals
         for s, weight in _quadrature(5, np.array((left, right))):
-            shell_trace = shell_local_trace(nx, ny, float(s))
+            shell_trace = (shell_local_trace(nx, ny, float(s))
+                           if trace_kind == "local" else
+                           shell_strip_trace(nx, ny, float(s)))
             value, _ = beam_basis(nb, float(s), basis="spline")
             beam_trace = np.zeros((3, nbeam))
             for axis in range(3):
@@ -159,7 +200,8 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
 
 def interface_stability(nx: int, ny: int, nb: int, intervals: int, *,
                         kind: str = "p0", thickness: float = THICKNESS,
-                        characteristic_length: float = 1.) -> dict:
+                        characteristic_length: float = 1.,
+                        trace_kind: str = "local") -> dict:
     """Energy/L2-scaled physical three-channel inf-sup diagnostic.
 
     The shell and beam matrices here are positive physical energies. The
@@ -169,7 +211,8 @@ def interface_stability(nx: int, ny: int, nb: int, intervals: int, *,
     the other three six-channel constraints and cannot select a space.
     """
     shell, beam, c, _ = assemble(nx, ny, nb, intervals,
-                                 kind=kind, thickness=thickness)
+                                 kind=kind, thickness=thickness,
+                                 trace_kind=trace_kind)
     if (not np.isfinite(characteristic_length) or
             characteristic_length <= 0.):
         raise ValueError("positive characteristic length required")
@@ -222,7 +265,8 @@ def interface_stability(nx: int, ny: int, nb: int, intervals: int, *,
             eigvals_only=True)[0]))
     return {
         "physical_subsystem": "membrane_ux_uy_and_beam_ux_uy_rz",
-        "kind": kind, "intervals": intervals, "rows": len(c),
+        "kind": kind, "trace_kind": trace_kind,
+        "intervals": intervals, "rows": len(c),
         "rank": int(np.linalg.matrix_rank(c)),
         "characteristic_length_m": characteristic_length,
         "normalized_eigen_min": float(scaled[0]),
@@ -242,10 +286,12 @@ def interface_stability(nx: int, ny: int, nb: int, intervals: int, *,
 
 def solve(nx: int, ny: int, nb: int, intervals: int, *,
           kind: str = "p0", tip_mz: float = 100.,
-          thickness: float = THICKNESS) -> dict:
+          thickness: float = THICKNESS,
+          trace_kind: str = "local") -> dict:
     """Solve and recover independent physical yaw work and support moment."""
     shell, beam, c, moments = assemble(
-        nx, ny, nb, intervals, kind=kind, thickness=thickness)
+        nx, ny, nb, intervals, kind=kind, thickness=thickness,
+        trace_kind=trace_kind)
     ns, nbeam = len(shell), len(beam)
     n = nbeam//3
     if np.linalg.matrix_rank(c) != len(c):
@@ -271,9 +317,12 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
     shell_support_mz = -transferred_mz
     beam_root_mz = transferred_mz-tip_mz
     return {
-        "model": "independent_membrane_Timoshenko_centerline_yaw",
+        "model": ("independent_membrane_Timoshenko_centerline_yaw"
+                  if trace_kind == "local" else
+                  "independent_membrane_Timoshenko_finite_strip_yaw"),
         "nx": nx, "ny": ny, "nb": nb, "intervals": intervals,
-        "kind": kind, "support": "full_left_edge_shell_and_beam_root",
+        "kind": kind, "trace_kind": trace_kind,
+        "support": "full_left_edge_shell_and_beam_root",
         "load": "beam_tip_yaw_couple", "tip_mz_n_m": tip_mz,
         "tip_rz_rad": tip_yaw,
         "shell_energy_j": shell_energy, "beam_energy_j": beam_energy,
@@ -293,9 +342,12 @@ def main() -> None:
     parser.add_argument("--nb", type=int, default=8)
     parser.add_argument("--intervals", type=int, default=2)
     parser.add_argument("--kind", choices=("p0", "p1", "dual"), default="p0")
+    parser.add_argument("--trace-kind", choices=("local", "strip_020_023"),
+                        default="local")
     args = parser.parse_args()
     print(json.dumps(solve(args.nx, args.ny, args.nb, args.intervals,
-                           kind=args.kind), indent=2, sort_keys=True))
+                           kind=args.kind, trace_kind=args.trace_kind),
+                     indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":

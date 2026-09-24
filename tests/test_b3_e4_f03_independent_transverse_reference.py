@@ -187,3 +187,33 @@ def test_independent_local_director_has_center_work_and_same_position():
     np.testing.assert_allclose(local[1]@q, (station+.5)**2, atol=1e-14)
     np.testing.assert_allclose(rail[1]@q, (station+.5)**2+.2**2,
                                atol=1e-14)
+
+
+def test_independent_finite_strip_means_quadratic_field_and_balances_loads():
+    nx = ny = nb = 2
+    xs = np.linspace(-.3, 1.4, nx+2)
+    ys = np.linspace(-.5, .5, ny+3)
+    points = [(x, y) for x in xs for y in ys]
+    collocation = np.array([
+        plate_basis(nx, ny, x, y, basis="spline")[0]
+        for x, y in points])
+    polynomial = np.array([(x+.5)**2 for x, _ in points])
+    coefficients = np.linalg.solve(collocation, polynomial)
+    q = np.r_[coefficients, coefficients, np.zeros_like(coefficients)]
+    station = .37
+    trace = shell_trace(nx, ny, station, "strip", basis="spline",
+                        director="strip")
+    expected = (station+.5)**2+.2**2/3
+    np.testing.assert_allclose(trace@q, (expected, expected, 0.),
+                               atol=2e-14)
+
+    for force, torque in ((1000., 0.), (0., 100.)):
+        result = solve(4, 4, 4, 2, origin="strip", director="strip",
+                       multiplier="p0", basis="spline",
+                       tip_force_z=force, tip_torque_x=torque)
+        assert result["scaled_equation_residual"] < 1e-9
+        assert result["weak_gap_l2"] < 1e-10
+        assert abs(result["work_error_j"]) < 1e-10
+        assert abs(result["balance_fz_n"]) < 1e-9
+        assert abs(result["balance_mx_n_m"]) < 1e-9
+        assert result["shell_energy_j"] > 0.

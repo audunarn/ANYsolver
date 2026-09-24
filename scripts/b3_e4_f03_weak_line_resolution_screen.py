@@ -23,6 +23,7 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_translation,
     pose_from_e4_total_local_director,
     pose_from_e4_total_local_frame)
+from scripts._b3_e4_f03_shell_strip_pose_candidate import pose_from_e4_total_strip
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
@@ -73,7 +74,10 @@ def one_case(topology: str, intervals: int, kind: str, *,
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
-                "local_frame": pose_from_e4_total_local_frame}[shell_port]
+                "local_frame": pose_from_e4_total_local_frame,
+                "physical_strip_020_023": lambda p, s, u: (
+                    pose_from_e4_total_strip(
+                        p, s, u, half_length=.2, half_width=.23))}[shell_port]
     shell_size = 6*shell.panel.node_count
     tip_rx = shell_size+6*beam.n_half_cells+3
     tip_rz = shell_size+6*beam.n_half_cells+5

@@ -1,5 +1,43 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**Current decision, 25 September 2026:** Keep the strict zero-width
+six-channel line unselected. A distinct finite `0.20 m` longitudinal by
+`0.23 m` transverse *half-width* material strip now has objective Q4/S3
+pose work, physical yaw from area-mean gradients, and independently matched
+elastic yaw/torque/shear responses. This supports further finite-footprint
+development, not substitution for the required line. At fixed Q4 x8/y4,
+P0-4 and beam-8, native/independent strip tip yaw is `3.860/3.663 µrad`;
+native Q4/S3/independent tip torsion under `100 Nm` is
+`14.410/14.668/14.635 µrad`. Under `1000 N` transverse force, tip z is
+`43.740/45.758/46.885 µm`. All three balance work and global loads; these
+are bounded development comparisons, not qualification.
+
+**Remaining uncertainty and next discriminator:** The strip does not settle
+multiplier stability, all six coupled channels, or whether a genuinely
+zero-width yaw law is possible without an unbounded shell gradient trace.
+At fixed shell/beam x8/8, P0-2→P0-4 changes native strip yaw
+`6.409→3.860 µrad`, while beam-8→16 at P0-4 changes it only
+`3.860→3.744 µrad`; the independent model has the same pattern. P1/dual
+give still smaller yaw but neither small weak gaps nor the three-channel
+spectral quotient selects them. Its weakest normalized mode is axial, not
+yaw. The next mechanics slice must compare an energy-continuous, declared
+line law with the finite-footprint interpretation and assess norm-scaled
+six-channel rank, interface modes, mesh ratios, work and physical response.
+If no true line law survives, retain the footprint candidate and surface
+the required scope decision explicitly; do not quietly rename the strip a
+line. Do not run another finer classical axial refinement absent a new
+decision-relevant hypothesis. G0B remains open, G1 barred and formal F03
+execution authority unconsumed.
+
+**Current checks:** The new finite-strip tests pass `8/8` by direct
+single-thread invocation; previous independent transverse and yaw tests
+pass `12/12` and `5/5`, and two new independent strip mean/load/yaw checks
+pass `2/2`.
+The focused pytest process produced no output for about two minutes and was
+stopped; it is incomplete, not a pass. All nine changed Python files parsed
+successfully; `compileall` could not write this checkout's protected
+`__pycache__` files. No product or frozen evidence changed.
+
 **Latest decision, 25 September 2026:** The local polar-frame pose restores
 yaw work, and a physically matched independent membrane/beam model follows
 the native yaw and transverse torque/shear trends. Line resolution remains
@@ -63,6 +101,30 @@ CPU-active without output for over ten minutes and was stopped as an
 incomplete check, not counted as a pass. All five test functions then passed
 by direct single-thread invocation in 5.3 s. No product or frozen evidence
 was changed.
+
+**Prospective next bounded experiment:** Define a distinct centered material
+strip with explicit half-length `0.20 m` and half-width `0.23 m`. Integrate
+position, physical director and both material gradients over its *area*;
+use their polar frame for six-channel pose work. This tests whether a
+finite physical support removes the zero-width trace objection without
+borrowing drilling stiffness or suppressing admissible director shear.
+Passage through reference consistency, rigid motion, actual-chart first/
+second variations and the boundary-layer witness would warrant a later
+loaded weak-line and physical-resolution study. Failure would return to
+the pose functional. This is a footprint/strip candidate, not a substitute
+for the required nonmatching line or a multiplier-space decision.
+
+**Strip pose check:** The fixed `0.20×0.23 m` half-width area mean passes
+Q4/S3 exact host coverage, rigid motion, actual-chart first/mixed-second
+variations, reference six-channel work, and independent director shear.
+The loaded native P0 small case has positive physical shell energy and
+global moment/work balance. It strongly attenuates the earlier 0.4 m yaw
+wave because the declared *longitudinal footprint* filters that wavelength;
+this is a physical footprint property, not evidence for a zero-width line.
+The next discriminator is a physically matched independent area-average
+plate/beam yaw response. Agreement would justify later strip-resolution and
+multiplier work; disagreement would send the pose or section mapping back
+for correction. No multiplier or connection type is qualified by these checks.
 
 **Current decision-oriented investigation, 25 September 2026:** Decide
 whether the local polar-frame line can advance to a formal interface-space

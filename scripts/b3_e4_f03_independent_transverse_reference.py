@@ -56,7 +56,8 @@ def _quadrature(order: int, edges: np.ndarray):
 
 
 def _line_edges(cell: int, intervals: int, nx: int, nb: int,
-                basis: str) -> np.ndarray:
+                basis: str, *, origin: str = "rail",
+                director: str = "rail") -> np.ndarray:
     left, right = cell/intervals, (cell+1)/intervals
     if basis == "global":
         return np.array((left, right))
@@ -64,7 +65,12 @@ def _line_edges(cell: int, intervals: int, nx: int, nb: int,
     bedges = _spline(nb, 0., 1.)[2]
     stations = [left, right]
     for ox, _ in SAMPLES:
-        stations.extend(float(x-ox) for x in xedges if left < x-ox < right)
+        if origin == "rail" or director == "rail":
+            stations.extend(float(x-ox) for x in xedges if left < x-ox < right)
+    if origin == "strip" or director == "strip":
+        for offset in (-HALF_WINDOW, HALF_WINDOW):
+            stations.extend(float(x-offset) for x in xedges
+                            if left < x-offset < right)
     stations.extend(float(s) for s in bedges if left < s < right)
     stations.extend(float(s) for s in xedges if left < s < right)
     return np.unique(np.round(stations, 14))
@@ -156,19 +162,37 @@ def _orders(nx: int, ny: int, nb: int, intervals: int) -> None:
 def shell_trace(nx: int, ny: int, s: float, origin: str, *,
                 basis: str = "global", director: str = "rail") -> np.ndarray:
     """Linearized [z,rx,ry] trace of the declared material point/director."""
-    if origin not in ("rail", "local"):
-        raise ValueError("rail or local shell origin required")
-    if director not in ("rail", "local"):
-        raise ValueError("rail or local shell director required")
+    if origin not in ("rail", "local", "strip"):
+        raise ValueError("rail, local or strip shell origin required")
+    if director not in ("rail", "local", "strip"):
+        raise ValueError("rail, local or strip shell director required")
     n = len(plate_basis(nx, ny, s, 0., basis=basis)[0])
     result = np.zeros((3, 3*n))
     values = [plate_basis(nx, ny, s+ox, y, basis=basis)[0]
               for ox, y in SAMPLES]
     mean = np.mean(values, axis=0)
+    if origin == "strip" or director == "strip":
+        xknots = (_spline(nx, -.5, 1.5)[2] if basis == "spline" else
+                  np.array((-.5, 1.5)))
+        yknots = (_spline(ny, -.5, .5)[2] if basis == "spline" else
+                  np.array((-.5, .5)))
+        x0, x1 = s-HALF_WINDOW, s+HALF_WINDOW
+        y0, y1 = -HALF_RAIL, HALF_RAIL
+        xedges = np.r_[x0, xknots[(x0 < xknots) & (xknots < x1)], x1]
+        yedges = np.r_[y0, yknots[(y0 < yknots) & (yknots < y1)], y1]
+        strip = np.zeros(n)
+        for x, wx in _quadrature(4 if basis == "spline" else 16, xedges):
+            for y, wy in _quadrature(4 if basis == "spline" else 16, yedges):
+                strip += wx*wy*plate_basis(
+                    nx, ny, float(x), float(y), basis=basis)[0]
+        strip /= 4*HALF_WINDOW*HALF_RAIL
+    else:
+        strip = None
+    local = plate_basis(nx, ny, s, 0., basis=basis)[0]
     result[0, :n] = (mean if origin == "rail" else
-                     plate_basis(nx, ny, s, 0., basis=basis)[0])
+                     local if origin == "local" else strip)
     director_values = (mean if director == "rail" else
-                       plate_basis(nx, ny, s, 0., basis=basis)[0])
+                       local if director == "local" else strip)
     result[1, n:2*n] = director_values
     result[2, 2*n:] = director_values
     return result
@@ -235,7 +259,8 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
     first_moments = np.zeros(nm)
     for cell in range(intervals):
         left, right = cell/intervals, (cell+1)/intervals
-        edges = _line_edges(cell, intervals, nx, nb, basis)
+        edges = _line_edges(cell, intervals, nx, nb, basis,
+                            origin=origin, director=director)
         for s, weight in _quadrature(
                 6 if basis == "spline" else max(2*max(nx, ny, nb)+4, 12),
                 edges):
@@ -294,7 +319,8 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
     gap_rotation_squared = 0.
     for cell in range(intervals):
         left, right = cell/intervals, (cell+1)/intervals
-        edges = _line_edges(cell, intervals, nx, nb, basis)
+        edges = _line_edges(cell, intervals, nx, nb, basis,
+                            origin=origin, director=director)
         for s, weight in _quadrature(
                 8 if basis == "spline" else max(2*max(nx,ny,nb)+6, 16),
                 edges):
