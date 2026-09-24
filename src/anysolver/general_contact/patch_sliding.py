@@ -12,10 +12,12 @@ from .moving import bound_swept_moving_mortar_gap
 from .overlap import reference_shell_face
 from .pair import _definition_parts, _reference_pair_normal, validate_planar_shell_pair
 from .patch_mortar import MovingPatchMortar, PatchFace
+from .pointwise_patch import PointwisePatchPenalty
 
 
 PROFILE = "PLANAR_Q4_S3_PATCH_RESTRICTED_SLIDING_MORTAR_DEV_V0"
 AUGMENTED_PROFILE = "PLANAR_Q4_S3_PATCH_RESTRICTED_SLIDING_AUGMENTED_MORTAR_DEV_V0"
+POINTWISE_PROFILE = "PLANAR_Q4_S3_PATCH_RESTRICTED_SLIDING_POINTWISE_PENALTY_DEV_V0"
 
 
 def _patch_faces(model, surface, body_id: int) -> tuple[PatchFace, ...]:
@@ -36,6 +38,10 @@ def validate_restricted_sliding_patch(
         model, definition, require_reference_overlap=False,
     )
     issues = list(report.issues)
+    controls = ContactSolverSettings() if settings is None else settings
+    if (controls.normal_discretization == "pointwise_penalty"
+            and any(item.normal_law != "penalty" for item in definition.interactions)):
+        issues.append("pointwise patch specialization requires penalty normal law")
     if len(definition.surfaces) == 2 and all(
         len(surface.element_ids) == 1 for surface in definition.surfaces
     ):
@@ -50,17 +56,28 @@ def validate_restricted_sliding_patch(
             tuple(face.geometry for face in source_faces),
             tuple(face.geometry for face in target_faces),
         )
-        controls = ContactSolverSettings() if settings is None else settings
         try:
-            MovingPatchMortar(
-                source_faces, target_faces, normal,
-                interaction.normal_stiffness,
-                maximum_candidate_pairs=controls.maximum_candidate_pairs,
-                maximum_normal_dofs=controls.maximum_patch_normal_dofs,
-            )
+            arguments = {
+                "maximum_candidate_pairs": controls.maximum_candidate_pairs,
+                "maximum_normal_dofs": controls.maximum_patch_normal_dofs,
+            }
+            if controls.normal_discretization == "pointwise_penalty":
+                PointwisePatchPenalty(
+                    source_faces, target_faces, normal,
+                    interaction.normal_stiffness,
+                    integration_subdivisions=controls.pointwise_integration_subdivisions,
+                    maximum_integration_triangles=controls.maximum_pointwise_triangles,
+                    **arguments,
+                )
+            else:
+                MovingPatchMortar(
+                    source_faces, target_faces, normal,
+                    interaction.normal_stiffness, **arguments,
+                )
         except (ValueError, MemoryError) as exc:
             issues.append(str(exc))
-    profile = (AUGMENTED_PROFILE if any(
+    profile = (POINTWISE_PROFILE if controls.normal_discretization == "pointwise_penalty"
+               else AUGMENTED_PROFILE if any(
         item.normal_law == "augmented" for item in definition.interactions
     ) else PROFILE)
     return ContactValidationReport(
@@ -81,8 +98,8 @@ class _SlidingPatchResults:
     current_overlap_area: float
     overlapping_pairs: int
     candidate_pairs: int
-    pressure_rank: int
-    active_pressure_dofs: int
+    pressure_rank: int | None
+    active_pressure_dofs: int | None
     minimum_sampled_gap: float
     conservative_lower_gap: float
     gap_tolerance_met: bool
@@ -101,8 +118,10 @@ class _SlidingPatchResults:
     maximum_positive_support_m2: float | None = None
     pressure_gradient_condition: float | None = None
     minimum_weighted_gap_m: float | None = None
-    maximum_algorithmic_pressure_Pa: float = 0.0
+    maximum_algorithmic_pressure_Pa: float | None = 0.0
     weighted_to_physical_gap_span_m: float | None = None
+    active_pointwise_area_m2: float | None = None
+    pointwise_integration_triangles: int | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -118,6 +137,8 @@ class _SlidingPatchResults:
             "minimum_weighted_gap_m": self.minimum_weighted_gap_m,
             "maximum_algorithmic_pressure_Pa": self.maximum_algorithmic_pressure_Pa,
             "weighted_to_physical_gap_span_m": self.weighted_to_physical_gap_span_m,
+            "active_pointwise_area_m2": self.active_pointwise_area_m2,
+            "pointwise_integration_triangles": self.pointwise_integration_triangles,
             "minimum_sampled_gap": self.minimum_sampled_gap,
             "conservative_lower_gap": self.conservative_lower_gap,
             "gap_tolerance_met": self.gap_tolerance_met,
@@ -167,11 +188,23 @@ class _RestrictedSlidingPatchFEManager:
             tuple(face.geometry for face in source_faces),
             tuple(face.geometry for face in target_faces),
         )
-        self.patch = MovingPatchMortar(
-            source_faces, target_faces, self.normal, self.stiffness,
-            maximum_candidate_pairs=self.settings.maximum_candidate_pairs,
-            maximum_normal_dofs=self.settings.maximum_patch_normal_dofs,
-        )
+        self.pointwise = self.settings.normal_discretization == "pointwise_penalty"
+        arguments = {
+            "maximum_candidate_pairs": self.settings.maximum_candidate_pairs,
+            "maximum_normal_dofs": self.settings.maximum_patch_normal_dofs,
+        }
+        if self.pointwise:
+            self.patch = PointwisePatchPenalty(
+                source_faces, target_faces, self.normal, self.stiffness,
+                integration_subdivisions=self.settings.pointwise_integration_subdivisions,
+                maximum_integration_triangles=self.settings.maximum_pointwise_triangles,
+                **arguments,
+            )
+        else:
+            self.patch = MovingPatchMortar(
+                source_faces, target_faces, self.normal, self.stiffness,
+                **arguments,
+            )
         self.normal_multipliers = np.zeros(len(self.patch.source_node_ids))
         self.node_ids = (self.patch.source_node_ids, self.patch.target_node_ids)
         self.node_dofs = tuple(
@@ -187,7 +220,7 @@ class _RestrictedSlidingPatchFEManager:
             face.geometry.corners - face.geometry.corners[0], axis=1
         ))) for face in (*source_faces, *target_faces))
         self.motion_tolerance = 256.0 * np.finfo(float).eps * scale
-        gradients: dict[tuple[int, int], np.ndarray] = {}
+        surface_levers: dict[tuple[int, int], np.ndarray] = {}
         from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
 
         for body, (surface, faces) in enumerate(zip(
@@ -207,16 +240,16 @@ class _RestrictedSlidingPatchFEManager:
                     if element.formulation_id == s3_id else
                     0.5 * coordinate * float(element.thickness)
                 )
-                gradient = offset * np.cross(director, self.normal)
+                lever = offset * director
                 for node in face.node_ids:
                     key = (body, node)
-                    if (key in gradients and
-                            float(np.linalg.norm(gradients[key] - gradient))
+                    if (key in surface_levers and
+                            float(np.linalg.norm(surface_levers[key] - lever))
                             > self.motion_tolerance):
                         raise ValueError(
                             f"shared patch node {node} has inconsistent physical directors"
                         )
-                    gradients[key] = gradient
+                    surface_levers[key] = lever
         projection = np.eye(3) - np.outer(self.normal, self.normal)
         reduced_count = 6 + sum(len(ids) for ids in self.node_ids)
         self.height_offsets = (6, 6 + len(self.node_ids[0]))
@@ -225,13 +258,21 @@ class _RestrictedSlidingPatchFEManager:
         data: list[float] = []
         for body, (ids, dofs) in enumerate(zip(self.node_ids, self.node_dofs)):
             for local, (node, nodal_dofs) in enumerate(zip(ids, dofs)):
-                rotation_gradient = gradients[(body, node)]
+                lever = surface_levers[(body, node)]
+                rotation_gradient = np.cross(lever, self.normal)
                 for component in range(3):
                     for structural in range(3):
                         coefficient = projection[component, structural] / len(ids)
                         if coefficient:
                             rows.append(3 * body + component)
                             cols.append(int(nodal_dofs[structural]))
+                            data.append(float(coefficient))
+                    tangent_rotation = np.cross(lever, projection[component]) / len(ids)
+                    for structural in range(3):
+                        coefficient = tangent_rotation[structural]
+                        if coefficient:
+                            rows.append(3 * body + component)
+                            cols.append(int(nodal_dofs[3 + structural]))
                             data.append(float(coefficient))
                     coefficient = self.normal[component]
                     if coefficient:
@@ -359,6 +400,14 @@ class _RestrictedSlidingPatchFEManager:
                 "maximum_gap_triangles": self.settings.maximum_gap_triangles,
             },
         }
+        if self.pointwise:
+            contract["settings"]["normal_discretization"] = "pointwise_penalty"
+            contract["settings"]["pointwise_integration_subdivisions"] = (
+                self.settings.pointwise_integration_subdivisions
+            )
+            contract["settings"]["maximum_pointwise_triangles"] = (
+                self.settings.maximum_pointwise_triangles
+            )
         if self.normal_law == "augmented":
             contract["settings"]["maximum_augmentations"] = self.settings.maximum_augmentations
             contract["settings"]["pressure_tolerance"] = self.settings.pressure_tolerance
@@ -385,25 +434,38 @@ class _RestrictedSlidingPatchFEManager:
         split = self.height_offsets[1]
         certificate = self._certificate(q, self.gap_tolerance)
         if tangent:
-            reduced = self.patch.reduced_system(
-                q[:3], q[3:6], q[6:split], q[split:],
-                difference_step=self.difference_step,
-                multiplier_estimate=self.normal_multipliers,
-            )
+            if self.pointwise:
+                reduced = self.patch.reduced_system(
+                    q[:3], q[3:6], q[6:split], q[split:],
+                    difference_step=self.difference_step,
+                )
+            else:
+                reduced = self.patch.reduced_system(
+                    q[:3], q[3:6], q[6:split], q[split:],
+                    difference_step=self.difference_step,
+                    multiplier_estimate=self.normal_multipliers,
+                )
             state = reduced.state
             reduced_force = reduced.residual
             stiffness = (self.work_map.T @ sparse.csr_matrix(reduced.tangent)
                          @ self.work_map).tocsr()
             asymmetry = reduced.relative_tangent_asymmetry
         else:
-            state = self.patch.evaluate(
-                q[:3], q[3:6], q[6:split], q[split:],
-                multiplier_estimate=self.normal_multipliers,
-            )
-            source, target = self.patch.translation_residual(
-                q[:3], q[3:6], q[6:split], q[split:],
-                multiplier_estimate=self.normal_multipliers,
-            )
+            if self.pointwise:
+                state = self.patch.evaluate(
+                    q[:3], q[3:6], q[6:split], q[split:],
+                )
+                source = state.source_translation_residual
+                target = state.target_translation_residual
+            else:
+                state = self.patch.evaluate(
+                    q[:3], q[3:6], q[6:split], q[split:],
+                    multiplier_estimate=self.normal_multipliers,
+                )
+                source, target = self.patch.translation_residual(
+                    q[:3], q[3:6], q[6:split], q[split:],
+                    multiplier_estimate=self.normal_multipliers,
+                )
             reduced_force = np.r_[source, target, state.normal_residual]
             stiffness = None
             asymmetry = None
@@ -422,26 +484,38 @@ class _RestrictedSlidingPatchFEManager:
                 ) - force[nodal_dofs[3:]]
             body_forces.append(tuple(float(value) for value in total_force))
             body_moments.append(tuple(float(value) for value in total_moment))
-        supported = state.support > 0.0
-        if np.any(supported):
-            minimum_support = float(np.min(state.support[supported]))
-            maximum_support = float(np.max(state.support[supported]))
-            minimum_weighted_gap = float(np.min(state.normalized_gap[supported]))
-            gap_span = minimum_weighted_gap - certificate.conservative_lower_gap
-            maximum_algorithmic_pressure = float(np.max(np.maximum(
-                0.0, self.normal_multipliers[supported]
-                - self.stiffness * state.normalized_gap[supported],
-            )))
-        else:
+        if self.pointwise:
+            pressure_rank = active_pressure_dofs = None
             minimum_support = maximum_support = minimum_weighted_gap = gap_span = None
-            maximum_algorithmic_pressure = 0.0
+            pressure_condition = None
+            maximum_algorithmic_pressure = None
+            pointwise_area = state.active_quadrature_area
+            pointwise_triangles = state.integration_triangles
+        else:
+            supported = state.support > 0.0
+            pressure_rank = state.pressure_rank
+            active_pressure_dofs = int(np.count_nonzero(
+                supported & (state.normalized_gap - self.normal_multipliers
+                             / self.stiffness < 0.0)
+            ))
+            pressure_condition = state.pressure_gradient_condition
+            pointwise_area = pointwise_triangles = None
+            if np.any(supported):
+                minimum_support = float(np.min(state.support[supported]))
+                maximum_support = float(np.max(state.support[supported]))
+                minimum_weighted_gap = float(np.min(state.normalized_gap[supported]))
+                gap_span = minimum_weighted_gap - certificate.conservative_lower_gap
+                maximum_algorithmic_pressure = float(np.max(np.maximum(
+                    0.0, self.normal_multipliers[supported]
+                    - self.stiffness * state.normalized_gap[supported],
+                )))
+            else:
+                minimum_support = maximum_support = minimum_weighted_gap = gap_span = None
+                maximum_algorithmic_pressure = 0.0
         result = _SlidingPatchResults(
             self.profile, state.overlap_area,
-            state.overlapping_pairs, state.candidate_pairs,
-            state.pressure_rank,
-            int(np.count_nonzero((state.support > 0.0)
-                                 & (state.normalized_gap - self.normal_multipliers
-                                    / self.stiffness < 0.0))),
+            state.overlapping_pairs, self.patch.candidate_pairs,
+            pressure_rank, active_pressure_dofs,
             certificate.minimum_sampled_gap,
             certificate.conservative_lower_gap,
             certificate.tolerance_met,
@@ -451,7 +525,8 @@ class _RestrictedSlidingPatchFEManager:
             state.energy, body_forces[0], body_forces[1],
             body_moments[0], body_moments[1], asymmetry,
             self.normal_law, float(np.linalg.norm(self.normal_multipliers)),
-            minimum_support, maximum_support, state.pressure_gradient_condition,
+            minimum_support, maximum_support, pressure_condition,
             minimum_weighted_gap, maximum_algorithmic_pressure, gap_span,
+            pointwise_area, pointwise_triangles,
         )
         return force, stiffness, result

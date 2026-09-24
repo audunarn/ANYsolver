@@ -96,6 +96,90 @@ def test_q4_against_two_s3_faces_uses_physical_offsets_and_shared_pressure():
     assert coupled["integration_force"][2] == pytest.approx(0.4, rel=1e-5)
 
 
+def test_pointwise_penalty_patch_is_explicit_and_solves_constant_closure():
+    model, definition, _settings = _q4_against_two_s3()
+    settings = ContactSolverSettings(
+        pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
+        normal_discretization="pointwise_penalty",
+        pointwise_integration_subdivisions=1,
+        maximum_pointwise_triangles=1000,
+    )
+    report = validate_general_contact(model, definition, settings)
+    assert report.valid, report.issues
+    assert "POINTWISE_PENALTY" in report.profile
+    manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node in (5, 6, 7, 8):
+        displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = -1.0e-6
+    force, tangent, summary = manager.evaluate(displacement)
+    assert tangent is not None
+    assert summary.integration_force[2] == pytest.approx(0.72, rel=1.0e-7)
+    assert summary.target_force[2] == pytest.approx(-0.72, rel=1.0e-7)
+    assert summary.pressure_rank is None
+    assert summary.active_pointwise_area_m2 == pytest.approx(0.72)
+    assert summary.pointwise_integration_triangles > 0
+    assert sum(force[model.mesh.dof_manager.get_node_dofs(node)[2]]
+               for node in (5, 6, 7, 8)) == pytest.approx(-0.72)
+
+    model.add_boundary_condition(BoundaryCondition(
+        "lower_fixed", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "upper_guide", (5, 6, 7, 8),
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    load = LoadCase("press")
+    for node in (5, 6, 7, 8):
+        load.add_nodal_load(node, forces=(0.0, 0.0, -0.1))
+    result = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=1, max_iterations=12,
+    )
+    assert result.status == "completed", result.failure_reason
+    assert result.info["general_contact"]["integration_force"][2] == pytest.approx(0.4)
+    half = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=1, max_iterations=12,
+        max_load_factor=0.5, emit_restart_checkpoint=True,
+    )
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=1, max_iterations=12,
+        max_load_factor=1.0,
+        restart_checkpoint=half.to_restart_checkpoint(),
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(
+        resumed.displacements, result.displacements, rtol=1.0e-7, atol=1.0e-9,
+    )
+
+    with pytest.raises(ValueError, match="normal_discretization"):
+        ContactSolverSettings(normal_discretization="unsupported")
+
+
+@pytest.mark.parametrize("discretization", ("primal_mortar", "pointwise_penalty"))
+def test_patch_lateral_force_uses_physical_shell_offset_couple(discretization):
+    model, definition, _settings = _q4_against_two_s3()
+    settings = ContactSolverSettings(
+        pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
+        normal_discretization=discretization,
+        pointwise_integration_subdivisions=1,
+    )
+    manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node in (5, 6, 7, 8):
+        dofs = model.mesh.dof_manager.get_node_dofs(node)
+        displacement[dofs[0]] = 0.02
+        displacement[dofs[2]] = -1.0e-6
+    _force, _tangent, summary = manager.evaluate(displacement, tangent=False)
+    net_force = np.asarray(summary.integration_force) + summary.target_force
+    net_moment = np.asarray(summary.integration_moment) + summary.target_moment
+    np.testing.assert_allclose(net_force, np.zeros(3), atol=1.0e-10)
+    np.testing.assert_allclose(net_moment[:2], np.zeros(2), atol=1.0e-9)
+
+
 def test_q4_against_two_s3_faces_slides_and_restarts():
     model, definition, settings = _q4_against_two_s3()
     model.add_boundary_condition(BoundaryCondition(

@@ -89,6 +89,38 @@ integration convergence remain to be established separately.
 The full nonmatching slide, separation and recontact handoff and the main
 plan's refinement, independent-review and package gates remain open.
 
+## Separate pointwise penalty verification route
+
+Set `normal_discretization="pointwise_penalty"` in `ContactSolverSettings`
+to select the distinct
+`PLANAR_Q4_S3_PATCH_RESTRICTED_SLIDING_POINTWISE_PENALTY_DEV_V0`
+profile. This route is admitted only for a multi-face restricted planar Q4/S3
+shell pair with the penalty normal law. It integrates the negative physical
+gap point by point on the current common refinement. It has no mortar
+pressure basis or pressure-rank result; those fields are null in its output.
+The primal-pressure mortar remains the default.
+
+`pointwise_integration_subdivisions` controls triangle subdivision and
+`maximum_pointwise_triangles` is a hard resource limit. The result reports
+the number of integration triangles and quadrature-estimated active area.
+The physical gap still uses the separate conservative certificate. The
+translation force includes moving-overlap boundary work and the reduced
+tangent is checked on smooth branches. Projected-boundary transitions must
+be subdivided along the load path.
+
+In one exploratory 6×6 Q4/S3 partial-contact comparison at 0.4 N and
+4 MPa/m, the certified physical lower gap improved from −9.620 µm with
+the default mortar law to −7.355 µm with the pointwise law. Depth-two to
+depth-three quadrature changed accepted-pose energy by 2.02×10⁻⁶ relative
+and normal reaction by 6.63×10⁻⁵ relative. This is a development comparison,
+not pressure-space acceptance or a mesh-convergence result. The patch-wide
+translation force map still leaves a net z moment of about 1.01×10⁻⁶ N·m
+in that case, above the registered normalized wrench target. Local
+tangential force distribution and its tangent remain required before
+engineering acceptance. The physical-offset rotation couple for lateral
+contact forces is included in both patch laws; it resolved the x/y moment
+defect identified in this comparison.
+
 Focused checks are in `tests/test_general_contact_patch_mortar.py`,
 `tests/test_general_contact_pair.py` and
 `tests/test_general_contact_patch_sliding.py`. Run

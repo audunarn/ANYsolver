@@ -175,12 +175,22 @@ class ContactSolverSettings:
     line_integration_relative_tolerance: float | None = None
     maximum_line_subdivisions: int = 8
     maximum_swept_subdivisions: int = 14
+    normal_discretization: str = "primal_mortar"
+    pointwise_integration_subdivisions: int = 2
+    maximum_pointwise_triangles: int = 10_000
 
     def __post_init__(self) -> None:
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
             raise ValueError("maximum_candidate_pairs must be a positive integer")
         if self.pair_motion not in {"guided", "restricted_sliding", "general"}:
             raise ValueError("pair_motion must be guided, restricted_sliding or general")
+        if self.normal_discretization not in {"primal_mortar", "pointwise_penalty"}:
+            raise ValueError("normal_discretization must be primal_mortar or pointwise_penalty")
+        if (type(self.pointwise_integration_subdivisions) is not int
+                or not 0 <= self.pointwise_integration_subdivisions <= 20):
+            raise ValueError("pointwise_integration_subdivisions must be an integer from 0 to 20")
+        if type(self.maximum_pointwise_triangles) is not int or self.maximum_pointwise_triangles < 1:
+            raise ValueError("maximum_pointwise_triangles must be a positive integer")
         if self.sliding_difference_step is not None and (
             not np.isfinite(self.sliding_difference_step)
             or self.sliding_difference_step <= 0.0
@@ -263,6 +273,14 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if settings is not None and settings.normal_discretization == "pointwise_penalty":
+        if (settings.pair_motion != "restricted_sliding" or definition.rigid_bodies
+                or len(definition.surfaces) != 2
+                or not any(len(item.element_ids) > 1 for item in definition.surfaces)
+                or any(item.normal_law != "penalty" for item in definition.interactions)):
+            return ContactValidationReport("invalid", (
+                "pointwise penalty is admitted only for multi-face restricted sliding shell pairs with penalty normal law",
+            ))
     if analysis_control not in {"force", "displacement"}:
         return ContactValidationReport("invalid", ("analysis_control must be force or displacement",))
     if any(surface.beam_radius is not None for surface in definition.surfaces):
