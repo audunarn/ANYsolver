@@ -267,6 +267,12 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("analysis_control must be force or displacement",))
     if any(surface.beam_radius is not None for surface in definition.surfaces):
         if definition.rigid_bodies:
+            if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {
+                "sphere", "cylinder",
+            }:
+                from .beam_radial import validate_beam_radial_contact
+
+                return validate_beam_radial_contact(model, definition, settings)
             from .beam_plane import validate_beam_plane_contact
 
             return validate_beam_plane_contact(model, definition, settings)
@@ -715,9 +721,16 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
         manager = _BeamPairManager(model, definition, settings, initial_displacement)
     elif definition.rigid_bodies:
         if any(surface.beam_radius is not None for surface in definition.surfaces):
-            from .beam_plane import _BeamPlaneManager
+            if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {
+                "sphere", "cylinder",
+            }:
+                from .beam_radial import _BeamRadialManager
 
-            manager = _BeamPlaneManager(model, definition, settings, initial_displacement)
+                manager = _BeamRadialManager(model, definition, settings, initial_displacement)
+            else:
+                from .beam_plane import _BeamPlaneManager
+
+                manager = _BeamPlaneManager(model, definition, settings, initial_displacement)
         elif (len(definition.rigid_bodies) == 1
                 and definition.rigid_bodies[0].kind in {"sphere", "cylinder"}):
             from .sphere import _SphereShellManager
