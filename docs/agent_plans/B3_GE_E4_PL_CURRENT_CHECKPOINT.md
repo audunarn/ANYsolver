@@ -11,6 +11,9 @@ torque/tip-z-force screen at beam:shell-host ratios 8:1, 1:1 and 1:4 has
 exact balance/work but strongly nonmonotone physical responses (Q4 P1
 tip-z displacement `19.21→31.47→4.17 µm`). Both meshes
 change along this path, so it proves neither locking nor convergence.
+The earlier constant-shear patch admits physical shell shear, and the
+drilling-free torque replay matches bounded native responses; neither
+supplies an independently converged loaded torque/shear target.
 The executed 3D CalculiX canary has a different eccentric footprint,
 section, load and support contract and cannot serve as a native line
 torque/shear reference. Classical axial, Q6/finite-pad and native evidence
