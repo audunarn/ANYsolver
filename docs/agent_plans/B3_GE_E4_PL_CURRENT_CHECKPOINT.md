@@ -863,12 +863,14 @@ physical-response oracle. The same 100 Nm reference case now also recovers
 the physical-multiplier support residual and closes global force and moment
 balance about a common origin, with a nonzero shell support share. Independent
 review confirmed the residual sign and retained-coordinate treatment. The
-same no-drilling comparison now passes on S3-V2D as well as Q4: each has
+same no-drilling comparison now passes on S3-V2D as well as Q4 at all three
+tested mesh sizes (`n_s=1,2,4` with 4, 8 and 16 native half-cells): each has
 positive physical shell energy and nonzero tip torque response, and deleting
 all independent shell `rz` coordinates leaves the bounded response unchanged
-within the test tolerance. This establishes only the narrow flat, virgin,
-two-interval comparator. Local traction balance, thickness/refinement
-sensitivity, distorted geometry and full F03 stability remain open.
+within the test tolerance. This establishes only the flat, virgin, fixed-
+thickness comparator with mesh-tied P0 spaces. Local traction balance,
+thinning, physical convergence, distorted geometry and full F03 stability
+remain open.
 The same small KKT route also executes on three Q4/S3 mesh sizes with 4,
 8 and 16 native half-cells and matching 2, 4 and 8 multiplier intervals
 for both P0/P1 candidates. This execution check is not a convergence or

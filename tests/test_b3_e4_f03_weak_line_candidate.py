@@ -287,11 +287,14 @@ def test_reference_line_annihilates_six_common_rigid_modes(topology):
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-def test_torque_reaches_physical_shell_without_drilling_completion(topology):
-    panel = make_shell(1, topology)
+@pytest.mark.parametrize("n_s,n_half_cells", ((1, 4), (2, 8), (4, 16)))
+def test_torque_reaches_physical_shell_without_drilling_completion(
+        topology, n_s, n_half_cells):
+    panel = make_shell(n_s, topology)
     shell = FlatE4TrialPanel(panel)
-    beam = build(4)
-    space = LineMultiplierSpace("piecewise_constant", (0., .5, 1.))
+    beam = build(n_half_cells)
+    space = LineMultiplierSpace(
+        "piecewise_constant", tuple(np.linspace(0., 1., 2*n_s+1)))
     kkt = assemble_reference_kkt(shell, beam, space)
     shell_size = 6*panel.node_count
     tip_rx = shell_size+6*beam.n_half_cells+3
