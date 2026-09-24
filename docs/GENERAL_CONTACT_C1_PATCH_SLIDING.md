@@ -148,6 +148,17 @@ This cross-check uses the same structural idealization and one mesh. It does
 not establish structural mesh convergence, pressure-space stability or
 enforcement convergence.
 
+At that fixed 4×4 geometry and 0.4 N load, explicitly increasing the
+penalty stiffness from 4 to 8 to 16 MPa/m improved the independently
+certified lower gap from −7.916 to −7.085 to −6.173 µm. Mean source
+normal displacement changed from −24.964 to −23.805 to −22.730 µm.
+Integrated normal reactions remained ±0.4 N and all three states met the
+unchanged 10 µm gap budget. Penalty storage was nonmonotone:
+3.733, 3.145 and 3.385×10⁻⁷ J. The two added solves and the original pose
+are recorded in `c1-fixed-mesh-enforcement-final.txt` in the evidence
+directory. This is a bounded fixed-mesh enforcement sensitivity, not a
+universal stiffness prescription or evidence of asymptotic convergence.
+
 The full nonmatching slide, separation and recontact handoff and the main
 plan's refinement, independent-review and package gates remain open.
 

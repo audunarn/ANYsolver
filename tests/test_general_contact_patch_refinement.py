@@ -1,5 +1,7 @@
 """Coupled nonmatching Q4/S3 partial-contact resolution controls."""
 
+from dataclasses import replace
+
 import numpy as np
 import pytest
 from numpy.polynomial.legendre import leggauss
@@ -81,13 +83,13 @@ def accepted_patch_pose():
         kinematics="von_karman", num_steps=1, max_iterations=12,
         min_step_fraction=0.1,
     )
-    return model, definition, settings, result
+    return model, load, definition, settings, result
 
 
 def test_refined_q4_patch_on_s3_meets_declared_pointwise_gap_budget(
     accepted_patch_pose,
 ):
-    _model, _definition, _settings, result = accepted_patch_pose
+    _model, _load, _definition, _settings, result = accepted_patch_pose
     assert result.status == "completed", (
         result.failure_reason, result.load_factor, result.info.get("general_contact"),
     )
@@ -175,7 +177,7 @@ def _independent_triangle_overlap_integrals(patch, q, order):
 def test_accepted_q4_s3_pose_contact_integration_has_independent_error_budget(
     accepted_patch_pose,
 ):
-    model, definition, settings, result = accepted_patch_pose
+    model, _load, definition, settings, result = accepted_patch_pose
     assert result.status == "completed"
     manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
     q = manager._reduced_pose(result.displacements)
@@ -237,7 +239,7 @@ def test_accepted_q4_s3_pose_contact_integration_has_independent_error_budget(
 def test_q4_s3_coupled_response_against_independent_contact_equilibrium(
     accepted_patch_pose,
 ):
-    model, definition, settings, result = accepted_patch_pose
+    model, _load, definition, settings, result = accepted_patch_pose
     assert result.status == "completed"
     manager = _RestrictedSlidingPatchFEManager(model, definition, settings)
     patch = manager.patch
@@ -299,3 +301,41 @@ def test_q4_s3_coupled_response_against_independent_contact_equilibrium(
     print(f"independent coupled equilibrium: {iteration + 1} iterations, "
           f"force residual={residual_ratio:.3e}, "
           f"displacement error={displacement_error:.3e}")
+
+
+def test_q4_s3_fixed_mesh_penalty_enforcement_sensitivity(accepted_patch_pose):
+    model, load, definition, settings, baseline = accepted_patch_pose
+    summaries = [(4.0e6, baseline)]
+    for stiffness in (8.0e6, 16.0e6):
+        interaction = replace(definition.interactions[0],
+                              normal_stiffness=stiffness)
+        candidate = replace(definition, interactions=(interaction,))
+        result = solve_static_nonlinear(
+            model, load, contact=candidate, contact_settings=settings,
+            kinematics="von_karman", num_steps=1, max_iterations=12,
+            min_step_fraction=0.1,
+        )
+        assert result.status == "completed", (
+            stiffness, result.failure_reason, result.info.get("general_contact"),
+        )
+        summaries.append((stiffness, result))
+    lower_gaps = []
+    source_ids = tuple(sorted({
+        node for element_id in definition.surfaces[0].element_ids
+        for node in model.mesh.elements[element_id].node_ids
+    }))
+    source_z_dofs = np.asarray([
+        model.mesh.dof_manager.get_node_dofs(node)[2] for node in source_ids
+    ], dtype=np.intp)
+    for stiffness, result in summaries:
+        contact = result.info["general_contact"]
+        assert contact["gap_tolerance_met"]
+        assert contact["integration_force"][2] == pytest.approx(0.4, rel=1e-6)
+        assert contact["target_force"][2] == pytest.approx(-0.4, rel=1e-6)
+        lower_gaps.append(contact["conservative_lower_gap"])
+        mean_source_z = float(np.mean(result.displacements[source_z_dofs]))
+        print(f"stiffness={stiffness:.0f} Pa/m; certified lower gap="
+              f"{contact['conservative_lower_gap'] * 1e6:.6f} um; "
+              f"mean source uz={mean_source_z * 1e6:.6f} um; "
+              f"penalty storage={contact['penalty_energy']:.9g} J")
+    assert lower_gaps[0] < lower_gaps[1] < lower_gaps[2] < 0.0
