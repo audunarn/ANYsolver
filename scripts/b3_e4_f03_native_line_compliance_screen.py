@@ -18,6 +18,7 @@ from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_p0_dual_norm import p0_dual_gram
 from scripts._b3_e4_f03_p1_dual_norm import p1_dual_gram
+from scripts._b3_e4_f03_dual_linear_norm import dual_linear_gram
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_reference_kkt)
@@ -118,8 +119,10 @@ def one_case(topology: str, n_s: int, kind: str, *,
                         moment_to_force[None, :])
     if kind == "piecewise_constant":
         lower, upper = p0_dual_gram(n_intervals, length_m, 4095)
-    else:
+    elif kind == "continuous_linear":
         lower, upper = p1_dual_gram(n_intervals, length_m, 4095)
+    else:
+        lower, upper = dual_linear_gram(n_intervals, length_m, 4095)
     dual_lower = np.kron(lower, np.eye(6))
     dual_upper = np.kron(upper, np.eye(6))
     # E*t converts the compliance/force-dual-norm quotient to a dimensionless
@@ -225,15 +228,19 @@ def main() -> None:
     parser.add_argument("--absolute-primal", action="store_true")
     parser.add_argument("--multiplier-intervals-per-shell", type=int,
                         choices=(1, 2), default=2)
+    parser.add_argument("--include-dual", action="store_true")
     arguments = parser.parse_args()
     fixed = arguments.fixed_primal
     shell_port = "local_translation" if arguments.local_translation else "rail"
+    kinds = (("piecewise_constant", "continuous_linear", "dual_linear")
+             if arguments.include_dual else
+             ("piecewise_constant", "continuous_linear"))
     if fixed:
         rows = [one_case(topology, 4, kind, n_intervals=intervals,
                          shell_port=shell_port,
                          absolute_primal=arguments.absolute_primal)
                 for topology in ("Q4", "S3-V2D")
-                for kind in ("piecewise_constant", "continuous_linear")
+                for kind in kinds
                 for intervals in (2, 4, 8)]
     else:
         rows = [one_case(topology, n_s, kind,
@@ -241,7 +248,7 @@ def main() -> None:
                          shell_port=shell_port,
                          absolute_primal=arguments.absolute_primal)
                 for topology in ("Q4", "S3-V2D")
-                for kind in ("piecewise_constant", "continuous_linear")
+                for kind in kinds
                 for n_s in (1, 2, 4)]
     print(json.dumps({"status": "UNREGISTERED_COMPLIANCE_DIAGNOSTIC",
                       "screen": "fixed_primal" if fixed else "paired_refinement",

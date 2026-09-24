@@ -30,14 +30,15 @@ from scripts._b3_e4_f03_shell_spatial_linear_port import reference_spatial_trace
 
 @dataclass(frozen=True)
 class LineMultiplierSpace:
-    """Piecewise constant or continuous linear six-vector coefficients."""
+    """P0, continuous P1 or local biorthogonal dual-P1 six-vectors."""
 
     kind: str
     knots: tuple[float, ...]
 
     def __post_init__(self) -> None:
         values = np.asarray(self.knots, dtype=float)
-        if (self.kind not in ("piecewise_constant", "continuous_linear") or
+        if (self.kind not in ("piecewise_constant", "continuous_linear",
+                              "dual_linear") or
                 values.ndim != 1 or len(values) < 2 or
                 not np.isfinite(values).all() or
                 values[0] != 0. or values[-1] != 1. or
@@ -60,7 +61,12 @@ class LineMultiplierSpace:
         else:
             fraction = ((station-self.knots[index]) /
                         (self.knots[index+1]-self.knots[index]))
-            out[index:index+2] = (1.-fraction, fraction)
+            if self.kind == "continuous_linear":
+                out[index:index+2] = (1.-fraction, fraction)
+            else:
+                # On one cell, psi_L=2*N_L-N_R and psi_R=2*N_R-N_L.
+                # Assembly is biorthogonal to the continuous P1 nodal hats.
+                out[index:index+2] = (2.-3.*fraction, 3.*fraction-1.)
         return out
 
 

@@ -124,14 +124,18 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--local-translation", action="store_true")
     parser.add_argument("--axial-wave", action="store_true")
+    parser.add_argument("--include-dual", action="store_true")
     arguments = parser.parse_args()
     shell_port = ("local_translation" if arguments.local_translation
                   else "rail")
     load_kind = "axial_wave" if arguments.axial_wave else "torsion"
+    kinds = ("piecewise_constant", "continuous_linear")
+    if arguments.include_dual:
+        kinds += ("dual_linear",)
     rows = [one_case(topology, intervals, kind, shell_port=shell_port,
                      load_kind=load_kind)
             for topology in ("Q4", "S3-V2D")
-            for kind in ("piecewise_constant", "continuous_linear")
+            for kind in kinds
             for intervals in (2, 4, 8)]
     print(json.dumps({"status": "UNREGISTERED_DIAGNOSTIC",
                       "shell_port": shell_port, "load_kind": load_kind,

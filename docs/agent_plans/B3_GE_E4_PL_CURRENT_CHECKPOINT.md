@@ -1,5 +1,49 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — F03 biorthogonal dual-P1 development candidate.**
+From parent `1e18bb053a6a59becf9e1e6f96ea94b30e94f944`, added the local
+dual basis `psi_L=2N_L-N_R`, `psi_R=2N_R-N_L` to the bounded weak-line and
+native-compliance diagnostics. Its Neumann H^-1/2 Gram has analytic cosine
+moments and a floating spectral-tail upper estimate. Four biorthogonality cases, a separate
+Gauss-moment check, four Q4/S3 reference-Jacobian checks, four
+nonzero-multiplier work/derivative checks and two retained absolute-metric
+checks passed by direct invocation (**15 checks**, Python 3.14.2, NumPy
+2.4.6, SciPy 1.17.1). A focused pytest collection attempt produced no
+result after 50 s and was stopped; it is not counted as a pass.
+
+The unregistered paired and fixed-shell screens compare P0, continuous P1
+and dual P1 on both Q4/S3 and rail/local shell ports. At one multiplier
+interval per shell host, dual shell rows have full measured rank in all
+12 paired cases, but the shell-only norm quotient is as low as 0.00943.
+At eight intervals on the fixed four-host shell, dual shell row ranks are
+Q4 rail **42/54**, Q4 local **38/54**, S3 rail **54/54** and S3 local
+**42/54**; the full-rank S3 rail shell-only quotient is only 0.000165.
+This candidate therefore does not repair the fine-interface shell-side
+resolution failure. Loaded axial and torsion screens show different
+responses among the three spaces; for example Q4 rail dual axial tip motion
+changes from -1.697e-6 m at four intervals to -1.243e-6 m at eight, while
+dual torsion tip rotation changes from 1.057e-5 to 9.199e-6 rad. The dual
+torsion pointwise gap falls on this fixture, but no independent physical
+target or convergence claim follows from that observation.
+
+Raw cases (18 each) are retained as
+`B3_GE_E4_PL_F03_DUAL_{PAIRED,FIXED}_{RAIL,LOCAL}_V1.json` and
+`B3_GE_E4_PL_F03_DUAL_{AXIAL,TORSION}_{RAIL,LOCAL}_V1.json` in this
+directory. The commands are `python -B -m
+scripts.b3_e4_f03_native_line_compliance_screen --absolute-primal
+--include-dual` with either `--fixed-primal` or
+`--multiplier-intervals-per-shell 1`, and optionally
+`--local-translation`; and `python -B -m
+scripts.b3_e4_f03_weak_line_resolution_screen --include-dual` with
+optional `--axial-wave` and `--local-translation`. All eight copied JSON
+records were parsed and
+compared semantically with the source outputs. This is Level-A development
+evidence, not the frozen one-use F03 assessment. **No multiplier space is
+selected; F03/G0B remain open and G1 remains barred.** The next integrated
+result is a physically defined, independently checkable line-coupling
+observable and a resolution policy that avoids the demonstrated shell rank
+loss without silently narrowing the registered mesh-ratio domain.
+
 **24 September 2026 — F03 axial channel separated by domain and norm.** An
 independent unit axial-bar calculation shows that alternating P0 load
 compliance divided by the existing H^-1/2 norm falls with refinement even

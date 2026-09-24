@@ -86,6 +86,8 @@ def test_reference_joint_varies_along_rigidly_rotated_shell(topology):
 @pytest.mark.parametrize("topology,kind", (
     ("Q4", "piecewise_constant"),
     ("S3-V2D", "continuous_linear"),
+    ("Q4", "dual_linear"),
+    ("S3-V2D", "dual_linear"),
 ))
 @pytest.mark.parametrize("shell_port", ("rail", "local_translation"))
 def test_segmented_line_directional_work_matches_direct_potential(
