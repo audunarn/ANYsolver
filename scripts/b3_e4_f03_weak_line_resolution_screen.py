@@ -73,6 +73,11 @@ def one_case(topology: str, intervals: int, kind: str, *,
     load = np.zeros(shell_size+beam.context.count)
     if load_kind == "torsion":
         load[tip_rx] = 100.
+    elif load_kind == "shell_force_couple_x":
+        sample = shell.panel.sample_weights(1.)
+        y = np.array([-.23, -.23, .23, .23])
+        load[:shell_size].reshape(-1, 6)[:, 2] += (
+            100.*(y/(y@y))@sample)
     elif load_kind == "transverse_force_z":
         load[tip_uz] = 1000.
     elif load_kind == "axial_wave":
@@ -116,10 +121,18 @@ def one_case(topology: str, intervals: int, kind: str, *,
     beam_root_reaction_mx = float(physical_residual[shell_size+3])
     beam_root_reaction_fz = float(physical_residual[shell_size+2])
     beam_root_reaction_my = float(physical_residual[shell_size+4])
-    applied_torque_x = float(load[tip_rx])
-    applied_force_z = float(load[tip_uz])
-    applied_moment_y = -applied_force_z  # tip at reference x=1 m, z=0
+    shell_load = load[:shell_size].reshape(-1, 6)
+    applied_torque_x = float(load[tip_rx]+np.sum(
+        shell_load[:, 3]+shell_reference_nodes[:, 1]*shell_load[:, 2]
+        -shell_reference_nodes[:, 2]*shell_load[:, 1]))
+    applied_force_z = float(load[tip_uz]+np.sum(shell_load[:, 2]))
+    applied_moment_y = float(-load[tip_uz]+np.sum(
+        shell_load[:, 4]+shell_reference_nodes[:, 2]*shell_load[:, 0]
+        -shell_reference_nodes[:, 0]*shell_load[:, 2]))
     shell_total = full[:shell_size]
+    sample_z = shell.panel.sample_weights(1.)@shell_total.reshape(-1, 6)[:, 2]
+    sample_y = np.array([-.23, -.23, .23, .23])
+    shell_tip_z_slope = float(sample_y@sample_z/(sample_y@sample_y))
     shell_inplane = shell_total.reshape(-1, 6)[:, :2].ravel()
     shell_physical_inplane_energy = float(
         .5*shell_inplane@(shell.panel.stiffness@ shell_inplane))
@@ -170,6 +183,7 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "shell_elements": shell.panel.element_count,
         "native_elements": beam.n_half_cells//2,
         "tip_rx_rad": float(full[tip_rx]),
+        "shell_tip_z_antisymmetric_slope_rad": shell_tip_z_slope,
         "beam_tip_uz_m": float(full[tip_uz]),
         "beam_tip_ux_m": float(beam_nodal[-1, 0]),
         "beam_max_abs_ux_m": float(np.max(np.abs(beam_nodal[:, 0]))),

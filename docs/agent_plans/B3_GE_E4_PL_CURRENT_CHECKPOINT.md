@@ -1,32 +1,33 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current decision, 24 September 2026 (policy 2026-09-24.2):** Carry the
-shell position at the declared center material line, with the existing
-finite-width director frame, as the preferred *development candidate*.
-For non-affine axial motion, the rail-average origin is a different
-physical connection: a quadratic patch places it over 30 µm from the
-center material point, and a self-equilibrated native axial load changes
-beam motion by 54% between ports. Both Q4 and S3-V2D show about a 9–10%
-rail/local tip-z difference on the same fine flat mesh. These results
-identify the choice; they do not qualify it. The independent local-spline
-plate/beam comparator isolated beam-versus-line resolution but did not
-settle as a loaded shell target. Native one-axis paths show underresolved
-shell hosts at 8:1 and underresolved beam traces at 1:8.
+**Current state and decision, 24 September 2026 (policy 2026-09-24.2):**
+Use the shell center material line and finite-width director frame as the
+native *development candidate*. P0 leads the line-space investigation,
+but no multiplier space or connection law is qualified. At fixed Q4 x8/y8
+and 32 native half-cells, P0 line intervals 8→16 change torque rotation
+−17.3% and transverse tip displacement −10.5%; the shell-only trace
+rank changes from 48/48 to 69/96 while the complete beam–shell rows stay
+full rank. The beam can carry interface oscillations that the shell trace
+cannot resolve. Stop further line escalation. Bare native beam stiffness
+is exact at 16/32 half-cells in the registered simple loads; the station
+port has the expected `h²` position and `h` rotation orders. These facts
+point to a connection-resolution question, not bare-beam convergence.
 
-**Remaining uncertainty and next action:** P0 is the leading *development*
-line-space candidate at the local-center pose: on the same fine shell and
-P0/P1/dual line10 comparison, doubling beam half-cells changes P0
-torque/tip-z by −0.18%/−1.11%, versus about −5% for P1 and −7% for
-dual. Bare native beam stiffness is exact at both resolutions; the
-coupled difference is at the station trace/line interface. The port's
-smooth-field error has the expected `h²` position and `h` rotation
-orders. P0 still changes with line resolution and has no qualified
-matched torque/shear target. Check physical patch and mesh-ratio
-stability before selecting any space. Retain rail as a diagnostic and
-keep six-channel, classical axial and Q6/finite-pad evidence distinct.
-Rank, small gaps and a quotient alone cannot select a space. Formal
-F03 authority remains unconsumed, G0B open and G1 barred. Details and
-raw roots are below; no global axial refinement is planned.
+**Remaining uncertainty and next discriminating action:** Establish an
+independent torque/shear target with the same physical geometry, load,
+support and section idealization, and a connection whose work can be
+compared with the native centerline law. The executed CalculiX S4/B31
+probe transfers a physical shell force couple and transverse force, but
+uses a rectangular beam section, nodal collocation and a different shell;
+its beam-rotation monitor is unvalidated. S4/U1 failed in CalculiX and
+B31 rejects the generalized section. Those runs are execution/idealization
+diagnostics, not the matched target. If a matched target and joint
+shell/beam/line refinement agree within the frozen criteria, assess P0
+stability and locking over the required mesh ratios; otherwise revise the
+pose, connection or reference route before selecting a space. Keep the
+classical axial, historical Q6/finite-pad and native six-channel results
+separate. Rank, small gaps or a quotient alone cannot select a space.
+Formal F03 authority is unconsumed, G0B open and G1 barred.
 
 **Historical transverse-partition decision, 24 September 2026:** A systematic
 midpoint split of all three y intervals (six elements) passed 18 focused
@@ -2076,3 +2077,63 @@ torque substantially. Next use one-axis shell/beam/line physical checks
 and a genuinely matched torque/shear reference at the declared center
 material line; no further blind beam doubling is warranted.
 Raw root: `B3_GE_E4_PL_F03_NATIVE_BEAM32_SPACES_V1.jsonl`.
+
+Next aligned line-resolution question: with the better resolved native
+32-half-cell beam and fixed Q4 x8/y8 shell, does the leading P0 space
+approach a stable loaded response when one line interval matches each
+of the 16 shell x hosts? Compare nested P0 intervals 8 and 16 under
+the same torque/tip-z loads, retaining line10 as an intermediate
+descriptive point. If 8→16 remains material, stop line escalation and
+inspect the physical line law and external target; if small, advance
+one-axis ratio/stability checks. This does not select P0 or consume
+formal F03 authority.
+
+The bounded aligned P0 check is complete and takes the first branch of
+that decision. On fixed Q4 x8/y8, native half32, full-left supports and
+local-center pose, P0 intervals 8→10→16 give torque tip `rx`
+`11.679→10.968→9.659 µrad` and transverse tip `z`
+`45.195→43.992→40.443 µm`. The 8→16 changes are −17.296% and
+−10.514%. All four new solves completed with small equilibrium and
+work errors. Raw root:
+`B3_GE_E4_PL_F03_NATIVE_P0_ALIGNED_LINE_V1.jsonl`. Do not refine the
+line further on this fixed physical mesh.
+
+The corresponding rank audit used the same complete native retained
+linearization, the actual local-center trace, and existing coordinate
+scales, with a declared `1e-10` relative row-dependence threshold. At
+P0 m8, whole/shell-only/beam-only ranks are each 48/48. At m16, the
+whole and beam-only ranks are 96/96, while shell-only is 69/96. In the
+transverse Fz/Mx/My subset, whole/beam-only are 48/48 and shell-only
+35/48. This is a finite-grid representability audit, not an inf-sup
+bound or an accuracy criterion; its loss of shell-only rank explains
+why additional line rows can be beam-supported without resolving shell
+work. Raw root: `B3_GE_E4_PL_F03_NATIVE_P0_ALIGNED_RANK_V1.json`.
+The earlier one-axis inventory remains descriptive: Q4 shell x-host
+2→4→8 at native half16/P1 line4 moves local-center tip-z
+`29.29→42.30→44.60 µm`, while fixed x-host8 and beam half4→8→16
+moves torque `14.99→11.97→11.39 µrad`. These are separate axes; their
+apparent endpoint closeness is not a mesh-ratio stability certificate.
+
+The physically defined four-sample +100 Nm shell force couple and
++1000 N transverse force were added only to bounded native and
+CalculiX probes. The native Q4 x4/y2, half4, P0 m4 local-center runs
+give shell-tip transverse slope `8.929 µrad` for the couple and tip-z
+`35.370 µm` for the force, with small global wrench/work residuals.
+The exploratory CalculiX S4/B31 rectangular-section, six-channel
+*nodal-collocation* deck gives shell slope `7.873 µrad` and tip-z
+`20.013 µm` at the same coarse geometric mesh and declared loads.
+These differences are not scored against qualification tolerances:
+S4 versus E4-PL, B31 rectangular versus native generalized section,
+and collocation versus integrated multipliers are material model
+differences. The CalculiX S4/U1 run failed with a shell-thickness
+expansion error; B31 rejected `SECTION=GENERAL`; a moment placed on
+an eliminated beam coordinate produced zero response. Those failed
+runs remain preserved. The B31 rotation monitor still reads zero under
+the nonzero shell force couple, so no external beam-twist comparison is
+claimed. Executed raw roots are under
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-ccx-s4-*-v1/`;
+the native root is
+`B3_GE_E4_PL_F03_NATIVE_SHELL_COUPLE_COMPARATOR_V1.jsonl`.
+Next investigate a reference route with independently recoverable beam
+torsion and calibrated section/shear properties; do not relabel these
+partial matches as the mandatory external comparison.
