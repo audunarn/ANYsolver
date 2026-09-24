@@ -10,7 +10,9 @@ from anysolver import (
     validate_general_contact,
 )
 from anysolver.fe_core import FEModel
-from anysolver.general_contact.sphere import _SphereShellManager
+from anysolver.general_contact.sphere import (
+    _GapCertificateLimitError, _SphereShellManager,
+)
 
 
 def _q4_sphere(*, center_height=5.0, warp=0.0):
@@ -176,6 +178,28 @@ def test_sphere_swept_path_rejects_interior_shell_collapse():
     assert manager.evaluate(end, tangent=False)[2].gap_tolerance_met
     with pytest.raises(ValueError, match="collapses along the trial path"):
         manager.admissible_step_fraction(start, end)
+
+
+def test_sphere_uncertified_trial_path_is_shortened(monkeypatch):
+    model, definition, settings = _q4_sphere()
+    manager = _SphereShellManager(model, definition, settings)
+    start = np.zeros(model.mesh.dof_manager.total_dofs)
+    end = start.copy()
+    for node_id in range(1, 5):
+        end[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = 0.001
+    original_certificate = manager._certify_gap
+
+    def bounded_certificate(first, candidate, tolerance):
+        if np.max(candidate - first) > 0.0005:
+            raise _GapCertificateLimitError("trial geometry budget exhausted")
+        return original_certificate(first, candidate, tolerance)
+
+    monkeypatch.setattr(manager, "_certify_gap", bounded_certificate)
+    fraction = manager.admissible_step_fraction(start, end)
+    assert 0.45 < fraction < 0.5
+    assert manager.swept_trial_cutbacks == 1
+    assert original_certificate(start, fraction * end,
+                                manager.gap_tolerance)[0] >= -manager.gap_tolerance
 
 
 def test_sphere_contact_spot_slides_across_two_q4_faces():

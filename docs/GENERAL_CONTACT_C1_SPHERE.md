@@ -21,7 +21,9 @@ and work map. Pure drill motion generates no contact work.
 The independent gap check recursively bounds the represented bilinear Q4 or
 linear S3 surface using parametric-cell boxes. Swept checks bound the entire
 linear trial path, including interior closest approach to the sphere. A
-finite cell budget produces an explicit resource failure. Initial physical
+finite cell budget produces an explicit resource failure for a state being
+evaluated. During trial-step control, an unresolved path is shortened and
+must be certified before it can be accepted. Initial physical
 penetration is rejected. Current and swept element orientation are also
 checked; a trial whose endpoints are valid but whose shell collapses between
 them fails explicitly. The selected physical shell side remains fixed;
@@ -37,12 +39,24 @@ collapse and a through-crossing trial whose endpoints are both open. Results
 label the independently bounded gap, sampled gap and pressure-weighted gap
 separately, along with candidate-face, pressure-node and gap-cell counts.
 
+`examples/general_contact_sphere_tight_gap.py` is a force-controlled,
+well-resolved large-radius sphere case. It registers a 20 µm gap budget,
+equal to (10^{-3}) of its 20 mm shell thickness. The independently bounded
+gap is reported alongside sampled and weighted gaps. This is a development
+benchmark of dimensional gap control, not a curvature or local-pressure
+qualification case.
+
 A two-face Q4 check translated the shell under the fixed sphere and observed
 the active contact force transfer across the shared face boundary. A smaller
 contact spot produced zero nodal pressure despite physical penetration;
 with a tighter declared gap tolerance, the independent bound marked that
 state unacceptable. This preserves the pressure-space resolution boundary
 instead of treating a small solver residual as contact acceptance.
+An exploratory 5 m-radius, 0.5 N force-controlled case with a 20 µm budget
+reached the adaptive gap-certificate resource limit at the tolerance
+boundary. A separate high-stiffness exploration was stopped after excessive
+runtime. Neither is an accepted numerical result; both motivate tighter
+geometry and pressure-space resolution before admitting small contact spots.
 
 This profile does not admit sphere motion, a free rigid body, augmented
 enforcement, friction, warped Q4, shell finite rotation, impact or automatic

@@ -23,6 +23,10 @@ from .overlap import reference_shell_face
 PROFILE = "Q4_S3_FIXED_SPHERE_PENALTY_MORTAR_STATIC_DEV_V0"
 
 
+class _GapCertificateLimitError(MemoryError):
+    """A trial path could not be certified within its geometry budget."""
+
+
 def _skew(vector: np.ndarray) -> np.ndarray:
     x, y, z = vector
     return np.array(((0.0, -z, y), (z, 0.0, -x), (-y, x, 0.0)))
@@ -404,7 +408,12 @@ class _SphereShellManager:
                 cell = stack.pop()
                 checked += 1
                 if checked > self.settings.maximum_gap_triangles:
-                    raise MemoryError("sphere gap certificate resource limit exceeded")
+                    raise _GapCertificateLimitError(
+                        "sphere gap certificate resource limit exceeded "
+                        f"(sampled={minimum_sampled:.6g} m, "
+                        f"lower={minimum_lower:.6g} m, "
+                        f"tolerance={tolerance:.6g} m)"
+                    )
                 parameter_samples = (*cell, tuple(np.mean(cell, axis=0)))
                 vertices = np.asarray([face.point(point, start) for point in cell])
                 if end is not None:
@@ -558,13 +567,23 @@ class _SphereShellManager:
     def admissible_step_fraction(self, start: np.ndarray, end: np.ndarray) -> float:
         first = np.asarray(start, dtype=float).reshape(-1)
         last = np.asarray(end, dtype=float).reshape(-1)
-        if self._certify_gap(first, last, self.gap_tolerance)[0] >= -self.gap_tolerance:
+        try:
+            full_step_lower = self._certify_gap(first, last, self.gap_tolerance)[0]
+        except _GapCertificateLimitError:
+            full_step_lower = -float("inf")
+        if full_step_lower >= -self.gap_tolerance:
             return 1.0
         lower, upper = 0.0, 1.0
         for _ in range(30):
             middle = 0.5 * (lower + upper)
             candidate = first + middle * (last - first)
-            if self._certify_gap(first, candidate, self.gap_tolerance)[0] >= -self.gap_tolerance:
+            try:
+                candidate_lower = self._certify_gap(
+                    first, candidate, self.gap_tolerance,
+                )[0]
+            except _GapCertificateLimitError:
+                candidate_lower = -float("inf")
+            if candidate_lower >= -self.gap_tolerance:
                 lower = middle
             else:
                 upper = middle
