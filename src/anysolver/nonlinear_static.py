@@ -7263,10 +7263,10 @@ def solve_static_nonlinear(
         if contact_settings is not None and type(contact_settings) is not ContactSolverSettings:
             raise TypeError("contact_settings must be ContactSolverSettings")
         if (len(contact.rigid_bodies) == 1
-                and contact.rigid_bodies[0].kind == "sphere"
+                and contact.rigid_bodies[0].kind in {"sphere", "cylinder"}
                 and (kinematics != "von_karman"
                      or corotational_tangent != "auto")):
-            raise ValueError("sphere contact currently admits von_karman kinematics only")
+            raise ValueError("radial rigid contact currently admits von_karman kinematics only")
         if fracture_config is not None or imperfection is not None:
             raise ValueError("contact with fracture or imperfection is not yet admitted")
         if not contact.rigid_bodies:

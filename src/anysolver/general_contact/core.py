@@ -52,8 +52,8 @@ class RigidContactBody:
 
     def __post_init__(self) -> None:
         point = np.asarray(self.point, dtype=float)
-        if not self.name or self.kind not in {"plane", "sphere"}:
-            raise ValueError("rigid contact body must name a plane or sphere")
+        if not self.name or self.kind not in {"plane", "sphere", "cylinder"}:
+            raise ValueError("rigid contact body must name a plane, sphere or cylinder")
         if point.shape != (3,) or not np.all(np.isfinite(point)):
             raise ValueError("rigid contact point must contain three finite values")
         object.__setattr__(self, "point", tuple(float(x) for x in point))
@@ -64,6 +64,21 @@ class RigidContactBody:
             if not np.isfinite(radius) or radius <= 0.0:
                 raise ValueError("rigid sphere radius must be finite and positive")
             object.__setattr__(self, "radius", radius)
+            return
+        if self.kind == "cylinder":
+            if self.normal is None or self.radius is None:
+                raise ValueError("rigid cylinder requires an axis and radius")
+            radius = float(self.radius)
+            if not np.isfinite(radius) or radius <= 0.0:
+                raise ValueError("rigid cylinder radius must be finite and positive")
+            axis = np.asarray(self.normal, dtype=float)
+            if axis.shape != (3,) or not np.all(np.isfinite(axis)):
+                raise ValueError("rigid cylinder axis must contain three finite values")
+            length = float(np.linalg.norm(axis))
+            if length <= 0.0:
+                raise ValueError("rigid cylinder axis must be nonzero")
+            object.__setattr__(self, "radius", radius)
+            object.__setattr__(self, "normal", tuple(float(x) for x in axis / length))
             return
         if self.radius is not None or self.normal is None:
             raise ValueError("rigid plane requires a normal and no sphere radius")
@@ -216,7 +231,7 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
     if not definition.rigid_bodies:
         if settings is not None and settings.pair_motion == "general":
             return ContactValidationReport("invalid", (
-                "general pair_motion currently requires an analytic rigid sphere",
+                "general pair_motion currently requires an analytic rigid sphere or cylinder",
             ))
         if settings is not None and settings.pair_motion == "restricted_sliding":
             if len(definition.surfaces) == 2 and any(
@@ -232,7 +247,7 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
 
         return validate_planar_shell_pair(model, definition)
     if (len(definition.rigid_bodies) == 1
-            and definition.rigid_bodies[0].kind == "sphere"):
+            and definition.rigid_bodies[0].kind in {"sphere", "cylinder"}):
         from .sphere import validate_sphere_shell_contact
 
         return validate_sphere_shell_contact(model, definition, settings)
@@ -561,7 +576,7 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
             raise ValueError("unsupported augmented contact: " + "; ".join(report.issues))
     if definition.rigid_bodies:
         if (len(definition.rigid_bodies) == 1
-                and definition.rigid_bodies[0].kind == "sphere"):
+                and definition.rigid_bodies[0].kind in {"sphere", "cylinder"}):
             from .sphere import _SphereShellManager
 
             manager = _SphereShellManager(model, definition, settings,

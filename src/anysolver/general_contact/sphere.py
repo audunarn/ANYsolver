@@ -1,7 +1,7 @@
-"""Fixed analytic sphere against qualified small-rotation shell skins.
+"""Fixed radial rigid obstacles against qualified small-rotation shell skins.
 
 This is a primal nodal-pressure penalty profile.  It uses the shell's
-physical reference side and differentiates the exact sphere distance at the
+physical reference side and differentiates the exact radial distance at the
 contact quadrature points.  The represented surface is independently bounded
 by adaptive parametric cells before an increment can be accepted.
 """
@@ -21,6 +21,7 @@ from .overlap import reference_shell_face
 
 
 PROFILE = "Q4_S3_FIXED_SPHERE_PENALTY_MORTAR_STATIC_DEV_V0"
+CYLINDER_PROFILE = "Q4_S3_FIXED_INFINITE_CYLINDER_PENALTY_MORTAR_STATIC_DEV_V0"
 
 
 class _GapCertificateLimitError(MemoryError):
@@ -36,18 +37,19 @@ def _sphere_parts(model, definition: ContactDefinition):
     issues: list[str] = []
     if (len(definition.surfaces), len(definition.rigid_bodies),
             len(definition.interactions)) != (1, 1, 1):
-        return ["sphere profile requires one shell surface, one sphere and one interaction"], None
+        return ["radial profile requires one shell surface, one obstacle and one interaction"], None
     surface = definition.surfaces[0]
     body = definition.rigid_bodies[0]
     interaction = definition.interactions[0]
-    if body.kind != "sphere":
-        issues.append("sphere profile requires an analytic sphere")
+    if body.kind not in {"sphere", "cylinder"}:
+        issues.append("radial profile requires an analytic sphere or cylinder")
+    obstacle = body.kind
     if interaction.surface != surface.name or interaction.target != body.name:
-        issues.append("sphere interaction must name its shell surface and rigid sphere")
+        issues.append(f"{obstacle} interaction must name its shell surface and rigid obstacle")
     if interaction.normal_law != "penalty":
-        issues.append("sphere profile currently admits penalty normal law only")
+        issues.append(f"{obstacle} profile currently admits penalty normal law only")
     if surface.side == "midsurface":
-        issues.append("sphere contact requires an explicit top or bottom shell side")
+        issues.append(f"{obstacle} contact requires an explicit top or bottom shell side")
     from anysolver.e4_pl_element import FORMULATION_ID as q4_id
     from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
     from anymaterial.isotropic import IsotropicMaterial
@@ -55,20 +57,22 @@ def _sphere_parts(model, definition: ContactDefinition):
     for element in model.mesh.elements.values():
         material = model.get_material(element.material_name)
         if type(material) is not IsotropicMaterial or material.hardening_curve is not None:
-            issues.append("sphere static profile currently admits elastic isotropic materials only")
+            issues.append(f"{obstacle} static profile currently admits elastic isotropic materials only")
             break
 
     if not issues:
         center = np.asarray(body.point, dtype=float)
+        metric = (np.eye(3) if body.kind == "sphere" else
+                  np.eye(3) - np.outer(body.normal, body.normal))
         for element_id in surface.element_ids:
             element = model.mesh.elements.get(element_id)
             if element is None or getattr(element, "formulation_id", None) not in {q4_id, s3_id}:
-                issues.append(f"sphere surface element {element_id} is not admitted Q4/S3")
+                issues.append(f"{obstacle} surface element {element_id} is not admitted Q4/S3")
                 continue
             try:
                 face = reference_shell_face(model, 1, element_id, surface.side)
             except ValueError as exc:
-                issues.append(f"sphere surface element {element_id}: {exc}")
+                issues.append(f"{obstacle} surface element {element_id}: {exc}")
                 continue
             director = element.physical_reference_director
             if director is None:
@@ -79,8 +83,9 @@ def _sphere_parts(model, definition: ContactDefinition):
             outward = np.asarray(director, dtype=float)
             if surface.side == "bottom":
                 outward = -outward
-            if float((center - np.mean(face.corners, axis=0)) @ outward) <= 0.0:
-                issues.append(f"sphere lies behind selected side of element {element_id}")
+            projected = metric @ (center - np.mean(face.corners, axis=0))
+            if float(projected @ outward) <= 0.0:
+                issues.append(f"{obstacle} lies behind selected side of element {element_id}")
     return issues, (surface, body, interaction) if not issues else None
 
 
@@ -89,19 +94,21 @@ def validate_sphere_shell_contact(model, definition: ContactDefinition,
                                   ) -> ContactValidationReport:
     controls = ContactSolverSettings() if settings is None else settings
     issues, parts = _sphere_parts(model, definition)
+    obstacle = definition.rigid_bodies[0].kind if definition.rigid_bodies else "radial"
     if controls.pair_motion != "general":
-        issues.append("sphere contact requires pair_motion='general'")
+        issues.append(f"{obstacle} contact requires pair_motion='general'")
     if controls.maximum_shell_tilt is None or controls.maximum_shell_tilt > 0.1:
-        issues.append("sphere contact requires explicit maximum_shell_tilt at or below 0.1 rad")
+        issues.append(f"{obstacle} contact requires explicit maximum_shell_tilt at or below 0.1 rad")
     if parts is not None:
         surface, _body, _interaction = parts
         if len(surface.element_ids) > controls.maximum_candidate_pairs:
-            issues.append("sphere contact candidate limit exceeded")
+            issues.append(f"{obstacle} contact candidate limit exceeded")
         node_ids = {int(node) for element_id in surface.element_ids
                     for node in model.mesh.elements[element_id].node_ids}
         if len(node_ids) > controls.maximum_patch_normal_dofs:
-            issues.append("sphere pressure-node resource limit exceeded")
-    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE)
+            issues.append(f"{obstacle} pressure-node resource limit exceeded")
+    profile = CYLINDER_PROFILE if obstacle == "cylinder" else PROFILE
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
 @dataclass(frozen=True)
@@ -208,7 +215,7 @@ def _prepare_face(model, surface, element_id: int) -> _SphereFace:
         shape = np.asarray(shape, dtype=float)
         measure = float(np.linalg.norm(np.cross(dxi @ reference, deta @ reference)))
         if not np.isfinite(measure) or measure <= 0.0:
-            raise ValueError(f"sphere contact face {element_id} has invalid reference measure")
+            raise ValueError(f"radial contact face {element_id} has invalid reference measure")
         quadrature.append(_SphereQuadrature(
             shape, weight * measure,
             shape @ reference + offset * director,
@@ -248,15 +255,20 @@ class _SphereShellManager:
         controls = ContactSolverSettings() if settings is None else settings
         report = validate_sphere_shell_contact(model, definition, controls)
         if not report.valid:
-            raise ValueError("unsupported sphere contact: " + "; ".join(report.issues))
+            raise ValueError("unsupported radial contact: " + "; ".join(report.issues))
         self.model = model
         self.definition = definition
         self.settings = controls
-        self.profile = PROFILE
+        self.profile = report.profile
         surface, body, interaction = _sphere_parts(model, definition)[1]
         self.side = surface.side
+        self.kind = body.kind
         self.center = np.asarray(body.point, dtype=float)
         self.radius = float(body.radius)
+        self.axis = (None if body.kind == "sphere" else
+                     np.asarray(body.normal, dtype=float))
+        self.metric = (np.eye(3) if self.axis is None else
+                       np.eye(3) - np.outer(self.axis, self.axis))
         self.stiffness = interaction.normal_stiffness
         self.gap_tolerance = interaction.gap_tolerance
         self.swept_trial_cutbacks = 0
@@ -270,7 +282,7 @@ class _SphereShellManager:
         initial = (np.zeros(n_dof) if initial_displacement is None
                    else np.asarray(initial_displacement, dtype=float).reshape(-1))
         if initial.shape != (n_dof,) or not np.all(np.isfinite(initial)):
-            raise ValueError("sphere initial displacement is invalid")
+            raise ValueError(f"{self.kind} initial displacement is invalid")
         self._check_tilt(initial)
         self._check_side(initial)
         roundoff = 256.0 * np.finfo(float).eps * max(
@@ -279,9 +291,9 @@ class _SphereShellManager:
         )
         lower, sampled, _checked = self._certify_gap(initial, None, roundoff)
         if sampled < -roundoff:
-            raise ValueError(f"sphere has unresolved initial penetration {sampled:.6g} m")
+            raise ValueError(f"{self.kind} has unresolved initial penetration {sampled:.6g} m")
         if lower < -roundoff:
-            raise ValueError("sphere initial gap could not be certified")
+            raise ValueError(f"{self.kind} initial gap could not be certified")
 
     def restart_contract(self) -> dict[str, object]:
         surface = self.definition.surfaces[0]
@@ -292,7 +304,9 @@ class _SphereShellManager:
             "surface": {"name": surface.name, "element_ids": list(surface.element_ids),
                         "side": surface.side},
             "body": {"name": body.name, "kind": body.kind,
-                     "center": list(body.point), "radius": body.radius},
+                     "center": list(body.point),
+                     **({"axis": list(body.normal)} if body.kind == "cylinder" else {}),
+                     "radius": body.radius},
             "interaction": {"name": interaction.name,
                             "normal_stiffness": interaction.normal_stiffness,
                             "gap_tolerance": interaction.gap_tolerance,
@@ -304,12 +318,15 @@ class _SphereShellManager:
                          "maximum_shell_tilt": self.settings.maximum_shell_tilt},
         }
 
+    def _project(self, points: np.ndarray) -> np.ndarray:
+        return (np.asarray(points, dtype=float) - self.center) @ self.metric
+
     def _check_tilt(self, u: np.ndarray) -> None:
         for face in self.faces:
             rotation = u[face.dofs[:, 3:]]
             tilt = rotation - np.outer(rotation @ face.director, face.director)
             if float(np.max(np.linalg.norm(tilt, axis=1))) > self.settings.maximum_shell_tilt:
-                raise ValueError("sphere shell tilt exceeds the admitted small-rotation limit")
+                raise ValueError(f"{self.kind} shell tilt exceeds the admitted small-rotation limit")
 
     def _check_side(self, u: np.ndarray) -> None:
         sign = 1.0 if self.side == "top" else -1.0
@@ -321,9 +338,9 @@ class _SphereShellManager:
             director = face.director + np.cross(rotation, face.director)
             outward = sign * director
             position = face.point(parameters, u)
-            if float((self.center - position) @ outward) <= 0.0:
+            if float((-self._project(position)) @ outward) <= 0.0:
                 raise ValueError(
-                    f"sphere lies behind selected {self.side} side of face {face.element_id}"
+                    f"{self.kind} lies behind selected {self.side} side of face {face.element_id}"
                 )
 
     def _check_geometry(self, u: np.ndarray) -> None:
@@ -348,7 +365,7 @@ class _SphereShellManager:
                 if (not np.all(np.isfinite(physical_cross))
                         or float(physical_cross @ reference_cross)
                         <= 1.0e-8 * reference_area):
-                    raise ValueError(f"sphere contact face {face.element_id} is inverted or collapsed")
+                    raise ValueError(f"{self.kind} contact face {face.element_id} is inverted or collapsed")
 
     def _check_swept_geometry(self, start: np.ndarray, end: np.ndarray) -> None:
         for face in self.faces:
@@ -388,7 +405,7 @@ class _SphereShellManager:
                                   + linear * vertex + initial)
                 if minimum <= 1.0e-8 * scale:
                     raise ValueError(
-                        f"sphere contact face {face.element_id} collapses along the trial path"
+                        f"{self.kind} contact face {face.element_id} collapses along the trial path"
                     )
 
     def _certify_gap(self, start: np.ndarray, end: np.ndarray | None,
@@ -409,7 +426,7 @@ class _SphereShellManager:
                 checked += 1
                 if checked > self.settings.maximum_gap_triangles:
                     raise _GapCertificateLimitError(
-                        "sphere gap certificate resource limit exceeded "
+                        f"{self.kind} gap certificate resource limit exceeded "
                         f"(sampled={minimum_sampled:.6g} m, "
                         f"lower={minimum_lower:.6g} m, "
                         f"tolerance={tolerance:.6g} m)"
@@ -419,42 +436,46 @@ class _SphereShellManager:
                 if end is not None:
                     vertices = np.vstack((vertices,
                                           [face.point(point, end) for point in cell]))
-                lower_corner = np.min(vertices, axis=0)
-                upper_corner = np.max(vertices, axis=0)
+                radial_vertices = self._project(vertices)
+                lower_corner = np.min(radial_vertices, axis=0)
+                upper_corner = np.max(radial_vertices, axis=0)
                 closest = np.maximum(lower_corner,
-                                     np.minimum(self.center, upper_corner))
-                lower = float(np.linalg.norm(closest - self.center) - self.radius)
-                start_samples = np.asarray([face.point(point, start)
-                                            for point in parameter_samples])
+                                     np.minimum(0.0, upper_corner))
+                lower = float(np.linalg.norm(closest) - self.radius)
+                start_samples = self._project(np.asarray([
+                    face.point(point, start) for point in parameter_samples
+                ]))
                 if end is None:
-                    gaps = np.linalg.norm(start_samples - self.center, axis=1) - self.radius
+                    gaps = np.linalg.norm(start_samples, axis=1) - self.radius
                     minimum_sampled = min(minimum_sampled, float(np.min(gaps)))
                 else:
-                    end_samples = np.asarray([face.point(point, end)
-                                              for point in parameter_samples])
+                    end_samples = self._project(np.asarray([
+                        face.point(point, end) for point in parameter_samples
+                    ]))
                     motion = end_samples - start_samples
                     squared = np.einsum("ij,ij->i", motion, motion)
                     parameter = np.zeros(len(parameter_samples))
                     moving = squared > 0.0
                     parameter[moving] = np.clip(
-                        np.einsum("ij,ij->i", self.center - start_samples, motion)[moving]
+                        np.einsum("ij,ij->i", -start_samples, motion)[moving]
                         / squared[moving], 0.0, 1.0,
                     )
                     closest_path = start_samples + parameter[:, None] * motion
-                    gaps = np.linalg.norm(closest_path - self.center, axis=1) - self.radius
+                    gaps = np.linalg.norm(closest_path, axis=1) - self.radius
                     minimum_sampled = min(minimum_sampled, float(np.min(gaps)))
-                    reference_start = vertices[0]
-                    reference_end = vertices[len(cell)]
+                    reference_start = radial_vertices[0]
+                    reference_end = radial_vertices[len(cell)]
                     direction = reference_end - reference_start
                     squared_direction = float(direction @ direction)
                     parameter0 = (0.0 if squared_direction == 0.0 else
-                                  float(np.clip((self.center - reference_start) @ direction
+                                  float(np.clip((-reference_start) @ direction
                                                 / squared_direction, 0.0, 1.0)))
                     path_distance = float(np.linalg.norm(
-                        reference_start + parameter0 * direction - self.center
+                        reference_start + parameter0 * direction
                     ))
                     span = max(float(np.linalg.norm(
-                        face.point(point, pose) - face.point(cell[0], pose)
+                        (face.point(point, pose) - face.point(cell[0], pose))
+                        @ self.metric
                     )) for point in cell for pose in (start, end))
                     lower = max(lower, path_distance - span - self.radius)
                 if minimum_sampled < -tolerance:
@@ -468,7 +489,7 @@ class _SphereShellManager:
     def evaluate(self, displacement: np.ndarray, *, tangent: bool = True):
         u = np.asarray(displacement, dtype=float).reshape(-1)
         if u.shape != (self.n_dof,) or not np.all(np.isfinite(u)):
-            raise ValueError("sphere contact displacement is invalid")
+            raise ValueError(f"{self.kind} contact displacement is invalid")
         self._check_tilt(u)
         self._check_side(u)
         self._check_geometry(u)
@@ -485,10 +506,10 @@ class _SphereShellManager:
             local_u = u[local_dofs]
             for point in face.quadrature:
                 position = point.reference_point + point.jacobian @ local_u
-                relative = position - self.center
+                relative = self._project(position)
                 radius = float(np.linalg.norm(relative))
                 if radius <= 0.0:
-                    raise ValueError("sphere projection reached its undefined center")
+                    raise ValueError(f"{self.kind} projection reached its undefined axis or center")
                 normal = relative / radius
                 gap = radius - self.radius
                 local_gradient = normal @ point.jacobian
@@ -501,7 +522,7 @@ class _SphereShellManager:
                     coefficients.extend(weight * local_gradient)
                 samples.append((face, point, local_dofs, normal, radius))
         if np.any(support <= 0.0):
-            raise ValueError("sphere contact pressure support is nonpositive")
+            raise ValueError(f"{self.kind} contact pressure support is nonpositive")
         roundoff = 256.0 * np.finfo(float).eps * self.radius
         weighted_gap[np.abs(weighted_gap) <= roundoff * support] = 0.0
         normalized_gap = weighted_gap / support
@@ -523,13 +544,12 @@ class _SphereShellManager:
             geometric_rows: list[int] = []
             geometric_cols: list[int] = []
             geometric_values: list[float] = []
-            eye = np.eye(3)
             for face, point, local_dofs, normal, radius in samples:
                 pressure = sum(signed_pressure[self.pressure_index[node]] * value
                                for node, value in zip(face.node_ids, point.shape))
                 if pressure == 0.0:
                     continue
-                projector = (eye - np.outer(normal, normal)) / radius
+                projector = (self.metric - np.outer(normal, normal)) / radius
                 local_hessian = (point.weight * pressure
                                  * point.jacobian.T @ projector @ point.jacobian)
                 geometric_rows.extend(np.repeat(local_dofs, len(local_dofs)))
