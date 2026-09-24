@@ -20,6 +20,7 @@ from scipy import sparse
 
 _Q4_PLANE_PROFILE = "PLANAR_Q4_RIGID_PLANE_PENALTY_MORTAR_V1"
 _S3_PLANE_PROFILE = "PLANAR_Q4_S3_RIGID_PLANE_PENALTY_MORTAR_V0"
+_MOVING_PLANE_PROFILE = "PLANAR_Q4_S3_TRANSLATING_PLANE_PENALTY_MORTAR_FORCE_STATIC_DEV_V0"
 
 if TYPE_CHECKING:
     from anysolver.fe_core import FEModel
@@ -260,10 +261,6 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         from .sphere import validate_sphere_shell_contact
 
         return validate_sphere_shell_contact(model, definition, settings)
-    if any(body.path_translation is not None for body in definition.rigid_bodies):
-        return ContactValidationReport("invalid", (
-            "prescribed rigid-plane motion is not admitted by the guided profile",
-        ))
     if settings is not None and settings.pair_motion != "guided":
         return ContactValidationReport("invalid", ("rigid plane requires guided pair_motion",))
     surface_by_name = {surface.name: surface for surface in definition.surfaces}
@@ -307,7 +304,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
     for interaction in definition.interactions:
         if interaction.surface not in surface_by_name or interaction.target not in rigid_by_name:
             issues.append(f"interaction {interaction.name}: missing surface or rigid body")
-    profile = _S3_PLANE_PROFILE if contains_s3 else _Q4_PLANE_PROFILE
+    moving = (len(definition.rigid_bodies) == 1 and
+              definition.rigid_bodies[0].path_translation is not None)
+    profile = (_MOVING_PLANE_PROFILE if moving else
+               _S3_PLANE_PROFILE if contains_s3 else _Q4_PLANE_PROFILE)
     return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
@@ -332,7 +332,11 @@ class _PlanarQ4PlaneManager:
         self.gap_tolerance = interaction.gap_tolerance
         self.swept_trial_cutbacks = 0
         self.normal = np.asarray(body.normal, dtype=float)
-        self.point = np.asarray(body.point, dtype=float)
+        self.reference_point = np.asarray(body.point, dtype=float)
+        self.path_translation = (np.zeros(3) if body.path_translation is None
+                                 else np.asarray(body.path_translation, dtype=float))
+        self.path_factor = 0.0
+        self.point = self.reference_point.copy()
         node_ids = sorted({int(node_id) for element_id in surface.element_ids
                            for node_id in model.mesh.elements[element_id].node_ids})
         pressure_index = {node_id: index for index, node_id in enumerate(node_ids)}
@@ -447,7 +451,9 @@ class _PlanarQ4PlaneManager:
             ],
             "rigid_bodies": [
                 {"name": item.name, "kind": item.kind, "point": list(item.point),
-                 "normal": list(item.normal)}
+                 "normal": list(item.normal),
+                 **({"path_translation": list(item.path_translation)}
+                    if item.path_translation is not None else {})}
                 for item in self.definition.rigid_bodies
             ],
             "interactions": [
@@ -462,12 +468,26 @@ class _PlanarQ4PlaneManager:
             },
         }
 
+    def point_at(self, factor: float) -> np.ndarray:
+        value = float(factor)
+        if not np.isfinite(value) or value < 0.0:
+            raise ValueError("rigid-plane path factor must be finite and nonnegative")
+        point = self.reference_point + value * self.path_translation
+        if not np.all(np.isfinite(point)):
+            raise ValueError("rigid-plane path position is nonfinite")
+        return point
+
+    def set_path_factor(self, factor: float) -> None:
+        self.point = self.point_at(factor)
+        self.path_factor = float(factor)
+
     def evaluate(self, displacement: np.ndarray, *, tangent: bool = True):
         n_dof = self.model.mesh.dof_manager.total_dofs
         u = np.asarray(displacement, dtype=float).reshape(-1)
         if u.size != n_dof or not np.all(np.isfinite(u)):
             raise ValueError("contact displacement has invalid size or nonfinite values")
-        weighted_gap = self.reference_weighted_gap + np.asarray(
+        plane_shift = -float((self.point - self.reference_point) @ self.normal)
+        weighted_gap = self.reference_weighted_gap + plane_shift * self.support + np.asarray(
             self.gap_gradient @ u, dtype=float
         ).reshape(-1)
         normalized_gap = weighted_gap / self.support
@@ -553,6 +573,43 @@ class _PlanarQ4PlaneManager:
             return 1.0
         self.swept_trial_cutbacks += 1
         return max(0.0, 0.98 * fraction)
+
+    def swept_increment_admissible(self, start: np.ndarray, end: np.ndarray,
+                                   start_factor: float,
+                                   end_factor: float) -> bool:
+        if not np.any(self.path_translation):
+            return True
+        first_point = self.point_at(start_factor)
+        last_point = self.point_at(end_factor)
+        for reference, dofs, _N, skin_offset, gradient in self.patches:
+            first_gap = ((reference + skin_offset - first_point) @ self.normal
+                         + np.asarray(start)[dofs] @ gradient)
+            last_gap = ((reference + skin_offset - last_point) @ self.normal
+                        + np.asarray(end)[dofs] @ gradient)
+            if np.min(first_gap) < -self.gap_tolerance:
+                raise ValueError("committed rigid-plane pose exceeds the gap tolerance")
+            if np.min(last_gap) < -self.gap_tolerance:
+                self.swept_trial_cutbacks += 1
+                return False
+        return True
+
+    def tool_work_increment(self, start: np.ndarray, end: np.ndarray,
+                            start_factor: float, end_factor: float) -> float:
+        if not np.any(self.path_translation):
+            return 0.0
+        previous_factor = self.path_factor
+        try:
+            self.set_path_factor(start_factor)
+            first_force = np.asarray(self.evaluate(start, tangent=False)[2].rigid_force)
+            self.set_path_factor(end_factor)
+            last_force = np.asarray(self.evaluate(end, tangent=False)[2].rigid_force)
+        finally:
+            self.set_path_factor(previous_factor)
+        motion = (float(end_factor) - float(start_factor)) * self.path_translation
+        work = float(0.5 * (first_force + last_force) @ motion)
+        if not np.isfinite(work):
+            raise ValueError("rigid-plane contact work is nonfinite")
+        return work
 
 
 _ACTIVE_CONTACT: ContextVar[object | None] = ContextVar(

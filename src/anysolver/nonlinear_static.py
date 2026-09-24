@@ -7317,6 +7317,8 @@ def solve_static_nonlinear(
         if any(body.path_translation is not None for body in contact.rigid_bodies):
             if str(control).lower() != "force" or load_program is not None:
                 raise ValueError("prescribed rigid-tool translation currently requires force control without a load program")
+            if str(kinematics).lower() != "von_karman":
+                raise ValueError("prescribed rigid-tool translation currently requires von_karman kinematics")
         if fracture_config is not None or imperfection is not None:
             raise ValueError("contact with fracture or imperfection is not yet admitted")
         if not contact.rigid_bodies:
@@ -7415,7 +7417,11 @@ def solve_static_nonlinear(
                         for item in increments
                     ))
                     summary_payload.update(
-                        rigid_tool_position=contact_manager.center.tolist(),
+                        rigid_tool_position=(
+                            contact_manager.center.tolist()
+                            if hasattr(contact_manager, "center") else
+                            contact_manager.point.tolist()
+                        ),
                         rigid_contact_work_trapezoid=tool_work,
                         prescribed_actuator_work_trapezoid=-tool_work,
                     )

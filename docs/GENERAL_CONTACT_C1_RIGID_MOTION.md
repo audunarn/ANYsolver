@@ -1,7 +1,7 @@
-# C1 development profile: prescribed radial rigid-tool translation
+# C1 development profiles: prescribed analytic rigid-tool translation
 
 `RigidContactBody` accepts `path_translation=(dx, dy, dz)` for one analytic
-sphere or infinite cylinder. Components are SI metres at continuation factor
+sphere, infinite cylinder or plane. Components are SI metres at continuation factor
 one: the rigid point is (c(\lambda)=c_0+\lambda\Delta c). The direction
 and speed are constant in factor; no rotation, acceleration or free-body
 inertia is implied. The tool's geometry and its path translation are part of
@@ -10,14 +10,17 @@ existing fixed-obstacle profile.
 
 The admitted solver route is `solve_static_nonlinear` with force control,
 elastic isotropic Q4/S3 V2D shell skins, von Karman kinematics, frictionless
-penalty contact, explicit shell side and `pair_motion="general"`. The
+penalty contact and explicit shell side. Sphere/cylinder use
+`pair_motion="general"`; the planar profile uses `pair_motion="guided"`. The
 structural/contact residual and tangent are evaluated against the tool pose
 at the same load factor. Before a trial increment is assembled, a swept check
 tests the path from the last accepted shell/tool pose to the trial factor.
 The converged increment is checked again using both accepted endpoint poses.
 An unresolved crossing or gap over the declared budget triggers the ordinary
 load-step cutback. Newton candidates are separately bounded with the tool
-held at that factor. Failed trials do not commit tool or material state.
+held at that factor. For the plane, the physical Q4/S3 nodal gap is affine
+in both shell pose and plane point, so its endpoint corner check bounds the
+full linear accepted path. Failed trials do not commit tool or material state.
 
 Results give the tool point, paired force and moment, conservative/sampled
 gap, search and cutback counters, and a signed contact-work estimate. Rigid
@@ -44,12 +47,16 @@ qualify small, highly curved contact spots. Focused tests cover relative
 shell/tool motion, a through-crossing path, a solver cutback before an
 invalid pose, moving sphere and cylinder equilibrium, work sign, restart
 continuation, and incompatible-motion rejection.
+`examples/general_contact_moving_plane.py` drives a plane 10 µm into the
+same supported Q4 scale with a 20 µm gap budget. Local controls cover its
+Q4/S3 physical gap and force map, coupled Q4 and S3 force paths, work sign,
+swept load-step cutback and split/restart.
 Exploratory 8-, 16- and 32-step versions of this same example gave signed
 rigid work of approximately −3.29462, −3.28825 and −3.28507 ×10⁻⁸ J.
 This measured partition dependence motivates a work-integration tolerance
 and path refinement before engineering acceptance.
 
-Prescribed plane motion, displacement-control and arc-length tool motion,
+Displacement-control and arc-length tool motion,
 piecewise or rotational tool paths, free rigid-body dynamics, friction,
 finite cylinder caps and engineering work/penetration qualification remain
 open. The swept certificate covers the linear interpolant of each accepted

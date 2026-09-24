@@ -104,3 +104,7 @@ frictionless penalty profile has no physical history. No-contact checkpoints
 retain their version-1 format. The profile has not passed the programme's
 independent review or registered engineering qualification. It must remain
 labelled **implemented and locally tested**.
+
+A separate [prescribed translating-plane development profile](GENERAL_CONTACT_C1_RIGID_MOTION.md)
+uses force control and binds its linear tool path to restart. It does not
+change the fixed C0 capability or its evidence status.

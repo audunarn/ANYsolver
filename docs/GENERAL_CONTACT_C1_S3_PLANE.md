@@ -16,8 +16,9 @@ vertex-gap check and affine swept trial bound remain in force.
 
 This profile supports `von_karman` force and displacement control and the
 state-free version-2 penalty checkpoint. It does not admit corotational S3
-contact, warped Q4, moving planes, friction or impact. The plane is infinite
-and fixed.
+contact, warped Q4, friction or impact. The plane is infinite and fixed in
+this profile. A separate [prescribed translating-plane profile](GENERAL_CONTACT_C1_RIGID_MOTION.md)
+is available for force control.
 
 Run the [S3 physical-skin example](../examples/general_contact_s3_plane.py).
 Its 0.05 m shell has a 0.01 m reference-surface offset; the mesh lies at
