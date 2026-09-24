@@ -295,13 +295,18 @@ def test_moving_gap_certificate_distinguishes_pass_violation_and_budget():
     )
     assert not violated.tolerance_met
     assert violated.minimum_sampled_gap < -1.0e-6
+    nonaffine_source = PlanarFace((1, 1), np.array((
+        (0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
+        (0.9, 1.0, 0.0), (0.0, 1.0, 0.0),
+    )))
     exhausted = certify_moving_mortar_gap(
-        source, target, normal, zero, zero,
+        nonaffine_source, target, normal, zero, zero,
         np.full(4, -4.0e-7), np.zeros(4),
         gap_tolerance=1.0e-6, maximum_triangles=1,
     )
     assert not exhausted.tolerance_met
     assert exhausted.conservative_lower_gap == float("-inf")
+    assert exhausted.method == "subdivision"
 
 
 def test_moving_gap_certificate_bounds_independent_bilinear_samples():
@@ -330,6 +335,83 @@ def test_moving_gap_certificate_bounds_independent_bilinear_samples():
     assert result.tolerance_met
     assert result.conservative_lower_gap <= dense_minimum + 1.0e-12
     assert result.minimum_sampled_gap >= dense_minimum - 1.0e-12
+
+
+def test_quadratic_gap_certificate_finds_unsampled_edge_minimum_and_is_objective():
+    source = _square((1, 1), 0.0, 0.0)
+    target = PlanarFace((2, 1), np.array((
+        (0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+    )))
+    normal = np.array((0.0, 0.0, 1.0))
+    heights = np.array((0.0, 0.0, -1.0, 0.0))
+    zero = np.zeros(3)
+    result = certify_moving_mortar_gap(
+        source, target, normal, zero, zero, heights, np.zeros(3),
+        gap_tolerance=0.2, maximum_triangles=1,
+    )
+    assert result.method == "quadratic_extrema"
+    assert result.triangles_checked == 0
+    assert result.minimum_sampled_gap == pytest.approx(0.0)
+    assert result.conservative_lower_gap == pytest.approx(-0.25, abs=1.0e-12)
+    assert not result.tolerance_met
+
+    angle = 0.37
+    rotation = np.array((
+        (np.cos(angle), 0.0, np.sin(angle)),
+        (0.0, 1.0, 0.0),
+        (-np.sin(angle), 0.0, np.cos(angle)),
+    ))
+    shift = np.array((0.3, -0.4, 0.2))
+    transformed = certify_moving_mortar_gap(
+        PlanarFace(source.feature_id, source.corners @ rotation.T + shift),
+        PlanarFace(target.feature_id, target.corners @ rotation.T + shift),
+        rotation @ normal, zero, zero, heights, np.zeros(3),
+        gap_tolerance=0.2, maximum_triangles=1,
+    )
+    assert transformed.method == "quadratic_extrema"
+    assert transformed.conservative_lower_gap == pytest.approx(
+        result.conservative_lower_gap, abs=1.0e-12,
+    )
+
+
+def test_weighted_mortar_gap_does_not_certify_partial_contact_pointwise_gap():
+    source = _square((1, 2), 0.15, 0.1)
+    target = PlanarFace((2, 1), np.array((
+        (0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+    )))
+    source_heights = np.array((
+        3.647970327683101e-5, -3.216029592989825e-5,
+        -6.336029579114779e-5, -3.216029592989776e-5,
+    ))
+    zero = np.zeros(3)
+    state = moving_mortar_state(
+        source, target, np.array((0.0, 0.0, 1.0)), 1.6e7,
+        zero, zero, source_heights, np.zeros(3),
+    )
+    assert np.count_nonzero(state.normalized_gap < 0.0) == 1
+    certificate = certify_moving_mortar_gap(
+        source, target, np.array((0.0, 0.0, 1.0)),
+        zero, zero, source_heights, np.zeros(3),
+        gap_tolerance=1.0e-5, maximum_triangles=1,
+    )
+    assert certificate.method == "quadratic_extrema"
+    assert certificate.conservative_lower_gap == pytest.approx(-1.5e-5, abs=1.0e-9)
+    assert not certificate.tolerance_met
+
+
+def test_quadratic_gap_certificate_includes_planar_geometric_height():
+    source = PlanarFace((1, 1), np.array((
+        (0.0, 0.0, 0.0), (1.0, 0.0, -1.0e-6),
+        (1.0, 1.0, -1.0e-6), (0.0, 1.0, 0.0),
+    )))
+    target = _square((2, 1), 0.0, 0.0)
+    result = certify_moving_mortar_gap(
+        source, target, np.array((0.0, 0.0, 1.0)),
+        np.zeros(3), np.zeros(3), np.zeros(4), np.zeros(4),
+        gap_tolerance=5.0e-7, maximum_triangles=100,
+    )
+    assert result.conservative_lower_gap == pytest.approx(-1.0e-6, abs=1.0e-10)
+    assert not result.tolerance_met
 
 
 def test_swept_gap_bound_detects_clear_to_clear_crossing():

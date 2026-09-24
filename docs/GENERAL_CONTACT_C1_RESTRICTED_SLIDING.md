@@ -31,6 +31,10 @@ route remains the default.
 - A conservative subdivision check certifies the represented physical gap
   against the declared tolerance. A swept convex-overlap check inspects the
   linear trial path, including cases with no overlap at either endpoint.
+  Planar S3 and exact-parallelogram Q4 projections use quadratic interior
+  and edge extrema with a floating-point guard; other admitted Q4 outlines
+  use bounded subdivision. Results identify the method as
+  `gap_check_method` and report its independent lower gap bound.
   For a path with exactly fixed projected overlap, certified endpoint gaps
   also certify the entire path because the pointwise gap is affine in the
   trial parameter.
@@ -49,9 +53,15 @@ development evidence only; engineering acceptance still requires the C1
 patch, sliding, refinement and independent-review gates in the main plan.
 Q4/Q4 coupled pressing, relative lateral motion and restart, plus S3/Q4
 coupled pressing, have completed local checks. A Q4 integration/S3 target
-pressing case stopped at its declared gap criterion; its coupled convergence
-and S3/S3 coupled results remain unverified. Validation reports the structural
-profile, not independent engineering acceptance.
+case stopped at a declared 10 µm gap budget. Exploratory full-load solves
+with a deliberately relaxed 1 mm budget measured pointwise gaps of about
+−19.2, −16.6 and −15.0 µm at normal regularization values of
+1×10⁶, 4×10⁶ and 1.6×10⁷ Pa/m. Only one of its four weighted pressure
+gaps was compressive at 1.6×10⁷ Pa/m;
+the pointwise violation remained. These relaxed solves are diagnostics, not
+passes. Partial-contact pressure-space and mesh refinement are still open,
+as are S3/S3 coupled results. Validation reports the structural profile,
+not independent engineering acceptance.
 
 Run `examples/general_contact_restricted_sliding.py` for a prescribed
 lateral path under constant normal loading. Focused checks are in

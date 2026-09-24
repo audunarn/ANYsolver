@@ -47,6 +47,7 @@ class _SlidingResults:
     conservative_lower_gap: float
     gap_tolerance_met: bool
     gap_triangles_checked: int
+    gap_check_method: str
     penalty_energy: float
     integration_force: tuple[float, float, float]
     target_force: tuple[float, float, float]
@@ -62,6 +63,7 @@ class _SlidingResults:
             "conservative_lower_gap": self.conservative_lower_gap,
             "gap_tolerance_met": self.gap_tolerance_met,
             "gap_triangles_checked": self.gap_triangles_checked,
+            "gap_check_method": self.gap_check_method,
             "penalty_energy": self.penalty_energy,
             "integration_force": list(self.integration_force),
             "target_force": list(self.target_force),
@@ -333,6 +335,7 @@ class _RestrictedSlidingPairFEManager:
             gap_certificate.conservative_lower_gap,
             gap_certificate.tolerance_met,
             gap_certificate.triangles_checked,
+            gap_certificate.method,
             state.energy, body_forces[0], body_forces[1],
             body_moments[0], body_moments[1], asymmetry,
         )

@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from .gap_extrema import quadratic_gap_extremum
 from .overlap import (
     PlanarFace,
     _cross2,
@@ -142,6 +143,7 @@ class MovingGapCertificate:
     conservative_lower_gap: float
     tolerance_met: bool
     triangles_checked: int
+    method: str = "subdivision"
 
 
 @dataclass(frozen=True)
@@ -433,9 +435,7 @@ def certify_moving_mortar_gap(
     heights_a, heights_b = heights
     overlap = planar_projected_overlap(moved_a, moved_b)
     if overlap is None:
-        return MovingGapCertificate(float("inf"), float("inf"), True, 0)
-    lipschitz = (_height_lipschitz(moved_a, heights_a, overlap)
-                 + _height_lipschitz(moved_b, heights_b, overlap))
+        return MovingGapCertificate(float("inf"), float("inf"), True, 0, "empty")
 
     def gap(point: np.ndarray) -> float:
         shape_a = overlap.shape_values(moved_a, point)
@@ -445,6 +445,19 @@ def certify_moving_mortar_gap(
         ) + shape_a @ heights_a - shape_b @ heights_b)
 
     polygon = overlap.polygon
+    quadratic = quadratic_gap_extremum(
+        moved_a, moved_b, overlap, direction, heights_a, heights_b,
+    )
+    if quadratic is not None:
+        sampled = min(gap(point) for point in polygon)
+        return MovingGapCertificate(
+            sampled, quadratic.guarded_lower,
+            bool(quadratic.guarded_lower >= -tolerance), 0, "quadratic_extrema",
+        )
+    lipschitz = (
+        _height_lipschitz(moved_a, heights_a + moved_a.corners @ direction, overlap)
+        + _height_lipschitz(moved_b, heights_b + moved_b.corners @ direction, overlap)
+    )
     centre = np.mean(polygon, axis=0)
     pending = [
         (centre, polygon[index], polygon[(index + 1) % len(polygon)])
