@@ -1,5 +1,19 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — native F03 positive-norm attribution.** A bounded
+48-case screen replaced the signed inverse of the indefinite native retained
+primal tangent with its positive spectral absolute **as a diagnostic norm**;
+the physical rows and H^-1/2 multiplier Gram were unchanged. The alternating
+axial minimum still declines under both fixed-primal multiplier refinement
+and paired shell/beam/multiplier refinement for Q4/S3, P0/P1 and both shell
+origins. At fixed Q4 rail, P0 falls `2.963 → 1.406`, P1 `1.970 → 0.764`;
+local translation raises the shell contribution but does not remove the
+trend. See the [result and four raw inventories](B3_GE_E4_PL_F03_ABSOLUTE_METRIC_DIAGNOSTIC_V1.md).
+This distinguishes signed cancellation from the persistent positive-norm
+trend but does not establish a physical inf-sup limit or select a line space.
+Direct mathematical/native checks passed; the local pytest collection attempt
+stalled and was stopped. F03/G0B remain open; G1 barred.
+
 **24 September 2026 — Q6 linear observable bound diagnostic.** Added an
 exact-represented rational propagation of the saved scaled-state certificate
 to tip pose, external work and root multipliers, including the discrepancy

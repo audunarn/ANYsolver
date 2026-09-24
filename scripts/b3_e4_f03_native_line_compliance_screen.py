@@ -23,9 +23,46 @@ from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_reference_kkt)
 
 
+def absolute_primal_action(tangent: np.ndarray,
+                           right: np.ndarray) -> tuple[np.ndarray, float, float]:
+    """Apply the inverse spectral absolute of a bounded symmetric tangent.
+
+    This positive diagnostic norm is not native strain energy or a production
+    operator.
+    """
+    a = np.asarray(tangent, dtype=np.float64)
+    b = np.asarray(right, dtype=np.float64)
+    if (a.ndim != 2 or a.shape[0] != a.shape[1] or
+            not 1 <= len(a) <= 1024 or b.ndim != 2 or
+            b.shape[0] != len(a) or not 1 <= b.shape[1] <= 128 or
+            not np.isfinite(a).all() or not np.isfinite(b).all()):
+        raise ValueError("bounded finite primal action required")
+    norm = np.linalg.norm(a)
+    if norm == 0. or np.linalg.norm(b) == 0.:
+        raise ValueError("zero primal tangent or interface action")
+    skew = float(np.linalg.norm(a-a.T)/norm)
+    if skew > 1e-8:
+        raise ValueError("absolute-primal diagnostic requires symmetric tangent")
+    values, vectors = linalg.eigh((a+a.T)/2, check_finite=True)
+    absolute = np.abs(values)
+    minimum = float(np.min(absolute))
+    maximum = float(np.max(absolute))
+    if minimum <= np.finfo(float).eps*len(a)*maximum:
+        raise ValueError("absolute-primal diagnostic has unresolved null mode")
+    projection = vectors.T@b
+    action = vectors@(projection/absolute[:, None])
+    residual = float(np.linalg.norm(
+        absolute[:, None]*(vectors.T@action)-projection)/
+        np.linalg.norm(b))
+    if residual > 1e-8:
+        raise ArithmeticError("absolute-primal action residual too large")
+    return action, residual, minimum/maximum
+
+
 def one_case(topology: str, n_s: int, kind: str, *,
              n_intervals: int | None = None,
-             shell_port: str = "rail") -> dict:
+             shell_port: str = "rail",
+             absolute_primal: bool = False) -> dict:
     """Return full-retained compliance eigenvalues on a fixed paired grid."""
     if n_intervals is None:
         n_intervals = 2*n_s
@@ -43,10 +80,15 @@ def one_case(topology: str, n_s: int, kind: str, *,
     scaled_tangent = (((qscale[:, None]*tangent)*qscale[None, :])/
                       kkt.energy_scale)
     scaled_rows = rows*qscale[None, :]
-    inverse_action = np.linalg.solve(scaled_tangent, scaled_rows.T)
-    solve_residual = np.linalg.norm(
-        scaled_tangent@inverse_action-scaled_rows.T)/np.linalg.norm(
-            scaled_rows)
+    if absolute_primal:
+        inverse_action, solve_residual, absolute_eigen_ratio = (
+            absolute_primal_action(scaled_tangent, scaled_rows.T))
+    else:
+        inverse_action = np.linalg.solve(scaled_tangent, scaled_rows.T)
+        solve_residual = np.linalg.norm(
+            scaled_tangent@inverse_action-scaled_rows.T)/np.linalg.norm(
+                scaled_rows)
+        absolute_eigen_ratio = None
     compliance = scaled_rows@inverse_action/kkt.energy_scale
     shell_free = int(np.count_nonzero(free < 6*shell.panel.node_count))
     shell_compliance = (scaled_rows[:, :shell_free]@
@@ -105,6 +147,8 @@ def one_case(topology: str, n_s: int, kind: str, *,
         "n_s": n_s,
         "native_half_cells": beam.n_half_cells,
         "kind": kind,
+        "primal_metric": "spectral_absolute" if absolute_primal else "signed",
+        "absolute_minimum_eigen_ratio": absolute_eigen_ratio,
         "shell_port": shell_port,
         "multiplier_intervals": n_intervals,
         "free_primal": n_free,
@@ -133,23 +177,28 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixed-primal", action="store_true")
     parser.add_argument("--local-translation", action="store_true")
+    parser.add_argument("--absolute-primal", action="store_true")
     arguments = parser.parse_args()
     fixed = arguments.fixed_primal
     shell_port = "local_translation" if arguments.local_translation else "rail"
     if fixed:
         rows = [one_case(topology, 4, kind, n_intervals=intervals,
-                         shell_port=shell_port)
+                         shell_port=shell_port,
+                         absolute_primal=arguments.absolute_primal)
                 for topology in ("Q4", "S3-V2D")
                 for kind in ("piecewise_constant", "continuous_linear")
                 for intervals in (2, 4, 8)]
     else:
-        rows = [one_case(topology, n_s, kind, shell_port=shell_port)
+        rows = [one_case(topology, n_s, kind, shell_port=shell_port,
+                         absolute_primal=arguments.absolute_primal)
                 for topology in ("Q4", "S3-V2D")
                 for kind in ("piecewise_constant", "continuous_linear")
                 for n_s in (1, 2, 4)]
     print(json.dumps({"status": "UNREGISTERED_COMPLIANCE_DIAGNOSTIC",
                       "screen": "fixed_primal" if fixed else "paired_refinement",
                       "shell_port": shell_port,
+                      "primal_metric": ("spectral_absolute" if
+                                        arguments.absolute_primal else "signed"),
                       "cases": rows}, indent=2, sort_keys=True))
 
 
