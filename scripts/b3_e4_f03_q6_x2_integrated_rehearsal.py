@@ -58,8 +58,10 @@ def child(output: Path) -> None:
         raise ArithmeticError("X2 certificate diagnostic did not pass")
     started = perf_counter()
     physical = physical_run(6, "x2")
-    validate_case_payload("X2", physical)
     physical_bytes = _write_new(output / "physical.json", physical)
+    # Validate the actual JSON boundary: the producer uses tuples for grids,
+    # while the durable case schema owns JSON list representations.
+    validate_case_payload("X2", json.loads(physical_bytes))
     physical_s = perf_counter() - started
     started = perf_counter()
     spatial = spatial_run(output / "physical.json")
