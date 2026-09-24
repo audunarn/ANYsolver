@@ -1,5 +1,24 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**24 September 2026 — drilling-independent reference torque replay.**
+The existing small KKT torque test was extended, without changing product
+mechanics, to the support-matched 4-by-4 and 8-by-8 shell grids for Q4 and
+S3-V2D and all three P0, continuous-P1 and dual-P1 spaces. Its second
+solve replaces the full E4 shell block with the independently assembled
+physical shell block and removes every independent shell `rz` coordinate;
+the native B3 and the same exact weak-line Jacobian remain. In all
+**12** new support-matched combinations, the `100 N m` tip response and
+all non-drilling shell coordinates match the full E4 solution within
+`rtol=1e-8, atol=1e-12`, the recovered shell support torque about the
+common origin matches within `rtol=1e-8, atol=1e-7 N m`, physical-shell
+quadratic energy is positive, and the coupled moment balance closes.
+The full affected test, including six earlier legacy-support controls,
+passed **18/18**. This rules out numerical drilling completion as the
+source of the observed P0/P1/dual torque separation on these flat virgin
+grids. It does not establish a physically correct torque value, preserve
+transverse shear under finite motion, or replace an independent torque
+reference. **F03/G0B remain open and G1 barred.**
+
 **24 September 2026 — three-level support-matched joint refinement.**
 The bounded flat fixture now has an unregistered common-support screen at
 joint `(n_s,n_y,n_half_cells)=(2,2,8),(4,4,16),(8,8,32)` for Q4 and

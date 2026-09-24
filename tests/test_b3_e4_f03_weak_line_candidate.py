@@ -298,15 +298,26 @@ def test_reference_line_annihilates_six_common_rigid_modes(
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-@pytest.mark.parametrize("n_s,n_half_cells", ((1, 4), (2, 8), (4, 16)))
+@pytest.mark.parametrize("n_s,n_half_cells,n_y,kind,support_policy,intervals", (
+    (1, 4, 2, "piecewise_constant", "legacy_three_left_nodes", 2),
+    (2, 8, 2, "piecewise_constant", "legacy_three_left_nodes", 4),
+    (4, 16, 2, "piecewise_constant", "legacy_three_left_nodes", 8),
+    (4, 16, 4, "piecewise_constant", "both_xy_edges", 4),
+    (4, 16, 4, "continuous_linear", "both_xy_edges", 4),
+    (4, 16, 4, "dual_linear", "both_xy_edges", 4),
+    (8, 32, 8, "piecewise_constant", "both_xy_edges", 8),
+    (8, 32, 8, "continuous_linear", "both_xy_edges", 8),
+    (8, 32, 8, "dual_linear", "both_xy_edges", 8),
+))
 def test_torque_reaches_physical_shell_without_drilling_completion(
-        topology, n_s, n_half_cells):
-    panel = make_shell(n_s, topology)
+        topology, n_s, n_half_cells, n_y, kind, support_policy, intervals):
+    panel = make_shell(n_s, topology, n_y=n_y)
     shell = FlatE4TrialPanel(panel)
     beam = build(n_half_cells)
     space = LineMultiplierSpace(
-        "piecewise_constant", tuple(np.linspace(0., 1., 2*n_s+1)))
-    kkt = assemble_reference_kkt(shell, beam, space)
+        kind, tuple(np.linspace(0., 1., intervals+1)))
+    kkt = assemble_reference_kkt(
+        shell, beam, space, shell_support_policy=support_policy)
     shell_size = 6*panel.node_count
     tip_rx = shell_size+6*beam.n_half_cells+3
     load = np.zeros(shell_size+beam.context.count)
@@ -339,7 +350,7 @@ def test_torque_reaches_physical_shell_without_drilling_completion(
     ])
     scale = np.r_[kkt.coordinate_scale[:len(kkt.free_primal)][keep],
                   kkt.coordinate_scale[len(kkt.free_primal):]]
-    physical_response, _ = solve(physical_system, free, scale)
+    physical_response, physical_multipliers = solve(physical_system, free, scale)
     shell_energy = .5*physical_response[:shell_size]@physical@(
         physical_response[:shell_size])
     assert shell_energy > 1e-6
@@ -366,6 +377,14 @@ def test_torque_reaches_physical_shell_without_drilling_completion(
     beam_force = beam_residual[:, :3].sum(axis=0)
     shell_moment = np.sum(shell_residual[:, 3:]+np.cross(
         shell_positions, shell_residual[:, :3]), axis=0)
+    physical_residual = (physical_primal@physical_response+
+                         kkt.constraint_jacobian.T@physical_multipliers-load)
+    physical_shell_residual = physical_residual[:shell_size].reshape(-1, 6)
+    physical_shell_moment = np.sum(
+        physical_shell_residual[:, 3:]+np.cross(
+            shell_positions, physical_shell_residual[:, :3]), axis=0)
+    np.testing.assert_allclose(physical_shell_moment[0], shell_moment[0],
+                               rtol=1e-8, atol=1e-7)
     beam_moment = np.sum(beam_residual[:, 3:]+np.cross(
         beam_positions, beam_residual[:, :3]), axis=0)
     np.testing.assert_allclose(shell_force+beam_force, 0., atol=1e-7)
