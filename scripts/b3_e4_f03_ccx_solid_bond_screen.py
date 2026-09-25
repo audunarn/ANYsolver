@@ -66,11 +66,20 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           bond_policy: str = "full", contact_policy: str = "none",
           reverse_tip_fz: bool = False, element_family: str = "C3D8",
           tip_mx_gap_audit: bool = False, bar_clearance_um: int = 0,
-          plate_thickness_mm: int = 70, tip_load_map: str = "legacy"
+          plate_thickness_mm: int = 70, tip_load_map: str = "legacy",
+          full_displacement_output: bool = False
           ) -> tuple[str, dict]:
     """Return an exact-coordinate brick deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
         raise ValueError("undeclared solid-bond loading")
+    if type(full_displacement_output) is not bool or (
+            full_displacement_output and not (
+                factor == 4 and shear in ("tip_mx", "tip_fz") and
+                boundary_policy == "left_root" and bond_policy == "full" and
+                contact_policy == "none" and element_family == "C3D20R" and
+                plate_thickness_mm == 35 and
+                tip_load_map == "quadratic_face")):
+        raise ValueError("bounded full-bond displacement output required")
     if type(plate_thickness_mm) is not int or plate_thickness_mm not in (35,70):
         raise ValueError("bounded 35/70 mm plate thickness required")
     plate_top=Fraction(plate_thickness_mm,2)
@@ -436,6 +445,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     lines.extend(("*NODE PRINT,NSET=Probe", "U",
                   f"*NODE PRINT,NSET={support_set}", "RF",
                   "*END STEP"))
+    if full_displacement_output:
+        lines[-1:-1] = ("*NODE FILE,OUTPUT=3D", "U")
     if reverse_tip_fz or tip_mx_gap_audit:
         lines[-1:-1] = ("*NODE PRINT,NSET=UnbondedInterface", "U")
     shared_ids=(sorted(i for i in plate_nodes & bar_nodes if inverse[i][2] == plate_top)
@@ -502,6 +513,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                       "all three translations on plate left edge fixed; bar has no direct supports"
                       if boundary_policy == "left" else
                       "all three translations on plate perimeter follow declared affine shear; bar has no direct supports or loads")}
+    if full_displacement_output:
+        meta["full_displacement_output"] = True
     return "\n".join(lines)+"\n",meta
 
 

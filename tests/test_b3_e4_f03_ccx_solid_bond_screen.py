@@ -13,6 +13,24 @@ SCREEN = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(SCREEN)
 
 
+@pytest.mark.parametrize("load", ("tip_mx", "tip_fz"))
+def test_full_bond_displacement_deck_changes_output_only(load):
+    options = dict(boundary_policy="left_root", bond_policy="full",
+                   element_family="C3D20R", plate_thickness_mm=35,
+                   tip_load_map="quadratic_face")
+    original, original_meta = SCREEN.build(4, load, **options)
+    expanded, expanded_meta = SCREEN.build(
+        4, load, full_displacement_output=True, **options)
+    output_card = "*NODE FILE,OUTPUT=3D\nU\n"
+    assert expanded.count(output_card) == 1
+    assert expanded.replace(output_card, "") == original
+    assert {key:value for key,value in expanded_meta.items()
+            if key != "full_displacement_output"} == original_meta
+    assert expanded_meta["full_displacement_output"] is True
+    with pytest.raises(ValueError, match="bounded full-bond"):
+        SCREEN.build(2, load, full_displacement_output=True, **options)
+
+
 @pytest.mark.parametrize("factor", (1, 2, 4))
 @pytest.mark.parametrize("shear", ("uy_x", "ux_y"))
 def test_shared_interface_and_prescribed_plate_only(factor, shear):
