@@ -92,7 +92,8 @@ def run(output_dir: Path) -> None:
 
 
 def run_matched_full_bond(output_dir: Path, *,
-                          transverse_band: bool = False) -> None:
+                          transverse_band: bool = False,
+                          transverse_intervals: int = 4) -> None:
     """Bounded six-channel reference comparison, not a bond equivalence claim."""
     from scripts.b3_e4_f03_weak_line_resolution_screen import one_case
     from scripts._b3_e4_f03_shell_strip_pose_candidate import (
@@ -106,24 +107,28 @@ def run_matched_full_bond(output_dir: Path, *,
     output_dir.mkdir(parents=True, exist_ok=False)
     shell_port = (TRANSVERSE_BAND_PORT if transverse_band else
                   "physical_strip_005_005")
+    if transverse_intervals not in (4, 8):
+        raise ValueError("bounded transverse resolution must be 4 or 8")
     manifest = {
         "status": "EXPLORATORY_NOT_G0_ACCEPTANCE",
-        "question": ("Does a physical top-surface width-average trace with independent director and no fixed longitudinal averaging improve matched native torque/shear transfer and n4/n8 behavior?" if transverse_band else
+        "question": ("Does shell-y4 to shell-y8 refinement, with fixed x/beam mesh, physical connection width, loads and supports, materially reduce the n4/n8 torque drift of the top-surface transverse-band trace?" if transverse_band and transverse_intervals == 8 else
+                     "Does a physical top-surface width-average trace with independent director and no fixed longitudinal averaging improve matched native torque/shear transfer and n4/n8 behavior?" if transverse_band else
                      "With thickness, offset, section, supports and resultants matched, does the native exact six-channel line transfer torque and shear toward the full-bond solid reference at fixed shell/beam resolution as line rows increase?"),
-        "outcome_rule": ("Advance to finite-chart derivatives and normed stability only if loaded work, torque/shear response, plate/root partition and resolution behavior improve without drilling or shear suppression. Otherwise revise the trace or enforcement law. The full-bond solid differs in bond and tip-load idealization." if transverse_band else
+        "outcome_rule": ("If transverse refinement materially reduces line-resolution drift while preserving physical shear, torque partition and work, develop the trace/finite-chart derivatives before registered stability and mesh-ratio checks. If drift persists, stop row refinement for this pose and revise the physical connection or enforcement contract. Neither result passes G0B." if transverse_band and transverse_intervals == 8 else
+                         "Advance to finite-chart derivatives and normed stability only if loaded work, torque/shear response, plate/root partition and resolution behavior improve without drilling or shear suppression. Otherwise revise the trace or enforcement law. The full-bond solid differs in bond and tip-load idealization." if transverse_band else
                          "If both loads, plate support shares and work improve at finite line resolution, advance the native pose to registered mesh-ratio/stability testing. If line resolution strongly stiffens or undertransfers, revise the torsional pose or interface law before choosing a multiplier. This is not direct accuracy qualification because a finite-width solid volume bond differs from a one-dimensional B3/E4 strip tie and tip face tractions differ from native nodal resultants."),
         "source_head": source,
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "python": platform.python_version(),
         "requested_blas_threads": 1,
-        "geometry": "plate x[-.5,1.5] y[-.5,.5] z=0 thickness .035 m; B3 axis x[0,1] y=0 z=.0675 m; square strip half-length/width .05/.05 m",
+        "geometry": "plate x[-.5,1.5] y[-.5,.5] z=0 thickness .035 m; B3 axis x[0,1] y=0 z=.0675 m; physical connection y half-width .05 m",
         "materials": "E=210 GPa, nu=.3; generalized B3 square A=.01 m2, Iy=Iz=8.333333333333333e-6 m4, square Saint-Venant J; elastic E4 Q4/S3-V2D",
         "supports": "all shell left-edge coordinates and native B3 root fixed; same support location and resultant constraints as solid left/root case",
         "loads": "separate +100 N m native tip Mx and +1000 N native tip Fz; solid reference applies work-conjugate quadratic-face tractions",
         "connection": ("native exact six-channel P0 top-surface transverse band y±.05 m without axial averaging over beam x[0,1], line intervals 4 and 8; solid reference is conforming full-width volume bond" if transverse_band else
                        "native exact six-channel P0 physical_strip_005_005 over beam x[0,1], line intervals 4 and 8; solid reference is conforming full-width volume bond"),
         "shell_port": shell_port,
-        "mesh": "native shell Q4/S3 x8/y4, B3 16 half-cells, fixed while line rows change; solid C3D20R factor 4 has a distinct mesh",
+        "mesh": f"native shell Q4/S3 x8/y{transverse_intervals}, B3 16 half-cells, fixed while line rows change; solid C3D20R factor 4 has a distinct mesh",
         "solid_reference": "f03-ccx-full-bond-quadratic-face-dev-20260925-v1, factor-4 tip_mx/tip_fz, and output-only full-field replay",
         "primal_row_limit": "existing bounded dense reference KKT",
     }
@@ -136,7 +141,7 @@ def run_matched_full_bond(output_dir: Path, *,
                     row = one_case(
                         topology, intervals, "piecewise_constant",
                         shell_port=shell_port, load_kind=load,
-                        n_s=4, n_y=4, native_half_cells=16,
+                        n_s=4, n_y=transverse_intervals, native_half_cells=16,
                         thickness=.035, beam_z_offset=.0675,
                         beam_torsion_constant=square_torsion_constant(),
                         shell_support_policy="full_left_edge")
@@ -219,11 +224,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--matched-full-bond", action="store_true")
     parser.add_argument("--matched-transverse-band", action="store_true")
+    parser.add_argument("--matched-transverse-band-y8", action="store_true")
     parser.add_argument("--matched-mx-split", action="store_true")
     parser.add_argument("--matched-non-mx-split", action="store_true")
     parser.add_argument("output_dir", type=Path)
     args = parser.parse_args()
     if sum((args.matched_full_bond, args.matched_transverse_band,
+            args.matched_transverse_band_y8,
             args.matched_mx_split,
             args.matched_non_mx_split)) > 1:
         parser.error("select one matched diagnostic")
@@ -233,6 +240,9 @@ if __name__ == "__main__":
         run_matched_mx_split(args.output_dir)
     elif args.matched_transverse_band:
         run_matched_full_bond(args.output_dir, transverse_band=True)
+    elif args.matched_transverse_band_y8:
+        run_matched_full_bond(args.output_dir, transverse_band=True,
+                              transverse_intervals=8)
     elif args.matched_full_bond:
         run_matched_full_bond(args.output_dir)
     else:
