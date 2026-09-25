@@ -19,6 +19,9 @@ import time
 import numpy as np
 from threadpoolctl import threadpool_info, threadpool_limits
 
+from anysolver.corotational import corotational_element_response
+from anysolver.elements import create_shell_element
+from anysolver.fe_core import FEModel
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_shell_finite_pose_candidate import reference_nodes
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
@@ -189,6 +192,167 @@ def shell_case(level: int,loading: str) -> dict:
             "applied_wrench_N_Nm":wrench.tolist(),"response":measured}
 
 
+def local_grid(patch_cells: int) -> tuple[np.ndarray,np.ndarray]:
+    if patch_cells not in (2,4,8):
+        raise ValueError("bounded local patch resolution required")
+    xs=np.r_[(-.5,-.25,0.,.25,.5,.75,.85),
+             np.linspace(.9,1.,patch_cells+1),
+             (1.1,1.25,1.5)]
+    ys=np.r_[(-.5,-.25,-.1),
+             np.linspace(-.05,.05,patch_cells+1),
+             (.1,.25,.5)]
+    if (not np.all(np.diff(xs)>0) or not np.all(np.diff(ys)>0) or
+            len(xs)*len(ys)*6>1800):
+        raise AssertionError("local patch grid exceeds declared bound")
+    return xs,ys
+
+
+def raw_e4_tangent(xs: np.ndarray,ys: np.ndarray) -> tuple[np.ndarray,np.ndarray]:
+    """Assemble the same zero-state Q4 E4 operator without uniform-grid ports."""
+    x=np.asarray(xs,dtype=float)
+    y=np.asarray(ys,dtype=float)
+    if (x.ndim!=1 or y.ndim!=1 or len(x)<2 or len(y)<2 or
+            not np.isfinite(x).all() or not np.isfinite(y).all() or
+            not np.all(np.diff(x)>0) or not np.all(np.diff(y)>0) or
+            6*len(x)*len(y)>1800):
+        raise ValueError("bounded ordered E4 grid required")
+    model=FEModel("f03-graded-e4-patch-diagnostic")
+    model.add_material("steel",210e9,.3,density=7850.)
+    positions=np.array([(xi,yi,0.) for yi in y for xi in x])
+    for index,xyz in enumerate(positions,1):
+        model.add_node(index,*xyz)
+    count=6*len(positions)
+    tangent=np.zeros((count,count))
+    physical=np.zeros((count,count))
+    material=model.get_material("steel")
+    for j in range(len(y)-1):
+        for i in range(len(x)-1):
+            a=1+j*len(x)+i
+            nodes=(a,a+1,a+1+len(x),a+len(x))
+            eid=1+j*(len(x)-1)+i
+            element=create_shell_element(
+                eid,list(nodes),"steel",formulation="e4-pl",
+                thickness=.07,reference_normal=(0.,0.,1.))
+            model.add_element(eid,element)
+            origin=element.init_nonlinear_state(3)
+            force,stiffness,candidate=corotational_element_response(
+                model,eid,element,np.zeros(24),True,
+                committed_state=origin,num_layers=3,tangent_mode="consistent")
+            if (force is None or stiffness is None or candidate is None or
+                    np.linalg.norm(force)>1e-7):
+                raise ArithmeticError("graded E4 zero-state operator unavailable")
+            local=np.asarray(element.compute_stiffness_components(
+                model.mesh,material)["physical"])
+            dofs=np.array([6*(node-1)+axis for node in nodes
+                           for axis in range(6)])
+            tangent[np.ix_(dofs,dofs)]+=np.asarray(stiffness)
+            physical[np.ix_(dofs,dofs)]+=local
+    return tangent,physical
+
+
+def graded_patch_force(xs: np.ndarray,ys: np.ndarray,
+                       loading: str) -> tuple[np.ndarray,np.ndarray]:
+    if loading not in LOADS:
+        raise ValueError("undeclared plate-patch load")
+    force=np.zeros(6*len(xs)*len(ys))
+    points,weights=np.polynomial.legendre.leggauss(3)
+    for j in range(len(ys)-1):
+        y0,y1=ys[j:j+2]
+        if y0<PATCH_Y[0]-1e-12 or y1>PATCH_Y[1]+1e-12:
+            continue
+        for i in range(len(xs)-1):
+            x0,x1=xs[i:i+2]
+            if x0<PATCH_X[0]-1e-12 or x1>PATCH_X[1]+1e-12:
+                continue
+            nodes=(j*len(xs)+i,j*len(xs)+i+1,
+                   (j+1)*len(xs)+i+1,(j+1)*len(xs)+i)
+            jac=(x1-x0)*(y1-y0)/4
+            for xi,wi in zip(points,weights):
+                sx=(1+float(xi))/2
+                for eta,wj in zip(points,weights):
+                    sy=(1+float(eta))/2
+                    y=y0+(y1-y0)*sy
+                    shape=((1-sx)*(1-sy),sx*(1-sy),sx*sy,(1-sx)*sy)
+                    for node,value in zip(nodes,shape):
+                        force[6*node+2]+=float(wi*wj*jac*traction(y,loading)*value)
+    locations=np.array([(xi,yi,0.) for yi in ys for xi in xs])
+    nodal=force.reshape(-1,6)
+    wrench=np.r_[nodal[:,:3].sum(axis=0),
+                 (np.cross(locations,nodal[:,:3])+nodal[:,3:]).sum(axis=0)]
+    if np.linalg.norm(wrench-expected_wrench(loading))>1e-8:
+        raise AssertionError("graded E4 patch load has wrong physical wrench")
+    return force,wrench
+
+
+def graded_shell_case(patch_cells: int,loading: str) -> dict:
+    xs,ys=local_grid(patch_cells)
+    tangent,physical=raw_e4_tangent(xs,ys)
+    force,wrench=graded_patch_force(xs,ys,loading)
+    fixed={6*(j*len(xs))+axis for j in range(len(ys)) for axis in range(6)}
+    free=np.array([i for i in range(len(force)) if i not in fixed])
+    measured=response(tangent,force,free,physical=physical)
+    return {"formulation":"Q4","patch_cells_per_side":patch_cells,
+            "x_coordinates_m":xs.tolist(),"y_coordinates_m":ys.tolist(),
+            "nodes":len(xs)*len(ys),"elements":(len(xs)-1)*(len(ys)-1),
+            "applied_wrench_N_Nm":wrench.tolist(),"response":measured}
+
+
+def uniform_operator_parity() -> dict:
+    panel=make_shell(2,"Q4",n_y=2)
+    xs=np.linspace(-.5,1.5,5)
+    ys=np.linspace(-.5,.5,3)
+    raw,_=raw_e4_tangent(xs,ys)
+    existing=FlatE4TrialPanel(panel).evaluate(
+        np.zeros(6*panel.node_count),.95).tangent
+    error=float(np.linalg.norm(raw-existing)/np.linalg.norm(existing))
+    if error>1e-10:
+        raise ArithmeticError("graded E4 operator differs from uniform adapter")
+    return {"uniform_level":2,"relative_tangent_error":error,
+            "nodes":panel.node_count}
+
+
+def run_local(root: Path) -> None:
+    source=subprocess.check_output(("git","rev-parse","HEAD"),text=True).strip()
+    if subprocess.check_output(("git","status","--porcelain"),text=True).strip():
+        raise RuntimeError("local E4 screen requires clean source")
+    root.mkdir(parents=True,exist_ok=False)
+    manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
+              "question":"Does locally resolving both patch directions move E4 plate-only torque work toward the converged C3D20R plate reference?",
+              "decision":"If torque work approaches the solid while shear and operator parity hold, resolve the native shell trace before ranking joints; if it stays distinct, assess shell thickness/local 3D effects and physical footprint domain. Neither outcome selects a connection.",
+              "source_sha":source,"runner_sha256":digest(Path(__file__)),
+              "patch_cells_per_side":[2,4,8],"thickness_m":.07,
+              "load_and_support":"same continuous top-face traction and left-edge clamp as prior plate-only solid/E4 screen",
+              "reused_external_root":"f03-plate-only-solid-e4-patch-dev-20260925-v2",
+              "limits":{"max_dense_rows":1800,"blas_threads":1},
+              "scope":"bounded locally graded E4 physical-shell diagnostic; no full coupled owner, shell-domain qualification or multiplier selection",
+              "python":platform.python_version(),"numpy":np.__version__}
+    with threadpool_limits(limits=1):
+        manifest["effective_threadpools"]=threadpool_info()
+        (root/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+        parity=uniform_operator_parity()
+        (root/"uniform_parity.json").write_text(json.dumps(parity,indent=2)+"\n")
+        records=[]
+        for cells in (2,4,8):
+            for loading in LOADS:
+                try:
+                    result=graded_shell_case(cells,loading)
+                    record={"case":f"graded-{cells}-{loading}",
+                            "status":"EXPLORATORY_COMPLETE","response":result}
+                except Exception as exc:
+                    record={"case":f"graded-{cells}-{loading}",
+                            "status":"EXPLORATORY_FAILURE",
+                            "failure":f"{type(exc).__name__}: {exc}"}
+                    records.append(record)
+                    (root/"results.json").write_text(json.dumps(records,indent=2,
+                                                     allow_nan=False)+"\n")
+                    raise
+                records.append(record)
+                (root/"results.json").write_text(json.dumps(records,indent=2,
+                                                 allow_nan=False)+"\n")
+                print(json.dumps({"case":record["case"],
+                                  "status":record["status"]}),flush=True)
+
+
 def run(root: Path, factors: tuple[int,...], levels: tuple[int,...]) -> None:
     source=subprocess.check_output(("git","rev-parse","HEAD"),text=True).strip()
     if subprocess.check_output(("git","status","--porcelain"),text=True).strip():
@@ -312,5 +476,9 @@ if __name__=="__main__":
     parser.add_argument("--root",type=Path,required=True)
     parser.add_argument("--factor",type=int,choices=(1,2,4),nargs="+",default=(1,2,4))
     parser.add_argument("--shell-level",type=int,choices=(2,4,8),nargs="+",default=(2,4,8))
+    parser.add_argument("--local-shell-patch-resolution",action="store_true")
     args=parser.parse_args()
-    run(args.root,tuple(args.factor),tuple(args.shell_level))
+    if args.local_shell_patch_resolution:
+        run_local(args.root)
+    else:
+        run(args.root,tuple(args.factor),tuple(args.shell_level))

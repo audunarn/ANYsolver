@@ -5,7 +5,8 @@ import pytest
 
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts.b3_e4_f03_plate_patch_work import (
-    build_solid_plate, expected_wrench, shell_patch_force,
+    build_solid_plate, expected_wrench, graded_patch_force, local_grid,
+    shell_patch_force, uniform_operator_parity,
 )
 
 
@@ -44,3 +45,16 @@ def test_plate_patch_rejects_undeclared_inputs():
         build_solid_plate(3,"tip_mx")
     with pytest.raises(ValueError,match="bounded quadratic"):
         build_solid_plate(1,"pressure")
+
+
+def test_local_patch_grid_resolves_both_directions_and_preserves_operator():
+    assert uniform_operator_parity()["relative_tangent_error"]<1e-10
+    for cells in (2,4,8):
+        xs,ys=local_grid(cells)
+        assert len(xs)*len(ys)*6<=1800
+        assert sum(.9-1e-12<=x<1.-1e-12 for x in xs)==cells
+        assert sum(-.05-1e-12<=y<.05-1e-12 for y in ys)==cells
+        for loading in ("tip_mx","tip_fz"):
+            force,wrench=graded_patch_force(xs,ys,loading)
+            assert np.linalg.norm(force)>0
+            assert wrench==pytest.approx(expected_wrench(loading),abs=1e-8)
