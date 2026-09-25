@@ -125,6 +125,55 @@ def test_detached_bar_control_preserves_mesh_loads_and_separate_roots(factor,loa
     assert not SCREEN.recover(meta,displacement)["station_motion"]["1000"]["interface_shared"]
 
 
+@pytest.mark.parametrize("factor", (1, 2))
+@pytest.mark.parametrize("bond", ("detached", "terminal"))
+def test_quadratic_solid_preserves_corner_mesh_and_complete_opening_audit(factor,bond):
+    linear, old=SCREEN.build(factor,"tip_fz",boundary_policy="left_root",
+                            bond_policy=bond,reverse_tip_fz=bond=="terminal")
+    deck,meta=SCREEN.build(factor,"tip_fz",boundary_policy="left_root",
+                            bond_policy=bond,reverse_tip_fz=bond=="terminal",
+                            element_family="C3D20R")
+    assert meta["plate_elements"] == old["plate_elements"]
+    assert meta["bar_elements"] == old["bar_elements"]
+    assert meta["node_count"] > old["node_count"]
+    assert deck.count("*ELEMENT,TYPE=C3D20R") == 2
+    assert "*CONTACT PAIR" not in deck
+    lines=deck.splitlines()
+    coords={}
+    for line in lines[lines.index("*NODE,NSET=AllNodes")+1:]:
+        if line.startswith("*"):
+            break
+        fields=line.split(",")
+        coords[int(fields[0])]=np.array([float(v) for v in fields[1:]])
+    start=lines.index("*ELEMENT,TYPE=C3D20R,ELSET=Plate")
+    cell=tuple(int(v) for v in lines[start+1].split(",")[1:])
+    assert len(cell)==20
+    for midpoint,(a,b) in zip(cell[8:],SCREEN.HEX20_EDGES):
+        assert coords[midpoint] == pytest.approx(
+            (coords[cell[a]]+coords[cell[b]])/2,abs=1e-12)
+    assert any(node>old["node_count"] for node in meta["beam_root_node_ids"])
+    assert any(node>old["node_count"] for node in meta["plate_boundary_node_ids"])
+    applied={int(node):np.array(force) for node,force in
+             meta["applied_nodal_forces_N"].items()}
+    expected=[0.,0.,-1000.,0.,1000.,0.] if bond=="terminal" else [0.,0.,1000.,0.,-1000.,0.]
+    assert SCREEN._wrench(applied,meta["probe_coordinates_m"]) == pytest.approx(
+        expected,abs=1e-10)
+    if bond=="terminal":
+        assert meta["detached_interface_nodes"] > old["detached_interface_nodes"]
+        assert len(meta["unbonded_interface_pairs"]) == meta["detached_interface_nodes"]
+        assert "*NODE PRINT,NSET=UnbondedInterface\nU" in deck
+        assert meta["shared_interface_nodes"] > old["shared_interface_nodes"]
+
+
+def test_quadratic_contact_and_unsupported_scope_are_rejected():
+    with pytest.raises(ValueError,match="quadratic screen"):
+        SCREEN.build(1,"tip_fz",element_family="C3D20R")
+    with pytest.raises(ValueError,match="quadratic screen"):
+        SCREEN.build(1,"tip_fz",boundary_policy="left_root",
+                     bond_policy="terminal",contact_policy="mortar_hard",
+                     element_family="C3D20R")
+
+
 @pytest.mark.parametrize("factor", (1, 2, 4))
 def test_terminal_hard_mortar_faces_exclude_bonded_patch(factor):
     deck, meta = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",

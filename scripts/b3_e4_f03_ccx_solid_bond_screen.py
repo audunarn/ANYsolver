@@ -34,6 +34,9 @@ BAR_X_MM = (0, 250, 500, 750, 1000)
 BAR_Y_MM = (-50, 0, 50)
 BAR_Z_MM = (35, 85, 135)
 STATIONS_MM = (0, 250, 500, 750, 1000)
+HEX20_EDGES = ((0,1),(1,2),(2,3),(3,0),
+               (4,5),(5,6),(6,7),(7,4),
+               (0,4),(1,5),(2,6),(3,7))
 
 
 def digest(path: Path) -> str:
@@ -61,9 +64,9 @@ def _set_lines(indices: set[int] | list[int]) -> list[str]:
 
 def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           bond_policy: str = "full", contact_policy: str = "none",
-          reverse_tip_fz: bool = False
+          reverse_tip_fz: bool = False, element_family: str = "C3D8"
           ) -> tuple[str, dict]:
-    """Return an exact-coordinate C3D8 deck and explicit bond identity."""
+    """Return an exact-coordinate brick deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
         raise ValueError("undeclared solid-bond loading")
     if boundary_policy not in ("perimeter", "left", "left_root") or (
@@ -81,6 +84,12 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                            boundary_policy != "left_root" or
                            contact_policy != "none"):
         raise ValueError("reverse Fz opening audit requires no-contact terminal tip load")
+    if element_family not in ("C3D8", "C3D20R") or (
+            element_family == "C3D20R" and
+            (bond_policy not in ("detached", "terminal") or
+             boundary_policy != "left_root" or
+             shear not in ("tip_mx", "tip_fz") or contact_policy != "none")):
+        raise ValueError("quadratic screen requires no-contact detached/terminal tip load")
     plate_x = (PLATE_X_MM if bond_policy == "full" else
                tuple(sorted(set((*PLATE_X_MM, 900)))))
     bar_x = (BAR_X_MM if bond_policy == "full" else
@@ -134,8 +143,33 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
 
     plate_cells=tuple(cells(px,py,pz,node))
     bar_cells=tuple(cells(bx,by,bz,bar_node))
-    if len(set((*coordinates.values(), *detached.values())))!=next_id-1:
-        raise AssertionError("duplicate solid node identity")
+    inverse={index:key for key,index in
+             ((*coordinates.items(), *detached.items()))}
+    if element_family == "C3D20R":
+        midsides: dict[tuple[int,int],int] = {}
+        def elevate(cells8, domain_nodes):
+            nonlocal next_id
+            raised=[]
+            for cell in cells8:
+                edge_nodes=[]
+                for ia, ib in HEX20_EDGES:
+                    a, b=cell[ia], cell[ib]
+                    edge=tuple(sorted((a,b)))
+                    if edge not in midsides:
+                        inverse[next_id]=tuple((u+v)/2 for u,v in
+                                               zip(inverse[a],inverse[b]))
+                        midsides[edge]=next_id
+                        next_id+=1
+                    edge_nodes.append(midsides[edge])
+                    domain_nodes.add(midsides[edge])
+                raised.append(cell+tuple(edge_nodes))
+            return tuple(raised)
+        plate_cells=elevate(plate_cells,plate_nodes)
+        bar_cells=elevate(bar_cells,bar_nodes)
+    if len(set((*coordinates.values(), *detached.values()))) != len(coordinates) + len(detached):
+        raise AssertionError("duplicate solid corner-node identity")
+    if set(inverse) != set(range(1,next_id)):
+        raise AssertionError("solid node identity changed")
     interface={(x,y,Fraction(35)) for x in bx for y in by
                if bond_policy == "full" or
                (bond_policy == "terminal" and x >= 900)}
@@ -149,6 +183,11 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                     if (x == px[0] if boundary_policy != "perimeter" else
                         x in (px[0],px[-1]) or y in (py[0],py[-1]))}
     beam_root={bar_node((Fraction(0),y,z)) for y in by for z in bz}
+    if element_family == "C3D20R":
+        plate_boundary.update(index for index in plate_nodes
+                              if inverse[index][0] == px[0])
+        beam_root.update(index for index in bar_nodes
+                         if inverse[index][0] == 0)
     boundary=(plate_boundary | beam_root if boundary_policy == "left_root"
               else plate_boundary)
     if boundary & (bar_nodes-plate_nodes) and boundary_policy != "left_root":
@@ -165,11 +204,11 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     surface={(x,y):coordinates[(Fraction(x),Fraction(y),Fraction(35))]
              for x in surface_x for y in (-50,0,50)}
     probe=set().union(*station_nodes.values(),surface.values())
-    lines=["** BOUNDED C3D8 PLATE AND CONFORMING SOLID STIFFENER; DEVELOPMENT ONLY",
+    lines=[("** BOUNDED C3D8 PLATE AND CONFORMING SOLID STIFFENER; DEVELOPMENT ONLY"
+            if element_family == "C3D8" else
+            "** BOUNDED C3D20R PLATE AND SOLID STIFFENER; DEVELOPMENT ONLY"),
            f"** factor={factor}; shear={shear}; gamma={_number(GAMMA)}",
            "*NODE,NSET=AllNodes"]
-    inverse={index:key for key,index in
-             ((*coordinates.items(), *detached.items()))}
     plate_contact=[]
     bar_contact=[]
     if contact_policy == "mortar_hard":
@@ -191,10 +230,10 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     for index in range(1,len(inverse)+1):
         xyz=inverse[index]
         lines.append(f"{index},"+",".join(_number(float(v)/1000) for v in xyz))
-    lines.append("*ELEMENT,TYPE=C3D8,ELSET=Plate")
+    lines.append(f"*ELEMENT,TYPE={element_family},ELSET=Plate")
     for eid,cell in enumerate(plate_cells,1):
         lines.append(f"{eid},"+",".join(map(str,cell)))
-    lines.append("*ELEMENT,TYPE=C3D8,ELSET=Stiffener")
+    lines.append(f"*ELEMENT,TYPE={element_family},ELSET=Stiffener")
     for eid,cell in enumerate(bar_cells,len(plate_cells)+1):
         lines.append(f"{eid},"+",".join(map(str,cell)))
     if contact_policy == "mortar_hard":
@@ -209,8 +248,22 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                       "*SURFACE INTERACTION,NAME=HardUnbonded",
                       "*CONTACT PAIR,INTERACTION=HardUnbonded,TYPE=MORTAR",
                       "BarBottomUnbonded,PlateTopUnbonded"))
-    unbonded_pairs = [(coordinates[key], bar_index)
-                      for key, bar_index in sorted(detached.items())]
+    if element_family == "C3D20R":
+        plate_surface={inverse[i]:i for i in plate_nodes
+                       if inverse[i][2] == 35 and 0 <= inverse[i][0] < 900
+                       and -50 <= inverse[i][1] <= 50}
+        bar_surface={inverse[i]:i for i in bar_nodes
+                     if inverse[i][2] == 35 and 0 <= inverse[i][0] < 900
+                     and -50 <= inverse[i][1] <= 50}
+        if set(plate_surface) != set(bar_surface):
+            raise AssertionError("quadratic unbonded interface is nonmatching")
+        unbonded_pairs=[(plate_surface[key],bar_surface[key])
+                        for key in sorted(plate_surface)]
+        if any(a == b for a,b in unbonded_pairs):
+            raise AssertionError("quadratic unbonded interface was merged")
+    else:
+        unbonded_pairs = [(coordinates[key], bar_index)
+                          for key, bar_index in sorted(detached.items())]
     if reverse_tip_fz:
         lines.append("*NSET,NSET=UnbondedInterface")
         lines.extend(_set_lines([node for pair in unbonded_pairs for node in pair]))
@@ -264,12 +317,16 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                   "*END STEP"))
     if reverse_tip_fz:
         lines[-1:-1] = ("*NODE PRINT,NSET=UnbondedInterface", "U")
+    shared_ids=(sorted(i for i in plate_nodes & bar_nodes if inverse[i][2] == 35)
+                if element_family == "C3D20R" else
+                sorted(coordinates[p] for p in interface))
     meta={"factor":factor,"shear":shear,"gamma":GAMMA,
+          "element_family":element_family,
           "node_count":next_id-1,"plate_elements":len(plate_cells),
-          "bar_elements":len(bar_cells),"shared_interface_nodes":len(interface),
-          "detached_interface_nodes":len(detached),
-          "shared_interface_node_ids":sorted(coordinates[p] for p in interface),
-          "detached_stiffener_node_ids":sorted(detached.values()),
+          "bar_elements":len(bar_cells),"shared_interface_nodes":len(shared_ids),
+          "detached_interface_nodes":len(unbonded_pairs),
+          "shared_interface_node_ids":shared_ids,
+          "detached_stiffener_node_ids":sorted(b for _,b in unbonded_pairs),
           "bond_policy":bond_policy,"bond_interval_m":(
               [0.,1.] if bond_policy=="full" else
               [.9,1.] if bond_policy=="terminal" else None),
@@ -292,7 +349,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           "applied_nodal_forces_N":{str(index):list(force)
                                     for index,force in applied.items()},
           "surface_nodes":{f"{x},{y}":index for (x,y),index in surface.items()},
-          "model":("3D C3D8 plate/bar with shared nodes " +
+          "model":(f"3D {element_family} plate/bar with shared nodes " +
                    ("along the full interface" if bond_policy=="full" else
                     "only on the last 0.1 m terminal interface" if
                     bond_policy=="terminal" else "nowhere (free-bar control)") +
@@ -485,6 +542,8 @@ def main() -> int:
     parser.add_argument("--boundary",choices=("perimeter","left","left_root"),default="perimeter")
     parser.add_argument("--bond",choices=("full","terminal","detached"),default="full")
     parser.add_argument("--contact",choices=("none","mortar_hard"),default="none")
+    parser.add_argument("--element-family",choices=("C3D8","C3D20R"),
+                        default="C3D8")
     parser.add_argument("--reverse-fz-open-audit",action="store_true")
     args=parser.parse_args()
     if args.boundary != "perimeter" and args.suite != "loads":
@@ -497,6 +556,10 @@ def main() -> int:
         parser.error("detached control requires no-contact left/root tip-load suite")
     if args.contact == "mortar_hard" and args.bond != "terminal":
         parser.error("hard mortar contact requires terminal bond")
+    if args.element_family == "C3D20R" and (
+            args.boundary != "left_root" or args.bond not in ("detached","terminal") or
+            args.suite != "loads" or args.contact != "none"):
+        parser.error("quadratic screen requires no-contact detached/terminal tip loads")
     if args.reverse_fz_open_audit and (args.suite!="loads" or
             args.boundary!="left_root" or args.bond!="terminal" or
             args.contact!="none"):
@@ -511,7 +574,11 @@ def main() -> int:
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":("Do the same C3D8 bar meshes resolve free bending and torsion before their terminal-bond responses are used to judge a connection?"
+              "question":("Does replacing bending-stiff C3D8 with quadratic C3D20R on the same free-bar mesh reduce shear/torsion resolution error before advancing a terminal reference?"
+                          if args.element_family=="C3D20R" and args.bond=="detached" else
+                          "Can a C3D20R terminal model retain an open unbonded interface under reverse Fz while reducing the solid section error?"
+                          if args.element_family=="C3D20R" and args.reverse_fz_open_audit else
+                          "Do the same C3D8 bar meshes resolve free bending and torsion before their terminal-bond responses are used to judge a connection?"
                           if args.bond=="detached" else
                           "Does reversed transverse loading leave the whole matching unbonded solid interface open, making the no-contact solution an admissible directional comparator?"
                           if args.reverse_fz_open_audit else
@@ -522,7 +589,11 @@ def main() -> int:
                           "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
                           if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
-              "decision":("If the free bar itself remains mesh-sensitive, do not use current terminal-solid responses to rank connection laws; if it stabilizes, investigate plate and terminal-bond discretization next. Neither outcome selects a native footprint."
+              "decision":("If quadratic free-bar torque/shear approach the declared section values and change little over the bounded levels, advance the open-terminal shear check; otherwise stop this solid reference route. No footprint is selected."
+                          if args.element_family=="C3D20R" and args.bond=="detached" else
+                          "If the quadratic reverse-Fz case has a fully open matching interface and section-resolved response, retain it as a directional shear comparator; otherwise stop. No torque or footprint accuracy is inferred."
+                          if args.element_family=="C3D20R" and args.reverse_fz_open_audit else
+                          "If the free bar itself remains mesh-sensitive, do not use current terminal-solid responses to rank connection laws; if it stabilizes, investigate plate and terminal-bond discretization next. Neither outcome selects a native footprint."
                           if args.bond=="detached" else
                           "If every reference-normal paired-node gap is nonnegative, retain only the reverse-Fz open-interface result as a directional physical comparator, subject to mesh convergence and deformed-surface checks; otherwise reject this no-contact reference for shear. Neither outcome selects a native footprint."
                           if args.reverse_fz_open_audit else
@@ -540,12 +611,17 @@ def main() -> int:
               "boundary_policy":args.boundary,
               "bond_policy":args.bond,
               "contact_policy":args.contact,
+              "element_family":args.element_family,
+              "element_reference":"https://www.dhondt.de/ccx_2.22.pdf, element types: C3D20R preferred for bending; no quadratic contact is used",
               "reverse_fz_open_audit":args.reverse_fz_open_audit,
               "contact_reference":"https://www.dhondt.de/ccx_2.22.pdf, sections on MORTAR contact and hard surface behavior (external-reference diagnostic only)",
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
               "limits_of_claim":["3D solid idealization, not E4 or B3",
                                  f"{len(args.factor)} development mesh levels, not convergence qualification",
                                  f"prescribed plate {args.boundary} and bar root as declared",
+                                 "quadratic screen retains corner-node tip loads to isolate element interpolation; not a consistent quadratic face traction"
+                                 if args.element_family=="C3D20R" else
+                                 "linear-brick tip loads use corner-node face weights",
                                  ("detached control has no physical plate/bar connection"
                                   if args.bond=="detached" else
                                   "terminal mode uses external hard-mortar contact only outside the shared patch"
@@ -560,7 +636,8 @@ def main() -> int:
         folder.mkdir()
         deck,meta=build(factor,shear,boundary_policy=args.boundary,
                         bond_policy=args.bond,contact_policy=args.contact,
-                        reverse_tip_fz=args.reverse_fz_open_audit)
+                        reverse_tip_fz=args.reverse_fz_open_audit,
+                        element_family=args.element_family)
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()
