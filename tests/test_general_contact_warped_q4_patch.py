@@ -108,6 +108,16 @@ def test_two_face_warped_q4_pressure_space_and_global_work():
                                rtol=1e-8, atol=1e-11)
     assert np.all(manager.law.support > 0.0)
     assert np.linalg.matrix_rank(manager.law.gap_gradient[:, 2::6]) == 6
+    reversed_definition = ContactDefinition(
+        surfaces=(ContactSurface("skin", (2, 1)),),
+        rigid_bodies=definition.rigid_bodies,
+        interactions=definition.interactions,
+    )
+    reversed_manager = WarpedQ4PlaneManager(model, reversed_definition, settings)
+    np.testing.assert_allclose(reversed_manager.law.support, manager.law.support,
+                               rtol=0, atol=1e-14)
+    np.testing.assert_allclose(reversed_manager.law.gap_gradient,
+                               manager.law.gap_gradient, rtol=0, atol=1e-14)
     u = np.zeros(manager.n_dof)
     u[manager.dofs[:, 2]] = -0.006
     force, tangent, result = manager.evaluate(u)
