@@ -496,6 +496,27 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
                                  max(yaw_work,1e-300))
         if not -1e-10 <= yaw_physical_share <= 1.+1e-10:
             raise ArithmeticError("invalid yaw work decomposition")
+        # The saved torque-channel ablation identifies Fy/Mx/Mz together as
+        # the load-carrying subspace. Its minimum is more relevant to torque
+        # than the all-channel or Fz/Mx/My minimum, but remains diagnostic.
+        torque_rows=np.array([6*i+axis for i in range(space.count)
+                              for axis in (1,3,5)])
+        torque_bp,torque_br=bp[torque_rows],br[torque_rows]
+        torque_action=torque_bp@torque_bp.T+torque_br@torque_br.T
+        torque_action=(torque_action+torque_action.T)/2
+        torque_low,torque_vectors=linalg.eigh(torque_action,upper3)
+        torque_high=linalg.eigh(torque_action,lower3,eigvals_only=True)
+        if torque_low[0] < -1e-9*max(1.,torque_low[-1]):
+            raise ArithmeticError("negative torque-subspace dual action")
+        torque_mode=torque_vectors[:,0].reshape(space.count,3)
+        torque_shares=np.array([float(torque_mode[:,axis]@upper@
+                                      torque_mode[:,axis]) for axis in range(3)])
+        torque_work=float(torque_vectors[:,0]@torque_action@
+                          torque_vectors[:,0])
+        torque_physical_share=float(np.linalg.norm(
+            torque_vectors[:,0]@torque_bp)**2/max(torque_work,1e-300))
+        if not -1e-10 <= torque_physical_share <= 1.+1e-10:
+            raise ArithmeticError("invalid torque-subspace work decomposition")
         mode3=low_vectors[:,0].reshape(space.count,3)
         shares=[float(mode3[:,axis]@upper@mode3[:,axis])
                 for axis in range(3)]
@@ -523,6 +544,12 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
                 yaw_signs[1:] != yaw_signs[:-1])),
             "yaw_mz_physical_work_share":float(np.clip(
                 yaw_physical_share,0.,1.)),
+            "torque_fy_mx_mz_beta_lower":float(np.sqrt(max(0.,torque_low[0]))),
+            "torque_fy_mx_mz_beta_upper":float(np.sqrt(max(0.,torque_high[0]))),
+            "torque_mode_fy_mx_mz_norm_shares":(
+                torque_shares/torque_shares.sum()).tolist(),
+            "torque_mode_physical_work_share":float(np.clip(
+                torque_physical_share,0.,1.)),
         }
     return {
         "topology": topology, "shell_x_intervals": 2*n_s,
