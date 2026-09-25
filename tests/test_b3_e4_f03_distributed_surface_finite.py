@@ -1,6 +1,16 @@
 """One bounded finite-chart gate for the six-resultant surface candidate."""
 
-from scripts.b3_e4_f03_distributed_surface_finite import finite_chart_screen
+import numpy as np
+
+from scripts._b3_e4_f03_native_fixture import build
+from scripts.b3_e4_f03_distributed_surface_finite import (
+    FiniteSurfaceMomentPatch, finite_chart_screen,
+)
+from scripts.b3_e4_f03_local_footprint_work import (
+    bond_x_segments, distributed_surface_patch_trace,
+)
+from scripts.b3_e4_f03_plate_patch_work import local_grid
+from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
 def test_actual_e4_b3_surface_work_has_consistent_finite_derivatives():
@@ -14,3 +24,25 @@ def test_actual_e4_b3_surface_work_has_consistent_finite_derivatives():
     assert result["finite_common_rigid_gap_error"] < 1e-12
     assert abs(result["common_rigid_virtual_work_j"]) < 1e-9
     assert result["quadrature_points"] == 18
+
+
+def test_reference_integration_splits_native_half_cell_inside_shell_host():
+    assert bond_x_segments(.925, .95, 16) == (
+        (.925, .9375), (.9375, .95))
+    xs, ys = local_grid(4)
+    beam = build(16, z_offset=.0675,
+                 torsion_constant=square_torsion_constant())
+    patch = FiniteSurfaceMomentPatch(xs, ys, beam, thickness=.035)
+    assert len(patch.points) == 180
+    trace, reference = distributed_surface_patch_trace(
+        xs, ys, beam, plate_thickness=.035)
+    assert abs(reference["area_m2"]-.01) < 1e-12
+    first = np.zeros((patch.shell_count, 6))
+    first[:, 2] = 1e-5*patch.reference_nodes[:, 1]
+    beam_first = np.zeros(beam.context.count)
+    direction = (first, beam_first)
+    frames = np.broadcast_to(np.eye(3), (patch.shell_count, 3, 3)).copy()
+    derivative = patch.evaluate(
+        patch.reference_nodes, frames, beam.context.initial.mechanical,
+        direction, direction)[:, 1]
+    assert np.max(np.abs(derivative-trace@np.r_[first.ravel(), beam_first])) < 1e-12

@@ -111,6 +111,19 @@ def structured_q4_point_shape(xs: np.ndarray, ys: np.ndarray,
     return nodes,values
 
 
+def bond_x_segments(lo_x: float, hi_x: float, half_cells: int
+                    ) -> tuple[tuple[float, float], ...]:
+    """Split a shell-host interval at every retained B3 half-cell boundary."""
+    if (not np.isfinite((lo_x, hi_x)).all() or hi_x <= lo_x or
+            type(half_cells) is not int or half_cells <= 0):
+        raise ValueError("valid shell interval and native half-cell count required")
+    cuts = [float(lo_x)]
+    cuts.extend(k/half_cells for k in range(1, half_cells)
+                if lo_x+1e-14 < k/half_cells < hi_x-1e-14)
+    cuts.append(float(hi_x))
+    return tuple(zip(cuts[:-1], cuts[1:]))
+
+
 def distributed_surface_patch_trace(
         xs: np.ndarray, ys: np.ndarray, beam, *,
         plate_thickness: float) -> tuple[np.ndarray, dict]:
@@ -141,47 +154,48 @@ def distributed_surface_patch_trace(
         lo_x,hi_x=max(float(x0),.9),min(float(x1),1.)
         if hi_x<=lo_x:
             continue
-        for y0,y1 in zip(ys[:-1],ys[1:]):
-            lo_y,hi_y=max(float(y0),-.05),min(float(y1),.05)
-            if hi_y<=lo_y:
-                continue
-            jac=(hi_x-lo_x)*(hi_y-lo_y)/4.
-            for xi,wx in zip(roots,gauss_weights):
-                x=(lo_x+hi_x)/2+float(xi)*(hi_x-lo_x)/2
-                element,cell,weight,_=beam._locate(x)
-                port=NativeHalfCellSpatialPort(
-                    beam.context,element,cell,weight)
-                high,low,frame=port.pose_pair(base)
-                center=high+low
-                if (np.linalg.norm(center-(x,0.,beam_axis_z))>1e-11 or
-                        np.linalg.norm(frame-np.eye(3))>1e-11):
-                    raise ArithmeticError("native beam trace reference changed")
-                tangent=port.tangent(base)
-                for eta,wy in zip(roots,gauss_weights):
-                    y=(lo_y+hi_y)/2+float(eta)*(hi_y-lo_y)/2
-                    shell_indices,shape=structured_q4_point_shape(xs,ys,x,y)
-                    surface_offset=np.array((0.,y,-.05))
-                    shell_reference=np.array((x,y,shell_top))
-                    beam_reference=center+frame@surface_offset
-                    max_reference_gap=max(max_reference_gap,float(
-                        np.linalg.norm(shell_reference-beam_reference)))
-                    if max_reference_gap>1e-11:
-                        raise ArithmeticError("solid-like surface reference is open")
-                    dg=np.zeros((3,total))
-                    for node,value in zip(shell_indices,shape):
-                        start=6*int(node)
-                        dg[:,start:start+3]+=value*np.eye(3)
-                        dg[:,start+3:start+6]+=(
-                            -value*shell_top*skew(np.array((0.,0.,1.))))
-                    dg[:,shell_size:]-=(np.column_stack((
-                        np.eye(3),-skew(surface_offset)))@tangent)
-                    arm=np.array((x-.95,y,0.))
-                    quadrature=float(wx*wy*jac)/.01
-                    mean+=quadrature*dg
-                    first_moment+=quadrature*skew(arm)@dg
-                    inertia+=quadrature*((arm@arm)*np.eye(3)-
-                                         np.outer(arm,arm))
-                    area+=float(wx*wy*jac)
+        for sx0,sx1 in bond_x_segments(lo_x,hi_x,beam.n_half_cells):
+            for y0,y1 in zip(ys[:-1],ys[1:]):
+                lo_y,hi_y=max(float(y0),-.05),min(float(y1),.05)
+                if hi_y<=lo_y:
+                    continue
+                jac=(sx1-sx0)*(hi_y-lo_y)/4.
+                for xi,wx in zip(roots,gauss_weights):
+                    x=(sx0+sx1)/2+float(xi)*(sx1-sx0)/2
+                    element,cell,weight,_=beam._locate(x)
+                    port=NativeHalfCellSpatialPort(
+                        beam.context,element,cell,weight)
+                    high,low,frame=port.pose_pair(base)
+                    center=high+low
+                    if (np.linalg.norm(center-(x,0.,beam_axis_z))>1e-11 or
+                            np.linalg.norm(frame-np.eye(3))>1e-11):
+                        raise ArithmeticError("native beam trace reference changed")
+                    tangent=port.tangent(base)
+                    for eta,wy in zip(roots,gauss_weights):
+                        y=(lo_y+hi_y)/2+float(eta)*(hi_y-lo_y)/2
+                        shell_indices,shape=structured_q4_point_shape(xs,ys,x,y)
+                        surface_offset=np.array((0.,y,-.05))
+                        shell_reference=np.array((x,y,shell_top))
+                        beam_reference=center+frame@surface_offset
+                        max_reference_gap=max(max_reference_gap,float(
+                            np.linalg.norm(shell_reference-beam_reference)))
+                        if max_reference_gap>1e-11:
+                            raise ArithmeticError("solid-like surface reference is open")
+                        dg=np.zeros((3,total))
+                        for node,value in zip(shell_indices,shape):
+                            start=6*int(node)
+                            dg[:,start:start+3]+=value*np.eye(3)
+                            dg[:,start+3:start+6]+=(
+                                -value*shell_top*skew(np.array((0.,0.,1.))))
+                        dg[:,shell_size:]-=(np.column_stack((
+                            np.eye(3),-skew(surface_offset)))@tangent)
+                        arm=np.array((x-.95,y,0.))
+                        quadrature=float(wx*wy*jac)/.01
+                        mean+=quadrature*dg
+                        first_moment+=quadrature*skew(arm)@dg
+                        inertia+=quadrature*((arm@arm)*np.eye(3)-
+                                             np.outer(arm,arm))
+                        area+=float(wx*wy*jac)
     if abs(area-.01)>1e-12:
         raise ArithmeticError("distributed bond area changed")
     eigenvalues=np.linalg.eigvalsh(inertia)

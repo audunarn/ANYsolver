@@ -14,7 +14,8 @@ import numpy as np
 from anysolver._ge_beam3_mixed_ad import rotation_exponential
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts.b3_e4_f03_local_footprint_work import (
-    distributed_surface_patch_trace, skew, structured_q4_point_shape,
+    bond_x_segments, distributed_surface_patch_trace, skew,
+    structured_q4_point_shape,
 )
 
 
@@ -48,25 +49,26 @@ class FiniteSurfaceMomentPatch:
             lx, hx = max(float(x0), .9), min(float(x1), 1.)
             if hx <= lx:
                 continue
-            for y0, y1 in zip(self.ys[:-1], self.ys[1:]):
-                ly, hy = max(float(y0), -.05), min(float(y1), .05)
-                if hy <= ly:
-                    continue
-                jac = (hx-lx)*(hy-ly)/4
-                for xi, wx in zip(roots, weights):
-                    x = (lx+hx)/2 + float(xi)*(hx-lx)/2
-                    element, cell, fraction, _ = beam._locate(x)
-                    port = NativeHalfCellSpatialPort(
-                        beam.context, element, cell, fraction)
-                    for eta, wy in zip(roots, weights):
-                        y = (ly+hy)/2 + float(eta)*(hy-ly)/2
-                        nodes, shape = structured_q4_point_shape(
-                            self.xs, self.ys, x, y)
-                        w = float(wx*wy*jac)/.01
-                        self.points.append(_Point(x, y, w, nodes, shape, port))
-                        arm = np.array((x-.95, y, 0.))
-                        inertia += w*((arm@arm)*np.eye(3)-np.outer(arm, arm))
-                        area += float(wx*wy*jac)
+            for sx0, sx1 in bond_x_segments(lx, hx, beam.n_half_cells):
+                for y0, y1 in zip(self.ys[:-1], self.ys[1:]):
+                    ly, hy = max(float(y0), -.05), min(float(y1), .05)
+                    if hy <= ly:
+                        continue
+                    jac = (sx1-sx0)*(hy-ly)/4
+                    for xi, wx in zip(roots, weights):
+                        x = (sx0+sx1)/2 + float(xi)*(sx1-sx0)/2
+                        element, cell, fraction, _ = beam._locate(x)
+                        port = NativeHalfCellSpatialPort(
+                            beam.context, element, cell, fraction)
+                        for eta, wy in zip(roots, weights):
+                            y = (ly+hy)/2 + float(eta)*(hy-ly)/2
+                            nodes, shape = structured_q4_point_shape(
+                                self.xs, self.ys, x, y)
+                            w = float(wx*wy*jac)/.01
+                            self.points.append(_Point(x, y, w, nodes, shape, port))
+                            arm = np.array((x-.95, y, 0.))
+                            inertia += w*((arm@arm)*np.eye(3)-np.outer(arm, arm))
+                            area += float(wx*wy*jac)
         if abs(area-.01) > 1e-12 or len(self.points) == 0:
             raise ValueError("complete bounded 0.1 by 0.1 m patch required")
         self.inertia = inertia
