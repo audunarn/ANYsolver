@@ -180,6 +180,13 @@ class ContactSolverSettings:
     maximum_pointwise_triangles: int = 10_000
     beam_shell_rim_clearance: float | None = None
     beam_shell_difference_step: float | None = None
+    warped_q4_plane: bool = False
+    warped_q4_quadrature_order: int | None = None
+    warped_q4_control_order: int | None = None
+    warped_q4_integration_tolerance: float | None = None
+    warped_q4_gap_accuracy: float | None = None
+    warped_q4_maximum_gap_cells: int | None = None
+    warped_q4_maximum_gap_depth: int | None = None
 
     def __post_init__(self) -> None:
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
@@ -188,6 +195,21 @@ class ContactSolverSettings:
             raise ValueError("pair_motion must be guided, restricted_sliding or general")
         if self.normal_discretization not in {"primal_mortar", "pointwise_penalty"}:
             raise ValueError("normal_discretization must be primal_mortar or pointwise_penalty")
+        if type(self.warped_q4_plane) is not bool:
+            raise ValueError("warped_q4_plane must be a boolean")
+        for name in ("warped_q4_quadrature_order", "warped_q4_control_order",
+                     "warped_q4_maximum_gap_cells"):
+            value = getattr(self, name)
+            if value is not None and (type(value) is not int or value < 1):
+                raise ValueError(f"{name} must be a positive integer")
+        if (self.warped_q4_maximum_gap_depth is not None
+                and (type(self.warped_q4_maximum_gap_depth) is not int
+                     or self.warped_q4_maximum_gap_depth < 0)):
+            raise ValueError("warped_q4_maximum_gap_depth must be a nonnegative integer")
+        for name in ("warped_q4_integration_tolerance", "warped_q4_gap_accuracy"):
+            value = getattr(self, name)
+            if value is not None and (not np.isfinite(value) or value <= 0.0):
+                raise ValueError(f"{name} must be finite and positive")
         if (type(self.pointwise_integration_subdivisions) is not int
                 or not 0 <= self.pointwise_integration_subdivisions <= 20):
             raise ValueError("pointwise_integration_subdivisions must be an integer from 0 to 20")
@@ -295,6 +317,11 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             ))
     if analysis_control not in {"force", "displacement"}:
         return ContactValidationReport("invalid", ("analysis_control must be force or displacement",))
+    if settings is not None and settings.warped_q4_plane:
+        from .warped_q4_static import validate_warped_q4_plane
+
+        return validate_warped_q4_plane(model, definition, settings,
+                                        analysis_control=analysis_control)
     if any(surface.beam_radius is not None for surface in definition.surfaces):
         if definition.rigid_bodies:
             if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {
@@ -741,6 +768,13 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
                    *, allow_augmented: bool = False,
                    analysis_control: str = "force") -> Iterator[object]:
     settings = ContactSolverSettings() if settings is None else settings
+    if settings.warped_q4_plane:
+        report = validate_general_contact(
+            model, definition, settings, analysis_control=analysis_control,
+        )
+        if not report.valid:
+            raise ValueError("unsupported warped Q4 plane contact: "
+                             + "; ".join(report.issues))
     if any(item.normal_law == "augmented" for item in definition.interactions):
         if not allow_augmented:
             raise ValueError("augmented contact requires the contact path analysis owner")
@@ -770,7 +804,12 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
 
                 manager = _BeamPairManager(model, definition, settings, initial_displacement)
     elif definition.rigid_bodies:
-        if any(surface.beam_radius is not None for surface in definition.surfaces):
+        if settings.warped_q4_plane:
+            from .warped_q4_static import WarpedQ4PlaneManager
+
+            manager = WarpedQ4PlaneManager(model, definition, settings,
+                                           initial_displacement)
+        elif any(surface.beam_radius is not None for surface in definition.surfaces):
             if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {
                 "sphere", "cylinder",
             }:

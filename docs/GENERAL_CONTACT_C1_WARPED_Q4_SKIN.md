@@ -1,8 +1,9 @@
 # C1 development ingredient: warped Q4 physical reference skin
 
 `WarpedQ4Skin` is an internal geometry adapter for the qualified
-`varying_frame` Q4. It is **not an admitted contact profile**. Public
-`validate_general_contact` continues to reject warped Q4 contact.
+`varying_frame` Q4. The public solver has a separate, explicitly selected
+single-face rigid-plane development profile; default contact validation still
+rejects warped Q4 contact.
 
 For Q4 shape values (N_i(\xi,\eta)), the adapter retains the original
 bilinear midsurface (r=\sum_i N_i X_i). It obtains the physical director
@@ -83,9 +84,7 @@ dense current-pose oracle, zero-increment reference equivalence, rigid-mode
 check and sampled interior path passed in
 `c1-warped-q4-current-gap-local2.txt` (10 geometry/work tests).
 
-This is still a linearized model using the reference director. It has no
-global static contact owner, transaction/restart route or demonstrated
-compatibility with the qualified Q4's coupled nonlinear displacement and
-rotation equations. The endpoint argument does not apply to finite SO(3)
-director motion. Warped Q4 remains rejected by `validate_general_contact`;
-the local kernel is not an accepted contact capability.
+This is still a linearized model using the reference director. The narrow
+development owner is documented in `GENERAL_CONTACT_C1_WARPED_Q4_STATIC.md`.
+The endpoint argument does not apply to finite SO(3) director motion. Paired
+warped Q4 contact and engineering acceptance remain open.

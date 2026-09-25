@@ -102,11 +102,16 @@ class WarpedQ4PlaneMortar:
                 gradient += measure * shape[:, None, None] * shape[None, :, None] * work
         return support, weighted_gap, gradient
 
-    def evaluate(self, nodal_coordinates: np.ndarray) -> WarpedQ4PlaneState:
+    def evaluate(self, nodal_coordinates: np.ndarray, *,
+                 plane_normal_translation: float = 0.0) -> WarpedQ4PlaneState:
         coordinates = np.asarray(nodal_coordinates, dtype=float)
         if coordinates.shape != (4, 6) or not np.all(np.isfinite(coordinates)):
             raise ValueError("warped Q4 contact needs four finite six-DOF rows")
-        weighted = self.reference_weighted_gap + self.gap_gradient @ coordinates.reshape(24)
+        if not np.isfinite(plane_normal_translation):
+            raise ValueError("plane translation must be finite")
+        weighted = (self.reference_weighted_gap
+                    + self.gap_gradient @ coordinates.reshape(24)
+                    - float(plane_normal_translation) * self.support)
         normalized = weighted / self.support
         closed_gap = np.minimum(normalized, 0.0)
         closed = normalized <= 0.0

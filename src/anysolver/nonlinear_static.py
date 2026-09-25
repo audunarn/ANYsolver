@@ -7370,6 +7370,10 @@ def solve_static_nonlinear(
             raise TypeError("contact must be a ContactDefinition")
         if contact_settings is not None and type(contact_settings) is not ContactSolverSettings:
             raise TypeError("contact_settings must be ContactSolverSettings")
+        if (contact_settings is not None and contact_settings.warped_q4_plane
+                and (str(kinematics).lower() != "von_karman"
+                     or corotational_tangent != "auto")):
+            raise ValueError("warped Q4 plane contact currently requires von_karman small-rotation kinematics")
         if any(surface.beam_radius is not None for surface in contact.surfaces):
             if str(kinematics).lower() != "von_karman":
                 raise ValueError("round classical beam-plane contact currently requires von_karman kinematics")
@@ -7477,6 +7481,17 @@ def solve_static_nonlinear(
                     ),
                     swept_trial_cutbacks=contact_manager.swept_trial_cutbacks,
                 )
+                if hasattr(contact_manager, "last_gap_certificate"):
+                    certificate = contact_manager.last_gap_certificate
+                    summary_payload.update(
+                        independent_gap_sample=certificate.minimum_sampled_gap,
+                        independent_gap_lower_bound=certificate.conservative_lower_gap,
+                        independent_gap_cells=certificate.cells_checked,
+                        independent_gap_accuracy=certificate.accuracy,
+                        contact_integration_relative_error=(
+                            contact_manager.law.integration_relative_error
+                        ),
+                    )
                 if not hasattr(contact_manager, "end_caps"):
                     summary_payload["normal_stiffness"] = contact_manager.stiffness
                 if (hasattr(contact_manager, "path_translation")
