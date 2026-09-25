@@ -13,7 +13,9 @@ physical endpoints. Competing spatially distinct closest points fail
 explicitly. For an exactly straight current target, active intervals are
 partitioned at target endpoint-projection changes and all real roots of the
 piecewise squared-distance quartic. Curved targets retain the bounded adaptive
-station scan and are not yet qualified for interval completeness. Contact
+station scan, with a source-chord/quadratic-target lower-distance check for
+otherwise unresolved open intervals. Curved-target interval completeness
+is not yet qualified. Contact
 activation and endpoint-projection changes are cut before
 8/16-point adaptive line integration. The paired physical-gap certificate
 uses quadratic Bézier hull bounds with an explicit spatial cell/depth budget.

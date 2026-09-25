@@ -1,5 +1,7 @@
 """Opt-in static contact between one round B2 and one round B3 cell."""
 
+import argparse
+
 from anysolver import (
     BoundaryCondition, ContactDefinition, ContactInteraction,
     ContactSolverSettings, ContactSurface, DisplacementControl, LoadCase,
@@ -8,6 +10,13 @@ from anysolver import (
 from anysolver.elements import BeamElement, QuadraticBeamElement
 from anysolver.fe_core import FEModel
 
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument(
+    "--radius-scaled-gap", action="store_true",
+    help="use a 50 micrometre gap budget for the 50 mm beam radius",
+)
+arguments = parser.parse_args()
 
 model = FEModel("round_b2_b3_pair_example")
 model.add_material("elastic", 1.0e3, 0.3, density=1.0)
@@ -37,7 +46,8 @@ contact = ContactDefinition(
     rigid_bodies=(),
     interactions=(ContactInteraction(
         "pair", "b2", "b3", normal_stiffness=None,
-        gap_tolerance=0.015, line_stiffness=1.0e4,
+        gap_tolerance=5.0e-5 if arguments.radius_scaled_gap else 0.015,
+        line_stiffness=1.0e4,
     ),),
 )
 settings = ContactSolverSettings(
@@ -49,7 +59,8 @@ result = solve_static_nonlinear(
     model, load, contact=contact, contact_settings=settings,
     control="displacement",
     displacement_control=DisplacementControl(
-        node_id=5, dof="uy", target_displacement=-0.03,
+        node_id=5, dof="uy",
+        target_displacement=-0.02004 if arguments.radius_scaled_gap else -0.03,
     ),
     num_steps=4, max_iterations=20, kinematics="von_karman",
     emit_restart_checkpoint=True,

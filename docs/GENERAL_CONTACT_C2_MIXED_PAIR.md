@@ -15,6 +15,8 @@ gap-certificate budgets. Both beams must be separate, elastic, concentric,
 von Karman classical cells without endpoint caps or shared material nodes.
 Force and displacement control use the ordinary nonlinear static route;
 version-2 restart binds the mixed profile, definitions and numerical settings.
+The example's `--radius-scaled-gap` option commands 40 micrometres of closure
+and checks a 50 micrometre gap budget for the declared 50 mm radius.
 
 The focused mixed-pair checks cover an independent parallel-line energy and
 force reference, B2 nodal-force mapping, paired wrench, smooth-branch
@@ -22,14 +24,25 @@ directional tangent, role exchange, an active displacement path and split
 restart. The first mixed tangent trial exposed an existing near-endpoint
 projection classification failure for a slightly tilted straight target; the
 roundoff-aware feature classification is now exercised by that check. The
-affected B2/B3 pair group passed 25 tests after the fix.
+initial affected B2/B3 pair group passed 25 tests after the fix.
 
-The example uses a 15 mm gap budget for a 50 mm beam radius. This is a
-development setting and does not meet the programme's prospective
-thickness/radius-scaled qualification budget. Mixed curved-target active
-interval completeness, endpoint ownership, multi-cell beams, mesh and penalty
-convergence and independent acceptance remain open. The profile is implemented
-and locally tested only.
+The first 50 micrometre trial then exhausted the curved-target interval scan
+near a narrow open interval adjacent to contact. The retained captured pose
+showed that its full-source-speed bound could not certify the open interval.
+The updated scan computes the minimum distance between each uncertain source
+interval's chord and the complete quadratic target by partitioning target
+projection branches and checking their polynomial extrema. It subtracts the
+maximum source-to-chord deviation and floating-point guards before declaring
+an interval open. Independent sampled-distance controls, the captured pose,
+the radius-scaled integrated path and the affected B2/B3 group passed 33 tests.
+The integrated path reported a conservative lower gap of about -40 micrometres
+within its 50 micrometre budget, nonzero contact and equal/opposite body forces.
+
+The example's default remains the original 15 mm development gap setting.
+The single radius-scaled path is a development check, not mesh, integration or
+penalty convergence. General curved-target active-interval completeness,
+endpoint ownership, multi-cell beams, refinement and independent acceptance
+remain open. The profile is implemented and locally tested only.
 
 Source `f5b7bd70a46d386ceec4154ef3ab8c2d9afa36cd` built an offline,
 dependency-free-installed wheel (SHA-256

@@ -279,6 +279,77 @@ def _real_polynomial_roots_unit(polynomial: np.polynomial.Polynomial,
                             for root in roots)))
 
 
+def _source_interval_target_gap_lower(
+    source: np.ndarray, left: float, right: float,
+    target: np.ndarray, radius: float,
+) -> float:
+    """Bound a Q2 source interval using exact curve-to-chord station extrema.
+
+    The target-to-source-chord minimum is piecewise quartic in target station.
+    A quadratic source differs from its interval chord by at most its midpoint
+    deviation. The floating guard keeps near-touching intervals unresolved.
+    """
+    start = _curve(source, left)[0]
+    end = _curve(source, right)[0]
+    middle = _curve(source, 0.5 * (left + right))[0]
+    chord_deviation = float(np.linalg.norm(middle - 0.5 * (start + end)))
+    vector = end - start
+    squared_length = float(vector @ vector)
+    if squared_length <= 0.0:
+        raise MemoryError("B3 pair source interval chord is degenerate")
+
+    polynomial = np.polynomial.Polynomial
+    target_curve = tuple(polynomial((
+        target[0, axis],
+        -3.0*target[0, axis] + 4.0*target[1, axis] - target[2, axis],
+        2.0*target[0, axis] - 4.0*target[1, axis] + 2.0*target[2, axis],
+    )) for axis in range(3))
+    offset = tuple(component - float(start[axis])
+                   for axis, component in enumerate(target_curve))
+    along = sum((component*float(vector[axis])
+                 for axis, component in enumerate(offset)), polynomial((0.0,)))
+    projection = along / squared_length
+    start_distance = sum((component*component for component in offset),
+                         polynomial((0.0,)))
+    end_distance = sum(((component - float(end[axis]))**2
+                        for axis, component in enumerate(target_curve)),
+                       polynomial((0.0,)))
+    interior_distance = start_distance - along*along/squared_length
+
+    cuts = (0.0, *sorted(set((
+        *_real_polynomial_roots_unit(projection),
+        *_real_polynomial_roots_unit(projection - 1.0),
+    ))), 1.0)
+    minimum_squared = np.inf
+    coefficient_scale = 0.0
+    for first, last in zip(cuts[:-1], cuts[1:]):
+        if last - first <= 1.0e-14:
+            continue
+        projected = float(projection(0.5*(first + last)))
+        branch = (start_distance if projected <= 0.0 else
+                  end_distance if projected >= 1.0 else interior_distance)
+        coefficient_scale = max(
+            coefficient_scale, float(np.sum(np.abs(branch.coef))),
+        )
+        stations = (first, *_real_polynomial_roots_unit(branch.deriv()), last)
+        minimum_squared = min(
+            minimum_squared,
+            *(float(branch(station)) for station in stations
+              if first <= station <= last),
+        )
+    if not np.isfinite(minimum_squared):
+        raise MemoryError("B3 pair interval distance could not be bounded")
+    squared_guard = 1024.0 * np.finfo(float).eps * max(
+        coefficient_scale, radius*radius, np.finfo(float).tiny,
+    )
+    position_guard = 1024.0 * np.finfo(float).eps * max(
+        float(np.max(np.abs(source))), float(np.max(np.abs(target))),
+        radius,
+    )
+    return (float(np.sqrt(max(0.0, minimum_squared - squared_guard)))
+            - radius - chord_deviation - position_guard)
+
+
 def _straight_target_contact_roots(source: np.ndarray,
                                     target: np.ndarray,
                                     radius: float) -> tuple[float, ...]:
@@ -490,7 +561,10 @@ class B3PairPotential:
             )
             if min(samples) > 0.0:
                 if (_aabb_distance(controls, target_controls) > self.radius
-                        or min(samples) > speed_reach):
+                        or min(samples) > speed_reach
+                        or _source_interval_target_gap_lower(
+                            source, left, right, target, self.radius,
+                        ) > 0.0):
                     return
             elif max(samples) < -speed_reach:
                 return

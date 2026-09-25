@@ -115,3 +115,37 @@ def test_mixed_pair_displacement_path_and_restart():
     assert resumed.status == "completed", resumed.failure_reason
     np.testing.assert_allclose(resumed.displacements, full.displacements,
                                rtol=1e-7, atol=1e-8)
+
+
+def test_mixed_pair_curved_target_radius_scaled_gap_path():
+    model, definition, settings = _pair()
+    definition = replace(definition, interactions=(replace(
+        definition.interactions[0], gap_tolerance=5.0e-5,
+    ),))
+    model.add_boundary_condition(BoundaryCondition(
+        "b2_fixed", (1, 2),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "b3_guide", (3, 4, 5),
+        {name: 0.0 for name in ("ux", "uz", "rx", "ry", "rz")},
+    ))
+    load = LoadCase("tight_mixed_pair_path")
+    load.add_nodal_load(5, forces=(0.0, -1.0, 0.0))
+    result = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        control="displacement",
+        displacement_control=DisplacementControl(
+            node_id=5, dof="uy", target_displacement=-0.02004,
+        ), num_steps=4, max_iterations=20, kinematics="von_karman",
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "completed", result.failure_reason
+    summary = result.info["general_contact"]
+    assert summary["profile"] == MIXED_PROFILE
+    assert summary["active_source_intervals"] > 0
+    assert summary["gap_tolerance_met"]
+    assert -5.0e-5 <= summary["independent_gap_lower_bound"] < 0.0
+    np.testing.assert_allclose(summary["beam_a_force"],
+                               -np.asarray(summary["beam_b_force"]), atol=1e-10)
+    assert result.restart_checkpoint["version"] == 2
