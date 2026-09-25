@@ -127,3 +127,19 @@ def test_shared_face_trace_distinguishes_rigid_twist_from_section_warping():
     station = SCREEN.recover(meta, warped)["station_motion"]["500"]
     assert abs(station["shared_face_slope_minus_section_rx_rad"]) > 1e-6
     assert station["max_warping_residual_m"] > 1e-8
+
+
+def test_midspan_transverse_slope_preserves_independent_shear_field():
+    _, meta = SCREEN.build(4, "tip_fz", boundary_policy="left_root")
+    rotation = 1e-4
+    rigid = {int(node): np.array([(xyz[2]-.085)*rotation, 0.,
+                                  -xyz[0]*rotation])
+             for node, xyz in meta["probe_coordinates_m"].items()}
+    assert abs(SCREEN.recover(meta, rigid)[
+        "midspan_transverse_kinematics"]["slope_plus_section_ry_rad"]) < 1e-14
+    shear = 2e-5
+    sheared = {node: value + np.array([0., 0., shear *
+                                      meta["probe_coordinates_m"][str(node)][0]])
+               for node, value in rigid.items()}
+    measured = SCREEN.recover(meta, sheared)["midspan_transverse_kinematics"]
+    assert measured["slope_plus_section_ry_rad"] == pytest.approx(shear, abs=1e-13)

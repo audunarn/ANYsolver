@@ -312,6 +312,14 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
             "surface_square_patch_yaw_rad":patch_yaw,
             "surface_square_patch_half_width_m":.05,
             "station_motion":stations}
+    surface_slope_z_x=float((value(right,0)[2]-value(left,0)[2])/
+                            ((right-left)/1000))
+    beam_ry=float(stations["500"]["section_rotation_rad"][1])
+    result["midspan_transverse_kinematics"]={
+        "plate_top_slope_z_x_rad":surface_slope_z_x,
+        "beam_section_ry_rad":beam_ry,
+        "slope_plus_section_ry_rad":surface_slope_z_x+beam_ry,
+        "meaning":"kinematic slope/section comparison; not a measured interface gap or shell director shear"}
     applied={int(index):np.array(force) for index,force in
              meta["applied_nodal_forces_N"].items()}
     if applied:
