@@ -38,8 +38,10 @@ The gradient-polar strip gives `±.005` rad, while the line tangent gives
 `+.01/0` rad. This distinguishes three kinematic reductions; the rigid
 fit is not a solved rigid-footprint boundary-value problem, and none is
 yet the qualified physical weld reference. The finite strip is best kept
-as a distributing-footprint candidate until its law is reviewed; the
-rigid footprint needs its own region constraint and work functional.
+as a distributing-footprint candidate until its law is reviewed. It is
+distinct from the already registered F04 distributing functional and its
+evidence; the rigid footprint needs its own region constraint and work
+functional.
 
 **Remaining uncertainty and next discriminator:** Confinement corrects
 where the law acts, but the chord still aligns beam yaw with the shell
