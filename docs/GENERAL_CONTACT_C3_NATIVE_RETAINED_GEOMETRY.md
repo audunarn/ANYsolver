@@ -241,10 +241,10 @@ affected native tests passed 25/25
 This is a straight-profile support result, not a qualified general endpoint
 law. Genuine endpoint force regularization, curved support boundaries,
 arbitrary whole-beam sliding, retained rotational work in this whole-pair
-route, static-owner coupling and C3 qualification remain open.
+route and C3 qualification remain open.
 
 The two-beam retained static owner now admits the exact whole-pair kernel
-under separate `NATIVE_B3_GE_WHOLE_CURVE_PAIR_STATIC_DEV_V0` and checkpoint
+under separate `NATIVE_B3_GE_WHOLE_CURVE_PAIR_STATIC_DEV_V1` and checkpoint
 schema identities. It binds both beam and material-node identities, keeps
 the existing 84-coordinate coupled assembly and spatial tangent mapping,
 and records the whole-pair energy, gap and resource/error fields. The
@@ -263,6 +263,40 @@ It returned failure with the first accepted target and its checkpoint
 unchanged. This is a current geometry-kernel limit, not an accepted active
 whole-beam static solve. The next C3 work must resolve curved partial
 support and target ownership before this route can be promoted.
+
+The revised development kernel first certifies open source subintervals
+from the Q2 Bezier hull and the closest-distance Lipschitz bound. Where
+target squared distance is strictly convex in station, a bound on the gap's
+second derivative can certify monotonicity and isolate one activation root.
+Exact target-endpoint projection cuts split tangent discontinuities before
+Gauss integration. The straight-support specialization retains its original
+exact active/open partition. The kernel now reports integration cells
+checked and carries `NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V1`; the whole-pair
+owner/checkpoint likewise use V1. Earlier V0 evidence remains historical.
+
+Three bent fabricated poses previously rejected by the kernel now evaluate
+(`c3-native-whole-curved-support-probe-feature-split.txt`). For one partial
+contact pose, potential agreed with an independent polyline-distance
+integration (`c3-native-curved-partial-oracle-first.txt`). The loaded solve
+still does not produce an accepted active target. Its first Newton trial
+crossed the obstacle by a large amount
+(`c3-native-whole-loaded-candidate-diagnostic.txt`). Exact contact
+geometry/resource failures in candidate evaluation now cause bounded
+backtracking rather than terminating immediately; mutation errors still
+propagate. The nine allowed trial cuts were insufficient for the registered
+large-load case, leaving the first accepted target and checkpoint intact
+(`c3-native-whole-first-backtrack-diagnostic.txt`,
+`c3-native-whole-iteration-diagnostic.txt`). The smaller-load diagnostic
+also shows tiny accepted increments and subsequent gap/geometry rejections
+(`c3-native-whole-small-load-diagnostic.txt`). Load-path subdivision and
+general curved ownership remain open. The affected set passed 22/22
+(`c3-native-curved-support-final2-affected.txt`). The terminal whole-pair
+result now reports rejected trial counts and the last dimensional gap or
+geometry reason; the registered large-load case reported six geometry
+rejections and three gap rejections at its final iteration
+(`c3-native-curved-cutback-diagnostic-result.txt`). The historical
+selected-cell checkpoint hash still matched
+(`c3-native-curved-support-selected-checkpoint.txt`).
 
 ## Retained round-centreline/plane penalty kernel
 

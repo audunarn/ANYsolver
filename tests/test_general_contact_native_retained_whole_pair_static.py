@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from scipy.integrate import quad
 
 from anysolver._ge_beam3_centered_reference import (
     CenteredCurvedBeam3ReferenceGeometry,
@@ -131,8 +132,53 @@ def test_unresolved_curved_support_keeps_accepted_target_prefix():
     owner = _owner(separation=0.13, force=-5.0)
     failed = owner.solve()
     assert failed.status == "failed"
-    assert "possible native whole-pair contact missed" in failed.failure
+    assert "native whole pair line-search/gap limit" in failed.failure
+    assert "rejected=" in failed.failure
     assert failed.accepted.completed_targets == 1
     prefix = _owner(separation=0.13, force=-5.0).solve(stop_after=1)
     assert prefix.status == "paused", prefix.failure
     assert failed.checkpoint == prefix.checkpoint
+
+
+def test_bent_partial_contact_matches_independent_polyline_energy():
+    owner = _owner(separation=0.13)
+    increment = np.zeros(owner.context.count)
+    increment[6*owner.context.index[6]+1] = -0.04
+    state = owner.context.advance(owner.initial.mechanical, increment)
+    contact = owner._contact(state)
+    assert contact.potential_j > 0.0
+    assert contact.integration_cells_checked > 0
+
+    positions_a = state.positions[owner.context.nodes[owner.indices[0]]]
+    positions_b = state.positions[owner.context.nodes[owner.indices[1]]]
+    segments_a = ((positions_a[0], positions_a[1]),
+                  (positions_a[1], positions_a[2]))
+    segments_b = ((positions_b[0], positions_b[1]),
+                  (positions_b[1], positions_b[2]))
+
+    def distance_to_segment(point, segment):
+        start, end = segment
+        direction = end-start
+        station = np.clip(float((point-start)@direction/(direction@direction)),
+                          0.0, 1.0)
+        return float(np.linalg.norm(point-start-station*direction))
+
+    def directional_energy(source, target):
+        total = 0.0
+        for start, end in source:
+            def density(station):
+                point = start+station*(end-start)
+                gap = min(distance_to_segment(point, cell)
+                          for cell in target)-0.1
+                return min(gap, 0.0)**2
+            value, _ = quad(density, 0.0, 1.0,
+                            epsabs=1e-11, limit=200)
+            total += value
+        return total
+
+    reference = 25.0*(directional_energy(segments_a, segments_b)
+                      + directional_energy(segments_b, segments_a))
+    assert contact.potential_j == pytest.approx(reference,
+                                                rel=1e-4, abs=1e-8)
+    np.testing.assert_allclose(contact.beam_a_force_n+contact.beam_b_force_n,
+                               0.0, atol=1e-8)

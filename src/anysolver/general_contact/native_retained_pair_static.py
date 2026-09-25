@@ -31,8 +31,8 @@ from .native_retained_whole_pair import (
 
 PROFILE = "NATIVE_B3_GE_SELECTED_CELL_PAIR_STATIC_DEV_V1"
 CHECKPOINT_SCHEMA = "NATIVE_RETAINED_SELECTED_CELL_PAIR_CHECKPOINT_DEV_V1"
-WHOLE_PROFILE = "NATIVE_B3_GE_WHOLE_CURVE_PAIR_STATIC_DEV_V0"
-WHOLE_CHECKPOINT_SCHEMA = "NATIVE_RETAINED_WHOLE_CURVE_PAIR_CHECKPOINT_DEV_V0"
+WHOLE_PROFILE = "NATIVE_B3_GE_WHOLE_CURVE_PAIR_STATIC_DEV_V1"
+WHOLE_CHECKPOINT_SCHEMA = "NATIVE_RETAINED_WHOLE_CURVE_PAIR_CHECKPOINT_DEV_V1"
 
 
 @dataclass(frozen=True)
@@ -191,6 +191,7 @@ class NativeRetainedRoundPairAnalysis:
                 search_cells=contact.search_cells,
                 integration_intervals=contact.integration_intervals,
                 integration_evaluations=contact.integration_evaluations,
+                integration_cells_checked=contact.integration_cells_checked,
                 unresolved_search_intervals=contact.unresolved_search_intervals,
             )
         row = dict(target=target, previous_sha256=previous_sha256,
@@ -269,6 +270,28 @@ class NativeRetainedRoundPairAnalysis:
             mechanical.cell_rotations[b],
         )
 
+    def _recoverable_trial_contact_error(self, exc: Exception) -> bool:
+        """Only geometric/resource non-admission may trigger a path cutback."""
+        message = str(exc)
+        if type(self.contact) is NativeRetainedSelectedCellPair:
+            return (type(exc) is ValueError
+                    and "undeclared native half-cell pair" in message)
+        return (
+            type(exc) in (ValueError, MemoryError)
+            and message.startswith((
+                "native whole pair integration interval budget exhausted",
+                "native whole pair integration parameter resolution exhausted",
+                "native whole pair has competing target minima",
+                "native whole pair target ownership is unresolved",
+                "native union has competing",
+                "native union search cell budget exhausted",
+                "native union search depth budget exhausted",
+                "B3 projection has competing equal-distance minima",
+                "B3 closest-point branch lacks positive curvature",
+                "coincident B3 centrelines cannot define a contact normal",
+            ))
+        )
+
     def _assemble(self, mechanical, parameter, origins):
         self._guard()
         residual, tangent, _, responses, _ = self.context.assemble(
@@ -325,8 +348,8 @@ class NativeRetainedRoundPairAnalysis:
             state = self.context.advance(start, middle*increment)
             try:
                 gap = self._contact(state).conservative_lower_gap_m
-            except ValueError as exc:
-                if "undeclared native half-cell pair" in str(exc):
+            except (ValueError, MemoryError) as exc:
+                if self._recoverable_trial_contact_error(exc):
                     return False
                 raise
             if gap < -self.gap_tolerance:
@@ -390,22 +413,35 @@ class NativeRetainedRoundPairAnalysis:
                             np.finfo(float).tiny,
                         ),
                     )
+                    rejected = dict(geometry=0, gap=0, swept=0, merit=0)
+                    last_rejection = ""
                     for cut in range(self.program.max_backtracks+1):
                         increment = step*(fraction*0.5**cut)
                         candidate = self.context.advance(trial, increment)
                         try:
                             candidate_contact = self._contact(candidate)
-                        except ValueError as exc:
-                            if "undeclared native half-cell pair" in str(exc):
+                        except (ValueError, MemoryError) as exc:
+                            if self._recoverable_trial_contact_error(exc):
+                                rejected["geometry"] += 1
+                                last_rejection = (f"geometry {type(exc).__name__}: "
+                                                  f"{str(exc)[:160]}")
                                 continue
                             raise
                         if (candidate_contact.conservative_lower_gap_m
-                                < -self.gap_tolerance
-                                or not self._swept_admissible(
+                                < -self.gap_tolerance):
+                            rejected["gap"] += 1
+                            last_rejection = (
+                                "gap lower bound "
+                                f"{candidate_contact.conservative_lower_gap_m} m"
+                            )
+                            continue
+                        if not self._swept_admissible(
                                     trial, increment, candidate,
                                     contact.conservative_lower_gap_m,
                                     candidate_contact.conservative_lower_gap_m,
-                                )):
+                                ):
+                            rejected["swept"] += 1
+                            last_rejection = "swept gap not certified"
                             continue
                         _, _, changed, _, _ = self._assemble(
                             candidate, parameter, origins,
@@ -413,7 +449,15 @@ class NativeRetainedRoundPairAnalysis:
                         if max(changed) < max(metrics):
                             trial = candidate
                             break
+                        rejected["merit"] += 1
+                        last_rejection = f"merit {max(changed)} >= {max(metrics)}"
                     else:
+                        if self.profile == WHOLE_PROFILE:
+                            raise RuntimeError(
+                                "native whole pair line-search/gap limit: "
+                                f"iteration={iteration}, rejected={rejected}, "
+                                f"last={last_rejection}"
+                            )
                         raise RuntimeError("native pair line-search/gap limit")
             status = "completed" if end == len(self.program.targets) else "paused"
             return NativeRetainedPairRun(status, accepted, None, capsule,

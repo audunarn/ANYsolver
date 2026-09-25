@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from math import isfinite
 
 import numpy as np
+from scipy.optimize import brentq
 
 from anysolver._ge_beam3_centered_reference import (
     CenteredCurvedBeam3ReferenceGeometry,
@@ -14,7 +15,7 @@ from anysolver._ge_beam3_p5_seeded.core import sha
 
 from .beam_curve_pair import (
     _GAUSS_8, _GAUSS_16, _bezier_controls, _curve,
-    b3_distance_jet,
+    _endpoint_projection_cuts, b3_distance_jet, closest_on_b3,
 )
 from .native_curve_union import NativeTwoCellUnionSearch
 from .native_retained_curve_cell import NativeRetainedCurveCell
@@ -214,6 +215,74 @@ def _straight_support_partitions(
     return tuple(pieces)
 
 
+def _monotone_gap_endpoints(
+    source: np.ndarray, target: np.ndarray,
+    left: float, right: float, roundoff_m: float,
+) -> tuple[float, float] | None:
+    """Certify one smooth closest-distance branch and a gap derivative sign.
+
+    Strict convexity of squared distance in target station gives unique
+    projection. A bound on the source-distance second derivative then proves
+    that its first derivative cannot change sign over this source interval.
+    Returned values are endpoint centreline distances, before subtracting
+    the declared round radius.
+    """
+    source_controls = _bezier_controls(source, left, right)
+    target_controls = _bezier_controls(target, 0.0, 1.0)
+    maximum_separation = max(
+        float(np.linalg.norm(a-b))
+        for a in source_controls for b in target_controls
+    )
+    target_first = _curve(target, 0.0)[1]
+    target_last = _curve(target, 1.0)[1]
+    target_delta = target_last-target_first
+    target_delta_square = float(target_delta@target_delta)
+    minimum_station = (float(np.clip(-float(target_first@target_delta)
+                                     /target_delta_square, 0.0, 1.0))
+                       if target_delta_square > 0.0 else 0.0)
+    target_min_speed = float(np.linalg.norm(
+        target_first+minimum_station*target_delta,
+    ))
+    target_max_speed = max(float(np.linalg.norm(target_first)),
+                           float(np.linalg.norm(target_last)))
+    convexity = (target_min_speed**2
+                 - maximum_separation*float(np.linalg.norm(target_delta)))
+    if convexity <= 0.0:
+        return None
+    middle = 0.5*(left+right)
+    source_point, source_speed, source_second = _curve(source, middle)
+    projection = closest_on_b3(source_point, target)
+    if not projection.unique:
+        return None
+    target_point = _curve(target, projection.minimizers[0])[0]
+    normal_vector = source_point-target_point
+    distance = float(np.linalg.norm(normal_vector))
+    reach = max(float(np.linalg.norm(control-source_point))
+                for control in source_controls)
+    minimum_distance = distance-reach-roundoff_m
+    if minimum_distance <= 0.0:
+        return None
+    source_max_speed = max(float(np.linalg.norm(_curve(source, station)[1]))
+                           for station in (left, right))
+    projection_hessian_bound = (
+        1.0/minimum_distance
+        + (target_max_speed/minimum_distance)**2
+        * maximum_separation/convexity
+    )
+    second_bound = (source_max_speed**2*projection_hessian_bound
+                    + float(np.linalg.norm(source_second)))
+    derivative = float((normal_vector/distance)@source_speed)
+    derivative_roundoff = 256.0*np.finfo(float).eps*max(
+        1.0, source_max_speed, target_max_speed,
+    )
+    if abs(derivative) <= second_bound*0.5*(right-left)+derivative_roundoff:
+        return None
+    return tuple(
+        float(closest_on_b3(_curve(source, station)[0], target).distance)
+        for station in (left, right)
+    )
+
+
 @dataclass(frozen=True)
 class NativeRetainedWholePairResult:
     potential_j: float
@@ -231,6 +300,7 @@ class NativeRetainedWholePairResult:
     search_cells: int
     integration_intervals: int
     integration_evaluations: int
+    integration_cells_checked: int
     unresolved_search_intervals: int
 
 
@@ -305,7 +375,7 @@ class NativeRetainedWholeCurvePair:
 
     def _fingerprint(self) -> str:
         return sha(dict(
-            profile="NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V0",
+            profile="NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V1",
             cells_a=[(cell.element_id, cell.cell,
                       cell.reference.canonical_data()) for cell in self.cells_a],
             cells_b=[(cell.element_id, cell.cell,
@@ -352,6 +422,7 @@ class NativeRetainedWholeCurvePair:
             target_ids = ((ids[0], ids[1]), (ids[1], ids[2]))
             for source_cell in (0, 1):
                 source_index = source_base+source_cell
+                projection_cuts: dict[int, tuple[float, ...]] = {}
                 search = NativeTwoCellUnionSearch(
                     current[source_index], target_positions, target_ids,
                     combined_radius_m=self.radius,
@@ -410,11 +481,55 @@ class NativeRetainedWholeCurvePair:
                     return result, active
 
                 def integrate(left: float, right: float, owner: int | None,
-                              budget: np.ndarray) -> np.ndarray:
+                              budget: np.ndarray,
+                              certified_active: bool = False) -> np.ndarray:
                     nonlocal visited, intervals
                     visited += 1
                     if visited > self.maximum_integration_intervals:
                         raise MemoryError("native whole pair integration interval budget exhausted")
+                    middle = 0.5*(left+right)
+                    if middle == left or middle == right:
+                        raise MemoryError(
+                            "native whole pair integration parameter resolution "
+                            f"exhausted: source cell {source_index}, target cell "
+                            f"{target_base+owner}, interval [{left}, {right}]"
+                        )
+                    point = _curve(current[source_index], middle)[0]
+                    projected = closest_on_b3(point, current[target_base+owner])
+                    if not projected.unique:
+                        raise ValueError("native whole pair has competing target minima")
+                    controls = _bezier_controls(current[source_index], left, right)
+                    reach = max(float(np.linalg.norm(control-point))
+                                for control in controls)
+                    lower_gap = projected.distance-self.radius-reach-search.roundoff
+                    if lower_gap >= 0.0:
+                        return np.zeros_like(total)
+                    support = (None if certified_active else _monotone_gap_endpoints(
+                        current[source_index], current[target_base+owner],
+                        left, right, search.roundoff,
+                    ))
+                    if support is not None:
+                        gap_left, gap_right = (value-self.radius
+                                               for value in support)
+                        if min(gap_left, gap_right) >= 0.0:
+                            return np.zeros_like(total)
+                        if gap_left*gap_right < 0.0:
+                            def gap_at(station: float) -> float:
+                                return (closest_on_b3(
+                                    _curve(current[source_index], station)[0],
+                                    current[target_base+owner],
+                                ).distance-self.radius)
+                            root = float(brentq(
+                                gap_at, left, right,
+                                xtol=1e-14, rtol=1e-14,
+                            ))
+                            if left < root < right:
+                                fraction = (root-left)/(right-left)
+                                return (
+                                    integrate(left, root, owner, fraction*budget)
+                                    + integrate(root, right, owner,
+                                                (1.0-fraction)*budget)
+                                )
                     coarse, coarse_active = quadrature(left, right, _GAUSS_8, owner)
                     refined, refined_active = quadrature(left, right, _GAUSS_16, owner)
                     difference = np.abs(refined-coarse)
@@ -422,24 +537,26 @@ class NativeRetainedWholeCurvePair:
                         difference[0], float(np.max(difference[1:37])),
                         float(np.max(difference[37:])),
                     ))
-                    if not (coarse_active or refined_active):
-                        raise MemoryError("possible native whole-pair contact missed by quadrature")
-                    if np.all(measured <= budget):
+                    if (coarse_active or refined_active) and np.all(measured <= budget):
                         intervals += 1
                         error[:] += measured
                         return refined
-                    midpoint = 0.5*(left+right)
-                    return (integrate(left, midpoint, owner, 0.5*budget)
-                            + integrate(midpoint, right, owner, 0.5*budget))
+                    if certified_active and not (coarse_active or refined_active):
+                        raise MemoryError("certified native whole-pair contact absent at quadrature")
+                    return (integrate(left, middle, owner, 0.5*budget,
+                                      certified_active)
+                            + integrate(middle, right, owner, 0.5*budget,
+                                        certified_active))
 
                 for interval in scan.intervals:
                     if interval.status == "open":
                         continue
-                    pieces = _straight_support_partitions(
+                    straight_pieces = _straight_support_partitions(
                         current[source_index], target_positions,
                         self.radius, interval.left, interval.right,
                         min(self.distance_tolerance, self.feature_tolerance),
                     )
+                    pieces = straight_pieces
                     if pieces is None and interval.target_cell is None:
                         pieces = _straight_join_partitions(
                             current[source_index], target_positions,
@@ -452,13 +569,27 @@ class NativeRetainedWholeCurvePair:
                         pieces = ((interval.left, interval.right,
                                    interval.target_cell),)
                     for begin, stop, certified_owner in pieces:
-                        share = 0.25*(stop-begin)
-                        budget = np.array((self.energy_tolerance*share,
-                                           self.force_tolerance*share,
-                                           self.tangent_tolerance*share))
-                        total += 0.5*integrate(
-                            begin, stop, certified_owner, budget,
-                        )
+                        if certified_owner not in projection_cuts:
+                            projection_cuts[certified_owner] = (
+                                _endpoint_projection_cuts(
+                                    current[source_index],
+                                    current[target_base+certified_owner],
+                                )
+                            )
+                        cuts = (begin, *(value for value in
+                                         projection_cuts[certified_owner]
+                                         if (begin+64.0*np.finfo(float).eps
+                                             < value < stop-64.0*np.finfo(float).eps)),
+                                stop)
+                        for start, end in zip(cuts[:-1], cuts[1:]):
+                            share = 0.25*(end-start)
+                            budget = np.array((self.energy_tolerance*share,
+                                               self.force_tolerance*share,
+                                               self.tangent_tolerance*share))
+                            total += 0.5*integrate(
+                                start, end, certified_owner, budget,
+                                straight_pieces is not None,
+                            )
 
         jacobian = np.zeros((36, 84))
         for global_cell, state in enumerate(states):
@@ -491,5 +622,5 @@ class NativeRetainedWholeCurvePair:
             _readonly(np.sum(moment[2:], axis=0)),
             conservative_lower, minimum_sampled,
             float(error[0]), float(error[1]), float(error[2]),
-            search_cells, intervals, evaluations, unresolved,
+            search_cells, intervals, evaluations, visited, unresolved,
         )
