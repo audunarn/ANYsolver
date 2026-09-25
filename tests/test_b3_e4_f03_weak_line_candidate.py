@@ -15,6 +15,7 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_translation,
     pose_from_e4_total_local_director,
     pose_from_e4_total_local_frame)
+from scripts._b3_e4_f03_shell_chord_pose_candidate import pose_from_e4_total_chord
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_weak_line_candidate import (
@@ -92,7 +93,8 @@ def test_reference_joint_varies_along_rigidly_rotated_shell(topology):
     ("S3-V2D", "dual_linear"),
 ))
 @pytest.mark.parametrize("shell_port", (
-    "rail", "local_translation", "local_director", "local_frame"))
+    "rail", "local_translation", "local_director", "local_frame",
+    "line_chord_020"))
 def test_segmented_line_directional_work_matches_direct_potential(
         topology, kind, shell_port):
     shell = FlatE4TrialPanel(make_shell(1, topology))
@@ -127,7 +129,8 @@ def test_segmented_line_directional_work_matches_direct_potential(
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
-                "local_frame": pose_from_e4_total_local_frame}[shell_port]
+                "local_frame": pose_from_e4_total_local_frame,
+                "line_chord_020": pose_from_e4_total_chord}[shell_port]
 
     edges = segments(shell, beam, space, shell_port=shell_port)
     points, weights = np.polynomial.legendre.leggauss(4)

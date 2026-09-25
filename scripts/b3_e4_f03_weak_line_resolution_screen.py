@@ -11,6 +11,7 @@ import argparse
 import json
 
 import numpy as np
+from scipy import linalg
 
 from anysolver._ge_beam3_pose_joint import RigidPoseJoint
 
@@ -24,6 +25,7 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_director,
     pose_from_e4_total_local_frame)
 from scripts._b3_e4_f03_shell_strip_pose_candidate import pose_from_e4_total_strip
+from scripts._b3_e4_f03_shell_chord_pose_candidate import pose_from_e4_total_chord
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
@@ -77,7 +79,8 @@ def one_case(topology: str, intervals: int, kind: str, *,
                 "local_frame": pose_from_e4_total_local_frame,
                 "physical_strip_020_023": lambda p, s, u: (
                     pose_from_e4_total_strip(
-                        p, s, u, half_length=.2, half_width=.23))}[shell_port]
+                        p, s, u, half_length=.2, half_width=.23)),
+                "line_chord_020": pose_from_e4_total_chord}[shell_port]
     shell_size = 6*shell.panel.node_count
     tip_rx = shell_size+6*beam.n_half_cells+3
     tip_rz = shell_size+6*beam.n_half_cells+5
@@ -294,6 +297,140 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "scaled_equilibrium_residual": float(np.linalg.norm(scaled_residual)),
         "free_primal_residual_mixed_l2": float(np.linalg.norm(
             physical_residual[kkt.free_primal])),
+    }
+
+
+def chord_reference_modes(topology: str, intervals: int, kind: str, *,
+                          n_s: int = 4, n_y: int = 4,
+                          native_half_cells: int = 8,
+                          characteristic_length: float = .46) -> dict:
+    """Bounded six-channel, work-scaled line-chord interface diagnostic.
+
+    Exact elimination of the indefinite native retained block separates a
+    positive physical stiffness from signed local retained work. The norm
+    uses physical energy plus the absolute retained quadratic form; it is
+    an algorithmic finite-mesh diagnostic, not a physical continuum inf-sup
+    proof or multiplier-space selection. E4 numerical completion remains in
+    the stiffness and must be assessed separately.
+    """
+    if not np.isfinite(characteristic_length) or characteristic_length <= 0.:
+        raise ValueError("positive physical characteristic length required")
+    shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y))
+    beam = build(native_half_cells)
+    space = LineMultiplierSpace(
+        kind, tuple(np.linspace(0., 1., intervals+1)))
+    kkt = assemble_reference_kkt(
+        shell, beam, space, shell_port="line_chord_020",
+        shell_support_policy="full_left_edge")
+    free = kkt.free_primal
+    rows = kkt.constraint_jacobian[:, free]
+    n = len(free)
+    if n+len(rows) > 1200:
+        raise ValueError("bounded dense interface diagnostic exceeds 1200 rows")
+    n_physical = int(np.count_nonzero(
+        free < 6*shell.panel.node_count+beam.context.nodal_count))
+    displacement_scale = 1e6/(210e9*.07)
+    if not np.isclose(kkt.energy_scale, 1e6*displacement_scale,
+                      rtol=1e-14, atol=0.):
+        raise ValueError("reference KKT work scale changed")
+    scales = kkt.coordinate_scale[:n]
+    k = kkt.primal_tangent[np.ix_(free, free)]
+    kbar = (scales[:, None]*k)*scales[None, :]/kkt.energy_scale
+    if np.linalg.norm(kbar-kbar.T) > 1e-10*np.linalg.norm(kbar):
+        raise ValueError("nonsymmetric reference tangent cannot use energy norm")
+    kpp = kbar[:n_physical, :n_physical]
+    kpr = kbar[:n_physical, n_physical:]
+    krp = kbar[n_physical:, :n_physical]
+    krr = kbar[n_physical:, n_physical:]
+    retained_action = linalg.solve(krr, krp, assume_a="sym")
+    physical_k = kpp-kpr@retained_action
+    ep, up = linalg.eigh(physical_k)
+    er, ur = linalg.eigh(krr)
+    if (ep[0] <= 1e-10*ep[-1] or
+            np.min(np.abs(er)) <= 1e-12*np.max(np.abs(er))):
+        raise ValueError("positive physical/regular retained split unavailable")
+
+    # C integrates each physical gap against a dimensionless line basis.
+    # Divide by a fixed translation scale and line length (1 m); convert
+    # rotations into lengths with the declared characteristic length.
+    row_scale = np.tile(np.r_[np.ones(3),
+                              np.full(3, characteristic_length)],
+                        space.count)/displacement_scale
+    cbar = (row_scale[:, None]*rows)*scales[None, :]
+    cp, cr = cbar[:, :n_physical], cbar[:, n_physical:]
+    cl = cp-cr@retained_action
+    bp = cl@(up/np.sqrt(ep)[None, :])
+    br = cr@(ur/np.sqrt(np.abs(er))[None, :])
+    signed = bp@bp.T+(br*np.sign(er)[None, :])@br.T
+    direct = cbar@linalg.solve(kbar, cbar.T, assume_a="sym")
+    decomposition_error = float(np.linalg.norm(signed-direct)/
+                                max(np.linalg.norm(direct), 1e-30))
+    if decomposition_error > 1e-9:
+        raise ArithmeticError("retained interface decomposition inconsistent")
+
+    scalar_mass = np.zeros((space.count, space.count))
+    points, weights = np.polynomial.legendre.leggauss(3)
+    for left, right in zip(space.knots[:-1], space.knots[1:]):
+        half, center = .5*(right-left), .5*(right+left)
+        for point, weight in zip(points, weights):
+            phi = space.values(float(center+half*point))
+            scalar_mass += half*weight*np.outer(phi, phi)
+    mass = np.kron(scalar_mass, np.eye(6))
+    em, um = linalg.eigh(mass)
+    if em[0] <= 1e-12*em[-1]:
+        raise ValueError("multiplier L2 Gram is deficient")
+    inv_sqrt = (um/np.sqrt(em)[None, :])@um.T
+    bpw, brw = inv_sqrt@bp, inv_sqrt@br
+    left, singular, _ = linalg.svd(
+        np.column_stack((bpw, brw)), full_matrices=False)
+    mode = inv_sqrt@left[:, -1]
+    mode = mode.reshape(space.count, 6)
+    channel_shares = [float(mode[:, axis]@scalar_mass@mode[:, axis])
+                      for axis in range(6)]
+    physical_share = float(np.linalg.norm(left[:, -1]@bpw)**2/
+                           singular[-1]**2)
+    if not -1e-10 <= physical_share <= 1.+1e-10:
+        raise ArithmeticError("invalid weakest-mode work decomposition")
+    physical_share = float(np.clip(physical_share, 0., 1.))
+    weighted = np.column_stack((bpw, brw))
+    channel_beta = []
+    for axis in range(6):
+        selected = np.arange(axis, len(rows), 6)
+        channel_beta.append(float(linalg.svdvals(weighted[selected, :])[-1]))
+    transverse_rows = np.array([6*i+axis for i in range(space.count)
+                                for axis in (2, 3, 4)])
+    transverse_left, transverse_singular, _ = linalg.svd(
+        weighted[transverse_rows, :], full_matrices=False)
+    transverse_mode = transverse_left[:, -1]
+    transverse_shares = [float(np.linalg.norm(transverse_mode[axis::3])**2)
+                         for axis in range(3)]
+    transverse_physical = float(np.linalg.norm(
+        transverse_mode@bpw[transverse_rows, :])**2/
+        transverse_singular[-1]**2)
+    if not -1e-10 <= transverse_physical <= 1.+1e-10:
+        raise ArithmeticError("invalid transverse work decomposition")
+    transverse_physical = float(np.clip(transverse_physical, 0., 1.))
+    return {
+        "topology": topology, "shell_x_intervals": 2*n_s,
+        "shell_y_intervals": n_y,
+        "native_half_cells": native_half_cells,
+        "line_intervals": intervals, "space": kind,
+        "row_count": len(rows),
+        "row_rank": int(np.linalg.matrix_rank(rows)),
+        "physical_stiffness_min_eigen": float(ep[0]),
+        "retained_negative_modes": int(np.count_nonzero(er < 0.)),
+        "decomposition_relative_error": decomposition_error,
+        "characteristic_length_m": characteristic_length,
+        "minimum_algorithmic_beta": float(singular[-1]),
+        "weakest_mode_channel_l2_shares": channel_shares,
+        "weakest_mode_physical_work_share": physical_share,
+        "weakest_mode_retained_work_share": 1.-physical_share,
+        "single_channel_beta_fx_fy_fz_mx_my_mz": channel_beta,
+        "transverse_fz_mx_my_beta": float(transverse_singular[-1]),
+        "transverse_mode_fz_mx_my_l2_shares": transverse_shares,
+        "transverse_mode_physical_work_share": transverse_physical,
+        "transverse_mode_retained_work_share": 1.-transverse_physical,
+        "scope": "finite native six-channel algorithmic norm; not physical inf-sup acceptance",
     }
 
 

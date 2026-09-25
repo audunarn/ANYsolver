@@ -133,12 +133,29 @@ def shell_strip_trace(nx: int, ny: int, s: float, *,
     return rows
 
 
+def shell_chord_trace(nx: int, ny: int, s: float, *,
+                      half_chord: float = .2) -> np.ndarray:
+    """Independent centerline displacement and fixed-chord heading."""
+    if not 0. <= s <= 1. or not .05 <= half_chord <= .25:
+        raise ValueError("bounded fixed shell-line chord required")
+    center = plate_basis(nx, ny, s, 0., basis="spline")[0]
+    plus = plate_basis(nx, ny, s+half_chord, 0., basis="spline")[0]
+    minus = plate_basis(nx, ny, s-half_chord, 0., basis="spline")[0]
+    n = len(center)
+    rows = np.zeros((3, 2*n))
+    rows[0, :n] = center
+    rows[1, n:] = center
+    rows[2, n:] = (plus-minus)/(2*half_chord)
+    return rows
+
+
 def _line_edges(nx: int, nb: int, intervals: int, *,
                 trace_kind: str = "local") -> np.ndarray:
     """Split weak integrals at every spline or multiplier breakpoint."""
     xknots = _spline(nx, -.5, 1.5)[2]
     moving = (np.r_[xknots-.2, xknots+.2]
-              if trace_kind == "strip_020_023" else np.array(()))
+              if trace_kind in ("strip_020_023", "chord_020")
+              else np.array(()))
     return np.unique(np.r_[np.linspace(0., 1., intervals+1), xknots, moving,
                            _spline(nb, 0., 1.)[2]].clip(0., 1.))
 
@@ -149,8 +166,8 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
              ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Independently assemble physical plate, beam and line constraint."""
     _validate(nx, ny, nb, intervals, kind)
-    if trace_kind not in ("local", "strip_020_023"):
-        raise ValueError("local or declared physical-strip trace required")
+    if trace_kind not in ("local", "strip_020_023", "chord_020"):
+        raise ValueError("local, strip or declared line-chord trace required")
     if (isinstance(thickness, bool) or not np.isfinite(thickness)
             or thickness <= 0.):
         raise ValueError("finite positive thickness required")
@@ -179,9 +196,11 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
         cell = min(int(np.floor((left+right)*.5*intervals)), intervals-1)
         c_left, c_right = cell/intervals, (cell+1)/intervals
         for s, weight in _quadrature(5, np.array((left, right))):
-            shell_trace = (shell_local_trace(nx, ny, float(s))
-                           if trace_kind == "local" else
-                           shell_strip_trace(nx, ny, float(s)))
+            shell_trace = {
+                "local": shell_local_trace,
+                "strip_020_023": shell_strip_trace,
+                "chord_020": shell_chord_trace,
+            }[trace_kind](nx, ny, float(s))
             value, _ = beam_basis(nb, float(s), basis="spline")
             beam_trace = np.zeros((3, nbeam))
             for axis in range(3):
@@ -317,9 +336,11 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
     shell_support_mz = -transferred_mz
     beam_root_mz = transferred_mz-tip_mz
     return {
-        "model": ("independent_membrane_Timoshenko_centerline_yaw"
-                  if trace_kind == "local" else
-                  "independent_membrane_Timoshenko_finite_strip_yaw"),
+        "model": {
+            "local": "independent_membrane_Timoshenko_centerline_yaw",
+            "strip_020_023": "independent_membrane_Timoshenko_finite_strip_yaw",
+            "chord_020": "independent_membrane_Timoshenko_line_chord_yaw",
+        }[trace_kind],
         "nx": nx, "ny": ny, "nb": nb, "intervals": intervals,
         "kind": kind, "trace_kind": trace_kind,
         "support": "full_left_edge_shell_and_beam_root",
@@ -342,7 +363,8 @@ def main() -> None:
     parser.add_argument("--nb", type=int, default=8)
     parser.add_argument("--intervals", type=int, default=2)
     parser.add_argument("--kind", choices=("p0", "p1", "dual"), default="p0")
-    parser.add_argument("--trace-kind", choices=("local", "strip_020_023"),
+    parser.add_argument("--trace-kind", choices=("local", "strip_020_023",
+                                                 "chord_020"),
                         default="local")
     args = parser.parse_args()
     print(json.dumps(solve(args.nx, args.ny, args.nb, args.intervals,

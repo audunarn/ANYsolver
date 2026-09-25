@@ -32,6 +32,8 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
 from scripts._b3_e4_f03_shell_spatial_linear_port import reference_spatial_trace
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
     pose_from_e4_total_strip, reference_spatial_trace_strip)
+from scripts._b3_e4_f03_shell_chord_pose_candidate import (
+    pose_from_e4_total_chord, reference_spatial_trace_chord)
 
 
 @dataclass(frozen=True)
@@ -130,6 +132,16 @@ def segments(shell: FlatE4TrialPanel, beam: Fixture,
                     diagonal = edge+eta/shell.panel.n_s
                     sites.extend((diagonal-.2, diagonal+.2))
         shell_sites = np.array([s for s in sites if 0. <= s <= 1.])
+    elif shell_port == "line_chord_020":
+        x_grid = -.5+np.arange(shell.panel.x_interval_count+1)/shell.panel.n_s
+        hosts = list(x_grid)
+        if shell.panel.topology == "S3-V2D":
+            eta = .5*shell.panel.n_y
+            eta -= np.floor(eta)
+            hosts.extend(x_grid[:-1]+eta/shell.panel.n_s)
+        shell_sites = np.array([
+            x-offset for x in hosts for offset in (0., -.2, .2)
+            if 0. <= x-offset <= 1.])
     elif shell_port in ("rail", "local_translation", "local_director"):
         shell_sites = shell.panel.breakpoints()
     else:
@@ -162,7 +174,8 @@ def integrate_weak_line(
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
     if shell_port not in ("rail", "local_translation", "local_director",
-                          "local_frame", "physical_strip_020_023"):
+                          "local_frame", "physical_strip_020_023",
+                          "line_chord_020"):
         raise ValueError("unknown bounded shell pose port")
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
@@ -170,7 +183,8 @@ def integrate_weak_line(
                 "local_frame": pose_from_e4_total_local_frame,
                 "physical_strip_020_023": lambda p, s, u: (
                     pose_from_e4_total_strip(
-                        p, s, u, half_length=.2, half_width=.23))}[shell_port]
+                        p, s, u, half_length=.2, half_width=.23)),
+                "line_chord_020": pose_from_e4_total_chord}[shell_port]
     if type(order) is not int or order not in (2, 3, 4, 5):
         raise ValueError("bounded Gauss order 2 through 5 required")
     coefficients = np.asarray(multipliers, dtype=float)
@@ -238,7 +252,8 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
     if shell_port not in ("rail", "local_translation", "local_director",
-                          "local_frame", "physical_strip_020_023"):
+                          "local_frame", "physical_strip_020_023",
+                          "line_chord_020"):
         raise ValueError("unknown bounded shell pose port")
     if shell_support_policy not in ("legacy_three_left_nodes",
                                     "full_left_edge", "both_xy_edges"):
@@ -249,7 +264,8 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                 "local_frame": pose_from_e4_total_local_frame,
                 "physical_strip_020_023": lambda p, s, u: (
                     pose_from_e4_total_strip(
-                        p, s, u, half_length=.2, half_width=.23))}[shell_port]
+                        p, s, u, half_length=.2, half_width=.23)),
+                "line_chord_020": pose_from_e4_total_chord}[shell_port]
     reference_trace = {
         "rail": reference_spatial_trace,
         "local_translation": reference_spatial_trace_local_translation,
@@ -257,7 +273,8 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
         "local_frame": reference_spatial_trace_local_frame,
         "physical_strip_020_023": lambda p, s: (
             reference_spatial_trace_strip(
-                p, s, half_length=.2, half_width=.23))}[shell_port]
+                p, s, half_length=.2, half_width=.23)),
+        "line_chord_020": reference_spatial_trace_chord}[shell_port]
     if type(order) is not int or order not in (2, 3, 4, 5):
         raise ValueError("bounded Gauss order 2 through 5 required")
     edges = segments(shell, beam, space, shell_port=shell_port)

@@ -9,13 +9,15 @@ from scripts._b3_e4_f03_coupled_point_work_candidate import directional_point_wo
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import pose_from_e4_total
+from scripts._b3_e4_f03_shell_chord_pose_candidate import pose_from_e4_total_chord
 from scripts._b3_e4_f03_shell_trace import make_shell
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
 @pytest.mark.parametrize("eccentricity", (0., .11))
+@pytest.mark.parametrize("shell_port", ("rail", "line_chord_020"))
 def test_composed_point_work_first_and_mixed_second_variations(
-        topology, eccentricity):
+        topology, eccentricity, shell_port):
     shell = make_shell(2, topology)
     beam = build(4)
     station = .37
@@ -23,7 +25,9 @@ def test_composed_point_work_first_and_mixed_second_variations(
     port = NativeHalfCellSpatialPort(beam.context, element, cell, weight)
     reference_shell = np.zeros((shell.node_count, 6))
     reference_shell[:, 2] = -eccentricity
-    shell_ref = pose_from_e4_total(shell, station, reference_shell.ravel())
+    pose_map = {"rail": pose_from_e4_total,
+                "line_chord_020": pose_from_e4_total_chord}[shell_port]
+    shell_ref = pose_map(shell, station, reference_shell.ravel())
     beam_high, beam_low, beam_frame = port.pose_pair(
         beam.context.initial.mechanical)
     joint = RigidPoseJoint(
@@ -58,11 +62,12 @@ def test_composed_point_work_first_and_mixed_second_variations(
     force = np.array((18., -23., 31., 7., -11., 13.))
     analytic = directional_point_work(
         joint, shell, station, shell_base.ravel(), shell_first,
-        shell_second, port, base_state, beam_first, beam_second, force)
+        shell_second, port, base_state, beam_first, beam_second, force,
+        shell_port=shell_port)
 
     def potential(a, b):
         current_shell = shell_base+a*shell_first+b*shell_second
-        shell_position, shell_frame = pose_from_e4_total(
+        shell_position, shell_frame = pose_map(
             shell, station, current_shell.ravel())
         current_beam = beam.context.advance(
             base_state, a*beam_first+b*beam_second)

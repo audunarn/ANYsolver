@@ -1,5 +1,54 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**Current state, 25 September 2026 — decision sought:** Determine whether a
+declared zero-transverse-width *line-tangent/director* bond can represent
+the required nonmatching six-channel line, or whether physical full-pose
+bonding needs a finite footprint. A fixed `0.20 m` half-chord on the shell
+material line avoids the local polar pose's unbounded normal-gradient yaw:
+its *integrated linear weak law* uses shifted displacement traces, which
+are bounded by the shell H1 trace norm for a fixed nonzero chord. The
+individual point pose is not claimed H1-continuous. This candidate is
+distinct from the finite `0.20×0.23 m` half-width strip, classical axial
+comparator and historical Q6/finite-pad reference.
+
+**Established development facts:** The chord port passes Q4/S3 rigid-motion,
+actual-chart first/mixed-second, eccentric point and weak-line work, shear
+preservation and loaded balance checks without a shell `rz` contribution.
+On fixed Q4 x8/y4, beam-8, P0-4, native/independent tip yaw is
+`3.905/3.713 µrad`, transverse tip z `47.809/50.865 µm` and beam-axis
+torsion `16.179/15.636 µrad`; S3 follows the same trends. These are
+matched bounded elastic diagnostics, not qualification. Pure in-plane
+shear exposes the decisive model distinction: for `uy=γx`, chord yaw is
+`γ` while area-polar strip yaw is `γ/2`; for `ux=γy`, chord yaw is zero
+while strip yaw is `−γ/2`. Therefore neither may be substituted for the
+other or called the canonical bond without a physical connection choice.
+
+**Interface and next action:** Exact retained-coordinate decomposition
+agrees with the full signed native interface action to about `2.3e-12`;
+the reduced physical stiffness is positive on the bounded cases. All
+tested P0/P1/dual six-channel rows are independent, yet Q4 P0 transverse
+`Fz/Mx/My` algorithmic quotient drops `2.74→0.678→0.080` for line
+intervals 2→4→8 at fixed shell-8/beam-8. Its fine mode is almost pure
+alternating `Fz`, while the overall weakest mode is axial. Beam-16 raises
+the P0-8 transverse value to `0.203`; at P0-4/beam-16, shell x-intervals
+2→4→8 give `0.729/0.809/0.761`. These are finite-model, E4-completion-
+inclusive norm diagnostics, not continuum inf-sup or a space selection.
+Next compare the *declared physical shear and termination meaning* of the
+line-tangent law with a resolved reference, then run the required ratio and
+mode qualification only for a mechanically defensible law. If the desired
+bond requires area-polar yaw, retain the strip as a footprint candidate
+and make the line-scope decision explicit; do not relabel it. No further
+classical axial refinement is justified by this batch. Formal F03 authority
+remains unconsumed, G0B open and G1 barred.
+
+**Checks:** New chord pose cases passed `4/4`, loaded/weak cases `2/2`,
+mode decomposition `1/1`, shear distinction `2/2`, eccentric point cases
+`8/8`, independent chord case `1/1`, and selected segmented weak-line
+mixed-derivative cases `4/4` by direct single-thread invocation. Existing
+rail/local cases were included. The focused pytest runner remained
+CPU-active without output for about two minutes and was stopped; it is
+incomplete, not a pass. No product source or protected evidence changed.
+
 **Current decision, 25 September 2026:** Keep the strict zero-width
 six-channel line unselected. A distinct finite `0.20 m` longitudinal by
 `0.23 m` transverse *half-width* material strip now has objective Q4/S3
