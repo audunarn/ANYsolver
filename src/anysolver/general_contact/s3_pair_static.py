@@ -17,20 +17,22 @@ from .s3_skin_work import S3SkinWorkAdapter
 from .triangle_pair_energy import MovingS3PairPenalty
 
 
-PROFILE = "S3_S3_GENERAL_NODAL_POINTWISE_PENALTY_STATIC_DEV_V0"
+POINTWISE_PROFILE = "S3_S3_GENERAL_NODAL_POINTWISE_PENALTY_STATIC_DEV_V0"
+MORTAR_PROFILE = "S3_S3_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 
 
 def validate_general_s3_pair(model, definition: ContactDefinition,
                              settings: ContactSolverSettings) -> ContactValidationReport:
+    profile = (MORTAR_PROFILE if settings.normal_discretization == "primal_mortar"
+               else POINTWISE_PROFILE)
     issues: list[str] = []
     if tuple(map(len, (definition.surfaces, definition.rigid_bodies,
                        definition.interactions))) != (2, 0, 1):
         return ContactValidationReport("invalid", (
             "general S3 pair needs two shell surfaces and one interaction",
-        ), PROFILE)
-    if (settings.pair_motion != "general"
-            or settings.normal_discretization != "pointwise_penalty"):
-        issues.append("general S3 pair needs general pointwise-penalty settings")
+        ), profile)
+    if settings.pair_motion != "general":
+        issues.append("general S3 pair needs pair_motion='general'")
     if settings.general_s3_difference_step is None:
         issues.append("general S3 pair needs explicit general_s3_difference_step")
     if settings.sliding_difference_step is not None:
@@ -77,7 +79,10 @@ def validate_general_s3_pair(model, definition: ContactDefinition,
         try:
             a = S3SkinWorkAdapter.from_model(model, 1, source.element_ids[0], source.side)
             b = S3SkinWorkAdapter.from_model(model, 2, target.element_ids[0], target.side)
-            MovingS3PairPenalty(
+            law_type = (MovingS3PairPenalty
+                        if settings.normal_discretization == "pointwise_penalty"
+                        else _mortar_law_type())
+            law_type(
                 a.reference_positions, b.reference_positions,
                 interaction.normal_stiffness,
                 difference_step=settings.general_s3_difference_step,
@@ -101,7 +106,13 @@ def validate_general_s3_pair(model, definition: ContactDefinition,
                 issues.append(f"surface {target.name}: physical side faces away from source")
         except ValueError as exc:
             issues.append(str(exc))
-    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE)
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
+
+
+def _mortar_law_type():
+    from .triangle_mortar_energy import MovingS3PrimalMortarPenalty
+
+    return MovingS3PrimalMortarPenalty
 
 
 def _normal(positions: np.ndarray) -> np.ndarray:
@@ -165,20 +176,32 @@ class _Results:
     sampled_overlap_gap: float | None
     penalty_energy: float
     overlap_area: float
-    active_area: float
+    active_area: float | None
     integration_force: tuple[float, float, float]
     target_force: tuple[float, float, float]
     integration_moment: tuple[float, float, float]
     target_moment: tuple[float, float, float]
     gap_tolerance_met: bool
     energy_evaluations: int
+    active_pressure_dofs: int | None
+    normalized_weighted_gap_m: tuple[float, ...] | None
+    numerical_pressure_pa: tuple[float, ...] | None
+    reference_support_m2: tuple[float, ...] | None
 
     def to_dict(self):
         return dict(vars(self), integration_force=list(self.integration_force),
                     target_force=list(self.target_force),
                     integration_moment=list(self.integration_moment),
                     target_moment=list(self.target_moment),
-                    active_pressure_dofs=None)
+                    normalized_weighted_gap_m=(
+                        None if self.normalized_weighted_gap_m is None
+                        else list(self.normalized_weighted_gap_m)),
+                    numerical_pressure_pa=(
+                        None if self.numerical_pressure_pa is None
+                        else list(self.numerical_pressure_pa)),
+                    reference_support_m2=(
+                        None if self.reference_support_m2 is None
+                        else list(self.reference_support_m2)))
 
 
 class GeneralS3PairManager:
@@ -190,7 +213,7 @@ class GeneralS3PairManager:
         if not report.valid:
             raise ValueError("unsupported general S3 pair: " + "; ".join(report.issues))
         self.definition = definition
-        self.profile = PROFILE
+        self.profile = report.profile
         interaction = definition.interactions[0]
         names = {surface.name: surface for surface in definition.surfaces}
         selected = (names[interaction.surface], names[interaction.target])
@@ -202,7 +225,10 @@ class GeneralS3PairManager:
         self.stiffness = interaction.normal_stiffness
         self.gap_tolerance = interaction.gap_tolerance
         self.swept_trial_cutbacks = 0
-        self.law = MovingS3PairPenalty(
+        law_type = (MovingS3PairPenalty
+                    if self.settings.normal_discretization == "pointwise_penalty"
+                    else _mortar_law_type())
+        self.law = law_type(
             self.adapters[0].reference_positions,
             self.adapters[1].reference_positions,
             self.stiffness,
@@ -239,12 +265,19 @@ class GeneralS3PairManager:
         fa, fb = np.sum(physical[:3], axis=0), np.sum(physical[3:], axis=0)
         ma = np.sum(np.cross(a, physical[:3]), axis=0)
         mb = np.sum(np.cross(b, physical[3:]), axis=0)
+        mortar = self.settings.normal_discretization == "primal_mortar"
         results = _Results(
-            self.profile, lower, energy.minimum_gap, energy.energy,
-            energy.overlap_area, energy.active_area,
+            self.profile, lower,
+            energy.minimum_physical_gap if mortar else energy.minimum_gap,
+            energy.energy, energy.overlap_area,
+            None if mortar else energy.active_area,
             tuple(map(float, fa)), tuple(map(float, fb)),
             tuple(map(float, ma)), tuple(map(float, mb)),
             lower >= -self.gap_tolerance, evaluations,
+            energy.active_pressure_dofs if mortar else None,
+            tuple(map(float, energy.normalized_gap)) if mortar else None,
+            tuple(map(float, energy.pressure)) if mortar else None,
+            tuple(map(float, energy.reference_support)) if mortar else None,
         )
         return force, stiffness, results
 

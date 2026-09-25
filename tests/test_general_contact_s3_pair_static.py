@@ -17,7 +17,8 @@ from anysolver.general_contact.s3_pair_static import (
 )
 
 
-def _case(*, gap_tolerance=0.011, maximum_swept_subdivisions=14):
+def _case(*, gap_tolerance=0.011, maximum_swept_subdivisions=14,
+          normal_discretization="pointwise_penalty"):
     model = FEModel("general_s3_pair")
     model.add_material("elastic", 1e5, 0.3, density=1.0)
     source = ((0.4, 0.2, 0.065), (0.9, 0.2, 0.065),
@@ -41,15 +42,16 @@ def _case(*, gap_tolerance=0.011, maximum_swept_subdivisions=14):
         ),),
     )
     settings = ContactSolverSettings(
-        pair_motion="general", normal_discretization="pointwise_penalty",
+        pair_motion="general", normal_discretization=normal_discretization,
         general_s3_difference_step=2e-5,
         maximum_swept_subdivisions=maximum_swept_subdivisions,
     )
     return model, definition, settings
 
 
-def test_general_s3_pair_maps_nonuniform_skin_work_and_restart_identity():
-    model, definition, settings = _case()
+@pytest.mark.parametrize("discretization", ("pointwise_penalty", "primal_mortar"))
+def test_general_s3_pair_maps_nonuniform_skin_work_and_restart_identity(discretization):
+    model, definition, settings = _case(normal_discretization=discretization)
     report = validate_general_contact(model, definition, settings)
     assert report.valid, report.issues
     manager = GeneralS3PairManager(model, definition, settings)
@@ -69,6 +71,11 @@ def test_general_s3_pair_maps_nonuniform_skin_work_and_restart_identity():
                                + np.array(result.target_moment), 0.0, atol=1e-8)
     assert np.linalg.norm(force) > 0.0
     assert manager.restart_contract()["settings"]["general_s3_difference_step"] == 2e-5
+    if discretization == "primal_mortar":
+        assert result.active_pressure_dofs == 3
+        assert len(result.normalized_weighted_gap_m) == 3
+        assert all(item > 0.0 for item in result.reference_support_m2)
+        assert result.sampled_overlap_gap is not None
 
 
 def test_general_s3_swept_bound_catches_crossing():
@@ -116,8 +123,11 @@ def test_general_s3_manager_cuts_back_through_crossing():
                                               0.0, fraction)
 
 
-def test_general_s3_coupled_displacement_and_restart():
-    model, definition, settings = _case(gap_tolerance=0.02)
+@pytest.mark.parametrize("discretization", ("pointwise_penalty", "primal_mortar"))
+def test_general_s3_coupled_displacement_and_restart(discretization):
+    model, definition, settings = _case(
+        gap_tolerance=0.02, normal_discretization=discretization,
+    )
     model.add_boundary_condition(BoundaryCondition(
         "target_fixed", (4, 5, 6),
         {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
@@ -153,7 +163,7 @@ def test_general_s3_coupled_displacement_and_restart():
     np.testing.assert_allclose(resumed.displacements, full.displacements,
                                rtol=1e-7, atol=1e-9)
     changed = ContactSolverSettings(
-        pair_motion="general", normal_discretization="pointwise_penalty",
+        pair_motion="general", normal_discretization=discretization,
         general_s3_difference_step=1e-5,
     )
     with pytest.raises(ValueError, match="analysis contract is incompatible"):

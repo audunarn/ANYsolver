@@ -44,7 +44,7 @@ def main():
         ),),
     )
     settings = ContactSolverSettings(
-        pair_motion="general", normal_discretization="pointwise_penalty",
+        pair_motion="general", normal_discretization="primal_mortar",
         general_s3_difference_step=2.0e-5,
     )
     report = validate_general_contact(model, definition, settings)
@@ -70,6 +70,8 @@ def main():
         "target_force_N": summary["target_force"],
         "conservative_gap_m": summary["minimum_gap"],
         "gap_tolerance_met": summary["gap_tolerance_met"],
+        "normalized_weighted_gap_m": summary["normalized_weighted_gap_m"],
+        "numerical_pressure_pa": summary["numerical_pressure_pa"],
         "restart_schema_version": result.restart_checkpoint["version"],
     }, indent=2))
 

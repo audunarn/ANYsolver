@@ -2,8 +2,10 @@
 
 `MovingS3PairPenalty` in `triangle_pair_energy.py` is an internal verification
 specialization for two explicitly supplied physical S3 triangles. Each of
-their six nodes may translate independently. It is not admitted by
-`solve_static_nonlinear` and is not the selected primal-pressure mortar law.
+their six nodes may translate independently. The distinct development static
+route in [GENERAL_CONTACT_C1_GENERAL_S3_STATIC.md](GENERAL_CONTACT_C1_GENERAL_S3_STATIC.md)
+now composes this kernel with physical S3 skin work maps. Neither the kernel
+nor that route is the selected primal-pressure mortar law.
 
 For current source and target positions projected along the current source
 normal, the kernel clips their common triangle overlap at the affine normal
@@ -26,8 +28,8 @@ that same energy by centered differences with an explicit dimensional step
 and a finite evaluation budget. Current face inversion, conflicting
 polarity, overlap/contact branch changes and coincident-edge derivative
 kinks fail explicitly. These checks do not certify every possible projection
-branch switch. Swept crossing, a shell static analysis owner, restart and Q4
-bilinear geometry are not yet connected.
+branch switch. The separate static development owner adds conservative swept
+control and restart; Q4 bilinear geometry remains unimplemented in this route.
 
 `tests/test_general_contact_triangle_pair_energy.py` covers an independent
 constant-gap reference-area integral, exact partial-contact affine-gap
@@ -52,6 +54,6 @@ elements. It checks formulation-owned top/middle/bottom positions against a
 separate geometry adapter, nonzero offset couples, drill invariance, global
 virtual work and a smooth directional tangent at relative error at most
 `1e-5`. Together with the energy tests, seven checks passed in
-`c1-s3-skin-energy-final1.txt`. This still lacks a nonlinear static contact
-owner, swept path admission and checkpoint; the adapter alone does not make
-general nodal sliding publicly available.
+`c1-s3-skin-energy-final1.txt`. The adapter alone does not admit a contact
+solve; the separate S3 static development profile now connects it to the
+nonlinear owner, with its own validation and limitations.
