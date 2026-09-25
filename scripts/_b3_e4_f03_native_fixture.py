@@ -174,13 +174,18 @@ def _sparse_native_assembly(context):
     return residual, tangent
 
 
-def build(n_half_cells: int, *, z_offset: float = 0.) -> Fixture:
+def build(n_half_cells: int, *, z_offset: float = 0.,
+          torsion_constant: float | None = None) -> Fixture:
     """Construct and assemble an actual virgin elastic retained B3 chain."""
     if type(n_half_cells) is not int or n_half_cells not in (4, 8, 16, 32):
         raise ValueError('n_half_cells must be exactly 4, 8, 16, or 32')
     if (isinstance(z_offset, bool) or not np.isfinite(z_offset) or
             not -.2 <= z_offset <= .2):
         raise ValueError('bounded finite native beam reference offset required')
+    if torsion_constant is not None and (
+            isinstance(torsion_constant, bool) or
+            not np.isfinite(torsion_constant) or torsion_constant <= 0.):
+        raise ValueError('positive finite physical torsion constant required')
     n_elements = n_half_cells // 2
     h = 1 / n_half_cells
     name = f'f03-native-virgin-{n_half_cells}'
@@ -189,7 +194,10 @@ def build(n_half_cells: int, *, z_offset: float = 0.) -> Fixture:
     model = FEModel(name)
     for node in range(n_half_cells + 1):
         model.add_node(node + 1, node*h, 0., z_offset)
-    section = EllipsoidalGeneralizedSection(np.diag(SECTION_DIAGONAL), np.eye(6),
+    section_diagonal = SECTION_DIAGONAL.copy()
+    if torsion_constant is not None:
+        section_diagonal[3] = G * torsion_constant
+    section = EllipsoidalGeneralizedSection(np.diag(section_diagonal), np.eye(6),
                                            1e20, 1e9)
     for element in range(n_elements):
         ids = (2*element+1, 2*element+2, 2*element+3)

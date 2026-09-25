@@ -20,6 +20,22 @@ from scripts._b3_e4_f03_native_spatial_port import (NativeHalfCellSpatialPort,
                                                      NativeNodalSpatialPort)
 
 
+def test_reference_fixture_can_match_square_bar_torsion_without_changing_other_laws():
+    original = build(4)
+    square_j = 1.40577014955e-5
+    matched = build(4, z_offset=.085, torsion_constant=square_j)
+    original_section = next(iter(original.model.mesh.elements.values())).section
+    matched_section = next(iter(matched.model.mesh.elements.values())).section
+    np.testing.assert_array_equal(np.diag(original_section.elastic), SECTION_DIAGONAL)
+    np.testing.assert_array_equal(np.diag(matched_section.elastic)[[0, 1, 2, 4, 5]],
+                                  SECTION_DIAGONAL[[0, 1, 2, 4, 5]])
+    assert matched_section.elastic[3, 3] == pytest.approx(
+        SECTION_DIAGONAL[3] * square_j / (2 * 8.333333333333333e-6))
+    assert matched.dense_oracle_max_error < 1e-9
+    with pytest.raises(ValueError, match="torsion constant"):
+        build(4, torsion_constant=0.)
+
+
 def _curved_context():
     model = FEModel("f03-curved-pre-rotated-station-port")
     coordinates, frames = [], []
