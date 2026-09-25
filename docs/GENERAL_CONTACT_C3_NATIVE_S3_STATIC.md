@@ -33,10 +33,17 @@ this sufficient certificate; the owner never flips the physical side.
 
 Every structural/contact candidate evaluates from the last accepted native
 material history. The owner stores a new history only after coupled equilibrium
-and endpoint gap pass. A failed solve returns the prior accepted state. There
-is no restart schema yet; no failure or cancellation recovery beyond this
-in-memory transaction is claimed. The current result reports the contact
-kernel's forces, moments, gap and integration counters, plus retained native
+and endpoint gap pass. A failed solve returns the prior accepted state and
+checkpoint. `NATIVE_B3_GE_ELASTIC_S3_CHECKPOINT_DEV_V1` binds the native model,
+program and supports; S3 formulation, material, geometry, supports and physical
+skin work; contact definition; and numerical settings. Its accepted record
+chain contains native mechanical/material states, S3 displacement and a
+recomputed contact summary. Restore checks external and internal hashes,
+canonical form, record order and full coupled physical replay from each prior
+committed material origin. It supports split continuation through activation.
+There is no cancellation or arbitrary callback restart contract yet. The
+current result reports the contact kernel's forces, moments, gap and
+integration counters, plus retained native
 and shell displacement states. It is not a supported public contact route.
 
 `examples/general_contact_native_s3_static.py` is the runnable development
@@ -45,5 +52,8 @@ native internal contact work and shell displacement. Focused checks cover
 coupled equilibrium, action/reaction, the assembled cross tangent, a curved
 retained-cell result, initial interference, unsupported shell material and
 mechanism rejection, definition mutation, and failed-solve rollback. These
-are local Level-A checks. Independent C3 acceptance still requires broader
-geometry/pairing, restart, prescribed motion, refinement and review.
+include byte-identical one-shot versus split restart, wrong-model and forged
+summary rejection, and preservation of an accepted checkpoint after a later
+failed increment. These are local Level-A checks. Independent C3 acceptance
+still requires broader geometry/pairing, prescribed motion, refinement and
+review of restart and path rules.

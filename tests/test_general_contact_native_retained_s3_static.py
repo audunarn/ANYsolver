@@ -1,5 +1,8 @@
 """Restricted coupled native B3-GE and deformable S3 static development."""
 
+from hashlib import sha256
+import json
+
 import numpy as np
 import pytest
 
@@ -8,7 +11,7 @@ from anysolver._ge_beam3_native_definition import NativeBeamDefinition
 from anysolver._ge_beam3_native_generalized_loading import DistributedPattern
 from anysolver._ge_beam3_native_line_loading import LinePattern
 from anysolver._ge_beam3_retained_nodal_loading import NodalDeadForces, Program
-from anysolver._ge_beam3_p5_seeded.core import sha
+from anysolver._ge_beam3_p5_seeded.core import canonical, sha
 from anysolver.boundary import BoundaryCondition, FixedSupport
 from anysolver.fe_core import FEModel
 from anysolver.general_contact.native_retained_line_s3 import (
@@ -27,12 +30,12 @@ from test_ge_beam3_native_generalized_modal import make
 
 def _analysis(*, force=-0.01, iterations=24, shell_z=-0.051,
               shell_elastic_modulus=1e5, shell_yield_stress=0.0,
-              curved=False, shell_supports=True):
+              curved=False, shell_supports=True, targets=(1.0,)):
     native_model, _, inertias = make(curved, clamped=True)
     native_element = native_model.mesh.elements[1]
     definition = NativeBeamDefinition.capture(native_element, inertias[1])
     program = Program(
-        (1.0,), DistributedPattern(LinePattern(()), ()),
+        targets, DistributedPattern(LinePattern(()), ()),
         NodalDeadForces(((3, 0.0, 0.0, float(force)),)),
         max_iterations=iterations,
     )
@@ -158,3 +161,68 @@ def test_unsupported_shell_material_mechanism_and_mutation_fail():
         owner._assemble(owner.initial.mechanical,
                         owner.initial.shell_displacement, 0.0,
                         owner.initial.native_histories)
+
+
+def test_split_restart_replays_native_and_shell_accepted_state():
+    targets = (0.5, 1.0)
+    full = _analysis(curved=True, targets=targets).solve()
+    assert full.status == "completed", full.failure
+    prefix = _analysis(curved=True, targets=targets).solve(stop_after=1)
+    assert prefix.status == "paused", prefix.failure
+    assert prefix.accepted.completed_targets == 1
+    resumed = _analysis(curved=True, targets=targets).solve(
+        checkpoint=prefix.checkpoint,
+        expected_sha256=prefix.checkpoint_sha256,
+    )
+    assert resumed.status == "completed", resumed.failure
+    assert resumed.checkpoint == full.checkpoint
+    np.testing.assert_array_equal(resumed.accepted.shell_displacement,
+                                  full.accepted.shell_displacement)
+    np.testing.assert_array_equal(resumed.accepted.mechanical.positions,
+                                  full.accepted.mechanical.positions)
+    assert sha(resumed.accepted.native_histories) == sha(full.accepted.native_histories)
+    assert resumed.accepted.contact.contact.potential_j == full.accepted.contact.contact.potential_j
+
+
+def test_wrong_model_and_rehashed_checkpoint_tampering_rejected():
+    prefix = _analysis(targets=(0.5, 1.0)).solve(stop_after=1)
+    assert prefix.status == "paused", prefix.failure
+    with pytest.raises(ValueError, match="definition/settings binding"):
+        _analysis(targets=(0.5, 1.0), shell_elastic_modulus=2e5).solve(
+            checkpoint=prefix.checkpoint,
+            expected_sha256=prefix.checkpoint_sha256,
+        )
+    broken = bytearray(prefix.checkpoint)
+    broken[-2] = ord("0") if broken[-2] != ord("0") else ord("1")
+    with pytest.raises(ValueError, match="external checkpoint hash mismatch"):
+        _analysis(targets=(0.5, 1.0)).solve(
+            checkpoint=bytes(broken),
+            expected_sha256=prefix.checkpoint_sha256,
+        )
+    value = json.loads(prefix.checkpoint)
+    value["records"][0]["contact"]["potential_j"] += 1e-6
+    body = {key: item for key, item in value.items()
+            if key != "checkpoint_sha256"}
+    value["checkpoint_sha256"] = sha(body)
+    forged = canonical(value)
+    with pytest.raises(ValueError, match="physical replay mismatch"):
+        _analysis(targets=(0.5, 1.0)).solve(
+            checkpoint=forged,
+            expected_sha256=sha256(forged).hexdigest(),
+        )
+
+
+def test_second_increment_failure_returns_accepted_checkpoint_prefix():
+    owner = _analysis(targets=(0.0, 1.0), iterations=1)
+    run = owner.solve()
+    assert run.status == "failed"
+    assert run.accepted.completed_targets == 1
+    restored = _analysis(targets=(0.0, 1.0), iterations=1).solve(
+        checkpoint=run.checkpoint,
+        expected_sha256=run.checkpoint_sha256,
+        stop_after=1,
+    )
+    assert restored.status == "paused", restored.failure
+    assert restored.checkpoint == run.checkpoint
+    np.testing.assert_array_equal(restored.accepted.shell_displacement,
+                                  run.accepted.shell_displacement)

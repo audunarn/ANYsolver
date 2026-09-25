@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 from math import isfinite
 
 import numpy as np
@@ -16,7 +17,8 @@ from anysolver._ge_beam3_retained_nodal_loading import (
     Context as NativeNodalContext,
     Program as NativeNodalProgram,
 )
-from anysolver._ge_beam3_p5_seeded.core import sha
+from anysolver._ge_beam3_p5_seeded.core import canonical, sha
+from anysolver._ge_beam3_p5_seeded.codec import MAX_BYTES, _load
 from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 from anysolver.fe_core import FEModel
 
@@ -28,7 +30,8 @@ from .native_retained_station import _readonly
 from .s3_skin_work import S3SkinWorkAdapter
 
 
-PROFILE = "NATIVE_B3_GE_ELASTIC_S3_INTERIOR_STATIC_DEV_V0"
+PROFILE = "NATIVE_B3_GE_ELASTIC_S3_INTERIOR_STATIC_DEV_V1"
+CHECKPOINT_SCHEMA = "NATIVE_B3_GE_ELASTIC_S3_CHECKPOINT_DEV_V1"
 
 
 @dataclass(frozen=True)
@@ -45,7 +48,12 @@ class NativeRetainedS3Run:
     status: str
     accepted: NativeRetainedS3Accepted
     failure: str | None
+    checkpoint: bytes
     profile: str = PROFILE
+
+    @property
+    def checkpoint_sha256(self) -> str:
+        return sha256(self.checkpoint).hexdigest()
 
 
 class NativeRetainedRoundS3Analysis:
@@ -89,6 +97,7 @@ class NativeRetainedRoundS3Analysis:
         self.maximum_swept_intervals = maximum_swept_intervals
         self.shell_stiffness, self.shell_free, self.shell_fixed = self._shell_contract()
         self.shell_contract_sha = self._shell_contract_sha()
+        self.identity = self._identity()
         displacement = np.zeros(self.shell_stiffness.shape[0])
         initial_native = self.context.initial
         first = self._contact(initial_native.mechanical, displacement)
@@ -101,6 +110,18 @@ class NativeRetainedRoundS3Analysis:
             initial_native.mechanical, initial_native.histories,
             _readonly(displacement), 0, first,
         )
+
+    def _identity(self) -> str:
+        return sha(dict(
+            profile=PROFILE,
+            native_model=self.context.identity,
+            native_support_sha256=sha256(self.context.support_identity).hexdigest(),
+            shell_contract=self.shell_contract_sha,
+            contact=self.contact.identity,
+            gap_tolerance_m=self.gap_tolerance,
+            equilibrium_tolerance=self.equilibrium_tolerance,
+            maximum_swept_intervals=self.maximum_swept_intervals,
+        ))
 
     def _shell_contract(self):
         model = self.shell_model
@@ -172,8 +193,123 @@ class NativeRetainedRoundS3Analysis:
 
     def _guard(self):
         self.context.guard()
+        if self._identity() != self.identity:
+            raise ValueError("native/S3 definition/settings changed")
         if self._shell_contract_sha() != self.shell_contract_sha:
             raise ValueError("native/S3 shell model/contact definition changed")
+        self.native._guard()
+
+    def _record(self, target: int, mechanical, displacement, origins,
+                previous_sha256: str):
+        if type(target) is not int or not 1 <= target <= len(self.program.targets):
+            raise ValueError("native/S3 checkpoint target")
+        mechanical = self.context.make(mechanical.descriptor())
+        shell_u = np.asarray(displacement, dtype=float).reshape(-1)
+        if (shell_u.size != self.shell_stiffness.shape[0]
+                or not np.all(np.isfinite(shell_u))
+                or np.any(shell_u[self.shell_fixed] != 0.0)):
+            raise ValueError("native/S3 checkpoint shell displacement")
+        residual, tangent, metrics, responses, contact = self._assemble(
+            mechanical, shell_u, self.program.targets[target-1], origins,
+        )
+        _, correction = self._step(residual, tangent)
+        if max(*metrics, correction) > self.equilibrium_tolerance:
+            raise ValueError("native/S3 checkpoint requires coupled equilibrium")
+        if contact.contact.minimum_gap_m < -self.gap_tolerance:
+            raise ValueError("native/S3 checkpoint gap tolerance")
+        histories = self.context.histories(
+            tuple(response.history for response in responses)
+        )
+        physical = contact.contact
+        summary = dict(
+            potential_j=physical.potential_j,
+            minimum_gap_m=physical.minimum_gap_m,
+            minimum_rim_clearance_m=physical.minimum_rim_clearance_m,
+            beam_force_n=physical.beam_force_n,
+            shell_force_n=physical.shell_force_n,
+            beam_moment_nm=physical.beam_moment_nm,
+            shell_moment_nm=physical.shell_moment_nm,
+            active_intervals=physical.active_intervals,
+            integration_intervals=physical.integration_intervals,
+            integration_evaluations=physical.integration_evaluations,
+            energy_error_j=physical.energy_error_j,
+            force_error_n=physical.force_error_n,
+            tangent_error_n_per_m=physical.tangent_error_n_per_m,
+        )
+        row = dict(
+            target=target, previous_sha256=previous_sha256,
+            mechanical=mechanical.descriptor(),
+            histories=histories, shell_displacement=shell_u,
+            contact=summary,
+        )
+        accepted = NativeRetainedS3Accepted(
+            mechanical, histories, _readonly(shell_u), target, contact,
+        )
+        return accepted, _load(canonical(row).decode("ascii"))
+
+    def _checkpoint(self, records: tuple[dict, ...]) -> bytes:
+        self._guard()
+        if type(records) is not tuple or len(records) > len(self.program.targets):
+            raise ValueError("native/S3 checkpoint record extent")
+        body = dict(schema=CHECKPOINT_SCHEMA, profile=PROFILE,
+                    identity=self.identity, completed_targets=len(records),
+                    records=records)
+        raw = canonical({**body, "checkpoint_sha256": sha(body)})
+        if len(raw) > MAX_BYTES:
+            raise ValueError("native/S3 checkpoint byte limit")
+        return raw
+
+    def _restore(self, raw: bytes, expected_sha256: str):
+        self._guard()
+        if (type(raw) is not bytes or type(expected_sha256) is not str
+                or sha256(raw).hexdigest() != expected_sha256):
+            raise ValueError("native/S3 external checkpoint hash mismatch")
+        value = _load(raw.decode("ascii"))
+        keys = {"schema", "profile", "identity", "completed_targets",
+                "records", "checkpoint_sha256"}
+        if type(value) is not dict or set(value) != keys:
+            raise ValueError("native/S3 checkpoint schema")
+        body = {key: item for key, item in value.items()
+                if key != "checkpoint_sha256"}
+        if (value["schema"] != CHECKPOINT_SCHEMA
+                or value["profile"] != PROFILE
+                or value["identity"] != self.identity
+                or value["checkpoint_sha256"] != sha(body)):
+            raise ValueError("native/S3 checkpoint definition/settings binding")
+        count = value["completed_targets"]
+        if (type(count) is not int or not 0 <= count <= len(self.program.targets)
+                or type(value["records"]) is not list
+                or len(value["records"]) != count):
+            raise ValueError("native/S3 checkpoint target extent")
+        accepted = self.initial
+        previous = sha(dict(schema=CHECKPOINT_SCHEMA, identity=self.identity))
+        records = ()
+        for index, row in enumerate(value["records"], 1):
+            if (type(row) is not dict or set(row) !=
+                    {"target", "previous_sha256", "mechanical", "histories",
+                     "shell_displacement", "contact"}
+                    or row["target"] != index
+                    or row["previous_sha256"] != previous):
+                raise ValueError("native/S3 checkpoint accepted chain")
+            mechanical = self.context.make(row["mechanical"], decoded=True)
+            values = row["shell_displacement"]
+            if (type(values) is not list
+                    or len(values) != self.shell_stiffness.shape[0]
+                    or any(type(item) is not float or not isfinite(item)
+                           for item in values)):
+                raise ValueError("native/S3 checkpoint shell displacement schema")
+            proposed, replay = self._record(
+                index, mechanical, np.array(values),
+                accepted.native_histories, previous,
+            )
+            if canonical(row) != canonical(replay):
+                raise ValueError("native/S3 checkpoint physical replay mismatch")
+            accepted = proposed
+            records = (*records, replay)
+            previous = sha(replay)
+        if self._checkpoint(records) != raw:
+            raise ValueError("native/S3 noncanonical checkpoint replay")
+        return accepted, records
 
     def _contact(self, mechanical, displacement):
         nodes = self.context.nodes[0]
@@ -337,10 +473,25 @@ class NativeRetainedRoundS3Analysis:
                           (t, right, gap, lower_right, rim, rim_right)))
         return True
 
-    def solve(self) -> NativeRetainedS3Run:
-        accepted = self.initial
+    def solve(self, *, checkpoint: bytes | None = None,
+              expected_sha256: str | None = None,
+              stop_after: int | None = None) -> NativeRetainedS3Run:
+        end = len(self.program.targets) if stop_after is None else stop_after
+        if type(end) is not int or not 0 <= end <= len(self.program.targets):
+            raise ValueError("native/S3 bounded stop target")
+        if checkpoint is None:
+            if expected_sha256 is not None:
+                raise ValueError("native/S3 hash requires checkpoint")
+            accepted, records = self.initial, ()
+            capsule = self._checkpoint(records)
+        else:
+            accepted, records = self._restore(checkpoint, expected_sha256)
+            capsule = checkpoint
+        if accepted.completed_targets > end:
+            raise ValueError("native/S3 accepted target cannot rewind")
         try:
-            for index, parameter in enumerate(self.program.targets):
+            for index in range(accepted.completed_targets, end):
+                parameter = self.program.targets[index]
                 trial = accepted.mechanical
                 u = accepted.shell_displacement.copy()
                 origins = accepted.native_histories
@@ -352,12 +503,15 @@ class NativeRetainedRoundS3Analysis:
                     if max(*metrics, correction) <= self.equilibrium_tolerance:
                         if contact.contact.minimum_gap_m < -self.gap_tolerance:
                             raise RuntimeError("native/S3 endpoint gap tolerance not met")
-                        histories = self.context.histories(
-                            tuple(response.history for response in responses)
+                        previous = (sha(records[-1]) if records else sha(dict(
+                            schema=CHECKPOINT_SCHEMA, identity=self.identity,
+                        )))
+                        proposed, record = self._record(
+                            index+1, trial, u, origins, previous,
                         )
-                        accepted = NativeRetainedS3Accepted(
-                            trial, histories, _readonly(u), index+1, contact,
-                        )
+                        next_records = (*records, record)
+                        staged = self._checkpoint(next_records)
+                        accepted, records, capsule = proposed, next_records, staged
                         break
                     if iteration == self.program.max_iterations:
                         raise RuntimeError("native/S3 Newton iteration limit")
@@ -414,8 +568,9 @@ class NativeRetainedRoundS3Analysis:
                             f"iteration={iteration}, rejected={rejected}, "
                             f"last={last_rejection}"
                         )
-            return NativeRetainedS3Run("completed", accepted, None)
+            status = "completed" if end == len(self.program.targets) else "paused"
+            return NativeRetainedS3Run(status, accepted, None, capsule)
         except Exception as exc:
             return NativeRetainedS3Run(
-                "failed", accepted, type(exc).__name__+": "+str(exc),
+                "failed", accepted, type(exc).__name__+": "+str(exc), capsule,
             )

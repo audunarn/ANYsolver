@@ -1,7 +1,7 @@
 """Internal C3 development example: retained native beam on elastic S3 skin.
 
 Run with ANYsolver installed or from an editable checkout. This restricted
-analysis has no restart or public native beam–shell capability admission.
+analysis is not a public native beam–shell capability admission.
 """
 
 from __future__ import annotations
@@ -108,6 +108,15 @@ def main() -> None:
     run = owner.solve()
     if run.status != "completed":
         raise RuntimeError(run.failure)
+    prefix = analysis().solve(stop_after=1)
+    if prefix.status != "paused":
+        raise RuntimeError(prefix.failure)
+    resumed = analysis().solve(
+        checkpoint=prefix.checkpoint,
+        expected_sha256=prefix.checkpoint_sha256,
+    )
+    if resumed.status != "completed" or resumed.checkpoint != run.checkpoint:
+        raise RuntimeError(resumed.failure or "native/S3 restart mismatch")
     accepted = run.accepted
     contact = accepted.contact.contact
     print(json.dumps({
@@ -121,6 +130,7 @@ def main() -> None:
             contact.residual[18:24])),
         "minimum_gap_m": float(contact.minimum_gap_m),
         "active_intervals": contact.active_intervals,
+        "checkpoint_sha256": run.checkpoint_sha256,
     }, sort_keys=True))
 
 
