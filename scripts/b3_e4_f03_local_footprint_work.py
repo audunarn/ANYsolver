@@ -387,11 +387,11 @@ def termination_local(shell: FlatE4TrialPanel, beam) -> dict:
         shell_nodes = reference_nodes(panel)
         beam_nodes = np.array([(i/beam.n_half_cells, 0., .085)
                                for i in range(beam.n_half_cells+1)])
-        support_moment = (
-            np.cross(shell_nodes, shell_reactions[:, :3]).sum(axis=0) +
-            shell_reactions[:, 3:].sum(axis=0) +
-            np.cross(beam_nodes, beam_reactions[:, :3]).sum(axis=0) +
-            beam_reactions[:, 3:].sum(axis=0))
+        shell_moment = (np.cross(shell_nodes,shell_reactions[:,:3]).sum(axis=0)+
+                        shell_reactions[:,3:].sum(axis=0))
+        beam_moment = (np.cross(beam_nodes,beam_reactions[:,:3]).sum(axis=0)+
+                       beam_reactions[:,3:].sum(axis=0))
+        support_moment = shell_moment+beam_moment
         applied_force = load[shell_size+6*beam.n_half_cells:
                              shell_size+6*beam.n_half_cells+3]
         applied_moment = load[shell_size+6*beam.n_half_cells+3:
@@ -405,6 +405,10 @@ def termination_local(shell: FlatE4TrialPanel, beam) -> dict:
             raise ArithmeticError("loaded local termination solution failed")
         return {"tip_rx_rad": float(full[shell_size+6*beam.n_half_cells+3]),
                 "tip_uz_m": float(full[shell_size+6*beam.n_half_cells+2]),
+                "shell_support_wrench_N_Nm":[*shell_force.tolist(),
+                                             *shell_moment.tolist()],
+                "beam_root_wrench_N_Nm":[*beam_force.tolist(),
+                                           *beam_moment.tolist()],
                 "scaled_equilibrium_residual": free_error,
                 "weak_gap_norm": gap_error,
                 "work_error_j": work_error,
@@ -648,8 +652,8 @@ def run_terminal_shell_resolution(output_dir: Path) -> None:
     manifest={
         "status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
         "source_sha":source,
-        "question":"Do native six-channel rigid/distributing terminal torque and shear responses approach the section-resolved external terminal reference as the E4 shell refines?",
-        "decision":"A strong native mesh trend bars a law ranking until convergence; a stable discrepancy requires connection/section/warping diagnosis. Neither outcome selects a footprint or true-line multiplier space.",
+        "question":"Do native six-channel rigid/distributing terminal responses and plate/beam support-wrench partitions approach the section-resolved external terminal reference as the E4 shell refines?",
+        "decision":"A strong native mesh trend bars a law ranking until convergence. A stable response discrepancy with different support partition points to connection transfer; a similar partition points to section, warping or shell stiffness. Neither outcome selects a footprint or true-line multiplier space.",
         "shell_formulations":["Q4","S3-V2D"],
         "shell_levels_x_half_y":list(levels),
         "beam_half_cells":8,
