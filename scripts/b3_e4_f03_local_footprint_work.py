@@ -644,7 +644,7 @@ def run_terminal_shell_resolution(output_dir: Path) -> None:
                                text=True).strip():
         raise RuntimeError("run requires clean source")
     output_dir.mkdir(parents=True, exist_ok=False)
-    levels=(4,8,12)
+    levels=(2,4,8)
     manifest={
         "status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
         "source_sha":source,
