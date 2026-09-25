@@ -1396,9 +1396,14 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
 def run_graded_terminal(output_dir: Path,
                         patch_levels: tuple[int,...] = (4,8), *,
                         plate_thickness: float = .07,
-                        include_surface_moments: bool = False) -> None:
+                        include_surface_moments: bool = False,
+                        c1_opening_shear: bool = False) -> None:
     if plate_thickness not in (.07,.035):
         raise ValueError("bounded native plate thickness required")
+    if c1_opening_shear and (plate_thickness != .035 or
+                             not include_surface_moments or
+                             patch_levels != (2,4)):
+        raise ValueError("matched C1 opening screen requires the two/four-cell surface patch")
     beam_axis_z=plate_thickness/2+.05
     source=subprocess.check_output(["git","rev-parse","HEAD"],
                                    text=True).strip()
@@ -1409,20 +1414,31 @@ def run_graded_terminal(output_dir: Path,
     manifest={
         "status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
         "source_sha":source,
-        "question":("Does a six-resultant physical surface-position bond with a distributed native beam trace improve torque/shear transfer while preserving work and rigid motions?"
+        "question":("On the exact C1 tangent-aligned beam reference, do the two bounded native terminal-patch grids reproduce the balanced torque and opening-shear work used in the matched-solid discriminator?"
+                    if c1_opening_shear else
+                    "Does a six-resultant physical surface-position bond with a distributed native beam trace improve torque/shear transfer while preserving work and rigid motions?"
                     if include_surface_moments else
                     "Does resolving the native coupled terminal patch change torque/shear work and interface-force distribution for rigid and distributing laws?"),
-        "decision":("If reference, rank, work and physical response pass and the result settles from four to eight patch cells, advance finite variations and interface-stability assessment; failure or material drift requires revising the surface trace/section model. No law is production-selected by this screen."
+        "decision":("Reproduction with balanced work retains the surface-position footprint for independent mechanics review and a separately justified sparse patch study; disagreement requires correcting the native comparison. The saved solid torque case penetrates; no accuracy or true-line selection follows."
+                    if c1_opening_shear else
+                    "If reference, rank, work and physical response pass and the result settles from four to eight patch cells, advance finite variations and interface-stability assessment; failure or material drift requires revising the surface trace/section model. No law is production-selected by this screen."
                     if include_surface_moments else
                     "Settling work and transfer fields supports a matched 3D bond comparison; material drift requires revising patch trace or resolution policy first. Neither selects a production law or true-line multiplier."),
         "geometry":f"E4 Q4 plate [-.5,1.5]x[-.5,.5] m, t={plate_thickness:g} m; B3 centroid z={beam_axis_z:g} m; x=[.9,1], y=[-.05,.05] m patch",
         "plate_thickness_m":plate_thickness,
-        "grids":"structured local Q4 with four/eight cells per patch direction; exact area-mean/director/polar-yaw trace and corner rows",
+        "grids":("structured local Q4 with two/four cells per patch direction; exact C1 native half-cell cuts in surface quadrature"
+                 if c1_opening_shear else
+                 "structured local Q4 with four/eight cells per patch direction; exact area-mean/director/polar-yaw trace and corner rows"),
         "executed_patch_levels":list(patch_levels),
         "include_surface_moments":include_surface_moments,
-        "beam":"native generalized B3, eight half-cells, square-section Saint-Venant torsion; root fixed",
+        "beam":("native generalized B3, twelve nonuniform half-cells, exact 2 µm C1 tangent-aligned reference, square-section Saint-Venant torsion; root fixed"
+                if c1_opening_shear else
+                "native generalized B3, eight half-cells, square-section Saint-Venant torsion; root fixed"),
         "supports":"all E4 left-edge coordinates fixed and B3 root fixed",
-        "loads":"separate +100 Nm tip Mx and +1000 N tip Fz",
+        "loads":("separate +100 Nm tip Mx and -1000 N tip Fz opening"
+                 if c1_opening_shear else
+                 "separate +100 Nm tip Mx and +1000 N tip Fz"),
+        **({"reference_profile":"c1_tangent_2um"} if c1_opening_shear else {}),
         "uniform_trace_parity":"structured Q4 exact trace and corner rows match the existing uniform native port at x8/y8 to <1e-12",
         "limits":{"max_dense_kkt_rows":1900,"blas_threads":1},
         "scope":"linearized bounded coupled diagnostic; no external accuracy, continuum interface traction, nonlinear or qualification claim",
@@ -1431,14 +1447,17 @@ def run_graded_terminal(output_dir: Path,
     with threadpool_limits(limits=1):
         manifest["effective_threadpools"]=threadpool_info()
         (output_dir/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
-        beam=build(8,z_offset=beam_axis_z,
-                   torsion_constant=square_torsion_constant())
+        beam=build(12 if c1_opening_shear else 8,z_offset=beam_axis_z,
+                   torsion_constant=square_torsion_constant(),
+                   reference_profile=("c1_tangent_2um" if c1_opening_shear
+                                      else "straight"))
         records=[]
         for patch_cells in patch_levels:
             started=time.perf_counter()
             result=graded_terminal_coupling(
                 patch_cells,beam,plate_thickness=plate_thickness,
-                include_surface_moments=include_surface_moments)
+                include_surface_moments=include_surface_moments,
+                force_sign=-1. if c1_opening_shear else 1.)
             records.append({"patch_cells_per_side":patch_cells,
                             "seconds":time.perf_counter()-started,
                             "response":result})
@@ -1467,6 +1486,7 @@ if __name__ == "__main__":
                         nargs="+",default=(4,8))
     parser.add_argument("--half-plate-thickness",action="store_true")
     parser.add_argument("--surface-moment-candidate",action="store_true")
+    parser.add_argument("--c1-opening-shear",action="store_true")
     args = parser.parse_args()
     if sum((args.terminal_beam_resolution,args.terminal_shell_resolution,
             args.terminal_interface,args.graded_terminal))>1:
@@ -1475,10 +1495,21 @@ if __name__ == "__main__":
         parser.error("half plate thickness requires the graded terminal screen")
     if args.surface_moment_candidate and not args.graded_terminal:
         parser.error("surface moment candidate requires graded terminal screen")
+    if args.c1_opening_shear and not args.graded_terminal:
+        parser.error("C1 opening shear requires graded terminal screen")
     if args.graded_terminal:
-        run_graded_terminal(args.output_dir,tuple(args.graded_patch_cells),
-                            plate_thickness=.035 if args.half_plate_thickness else .07,
-                            include_surface_moments=args.surface_moment_candidate)
+        if args.c1_opening_shear and (args.half_plate_thickness or
+                                      args.surface_moment_candidate or
+                                      args.graded_patch_cells != [4,8]):
+            parser.error("C1 opening shear selects its own bounded model and grids")
+        run_graded_terminal(args.output_dir,
+                            (2,4) if args.c1_opening_shear else
+                            tuple(args.graded_patch_cells),
+                            plate_thickness=.035 if (args.half_plate_thickness or
+                                                      args.c1_opening_shear) else .07,
+                            include_surface_moments=(args.surface_moment_candidate or
+                                                     args.c1_opening_shear),
+                            c1_opening_shear=args.c1_opening_shear)
     elif args.terminal_interface:
         run_terminal_interface(args.output_dir)
     elif args.terminal_beam_resolution:
