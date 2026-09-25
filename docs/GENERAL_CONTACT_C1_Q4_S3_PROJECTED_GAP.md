@@ -47,6 +47,12 @@ about `-0.04 mm` (`q4-s3-projected-tight-source.txt`, output SHA-256
 `986964199bdce57cd63967f6081e9df14c13992065a29023ad9418e8a65ab98e`).
 One active mode here is an outcome of this loaded geometry and regularization;
 the other pressure functions remain in the declared Q1 space.
+An offline wheel from clean commit `2dad1318`, SHA-256
+`361db32d67c81aeaec9e3089de9d1c6ac44a6caf8398cbf016605d4ad5f8d419`,
+was installed into an isolated target. Its import origin pointed to that
+target and `--projected-tight` completed with output byte-identical to the
+source run (`q4-s3-projected-tight-installed-2dad1318.txt`). This verifies
+the installed route for the tight example; no package was published.
 
 Run `python examples/general_contact_q4_s3_augmented_path.py --projected`
 for the 0.2 mm development lifecycle or `--projected-tight` for the
