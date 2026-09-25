@@ -19,6 +19,7 @@ MIXED_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 SOURCE_Q4_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 Q4_PAIR_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 AUGMENTED_PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+AUGMENTED_MIXED_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 
 
 def _selected(definition: ContactDefinition):
@@ -137,9 +138,9 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
     if augmented:
-        profile = AUGMENTED_PROFILE
-        if source_q4 or target_q4:
-            issues.append("augmented general patch currently admits S3 faces only")
+        profile = AUGMENTED_MIXED_PROFILE if target_q4 else AUGMENTED_PROFILE
+        if source_q4:
+            issues.append("augmented general patch currently requires S3 source faces")
     for side_index, surface in enumerate((source, target)):
         if surface.beam_radius is not None:
             issues.append(f"surface {surface.name} cannot declare beam radius")
