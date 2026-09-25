@@ -39,6 +39,14 @@ pressure test; numerical pair-local Hessians are costly at that scale.
 This is **implemented and locally tested development work**. Split restart
 through active contact, coupled mesh/enforcement convergence, partial-contact
 pressure stability, complete-route resource scaling, independent review,
-installed-package use and C1 acceptance remain open. Raw results are retained
-under `C:/ANYworkspaceWork/general-contact-evidence` with the
-`c1-multi-q4-*` prefix.
+and C1 acceptance remain open. The standalone
+`examples/general_contact_refined_q4_s3_path.py` completed from both source
+and an isolated wheel installation built from commit `2a76cd33`. The wheel
+SHA-256 is
+`C67027ECC86461E864B40DAAD0A67E89231A04EF0D222D75F8CAE4BF44D51F18`.
+The installed import origin was asserted and the complete 600-byte source and
+installed outputs were identical (SHA-256
+`729FC7E0002613F0B3A1931C81E88F1B423F9B23292917C3A69908E15C84C49C`).
+This checks packaging for that exact development case, not a supported release.
+Raw results are retained under `C:/ANYworkspaceWork/general-contact-evidence`
+with the `c1-multi-q4-*` and `c1-refined-q4-s3-*` prefixes.
