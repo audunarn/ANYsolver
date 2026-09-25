@@ -6,6 +6,7 @@ import pytest
 from anysolver.general_contact.friction_point import (
     FrictionPointState, initial_friction_point,
     objective_relative_tangent_increment, trial_coulomb_point,
+    trial_coulomb_point_directional,
 )
 
 
@@ -202,3 +203,67 @@ def test_objective_pair_motion_equal_and_independent_translations():
             target_frame_committed=FRAME,
             target_frame_candidate=np.diag((2.0, 1.0, 1.0)),
         )
+
+
+@pytest.mark.parametrize("increment,branch", [
+    ((0.00005, -0.00002, 0.0), "stick"),
+    ((0.001, -0.0001, 0.0), "slip"),
+])
+def test_rotating_committed_spring_traction_directional(increment, branch):
+    committed = trial(initial_friction_point(FRAME),
+                      (0.00025, 0.0, 0.0)).candidate_state
+
+    def rotation(angle):
+        c, s = np.cos(angle), np.sin(angle)
+        return np.array(((c, -s, 0.0),
+                         (s, c, 0.0),
+                         (0.0, 0.0, 1.0)))
+
+    angle = 0.21
+    frame = rotation(angle)
+    generator = np.array(((0.0, -1.0, 0.0),
+                          (1.0, 0.0, 0.0),
+                          (0.0, 0.0, 0.0)))
+    d_frame = generator @ frame
+    d_increment = np.array((0.0003, -0.0002, 0.0001))
+    d_pressure = 2.0e5
+    analytic = trial_coulomb_point_directional(
+        committed, material_frame=frame, material_frame_variation=d_frame,
+        relative_increment=increment,
+        relative_increment_variation=d_increment,
+        normal_pressure=PRESSURE, pressure_variation=d_pressure,
+        friction_coefficient=MU, tangential_stiffness=STIFFNESS,
+        partner_key=PARTNER,
+    )
+    assert trial(committed, increment, frame=frame).branch == branch
+    for step in (1.0e-6, 3.0e-7):
+        plus = trial(committed, np.asarray(increment) + step*d_increment,
+                     frame=rotation(angle + step),
+                     pressure=PRESSURE + step*d_pressure)
+        minus = trial(committed, np.asarray(increment) - step*d_increment,
+                      frame=rotation(angle - step),
+                      pressure=PRESSURE - step*d_pressure)
+        assert plus.branch == minus.branch == branch
+        finite = (np.asarray(plus.traction)-minus.traction)/(2.0*step)
+        np.testing.assert_allclose(analytic, finite,
+                                   rtol=1.0e-6, atol=1.0e-3)
+
+
+def test_traction_directional_rejects_nonsmooth_activation_and_yield():
+    origin = initial_friction_point(FRAME)
+    data = dict(
+        material_frame=FRAME, material_frame_variation=np.zeros((3, 3)),
+        relative_increment=(0.0006, 0.0, 0.0),
+        relative_increment_variation=(1.0, 0.0, 0.0),
+        normal_pressure=PRESSURE, pressure_variation=0.0,
+        friction_coefficient=MU, tangential_stiffness=STIFFNESS,
+        partner_key=PARTNER,
+    )
+    with pytest.raises(ValueError, match="stick/slip equality"):
+        trial_coulomb_point_directional(origin, **data)
+    data.update(normal_pressure=0.0, pressure_variation=1.0,
+                partner_key=None)
+    with pytest.raises(ValueError, match="normal activation"):
+        trial_coulomb_point_directional(origin, **data)
+    data["friction_coefficient"] = 0.0
+    assert trial_coulomb_point_directional(origin, **data) == (0.0, 0.0, 0.0)

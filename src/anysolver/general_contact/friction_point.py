@@ -281,3 +281,80 @@ def trial_coulomb_point(
         _frozen_vector(plastic), dissipated,
         0.5 * stiffness * float(elastic @ elastic), released,
     )
+
+
+def trial_coulomb_point_directional(
+    committed: FrictionPointState,
+    *,
+    material_frame,
+    material_frame_variation,
+    relative_increment,
+    relative_increment_variation,
+    normal_pressure: float,
+    pressure_variation: float,
+    friction_coefficient: float,
+    tangential_stiffness: float,
+    partner_key: str | None,
+) -> tuple[float, float, float]:
+    """Smooth-branch traction derivative with frame and pressure variation."""
+
+    response = trial_coulomb_point(
+        committed, material_frame=material_frame,
+        relative_increment=relative_increment,
+        normal_pressure=normal_pressure,
+        friction_coefficient=friction_coefficient,
+        tangential_stiffness=tangential_stiffness,
+        partner_key=partner_key,
+    )
+    frame = _frame3(material_frame)
+    d_frame = np.asarray(material_frame_variation, dtype=float)
+    if d_frame.shape != (3, 3) or not np.all(np.isfinite(d_frame)):
+        raise ValueError("material frame variation must be a finite 3 by 3 matrix")
+    increment = _vector3(relative_increment, "relative increment")
+    d_increment = _vector3(relative_increment_variation,
+                           "relative increment variation")
+    try:
+        d_pressure = float(pressure_variation)
+    except (TypeError, ValueError) as error:
+        raise ValueError("pressure variation must be a finite scalar") from error
+    if not np.isfinite(d_pressure):
+        raise ValueError("pressure variation must be a finite scalar")
+    if float(friction_coefficient) == 0.0:
+        return (0.0, 0.0, 0.0)
+    if response.branch == "open":
+        if d_pressure != 0.0:
+            raise ValueError("normal activation has no smooth traction derivative")
+        return (0.0, 0.0, 0.0)
+
+    prior_frame = _frame3(committed.material_frame)
+    same_partner = (committed.partner_key is not None
+                    and committed.partner_key == partner_key)
+    old_elastic = (_vector3(committed.elastic_slip, "elastic slip")
+                   if same_partner else np.zeros(3))
+    rotated_old = frame @ prior_frame.T @ old_elastic
+    d_rotated_old = d_frame @ prior_frame.T @ old_elastic
+    tangent = frame[:, :2]
+    d_tangent = d_frame[:, :2]
+    projector = tangent @ tangent.T
+    d_projector = d_tangent @ tangent.T + tangent @ d_tangent.T
+    trial_vector = projector @ (rotated_old + increment)
+    d_trial_vector = (d_projector @ (rotated_old + increment)
+                      + projector @ (d_rotated_old + d_increment))
+    stiffness = float(tangential_stiffness)
+    coefficient = float(friction_coefficient)
+    cap = coefficient * float(normal_pressure)
+    magnitude = float(np.linalg.norm(trial_vector))
+    if abs(stiffness*magnitude - cap) <= 1.0e-12 * max(
+            1.0, stiffness*magnitude, cap):
+        raise ValueError("stick/slip equality has no smooth traction derivative")
+    if response.branch == "stick":
+        derivative = -stiffness * d_trial_vector
+    else:
+        direction = trial_vector / magnitude
+        derivative = (-coefficient * d_pressure * direction
+                      - (cap / magnitude) *
+                      ((np.eye(3) - np.outer(direction, direction))
+                       @ d_trial_vector))
+    if not np.all(np.isfinite(derivative)):
+        raise ValueError("friction traction variation exceeded finite range")
+    return _frozen_vector(derivative)

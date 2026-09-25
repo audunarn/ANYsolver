@@ -60,6 +60,15 @@ The returned displacement tangent is `-k_t P_current` in stick and
 is zero in stick and `-mu d` in smooth slip. These derivatives are not claimed
 at activation or the stick/slip kink.
 
+`trial_coulomb_point_directional` includes changes in the material frame as
+well as slip and pressure. With `w = R z_old + delta_u`, its internal trial
+variation is `delta_z = delta_P w + P (delta_R z_old + delta_delta_u)`.
+The traction variation is `-k_t delta_z` in stick and
+`-mu delta_p d - (cap / |z_trial|)(I - d d^T) delta_z` in smooth slip.
+It rejects activation and yield equality when a smooth derivative does not
+exist; the later coupled solver must handle these transitions by active-set
+or one-sided logic.
+
 The candidate state is disposable. A Newton iteration or line-search trial
 must always evaluate from the same physical committed state; only a fully
 accepted structural increment may commit its candidate. Opening clears
