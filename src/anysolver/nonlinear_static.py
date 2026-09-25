@@ -7691,12 +7691,14 @@ def solve_static_nonlinear(
                         AUGMENTED_PROFILE, AUGMENTED_MIXED_PROFILE,
                         REFINED_AUGMENTED_PROFILE, SOURCE_Q4_AUGMENTED_PROFILE,
                         Q4_PAIR_AUGMENTED_PROFILE,
+                        Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                     )
 
                     if contact_manager.profile not in {
                         AUGMENTED_PROFILE, AUGMENTED_MIXED_PROFILE,
                         REFINED_AUGMENTED_PROFILE, SOURCE_Q4_AUGMENTED_PROFILE,
                         Q4_PAIR_AUGMENTED_PROFILE,
+                        Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                     }:
                         raise ValueError("ordinary augmented contact requires an admitted general shell patch")
                 result = run_solver()

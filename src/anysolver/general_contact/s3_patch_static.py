@@ -11,7 +11,10 @@ from .core import ContactDefinition, ContactSolverSettings, ContactValidationRep
 from .s3_patch_mortar_energy import MovingS3PatchPrimalMortarPenalty, S3PatchFace
 from .s3_pair_static import _normal, _normal_controls, _swept_gap_lower, _vertex_gap_lower
 from .s3_skin_work import S3SkinWorkAdapter
-from .q4_source_overlap import q4_source_gap_lower, q4_source_swept_gap_lower
+from .q4_source_overlap import (
+    q4_source_gap_lower, q4_source_projected_gap_lower,
+    q4_source_projected_swept_gap_lower, q4_source_swept_gap_lower,
+)
 
 
 PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
@@ -22,6 +25,7 @@ AUGMENTED_PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V
 AUGMENTED_MIXED_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 SOURCE_Q4_AUGMENTED_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 Q4_PAIR_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+Q4_PAIR_PROJECTED_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
 REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 
 
@@ -147,9 +151,14 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                MIXED_PROFILE if target_q4 else PROFILE)
     if augmented:
         profile = (REFINED_AUGMENTED_PROFILE if refined else
+                   Q4_PAIR_PROJECTED_AUGMENTED_PROFILE
+                   if q4_pair and settings.q4_source_gap_certificate == "projected_matching" else
                    Q4_PAIR_AUGMENTED_PROFILE if q4_pair else
                    SOURCE_Q4_AUGMENTED_PROFILE if source_q4 else
                    AUGMENTED_MIXED_PROFILE if target_q4 else AUGMENTED_PROFILE)
+    if (settings.q4_source_gap_certificate == "projected_matching"
+            and not (augmented and q4_pair)):
+        issues.append("projected-matching Q4 gap certificate requires augmented Q4/Q4")
     for side_index, surface in enumerate((source, target)):
         if surface.beam_radius is not None:
             issues.append(f"surface {surface.name} cannot declare beam radius")
@@ -312,7 +321,10 @@ class GeneralS3PatchManager:
 
     def _gap_lower(self, positions):
         source, target = positions
-        return min((q4_source_gap_lower(source[si], target[ti])
+        q4_lower = (q4_source_projected_gap_lower
+                    if self.settings.q4_source_gap_certificate == "projected_matching"
+                    else q4_source_gap_lower)
+        return min((q4_lower(source[si], target[ti])
                     if len(si) == 4 else
                     _vertex_gap_lower(source[si], target[ti]))
                    for si in self.law.source_face_indices
@@ -377,7 +389,8 @@ class GeneralS3PatchManager:
     def restrict_tangent_to_reduced_variations(self, transform):
         """Keep Q4-source Hessian work on axes reached by free coordinates."""
         if self.profile not in {SOURCE_Q4_AUGMENTED_PROFILE,
-                                Q4_PAIR_AUGMENTED_PROFILE}:
+                                Q4_PAIR_AUGMENTED_PROFILE,
+                                Q4_PAIR_PROJECTED_AUGMENTED_PROFILE}:
             return
         variations = (self.map @ transform).tocsr()
         variations.eliminate_zeros()
@@ -414,8 +427,13 @@ class GeneralS3PatchManager:
                         controls = _normal_controls(left[side][local], right[side][local])
                         if min(float(item@reference) for item in controls) <= 0.0:
                             orientation_ok = False
+            q4_swept_lower = (
+                q4_source_projected_swept_gap_lower
+                if self.settings.q4_source_gap_certificate == "projected_matching"
+                else q4_source_swept_gap_lower
+            )
             gap_ok = all(
-                (q4_source_swept_gap_lower(
+                (q4_swept_lower(
                     left[0][si], right[0][si],
                     left[1][ti], right[1][ti], self.reference_normals[0],
                 ) if len(si) == 4 else
@@ -480,6 +498,8 @@ class GeneralS3PatchManager:
                          "q4_source_area_tolerance": self.settings.q4_source_area_tolerance,
                          "q4_source_weighted_gap_tolerance": self.settings.q4_source_weighted_gap_tolerance,
                          "maximum_q4_source_integration_triangles": self.settings.maximum_q4_source_integration_triangles,
+                         **({"q4_source_gap_certificate": self.settings.q4_source_gap_certificate}
+                            if self.settings.q4_source_gap_certificate != "whole_face" else {}),
                          "maximum_swept_subdivisions": self.settings.maximum_swept_subdivisions,
                          "maximum_candidate_pairs": self.settings.maximum_candidate_pairs},
         }

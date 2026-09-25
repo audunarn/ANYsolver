@@ -58,6 +58,7 @@ GENERAL_S3_PATCH_AUGMENTED_PROFILE = "S3_PATCH_GENERAL_AUGMENTED_PATH_DEV_V0"
 GENERAL_S3_Q4_PATCH_AUGMENTED_PROFILE = "S3_Q4_PATCH_GENERAL_AUGMENTED_PATH_DEV_V0"
 GENERAL_Q4_S3_PATCH_AUGMENTED_PROFILE = "Q4_S3_PATCH_GENERAL_AUGMENTED_PATH_DEV_V0"
 GENERAL_Q4_Q4_PATCH_AUGMENTED_PROFILE = "Q4_Q4_PATCH_GENERAL_AUGMENTED_PATH_DEV_V0"
+GENERAL_Q4_Q4_PATCH_PROJECTED_AUGMENTED_PROFILE = "Q4_Q4_PATCH_GENERAL_AUGMENTED_PATH_DEV_V1"
 GENERAL_S3_PATCH_REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_AUGMENTED_PATH_DEV_V0"
 GENERAL_S3_Q4_PATCH_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 GENERAL_Q4_S3_PATCH_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
@@ -170,13 +171,14 @@ def solve_static_contact_path(
     from .s3_patch_static import AUGMENTED_MIXED_PROFILE as mixed_augmented_profile
     from .s3_patch_static import SOURCE_Q4_AUGMENTED_PROFILE as source_q4_augmented_profile
     from .s3_patch_static import Q4_PAIR_AUGMENTED_PROFILE as q4_pair_augmented_profile
+    from .s3_patch_static import Q4_PAIR_PROJECTED_AUGMENTED_PROFILE as q4_pair_projected_augmented_profile
     from .s3_patch_static import REFINED_AUGMENTED_PROFILE as refined_augmented_profile
 
     general_s3_patch = report.profile in {
         s3_patch_profile, mixed_patch_profile, source_q4_patch_profile,
         q4_pair_profile, general_augmented_profile, mixed_augmented_profile,
         refined_augmented_profile, source_q4_augmented_profile,
-        q4_pair_augmented_profile,
+        q4_pair_augmented_profile, q4_pair_projected_augmented_profile,
     }
     if not general_s3_patch and "RESTRICTED_SLIDING" not in report.profile:
         raise ValueError("unsupported contact path profile: " + report.profile)
@@ -197,6 +199,8 @@ def solve_static_contact_path(
                if report.profile == source_q4_augmented_profile else
                GENERAL_Q4_Q4_PATCH_AUGMENTED_PROFILE
                if report.profile == q4_pair_augmented_profile else
+               GENERAL_Q4_Q4_PATCH_PROJECTED_AUGMENTED_PROFILE
+               if report.profile == q4_pair_projected_augmented_profile else
                GENERAL_S3_PATCH_REFINED_AUGMENTED_PROFILE
                if report.profile == refined_augmented_profile else
                GENERAL_S3_PATCH_AUGMENTED_PROFILE
