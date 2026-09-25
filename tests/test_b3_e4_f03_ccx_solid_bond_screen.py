@@ -97,6 +97,26 @@ def test_half_thickness_quadratic_terminal_torque_preserves_bond_and_wrench(fact
         "bar_minus_plate_z_m"]==pytest.approx([2e-6]*3,abs=1e-12)
 
 
+@pytest.mark.parametrize("bond",("terminal","detached"))
+def test_quadratic_tip_traction_has_exact_wrench_and_conjugate_work(bond):
+    _,meta=SCREEN.build(
+        2,"tip_mx",boundary_policy="left_root",bond_policy=bond,
+        element_family="C3D20R",tip_mx_gap_audit=bond=="terminal",
+        bar_clearance_um=2 if bond=="terminal" else 0,
+        plate_thickness_mm=35,tip_load_map="quadratic_face")
+    applied={int(i):np.asarray(force) for i,force in
+             meta["applied_nodal_forces_N"].items()}
+    assert len(applied)>len(meta["bar_station_nodes"]["1000"])
+    assert set(applied).issubset(meta["probe_node_ids"])
+    assert SCREEN._wrench(applied,meta["probe_coordinates_m"])==pytest.approx(
+        [0.,0.,0.,100.,0.,0.],abs=1e-9)
+    theta=1e-5
+    u={int(i):np.array([0.,-(xyz[2]-.0675)*theta,xyz[1]*theta])
+       for i,xyz in meta["probe_coordinates_m"].items()}
+    assert SCREEN.recover(meta,u)["tip_work_conjugate_displacement"][
+        "value"]==pytest.approx(theta,abs=1e-13)
+
+
 def test_thickness_screen_rejects_undeclared_geometry():
     with pytest.raises(ValueError,match="35/70 mm"):
         SCREEN.build(1,"tip_mx",plate_thickness_mm=50)

@@ -66,7 +66,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           bond_policy: str = "full", contact_policy: str = "none",
           reverse_tip_fz: bool = False, element_family: str = "C3D8",
           tip_mx_gap_audit: bool = False, bar_clearance_um: int = 0,
-          plate_thickness_mm: int = 70
+          plate_thickness_mm: int = 70, tip_load_map: str = "legacy"
           ) -> tuple[str, dict]:
     """Return an exact-coordinate brick deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
@@ -105,6 +105,12 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
              boundary_policy != "left_root" or
              shear not in ("tip_mx", "tip_fz") or contact_policy != "none")):
         raise ValueError("quadratic screen requires no-contact detached/terminal tip load")
+    if tip_load_map not in ("legacy", "quadratic_face") or (
+            tip_load_map == "quadratic_face" and
+            (element_family != "C3D20R" or shear != "tip_mx" or
+             bond_policy not in ("detached", "terminal") or
+             boundary_policy != "left_root" or contact_policy != "none")):
+        raise ValueError("consistent quadratic face traction requires a no-contact C3D20R tip-torque case")
     plate_x = (PLATE_X_MM if bond_policy == "full" else
                tuple(sorted(set((*PLATE_X_MM, 900)))))
     bar_x = (BAR_X_MM if bond_policy == "full" else
@@ -227,6 +233,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     surface={(x,y):coordinates[(Fraction(x),Fraction(y),plate_top)]
              for x in surface_x for y in (-50,0,50)}
     probe=set().union(*station_nodes.values(),surface.values())
+    if tip_load_map == "quadratic_face":
+        probe.update(index for index in bar_nodes if inverse[index][0] == 1000)
     lines=[("** BOUNDED C3D8 PLATE AND CONFORMING SOLID STIFFENER; DEVELOPMENT ONLY"
             if element_family == "C3D8" else
             "** BOUNDED C3D20R PLATE AND SOLID STIFFENER; DEVELOPMENT ONLY"),
@@ -351,7 +359,42 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                         (.5 if k in (0,len(bz)-1) else 1.)
                  for j,y in enumerate(by) for k,z in enumerate(bz)
                  for index in (bar_node((Fraction(1000),y,z)),)}
-        if shear=="tip_fz":
+        if tip_load_map == "quadratic_face":
+            # Integrate the declared linear torsional traction against each
+            # quadratic serendipity face shape; the legacy corner-weighted
+            # load remains byte-identical for every existing deck.
+            end_nodes={inverse[index][1:]:index for index in bar_nodes
+                       if inverse[index][0] == 1000}
+            roots,gauss_weights=np.polynomial.legendre.leggauss(3)
+            face_data=[]
+            polar=0.
+            for z0,z1 in zip(bz[:-1],bz[1:]):
+                for y0,y1 in zip(by[:-1],by[1:]):
+                    ym=(y0+y1)/2
+                    zm=(z0+z1)/2
+                    positions=((y0,z0),(y1,z0),(y1,z1),(y0,z1),
+                               (ym,z0),(y1,zm),(ym,z1),(y0,zm))
+                    ids=tuple(end_nodes[position] for position in positions)
+                    yz=np.array([[float(y)/1000,float(z)/1000]
+                                 for y,z in positions])
+                    jacobian=float((y1-y0)*(z1-z0))/4e6
+                    for xi,wx in zip(roots,gauss_weights):
+                        for eta,wy in zip(roots,gauss_weights):
+                            shape=_quad8_shape(float(xi),float(eta))
+                            y,z=shape@yz
+                            weight=float(wx*wy*jacobian)
+                            polar+=weight*(y*y+(z-bar_axis_z_m)**2)
+                            face_data.append((ids,shape,weight,y,z))
+            if polar<=0. or not np.isfinite(polar):
+                raise AssertionError("invalid quadratic end-face polar integral")
+            vectors={index:np.zeros(3) for index in end_nodes.values()}
+            for ids,shape,weight,y,z in face_data:
+                traction=np.array((0.,-100.*(z-bar_axis_z_m)/polar,
+                                   100.*y/polar))
+                for index,n in zip(ids,shape):
+                    vectors[index]+=weight*n*traction
+            applied={index:tuple(force) for index,force in vectors.items()}
+        elif shear=="tip_fz":
             normalizer=sum(weights.values())
             applied={index:(0.,0.,(-1000. if reverse_tip_fz else 1000.)*weight/normalizer)
                      for index,weight in weights.items()}
@@ -362,7 +405,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             applied={index:(0.,-100.*weight*(float(inverse[index][2]/1000)-bar_axis_z_m)/polar,
                             100.*weight*float(inverse[index][1]/1000)/polar)
                      for index,weight in weights.items()}
-        if set(applied)!=set(tip):
+        if set(applied)!=(set(end_nodes.values()) if tip_load_map == "quadratic_face"
+                         else set(tip)):
             raise AssertionError("incomplete loaded end face")
         lines.append("*CLOAD")
         for index,force in sorted(applied.items()):
@@ -395,6 +439,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           "bar_clearance_um":bar_clearance_um,
           "reverse_tip_fz":reverse_tip_fz,
           "tip_mx_gap_audit":tip_mx_gap_audit,
+          "tip_load_map":tip_load_map,
           "unbonded_interface_pairs":(unbonded_pairs if reverse_tip_fz or tip_mx_gap_audit
                                         else []),
           "unbonded_initial_gaps_m":([float((inverse[bar][2]-inverse[plate][2])/1000)
@@ -764,6 +809,7 @@ def main() -> int:
     parser.add_argument("--tip-mx-gap-audit",action="store_true")
     parser.add_argument("--bar-clearance-um",type=int,choices=(0,1,2),default=0)
     parser.add_argument("--half-plate-thickness",action="store_true")
+    parser.add_argument("--quadratic-face-traction",action="store_true")
     args=parser.parse_args()
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
@@ -791,10 +837,18 @@ def main() -> int:
                                   args.element_family!="C3D20R"):
         parser.error("declared bar clearance requires quadratic terminal torque audit")
     if args.half_plate_thickness and (
-            args.element_family!="C3D20R" or not args.tip_mx_gap_audit or
-            args.bar_clearance_um!=2 or args.bond!="terminal" or
+            args.element_family!="C3D20R" or
+            not ((args.tip_mx_gap_audit and args.bar_clearance_um==2 and
+                  args.bond=="terminal") or
+                 (args.quadratic_face_traction and args.bar_clearance_um==0 and
+                  args.bond=="detached")) or
             args.boundary!="left_root" or any(f not in (2,4) for f in args.factor)):
-        parser.error("half-thickness diagnostic requires factor-2/4 quadratic terminal torque with 2 um clearance")
+        parser.error("half-thickness diagnostic requires quadratic terminal torque with 2 um clearance or its detached consistent-traction control")
+    if args.quadratic_face_traction and (
+            args.element_family!="C3D20R" or args.suite!="loads" or
+            args.boundary!="left_root" or args.bond not in ("terminal","detached") or
+            args.contact!="none" or args.reverse_fz_open_audit):
+        parser.error("quadratic face traction requires no-contact C3D20R tip torque")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -805,7 +859,9 @@ def main() -> int:
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":("At the plate-only characterized 35 mm thickness, does a quadratic terminal solid bond retain open unbonded faces and a resolved torque partition/tip work?"
+              "question":("Does replacing corner-weighted tip torque with consistent quadratic end-face traction change the 35 mm terminal bond torque partition or detached free-bar work?"
+                          if args.quadratic_face_traction else
+                          "At the plate-only characterized 35 mm thickness, does a quadratic terminal solid bond retain open unbonded faces and a resolved torque partition/tip work?"
                           if args.half_plate_thickness else
                           "Does a declared micrometre clearance keep the unbonded terminal-bar faces open under torque while leaving work insensitive to clearance and mesh?"
                           if args.bar_clearance_um else
@@ -826,7 +882,9 @@ def main() -> int:
                           "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
                           if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
-              "decision":("If face gaps and torque work remain admissible and settle, compare the section-axis torque partition and local tip compliance with the same-thickness graded native model. A persistent gap points to connection transfer rather than the already smaller plate-only discrepancy; overlap or drift blocks accuracy scoring. No footprint cutoff is inferred."
+              "decision":("If the consistent face load materially shifts torque partition, revise the external load idealization before judging the native footprint; if it does not, focus the next discriminator on connection pose and local tip work. Neither outcome selects a production law."
+                          if args.quadratic_face_traction else
+                          "If face gaps and torque work remain admissible and settle, compare the section-axis torque partition and local tip compliance with the same-thickness graded native model. A persistent gap points to connection transfer rather than the already smaller plate-only discrepancy; overlap or drift blocks accuracy scoring. No footprint cutoff is inferred."
                           if args.half_plate_thickness else
                           "If paired-node gaps remain positive and torque work is clearance- and mesh-insensitive, retain only a declared-gap external reference candidate pending face-interior checks; otherwise require contact. No native footprint is selected."
                           if args.bar_clearance_um else
@@ -848,7 +906,8 @@ def main() -> int:
               "source_head":head,"source_sha256":digest(Path(__file__)),
               "executable":str(EXE),"executable_sha256":EXE_SHA,
               "cases":[(factor,shear) for factor in args.factor
-                   for shear in (("tip_fz",) if args.reverse_fz_open_audit else
+                   for shear in (("tip_mx",) if args.quadratic_face_traction else
+                                 ("tip_fz",) if args.reverse_fz_open_audit else
                                  ("tip_mx",) if args.tip_mx_gap_audit else
                                  ("uy_x","ux_y") if args.suite=="shear"
                                  else ("tip_mx","tip_fz"))],
@@ -861,11 +920,15 @@ def main() -> int:
               "tip_mx_gap_audit":args.tip_mx_gap_audit,
               "bar_clearance_um":args.bar_clearance_um,
               "plate_thickness_m":.035 if args.half_plate_thickness else .07,
+              "tip_load_map":("quadratic_face" if args.quadratic_face_traction
+                              else "legacy"),
               "contact_reference":"https://www.dhondt.de/ccx_2.22.pdf, sections on MORTAR contact and hard surface behavior (external-reference diagnostic only)",
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
               "limits_of_claim":["3D solid idealization, not E4 or B3",
                                  f"{len(args.factor)} development mesh levels, not convergence qualification",
                                  f"prescribed plate {args.boundary} and bar root as declared",
+                                 "quadratic screen uses a consistent integrated end-face torque traction"
+                                 if args.quadratic_face_traction else
                                  "quadratic screen retains corner-node tip loads to isolate element interpolation; not a consistent quadratic face traction"
                                  if args.element_family=="C3D20R" else
                                  "linear-brick tip loads use corner-node face weights",
@@ -890,7 +953,9 @@ def main() -> int:
                         element_family=args.element_family,
                         tip_mx_gap_audit=args.tip_mx_gap_audit and shear=="tip_mx",
                         bar_clearance_um=args.bar_clearance_um,
-                        plate_thickness_mm=35 if args.half_plate_thickness else 70)
+                        plate_thickness_mm=35 if args.half_plate_thickness else 70,
+                        tip_load_map=("quadratic_face" if args.quadratic_face_traction
+                                      else "legacy"))
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()
