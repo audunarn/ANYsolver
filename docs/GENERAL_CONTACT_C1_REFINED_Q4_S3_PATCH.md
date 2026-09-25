@@ -28,6 +28,16 @@ pair-local differentiation, was stopped after more than three minutes with
 no terminal result. It is retained as an interrupted resource observation,
 not a mechanics failure or a measured speed comparison.
 
+The corner-closure example prescribes a source material node inside the fixed
+target's overlap, 50 µm beyond the target skin. It therefore tests routing,
+reaction balance and restart, but cannot serve as a mesh-converged zero-gap
+augmented contact benchmark. A graded 2×2 source patch exposed persistent
+multiplier updates at this imposed interference. A separate fixed-pose test
+of the actual multi-Q4/S3 kernel matched independent Q1 support and weighted
+gap integrals: refining a 4×4 source to 8×8 changed a weak-open corner into
+one active pressure node. A feasible off-contact loading case is needed for
+coupled pressure and enforcement convergence.
+
 This profile requires explicitly dimensioned Q4 area and weighted-gap
 tolerances, triangle and energy-evaluation budgets, and augmented-pressure
 controls. It does not admit penalty enforcement or the separate
