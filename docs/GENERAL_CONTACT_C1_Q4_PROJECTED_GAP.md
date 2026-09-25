@@ -74,3 +74,13 @@ not directed interval arithmetic. Pressure-space stability, partially
 contacting nonmatching meshes, edge ownership, reference-warped Q4, independent
 review, installed-package verification of V1 and application adapters remain
 open. No C1 engineering acceptance is claimed.
+
+The runnable [V1 Q4/Q4 example](../examples/general_contact_q4_q4_projected_gap.py)
+uses the 0.04 mm closure and 0.05 mm gap budget by default; `--four-phase`
+selects the 0.05 mm closure and 0.2 mm gap budget lifecycle case. The source
+default run completed with one active pressure DOF, seven augmentation passes,
+0.1211 N normal force and a −0.0400 mm conservative lower gap
+(`q4-projected-v1-example-tight-source.txt`). The source four-phase run
+completed with zero multipliers on opening and four active pressure DOFs on
+recontact (`q4-projected-v1-example-four-source.txt`). These are development
+settings, not general regularization recommendations.
