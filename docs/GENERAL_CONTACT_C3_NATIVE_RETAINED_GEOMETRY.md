@@ -146,6 +146,33 @@ The checkpoint remains specific to the restricted selected-cell route.
 Automatic multi-cell feature ownership, beam–shell interaction, friction,
 native impact and independent C3 acceptance are still open.
 
+## Two-cell union search development
+
+`native_curve_union.py` is a local geometric step toward contact across the
+whole two-cell target beam. It requires the target cells' persistent material
+node identities and verifies that they share one declared junction; matching
+coordinates alone do not create shared feature ownership. At a source
+station it compares the closest point on both target cells. A tie at their
+shared physical junction has stable ownership. Equal-distance remote
+minima are rejected as ambiguous.
+
+For a source subinterval, the quadratic Bezier controls conservatively bound
+the reach from its midpoint. Distance to the target union changes by no
+more than that reach; the difference between the two target distances
+changes by no more than twice it. These bounds certify open support, fully
+active support with one target owner, or an unresolved interval. Unresolved
+support is returned explicitly for further integration refinement; finite
+depth/cell budgets fail rather than dropping it. The search does not yet
+produce contact forces or resolve a switching interval's tangent.
+
+Three focused tests passed (`c3-native-curve-union-final.txt`): a target-cell
+ownership switch at the shared junction, an open case, a narrow contact
+pocket, remote equal-distance ambiguity, explicit resource failure and
+rejection of coincident cells without a shared material identity. The
+preceding source-only and identity-check logs are retained. Full distributed
+multi-cell integration, boundary derivative treatment, search scaling and
+C3 acceptance remain open.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization
