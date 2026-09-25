@@ -67,7 +67,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           reverse_tip_fz: bool = False, element_family: str = "C3D8",
           tip_mx_gap_audit: bool = False, bar_clearance_um: int = 0,
           plate_thickness_mm: int = 70, tip_load_map: str = "legacy",
-          full_displacement_output: bool = False
+          full_displacement_output: bool = False,
+          bar_reference_profile: str = "legacy_linear"
           ) -> tuple[str, dict]:
     """Return an exact-coordinate brick deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
@@ -108,6 +109,11 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     if bar_clearance_um not in (0, 1, 2) or (bar_clearance_um and
             (not tip_mx_gap_audit or element_family != "C3D20R")):
         raise ValueError("declared bar clearance requires quadratic terminal torque audit")
+    if bar_reference_profile not in ("legacy_linear", "c1_tangent") or (
+            bar_reference_profile == "c1_tangent" and
+            (bar_clearance_um != 2 or factor != 4 or
+             bond_policy != "terminal" or tip_load_map != "quadratic_face")):
+        raise ValueError("C1 tangent profile requires the bounded quadratic terminal torque reference")
     if element_family not in ("C3D8", "C3D20R") or (
             element_family == "C3D20R" and
             (bond_policy not in ("detached", "terminal", "full") or
@@ -131,6 +137,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
               (plate_x,PLATE_Y_MM,plate_z))
     bx,by,bz=(_cuts(v,factor) for v in
               (bar_x,BAR_Y_MM,bar_z))
+    if bar_reference_profile == "c1_tangent" and Fraction(825) not in bx:
+        raise AssertionError("C1 transition midpoint must split the solid grid")
     coordinates: dict[tuple[Fraction,Fraction,Fraction],int]={}
     detached: dict[tuple[Fraction,Fraction,Fraction],int]={}
     plate_nodes=set()
@@ -209,8 +217,26 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
         for index in bar_nodes-plate_nodes:
             x,y,z=inverse[index]
             if x < 900:
-                taper=min(Fraction(1), (900-x)/150)
-                inverse[index]=(x,y,z+clearance_mm*taper)
+                if bar_reference_profile == "legacy_linear":
+                    taper=min(Fraction(1), (900-x)/150)
+                    inverse[index]=(x,y,z+clearance_mm*taper)
+                else:
+                    if x <= 750:
+                        offset,slope=clearance_mm,Fraction(0)
+                    else:
+                        t=(x-750)/150
+                        if t <= Fraction(1,2):
+                            offset=clearance_mm*(1-2*t*t)
+                            slope=-4*clearance_mm*t/150
+                        else:
+                            offset=2*clearance_mm*(1-t)*(1-t)
+                            slope=-4*clearance_mm*(1-t)/150
+                    normalizer=(1+float(slope)**2)**.5
+                    local_z=float(z-(plate_top+50))
+                    inverse[index]=(
+                        float(x)-local_z*float(slope)/normalizer,
+                        y,
+                        float(plate_top+50+offset)+local_z/normalizer)
     interface={(x,y,plate_top) for x in bx for y in by
                if bond_policy == "full" or
                (bond_policy == "terminal" and x >= 900)}
@@ -515,6 +541,12 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                       "all three translations on plate perimeter follow declared affine shear; bar has no direct supports or loads")}
     if full_displacement_output:
         meta["full_displacement_output"] = True
+    if bar_reference_profile == "c1_tangent":
+        meta["bar_reference_profile"] = "C1_TWO_QUADRATIC_TANGENT_ALIGNED_V1"
+        meta["bar_reference_meaning"] = (
+            "2 micrometre clearance through x=0.75-0.90 m; each solid "
+            "bar node follows a tangent-aligned native B3 section map; "
+            "unbonded paired-node normal gaps are not a contact certificate")
     return "\n".join(lines)+"\n",meta
 
 

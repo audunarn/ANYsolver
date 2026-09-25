@@ -1,7 +1,9 @@
 """Bounded controls for the exploratory conforming solid-bond deck."""
 
 import importlib.util
+import hashlib
 from pathlib import Path
+import sys
 
 import numpy as np
 import pytest
@@ -334,6 +336,160 @@ def test_quadratic_terminal_torque_gap_audit_keeps_the_physical_wrench():
         SCREEN.build(1,"tip_fz",boundary_policy="left_root",
                      bond_policy="terminal",element_family="C3D20R",
                      tip_mx_gap_audit=True)
+
+
+def test_c1_terminal_solid_sections_follow_native_tangent_without_changing_legacy_deck():
+    options=dict(boundary_policy="left_root",bond_policy="terminal",
+                 element_family="C3D20R",tip_mx_gap_audit=True,
+                 bar_clearance_um=2,plate_thickness_mm=35,
+                 tip_load_map="quadratic_face")
+    legacy,old=SCREEN.build(4,"tip_mx",**options)
+    assert hashlib.sha256(legacy.encode()).hexdigest() == (
+        "85c7fd286fbf0363227e3209f9982c2a8beb32508d692f05946c5761b2e60344")
+    deck,meta=SCREEN.build(4,"tip_mx",bar_reference_profile="c1_tangent",
+                           **options)
+    assert meta["bar_reference_profile"] == "C1_TWO_QUADRATIC_TANGENT_ALIGNED_V1"
+    assert meta["shared_interface_node_ids"] == old["shared_interface_node_ids"]
+    assert meta["applied_nodal_forces_N"] == old["applied_nodal_forces_N"]
+    coords={}
+    for line in deck.split("*NODE,NSET=AllNodes\n",1)[1].split("\n*",1)[0].splitlines():
+        fields=line.split(",")
+        coords[int(fields[0])]=np.array([float(v) for v in fields[1:]])
+
+    def offset_and_slope(x):
+        t=(x-.75)/.15
+        if x<=.75:
+            return 2e-6,0.
+        if t<=.5:
+            return 2e-6*(1-2*t*t),-4*2e-6*t/.15
+        return 4e-6*(1-t)**2,-4*2e-6*(1-t)/.15
+
+    checked_midpoint=False
+    for plate,bar in meta["unbonded_interface_pairs"]:
+        x,y,_=coords[plate]
+        offset,slope=offset_and_slope(x)
+        normalizer=np.sqrt(1+slope*slope)
+        expected=(x+.05*slope/normalizer,y,
+                  .0675+offset-.05/normalizer)
+        np.testing.assert_allclose(coords[bar],expected,rtol=0.,atol=2e-12)
+        if abs(x-.825)<1e-12 and abs(y)<1e-12:
+            assert abs(coords[bar][0]-x)>1e-6
+            checked_midpoint=True
+    assert checked_midpoint
+    for node in meta["shared_interface_node_ids"]:
+        assert coords[node][2] == pytest.approx(.0175,abs=1e-12)
+    with pytest.raises(ValueError,match="C1 tangent profile"):
+        SCREEN.build(4,"tip_mx",bar_reference_profile="c1_tangent",
+                     **{**options,"bar_clearance_um":0})
+
+
+def test_smooth_terminal_clearance_admits_shared_native_b3_frames():
+    """The native Q2 frame guard admits the C1 reference used by the solid."""
+    source=MODULE.parents[1]/"src"/"anysolver"/"ge_beam3_curved_reference.py"
+    spec=importlib.util.spec_from_file_location("f03_curved_reference_source",source)
+    curved=importlib.util.module_from_spec(spec)
+    sys.modules[spec.name]=curved
+    spec.loader.exec_module(curved)
+    clearance=2e-6
+    transition=.15
+
+    def offset(x):
+        t=(x-.75)/transition
+        if t<=.5:
+            return clearance*(1-2*t*t),-4*clearance*t/transition
+        return 2*clearance*(1-t)**2,-4*clearance*(1-t)/transition
+
+    def span(a,b):
+        abscissae=np.linspace(a,b,3)
+        coordinates=np.array([
+            (x,0.,.0675+offset(x)[0]) for x in abscissae])
+        frames=[]
+        for x in abscissae:
+            tangent=np.array((1.,0.,offset(x)[1]))
+            tangent/=np.linalg.norm(tangent)
+            transverse=np.array((0.,1.,0.))
+            frames.append(np.column_stack((
+                tangent,transverse,np.cross(tangent,transverse))))
+        return curved.CurvedBeam3ReferenceGeometry(
+            coordinates,np.array(frames))
+
+    left,right=span(.75,.825),span(.825,.9)
+    np.testing.assert_allclose(left.position(1.),right.position(-1.),
+                               rtol=0.,atol=1e-14)
+    np.testing.assert_allclose(left.nodal_triads[-1],right.nodal_triads[0],
+                               rtol=0.,atol=1e-14)
+    np.testing.assert_allclose(
+        left.derivative(1.)/left.jacobian(1.),
+        right.derivative(-1.)/right.jacobian(-1.),
+        rtol=0.,atol=1e-13)
+    np.testing.assert_allclose(left.nodal_triads[0],np.eye(3),
+                               rtol=0.,atol=1e-13)
+    np.testing.assert_allclose(right.nodal_triads[-1],np.eye(3),
+                               rtol=0.,atol=1e-13)
+    bonded_bottom=right.position(1.)+right.nodal_triads[-1]@(0.,0.,-.05)
+    np.testing.assert_allclose(bonded_bottom,(.9,0.,.0175),
+                               rtol=0.,atol=1e-13)
+    bent_bottom=left.position(1.)+left.nodal_triads[-1]@(0.,0.,-.05)
+    assert abs(bent_bottom[0]-.825)>1e-6
+
+
+def test_c1_terminal_solid_bar_has_positive_quadratic_gauss_jacobians():
+    deck,_=SCREEN.build(
+        4,"tip_mx",boundary_policy="left_root",bond_policy="terminal",
+        element_family="C3D20R",tip_mx_gap_audit=True,
+        bar_clearance_um=2,plate_thickness_mm=35,
+        tip_load_map="quadratic_face",bar_reference_profile="c1_tangent")
+    lines=deck.splitlines()
+    coords={}
+    for line in lines[lines.index("*NODE,NSET=AllNodes")+1:]:
+        if line.startswith("*"):
+            break
+        fields=line.split(",")
+        coords[int(fields[0])]=np.array([float(v) for v in fields[1:]])
+    start=lines.index("*ELEMENT,TYPE=C3D20R,ELSET=Stiffener")+1
+    cells=[]
+    for line in range(start,len(lines),2):
+        if lines[line].startswith("*"):
+            break
+        first=[int(v) for v in lines[line].split(",")]
+        second=[int(v) for v in lines[line+1].split(",")]
+        cells.append(first[1:]+second)
+    xyz=np.array([[coords[node] for node in cell] for cell in cells])
+    assert len(cells)==1280
+
+    corners=np.array(((-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),
+                      (-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)))
+
+    def shape(q):
+        values=[np.prod(1+q*v)*(q@v-2)/8 for v in corners]
+        for a,b in SCREEN.HEX20_EDGES:
+            first,last=corners[a],corners[b]
+            axis=int(np.flatnonzero(first!=last)[0])
+            others=[index for index in range(3) if index!=axis]
+            values.append((1-q[axis]**2)*
+                          (1+q[others[0]]*first[others[0]])*
+                          (1+q[others[1]]*first[others[1]])/4)
+        return np.array(values)
+
+    gauss=np.sqrt(3/5)
+    gradients=[]
+    for r in (-gauss,0.,gauss):
+        for s in (-gauss,0.,gauss):
+            for t in (-gauss,0.,gauss):
+                point=np.array((r,s,t))
+                assert abs(shape(point).sum()-1)<1e-13
+                components=[]
+                for axis in range(3):
+                    perturbed=point.astype(complex)
+                    perturbed[axis]+=1e-30j
+                    components.append(np.imag(shape(perturbed))/1e-30)
+                gradients.append(np.stack(components,axis=1))
+    gradients=np.array(gradients)
+    assert np.max(np.abs(gradients.sum(axis=1)))<1e-13
+    jacobians=np.einsum("eik,gij->egkj",xyz,gradients)
+    determinants=np.linalg.det(jacobians)
+    assert np.isfinite(determinants).all()
+    assert np.min(determinants)>0.
 
 
 @pytest.mark.parametrize("clearance_um", (1, 2))
