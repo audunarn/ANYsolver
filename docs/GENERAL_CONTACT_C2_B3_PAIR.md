@@ -62,4 +62,10 @@ was installed into an isolated target without dependencies or index access.
 The installed example produced the same reported forces, gap, counters and
 checkpoint version (`c2-b3-pair-example-installed-40e977a8.txt`). This is an
 installed-package smoke check for V0, not publication or engineering acceptance.
-V1 requires its own installed-package check.
+
+V1 source `50b98ee46448ccf55f0718f33120a28d70fa36fd` built an isolated
+wheel (SHA-256
+`704d3835132e5d387bb890f1db28071f4ec4cddc372a13697cf3115eb6505055`).
+The installed V1 example reproduced the source reaction, gap, counters and
+checkpoint version (`c2-b3-straight-roots-example-installed-50b98ee4.txt`).
+This remains development evidence; no package was published.
