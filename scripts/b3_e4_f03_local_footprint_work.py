@@ -600,8 +600,48 @@ def run(output_dir: Path) -> None:
                       flush=True)
 
 
+def run_terminal_beam_resolution(output_dir: Path) -> None:
+    """One-axis native beam check with the E4 panel and footprint fixed."""
+    source = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                     text=True).strip()
+    if subprocess.check_output(["git", "status", "--porcelain"],
+                               text=True).strip():
+        raise RuntimeError("run requires clean source")
+    output_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "status": "EXPLORATORY_NOT_G0_ACCEPTANCE",
+        "source_sha": source,
+        "question": "Does native B3 half-cell resolution cause the rigid/distributing terminal response difference on one fixed E4 Q4 panel?",
+        "decision": "Material drift with beam 4->8->16 requires beam/port convergence work before comparing footprint laws; roundoff agreement shifts the remaining discrepancy to shell or connection idealization. Neither selects a production law.",
+        "panel": "Q4 x4/y4, t=.07 m; full left-edge clamp",
+        "beam": "native B3 half-cells 4/8/16, centroid z=.085 m, square Saint-Venant J; root fixed",
+        "footprint": "last 0.1 m, y +/-0.05 m; same rigid and distributing laws",
+        "loads": "separate +100 Nm tip Mx and +1000 N tip Fz",
+        "python": platform.python_version(), "numpy": np.__version__,
+        "scope": "bounded linearized fixed-panel check; no external accuracy, mesh convergence or nonlinear qualification",
+    }
+    with threadpool_limits(limits=1):
+        manifest["effective_threadpools"] = threadpool_info()
+        (output_dir/"manifest.json").write_text(json.dumps(manifest, indent=2)+"\n")
+        shell = FlatE4TrialPanel(make_shell(4, "Q4", n_y=4))
+        records=[]
+        for half in (4, 8, 16):
+            beam = build(half, z_offset=.085,
+                         torsion_constant=square_torsion_constant())
+            result=termination_local(shell, beam)
+            records.append({"beam_half_cells":half, "response":result})
+            print(half, json.dumps(result["loaded_linear_reference"]), flush=True)
+        (output_dir/"results.json").write_text(json.dumps(records, indent=2,
+                                             allow_nan=False)+"\n")
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("output_dir", type=Path)
-    run(parser.parse_args().output_dir)
+    parser.add_argument("--terminal-beam-resolution", action="store_true")
+    args = parser.parse_args()
+    if args.terminal_beam_resolution:
+        run_terminal_beam_resolution(args.output_dir)
+    else:
+        run(args.output_dir)
