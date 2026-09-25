@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import platform
 import subprocess
+import time
 from pathlib import Path
 
 import numpy as np
@@ -635,13 +636,68 @@ def run_terminal_beam_resolution(output_dir: Path) -> None:
                                              allow_nan=False)+"\n")
 
 
+def run_terminal_shell_resolution(output_dir: Path) -> None:
+    """Bounded native terminal-law response under simultaneous shell refinement."""
+    source = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                     text=True).strip()
+    if subprocess.check_output(["git", "status", "--porcelain"],
+                               text=True).strip():
+        raise RuntimeError("run requires clean source")
+    output_dir.mkdir(parents=True, exist_ok=False)
+    levels=(4,8,12)
+    manifest={
+        "status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
+        "source_sha":source,
+        "question":"Do native six-channel rigid/distributing terminal torque and shear responses approach the section-resolved external terminal reference as the E4 shell refines?",
+        "decision":"A strong native mesh trend bars a law ranking until convergence; a stable discrepancy requires connection/section/warping diagnosis. Neither outcome selects a footprint or true-line multiplier space.",
+        "shell_formulations":["Q4","S3-V2D"],
+        "shell_levels_x_half_y":list(levels),
+        "beam_half_cells":8,
+        "geometry":"plate [-.5,1.5]x[-.5,.5] m, thickness .07 m; B3 straight x=[0,1] m, centroid z=.085 m; patch x=[.9,1], y=+/- .05 m",
+        "supports":"full E4 left edge and B3 root fixed",
+        "loads":"separate +100 N m tip Mx and +1000 N tip Fz",
+        "external_context":"C3D20R solid terminal patch has a declared 2 micrometre clearance outside the patch; native straight beam does not",
+        "limits":{"max_dense_kkt_rows":2300,"blas_threads":1},
+        "scope":"linearized dense G0 native response screen; no production assembly, nonlinear qualification, exact solid geometry parity or true-line selection",
+        "python":platform.python_version(),"numpy":np.__version__,
+    }
+    with threadpool_limits(limits=1):
+        manifest["effective_threadpools"]=threadpool_info()
+        (output_dir/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+        beam=build(8,z_offset=.085,torsion_constant=square_torsion_constant())
+        records=[]
+        for topology in manifest["shell_formulations"]:
+            for level in levels:
+                started=time.perf_counter()
+                shell=FlatE4TrialPanel(make_shell(level,topology,n_y=level))
+                rows=6*shell.panel.node_count+beam.context.count+12
+                if rows>manifest["limits"]["max_dense_kkt_rows"]:
+                    raise ValueError("terminal shell-resolution dense row cap exceeded")
+                result=termination_local(shell,beam)
+                record={"topology":topology,"shell_level":level,
+                        "shell_nodes":shell.panel.node_count,
+                        "dense_kkt_rows_bound":rows,
+                        "seconds":time.perf_counter()-started,
+                        "response":result}
+                records.append(record)
+                (output_dir/"results.json").write_text(json.dumps(
+                    records,indent=2,allow_nan=False)+"\n")
+                print(topology,level,json.dumps(result["loaded_linear_reference"]),
+                      flush=True)
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("output_dir", type=Path)
     parser.add_argument("--terminal-beam-resolution", action="store_true")
+    parser.add_argument("--terminal-shell-resolution", action="store_true")
     args = parser.parse_args()
+    if args.terminal_beam_resolution and args.terminal_shell_resolution:
+        parser.error("select one terminal resolution screen")
     if args.terminal_beam_resolution:
         run_terminal_beam_resolution(args.output_dir)
+    elif args.terminal_shell_resolution:
+        run_terminal_shell_resolution(args.output_dir)
     else:
         run(args.output_dir)
