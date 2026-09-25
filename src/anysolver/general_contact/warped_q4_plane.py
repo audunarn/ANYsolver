@@ -109,18 +109,77 @@ class WarpedQ4PlaneMortar:
             raise ValueError("warped Q4 contact needs four finite six-DOF rows")
         if not np.isfinite(plane_normal_translation):
             raise ValueError("plane translation must be finite")
-        weighted = (self.reference_weighted_gap
-                    + self.gap_gradient @ coordinates.reshape(24)
-                    - float(plane_normal_translation) * self.support)
-        normalized = weighted / self.support
-        closed_gap = np.minimum(normalized, 0.0)
-        closed = normalized <= 0.0
-        energy = 0.5 * self.stiffness * float(self.support @ (closed_gap * closed_gap))
-        residual = self.gap_gradient.T @ (self.stiffness * closed_gap)
-        tangent = (self.stiffness * self.gap_gradient[closed].T
-                   @ np.diag(1.0 / self.support[closed])
-                   @ self.gap_gradient[closed])
-        return WarpedQ4PlaneState(
-            weighted, normalized, energy, residual.reshape(4, 6), tangent,
-            np.maximum(0.0, -self.stiffness * closed_gap),
+        return _evaluate_penalty(
+            self.support, self.reference_weighted_gap, self.gap_gradient,
+            self.stiffness, coordinates, plane_normal_translation,
+        )
+
+
+def _evaluate_penalty(support, reference_weighted_gap, gap_gradient,
+                      stiffness, coordinates, plane_normal_translation):
+    weighted = (reference_weighted_gap
+                + gap_gradient @ coordinates.reshape(-1)
+                - float(plane_normal_translation) * support)
+    normalized = weighted / support
+    closed_gap = np.minimum(normalized, 0.0)
+    closed = normalized <= 0.0
+    energy = 0.5 * stiffness * float(support @ (closed_gap * closed_gap))
+    residual = gap_gradient.T @ (stiffness * closed_gap)
+    tangent = (stiffness * gap_gradient[closed].T
+               @ np.diag(1.0 / support[closed])
+               @ gap_gradient[closed])
+    return WarpedQ4PlaneState(
+        weighted, normalized, energy, residual.reshape(coordinates.shape), tangent,
+        np.maximum(0.0, -stiffness * closed_gap),
+    )
+
+
+class WarpedQ4PatchPlaneMortar:
+    """Continuous Q1 pressure supports over two edge-sharing Q4 skins."""
+
+    def __init__(self, skins, plane_point, plane_normal, stiffness, *,
+                 quadrature_order, control_order,
+                 integration_relative_tolerance):
+        if len(skins) != 2 or any(type(skin) is not WarpedQ4Skin for skin in skins):
+            raise ValueError("warped Q4 patch law needs exactly two physical skins")
+        self.skins = tuple(skins)
+        self.node_ids = tuple(sorted({node for skin in skins for node in skin.node_ids}))
+        index = {node: i for i, node in enumerate(self.node_ids)}
+        n_nodes = len(self.node_ids)
+        self.support = np.zeros(n_nodes)
+        self.reference_weighted_gap = np.zeros(n_nodes)
+        gradient = np.zeros((n_nodes, n_nodes, 6))
+        local_laws = tuple(WarpedQ4PlaneMortar(
+            skin, plane_point, plane_normal, stiffness,
+            quadrature_order=quadrature_order,
+            control_order=control_order,
+            integration_relative_tolerance=integration_relative_tolerance,
+        ) for skin in skins)
+        for skin, law in zip(skins, local_laws):
+            local_gradient = law.gap_gradient.reshape(4, 4, 6)
+            for a, node_a in enumerate(skin.node_ids):
+                row = index[node_a]
+                self.support[row] += law.support[a]
+                self.reference_weighted_gap[row] += law.reference_weighted_gap[a]
+                for b, node_b in enumerate(skin.node_ids):
+                    gradient[row, index[node_b]] += local_gradient[a, b]
+        if np.any(self.support <= 0.0):
+            raise ValueError("warped Q4 patch pressure support must be positive")
+        self.gap_gradient = gradient.reshape(n_nodes, 6 * n_nodes)
+        self.stiffness = float(stiffness)
+        self.integration_relative_error = max(
+            law.integration_relative_error for law in local_laws
+        )
+
+    def evaluate(self, nodal_coordinates: np.ndarray, *,
+                 plane_normal_translation: float = 0.0) -> WarpedQ4PlaneState:
+        coordinates = np.asarray(nodal_coordinates, dtype=float)
+        if (coordinates.shape != (len(self.node_ids), 6)
+                or not np.all(np.isfinite(coordinates))):
+            raise ValueError("warped Q4 patch needs finite six-DOF nodal rows")
+        if not np.isfinite(plane_normal_translation):
+            raise ValueError("plane translation must be finite")
+        return _evaluate_penalty(
+            self.support, self.reference_weighted_gap, self.gap_gradient,
+            self.stiffness, coordinates, plane_normal_translation,
         )

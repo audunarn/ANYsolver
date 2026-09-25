@@ -40,3 +40,23 @@ physical-gap convergence under mesh and enforcement refinement. Finite
 rotations, deformable paired warped faces, friction and broader C1
 qualification remain open. No acceptance claim follows from a completed
 solver status under a development gap budget.
+
+## Two-face pressure-resolution development profile
+
+The same explicit setting also admits exactly two edge-sharing qualified Q4
+midsurface faces. They share one continuous Q1 pressure space at their common
+material nodes. Top and bottom skins over a multi-face seam remain unadmitted
+until the physical crease/rim geometry is resolved. The separate profile ID is
+`TWO_FACE_WARPED_Q4_RIGID_PLANE_SMALL_ROTATION_PENALTY_MORTAR_STATIC_DEV_V0`.
+Run `examples/general_contact_warped_q4_patch.py` for this case.
+
+An independent 20×20 per-face surface integral reproduced the combined
+support, weighted gap and global work map. All six normal pressure rows had
+positive support and full rank. The direct global tangent matched a finite
+difference, the coupled reaction balanced the applied load, and a half-load
+checkpoint resumed to the same final state. The two-face 1 N solve reached a
+1.725 mm conservative gap lower bound under the explicit 3 mm development
+budget. With the same 1 mm budget used for the one-face investigation it
+stopped at about 8.0% load before any pressure support activated. The local
+improvement at the relaxed budget does not establish mesh convergence or
+the programme's 0.08 mm benchmark.

@@ -10,11 +10,12 @@ from __future__ import annotations
 import numpy as np
 from scipy import sparse
 
-from .warped_q4_plane import WarpedQ4PlaneMortar
-from .warped_q4_skin import WarpedQ4Skin
+from .warped_q4_plane import WarpedQ4PatchPlaneMortar, WarpedQ4PlaneMortar
+from .warped_q4_skin import WarpedQ4GapCertificate, WarpedQ4Skin
 
 
 PROFILE = "WARPED_Q4_RIGID_PLANE_SMALL_ROTATION_PENALTY_MORTAR_STATIC_DEV_V0"
+PATCH_PROFILE = "TWO_FACE_WARPED_Q4_RIGID_PLANE_SMALL_ROTATION_PENALTY_MORTAR_STATIC_DEV_V0"
 
 _REQUIRED_SETTINGS = (
     "warped_q4_quadrature_order", "warped_q4_control_order",
@@ -44,15 +45,30 @@ def validate_warped_q4_plane(model, definition, settings, *, analysis_control="f
         issues.append("warped Q4 control quadrature may not exceed order 32")
     if len(definition.surfaces) == 1:
         surface = definition.surfaces[0]
-        if surface.beam_radius is not None or len(surface.element_ids) != 1:
-            issues.append("warped Q4 plane profile needs exactly one shell Q4 face")
-        elif type(model.mesh.elements.get(surface.element_ids[0])) is not QualifiedE4PLShellElement:
-            issues.append("warped Q4 plane profile needs an exact qualified Q4 formulation")
+        if surface.beam_radius is not None or len(surface.element_ids) not in {1, 2}:
+            issues.append("warped Q4 plane profile needs one or two shell Q4 faces")
         else:
-            try:
-                WarpedQ4Skin(model, surface.element_ids[0], surface.side)
-            except ValueError as exc:
-                issues.append(str(exc))
+            skins = []
+            for element_id in surface.element_ids:
+                if type(model.mesh.elements.get(element_id)) is not QualifiedE4PLShellElement:
+                    issues.append("warped Q4 plane profile needs exact qualified Q4 formulations")
+                    continue
+                try:
+                    skins.append(WarpedQ4Skin(model, element_id, surface.side))
+                except ValueError as exc:
+                    issues.append(str(exc))
+            if len(surface.element_ids) == 2:
+                if surface.side != "midsurface":
+                    issues.append("two-face warped Q4 profile currently needs midsurface contact")
+                if len(skins) == 2:
+                    shared = frozenset(set(skins[0].node_ids) & set(skins[1].node_ids))
+                    edges = tuple({frozenset((skin.node_ids[i], skin.node_ids[(i + 1) % 4]))
+                                   for i in range(4)} for skin in skins)
+                    if len(shared) != 2 or any(shared not in face_edges for face_edges in edges):
+                        issues.append("two warped Q4 faces must share exactly one material edge")
+                    if float(skins[0].sample(0.0, 0.0).director
+                             @ skins[1].sample(0.0, 0.0).director) <= 0.0:
+                        issues.append("two warped Q4 faces need consistent physical sides")
     if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind != "plane":
         issues.append("warped Q4 profile needs an analytic rigid plane")
     if len(definition.interactions) == 1:
@@ -67,7 +83,9 @@ def validate_warped_q4_plane(model, definition, settings, *, analysis_control="f
             issues.append("warped Q4 interaction participants do not match")
     if settings.maximum_candidate_pairs < 1:
         issues.append("warped Q4 candidate budget is exhausted")
-    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE)
+    profile = (PATCH_PROFILE if len(definition.surfaces) == 1
+               and len(definition.surfaces[0].element_ids) == 2 else PROFILE)
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
 class WarpedQ4PlaneManager:
@@ -84,7 +102,15 @@ class WarpedQ4PlaneManager:
         surface = definition.surfaces[0]
         body = definition.rigid_bodies[0]
         interaction = definition.interactions[0]
-        self.skin = WarpedQ4Skin(model, surface.element_ids[0], surface.side)
+        self.skins = tuple(WarpedQ4Skin(model, element_id, surface.side)
+                           for element_id in surface.element_ids)
+        self.skin = self.skins[0]
+        self.node_ids = tuple(sorted({node_id for skin in self.skins
+                                      for node_id in skin.node_ids}))
+        self.node_index = {node_id: i for i, node_id in enumerate(self.node_ids)}
+        self.reference = np.asarray([
+            model.mesh.get_node(node_id).coords() for node_id in self.node_ids
+        ], dtype=float)
         self.normal = np.asarray(body.normal, dtype=float)
         self.reference_point = np.asarray(body.point, dtype=float)
         self.path_translation = (np.zeros(3) if body.path_translation is None
@@ -96,18 +122,21 @@ class WarpedQ4PlaneManager:
         self.swept_trial_cutbacks = 0
         self.dofs = np.asarray([
             model.mesh.dof_manager.get_node_dofs(node_id)[:6]
-            for node_id in self.skin.node_ids
+            for node_id in self.node_ids
         ], dtype=np.intp)
         self.n_dof = model.mesh.dof_manager.total_dofs
-        self.law = WarpedQ4PlaneMortar(
-            self.skin, self.reference_point, self.normal, self.stiffness,
+        law_type = (WarpedQ4PatchPlaneMortar if len(self.skins) == 2
+                    else WarpedQ4PlaneMortar)
+        law_geometry = (self.skins if len(self.skins) == 2 else self.skin)
+        self.law = law_type(
+            law_geometry, self.reference_point, self.normal, self.stiffness,
             quadrature_order=settings.warped_q4_quadrature_order,
             control_order=settings.warped_q4_control_order,
             integration_relative_tolerance=settings.warped_q4_integration_tolerance,
         )
         initial = np.zeros(self.n_dof) if initial_displacement is None else initial_displacement
         initial_gap = self._certificate(initial, self.point)
-        scale = max(1.0, float(np.max(np.abs(self.skin.reference))),
+        scale = max(1.0, float(np.max(np.abs(self.reference))),
                     float(np.max(np.abs(self.point))))
         roundoff = 256.0 * np.finfo(float).eps * scale
         if initial_gap.conservative_lower_gap < -roundoff:
@@ -169,11 +198,26 @@ class WarpedQ4PlaneManager:
         return coordinates
 
     def _certificate(self, displacement, point):
-        return self.skin.certify_linearized_plane_gap(
-            self._coordinates(displacement), point, self.normal,
-            accuracy=self.settings.warped_q4_gap_accuracy,
-            maximum_cells=self.settings.warped_q4_maximum_gap_cells,
-            maximum_depth=self.settings.warped_q4_maximum_gap_depth,
+        coordinates = self._coordinates(displacement)
+        remaining = self.settings.warped_q4_maximum_gap_cells
+        certificates = []
+        for skin in self.skins:
+            if remaining < 1:
+                raise MemoryError("warped Q4 patch gap cell budget exhausted")
+            rows = [self.node_index[node_id] for node_id in skin.node_ids]
+            certificate = skin.certify_linearized_plane_gap(
+                coordinates[rows], point, self.normal,
+                accuracy=self.settings.warped_q4_gap_accuracy,
+                maximum_cells=remaining,
+                maximum_depth=self.settings.warped_q4_maximum_gap_depth,
+            )
+            remaining -= certificate.cells_checked
+            certificates.append(certificate)
+        return WarpedQ4GapCertificate(
+            min(item.minimum_sampled_gap for item in certificates),
+            min(item.conservative_lower_gap for item in certificates),
+            sum(item.cells_checked for item in certificates),
+            self.settings.warped_q4_gap_accuracy,
         )
 
     def evaluate(self, displacement, *, tangent=True):
@@ -184,9 +228,9 @@ class WarpedQ4PlaneManager:
         )
         certificate = self._certificate(displacement, self.point)
         self.last_gap_certificate = certificate
-        dofs = self.dofs.reshape(24)
+        dofs = self.dofs.reshape(-1)
         force = np.zeros(self.n_dof)
-        np.add.at(force, dofs, state.residual.reshape(24))
+        np.add.at(force, dofs, state.residual.reshape(-1))
         stiffness = None
         if tangent:
             local = sparse.coo_matrix(state.tangent)
@@ -197,7 +241,7 @@ class WarpedQ4PlaneManager:
         local_physical_force = -state.residual[:, :3]
         shell_force = np.sum(local_physical_force, axis=0)
         shell_moment = np.sum(np.cross(
-            self.skin.reference + coordinates[:, :3], local_physical_force,
+            self.reference + coordinates[:, :3], local_physical_force,
         ) - state.residual[:, 3:], axis=0)
         results = self._results(state, certificate, shell_force, shell_moment)
         return force, stiffness, results
@@ -248,16 +292,11 @@ class WarpedQ4PlaneManager:
     def swept_increment_admissible(self, start, end, start_factor, end_factor):
         first_point = self.point_at(start_factor)
         last_point = self.point_at(end_factor)
-        swept = self.skin.certify_linearized_swept_plane_gap(
-            self._coordinates(start), self._coordinates(end),
-            first_point, last_point, self.normal,
-            accuracy=self.settings.warped_q4_gap_accuracy,
-            maximum_cells=self.settings.warped_q4_maximum_gap_cells,
-            maximum_depth=self.settings.warped_q4_maximum_gap_depth,
-        )
-        if swept.start.conservative_lower_gap < -self.gap_tolerance:
+        first = self._certificate(start, first_point)
+        last = self._certificate(end, last_point)
+        if first.conservative_lower_gap < -self.gap_tolerance:
             raise ValueError("committed warped Q4 plane pose exceeds the gap tolerance")
-        if swept.conservative_lower_gap < -self.gap_tolerance:
+        if min(first.conservative_lower_gap, last.conservative_lower_gap) < -self.gap_tolerance:
             self.swept_trial_cutbacks += 1
             return False
         return True
