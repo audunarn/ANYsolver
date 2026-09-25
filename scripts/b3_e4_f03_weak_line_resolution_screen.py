@@ -80,7 +80,10 @@ def one_case(topology: str, intervals: int, kind: str, *,
                 "physical_strip_020_023": lambda p, s, u: (
                     pose_from_e4_total_strip(
                         p, s, u, half_length=.2, half_width=.23)),
-                "line_chord_020": pose_from_e4_total_chord}[shell_port]
+                "line_chord_020": pose_from_e4_total_chord,
+                "line_chord_confined_020": lambda p, s, u: (
+                    pose_from_e4_total_chord(
+                        p, s, u, confined=True))}[shell_port]
     shell_size = 6*shell.panel.node_count
     tip_rx = shell_size+6*beam.n_half_cells+3
     tip_rz = shell_size+6*beam.n_half_cells+5
@@ -303,7 +306,8 @@ def one_case(topology: str, intervals: int, kind: str, *,
 def chord_reference_modes(topology: str, intervals: int, kind: str, *,
                           n_s: int = 4, n_y: int = 4,
                           native_half_cells: int = 8,
-                          characteristic_length: float = .46) -> dict:
+                          characteristic_length: float = .46,
+                          confined: bool = False) -> dict:
     """Bounded six-channel, work-scaled line-chord interface diagnostic.
 
     Exact elimination of the indefinite native retained block separates a
@@ -319,8 +323,12 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
     beam = build(native_half_cells)
     space = LineMultiplierSpace(
         kind, tuple(np.linspace(0., 1., intervals+1)))
+    if type(confined) is not bool:
+        raise ValueError("Boolean attachment confinement required")
     kkt = assemble_reference_kkt(
-        shell, beam, space, shell_port="line_chord_020",
+        shell, beam, space,
+        shell_port=("line_chord_confined_020" if confined else
+                    "line_chord_020"),
         shell_support_policy="full_left_edge")
     free = kkt.free_primal
     rows = kkt.constraint_jacobian[:, free]
@@ -415,6 +423,7 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         "shell_y_intervals": n_y,
         "native_half_cells": native_half_cells,
         "line_intervals": intervals, "space": kind,
+        "confined_to_attachment": confined,
         "row_count": len(rows),
         "row_rank": int(np.linalg.matrix_rank(rows)),
         "physical_stiffness_min_eigen": float(ep[0]),

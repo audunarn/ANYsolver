@@ -24,7 +24,8 @@ from scripts.b3_e4_f03_weak_line_resolution_screen import (
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-def test_chord_reference_work_rigid_motion_and_no_drilling(topology):
+@pytest.mark.parametrize("confined", (False, True))
+def test_chord_reference_work_rigid_motion_and_no_drilling(topology, confined):
     panel = make_shell(2, topology, n_y=4)
     nodes = reference_nodes(panel)
     translation = np.array((.1, -.2, .3))
@@ -33,7 +34,8 @@ def test_chord_reference_work_rigid_motion_and_no_drilling(topology):
     rigid[:, :3] = translation+np.cross(omega, nodes)
     rigid[:, 3:] = omega
     for station in (0., .37, 1.):
-        trace = reference_spatial_trace_chord(panel, station)
+        trace = reference_spatial_trace_chord(
+            panel, station, confined=confined)
         np.testing.assert_allclose(
             trace@rigid.ravel(),
             np.r_[translation+np.cross(omega, (station, 0., 0.)), omega],
@@ -45,11 +47,14 @@ def test_chord_reference_work_rigid_motion_and_no_drilling(topology):
     # local polar yaw does not enter this line-trace functional.
     localized = np.zeros_like(rigid)
     localized[:, 0] = 1e-4*nodes[:, 0]*nodes[:, 1]
-    assert reference_spatial_trace_chord(panel, .37)[5]@localized.ravel() == 0.
+    assert (reference_spatial_trace_chord(
+        panel, .37, confined=confined)[5]@localized.ravel() == 0.)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-def test_chord_objectivity_actual_chart_derivatives_and_shear(topology):
+@pytest.mark.parametrize("confined", (False, True))
+def test_chord_objectivity_actual_chart_derivatives_and_shear(topology,
+                                                               confined):
     panel = make_shell(2, topology, n_y=4)
     nodes = reference_nodes(panel)
     station = .37
@@ -60,7 +65,7 @@ def test_chord_objectivity_actual_chart_derivatives_and_shear(topology):
     rigid[:, :3] = nodes@rotation.T+shift-nodes
     rigid[:, 3:] = angle
     position, frame = pose_from_e4_total_chord(
-        panel, station, rigid.ravel())
+        panel, station, rigid.ravel(), confined=confined)
     np.testing.assert_allclose(position,
                                rotation@(station, 0., 0.)+shift, atol=2e-12)
     np.testing.assert_allclose(frame, rotation, atol=2e-12)
@@ -69,11 +74,12 @@ def test_chord_objectivity_actual_chart_derivatives_and_shear(topology):
     first = rng.normal(size=rigid.shape)*.04
     second = rng.normal(size=rigid.shape)*.04
     analytic = directional_pose_from_e4_total_chord(
-        panel, station, rigid.ravel(), first, second)
+        panel, station, rigid.ravel(), first, second, confined=confined)
 
     def moved(a, b):
         return pose_from_e4_total_chord(
-            panel, station, (rigid+a*first+b*second).ravel())
+            panel, station, (rigid+a*first+b*second).ravel(),
+            confined=confined)
 
     h = 1e-5
     plus, minus = moved(h, 0.), moved(-h, 0.)
@@ -91,25 +97,28 @@ def test_chord_objectivity_actual_chart_derivatives_and_shear(topology):
 
     zero = np.zeros_like(rigid)
     reference = directional_pose_from_e4_total_chord(
-        panel, station, zero.ravel(), first, zero)
+        panel, station, zero.ravel(), first, zero, confined=confined)
     derivative = reference.frame_first
     spin = np.array((derivative[2, 1]-derivative[1, 2],
                      derivative[0, 2]-derivative[2, 0],
                      derivative[1, 0]-derivative[0, 1]))/2
     np.testing.assert_allclose(
         np.r_[reference.position_first, spin],
-        reference_spatial_trace_chord(panel, station)@first.ravel(),
+        reference_spatial_trace_chord(
+            panel, station, confined=confined)@first.ravel(),
         atol=2e-13)
 
     shear = np.zeros_like(rigid)
     shear[:, 2] = .07*nodes[:, 0]
     _, sheared_frame = pose_from_e4_total_chord(
-        panel, station, shear.ravel())
+        panel, station, shear.ravel(), confined=confined)
     np.testing.assert_allclose(sheared_frame, np.eye(3), atol=2e-14)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-def test_chord_weak_work_derivative_and_loaded_balance(topology):
+@pytest.mark.parametrize("shell_port", ("line_chord_020",
+                                        "line_chord_confined_020"))
+def test_chord_weak_work_derivative_and_loaded_balance(topology, shell_port):
     shell = FlatE4TrialPanel(make_shell(1, topology, n_y=4))
     beam = build(4)
     space = LineMultiplierSpace("piecewise_constant", (0., .5, 1.))
@@ -125,7 +134,7 @@ def test_chord_weak_work_derivative_and_loaded_balance(topology):
             shell, beam, space, coefficients, zero.ravel(),
             (base+a*direction).ravel(), direction, np.zeros_like(direction),
             beam.context.initial.mechanical, beam_zero, beam_zero,
-            shell_port="line_chord_020")
+            shell_port=shell_port)
 
     central = evaluate(0.)
     h = 1e-5
@@ -133,13 +142,13 @@ def test_chord_weak_work_derivative_and_loaded_balance(topology):
     np.testing.assert_allclose(central.first, observed,
                                rtol=2e-6, atol=2e-8)
     kkt = assemble_reference_kkt(
-        shell, beam, space, shell_port="line_chord_020",
+        shell, beam, space, shell_port=shell_port,
         shell_support_policy="full_left_edge")
     assert np.linalg.matrix_rank(
         kkt.constraint_jacobian[:, kkt.free_primal]) == 12
     loaded = one_case(
         topology, 2, "piecewise_constant",
-        shell_port="line_chord_020", load_kind="yaw_torque_z",
+        shell_port=shell_port, load_kind="yaw_torque_z",
         n_s=2, n_y=4, native_half_cells=4,
         shell_support_policy="full_left_edge")
     assert loaded["tip_rz_rad"] > 0.
@@ -149,18 +158,20 @@ def test_chord_weak_work_derivative_and_loaded_balance(topology):
 
 
 def test_chord_native_six_channel_mode_is_not_an_axial_proxy_for_transverse():
-    result = chord_reference_modes(
-        "Q4", 2, "piecewise_constant", n_s=2, n_y=4,
-        native_half_cells=4)
-    assert result["row_rank"] == result["row_count"] == 12
-    assert result["physical_stiffness_min_eigen"] > 0.
-    assert result["retained_negative_modes"] > 0
-    assert result["decomposition_relative_error"] < 1e-9
-    np.testing.assert_allclose(sum(result["weakest_mode_channel_l2_shares"]),
-                               1., atol=1e-12)
-    assert result["weakest_mode_channel_l2_shares"][0] > .99
-    assert result["transverse_fz_mx_my_beta"] > 0.
-    assert result["transverse_mode_fz_mx_my_l2_shares"][0] > .5
+    for confined in (False, True):
+        result = chord_reference_modes(
+            "Q4", 2, "piecewise_constant", n_s=2, n_y=4,
+            native_half_cells=4, confined=confined)
+        assert result["row_rank"] == result["row_count"] == 12
+        assert result["physical_stiffness_min_eigen"] > 0.
+        assert result["retained_negative_modes"] > 0
+        assert result["decomposition_relative_error"] < 1e-9
+        np.testing.assert_allclose(
+            sum(result["weakest_mode_channel_l2_shares"]),
+            1., atol=1e-12)
+        assert result["weakest_mode_channel_l2_shares"][0] > .99
+        assert result["transverse_fz_mx_my_beta"] > 0.
+        assert result["transverse_mode_fz_mx_my_l2_shares"][0] > .5
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
@@ -182,3 +193,27 @@ def test_chord_and_finite_footprint_make_distinct_inplane_shear_choices(topology
     np.testing.assert_allclose(chord[5]@across.ravel(), 0., atol=2e-15)
     np.testing.assert_allclose(strip[5]@across.ravel(), -gamma/2,
                                atol=2e-15)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_confined_chord_keeps_weak_work_inside_declared_line(topology):
+    panel = make_shell(4, topology, n_y=4)
+    shell = FlatE4TrialPanel(panel)
+    beam = build(8)
+    space = LineMultiplierSpace("piecewise_constant",
+                                (0., .25, .5, .75, 1.))
+    x = reference_nodes(panel)[:, 0]
+    outside = (x < 0.) | (x > 1.)
+    old = assemble_reference_kkt(
+        shell, beam, space, shell_port="line_chord_020",
+        shell_support_policy="full_left_edge")
+    confined = assemble_reference_kkt(
+        shell, beam, space, shell_port="line_chord_confined_020",
+        shell_support_policy="full_left_edge")
+    shell_size = 6*panel.node_count
+    old_rows = old.constraint_jacobian[:, :shell_size].reshape(
+        -1, panel.node_count, 6)
+    confined_rows = confined.constraint_jacobian[:, :shell_size].reshape(
+        -1, panel.node_count, 6)
+    assert np.linalg.norm(old_rows[:, outside, :]) > .1
+    np.testing.assert_allclose(confined_rows[:, outside, :], 0., atol=1e-14)

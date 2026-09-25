@@ -115,6 +115,12 @@ def directional_point_work(
     elif shell_port == "line_chord_020":
         pose_map = pose_from_e4_total_chord
         derivative_map = directional_pose_from_e4_total_chord
+    elif shell_port == "line_chord_confined_020":
+        pose_map = lambda p, s, u: pose_from_e4_total_chord(
+            p, s, u, confined=True)
+        derivative_map = lambda p, s, u, a, b: (
+            directional_pose_from_e4_total_chord(
+                p, s, u, a, b, confined=True))
     else:
         raise ValueError("unknown bounded shell pose port")
     shell_position, shell_frame = pose_map(shell, station, shell_total)

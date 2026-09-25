@@ -22,7 +22,8 @@ from scripts._b3_e4_f03_shell_trace import ShellPanel
 HALF_CHORD = .2
 
 
-def _weights(panel: ShellPanel, station: float, half_chord: float
+def _weights(panel: ShellPanel, station: float, half_chord: float,
+             confined: bool = False
              ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     if (not isinstance(panel, ShellPanel) or
             panel.topology not in ("Q4", "S3-V2D") or
@@ -31,8 +32,15 @@ def _weights(panel: ShellPanel, station: float, half_chord: float
             not .05 <= half_chord <= .25):
         raise ValueError("bounded fixed shell-line chord required")
     reference_nodes(panel)
+    if type(confined) is not bool:
+        raise ValueError("Boolean attachment confinement required")
+    if confined:
+        minus_x = (1.-2*half_chord)*station
+        plus_x = minus_x+2*half_chord
+    else:
+        minus_x, plus_x = station-half_chord, station+half_chord
     rows = []
-    for x in (station, station-half_chord, station+half_chord):
+    for x in (station, minus_x, plus_x):
         indices, values = panel._shape(x, 0.)
         row = np.zeros(panel.node_count)
         row[indices] = values
@@ -44,9 +52,10 @@ def _weights(panel: ShellPanel, station: float, half_chord: float
 
 def reference_spatial_trace_chord(
         panel: ShellPanel, station: float, *,
-        half_chord: float = HALF_CHORD) -> np.ndarray:
+        half_chord: float = HALF_CHORD,
+        confined: bool = False) -> np.ndarray:
     """Six physical pose variations at a flat reference configuration."""
-    center, minus, plus = _weights(panel, station, half_chord)
+    center, minus, plus = _weights(panel, station, half_chord, confined)
     result = np.zeros((6, 6*panel.node_count))
     for axis in range(3):
         result[axis, axis::6] = center
@@ -57,8 +66,9 @@ def reference_spatial_trace_chord(
 
 
 def _numeric_pose(panel: ShellPanel, station: float, total_u: np.ndarray,
-                  half_chord: float) -> tuple[np.ndarray, np.ndarray]:
-    center, minus, plus = _weights(panel, station, half_chord)
+                  half_chord: float, confined: bool
+                  ) -> tuple[np.ndarray, np.ndarray]:
+    center, minus, plus = _weights(panel, station, half_chord, confined)
     reference = reference_nodes(panel)
     values = np.asarray(total_u, dtype=float)
     if values.shape != (6*panel.node_count,) or not np.isfinite(values).all():
@@ -89,9 +99,10 @@ def _numeric_pose(panel: ShellPanel, station: float, total_u: np.ndarray,
 
 def pose_from_e4_total_chord(
         panel: ShellPanel, station: float, total_u: np.ndarray, *,
-        half_chord: float = HALF_CHORD) -> tuple[np.ndarray, np.ndarray]:
+        half_chord: float = HALF_CHORD,
+        confined: bool = False) -> tuple[np.ndarray, np.ndarray]:
     """Finite material-line pose through the actual flat E4 chart."""
-    return _numeric_pose(panel, station, total_u, half_chord)
+    return _numeric_pose(panel, station, total_u, half_chord, confined)
 
 
 def _cross(a, b):
@@ -103,9 +114,10 @@ def _cross(a, b):
 def directional_pose_from_e4_total_chord(
         panel: ShellPanel, station: float, total_u: np.ndarray,
         first: np.ndarray, second: np.ndarray, *,
-        half_chord: float = HALF_CHORD) -> DirectionalPose:
+        half_chord: float = HALF_CHORD,
+        confined: bool = False) -> DirectionalPose:
     """Owned first/mixed-second variations through additive E4 rotations."""
-    center, minus, plus = _weights(panel, station, half_chord)
+    center, minus, plus = _weights(panel, station, half_chord, confined)
     base = np.asarray(total_u, dtype=float)
     u = np.asarray(first, dtype=float)
     v = np.asarray(second, dtype=float)
@@ -116,7 +128,7 @@ def directional_pose_from_e4_total_chord(
         raise ValueError("finite complete E4 state and two directions required")
     reference = reference_nodes(panel)
     numeric_position, numeric_frame = _numeric_pose(
-        panel, station, base, half_chord)
+        panel, station, base, half_chord, confined)
     base = base.reshape(shape)
     epsilon = ad.Jet2.variable(0., 0, 2)
     eta = ad.Jet2.variable(0., 1, 2)

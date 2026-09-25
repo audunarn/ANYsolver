@@ -15,7 +15,8 @@ from scripts._b3_e4_f03_shell_trace import make_shell
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
 @pytest.mark.parametrize("eccentricity", (0., .11))
-@pytest.mark.parametrize("shell_port", ("rail", "line_chord_020"))
+@pytest.mark.parametrize("shell_port", ("rail", "line_chord_020",
+                                        "line_chord_confined_020"))
 def test_composed_point_work_first_and_mixed_second_variations(
         topology, eccentricity, shell_port):
     shell = make_shell(2, topology)
@@ -26,7 +27,10 @@ def test_composed_point_work_first_and_mixed_second_variations(
     reference_shell = np.zeros((shell.node_count, 6))
     reference_shell[:, 2] = -eccentricity
     pose_map = {"rail": pose_from_e4_total,
-                "line_chord_020": pose_from_e4_total_chord}[shell_port]
+                "line_chord_020": pose_from_e4_total_chord,
+                "line_chord_confined_020": lambda p, s, u: (
+                    pose_from_e4_total_chord(
+                        p, s, u, confined=True))}[shell_port]
     shell_ref = pose_map(shell, station, reference_shell.ravel())
     beam_high, beam_low, beam_frame = port.pose_pair(
         beam.context.initial.mechanical)

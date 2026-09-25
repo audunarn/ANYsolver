@@ -1,5 +1,62 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+**Current decision, 25 September 2026:** The first fixed chord is not a
+strictly local attachment: a P0 tip yaw multiplier on `[.75,1]` acts at a
+shell sample beyond the declared beam end. On the aligned Q4 x8/y4 test,
+its last yaw row has coefficient `−0.2` at shell `x=1.25 m`, or `16.7%`
+of that row's absolute shell-`uy` coefficients. The finite strip likewise
+has outboard work, as expected from its explicitly finite footprint;
+the prior zero-width local polar law does not. The sample is physical
+outboard support, not merely a nonmatching FE shape node.
+
+**Bounded correction and interpretation:** A separate *confined* chord
+samples shell positions at `x_−=.6s`, `x_+=.4+.6s` for `s∈[0,1] m`.
+Its fixed `0.40 m` gauge has two moving sample maps, stays inside the
+declared attachment, and avoids the point atom introduced by simply
+clipping one end to `x=0` or `x=1`. Its integrated linear weak law uses
+shifted H1 displacement traces; no continuum claim is made for an
+individual point pose or the full nonlinear law. Q4/S3 constrained
+reference rows now have zero shell work outside `[0,1]` on the aligned
+diagnostic meshes. On fixed Q4 x8/y4, beam-8, P0-4, native yaw changes
+`3.905→3.881 µrad`; the independent confined value is `3.677 µrad`.
+Transverse force and beam-axis torque responses are unchanged to the
+reported precision on Q4 and S3. The native P0-4/P0-8 transverse
+algorithmic quotient remains `0.678/0.080`; confinement does not repair
+line-resolution sensitivity or select P0. Rigid motion, finite-chart
+derivatives, nonzero-multiplier point/weak work, eccentricity, loaded
+balance and the termination-support check pass bounded Q4/S3 tests.
+The confined Q4/S3 reference constraint agrees across Gauss orders 2–5
+to at most `2.2e-16` relative on the small segmented case; this rules
+out under-integration as the source of its observed response difference.
+
+**Resolved affine-patch kinematic comparator:** For a `0.20×0.23 m`
+half-size rectangle and `γ=.01`, the least-squares rigid rotation of the
+*given* affine displacement field is `+.004305705` rad for `uy=γx` and
+`−.005694295` rad for `ux=γy`. Independent five-point area quadrature
+matches `γ a²/(a²+b²)` and `−γ b²/(a²+b²)` exactly at displayed precision.
+The gradient-polar strip gives `±.005` rad, while the line tangent gives
+`+.01/0` rad. This distinguishes three kinematic reductions; the rigid
+fit is not a solved rigid-footprint boundary-value problem, and none is
+yet the qualified physical weld reference. The finite strip is best kept
+as a distributing-footprint candidate until its law is reviewed; the
+rigid footprint needs its own region constraint and work functional.
+
+**Remaining uncertainty and next discriminator:** Confinement corrects
+where the law acts, but the chord still aligns beam yaw with the shell
+line tangent. Under homogeneous in-plane shear that differs by a factor
+of two from an area-polar finite-width bond and can constrain native
+beam shear. Before treating this as the required *bonded* six-channel
+line, use a section-resolved shear/terminated-stiffener reference with
+the same geometry, supports, section axes and load work to determine
+which rotation is physically intended. If the resolved bond follows
+area-polar rotation, keep the confined tangent law as a separately
+declared idealization and advance the finite footprint for full-pose
+bonding; if tangent alignment is the intended line law, qualify its
+shear restriction, curved/rotated reference and mesh-ratio/interface
+modes. The prior CalculiX S4/B31 collocation route is preserved as failed
+within its 120 s envelope and is not reused as a matched reference.
+Formal F03 authority remains unconsumed, G0B open and G1 barred.
+
 **Current state, 25 September 2026 — decision sought:** Determine whether a
 declared zero-transverse-width *line-tangent/director* bond can represent
 the required nonmatching six-channel line, or whether physical full-pose

@@ -94,7 +94,7 @@ def test_reference_joint_varies_along_rigidly_rotated_shell(topology):
 ))
 @pytest.mark.parametrize("shell_port", (
     "rail", "local_translation", "local_director", "local_frame",
-    "line_chord_020"))
+    "line_chord_020", "line_chord_confined_020"))
 def test_segmented_line_directional_work_matches_direct_potential(
         topology, kind, shell_port):
     shell = FlatE4TrialPanel(make_shell(1, topology))
@@ -130,7 +130,10 @@ def test_segmented_line_directional_work_matches_direct_potential(
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
                 "local_frame": pose_from_e4_total_local_frame,
-                "line_chord_020": pose_from_e4_total_chord}[shell_port]
+                "line_chord_020": pose_from_e4_total_chord,
+                "line_chord_confined_020": lambda p, s, u: (
+                    pose_from_e4_total_chord(
+                        p, s, u, confined=True))}[shell_port]
 
     edges = segments(shell, beam, space, shell_port=shell_port)
     points, weights = np.polynomial.legendre.leggauss(4)

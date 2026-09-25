@@ -134,13 +134,18 @@ def shell_strip_trace(nx: int, ny: int, s: float, *,
 
 
 def shell_chord_trace(nx: int, ny: int, s: float, *,
-                      half_chord: float = .2) -> np.ndarray:
+                      half_chord: float = .2,
+                      confined: bool = False) -> np.ndarray:
     """Independent centerline displacement and fixed-chord heading."""
     if not 0. <= s <= 1. or not .05 <= half_chord <= .25:
         raise ValueError("bounded fixed shell-line chord required")
     center = plate_basis(nx, ny, s, 0., basis="spline")[0]
-    plus = plate_basis(nx, ny, s+half_chord, 0., basis="spline")[0]
-    minus = plate_basis(nx, ny, s-half_chord, 0., basis="spline")[0]
+    if type(confined) is not bool:
+        raise ValueError("Boolean attachment confinement required")
+    left = (1.-2*half_chord)*s if confined else s-half_chord
+    right = left+2*half_chord
+    plus = plate_basis(nx, ny, right, 0., basis="spline")[0]
+    minus = plate_basis(nx, ny, left, 0., basis="spline")[0]
     n = len(center)
     rows = np.zeros((3, 2*n))
     rows[0, :n] = center
@@ -155,6 +160,8 @@ def _line_edges(nx: int, nb: int, intervals: int, *,
     xknots = _spline(nx, -.5, 1.5)[2]
     moving = (np.r_[xknots-.2, xknots+.2]
               if trace_kind in ("strip_020_023", "chord_020")
+              else np.r_[xknots/.6, (xknots-.4)/.6]
+              if trace_kind == "confined_chord_020"
               else np.array(()))
     return np.unique(np.r_[np.linspace(0., 1., intervals+1), xknots, moving,
                            _spline(nb, 0., 1.)[2]].clip(0., 1.))
@@ -166,7 +173,8 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
              ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Independently assemble physical plate, beam and line constraint."""
     _validate(nx, ny, nb, intervals, kind)
-    if trace_kind not in ("local", "strip_020_023", "chord_020"):
+    if trace_kind not in ("local", "strip_020_023", "chord_020",
+                          "confined_chord_020"):
         raise ValueError("local, strip or declared line-chord trace required")
     if (isinstance(thickness, bool) or not np.isfinite(thickness)
             or thickness <= 0.):
@@ -200,6 +208,8 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
                 "local": shell_local_trace,
                 "strip_020_023": shell_strip_trace,
                 "chord_020": shell_chord_trace,
+                "confined_chord_020": lambda x, y, station: (
+                    shell_chord_trace(x, y, station, confined=True)),
             }[trace_kind](nx, ny, float(s))
             value, _ = beam_basis(nb, float(s), basis="spline")
             beam_trace = np.zeros((3, nbeam))
@@ -340,6 +350,8 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
             "local": "independent_membrane_Timoshenko_centerline_yaw",
             "strip_020_023": "independent_membrane_Timoshenko_finite_strip_yaw",
             "chord_020": "independent_membrane_Timoshenko_line_chord_yaw",
+            "confined_chord_020": (
+                "independent_membrane_Timoshenko_confined_chord_yaw"),
         }[trace_kind],
         "nx": nx, "ny": ny, "nb": nb, "intervals": intervals,
         "kind": kind, "trace_kind": trace_kind,
@@ -364,7 +376,8 @@ def main() -> None:
     parser.add_argument("--intervals", type=int, default=2)
     parser.add_argument("--kind", choices=("p0", "p1", "dual"), default="p0")
     parser.add_argument("--trace-kind", choices=("local", "strip_020_023",
-                                                 "chord_020"),
+                                                 "chord_020",
+                                                 "confined_chord_020"),
                         default="local")
     args = parser.parse_args()
     print(json.dumps(solve(args.nx, args.ny, args.nb, args.intervals,

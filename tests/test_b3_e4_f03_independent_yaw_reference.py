@@ -123,6 +123,11 @@ def test_independent_line_chord_uses_only_displacement_trace():
     expected = 3*(station+.5)**2+.2**2
     np.testing.assert_allclose(trace[2]@np.r_[ux, uy], expected,
                                atol=2e-14)
+    confined = shell_chord_trace(nx, ny, station, confined=True)
+    confined_midpoint = .6*station+.2
+    np.testing.assert_allclose(
+        confined[2]@np.r_[ux, uy],
+        3*(confined_midpoint+.5)**2+.2**2, atol=2e-14)
     assert trace[2]@np.r_[ux, np.zeros_like(uy)] == 0.
     assert abs(shell_local_trace(nx, ny, station)[2]@
                np.r_[ux, np.zeros_like(uy)]) > .4
@@ -135,3 +140,7 @@ def test_independent_line_chord_uses_only_displacement_trace():
                                    trace_kind="chord_020")
     assert spectrum["rank"] == spectrum["rows"]
     assert spectrum["lowest_mode_channel_l2"][0] > .99
+    confined_result = solve(8, 4, 8, 4,
+                            trace_kind="confined_chord_020")
+    assert confined_result["tip_rz_rad"] > 0.
+    assert abs(confined_result["work_error_j"]) < 1e-12
