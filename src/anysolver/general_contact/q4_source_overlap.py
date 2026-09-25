@@ -79,6 +79,50 @@ def q4_source_gap_lower(source: np.ndarray, target: np.ndarray) -> float:
     )
 
 
+def q4_source_projected_gap_lower(source: np.ndarray,
+                                  target: np.ndarray) -> float:
+    """Lower bound the gap of Q4 points sharing the overlap projection.
+
+    If source and target points project to the same point along ``projection``,
+    their difference is ``distance * projection``.  A target-face direction
+    ``axis`` therefore bounds distance by the extrema of ``axis @ position``
+    on both faces.  Q1 and P1 positions are convex combinations of their
+    corners.  Positive source projected Jacobians make the physical normal's
+    cosine with ``projection`` lie in (0, 1], so a negative distance lower
+    bound is also a lower bound on the physical signed gap.  The old full-pair
+    cone remains a fallback when the projection is poorly conditioned.
+
+    This bounds matched points only.  It is not a swept collision certificate
+    and must not replace ``q4_source_swept_gap_lower``.
+    """
+    first = np.asarray(source, dtype=float)
+    second = np.asarray(target, dtype=float)
+    if (first.shape != (4, 3) or second.shape not in {(3, 3), (4, 3)}
+            or not np.all(np.isfinite(first))
+            or not np.all(np.isfinite(second))):
+        raise ValueError("projected Q4 gap needs finite Q4/S3 or Q4/Q4 corners")
+    _, projection = projected_q4_source_face(first)
+    old_lower = q4_source_gap_lower(first, second)
+    last = 2 if len(second) == 3 else 3
+    axis = np.cross(second[1]-second[0], second[last]-second[0])
+    length = float(np.linalg.norm(axis))
+    if length <= 0.0 or not np.isfinite(length):
+        raise ValueError("projected Q4 target has ambiguous normal")
+    denominator = float(axis @ projection)
+    if denominator < 0.0:
+        axis = -axis
+        denominator = -denominator
+    cosine = denominator/length
+    if cosine < 0.25:
+        return old_lower
+    numerator = float(np.min(first @ axis)-np.max(second @ axis))
+    scale = max(1.0, float(np.max(np.abs(first))),
+                float(np.max(np.abs(second))))
+    projected_lower = min(0.0, numerator/denominator)
+    projected_lower -= 512.0*np.finfo(float).eps*scale/cosine
+    return max(old_lower, projected_lower)
+
+
 def q4_source_swept_gap_lower(source_start: np.ndarray,
                               source_end: np.ndarray,
                               target_start: np.ndarray,
@@ -102,6 +146,80 @@ def q4_source_swept_gap_lower(source_start: np.ndarray,
     return _normal_cone_gap_lower(
         controls, differences, np.asarray(reference_normal, dtype=float), scale,
     )
+
+
+def q4_source_projected_swept_gap_lower(
+        source_start: np.ndarray, source_end: np.ndarray,
+        target_start: np.ndarray, target_end: np.ndarray,
+        reference_normal: np.ndarray) -> float:
+    """Bound matching-projection Q4 gaps along a linear nodal trial path.
+
+    Corner-pair differences are linear in path time; the source projection
+    normal and each physical corner normal are quadratic.  Their quadratic
+    Bernstein controls provide an interval-wide normal cone.  The projected
+    bound is used only when both normal families stay within 41 degrees of a
+    common axis, which makes their mutual dot product positive.  Otherwise
+    the existing full-pair swept cone is returned.
+    """
+    a0, a1 = (np.asarray(item, dtype=float)
+              for item in (source_start, source_end))
+    b0, b1 = (np.asarray(item, dtype=float)
+              for item in (target_start, target_end))
+    if (a0.shape != (4, 3) or a1.shape != (4, 3)
+            or b0.shape not in {(3, 3), (4, 3)} or b1.shape != b0.shape
+            or not all(np.all(np.isfinite(item)) for item in (a0, a1, b0, b1))):
+        raise ValueError("projected swept Q4 gap needs finite matching Q4/S3 or Q4/Q4 paths")
+    old_lower = q4_source_swept_gap_lower(
+        a0, a1, b0, b1, reference_normal,
+    )
+    last = 2 if len(b0) == 3 else 3
+    axis = np.cross(b0[1]-b0[0], b0[last]-b0[0])
+    length = float(np.linalg.norm(axis))
+    if length <= 0.0 or not np.isfinite(length):
+        raise ValueError("projected swept Q4 target has ambiguous initial normal")
+    axis /= length
+    projection_start = np.cross(a0[1]-a0[0], a0[3]-a0[0])
+    if float(axis @ projection_start) < 0.0:
+        axis = -axis
+
+    middle = 0.5*(a0+a1)
+
+    def controls(start, midpoint, end):
+        return np.asarray((start,
+                           2.0*midpoint-0.5*(start+end), end))
+
+    projection_controls = controls(
+        projection_start,
+        np.cross(middle[1]-middle[0], middle[3]-middle[0]),
+        np.cross(a1[1]-a1[0], a1[3]-a1[0]),
+    )
+    corner_start = _q4_corner_normals(a0)
+    corner_middle = _q4_corner_normals(middle)
+    corner_end = _q4_corner_normals(a1)
+    corner_controls = np.stack([
+        controls(corner_start[index], corner_middle[index],
+                 corner_end[index]) for index in range(4)
+    ])
+
+    def cosine_lower(values):
+        maximum = float(np.max(np.linalg.norm(values, axis=-1)))
+        if maximum <= 0.0 or not np.isfinite(maximum):
+            return -float("inf")
+        return float(np.min(values @ axis))/maximum
+
+    projection_cosine = cosine_lower(projection_controls)
+    if (projection_cosine < 0.75
+            or any(cosine_lower(item) < 0.75 for item in corner_controls)):
+        return old_lower
+    first_difference = a0[:, None, :]-b0[None, :, :]
+    last_difference = a1[:, None, :]-b1[None, :, :]
+    numerator = min(float(np.min(first_difference @ axis)),
+                    float(np.min(last_difference @ axis)))
+    scale = max(1.0, *(float(np.max(np.abs(item)))
+                       for item in (a0, a1, b0, b1)))
+    projected_lower = min(0.0, numerator/projection_cosine)
+    projected_lower -= 512.0*np.finfo(float).eps*scale/projection_cosine
+    return max(old_lower, projected_lower)
 
 
 def q4_source_overlap_integrals(
