@@ -363,7 +363,10 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
                           characteristic_length: float = .46,
                           confined: bool = False,
                           shell_port: str | None = None,
-                          loaded_mode_overlap: bool = False) -> dict:
+                          loaded_mode_overlap: bool = False,
+                          thickness: float = .07,
+                          beam_z_offset: float = 0.,
+                          beam_torsion_constant: float | None = None) -> dict:
     """Bounded six-channel, work-scaled interface diagnostic.
 
     Exact elimination of the indefinite native retained block separates a
@@ -377,8 +380,10 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         raise ValueError("positive physical characteristic length required")
     if type(loaded_mode_overlap) is not bool:
         raise ValueError("Boolean loaded-mode diagnostic required")
-    shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y))
-    beam = build(native_half_cells)
+    shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y,
+                                       thickness=thickness))
+    beam = build(native_half_cells, z_offset=beam_z_offset,
+                 torsion_constant=beam_torsion_constant)
     space = LineMultiplierSpace(
         kind, tuple(np.linspace(0., 1., intervals+1)))
     if type(confined) is not bool:
@@ -649,6 +654,9 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         "topology": topology, "shell_x_intervals": 2*n_s,
         "shell_y_intervals": n_y,
         "native_half_cells": native_half_cells,
+        "shell_thickness_m": shell.panel.thickness,
+        "beam_reference_z_m": beam_z_offset,
+        "beam_torsion_constant_m4": beam_torsion_constant,
         "line_intervals": intervals, "space": kind,
         "shell_port": shell_port,
         "confined_to_attachment": confined,
