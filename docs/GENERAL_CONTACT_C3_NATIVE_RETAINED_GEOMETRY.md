@@ -88,6 +88,39 @@ that the declared 28-level budget completed that 0.1 mm certificate within
 checks then passed (`...-third.txt`). This is a resource setting for the
 development scene, not a universal recommendation.
 
+`native_retained_pair_static.py` adds a separate internal two-beam native
+static owner. It instantiates two exact generalized B3-GE definitions through
+the existing native model owner, retains every cell rotation and algebraic
+coordinate, assembles both 42-coordinate contact blocks and their off-diagonal
+coupling into one structural Newton system, and applies the native spatial
+rotation correction on each diagonal block. It keeps committed material
+histories fixed during trials. Initial penetration and undeclared cell
+proximity fail explicitly; accepted targets require coupled equilibrium and
+the declared endpoint gap. A finite path-gap certificate bounds both beams'
+nodal and retained rotational motion during backtracking.
+
+A two-beam crossing activated its selected distributed cell pair under a
+0.02 N dead load at the tip of beam B. The development case completed two
+targets with a conservative lower gap around -0.247 mm under an explicit
+1 mm gap budget. Its retained-cell contact work, off-diagonal tangent,
+reciprocal force, coupled equilibrium and smooth directional derivative
+passed. Initial interference and failed-target accepted-prefix preservation
+also passed. The focused owner tests passed 3/3
+(`c3-native-retained-pair-static-third.txt`); the affected native/classical
+pair group passed 18/18 (`c3-native-retained-pair-static-affected.txt`).
+The first case used an initial 40 mm clearance and stayed open at 0.02 N;
+a bounded activation diagnostic identified the 30 mm clearance used in the
+registered development fixture (`c3-native-retained-pair-activation-diagnostic.txt`).
+The first owner tangent test perturbed a fixed root coordinate and failed in
+test setup; the corrected direction passed. Both failures remain in the
+evidence directory.
+
+The two-beam owner still admits only disjoint beams, one selected half-cell
+pair and dead-force control. It has no durable contact checkpoint, automatic
+multi-cell feature ownership, beam–shell interaction, general rigid tools,
+friction or public C3 admission. Its swept check is a bounded fixed-pair
+path-gap control, not a complete event-placement method.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization
