@@ -100,7 +100,7 @@ class Model:
         return result
 
     def shell_patch_pose(self) -> np.ndarray:
-        """Area-mean position/director and polar in-plane yaw of 0.1 m square."""
+        """Area-mean position/director and mean-curl yaw of 0.1 m square."""
         result = np.zeros((6, self.k.shape[0]))
         roots, weights = np.polynomial.legendre.leggauss(4)
         # Split at both membrane hosts and spline knots; 4-point integration
@@ -118,7 +118,6 @@ class Model:
                 (-.05 < transverse._spline(self.n, -.5, .5)[2]) &
                 (transverse._spline(self.n, -.5, .5)[2] < .05)]])
         area = .01
-        polar = area*(.1**2+.1**2)/12
         for xa, xb in zip(x_edges[:-1], x_edges[1:]):
             for ya, yb in zip(y_edges[:-1], y_edges[1:]):
                 for rx, wx in zip(roots, weights):
@@ -130,7 +129,13 @@ class Model:
                         director = self.shell_director(float(x), float(y))
                         result[:3] += darea/area*u
                         result[3:5] += darea/area*director
-                        result[5] += darea/polar*((x-.95)*u[1]-y*u[0])
+                        nodes, _ = membrane_shell.sample(
+                            self.panel, float(x), float(y))
+                        _, gradients, _ = membrane_shell.shape(
+                            self.panel.nodes[list(nodes)], "Q4", (float(x), float(y)))
+                        for node, (dx, dy) in zip(nodes, gradients):
+                            result[5, 2*node] -= .5*darea/area*dy
+                            result[5, 2*node+1] += .5*darea/area*dx
         return result
 
     def constraint(self, law: str) -> np.ndarray:
