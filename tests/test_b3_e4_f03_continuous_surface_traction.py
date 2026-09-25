@@ -72,6 +72,7 @@ def test_local_yaw_dipole_adds_physical_mz_without_changing_four_rows():
     four, _, _ = continuous_traction_rows(xs, ys, beam, intervals=2)
     five, wrench, meta = continuous_traction_rows(
         xs, ys, beam, intervals=2, local_yaw=True)
+    shell_size = 6 * len(xs) * len(ys)
     assert five.shape[0] == 15
     assert meta["local_section_wrench_rank"] == 5
     for station in range(3):
@@ -79,4 +80,5 @@ def test_local_yaw_dipole_adds_physical_mz_without_changing_four_rows():
             four[4 * station:4 * station + 4], abs=1e-12)
         assert wrench[:, 5 * station + 4] == pytest.approx(
             [0., 0., 0., 0., 0., 1.], abs=1e-12)
-        assert np.max(np.abs(five[5 * station + 4, 5::6])) == 0.
+        assert np.max(np.abs(five[5 * station + 4,
+                                  5:shell_size:6])) == 0.
