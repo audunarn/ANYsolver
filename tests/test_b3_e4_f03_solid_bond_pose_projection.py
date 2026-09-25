@@ -79,3 +79,27 @@ def test_solid_surface_moment_projection_separates_reference_and_section_fit(
                  for node, xyz in coords.items()})
     assert moved["reduced_section_gap_rms_m"] < 1e-9
     assert np.max(np.abs(moved["surface_position_moment_gap_m_rad"])) < 1e-8
+
+
+def test_full_bond_interior_surface_moment_projection_is_objective(tmp_path):
+    deck, _ = build(
+        4, "tip_mx", boundary_policy="left_root", bond_policy="full",
+        element_family="C3D20R", plate_thickness_mm=35,
+        tip_load_map="quadratic_face")
+    path = tmp_path / "full.inp"
+    path.write_text(deck)
+    coords = _read_deck_nodes(path)
+    stations = (.5, .5625, .625)
+    zero = {node: np.zeros(3) for node in coords}
+    reference = project_surface_position_moments(
+        coords, zero, stations=stations)
+    assert reference["patch_interval_x_m"] == [.5, .625]
+    assert np.max(np.abs(reference["surface_position_moment_gap_m_rad"])) < 1e-12
+    assert reference["reduced_section_gap_rms_m"] < 1e-12
+    rotation = Rotation.from_rotvec((4e-5, -3e-5, 2e-5)).as_matrix()
+    shift = np.array((1e-4, -2e-4, 3e-4))
+    moved = project_surface_position_moments(
+        coords, {node: rotation@xyz+shift-xyz
+                 for node, xyz in coords.items()}, stations=stations)
+    assert moved["reduced_section_gap_rms_m"] < 1e-9
+    assert np.max(np.abs(moved["surface_position_moment_gap_m_rad"])) < 1e-8

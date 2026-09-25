@@ -243,23 +243,32 @@ def project_surface_position_moments(
         coords: dict[int, np.ndarray], u: dict[int, np.ndarray], *,
         stations: tuple[float, ...] = (.9, .925, .95, .975, 1.)
         ) -> dict:
-    """Read-only solid projection onto the finite six-position-moment patch.
+    """Read-only solid projection onto a mesh-aligned finite moment patch.
 
     The shell side is the *actual* loaded solid top face. The beam side is a
     piecewise-interpolated rigid fit to complete solid bar sections at the
     registered stations. Their difference measures the reduction to a B3
     section; the solid's actual shared bond face has zero positional gap.
-    The same material arms, area and inertia as the native 100 mm footprint
-    turn this difference into three translations and three rotation-like
-    moments. This is not a constitutive, contact or E4-state comparison.
+    Material arms, actual area and inertia turn the difference into three
+    translations and three rotation-like moments. The default 100 mm patch
+    is the native candidate; 125 mm interior patches only compare positions
+    within the saved full-bond solid. This is not a constitutive, contact or
+    E4-state comparison.
     """
     grid = np.asarray(stations, dtype=float)
-    if (grid.shape != (5,) or
-            not np.allclose(grid, (.9, .925, .95, .975, 1.),
-                            rtol=0., atol=1e-12)):
-        raise ValueError("registered terminal solid section stations required")
+    if (grid.ndim != 1 or len(grid) not in (3, 5) or
+            not np.isfinite(grid).all() or
+            not np.all(np.diff(grid) > 0.) or
+            not (len(grid) == 5 and
+                 np.allclose(np.diff(grid), .025, rtol=0., atol=1e-12) or
+                 len(grid) == 3 and
+                 np.allclose(np.diff(grid), .0625, rtol=0., atol=1e-12)) or
+            grid[0] < 0. or grid[-1] > 1.):
+        raise ValueError("mesh-aligned solid section stations required")
+    patch_x0, patch_x1 = float(grid[0]), float(grid[-1])
+    patch_center_x = (patch_x0+patch_x1)/2.
     fitted = [project(coords, u, section_x=float(x),
-                      patch_x0=.9, patch_x1=1.,
+                      patch_x0=patch_x0, patch_x1=patch_x1,
                       patch_grid=tuple(grid)) for x in grid]
     lookup: dict[tuple[float, float, float], list[int]] = {}
     for node, xyz in coords.items():
@@ -273,12 +282,12 @@ def project_surface_position_moments(
         for x, y in points:
             ids = lookup.get(tuple(np.round((x, y, .0175), 9)), ())
             if len(ids) != 1:
-                raise ValueError("ambiguous shared terminal solid bond node")
+                raise ValueError("ambiguous shared solid bond node")
             result.append(coords[ids[0]]+u[ids[0]])
         return np.array(result)
 
     center_frame = Rotation.from_rotvec(
-        fitted[2]["beam_rotation_vector_rad"]).as_matrix()
+        fitted[len(grid)//2]["beam_rotation_vector_rad"]).as_matrix()
     mean = np.zeros(3)
     moment = np.zeros(3)
     inertia = np.zeros((3, 3))
@@ -324,7 +333,7 @@ def project_surface_position_moments(
                                       pose_interpolation) > 1e-12:
                         raise ArithmeticError("solid section residual split failed")
                     gap = center_frame.T@(shell_point-beam_point)
-                    arm = np.array((x-.95, y, 0.))
+                    arm = np.array((x-patch_center_x, y, 0.))
                     weight = float(wx*wy*jac)
                     area += weight
                     mean += weight*gap
@@ -338,17 +347,18 @@ def project_surface_position_moments(
                     squared_pose_interpolation += (
                         weight*float(pose_interpolation@pose_interpolation))
                     max_gap = max(max_gap, float(np.linalg.norm(gap)))
-    if abs(area-.01) > 1e-12:
-        raise ArithmeticError("physical terminal bond area changed")
+    expected_area = (patch_x1-patch_x0)*.1
+    if abs(area-expected_area) > 1e-12:
+        raise ArithmeticError("physical bond patch area changed")
     mean /= area
     moment /= area
     inertia /= area
     if np.linalg.eigvalsh(inertia)[0] <= 1e-8:
-        raise ArithmeticError("degenerate terminal footprint inertia")
+        raise ArithmeticError("degenerate footprint inertia")
     rotation_like = np.linalg.solve(inertia, moment)
     return {
         "status": "EXPLORATORY_NOT_G0_ACCEPTANCE",
-        "patch_interval_x_m": [.9, 1.],
+        "patch_interval_x_m": [patch_x0, patch_x1],
         "patch_width_y_m": .1,
         "section_stations_x_m": grid.tolist(),
         "area_m2": float(area),
