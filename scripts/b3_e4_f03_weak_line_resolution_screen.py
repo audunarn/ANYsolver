@@ -477,6 +477,25 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         high_values=linalg.eigh(transverse_action,lower3,eigvals_only=True)
         if low_values[0] < -1e-9*max(1.,low_values[-1]):
             raise ArithmeticError("negative absolute-energy dual action")
+        # The earlier transverse screen excludes Mz. Test the physically
+        # polar-yaw channel separately with the same moment/length scaling
+        # and bounded dual Gram; it is not a mixed-channel stability proof.
+        yaw_rows=np.arange(5,len(rows),6)
+        yaw_bp,yaw_br=bp[yaw_rows],br[yaw_rows]
+        yaw_action=yaw_bp@yaw_bp.T+yaw_br@yaw_br.T
+        yaw_action=(yaw_action+yaw_action.T)/2
+        yaw_low,yaw_vectors=linalg.eigh(yaw_action,upper)
+        yaw_high=linalg.eigh(yaw_action,lower,eigvals_only=True)
+        if yaw_low[0] < -1e-9*max(1.,yaw_low[-1]):
+            raise ArithmeticError("negative yaw absolute-energy dual action")
+        yaw_mode=yaw_vectors[:,0]
+        yaw_significant=np.abs(yaw_mode)>1e-8*np.max(np.abs(yaw_mode))
+        yaw_signs=np.sign(yaw_mode[yaw_significant])
+        yaw_work=float(yaw_mode@yaw_action@yaw_mode)
+        yaw_physical_share=float(np.linalg.norm(yaw_mode@yaw_bp)**2/
+                                 max(yaw_work,1e-300))
+        if not -1e-10 <= yaw_physical_share <= 1.+1e-10:
+            raise ArithmeticError("invalid yaw work decomposition")
         mode3=low_vectors[:,0].reshape(space.count,3)
         shares=[float(mode3[:,axis]@upper@mode3[:,axis])
                 for axis in range(3)]
@@ -498,6 +517,12 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
                 np.linalg.norm(low_vectors[:,0]@bp[transverse_rows])**2/
                 max(low_vectors[:,0]@transverse_action@low_vectors[:,0],
                     1e-300)),
+            "yaw_mz_beta_lower":float(np.sqrt(max(0.,yaw_low[0]))),
+            "yaw_mz_beta_upper":float(np.sqrt(max(0.,yaw_high[0]))),
+            "yaw_mz_sign_changes":int(np.count_nonzero(
+                yaw_signs[1:] != yaw_signs[:-1])),
+            "yaw_mz_physical_work_share":float(np.clip(
+                yaw_physical_share,0.,1.)),
         }
     return {
         "topology": topology, "shell_x_intervals": 2*n_s,

@@ -237,6 +237,10 @@ def test_square_patch_retained_interface_action_is_consistent(kind):
     assert dual["space"] == kind
     assert dual["transverse_beta_lower"] <= (
         dual["transverse_beta_upper"] + 1e-10)
+    assert 0. < dual["yaw_mz_beta_lower"] <= (
+        dual["yaw_mz_beta_upper"] + 1e-10)
+    assert 0 <= dual["yaw_mz_sign_changes"] < mode["row_count"] // 6
+    assert 0. <= dual["yaw_mz_physical_work_share"] <= 1.
     assert dual["gram_relative_enclosure"] < 1e-3
     assert 0. <= dual["weakest_fz_norm_share"] <= 1.
     assert mode["scope"].endswith("not physical inf-sup acceptance")
