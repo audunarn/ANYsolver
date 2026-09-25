@@ -194,3 +194,72 @@ def test_q4_s3_projected_ordinary_displacement_control():
         0.0, atol=1e-6,
     )
     assert len(result.to_restart_checkpoint()["path_state"]["normal_multipliers"]) == 4
+
+
+def test_q4_s3_projected_50_micrometre_gap_candidate():
+    model, definition, settings, _program = _path_case()
+    definition = replace(definition, interactions=(
+        replace(definition.interactions[0], normal_stiffness=10000.0,
+                gap_tolerance=5e-5),
+    ))
+    settings = replace(settings, q4_source_gap_certificate="projected_matching",
+                       pressure_tolerance=2e-2, maximum_augmentations=16)
+    program = ContactPathProgram(
+        controls=(ContactPathControl.node(1, "ux"),
+                  ContactPathControl.node(1, "uz")),
+        waypoints=((0.0, 0.0), (0.0, -0.01504)),
+        steps_per_segment=1,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=15,
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "completed", (
+        result.failure_reason, result.info.get("contact_failure"),
+    )
+    contact = result.info["general_contact"]
+    assert contact["active_pressure_dofs"] > 0
+    assert contact["minimum_gap"] >= -5e-5
+    assert contact["gap_tolerance_met"]
+    np.testing.assert_allclose(
+        np.asarray(contact["integration_force"])+contact["target_force"],
+        0.0, atol=1e-6,
+    )
+    assert len(result.to_restart_checkpoint()["path_state"]["normal_multipliers"]) == 4
+
+
+def test_q4_s3_projected_50_micrometre_four_phase():
+    model, definition, settings, _program = _path_case()
+    definition = replace(definition, interactions=(
+        replace(definition.interactions[0], normal_stiffness=10000.0,
+                gap_tolerance=5e-5),
+    ))
+    settings = replace(settings, q4_source_gap_certificate="projected_matching",
+                       pressure_tolerance=2e-2, maximum_augmentations=16)
+    program = ContactPathProgram(
+        controls=(ContactPathControl.node(1, "ux"),
+                  ContactPathControl.node(1, "uz")),
+        waypoints=((0.0, 0.0), (0.0, -0.01504),
+                   (0.05, -0.01504), (0.05, 0.0),
+                   (0.05, -0.01504)),
+        steps_per_segment=1,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=15,
+    )
+    assert result.status == "completed", (
+        result.failure_reason, result.info.get("contact_failure"),
+    )
+    phases = result.info["force_displacement_history"]
+    assert [row["contact"]["active_pressure_dofs"] > 0
+            for row in phases] == [True, True, False, True]
+    assert all(row["contact"]["minimum_gap"] >= -5e-5 for row in phases)
+    assert phases[2]["contact"]["normal_multiplier_estimate_pa"] == [0.0]*4
+    for row in phases:
+        contact = row["contact"]
+        np.testing.assert_allclose(
+            np.asarray(contact["integration_force"])+contact["target_force"],
+            0.0, atol=1e-6,
+        )

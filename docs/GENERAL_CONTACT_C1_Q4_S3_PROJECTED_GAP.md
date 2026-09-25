@@ -34,9 +34,23 @@ corner closure with active pressure, opposite-body force balance, the same
 0.2 mm gap budget and a version-2 multiplier checkpoint
 (`q4-s3-projected-ordinary-displacement-first.txt`, 48.43 seconds). Ordinary
 force control remains a separate untested route for this V1 profile.
+With 10,000 Pa/m normal regularization and a 0.04 mm corner closure, a
+single press and a four-phase lifecycle each met a declared 0.05 mm gap
+budget (`q4-s3-projected-50um-first.txt`,
+`q4-s3-projected-50um-four-phase-first.txt`). The latter activated pressure
+in press, slide and recontact and released it on opening. This budget equals
+`10^-3` of the 50 mm shell thickness for this benchmark; it is not a
+universal tolerance or evidence of enforcement convergence.
+The `--projected-tight` source example completed with one active Q1 pressure
+mode in each contact phase, none on opening, and a worst certified gap of
+about `-0.04 mm` (`q4-s3-projected-tight-source.txt`, output SHA-256
+`986964199bdce57cd63967f6081e9df14c13992065a29023ad9418e8a65ab98e`).
+One active mode here is an outcome of this loaded geometry and regularization;
+the other pressure functions remain in the declared Q1 space.
 
 Run `python examples/general_contact_q4_s3_augmented_path.py --projected`
-for this profile. It reports phase gaps, integrated normal forces, pressure
+for the 0.2 mm development lifecycle or `--projected-tight` for the
+0.05 mm benchmark-scale lifecycle. It reports phase gaps, integrated normal forces, pressure
 multipliers and augmentation counts. The route uses physical Q4 bottom and
 S3 top skins, including the S3 reference offset. These are development
 settings, not application defaults.

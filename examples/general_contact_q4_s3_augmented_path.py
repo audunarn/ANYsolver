@@ -16,9 +16,18 @@ from anysolver.fe_core import FEModel
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--projected", action="store_true",
-                        help="use the opt-in Q4/S3 V1 matching-projection gap certificate")
+    projected_modes = parser.add_mutually_exclusive_group()
+    projected_modes.add_argument(
+        "--projected", action="store_true",
+        help="use the opt-in Q4/S3 V1 matching-projection gap certificate",
+    )
+    projected_modes.add_argument(
+        "--projected-tight", action="store_true",
+        help="use the verified V1 50-micrometre gap-budget lifecycle settings",
+    )
     args = parser.parse_args()
+    projected = args.projected or args.projected_tight
+    closure = -0.01504 if args.projected_tight else -0.01505
     model = FEModel("general_q4_s3_augmented_path")
     model.add_material("elastic", 1e5, 0.3, density=1.0)
     source = ((0.1, 0.1, 0.055), (1.1, 0.1, 0.055),
@@ -50,7 +59,9 @@ def main() -> None:
                   ContactSurface("target_top", (2, 3), "top")),
         rigid_bodies=(),
         interactions=(ContactInteraction(
-            "patch", "source_bottom", "target_top", 1000.0,
+            "patch", "source_bottom", "target_top",
+            10000.0 if args.projected_tight else 1000.0,
+            0.00005 if args.projected_tight else
             0.0002 if args.projected else 0.005,
             normal_law="augmented",
         ),),
@@ -62,7 +73,7 @@ def main() -> None:
         q4_source_weighted_gap_tolerance=1e-10,
         maximum_q4_source_integration_triangles=300,
         pressure_tolerance=0.02, maximum_augmentations=16,
-        q4_source_gap_certificate=("projected_matching" if args.projected
+        q4_source_gap_certificate=("projected_matching" if projected
                                    else "whole_face"),
     )
     report = validate_general_contact(model, definition, settings)
@@ -71,9 +82,9 @@ def main() -> None:
     path = ContactPathProgram(
         controls=(ContactPathControl.node(1, "ux"),
                   ContactPathControl.node(1, "uz")),
-        waypoints=((0.0, 0.0), (0.0, -0.01505),
-                   (0.05, -0.01505), (0.05, 0.0),
-                   (0.05, -0.01505)),
+        waypoints=((0.0, 0.0), (0.0, closure),
+                   (0.05, closure), (0.05, 0.0),
+                   (0.05, closure)),
         steps_per_segment=1,
     )
     result = solve_static_nonlinear(
@@ -97,7 +108,10 @@ def main() -> None:
         "profile": result.info["general_contact"]["profile"],
         **({"gap_tolerance_m": definition.interactions[0].gap_tolerance,
             "q4_source_gap_certificate": settings.q4_source_gap_certificate}
-           if args.projected else {}),
+           if projected else {}),
+        **({"normal_stiffness_pa_per_m": definition.interactions[0].normal_stiffness,
+            "corner_closure_m": -closure}
+           if args.projected_tight else {}),
         "pressure_node_ids": result.info["general_contact"]["source_pressure_node_ids"],
         "phases": [
             {"target_m": row["target"],
