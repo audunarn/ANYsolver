@@ -8,6 +8,8 @@ from scripts.b3_e4_f03_continuous_surface_traction import (
     _common_rigid_direction, continuous_traction_rows,
 )
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
+from scripts.b3_e4_f03_local_footprint_work import (
+    distributed_surface_patch_trace)
 
 
 def test_continuous_traction_spans_six_wrenches_without_drilling():
@@ -131,3 +133,21 @@ def test_six_local_p1_has_fz_my_dependency_but_p0_is_independent_at_n2():
     assert p0_meta["six_local_wrench_identity_error"] < 1e-12
     assert np.linalg.matrix_rank(p1[:, free]) == 17
     assert np.linalg.matrix_rank(p0[:, free]) == 12
+
+
+@pytest.mark.parametrize("intervals", (2, 4, 8))
+def test_p0_six_local_rows_equal_repeated_distributing_footprints(intervals):
+    xs = np.linspace(-.5, 1.5, 9)
+    ys = np.linspace(-.5, .5, 5)
+    beam = build(16, z_offset=.0675,
+                 torsion_constant=square_torsion_constant())
+    rows, _, meta = continuous_traction_rows(
+        xs, ys, beam, intervals=intervals,
+        six_local_resultants=True, line_kind="piecewise_constant")
+    assert meta["line_kind"] == "piecewise_constant"
+    for station in range(intervals):
+        footprint, _ = distributed_surface_patch_trace(
+            xs, ys, beam, plate_thickness=.035,
+            x_interval=(station/intervals, (station+1)/intervals))
+        np.testing.assert_allclose(rows[6*station:6*station+6],
+                                   footprint, rtol=0., atol=1e-12)

@@ -9,6 +9,9 @@ from scripts._b3_e4_f03_shell_finite_pose_candidate import reference_nodes
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
     directional_pose_from_e4_total_strip, pose_from_e4_total_strip,
     reference_spatial_trace_strip, strip_weights,
+    transverse_band_weights, pose_from_e4_total_transverse_band,
+    reference_spatial_trace_transverse_band,
+    TRANSVERSE_BAND_PORT,
 )
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
@@ -27,6 +30,87 @@ from scripts.b3_e4_f03_weak_line_resolution_screen import (
 
 WIDTH = dict(half_length=.2, half_width=.23)
 SQUARE = dict(half_length=.05, half_width=.05)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_transverse_band_top_surface_reference_rigid_and_chart(topology):
+    panel = make_shell(4, topology, n_y=4, thickness=.035)
+    nodes = reference_nodes(panel)
+    station = .31
+    mean, gradients = transverse_band_weights(panel, station)
+    np.testing.assert_allclose(mean@nodes, (station, 0., 0.), atol=2e-14)
+    np.testing.assert_allclose(gradients@nodes,
+                               ((1., 0., 0.), (0., 1., 0.)), atol=2e-14)
+    zero = np.zeros(6*panel.node_count)
+    position, frame = pose_from_e4_total_transverse_band(panel, station, zero)
+    np.testing.assert_allclose(position, (station, 0., .0175), atol=2e-14)
+    np.testing.assert_allclose(frame, np.eye(3), atol=2e-14)
+
+    rotation = Rotation.from_rotvec((.03, -.02, .04)).as_matrix()
+    translation = np.array((.02, -.01, .03))
+    rigid = np.zeros((panel.node_count, 6))
+    rigid[:, :3] = nodes@rotation.T+translation-nodes
+    rigid[:, 3:] = (.03, -.02, .04)
+    moved, oriented = pose_from_e4_total_transverse_band(
+        panel, station, rigid.ravel())
+    np.testing.assert_allclose(moved,
+                               rotation@position+translation, atol=2e-14)
+    np.testing.assert_allclose(oriented, rotation, atol=2e-14)
+
+    direction = np.random.default_rng(117).normal(
+        size=6*panel.node_count) * .01
+    step = 1e-6
+    plus = pose_from_e4_total_transverse_band(panel, station,
+                                               step*direction)
+    minus = pose_from_e4_total_transverse_band(panel, station,
+                                                -step*direction)
+    spin = Rotation.from_matrix(plus[1]@minus[1].T).as_rotvec()/(2*step)
+    observed = np.r_[(plus[0]-minus[0])/(2*step), spin]
+    np.testing.assert_allclose(
+        observed, reference_spatial_trace_transverse_band(
+            panel, station)@direction, rtol=2e-7, atol=2e-9)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_transverse_band_retains_shear_and_longitudinal_yaw(topology):
+    panel = make_shell(8, topology, n_y=4, thickness=.035)
+    nodes = reference_nodes(panel)
+    station = .4
+    shear = np.zeros((panel.node_count, 6))
+    shear[:, 2] = .07*nodes[:, 0]
+    _, frame = pose_from_e4_total_transverse_band(
+        panel, station, shear.ravel())
+    np.testing.assert_allclose(frame[:, 2], (0., 0., 1.), atol=2e-14)
+    normal = np.cross((1., 0., .07), (0., 1., 0.))
+    normal /= np.linalg.norm(normal)
+    assert np.linalg.norm(frame[:, 2]-normal) > .05
+
+    direction = np.zeros(6*panel.node_count)
+    wave = 5*np.pi
+    direction[1::6] = 1e-4/wave*np.sin(wave*nodes[:, 0])
+    band = reference_spatial_trace_transverse_band(
+        panel, station)[5]@direction
+    square = reference_spatial_trace_strip(
+        panel, station, half_length=.2, half_width=.05)[5]@direction
+    assert band > 3e-5
+    assert abs(square) < 1e-6
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_transverse_band_native_reference_torque_balance(topology):
+    from scripts.b3_e4_f03_square_section_control import square_torsion_constant
+    result = one_case(
+        topology, 2, "piecewise_constant",
+        shell_port=TRANSVERSE_BAND_PORT, load_kind="torsion",
+        n_s=2, n_y=4, native_half_cells=4, thickness=.035,
+        beam_z_offset=.0675,
+        beam_torsion_constant=square_torsion_constant(),
+        shell_support_policy="full_left_edge")
+    assert result["tip_rx_rad"] > 0.
+    assert result["shell_physical_energy_j"] > 0.
+    assert abs(result["global_torque_x_balance_n_m"]) < 1e-8
+    assert abs(result["global_work_error_j"]) < 1e-10
+    assert result["scaled_equilibrium_residual"] < 1e-10
 
 
 def _linear_fz_p0_mx_spaces(coarse: int, fine: int,

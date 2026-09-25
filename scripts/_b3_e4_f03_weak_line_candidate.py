@@ -32,7 +32,9 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
 from scripts._b3_e4_f03_shell_spatial_linear_port import reference_spatial_trace
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
     LINE_ORIGIN_PORT, STRIP_PORTS, pose_from_e4_total_strip,
-    reference_spatial_trace_strip)
+    reference_spatial_trace_strip, TRANSVERSE_BAND_PORT,
+    pose_from_e4_total_transverse_band,
+    reference_spatial_trace_transverse_band)
 from scripts._b3_e4_f03_shell_chord_pose_candidate import (
     pose_from_e4_total_chord, reference_spatial_trace_chord)
 
@@ -132,7 +134,16 @@ def segments(shell: FlatE4TrialPanel, beam: Fixture,
         raise TypeError("bounded E4 and native B3 fixtures required")
     shell.guard()
     beam.context.guard()
-    if shell_port == "local_frame":
+    if shell_port == TRANSVERSE_BAND_PORT:
+        x_grid = -.5+np.arange(shell.panel.x_interval_count+1)/shell.panel.n_s
+        sites = list(x_grid)
+        if shell.panel.topology == "S3-V2D":
+            for y in (-.05, .05):
+                eta = (y+.5)*shell.panel.n_y
+                eta -= np.floor(eta)
+                sites.extend(x_grid[:-1]+eta/shell.panel.n_s)
+        shell_sites = np.array([s for s in sites if 0. <= s <= 1.])
+    elif shell_port == "local_frame":
         shell_sites = -.5+np.arange(shell.panel.x_interval_count+1)/shell.panel.n_s
         shell_sites = shell_sites[(shell_sites >= 0.) & (shell_sites <= 1.)]
         shell_sites = np.r_[0., shell_sites, 1.]
@@ -283,7 +294,8 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
         raise TypeError("line multiplier space required")
     if shell_port not in ("rail", "local_translation", "local_director",
                           "local_frame", "line_chord_020",
-                          "line_chord_confined_020", *STRIP_PORTS):
+                          "line_chord_confined_020", TRANSVERSE_BAND_PORT,
+                          *STRIP_PORTS):
         raise ValueError("unknown bounded shell pose port")
     if shell_support_policy not in ("legacy_three_left_nodes",
                                     "full_left_edge", "both_xy_edges"):
@@ -291,7 +303,8 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
-                "local_frame": pose_from_e4_total_local_frame,
+                 "local_frame": pose_from_e4_total_local_frame,
+                 TRANSVERSE_BAND_PORT: pose_from_e4_total_transverse_band,
                  **{name: lambda p, s, u, a=a, b=b, line=name==LINE_ORIGIN_PORT: (
                      pose_from_e4_total_strip(
                          p, s, u, half_length=a, half_width=b,
@@ -306,6 +319,7 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
         "local_translation": reference_spatial_trace_local_translation,
         "local_director": reference_spatial_trace_local_director,
         "local_frame": reference_spatial_trace_local_frame,
+        TRANSVERSE_BAND_PORT: reference_spatial_trace_transverse_band,
         **{name: lambda p, s, a=a, b=b, line=name==LINE_ORIGIN_PORT: (
             reference_spatial_trace_strip(
                 p, s, half_length=a, half_width=b,

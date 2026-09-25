@@ -12,8 +12,9 @@ import numpy as np
 
 from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     DirectionalPose, directional_pose_from_e4_total, pose_from_e4_total,
-    reference_nodes,
+    pose, reference_nodes,
 )
+from anysolver.corotational import rotation_matrix_from_vector
 from scripts._b3_e4_f03_shell_trace import ShellPanel
 
 
@@ -23,6 +24,103 @@ STRIP_PORTS = {
     "physical_strip_line_origin_005_005": (.05, .05),
 }
 LINE_ORIGIN_PORT = "physical_strip_line_origin_005_005"
+TRANSVERSE_BAND_PORT = "physical_top_transverse_band_005"
+
+
+def transverse_band_weights(panel: ShellPanel, station: float, *,
+                            half_width: float = .05
+                            ) -> tuple[np.ndarray, np.ndarray]:
+    """Width-mean material trace and gradients, with no axial averaging.
+
+    The band is a declared physical shell-top surface region. Q4/S3 host and
+    diagonal cuts make the y integration exact on the flat bounded panel.
+    Longitudinal derivatives use the deterministic one-sided x host at edges.
+    """
+    if (not isinstance(panel, ShellPanel) or
+            panel.topology not in ("Q4", "S3-V2D") or
+            not np.isfinite(station) or not 0. <= station <= 1. or
+            not np.isfinite(half_width) or
+            not .025 <= half_width <= .25):
+        raise ValueError("bounded physical transverse band required")
+    nodes = reference_nodes(panel)
+    width = 2 * half_width
+    y_grid = np.linspace(-.5, .5, panel.n_y+1)
+    dx, dy = 1./panel.n_s, 1./panel.n_y
+    i = int(np.clip(np.ceil((station+.5)/dx)-1, 0,
+                    panel.x_interval_count-1))
+    xi = (station-(-.5+i*dx))/dx
+    cuts = {-half_width, half_width}
+    cuts.update(float(y) for y in y_grid
+                if -half_width < y < half_width)
+    if panel.topology == "S3-V2D":
+        cuts.update(float(y+xi*dy) for y in y_grid[:-1]
+                    if -half_width < y+xi*dy < half_width)
+    ordered = sorted(cuts)
+    points, weights = np.polynomial.legendre.leggauss(2)
+    mean = np.zeros(panel.node_count)
+    gradients = np.zeros((2, panel.node_count))
+    for low, high in zip(ordered[:-1], ordered[1:]):
+        mid, half = .5*(low+high), .5*(high-low)
+        for point, weight in zip(points, weights):
+            indices, values, derivative = _shape_gradient(
+                panel, station, float(mid+half*point))
+            mean[indices] += half*weight*values/width
+            gradients[:, indices] += half*weight*derivative/width
+    upper = np.zeros(panel.node_count)
+    lower = np.zeros(panel.node_count)
+    idx, val = panel._shape(station, half_width)
+    upper[idx] = val
+    idx, val = panel._shape(station, -half_width)
+    lower[idx] = val
+    if (abs(float(np.sum(mean))-1.) > 2e-12 or
+            np.max(np.abs(np.sum(gradients, axis=1))) > 2e-12 or
+            np.max(np.abs(gradients[1]-(upper-lower)/width)) > 2e-12 or
+            np.max(np.abs(mean@nodes - (station, 0., 0.))) > 2e-12 or
+            np.max(np.abs(gradients@nodes -
+                          ((1., 0., 0.), (0., 1., 0.)))) > 2e-12):
+        raise ArithmeticError("transverse band reference or host integration failed")
+    return mean, gradients
+
+
+def reference_spatial_trace_transverse_band(
+        panel: ShellPanel, station: float, *, half_width: float = .05
+        ) -> np.ndarray:
+    """Linearized physical top-surface pose [translation, spatial spin]."""
+    mean, gradients = transverse_band_weights(
+        panel, station, half_width=half_width)
+    result = np.zeros((6, 6*panel.node_count))
+    for axis in range(3):
+        result[axis, axis::6] = mean
+    top = panel.thickness/2
+    result[0, 4::6] = top*mean
+    result[1, 3::6] = -top*mean
+    result[3, 3::6] = mean
+    result[4, 4::6] = mean
+    result[5, 0::6] = -.5*gradients[1]
+    result[5, 1::6] = .5*gradients[0]
+    result[5, 3::6] = -.5*top*gradients[0]
+    result[5, 4::6] = -.5*top*gradients[1]
+    return result
+
+
+def pose_from_e4_total_transverse_band(
+        panel: ShellPanel, station: float, total_u: np.ndarray, *,
+        half_width: float = .05) -> tuple[np.ndarray, np.ndarray]:
+    """Finite top-surface width-mean pose with independent E4 director."""
+    mean, gradients = transverse_band_weights(
+        panel, station, half_width=half_width)
+    nodes = reference_nodes(panel)
+    values = np.asarray(total_u, dtype=float)
+    if values.shape != (6*panel.node_count,) or not np.isfinite(values).all():
+        raise ValueError("finite complete flat E4 total coordinates required")
+    nodal = values.reshape(-1, 6)
+    directors = np.array([rotation_matrix_from_vector(theta)[:, 2]
+                          for theta in nodal[:, 3:]])
+    top_positions = (nodes+nodal[:, :3]+
+                     panel.thickness/2*directors)
+    return pose(panel, station, top_positions, directors,
+                _origin_weights=mean, _director_weights=mean,
+                _planar_weights=gradients)
 
 
 def _origin_weights(panel: ShellPanel, station: float) -> np.ndarray:
