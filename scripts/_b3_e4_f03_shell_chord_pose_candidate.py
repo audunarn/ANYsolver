@@ -1,9 +1,9 @@
-"""Bounded zero-transverse-width shell-line pose with a fixed axial chord.
+"""Bounded material-chord shell poses for exploratory exact line work.
 
-The origin and physical director are evaluated on the shell material line.
-The in-plane heading comes from two positions on that same line, separated
-by a declared physical gauge length. This is an exploratory nonlocal line
-law, not the local polar-frame law or a selected production connection.
+The historical default uses a fixed axial chord on a zero-width material
+line. The opt-in transverse-top variant uses the physical shell-top chord
+across a declared finite bond width and the independent E4 director. They
+are distinct connection idealizations, neither a selected production law.
 """
 
 from __future__ import annotations
@@ -20,10 +20,11 @@ from scripts._b3_e4_f03_shell_trace import ShellPanel
 
 
 HALF_CHORD = .2
+TRANSVERSE_TOP_CHORD_PORT = "line_transverse_top_chord_005"
 
 
 def _weights(panel: ShellPanel, station: float, half_chord: float,
-             confined: bool = False
+             confined: bool = False, axis: str = "axial"
              ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     if (not isinstance(panel, ShellPanel) or
             panel.topology not in ("Q4", "S3-V2D") or
@@ -32,16 +33,22 @@ def _weights(panel: ShellPanel, station: float, half_chord: float,
             not .05 <= half_chord <= .25):
         raise ValueError("bounded fixed shell-line chord required")
     reference_nodes(panel)
-    if type(confined) is not bool:
-        raise ValueError("Boolean attachment confinement required")
-    if confined:
+    if type(confined) is not bool or axis not in ("axial", "transverse_top") or (
+            axis == "transverse_top" and confined):
+        raise ValueError("valid chord direction and confinement required")
+    if axis == "transverse_top":
+        sites = ((station, 0.), (station, -half_chord),
+                 (station, half_chord))
+    elif confined:
         minus_x = (1.-2*half_chord)*station
         plus_x = minus_x+2*half_chord
+        sites = ((station, 0.), (minus_x, 0.), (plus_x, 0.))
     else:
         minus_x, plus_x = station-half_chord, station+half_chord
+        sites = ((station, 0.), (minus_x, 0.), (plus_x, 0.))
     rows = []
-    for x in (station, minus_x, plus_x):
-        indices, values = panel._shape(x, 0.)
+    for x, y in sites:
+        indices, values = panel._shape(x, y)
         row = np.zeros(panel.node_count)
         row[indices] = values
         if abs(float(np.sum(row))-1.) > 2e-12:
@@ -53,22 +60,29 @@ def _weights(panel: ShellPanel, station: float, half_chord: float,
 def reference_spatial_trace_chord(
         panel: ShellPanel, station: float, *,
         half_chord: float = HALF_CHORD,
-        confined: bool = False) -> np.ndarray:
+        confined: bool = False, axis: str = "axial") -> np.ndarray:
     """Six physical pose variations at a flat reference configuration."""
-    center, minus, plus = _weights(panel, station, half_chord, confined)
+    center, minus, plus = _weights(panel, station, half_chord, confined, axis)
     result = np.zeros((6, 6*panel.node_count))
     for axis in range(3):
         result[axis, axis::6] = center
     result[3, 3::6] = center
     result[4, 4::6] = center
-    result[5, 1::6] = (plus-minus)/(2*half_chord)
+    if axis == "transverse_top":
+        top = panel.thickness/2
+        result[0, 4::6] = top*center
+        result[1, 3::6] = -top*center
+        result[5, 0::6] = -(plus-minus)/(2*half_chord)
+        result[5, 4::6] = -top*(plus-minus)/(2*half_chord)
+    else:
+        result[5, 1::6] = (plus-minus)/(2*half_chord)
     return result
 
 
 def _numeric_pose(panel: ShellPanel, station: float, total_u: np.ndarray,
-                  half_chord: float, confined: bool
+                  half_chord: float, confined: bool, axis: str
                   ) -> tuple[np.ndarray, np.ndarray]:
-    center, minus, plus = _weights(panel, station, half_chord, confined)
+    center, minus, plus = _weights(panel, station, half_chord, confined, axis)
     reference = reference_nodes(panel)
     values = np.asarray(total_u, dtype=float)
     if values.shape != (6*panel.node_count,) or not np.isfinite(values).all():
@@ -77,18 +91,24 @@ def _numeric_pose(panel: ShellPanel, station: float, total_u: np.ndarray,
     positions = reference+nodal[:, :3]
     directors = np.array([rotation_matrix_from_vector(theta)[:, 2]
                           for theta in nodal[:, 3:]])
+    if axis == "transverse_top":
+        positions = positions+panel.thickness/2*directors
     director = center@directors
     dn = float(np.linalg.norm(director))
     if not np.isfinite(dn) or dn <= 1e-8:
         raise ValueError("cancelled shell-line director")
     director /= dn
     tangent = (plus-minus)@positions
-    x = tangent-director*float(director@tangent)
-    xn = float(np.linalg.norm(x))
+    projected = tangent-director*float(director@tangent)
+    xn = float(np.linalg.norm(projected))
     if not np.isfinite(xn) or xn <= 1e-8*half_chord:
         raise ValueError("degenerate projected shell-line chord")
-    x /= xn
-    y = np.cross(director, x)
+    if axis == "transverse_top":
+        y = projected/xn
+        x = np.cross(y, director)
+    else:
+        x = projected/xn
+        y = np.cross(director, x)
     frame = np.column_stack((x, y, director))
     if (not np.isfinite(frame).all() or
             np.linalg.norm(frame.T@frame-np.eye(3)) > 2e-12 or
@@ -100,9 +120,9 @@ def _numeric_pose(panel: ShellPanel, station: float, total_u: np.ndarray,
 def pose_from_e4_total_chord(
         panel: ShellPanel, station: float, total_u: np.ndarray, *,
         half_chord: float = HALF_CHORD,
-        confined: bool = False) -> tuple[np.ndarray, np.ndarray]:
-    """Finite material-line pose through the actual flat E4 chart."""
-    return _numeric_pose(panel, station, total_u, half_chord, confined)
+        confined: bool = False, axis: str = "axial") -> tuple[np.ndarray, np.ndarray]:
+    """Finite material-chord pose through the actual flat E4 chart."""
+    return _numeric_pose(panel, station, total_u, half_chord, confined, axis)
 
 
 def _cross(a, b):
@@ -115,9 +135,9 @@ def directional_pose_from_e4_total_chord(
         panel: ShellPanel, station: float, total_u: np.ndarray,
         first: np.ndarray, second: np.ndarray, *,
         half_chord: float = HALF_CHORD,
-        confined: bool = False) -> DirectionalPose:
+        confined: bool = False, axis: str = "axial") -> DirectionalPose:
     """Owned first/mixed-second variations through additive E4 rotations."""
-    center, minus, plus = _weights(panel, station, half_chord, confined)
+    center, minus, plus = _weights(panel, station, half_chord, confined, axis)
     base = np.asarray(total_u, dtype=float)
     u = np.asarray(first, dtype=float)
     v = np.asarray(second, dtype=float)
@@ -128,7 +148,7 @@ def directional_pose_from_e4_total_chord(
         raise ValueError("finite complete E4 state and two directions required")
     reference = reference_nodes(panel)
     numeric_position, numeric_frame = _numeric_pose(
-        panel, station, base, half_chord, confined)
+        panel, station, base, half_chord, confined, axis)
     base = base.reshape(shape)
     epsilon = ad.Jet2.variable(0., 0, 2)
     eta = ad.Jet2.variable(0., 1, 2)
@@ -143,6 +163,10 @@ def directional_pose_from_e4_total_chord(
                 epsilon*u[index, axis+3]+eta*v[index, axis+3]
                 for axis in range(3)]
         directors.append(ad.matvec(ad.so3_exp(spin), [zero, zero, 1.+zero]))
+    if axis == "transverse_top":
+        nodes = [[node[i]+panel.thickness/2*director[i]
+                  for i in range(3)]
+                 for node, director in zip(nodes, directors)]
 
     def weighted(weights, vectors):
         return [sum((weights[i]*vectors[i][axis]
@@ -156,10 +180,14 @@ def directional_pose_from_e4_total_chord(
     chord_weights = plus-minus
     chord = weighted(chord_weights, nodes)
     projection = ad.dot(director, chord)
-    x0 = [chord[i]-projection*director[i] for i in range(3)]
-    norm = ad.sqrt(ad.dot(x0, x0))
-    x = [entry/norm for entry in x0]
-    y = _cross(director, x)
+    projected = [chord[i]-projection*director[i] for i in range(3)]
+    norm = ad.sqrt(ad.dot(projected, projected))
+    if axis == "transverse_top":
+        y = [entry/norm for entry in projected]
+        x = _cross(y, director)
+    else:
+        x = [entry/norm for entry in projected]
+        y = _cross(director, x)
     frame = [[x[i], y[i], director[i]] for i in range(3)]
     if (np.max(np.abs(np.array([entry.value for entry in position])-
                       numeric_position)) > 1e-11 or

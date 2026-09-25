@@ -29,7 +29,8 @@ from scripts._b3_e4_f03_shell_strip_pose_candidate import (
     LINE_ORIGIN_PORT, STRIP_PORTS, directional_pose_from_e4_total_strip,
     pose_from_e4_total_strip)
 from scripts._b3_e4_f03_shell_chord_pose_candidate import (
-    directional_pose_from_e4_total_chord, pose_from_e4_total_chord)
+    TRANSVERSE_TOP_CHORD_PORT, directional_pose_from_e4_total_chord,
+    pose_from_e4_total_chord)
 from scripts._b3_e4_f03_shell_trace import ShellPanel
 
 
@@ -123,6 +124,13 @@ def directional_point_work(
     elif shell_port == "line_chord_020":
         pose_map = pose_from_e4_total_chord
         derivative_map = directional_pose_from_e4_total_chord
+    elif shell_port == TRANSVERSE_TOP_CHORD_PORT:
+        pose_map = lambda p, s, u: pose_from_e4_total_chord(
+            p, s, u, half_chord=.05, axis="transverse_top")
+        derivative_map = lambda p, s, u, a, b: (
+            directional_pose_from_e4_total_chord(
+                p, s, u, a, b, half_chord=.05,
+                axis="transverse_top"))
     elif shell_port == "line_chord_confined_020":
         pose_map = lambda p, s, u: pose_from_e4_total_chord(
             p, s, u, confined=True)

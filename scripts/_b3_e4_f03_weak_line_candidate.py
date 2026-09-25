@@ -36,7 +36,8 @@ from scripts._b3_e4_f03_shell_strip_pose_candidate import (
     pose_from_e4_total_transverse_band,
     reference_spatial_trace_transverse_band)
 from scripts._b3_e4_f03_shell_chord_pose_candidate import (
-    pose_from_e4_total_chord, reference_spatial_trace_chord)
+    TRANSVERSE_TOP_CHORD_PORT, pose_from_e4_total_chord,
+    reference_spatial_trace_chord)
 
 
 @dataclass(frozen=True)
@@ -134,7 +135,7 @@ def segments(shell: FlatE4TrialPanel, beam: Fixture,
         raise TypeError("bounded E4 and native B3 fixtures required")
     shell.guard()
     beam.context.guard()
-    if shell_port == TRANSVERSE_BAND_PORT:
+    if shell_port in (TRANSVERSE_BAND_PORT, TRANSVERSE_TOP_CHORD_PORT):
         x_grid = -.5+np.arange(shell.panel.x_interval_count+1)/shell.panel.n_s
         sites = list(x_grid)
         if shell.panel.topology == "S3-V2D":
@@ -211,7 +212,8 @@ def integrate_weak_line(
         raise TypeError("line multiplier space required")
     if shell_port not in ("rail", "local_translation", "local_director",
                           "local_frame", "line_chord_020",
-                          "line_chord_confined_020", *STRIP_PORTS):
+                          "line_chord_confined_020",
+                          TRANSVERSE_TOP_CHORD_PORT, *STRIP_PORTS):
         raise ValueError("unknown bounded shell pose port")
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
@@ -223,6 +225,10 @@ def integrate_weak_line(
                         line_origin=line))
                    for name,(a,b) in STRIP_PORTS.items()},
                 "line_chord_020": pose_from_e4_total_chord,
+                TRANSVERSE_TOP_CHORD_PORT: lambda p, s, u: (
+                    pose_from_e4_total_chord(
+                        p, s, u, half_chord=.05,
+                        axis="transverse_top")),
                 "line_chord_confined_020": lambda p, s, u: (
                     pose_from_e4_total_chord(
                         p, s, u, confined=True))}[shell_port]
@@ -295,6 +301,7 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
     if shell_port not in ("rail", "local_translation", "local_director",
                           "local_frame", "line_chord_020",
                           "line_chord_confined_020", TRANSVERSE_BAND_PORT,
+                          TRANSVERSE_TOP_CHORD_PORT,
                           *STRIP_PORTS):
         raise ValueError("unknown bounded shell pose port")
     if shell_support_policy not in ("legacy_three_left_nodes",
@@ -311,6 +318,10 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                          line_origin=line))
                     for name,(a,b) in STRIP_PORTS.items()},
                 "line_chord_020": pose_from_e4_total_chord,
+                TRANSVERSE_TOP_CHORD_PORT: lambda p, s, u: (
+                    pose_from_e4_total_chord(
+                        p, s, u, half_chord=.05,
+                        axis="transverse_top")),
                 "line_chord_confined_020": lambda p, s, u: (
                     pose_from_e4_total_chord(
                         p, s, u, confined=True))}[shell_port]
@@ -326,6 +337,10 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                 line_origin=line))
            for name,(a,b) in STRIP_PORTS.items()},
         "line_chord_020": reference_spatial_trace_chord,
+        TRANSVERSE_TOP_CHORD_PORT: lambda p, s: (
+            reference_spatial_trace_chord(
+                p, s, half_chord=.05,
+                axis="transverse_top")),
         "line_chord_confined_020": lambda p, s: (
             reference_spatial_trace_chord(
                 p, s, confined=True))}[shell_port]

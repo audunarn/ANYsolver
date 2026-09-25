@@ -27,7 +27,8 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
     LINE_ORIGIN_PORT, STRIP_PORTS, pose_from_e4_total_strip,
     TRANSVERSE_BAND_PORT, pose_from_e4_total_transverse_band)
-from scripts._b3_e4_f03_shell_chord_pose_candidate import pose_from_e4_total_chord
+from scripts._b3_e4_f03_shell_chord_pose_candidate import (
+    TRANSVERSE_TOP_CHORD_PORT, pose_from_e4_total_chord)
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
@@ -116,6 +117,10 @@ def one_case(topology: str, intervals: int, kind: str, *,
                         line_origin=line))
                    for name,(a,b) in STRIP_PORTS.items()},
                 "line_chord_020": pose_from_e4_total_chord,
+                TRANSVERSE_TOP_CHORD_PORT: lambda p, s, u: (
+                    pose_from_e4_total_chord(
+                        p, s, u, half_chord=.05,
+                        axis="transverse_top")),
                 "line_chord_confined_020": lambda p, s, u: (
                     pose_from_e4_total_chord(
                         p, s, u, confined=True))}[shell_port]
