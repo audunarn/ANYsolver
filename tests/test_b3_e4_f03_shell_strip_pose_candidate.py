@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from scipy.integrate import quad
 from scipy.spatial.transform import Rotation
 
 from scripts._b3_e4_f03_shell_finite_pose_candidate import reference_nodes
@@ -155,6 +156,50 @@ def test_square_patch_has_physical_yaw_and_no_drilling_work(topology):
     nodal = trace[5].reshape(-1, 6)
     moment = np.sum(nodes[:, 0]*nodal[:, 1]-nodes[:, 1]*nodal[:, 0])
     assert moment == pytest.approx(1., abs=2e-13)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_strip_polar_yaw_is_balanced_physical_boundary_work(topology):
+    """Independent boundary work oracle for the finite-area yaw row.
+
+    Stokes' theorem turns the area-mean polar spin into tangential force
+    couples on all four patch edges. A single transverse force dipole omits
+    the longitudinal-edge part and is a different connection law.
+    """
+    panel = make_shell(2, topology, n_y=4)
+    trace = reference_spatial_trace_strip(panel, .5, **SQUARE)
+    nodes = reference_nodes(panel)
+    rng = np.random.default_rng(54331)
+    motion = np.zeros((panel.node_count, 6))
+    motion[:, :2] = rng.normal(scale=.02, size=(panel.node_count, 2))
+    motion[:, 5] = rng.normal(scale=.1, size=panel.node_count)
+    x0, x1, y0, y1 = .45, .55, -.05, .05
+    area = (x1-x0)*(y1-y0)
+
+    def value(axis, x, y):
+        indices, shape = panel._shape(x, y)
+        return float(shape @ motion[indices, axis])
+
+    def boundary_work():
+        right = quad(lambda y:value(1, x1, y), y0, y1,
+                     epsabs=1e-13, points=[0.])[0]
+        left = quad(lambda y:value(1, x0, y), y0, y1,
+                    epsabs=1e-13, points=[0.])[0]
+        top = quad(lambda x:value(0, x, y1), x0, x1,
+                   epsabs=1e-13, points=[.5])[0]
+        bottom = quad(lambda x:value(0, x, y0), x0, x1,
+                      epsabs=1e-13, points=[.5])[0]
+        return (right-left-top+bottom)/(2*area)
+
+    assert boundary_work() == pytest.approx(
+        trace[5] @ motion.ravel(), abs=3e-11)
+    gamma = .01
+    motion[:, 0] = gamma*nodes[:, 1]
+    motion[:, 1] = gamma*nodes[:, 0]
+    assert boundary_work() == pytest.approx(0., abs=3e-14)
+    motion[:, 0] = -gamma*nodes[:, 1]
+    motion[:, 1] = gamma*nodes[:, 0]
+    assert boundary_work() == pytest.approx(gamma, abs=3e-14)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
