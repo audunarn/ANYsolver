@@ -64,8 +64,8 @@ def reference_spatial_trace_chord(
     """Six physical pose variations at a flat reference configuration."""
     center, minus, plus = _weights(panel, station, half_chord, confined, axis)
     result = np.zeros((6, 6*panel.node_count))
-    for axis in range(3):
-        result[axis, axis::6] = center
+    for component in range(3):
+        result[component, component::6] = center
     result[3, 3::6] = center
     result[4, 4::6] = center
     if axis == "transverse_top":
