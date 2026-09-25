@@ -101,16 +101,17 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
         raise ValueError("declared bar clearance requires quadratic terminal torque audit")
     if element_family not in ("C3D8", "C3D20R") or (
             element_family == "C3D20R" and
-            (bond_policy not in ("detached", "terminal") or
+            (bond_policy not in ("detached", "terminal", "full") or
              boundary_policy != "left_root" or
              shear not in ("tip_mx", "tip_fz") or contact_policy != "none")):
-        raise ValueError("quadratic screen requires no-contact detached/terminal tip load")
+        raise ValueError("quadratic screen requires no-contact left/root tip load")
     if tip_load_map not in ("legacy", "quadratic_face") or (
             tip_load_map == "quadratic_face" and
             (element_family != "C3D20R" or
              shear not in ("tip_mx", "tip_fz") or
-             (shear == "tip_fz" and not reverse_tip_fz) or
-             bond_policy not in ("detached", "terminal") or
+             (shear == "tip_fz" and bond_policy != "full" and
+              not reverse_tip_fz) or
+             bond_policy not in ("detached", "terminal", "full") or
              boundary_policy != "left_root" or contact_policy != "none")):
         raise ValueError("consistent quadratic face traction requires admitted no-contact C3D20R tip loading")
     plate_x = (PLATE_X_MM if bond_policy == "full" else
@@ -289,7 +290,20 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                       "*SURFACE INTERACTION,NAME=HardUnbonded",
                       "*CONTACT PAIR,INTERACTION=HardUnbonded,TYPE=MORTAR",
                       "BarBottomUnbonded,PlateTopUnbonded"))
-    if element_family == "C3D20R":
+    if element_family == "C3D20R" and bond_policy == "full":
+        plate_surface={reference_inverse[i]:i for i in plate_nodes
+                       if reference_inverse[i][2] == plate_top and
+                       0 <= reference_inverse[i][0] <= 1000 and
+                       -50 <= reference_inverse[i][1] <= 50}
+        bar_surface={reference_inverse[i]:i for i in bar_nodes
+                     if reference_inverse[i][2] == plate_top and
+                     0 <= reference_inverse[i][0] <= 1000 and
+                     -50 <= reference_inverse[i][1] <= 50}
+        if plate_surface != bar_surface:
+            raise AssertionError("quadratic full-bond interface is not shared")
+        unbonded_pairs=[]
+        unbonded_face_pairs=[]
+    elif element_family == "C3D20R":
         plate_surface={reference_inverse[i]:i for i in plate_nodes
                        if reference_inverse[i][2] == plate_top and
                        0 <= reference_inverse[i][0] < 900 and
@@ -826,9 +840,9 @@ def main() -> int:
     if args.contact == "mortar_hard" and args.bond != "terminal":
         parser.error("hard mortar contact requires terminal bond")
     if args.element_family == "C3D20R" and (
-            args.boundary != "left_root" or args.bond not in ("detached","terminal") or
+            args.boundary != "left_root" or args.bond not in ("detached","terminal","full") or
             args.suite != "loads" or args.contact != "none"):
-        parser.error("quadratic screen requires no-contact detached/terminal tip loads")
+        parser.error("quadratic screen requires no-contact left/root tip loads")
     if args.reverse_fz_open_audit and (args.suite!="loads" or
             args.boundary!="left_root" or args.bond!="terminal" or
             args.contact!="none"):
@@ -847,12 +861,12 @@ def main() -> int:
                  (args.reverse_fz_open_audit and args.bar_clearance_um==0 and
                   args.bond=="terminal" and args.quadratic_face_traction) or
                  (args.quadratic_face_traction and args.bar_clearance_um==0 and
-                  args.bond=="detached")) or
+                  args.bond in ("detached","full"))) or
             args.boundary!="left_root" or any(f not in (2,4) for f in args.factor)):
-        parser.error("half-thickness diagnostic requires admitted quadratic terminal torque, reverse force, or detached control")
+        parser.error("half-thickness diagnostic requires admitted quadratic terminal, detached, or full-bond control")
     if args.quadratic_face_traction and (
             args.element_family!="C3D20R" or args.suite!="loads" or
-            args.boundary!="left_root" or args.bond not in ("terminal","detached") or
+            args.boundary!="left_root" or args.bond not in ("terminal","detached","full") or
             args.contact!="none" or
             (args.reverse_fz_open_audit and args.bond!="terminal")):
         parser.error("quadratic face traction requires admitted no-contact C3D20R tip loading")
@@ -866,7 +880,9 @@ def main() -> int:
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":("Does reverse transverse loading with consistent quadratic end-face force leave the 35 mm unbonded solid interface open and resolve its work?"
+              "question":("Does a fully shared 35 mm quadratic solid bond under matched left/root supports and consistent tip torque/shear loading approach a stable physical transfer response?"
+                          if args.quadratic_face_traction and args.bond=="full" else
+                          "Does reverse transverse loading with consistent quadratic end-face force leave the 35 mm unbonded solid interface open and resolve its work?"
                           if args.quadratic_face_traction and args.reverse_fz_open_audit else
                           "Does replacing corner-weighted tip torque with consistent quadratic end-face traction change the 35 mm terminal bond torque partition or detached free-bar work?"
                           if args.quadratic_face_traction else
@@ -891,7 +907,9 @@ def main() -> int:
                           "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
                           if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
-              "decision":("If the reverse-Fz faces remain open and the force work settles across the two bounded factors, compare the physical shear work and support split with the existing sign-reversed native linear cases; overlap or drift blocks external shear accuracy scoring. Neither outcome selects a connection law."
+              "decision":("If torque/shear work and support partition settle at factors 2/4, compare matched physical observables with the native full-line and reduced-channel screens while recording solid warping and shell idealization limits; drift blocks accuracy scoring. No line law is selected from this reference alone."
+                          if args.quadratic_face_traction and args.bond=="full" else
+                          "If the reverse-Fz faces remain open and the force work settles across the two bounded factors, compare the physical shear work and support split with the existing sign-reversed native linear cases; overlap or drift blocks external shear accuracy scoring. Neither outcome selects a connection law."
                           if args.quadratic_face_traction and args.reverse_fz_open_audit else
                           "If the consistent face load materially shifts torque partition, revise the external load idealization before judging the native footprint; if it does not, focus the next discriminator on connection pose and local tip work. Neither outcome selects a production law."
                           if args.quadratic_face_traction else
@@ -917,7 +935,8 @@ def main() -> int:
               "source_head":head,"source_sha256":digest(Path(__file__)),
               "executable":str(EXE),"executable_sha256":EXE_SHA,
               "cases":[(factor,shear) for factor in args.factor
-                   for shear in (("tip_fz",) if args.reverse_fz_open_audit else
+                   for shear in (("tip_mx","tip_fz") if args.quadratic_face_traction and args.bond=="full" else
+                                 ("tip_fz",) if args.reverse_fz_open_audit else
                                  ("tip_mx",) if args.quadratic_face_traction else
                                  ("tip_mx",) if args.tip_mx_gap_audit else
                                  ("uy_x","ux_y") if args.suite=="shear"
@@ -945,6 +964,8 @@ def main() -> int:
                                  "linear-brick tip loads use corner-node face weights",
                                  "bar axis and section are lifted by the declared clearance outside the terminal bond and taper to the original axis over x=0.75-0.9 m; this differs from the straight native beam"
                                  if args.bar_clearance_um else
+                                 "fully shared plate/bar interface; no unbonded plate/bar face"
+                                 if args.bond=="full" else
                                  "no initial clearance outside the shared patch",
                                  ("detached control has no physical plate/bar connection"
                                   if args.bond=="detached" else

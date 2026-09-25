@@ -133,6 +133,34 @@ def test_quadratic_reverse_force_has_exact_wrench_and_work():
         "value"]==pytest.approx(2e-5,abs=1e-13)
 
 
+@pytest.mark.parametrize("factor", (2, 4))
+@pytest.mark.parametrize("load,expected", (
+    ("tip_mx", [0., 0., 0., 100., 0., 0.]),
+    ("tip_fz", [0., 0., 1000., 0., -1000., 0.])))
+def test_quadratic_full_bond_is_conforming_and_has_exact_face_wrench(
+        factor, load, expected):
+    deck, meta = SCREEN.build(
+        factor, load, boundary_policy="left_root", bond_policy="full",
+        element_family="C3D20R", plate_thickness_mm=35,
+        tip_load_map="quadratic_face")
+    assert meta["bond_interval_m"] == [0., 1.]
+    assert meta["plate_thickness_m"] == .035
+    assert meta["bar_tip_axis_z_m"] == .0675
+    assert meta["detached_interface_nodes"] == 0
+    assert not meta["unbonded_face_pairs"]
+    assert meta["shared_interface_nodes"] > 0
+    assert set(meta["boundary_node_ids"]) == (
+        set(meta["beam_root_node_ids"]) |
+        set(meta["plate_boundary_node_ids"]))
+    assert "*MPC" not in deck and "*TIE" not in deck
+    applied = {int(i): np.asarray(force) for i, force in
+               meta["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(applied, meta["probe_coordinates_m"]) == pytest.approx(
+        expected, abs=1e-9)
+    assert set(applied).issubset(meta["probe_node_ids"])
+    assert len(applied) > len(meta["bar_station_nodes"]["1000"])
+
+
 def test_thickness_screen_rejects_undeclared_geometry():
     with pytest.raises(ValueError,match="35/70 mm"):
         SCREEN.build(1,"tip_mx",plate_thickness_mm=50)
