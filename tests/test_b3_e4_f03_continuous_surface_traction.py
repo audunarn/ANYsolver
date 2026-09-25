@@ -82,3 +82,52 @@ def test_local_yaw_dipole_adds_physical_mz_without_changing_four_rows():
             [0., 0., 0., 0., 0., 1.], abs=1e-12)
         assert np.max(np.abs(five[5 * station + 4,
                                   5:shell_size:6])) == 0.
+
+
+def test_six_local_physical_resultants_include_independent_my_and_mz():
+    xs = np.linspace(-.5, 1.5, 9)
+    ys = np.linspace(-.5, .5, 9)
+    beam = build(8, z_offset=.0675,
+                 torsion_constant=square_torsion_constant())
+    four, _, _ = continuous_traction_rows(xs, ys, beam, intervals=2)
+    six, wrench, meta = continuous_traction_rows(
+        xs, ys, beam, intervals=2, six_local_resultants=True)
+    shell_size = 6 * len(xs) * len(ys)
+    assert six.shape == (18, shell_size + beam.context.count)
+    assert meta["local_section_wrench_rank"] == 6
+    assert meta["six_local_wrench_identity_error"] < 1e-12
+    assert np.max(np.abs(six[:, 5:shell_size:6])) == 0.
+    for station in range(3):
+        np.testing.assert_allclose(six[6*station:6*station+4],
+                                   four[4*station:4*station+4], atol=1e-12)
+        local = wrench[:, 6*station:6*station+6].copy()
+        center = np.array((meta["station_x_centroid_m"][station], 0.,
+                           .035/2))
+        local[3:] -= np.cross(center, local[:3].T).T
+        np.testing.assert_allclose(local, np.eye(6), atol=1e-12)
+    direction = _common_rigid_direction(
+        xs, ys, beam, np.array((.02, -.03, .04)),
+        np.array((.003, -.005, .007)))
+    assert np.max(np.abs(six @ direction)) < 1e-11
+
+
+def test_six_local_p1_has_fz_my_dependency_but_p0_is_independent_at_n2():
+    xs = np.linspace(-.5, 1.5, 9)
+    ys = np.linspace(-.5, .5, 5)
+    beam = build(16, z_offset=.0675,
+                 torsion_constant=square_torsion_constant())
+    shell_size = 6 * len(xs) * len(ys)
+    fixed = {6*j*len(xs)+axis for j in range(len(ys))
+             for axis in range(6)}
+    fixed.update(shell_size+index for index in beam.context.fixed)
+    free = [i for i in range(shell_size+beam.context.count)
+            if i not in fixed]
+    p1, _, p1_meta = continuous_traction_rows(
+        xs, ys, beam, intervals=2, six_local_resultants=True)
+    p0, _, p0_meta = continuous_traction_rows(
+        xs, ys, beam, intervals=2, six_local_resultants=True,
+        line_kind="piecewise_constant")
+    assert p1_meta["six_local_wrench_identity_error"] < 1e-12
+    assert p0_meta["six_local_wrench_identity_error"] < 1e-12
+    assert np.linalg.matrix_rank(p1[:, free]) == 17
+    assert np.linalg.matrix_rank(p0[:, free]) == 12
