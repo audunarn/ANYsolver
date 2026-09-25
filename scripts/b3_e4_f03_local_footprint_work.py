@@ -273,7 +273,8 @@ def finite_distributing_work(shell: FlatE4TrialPanel, beam, port) -> dict:
             "scope": "actual E4 area-mean/polar pose and native nodal Exp-chart, nonzero-multiplier local proof"}
 
 
-def termination_local(shell: FlatE4TrialPanel, beam) -> dict:
+def termination_local(shell: FlatE4TrialPanel, beam, *,
+                      recover_interface: bool = False) -> dict:
     """Check a declared last-0.1 m bonded patch at the native beam tip."""
     panel = shell.panel
     shell_size = 6*panel.node_count
@@ -403,7 +404,7 @@ def termination_local(shell: FlatE4TrialPanel, beam) -> dict:
                 max(balance_force, balance_moment) > 1e-7 or
                 not np.isfinite(full).all()):
             raise ArithmeticError("loaded local termination solution failed")
-        return {"tip_rx_rad": float(full[shell_size+6*beam.n_half_cells+3]),
+        result = {"tip_rx_rad": float(full[shell_size+6*beam.n_half_cells+3]),
                 "tip_uz_m": float(full[shell_size+6*beam.n_half_cells+2]),
                 "beam_section_rx_at_stations_rad":{
                     str(station):float(full[shell_size+6*(beam.n_half_cells*station//1000)+3])
@@ -417,6 +418,41 @@ def termination_local(shell: FlatE4TrialPanel, beam) -> dict:
                 "work_error_j": work_error,
                 "global_force_balance_n": balance_force,
                 "global_moment_balance_nm": balance_moment}
+        if recover_interface:
+            # Kq + C.T lambda = applied. The load exerted by the other
+            # domain on each component is therefore -C_component.T lambda.
+            interface = -constraint.T@multiplier
+            shell_interface=interface[:shell_size].reshape(-1,6)
+            beam_interface=interface[shell_size:shell_size+
+                                     beam.context.nodal_count].reshape(-1,6)
+            def wrench(nodal, locations):
+                return np.r_[nodal[:,:3].sum(axis=0),
+                             (np.cross(locations,nodal[:,:3])+
+                              nodal[:,3:]).sum(axis=0)]
+            shell_wrench=wrench(shell_interface,shell_nodes)
+            beam_wrench=wrench(beam_interface,beam_nodes)
+            action_error=float(np.linalg.norm(shell_wrench+beam_wrench))
+            virtual_work_error=float(abs(interface@full))
+            if max(action_error,virtual_work_error)>1e-7:
+                raise ArithmeticError("native interface wrench/work imbalance")
+            active=np.flatnonzero(np.max(np.abs(shell_interface),axis=1)>1e-10)
+            result["interface"]={
+                "meaning":"forces/moments exerted by beam on shell and shell on beam; global-reference wrench; linearized accepted-reference KKT",
+                "shell_wrench_N_Nm":shell_wrench.tolist(),
+                "beam_wrench_N_Nm":beam_wrench.tolist(),
+                "opposite_wrench_error":action_error,
+                "zero_gap_virtual_work_error_j":virtual_work_error,
+                "shell_work_j":float(interface[:shell_size]@full[:shell_size]),
+                "beam_work_j":float(interface[shell_size:]@full[shell_size:]),
+                "active_shell_nodes":[
+                    {"node_row":int(i),"xyz_m":shell_nodes[i].tolist(),
+                     "force_moment_N_Nm":shell_interface[i].tolist()}
+                    for i in active],
+                "beam_tip_force_moment_N_Nm":beam_interface[-1].tolist(),
+                "retained_interface_norm":float(np.linalg.norm(
+                    interface[shell_size+beam.context.nodal_count:])),
+            }
+        return result
 
     loaded_results = {
         family: {"torque_mx_100nm": loaded(constraint, 3),
@@ -693,16 +729,63 @@ def run_terminal_shell_resolution(output_dir: Path) -> None:
                       flush=True)
 
 
+def run_terminal_interface(output_dir: Path) -> None:
+    """Recover actual native KKT interface actions for reference design."""
+    source=subprocess.check_output(["git","rev-parse","HEAD"],
+                                   text=True).strip()
+    if subprocess.check_output(["git","status","--porcelain"],
+                               text=True).strip():
+        raise RuntimeError("run requires clean source")
+    output_dir.mkdir(parents=True,exist_ok=False)
+    manifest={
+        "status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
+        "source_sha":source,
+        "question":"What shell force/moment fields do the actual native terminal KKT multipliers transmit under separate torque and transverse-force loading?",
+        "decision":"Use the recovered shape, work and wrench to design a physically matched external bond comparison. If the fields differ materially between laws, smooth plate-only traction cannot rank them. This does not select a connection.",
+        "geometry":"Q4 plate [-.5,1.5]x[-.5,.5] m, t=.07 m; last-0.1 m square footprint; B3 centroid z=.085 m",
+        "model":"E4 Q4 x4/y4, native generalized B3 eight half-cells, retained coordinates, distributing six rows or rigid twelve rows",
+        "support":"full shell left-edge and B3 root fixed",
+        "loads":"separate +100 Nm tip Mx and +1000 N tip Fz",
+        "limits":{"max_dense_kkt_rows":1000,"blas_threads":1},
+        "scope":"linearized native coupled interface recovery; no continuum contact, external accuracy, footprint or line qualification",
+        "python":platform.python_version(),"numpy":np.__version__,
+    }
+    with threadpool_limits(limits=1):
+        manifest["effective_threadpools"]=threadpool_info()
+        (output_dir/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+        shell=FlatE4TrialPanel(make_shell(4,"Q4",n_y=4))
+        beam=build(8,z_offset=.085,
+                   torsion_constant=square_torsion_constant())
+        rows=6*shell.panel.node_count+beam.context.count+12
+        if rows>manifest["limits"]["max_dense_kkt_rows"]:
+            raise ValueError("terminal interface dense row cap exceeded")
+        result=termination_local(shell,beam,recover_interface=True)
+        (output_dir/"results.json").write_text(json.dumps(
+            result,indent=2,allow_nan=False)+"\n")
+        for law,cases in result["loaded_linear_reference"].items():
+            for loading,case in cases.items():
+                field=case["interface"]
+                print(json.dumps({"law":law,"loading":loading,
+                                  "shell_wrench_N_Nm":field["shell_wrench_N_Nm"],
+                                  "active_shell_nodes":len(field["active_shell_nodes"]),
+                                  "shell_work_j":field["shell_work_j"]}),
+                      flush=True)
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("output_dir", type=Path)
     parser.add_argument("--terminal-beam-resolution", action="store_true")
     parser.add_argument("--terminal-shell-resolution", action="store_true")
+    parser.add_argument("--terminal-interface", action="store_true")
     args = parser.parse_args()
-    if args.terminal_beam_resolution and args.terminal_shell_resolution:
+    if sum((args.terminal_beam_resolution,args.terminal_shell_resolution,
+            args.terminal_interface))>1:
         parser.error("select one terminal resolution screen")
-    if args.terminal_beam_resolution:
+    if args.terminal_interface:
+        run_terminal_interface(args.output_dir)
+    elif args.terminal_beam_resolution:
         run_terminal_beam_resolution(args.output_dir)
     elif args.terminal_shell_resolution:
         run_terminal_shell_resolution(args.output_dir)
