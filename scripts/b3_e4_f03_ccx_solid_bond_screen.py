@@ -292,9 +292,18 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
             "surface_square_patch_yaw_rad":patch_yaw,
             "surface_square_patch_half_width_m":.05,
             "station_motion":stations}
+    applied={int(index):np.array(force) for index,force in
+             meta["applied_nodal_forces_N"].items()}
+    if applied:
+        work=float(sum(force@displacement[index]
+                       for index,force in applied.items()))
+        magnitude=(100. if meta["shear"]=="tip_mx" else 1000.)
+        result["applied_load_work_j"]=work
+        result["tip_work_conjugate_displacement"]={
+            "value":work/magnitude,
+            "unit":"rad" if meta["shear"]=="tip_mx" else "m",
+            "definition":"sum(applied nodal force dot nodal displacement) / declared load magnitude"}
     if reactions is not None:
-        applied={int(index):np.array(force) for index,force in
-                 meta["applied_nodal_forces_N"].items()}
         applied_wrench=(_wrench(applied,meta["probe_coordinates_m"])
                         if applied else [0.]*6)
         support_wrench=_wrench(reactions,meta["boundary_coordinates_m"])

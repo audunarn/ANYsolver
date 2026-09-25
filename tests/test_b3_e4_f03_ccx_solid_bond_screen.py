@@ -94,3 +94,19 @@ def test_left_edge_and_root_face_support_are_explicit(factor):
     assert meta["support_set"] == "Supports"
     assert "*NODE PRINT,NSET=Supports" in deck
     assert "*MPC" not in deck and "*TIE" not in deck
+
+
+@pytest.mark.parametrize("load", ("tip_mx", "tip_fz"))
+def test_end_face_recovery_is_conjugate_to_actual_discrete_load(load):
+    _, meta = SCREEN.build(1, load, boundary_policy="left_root")
+    amplitude = 2.5e-5
+    displacement = {}
+    for node, xyz in meta["probe_coordinates_m"].items():
+        _, y, z = xyz
+        displacement[int(node)] = (
+            np.array([0., -(z-.085)*amplitude, y*amplitude])
+            if load == "tip_mx" else np.array([0., 0., amplitude]))
+    result = SCREEN.recover(meta, displacement)
+    measure = result["tip_work_conjugate_displacement"]
+    assert measure["value"] == pytest.approx(amplitude, abs=1e-15)
+    assert measure["unit"] == ("rad" if load == "tip_mx" else "m")
