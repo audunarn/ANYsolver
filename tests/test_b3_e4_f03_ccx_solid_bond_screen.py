@@ -27,6 +27,37 @@ def test_shared_interface_and_prescribed_plate_only(factor, shear):
         assert len(station) == (2 * factor + 1)**2
 
 
+@pytest.mark.parametrize("factor", (1, 2, 4))
+@pytest.mark.parametrize("load,expected", (("tip_mx", [0.,0.,0.,100.,0.,0.]),
+                                            ("tip_fz", [0.,0.,1000.,0.,-1000.,0.])))
+def test_terminal_bond_has_only_declared_shared_patch(factor, load, expected):
+    deck, meta = SCREEN.build(factor, load, boundary_policy="left_root",
+                              bond_policy="terminal")
+    assert meta["bond_policy"] == "terminal"
+    assert meta["bond_interval_m"] == [.9, 1.]
+    assert meta["shared_interface_nodes"] == (factor+1)*(2*factor+1)
+    assert meta["detached_interface_nodes"] == 4*factor*(2*factor+1)
+    assert len(meta["shared_interface_node_ids"]) == meta["shared_interface_nodes"]
+    assert len(meta["detached_stiffener_node_ids"]) == meta["detached_interface_nodes"]
+    assert not set(meta["detached_stiffener_node_ids"]) & set(
+        meta["shared_interface_node_ids"])
+    assert not set(meta["beam_root_node_ids"]) & set(
+        meta["plate_boundary_node_ids"])
+    assert set(meta["boundary_node_ids"]) == (
+        set(meta["beam_root_node_ids"]) | set(meta["plate_boundary_node_ids"]))
+    assert "*MPC" not in deck and "*TIE" not in deck
+    applied = {int(node): np.array(force) for node, force in
+               meta["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(applied, meta["probe_coordinates_m"]) == pytest.approx(
+        expected, abs=1e-10)
+    displacement = {int(node): np.zeros(3) for node in meta["probe_node_ids"]}
+    recovered = SCREEN.recover(meta, displacement)
+    assert recovered["station_motion"]["500"]["interface_shared"] is False
+    assert "shared_face_mean_translation_m" not in recovered["station_motion"]["500"]
+    assert recovered["station_motion"]["1000"]["interface_shared"] is True
+    assert "shared_face_mean_translation_m" in recovered["station_motion"]["1000"]
+
+
 def test_recovery_rigid_motion_and_orthogonal_shear_measures():
     _, meta = SCREEN.build(1, "uy_x")
     coordinates = meta["probe_coordinates_m"]

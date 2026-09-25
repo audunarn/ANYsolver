@@ -59,26 +59,48 @@ def _set_lines(indices: set[int] | list[int]) -> list[str]:
             for i in range(0,len(ordered),12)]
 
 
-def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
+def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
+          bond_policy: str = "full"
           ) -> tuple[str, dict]:
-    """Return an exact-coordinate conforming C3D8 deck and probe identity."""
+    """Return an exact-coordinate C3D8 deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
         raise ValueError("undeclared solid-bond loading")
     if boundary_policy not in ("perimeter", "left", "left_root") or (
             boundary_policy != "perimeter" and shear not in ("tip_mx", "tip_fz")):
         raise ValueError("unsupported plate boundary/loading combination")
+    if bond_policy not in ("full", "terminal") or (
+            bond_policy == "terminal" and (boundary_policy != "left_root" or
+                                           shear not in ("tip_mx", "tip_fz"))):
+        raise ValueError("terminal bond requires left/root tip-load case")
+    plate_x = (PLATE_X_MM if bond_policy == "full" else
+               tuple(sorted(set((*PLATE_X_MM, 900)))))
+    bar_x = (BAR_X_MM if bond_policy == "full" else
+             tuple(sorted(set((*BAR_X_MM, 900)))))
     px,py,pz=(_cuts(v,factor) for v in
-              (PLATE_X_MM,PLATE_Y_MM,PLATE_Z_MM))
+              (plate_x,PLATE_Y_MM,PLATE_Z_MM))
     bx,by,bz=(_cuts(v,factor) for v in
-              (BAR_X_MM,BAR_Y_MM,BAR_Z_MM))
+              (bar_x,BAR_Y_MM,BAR_Z_MM))
     coordinates: dict[tuple[Fraction,Fraction,Fraction],int]={}
+    detached: dict[tuple[Fraction,Fraction,Fraction],int]={}
     plate_nodes=set()
     bar_nodes=set()
+    next_id=1
 
     def node(key: tuple[Fraction,Fraction,Fraction]) -> int:
+        nonlocal next_id
         if key not in coordinates:
-            coordinates[key]=len(coordinates)+1
+            coordinates[key]=next_id
+            next_id+=1
         return coordinates[key]
+
+    def bar_node(key: tuple[Fraction,Fraction,Fraction]) -> int:
+        nonlocal next_id
+        if bond_policy == "terminal" and key[2] == 35 and key[0] < 900:
+            if key not in detached:
+                detached[key]=next_id
+                next_id+=1
+            return detached[key]
+        return node(key)
 
     for z in pz:
         for y in py:
@@ -87,30 +109,35 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
     for z in bz:
         for y in by:
             for x in bx:
-                bar_nodes.add(node((x,y,z)))
+                bar_nodes.add(bar_node((x,y,z)))
 
-    def cells(xs,ys,zs):
+    def cells(xs,ys,zs,node_at):
         for iz in range(len(zs)-1):
             for iy in range(len(ys)-1):
                 for ix in range(len(xs)-1):
                     x0,x1=xs[ix:ix+2]
                     y0,y1=ys[iy:iy+2]
                     z0,z1=zs[iz:iz+2]
-                    yield tuple(node(p) for p in (
+                    yield tuple(node_at(p) for p in (
                         (x0,y0,z0),(x1,y0,z0),(x1,y1,z0),(x0,y1,z0),
                         (x0,y0,z1),(x1,y0,z1),(x1,y1,z1),(x0,y1,z1)))
 
-    plate_cells=tuple(cells(px,py,pz))
-    bar_cells=tuple(cells(bx,by,bz))
-    if len(set(coordinates.values()))!=len(coordinates):
+    plate_cells=tuple(cells(px,py,pz,node))
+    bar_cells=tuple(cells(bx,by,bz,bar_node))
+    if len(set((*coordinates.values(), *detached.values())))!=next_id-1:
         raise AssertionError("duplicate solid node identity")
-    interface={(x,y,Fraction(35)) for x in bx for y in by}
+    interface={(x,y,Fraction(35)) for x in bx for y in by
+               if bond_policy == "full" or x >= 900}
     if not all(coordinates[p] in plate_nodes & bar_nodes for p in interface):
         raise AssertionError("plate/bar interface is not conforming")
+    if bond_policy == "terminal" and (
+            not detached or
+            any(coordinates[p] in bar_nodes for p in detached)):
+        raise AssertionError("unbonded plate/stiffener nodes were merged")
     plate_boundary={coordinates[(x,y,z)] for z in pz for y in py for x in px
                     if (x == px[0] if boundary_policy != "perimeter" else
                         x in (px[0],px[-1]) or y in (py[0],py[-1]))}
-    beam_root={coordinates[(Fraction(0),y,z)] for y in by for z in bz}
+    beam_root={bar_node((Fraction(0),y,z)) for y in by for z in bz}
     boundary=(plate_boundary | beam_root if boundary_policy == "left_root"
               else plate_boundary)
     if boundary & (bar_nodes-plate_nodes) and boundary_policy != "left_root":
@@ -118,7 +145,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
     if boundary_policy == "left_root" and boundary & (bar_nodes-plate_nodes) != (
             beam_root-plate_nodes):
         raise AssertionError("unexpected stiffener support")
-    station_nodes={str(s): sorted(coordinates[(Fraction(s),y,z)]
+    station_nodes={str(s): sorted(bar_node((Fraction(s),y,z))
                                   for y in by for z in bz)
                    for s in STATIONS_MM}
     surface_x=((250,500,750) if factor==1 else
@@ -130,7 +157,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
     lines=["** BOUNDED C3D8 PLATE AND CONFORMING SOLID STIFFENER; DEVELOPMENT ONLY",
            f"** factor={factor}; shear={shear}; gamma={_number(GAMMA)}",
            "*NODE,NSET=AllNodes"]
-    inverse={index:key for key,index in coordinates.items()}
+    inverse={index:key for key,index in
+             ((*coordinates.items(), *detached.items()))}
     for index in range(1,len(inverse)+1):
         xyz=inverse[index]
         lines.append(f"{index},"+",".join(_number(float(v)/1000) for v in xyz))
@@ -158,13 +186,13 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
             lines.append(f"{index},{dof},{dof},{_number(value)}")
     applied={}
     if shear in ("tip_mx","tip_fz"):
-        tip=tuple(coordinates[(Fraction(1000),y,z)] for y in by for z in bz)
+        tip=tuple(bar_node((Fraction(1000),y,z)) for y in by for z in bz)
         # Trapezoidal face integration of a distributed force/couple; each
         # discrete load has the exact requested resultant about the bar axis.
         weights={index:(.5 if j in (0,len(by)-1) else 1.)*
                         (.5 if k in (0,len(bz)-1) else 1.)
                  for j,y in enumerate(by) for k,z in enumerate(bz)
-                 for index in (coordinates[(Fraction(1000),y,z)],)}
+                 for index in (bar_node((Fraction(1000),y,z)),)}
         if shear=="tip_fz":
             normalizer=sum(weights.values())
             applied={index:(0.,0.,1000.*weight/normalizer)
@@ -187,8 +215,13 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
                   f"*NODE PRINT,NSET={support_set}", "RF",
                   "*END STEP"))
     meta={"factor":factor,"shear":shear,"gamma":GAMMA,
-          "node_count":len(coordinates),"plate_elements":len(plate_cells),
+          "node_count":next_id-1,"plate_elements":len(plate_cells),
           "bar_elements":len(bar_cells),"shared_interface_nodes":len(interface),
+          "detached_interface_nodes":len(detached),
+          "shared_interface_node_ids":sorted(coordinates[p] for p in interface),
+          "detached_stiffener_node_ids":sorted(detached.values()),
+          "bond_policy":bond_policy,"bond_interval_m":(
+              [0.,1.] if bond_policy=="full" else [.9,1.]),
           "boundary_nodes":len(boundary),"boundary_node_ids":sorted(boundary),
           "plate_boundary_node_ids":sorted(plate_boundary),
           "beam_root_node_ids":(sorted(beam_root) if boundary_policy == "left_root"
@@ -203,7 +236,10 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
           "applied_nodal_forces_N":{str(index):list(force)
                                     for index,force in applied.items()},
           "surface_nodes":{f"{x},{y}":index for (x,y),index in surface.items()},
-          "model":"3D conforming C3D8 plate/bar; plate [-.5,1.5]x[-.5,.5]x[-.035,.035] m; bar [0,1]x[-.05,.05]x[.035,.135] m; E=210 GPa, nu=.3",
+          "model":("3D C3D8 plate/bar with shared nodes " +
+                   ("along the full interface" if bond_policy=="full" else
+                    "only on the last 0.1 m terminal interface") +
+                   "; plate [-.5,1.5]x[-.5,.5]x[-.035,.035] m; bar [0,1]x[-.05,.05]x[.035,.135] m; E=210 GPa, nu=.3"),
           "boundary_policy":boundary_policy,
           "boundary":("all three translations on plate left edge and stiffener root face fixed"
                       if boundary_policy == "left_root" else
@@ -286,40 +322,53 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
         residual=(response-design@fitted).reshape(-1,3)
         top=np.flatnonzero(np.abs(xyz[:,2]-.035)<1e-12)
         if len(top)!=2*meta["factor"]+1:
-            raise ValueError("incomplete shared solid-bond face trace")
+            raise ValueError("incomplete stiffener bottom-face trace")
         top=top[np.argsort(xyz[top,1])]
         if (abs(xyz[top[0],1]+.05)>1e-12 or
                 abs(xyz[top[-1],1]-.05)>1e-12):
-            raise ValueError("shared solid-bond face extent changed")
+            raise ValueError("stiffener bottom-face extent changed")
         weights=np.ones(len(top))
         weights[[0,-1]]=.5
         top_mean=np.average(response.reshape(-1,3)[top],axis=0,weights=weights)
         fitted_bottom=fitted[:3]+np.cross(fitted[3:],(0.,0.,-.05))
         top_slope_z_y=float((displacement[indices[top[-1]]][2]-
                              displacement[indices[top[0]]][2])/.1)
-        stations[station]={"translation_m":fitted[:3].tolist(),
-                           "section_rotation_rad":fitted[3:].tolist(),
-                           "max_warping_residual_m":float(np.linalg.norm(residual,axis=1).max()),
-                           "shared_face_mean_translation_m":top_mean.tolist(),
-                           "fitted_section_bottom_translation_m":fitted_bottom.tolist(),
-                           "shared_face_minus_fitted_bottom_m":(
-                               top_mean-fitted_bottom).tolist(),
-                           "shared_face_slope_z_y_rad":top_slope_z_y,
-                           "shared_face_slope_minus_section_rx_rad":(
-                               top_slope_z_y-float(fitted[3])),
-                           "node_count":len(indices)}
-    result={"centerline_tangent_yaw_rad":float(tangent),
-            "surface_square_patch_yaw_rad":patch_yaw,
-            "surface_square_patch_half_width_m":.05,
-            "station_motion":stations}
-    surface_slope_z_x=float((value(right,0)[2]-value(left,0)[2])/
-                            ((right-left)/1000))
-    beam_ry=float(stations["500"]["section_rotation_rad"][1])
-    result["midspan_transverse_kinematics"]={
-        "plate_top_slope_z_x_rad":surface_slope_z_x,
-        "beam_section_ry_rad":beam_ry,
-        "slope_plus_section_ry_rad":surface_slope_z_x+beam_ry,
-        "meaning":"kinematic slope/section comparison; not a measured interface gap or shell director shear"}
+        shared=(meta.get("bond_policy", "full")=="full" or
+                float(station)>=900.)
+        entry={"translation_m":fitted[:3].tolist(),
+               "section_rotation_rad":fitted[3:].tolist(),
+               "max_warping_residual_m":float(np.linalg.norm(residual,axis=1).max()),
+               "fitted_section_bottom_translation_m":fitted_bottom.tolist(),
+               "node_count":len(indices),"interface_shared":shared}
+        if shared:
+            entry.update({"shared_face_mean_translation_m":top_mean.tolist(),
+                          "shared_face_minus_fitted_bottom_m":(
+                              top_mean-fitted_bottom).tolist(),
+                          "shared_face_slope_z_y_rad":top_slope_z_y,
+                          "shared_face_slope_minus_section_rx_rad":(
+                              top_slope_z_y-float(fitted[3]))})
+        else:
+            entry.update({"detached_bottom_mean_translation_m":top_mean.tolist(),
+                          "detached_bottom_slope_z_y_rad":top_slope_z_y})
+        stations[station]=entry
+    if meta.get("bond_policy", "full")=="full":
+        result={"centerline_tangent_yaw_rad":float(tangent),
+                "surface_square_patch_yaw_rad":patch_yaw,
+                "surface_square_patch_half_width_m":.05,
+                "station_motion":stations}
+        surface_slope_z_x=float((value(right,0)[2]-value(left,0)[2])/
+                                ((right-left)/1000))
+        beam_ry=float(stations["500"]["section_rotation_rad"][1])
+        result["midspan_transverse_kinematics"]={
+            "plate_top_slope_z_x_rad":surface_slope_z_x,
+            "beam_section_ry_rad":beam_ry,
+            "slope_plus_section_ry_rad":surface_slope_z_x+beam_ry,
+            "meaning":"kinematic slope/section comparison; not a measured interface gap or shell director shear"}
+    else:
+        result={"plate_midspan_centerline_tangent_yaw_rad":float(tangent),
+                "plate_midspan_square_patch_yaw_rad":patch_yaw,
+                "station_motion":stations,
+                "meaning":"midspan plate and bar are coincident but intentionally unbonded"}
     applied={int(index):np.array(force) for index,force in
              meta["applied_nodal_forces_N"].items()}
     if applied:
@@ -348,9 +397,13 @@ def main() -> int:
     parser.add_argument("--suite",choices=("shear","loads"),default="shear")
     parser.add_argument("--factor",type=int,choices=(1,2,4),nargs="+",default=(1,2))
     parser.add_argument("--boundary",choices=("perimeter","left","left_root"),default="perimeter")
+    parser.add_argument("--bond",choices=("full","terminal"),default="full")
     args=parser.parse_args()
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
+    if args.bond == "terminal" and (args.boundary != "left_root" or
+                                    args.suite != "loads"):
+        parser.error("terminal bond requires left/root tip-load suite")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -363,17 +416,24 @@ def main() -> int:
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
               "question":("finite physical bond yaw under two affine shears"
                           if args.suite=="shear" else
+                          "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
+                          if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
+              "decision":("If the terminal solid work responses settle under refinement, compare them separately with the rigid and distributing native footprint idealizations; if they do not settle, retain a feasibility reference only. A mismatch prompts connection/section/warping diagnosis, never an automatic line-space selection."
+                          if args.bond=="terminal" else
+                          "Retain as a bounded physical-bond diagnostic under its declared support and connection."),
               "source_head":head,"source_sha256":digest(Path(__file__)),
               "executable":str(EXE),"executable_sha256":EXE_SHA,
               "cases":[(factor,shear) for factor in args.factor
                    for shear in (("uy_x","ux_y") if args.suite=="shear"
                                      else ("tip_mx","tip_fz"))],
               "boundary_policy":args.boundary,
+              "bond_policy":args.bond,
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
               "limits_of_claim":["3D solid idealization, not E4 or B3",
-                                 "two development mesh levels, not convergence qualification",
-                                 f"prescribed plate {args.boundary} and free bar ends",
+                                 f"{len(args.factor)} development mesh levels, not convergence qualification",
+                                 f"prescribed plate {args.boundary} and bar root as declared",
+                                 "terminal mode omits contact outside the shared patch",
                                  "connection and section still differ from native weak-line B3/E4"]}
     (root/"manifest.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
     records=[]
@@ -381,7 +441,8 @@ def main() -> int:
         name=f"solid-{factor}-{shear}"
         folder=root/name
         folder.mkdir()
-        deck,meta=build(factor,shear,boundary_policy=args.boundary)
+        deck,meta=build(factor,shear,boundary_policy=args.boundary,
+                        bond_policy=args.bond)
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()
