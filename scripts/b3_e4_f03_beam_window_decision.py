@@ -139,8 +139,8 @@ def loaded(kkt, shell, beam, constraint, load_axis):
     free = kkt.free_primal
     n = len(free)
     rows = constraint[:, free]
-    system = np.block(((kkt.primal_tangent[np.ix_(free, free)], rows.T),
-                       (rows, np.zeros((len(rows), len(rows))))))
+    system = np.block([[kkt.primal_tangent[np.ix_(free, free)], rows.T],
+                       [rows, np.zeros((len(rows), len(rows)))]])
     scale = kkt.coordinate_scale
     scaled = (scale[:, None] * system) * scale[None, :] / kkt.energy_scale
     load = np.zeros(shell_size + beam.context.count)
