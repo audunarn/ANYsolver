@@ -65,6 +65,38 @@ def test_terminal_bond_has_only_declared_shared_patch(factor, load, expected):
         "unbonded_midspan_normal_separation_m"]["bar_minus_plate_z_m"][1] == pytest.approx(-1e-6)
 
 
+@pytest.mark.parametrize("factor",(1,2))
+def test_half_thickness_quadratic_terminal_torque_preserves_bond_and_wrench(factor):
+    deck,meta=SCREEN.build(
+        factor,"tip_mx",boundary_policy="left_root",bond_policy="terminal",
+        element_family="C3D20R",tip_mx_gap_audit=True,
+        bar_clearance_um=2,plate_thickness_mm=35)
+    assert meta["plate_thickness_m"]==.035
+    assert meta["bar_tip_axis_z_m"]==.0675
+    assert "x[-.0175,.0175]" in meta["model"]
+    assert deck.count("*ELEMENT,TYPE=C3D20R")==2
+    assert meta["shared_interface_nodes"]>0
+    assert meta["detached_interface_nodes"]>0
+    assert len(meta["unbonded_face_pairs"])>0
+    assert min(meta["unbonded_initial_gaps_m"])>0
+    assert max(meta["unbonded_initial_gaps_m"])==pytest.approx(2e-6)
+    tip_z=[meta["probe_coordinates_m"][str(i)][2]
+           for i in meta["bar_station_nodes"]["1000"]]
+    root_z=[meta["boundary_coordinates_m"][str(i)][2]
+            for i in meta["beam_root_node_ids"]]
+    assert np.mean(tip_z)==pytest.approx(.0675)
+    assert np.mean(root_z)==pytest.approx(.067502)
+    applied={int(i):np.asarray(force) for i,force in
+             meta["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(applied,meta["probe_coordinates_m"])==pytest.approx(
+        [0.,0.,0.,100.,0.,0.],abs=1e-9)
+
+
+def test_thickness_screen_rejects_undeclared_geometry():
+    with pytest.raises(ValueError,match="35/70 mm"):
+        SCREEN.build(1,"tip_mx",plate_thickness_mm=50)
+
+
 @pytest.mark.parametrize("factor", (1, 2, 4))
 def test_reverse_fz_audit_preserves_geometry_and_reverses_exact_tip_wrench(factor):
     forward, control = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",

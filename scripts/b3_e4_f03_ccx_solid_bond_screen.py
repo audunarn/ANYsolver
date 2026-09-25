@@ -43,7 +43,7 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _cuts(values: tuple[int, ...], factor: int) -> tuple[Fraction, ...]:
+def _cuts(values: tuple[int | Fraction, ...], factor: int) -> tuple[Fraction, ...]:
     if type(factor) is not int or factor not in (1, 2, 4):
         raise ValueError("bounded solid mesh factor must be 1, 2, or 4")
     return tuple(Fraction(a)+(Fraction(b-a)*k)/factor
@@ -65,11 +65,18 @@ def _set_lines(indices: set[int] | list[int]) -> list[str]:
 def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           bond_policy: str = "full", contact_policy: str = "none",
           reverse_tip_fz: bool = False, element_family: str = "C3D8",
-          tip_mx_gap_audit: bool = False, bar_clearance_um: int = 0
+          tip_mx_gap_audit: bool = False, bar_clearance_um: int = 0,
+          plate_thickness_mm: int = 70
           ) -> tuple[str, dict]:
     """Return an exact-coordinate brick deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
         raise ValueError("undeclared solid-bond loading")
+    if type(plate_thickness_mm) is not int or plate_thickness_mm not in (35,70):
+        raise ValueError("bounded 35/70 mm plate thickness required")
+    plate_top=Fraction(plate_thickness_mm,2)
+    plate_z=(-plate_top,Fraction(0),plate_top)
+    bar_z=(plate_top,plate_top+50,plate_top+100)
+    bar_axis_z_m=float(plate_top+50)/1000
     if boundary_policy not in ("perimeter", "left", "left_root") or (
             boundary_policy != "perimeter" and shear not in ("tip_mx", "tip_fz")):
         raise ValueError("unsupported plate boundary/loading combination")
@@ -103,9 +110,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     bar_x = (BAR_X_MM if bond_policy == "full" else
              tuple(sorted(set((*BAR_X_MM, 900)))))
     px,py,pz=(_cuts(v,factor) for v in
-              (plate_x,PLATE_Y_MM,PLATE_Z_MM))
+              (plate_x,PLATE_Y_MM,plate_z))
     bx,by,bz=(_cuts(v,factor) for v in
-              (bar_x,BAR_Y_MM,BAR_Z_MM))
+              (bar_x,BAR_Y_MM,bar_z))
     coordinates: dict[tuple[Fraction,Fraction,Fraction],int]={}
     detached: dict[tuple[Fraction,Fraction,Fraction],int]={}
     plate_nodes=set()
@@ -121,7 +128,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
 
     def bar_node(key: tuple[Fraction,Fraction,Fraction]) -> int:
         nonlocal next_id
-        if bond_policy in ("terminal", "detached") and key[2] == 35 and (
+        if bond_policy in ("terminal", "detached") and key[2] == plate_top and (
                 bond_policy == "detached" or key[0] < 900):
             if key not in detached:
                 detached[key]=next_id
@@ -186,7 +193,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             if x < 900:
                 taper=min(Fraction(1), (900-x)/150)
                 inverse[index]=(x,y,z+clearance_mm*taper)
-    interface={(x,y,Fraction(35)) for x in bx for y in by
+    interface={(x,y,plate_top) for x in bx for y in by
                if bond_policy == "full" or
                (bond_policy == "terminal" and x >= 900)}
     if not all(coordinates[p] in plate_nodes & bar_nodes for p in interface):
@@ -217,7 +224,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     surface_x=((250,500,750) if factor==1 else
                (375,500,625) if factor==2 else
                (437.5,500,562.5))
-    surface={(x,y):coordinates[(Fraction(x),Fraction(y),Fraction(35))]
+    surface={(x,y):coordinates[(Fraction(x),Fraction(y),plate_top)]
              for x in surface_x for y in (-50,0,50)}
     probe=set().union(*station_nodes.values(),surface.values())
     lines=[("** BOUNDED C3D8 PLATE AND CONFORMING SOLID STIFFENER; DEVELOPMENT ONLY"
@@ -230,7 +237,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     if contact_policy == "mortar_hard":
         def unbonded_face(cell: tuple[int, ...], face: tuple[int, ...]) -> bool:
             xyz=[inverse[cell[index]] for index in face]
-            return (all(z == 35 for _,_,z in xyz) and
+            return (all(z == plate_top for _,_,z in xyz) and
                     min(x for x,_,_ in xyz) >= 0 and
                     max(x for x,_,_ in xyz) <= 900 and
                     min(y for _,y,_ in xyz) >= -50 and
@@ -274,11 +281,11 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                       "BarBottomUnbonded,PlateTopUnbonded"))
     if element_family == "C3D20R":
         plate_surface={reference_inverse[i]:i for i in plate_nodes
-                       if reference_inverse[i][2] == 35 and
+                       if reference_inverse[i][2] == plate_top and
                        0 <= reference_inverse[i][0] < 900 and
                        -50 <= reference_inverse[i][1] <= 50}
         bar_surface={reference_inverse[i]:i for i in bar_nodes
-                     if reference_inverse[i][2] == 35 and
+                     if reference_inverse[i][2] == plate_top and
                      0 <= reference_inverse[i][0] < 900 and
                      -50 <= reference_inverse[i][1] <= 50}
         if set(plate_surface) != set(bar_surface):
@@ -292,7 +299,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             for cell in cells:
                 face=tuple(cell[i] for i in face_indices)
                 points=[reference_inverse[i] for i in face]
-                if (all(z==35 for _,_,z in points) and
+                if (all(z==plate_top for _,_,z in points) and
                     min(x for x,_,_ in points)>=0 and
                     max(x for x,_,_ in points)<=900 and
                     min(y for _,y,_ in points)>=-50 and
@@ -350,9 +357,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                      for index,weight in weights.items()}
         else:
             polar=sum(weight*(float(inverse[index][1]/1000)**2+
-                              (float(inverse[index][2]/1000)-.085)**2)
+                              (float(inverse[index][2]/1000)-bar_axis_z_m)**2)
                       for index,weight in weights.items())
-            applied={index:(0.,-100.*weight*(float(inverse[index][2]/1000)-.085)/polar,
+            applied={index:(0.,-100.*weight*(float(inverse[index][2]/1000)-bar_axis_z_m)/polar,
                             100.*weight*float(inverse[index][1]/1000)/polar)
                      for index,weight in weights.items()}
         if set(applied)!=set(tip):
@@ -369,10 +376,12 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                   "*END STEP"))
     if reverse_tip_fz or tip_mx_gap_audit:
         lines[-1:-1] = ("*NODE PRINT,NSET=UnbondedInterface", "U")
-    shared_ids=(sorted(i for i in plate_nodes & bar_nodes if inverse[i][2] == 35)
+    shared_ids=(sorted(i for i in plate_nodes & bar_nodes if inverse[i][2] == plate_top)
                 if element_family == "C3D20R" else
                 sorted(coordinates[p] for p in interface))
     meta={"factor":factor,"shear":shear,"gamma":GAMMA,
+          "plate_thickness_m":plate_thickness_mm/1000,
+          "bar_tip_axis_z_m":bar_axis_z_m,
           "element_family":element_family,
           "node_count":next_id-1,"plate_elements":len(plate_cells),
           "bar_elements":len(bar_cells),"shared_interface_nodes":len(shared_ids),
@@ -421,7 +430,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                    ("along the full interface" if bond_policy=="full" else
                     "only on the last 0.1 m terminal interface" if
                     bond_policy=="terminal" else "nowhere (free-bar control)") +
-                   "; plate [-.5,1.5]x[-.5,.5]x[-.035,.035] m; bar [0,1]x[-.05,.05]x[.035,.135] m; E=210 GPa, nu=.3"),
+                   ("; plate [-.5,1.5]x[-.5,.5]x[-.035,.035] m; bar [0,1]x[-.05,.05]x[.035,.135] m; E=210 GPa, nu=.3"
+                    if plate_thickness_mm==70 else
+                    "; plate [-.5,1.5]x[-.5,.5]x[-.0175,.0175] m; bar [0,1]x[-.05,.05]x[.0175,.1175] m; E=210 GPa, nu=.3")),
           "boundary_policy":boundary_policy,
           "boundary":("all three translations on plate left edge and stiffener root face fixed"
                       if boundary_policy == "left_root" else
@@ -664,6 +675,7 @@ def main() -> int:
     parser.add_argument("--reverse-fz-open-audit",action="store_true")
     parser.add_argument("--tip-mx-gap-audit",action="store_true")
     parser.add_argument("--bar-clearance-um",type=int,choices=(0,1,2),default=0)
+    parser.add_argument("--half-plate-thickness",action="store_true")
     args=parser.parse_args()
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
@@ -690,6 +702,11 @@ def main() -> int:
     if args.bar_clearance_um and (not args.tip_mx_gap_audit or
                                   args.element_family!="C3D20R"):
         parser.error("declared bar clearance requires quadratic terminal torque audit")
+    if args.half_plate_thickness and (
+            args.element_family!="C3D20R" or not args.tip_mx_gap_audit or
+            args.bar_clearance_um!=2 or args.bond!="terminal" or
+            args.boundary!="left_root" or any(f not in (2,4) for f in args.factor)):
+        parser.error("half-thickness diagnostic requires factor-2/4 quadratic terminal torque with 2 um clearance")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -700,7 +717,9 @@ def main() -> int:
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":("Does a declared micrometre clearance keep the unbonded terminal-bar faces open under torque while leaving work insensitive to clearance and mesh?"
+              "question":("At the plate-only characterized 35 mm thickness, does a quadratic terminal solid bond retain open unbonded faces and a resolved torque partition/tip work?"
+                          if args.half_plate_thickness else
+                          "Does a declared micrometre clearance keep the unbonded terminal-bar faces open under torque while leaving work insensitive to clearance and mesh?"
                           if args.bar_clearance_um else
                           "Does terminal torque on the free, coincident no-contact faces produce a negative physical normal gap, invalidating this torque comparator?"
                           if args.tip_mx_gap_audit else
@@ -719,7 +738,9 @@ def main() -> int:
                           "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
                           if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
-              "decision":("If paired-node gaps remain positive and torque work is clearance- and mesh-insensitive, retain only a declared-gap external reference candidate pending face-interior checks; otherwise require contact. No native footprint is selected."
+              "decision":("If face gaps and torque work remain admissible and settle, compare the section-axis torque partition and local tip compliance with the same-thickness graded native model. A persistent gap points to connection transfer rather than the already smaller plate-only discrepancy; overlap or drift blocks accuracy scoring. No footprint cutoff is inferred."
+                          if args.half_plate_thickness else
+                          "If paired-node gaps remain positive and torque work is clearance- and mesh-insensitive, retain only a declared-gap external reference candidate pending face-interior checks; otherwise require contact. No native footprint is selected."
                           if args.bar_clearance_um else
                           "If any paired node overlaps under torque, reject no-contact torque as a physical comparator; if all remain open, assess face interiors and deformation before using it. Neither outcome selects a footprint."
                           if args.tip_mx_gap_audit else
@@ -751,6 +772,7 @@ def main() -> int:
               "reverse_fz_open_audit":args.reverse_fz_open_audit,
               "tip_mx_gap_audit":args.tip_mx_gap_audit,
               "bar_clearance_um":args.bar_clearance_um,
+              "plate_thickness_m":.035 if args.half_plate_thickness else .07,
               "contact_reference":"https://www.dhondt.de/ccx_2.22.pdf, sections on MORTAR contact and hard surface behavior (external-reference diagnostic only)",
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
               "limits_of_claim":["3D solid idealization, not E4 or B3",
@@ -779,7 +801,8 @@ def main() -> int:
                         reverse_tip_fz=args.reverse_fz_open_audit,
                         element_family=args.element_family,
                         tip_mx_gap_audit=args.tip_mx_gap_audit and shear=="tip_mx",
-                        bar_clearance_um=args.bar_clearance_um)
+                        bar_clearance_um=args.bar_clearance_um,
+                        plate_thickness_mm=35 if args.half_plate_thickness else 70)
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()

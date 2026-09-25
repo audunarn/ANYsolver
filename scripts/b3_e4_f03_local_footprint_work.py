@@ -844,10 +844,14 @@ def run_terminal_interface(output_dir: Path) -> None:
                       flush=True)
 
 
-def graded_terminal_coupling(patch_cells: int, beam) -> dict:
+def graded_terminal_coupling(patch_cells: int, beam, *,
+                             plate_thickness: float = .07) -> dict:
     """Linearized native B3/E4 Q4 terminal KKT on a resolved local grid."""
+    if plate_thickness not in (.07,.035):
+        raise ValueError("bounded native plate thickness required")
+    beam_axis_z=plate_thickness/2+.05
     xs,ys=local_grid(patch_cells)
-    shell_k,physical=raw_e4_tangent(xs,ys)
+    shell_k,physical=raw_e4_tangent(xs,ys,thickness=plate_thickness)
     shell_nodes=np.array([(x,y,0.) for y in ys for x in xs])
     shell_size=6*len(shell_nodes)
     total=shell_size+beam.context.count
@@ -858,7 +862,7 @@ def graded_terminal_coupling(patch_cells: int, beam) -> dict:
     center=high+low
     shell_center=trace[0,0::6]@shell_nodes
     if (np.linalg.norm(shell_center-(.95,0.,0.))>1e-12 or
-            np.linalg.norm(center-(1.,0.,.085))>1e-12):
+            np.linalg.norm(center-(1.,0.,beam_axis_z))>1e-12):
         raise ArithmeticError("graded terminal reference geometry changed")
     joint=RigidPoseJoint(np.array((shell_center,center)),
                          np.array((np.eye(3),frame)))
@@ -886,7 +890,7 @@ def graded_terminal_coupling(patch_cells: int, beam) -> dict:
                    if i not in fixed_shell and i not in fixed_beam])
     primal=linalg.block_diag(shell_k,beam.tangent.toarray())
     force_scale=1e6
-    displacement_scale=force_scale/(210e9*.07)
+    displacement_scale=force_scale/(210e9*plate_thickness)
     nodal_scale=np.tile(np.full(6,displacement_scale),
                         len(shell_nodes)+beam.context.nodal_count//6)
     resultants=np.r_[np.tile(SECTION_DIAGONAL[:3]*displacement_scale,2),
@@ -896,7 +900,7 @@ def graded_terminal_coupling(patch_cells: int, beam) -> dict:
     primal_scale=np.r_[nodal_scale,retained_scale]
     if len(primal_scale)!=total:
         raise ArithmeticError("graded retained scale layout changed")
-    beam_nodes=np.array([(i/beam.n_half_cells,0.,.085)
+    beam_nodes=np.array([(i/beam.n_half_cells,0.,beam_axis_z)
                          for i in range(beam.n_half_cells+1)])
     def wrench(nodal,locations):
         return np.r_[nodal[:,:3].sum(axis=0),
@@ -979,12 +983,17 @@ def graded_terminal_coupling(patch_cells: int, beam) -> dict:
             }
         records[family]={"constraint_rank":rank,"cases":cases}
     return {"patch_cells_per_side":patch_cells,
+            "plate_thickness_m":plate_thickness,
             "shell_nodes":len(shell_nodes),"e4_elements":(len(xs)-1)*(len(ys)-1),
             "beam_half_cells":beam.n_half_cells,"results":records}
 
 
 def run_graded_terminal(output_dir: Path,
-                        patch_levels: tuple[int,...] = (4,8)) -> None:
+                        patch_levels: tuple[int,...] = (4,8), *,
+                        plate_thickness: float = .07) -> None:
+    if plate_thickness not in (.07,.035):
+        raise ValueError("bounded native plate thickness required")
+    beam_axis_z=plate_thickness/2+.05
     source=subprocess.check_output(["git","rev-parse","HEAD"],
                                    text=True).strip()
     if subprocess.check_output(["git","status","--porcelain"],
@@ -996,7 +1005,8 @@ def run_graded_terminal(output_dir: Path,
         "source_sha":source,
         "question":"Does resolving the native coupled terminal patch change torque/shear work and interface-force distribution for rigid and distributing laws?",
         "decision":"Settling work and transfer fields supports a matched 3D bond comparison; material drift requires revising patch trace or resolution policy first. Neither selects a production law or true-line multiplier.",
-        "geometry":"E4 Q4 plate [-.5,1.5]x[-.5,.5] m, t=.07 m; B3 centroid z=.085 m; x=[.9,1], y=[-.05,.05] m patch",
+        "geometry":f"E4 Q4 plate [-.5,1.5]x[-.5,.5] m, t={plate_thickness:g} m; B3 centroid z={beam_axis_z:g} m; x=[.9,1], y=[-.05,.05] m patch",
+        "plate_thickness_m":plate_thickness,
         "grids":"structured local Q4 with four/eight cells per patch direction; exact area-mean/director/polar-yaw trace and corner rows",
         "executed_patch_levels":list(patch_levels),
         "beam":"native generalized B3, eight half-cells, square-section Saint-Venant torsion; root fixed",
@@ -1010,12 +1020,13 @@ def run_graded_terminal(output_dir: Path,
     with threadpool_limits(limits=1):
         manifest["effective_threadpools"]=threadpool_info()
         (output_dir/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
-        beam=build(8,z_offset=.085,
+        beam=build(8,z_offset=beam_axis_z,
                    torsion_constant=square_torsion_constant())
         records=[]
         for patch_cells in patch_levels:
             started=time.perf_counter()
-            result=graded_terminal_coupling(patch_cells,beam)
+            result=graded_terminal_coupling(
+                patch_cells,beam,plate_thickness=plate_thickness)
             records.append({"patch_cells_per_side":patch_cells,
                             "seconds":time.perf_counter()-started,
                             "response":result})
@@ -1042,12 +1053,16 @@ if __name__ == "__main__":
     parser.add_argument("--graded-terminal", action="store_true")
     parser.add_argument("--graded-patch-cells",type=int,choices=(4,8),
                         nargs="+",default=(4,8))
+    parser.add_argument("--half-plate-thickness",action="store_true")
     args = parser.parse_args()
     if sum((args.terminal_beam_resolution,args.terminal_shell_resolution,
             args.terminal_interface,args.graded_terminal))>1:
         parser.error("select one terminal resolution screen")
+    if args.half_plate_thickness and not args.graded_terminal:
+        parser.error("half plate thickness requires the graded terminal screen")
     if args.graded_terminal:
-        run_graded_terminal(args.output_dir,tuple(args.graded_patch_cells))
+        run_graded_terminal(args.output_dir,tuple(args.graded_patch_cells),
+                            plate_thickness=.035 if args.half_plate_thickness else .07)
     elif args.terminal_interface:
         run_terminal_interface(args.output_dir)
     elif args.terminal_beam_resolution:
