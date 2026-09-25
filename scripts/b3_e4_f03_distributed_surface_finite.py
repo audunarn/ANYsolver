@@ -164,13 +164,17 @@ class FiniteSurfaceMomentPatch:
                 self.beam.context.advance(beam_state, np.asarray(beam_step)))
 
 
-def finite_chart_screen() -> dict:
+def finite_chart_screen(reference_profile: str = "straight") -> dict:
     """One deterministic, bounded nonzero-gap and nonzero-multiplier proof."""
     from scripts._b3_e4_f03_native_fixture import build
     from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
-    beam = build(4, z_offset=.0675,
-                 torsion_constant=square_torsion_constant())
+    if reference_profile not in ("straight", "c1_tangent_2um"):
+        raise ValueError("bounded straight or C1 chart reference required")
+    beam = build(4 if reference_profile == "straight" else 12,
+                 z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile=reference_profile)
     patch = FiniteSurfaceMomentPatch(
         np.linspace(-.5, 1.5, 5), np.linspace(-.5, .5, 3), beam,
         thickness=.035)
@@ -265,6 +269,7 @@ def finite_chart_screen() -> dict:
     rigid_virtual_work = float(multipliers @ patch.evaluate(
         coordinates, frames, state, rigid_direction, rigid_direction)[:, 1])
     return {
+        "reference_profile": reference_profile,
         "reference_gap_max_m_rad": float(np.max(np.abs(reference))),
         "reference_jacobian_direction_error": reference_error,
         "nonzero_gap_norm_m_rad": float(np.linalg.norm(derivatives[:, 0])),

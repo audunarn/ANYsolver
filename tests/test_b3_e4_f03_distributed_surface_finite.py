@@ -88,3 +88,16 @@ def test_c1_surface_moment_chart_matches_linearized_native_trace():
     assert np.max(np.abs(actual[:, 0])) < 1e-12
     expected = trace@np.r_[shell_direction.ravel(), beam_direction]
     assert np.max(np.abs(actual[:, 1]-expected)) < 1e-12
+
+
+def test_c1_surface_moment_finite_chart_preserves_work_and_objectivity():
+    result = finite_chart_screen("c1_tangent_2um")
+    assert result["reference_profile"] == "c1_tangent_2um"
+    assert result["reference_gap_max_m_rad"] < 1e-12
+    assert result["reference_jacobian_direction_error"] < 1e-12
+    assert abs(result["nonzero_multiplier_mixed_work_j"]) > 1e-3
+    assert result["first_direction_error_j"] < 1e-7
+    assert result["mixed_direction_error_j"] < 1e-6
+    assert result["finite_common_rigid_gap_error"] < 1e-12
+    assert abs(result["common_rigid_virtual_work_j"]) < 1e-9
+    assert result["quadrature_points"] == 36

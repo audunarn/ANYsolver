@@ -123,7 +123,11 @@ physical shell strain work (`0.001955/0.001952 J`); numerical-completion
 work is `2.25e−7/1.28e−7 J`, respectively. Total wrench/work errors are
 below `4.1e−12` in the recorded numerical measure. The focused C1 test
 now checks external torque work, support-moment balance and physical-work
-dominance. These results support retaining this **finite-width distributing
+dominance. The actual C1 finite chart also passes nonzero-gap,
+nonzero-multiplier first and mixed finite differences (`8.1e−10` and
+`1.7e−9 J` errors), a common finite rigid motion (`1.9e−16` gap error)
+and reference-row parity (`4e−17`); six focused checks pass. These results
+support retaining this **finite-width distributing
 footprint** for review; the saved solid torque field remains contact-
 inadmissible, so no torque accuracy claim follows. This law's six
 integrated moments do not enforce a pointwise solid bond or constitute the
