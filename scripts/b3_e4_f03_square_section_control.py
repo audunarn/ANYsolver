@@ -137,7 +137,8 @@ def run_matched_full_bond(output_dir: Path) -> None:
                           flush=True)
         data = json.dumps(rows, indent=2, allow_nan=False) + "\n"
         (output_dir / "results.json").write_text(data)
-        manifest["results_sha256"] = hashlib.sha256(data.encode()).hexdigest()
+        manifest["results_sha256"] = hashlib.sha256(
+            (output_dir / "results.json").read_bytes()).hexdigest()
         (output_dir / "manifest.json").write_text(
             json.dumps(manifest, indent=2, allow_nan=False) + "\n")
 
