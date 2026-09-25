@@ -1,0 +1,343 @@
+"""Bounded general-nodal S3 patch mortar development static owner."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import numpy as np
+from scipy import sparse
+
+from .core import ContactDefinition, ContactSolverSettings, ContactValidationReport
+from .s3_patch_mortar_energy import MovingS3PatchPrimalMortarPenalty, S3PatchFace
+from .s3_pair_static import _normal, _normal_controls, _swept_gap_lower, _vertex_gap_lower
+from .s3_skin_work import S3SkinWorkAdapter
+
+
+PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
+
+
+def _selected(definition: ContactDefinition):
+    if len(definition.interactions) != 1:
+        raise ValueError("S3 patch needs one interaction")
+    interaction = definition.interactions[0]
+    names = {surface.name: surface for surface in definition.surfaces}
+    if (interaction.surface not in names or interaction.target not in names
+            or interaction.surface == interaction.target):
+        raise ValueError("S3 patch interaction must name different source and target surfaces")
+    return names[interaction.surface], names[interaction.target], interaction
+
+
+def _adapters(model, selected):
+    return tuple(tuple(
+        S3SkinWorkAdapter.from_model(model, side+1, element_id, surface.side)
+        for element_id in surface.element_ids
+    ) for side, surface in enumerate(selected))
+
+
+def _patch_faces(adapters):
+    return tuple(tuple(S3PatchFace(item.node_ids, item.reference_positions)
+                       for item in side) for side in adapters)
+
+
+def _unique_work_map(adapters, node_ids):
+    blocks = {}
+    positions = {}
+    for adapter in adapters:
+        for local, node in enumerate(adapter.node_ids):
+            block = adapter.work_map[3*local:3*local+3, :].tocsr()
+            position = adapter.reference_positions[local]
+            if node in blocks:
+                delta = (blocks[node]-block).tocsr()
+                if delta.nnz and np.max(np.abs(delta.data)) > 1e-12:
+                    raise ValueError("shared S3 patch node has inconsistent skin work map")
+                if np.linalg.norm(positions[node]-position) > 1e-12*max(
+                    1.0, float(np.max(np.abs(position))),
+                ):
+                    raise ValueError("shared S3 patch node has inconsistent skin position")
+            else:
+                blocks[node] = block
+                positions[node] = position
+    mapping = sparse.vstack([blocks[node] for node in node_ids]).tocsr()
+    reference = np.asarray([positions[node] for node in node_ids], dtype=float)
+    return reference, mapping
+
+
+def validate_general_s3_patch(model, definition: ContactDefinition,
+                              settings: ContactSolverSettings) -> ContactValidationReport:
+    issues: list[str] = []
+    if (len(definition.surfaces) != 2 or definition.rigid_bodies
+            or len(definition.interactions) != 1):
+        return ContactValidationReport("invalid", (
+            "general S3 patch needs two surfaces, no rigid body and one interaction",
+        ), PROFILE)
+    if (settings.pair_motion != "general"
+            or settings.normal_discretization != "primal_mortar"):
+        issues.append("general S3 patch needs general primal-mortar settings")
+    if settings.general_s3_difference_step is None:
+        issues.append("general S3 patch needs explicit general_s3_difference_step")
+    if settings.sliding_difference_step is not None:
+        issues.append("general S3 patch does not use sliding_difference_step")
+    try:
+        source, target, interaction = _selected(definition)
+    except ValueError as exc:
+        return ContactValidationReport("invalid", (str(exc),), PROFILE)
+    if (interaction.normal_law != "penalty" or interaction.normal_stiffness is None
+            or interaction.line_stiffness is not None
+            or interaction.endpoint_stiffness is not None):
+        issues.append("general S3 patch needs penalty surface-pressure stiffness only")
+    if (not 1 <= len(source.element_ids) <= 2
+            or not 1 <= len(target.element_ids) <= 2
+            or len(source.element_ids)+len(target.element_ids) < 3):
+        issues.append("general S3 patch admits one or two faces per side, at least three total")
+    if len(source.element_ids)*len(target.element_ids) > settings.maximum_candidate_pairs:
+        issues.append("general S3 patch exceeds candidate pair resource budget")
+    from anymaterial import IsotropicMaterial
+    from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
+    for surface in (source, target):
+        if surface.beam_radius is not None:
+            issues.append(f"surface {surface.name} cannot declare beam radius")
+        for element_id in surface.element_ids:
+            element = model.mesh.elements.get(element_id)
+            if type(element) is not NativeParityE4PLS3V2DShellElement:
+                issues.append(f"element {element_id} is not admitted S3 V2D")
+                continue
+            material = model.materials.get(element.material_name)
+            if (type(material) is not IsotropicMaterial
+                    or material.yield_stress != 0.0
+                    or material.hardening_curve is not None):
+                issues.append(f"element {element_id} needs isotropic elastic material")
+    if issues:
+        return ContactValidationReport("invalid", tuple(issues), PROFILE)
+    try:
+        adapters = _adapters(model, (source, target))
+        faces = _patch_faces(adapters)
+        potential = MovingS3PatchPrimalMortarPenalty(
+            faces[0], faces[1], interaction.normal_stiffness,
+            difference_step=settings.general_s3_difference_step,
+            maximum_energy_evaluations=settings.maximum_general_s3_energy_evaluations,
+        )
+        _unique_work_map(adapters[0], potential.source_node_ids)
+        _unique_work_map(adapters[1], potential.target_node_ids)
+        normal = _normal(adapters[0][0].reference_positions)
+        for side_index, side_adapters in enumerate(adapters):
+            for adapter in side_adapters:
+                local_normal = _normal(adapter.reference_positions)
+                if float(local_normal @ normal) <= 0.0:
+                    issues.append("S3 patch faces need consistent reference polarity")
+                side_sign = (-1.0 if adapter.side == "bottom" else 1.0)
+                if adapter.side != "midsurface":
+                    directed = side_sign*float(adapter.director @ normal)
+                    if (directed >= 0.0 if side_index == 0 else directed <= 0.0):
+                        issues.append(f"element {adapter.element_id} physical side faces away from pair")
+        roundoff = 256.0*np.finfo(float).eps*max(
+            1.0, float(np.max(np.abs(potential.reference_source))),
+            float(np.max(np.abs(potential.reference_target))),
+        )
+        if min(_vertex_gap_lower(
+            potential.reference_source[si], potential.reference_target[ti],
+        ) for si in potential.source_face_indices
+              for ti in potential.target_face_indices) < -roundoff:
+            issues.append("source S3 patch reference normal must point from target to source")
+    except (ValueError, MemoryError) as exc:
+        issues.append(str(exc))
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE)
+
+
+@dataclass(frozen=True)
+class _PatchResults:
+    profile: str
+    minimum_gap: float
+    sampled_overlap_gap: float | None
+    penalty_energy: float
+    current_overlap_area: float
+    reference_overlap_area: float
+    overlapping_pairs: int
+    integration_force: tuple[float, float, float]
+    target_force: tuple[float, float, float]
+    integration_moment: tuple[float, float, float]
+    target_moment: tuple[float, float, float]
+    gap_tolerance_met: bool
+    active_pressure_dofs: int
+    source_pressure_node_ids: tuple[int, ...]
+    normalized_weighted_gap_m: tuple[float, ...]
+    numerical_pressure_pa: tuple[float, ...]
+    reference_support_m2: tuple[float, ...]
+    energy_evaluations: int
+
+    def to_dict(self):
+        result = dict(vars(self))
+        for name in ("integration_force", "target_force", "integration_moment",
+                     "target_moment", "source_pressure_node_ids",
+                     "normalized_weighted_gap_m", "numerical_pressure_pa",
+                     "reference_support_m2"):
+            result[name] = list(result[name])
+        return result
+
+
+class GeneralS3PatchManager:
+    def __init__(self, model, definition: ContactDefinition,
+                 settings: ContactSolverSettings | None = None,
+                 initial_displacement: np.ndarray | None = None):
+        self.settings = ContactSolverSettings() if settings is None else settings
+        report = validate_general_s3_patch(model, definition, self.settings)
+        if not report.valid:
+            raise ValueError("unsupported general S3 patch: " + "; ".join(report.issues))
+        self.definition = definition
+        self.profile = PROFILE
+        source, target, interaction = _selected(definition)
+        adapters = _adapters(model, (source, target))
+        faces = _patch_faces(adapters)
+        self.stiffness = interaction.normal_stiffness
+        self.gap_tolerance = interaction.gap_tolerance
+        self.swept_trial_cutbacks = 0
+        self.law = MovingS3PatchPrimalMortarPenalty(
+            faces[0], faces[1], self.stiffness,
+            difference_step=self.settings.general_s3_difference_step,
+            maximum_energy_evaluations=self.settings.maximum_general_s3_energy_evaluations,
+        )
+        source_ref, source_map = _unique_work_map(adapters[0], self.law.source_node_ids)
+        target_ref, target_map = _unique_work_map(adapters[1], self.law.target_node_ids)
+        self.reference = source_ref, target_ref
+        self.map = sparse.vstack((source_map, target_map)).tocsr()
+        self.n_dof = model.mesh.dof_manager.total_dofs
+        self.source_coordinates = len(self.law.source_node_ids)*3
+        self.reference_normals = (
+            _normal(adapters[0][0].reference_positions),
+            _normal(adapters[1][0].reference_positions),
+        )
+        initial = np.zeros(self.n_dof) if initial_displacement is None else initial_displacement
+        current = self._positions(initial)
+        lower = self._gap_lower(current)
+        scale = max(1.0, *(float(np.max(np.abs(item))) for item in current))
+        if lower < -256.0*np.finfo(float).eps*scale:
+            raise ValueError(f"general S3 patch initial penetration unresolved: lower bound {lower:.6g} m")
+
+    def _positions(self, displacement):
+        u = np.asarray(displacement, dtype=float).reshape(-1)
+        if u.size != self.n_dof or not np.all(np.isfinite(u)):
+            raise ValueError("general S3 patch displacement has invalid size or values")
+        current = np.concatenate(self.reference) + np.asarray(
+            self.map @ u,
+        ).reshape(-1, 3)
+        source_count = len(self.law.source_node_ids)
+        return current[:source_count], current[source_count:]
+
+    def _gap_lower(self, positions):
+        source, target = positions
+        return min(_vertex_gap_lower(source[si], target[ti])
+                   for si in self.law.source_face_indices
+                   for ti in self.law.target_face_indices)
+
+    def evaluate(self, displacement, *, tangent=True):
+        source, target = self._positions(displacement)
+        lower = self._gap_lower((source, target))
+        state = self.law.evaluate(source, target)
+        if state.energy == 0.0:
+            local_force = np.zeros(self.law.n_coordinates)
+            local_tangent = (sparse.csr_matrix((self.law.n_coordinates, self.law.n_coordinates))
+                             if tangent else None)
+            evaluations = 1
+        else:
+            work = self.law.work(source, target, tangent=tangent)
+            local_force = work.residual
+            local_tangent = sparse.csr_matrix(work.tangent) if tangent else None
+            evaluations = work.energy_evaluations
+        force = np.asarray(self.map.T @ local_force).reshape(-1)
+        stiffness = ((self.map.T @ local_tangent @ self.map).tocsr()
+                     if tangent else None)
+        physical = -local_force.reshape(-1, 3)
+        source_count = len(self.law.source_node_ids)
+        source_force = np.sum(physical[:source_count], axis=0)
+        target_force = np.sum(physical[source_count:], axis=0)
+        source_moment = np.sum(np.cross(source, physical[:source_count]), axis=0)
+        target_moment = np.sum(np.cross(target, physical[source_count:]), axis=0)
+        result = _PatchResults(
+            self.profile, lower, state.minimum_physical_gap, state.energy,
+            state.overlap_area, state.reference_overlap_area,
+            state.overlapping_pairs,
+            tuple(map(float, source_force)), tuple(map(float, target_force)),
+            tuple(map(float, source_moment)), tuple(map(float, target_moment)),
+            lower >= -self.gap_tolerance, state.active_pressure_dofs,
+            self.law.source_node_ids,
+            tuple(map(float, state.normalized_gap)),
+            tuple(map(float, state.pressure)),
+            tuple(map(float, state.reference_support)), evaluations,
+        )
+        return force, stiffness, result
+
+    def _swept_admissible(self, start, end):
+        first = self._positions(start)
+        last = self._positions(end)
+        if self._gap_lower(first) < -self.gap_tolerance:
+            raise ValueError("committed general S3 patch gap exceeds tolerance")
+        if self._gap_lower(last) < -self.gap_tolerance:
+            return False
+
+        def certify(left, right, depth):
+            orientation_ok = True
+            for side, indices, reference in (
+                (0, self.law.source_face_indices, self.reference_normals[0]),
+                (1, self.law.target_face_indices, self.reference_normals[1]),
+            ):
+                for face in indices:
+                    controls = _normal_controls(left[side][face], right[side][face])
+                    if min(float(item@reference) for item in controls) <= 0.0:
+                        orientation_ok = False
+            gap_ok = all(
+                _swept_gap_lower(left[0][si], right[0][si],
+                                 left[1][ti], right[1][ti]) >= -self.gap_tolerance
+                for si in self.law.source_face_indices
+                for ti in self.law.target_face_indices
+            )
+            if orientation_ok and gap_ok:
+                return True
+            if depth >= self.settings.maximum_swept_subdivisions:
+                return False
+            middle = tuple(0.5*(a+b) for a, b in zip(left, right))
+            if self._gap_lower(middle) < -self.gap_tolerance:
+                return False
+            return certify(left, middle, depth+1) and certify(middle, right, depth+1)
+
+        return certify(first, last, 0)
+
+    def swept_increment_admissible(self, start, end, _start_factor, _end_factor):
+        admitted = self._swept_admissible(start, end)
+        if not admitted:
+            self.swept_trial_cutbacks += 1
+        return admitted
+
+    def admissible_step_fraction(self, start, end):
+        first = np.asarray(start, dtype=float).reshape(-1)
+        last = np.asarray(end, dtype=float).reshape(-1)
+        if self._swept_admissible(first, last):
+            return 1.0
+        self.swept_trial_cutbacks += 1
+        fraction = 0.5
+        for _ in range(self.settings.maximum_swept_subdivisions):
+            if self._swept_admissible(first, first+fraction*(last-first)):
+                return fraction
+            fraction *= 0.5
+        return 0.0
+
+    def restart_contract(self):
+        interaction = self.definition.interactions[0]
+        return {
+            "profile": self.profile,
+            "surfaces": [{"name": surface.name,
+                          "element_ids": list(surface.element_ids),
+                          "side": surface.side}
+                         for surface in self.definition.surfaces],
+            "interaction": {"name": interaction.name,
+                            "surface": interaction.surface,
+                            "target": interaction.target,
+                            "normal_stiffness": self.stiffness,
+                            "gap_tolerance": self.gap_tolerance,
+                            "normal_law": interaction.normal_law},
+            "settings": {"pair_motion": self.settings.pair_motion,
+                         "normal_discretization": self.settings.normal_discretization,
+                         "general_s3_difference_step": self.settings.general_s3_difference_step,
+                         "maximum_general_s3_energy_evaluations": self.settings.maximum_general_s3_energy_evaluations,
+                         "maximum_swept_subdivisions": self.settings.maximum_swept_subdivisions,
+                         "maximum_candidate_pairs": self.settings.maximum_candidate_pairs},
+        }

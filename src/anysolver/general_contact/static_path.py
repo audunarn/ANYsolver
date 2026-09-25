@@ -2,8 +2,8 @@
 
 The path keeps several prescribed coordinates in one nonlinear transaction.
 Their conjugate forces are unknowns, so an opened patch has no unsupported
-rigid translation. This owner currently admits the restricted planar static
-profile only; its checkpoint is bound to the complete path definition.
+rigid translation. This owner admits restricted planar and bounded general
+S3 patch static profiles; its checkpoint binds the complete path definition.
 """
 
 from __future__ import annotations
@@ -53,6 +53,7 @@ from .core import (
 
 PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_CONTACT_PATH_DEV_V0"
 AUGMENTED_PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_AUGMENTED_PATH_DEV_V0"
+GENERAL_S3_PATCH_PROFILE = "S3_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 _DOF = {"ux": 0, "uy": 1, "uz": 2}
 
 
@@ -144,19 +145,29 @@ def solve_static_contact_path(
         emit_restart_checkpoint: bool = False,
         cancellation_token: CancellationToken | None = None,
         ) -> NonlinearStaticResult:
-    """Solve one multi-control path under the restricted planar contact profile."""
+    """Solve one multi-control path under an admitted static contact profile."""
 
     if type(definition) is not ContactDefinition or type(settings) is not ContactSolverSettings:
         raise TypeError("contact path needs exact contact definitions and settings")
     if type(program) is not ContactPathProgram:
         raise TypeError("contact path needs ContactPathProgram")
     report = validate_general_contact(model, definition, settings)
-    if not report.valid or "RESTRICTED_SLIDING" not in report.profile:
+    if not report.valid:
         raise ValueError("unsupported contact path: " + "; ".join(report.issues))
-    if definition.rigid_bodies or settings.pair_motion != "restricted_sliding":
+    from .s3_patch_static import PROFILE as s3_patch_profile
+
+    general_s3_patch = report.profile == s3_patch_profile
+    if not general_s3_patch and "RESTRICTED_SLIDING" not in report.profile:
+        raise ValueError("unsupported contact path profile: " + report.profile)
+    if (definition.rigid_bodies or
+            settings.pair_motion != ("general" if general_s3_patch
+                                    else "restricted_sliding")):
         raise ValueError("contact path currently requires a deformable shell pair")
     augmented = definition.interactions[0].normal_law == "augmented"
-    profile = AUGMENTED_PROFILE if augmented else PROFILE
+    if general_s3_patch and augmented:
+        raise ValueError("general S3 patch path does not admit augmented normal law")
+    profile = (GENERAL_S3_PATCH_PROFILE if general_s3_patch else
+               AUGMENTED_PROFILE if augmented else PROFILE)
     from anymaterial.isotropic import IsotropicMaterial
 
     for element in model.mesh.elements.values():

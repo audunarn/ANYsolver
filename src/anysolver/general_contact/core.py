@@ -392,6 +392,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             ))
     if not definition.rigid_bodies:
         if settings is not None and settings.pair_motion == "general":
+            if any(len(surface.element_ids) > 1 for surface in definition.surfaces):
+                from .s3_patch_static import validate_general_s3_patch
+
+                return validate_general_s3_patch(model, definition, settings)
             from .s3_pair_static import validate_general_s3_pair
 
             return validate_general_s3_pair(model, definition, settings)
@@ -876,11 +880,18 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
             manager = _PlanarQ4PlaneManager(model, definition, settings, initial_displacement)
     else:
         if settings.pair_motion == "general":
-            from .s3_pair_static import GeneralS3PairManager
+            if any(len(surface.element_ids) > 1 for surface in definition.surfaces):
+                from .s3_patch_static import GeneralS3PatchManager
 
-            manager = GeneralS3PairManager(
-                model, definition, settings, initial_displacement,
-            )
+                manager = GeneralS3PatchManager(
+                    model, definition, settings, initial_displacement,
+                )
+            else:
+                from .s3_pair_static import GeneralS3PairManager
+
+                manager = GeneralS3PairManager(
+                    model, definition, settings, initial_displacement,
+                )
         elif settings.pair_motion == "restricted_sliding":
             if len(definition.surfaces) == 2 and any(
                 len(surface.element_ids) > 1 for surface in definition.surfaces
