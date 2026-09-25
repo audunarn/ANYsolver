@@ -55,6 +55,17 @@ rigid covariance and foreign-reference rejection. It is a work-map
 foundation for distributed line-to-line pairing; it does not declare
 point-contact or admit a native beam pair.
 
+The existing Q2/Q2 distributed pair potential now has an explicit
+`reference_arc_measure="quadratic"` mode. It uses the actual reference Q2
+arc-speed at every source integration station. The default `"straight"`
+mode and its prior route remain unchanged. A constant-gap parallel-line
+case matched a separately integrated curved reference arc length and a
+directional force check; the affected classical pair suite passed 7/7
+(`c3-native-pair-curved-measure-final.txt`). The first affected run exposed
+two tests calling the existing private `_direction` signature; that
+signature was preserved, and its failing log remains at
+`c3-native-pair-curved-measure-affected.txt`.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization

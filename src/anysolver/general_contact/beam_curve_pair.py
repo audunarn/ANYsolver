@@ -405,14 +405,18 @@ class B3PairPotential:
     def __init__(self, reference_a: np.ndarray, reference_b: np.ndarray,
                  radius: float, line_stiffness: float, *,
                  integration_relative_tolerance: float,
-                 maximum_subdivisions: int):
+                 maximum_subdivisions: int,
+                 reference_arc_measure: str = "straight"):
         self.reference_a = _positions(reference_a, "beam A reference").copy()
         self.reference_b = _positions(reference_b, "beam B reference").copy()
+        if reference_arc_measure not in ("straight", "quadratic"):
+            raise ValueError("B3 pair reference arc measure must be explicit")
         for label, reference in (("beam A", self.reference_a),
                                  ("beam B", self.reference_b)):
             length = float(np.linalg.norm(reference[2] - reference[0]))
-            if float(np.linalg.norm(reference[1]
-                                    - 0.5 * (reference[0] + reference[2]))) > 1.0e-10 * length:
+            if (reference_arc_measure == "straight"
+                    and float(np.linalg.norm(reference[1]
+                        - 0.5 * (reference[0] + reference[2]))) > 1.0e-10 * length):
                 raise ValueError(f"{label} classical B3 reference midpoint must be straight")
         for label, value in (("combined radius", radius),
                              ("line stiffness", line_stiffness),
@@ -425,11 +429,27 @@ class B3PairPotential:
         self.stiffness = float(line_stiffness)
         self.tolerance = float(integration_relative_tolerance)
         self.maximum_subdivisions = maximum_subdivisions
-        self.length_a = float(np.linalg.norm(self.reference_a[2] - self.reference_a[0]))
-        self.length_b = float(np.linalg.norm(self.reference_b[2] - self.reference_b[0]))
+        self.reference_arc_measure = reference_arc_measure
+        self.length_a = self._reference_length(self.reference_a)
+        self.length_b = self._reference_length(self.reference_b)
+
+    def _reference_speed(self, reference: np.ndarray, station: float) -> float:
+        if self.reference_arc_measure == "straight":
+            return float(np.linalg.norm(reference[2] - reference[0]))
+        return float(np.linalg.norm(_curve(reference, station)[1]))
+
+    def _reference_length(self, reference: np.ndarray) -> float:
+        if self.reference_arc_measure == "straight":
+            return float(np.linalg.norm(reference[2] - reference[0]))
+        points, weights = np.polynomial.legendre.leggauss(32)
+        return 0.5*sum(
+            float(weight)*self._reference_speed(reference, 0.5*(float(point)+1.0))
+            for point, weight in zip(points, weights)
+        )
 
     def _direction(self, source: np.ndarray, target: np.ndarray,
                    length: float, source_is_a: bool):
+        reference = self.reference_a if source_is_a else self.reference_b
         target_controls = _bezier_controls(target, 0.0, 1.0)
         points = 0
         scan_points = 0
@@ -514,7 +534,8 @@ class B3PairPotential:
                 if station.gap >= 0.0:
                     continue
                 active = True
-                measure = 0.5 * (right - left) * float(weight) * length
+                measure = (0.5 * (right - left) * float(weight)
+                           * self._reference_speed(reference, s))
                 factor = self.stiffness * measure
                 energy += 0.5 * factor * station.gap * station.gap
                 residual += factor * station.gap * station.gradient
