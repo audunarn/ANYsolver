@@ -28,6 +28,7 @@ SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR
 Q4_PAIR_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 Q4_PAIR_PROJECTED_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
 REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+REFINED_Q4_S3_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 
 
 def _selected(definition: ContactDefinition):
@@ -124,17 +125,22 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                and 1 <= len(target.element_ids) <= 2
                and (len(source.element_ids)+len(target.element_ids) >= 3
                     or q4_pair))
-    refined = (augmented and not source_q4 and not target_q4
-               and len(source.element_ids) >= 2
-               and len(target.element_ids) >= 1
-               and (len(source.element_ids) > 2 or len(target.element_ids) > 2))
+    refined_s3 = (augmented and not source_q4 and not target_q4
+                  and len(source.element_ids) >= 2
+                  and len(target.element_ids) >= 1
+                  and (len(source.element_ids) > 2 or len(target.element_ids) > 2))
+    refined_q4 = (augmented and len(source.element_ids) >= 2
+                  and len(source_q4) == len(source.element_ids)
+                  and not target_q4 and len(target.element_ids) >= 1)
+    refined = refined_s3 or refined_q4
     if not (bounded or refined):
         issues.append("general shell patch needs three faces or one Q4/Q4 pair")
     if len(source.element_ids)*len(target.element_ids) > settings.maximum_candidate_pairs:
         issues.append("general S3 patch exceeds candidate pair resource budget")
-    if source_q4 and (len(source.element_ids) != 1
-                      or len(target.element_ids) != 2
-                      or target_q4) and not q4_pair:
+    if (source_q4 and not refined_q4 and
+            (len(source.element_ids) != 1
+             or len(target.element_ids) != 2
+             or target_q4) and not q4_pair):
         issues.append("Q4 pressure-side patch needs one source Q4 and two target S3 faces")
     if source_q4 and (settings.q4_source_area_tolerance is None
                       or settings.q4_source_weighted_gap_tolerance is None
@@ -151,7 +157,8 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
     if augmented:
-        profile = (REFINED_AUGMENTED_PROFILE if refined else
+        profile = (REFINED_Q4_S3_AUGMENTED_PROFILE if refined_q4 else
+                   REFINED_AUGMENTED_PROFILE if refined_s3 else
                    Q4_PAIR_PROJECTED_AUGMENTED_PROFILE
                    if q4_pair and settings.q4_source_gap_certificate == "projected_matching" else
                    Q4_PAIR_AUGMENTED_PROFILE if q4_pair else
@@ -162,6 +169,8 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
     if (settings.q4_source_gap_certificate == "projected_matching"
             and not (augmented and (q4_pair or source_q4))):
         issues.append("projected-matching Q4 gap certificate requires augmented Q4/Q4 or Q4/two-S3")
+    if refined_q4 and settings.q4_source_gap_certificate == "projected_matching":
+        issues.append("refined Q4/S3 patch has no projected-matching gap profile")
     for side_index, surface in enumerate((source, target)):
         if surface.beam_radius is not None:
             issues.append(f"surface {surface.name} cannot declare beam radius")
@@ -291,7 +300,9 @@ class GeneralS3PatchManager:
             q4_source_area_tolerance=self.settings.q4_source_area_tolerance,
             q4_source_weighted_gap_tolerance=self.settings.q4_source_weighted_gap_tolerance,
             maximum_q4_source_integration_triangles=self.settings.maximum_q4_source_integration_triangles,
-            differentiation="pair_local" if self.profile == REFINED_AUGMENTED_PROFILE
+            differentiation="pair_local" if self.profile in {
+                REFINED_AUGMENTED_PROFILE, REFINED_Q4_S3_AUGMENTED_PROFILE,
+            }
             else "global",
             maximum_candidate_pairs=self.settings.maximum_candidate_pairs,
         )
@@ -370,7 +381,8 @@ class GeneralS3PatchManager:
         target_moment = np.sum(np.cross(target, physical[source_count:]), axis=0)
         gram_rank = gram_condition = None
         if self.profile in {Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
-                            SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE}:
+                            SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
+                            REFINED_Q4_S3_AUGMENTED_PROFILE}:
             eigenvalues = np.linalg.eigvalsh(state.pressure_gram)
             greatest = max(0.0, float(eigenvalues[-1]))
             threshold = (len(eigenvalues)*np.finfo(float).eps*greatest)
@@ -410,7 +422,8 @@ class GeneralS3PatchManager:
         if self.profile not in {SOURCE_Q4_AUGMENTED_PROFILE,
                                 SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
                                 Q4_PAIR_AUGMENTED_PROFILE,
-                                Q4_PAIR_PROJECTED_AUGMENTED_PROFILE}:
+                                Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
+                                REFINED_Q4_S3_AUGMENTED_PROFILE}:
             return
         variations = (self.map @ transform).tocsr()
         variations.eliminate_zeros()

@@ -89,18 +89,22 @@ class MovingS3PatchPrimalMortarPenalty:
                    and 1 <= len(self.target_faces) <= 2
                    and (len(self.source_faces)+len(self.target_faces) >= 3
                         or q4_pair))
-        refined = (differentiation == "pair_local"
-                   and self.source_faces and self.target_faces
-                   and len(self.source_faces)+len(self.target_faces) >= 3
-                   and all(len(face.node_ids) == 3
-                           for face in (*self.source_faces, *self.target_faces)))
+        refined_s3 = (differentiation == "pair_local"
+                      and len(self.source_faces)+len(self.target_faces) >= 3
+                      and all(len(face.node_ids) == 3
+                              for face in (*self.source_faces, *self.target_faces)))
+        refined_q4 = (differentiation == "pair_local"
+                      and len(self.source_faces) >= 2
+                      and all(len(face.node_ids) == 4 for face in self.source_faces)
+                      and all(len(face.node_ids) == 3 for face in self.target_faces))
+        refined = refined_s3 or refined_q4
         if not (bounded or refined):
             raise ValueError("development shell patch needs three faces or one Q4/Q4 pair")
         if differentiation == "pair_local" and not refined:
-            raise ValueError("pair-local differentiation currently requires S3 faces")
-        source_q4 = len(self.source_faces) == 1 and len(self.source_faces[0].node_ids) == 4
+            raise ValueError("pair-local differentiation needs S3 faces or Q4 source/S3 target faces")
+        source_q4 = all(len(face.node_ids) == 4 for face in self.source_faces)
         if not source_q4 and any(len(face.node_ids) != 3 for face in self.source_faces):
-            raise ValueError("development patch pressure side needs S3 triangles or one Q4")
+            raise ValueError("development patch pressure side needs S3 triangles or Q4 faces")
         self.source_node_ids = tuple(sorted({node for face in self.source_faces
                                              for node in face.node_ids}))
         self.target_node_ids = tuple(sorted({node for face in self.target_faces
@@ -128,7 +132,8 @@ class MovingS3PatchPrimalMortarPenalty:
         self.n_coordinates = 3*(len(self.source_node_ids)+len(self.target_node_ids))
         self.required_hessian_evaluations = (
             1+2*self.n_coordinates**2 if differentiation == "global" else
-            len(self.source_faces)*len(self.target_faces)*(2+2*18**2)
+            sum(2+2*(3*(len(source.node_ids)+len(target.node_ids)))**2
+                for source in self.source_faces for target in self.target_faces)
         )
         if self.required_hessian_evaluations > self.maximum_energy_evaluations:
             raise MemoryError(
@@ -176,10 +181,22 @@ class MovingS3PatchPrimalMortarPenalty:
             return
         scale = max(1.0, float(np.max(np.abs(positions))))
         for first_index in range(len(indices)):
-            first = PlanarFace((1, first_index+1), positions[indices[first_index]])
+            first_positions = positions[indices[first_index]]
+            if len(first_positions) == 4:
+                first, normal = projected_q4_source_face(first_positions)
+            else:
+                first = PlanarFace((1, first_index+1), first_positions)
+                normal = np.cross(first_positions[1]-first_positions[0],
+                                  first_positions[2]-first_positions[0])
+                normal /= np.linalg.norm(normal)
             for second_index in range(first_index+1, len(indices)):
-                second = PlanarFace((1, second_index+1),
-                                    positions[indices[second_index]])
+                second_positions = positions[indices[second_index]]
+                if len(second_positions) == 4:
+                    projected_q4_source_face(second_positions)
+                projected = second_positions - (
+                    (second_positions-first.corners[0]) @ normal
+                )[:, None]*normal
+                second = PlanarFace((1, second_index+1), projected)
                 overlap = planar_projected_overlap(first, second)
                 if overlap is not None and overlap.area > 1e-12*scale**2:
                     raise ValueError("S3 patch has overlapping faces on one side")

@@ -202,6 +202,11 @@ class MovingS3PatchProjectedNormal:
     def _pair_local_work(self, current_source, current_target, base, *, tangent):
         """Assemble integral derivatives per face pair into shared pressure nodes."""
         count = self.n_coordinates
+        active_coordinates = (
+            np.arange(count, dtype=np.intp)
+            if self.tangent_active_coordinates is None else
+            self.tangent_active_coordinates
+        )
         source_count = len(self.source_node_ids)
         pressure_count = source_count
         jw = np.zeros((pressure_count, count))
@@ -229,6 +234,8 @@ class MovingS3PatchProjectedNormal:
                 dtype=np.intp,
             )
             local_count = len(coordinate_map)
+            local_active = np.flatnonzero(np.isin(coordinate_map,
+                                                  active_coordinates))
 
             def state_at(steps):
                 nonlocal evaluations
@@ -253,40 +260,49 @@ class MovingS3PatchProjectedNormal:
             jw[np.ix_(source_nodes, coordinate_map)] += local_jw
             if not tangent:
                 continue
+            if not len(local_active):
+                continue
             local_js = np.column_stack([
-                (plus.reference_support-minus.reference_support)/(2*step)
-                for plus, minus in zip(positive, negative)
+                (positive[j].reference_support-negative[j].reference_support)/(2*step)
+                for j in local_active
             ])
-            js[np.ix_(source_nodes, coordinate_map)] += local_js
+            active_map = coordinate_map[local_active]
+            js[np.ix_(source_nodes, active_map)] += local_js
             local_pressure = base.pressure[source_nodes]
-            local_hessian = np.empty((local_count, local_count))
-            for j in range(local_count):
-                local_hessian[j, j] = float(local_pressure @ (
+            local_hessian = np.empty((len(local_active), len(local_active)))
+            for local_j, j in enumerate(local_active):
+                local_hessian[local_j, local_j] = float(local_pressure @ (
                     positive[j].reference_weighted_gap
                     - 2*middle.reference_weighted_gap
                     + negative[j].reference_weighted_gap
                 ))/step**2
-                for k in range(j+1, local_count):
+                for local_k in range(local_j+1, len(local_active)):
+                    k = int(local_active[local_k])
                     mixed = (
                         state_at(((j, 1), (k, 1))).reference_weighted_gap
                         - state_at(((j, 1), (k, -1))).reference_weighted_gap
                         - state_at(((j, -1), (k, 1))).reference_weighted_gap
                         + state_at(((j, -1), (k, -1))).reference_weighted_gap
                     )/(4*step**2)
-                    local_hessian[j, k] = local_hessian[k, j] = float(
+                    local_hessian[local_j, local_k] = local_hessian[local_k, local_j] = float(
                         local_pressure @ mixed
                     )
-            weighted_hessian[np.ix_(coordinate_map, coordinate_map)] += local_hessian
+            weighted_hessian[np.ix_(active_map, active_map)] += local_hessian
 
         residual = -(base.pressure @ jw)
         if not tangent:
             return MovingS3PatchMortarWork(base, residual, None, evaluations)
-        dp = np.zeros_like(jw)
+        dp = np.zeros((pressure_count, len(active_coordinates)))
         active = base.pressure > 0.0
         support = base.reference_support[active, None]
         dp[active] = -self.stiffness*(
-            jw[active]/support
-            - base.reference_weighted_gap[active, None]*js[active]/support**2
+            jw[np.ix_(active, active_coordinates)]/support
+            - base.reference_weighted_gap[active, None]
+            * js[np.ix_(active, active_coordinates)]/support**2
         )
-        tangent_matrix = -(jw.T @ dp + weighted_hessian)
+        tangent_matrix = np.zeros((count, count))
+        tangent_matrix[np.ix_(active_coordinates, active_coordinates)] = -(
+            jw[:, active_coordinates].T @ dp
+            + weighted_hessian[np.ix_(active_coordinates, active_coordinates)]
+        )
         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)

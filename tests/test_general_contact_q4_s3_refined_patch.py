@@ -1,0 +1,173 @@
+"""Multiple conforming Q4 pressure faces against a nonmatching S3 patch."""
+
+import os
+from dataclasses import replace
+
+import numpy as np
+import pytest
+from scipy import sparse
+
+from anysolver import (
+    BoundaryCondition, ContactDefinition, ContactInteraction, ContactPathControl,
+    ContactPathProgram, ContactSolverSettings, ContactSurface,
+    create_shell_element, solve_static_nonlinear, validate_general_contact,
+)
+from anysolver.fe_core import FEModel
+from anysolver.general_contact.s3_patch_static import (
+    GeneralS3PatchManager, REFINED_Q4_S3_AUGMENTED_PROFILE,
+)
+
+
+def _two_q4_two_s3():
+    model = FEModel("refined_q4_pressure_patch")
+    model.add_material("elastic", 1.0e5, 0.3, density=1.0)
+    source = (
+        (0.1, 0.1, 0.055), (0.6, 0.1, 0.055), (1.1, 0.1, 0.055),
+        (0.1, 1.1, 0.055), (0.6, 1.1, 0.055), (1.1, 1.1, 0.055),
+    )
+    target = (
+        (0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
+        (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
+    )
+    for node, position in enumerate((*source, *target), 1):
+        model.add_node(node, *position)
+    for element_id, nodes in ((1, (1, 2, 5, 4)), (2, (2, 3, 6, 5))):
+        model.add_element(element_id, create_shell_element(
+            element_id, nodes, "elastic", thickness=0.05,
+            reference_normal=(0.0, 0.0, 1.0),
+        ))
+    for element_id, nodes in ((3, (7, 8, 10)), (4, (8, 9, 10))):
+        model.add_element(element_id, create_shell_element(
+            element_id, nodes, "elastic", thickness=0.05,
+            formulation="e4-pl-s3-v2d", reference_normal=(0.0, 0.0, 1.0),
+            reference_surface_offset=0.01,
+        ))
+    definition = ContactDefinition(
+        surfaces=(ContactSurface("q4_source", (1, 2), "bottom"),
+                  ContactSurface("s3_target", (3, 4), "top")),
+        rigid_bodies=(),
+        interactions=(ContactInteraction(
+            "pair", "q4_source", "s3_target", 1000.0, 0.02,
+            normal_law="augmented",
+        ),),
+    )
+    settings = ContactSolverSettings(
+        pair_motion="general", normal_discretization="primal_mortar",
+        general_s3_difference_step=2.0e-5,
+        maximum_general_s3_energy_evaluations=5000,
+        q4_source_area_tolerance=1.0e-9,
+        q4_source_weighted_gap_tolerance=1.0e-10,
+        maximum_q4_source_integration_triangles=300,
+        pressure_tolerance=0.02,
+    )
+    return model, definition, settings
+
+
+def test_refined_q4_source_public_work_and_opening():
+    model, definition, settings = _two_q4_two_s3()
+    report = validate_general_contact(model, definition, settings)
+    assert report.valid, report.issues
+    assert report.profile == REFINED_Q4_S3_AUGMENTED_PROFILE
+    manager = GeneralS3PatchManager(model, definition, settings)
+    assert manager.law.geometry.differentiation == "pair_local"
+    assert manager.law.source_node_ids == (1, 2, 3, 4, 5, 6)
+    opening = manager.evaluate(np.zeros(manager.n_dof), tangent=False)[2]
+    assert opening.active_pressure_dofs == 0
+    u = np.zeros(manager.n_dof)
+    for node in range(1, 7):
+        u[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.02
+    force, _tangent, result = manager.evaluate(u, tangent=False)
+    assert result.active_pressure_dofs == 6
+    assert result.gap_tolerance_met
+    assert result.energy_evaluations <= settings.maximum_general_s3_energy_evaluations
+    np.testing.assert_allclose(
+        np.asarray(result.integration_force) + result.target_force,
+        0.0, atol=1.0e-6,
+    )
+    np.testing.assert_allclose(
+        np.asarray(result.integration_moment) + result.target_moment,
+        0.0, atol=1.0e-6,
+    )
+    assert np.linalg.norm(force) > 0.0
+    assert manager.restart_contract()["profile"] == REFINED_Q4_S3_AUGMENTED_PROFILE
+    assert not validate_general_contact(model, replace(definition, interactions=(
+        replace(definition.interactions[0], normal_law="penalty"),
+    )), settings).valid
+    exhausted = validate_general_contact(
+        model, definition, replace(
+            settings, maximum_general_s3_energy_evaluations=3535,
+        ),
+    )
+    assert not exhausted.valid
+    assert any("Hessian exceeds" in issue for issue in exhausted.issues)
+    assert not validate_general_contact(model, definition, replace(
+        settings, q4_source_gap_certificate="projected_matching",
+    )).valid
+
+
+def test_refined_q4_source_reduced_tangent_keeps_shared_node_work():
+    model, definition, settings = _two_q4_two_s3()
+    manager = GeneralS3PatchManager(model, definition, settings)
+    free = [model.mesh.dof_manager.get_node_dofs(node)[axis]
+            for node in range(1, 7) for axis in (0, 2)]
+    transform = sparse.eye(manager.n_dof, format="csr")[:, free]
+    manager.restrict_tangent_to_reduced_variations(transform)
+    u = np.zeros(manager.n_dof)
+    for node in range(1, 7):
+        u[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.02
+    _force, tangent, result = manager.evaluate(u)
+    assert result.active_pressure_dofs == 6
+    assert result.energy_evaluations < 1000
+    direction = np.zeros(manager.n_dof)
+    direction[model.mesh.dof_manager.get_node_dofs(2)[0]] = 0.2
+    direction[model.mesh.dof_manager.get_node_dofs(5)[2]] = 0.5
+    step = 1.0e-4
+    plus = manager.evaluate(u + step*direction, tangent=False)[0]
+    minus = manager.evaluate(u - step*direction, tangent=False)[0]
+    predicted = transform.T @ (tangent @ direction)
+    measured = transform.T @ ((plus-minus)/(2.0*step))
+    np.testing.assert_allclose(predicted, measured, rtol=3.0e-3, atol=8.0e-4)
+
+
+@pytest.mark.skipif(os.environ.get("ANYSOLVER_LONG_CONTACT") != "1",
+                    reason="opt-in coupled multi-Q4 contact path")
+def test_refined_q4_source_active_two_control_path():
+    model, definition, settings = _two_q4_two_s3()
+    definition = replace(definition, interactions=(replace(
+        definition.interactions[0], gap_tolerance=0.005,
+    ),))
+    settings = replace(settings, maximum_augmentations=8)
+    model.add_boundary_condition(BoundaryCondition(
+        "target_fixed", (7, 8, 9, 10),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "source_guide", (1, 2, 3, 4, 5, 6),
+        {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+    ))
+    program = ContactPathProgram(
+        controls=(ContactPathControl.node(1, "ux"),
+                  ContactPathControl.node(1, "uz")),
+        waypoints=((0.0, 0.0), (0.0, -0.01505)),
+        steps_per_segment=1,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "completed", result.failure_reason
+    contact = result.info["general_contact"]
+    assert contact["profile"] == REFINED_Q4_S3_AUGMENTED_PROFILE
+    assert contact["active_pressure_dofs"] == 6
+    assert contact["gap_tolerance_met"]
+    assert contact["pressure_gram_rank"] == 6
+    np.testing.assert_allclose(
+        np.asarray(contact["integration_force"]) + contact["target_force"],
+        0.0, atol=1.0e-6,
+    )
+    np.testing.assert_allclose(
+        np.asarray(contact["integration_moment"]) + contact["target_moment"],
+        0.0, atol=1.0e-6,
+    )
+    assert result.restart_checkpoint["version"] == 2
