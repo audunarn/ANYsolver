@@ -41,15 +41,16 @@ Historical Q6/finite-pad, classical axial, CalculiX B31/S4 and native
 six-channel cases retain separate definitions. The complete registered
 mesh-ratio, physical-history and external-reference gates remain open.
 
-**Next discriminating experiment:** At fixed, already registered physical
-meshes and loads, examine the Fz trace-image/traction mode and compare the
-coarse-Fz/fine-Mx policy with the independent square-strip model's
-corresponding work and response. This distinguishes a legitimate
-resolution split from a hidden traction mode or shell/beam trace mismatch.
-If the physical responses or reaction partition remain row-sensitive,
-revise the weak trace/test pairing before selecting a multiplier. Any
-further reference must match geometry, support, section and connection;
-do not restart the closed axial, C3D8 or joint-refinement sweeps.
+**Next discriminating experiment:** Derive a dimensionally consistent
+Fz/Mx interface-resolution rule from the beam/shell trace images and
+physical load-transfer error, then test candidate P0/P1/dual spaces over
+the registered mesh ratios with loaded torque/shear and reaction checks.
+The independent fixed-grid Fz screen reproduces the alternating mode,
+so simply adding native line rows or tuning a quotient is not a solution.
+If the candidates cannot provide stable and adequately resolving transfer,
+revise the weak trace/test pairing before production. Further references
+must match geometry, support, section and connection; do not restart the
+closed axial, C3D8 or joint-refinement sweeps.
 
 **Resulting action:** Retain the square strip and mixed-channel pairing as
 exploratory candidates, reject the tested all-channel P0 cap, and stop the
@@ -108,6 +109,19 @@ a solid square-bar torsion law rather than the native generalized
 `GJ` section; its results cannot be scored against this pair as if their
 boundary-value problems matched. No new C3D8 refinement is authorized
 by this result.
+
+The independent square-strip spline operator then examined *one fixed*
+plate x16/y4, beam8 grid with Fz P0-4 versus P0-8. Its Fz-only
+H^(-1/2) action has full row rank but the weakest mode changes from
+three to seven sign reversals, and its smallest normalized action drops
+by a factor of about `4.8` (`3.229e-5→6.686e-6` in that model's own
+energy scale). Under `1000 N` transverse force, independent tip-z moves
+`51.014→49.369 µm`. These numbers are not directly comparable to the
+native quotient scale, but the direction and mode character agree with
+the native fixed-grid result. This makes a native-only assembly error
+less likely and confirms that row density alone cannot choose the
+multiplier. Raw root:
+`f03-independent-fz-trace-image-dev-20260925-v1`.
 
 **25 September native square-strip and stability screen (development
 only):** The new `physical_strip_005_005` port uses a fixed 0.1 x 0.1 m
