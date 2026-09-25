@@ -1005,8 +1005,14 @@ def main() -> int:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
                         check=True,capture_output=True,text=True).stdout.strip()
-    if subprocess.run(("git","status","--porcelain"),cwd=WORKTREE,
-                      check=True,capture_output=True,text=True).stdout.strip():
+    status=subprocess.run(("git","status","--porcelain"),cwd=WORKTREE,
+                          check=True,capture_output=True,text=True).stdout
+    # A protected, unrelated pytest scratch root predates this experiment.
+    # Keep it intact while requiring every tracked or other untracked edit
+    # to be committed before recording source-bound external evidence.
+    dirty=[line for line in status.splitlines()
+           if line != "?? .pytest-b3-g0-interior/"]
+    if dirty:
         raise ValueError("solid bond screen requires clean source")
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
@@ -1139,6 +1145,8 @@ def main() -> int:
                  else entry)
                 for entry in manifest["limits_of_claim"]]
     if args.contact == "c1_penalty":
+        if "?? .pytest-b3-g0-interior/" in status.splitlines():
+            manifest["untracked_scratch_exclusion"] = ".pytest-b3-g0-interior/"
         paired_deck, _ = build(
             4, "tip_mx", boundary_policy="left_root", bond_policy="terminal",
             element_family="C3D20R", tip_mx_gap_audit=True,
