@@ -898,6 +898,9 @@ def main() -> int:
     parser.add_argument("--reverse-fz-open-audit",action="store_true")
     parser.add_argument("--tip-mx-gap-audit",action="store_true")
     parser.add_argument("--bar-clearance-um",type=int,choices=(0,1,2),default=0)
+    parser.add_argument("--bar-reference-profile",
+                        choices=("legacy_linear","c1_tangent"),
+                        default="legacy_linear")
     parser.add_argument("--half-plate-thickness",action="store_true")
     parser.add_argument("--quadratic-face-traction",action="store_true")
     parser.add_argument("--full-displacement-output",action="store_true")
@@ -927,6 +930,13 @@ def main() -> int:
     if args.bar_clearance_um and (not args.tip_mx_gap_audit or
                                   args.element_family!="C3D20R"):
         parser.error("declared bar clearance requires quadratic terminal torque audit")
+    if args.bar_reference_profile=="c1_tangent" and not (
+            list(args.factor)==[4] and args.suite=="loads" and
+            args.boundary=="left_root" and args.bond=="terminal" and
+            args.contact=="none" and args.element_family=="C3D20R" and
+            args.tip_mx_gap_audit and args.bar_clearance_um==2 and
+            args.half_plate_thickness and args.quadratic_face_traction):
+        parser.error("C1 tangent reference requires the bounded factor-4 terminal torque screen")
     if args.half_plate_thickness and (
             args.element_family!="C3D20R" or
             not ((args.tip_mx_gap_audit and args.bar_clearance_um==2 and
@@ -1060,6 +1070,25 @@ def main() -> int:
         manifest["full_displacement_output"] = True
         manifest["limits_of_claim"].append(
             "output-only replay of factor-4 cases; full solid displacement field for read-only interior pose projection, not a new convergence level")
+    if args.bar_reference_profile=="c1_tangent":
+        manifest["bar_reference_profile"]="C1_TWO_QUADRATIC_TANGENT_ALIGNED_V1"
+        manifest["question"]=(
+            "On one tangent-matched terminal solid geometry, does the saved "
+            "100 N m torque response preserve an admissible unbonded-face gap "
+            "before comparing any native connection response?")
+        manifest["decision"]=(
+            "A negative deformed paired-face gap rejects this no-contact "
+            "reference. Nonnegative paired-face gaps only advance to a "
+            "continuous deformed-surface intersection check and matching "
+            "native curved-model construction; neither outcome selects a "
+            "footprint or multiplier space.")
+        manifest["limits_of_claim"]=[
+            ("bar nodes follow the two-quadratic C1 tangent-aligned section "
+             "map over x=0.75-0.9 m; native coupled mechanics is not solved"
+             if entry.startswith("bar axis and section are lifted") else entry)
+            for entry in manifest["limits_of_claim"]]
+        manifest["limits_of_claim"].append(
+            "paired reference-normal gaps are not a continuous deformed-contact certificate")
     (root/"manifest.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
     records=[]
     for factor,shear in manifest["cases"]:
@@ -1075,7 +1104,8 @@ def main() -> int:
                         plate_thickness_mm=35 if args.half_plate_thickness else 70,
                         tip_load_map=("quadratic_face" if args.quadratic_face_traction
                                       else "legacy"),
-                        full_displacement_output=args.full_displacement_output)
+                        full_displacement_output=args.full_displacement_output,
+                        bar_reference_profile=args.bar_reference_profile)
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()
