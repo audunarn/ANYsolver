@@ -66,7 +66,30 @@ analytic straight full/partial line force and energy, opening, curved retained
 virtual work and smooth tangent, common rigid transformation, paired wrench,
 and explicit integration-budget failure.
 
-The kernel is not an analysis owner. It has no first-approach swept event
-control, physical endpoint caps, beam–beam or beam–shell pairs, friction,
-material transactions, restart or admitted public C3 profile. Its local
-checks do not qualify engineering contact.
+## One-beam retained static development owner
+
+`native_retained_static.py` composes the existing native model owner and
+retained generalized nodal-force equations with this plane kernel. It admits
+exactly one generalized B3-GE beam and one fixed plane. All 42 local
+generalized coordinates, including both retained cell rotations and 18
+constitutive/resultant coordinates, remain in the coupled Newton solve. The
+contact tangent receives the same spatial rotation correction as the native
+structural tangent. Material history origins remain fixed during Newton and
+backtracking; accepted history advances only after the coupled equilibrium
+and declared endpoint gap checks pass.
+
+The owner rejects initial interference, bounds iterations and backtracking,
+and returns the last accepted target on failure. A curved clamped beam loaded
+toward a supporting plane completed with 0.005804 N integrated contact
+reaction, 0.178 mm maximum penetration against an explicit 1 mm development
+budget, nonzero contact work on retained cell rotations, and a coupled
+directional tangent error below 1e-8. The affected geometry, kernel and owner
+tests passed 13/13 (`c3-native-retained-static-final.txt`). A failed second
+target preserved the accepted first target, and a foreign element identity
+was rejected.
+
+This is an internal development route only. It has no conservative swept
+first-approach control, native checkpoint, prescribed-motion tool, endpoint
+caps, multiple beams, beam–shell coupling, friction or admitted public C3
+profile. The existing native context has its own 120-second execution limit.
+The local checks do not qualify engineering contact.
