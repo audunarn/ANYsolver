@@ -31,11 +31,18 @@ a prescribed average downward motion across a fully supported contacting
 patch exhausted its bounded augmentation sequence in the exploratory
 `c1-augmented-press1.txt` and `c1-augmented-press2.txt` evidence. The
 corner-driven case has a deformable contact region and completed with active
-pressure, nonzero reaction and split/restart agreement. Neither case is an
-independent engineering acceptance.
+pressure, nonzero reaction and split/restart agreement. A four-phase
+corner-driven Q4/two-S3 path now presses, slides 0.1 m, opens and recontacts.
+The open phase has a positive 1 µm independent gap, zero contact force and
+zero multiplier norm; restarting from that phase reproduces the final
+displacement and contact reaction. Its focused source check is
+`c1-augmented-four-phase-restart-final1.txt`. These remain development results,
+not independent engineering acceptance.
 
 Run `python examples/general_contact_mixed_path.py --augmented` for the
-corner-driven demonstration. Focused checks are in
+corner-driven press demonstration, or use `--augmented-cycle` for the full
+four-phase path with integrated contact forces, generalized control reactions,
+gap diagnostics and checkpoint output. Focused checks are in
 `tests/test_general_contact_patch_mortar.py` and
 `tests/test_general_contact_patch_sliding.py`. Warped shells, rotations,
 general finite sliding, friction, automatic pairing and dynamics remain open.

@@ -558,6 +558,67 @@ def test_q4_s3_patch_augmented_press_uses_fixed_multiplier_equilibrium():
                                rtol=1.0e-7, atol=1.0e-9)
 
 
+def test_q4_s3_augmented_slide_open_recontact_restarts_from_open_state():
+    from dataclasses import replace
+
+    model, definition, settings, initial = _augmented_patch_path(
+        averaged_normal=False,
+    )
+    program = replace(
+        initial,
+        waypoints=((0.0, 0.0), (0.0, -5.0e-7),
+                   (0.1, -5.0e-7), (0.1, 1.0e-6),
+                   (0.1, -5.0e-7)),
+        steps_per_segment=1,
+    )
+    common = dict(contact=definition, contact_settings=settings,
+                  contact_path_program=program, max_iterations=15)
+    full = solve_static_nonlinear(
+        model, emit_restart_checkpoint=True, **common,
+    )
+    assert full.status == "completed", full.failure_reason
+    assert len(full.steps) == 4
+    history = full.info["force_displacement_history"]
+    assert [row["contact"]["active_pressure_dofs"] for row in history] == [
+        1, 1, 0, 1,
+    ]
+    assert all(row["normal_multiplier_change"] <= settings.pressure_tolerance
+               for row in history)
+    for row in history:
+        contact = row["contact"]
+        assert len(row["reaction_generalized"]) == 2
+        assert np.all(np.isfinite(row["reaction_generalized"]))
+        assert (contact["integration_force"][2]
+                + contact["target_force"][2]) == pytest.approx(0.0, abs=1e-9)
+    slid_force = history[1]["contact"]["integration_force"][2]
+    assert slid_force > 0.0
+    opened = history[2]["contact"]
+    assert opened["conservative_lower_gap"] > 0.0
+    assert opened["integration_force"][2] == 0.0
+    assert opened["multiplier_norm"] == 0.0
+    assert history[3]["contact"]["integration_force"][2] == pytest.approx(
+        slid_force, rel=1e-4,
+    )
+
+    split = solve_static_nonlinear(
+        model, max_load_factor=0.75,
+        emit_restart_checkpoint=True, **common,
+    )
+    assert split.status == "completed", split.failure_reason
+    assert len(split.steps) == 3
+    assert split.info["general_contact"]["multiplier_norm"] == 0.0
+    assert split.restart_checkpoint["version"] == 2
+    resumed = solve_static_nonlinear(
+        model, restart_checkpoint=split.to_restart_checkpoint(), **common,
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, full.displacements,
+                               rtol=1e-7, atol=1e-9)
+    assert resumed.info["general_contact"]["integration_force"][2] == pytest.approx(
+        full.info["general_contact"]["integration_force"][2], rel=1e-5,
+    )
+
+
 def test_q4_s3_augmented_forced_penetration_fails_without_committing():
     model, definition, settings, program = _augmented_patch_path(
         averaged_normal=True,

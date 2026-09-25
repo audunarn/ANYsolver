@@ -70,8 +70,11 @@ at 0.4 N, a 0.1 m lateral path across the S3 patch and split/restart. A
 separate normal-displacement path pressed, opened and recontacted the same
 Q4/S3 pair through three checkpoint continuations. The opened state had no
 active pressure and a positive certified gap; the recontact force matched
-the initial closed state. These are separate local paths, not yet one
-combined slide–separate–recontact qualification case. Two S3 integration
+the initial closed state. The later [multi-control path](GENERAL_CONTACT_C1_MULTI_CONTROL_PATH.md)
+combines those phases in one local development analysis, and its separate
+[augmented variant](GENERAL_CONTACT_C1_AUGMENTED_PATH.md) now does so with
+multiplier release and open-phase restart. Neither is a qualified C1 handoff.
+Two S3 integration
 faces share four pressure nodes and passed a local physical force/rank check.
 Their full and partial-overlap coupled uniform-pressure cases then completed
 with independently integrated nodal loads. An earlier uneven-load

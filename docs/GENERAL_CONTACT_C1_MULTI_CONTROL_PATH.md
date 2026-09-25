@@ -43,3 +43,8 @@ active while closed; none are active when open. The final overlap is
 a changed path is rejected. Focused checks are in
 `tests/test_general_contact_patch_sliding.py`. This is a local development
 case, not the full C1 engineering handoff or a release claim.
+
+The separately selected `--augmented-cycle` uses one corner normal control
+and the projected augmented law across those same four phases. It releases
+the multiplier at opening and resumes from an open-phase checkpoint. See
+[augmented path limits](GENERAL_CONTACT_C1_AUGMENTED_PATH.md).

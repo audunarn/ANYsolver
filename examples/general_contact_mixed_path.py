@@ -3,6 +3,7 @@
 Run from the repository root with the installed package on Python's path:
     python examples/general_contact_mixed_path.py
     python examples/general_contact_mixed_path.py --augmented
+    python examples/general_contact_mixed_path.py --augmented-cycle
     python examples/general_contact_mixed_path.py --first-approach
 """
 
@@ -20,7 +21,9 @@ from anysolver import (
 from anysolver.fe_core import FEModel
 
 
-def main(*, augmented: bool = False, first_approach: bool = False) -> None:
+def main(*, augmented: bool = False, augmented_cycle: bool = False,
+         first_approach: bool = False) -> None:
+    use_augmented = augmented or augmented_cycle
     model = FEModel("restricted_mixed_patch_sliding_example")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
     lower_x_shift = 1.0 if first_approach else 0.0
@@ -62,13 +65,13 @@ def main(*, augmented: bool = False, first_approach: bool = False) -> None:
         rigid_bodies=(),
         interactions=(ContactInteraction(
             "patch_pair", "upper_bottom", "lower_top", 1.0e6, 6.0e-6,
-            normal_law="augmented" if augmented else "penalty",
+            normal_law="augmented" if use_augmented else "penalty",
         ),),
     )
     settings = ContactSolverSettings(
         pair_motion="restricted_sliding", sliding_difference_step=1.0e-8,
-        pressure_tolerance=1.0e-5 if augmented else None,
-        maximum_augmentations=20 if augmented else 12,
+        pressure_tolerance=1.0e-5 if use_augmented else None,
+        maximum_augmentations=20 if use_augmented else 12,
     )
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
@@ -76,7 +79,7 @@ def main(*, augmented: bool = False, first_approach: bool = False) -> None:
     program = ContactPathProgram(
         controls=(
             ContactPathControl.node(5, "ux"),
-            (ContactPathControl.node(5, "uz") if augmented else
+            (ContactPathControl.node(5, "uz") if use_augmented else
              ContactPathControl(tuple((node, "uz", 0.25)
                                       for node in (5, 6, 7, 8)))),
         ),
@@ -106,6 +109,8 @@ def main(*, augmented: bool = False, first_approach: bool = False) -> None:
                 "active_pressure_dofs": record["contact"]["active_pressure_dofs"],
                 "lower_gap_m": record["contact"]["conservative_lower_gap"],
                 "normal_force_N": record["contact"]["integration_force"][2],
+                "opposite_normal_force_N": record["contact"]["target_force"][2],
+                "control_reactions": record["reaction_generalized"],
                 "augmentation_iterations": record["augmentation_iterations"],
             }
             for record in result.info["force_displacement_history"]
@@ -120,7 +125,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--augmented", action="store_true")
+    modes.add_argument("--augmented-cycle", action="store_true")
     modes.add_argument("--first-approach", action="store_true")
     arguments = parser.parse_args()
     main(augmented=arguments.augmented,
+         augmented_cycle=arguments.augmented_cycle,
          first_approach=arguments.first_approach)
