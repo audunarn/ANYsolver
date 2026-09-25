@@ -29,7 +29,7 @@ def bounded_surface_line_screen(*, shell_x: int = 8, shell_y: int = 8,
     if (shell_x not in (8, 16) or shell_y not in (8, 16) or
             beam_half_cells not in (4, 8, 16) or
             not intervals or any(n not in (2, 4, 8) for n in intervals) or
-            moment_y_policy not in ("local", "global")):
+            moment_y_policy not in ("local", "global", "global_yz")):
         raise ValueError("bounded shell, beam and line resolutions required")
     xs = np.linspace(-.5, 1.5, shell_x+1)
     ys = np.linspace(-.5, .5, shell_y+1)
@@ -64,17 +64,22 @@ def bounded_surface_line_screen(*, shell_x: int = 8, shell_y: int = 8,
         if moment_y_policy == "local":
             rows = all_rows
         else:
-            # A continuous-P1 transverse gap has n+1 trace coordinates.
-            # Keep its n means and one global first moment, rather than
-            # imposing n independent first moments on the same P1 field.
+            # A continuous-P1 transverse or lateral gap has n+1 trace
+            # coordinates. Keep n means and one global first moment for
+            # each selected direction instead of n redundant local moments.
+            local_channels = ((0, 1, 2, 3, 5) if
+                              moment_y_policy == "global" else (0, 1, 2, 3))
             local_indices = [6*k+j for k in range(n)
-                             for j in (0, 1, 2, 3, 5)]
+                             for j in local_channels]
             global_row, global_reference = distributed_surface_patch_trace(
                 xs, ys, beam, plate_thickness=.035,
                 x_interval=(0., 1.))
             reference_gap = max(reference_gap,
                                 global_reference["reference_gap_m"])
-            rows = np.vstack((all_rows[local_indices], global_row[4]))
+            global_channels = ((4,) if moment_y_policy == "global" else
+                               (4, 5))
+            rows = np.vstack((all_rows[local_indices],
+                              global_row[list(global_channels)]))
         row_count = len(rows)
         constrained = rows[:, free]
         rank = int(np.linalg.matrix_rank(constrained))
@@ -108,37 +113,49 @@ def bounded_surface_line_screen(*, shell_x: int = 8, shell_y: int = 8,
         if skew > 1e-8:
             raise ArithmeticError("reference line compliance is nonsymmetric")
 
-        # Each multiplier is a cell resultant. Divide by its cell length to
-        # recover the physical line-density coefficients for the dual norm.
-        lower, upper = p0_dual_gram(n, 1., 2048)
-        dual = np.zeros((row_count, row_count))
-        density_gram = lower*n*n
-        channels = ((0, 1, 2, 3, 4, 5) if moment_y_policy == "local"
-                    else (0, 1, 2, 3, 5))
-        for position, channel in enumerate(channels):
-            indices = np.arange(position, len(channels)*n, len(channels))
-            dual[np.ix_(indices, indices)] = (
-                density_gram/action_scales[channel]**2)
-        if moment_y_policy == "global":
-            dual[-1, -1] = 1./action_scales[4]**2
-        eigenvalues, eigenvectors = linalg.eigh(compliance, dual)
-        if eigenvalues[0] <= 0.:
-            raise ArithmeticError("nonpositive physical line-compliance mode")
-        weak = eigenvectors[:, 0]
-        channel_fractions = [0.]*6
-        for position, channel in enumerate(channels):
-            values = weak[position:len(channels)*n:len(channels)]*n/action_scales[channel]
-            channel_fractions[channel] = float(values@lower@values)
-        if moment_y_policy == "global":
-            channel_fractions[4] = float((weak[-1]/action_scales[4])**2)
-        weak_response = inverse_rows@weak
-        shell_mode = np.zeros(shell_size)
-        shell_mode[free[free<shell_size]] = weak_response[free<shell_size]
-        physical_shell_action = float(shell_mode@shell_physical@shell_mode)
-        shell_action = float(shell_mode@shell_k@shell_mode)
-        beam_mode = weak_response[free>=shell_size]
-        beam_free = free[free>=shell_size]-shell_size
-        beam_action = float(beam_mode@beam_k[np.ix_(beam_free, beam_free)]@beam_mode)
+        mode_diagnostics = {"mode_status": "NOT_EVALUATED_MIXED_DUAL_NORM"}
+        if moment_y_policy != "global_yz":
+            # The mixed P0/global-YZ dual norm needs a separate derivation.
+            # Do not present a diagonal surrogate as interface stability.
+            lower, upper = p0_dual_gram(n, 1., 2048)
+            dual = np.zeros((row_count, row_count))
+            density_gram = lower*n*n
+            channels = ((0, 1, 2, 3, 4, 5) if moment_y_policy == "local"
+                        else (0, 1, 2, 3, 5))
+            for position, channel in enumerate(channels):
+                indices = np.arange(position, len(channels)*n, len(channels))
+                dual[np.ix_(indices, indices)] = (
+                    density_gram/action_scales[channel]**2)
+            if moment_y_policy == "global":
+                dual[-1, -1] = 1./action_scales[4]**2
+            eigenvalues, eigenvectors = linalg.eigh(compliance, dual)
+            if eigenvalues[0] <= 0.:
+                raise ArithmeticError("nonpositive physical line-compliance mode")
+            weak = eigenvectors[:, 0]
+            channel_fractions = [0.]*6
+            for position, channel in enumerate(channels):
+                values = weak[position:len(channels)*n:len(channels)]*n/action_scales[channel]
+                channel_fractions[channel] = float(values@lower@values)
+            if moment_y_policy == "global":
+                channel_fractions[4] = float((weak[-1]/action_scales[4])**2)
+            weak_response = inverse_rows@weak
+            shell_mode = np.zeros(shell_size)
+            shell_mode[free[free<shell_size]] = weak_response[free<shell_size]
+            physical_shell_action = float(shell_mode@shell_physical@shell_mode)
+            shell_action = float(shell_mode@shell_k@shell_mode)
+            beam_mode = weak_response[free>=shell_size]
+            beam_free = free[free>=shell_size]-shell_size
+            beam_action = float(beam_mode@beam_k[np.ix_(beam_free, beam_free)]@beam_mode)
+            mode_diagnostics = {
+                "mode_status": "DIAGNOSTIC_FINITE_COMPLIANCE_ONLY",
+                "h_minus_half_gram_relative_tail": float(
+                    np.linalg.norm(upper-lower)/np.linalg.norm(lower)),
+                "finite_physical_mode_action_j": float(eigenvalues[0]),
+                "weakest_mode_channel_norm_fractions": channel_fractions,
+                "weakest_mode_shell_physical_action_j": physical_shell_action,
+                "weakest_mode_shell_numerical_action_j": shell_action-physical_shell_action,
+                "weakest_mode_beam_action_j": beam_action,
+            }
 
         loaded = {}
         for name, (dof, amplitude) in loads.items():
@@ -205,16 +222,12 @@ def bounded_surface_line_screen(*, shell_x: int = 8, shell_y: int = 8,
             "constraint_rank": rank,
             "max_reference_gap_m": reference_gap,
             "action_scales_n_nm": action_scales.tolist(),
-            "h_minus_half_gram_relative_tail": float(
-                np.linalg.norm(upper-lower)/np.linalg.norm(lower)),
-            "finite_physical_mode_action_j": float(eigenvalues[0]),
-            "weakest_mode_channel_norm_fractions": channel_fractions,
-            "weakest_mode_shell_physical_action_j": physical_shell_action,
-            "weakest_mode_shell_numerical_action_j": shell_action-physical_shell_action,
-            "weakest_mode_beam_action_j": beam_action,
+            **mode_diagnostics,
             "compliance_relative_skew": skew,
             "loaded": loaded,
-            "interpretation": "fixed-mesh exact surface-resultant line screen; global My is a nonlocal diagnostic, not a production mortar or inf-sup qualification",
+            "interpretation": ("trace-dimension global My/Mz screen: rank, work and loaded transfer only; mixed dual norm and production law are not qualified"
+                               if moment_y_policy == "global_yz" else
+                               "fixed-mesh exact surface-resultant line screen; global My is a nonlocal diagnostic, not a production mortar or inf-sup qualification"),
         })
     return results
 
