@@ -169,7 +169,7 @@ def force_only_modes(kkt, shell, beam, spaces) -> dict:
     return result
 
 
-def run(output_dir: Path) -> None:
+def run(output_dir: Path, *, joint: bool = False) -> None:
     source = subprocess.check_output(["git", "rev-parse", "HEAD"],
                                      text=True).strip()
     if subprocess.check_output(["git", "status", "--porcelain"],
@@ -188,25 +188,56 @@ def run(output_dir: Path) -> None:
         "scope": "same fixed discrete model, actual native section recovery; no continuum inf-sup or production selection",
         "dense_limit": 1200,
     }
+    if joint:
+        manifest.update({
+            "question": "Does the physical Fz-only positive-compliance mode keep weakening across the registered three-level joint axial series at beam:shell element ratio 1:2?",
+            "decision": "A persistent decline bars P0 selection pending a trace/space revision; stabilization would identify fixed-primal saturation but still require transverse refinement, physical accuracy and the registered mesh ratios.",
+            "mesh": "Q4/S3 shell axial 4/8/16, transverse 4; native B3 half4/8/16; fixed .05/.05 m physical strip",
+            "spaces": ["P0 Fz and other channels 2/4/8; P0 Mx 4/8/16"],
+            "scope": "one-axis joint refinement only; physical Fz compliance, not six-channel or continuum inf-sup",
+        })
     with threadpool_limits(limits=1):
         manifest["effective_threadpools"] = threadpool_info()
         (output_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
         with (output_dir / "results.jsonl").open("w") as stream:
-            coarse = LineMultiplierSpace(
-                "piecewise_constant", (0., .25, .5, .75, 1.))
-            fine = LineMultiplierSpace(
-                "piecewise_constant", tuple(np.linspace(0., 1., 9)))
             for topology in ("Q4", "S3-V2D"):
-                shell = FlatE4TrialPanel(make_shell(4, topology, n_y=4))
-                beam = build(16)
-                for label, spaces in (
-                        ("coarse_Fz_fine_Mx",
-                         (coarse, coarse, coarse, fine, coarse, coarse)),
-                        ("fine_all", (fine,) * 6)):
+                if joint:
+                    cases = ((cells, cells, cells // 2, "joint")
+                             for cells in (4, 8, 16))
+                else:
+                    cases = ((8, 16, 4, "coarse_Fz_fine_Mx"),
+                             (8, 16, 8, "fine_all"))
+                for shell_x, beam_half, fz_cells, label in cases:
+                    shell = FlatE4TrialPanel(make_shell(
+                        shell_x // 2, topology, n_y=4))
+                    beam = build(beam_half)
+                    coarse = LineMultiplierSpace(
+                        "piecewise_constant",
+                        tuple(np.linspace(0., 1., fz_cells + 1)))
+                    fine = LineMultiplierSpace(
+                        "piecewise_constant",
+                        tuple(np.linspace(0., 1., 2 * fz_cells + 1)))
+                    spaces = ((coarse, coarse, coarse, fine, coarse, coarse)
+                              if joint or fz_cells == 4 else (coarse,) * 6)
                     kkt = assemble_channel_basis_reference_kkt(
                         shell, beam, spaces,
                         shell_port="physical_strip_005_005",
                         shell_support_policy="full_left_edge")
+                    if joint:
+                        row = {"topology": topology, "space": label,
+                               "shell_axial_cells": shell_x,
+                               "shell_transverse_cells": 4,
+                               "beam_half_cells": beam_half,
+                               "fz_cells": fz_cells,
+                               "row_count": len(kkt.constraint_jacobian),
+                               "force_only": force_only_modes(
+                                   kkt, shell, beam, spaces)}
+                        stream.write(json.dumps(row, allow_nan=False) + "\n")
+                        stream.flush()
+                        print(topology, shell_x,
+                              row["force_only"]["HminusOne"]["beta_lower"],
+                              flush=True)
+                        continue
                     diagnostic = weakest_mode(
                         kkt, shell, beam, spaces, kkt.constraint_jacobian)
                     selected = diagnostic["transverse_row_indices"]
@@ -242,4 +273,6 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("output_dir", type=Path)
-    run(parser.parse_args().output_dir)
+    parser.add_argument("--joint", action="store_true")
+    args = parser.parse_args()
+    run(args.output_dir, joint=args.joint)
