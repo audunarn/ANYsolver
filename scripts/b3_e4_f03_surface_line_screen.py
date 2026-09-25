@@ -22,12 +22,14 @@ from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 def bounded_surface_line_screen(*, shell_x: int = 8, shell_y: int = 8,
                                 beam_half_cells: int = 8,
-                                intervals: tuple[int, ...] = (2, 4, 8)
+                                intervals: tuple[int, ...] = (2, 4, 8),
+                                moment_y_policy: str = "local"
                                 ) -> list[dict]:
     """Solve identical torque/shear loads for several exact line row counts."""
     if (shell_x not in (8, 16) or shell_y not in (8, 16) or
             beam_half_cells not in (4, 8, 16) or
-            not intervals or any(n not in (2, 4, 8) for n in intervals)):
+            not intervals or any(n not in (2, 4, 8) for n in intervals) or
+            moment_y_policy not in ("local", "global")):
         raise ValueError("bounded shell, beam and line resolutions required")
     xs = np.linspace(-.5, 1.5, shell_x+1)
     ys = np.linspace(-.5, .5, shell_y+1)
@@ -57,29 +59,47 @@ def bounded_surface_line_screen(*, shell_x: int = 8, shell_y: int = 8,
         parts = [distributed_surface_patch_trace(
             xs, ys, beam, plate_thickness=.035,
             x_interval=(k/n, (k+1)/n)) for k in range(n)]
-        rows = np.vstack([part[0] for part in parts])
+        all_rows = np.vstack([part[0] for part in parts])
         reference_gap = max(part[1]["reference_gap_m"] for part in parts)
+        if moment_y_policy == "local":
+            rows = all_rows
+        else:
+            # A continuous-P1 transverse gap has n+1 trace coordinates.
+            # Keep its n means and one global first moment, rather than
+            # imposing n independent first moments on the same P1 field.
+            local_indices = [6*k+j for k in range(n)
+                             for j in (0, 1, 2, 3, 5)]
+            global_row, global_reference = distributed_surface_patch_trace(
+                xs, ys, beam, plate_thickness=.035,
+                x_interval=(0., 1.))
+            reference_gap = max(reference_gap,
+                                global_reference["reference_gap_m"])
+            rows = np.vstack((all_rows[local_indices], global_row[4]))
+        row_count = len(rows)
         constrained = rows[:, free]
         rank = int(np.linalg.matrix_rank(constrained))
         if reference_gap > 1e-11:
             raise ArithmeticError("exact surface-line reference gap changed")
-        if rank != 6*n:
+        if rank != row_count:
             left, singular, _ = np.linalg.svd(constrained, full_matrices=False)
             null = left[:, rank:]
-            results.append({
+            failed = {
                 "status": "RANK_DEFICIENT_NO_SOLVE",
+                "moment_y_policy": moment_y_policy,
                 "shell_elements_xy": [shell_x, shell_y],
                 "beam_half_cells": beam_half_cells,
                 "line_intervals": n,
                 "primal_rows": total,
                 "constraint_rank": rank,
-                "constraint_rows": 6*n,
+                "constraint_rows": row_count,
                 "max_reference_gap_m": reference_gap,
                 "smallest_singular_value_raw_mixed_units": float(singular[-1]),
-                "null_projector_channel_weights_raw_mixed_units": (
-                    np.sum(null.reshape(n, 6, -1)**2, axis=(0, 2))).tolist(),
                 "interpretation": "exact row dependence; no KKT solve or physical stability claim",
-            })
+            }
+            if moment_y_policy == "local":
+                failed["null_projector_channel_weights_raw_mixed_units"] = (
+                    np.sum(null.reshape(n, 6, -1)**2, axis=(0, 2))).tolist()
+            results.append(failed)
             continue
         inverse_rows = linalg.lu_solve(factor, constrained.T)
         compliance = constrained@inverse_rows
@@ -91,20 +111,26 @@ def bounded_surface_line_screen(*, shell_x: int = 8, shell_y: int = 8,
         # Each multiplier is a cell resultant. Divide by its cell length to
         # recover the physical line-density coefficients for the dual norm.
         lower, upper = p0_dual_gram(n, 1., 2048)
-        dual = np.zeros((6*n, 6*n))
+        dual = np.zeros((row_count, row_count))
         density_gram = lower*n*n
-        for channel in range(6):
-            indices = np.arange(channel, 6*n, 6)
+        channels = ((0, 1, 2, 3, 4, 5) if moment_y_policy == "local"
+                    else (0, 1, 2, 3, 5))
+        for position, channel in enumerate(channels):
+            indices = np.arange(position, len(channels)*n, len(channels))
             dual[np.ix_(indices, indices)] = (
                 density_gram/action_scales[channel]**2)
+        if moment_y_policy == "global":
+            dual[-1, -1] = 1./action_scales[4]**2
         eigenvalues, eigenvectors = linalg.eigh(compliance, dual)
         if eigenvalues[0] <= 0.:
             raise ArithmeticError("nonpositive physical line-compliance mode")
         weak = eigenvectors[:, 0]
-        channel_fractions = []
-        for channel in range(6):
-            values = weak[channel::6]*n/action_scales[channel]
-            channel_fractions.append(float(values@lower@values))
+        channel_fractions = [0.]*6
+        for position, channel in enumerate(channels):
+            values = weak[position:len(channels)*n:len(channels)]*n/action_scales[channel]
+            channel_fractions[channel] = float(values@lower@values)
+        if moment_y_policy == "global":
+            channel_fractions[4] = float((weak[-1]/action_scales[4])**2)
         weak_response = inverse_rows@weak
         shell_mode = np.zeros(shell_size)
         shell_mode[free[free<shell_size]] = weak_response[free<shell_size]
@@ -171,6 +197,7 @@ def bounded_surface_line_screen(*, shell_x: int = 8, shell_y: int = 8,
             }
         results.append({
             "status": "SOLVED_BOUNDED_DIAGNOSTIC",
+            "moment_y_policy": moment_y_policy,
             "shell_elements_xy": [shell_x, shell_y],
             "beam_half_cells": beam_half_cells,
             "line_intervals": n,
@@ -187,6 +214,92 @@ def bounded_surface_line_screen(*, shell_x: int = 8, shell_y: int = 8,
             "weakest_mode_beam_action_j": beam_action,
             "compliance_relative_skew": skew,
             "loaded": loaded,
-            "interpretation": "fixed-mesh exact P0 surface-resultant line screen; not inf-sup or external qualification",
+            "interpretation": "fixed-mesh exact surface-resultant line screen; global My is a nonlocal diagnostic, not a production mortar or inf-sup qualification",
         })
     return results
+
+
+def bounded_torsion_channel_ablation() -> list[dict]:
+    """Isolate which exact line rows change torque on one fixed model.
+
+    All policies use the same virgin Q4 x8/y8, retained B3 half16, 35 mm
+    shell, 100 mm square-section, eccentricity, supports and 100 N m tip
+    torque. This is a coupled-channel diagnosis, not permission to delete a
+    physical channel from a production attachment.
+    """
+    xs = np.linspace(-.5, 1.5, 9)
+    ys = np.linspace(-.5, .5, 9)
+    shell_k, shell_physical = raw_e4_tangent(xs, ys, thickness=.035)
+    beam = build(16, z_offset=.0675,
+                 torsion_constant=square_torsion_constant())
+    shell_size = len(shell_k)
+    primal = linalg.block_diag(shell_k, beam.tangent.toarray())
+    fixed = ({6*j*len(xs)+axis for j in range(len(ys))
+              for axis in range(6)} |
+             {shell_size+i for i in beam.context.fixed})
+    free = np.array([i for i in range(len(primal)) if i not in fixed])
+    if len(primal) > 1900:
+        raise ValueError("torsion ablation exceeds bounded dense row cap")
+    factor = linalg.lu_factor(primal[np.ix_(free, free)])
+    tip_rx = shell_size+6*beam.n_half_cells+3
+    force = np.zeros(len(primal))
+    force[tip_rx] = 100.
+    unconstrained = linalg.lu_solve(factor, force[free])
+    policies = {
+        "mx_only": (3,),
+        "mx_fx": (3, 0),
+        "mx_fy": (3, 1),
+        "mx_fz": (3, 2),
+        "mx_my": (3, 4),
+        "mx_mz": (3, 5),
+        "mx_fy_mz": (3, 1, 5),
+        "all_six": (0, 1, 2, 3, 4, 5),
+    }
+    records = []
+    for n in (2, 4, 8):
+        all_rows = np.vstack([
+            distributed_surface_patch_trace(
+                xs, ys, beam, plate_thickness=.035,
+                x_interval=(cell/n, (cell+1)/n))[0]
+            for cell in range(n)])
+        responses = {}
+        for name, channels in policies.items():
+            indices = [6*cell+channel for cell in range(n)
+                       for channel in channels]
+            rows = all_rows[indices]
+            constrained = rows[:, free]
+            rank = int(np.linalg.matrix_rank(constrained))
+            if rank != len(rows):
+                responses[name] = {"status": "RANK_DEFICIENT_NO_SOLVE",
+                                   "rank": rank, "rows": len(rows)}
+                continue
+            inverse_rows = linalg.lu_solve(factor, constrained.T)
+            multiplier = linalg.solve(
+                constrained@inverse_rows, constrained@unconstrained)
+            solution = np.zeros(len(primal))
+            solution[free] = unconstrained-inverse_rows@multiplier
+            residual = primal@solution+rows.T@multiplier-force
+            gap = rows@solution
+            work = float(force@solution)
+            if (np.linalg.norm(residual[free])/100. > 1e-8 or
+                    np.max(np.abs(gap)) > 1e-8 or work <= 0.):
+                raise ArithmeticError("bounded torque-channel solve failed")
+            shell_solution = solution[:shell_size]
+            responses[name] = {
+                "status": "SOLVED_BOUNDED_DIAGNOSTIC",
+                "rank": rank,
+                "tip_rx_rad": float(solution[tip_rx]),
+                "physical_shell_work_j": float(
+                    shell_solution@shell_physical@shell_solution),
+                "numerical_shell_work_j": float(
+                    shell_solution@(shell_k-shell_physical)@shell_solution),
+                "scaled_equilibrium_error": float(
+                    np.linalg.norm(residual[free])/100.),
+                "max_weak_gap_m_rad": float(np.max(np.abs(gap))),
+            }
+        records.append({"line_intervals": n,
+                        "shell_elements_xy": [8, 8],
+                        "beam_half_cells": 16,
+                        "responses": responses,
+                        "interpretation": "fixed-mesh torque channel ablation, not a physical channel-removal policy"})
+    return records
