@@ -23,3 +23,6 @@ def test_distinct_footprint_work_and_finite_rigid_pullback(topology):
     assert abs(distributing["mixed_hessian_j"]) > 1e-3
     assert distributing["first_error_j"] < 1e-6
     assert distributing["mixed_error_j"] < 1e-5
+    assert distributing["force_balance_n"] < 1e-9
+    assert distributing["moment_balance_nm"] < 1e-9
+    assert distributing["physical_work_error_j"] < 1e-9

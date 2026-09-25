@@ -23,7 +23,8 @@ from scripts._b3_e4_f03_native_spatial_port import NativeNodalSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import reference_nodes
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
-    pose_from_e4_total_strip, reference_spatial_trace_strip, strip_weights,
+    directional_pose_from_e4_total_strip, pose_from_e4_total_strip,
+    reference_spatial_trace_strip, strip_weights,
 )
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
@@ -220,13 +221,53 @@ def finite_distributing_work(shell: FlatE4TrialPanel, beam, port) -> dict:
     mixed_fd = (potential(h, h)-potential(h, -h)-
                 potential(-h, h)+potential(-h, -h))/(4*h*h)
     mixed_error = abs(analytic.mixed-mixed_fd)
+    shell_position, shell_frame = pose_from_e4_total_strip(
+        panel, .5, shell_base.ravel(), half_length=.05, half_width=.05)
+    shell_d = directional_pose_from_e4_total_strip(
+        panel, .5, shell_base.ravel(), first, second,
+        half_length=.05, half_width=.05)
+    high, low, beam_frame = port.pose_pair(state)
+    beam_position = high + low
+    evaluation = joint.evaluate(
+        np.array((shell_position, high)),
+        np.array((shell_frame, beam_frame)), multipliers,
+        position_low=np.array((np.zeros(3), low)))
+    shell_force = evaluation.residual[:3]
+    shell_moment = evaluation.residual[3:6]
+    beam_force = evaluation.residual[6:9]
+    beam_moment = evaluation.residual[9:12]
+    force_balance = float(np.linalg.norm(shell_force+beam_force))
+    moment_balance = float(np.linalg.norm(
+        np.cross(shell_position, shell_force)+shell_moment+
+        np.cross(beam_position, beam_force)+beam_moment))
+
+    def angular(frame_first: np.ndarray) -> np.ndarray:
+        matrix = frame_first @ shell_frame.T
+        return np.array((matrix[2, 1]-matrix[1, 2],
+                         matrix[0, 2]-matrix[2, 0],
+                         matrix[1, 0]-matrix[0, 1]))/2.
+
+    beam_trace = port.tangent(state)
+    first_trace = np.r_[shell_d.position_first,
+                        angular(shell_d.frame_first),
+                        beam_trace@beam_first]
+    second_trace = np.r_[shell_d.position_second,
+                         angular(shell_d.frame_second),
+                         beam_trace@beam_second]
+    physical_work_error = max(
+        abs(analytic.first-evaluation.residual[:12]@first_trace),
+        abs(analytic.second-evaluation.residual[:12]@second_trace))
     if (abs(analytic.potential-potential(0., 0.)) > 1e-10 or
             first_error > 1e-6 or mixed_error > 1e-5 or
-            abs(analytic.mixed) < 1e-3):
+            abs(analytic.mixed) < 1e-3 or
+            max(force_balance, moment_balance, physical_work_error) > 1e-9):
         raise ArithmeticError("finite distributing patch pullback failed")
     return {"potential_j": analytic.potential,
             "first_error_j": first_error, "mixed_hessian_j": analytic.mixed,
             "mixed_error_j": mixed_error,
+            "force_balance_n": force_balance,
+            "moment_balance_nm": moment_balance,
+            "physical_work_error_j": physical_work_error,
             "scope": "actual E4 area-mean/polar pose and native nodal Exp-chart, nonzero-multiplier local proof"}
 
 
