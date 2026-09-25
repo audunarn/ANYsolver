@@ -1500,7 +1500,7 @@ if __name__ == "__main__":
     if args.graded_terminal:
         if args.c1_opening_shear and (args.half_plate_thickness or
                                       args.surface_moment_candidate or
-                                      args.graded_patch_cells != [4,8]):
+                                      tuple(args.graded_patch_cells) != (4,8)):
             parser.error("C1 opening shear selects its own bounded model and grids")
         run_graded_terminal(args.output_dir,
                             (2,4) if args.c1_opening_shear else
