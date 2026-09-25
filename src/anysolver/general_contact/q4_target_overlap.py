@@ -100,11 +100,13 @@ def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray
         if visited > maximum_triangles:
             raise MemoryError("Q4 target contact integration triangle budget exhausted")
         coarse, coarse_min = rule(triangle)
-        middle = np.mean(triangle, axis=0)
+        a, b, c = triangle
+        ab, bc, ca = (a+b)/2.0, (b+c)/2.0, (c+a)/2.0
         children = (
-            np.asarray((triangle[0], triangle[1], middle)),
-            np.asarray((triangle[1], triangle[2], middle)),
-            np.asarray((triangle[2], triangle[0], middle)),
+            np.asarray((a, ab, ca)),
+            np.asarray((ab, b, bc)),
+            np.asarray((ca, bc, c)),
+            np.asarray((ab, bc, ca)),
         )
         refined = np.zeros(3)
         child_minimum = coarse_min
@@ -115,16 +117,16 @@ def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray
         minimum_sampled = min(minimum_sampled, child_minimum)
         error = reference_area_ratio*float(np.max(np.abs(refined-coarse)))
         if error <= budget:
-            leaves += 3
+            leaves += 4
             if leaves > maximum_triangles:
                 raise MemoryError("Q4 target contact integration triangle budget exhausted")
             measured_error += error
             return refined
-        if leaves+3 > maximum_triangles:
+        if leaves+4 > maximum_triangles:
             raise MemoryError("Q4 target contact integration triangle budget exhausted")
         values = np.zeros(3)
         for child in children:
-            values += integrate(child, budget/3.0)
+            values += integrate(child, budget/4.0)
         return values
 
     for index in range(1, len(overlap.polygon)-1):

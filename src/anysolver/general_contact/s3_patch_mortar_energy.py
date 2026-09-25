@@ -8,6 +8,8 @@ import numpy as np
 
 from .moving import _has_shared_edge_transition
 from .overlap import PlanarFace, planar_projected_overlap
+from .q4_source_mortar_energy import MovingQ4PrimalMortarPenalty
+from .q4_source_overlap import projected_q4_source_face
 from .triangle_mortar_energy import MovingS3PrimalMortarPenalty
 
 
@@ -43,6 +45,7 @@ class MovingS3PatchMortarState:
     overlapping_pairs: int
     weighted_gap_integration_error: float = 0.0
     integration_triangles: int = 0
+    area_integration_error: float = 0.0
 
     @property
     def active_pressure_dofs(self):
@@ -65,15 +68,19 @@ class MovingS3PatchPrimalMortarPenalty:
                  *, difference_step: float,
                  maximum_energy_evaluations: int = 1500,
                  q4_weighted_gap_tolerance: float | None = None,
-                 maximum_q4_integration_triangles: int | None = None):
+                 maximum_q4_integration_triangles: int | None = None,
+                 q4_source_area_tolerance: float | None = None,
+                 q4_source_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_source_integration_triangles: int | None = None):
         self.source_faces = tuple(source_faces)
         self.target_faces = tuple(target_faces)
         if not (1 <= len(self.source_faces) <= 2
                 and 1 <= len(self.target_faces) <= 2
                 and len(self.source_faces)+len(self.target_faces) >= 3):
             raise ValueError("development S3 patch needs one or two faces per side and at least three total")
-        if any(len(face.node_ids) != 3 for face in self.source_faces):
-            raise ValueError("development patch pressure side needs S3 triangles")
+        source_q4 = len(self.source_faces) == 1 and len(self.source_faces[0].node_ids) == 4
+        if not source_q4 and any(len(face.node_ids) != 3 for face in self.source_faces):
+            raise ValueError("development patch pressure side needs S3 triangles or one Q4")
         self.source_node_ids = tuple(sorted({node for face in self.source_faces
                                              for node in face.node_ids}))
         self.target_node_ids = tuple(sorted({node for face in self.target_faces
@@ -105,6 +112,14 @@ class MovingS3PatchPrimalMortarPenalty:
                 "S3 patch Hessian exceeds declared energy evaluation budget"
             )
         self.pair_laws = tuple(
+            MovingQ4PrimalMortarPenalty(
+                source.reference_positions, target.reference_positions,
+                self.stiffness, difference_step=self.difference_step,
+                maximum_energy_evaluations=self.maximum_energy_evaluations,
+                area_tolerance=q4_source_area_tolerance,
+                weighted_gap_tolerance=q4_source_weighted_gap_tolerance,
+                maximum_integration_triangles=maximum_q4_source_integration_triangles,
+            ) if len(source.node_ids) == 4 else
             MovingS3PrimalMortarPenalty(
                 source.reference_positions, target.reference_positions,
                 self.stiffness, difference_step=self.difference_step,
@@ -164,6 +179,7 @@ class MovingS3PatchPrimalMortarPenalty:
         overlapping_pairs = 0
         weighted_error = 0.0
         integration_triangles = 0
+        area_error = 0.0
         for index, law in enumerate(self.pair_laws):
             source_face = index // len(self.target_faces)
             target_face = index % len(self.target_faces)
@@ -175,14 +191,16 @@ class MovingS3PatchPrimalMortarPenalty:
             overlapping_pairs += 1
             weighted_error += state.weighted_gap_integration_error
             integration_triangles += state.integration_triangles
+            area_error += getattr(state, "area_integration_error", 0.0)
             dofs = self.source_face_indices[source_face]
             support[dofs] += state.reference_support
             weighted_gap[dofs] += state.reference_weighted_gap
             gram[np.ix_(dofs, dofs)] += state.pressure_gram
             overlap_area += state.overlap_area
             reference_overlap_area += state.reference_overlap_area
-            minimum = (state.minimum_physical_gap if minimum is None
-                       else min(minimum, state.minimum_physical_gap))
+            sampled = (state.minimum_sampled_gap if len(self.source_face_indices[source_face]) == 4
+                       else state.minimum_physical_gap)
+            minimum = (sampled if minimum is None else min(minimum, sampled))
         normalized = np.zeros_like(support)
         supported = support > 0.0
         normalized[supported] = weighted_gap[supported]/support[supported]
@@ -195,7 +213,7 @@ class MovingS3PatchPrimalMortarPenalty:
             energy, support, weighted_gap, normalized, pressure, gram,
             overlap_area, reference_overlap_area, minimum,
             tuple(signature), overlapping_pairs,
-            weighted_error, integration_triangles,
+            weighted_error, integration_triangles, area_error,
         )
 
     def work(self, current_source: np.ndarray, current_target: np.ndarray,
@@ -218,10 +236,19 @@ class MovingS3PatchPrimalMortarPenalty:
         for index, law in enumerate(self.pair_laws):
             source_face = index // len(self.target_faces)
             target_face = index % len(self.target_faces)
-            first = PlanarFace((1, 1),
-                               np.asarray(current_source)[self.source_face_indices[source_face]])
-            second = PlanarFace((2, 1),
-                                np.asarray(current_target)[self.target_face_indices[target_face]])
+            source_positions = np.asarray(current_source)[self.source_face_indices[source_face]]
+            target_positions = np.asarray(current_target)[self.target_face_indices[target_face]]
+            if len(source_positions) == 4:
+                first, normal = projected_q4_source_face(source_positions)
+            else:
+                first = PlanarFace((1, 1), source_positions)
+                normal = np.cross(first.corners[1]-first.corners[0],
+                                  first.corners[2]-first.corners[0])
+                normal /= np.linalg.norm(normal)
+            projected_target = target_positions - (
+                (target_positions-first.corners[0])@normal
+            )[:, None]*normal
+            second = PlanarFace((2, 1), projected_target)
             overlap = planar_projected_overlap(first, second)
             if _has_shared_edge_transition(first, second, overlap):
                 raise ValueError("S3 patch shared-edge derivative is nonunique")

@@ -11,10 +11,12 @@ from .core import ContactDefinition, ContactSolverSettings, ContactValidationRep
 from .s3_patch_mortar_energy import MovingS3PatchPrimalMortarPenalty, S3PatchFace
 from .s3_pair_static import _normal, _normal_controls, _swept_gap_lower, _vertex_gap_lower
 from .s3_skin_work import S3SkinWorkAdapter
+from .q4_source_overlap import q4_source_gap_lower, q4_source_swept_gap_lower
 
 
 PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 MIXED_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
+SOURCE_Q4_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 
 
 def _selected(definition: ContactDefinition):
@@ -105,6 +107,16 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
     from anymaterial import IsotropicMaterial
     target_q4 = [element_id for element_id in target.element_ids
                  if type(model.mesh.elements.get(element_id)) is QualifiedE4PLShellElement]
+    source_q4 = [element_id for element_id in source.element_ids
+                 if type(model.mesh.elements.get(element_id)) is QualifiedE4PLShellElement]
+    if source_q4 and (len(source.element_ids) != 1
+                      or len(target.element_ids) != 2
+                      or target_q4):
+        issues.append("Q4 pressure-side patch needs one source Q4 and two target S3 faces")
+    if source_q4 and (settings.q4_source_area_tolerance is None
+                      or settings.q4_source_weighted_gap_tolerance is None
+                      or settings.maximum_q4_source_integration_triangles is None):
+        issues.append("Q4 pressure-side patch needs explicit area/gap tolerances and triangle budget")
     if target_q4 and (len(target.element_ids) != 1 or len(source.element_ids) != 2):
         issues.append("mixed S3/Q4 patch needs two source S3 faces and one target Q4 face")
     if target_q4 and len(target_q4) != len(target.element_ids):
@@ -112,15 +124,16 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
     if target_q4 and (settings.q4_target_weighted_gap_tolerance is None
                       or settings.maximum_q4_target_integration_triangles is None):
         issues.append("mixed S3/Q4 patch needs explicit Q4 weighted-gap tolerance and triangle budget")
-    profile = MIXED_PROFILE if target_q4 else PROFILE
+    profile = (SOURCE_Q4_PROFILE if source_q4 else
+               MIXED_PROFILE if target_q4 else PROFILE)
     for side_index, surface in enumerate((source, target)):
         if surface.beam_radius is not None:
             issues.append(f"surface {surface.name} cannot declare beam radius")
         for element_id in surface.element_ids:
             element = model.mesh.elements.get(element_id)
             if (type(element) is not NativeParityE4PLS3V2DShellElement
-                    and not (side_index == 1 and type(element)
-                             is QualifiedE4PLShellElement)):
+                    and not (type(element) is QualifiedE4PLShellElement
+                             and (side_index == 1 or bool(source_q4)))):
                 issues.append(f"element {element_id} is not admitted S3 source or S3/Q4 target")
                 continue
             material = model.materials.get(element.material_name)
@@ -141,6 +154,9 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             maximum_energy_evaluations=settings.maximum_general_s3_energy_evaluations,
             q4_weighted_gap_tolerance=settings.q4_target_weighted_gap_tolerance,
             maximum_q4_integration_triangles=settings.maximum_q4_target_integration_triangles,
+            q4_source_area_tolerance=settings.q4_source_area_tolerance,
+            q4_source_weighted_gap_tolerance=settings.q4_source_weighted_gap_tolerance,
+            maximum_q4_source_integration_triangles=settings.maximum_q4_source_integration_triangles,
         )
         _unique_work_map(adapters[0], potential.source_node_ids)
         _unique_work_map(adapters[1], potential.target_node_ids)
@@ -191,6 +207,7 @@ class _PatchResults:
     energy_evaluations: int
     weighted_gap_integration_error_m3: float = 0.0
     integration_triangles: int = 0
+    area_integration_error_m2: float = 0.0
 
     def to_dict(self):
         result = dict(vars(self))
@@ -224,6 +241,9 @@ class GeneralS3PatchManager:
             maximum_energy_evaluations=self.settings.maximum_general_s3_energy_evaluations,
             q4_weighted_gap_tolerance=self.settings.q4_target_weighted_gap_tolerance,
             maximum_q4_integration_triangles=self.settings.maximum_q4_target_integration_triangles,
+            q4_source_area_tolerance=self.settings.q4_source_area_tolerance,
+            q4_source_weighted_gap_tolerance=self.settings.q4_source_weighted_gap_tolerance,
+            maximum_q4_source_integration_triangles=self.settings.maximum_q4_source_integration_triangles,
         )
         source_ref, source_map = _unique_work_map(adapters[0], self.law.source_node_ids)
         target_ref, target_map = _unique_work_map(adapters[1], self.law.target_node_ids)
@@ -254,7 +274,9 @@ class GeneralS3PatchManager:
 
     def _gap_lower(self, positions):
         source, target = positions
-        return min(_vertex_gap_lower(source[si], target[ti])
+        return min((q4_source_gap_lower(source[si], target[ti])
+                    if len(si) == 4 else
+                    _vertex_gap_lower(source[si], target[ti]))
                    for si in self.law.source_face_indices
                    for ti in self.law.target_face_indices)
 
@@ -294,6 +316,7 @@ class GeneralS3PatchManager:
             tuple(map(float, state.reference_support)), evaluations,
             state.weighted_gap_integration_error,
             state.integration_triangles,
+            state.area_integration_error,
         )
         return force, stiffness, result
 
@@ -321,8 +344,12 @@ class GeneralS3PatchManager:
                         if min(float(item@reference) for item in controls) <= 0.0:
                             orientation_ok = False
             gap_ok = all(
-                _swept_gap_lower(left[0][si], right[0][si],
-                                 left[1][ti], right[1][ti]) >= -self.gap_tolerance
+                (q4_source_swept_gap_lower(
+                    left[0][si], right[0][si],
+                    left[1][ti], right[1][ti], self.reference_normals[0],
+                ) if len(si) == 4 else
+                 _swept_gap_lower(left[0][si], right[0][si],
+                                  left[1][ti], right[1][ti])) >= -self.gap_tolerance
                 for si in self.law.source_face_indices
                 for ti in self.law.target_face_indices
             )
@@ -376,6 +403,9 @@ class GeneralS3PatchManager:
                          "maximum_general_s3_energy_evaluations": self.settings.maximum_general_s3_energy_evaluations,
                          "q4_target_weighted_gap_tolerance": self.settings.q4_target_weighted_gap_tolerance,
                          "maximum_q4_target_integration_triangles": self.settings.maximum_q4_target_integration_triangles,
+                         "q4_source_area_tolerance": self.settings.q4_source_area_tolerance,
+                         "q4_source_weighted_gap_tolerance": self.settings.q4_source_weighted_gap_tolerance,
+                         "maximum_q4_source_integration_triangles": self.settings.maximum_q4_source_integration_triangles,
                          "maximum_swept_subdivisions": self.settings.maximum_swept_subdivisions,
                          "maximum_candidate_pairs": self.settings.maximum_candidate_pairs},
         }
