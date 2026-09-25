@@ -211,6 +211,52 @@ def test_q4_source_augmented_exhausted_update_rolls_back():
     )
 
 
+def test_q4_source_augmented_four_phase_path():
+    model, definition, settings, _program = _path_case()
+    settings = replace(settings, maximum_augmentations=16)
+    program = ContactPathProgram(
+        controls=(ContactPathControl.node(1, "ux"),
+                  ContactPathControl.node(1, "uz")),
+        waypoints=((0.0, 0.0), (0.0, -0.01505),
+                   (0.05, -0.01505), (0.05, 0.0),
+                   (0.05, -0.01505)),
+        steps_per_segment=1,
+    )
+    common = dict(
+        contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=15,
+        emit_restart_checkpoint=True,
+    )
+    result = solve_static_nonlinear(model, **common)
+    assert result.status == "completed", (
+        result.failure_reason, result.info.get("contact_failure"),
+    )
+    phases = result.info["force_displacement_history"]
+    assert [phase["contact"]["active_pressure_dofs"] > 0
+            for phase in phases] == [True, True, False, True]
+    assert all(phase["contact"]["gap_tolerance_met"] for phase in phases)
+    assert phases[2]["contact"]["normal_multiplier_estimate_pa"] == [0.0]*4
+    for phase in phases:
+        contact = phase["contact"]
+        np.testing.assert_allclose(
+            np.asarray(contact["integration_force"])+contact["target_force"],
+            0.0, atol=1e-6,
+        )
+    half = solve_static_nonlinear(model, max_load_factor=0.75, **common)
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, restart_checkpoint=half.to_restart_checkpoint(), **common,
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, result.displacements,
+                               rtol=1e-7, atol=1e-9)
+    np.testing.assert_allclose(
+        resumed.info["general_contact"]["normal_multiplier_estimate_pa"],
+        result.info["general_contact"]["normal_multiplier_estimate_pa"],
+        rtol=1e-6, atol=1e-7,
+    )
+
+
 def test_q4_source_augmented_loaded_force_control():
     model, definition, settings = _case()
     definition = replace(definition, interactions=(
