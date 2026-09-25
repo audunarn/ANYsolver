@@ -1,5 +1,7 @@
 """Bounded F08 native B3 local-operator seam; not G0B acceptance."""
 
+from hashlib import sha256
+
 import numpy as np
 import pytest
 from scipy import sparse
@@ -11,6 +13,7 @@ from anysolver._ge_beam3_generalized_static_boundary import (
 from anysolver._ge_beam3_operator_validation_scope import operator_call
 from anysolver._ge_beam3_p5_seeded.core import canonical
 from anysolver._ge_beam3_retained_fibre_state import Context as FibreContext
+from anysolver._ge_beam3_retained_fibre_program import solve_force_program
 from anysolver._ge_beam3_seeded_load_program import ForceProgram
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
@@ -110,3 +113,39 @@ def test_native_two_element_local_sparse_seam_matches_dense_owner(
     assert candidate == tuple(canonical(response.history)
                               for response in dense_result[3])
     assert canonical(origin) == before
+
+
+def test_local_fibre_seam_uses_one_accepted_yielded_predecessor():
+    program = ForceProgram(
+        (.25, .5, 1., .5, 0., -.5, 0.),
+        ((5, .4, -.005, 0.),), max_iterations=24)
+    accepted = solve_force_program(make_model(contrast=1.), program,
+                                   stop_after=3)
+    assert accepted.status == "paused" and accepted.completed_targets == 3
+    checkpoint_hash = sha256(accepted.checkpoint).hexdigest()
+    context = FibreContext(make_model(contrast=1.), program)
+    restored, _ = context.restore(
+        accepted.checkpoint, expected_sha256=checkpoint_hash)
+    origin = restored.histories
+    assert any(row[2] > 0 for cell in origin for station in cell.stations
+               for row in station.rows)
+    predecessor = canonical(restored.mechanical.descriptor())
+    history = canonical(origin)
+    for trial in (False, True):
+        state = restored.mechanical
+        if trial:
+            delta = np.zeros(context.layout.count)
+            delta[context.layout.nodal_count-6+1] = 1e-6
+            delta[context.layout.nodal_count-6+3] = 2e-6
+            delta[context.layout.nodal_count] = 1e-6
+            state = context.layout.advance(state, delta)
+        residual, tangent, candidate = _sparse_local_gather(
+            context, state, origin, 1., fibre=True)
+        dense = context.assemble(state, 1., origin)
+        assert _relative_error(residual, dense[0]) <= 1e-12
+        assert _relative_error(tangent.toarray(), dense[1]) <= 1e-12
+        assert candidate == tuple(canonical(response.history)
+                                  for response in dense[3])
+        assert canonical(origin) == history
+        assert canonical(restored.mechanical.descriptor()) == predecessor
+        assert sha256(accepted.checkpoint).hexdigest() == checkpoint_hash
