@@ -59,10 +59,14 @@ def _set_lines(indices: set[int] | list[int]) -> list[str]:
             for i in range(0,len(ordered),12)]
 
 
-def build(factor: int, shear: str) -> tuple[str, dict]:
+def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
+          ) -> tuple[str, dict]:
     """Return an exact-coordinate conforming C3D8 deck and probe identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
         raise ValueError("undeclared solid-bond loading")
+    if boundary_policy not in ("perimeter", "left") or (
+            boundary_policy == "left" and shear not in ("tip_mx", "tip_fz")):
+        raise ValueError("unsupported plate boundary/loading combination")
     px,py,pz=(_cuts(v,factor) for v in
               (PLATE_X_MM,PLATE_Y_MM,PLATE_Z_MM))
     bx,by,bz=(_cuts(v,factor) for v in
@@ -104,7 +108,8 @@ def build(factor: int, shear: str) -> tuple[str, dict]:
     if not all(coordinates[p] in plate_nodes & bar_nodes for p in interface):
         raise AssertionError("plate/bar interface is not conforming")
     boundary={coordinates[(x,y,z)] for z in pz for y in py for x in px
-              if x in (px[0],px[-1]) or y in (py[0],py[-1])}
+              if (x == px[0] if boundary_policy == "left" else
+                  x in (px[0],px[-1]) or y in (py[0],py[-1]))}
     if boundary & (bar_nodes-plate_nodes):
         raise AssertionError("bar has a directly prescribed node")
     station_nodes={str(s): sorted(coordinates[(Fraction(s),y,z)]
@@ -188,7 +193,10 @@ def build(factor: int, shear: str) -> tuple[str, dict]:
                                     for index,force in applied.items()},
           "surface_nodes":{f"{x},{y}":index for (x,y),index in surface.items()},
           "model":"3D conforming C3D8 plate/bar; plate [-.5,1.5]x[-.5,.5]x[-.035,.035] m; bar [0,1]x[-.05,.05]x[.035,.135] m; E=210 GPa, nu=.3",
-          "boundary":"all three translations on plate perimeter follow declared affine shear; bar has no direct supports or loads"}
+          "boundary_policy":boundary_policy,
+          "boundary":("all three translations on plate left edge fixed; bar has no direct supports"
+                      if boundary_policy == "left" else
+                      "all three translations on plate perimeter follow declared affine shear; bar has no direct supports or loads")}
     return "\n".join(lines)+"\n",meta
 
 
@@ -289,7 +297,10 @@ def main() -> int:
     parser.add_argument("--root",type=Path,required=True)
     parser.add_argument("--suite",choices=("shear","loads"),default="shear")
     parser.add_argument("--factor",type=int,choices=(1,2,4),nargs="+",default=(1,2))
+    parser.add_argument("--boundary",choices=("perimeter","left"),default="perimeter")
     args=parser.parse_args()
+    if args.boundary == "left" and args.suite != "loads":
+        parser.error("left-edge support is admitted only for the tip-load suite")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -302,23 +313,25 @@ def main() -> int:
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
               "question":("finite physical bond yaw under two affine shears"
                           if args.suite=="shear" else
-                          "physical solid-bond end torque and transverse-force transfer"),
+                          "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
               "source_head":head,"source_sha256":digest(Path(__file__)),
               "executable":str(EXE),"executable_sha256":EXE_SHA,
               "cases":[(factor,shear) for factor in args.factor
-                       for shear in (("uy_x","ux_y") if args.suite=="shear"
+                   for shear in (("uy_x","ux_y") if args.suite=="shear"
                                      else ("tip_mx","tip_fz"))],
+              "boundary_policy":args.boundary,
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
               "limits_of_claim":["3D solid idealization, not E4 or B3",
                                  "two development mesh levels, not convergence qualification",
-                                 "prescribed plate perimeter and free bar ends"]}
+                                 f"prescribed plate {args.boundary} and free bar ends",
+                                 "connection and section still differ from native weak-line B3/E4"]}
     (root/"manifest.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
     records=[]
     for factor,shear in manifest["cases"]:
         name=f"solid-{factor}-{shear}"
         folder=root/name
         folder.mkdir()
-        deck,meta=build(factor,shear)
+        deck,meta=build(factor,shear,boundary_policy=args.boundary)
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()

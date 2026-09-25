@@ -61,3 +61,21 @@ def test_end_face_load_has_exact_declared_wrench(factor, load, expected):
              meta["applied_nodal_forces_N"].items()}
     assert len(applied)==(2*factor+1)**2
     assert SCREEN._wrench(applied,meta["probe_coordinates_m"]) == pytest.approx(expected,abs=1e-10)
+
+
+@pytest.mark.parametrize("factor", (1, 4))
+@pytest.mark.parametrize("load", ("tip_mx", "tip_fz"))
+def test_left_edge_reference_preserves_end_wrench_and_free_stiffener(factor, load):
+    _, meta = SCREEN.build(factor, load, boundary_policy="left")
+    boundary = meta["boundary_coordinates_m"]
+    assert meta["boundary_policy"] == "left"
+    assert len(boundary) == (6 * factor + 1) * (2 * factor + 1)
+    assert all(xyz[0] == -.5 for xyz in boundary.values())
+    assert set(meta["boundary_node_ids"]).isdisjoint(
+        meta["bar_station_nodes"]["0"])
+    applied = {int(node): np.array(force) for node, force in
+               meta["applied_nodal_forces_N"].items()}
+    expected = ([0., 0., 0., 100., 0., 0.] if load == "tip_mx" else
+                [0., 0., 1000., 0., -1000., 0.])
+    assert SCREEN._wrench(applied, meta["probe_coordinates_m"]) == pytest.approx(
+        expected, abs=1e-10)
