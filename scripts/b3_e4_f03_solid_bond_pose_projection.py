@@ -89,10 +89,20 @@ def _frame(a: np.ndarray, b: np.ndarray,
 
 
 def project(coords: dict[int, np.ndarray],
-            u: dict[int, np.ndarray]) -> dict:
+            u: dict[int, np.ndarray], *,
+            section_x: float = 1.,
+            patch_x0: float = .9,
+            patch_x1: float = 1.) -> dict:
     """Evaluate the declared 35 mm, factor-four, 0.1 m terminal patch."""
     if set(coords) != set(u) or not all(np.isfinite(v).all() for v in u.values()):
         raise ValueError("complete finite solid displacement inventory required")
+    if not any(abs(section_x-x) < 1e-12 for x in (.9,.925,.95,.975,1.)):
+        raise ValueError("section station must be on the bounded solid bond grid")
+    patch_grid = (.9,.925,.95,.975,1.)
+    if (not any(abs(patch_x0-x) < 1e-12 for x in patch_grid) or
+            not any(abs(patch_x1-x) < 1e-12 for x in patch_grid) or
+            patch_x1 <= patch_x0):
+        raise ValueError("patch must be a nonempty solid bond subinterval")
     lookup: dict[tuple[float, float, float], list[int]] = {}
     for node, xyz in coords.items():
         lookup.setdefault(tuple(np.round(xyz, 9)), []).append(node)
@@ -119,7 +129,8 @@ def project(coords: dict[int, np.ndarray],
         return np.array([coords[node(x,y,z)] + u[node(x,y,z)]
                          for y,z in points])
 
-    xcuts = np.linspace(.9, 1., 5)
+    xcuts = np.array([x for x in patch_grid
+                      if patch_x0-1e-12 <= x <= patch_x1+1e-12])
     ycuts = np.linspace(-.05, .05, 9)
     zcuts = np.linspace(.0175, .1175, 9)
     roots, gauss = np.polynomial.legendre.leggauss(3)
@@ -150,20 +161,21 @@ def project(coords: dict[int, np.ndarray],
                     gradient_x += weight * dx
                     gradient_y += weight * dy
                     director += weight * d
-    if abs(area - .01) > 1e-12:
+    expected_area = (patch_x1-patch_x0)*.1
+    if abs(area - expected_area) > 1e-12:
         raise AssertionError("solid patch area changed")
     shell_center /= area
     gradient_x /= area
     gradient_y /= area
     shell_frame = _frame(gradient_x, gradient_y, director)
 
-    section_ref = np.array((1., 0., .0675))
+    section_ref = np.array((section_x, 0., .0675))
     rows = []
     values = []
     weights = []
     for z0, z1 in zip(zcuts[:-1], zcuts[1:]):
         for y0, y1 in zip(ycuts[:-1], ycuts[1:]):
-            face = face_yz(1., y0, y1, z0, z1)
+            face = face_yz(section_x, y0, y1, z0, z1)
             jac = (y1 - y0) * (z1 - z0) / 4.
             for xi, wx in zip(roots, gauss):
                 for eta, wy in zip(roots, gauss):
@@ -175,7 +187,7 @@ def project(coords: dict[int, np.ndarray],
                                      (-relative[1], 0., 0.)))
                     design = np.column_stack((np.eye(3), -skew))
                     point = _quad8_shape(float(xi),float(eta)) @ face
-                    displacement = point - np.array((1.,y,z))
+                    displacement = point - np.array((section_x,y,z))
                     rows.append(design)
                     values.append(displacement)
                     weights.append(float(wx * wy * jac))
@@ -191,16 +203,20 @@ def project(coords: dict[int, np.ndarray],
                   np.sum(error**2,axis=1)) / sum(weights)))
     beam_center = section_ref + motion[:3]
     beam_frame = Rotation.from_rotvec(motion[3:]).as_matrix()
-    reference_offset = np.array((.05,0.,.0675))
+    patch_center_x = (patch_x0+patch_x1)/2.
+    reference_offset = np.array((section_x-patch_center_x,0.,.0675))
     translation_gap = shell_frame.T @ (beam_center-shell_center) - reference_offset
     rotation_gap = Rotation.from_matrix(shell_frame.T @ beam_frame).as_rotvec()
     corner_gaps = []
-    for x,y in ((.9,-.05),(1.,-.05),(1.,.05),(.9,.05)):
+    for x,y in ((patch_x0,-.05),(patch_x1,-.05),
+                (patch_x1,.05),(patch_x0,.05)):
         shell_point = coords[node(x,y,0.)] + u[node(x,y,0.)]
         predicted = beam_center + beam_frame @ (np.array((x,y,0.))-section_ref)
         corner_gaps.append(shell_point-predicted)
     corner_gaps = np.array(corner_gaps)
-    return {"shell_center_m":shell_center.tolist(),
+    return {"section_station_x_m":section_x,
+            "patch_interval_x_m":[patch_x0,patch_x1],
+            "shell_center_m":shell_center.tolist(),
             "shell_midplane_gradient_x":gradient_x.tolist(),
             "shell_midplane_gradient_y":gradient_y.tolist(),
             "solid_inferred_director":(director/np.linalg.norm(director)).tolist(),
@@ -221,6 +237,7 @@ def main() -> None:
     parser.add_argument("--case", type=Path, required=True)
     parser.add_argument("--stem", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--station-series", action="store_true")
     args = parser.parse_args()
     folder = args.case.resolve()
     inp,frd = (folder/(args.stem+suffix) for suffix in (".inp",".frd"))
@@ -243,6 +260,16 @@ def main() -> None:
     if rigid_error > 1e-9:
         raise AssertionError("projected solid pose is not objective at physical rotation scale")
     result = project(coords,u)
+    if args.station_series:
+        whole = [project(coords,u,section_x=station)
+                 for station in (.9,.925,.95,.975,1.)]
+        local = [project(coords,u,section_x=station,
+                         patch_x0=left,patch_x1=right)
+                 for station,left,right in ((.925,.9,.95),
+                                            (.95,.925,.975),
+                                            (.975,.95,1.))]
+        result["whole_patch_station_series"] = whole
+        result["local_patch_station_series"] = local
     result.update({"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
                    "case":str(folder),
                    "deck_sha256":_sha(inp),"frd_sha256":_sha(frd),

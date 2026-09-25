@@ -17,16 +17,16 @@ def test_solid_bond_pose_projection_has_zero_reference_and_common_motion(tmp_pat
     path = tmp_path / "solid.inp"
     path.write_text(deck)
     coords = _read_deck_nodes(path)
-    zero = project(coords,{node:np.zeros(3) for node in coords})
-    assert np.max(np.abs(zero["distributing_translation_gap_m"])) < 1e-12
-    assert np.max(np.abs(zero["distributing_rotation_gap_rad"])) < 1e-12
-    assert zero["rigid_corner_gap_max_norm_m"] < 1e-12
-
     rotation = Rotation.from_rotvec((4e-5,-3e-5,2e-5)).as_matrix()
     shift = np.array((1e-4,-2e-4,3e-4))
     displacement = {node:rotation@xyz+shift-xyz
                     for node,xyz in coords.items()}
-    moved = project(coords,displacement)
-    assert np.max(np.abs(moved["distributing_translation_gap_m"])) < 1e-10
-    assert np.max(np.abs(moved["distributing_rotation_gap_rad"])) < 1e-9
-    assert moved["rigid_corner_gap_max_norm_m"] < 1e-10
+    for kwargs in ({}, {"section_x":.95,"patch_x0":.925,"patch_x1":.975}):
+        zero = project(coords,{node:np.zeros(3) for node in coords},**kwargs)
+        assert np.max(np.abs(zero["distributing_translation_gap_m"])) < 1e-12
+        assert np.max(np.abs(zero["distributing_rotation_gap_rad"])) < 1e-12
+        assert zero["rigid_corner_gap_max_norm_m"] < 1e-12
+        moved = project(coords,displacement,**kwargs)
+        assert np.max(np.abs(moved["distributing_translation_gap_m"])) < 1e-10
+        assert np.max(np.abs(moved["distributing_rotation_gap_rad"])) < 1e-9
+        assert moved["rigid_corner_gap_max_norm_m"] < 1e-10
