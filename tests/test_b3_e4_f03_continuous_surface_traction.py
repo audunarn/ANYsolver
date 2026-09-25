@@ -135,6 +135,41 @@ def test_six_local_p1_has_fz_my_dependency_but_p0_is_independent_at_n2():
     assert np.linalg.matrix_rank(p0[:, free]) == 12
 
 
+def test_hybrid_director_my_has_six_physical_rows_without_drilling_or_shear_tie():
+    xs = np.linspace(-.5, 1.5, 9)
+    ys = np.linspace(-.5, .5, 5)
+    beam = build(16, z_offset=.0675,
+                 torsion_constant=square_torsion_constant())
+    shell_size = 6 * len(xs) * len(ys)
+    fixed = {6*j*len(xs)+axis for j in range(len(ys))
+             for axis in range(6)}
+    fixed.update(shell_size+index for index in beam.context.fixed)
+    free = [i for i in range(shell_size+beam.context.count)
+            if i not in fixed]
+    rows, wrench, meta = continuous_traction_rows(
+        xs, ys, beam, intervals=2, six_local_resultants=True,
+        director_my=True)
+    assert rows.shape[0] == 18
+    assert np.linalg.matrix_rank(rows[:, free]) == 18
+    assert meta["six_local_wrench_identity_error"] < 1e-12
+    assert np.max(np.abs(rows[:, 5:shell_size:6])) == 0.
+    assert np.max(np.abs(rows[4::6, :shell_size][:, 0::6])) == 0.
+    assert np.max(np.abs(rows[4::6, :shell_size][:, 2::6])) == 0.
+    assert np.max(np.abs(rows[4::6, 4:shell_size:6])) > 0.
+    shear = np.zeros((len(xs)*len(ys), 6))
+    shear[:, 2] = np.tile(xs, len(ys))*.001
+    assert np.max(np.abs(rows[4::6, :shell_size] @ shear.ravel())) == 0.
+    rigid = _common_rigid_direction(
+        xs, ys, beam, np.array((.02, -.03, .04)),
+        np.array((.003, -.005, .007)))
+    assert np.max(np.abs(rows @ rigid)) < 1e-11
+    for station in range(3):
+        local = wrench[:, 6*station:6*station+6].copy()
+        center = np.array((meta["station_x_centroid_m"][station], 0., .0175))
+        local[3:] -= np.cross(center, local[:3].T).T
+        np.testing.assert_allclose(local, np.eye(6), atol=1e-12)
+
+
 @pytest.mark.parametrize("intervals", (2, 4, 8))
 def test_p0_six_local_rows_equal_repeated_distributing_footprints(intervals):
     xs = np.linspace(-.5, 1.5, 9)

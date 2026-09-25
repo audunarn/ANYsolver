@@ -30,6 +30,7 @@ def continuous_traction_rows(xs: np.ndarray, ys: np.ndarray, beam, *,
                              intervals: int = 4,
                              local_yaw: bool = False,
                              six_local_resultants: bool = False,
+                             director_my: bool = False,
                              line_kind: str = "continuous_linear"
                              ) -> tuple[np.ndarray, np.ndarray, dict]:
     """Integrate work rows and their physical six-resultant wrench map.
@@ -41,15 +42,20 @@ def continuous_traction_rows(xs: np.ndarray, ys: np.ndarray, beam, *,
     antisymmetric z traction is normalized to one unit Mx. Bending/yaw moments
     are available through distributed force resultants, not independent local
     moment rows. ``local_yaw`` adds one physical in-plane force dipole.
-    ``six_local_resultants`` instead adds independent longitudinal Fz and
-    balanced in-plane polar force couples, giving local My and Mz. Their
-    moments are normalized about each line-hat's physical area centroid.
+    ``six_local_resultants`` adds independent longitudinal Fz and balanced
+    in-plane polar force couples, giving local My and Mz. The opt-in
+    ``director_my`` diagnostic replaces the longitudinal My force couple by
+    an independent shell-director/beam-frame bending couple at each station;
+    its Mz remains a physical transverse force dipole. This is only the
+    flat-reference variation of that proposed hybrid work law.
     No E4 drilling coordinate participates.
     """
     xs, ys = np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)
     if (plate_thickness != .035 or type(intervals) is not int or
             type(local_yaw) is not bool or
             type(six_local_resultants) is not bool or
+            type(director_my) is not bool or
+            (director_my and not six_local_resultants) or
             (local_yaw and six_local_resultants) or
             line_kind not in ("continuous_linear", "piecewise_constant") or
             (line_kind == "piecewise_constant" and
@@ -143,18 +149,32 @@ def continuous_traction_rows(xs: np.ndarray, ys: np.ndarray, beam, *,
                                 profiles += (np.array((-1., 0., 0.)) *
                                              hat * y / station_y_inertia[station],)
                             if six_local_resultants:
-                                dx = x - station_x_centroid[station]
-                                profiles += (
-                                    np.array((0., 0., -1.)) * hat * dx /
-                                    station_x_inertia[station],
-                                    np.array((-y, dx, 0.)) * hat /
-                                    station_polar_inertia[station],
-                                )
+                                if director_my:
+                                    profiles += (
+                                        np.zeros(3),
+                                        np.array((-y, 0., 0.)) * hat /
+                                        station_y_inertia[station],
+                                    )
+                                else:
+                                    dx = x - station_x_centroid[station]
+                                    profiles += (
+                                        np.array((0., 0., -1.)) * hat * dx /
+                                        station_x_inertia[station],
+                                        np.array((-y, dx, 0.)) * hat /
+                                        station_polar_inertia[station],
+                                    )
                             for channel, traction in enumerate(profiles):
                                 row = channels * station + channel
                                 rows[row] += weight * traction @ dg
                                 wrench[:3, row] += weight * traction
                                 wrench[3:, row] += weight * np.cross(shell_point, traction)
+                            if director_my:
+                                row = channels * station + 4
+                                scale = weight * hat / station_area[station]
+                                for node, value in zip(shell_nodes, shape):
+                                    rows[row, 6 * int(node) + 4] += scale * value
+                                rows[row, shell_size:] -= scale * tangent[4]
+                                wrench[4, row] += scale
                         area += weight
     wrench_scales = np.array((1000., 1000., 1000., 100., 100., 100.))
     if (abs(area - WIDTH) > 1e-12 or reference_gap > 1e-11 or
@@ -179,6 +199,7 @@ def continuous_traction_rows(xs: np.ndarray, ys: np.ndarray, beam, *,
                           "local_section_wrench_rank": channels,
                           "local_yaw_force_dipole": local_yaw,
                           "six_local_resultants": six_local_resultants,
+                          "director_my": director_my,
                           "line_kind": line_kind,
                           "six_local_wrench_identity_error": local_wrench_error,
                           "wrench_scales_N_Nm": wrench_scales.tolist(),
@@ -214,12 +235,15 @@ def bounded_continuous_traction_screen(*, shell_x: int = 8,
                                        intervals: tuple[int, ...] = (2, 4, 8),
                                        local_yaw: bool = False,
                                        six_local_resultants: bool = False,
+                                       director_my: bool = False,
                                        line_kind: str = "continuous_linear"
                                        ) -> list[dict]:
     """Solve the same native torque/shear case with a distinct traction basis."""
     if (shell_x not in (8, 16) or shell_y not in (4, 8, 16) or
             beam_half_cells not in (8, 16, 32) or type(local_yaw) is not bool or
             type(six_local_resultants) is not bool or
+            type(director_my) is not bool or
+            (director_my and not six_local_resultants) or
             (local_yaw and six_local_resultants) or
             line_kind not in ("continuous_linear", "piecewise_constant") or
             (line_kind == "piecewise_constant" and
@@ -255,6 +279,7 @@ def bounded_continuous_traction_screen(*, shell_x: int = 8,
         rows, wrench, meta = continuous_traction_rows(
             xs, ys, beam, intervals=n, local_yaw=local_yaw,
             six_local_resultants=six_local_resultants,
+            director_my=director_my,
             line_kind=line_kind)
         rigid_gap = float(np.max(np.abs(rows @ rigid)))
         global_rows, _ = distributed_surface_patch_trace(
@@ -359,7 +384,8 @@ def bounded_continuous_traction_screen(*, shell_x: int = 8,
                         "global_row_error": global_row_error,
                         "compliance_relative_skew": skew_error,
                         "loaded": loaded,
-                        "interpretation": ("Six independent local finite-width physical traction resultants; bounded Q4 linearized work only, not a selected nonlinear line or interface-stability acceptance" if six_local_resultants else
+                        "interpretation": ("Five finite-width position resultants plus independent director My; bounded Q4 linearized work only, not a selected nonlinear line or interface-stability acceptance" if director_my else
+                                           "Six independent local finite-width physical traction resultants; bounded Q4 linearized work only, not a selected nonlinear line or interface-stability acceptance" if six_local_resultants else
                                            "Continuous physical-traction work with six global wrench directions; four or five local channels, not a selected six-channel pose or interface-stability acceptance"),
                         **meta})
     return results
