@@ -2,6 +2,73 @@
 
 ## Current state — 25 September 2026, native connection and physical reference
 
+**Next bounded decision probe, before execution:** At the interior of the
+same saved C1 factor-four, 35 mm terminal bond under +100 N m, compare the
+three-dimensional plate's polar-band and transverse-material-chord frames
+with the independently fitted solid bar section at identical x stations.
+The competing explanations are that the chord's altered native torque split
+tracks an actual finite-width material-line motion, or that it is merely a
+different discrete constraint with no better physical correspondence. Use
+the existing no-contact and matched penalty displacement fields, unchanged
+geometry/load/support/section and shared bonded nodes; record both pose gaps,
+section-fit residuals and the contact-field limitation. If the chord is
+consistently closer at interior bonded stations with a credible section fit,
+retain it for a later matched loaded/reference check; if not, stop treating
+it as a preferred law. Neither outcome selects a multiplier, certifies the
+external result, or justifies new axial or line-row refinement. The existing
+B2 F09 experiment continues independently. Formal F03 authority remains
+unconsumed, G0B open, G1 barred.
+
+**Follow-on reference discriminator, before execution:** The corrected
+same-station solid projection below can distinguish pose meaning but cannot
+admit the C1 torque reference while its unbonded faces penetrate. Reuse the
+identical C1 tangent-aligned section geometry, 35 mm plate, shared terminal
+bond and left/root supports for a separate *opening* `−1000 N Fz` quadratic
+end-face load. This tests whether a contact-free, physically admissible
+transverse-shear reference can advance independently of torque contact.
+Require exact applied wrench, shared-bond identity, one completed solve,
+balanced support wrench and nonnegative deformed unbonded-face separation
+before using it even as a directional comparator. A negative gap or failed
+solve stops this route; an open, balanced case advances to a matched native
+shear model and refinement, not an accuracy score or multiplier selection.
+Keep the existing one-thread, 120-second development limit and preserve all
+older deck identities.
+
+**Corrected same-station projection result (development only):** The first
+read-only attempt used an axial-area average for the polar frame and is not
+decision evidence: native `physical_top_transverse_band_005` has no axial
+average. Recomputing the solid's top-surface x/y gradients and through-
+thickness director at the same material stations `.925/.950/.975 m`, with
+left-host x derivatives and exact Q8 width integration, gives polar versus
+chord yaw gaps to the fitted 3D bar section of `−1.529/−1.448`,
+`−1.598/−1.376`, and `−1.731/−1.336 µrad` in the saved no-contact torque
+field. The matched penalty field gives essentially the same values:
+`−1.528/−1.447`, `−1.599/−1.376`, `−1.731/−1.337 µrad`. The y-gradient
+integral agrees with the material end chord within `4.9e-12` in the
+dimensionless gradient. Chord reduces the full orientation-gap norm by
+only `0.064/0.141/0.185 µrad` no-contact; fitted-section RMS residual is
+`16.6/20.6/30.1 nm`, and the shared x-rotation gap remains
+`1.15/1.80/2.89 µrad`. Thus the chord is a somewhat closer *yaw
+projection* in this bonded interior, but the unresolved section deformation
+and much larger pose gap prevent a physical law choice. Contact changes
+these interior numbers little, yet its sampled penetration still blocks
+external accuracy use. Saved deck/FRD SHA-256 pairs: no-contact
+`cc88870f…`/`543dbbb0…`, penalty `54c15a39…`/`f013af27…`; exact hashes
+remain in their protected raw roots. The same C1 final-state tip load work
+measure changes only `49.400037→49.398605 µrad` with penalty contact and
+plate support Mx changes `−40.53012→−40.54268 N m`; this tiny global
+change is not integrated path-work or a contact-admissibility certificate.
+
+**Opening-shear route prepared:** Existing deck builder now admits only the
+explicit C1 `−1000 N Fz` no-contact opening case with the unchanged
+two-quadratic tangent-aligned reference profile, 2 µm clearance, 35 mm
+plate, C3D20R, quadratic face load, factor four and full displacement
+output. The torque deck SHA-256 identity and node/element/support/shared-
+bond identities remain unchanged; the new shear deck has the exact applied
+force/moment wrench `[0,0,−1000,0,+1000,0]` in SI units. Focused builder
+checks pass `74/74`. This is deck preparation, not a completed physical
+shear result.
+
 **Numerical-completion discriminator, executed:** On the registered matched Q4/S3 torque cases, the diagnostic changed only E4's declared numerical tangent factor `0.5→1→2`. Both poses retained scaled linear residuals below `1.1e-16` and work errors below `2.8e-15 J`; factor `1` exactly reproduces the saved loaded responses. Across `0.5→2`, the largest shell support-torque change relative to factor `1` is about `0.53%` (S3 polar band); the chord changes by about `0.34%` (Q4) and `0.31%` (S3). Tip twist changes by under `0.5%`. Thus the roughly `30%` pose-law torque-partition difference is not primarily driven by this bounded stabilization variation. This does not prove zero-drilling or refinement independence, select a line law, or supply the missing physical torque reference. Stop stabilization tuning and continue the physical connection/reference discriminator.
 
 **Fixed-grid loaded and physical-mode result:** On the same 35 mm Q4/S3 x8/y4 panel, eight native beam half-cells, square-section torsion constant, `.0675 m` beam-axis offset, full-left support and four P0 intervals, the transverse chord changes +100 N m tip twist from `28.171→26.969 µrad` (Q4) and `27.793→26.591 µrad` (S3) relative to the polar band. Shell support-torque magnitude rises `13.885→18.115 N m` and `12.848→16.794 N m`; under +1000 N Fz, tip-z rises `43.008→43.555 µm` and `43.239→43.676 µm`. Work and global wrench residuals are small, but numerical shell-component energy is nonzero (`0.67–1.14%` of physical shell energy for torque). In the matched positive-physical/absolute-retained H^(-1/2) diagnostic, both 24-row spaces are full rank; Q4 lower quotient changes `3.658→3.860`, S3 `4.724→5.017`. The S3 weakest mode remains about `94%` Fz by the chosen norm and about `94%` physical work for the chord. This is a bounded, norm-dependent improvement of about `6%`, not a mesh-uniform stability result. The roughly `30%` torque-partition change and missing physical reference prevent a defensible selection; stop this pose before ratio escalation rather than using a small residual or quotient as proof.

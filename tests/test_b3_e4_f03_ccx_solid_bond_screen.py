@@ -417,6 +417,32 @@ def test_c1_penalty_contact_preserves_the_matched_torque_geometry_and_load():
         SCREEN.build(4, "tip_fz", contact_policy="c1_penalty", **options)
 
 
+def test_c1_opening_shear_keeps_torque_geometry_and_has_exact_reverse_wrench():
+    common=dict(boundary_policy="left_root", bond_policy="terminal",
+                element_family="C3D20R", bar_clearance_um=2,
+                plate_thickness_mm=35, tip_load_map="quadratic_face",
+                full_displacement_output=True,
+                bar_reference_profile="c1_tangent")
+    torque, torque_meta = SCREEN.build(
+        4, "tip_mx", tip_mx_gap_audit=True, **common)
+    shear, shear_meta = SCREEN.build(
+        4, "tip_fz", reverse_tip_fz=True, **common)
+    nodes_and_elements = lambda deck: deck.split("*NODE,NSET=AllNodes\n", 1)[1].split(
+        "\n*NSET", 1)[0]
+    assert nodes_and_elements(shear) == nodes_and_elements(torque)
+    for key in ("shared_interface_node_ids", "unbonded_interface_pairs",
+                "boundary_node_ids", "bar_reference_profile"):
+        assert shear_meta[key] == torque_meta[key]
+    applied={int(node):np.array(force) for node,force in
+             shear_meta["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(applied, shear_meta["probe_coordinates_m"]) == pytest.approx(
+        [0.,0.,-1000.,0.,1000.,0.], abs=1e-9)
+    assert "*CONTACT PAIR" not in shear
+    assert "*NODE FILE,OUTPUT=3D\nU" in shear
+    with pytest.raises(ValueError, match="displacement output required"):
+        SCREEN.build(4, "tip_mx", reverse_tip_fz=True, **common)
+
+
 def test_c1_penalty_runner_allows_only_its_known_static_notice():
     notice = " *WARNING reading *STATIC: a nonlinear analysis is requested"
     other = " *WARNING in contact: face search failed"

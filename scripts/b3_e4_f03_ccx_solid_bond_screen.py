@@ -82,6 +82,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     """Return an exact-coordinate brick deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
         raise ValueError("undeclared solid-bond loading")
+    c1_open_shear = (shear == "tip_fz" and reverse_tip_fz and
+                     bar_reference_profile == "c1_tangent" and
+                     contact_policy == "none")
     if type(full_displacement_output) is not bool or (
             full_displacement_output and not (
                 factor == 4 and shear in ("tip_mx", "tip_fz") and
@@ -91,8 +94,10 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                 plate_thickness_mm == 35 and
                 tip_load_map == "quadratic_face" and
                 (bond_policy == "full" or
-                 (bond_policy == "terminal" and shear == "tip_mx" and
-                  tip_mx_gap_audit and bar_clearance_um == 2 and
+                 (bond_policy == "terminal" and
+                  ((shear == "tip_mx" and tip_mx_gap_audit) or
+                   c1_open_shear) and
+                  bar_clearance_um == 2 and
                   bar_reference_profile == "c1_tangent")))):
         raise ValueError("bounded full-bond or C1 terminal displacement output required")
     if type(plate_thickness_mm) is not int or plate_thickness_mm not in (35,70):
@@ -130,13 +135,14 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                              reverse_tip_fz):
         raise ValueError("torque gap audit requires no-contact terminal torque")
     if bar_clearance_um not in (0, 1, 2) or (bar_clearance_um and
-            (not tip_mx_gap_audit or element_family != "C3D20R")):
-        raise ValueError("declared bar clearance requires quadratic terminal torque audit")
+            (not (tip_mx_gap_audit or c1_open_shear) or
+             element_family != "C3D20R")):
+        raise ValueError("declared bar clearance requires quadratic terminal torque or C1 opening-shear audit")
     if bar_reference_profile not in ("legacy_linear", "c1_tangent") or (
             bar_reference_profile == "c1_tangent" and
             (bar_clearance_um != 2 or factor != 4 or
              bond_policy != "terminal" or tip_load_map != "quadratic_face")):
-        raise ValueError("C1 tangent profile requires the bounded quadratic terminal torque reference")
+        raise ValueError("C1 tangent profile requires the bounded quadratic terminal reference")
     if element_family not in ("C3D8", "C3D20R") or (
             element_family == "C3D20R" and
             (bond_policy not in ("detached", "terminal", "full") or
@@ -939,6 +945,9 @@ def main() -> int:
     parser.add_argument("--quadratic-face-traction",action="store_true")
     parser.add_argument("--full-displacement-output",action="store_true")
     args=parser.parse_args()
+    c1_open_shear = (args.bar_reference_profile == "c1_tangent" and
+                     args.reverse_fz_open_audit and
+                     args.contact == "none")
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
     if args.bond == "terminal" and (args.boundary != "left_root" or
@@ -963,20 +972,22 @@ def main() -> int:
             args.contact not in ("none","c1_penalty") or
             args.reverse_fz_open_audit):
         parser.error("torque gap audit requires no-contact terminal tip-load suite")
-    if args.bar_clearance_um and (not args.tip_mx_gap_audit or
+    if args.bar_clearance_um and (not (args.tip_mx_gap_audit or c1_open_shear) or
                                   args.element_family!="C3D20R"):
-        parser.error("declared bar clearance requires quadratic terminal torque audit")
+        parser.error("declared bar clearance requires quadratic terminal torque or C1 opening-shear audit")
     if args.bar_reference_profile=="c1_tangent" and not (
             list(args.factor)==[4] and args.suite=="loads" and
             args.boundary=="left_root" and args.bond=="terminal" and
             args.contact in ("none","c1_penalty") and
             args.element_family=="C3D20R" and
-            args.tip_mx_gap_audit and args.bar_clearance_um==2 and
+            (args.tip_mx_gap_audit or c1_open_shear) and
+            args.bar_clearance_um==2 and
             args.half_plate_thickness and args.quadratic_face_traction):
-        parser.error("C1 tangent reference requires the bounded factor-4 terminal torque screen")
+        parser.error("C1 tangent reference requires the bounded factor-4 terminal screen")
     if args.half_plate_thickness and (
             args.element_family!="C3D20R" or
-            not ((args.tip_mx_gap_audit and args.bar_clearance_um==2 and
+            not (((args.tip_mx_gap_audit or c1_open_shear) and
+                  args.bar_clearance_um==2 and
                   args.bond=="terminal") or
                  (args.reverse_fz_open_audit and args.bar_clearance_um==0 and
                   args.bond=="terminal" and args.quadratic_face_traction) or
@@ -997,10 +1008,11 @@ def main() -> int:
             args.element_family=="C3D20R" and
             args.half_plate_thickness and args.quadratic_face_traction and
             (args.bond=="full" or
-             (args.bond=="terminal" and args.tip_mx_gap_audit and
+             (args.bond=="terminal" and
+              (args.tip_mx_gap_audit or c1_open_shear) and
               args.bar_clearance_um==2 and
               args.bar_reference_profile=="c1_tangent"))):
-        parser.error("full-field reference requires the bounded factor-4 full bond or C1 terminal torque")
+        parser.error("full-field reference requires the bounded factor-4 full bond or C1 terminal case")
     if args.contact == "c1_penalty" and not (
             list(args.factor)==[4] and args.suite=="loads" and
             args.boundary=="left_root" and args.bond=="terminal" and
@@ -1129,10 +1141,17 @@ def main() -> int:
     if args.bar_reference_profile=="c1_tangent":
         manifest["bar_reference_profile"]="C1_TWO_QUADRATIC_TANGENT_ALIGNED_V1"
         manifest["question"]=(
+            "On the unchanged C1 tangent-aligned terminal geometry, does "
+            "the separate opening -1000 N Fz load leave the unbonded faces "
+            "open with a balanced physical response?" if c1_open_shear else
             "On one tangent-matched terminal solid geometry, does the saved "
             "100 N m torque response preserve an admissible unbonded-face gap "
             "before comparing any native connection response?")
         manifest["decision"]=(
+            "An open, balanced completed shear case advances to matching "
+            "native curved-model shear and refinement; overlap or failure "
+            "stops this directional reference. No torque or multiplier "
+            "accuracy follows." if c1_open_shear else
             "A negative deformed paired-face gap rejects this no-contact "
             "reference. Nonnegative paired-face gaps only advance to a "
             "continuous deformed-surface intersection check and matching "
@@ -1147,8 +1166,10 @@ def main() -> int:
             "paired reference-normal gaps are not a continuous deformed-contact certificate")
         if args.full_displacement_output:
             manifest["limits_of_claim"]=[
-                ("output-only replay of the unchanged C1 terminal torque "
-                 "model for deformed seam and surface projection"
+                (("full displacement output on the C1 opening-shear model "
+                  "for deformed seam and surface projection" if c1_open_shear
+                  else "output-only replay of the unchanged C1 terminal torque "
+                  "model for deformed seam and surface projection")
                  if entry.startswith("output-only replay of factor-4 cases")
                  else entry)
                 for entry in manifest["limits_of_claim"]]
