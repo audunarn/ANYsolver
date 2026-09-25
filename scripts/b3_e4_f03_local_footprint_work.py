@@ -1302,9 +1302,15 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         return result
     families=[("distributing",distributing),("rigid",rigid)]
     surface_diagnostics=None
+    surface_patch=None
     if include_surface_moments:
+        from scripts.b3_e4_f03_distributed_surface_finite import (
+            FiniteSurfaceMomentPatch,
+        )
         surface,surface_diagnostics=distributed_surface_patch_trace(
             xs,ys,beam,plate_thickness=plate_thickness)
+        surface_patch=FiniteSurfaceMomentPatch(
+            xs,ys,beam,thickness=plate_thickness)
         families.append(("surface_moments",surface))
     records={}
     for family,constraint in families:
@@ -1383,6 +1389,10 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                     {"node_row":int(i),"xyz_m":shell_nodes[i].tolist(),
                      "force_moment_N_Nm":shell_interface[i].tolist()}
                     for i in active],
+                **({"surface_point_gap":surface_patch.linearized_gap_statistics(
+                    full[:shell_size],full[shell_size:])}
+                   if surface_patch is not None and family=="surface_moments"
+                   else {}),
             }
         records[family]={"constraint_rank":rank,"cases":cases}
     return {"patch_cells_per_side":patch_cells,

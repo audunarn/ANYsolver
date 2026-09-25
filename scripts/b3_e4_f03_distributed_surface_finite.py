@@ -88,6 +88,44 @@ class FiniteSurfaceMomentPatch:
             position += shape*(coordinates[node]+directed)
         return position
 
+    def linearized_gap_statistics(self, shell_step, beam_step) -> dict:
+        """Recover sampled local slip separately from the six weak moments."""
+        shell = np.asarray(shell_step, dtype=float).reshape(self.shell_count, 6)
+        beam = np.asarray(beam_step, dtype=float)
+        if beam.shape != (self.beam.context.count,) or not (
+                np.isfinite(shell).all() and np.isfinite(beam).all()):
+            raise ValueError("finite complete linearized surface state required")
+        base = self.beam.context.initial.mechanical
+        _, _, center_frame = self.center.pose_pair(base)
+        material = center_frame.T
+        mean = np.zeros(3)
+        moment = np.zeros(3)
+        square = 0.
+        maximum = 0.
+        for point in self.points:
+            shell_displacement = np.zeros(3)
+            for node, shape in zip(point.nodes, point.shape):
+                step = shell[int(node)]
+                shell_displacement += shape*(
+                    step[:3]+np.cross(step[3:], (0., 0., self.top)))
+            pose = point.port.tangent(base) @ beam
+            beam_displacement = pose[:3]+np.cross(
+                pose[3:], (0., point.y, -.05))
+            gap = material @ (shell_displacement-beam_displacement)
+            arm = np.array((point.x-.95, point.y, 0.))
+            mean += point.weight*gap
+            moment += point.weight*np.cross(arm, gap)
+            square += point.weight*float(gap @ gap)
+            maximum = max(maximum, float(np.linalg.norm(gap)))
+        weak = np.r_[mean, np.linalg.solve(self.inertia, moment)]
+        return {
+            "quadrature_rms_position_gap_m": float(np.sqrt(square)),
+            "quadrature_max_position_gap_m": maximum,
+            "weak_six_gap_m_rad": weak.tolist(),
+            "quadrature_points": len(self.points),
+            "meaning": "sampled linearized shell-top minus native beam-bottom position; six weak moments may vanish while local slip remains",
+        }
+
     def evaluate(self, shell_coordinates: np.ndarray, shell_frames: np.ndarray,
                  beam_state, first=None, second=None):
         """Return six gaps and, optionally, exact first and mixed variations.

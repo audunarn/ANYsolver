@@ -58,6 +58,11 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
             physical["beam_root_wrench_N_Nm"][3]) == pytest.approx(
         -100., abs=1e-7)
     assert physical["mechanics_error"] < 1e-7
+    for load in ("tip_mx", "tip_fz"):
+        gap = result["results"]["surface_moments"]["cases"][load][
+            "surface_point_gap"]
+        assert max(abs(value) for value in gap["weak_six_gap_m_rad"]) < 1e-9
+        assert gap["quadrature_rms_position_gap_m"] > 0.
 
 
 def test_structured_patch_trace_matches_existing_uniform_native_rows():

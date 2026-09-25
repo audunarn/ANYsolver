@@ -101,3 +101,20 @@ def test_c1_surface_moment_finite_chart_preserves_work_and_objectivity():
     assert result["finite_common_rigid_gap_error"] < 1e-12
     assert abs(result["common_rigid_virtual_work_j"]) < 1e-9
     assert result["quadrature_points"] == 36
+
+
+def test_six_surface_moments_leave_a_real_local_slip_mode():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    patch = FiniteSurfaceMomentPatch(xs, ys, beam, thickness=.035)
+    shell_step = np.zeros((patch.shell_count, 6))
+    slope = 1e-5
+    shell_step[:, 0] = slope*(patch.reference_nodes[:, 0]-.95)
+    stats = patch.linearized_gap_statistics(
+        shell_step, np.zeros(beam.context.count))
+    assert np.max(np.abs(stats["weak_six_gap_m_rad"])) < 1e-12
+    assert abs(stats["quadrature_rms_position_gap_m"]-
+               slope*.1/np.sqrt(12)) < 1e-12
+    assert stats["quadrature_max_position_gap_m"] > 0.
