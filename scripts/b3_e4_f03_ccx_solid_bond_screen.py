@@ -60,7 +60,8 @@ def _set_lines(indices: set[int] | list[int]) -> list[str]:
 
 
 def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
-          bond_policy: str = "full", contact_policy: str = "none"
+          bond_policy: str = "full", contact_policy: str = "none",
+          reverse_tip_fz: bool = False
           ) -> tuple[str, dict]:
     """Return an exact-coordinate C3D8 deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
@@ -75,6 +76,10 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     if contact_policy not in ("none", "mortar_hard") or (
             contact_policy == "mortar_hard" and bond_policy != "terminal"):
         raise ValueError("hard mortar contact requires terminal bond")
+    if reverse_tip_fz and (shear != "tip_fz" or bond_policy != "terminal" or
+                           boundary_policy != "left_root" or
+                           contact_policy != "none"):
+        raise ValueError("reverse Fz opening audit requires no-contact terminal tip load")
     plate_x = (PLATE_X_MM if bond_policy == "full" else
                tuple(sorted(set((*PLATE_X_MM, 900)))))
     bar_x = (BAR_X_MM if bond_policy == "full" else
@@ -201,6 +206,11 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                       "*SURFACE INTERACTION,NAME=HardUnbonded",
                       "*CONTACT PAIR,INTERACTION=HardUnbonded,TYPE=MORTAR",
                       "BarBottomUnbonded,PlateTopUnbonded"))
+    unbonded_pairs = [(coordinates[key], bar_index)
+                      for key, bar_index in sorted(detached.items())]
+    if reverse_tip_fz:
+        lines.append("*NSET,NSET=UnbondedInterface")
+        lines.extend(_set_lines([node for pair in unbonded_pairs for node in pair]))
     lines.extend(("*MATERIAL,NAME=Isotropic", "*ELASTIC", "210000000000,0.3",
                   "*SOLID SECTION,ELSET=Plate,MATERIAL=Isotropic",
                   "*SOLID SECTION,ELSET=Stiffener,MATERIAL=Isotropic",
@@ -228,7 +238,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                  for index in (bar_node((Fraction(1000),y,z)),)}
         if shear=="tip_fz":
             normalizer=sum(weights.values())
-            applied={index:(0.,0.,1000.*weight/normalizer)
+            applied={index:(0.,0.,(-1000. if reverse_tip_fz else 1000.)*weight/normalizer)
                      for index,weight in weights.items()}
         else:
             polar=sum(weight*(float(inverse[index][1]/1000)**2+
@@ -249,6 +259,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     lines.extend(("*NODE PRINT,NSET=Probe", "U",
                   f"*NODE PRINT,NSET={support_set}", "RF",
                   "*END STEP"))
+    if reverse_tip_fz:
+        lines[-1:-1] = ("*NODE PRINT,NSET=UnbondedInterface", "U")
     meta={"factor":factor,"shear":shear,"gamma":GAMMA,
           "node_count":next_id-1,"plate_elements":len(plate_cells),
           "bar_elements":len(bar_cells),"shared_interface_nodes":len(interface),
@@ -258,6 +270,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           "bond_policy":bond_policy,"bond_interval_m":(
               [0.,1.] if bond_policy=="full" else [.9,1.]),
           "contact_policy":contact_policy,
+          "reverse_tip_fz":reverse_tip_fz,
+          "unbonded_interface_pairs":unbonded_pairs if reverse_tip_fz else [],
           "plate_contact_face_element_ids":plate_contact,
           "bar_contact_face_element_ids":bar_contact,
           "boundary_nodes":len(boundary),"boundary_node_ids":sorted(boundary),
@@ -318,6 +332,22 @@ def parse_nodal_vectors(dat: str, expected: set[int],
 
 def parse_probe_displacements(dat: str, expected: set[int]) -> dict[int,np.ndarray]:
     return parse_nodal_vectors(dat,expected,"displacements","PROBE")
+
+
+def audit_unbonded_open(meta: dict, displacement: dict[int,np.ndarray]) -> dict:
+    """Reference-normal gap at every paired node of the matching free faces."""
+    pairs=meta["unbonded_interface_pairs"]
+    if not pairs or set(displacement) != {node for pair in pairs for node in pair}:
+        raise ValueError("incomplete unbonded interface displacement inventory")
+    gap=np.array([displacement[bar][2]-displacement[plate][2]
+                  for plate,bar in pairs])
+    if not np.isfinite(gap).all():
+        raise ValueError("nonfinite unbonded interface gap")
+    return {"paired_nodes":len(pairs),
+            "minimum_reference_normal_gap_m":float(gap.min()),
+            "maximum_reference_normal_gap_m":float(gap.max()),
+            "negative_nodal_gaps":int(np.count_nonzero(gap < -1e-12)),
+            "meaning":"reference-normal paired-node check on matching bilinear faces; contact and deformed-surface closest-point gap were not solved"}
 
 
 def _wrench(forces: dict[int,np.ndarray], xyz: dict[str,list[float]]) -> list[float]:
@@ -450,6 +480,7 @@ def main() -> int:
     parser.add_argument("--boundary",choices=("perimeter","left","left_root"),default="perimeter")
     parser.add_argument("--bond",choices=("full","terminal"),default="full")
     parser.add_argument("--contact",choices=("none","mortar_hard"),default="none")
+    parser.add_argument("--reverse-fz-open-audit",action="store_true")
     args=parser.parse_args()
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
@@ -458,6 +489,10 @@ def main() -> int:
         parser.error("terminal bond requires left/root tip-load suite")
     if args.contact == "mortar_hard" and args.bond != "terminal":
         parser.error("hard mortar contact requires terminal bond")
+    if args.reverse_fz_open_audit and (args.suite!="loads" or
+            args.boundary!="left_root" or args.bond!="terminal" or
+            args.contact!="none"):
+        parser.error("reverse Fz opening audit requires no-contact terminal load suite")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -468,14 +503,18 @@ def main() -> int:
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":("finite physical bond yaw under two affine shears"
+              "question":("Does reversed transverse loading leave the whole matching unbonded solid interface open, making the no-contact solution an admissible directional comparator?"
+                          if args.reverse_fz_open_audit else
+                          "finite physical bond yaw under two affine shears"
                           if args.suite=="shear" else
                           "Can hard mortar contact remove unbonded penetration while retaining the declared terminal solid bond and load work?"
                           if args.contact=="mortar_hard" else
                           "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
                           if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
-              "decision":("If the hard-mortar case executes with admissible contact output, no sampled penetration, work and reaction balance, advance it to mesh/contact assessment; otherwise preserve the failed reference and revise its external contact formulation. No native connection is selected by an unresolved contact result."
+              "decision":("If every reference-normal paired-node gap is nonnegative, retain only the reverse-Fz open-interface result as a directional physical comparator, subject to mesh convergence and deformed-surface checks; otherwise reject this no-contact reference for shear. Neither outcome selects a native footprint."
+                          if args.reverse_fz_open_audit else
+                          "If the hard-mortar case executes with admissible contact output, no sampled penetration, work and reaction balance, advance it to mesh/contact assessment; otherwise preserve the failed reference and revise its external contact formulation. No native connection is selected by an unresolved contact result."
                           if args.contact=="mortar_hard" else
                           "If the terminal solid work responses settle under refinement, compare them separately with the rigid and distributing native footprint idealizations; if they do not settle, retain a feasibility reference only. A mismatch prompts connection/section/warping diagnosis, never an automatic line-space selection."
                           if args.bond=="terminal" else
@@ -483,11 +522,13 @@ def main() -> int:
               "source_head":head,"source_sha256":digest(Path(__file__)),
               "executable":str(EXE),"executable_sha256":EXE_SHA,
               "cases":[(factor,shear) for factor in args.factor
-                   for shear in (("uy_x","ux_y") if args.suite=="shear"
-                                     else ("tip_mx","tip_fz"))],
+                   for shear in (("tip_fz",) if args.reverse_fz_open_audit else
+                                 ("uy_x","ux_y") if args.suite=="shear"
+                                 else ("tip_mx","tip_fz"))],
               "boundary_policy":args.boundary,
               "bond_policy":args.bond,
               "contact_policy":args.contact,
+              "reverse_fz_open_audit":args.reverse_fz_open_audit,
               "contact_reference":"https://www.dhondt.de/ccx_2.22.pdf, sections on MORTAR contact and hard surface behavior (external-reference diagnostic only)",
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
               "limits_of_claim":["3D solid idealization, not E4 or B3",
@@ -504,7 +545,8 @@ def main() -> int:
         folder=root/name
         folder.mkdir()
         deck,meta=build(factor,shear,boundary_policy=args.boundary,
-                        bond_policy=args.bond,contact_policy=args.contact)
+                        bond_policy=args.bond,contact_policy=args.contact,
+                        reverse_tip_fz=args.reverse_fz_open_audit)
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()
@@ -540,6 +582,12 @@ def main() -> int:
                 reactions=parse_nodal_vectors(dat,set(meta["boundary_node_ids"]),
                                               "forces",meta["support_set"])
                 parsed=recover(meta,probes,reactions)
+                if args.reverse_fz_open_audit:
+                    expected={node for pair in meta["unbonded_interface_pairs"]
+                              for node in pair}
+                    interface=parse_nodal_vectors(dat,expected,"displacements",
+                                                  "UNBONDEDINTERFACE")
+                    parsed["unbonded_open_audit"]=audit_unbonded_open(meta,interface)
             except (OSError,ValueError) as exc:
                 failure=f"PARSE_{type(exc).__name__}: {exc}"
         record={"case":name,"status":"EXPLORATORY_COMPLETE" if failure is None

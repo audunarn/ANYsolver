@@ -66,6 +66,43 @@ def test_terminal_bond_has_only_declared_shared_patch(factor, load, expected):
 
 
 @pytest.mark.parametrize("factor", (1, 2, 4))
+def test_reverse_fz_audit_preserves_geometry_and_reverses_exact_tip_wrench(factor):
+    forward, control = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",
+                                    bond_policy="terminal")
+    deck, meta = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",
+                              bond_policy="terminal", reverse_tip_fz=True)
+    assert meta["shared_interface_node_ids"] == control["shared_interface_node_ids"]
+    assert meta["detached_stiffener_node_ids"] == control["detached_stiffener_node_ids"]
+    assert len(meta["unbonded_interface_pairs"]) == meta["detached_interface_nodes"]
+    assert "*NODE PRINT,NSET=UnbondedInterface\nU" in deck
+    assert "*NODE PRINT,NSET=UnbondedInterface" not in forward
+    applied = {int(node): np.array(force) for node, force in
+               meta["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(applied, meta["probe_coordinates_m"]) == pytest.approx(
+        [0., 0., -1000., 0., 1000., 0.], abs=1e-10)
+    interface={node:np.zeros(3) for pair in meta["unbonded_interface_pairs"]
+               for node in pair}
+    for plate, bar in meta["unbonded_interface_pairs"]:
+        interface[bar][2]=1e-6
+    audit=SCREEN.audit_unbonded_open(meta,interface)
+    assert audit["paired_nodes"] == meta["detached_interface_nodes"]
+    assert audit["minimum_reference_normal_gap_m"] == pytest.approx(1e-6)
+    assert audit["negative_nodal_gaps"] == 0
+    interface[meta["unbonded_interface_pairs"][0][1]][2]=-1e-6
+    assert SCREEN.audit_unbonded_open(meta,interface)["negative_nodal_gaps"] == 1
+
+
+def test_reverse_fz_audit_rejects_wrong_scope_and_incomplete_inventory():
+    with pytest.raises(ValueError, match="reverse Fz"):
+        SCREEN.build(1,"tip_mx",boundary_policy="left_root",
+                     bond_policy="terminal",reverse_tip_fz=True)
+    _,meta=SCREEN.build(1,"tip_fz",boundary_policy="left_root",
+                        bond_policy="terminal",reverse_tip_fz=True)
+    with pytest.raises(ValueError,match="incomplete"):
+        SCREEN.audit_unbonded_open(meta,{})
+
+
+@pytest.mark.parametrize("factor", (1, 2, 4))
 def test_terminal_hard_mortar_faces_exclude_bonded_patch(factor):
     deck, meta = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",
                               bond_policy="terminal", contact_policy="mortar_hard")
