@@ -1,4 +1,4 @@
-"""Neumann H^(-1/2) Gram for a local biorthogonal dual-P1 line space.
+"""Neumann H^(-1/2), H^(-1) and normalized L2 dual-P1 Grams.
 
 Each dual basis function is assembled from ``2*N_i-N_j`` on cells adjacent
 to node i. It is generally discontinuous across cell boundaries. This is
@@ -45,8 +45,9 @@ def dual_linear_cosine_moments(n_cells: int, first_mode: int,
 
 
 def dual_linear_gram(n_cells: int, length_m: float, last_mode: int,
-                     *, chunk_size: int = 2048) -> tuple[np.ndarray, np.ndarray]:
-    """Floating lower/upper spectral-tail Grams for dual-P1 coefficients."""
+                     *, chunk_size: int = 2048,
+                     sobolev_order: float = 0.5) -> tuple[np.ndarray, np.ndarray]:
+    """Floating H^-1/2 or H^-1 spectral-tail Grams for dual-P1 coefficients."""
     if type(n_cells) is not int or not 1 <= n_cells <= 128:
         raise ValueError("bounded positive dual cell count required")
     if (type(length_m) not in (int, float) or not np.isfinite(length_m)
@@ -56,6 +57,8 @@ def dual_linear_gram(n_cells: int, length_m: float, last_mode: int,
         raise ValueError("dual modes must cover every basis direction")
     if type(chunk_size) is not int or not 1 <= chunk_size <= 65536:
         raise ValueError("bounded positive dual chunk size required")
+    if type(sobolev_order) not in (int, float) or sobolev_order not in (0.5, 1.):
+        raise ValueError("bounded H^-1/2 or H^-1 dual order required")
     h = 1./n_cells
     mass = np.diag(np.r_[h, np.full(n_cells-1, 2*h), h])
     adjacent = np.arange(n_cells)
@@ -67,7 +70,9 @@ def dual_linear_gram(n_cells: int, length_m: float, last_mode: int,
         stop = min(start+chunk_size, last_mode+1)
         moments = dual_linear_cosine_moments(n_cells, start, stop)
         modes = np.arange(start, stop, dtype=np.float64)
-        weights = 1./np.sqrt(1.+(np.pi*modes)**2)
+        spectrum = 1.+(np.pi*modes)**2
+        weights = (1./np.sqrt(spectrum) if sobolev_order == 0.5
+                   else 1./spectrum)
         weighted += (moments*weights[None, :])@moments.T
         projection += moments@moments.T
     residual = (mass-projection+mass.T-projection.T)/2
@@ -75,7 +80,9 @@ def dual_linear_gram(n_cells: int, length_m: float, last_mode: int,
     if eigenvalues[0] < -1e-10/n_cells:
         raise ArithmeticError("dual cosine projection exceeds Parseval mass")
     residual = (vectors*np.maximum(eigenvalues, 0.))@vectors.T
-    first_omitted = 1./np.sqrt(1.+(np.pi*(last_mode+1))**2)
+    first_spectrum = 1.+(np.pi*(last_mode+1))**2
+    first_omitted = (1./np.sqrt(first_spectrum)
+                     if sobolev_order == 0.5 else 1./first_spectrum)
     lower = length_m**2*(weighted+weighted.T)/2
     upper = lower+length_m**2*first_omitted*residual
     upper = (upper+upper.T)/2
@@ -83,3 +90,22 @@ def dual_linear_gram(n_cells: int, length_m: float, last_mode: int,
             np.linalg.eigvalsh(lower)[0] <= 0.):
         raise ArithmeticError("positive finite dual spectral Gram required")
     return lower, upper
+
+
+def dual_linear_l2_gram(n_cells: int, length_m: float) -> np.ndarray:
+    """Exact normalized L2 Gram for the discontinuous dual-P1 density.
+
+    The factor ``length_m**2`` gives the same squared-resultant units as
+    the spectral dual Grams: ``length_m * integral(lambda**2 ds)``.
+    """
+    if type(n_cells) is not int or not 1 <= n_cells <= 128:
+        raise ValueError("bounded positive dual cell count required")
+    if (type(length_m) not in (int, float) or not np.isfinite(length_m)
+            or length_m <= 0.):
+        raise ValueError("finite positive dual length required")
+    h = 1./n_cells
+    mass = np.diag(np.r_[h, np.full(n_cells-1, 2*h), h])
+    adjacent = np.arange(n_cells)
+    mass[adjacent, adjacent+1] = -h/2
+    mass[adjacent+1, adjacent] = -h/2
+    return length_m**2*mass

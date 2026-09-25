@@ -67,6 +67,22 @@ def test_units_and_force_work_pairing() -> None:
     assert np.isclose(work_j, work_in_mm_units)
 
 
+def test_hminus_one_p0_gram_has_constant_and_alternating_mode_order() -> None:
+    import pytest
+
+    length = 1.0
+    half, _ = p0_dual_gram(4, length, 4095)
+    lower, upper = p0_dual_gram(4, length, 4095, sobolev_order=1.)
+    ones = np.ones(4)
+    alternating = np.array([1., -1., 1., -1.])
+    assert ones @ lower @ ones == pytest.approx(length**2, abs=1e-12)
+    assert ones @ upper @ ones == pytest.approx(length**2, abs=1e-12)
+    assert 0. < alternating @ lower @ alternating < alternating @ half @ alternating
+    assert np.linalg.eigvalsh(upper-lower)[0] > -1e-14
+    with pytest.raises(ValueError, match="dual order"):
+        p0_dual_gram(4, length, 4, sobolev_order=0.)
+
+
 def test_reject_underresolved_or_nonphysical_inputs() -> None:
     import pytest
 

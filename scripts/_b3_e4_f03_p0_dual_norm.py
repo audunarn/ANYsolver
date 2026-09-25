@@ -1,8 +1,9 @@
-"""Reference-interval H^(-1/2) Gram for uniform, classical P0 line tests.
+"""Reference-interval H^(-1/2) and H^(-1) Grams for P0 line tests.
 
 This is a norm construction only, not an F03 physical or stability result.
 The Neumann cosine basis is orthonormal on x=s/L in [0, 1], and its spectral
-weights are (1 + (pi*n)**2)**(-1/2). A density coefficient has units N/m;
+weights default to (1 + (pi*n)**2)**(-1/2), or exponent -1 when requested.
+A density coefficient has units N/m;
 the returned Gram has units m**2, so its quadratic form has units N**2.
 """
 
@@ -33,13 +34,15 @@ def cell_cosine_moments(n_cells: int, first_mode: int, stop_mode: int) -> np.nda
 
 
 def p0_dual_gram(
-    n_cells: int, length_m: float, last_mode: int, *, chunk_size: int = 2048
+    n_cells: int, length_m: float, last_mode: int, *, chunk_size: int = 2048,
+    sobolev_order: float = 0.5
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return floating Grams from analytic lower/upper Loewner formulas.
 
     Modes 0..last_mode are integrated exactly. At least n_cells modes are
     necessary for an SPD lower Gram. The upper bound uses Parseval's residual
-    mass and the first omitted spectral weight; these are Loewner bounds, not
+    mass and the first omitted spectral weight for the selected order; these
+    are Loewner bounds, not
     elementwise bounds. Larger last_mode tightens the enclosure. No assertion
     of a mesh-uniform inf-sup or trace-continuity constant follows.
     """
@@ -53,6 +56,8 @@ def p0_dual_gram(
         raise ValueError("last_mode must be at least n_cells - 1")
     if type(chunk_size) is not int or not 1 <= chunk_size <= 65536:
         raise ValueError("chunk_size must be a positive integer")
+    if type(sobolev_order) not in (int, float) or sobolev_order not in (0.5, 1.):
+        raise ValueError("bounded H^-1/2 or H^-1 dual order required")
 
     weighted = np.zeros((n_cells, n_cells))
     projection = np.zeros_like(weighted)
@@ -60,7 +65,9 @@ def p0_dual_gram(
         stop = min(start + chunk_size, last_mode + 1)
         moments = cell_cosine_moments(n_cells, start, stop)
         modes = np.arange(start, stop, dtype=np.float64)
-        weights = 1.0 / np.sqrt(1.0 + (np.pi * modes) ** 2)
+        spectrum = 1.0 + (np.pi * modes) ** 2
+        weights = (1.0 / np.sqrt(spectrum) if sobolev_order == 0.5
+                   else 1.0 / spectrum)
         weighted += (moments * weights[None, :]) @ moments.T
         projection += moments @ moments.T
     mass = np.eye(n_cells) / n_cells
@@ -71,7 +78,9 @@ def p0_dual_gram(
     if eig[0] < -1e-10 / n_cells:
         raise ArithmeticError("cosine projection exceeds P0 Parseval mass")
     residual = (vec * np.maximum(eig, 0.0)) @ vec.T
-    first_omitted = 1.0 / np.sqrt(1.0 + (np.pi * (last_mode + 1)) ** 2)
+    first_spectrum = 1.0 + (np.pi * (last_mode + 1)) ** 2
+    first_omitted = (1.0 / np.sqrt(first_spectrum)
+                     if sobolev_order == 0.5 else 1.0 / first_spectrum)
     lower = length_m**2 * (weighted + weighted.T) / 2
     upper = lower + length_m**2 * first_omitted * residual
     upper = (upper + upper.T) / 2

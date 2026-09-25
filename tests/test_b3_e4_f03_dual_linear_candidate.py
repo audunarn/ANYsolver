@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 
 from scripts._b3_e4_f03_dual_linear_norm import (
-    dual_linear_cosine_moments, dual_linear_gram)
+    dual_linear_cosine_moments, dual_linear_gram,
+    dual_linear_l2_gram)
 
 
 @pytest.mark.parametrize("cells", (1, 2, 4, 8))
@@ -47,6 +48,37 @@ def test_dual_cosine_moments_match_independent_gauss_integration():
     lower, upper = dual_linear_gram(cells, 1., 4095)
     assert np.linalg.eigvalsh(lower)[0] > 0.
     assert np.linalg.eigvalsh(upper-lower)[0] > -1e-12
+
+
+def test_dual_hminus_one_and_exact_l2_norms_match_basis_work():
+    from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
+
+    cells = 4
+    length = 1.
+    space = LineMultiplierSpace("dual_linear",
+                                tuple(np.linspace(0., 1., cells+1)))
+    roots, weights = np.polynomial.legendre.leggauss(4)
+    integrated = np.zeros((space.count, space.count))
+    for cell in range(cells):
+        for root, weight in zip(roots, weights):
+            station = (cell+(root+1)/2)/cells
+            value = space.values(station)
+            integrated += weight/(2*cells)*np.outer(value, value)
+    l2 = dual_linear_l2_gram(cells, length)
+    np.testing.assert_allclose(l2, integrated, rtol=1e-14, atol=1e-15)
+    lower, upper = dual_linear_gram(
+        cells, length, 4095, sobolev_order=1.)
+    half, _ = dual_linear_gram(cells, length, 4095)
+    ones = np.ones(space.count)
+    alternating = np.array([1., -1., 1., -1., 1.])
+    assert ones @ lower @ ones == pytest.approx(length**2, abs=1e-12)
+    assert ones @ l2 @ ones == pytest.approx(length**2, abs=1e-12)
+    assert (0. < alternating @ lower @ alternating
+            < alternating @ half @ alternating
+            < alternating @ l2 @ alternating)
+    assert np.linalg.eigvalsh(upper-lower)[0] > -1e-14
+    with pytest.raises(ValueError, match="dual order"):
+        dual_linear_gram(cells, length, 4, sobolev_order=0.)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
