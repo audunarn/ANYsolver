@@ -841,6 +841,7 @@ def main() -> int:
     parser.add_argument("--bar-clearance-um",type=int,choices=(0,1,2),default=0)
     parser.add_argument("--half-plate-thickness",action="store_true")
     parser.add_argument("--quadratic-face-traction",action="store_true")
+    parser.add_argument("--full-displacement-output",action="store_true")
     args=parser.parse_args()
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
@@ -883,6 +884,12 @@ def main() -> int:
             args.contact!="none" or
             (args.reverse_fz_open_audit and args.bond!="terminal")):
         parser.error("quadratic face traction requires admitted no-contact C3D20R tip loading")
+    if args.full_displacement_output and not (
+            list(args.factor)==[4] and args.suite=="loads" and
+            args.boundary=="left_root" and args.bond=="full" and
+            args.contact=="none" and args.element_family=="C3D20R" and
+            args.half_plate_thickness and args.quadratic_face_traction):
+        parser.error("full-field pose reference requires the matched factor-4 full bond")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -893,7 +900,9 @@ def main() -> int:
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":("Does a fully shared 35 mm quadratic solid bond under matched left/root supports and consistent tip torque/shear loading approach a stable physical transfer response?"
+              "question":("Do the inferred finite-area shell director pose and solid beam section fit agree on a mesh-aligned interior patch under the already matched full-bond torque and shear loads?"
+                          if args.full_displacement_output else
+                          "Does a fully shared 35 mm quadratic solid bond under matched left/root supports and consistent tip torque/shear loading approach a stable physical transfer response?"
                           if args.quadratic_face_traction and args.bond=="full" else
                           "Does reverse transverse loading with consistent quadratic end-face force leave the 35 mm unbonded solid interface open and resolve its work?"
                           if args.quadratic_face_traction and args.reverse_fz_open_audit else
@@ -920,7 +929,9 @@ def main() -> int:
                           "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
                           if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
-              "decision":("If torque/shear work and support partition settle at factors 2/4, compare matched physical observables with the native full-line and reduced-channel screens while recording solid warping and shell idealization limits; drift blocks accuracy scoring. No line law is selected from this reference alone."
+              "decision":("Small interior pose gaps in both loads support the finite-area pose geometry for further native line testing; substantial gaps keep the shell-side pose idealization open. This one solid level cannot select a multiplier or qualify accuracy."
+                          if args.full_displacement_output else
+                          "If torque/shear work and support partition settle at factors 2/4, compare matched physical observables with the native full-line and reduced-channel screens while recording solid warping and shell idealization limits; drift blocks accuracy scoring. No line law is selected from this reference alone."
                           if args.quadratic_face_traction and args.bond=="full" else
                           "If the reverse-Fz faces remain open and the force work settles across the two bounded factors, compare the physical shear work and support split with the existing sign-reversed native linear cases; overlap or drift blocks external shear accuracy scoring. Neither outcome selects a connection law."
                           if args.quadratic_face_traction and args.reverse_fz_open_audit else
@@ -984,8 +995,12 @@ def main() -> int:
                                   if args.bond=="detached" else
                                   "terminal mode uses external hard-mortar contact only outside the shared patch"
                                   if args.contact=="mortar_hard" else
-                                  "terminal mode omits contact outside the shared patch"),
+                                 "terminal mode omits contact outside the shared patch"),
                                  "connection and section still differ from native weak-line B3/E4"]}
+    if args.full_displacement_output:
+        manifest["full_displacement_output"] = True
+        manifest["limits_of_claim"].append(
+            "output-only replay of factor-4 cases; full solid displacement field for read-only interior pose projection, not a new convergence level")
     (root/"manifest.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
     records=[]
     for factor,shear in manifest["cases"]:
@@ -1000,7 +1015,8 @@ def main() -> int:
                         bar_clearance_um=args.bar_clearance_um,
                         plate_thickness_mm=35 if args.half_plate_thickness else 70,
                         tip_load_map=("quadratic_face" if args.quadratic_face_traction
-                                      else "legacy"))
+                                      else "legacy"),
+                        full_displacement_output=args.full_displacement_output)
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()
