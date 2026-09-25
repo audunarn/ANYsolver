@@ -109,6 +109,17 @@ The positive shear samples retain a *directional* external candidate only.
 They approach the bonded seam and cannot certify nonintersection or mesh
 convergence. Do not add more sampling levels as a surrogate for proof.
 
+The same saved shear field also gives an independent kinematic check at
+interior bond stations x=`.925/.950/.975 m`: width-averaged solid midplane
+slopes are `−61.87/−63.02/−62.15 µrad`, while through-thickness inferred
+director pitches are `+57.65/+59.85/+60.14 µrad`. Their physical
+transverse-shear indicators are therefore `−4.22/−3.17/−2.01 µrad`, not
+zero. Fitted bar-section y-rotations are `+64.63/+63.37/+62.77 µrad`,
+with `35.6–41.7 nm` section-fit RMS residuals. These are 3D field
+projections, not E4 director states or a native/solid acceptance comparison;
+they reinforce the requirement to preserve independent shell shear rather
+than identifying director rotation with geometric surface normal.
+
 **Near-seam gap follow-up, before execution:** The source-bound C1 opening
 solve completed and the same-deformed-XY 9×9 face sample is positive, but
 its minimum is only `10.33 nm` near the bond seam. A denser 17×17 sample
