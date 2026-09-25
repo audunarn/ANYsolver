@@ -88,7 +88,9 @@ tests passed 13/13 (`c3-native-retained-static-final.txt`). A failed second
 target preserved the accepted first target, and a foreign element identity
 was rejected.
 
-The owner now has a distinct versioned accepted-target checkpoint. It binds
+The owner has a distinct versioned accepted-target checkpoint. Its current
+fixed-plane swept candidate uses checkpoint V2, superseding the earlier
+development-only V1. It binds
 the native model/program/support identity, contact geometry and all numerical
 settings. Resume authenticates the external bytes and replays every accepted
 mechanical/material state against its prior committed history, coupled
@@ -106,8 +108,31 @@ canonical bytes, was passed to the JSON canonicalizer; the final binding uses
 its SHA-256 value. That failure is retained in
 `c3-native-retained-checkpoint-first.txt`.
 
-This remains an internal development route only. It has no conservative
-swept first-approach control, prescribed-motion tool, endpoint caps, multiple
+## Conservative trial-path gap bound
+
+For each native Newton or backtracking update, the one-beam owner now bounds
+the physical plane gap throughout the retained-coordinate path. Nodal
+translations vary linearly in the line-search fraction. Each retained cell
+rotation follows the owner's SO(3) exponential update. The normal-gap change
+per unit fraction is bounded by the largest nodal normal translation plus
+the rotation-angle norm times the maximum reference half-cell lift. At an
+interval midpoint, the kernel evaluates the exact quadratic minimum over
+both cells; subtracting half the interval's Lipschitz allowance and a
+roundoff allowance gives a conservative lower bound. Intervals are bisected
+until the declared penetration budget is certified. A finite explicit
+interval budget triggers trial cutback or solve failure.
+
+A curved-beam test holds both trial endpoints clear while retained rotation
+drives the intermediate path through the plane; the bound rejects it. A
+shorter safe path passes. The current V1/V2 candidate's affected 17 checks
+passed (`c3-native-retained-swept-v1-final.txt`), and the full/split example
+still matched (`c3-native-retained-swept-v1-example.txt`). The path check covers this
+fixed-plane owner and its actual interpolation only. It does not establish
+general first-contact event placement, moving obstacles or paired-body
+swept search.
+
+This remains an internal development route only. It has no complete
+first-approach event control, prescribed-motion tool, endpoint caps, multiple
 beams, beam–shell coupling, friction or admitted public C3 profile. The
 existing native context has its own 120-second execution limit. These checks
 do not qualify engineering contact or the general restart contract.

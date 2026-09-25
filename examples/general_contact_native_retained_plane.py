@@ -75,6 +75,7 @@ def analysis() -> NativeRetainedRoundPlaneAnalysis:
     return NativeRetainedRoundPlaneAnalysis(
         (definition,), (root,), program, contact,
         gap_tolerance_m=1e-3, equilibrium_tolerance=1e-8,
+        maximum_swept_intervals=128,
     )
 
 

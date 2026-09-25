@@ -30,8 +30,8 @@ from .native_retained_line_plane import (
 )
 
 
-PROFILE = "NATIVE_B3_GE_RETAINED_ROUND_LINE_PLANE_STATIC_DEV_V0"
-CHECKPOINT_SCHEMA = "NATIVE_RETAINED_ROUND_LINE_PLANE_STATIC_CHECKPOINT_DEV_V1"
+PROFILE = "NATIVE_B3_GE_RETAINED_ROUND_LINE_PLANE_STATIC_DEV_V1"
+CHECKPOINT_SCHEMA = "NATIVE_RETAINED_ROUND_LINE_PLANE_STATIC_CHECKPOINT_DEV_V2"
 
 
 @dataclass(frozen=True)
@@ -61,7 +61,8 @@ class NativeRetainedRoundPlaneAnalysis:
     def __init__(self, definitions: tuple[NativeBeamDefinition, ...],
                  boundaries: tuple, program: NativeNodalProgram,
                  contact: NativeRetainedRoundLinePlane, *,
-                 gap_tolerance_m: float, equilibrium_tolerance: float):
+                 gap_tolerance_m: float, equilibrium_tolerance: float,
+                 maximum_swept_intervals: int):
         if (type(definitions) is not tuple or len(definitions) != 1
                 or type(definitions[0]) is not NativeBeamDefinition):
             raise ValueError("native contact development owner needs one exact beam definition")
@@ -74,6 +75,8 @@ class NativeRetainedRoundPlaneAnalysis:
                 or type(equilibrium_tolerance) not in (int, float)
                 or not isfinite(equilibrium_tolerance) or equilibrium_tolerance <= 0.0):
             raise ValueError("native contact owner needs positive gap/equilibrium tolerances")
+        if type(maximum_swept_intervals) is not int or maximum_swept_intervals < 1:
+            raise ValueError("native contact owner needs finite swept interval budget")
         self.native = NativeBeamAnalysis(definitions, boundaries)
         self.context = NativeNodalContext(self.native.model, program)
         if len(self.context.elements) != 1:
@@ -87,6 +90,7 @@ class NativeRetainedRoundPlaneAnalysis:
         self.contact = contact
         self.gap_tolerance = float(gap_tolerance_m)
         self.equilibrium_tolerance = float(equilibrium_tolerance)
+        self.maximum_swept_intervals = maximum_swept_intervals
         self.program = program
         self.identity = self._identity()
         initial = self.context.initial
@@ -121,6 +125,7 @@ class NativeRetainedRoundPlaneAnalysis:
                          maximum_intervals=contact.maximum_intervals),
             gap_tolerance_m=self.gap_tolerance,
             equilibrium_tolerance=self.equilibrium_tolerance,
+            maximum_swept_intervals=self.maximum_swept_intervals,
         ))
 
     def _guard_contact(self) -> None:
@@ -221,6 +226,46 @@ class NativeRetainedRoundPlaneAnalysis:
             mechanical.cell_rotations[0],
         )
 
+    def _swept_admissible(self, start, increment, end,
+                          start_gap: float, end_gap: float) -> bool:
+        """Bound the minimum plane gap along one native exponential update."""
+        self._guard_contact()
+        if min(start_gap, end_gap) < -self.gap_tolerance:
+            return False
+        nodes = self.context.nodes[0]
+        before = start.positions[nodes]+start.position_low[nodes]
+        after = end.positions[nodes]+end.position_low[nodes]
+        normal = self.contact.normal
+        translation_lipschitz = float(np.max(np.abs((after-before) @ normal)))
+        cell_first = self.context.nodal_count
+        rotation_lipschitz = max(
+            float(np.linalg.norm(increment[cell_first+3*cell:
+                                           cell_first+3*cell+3])
+                  * np.linalg.norm(self.contact.reference.half_cell_lift(cell, 0.5)))
+            for cell in (0, 1)
+        )
+        lipschitz = translation_lipschitz+rotation_lipschitz
+        roundoff = 256.0*np.finfo(float).eps*max(
+            1.0, float(np.max(np.abs(before))), float(np.max(np.abs(after))),
+            self.contact.radius,
+        )
+        stack = [(0.0, 1.0)]
+        visited = 0
+        while stack:
+            left, right = stack.pop()
+            visited += 1
+            if visited > self.maximum_swept_intervals:
+                return False
+            middle = 0.5*(left+right)
+            state = self.context.advance(start, middle*increment)
+            gap = self._contact(state).minimum_gap_m
+            if gap < -self.gap_tolerance:
+                return False
+            if gap-0.5*(right-left)*lipschitz-roundoff >= -self.gap_tolerance:
+                continue
+            stack.extend(((left, middle), (middle, right)))
+        return True
+
     def _assemble(self, mechanical, parameter, origins):
         self._guard_contact()
         self.native._guard()
@@ -298,6 +343,11 @@ class NativeRetainedRoundPlaneAnalysis:
                             candidate, parameter, origins,
                         )
                         if (candidate_contact.minimum_gap_m >= -self.gap_tolerance
+                                and self._swept_admissible(
+                                    trial, step*(fraction*0.5**cut), candidate,
+                                    contact.minimum_gap_m,
+                                    candidate_contact.minimum_gap_m,
+                                )
                                 and max(changed) < max(metrics)):
                             trial = candidate
                             break

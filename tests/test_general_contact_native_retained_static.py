@@ -22,7 +22,8 @@ from test_ge_beam3_native_generalized_modal import make
 
 def _analysis(*, curved=True, targets=(1.0,), iterations=24,
               plane_z=-0.05, contact_element_id=1,
-              line_stiffness=100.0):
+              line_stiffness=100.0, plane_origin=None,
+              plane_normal=None):
     model, _, inertias = make(curved, clamped=True)
     element = model.mesh.elements[1]
     definition = NativeBeamDefinition.capture(element, inertias[1])
@@ -35,8 +36,10 @@ def _analysis(*, curved=True, targets=(1.0,), iterations=24,
     kernel = NativeRetainedRoundLinePlane(
         contact_element_id, element.operator.reference,
         radius_m=0.05,
-        plane_origin_m=np.array((0.0, 0.0, plane_z)),
-        plane_normal=np.array((0.0, 0.0, 1.0)),
+        plane_origin_m=np.array((0.0, 0.0, plane_z) if plane_origin is None
+                                else plane_origin),
+        plane_normal=np.array((0.0, 0.0, 1.0) if plane_normal is None
+                              else plane_normal),
         line_stiffness_n_per_m2=line_stiffness,
         energy_tolerance_j=1e-10,
         force_tolerance_n=1e-9,
@@ -46,6 +49,7 @@ def _analysis(*, curved=True, targets=(1.0,), iterations=24,
     return NativeRetainedRoundPlaneAnalysis(
         (definition,), tuple(model.boundary_conditions), program, kernel,
         gap_tolerance_m=1e-3, equilibrium_tolerance=1e-8,
+        maximum_swept_intervals=128,
     )
 
 
@@ -160,3 +164,30 @@ def test_live_contact_setting_mutation_fails_before_solve():
     owner.contact.stiffness = 101.0
     with pytest.raises(ValueError, match="definition/settings changed"):
         owner.solve()
+
+
+def test_swept_path_rejects_hidden_retained_rotation_crossing():
+    owner = _analysis(plane_origin=(0.0, -0.07, 0.0),
+                      plane_normal=(0.0, 1.0, 0.0))
+    state_step = np.zeros(owner.context.count)
+    state_step[7] = -0.2
+    state_step[18] = 1.741592653589793
+    state_step[21] = 1.741592653589793
+    start = owner.context.advance(owner.initial.mechanical, state_step)
+    increment = np.zeros(owner.context.count)
+    increment[18] = 2.8
+    increment[21] = 2.8
+    end = owner.context.advance(start, increment)
+    start_gap = owner._contact(start).minimum_gap_m
+    end_gap = owner._contact(end).minimum_gap_m
+    midpoint = owner.context.advance(start, 0.5*increment)
+    assert start_gap > 0.0 and end_gap > 0.0
+    assert owner._contact(midpoint).minimum_gap_m < -owner.gap_tolerance
+    assert not owner._swept_admissible(start, increment, end,
+                                      start_gap, end_gap)
+    safe_increment = increment*0.01
+    safe_end = owner.context.advance(start, safe_increment)
+    assert owner._swept_admissible(
+        start, safe_increment, safe_end,
+        start_gap, owner._contact(safe_end).minimum_gap_m,
+    )
