@@ -18,6 +18,9 @@ from threadpoolctl import threadpool_info, threadpool_limits
 
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import build
+from scripts._b3_e4_f03_dual_linear_norm import (
+    dual_linear_cosine_moments, dual_linear_gram,
+)
 from scripts._b3_e4_f03_p0_dual_norm import cell_cosine_moments, p0_dual_gram
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
@@ -25,41 +28,17 @@ from scripts._b3_e4_f03_weak_line_candidate import (
 )
 
 
-def dual_cosine_moments(cells: int, first: int, stop: int) -> np.ndarray:
-    """Integrate each local dual hat against normalized Neumann cosines."""
-    modes = np.arange(first, stop, dtype=float)
-    out = np.zeros((cells + 1, len(modes)))
-    if not len(modes):
-        return out
-    h = 1. / cells
-    zero = modes == 0
-    if np.any(zero):
-        out[0, zero] = h / 2
-        out[-1, zero] = h / 2
-        out[1:-1, zero] = h
-    active = ~zero
-    if np.any(active):
-        frequency = np.pi * modes[active]
-        for cell in range(cells):
-            left, right = cell * h, (cell + 1) * h
-            difference = (np.cos(frequency * left) -
-                          np.cos(frequency * right)) / (h * frequency**2)
-            p_left = np.sqrt(2.) * (-np.sin(frequency * left) / frequency + difference)
-            p_right = np.sqrt(2.) * (np.sin(frequency * right) / frequency - difference)
-            out[cell, active] += 2 * p_left - p_right
-            out[cell + 1, active] += 2 * p_right - p_left
-    return out
-
-
 def norm_gram(kind: str, cells: int, power: float, last: int = 4095):
     if kind == "piecewise_constant" and power == -.5:
         return p0_dual_gram(cells, 1., last)
+    if kind == "dual_linear" and power == -.5:
+        return dual_linear_gram(cells, 1., last)
     h = 1. / cells
     if kind == "piecewise_constant":
         moments_fn = cell_cosine_moments
         mass = np.eye(cells) * h
     elif kind == "dual_linear":
-        moments_fn = dual_cosine_moments
+        moments_fn = dual_linear_cosine_moments
         mass = np.diag(np.r_[h, np.full(cells - 1, 2 * h), h])
         adjacent = np.arange(cells)
         mass[adjacent, adjacent + 1] = -h / 2

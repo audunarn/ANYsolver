@@ -1,71 +1,16 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Decision sought, 25 September 2026:** Define a physical, work-conjugate
-native six-channel nonmatching bond and an adequately resolving, stable
-interface space. The finite-width square connection and a true bonded-line
-law remain distinct idealizations; neither is selected for production.
+**Decision sought, 25 September 2026:** Select a defensible physical native six-channel beam–shell connection and a stable, adequately resolving exact interface space. The finite square distributing strip and a true bonded line remain distinct idealizations; neither is production-selected. G0B is open, G1 barred, and formal F03 authority unconsumed.
 
-**Established facts:** The confined chord passes bounded Q4/S3 work,
-chart, rigid-motion, balance and termination-support checks, but its shear
-yaw differs materially from finite-width measures. A conforming C3D8
-plate/stiffener bond confirms that distinction over three mesh levels;
-its end torque/transverse-force displacements have not converged and are
-not quantitative native oracles. A separate 0.1 m square *distributing*
-strip port passes bounded native Q4/S3 reference, objectivity, derivatives,
-physical-energy, torque/shear work and balance without drilling-component
-work. Finer Mx rows reproduce the fully fine fixed-mesh torque response;
-the nonlinear mixed work and actual-chart derivatives pass. The
-predeclared joint axial refinement nevertheless develops an alternating
-Fz mode. Changing only the strip position from area mean to centerline
-leaves that mode and torque essentially unchanged. At the fixed final
-mesh, coarsening only Fz rows restores the finite-model H^(-1/2)
-transverse quotient while changing shear response by about 3%. An
-independently assembled, physically matched square-strip RM plate/beam
-model follows torque/shear trends, but its finer-line torque and shell
-reaction partition differ materially. The conforming C3D8 solid model
-has different supports and section torsion. Native retained-cell frames
-are one-sided at a junction, so a discrete footprint needs an explicit
-shared nodal pose law. The independent Fz mode weakens under both
-H^(-1/2) and H^(-1) norms as rows double; at eight rows its physical
-action is mostly beam-side. A two-beam-element force-row cap strengthens
-the finite mode but changes loaded shear and reaction transfer materially.
-Coarse-cell continuous P1 Fz retains an alternating mode and worsens the
-shell force partition despite intermediate tip shear.
+**Established facts:** The 0.1 m square native strip is objective and work-conjugate in bounded Q4/S3 tests; physical shell energy transfers torque and shear without drilling-component work. The completed transverse-order/line-resolution diagnosis shows that added Fz rows expose an alternating weak mode under both H^(-1/2) and H^(-1) measures. Seven registered beam:shell ratios have finite full rank and positive work, but the joint axial series weakens and a simple row cap changes torque or shear materially. Coarse continuous-P1 and locally biorthogonal dual-P1 Fz spaces, each with fine P0 Mx, have nearly identical fixed-mesh weakest modes (about 99% Fz, four sign changes) and quotients: Q4 2.12/2.10, S3 2.47/2.45 in the same H^(-1/2) convention. Dual-Fz loaded support Fz moves farther from the fine-P0 comparator than P1, without that comparator being a converged target. A Q4 dual-mode action split is 22% shell, 55% beam physical, 23% beam retained; S3 is 43/41/15% (rounding). Under H^(-1), retained shares rise. The mode is not solely a shell-drilling or shell-width artifact, and the split does not identify one universal offending operator.
 
-**Remaining uncertainty:** The square strip is only a bounded distributing
-pose candidate, not a selected rigid/distributing production footprint.
-Its physical torque/shear transfer, drilling/thickness/refinement behavior,
-and a stable *and adequately resolving* interface discretization still
-need qualification. An all-channel P0 cap underresolves torque; the
-coarse-Fz/fine-Mx pairing is a promising diagnostic but has no established
-joint-refinement limit or physical accuracy target. Existing ratio screens
-show finite rank/quotients only over their tested grids; they do not
-establish a mesh-uniform inf-sup property. The first-order solid reference
-is too mesh-sensitive and physically mismatched for quantitative parity.
-Historical Q6/finite-pad, classical axial, CalculiX B31/S4 and native
-six-channel cases retain separate definitions. The complete registered
-mesh-ratio, physical-history and external-reference gates remain open.
+**Reference interpretation:** The independent RM-plate/Timoshenko-beam square-strip model matches flat geometry, elastic resultants, left-edge/root supports, strip dimensions and separate 100 N m / 1000 N loads, but evaluates only a linearized three-channel trace. It reproduces the line-resolution trend; its finer-line torque and support reaction partition differ, so it is a diagnostic comparator rather than a qualified oracle. The executed CalculiX B31/S4 knot case is a different *rigid footprint*: rows and eccentric geometry match its native footprint counterpart, but B31 torsion/section and S4 shell operators do not yet match. The historical Q6/finite-pad and C3D8 solid cases have their own connection, supports or section definitions. Do not mix any of these with the native six-channel weak line when scoring accuracy.
 
-**Next discriminating experiment:** Derive one locally supported exact
-multiplier basis paired to the native beam physical trace, with explicit
-resultant/first-moment reproduction and fixed-size row support. On the
-same small Q4/S3 cases, check virtual work, actual-chart derivatives,
-row independence, transverse modes, torque/shear response and support
-reaction before any mesh-ratio expansion. If this local pairing cannot
-retain both physical transfer and stable modes, revise the shell/beam
-trace law rather than tune row counts. Further references must match
-geometry, support, section and connection; do not restart the closed
-axial, C3D8 or joint-refinement sweeps.
+**Remaining uncertainty and next discriminating work:** The actual native beam-side rotational trace uses one-sided retained-cell frames, whereas a shared node has a distinct nodal frame; the tested coarse dual basis pairs only with a chosen coarse translation subspace, not the full native trace. Derive one objective, differentiable shared-frame/line trace candidate compatible with retained B3 kinematics, and compare it with the current retained-cell trace on the *same* Q4/S3 square-strip geometry, torque/shear loads, work/tangent checks, physical reaction partition and norm-scaled weak modes. In parallel, finish a section-, support- and connection-matched physical torque/shear reference before any quantitative parity claim. If the alternative trace improves both physical transfer and mode behavior, advance it to the registered ratio and thickness tests; if it does not, revise the connection functional rather than increase line rows or tune a penalty. Explicitly check the candidate's reference geometry, loads and supports before comparing it with any external model.
 
-**Resulting action:** Retain the square strip as an exploratory physical
-connection. Reject the tested all-channel P0 and beam-macroelement caps as
-qualification policies; stop the hybrid-position and P1-Fz/P0-Mx
-hypotheses as current space selections. Do not select a multiplier, claim
-inf-sup stability or advance G1 from small residuals, finite rank or a
-quotient.
-An executed, section-matched external reference remains necessary for
-quantitative parity. F03 authority remains unconsumed, G0B open and G1
-barred.
+**Resulting action:** Stop P0 row caps, coarse P1-Fz, coarse dual-Fz and further classical axial or fixed-grid line escalation as space-selection routes. Retain their failed/limited evidence. No multiplier space is selected; finite rank, small weak residuals, small gaps and unexplained quotients are insufficient. The square strip remains exploratory. Continue bounded trace/reference work under the adopted risk-proportionate process without changing scientific criteria, resources or execution authority.
+
+**Current dual-basis evidence:** Sources `34438195`, `a0dc6de8`, `8b289147`; exact coarse-beam P1 biorthogonality, resultant and first moment pass; 5 focused basis tests had passed before the action-split addition. Dual norm moments agree with independent quadrature to `2.1e-16`; lower Gram is positive and tail enclosure is nonnegative to floating roundoff. Q4/S3 loaded and mode raw records are under the worktree `.qualification/b3-ge-e4-pl/f03-dualfz-p0mx-{fixed,modes}-dev-20260925-v1`, with mode action split in `f03-dualfz-p0mx-modes-dev-20260925-v2`. A broad rerun is not implied by these development screens.
 
 **25 September force-space decision batch (development only):** On the
 fixed independent square-strip plate x16/y4, beam8 grid, changing Fz
