@@ -29,9 +29,19 @@ The raw test output is retained at
 The long test is opt-in with `ANY_RUN_C1_TIGHT_PATH=1`; the default suite
 checks the case declaration and reports the long test as skipped.
 
+From clean source commit `04a66553`, an offline no-isolation wheel was built
+and installed without dependencies into an isolated target. The wheel SHA-256
+is `3e22075d21d8d58d9dd5e9d822bb3e646320445305e27148f26713678cb1b687`.
+The example ran through explicit source and installed import paths; the
+complete 1,070-byte outputs matched byte for byte, with SHA-256
+`66c427824dd619c03c8ac798eec403e8fbb30a4fd06f8c88f680040dbf994ca0`.
+Build, install, import-origin and run logs are in
+`C:/ANYworkspaceWork/general-contact-evidence` with the `04a66553` suffix.
+The wheel was not published.
+
 This is a **development handoff candidate for the stated shallow, guided
 path**. It does not resolve the retained weak-open counterexample, prove
 pressure-space stability or admit arbitrary partial contact and finite
 sliding. General C1 acceptance still requires the registered mesh,
-enforcement and integration refinement, independent review, installed
-artifact verification and supported capability decision.
+enforcement and integration refinement, independent review, verification of
+the final qualified installed profile and a supported capability decision.
