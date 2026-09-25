@@ -10,7 +10,9 @@ penetrates despite penalty contact. The exact C1 native B3 reference has
 zero virgin residual and sparse/dense operator parity. On two Q4 patch
 levels its six-resultant surface-position-moment footprint approaches the
 solid opening-shear work and support split more closely than the rigid or
-distributing pose ties. **Uncertainty:** The footprint is not mesh settled
+distributing pose ties. A separate C1 torque load closes work and wrench
+balance with shell work overwhelmingly physical on both grids.
+**Uncertainty:** The footprint is not mesh settled
 in plate support transfer, the solid and reduced idealizations still differ,
 the physical torque reference is inadmissible, and no exact line space has
 mesh-uniform stability evidence. **Next discriminating action:** Review the
@@ -109,7 +111,33 @@ finite-chart reference gap and first directional row agree with the
 linearized trace within `1e−12`. Existing straight-reference mixed-chart
 checks remain separate. A sparse third level and independent mechanics
 review, not a raised dense row cap, are the next meaningful finite-patch
-steps. This does not settle a zero-width exact line law or torque transfer.
+steps. This does not settle a zero-width exact line law or physically matched
+torque accuracy.
+
+**C1 physical torque-work check and line-space decision:** On the same
+exact C1 native beam, 35 mm Q4 plate, 0.1 by 0.1 m physical terminal
+footprint and +100 N m tip torque, the surface-position-moment law gives
+tip twist `50.024→50.428 µrad` and plate support Mx
+`−42.186→−41.722 N m` for patch cells two→four. Both grids have positive
+physical shell strain work (`0.001955/0.001952 J`); numerical-completion
+work is `2.25e−7/1.28e−7 J`, respectively. Total wrench/work errors are
+below `4.1e−12` in the recorded numerical measure. The focused C1 test
+now checks external torque work, support-moment balance and physical-work
+dominance. These results support retaining this **finite-width distributing
+footprint** for review; the saved solid torque field remains contact-
+inadmissible, so no torque accuracy claim follows. This law's six
+integrated moments do not enforce a pointwise solid bond or constitute the
+required true line law. Across the existing native line experiments, P0
+line intervals 8→16 on fixed Q4 x8/y8 and beam-half32 still move loaded
+torque by `17.3%` and transverse tip displacement by `10.5%`; at P0 m16
+the shell-only row rank is `69/96` while the complete and beam-only ranks
+are `96/96`. The normed transverse minimum shifts toward an alternating
+Fz density dominated by beam work as line resolution increases. These
+are discrete representability and mode diagnostics, not a mesh-uniform
+inf-sup bound or a multiplier selection. Next derive a physical six-channel
+line work law with a distinguishable shell trace, check its fixed-grid
+transfer and normalized modes, then assess the registered mesh ratios.
+Do not add P0 rows merely to reduce a gap or the quotient.
 
 **Continuous-gap precondition, before execution:** For the saved C1 opening
 field, convert each paired Q8 face's *corresponding-material-coordinate*

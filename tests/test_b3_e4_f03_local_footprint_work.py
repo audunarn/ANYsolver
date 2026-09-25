@@ -37,7 +37,8 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
         assert tangent[2]/tangent[0] == pytest.approx(
             -4*2e-6*.5/.15, abs=1e-11)
         result = graded_terminal_coupling(
-            2, beam, plate_thickness=.035, force_sign=-1.)
+            2, beam, plate_thickness=.035,
+            include_surface_moments=True, force_sign=-1.)
     for family in ("distributing", "rigid"):
         case = result["results"][family]["cases"]["tip_fz"]
         assert case["tip_uz_m"] < 0.
@@ -47,6 +48,16 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
                 case["beam_root_wrench_N_Nm"][2]) == pytest.approx(
             1000., abs=1e-7)
         assert case["mechanics_error"] < 1e-7
+    physical = result["results"]["surface_moments"]["cases"]["tip_mx"]
+    assert physical["total_external_work_j"] == pytest.approx(
+        100.*physical["tip_rx_rad"], rel=1e-10)
+    assert physical["physical_shell_work_j"] > 0.
+    assert abs(physical["numerical_shell_work_j"]) < (
+        1e-3*physical["physical_shell_work_j"])
+    assert (physical["shell_support_wrench_N_Nm"][3]+
+            physical["beam_root_wrench_N_Nm"][3]) == pytest.approx(
+        -100., abs=1e-7)
+    assert physical["mechanics_error"] < 1e-7
 
 
 def test_structured_patch_trace_matches_existing_uniform_native_rows():
