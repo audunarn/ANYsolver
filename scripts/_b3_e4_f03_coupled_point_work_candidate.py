@@ -14,7 +14,8 @@ import numpy as np
 from anysolver._ge_beam3_pose_joint import RigidPoseJoint
 from anysolver._ge_beam3_retained_generalized_state import Mechanical
 
-from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
+from scripts._b3_e4_f03_native_spatial_port import (
+    NativeHalfCellSpatialPort, NativeNodalSpatialPort)
 from scripts._b3_e4_f03_shell_finite_pose_candidate import (
     directional_pose_from_e4_total, pose_from_e4_total)
 from scripts._b3_e4_f03_shell_local_translation_candidate import (
@@ -71,7 +72,8 @@ def directional_point_work(
         joint: RigidPoseJoint,
         shell: ShellPanel, station: float, shell_total: np.ndarray,
         shell_first: np.ndarray, shell_second: np.ndarray,
-        beam_port: NativeHalfCellSpatialPort, beam_state: Mechanical,
+        beam_port: NativeHalfCellSpatialPort | NativeNodalSpatialPort,
+        beam_state: Mechanical,
         beam_first: np.ndarray, beam_second: np.ndarray,
         multipliers: np.ndarray, *,
         shell_port: str = "rail") -> DirectionalJointWork:
@@ -82,7 +84,8 @@ def directional_point_work(
     physical port wrenches; the joint Hessian is its scalar Exp-chart Hessian.
     The shell/beam port curvature is added exactly once in that chart.
     """
-    if not isinstance(joint, RigidPoseJoint) or not isinstance(beam_port, NativeHalfCellSpatialPort):
+    if not isinstance(joint, RigidPoseJoint) or not isinstance(
+            beam_port, (NativeHalfCellSpatialPort, NativeNodalSpatialPort)):
         raise TypeError("objective joint and native station port required")
     shell_u = np.asarray(shell_first, dtype=float)
     shell_v = np.asarray(shell_second, dtype=float)

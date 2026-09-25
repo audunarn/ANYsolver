@@ -16,6 +16,7 @@ from threadpoolctl import threadpool_info, threadpool_limits
 
 from anysolver._ge_beam3_mixed_ad import Jet2, matvec, so3_exp, transpose
 from anysolver._ge_beam3_pose_joint import RigidPoseJoint
+from scripts._b3_e4_f03_coupled_point_work_candidate import directional_point_work
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeNodalSpatialPort
@@ -165,6 +166,70 @@ def finite_rigid_work(shell: FlatE4TrialPanel, beam, port,
             "scope": "actual E4 position interpolation and native nodal Exp-chart, local nonzero-multiplier proof"}
 
 
+def finite_distributing_work(shell: FlatE4TrialPanel, beam, port) -> dict:
+    """Check the six-channel area-mean/polar patch through both finite charts."""
+    panel = shell.panel
+    shell_ref = pose_from_e4_total_strip(
+        panel, .5, np.zeros(6*panel.node_count),
+        half_length=.05, half_width=.05)
+    base = beam.context.initial.mechanical
+    beam_high, beam_low, beam_frame = port.pose_pair(base)
+    joint = RigidPoseJoint(
+        np.array((shell_ref[0], beam_high+beam_low)),
+        np.array((shell_ref[1], beam_frame)))
+    reference = joint.evaluate(
+        np.array((shell_ref[0], beam_high)),
+        np.array((shell_ref[1], beam_frame)), np.zeros(6),
+        position_low=np.array((np.zeros(3), beam_low)))
+    if np.max(np.abs(reference.constraints)) > 1e-12:
+        raise ArithmeticError("distributing finite patch changed reference")
+    rng = np.random.default_rng(615)
+    shell_base = rng.normal(size=(panel.node_count, 6)) * .002
+    first = rng.normal(size=shell_base.shape) * .025
+    second = rng.normal(size=shell_base.shape) * .025
+    beam_base = np.zeros(beam.context.count)
+    beam_first = np.zeros_like(beam_base)
+    beam_second = np.zeros_like(beam_base)
+    start = 6*port.node_index
+    beam_base[start:start+6] = (.0008, -.0005, .0004, .018, -.012, .009)
+    beam_first[start:start+6] = (.003, -.002, .004, .07, -.05, .04)
+    beam_second[start:start+6] = (-.002, .004, .001, -.06, .03, .05)
+    state = beam.context.advance(base, beam_base)
+    multipliers = np.array((18., -23., 31., 7., -100., 13.))
+    analytic = directional_point_work(
+        joint, panel, .5, shell_base.ravel(), first, second,
+        port, state, beam_first, beam_second, multipliers,
+        shell_port="physical_strip_005_005")
+
+    def potential(a: float, b: float) -> float:
+        shell_position, shell_frame = pose_from_e4_total_strip(
+            panel, .5, (shell_base+a*first+b*second).ravel(),
+            half_length=.05, half_width=.05)
+        current = beam.context.advance(state, a*beam_first+b*beam_second)
+        high, low, frame = port.pose_pair(current)
+        return float(joint.evaluate(
+            np.array((shell_position, high)),
+            np.array((shell_frame, frame)), multipliers,
+            position_low=np.array((np.zeros(3), low))).potential)
+
+    h = 1e-5
+    first_error = max(
+        abs(analytic.first-(potential(h, 0.)-potential(-h, 0.))/(2*h)),
+        abs(analytic.second-(potential(0., h)-potential(0., -h))/(2*h)))
+    h = 2e-3
+    mixed_fd = (potential(h, h)-potential(h, -h)-
+                potential(-h, h)+potential(-h, -h))/(4*h*h)
+    mixed_error = abs(analytic.mixed-mixed_fd)
+    if (abs(analytic.potential-potential(0., 0.)) > 1e-10 or
+            first_error > 1e-6 or mixed_error > 1e-5 or
+            abs(analytic.mixed) < 1e-3):
+        raise ArithmeticError("finite distributing patch pullback failed")
+    return {"potential_j": analytic.potential,
+            "first_error_j": first_error, "mixed_hessian_j": analytic.mixed,
+            "mixed_error_j": mixed_error,
+            "scope": "actual E4 area-mean/polar pose and native nodal Exp-chart, nonzero-multiplier local proof"}
+
+
 def case(topology: str) -> dict:
     """Compare actual linearized local maps and their virtual work."""
     shell = FlatE4TrialPanel(make_shell(4, topology, n_y=4))
@@ -300,6 +365,8 @@ def case(topology: str) -> dict:
                                "rigid": shell_moments[1]},
         "finite_rigid_chart": finite_rigid_work(
             shell, beam, port, points, rigid_moment),
+        "finite_distributing_chart": finite_distributing_work(
+            shell, beam, port),
         "scope": "local linearized patch row-space/work proof; rigid patch intentionally restrains local shear; not a full line solve or space selection",
     }
 
@@ -313,8 +380,8 @@ def run(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=False)
     manifest = {
         "status": "EXPLORATORY_NOT_G0_ACCEPTANCE", "source_sha": source,
-        "question": "Does the rigid footprint's local force and curvature remain objective and work-conjugate through actual E4 interpolation and native B3 nodal finite rotation?",
-        "decision": "If the finite-chart check passes, retain the distinct rigid-footprint law for physical termination study; if it fails, revise its pullback before production. It does not select a line multiplier space or qualify a complete footprint.",
+        "question": "Do both distinct finite-width laws retain their local nonzero-multiplier work curvature through actual E4 and native B3 nodal charts?",
+        "decision": "If both finite-chart checks pass, retain the laws as distinct candidates for intended-extent and termination study; any failure sends that law's pullback back for revision. Neither check selects a line multiplier space or qualifies a complete footprint.",
         "python": platform.python_version(), "numpy": np.__version__,
         "threads": 1, "models": ["Q4", "S3-V2D"],
         "geometry": "plate [-.5,1.5]x[-.5,.5] z=0 thickness .07 m; square patch at x=.5 half-width .05/.05 m; B3 axis z=.085 m",
