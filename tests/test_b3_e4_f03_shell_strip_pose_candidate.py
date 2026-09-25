@@ -13,8 +13,10 @@ from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_weak_line_candidate import (
-    LineMultiplierSpace, assemble_channel_split_reference_kkt,
-    assemble_reference_kkt, integrate_channel_split_weak_line,
+    LineMultiplierSpace, assemble_channel_basis_reference_kkt,
+    assemble_channel_split_reference_kkt,
+    assemble_reference_kkt, integrate_channel_basis_weak_line,
+    integrate_channel_split_weak_line,
     integrate_weak_line,
 )
 from scripts.b3_e4_f03_weak_line_resolution_screen import (
@@ -23,6 +25,80 @@ from scripts.b3_e4_f03_weak_line_resolution_screen import (
 
 WIDTH = dict(half_length=.2, half_width=.23)
 SQUARE = dict(half_length=.05, half_width=.05)
+
+
+def _p1_fz_p0_mx_spaces(coarse: int, fine: int):
+    p0 = LineMultiplierSpace(
+        "piecewise_constant", tuple(np.linspace(0., 1., coarse+1)))
+    p1 = LineMultiplierSpace(
+        "continuous_linear", tuple(np.linspace(0., 1., coarse+1)))
+    mx = LineMultiplierSpace(
+        "piecewise_constant", tuple(np.linspace(0., 1., fine+1)))
+    return (p0, p0, p1, mx, p0, p0)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_channel_basis_uniform_p0_is_reference_row_permutation(topology):
+    shell = FlatE4TrialPanel(make_shell(1, topology, n_y=4))
+    beam = build(4)
+    p0 = LineMultiplierSpace("piecewise_constant", (0., .5, 1.))
+    kwargs = dict(shell_port="physical_strip_005_005",
+                  shell_support_policy="full_left_edge")
+    ordinary = assemble_reference_kkt(shell, beam, p0, **kwargs)
+    grouped = assemble_channel_basis_reference_kkt(
+        shell, beam, (p0,)*6, **kwargs)
+    rows = [6*i+axis for axis in range(6) for i in range(p0.count)]
+    np.testing.assert_allclose(grouped.constraint_jacobian,
+                               ordinary.constraint_jacobian[rows], atol=0.)
+    np.testing.assert_allclose(grouped.primal_tangent,
+                               ordinary.primal_tangent, atol=0.)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_p1_fz_p0_mx_basis_work_and_actual_chart_derivatives(topology):
+    shell = FlatE4TrialPanel(make_shell(1, topology, n_y=4))
+    beam = build(4)
+    spaces = _p1_fz_p0_mx_spaces(2, 4)
+    kkt = assemble_channel_basis_reference_kkt(shell, beam, spaces)
+    rng = np.random.default_rng(543)
+    shape = (shell.panel.node_count, 6)
+    zero = np.zeros(shape)
+    current = rng.normal(scale=.001, size=shape)
+    first = rng.normal(scale=.01, size=shape)
+    second = rng.normal(scale=.01, size=shape)
+    beam_zero = np.zeros(beam.context.count)
+    coefficients = np.linspace(-8., 8., kkt.constraint_jacobian.shape[0])
+
+    def work(a, b, directions=False):
+        return integrate_channel_basis_weak_line(
+            shell, beam, spaces, coefficients, zero.ravel(),
+            (current+a*first+b*second).ravel(),
+            first if directions else zero,
+            second if directions else zero,
+            beam.context.initial.mechanical, beam_zero, beam_zero)
+
+    result = work(0., 0., True)
+    assert result.potential == pytest.approx(
+        coefficients@result.weak_constraints, abs=2e-10)
+    assert result.first == pytest.approx(
+        coefficients@result.weak_first, abs=2e-9)
+    h = 1e-5
+    assert result.first == pytest.approx(
+        (work(h, 0.).potential-work(-h, 0.).potential)/(2*h),
+        rel=2e-6, abs=2e-8)
+    h = 2e-3
+    mixed = (work(h, h).potential-work(h, -h).potential-
+             work(-h, h).potential+work(-h, -h).potential)/(4*h*h)
+    assert result.mixed == pytest.approx(mixed, rel=5e-5, abs=5e-7)
+
+    reference = integrate_channel_basis_weak_line(
+        shell, beam, spaces, np.zeros_like(coefficients), zero.ravel(),
+        zero.ravel(), first, zero, beam.context.initial.mechanical,
+        beam_zero, beam_zero)
+    direction = np.r_[first.ravel(), beam_zero]
+    np.testing.assert_allclose(
+        reference.weak_first, kkt.constraint_jacobian@direction,
+        rtol=2e-10, atol=2e-11)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))

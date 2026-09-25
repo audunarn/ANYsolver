@@ -532,3 +532,121 @@ def integrate_channel_split_weak_line(
             1e-10*max(1.,abs(result.potential))):
         raise ArithmeticError("split-channel potential/weak-row mismatch")
     return result
+
+
+def _bounded_channel_spaces(
+        spaces: tuple[LineMultiplierSpace, ...]) -> None:
+    """Validate six explicitly chosen physical multiplier test spaces."""
+    if (type(spaces) is not tuple or len(spaces) != 6 or
+            any(not isinstance(space, LineMultiplierSpace)
+                for space in spaces) or
+            any(space.count > 17 for space in spaces) or
+            sum(space.count for space in spaces) > 96):
+        raise ValueError("six bounded physical channel spaces required")
+
+
+def assemble_channel_basis_reference_kkt(
+        shell: FlatE4TrialPanel, beam: Fixture,
+        spaces: tuple[LineMultiplierSpace, ...], *,
+        shell_port: str = "physical_strip_005_005",
+        shell_support_policy: str = "full_left_edge") -> ReferenceKKT:
+    """Exact reference rows for independently chosen channel bases.
+
+    Rows are grouped Fx,Fy,Fz,Mx,My,Mz, with each group's own basis order.
+    This bounded G0 oracle neither selects a multiplier nor condenses the
+    native beam's retained coordinates.
+    """
+    _bounded_channel_spaces(spaces)
+    cache: dict[LineMultiplierSpace, ReferenceKKT] = {}
+    for space in spaces:
+        if space not in cache:
+            cache[space] = assemble_reference_kkt(
+                shell, beam, space, shell_port=shell_port,
+                shell_support_policy=shell_support_policy)
+    reference = cache[spaces[0]]
+    n = len(reference.free_primal)
+    if n+sum(space.count for space in spaces) > 1200:
+        raise ValueError("bounded dense interface diagnostic exceeds 1200 rows")
+    for candidate in cache.values():
+        if (not np.array_equal(reference.free_primal,
+                               candidate.free_primal) or
+                not np.array_equal(reference.primal_tangent,
+                                   candidate.primal_tangent) or
+                not np.array_equal(reference.coordinate_scale[:n],
+                                   candidate.coordinate_scale[:n]) or
+                reference.energy_scale != candidate.energy_scale):
+            raise ArithmeticError("channel basis primal contracts disagree")
+    constraint = np.vstack([
+        cache[space].constraint_jacobian[axis::6]
+        for axis, space in enumerate(spaces)]).copy()
+    rows = constraint[:, reference.free_primal]
+    channel_ids = [axis for axis, space in enumerate(spaces)
+                   for _ in range(space.count)]
+    row_scale = np.array([1. if axis < 3 else .46
+                          for axis in channel_ids])
+    scaled_rows = ((row_scale[:, None]*rows)*
+                   reference.coordinate_scale[None, :n])
+    if np.linalg.matrix_rank(scaled_rows) != len(rows):
+        raise ValueError("channel basis rows are algebraically dependent")
+    k = reference.primal_tangent[np.ix_(reference.free_primal,
+                                        reference.free_primal)]
+    system = np.block([[k, rows.T],
+                       [rows, np.zeros((len(rows), len(rows)))]])
+    multiplier_scale = reference.coordinate_scale[n]
+    coordinate_scale = np.r_[reference.coordinate_scale[:n],
+                             np.full(len(rows), multiplier_scale)]
+    scaled_system = ((coordinate_scale[:, None]*system)*
+                     coordinate_scale[None, :])/reference.energy_scale
+    return ReferenceKKT(
+        reference.primal_tangent.copy(), constraint,
+        reference.free_primal.copy(), system, coordinate_scale,
+        reference.energy_scale, scaled_system,
+        max(candidate.segment_count for candidate in cache.values()),
+        shell_support_policy)
+
+
+def integrate_channel_basis_weak_line(
+        shell: FlatE4TrialPanel, beam: Fixture,
+        spaces: tuple[LineMultiplierSpace, ...],
+        multipliers: np.ndarray,
+        shell_reference_total: np.ndarray, shell_total: np.ndarray,
+        shell_first: np.ndarray, shell_second: np.ndarray,
+        beam_state: Mechanical, beam_first: np.ndarray,
+        beam_second: np.ndarray, *, order: int = 4,
+        shell_port: str = "physical_strip_005_005") -> ChannelSplitWeakWork:
+    """One exact multiplier potential assembled from six channel bases."""
+    _bounded_channel_spaces(spaces)
+    coefficients = np.asarray(multipliers, dtype=float)
+    if (coefficients.shape != (sum(space.count for space in spaces),) or
+            not np.isfinite(coefficients).all()):
+        raise ValueError("finite channel-basis multiplier vector required")
+    arguments = (shell_reference_total, shell_total, shell_first,
+                 shell_second, beam_state, beam_first, beam_second)
+    cache: dict[LineMultiplierSpace, np.ndarray] = {}
+    offset = 0
+    for axis, space in enumerate(spaces):
+        if space not in cache:
+            cache[space] = np.zeros((space.count, 6))
+        cache[space][:, axis] = coefficients[offset:offset+space.count]
+        offset += space.count
+    evaluated = {space: integrate_weak_line(
+        shell, beam, space, grouped, *arguments, order=order,
+        shell_port=shell_port) for space, grouped in cache.items()}
+    selected = lambda name: np.concatenate([
+        getattr(evaluated[space], name)[:, axis]
+        for axis, space in enumerate(spaces)]).copy()
+    first = next(iter(evaluated.values()))
+    result = ChannelSplitWeakWork(
+        sum(work.potential for work in evaluated.values()),
+        selected("weak_constraints"), selected("weak_first"),
+        selected("weak_second"),
+        sum(work.first for work in evaluated.values()),
+        sum(work.second for work in evaluated.values()),
+        sum(work.mixed for work in evaluated.values()),
+        sum(work.segment_count for work in evaluated.values()),
+        sum(work.quadrature_count for work in evaluated.values()),
+        first.shell_trial)
+    if abs(result.potential-coefficients@result.weak_constraints) > (
+            1e-10*max(1., abs(result.potential))):
+        raise ArithmeticError("channel-basis potential/weak-row mismatch")
+    return result

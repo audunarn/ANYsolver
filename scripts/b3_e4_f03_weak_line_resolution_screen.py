@@ -30,7 +30,8 @@ from scripts._b3_e4_f03_shell_chord_pose_candidate import pose_from_e4_total_cho
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
-    LineMultiplierSpace, assemble_channel_split_reference_kkt,
+    LineMultiplierSpace, assemble_channel_basis_reference_kkt,
+    assemble_channel_split_reference_kkt,
     assemble_reference_kkt)
 from scripts._b3_e4_f03_p0_dual_norm import p0_dual_gram
 from scripts._b3_e4_f03_p1_dual_norm import p1_dual_gram
@@ -70,14 +71,22 @@ def one_case(topology: str, intervals: int, kind: str, *,
              thickness: float = .07,
              shell_support_policy: str = "legacy_three_left_nodes",
              fine_intervals: int | None = None,
-             fine_channels: tuple[int, ...] = ()) -> dict:
+             fine_channels: tuple[int, ...] = (),
+             channel_spaces: tuple[LineMultiplierSpace, ...] | None = None
+             ) -> dict:
     """Solve one bounded six-channel load at fixed reference resolution."""
     shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y,
                                        thickness=thickness))
     beam = build(native_half_cells)
     space = LineMultiplierSpace(
         kind, tuple(np.linspace(0., 1., intervals+1)))
-    if fine_intervals is None:
+    if channel_spaces is not None:
+        if fine_intervals is not None or fine_channels:
+            raise ValueError("explicit channel spaces cannot combine with split intervals")
+        kkt = assemble_channel_basis_reference_kkt(
+            shell, beam, channel_spaces, shell_port=shell_port,
+            shell_support_policy=shell_support_policy)
+    elif fine_intervals is None:
         if fine_channels:
             raise ValueError("fine channels require a fine interval count")
         kkt = assemble_reference_kkt(
@@ -247,6 +256,9 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "intervals": intervals,
         "fine_intervals":fine_intervals,
         "fine_channels":fine_channels,
+        "channel_spaces":(None if channel_spaces is None else tuple(
+            {"kind": entry.kind, "knots": entry.knots}
+            for entry in channel_spaces)),
         "shell_host_intervals": n_s,
         "shell_transverse_intervals": n_y,
         "shell_thickness_m": shell.panel.thickness,
