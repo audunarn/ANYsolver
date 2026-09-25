@@ -543,6 +543,7 @@ def _wrench(forces: dict[int,np.ndarray], xyz: dict[str,list[float]]) -> list[fl
 def recover(meta: dict, displacement: dict[int,np.ndarray],
             reactions: dict[int,np.ndarray] | None = None) -> dict:
     surface=meta["surface_nodes"]
+    plate_top_z=meta.get("plate_thickness_m",.07)/2
     def value(x,y):
         return displacement[surface[f"{x},{y}"]]
     left,right=((250,750) if meta["factor"]==1 else
@@ -574,7 +575,7 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
             design[3*i:3*i+3,3:]=((0.,z,-y),(-z,0.,x),(y,-x,0.))
         fitted=np.linalg.lstsq(design,response,rcond=None)[0]
         residual=(response-design@fitted).reshape(-1,3)
-        top=np.flatnonzero(np.abs(reference_xyz[:,2]-.035)<1e-12)
+        top=np.flatnonzero(np.abs(reference_xyz[:,2]-plate_top_z)<1e-12)
         if len(top)!=2*meta["factor"]+1:
             raise ValueError("incomplete stiffener bottom-face trace")
         top=top[np.argsort(xyz[top,1])]
@@ -626,7 +627,7 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
             plate=surface[f"500,{y}"]
             bottom=next((index for index in meta["bar_station_nodes"]["500"]
                          if abs(reference_xyz[str(index)][1]-y/1000)<1e-12 and
-                            abs(reference_xyz[str(index)][2]-.035)<1e-12),None)
+                            abs(reference_xyz[str(index)][2]-plate_top_z)<1e-12),None)
             if bottom is None:
                 raise ValueError("incomplete unbonded midspan bottom probe")
             midspan.append(float(xyz[str(bottom)][2]-xyz[str(plate)][2]+

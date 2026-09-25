@@ -90,6 +90,11 @@ def test_half_thickness_quadratic_terminal_torque_preserves_bond_and_wrench(fact
              meta["applied_nodal_forces_N"].items()}
     assert SCREEN._wrench(applied,meta["probe_coordinates_m"])==pytest.approx(
         [0.,0.,0.,100.,0.,0.],abs=1e-9)
+    probe={i:np.zeros(3) for i in meta["probe_node_ids"]}
+    recovered=SCREEN.recover(meta,probe)
+    assert recovered["station_motion"]["1000"]["interface_shared"]
+    assert recovered["unbonded_midspan_normal_separation_m"][
+        "bar_minus_plate_z_m"]==pytest.approx([2e-6]*3,abs=1e-12)
 
 
 def test_thickness_screen_rejects_undeclared_geometry():
