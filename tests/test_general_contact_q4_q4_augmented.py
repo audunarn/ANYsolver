@@ -5,8 +5,12 @@ from dataclasses import replace
 import numpy as np
 from scipy import sparse
 
-from anysolver import BoundaryCondition, ContactPathControl, ContactPathProgram
-from anysolver import solve_static_nonlinear, validate_general_contact
+from anysolver import (
+    BoundaryCondition, ContactPathControl, ContactPathProgram,
+    DisplacementControl, LoadCase, NonlinearConvergenceSettings,
+    solve_static_nonlinear,
+    validate_general_contact,
+)
 from anysolver.general_contact.s3_patch_augmented import MovingS3PatchProjectedNormal
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from test_general_contact_q4_q4_static import _case
@@ -150,4 +154,108 @@ def test_q4_q4_augmented_four_phase_public_path():
         resumed.info["general_contact"]["normal_multiplier_estimate_pa"],
         result.info["general_contact"]["normal_multiplier_estimate_pa"],
         rtol=1e-6, atol=1e-7,
+    )
+
+
+def _ordinary_case(*, force_control):
+    model, definition, settings = _augmented_case()
+    if force_control:
+        for node in (1, 2, 3, 4):
+            model.mesh.get_node(node).z -= 0.015
+    model.add_boundary_condition(BoundaryCondition(
+        "target_fixed", (5, 6, 7, 8),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "source_guide", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    load = LoadCase("drive")
+    if force_control:
+        model.add_boundary_condition(BoundaryCondition(
+            "source_clamp", (1, 4), {"uz": 0.0},
+        ))
+        for node in (2, 3):
+            load.add_nodal_load(node, forces=(0.0, 0.0, -0.05))
+    else:
+        load.add_nodal_load(1, forces=(0.0, 0.0, -1.0))
+    return model, definition, settings, load
+
+
+def _assert_ordinary_contact(result):
+    assert result.status == "completed", (
+        result.failure_reason, result.info.get("first_failed_iteration_reason"),
+    )
+    contact = result.info["general_contact"]
+    assert contact["active_pressure_dofs"] > 0
+    assert contact["gap_tolerance_met"]
+    assert any(row["augmentation_iterations"] > 1 for row in
+               result.info["force_displacement_history"])
+    assert len(result.to_restart_checkpoint()["path_state"]["normal_multipliers"]) == 4
+    np.testing.assert_allclose(
+        np.asarray(contact["integration_force"])+contact["target_force"],
+        0.0, atol=1e-6,
+    )
+
+
+def test_q4_q4_augmented_ordinary_force_control():
+    model, definition, settings, load = _ordinary_case(force_control=True)
+    common = dict(
+        contact=definition, contact_settings=settings,
+        control="force", kinematics="von_karman",
+        max_iterations=8, min_step_fraction=0.1,
+        convergence_settings=NonlinearConvergenceSettings(
+            growth_factor=1.0, max_step_factor=1.0,
+        ),
+        emit_restart_checkpoint=True,
+    )
+    result = solve_static_nonlinear(model, load, num_steps=4, **common)
+    _assert_ordinary_contact(result)
+    half = solve_static_nonlinear(
+        model, load, num_steps=2, max_load_factor=0.5, **common,
+    )
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, load, num_steps=2,
+        restart_checkpoint=half.to_restart_checkpoint(), **common,
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    assert [row["load_factor"] for row in
+            resumed.info["force_displacement_history"]] == [0.25, 0.5, 0.75, 1.0]
+    np.testing.assert_allclose(resumed.displacements, result.displacements,
+                               rtol=1e-2, atol=1e-6)
+    np.testing.assert_allclose(
+        resumed.info["general_contact"]["normal_multiplier_estimate_pa"],
+        result.info["general_contact"]["normal_multiplier_estimate_pa"],
+        rtol=5e-2, atol=2e-2,
+    )
+
+
+def test_q4_q4_augmented_ordinary_displacement_control():
+    model, definition, settings, load = _ordinary_case(force_control=False)
+    common = dict(
+        contact=definition, contact_settings=settings,
+        control="displacement", kinematics="von_karman",
+        max_iterations=15, emit_restart_checkpoint=True,
+        displacement_control=DisplacementControl(
+            node_id=1, dof="uz", target_displacement=-0.01505,
+        ),
+    )
+    result = solve_static_nonlinear(model, load, num_steps=2, **common)
+    _assert_ordinary_contact(result)
+    half = solve_static_nonlinear(
+        model, load, num_steps=1, max_load_factor=0.5, **common,
+    )
+    assert half.status == "completed", half.failure_reason
+    resumed = solve_static_nonlinear(
+        model, load, num_steps=1,
+        restart_checkpoint=half.to_restart_checkpoint(), **common,
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, result.displacements,
+                               rtol=1e-2, atol=1e-6)
+    np.testing.assert_allclose(
+        resumed.info["general_contact"]["normal_multiplier_estimate_pa"],
+        result.info["general_contact"]["normal_multiplier_estimate_pa"],
+        rtol=5e-2, atol=2e-2,
     )
