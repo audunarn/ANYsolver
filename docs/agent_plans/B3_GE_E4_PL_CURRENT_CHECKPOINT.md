@@ -1,9 +1,9 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
 **Decision sought, 25 September 2026:** Define a physical, work-conjugate
-native six-channel nonmatching bond. The current development direction is
-a finite-width connection; a line-tangent/director law remains a separate
-idealization. Neither a footprint law nor a multiplier space is selected.
+native six-channel nonmatching bond and an adequately resolving, stable
+interface space. The finite-width square connection and a true bonded-line
+law remain distinct idealizations; neither is selected for production.
 
 **Established facts:** The confined chord passes bounded Q4/S3 work,
 chart, rigid-motion, balance and termination-support checks, but its shear
@@ -11,44 +11,103 @@ yaw differs materially from finite-width measures. A conforming C3D8
 plate/stiffener bond confirms that distinction over three mesh levels;
 its end torque/transverse-force displacements have not converged and are
 not quantitative native oracles. A separate 0.1 m square *distributing*
-strip port now passes bounded native Q4/S3 reference, objectivity,
-derivative, physical-energy, torque/shear work and balance checks without
-drilling-component work. P0, continuous P1 and dual P1 weak lines all
-develop an alternating transverse Fz mode as line resolution rises. A
-Neumann H^(-1/2) norm does not erase that finite-model sensitivity. Native
-retained-cell frames are
-one-sided at a junction, so a discrete footprint also needs an explicit
+strip port passes bounded native Q4/S3 reference, objectivity, derivatives,
+physical-energy, torque/shear work and balance without drilling-component
+work. Finer Mx rows reproduce the fully fine fixed-mesh torque response;
+the nonlinear mixed work and actual-chart derivatives pass. The
+predeclared joint axial refinement nevertheless develops an alternating
+Fz mode. Changing only the strip position from area mean to centerline
+leaves that mode and torque essentially unchanged. At the fixed final
+mesh, coarsening only Fz rows restores the finite-model H^(-1/2)
+transverse quotient while changing shear response by about 3%. An
+independently assembled, physically matched square-strip RM plate/beam
+model follows torque/shear trends, but its finer-line torque and shell
+reaction partition differ materially. The conforming C3D8 solid model
+has different supports and section torsion. Native retained-cell frames
+are one-sided at a junction, so a discrete footprint needs an explicit
 shared nodal pose law.
 
 **Remaining uncertainty:** The square strip is only a bounded distributing
 pose candidate, not a selected rigid/distributing production footprint.
 Its physical torque/shear transfer, drilling/thickness/refinement behavior,
 and a stable *and adequately resolving* interface discretization still
-need qualification. A conservative P0 line-count cap controls the finite
-mode quotient across the required ratios but materially underresolves
-torque on fixed meshes, so it is not a selected policy.
-The current first-order solid reference is too mesh-sensitive to set
-physical response tolerances. Historical Q6/finite-pad, classical axial,
-CalculiX B31/S4 knot and native six-channel cases have different laws.
-An interface-resolution policy with loaded physical checks and the
-required complete mesh-ratio series remain open.
+need qualification. An all-channel P0 cap underresolves torque; the
+coarse-Fz/fine-Mx pairing is a promising diagnostic but has no established
+joint-refinement limit or physical accuracy target. Existing ratio screens
+show finite rank/quotients only over their tested grids; they do not
+establish a mesh-uniform inf-sup property. The first-order solid reference
+is too mesh-sensitive and physically mismatched for quantitative parity.
+Historical Q6/finite-pad, classical axial, CalculiX B31/S4 and native
+six-channel cases retain separate definitions. The complete registered
+mesh-ratio, physical-history and external-reference gates remain open.
 
-**Next discriminating experiment:** Analyze the saved alternating Fz and
-torque modes against the shell and retained-beam trace spaces, then derive
-one different work-conjugate interface pairing or finite-footprint law
-that preserves constant force/moment transfer and resolves the fixed-mesh
-torque response without a weak oscillatory channel. Test only the existing
-fixed Q4/S3 torque/shear controls and a bounded dual-norm mode check first.
-If that fails, revise the shell/beam pose trace rather than repeating finer
-line or classical axial screens. Do not restart a finer C3D8 sweep.
+**Next discriminating experiment:** At fixed, already registered physical
+meshes and loads, examine the Fz trace-image/traction mode and compare the
+coarse-Fz/fine-Mx policy with the independent square-strip model's
+corresponding work and response. This distinguishes a legitimate
+resolution split from a hidden traction mode or shell/beam trace mismatch.
+If the physical responses or reaction partition remain row-sensitive,
+revise the weak trace/test pairing before selecting a multiplier. Any
+further reference must match geometry, support, section and connection;
+do not restart the closed axial, C3D8 or joint-refinement sweeps.
 
-**Resulting action:** Retain the square strip as an exploratory finite-width
-pose candidate, and reject the tested P0 line-count cap as sufficient for
-qualification. Do not select a multiplier, claim inf-sup stability, or
-advance G1 from small loaded residuals, a rank check or either quotient.
-A higher-order or section-matched external reference is still needed for
-quantitative torque/shear parity. F03 authority remains unconsumed, G0B
-open and G1 barred.
+**Resulting action:** Retain the square strip and mixed-channel pairing as
+exploratory candidates, reject the tested all-channel P0 cap, and stop the
+hybrid-position hypothesis. Do not select a multiplier, claim inf-sup
+stability or advance G1 from small residuals, finite rank or a quotient.
+An executed, section-matched external reference remains necessary for
+quantitative parity. F03 authority remains unconsumed, G0B open and G1
+barred.
+
+**25 September position, Fz-row and matched-reference decision batch
+(development only):** Source `f81e0e41` adds the centerline-position,
+finite-area-orientation diagnostic to the existing nonlinear weak work.
+The 32 focused strip tests passed, including Q4/S3 actual-chart first and
+mixed derivatives, reference rows, objectivity and shear preservation.
+On fixed shell x8/y4, beam-half16, coarse4/Mx8, centerline position
+changes Q4 torque from `13.304673` to `13.304673 µrad` and tip-z force
+response from `46.644` to `47.224 µm`; S3 torque changes
+`13.303163→13.307360 µrad` and tip-z `48.695→49.156 µm`. The bounded
+H^(-1/2) transverse quotient changes only `2.584→2.600` (Q4) and
+`2.750→2.78` (S3); the weakest mode remains approximately 94–96% Fz.
+This rejects position averaging as the explanation for the Fz mode,
+without rejecting the finite-width pose itself. Raw root:
+`f03-native-hybrid-line-origin-dev-20260925-v1`. Its first invocation
+failed at Python import before physics evaluation because the checkout
+was absent from `PYTHONPATH`; the corrected single-thread invocation
+completed and the failed invocation is retained in the run history.
+
+On the *same final* shell x16/y4, beam-half16, Mx16 mesh, coarsening
+other channel rows from eight to four (including Fz) raises the finite
+transverse quotient from `1.087→2.84` for Q4 and `1.110→2.95` for S3.
+All combined rows remain full rank; Q4 shell-only rank is `31/36` and
+S3 `36/36`. Torque changes less than 0.1%, while tip-z changes from
+`48.591→49.820 µm` (Q4) and `49.252→50.687 µm` (S3). Physical shell
+energy stays positive, the numerical shell energy remains zero and work
+balances close. This supports Fz overresolution as a *fixed-grid*
+explanation, not an accepted row cap, physical response, or inf-sup
+proof. Raw root: `f03-native-fixed-grid-fz-row-dev-20260925-v1`.
+
+Source `9bc0a7fb` lets the existing independent RM-plate/Timoshenko-beam
+operator use the same square strip; its 16 tests passed. The paired
+reference uses plate `[-.5,1.5]×[-.5,.5] m`, `t=.07 m`, the same
+`E,ν,GJ,EI,GAs`, left-edge/root constraints, no offset, and separate
+`100 Nm` torque / `1000 N` transverse-force tip loads. The independent
+trace is the linearized z/rx/ry subset, not the native six-channel
+operator. At P0-4 the independent/native Q4/S3 torque tip rotations are
+`15.54/15.69/15.73 µrad`; at P0-8 they are
+`12.56/13.30/13.30 µrad`. Corresponding tip-z responses are
+`50.58/46.64/48.70 µm` and `48.69/45.77/47.52 µm`. Shell support
+torque under the torque load at P0-4 is `-56.25/-57.79/-57.13 Nm`,
+but at P0-8 is `-39.67/-47.36/-45.93 Nm`. Work and global balance pass.
+The common row-resolution trend is independently reproduced, but the
+finer-line response/reaction split is not a settled physical oracle.
+Raw root: `f03-square-independent-transverse-dev-20260925-v1`.
+The C3D8 solid deck separately fixes the full plate perimeter and has
+a solid square-bar torsion law rather than the native generalized
+`GJ` section; its results cannot be scored against this pair as if their
+boundary-value problems matched. No new C3D8 refinement is authorized
+by this result.
 
 **25 September native square-strip and stability screen (development
 only):** The new `physical_strip_005_005` port uses a fixed 0.1 x 0.1 m
@@ -112,6 +171,34 @@ are in `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/` under
 `f03-native-square-ratios-dev-20260925-v1`,
 `f03-native-square-ratio-loads-dev-20260925-v1` and
 `f03-native-square-fixed-line-dev-20260925-v1`.
+
+**Mixed-channel decision and terminal joint series:** Exact P0 row
+composition with coarse Fz/Fx/Fy/My/Mz and twice-resolved Mx reproduces
+the fully refined torque twist on fixed Q4/S3 x8/y4 beam-half16 to the
+reported precision; Fz-only refinement does not change torque materially.
+The bounded nonlinear multiplier potential, first/mixed variations through
+actual E4/B3 charts, reference Jacobian and constant Mx work pass focused
+checks. In fourteen 1:8–8:1 ratio cases, combined rows are full rank,
+the H^(-1/2) transverse quotient is at least 2.300, physical shell energy
+is positive, numerical shell-component energy is zero, and work/balance
+errors are small. Q4 shell-only rank is 27/28 at shell x8/beam-half16;
+doubling shell x restores 28/28 but changes torque/shear responses by
+3.3%/6.8%. The predeclared three-level *axial-only* joint series at
+beam:shell element ratio 1:2 shows Q4 quotient `3.348→2.300→1.087`,
+torque twist `15.354→13.305→12.537 µrad`; S3 quotient
+`4.197→2.483→1.110`, torque twist `15.387→13.303→11.831 µrad`.
+The final weakest mode is >99.95% Fz. Those results trigger the declared
+stop rule: no more refinement of this candidate under this diagnostic.
+They are not proof of general formulation failure. Raw records are under
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/` in
+`f03-native-square-channel-split-dev-20260925-v2`,
+`f03-native-square-channel-modes-dev-20260925-v1`,
+`f03-native-square-mixed-ratios-dev-20260925-v1`,
+`f03-native-square-mixed-q4-shell-refine-dev-20260925-v1`, and
+`f03-native-square-mixed-joint-dev-20260925-v1`. The earlier `-v1`
+channel-split runner syntax failure is retained. The affected mechanical
+suite passed 118/118 after the split load route, and the nonlinear split
+work suite passed 26/26.
 
 **25 September bounded physical-bond screen (development only):** The
 conforming 3D model is a 2.0 x 1.0 x 0.07 m plate with a 1.0 x 0.1 x
