@@ -27,6 +27,7 @@ _REQUIRED_SETTINGS = (
 def validate_warped_q4_plane(model, definition, settings, *, analysis_control="force"):
     from .core import ContactValidationReport
     from anysolver.e4_pl_element import QualifiedE4PLShellElement
+    from anysolver.fe_core import Material
 
     issues = []
     if (len(definition.surfaces) != 1 or len(definition.rigid_bodies) != 1
@@ -50,9 +51,19 @@ def validate_warped_q4_plane(model, definition, settings, *, analysis_control="f
         else:
             skins = []
             for element_id in surface.element_ids:
-                if type(model.mesh.elements.get(element_id)) is not QualifiedE4PLShellElement:
+                element = model.mesh.elements.get(element_id)
+                if type(element) is not QualifiedE4PLShellElement:
                     issues.append("warped Q4 plane profile needs exact qualified Q4 formulations")
                     continue
+                material = model.get_material(element.material_name)
+                if (type(material) is not Material
+                        or float(material.yield_stress) != 0.0
+                        or material.hardening_curve is not None
+                        or element.shell_section is not None):
+                    issues.append(
+                        f"warped Q4 element {element_id} needs an admitted "
+                        "homogeneous isotropic elastic material without a shell section"
+                    )
                 try:
                     skins.append(WarpedQ4Skin(model, element_id, surface.side))
                 except ValueError as exc:

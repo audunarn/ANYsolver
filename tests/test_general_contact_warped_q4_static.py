@@ -104,6 +104,15 @@ def test_warped_static_assembly_maps_local_work_and_rejects_unsupported_profile(
     with pytest.raises(ValueError, match="von_karman"):
         solve_static_nonlinear(model, LoadCase("empty"), contact=definition,
                                contact_settings=settings, kinematics="corotational")
+    with pytest.raises(ValueError, match="seeded material"):
+        solve_static_nonlinear(model, LoadCase("empty"), contact=definition,
+                               contact_settings=settings, initial_element_states={})
+    plastic_model = _model()
+    plastic_model.add_material("elastic", 1.0e5, 0.3, yield_stress=10.0)
+    plastic_report = validate_general_contact(plastic_model, definition, settings)
+    assert not plastic_report.valid
+    assert any("homogeneous isotropic elastic" in issue
+               for issue in plastic_report.issues)
 
 
 def test_warped_static_reaction_and_restart_follow_coupled_solver():

@@ -6,7 +6,10 @@ profile assembles one qualified Q4 face against one analytic rigid plane through
 qualified varying-frame physical director, Q1 primal pressure support and a
 penalty normal law. Both top and bottom skins use structural half-thickness
 offsets. A fixed-normal translating plane is admitted. Restart binds the
-contact definition and declared numerical settings.
+contact definition and declared numerical settings. This development route
+admits homogeneous isotropic elastic shell material only; plasticity,
+orthotropy, generalized sections and externally seeded initial histories
+require separate material-state checks.
 
 Set `ContactSolverSettings(warped_q4_plane=True, ...)`, provide all six
 `warped_q4_*` quadrature and gap controls explicitly, and declare a

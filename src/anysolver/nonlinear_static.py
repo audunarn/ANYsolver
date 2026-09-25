@@ -7374,6 +7374,9 @@ def solve_static_nonlinear(
                 and (str(kinematics).lower() != "von_karman"
                      or corotational_tangent != "auto")):
             raise ValueError("warped Q4 plane contact currently requires von_karman small-rotation kinematics")
+        if (contact_settings is not None and contact_settings.warped_q4_plane
+                and (initial_element_states is not None or initial_fields is not None)):
+            raise ValueError("warped Q4 plane contact does not admit seeded material or initial-field history")
         if any(surface.beam_radius is not None for surface in contact.surfaces):
             if str(kinematics).lower() != "von_karman":
                 raise ValueError("round classical beam-plane contact currently requires von_karman kinematics")
