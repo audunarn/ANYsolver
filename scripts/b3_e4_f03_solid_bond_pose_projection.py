@@ -239,6 +239,138 @@ def project(coords: dict[int, np.ndarray],
             "meaning":"area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison"}
 
 
+def project_surface_position_moments(
+        coords: dict[int, np.ndarray], u: dict[int, np.ndarray], *,
+        stations: tuple[float, ...] = (.9, .925, .95, .975, 1.)
+        ) -> dict:
+    """Read-only solid projection onto the finite six-position-moment patch.
+
+    The shell side is the *actual* loaded solid top face. The beam side is a
+    piecewise-interpolated rigid fit to complete solid bar sections at the
+    registered stations. Their difference measures the reduction to a B3
+    section; the solid's actual shared bond face has zero positional gap.
+    The same material arms, area and inertia as the native 100 mm footprint
+    turn this difference into three translations and three rotation-like
+    moments. This is not a constitutive, contact or E4-state comparison.
+    """
+    grid = np.asarray(stations, dtype=float)
+    if (grid.shape != (5,) or
+            not np.allclose(grid, (.9, .925, .95, .975, 1.),
+                            rtol=0., atol=1e-12)):
+        raise ValueError("registered terminal solid section stations required")
+    fitted = [project(coords, u, section_x=float(x),
+                      patch_x0=.9, patch_x1=1.,
+                      patch_grid=tuple(grid)) for x in grid]
+    lookup: dict[tuple[float, float, float], list[int]] = {}
+    for node, xyz in coords.items():
+        lookup.setdefault(tuple(np.round(xyz, 9)), []).append(node)
+
+    def top_face(x0, x1, y0, y1):
+        xm, ym = (x0+x1)/2, (y0+y1)/2
+        points = ((x0,y0),(x1,y0),(x1,y1),(x0,y1),
+                  (xm,y0),(x1,ym),(xm,y1),(x0,ym))
+        result = []
+        for x, y in points:
+            ids = lookup.get(tuple(np.round((x, y, .0175), 9)), ())
+            if len(ids) != 1:
+                raise ValueError("ambiguous shared terminal solid bond node")
+            result.append(coords[ids[0]]+u[ids[0]])
+        return np.array(result)
+
+    center_frame = Rotation.from_rotvec(
+        fitted[2]["beam_rotation_vector_rad"]).as_matrix()
+    mean = np.zeros(3)
+    moment = np.zeros(3)
+    inertia = np.zeros((3, 3))
+    squared_gap = 0.
+    squared_face_interpolation = 0.
+    squared_endpoint_section_fit = 0.
+    squared_pose_interpolation = 0.
+    max_gap = 0.
+    area = 0.
+    ycuts = np.linspace(-.05, .05, 9)
+    roots, weights = np.polynomial.legendre.leggauss(3)
+    for station, (x0, x1) in enumerate(zip(grid[:-1], grid[1:])):
+        c0 = np.array(fitted[station]["beam_center_m"])
+        c1 = np.array(fitted[station+1]["beam_center_m"])
+        r0 = np.array(fitted[station]["beam_rotation_vector_rad"])
+        r1 = np.array(fitted[station+1]["beam_rotation_vector_rad"])
+        q0 = Rotation.from_rotvec(r0).as_matrix()
+        q1 = Rotation.from_rotvec(r1).as_matrix()
+        for y0, y1 in zip(ycuts[:-1], ycuts[1:]):
+            face = top_face(float(x0), float(x1), float(y0), float(y1))
+            jac = (x1-x0)*(y1-y0)/4
+            for xi, wx in zip(roots, weights):
+                x = (x0+x1)/2+xi*(x1-x0)/2
+                fraction = (x-x0)/(x1-x0)
+                beam_center = (1-fraction)*c0+fraction*c1
+                beam_frame = Rotation.from_rotvec(
+                    (1-fraction)*r0+fraction*r1).as_matrix()
+                for eta, wy in zip(roots, weights):
+                    y = (y0+y1)/2+eta*(y1-y0)/2
+                    shell_point = _quad8_shape(float(xi), float(eta))@face
+                    section_arm = np.array((0., y, -.05))
+                    beam_point = beam_center+beam_frame@section_arm
+                    shell_left = _quad8_shape(-1., float(eta))@face
+                    shell_right = _quad8_shape(1., float(eta))@face
+                    linear_shell = (1-fraction)*shell_left+fraction*shell_right
+                    linear_beam = ((1-fraction)*(c0+q0@section_arm)+
+                                   fraction*(c1+q1@section_arm))
+                    face_interpolation = shell_point-linear_shell
+                    endpoint_section_fit = linear_shell-linear_beam
+                    pose_interpolation = linear_beam-beam_point
+                    if np.linalg.norm(shell_point-beam_point-
+                                      face_interpolation-endpoint_section_fit-
+                                      pose_interpolation) > 1e-12:
+                        raise ArithmeticError("solid section residual split failed")
+                    gap = center_frame.T@(shell_point-beam_point)
+                    arm = np.array((x-.95, y, 0.))
+                    weight = float(wx*wy*jac)
+                    area += weight
+                    mean += weight*gap
+                    moment += weight*np.cross(arm, gap)
+                    inertia += weight*((arm@arm)*np.eye(3)-np.outer(arm, arm))
+                    squared_gap += weight*float(gap@gap)
+                    squared_face_interpolation += (
+                        weight*float(face_interpolation@face_interpolation))
+                    squared_endpoint_section_fit += (
+                        weight*float(endpoint_section_fit@endpoint_section_fit))
+                    squared_pose_interpolation += (
+                        weight*float(pose_interpolation@pose_interpolation))
+                    max_gap = max(max_gap, float(np.linalg.norm(gap)))
+    if abs(area-.01) > 1e-12:
+        raise ArithmeticError("physical terminal bond area changed")
+    mean /= area
+    moment /= area
+    inertia /= area
+    if np.linalg.eigvalsh(inertia)[0] <= 1e-8:
+        raise ArithmeticError("degenerate terminal footprint inertia")
+    rotation_like = np.linalg.solve(inertia, moment)
+    return {
+        "status": "EXPLORATORY_NOT_G0_ACCEPTANCE",
+        "patch_interval_x_m": [.9, 1.],
+        "patch_width_y_m": .1,
+        "section_stations_x_m": grid.tolist(),
+        "area_m2": float(area),
+        "inertia_eigenvalues_m2": np.linalg.eigvalsh(inertia).tolist(),
+        "surface_position_moment_gap_m_rad": np.r_[mean, rotation_like].tolist(),
+        "reduced_section_gap_rms_m": float(np.sqrt(squared_gap/area)),
+        "reduced_section_gap_max_m": max_gap,
+        "face_interpolation_rms_m": float(np.sqrt(
+            squared_face_interpolation/area)),
+        "endpoint_section_fit_rms_m": float(np.sqrt(
+            squared_endpoint_section_fit/area)),
+        "beam_pose_interpolation_rms_m": float(np.sqrt(
+            squared_pose_interpolation/area)),
+        "beam_section_fit_rms_by_station_m": [
+            row["beam_section_rms_fit_residual_m"] for row in fitted],
+        "tip_lumped_pose_gap_m_rad": (
+            fitted[-1]["distributing_translation_gap_m"]+
+            fitted[-1]["distributing_rotation_gap_rad"]),
+        "interpretation": "solid top face versus fitted rigid B3-like sections, not actual shared-face opening, E4 reconstruction, native multiplier work or external accuracy acceptance",
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", type=Path, required=True)
