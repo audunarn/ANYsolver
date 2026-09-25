@@ -48,6 +48,12 @@ budget. Source/target force and moment balance was within 3×10⁻¹¹ in SI
 units. The opt-in integrated regression passed in 137.66 s. This feasible
 case supplies a development baseline for coupled refinement; one mesh and
 one normal stiffness do not establish convergence or C1 acceptance.
+An offline wheel from source `29dfa8d4` (SHA-256
+`CBB5628888F5E94B5F9787AE6430D9B8BCBA4A4D3DF312BB6135A7241CA1512D`)
+ran the same example from an isolated installation. The complete 623-byte
+source and installed outputs were identical (SHA-256
+`D559C85E4F3A8840F442DA14BAD066D6B211B384A80E5728C3EF714CD0F13E75`).
+This verifies packaging for this development example only.
 
 This profile requires explicitly dimensioned Q4 area and weighted-gap
 tolerances, triangle and energy-evaluation budgets, and augmented-pressure
