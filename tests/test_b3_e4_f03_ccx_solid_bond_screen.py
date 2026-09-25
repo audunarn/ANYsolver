@@ -103,6 +103,29 @@ def test_reverse_fz_audit_rejects_wrong_scope_and_incomplete_inventory():
 
 
 @pytest.mark.parametrize("factor", (1, 2, 4))
+@pytest.mark.parametrize("load,expected", (("tip_mx", [0.,0.,0.,100.,0.,0.]),
+                                            ("tip_fz", [0.,0.,1000.,0.,-1000.,0.])))
+def test_detached_bar_control_preserves_mesh_loads_and_separate_roots(factor,load,expected):
+    _, terminal=SCREEN.build(factor,load,boundary_policy="left_root",
+                             bond_policy="terminal")
+    deck,meta=SCREEN.build(factor,load,boundary_policy="left_root",
+                            bond_policy="detached")
+    assert meta["shared_interface_nodes"] == 0
+    assert meta["bond_interval_m"] is None
+    assert meta["detached_interface_nodes"] == (5*factor+1)*(2*factor+1)
+    assert meta["plate_elements"] == terminal["plate_elements"]
+    assert meta["bar_elements"] == terminal["bar_elements"]
+    assert set(meta["beam_root_node_ids"]).isdisjoint(meta["plate_boundary_node_ids"])
+    assert "*CONTACT PAIR" not in deck and "*TIE" not in deck
+    applied={int(node):np.array(force) for node,force in
+             meta["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(applied,meta["probe_coordinates_m"]) == pytest.approx(
+        expected,abs=1e-10)
+    displacement={int(node):np.zeros(3) for node in meta["probe_node_ids"]}
+    assert not SCREEN.recover(meta,displacement)["station_motion"]["1000"]["interface_shared"]
+
+
+@pytest.mark.parametrize("factor", (1, 2, 4))
 def test_terminal_hard_mortar_faces_exclude_bonded_patch(factor):
     deck, meta = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",
                               bond_policy="terminal", contact_policy="mortar_hard")

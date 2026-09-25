@@ -69,10 +69,11 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     if boundary_policy not in ("perimeter", "left", "left_root") or (
             boundary_policy != "perimeter" and shear not in ("tip_mx", "tip_fz")):
         raise ValueError("unsupported plate boundary/loading combination")
-    if bond_policy not in ("full", "terminal") or (
-            bond_policy == "terminal" and (boundary_policy != "left_root" or
-                                           shear not in ("tip_mx", "tip_fz"))):
-        raise ValueError("terminal bond requires left/root tip-load case")
+    if bond_policy not in ("full", "terminal", "detached") or (
+            bond_policy in ("terminal", "detached") and
+            (boundary_policy != "left_root" or
+             shear not in ("tip_mx", "tip_fz"))):
+        raise ValueError("terminal/detached bond requires left/root tip-load case")
     if contact_policy not in ("none", "mortar_hard") or (
             contact_policy == "mortar_hard" and bond_policy != "terminal"):
         raise ValueError("hard mortar contact requires terminal bond")
@@ -103,7 +104,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
 
     def bar_node(key: tuple[Fraction,Fraction,Fraction]) -> int:
         nonlocal next_id
-        if bond_policy == "terminal" and key[2] == 35 and key[0] < 900:
+        if bond_policy in ("terminal", "detached") and key[2] == 35 and (
+                bond_policy == "detached" or key[0] < 900):
             if key not in detached:
                 detached[key]=next_id
                 next_id+=1
@@ -135,10 +137,11 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     if len(set((*coordinates.values(), *detached.values())))!=next_id-1:
         raise AssertionError("duplicate solid node identity")
     interface={(x,y,Fraction(35)) for x in bx for y in by
-               if bond_policy == "full" or x >= 900}
+               if bond_policy == "full" or
+               (bond_policy == "terminal" and x >= 900)}
     if not all(coordinates[p] in plate_nodes & bar_nodes for p in interface):
         raise AssertionError("plate/bar interface is not conforming")
-    if bond_policy == "terminal" and (
+    if bond_policy in ("terminal", "detached") and (
             not detached or
             any(coordinates[p] in bar_nodes for p in detached)):
         raise AssertionError("unbonded plate/stiffener nodes were merged")
@@ -268,7 +271,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           "shared_interface_node_ids":sorted(coordinates[p] for p in interface),
           "detached_stiffener_node_ids":sorted(detached.values()),
           "bond_policy":bond_policy,"bond_interval_m":(
-              [0.,1.] if bond_policy=="full" else [.9,1.]),
+              [0.,1.] if bond_policy=="full" else
+              [.9,1.] if bond_policy=="terminal" else None),
           "contact_policy":contact_policy,
           "reverse_tip_fz":reverse_tip_fz,
           "unbonded_interface_pairs":unbonded_pairs if reverse_tip_fz else [],
@@ -290,7 +294,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           "surface_nodes":{f"{x},{y}":index for (x,y),index in surface.items()},
           "model":("3D C3D8 plate/bar with shared nodes " +
                    ("along the full interface" if bond_policy=="full" else
-                    "only on the last 0.1 m terminal interface") +
+                    "only on the last 0.1 m terminal interface" if
+                    bond_policy=="terminal" else "nowhere (free-bar control)") +
                    "; plate [-.5,1.5]x[-.5,.5]x[-.035,.035] m; bar [0,1]x[-.05,.05]x[.035,.135] m; E=210 GPa, nu=.3"),
           "boundary_policy":boundary_policy,
           "boundary":("all three translations on plate left edge and stiffener root face fixed"
@@ -402,7 +407,7 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
         top_slope_z_y=float((displacement[indices[top[-1]]][2]-
                              displacement[indices[top[0]]][2])/.1)
         shared=(meta.get("bond_policy", "full")=="full" or
-                float(station)>=900.)
+                (meta.get("bond_policy")=="terminal" and float(station)>=900.))
         entry={"translation_m":fitted[:3].tolist(),
                "section_rotation_rad":fitted[3:].tolist(),
                "max_warping_residual_m":float(np.linalg.norm(residual,axis=1).max()),
@@ -478,7 +483,7 @@ def main() -> int:
     parser.add_argument("--suite",choices=("shear","loads"),default="shear")
     parser.add_argument("--factor",type=int,choices=(1,2,4),nargs="+",default=(1,2))
     parser.add_argument("--boundary",choices=("perimeter","left","left_root"),default="perimeter")
-    parser.add_argument("--bond",choices=("full","terminal"),default="full")
+    parser.add_argument("--bond",choices=("full","terminal","detached"),default="full")
     parser.add_argument("--contact",choices=("none","mortar_hard"),default="none")
     parser.add_argument("--reverse-fz-open-audit",action="store_true")
     args=parser.parse_args()
@@ -487,6 +492,9 @@ def main() -> int:
     if args.bond == "terminal" and (args.boundary != "left_root" or
                                     args.suite != "loads"):
         parser.error("terminal bond requires left/root tip-load suite")
+    if args.bond == "detached" and (args.boundary != "left_root" or
+                                    args.suite != "loads" or args.contact != "none"):
+        parser.error("detached control requires no-contact left/root tip-load suite")
     if args.contact == "mortar_hard" and args.bond != "terminal":
         parser.error("hard mortar contact requires terminal bond")
     if args.reverse_fz_open_audit and (args.suite!="loads" or
@@ -503,7 +511,9 @@ def main() -> int:
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":("Does reversed transverse loading leave the whole matching unbonded solid interface open, making the no-contact solution an admissible directional comparator?"
+              "question":("Do the same C3D8 bar meshes resolve free bending and torsion before their terminal-bond responses are used to judge a connection?"
+                          if args.bond=="detached" else
+                          "Does reversed transverse loading leave the whole matching unbonded solid interface open, making the no-contact solution an admissible directional comparator?"
                           if args.reverse_fz_open_audit else
                           "finite physical bond yaw under two affine shears"
                           if args.suite=="shear" else
@@ -512,7 +522,9 @@ def main() -> int:
                           "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
                           if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
-              "decision":("If every reference-normal paired-node gap is nonnegative, retain only the reverse-Fz open-interface result as a directional physical comparator, subject to mesh convergence and deformed-surface checks; otherwise reject this no-contact reference for shear. Neither outcome selects a native footprint."
+              "decision":("If the free bar itself remains mesh-sensitive, do not use current terminal-solid responses to rank connection laws; if it stabilizes, investigate plate and terminal-bond discretization next. Neither outcome selects a native footprint."
+                          if args.bond=="detached" else
+                          "If every reference-normal paired-node gap is nonnegative, retain only the reverse-Fz open-interface result as a directional physical comparator, subject to mesh convergence and deformed-surface checks; otherwise reject this no-contact reference for shear. Neither outcome selects a native footprint."
                           if args.reverse_fz_open_audit else
                           "If the hard-mortar case executes with admissible contact output, no sampled penetration, work and reaction balance, advance it to mesh/contact assessment; otherwise preserve the failed reference and revise its external contact formulation. No native connection is selected by an unresolved contact result."
                           if args.contact=="mortar_hard" else
@@ -534,7 +546,9 @@ def main() -> int:
               "limits_of_claim":["3D solid idealization, not E4 or B3",
                                  f"{len(args.factor)} development mesh levels, not convergence qualification",
                                  f"prescribed plate {args.boundary} and bar root as declared",
-                                 ("terminal mode uses external hard-mortar contact only outside the shared patch"
+                                 ("detached control has no physical plate/bar connection"
+                                  if args.bond=="detached" else
+                                  "terminal mode uses external hard-mortar contact only outside the shared patch"
                                   if args.contact=="mortar_hard" else
                                   "terminal mode omits contact outside the shared patch"),
                                  "connection and section still differ from native weak-line B3/E4"]}
