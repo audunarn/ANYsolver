@@ -1,0 +1,38 @@
+# C1 internal development kernel: moving S3/S3 pointwise energy
+
+`MovingS3PairPenalty` in `triangle_pair_energy.py` is an internal verification
+specialization for two explicitly supplied physical S3 triangles. Each of
+their six nodes may translate independently. It is not admitted by
+`solve_static_nonlinear` and is not the selected primal-pressure mortar law.
+
+For current source and target positions projected along the current source
+normal, the kernel clips their common triangle overlap at the affine normal
+gap (g=0). It integrates the squared closed gap exactly over the active
+polygon. The scalar work is
+
+\[
+E_c=\tfrac12\epsilon_n\frac{A_{s,0}}{A_s}
+    \int_{\Omega_s\cap\Omega_t}\langle-g\rangle_+^2\,da,
+\]
+
+where (A_{s,0}) is source reference area and (A_s) its current area. This
+keeps the declared source reference-area measure under arbitrary affine S3
+motion. The active area and independent minimum represented gap are reported
+separately. There is no pressure-space interpolation or augmented multiplier
+in this specialization.
+
+The local 18-coordinate residual and smooth-branch tangent differentiate
+that same energy by centered differences with an explicit dimensional step
+and a finite evaluation budget. Current face inversion, conflicting
+polarity, overlap/contact branch changes and coincident-edge derivative
+kinks fail explicitly. These checks do not certify every possible projection
+branch switch. Swept crossing, director/skin rotation maps, shell structural
+assembly, restart and Q4 bilinear geometry are not yet connected.
+
+`tests/test_general_contact_triangle_pair_energy.py` covers an independent
+constant-gap reference-area integral, exact partial-contact affine-gap
+integration, nonuniform in-plane nodal motion against analytic polygon
+clipping, common-translation invariance, force/moment balance, a smooth
+directional tangent and explicit kink/resource rejection. Five focused tests
+passed in `c1-general-s3-energy-final1.txt`. This is development evidence,
+not C1 engineering acceptance or a public capability.
