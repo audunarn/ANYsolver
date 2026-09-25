@@ -68,7 +68,13 @@ def test_square_patch_retained_interface_action_is_consistent():
         native_half_cells=4, shell_port="physical_strip_005_005")
     assert mode["shell_port"] == "physical_strip_005_005"
     assert mode["row_rank"] == mode["row_count"]
+    assert mode["shell_only_row_rank"] <= mode["row_count"]
+    assert mode["beam_only_row_rank"] <= mode["row_count"]
     assert mode["decomposition_relative_error"] < 1e-9
+    dual=mode["p0_dual_diagnostic"]
+    assert dual["transverse_beta_lower"] <= dual["transverse_beta_upper"]
+    assert dual["gram_relative_enclosure"] < 1e-3
+    assert 0. <= dual["weakest_fz_norm_share"] <= 1.
     assert mode["scope"].endswith("not physical inf-sup acceptance")
 
 

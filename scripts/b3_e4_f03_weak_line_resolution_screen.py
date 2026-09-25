@@ -31,6 +31,7 @@ from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffnes
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_reference_kkt)
+from scripts._b3_e4_f03_p0_dual_norm import p0_dual_gram
 
 
 def sinusoidal_axial_density_load(beam, *, amplitude_n_per_m=1e5):
@@ -424,6 +425,43 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
     if not -1e-10 <= transverse_physical <= 1.+1e-10:
         raise ArithmeticError("invalid transverse work decomposition")
     transverse_physical = float(np.clip(transverse_physical, 0., 1.))
+    dual_diagnostic = None
+    if kind == "piecewise_constant":
+        # The L2 quotient above shrinks for high-frequency dual loads even
+        # when a trace pair is stable. Compare the same absolute-energy
+        # action with an analytically bounded reference H^(-1/2) dual norm.
+        lower,upper=p0_dual_gram(intervals,1.,4095)
+        transverse_action=np.column_stack((bp[transverse_rows],
+                                            br[transverse_rows]))
+        transverse_action=transverse_action@transverse_action.T
+        transverse_action=(transverse_action+transverse_action.T)/2
+        lower3=np.kron(lower,np.eye(3))
+        upper3=np.kron(upper,np.eye(3))
+        low_values,low_vectors=linalg.eigh(transverse_action,upper3)
+        high_values=linalg.eigh(transverse_action,lower3,eigvals_only=True)
+        if low_values[0] < -1e-9*max(1.,low_values[-1]):
+            raise ArithmeticError("negative absolute-energy dual action")
+        mode3=low_vectors[:,0].reshape(space.count,3)
+        shares=[float(mode3[:,axis]@upper@mode3[:,axis])
+                for axis in range(3)]
+        fz=mode3[:,0]
+        significant=np.abs(fz)>1e-8*np.max(np.abs(fz))
+        signs=np.sign(fz[significant])
+        dual_diagnostic={
+            "norm":"reference Neumann H^(-1/2); development diagnostic",
+            "last_integrated_cosine_mode":4095,
+            "transverse_beta_lower":float(np.sqrt(max(0.,low_values[0]))),
+            "transverse_beta_upper":float(np.sqrt(max(0.,high_values[0]))),
+            "gram_relative_enclosure":float(
+                linalg.eigvalsh(upper3,lower3)[-1]-1.),
+            "weakest_fz_norm_share":shares[0]/sum(shares),
+            "weakest_fz_sign_changes":int(np.count_nonzero(
+                signs[1:] != signs[:-1])),
+            "weakest_physical_work_share":float(
+                np.linalg.norm(low_vectors[:,0]@bp[transverse_rows])**2/
+                max(low_vectors[:,0]@transverse_action@low_vectors[:,0],
+                    1e-300)),
+        }
     return {
         "topology": topology, "shell_x_intervals": 2*n_s,
         "shell_y_intervals": n_y,
@@ -433,6 +471,10 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         "confined_to_attachment": confined,
         "row_count": len(rows),
         "row_rank": int(np.linalg.matrix_rank(rows)),
+        "shell_only_row_rank": int(np.linalg.matrix_rank(
+            rows[:,free < 6*shell.panel.node_count])),
+        "beam_only_row_rank": int(np.linalg.matrix_rank(
+            rows[:,free >= 6*shell.panel.node_count])),
         "physical_stiffness_min_eigen": float(ep[0]),
         "retained_negative_modes": int(np.count_nonzero(er < 0.)),
         "decomposition_relative_error": decomposition_error,
@@ -446,6 +488,7 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         "transverse_mode_fz_mx_my_l2_shares": transverse_shares,
         "transverse_mode_physical_work_share": transverse_physical,
         "transverse_mode_retained_work_share": 1.-transverse_physical,
+        "p0_dual_diagnostic":dual_diagnostic,
         "scope": "finite native six-channel algorithmic norm; not physical inf-sup acceptance",
     }
 
