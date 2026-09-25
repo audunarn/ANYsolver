@@ -32,6 +32,8 @@ from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_reference_kkt)
 from scripts._b3_e4_f03_p0_dual_norm import p0_dual_gram
+from scripts._b3_e4_f03_p1_dual_norm import p1_dual_gram
+from scripts._b3_e4_f03_dual_linear_norm import dual_linear_gram
 
 
 def sinusoidal_axial_density_load(beam, *, amplitude_n_per_m=1e5):
@@ -426,11 +428,16 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         raise ArithmeticError("invalid transverse work decomposition")
     transverse_physical = float(np.clip(transverse_physical, 0., 1.))
     dual_diagnostic = None
-    if kind == "piecewise_constant":
+    if kind in ("piecewise_constant", "continuous_linear", "dual_linear"):
         # The L2 quotient above shrinks for high-frequency dual loads even
         # when a trace pair is stable. Compare the same absolute-energy
         # action with an analytically bounded reference H^(-1/2) dual norm.
-        lower,upper=p0_dual_gram(intervals,1.,4095)
+        gram_builder={"piecewise_constant":p0_dual_gram,
+                      "continuous_linear":p1_dual_gram,
+                      "dual_linear":dual_linear_gram}[kind]
+        lower,upper=gram_builder(intervals,1.,4095)
+        if lower.shape != (space.count,space.count):
+            raise ArithmeticError("dual norm and multiplier space disagree")
         transverse_action=np.column_stack((bp[transverse_rows],
                                             br[transverse_rows]))
         transverse_action=transverse_action@transverse_action.T
@@ -449,6 +456,7 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         signs=np.sign(fz[significant])
         dual_diagnostic={
             "norm":"reference Neumann H^(-1/2); development diagnostic",
+            "space":kind,
             "last_integrated_cosine_mode":4095,
             "transverse_beta_lower":float(np.sqrt(max(0.,low_values[0]))),
             "transverse_beta_upper":float(np.sqrt(max(0.,high_values[0]))),
@@ -489,6 +497,7 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         "transverse_mode_physical_work_share": transverse_physical,
         "transverse_mode_retained_work_share": 1.-transverse_physical,
         "p0_dual_diagnostic":dual_diagnostic,
+        "density_dual_diagnostic":dual_diagnostic,
         "scope": "finite native six-channel algorithmic norm; not physical inf-sup acceptance",
     }
 

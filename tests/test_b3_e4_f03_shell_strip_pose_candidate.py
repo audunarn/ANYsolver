@@ -62,17 +62,21 @@ def test_square_patch_native_load_work_is_physical(topology, load):
         assert loaded["beam_tip_uz_m"] > 0.
 
 
-def test_square_patch_retained_interface_action_is_consistent():
+@pytest.mark.parametrize("kind", ("piecewise_constant", "continuous_linear",
+                                   "dual_linear"))
+def test_square_patch_retained_interface_action_is_consistent(kind):
     mode=chord_reference_modes(
-        "Q4", 2, "piecewise_constant", n_s=2, n_y=4,
+        "Q4", 2, kind, n_s=2, n_y=4,
         native_half_cells=4, shell_port="physical_strip_005_005")
     assert mode["shell_port"] == "physical_strip_005_005"
     assert mode["row_rank"] == mode["row_count"]
     assert mode["shell_only_row_rank"] <= mode["row_count"]
     assert mode["beam_only_row_rank"] <= mode["row_count"]
     assert mode["decomposition_relative_error"] < 1e-9
-    dual=mode["p0_dual_diagnostic"]
-    assert dual["transverse_beta_lower"] <= dual["transverse_beta_upper"]
+    dual=mode["density_dual_diagnostic"]
+    assert dual["space"] == kind
+    assert dual["transverse_beta_lower"] <= (
+        dual["transverse_beta_upper"] + 1e-10)
     assert dual["gram_relative_enclosure"] < 1e-3
     assert 0. <= dual["weakest_fz_norm_share"] <= 1.
     assert mode["scope"].endswith("not physical inf-sup acceptance")
