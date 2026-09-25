@@ -538,3 +538,21 @@ def test_midspan_transverse_slope_preserves_independent_shear_field():
                for node, value in rigid.items()}
     measured = SCREEN.recover(meta, sheared)["midspan_transverse_kinematics"]
     assert measured["slope_plus_section_ry_rad"] == pytest.approx(shear, abs=1e-13)
+
+
+def test_left_root_support_split_uses_common_origin_and_complete_inventory():
+    meta = {"boundary_policy": "left_root",
+            "plate_boundary_node_ids": [1], "beam_root_node_ids": [2],
+            "boundary_coordinates_m": {"1": [-.5, .2, 0.],
+                                      "2": [0., 0., .0675]}}
+    reaction = {1: np.array([0., 0., -10.]),
+                2: np.array([0., 4., 0.])}
+    split = SCREEN.split_left_root_support_wrenches(meta, reaction)
+    assert split["plate_support_wrench_N_Nm"] == pytest.approx(
+        [0., 0., -10., -2., -5., 0.])
+    assert split["bar_root_support_wrench_N_Nm"] == pytest.approx(
+        [0., 4., 0., -.27, 0., 0.])
+    assert split["total_support_wrench_N_Nm"] == pytest.approx(
+        [0., 4., -10., -2.27, -5., 0.])
+    with pytest.raises(ValueError, match="disjoint complete"):
+        SCREEN.split_left_root_support_wrenches(meta, {1: reaction[1]})

@@ -703,6 +703,33 @@ def _wrench(forces: dict[int,np.ndarray], xyz: dict[str,list[float]]) -> list[fl
     return [*resultant.tolist(),*moment.tolist()]
 
 
+def split_left_root_support_wrenches(
+        meta: dict, reactions: dict[int,np.ndarray]) -> dict[str,list[float]]:
+    """Recover disjoint plate and bar-root support wrenches from saved RFs.
+
+    This applies only to the declared left/root solid model. Moments use
+    the common global origin, so eccentric reaction forces are included.
+    """
+    if meta.get("boundary_policy") != "left_root":
+        raise ValueError("left/root support model required")
+    plate = set(map(int, meta["plate_boundary_node_ids"]))
+    bar = set(map(int, meta["beam_root_node_ids"]))
+    if not plate or not bar or plate & bar or plate | bar != set(reactions):
+        raise ValueError("disjoint complete plate/bar reaction inventory required")
+    xyz = meta["boundary_coordinates_m"]
+    plate_wrench = np.asarray(_wrench(
+        {node: reactions[node] for node in sorted(plate)}, xyz))
+    bar_wrench = np.asarray(_wrench(
+        {node: reactions[node] for node in sorted(bar)}, xyz))
+    total_wrench = np.asarray(_wrench(reactions, xyz))
+    if not np.allclose(plate_wrench+bar_wrench, total_wrench,
+                       rtol=1e-12, atol=1e-9):
+        raise ArithmeticError("support partition does not reconstruct total")
+    return {"plate_support_wrench_N_Nm": plate_wrench.tolist(),
+            "bar_root_support_wrench_N_Nm": bar_wrench.tolist(),
+            "total_support_wrench_N_Nm": total_wrench.tolist()}
+
+
 def recover(meta: dict, displacement: dict[int,np.ndarray],
             reactions: dict[int,np.ndarray] | None = None) -> dict:
     surface=meta["surface_nodes"]
