@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 from math import isfinite
 
 import numpy as np
@@ -15,7 +16,8 @@ from anysolver._ge_beam3_retained_nodal_loading import (
     Context as NativeNodalContext,
     Program as NativeNodalProgram,
 )
-from anysolver._ge_beam3_p5_seeded.core import sha
+from anysolver._ge_beam3_p5_seeded.core import canonical, sha
+from anysolver._ge_beam3_p5_seeded.codec import MAX_BYTES, _load
 
 from .native_retained_cell_pair import (
     NativeRetainedCellPairResult,
@@ -23,7 +25,8 @@ from .native_retained_cell_pair import (
 )
 
 
-PROFILE = "NATIVE_B3_GE_SELECTED_CELL_PAIR_STATIC_DEV_V0"
+PROFILE = "NATIVE_B3_GE_SELECTED_CELL_PAIR_STATIC_DEV_V1"
+CHECKPOINT_SCHEMA = "NATIVE_RETAINED_SELECTED_CELL_PAIR_CHECKPOINT_DEV_V1"
 
 
 @dataclass(frozen=True)
@@ -39,7 +42,12 @@ class NativeRetainedPairRun:
     status: str
     accepted: NativeRetainedPairAccepted
     failure: str | None
+    checkpoint: bytes
     profile: str = PROFILE
+
+    @property
+    def checkpoint_sha256(self) -> str:
+        return sha256(self.checkpoint).hexdigest()
 
 
 class NativeRetainedRoundPairAnalysis:
@@ -87,7 +95,7 @@ class NativeRetainedRoundPairAnalysis:
         self.gap_tolerance = float(gap_tolerance_m)
         self.equilibrium_tolerance = float(equilibrium_tolerance)
         self.maximum_swept_intervals = maximum_swept_intervals
-        self._settings_identity = self._settings_digest()
+        self.identity = self._identity()
         initial = self.context.initial
         first = self._contact(initial.mechanical)
         roundoff = 256.0*np.finfo(float).eps*max(
@@ -97,23 +105,123 @@ class NativeRetainedRoundPairAnalysis:
         )
         if first.conservative_lower_gap_m < -roundoff:
             raise ValueError(
-                f"unresolved initial native pair penetration "
-                f"{first.conservative_lower_gap_m} m"
+                f"initial native pair gap not certified: conservative lower "
+                f"bound {first.conservative_lower_gap_m} m"
             )
         self.initial = NativeRetainedPairAccepted(
             initial.mechanical, initial.histories, 0, first,
         )
 
-    def _settings_digest(self) -> str:
-        return sha(dict(profile=PROFILE, contact=self.contact.identity,
-                        gap_tolerance_m=self.gap_tolerance,
-                        equilibrium_tolerance=self.equilibrium_tolerance,
-                        maximum_swept_intervals=self.maximum_swept_intervals))
+    def _identity(self) -> str:
+        return sha(dict(
+            profile=PROFILE,
+            native_model=self.context.identity,
+            native_support_sha256=sha256(self.context.support_identity).hexdigest(),
+            contact=self.contact.identity,
+            gap_tolerance_m=self.gap_tolerance,
+            equilibrium_tolerance=self.equilibrium_tolerance,
+            maximum_swept_intervals=self.maximum_swept_intervals,
+        ))
 
     def _guard(self) -> None:
-        if self._settings_digest() != self._settings_identity:
-            raise ValueError("native pair settings changed")
+        if self._identity() != self.identity:
+            raise ValueError("native pair definition/settings changed")
+        if self.contact._fingerprint() != self.contact.identity:
+            raise ValueError("native pair contact definition changed")
         self.native._guard()
+
+    def _record(self, target: int, mechanical, origins,
+                previous_sha256: str):
+        if type(target) is not int or not 1 <= target <= len(self.program.targets):
+            raise ValueError("native pair checkpoint target")
+        mechanical = self.context.make(mechanical.descriptor())
+        residual, tangent, metrics, responses, contact = self._assemble(
+            mechanical, self.program.targets[target-1], origins,
+        )
+        _, correction = self.context.step(mechanical, residual, tangent)
+        if max(*metrics, correction) > self.equilibrium_tolerance:
+            raise ValueError("native pair checkpoint requires coupled equilibrium")
+        if contact.conservative_lower_gap_m < -self.gap_tolerance:
+            raise ValueError("native pair checkpoint gap tolerance")
+        histories = self.context.histories(
+            tuple(response.history for response in responses)
+        )
+        summary = dict(
+            potential_j=contact.potential_j,
+            conservative_lower_gap_m=contact.conservative_lower_gap_m,
+            sampled_gap_m=contact.sampled_gap_m,
+            beam_a_force_n=contact.beam_a_force_n,
+            beam_b_force_n=contact.beam_b_force_n,
+            beam_a_moment_nm=contact.beam_a_moment_nm,
+            beam_b_moment_nm=contact.beam_b_moment_nm,
+            integration_points=contact.integration_points,
+            integrated_intervals=contact.integrated_intervals,
+            projection_evaluations=contact.projection_evaluations,
+            maximum_relative_integration_error=(
+                contact.maximum_relative_integration_error
+            ),
+            gap_cells_checked=contact.gap_cells_checked,
+        )
+        row = dict(target=target, previous_sha256=previous_sha256,
+                   mechanical=mechanical.descriptor(), histories=histories,
+                   contact=summary)
+        return NativeRetainedPairAccepted(
+            mechanical, histories, target, contact,
+        ), _load(canonical(row).decode("ascii"))
+
+    def _checkpoint(self, records: tuple[dict, ...]) -> bytes:
+        self._guard()
+        if type(records) is not tuple or len(records) > len(self.program.targets):
+            raise ValueError("native pair checkpoint record extent")
+        body = dict(schema=CHECKPOINT_SCHEMA, profile=PROFILE,
+                    identity=self.identity, completed_targets=len(records),
+                    records=records)
+        raw = canonical({**body, "checkpoint_sha256": sha(body)})
+        if len(raw) > MAX_BYTES:
+            raise ValueError("native pair checkpoint byte limit")
+        return raw
+
+    def _restore(self, raw: bytes, expected_sha256: str):
+        self._guard()
+        if (type(raw) is not bytes or type(expected_sha256) is not str
+                or sha256(raw).hexdigest() != expected_sha256):
+            raise ValueError("native pair external checkpoint hash mismatch")
+        value = _load(raw.decode("ascii"))
+        keys = {"schema", "profile", "identity", "completed_targets",
+                "records", "checkpoint_sha256"}
+        if type(value) is not dict or set(value) != keys:
+            raise ValueError("native pair checkpoint schema")
+        body = {key: item for key, item in value.items()
+                if key != "checkpoint_sha256"}
+        if (value["schema"] != CHECKPOINT_SCHEMA or value["profile"] != PROFILE
+                or value["identity"] != self.identity
+                or value["checkpoint_sha256"] != sha(body)):
+            raise ValueError("native pair checkpoint definition/settings binding")
+        count = value["completed_targets"]
+        if (type(count) is not int or not 0 <= count <= len(self.program.targets)
+                or type(value["records"]) is not list
+                or len(value["records"]) != count):
+            raise ValueError("native pair checkpoint target extent")
+        accepted = self.initial
+        previous = sha(dict(schema=CHECKPOINT_SCHEMA, identity=self.identity))
+        records = ()
+        for index, row in enumerate(value["records"], 1):
+            if (type(row) is not dict or set(row) !=
+                    {"target", "previous_sha256", "mechanical", "histories", "contact"}
+                    or row["target"] != index or row["previous_sha256"] != previous):
+                raise ValueError("native pair checkpoint accepted chain")
+            mechanical = self.context.make(row["mechanical"], decoded=True)
+            proposed, replay = self._record(
+                index, mechanical, accepted.histories, previous,
+            )
+            if canonical(row) != canonical(replay):
+                raise ValueError("native pair checkpoint physical replay mismatch")
+            accepted = proposed
+            records = (*records, replay)
+            previous = sha(replay)
+        if self._checkpoint(records) != raw:
+            raise ValueError("native pair noncanonical checkpoint replay")
+        return accepted, records
 
     def _contact(self, mechanical) -> NativeRetainedCellPairResult:
         a, b = self.indices
@@ -193,10 +301,25 @@ class NativeRetainedRoundPairAnalysis:
             stack.extend(((left, middle), (middle, right)))
         return True
 
-    def solve(self) -> NativeRetainedPairRun:
-        accepted = self.initial
+    def solve(self, *, checkpoint: bytes | None = None,
+              expected_sha256: str | None = None,
+              stop_after: int | None = None) -> NativeRetainedPairRun:
+        end = len(self.program.targets) if stop_after is None else stop_after
+        if type(end) is not int or not 0 <= end <= len(self.program.targets):
+            raise ValueError("native pair bounded stop target")
+        if checkpoint is None:
+            if expected_sha256 is not None:
+                raise ValueError("native pair hash requires checkpoint")
+            accepted, records = self.initial, ()
+            capsule = self._checkpoint(records)
+        else:
+            accepted, records = self._restore(checkpoint, expected_sha256)
+            capsule = checkpoint
+        if accepted.completed_targets > end:
+            raise ValueError("native pair accepted target cannot rewind")
         try:
-            for index, parameter in enumerate(self.program.targets):
+            for index in range(accepted.completed_targets, end):
+                parameter = self.program.targets[index]
                 trial = accepted.mechanical
                 origins = accepted.histories
                 for iteration in range(self.program.max_iterations+1):
@@ -207,12 +330,15 @@ class NativeRetainedRoundPairAnalysis:
                     if max(*metrics, correction) <= self.equilibrium_tolerance:
                         if contact.conservative_lower_gap_m < -self.gap_tolerance:
                             raise RuntimeError("native pair endpoint gap tolerance not met")
-                        histories = self.context.histories(
-                            tuple(response.history for response in responses)
+                        previous = (sha(records[-1]) if records else sha(dict(
+                            schema=CHECKPOINT_SCHEMA, identity=self.identity,
+                        )))
+                        proposed, record = self._record(
+                            index+1, trial, origins, previous,
                         )
-                        accepted = NativeRetainedPairAccepted(
-                            trial, histories, index+1, contact,
-                        )
+                        next_records = (*records, record)
+                        staged = self._checkpoint(next_records)
+                        accepted, records, capsule = proposed, next_records, staged
                         break
                     if iteration == self.program.max_iterations:
                         raise RuntimeError("native pair Newton iteration limit")
@@ -254,8 +380,9 @@ class NativeRetainedRoundPairAnalysis:
                             break
                     else:
                         raise RuntimeError("native pair line-search/gap limit")
-            return NativeRetainedPairRun("completed", accepted, None)
+            status = "completed" if end == len(self.program.targets) else "paused"
+            return NativeRetainedPairRun(status, accepted, None, capsule)
         except Exception as exc:
             return NativeRetainedPairRun(
-                "failed", accepted, type(exc).__name__+": "+str(exc),
+                "failed", accepted, type(exc).__name__+": "+str(exc), capsule,
             )

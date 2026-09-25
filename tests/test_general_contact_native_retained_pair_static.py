@@ -1,5 +1,8 @@
 """Two native B3-GE beams solved with retained distributed pair contact."""
 
+from hashlib import sha256
+import json
+
 import numpy as np
 import pytest
 
@@ -16,6 +19,7 @@ from anysolver._ge_beam3_native_generalized_element import (
 from anysolver._ge_beam3_native_generalized_loading import DistributedPattern
 from anysolver._ge_beam3_native_line_loading import LinePattern
 from anysolver._ge_beam3_retained_nodal_loading import NodalDeadForces, Program
+from anysolver._ge_beam3_p5_seeded.core import canonical, sha
 from anysolver.boundary import BoundaryCondition
 from anysolver.general_contact.native_retained_cell_pair import (
     NativeRetainedSelectedCellPair,
@@ -105,7 +109,7 @@ def test_two_native_beams_couple_through_retained_contact():
 
 
 def test_initial_interference_is_rejected():
-    with pytest.raises(ValueError, match="initial native pair penetration"):
+    with pytest.raises(ValueError, match="initial native pair gap not certified"):
         _owner(offset=0.08)
 
 
@@ -118,3 +122,53 @@ def test_failed_target_preserves_accepted_prefix():
         result.accepted.mechanical.positions,
         owner.initial.mechanical.positions,
     )
+    paused = _owner(targets=(0.0, 1.0), iterations=1).solve(stop_after=1)
+    assert paused.status == "paused"
+    assert result.checkpoint == paused.checkpoint
+
+
+def test_two_beam_checkpoint_split_restart_matches_full_run():
+    full = _owner().solve()
+    assert full.status == "completed", full.failure
+    part = _owner().solve(stop_after=1)
+    assert part.status == "paused", part.failure
+    resumed = _owner().solve(
+        checkpoint=part.checkpoint,
+        expected_sha256=part.checkpoint_sha256,
+    )
+    assert resumed.status == "completed", resumed.failure
+    assert resumed.checkpoint == full.checkpoint
+    np.testing.assert_array_equal(
+        resumed.accepted.mechanical.positions,
+        full.accepted.mechanical.positions,
+    )
+
+
+def test_two_beam_checkpoint_rejects_changed_definition_and_forgery():
+    part = _owner().solve(stop_after=1)
+    assert part.status == "paused", part.failure
+    with pytest.raises(ValueError, match="definition/settings binding"):
+        _owner(line_stiffness=1001.0).solve(
+            checkpoint=part.checkpoint,
+            expected_sha256=part.checkpoint_sha256,
+        )
+    with pytest.raises(ValueError, match="external checkpoint hash"):
+        _owner().solve(checkpoint=part.checkpoint,
+                       expected_sha256="0"*64)
+    body = json.loads(part.checkpoint)
+    body["records"][0]["contact"]["sampled_gap_m"] += 0.001
+    body["checkpoint_sha256"] = sha({
+        key: value for key, value in body.items()
+        if key != "checkpoint_sha256"
+    })
+    forged = canonical(body)
+    with pytest.raises(ValueError, match="physical replay mismatch"):
+        _owner().solve(checkpoint=forged,
+                       expected_sha256=sha256(forged).hexdigest())
+
+
+def test_live_pair_definition_mutation_fails_before_solve():
+    owner = _owner()
+    owner.contact.law.stiffness += 1.0
+    with pytest.raises(ValueError, match="contact definition changed"):
+        owner.solve()

@@ -116,10 +116,35 @@ test setup; the corrected direction passed. Both failures remain in the
 evidence directory.
 
 The two-beam owner still admits only disjoint beams, one selected half-cell
-pair and dead-force control. It has no durable contact checkpoint, automatic
-multi-cell feature ownership, beam–shell interaction, general rigid tools,
+pair and dead-force control. It has no automatic multi-cell feature
+ownership, beam–shell interaction, general rigid tools,
 friction or public C3 admission. Its swept check is a bounded fixed-pair
 path-gap control, not a complete event-placement method.
+
+The selected-cell two-beam development owner now uses profile
+`NATIVE_B3_GE_SELECTED_CELL_PAIR_STATIC_DEV_V1` and a separate versioned
+accepted-target checkpoint. It binds the native model, program and support,
+selected contact identity, gap, equilibrium and path budgets. On resume it
+replays each accepted mechanical/material state from the preceding committed
+history, rechecking coupled equilibrium, the conservative endpoint gap and
+the integrated contact summary. A failed later target returns the last
+accepted checkpoint. Full and split continuation generated identical bytes;
+changed line stiffness, wrong external hash, a forged contact summary with
+recomputed envelope hash and live definition mutation were rejected.
+The revised initial-gap diagnostic says the conservative lower bound is
+uncertified; it no longer states that physical penetration was proven by a
+negative bound.
+
+The affected native/classical pair group passed 21/21
+(`c3-native-pair-checkpoint-affected.txt`). The standalone internal example
+`examples/general_contact_native_retained_pair.py` completed contact and
+split restart (`c3-native-pair-checkpoint-example.txt`). The first checkpoint
+test run failed only because its fixture expected the old diagnostic text;
+that log is retained at `c3-native-pair-checkpoint-first.txt`.
+
+The checkpoint remains specific to the restricted selected-cell route.
+Automatic multi-cell feature ownership, beam–shell interaction, friction,
+native impact and independent C3 acceptance are still open.
 
 ## Retained round-centreline/plane penalty kernel
 
