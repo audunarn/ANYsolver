@@ -274,3 +274,98 @@ def finite_chart_screen() -> dict:
         "quadrature_points": len(patch.points),
         "scope": "actual E4 director and retained B3 half-cell charts; bounded finite six-resultant surface-position law",
     }
+
+
+def bounded_physical_compliance_screen() -> list[dict]:
+    """Compare six physical interface actions on several bounded local grids.
+
+    This is a finite-dimensional, support-conditioned compliance diagnostic,
+    not an inf-sup constant or a choice of a true-line multiplier space.
+    The positive-energy Gram is formed from actual retained B3 and E4
+    operators without symmetrizing either operator to repair its tangent.
+    """
+    from scipy import linalg
+
+    from scripts._b3_e4_f03_native_fixture import build
+    from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
+    from scripts.b3_e4_f03_square_section_control import square_torsion_constant
+
+    results = []
+    actions = np.diag((1000., 1000., 1000., 100., 100., 100.))
+    shell_operators = {}
+    for patch_cells, half_cells in ((2, 4), (2, 8), (4, 4), (4, 8), (4, 16)):
+        xs, ys = local_grid(patch_cells)
+        beam = build(half_cells, z_offset=.0675,
+                     torsion_constant=square_torsion_constant())
+        if patch_cells not in shell_operators:
+            shell_operators[patch_cells] = raw_e4_tangent(
+                xs, ys, thickness=.035)
+        shell_k, shell_physical = shell_operators[patch_cells]
+        rows, reference = distributed_surface_patch_trace(
+            xs, ys, beam, plate_thickness=.035)
+        shell_size = shell_k.shape[0]
+        total = shell_size+beam.context.count
+        if total > 1900:
+            raise ValueError("bounded local compliance matrix cap exceeded")
+        fixed_shell = {6*j*len(xs)+axis for j in range(len(ys))
+                       for axis in range(6)}
+        fixed_beam = {shell_size+i for i in beam.context.fixed}
+        free = np.array([i for i in range(total)
+                         if i not in fixed_shell and i not in fixed_beam])
+        shell_free = free[free < shell_size]
+        beam_free = free[free >= shell_size]-shell_size
+        shell_rows = rows[:, shell_free]
+        beam_rows = rows[:, shell_size+beam_free]
+        shell_block = shell_k[np.ix_(shell_free, shell_free)]
+        beam_block = beam.tangent[np.ix_(beam_free, beam_free)].toarray()
+        shell_response = linalg.solve(
+            shell_block, shell_rows.T, assume_a="gen", check_finite=True)
+        beam_response = linalg.solve(
+            beam_block, beam_rows.T, assume_a="gen", check_finite=True)
+        gram_shell = shell_rows@ shell_response
+        gram_beam = beam_rows@ beam_response
+        gram = actions@(gram_shell+gram_beam)@actions
+        skew_relative = float(np.linalg.norm(gram-gram.T)/max(
+            np.linalg.norm(gram), 1e-30))
+        if skew_relative > 1e-8:
+            raise ArithmeticError("reference physical compliance is nonsymmetric")
+        diagonal = np.diag(gram)
+        if np.min(diagonal) <= 0.:
+            raise ArithmeticError("nonpositive physical interface action")
+        energy_scale = np.sqrt(diagonal)
+        normalized = gram/np.outer(energy_scale, energy_scale)
+        eigenvalues, eigenvectors = np.linalg.eigh(normalized)
+        mode = eigenvectors[:, 0]
+        shell_action = float(mode@(
+            actions@gram_shell@actions/np.outer(energy_scale, energy_scale))@mode)
+        beam_action = float(mode@(
+            actions@gram_beam@actions/np.outer(energy_scale, energy_scale))@mode)
+        action_dual = actions@(mode/energy_scale)
+        shell_mode = shell_response@action_dual
+        physical_shell_block = shell_physical[np.ix_(shell_free, shell_free)]
+        physical_shell_action = float(shell_mode@physical_shell_block@shell_mode)
+        numerical_shell_action = shell_action-physical_shell_action
+        if (eigenvalues[0] <= 0. or shell_action <= 0. or
+                beam_action <= 0. or physical_shell_action <= 0. or
+                abs(shell_action+beam_action-eigenvalues[0]) > 1e-8):
+            raise ArithmeticError("physical interface mode action failed")
+        results.append({
+            "patch_cells_per_side": patch_cells,
+            "beam_half_cells": half_cells,
+            "shell_nodes": len(xs)*len(ys),
+            "total_primal_rows": total,
+            "constraint_rank_on_free": int(np.linalg.matrix_rank(rows[:, free])),
+            "applied_action_scales_N_Nm": np.diag(actions).tolist(),
+            "unit_action_twice_compliances_j": diagonal.tolist(),
+            "normalized_mode_minimum": float(eigenvalues[0]),
+            "normalized_mode_maximum": float(eigenvalues[-1]),
+            "weakest_mode_components": mode.tolist(),
+            "weakest_mode_shell_action": shell_action,
+            "weakest_mode_physical_shell_action": physical_shell_action,
+            "weakest_mode_numerical_shell_action": numerical_shell_action,
+            "weakest_mode_beam_action": beam_action,
+            "compliance_relative_skew": skew_relative,
+            "reference_gap_m": reference["reference_gap_m"],
+            "interpretation": "support-conditioned finite-grid physical action; not continuum inf-sup or line-space qualification",
+        })
+    return results
