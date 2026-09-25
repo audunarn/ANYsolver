@@ -22,7 +22,7 @@ from scripts._b3_e4_f03_weak_line_candidate import (
     assemble_channel_split_reference_kkt,
     assemble_reference_kkt, integrate_channel_basis_weak_line,
     integrate_channel_split_weak_line,
-    integrate_weak_line,
+    integrate_weak_line, segments,
 )
 from scripts.b3_e4_f03_weak_line_resolution_screen import (
     channel_split_reference_modes, chord_reference_modes, one_case)
@@ -69,6 +69,80 @@ def test_transverse_band_top_surface_reference_rigid_and_chart(topology):
     np.testing.assert_allclose(
         observed, reference_spatial_trace_transverse_band(
             panel, station)@direction, rtol=2e-7, atol=2e-9)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_transverse_band_mixed_rows_match_finite_chart_work(topology):
+    """Independently integrate the physical pose law, including eccentricity.
+
+    This checks reference rows and multiplier work, not a nonlinear Hessian or
+    continuum multiplier stability claim.
+    """
+    shell = FlatE4TrialPanel(make_shell(1, topology, n_y=4, thickness=.035))
+    beam = build(4, z_offset=.0675)
+    p0 = LineMultiplierSpace("piecewise_constant", (0., .5, 1.))
+    dual = LineMultiplierSpace("dual_linear", (0., .5, 1.))
+    spaces = (p0, dual, p0, dual, p0, dual)
+    kkt = assemble_channel_basis_reference_kkt(
+        shell, beam, spaces, shell_port=TRANSVERSE_BAND_PORT,
+        shell_support_policy="full_left_edge")
+    rng = np.random.default_rng(2927)
+    shell_direction = rng.normal(scale=.01, size=6*shell.panel.node_count)
+    beam_direction = np.zeros(beam.context.count)
+    beam_direction[:beam.context.nodal_count] = rng.normal(
+        scale=.01, size=beam.context.nodal_count)
+    for element in range(len(beam.context.elements)):
+        start = beam.context.nodal_count+24*element
+        beam_direction[start:start+6] = rng.normal(scale=.01, size=6)
+    beam_direction[list(beam.context.fixed)] = 0.
+    direction = np.r_[shell_direction, beam_direction]
+    coefficients = np.linspace(-30., 40., len(kkt.constraint_jacobian))
+    expected_rows = kkt.constraint_jacobian@direction
+    expected_work = coefficients@expected_rows
+
+    edges = np.unique(np.r_[segments(shell, beam, p0,
+                                     shell_port=TRANSVERSE_BAND_PORT),
+                             segments(shell, beam, dual,
+                                      shell_port=TRANSVERSE_BAND_PORT)])
+    points, weights = np.polynomial.legendre.leggauss(4)
+    zero = np.zeros_like(shell_direction)
+    reference = beam.context.initial.mechanical
+    def integrated_rows(step):
+        moved = beam.context.advance(reference, step*beam_direction)
+        result = np.zeros_like(coefficients)
+        for left, right in zip(edges[:-1], edges[1:]):
+            half, center = .5*(right-left), .5*(left+right)
+            for point, weight in zip(points, weights):
+                station = center+half*point
+                element, cell, fraction, _ = beam._locate(station)
+                port = NativeHalfCellSpatialPort(
+                    beam.context, element, cell, fraction)
+                rs0, qs0 = pose_from_e4_total_transverse_band(
+                    shell.panel, station, zero)
+                bh0, bl0, qb0 = port.pose_pair(reference)
+                rs, qs = pose_from_e4_total_transverse_band(
+                    shell.panel, station, step*shell_direction)
+                bh, bl, qb = port.pose_pair(moved)
+                translation = (qs.T@(bh+bl-rs)-
+                               qs0.T@(bh0+bl0-rs0))
+                rotation = Rotation.from_matrix(
+                    (qs0.T@qb0).T@qs.T@qb).as_rotvec()
+                gap = np.r_[translation, rotation]
+                offset = 0
+                for axis, space in enumerate(spaces):
+                    basis = space.values(station)
+                    result[offset:offset+space.count] += (
+                        half*weight*basis*gap[axis])
+                    offset += space.count
+        return result
+
+    np.testing.assert_allclose(integrated_rows(0.), 0., atol=2e-14)
+    for step in (1e-4, 5e-5):
+        observed = (integrated_rows(step)-integrated_rows(-step))/(2*step)
+        np.testing.assert_allclose(observed, expected_rows,
+                                   rtol=2e-6, atol=2e-9)
+        assert coefficients@observed == pytest.approx(
+            expected_work, rel=2e-6, abs=2e-8)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
