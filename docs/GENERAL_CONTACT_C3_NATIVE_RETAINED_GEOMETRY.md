@@ -162,16 +162,53 @@ more than that reach; the difference between the two target distances
 changes by no more than twice it. These bounds certify open support, fully
 active support with one target owner, or an unresolved interval. Unresolved
 support is returned explicitly for further integration refinement; finite
-depth/cell budgets fail rather than dropping it. The search does not yet
+depth/cell budgets fail rather than dropping it. The search alone does not
 produce contact forces or resolve a switching interval's tangent.
 
 Three focused tests passed (`c3-native-curve-union-final.txt`): a target-cell
 ownership switch at the shared junction, an open case, a narrow contact
 pocket, remote equal-distance ambiguity, explicit resource failure and
 rejection of coincident cells without a shared material identity. The
-preceding source-only and identity-check logs are retained. Full distributed
-multi-cell integration, boundary derivative treatment, search scaling and
-C3 acceptance remain open.
+preceding source-only and identity-check logs are retained. The subsequent
+whole-pair development kernel below handles only certified cell ownership.
+General switching-boundary derivatives, search scaling and C3 acceptance
+remain open.
+
+## Restricted whole two-cell beam-pair potential
+
+`native_retained_whole_pair.py` integrates a symmetric half-weighted line
+penalty over all four physical half-cells of two native beams. It skips only
+certified-open source intervals from the two-cell union search. For an
+interval with a certified target owner, it integrates the closest-point
+distance jet and its first and second derivatives. The 36 curve-position
+gradient and Hessian pull back to both 42-coordinate retained beam systems,
+including midpoint rotation curvature and cross-beam blocks. Reference
+Q2 arc speed sets the line measure. Eight- and sixteen-point Gauss rules
+are compared under dimensional energy, force and tangent error budgets.
+Unresolved integration and finite search/integration budgets fail explicitly.
+
+The union search's Lipschitz ownership bound remains conservative near a
+shared junction. For **collinear, forward-ordered straight target cells**,
+the kernel also proves ownership from the junction half-space: a source
+point on one side is at least as close to the corresponding cell as to the
+other, and the source Bezier hull bounds the entire integration interval.
+An unproven curved or crossing ownership interval fails. This development
+route therefore does not yet support general sliding through an interior
+target junction or arbitrary curved whole-beam pairs. It is not connected
+to the native static owner or public admission.
+
+The first parallel full-length run failed on a conservative false ownership
+alarm (`c3-native-whole-pair-first.txt`); a bounded diagnostic identified
+the narrow intervals and projected points
+(`c3-native-whole-pair-ownership-diagnostic.txt`). A rigid-transformation
+check then exposed roundoff at the junction (`c3-native-whole-pair-fourth.txt`);
+the half-space test now admits only roundoff-sized boundary differences.
+The focused search/kernel set passed 8/8 after that final numerical bound
+(`c3-native-whole-pair-final.txt`), including total force/moment balance,
+energy/tangent directional checks, role exchange, common rigid motion,
+opening and resource failure. The affected native curve/selected-pair/static
+set passed 22/22 (`c3-native-whole-pair-affected.txt`). These are development
+checks, not full C3 qualification or evidence of nonlinear static coupling.
 
 ## Retained round-centreline/plane penalty kernel
 

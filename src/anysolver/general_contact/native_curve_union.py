@@ -57,7 +57,7 @@ class NativeTwoCellUnionSearch:
     """Bound contact support and nearest material-cell ownership, never drop it."""
 
     def __init__(self, source: np.ndarray, target_cells: tuple[np.ndarray, np.ndarray],
-                 target_node_ids: tuple[tuple[int, int, int], tuple[int, int, int]],
+                 target_node_ids: tuple[tuple[int, int], tuple[int, int]],
                  *, combined_radius_m: float, distance_tolerance_m: float,
                  feature_tolerance_m: float, parameter_tolerance: float,
                  maximum_depth: int, maximum_cells: int):
@@ -65,11 +65,11 @@ class NativeTwoCellUnionSearch:
         if type(target_cells) is not tuple or len(target_cells) != 2:
             raise ValueError("native union needs two ordered target half-cells")
         if (type(target_node_ids) is not tuple or len(target_node_ids) != 2
-                or any(type(row) is not tuple or len(row) != 3
+                or any(type(row) is not tuple or len(row) != 2
                        or any(type(value) is not int or value <= 0 for value in row)
                        for row in target_node_ids)
-                or target_node_ids[0][2] != target_node_ids[1][0]
-                or len(set((*target_node_ids[0], *target_node_ids[1]))) != 5):
+                or target_node_ids[0][1] != target_node_ids[1][0]
+                or len(set((*target_node_ids[0], *target_node_ids[1]))) != 3):
             raise ValueError("native union needs one shared material junction identity")
         self.target_node_ids = target_node_ids
         self.targets = tuple(_owned(_positions(value, "native union target"))
@@ -161,7 +161,9 @@ class NativeTwoCellUnionSearch:
                 ))
             elif right-left <= self.parameter_tolerance:
                 leaves.append(NativeUnionInterval(
-                    left, right, "unresolved", None, lower, upper,
+                    left, right, "unresolved",
+                    nearest.target_cell if owner_certified else None,
+                    lower, upper,
                 ))
             else:
                 if depth >= self.maximum_depth:

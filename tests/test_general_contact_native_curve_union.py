@@ -19,7 +19,7 @@ def _search(source=None, *, target_y=0.08, radius=0.1,
     return NativeTwoCellUnionSearch(
         source, (_line(0.0, 0.5, target_y),
                  _line(0.5, 1.0, target_y)),
-        ((1, 2, 3), (3, 4, 5)),
+        ((1, 2), (2, 3)),
         combined_radius_m=radius,
         distance_tolerance_m=1e-10,
         feature_tolerance_m=1e-9,
@@ -78,7 +78,7 @@ def test_remote_equal_minima_and_resource_exhaustion_fail_explicitly():
                          (0.5, 0.5, 0.0),
                          (1.0, 1.0, 0.0)))
     ambiguous = NativeTwoCellUnionSearch(
-        source, (target_a, target_b), ((1, 2, 3), (3, 4, 5)),
+        source, (target_a, target_b), ((1, 2), (2, 3)),
         combined_radius_m=0.8,
         distance_tolerance_m=1e-10,
         feature_tolerance_m=1e-9,
@@ -94,7 +94,7 @@ def test_remote_equal_minima_and_resource_exhaustion_fail_explicitly():
         NativeTwoCellUnionSearch(
             _line(0.0, 1.0, 0.0),
             (_line(0.0, 0.5, 0.08), _line(0.5, 1.0, 0.08)),
-            ((1, 2, 3), (6, 4, 5)),
+            ((1, 2), (6, 3)),
             combined_radius_m=0.1,
             distance_tolerance_m=1e-10,
             feature_tolerance_m=1e-9,
