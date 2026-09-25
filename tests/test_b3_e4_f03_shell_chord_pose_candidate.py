@@ -273,16 +273,20 @@ def test_transverse_top_chord_has_distinct_objective_work_and_free_shear(topolog
         np.r_[np.cross(angle, (station, 0., top)), angle], atol=2e-14)
 
 
-def test_transverse_top_chord_q4_preserves_first_five_polar_band_rows():
+def test_transverse_top_chord_q4_changes_piecewise_band_fz_trace():
     panel = make_shell(2, "Q4", n_y=4)
     chord = reference_spatial_trace_chord(
         panel, .37, half_chord=.05, axis="transverse_top")
     polar = reference_spatial_trace_transverse_band(
         panel, .37, half_width=.05)
-    np.testing.assert_allclose(chord[:5], polar[:5], atol=2e-14)
+    indices, values = panel._shape(.37, 0.)
+    center = np.zeros(panel.node_count)
+    center[indices] = values
+    np.testing.assert_allclose(chord[2, 2::6], center, atol=2e-14)
+    # The Q4 trace is piecewise across y=0, so width averaging and the
+    # center-point interpolation act differently on the Fz row.
+    assert np.linalg.norm(chord[2]-polar[2]) > 1e-3
     assert np.linalg.norm(chord[5]-polar[5]) > 1e-3
-    # The changed yaw work cannot by itself resolve the Q4 Fz-row mode.
-    np.testing.assert_allclose(chord[2], polar[2], atol=2e-14)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
