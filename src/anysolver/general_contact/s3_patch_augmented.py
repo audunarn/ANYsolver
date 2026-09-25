@@ -1,4 +1,4 @@
-"""Projected normal work for a moving, primal-pressure S3 shell patch.
+"""Projected normal work for a moving, primal-pressure S3 or Q4 shell patch.
 
 Multipliers are held during structural equilibrium.  The residual is the
 weighted-gap virtual work, rather than the derivative of a shifted overlap
@@ -13,6 +13,7 @@ import numpy as np
 
 from .moving import _has_shared_edge_transition
 from .overlap import PlanarFace, planar_projected_overlap
+from .q4_source_overlap import projected_q4_source_face
 from .s3_patch_mortar_energy import (
     MovingS3PatchMortarWork,
     MovingS3PatchPrimalMortarPenalty,
@@ -21,8 +22,8 @@ from .s3_patch_mortar_energy import (
 
 class MovingS3PatchProjectedNormal:
     def __init__(self, geometry: MovingS3PatchPrimalMortarPenalty):
-        if any(len(face.node_ids) != 3 for face in geometry.source_faces):
-            raise ValueError("projected normal pressure space requires S3 source faces")
+        if any(len(face.node_ids) not in {3, 4} for face in geometry.source_faces):
+            raise ValueError("projected normal pressure space requires S3 or Q4 source faces")
         self.geometry = geometry
         self.n_coordinates = geometry.n_coordinates
         self.source_node_ids = geometry.source_node_ids
@@ -32,12 +33,21 @@ class MovingS3PatchProjectedNormal:
         self.reference_source = geometry.reference_source
         self.reference_target = geometry.reference_target
         self.stiffness = geometry.stiffness
+        self.tangent_active_coordinates: np.ndarray | None = None
+
+    def set_tangent_active_coordinates(self, coordinates):
+        """Limit Hessian work to physical axes reached by reduced unknowns."""
+        indices = np.asarray(coordinates, dtype=np.intp).reshape(-1)
+        if (np.any(indices < 0) or np.any(indices >= self.n_coordinates)
+                or len(np.unique(indices)) != len(indices)):
+            raise ValueError("projected patch tangent coordinate selection is invalid")
+        self.tangent_active_coordinates = np.sort(indices)
 
     def _multipliers(self, multipliers):
         values = np.asarray(multipliers, dtype=float)
         if (values.shape != (len(self.source_node_ids),)
                 or not np.all(np.isfinite(values)) or np.any(values < 0.0)):
-            raise ValueError("S3 patch normal multipliers must be finite nonnegative pressures")
+            raise ValueError("patch normal multipliers must be finite nonnegative pressures")
         return values
 
     def _project(self, state, multipliers):
@@ -80,7 +90,7 @@ class MovingS3PatchProjectedNormal:
         coordinates = np.concatenate((np.asarray(current_source, dtype=float),
                                       np.asarray(current_target, dtype=float))).reshape(-1)
         if coordinates.size != self.n_coordinates:
-            raise ValueError("S3 patch work has invalid physical coordinate count")
+            raise ValueError("patch work has invalid physical coordinate count")
         source_count = 3*len(self.source_node_ids)
 
         def state_at(values):
@@ -99,10 +109,14 @@ class MovingS3PatchProjectedNormal:
                 if self.geometry.differentiation == "pair_local" else 1,
             )
         for source_index in self.source_face_indices:
-            first = PlanarFace((1, 1), np.asarray(current_source)[source_index])
-            normal = np.cross(first.corners[1]-first.corners[0],
-                              first.corners[2]-first.corners[0])
-            normal /= np.linalg.norm(normal)
+            source_positions = np.asarray(current_source)[source_index]
+            if len(source_positions) == 4:
+                first, normal = projected_q4_source_face(source_positions)
+            else:
+                first = PlanarFace((1, 1), source_positions)
+                normal = np.cross(first.corners[1]-first.corners[0],
+                                  first.corners[2]-first.corners[0])
+                normal /= np.linalg.norm(normal)
             for target_index in self.target_face_indices:
                 target = np.asarray(current_target)[target_index]
                 projected = target-((target-first.corners[0])@normal)[:, None]*normal
@@ -144,30 +158,45 @@ class MovingS3PatchProjectedNormal:
             (plus.reference_support-minus.reference_support)/(2*step)
             for plus, minus in zip(positive, negative)
         ])
-        hessian_w = np.empty((len(self.source_node_ids), count, count))
-        for j in range(count):
-            hessian_w[:, j, j] = (
+        active_coordinates = (
+            np.arange(count, dtype=np.intp)
+            if self.tangent_active_coordinates is None else
+            self.tangent_active_coordinates
+        )
+        hessian_w = np.empty((len(self.source_node_ids),
+                              len(active_coordinates), len(active_coordinates)))
+        for local_j, j in enumerate(active_coordinates):
+            hessian_w[:, local_j, local_j] = (
                 positive[j].reference_weighted_gap
                 - 2*base.reference_weighted_gap
                 + negative[j].reference_weighted_gap
             )/step**2
-            for k in range(j+1, count):
+            for local_k in range(local_j+1, len(active_coordinates)):
+                k = int(active_coordinates[local_k])
                 mixed = (
                     geometry_at(((j, 1), (k, 1))).reference_weighted_gap
                     - geometry_at(((j, 1), (k, -1))).reference_weighted_gap
                     - geometry_at(((j, -1), (k, 1))).reference_weighted_gap
                     + geometry_at(((j, -1), (k, -1))).reference_weighted_gap
                 )/(4*step**2)
-                hessian_w[:, j, k] = mixed
-                hessian_w[:, k, j] = mixed
-        dp = np.zeros_like(jw)
+                hessian_w[:, local_j, local_k] = mixed
+                hessian_w[:, local_k, local_j] = mixed
+        dp = np.zeros((len(self.source_node_ids), len(active_coordinates)))
         active = base.pressure > 0.0
         support = base.reference_support[active, None]
         dp[active] = -self.stiffness*(
-            jw[active]/support
-            - base.reference_weighted_gap[active, None]*js[active]/support**2
+            jw[np.ix_(active, active_coordinates)]/support
+            - base.reference_weighted_gap[active, None]
+            * js[np.ix_(active, active_coordinates)]/support**2
         )
-        tangent_matrix = -(jw.T @ dp + np.einsum("i,ijk->jk", base.pressure, hessian_w))
+        reduced_tangent = -(
+            jw[:, active_coordinates].T @ dp
+            + np.einsum("i,ijk->jk", base.pressure, hessian_w)
+        )
+        tangent_matrix = np.zeros((count, count))
+        tangent_matrix[np.ix_(active_coordinates, active_coordinates)] = (
+            reduced_tangent
+        )
         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
 
     def _pair_local_work(self, current_source, current_target, base, *, tangent):

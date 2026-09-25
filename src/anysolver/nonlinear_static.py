@@ -3800,6 +3800,10 @@ def _solve_static_displacement_control(
     augmented_contact_manager = (
         contact_manager if getattr(contact_manager, "augmented", False) else None
     )
+    if augmented_contact_manager is not None:
+        # Normalized pressure differentiates changing overlap support; its
+        # fixed-multiplier Jacobian need not be symmetric.
+        general_tangent = True
     moving_tool = bool(
         contact_manager is not None
         and hasattr(contact_manager, "path_translation")
@@ -5276,6 +5280,9 @@ def _solve_static_nonlinear_under_lease(
         F_prop,
         model,
     )
+    if (active_manager is not None
+            and hasattr(active_manager, "restrict_tangent_to_reduced_variations")):
+        active_manager.restrict_tangent_to_reduced_variations(T)
     exact_guard(model, context="nonlinear static constraint transformation")
     armijo_weights = (
         _armijo_residual_weights(
@@ -5323,7 +5330,7 @@ def _solve_static_nonlinear_under_lease(
     general_tangent = follower_active or (
         kinematics == "corotational"
         and resolved_corotational_tangent == "consistent"
-    )
+    ) or augmented_contact_manager is not None
     native_spatial_couples = False
     native_combined_couples = False
     native_generalized_combined_couples = False
@@ -7682,12 +7689,12 @@ def solve_static_nonlinear(
                 if augmented_contact_requested:
                     from .general_contact.s3_patch_static import (
                         AUGMENTED_PROFILE, AUGMENTED_MIXED_PROFILE,
-                        REFINED_AUGMENTED_PROFILE,
+                        REFINED_AUGMENTED_PROFILE, SOURCE_Q4_AUGMENTED_PROFILE,
                     )
 
                     if contact_manager.profile not in {
                         AUGMENTED_PROFILE, AUGMENTED_MIXED_PROFILE,
-                        REFINED_AUGMENTED_PROFILE,
+                        REFINED_AUGMENTED_PROFILE, SOURCE_Q4_AUGMENTED_PROFILE,
                     }:
                         raise ValueError("ordinary augmented contact requires an admitted general shell patch")
                 result = run_solver()

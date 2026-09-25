@@ -56,6 +56,7 @@ AUGMENTED_PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_AUGMENTED_PATH_DEV_V0"
 GENERAL_S3_PATCH_PROFILE = "S3_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 GENERAL_S3_PATCH_AUGMENTED_PROFILE = "S3_PATCH_GENERAL_AUGMENTED_PATH_DEV_V0"
 GENERAL_S3_Q4_PATCH_AUGMENTED_PROFILE = "S3_Q4_PATCH_GENERAL_AUGMENTED_PATH_DEV_V0"
+GENERAL_Q4_S3_PATCH_AUGMENTED_PROFILE = "Q4_S3_PATCH_GENERAL_AUGMENTED_PATH_DEV_V0"
 GENERAL_S3_PATCH_REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_AUGMENTED_PATH_DEV_V0"
 GENERAL_S3_Q4_PATCH_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 GENERAL_Q4_S3_PATCH_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
@@ -166,12 +167,13 @@ def solve_static_contact_path(
     from .s3_patch_static import Q4_PAIR_PROFILE as q4_pair_profile
     from .s3_patch_static import AUGMENTED_PROFILE as general_augmented_profile
     from .s3_patch_static import AUGMENTED_MIXED_PROFILE as mixed_augmented_profile
+    from .s3_patch_static import SOURCE_Q4_AUGMENTED_PROFILE as source_q4_augmented_profile
     from .s3_patch_static import REFINED_AUGMENTED_PROFILE as refined_augmented_profile
 
     general_s3_patch = report.profile in {
         s3_patch_profile, mixed_patch_profile, source_q4_patch_profile,
         q4_pair_profile, general_augmented_profile, mixed_augmented_profile,
-        refined_augmented_profile,
+        refined_augmented_profile, source_q4_augmented_profile,
     }
     if not general_s3_patch and "RESTRICTED_SLIDING" not in report.profile:
         raise ValueError("unsupported contact path profile: " + report.profile)
@@ -188,6 +190,8 @@ def solve_static_contact_path(
                if report.profile == mixed_patch_profile else
                GENERAL_S3_Q4_PATCH_AUGMENTED_PROFILE
                if report.profile == mixed_augmented_profile else
+               GENERAL_Q4_S3_PATCH_AUGMENTED_PROFILE
+               if report.profile == source_q4_augmented_profile else
                GENERAL_S3_PATCH_REFINED_AUGMENTED_PROFILE
                if report.profile == refined_augmented_profile else
                GENERAL_S3_PATCH_AUGMENTED_PROFILE
@@ -240,6 +244,8 @@ def solve_static_contact_path(
                 _, _, T, u0, _independent, _constraint_info = (
                     build_constraint_transformation(stiffness, zeros, model)
                 )
+                if hasattr(manager, "restrict_tangent_to_reduced_variations"):
+                    manager.restrict_tangent_to_reduced_variations(T)
                 controls = np.zeros((len(program.controls), len(zeros)))
                 for index, control in enumerate(program.controls):
                     for node_id, dof_name, weight in control.terms:
@@ -334,6 +340,11 @@ def solve_static_contact_path(
                     target = program.target_at(step)
                     candidate_states = committed_states
                     normal_multiplier_change = 0.0
+                    augmentation_trace: list[dict[str, float]] = []
+                    certificate = None
+                    residual_norm = float("inf")
+                    constraint_norm = float("inf")
+                    iteration = 0
                     augmentation_limit = (settings.maximum_augmentations
                                           if augmented else 1)
                     for augmentation in range(1, augmentation_limit + 1):
@@ -401,6 +412,11 @@ def solve_static_contact_path(
                             normal_multiplier_change = float(np.max(np.abs(
                                 projected - manager.normal_multipliers
                             )))
+                            augmentation_trace.append({
+                                "pressure_change": normal_multiplier_change,
+                                "minimum_gap": float(certificate.minimum_gap),
+                                "residual_norm": residual_norm,
+                            })
                             if (normal_multiplier_change <= settings.pressure_tolerance
                                     and certificate.gap_tolerance_met):
                                 break
@@ -413,6 +429,27 @@ def solve_static_contact_path(
                     else:
                         failure_reason = "maximum_augmentations_reached"
                     if failure_reason is not None:
+                        info["contact_failure"] = {
+                            "step_index": step,
+                            "augmentation_iterations": augmentation,
+                            "newton_iterations_last_augmentation": iteration,
+                            "residual_norm": residual_norm,
+                            "constraint_norm": constraint_norm,
+                            "normal_multiplier_change": normal_multiplier_change,
+                            "augmentation_trace": augmentation_trace,
+                            "minimum_gap": (
+                                None if certificate is None else
+                                certificate.minimum_gap
+                            ),
+                            "gap_tolerance_met": (
+                                None if certificate is None else
+                                certificate.gap_tolerance_met
+                            ),
+                            "active_pressure_dofs": (
+                                None if certificate is None else
+                                certificate.active_pressure_dofs
+                            ),
+                        }
                         _discard_nonlinear_state_candidate(committed_states)
                         q = start_q
                         multipliers = start_multipliers

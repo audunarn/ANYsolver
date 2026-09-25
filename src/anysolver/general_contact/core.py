@@ -419,7 +419,9 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         general_patch = (settings is not None and settings.pair_motion == "general"
                          and not definition.rigid_bodies
                          and len(definition.surfaces) == 2
-                         and any(len(item.element_ids) > 1 for item in definition.surfaces))
+                         and (any(len(item.element_ids) > 1
+                                  for item in definition.surfaces)
+                              or _exact_single_q4_pair(model, definition)))
         restricted_patch = (settings is not None
                             and settings.pair_motion == "restricted_sliding"
                             and not definition.rigid_bodies

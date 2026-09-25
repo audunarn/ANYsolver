@@ -11,6 +11,7 @@ from anysolver import (
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from test_general_contact_s3_q4_patch_static import _case
 from test_general_contact_q4_s3_patch_static import _case as _q4_source_case
+from test_general_contact_q4_q4_static import _case as _q4_pair_case
 
 
 def _augmented_case():
@@ -76,7 +77,7 @@ def test_mixed_projected_warped_target_balances_wrench_and_tangent():
                                rtol=3e-3, atol=5e-4)
 
 
-def test_q4_pressure_source_augmented_remains_unadmitted():
+def test_q4_pressure_source_augmented_has_distinct_admitted_profile():
     model, definition, settings = _q4_source_case()
     definition = replace(definition, interactions=(
         replace(definition.interactions[0], normal_law="augmented"),
@@ -84,8 +85,22 @@ def test_q4_pressure_source_augmented_remains_unadmitted():
     report = validate_general_contact(
         model, definition, replace(settings, pressure_tolerance=0.001),
     )
+    assert report.valid, report.issues
+    assert report.profile == (
+        "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+    )
+
+
+def test_q4_q4_augmented_profile_remains_unadmitted():
+    model, definition, settings = _q4_pair_case()
+    definition = replace(definition, interactions=(
+        replace(definition.interactions[0], normal_law="augmented"),
+    ))
+    report = validate_general_contact(
+        model, definition, replace(settings, pressure_tolerance=0.001),
+    )
     assert not report.valid
-    assert "requires S3 source faces" in " ".join(report.issues)
+    assert "augmented Q4/Q4 pressure-side profile" in " ".join(report.issues)
 
 
 def _path_case():
