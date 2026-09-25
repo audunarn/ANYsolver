@@ -1,6 +1,18 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-## Current state — 25 September 2026, matched native torque/shear screen
+## Current state — 25 September 2026, transverse-band decision
+
+**Decision sought:** Determine whether the physically placed top-surface transverse-band pose is a credible native six-channel line trace worth finite-chart and stability work. G0B remains open, G1 barred, and formal F03 authority unconsumed.
+
+**Established facts:** The P0 six-local-traction rows are exactly the earlier distributing surface-patch rows (maximum row difference `7.1e-15` at n2/4/8); they are not an independent law. The new top-surface transverse band has no fixed longitudinal averaging, preserves reference rigid motion and independent director/shear, and its Q4/S3 first variation passes direct finite differences. On the physically matched Q4/S3 x8/y4, beam-half16 square-section model with full shell-left and beam-root supports, its P0 n4→n8 torque tip twist is Q4 `27.628→24.605 µrad`, S3 `27.741→24.763 µrad`; shell-support torque is Q4 `−11.988→−11.553 N m`, S3 `−11.682→−11.202 N m`. Shear tip motion is Q4 `41.923→40.960 µm`, S3 `42.804→41.593 µm`. Work and equilibrium close. The support-torque partition is steadier than the previous finite-longitudinal-strip pose, but twist still changes about 11% with line resolution. The separate full-bond solid has different volume connection and tip-face tractions, so its `35.076 µrad` twist is not a direct accuracy target. Classical axial, historical Q6/finite-pad, and native six-channel evidence stay distinct.
+
+**Remaining uncertainty:** At fixed x/beam resolution, the line-dependent twist may reflect unresolved shell transverse trace deformation or the line pose/enforcement law itself. Neither small gaps nor raw spectral quotients select a multiplier. The top band remains a reference-linearization-only development candidate; its full nonlinear derivatives and chart behavior are unproved.
+
+**Next discriminating experiment and resulting action:** Run only the matched Q4/S3 torque and shear controls at shell-y8 for P0 n4 and n8, alongside the existing y4 evidence; change no other geometry, load, support, section or connection definition. If transverse refinement materially reduces the line-resolution drift while preserving physical shear, torque partition and work, develop the trace/finite-chart derivatives and then registered norm-scaled stability and mesh-ratio tests. If drift persists, stop row refinement for this pose and revise the physical connection or enforcement contract before additional line-space work. Neither result by itself passes G0B.
+
+Source-bound top-band screen: `.qualification/b3-ge-e4-pl/f03-transverse-band-matched-dev-20260925-v1`; focused port and P0/footprint parity tests are in `tests/test_b3_e4_f03_shell_strip_pose_candidate.py` and `tests/test_b3_e4_f03_continuous_surface_traction.py`. Historical records and failures remain below.
+
+## Prior state — 25 September 2026, matched native torque/shear screen
 
 **Decision sought:** A defensible native six-channel beam–shell connection and, only then, a stable exact line space. G0B remains open, G1 barred, and formal F03 authority unconsumed.
 
