@@ -1,38 +1,74 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Decision sought, 25 September 2026:** Choose the physical meaning of the
-required six-channel nonmatching bond: line-tangent/director alignment or a
-finite-width full-pose connection. Do not select a multiplier space before
-that choice.
+**Decision sought, 25 September 2026:** Define a physical, work-conjugate
+native six-channel nonmatching bond. The current development direction is
+a finite-width connection; a line-tangent/director law remains a separate
+idealization. Neither a footprint law nor a multiplier space is selected.
 
 **Established facts:** The confined chord passes bounded Q4/S3 work,
-chart, rigid-motion, balance and termination-support checks. Its shear
-yaw differs materially from the finite-width strip and rigid-fit patch.
-Quadrature order does not explain the line response. At fixed physical
-meshes, P0, P1 and dual all develop a weak alternating transverse-force
-mode as line resolution rises; full row rank does not establish stability.
-At a beam junction, the native retained-cell frames are one-sided under
-load; a point or footprint there needs an explicit shared nodal pose law.
+chart, rigid-motion, balance and termination-support checks, but its shear
+yaw differs materially from finite-width measures. A conforming C3D8
+plate/stiffener bond with explicit common interface nodes confirms that
+distinction over three mesh levels: the local square-patch yaw stays near
+`0.675/-0.329 gamma` under the two affine shears, versus centerline
+`0.99/-0.015 gamma`. The solid stiffener section has a third, warped
+rotation measure. The solid end torque/transverse-force reactions balance,
+but their displacements have not converged; they are not quantitative native
+oracles. Existing P0/P1/dual weak alternating transverse modes and full
+row ranks do not select a stable space. Native retained-cell frames are
+one-sided at a junction, so a footprint needs an explicit nodal pose law.
 
-**Remaining uncertainty:** The independent transverse comparator confirms
-the discrete local-center line trend, not the intended weld. The historical
-Q6/finite-pad, classical axial and CalculiX rigid-footprint models have
-different connection laws. A section-resolved physical torque/shear
-reference with matched connection and recoverable work is still missing.
+**Remaining uncertainty:** Derive and verify a finite-width native
+footprint that transfers torque without relying on E4 drilling completion
+or suppressing admissible transverse shear. The current first-order solid
+reference is too mesh-sensitive in torque and transverse displacement to
+set physical response tolerances. The historical Q6/finite-pad, classical
+axial, CalculiX B31/S4 knot and native six-channel cases have different
+connection or section laws. Norm-scaled interface stability and the
+required controlled mesh-ratio series remain open.
 
-**Next discriminating experiment:** Prepare one bounded,
-section-resolved shear/termination comparison with matched panel and beam
-geometry, section axes, offset, supports and load work. Extract the
-connection rotation and torque/transverse-force work under both affine
-in-plane shears and a terminated-stiffener load.
+**Next discriminating experiment:** Form one differentiable finite-width
+native pose/work functional with declared footprint geometry, physical
+moment map and exact reference. Compare its two affine-shear measures,
+end torque/transverse-force work and Q4/S3 drilling/shear sensitivity
+against the line idealization and the existing solid-bond evidence on
+bounded models. Then assess its six-channel interface modes at fixed
+physical meshes and registered beam:shell ratios with a norm appropriate
+to the selected law. Do not restart a finer C3D8 or classical axial sweep.
 
-**Resulting action:** If the resolved bond tracks line-tangent yaw without
-spurious shear constraint, continue line-law qualification; if it tracks
-area-polar or rigid-fit response, keep the chord as a declared tangent
-idealization and develop the appropriate footprint bond. If materially
-resolution-dependent, refine the physical reference first. Do not extend
-classical axial refinement or select a multiplier yet. F03 authority remains
-unconsumed, G0B open and G1 barred.
+**Resulting action:** Advance the finite-width law only if its reference,
+objectivity, virtual work, derivatives and physical torque/shear channels
+hold without artificial stabilization. Otherwise revise that law before
+line-space selection. A new higher-order or section-matched reference is
+needed before quantitative torque/shear parity; the present solid load
+case is not a convergence claim. F03 authority remains unconsumed, G0B
+open and G1 barred.
+
+**25 September bounded physical-bond screen (development only):** The
+conforming 3D model is a 2.0 x 1.0 x 0.07 m plate with a 1.0 x 0.1 x
+0.1 m square stiffener bonded by common nodes at the plate top. It uses
+isotropic E=210 GPa, nu=0.3, free stiffener ends and declared plate-edge
+affine shear or fixed edges with a 100 Nm end torque / 1000 N transverse
+force. There is no beam/shell MPC, numerical drilling term or reference
+offset. On mesh factors 1/2/4, the two shear cases give, respectively,
+local square-patch yaw `0.679/0.674/0.675` and
+`-0.321/-0.326/-0.329` times gamma; solid midsection fitted yaw
+`0.757/0.775/0.789` and `-0.243/-0.225/-0.220` times gamma, with
+about 2 micrometres maximum section-fit residual. The line tangent gives
+`0.998/0.994/0.991` and `-0.002/-0.006/-0.015` times gamma. The
+torque tip twist is `2.697/4.524/5.752` microrad and transverse-force
+tip displacement `0.298/0.602/0.864` micrometres. Applied and support
+wrenches balance to print precision, but the latter responses remain
+materially mesh-dependent. These are distinct solid and native
+idealizations, so the yaw contrast informs the connection choice but is
+not native accuracy or continuum convergence. Raw records and file hashes
+are in `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/` under
+`f03-ccx-solid-bond-shear-dev-20260925-v3`,
+`f03-ccx-solid-bond-shear-dev-20260925-v4`,
+`f03-ccx-solid-bond-loads-dev-20260925-v1` and
+`f03-ccx-solid-bond-loads-dev-20260925-v2`. The earlier
+`f03-ccx-solid-bond-shear-dev-20260925-v1` input-format failure and
+`-v2` elongated-patch response are retained, not overwritten.
 
 **Bounded 25 September diagnosis (development only):** For the chord,
 `uy=γx` gives yaw `γ`, `ux=γy` gives zero; the strip gives `+γ/2` and
