@@ -117,6 +117,22 @@ def test_quadratic_tip_traction_has_exact_wrench_and_conjugate_work(bond):
         "value"]==pytest.approx(theta,abs=1e-13)
 
 
+def test_quadratic_reverse_force_has_exact_wrench_and_work():
+    _,meta=SCREEN.build(
+        2,"tip_fz",boundary_policy="left_root",bond_policy="terminal",
+        element_family="C3D20R",reverse_tip_fz=True,
+        plate_thickness_mm=35,tip_load_map="quadratic_face")
+    applied={int(i):np.asarray(force) for i,force in
+             meta["applied_nodal_forces_N"].items()}
+    assert len(applied)>len(meta["bar_station_nodes"]["1000"])
+    assert SCREEN._wrench(applied,meta["probe_coordinates_m"])==pytest.approx(
+        [0.,0.,-1000.,0.,1000.,0.],abs=1e-9)
+    u={int(i):np.array([0.,0.,-2e-5])
+       for i in meta["probe_node_ids"]}
+    assert SCREEN.recover(meta,u)["tip_work_conjugate_displacement"][
+        "value"]==pytest.approx(2e-5,abs=1e-13)
+
+
 def test_thickness_screen_rejects_undeclared_geometry():
     with pytest.raises(ValueError,match="35/70 mm"):
         SCREEN.build(1,"tip_mx",plate_thickness_mm=50)
