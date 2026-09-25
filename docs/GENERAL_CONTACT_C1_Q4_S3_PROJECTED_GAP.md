@@ -29,6 +29,11 @@ slide, opening and recontact path completed under a 0.2 mm gap budget; opening
 released all four multipliers, and resuming from the opening checkpoint
 matched the uninterrupted final displacement and multipliers
 (`q4-s3-projected-four-phase-first.txt`, 248.71 seconds).
+The ordinary displacement-control route also completed a two-step 0.05 mm
+corner closure with active pressure, opposite-body force balance, the same
+0.2 mm gap budget and a version-2 multiplier checkpoint
+(`q4-s3-projected-ordinary-displacement-first.txt`, 48.43 seconds). Ordinary
+force control remains a separate untested route for this V1 profile.
 
 Run `python examples/general_contact_q4_s3_augmented_path.py --projected`
 for this profile. It reports phase gaps, integrated normal forces, pressure
@@ -41,6 +46,15 @@ active pressure counts `4, 4, 0, 4`, a worst certified gap of about
 `-0.05 mm` and a version-2 checkpoint
 (`q4-s3-projected-example-source.txt`, SHA-256
 `40bfb10bf19351e158a5617b2639a5a0a3300bd901fc8eafbe3799c03f428e06`).
+
+A wheel built from clean commit `223d1a9f` has SHA-256
+`565cc98c2622dac3300116c0ea456b7973355a235a5f05721886dfb776acc43c`.
+After offline installation into an isolated target, the import origin pointed
+there and the installed `--projected` example completed. Its complete output
+was byte-identical to the committed-source output, with SHA-256
+`40bfb10bf19351e158a5617b2639a5a0a3300bd901fc8eafbe3799c03f428e06`
+(`q4-s3-projected-example-installed-223d1a9f.txt`). The wheel was not
+published; installed agreement is a delivery-route check only.
 
 This is one small nonmatching pair, not pressure-space or mesh/enforcement
 convergence. The matching-projection certificate excludes unrepresented edge

@@ -5,7 +5,8 @@ from dataclasses import replace
 import numpy as np
 
 from anysolver import (
-    ContactPathControl, ContactPathProgram, solve_static_nonlinear,
+    BoundaryCondition, ContactPathControl, ContactPathProgram,
+    DisplacementControl, LoadCase, solve_static_nonlinear,
     validate_general_contact,
 )
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
@@ -153,3 +154,43 @@ def test_q4_s3_projected_four_phase_restart():
         result.info["general_contact"]["normal_multiplier_estimate_pa"],
         rtol=1e-6, atol=1e-7,
     )
+
+
+def test_q4_s3_projected_ordinary_displacement_control():
+    model, definition, settings = _projected_case()
+    definition = replace(definition, interactions=(
+        replace(definition.interactions[0], gap_tolerance=2e-4),
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "target_fixed", (5, 6, 7, 8),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "source_guide", (1, 2, 3, 4),
+        {name: 0.0 for name in ("ux", "uy", "rx", "ry", "rz")},
+    ))
+    load = LoadCase("drive")
+    load.add_nodal_load(1, forces=(0.0, 0.0, -1.0))
+    result = solve_static_nonlinear(
+        model, load, num_steps=2,
+        contact=definition, contact_settings=settings,
+        control="displacement", kinematics="von_karman",
+        max_iterations=15, emit_restart_checkpoint=True,
+        displacement_control=DisplacementControl(
+            node_id=1, dof="uz", target_displacement=-0.01505,
+        ),
+    )
+    assert result.status == "completed", (
+        result.failure_reason, result.info.get("contact_failure"),
+    )
+    contact = result.info["general_contact"]
+    assert contact["profile"] == (
+        "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
+    )
+    assert contact["active_pressure_dofs"] > 0
+    assert contact["gap_tolerance_met"]
+    np.testing.assert_allclose(
+        np.asarray(contact["integration_force"])+contact["target_force"],
+        0.0, atol=1e-6,
+    )
+    assert len(result.to_restart_checkpoint()["path_state"]["normal_multipliers"]) == 4
