@@ -6,7 +6,7 @@
 
 **Established:** The bounded transverse-order diagnosis and seven mesh-ratio screens are complete but do not qualify P0, P1 or dual spaces. Plate-only comparisons show patch resolution, thickness and load shape all matter. A locally graded coupled Q4 patch gives four→eight-cell torque changes below 0.23% and shear changes below 0.07%; rigid and distributing tip torque differ only 1.62% at eight cells. The existing solid shows more beam twist along the free span and an additional near-tip increase, with a different root torque partition and declared clearance.
 
-**Uncertainty:** Whether a locally resolved native connection can transfer torque and shear with the correct physical work against a matched three-dimensional bond, and whether a true line space has norm-scaled stability and adequate loaded response over the required ratios.
+**Uncertainty:** Whether a locally resolved native connection transfers torque and shear with the correct physical work against a matched three-dimensional bond, and whether a true line space has norm-scaled stability and adequate loaded response over the required ratios. The saved positive-Fz no-contact solid overlaps, so the graded native Fz response has no accepted physical external accuracy comparator.
 
 **Next discriminator and consequence:** Resolve the 3D and native root torque/section interpretation and choose a physically admissible footprint-to-thickness and clearance geometry for a matched bond comparison. The span-wide and near-tip differences require separate attribution before connection ranking. Assess the true line separately with positive physical compliance and loaded mesh-ratio behavior. No more classical axial digits or automatic P0-row escalation.
 
