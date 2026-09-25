@@ -376,6 +376,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           "bar_station_nodes":station_nodes,
           "probe_coordinates_m":{str(index):[float(v)/1000 for v in inverse[index]]
                                  for index in probe},
+          "reference_probe_coordinates_m":{
+              str(index):[float(v)/1000 for v in reference_inverse[index]]
+              for index in probe},
           "boundary_coordinates_m":{str(index):[float(v)/1000 for v in inverse[index]]
                                     for index in boundary},
           "applied_nodal_forces_N":{str(index):list(force)
@@ -476,7 +479,10 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
     stations={}
     for station,indices in meta["bar_station_nodes"].items():
         xyz=np.array([meta["probe_coordinates_m"][str(node)] for node in indices])
-        center=np.array([float(station)/1000,0.,.085])
+        reference_xyz=np.array([meta["reference_probe_coordinates_m"][str(node)]
+                                for node in indices])
+        center=np.array([float(station)/1000,0.,
+                         (xyz[:,2].min()+xyz[:,2].max())/2])
         design=np.zeros((3*len(indices),6))
         response=np.array([displacement[node] for node in indices]).reshape(-1)
         for i,relative in enumerate(xyz-center):
@@ -485,7 +491,7 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
             design[3*i:3*i+3,3:]=((0.,z,-y),(-z,0.,x),(y,-x,0.))
         fitted=np.linalg.lstsq(design,response,rcond=None)[0]
         residual=(response-design@fitted).reshape(-1,3)
-        top=np.flatnonzero(np.abs(xyz[:,2]-.035)<1e-12)
+        top=np.flatnonzero(np.abs(reference_xyz[:,2]-.035)<1e-12)
         if len(top)!=2*meta["factor"]+1:
             raise ValueError("incomplete stiffener bottom-face trace")
         top=top[np.argsort(xyz[top,1])]
@@ -532,21 +538,25 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
     else:
         midspan=[]
         xyz=meta["probe_coordinates_m"]
+        reference_xyz=meta["reference_probe_coordinates_m"]
         for y in (-50,0,50):
             plate=surface[f"500,{y}"]
             bottom=next((index for index in meta["bar_station_nodes"]["500"]
-                         if abs(xyz[str(index)][1]-y/1000)<1e-12 and
-                            abs(xyz[str(index)][2]-.035)<1e-12),None)
+                         if abs(reference_xyz[str(index)][1]-y/1000)<1e-12 and
+                            abs(reference_xyz[str(index)][2]-.035)<1e-12),None)
             if bottom is None:
                 raise ValueError("incomplete unbonded midspan bottom probe")
-            midspan.append(float(displacement[bottom][2]-displacement[plate][2]))
+            midspan.append(float(xyz[str(bottom)][2]-xyz[str(plate)][2]+
+                                 displacement[bottom][2]-displacement[plate][2]))
         result={"plate_midspan_centerline_tangent_yaw_rad":float(tangent),
                 "plate_midspan_square_patch_yaw_rad":patch_yaw,
                 "station_motion":stations,
                 "unbonded_midspan_normal_separation_m":{
                     "y_m":[-.05,0.,.05],"bar_minus_plate_z_m":midspan,
-                    "meaning":"negative value is sampled geometric overlap of coincident unbonded surfaces; not a mortar integration-point contact gap or traction"},
-                "meaning":"midspan plate and bar are coincident but intentionally unbonded"}
+                    "meaning":"negative value is sampled geometric overlap of unbonded surfaces; not a mortar integration-point contact gap or traction"},
+                "meaning":("midspan plate and bar have declared clearance outside the bonded patch"
+                           if meta.get("bar_clearance_um") else
+                           "midspan plate and bar are coincident but intentionally unbonded")}
     applied={int(index):np.array(force) for index,force in
              meta["applied_nodal_forces_N"].items()}
     if applied:

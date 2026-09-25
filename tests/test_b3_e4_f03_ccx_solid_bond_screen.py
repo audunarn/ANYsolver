@@ -222,6 +222,10 @@ def test_declared_terminal_clearance_is_positive_and_tapers_to_shared_patch(clea
     audit=SCREEN.audit_unbonded_open(meta,motion)
     assert audit["negative_nodal_gaps"]==0
     assert audit["minimum_reference_normal_gap_m"]==pytest.approx(min(gaps))
+    probes={node:np.zeros(3) for node in meta["probe_node_ids"]}
+    recovered=SCREEN.recover(meta,probes)
+    assert recovered["unbonded_midspan_normal_separation_m"][
+        "bar_minus_plate_z_m"] == pytest.approx([clearance_um*1e-6]*3,abs=1e-15)
     with pytest.raises(ValueError,match="declared bar clearance"):
         SCREEN.build(1,"tip_mx",boundary_policy="left_root",
                      bond_policy="terminal",element_family="C3D8",
