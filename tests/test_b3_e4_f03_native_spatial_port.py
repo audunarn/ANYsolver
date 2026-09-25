@@ -16,7 +16,8 @@ from anysolver._ge_beam3_native_line_loading import LinePattern
 from anysolver._ge_beam3_retained_generalized_state import Context, Program
 
 from scripts._b3_e4_f03_native_fixture import SECTION_DIAGONAL, build
-from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
+from scripts._b3_e4_f03_native_spatial_port import (NativeHalfCellSpatialPort,
+                                                     NativeNodalSpatialPort)
 
 
 def _curved_context():
@@ -261,3 +262,80 @@ def test_invalid_half_cell_or_weight_rejected(cell, weight):
     context, _ = _curved_context()
     with pytest.raises(ValueError, match="valid native element"):
         NativeHalfCellSpatialPort(context, 0, cell, weight)
+
+
+def test_loaded_junction_has_one_nodal_pose_but_two_cell_frame_traces():
+    fixture=build(16)
+    context=fixture.context
+    load=np.zeros(context.count)
+    load[6*16+3]=100.
+    free=np.array([i for i in range(context.count)
+                   if i not in set(context.fixed)])
+    step=np.zeros(context.count)
+    step[free]=np.linalg.solve(fixture.tangent[np.ix_(free,free)].toarray(),
+                               load[free])
+    assert np.linalg.norm((fixture.tangent@step-load)[free])<1e-10
+    trial=context.advance(context.initial.mechanical,step)
+    left=NativeHalfCellSpatialPort(context,3,1,1.)
+    right=NativeHalfCellSpatialPort(context,4,0,0.)
+    node=NativeNodalSpatialPort(context,8)
+    positions=[port.pose_pair(trial) for port in (left,node,right)]
+    for high,low,_ in positions:
+        np.testing.assert_allclose(high+low,(.5,0.,0.),rtol=0,atol=1e-12)
+    angles=[Rotation.from_matrix(frame).as_rotvec()[0]
+            for _,_,frame in positions]
+    assert angles[0]<angles[1]<angles[2]
+    assert angles[2]-angles[0]>1e-6
+    np.testing.assert_allclose(node.tangent(trial)[:,6*8:6*9],
+                               np.eye(6),rtol=0,atol=0)
+    assert np.linalg.norm(left.tangent(trial)-right.tangent(trial))>1.
+
+
+def test_nodal_port_uses_actual_chart_and_owns_pose_outputs():
+    context,_=_curved_context()
+    port=NativeNodalSpatialPort(context,1)
+    initial=context.initial.mechanical
+    base=np.zeros(context.count)
+    base[6:12]=(1e-3,-2e-3,3e-3,.12,-.07,.05)
+    state=context.advance(initial,base)
+    direction=np.zeros(context.count)
+    direction[6:12]=(.3,-.4,.2,.05,-.03,.07)
+    h=1e-6
+    plus=context.advance(state,h*direction)
+    minus=context.advance(state,-h*direction)
+    ph,pl,pr=port.pose_pair(plus)
+    mh,ml,mr=port.pose_pair(minus)
+    observed=np.r_[((ph+pl)-(mh+ml))/(2*h),
+                   Rotation.from_matrix(pr@mr.T).as_rotvec()/(2*h)]
+    np.testing.assert_allclose(observed,port.tangent(state)@direction,
+                               rtol=1e-8,atol=1e-10)
+    other=np.zeros(context.count)
+    other[6:12]=(-.2,.1,.4,-.04,.08,.03)
+    second_position,second_frame=port.second_variation(state,direction,other)
+    np.testing.assert_array_equal(second_position,np.zeros(3))
+    hh=2e-4
+    def frame_with(a,b):
+        return port.pose_pair(context.advance(state,hh*(a*direction+b*other)))[2]
+    observed_second=(frame_with(1,1)-frame_with(1,-1)-
+                     frame_with(-1,1)+frame_with(-1,-1))/(4*hh*hh)
+    np.testing.assert_allclose(observed_second,second_frame,rtol=1e-5,atol=1e-8)
+    wrench=np.array((3.,-5.,7.,11.,-13.,17.))
+    assert direction@port.pullback(state,wrench)==pytest.approx(
+        wrench@(port.tangent(state)@direction),rel=1e-14)
+    before=state.nodal_frames[1].copy()
+    ph[:]=0.;pl[:]=0.;pr[:]=0.
+    np.testing.assert_array_equal(state.nodal_frames[1],before)
+    assert np.linalg.norm(port.pose_pair(state)[2])>0.
+    with pytest.raises(ValueError,match="valid native physical node"):
+        NativeNodalSpatialPort(context,True)
+
+
+def test_offset_native_reference_preserves_local_operator_parity():
+    fixture=build(16,z_offset=.1)
+    high,low,frame=NativeNodalSpatialPort(
+        fixture.context,8).pose_pair(fixture.context.initial.mechanical)
+    np.testing.assert_allclose(high+low,(.5,0.,.1),rtol=0,atol=1e-14)
+    np.testing.assert_allclose(frame,np.eye(3),rtol=0,atol=1e-14)
+    assert fixture.dense_oracle_max_error<1e-9
+    with pytest.raises(ValueError,match="reference offset"):
+        build(4,z_offset=float("nan"))

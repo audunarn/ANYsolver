@@ -131,3 +131,57 @@ class NativeHalfCellSpatialPort:
         a, b = _skew(u[column:column+3]), _skew(v[column:column+3])
         mixed = .5*(a@b+b@a)
         return mixed@(rotation@lift), mixed@(rotation@frame)
+
+
+@dataclass(frozen=True)
+class NativeNodalSpatialPort:
+    """Unique physical nodal pose at a native member junction or termination.
+
+    A half-cell material frame is one-sided at an internal node. Its endpoint
+    value must not silently stand in for this shared nodal frame when a point
+    attachment or a footprint is declared at the node.
+    """
+
+    context: Context
+    node_index: int
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.context, Context) or
+                type(self.node_index) is not int or
+                not 0 <= self.node_index < self.context.nodal_count // 6):
+            raise ValueError("valid native physical node required")
+
+    def pose_pair(self, state: Mechanical
+                  ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        if not isinstance(state, Mechanical):
+            raise TypeError("retained native mechanical state required")
+        self.context.guard()
+        owned = self.context.make(state.descriptor())
+        node = self.node_index
+        return (owned.positions[node].copy(), owned.position_low[node].copy(),
+                owned.nodal_frames[node].copy())
+
+    def tangent(self, state: Mechanical) -> np.ndarray:
+        self.pose_pair(state)
+        result = np.zeros((6, self.context.count))
+        start = 6 * self.node_index
+        result[:, start:start+6] = np.eye(6)
+        return result
+
+    def pullback(self, state: Mechanical, spatial_wrench: np.ndarray) -> np.ndarray:
+        wrench = np.asarray(spatial_wrench, dtype=float)
+        if wrench.shape != (6,) or not np.isfinite(wrench).all():
+            raise ValueError("finite six-component spatial wrench required")
+        return self.tangent(state).T @ wrench
+
+    def second_variation(self, state: Mechanical, first: np.ndarray,
+                         second: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        _, _, frame = self.pose_pair(state)
+        u, v = np.asarray(first, dtype=float), np.asarray(second, dtype=float)
+        if (u.shape != (self.context.count,) or
+                v.shape != (self.context.count,) or
+                not np.isfinite(u).all() or not np.isfinite(v).all()):
+            raise ValueError("finite retained variation directions required")
+        start = 6 * self.node_index + 3
+        a, b = _skew(u[start:start+3]), _skew(v[start:start+3])
+        return np.zeros(3), .5 * (a @ b + b @ a) @ frame

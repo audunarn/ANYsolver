@@ -11,6 +11,8 @@ yaw differs materially from the finite-width strip and rigid-fit patch.
 Quadrature order does not explain the line response. At fixed physical
 meshes, P0, P1 and dual all develop a weak alternating transverse-force
 mode as line resolution rises; full row rank does not establish stability.
+At a beam junction, the native retained-cell frames are one-sided under
+load; a point or footprint there needs an explicit shared nodal pose law.
 
 **Remaining uncertainty:** The independent transverse comparator confirms
 the discrete local-center line trend, not the intended weld. The historical
@@ -97,6 +99,38 @@ section, or close F03/G0B. Stop repeating this external screen. Next
 compare a section- and connection-matched finite footprint, while the
 line-versus-footprint decision uses the declared shear/termination
 discriminator above.
+
+**Native rigid-footprint junction comparison, 25 September 2026:** A
+bounded native nodal pose port now uses the actual shared B3 position and
+nodal frame, with owned outputs and actual-chart variations. In a bare
+16-half-cell B3 under `+100 N m` tip torque, left cell, shared node and
+right cell twists at `x=.5 m` are respectively
+`34.8214286/37.1428571/39.4642857 µrad`; position is continuous but
+the one-sided frames differ by `4.6428571 µrad`. Thus using either
+half-cell port for a point footprint at that junction would silently
+change the connection. The nodal port and translated `z=.1 m` native
+fixture retain local operator parity.
+
+A bounded Q4/S3 E4-PL plus retained B3 linear KKT now ties the same four
+shell material nodes to that nodal pose. Its twelve virgin translation
+constraint rows agree exactly with the CalculiX knot footprint's declared
+rows after numbering, including the `0.1 m` eccentricity. Actual-chart
+finite differences, reference gaps and physical work pass. For Q4,
+native B3 half-cell counts 4→16 give the same `+100 N m` tip twist
+`40.2288853 µrad`, shell support `Mx=-87.1762134 N m` and beam-root
+`Fy=+45.1524914 N` to reported precision. S3 at half-cell 4 gives
+`40.3504420 µrad`. All have scaled equilibrium, compatibility, total
+wrench and quadratic-work closure; the focused port/footprint suite passed
+19/19. The Q4 native result differs from the external rigid-footprint
+twist `39.31475 µrad` and shell support `Mx=-64.34595 N m`. Identical
+constraint rows and native half-cell invariance rule out row-sign or
+native-beam-resolution explanations on this fixture. B31 versus B3
+section/torsion and S4 versus E4 shell operators remain different, so
+these are not accepted cross-solver errors or a native weak-line decision.
+Stop refining this torque fixture; make the next physical comparison
+section- and connection-matched and retain the registered
+shear/termination discriminator. F03 authority remains unconsumed,
+G0B open and G1 barred.
 
 **Previous bounded chord and strip observations (preserved):** The first fixed chord is not a
 strictly local attachment: a P0 tip yaw multiplier on `[.75,1]` acts at a
