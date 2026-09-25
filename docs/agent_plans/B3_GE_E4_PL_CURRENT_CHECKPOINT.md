@@ -25,7 +25,12 @@ model follows torque/shear trends, but its finer-line torque and shell
 reaction partition differ materially. The conforming C3D8 solid model
 has different supports and section torsion. Native retained-cell frames
 are one-sided at a junction, so a discrete footprint needs an explicit
-shared nodal pose law.
+shared nodal pose law. The independent Fz mode weakens under both
+H^(-1/2) and H^(-1) norms as rows double; at eight rows its physical
+action is mostly beam-side. A two-beam-element force-row cap strengthens
+the finite mode but changes loaded shear and reaction transfer materially.
+Coarse-cell continuous P1 Fz retains an alternating mode and worsens the
+shell force partition despite intermediate tip shear.
 
 **Remaining uncertainty:** The square strip is only a bounded distributing
 pose candidate, not a selected rigid/distributing production footprint.
@@ -41,24 +46,71 @@ Historical Q6/finite-pad, classical axial, CalculiX B31/S4 and native
 six-channel cases retain separate definitions. The complete registered
 mesh-ratio, physical-history and external-reference gates remain open.
 
-**Next discriminating experiment:** Derive a dimensionally consistent
-Fz/Mx interface-resolution rule from the beam/shell trace images and
-physical load-transfer error, then test candidate P0/P1/dual spaces over
-the registered mesh ratios with loaded torque/shear and reaction checks.
-The independent fixed-grid Fz screen reproduces the alternating mode,
-so simply adding native line rows or tuning a quotient is not a solution.
-If the candidates cannot provide stable and adequately resolving transfer,
-revise the weak trace/test pairing before production. Further references
-must match geometry, support, section and connection; do not restart the
-closed axial, C3D8 or joint-refinement sweeps.
+**Next discriminating experiment:** Derive one locally supported exact
+multiplier basis paired to the native beam physical trace, with explicit
+resultant/first-moment reproduction and fixed-size row support. On the
+same small Q4/S3 cases, check virtual work, actual-chart derivatives,
+row independence, transverse modes, torque/shear response and support
+reaction before any mesh-ratio expansion. If this local pairing cannot
+retain both physical transfer and stable modes, revise the shell/beam
+trace law rather than tune row counts. Further references must match
+geometry, support, section and connection; do not restart the closed
+axial, C3D8 or joint-refinement sweeps.
 
-**Resulting action:** Retain the square strip and mixed-channel pairing as
-exploratory candidates, reject the tested all-channel P0 cap, and stop the
-hybrid-position hypothesis. Do not select a multiplier, claim inf-sup
-stability or advance G1 from small residuals, finite rank or a quotient.
+**Resulting action:** Retain the square strip as an exploratory physical
+connection. Reject the tested all-channel P0 and beam-macroelement caps as
+qualification policies; stop the hybrid-position and P1-Fz/P0-Mx
+hypotheses as current space selections. Do not select a multiplier, claim
+inf-sup stability or advance G1 from small residuals, finite rank or a
+quotient.
 An executed, section-matched external reference remains necessary for
 quantitative parity. F03 authority remains unconsumed, G0B open and G1
 barred.
+
+**25 September force-space decision batch (development only):** On the
+fixed independent square-strip plate x16/y4, beam8 grid, changing Fz
+P0-4→P0-8 reduces the H^(-1/2) quotient
+`3.229e-5→6.686e-6` and the plausible finite-width H^(-1) quotient
+`7.000e-5→3.285e-5`; the weakest vector alternates three→seven times
+under either norm. H^(-1) changes the decline but does not remove it.
+These quotients use that independent model's physical energy and are not
+numerically interchangeable with the native retained-system quotient.
+On the H^(-1) weak mode, the shell/beam portions of physical action change
+from `67.6/32.4%` at four rows to `31.3/68.7%` at eight. Thus fixed-area
+shell averaging is not the sole explanation; the near-beam-resolution
+force mode matters. Raw roots:
+`f03-finite-strip-dual-norm-dev-20260925-v1` and
+`f03-independent-fz-action-decomposition-dev-20260925-v1`.
+
+A bounded two-beam-element macroforce-row rule changed only three of the
+seven already registered beam:shell ratios; the other four reused the
+preserved controls. In six new Q4/S3 cases, combined rows remain full
+rank and the H^(-1/2) quotient rises from `2.30–4.12` to `3.93–9.73`.
+Torque response is unchanged to `0.02%`, but transverse tip response
+changes by `5.52–15.03%` and shell support Fz by `129–220 N` on the same
+physical meshes and loads. This rejects the simple cap as a physical
+transfer policy despite its favorable finite-mode diagnostic. Raw root:
+`f03-native-macroforce-ratio-dev-20260925-v1` (records bind each
+unchanged prior control by path and SHA-256).
+
+Source `879bbd85` adds a bounded exact weak-work/KKT oracle with a
+separate basis for each physical channel; uniform P0 reproduces the old
+reference rows under a known permutation. A candidate with Fz continuous
+P1 on four cells, Mx P0 on eight, and other channels P0 on four passes
+36/36 affected strip tests, including Q4/S3 nonlinear first/mixed chart
+variations and reference-row parity. On the fixed Q4/S3 x8/y4,
+beam-half16 mesh, its torque remains `13.305/13.303 µrad`. Tip-z is
+`46.248/48.434 µm`, between coarse P0 `46.644/48.695` and fully fine
+P0 `45.771/47.517 µm`. But shell support Fz becomes
+`1728.74/1588.07 N`, farther from the fine-P0 `1597.05/1392.55 N`
+than coarse P0 `1672.82/1527.20 N`. The finite H^(-1/2) transverse
+quotient is `2.120/2.473`, below coarse P0 `2.584/2.750` and above fine
+P0 about `1.07/1.08`; the weakest mode remains about 99% Fz with four
+sign reversals. Rows are full rank, work and balance close, and physical
+shell energy is positive. None of these comparators is a converged
+external target; the combined evidence gives no basis to select this
+space. Raw roots: `f03-p1fz-p0mx-fixed-dev-20260925-v1` and
+`f03-p1fz-p0mx-modes-dev-20260925-v1`.
 
 **25 September position, Fz-row and matched-reference decision batch
 (development only):** Source `f81e0e41` adds the centerline-position,

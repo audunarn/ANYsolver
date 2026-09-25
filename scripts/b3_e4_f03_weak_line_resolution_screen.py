@@ -249,7 +249,7 @@ def one_case(topology: str, intervals: int, kind: str, *,
         shell_size:shell_size+beam.context.nodal_count].reshape(-1, 6)
     return {
         "topology": topology,
-        "kind": kind,
+        "kind": "channel_specific" if channel_spaces is not None else kind,
         "shell_port": shell_port,
         "shell_support_policy": shell_support_policy,
         "load_kind": load_kind,
