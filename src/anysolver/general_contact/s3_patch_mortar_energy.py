@@ -18,12 +18,12 @@ class S3PatchFace:
 
     def __post_init__(self):
         nodes = tuple(self.node_ids)
-        if (len(nodes) != 3 or len(set(nodes)) != 3
+        if (len(nodes) not in {3, 4} or len(set(nodes)) != len(nodes)
                 or any(type(node) is not int or node <= 0 for node in nodes)):
-            raise ValueError("S3 patch face needs three distinct material nodes")
+            raise ValueError("shell patch face needs three or four distinct material nodes")
         face = PlanarFace((1, 1), self.reference_positions)
-        if len(face.corners) != 3:
-            raise ValueError("S3 patch face must be triangular")
+        if len(face.corners) != len(nodes):
+            raise ValueError("shell patch face topology and geometry disagree")
         object.__setattr__(self, "node_ids", nodes)
         object.__setattr__(self, "reference_positions", face.corners)
 
@@ -41,6 +41,8 @@ class MovingS3PatchMortarState:
     minimum_physical_gap: float | None
     overlap_signature: tuple[int, ...]
     overlapping_pairs: int
+    weighted_gap_integration_error: float = 0.0
+    integration_triangles: int = 0
 
     @property
     def active_pressure_dofs(self):
@@ -61,13 +63,17 @@ class MovingS3PatchPrimalMortarPenalty:
     def __init__(self, source_faces: tuple[S3PatchFace, ...],
                  target_faces: tuple[S3PatchFace, ...], stiffness: float,
                  *, difference_step: float,
-                 maximum_energy_evaluations: int = 1500):
+                 maximum_energy_evaluations: int = 1500,
+                 q4_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_integration_triangles: int | None = None):
         self.source_faces = tuple(source_faces)
         self.target_faces = tuple(target_faces)
         if not (1 <= len(self.source_faces) <= 2
                 and 1 <= len(self.target_faces) <= 2
                 and len(self.source_faces)+len(self.target_faces) >= 3):
             raise ValueError("development S3 patch needs one or two faces per side and at least three total")
+        if any(len(face.node_ids) != 3 for face in self.source_faces):
+            raise ValueError("development patch pressure side needs S3 triangles")
         self.source_node_ids = tuple(sorted({node for face in self.source_faces
                                              for node in face.node_ids}))
         self.target_node_ids = tuple(sorted({node for face in self.target_faces
@@ -103,6 +109,8 @@ class MovingS3PatchPrimalMortarPenalty:
                 source.reference_positions, target.reference_positions,
                 self.stiffness, difference_step=self.difference_step,
                 maximum_energy_evaluations=self.maximum_energy_evaluations,
+                q4_weighted_gap_tolerance=q4_weighted_gap_tolerance,
+                maximum_q4_integration_triangles=maximum_q4_integration_triangles,
             )
             for source in self.source_faces for target in self.target_faces
         )
@@ -154,6 +162,8 @@ class MovingS3PatchPrimalMortarPenalty:
         minimum = None
         signature: list[int] = []
         overlapping_pairs = 0
+        weighted_error = 0.0
+        integration_triangles = 0
         for index, law in enumerate(self.pair_laws):
             source_face = index // len(self.target_faces)
             target_face = index % len(self.target_faces)
@@ -163,6 +173,8 @@ class MovingS3PatchPrimalMortarPenalty:
             if state.overlap_vertices == 0:
                 continue
             overlapping_pairs += 1
+            weighted_error += state.weighted_gap_integration_error
+            integration_triangles += state.integration_triangles
             dofs = self.source_face_indices[source_face]
             support[dofs] += state.reference_support
             weighted_gap[dofs] += state.reference_weighted_gap
@@ -183,6 +195,7 @@ class MovingS3PatchPrimalMortarPenalty:
             energy, support, weighted_gap, normalized, pressure, gram,
             overlap_area, reference_overlap_area, minimum,
             tuple(signature), overlapping_pairs,
+            weighted_error, integration_triangles,
         )
 
     def work(self, current_source: np.ndarray, current_target: np.ndarray,

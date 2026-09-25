@@ -54,6 +54,7 @@ from .core import (
 PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_CONTACT_PATH_DEV_V0"
 AUGMENTED_PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_AUGMENTED_PATH_DEV_V0"
 GENERAL_S3_PATCH_PROFILE = "S3_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
+GENERAL_S3_Q4_PATCH_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 _DOF = {"ux": 0, "uy": 1, "uz": 2}
 
 
@@ -154,9 +155,10 @@ def solve_static_contact_path(
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
         raise ValueError("unsupported contact path: " + "; ".join(report.issues))
+    from .s3_patch_static import MIXED_PROFILE as mixed_patch_profile
     from .s3_patch_static import PROFILE as s3_patch_profile
 
-    general_s3_patch = report.profile == s3_patch_profile
+    general_s3_patch = report.profile in {s3_patch_profile, mixed_patch_profile}
     if not general_s3_patch and "RESTRICTED_SLIDING" not in report.profile:
         raise ValueError("unsupported contact path profile: " + report.profile)
     if (definition.rigid_bodies or
@@ -166,7 +168,9 @@ def solve_static_contact_path(
     augmented = definition.interactions[0].normal_law == "augmented"
     if general_s3_patch and augmented:
         raise ValueError("general S3 patch path does not admit augmented normal law")
-    profile = (GENERAL_S3_PATCH_PROFILE if general_s3_patch else
+    profile = (GENERAL_S3_Q4_PATCH_PROFILE
+               if report.profile == mixed_patch_profile else
+               GENERAL_S3_PATCH_PROFILE if general_s3_patch else
                AUGMENTED_PROFILE if augmented else PROFILE)
     from anymaterial.isotropic import IsotropicMaterial
 

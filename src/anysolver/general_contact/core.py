@@ -192,8 +192,18 @@ class ContactSolverSettings:
     maximum_beam_pair_gap_depth: int | None = None
     general_s3_difference_step: float | None = None
     maximum_general_s3_energy_evaluations: int = 1500
+    q4_target_weighted_gap_tolerance: float | None = None
+    maximum_q4_target_integration_triangles: int | None = None
 
     def __post_init__(self) -> None:
+        if (self.q4_target_weighted_gap_tolerance is not None
+                and (not np.isfinite(self.q4_target_weighted_gap_tolerance)
+                     or self.q4_target_weighted_gap_tolerance <= 0.0)):
+            raise ValueError("q4_target_weighted_gap_tolerance must be finite and positive")
+        if (self.maximum_q4_target_integration_triangles is not None
+                and (type(self.maximum_q4_target_integration_triangles) is not int
+                     or self.maximum_q4_target_integration_triangles < 1)):
+            raise ValueError("maximum_q4_target_integration_triangles must be a positive integer")
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
             raise ValueError("maximum_candidate_pairs must be a positive integer")
         if self.pair_motion not in {"guided", "restricted_sliding", "general"}:

@@ -1,0 +1,138 @@
+"""Project and integrate a bilinear Q4 target against a planar S3 source.
+
+Only the projected *boundary* is polygonal. The physical target position at
+every integration point uses the original Q1 shape functions and four corners.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import numpy as np
+
+from .moving import _triangle_samples
+from .overlap import PlanarFace, planar_projected_overlap
+from .triangle_pair_energy import _triangle_area
+
+
+@dataclass(frozen=True)
+class Q4TargetOverlapIntegrals:
+    support: np.ndarray
+    weighted_gap: np.ndarray
+    pressure_gram: np.ndarray
+    overlap_area: float
+    minimum_sampled_gap: float | None
+    overlap_vertices: int
+    weighted_gap_error: float
+    integration_triangles: int
+
+
+def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray,
+                                *, reference_area_ratio: float,
+                                weighted_gap_tolerance: float,
+                                maximum_triangles: int
+                                ) -> Q4TargetOverlapIntegrals:
+    if len(source.corners) != 3:
+        raise ValueError("Q4 target overlap needs triangular S3 source")
+    target = np.asarray(target_positions, dtype=float)
+    if target.shape != (4, 3) or not np.all(np.isfinite(target)):
+        raise ValueError("Q4 target needs four finite physical corners")
+    if (not np.isfinite(reference_area_ratio) or reference_area_ratio <= 0.0
+            or not np.isfinite(weighted_gap_tolerance)
+            or weighted_gap_tolerance <= 0.0
+            or type(maximum_triangles) is not int or maximum_triangles < 1):
+        raise ValueError("Q4 target integration controls must be finite and positive")
+    normal = np.cross(source.corners[1]-source.corners[0],
+                      source.corners[2]-source.corners[0])
+    normal /= np.linalg.norm(normal)
+    for indices in ((0, 1, 2), (0, 2, 3)):
+        a, b, c = target[list(indices)]
+        if float(np.cross(b-a, c-a)@normal) <= 0.0:
+            raise ValueError("bilinear Q4 target is inverted or faces away from source")
+    origin = source.corners[0]
+    projected = target - ((target-origin)@normal)[:, None]*normal
+    projected_face = PlanarFace((2, 1), projected)
+    overlap = planar_projected_overlap(source, projected_face)
+    support = np.zeros(3)
+    weighted = np.zeros(3)
+    gram = np.zeros((3, 3))
+    if overlap is None:
+        return Q4TargetOverlapIntegrals(
+            support, weighted, gram, 0.0, None, 0, 0.0, 0,
+        )
+
+    shapes = np.asarray([overlap.shape_values(source, point)
+                         for point in overlap.polygon])
+    for index in range(1, len(overlap.polygon)-1):
+        corners = overlap.polygon[[0, index, index+1]]
+        values = shapes[[0, index, index+1]]
+        area = _triangle_area(corners)
+        sums = np.sum(values, axis=0)
+        support += area/3.0*sums
+        gram += area/12.0*(np.outer(sums, sums)+values.T@values)
+    support *= reference_area_ratio
+    gram *= reference_area_ratio
+
+    def sample(point):
+        shape_a = overlap.shape_values(source, point)
+        shape_b = overlap.shape_values(projected_face, point)
+        gap = float((point-shape_b@target)@normal)
+        return shape_a*gap, gap
+
+    def rule(triangle):
+        area = _triangle_area(triangle)
+        total = np.zeros(3)
+        minimum = float("inf")
+        for point, weight in _triangle_samples(tuple(triangle), area):
+            integrand, gap = sample(point)
+            total += weight*integrand
+            minimum = min(minimum, gap)
+        return total, minimum
+
+    leaves = 0
+    visited = 0
+    measured_error = 0.0
+    minimum_sampled = min(sample(point)[1] for point in overlap.polygon)
+
+    def integrate(triangle, budget):
+        nonlocal leaves, visited, measured_error, minimum_sampled
+        visited += 1
+        if visited > maximum_triangles:
+            raise MemoryError("Q4 target contact integration triangle budget exhausted")
+        coarse, coarse_min = rule(triangle)
+        middle = np.mean(triangle, axis=0)
+        children = (
+            np.asarray((triangle[0], triangle[1], middle)),
+            np.asarray((triangle[1], triangle[2], middle)),
+            np.asarray((triangle[2], triangle[0], middle)),
+        )
+        refined = np.zeros(3)
+        child_minimum = coarse_min
+        for child in children:
+            value, sampled_min = rule(child)
+            refined += value
+            child_minimum = min(child_minimum, sampled_min)
+        minimum_sampled = min(minimum_sampled, child_minimum)
+        error = reference_area_ratio*float(np.max(np.abs(refined-coarse)))
+        if error <= budget:
+            leaves += 3
+            if leaves > maximum_triangles:
+                raise MemoryError("Q4 target contact integration triangle budget exhausted")
+            measured_error += error
+            return refined
+        if leaves+3 > maximum_triangles:
+            raise MemoryError("Q4 target contact integration triangle budget exhausted")
+        values = np.zeros(3)
+        for child in children:
+            values += integrate(child, budget/3.0)
+        return values
+
+    for index in range(1, len(overlap.polygon)-1):
+        triangle = overlap.polygon[[0, index, index+1]]
+        budget = weighted_gap_tolerance*_triangle_area(triangle)/overlap.area
+        weighted += integrate(triangle, budget)
+    weighted *= reference_area_ratio
+    return Q4TargetOverlapIntegrals(
+        support, weighted, gram, overlap.area, minimum_sampled,
+        len(overlap.polygon), measured_error, leaves,
+    )

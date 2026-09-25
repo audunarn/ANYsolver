@@ -14,6 +14,7 @@ from .s3_skin_work import S3SkinWorkAdapter
 
 
 PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
+MIXED_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 
 
 def _selected(definition: ContactDefinition):
@@ -28,8 +29,14 @@ def _selected(definition: ContactDefinition):
 
 
 def _adapters(model, selected):
+    from anysolver.e4_pl_element import QualifiedE4PLShellElement
+    from .q4_skin_work import Q4SkinWorkAdapter
+
     return tuple(tuple(
-        S3SkinWorkAdapter.from_model(model, side+1, element_id, surface.side)
+        (Q4SkinWorkAdapter if type(model.mesh.elements.get(element_id))
+         is QualifiedE4PLShellElement else S3SkinWorkAdapter).from_model(
+            model, side+1, element_id, surface.side,
+        )
         for element_id in surface.element_ids
     ) for side, surface in enumerate(selected))
 
@@ -65,11 +72,15 @@ def _unique_work_map(adapters, node_ids):
 def validate_general_s3_patch(model, definition: ContactDefinition,
                               settings: ContactSolverSettings) -> ContactValidationReport:
     issues: list[str] = []
+    from anysolver.e4_pl_element import QualifiedE4PLShellElement
+    from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
+    profile = PROFILE
     if (len(definition.surfaces) != 2 or definition.rigid_bodies
             or len(definition.interactions) != 1):
         return ContactValidationReport("invalid", (
             "general S3 patch needs two surfaces, no rigid body and one interaction",
-        ), PROFILE)
+        ), profile)
     if (settings.pair_motion != "general"
             or settings.normal_discretization != "primal_mortar"):
         issues.append("general S3 patch needs general primal-mortar settings")
@@ -80,7 +91,7 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
     try:
         source, target, interaction = _selected(definition)
     except ValueError as exc:
-        return ContactValidationReport("invalid", (str(exc),), PROFILE)
+        return ContactValidationReport("invalid", (str(exc),), profile)
     if (interaction.normal_law != "penalty" or interaction.normal_stiffness is None
             or interaction.line_stiffness is not None
             or interaction.endpoint_stiffness is not None):
@@ -92,23 +103,35 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
     if len(source.element_ids)*len(target.element_ids) > settings.maximum_candidate_pairs:
         issues.append("general S3 patch exceeds candidate pair resource budget")
     from anymaterial import IsotropicMaterial
-    from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
-
-    for surface in (source, target):
+    target_q4 = [element_id for element_id in target.element_ids
+                 if type(model.mesh.elements.get(element_id)) is QualifiedE4PLShellElement]
+    if target_q4 and (len(target.element_ids) != 1 or len(source.element_ids) != 2):
+        issues.append("mixed S3/Q4 patch needs two source S3 faces and one target Q4 face")
+    if target_q4 and len(target_q4) != len(target.element_ids):
+        issues.append("mixed S3/Q4 patch cannot mix target formulations")
+    if target_q4 and (settings.q4_target_weighted_gap_tolerance is None
+                      or settings.maximum_q4_target_integration_triangles is None):
+        issues.append("mixed S3/Q4 patch needs explicit Q4 weighted-gap tolerance and triangle budget")
+    profile = MIXED_PROFILE if target_q4 else PROFILE
+    for side_index, surface in enumerate((source, target)):
         if surface.beam_radius is not None:
             issues.append(f"surface {surface.name} cannot declare beam radius")
         for element_id in surface.element_ids:
             element = model.mesh.elements.get(element_id)
-            if type(element) is not NativeParityE4PLS3V2DShellElement:
-                issues.append(f"element {element_id} is not admitted S3 V2D")
+            if (type(element) is not NativeParityE4PLS3V2DShellElement
+                    and not (side_index == 1 and type(element)
+                             is QualifiedE4PLShellElement)):
+                issues.append(f"element {element_id} is not admitted S3 source or S3/Q4 target")
                 continue
             material = model.materials.get(element.material_name)
             if (type(material) is not IsotropicMaterial
                     or material.yield_stress != 0.0
-                    or material.hardening_curve is not None):
+                    or material.hardening_curve is not None
+                    or (type(element) is QualifiedE4PLShellElement
+                        and element.shell_section is not None)):
                 issues.append(f"element {element_id} needs isotropic elastic material")
     if issues:
-        return ContactValidationReport("invalid", tuple(issues), PROFILE)
+        return ContactValidationReport("invalid", tuple(issues), profile)
     try:
         adapters = _adapters(model, (source, target))
         faces = _patch_faces(adapters)
@@ -116,6 +139,8 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             faces[0], faces[1], interaction.normal_stiffness,
             difference_step=settings.general_s3_difference_step,
             maximum_energy_evaluations=settings.maximum_general_s3_energy_evaluations,
+            q4_weighted_gap_tolerance=settings.q4_target_weighted_gap_tolerance,
+            maximum_q4_integration_triangles=settings.maximum_q4_target_integration_triangles,
         )
         _unique_work_map(adapters[0], potential.source_node_ids)
         _unique_work_map(adapters[1], potential.target_node_ids)
@@ -141,7 +166,7 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             issues.append("source S3 patch reference normal must point from target to source")
     except (ValueError, MemoryError) as exc:
         issues.append(str(exc))
-    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE)
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
 @dataclass(frozen=True)
@@ -164,6 +189,8 @@ class _PatchResults:
     numerical_pressure_pa: tuple[float, ...]
     reference_support_m2: tuple[float, ...]
     energy_evaluations: int
+    weighted_gap_integration_error_m3: float = 0.0
+    integration_triangles: int = 0
 
     def to_dict(self):
         result = dict(vars(self))
@@ -184,7 +211,7 @@ class GeneralS3PatchManager:
         if not report.valid:
             raise ValueError("unsupported general S3 patch: " + "; ".join(report.issues))
         self.definition = definition
-        self.profile = PROFILE
+        self.profile = report.profile
         source, target, interaction = _selected(definition)
         adapters = _adapters(model, (source, target))
         faces = _patch_faces(adapters)
@@ -195,6 +222,8 @@ class GeneralS3PatchManager:
             faces[0], faces[1], self.stiffness,
             difference_step=self.settings.general_s3_difference_step,
             maximum_energy_evaluations=self.settings.maximum_general_s3_energy_evaluations,
+            q4_weighted_gap_tolerance=self.settings.q4_target_weighted_gap_tolerance,
+            maximum_q4_integration_triangles=self.settings.maximum_q4_target_integration_triangles,
         )
         source_ref, source_map = _unique_work_map(adapters[0], self.law.source_node_ids)
         target_ref, target_map = _unique_work_map(adapters[1], self.law.target_node_ids)
@@ -263,6 +292,8 @@ class GeneralS3PatchManager:
             tuple(map(float, state.normalized_gap)),
             tuple(map(float, state.pressure)),
             tuple(map(float, state.reference_support)), evaluations,
+            state.weighted_gap_integration_error,
+            state.integration_triangles,
         )
         return force, stiffness, result
 
@@ -281,9 +312,14 @@ class GeneralS3PatchManager:
                 (1, self.law.target_face_indices, self.reference_normals[1]),
             ):
                 for face in indices:
-                    controls = _normal_controls(left[side][face], right[side][face])
-                    if min(float(item@reference) for item in controls) <= 0.0:
-                        orientation_ok = False
+                    corners = ((0, 1, 2),) if len(face) == 3 else (
+                        (0, 1, 2), (1, 2, 3), (2, 3, 0), (3, 0, 1),
+                    )
+                    for triple in corners:
+                        local = face[list(triple)]
+                        controls = _normal_controls(left[side][local], right[side][local])
+                        if min(float(item@reference) for item in controls) <= 0.0:
+                            orientation_ok = False
             gap_ok = all(
                 _swept_gap_lower(left[0][si], right[0][si],
                                  left[1][ti], right[1][ti]) >= -self.gap_tolerance
@@ -338,6 +374,8 @@ class GeneralS3PatchManager:
                          "normal_discretization": self.settings.normal_discretization,
                          "general_s3_difference_step": self.settings.general_s3_difference_step,
                          "maximum_general_s3_energy_evaluations": self.settings.maximum_general_s3_energy_evaluations,
+                         "q4_target_weighted_gap_tolerance": self.settings.q4_target_weighted_gap_tolerance,
+                         "maximum_q4_target_integration_triangles": self.settings.maximum_q4_target_integration_triangles,
                          "maximum_swept_subdivisions": self.settings.maximum_swept_subdivisions,
                          "maximum_candidate_pairs": self.settings.maximum_candidate_pairs},
         }
