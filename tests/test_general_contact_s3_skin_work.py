@@ -9,6 +9,7 @@ from anysolver.fe_core import FEModel
 from anysolver.general_contact.overlap import current_planar_shell_face
 from anysolver.general_contact.friction_point import (
     objective_relative_tangent_increment,
+    objective_relative_tangent_variation,
 )
 from anysolver.general_contact.s3_friction_point import S3SkinMaterialPoint
 from anysolver.general_contact.s3_skin_work import S3SkinWorkAdapter
@@ -201,6 +202,51 @@ def test_s3_material_pair_objective_motion_and_geometry_rejection():
         moving_source[model.mesh.dof_manager.get_node_dofs(node)[0]] = 0.001
     np.testing.assert_allclose(increment(moving_source),
                                (0.001, 0.0, 0.0), atol=1e-15)
+
+    candidate = moving_source.copy()
+    candidate[model.mesh.dof_manager.get_node_dofs(5)[0]] = 0.005
+    candidate[model.mesh.dof_manager.get_node_dofs(5)[2]] = -0.001
+    candidate[model.mesh.dof_manager.get_node_dofs(6)[1]] = -0.003
+    candidate[model.mesh.dof_manager.get_node_dofs(6)[3]] = 0.002
+    source_new = source.physical_pose(candidate)
+    target_new = target.physical_pose(candidate)
+    direction = np.linspace(-0.02, 0.03, candidate.size)
+
+    def directional(value):
+        return objective_relative_tangent_variation(
+            source_committed=source_old.position,
+            target_committed=target_old.position,
+            source_candidate=source_new.position,
+            target_candidate=target_new.position,
+            target_frame_committed=target_old.material_frame,
+            target_frame_candidate=target_new.material_frame,
+            source_position_variation=source.position_map @ value,
+            target_position_variation=target.position_map @ value,
+            target_frame_variation=target.frame_directional_variation(
+                candidate, value,
+            ),
+        )
+
+    for step in (1.0e-5, 3.0e-6):
+        finite = (np.asarray(increment(candidate + step*direction))
+                  - increment(candidate - step*direction))/(2.0*step)
+        np.testing.assert_allclose(directional(direction), finite,
+                                   rtol=1.0e-7, atol=1.0e-9)
+    drill = np.zeros_like(candidate)
+    drill[model.mesh.dof_manager.get_node_dofs(5)[5]] = 1.0
+    np.testing.assert_allclose(directional(drill), 0.0, atol=0.0)
+    with pytest.raises(ValueError, match="frame variation"):
+        objective_relative_tangent_variation(
+            source_committed=source_old.position,
+            target_committed=target_old.position,
+            source_candidate=source_new.position,
+            target_candidate=target_new.position,
+            target_frame_committed=target_old.material_frame,
+            target_frame_candidate=target_new.material_frame,
+            source_position_variation=(0, 0, 0),
+            target_position_variation=(0, 0, 0),
+            target_frame_variation=np.full((3, 3), np.nan),
+        )
 
     inverted = zero.copy()
     inverted[model.mesh.dof_manager.get_node_dofs(3)[1]] = -0.6

@@ -29,8 +29,12 @@ delta_u_t = P_target_candidate [
 Transporting the old separation before differencing removes apparent slip
 when a finite normal opening rotates with both bodies. The caller must supply
 the same source and target material points at both states. Neither this helper
-nor the local return map differentiates a frame supplied by a deforming
-element; the later coupled contact adapter must include those derivatives.
+nor the local return map owns a deforming element frame. At fixed committed
+points, `objective_relative_tangent_variation` includes the candidate
+point-position variations, material-frame rotation of the old separation and
+the variation of the current tangent projector. The S3 point adapter below
+supplies these local chain-rule inputs. Pressure, projection coordinates,
+overlap boundaries and contact-point history still need coupled derivatives.
 
 Given committed elastic slip vector `z_old` and frame rotation
 `R = F_current F_old^T`, the trial elastic slip is

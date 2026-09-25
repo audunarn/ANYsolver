@@ -130,6 +130,46 @@ def objective_relative_tangent_increment(
     return _frozen_vector(increment)
 
 
+def objective_relative_tangent_variation(
+    *,
+    source_committed,
+    target_committed,
+    source_candidate,
+    target_candidate,
+    target_frame_committed,
+    target_frame_candidate,
+    source_position_variation,
+    target_position_variation,
+    target_frame_variation,
+) -> tuple[float, float, float]:
+    """Smooth candidate directional derivative of the fixed-pair increment."""
+
+    old_relative = (_vector3(source_committed, "committed source position")
+                    - _vector3(target_committed, "committed target position"))
+    current_relative = (_vector3(source_candidate, "candidate source position")
+                        - _vector3(target_candidate, "candidate target position"))
+    old_frame = _frame3(target_frame_committed)
+    frame = _frame3(target_frame_candidate)
+    d_frame = np.asarray(target_frame_variation, dtype=float)
+    if d_frame.shape != (3, 3) or not np.all(np.isfinite(d_frame)):
+        raise ValueError("target frame variation must be a finite 3 by 3 matrix")
+    d_relative = (
+        _vector3(source_position_variation, "source position variation")
+        - _vector3(target_position_variation, "target position variation")
+    )
+    tangent = frame[:, :2]
+    d_tangent = d_frame[:, :2]
+    projector = tangent @ tangent.T
+    d_projector = d_tangent @ tangent.T + tangent @ d_tangent.T
+    rotated_old = frame @ old_frame.T @ old_relative
+    d_rotated_old = d_frame @ old_frame.T @ old_relative
+    variation = (d_projector @ (current_relative - rotated_old)
+                 + projector @ (d_relative - d_rotated_old))
+    if not np.all(np.isfinite(variation)):
+        raise ValueError("relative material-point variation exceeded finite range")
+    return _frozen_vector(variation)
+
+
 def trial_coulomb_point(
     committed: FrictionPointState,
     *,
