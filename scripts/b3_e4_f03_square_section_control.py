@@ -7,6 +7,7 @@ constant is substituted explicitly; no product section law is changed.
 from __future__ import annotations
 
 import json
+import hashlib
 import platform
 import subprocess
 from pathlib import Path
@@ -90,8 +91,64 @@ def run(output_dir: Path) -> None:
                           record["tip_fz"]["tip_uz_m"], flush=True)
 
 
+def run_matched_full_bond(output_dir: Path) -> None:
+    """Bounded six-channel reference comparison, not a bond equivalence claim."""
+    from scripts.b3_e4_f03_weak_line_resolution_screen import one_case
+
+    source = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                     text=True).strip()
+    if subprocess.check_output(["git", "status", "--porcelain"],
+                               text=True).strip():
+        raise RuntimeError("run requires clean source")
+    output_dir.mkdir(parents=True, exist_ok=False)
+    manifest = {
+        "status": "EXPLORATORY_NOT_G0_ACCEPTANCE",
+        "question": "With thickness, offset, section, supports and resultants matched, does the native exact six-channel line transfer torque and shear toward the full-bond solid reference at fixed shell/beam resolution as line rows increase?",
+        "outcome_rule": "If both loads, plate support shares and work improve at finite line resolution, advance the native pose to registered mesh-ratio/stability testing. If line resolution strongly stiffens or undertransfers, revise the torsional pose or interface law before choosing a multiplier. This is not direct accuracy qualification because a finite-width solid volume bond differs from a one-dimensional B3/E4 strip tie and tip face tractions differ from native nodal resultants.",
+        "source_head": source,
+        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "python": platform.python_version(),
+        "requested_blas_threads": 1,
+        "geometry": "plate x[-.5,1.5] y[-.5,.5] z=0 thickness .035 m; B3 axis x[0,1] y=0 z=.0675 m; square strip half-length/width .05/.05 m",
+        "materials": "E=210 GPa, nu=.3; generalized B3 square A=.01 m2, Iy=Iz=8.333333333333333e-6 m4, square Saint-Venant J; elastic E4 Q4/S3-V2D",
+        "supports": "all shell left-edge coordinates and native B3 root fixed; same support location and resultant constraints as solid left/root case",
+        "loads": "separate +100 N m native tip Mx and +1000 N native tip Fz; solid reference applies work-conjugate quadratic-face tractions",
+        "connection": "native exact six-channel P0 physical_strip_005_005 over beam x[0,1], line intervals 4 and 8; solid reference is conforming full-width volume bond",
+        "mesh": "native shell Q4/S3 x8/y4, B3 16 half-cells, fixed while line rows change; solid C3D20R factor 4 has a distinct mesh",
+        "solid_reference": "f03-ccx-full-bond-quadratic-face-dev-20260925-v1, factor-4 tip_mx/tip_fz, and output-only full-field replay",
+        "primal_row_limit": "existing bounded dense reference KKT",
+    }
+    with threadpool_limits(limits=1):
+        manifest["effective_threadpools"] = threadpool_info()
+        rows = []
+        for topology in ("Q4", "S3-V2D"):
+            for intervals in (4, 8):
+                for load in ("torsion", "transverse_force_z"):
+                    row = one_case(
+                        topology, intervals, "piecewise_constant",
+                        shell_port="physical_strip_005_005", load_kind=load,
+                        n_s=4, n_y=4, native_half_cells=16,
+                        thickness=.035, beam_z_offset=.0675,
+                        beam_torsion_constant=square_torsion_constant(),
+                        shell_support_policy="full_left_edge")
+                    rows.append(row)
+                    print(topology, intervals, load,
+                          row["tip_rx_rad"], row["beam_tip_uz_m"],
+                          flush=True)
+        data = json.dumps(rows, indent=2, allow_nan=False) + "\n"
+        (output_dir / "results.json").write_text(data)
+        manifest["results_sha256"] = hashlib.sha256(data.encode()).hexdigest()
+        (output_dir / "manifest.json").write_text(
+            json.dumps(manifest, indent=2, allow_nan=False) + "\n")
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument("--matched-full-bond", action="store_true")
     parser.add_argument("output_dir", type=Path)
-    run(parser.parse_args().output_dir)
+    args = parser.parse_args()
+    if args.matched_full_bond:
+        run_matched_full_bond(args.output_dir)
+    else:
+        run(args.output_dir)

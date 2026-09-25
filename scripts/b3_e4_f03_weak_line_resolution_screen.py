@@ -69,6 +69,8 @@ def one_case(topology: str, intervals: int, kind: str, *,
              native_half_cells: int = 16,
              n_y: int = 2,
              thickness: float = .07,
+             beam_z_offset: float = 0.,
+             beam_torsion_constant: float | None = None,
              shell_support_policy: str = "legacy_three_left_nodes",
              fine_intervals: int | None = None,
              fine_channels: tuple[int, ...] = (),
@@ -77,7 +79,8 @@ def one_case(topology: str, intervals: int, kind: str, *,
     """Solve one bounded six-channel load at fixed reference resolution."""
     shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y,
                                        thickness=thickness))
-    beam = build(native_half_cells)
+    beam = build(native_half_cells, z_offset=beam_z_offset,
+                 torsion_constant=beam_torsion_constant)
     space = LineMultiplierSpace(
         kind, tuple(np.linspace(0., 1., intervals+1)))
     if channel_spaces is not None:
@@ -180,6 +183,9 @@ def one_case(topology: str, intervals: int, kind: str, *,
         shell_support[:, 5]+shell_reference_nodes[:, 0]*shell_support[:, 1]
         -shell_reference_nodes[:, 1]*shell_support[:, 0]))
     beam_root_reaction_mx = float(physical_residual[shell_size+3])
+    beam_root_reaction_fy = float(physical_residual[shell_size+1])
+    beam_root_reaction_mx_about_origin = float(
+        beam_root_reaction_mx-beam_z_offset*beam_root_reaction_fy)
     beam_root_reaction_fz = float(physical_residual[shell_size+2])
     beam_root_reaction_my = float(physical_residual[shell_size+4])
     beam_root_reaction_mz = float(physical_residual[shell_size+5])
@@ -262,6 +268,8 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "shell_host_intervals": n_s,
         "shell_transverse_intervals": n_y,
         "shell_thickness_m": shell.panel.thickness,
+        "beam_reference_z_m": beam_z_offset,
+        "beam_torsion_constant_m4": beam_torsion_constant,
         "native_half_cells": native_half_cells,
         "shell_elements": shell.panel.element_count,
         "native_elements": beam.n_half_cells//2,
@@ -305,8 +313,12 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "shell_support_minus_interface_torque_x_n_m": float(
             shell_reaction_mx-shell_interface_torque_x),
         "beam_root_reaction_torque_x_n_m": beam_root_reaction_mx,
+        "beam_root_reaction_fy_n": beam_root_reaction_fy,
+        "beam_root_reaction_torque_x_about_origin_n_m": (
+            beam_root_reaction_mx_about_origin),
         "global_torque_x_balance_n_m": float(
-            shell_reaction_mx+beam_root_reaction_mx+applied_torque_x),
+            shell_reaction_mx+beam_root_reaction_mx_about_origin+
+            applied_torque_x),
         "applied_force_z_n": applied_force_z,
         "shell_support_reaction_fz_n": shell_reaction_fz,
         "shell_interface_fz_n": shell_interface_force_z,
