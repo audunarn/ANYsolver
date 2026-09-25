@@ -79,3 +79,37 @@ class S3SkinMaterialPoint:
             tuple(float(value) for value in position),
             tuple(tuple(float(value) for value in row) for row in frame),
         )
+
+    def frame_directional_variation(
+            self, displacement: np.ndarray,
+            direction: np.ndarray) -> np.ndarray:
+        """Exact smooth-pose variation of the material frame per FE direction."""
+
+        self.physical_pose(displacement)  # Shared geometry and polarity checks.
+        variation = np.asarray(direction, dtype=float).reshape(-1)
+        if (variation.size != self.adapter.work_map.shape[1]
+                or not np.all(np.isfinite(variation))):
+            raise ValueError("S3 frame variation needs a finite full FE direction")
+        corners = self.adapter.current_positions(displacement)
+        moved = np.asarray(self.adapter.work_map @ variation).reshape(3, 3)
+        first = corners[1] - corners[0]
+        second = corners[2] - corners[0]
+        d_first = moved[1] - moved[0]
+        d_second = moved[2] - moved[0]
+        length = float(np.linalg.norm(first))
+        raw_normal = np.cross(first, second)
+        area_scale = float(np.linalg.norm(raw_normal))
+        tangent_1 = first / length
+        normal = raw_normal / area_scale
+        d_raw_normal = (np.cross(d_first, second)
+                        + np.cross(first, d_second))
+        d_tangent_1 = ((np.eye(3) - np.outer(tangent_1, tangent_1))
+                       @ d_first / length)
+        d_normal = ((np.eye(3) - np.outer(normal, normal))
+                    @ d_raw_normal / area_scale)
+        d_tangent_2 = (np.cross(d_normal, tangent_1)
+                       + np.cross(normal, d_tangent_1))
+        derivative = np.column_stack((d_tangent_1, d_tangent_2, d_normal))
+        if not np.all(np.isfinite(derivative)):
+            raise ValueError("S3 frame variation exceeded finite range")
+        return derivative

@@ -78,9 +78,11 @@ authoritative translations and rotations through a sparse position map.
 Numerical drill changes that leave the physical skin fixed leave its pose and
 work unchanged. A collapsed or inverted skin fails explicitly. This map uses
 the admitted small-rotation S3 skin kinematics; it does not extend the solver
-to finite-rotation shell friction. The material-frame derivative, point
-migration between facets, pressure-to-traction integration and committed
-history owner remain to be implemented.
+to finite-rotation shell friction. Its `frame_directional_variation` returns
+the exact smooth-pose derivative of both material tangents and the normal
+through the S3 physical skin work map. Point migration between facets,
+pressure-to-traction integration, a fully assembled contact tangent and the
+committed history owner remain to be implemented.
 
 Focused checks in `tests/test_general_contact_friction_point.py` cover an
 independent scalar stick/slip slider, reversal, material spin and normal

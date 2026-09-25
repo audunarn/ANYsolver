@@ -144,6 +144,14 @@ def test_s3_material_point_uses_physical_skin_and_authoritative_work_map():
     assert float(nodal_force @ direction) == pytest.approx(
         float(traction @ (point.position_map @ direction)), abs=1e-14,
     )
+    frame_tangent = point.frame_directional_variation(u, direction)
+    for step in (1.0e-5, 3.0e-6):
+        plus = np.asarray(point.physical_pose(u + step*direction).material_frame)
+        minus = np.asarray(point.physical_pose(u - step*direction).material_frame)
+        np.testing.assert_allclose(
+            frame_tangent, (plus-minus)/(2.0*step),
+            rtol=1.0e-7, atol=1.0e-9,
+        )
     drill = np.zeros_like(u)
     drill[model.mesh.dof_manager.get_node_dofs(1)[5]] = 1.0
     np.testing.assert_allclose(point.position_map @ drill, 0.0, atol=0.0)
@@ -151,6 +159,10 @@ def test_s3_material_point_uses_physical_skin_and_authoritative_work_map():
                                current.position, atol=0.0)
     np.testing.assert_allclose(point.physical_pose(u + 0.1*drill).material_frame,
                                current.material_frame, atol=0.0)
+    np.testing.assert_allclose(point.frame_directional_variation(u, drill),
+                               0.0, atol=0.0)
+    with pytest.raises(ValueError, match="full FE direction"):
+        point.frame_directional_variation(u, np.zeros(3))
 
 
 def test_s3_material_pair_objective_motion_and_geometry_rejection():
