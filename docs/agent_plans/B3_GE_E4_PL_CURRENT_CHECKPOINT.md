@@ -69,11 +69,34 @@ motion. An independent source-formula calculation reproduces saved
 `rx=-1.9522285e-6 rad`, and a synthetic nonrigid parity test passes.
 This establishes the *external model's* linear tip-rotation work map,
 not a native comparison, physical section match or rigid section field.
-The focused parser/deck tests pass 33/33. Next run the bounded signed
-tip-`Mx` case on this same knot footprint, then decide whether its
-response merits a section/connection-matched comparison. The original
-canary and its failed reaction interpretation remain separate. No new
-external solve or F03 gate claim was made by the source derivation.
+The focused parser/deck tests pass 33/33. The signed tip-`Mx` execution
+below uses this same knot footprint. The original canary and its failed
+reaction interpretation remain separate.
+
+**Executed signed knot-footprint torque screen, 25 September 2026:** The
+frozen source `0994b542` generated two otherwise identical CalculiX 2.23
+decks with `Mx=±100 N m`. Both exited zero with one full accepted linear
+step, the expected knot, and finite DAT/FRD responses within the 120 s,
+one-thread envelope. The source-conjugate four-corner mean twist is
+`±3.931475e-5 rad`, signed oddness is zero at printed precision, and
+maximum rigid-fit corner residual is `3.54e-12 m`. Reusing the 24
+previously executed, hash-checked same-model unloaded support influences
+gives for positive torque shell wrench about origin
+`(Fy,Mx,Mz)=(-298.0665 N,-64.34595 N m,-74.5682 N m)` and beam-root
+wrench `(298.066 N,-5.84742 N m,74.56845 N m)`. Including the beam-root
+`0.1 m` lever arm gives total reaction moment `Mx=-99.99997 N m`.
+Normalized total force/moment discrepancies are `5e-6/2.5e-6` at the
+available external print precision. They exceed the registered G0
+`1e-8` balance default: **this is not acceptance**. The raw signed
+decks/logs/FRDs and source-bound manifest are retained in
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-ccx-knot-mx-dev-20260925-v1/`;
+manifest/result/reciprocal hashes begin `3fe2c3b4/d5214efb/0f34c72d`.
+This confirms a bounded external *rigid-footprint* torque route; it does
+not decide the native weak-line law, match the native generalized torsion
+section, or close F03/G0B. Stop repeating this external screen. Next
+compare a section- and connection-matched finite footprint, while the
+line-versus-footprint decision uses the declared shear/termination
+discriminator above.
 
 **Previous bounded chord and strip observations (preserved):** The first fixed chord is not a
 strictly local attachment: a P0 tip yaw multiplier on `[.75,1]` acts at a
