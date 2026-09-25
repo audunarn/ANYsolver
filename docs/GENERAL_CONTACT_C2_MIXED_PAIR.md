@@ -28,5 +28,14 @@ The example uses a 15 mm gap budget for a 50 mm beam radius. This is a
 development setting and does not meet the programme's prospective
 thickness/radius-scaled qualification budget. Mixed curved-target active
 interval completeness, endpoint ownership, multi-cell beams, mesh and penalty
-convergence, installed-package verification and independent acceptance remain
-open. The profile is implemented and locally tested only.
+convergence and independent acceptance remain open. The profile is implemented
+and locally tested only.
+
+Source `f5b7bd70a46d386ceec4154ef3ab8c2d9afa36cd` built an offline,
+dependency-free-installed wheel (SHA-256
+`1D79E74ECF84D4D1D3DBDB64D54445593F861B5F18C071AE432BBC41D5EBAE13`).
+The installed import origin was checked, and the example's source and installed
+outputs were byte-identical (SHA-256
+`CD53FB37764490B12095608018AF0E004172091A81C575943D290D13539FC3AF`).
+This verifies package routing for this development slice; no package was
+published.
