@@ -885,6 +885,7 @@ def _restore_static_path_state(
     control_name: str,
     n_red: Optional[int] = None,
     total_dofs: Optional[int] = None,
+    normal_multiplier_count: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Validate static continuation state before solver assembly."""
 
@@ -924,10 +925,12 @@ def _restore_static_path_state(
         if control_name == "force"
         else expected
     )
-    if frozenset(value) not in {
-        frozenset(expected),
-        frozenset(legacy_expected),
-    } or value.get("mode") != control_name:
+    if normal_multiplier_count is not None:
+        expected = expected | {"normal_multipliers"}
+        admitted_keys = {frozenset(expected)}
+    else:
+        admitted_keys = {frozenset(expected), frozenset(legacy_expected)}
+    if frozenset(value) not in admitted_keys or value.get("mode") != control_name:
         raise ValueError("static checkpoint path schema is incompatible")
     steps_raw = value["steps"]
     history = value["force_displacement_history"]
@@ -964,6 +967,13 @@ def _restore_static_path_state(
     ):
         raise ValueError("static checkpoint reduced coordinates are incompatible")
     restored["reduced_coordinates"] = reduced_coordinates.copy()
+    if normal_multiplier_count is not None:
+        normal_multipliers = np.asarray(value["normal_multipliers"], dtype=float)
+        if (normal_multipliers.shape != (normal_multiplier_count,)
+                or not np.all(np.isfinite(normal_multipliers))
+                or np.any(normal_multipliers < 0.0)):
+            raise ValueError("static checkpoint normal multipliers are incompatible")
+        restored["normal_multipliers"] = normal_multipliers.copy()
     if restored["total_iterations"] < 0:
         raise ValueError("static checkpoint iteration count is invalid")
     if control_name == "force":
@@ -5093,6 +5103,16 @@ def _solve_static_nonlinear_under_lease(
         kinematics=kinematics,
         resolved_corotational_tangent=resolved_corotational_tangent,
     )
+    from .general_contact.core import active_contact_manager
+
+    active_manager = active_contact_manager()
+    augmented_contact_manager = (
+        active_manager if getattr(active_manager, "augmented", False) else None
+    )
+    normal_multiplier_count = (
+        len(augmented_contact_manager.normal_multipliers)
+        if augmented_contact_manager is not None else None
+    )
     restored_static_path: Optional[Dict[str, Any]] = None
     validated_restart = None
     if parsed_restart_checkpoint is not None:
@@ -5108,7 +5128,12 @@ def _solve_static_nonlinear_under_lease(
             validated_restart.path_state,
             control_name=control_name,
             total_dofs=int(model.mesh.dof_manager.total_dofs),
+            normal_multiplier_count=normal_multiplier_count,
         )
+        if augmented_contact_manager is not None:
+            augmented_contact_manager.set_normal_multipliers(
+                restored_static_path["normal_multipliers"]
+            )
         if restored_static_path["terminal_status"] != "completed":
             raise ValueError(
                 "restart checkpoint does not end at a continuable completed static target"
@@ -5190,6 +5215,7 @@ def _solve_static_nonlinear_under_lease(
             control_name=control_name,
             n_red=int(T.shape[1]),
             total_dofs=int(model.mesh.dof_manager.total_dofs),
+            normal_multiplier_count=normal_multiplier_count,
         )
 
     info: Dict[str, Any] = {
@@ -6249,7 +6275,8 @@ def _solve_static_nonlinear_under_lease(
             return assemble_at(path_factor, *args, **kwargs)
         return _assemble_nonlinear_system(*args, **kwargs)
 
-    def newton_increment(q_start, path_factor, reference, line_search_mode):
+    def newton_increment(q_start, path_factor, reference, line_search_mode,
+                         *, swept_origin_q=None, augmentation=0):
         """Solve one load increment with plain, decrease, or Armijo Newton."""
         nonlocal total_iterations
         cancellation_safe_point(
@@ -6267,7 +6294,9 @@ def _solve_static_nonlinear_under_lease(
         if (contact_manager is not None
                 and hasattr(contact_manager, "swept_increment_admissible")
                 and not contact_manager.swept_increment_admissible(
-                    full_displacement(q_start, lam), u, lam, path_factor,
+                    full_displacement(
+                        q_start if swept_origin_q is None else swept_origin_q, lam
+                    ), u, lam, path_factor,
                 )):
             return (
                 False, q_start, committed_states, float("inf"), 0,
@@ -6326,9 +6355,11 @@ def _solve_static_nonlinear_under_lease(
                 from .general_contact.core import active_contact_manager
 
                 contact_manager = active_contact_manager()
-                if contact_manager is not None and not contact_manager.evaluate(
-                    u, tangent=False
-                )[2].gap_tolerance_met:
+                if (contact_manager is not None
+                        and augmented_contact_manager is None
+                        and not contact_manager.evaluate(
+                            u, tangent=False
+                        )[2].gap_tolerance_met):
                     return (
                         False,
                         q_start,
@@ -6341,7 +6372,10 @@ def _solve_static_nonlinear_under_lease(
                 if (contact_manager is not None
                         and hasattr(contact_manager, "swept_increment_admissible")
                         and not contact_manager.swept_increment_admissible(
-                            full_displacement(q_start, lam), u,
+                            full_displacement(
+                                q_start if swept_origin_q is None else swept_origin_q,
+                                lam,
+                            ), u,
                             lam, path_factor,
                         )):
                     return (
@@ -6375,7 +6409,12 @@ def _solve_static_nonlinear_under_lease(
                         if general_tangent
                         else MatrixClass.SYMMETRIC_INDEFINITE
                     ),
-                    signature=f"nonlinear.static_newton:{lam:.16g}:{iteration}",
+                    signature=(
+                        f"nonlinear.static_newton:{lam:.16g}:{iteration}"
+                        if augmented_contact_manager is None else
+                        f"nonlinear.static_newton:{lam:.16g}:{path_factor:.16g}:"
+                        f"{augmentation}:{iteration}"
+                    ),
                 )
             if handle.status != "ok":
                 detail = (
@@ -6780,40 +6819,84 @@ def _solve_static_nonlinear_under_lease(
                 if line_search_first
                 else "none"
             )
-            (
-                converged,
-                q_new,
-                states_new,
-                residual_norm,
-                iterations_used,
-                failure_reason,
-                accepted_force_payload,
-            ) = newton_increment(
-                q,
-                lam_trial,
-                reference,
-                line_search_mode=first_mode,
+            start_normal_multipliers = (
+                augmented_contact_manager.normal_multipliers.copy()
+                if augmented_contact_manager is not None else None
             )
+            augmentation_limit = (
+                augmented_contact_manager.settings.maximum_augmentations
+                if augmented_contact_manager is not None else 1
+            )
+            augmentation_iterations = 0
+            normal_multiplier_change = 0.0
+            iterations_used = 0
             line_search_used = bool(line_search_first)
-            if not converged and not line_search_first and policy in {"rescue", "auto", "always"}:
-                # Rescue retry with globalized (line-search) Newton before
-                # cutting the load increment.
+            augmentation_start_q = q
+            for augmentation in range(1, augmentation_limit + 1):
+                augmentation_iterations = augmentation
                 (
                     converged,
                     q_new,
                     states_new,
                     residual_norm,
-                    extra,
+                    newton_iterations,
                     failure_reason,
                     accepted_force_payload,
                 ) = newton_increment(
-                    q,
+                    augmentation_start_q,
                     lam_trial,
                     reference,
-                    line_search_mode="decrease",
+                    line_search_mode=first_mode,
+                    swept_origin_q=q,
+                    augmentation=augmentation,
                 )
-                iterations_used += extra
-                line_search_used = True
+                iterations_used += newton_iterations
+                if (not converged and not line_search_first
+                        and policy in {"rescue", "auto", "always"}):
+                    # Rescue at the same fixed multiplier estimate.
+                    (
+                        converged,
+                        q_new,
+                        states_new,
+                        residual_norm,
+                        extra,
+                        failure_reason,
+                        accepted_force_payload,
+                    ) = newton_increment(
+                        augmentation_start_q,
+                        lam_trial,
+                        reference,
+                        line_search_mode="decrease",
+                        swept_origin_q=q,
+                        augmentation=augmentation,
+                    )
+                    iterations_used += extra
+                    line_search_used = True
+                if not converged or augmented_contact_manager is None:
+                    break
+                candidate_u = full_displacement(q_new, lam_trial)
+                certificate = augmented_contact_manager.evaluate(
+                    candidate_u, tangent=False
+                )[2]
+                projected = augmented_contact_manager.projected_normal_multipliers(
+                    candidate_u
+                )
+                normal_multiplier_change = float(np.max(np.abs(
+                    projected - augmented_contact_manager.normal_multipliers
+                )))
+                if (normal_multiplier_change <=
+                        augmented_contact_manager.settings.pressure_tolerance
+                        and certificate.gap_tolerance_met):
+                    break
+                augmented_contact_manager.set_normal_multipliers(projected)
+                augmentation_start_q = q_new
+            else:
+                converged = False
+                failure_reason = "maximum_augmentations_reached"
+            if not converged and augmented_contact_manager is not None:
+                augmented_contact_manager.set_normal_multipliers(
+                    start_normal_multipliers
+                )
 
             if converged:
                 from .general_contact.core import active_contact_manager
@@ -6998,6 +7081,13 @@ def _solve_static_nonlinear_under_lease(
                         "iterations": iterations_used,
                         "step_size": float(attempted_step_size),
                         "line_search_used": line_search_used,
+                        **({
+                            "augmentation_iterations": augmentation_iterations,
+                            "normal_multiplier_change": normal_multiplier_change,
+                            "normal_multipliers": (
+                                augmented_contact_manager.normal_multipliers.tolist()
+                            ),
+                        } if augmented_contact_manager is not None else {}),
                         "stage_factors": stage_factors,
                         "active_stage": active_stage,
                         "stage_endpoint_committed": bool(
@@ -7147,6 +7237,9 @@ def _solve_static_nonlinear_under_lease(
                 )
                 if step_size < min_step:
                     contact_gap_failure = failure_reason == "contact_gap_exceeded"
+                    augmentation_failure = (
+                        failure_reason == "maximum_augmentations_reached"
+                    )
                     status = (
                         "contact_gap_exceeded"
                         if contact_gap_failure
@@ -7154,7 +7247,10 @@ def _solve_static_nonlinear_under_lease(
                     )
                     info["failure_reason"] = (
                         "contact_gap_exceeded"
-                        if contact_gap_failure else "minimum_load_increment_reached"
+                        if contact_gap_failure else
+                        "maximum_augmentations_reached"
+                        if augmentation_failure else
+                        "minimum_load_increment_reached"
                     )
                     info["first_failed_load_factor"] = float(lam_trial)
                     info["first_failed_step_size"] = float(attempted_step_size)
@@ -7162,6 +7258,22 @@ def _solve_static_nonlinear_under_lease(
                     break
 
     u_final = full_displacement(q, lam)
+    if (augmented_contact_manager is not None and not steps
+            and not committed_states):
+        # A rejected first increment leaves the physical state at its reference
+        # configuration. Recover that result state without accepting any trial.
+        _initial_force, _initial_tangent, reference_states = (
+            assemble_force_system(
+                lam, model, u_final, committed_states, num_layers,
+                tangent=False, kinematics=kinematics,
+                corotational_tangent=resolved_corotational_tangent,
+                deleted_element_ids=tuple(deleted_element_ids),
+            )
+        )
+        committed_states = _commit_nonlinear_state_candidate(
+            committed_states, reference_states, model=model,
+            accepted_displacements=u_final,
+        )
     committed_states = _materialize_final_nonlinear_states(committed_states, info)
     committed_states = _finalize_nonlinear_element_states(
         model,
@@ -7277,6 +7389,9 @@ def _solve_static_nonlinear_under_lease(
                 exact_base_offset=np.asarray(
                     prescribed_base, dtype=np.float64
                 ).reshape(-1).tolist(),
+                **({"normal_multipliers":
+                    augmented_contact_manager.normal_multipliers.tolist()}
+                   if augmented_contact_manager is not None else {}),
             ),
         )
         exact_guard(model, context="nonlinear static checkpoint output")
@@ -7370,6 +7485,12 @@ def solve_static_nonlinear(
             raise TypeError("contact must be a ContactDefinition")
         if contact_settings is not None and type(contact_settings) is not ContactSolverSettings:
             raise TypeError("contact_settings must be ContactSolverSettings")
+        augmented_contact_requested = any(
+            interaction.normal_law == "augmented"
+            for interaction in contact.interactions
+        )
+        if augmented_contact_requested and str(control).lower() != "force":
+            raise ValueError("ordinary augmented contact currently requires force control")
         if (contact_settings is not None and contact_settings.warped_q4_plane
                 and (str(kinematics).lower() != "von_karman"
                      or corotational_tangent != "auto")):
@@ -7473,8 +7594,20 @@ def solve_static_nonlinear(
 
             with contact_scope(
                 model, contact, contact_settings, initial_displacements,
+                allow_augmented=augmented_contact_requested,
                 analysis_control=str(control).lower(),
             ) as contact_manager:
+                if augmented_contact_requested:
+                    from .general_contact.s3_patch_static import (
+                        AUGMENTED_PROFILE, AUGMENTED_MIXED_PROFILE,
+                        REFINED_AUGMENTED_PROFILE,
+                    )
+
+                    if contact_manager.profile not in {
+                        AUGMENTED_PROFILE, AUGMENTED_MIXED_PROFILE,
+                        REFINED_AUGMENTED_PROFILE,
+                    }:
+                        raise ValueError("ordinary augmented force contact requires an admitted general shell patch")
                 result = run_solver()
                 if hasattr(contact_manager, "set_path_factor"):
                     contact_manager.set_path_factor(
@@ -7483,7 +7616,7 @@ def solve_static_nonlinear(
                 summary = contact_manager.evaluate(result.displacements, tangent=False)[2]
                 summary_payload = summary.to_dict()
                 summary_payload.update(
-                    normal_law="penalty",
+                    normal_law=("augmented" if augmented_contact_requested else "penalty"),
                     gap_tolerance=contact_manager.gap_tolerance,
                     maximum_candidate_pairs=(
                         contact_manager.settings.maximum_candidate_pairs
