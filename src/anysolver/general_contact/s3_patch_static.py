@@ -246,6 +246,8 @@ class _PatchResults:
     augmented_merit_j: float = 0.0
     normal_multiplier_estimate_pa: tuple[float, ...] = ()
     pair_geometry_evaluations: int = 0
+    pressure_gram_rank: int | None = None
+    pressure_gram_condition_estimate: float | None = None
 
     def to_dict(self):
         result = dict(vars(self))
@@ -254,6 +256,9 @@ class _PatchResults:
                      "normalized_weighted_gap_m", "numerical_pressure_pa",
                      "reference_support_m2", "normal_multiplier_estimate_pa"):
             result[name] = list(result[name])
+        if self.pressure_gram_rank is None:
+            result.pop("pressure_gram_rank")
+            result.pop("pressure_gram_condition_estimate")
         return result
 
 
@@ -360,6 +365,15 @@ class GeneralS3PatchManager:
         target_force = np.sum(physical[source_count:], axis=0)
         source_moment = np.sum(np.cross(source, physical[:source_count]), axis=0)
         target_moment = np.sum(np.cross(target, physical[source_count:]), axis=0)
+        gram_rank = gram_condition = None
+        if self.profile == Q4_PAIR_PROJECTED_AUGMENTED_PROFILE:
+            eigenvalues = np.linalg.eigvalsh(state.pressure_gram)
+            greatest = max(0.0, float(eigenvalues[-1]))
+            threshold = (len(eigenvalues)*np.finfo(float).eps*greatest)
+            positive = eigenvalues[eigenvalues > threshold]
+            gram_rank = int(len(positive))
+            if gram_rank == len(eigenvalues):
+                gram_condition = float(greatest/positive[0])
         result = _PatchResults(
             self.profile, lower, state.minimum_physical_gap,
             0.0 if self.augmented else state.energy,
@@ -378,6 +392,7 @@ class GeneralS3PatchManager:
             state.energy if self.augmented else 0.0,
             tuple(map(float, self.normal_multipliers)) if self.augmented else (),
             pair_evaluations,
+            gram_rank, gram_condition,
         )
         return force, stiffness, result
 

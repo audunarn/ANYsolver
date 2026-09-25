@@ -81,6 +81,20 @@ mesh-refinement stability result. The first test attempt used a nonexistent
 test-side field and is retained as `q4-partial-pressure-first.txt`; the
 corrected tests passed without a production-kernel change.
 
+The V1 result now includes `pressure_gram_rank` and
+`pressure_gram_condition_estimate`. These describe the reference pressure
+Gram over projected geometric overlap, including when the normal contact law
+is open. Numerical rank counts eigenvalues greater than
+`4 × machine_epsilon × largest_eigenvalue`; the condition estimate is the
+largest divided by the smallest eigenvalue only when all four modes pass that
+threshold. With no projected overlap, rank is zero and condition is `null`.
+Neither number certifies coupled pressure-space stability. On physical
+half-overlap and 2%-strip pairs, 10 Pa fixed augmented pressure carried
+5.4 N and 0.18 N respectively with opposite body forces; the reported
+conditions matched independently integrated Q1 Grams
+(`q4-pressure-diagnostic-first.txt`). V0 result serialization omits these
+V1-only fields.
+
 The 0.05 mm run is a single candidate, not mesh, integration or enforcement
 convergence. Numeric roundoff allowances are bounded development guards,
 not directed interval arithmetic. Pressure-space stability across meshes,
