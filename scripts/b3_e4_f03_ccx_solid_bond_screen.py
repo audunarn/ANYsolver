@@ -61,8 +61,8 @@ def _set_lines(indices: set[int] | list[int]) -> list[str]:
 
 def build(factor: int, shear: str) -> tuple[str, dict]:
     """Return an exact-coordinate conforming C3D8 deck and probe identity."""
-    if shear not in ("uy_x", "ux_y"):
-        raise ValueError("two declared affine plate-edge shears only")
+    if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
+        raise ValueError("undeclared solid-bond loading")
     px,py,pz=(_cuts(v,factor) for v in
               (PLATE_X_MM,PLATE_Y_MM,PLATE_Z_MM))
     bx,by,bz=(_cuts(v,factor) for v in
@@ -138,32 +138,66 @@ def build(factor: int, shear: str) -> tuple[str, dict]:
     for index in sorted(boundary):
         x,y,_=inverse[index]
         values=((0.,GAMMA*float(x)/1000,0.) if shear=="uy_x" else
-                (GAMMA*float(y)/1000,0.,0.))
+                (GAMMA*float(y)/1000,0.) if shear=="ux_y" else
+                (0.,0.,0.))
         for dof,value in enumerate(values,1):
             lines.append(f"{index},{dof},{dof},{_number(value)}")
+    applied={}
+    if shear in ("tip_mx","tip_fz"):
+        tip=tuple(coordinates[(Fraction(1000),y,z)] for y in by for z in bz)
+        # Trapezoidal face integration of a distributed force/couple; each
+        # discrete load has the exact requested resultant about the bar axis.
+        weights={index:(.5 if j in (0,len(by)-1) else 1.)*
+                        (.5 if k in (0,len(bz)-1) else 1.)
+                 for j,y in enumerate(by) for k,z in enumerate(bz)
+                 for index in (coordinates[(Fraction(1000),y,z)],)}
+        if shear=="tip_fz":
+            normalizer=sum(weights.values())
+            applied={index:(0.,0.,1000.*weight/normalizer)
+                     for index,weight in weights.items()}
+        else:
+            polar=sum(weight*(float(inverse[index][1]/1000)**2+
+                              (float(inverse[index][2]/1000)-.085)**2)
+                      for index,weight in weights.items())
+            applied={index:(0.,-100.*weight*(float(inverse[index][2]/1000)-.085)/polar,
+                            100.*weight*float(inverse[index][1]/1000)/polar)
+                     for index,weight in weights.items()}
+        if set(applied)!=set(tip):
+            raise AssertionError("incomplete loaded end face")
+        lines.append("*CLOAD")
+        for index,force in sorted(applied.items()):
+            for dof,value in enumerate(force,1):
+                if value:
+                    lines.append(f"{index},{dof},{_number(value)}")
     lines.extend(("*NODE PRINT,NSET=Probe", "U",
                   "*NODE PRINT,NSET=PlateEdge", "RF",
                   "*END STEP"))
     meta={"factor":factor,"shear":shear,"gamma":GAMMA,
           "node_count":len(coordinates),"plate_elements":len(plate_cells),
           "bar_elements":len(bar_cells),"shared_interface_nodes":len(interface),
-          "boundary_nodes":len(boundary),"probe_node_ids":sorted(probe),
+          "boundary_nodes":len(boundary),"boundary_node_ids":sorted(boundary),
+          "probe_node_ids":sorted(probe),
           "bar_station_nodes":station_nodes,
           "probe_coordinates_m":{str(index):[float(v)/1000 for v in inverse[index]]
                                  for index in probe},
+          "boundary_coordinates_m":{str(index):[float(v)/1000 for v in inverse[index]]
+                                    for index in boundary},
+          "applied_nodal_forces_N":{str(index):list(force)
+                                    for index,force in applied.items()},
           "surface_nodes":{f"{x},{y}":index for (x,y),index in surface.items()},
           "model":"3D conforming C3D8 plate/bar; plate [-.5,1.5]x[-.5,.5]x[-.035,.035] m; bar [0,1]x[-.05,.05]x[.035,.135] m; E=210 GPa, nu=.3",
           "boundary":"all three translations on plate perimeter follow declared affine shear; bar has no direct supports or loads"}
     return "\n".join(lines)+"\n",meta
 
 
-def parse_probe_displacements(dat: str, expected: set[int]) -> dict[int,np.ndarray]:
+def parse_nodal_vectors(dat: str, expected: set[int],
+                        quantity: str, node_set: str) -> dict[int,np.ndarray]:
     lines=dat.splitlines()
     starts=[i for i,line in enumerate(lines)
-            if re.search(r"(?i)^\s*displacements\s*\(",line) and
-            re.search(r"(?i)for set PROBE",line)]
+            if re.search(rf"(?i)^\s*{re.escape(quantity)}\s*\(",line) and
+            re.search(rf"(?i)for set {re.escape(node_set)}\b",line)]
     if len(starts)!=1:
-        raise ValueError("one probe displacement block required")
+        raise ValueError(f"one {node_set} {quantity} block required")
     result={}
     for line in lines[starts[0]+1:]:
         parts=line.split()
@@ -178,14 +212,26 @@ def parse_probe_displacements(dat: str, expected: set[int]) -> dict[int,np.ndarr
         node=int(parts[0])
         value=np.array([float(v) for v in parts[1:]])
         if node in result or not np.isfinite(value).all():
-            raise ValueError("invalid or repeated probe displacement")
+            raise ValueError("invalid or repeated nodal vector")
         result[node]=value
     if set(result)!=expected:
-        raise ValueError("incomplete probe displacement inventory")
+        raise ValueError("incomplete nodal vector inventory")
     return result
 
 
-def recover(meta: dict, displacement: dict[int,np.ndarray]) -> dict:
+def parse_probe_displacements(dat: str, expected: set[int]) -> dict[int,np.ndarray]:
+    return parse_nodal_vectors(dat,expected,"displacements","PROBE")
+
+
+def _wrench(forces: dict[int,np.ndarray], xyz: dict[str,list[float]]) -> list[float]:
+    resultant=np.sum(tuple(forces.values()),axis=0)
+    moment=np.sum(tuple(np.cross(np.array(xyz[str(index)]),force)
+                        for index,force in forces.items()),axis=0)
+    return [*resultant.tolist(),*moment.tolist()]
+
+
+def recover(meta: dict, displacement: dict[int,np.ndarray],
+            reactions: dict[int,np.ndarray] | None = None) -> dict:
     surface=meta["surface_nodes"]
     def value(x,y):
         return displacement[surface[f"{x},{y}"]]
@@ -217,15 +263,27 @@ def recover(meta: dict, displacement: dict[int,np.ndarray]) -> dict:
                            "section_rotation_rad":fitted[3:].tolist(),
                            "max_warping_residual_m":float(np.linalg.norm(residual,axis=1).max()),
                            "node_count":len(indices)}
-    return {"centerline_tangent_yaw_rad":float(tangent),
+    result={"centerline_tangent_yaw_rad":float(tangent),
             "surface_square_patch_yaw_rad":patch_yaw,
             "surface_square_patch_half_width_m":.05,
             "station_motion":stations}
+    if reactions is not None:
+        applied={int(index):np.array(force) for index,force in
+                 meta["applied_nodal_forces_N"].items()}
+        applied_wrench=(_wrench(applied,meta["probe_coordinates_m"])
+                        if applied else [0.]*6)
+        support_wrench=_wrench(reactions,meta["boundary_coordinates_m"])
+        result["applied_wrench_N_Nm"]=applied_wrench
+        result["support_wrench_N_Nm"]=support_wrench
+        result["wrench_imbalance_N_Nm"]=(np.array(applied_wrench)+
+                                          np.array(support_wrench)).tolist()
+    return result
 
 
 def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root",type=Path,required=True)
+    parser.add_argument("--suite",choices=("shear","loads"),default="shear")
     args=parser.parse_args()
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
@@ -237,11 +295,14 @@ def main() -> int:
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":"finite physical bond yaw under two affine shears and free terminations",
+              "question":("finite physical bond yaw under two affine shears"
+                          if args.suite=="shear" else
+                          "physical solid-bond end torque and transverse-force transfer"),
               "source_head":head,"source_sha256":digest(Path(__file__)),
               "executable":str(EXE),"executable_sha256":EXE_SHA,
               "cases":[(factor,shear) for factor in (1,2)
-                       for shear in ("uy_x","ux_y")],
+                       for shear in (("uy_x","ux_y") if args.suite=="shear"
+                                     else ("tip_mx","tip_fz"))],
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
               "limits_of_claim":["3D solid idealization, not E4 or B3",
                                  "two development mesh levels, not convergence qualification",
@@ -285,7 +346,9 @@ def main() -> int:
                               stderr.decode(errors="replace"))):
                     raise ValueError("solver diagnostic or incomplete job")
                 probes=parse_probe_displacements(dat,set(meta["probe_node_ids"]))
-                parsed=recover(meta,probes)
+                reactions=parse_nodal_vectors(dat,set(meta["boundary_node_ids"]),
+                                              "forces","PLATEEDGE")
+                parsed=recover(meta,probes,reactions)
             except (OSError,ValueError) as exc:
                 failure=f"PARSE_{type(exc).__name__}: {exc}"
         record={"case":name,"status":"EXPLORATORY_COMPLETE" if failure is None

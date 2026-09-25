@@ -49,3 +49,15 @@ def test_probe_parser_requires_complete_unique_finite_inventory():
     assert values[2][1] == pytest.approx(2e-5)
     with pytest.raises(ValueError, match="incomplete"):
         SCREEN.parse_probe_displacements(dat, {1, 2, 3})
+
+
+@pytest.mark.parametrize("factor", (1, 2))
+@pytest.mark.parametrize("load,expected", (("tip_mx", [0.,0.,0.,100.,0.,0.]),
+                                            ("tip_fz", [0.,0.,1000.,0.,-1000.,0.])))
+def test_end_face_load_has_exact_declared_wrench(factor, load, expected):
+    deck,meta=SCREEN.build(factor,load)
+    assert "*CLOAD" in deck
+    applied={int(node):np.array(force) for node,force in
+             meta["applied_nodal_forces_N"].items()}
+    assert len(applied)==(2*factor+1)**2
+    assert SCREEN._wrench(applied,meta["probe_coordinates_m"]) == pytest.approx(expected,abs=1e-10)
