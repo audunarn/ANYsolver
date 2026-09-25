@@ -88,8 +88,26 @@ tests passed 13/13 (`c3-native-retained-static-final.txt`). A failed second
 target preserved the accepted first target, and a foreign element identity
 was rejected.
 
-This is an internal development route only. It has no conservative swept
-first-approach control, native checkpoint, prescribed-motion tool, endpoint
-caps, multiple beams, beam–shell coupling, friction or admitted public C3
-profile. The existing native context has its own 120-second execution limit.
-The local checks do not qualify engineering contact.
+The owner now has a distinct versioned accepted-target checkpoint. It binds
+the native model/program/support identity, contact geometry and all numerical
+settings. Resume authenticates the external bytes and replays every accepted
+mechanical/material state against its prior committed history, coupled
+equilibrium, endpoint gap and integrated contact summary. Full and split
+continuation produce identical checkpoint bytes. Changed contact settings,
+tampered records and live definition mutation are rejected. A failed later
+target retains the last accepted checkpoint. See the runnable internal example
+at `examples/general_contact_native_retained_plane.py`.
+
+The affected 16 geometry/kernel/owner checks passed
+(`c3-native-retained-checkpoint-final.txt`), and the example completed its
+split restart (`c3-native-retained-checkpoint-example.txt`). The first
+checkpoint development run failed when the native support identity, already
+canonical bytes, was passed to the JSON canonicalizer; the final binding uses
+its SHA-256 value. That failure is retained in
+`c3-native-retained-checkpoint-first.txt`.
+
+This remains an internal development route only. It has no conservative
+swept first-approach control, prescribed-motion tool, endpoint caps, multiple
+beams, beam–shell coupling, friction or admitted public C3 profile. The
+existing native context has its own 120-second execution limit. These checks
+do not qualify engineering contact or the general restart contract.

@@ -7,6 +7,7 @@ are admitted. No public native workflow profile or restart is claimed.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 from math import isfinite
 
 import numpy as np
@@ -20,6 +21,8 @@ from anysolver._ge_beam3_retained_nodal_loading import (
     Program as NativeNodalProgram,
 )
 from anysolver._ge_beam3_p5_seeded.core import sha
+from anysolver._ge_beam3_p5_seeded.core import canonical
+from anysolver._ge_beam3_p5_seeded.codec import MAX_BYTES, _load
 
 from .native_retained_line_plane import (
     NativeRetainedLinePlaneResult,
@@ -28,6 +31,7 @@ from .native_retained_line_plane import (
 
 
 PROFILE = "NATIVE_B3_GE_RETAINED_ROUND_LINE_PLANE_STATIC_DEV_V0"
+CHECKPOINT_SCHEMA = "NATIVE_RETAINED_ROUND_LINE_PLANE_STATIC_CHECKPOINT_DEV_V1"
 
 
 @dataclass(frozen=True)
@@ -43,7 +47,12 @@ class NativeRetainedContactRun:
     status: str
     accepted: NativeRetainedContactAccepted
     failure: str | None
+    checkpoint: bytes
     profile: str = PROFILE
+
+    @property
+    def checkpoint_sha256(self) -> str:
+        return sha256(self.checkpoint).hexdigest()
 
 
 class NativeRetainedRoundPlaneAnalysis:
@@ -79,6 +88,7 @@ class NativeRetainedRoundPlaneAnalysis:
         self.gap_tolerance = float(gap_tolerance_m)
         self.equilibrium_tolerance = float(equilibrium_tolerance)
         self.program = program
+        self.identity = self._identity()
         initial = self.context.initial
         first = self._contact(initial.mechanical)
         roundoff = 256.0*np.finfo(float).eps*max(
@@ -93,6 +103,117 @@ class NativeRetainedRoundPlaneAnalysis:
             initial.mechanical, initial.histories, 0, first,
         )
 
+    def _identity(self) -> str:
+        contact = self.contact
+        return sha(dict(
+            profile=PROFILE,
+            native_model=self.context.identity,
+            native_support_sha256=sha256(self.context.support_identity).hexdigest(),
+            contact=dict(element=contact.element_id,
+                         reference=contact.reference.canonical_data(),
+                         radius_m=contact.radius,
+                         plane_origin_m=contact.origin,
+                         plane_normal=contact.normal,
+                         line_stiffness_n_per_m2=contact.stiffness,
+                         energy_tolerance_j=contact.energy_tolerance,
+                         force_tolerance_n=contact.force_tolerance,
+                         tangent_tolerance_n_per_m=contact.tangent_tolerance,
+                         maximum_intervals=contact.maximum_intervals),
+            gap_tolerance_m=self.gap_tolerance,
+            equilibrium_tolerance=self.equilibrium_tolerance,
+        ))
+
+    def _guard_contact(self) -> None:
+        if self._identity() != self.identity:
+            raise ValueError("native contact definition/settings changed")
+
+    def _record(self, target: int, mechanical, origins, previous_sha256: str):
+        if type(target) is not int or not 1 <= target <= len(self.program.targets):
+            raise ValueError("native contact checkpoint target")
+        mechanical = self.context.make(mechanical.descriptor())
+        r, j, metrics, responses, contact = self._assemble(
+            mechanical, self.program.targets[target-1], origins,
+        )
+        _, correction = self.context.step(mechanical, r, j)
+        if max(*metrics, correction) > self.equilibrium_tolerance:
+            raise ValueError("native contact checkpoint requires coupled equilibrium")
+        if contact.minimum_gap_m < -self.gap_tolerance:
+            raise ValueError("native contact checkpoint gap tolerance")
+        histories = self.context.histories(
+            tuple(response.history for response in responses)
+        )
+        contact_summary = dict(
+            potential_j=contact.potential_j,
+            minimum_gap_m=contact.minimum_gap_m,
+            beam_force_n=contact.beam_force_n,
+            plane_force_n=contact.plane_force_n,
+            beam_moment_nm=contact.beam_moment_nm,
+            plane_moment_nm=contact.plane_moment_nm,
+            energy_error_j=contact.energy_error_j,
+            force_error_n=contact.force_error_n,
+            tangent_error_n_per_m=contact.tangent_error_n_per_m,
+        )
+        row = dict(target=target, previous_sha256=previous_sha256,
+                   mechanical=mechanical.descriptor(), histories=histories,
+                   contact=contact_summary)
+        return NativeRetainedContactAccepted(
+            mechanical, histories, target, contact,
+        ), _load(canonical(row).decode("ascii"))
+
+    def _checkpoint(self, records: tuple[dict, ...]) -> bytes:
+        self._guard_contact()
+        if type(records) is not tuple or len(records) > len(self.program.targets):
+            raise ValueError("native contact checkpoint record extent")
+        body = dict(schema=CHECKPOINT_SCHEMA, profile=PROFILE,
+                    identity=self.identity, completed_targets=len(records),
+                    records=records)
+        raw = canonical({**body, "checkpoint_sha256": sha(body)})
+        if len(raw) > MAX_BYTES:
+            raise ValueError("native contact checkpoint byte limit")
+        self.context.guard()
+        return raw
+
+    def _restore(self, raw: bytes, expected_sha256: str):
+        self._guard_contact()
+        if (type(raw) is not bytes or type(expected_sha256) is not str
+                or sha256(raw).hexdigest() != expected_sha256):
+            raise ValueError("native contact external checkpoint hash mismatch")
+        value = _load(raw.decode("ascii"))
+        keys = {"schema", "profile", "identity", "completed_targets",
+                "records", "checkpoint_sha256"}
+        if type(value) is not dict or set(value) != keys:
+            raise ValueError("native contact checkpoint schema")
+        body = {key: item for key, item in value.items()
+                if key != "checkpoint_sha256"}
+        if (value["schema"] != CHECKPOINT_SCHEMA or value["profile"] != PROFILE
+                or value["identity"] != self.identity
+                or value["checkpoint_sha256"] != sha(body)):
+            raise ValueError("native contact checkpoint definition/settings binding")
+        count = value["completed_targets"]
+        if (type(count) is not int or not 0 <= count <= len(self.program.targets)
+                or type(value["records"]) is not list or len(value["records"]) != count):
+            raise ValueError("native contact checkpoint target extent")
+        accepted = self.initial
+        previous = sha(dict(schema=CHECKPOINT_SCHEMA, identity=self.identity))
+        records = ()
+        for index, row in enumerate(value["records"], 1):
+            if (type(row) is not dict or set(row) !=
+                    {"target", "previous_sha256", "mechanical", "histories", "contact"}
+                    or row["target"] != index or row["previous_sha256"] != previous):
+                raise ValueError("native contact checkpoint accepted chain")
+            mechanical = self.context.make(row["mechanical"], decoded=True)
+            proposed, replay = self._record(
+                index, mechanical, accepted.histories, previous,
+            )
+            if canonical(row) != canonical(replay):
+                raise ValueError("native contact checkpoint physical replay mismatch")
+            accepted = proposed
+            records = (*records, replay)
+            previous = sha(replay)
+        if self._checkpoint(records) != raw:
+            raise ValueError("native contact noncanonical checkpoint replay")
+        return accepted, records
+
     def _contact(self, mechanical) -> NativeRetainedLinePlaneResult:
         nodes = self.context.nodes[0]
         return self.contact.evaluate(
@@ -101,6 +222,7 @@ class NativeRetainedRoundPlaneAnalysis:
         )
 
     def _assemble(self, mechanical, parameter, origins):
+        self._guard_contact()
         self.native._guard()
         r, j, _structural_metrics, responses, _works = self.context.assemble(
             mechanical, parameter, origins,
@@ -116,10 +238,25 @@ class NativeRetainedRoundPlaneAnalysis:
                    float(np.linalg.norm(scaled[self.context.compatibility])))
         return r, j, metrics, responses, contact
 
-    def solve(self) -> NativeRetainedContactRun:
-        accepted = self.initial
+    def solve(self, *, checkpoint: bytes | None = None,
+              expected_sha256: str | None = None,
+              stop_after: int | None = None) -> NativeRetainedContactRun:
+        end = len(self.program.targets) if stop_after is None else stop_after
+        if type(end) is not int or not 0 <= end <= len(self.program.targets):
+            raise ValueError("native contact bounded stop target")
+        if checkpoint is None:
+            if expected_sha256 is not None:
+                raise ValueError("native contact hash requires checkpoint")
+            accepted, records = self.initial, ()
+            capsule = self._checkpoint(records)
+        else:
+            accepted, records = self._restore(checkpoint, expected_sha256)
+            capsule = checkpoint
+        if accepted.completed_targets > end:
+            raise ValueError("native contact accepted target cannot rewind")
         try:
-            for index, parameter in enumerate(self.program.targets):
+            for index in range(accepted.completed_targets, end):
+                parameter = self.program.targets[index]
                 trial = accepted.mechanical
                 origins = accepted.histories
                 for iteration in range(self.program.max_iterations+1):
@@ -130,12 +267,15 @@ class NativeRetainedRoundPlaneAnalysis:
                     if max(*metrics, correction) <= self.equilibrium_tolerance:
                         if contact.minimum_gap_m < -self.gap_tolerance:
                             raise RuntimeError("native contact endpoint gap tolerance not met")
-                        histories = self.context.histories(
-                            tuple(response.history for response in responses)
+                        previous = (sha(records[-1]) if records else sha(dict(
+                            schema=CHECKPOINT_SCHEMA, identity=self.identity,
+                        )))
+                        proposed, record = self._record(
+                            index+1, trial, origins, previous,
                         )
-                        accepted = NativeRetainedContactAccepted(
-                            trial, histories, index+1, contact,
-                        )
+                        next_records = (*records, record)
+                        staged = self._checkpoint(next_records)
+                        accepted, records, capsule = proposed, next_records, staged
                         break
                     if iteration == self.program.max_iterations:
                         raise RuntimeError("native contact Newton iteration limit")
@@ -163,8 +303,9 @@ class NativeRetainedRoundPlaneAnalysis:
                             break
                     else:
                         raise RuntimeError("native contact line-search/gap limit")
-            return NativeRetainedContactRun("completed", accepted, None)
+            status = "completed" if end == len(self.program.targets) else "paused"
+            return NativeRetainedContactRun(status, accepted, None, capsule)
         except Exception as exc:
             return NativeRetainedContactRun(
-                "failed", accepted, type(exc).__name__+": "+str(exc),
+                "failed", accepted, type(exc).__name__+": "+str(exc), capsule,
             )
