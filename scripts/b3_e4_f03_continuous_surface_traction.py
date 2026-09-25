@@ -27,7 +27,9 @@ HALF_WIDTH = WIDTH / 2
 
 def continuous_traction_rows(xs: np.ndarray, ys: np.ndarray, beam, *,
                              plate_thickness: float = .035,
-                             intervals: int = 4) -> tuple[np.ndarray, np.ndarray, dict]:
+                             intervals: int = 4,
+                             local_yaw: bool = False
+                             ) -> tuple[np.ndarray, np.ndarray, dict]:
     """Integrate work rows and their physical six-resultant wrench map.
 
     A row dual is a physical force or torque at one line basis station. The
@@ -36,10 +38,14 @@ def continuous_traction_rows(xs: np.ndarray, ys: np.ndarray, beam, *,
     The two line-hat force tractions vary continuously in x; the transverse
     antisymmetric z traction is normalized to one unit Mx. Bending/yaw moments
     are available through distributed force resultants, not independent local
-    moment rows. No E4 drilling coordinate participates.
+    moment rows. ``local_yaw`` adds one physical in-plane force dipole,
+    with zero net force and unit Mz at each station. It still cannot make
+    independent local My from a single-height surface traction. No E4
+    drilling coordinate participates.
     """
     xs, ys = np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)
     if (plate_thickness != .035 or type(intervals) is not int or
+            type(local_yaw) is not bool or
             intervals not in (2, 4, 8) or xs.ndim != 1 or ys.ndim != 1 or
             not np.isfinite(xs).all() or not np.isfinite(ys).all() or
             not np.all(np.diff(xs) > 0) or not np.all(np.diff(ys) > 0) or
@@ -48,7 +54,8 @@ def continuous_traction_rows(xs: np.ndarray, ys: np.ndarray, beam, *,
         raise ValueError("bounded, covered 35 mm physical strip required")
     shell_size = 6 * len(xs) * len(ys)
     total = shell_size + beam.context.count
-    count = 4 * (intervals + 1)
+    channels = 5 if local_yaw else 4
+    count = channels * (intervals + 1)
     rows = np.zeros((count, total))
     wrench = np.zeros((6, count))
     reference_gap = 0.
@@ -106,8 +113,11 @@ def continuous_traction_rows(xs: np.ndarray, ys: np.ndarray, beam, *,
                                         np.array((0., 0., 1.)) * hat / station_area[station],
                                         np.array((0., 0., 1.)) *
                                         hat * y / station_y_inertia[station])
+                            if local_yaw:
+                                profiles += (np.array((-1., 0., 0.)) *
+                                             hat * y / station_y_inertia[station],)
                             for channel, traction in enumerate(profiles):
-                                row = 4 * station + channel
+                                row = channels * station + channel
                                 rows[row] += weight * traction @ dg
                                 wrench[:3, row] += weight * traction
                                 wrench[3:, row] += weight * np.cross(shell_point, traction)
@@ -120,6 +130,8 @@ def continuous_traction_rows(xs: np.ndarray, ys: np.ndarray, beam, *,
     return rows, wrench, {"reference_gap_m": reference_gap,
                           "bond_area_m2": area,
                           "global_wrench_rank": 6,
+                          "local_section_wrench_rank": channels,
+                          "local_yaw_force_dipole": local_yaw,
                           "wrench_scales_N_Nm": wrench_scales.tolist(),
                           "row_count": count,
                           "station_area_m2": station_area.tolist(),
@@ -148,11 +160,13 @@ def _common_rigid_direction(xs: np.ndarray, ys: np.ndarray, beam,
 def bounded_continuous_traction_screen(*, shell_x: int = 8,
                                        shell_y: int = 8,
                                        beam_half_cells: int = 16,
-                                       intervals: tuple[int, ...] = (2, 4, 8)
+                                       intervals: tuple[int, ...] = (2, 4, 8),
+                                       local_yaw: bool = False
                                        ) -> list[dict]:
     """Solve the same native torque/shear case with a distinct traction basis."""
     if (shell_x not in (8, 16) or shell_y not in (8, 16) or
-            beam_half_cells not in (8, 16) or not intervals or
+            beam_half_cells not in (8, 16) or type(local_yaw) is not bool or
+            not intervals or
             any(n not in (2, 4, 8) for n in intervals)):
         raise ValueError("bounded shell, beam and line resolutions required")
     xs = np.linspace(-.5, 1.5, shell_x + 1)
@@ -181,17 +195,18 @@ def bounded_continuous_traction_screen(*, shell_x: int = 8,
     results = []
     for n in intervals:
         rows, wrench, meta = continuous_traction_rows(
-            xs, ys, beam, intervals=n)
+            xs, ys, beam, intervals=n, local_yaw=local_yaw)
         rigid_gap = float(np.max(np.abs(rows @ rigid)))
         global_rows, _ = distributed_surface_patch_trace(
             xs, ys, beam, plate_thickness=.035, x_interval=(0., 1.))
         partition = np.array(meta["station_area_m2"]) / WIDTH
         inertia = np.array(meta["station_y_inertia_m4"])
         inertia /= inertia.sum()
+        channels = meta["local_section_wrench_rank"]
         reconstructed = np.vstack((
-            *(sum(partition[j] * rows[4 * j + channel]
+            *(sum(partition[j] * rows[channels * j + channel]
                    for j in range(n + 1)) for channel in range(3)),
-            sum(inertia[j] * rows[4 * j + 3] for j in range(n + 1)),
+            sum(inertia[j] * rows[channels * j + 3] for j in range(n + 1)),
         ))
         global_row_error = float(np.max(np.abs(reconstructed - global_rows[:4])))
         if rigid_gap > 1e-10 or global_row_error > 1e-10:
@@ -283,6 +298,6 @@ def bounded_continuous_traction_screen(*, shell_x: int = 8,
                         "global_row_error": global_row_error,
                         "compliance_relative_skew": skew_error,
                         "loaded": loaded,
-                        "interpretation": "Continuous physical-traction work with six global wrench directions; not six independent local pose channels or interface-stability acceptance",
+                        "interpretation": "Continuous physical-traction work with six global wrench directions; four or five local channels, not a selected six-channel pose or interface-stability acceptance",
                         **meta})
     return results

@@ -51,3 +51,32 @@ def test_section_traction_has_only_four_independent_local_wrenches():
     assert np.linalg.matrix_rank(section / scales[:, None]) == 4
     assert section[4] == pytest.approx(-.05 * section[0], abs=1e-15)
     assert section[5] == pytest.approx(np.zeros(4), abs=1e-15)
+
+    yaw = np.zeros(6)
+    for point, weight in zip(points, weights):
+        y = .05 * point
+        force = np.array((-y, 0., 0.))
+        yaw[:3] += .05 * weight * force
+        yaw[3:] += .05 * weight * np.cross((0., y, -.05), force)
+    five = np.column_stack((section, yaw))
+    assert np.linalg.matrix_rank(five / scales[:, None]) == 5
+    assert yaw[:5] == pytest.approx(np.zeros(5), abs=1e-15)
+    assert yaw[5] == pytest.approx(.1**3 / 12, abs=1e-15)
+
+
+def test_local_yaw_dipole_adds_physical_mz_without_changing_four_rows():
+    xs = np.linspace(-.5, 1.5, 9)
+    ys = np.linspace(-.5, .5, 9)
+    beam = build(8, z_offset=.0675,
+                 torsion_constant=square_torsion_constant())
+    four, _, _ = continuous_traction_rows(xs, ys, beam, intervals=2)
+    five, wrench, meta = continuous_traction_rows(
+        xs, ys, beam, intervals=2, local_yaw=True)
+    assert five.shape[0] == 15
+    assert meta["local_section_wrench_rank"] == 5
+    for station in range(3):
+        assert five[5 * station:5 * station + 4] == pytest.approx(
+            four[4 * station:4 * station + 4], abs=1e-12)
+        assert wrench[:, 5 * station + 4] == pytest.approx(
+            [0., 0., 0., 0., 0., 1.], abs=1e-12)
+        assert np.max(np.abs(five[5 * station + 4, 5::6])) == 0.
