@@ -13,9 +13,10 @@ its end torque/transverse-force displacements have not converged and are
 not quantitative native oracles. A separate 0.1 m square *distributing*
 strip port now passes bounded native Q4/S3 reference, objectivity,
 derivative, physical-energy, torque/shear work and balance checks without
-drilling-component work. Its P0 weak line still develops an alternating
-transverse Fz mode as line resolution rises. A Neumann H^(-1/2) norm does
-not erase that finite-model sensitivity. Native retained-cell frames are
+drilling-component work. P0, continuous P1 and dual P1 weak lines all
+develop an alternating transverse Fz mode as line resolution rises. A
+Neumann H^(-1/2) norm does not erase that finite-model sensitivity. Native
+retained-cell frames are
 one-sided at a junction, so a discrete footprint also needs an explicit
 shared nodal pose law.
 
@@ -26,17 +27,19 @@ and stable line/beam/shell resolution policy still need qualification.
 The current first-order solid reference is too mesh-sensitive to set
 physical response tolerances. Historical Q6/finite-pad, classical axial,
 CalculiX B31/S4 knot and native six-channel cases have different laws.
-P1/dual comparison in an appropriate dual norm and the required complete
-mesh-ratio series remain open.
+An interface-resolution policy with loaded physical checks and the
+required complete mesh-ratio series remain open.
 
-**Next discriminating experiment:** At fixed physical Q4/S3 models and
-the same square-strip law, compare P0, continuous P1 and dual P1 using
-their appropriate H^(-1/2) density norms, shell/beam trace ranks and
-loaded torque/shear work. Then test a declared interface-resolution policy
-over the required beam:shell ratios. If the alternating mode persists
-despite supported trace resolution, revise the trace or multiplier law;
-if it is controlled, advance that candidate to the full G0B checks. Do
-not restart a finer C3D8 or classical axial sweep.
+**Next discriminating experiment:** Freeze one conservative interface-
+resolution policy from both shell and native beam trace capacity; run a
+bounded P0 square-strip ratio screen, including 1:8 and 8:1 endpoints,
+with the H^(-1/2) quotient, trace ranks, loaded torque/shear work and
+physical/numerical shell energy interpreted together. If a supported
+policy still produces weak alternating modes or severe loaded response
+drift, revise the trace or multiplier law instead of refining indefinitely.
+If it controls both, assess P1/dual only for a distinct benefit and proceed
+to the remaining G0B derivation and external-reference work. Do not
+restart a finer C3D8 or classical axial sweep.
 
 **Resulting action:** Retain the square strip as an exploratory finite-width
 candidate. Do not select a multiplier, claim inf-sup stability, or advance
@@ -71,6 +74,21 @@ and `-v4`; the import-failed `-v1` and earlier L2-only `-v2` remain
 preserved. Focused new mechanics checks pass 11/11; the pre-existing
 affected weak-line and strip suite passed 87/87 before the dual-norm
 addition.
+
+**Three-space comparison on the same square-strip model:** With Q4/S3
+shell x8/y4, native beam-half16 and line intervals 4→8, the H^(-1/2)
+transverse quotients are P0 `2.584→1.071` / `2.750→1.079`,
+continuous P1 `2.257→1.114` / `2.586→1.120`, and dual P1
+`2.302→1.116` / `2.608→1.123`. Each eight-interval weakest mode is
+>99.97% Fz and alternates at every coefficient; all combined row sets
+are full rank. Q4 shell-only rank is 42/48 for P0 and 42/54 for each
+P1 variant at this resolution. The analytic spectral-tail Gram enclosure
+is at most `5.1e-7` relative for these dual cases. Near-equal P1/dual
+quotients give no evidence that a basis swap solves the interface mode;
+none of the quotients is a mesh-uniform inf-sup proof. The eight raw
+three-space outputs, source/dependency identities and limits are in
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-native-square-spaces-dev-20260925-v1`.
+The affected strip and dual-norm tests pass 40/40.
 
 **25 September bounded physical-bond screen (development only):** The
 conforming 3D model is a 2.0 x 1.0 x 0.07 m plate with a 1.0 x 0.1 x
