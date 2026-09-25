@@ -20,6 +20,7 @@ SOURCE_Q4_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_
 Q4_PAIR_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 AUGMENTED_PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 AUGMENTED_MIXED_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 
 
 def _selected(definition: ContactDefinition):
@@ -112,10 +113,15 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                  if type(model.mesh.elements.get(element_id)) is QualifiedE4PLShellElement]
     q4_pair = (len(source.element_ids) == len(target.element_ids) == 1
                and len(source_q4) == len(target_q4) == 1)
-    if (not 1 <= len(source.element_ids) <= 2
-            or not 1 <= len(target.element_ids) <= 2
-            or (len(source.element_ids)+len(target.element_ids) < 3
-                and not q4_pair)):
+    bounded = (1 <= len(source.element_ids) <= 2
+               and 1 <= len(target.element_ids) <= 2
+               and (len(source.element_ids)+len(target.element_ids) >= 3
+                    or q4_pair))
+    refined = (augmented and not source_q4 and not target_q4
+               and len(source.element_ids) >= 2
+               and len(target.element_ids) >= 1
+               and (len(source.element_ids) > 2 or len(target.element_ids) > 2))
+    if not (bounded or refined):
         issues.append("general shell patch needs three faces or one Q4/Q4 pair")
     if len(source.element_ids)*len(target.element_ids) > settings.maximum_candidate_pairs:
         issues.append("general S3 patch exceeds candidate pair resource budget")
@@ -138,7 +144,8 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
     if augmented:
-        profile = AUGMENTED_MIXED_PROFILE if target_q4 else AUGMENTED_PROFILE
+        profile = (REFINED_AUGMENTED_PROFILE if refined else
+                   AUGMENTED_MIXED_PROFILE if target_q4 else AUGMENTED_PROFILE)
         if source_q4:
             issues.append("augmented general patch currently requires S3 source faces")
     for side_index, surface in enumerate((source, target)):
@@ -172,6 +179,8 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             q4_source_area_tolerance=settings.q4_source_area_tolerance,
             q4_source_weighted_gap_tolerance=settings.q4_source_weighted_gap_tolerance,
             maximum_q4_source_integration_triangles=settings.maximum_q4_source_integration_triangles,
+            differentiation="pair_local" if refined else "global",
+            maximum_candidate_pairs=settings.maximum_candidate_pairs,
         )
         _unique_work_map(adapters[0], potential.source_node_ids)
         _unique_work_map(adapters[1], potential.target_node_ids)
@@ -225,6 +234,7 @@ class _PatchResults:
     area_integration_error_m2: float = 0.0
     augmented_merit_j: float = 0.0
     normal_multiplier_estimate_pa: tuple[float, ...] = ()
+    pair_geometry_evaluations: int = 0
 
     def to_dict(self):
         result = dict(vars(self))
@@ -262,6 +272,9 @@ class GeneralS3PatchManager:
             q4_source_area_tolerance=self.settings.q4_source_area_tolerance,
             q4_source_weighted_gap_tolerance=self.settings.q4_source_weighted_gap_tolerance,
             maximum_q4_source_integration_triangles=self.settings.maximum_q4_source_integration_triangles,
+            differentiation="pair_local" if self.profile == REFINED_AUGMENTED_PROFILE
+            else "global",
+            maximum_candidate_pairs=self.settings.maximum_candidate_pairs,
         )
         if self.augmented:
             from .s3_patch_augmented import MovingS3PatchProjectedNormal
@@ -308,17 +321,22 @@ class GeneralS3PatchManager:
         lower = self._gap_lower((source, target))
         state = (self.law.evaluate(source, target, self.normal_multipliers)
                  if self.augmented else self.law.evaluate(source, target))
+        pair_local = (self.augmented
+                      and self.law.geometry.differentiation == "pair_local")
+        pair_evaluations = len(self.law.geometry.pair_laws) if pair_local else 0
         if state.active_pressure_dofs == 0:
             local_force = np.zeros(self.law.n_coordinates)
             local_tangent = (sparse.csr_matrix((self.law.n_coordinates, self.law.n_coordinates))
                              if tangent else None)
-            evaluations = 1
+            evaluations = pair_evaluations if pair_local else 1
         else:
             work = (self.law.work(source, target, self.normal_multipliers, tangent=tangent)
                     if self.augmented else self.law.work(source, target, tangent=tangent))
             local_force = work.residual
             local_tangent = sparse.csr_matrix(work.tangent) if tangent else None
             evaluations = work.energy_evaluations
+            if pair_local:
+                pair_evaluations += work.energy_evaluations
         force = np.asarray(self.map.T @ local_force).reshape(-1)
         stiffness = ((self.map.T @ local_tangent @ self.map).tocsr()
                      if tangent else None)
@@ -345,6 +363,7 @@ class GeneralS3PatchManager:
             state.area_integration_error,
             state.energy if self.augmented else 0.0,
             tuple(map(float, self.normal_multipliers)) if self.augmented else (),
+            pair_evaluations,
         )
         return force, stiffness, result
 

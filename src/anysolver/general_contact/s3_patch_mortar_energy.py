@@ -71,17 +71,33 @@ class MovingS3PatchPrimalMortarPenalty:
                  maximum_q4_integration_triangles: int | None = None,
                  q4_source_area_tolerance: float | None = None,
                  q4_source_weighted_gap_tolerance: float | None = None,
-                 maximum_q4_source_integration_triangles: int | None = None):
+                 maximum_q4_source_integration_triangles: int | None = None,
+                 differentiation: str = "global",
+                 maximum_candidate_pairs: int = 4):
         self.source_faces = tuple(source_faces)
         self.target_faces = tuple(target_faces)
+        if differentiation not in {"global", "pair_local"}:
+            raise ValueError("S3 patch differentiation must be global or pair_local")
+        self.differentiation = differentiation
+        if (type(maximum_candidate_pairs) is not int or maximum_candidate_pairs < 1
+                or len(self.source_faces)*len(self.target_faces) > maximum_candidate_pairs):
+            raise MemoryError("S3 patch exceeds declared candidate-pair budget")
         q4_pair = (len(self.source_faces) == len(self.target_faces) == 1
                    and len(self.source_faces[0].node_ids) == 4
                    and len(self.target_faces[0].node_ids) == 4)
-        if not (1 <= len(self.source_faces) <= 2
-                and 1 <= len(self.target_faces) <= 2
-                and (len(self.source_faces)+len(self.target_faces) >= 3
-                     or q4_pair)):
+        bounded = (1 <= len(self.source_faces) <= 2
+                   and 1 <= len(self.target_faces) <= 2
+                   and (len(self.source_faces)+len(self.target_faces) >= 3
+                        or q4_pair))
+        refined = (differentiation == "pair_local"
+                   and self.source_faces and self.target_faces
+                   and len(self.source_faces)+len(self.target_faces) >= 3
+                   and all(len(face.node_ids) == 3
+                           for face in (*self.source_faces, *self.target_faces)))
+        if not (bounded or refined):
             raise ValueError("development shell patch needs three faces or one Q4/Q4 pair")
+        if differentiation == "pair_local" and not refined:
+            raise ValueError("pair-local differentiation currently requires S3 faces")
         source_q4 = len(self.source_faces) == 1 and len(self.source_faces[0].node_ids) == 4
         if not source_q4 and any(len(face.node_ids) != 3 for face in self.source_faces):
             raise ValueError("development patch pressure side needs S3 triangles or one Q4")
@@ -110,7 +126,10 @@ class MovingS3PatchPrimalMortarPenalty:
             raise ValueError("S3 patch energy evaluation budget must be positive")
         self.maximum_energy_evaluations = maximum_energy_evaluations
         self.n_coordinates = 3*(len(self.source_node_ids)+len(self.target_node_ids))
-        self.required_hessian_evaluations = 1+2*self.n_coordinates**2
+        self.required_hessian_evaluations = (
+            1+2*self.n_coordinates**2 if differentiation == "global" else
+            len(self.source_faces)*len(self.target_faces)*(2+2*18**2)
+        )
         if self.required_hessian_evaluations > self.maximum_energy_evaluations:
             raise MemoryError(
                 "S3 patch Hessian exceeds declared energy evaluation budget"
@@ -155,13 +174,15 @@ class MovingS3PatchPrimalMortarPenalty:
                                  indices: tuple[np.ndarray, ...]) -> None:
         if len(indices) < 2:
             return
-        first = PlanarFace((1, 1), positions[indices[0]])
-        second = PlanarFace((1, 2), positions[indices[1]])
-        overlap = planar_projected_overlap(first, second)
-        if overlap is not None:
-            scale = max(1.0, float(np.max(np.abs(positions))))
-            if overlap.area > 1e-12*scale**2:
-                raise ValueError("S3 patch has overlapping faces on one side")
+        scale = max(1.0, float(np.max(np.abs(positions))))
+        for first_index in range(len(indices)):
+            first = PlanarFace((1, first_index+1), positions[indices[first_index]])
+            for second_index in range(first_index+1, len(indices)):
+                second = PlanarFace((1, second_index+1),
+                                    positions[indices[second_index]])
+                overlap = planar_projected_overlap(first, second)
+                if overlap is not None and overlap.area > 1e-12*scale**2:
+                    raise ValueError("S3 patch has overlapping faces on one side")
 
     def evaluate(self, current_source: np.ndarray,
                  current_target: np.ndarray) -> MovingS3PatchMortarState:
@@ -222,6 +243,8 @@ class MovingS3PatchPrimalMortarPenalty:
 
     def work(self, current_source: np.ndarray, current_target: np.ndarray,
              *, tangent: bool = True) -> MovingS3PatchMortarWork:
+        if self.differentiation != "global":
+            raise ValueError("pair-local geometry requires projected normal work")
         coordinates = np.concatenate((np.asarray(current_source, dtype=float),
                                       np.asarray(current_target, dtype=float))).reshape(-1)
         if coordinates.size != self.n_coordinates:
@@ -254,7 +277,8 @@ class MovingS3PatchPrimalMortarPenalty:
             )[:, None]*normal
             second = PlanarFace((2, 1), projected_target)
             overlap = planar_projected_overlap(first, second)
-            if _has_shared_edge_transition(first, second, overlap):
+            if (overlap is not None
+                    and _has_shared_edge_transition(first, second, overlap)):
                 raise ValueError("S3 patch shared-edge derivative is nonunique")
         evaluations = 1
         cache: dict[tuple[tuple[int, int], ...], float] = {}

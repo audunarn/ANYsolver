@@ -94,7 +94,9 @@ class MovingS3PatchProjectedNormal:
         count = self.n_coordinates
         if not base.active_pressure_dofs:
             return MovingS3PatchMortarWork(
-                base, np.zeros(count), np.zeros((count, count)) if tangent else None, 1,
+                base, np.zeros(count), np.zeros((count, count)) if tangent else None,
+                len(self.geometry.pair_laws)
+                if self.geometry.differentiation == "pair_local" else 1,
             )
         for source_index in self.source_face_indices:
             first = PlanarFace((1, 1), np.asarray(current_source)[source_index])
@@ -106,8 +108,12 @@ class MovingS3PatchProjectedNormal:
                 projected = target-((target-first.corners[0])@normal)[:, None]*normal
                 second = PlanarFace((2, 1), projected)
                 overlap = planar_projected_overlap(first, second)
-                if _has_shared_edge_transition(first, second, overlap):
+                if (overlap is not None
+                        and _has_shared_edge_transition(first, second, overlap)):
                     raise ValueError("S3 patch shared-edge derivative is nonunique")
+        if self.geometry.differentiation == "pair_local":
+            return self._pair_local_work(current_source, current_target,
+                                         base, tangent=tangent)
         step = self.geometry.difference_step
         evaluations = 1
         cache = {}
@@ -162,4 +168,96 @@ class MovingS3PatchProjectedNormal:
             - base.reference_weighted_gap[active, None]*js[active]/support**2
         )
         tangent_matrix = -(jw.T @ dp + np.einsum("i,ijk->jk", base.pressure, hessian_w))
+        return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
+
+    def _pair_local_work(self, current_source, current_target, base, *, tangent):
+        """Assemble integral derivatives per face pair into shared pressure nodes."""
+        count = self.n_coordinates
+        source_count = len(self.source_node_ids)
+        pressure_count = source_count
+        jw = np.zeros((pressure_count, count))
+        js = np.zeros_like(jw) if tangent else None
+        weighted_hessian = np.zeros((count, count)) if tangent else None
+        step = self.geometry.difference_step
+        evaluations = len(self.geometry.pair_laws)  # Base patch integration.
+        source = np.asarray(current_source, dtype=float)
+        target = np.asarray(current_target, dtype=float)
+
+        for pair_index, law in enumerate(self.geometry.pair_laws):
+            source_face = pair_index // len(self.geometry.target_faces)
+            target_face = pair_index % len(self.geometry.target_faces)
+            source_nodes = self.source_face_indices[source_face]
+            target_nodes = self.target_face_indices[target_face]
+            if not np.any(base.pressure[source_nodes]):
+                continue
+            local_positions = np.concatenate((source[source_nodes],
+                                              target[target_nodes])).reshape(-1)
+            source_local_count = 3*len(source_nodes)
+            coordinate_map = np.asarray(
+                [3*int(node)+axis for node in source_nodes for axis in range(3)]
+                + [3*(source_count+int(node))+axis
+                   for node in target_nodes for axis in range(3)],
+                dtype=np.intp,
+            )
+            local_count = len(coordinate_map)
+
+            def state_at(steps):
+                nonlocal evaluations
+                evaluations += 1
+                if evaluations > self.geometry.maximum_energy_evaluations:
+                    raise MemoryError("S3 patch pair-local differentiation budget exhausted")
+                trial = local_positions.copy()
+                for coordinate, sign in steps:
+                    trial[coordinate] += sign*step
+                return law.evaluate(
+                    trial[:source_local_count].reshape(-1, 3),
+                    trial[source_local_count:].reshape(-1, 3),
+                )
+
+            middle = state_at(())
+            positive = [state_at(((j, 1),)) for j in range(local_count)]
+            negative = [state_at(((j, -1),)) for j in range(local_count)]
+            local_jw = np.column_stack([
+                (plus.reference_weighted_gap-minus.reference_weighted_gap)/(2*step)
+                for plus, minus in zip(positive, negative)
+            ])
+            jw[np.ix_(source_nodes, coordinate_map)] += local_jw
+            if not tangent:
+                continue
+            local_js = np.column_stack([
+                (plus.reference_support-minus.reference_support)/(2*step)
+                for plus, minus in zip(positive, negative)
+            ])
+            js[np.ix_(source_nodes, coordinate_map)] += local_js
+            local_pressure = base.pressure[source_nodes]
+            local_hessian = np.empty((local_count, local_count))
+            for j in range(local_count):
+                local_hessian[j, j] = float(local_pressure @ (
+                    positive[j].reference_weighted_gap
+                    - 2*middle.reference_weighted_gap
+                    + negative[j].reference_weighted_gap
+                ))/step**2
+                for k in range(j+1, local_count):
+                    mixed = (
+                        state_at(((j, 1), (k, 1))).reference_weighted_gap
+                        - state_at(((j, 1), (k, -1))).reference_weighted_gap
+                        - state_at(((j, -1), (k, 1))).reference_weighted_gap
+                        + state_at(((j, -1), (k, -1))).reference_weighted_gap
+                    )/(4*step**2)
+                    local_hessian[j, k] = local_hessian[k, j] = float(
+                        local_pressure @ mixed
+                    )
+            weighted_hessian[np.ix_(coordinate_map, coordinate_map)] += local_hessian
+
+        residual = -(base.pressure @ jw)
+        if not tangent:
+            return MovingS3PatchMortarWork(base, residual, None, evaluations)
+        dp = np.zeros_like(jw)
+        active = base.pressure > 0.0
+        support = base.reference_support[active, None]
+        dp[active] = -self.stiffness*(
+            jw[active]/support
+            - base.reference_weighted_gap[active, None]*js[active]/support**2
+        )
+        tangent_matrix = -(jw.T @ dp + weighted_hessian)
         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
