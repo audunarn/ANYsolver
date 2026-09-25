@@ -381,12 +381,118 @@ def project_surface_position_moments(
     }
 
 
+def bound_c1_unbonded_vertical_gap(
+        coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
+        face_pairs: list[list[list[int]]]) -> dict:
+    """Sufficient continuous underside/top gap bound for saved C1 Q8 fields.
+
+    The result applies where the two deformed XY face unions overlap. It
+    concerns the interpolated displacement output, not solver truncation,
+    side-face contact, mesh convergence, or native coupling accuracy.
+    """
+    if set(coords) != set(u) or not all(np.isfinite(v).all() for v in u.values()):
+        raise ValueError("complete finite C1 displacement inventory required")
+    pairs = np.asarray(face_pairs, dtype=int)
+    if pairs.shape != (128, 8, 2) or not set(pairs.flat).issubset(coords):
+        raise ValueError("complete 128-face paired C1 inventory required")
+    transform = np.array(((1., 0., 0.), (-.5, 2., -.5), (0., 0., 1.)))
+    sample = (-1., 0., 1.)
+
+    def coefficients(nodes: np.ndarray) -> np.ndarray:
+        values = np.array([[_quad8_shape(x, y) @ nodes for y in sample]
+                           for x in sample])
+        return np.stack([transform @ values[:, :, k] @ transform.T
+                         for k in range(3)], axis=2)
+
+    rows = []
+    cells = set()
+    for index, face in enumerate(pairs):
+        plate_ref = np.array([coords[int(i)] for i in face[:, 0]])
+        plate = np.array([coords[int(i)]+u[int(i)] for i in face[:, 0]])
+        bar = np.array([coords[int(j)]+u[int(j)] for j in face[:, 1]])
+        x0, x1 = float(plate_ref[0, 0]), float(plate_ref[1, 0])
+        y0, y1 = float(plate_ref[0, 1]), float(plate_ref[3, 1])
+        if (x1 <= x0 or y1 <= y0 or
+                np.max(np.abs(plate_ref[:, 2]-.0175)) > 1e-12):
+            raise ValueError("invalid C1 plate-top reference face")
+        cell = tuple(round(v, 10) for v in (x0, x1, y0, y1))
+        if cell in cells:
+            raise ValueError("duplicate C1 unbonded face")
+        cells.add(cell)
+        pcoef, bcoef = coefficients(plate), coefficients(bar)
+        delta = pcoef-bcoef
+        gap = bcoef[:, :, 2]-pcoef[:, :, 2]
+        ax, ay = (x1-x0)/2, (y1-y0)/2
+        dx = bcoef[1:, :, :]-bcoef[:-1, :, :]
+        dy = bcoef[:, 1:, :]-bcoef[:, :-1, :]
+        perturbation = np.array((
+            (np.max(np.abs(dx[:, :, 0]/ax-1.)),
+             np.max(np.abs(dy[:, :, 0]/ay))),
+            (np.max(np.abs(dx[:, :, 1]/ax)),
+             np.max(np.abs(dy[:, :, 1]/ay-1.)))))
+        epsilon = float(np.linalg.norm(perturbation))
+        vertical_lipschitz = float(np.hypot(
+            np.max(np.abs(dx[:, :, 2]/ax)),
+            np.max(np.abs(dy[:, :, 2]/ay))))
+        seam = abs(x1-.9) <= 1e-10
+        if seam:
+            if max(np.max(np.abs(delta[2, :, :])),
+                   np.max(np.abs(gap[2, :]))) > 2e-12:
+                raise ValueError("C1 seam is not exactly shared")
+            # The shared edge is t=1; both gap and horizontal mismatch
+            # factor by (1-t), with degree-one quotient controls below.
+            gap_controls = np.stack((gap[0, :], 2*gap[1, :]))
+            mismatch_controls = np.stack((delta[0, :, :2],
+                                          2*delta[1, :, :2]))
+        else:
+            gap_controls = gap
+            mismatch_controls = delta[:, :, :2]
+        rows.append((index, seam, epsilon, vertical_lipschitz,
+                     float(np.min(gap_controls)),
+                     float(np.max(np.linalg.norm(
+                         mismatch_controls, axis=2)))))
+
+    xs = sorted({x for x0, x1, _, _ in cells for x in (x0, x1)})
+    ys = sorted({y for _, _, y0, y1 in cells for y in (y0, y1)})
+    expected = {(xs[i], xs[i+1], ys[j], ys[j+1])
+                for i in range(len(xs)-1) for j in range(len(ys)-1)}
+    if (len(xs) != 17 or len(ys) != 9 or cells != expected or
+            abs(xs[0]) > 1e-10 or abs(xs[-1]-.9) > 1e-10 or
+            abs(ys[0]+.05) > 1e-10 or abs(ys[-1]-.05) > 1e-10):
+        raise ValueError("C1 unbonded reference rectangle is incomplete")
+    epsilon = max(row[2] for row in rows)
+    if epsilon >= 1.:
+        raise ValueError("C1 deformed horizontal map is not bounded injective")
+    vertical_lipschitz = max(row[3] for row in rows)
+    margins = [(g-vertical_lipschitz*h/(1.-epsilon), index, seam)
+               for index, seam, _, _, g, h in rows]
+    return {
+        "status": ("POSITIVE_SAVED_FIELD_FACE_GAP_BOUND" if
+                   min(margin for margin, _, _ in margins) > 0. else
+                   "INCONCLUSIVE_FACE_GAP_BOUND"),
+        "face_count": len(rows),
+        "seam_face_count": sum(row[1] for row in rows),
+        "horizontal_map_perturbation_frobenius_bound": epsilon,
+        "bar_vertical_lipschitz_bound": vertical_lipschitz,
+        "maximum_horizontal_mismatch_m": max(row[5] for row in rows),
+        "maximum_vertical_reprojection_correction_m": max(
+            vertical_lipschitz*row[5]/(1.-epsilon) for row in rows),
+        "minimum_nonseam_gap_bound_m": min(
+            margin for margin, _, seam in margins if not seam),
+        "minimum_seam_factored_gap_bound_m": min(
+            margin for margin, _, seam in margins if seam),
+        "minimum_margin_face_index": min(margins)[1],
+        "meaning": "sufficient vertical gap bound for overlapping deformed XY on the saved C1 unbonded underside/top face unions; the seam gap is zero",
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", type=Path, required=True)
     parser.add_argument("--stem", required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--station-series", action="store_true")
+    parser.add_argument("--face-gap-bound", action="store_true")
     args = parser.parse_args()
     folder = args.case.resolve()
     inp,frd = (folder/(args.stem+suffix) for suffix in (".inp",".frd"))
@@ -409,6 +515,10 @@ def main() -> None:
     if rigid_error > 1e-9:
         raise AssertionError("projected solid pose is not objective at physical rotation scale")
     result = project(coords,u)
+    if args.face_gap_bound:
+        model = json.loads((folder/"model.json").read_text())
+        result["unbonded_face_gap_bound"] = bound_c1_unbonded_vertical_gap(
+            coords, u, model["unbonded_face_pairs"])
     if args.station_series:
         whole = [project(coords,u,section_x=station)
                  for station in (.9,.925,.95,.975,1.)]

@@ -6,20 +6,89 @@
 stable exact line space. **Established:** The transverse-order diagnosis is
 complete; the chord changes the loaded torque split substantially but is
 only modestly closer to one solid-section yaw projection. The matched C1
-opening-shear solve completes and has no negative gap in two saved-field
-samples, whereas the matched torque case still penetrates despite penalty
-contact. **Uncertainty:** Neither pose has an admitted torque/shear accuracy
-reference or a mesh-uniform line-stability result; the shear field still
-needs continuous-gap and mesh checks. **Next discriminating action:** Stop
-finer axial and gap sampling; establish a continuous nonintersection bound
-for the saved opening-shear geometry, then match that physical section,
-support and load in a native shear solve. In parallel, derive a truly
+opening-shear solve completes and has a continuous saved-field gap bound
+on its unbonded underside/top face, whereas the matched torque case still
+penetrates despite penalty contact. **Uncertainty:** Neither pose has an
+admitted torque/shear accuracy reference or a mesh-uniform line-stability
+result; the shear case still needs mesh convergence and a matched native
+solve. **Next discriminating action:** Stop finer axial and gap sampling;
+match the C1 physical section, support and opening load in a native shear
+solve and assess the corresponding solid mesh. In parallel, derive a truly
 physical line work law within the rigid B3 section contract and test its
 fixed-grid work/transfer and norm-correct modes before registered ratios.
 If the gap bound fails, revise the external reference; if the native law
 fails work/transfer, revise its mechanics, not the multiplier count. No
 multiplier or pose is selected. Formal F03 authority is unconsumed, G0B
 open and G1 barred.
+
+**Continuous-gap precondition, before execution:** For the saved C1 opening
+field, convert each paired Q8 face's *corresponding-material-coordinate*
+vertical separation into its biquadratic Bernstein control net. If any
+control coefficient is negative, this simple sufficient nonpenetration
+route fails and requires a more precise geometric check; if all are
+nonnegative, the corresponding-coordinate gap is continuously nonnegative.
+On the eight seam-adjacent faces, factor the exactly shared zero-gap edge
+and check the remaining control net. This is only a precondition: actual
+same-deformed-XY nonintersection also requires bounding the horizontal
+reprojection correction. It does not qualify the reference by itself.
+
+**Reprojection bound, before execution:** The corresponding-coordinate
+control nets pass with a strict positive factored seam margin. Bound each
+saved face's horizontal plate–bar mismatch and bar vertical derivative by
+Bernstein controls, and the inverse horizontal map by its affine Jacobian
+minus a bounded deformation perturbation. If the worst possible vertical
+reprojection correction exceeds the proven gap margin, the control-net
+route is inconclusive; if every margin stays positive, the sampled shear
+candidate has a continuous *within-paired-face* gap bound, but face-edge
+coverage and mesh convergence remain separate. Do not add more point
+samples to resolve this question.
+
+**Global map follow-up, before execution:** If the local face bounds pass,
+recast them in common physical material XY coordinates over the convex
+unbonded rectangle. A uniform Bernstein bound `||D R_xy−I||<1` for the
+deformed bar map makes it globally injective and gives an inverse
+Lipschitz bound across face edges; combine it with a global vertical
+Lipschitz bound and each face's factored seam gap. If the resulting lower
+gap is positive for every overlapping deformed XY point, retain a
+continuous contact-free *saved-field* shear reference candidate. If not,
+the face-edge issue remains open. This still does not establish mesh
+convergence, exact-solution nonpenetration or native accuracy.
+
+**Continuous saved-field gap result:** All 128 paired unbonded Q8 faces
+have nonnegative corresponding-coordinate biquadratic Bernstein gap
+controls. On the eight faces adjoining the x=`.9 m` bonded seam, the
+control net's zero seam edge is exact and the factored positive gap has a
+minimum control coefficient of `643.6 nm`; other faces have minimum
+`786.4 nm`. The deformed bar XY map over the convex unbonded rectangle
+has a global `||D R_xy−I||_F ≤ 4.891e−5` Bernstein bound and is therefore
+injective with inverse Lipschitz factor `1/(1−4.891e−5)`. Its vertical
+Lipschitz bound is `1.066e−4`; the maximum corresponding-coordinate
+horizontal mismatch bound is `3.336 µm`. The resulting worst vertical
+reprojection correction is at most `0.356 nm`. Every nonseam lower gap
+remains at least `786.1 nm`; every seam-face gap remains at least
+`(1−t)·643.4 nm`, where `t=1` is the bonded edge. Thus the *interpolated,
+rounded saved displacement field* has positive vertical separation at
+every overlapping deformed XY location on the specified unbonded face
+pairs, with zero permitted at the shared bonded seam. This is a sufficient
+continuous face-gap bound, not a proof about unsampled side surfaces,
+the exact unrounded solver solution or mesh convergence. A 384-point
+cross-check reconstructs Q8 values from Bernstein coefficients within
+`3.4e−16 m` and x-parametric derivatives within `1.3e−11 m` of finite
+differences. The identical control-net method has five negative-control
+faces in each retained torque field, consistent with their independent
+negative-gap samples; a negative control alone is not a penetration proof.
+No external accuracy or native multiplier selection follows yet.
+The read-only calculation is now reproducible through
+`bound_c1_unbonded_vertical_gap` in the existing solid-pose diagnostic,
+using the saved deck, FRD and `model.json` face pairs. It validates the
+128-face rectangular inventory and returns typed positive/inconclusive
+status. The saved opening field returns
+`POSITIVE_SAVED_FIELD_FACE_GAP_BOUND`; the two retained torque fields return
+`INCONCLUSIVE_FACE_GAP_BOUND`, consistent with their separate sampled
+penetration witnesses. The two directly affected test files pass `79/79`
+with a workspace-local disposable test directory. This source-level
+development check still needs independent mechanics scrutiny before it
+can support a G0 acceptance record.
 
 **Next bounded decision probe, before execution:** At the interior of the
 same saved C1 factor-four, 35 mm terminal bond under +100 N m, compare the
