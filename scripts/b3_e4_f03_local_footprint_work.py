@@ -123,12 +123,21 @@ def case(topology: str) -> dict:
 
     # Paired +My multipliers act on the same shell patch and beam station.
     distributing_moment = np.zeros(6)
-    distributing_moment[4] = 100.
+    # c_R = Log(R_shell^T R_beam), so a negative multiplier gives +My
+    # on the shell. The corner-force construction below gives that same
+    # physical shell moment through its eccentric Fz resultants.
+    distributing_moment[4] = -100.
     dx = np.array([point[0]-.5 for point in points])
     rigid_moment = np.zeros(12)
     rigid_moment[2::3] = -100.*dx/(dx@dx)
     distributed_force = distributing.T @ distributing_moment
     rigid_force = rigid.T @ rigid_moment
+    def shell_my(force: np.ndarray) -> float:
+        nodal = force[:shell_size].reshape(-1, 6)
+        return float(np.sum(nodal[:, 4] - reference[:, 0]*nodal[:, 2]))
+    shell_moments = (shell_my(distributed_force), shell_my(rigid_force))
+    if max(abs(value-100.) for value in shell_moments) > 1e-8:
+        raise ArithmeticError(f"paired shell moments differ: {shell_moments}")
     distributed_shear_work = float(distributed_force @ shear)
     rigid_shear_work = float(rigid_force @ shear)
     if (abs(distributed_shear_work) > 1e-9 or
@@ -154,6 +163,8 @@ def case(topology: str) -> dict:
                 distributed_force[:shell_size][5::6]))),
             "rigid": float(np.max(np.abs(
                 rigid_force[:shell_size][5::6])))},
+        "paired_shell_my_nm": {"distributing": shell_moments[0],
+                               "rigid": shell_moments[1]},
         "scope": "local linearized patch row-space/work proof; rigid patch intentionally restrains local shear; not a full line solve or space selection",
     }
 
