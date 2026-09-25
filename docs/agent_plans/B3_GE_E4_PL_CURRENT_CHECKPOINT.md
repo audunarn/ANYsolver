@@ -1,6 +1,53 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-**Current decision, 25 September 2026:** The first fixed chord is not a
+**Decision sought, 25 September 2026:** Choose the physical meaning of the
+required six-channel nonmatching bond: line-tangent/director alignment or a
+finite-width full-pose connection. Do not select a multiplier space before
+that choice.
+
+**Established facts:** The confined chord passes bounded Q4/S3 work,
+chart, rigid-motion, balance and termination-support checks. Its shear
+yaw differs materially from the finite-width strip and rigid-fit patch.
+Quadrature order does not explain the line response. At fixed physical
+meshes, P0, P1 and dual all develop a weak alternating transverse-force
+mode as line resolution rises; full row rank does not establish stability.
+
+**Remaining uncertainty:** The independent transverse comparator confirms
+the discrete local-center line trend, not the intended weld. The historical
+Q6/finite-pad, classical axial and CalculiX rigid-footprint models have
+different connection laws. A section-resolved physical torque/shear
+reference with matched connection and recoverable work is still missing.
+
+**Next discriminating experiment:** Prepare one bounded,
+section-resolved shear/termination comparison with matched panel and beam
+geometry, section axes, offset, supports and load work. Extract the
+connection rotation and torque/transverse-force work under both affine
+in-plane shears and a terminated-stiffener load.
+
+**Resulting action:** If the resolved bond tracks line-tangent yaw without
+spurious shear constraint, continue line-law qualification; if it tracks
+area-polar or rigid-fit response, keep the chord as a declared tangent
+idealization and develop the appropriate footprint bond. If materially
+resolution-dependent, refine the physical reference first. Do not extend
+classical axial refinement or select a multiplier yet. F03 authority remains
+unconsumed, G0B open and G1 barred.
+
+**Bounded 25 September diagnosis (development only):** For the chord,
+`uy=γx` gives yaw `γ`, `ux=γy` gives zero; the strip gives `+γ/2` and
+`−γ/2`, while the affine-patch rigid fit gives `0.43057γ` and
+`−0.56943γ`. The fit is not a solved weld. Quadrature orders 2–5 agree
+within `2.2e-16`. At fixed shell x8/y4, beam-half16, line intervals
+4→8 reduce the work-scaled transverse `Fz/Mx/My` quotient for P0/P1/dual
+from `0.761/0.666/0.694` to `0.203/0.230/0.231` on Q4 and from
+`0.812/0.769/0.788` to `0.203/0.231/0.232` on S3. All 12 six-channel
+row sets have full rank; at eight intervals the weakest transverse mode
+has >99.98% `Fz` L2 share. Direct and exactly retained-condensed actions
+agree within `4.3e-12` relative. These finite-model quotients include E4
+numerical completion and do not establish continuum inf-sup or choose a
+production space. The 12 direct single-thread diagnostic results are in
+the task trace; this summary is not a registered or immutable gate record.
+
+**Previous bounded chord and strip observations (preserved):** The first fixed chord is not a
 strictly local attachment: a P0 tip yaw multiplier on `[.75,1]` acts at a
 shell sample beyond the declared beam end. On the aligned Q4 x8/y4 test,
 its last yaw row has coefficient `−0.2` at shell `x=1.25 m`, or `16.7%`
