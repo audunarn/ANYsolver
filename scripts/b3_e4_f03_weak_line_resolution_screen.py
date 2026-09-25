@@ -342,7 +342,8 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
                           native_half_cells: int = 8,
                           characteristic_length: float = .46,
                           confined: bool = False,
-                          shell_port: str | None = None) -> dict:
+                          shell_port: str | None = None,
+                          loaded_mode_overlap: bool = False) -> dict:
     """Bounded six-channel, work-scaled interface diagnostic.
 
     Exact elimination of the indefinite native retained block separates a
@@ -354,6 +355,8 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
     """
     if not np.isfinite(characteristic_length) or characteristic_length <= 0.:
         raise ValueError("positive physical characteristic length required")
+    if type(loaded_mode_overlap) is not bool:
+        raise ValueError("Boolean loaded-mode diagnostic required")
     shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y))
     beam = build(native_half_cells)
     space = LineMultiplierSpace(
@@ -551,6 +554,49 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
             "torque_mode_physical_work_share":float(np.clip(
                 torque_physical_share,0.,1.)),
         }
+        if loaded_mode_overlap:
+            shell_size=6*shell.panel.node_count
+            tip_rx=shell_size+6*beam.n_half_cells+3
+            load=np.zeros(kkt.primal_tangent.shape[0])
+            load[tip_rx]=100.
+            rhs=np.r_[load[free]*kkt.coordinate_scale[:n]/
+                       kkt.energy_scale,np.zeros(len(rows))]
+            scaled_solution=linalg.solve(kkt.scaled_system,rhs,
+                                         assume_a="sym")
+            physical_solution=kkt.coordinate_scale*scaled_solution
+            full=np.zeros(len(load))
+            full[free]=physical_solution[:n]
+            multiplier=physical_solution[n:]
+            equilibrium=kkt.primal_tangent@full+(
+                kkt.constraint_jacobian.T@multiplier)-load
+            gap=kkt.constraint_jacobian@full
+            scaled_error=float(np.linalg.norm(equilibrium[free])/100.)
+            if scaled_error>1e-8 or np.max(np.abs(gap))>1e-8:
+                raise ArithmeticError("loaded torque mode has invalid equilibrium")
+            # cbar = diag(row_scale) C diag(scales); the normalized dual
+            # coefficient is proportional to lambda/row_scale. The omitted
+            # common energy factor cancels from projection and norm shares.
+            normalized_multiplier=(multiplier/row_scale)[torque_rows]
+            loaded_norm=float(normalized_multiplier@upper3@
+                              normalized_multiplier)
+            if loaded_norm<=0.:
+                raise ArithmeticError("loaded torque multiplier norm vanished")
+            overlap=float((torque_vectors[:,0]@upper3@
+                           normalized_multiplier)**2/loaded_norm)
+            loaded_channels=normalized_multiplier.reshape(space.count,3)
+            loaded_shares=np.array([float(loaded_channels[:,axis]@upper@
+                                          loaded_channels[:,axis])
+                                    for axis in range(3)])/loaded_norm
+            if not -1e-10<=overlap<=1.+1e-10:
+                raise ArithmeticError("loaded torque mode overlap invalid")
+            dual_diagnostic.update({
+                "loaded_torque_tip_rx_rad":float(full[tip_rx]),
+                "loaded_torque_scaled_equilibrium_error":scaled_error,
+                "loaded_torque_weak_mode_dual_overlap_fraction":float(
+                    np.clip(overlap,0.,1.)),
+                "loaded_torque_fy_mx_mz_dual_norm_shares":
+                    loaded_shares.tolist(),
+            })
     return {
         "topology": topology, "shell_x_intervals": 2*n_s,
         "shell_y_intervals": n_y,

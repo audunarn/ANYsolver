@@ -251,6 +251,23 @@ def test_square_patch_retained_interface_action_is_consistent(kind):
     assert mode["scope"].endswith("not physical inf-sup acceptance")
 
 
+def test_loaded_torque_overlap_uses_the_same_physical_solution():
+    options = dict(n_s=2, n_y=4, native_half_cells=4,
+                   shell_port="physical_strip_005_005")
+    mode = chord_reference_modes(
+        "Q4", 2, "piecewise_constant", loaded_mode_overlap=True,
+        **options)["density_dual_diagnostic"]
+    loaded = one_case(
+        "Q4", 2, "piecewise_constant", load_kind="torsion",
+        shell_support_policy="full_left_edge", **options)
+    assert mode["loaded_torque_tip_rx_rad"] == pytest.approx(
+        loaded["tip_rx_rad"], rel=1e-10)
+    assert mode["loaded_torque_scaled_equilibrium_error"] < 1e-8
+    assert 0. <= mode["loaded_torque_weak_mode_dual_overlap_fraction"] <= 1.
+    assert sum(mode["loaded_torque_fy_mx_mz_dual_norm_shares"]) == (
+        pytest.approx(1., abs=1e-10))
+
+
 def test_split_mx_rows_preserve_constant_torque_and_end_member_parity():
     shell=FlatE4TrialPanel(make_shell(2,"Q4",n_y=4))
     beam=build(4)
