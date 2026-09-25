@@ -676,7 +676,9 @@ def channel_split_reference_modes(
         fine_intervals: int = 8, fine_channels: tuple[int, ...] = (3,),
         n_s: int = 4, n_y: int = 4, native_half_cells: int = 16,
         characteristic_length: float = .46,
-        shell_port: str = "physical_strip_005_005") -> dict:
+        shell_port: str = "physical_strip_005_005",
+        thickness: float = .07, beam_z_offset: float = 0.,
+        beam_torsion_constant: float | None = None) -> dict:
     """Absolute-energy dual-norm screen for a bounded mixed-channel P0 pair.
 
     The H^(-1/2) Gram follows the actual interval count of each physical
@@ -684,8 +686,10 @@ def channel_split_reference_modes(
     """
     if not np.isfinite(characteristic_length) or characteristic_length <= 0.:
         raise ValueError("positive physical characteristic length required")
-    shell=FlatE4TrialPanel(make_shell(n_s,topology,n_y=n_y))
-    beam=build(native_half_cells)
+    shell=FlatE4TrialPanel(make_shell(n_s,topology,n_y=n_y,
+                                      thickness=thickness))
+    beam=build(native_half_cells,z_offset=beam_z_offset,
+               torsion_constant=beam_torsion_constant)
     kkt=assemble_channel_split_reference_kkt(
         shell,beam,coarse_intervals=coarse_intervals,
         fine_intervals=fine_intervals,fine_channels=fine_channels,
@@ -766,6 +770,8 @@ def channel_split_reference_modes(
         "topology":topology,"shell_port":shell_port,
         "shell_x_intervals":2*n_s,
         "shell_y_intervals":n_y,"native_half_cells":native_half_cells,
+        "shell_thickness_m":thickness,"beam_reference_z_m":beam_z_offset,
+        "beam_torsion_constant_m4":beam_torsion_constant,
         "coarse_line_intervals":coarse_intervals,
         "fine_line_intervals":fine_intervals,
         "fine_channels":fine_channels,"row_count":len(channels),
