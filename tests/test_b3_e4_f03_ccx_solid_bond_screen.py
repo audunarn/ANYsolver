@@ -56,6 +56,13 @@ def test_terminal_bond_has_only_declared_shared_patch(factor, load, expected):
     assert "shared_face_mean_translation_m" not in recovered["station_motion"]["500"]
     assert recovered["station_motion"]["1000"]["interface_shared"] is True
     assert "shared_face_mean_translation_m" in recovered["station_motion"]["1000"]
+    assert recovered["unbonded_midspan_normal_separation_m"][
+        "bar_minus_plate_z_m"] == [0., 0., 0.]
+    bottom = next(index for index in meta["bar_station_nodes"]["500"]
+                  if meta["probe_coordinates_m"][str(index)] == [.5, 0., .035])
+    displacement[bottom] = np.array([0., 0., -1e-6])
+    assert SCREEN.recover(meta, displacement)[
+        "unbonded_midspan_normal_separation_m"]["bar_minus_plate_z_m"][1] == pytest.approx(-1e-6)
 
 
 def test_recovery_rigid_motion_and_orthogonal_shear_measures():

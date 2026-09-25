@@ -365,9 +365,22 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
             "slope_plus_section_ry_rad":surface_slope_z_x+beam_ry,
             "meaning":"kinematic slope/section comparison; not a measured interface gap or shell director shear"}
     else:
+        midspan=[]
+        xyz=meta["probe_coordinates_m"]
+        for y in (-50,0,50):
+            plate=surface[f"500,{y}"]
+            bottom=next((index for index in meta["bar_station_nodes"]["500"]
+                         if abs(xyz[str(index)][1]-y/1000)<1e-12 and
+                            abs(xyz[str(index)][2]-.035)<1e-12),None)
+            if bottom is None:
+                raise ValueError("incomplete unbonded midspan bottom probe")
+            midspan.append(float(displacement[bottom][2]-displacement[plate][2]))
         result={"plate_midspan_centerline_tangent_yaw_rad":float(tangent),
                 "plate_midspan_square_patch_yaw_rad":patch_yaw,
                 "station_motion":stations,
+                "unbonded_midspan_normal_separation_m":{
+                    "y_m":[-.05,0.,.05],"bar_minus_plate_z_m":midspan,
+                    "meaning":"negative value is interpenetration of coincident unbonded surfaces; no contact law is present"},
                 "meaning":"midspan plate and bar are coincident but intentionally unbonded"}
     applied={int(index):np.array(force) for index,force in
              meta["applied_nodal_forces_N"].items()}
