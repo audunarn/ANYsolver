@@ -405,6 +405,9 @@ def termination_local(shell: FlatE4TrialPanel, beam) -> dict:
             raise ArithmeticError("loaded local termination solution failed")
         return {"tip_rx_rad": float(full[shell_size+6*beam.n_half_cells+3]),
                 "tip_uz_m": float(full[shell_size+6*beam.n_half_cells+2]),
+                "beam_section_rx_at_stations_rad":{
+                    str(station):float(full[shell_size+6*(beam.n_half_cells*station//1000)+3])
+                    for station in (0,250,500,750,1000)},
                 "shell_support_wrench_N_Nm":[*shell_force.tolist(),
                                              *shell_moment.tolist()],
                 "beam_root_wrench_N_Nm":[*beam_force.tolist(),
@@ -652,8 +655,8 @@ def run_terminal_shell_resolution(output_dir: Path) -> None:
     manifest={
         "status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
         "source_sha":source,
-        "question":"Do native six-channel rigid/distributing terminal responses and plate/beam support-wrench partitions approach the section-resolved external terminal reference as the E4 shell refines?",
-        "decision":"A strong native mesh trend bars a law ranking until convergence. A stable response discrepancy with different support partition points to connection transfer; a similar partition points to section, warping or shell stiffness. Neither outcome selects a footprint or true-line multiplier space.",
+        "question":"Do native six-channel terminal responses, support-wrench partitions and beam-section rotation profiles approach the section-resolved external terminal reference as E4 refines?",
+        "decision":"A strong native mesh trend bars a law ranking. Similar support partition with a near-patch rotation difference directs investigation to local connection/warping; a span-wide difference directs it to section or shell stiffness. Neither outcome selects a footprint or true-line multiplier space.",
         "shell_formulations":["Q4","S3-V2D"],
         "shell_levels_x_half_y":list(levels),
         "beam_half_cells":8,
