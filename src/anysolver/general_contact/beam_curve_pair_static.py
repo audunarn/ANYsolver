@@ -12,7 +12,7 @@ from .beam_pair import _BeamPairResults
 from .core import ContactDefinition, ContactSolverSettings, ContactValidationReport
 
 
-PROFILE = "CLASSICAL_B3_B3_ROUND_TUBE_DISTRIBUTED_PAIR_STATIC_DEV_V0"
+PROFILE = "CLASSICAL_B3_B3_ROUND_TUBE_DISTRIBUTED_PAIR_STATIC_DEV_V1"
 
 
 def validate_b3_pair_contact(model, definition: ContactDefinition,

@@ -238,6 +238,112 @@ def _endpoint_projection_cuts(source: np.ndarray,
     return tuple(sorted(set(cuts)))
 
 
+def _real_polynomial_roots_unit(polynomial: np.polynomial.Polynomial,
+                                *, reject_ambiguous_minimum: bool = False
+                                ) -> tuple[float, ...]:
+    """Isolate every real root on [0, 1] between derivative extrema."""
+
+    coefficients = np.asarray(polynomial.coef, dtype=float)
+    while len(coefficients) > 1 and coefficients[-1] == 0.0:
+        coefficients = coefficients[:-1]
+    if len(coefficients) <= 1:
+        return ()
+    normalized = np.polynomial.Polynomial(
+        coefficients / float(np.max(np.abs(coefficients))),
+    )
+    critical = _real_polynomial_roots_unit(normalized.deriv())
+    stations = (0.0, *critical, 1.0)
+    values = tuple(float(normalized(station)) for station in stations)
+    evaluation_guard = 128.0 * np.finfo(float).eps * float(
+        np.sum(np.abs(normalized.coef)),
+    )
+    if reject_ambiguous_minimum:
+        for index in range(1, len(stations) - 1):
+            if (abs(values[index]) <= evaluation_guard
+                    and values[index - 1] > evaluation_guard
+                    and values[index + 1] > evaluation_guard):
+                raise MemoryError(
+                    "straight B3 target near-tangent contact roots "
+                    "cannot be resolved at current precision"
+                )
+    roots = [station for station, value in zip(stations, values)
+             if abs(value) <= evaluation_guard]
+    for left, right, value_left, value_right in zip(
+        stations[:-1], stations[1:], values[:-1], values[1:],
+    ):
+        if value_left * value_right < 0.0:
+            roots.append(float(brentq(
+                normalized, left, right, xtol=1e-14, rtol=1e-14,
+            )))
+    return tuple(sorted(set(float(np.clip(root, 0.0, 1.0))
+                            for root in roots)))
+
+
+def _straight_target_contact_roots(source: np.ndarray,
+                                    target: np.ndarray,
+                                    radius: float) -> tuple[float, ...]:
+    """All line-contact boundaries against one exactly straight B3 target."""
+
+    axis = target[2] - target[0]
+    length_squared = float(axis @ axis)
+    if length_squared <= 0.0:
+        raise ValueError("straight B3 target has zero length")
+    endpoint_roundoff = 128.0 * np.finfo(float).eps
+    feature_cuts = (station for station in
+                    _endpoint_projection_cuts(source, target)
+                    if endpoint_roundoff < station < 1.0 - endpoint_roundoff)
+    cuts = (0.0, *sorted(set((*np.linspace(0.0, 1.0, 33)[1:-1],
+                               *feature_cuts))), 1.0)
+    roots = []
+    for left, right in zip(cuts[:-1], cuts[1:]):
+        controls = _bezier_controls(source, left, right)
+        projected = ((controls - target[0]) @ axis) / length_squared
+        projection_roundoff = (128.0 * np.finfo(float).eps
+                               * max(1.0,
+                                     float(np.max(np.abs(controls)))
+                                     / np.sqrt(length_squared),
+                                     float(np.max(np.abs(target)))
+                                     / np.sqrt(length_squared)))
+        if np.max(projected) <= 0.0:
+            origin = target[0]
+            interior = False
+        elif np.min(projected) >= 1.0:
+            origin = target[2]
+            interior = False
+        elif (np.min(projected) >= -projection_roundoff
+              and np.max(projected) <= 1.0 + projection_roundoff):
+            origin = target[0]
+            interior = True
+        else:
+            raise MemoryError(
+                "straight B3 target projection feature cannot be certified "
+                f"on [{left:.9g}, {right:.9g}]: "
+                f"projection range [{np.min(projected):.9g}, "
+                f"{np.max(projected):.9g}]"
+            )
+        coefficients = np.array((
+            controls[0] - origin,
+            2.0 * (controls[1] - controls[0]),
+            controls[0] - 2.0*controls[1] + controls[2],
+        ))
+        if interior:
+            coefficients -= np.outer((coefficients @ axis) / length_squared,
+                                     axis)
+        distance_squared = np.polynomial.Polynomial([
+            sum(float(coefficients[i] @ coefficients[j])
+                for i in range(3) for j in range(3) if i + j == degree)
+            for degree in range(5)
+        ])
+        distance_squared -= radius * radius
+        for local in _real_polynomial_roots_unit(
+            distance_squared, reject_ambiguous_minimum=True,
+        ):
+            station = float(left + (right - left) * local)
+            if 0.0 < station < 1.0:
+                roots.append(station)
+    return tuple(sorted(set(roots)))
+
+
 def certify_b3_pair_gap(positions_a: np.ndarray, positions_b: np.ndarray,
                         radius: float, *, accuracy: float,
                         maximum_cells: int,
@@ -373,11 +479,16 @@ class B3PairPotential:
             scan(left, middle, gap_left, gap_middle, depth + 1)
             scan(middle, right, gap_middle, gap_right, depth + 1)
 
-        coarse = np.linspace(0.0, 1.0, 33)
-        coarse_gaps = [gap_at(float(station)) for station in coarse]
-        for index in range(32):
-            scan(float(coarse[index]), float(coarse[index + 1]),
-                 coarse_gaps[index], coarse_gaps[index + 1], 0)
+        if np.array_equal(target[1], 0.5 * (target[0] + target[2])):
+            roots.extend(_straight_target_contact_roots(
+                source, target, self.radius,
+            ))
+        else:
+            coarse = np.linspace(0.0, 1.0, 33)
+            coarse_gaps = [gap_at(float(station)) for station in coarse]
+            for index in range(32):
+                scan(float(coarse[index]), float(coarse[index + 1]),
+                     coarse_gaps[index], coarse_gaps[index + 1], 0)
         cuts = (0.0, *sorted(set((*roots,
                                   *_endpoint_projection_cuts(source, target)))),
                 1.0)

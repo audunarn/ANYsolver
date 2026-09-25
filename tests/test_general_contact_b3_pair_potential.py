@@ -153,15 +153,11 @@ def test_b3_pair_gap_certificate_contains_independent_curve_grid():
         )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="C2: sign-changing scan cell can hide another narrow contact pocket",
-)
 def test_b3_pair_narrow_double_pocket_independent_energy_gate():
     # A quadratic parabola crosses a 5 mm tube in two narrow station pockets.
-    # The first coarse scan cell contains three gap roots; the current scan
-    # stops after the first and misses the second pocket. This frozen failure
-    # blocks C2 acceptance until interval completeness is established.
+    # The first coarse scan cell contains three gap roots. The original scan
+    # stopped after the first and missed the second pocket. Keep this frozen
+    # oracle as a regression gate for the straight-target root partition.
     centre = 0.5014
 
     def position(station):
@@ -190,3 +186,23 @@ def test_b3_pair_narrow_double_pocket_independent_energy_gate():
         points=[0.5, 0.5028], limit=100,
     )[0] for left, right in ((0.49, centre), (centre, 0.52)))
     assert measured == pytest.approx(independent, rel=1e-4, abs=1e-15)
+
+
+def test_b3_pair_straight_target_endpoint_to_interior_transition():
+    source = np.array(((-0.2, 0.08, 0.0), (0.3, 0.08, 0.0),
+                       (0.8, 0.08, 0.0)))
+    target = _TARGET.copy()
+    law = B3PairPotential(
+        source, target, 0.1, 1000.0,
+        integration_relative_tolerance=1e-6,
+        maximum_subdivisions=8,
+    )
+    measured = law._direction(source, target, 1.0, True)[0]
+
+    def endpoint_density(station):
+        distance = np.hypot(station - 0.2, 0.08)
+        return 500.0 * min(distance - 0.1, 0.0)**2
+
+    independent = (quad(endpoint_density, 0.14, 0.2, epsabs=1e-13)[0]
+                   + 500.0 * 0.02**2 * 0.8)
+    assert measured == pytest.approx(independent, rel=1e-8)
