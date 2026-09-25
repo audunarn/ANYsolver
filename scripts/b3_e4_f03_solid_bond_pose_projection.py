@@ -92,17 +92,23 @@ def project(coords: dict[int, np.ndarray],
             u: dict[int, np.ndarray], *,
             section_x: float = 1.,
             patch_x0: float = .9,
-            patch_x1: float = 1.) -> dict:
-    """Evaluate the declared 35 mm, factor-four, 0.1 m terminal patch."""
+            patch_x1: float = 1.,
+            patch_grid: tuple[float, ...] = (.9, .925, .95, .975, 1.)
+            ) -> dict:
+    """Evaluate a declared mesh-aligned 35 mm, factor-four bond patch."""
     if set(coords) != set(u) or not all(np.isfinite(v).all() for v in u.values()):
         raise ValueError("complete finite solid displacement inventory required")
-    if not any(abs(section_x-x) < 1e-12 for x in (.9,.925,.95,.975,1.)):
-        raise ValueError("section station must be on the bounded solid bond grid")
-    patch_grid = (.9,.925,.95,.975,1.)
-    if (not any(abs(patch_x0-x) < 1e-12 for x in patch_grid) or
+    grid = np.asarray(patch_grid, dtype=float)
+    if (grid.ndim != 1 or len(grid) < 2 or
+            not np.isfinite(grid).all() or not np.all(np.diff(grid) > 0.) or
+            grid[0] < 0. or grid[-1] > 1. or
+            not np.isfinite(section_x) or
+            not any(abs(section_x-x) < 1e-12 for x in grid) or
+            not patch_x0 <= section_x <= patch_x1 or
+            not any(abs(patch_x0-x) < 1e-12 for x in grid) or
             not any(abs(patch_x1-x) < 1e-12 for x in patch_grid) or
             patch_x1 <= patch_x0):
-        raise ValueError("patch must be a nonempty solid bond subinterval")
+        raise ValueError("mesh-aligned solid section and bond patch required")
     lookup: dict[tuple[float, float, float], list[int]] = {}
     for node, xyz in coords.items():
         lookup.setdefault(tuple(np.round(xyz, 9)), []).append(node)
@@ -129,7 +135,7 @@ def project(coords: dict[int, np.ndarray],
         return np.array([coords[node(x,y,z)] + u[node(x,y,z)]
                          for y,z in points])
 
-    xcuts = np.array([x for x in patch_grid
+    xcuts = np.array([x for x in grid
                       if patch_x0-1e-12 <= x <= patch_x1+1e-12])
     ycuts = np.linspace(-.05, .05, 9)
     zcuts = np.linspace(.0175, .1175, 9)
@@ -216,6 +222,7 @@ def project(coords: dict[int, np.ndarray],
     corner_gaps = np.array(corner_gaps)
     return {"section_station_x_m":section_x,
             "patch_interval_x_m":[patch_x0,patch_x1],
+            "patch_grid_x_m":grid.tolist(),
             "shell_center_m":shell_center.tolist(),
             "shell_midplane_gradient_x":gradient_x.tolist(),
             "shell_midplane_gradient_y":gradient_y.tolist(),
