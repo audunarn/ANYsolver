@@ -52,8 +52,9 @@ def expected_wrench(loading: str) -> np.ndarray:
                     (0.,0.,1000.,0.,-950.,0.))
 
 
-def build_solid_plate(factor: int, loading: str) -> tuple[str,dict]:
-    if factor not in (1,2,4) or loading not in LOADS:
+def build_solid_plate(factor: int, loading: str, *, thickness: float = .07
+                      ) -> tuple[str,dict]:
+    if factor not in (1,2,4) or loading not in LOADS or thickness not in (.07,.035):
         raise ValueError("bounded quadratic plate-patch case required")
     coupled,_=build(factor,"tip_mx",boundary_policy="left_root",
                     bond_policy="terminal",element_family="C3D20R")
@@ -76,6 +77,10 @@ def build_solid_plate(factor: int, loading: str) -> tuple[str,dict]:
             raise AssertionError("quadratic plate connectivity changed")
         cells.append((a[0],tuple(a[1:]+b)))
     plate_nodes={node for _,cell in cells for node in cell}
+    if thickness!=.07:
+        for index in plate_nodes:
+            coords[index]=coords[index].copy()
+            coords[index][2]*=thickness/.07
     clamp={index for index in plate_nodes if abs(coords[index][0]+.5)<1e-12}
     if not clamp or any(abs(coords[i][0]+.5)>1e-12 for i in clamp):
         raise AssertionError("plate clamp inventory changed")
@@ -85,7 +90,7 @@ def build_solid_plate(factor: int, loading: str) -> tuple[str,dict]:
     for _,cell in cells:
         face=tuple(cell[i] for i in (4,5,6,7,12,13,14,15))
         xyz=np.array([coords[i] for i in face])
-        if (not np.all(np.abs(xyz[:,2]-.035)<1e-12) or
+        if (not np.all(np.abs(xyz[:,2]-thickness/2)<1e-12) or
             xyz[:,0].min()<PATCH_X[0]-1e-12 or
             xyz[:,0].max()>PATCH_X[1]+1e-12 or
             xyz[:,1].min()<PATCH_Y[0]-1e-12 or
@@ -113,7 +118,9 @@ def build_solid_plate(factor: int, loading: str) -> tuple[str,dict]:
     output=["** BOUNDED PLATE-ONLY C3D20R PATCH WORK; DEVELOPMENT ONLY",
             f"** factor={factor}; loading={loading}",
             "*NODE,NSET=AllNodes"]
-    output.extend(node_rows[i] for i in sorted(plate_nodes))
+    output.extend(node_rows[i] if thickness==.07 else
+                  f"{i},"+",".join(_number(v) for v in coords[i])
+                  for i in sorted(plate_nodes))
     output.append("*ELEMENT,TYPE=C3D20R,ELSET=Plate")
     output.extend(element_rows)
     output.extend(("*MATERIAL,NAME=Isotropic","*ELASTIC","210000000000,0.3",
@@ -132,14 +139,15 @@ def build_solid_plate(factor: int, loading: str) -> tuple[str,dict]:
             output.append(f"{index},3,{_number(value)}")
     output.extend(("*NODE PRINT,NSET=LoadedPatch","U",
                    "*NODE PRINT,NSET=PlateClamp","RF","*END STEP"))
-    meta={"factor":factor,"loading":loading,"plate_elements":len(cells),
+    meta={"factor":factor,"loading":loading,"thickness_m":thickness,
+          "plate_elements":len(cells),
           "plate_nodes":len(plate_nodes),"patch_faces":faces,
           "loaded_node_ids":sorted(load),"clamp_node_ids":sorted(clamp),
           "coordinates_m":{str(i):coords[i].tolist() for i in load.keys()|clamp},
           "nodal_fz_n":{str(i):value for i,value in load.items()},
           "applied_wrench_N_Nm":wrench.tolist(),
           "support":"all plate x=-.5 m nodes fixed in x/y/z",
-          "patch":"top z=.035 m, x=[.9,1] m, y=[-.05,.05] m",
+          "patch":f"top z={thickness/2:g} m, x=[.9,1] m, y=[-.05,.05] m",
           "load_definition":("t_z proportional to y, exact 100 N m Mx"
                              if loading=="tip_mx" else
                              "uniform t_z, 1000 N Fz at x=.95 m")}
@@ -213,14 +221,15 @@ def local_grid(patch_cells: int, *, outer_refined: bool = False
     return xs,ys
 
 
-def raw_e4_tangent(xs: np.ndarray,ys: np.ndarray) -> tuple[np.ndarray,np.ndarray]:
+def raw_e4_tangent(xs: np.ndarray,ys: np.ndarray, *,
+                   thickness: float = .07) -> tuple[np.ndarray,np.ndarray]:
     """Assemble the same zero-state Q4 E4 operator without uniform-grid ports."""
     x=np.asarray(xs,dtype=float)
     y=np.asarray(ys,dtype=float)
     if (x.ndim!=1 or y.ndim!=1 or len(x)<2 or len(y)<2 or
             not np.isfinite(x).all() or not np.isfinite(y).all() or
             not np.all(np.diff(x)>0) or not np.all(np.diff(y)>0) or
-            6*len(x)*len(y)>1800):
+            6*len(x)*len(y)>1800 or thickness not in (.07,.035)):
         raise ValueError("bounded ordered E4 grid required")
     model=FEModel("f03-graded-e4-patch-diagnostic")
     model.add_material("steel",210e9,.3,density=7850.)
@@ -238,7 +247,7 @@ def raw_e4_tangent(xs: np.ndarray,ys: np.ndarray) -> tuple[np.ndarray,np.ndarray
             eid=1+j*(len(x)-1)+i
             element=create_shell_element(
                 eid,list(nodes),"steel",formulation="e4-pl",
-                thickness=.07,reference_normal=(0.,0.,1.))
+                thickness=thickness,reference_normal=(0.,0.,1.))
             model.add_element(eid,element)
             origin=element.init_nonlinear_state(3)
             force,stiffness,candidate=corotational_element_response(
@@ -291,31 +300,34 @@ def graded_patch_force(xs: np.ndarray,ys: np.ndarray,
 
 
 def graded_shell_case(patch_cells: int,loading: str, *,
-                      outer_refined: bool = False) -> dict:
+                      outer_refined: bool = False,
+                      thickness: float = .07) -> dict:
     xs,ys=local_grid(patch_cells,outer_refined=outer_refined)
-    tangent,physical=raw_e4_tangent(xs,ys)
+    tangent,physical=raw_e4_tangent(xs,ys,thickness=thickness)
     force,wrench=graded_patch_force(xs,ys,loading)
     fixed={6*(j*len(xs))+axis for j in range(len(ys)) for axis in range(6)}
     free=np.array([i for i in range(len(force)) if i not in fixed])
     measured=response(tangent,force,free,physical=physical)
     return {"formulation":"Q4","patch_cells_per_side":patch_cells,
             "outer_refined":outer_refined,
+            "thickness_m":thickness,
             "x_coordinates_m":xs.tolist(),"y_coordinates_m":ys.tolist(),
             "nodes":len(xs)*len(ys),"elements":(len(xs)-1)*(len(ys)-1),
             "applied_wrench_N_Nm":wrench.tolist(),"response":measured}
 
 
-def uniform_operator_parity() -> dict:
-    panel=make_shell(2,"Q4",n_y=2)
+def uniform_operator_parity(*, thickness: float = .07) -> dict:
+    panel=make_shell(2,"Q4",n_y=2,thickness=thickness)
     xs=np.linspace(-.5,1.5,5)
     ys=np.linspace(-.5,.5,3)
-    raw,_=raw_e4_tangent(xs,ys)
+    raw,_=raw_e4_tangent(xs,ys,thickness=thickness)
     existing=FlatE4TrialPanel(panel).evaluate(
         np.zeros(6*panel.node_count),.95).tangent
     error=float(np.linalg.norm(raw-existing)/np.linalg.norm(existing))
     if error>1e-10:
         raise ArithmeticError("graded E4 operator differs from uniform adapter")
-    return {"uniform_level":2,"relative_tangent_error":error,
+    return {"uniform_level":2,"thickness_m":thickness,
+            "relative_tangent_error":error,
             "nodes":panel.node_count}
 
 
@@ -402,7 +414,9 @@ def run_outer(root: Path) -> None:
                               "status":record["status"]}),flush=True)
 
 
-def run(root: Path, factors: tuple[int,...], levels: tuple[int,...]) -> None:
+def run(root: Path, factors: tuple[int,...], levels: tuple[int,...], *,
+        thickness: float = .07,
+        graded_levels: tuple[int,...] = ()) -> None:
     source=subprocess.check_output(("git","rev-parse","HEAD"),text=True).strip()
     if subprocess.check_output(("git","status","--porcelain"),text=True).strip():
         raise RuntimeError("plate-patch screen requires clean source")
@@ -410,28 +424,40 @@ def run(root: Path, factors: tuple[int,...], levels: tuple[int,...]) -> None:
         raise RuntimeError("CalculiX executable identity changed")
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":"Does physical E4 plate-only patch work agree with a section-resolved C3D20R plate under identical geometry, support and top-face traction?",
-              "decision":"Material plate-only discrepancy directs shell map/stiffness investigation; agreement directs bonded-region and B3 warping investigation. Neither outcome selects a native attachment or line multiplier.",
+              "question":("Does halving the plate thickness reduce the matched, patch-resolved E4/C3D20R torque-work gap?"
+                          if thickness==.035 else
+                          "Does physical E4 plate-only patch work agree with a section-resolved C3D20R plate under identical geometry, support and top-face traction?"),
+              "decision":("A narrowing torque gap with resolved solid/graded-shell trends points to a local footprint-to-thickness validity condition; a persistent gap directs load-map/support/formulation checks. Neither outcome selects a native connection."
+                          if thickness==.035 else
+                          "Material plate-only discrepancy directs shell map/stiffness investigation; agreement directs bonded-region and B3 warping investigation. Neither outcome selects a native attachment or line multiplier."),
               "source_sha":source,"runner_sha256":digest(Path(__file__)),
               "ccx_executable":str(EXE),"ccx_sha256":EXE_SHA,
-              "solid_factors":factors,"shell_levels":levels,"loads":LOADS,
-              "geometry":"plate [-.5,1.5]x[-.5,.5] m, thickness .07 m; top patch x=[.9,1], y=[-.05,.05] m",
+              "solid_factors":factors,"shell_levels":graded_levels or levels,
+              "graded_shell":bool(graded_levels),"loads":LOADS,
+              "geometry":f"plate [-.5,1.5]x[-.5,.5] m, thickness {thickness:g} m; top patch x=[.9,1], y=[-.05,.05] m",
+              "reused_prior_roots":(["f03-plate-only-solid-e4-patch-dev-20260925-v2",
+                                      "f03-graded-e4-plate-patch-dev-20260925-v1"]
+                                     if thickness==.035 else []),
               "material":"isotropic E=210 GPa, nu=.3",
               "supports":"full x=-.5 m plate edge fixed",
               "limits":{"ccx_seconds_each":TIMEOUT_SECONDS,"omp_threads":1,
-                        "blas_threads":1},
+                        "blas_threads":1,"max_dense_shell_rows":1800},
               "scope":"linear plate-only external comparison; no bonded-beam, contact, nonlinear, exact face-minimum or production qualification",
               "python":platform.python_version(),"numpy":np.__version__}
     with threadpool_limits(limits=1):
         manifest["effective_threadpools"]=threadpool_info()
         (root/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+        if graded_levels:
+            parity=uniform_operator_parity(thickness=thickness)
+            (root/"uniform_parity.json").write_text(json.dumps(
+                parity,indent=2)+"\n")
         records=[]
         for factor in factors:
             for loading in LOADS:
                 name=f"plate-{factor}-{loading}"
                 folder=root/name
                 folder.mkdir()
-                deck,meta=build_solid_plate(factor,loading)
+                deck,meta=build_solid_plate(factor,loading,thickness=thickness)
                 (folder/f"{name}.inp").write_text(deck,encoding="ascii")
                 (folder/"model.json").write_text(json.dumps(meta,indent=2)+"\n")
                 started=time.perf_counter()
@@ -499,14 +525,15 @@ def run(root: Path, factors: tuple[int,...], levels: tuple[int,...]) -> None:
                 if failure:
                     return
         shell_records=[]
-        for level in levels:
+        for level in graded_levels or levels:
             for loading in LOADS:
                 try:
-                    item=shell_case(level,loading)
-                    record={"case":f"shell-{level}-{loading}",
+                    item=(graded_shell_case(level,loading,thickness=thickness)
+                          if graded_levels else shell_case(level,loading))
+                    record={"case":f"{'graded' if graded_levels else 'shell'}-{level}-{loading}",
                             "status":"EXPLORATORY_COMPLETE","response":item}
                 except Exception as exc:
-                    record={"case":f"shell-{level}-{loading}",
+                    record={"case":f"{'graded' if graded_levels else 'shell'}-{level}-{loading}",
                             "status":"EXPLORATORY_FAILURE",
                             "failure":f"{type(exc).__name__}: {exc}"}
                     shell_records.append(record)
@@ -527,10 +554,14 @@ if __name__=="__main__":
     parser.add_argument("--shell-level",type=int,choices=(2,4,8),nargs="+",default=(2,4,8))
     parser.add_argument("--local-shell-patch-resolution",action="store_true")
     parser.add_argument("--outer-patch-grid-refinement",action="store_true")
+    parser.add_argument("--half-thickness",action="store_true")
     args=parser.parse_args()
-    if args.local_shell_patch_resolution and args.outer_patch_grid_refinement:
+    if sum((args.local_shell_patch_resolution,
+            args.outer_patch_grid_refinement,args.half_thickness))>1:
         parser.error("select one E4 refinement screen")
-    if args.outer_patch_grid_refinement:
+    if args.half_thickness:
+        run(args.root,(2,4),(),thickness=.035,graded_levels=(4,8))
+    elif args.outer_patch_grid_refinement:
         run_outer(args.root)
     elif args.local_shell_patch_resolution:
         run_local(args.root)

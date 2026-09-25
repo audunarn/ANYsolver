@@ -47,6 +47,17 @@ def test_plate_patch_rejects_undeclared_inputs():
         build_solid_plate(1,"pressure")
 
 
+def test_half_thickness_plate_preserves_patch_wrench_and_operator_parity():
+    deck,meta=build_solid_plate(1,"tip_mx",thickness=.035)
+    assert meta["thickness_m"]==.035
+    assert np.array(meta["applied_wrench_N_Nm"])==pytest.approx(
+        expected_wrench("tip_mx"),abs=1e-8)
+    assert all(abs(meta["coordinates_m"][str(i)][2]-.0175)<1e-12
+               for i in meta["loaded_node_ids"])
+    assert "ELSET=Stiffener" not in deck
+    assert uniform_operator_parity(thickness=.035)["relative_tangent_error"]<1e-10
+
+
 def test_local_patch_grid_resolves_both_directions_and_preserves_operator():
     assert uniform_operator_parity()["relative_tangent_error"]<1e-10
     for cells in (2,4,8):
