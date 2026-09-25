@@ -29,3 +29,25 @@ def test_continuous_traction_spans_six_wrenches_without_drilling():
         xs, ys, beam, np.array((.02, -.03, .04)),
         np.array((.003, -.005, .007)))
     assert np.max(np.abs(rows @ direction)) < 1e-11
+
+
+def test_section_traction_has_only_four_independent_local_wrenches():
+    """Six integrated resultants do not imply six poses at every section.
+
+    This uses the physical 100 mm strip at the B3 bottom surface, 50 mm
+    below its centroid, and independently integrates the four force profiles
+    used by the candidate. Moment is taken about that section centroid.
+    """
+    points, weights = np.polynomial.legendre.leggauss(3)
+    section = np.zeros((6, 4))
+    for point, weight in zip(points, weights):
+        y = .05 * point
+        traction = np.array(((1., 0., 0.), (0., 1., 0.),
+                             (0., 0., 1.), (0., 0., y)))
+        lever = np.array((0., y, -.05))
+        section[:3] += .05 * weight * traction.T
+        section[3:] += .05 * weight * np.cross(lever, traction).T
+    scales = np.array((.1, .1, .1, .005, .005, .005))
+    assert np.linalg.matrix_rank(section / scales[:, None]) == 4
+    assert section[4] == pytest.approx(-.05 * section[0], abs=1e-15)
+    assert section[5] == pytest.approx(np.zeros(4), abs=1e-15)
