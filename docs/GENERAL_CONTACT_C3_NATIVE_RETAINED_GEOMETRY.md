@@ -66,6 +66,28 @@ two tests calling the existing private `_direction` signature; that
 signature was preserved, and its failing log remains at
 `c3-native-pair-curved-measure-affected.txt`.
 
+`native_retained_cell_pair.py` composes that symmetric distributed potential
+with two retained Q2 half-cell maps. It returns an 84-coordinate residual and
+tangent, including cross-beam blocks and each selected cell's rotated-lift
+second variation. It checks all four half-cell combinations with conservative
+gap certificates. Only one declared pair may contact; a possibly active
+undeclared pair raises an error instead of being dropped. The restricted
+ownership makes this an internal integration kernel, not a complete native
+beam-pair route.
+
+An interior crossing with curved native beam A gave nonzero retained-cell
+work, reciprocal body forces and a balanced global-origin wrench. A combined
+two-beam energy perturbation checked the coupled tangent; rigid covariance,
+resource exhaustion, undeclared-pair rejection and live-definition mutation
+also passed. The affected native/classical pair group passed 11/11
+(`c3-native-retained-cell-pair-affected.txt`). The first focused run exhausted
+a 16-level gap-certificate depth budget in a geometrically separated cell
+(`c3-native-retained-cell-pair-first.txt`). A bounded diagnostic measured
+that the declared 28-level budget completed that 0.1 mm certificate within
+231 cells (`c3-native-retained-cell-pair-depth28.txt`); the four focused
+checks then passed (`...-third.txt`). This is a resource setting for the
+development scene, not a universal recommendation.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization
