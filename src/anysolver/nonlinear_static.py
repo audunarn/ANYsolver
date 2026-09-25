@@ -7377,6 +7377,12 @@ def solve_static_nonlinear(
         if (contact_settings is not None and contact_settings.warped_q4_plane
                 and (initial_element_states is not None or initial_fields is not None)):
             raise ValueError("warped Q4 plane contact does not admit seeded material or initial-field history")
+        if (contact_settings is not None
+                and contact_settings.pair_motion == "general"
+                and contact_settings.normal_discretization == "pointwise_penalty"
+                and not contact.rigid_bodies
+                and (initial_element_states is not None or initial_fields is not None)):
+            raise ValueError("general S3 pair does not admit seeded material or initial-field history")
         if any(surface.beam_radius is not None for surface in contact.surfaces):
             if str(kinematics).lower() != "von_karman":
                 raise ValueError("round classical beam-plane contact currently requires von_karman kinematics")

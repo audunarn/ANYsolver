@@ -190,6 +190,8 @@ class ContactSolverSettings:
     beam_pair_gap_accuracy: float | None = None
     maximum_beam_pair_gap_cells: int | None = None
     maximum_beam_pair_gap_depth: int | None = None
+    general_s3_difference_step: float | None = None
+    maximum_general_s3_energy_evaluations: int = 1500
 
     def __post_init__(self) -> None:
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
@@ -245,6 +247,14 @@ class ContactSolverSettings:
             or self.sliding_difference_step <= 0.0
         ):
             raise ValueError("sliding_difference_step must be finite and positive")
+        if self.general_s3_difference_step is not None and (
+            not np.isfinite(self.general_s3_difference_step)
+            or self.general_s3_difference_step <= 0.0
+        ):
+            raise ValueError("general_s3_difference_step must be finite and positive")
+        if (type(self.maximum_general_s3_energy_evaluations) is not int
+                or self.maximum_general_s3_energy_evaluations < 1):
+            raise ValueError("maximum_general_s3_energy_evaluations must be positive")
         if type(self.maximum_gap_triangles) is not int or self.maximum_gap_triangles < 1:
             raise ValueError("maximum_gap_triangles must be a positive integer")
         if type(self.maximum_patch_normal_dofs) is not int or self.maximum_patch_normal_dofs < 1:
@@ -323,12 +333,19 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
     if settings is not None and settings.normal_discretization == "pointwise_penalty":
-        if (settings.pair_motion != "restricted_sliding" or definition.rigid_bodies
+        general_s3 = (settings.pair_motion == "general"
+                      and not definition.rigid_bodies
+                      and len(definition.surfaces) == 2
+                      and all(item.beam_radius is None for item in definition.surfaces)
+                      and all(len(item.element_ids) == 1 for item in definition.surfaces)
+                      and all(item.normal_law == "penalty" for item in definition.interactions))
+        if (not general_s3 and
+                (settings.pair_motion != "restricted_sliding" or definition.rigid_bodies
                 or len(definition.surfaces) != 2
                 or not any(len(item.element_ids) > 1 for item in definition.surfaces)
-                or any(item.normal_law != "penalty" for item in definition.interactions)):
+                or any(item.normal_law != "penalty" for item in definition.interactions))):
             return ContactValidationReport("invalid", (
-                "pointwise penalty is admitted only for multi-face restricted sliding shell pairs with penalty normal law",
+                "pointwise penalty needs a multi-face restricted shell pair or the single-face general S3 verification profile, with penalty normal law",
             ))
     if analysis_control not in {"force", "displacement"}:
         return ContactValidationReport("invalid", ("analysis_control must be force or displacement",))
@@ -375,8 +392,12 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             ))
     if not definition.rigid_bodies:
         if settings is not None and settings.pair_motion == "general":
+            if settings.normal_discretization == "pointwise_penalty":
+                from .s3_pair_static import validate_general_s3_pair
+
+                return validate_general_s3_pair(model, definition, settings)
             return ContactValidationReport("invalid", (
-                "general pair_motion currently requires an analytic rigid sphere or cylinder",
+                "general shell pair currently requires the S3 pointwise verification profile",
             ))
         if settings is not None and settings.pair_motion == "restricted_sliding":
             if len(definition.surfaces) == 2 and any(
@@ -858,7 +879,14 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
                 raise ValueError("rigid plane requires guided pair_motion")
             manager = _PlanarQ4PlaneManager(model, definition, settings, initial_displacement)
     else:
-        if settings.pair_motion == "restricted_sliding":
+        if (settings.pair_motion == "general"
+                and settings.normal_discretization == "pointwise_penalty"):
+            from .s3_pair_static import GeneralS3PairManager
+
+            manager = GeneralS3PairManager(
+                model, definition, settings, initial_displacement,
+            )
+        elif settings.pair_motion == "restricted_sliding":
             if len(definition.surfaces) == 2 and any(
                 len(surface.element_ids) > 1 for surface in definition.surfaces
             ):
