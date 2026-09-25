@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from scipy.integrate import quad
 from scipy.spatial.transform import Rotation
 
 from anysolver._ge_beam3_centered_reference import (
@@ -11,6 +12,7 @@ from anysolver.general_contact.native_retained_whole_pair import (
     NativeRetainedWholeCurvePair,
     _straight_join_owner,
     _straight_join_partitions,
+    _straight_support_partitions,
 )
 
 
@@ -77,23 +79,26 @@ def test_straight_junction_owner_is_certified_only_on_one_side():
     kernel = _kernel(a, b)
     target = kernel.reference_curves[2:4]
     assert _straight_join_owner(kernel.reference_curves[0], target,
-                                0.98, 1.0) == 0
+                                0.98, 1.0, 1e-9) == 0
     assert _straight_join_owner(kernel.reference_curves[1], target,
-                                0.0, 0.02) == 1
+                                0.0, 0.02, 1e-9) == 1
     spanning = np.array(((0.9, 0.0, 0.0),
                          (1.0, 0.0, 0.0),
                          (1.1, 0.0, 0.0)))
-    assert _straight_join_owner(spanning, target, 0.0, 1.0) is None
+    assert _straight_join_owner(spanning, target, 0.0, 1.0,
+                                1e-9) is None
     curved = (target[0].copy(), target[1].copy())
     curved[0][1, 1] += 0.01
     assert _straight_join_owner(kernel.reference_curves[0], curved,
-                                0.98, 1.0) is None
-    partitions = _straight_join_partitions(spanning, target, 0.0, 1.0)
+                                0.98, 1.0, 1e-9) is None
+    partitions = _straight_join_partitions(spanning, target, 0.0, 1.0,
+                                            1e-9)
     assert partitions is not None
     assert tuple(piece[2] for piece in partitions) == (0, 1)
     assert partitions[0][1] == pytest.approx(0.5)
     assert partitions[1][0] == pytest.approx(0.5)
-    assert _straight_join_partitions(spanning, curved, 0.0, 1.0) is None
+    assert _straight_join_partitions(spanning, curved, 0.0, 1.0,
+                                      1e-9) is None
 
 
 def test_parallel_interior_cell_motion_crosses_target_junction():
@@ -119,6 +124,82 @@ def test_parallel_interior_cell_motion_crosses_target_junction():
                                0.0, atol=1e-8)
     np.testing.assert_allclose(result.beam_a_moment_nm+result.beam_b_moment_nm,
                                0.0, atol=1e-8)
+
+
+def test_translated_parallel_beams_have_certified_partial_endpoint_support():
+    a, b = _reference(0.0), _reference(0.08)
+    shifted = b.coordinates.copy()
+    shifted[:, 0] += 0.2
+    target = tuple(cell.copy() for cell in _kernel(a, b).reference_curves[2:4])
+    target = tuple(cell+np.array((0.2, 0.0, 0.0)) for cell in target)
+    source = _kernel(a, b).reference_curves[0]
+    pieces = _straight_support_partitions(source, target, 0.1,
+                                           0.0, 1.0, 1e-9)
+    assert pieces is not None
+    assert pieces[0][0] == pytest.approx(0.14)
+    result = _kernel(a, b).evaluate(
+        *_pose(a), shifted, np.zeros((3, 3)),
+        np.tile(np.eye(3), (2, 1, 1)),
+    )
+    def scalar_energy(x):
+        distance = np.hypot(0.08, max(0.2-x, 0.0))
+        return min(distance-0.1, 0.0)**2
+    oracle, _ = quad(scalar_energy, 0.0, 2.0,
+                     points=(0.14, 0.2), epsabs=1e-12)
+    assert result.potential_j == pytest.approx(50.0*oracle,
+                                               rel=1e-5, abs=1e-8)
+    np.testing.assert_allclose(result.beam_a_force_n+result.beam_b_force_n,
+                               0.0, atol=1e-8)
+    np.testing.assert_allclose(result.beam_a_moment_nm+result.beam_b_moment_nm,
+                               0.0, atol=1e-8)
+    exchanged = _kernel(b, a).evaluate(
+        shifted, np.zeros((3, 3)), np.tile(np.eye(3), (2, 1, 1)),
+        *_pose(a),
+    )
+    assert exchanged.potential_j == pytest.approx(result.potential_j,
+                                                   rel=1e-10)
+
+    direction = np.zeros(84)
+    direction[[1, 7, 13]] = -0.001
+    direction[[43, 49, 55]] = 0.002
+    def perturbed(fraction):
+        moved_a = a.coordinates.copy()
+        moved_b = shifted.copy()
+        moved_a[:, 1] -= fraction*0.001
+        moved_b[:, 1] += fraction*0.002
+        return _kernel(a, b).evaluate(
+            moved_a, np.zeros((3, 3)), np.tile(np.eye(3), (2, 1, 1)),
+            moved_b, np.zeros((3, 3)), np.tile(np.eye(3), (2, 1, 1)),
+        )
+    step = 1e-2
+    plus, minus = perturbed(step), perturbed(-step)
+    first = (plus.potential_j-minus.potential_j)/(2.0*step)
+    second = (plus.potential_j-2.0*result.potential_j
+              +minus.potential_j)/step**2
+    assert first == pytest.approx(result.residual@direction,
+                                  rel=1e-5, abs=1e-7)
+    assert second == pytest.approx(direction@result.tangent@direction,
+                                   rel=1e-5, abs=1e-6)
+
+
+def test_straight_support_finds_sub_gauss_narrow_pocket_and_open_interval():
+    _, b = _reference(0.0), _reference(0.0999995)
+    target = tuple(_kernel(_reference(0.0), b).reference_curves[2:4])
+    source = np.array(((-0.02, 0.0, 0.0),
+                       (-0.01015, 0.0, 0.0),
+                       (-0.0003, 0.0, 0.0)))
+    pieces = _straight_support_partitions(source, target, 0.1,
+                                           0.0, 1.0, 1e-9)
+    assert pieces is not None
+    assert len(pieces) == 1
+    assert 0.0 < 1.0-pieces[0][0] < 0.001
+    assert _straight_support_partitions(source, target, 0.09,
+                                        0.0, 1.0, 1e-9) == ()
+    far_shift = np.array((1e9, 0.0, 0.0))
+    distant_source = source+far_shift
+    distant_target = tuple(cell+far_shift for cell in target)
+    assert _straight_support_partitions(distant_source, distant_target,
+                                        0.1, 0.0, 1.0, 1e-9) is None
 
 
 def test_whole_pair_energy_and_cross_beam_tangent_on_smooth_branch():

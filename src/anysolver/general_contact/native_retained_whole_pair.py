@@ -23,7 +23,8 @@ from .native_retained_station import _readonly
 
 def _straight_join_owner(source: np.ndarray,
                          targets: tuple[np.ndarray, np.ndarray],
-                         left: float, right: float) -> int | None:
+                         left: float, right: float,
+                         accuracy_m: float) -> int | None:
     """Certify a target owner by the shared-junction Voronoi half-space.
 
     For collinear, forward-ordered straight cells, a source point on one
@@ -38,7 +39,7 @@ def _straight_join_owner(source: np.ndarray,
         1.0, float(np.max(np.abs(source))),
         float(np.max(np.abs(first))), float(np.max(np.abs(second))),
     )
-    if length <= roundoff:
+    if roundoff > accuracy_m or length <= roundoff:
         return None
     axis = span/length
     if (float(np.dot(junction-start, axis)) <= roundoff
@@ -62,6 +63,7 @@ def _straight_join_owner(source: np.ndarray,
 def _straight_join_partitions(source: np.ndarray,
                               targets: tuple[np.ndarray, np.ndarray],
                               left: float, right: float,
+                              accuracy_m: float,
                               ) -> tuple[tuple[float, float, int], ...] | None:
     """Split a Q2 source interval at its exact straight-target Voronoi crossings."""
     start, end = targets[0][0], targets[1][2]
@@ -78,6 +80,8 @@ def _straight_join_partitions(source: np.ndarray,
     constant = ordinates[0]
     scale = max(1.0, float(np.max(np.abs(ordinates))))
     roundoff = 256.0*np.finfo(float).eps*scale
+    if roundoff > accuracy_m:
+        return None
     if abs(quadratic) > roundoff:
         candidates = np.roots((quadratic, linear, constant))
     elif abs(linear) > roundoff:
@@ -97,10 +101,116 @@ def _straight_join_partitions(source: np.ndarray,
     for begin, stop in zip(boundaries[:-1], boundaries[1:]):
         if stop-begin <= roundoff:
             return None
-        owner = _straight_join_owner(source, targets, begin, stop)
+        owner = _straight_join_owner(source, targets, begin, stop,
+                                     accuracy_m)
         if owner is None:
             return None
         pieces.append((begin, stop, owner))
+    return tuple(pieces)
+
+
+def _straight_support_partitions(
+    source: np.ndarray, targets: tuple[np.ndarray, np.ndarray],
+    radius: float, left: float, right: float, accuracy_m: float,
+) -> tuple[tuple[float, float, int], ...] | None:
+    """Certify active line intervals for straight finite target geometry.
+
+    The source is affine in station. Its squared distance to either physical
+    endpoint or the target line is quadratic. Split first at the axial
+    feature changes, then at every real activation root within each feature.
+    A returned empty tuple proves this interval open. ``None`` means this
+    exact straight profile does not apply and the caller must use its
+    conservative general search route.
+    """
+    start, junction, end = targets[0][0], targets[0][2], targets[1][2]
+    span = end-start
+    length = float(np.linalg.norm(span))
+    roundoff = 256.0*np.finfo(float).eps*max(
+        1.0, float(np.max(np.abs(source))),
+        *(float(np.max(np.abs(target))) for target in targets),
+        radius,
+    )
+    if roundoff > accuracy_m or length <= roundoff:
+        return None
+    axis = span/length
+    junction_axial = float(np.dot(junction-start, axis))
+    if not roundoff < junction_axial < length-roundoff:
+        return None
+    for cell in targets:
+        if (float(np.linalg.norm(cell[1]-0.5*(cell[0]+cell[2]))) > roundoff
+                or any(float(np.linalg.norm(
+                    point-start-np.dot(point-start, axis)*axis,
+                )) > roundoff for point in cell)):
+            return None
+    if float(np.linalg.norm(source[1]-0.5*(source[0]+source[2]))) > roundoff:
+        return None
+
+    origin = source[0]
+    direction = source[2]-source[0]
+    axial_origin = float(np.dot(origin-start, axis))
+    axial_direction = float(np.dot(direction, axis))
+    boundaries = [left, right]
+    if abs(axial_direction) > roundoff:
+        for threshold in (0.0, junction_axial, length):
+            root = (threshold-axial_origin)/axial_direction
+            if left+roundoff < root < right-roundoff:
+                boundaries.append(float(root))
+    boundaries.sort()
+
+    def add_roots(begin: float, stop: float) -> list[float]:
+        middle = 0.5*(begin+stop)
+        axial_middle = axial_origin+axial_direction*middle
+        if axial_middle < 0.0:
+            relative = origin-start
+            slope = direction
+        elif axial_middle > length:
+            relative = origin-end
+            slope = direction
+        else:
+            relative = origin-start-axial_origin*axis
+            slope = direction-axial_direction*axis
+        coefficients = (
+            float(np.dot(slope, slope)),
+            2.0*float(np.dot(relative, slope)),
+            float(np.dot(relative, relative))-radius*radius,
+        )
+        if abs(coefficients[0]) > roundoff*roundoff:
+            candidates = np.roots(coefficients)
+        elif abs(coefficients[1]) > roundoff*roundoff:
+            candidates = (-coefficients[2]/coefficients[1],)
+        else:
+            candidates = ()
+        roots = []
+        for candidate in candidates:
+            if abs(complex(candidate).imag) > roundoff:
+                continue
+            root = float(complex(candidate).real)
+            if begin+roundoff < root < stop-roundoff:
+                roots.append(root)
+        return roots
+
+    activation = []
+    for begin, stop in zip(boundaries[:-1], boundaries[1:]):
+        activation.extend(add_roots(begin, stop))
+    boundaries.extend(activation)
+    boundaries.sort()
+    pieces = []
+    for begin, stop in zip(boundaries[:-1], boundaries[1:]):
+        if stop-begin <= roundoff:
+            return None
+        middle = 0.5*(begin+stop)
+        point = origin+middle*direction
+        axial = axial_origin+middle*axial_direction
+        nearest = start+np.clip(axial, 0.0, length)*axis
+        difference = float(np.dot(point-nearest, point-nearest))-radius*radius
+        if abs(difference) <= roundoff*roundoff:
+            return None
+        if difference < 0.0:
+            owner = _straight_join_owner(source, targets, begin, stop,
+                                         accuracy_m)
+            if owner is None:
+                return None
+            pieces.append((begin, stop, owner))
     return tuple(pieces)
 
 
@@ -325,16 +435,22 @@ class NativeRetainedWholeCurvePair:
                 for interval in scan.intervals:
                     if interval.status == "open":
                         continue
-                    owner = interval.target_cell
-                    if owner is None:
+                    pieces = _straight_support_partitions(
+                        current[source_index], target_positions,
+                        self.radius, interval.left, interval.right,
+                        min(self.distance_tolerance, self.feature_tolerance),
+                    )
+                    if pieces is None and interval.target_cell is None:
                         pieces = _straight_join_partitions(
                             current[source_index], target_positions,
                             interval.left, interval.right,
+                            min(self.distance_tolerance, self.feature_tolerance),
                         )
                         if pieces is None:
                             raise ValueError("native whole pair target ownership is unresolved")
-                    else:
-                        pieces = ((interval.left, interval.right, owner),)
+                    elif pieces is None:
+                        pieces = ((interval.left, interval.right,
+                                   interval.target_cell),)
                     for begin, stop, certified_owner in pieces:
                         share = 0.25*(stop-begin)
                         budget = np.array((self.energy_tolerance*share,

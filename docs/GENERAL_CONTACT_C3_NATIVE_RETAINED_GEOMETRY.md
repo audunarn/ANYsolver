@@ -220,10 +220,28 @@ affected native curve/selected-pair/static set passed 23/23
 (`c3-native-whole-pair-crossing-affected.txt`). The
 first crossing run found a separate unresolved support edge when the whole
 beam was translated axially (`c3-native-whole-pair-crossing-first.txt`). It
-failed explicitly as a possible contact missed by quadrature. General
-finite sliding with contact activation at physical endpoints, curved
-whole-beam pairs, retained rotational work in this whole-pair route and
-qualification remain open.
+failed explicitly as a possible contact missed by quadrature.
+
+For straight affine source cells and collinear straight target cells, the
+kernel now splits each source interval at axial target-feature transitions
+and every real root of squared distance to the finite target segment minus
+squared combined radius. The squared distance is quadratic on each such
+interval. Open intervals are certified before quadrature; active intervals
+are integrated with the existing dimensional error budgets. This resolves
+the translated parallel-beam fixture that previously failed. Its energy
+agreed with an independent scalar integration of the finite-segment gap;
+forces and moments balanced, role exchange agreed, and a moving-boundary
+energy/tangent check passed (`c3-native-whole-pair-support-final.txt`, 8/8).
+An isolated narrow pocket smaller than the original Gauss-node spacing was
+also found by the exact partition. The straight certificate rejects poses
+whose coordinate roundoff exceeds the declared geometry tolerance. The
+affected native tests passed 25/25
+(`c3-native-whole-pair-support-final-affected.txt`).
+
+This is a straight-profile support result, not a qualified general endpoint
+law. Genuine endpoint force regularization, curved support boundaries,
+arbitrary whole-beam sliding, retained rotational work in this whole-pair
+route, static-owner coupling and C3 qualification remain open.
 
 ## Retained round-centreline/plane penalty kernel
 
