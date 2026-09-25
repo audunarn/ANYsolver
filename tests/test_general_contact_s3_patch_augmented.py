@@ -80,6 +80,26 @@ def test_projected_patch_rejects_missing_pressure_tolerance():
     assert "pressure_tolerance" in " ".join(report.issues)
 
 
+def test_projected_patch_weak_open_gap_is_reported_and_cannot_pass():
+    model, definition, settings = _augmented_case()
+    definition = replace(definition, interactions=(
+        replace(definition.interactions[0], gap_tolerance=5e-5),
+    ))
+    manager = GeneralS3PatchManager(model, definition, settings)
+    displacement = np.zeros(manager.n_dof)
+    for node, vertical in ((1, -0.0151), (2, -0.014),
+                           (3, -0.014), (4, -0.014)):
+        displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = vertical
+    force, _tangent, result = manager.evaluate(displacement, tangent=False)
+    assert min(result.normalized_weighted_gap_m) > 0.0
+    assert result.active_pressure_dofs == 0
+    np.testing.assert_array_equal(manager.projected_normal_multipliers(displacement),
+                                  0.0)
+    np.testing.assert_array_equal(force, 0.0)
+    assert result.minimum_gap < -5e-5
+    assert not result.gap_tolerance_met
+
+
 def test_projected_patch_normal_tangent_matches_directional_residual():
     model, definition, settings = _augmented_case()
     manager = GeneralS3PatchManager(model, definition, settings)
