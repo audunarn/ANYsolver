@@ -13,7 +13,8 @@ import time
 from pathlib import Path
 
 import numpy as np
-from scipy import linalg
+from scipy import linalg, sparse
+from scipy.sparse.linalg import spsolve
 from threadpoolctl import threadpool_info, threadpool_limits
 
 from anysolver._ge_beam3_mixed_ad import Jet2, matvec, so3_exp, transpose
@@ -335,6 +336,117 @@ def distributed_surface_patch_trace_panel(
             np.max(np.abs(rows[:, 5:shell_size:6]))),
         "definition": "host-clipped Q4/S3 reference oracle for six surface-position moments",
     }
+
+
+def loaded_surface_patch_panel(topology: str, shell_intervals: int,
+                               *, transverse_intervals: int = 4) -> dict:
+    """Bounded virgin Q4/S3 and native B3 torque/shear KKT discriminator.
+
+    The beam, 35 mm panel, supports, patch and separate tip loads are fixed.
+    The actual E4 trial tangent and retained B3 tangent remain in the KKT;
+    this is an exploratory linearization, not a production or G0 solve.
+    """
+    if (topology not in ("Q4", "S3-V2D") or
+            shell_intervals not in (4, 8) or
+            transverse_intervals not in (4, 8)):
+        raise ValueError("bounded Q4/S3 panel resolution required")
+    if shell_intervals == 8 and transverse_intervals == 8:
+        raise ValueError("bounded finite-patch KKT row cap exceeded")
+    shell = FlatE4TrialPanel(make_shell(
+        shell_intervals, topology, n_y=transverse_intervals,
+        thickness=.035))
+    beam = build(8, z_offset=.0675,
+                 torsion_constant=square_torsion_constant())
+    shell_size = 6*shell.panel.node_count
+    trial = shell.evaluate(np.zeros(shell_size), .95)
+    constraint, reference = distributed_surface_patch_trace_panel(shell, beam)
+    total = shell_size+beam.context.count
+    fixed_shell = {6*j*(shell.panel.x_interval_count+1)+axis
+                   for j in range(shell.panel.n_y+1) for axis in range(6)}
+    fixed_beam = {shell_size+int(index) for index in beam.context.fixed}
+    free = np.array([i for i in range(total)
+                     if i not in fixed_shell and i not in fixed_beam])
+    if np.linalg.matrix_rank(constraint[:, free]) != 6:
+        raise ArithmeticError("supported finite-patch rows lost rank")
+    primal = sparse.block_diag(
+        (sparse.csr_matrix(trial.tangent), beam.tangent), format="csr")
+    physical_shell = physical_shell_stiffness(shell.panel)
+    base_residual = np.r_[trial.residual, beam.residual]
+    rows = sparse.csr_matrix(constraint[:, free])
+    kkt = sparse.bmat([[primal[free, :][:, free], rows.T],
+                       [rows, None]], format="csr")
+    if kkt.shape[0] > 1000:
+        raise ValueError("bounded finite-patch KKT row cap exceeded")
+    force_scale = 1e6
+    displacement_scale = force_scale/(210e9*.035)
+    nodal_scale = np.tile(np.full(6, displacement_scale),
+                          shell.panel.node_count+
+                          beam.context.nodal_count//6)
+    resultants = np.r_[
+        np.tile(SECTION_DIAGONAL[:3]*displacement_scale, 2),
+        np.tile(SECTION_DIAGONAL[3:]*displacement_scale, 4)]
+    retained_scale = np.tile(
+        np.r_[np.full(6, displacement_scale), resultants],
+        beam.n_half_cells//2)
+    primal_scale = np.r_[nodal_scale, retained_scale]
+    if len(primal_scale) != total:
+        raise ArithmeticError("native retained scaling layout changed")
+    scales = np.r_[primal_scale[free], np.full(6, force_scale)]
+    energy_scale = force_scale*displacement_scale
+    scaled = (sparse.diags(scales)@kkt@sparse.diags(scales)/energy_scale)
+    results = {}
+    for label, axis, magnitude in (("tip_mx_100nm", 3, 100.),
+                                    ("tip_fz_1000n", 2, 1000.)):
+        load = np.zeros(total)
+        load[shell_size+6*beam.n_half_cells+axis] = magnitude
+        effective_load = load-base_residual
+        rhs = np.r_[effective_load[free]*scales[:len(free)]/energy_scale,
+                    np.zeros(6)]
+        answer = spsolve(scaled, rhs)
+        state = np.zeros(total)
+        state[free] = scales[:len(free)]*answer[:len(free)]
+        multipliers = scales[len(free):]*answer[len(free):]
+        residual = (base_residual+primal@state+
+                    constraint.T@multipliers-load)
+        gap = constraint@state
+        support = residual[:shell_size].reshape(-1, 6)
+        beam_support = residual[shell_size:shell_size+
+                                beam.context.nodal_count].reshape(-1, 6)
+        shell_nodes = reference_nodes(shell.panel)
+        plate_moment = np.sum(
+            np.cross(shell_nodes, support[:, :3])+support[:, 3:], axis=0)
+        beam_root_moment = np.sum(
+            np.cross(np.array([(i/beam.n_half_cells, 0., .0675)
+                               for i in range(beam.n_half_cells+1)]),
+                     beam_support[:, :3])+beam_support[:, 3:], axis=0)
+        work_error = abs(state@(primal@state)-effective_load@state)
+        physical_shell_work = float(
+            state[:shell_size]@physical_shell@state[:shell_size])
+        relative_equilibrium = (np.linalg.norm(residual[free])/
+                                max(1., np.linalg.norm(load[free])))
+        if (not np.isfinite(state).all() or physical_shell_work <= 0. or
+                max(relative_equilibrium, np.linalg.norm(gap),
+                    work_error) > 1e-8):
+            raise ArithmeticError("bounded loaded finite-patch check failed")
+        results[label] = {
+            "tip_work_coordinate": float(state[
+                shell_size+6*beam.n_half_cells+axis]),
+            "load_work_j": float(load@state),
+            "physical_shell_work_j": physical_shell_work,
+            "plate_support_force_n": support[:, :3].sum(axis=0).tolist(),
+            "plate_support_moment_nm": plate_moment.tolist(),
+            "beam_root_support_moment_nm": beam_root_moment.tolist(),
+            "scaled_equilibrium_residual": float(relative_equilibrium),
+            "weak_gap_norm": float(np.linalg.norm(gap)),
+            "work_error_j": float(work_error),
+        }
+    return {"topology": topology, "shell_intervals": shell_intervals,
+            "transverse_intervals": transverse_intervals,
+            "beam_half_cells": beam.n_half_cells,
+            "kkt_rows": int(kkt.shape[0]), "kkt_nnz": int(kkt.nnz),
+            "initial_shell_residual_n": float(np.linalg.norm(trial.residual)),
+            "reference": reference, "loads": results,
+            "scope": "bounded reference linearization; no G0 or external acceptance"}
 
 
 def finite_rigid_work(shell: FlatE4TrialPanel, beam, port,

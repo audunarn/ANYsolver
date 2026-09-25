@@ -7,7 +7,7 @@ from scripts._b3_e4_f03_shell_strip_pose_candidate import reference_spatial_trac
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts.b3_e4_f03_local_footprint_work import (
     case, distributed_surface_patch_trace, distributed_surface_patch_trace_panel,
-    structured_q4_patch_trace,
+    loaded_surface_patch_panel, structured_q4_patch_trace,
     structured_q4_point_shape,
 )
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
@@ -137,6 +137,26 @@ def test_host_clipped_surface_moments_reproduce_six_physical_actions(topology):
         for i in range(len(xs)):
             shear[6*(j*len(xs)+i)+2] = 1e-5*y
     assert (rows@shear)[3] == pytest.approx(1e-5, abs=1e-14)
+
+
+@pytest.mark.parametrize("topology", ["Q4", "S3-V2D"])
+def test_loaded_surface_patch_panel_keeps_work_gap_and_support_balance(topology):
+    result = loaded_surface_patch_panel(topology, 4)
+    assert result["kkt_rows"] < 1000
+    for response in result["loads"].values():
+        assert response["scaled_equilibrium_residual"] < 1e-9
+        assert response["weak_gap_norm"] < 1e-12
+        assert response["work_error_j"] < 1e-9
+        assert response["load_work_j"] > 0.
+        assert response["physical_shell_work_j"] > 0.
+    torque = result["loads"]["tip_mx_100nm"]
+    assert (torque["plate_support_moment_nm"][0]+
+            torque["beam_root_support_moment_nm"][0]) == pytest.approx(
+                -100., abs=1e-7)
+    shear = result["loads"]["tip_fz_1000n"]
+    assert (shear["plate_support_moment_nm"][1]+
+            shear["beam_root_support_moment_nm"][1]) == pytest.approx(
+                1000., abs=1e-7)
 
 
 @pytest.mark.parametrize("topology", ["Q4", "S3-V2D"])
