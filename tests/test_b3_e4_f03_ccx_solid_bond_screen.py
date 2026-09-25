@@ -222,6 +222,10 @@ def test_declared_terminal_clearance_is_positive_and_tapers_to_shared_patch(clea
     audit=SCREEN.audit_unbonded_open(meta,motion)
     assert audit["negative_nodal_gaps"]==0
     assert audit["minimum_reference_normal_gap_m"]==pytest.approx(min(gaps))
+    assert audit["sampled_face_count"]>0
+    assert audit["sampled_face_points_per_face"]==81
+    assert audit["sampled_face_negative_points"]==0
+    assert audit["sampled_face_minimum_reference_normal_gap_m"]>0
     probes={node:np.zeros(3) for node in meta["probe_node_ids"]}
     recovered=SCREEN.recover(meta,probes)
     assert recovered["unbonded_midspan_normal_separation_m"][
@@ -230,6 +234,31 @@ def test_declared_terminal_clearance_is_positive_and_tapers_to_shared_patch(clea
         SCREEN.build(1,"tip_mx",boundary_policy="left_root",
                      bond_policy="terminal",element_family="C3D8",
                      tip_mx_gap_audit=True,bar_clearance_um=clearance_um)
+
+
+def test_quadratic_face_shape_has_partition_and_nodal_interpolation():
+    nodes=((-1.,-1.),(1.,-1.),(1.,1.),(-1.,1.),
+           (0.,-1.),(1.,0.),(0.,1.),(-1.,0.))
+    for i,(xi,eta) in enumerate(nodes):
+        expected=np.zeros(8)
+        expected[i]=1.
+        assert SCREEN._quad8_shape(xi,eta)==pytest.approx(expected,abs=1e-15)
+    for xi,eta in ((0.,0.),(.4,-.6),(-.9,.8)):
+        assert sum(SCREEN._quad8_shape(xi,eta))==pytest.approx(1.,abs=1e-15)
+
+
+def test_quadratic_face_audit_finds_negative_interior_with_positive_nodes():
+    pairs=[(i,i+8) for i in range(1,9)]
+    positive=[1e-6]*4+[.1e-6]*4
+    meta={"unbonded_interface_pairs":pairs,
+          "unbonded_initial_gaps_m":positive,
+          "unbonded_face_pairs":[pairs],
+          "unbonded_face_initial_gaps_m":[positive]}
+    motion={node:np.zeros(3) for pair in pairs for node in pair}
+    audit=SCREEN.audit_unbonded_open(meta,motion)
+    assert audit["negative_nodal_gaps"]==0
+    assert audit["sampled_face_negative_points"]>0
+    assert audit["sampled_face_minimum_reference_normal_gap_m"]<0
 
 
 @pytest.mark.parametrize("factor", (1, 2, 4))

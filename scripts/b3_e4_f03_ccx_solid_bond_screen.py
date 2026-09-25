@@ -287,9 +287,35 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                         for key in sorted(plate_surface)]
         if any(a == b for a,b in unbonded_pairs):
             raise AssertionError("quadratic unbonded interface was merged")
+        def interface_faces(cells, face_indices):
+            faces={}
+            for cell in cells:
+                face=tuple(cell[i] for i in face_indices)
+                points=[reference_inverse[i] for i in face]
+                if (all(z==35 for _,_,z in points) and
+                    min(x for x,_,_ in points)>=0 and
+                    max(x for x,_,_ in points)<=900 and
+                    min(y for _,y,_ in points)>=-50 and
+                    max(y for _,y,_ in points)<=50):
+                    key=tuple((x,y) for x,y,_ in points[:4])
+                    if key in faces:
+                        raise AssertionError("repeated quadratic interface face")
+                    faces[key]=face
+            return faces
+        plate_faces=interface_faces(plate_cells,(4,5,6,7,12,13,14,15))
+        bar_faces=interface_faces(bar_cells,(0,1,2,3,8,9,10,11))
+        if set(plate_faces)!=set(bar_faces):
+            raise AssertionError("quadratic interface faces do not match")
+        unbonded_face_pairs=[]
+        for key in sorted(plate_faces):
+            paired=list(zip(plate_faces[key],bar_faces[key]))
+            if any(reference_inverse[a]!=reference_inverse[b] for a,b in paired):
+                raise AssertionError("quadratic interface face nodes do not match")
+            unbonded_face_pairs.append(paired)
     else:
         unbonded_pairs = [(coordinates[key], bar_index)
                           for key, bar_index in sorted(detached.items())]
+        unbonded_face_pairs=[]
     if reverse_tip_fz or tip_mx_gap_audit:
         lines.append("*NSET,NSET=UnbondedInterface")
         lines.extend(_set_lines([node for pair in unbonded_pairs for node in pair]))
@@ -365,6 +391,13 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           "unbonded_initial_gaps_m":([float((inverse[bar][2]-inverse[plate][2])/1000)
                                         for plate,bar in unbonded_pairs]
                                        if reverse_tip_fz or tip_mx_gap_audit else []),
+          "unbonded_face_pairs":(unbonded_face_pairs if reverse_tip_fz or tip_mx_gap_audit
+                                  else []),
+          "unbonded_face_initial_gaps_m":([
+              [float((inverse[bar][2]-inverse[plate][2])/1000)
+               for plate,bar in face]
+              for face in unbonded_face_pairs]
+              if reverse_tip_fz or tip_mx_gap_audit else []),
           "plate_contact_face_element_ids":plate_contact,
           "bar_contact_face_element_ids":bar_contact,
           "boundary_nodes":len(boundary),"boundary_node_ids":sorted(boundary),
@@ -431,6 +464,17 @@ def parse_probe_displacements(dat: str, expected: set[int]) -> dict[int,np.ndarr
     return parse_nodal_vectors(dat,expected,"displacements","PROBE")
 
 
+def _quad8_shape(xi: float, eta: float) -> np.ndarray:
+    corners=((-1.,-1.),(1.,-1.),(1.,1.),(-1.,1.))
+    return np.array([
+        .25*(1.+sx*xi)*(1.+sy*eta)*(sx*xi+sy*eta-1.)
+        for sx,sy in corners]+[
+        .5*(1.-xi*xi)*(1.-eta),
+        .5*(1.+xi)*(1.-eta*eta),
+        .5*(1.-xi*xi)*(1.+eta),
+        .5*(1.-xi)*(1.-eta*eta)])
+
+
 def audit_unbonded_open(meta: dict, displacement: dict[int,np.ndarray]) -> dict:
     """Reference-normal gap at every paired node of the matching free faces."""
     pairs=meta["unbonded_interface_pairs"]
@@ -443,11 +487,39 @@ def audit_unbonded_open(meta: dict, displacement: dict[int,np.ndarray]) -> dict:
                   for i,(plate,bar) in enumerate(pairs)])
     if not np.isfinite(gap).all():
         raise ValueError("nonfinite unbonded interface gap")
-    return {"paired_nodes":len(pairs),
+    result={"paired_nodes":len(pairs),
             "minimum_reference_normal_gap_m":float(gap.min()),
             "maximum_reference_normal_gap_m":float(gap.max()),
             "negative_nodal_gaps":int(np.count_nonzero(gap < -1e-12)),
             "meaning":"reference-normal paired-node check on matching element faces; contact and deformed-surface closest-point gap were not solved"}
+    faces=meta.get("unbonded_face_pairs",[])
+    face_initial=meta.get("unbonded_face_initial_gaps_m",[])
+    if faces:
+        if len(faces)!=len(face_initial) or any(len(face)!=8 for face in faces):
+            raise ValueError("invalid quadratic interface face inventory")
+        roots=np.polynomial.legendre.leggauss(9)[0]
+        shapes=np.array([_quad8_shape(float(xi),float(eta))
+                         for xi in roots for eta in roots])
+        sample_min=float("inf")
+        negatives=0
+        for face,initial_face in zip(faces,face_initial):
+            if len(initial_face)!=8:
+                raise ValueError("invalid quadratic initial face gap inventory")
+            nodal=np.array([initial_face[i]+(
+                displacement[bar][2]-displacement[plate][2]
+                if plate!=bar else 0.)
+                for i,(plate,bar) in enumerate(face)])
+            sampled=shapes@nodal
+            if not np.isfinite(sampled).all():
+                raise ValueError("nonfinite quadratic interface face gap")
+            sample_min=min(sample_min,float(sampled.min()))
+            negatives+=int(np.count_nonzero(sampled < -1e-12))
+        result.update({"sampled_face_count":len(faces),
+                       "sampled_face_points_per_face":len(shapes),
+                       "sampled_face_minimum_reference_normal_gap_m":sample_min,
+                       "sampled_face_negative_points":negatives,
+                       "sampled_face_meaning":"nine-point Gauss grid per direction on paired quadratic faces, excluding the zero-gap bonded seam; not an exact minimum or deformed closest-point contact check"})
+    return result
 
 
 def _wrench(forces: dict[int,np.ndarray], xyz: dict[str,list[float]]) -> list[float]:
