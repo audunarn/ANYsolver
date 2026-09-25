@@ -241,6 +241,9 @@ def test_square_patch_retained_interface_action_is_consistent(kind):
         dual["yaw_mz_beta_upper"] + 1e-10)
     assert 0 <= dual["yaw_mz_sign_changes"] < mode["row_count"] // 6
     assert 0. <= dual["yaw_mz_physical_work_share"] <= 1.
+    assert 0. < dual["mx_beta_lower"] <= dual["mx_beta_upper"] + 1e-10
+    assert 0 <= dual["mx_sign_changes"] < mode["row_count"] // 6
+    assert 0. <= dual["mx_physical_work_share"] <= 1.
     assert 0. < dual["torque_fy_mx_mz_beta_lower"] <= (
         dual["torque_fy_mx_mz_beta_upper"] + 1e-10)
     assert sum(dual["torque_mode_fy_mx_mz_norm_shares"]) == pytest.approx(
@@ -264,6 +267,8 @@ def test_loaded_torque_overlap_uses_the_same_physical_solution():
         loaded["tip_rx_rad"], rel=1e-10)
     assert mode["loaded_torque_scaled_equilibrium_error"] < 1e-8
     assert 0. <= mode["loaded_torque_weak_mode_dual_overlap_fraction"] <= 1.
+    assert 0. <= mode[
+        "loaded_torque_mx_weak_mode_dual_overlap_fraction"] <= 1.
     assert sum(mode["loaded_torque_fy_mx_mz_dual_norm_shares"]) == (
         pytest.approx(1., abs=1e-10))
 

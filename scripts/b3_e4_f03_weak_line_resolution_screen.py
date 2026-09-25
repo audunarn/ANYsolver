@@ -499,6 +499,22 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
                                  max(yaw_work,1e-300))
         if not -1e-10 <= yaw_physical_share <= 1.+1e-10:
             raise ArithmeticError("invalid yaw work decomposition")
+        mx_rows=np.arange(3,len(rows),6)
+        mx_bp,mx_br=bp[mx_rows],br[mx_rows]
+        mx_action=mx_bp@mx_bp.T+mx_br@mx_br.T
+        mx_action=(mx_action+mx_action.T)/2
+        mx_low,mx_vectors=linalg.eigh(mx_action,upper)
+        mx_high=linalg.eigh(mx_action,lower,eigvals_only=True)
+        if mx_low[0] < -1e-9*max(1.,mx_low[-1]):
+            raise ArithmeticError("negative Mx absolute-energy dual action")
+        mx_mode=mx_vectors[:,0]
+        mx_significant=np.abs(mx_mode)>1e-8*np.max(np.abs(mx_mode))
+        mx_signs=np.sign(mx_mode[mx_significant])
+        mx_work=float(mx_mode@mx_action@mx_mode)
+        mx_physical_share=float(np.linalg.norm(mx_mode@mx_bp)**2/
+                                 max(mx_work,1e-300))
+        if not -1e-10 <= mx_physical_share <= 1.+1e-10:
+            raise ArithmeticError("invalid Mx work decomposition")
         # The saved torque-channel ablation identifies Fy/Mx/Mz together as
         # the load-carrying subspace. Its minimum is more relevant to torque
         # than the all-channel or Fz/Mx/My minimum, but remains diagnostic.
@@ -547,6 +563,11 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
                 yaw_signs[1:] != yaw_signs[:-1])),
             "yaw_mz_physical_work_share":float(np.clip(
                 yaw_physical_share,0.,1.)),
+            "mx_beta_lower":float(np.sqrt(max(0.,mx_low[0]))),
+            "mx_beta_upper":float(np.sqrt(max(0.,mx_high[0]))),
+            "mx_sign_changes":int(np.count_nonzero(
+                mx_signs[1:] != mx_signs[:-1])),
+            "mx_physical_work_share":float(np.clip(mx_physical_share,0.,1.)),
             "torque_fy_mx_mz_beta_lower":float(np.sqrt(max(0.,torque_low[0]))),
             "torque_fy_mx_mz_beta_upper":float(np.sqrt(max(0.,torque_high[0]))),
             "torque_mode_fy_mx_mz_norm_shares":(
@@ -583,17 +604,24 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
                 raise ArithmeticError("loaded torque multiplier norm vanished")
             overlap=float((torque_vectors[:,0]@upper3@
                            normalized_multiplier)**2/loaded_norm)
+            mx_multiplier=(multiplier/row_scale)[mx_rows]
+            loaded_mx_norm=float(mx_multiplier@upper@mx_multiplier)
+            mx_overlap=float((mx_mode@upper@mx_multiplier)**2/
+                             max(loaded_mx_norm,1e-300))
             loaded_channels=normalized_multiplier.reshape(space.count,3)
             loaded_shares=np.array([float(loaded_channels[:,axis]@upper@
                                           loaded_channels[:,axis])
                                     for axis in range(3)])/loaded_norm
-            if not -1e-10<=overlap<=1.+1e-10:
+            if (not -1e-10<=overlap<=1.+1e-10 or
+                    not -1e-10<=mx_overlap<=1.+1e-10):
                 raise ArithmeticError("loaded torque mode overlap invalid")
             dual_diagnostic.update({
                 "loaded_torque_tip_rx_rad":float(full[tip_rx]),
                 "loaded_torque_scaled_equilibrium_error":scaled_error,
                 "loaded_torque_weak_mode_dual_overlap_fraction":float(
                     np.clip(overlap,0.,1.)),
+                "loaded_torque_mx_weak_mode_dual_overlap_fraction":float(
+                    np.clip(mx_overlap,0.,1.)),
                 "loaded_torque_fy_mx_mz_dual_norm_shares":
                     loaded_shares.tolist(),
             })
