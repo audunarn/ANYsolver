@@ -115,7 +115,8 @@ def mode(kkt, shell, beam, spaces, constraint):
     action = action[np.ix_(selected, selected)]
     action = (action + action.T) / 2
     result = {"row_rank": int(np.linalg.matrix_rank(constraint[:, free])),
-              "row_count": len(constraint)}
+              "row_count": len(constraint),
+              "transverse_row_indices": list(selected)}
     for name, power in (("HminusHalf", -.5), ("HminusOne", -1.)):
         gr = [norm_gram(space.kind, len(space.knots) - 1, power)
               for space in (spaces[2], spaces[3], spaces[4])]
@@ -130,6 +131,11 @@ def mode(kkt, shell, beam, spaces, constraint):
             "beta_upper": float(np.sqrt(max(0., linalg.eigh(action, lower, eigvals_only=True)[0]))),
             "fz_sign_changes": int(np.count_nonzero(signs[1:] != signs[:-1])),
             "fz_coefficients": fz.tolist(),
+            "transverse_mode_coefficients": weak.tolist(),
+            "algorithmic_physical_action": float(np.linalg.norm(
+                bp[selected, :].T @ weak)**2),
+            "algorithmic_retained_absolute_action": float(np.linalg.norm(
+                br[selected, :].T @ weak)**2),
         }
     return result
 
