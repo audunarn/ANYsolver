@@ -259,3 +259,36 @@ def test_q4_q4_augmented_ordinary_displacement_control():
         result.info["general_contact"]["normal_multiplier_estimate_pa"],
         rtol=5e-2, atol=2e-2,
     )
+
+
+def test_q4_q4_augmented_single_press_tighter_gap_rejects_and_rolls_back():
+    model, definition, settings = _augmented_case()
+    definition = replace(definition, interactions=(
+        replace(definition.interactions[0], normal_stiffness=10000.0,
+                gap_tolerance=5e-5),
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "target_fixed", (5, 6, 7, 8),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "source_guide", (1, 2, 3, 4),
+        {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+    ))
+    path = ContactPathProgram(
+        controls=(ContactPathControl.node(1, "ux"),
+                  ContactPathControl.node(1, "uz")),
+        waypoints=((0.0, 0.0), (0.0, -0.01505)),
+        steps_per_segment=1,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=path, max_iterations=40,
+    )
+    assert result.status == "diverged"
+    assert result.failure_reason == "contact_gap_exceeded"
+    np.testing.assert_array_equal(result.displacements, 0.0)
+    np.testing.assert_array_equal(
+        result.info["general_contact"]["normal_multiplier_estimate_pa"],
+        0.0,
+    )
