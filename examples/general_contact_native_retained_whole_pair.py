@@ -1,0 +1,115 @@
+"""Internal C3 example: active contact between two complete native B3-GE beams.
+
+Install this checkout or set PYTHONPATH=src before running. The example uses
+the restricted development profile and may take several minutes. It is not
+an admitted public native contact capability or engineering qualification.
+"""
+
+from __future__ import annotations
+
+import json
+
+import numpy as np
+
+from anysolver._ge_beam3_centered_reference import (
+    CenteredCurvedBeam3ReferenceGeometry,
+)
+from anysolver._ge_beam3_generalized_ellipsoid_section import (
+    EllipsoidalGeneralizedSection,
+)
+from anysolver._ge_beam3_native_definition import NativeBeamDefinition
+from anysolver._ge_beam3_native_generalized_element import (
+    NativeGeneralizedStaticElement,
+)
+from anysolver._ge_beam3_native_generalized_loading import DistributedPattern
+from anysolver._ge_beam3_native_line_loading import LinePattern
+from anysolver._ge_beam3_retained_nodal_loading import NodalDeadForces, Program
+from anysolver.boundary import BoundaryCondition
+from anysolver.general_contact.native_retained_pair_static import (
+    NativeRetainedRoundPairAnalysis,
+)
+from anysolver.general_contact.native_retained_whole_pair import (
+    NativeRetainedWholeCurvePair,
+)
+
+
+def analysis() -> NativeRetainedRoundPairAnalysis:
+    def reference(y: float) -> CenteredCurvedBeam3ReferenceGeometry:
+        return CenteredCurvedBeam3ReferenceGeometry(
+            np.array(((0.0, y, 0.0), (1.0, y, 0.0), (2.0, y, 0.0))),
+            np.tile(np.eye(3), (3, 1, 1)),
+        )
+
+    a, b = reference(0.0), reference(0.13)
+    section = EllipsoidalGeneralizedSection(
+        np.diag((1000.0, 400.0, 350.0, 0.8, 1.0, 1.2)),
+        np.eye(6), 1e6, 1.0,
+    )
+    inertia = np.diag((2.0, 2.0, 2.0, 0.07, 0.09, 0.11))
+    first = NativeGeneralizedStaticElement(
+        11, (1, 2, 3), a, section, order=4,
+    )
+    second = NativeGeneralizedStaticElement(
+        12, (4, 5, 6), b, section, order=4,
+    )
+    definitions = (NativeBeamDefinition.capture(first, inertia),
+                   NativeBeamDefinition.capture(second, inertia))
+    fixed = {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")}
+    boundaries = (BoundaryCondition("first-root", [1], fixed),
+                  BoundaryCondition("second-root", [4], fixed))
+    program = Program(
+        (0.0, 0.1, 0.2, 0.3),
+        DistributedPattern(LinePattern(()), ()),
+        NodalDeadForces(((6, 0.0, -0.05, 0.0),)),
+        max_iterations=24,
+    )
+    contact = NativeRetainedWholeCurvePair(
+        11, a, (1, 2, 3), 0.05,
+        12, b, (4, 5, 6), 0.05,
+        line_stiffness_n_per_m2=100.0,
+        distance_tolerance_m=1e-10,
+        feature_tolerance_m=1e-9,
+        search_parameter_tolerance=1e-3,
+        maximum_search_depth=20,
+        maximum_search_cells=10000,
+        energy_tolerance_j=1e-8,
+        force_tolerance_n=1e-7,
+        tangent_tolerance_n_per_m=1e-6,
+        maximum_integration_intervals=1000,
+    )
+    return NativeRetainedRoundPairAnalysis(
+        definitions, boundaries, program, contact,
+        gap_tolerance_m=1e-3, equilibrium_tolerance=1e-8,
+        maximum_swept_intervals=128,
+    )
+
+
+def main() -> None:
+    prefix = analysis().solve(stop_after=3)
+    if prefix.status != "paused":
+        raise RuntimeError(prefix.failure)
+    resumed = analysis().solve(
+        checkpoint=prefix.checkpoint,
+        expected_sha256=prefix.checkpoint_sha256,
+    )
+    if resumed.status != "completed":
+        raise RuntimeError(resumed.failure)
+    result = resumed.accepted.contact
+    print(json.dumps({
+        "profile": resumed.profile,
+        "completed_targets": resumed.accepted.completed_targets,
+        "potential_j": result.potential_j,
+        "conservative_lower_gap_m": result.conservative_lower_gap_m,
+        "declared_gap_tolerance_m": 1e-3,
+        "force_on_first_beam_n": result.beam_a_force_n.tolist(),
+        "force_on_second_beam_n": result.beam_b_force_n.tolist(),
+        "moment_on_first_beam_about_origin_nm": result.beam_a_moment_nm.tolist(),
+        "moment_on_second_beam_about_origin_nm": result.beam_b_moment_nm.tolist(),
+        "search_cells": result.search_cells,
+        "integration_evaluations": result.integration_evaluations,
+        "checkpoint_sha256": resumed.checkpoint_sha256,
+    }, indent=2))
+
+
+if __name__ == "__main__":
+    main()

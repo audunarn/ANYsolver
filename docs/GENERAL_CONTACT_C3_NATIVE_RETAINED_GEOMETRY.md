@@ -356,6 +356,17 @@ failure. These development results do not admit the general C3 profile;
 complete curved ownership, practical resource use, beam–shell coupling
 and independent qualification remain open.
 
+Run `examples/general_contact_native_retained_whole_pair.py` from an
+installed checkout or with `PYTHONPATH=src` to reproduce the restricted
+active path and its checkpoint continuation. The example completed and
+reported 1.136742774e-7 J contact potential, equal/opposite transverse
+forces of 0.000652809 N, equal/opposite moments about the origin of
+0.001300055 N m, and checkpoint SHA-256
+`932efcb531cdb6113950ecb7b0e1770644332f8068accd2e8124c838d6eb9b5c`
+(`c3-native-whole-active-example.txt`). These are integrated line-contact
+reactions for the declared 0.05 m round centreline radii, not section
+surface pressures.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization
