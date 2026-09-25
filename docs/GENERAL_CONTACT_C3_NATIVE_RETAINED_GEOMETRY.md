@@ -356,6 +356,17 @@ failure. These development results do not admit the general C3 profile;
 complete curved ownership, practical resource use, beam–shell coupling
 and independent qualification remain open.
 
+The nearby failure is now localized: its source half-cell is straight and
+its two straight target half-cells meet at a small kink. Generic union
+search returned hundreds of individually unresolved intervals, including
+an open region near source station 0.183, and integration exhausted its
+declared interval budget. The failure now reports source/target cells,
+station interval, visited count and allocated tolerances
+(`c3-native-whole-near-contact-probe-2.txt`,
+`c3-native-whole-near-capture.txt`). A piecewise-straight two-segment
+support and ownership partition is the next development candidate;
+no tolerance or contact was silently discarded.
+
 Run `examples/general_contact_native_retained_whole_pair.py` from an
 installed checkout or with `PYTHONPATH=src` to reproduce the restricted
 active path and its checkpoint continuation. The example completed and

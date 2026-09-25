@@ -432,7 +432,7 @@ class NativeRetainedRoundPairAnalysis:
                             if self._recoverable_trial_contact_error(exc):
                                 rejected["geometry"] += 1
                                 last_rejection = (f"geometry {type(exc).__name__}: "
-                                                  f"{str(exc)[:160]}")
+                                                  f"{str(exc)[:320]}")
                                 continue
                             raise
                         if (candidate_contact.conservative_lower_gap_m

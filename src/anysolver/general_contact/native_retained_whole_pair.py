@@ -553,7 +553,13 @@ class NativeRetainedWholeCurvePair:
                     nonlocal visited, intervals, omissions
                     visited += 1
                     if visited > self.maximum_integration_intervals:
-                        raise MemoryError("native whole pair integration interval budget exhausted")
+                        raise MemoryError(
+                            "native whole pair integration interval budget exhausted: "
+                            f"source cell {source_index}, target cell "
+                            f"{target_base+owner}, interval [{left}, {right}], "
+                            f"visited {visited}, allocated tolerances "
+                            f"{budget.tolist()}"
+                        )
                     middle = 0.5*(left+right)
                     if middle == left or middle == right:
                         bound = _tiny_cell_omission_bound(
