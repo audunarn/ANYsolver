@@ -68,16 +68,29 @@ def one_case(topology: str, intervals: int, kind: str, *,
              native_half_cells: int = 16,
              n_y: int = 2,
              thickness: float = .07,
-             shell_support_policy: str = "legacy_three_left_nodes") -> dict:
+             shell_support_policy: str = "legacy_three_left_nodes",
+             fine_intervals: int | None = None,
+             fine_channels: tuple[int, ...] = ()) -> dict:
     """Solve one bounded six-channel load at fixed reference resolution."""
     shell = FlatE4TrialPanel(make_shell(n_s, topology, n_y=n_y,
                                        thickness=thickness))
     beam = build(native_half_cells)
     space = LineMultiplierSpace(
         kind, tuple(np.linspace(0., 1., intervals+1)))
-    kkt = assemble_reference_kkt(
-        shell, beam, space, shell_port=shell_port,
-        shell_support_policy=shell_support_policy)
+    if fine_intervals is None:
+        if fine_channels:
+            raise ValueError("fine channels require a fine interval count")
+        kkt = assemble_reference_kkt(
+            shell, beam, space, shell_port=shell_port,
+            shell_support_policy=shell_support_policy)
+    else:
+        if kind != "piecewise_constant":
+            raise ValueError("split channels require P0 multipliers")
+        kkt = assemble_channel_split_reference_kkt(
+            shell, beam, coarse_intervals=intervals,
+            fine_intervals=fine_intervals,fine_channels=fine_channels,
+            shell_port=shell_port,
+            shell_support_policy=shell_support_policy)
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
@@ -119,7 +132,7 @@ def one_case(topology: str, intervals: int, kind: str, *,
     free_count = len(kkt.free_primal)
     rhs = np.r_[load[kkt.free_primal]*
                 kkt.coordinate_scale[:free_count]/kkt.energy_scale,
-                np.zeros(6*space.count)]
+                np.zeros(kkt.constraint_jacobian.shape[0])]
     scaled_solution = np.linalg.solve(kkt.scaled_system, rhs)
     scaled_residual = kkt.scaled_system@scaled_solution-rhs
     physical_solution = kkt.coordinate_scale*scaled_solution
@@ -231,6 +244,8 @@ def one_case(topology: str, intervals: int, kind: str, *,
         "shell_support_policy": shell_support_policy,
         "load_kind": load_kind,
         "intervals": intervals,
+        "fine_intervals":fine_intervals,
+        "fine_channels":fine_channels,
         "shell_host_intervals": n_s,
         "shell_transverse_intervals": n_y,
         "shell_thickness_m": shell.panel.thickness,

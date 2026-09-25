@@ -142,6 +142,30 @@ def test_split_mx_dual_norm_matches_coarse_transverse_control():
     assert split["weakest_channel_dual_norm_shares_fz_mx_my"][0] > .3
 
 
+def test_split_mx_recovers_fine_torque_without_refining_transverse_force():
+    kwargs=dict(shell_port="physical_strip_005_005",n_s=2,n_y=4,
+                native_half_cells=4,shell_support_policy="full_left_edge")
+    refined=dict(fine_intervals=4,fine_channels=(3,))
+    torque_fine=one_case("Q4",4,"piecewise_constant",
+                         load_kind="torsion",**kwargs)
+    torque_split=one_case("Q4",2,"piecewise_constant",
+                          load_kind="torsion",**refined,**kwargs)
+    shear_coarse=one_case("Q4",2,"piecewise_constant",
+                          load_kind="transverse_force_z",**kwargs)
+    shear_split=one_case("Q4",2,"piecewise_constant",
+                         load_kind="transverse_force_z",**refined,**kwargs)
+    assert torque_split["tip_rx_rad"] == pytest.approx(
+        torque_fine["tip_rx_rad"],rel=1e-9)
+    assert shear_split["beam_tip_uz_m"] == pytest.approx(
+        shear_coarse["beam_tip_uz_m"],rel=1e-9)
+    for result in (torque_split,shear_split):
+        assert result["shell_component_physical_energy_j"] > 0.
+        assert abs(result["shell_numerical_energy_j"]) < 1e-12
+        assert abs(result["global_work_error_j"]) < 1e-10
+        assert abs(result["global_torque_x_balance_n_m"]) < 1e-8
+        assert abs(result["global_force_z_balance_n"]) < 1e-8
+
+
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
 def test_strip_reference_area_and_rigid_work(topology):
     panel = make_shell(2, topology, n_y=4)
