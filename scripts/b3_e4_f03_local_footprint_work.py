@@ -12,13 +12,14 @@ import subprocess
 from pathlib import Path
 
 import numpy as np
+from scipy import linalg
 from threadpoolctl import threadpool_info, threadpool_limits
 
 from anysolver._ge_beam3_mixed_ad import Jet2, matvec, so3_exp, transpose
 from anysolver._ge_beam3_pose_joint import RigidPoseJoint
 from scripts._b3_e4_f03_coupled_point_work_candidate import directional_point_work
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
-from scripts._b3_e4_f03_native_fixture import build
+from scripts._b3_e4_f03_native_fixture import SECTION_DIAGONAL, build
 from scripts._b3_e4_f03_native_spatial_port import NativeNodalSpatialPort
 from scripts._b3_e4_f03_shell_finite_pose_candidate import reference_nodes
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
@@ -271,6 +272,160 @@ def finite_distributing_work(shell: FlatE4TrialPanel, beam, port) -> dict:
             "scope": "actual E4 area-mean/polar pose and native nodal Exp-chart, nonzero-multiplier local proof"}
 
 
+def termination_local(shell: FlatE4TrialPanel, beam) -> dict:
+    """Check a declared last-0.1 m bonded patch at the native beam tip."""
+    panel = shell.panel
+    shell_size = 6*panel.node_count
+    port = NativeNodalSpatialPort(beam.context, beam.n_half_cells)
+    state = beam.context.initial.mechanical
+    high, low, frame = port.pose_pair(state)
+    center = high+low
+    station = .95
+    points = tuple((x, y, 0.) for x, y in
+                   ((.9, -.05), (1., -.05), (1., .05), (.9, .05)))
+    if np.max(np.abs(center - (1., 0., .085))) > 1e-14:
+        raise ArithmeticError("native tip footprint geometry changed")
+    total = shell_size+beam.context.count
+    beam_trace = port.tangent(state)
+    rigid = np.zeros((12, total))
+    offsets = []
+    for i, point in enumerate(points):
+        indices, shape = panel._shape(point[0], point[1])
+        for node, weight in zip(indices, shape):
+            rigid[3*i:3*i+3, 6*node:6*node+3] += weight*np.eye(3)
+        rigid[3*i:3*i+3, shell_size:] = np.column_stack((
+            -np.eye(3), skew(np.asarray(point)-center)))@beam_trace
+        offsets.append(frame.T@(np.asarray(point)-center))
+    shell_position, shell_frame = pose_from_e4_total_strip(
+        panel, station, np.zeros(shell_size),
+        half_length=.05, half_width=.05)
+    joint = RigidPoseJoint(
+        np.array((shell_position, center)),
+        np.array((shell_frame, frame)))
+    evaluation = joint.evaluate(
+        np.array((shell_position, high)),
+        np.array((shell_frame, frame)), np.zeros(6),
+        position_low=np.array((np.zeros(3), low)))
+    trace = reference_spatial_trace_strip(
+        panel, station, half_length=.05, half_width=.05)
+    distributing = np.column_stack((
+        evaluation.constraint_jacobian[:, :6]@trace,
+        evaluation.constraint_jacobian[:, 6:]@beam_trace))
+    fixed_shell = {6*j*(panel.x_interval_count+1)+axis
+                   for j in range(panel.n_y+1) for axis in range(6)}
+    fixed_beam = {shell_size+index for index in beam.context.fixed}
+    free = np.array([index for index in range(total)
+                     if index not in fixed_shell and index not in fixed_beam])
+    ranks = (int(np.linalg.matrix_rank(distributing[:, free])),
+             int(np.linalg.matrix_rank(rigid[:, free])))
+    # The patch lies entirely on the plate; its mean is not the native tip.
+    # A physical shell My must still be recovered about one common origin.
+    dmoment = np.zeros(6)
+    dmoment[4] = -100.
+    dx = np.array([point[0]-station for point in points])
+    rmoment = np.zeros(12)
+    rmoment[2::3] = -100.*dx/(dx@dx)
+    reference = reference_nodes(panel)
+    def shell_my(force):
+        nodal = force[:shell_size].reshape(-1, 6)
+        return float(np.sum(nodal[:, 4]-reference[:, 0]*nodal[:, 2]))
+    moments = (shell_my(distributing.T@dmoment),
+               shell_my(rigid.T@rmoment))
+    rigid_reference_gap = max(float(np.linalg.norm(
+        frame.T@(np.asarray(point)-center)-offset))
+        for point, offset in zip(points, offsets))
+    if (ranks != (6, 12) or
+            max(abs(value-100.) for value in moments) > 1e-8 or
+            max(rigid_reference_gap,
+                float(np.max(np.abs(evaluation.constraints)))) > 1e-12):
+        raise ArithmeticError("local termination footprint admission failed")
+
+    # The small dense system is a bounded, independent G0 assembly oracle.
+    # Both laws use identical E4/native-B3 tangents, supports and tip loads.
+    shell_k = shell.evaluate(np.zeros(shell_size), station).tangent
+    primal = linalg.block_diag(shell_k, beam.tangent.toarray())
+    force_scale = 1e6
+    displacement_scale = force_scale/(210e9*.07)
+    nodal_scale = np.tile(np.full(6, displacement_scale),
+                          panel.node_count+beam.context.nodal_count//6)
+    resultants = np.r_[np.tile(SECTION_DIAGONAL[:3]*displacement_scale, 2),
+                       np.tile(SECTION_DIAGONAL[3:]*displacement_scale, 4)]
+    retained_scale = np.tile(np.r_[np.full(6, displacement_scale), resultants],
+                              beam.n_half_cells//2)
+    primal_scale = np.r_[nodal_scale, retained_scale]
+    if len(primal_scale) != total:
+        raise ArithmeticError("termination retained scale layout changed")
+
+    def loaded(constraint: np.ndarray, axis: int) -> dict:
+        m = len(constraint)
+        n = len(free)
+        rows = constraint[:, free]
+        kkt = np.block([[primal[np.ix_(free, free)], rows.T],
+                        [rows, np.zeros((m, m))]])
+        scale = np.r_[primal_scale[free], np.full(m, force_scale)]
+        energy = force_scale*displacement_scale
+        scaled = (scale[:, None]*kkt)*scale[None, :]/energy
+        load = np.zeros(total)
+        load[shell_size+6*beam.n_half_cells+axis] = (
+            100. if axis == 3 else 1000.)
+        rhs = np.r_[load[free]*scale[:n]/energy, np.zeros(m)]
+        answer = linalg.solve(scaled, rhs, assume_a="gen")
+        full = np.zeros(total)
+        full[free] = scale[:n]*answer[:n]
+        multiplier = scale[n:]*answer[n:]
+        residual = primal@full + constraint.T@multiplier-load
+        free_error = float(np.linalg.norm(residual[free]) /
+                           max(1., np.linalg.norm(load[free])))
+        gap_error = float(np.linalg.norm(constraint@full))
+        work_error = float(abs(full@(primal@full)-load@full))
+        shell_reactions = residual[:shell_size].reshape(-1, 6)
+        beam_reactions = residual[shell_size:shell_size+beam.context.nodal_count].reshape(-1, 6)
+        shell_force = shell_reactions.sum(axis=0)[:3]
+        beam_force = beam_reactions.sum(axis=0)[:3]
+        support_force = shell_force+beam_force
+        shell_nodes = reference_nodes(panel)
+        beam_nodes = np.array([(i/beam.n_half_cells, 0., .085)
+                               for i in range(beam.n_half_cells+1)])
+        support_moment = (
+            np.cross(shell_nodes, shell_reactions[:, :3]).sum(axis=0) +
+            shell_reactions[:, 3:].sum(axis=0) +
+            np.cross(beam_nodes, beam_reactions[:, :3]).sum(axis=0) +
+            beam_reactions[:, 3:].sum(axis=0))
+        applied_force = load[shell_size+6*beam.n_half_cells:
+                             shell_size+6*beam.n_half_cells+3]
+        applied_moment = load[shell_size+6*beam.n_half_cells+3:
+                              shell_size+6*beam.n_half_cells+6]
+        balance_force = float(np.linalg.norm(support_force+applied_force))
+        balance_moment = float(np.linalg.norm(support_moment+
+            np.cross(center, applied_force)+applied_moment))
+        if (max(free_error, gap_error, work_error) > 1e-7 or
+                max(balance_force, balance_moment) > 1e-7 or
+                not np.isfinite(full).all()):
+            raise ArithmeticError("loaded local termination solution failed")
+        return {"tip_rx_rad": float(full[shell_size+6*beam.n_half_cells+3]),
+                "tip_uz_m": float(full[shell_size+6*beam.n_half_cells+2]),
+                "scaled_equilibrium_residual": free_error,
+                "weak_gap_norm": gap_error,
+                "work_error_j": work_error,
+                "global_force_balance_n": balance_force,
+                "global_moment_balance_nm": balance_moment}
+
+    loaded_results = {
+        family: {"torque_mx_100nm": loaded(constraint, 3),
+                 "shear_fz_1000n": loaded(constraint, 2)}
+        for family, constraint in (("distributing", distributing),
+                                   ("rigid", rigid))}
+    return {"patch_x_m": [.9, 1.], "beam_tip_x_m": 1.,
+            "rows_and_supported_ranks": {"distributing": [6, ranks[0]],
+                                         "rigid": [12, ranks[1]]},
+            "reference_gap_max": max(
+                rigid_reference_gap,
+                float(np.max(np.abs(evaluation.constraints)))),
+            "shell_my_nm": {"distributing": moments[0], "rigid": moments[1]},
+            "loaded_linear_reference": loaded_results,
+            "scope": "bounded linearized tip-patch dense oracle; no nonlinear termination qualification"}
+
+
 def case(topology: str) -> dict:
     """Compare actual linearized local maps and their virtual work."""
     shell = FlatE4TrialPanel(make_shell(4, topology, n_y=4))
@@ -408,7 +563,8 @@ def case(topology: str) -> dict:
             shell, beam, port, points, rigid_moment),
         "finite_distributing_chart": finite_distributing_work(
             shell, beam, port),
-        "scope": "local linearized patch row-space/work proof; rigid patch intentionally restrains local shear; not a full line solve or space selection",
+        "tip_termination_local": termination_local(shell, beam),
+        "scope": "local patch work and bounded linearized tip KKT; rigid patch intentionally restrains local shear; not a true-line or production result",
     }
 
 
@@ -421,14 +577,15 @@ def run(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=False)
     manifest = {
         "status": "EXPLORATORY_NOT_G0_ACCEPTANCE", "source_sha": source,
-        "question": "Do both distinct finite-width laws retain their local nonzero-multiplier work curvature through actual E4 and native B3 nodal charts?",
-        "decision": "If both finite-chart checks pass, retain the laws as distinct candidates for intended-extent and termination study; any failure sends that law's pullback back for revision. Neither check selects a line multiplier space or qualifies a complete footprint.",
+        "question": "Do distinct finite-width laws remain consistent and give distinguishable, balanced linearized responses for the same last-0.1 m beam-tip patch?",
+        "decision": "Failure of reference, rank, equilibrium, work or global balance requires map/assembly revision. Passing bounded loaded responses keeps both declared idealizations for physical-reference and nonlinear checks; it does not select a true-line multiplier space.",
         "python": platform.python_version(), "numpy": np.__version__,
         "threads": 1, "models": ["Q4", "S3-V2D"],
-        "geometry": "plate [-.5,1.5]x[-.5,.5] z=0 thickness .07 m; square patch at x=.5 half-width .05/.05 m; B3 axis z=.085 m",
+        "geometry": "plate [-.5,1.5]x[-.5,.5] z=0 thickness .07 m; center patch x=.5±.05 and terminal patch x=[.9,1.0], y±.05; B3 axis z=.085 m, x=[0,1]",
         "section": "square-bar Saint-Venant J; other native generalized resultants unchanged",
         "support": "full shell left edge and native B3 root fixed",
-        "scope": "local linear row-space and finite-chart work checks, not a global footprint or line qualification",
+        "loads": "separate +100 Nm native tip Mx and +1000 N native tip Fz for the bounded terminal KKT",
+        "scope": "local work and dense linearized terminal KKT; no nonlinear, convergence, physical-accuracy, production-footprint or true-line qualification",
     }
     with threadpool_limits(limits=1):
         manifest["effective_threadpools"] = threadpool_info()
