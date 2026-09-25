@@ -65,7 +65,7 @@ def _set_lines(indices: set[int] | list[int]) -> list[str]:
 def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           bond_policy: str = "full", contact_policy: str = "none",
           reverse_tip_fz: bool = False, element_family: str = "C3D8",
-          tip_mx_gap_audit: bool = False
+          tip_mx_gap_audit: bool = False, bar_clearance_um: int = 0
           ) -> tuple[str, dict]:
     """Return an exact-coordinate brick deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
@@ -89,6 +89,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                              boundary_policy != "left_root" or
                              contact_policy != "none" or reverse_tip_fz):
         raise ValueError("torque gap audit requires no-contact terminal torque")
+    if bar_clearance_um not in (0, 1, 2) or (bar_clearance_um and
+            (not tip_mx_gap_audit or element_family != "C3D20R")):
+        raise ValueError("declared bar clearance requires quadratic terminal torque audit")
     if element_family not in ("C3D8", "C3D20R") or (
             element_family == "C3D20R" and
             (bond_policy not in ("detached", "terminal") or
@@ -175,6 +178,14 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
         raise AssertionError("duplicate solid corner-node identity")
     if set(inverse) != set(range(1,next_id)):
         raise AssertionError("solid node identity changed")
+    reference_inverse=inverse.copy()
+    if bar_clearance_um:
+        clearance_mm=Fraction(bar_clearance_um,1000)
+        for index in bar_nodes-plate_nodes:
+            x,y,z=inverse[index]
+            if x < 900:
+                taper=min(Fraction(1), (900-x)/150)
+                inverse[index]=(x,y,z+clearance_mm*taper)
     interface={(x,y,Fraction(35)) for x in bx for y in by
                if bond_policy == "full" or
                (bond_policy == "terminal" and x >= 900)}
@@ -262,12 +273,14 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                       "*CONTACT PAIR,INTERACTION=HardUnbonded,TYPE=MORTAR",
                       "BarBottomUnbonded,PlateTopUnbonded"))
     if element_family == "C3D20R":
-        plate_surface={inverse[i]:i for i in plate_nodes
-                       if inverse[i][2] == 35 and 0 <= inverse[i][0] < 900
-                       and -50 <= inverse[i][1] <= 50}
-        bar_surface={inverse[i]:i for i in bar_nodes
-                     if inverse[i][2] == 35 and 0 <= inverse[i][0] < 900
-                     and -50 <= inverse[i][1] <= 50}
+        plate_surface={reference_inverse[i]:i for i in plate_nodes
+                       if reference_inverse[i][2] == 35 and
+                       0 <= reference_inverse[i][0] < 900 and
+                       -50 <= reference_inverse[i][1] <= 50}
+        bar_surface={reference_inverse[i]:i for i in bar_nodes
+                     if reference_inverse[i][2] == 35 and
+                     0 <= reference_inverse[i][0] < 900 and
+                     -50 <= reference_inverse[i][1] <= 50}
         if set(plate_surface) != set(bar_surface):
             raise AssertionError("quadratic unbonded interface is nonmatching")
         unbonded_pairs=[(plate_surface[key],bar_surface[key])
@@ -344,10 +357,14 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
               [0.,1.] if bond_policy=="full" else
               [.9,1.] if bond_policy=="terminal" else None),
           "contact_policy":contact_policy,
+          "bar_clearance_um":bar_clearance_um,
           "reverse_tip_fz":reverse_tip_fz,
           "tip_mx_gap_audit":tip_mx_gap_audit,
           "unbonded_interface_pairs":(unbonded_pairs if reverse_tip_fz or tip_mx_gap_audit
                                         else []),
+          "unbonded_initial_gaps_m":([float((inverse[bar][2]-inverse[plate][2])/1000)
+                                        for plate,bar in unbonded_pairs]
+                                       if reverse_tip_fz or tip_mx_gap_audit else []),
           "plate_contact_face_element_ids":plate_contact,
           "bar_contact_face_element_ids":bar_contact,
           "boundary_nodes":len(boundary),"boundary_node_ids":sorted(boundary),
@@ -416,8 +433,11 @@ def audit_unbonded_open(meta: dict, displacement: dict[int,np.ndarray]) -> dict:
     pairs=meta["unbonded_interface_pairs"]
     if not pairs or set(displacement) != {node for pair in pairs for node in pair}:
         raise ValueError("incomplete unbonded interface displacement inventory")
-    gap=np.array([displacement[bar][2]-displacement[plate][2]
-                  for plate,bar in pairs])
+    initial=meta.get("unbonded_initial_gaps_m", [0.]*len(pairs))
+    if len(initial) != len(pairs):
+        raise ValueError("incomplete initial interface gap inventory")
+    gap=np.array([initial[i]+displacement[bar][2]-displacement[plate][2]
+                  for i,(plate,bar) in enumerate(pairs)])
     if not np.isfinite(gap).all():
         raise ValueError("nonfinite unbonded interface gap")
     return {"paired_nodes":len(pairs),
@@ -561,6 +581,7 @@ def main() -> int:
                         default="C3D8")
     parser.add_argument("--reverse-fz-open-audit",action="store_true")
     parser.add_argument("--tip-mx-gap-audit",action="store_true")
+    parser.add_argument("--bar-clearance-um",type=int,choices=(0,1,2),default=0)
     args=parser.parse_args()
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
@@ -584,6 +605,9 @@ def main() -> int:
             args.boundary!="left_root" or args.bond!="terminal" or
             args.contact!="none" or args.reverse_fz_open_audit):
         parser.error("torque gap audit requires no-contact terminal tip-load suite")
+    if args.bar_clearance_um and (not args.tip_mx_gap_audit or
+                                  args.element_family!="C3D20R"):
+        parser.error("declared bar clearance requires quadratic terminal torque audit")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -594,7 +618,9 @@ def main() -> int:
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":("Does terminal torque on the free, coincident no-contact faces produce a negative physical normal gap, invalidating this torque comparator?"
+              "question":("Does a declared micrometre clearance keep the unbonded terminal-bar faces open under torque while leaving work insensitive to clearance and mesh?"
+                          if args.bar_clearance_um else
+                          "Does terminal torque on the free, coincident no-contact faces produce a negative physical normal gap, invalidating this torque comparator?"
                           if args.tip_mx_gap_audit else
                           "Does replacing bending-stiff C3D8 with quadratic C3D20R on the same free-bar mesh reduce shear/torsion resolution error before advancing a terminal reference?"
                           if args.element_family=="C3D20R" and args.bond=="detached" else
@@ -611,7 +637,9 @@ def main() -> int:
                           "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
                           if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
-              "decision":("If any paired node overlaps under torque, reject no-contact torque as a physical comparator; if all remain open, assess face interiors and deformation before using it. Neither outcome selects a footprint."
+              "decision":("If paired-node gaps remain positive and torque work is clearance- and mesh-insensitive, retain only a declared-gap external reference candidate pending face-interior checks; otherwise require contact. No native footprint is selected."
+                          if args.bar_clearance_um else
+                          "If any paired node overlaps under torque, reject no-contact torque as a physical comparator; if all remain open, assess face interiors and deformation before using it. Neither outcome selects a footprint."
                           if args.tip_mx_gap_audit else
                           "If quadratic free-bar torque/shear approach the declared section values and change little over the bounded levels, advance the open-terminal shear check; otherwise stop this solid reference route. No footprint is selected."
                           if args.element_family=="C3D20R" and args.bond=="detached" else
@@ -640,6 +668,7 @@ def main() -> int:
               "element_reference":"https://www.dhondt.de/ccx_2.22.pdf, element types: C3D20R preferred for bending; no quadratic contact is used",
               "reverse_fz_open_audit":args.reverse_fz_open_audit,
               "tip_mx_gap_audit":args.tip_mx_gap_audit,
+              "bar_clearance_um":args.bar_clearance_um,
               "contact_reference":"https://www.dhondt.de/ccx_2.22.pdf, sections on MORTAR contact and hard surface behavior (external-reference diagnostic only)",
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
               "limits_of_claim":["3D solid idealization, not E4 or B3",
@@ -648,6 +677,9 @@ def main() -> int:
                                  "quadratic screen retains corner-node tip loads to isolate element interpolation; not a consistent quadratic face traction"
                                  if args.element_family=="C3D20R" else
                                  "linear-brick tip loads use corner-node face weights",
+                                 "bar axis and section are lifted by the declared clearance outside the terminal bond and taper to the original axis over x=0.75-0.9 m; this differs from the straight native beam"
+                                 if args.bar_clearance_um else
+                                 "no initial clearance outside the shared patch",
                                  ("detached control has no physical plate/bar connection"
                                   if args.bond=="detached" else
                                   "terminal mode uses external hard-mortar contact only outside the shared patch"
@@ -664,7 +696,8 @@ def main() -> int:
                         bond_policy=args.bond,contact_policy=args.contact,
                         reverse_tip_fz=args.reverse_fz_open_audit,
                         element_family=args.element_family,
-                        tip_mx_gap_audit=args.tip_mx_gap_audit and shear=="tip_mx")
+                        tip_mx_gap_audit=args.tip_mx_gap_audit and shear=="tip_mx",
+                        bar_clearance_um=args.bar_clearance_um)
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()

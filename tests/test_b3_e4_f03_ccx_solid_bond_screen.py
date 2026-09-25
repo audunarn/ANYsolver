@@ -201,6 +201,33 @@ def test_quadratic_terminal_torque_gap_audit_keeps_the_physical_wrench():
                      tip_mx_gap_audit=True)
 
 
+@pytest.mark.parametrize("clearance_um", (1, 2))
+def test_declared_terminal_clearance_is_positive_and_tapers_to_shared_patch(clearance_um):
+    deck,meta=SCREEN.build(2,"tip_mx",boundary_policy="left_root",
+                           bond_policy="terminal",element_family="C3D20R",
+                           tip_mx_gap_audit=True,bar_clearance_um=clearance_um)
+    pairs=meta["unbonded_interface_pairs"]
+    gaps=meta["unbonded_initial_gaps_m"]
+    assert len(gaps)==len(pairs)
+    assert min(gaps)>0
+    assert max(gaps)==pytest.approx(clearance_um*1e-6,abs=1e-15)
+    assert len(set(round(g,14) for g in gaps))>1
+    assert meta["shared_interface_nodes"]>0
+    assert "*CONTACT PAIR" not in deck
+    applied={int(node):np.array(force) for node,force in
+             meta["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(applied,meta["probe_coordinates_m"]) == pytest.approx(
+        [0.,0.,0.,100.,0.,0.],abs=1e-10)
+    motion={node:np.zeros(3) for pair in pairs for node in pair}
+    audit=SCREEN.audit_unbonded_open(meta,motion)
+    assert audit["negative_nodal_gaps"]==0
+    assert audit["minimum_reference_normal_gap_m"]==pytest.approx(min(gaps))
+    with pytest.raises(ValueError,match="declared bar clearance"):
+        SCREEN.build(1,"tip_mx",boundary_policy="left_root",
+                     bond_policy="terminal",element_family="C3D8",
+                     tip_mx_gap_audit=True,bar_clearance_um=clearance_um)
+
+
 @pytest.mark.parametrize("factor", (1, 2, 4))
 def test_terminal_hard_mortar_faces_exclude_bonded_patch(factor):
     deck, meta = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",
