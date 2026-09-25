@@ -33,7 +33,11 @@ The ordinary displacement-control route also completed a two-step 0.05 mm
 corner closure with active pressure, opposite-body force balance, the same
 0.2 mm gap budget and a version-2 multiplier checkpoint
 (`q4-s3-projected-ordinary-displacement-first.txt`, 48.43 seconds). Ordinary
-force control remains a separate untested route for this V1 profile.
+force control also completed four fixed load-factor increments with active
+pressure, integrated force balance, the declared 5 mm route gap budget and a
+version-2 multiplier checkpoint
+(`q4-s3-projected-ordinary-force-first.txt`, 53.92 seconds). This force-route
+fixture is separate from the tighter gap benchmark.
 With 10,000 Pa/m normal regularization and a 0.04 mm corner closure, a
 single press and a four-phase lifecycle each met a declared 0.05 mm gap
 budget (`q4-s3-projected-50um-first.txt`,
