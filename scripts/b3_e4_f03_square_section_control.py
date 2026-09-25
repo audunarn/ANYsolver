@@ -143,13 +143,68 @@ def run_matched_full_bond(output_dir: Path) -> None:
             json.dumps(manifest, indent=2, allow_nan=False) + "\n")
 
 
+def run_matched_mx_split(output_dir: Path) -> None:
+    """Attribute the matched loaded change to Mx rows without mesh change."""
+    from scripts.b3_e4_f03_weak_line_resolution_screen import one_case
+
+    source = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                     text=True).strip()
+    if subprocess.check_output(["git", "status", "--porcelain"],
+                               text=True).strip():
+        raise RuntimeError("run requires clean source")
+    output_dir.mkdir(parents=True, exist_ok=False)
+    coarse = LineMultiplierSpace("piecewise_constant",
+                                 tuple(np.linspace(0., 1., 5)))
+    fine = LineMultiplierSpace("piecewise_constant",
+                               tuple(np.linspace(0., 1., 9)))
+    spaces = (coarse, coarse, coarse, fine, coarse, coarse)
+    manifest = {
+        "status": "EXPLORATORY_NOT_G0_ACCEPTANCE",
+        "question": "On the matched native mesh, do Mx rows alone cause the n4-to-n8 torque drift without altering the Fz shear response?",
+        "outcome_rule": "If split Mx matches n8 all-row torque but n4 all-row shear, prioritize Mx pose/interface-resolution revision. Otherwise investigate coupled non-Mx rows or physical bond idealization. Do not infer a multiplier choice from this fixed-mesh ablation.",
+        "source_head": source,
+        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "comparison": "f03-matched-native-full-bond-dev-20260925-v2",
+        "geometry_loads_supports": "identical to v2; Q4/S3 x8/y4, B3 half16, 35 mm shell, z=.0675 m axis, square Saint-Venant J, full left shell edge and B3 root fixed; separate +100 N m tip Mx and +1000 N tip Fz",
+        "connection": "physical_strip_005_005 exact six-channel P0; Mx has 8 intervals, all other channels 4",
+        "requested_blas_threads": 1,
+        "python": platform.python_version(),
+    }
+    with threadpool_limits(limits=1):
+        manifest["effective_threadpools"] = threadpool_info()
+        rows = []
+        for topology in ("Q4", "S3-V2D"):
+            for load in ("torsion", "transverse_force_z"):
+                row = one_case(
+                    topology, 4, "piecewise_constant",
+                    channel_spaces=spaces, shell_port="physical_strip_005_005",
+                    load_kind=load, n_s=4, n_y=4, native_half_cells=16,
+                    thickness=.035, beam_z_offset=.0675,
+                    beam_torsion_constant=square_torsion_constant(),
+                    shell_support_policy="full_left_edge")
+                rows.append(row)
+                print(topology, load, row["tip_rx_rad"],
+                      row["beam_tip_uz_m"], flush=True)
+        (output_dir / "results.json").write_text(
+            json.dumps(rows, indent=2, allow_nan=False) + "\n")
+        manifest["results_sha256"] = hashlib.sha256(
+            (output_dir / "results.json").read_bytes()).hexdigest()
+        (output_dir / "manifest.json").write_text(
+            json.dumps(manifest, indent=2, allow_nan=False) + "\n")
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--matched-full-bond", action="store_true")
+    parser.add_argument("--matched-mx-split", action="store_true")
     parser.add_argument("output_dir", type=Path)
     args = parser.parse_args()
-    if args.matched_full_bond:
+    if args.matched_full_bond and args.matched_mx_split:
+        parser.error("select one matched diagnostic")
+    if args.matched_mx_split:
+        run_matched_mx_split(args.output_dir)
+    elif args.matched_full_bond:
         run_matched_full_bond(args.output_dir)
     else:
         run(args.output_dir)

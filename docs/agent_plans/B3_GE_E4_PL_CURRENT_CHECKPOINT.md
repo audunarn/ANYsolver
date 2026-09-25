@@ -1,6 +1,18 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-## Current state — 25 September 2026
+## Current state — 25 September 2026, matched native torque/shear screen
+
+**Decision sought:** A defensible native six-channel beam–shell connection and, only then, a stable exact line space. G0B remains open, G1 barred, and formal F03 authority unconsumed.
+
+**Established facts:** The finite-strip polar-yaw functional has a balanced physical boundary-force work identity and preserves symmetric shear. On the fixed Q4/S3 x8/y4, B3-half16 diagnostic, the loaded +Mx solution excites only Mx multipliers to reported precision. Its overlap with the weakest normed Fy/Mx/Mz mode is effectively zero; the Mx-only weakest-mode overlap is only 0.7–4.0%. Thus the earlier weakening Fz/Fy spectral quotients do not explain the loaded torque drift or select a line space. In the newly *geometry/section/support-matched* native screen (35 mm plate, axis z=.0675 m, square Saint-Venant J, full left shell edge and beam root fixed), P0 n4→n8 gives Q4/S3 torque twist `27.079/27.018→23.987/23.956 µrad`, while shell-support torque falls `10.242/9.641→9.073/8.511 N m`. Shear moves `41.883/42.770→40.939/41.585 µm`. The separately executed full-bond C3D20R factor-4 reference gives `35.076 µrad` and `41.530 µm`; its volume bond and quadratic tip-face tractions differ from the native line tie and nodal resultants. Native equilibrium and work checks close, including the offset root-force moment arm. The first matched-screen manifest had a Windows newline hash error; v1 is preserved and v2 is a byte-identical result with a corrected hash, not a rerun.
+
+**Remaining uncertainty:** The matched torque gap and falling plate torque share could reflect the finite-strip Mx pose constraint, exact-row resolution, or the different physical bond and load idealizations. The solid record has a combined support wrench, not a reliable plate/root partition. The finite absolute-energy quotient is not a continuum inf-sup proof. Neither small gaps nor the matched shear response qualifies the six-channel connection. Classical axial, historical Q6/finite-pad, and native six-channel evidence remain distinct.
+
+**Next discriminating experiment and resulting action:** Use one bounded matched-mesh comparison that holds all non-Mx rows fixed while changing only Mx resolution, and inspect loaded torque, plate/root work partition, shell physical versus numerical energy, and Q4/S3 parity. If Mx rows explain the drift, revise the torsional pose/interface-resolution law before a multiplier choice; if they do not, isolate the other connection rows or bond idealization instead. Then assess the resulting credible candidate over registered mesh ratios with norm-scaled interface modes and loaded work. Do not resume axial refinement or select a space from a spectral minimum alone.
+
+Current source-bound records: `.qualification/b3-ge-e4-pl/f03-polar-yaw-dual-dev-20260925-v{1,2,3,4}` and `.qualification/b3-ge-e4-pl/f03-matched-native-full-bond-dev-20260925-v{1,2}`. The original matched-solid and full-field evidence remains listed below. The focused Q4/S3 offset-root torque controls passed directly; existing long-running pytest processes have not reported completion and are not claimed as passed.
+
+## Prior state and retained development evidence — 25 September 2026
 
 **Decision sought:** Select a physically defensible native six-channel beam–shell connection, then a stable exact line space. No production line or footprint law is selected. G0B remains open, G1 barred, and formal F03 authority unconsumed.
 
