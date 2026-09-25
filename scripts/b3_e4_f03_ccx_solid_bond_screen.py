@@ -44,6 +44,14 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def unexpected_solver_diagnostics(text: str, *, c1_penalty: bool) -> list[str]:
+    """Keep every solver warning except the known contact *STATIC notice."""
+    static_notice = "*WARNING reading *STATIC: a nonlinear analysis is requested"
+    return [line.strip() for line in text.splitlines()
+            if re.search(r"(?i)\b(warning|error|fatal)\b", line) and
+            not (c1_penalty and line.strip() == static_notice)]
+
+
 def _cuts(values: tuple[int | Fraction, ...], factor: int) -> tuple[Fraction, ...]:
     if type(factor) is not int or factor not in (1, 2, 4):
         raise ValueError("bounded solid mesh factor must be 1, 2, or 4")
@@ -1227,10 +1235,12 @@ def main() -> int:
                 status_rows=[re.match(r"^\s*1\s+1\s+1\s+\d+\s+([\d.Ee+-]+)\s+([\d.Ee+-]+)\s+([\d.Ee+-]+)\s*$",line)
                              for line in sta.splitlines()]
                 complete=[m for m in status_rows if m is not None]
+                diagnostics=unexpected_solver_diagnostics(
+                    out+sta+dat+stderr.decode(errors="replace"),
+                    c1_penalty=args.contact=="c1_penalty")
                 if (out.count("Job finished")!=1 or len(complete)!=1 or
                     abs(float(complete[0].group(1))-1.)>1e-10 or
-                    re.search(r"(?i)\b(warning|error|fatal)\b",out+sta+dat+
-                              stderr.decode(errors="replace"))):
+                    diagnostics):
                     raise ValueError("solver diagnostic or incomplete job")
                 probes=parse_probe_displacements(dat,set(meta["probe_node_ids"]))
                 reactions=parse_nodal_vectors(dat,set(meta["boundary_node_ids"]),

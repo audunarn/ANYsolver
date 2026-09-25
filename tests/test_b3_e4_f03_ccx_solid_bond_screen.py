@@ -417,6 +417,17 @@ def test_c1_penalty_contact_preserves_the_matched_torque_geometry_and_load():
         SCREEN.build(4, "tip_fz", contact_policy="c1_penalty", **options)
 
 
+def test_c1_penalty_runner_allows_only_its_known_static_notice():
+    notice = " *WARNING reading *STATIC: a nonlinear analysis is requested"
+    other = " *WARNING in contact: face search failed"
+    assert SCREEN.unexpected_solver_diagnostics(
+        notice, c1_penalty=True) == []
+    assert SCREEN.unexpected_solver_diagnostics(
+        notice, c1_penalty=False) == [notice.strip()]
+    assert SCREEN.unexpected_solver_diagnostics(
+        notice+"\n"+other, c1_penalty=True) == [other.strip()]
+
+
 def test_smooth_terminal_clearance_admits_shared_native_b3_frames():
     """The native Q2 frame guard admits the C1 reference used by the solid."""
     source=MODULE.parents[1]/"src"/"anysolver"/"ge_beam3_curved_reference.py"
