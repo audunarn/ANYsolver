@@ -14,7 +14,8 @@ from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_channel_split_reference_kkt,
-    assemble_reference_kkt, integrate_weak_line,
+    assemble_reference_kkt, integrate_channel_split_weak_line,
+    integrate_weak_line,
 )
 from scripts.b3_e4_f03_weak_line_resolution_screen import (
     channel_split_reference_modes, chord_reference_modes, one_case)
@@ -164,6 +165,82 @@ def test_split_mx_recovers_fine_torque_without_refining_transverse_force():
         assert abs(result["global_work_error_j"]) < 1e-10
         assert abs(result["global_torque_x_balance_n_m"]) < 1e-8
         assert abs(result["global_force_z_balance_n"]) < 1e-8
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_split_mx_weak_work_matches_actual_chart_derivatives(topology):
+    shell=FlatE4TrialPanel(make_shell(1,topology,n_y=4))
+    beam=build(4)
+    rng=np.random.default_rng(731)
+    shape=(shell.panel.node_count,6)
+    reference=np.zeros(shape)
+    current=rng.normal(scale=.001,size=shape)
+    first=rng.normal(scale=.01,size=shape)
+    second=rng.normal(scale=.01,size=shape)
+    beam_base=np.zeros(beam.context.count)
+    beam_base[6:12]=(.001,-.002,.0015,.01,-.007,.004)
+    beam_base[beam.context.nodal_count+3:beam.context.nodal_count+6]=(
+        .012,-.008,.006)
+    state=beam.context.advance(beam.context.initial.mechanical,beam_base)
+    beam_first=np.zeros_like(beam_base)
+    beam_second=np.zeros_like(beam_base)
+    beam_first[6:12]=(.02,-.01,.015,.03,-.02,.01)
+    beam_first[beam.context.nodal_count+3:beam.context.nodal_count+6]=(
+        .04,-.03,.02)
+    beam_second[12:18]=(-.015,.02,-.01,-.02,.01,.025)
+    beam_second[beam.context.nodal_count+6:beam.context.nodal_count+9]=(
+        -.02,.03,-.01)
+    coefficients=np.linspace(-12.,11.,14)
+    def work(a,b,with_directions=False):
+        moved=beam.context.advance(state,a*beam_first+b*beam_second)
+        return integrate_channel_split_weak_line(
+            shell,beam,2,4,(3,),coefficients,reference.ravel(),
+            (current+a*first+b*second).ravel(),
+            first if with_directions else np.zeros_like(first),
+            second if with_directions else np.zeros_like(second),
+            moved,beam_first if with_directions else np.zeros_like(beam_first),
+            beam_second if with_directions else np.zeros_like(beam_second))
+    result=work(0.,0.,True)
+    assert result.potential == pytest.approx(
+        coefficients@result.weak_constraints,abs=2e-10)
+    assert result.first == pytest.approx(
+        coefficients@result.weak_first,abs=2e-9)
+    assert result.second == pytest.approx(
+        coefficients@result.weak_second,abs=2e-9)
+    h=1e-5
+    assert result.first == pytest.approx(
+        (work(h,0.).potential-work(-h,0.).potential)/(2*h),
+        rel=2e-6,abs=2e-8)
+    assert result.second == pytest.approx(
+        (work(0.,h).potential-work(0.,-h).potential)/(2*h),
+        rel=2e-6,abs=2e-8)
+    h=2e-3
+    mixed=(work(h,h).potential-work(h,-h).potential-
+           work(-h,h).potential+work(-h,-h).potential)/(4*h*h)
+    assert result.mixed == pytest.approx(mixed,rel=5e-5,abs=5e-7)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_split_mx_reference_rows_match_nonlinear_first_variation(topology):
+    shell=FlatE4TrialPanel(make_shell(1,topology,n_y=4))
+    beam=build(4)
+    kkt=assemble_channel_split_reference_kkt(
+        shell,beam,coarse_intervals=2,fine_intervals=4,
+        fine_channels=(3,))
+    rng=np.random.default_rng(1901)
+    shell_first=rng.normal(scale=.001,size=(shell.panel.node_count,6))
+    beam_first=rng.normal(scale=.001,size=beam.context.count)
+    beam_first[list(beam.context.fixed)]=0.
+    zeros_shell=np.zeros_like(shell_first)
+    zeros_beam=np.zeros_like(beam_first)
+    result=integrate_channel_split_weak_line(
+        shell,beam,2,4,(3,),np.zeros(14),zeros_shell.ravel(),
+        zeros_shell.ravel(),shell_first,zeros_shell,
+        beam.context.initial.mechanical,beam_first,zeros_beam)
+    direction=np.r_[shell_first.ravel(),beam_first]
+    np.testing.assert_allclose(result.weak_first,
+                               kkt.constraint_jacobian@direction,
+                               rtol=2e-10,atol=2e-11)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))

@@ -93,6 +93,22 @@ class WeakLineWork:
 
 
 @dataclass(frozen=True)
+class ChannelSplitWeakWork:
+    """Ordered coarse/fine channel work from one accepted predecessor."""
+
+    potential: float
+    weak_constraints: np.ndarray
+    weak_first: np.ndarray
+    weak_second: np.ndarray
+    first: float
+    second: float
+    mixed: float
+    segment_count: int
+    quadrature_count: int
+    shell_trial: TrialPanelResponse
+
+
+@dataclass(frozen=True)
 class ReferenceKKT:
     """Small dense oracle of the virgin constrained reference linearization."""
 
@@ -385,6 +401,27 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                         scaled_system, len(edges)-1, shell_support_policy)
 
 
+def _channel_split_rows(coarse_intervals: int, fine_intervals: int,
+                        fine_channels: tuple[int, ...]
+                        ) -> tuple[list[int], list[int]]:
+    """Validate and number each physical channel exactly once."""
+    if (type(coarse_intervals) is not int or
+            type(fine_intervals) is not int or
+            not 1 <= coarse_intervals <= fine_intervals <= 16 or
+            fine_intervals % coarse_intervals):
+        raise ValueError("bounded nested P0 interval counts required")
+    if (type(fine_channels) is not tuple or
+            any(type(channel) is not int or not 0 <= channel < 6
+                for channel in fine_channels) or
+            tuple(sorted(set(fine_channels))) != fine_channels):
+        raise ValueError("ordered unique physical channel indices required")
+    coarse_rows=[6*i+j for i in range(coarse_intervals)
+                 for j in range(6) if j not in fine_channels]
+    fine_rows=[6*i+j for i in range(fine_intervals)
+               for j in fine_channels]
+    return coarse_rows,fine_rows
+
+
 def assemble_channel_split_reference_kkt(
         shell: FlatE4TrialPanel, beam: Fixture, *,
         coarse_intervals: int, fine_intervals: int,
@@ -397,16 +434,8 @@ def assemble_channel_split_reference_kkt(
     reference weak line. No multiplier row is averaged, penalized or
     duplicated. This is a G0 diagnostic candidate, not a space selection.
     """
-    if (type(coarse_intervals) is not int or
-            type(fine_intervals) is not int or
-            not 1 <= coarse_intervals <= fine_intervals <= 16 or
-            fine_intervals % coarse_intervals):
-        raise ValueError("bounded nested P0 interval counts required")
-    if (type(fine_channels) is not tuple or
-            any(type(channel) is not int or not 0 <= channel < 6
-                for channel in fine_channels) or
-            tuple(sorted(set(fine_channels))) != fine_channels):
-        raise ValueError("ordered unique physical channel indices required")
+    coarse_rows,fine_rows=_channel_split_rows(
+        coarse_intervals,fine_intervals,fine_channels)
 
     def assemble(intervals: int) -> ReferenceKKT:
         space=LineMultiplierSpace(
@@ -424,10 +453,6 @@ def assemble_channel_split_reference_kkt(
                                fine.coordinate_scale[:n]) or
             coarse.energy_scale != fine.energy_scale):
         raise ArithmeticError("split channel primal contracts disagree")
-    coarse_rows=[6*i+j for i in range(coarse_intervals)
-                 for j in range(6) if j not in fine_channels]
-    fine_rows=[6*i+j for i in range(fine_intervals)
-               for j in fine_channels]
     constraint=np.vstack((coarse.constraint_jacobian[coarse_rows],
                           fine.constraint_jacobian[fine_rows])).copy()
     rows=constraint[:,coarse.free_primal]
@@ -450,3 +475,54 @@ def assemble_channel_split_reference_kkt(
                         coarse.energy_scale,scaled_system,
                         max(coarse.segment_count,fine.segment_count),
                         shell_support_policy)
+
+
+def integrate_channel_split_weak_line(
+        shell: FlatE4TrialPanel, beam: Fixture,
+        coarse_intervals: int, fine_intervals: int,
+        fine_channels: tuple[int, ...], multipliers: np.ndarray,
+        shell_reference_total: np.ndarray, shell_total: np.ndarray,
+        shell_first: np.ndarray, shell_second: np.ndarray,
+        beam_state: Mechanical, beam_first: np.ndarray,
+        beam_second: np.ndarray, *, order: int = 4,
+        shell_port: str = "physical_strip_005_005") -> ChannelSplitWeakWork:
+    """Compose exact nonlinear weak work with channel-specific P0 tests.
+
+    Both integrals evaluate the same physical trial and accepted predecessor.
+    Their selected rows form one multiplier potential; no domain commits.
+    """
+    coarse_rows,fine_rows=_channel_split_rows(
+        coarse_intervals,fine_intervals,fine_channels)
+    coefficients=np.asarray(multipliers,dtype=float)
+    if (coefficients.shape != (len(coarse_rows)+len(fine_rows),) or
+            not np.isfinite(coefficients).all()):
+        raise ValueError("finite split-channel multipliers required")
+    coarse_coeff=np.zeros((coarse_intervals,6))
+    fine_coeff=np.zeros((fine_intervals,6))
+    coarse_coeff.ravel()[coarse_rows]=coefficients[:len(coarse_rows)]
+    fine_coeff.ravel()[fine_rows]=coefficients[len(coarse_rows):]
+    arguments=(shell_reference_total,shell_total,shell_first,shell_second,
+               beam_state,beam_first,beam_second)
+    coarse=integrate_weak_line(
+        shell,beam,LineMultiplierSpace("piecewise_constant",
+            tuple(np.linspace(0.,1.,coarse_intervals+1))),
+        coarse_coeff,*arguments,order=order,shell_port=shell_port)
+    fine=integrate_weak_line(
+        shell,beam,LineMultiplierSpace("piecewise_constant",
+            tuple(np.linspace(0.,1.,fine_intervals+1))),
+        fine_coeff,*arguments,order=order,shell_port=shell_port)
+    def selected(name: str) -> np.ndarray:
+        return np.r_[getattr(coarse,name).ravel()[coarse_rows],
+                     getattr(fine,name).ravel()[fine_rows]].copy()
+    result=ChannelSplitWeakWork(
+        coarse.potential+fine.potential,
+        selected("weak_constraints"),selected("weak_first"),
+        selected("weak_second"),coarse.first+fine.first,
+        coarse.second+fine.second,coarse.mixed+fine.mixed,
+        coarse.segment_count+fine.segment_count,
+        coarse.quadrature_count+fine.quadrature_count,
+        coarse.shell_trial)
+    if abs(result.potential-coefficients@result.weak_constraints) > (
+            1e-10*max(1.,abs(result.potential))):
+        raise ArithmeticError("split-channel potential/weak-row mismatch")
+    return result
