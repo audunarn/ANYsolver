@@ -60,7 +60,7 @@ def _set_lines(indices: set[int] | list[int]) -> list[str]:
 
 
 def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
-          bond_policy: str = "full"
+          bond_policy: str = "full", contact_policy: str = "none"
           ) -> tuple[str, dict]:
     """Return an exact-coordinate C3D8 deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
@@ -72,6 +72,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             bond_policy == "terminal" and (boundary_policy != "left_root" or
                                            shear not in ("tip_mx", "tip_fz"))):
         raise ValueError("terminal bond requires left/root tip-load case")
+    if contact_policy not in ("none", "mortar_hard") or (
+            contact_policy == "mortar_hard" and bond_policy != "terminal"):
+        raise ValueError("hard mortar contact requires terminal bond")
     plate_x = (PLATE_X_MM if bond_policy == "full" else
                tuple(sorted(set((*PLATE_X_MM, 900)))))
     bar_x = (BAR_X_MM if bond_policy == "full" else
@@ -159,6 +162,24 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
            "*NODE,NSET=AllNodes"]
     inverse={index:key for key,index in
              ((*coordinates.items(), *detached.items()))}
+    plate_contact=[]
+    bar_contact=[]
+    if contact_policy == "mortar_hard":
+        def unbonded_face(cell: tuple[int, ...], face: tuple[int, ...]) -> bool:
+            xyz=[inverse[cell[index]] for index in face]
+            return (all(z == 35 for _,_,z in xyz) and
+                    min(x for x,_,_ in xyz) >= 0 and
+                    max(x for x,_,_ in xyz) <= 900 and
+                    min(y for _,y,_ in xyz) >= -50 and
+                    max(y for _,y,_ in xyz) <= 50)
+        plate_contact=[eid for eid,cell in enumerate(plate_cells,1)
+                       if unbonded_face(cell,(4,5,6,7))]
+        bar_contact=[eid for eid,cell in
+                     enumerate(bar_cells,len(plate_cells)+1)
+                     if unbonded_face(cell,(0,1,2,3))]
+        expected=4*factor*2*factor
+        if len(plate_contact)!=expected or len(bar_contact)!=expected:
+            raise AssertionError("unbonded contact face inventory changed")
     for index in range(1,len(inverse)+1):
         xyz=inverse[index]
         lines.append(f"{index},"+",".join(_number(float(v)/1000) for v in xyz))
@@ -168,6 +189,18 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     lines.append("*ELEMENT,TYPE=C3D8,ELSET=Stiffener")
     for eid,cell in enumerate(bar_cells,len(plate_cells)+1):
         lines.append(f"{eid},"+",".join(map(str,cell)))
+    if contact_policy == "mortar_hard":
+        lines.append("*ELSET,ELSET=PlateUnbondedFaces")
+        lines.extend(_set_lines(plate_contact))
+        lines.append("*ELSET,ELSET=BarUnbondedFaces")
+        lines.extend(_set_lines(bar_contact))
+        lines.extend(("*SURFACE,NAME=PlateTopUnbonded,TYPE=ELEMENT",
+                      "PlateUnbondedFaces,S2",
+                      "*SURFACE,NAME=BarBottomUnbonded,TYPE=ELEMENT",
+                      "BarUnbondedFaces,S1",
+                      "*SURFACE INTERACTION,NAME=HardUnbonded",
+                      "*CONTACT PAIR,INTERACTION=HardUnbonded,TYPE=MORTAR",
+                      "BarBottomUnbonded,PlateTopUnbonded"))
     lines.extend(("*MATERIAL,NAME=Isotropic", "*ELASTIC", "210000000000,0.3",
                   "*SOLID SECTION,ELSET=Plate,MATERIAL=Isotropic",
                   "*SOLID SECTION,ELSET=Stiffener,MATERIAL=Isotropic",
@@ -211,6 +244,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             for dof,value in enumerate(force,1):
                 if value:
                     lines.append(f"{index},{dof},{_number(value)}")
+    if contact_policy == "mortar_hard":
+        lines.extend(("*CONTACT PRINT,FREQUENCY=9999", "CDIS,CSTR,CNUM"))
     lines.extend(("*NODE PRINT,NSET=Probe", "U",
                   f"*NODE PRINT,NSET={support_set}", "RF",
                   "*END STEP"))
@@ -222,6 +257,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           "detached_stiffener_node_ids":sorted(detached.values()),
           "bond_policy":bond_policy,"bond_interval_m":(
               [0.,1.] if bond_policy=="full" else [.9,1.]),
+          "contact_policy":contact_policy,
+          "plate_contact_face_element_ids":plate_contact,
+          "bar_contact_face_element_ids":bar_contact,
           "boundary_nodes":len(boundary),"boundary_node_ids":sorted(boundary),
           "plate_boundary_node_ids":sorted(plate_boundary),
           "beam_root_node_ids":(sorted(beam_root) if boundary_policy == "left_root"
@@ -411,12 +449,15 @@ def main() -> int:
     parser.add_argument("--factor",type=int,choices=(1,2,4),nargs="+",default=(1,2))
     parser.add_argument("--boundary",choices=("perimeter","left","left_root"),default="perimeter")
     parser.add_argument("--bond",choices=("full","terminal"),default="full")
+    parser.add_argument("--contact",choices=("none","mortar_hard"),default="none")
     args=parser.parse_args()
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
     if args.bond == "terminal" and (args.boundary != "left_root" or
                                     args.suite != "loads"):
         parser.error("terminal bond requires left/root tip-load suite")
+    if args.contact == "mortar_hard" and args.bond != "terminal":
+        parser.error("hard mortar contact requires terminal bond")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -429,10 +470,14 @@ def main() -> int:
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
               "question":("finite physical bond yaw under two affine shears"
                           if args.suite=="shear" else
+                          "Can hard mortar contact remove unbonded penetration while retaining the declared terminal solid bond and load work?"
+                          if args.contact=="mortar_hard" else
                           "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
                           if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
-              "decision":("If the terminal solid work responses settle under refinement, compare them separately with the rigid and distributing native footprint idealizations; if they do not settle, retain a feasibility reference only. A mismatch prompts connection/section/warping diagnosis, never an automatic line-space selection."
+              "decision":("If the hard-mortar case executes with admissible contact output, no sampled penetration, work and reaction balance, advance it to mesh/contact assessment; otherwise preserve the failed reference and revise its external contact formulation. No native connection is selected by an unresolved contact result."
+                          if args.contact=="mortar_hard" else
+                          "If the terminal solid work responses settle under refinement, compare them separately with the rigid and distributing native footprint idealizations; if they do not settle, retain a feasibility reference only. A mismatch prompts connection/section/warping diagnosis, never an automatic line-space selection."
                           if args.bond=="terminal" else
                           "Retain as a bounded physical-bond diagnostic under its declared support and connection."),
               "source_head":head,"source_sha256":digest(Path(__file__)),
@@ -442,11 +487,15 @@ def main() -> int:
                                      else ("tip_mx","tip_fz"))],
               "boundary_policy":args.boundary,
               "bond_policy":args.bond,
+              "contact_policy":args.contact,
+              "contact_reference":"https://www.dhondt.de/ccx_2.22.pdf, sections on MORTAR contact and hard surface behavior (external-reference diagnostic only)",
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
               "limits_of_claim":["3D solid idealization, not E4 or B3",
                                  f"{len(args.factor)} development mesh levels, not convergence qualification",
                                  f"prescribed plate {args.boundary} and bar root as declared",
-                                 "terminal mode omits contact outside the shared patch",
+                                 ("terminal mode uses external hard-mortar contact only outside the shared patch"
+                                  if args.contact=="mortar_hard" else
+                                  "terminal mode omits contact outside the shared patch"),
                                  "connection and section still differ from native weak-line B3/E4"]}
     (root/"manifest.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
     records=[]
@@ -455,7 +504,7 @@ def main() -> int:
         folder=root/name
         folder.mkdir()
         deck,meta=build(factor,shear,boundary_policy=args.boundary,
-                        bond_policy=args.bond)
+                        bond_policy=args.bond,contact_policy=args.contact)
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()

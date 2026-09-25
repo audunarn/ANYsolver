@@ -65,6 +65,32 @@ def test_terminal_bond_has_only_declared_shared_patch(factor, load, expected):
         "unbonded_midspan_normal_separation_m"]["bar_minus_plate_z_m"][1] == pytest.approx(-1e-6)
 
 
+@pytest.mark.parametrize("factor", (1, 2, 4))
+def test_terminal_hard_mortar_faces_exclude_bonded_patch(factor):
+    deck, meta = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",
+                              bond_policy="terminal", contact_policy="mortar_hard")
+    assert meta["contact_policy"] == "mortar_hard"
+    assert len(meta["plate_contact_face_element_ids"]) == 8*factor**2
+    assert len(meta["bar_contact_face_element_ids"]) == 8*factor**2
+    assert max(meta["plate_contact_face_element_ids"]) <= meta["plate_elements"]
+    assert min(meta["bar_contact_face_element_ids"]) > meta["plate_elements"]
+    assert "PlateUnbondedFaces,S2" in deck
+    assert "BarUnbondedFaces,S1" in deck
+    assert "*CONTACT PAIR,INTERACTION=HardUnbonded,TYPE=MORTAR" in deck
+    assert "*SURFACE INTERACTION,NAME=HardUnbonded\n*CONTACT PAIR" in deck
+    assert "*SURFACE BEHAVIOR" not in deck and "ADJUST" not in deck
+    assert "*CONTACT PRINT,FREQUENCY=9999\nCDIS,CSTR,CNUM" in deck
+    without, _ = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",
+                              bond_policy="terminal")
+    assert "*CONTACT PAIR" not in without
+
+
+def test_contact_requires_separate_terminal_bond():
+    with pytest.raises(ValueError, match="requires terminal bond"):
+        SCREEN.build(1, "tip_fz", boundary_policy="left_root",
+                     contact_policy="mortar_hard")
+
+
 def test_recovery_rigid_motion_and_orthogonal_shear_measures():
     _, meta = SCREEN.build(1, "uy_x")
     coordinates = meta["probe_coordinates_m"]
