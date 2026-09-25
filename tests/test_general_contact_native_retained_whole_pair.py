@@ -3,16 +3,18 @@
 import numpy as np
 import pytest
 from scipy.integrate import quad
-from scipy.optimize import brentq
+from scipy.optimize import brentq, minimize_scalar
 from scipy.spatial.transform import Rotation
 
 from anysolver._ge_beam3_centered_reference import (
     CenteredCurvedBeam3ReferenceGeometry,
 )
+from anysolver.general_contact.native_curve_union import NativeTwoCellUnionSearch
 from anysolver.general_contact.native_retained_whole_pair import (
     NativeRetainedWholeCurvePair,
     _straight_join_owner,
     _straight_join_partitions,
+    _junction_endpoint_owner,
     _straight_support_partitions,
     _piecewise_straight_support_partitions,
     _tiny_cell_omission_bound,
@@ -188,6 +190,127 @@ def test_shared_junction_owner_requires_persistent_node_identity():
     assert _piecewise_straight_support_partitions(
         source, targets, ((1, 2), (7, 3)), 0.1, 1e-10,
     ) is None
+
+
+def test_curved_target_junction_endpoint_owner_is_certified():
+    source = np.array(((0.0, 0.0, 0.0),
+                       (0.56, 0.0, 0.0),
+                       (1.12, 0.0, 0.0)))
+    targets = (
+        np.array(((0.0, 0.08, 0.0),
+                  (0.5, 0.11, 0.0),
+                  (1.0, 0.08, 0.0))),
+        np.array(((1.0, 0.08, 0.0),
+                  (1.62, 0.08, 0.0),
+                  (2.24, 0.08, 0.0))),
+    )
+
+    def distance(point, target):
+        def squared(station):
+            shapes = np.array((2.0*(station-0.5)*(station-1.0),
+                               4.0*station*(1.0-station),
+                               2.0*station*(station-0.5)))
+            delta = point-shapes@target
+            return float(delta@delta)
+
+        interior = minimize_scalar(squared, bounds=(0.0, 1.0),
+                                   method="bounded",
+                                   options={"xatol": 1e-14}).fun
+        return float(np.sqrt(min(interior, squared(0.0), squared(1.0))))
+
+    for left, right, expected in (
+        (0.8720703125, 0.873046875, 0),
+        (0.92, 0.93, 1),
+    ):
+        assert _junction_endpoint_owner(
+            source, targets, ((1, 2), (2, 3)), left, right, 1e-10,
+        ) == expected
+        for station in np.linspace(left, right, 9):
+            point = source[0]+station*(source[2]-source[0])
+            distances = [distance(point, target)
+                         for target in targets]
+            assert distances[expected] <= distances[1-expected]+1e-12
+    assert _junction_endpoint_owner(
+        source, targets, ((1, 2), (7, 3)),
+        0.8720703125, 0.873046875, 1e-10,
+    ) is None
+
+
+def test_curved_retained_half_cell_keeps_two_contact_pockets():
+    a = CenteredCurvedBeam3ReferenceGeometry(
+        np.array(((0.0, 0.08, 0.0),
+                  (1.0, 0.08, 0.0),
+                  (2.24, 0.08, 0.0))),
+        np.tile(np.eye(3), (3, 1, 1)),
+    )
+    b = CenteredCurvedBeam3ReferenceGeometry(
+        np.array(((0.0, 0.0, 0.0),
+                  (1.12, 0.0, 0.0),
+                  (2.24, 0.0, 0.0))),
+        np.tile(np.eye(3), (3, 1, 1)),
+    )
+    kernel = _kernel(a, b)
+    pose_a = list(_pose(a))
+    pose_a[2][0] = Rotation.from_euler("z", -90.0, degrees=True).as_matrix()
+    source = kernel.cells_a[0].evaluate(*pose_a).positions
+    np.testing.assert_allclose(source,
+                               ((0.0, 0.08, 0.0),
+                                (0.5, 0.11, 0.0),
+                                (1.0, 0.08, 0.0)), atol=1e-14)
+    scan = NativeTwoCellUnionSearch(
+        source, kernel.reference_curves[2:4], ((4, 5), (5, 6)),
+        combined_radius_m=0.1,
+        distance_tolerance_m=1e-10,
+        feature_tolerance_m=1e-9,
+        parameter_tolerance=1e-3,
+        maximum_depth=20,
+        maximum_cells=10000,
+    ).scan()
+    for station in np.linspace(0.0, 1.0, 201):
+        physical_gap = -0.02+0.12*station*(1.0-station)
+        interval = next(item for item in scan.intervals
+                        if item.left <= station <= item.right)
+        if physical_gap < 0.0:
+            assert interval.status != "open"
+    assert any(item.status == "open" and item.left <= 0.5 <= item.right
+               for item in scan.intervals)
+
+    result = kernel.evaluate(*pose_a, *_pose(b))
+    # Separate scalar Q2/finite-target integration, including both pocket
+    # boundaries, is retained in c3-native-curved-two-pocket-oracle-first.txt.
+    assert result.potential_j == pytest.approx(
+        0.027350373701436004, rel=1e-8, abs=1e-10,
+    )
+    assert result.integration_cells_checked < 1000
+    np.testing.assert_allclose(result.beam_a_force_n+result.beam_b_force_n,
+                               0.0, atol=1e-8)
+    np.testing.assert_allclose(result.beam_a_moment_nm+result.beam_b_moment_nm,
+                               0.0, atol=1e-8)
+    exchanged = _kernel(b, a).evaluate(*_pose(b), *pose_a)
+    assert exchanged.potential_j == pytest.approx(result.potential_j,
+                                                   rel=1e-10)
+
+    skew = list(pose_a)
+    skew[2] = pose_a[2].copy()
+    skew[2][0] = Rotation.from_euler("z", -80.0, degrees=True).as_matrix()
+    skew_result = kernel.evaluate(*skew, *_pose(b))
+    step = 1e-4
+    def skewed(sign):
+        rotated = list(skew)
+        rotated[2] = skew[2].copy()
+        rotated[2][0] = (
+            Rotation.from_rotvec((0.0, 0.0, sign*step)).as_matrix()
+            @ rotated[2][0]
+        )
+        return kernel.evaluate(*rotated, *_pose(b)).potential_j
+    plus, minus = skewed(1.0), skewed(-1.0)
+    work = (plus-minus)/(2.0*step)
+    curvature = (plus-2.0*skew_result.potential_j+minus)/step**2
+    assert abs(work) > 1e-4
+    assert work == pytest.approx(skew_result.residual[20],
+                                 rel=1e-5, abs=1e-8)
+    assert curvature == pytest.approx(skew_result.tangent[20, 20],
+                                      rel=1e-5, abs=1e-7)
 
 
 def test_straight_junction_owner_is_certified_only_on_one_side():

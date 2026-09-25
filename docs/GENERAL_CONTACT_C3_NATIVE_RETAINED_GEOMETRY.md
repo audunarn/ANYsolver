@@ -418,6 +418,51 @@ evaluations, with checkpoint SHA-256
 curved multi-pocket support, resource scaling, beam–shell coupling and
 independent C3 qualification remain open.
 
+The V4 restricted whole-pair kernel adds a sufficient ownership certificate
+beside a persistent material junction when one or both target Q2 cells are
+curved. For every source point in the interval's Bézier hull, Bernstein
+controls bound the cubic derivative of squared distance along the
+**opposite** target cell. A strictly increasing distance from that cell's
+shared start, or strictly decreasing distance to its shared end, proves
+the adjoining cell is no farther because it contains the same material
+junction. The certificate requires shared node identity, coincident
+physical junction positions within roundoff and the declared geometry
+accuracy. It leaves ambiguous intervals on the existing fail-closed path.
+The original union search, integration budgets and V2 finite-precision
+omission bound remain active. Kernel, static-owner and checkpoint identities
+are V4; prior whole-pair checkpoints are intentionally incompatible.
+
+A curved retained half-cell with physical heights (0.08, 0.11, 0.08) m
+over a 0.1 m combined radius has two active end pockets separated by an
+open middle. Search agreed with independent scalar gaps at sampled
+stations. An initial reference layout failed in its unrelated second cell
+at machine parameter resolution (`c3-native-curved-two-pocket-first.txt`).
+An internally rotated first cell isolated the intended pockets, after
+which reverse-direction curved target ownership failed explicitly at
+source cell 2 near station 0.872
+(`c3-native-curved-two-pocket-second.txt` through
+`c3-native-curved-two-pocket-fourth.txt`). With the V4 certificate the
+whole-pair kernel evaluated that pose. Its 0.027350373700759 J potential
+agreed with a separately coded Q2/finite-target scalar integral to
+6.77e-13 J (`c3-native-curved-two-pocket-oracle-first.txt`). Role exchange
+and paired force/moment balance passed; a skewed retained rotation gave
+nonzero work and a directional tangent matching finite differences
+(`c3-native-curved-two-pocket-skew-tangent.txt`).
+
+The affected kernel/owner suite passed 21 tests with the opt-in long
+route skipped (`c3-native-curved-junction-v4-affected.txt`). The long
+active full/split restart check passed separately in 95.12 s
+(`c3-native-curved-junction-v4-active-restart.txt`). The V4 example
+completed with 1872 integration evaluations, contact potential
+1.136742774e-7 J, conservative gap lower bound -0.000996694 m and
+checkpoint SHA-256
+`2317a6aef60837a2b25e2191f69025c1002631112813b988f04c44cc69c7e6ca`
+(`c3-native-curved-junction-v4-example.txt`). The selected-cell checkpoint
+remains 5469 bytes with its historical SHA-256
+(`c3-native-curved-junction-v4-selected-checkpoint.txt`). Curved owner
+switches that do not satisfy this endpoint proof, beam–shell coupling,
+resource scaling and independent C3 qualification remain open.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization

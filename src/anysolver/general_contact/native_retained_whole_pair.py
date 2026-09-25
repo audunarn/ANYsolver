@@ -110,6 +110,56 @@ def _straight_join_partitions(source: np.ndarray,
     return tuple(pieces)
 
 
+def _junction_endpoint_owner(
+    source: np.ndarray, targets: tuple[np.ndarray, np.ndarray],
+    target_node_ids: tuple[tuple[int, int], tuple[int, int]],
+    left: float, right: float, accuracy_m: float,
+) -> int | None:
+    """Certify ownership beside a material junction with curved target cells.
+
+    If squared distance to the opposite cell increases from its shared
+    endpoint throughout that target cell, its nearest point is the junction.
+    The adjoining cell contains the same material point and is therefore no
+    farther away. Bernstein bounds certify the cubic derivative for every
+    source point in the interval's Q2 hull.
+    """
+    scale = max(1.0, float(np.max(np.abs(source))),
+                *(float(np.max(np.abs(target))) for target in targets))
+    roundoff = 256.0*np.finfo(float).eps*scale
+    derivative_margin = 1024.0*np.finfo(float).eps*scale*scale
+    if (roundoff > accuracy_m
+            or target_node_ids[0][1] != target_node_ids[1][0]
+            or float(np.linalg.norm(targets[0][2]-targets[1][0]))
+            > roundoff):
+        return None
+    hull = _bezier_controls(source, left, right)
+
+    def endpoint_minimum(target: np.ndarray, sign: float) -> bool:
+        origin = target[0]
+        first = -3.0*target[0]+4.0*target[1]-target[2]
+        second = 2.0*target[0]-4.0*target[1]+2.0*target[2]
+        for point in hull:
+            constant = float((origin-point)@first)
+            linear = 2.0*float((origin-point)@second)+float(first@first)
+            quadratic = 3.0*float(first@second)
+            cubic = 2.0*float(second@second)
+            bernstein = (
+                constant,
+                constant+linear/3.0,
+                constant+2.0*linear/3.0+quadratic/3.0,
+                constant+linear+quadratic+cubic,
+            )
+            if min(sign*value for value in bernstein) <= derivative_margin:
+                return False
+        return True
+
+    if endpoint_minimum(targets[1], 1.0):
+        return 0
+    if endpoint_minimum(targets[0], -1.0):
+        return 1
+    return None
+
+
 def _straight_support_partitions(
     source: np.ndarray, targets: tuple[np.ndarray, np.ndarray],
     radius: float, left: float, right: float, accuracy_m: float,
@@ -592,7 +642,7 @@ class NativeRetainedWholeCurvePair:
 
     def _fingerprint(self) -> str:
         return sha(dict(
-            profile="NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V3",
+            profile="NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V4",
             cells_a=[(cell.element_id, cell.cell,
                       cell.reference.canonical_data()) for cell in self.cells_a],
             cells_b=[(cell.element_id, cell.cell,
@@ -819,8 +869,20 @@ class NativeRetainedWholeCurvePair:
                                     self.feature_tolerance),
                             )
                             if pieces is None:
+                                owner = _junction_endpoint_owner(
+                                    current[source_index], target_positions,
+                                    target_ids, interval.left, interval.right,
+                                    min(self.distance_tolerance,
+                                        self.feature_tolerance),
+                                )
+                                if owner is not None:
+                                    pieces = ((interval.left, interval.right,
+                                               owner),)
+                            if pieces is None:
                                 raise ValueError(
-                                    "native whole pair target ownership is unresolved"
+                                    "native whole pair target ownership is unresolved: "
+                                    f"source cell {source_index}, interval "
+                                    f"[{interval.left}, {interval.right}]"
                                 )
                         elif pieces is None:
                             pieces = ((interval.left, interval.right,
