@@ -45,3 +45,54 @@ pressure-space stability or admit arbitrary partial contact and finite
 sliding. General C1 acceptance still requires the registered mesh,
 enforcement and integration refinement, independent review, verification of
 the final qualified installed profile and a supported capability decision.
+
+## Independent Q4 pressure-resolution control
+
+`tests/test_general_contact_q4_s3_corner_pressure.py` evaluates a square Q4
+source patch against two S3 target faces at a fixed pose. The prescribed
+affine gap is (g(x,y)=-0.0001+0.001(x+y)) m. Its physical minimum is
+−0.1 mm at the corner, so a 0.05 mm independent gap budget must reject the
+coarse state. For a uniform Q4 cell of width (h), direct integration of the
+corner Q1 pressure basis gives normalized weighted gap
+(-0.0001+2(0.001)h/3) m. The independent pointwise penalty reaction at
+1 MPa/m is (1/6) N.
+
+| Q4 divisions per edge | Corner weighted gap | Active pressure nodes | Integrated reaction |
+|---:|---:|---:|---:|
+| 1 | +0.567 mm | 0 | 0 N |
+| 4 | +0.0667 mm | 0 | 0 N |
+| 8 | −0.0167 mm | 1 | 0.0651 N |
+| 12 | −0.0444 mm | 1 | 0.0772 N |
+| 16 | −0.0583 mm | 3 | 0.1221 N |
+
+The measured corner gaps match the independent basis integral. Every mesh
+has full reported pressure-gradient rank, including the two meshes that miss
+the corner contact entirely. Refinement recovers activity and moves the
+integrated reaction toward (1/6) N, but the 16-division response remains
+about 27% low. Full rank and a passing shallow guided path therefore do not
+establish pressure resolution for localized partial contact. The raw probe is
+`C:/ANYworkspaceWork/general-contact-evidence/c1-q4-s3-corner-pressure-probe-refined.txt`;
+the focused test output is `c1-q4-s3-corner-pressure-focused-first.txt` in the
+same evidence directory. Uniform refinement through 16 divisions has not
+resolved this localized response to the prospective 2% level.
+
+A nonuniform Q4 mesh with 16 cells from 0 to 0.1 m in each direction,
+followed by cells to 0.2 and 1 m, concentrates pressure resolution around
+the active corner. Its 361 source pressure nodes and 648 face candidates
+produce 0.165731 N and ±0.00415107 N m. The independent affine pointwise
+references are 1/6 N and ±1/240 N m, giving 0.562% force error and 0.374%
+moment error. Independent tensor-Q1 cell integrals match every reported
+support and weighted gap; an independently assembled Q1 Gram matrix maps
+the pressure coefficients to the production nodal reactions within the
+focused test tolerance. The Gram matrix is positive definite. The reported
+pressure-gradient condition is about (1.09\times10^5), so full rank alone
+is not a mesh-independent stability result.
+
+This passes the prospective 2% integrated response target for **one fixed
+pose** after targeted mesh refinement. It does not establish convergence
+under further refinement, gap enforcement in a coupled solve, pressure-space
+stability across partial contact, a complete-route resource budget or
+independent C1 acceptance. The registered test is
+`tests/test_general_contact_q4_s3_corner_pressure.py`; retained outputs are
+`c1-q4-s3-graded-pressure-moment-first.txt` and
+`c1-q4-s3-graded-gram-first.txt` in the evidence directory.
