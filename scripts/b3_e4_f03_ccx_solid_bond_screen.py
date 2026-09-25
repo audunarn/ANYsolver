@@ -41,8 +41,8 @@ def digest(path: Path) -> str:
 
 
 def _cuts(values: tuple[int, ...], factor: int) -> tuple[Fraction, ...]:
-    if type(factor) is not int or factor not in (1, 2):
-        raise ValueError("bounded solid mesh factor must be 1 or 2")
+    if type(factor) is not int or factor not in (1, 2, 4):
+        raise ValueError("bounded solid mesh factor must be 1, 2, or 4")
     return tuple(Fraction(a)+(Fraction(b-a)*k)/factor
                  for a,b in zip(values[:-1],values[1:])
                  for k in range(factor))+(Fraction(values[-1]),)
@@ -110,7 +110,9 @@ def build(factor: int, shear: str) -> tuple[str, dict]:
     station_nodes={str(s): sorted(coordinates[(Fraction(s),y,z)]
                                   for y in by for z in bz)
                    for s in STATIONS_MM}
-    surface_x=(250,500,750) if factor==1 else (375,500,625)
+    surface_x=((250,500,750) if factor==1 else
+               (375,500,625) if factor==2 else
+               (437.5,500,562.5))
     surface={(x,y):coordinates[(Fraction(x),Fraction(y),Fraction(35))]
              for x in surface_x for y in (-50,0,50)}
     probe=set().union(*station_nodes.values(),surface.values())
@@ -235,7 +237,9 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
     surface=meta["surface_nodes"]
     def value(x,y):
         return displacement[surface[f"{x},{y}"]]
-    left,right=((250,750) if meta["factor"]==1 else (375,625))
+    left,right=((250,750) if meta["factor"]==1 else
+                (375,625) if meta["factor"]==2 else
+                (437.5,562.5))
     def local(x,y):
         a,b=((left,500) if x<500 else (500,right))
         return value(a,y)+(value(b,y)-value(a,y))*((x-a)/(b-a))
@@ -284,6 +288,7 @@ def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root",type=Path,required=True)
     parser.add_argument("--suite",choices=("shear","loads"),default="shear")
+    parser.add_argument("--factor",type=int,choices=(1,2,4),nargs="+",default=(1,2))
     args=parser.parse_args()
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
@@ -300,7 +305,7 @@ def main() -> int:
                           "physical solid-bond end torque and transverse-force transfer"),
               "source_head":head,"source_sha256":digest(Path(__file__)),
               "executable":str(EXE),"executable_sha256":EXE_SHA,
-              "cases":[(factor,shear) for factor in (1,2)
+              "cases":[(factor,shear) for factor in args.factor
                        for shear in (("uy_x","ux_y") if args.suite=="shear"
                                      else ("tip_mx","tip_fz"))],
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
@@ -366,7 +371,8 @@ def main() -> int:
             break
     (root/"result.json").write_text(json.dumps(records,sort_keys=True,
                                      indent=2,allow_nan=False)+"\n")
-    return 0 if len(records)==4 and all(r["failure"] is None for r in records) else 1
+    return 0 if len(records)==len(manifest["cases"]) and all(
+        r["failure"] is None for r in records) else 1
 
 
 if __name__=="__main__":

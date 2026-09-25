@@ -13,7 +13,7 @@ SCREEN = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(SCREEN)
 
 
-@pytest.mark.parametrize("factor", (1, 2))
+@pytest.mark.parametrize("factor", (1, 2, 4))
 @pytest.mark.parametrize("shear", ("uy_x", "ux_y"))
 def test_shared_interface_and_prescribed_plate_only(factor, shear):
     deck, meta = SCREEN.build(factor, shear)
@@ -51,7 +51,7 @@ def test_probe_parser_requires_complete_unique_finite_inventory():
         SCREEN.parse_probe_displacements(dat, {1, 2, 3})
 
 
-@pytest.mark.parametrize("factor", (1, 2))
+@pytest.mark.parametrize("factor", (1, 2, 4))
 @pytest.mark.parametrize("load,expected", (("tip_mx", [0.,0.,0.,100.,0.,0.]),
                                             ("tip_fz", [0.,0.,1000.,0.,-1000.,0.])))
 def test_end_face_load_has_exact_declared_wrench(factor, load, expected):
