@@ -955,6 +955,10 @@ def graded_terminal_coupling(patch_cells: int, beam) -> dict:
             cases[loading]={
                 "tip_rx_rad":float(full[shell_size+6*beam.n_half_cells+3]),
                 "tip_uz_m":float(full[shell_size+6*beam.n_half_cells+2]),
+                "beam_section_rx_at_stations_rad":{
+                    str(station):float(full[shell_size+
+                        6*(beam.n_half_cells*station//1000)+3])
+                    for station in (0,250,500,750,1000)},
                 "total_external_work_j":work,
                 "physical_shell_work_j":physical_work,
                 "numerical_shell_work_j":shell_total-physical_work,
@@ -979,7 +983,8 @@ def graded_terminal_coupling(patch_cells: int, beam) -> dict:
             "beam_half_cells":beam.n_half_cells,"results":records}
 
 
-def run_graded_terminal(output_dir: Path) -> None:
+def run_graded_terminal(output_dir: Path,
+                        patch_levels: tuple[int,...] = (4,8)) -> None:
     source=subprocess.check_output(["git","rev-parse","HEAD"],
                                    text=True).strip()
     if subprocess.check_output(["git","status","--porcelain"],
@@ -993,6 +998,7 @@ def run_graded_terminal(output_dir: Path) -> None:
         "decision":"Settling work and transfer fields supports a matched 3D bond comparison; material drift requires revising patch trace or resolution policy first. Neither selects a production law or true-line multiplier.",
         "geometry":"E4 Q4 plate [-.5,1.5]x[-.5,.5] m, t=.07 m; B3 centroid z=.085 m; x=[.9,1], y=[-.05,.05] m patch",
         "grids":"structured local Q4 with four/eight cells per patch direction; exact area-mean/director/polar-yaw trace and corner rows",
+        "executed_patch_levels":list(patch_levels),
         "beam":"native generalized B3, eight half-cells, square-section Saint-Venant torsion; root fixed",
         "supports":"all E4 left-edge coordinates fixed and B3 root fixed",
         "loads":"separate +100 Nm tip Mx and +1000 N tip Fz",
@@ -1007,7 +1013,7 @@ def run_graded_terminal(output_dir: Path) -> None:
         beam=build(8,z_offset=.085,
                    torsion_constant=square_torsion_constant())
         records=[]
-        for patch_cells in (4,8):
+        for patch_cells in patch_levels:
             started=time.perf_counter()
             result=graded_terminal_coupling(patch_cells,beam)
             records.append({"patch_cells_per_side":patch_cells,
@@ -1034,12 +1040,14 @@ if __name__ == "__main__":
     parser.add_argument("--terminal-shell-resolution", action="store_true")
     parser.add_argument("--terminal-interface", action="store_true")
     parser.add_argument("--graded-terminal", action="store_true")
+    parser.add_argument("--graded-patch-cells",type=int,choices=(4,8),
+                        nargs="+",default=(4,8))
     args = parser.parse_args()
     if sum((args.terminal_beam_resolution,args.terminal_shell_resolution,
             args.terminal_interface,args.graded_terminal))>1:
         parser.error("select one terminal resolution screen")
     if args.graded_terminal:
-        run_graded_terminal(args.output_dir)
+        run_graded_terminal(args.output_dir,tuple(args.graded_patch_cells))
     elif args.terminal_interface:
         run_terminal_interface(args.output_dir)
     elif args.terminal_beam_resolution:
