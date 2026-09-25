@@ -13,6 +13,7 @@ from anysolver.general_contact.native_retained_whole_pair import (
     _straight_join_owner,
     _straight_join_partitions,
     _straight_support_partitions,
+    _tiny_cell_omission_bound,
 )
 
 
@@ -200,6 +201,35 @@ def test_straight_support_finds_sub_gauss_narrow_pocket_and_open_interval():
     distant_target = tuple(cell+far_shift for cell in target)
     assert _straight_support_partitions(distant_source, distant_target,
                                         0.1, 0.0, 1.0, 1e-9) is None
+
+
+def test_tiny_cell_bound_covers_parallel_line_work_and_rejects_roundoff():
+    source = np.array(((0.0, 0.0, 0.0),
+                       (0.5, 0.0, 0.0),
+                       (1.0, 0.0, 0.0)))
+    target = source+np.array((0.0, 0.08, 0.0))
+    left = 0.5
+    right = np.nextafter(left, 1.0)
+    width = right-left
+    bound = _tiny_cell_omission_bound(
+        source, target, source, 0.1, 100.0,
+        left, right, 1e-13, 1e-9,
+    )
+    assert bound is not None
+    assert bound[0] >= 0.02*width
+    assert bound[1] >= 2.0*width
+    assert bound[2] >= 100.0*width
+    assert np.all(bound <= (1e-8, 1e-7, 1e-6))
+    assert _tiny_cell_omission_bound(
+        source, target, source, 0.1, 100.0,
+        left, right, 1e-5, 1e-9,
+    ) is None
+    turning_target = target.copy()
+    turning_target[2] = turning_target[0]
+    assert _tiny_cell_omission_bound(
+        source, turning_target, source, 0.1, 100.0,
+        left, right, 1e-13, 1e-9,
+    ) is None
 
 
 def test_whole_pair_energy_and_cross_beam_tangent_on_smooth_branch():

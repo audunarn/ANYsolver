@@ -33,7 +33,8 @@ def _reference(y):
     )
 
 
-def _owner(*, separation=0.3, force=0.0, node_ids_b=(4, 5, 6)):
+def _owner(*, separation=0.3, force=0.0, node_ids_b=(4, 5, 6),
+           targets=(0.0, 1.0), maximum_swept_intervals=128):
     a, b = _reference(0.0), _reference(separation)
     section = EllipsoidalGeneralizedSection(
         np.diag((1000.0, 400.0, 350.0, 0.8, 1.0, 1.2)),
@@ -52,7 +53,7 @@ def _owner(*, separation=0.3, force=0.0, node_ids_b=(4, 5, 6)):
     boundaries = (BoundaryCondition("first-root", [1], axes),
                   BoundaryCondition("second-root", [4], axes))
     program = Program(
-        (0.0, 1.0), DistributedPattern(LinePattern(()), ()),
+        targets, DistributedPattern(LinePattern(()), ()),
         NodalDeadForces(((6, 0.0, force, 0.0),)),
         max_iterations=24,
     )
@@ -73,7 +74,7 @@ def _owner(*, separation=0.3, force=0.0, node_ids_b=(4, 5, 6)):
     return NativeRetainedRoundPairAnalysis(
         definitions, boundaries, program, contact,
         gap_tolerance_m=1e-3, equilibrium_tolerance=1e-8,
-        maximum_swept_intervals=128,
+        maximum_swept_intervals=maximum_swept_intervals,
     )
 
 

@@ -298,6 +298,33 @@ rejections and three gap rejections at its final iteration
 selected-cell checkpoint hash still matched
 (`c3-native-curved-support-selected-checkpoint.txt`).
 
+The V2 development kernel adds a finite-precision contribution bound for
+integration cells that can no longer be bisected in binary64. It requires
+strict target-station convexity, a positive certified distance, and a
+coordinate-roundoff bound within the declared geometry accuracy. Q2 shape
+and derivative bounds, reference arc speed and the projection curvature
+bound give dimensional upper limits on omitted energy, curve-position
+force and tangent. A cell is omitted only if all three fit the remaining
+global error budgets; the reported error totals include those limits and
+`bounded_omission_cells` counts the events. The whole-pair owner/checkpoint
+use V2 to distinguish this numerical method. This bound does not replace
+independent gap checking or establish a retained-coordinate tangent error
+bound after pullback.
+
+The direct parallel-line bound check and its far-origin/nonconvex rejection
+passed (`c3-native-tiny-cell-bound-final.txt`); affected kernel and owner
+sets passed 9/9 and 11/11 respectively
+(`c3-native-tiny-cell-focused.txt`,
+`c3-native-tiny-cell-owner-affected.txt`). In an observed contact candidate,
+two bounded omissions consumed at most 2.44e-19 J, 1.21e-16 N and
+1.50e-13 N/m of the declared curve-position budgets
+(`c3-native-tiny-cell-activation-observation.txt`). An explicit 0.0, 0.1,
+0.2, 0.3 load path accepted through 0.2 but hit the native context's
+120-second deadline before finishing 0.3
+(`c3-native-tiny-cell-load-03-first.txt`). Full path completion and
+resource performance remain open. The selected-cell checkpoint hash stayed
+unchanged (`c3-native-tiny-cell-selected-checkpoint.txt`).
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization

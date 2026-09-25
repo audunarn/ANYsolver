@@ -31,8 +31,8 @@ from .native_retained_whole_pair import (
 
 PROFILE = "NATIVE_B3_GE_SELECTED_CELL_PAIR_STATIC_DEV_V1"
 CHECKPOINT_SCHEMA = "NATIVE_RETAINED_SELECTED_CELL_PAIR_CHECKPOINT_DEV_V1"
-WHOLE_PROFILE = "NATIVE_B3_GE_WHOLE_CURVE_PAIR_STATIC_DEV_V1"
-WHOLE_CHECKPOINT_SCHEMA = "NATIVE_RETAINED_WHOLE_CURVE_PAIR_CHECKPOINT_DEV_V1"
+WHOLE_PROFILE = "NATIVE_B3_GE_WHOLE_CURVE_PAIR_STATIC_DEV_V2"
+WHOLE_CHECKPOINT_SCHEMA = "NATIVE_RETAINED_WHOLE_CURVE_PAIR_CHECKPOINT_DEV_V2"
 
 
 @dataclass(frozen=True)
@@ -192,6 +192,7 @@ class NativeRetainedRoundPairAnalysis:
                 integration_intervals=contact.integration_intervals,
                 integration_evaluations=contact.integration_evaluations,
                 integration_cells_checked=contact.integration_cells_checked,
+                bounded_omission_cells=contact.bounded_omission_cells,
                 unresolved_search_intervals=contact.unresolved_search_intervals,
             )
         row = dict(target=target, previous_sha256=previous_sha256,

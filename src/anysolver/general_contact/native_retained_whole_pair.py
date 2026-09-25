@@ -283,6 +283,72 @@ def _monotone_gap_endpoints(
     )
 
 
+def _tiny_cell_omission_bound(
+    source: np.ndarray, target: np.ndarray, reference: np.ndarray,
+    radius: float, stiffness: float, left: float, right: float,
+    roundoff_m: float, accuracy_m: float,
+) -> np.ndarray | None:
+    """Bound all three omitted line contributions on a smooth Q2 cell.
+
+    Q2 position shapes have absolute value at most one, so the 18-coordinate
+    distance Jacobian has norm at most sqrt(6). Target shape derivatives
+    have absolute value at most four, giving a sqrt(48) bound. Strict
+    convexity in target station bounds the projection Hessian. The returned
+    bounds are for energy, maximum force component and maximum tangent entry.
+    """
+    if roundoff_m > accuracy_m:
+        return None
+    source_controls = _bezier_controls(source, left, right)
+    target_controls = _bezier_controls(target, 0.0, 1.0)
+    maximum_separation = max(
+        float(np.linalg.norm(a-b))
+        for a in source_controls for b in target_controls
+    )
+    if maximum_separation <= 0.0:
+        return None
+    target_first = _curve(target, 0.0)[1]
+    target_last = _curve(target, 1.0)[1]
+    target_delta = target_last-target_first
+    delta_square = float(target_delta@target_delta)
+    minimum_station = (float(np.clip(-float(target_first@target_delta)
+                                     /delta_square, 0.0, 1.0))
+                       if delta_square > 0.0 else 0.0)
+    target_min_speed = float(np.linalg.norm(
+        target_first+minimum_station*target_delta,
+    ))
+    target_max_speed = max(float(np.linalg.norm(target_first)),
+                           float(np.linalg.norm(target_last)))
+    convexity = (target_min_speed**2
+                 - maximum_separation*float(np.linalg.norm(target_delta)))
+    if convexity <= 0.0:
+        return None
+    middle = 0.5*(left+right)
+    source_point = _curve(source, middle)[0]
+    projection = closest_on_b3(source_point, target)
+    if not projection.unique:
+        return None
+    reach = max(float(np.linalg.norm(control-source_point))
+                for control in source_controls)
+    minimum_distance = projection.distance-reach-roundoff_m
+    if minimum_distance <= 0.0:
+        return None
+    penetration = max(0.0, radius-minimum_distance)
+    reference_speed = max(float(np.linalg.norm(_curve(reference, station)[1]))
+                          for station in (left, right))
+    jacobian_norm = np.sqrt(6.0)
+    mixed_norm = (np.sqrt(48.0)
+                  + jacobian_norm*target_max_speed/minimum_distance)
+    hessian_norm = (6.0/minimum_distance
+                    + mixed_norm**2*maximum_separation/convexity)
+    measure = stiffness*reference_speed*(right-left)
+    bounds = np.array((
+        0.5*measure*penetration**2,
+        measure*penetration*jacobian_norm,
+        measure*(6.0+penetration*hessian_norm),
+    ))
+    return bounds if np.all(np.isfinite(bounds)) else None
+
+
 @dataclass(frozen=True)
 class NativeRetainedWholePairResult:
     potential_j: float
@@ -301,6 +367,7 @@ class NativeRetainedWholePairResult:
     integration_intervals: int
     integration_evaluations: int
     integration_cells_checked: int
+    bounded_omission_cells: int
     unresolved_search_intervals: int
 
 
@@ -375,7 +442,7 @@ class NativeRetainedWholeCurvePair:
 
     def _fingerprint(self) -> str:
         return sha(dict(
-            profile="NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V1",
+            profile="NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V2",
             cells_a=[(cell.element_id, cell.cell,
                       cell.reference.canonical_data()) for cell in self.cells_a],
             cells_b=[(cell.element_id, cell.cell,
@@ -412,7 +479,7 @@ class NativeRetainedWholeCurvePair:
         current = tuple(state.positions for state in states)
         total = np.zeros(1+36+36*36)
         error = np.zeros(3)
-        search_cells = intervals = evaluations = unresolved = visited = 0
+        search_cells = intervals = evaluations = unresolved = visited = omissions = 0
         minimum_sampled = conservative_lower = float("inf")
 
         for source_beam, target_beam in ((0, 1), (1, 0)):
@@ -483,12 +550,27 @@ class NativeRetainedWholeCurvePair:
                 def integrate(left: float, right: float, owner: int | None,
                               budget: np.ndarray,
                               certified_active: bool = False) -> np.ndarray:
-                    nonlocal visited, intervals
+                    nonlocal visited, intervals, omissions
                     visited += 1
                     if visited > self.maximum_integration_intervals:
                         raise MemoryError("native whole pair integration interval budget exhausted")
                     middle = 0.5*(left+right)
                     if middle == left or middle == right:
+                        bound = _tiny_cell_omission_bound(
+                            current[source_index], current[target_base+owner],
+                            self.reference_curves[source_index],
+                            self.radius, self.stiffness, left, right,
+                            search.roundoff,
+                            min(self.distance_tolerance,
+                                self.feature_tolerance),
+                        )
+                        remaining = np.array((self.energy_tolerance,
+                                              self.force_tolerance,
+                                              self.tangent_tolerance))-error
+                        if bound is not None and np.all(bound <= remaining):
+                            error[:] += bound
+                            omissions += 1
+                            return np.zeros_like(total)
                         raise MemoryError(
                             "native whole pair integration parameter resolution "
                             f"exhausted: source cell {source_index}, target cell "
@@ -622,5 +704,5 @@ class NativeRetainedWholeCurvePair:
             _readonly(np.sum(moment[2:], axis=0)),
             conservative_lower, minimum_sampled,
             float(error[0]), float(error[1]), float(error[2]),
-            search_cells, intervals, evaluations, visited, unresolved,
+            search_cells, intervals, evaluations, visited, omissions, unresolved,
         )
