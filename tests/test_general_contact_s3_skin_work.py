@@ -7,6 +7,10 @@ from scipy import sparse
 from anysolver import create_shell_element
 from anysolver.fe_core import FEModel
 from anysolver.general_contact.overlap import current_planar_shell_face
+from anysolver.general_contact.friction_point import (
+    objective_relative_tangent_increment,
+)
+from anysolver.general_contact.s3_friction_point import S3SkinMaterialPoint
 from anysolver.general_contact.s3_skin_work import S3SkinWorkAdapter
 from anysolver.general_contact.triangle_pair_energy import MovingS3PairPenalty
 
@@ -110,3 +114,90 @@ def test_s3_pair_physical_work_pullback_and_tangent_use_authoritative_dofs():
     drill[model.mesh.dof_manager.get_node_dofs(1)[5]] = 1.0
     np.testing.assert_allclose(mapping @ drill, 0.0, atol=0.0)
     assert float(residual @ drill) == 0.0
+
+
+def test_s3_material_point_uses_physical_skin_and_authoritative_work_map():
+    model = _model()
+    point = S3SkinMaterialPoint.from_model(
+        model, 1, 1, "bottom", (0.3, 0.3, 0.4),
+    )
+    u = np.zeros(model.mesh.dof_manager.total_dofs)
+    initial = point.physical_pose(u)
+    expected = np.asarray(point.barycentric) @ point.adapter.reference_positions
+    np.testing.assert_allclose(initial.position, expected, atol=1e-15)
+    assert expected[2] == pytest.approx(0.03)
+    np.testing.assert_allclose(initial.material_frame, np.eye(3), atol=1e-15)
+    u[model.mesh.dof_manager.get_node_dofs(1)[:3]] = (0.01, -0.02, 0.005)
+    u[model.mesh.dof_manager.get_node_dofs(2)[3:6]] = (0.002, -0.003, 0.004)
+    current = point.physical_pose(u)
+    np.testing.assert_allclose(
+        np.asarray(current.position) - initial.position,
+        np.asarray(point.position_map @ u).reshape(3), atol=1e-15,
+    )
+    frame = np.asarray(current.material_frame)
+    np.testing.assert_allclose(frame.T @ frame, np.eye(3), atol=1e-15)
+    assert np.linalg.det(frame) == pytest.approx(1.0)
+    traction = np.array((3.0, -2.0, 1.0))
+    direction = np.linspace(-0.03, 0.04, u.size)
+    nodal_force = np.asarray(point.position_map.T @ traction).reshape(-1)
+    assert abs(nodal_force[model.mesh.dof_manager.get_node_dofs(1)[3]]) > 0.0
+    assert float(nodal_force @ direction) == pytest.approx(
+        float(traction @ (point.position_map @ direction)), abs=1e-14,
+    )
+    drill = np.zeros_like(u)
+    drill[model.mesh.dof_manager.get_node_dofs(1)[5]] = 1.0
+    np.testing.assert_allclose(point.position_map @ drill, 0.0, atol=0.0)
+    np.testing.assert_allclose(point.physical_pose(u + 0.1*drill).position,
+                               current.position, atol=0.0)
+    np.testing.assert_allclose(point.physical_pose(u + 0.1*drill).material_frame,
+                               current.material_frame, atol=0.0)
+
+
+def test_s3_material_pair_objective_motion_and_geometry_rejection():
+    model = _model()
+    source = S3SkinMaterialPoint.from_model(
+        model, 1, 1, "bottom", (0.3, 0.3, 0.4),
+    )
+    target = S3SkinMaterialPoint.from_model(
+        model, 2, 2, "top", (0.05, 0.55, 0.4),
+    )
+    zero = np.zeros(model.mesh.dof_manager.total_dofs)
+    source_old = source.physical_pose(zero)
+    target_old = target.physical_pose(zero)
+    assert np.linalg.norm(np.asarray(source_old.position)-target_old.position) == pytest.approx(0.015)
+
+    def increment(u):
+        source_new = source.physical_pose(u)
+        target_new = target.physical_pose(u)
+        return objective_relative_tangent_increment(
+            source_committed=source_old.position,
+            target_committed=target_old.position,
+            source_candidate=source_new.position,
+            target_candidate=target_new.position,
+            target_frame_committed=target_old.material_frame,
+            target_frame_candidate=target_new.material_frame,
+        )
+
+    common = zero.copy()
+    for node in range(1, 7):
+        common[model.mesh.dof_manager.get_node_dofs(node)[:3]] = (
+            0.01, -0.02, 0.005,
+        )
+    np.testing.assert_allclose(increment(common), 0.0, atol=1e-15)
+    moving_source = zero.copy()
+    for node in (1, 2, 3):
+        moving_source[model.mesh.dof_manager.get_node_dofs(node)[0]] = 0.001
+    np.testing.assert_allclose(increment(moving_source),
+                               (0.001, 0.0, 0.0), atol=1e-15)
+
+    inverted = zero.copy()
+    inverted[model.mesh.dof_manager.get_node_dofs(3)[1]] = -0.6
+    with pytest.raises(ValueError, match="inverted"):
+        source.physical_pose(inverted)
+    degenerate = zero.copy()
+    degenerate[model.mesh.dof_manager.get_node_dofs(3)[1]] = -0.5
+    with pytest.raises(ValueError, match="degenerate"):
+        source.physical_pose(degenerate)
+    with pytest.raises(ValueError, match="nonnegative weights"):
+        S3SkinMaterialPoint.from_model(model, 1, 1, "bottom",
+                                        (-0.1, 0.5, 0.6))

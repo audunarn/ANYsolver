@@ -70,10 +70,25 @@ correspondence or transfer state across shell facets, clipped integration
 cells, changing partners, or beam section coordinates. Those are required
 before any frictional shell or beam profile can be admitted.
 
+The internal `S3SkinMaterialPoint` composes the exact admitted S3 V2D
+`S3SkinWorkAdapter` for one fixed barycentric point on a declared physical
+skin. It evaluates position from the formulation's actual skin corners,
+forms tangent axes from current material edges, and maps point force back to
+authoritative translations and rotations through a sparse position map.
+Numerical drill changes that leave the physical skin fixed leave its pose and
+work unchanged. A collapsed or inverted skin fails explicitly. This map uses
+the admitted small-rotation S3 skin kinematics; it does not extend the solver
+to finite-rotation shell friction. The material-frame derivative, point
+migration between facets, pressure-to-traction integration and committed
+history owner remain to be implemented.
+
 Focused checks in `tests/test_general_contact_friction_point.py` cover an
 independent scalar stick/slip slider, reversal, material spin and normal
 rotation with zero relative work, pressure reduction, opening/recontact,
 invalid state rejection, objective paired motion under common rigid rotation
-with a finite gap, and directional tangents on smooth branches. They do
-not qualify coupled equilibrium, frictional moment maps, finite sliding,
+with a finite gap, and directional tangents on smooth branches. The S3 point
+checks in `tests/test_general_contact_s3_skin_work.py` cover physical offsets,
+barycentric position and work, drill invariance, paired motion and geometric
+rejection. These checks do not qualify coupled equilibrium, frictional moment
+maps, finite sliding,
 restart, or energy accounting for a full structural step.
