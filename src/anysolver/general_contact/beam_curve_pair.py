@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from scipy.optimize import brentq
 
 
 @dataclass(frozen=True)
@@ -32,12 +33,39 @@ class CurveDistanceJet:
     target_branch: str
 
 
+@dataclass(frozen=True)
+class B3PairPotentialState:
+    energy: float
+    residual: np.ndarray
+    tangent: np.ndarray
+    integration_points: int
+    maximum_relative_integration_error: float
+    integrated_intervals: int
+    projection_evaluations: int
+
+
+@dataclass(frozen=True)
+class CurvePairGapCertificate:
+    minimum_sampled_gap: float
+    conservative_lower_gap: float
+    cells_checked: int
+    accuracy: float
+
+
 def _positions(value: np.ndarray, label: str) -> np.ndarray:
     positions = np.asarray(value, dtype=float)
     if positions.shape != (3, 3) or not np.all(np.isfinite(positions)):
         raise ValueError(f"{label} needs three finite B3 centreline positions")
     if float(np.linalg.norm(positions[2] - positions[0])) <= 0.0:
         raise ValueError(f"{label} B3 endpoints must be distinct")
+    first = -3.0 * positions[0] + 4.0 * positions[1] - positions[2]
+    second = 2.0 * positions[0] - 4.0 * positions[1] + 2.0 * positions[2]
+    curvature_norm = float(second @ second)
+    station = (float(np.clip(-float(first @ second) / (2.0 * curvature_norm),
+                             0.0, 1.0)) if curvature_norm > 0.0 else 0.0)
+    if (float(np.linalg.norm(first + 2.0 * station * second))
+            <= 1.0e-12 * float(np.linalg.norm(positions[2] - positions[0]))):
+        raise ValueError(f"{label} B3 centreline has a stationary cusp")
     return positions
 
 
@@ -91,8 +119,24 @@ def closest_on_b3(point: np.ndarray, target_positions: np.ndarray) -> CurveProje
     length_scale = max(float(np.linalg.norm(b)), float(np.linalg.norm(c)),
                        float(np.linalg.norm(a)), smallest, np.finfo(float).tiny)
     threshold = 256.0 * np.finfo(float).eps * length_scale
-    minimizers = tuple(float(t) for t, distance in zip(stations, distances)
-                       if distance - smallest <= threshold)
+    candidates = [(float(t), distance) for t, distance in zip(stations, distances)
+                  if distance - smallest <= threshold]
+    # A root arbitrarily close to a physical endpoint can have the same
+    # rounded distance. Treat geometrically indistinguishable stations as one
+    # branch, retaining the candidate with the lowest computed distance.
+    station_tolerance = (16.0 * np.sqrt(np.finfo(float).eps)
+                         * float(np.linalg.norm(target[2] - target[0])))
+    clusters: list[list[tuple[float, float]]] = []
+    for candidate in candidates:
+        if (clusters and float(np.linalg.norm(
+            _curve(target, candidate[0])[0]
+            - _curve(target, clusters[-1][-1][0])[0]
+        )) <= station_tolerance):
+            clusters[-1].append(candidate)
+        else:
+            clusters.append([candidate])
+    minimizers = tuple(min(cluster, key=lambda item: item[1])[0]
+                       for cluster in clusters)
     return CurveProjection(smallest, minimizers, tuple(stations))
 
 
@@ -145,3 +189,289 @@ def b3_distance_jet(source_positions: np.ndarray,
     return CurveDistanceJet(
         distance - radius, s, t, gradient, hessian, branch,
     )
+
+
+_GAUSS_8 = np.polynomial.legendre.leggauss(8)
+_GAUSS_16 = np.polynomial.legendre.leggauss(16)
+
+
+def _bezier_controls(positions: np.ndarray, left: float,
+                     right: float) -> np.ndarray:
+    first = _curve(positions, left)[0]
+    last = _curve(positions, right)[0]
+    middle = _curve(positions, 0.5 * (left + right))[0]
+    return np.array((first, 2.0 * middle - 0.5 * (first + last), last))
+
+
+def _aabb_distance(first: np.ndarray, second: np.ndarray) -> float:
+    first_min, first_max = np.min(first, axis=0), np.max(first, axis=0)
+    second_min, second_max = np.min(second, axis=0), np.max(second, axis=0)
+    separation = np.maximum(np.maximum(first_min - second_max,
+                                       second_min - first_max), 0.0)
+    return float(np.linalg.norm(separation))
+
+
+def _endpoint_projection_cuts(source: np.ndarray,
+                              target: np.ndarray) -> tuple[float, ...]:
+    """Source stations where a target-endpoint projection changes branch."""
+
+    source_a = source[0]
+    source_b = -3.0 * source[0] + 4.0 * source[1] - source[2]
+    source_c = 2.0 * source[0] - 4.0 * source[1] + 2.0 * source[2]
+    cuts = []
+    for t in (0.0, 1.0):
+        target_point, target_tangent, _ = _curve(target, t)
+        coefficients = np.array((
+            float((source_a - target_point) @ target_tangent),
+            float(source_b @ target_tangent),
+            float(source_c @ target_tangent),
+        ))
+        scale = float(np.max(np.abs(coefficients)))
+        if scale <= 0.0:
+            continue
+        polynomial = np.polynomial.Polynomial(coefficients / scale).trim(
+            tol=64.0 * np.finfo(float).eps,
+        )
+        for root in polynomial.roots():
+            if abs(float(root.imag)) <= 1.0e-10 and 0.0 < float(root.real) < 1.0:
+                cuts.append(float(root.real))
+    return tuple(sorted(set(cuts)))
+
+
+def certify_b3_pair_gap(positions_a: np.ndarray, positions_b: np.ndarray,
+                        radius: float, *, accuracy: float,
+                        maximum_cells: int,
+                        maximum_depth: int) -> CurvePairGapCertificate:
+    """Conservatively bound minimum distance of two quadratic centrelines."""
+
+    a = _positions(positions_a, "beam A")
+    b = _positions(positions_b, "beam B")
+    if not np.isfinite(radius) or radius <= 0.0:
+        raise ValueError("combined B3 pair radius must be finite and positive")
+    if not np.isfinite(accuracy) or accuracy <= 0.0:
+        raise ValueError("B3 pair gap accuracy must be finite and positive")
+    if (type(maximum_cells) is not int or maximum_cells < 1
+            or type(maximum_depth) is not int or maximum_depth < 0):
+        raise ValueError("B3 pair gap budgets are invalid")
+    scale = max(float(np.max(np.abs(a))), float(np.max(np.abs(b))),
+                float(radius), 1.0)
+    roundoff = 256.0 * np.finfo(float).eps * scale
+    best_sample = float("inf")
+    best_lower = float("inf")
+    cells_checked = 0
+    cells = [(0.0, 1.0, 0.0, 1.0, 0)]
+    while cells:
+        first_left, first_right, second_left, second_right, depth = cells.pop()
+        cells_checked += 1
+        if cells_checked > maximum_cells:
+            raise MemoryError("B3 pair gap cell budget exhausted")
+        controls_a = _bezier_controls(a, first_left, first_right)
+        controls_b = _bezier_controls(b, second_left, second_right)
+        lower = _aabb_distance(controls_a, controls_b) - radius - roundoff
+        first_samples = (first_left, 0.5 * (first_left + first_right), first_right)
+        second_samples = (second_left, 0.5 * (second_left + second_right),
+                          second_right)
+        sampled = min(float(np.linalg.norm(_curve(a, s)[0] - _curve(b, t)[0]))
+                      - radius for s in first_samples for t in second_samples)
+        best_sample = min(best_sample, sampled)
+        if lower >= best_sample - accuracy:
+            best_lower = min(best_lower, lower)
+            continue
+        if depth >= maximum_depth:
+            raise MemoryError("B3 pair gap depth budget exhausted")
+        first_size = float(np.linalg.norm(np.ptp(controls_a, axis=0)))
+        second_size = float(np.linalg.norm(np.ptp(controls_b, axis=0)))
+        if first_size >= second_size:
+            middle = 0.5 * (first_left + first_right)
+            cells.extend(((first_left, middle, second_left, second_right, depth + 1),
+                          (middle, first_right, second_left, second_right, depth + 1)))
+        else:
+            middle = 0.5 * (second_left + second_right)
+            cells.extend(((first_left, first_right, second_left, middle, depth + 1),
+                          (first_left, first_right, middle, second_right, depth + 1)))
+    return CurvePairGapCertificate(best_sample, best_lower, cells_checked,
+                                   float(accuracy))
+
+
+class B3PairPotential:
+    """Half-weighted two-direction distributed line potential, locally only."""
+
+    def __init__(self, reference_a: np.ndarray, reference_b: np.ndarray,
+                 radius: float, line_stiffness: float, *,
+                 integration_relative_tolerance: float,
+                 maximum_subdivisions: int):
+        self.reference_a = _positions(reference_a, "beam A reference").copy()
+        self.reference_b = _positions(reference_b, "beam B reference").copy()
+        for label, reference in (("beam A", self.reference_a),
+                                 ("beam B", self.reference_b)):
+            length = float(np.linalg.norm(reference[2] - reference[0]))
+            if float(np.linalg.norm(reference[1]
+                                    - 0.5 * (reference[0] + reference[2]))) > 1.0e-10 * length:
+                raise ValueError(f"{label} classical B3 reference midpoint must be straight")
+        for label, value in (("combined radius", radius),
+                             ("line stiffness", line_stiffness),
+                             ("integration tolerance", integration_relative_tolerance)):
+            if not np.isfinite(value) or value <= 0.0:
+                raise ValueError(f"B3 pair {label} must be finite and positive")
+        if type(maximum_subdivisions) is not int or maximum_subdivisions < 1:
+            raise ValueError("B3 pair maximum_subdivisions must be a positive integer")
+        self.radius = float(radius)
+        self.stiffness = float(line_stiffness)
+        self.tolerance = float(integration_relative_tolerance)
+        self.maximum_subdivisions = maximum_subdivisions
+        self.length_a = float(np.linalg.norm(self.reference_a[2] - self.reference_a[0]))
+        self.length_b = float(np.linalg.norm(self.reference_b[2] - self.reference_b[0]))
+
+    def _direction(self, source: np.ndarray, target: np.ndarray,
+                   length: float, source_is_a: bool):
+        target_controls = _bezier_controls(target, 0.0, 1.0)
+        points = 0
+        scan_points = 0
+        maximum_error = 0.0
+        integrated_intervals = 0
+
+        def gap_at(station: float) -> float:
+            nonlocal scan_points
+            scan_points += 1
+            return (closest_on_b3(_curve(source, station)[0], target).distance
+                    - self.radius)
+
+        roots: list[float] = []
+
+        def scan(left: float, right: float, gap_left: float,
+                 gap_right: float, depth: int):
+            middle = 0.5 * (left + right)
+            gap_middle = gap_at(middle)
+            samples = (gap_left, gap_middle, gap_right)
+            if any(samples[i] * samples[i + 1] < 0.0 for i in (0, 1)):
+                for first_s, last_s, first_g, last_g in (
+                    (left, middle, gap_left, gap_middle),
+                    (middle, right, gap_middle, gap_right),
+                ):
+                    if first_g * last_g < 0.0:
+                        roots.append(float(brentq(
+                            gap_at, first_s, last_s,
+                            xtol=1.0e-14, rtol=1.0e-14,
+                        )))
+                return
+            if gap_middle == 0.0:
+                roots.append(middle)
+                return
+            controls = _bezier_controls(source, left, right)
+            speed_reach = 0.5 * max(
+                float(np.linalg.norm(controls[1] - controls[0])),
+                float(np.linalg.norm(controls[2] - controls[1])),
+            )
+            if min(samples) > 0.0:
+                if (_aabb_distance(controls, target_controls) > self.radius
+                        or min(samples) > speed_reach):
+                    return
+            elif max(samples) < -speed_reach:
+                return
+            if depth >= self.maximum_subdivisions:
+                raise MemoryError("B3 pair contact interval scan budget exhausted")
+            scan(left, middle, gap_left, gap_middle, depth + 1)
+            scan(middle, right, gap_middle, gap_right, depth + 1)
+
+        coarse = np.linspace(0.0, 1.0, 33)
+        coarse_gaps = [gap_at(float(station)) for station in coarse]
+        for index in range(32):
+            scan(float(coarse[index]), float(coarse[index + 1]),
+                 coarse_gaps[index], coarse_gaps[index + 1], 0)
+        cuts = (0.0, *sorted(set((*roots,
+                                  *_endpoint_projection_cuts(source, target)))),
+                1.0)
+        active_intervals = tuple((left, right)
+                                 for left, right in zip(cuts[:-1], cuts[1:])
+                                 if right - left > 1.0e-14
+                                 and gap_at(0.5 * (left + right)) < 0.0)
+
+        def quadrature(left: float, right: float, rule):
+            nonlocal points
+            abscissae, weights = rule
+            energy = 0.0
+            residual = np.zeros(18)
+            tangent = np.zeros((18, 18))
+            active = False
+            for abscissa, weight in zip(abscissae, weights):
+                s = 0.5 * ((right - left) * float(abscissa) + right + left)
+                station = b3_distance_jet(
+                    source, target, s, self.radius,
+                    source_is_a=source_is_a,
+                )
+                points += 1
+                if station.gap >= 0.0:
+                    continue
+                active = True
+                measure = 0.5 * (right - left) * float(weight) * length
+                factor = self.stiffness * measure
+                energy += 0.5 * factor * station.gap * station.gap
+                residual += factor * station.gap * station.gradient
+                tangent += factor * (
+                    np.outer(station.gradient, station.gradient)
+                    + station.gap * station.hessian
+                )
+            return energy, residual, tangent, active
+
+        def integrate(left: float, right: float, depth: int):
+            nonlocal maximum_error, integrated_intervals
+            lower_bound = _aabb_distance(
+                _bezier_controls(source, left, right), target_controls,
+            ) - self.radius
+            if lower_bound > 0.0:
+                return 0.0, np.zeros(18), np.zeros((18, 18))
+            low = quadrature(left, right, _GAUSS_8)
+            high = quadrature(left, right, _GAUSS_16)
+            if not high[3] and not low[3]:
+                if depth >= self.maximum_subdivisions:
+                    raise MemoryError("B3 pair inactive interval cannot be certified")
+            else:
+                scales = (
+                    max(abs(high[0]), self.stiffness * length * self.radius**2 * 1e-12),
+                    max(float(np.linalg.norm(high[1])),
+                        self.stiffness * length * self.radius * 1e-12),
+                    max(float(np.linalg.norm(high[2])),
+                        self.stiffness * length * 1e-12),
+                )
+                error = max(
+                    abs(high[0] - low[0]) / scales[0],
+                    float(np.linalg.norm(high[1] - low[1])) / scales[1],
+                    float(np.linalg.norm(high[2] - low[2])) / scales[2],
+                )
+                if error <= self.tolerance:
+                    maximum_error = max(maximum_error, error)
+                    integrated_intervals += 1
+                    return high[:3]
+                if depth >= self.maximum_subdivisions:
+                    raise MemoryError(
+                        "B3 pair line integration subdivision budget exhausted"
+                    )
+            middle = 0.5 * (left + right)
+            first = integrate(left, middle, depth + 1)
+            second = integrate(middle, right, depth + 1)
+            return tuple(first[i] + second[i] for i in range(3))
+
+        energy, residual, tangent = 0.0, np.zeros(18), np.zeros((18, 18))
+        for left, right in active_intervals:
+            part = integrate(left, right, 0)
+            energy += part[0]
+            residual += part[1]
+            tangent += part[2]
+        return (energy, residual, tangent, points, maximum_error,
+                integrated_intervals, scan_points)
+
+    def evaluate(self, positions_a: np.ndarray,
+                 positions_b: np.ndarray) -> B3PairPotentialState:
+        a = _positions(positions_a, "beam A")
+        b = _positions(positions_b, "beam B")
+        first = self._direction(a, b, self.length_a, True)
+        second = self._direction(b, a, self.length_b, False)
+        return B3PairPotentialState(
+            0.5 * (first[0] + second[0]),
+            0.5 * (first[1] + second[1]),
+            0.5 * (first[2] + second[2]),
+            first[3] + second[3],
+            max(first[4], second[4]),
+            first[5] + second[5],
+            first[6] + second[6],
+        )

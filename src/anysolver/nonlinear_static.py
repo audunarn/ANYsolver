@@ -7491,9 +7491,14 @@ def solve_static_nonlinear(
                         independent_gap_lower_bound=certificate.conservative_lower_gap,
                         independent_gap_cells=certificate.cells_checked,
                         independent_gap_accuracy=certificate.accuracy,
-                        contact_integration_relative_error=(
+                    )
+                    if hasattr(contact_manager.law, "integration_relative_error"):
+                        summary_payload["contact_integration_relative_error"] = (
                             contact_manager.law.integration_relative_error
-                        ),
+                        )
+                if hasattr(contact_manager, "last_projection_evaluations"):
+                    summary_payload["projection_evaluations"] = (
+                        contact_manager.last_projection_evaluations
                     )
                 if not hasattr(contact_manager, "end_caps"):
                     summary_payload["normal_stiffness"] = contact_manager.stiffness

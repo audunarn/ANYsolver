@@ -187,6 +187,9 @@ class ContactSolverSettings:
     warped_q4_gap_accuracy: float | None = None
     warped_q4_maximum_gap_cells: int | None = None
     warped_q4_maximum_gap_depth: int | None = None
+    beam_pair_gap_accuracy: float | None = None
+    maximum_beam_pair_gap_cells: int | None = None
+    maximum_beam_pair_gap_depth: int | None = None
 
     def __post_init__(self) -> None:
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
@@ -210,6 +213,18 @@ class ContactSolverSettings:
             value = getattr(self, name)
             if value is not None and (not np.isfinite(value) or value <= 0.0):
                 raise ValueError(f"{name} must be finite and positive")
+        if (self.beam_pair_gap_accuracy is not None
+                and (not np.isfinite(self.beam_pair_gap_accuracy)
+                     or self.beam_pair_gap_accuracy <= 0.0)):
+            raise ValueError("beam_pair_gap_accuracy must be finite and positive")
+        if (self.maximum_beam_pair_gap_cells is not None
+                and (type(self.maximum_beam_pair_gap_cells) is not int
+                     or self.maximum_beam_pair_gap_cells < 1)):
+            raise ValueError("maximum_beam_pair_gap_cells must be a positive integer")
+        if (self.maximum_beam_pair_gap_depth is not None
+                and (type(self.maximum_beam_pair_gap_depth) is not int
+                     or self.maximum_beam_pair_gap_depth < 0)):
+            raise ValueError("maximum_beam_pair_gap_depth must be a nonnegative integer")
         if (type(self.pointwise_integration_subdivisions) is not int
                 or not 0 <= self.pointwise_integration_subdivisions <= 20):
             raise ValueError("pointwise_integration_subdivisions must be an integer from 0 to 20")
@@ -800,9 +815,21 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
 
                 manager = _BeamChainPairManager(model, definition, settings, initial_displacement)
             else:
-                from .beam_pair import _BeamPairManager
+                from anysolver.elements import QuadraticBeamElement
 
-                manager = _BeamPairManager(model, definition, settings, initial_displacement)
+                if (len(definition.surfaces) == 2
+                        and all(type(model.mesh.elements.get(surface.element_ids[0]))
+                                is QuadraticBeamElement
+                                for surface in definition.surfaces)):
+                    from .beam_curve_pair_static import B3PairManager
+
+                    manager = B3PairManager(model, definition, settings,
+                                            initial_displacement)
+                else:
+                    from .beam_pair import _BeamPairManager
+
+                    manager = _BeamPairManager(model, definition, settings,
+                                               initial_displacement)
     elif definition.rigid_bodies:
         if settings.warped_q4_plane:
             from .warped_q4_static import WarpedQ4PlaneManager
