@@ -28,7 +28,7 @@ from scripts._b3_e4_f03_shell_finite_pose_candidate import reference_nodes
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
     directional_pose_from_e4_total_strip, pose_from_e4_total_strip,
-    reference_spatial_trace_strip, strip_weights,
+    reference_spatial_trace_strip, strip_weights, _clip, _quadrature,
 )
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
@@ -223,6 +223,118 @@ def distributed_surface_patch_trace(
                        "inertia_eigenvalues_m2":eigenvalues.tolist(),
                        "shell_drilling_column_max":0.,
                        "definition":"mean top-surface position gap and normalized first moment of that gap against native bottom-surface half-cell traces"}
+
+
+def distributed_surface_patch_trace_panel(
+        shell: FlatE4TrialPanel, beam, *,
+        x_interval: tuple[float, float] = (.9, 1.)
+        ) -> tuple[np.ndarray, dict]:
+    """Independent Q4/S3 host-clipped reference oracle for the same patch law.
+
+    Shell hosts, S3 diagonals, native half-cells and physical patch boundaries
+    are all split before integrating the surface-position gap and its first
+    moment. This is a bounded reference linearization, not an accepted state.
+    """
+    if not isinstance(shell, FlatE4TrialPanel):
+        raise TypeError("bounded actual E4 trial panel required")
+    shell.guard()
+    beam.context.guard()
+    panel = shell.panel
+    if (panel.topology not in ("Q4", "S3-V2D") or
+            panel.thickness not in (.035, .07) or
+            not isinstance(x_interval, tuple) or len(x_interval) != 2 or
+            not np.isfinite(x_interval).all() or
+            not 0. <= x_interval[0] < x_interval[1] <= 1.):
+        raise ValueError("bounded physical Q4/S3 material patch required")
+    left, right = map(float, x_interval)
+    center_x = (left+right)/2
+    expected_area = (right-left)*.1
+    nodes = reference_nodes(panel)
+    shell_size = 6*panel.node_count
+    total = shell_size+beam.context.count
+    mean = np.zeros((3, total))
+    first_moment = np.zeros((3, total))
+    inertia = np.zeros((3, 3))
+    area = 0.
+    max_reference_gap = 0.
+    x_grid = np.linspace(-.5, 1.5, panel.x_interval_count+1)
+    y_grid = np.linspace(-.5, .5, panel.n_y+1)
+    base = beam.context.initial.mechanical
+    for j in range(panel.n_y):
+        y0, y1 = y_grid[j:j+2]
+        if y1 <= -.05 or y0 >= .05:
+            continue
+        for i in range(panel.x_interval_count):
+            x0, x1 = x_grid[i:i+2]
+            if x1 <= left or x0 >= right:
+                continue
+            a = np.array((x0, y0))
+            b = np.array((x1, y0))
+            c = np.array((x1, y1))
+            d = np.array((x0, y1))
+            hosts = ([a, b, c, d],) if panel.topology == "Q4" else (
+                [a, b, c], [a, c, d])
+            for host in hosts:
+                for half_cell in range(beam.n_half_cells):
+                    bx0 = half_cell/beam.n_half_cells
+                    bx1 = (half_cell+1)/beam.n_half_cells
+                    if bx1 <= max(left, x0) or bx0 >= min(right, x1):
+                        continue
+                    polygon = host
+                    for axis, bound, sign in (
+                            (0, max(left, bx0), 1),
+                            (0, min(right, bx1), -1),
+                            (1, -.05, 1), (1, .05, -1)):
+                        polygon = _clip(polygon, axis, bound, sign)
+                    for weight, point in _quadrature(polygon):
+                        x, y = map(float, point)
+                        element, cell, fraction, _ = beam._locate(x)
+                        port = NativeHalfCellSpatialPort(
+                            beam.context, element, cell, fraction)
+                        high, low, frame = port.pose_pair(base)
+                        shell_indices, shape = panel._shape(x, y)
+                        top = panel.thickness/2
+                        shell_position = shape@nodes[shell_indices]+(
+                            np.array((0., 0., top)))
+                        offset = np.array((0., y, -.05))
+                        beam_position = high+low+frame@offset
+                        max_reference_gap = max(max_reference_gap, float(
+                            np.linalg.norm(shell_position-beam_position)))
+                        dg = np.zeros((3, total))
+                        for node, value in zip(shell_indices, shape):
+                            start = 6*int(node)
+                            dg[:, start:start+3] += value*np.eye(3)
+                            dg[:, start+3:start+6] -= (
+                                value*top*skew(np.array((0., 0., 1.))))
+                        dg[:, shell_size:] -= (
+                            np.column_stack((np.eye(3), -skew(offset))) @
+                            port.tangent(base))
+                        arm = np.array((x-center_x, y, 0.))
+                        mean += weight*dg
+                        first_moment += weight*skew(arm)@dg
+                        inertia += weight*((arm@arm)*np.eye(3)-
+                                           np.outer(arm, arm))
+                        area += weight
+    if abs(area-expected_area) > 1e-12 or max_reference_gap > 1e-11:
+        raise ArithmeticError("bounded surface patch reference changed")
+    inertia /= area
+    eigenvalues = np.linalg.eigvalsh(inertia)
+    if eigenvalues[0] <= 1e-8:
+        raise ArithmeticError("degenerate physical footprint inertia")
+    rows = np.vstack((mean/area, np.linalg.solve(inertia,
+                                                  first_moment/area)))
+    if (not np.isfinite(rows).all() or
+            np.max(np.abs(rows[:, 5:shell_size:6])) > 1e-14):
+        raise ArithmeticError("surface patch row is invalid or uses drilling")
+    return rows, {
+        "topology": panel.topology,
+        "reference_gap_m": max_reference_gap,
+        "area_m2": float(area),
+        "inertia_eigenvalues_m2": eigenvalues.tolist(),
+        "shell_drilling_column_max": float(
+            np.max(np.abs(rows[:, 5:shell_size:6]))),
+        "definition": "host-clipped Q4/S3 reference oracle for six surface-position moments",
+    }
 
 
 def finite_rigid_work(shell: FlatE4TrialPanel, beam, port,

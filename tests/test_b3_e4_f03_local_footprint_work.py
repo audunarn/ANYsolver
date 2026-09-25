@@ -6,9 +6,11 @@ import pytest
 from scripts._b3_e4_f03_shell_strip_pose_candidate import reference_spatial_trace_strip
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts.b3_e4_f03_local_footprint_work import (
-    case, distributed_surface_patch_trace, structured_q4_patch_trace,
+    case, distributed_surface_patch_trace, distributed_surface_patch_trace_panel,
+    structured_q4_patch_trace,
     structured_q4_point_shape,
 )
+from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts.b3_e4_f03_plate_patch_work import local_grid
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
@@ -75,6 +77,66 @@ def test_distributed_surface_moments_preserve_physical_work_and_shear():
     gap=trace@director
     assert gap[1]==pytest.approx(-.0175e-5,abs=1e-14)
     assert np.max(np.abs(gap[3:]))<1e-14
+
+
+@pytest.mark.parametrize("topology", ["Q4", "S3-V2D"])
+def test_host_clipped_surface_moments_reproduce_six_physical_actions(topology):
+    beam = build(8, z_offset=.0675,
+                 torsion_constant=square_torsion_constant())
+    panel = FlatE4TrialPanel(make_shell(4, topology, n_y=4,
+                                       thickness=.035))
+    rows, reference = distributed_surface_patch_trace_panel(panel, beam)
+    xs = np.linspace(-.5, 1.5, 9)
+    ys = np.linspace(-.5, .5, 5)
+    shell_size = 6*panel.panel.node_count
+    assert rows.shape == (6, shell_size+beam.context.count)
+    assert np.linalg.matrix_rank(rows) == 6
+    assert reference["reference_gap_m"] < 1e-12
+    assert reference["area_m2"] == pytest.approx(.01, abs=1e-12)
+    assert reference["shell_drilling_column_max"] == 0.
+
+    if topology == "Q4":
+        old, _ = distributed_surface_patch_trace(
+            xs, ys, beam, plate_thickness=.035)
+        assert np.max(np.abs(rows-old)) < 1e-12
+
+    # An affine top-surface displacement t + omega x arm must reproduce
+    # six independent force/moment work coordinates on either host family.
+    displacement = np.zeros(rows.shape[1])
+    translation = np.array((.001, -.002, .003))
+    rotation = np.array((.004, -.005, .006))
+    for j, y in enumerate(ys):
+        for i, x in enumerate(xs):
+            k = 6*(j*len(xs)+i)
+            displacement[k:k+3] = translation + np.cross(
+                rotation, (x-.95, y, 0.))
+    np.testing.assert_allclose(rows@displacement,
+                               np.r_[translation, rotation], atol=1e-12)
+
+    # Rigidly moving both domains causes no work. Leaving the shell director
+    # fixed while varying transverse displacement remains an admissible shear.
+    common = np.zeros_like(displacement)
+    for j, y in enumerate(ys):
+        for i, x in enumerate(xs):
+            k = 6*(j*len(xs)+i)
+            common[k:k+3] = translation + np.cross(rotation, (x, y, 0.))
+            common[k+3:k+6] = rotation
+    for i in range(beam.n_half_cells+1):
+        k = shell_size+6*i
+        common[k:k+3] = translation + np.cross(
+            rotation, (i/beam.n_half_cells, 0., .0675))
+        common[k+3:k+6] = rotation
+    for element in range(beam.n_half_cells//2):
+        for cell in (0, 1):
+            k = shell_size+beam.context.nodal_count+24*element+3*cell
+            common[k:k+3] = rotation
+    assert np.max(np.abs(rows@common)) < 1e-12
+
+    shear = np.zeros_like(displacement)
+    for j, y in enumerate(ys):
+        for i in range(len(xs)):
+            shear[6*(j*len(xs)+i)+2] = 1e-5*y
+    assert (rows@shear)[3] == pytest.approx(1e-5, abs=1e-14)
 
 
 @pytest.mark.parametrize("topology", ["Q4", "S3-V2D"])
