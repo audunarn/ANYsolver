@@ -49,7 +49,8 @@ def _cuts(values: tuple[int, ...], factor: int) -> tuple[Fraction, ...]:
 
 
 def _number(value: float) -> str:
-    return f"{value:.17g}"
+    # CalculiX input fields are bounded; these coordinates are rational mm cuts.
+    return f"{value:.12g}"
 
 
 def _set_lines(indices: set[int] | list[int]) -> list[str]:
