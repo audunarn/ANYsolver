@@ -36,7 +36,7 @@ def test_recovery_rigid_motion_and_orthogonal_shear_measures():
                   for node, xyz in coordinates.items()}
         result = SCREEN.recover(meta, motion)
         assert result["centerline_tangent_yaw_rad"] == pytest.approx(sign * .4e-4)
-        assert result["surface_four_corner_yaw_rad"] == pytest.approx(sign * .4e-4)
+        assert result["surface_square_patch_yaw_rad"] == pytest.approx(sign * .4e-4)
         for station in result["station_motion"].values():
             assert station["section_rotation_rad"][2] == pytest.approx(sign * .4e-4)
             assert station["max_warping_residual_m"] < 1e-17

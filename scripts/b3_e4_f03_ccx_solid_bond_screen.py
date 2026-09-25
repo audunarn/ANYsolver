@@ -110,8 +110,9 @@ def build(factor: int, shear: str) -> tuple[str, dict]:
     station_nodes={str(s): sorted(coordinates[(Fraction(s),y,z)]
                                   for y in by for z in bz)
                    for s in STATIONS_MM}
+    surface_x=(250,500,750) if factor==1 else (375,500,625)
     surface={(x,y):coordinates[(Fraction(x),Fraction(y),Fraction(35))]
-             for x in (250,750) for y in (-50,0,50)}
+             for x in surface_x for y in (-50,0,50)}
     probe=set().union(*station_nodes.values(),surface.values())
     lines=["** BOUNDED C3D8 PLATE AND CONFORMING SOLID STIFFENER; DEVELOPMENT ONLY",
            f"** factor={factor}; shear={shear}; gamma={_number(GAMMA)}",
@@ -188,11 +189,15 @@ def recover(meta: dict, displacement: dict[int,np.ndarray]) -> dict:
     surface=meta["surface_nodes"]
     def value(x,y):
         return displacement[surface[f"{x},{y}"]]
-    tangent=(value(750,0)[1]-value(250,0)[1])/.5
-    patch=np.array([(x/1000,y/1000) for x in (250,750)
-                    for y in (-50,50)],dtype=float)
-    pu=np.array([value(x,y)[:2] for x in (250,750)
-                 for y in (-50,50)])
+    left,right=((250,750) if meta["factor"]==1 else (375,625))
+    def local(x,y):
+        a,b=((left,500) if x<500 else (500,right))
+        return value(a,y)+(value(b,y)-value(a,y))*((x-a)/(b-a))
+    tangent=(local(550,0)[1]-local(450,0)[1])/.1
+    patch=np.array([(x/1000,y/1000) for x in (450,550)
+                     for y in (-50,50)],dtype=float)
+    pu=np.array([local(x,y)[:2] for x in (450,550)
+                  for y in (-50,50)])
     centered=patch-patch.mean(axis=0)
     patch_yaw=float(np.sum(centered[:,0]*pu[:,1]-centered[:,1]*pu[:,0])/
                     np.sum(centered**2))
@@ -213,7 +218,8 @@ def recover(meta: dict, displacement: dict[int,np.ndarray]) -> dict:
                            "max_warping_residual_m":float(np.linalg.norm(residual,axis=1).max()),
                            "node_count":len(indices)}
     return {"centerline_tangent_yaw_rad":float(tangent),
-            "surface_four_corner_yaw_rad":patch_yaw,
+            "surface_square_patch_yaw_rad":patch_yaw,
+            "surface_square_patch_half_width_m":.05,
             "station_motion":stations}
 
 
