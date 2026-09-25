@@ -31,7 +31,8 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
     reference_spatial_trace_local_frame)
 from scripts._b3_e4_f03_shell_spatial_linear_port import reference_spatial_trace
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
-    STRIP_PORTS, pose_from_e4_total_strip, reference_spatial_trace_strip)
+    LINE_ORIGIN_PORT, STRIP_PORTS, pose_from_e4_total_strip,
+    reference_spatial_trace_strip)
 from scripts._b3_e4_f03_shell_chord_pose_candidate import (
     pose_from_e4_total_chord, reference_spatial_trace_chord)
 
@@ -139,6 +140,8 @@ def segments(shell: FlatE4TrialPanel, beam: Fixture,
         half_length,half_width=STRIP_PORTS[shell_port]
         x_grid = -.5+np.arange(shell.panel.x_interval_count+1)/shell.panel.n_s
         sites = [0., 1.]
+        if shell_port == LINE_ORIGIN_PORT:
+            sites.extend(x_grid)
         for edge in x_grid:
             sites.extend((edge-half_length, edge+half_length))
         if shell.panel.topology == "S3-V2D":
@@ -203,9 +206,10 @@ def integrate_weak_line(
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
                 "local_frame": pose_from_e4_total_local_frame,
-                **{name: lambda p, s, u, a=a, b=b: (
+                **{name: lambda p, s, u, a=a, b=b, line=name==LINE_ORIGIN_PORT: (
                     pose_from_e4_total_strip(
-                        p, s, u, half_length=a, half_width=b))
+                        p, s, u, half_length=a, half_width=b,
+                        line_origin=line))
                    for name,(a,b) in STRIP_PORTS.items()},
                 "line_chord_020": pose_from_e4_total_chord,
                 "line_chord_confined_020": lambda p, s, u: (
@@ -288,9 +292,10 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
                 "local_frame": pose_from_e4_total_local_frame,
-                 **{name: lambda p, s, u, a=a, b=b: (
+                 **{name: lambda p, s, u, a=a, b=b, line=name==LINE_ORIGIN_PORT: (
                      pose_from_e4_total_strip(
-                         p, s, u, half_length=a, half_width=b))
+                         p, s, u, half_length=a, half_width=b,
+                         line_origin=line))
                     for name,(a,b) in STRIP_PORTS.items()},
                 "line_chord_020": pose_from_e4_total_chord,
                 "line_chord_confined_020": lambda p, s, u: (
@@ -301,9 +306,10 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
         "local_translation": reference_spatial_trace_local_translation,
         "local_director": reference_spatial_trace_local_director,
         "local_frame": reference_spatial_trace_local_frame,
-        **{name: lambda p, s, a=a, b=b: (
+        **{name: lambda p, s, a=a, b=b, line=name==LINE_ORIGIN_PORT: (
             reference_spatial_trace_strip(
-                p, s, half_length=a, half_width=b))
+                p, s, half_length=a, half_width=b,
+                line_origin=line))
            for name,(a,b) in STRIP_PORTS.items()},
         "line_chord_020": reference_spatial_trace_chord,
         "line_chord_confined_020": lambda p, s: (

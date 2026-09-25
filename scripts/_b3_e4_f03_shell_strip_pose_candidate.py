@@ -20,7 +20,17 @@ from scripts._b3_e4_f03_shell_trace import ShellPanel
 STRIP_PORTS = {
     "physical_strip_020_023": (.2, .23),
     "physical_strip_005_005": (.05, .05),
+    "physical_strip_line_origin_005_005": (.05, .05),
 }
+LINE_ORIGIN_PORT = "physical_strip_line_origin_005_005"
+
+
+def _origin_weights(panel: ShellPanel, station: float) -> np.ndarray:
+    """Continuous material-centerline position within the finite patch."""
+    indices, values = panel._shape(station, 0.)
+    weights = np.zeros(panel.node_count)
+    weights[indices] = values
+    return weights
 
 
 def _clip(polygon: list[np.ndarray], axis: int, bound: float,
@@ -146,13 +156,15 @@ def strip_weights(panel: ShellPanel, station: float, *,
 
 def reference_spatial_trace_strip(
         panel: ShellPanel, station: float, *,
-        half_length: float, half_width: float) -> np.ndarray:
+        half_length: float, half_width: float,
+        line_origin: bool = False) -> np.ndarray:
     """Flat-reference six-channel strip trace with physical polar yaw."""
     mean, gradients = strip_weights(
         panel, station, half_length=half_length, half_width=half_width)
     result = np.zeros((6, 6*panel.node_count))
+    origin = _origin_weights(panel, station) if line_origin else mean
     for axis in range(3):
-        result[axis, axis::6] = mean
+        result[axis, axis::6] = origin
     result[3, 3::6] = mean
     result[4, 4::6] = mean
     result[5, 0::6] = -.5*gradients[1]
@@ -162,24 +174,28 @@ def reference_spatial_trace_strip(
 
 def pose_from_e4_total_strip(
         panel: ShellPanel, station: float, total_u: np.ndarray, *,
-        half_length: float, half_width: float
+        half_length: float, half_width: float,
+        line_origin: bool = False
         ) -> tuple[np.ndarray, np.ndarray]:
     """Finite material-strip pose through the actual flat E4 chart."""
     mean, gradients = strip_weights(
         panel, station, half_length=half_length, half_width=half_width)
+    origin = _origin_weights(panel, station) if line_origin else mean
     return pose_from_e4_total(
-        panel, station, total_u, _origin_weights=mean,
+        panel, station, total_u, _origin_weights=origin,
         _director_weights=mean, _planar_weights=gradients)
 
 
 def directional_pose_from_e4_total_strip(
         panel: ShellPanel, station: float, total_u: np.ndarray,
         first: np.ndarray, second: np.ndarray, *,
-        half_length: float, half_width: float) -> DirectionalPose:
+        half_length: float, half_width: float,
+        line_origin: bool = False) -> DirectionalPose:
     """Owned first/mixed-second strip derivatives in the actual E4 chart."""
     mean, gradients = strip_weights(
         panel, station, half_length=half_length, half_width=half_width)
+    origin = _origin_weights(panel, station) if line_origin else mean
     return directional_pose_from_e4_total(
         panel, station, total_u, first, second,
-        _origin_weights=mean, _director_weights=mean,
+        _origin_weights=origin, _director_weights=mean,
         _planar_weights=gradients)

@@ -25,7 +25,7 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_director,
     pose_from_e4_total_local_frame)
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
-    STRIP_PORTS, pose_from_e4_total_strip)
+    LINE_ORIGIN_PORT, STRIP_PORTS, pose_from_e4_total_strip)
 from scripts._b3_e4_f03_shell_chord_pose_candidate import pose_from_e4_total_chord
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_trace import make_shell
@@ -95,9 +95,10 @@ def one_case(topology: str, intervals: int, kind: str, *,
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
                 "local_frame": pose_from_e4_total_local_frame,
-                **{name: lambda p, s, u, a=a, b=b: (
+                **{name: lambda p, s, u, a=a, b=b, line=name==LINE_ORIGIN_PORT: (
                     pose_from_e4_total_strip(
-                        p, s, u, half_length=a, half_width=b))
+                        p, s, u, half_length=a, half_width=b,
+                        line_origin=line))
                    for name,(a,b) in STRIP_PORTS.items()},
                 "line_chord_020": pose_from_e4_total_chord,
                 "line_chord_confined_020": lambda p, s, u: (
@@ -522,7 +523,8 @@ def channel_split_reference_modes(
         topology: str, *, coarse_intervals: int = 4,
         fine_intervals: int = 8, fine_channels: tuple[int, ...] = (3,),
         n_s: int = 4, n_y: int = 4, native_half_cells: int = 16,
-        characteristic_length: float = .46) -> dict:
+        characteristic_length: float = .46,
+        shell_port: str = "physical_strip_005_005") -> dict:
     """Absolute-energy dual-norm screen for a bounded mixed-channel P0 pair.
 
     The H^(-1/2) Gram follows the actual interval count of each physical
@@ -534,7 +536,8 @@ def channel_split_reference_modes(
     beam=build(native_half_cells)
     kkt=assemble_channel_split_reference_kkt(
         shell,beam,coarse_intervals=coarse_intervals,
-        fine_intervals=fine_intervals,fine_channels=fine_channels)
+        fine_intervals=fine_intervals,fine_channels=fine_channels,
+        shell_port=shell_port)
     free=kkt.free_primal
     n=len(free)
     if n+kkt.constraint_jacobian.shape[0] > 1200:
@@ -608,7 +611,8 @@ def channel_split_reference_modes(
         signs=np.sign(values[significant])
         sign_changes[channel]=int(np.count_nonzero(signs[1:]!=signs[:-1]))
     return {
-        "topology":topology,"shell_x_intervals":2*n_s,
+        "topology":topology,"shell_port":shell_port,
+        "shell_x_intervals":2*n_s,
         "shell_y_intervals":n_y,"native_half_cells":native_half_cells,
         "coarse_line_intervals":coarse_intervals,
         "fine_line_intervals":fine_intervals,

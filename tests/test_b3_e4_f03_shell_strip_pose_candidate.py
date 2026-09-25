@@ -168,7 +168,10 @@ def test_split_mx_recovers_fine_torque_without_refining_transverse_force():
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-def test_split_mx_weak_work_matches_actual_chart_derivatives(topology):
+@pytest.mark.parametrize("shell_port", (
+    "physical_strip_005_005", "physical_strip_line_origin_005_005"))
+def test_split_mx_weak_work_matches_actual_chart_derivatives(
+        topology, shell_port):
     shell=FlatE4TrialPanel(make_shell(1,topology,n_y=4))
     beam=build(4)
     rng=np.random.default_rng(731)
@@ -199,7 +202,8 @@ def test_split_mx_weak_work_matches_actual_chart_derivatives(topology):
             first if with_directions else np.zeros_like(first),
             second if with_directions else np.zeros_like(second),
             moved,beam_first if with_directions else np.zeros_like(beam_first),
-            beam_second if with_directions else np.zeros_like(beam_second))
+            beam_second if with_directions else np.zeros_like(beam_second),
+            shell_port=shell_port)
     result=work(0.,0.,True)
     assert result.potential == pytest.approx(
         coefficients@result.weak_constraints,abs=2e-10)
@@ -221,12 +225,15 @@ def test_split_mx_weak_work_matches_actual_chart_derivatives(topology):
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-def test_split_mx_reference_rows_match_nonlinear_first_variation(topology):
+@pytest.mark.parametrize("shell_port", (
+    "physical_strip_005_005", "physical_strip_line_origin_005_005"))
+def test_split_mx_reference_rows_match_nonlinear_first_variation(
+        topology, shell_port):
     shell=FlatE4TrialPanel(make_shell(1,topology,n_y=4))
     beam=build(4)
     kkt=assemble_channel_split_reference_kkt(
         shell,beam,coarse_intervals=2,fine_intervals=4,
-        fine_channels=(3,))
+        fine_channels=(3,),shell_port=shell_port)
     rng=np.random.default_rng(1901)
     shell_first=rng.normal(scale=.001,size=(shell.panel.node_count,6))
     beam_first=rng.normal(scale=.001,size=beam.context.count)
@@ -236,7 +243,8 @@ def test_split_mx_reference_rows_match_nonlinear_first_variation(topology):
     result=integrate_channel_split_weak_line(
         shell,beam,2,4,(3,),np.zeros(14),zeros_shell.ravel(),
         zeros_shell.ravel(),shell_first,zeros_shell,
-        beam.context.initial.mechanical,beam_first,zeros_beam)
+        beam.context.initial.mechanical,beam_first,zeros_beam,
+        shell_port=shell_port)
     direction=np.r_[shell_first.ravel(),beam_first]
     np.testing.assert_allclose(result.weak_first,
                                kkt.constraint_jacobian@direction,
@@ -266,8 +274,10 @@ def test_strip_reference_area_and_rigid_work(topology):
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-@pytest.mark.parametrize("width", (WIDTH, SQUARE))
-def test_strip_finite_objectivity_chart_derivatives_and_shear(topology, width):
+@pytest.mark.parametrize("width,line_origin", (
+    (WIDTH, False), (SQUARE, False), (SQUARE, True)))
+def test_strip_finite_objectivity_chart_derivatives_and_shear(
+        topology, width, line_origin):
     panel = make_shell(2, topology, n_y=4)
     nodes = reference_nodes(panel)
     station = .37
@@ -278,7 +288,7 @@ def test_strip_finite_objectivity_chart_derivatives_and_shear(topology, width):
     rigid[:, :3] = nodes@rigid_frame.T+shift-nodes
     rigid[:, 3:] = angle
     position, frame = pose_from_e4_total_strip(
-        panel, station, rigid.ravel(), **width)
+        panel, station, rigid.ravel(), line_origin=line_origin, **width)
     np.testing.assert_allclose(position,
                                rigid_frame@(station, 0., 0.)+shift, atol=2e-12)
     np.testing.assert_allclose(frame, rigid_frame, atol=2e-12)
@@ -287,11 +297,13 @@ def test_strip_finite_objectivity_chart_derivatives_and_shear(topology, width):
     first = rng.normal(size=rigid.shape)*.04
     second = rng.normal(size=rigid.shape)*.04
     analytic = directional_pose_from_e4_total_strip(
-        panel, station, rigid.ravel(), first, second, **width)
+        panel, station, rigid.ravel(), first, second,
+        line_origin=line_origin, **width)
 
     def moved(a, b):
         return pose_from_e4_total_strip(
-            panel, station, (rigid+a*first+b*second).ravel(), **width)
+            panel, station, (rigid+a*first+b*second).ravel(),
+            line_origin=line_origin, **width)
 
     h = 1e-5
     plus, minus = moved(h, 0.), moved(-h, 0.)
@@ -311,20 +323,22 @@ def test_strip_finite_objectivity_chart_derivatives_and_shear(topology, width):
 
     zero = np.zeros_like(rigid)
     at_reference = directional_pose_from_e4_total_strip(
-        panel, station, zero.ravel(), first, zero, **width)
+        panel, station, zero.ravel(), first, zero,
+        line_origin=line_origin, **width)
     derivative = at_reference.frame_first
     spin = np.array((derivative[2, 1]-derivative[1, 2],
                      derivative[0, 2]-derivative[2, 0],
                      derivative[1, 0]-derivative[0, 1]))/2
     np.testing.assert_allclose(
         np.r_[at_reference.position_first, spin],
-        reference_spatial_trace_strip(panel, station, **width)@first.ravel(),
+        reference_spatial_trace_strip(
+            panel, station, line_origin=line_origin, **width)@first.ravel(),
         atol=2e-13)
 
     shear = np.zeros_like(rigid)
     shear[:, 2] = .07*nodes[:, 0]
     _, sheared_frame = pose_from_e4_total_strip(
-        panel, station, shear.ravel(), **width)
+        panel, station, shear.ravel(), line_origin=line_origin, **width)
     np.testing.assert_allclose(sheared_frame[:, 2], (0., 0., 1.), atol=2e-14)
     surface_normal = np.cross((1., 0., .07), (0., 1., 0.))
     surface_normal /= np.linalg.norm(surface_normal)

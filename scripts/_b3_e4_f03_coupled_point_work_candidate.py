@@ -25,7 +25,7 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_director,
     pose_from_e4_total_local_frame)
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
-    STRIP_PORTS, directional_pose_from_e4_total_strip,
+    LINE_ORIGIN_PORT, STRIP_PORTS, directional_pose_from_e4_total_strip,
     pose_from_e4_total_strip)
 from scripts._b3_e4_f03_shell_chord_pose_candidate import (
     directional_pose_from_e4_total_chord, pose_from_e4_total_chord)
@@ -110,11 +110,13 @@ def directional_point_work(
     elif shell_port in STRIP_PORTS:
         half_length,half_width=STRIP_PORTS[shell_port]
         pose_map = lambda p, s, u: pose_from_e4_total_strip(
-            p, s, u, half_length=half_length, half_width=half_width)
+            p, s, u, half_length=half_length, half_width=half_width,
+            line_origin=shell_port==LINE_ORIGIN_PORT)
         derivative_map = lambda p, s, u, a, b: (
             directional_pose_from_e4_total_strip(
                 p, s, u, a, b, half_length=half_length,
-                half_width=half_width))
+                half_width=half_width,
+                line_origin=shell_port==LINE_ORIGIN_PORT))
     elif shell_port == "line_chord_020":
         pose_map = pose_from_e4_total_chord
         derivative_map = directional_pose_from_e4_total_chord
