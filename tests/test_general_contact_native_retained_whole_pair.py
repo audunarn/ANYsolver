@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 from scipy.integrate import quad
+from scipy.optimize import brentq
 from scipy.spatial.transform import Rotation
 
 from anysolver._ge_beam3_centered_reference import (
@@ -13,6 +14,7 @@ from anysolver.general_contact.native_retained_whole_pair import (
     _straight_join_owner,
     _straight_join_partitions,
     _straight_support_partitions,
+    _piecewise_straight_support_partitions,
     _tiny_cell_omission_bound,
 )
 
@@ -73,6 +75,119 @@ def test_whole_pair_open_and_bounded_integration():
     a, b = _reference(0.0), _reference(0.08)
     with pytest.raises(MemoryError, match="integration interval budget"):
         _kernel(a, b, max_intervals=1).evaluate(*_pose(a), *_pose(b))
+
+
+def test_kinked_two_segment_support_matches_finite_segment_oracle():
+    a, b = _reference(0.0), _reference(0.102)
+    source = np.array(((1.0, 0.0, 0.0), (1.5, 0.0, 0.0),
+                       (2.0, 0.0, 0.0)))
+    nodes = np.array(((0.0, 0.102, 0.0),
+                      (1.0, 0.1006061111111111, 0.0),
+                      (2.0, 0.09754555555555555, 0.0)))
+    targets = tuple(np.array((nodes[i], 0.5*(nodes[i]+nodes[i+1]),
+                              nodes[i+1])) for i in (0, 1))
+    pieces = _piecewise_straight_support_partitions(
+        source, targets, ((4, 5), (5, 6)), 0.1, 1e-10,
+    )
+    assert pieces is not None
+    assert len(pieces) == 2
+
+    def segment_distance(point, first, second):
+        vector = second-first
+        station = np.clip(np.dot(point-first, vector)/np.dot(vector, vector),
+                          0.0, 1.0)
+        return float(np.linalg.norm(point-first-station*vector))
+
+    for station in np.linspace(0.0, 1.0, 257):
+        point = source[0]+station*(source[2]-source[0])
+        distances = tuple(segment_distance(point, nodes[i], nodes[i+1])
+                          for i in (0, 1))
+        if abs(min(distances)-0.1) < 1e-8:
+            continue
+        owning = next((owner for left, right, owner in pieces
+                       if left <= station <= right), None)
+        assert (owning is not None) == (min(distances) < 0.1)
+        if owning is not None:
+            assert owning == int(np.argmin(distances))
+
+    pose_a = _pose(a)
+    pose_b = list(_pose(b))
+    pose_b[0][:] = nodes
+    result = _kernel(a, b).evaluate(*pose_a, *pose_b)
+
+    def directional_integral(source_nodes, target_nodes, index):
+        first, second = source_nodes[index:index+2]
+
+        def gap(station):
+            point = first+station*(second-first)
+            distance = min(segment_distance(point, target_nodes[j],
+                                            target_nodes[j+1])
+                           for j in (0, 1))
+            return distance-0.1
+
+        stations = np.linspace(0.0, 1.0, 513)
+        crossings = [brentq(gap, left, right, xtol=1e-14)
+                     for left, right in zip(stations[:-1], stations[1:])
+                     if gap(left)*gap(right) < 0.0]
+        projection_cuts = []
+        for target in (0, 1):
+            origin, end = target_nodes[target:target+2]
+            vector = end-origin
+            squared_length = float(vector@vector)
+            first_projection = float((first-origin)@vector)/squared_length
+            slope = float((second-first)@vector)/squared_length
+            if slope != 0.0:
+                projection_cuts.extend(
+                    cut for level in (0.0, 1.0)
+                    if 0.0 < (cut := (level-first_projection)/slope) < 1.0
+                )
+        return quad(lambda station: min(gap(station), 0.0)**2,
+                    0.0, 1.0, epsabs=1e-14, epsrel=1e-12,
+                    points=sorted(set((*crossings, *projection_cuts))),
+                    limit=500)[0]
+
+    oracle = 25.0*sum(
+        directional_integral(source_nodes, target_nodes, index)
+        for source_nodes, target_nodes in ((a.coordinates, nodes),
+                                           (nodes, a.coordinates))
+        for index in (0, 1)
+    )
+    assert result.potential_j == pytest.approx(oracle, rel=1e-8, abs=1e-12)
+    assert result.integration_cells_checked <= 8
+    assert result.conservative_lower_gap_m <= -0.0024
+
+    step = 1e-6
+    plus, minus = pose_b[0].copy(), pose_b[0].copy()
+    plus[2, 1] += step
+    minus[2, 1] -= step
+    right = _kernel(a, b).evaluate(*pose_a, plus, *pose_b[1:])
+    left = _kernel(a, b).evaluate(*pose_a, minus, *pose_b[1:])
+    column = 42+6*2+1
+    assert ((right.potential_j-left.potential_j)/(2.0*step)
+            == pytest.approx(result.residual[column], rel=1e-5, abs=1e-8))
+    assert ((right.residual[column]-left.residual[column])/(2.0*step)
+            == pytest.approx(result.tangent[column, column],
+                             rel=1e-5, abs=1e-7))
+
+
+def test_shared_junction_owner_requires_persistent_node_identity():
+    target_nodes = np.array(((0.0, 0.0, 0.0),
+                             (0.9999999983139424, -0.0003613274401141717, 0.0),
+                             (1.9999999966905053, -0.0011550345541511337, 0.0)))
+    targets = tuple(np.array((target_nodes[i],
+                              0.5*(target_nodes[i]+target_nodes[i+1]),
+                              target_nodes[i+1])) for i in (0, 1))
+    source = np.array(((0.9999995263354753, 0.10096751256433002, 0.0),
+                       (1.4999983797836682, 0.09983418723760443, 0.0),
+                       (1.9999972332318612, 0.09870086191087882, 0.0)))
+    admitted = _piecewise_straight_support_partitions(
+        source, targets, ((1, 2), (2, 3)), 0.1, 1e-10,
+    )
+    assert admitted is not None
+    assert admitted[-1][2] == 1
+    assert _piecewise_straight_support_partitions(
+        source, targets, ((1, 2), (7, 3)), 0.1, 1e-10,
+    ) is None
 
 
 def test_straight_junction_owner_is_certified_only_on_one_side():

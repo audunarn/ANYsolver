@@ -168,6 +168,24 @@ def test_swept_endpoint_certificate_still_rejects_penetrating_end():
     )
 
 
+def test_kinked_whole_pair_near_contact_load_path_completes():
+    run = _owner(separation=0.102, force=-0.002,
+                 targets=(0.0, 1.0)).solve()
+    assert run.status == "completed", run.failure
+    assert run.accepted.completed_targets == 2
+    contact = run.accepted.contact
+    assert contact.potential_j > 0.0
+    assert contact.conservative_lower_gap_m >= -1e-3
+    np.testing.assert_allclose(
+        contact.beam_a_force_n+contact.beam_b_force_n,
+        0.0, rtol=0.0, atol=1e-8,
+    )
+    np.testing.assert_allclose(
+        contact.beam_a_moment_nm+contact.beam_b_moment_nm,
+        0.0, rtol=0.0, atol=1e-8,
+    )
+
+
 def test_active_affine_pose_assembles_both_retained_beams_and_tangent():
     owner = _owner(separation=0.13)
     increment = np.zeros(owner.context.count)

@@ -215,6 +215,156 @@ def _straight_support_partitions(
     return tuple(pieces)
 
 
+def _piecewise_straight_support_partitions(
+    source: np.ndarray, targets: tuple[np.ndarray, np.ndarray],
+    target_node_ids: tuple[tuple[int, int], tuple[int, int]],
+    radius: float, accuracy_m: float,
+) -> tuple[tuple[float, float, int], ...] | None:
+    """Exact finite-segment support for a straight source and two straight targets.
+
+    The target segments may meet at a kink. Projection clamps first partition
+    source station; each resulting squared segment distance is quadratic.
+    Radius crossings and equality of the two quadratics complete the
+    support/ownership partition. Ambiguous floating-point branches fall back
+    to the general search/integration path.
+    """
+    scale = max(1.0, radius, float(np.max(np.abs(source))),
+                *(float(np.max(np.abs(target))) for target in targets))
+    roundoff = 256.0*np.finfo(float).eps*scale
+    squared_roundoff = 32.0*roundoff*scale
+    station_roundoff = 64.0*np.finfo(float).eps
+    if roundoff > accuracy_m:
+        return None
+    if any(float(np.linalg.norm(curve[1]-0.5*(curve[0]+curve[2])))
+           > roundoff for curve in (source, *targets)):
+        return None
+    source_start, direction = source[0], source[2]-source[0]
+    segments = tuple((target[0], target[2]-target[0]) for target in targets)
+    if any(float(np.dot(vector, vector)) <= roundoff**2
+           for _, vector in segments):
+        return None
+    shared_junction = (
+        target_node_ids[0][1] == target_node_ids[1][0]
+        and float(np.linalg.norm(targets[0][2]-targets[1][0])) <= roundoff
+    )
+
+    def roots(coefficients: tuple[float, float, float],
+              left: float, right: float) -> tuple[float, ...] | None:
+        a, b, c = coefficients
+        if max(abs(a), abs(b), abs(c)) <= squared_roundoff:
+            return None
+        if a == 0.0:
+            candidates = () if b == 0.0 else (-c/b,)
+        else:
+            discriminant = b*b-4.0*a*c
+            discriminant_roundoff = (1024.0*np.finfo(float).eps
+                                     *(b*b+abs(4.0*a*c)))
+            if abs(discriminant) <= discriminant_roundoff:
+                return None
+            candidates = np.roots((a, b, c))
+        found = []
+        for candidate in candidates:
+            if abs(complex(candidate).imag) > station_roundoff:
+                continue
+            value = float(complex(candidate).real)
+            if not np.isfinite(value):
+                return None
+            if left < value < right:
+                if abs((a*value+b)*value+c) > squared_roundoff:
+                    return None
+                found.append(value)
+        return tuple(found)
+
+    boundaries = [0.0, 1.0]
+    for start, vector in segments:
+        squared_length = float(vector@vector)
+        first = float((source_start-start)@vector)/squared_length
+        slope = float(direction@vector)/squared_length
+        if abs(slope) <= station_roundoff:
+            if min(abs(first), abs(first-1.0)) <= station_roundoff:
+                return None
+            continue
+        for level in (0.0, 1.0):
+            root = (level-first)/slope
+            if 0.0 < root < 1.0:
+                boundaries.append(float(root))
+    boundaries = sorted(set(boundaries))
+    if any(right-left <= station_roundoff
+           for left, right in zip(boundaries[:-1], boundaries[1:])):
+        return None
+
+    def quadratics(left: float, right: float):
+        middle = 0.5*(left+right)
+        pieces = []
+        branches = []
+        for start, vector in segments:
+            squared_length = float(vector@vector)
+            first = float((source_start-start)@vector)/squared_length
+            slope = float(direction@vector)/squared_length
+            projected = first+slope*middle
+            if min(abs(projected), abs(projected-1.0)) <= station_roundoff:
+                return None
+            if projected < 0.0:
+                clamp, variation = 0.0, 0.0
+                branch = "start"
+            elif projected > 1.0:
+                clamp, variation = 1.0, 0.0
+                branch = "end"
+            else:
+                clamp, variation = first, slope
+                branch = "interior"
+            offset = source_start-start-clamp*vector
+            velocity = direction-variation*vector
+            pieces.append((float(velocity@velocity),
+                           2.0*float(offset@velocity),
+                           float(offset@offset)))
+            branches.append(branch)
+        return tuple(pieces), tuple(branches)
+
+    active = []
+    for left, right in zip(boundaries[:-1], boundaries[1:]):
+        calculated = quadratics(left, right)
+        if calculated is None:
+            return None
+        coefficients, branches = calculated
+        first, second = coefficients
+        junction_owner = shared_junction and branches == ("end", "start")
+        cuts = [left, right]
+        for index, polynomial in enumerate((
+            (first[0], first[1], first[2]-radius*radius),
+            (second[0], second[1], second[2]-radius*radius),
+            tuple(a-b for a, b in zip(first, second)),
+        )):
+            if (index == 2 and junction_owner
+                    and max(abs(value) for value in polynomial)
+                    <= squared_roundoff):
+                continue
+            found = roots(polynomial, left, right)
+            if found is None:
+                return None
+            cuts.extend(found)
+        cuts = sorted(set(cuts))
+        if any(stop-begin <= station_roundoff
+               for begin, stop in zip(cuts[:-1], cuts[1:])):
+            return None
+        for begin, stop in zip(cuts[:-1], cuts[1:]):
+            middle = 0.5*(begin+stop)
+            distances = tuple((a*middle+b)*middle+c
+                              for a, b, c in coefficients)
+            nearest = min(distances)
+            if abs(nearest-radius*radius) <= squared_roundoff:
+                return None
+            if nearest >= radius*radius:
+                continue
+            if (abs(distances[0]-distances[1]) <= squared_roundoff
+                    and not junction_owner):
+                return None
+            active.append((begin, stop,
+                           0 if junction_owner or distances[0] < distances[1]
+                           else 1))
+    return tuple(active)
+
+
 def _monotone_gap_endpoints(
     source: np.ndarray, target: np.ndarray,
     left: float, right: float, roundoff_m: float,
@@ -442,7 +592,7 @@ class NativeRetainedWholeCurvePair:
 
     def _fingerprint(self) -> str:
         return sha(dict(
-            profile="NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V2",
+            profile="NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V3",
             cells_a=[(cell.element_id, cell.cell,
                       cell.reference.canonical_data()) for cell in self.cells_a],
             cells_b=[(cell.element_id, cell.cell,
@@ -636,48 +786,71 @@ class NativeRetainedWholeCurvePair:
                             + integrate(middle, right, owner, 0.5*budget,
                                         certified_active))
 
-                for interval in scan.intervals:
-                    if interval.status == "open":
-                        continue
-                    straight_pieces = _straight_support_partitions(
-                        current[source_index], target_positions,
-                        self.radius, interval.left, interval.right,
+                piecewise = _straight_support_partitions(
+                    current[source_index], target_positions, self.radius,
+                    0.0, 1.0,
+                    min(self.distance_tolerance, self.feature_tolerance),
+                )
+                if piecewise is None:
+                    piecewise = _piecewise_straight_support_partitions(
+                        current[source_index], target_positions, target_ids,
+                        self.radius,
                         min(self.distance_tolerance, self.feature_tolerance),
                     )
-                    pieces = straight_pieces
-                    if pieces is None and interval.target_cell is None:
-                        pieces = _straight_join_partitions(
+                if piecewise is not None:
+                    source_pieces = [(left, right, owner, True)
+                                     for left, right, owner in piecewise]
+                else:
+                    source_pieces = []
+                    for interval in scan.intervals:
+                        if interval.status == "open":
+                            continue
+                        straight_pieces = _straight_support_partitions(
                             current[source_index], target_positions,
-                            interval.left, interval.right,
+                            self.radius, interval.left, interval.right,
                             min(self.distance_tolerance, self.feature_tolerance),
                         )
-                        if pieces is None:
-                            raise ValueError("native whole pair target ownership is unresolved")
-                    elif pieces is None:
-                        pieces = ((interval.left, interval.right,
-                                   interval.target_cell),)
-                    for begin, stop, certified_owner in pieces:
-                        if certified_owner not in projection_cuts:
-                            projection_cuts[certified_owner] = (
-                                _endpoint_projection_cuts(
-                                    current[source_index],
-                                    current[target_base+certified_owner],
+                        pieces = straight_pieces
+                        if pieces is None and interval.target_cell is None:
+                            pieces = _straight_join_partitions(
+                                current[source_index], target_positions,
+                                interval.left, interval.right,
+                                min(self.distance_tolerance,
+                                    self.feature_tolerance),
+                            )
+                            if pieces is None:
+                                raise ValueError(
+                                    "native whole pair target ownership is unresolved"
                                 )
+                        elif pieces is None:
+                            pieces = ((interval.left, interval.right,
+                                       interval.target_cell),)
+                        source_pieces.extend(
+                            (begin, stop, owner, straight_pieces is not None)
+                            for begin, stop, owner in pieces
+                        )
+                for begin, stop, certified_owner, certified_active in source_pieces:
+                    if certified_owner not in projection_cuts:
+                        projection_cuts[certified_owner] = (
+                            _endpoint_projection_cuts(
+                                current[source_index],
+                                current[target_base+certified_owner],
                             )
-                        cuts = (begin, *(value for value in
-                                         projection_cuts[certified_owner]
-                                         if (begin+64.0*np.finfo(float).eps
-                                             < value < stop-64.0*np.finfo(float).eps)),
-                                stop)
-                        for start, end in zip(cuts[:-1], cuts[1:]):
-                            share = 0.25*(end-start)
-                            budget = np.array((self.energy_tolerance*share,
-                                               self.force_tolerance*share,
-                                               self.tangent_tolerance*share))
-                            total += 0.5*integrate(
-                                start, end, certified_owner, budget,
-                                straight_pieces is not None,
-                            )
+                        )
+                    cuts = (begin, *(value for value in
+                                     projection_cuts[certified_owner]
+                                     if (begin+64.0*np.finfo(float).eps
+                                         < value < stop-64.0*np.finfo(float).eps)),
+                            stop)
+                    for start, end in zip(cuts[:-1], cuts[1:]):
+                        share = 0.25*(end-start)
+                        budget = np.array((self.energy_tolerance*share,
+                                           self.force_tolerance*share,
+                                           self.tangent_tolerance*share))
+                        total += 0.5*integrate(
+                            start, end, certified_owner, budget,
+                            certified_active,
+                        )
 
         jacobian = np.zeros((36, 84))
         for global_cell, state in enumerate(states):

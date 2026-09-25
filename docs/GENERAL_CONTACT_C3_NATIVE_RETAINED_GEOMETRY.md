@@ -378,6 +378,46 @@ forces of 0.000652809 N, equal/opposite moments about the origin of
 reactions for the declared 0.05 m round centreline radii, not section
 surface pressures.
 
+The V3 restricted whole-pair kernel adds an exact piecewise-straight
+support/ownership partition for a straight source half-cell and two
+straight target half-cells that may meet at a kink. It splits at finite
+segment projection transitions, zero-gap roots and equal-distance roots;
+only intervals certified active with an owner are integrated.
+When both target segments project to their persistent shared junction,
+that material feature has one deterministic owner. Other ambiguous ties
+fall back to the existing bounded general route. The independent union
+search and its conservative gap report remain in use. The V2 machine-cell
+omission bound and numerical tolerances are unchanged. This change has a
+distinct whole-pair kernel, static-owner and checkpoint V3 identity; V2
+checkpoints are not resumed under V3.
+
+The previously failing 0.102 m/-0.002 N near-contact path now completes
+in 22.75 s, with 2.22047e-8 J contact potential and conservative gap lower
+bound -0.00061256 m against the explicit 0.001 m budget
+(`c3-native-kink-near-load-third.txt`). The first candidate exposed a
+second, opposite-direction shared-junction branch
+(`c3-native-kink-near-load-first.txt`,
+`c3-native-kink-near-load-second.txt`); those failures remain recorded.
+An independent finite-segment scalar integral, material-node identity
+check, virtual-work derivative and tangent check passed. The oracle was
+split at a short endpoint projection transition after its initial
+under-resolved integral disagreed (`c3-native-kink-piecewise-focused-first.txt`
+through `c3-native-kink-piecewise-focused-fifth.txt`). The affected kernel
+and owner set passed 19/19 with the opt-in long test skipped
+(`c3-native-kink-v3-affected-first.txt`). The V3 long full/split restart
+test passed separately in 93.48 s
+(`c3-native-kink-v3-active-restart.txt`). The selected-cell checkpoint
+remains 5469 bytes with its original SHA-256
+(`c3-native-kink-v3-selected-checkpoint.txt`).
+
+The standalone V3 example completed with 1.136742774e-7 J potential,
+conservative gap lower bound -0.000996694 m and 1872 integration
+evaluations, with checkpoint SHA-256
+`2e3f5d298ac6cb3639115266b86ac72ad4b1fc016680ff6af103be8951fa496c`
+(`c3-native-kink-v3-active-example.txt`). This is a development result;
+curved multi-pocket support, resource scaling, beam–shell coupling and
+independent C3 qualification remain open.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization
