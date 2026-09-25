@@ -418,7 +418,7 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
                 "station_motion":stations,
                 "unbonded_midspan_normal_separation_m":{
                     "y_m":[-.05,0.,.05],"bar_minus_plate_z_m":midspan,
-                    "meaning":"negative value is interpenetration of coincident unbonded surfaces; no contact law is present"},
+                    "meaning":"negative value is sampled geometric overlap of coincident unbonded surfaces; not a mortar integration-point contact gap or traction"},
                 "meaning":"midspan plate and bar are coincident but intentionally unbonded"}
     applied={int(index):np.array(force) for index,force in
              meta["applied_nodal_forces_N"].items()}
