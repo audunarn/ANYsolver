@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 from threadpoolctl import threadpool_info, threadpool_limits
 
+from anysolver._ge_beam3_mixed_ad import Jet2, matvec, so3_exp, transpose
 from anysolver._ge_beam3_pose_joint import RigidPoseJoint
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import build
@@ -30,6 +31,116 @@ from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 def skew(vector: np.ndarray) -> np.ndarray:
     x, y, z = vector
     return np.array(((0., -z, y), (z, 0., -x), (-y, x, 0.)))
+
+
+def finite_rigid_work(shell: FlatE4TrialPanel, beam, port,
+                      points: tuple[tuple[float, float, float], ...],
+                      multipliers: np.ndarray) -> dict:
+    """Check actual E4 interpolation/native nodal Exp-chart footprint work.
+
+    Only the 12 corner-position rows of the declared rigid law are used.
+    Shell director coordinates do not enter that law. The beam frame is the
+    native nodal spatial frame, advanced from the same fixed predecessor.
+    """
+    base = beam.context.initial.mechanical
+    shell_size = 6 * shell.panel.node_count
+    q = np.zeros(shell_size)
+    nodes = reference_nodes(shell.panel)
+    nodal = q.reshape(-1, 6)
+    nodal[:, 2] = .001 * (nodes[:, 0] + .5) * (1. + nodes[:, 1])
+    nodal[:, 3] = .002 * (nodes[:, 0] + .5)
+    nodal[:, 4] = -.003 * (nodes[:, 0] + .5)
+    baseline = np.zeros(beam.context.count)
+    start = 6 * port.node_index
+    baseline[start:start+3] = (.0008, -.0005, .0004)
+    baseline[start+3:start+6] = (.018, -.012, .009)
+    state = beam.context.advance(base, baseline)
+    beam_ref_high, beam_ref_low, beam_ref_frame = port.pose_pair(base)
+    beam_ref = beam_ref_high + beam_ref_low
+    offsets = [beam_ref_frame.T @ (np.asarray(point) - beam_ref)
+               for point in points]
+    shape_rows = [shell.panel._shape(point[0], point[1]) for point in points]
+
+    u_shell = np.zeros_like(q)
+    v_shell = np.zeros_like(q)
+    u_shell.reshape(-1, 6)[:, 2] = .007 * (nodes[:, 0] + .5) * nodes[:, 1]
+    v_shell.reshape(-1, 6)[:, 0] = .004 * (nodes[:, 0] + .5)
+    u_beam = np.zeros(beam.context.count)
+    v_beam = np.zeros(beam.context.count)
+    u_beam[start:start+6] = (.003, -.002, .004, .07, -.05, .04)
+    v_beam[start:start+6] = (-.002, .004, .001, -.06, .03, .05)
+
+    def independent(a: float, b: float, *, motion=None) -> tuple[float, np.ndarray]:
+        total = (q + a*u_shell + b*v_shell).reshape(-1, 6)
+        changed = beam.context.advance(state, a*u_beam + b*v_beam)
+        high, low, frame = port.pose_pair(changed)
+        center = high + low
+        gaps = []
+        for (indices, weights), offset in zip(shape_rows, offsets):
+            position = weights @ (nodes[indices] + total[indices, :3])
+            if motion is not None:
+                rotation, translation = motion
+                position = rotation @ position + translation
+                transformed_center = rotation @ center + translation
+                transformed_frame = rotation @ frame
+            else:
+                transformed_center, transformed_frame = center, frame
+            gaps.extend(transformed_frame.T @ (position-transformed_center) - offset)
+        vector = np.asarray(gaps)
+        return float(multipliers @ vector), vector
+
+    # Two Jet directions give the complete mixed curvature of this actual
+    # local chart, including multiplier-dependent beam-frame terms.
+    a = Jet2.variable(0., 0, 2)
+    b = Jet2.variable(0., 1, 2)
+    high, low, frame = port.pose_pair(state)
+    center = high + low
+    frame_jets = so3_exp([a*value+b*other for value, other in
+                          zip(u_beam[start+3:start+6], v_beam[start+3:start+6])])
+    current_frame = [[sum(frame_jets[i][k]*frame[k, j] for k in range(3))
+                      for j in range(3)] for i in range(3)]
+    center_jets = [Jet2.constant(float(center[i]), 2) +
+                   a*float(u_beam[start+i]) + b*float(v_beam[start+i])
+                   for i in range(3)]
+    work = Jet2.constant(0., 2)
+    for (indices, weights), offset, row in zip(shape_rows, offsets, range(4)):
+        position = weights @ (nodes[indices] + q.reshape(-1, 6)[indices, :3])
+        pu = weights @ u_shell.reshape(-1, 6)[indices, :3]
+        pv = weights @ v_shell.reshape(-1, 6)[indices, :3]
+        distance = [Jet2.constant(float(position[i]), 2) + a*float(pu[i]) +
+                    b*float(pv[i]) - center_jets[i] for i in range(3)]
+        gaps = matvec(transpose(current_frame), distance)
+        for axis in range(3):
+            work += float(multipliers[3*row+axis]) * (gaps[axis]-float(offset[axis]))
+
+    h = 2e-4
+    f00, gap = independent(0., 0.)
+    fp, _ = independent(h, 0.)
+    fm, _ = independent(-h, 0.)
+    gp, _ = independent(0., h)
+    gm, _ = independent(0., -h)
+    fpp, _ = independent(h, h)
+    fpm, _ = independent(h, -h)
+    fmp, _ = independent(-h, h)
+    fmm, _ = independent(-h, -h)
+    first_error = max(abs(work.gradient[0]-(fp-fm)/(2*h)),
+                      abs(work.gradient[1]-(gp-gm)/(2*h)))
+    mixed_fd = (fpp-fpm-fmp+fmm)/(4*h*h)
+    mixed_error = abs(work.hessian[0, 1]-mixed_fd)
+    from scipy.spatial.transform import Rotation
+    motion = (Rotation.from_rotvec((.3, -.2, .4)).as_matrix(),
+              np.array((2., -3., 1.)))
+    moved, moved_gap = independent(0., 0., motion=motion)
+    objective_error = max(abs(moved-f00), float(np.max(np.abs(moved_gap-gap))))
+    if (abs(work.value-f00) > 1e-10 or first_error > 1e-6 or
+            mixed_error > 1e-5 or objective_error > 1e-10 or
+            abs(work.hessian[0, 1]) < 1e-3):
+        raise ArithmeticError("finite rigid footprint work/chart check failed")
+    return {"potential_j": f00, "first_error_j": first_error,
+            "mixed_hessian_j": float(work.hessian[0, 1]),
+            "mixed_error_j": mixed_error,
+            "objective_gap_work_error": objective_error,
+            "scope": "actual E4 position interpolation and native nodal Exp-chart, local nonzero-multiplier proof"}
 
 
 def case(topology: str) -> dict:
@@ -165,6 +276,8 @@ def case(topology: str) -> dict:
                 rigid_force[:shell_size][5::6])))},
         "paired_shell_my_nm": {"distributing": shell_moments[0],
                                "rigid": shell_moments[1]},
+        "finite_rigid_chart": finite_rigid_work(
+            shell, beam, port, points, rigid_moment),
         "scope": "local linearized patch row-space/work proof; rigid patch intentionally restrains local shear; not a full line solve or space selection",
     }
 
@@ -178,14 +291,14 @@ def run(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=False)
     manifest = {
         "status": "EXPLORATORY_NOT_G0_ACCEPTANCE", "source_sha": source,
-        "question": "On the same physical 0.1 m E4/B3 patch, do exact rigid and distributing laws admit different transverse-shear work and moment paths?",
-        "decision": "If the local modes/work differ, preserve distinct rigid and distributing footprints and assess termination idealization; do not treat one as a penalty approximation of the other. A rank or rigid-motion failure requires mechanics revision.",
+        "question": "Does the rigid footprint's local force and curvature remain objective and work-conjugate through actual E4 interpolation and native B3 nodal finite rotation?",
+        "decision": "If the finite-chart check passes, retain the distinct rigid-footprint law for physical termination study; if it fails, revise its pullback before production. It does not select a line multiplier space or qualify a complete footprint.",
         "python": platform.python_version(), "numpy": np.__version__,
         "threads": 1, "models": ["Q4", "S3-V2D"],
         "geometry": "plate [-.5,1.5]x[-.5,.5] z=0 thickness .07 m; square patch at x=.5 half-width .05/.05 m; B3 axis z=.085 m",
         "section": "square-bar Saint-Venant J; other native generalized resultants unchanged",
         "support": "full shell left edge and native B3 root fixed",
-        "scope": "local exact linearization, not a nonlinear/global footprint or line qualification",
+        "scope": "local linear row-space and finite-chart work checks, not a global footprint or line qualification",
     }
     with threadpool_limits(limits=1):
         manifest["effective_threadpools"] = threadpool_info()
