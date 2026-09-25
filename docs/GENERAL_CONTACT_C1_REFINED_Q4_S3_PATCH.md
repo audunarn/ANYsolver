@@ -38,6 +38,17 @@ gap integrals: refining a 4×4 source to 8×8 changed a weak-open corner into
 one active pressure node. A feasible off-contact loading case is needed for
 coupled pressure and enforcement convergence.
 
+The ordinary nonlinear force route now admits the exact multi-Q4/S3 profile.
+`examples/general_contact_refined_q4_s3_force.py` starts the source and target
+skins in contact, clamps the source left edge, and loads two right-edge nodes
+outside the overlap. At full load, one cutback produced accepted factors
+0.25, 0.5, 0.75, 0.875 and 1.0. Six pressure nodes were active and the
+conservative lower-gap magnitude was 26.2 µm under the explicit 50 µm
+budget. Source/target force and moment balance was within 3×10⁻¹¹ in SI
+units. The opt-in integrated regression passed in 137.66 s. This feasible
+case supplies a development baseline for coupled refinement; one mesh and
+one normal stiffness do not establish convergence or C1 acceptance.
+
 This profile requires explicitly dimensioned Q4 area and weighted-gap
 tolerances, triangle and energy-evaluation budgets, and augmented-pressure
 controls. It does not admit penalty enforcement or the separate
