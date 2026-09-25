@@ -151,3 +151,42 @@ def test_b3_pair_gap_certificate_contains_independent_curve_grid():
             source, target, 0.1, accuracy=1e-12,
             maximum_cells=1, maximum_depth=0,
         )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="C2: sign-changing scan cell can hide another narrow contact pocket",
+)
+def test_b3_pair_narrow_double_pocket_independent_energy_gate():
+    # A quadratic parabola crosses a 5 mm tube in two narrow station pockets.
+    # The first coarse scan cell contains three gap roots; the current scan
+    # stops after the first and misses the second pocket. This frozen failure
+    # blocks C2 acceptance until interval completeness is established.
+    centre = 0.5014
+
+    def position(station):
+        u = station - centre
+        return (u, 5000.0*u*u - 0.01, 0.0)
+
+    source = np.array([position(s) for s in (0.0, 0.5, 1.0)])
+    target = np.array(((0.0, 0.0, -0.1), (0.0, 0.0, 0.0),
+                       (0.0, 0.0, 0.1)))
+    reference = np.array(((0.0, 0.0, 0.0), (0.5, 0.0, 0.0),
+                          (1.0, 0.0, 0.0)))
+    law = B3PairPotential(
+        reference, target, 0.005, 1.0,
+        integration_relative_tolerance=1e-3,
+        maximum_subdivisions=16,
+    )
+    measured = law._direction(source, target, 1.0, True)[0]
+
+    def density(station):
+        u = station - centre
+        distance = np.hypot(u, 5000.0*u*u - 0.01)
+        return 0.5 * min(distance - 0.005, 0.0)**2
+
+    independent = sum(quad(
+        density, left, right, epsabs=1e-18, epsrel=1e-10,
+        points=[0.5, 0.5028], limit=100,
+    )[0] for left, right in ((0.49, centre), (centre, 0.52)))
+    assert measured == pytest.approx(independent, rel=1e-4, abs=1e-15)

@@ -42,9 +42,16 @@ projection switching then hit a tangent-integration limit
 (`c2-b3-pair-static-local4.txt`). Those failures drove the current cuts and
 remain recorded. This profile is implemented and locally tested, not
 independently accepted. Exact multi-minimum branch transitions, general
-boundary/end ownership, a completeness proof for the current interval scan,
+boundary/end ownership, interval-search completeness,
 mesh/regularization refinement and scale evidence
 remain C2 gates.
+
+The registered narrow-double-pocket case currently measures about
+`1.9431e-9 J` in one direction versus `3.8863e-9 J` from independent scalar
+integration. It is retained as a strict expected failure in
+`test_general_contact_b3_pair_potential.py`. Do not use this development
+profile to qualify curved configurations until the missing interval is
+handled without failing the coupled static path.
 
 The wheel built from source `40e977a81b4fba3b0d151d993e0db3881f599ecf`
 was installed into an isolated target without dependencies or index access.
