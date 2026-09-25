@@ -192,7 +192,8 @@ def shell_case(level: int,loading: str) -> dict:
             "applied_wrench_N_Nm":wrench.tolist(),"response":measured}
 
 
-def local_grid(patch_cells: int) -> tuple[np.ndarray,np.ndarray]:
+def local_grid(patch_cells: int, *, outer_refined: bool = False
+               ) -> tuple[np.ndarray,np.ndarray]:
     if patch_cells not in (2,4,8):
         raise ValueError("bounded local patch resolution required")
     xs=np.r_[(-.5,-.25,0.,.25,.5,.75,.85),
@@ -201,6 +202,11 @@ def local_grid(patch_cells: int) -> tuple[np.ndarray,np.ndarray]:
     ys=np.r_[(-.5,-.25,-.1),
              np.linspace(-.05,.05,patch_cells+1),
              (.1,.25,.5)]
+    if outer_refined:
+        if patch_cells!=4:
+            raise ValueError("outer refinement is bounded to the four-cell patch")
+        xs=np.sort(np.r_[xs,(-.375,.125,.625,1.375)])
+        ys=np.sort(np.r_[ys,(-.375,-.175,.175,.375)])
     if (not np.all(np.diff(xs)>0) or not np.all(np.diff(ys)>0) or
             len(xs)*len(ys)*6>1800):
         raise AssertionError("local patch grid exceeds declared bound")
@@ -284,14 +290,16 @@ def graded_patch_force(xs: np.ndarray,ys: np.ndarray,
     return force,wrench
 
 
-def graded_shell_case(patch_cells: int,loading: str) -> dict:
-    xs,ys=local_grid(patch_cells)
+def graded_shell_case(patch_cells: int,loading: str, *,
+                      outer_refined: bool = False) -> dict:
+    xs,ys=local_grid(patch_cells,outer_refined=outer_refined)
     tangent,physical=raw_e4_tangent(xs,ys)
     force,wrench=graded_patch_force(xs,ys,loading)
     fixed={6*(j*len(xs))+axis for j in range(len(ys)) for axis in range(6)}
     free=np.array([i for i in range(len(force)) if i not in fixed])
     measured=response(tangent,force,free,physical=physical)
     return {"formulation":"Q4","patch_cells_per_side":patch_cells,
+            "outer_refined":outer_refined,
             "x_coordinates_m":xs.tolist(),"y_coordinates_m":ys.tolist(),
             "nodes":len(xs)*len(ys),"elements":(len(xs)-1)*(len(ys)-1),
             "applied_wrench_N_Nm":wrench.tolist(),"response":measured}
@@ -351,6 +359,47 @@ def run_local(root: Path) -> None:
                                                  allow_nan=False)+"\n")
                 print(json.dumps({"case":record["case"],
                                   "status":record["status"]}),flush=True)
+
+
+def run_outer(root: Path) -> None:
+    source=subprocess.check_output(("git","rev-parse","HEAD"),text=True).strip()
+    if subprocess.check_output(("git","status","--porcelain"),text=True).strip():
+        raise RuntimeError("outer E4 screen requires clean source")
+    root.mkdir(parents=True,exist_ok=False)
+    manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
+              "question":"At a nearly stable four-cell patch, does refining the surrounding E4 plate mesh close the remaining torque-work difference from the C3D20R plate?",
+              "decision":"A material work change identifies far-field discretization as unresolved; a small change shifts attention to local shell/solid idealization. Neither outcome selects a connection or line multiplier.",
+              "source_sha":source,"runner_sha256":digest(Path(__file__)),
+              "reused_local_root":"f03-graded-e4-plate-patch-dev-20260925-v1",
+              "reused_external_root":"f03-plate-only-solid-e4-patch-dev-20260925-v2",
+              "patch_cells_per_side":4,"outer_refined":True,
+              "limits":{"max_dense_rows":1800,"blas_threads":1},
+              "scope":"bounded far-field grid attribution; no shell or connection qualification",
+              "python":platform.python_version(),"numpy":np.__version__}
+    with threadpool_limits(limits=1):
+        manifest["effective_threadpools"]=threadpool_info()
+        (root/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+        parity=uniform_operator_parity()
+        (root/"uniform_parity.json").write_text(json.dumps(parity,indent=2)+"\n")
+        records=[]
+        for loading in LOADS:
+            try:
+                result=graded_shell_case(4,loading,outer_refined=True)
+                record={"case":f"outer-4-{loading}",
+                        "status":"EXPLORATORY_COMPLETE","response":result}
+            except Exception as exc:
+                record={"case":f"outer-4-{loading}",
+                        "status":"EXPLORATORY_FAILURE",
+                        "failure":f"{type(exc).__name__}: {exc}"}
+                records.append(record)
+                (root/"results.json").write_text(json.dumps(records,indent=2,
+                                                 allow_nan=False)+"\n")
+                raise
+            records.append(record)
+            (root/"results.json").write_text(json.dumps(records,indent=2,
+                                             allow_nan=False)+"\n")
+            print(json.dumps({"case":record["case"],
+                              "status":record["status"]}),flush=True)
 
 
 def run(root: Path, factors: tuple[int,...], levels: tuple[int,...]) -> None:
@@ -477,8 +526,13 @@ if __name__=="__main__":
     parser.add_argument("--factor",type=int,choices=(1,2,4),nargs="+",default=(1,2,4))
     parser.add_argument("--shell-level",type=int,choices=(2,4,8),nargs="+",default=(2,4,8))
     parser.add_argument("--local-shell-patch-resolution",action="store_true")
+    parser.add_argument("--outer-patch-grid-refinement",action="store_true")
     args=parser.parse_args()
-    if args.local_shell_patch_resolution:
+    if args.local_shell_patch_resolution and args.outer_patch_grid_refinement:
+        parser.error("select one E4 refinement screen")
+    if args.outer_patch_grid_refinement:
+        run_outer(args.root)
+    elif args.local_shell_patch_resolution:
         run_local(args.root)
     else:
         run(args.root,tuple(args.factor),tuple(args.shell_level))

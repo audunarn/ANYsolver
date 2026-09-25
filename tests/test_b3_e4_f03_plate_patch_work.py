@@ -58,3 +58,11 @@ def test_local_patch_grid_resolves_both_directions_and_preserves_operator():
             force,wrench=graded_patch_force(xs,ys,loading)
             assert np.linalg.norm(force)>0
             assert wrench==pytest.approx(expected_wrench(loading),abs=1e-8)
+    coarse_x,coarse_y=local_grid(4)
+    fine_x,fine_y=local_grid(4,outer_refined=True)
+    assert len(fine_x)*len(fine_y)*6<=1800
+    assert set(coarse_x).issubset(fine_x) and set(coarse_y).issubset(fine_y)
+    assert sum(.9-1e-12<=x<1.-1e-12 for x in fine_x)==4
+    assert sum(-.05-1e-12<=y<.05-1e-12 for y in fine_y)==4
+    with pytest.raises(ValueError,match="outer refinement"):
+        local_grid(8,outer_refined=True)
