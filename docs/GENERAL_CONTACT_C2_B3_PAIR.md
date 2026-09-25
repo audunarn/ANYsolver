@@ -45,3 +45,9 @@ independently accepted. Exact multi-minimum branch transitions, general
 boundary/end ownership, a completeness proof for the current interval scan,
 mesh/regularization refinement and scale evidence
 remain C2 gates.
+
+The wheel built from source `40e977a81b4fba3b0d151d993e0db3881f599ecf`
+was installed into an isolated target without dependencies or index access.
+The installed example produced the same reported forces, gap, counters and
+checkpoint version (`c2-b3-pair-example-installed-40e977a8.txt`). This is an
+installed-package smoke check, not publication or engineering acceptance.
