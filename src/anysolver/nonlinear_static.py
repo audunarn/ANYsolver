@@ -6932,6 +6932,7 @@ def _solve_static_nonlinear_under_lease(
             augmentation_iterations = 0
             normal_multiplier_change = 0.0
             iterations_used = 0
+            adaptation_iterations = 0
             line_search_used = bool(line_search_first)
             augmentation_start_q = q
             for augmentation in range(1, augmentation_limit + 1):
@@ -6953,6 +6954,7 @@ def _solve_static_nonlinear_under_lease(
                     augmentation=augmentation,
                 )
                 iterations_used += newton_iterations
+                equilibrium_iterations = newton_iterations
                 if (not converged and not line_search_first
                         and policy in {"rescue", "auto", "always"}):
                     # Rescue at the same fixed multiplier estimate.
@@ -6973,7 +6975,11 @@ def _solve_static_nonlinear_under_lease(
                         augmentation=augmentation,
                     )
                     iterations_used += extra
+                    equilibrium_iterations += extra
                     line_search_used = True
+                adaptation_iterations = max(
+                    adaptation_iterations, equilibrium_iterations,
+                )
                 if not converged or augmented_contact_manager is None:
                     break
                 candidate_u = full_displacement(q_new, lam_trial)
@@ -7277,10 +7283,10 @@ def _solve_static_nonlinear_under_lease(
                         break
                 next_step = step_size
                 action = "keep"
-                if iterations_used <= settings.fast_iterations and step_size < max_step:
+                if adaptation_iterations <= settings.fast_iterations and step_size < max_step:
                     next_step = min(step_size * settings.growth_factor, max_step)
                     action = "grow"
-                elif iterations_used >= settings.slow_iterations:
+                elif adaptation_iterations >= settings.slow_iterations:
                     next_step = max(step_size * settings.cutback_factor, min_step)
                     action = "shrink_after_slow_convergence"
                     if policy == "auto":
@@ -7290,6 +7296,8 @@ def _solve_static_nonlinear_under_lease(
                         "step_index": step_index,
                         "load_factor": float(lam),
                         "iterations": int(iterations_used),
+                        **({"adaptation_iterations": int(adaptation_iterations)}
+                           if augmented_contact_manager is not None else {}),
                         "line_search_used": line_search_used,
                         "attempted_step_size": float(attempted_step_size),
                         "next_step_size": float(next_step),

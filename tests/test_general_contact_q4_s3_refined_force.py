@@ -39,8 +39,14 @@ def test_refined_q4_s3_force_path_meets_gap_wrench_and_restart_gate():
     assert contact["minimum_gap"] >= -GAP_BUDGET_M
     assert [row["load_factor"] for row in
             result.info["force_displacement_history"]] == [
-                0.25, 0.5, 0.75, 0.875, 1.0,
+                0.25, 0.5, 0.75, 1.0,
             ]
+    adaptation = result.info["convergence_adaptation"]
+    assert len(adaptation) == 4
+    assert all(row["action"] != "shrink_after_slow_convergence"
+               for row in adaptation)
+    assert any(row["iterations"] >= 9 and
+               row["adaptation_iterations"] < 9 for row in adaptation)
     for row in result.info["force_displacement_history"]:
         increment_contact = row["contact"]
         assert increment_contact["profile"] == REFINED_Q4_S3_AUGMENTED_PROFILE
