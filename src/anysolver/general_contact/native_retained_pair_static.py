@@ -23,10 +23,16 @@ from .native_retained_cell_pair import (
     NativeRetainedCellPairResult,
     NativeRetainedSelectedCellPair,
 )
+from .native_retained_whole_pair import (
+    NativeRetainedWholeCurvePair,
+    NativeRetainedWholePairResult,
+)
 
 
 PROFILE = "NATIVE_B3_GE_SELECTED_CELL_PAIR_STATIC_DEV_V1"
 CHECKPOINT_SCHEMA = "NATIVE_RETAINED_SELECTED_CELL_PAIR_CHECKPOINT_DEV_V1"
+WHOLE_PROFILE = "NATIVE_B3_GE_WHOLE_CURVE_PAIR_STATIC_DEV_V0"
+WHOLE_CHECKPOINT_SCHEMA = "NATIVE_RETAINED_WHOLE_CURVE_PAIR_CHECKPOINT_DEV_V0"
 
 
 @dataclass(frozen=True)
@@ -34,7 +40,7 @@ class NativeRetainedPairAccepted:
     mechanical: object
     histories: tuple
     completed_targets: int
-    contact: NativeRetainedCellPairResult
+    contact: NativeRetainedCellPairResult | NativeRetainedWholePairResult
 
 
 @dataclass(frozen=True)
@@ -51,11 +57,11 @@ class NativeRetainedPairRun:
 
 
 class NativeRetainedRoundPairAnalysis:
-    """Two disjoint native beams, one explicitly selected half-cell pair."""
+    """Two disjoint native beams with an exact admitted pair contact kernel."""
 
     def __init__(self, definitions: tuple[NativeBeamDefinition, ...],
                  boundaries: tuple, program: NativeNodalProgram,
-                 contact: NativeRetainedSelectedCellPair, *,
+                 contact: NativeRetainedSelectedCellPair | NativeRetainedWholeCurvePair, *,
                  gap_tolerance_m: float, equilibrium_tolerance: float,
                  maximum_swept_intervals: int):
         if (type(definitions) is not tuple or len(definitions) != 2
@@ -63,8 +69,15 @@ class NativeRetainedRoundPairAnalysis:
             raise ValueError("native pair owner needs two exact beam definitions")
         if type(program) is not NativeNodalProgram:
             raise TypeError("native pair owner needs exact retained nodal program")
-        if type(contact) is not NativeRetainedSelectedCellPair:
+        if type(contact) not in (NativeRetainedSelectedCellPair,
+                                 NativeRetainedWholeCurvePair):
             raise TypeError("native pair owner needs exact distributed pair kernel")
+        self.profile = (PROFILE if type(contact) is NativeRetainedSelectedCellPair
+                        else WHOLE_PROFILE)
+        self.checkpoint_schema = (
+            CHECKPOINT_SCHEMA if self.profile == PROFILE
+            else WHOLE_CHECKPOINT_SCHEMA
+        )
         controls = (gap_tolerance_m, equilibrium_tolerance)
         if any(type(item) not in (int, float) or not isfinite(item) or item <= 0.0
                for item in controls):
@@ -90,6 +103,10 @@ class NativeRetainedRoundPairAnalysis:
             raise ValueError("native pair contact references do not bind model")
         if set(a.node_ids) & set(b.node_ids):
             raise ValueError("selected native pair does not admit shared material nodes")
+        if (type(contact) is NativeRetainedWholeCurvePair
+                and (tuple(a.node_ids) != contact.node_ids_a
+                     or tuple(b.node_ids) != contact.node_ids_b)):
+            raise ValueError("native whole-pair material node identities do not bind model")
         self.contact = contact
         self.program = program
         self.gap_tolerance = float(gap_tolerance_m)
@@ -114,7 +131,7 @@ class NativeRetainedRoundPairAnalysis:
 
     def _identity(self) -> str:
         return sha(dict(
-            profile=PROFILE,
+            profile=self.profile,
             native_model=self.context.identity,
             native_support_sha256=sha256(self.context.support_identity).hexdigest(),
             contact=self.contact.identity,
@@ -149,19 +166,33 @@ class NativeRetainedRoundPairAnalysis:
         summary = dict(
             potential_j=contact.potential_j,
             conservative_lower_gap_m=contact.conservative_lower_gap_m,
-            sampled_gap_m=contact.sampled_gap_m,
             beam_a_force_n=contact.beam_a_force_n,
             beam_b_force_n=contact.beam_b_force_n,
             beam_a_moment_nm=contact.beam_a_moment_nm,
             beam_b_moment_nm=contact.beam_b_moment_nm,
-            integration_points=contact.integration_points,
-            integrated_intervals=contact.integrated_intervals,
-            projection_evaluations=contact.projection_evaluations,
-            maximum_relative_integration_error=(
-                contact.maximum_relative_integration_error
-            ),
-            gap_cells_checked=contact.gap_cells_checked,
         )
+        if type(contact) is NativeRetainedCellPairResult:
+            summary.update(
+                sampled_gap_m=contact.sampled_gap_m,
+                integration_points=contact.integration_points,
+                integrated_intervals=contact.integrated_intervals,
+                projection_evaluations=contact.projection_evaluations,
+                maximum_relative_integration_error=(
+                    contact.maximum_relative_integration_error
+                ),
+                gap_cells_checked=contact.gap_cells_checked,
+            )
+        else:
+            summary.update(
+                minimum_sampled_gap_m=contact.minimum_sampled_gap_m,
+                energy_error_j=contact.energy_error_j,
+                force_error_n=contact.force_error_n,
+                tangent_error_n_per_m=contact.tangent_error_n_per_m,
+                search_cells=contact.search_cells,
+                integration_intervals=contact.integration_intervals,
+                integration_evaluations=contact.integration_evaluations,
+                unresolved_search_intervals=contact.unresolved_search_intervals,
+            )
         row = dict(target=target, previous_sha256=previous_sha256,
                    mechanical=mechanical.descriptor(), histories=histories,
                    contact=summary)
@@ -173,7 +204,7 @@ class NativeRetainedRoundPairAnalysis:
         self._guard()
         if type(records) is not tuple or len(records) > len(self.program.targets):
             raise ValueError("native pair checkpoint record extent")
-        body = dict(schema=CHECKPOINT_SCHEMA, profile=PROFILE,
+        body = dict(schema=self.checkpoint_schema, profile=self.profile,
                     identity=self.identity, completed_targets=len(records),
                     records=records)
         raw = canonical({**body, "checkpoint_sha256": sha(body)})
@@ -193,7 +224,8 @@ class NativeRetainedRoundPairAnalysis:
             raise ValueError("native pair checkpoint schema")
         body = {key: item for key, item in value.items()
                 if key != "checkpoint_sha256"}
-        if (value["schema"] != CHECKPOINT_SCHEMA or value["profile"] != PROFILE
+        if (value["schema"] != self.checkpoint_schema
+                or value["profile"] != self.profile
                 or value["identity"] != self.identity
                 or value["checkpoint_sha256"] != sha(body)):
             raise ValueError("native pair checkpoint definition/settings binding")
@@ -203,7 +235,8 @@ class NativeRetainedRoundPairAnalysis:
                 or len(value["records"]) != count):
             raise ValueError("native pair checkpoint target extent")
         accepted = self.initial
-        previous = sha(dict(schema=CHECKPOINT_SCHEMA, identity=self.identity))
+        previous = sha(dict(schema=self.checkpoint_schema,
+                            identity=self.identity))
         records = ()
         for index, row in enumerate(value["records"], 1):
             if (type(row) is not dict or set(row) !=
@@ -223,7 +256,9 @@ class NativeRetainedRoundPairAnalysis:
             raise ValueError("native pair noncanonical checkpoint replay")
         return accepted, records
 
-    def _contact(self, mechanical) -> NativeRetainedCellPairResult:
+    def _contact(self, mechanical) -> (
+        NativeRetainedCellPairResult | NativeRetainedWholePairResult
+    ):
         a, b = self.indices
         return self.contact.evaluate(
             mechanical.positions[self.context.nodes[a]],
@@ -331,7 +366,7 @@ class NativeRetainedRoundPairAnalysis:
                         if contact.conservative_lower_gap_m < -self.gap_tolerance:
                             raise RuntimeError("native pair endpoint gap tolerance not met")
                         previous = (sha(records[-1]) if records else sha(dict(
-                            schema=CHECKPOINT_SCHEMA, identity=self.identity,
+                            schema=self.checkpoint_schema, identity=self.identity,
                         )))
                         proposed, record = self._record(
                             index+1, trial, origins, previous,
@@ -381,8 +416,10 @@ class NativeRetainedRoundPairAnalysis:
                     else:
                         raise RuntimeError("native pair line-search/gap limit")
             status = "completed" if end == len(self.program.targets) else "paused"
-            return NativeRetainedPairRun(status, accepted, None, capsule)
+            return NativeRetainedPairRun(status, accepted, None, capsule,
+                                         self.profile)
         except Exception as exc:
             return NativeRetainedPairRun(
                 "failed", accepted, type(exc).__name__+": "+str(exc), capsule,
+                self.profile,
             )

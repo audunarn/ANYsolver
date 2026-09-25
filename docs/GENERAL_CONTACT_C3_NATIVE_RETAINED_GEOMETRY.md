@@ -243,6 +243,27 @@ law. Genuine endpoint force regularization, curved support boundaries,
 arbitrary whole-beam sliding, retained rotational work in this whole-pair
 route, static-owner coupling and C3 qualification remain open.
 
+The two-beam retained static owner now admits the exact whole-pair kernel
+under separate `NATIVE_B3_GE_WHOLE_CURVE_PAIR_STATIC_DEV_V0` and checkpoint
+schema identities. It binds both beam and material-node identities, keeps
+the existing 84-coordinate coupled assembly and spatial tangent mapping,
+and records the whole-pair energy, gap and resource/error fields. The
+historical selected-cell target-1 checkpoint remained byte-for-byte
+identical after this change (SHA-256
+`7ba6c34566ec72a09daedeed8ec3de1d18269ed595c7203b4a5e9e75063610ec`,
+5469 bytes; before/after logs retained). The whole-pair open-contact solve
+completed with split restart, and a fabricated active affine pose produced
+nonzero work on both beams, a cross-beam tangent and a passing directional
+coupled tangent check. The affected selected/whole/kernel set passed 21/21
+(`c3-native-whole-owner-affected.txt`).
+
+A loaded, clamped whole-pair solve encountered an unresolved curved support
+edge at its second target (`c3-native-whole-owner-active-target-probe.txt`).
+It returned failure with the first accepted target and its checkpoint
+unchanged. This is a current geometry-kernel limit, not an accepted active
+whole-beam static solve. The next C3 work must resolve curved partial
+support and target ownership before this route can be promoted.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization
