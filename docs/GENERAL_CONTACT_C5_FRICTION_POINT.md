@@ -97,6 +97,26 @@ through the S3 physical skin work map. Point migration between facets,
 pressure-to-traction integration, a fully assembled contact tangent and the
 committed history owner remain to be implemented.
 
+`S3FrictionPointPair` is an internal fixed-material-pair force map. It takes
+two S3 points in one structural coordinate space, an explicit reference-area
+weight and a **prescribed** normal pressure. It builds the derivative `J_slip`
+of the objective relative increment only on relevant structural columns and
+returns the physical nodal force `A_ref J_slip^T t`. This includes frame terms
+that a direct `J_source^T t - J_target^T t` scatter would miss. It reports a
+disposable friction trial and does not mutate physical history. At zero
+pressure, it releases traction and avoids building a slip work map. The
+required active-column budget is explicit. A caller must still establish
+that both adapters belong to the same model; this internal map does not own a
+model-bound topology contract.
+
+The pair map is checked against finite-difference virtual work, equal and
+opposite translation forces, common rigid translation/rotation null work,
+offset rotational work, deterministic trial reevaluation, opening after
+stored traction and resource rejection. It does not represent mortar pressure
+integration or changing contact partners. In particular it returns **no
+coupled structural tangent**: derivatives of its slip work map, normal
+pressure and contact projection must be included before Newton admission.
+
 Focused checks in `tests/test_general_contact_friction_point.py` cover an
 independent scalar stick/slip slider, reversal, material spin and normal
 rotation with zero relative work, pressure reduction, opening/recontact,
@@ -104,6 +124,7 @@ invalid state rejection, objective paired motion under common rigid rotation
 with a finite gap, and directional tangents on smooth branches. The S3 point
 checks in `tests/test_general_contact_s3_skin_work.py` cover physical offsets,
 barycentric position and work, drill invariance, paired motion and geometric
-rejection. These checks do not qualify coupled equilibrium, frictional moment
-maps, finite sliding,
+rejection. `tests/test_general_contact_s3_friction_pair.py` covers the local
+paired force map. These checks do not qualify coupled equilibrium, general
+frictional moment maps, finite sliding,
 restart, or energy accounting for a full structural step.
