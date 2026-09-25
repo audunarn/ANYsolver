@@ -23,27 +23,29 @@ shared nodal pose law.
 **Remaining uncertainty:** The square strip is only a bounded distributing
 pose candidate, not a selected rigid/distributing production footprint.
 Its physical torque/shear transfer, drilling/thickness/refinement behavior,
-and stable line/beam/shell resolution policy still need qualification.
+and a stable *and adequately resolving* interface discretization still
+need qualification. A conservative P0 line-count cap controls the finite
+mode quotient across the required ratios but materially underresolves
+torque on fixed meshes, so it is not a selected policy.
 The current first-order solid reference is too mesh-sensitive to set
 physical response tolerances. Historical Q6/finite-pad, classical axial,
 CalculiX B31/S4 knot and native six-channel cases have different laws.
 An interface-resolution policy with loaded physical checks and the
 required complete mesh-ratio series remain open.
 
-**Next discriminating experiment:** Freeze one conservative interface-
-resolution policy from both shell and native beam trace capacity; run a
-bounded P0 square-strip ratio screen, including 1:8 and 8:1 endpoints,
-with the H^(-1/2) quotient, trace ranks, loaded torque/shear work and
-physical/numerical shell energy interpreted together. If a supported
-policy still produces weak alternating modes or severe loaded response
-drift, revise the trace or multiplier law instead of refining indefinitely.
-If it controls both, assess P1/dual only for a distinct benefit and proceed
-to the remaining G0B derivation and external-reference work. Do not
-restart a finer C3D8 or classical axial sweep.
+**Next discriminating experiment:** Analyze the saved alternating Fz and
+torque modes against the shell and retained-beam trace spaces, then derive
+one different work-conjugate interface pairing or finite-footprint law
+that preserves constant force/moment transfer and resolves the fixed-mesh
+torque response without a weak oscillatory channel. Test only the existing
+fixed Q4/S3 torque/shear controls and a bounded dual-norm mode check first.
+If that fails, revise the shell/beam pose trace rather than repeating finer
+line or classical axial screens. Do not restart a finer C3D8 sweep.
 
 **Resulting action:** Retain the square strip as an exploratory finite-width
-candidate. Do not select a multiplier, claim inf-sup stability, or advance
-G1 from small loaded residuals, a rank check or either spectral quotient.
+pose candidate, and reject the tested P0 line-count cap as sufficient for
+qualification. Do not select a multiplier, claim inf-sup stability, or
+advance G1 from small loaded residuals, a rank check or either quotient.
 A higher-order or section-matched external reference is still needed for
 quantitative torque/shear parity. F03 authority remains unconsumed, G0B
 open and G1 barred.
@@ -89,6 +91,27 @@ none of the quotients is a mesh-uniform inf-sup proof. The eight raw
 three-space outputs, source/dependency identities and limits are in
 `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-native-square-spaces-dev-20260925-v1`.
 The affected strip and dual-norm tests pass 40/40.
+
+**Ratio-cap decision:** A provisional P0 policy of line intervals
+`min(shell axial elements/2, native beam elements)` was screened on
+Q4/S3 beam:shell ratios 1:8 through 8:1. All fourteen finite systems
+have full shell-only, beam-only and combined row rank, and the bounded
+H^(-1/2) transverse quotient is at least 2.300. All 28 torque/shear
+loaded cases have positive physical shell energy, zero directly evaluated
+numerical shell-component energy, and small work and wrench-balance
+errors. Those findings alone cannot validate the cap: varying meshes
+confounds the broad tip-response spread, and fixed-mesh controls expose
+underresolution. With Q4/S3 shell x8/y4 and native beam-half4, line2→4
+reduces torque tip twist by `22.61%/22.56%`; with beam-half16,
+line4→8 reduces it by `15.19%/15.46%`. The corresponding transverse-tip
+changes are `4.00%/3.48%` and `1.87%/2.42%`. The cap therefore gives
+a favorable finite-mode screen at the cost of a material torque response
+change. It is rejected as a qualification policy, not proof that every
+finite-width bond formulation fails. Raw immutable development records
+are in `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/` under
+`f03-native-square-ratios-dev-20260925-v1`,
+`f03-native-square-ratio-loads-dev-20260925-v1` and
+`f03-native-square-fixed-line-dev-20260925-v1`.
 
 **25 September bounded physical-bond screen (development only):** The
 conforming 3D model is a 2.0 x 1.0 x 0.07 m plate with a 1.0 x 0.1 x
