@@ -79,3 +79,18 @@ def test_left_edge_reference_preserves_end_wrench_and_free_stiffener(factor, loa
                 [0., 0., 1000., 0., -1000., 0.])
     assert SCREEN._wrench(applied, meta["probe_coordinates_m"]) == pytest.approx(
         expected, abs=1e-10)
+
+
+@pytest.mark.parametrize("factor", (1, 4))
+def test_left_edge_and_root_face_support_are_explicit(factor):
+    deck, meta = SCREEN.build(factor, "tip_fz", boundary_policy="left_root")
+    plate = set(meta["plate_boundary_node_ids"])
+    root = set(meta["beam_root_node_ids"])
+    support = set(meta["boundary_node_ids"])
+    assert len(root) == (2 * factor + 1) ** 2
+    assert root == set(meta["bar_station_nodes"]["0"])
+    assert support == plate | root
+    assert root - plate
+    assert meta["support_set"] == "Supports"
+    assert "*NODE PRINT,NSET=Supports" in deck
+    assert "*MPC" not in deck and "*TIE" not in deck

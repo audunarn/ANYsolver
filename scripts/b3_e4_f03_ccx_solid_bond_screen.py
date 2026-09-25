@@ -64,8 +64,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
     """Return an exact-coordinate conforming C3D8 deck and probe identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
         raise ValueError("undeclared solid-bond loading")
-    if boundary_policy not in ("perimeter", "left") or (
-            boundary_policy == "left" and shear not in ("tip_mx", "tip_fz")):
+    if boundary_policy not in ("perimeter", "left", "left_root") or (
+            boundary_policy != "perimeter" and shear not in ("tip_mx", "tip_fz")):
         raise ValueError("unsupported plate boundary/loading combination")
     px,py,pz=(_cuts(v,factor) for v in
               (PLATE_X_MM,PLATE_Y_MM,PLATE_Z_MM))
@@ -107,11 +107,17 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
     interface={(x,y,Fraction(35)) for x in bx for y in by}
     if not all(coordinates[p] in plate_nodes & bar_nodes for p in interface):
         raise AssertionError("plate/bar interface is not conforming")
-    boundary={coordinates[(x,y,z)] for z in pz for y in py for x in px
-              if (x == px[0] if boundary_policy == "left" else
-                  x in (px[0],px[-1]) or y in (py[0],py[-1]))}
-    if boundary & (bar_nodes-plate_nodes):
+    plate_boundary={coordinates[(x,y,z)] for z in pz for y in py for x in px
+                    if (x == px[0] if boundary_policy != "perimeter" else
+                        x in (px[0],px[-1]) or y in (py[0],py[-1]))}
+    beam_root={coordinates[(Fraction(0),y,z)] for y in by for z in bz}
+    boundary=(plate_boundary | beam_root if boundary_policy == "left_root"
+              else plate_boundary)
+    if boundary & (bar_nodes-plate_nodes) and boundary_policy != "left_root":
         raise AssertionError("bar has a directly prescribed node")
+    if boundary_policy == "left_root" and boundary & (bar_nodes-plate_nodes) != (
+            beam_root-plate_nodes):
+        raise AssertionError("unexpected stiffener support")
     station_nodes={str(s): sorted(coordinates[(Fraction(s),y,z)]
                                   for y in by for z in bz)
                    for s in STATIONS_MM}
@@ -139,7 +145,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
                   "*SOLID SECTION,ELSET=Stiffener,MATERIAL=Isotropic",
                   "*NSET,NSET=Probe"))
     lines.extend(_set_lines(probe))
-    lines.append("*NSET,NSET=PlateEdge")
+    support_set="Supports" if boundary_policy == "left_root" else "PlateEdge"
+    lines.append(f"*NSET,NSET={support_set}")
     lines.extend(_set_lines(boundary))
     lines.extend(("*STEP", "*STATIC", "*BOUNDARY"))
     for index in sorted(boundary):
@@ -177,12 +184,16 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
                 if value:
                     lines.append(f"{index},{dof},{_number(value)}")
     lines.extend(("*NODE PRINT,NSET=Probe", "U",
-                  "*NODE PRINT,NSET=PlateEdge", "RF",
+                  f"*NODE PRINT,NSET={support_set}", "RF",
                   "*END STEP"))
     meta={"factor":factor,"shear":shear,"gamma":GAMMA,
           "node_count":len(coordinates),"plate_elements":len(plate_cells),
           "bar_elements":len(bar_cells),"shared_interface_nodes":len(interface),
           "boundary_nodes":len(boundary),"boundary_node_ids":sorted(boundary),
+          "plate_boundary_node_ids":sorted(plate_boundary),
+          "beam_root_node_ids":(sorted(beam_root) if boundary_policy == "left_root"
+                                else []),
+          "support_set":support_set,
           "probe_node_ids":sorted(probe),
           "bar_station_nodes":station_nodes,
           "probe_coordinates_m":{str(index):[float(v)/1000 for v in inverse[index]]
@@ -194,7 +205,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter"
           "surface_nodes":{f"{x},{y}":index for (x,y),index in surface.items()},
           "model":"3D conforming C3D8 plate/bar; plate [-.5,1.5]x[-.5,.5]x[-.035,.035] m; bar [0,1]x[-.05,.05]x[.035,.135] m; E=210 GPa, nu=.3",
           "boundary_policy":boundary_policy,
-          "boundary":("all three translations on plate left edge fixed; bar has no direct supports"
+          "boundary":("all three translations on plate left edge and stiffener root face fixed"
+                      if boundary_policy == "left_root" else
+                      "all three translations on plate left edge fixed; bar has no direct supports"
                       if boundary_policy == "left" else
                       "all three translations on plate perimeter follow declared affine shear; bar has no direct supports or loads")}
     return "\n".join(lines)+"\n",meta
@@ -297,9 +310,9 @@ def main() -> int:
     parser.add_argument("--root",type=Path,required=True)
     parser.add_argument("--suite",choices=("shear","loads"),default="shear")
     parser.add_argument("--factor",type=int,choices=(1,2,4),nargs="+",default=(1,2))
-    parser.add_argument("--boundary",choices=("perimeter","left"),default="perimeter")
+    parser.add_argument("--boundary",choices=("perimeter","left","left_root"),default="perimeter")
     args=parser.parse_args()
-    if args.boundary == "left" and args.suite != "loads":
+    if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
@@ -365,7 +378,7 @@ def main() -> int:
                     raise ValueError("solver diagnostic or incomplete job")
                 probes=parse_probe_displacements(dat,set(meta["probe_node_ids"]))
                 reactions=parse_nodal_vectors(dat,set(meta["boundary_node_ids"]),
-                                              "forces","PLATEEDGE")
+                                              "forces",meta["support_set"])
                 parsed=recover(meta,probes,reactions)
             except (OSError,ValueError) as exc:
                 failure=f"PARSE_{type(exc).__name__}: {exc}"
