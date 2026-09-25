@@ -67,6 +67,34 @@ def test_rail_and_local_traces_share_rigid_pose_but_are_distinct_fields():
                            shell_trace(4, 4, .37, "local")[0])
 
 
+def test_square_strip_trace_is_distinct_and_default_geometry_is_preserved():
+    old = shell_trace(4, 4, .37, "strip", director="strip")
+    explicit = shell_trace(4, 4, .37, "strip", director="strip",
+                           strip_half_length=.2, strip_half_width=.23)
+    square = shell_trace(4, 4, .37, "strip", director="strip",
+                         strip_half_length=.05, strip_half_width=.05)
+    np.testing.assert_allclose(old, explicit, rtol=0., atol=1e-14)
+    assert np.linalg.norm(square-old) > 1e-4
+    with pytest.raises(ValueError, match="strip half dimensions"):
+        shell_trace(4, 4, .37, "strip", strip_half_length=0.)
+
+
+@pytest.mark.parametrize("load", ("force_z", "torque_x"))
+def test_square_strip_independent_torque_shear_work_and_balance(load):
+    result = solve(
+        4, 4, 4, 2, basis="spline", multiplier="p0",
+        origin="strip", director="strip", strip_half_length=.05,
+        strip_half_width=.05,
+        tip_force_z=1000. if load == "force_z" else 0.,
+        tip_torque_x=100. if load == "torque_x" else 0.)
+    assert result["shell_energy_j"] > 0.
+    assert result["beam_energy_j"] > 0.
+    assert abs(result["work_error_j"]) < 1e-10
+    assert abs(result["balance_fz_n"]) < 1e-9
+    assert abs(result["balance_mx_n_m"]) < 1e-9
+    assert abs(result["balance_my_n_m"]) < 1e-9
+
+
 @pytest.mark.parametrize("origin", ("rail", "local"))
 @pytest.mark.parametrize("load", ("force_z", "torque_x"))
 def test_loaded_reference_equilibrium_work_and_wrench_balance(origin, load):

@@ -57,7 +57,8 @@ def _quadrature(order: int, edges: np.ndarray):
 
 def _line_edges(cell: int, intervals: int, nx: int, nb: int,
                 basis: str, *, origin: str = "rail",
-                director: str = "rail") -> np.ndarray:
+                director: str = "rail",
+                strip_half_length: float = HALF_WINDOW) -> np.ndarray:
     left, right = cell/intervals, (cell+1)/intervals
     if basis == "global":
         return np.array((left, right))
@@ -68,7 +69,7 @@ def _line_edges(cell: int, intervals: int, nx: int, nb: int,
         if origin == "rail" or director == "rail":
             stations.extend(float(x-ox) for x in xedges if left < x-ox < right)
     if origin == "strip" or director == "strip":
-        for offset in (-HALF_WINDOW, HALF_WINDOW):
+        for offset in (-strip_half_length, strip_half_length):
             stations.extend(float(x-offset) for x in xedges
                             if left < x-offset < right)
     stations.extend(float(s) for s in bedges if left < s < right)
@@ -160,12 +161,19 @@ def _orders(nx: int, ny: int, nb: int, intervals: int) -> None:
 
 
 def shell_trace(nx: int, ny: int, s: float, origin: str, *,
-                basis: str = "global", director: str = "rail") -> np.ndarray:
+                basis: str = "global", director: str = "rail",
+                strip_half_length: float = HALF_WINDOW,
+                strip_half_width: float = HALF_RAIL) -> np.ndarray:
     """Linearized [z,rx,ry] trace of the declared material point/director."""
     if origin not in ("rail", "local", "strip"):
         raise ValueError("rail, local or strip shell origin required")
     if director not in ("rail", "local", "strip"):
         raise ValueError("rail, local or strip shell director required")
+    if (not np.isfinite(strip_half_length) or
+            not np.isfinite(strip_half_width) or
+            not .05 <= strip_half_length <= .25 or
+            not .05 <= strip_half_width <= .25):
+        raise ValueError("bounded positive strip half dimensions required")
     n = len(plate_basis(nx, ny, s, 0., basis=basis)[0])
     result = np.zeros((3, 3*n))
     values = [plate_basis(nx, ny, s+ox, y, basis=basis)[0]
@@ -176,8 +184,8 @@ def shell_trace(nx: int, ny: int, s: float, origin: str, *,
                   np.array((-.5, 1.5)))
         yknots = (_spline(ny, -.5, .5)[2] if basis == "spline" else
                   np.array((-.5, .5)))
-        x0, x1 = s-HALF_WINDOW, s+HALF_WINDOW
-        y0, y1 = -HALF_RAIL, HALF_RAIL
+        x0, x1 = s-strip_half_length, s+strip_half_length
+        y0, y1 = -strip_half_width, strip_half_width
         xedges = np.r_[x0, xknots[(x0 < xknots) & (xknots < x1)], x1]
         yedges = np.r_[y0, yknots[(y0 < yknots) & (yknots < y1)], y1]
         strip = np.zeros(n)
@@ -185,7 +193,7 @@ def shell_trace(nx: int, ny: int, s: float, origin: str, *,
             for y, wy in _quadrature(4 if basis == "spline" else 16, yedges):
                 strip += wx*wy*plate_basis(
                     nx, ny, float(x), float(y), basis=basis)[0]
-        strip /= 4*HALF_WINDOW*HALF_RAIL
+        strip /= 4*strip_half_length*strip_half_width
     else:
         strip = None
     local = plate_basis(nx, ny, s, 0., basis=basis)[0]
@@ -207,7 +215,9 @@ def _gauss(order: int, left: float, right: float):
 def assemble(nx: int, ny: int, nb: int, intervals: int, *,
              origin: str = "rail", multiplier: str = "p1",
              basis: str = "global", thickness: float = THICKNESS,
-             director: str = "rail"
+             director: str = "rail",
+             strip_half_length: float = HALF_WINDOW,
+             strip_half_width: float = HALF_RAIL
              ) -> tuple[np.ndarray, np.ndarray, np.ndarray,
                         np.ndarray, np.ndarray, np.ndarray]:
     """Independent plate/beam energies and exact weak-line KKT blocks."""
@@ -215,6 +225,11 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
     if (isinstance(thickness, bool) or not np.isfinite(thickness) or
             thickness <= 0.):
         raise ValueError("finite positive shell thickness required")
+    if (not np.isfinite(strip_half_length) or
+            not np.isfinite(strip_half_width) or
+            not .05 <= strip_half_length <= .25 or
+            not .05 <= strip_half_width <= .25):
+        raise ValueError("bounded positive strip half dimensions required")
     if multiplier not in ("p0", "p1"):
         raise ValueError("P0 or continuous P1 multiplier required")
     # Each scalar line trace is a single polynomial of degree at most
@@ -260,7 +275,8 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
     for cell in range(intervals):
         left, right = cell/intervals, (cell+1)/intervals
         edges = _line_edges(cell, intervals, nx, nb, basis,
-                            origin=origin, director=director)
+                            origin=origin, director=director,
+                            strip_half_length=strip_half_length)
         for s, weight in _quadrature(
                 6 if basis == "spline" else max(2*max(nx, ny, nb)+4, 12),
                 edges):
@@ -270,7 +286,9 @@ def assemble(nx: int, ny: int, nb: int, intervals: int, *,
             for channel in range(3):
                 beam_trace[channel, channel*beam_n:(channel+1)*beam_n] = value
             trace = np.column_stack((-shell_trace(
-                nx, ny, s, origin, basis=basis, director=director),
+                nx, ny, s, origin, basis=basis, director=director,
+                strip_half_length=strip_half_length,
+                strip_half_width=strip_half_width),
                                      beam_trace))
             local = ((1.,) if multiplier == "p0" else
                      ((right-s)/(right-left), (s-left)/(right-left)))
@@ -288,11 +306,15 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
           origin: str = "rail", multiplier: str = "p1",
           tip_force_z: float = 1000., tip_torque_x: float = 0.,
           basis: str = "global", thickness: float = THICKNESS,
-          director: str = "rail") -> dict:
+          director: str = "rail",
+          strip_half_length: float = HALF_WINDOW,
+          strip_half_width: float = HALF_RAIL) -> dict:
     """Solve a bounded flat reference and recover work-conjugate reactions."""
     ks, kb, c, moments, first, _ = assemble(
         nx, ny, nb, intervals, origin=origin, multiplier=multiplier,
-        basis=basis, thickness=thickness, director=director)
+        basis=basis, thickness=thickness, director=director,
+        strip_half_length=strip_half_length,
+        strip_half_width=strip_half_width)
     ns, nbeam = len(ks), len(kb)
     n = nbeam//3
     f = np.zeros(ns+nbeam)
@@ -320,7 +342,8 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
     for cell in range(intervals):
         left, right = cell/intervals, (cell+1)/intervals
         edges = _line_edges(cell, intervals, nx, nb, basis,
-                            origin=origin, director=director)
+                            origin=origin, director=director,
+                            strip_half_length=strip_half_length)
         for s, weight in _quadrature(
                 8 if basis == "spline" else max(2*max(nx,ny,nb)+6, 16),
                 edges):
@@ -330,7 +353,9 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
                                   for i in range(3)])
             gap = beam_pose-shell_trace(
                 nx, ny, s, origin, basis=basis,
-                director=director)@q[:ns]
+                director=director,
+                strip_half_length=strip_half_length,
+                strip_half_width=strip_half_width)@q[:ns]
             gap_squared += weight*float(gap@gap)
             gap_z_squared += weight*float(gap[0]**2)
             gap_rotation_squared += weight*float(gap[1:]@gap[1:])
@@ -347,6 +372,8 @@ def solve(nx: int, ny: int, nb: int, intervals: int, *,
         "model":"independent_flat_RM_plate_Timoshenko_beam",
         "nx":nx, "ny":ny, "nb":nb, "line_intervals":intervals,
         "origin":origin, "director":director,
+        "strip_half_length_m":strip_half_length,
+        "strip_half_width_m":strip_half_width,
         "multiplier":multiplier, "basis":basis,
         "shell_thickness_m":thickness,
         "tip_force_z_n":tip_force_z, "tip_torque_x_n_m":tip_torque_x,
