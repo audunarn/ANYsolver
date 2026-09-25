@@ -13,10 +13,11 @@ from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_weak_line_candidate import (
-    LineMultiplierSpace, assemble_reference_kkt, integrate_weak_line,
+    LineMultiplierSpace, assemble_channel_split_reference_kkt,
+    assemble_reference_kkt, integrate_weak_line,
 )
 from scripts.b3_e4_f03_weak_line_resolution_screen import (
-    chord_reference_modes, one_case)
+    channel_split_reference_modes, chord_reference_modes, one_case)
 
 
 WIDTH = dict(half_length=.2, half_width=.23)
@@ -80,6 +81,65 @@ def test_square_patch_retained_interface_action_is_consistent(kind):
     assert dual["gram_relative_enclosure"] < 1e-3
     assert 0. <= dual["weakest_fz_norm_share"] <= 1.
     assert mode["scope"].endswith("not physical inf-sup acceptance")
+
+
+def test_split_mx_rows_preserve_constant_torque_and_end_member_parity():
+    shell=FlatE4TrialPanel(make_shell(2,"Q4",n_y=4))
+    beam=build(4)
+    options=dict(shell_port="physical_strip_005_005",
+                 shell_support_policy="full_left_edge")
+    coarse=assemble_reference_kkt(
+        shell,beam,LineMultiplierSpace("piecewise_constant",(0.,.5,1.)),
+        **options)
+    fine=assemble_reference_kkt(
+        shell,beam,LineMultiplierSpace(
+            "piecewise_constant",(0.,.25,.5,.75,1.)),**options)
+    split=assemble_channel_split_reference_kkt(
+        shell,beam,coarse_intervals=2,fine_intervals=4,
+        fine_channels=(3,),**options)
+    no_refinement=assemble_channel_split_reference_kkt(
+        shell,beam,coarse_intervals=2,fine_intervals=4,
+        fine_channels=(),**options)
+    all_refined=assemble_channel_split_reference_kkt(
+        shell,beam,coarse_intervals=2,fine_intervals=4,
+        fine_channels=(0,1,2,3,4,5),**options)
+    np.testing.assert_array_equal(no_refinement.constraint_jacobian,
+                                  coarse.constraint_jacobian)
+    np.testing.assert_array_equal(all_refined.constraint_jacobian,
+                                  fine.constraint_jacobian)
+    assert split.constraint_jacobian.shape[0] == 14
+    density=np.zeros(14)
+    density[-4:]=100.
+    nodal=(split.constraint_jacobian.T@density)[:6*shell.panel.node_count]
+    nodal=nodal.reshape(-1,6)
+    nodes=reference_nodes(shell.panel)
+    torque_x=np.sum(nodal[:,3]+nodes[:,1]*nodal[:,2]-
+                    nodes[:,2]*nodal[:,1])
+    assert torque_x == pytest.approx(-100.,abs=2e-10)
+    assert np.max(np.abs(nodal[:,5])) < 1e-13
+    direction=np.arange(split.primal_tangent.shape[0],dtype=float)*1e-7
+    assert density@(split.constraint_jacobian@direction) == pytest.approx(
+        direction@(split.constraint_jacobian.T@density),abs=1e-12)
+    with pytest.raises(ValueError,match="ordered unique"):
+        assemble_channel_split_reference_kkt(
+            shell,beam,coarse_intervals=2,fine_intervals=4,
+            fine_channels=(3,3),**options)
+
+
+def test_split_mx_dual_norm_matches_coarse_transverse_control():
+    kwargs=dict(n_s=2,n_y=4,native_half_cells=4)
+    split=channel_split_reference_modes(
+        "Q4",coarse_intervals=2,fine_intervals=4,
+        fine_channels=(3,),**kwargs)
+    coarse=chord_reference_modes(
+        "Q4",2,"piecewise_constant",
+        shell_port="physical_strip_005_005",**kwargs)
+    assert split["row_rank"] == split["row_count"] == 14
+    assert split["decomposition_relative_error"] < 1e-9
+    assert split["gram_relative_enclosure"] < 1e-3
+    assert split["transverse_beta_lower"] == pytest.approx(
+        coarse["density_dual_diagnostic"]["transverse_beta_lower"],rel=1e-10)
+    assert split["weakest_channel_dual_norm_shares_fz_mx_my"][0] > .3
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))

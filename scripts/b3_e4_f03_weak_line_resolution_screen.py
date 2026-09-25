@@ -30,7 +30,8 @@ from scripts._b3_e4_f03_shell_chord_pose_candidate import pose_from_e4_total_cho
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_weak_line_candidate import (
-    LineMultiplierSpace, assemble_reference_kkt)
+    LineMultiplierSpace, assemble_channel_split_reference_kkt,
+    assemble_reference_kkt)
 from scripts._b3_e4_f03_p0_dual_norm import p0_dual_gram
 from scripts._b3_e4_f03_p1_dual_norm import p1_dual_gram
 from scripts._b3_e4_f03_dual_linear_norm import dual_linear_gram
@@ -499,6 +500,121 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         "p0_dual_diagnostic":dual_diagnostic,
         "density_dual_diagnostic":dual_diagnostic,
         "scope": "finite native six-channel algorithmic norm; not physical inf-sup acceptance",
+    }
+
+
+def channel_split_reference_modes(
+        topology: str, *, coarse_intervals: int = 4,
+        fine_intervals: int = 8, fine_channels: tuple[int, ...] = (3,),
+        n_s: int = 4, n_y: int = 4, native_half_cells: int = 16,
+        characteristic_length: float = .46) -> dict:
+    """Absolute-energy dual-norm screen for a bounded mixed-channel P0 pair.
+
+    The H^(-1/2) Gram follows the actual interval count of each physical
+    wrench channel. This is a finite-model diagnostic, not inf-sup proof.
+    """
+    if not np.isfinite(characteristic_length) or characteristic_length <= 0.:
+        raise ValueError("positive physical characteristic length required")
+    shell=FlatE4TrialPanel(make_shell(n_s,topology,n_y=n_y))
+    beam=build(native_half_cells)
+    kkt=assemble_channel_split_reference_kkt(
+        shell,beam,coarse_intervals=coarse_intervals,
+        fine_intervals=fine_intervals,fine_channels=fine_channels)
+    free=kkt.free_primal
+    n=len(free)
+    if n+kkt.constraint_jacobian.shape[0] > 1200:
+        raise ValueError("bounded dense interface diagnostic exceeds 1200 rows")
+    physical_count=int(np.count_nonzero(
+        free < 6*shell.panel.node_count+beam.context.nodal_count))
+    displacement_scale=1e6/(210e9*.07)
+    scales=kkt.coordinate_scale[:n]
+    k=kkt.primal_tangent[np.ix_(free,free)]
+    kbar=(scales[:,None]*k)*scales[None,:]/kkt.energy_scale
+    if np.linalg.norm(kbar-kbar.T)>1e-10*np.linalg.norm(kbar):
+        raise ValueError("nonsymmetric reference tangent cannot use energy norm")
+    kpp=kbar[:physical_count,:physical_count]
+    kpr=kbar[:physical_count,physical_count:]
+    krp=kbar[physical_count:,:physical_count]
+    krr=kbar[physical_count:,physical_count:]
+    retained_action=linalg.solve(krr,krp,assume_a="sym")
+    physical_k=kpp-kpr@retained_action
+    ep,up=linalg.eigh(physical_k)
+    er,ur=linalg.eigh(krr)
+    if (ep[0]<=1e-10*ep[-1] or
+            np.min(np.abs(er))<=1e-12*np.max(np.abs(er))):
+        raise ValueError("positive physical/regular retained split unavailable")
+    channels=tuple(j for _ in range(coarse_intervals)
+                   for j in range(6) if j not in fine_channels)+tuple(
+                   j for _ in range(fine_intervals) for j in fine_channels)
+    if len(channels)!=kkt.constraint_jacobian.shape[0]:
+        raise AssertionError("split channel row inventory differs")
+    row_scale=np.array([1. if j<3 else characteristic_length
+                        for j in channels])/displacement_scale
+    cbar=(row_scale[:,None]*kkt.constraint_jacobian[:,free])*scales[None,:]
+    cp,cr=cbar[:,:physical_count],cbar[:,physical_count:]
+    cl=cp-cr@retained_action
+    bp=cl@(up/np.sqrt(ep)[None,:])
+    br=cr@(ur/np.sqrt(np.abs(er))[None,:])
+    signed=bp@bp.T+(br*np.sign(er)[None,:])@br.T
+    direct=cbar@linalg.solve(kbar,cbar.T,assume_a="sym")
+    decomposition_error=float(np.linalg.norm(signed-direct)/
+                              max(np.linalg.norm(direct),1e-30))
+    if decomposition_error>1e-9:
+        raise ArithmeticError("retained interface decomposition inconsistent")
+    lower=np.zeros((len(channels),len(channels)))
+    upper=np.zeros_like(lower)
+    for channel in range(6):
+        indices=np.flatnonzero(np.array(channels)==channel)
+        count=fine_intervals if channel in fine_channels else coarse_intervals
+        if len(indices)!=count:
+            raise AssertionError("per-channel interval inventory differs")
+        lo,hi=p0_dual_gram(count,1.,4095)
+        lower[np.ix_(indices,indices)]=lo
+        upper[np.ix_(indices,indices)]=hi
+    selected=np.array([i for i,j in enumerate(channels) if j in (2,3,4)])
+    transverse=np.column_stack((bp[selected],br[selected]))
+    action=transverse@transverse.T
+    action=(action+action.T)/2
+    lo=lower[np.ix_(selected,selected)]
+    hi=upper[np.ix_(selected,selected)]
+    eigen,vectors=linalg.eigh(action,hi)
+    bound=linalg.eigh(action,lo,eigvals_only=True)
+    if eigen[0]<-1e-9*max(1.,eigen[-1]):
+        raise ArithmeticError("negative absolute-energy dual action")
+    mode=vectors[:,0]
+    selected_channels=np.array(channels)[selected]
+    channel_shares={}
+    sign_changes={}
+    for channel in (2,3,4):
+        indices=np.flatnonzero(selected_channels==channel)
+        values=mode[indices]
+        channel_shares[channel]=float(values@hi[np.ix_(indices,indices)]@values)
+        significant=np.abs(values)>1e-8*max(np.max(np.abs(values)),1e-300)
+        signs=np.sign(values[significant])
+        sign_changes[channel]=int(np.count_nonzero(signs[1:]!=signs[:-1]))
+    return {
+        "topology":topology,"shell_x_intervals":2*n_s,
+        "shell_y_intervals":n_y,"native_half_cells":native_half_cells,
+        "coarse_line_intervals":coarse_intervals,
+        "fine_line_intervals":fine_intervals,
+        "fine_channels":fine_channels,"row_count":len(channels),
+        "row_rank":int(np.linalg.matrix_rank(kkt.constraint_jacobian[:,free])),
+        "shell_only_row_rank":int(np.linalg.matrix_rank(
+            kkt.constraint_jacobian[:,free[free<6*shell.panel.node_count]])),
+        "beam_only_row_rank":int(np.linalg.matrix_rank(
+            kkt.constraint_jacobian[:,free[free>=6*shell.panel.node_count]])),
+        "decomposition_relative_error":decomposition_error,
+        "transverse_beta_lower":float(np.sqrt(max(0.,eigen[0]))),
+        "transverse_beta_upper":float(np.sqrt(max(0.,bound[0]))),
+        "gram_relative_enclosure":float(linalg.eigvalsh(hi,lo)[-1]-1.),
+        "weakest_channel_dual_norm_shares_fz_mx_my":tuple(
+            channel_shares[j]/sum(channel_shares.values()) for j in (2,3,4)),
+        "weakest_channel_sign_changes_fz_mx_my":tuple(
+            sign_changes[j] for j in (2,3,4)),
+        "weakest_physical_work_share":float(
+            np.linalg.norm(mode@bp[selected])**2/
+            max(mode@action@mode,1e-300)),
+        "scope":"finite absolute-energy dual norm including E4 completion; not inf-sup acceptance",
     }
 
 

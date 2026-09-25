@@ -383,3 +383,70 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
     return ReferenceKKT(primal, constraint, free, system,
                         coordinate_scale, energy_scale,
                         scaled_system, len(edges)-1, shell_support_policy)
+
+
+def assemble_channel_split_reference_kkt(
+        shell: FlatE4TrialPanel, beam: Fixture, *,
+        coarse_intervals: int, fine_intervals: int,
+        fine_channels: tuple[int, ...],
+        shell_port: str = "physical_strip_005_005",
+        shell_support_policy: str = "full_left_edge") -> ReferenceKKT:
+    """Bounded P0 work pairing with explicit per-channel resolution.
+
+    Each channel is taken from exactly one independently integrated
+    reference weak line. No multiplier row is averaged, penalized or
+    duplicated. This is a G0 diagnostic candidate, not a space selection.
+    """
+    if (type(coarse_intervals) is not int or
+            type(fine_intervals) is not int or
+            not 1 <= coarse_intervals <= fine_intervals <= 16 or
+            fine_intervals % coarse_intervals):
+        raise ValueError("bounded nested P0 interval counts required")
+    if (type(fine_channels) is not tuple or
+            any(type(channel) is not int or not 0 <= channel < 6
+                for channel in fine_channels) or
+            tuple(sorted(set(fine_channels))) != fine_channels):
+        raise ValueError("ordered unique physical channel indices required")
+
+    def assemble(intervals: int) -> ReferenceKKT:
+        space=LineMultiplierSpace(
+            "piecewise_constant",tuple(np.linspace(0.,1.,intervals+1)))
+        return assemble_reference_kkt(
+            shell,beam,space,shell_port=shell_port,
+            shell_support_policy=shell_support_policy)
+
+    coarse=assemble(coarse_intervals)
+    fine=coarse if fine_intervals==coarse_intervals else assemble(fine_intervals)
+    n=len(coarse.free_primal)
+    if (not np.array_equal(coarse.free_primal,fine.free_primal) or
+            not np.array_equal(coarse.primal_tangent,fine.primal_tangent) or
+            not np.array_equal(coarse.coordinate_scale[:n],
+                               fine.coordinate_scale[:n]) or
+            coarse.energy_scale != fine.energy_scale):
+        raise ArithmeticError("split channel primal contracts disagree")
+    coarse_rows=[6*i+j for i in range(coarse_intervals)
+                 for j in range(6) if j not in fine_channels]
+    fine_rows=[6*i+j for i in range(fine_intervals)
+               for j in fine_channels]
+    constraint=np.vstack((coarse.constraint_jacobian[coarse_rows],
+                          fine.constraint_jacobian[fine_rows])).copy()
+    rows=constraint[:,coarse.free_primal]
+    channels=[j%6 for j in coarse_rows+fine_rows]
+    row_scale=np.array([1. if j<3 else .46 for j in channels])
+    scaled_rows=(row_scale[:,None]*rows)*coarse.coordinate_scale[None,:n]
+    if np.linalg.matrix_rank(scaled_rows) != len(rows):
+        raise ValueError("split channel rows are algebraically dependent")
+    reduced=coarse.primal_tangent[np.ix_(coarse.free_primal,
+                                         coarse.free_primal)]
+    system=np.block([[reduced,rows.T],
+                     [rows,np.zeros((len(rows),len(rows)))]])
+    multiplier_scale=coarse.coordinate_scale[n]
+    coordinate_scale=np.r_[coarse.coordinate_scale[:n],
+                           np.full(len(rows),multiplier_scale)]
+    scaled_system=((coordinate_scale[:,None]*system)*
+                   coordinate_scale[None,:])/coarse.energy_scale
+    return ReferenceKKT(coarse.primal_tangent.copy(),constraint,
+                        coarse.free_primal.copy(),system,coordinate_scale,
+                        coarse.energy_scale,scaled_system,
+                        max(coarse.segment_count,fine.segment_count),
+                        shell_support_policy)
