@@ -24,7 +24,8 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
     pose_from_e4_total_local_translation,
     pose_from_e4_total_local_director,
     pose_from_e4_total_local_frame)
-from scripts._b3_e4_f03_shell_strip_pose_candidate import pose_from_e4_total_strip
+from scripts._b3_e4_f03_shell_strip_pose_candidate import (
+    STRIP_PORTS, pose_from_e4_total_strip)
 from scripts._b3_e4_f03_shell_chord_pose_candidate import pose_from_e4_total_chord
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_trace import make_shell
@@ -77,9 +78,10 @@ def one_case(topology: str, intervals: int, kind: str, *,
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
                 "local_frame": pose_from_e4_total_local_frame,
-                "physical_strip_020_023": lambda p, s, u: (
+                **{name: lambda p, s, u, a=a, b=b: (
                     pose_from_e4_total_strip(
-                        p, s, u, half_length=.2, half_width=.23)),
+                        p, s, u, half_length=a, half_width=b))
+                   for name,(a,b) in STRIP_PORTS.items()},
                 "line_chord_020": pose_from_e4_total_chord,
                 "line_chord_confined_020": lambda p, s, u: (
                     pose_from_e4_total_chord(
@@ -307,8 +309,9 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
                           n_s: int = 4, n_y: int = 4,
                           native_half_cells: int = 8,
                           characteristic_length: float = .46,
-                          confined: bool = False) -> dict:
-    """Bounded six-channel, work-scaled line-chord interface diagnostic.
+                          confined: bool = False,
+                          shell_port: str | None = None) -> dict:
+    """Bounded six-channel, work-scaled interface diagnostic.
 
     Exact elimination of the indefinite native retained block separates a
     positive physical stiffness from signed local retained work. The norm
@@ -325,10 +328,13 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         kind, tuple(np.linspace(0., 1., intervals+1)))
     if type(confined) is not bool:
         raise ValueError("Boolean attachment confinement required")
-    kkt = assemble_reference_kkt(
-        shell, beam, space,
+    if shell_port is None:
         shell_port=("line_chord_confined_020" if confined else
-                    "line_chord_020"),
+                    "line_chord_020")
+    elif confined:
+        raise ValueError("explicit shell port cannot combine with confinement")
+    kkt = assemble_reference_kkt(
+        shell, beam, space, shell_port=shell_port,
         shell_support_policy="full_left_edge")
     free = kkt.free_primal
     rows = kkt.constraint_jacobian[:, free]
@@ -423,6 +429,7 @@ def chord_reference_modes(topology: str, intervals: int, kind: str, *,
         "shell_y_intervals": n_y,
         "native_half_cells": native_half_cells,
         "line_intervals": intervals, "space": kind,
+        "shell_port": shell_port,
         "confined_to_attachment": confined,
         "row_count": len(rows),
         "row_rank": int(np.linalg.matrix_rank(rows)),

@@ -15,10 +15,61 @@ from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_reference_kkt, integrate_weak_line,
 )
-from scripts.b3_e4_f03_weak_line_resolution_screen import one_case
+from scripts.b3_e4_f03_weak_line_resolution_screen import (
+    chord_reference_modes, one_case)
 
 
 WIDTH = dict(half_length=.2, half_width=.23)
+SQUARE = dict(half_length=.05, half_width=.05)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_square_patch_has_physical_yaw_and_no_drilling_work(topology):
+    panel = make_shell(2, topology, n_y=4)
+    nodes = reference_nodes(panel)
+    trace = reference_spatial_trace_strip(panel, .5, **SQUARE)
+    assert np.count_nonzero(trace[5, 5::6]) == 0
+    gamma = 1e-4
+    displacement = np.zeros((panel.node_count, 6))
+    displacement[:, 1] = gamma * nodes[:, 0]
+    assert (trace @ displacement.ravel())[5] == pytest.approx(gamma/2, abs=1e-16)
+    displacement.fill(0.)
+    displacement[:, 0] = gamma * nodes[:, 1]
+    assert (trace @ displacement.ravel())[5] == pytest.approx(-gamma/2, abs=1e-16)
+    # A unit yaw couple pulls back to a physical force couple of 1 Nm.
+    nodal = trace[5].reshape(-1, 6)
+    moment = np.sum(nodes[:, 0]*nodal[:, 1]-nodes[:, 1]*nodal[:, 0])
+    assert moment == pytest.approx(1., abs=2e-13)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+@pytest.mark.parametrize("load", ("torsion", "transverse_force_z"))
+def test_square_patch_native_load_work_is_physical(topology, load):
+    loaded = one_case(
+        topology, 2, "piecewise_constant",
+        shell_port="physical_strip_005_005", load_kind=load,
+        n_s=2, n_y=4, native_half_cells=4,
+        shell_support_policy="full_left_edge")
+    assert loaded["shell_component_physical_energy_j"] > 0.
+    assert abs(loaded["shell_numerical_energy_j"]) < 1e-12
+    assert abs(loaded["global_work_error_j"]) < 1e-10
+    assert abs(loaded["global_torque_x_balance_n_m"]) < 1e-8
+    assert abs(loaded["global_force_z_balance_n"]) < 1e-8
+    assert abs(loaded["global_moment_y_balance_n_m"]) < 1e-8
+    if load == "torsion":
+        assert loaded["tip_rx_rad"] > 0.
+    else:
+        assert loaded["beam_tip_uz_m"] > 0.
+
+
+def test_square_patch_retained_interface_action_is_consistent():
+    mode=chord_reference_modes(
+        "Q4", 2, "piecewise_constant", n_s=2, n_y=4,
+        native_half_cells=4, shell_port="physical_strip_005_005")
+    assert mode["shell_port"] == "physical_strip_005_005"
+    assert mode["row_rank"] == mode["row_count"]
+    assert mode["decomposition_relative_error"] < 1e-9
+    assert mode["scope"].endswith("not physical inf-sup acceptance")
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
@@ -44,7 +95,8 @@ def test_strip_reference_area_and_rigid_work(topology):
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-def test_strip_finite_objectivity_chart_derivatives_and_shear(topology):
+@pytest.mark.parametrize("width", (WIDTH, SQUARE))
+def test_strip_finite_objectivity_chart_derivatives_and_shear(topology, width):
     panel = make_shell(2, topology, n_y=4)
     nodes = reference_nodes(panel)
     station = .37
@@ -55,7 +107,7 @@ def test_strip_finite_objectivity_chart_derivatives_and_shear(topology):
     rigid[:, :3] = nodes@rigid_frame.T+shift-nodes
     rigid[:, 3:] = angle
     position, frame = pose_from_e4_total_strip(
-        panel, station, rigid.ravel(), **WIDTH)
+        panel, station, rigid.ravel(), **width)
     np.testing.assert_allclose(position,
                                rigid_frame@(station, 0., 0.)+shift, atol=2e-12)
     np.testing.assert_allclose(frame, rigid_frame, atol=2e-12)
@@ -64,11 +116,11 @@ def test_strip_finite_objectivity_chart_derivatives_and_shear(topology):
     first = rng.normal(size=rigid.shape)*.04
     second = rng.normal(size=rigid.shape)*.04
     analytic = directional_pose_from_e4_total_strip(
-        panel, station, rigid.ravel(), first, second, **WIDTH)
+        panel, station, rigid.ravel(), first, second, **width)
 
     def moved(a, b):
         return pose_from_e4_total_strip(
-            panel, station, (rigid+a*first+b*second).ravel(), **WIDTH)
+            panel, station, (rigid+a*first+b*second).ravel(), **width)
 
     h = 1e-5
     plus, minus = moved(h, 0.), moved(-h, 0.)
@@ -88,20 +140,20 @@ def test_strip_finite_objectivity_chart_derivatives_and_shear(topology):
 
     zero = np.zeros_like(rigid)
     at_reference = directional_pose_from_e4_total_strip(
-        panel, station, zero.ravel(), first, zero, **WIDTH)
+        panel, station, zero.ravel(), first, zero, **width)
     derivative = at_reference.frame_first
     spin = np.array((derivative[2, 1]-derivative[1, 2],
                      derivative[0, 2]-derivative[2, 0],
                      derivative[1, 0]-derivative[0, 1]))/2
     np.testing.assert_allclose(
         np.r_[at_reference.position_first, spin],
-        reference_spatial_trace_strip(panel, station, **WIDTH)@first.ravel(),
+        reference_spatial_trace_strip(panel, station, **width)@first.ravel(),
         atol=2e-13)
 
     shear = np.zeros_like(rigid)
     shear[:, 2] = .07*nodes[:, 0]
     _, sheared_frame = pose_from_e4_total_strip(
-        panel, station, shear.ravel(), **WIDTH)
+        panel, station, shear.ravel(), **width)
     np.testing.assert_allclose(sheared_frame[:, 2], (0., 0., 1.), atol=2e-14)
     surface_normal = np.cross((1., 0., .07), (0., 1., 0.))
     surface_normal /= np.linalg.norm(surface_normal)

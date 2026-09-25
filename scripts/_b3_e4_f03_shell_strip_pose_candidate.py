@@ -17,6 +17,12 @@ from scripts._b3_e4_f03_shell_finite_pose_candidate import (
 from scripts._b3_e4_f03_shell_trace import ShellPanel
 
 
+STRIP_PORTS = {
+    "physical_strip_020_023": (.2, .23),
+    "physical_strip_005_005": (.05, .05),
+}
+
+
 def _clip(polygon: list[np.ndarray], axis: int, bound: float,
           sign: int) -> list[np.ndarray]:
     """Clip one CCW host polygon by sign*(coordinate-bound)>=0."""

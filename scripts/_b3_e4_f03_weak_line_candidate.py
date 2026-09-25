@@ -31,7 +31,7 @@ from scripts._b3_e4_f03_shell_local_translation_candidate import (
     reference_spatial_trace_local_frame)
 from scripts._b3_e4_f03_shell_spatial_linear_port import reference_spatial_trace
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
-    pose_from_e4_total_strip, reference_spatial_trace_strip)
+    STRIP_PORTS, pose_from_e4_total_strip, reference_spatial_trace_strip)
 from scripts._b3_e4_f03_shell_chord_pose_candidate import (
     pose_from_e4_total_chord, reference_spatial_trace_chord)
 
@@ -119,18 +119,20 @@ def segments(shell: FlatE4TrialPanel, beam: Fixture,
         shell_sites = -.5+np.arange(shell.panel.x_interval_count+1)/shell.panel.n_s
         shell_sites = shell_sites[(shell_sites >= 0.) & (shell_sites <= 1.)]
         shell_sites = np.r_[0., shell_sites, 1.]
-    elif shell_port == "physical_strip_020_023":
+    elif shell_port in STRIP_PORTS:
+        half_length,half_width=STRIP_PORTS[shell_port]
         x_grid = -.5+np.arange(shell.panel.x_interval_count+1)/shell.panel.n_s
         sites = [0., 1.]
         for edge in x_grid:
-            sites.extend((edge-.2, edge+.2))
+            sites.extend((edge-half_length, edge+half_length))
         if shell.panel.topology == "S3-V2D":
-            for y in (-.23, .23):
+            for y in (-half_width, half_width):
                 eta = (y+.5)*shell.panel.n_y
                 eta -= np.floor(eta)
                 for edge in x_grid[:-1]:
                     diagonal = edge+eta/shell.panel.n_s
-                    sites.extend((diagonal-.2, diagonal+.2))
+                    sites.extend((diagonal-half_length,
+                                  diagonal+half_length))
         shell_sites = np.array([s for s in sites if 0. <= s <= 1.])
     elif shell_port in ("line_chord_020", "line_chord_confined_020"):
         x_grid = -.5+np.arange(shell.panel.x_interval_count+1)/shell.panel.n_s
@@ -178,16 +180,17 @@ def integrate_weak_line(
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
     if shell_port not in ("rail", "local_translation", "local_director",
-                          "local_frame", "physical_strip_020_023",
-                          "line_chord_020", "line_chord_confined_020"):
+                          "local_frame", "line_chord_020",
+                          "line_chord_confined_020", *STRIP_PORTS):
         raise ValueError("unknown bounded shell pose port")
     pose_map = {"rail": pose_from_e4_total,
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
                 "local_frame": pose_from_e4_total_local_frame,
-                "physical_strip_020_023": lambda p, s, u: (
+                **{name: lambda p, s, u, a=a, b=b: (
                     pose_from_e4_total_strip(
-                        p, s, u, half_length=.2, half_width=.23)),
+                        p, s, u, half_length=a, half_width=b))
+                   for name,(a,b) in STRIP_PORTS.items()},
                 "line_chord_020": pose_from_e4_total_chord,
                 "line_chord_confined_020": lambda p, s, u: (
                     pose_from_e4_total_chord(
@@ -259,8 +262,8 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
     if not isinstance(space, LineMultiplierSpace):
         raise TypeError("line multiplier space required")
     if shell_port not in ("rail", "local_translation", "local_director",
-                          "local_frame", "physical_strip_020_023",
-                          "line_chord_020", "line_chord_confined_020"):
+                          "local_frame", "line_chord_020",
+                          "line_chord_confined_020", *STRIP_PORTS):
         raise ValueError("unknown bounded shell pose port")
     if shell_support_policy not in ("legacy_three_left_nodes",
                                     "full_left_edge", "both_xy_edges"):
@@ -269,9 +272,10 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
                 "local_translation": pose_from_e4_total_local_translation,
                 "local_director": pose_from_e4_total_local_director,
                 "local_frame": pose_from_e4_total_local_frame,
-                "physical_strip_020_023": lambda p, s, u: (
-                    pose_from_e4_total_strip(
-                        p, s, u, half_length=.2, half_width=.23)),
+                 **{name: lambda p, s, u, a=a, b=b: (
+                     pose_from_e4_total_strip(
+                         p, s, u, half_length=a, half_width=b))
+                    for name,(a,b) in STRIP_PORTS.items()},
                 "line_chord_020": pose_from_e4_total_chord,
                 "line_chord_confined_020": lambda p, s, u: (
                     pose_from_e4_total_chord(
@@ -281,9 +285,10 @@ def assemble_reference_kkt(shell: FlatE4TrialPanel, beam: Fixture,
         "local_translation": reference_spatial_trace_local_translation,
         "local_director": reference_spatial_trace_local_director,
         "local_frame": reference_spatial_trace_local_frame,
-        "physical_strip_020_023": lambda p, s: (
+        **{name: lambda p, s, a=a, b=b: (
             reference_spatial_trace_strip(
-                p, s, half_length=.2, half_width=.23)),
+                p, s, half_length=a, half_width=b))
+           for name,(a,b) in STRIP_PORTS.items()},
         "line_chord_020": reference_spatial_trace_chord,
         "line_chord_confined_020": lambda p, s: (
             reference_spatial_trace_chord(
