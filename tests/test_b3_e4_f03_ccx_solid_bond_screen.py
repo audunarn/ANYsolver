@@ -378,6 +378,11 @@ def test_c1_terminal_solid_sections_follow_native_tangent_without_changing_legac
     assert checked_midpoint
     for node in meta["shared_interface_node_ids"]:
         assert coords[node][2] == pytest.approx(.0175,abs=1e-12)
+    with_u,with_u_meta=SCREEN.build(
+        4,"tip_mx",bar_reference_profile="c1_tangent",
+        full_displacement_output=True,**options)
+    assert with_u.replace("*NODE FILE,OUTPUT=3D\nU\n","") == deck
+    assert with_u_meta["full_displacement_output"] is True
     with pytest.raises(ValueError,match="C1 tangent profile"):
         SCREEN.build(4,"tip_mx",bar_reference_profile="c1_tangent",
                      **{**options,"bar_clearance_um":0})

@@ -76,11 +76,15 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     if type(full_displacement_output) is not bool or (
             full_displacement_output and not (
                 factor == 4 and shear in ("tip_mx", "tip_fz") and
-                boundary_policy == "left_root" and bond_policy == "full" and
+                boundary_policy == "left_root" and
                 contact_policy == "none" and element_family == "C3D20R" and
                 plate_thickness_mm == 35 and
-                tip_load_map == "quadratic_face")):
-        raise ValueError("bounded full-bond displacement output required")
+                tip_load_map == "quadratic_face" and
+                (bond_policy == "full" or
+                 (bond_policy == "terminal" and shear == "tip_mx" and
+                  tip_mx_gap_audit and bar_clearance_um == 2 and
+                  bar_reference_profile == "c1_tangent")))):
+        raise ValueError("bounded full-bond or C1 terminal displacement output required")
     if type(plate_thickness_mm) is not int or plate_thickness_mm not in (35,70):
         raise ValueError("bounded 35/70 mm plate thickness required")
     plate_top=Fraction(plate_thickness_mm,2)
@@ -955,10 +959,14 @@ def main() -> int:
         parser.error("quadratic face traction requires admitted no-contact C3D20R tip loading")
     if args.full_displacement_output and not (
             list(args.factor)==[4] and args.suite=="loads" and
-            args.boundary=="left_root" and args.bond=="full" and
+            args.boundary=="left_root" and
             args.contact=="none" and args.element_family=="C3D20R" and
-            args.half_plate_thickness and args.quadratic_face_traction):
-        parser.error("full-field pose reference requires the matched factor-4 full bond")
+            args.half_plate_thickness and args.quadratic_face_traction and
+            (args.bond=="full" or
+             (args.bond=="terminal" and args.tip_mx_gap_audit and
+              args.bar_clearance_um==2 and
+              args.bar_reference_profile=="c1_tangent"))):
+        parser.error("full-field reference requires the bounded factor-4 full bond or C1 terminal torque")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -1089,6 +1097,13 @@ def main() -> int:
             for entry in manifest["limits_of_claim"]]
         manifest["limits_of_claim"].append(
             "paired reference-normal gaps are not a continuous deformed-contact certificate")
+        if args.full_displacement_output:
+            manifest["limits_of_claim"]=[
+                ("output-only replay of the unchanged C1 terminal torque "
+                 "model for deformed seam and surface projection"
+                 if entry.startswith("output-only replay of factor-4 cases")
+                 else entry)
+                for entry in manifest["limits_of_claim"]]
     (root/"manifest.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
     records=[]
     for factor,shear in manifest["cases"]:
