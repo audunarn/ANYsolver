@@ -29,12 +29,84 @@ from scripts._b3_e4_f03_shell_strip_pose_candidate import (
     reference_spatial_trace_strip, strip_weights,
 )
 from scripts._b3_e4_f03_shell_trace import make_shell
+from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
 def skew(vector: np.ndarray) -> np.ndarray:
     x, y, z = vector
     return np.array(((0., -z, y), (z, 0., -x), (-y, x, 0.)))
+
+
+def structured_q4_patch_trace(xs: np.ndarray, ys: np.ndarray) -> np.ndarray:
+    """Exact Q4 area-mean/director/polar-yaw row on the terminal patch."""
+    xs=np.asarray(xs,dtype=float)
+    ys=np.asarray(ys,dtype=float)
+    if (xs.ndim!=1 or ys.ndim!=1 or len(xs)<2 or len(ys)<2 or
+            not np.isfinite(xs).all() or not np.isfinite(ys).all() or
+            not np.all(np.diff(xs)>0) or not np.all(np.diff(ys)>0) or
+            xs[0]>-.5 or xs[-1]<1.5 or ys[0]>-.5 or ys[-1]<.5 or
+            6*len(xs)*len(ys)>2300):
+        raise ValueError("bounded structured Q4 plate grid required")
+    count=len(xs)*len(ys)
+    mean=np.zeros(count)
+    gradient=np.zeros((2,count))
+    covered=0.
+    for j in range(len(ys)-1):
+        y0,y1=ys[j:j+2]
+        v0,v1=max(float(y0),-.05),min(float(y1),.05)
+        if v1<=v0:
+            continue
+        for i in range(len(xs)-1):
+            x0,x1=xs[i:i+2]
+            u0,u1=max(float(x0),.9),min(float(x1),1.)
+            if u1<=u0:
+                continue
+            area=(u1-u0)*(v1-v0)
+            xi=((u0+u1)/2-x0)/(x1-x0)
+            eta=((v0+v1)/2-y0)/(y1-y0)
+            values=((1-xi)*(1-eta),xi*(1-eta),xi*eta,(1-xi)*eta)
+            dx=(-(1-eta),1-eta,eta,-eta)
+            dy=(-(1-xi),-xi,xi,1-xi)
+            nodes=(j*len(xs)+i,j*len(xs)+i+1,
+                   (j+1)*len(xs)+i+1,(j+1)*len(xs)+i)
+            for node,value,gx,gy in zip(nodes,values,dx,dy):
+                mean[node]+=area*value
+                gradient[0,node]+=area*gx/(x1-x0)
+                gradient[1,node]+=area*gy/(y1-y0)
+            covered+=area
+    if abs(covered-.01)>1e-12:
+        raise ArithmeticError("terminal patch is not covered by Q4 grid")
+    mean/=.01
+    gradient/=.01
+    locations=np.array([(x,y,0.) for y in ys for x in xs])
+    if (abs(mean.sum()-1.)>1e-11 or
+            np.linalg.norm(gradient@np.ones(count))>1e-11 or
+            np.linalg.norm(gradient@locations[:,:2]-np.eye(2))>1e-11):
+        raise ArithmeticError("terminal patch partition or gradient failed")
+    trace=np.zeros((6,6*count))
+    for axis in range(3):
+        trace[axis,axis::6]=mean
+    trace[3,3::6]=mean
+    trace[4,4::6]=mean
+    trace[5,0::6]=-.5*gradient[1]
+    trace[5,1::6]=.5*gradient[0]
+    return trace
+
+
+def structured_q4_point_shape(xs: np.ndarray, ys: np.ndarray,
+                              x: float, y: float) -> tuple[np.ndarray,np.ndarray]:
+    """Physical bilinear host row, including a point on an element edge."""
+    i=int(np.clip(np.searchsorted(xs,x,side="left")-1,0,len(xs)-2))
+    j=int(np.clip(np.searchsorted(ys,y,side="left")-1,0,len(ys)-2))
+    xi=(x-xs[i])/(xs[i+1]-xs[i])
+    eta=(y-ys[j])/(ys[j+1]-ys[j])
+    if not (-1e-12<=xi<=1+1e-12 and -1e-12<=eta<=1+1e-12):
+        raise ValueError("point is outside structured Q4 plate")
+    nodes=np.array((j*len(xs)+i,j*len(xs)+i+1,
+                    (j+1)*len(xs)+i+1,(j+1)*len(xs)+i))
+    values=np.array(((1-xi)*(1-eta),xi*(1-eta),xi*eta,(1-xi)*eta))
+    return nodes,values
 
 
 def finite_rigid_work(shell: FlatE4TrialPanel, beam, port,
@@ -772,6 +844,188 @@ def run_terminal_interface(output_dir: Path) -> None:
                       flush=True)
 
 
+def graded_terminal_coupling(patch_cells: int, beam) -> dict:
+    """Linearized native B3/E4 Q4 terminal KKT on a resolved local grid."""
+    xs,ys=local_grid(patch_cells)
+    shell_k,physical=raw_e4_tangent(xs,ys)
+    shell_nodes=np.array([(x,y,0.) for y in ys for x in xs])
+    shell_size=6*len(shell_nodes)
+    total=shell_size+beam.context.count
+    trace=structured_q4_patch_trace(xs,ys)
+    port=NativeNodalSpatialPort(beam.context,beam.n_half_cells)
+    base=beam.context.initial.mechanical
+    high,low,frame=port.pose_pair(base)
+    center=high+low
+    shell_center=trace[0,0::6]@shell_nodes
+    if (np.linalg.norm(shell_center-(.95,0.,0.))>1e-12 or
+            np.linalg.norm(center-(1.,0.,.085))>1e-12):
+        raise ArithmeticError("graded terminal reference geometry changed")
+    joint=RigidPoseJoint(np.array((shell_center,center)),
+                         np.array((np.eye(3),frame)))
+    evaluation=joint.evaluate(
+        np.array((shell_center,high)),np.array((np.eye(3),frame)),
+        np.zeros(6),position_low=np.array((np.zeros(3),low)))
+    beam_trace=port.tangent(base)
+    distributing=np.column_stack((
+        evaluation.constraint_jacobian[:,:6]@trace,
+        evaluation.constraint_jacobian[:,6:]@beam_trace))
+    points=((.9,-.05), (1.,-.05), (1.,.05), (.9,.05))
+    rigid=np.zeros((12,total))
+    for point_index,(x,y) in enumerate(points):
+        nodes,values=structured_q4_point_shape(xs,ys,x,y)
+        for node,value in zip(nodes,values):
+            rigid[3*point_index:3*point_index+3,
+                  6*node:6*node+3]+=value*np.eye(3)
+        point=np.array((x,y,0.))
+        rigid[3*point_index:3*point_index+3,shell_size:]=(
+            np.column_stack((-np.eye(3),skew(point-center)))@beam_trace)
+    fixed_shell={6*j*len(xs)+axis for j in range(len(ys))
+                 for axis in range(6)}
+    fixed_beam={shell_size+index for index in beam.context.fixed}
+    free=np.array([i for i in range(total)
+                   if i not in fixed_shell and i not in fixed_beam])
+    primal=linalg.block_diag(shell_k,beam.tangent.toarray())
+    force_scale=1e6
+    displacement_scale=force_scale/(210e9*.07)
+    nodal_scale=np.tile(np.full(6,displacement_scale),
+                        len(shell_nodes)+beam.context.nodal_count//6)
+    resultants=np.r_[np.tile(SECTION_DIAGONAL[:3]*displacement_scale,2),
+                     np.tile(SECTION_DIAGONAL[3:]*displacement_scale,4)]
+    retained_scale=np.tile(np.r_[np.full(6,displacement_scale),resultants],
+                            beam.n_half_cells//2)
+    primal_scale=np.r_[nodal_scale,retained_scale]
+    if len(primal_scale)!=total:
+        raise ArithmeticError("graded retained scale layout changed")
+    beam_nodes=np.array([(i/beam.n_half_cells,0.,.085)
+                         for i in range(beam.n_half_cells+1)])
+    def wrench(nodal,locations):
+        return np.r_[nodal[:,:3].sum(axis=0),
+                     (np.cross(locations,nodal[:,:3])+nodal[:,3:]).sum(axis=0)]
+    records={}
+    for family,constraint in (("distributing",distributing),("rigid",rigid)):
+        rank=int(np.linalg.matrix_rank(constraint[:,free]))
+        if rank!=len(constraint):
+            raise ArithmeticError("graded terminal rows lost rank")
+        m=len(constraint)
+        n=len(free)
+        rows=constraint[:,free]
+        if n+m>1900:
+            raise ValueError("graded terminal KKT exceeds bounded row cap")
+        kkt=np.block([[primal[np.ix_(free,free)],rows.T],
+                      [rows,np.zeros((m,m))]])
+        scale=np.r_[primal_scale[free],np.full(m,force_scale)]
+        energy=force_scale*displacement_scale
+        scaled=(scale[:,None]*kkt)*scale[None,:]/energy
+        lu,piv=linalg.lu_factor(scaled)
+        cases={}
+        for loading,axis,magnitude in (("tip_mx",3,100.),
+                                       ("tip_fz",2,1000.)):
+            load=np.zeros(total)
+            load[shell_size+6*beam.n_half_cells+axis]=magnitude
+            rhs=np.r_[load[free]*scale[:n]/energy,np.zeros(m)]
+            answer=linalg.lu_solve((lu,piv),rhs)
+            full=np.zeros(total)
+            full[free]=scale[:n]*answer[:n]
+            multiplier=scale[n:]*answer[n:]
+            residual=primal@full+constraint.T@multiplier-load
+            interface=-constraint.T@multiplier
+            shell_interface=interface[:shell_size].reshape(-1,6)
+            beam_interface=interface[shell_size:shell_size+
+                                     beam.context.nodal_count].reshape(-1,6)
+            shell_wrench=wrench(shell_interface,shell_nodes)
+            beam_wrench=wrench(beam_interface,beam_nodes)
+            work=float(load@full)
+            physical_work=float(full[:shell_size]@physical@full[:shell_size])
+            shell_total=float(full[:shell_size]@shell_k@full[:shell_size])
+            balance=max(float(np.linalg.norm(residual[free])/max(1.,
+                                      np.linalg.norm(load[free]))),
+                        float(np.linalg.norm(constraint@full)),
+                        float(abs(full@(primal@full)-work)),
+                        float(np.linalg.norm(shell_wrench+beam_wrench)),
+                        float(abs(interface@full)))
+            if (not np.isfinite(full).all() or work<=0. or
+                    physical_work<=0. or balance>1e-7):
+                raise ArithmeticError(
+                    f"graded terminal mechanics check failed: {family} "
+                    f"{loading}, balance={balance:.6e}, "
+                    f"shell_total={shell_total:.6e}, "
+                    f"shell_physical={physical_work:.6e}, "
+                    f"shell_nonphysical={shell_total-physical_work:.6e}")
+            active=np.flatnonzero(np.max(np.abs(shell_interface),axis=1)>1e-10)
+            cases[loading]={
+                "tip_rx_rad":float(full[shell_size+6*beam.n_half_cells+3]),
+                "tip_uz_m":float(full[shell_size+6*beam.n_half_cells+2]),
+                "total_external_work_j":work,
+                "physical_shell_work_j":physical_work,
+                "numerical_shell_work_j":shell_total-physical_work,
+                "mechanics_error":balance,
+                "shell_support_wrench_N_Nm":wrench(
+                    residual[:shell_size].reshape(-1,6),shell_nodes).tolist(),
+                "beam_root_wrench_N_Nm":wrench(
+                    residual[shell_size:shell_size+beam.context.nodal_count]
+                    .reshape(-1,6),beam_nodes).tolist(),
+                "interface_shell_wrench_N_Nm":shell_wrench.tolist(),
+                "interface_beam_wrench_N_Nm":beam_wrench.tolist(),
+                "interface_shell_work_j":float(interface[:shell_size]@
+                                               full[:shell_size]),
+                "active_shell_nodes":[
+                    {"node_row":int(i),"xyz_m":shell_nodes[i].tolist(),
+                     "force_moment_N_Nm":shell_interface[i].tolist()}
+                    for i in active],
+            }
+        records[family]={"constraint_rank":rank,"cases":cases}
+    return {"patch_cells_per_side":patch_cells,
+            "shell_nodes":len(shell_nodes),"e4_elements":(len(xs)-1)*(len(ys)-1),
+            "beam_half_cells":beam.n_half_cells,"results":records}
+
+
+def run_graded_terminal(output_dir: Path) -> None:
+    source=subprocess.check_output(["git","rev-parse","HEAD"],
+                                   text=True).strip()
+    if subprocess.check_output(["git","status","--porcelain"],
+                               text=True).strip():
+        raise RuntimeError("run requires clean source")
+    output_dir.mkdir(parents=True,exist_ok=False)
+    manifest={
+        "status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
+        "source_sha":source,
+        "question":"Does resolving the native coupled terminal patch change torque/shear work and interface-force distribution for rigid and distributing laws?",
+        "decision":"Settling work and transfer fields supports a matched 3D bond comparison; material drift requires revising patch trace or resolution policy first. Neither selects a production law or true-line multiplier.",
+        "geometry":"E4 Q4 plate [-.5,1.5]x[-.5,.5] m, t=.07 m; B3 centroid z=.085 m; x=[.9,1], y=[-.05,.05] m patch",
+        "grids":"structured local Q4 with four/eight cells per patch direction; exact area-mean/director/polar-yaw trace and corner rows",
+        "beam":"native generalized B3, eight half-cells, square-section Saint-Venant torsion; root fixed",
+        "supports":"all E4 left-edge coordinates fixed and B3 root fixed",
+        "loads":"separate +100 Nm tip Mx and +1000 N tip Fz",
+        "uniform_trace_parity":"structured Q4 exact trace and corner rows match the existing uniform native port at x8/y8 to <1e-12",
+        "limits":{"max_dense_kkt_rows":1900,"blas_threads":1},
+        "scope":"linearized bounded coupled diagnostic; no external accuracy, continuum interface traction, nonlinear or qualification claim",
+        "python":platform.python_version(),"numpy":np.__version__,
+    }
+    with threadpool_limits(limits=1):
+        manifest["effective_threadpools"]=threadpool_info()
+        (output_dir/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+        beam=build(8,z_offset=.085,
+                   torsion_constant=square_torsion_constant())
+        records=[]
+        for patch_cells in (4,8):
+            started=time.perf_counter()
+            result=graded_terminal_coupling(patch_cells,beam)
+            records.append({"patch_cells_per_side":patch_cells,
+                            "seconds":time.perf_counter()-started,
+                            "response":result})
+            (output_dir/"results.json").write_text(json.dumps(
+                records,indent=2,allow_nan=False)+"\n")
+            for law,law_result in result["results"].items():
+                for loading,case in law_result["cases"].items():
+                    print(json.dumps({"patch_cells":patch_cells,
+                                      "law":law,"load":loading,
+                                      "tip_rx_urad":1e6*case["tip_rx_rad"],
+                                      "tip_z_um":1e6*case["tip_uz_m"],
+                                      "active_shell_nodes":len(
+                                          case["active_shell_nodes"])}),
+                          flush=True)
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -779,11 +1033,14 @@ if __name__ == "__main__":
     parser.add_argument("--terminal-beam-resolution", action="store_true")
     parser.add_argument("--terminal-shell-resolution", action="store_true")
     parser.add_argument("--terminal-interface", action="store_true")
+    parser.add_argument("--graded-terminal", action="store_true")
     args = parser.parse_args()
     if sum((args.terminal_beam_resolution,args.terminal_shell_resolution,
-            args.terminal_interface))>1:
+            args.terminal_interface,args.graded_terminal))>1:
         parser.error("select one terminal resolution screen")
-    if args.terminal_interface:
+    if args.graded_terminal:
+        run_graded_terminal(args.output_dir)
+    elif args.terminal_interface:
         run_terminal_interface(args.output_dir)
     elif args.terminal_beam_resolution:
         run_terminal_beam_resolution(args.output_dir)

@@ -1,8 +1,32 @@
 """Bounded actual E4/B3 footprint mechanics checks, not G0 acceptance."""
 
+import numpy as np
 import pytest
 
-from scripts.b3_e4_f03_local_footprint_work import case
+from scripts._b3_e4_f03_shell_strip_pose_candidate import reference_spatial_trace_strip
+from scripts._b3_e4_f03_shell_trace import make_shell
+from scripts.b3_e4_f03_local_footprint_work import (
+    case, structured_q4_patch_trace, structured_q4_point_shape,
+)
+
+
+def test_structured_patch_trace_matches_existing_uniform_native_rows():
+    panel=make_shell(8,"Q4",n_y=8)
+    xs=np.linspace(-.5,1.5,17)
+    ys=np.linspace(-.5,.5,9)
+    trace=structured_q4_patch_trace(xs,ys)
+    native=reference_spatial_trace_strip(
+        panel,.95,half_length=.05,half_width=.05)
+    assert np.max(np.abs(trace-native))<1e-12
+    for x in (.9,1.):
+        for y in (-.05,.05):
+            nodes,values=structured_q4_point_shape(xs,ys,x,y)
+            expected_nodes,expected_values=panel._shape(x,y)
+            observed=np.bincount(nodes,weights=values,
+                                 minlength=panel.node_count)
+            expected=np.bincount(expected_nodes,weights=expected_values,
+                                 minlength=panel.node_count)
+            assert np.max(np.abs(observed-expected))<1e-12
 
 
 @pytest.mark.parametrize("topology", ["Q4", "S3-V2D"])
