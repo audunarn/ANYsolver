@@ -12,6 +12,7 @@ from scripts._b3_e4_f03_shell_strip_pose_candidate import (
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import build
+from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_channel_basis_reference_kkt,
     assemble_channel_split_reference_kkt,
@@ -27,14 +28,48 @@ WIDTH = dict(half_length=.2, half_width=.23)
 SQUARE = dict(half_length=.05, half_width=.05)
 
 
-def _p1_fz_p0_mx_spaces(coarse: int, fine: int):
+def _linear_fz_p0_mx_spaces(coarse: int, fine: int,
+                            fz_kind: str = "continuous_linear"):
     p0 = LineMultiplierSpace(
         "piecewise_constant", tuple(np.linspace(0., 1., coarse+1)))
-    p1 = LineMultiplierSpace(
-        "continuous_linear", tuple(np.linspace(0., 1., coarse+1)))
+    fz = LineMultiplierSpace(
+        fz_kind, tuple(np.linspace(0., 1., coarse+1)))
     mx = LineMultiplierSpace(
         "piecewise_constant", tuple(np.linspace(0., 1., fine+1)))
-    return (p0, p0, p1, mx, p0, p0)
+    return (p0, p0, fz, mx, p0, p0)
+
+
+def test_dual_fz_is_local_and_biorthogonal_to_native_coarse_trace():
+    beam = build(16)
+    space = LineMultiplierSpace(
+        "dual_linear", tuple(np.linspace(0., 1., 5)))
+    directions = np.zeros((space.count, beam.context.count))
+    nodes = np.arange(beam.n_half_cells+1)/beam.n_half_cells
+    for coarse_node, station in enumerate(space.knots):
+        hat = np.maximum(0., 1.-np.abs(nodes-station)/.25)
+        directions[coarse_node, :beam.context.nodal_count].reshape(-1, 6)[:, 2] = hat
+    matrix = np.zeros((space.count, space.count))
+    resultant = np.zeros(space.count)
+    first_moment = np.zeros(space.count)
+    points, weights = np.polynomial.legendre.leggauss(3)
+    for half_cell in range(beam.n_half_cells):
+        left, right = half_cell/beam.n_half_cells, (half_cell+1)/beam.n_half_cells
+        for point, weight in zip(points, weights):
+            station = .5*(left+right)+.5*(right-left)*point
+            element, cell, fraction, _ = beam._locate(station)
+            port = NativeHalfCellSpatialPort(beam.context, element, cell, fraction)
+            trace = port.tangent(beam.context.initial.mechanical)[2]
+            values = directions@trace
+            dual = space.values(station)
+            assert np.sum(dual) == pytest.approx(1., abs=2e-15)
+            matrix += .5*(right-left)*weight*np.outer(dual, values)
+            resultant += .5*(right-left)*weight*dual
+            first_moment += .5*(right-left)*weight*station*dual
+    expected = np.diag((.125, .25, .25, .25, .125))
+    np.testing.assert_allclose(matrix, expected, atol=3e-15)
+    np.testing.assert_allclose(resultant, np.diag(expected), atol=3e-15)
+    assert np.sum(resultant) == pytest.approx(1., abs=3e-15)
+    assert np.sum(first_moment) == pytest.approx(.5, abs=3e-15)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
@@ -55,10 +90,12 @@ def test_channel_basis_uniform_p0_is_reference_row_permutation(topology):
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-def test_p1_fz_p0_mx_basis_work_and_actual_chart_derivatives(topology):
+@pytest.mark.parametrize("fz_kind", ("continuous_linear", "dual_linear"))
+def test_linear_fz_p0_mx_basis_work_and_actual_chart_derivatives(
+        topology, fz_kind):
     shell = FlatE4TrialPanel(make_shell(1, topology, n_y=4))
     beam = build(4)
-    spaces = _p1_fz_p0_mx_spaces(2, 4)
+    spaces = _linear_fz_p0_mx_spaces(2, 4, fz_kind)
     kkt = assemble_channel_basis_reference_kkt(shell, beam, spaces)
     rng = np.random.default_rng(543)
     shape = (shell.panel.node_count, 6)
