@@ -25,6 +25,7 @@ from scripts._b3_e4_f03_weak_line_candidate import (
     LineMultiplierSpace, assemble_channel_basis_reference_kkt,
 )
 from scripts.b3_e4_f03_beam_window_decision import mode as weakest_mode
+from scripts.b3_e4_f03_dual_fz_mode_decision import norm_gram
 
 
 def recovered_work(kkt, shell, beam, spaces, selected: list[int],
@@ -121,6 +122,53 @@ def recovered_work(kkt, shell, beam, spaces, selected: list[int],
     }
 
 
+def force_only_modes(kkt, shell, beam, spaces) -> dict:
+    """Positive physical Fz compliance, with no retained constraint rows."""
+    first = sum(space.count for space in spaces[:2])
+    selected = list(range(first, first + spaces[2].count))
+    free = kkt.free_primal
+    n = len(free)
+    physical = int(np.count_nonzero(
+        free < 6 * shell.panel.node_count + beam.context.nodal_count))
+    scale = kkt.coordinate_scale[:n]
+    stiffness = kkt.primal_tangent[np.ix_(free, free)]
+    scaled = (scale[:, None] * stiffness) * scale[None, :] / kkt.energy_scale
+    kp, kpr = scaled[:physical, :physical], scaled[:physical, physical:]
+    krp, kr = scaled[physical:, :physical], scaled[physical:, physical:]
+    physical_k = kp - kpr @ linalg.solve(kr, krp, assume_a="sym")
+    if linalg.eigvalsh(physical_k)[0] <= 0:
+        raise ArithmeticError("force-only physical Schur is not positive")
+    displacement_scale = 1e6 / (210e9 * .07)
+    rows = ((kkt.constraint_jacobian[selected][:, free] * scale[None, :]) /
+            displacement_scale)
+    retained_rows = rows[:, physical:]
+    if np.max(np.abs(retained_rows)) > 1e-12 * max(
+            1., float(np.max(np.abs(rows)))):
+        raise ArithmeticError("Fz constraint unexpectedly loads retained variables")
+    primal = rows[:, :physical]
+    action = primal @ linalg.solve(physical_k, primal.T, assume_a="pos")
+    action = (action + action.T) / 2
+    result = {"row_indices": selected,
+              "retained_row_max": float(np.max(np.abs(retained_rows)))}
+    for name, power in (("HminusHalf", -.5), ("HminusOne", -1.)):
+        lower, upper = norm_gram("piecewise_constant", spaces[2].count,
+                                 power)
+        eigen, vectors = linalg.eigh(action, upper)
+        coefficients = vectors[:, 0]
+        signs = np.sign(coefficients[
+            np.abs(coefficients) > 1e-8 * max(abs(coefficients))])
+        result[name] = {
+            "beta_lower": float(np.sqrt(max(0., eigen[0]))),
+            "beta_upper": float(np.sqrt(max(0., linalg.eigh(
+                action, lower, eigvals_only=True)[0]))),
+            "sign_changes": int(np.count_nonzero(signs[1:] != signs[:-1])),
+            "coefficients": coefficients.tolist(),
+            "physical": recovered_work(
+                kkt, shell, beam, spaces, selected, coefficients.tolist()),
+        }
+    return result
+
+
 def run(output_dir: Path) -> None:
     source = subprocess.check_output(["git", "rev-parse", "HEAD"],
                                      text=True).strip()
@@ -129,8 +177,8 @@ def run(output_dir: Path) -> None:
         raise RuntimeError("run requires clean source")
     output_dir.mkdir(parents=True, exist_ok=False)
     manifest = {
-        "question": "Does the native Q4/S3 model's own weakest transverse mode carry physical beam shear, or an unsupported shell/retained branch, as Fz rows increase at fixed resolution?",
-        "decision": "Use physical and algorithmic action together to decide whether the line-space problem remains; neither a finite quotient nor a shear shift alone is qualification.",
+        "question": "Does a positive physical-compliance Fz-only mode show the same fixed-mesh line-resolution trend as the earlier mixed Fz/Mx/My mode whose quotient includes an indefinite retained block?",
+        "decision": "If the trends differ, do not interpret the mixed quotient as a physical inf-sup result; if they agree, investigate physical trace and line resolution. Neither outcome selects a multiplier space or establishes uniform stability.",
         "source_sha": source, "python": platform.python_version(),
         "numpy": np.__version__, "scipy": scipy.__version__, "threads": 1,
         "mesh": "Q4/S3 shell x8/y4, native B3 half16, fixed .05/.05 m physical strip",
@@ -164,7 +212,9 @@ def run(output_dir: Path) -> None:
                     selected = diagnostic["transverse_row_indices"]
                     row = {"topology": topology, "space": label,
                            "row_count": diagnostic["row_count"],
-                           "row_rank": diagnostic["row_rank"]}
+                           "row_rank": diagnostic["row_rank"],
+                           "force_only": force_only_modes(
+                               kkt, shell, beam, spaces)}
                     for norm in ("HminusHalf", "HminusOne"):
                         values = diagnostic[norm]
                         physical = recovered_work(
