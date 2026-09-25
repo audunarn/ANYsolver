@@ -341,6 +341,21 @@ checks (`c3-native-whole-03-profile-first.txt`,
 different total work and neither completed the target, so they do not
 establish a whole-route speedup or active-contact acceptance.
 
+An opt-in active whole-pair static regression now follows the explicit
+0.0/0.1/0.2/0.3 force path with 0.13 m beam separation and -0.05 N terminal
+nodal load. It reached contact equilibrium at target 0.3, with a conservative
+gap lower bound of -0.000996694 m against the declared 0.001 m development
+budget. The test checks nonzero contact potential, paired force and moment
+balance to 1e-8 in their respective units, and byte-identical accepted
+checkpoints for full and split continuation. The registered run passed in
+172.09 s (`c3-native-whole-active-restart-first.txt`); set
+`ANYSOLVER_LONG_CONTACT=1` to include it. A nearby, simpler path at
+0.102 m and -0.002 N instead exhausted the integration-interval budget
+(`c3-native-whole-near-contact-probe-1.txt`), retained as a distinct
+failure. These development results do not admit the general C3 profile;
+complete curved ownership, practical resource use, beam–shell coupling
+and independent qualification remain open.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization

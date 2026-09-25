@@ -1,5 +1,7 @@
 """Distinct whole-curve profile through the retained two-native-beam owner."""
 
+import os
+
 import numpy as np
 import pytest
 from scipy.integrate import quad
@@ -91,6 +93,37 @@ def test_whole_pair_open_static_route_and_checkpoint_restart():
     resumed = _owner().solve(checkpoint=part.checkpoint,
                              expected_sha256=part.checkpoint_sha256)
     assert resumed.status == "completed", resumed.failure
+    assert resumed.checkpoint == full.checkpoint
+
+
+@pytest.mark.skipif(
+    os.environ.get("ANYSOLVER_LONG_CONTACT") != "1",
+    reason="opt-in long-running active native whole-pair development route",
+)
+def test_whole_pair_active_static_path_restart_and_wrench():
+    settings = dict(separation=0.13, force=-0.05,
+                    targets=(0.0, 0.1, 0.2, 0.3))
+    first = _owner(**settings).solve(stop_after=3)
+    assert first.status == "paused", first.failure
+    assert first.accepted.completed_targets == 3
+    resumed = _owner(**settings).solve(
+        checkpoint=first.checkpoint,
+        expected_sha256=first.checkpoint_sha256,
+    )
+    assert resumed.status == "completed", resumed.failure
+    contact = resumed.accepted.contact
+    assert contact.potential_j > 0.0
+    assert contact.conservative_lower_gap_m >= -1e-3
+    np.testing.assert_allclose(
+        contact.beam_a_force_n + contact.beam_b_force_n,
+        0.0, rtol=0.0, atol=1e-8,
+    )
+    np.testing.assert_allclose(
+        contact.beam_a_moment_nm + contact.beam_b_moment_nm,
+        0.0, rtol=0.0, atol=1e-8,
+    )
+    full = _owner(**settings).solve()
+    assert full.status == "completed", full.failure
     assert resumed.checkpoint == full.checkpoint
 
 
