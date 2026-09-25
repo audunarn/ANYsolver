@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 
 from anysolver import (
@@ -14,6 +15,10 @@ from anysolver.fe_core import FEModel
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--projected", action="store_true",
+                        help="use the opt-in Q4/S3 V1 matching-projection gap certificate")
+    args = parser.parse_args()
     model = FEModel("general_q4_s3_augmented_path")
     model.add_material("elastic", 1e5, 0.3, density=1.0)
     source = ((0.1, 0.1, 0.055), (1.1, 0.1, 0.055),
@@ -45,7 +50,8 @@ def main() -> None:
                   ContactSurface("target_top", (2, 3), "top")),
         rigid_bodies=(),
         interactions=(ContactInteraction(
-            "patch", "source_bottom", "target_top", 1000.0, 0.005,
+            "patch", "source_bottom", "target_top", 1000.0,
+            0.0002 if args.projected else 0.005,
             normal_law="augmented",
         ),),
     )
@@ -56,6 +62,8 @@ def main() -> None:
         q4_source_weighted_gap_tolerance=1e-10,
         maximum_q4_source_integration_triangles=300,
         pressure_tolerance=0.02, maximum_augmentations=16,
+        q4_source_gap_certificate=("projected_matching" if args.projected
+                                   else "whole_face"),
     )
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
@@ -84,9 +92,12 @@ def main() -> None:
         raise RuntimeError("unexpected contact activation history")
     if phases[2]["contact"]["normal_multiplier_estimate_pa"] != [0.0]*4:
         raise RuntimeError("normal multipliers did not release on opening")
-    print(json.dumps({
+    payload = {
         "status": result.status,
         "profile": result.info["general_contact"]["profile"],
+        **({"gap_tolerance_m": definition.interactions[0].gap_tolerance,
+            "q4_source_gap_certificate": settings.q4_source_gap_certificate}
+           if args.projected else {}),
         "pressure_node_ids": result.info["general_contact"]["source_pressure_node_ids"],
         "phases": [
             {"target_m": row["target"],
@@ -100,7 +111,8 @@ def main() -> None:
             for row in phases
         ],
         "restart_schema_version": result.restart_checkpoint["version"],
-    }, indent=2))
+    }
+    print(json.dumps(payload, indent=2))
 
 
 if __name__ == "__main__":

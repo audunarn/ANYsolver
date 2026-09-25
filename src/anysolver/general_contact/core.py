@@ -359,6 +359,29 @@ def _exact_single_q4_pair(model: FEModel,
                     for surface in definition.surfaces))
 
 
+def _exact_q4_s3_patch(model: FEModel,
+                       definition: ContactDefinition) -> bool:
+    """Admit only one Q4 pressure face against two qualified S3 target faces."""
+    from anysolver.e4_pl_element import QualifiedE4PLShellElement
+    from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
+    if len(definition.surfaces) != 2 or len(definition.interactions) != 1:
+        return False
+    names = {surface.name: surface for surface in definition.surfaces}
+    interaction = definition.interactions[0]
+    source = names.get(interaction.surface)
+    target = names.get(interaction.target)
+    if source is None or target is None or source is target:
+        return False
+    return (len(source.element_ids) == 1
+            and len(target.element_ids) == 2
+            and type(model.mesh.elements.get(source.element_ids[0]))
+            is QualifiedE4PLShellElement
+            and all(type(model.mesh.elements.get(element_id))
+                    is NativeParityE4PLS3V2DShellElement
+                    for element_id in target.element_ids))
+
+
 def validate_general_contact(model: FEModel, definition: ContactDefinition,
                              settings: ContactSolverSettings | None = None,
                              *, analysis_control: str = "force") -> ContactValidationReport:
@@ -374,9 +397,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                 and not definition.rigid_bodies
                 and len(definition.interactions) == 1
                 and definition.interactions[0].normal_law == "augmented"
-                and _exact_single_q4_pair(model, definition)):
+                and (_exact_single_q4_pair(model, definition)
+                     or _exact_q4_s3_patch(model, definition))):
             return ContactValidationReport("invalid", (
-                "projected-matching Q4 gap certificate requires one explicit augmented Q4/Q4 general pair",
+                "projected-matching Q4 gap certificate requires an explicit augmented Q4/Q4 or Q4/two-S3 general pair",
             ))
     if settings is not None and settings.normal_discretization == "pointwise_penalty":
         general_s3 = (settings.pair_motion == "general"

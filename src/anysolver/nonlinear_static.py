@@ -7690,6 +7690,7 @@ def solve_static_nonlinear(
                     from .general_contact.s3_patch_static import (
                         AUGMENTED_PROFILE, AUGMENTED_MIXED_PROFILE,
                         REFINED_AUGMENTED_PROFILE, SOURCE_Q4_AUGMENTED_PROFILE,
+                        SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
                         Q4_PAIR_AUGMENTED_PROFILE,
                         Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                     )
@@ -7697,6 +7698,7 @@ def solve_static_nonlinear(
                     if contact_manager.profile not in {
                         AUGMENTED_PROFILE, AUGMENTED_MIXED_PROFILE,
                         REFINED_AUGMENTED_PROFILE, SOURCE_Q4_AUGMENTED_PROFILE,
+                        SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
                         Q4_PAIR_AUGMENTED_PROFILE,
                         Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                     }:

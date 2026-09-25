@@ -52,9 +52,13 @@ def test_projected_q4_pair_has_distinct_profile_and_restart_contract():
         mixed_settings, pressure_tolerance=0.02,
         q4_source_gap_certificate="projected_matching",
     )
-    assert not validate_general_contact(
+    mixed_report = validate_general_contact(
         mixed_model, mixed_definition, mixed_settings,
-    ).valid
+    )
+    assert mixed_report.valid, mixed_report.issues
+    assert mixed_report.profile == (
+        "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
+    )
 
 
 def test_projected_q4_pair_certifies_static_and_swept_corner_trial():

@@ -24,6 +24,7 @@ Q4_PAIR_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 AUGMENTED_PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 AUGMENTED_MIXED_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 SOURCE_Q4_AUGMENTED_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
 Q4_PAIR_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 Q4_PAIR_PROJECTED_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
 REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
@@ -154,11 +155,13 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                    Q4_PAIR_PROJECTED_AUGMENTED_PROFILE
                    if q4_pair and settings.q4_source_gap_certificate == "projected_matching" else
                    Q4_PAIR_AUGMENTED_PROFILE if q4_pair else
+                   SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE
+                   if source_q4 and settings.q4_source_gap_certificate == "projected_matching" else
                    SOURCE_Q4_AUGMENTED_PROFILE if source_q4 else
                    AUGMENTED_MIXED_PROFILE if target_q4 else AUGMENTED_PROFILE)
     if (settings.q4_source_gap_certificate == "projected_matching"
-            and not (augmented and q4_pair)):
-        issues.append("projected-matching Q4 gap certificate requires augmented Q4/Q4")
+            and not (augmented and (q4_pair or source_q4))):
+        issues.append("projected-matching Q4 gap certificate requires augmented Q4/Q4 or Q4/two-S3")
     for side_index, surface in enumerate((source, target)):
         if surface.beam_radius is not None:
             issues.append(f"surface {surface.name} cannot declare beam radius")
@@ -366,7 +369,8 @@ class GeneralS3PatchManager:
         source_moment = np.sum(np.cross(source, physical[:source_count]), axis=0)
         target_moment = np.sum(np.cross(target, physical[source_count:]), axis=0)
         gram_rank = gram_condition = None
-        if self.profile == Q4_PAIR_PROJECTED_AUGMENTED_PROFILE:
+        if self.profile in {Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
+                            SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE}:
             eigenvalues = np.linalg.eigvalsh(state.pressure_gram)
             greatest = max(0.0, float(eigenvalues[-1]))
             threshold = (len(eigenvalues)*np.finfo(float).eps*greatest)
@@ -404,6 +408,7 @@ class GeneralS3PatchManager:
     def restrict_tangent_to_reduced_variations(self, transform):
         """Keep Q4-source Hessian work on axes reached by free coordinates."""
         if self.profile not in {SOURCE_Q4_AUGMENTED_PROFILE,
+                                SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
                                 Q4_PAIR_AUGMENTED_PROFILE,
                                 Q4_PAIR_PROJECTED_AUGMENTED_PROFILE}:
             return
