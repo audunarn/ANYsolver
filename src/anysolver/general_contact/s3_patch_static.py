@@ -21,6 +21,7 @@ Q4_PAIR_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 AUGMENTED_PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 AUGMENTED_MIXED_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 SOURCE_Q4_AUGMENTED_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+Q4_PAIR_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 
 
@@ -146,10 +147,9 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                MIXED_PROFILE if target_q4 else PROFILE)
     if augmented:
         profile = (REFINED_AUGMENTED_PROFILE if refined else
+                   Q4_PAIR_AUGMENTED_PROFILE if q4_pair else
                    SOURCE_Q4_AUGMENTED_PROFILE if source_q4 else
                    AUGMENTED_MIXED_PROFILE if target_q4 else AUGMENTED_PROFILE)
-        if q4_pair:
-            issues.append("augmented Q4/Q4 pressure-side profile is not admitted")
     for side_index, surface in enumerate((source, target)):
         if surface.beam_radius is not None:
             issues.append(f"surface {surface.name} cannot declare beam radius")
@@ -376,7 +376,8 @@ class GeneralS3PatchManager:
 
     def restrict_tangent_to_reduced_variations(self, transform):
         """Keep Q4-source Hessian work on axes reached by free coordinates."""
-        if self.profile != SOURCE_Q4_AUGMENTED_PROFILE:
+        if self.profile not in {SOURCE_Q4_AUGMENTED_PROFILE,
+                                Q4_PAIR_AUGMENTED_PROFILE}:
             return
         variations = (self.map @ transform).tocsr()
         variations.eliminate_zeros()

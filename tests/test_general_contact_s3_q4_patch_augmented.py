@@ -91,7 +91,7 @@ def test_q4_pressure_source_augmented_has_distinct_admitted_profile():
     )
 
 
-def test_q4_q4_augmented_profile_remains_unadmitted():
+def test_q4_q4_augmented_profile_has_distinct_admission():
     model, definition, settings = _q4_pair_case()
     definition = replace(definition, interactions=(
         replace(definition.interactions[0], normal_law="augmented"),
@@ -99,8 +99,10 @@ def test_q4_q4_augmented_profile_remains_unadmitted():
     report = validate_general_contact(
         model, definition, replace(settings, pressure_tolerance=0.001),
     )
-    assert not report.valid
-    assert "augmented Q4/Q4 pressure-side profile" in " ".join(report.issues)
+    assert report.valid, report.issues
+    assert report.profile == (
+        "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+    )
 
 
 def _path_case():
