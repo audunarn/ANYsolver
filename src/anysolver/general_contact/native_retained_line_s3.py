@@ -153,21 +153,19 @@ class NativeRetainedRoundLineS3Interior:
                 or len(shell_reference.corners) != 3):
             raise TypeError("native line-S3 needs exact native and physical S3 references")
         if (type(beam_element_id) is not int or beam_element_id <= 0
-                or type(shell_element_id) is not int or shell_element_id <= 0
-                or beam_element_id == shell_element_id):
-            raise ValueError("native line-S3 needs distinct positive element identities")
+                or type(shell_element_id) is not int or shell_element_id <= 0):
+            raise ValueError("native line-S3 needs positive element identities")
         if (type(shell_reference.feature_id) is not tuple
                 or len(shell_reference.feature_id) != 2
-                or shell_reference.feature_id[0] != shell_element_id
-                or type(shell_reference.feature_id[1]) is not int):
+                or type(shell_reference.feature_id[0]) is not int
+                or shell_reference.feature_id[0] <= 0
+                or shell_reference.feature_id[1] != shell_element_id):
             raise ValueError("native line-S3 needs matching shell feature identity")
         for name, ids in (("beam", beam_node_ids), ("shell", shell_node_ids)):
             if (type(ids) is not tuple or len(ids) != 3
                     or any(type(item) is not int or item <= 0 for item in ids)
                     or len(set(ids)) != 3):
                 raise ValueError(f"native line-S3 {name} needs three material nodes")
-        if set(beam_node_ids) & set(shell_node_ids):
-            raise ValueError("native line-S3 participants share material nodes")
         controls = (radius_m, line_stiffness_n_per_m2,
                     geometry_tolerance_m, energy_tolerance_j,
                     force_tolerance_n, tangent_tolerance_n_per_m)

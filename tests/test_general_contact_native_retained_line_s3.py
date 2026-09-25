@@ -24,7 +24,7 @@ def _case(*, curved=False, maximum_integration_intervals=100):
     shell = np.array(((-5.0, -5.0, 0.0),
                       (5.0, -5.0, 0.0),
                       (0.0, 10.0, 0.0)))
-    face = PlanarFace((21, 0), shell)
+    face = PlanarFace((1, 21), shell)
     kernel = NativeRetainedRoundLineS3Interior(
         11, reference, (1, 2, 3), 21, face, (4, 5, 6),
         radius_m=0.1, line_stiffness_n_per_m2=100.0,
@@ -153,3 +153,18 @@ def test_partial_activation_and_bounded_integration():
     limited, *_ = _case(maximum_integration_intervals=1)
     with pytest.raises(MemoryError, match="interval budget exhausted"):
         limited.evaluate(beam, low, rotations, shell)
+
+
+def test_native_and_shell_identity_namespaces_are_separate():
+    kernel, beam, low, rotations, shell = _case()
+    same_numbers = NativeRetainedRoundLineS3Interior(
+        21, kernel.beam_reference, (4, 5, 6),
+        21, kernel.shell_reference, (4, 5, 6),
+        radius_m=0.1, line_stiffness_n_per_m2=100.0,
+        rim_clearance_m=0.1, geometry_tolerance_m=1e-10,
+        energy_tolerance_j=1e-10, force_tolerance_n=1e-9,
+        tangent_tolerance_n_per_m=1e-7,
+        maximum_integration_intervals=100,
+    )
+    assert same_numbers.evaluate(beam, low, rotations, shell).potential_j == pytest.approx(
+        kernel.evaluate(beam, low, rotations, shell).potential_j)

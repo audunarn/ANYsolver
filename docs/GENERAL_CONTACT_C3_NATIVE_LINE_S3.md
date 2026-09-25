@@ -4,8 +4,12 @@
 component. It evaluates both Q2 half-cells of one retained native B3-GE beam
 against one deformable, ordered physical S3 skin triangle. The S3 vertex input
 already includes its formulation-owned director, side, offset and thickness.
-It is **not** an S3 nodal translation/rotation adapter or a coupled analysis
+`NativeRetainedLineS3Work` composes this kernel with the formulation-owned
+`S3SkinWorkAdapter`, pulling physical skin-vertex work to the S3 model's
+translational and rotational DOFs. There is no coupled native/shell analysis
 owner. C3 native beam–shell contact remains open.
+Native and shell element/node numbers are separate namespaces; the shell face
+identity binds its body and element IDs.
 
 The declared round centreline radius and normal line stiffness have units of
 metres and N/m². The energy is the reference-arc integral of
@@ -13,7 +17,9 @@ metres and N/m². The energy is the reference-arc integral of
 comes from the native curved beam; current position uses its retained Q2
 half-cell geometry. The output has a 51-coordinate residual and tangent: 42
 native retained coordinates followed by nine physical S3 skin-vertex
-coordinates. The second derivative includes the native internal-rotation
+coordinates. The work composer replaces the latter with the full shell-model
+DOF vector; its tangent is sparse. The second derivative includes native
+internal-rotation
 curvature term and full shell-normal variation. It uses the same spatial
 rotation-increment convention as the retained Q2 cell adapter.
 
@@ -30,8 +36,7 @@ changed definition identity are rejected.
 The ordered material S3 vertices define the physical normal. A single pose
 cannot distinguish an inverted patch from a valid large rigid rotation by
 comparison with the reference normal. The future analysis owner must track
-orientation and swept side identity along the accepted path, map the physical
-vertex work to authoritative S3 degrees of freedom, assemble shell and native
+orientation and swept side identity along the accepted path, assemble shell and native
 structural equations, and control initial interference, increments, state and
 restart. No public native beam–shell capability is admitted by this component.
 
@@ -39,5 +44,6 @@ Focused development checks cover an analytic parallel plane, partial line
 activation, paired force/moment balance, shell-vertex work and tangent,
 retained rotation work and curvature, an independently integrated curved
 scalar potential, common rigid motion through 170 degrees, opening, geometry
-rejection and bounded integration. These are local tests, not independent
-engineering qualification.
+rejection and bounded integration. A real S3 V2D model check covers the top-skin
+offset, full structural DOF pullback, drill invariance and definition binding.
+These are local tests, not independent engineering qualification.
