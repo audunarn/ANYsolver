@@ -46,3 +46,10 @@ gap diagnostics and checkpoint output. Focused checks are in
 `tests/test_general_contact_patch_mortar.py` and
 `tests/test_general_contact_patch_sliding.py`. Warped shells, rotations,
 general finite sliding, friction, automatic pairing and dynamics remain open.
+
+An isolated wheel from source `55d94daeb1f629067b1b0a111734f13b5999de34`
+(SHA-256 `5c38a199e03a26263a3925a97d2aeb66983c5d2ebfd3e983dfdd630f83d4cc45`)
+imported from its installation target and completed the `--augmented-cycle`
+example with four accepted phases (`c1-augmented-four-phase-example-installed-55d94dae.txt`).
+No package was published. This checks the installed workflow, not engineering
+acceptance.
