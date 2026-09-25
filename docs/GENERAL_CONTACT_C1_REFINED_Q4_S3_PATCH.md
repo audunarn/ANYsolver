@@ -36,9 +36,13 @@ identities remain separate. The current public route has not been exercised
 at the 361-source-node resolution used by the independent fixed-pose Q4/S3
 pressure test; numerical pair-local Hessians are costly at that scale.
 
-This is **implemented and locally tested development work**. Split restart
-through active contact, coupled mesh/enforcement convergence, partial-contact
-pressure stability, complete-route resource scaling, independent review,
+This is **implemented and locally tested development work**. An opt-in
+two-step active split-restart case passed: all six pressure nodes were active
+at the checkpoint, and the uninterrupted and resumed final checkpoints were
+equal. It took 578.30 s on the local host. The first candidate checkpoint
+at −0.0150 m was still open; that failed active-state gate is retained.
+Coupled mesh/enforcement convergence, partial-contact pressure stability,
+complete-route resource scaling, independent review,
 and C1 acceptance remain open. The standalone
 `examples/general_contact_refined_q4_s3_path.py` completed from both source
 and an isolated wheel installation built from commit `2a76cd33`. The wheel

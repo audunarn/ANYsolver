@@ -171,3 +171,52 @@ def test_refined_q4_source_active_two_control_path():
         0.0, atol=1.0e-6,
     )
     assert result.restart_checkpoint["version"] == 2
+
+
+@pytest.mark.skipif(os.environ.get("ANYSOLVER_LONG_CONTACT") != "1",
+                    reason="opt-in coupled multi-Q4 active split restart")
+def test_refined_q4_source_active_split_restart_matches_full_path():
+    model, definition, settings = _two_q4_two_s3()
+    definition = replace(definition, interactions=(replace(
+        definition.interactions[0], gap_tolerance=0.005,
+    ),))
+    settings = replace(settings, maximum_augmentations=8)
+    model.add_boundary_condition(BoundaryCondition(
+        "target_fixed", (7, 8, 9, 10),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "source_guide", (1, 2, 3, 4, 5, 6),
+        {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+    ))
+    program = ContactPathProgram(
+        controls=(ContactPathControl.node(1, "ux"),
+                  ContactPathControl.node(1, "uz")),
+        waypoints=((0.0, 0.0), (0.0, -0.01505), (0.0, -0.01506)),
+        steps_per_segment=1,
+    )
+    options = dict(contact=definition, contact_settings=settings,
+                   contact_path_program=program, max_iterations=12,
+                   emit_restart_checkpoint=True)
+    full = solve_static_nonlinear(model, **options)
+    assert full.status == "completed", full.failure_reason
+    prefix = solve_static_nonlinear(model, max_load_factor=0.5, **options)
+    assert prefix.status == "completed", prefix.failure_reason
+    assert prefix.info["general_contact"]["active_pressure_dofs"] == 6
+    assert prefix.info["general_contact"]["gap_tolerance_met"]
+    assert prefix.restart_checkpoint["version"] == 2
+    resumed = solve_static_nonlinear(
+        model, restart_checkpoint=prefix.to_restart_checkpoint(), **options,
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, full.displacements,
+                               rtol=0.0, atol=1.0e-10)
+    for field in ("integration_force", "target_force",
+                  "integration_moment", "target_moment"):
+        np.testing.assert_allclose(
+            resumed.info["general_contact"][field],
+            full.info["general_contact"][field], rtol=0.0, atol=1.0e-8,
+        )
+    assert (resumed.to_restart_checkpoint()["path_state"]["normal_multipliers"]
+            == full.to_restart_checkpoint()["path_state"]["normal_multipliers"])
+    assert resumed.to_restart_checkpoint() == full.to_restart_checkpoint()
