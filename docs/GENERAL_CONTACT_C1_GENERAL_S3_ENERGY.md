@@ -26,8 +26,8 @@ that same energy by centered differences with an explicit dimensional step
 and a finite evaluation budget. Current face inversion, conflicting
 polarity, overlap/contact branch changes and coincident-edge derivative
 kinks fail explicitly. These checks do not certify every possible projection
-branch switch. Swept crossing, director/skin rotation maps, shell structural
-assembly, restart and Q4 bilinear geometry are not yet connected.
+branch switch. Swept crossing, a shell static analysis owner, restart and Q4
+bilinear geometry are not yet connected.
 
 `tests/test_general_contact_triangle_pair_energy.py` covers an independent
 constant-gap reference-area integral, exact partial-contact affine-gap
@@ -36,3 +36,22 @@ clipping, common-translation invariance, force/moment balance, a smooth
 directional tangent and explicit kink/resource rejection. Five focused tests
 passed in `c1-general-s3-energy-final1.txt`. This is development evidence,
 not C1 engineering acceptance or a public capability.
+
+## S3 V2D physical-skin work map
+
+`S3SkinWorkAdapter` reads the exact S3 V2D formulation, its physical director
+and its signed material-surface offset. It maps the solver's translational
+and small-rotation nodal coordinates to the selected top, middle or bottom
+skin. The sparse linear work map pulls physical contact force and tangent
+back to the authoritative structural DOFs, including offset force couples.
+A pure drill rotation about the physical director leaves the skin and its
+contact work unchanged.
+
+The local pair test maps the moving-triangle energy through two actual S3
+elements. It checks formulation-owned top/middle/bottom positions against a
+separate geometry adapter, nonzero offset couples, drill invariance, global
+virtual work and a smooth directional tangent at relative error at most
+`1e-5`. Together with the energy tests, seven checks passed in
+`c1-s3-skin-energy-final1.txt`. This still lacks a nonlinear static contact
+owner, swept path admission and checkpoint; the adapter alone does not make
+general nodal sliding publicly available.
