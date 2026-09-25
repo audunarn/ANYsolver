@@ -413,12 +413,26 @@ def loaded_surface_patch_panel(topology: str, shell_intervals: int,
         beam_support = residual[shell_size:shell_size+
                                 beam.context.nodal_count].reshape(-1, 6)
         shell_nodes = reference_nodes(shell.panel)
+        beam_nodes = np.array([(i/beam.n_half_cells, 0., .0675)
+                               for i in range(beam.n_half_cells+1)])
+        plate_force = support[:, :3].sum(axis=0)
+        beam_root_force = beam_support[:, :3].sum(axis=0)
         plate_moment = np.sum(
             np.cross(shell_nodes, support[:, :3])+support[:, 3:], axis=0)
         beam_root_moment = np.sum(
-            np.cross(np.array([(i/beam.n_half_cells, 0., .0675)
-                               for i in range(beam.n_half_cells+1)]),
-                     beam_support[:, :3])+beam_support[:, 3:], axis=0)
+            np.cross(beam_nodes, beam_support[:, :3])+
+            beam_support[:, 3:], axis=0)
+        tip_force = np.zeros(3)
+        tip_moment = np.zeros(3)
+        if axis < 3:
+            tip_force[axis] = magnitude
+            tip_moment = np.cross(beam_nodes[-1], tip_force)
+        else:
+            tip_moment[axis-3] = magnitude
+        force_balance = np.linalg.norm(
+            plate_force+beam_root_force+tip_force)
+        moment_balance = np.linalg.norm(
+            plate_moment+beam_root_moment+tip_moment)
         work_error = abs(state@(primal@state)-effective_load@state)
         physical_shell_work = float(
             state[:shell_size]@physical_shell@state[:shell_size])
@@ -426,16 +440,19 @@ def loaded_surface_patch_panel(topology: str, shell_intervals: int,
                                 max(1., np.linalg.norm(load[free])))
         if (not np.isfinite(state).all() or physical_shell_work <= 0. or
                 max(relative_equilibrium, np.linalg.norm(gap),
-                    work_error) > 1e-8):
+                    work_error, force_balance, moment_balance) > 1e-7):
             raise ArithmeticError("bounded loaded finite-patch check failed")
         results[label] = {
             "tip_work_coordinate": float(state[
                 shell_size+6*beam.n_half_cells+axis]),
             "load_work_j": float(load@state),
             "physical_shell_work_j": physical_shell_work,
-            "plate_support_force_n": support[:, :3].sum(axis=0).tolist(),
+            "plate_support_force_n": plate_force.tolist(),
+            "beam_root_support_force_n": beam_root_force.tolist(),
             "plate_support_moment_nm": plate_moment.tolist(),
             "beam_root_support_moment_nm": beam_root_moment.tolist(),
+            "global_force_balance_n": float(force_balance),
+            "global_moment_balance_nm": float(moment_balance),
             "scaled_equilibrium_residual": float(relative_equilibrium),
             "weak_gap_norm": float(np.linalg.norm(gap)),
             "work_error_j": float(work_error),

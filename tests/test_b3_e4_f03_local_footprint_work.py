@@ -149,6 +149,8 @@ def test_loaded_surface_patch_panel_keeps_work_gap_and_support_balance(topology)
         assert response["work_error_j"] < 1e-9
         assert response["load_work_j"] > 0.
         assert response["physical_shell_work_j"] > 0.
+        assert response["global_force_balance_n"] < 1e-7
+        assert response["global_moment_balance_nm"] < 1e-7
     torque = result["loads"]["tip_mx_100nm"]
     assert (torque["plate_support_moment_nm"][0]+
             torque["beam_root_support_moment_nm"][0]) == pytest.approx(
