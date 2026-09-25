@@ -299,6 +299,51 @@ def graded_patch_force(xs: np.ndarray,ys: np.ndarray,
     return force,wrench
 
 
+def graded_torque_load_maps(xs: np.ndarray,ys: np.ndarray) -> dict[str,np.ndarray]:
+    """Same-wrench plate loads for the three distinct patch work maps."""
+    xs=np.asarray(xs,dtype=float)
+    ys=np.asarray(ys,dtype=float)
+    if (xs.ndim!=1 or ys.ndim!=1 or not np.all(np.diff(xs)>0) or
+            not np.all(np.diff(ys)>0) or
+            not np.any(np.isclose(xs,PATCH_X[0],atol=1e-12)) or
+            not np.any(np.isclose(xs,PATCH_X[1],atol=1e-12)) or
+            not np.any(np.isclose(ys,PATCH_Y[0],atol=1e-12)) or
+            not np.any(np.isclose(ys,PATCH_Y[1],atol=1e-12))):
+        raise ValueError("patch boundaries must be nodes of the graded grid")
+    smooth,_=graded_patch_force(xs,ys,"tip_mx")
+    distributing=np.zeros_like(smooth)
+    rigid=np.zeros_like(smooth)
+    for j in range(len(ys)-1):
+        if ys[j]<PATCH_Y[0]-1e-12 or ys[j+1]>PATCH_Y[1]+1e-12:
+            continue
+        for i in range(len(xs)-1):
+            if xs[i]<PATCH_X[0]-1e-12 or xs[i+1]>PATCH_X[1]+1e-12:
+                continue
+            area=(xs[i+1]-xs[i])*(ys[j+1]-ys[j])
+            for node in (j*len(xs)+i,j*len(xs)+i+1,
+                         (j+1)*len(xs)+i+1,(j+1)*len(xs)+i):
+                distributing[6*node+3]+=100.*area/(4*PATCH_AREA)
+    for x in PATCH_X:
+        for y in PATCH_Y:
+            i=int(np.argmin(abs(xs-x)))
+            j=int(np.argmin(abs(ys-y)))
+            if abs(xs[i]-x)>1e-12 or abs(ys[j]-y)>1e-12:
+                raise AssertionError("rigid corner is absent from graded grid")
+            rigid[6*(j*len(xs)+i)+2]+=100.*y/PATCH_AREA
+    locations=np.array([(x,y,0.) for y in ys for x in xs])
+    expected=expected_wrench("tip_mx")
+    result={"smooth_traction":smooth,
+            "native_distributing_director":distributing,
+            "native_rigid_corners":rigid}
+    for force in result.values():
+        nodal=force.reshape(-1,6)
+        wrench=np.r_[nodal[:,:3].sum(axis=0),
+                     (np.cross(locations,nodal[:,:3])+nodal[:,3:]).sum(axis=0)]
+        if np.linalg.norm(wrench-expected)>1e-8:
+            raise AssertionError("graded torque map does not preserve wrench")
+    return result
+
+
 def graded_shell_case(patch_cells: int,loading: str, *,
                       outer_refined: bool = False,
                       thickness: float = .07) -> dict:
@@ -329,6 +374,42 @@ def uniform_operator_parity(*, thickness: float = .07) -> dict:
     return {"uniform_level":2,"thickness_m":thickness,
             "relative_tangent_error":error,
             "nodes":panel.node_count}
+
+
+def run_load_maps(root: Path, patch_cells: int) -> None:
+    source=subprocess.check_output(("git","rev-parse","HEAD"),text=True).strip()
+    if subprocess.check_output(("git","status","--porcelain"),text=True).strip():
+        raise RuntimeError("load-map screen requires clean source")
+    root.mkdir(parents=True,exist_ok=False)
+    manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
+              "question":"On one resolved E4 plate, does the smooth solid-reference traction represent either native terminal torque work map?",
+              "decision":"Converging same-wrench work supports advancing a matched bonded-solid comparison; persistent shape-dependent work requires recovery of the actual coupled interface force before a solid comparison can rank native laws. Neither outcome selects a connection.",
+              "source_sha":source,"runner_sha256":digest(Path(__file__)),
+              "patch_cells_per_side":patch_cells,"thickness_m":.07,
+              "geometry":"flat plate [-.5,1.5]x[-.5,.5], patch x=[.9,1], y=[-.05,.05]",
+              "support":"all coordinates fixed at x=-.5",
+              "loads":"same +100 Nm global Mx; smooth top-face transverse traction, native distributing director couple, native rigid-corner forces",
+              "limits":{"max_dense_rows":1800,"blas_threads":1},
+              "scope":"linear E4 plate-only load-map discriminator; no actual coupled multipliers, solid bond, connection or multiplier qualification",
+              "python":platform.python_version(),"numpy":np.__version__}
+    with threadpool_limits(limits=1):
+        manifest["effective_threadpools"]=threadpool_info()
+        (root/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+        xs,ys=local_grid(patch_cells)
+        tangent,physical=raw_e4_tangent(xs,ys)
+        force_maps=graded_torque_load_maps(xs,ys)
+        fixed={6*j*len(xs)+axis for j in range(len(ys)) for axis in range(6)}
+        free=np.array([i for i in range(6*len(xs)*len(ys)) if i not in fixed])
+        records=[]
+        for name,force in force_maps.items():
+            measured=response(tangent,force,free,physical=physical)
+            record={"load_map":name,"response":measured}
+            records.append(record)
+            (root/"results.json").write_text(json.dumps(records,indent=2,
+                                                   allow_nan=False)+"\n")
+            print(json.dumps({"load_map":name,
+                              "compliance_work_j":measured["compliance_work_j"]}),
+                  flush=True)
 
 
 def run_local(root: Path) -> None:
@@ -555,11 +636,16 @@ if __name__=="__main__":
     parser.add_argument("--local-shell-patch-resolution",action="store_true")
     parser.add_argument("--outer-patch-grid-refinement",action="store_true")
     parser.add_argument("--half-thickness",action="store_true")
+    parser.add_argument("--load-map-screen",action="store_true")
+    parser.add_argument("--patch-cells",type=int,choices=(4,8),default=4)
     args=parser.parse_args()
     if sum((args.local_shell_patch_resolution,
-            args.outer_patch_grid_refinement,args.half_thickness))>1:
+            args.outer_patch_grid_refinement,args.half_thickness,
+            args.load_map_screen))>1:
         parser.error("select one E4 refinement screen")
-    if args.half_thickness:
+    if args.load_map_screen:
+        run_load_maps(args.root,args.patch_cells)
+    elif args.half_thickness:
         run(args.root,(2,4),(),thickness=.035,graded_levels=(4,8))
     elif args.outer_patch_grid_refinement:
         run_outer(args.root)

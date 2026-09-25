@@ -5,7 +5,8 @@ import pytest
 
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts.b3_e4_f03_plate_patch_work import (
-    build_solid_plate, expected_wrench, graded_patch_force, local_grid,
+    build_solid_plate, expected_wrench, graded_patch_force,
+    graded_torque_load_maps, local_grid,
     shell_patch_force, uniform_operator_parity,
 )
 
@@ -77,3 +78,23 @@ def test_local_patch_grid_resolves_both_directions_and_preserves_operator():
     assert sum(-.05-1e-12<=y<.05-1e-12 for y in fine_y)==4
     with pytest.raises(ValueError,match="outer refinement"):
         local_grid(8,outer_refined=True)
+
+
+def test_same_wrench_torque_maps_have_distinct_physical_work_channels():
+    xs,ys=local_grid(4)
+    maps=graded_torque_load_maps(xs,ys)
+    assert set(maps)=={"smooth_traction","native_distributing_director",
+                       "native_rigid_corners"}
+    smooth=maps["smooth_traction"].reshape(-1,6)
+    distributing=maps["native_distributing_director"].reshape(-1,6)
+    rigid=maps["native_rigid_corners"].reshape(-1,6)
+    assert np.count_nonzero(distributing[:,3])>4
+    assert np.count_nonzero(distributing[:,2])==0
+    assert np.count_nonzero(rigid[:,2])==4
+    assert np.count_nonzero(rigid[:,3:])==0
+    assert np.count_nonzero(smooth[:,2])>4
+    assert np.count_nonzero(smooth[:,3:])==0
+    assert not np.shares_memory(maps["smooth_traction"],
+                                maps["native_rigid_corners"])
+    with pytest.raises(ValueError,match="patch boundaries"):
+        graded_torque_load_maps(np.array((-.5,0.,1.5)),ys)
