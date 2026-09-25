@@ -123,6 +123,22 @@ def test_general_s3_manager_cuts_back_through_crossing():
                                               0.0, fraction)
 
 
+def test_general_s3_mortar_reports_weak_open_gap_separately():
+    model, definition, settings = _case(
+        gap_tolerance=5e-5, normal_discretization="primal_mortar",
+    )
+    manager = GeneralS3PairManager(model, definition, settings)
+    u = np.zeros(model.mesh.dof_manager.total_dofs)
+    u[model.mesh.dof_manager.get_node_dofs(1)[2]] = -0.012
+    for node in (2, 3):
+        u[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.016
+    _force, _tangent, result = manager.evaluate(u)
+    assert result.active_pressure_dofs == 0
+    assert min(result.normalized_weighted_gap_m) > 0.0
+    assert result.minimum_gap < -5e-5
+    assert not result.gap_tolerance_met
+
+
 @pytest.mark.parametrize("discretization", ("pointwise_penalty", "primal_mortar"))
 def test_general_s3_coupled_displacement_and_restart(discretization):
     model, definition, settings = _case(

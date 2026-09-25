@@ -164,8 +164,6 @@ class MovingS3PrimalMortarPenalty:
             return MovingS3MortarWork(
                 base, np.zeros(18), np.zeros((18, 18)) if tangent else None, 1,
             )
-        if np.min(np.abs(base.normalized_gap)) <= 8.0*self.difference_step:
-            raise ValueError("moving S3 mortar derivative is at a pressure branch")
         source = PlanarFace((1, 1), positions[:9].reshape(3, 3))
         target = PlanarFace((2, 1), positions[9:].reshape(3, 3))
         overlap = planar_projected_overlap(source, target)
@@ -187,10 +185,10 @@ class MovingS3PrimalMortarPenalty:
                 trial[coordinate] += sign*self.difference_step
             state = self.evaluate(trial[:9].reshape(3, 3),
                                   trial[9:].reshape(3, 3))
-            if (state.overlap_vertices != base.overlap_vertices
-                    or not np.array_equal(state.pressure > 0.0,
-                                          base.pressure > 0.0)):
-                raise ValueError("moving S3 mortar derivative crosses an overlap/pressure branch")
+            # The squared positive-part law is C1 at pressure activation.
+            # A centered Hessian crossing that kink is a generalized derivative.
+            if state.overlap_vertices != base.overlap_vertices:
+                raise ValueError("moving S3 mortar derivative crosses an overlap branch")
             cache[key] = state.energy
             return state.energy
 

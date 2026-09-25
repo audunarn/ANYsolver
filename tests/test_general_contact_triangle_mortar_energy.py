@@ -125,3 +125,21 @@ def test_moving_s3_mortar_opening_and_budget_failure():
     closed[:, 2] = -0.02
     with pytest.raises(MemoryError, match="budget exhausted"):
         law.gradient(closed, target)
+
+
+def test_moving_s3_mortar_pressure_activation_has_bounded_generalized_tangent():
+    source, _ = _triangles()
+    target = np.array(((-1., -1., 0.), (3., -1., 0.),
+                       (-1., 3., 0.)))
+    law = MovingS3PrimalMortarPenalty(
+        source, target, 1000.0, difference_step=1e-5,
+    )
+    current = source.copy()
+    current[:, 2] = (-0.03, 0.01, 0.01)
+    work = law.work(current, target, tangent=True)
+    assert work.state.energy > 0.0
+    assert max(abs(work.state.normalized_gap[1:])) < 1e-12
+    assert work.energy_evaluations <= law.maximum_energy_evaluations
+    assert np.all(np.isfinite(work.residual))
+    assert np.all(np.isfinite(work.tangent))
+    np.testing.assert_allclose(work.tangent, work.tangent.T, atol=0.0)
