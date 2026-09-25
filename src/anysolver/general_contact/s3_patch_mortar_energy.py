@@ -74,10 +74,14 @@ class MovingS3PatchPrimalMortarPenalty:
                  maximum_q4_source_integration_triangles: int | None = None):
         self.source_faces = tuple(source_faces)
         self.target_faces = tuple(target_faces)
+        q4_pair = (len(self.source_faces) == len(self.target_faces) == 1
+                   and len(self.source_faces[0].node_ids) == 4
+                   and len(self.target_faces[0].node_ids) == 4)
         if not (1 <= len(self.source_faces) <= 2
                 and 1 <= len(self.target_faces) <= 2
-                and len(self.source_faces)+len(self.target_faces) >= 3):
-            raise ValueError("development S3 patch needs one or two faces per side and at least three total")
+                and (len(self.source_faces)+len(self.target_faces) >= 3
+                     or q4_pair)):
+            raise ValueError("development shell patch needs three faces or one Q4/Q4 pair")
         source_q4 = len(self.source_faces) == 1 and len(self.source_faces[0].node_ids) == 4
         if not source_q4 and any(len(face.node_ids) != 3 for face in self.source_faces):
             raise ValueError("development patch pressure side needs S3 triangles or one Q4")

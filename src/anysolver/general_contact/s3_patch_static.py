@@ -17,6 +17,7 @@ from .q4_source_overlap import q4_source_gap_lower, q4_source_swept_gap_lower
 PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 MIXED_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 SOURCE_Q4_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
+Q4_PAIR_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 
 
 def _selected(definition: ContactDefinition):
@@ -98,33 +99,37 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             or interaction.line_stiffness is not None
             or interaction.endpoint_stiffness is not None):
         issues.append("general S3 patch needs penalty surface-pressure stiffness only")
-    if (not 1 <= len(source.element_ids) <= 2
-            or not 1 <= len(target.element_ids) <= 2
-            or len(source.element_ids)+len(target.element_ids) < 3):
-        issues.append("general S3 patch admits one or two faces per side, at least three total")
-    if len(source.element_ids)*len(target.element_ids) > settings.maximum_candidate_pairs:
-        issues.append("general S3 patch exceeds candidate pair resource budget")
     from anymaterial import IsotropicMaterial
     target_q4 = [element_id for element_id in target.element_ids
                  if type(model.mesh.elements.get(element_id)) is QualifiedE4PLShellElement]
     source_q4 = [element_id for element_id in source.element_ids
                  if type(model.mesh.elements.get(element_id)) is QualifiedE4PLShellElement]
+    q4_pair = (len(source.element_ids) == len(target.element_ids) == 1
+               and len(source_q4) == len(target_q4) == 1)
+    if (not 1 <= len(source.element_ids) <= 2
+            or not 1 <= len(target.element_ids) <= 2
+            or (len(source.element_ids)+len(target.element_ids) < 3
+                and not q4_pair)):
+        issues.append("general shell patch needs three faces or one Q4/Q4 pair")
+    if len(source.element_ids)*len(target.element_ids) > settings.maximum_candidate_pairs:
+        issues.append("general S3 patch exceeds candidate pair resource budget")
     if source_q4 and (len(source.element_ids) != 1
                       or len(target.element_ids) != 2
-                      or target_q4):
+                      or target_q4) and not q4_pair:
         issues.append("Q4 pressure-side patch needs one source Q4 and two target S3 faces")
     if source_q4 and (settings.q4_source_area_tolerance is None
                       or settings.q4_source_weighted_gap_tolerance is None
                       or settings.maximum_q4_source_integration_triangles is None):
         issues.append("Q4 pressure-side patch needs explicit area/gap tolerances and triangle budget")
-    if target_q4 and (len(target.element_ids) != 1 or len(source.element_ids) != 2):
+    if target_q4 and (len(target.element_ids) != 1 or len(source.element_ids) != 2) and not q4_pair:
         issues.append("mixed S3/Q4 patch needs two source S3 faces and one target Q4 face")
     if target_q4 and len(target_q4) != len(target.element_ids):
         issues.append("mixed S3/Q4 patch cannot mix target formulations")
-    if target_q4 and (settings.q4_target_weighted_gap_tolerance is None
+    if target_q4 and not q4_pair and (settings.q4_target_weighted_gap_tolerance is None
                       or settings.maximum_q4_target_integration_triangles is None):
         issues.append("mixed S3/Q4 patch needs explicit Q4 weighted-gap tolerance and triangle budget")
-    profile = (SOURCE_Q4_PROFILE if source_q4 else
+    profile = (Q4_PAIR_PROFILE if q4_pair else
+               SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
     for side_index, surface in enumerate((source, target)):
         if surface.beam_radius is not None:

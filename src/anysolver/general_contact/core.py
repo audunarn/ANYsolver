@@ -344,6 +344,18 @@ class ContactResults:
         }
 
 
+def _exact_single_q4_pair(model: FEModel,
+                          definition: ContactDefinition) -> bool:
+    """Route only exact qualified one-Q4-per-side definitions to the patch owner."""
+    from anysolver.e4_pl_element import QualifiedE4PLShellElement
+
+    return (len(definition.surfaces) == 2
+            and all(len(surface.element_ids) == 1
+                    and type(model.mesh.elements.get(surface.element_ids[0]))
+                    is QualifiedE4PLShellElement
+                    for surface in definition.surfaces))
+
+
 def validate_general_contact(model: FEModel, definition: ContactDefinition,
                              settings: ContactSolverSettings | None = None,
                              *, analysis_control: str = "force") -> ContactValidationReport:
@@ -414,7 +426,8 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             ))
     if not definition.rigid_bodies:
         if settings is not None and settings.pair_motion == "general":
-            if any(len(surface.element_ids) > 1 for surface in definition.surfaces):
+            if (any(len(surface.element_ids) > 1 for surface in definition.surfaces)
+                    or _exact_single_q4_pair(model, definition)):
                 from .s3_patch_static import validate_general_s3_patch
 
                 return validate_general_s3_patch(model, definition, settings)
@@ -902,7 +915,8 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
             manager = _PlanarQ4PlaneManager(model, definition, settings, initial_displacement)
     else:
         if settings.pair_motion == "general":
-            if any(len(surface.element_ids) > 1 for surface in definition.surfaces):
+            if (any(len(surface.element_ids) > 1 for surface in definition.surfaces)
+                    or _exact_single_q4_pair(model, definition)):
                 from .s3_patch_static import GeneralS3PatchManager
 
                 manager = GeneralS3PatchManager(

@@ -125,3 +125,36 @@ def test_q4_source_warped_trial_tangent_matches_independent_directional_step():
     actual = work.tangent@direction
     error = np.linalg.norm(actual-control)/max(1., np.linalg.norm(control))
     assert error <= 1e-5
+
+
+def test_q4_q4_bilinear_target_matches_independent_gap_integral_and_work():
+    reference, _ = _faces()
+    target_reference = np.array(((-2., -2., 0.), (3., -2., 0.),
+                                 (3., 3., 0.), (-2., 3., 0.)))
+    current = reference.copy()
+    current[:, 2] = -.02
+    target = target_reference.copy()
+    target[2, 2] = .03
+    law = MovingQ4PrimalMortarPenalty(
+        reference, target_reference, 1000., difference_step=2e-5,
+        area_tolerance=1e-10, weighted_gap_tolerance=1e-11,
+        maximum_integration_triangles=300,
+    )
+    state = law.evaluate(current, target)
+    abscissas, weights = np.polynomial.legendre.leggauss(12)
+    abscissas = (abscissas+1.)/2.
+    weights = weights/2.
+    expected = np.zeros(4)
+    for x, wx in zip(abscissas, weights):
+        for y, wy in zip(abscissas, weights):
+            shape = np.array(((1-x)*(1-y), x*(1-y), x*y, (1-x)*y))
+            target_height = .03*((x+2.)/5.)*((y+2.)/5.)
+            expected += wx*wy*shape*(-.02-target_height)
+    np.testing.assert_allclose(state.reference_support, .25, atol=1e-10)
+    np.testing.assert_allclose(state.reference_weighted_gap, expected, atol=1e-10)
+    assert state.overlap_area == pytest.approx(1.)
+    work = law.work(current, target, tangent=False)
+    assert work.residual.shape == (24,)
+    assert abs(work.residual[12+2*3+2]) > 0.
+    np.testing.assert_allclose(work.residual.reshape(8, 3).sum(axis=0),
+                               0., atol=1e-8*np.linalg.norm(work.residual))
