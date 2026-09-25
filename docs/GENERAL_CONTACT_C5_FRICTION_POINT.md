@@ -113,9 +113,15 @@ The pair map is checked against finite-difference virtual work, equal and
 opposite translation forces, common rigid translation/rotation null work,
 offset rotational work, deterministic trial reevaluation, opening after
 stored traction and resource rejection. It does not represent mortar pressure
-integration or changing contact partners. In particular it returns **no
-coupled structural tangent**: derivatives of its slip work map, normal
-pressure and contact projection must be included before Newton admission.
+integration or changing contact partners. Its optional
+`numerical_tangent` is a **development fixed-pressure tangent**: the caller
+supplies a positive step for every FE coordinate and an evaluation budget.
+Each central difference uses the same committed structural/friction origin,
+and a stick/slip branch change fails explicitly. Directional error is checked
+with force and moment DOFs normalized separately. The tangent does not include
+normal-pressure variation, changing contact projection, mortar integration
+boundaries or history transfer; those derivatives remain required before
+Newton admission.
 
 Focused checks in `tests/test_general_contact_friction_point.py` cover an
 independent scalar stick/slip slider, reversal, material spin and normal

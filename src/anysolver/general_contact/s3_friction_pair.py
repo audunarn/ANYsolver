@@ -25,6 +25,13 @@ class S3FrictionPairEvaluation:
 
 
 @dataclass(frozen=True)
+class S3FrictionPairTangent:
+    evaluation: S3FrictionPairEvaluation
+    tangent: np.ndarray
+    candidate_evaluations: int
+
+
+@dataclass(frozen=True)
 class S3FrictionPointPair:
     """One fixed material pair; no search, normal law, or public admission."""
 
@@ -161,3 +168,62 @@ class S3FrictionPointPair:
             trial, relative, force, slip_map,
             tuple(int(column) for column in active),
         )
+
+    def numerical_tangent(
+        self,
+        committed_displacement: np.ndarray,
+        candidate_displacement: np.ndarray,
+        committed_history: FrictionPointState,
+        *,
+        normal_pressure_Pa: float,
+        steps_by_dof: np.ndarray,
+        maximum_candidate_evaluations: int,
+    ) -> S3FrictionPairTangent:
+        """Budgeted fixed-pressure smooth-branch force derivative.
+
+        Every perturbed force is evaluated from the same physical committed
+        state. Caller-supplied steps carry the units of their corresponding
+        structural unknowns. This development derivative rejects branch
+        changes; it is not the final analytic coupled contact tangent.
+        """
+
+        candidate = np.asarray(candidate_displacement, dtype=float).reshape(-1)
+        count = self.source.adapter.work_map.shape[1]
+        steps = np.asarray(steps_by_dof, dtype=float).reshape(-1)
+        if (candidate.size != count or not np.all(np.isfinite(candidate))):
+            raise ValueError("candidate displacement needs finite full FE coordinates")
+        if (steps.size != count or not np.all(np.isfinite(steps))
+                or np.any(steps <= 0.0)):
+            raise ValueError("steps_by_dof needs positive finite full FE steps")
+        if (type(maximum_candidate_evaluations) is not int
+                or maximum_candidate_evaluations < 1):
+            raise ValueError("maximum_candidate_evaluations must be positive")
+        base = self.evaluate(
+            committed_displacement, candidate, committed_history,
+            normal_pressure_Pa=normal_pressure_Pa,
+        )
+        needed = 1 + 2 * len(base.active_columns)
+        if needed > maximum_candidate_evaluations:
+            raise MemoryError("S3 friction tangent evaluation budget exceeded")
+        tangent = np.zeros((count, count))
+        for column in base.active_columns:
+            delta = np.zeros(count)
+            delta[column] = steps[column]
+            plus = self.evaluate(
+                committed_displacement, candidate + delta,
+                committed_history, normal_pressure_Pa=normal_pressure_Pa,
+            )
+            minus = self.evaluate(
+                committed_displacement, candidate - delta,
+                committed_history, normal_pressure_Pa=normal_pressure_Pa,
+            )
+            if (plus.trial.branch != base.trial.branch
+                    or minus.trial.branch != base.trial.branch):
+                raise ValueError("S3 friction tangent crosses a stick/slip branch")
+            tangent[:, column] = (
+                plus.structural_force - minus.structural_force
+            ) / (2.0 * steps[column])
+        if not np.all(np.isfinite(tangent)):
+            raise ValueError("S3 friction tangent exceeded finite range")
+        tangent.setflags(write=False)
+        return S3FrictionPairTangent(base, tangent, needed)

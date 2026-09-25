@@ -153,3 +153,73 @@ def test_s3_pair_trials_do_not_commit_and_opening_releases_force():
         )
         limited.evaluate(committed, candidate, history,
                          normal_pressure_Pa=2.0e6)
+
+
+@pytest.mark.parametrize("slip,branch", [
+    (0.0002, "stick"), (0.001, "slip"),
+])
+def test_s3_pair_bounded_tangent_matches_independent_direction(slip, branch):
+    model, _, pair, committed, history = _case()
+    candidate = committed.copy()
+    for node in (1, 2, 3):
+        candidate[model.mesh.dof_manager.get_node_dofs(node)[0]] += slip
+    tangent = pair.numerical_tangent(
+        committed, candidate, history,
+        normal_pressure_Pa=2.0e6,
+        steps_by_dof=np.full(candidate.size, 1.0e-7),
+        maximum_candidate_evaluations=100,
+    )
+    assert tangent.evaluation.trial.branch == branch
+    assert tangent.candidate_evaluations == 1 + 2*len(
+        tangent.evaluation.active_columns,
+    )
+    direction = np.linspace(-0.03, 0.04, candidate.size)
+    step = 2.0e-5
+    plus = pair.evaluate(committed, candidate + step*direction, history,
+                         normal_pressure_Pa=2.0e6)
+    minus = pair.evaluate(committed, candidate - step*direction, history,
+                          normal_pressure_Pa=2.0e6)
+    assert plus.trial.branch == minus.trial.branch == branch
+    finite = (plus.structural_force - minus.structural_force)/(2.0*step)
+    error = tangent.tangent @ direction - finite
+    for local_dofs in (slice(0, 3), slice(3, 6)):
+        indices = np.asarray([
+            model.mesh.dof_manager.get_node_dofs(node)[local_dofs]
+            for node in range(1, 7)
+        ]).reshape(-1)
+        assert (np.linalg.norm(error[indices]) / np.linalg.norm(finite[indices])
+                <= 1.0e-5)
+    if branch == "stick":
+        defect = np.linalg.norm(tangent.tangent - tangent.tangent.T)
+        assert defect / np.linalg.norm(tangent.tangent) <= 1.0e-5
+    assert history.partner_key is None
+
+
+def test_s3_pair_tangent_open_budget_and_branch_kink():
+    model, _, pair, committed, history = _case()
+    steps = np.full(committed.size, 1.0e-7)
+    opened = pair.numerical_tangent(
+        committed, committed, history, normal_pressure_Pa=0.0,
+        steps_by_dof=steps, maximum_candidate_evaluations=1,
+    )
+    assert opened.evaluation.trial.branch == "open"
+    assert opened.candidate_evaluations == 1
+    np.testing.assert_array_equal(opened.tangent,
+                                  np.zeros_like(opened.tangent))
+
+    moving = committed.copy()
+    for node in (1, 2, 3):
+        moving[model.mesh.dof_manager.get_node_dofs(node)[0]] += 0.0002
+    with pytest.raises(MemoryError, match="evaluation budget"):
+        pair.numerical_tangent(
+            committed, moving, history, normal_pressure_Pa=2.0e6,
+            steps_by_dof=steps, maximum_candidate_evaluations=1,
+        )
+    at_yield = committed.copy()
+    for node in (1, 2, 3):
+        at_yield[model.mesh.dof_manager.get_node_dofs(node)[0]] += 0.0006
+    with pytest.raises(ValueError, match="stick/slip branch"):
+        pair.numerical_tangent(
+            committed, at_yield, history, normal_pressure_Pa=2.0e6,
+            steps_by_dof=steps, maximum_candidate_evaluations=100,
+        )
