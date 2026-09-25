@@ -388,6 +388,35 @@ def test_c1_terminal_solid_sections_follow_native_tangent_without_changing_legac
                      **{**options,"bar_clearance_um":0})
 
 
+def test_c1_penalty_contact_preserves_the_matched_torque_geometry_and_load():
+    options=dict(boundary_policy="left_root", bond_policy="terminal",
+                 element_family="C3D20R", tip_mx_gap_audit=True,
+                 bar_clearance_um=2, plate_thickness_mm=35,
+                 tip_load_map="quadratic_face",
+                 full_displacement_output=True,
+                 bar_reference_profile="c1_tangent")
+    baseline, original = SCREEN.build(4, "tip_mx", **options)
+    assert hashlib.sha256(baseline.replace("\n", "\r\n").encode("ascii")).hexdigest() == (
+        "cc88870f0664cbadb39a114f4755dc996c226ab683d3304ea8f4a60f26b93da0")
+    contact, candidate = SCREEN.build(
+        4, "tip_mx", contact_policy="c1_penalty", **options)
+    nodes = lambda deck: deck.split("*NODE,NSET=AllNodes\n", 1)[1].split(
+        "\n*ELEMENT", 1)[0]
+    assert nodes(contact) == nodes(baseline)
+    for key in ("node_count", "element_family", "plate_elements",
+                "bar_elements", "shared_interface_node_ids",
+                "boundary_node_ids", "applied_nodal_forces_N",
+                "unbonded_face_pairs", "bar_reference_profile"):
+        assert candidate[key] == original[key]
+    assert len(candidate["plate_contact_face_element_ids"]) == 128
+    assert len(candidate["bar_contact_face_element_ids"]) == 128
+    assert "*SURFACE BEHAVIOR,PRESSURE-OVERCLOSURE=LINEAR\n4.2e14,1" in contact
+    assert "*CONTACT PAIR,INTERACTION=PenaltyUnbonded,TYPE=SURFACE TO SURFACE" in contact
+    assert "*CONTACT PRINT,FREQUENCY=9999\nCDIS,CSTR,CNUM" in contact
+    with pytest.raises(ValueError, match="bounded full-bond or C1 terminal"):
+        SCREEN.build(4, "tip_fz", contact_policy="c1_penalty", **options)
+
+
 def test_smooth_terminal_clearance_admits_shared_native_b3_frames():
     """The native Q2 frame guard admits the C1 reference used by the solid."""
     source=MODULE.parents[1]/"src"/"anysolver"/"ge_beam3_curved_reference.py"

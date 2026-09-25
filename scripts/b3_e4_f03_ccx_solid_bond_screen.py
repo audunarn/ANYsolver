@@ -1,7 +1,8 @@
 """Bounded 3D solid plate/stiffener bond discriminator, not G0 acceptance.
 
-The plate and finite square stiffener share interface nodes. No beam/shell
-MPC, drilling spring, penalty, or inferred reference offset is present.
+The plate and finite square stiffener share the declared bonded interface
+nodes. Contact is absent by default; a bounded external-reference option
+adds finite-stiffness penalty contact on the unbonded C1 torque faces.
 The two imposed plate-edge shears distinguish a line-tangent rotation from
 the rotation of a finite bonded region at a free stiffener termination.
 """
@@ -77,7 +78,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             full_displacement_output and not (
                 factor == 4 and shear in ("tip_mx", "tip_fz") and
                 boundary_policy == "left_root" and
-                contact_policy == "none" and element_family == "C3D20R" and
+                contact_policy in ("none", "c1_penalty") and
+                element_family == "C3D20R" and
                 plate_thickness_mm == 35 and
                 tip_load_map == "quadratic_face" and
                 (bond_policy == "full" or
@@ -99,16 +101,25 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             (boundary_policy != "left_root" or
              shear not in ("tip_mx", "tip_fz"))):
         raise ValueError("terminal/detached bond requires left/root tip-load case")
-    if contact_policy not in ("none", "mortar_hard") or (
+    if contact_policy not in ("none", "mortar_hard", "c1_penalty") or (
             contact_policy == "mortar_hard" and bond_policy != "terminal"):
         raise ValueError("hard mortar contact requires terminal bond")
+    if contact_policy == "c1_penalty" and not (
+            factor == 4 and shear == "tip_mx" and
+            boundary_policy == "left_root" and bond_policy == "terminal" and
+            element_family == "C3D20R" and tip_mx_gap_audit and
+            bar_clearance_um == 2 and plate_thickness_mm == 35 and
+            tip_load_map == "quadratic_face" and full_displacement_output and
+            bar_reference_profile == "c1_tangent"):
+        raise ValueError("C1 penalty contact requires the matched bounded torque case")
     if reverse_tip_fz and (shear != "tip_fz" or bond_policy != "terminal" or
                            boundary_policy != "left_root" or
                            contact_policy != "none"):
         raise ValueError("reverse Fz opening audit requires no-contact terminal tip load")
     if tip_mx_gap_audit and (shear != "tip_mx" or bond_policy != "terminal" or
                              boundary_policy != "left_root" or
-                             contact_policy != "none" or reverse_tip_fz):
+                             contact_policy not in ("none", "c1_penalty") or
+                             reverse_tip_fz):
         raise ValueError("torque gap audit requires no-contact terminal torque")
     if bar_clearance_um not in (0, 1, 2) or (bar_clearance_um and
             (not tip_mx_gap_audit or element_family != "C3D20R")):
@@ -122,7 +133,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             element_family == "C3D20R" and
             (bond_policy not in ("detached", "terminal", "full") or
              boundary_policy != "left_root" or
-             shear not in ("tip_mx", "tip_fz") or contact_policy != "none")):
+             shear not in ("tip_mx", "tip_fz") or
+             contact_policy not in ("none", "c1_penalty"))):
         raise ValueError("quadratic screen requires no-contact left/root tip load")
     if tip_load_map not in ("legacy", "quadratic_face") or (
             tip_load_map == "quadratic_face" and
@@ -131,7 +143,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
              (shear == "tip_fz" and bond_policy != "full" and
               not reverse_tip_fz) or
              bond_policy not in ("detached", "terminal", "full") or
-             boundary_policy != "left_root" or contact_policy != "none")):
+             boundary_policy != "left_root" or
+             contact_policy not in ("none", "c1_penalty"))):
         raise ValueError("consistent quadratic face traction requires admitted no-contact C3D20R tip loading")
     plate_x = (PLATE_X_MM if bond_policy == "full" else
                tuple(sorted(set((*PLATE_X_MM, 900)))))
@@ -284,9 +297,10 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
            "*NODE,NSET=AllNodes"]
     plate_contact=[]
     bar_contact=[]
-    if contact_policy == "mortar_hard":
+    if contact_policy in ("mortar_hard", "c1_penalty"):
         def unbonded_face(cell: tuple[int, ...], face: tuple[int, ...]) -> bool:
-            xyz=[inverse[cell[index]] for index in face]
+            # C1 bar nodes are displaced from their topology coordinates.
+            xyz=[reference_inverse[cell[index]] for index in face]
             return (all(z == plate_top for _,_,z in xyz) and
                     min(x for x,_,_ in xyz) >= 0 and
                     max(x for x,_,_ in xyz) <= 900 and
@@ -317,7 +331,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             lines.append(",".join(map(str,cell[15:])))
         else:
             lines.append(f"{eid},"+",".join(map(str,cell)))
-    if contact_policy == "mortar_hard":
+    if contact_policy in ("mortar_hard", "c1_penalty"):
         lines.append("*ELSET,ELSET=PlateUnbondedFaces")
         lines.extend(_set_lines(plate_contact))
         lines.append("*ELSET,ELSET=BarUnbondedFaces")
@@ -325,10 +339,17 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
         lines.extend(("*SURFACE,NAME=PlateTopUnbonded,TYPE=ELEMENT",
                       "PlateUnbondedFaces,S2",
                       "*SURFACE,NAME=BarBottomUnbonded,TYPE=ELEMENT",
-                      "BarUnbondedFaces,S1",
-                      "*SURFACE INTERACTION,NAME=HardUnbonded",
-                      "*CONTACT PAIR,INTERACTION=HardUnbonded,TYPE=MORTAR",
-                      "BarBottomUnbonded,PlateTopUnbonded"))
+                      "BarUnbondedFaces,S1"))
+        if contact_policy == "mortar_hard":
+            lines.extend(("*SURFACE INTERACTION,NAME=HardUnbonded",
+                          "*CONTACT PAIR,INTERACTION=HardUnbonded,TYPE=MORTAR",
+                          "BarBottomUnbonded,PlateTopUnbonded"))
+        else:
+            lines.extend(("*SURFACE INTERACTION,NAME=PenaltyUnbonded",
+                          "*SURFACE BEHAVIOR,PRESSURE-OVERCLOSURE=LINEAR",
+                          "4.2e14,1",
+                          "*CONTACT PAIR,INTERACTION=PenaltyUnbonded,TYPE=SURFACE TO SURFACE",
+                          "BarBottomUnbonded,PlateTopUnbonded"))
     if element_family == "C3D20R" and bond_policy == "full":
         plate_surface={reference_inverse[i]:i for i in plate_nodes
                        if reference_inverse[i][2] == plate_top and
@@ -470,7 +491,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             for dof,value in enumerate(force,1):
                 if value:
                     lines.append(f"{index},{dof},{_number(value)}")
-    if contact_policy == "mortar_hard":
+    if contact_policy in ("mortar_hard", "c1_penalty"):
         lines.extend(("*CONTACT PRINT,FREQUENCY=9999", "CDIS,CSTR,CNUM"))
     lines.extend(("*NODE PRINT,NSET=Probe", "U",
                   f"*NODE PRINT,NSET={support_set}", "RF",
@@ -896,7 +917,8 @@ def main() -> int:
     parser.add_argument("--factor",type=int,choices=(1,2,4),nargs="+",default=(1,2))
     parser.add_argument("--boundary",choices=("perimeter","left","left_root"),default="perimeter")
     parser.add_argument("--bond",choices=("full","terminal","detached"),default="full")
-    parser.add_argument("--contact",choices=("none","mortar_hard"),default="none")
+    parser.add_argument("--contact",choices=("none","mortar_hard","c1_penalty"),
+                        default="none")
     parser.add_argument("--element-family",choices=("C3D8","C3D20R"),
                         default="C3D8")
     parser.add_argument("--reverse-fz-open-audit",action="store_true")
@@ -921,7 +943,8 @@ def main() -> int:
         parser.error("hard mortar contact requires terminal bond")
     if args.element_family == "C3D20R" and (
             args.boundary != "left_root" or args.bond not in ("detached","terminal","full") or
-            args.suite != "loads" or args.contact != "none"):
+            args.suite != "loads" or
+            args.contact not in ("none","c1_penalty")):
         parser.error("quadratic screen requires no-contact left/root tip loads")
     if args.reverse_fz_open_audit and (args.suite!="loads" or
             args.boundary!="left_root" or args.bond!="terminal" or
@@ -929,7 +952,8 @@ def main() -> int:
         parser.error("reverse Fz opening audit requires no-contact terminal load suite")
     if args.tip_mx_gap_audit and (args.suite!="loads" or
             args.boundary!="left_root" or args.bond!="terminal" or
-            args.contact!="none" or args.reverse_fz_open_audit):
+            args.contact not in ("none","c1_penalty") or
+            args.reverse_fz_open_audit):
         parser.error("torque gap audit requires no-contact terminal tip-load suite")
     if args.bar_clearance_um and (not args.tip_mx_gap_audit or
                                   args.element_family!="C3D20R"):
@@ -937,7 +961,8 @@ def main() -> int:
     if args.bar_reference_profile=="c1_tangent" and not (
             list(args.factor)==[4] and args.suite=="loads" and
             args.boundary=="left_root" and args.bond=="terminal" and
-            args.contact=="none" and args.element_family=="C3D20R" and
+            args.contact in ("none","c1_penalty") and
+            args.element_family=="C3D20R" and
             args.tip_mx_gap_audit and args.bar_clearance_um==2 and
             args.half_plate_thickness and args.quadratic_face_traction):
         parser.error("C1 tangent reference requires the bounded factor-4 terminal torque screen")
@@ -954,19 +979,28 @@ def main() -> int:
     if args.quadratic_face_traction and (
             args.element_family!="C3D20R" or args.suite!="loads" or
             args.boundary!="left_root" or args.bond not in ("terminal","detached","full") or
-            args.contact!="none" or
+            args.contact not in ("none","c1_penalty") or
             (args.reverse_fz_open_audit and args.bond!="terminal")):
         parser.error("quadratic face traction requires admitted no-contact C3D20R tip loading")
     if args.full_displacement_output and not (
             list(args.factor)==[4] and args.suite=="loads" and
             args.boundary=="left_root" and
-            args.contact=="none" and args.element_family=="C3D20R" and
+            args.contact in ("none","c1_penalty") and
+            args.element_family=="C3D20R" and
             args.half_plate_thickness and args.quadratic_face_traction and
             (args.bond=="full" or
              (args.bond=="terminal" and args.tip_mx_gap_audit and
               args.bar_clearance_um==2 and
               args.bar_reference_profile=="c1_tangent"))):
         parser.error("full-field reference requires the bounded factor-4 full bond or C1 terminal torque")
+    if args.contact == "c1_penalty" and not (
+            list(args.factor)==[4] and args.suite=="loads" and
+            args.boundary=="left_root" and args.bond=="terminal" and
+            args.element_family=="C3D20R" and args.tip_mx_gap_audit and
+            args.bar_clearance_um==2 and args.bar_reference_profile=="c1_tangent" and
+            args.half_plate_thickness and args.quadratic_face_traction and
+            args.full_displacement_output):
+        parser.error("C1 penalty contact requires the matched factor-4 torque case")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -1104,6 +1138,44 @@ def main() -> int:
                  if entry.startswith("output-only replay of factor-4 cases")
                  else entry)
                 for entry in manifest["limits_of_claim"]]
+    if args.contact == "c1_penalty":
+        paired_deck, _ = build(
+            4, "tip_mx", boundary_policy="left_root", bond_policy="terminal",
+            element_family="C3D20R", tip_mx_gap_audit=True,
+            bar_clearance_um=2, plate_thickness_mm=35,
+            tip_load_map="quadratic_face", full_displacement_output=True,
+            bar_reference_profile="c1_tangent")
+        # The preserved Windows input was written with CRLF newlines.
+        paired_hash = hashlib.sha256(
+            paired_deck.replace("\n", "\r\n").encode("ascii")).hexdigest()
+        if paired_hash != "cc88870f0664cbadb39a114f4755dc996c226ab683d3304ea8f4a60f26b93da0":
+            raise ValueError("paired C1 no-contact deck identity changed")
+        manifest["paired_no_contact_deck_sha256"] = paired_hash
+        manifest["question"] = (
+            "On the same C1 tangent-aligned quadratic terminal torque model, "
+            "does complete unbonded-face penalty contact execute with an "
+            "admissible deformed gap and balanced wrench?")
+        manifest["decision"] = (
+            "Failure, unsupported contact, or sampled penetration retains "
+            "the physical torque reference as unresolved. An admissible "
+            "single run advances only to matched shear and mesh/contact "
+            "convergence; it does not score native accuracy or select a line law.")
+        manifest["element_reference"] = (
+            "C3D20R quadratic solid on the existing C1 factor-4 geometry; "
+            "contact execution is an exploratory extension")
+        manifest["contact_reference"] = (
+            "https://www.dhondt.de/ccx_2.22.pdf, linear penalty "
+            "surface-to-surface contact; finite penetration is possible")
+        manifest["limits_of_claim"] = [
+            entry for entry in manifest["limits_of_claim"]
+            if not entry.startswith("terminal mode omits contact") and
+            not entry.startswith("paired reference-normal gaps") and
+            not entry.startswith("output-only replay")]
+        manifest["limits_of_claim"].extend((
+            "complete unbonded faces use finite-stiffness penalty contact, "
+            "not an exact hard-contact law",
+            "one torque mesh and one contact stiffness do not establish "
+            "nonpenetration, work convergence, or native accuracy"))
     (root/"manifest.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
     records=[]
     for factor,shear in manifest["cases"]:

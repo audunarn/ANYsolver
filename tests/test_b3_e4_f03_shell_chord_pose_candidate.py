@@ -11,6 +11,7 @@ from scripts._b3_e4_f03_shell_chord_pose_candidate import (
 from scripts._b3_e4_f03_shell_finite_pose_candidate import reference_nodes
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
     TRANSVERSE_BAND_PORT, reference_spatial_trace_strip,
+    reference_spatial_trace_transverse_band,
 )
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
@@ -270,6 +271,18 @@ def test_transverse_top_chord_has_distinct_objective_work_and_free_shear(topolog
     infinitesimal[:, 3:] = angle
     np.testing.assert_allclose(trace@infinitesimal.ravel(),
         np.r_[np.cross(angle, (station, 0., top)), angle], atol=2e-14)
+
+
+def test_transverse_top_chord_q4_preserves_first_five_polar_band_rows():
+    panel = make_shell(2, "Q4", n_y=4)
+    chord = reference_spatial_trace_chord(
+        panel, .37, half_chord=.05, axis="transverse_top")
+    polar = reference_spatial_trace_transverse_band(
+        panel, .37, half_width=.05)
+    np.testing.assert_allclose(chord[:5], polar[:5], atol=2e-14)
+    assert np.linalg.norm(chord[5]-polar[5]) > 1e-3
+    # The changed yaw work cannot by itself resolve the Q4 Fz-row mode.
+    np.testing.assert_allclose(chord[2], polar[2], atol=2e-14)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
