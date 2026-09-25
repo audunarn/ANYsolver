@@ -36,7 +36,8 @@ from scripts._b3_e4_f03_weak_line_candidate import (
     assemble_reference_kkt)
 from scripts._b3_e4_f03_p0_dual_norm import p0_dual_gram
 from scripts._b3_e4_f03_p1_dual_norm import p1_dual_gram
-from scripts._b3_e4_f03_dual_linear_norm import dual_linear_gram
+from scripts._b3_e4_f03_dual_linear_norm import (
+    dual_linear_gram, dual_linear_l2_gram)
 
 
 def sinusoidal_axial_density_load(beam, *, amplitude_n_per_m=1e5):
@@ -792,6 +793,170 @@ def channel_split_reference_modes(
             np.linalg.norm(mode@bp[selected])**2/
             max(mode@action@mode,1e-300)),
         "scope":"finite absolute-energy dual norm including E4 completion; not inf-sup acceptance",
+    }
+
+
+def finite_band_mixed_norm(
+        topology: str, *, shell_longitudinal_half_cells: int = 4,
+        shell_transverse_intervals: int = 8,
+        native_half_cells: int = 16,
+        p0_intervals: int = 4, dual_intervals: int = 8,
+        thickness: float = .035, beam_z_offset: float = .0675,
+        beam_torsion_constant: float | None = None,
+        characteristic_length: float = .46,
+        last_mode: int = 4095,
+        dual_norm_profile: str = "finite_band") -> dict:
+    """Finite-band mixed-space norm diagnostic at the virgin reference.
+
+    Width-mean translation/director gaps use an H^1 trace test norm, so
+    Fx/Fy/Fz/Mx/My densities use its Neumann H^-1 dual. Gradient-built
+    polar yaw is only L2 controlled, so Mz uses a normalized L2 dual.
+    This absolute-energy action includes the indefinite native retained
+    block. It is not a continuum inf-sup certificate or a space selection.
+    """
+    if not np.isfinite(characteristic_length) or characteristic_length <= 0.:
+        raise ValueError("positive characteristic length required")
+    if dual_norm_profile not in ("finite_band", "uniform_hminus_half"):
+        raise ValueError("declared finite-band or legacy diagnostic norm required")
+    shell = FlatE4TrialPanel(make_shell(
+        shell_longitudinal_half_cells, topology,
+        n_y=shell_transverse_intervals, thickness=thickness))
+    beam = build(native_half_cells, z_offset=beam_z_offset,
+                 torsion_constant=beam_torsion_constant)
+    p0 = LineMultiplierSpace(
+        "piecewise_constant", tuple(np.linspace(0., 1., p0_intervals+1)))
+    dual = LineMultiplierSpace(
+        "dual_linear", tuple(np.linspace(0., 1., dual_intervals+1)))
+    spaces = (p0, dual, p0, dual, p0, dual)
+    kkt = assemble_channel_basis_reference_kkt(
+        shell, beam, spaces, shell_port=TRANSVERSE_BAND_PORT,
+        shell_support_policy="full_left_edge")
+    free = kkt.free_primal
+    n = len(free)
+    shell_size = 6*shell.panel.node_count
+    physical_count = int(np.count_nonzero(
+        free < shell_size+beam.context.nodal_count))
+    coordinate_scale = kkt.coordinate_scale[:n]
+    stiffness = kkt.primal_tangent[np.ix_(free, free)]
+    scaled_k = ((coordinate_scale[:, None]*stiffness)*
+                coordinate_scale[None, :])/kkt.energy_scale
+    if np.linalg.norm(scaled_k-scaled_k.T) > 1e-10*np.linalg.norm(scaled_k):
+        raise ValueError("nonsymmetric reference tangent lacks energy norm")
+    kpp = scaled_k[:physical_count, :physical_count]
+    kpr = scaled_k[:physical_count, physical_count:]
+    krp = scaled_k[physical_count:, :physical_count]
+    krr = scaled_k[physical_count:, physical_count:]
+    retained_action = linalg.solve(krr, krp, assume_a="sym")
+    physical_k = kpp-kpr@retained_action
+    physical_eigen, physical_vectors = linalg.eigh(physical_k)
+    retained_eigen, retained_vectors = linalg.eigh(krr)
+    if (physical_eigen[0] <= 1e-10*physical_eigen[-1] or
+            np.min(np.abs(retained_eigen)) <=
+            1e-12*np.max(np.abs(retained_eigen))):
+        raise ValueError("positive physical/regular retained split unavailable")
+    channels = tuple(axis for axis, space in enumerate(spaces)
+                     for _ in range(space.count))
+    row_scale = np.array([
+        1. if axis < 3 else characteristic_length for axis in channels])
+    displacement_scale = 1e6/(210e9*.07)
+    scaled_c = ((row_scale[:, None]/displacement_scale)*
+                kkt.constraint_jacobian[:, free])*coordinate_scale[None, :]
+    cp, cr = scaled_c[:, :physical_count], scaled_c[:, physical_count:]
+    condensed_c = cp-cr@retained_action
+    bp = condensed_c@(physical_vectors/
+                      np.sqrt(physical_eigen)[None, :])
+    br = cr@(retained_vectors/
+             np.sqrt(np.abs(retained_eigen))[None, :])
+    action = bp@bp.T+br@br.T
+    action = (action+action.T)/2
+    signed = bp@bp.T+(br*np.sign(retained_eigen)[None, :])@br.T
+    direct = scaled_c@linalg.solve(scaled_k, scaled_c.T, assume_a="sym")
+    decomposition_error = float(np.linalg.norm(signed-direct)/
+                                max(np.linalg.norm(direct), 1e-30))
+    if decomposition_error > 1e-9:
+        raise ArithmeticError("physical/retained work decomposition differs")
+    order = 1. if dual_norm_profile == "finite_band" else 0.5
+    p0_lower, p0_upper = p0_dual_gram(
+        p0_intervals, 1., last_mode, sobolev_order=order)
+    dual_lower, dual_upper = dual_linear_gram(
+        dual_intervals, 1., last_mode, sobolev_order=order)
+    yaw_lower, yaw_upper = ((dual_linear_l2_gram(dual_intervals, 1.),)*2
+                            if dual_norm_profile == "finite_band" else
+                            (dual_lower, dual_upper))
+    lower = np.zeros((len(channels), len(channels)))
+    upper = np.zeros_like(lower)
+    channel_slices = []
+    start = 0
+    for axis, space in enumerate(spaces):
+        stop = start+space.count
+        lo, hi = ((p0_lower, p0_upper) if space is p0 else
+                  (yaw_lower, yaw_upper) if axis == 5 else
+                  (dual_lower, dual_upper))
+        lower[start:stop, start:stop] = lo
+        upper[start:stop, start:stop] = hi
+        channel_slices.append(slice(start, stop))
+        start = stop
+    eigen, vectors = linalg.eigh(action, upper)
+    upper_eigen = linalg.eigh(action, lower, eigvals_only=True)
+    if eigen[0] < -1e-9*max(1., eigen[-1]):
+        raise ArithmeticError("negative absolute-energy dual action")
+    mode = vectors[:, 0]
+    channel_shares = []
+    channel_sign_changes = []
+    for part in channel_slices:
+        entries = mode[part]
+        channel_shares.append(float(
+            entries@upper[part, part]@entries))
+        significant = np.abs(entries) > 1e-8*max(
+            np.max(np.abs(entries)), 1e-300)
+        signs = np.sign(entries[significant])
+        channel_sign_changes.append(int(np.count_nonzero(
+            signs[1:] != signs[:-1])))
+    physical_share = float(np.linalg.norm(mode@bp)**2/
+                           max(mode@action@mode, 1e-300))
+    def restricted_beta(axes: tuple[int, ...]) -> tuple[float, float]:
+        selected = np.array([index for axis in axes
+                             for index in range(
+                                 channel_slices[axis].start,
+                                 channel_slices[axis].stop)])
+        sub = np.ix_(selected, selected)
+        lo = linalg.eigh(action[sub], upper[sub], eigvals_only=True)[0]
+        hi = linalg.eigh(action[sub], lower[sub], eigvals_only=True)[0]
+        return float(np.sqrt(max(0., lo))), float(np.sqrt(max(0., hi)))
+    torque_beta = restricted_beta((1, 3, 5))
+    shear_beta = restricted_beta((2, 4))
+    def scaled_rank(columns: np.ndarray) -> int:
+        values = np.linalg.svd(scaled_c[:, columns], compute_uv=False)
+        return int(np.count_nonzero(values > 1e-10*values[0]))
+    return {
+        "topology": topology,
+        "shell_x_elements": 2*shell_longitudinal_half_cells,
+        "shell_y_intervals": shell_transverse_intervals,
+        "native_half_cells": native_half_cells,
+        "p0_intervals": p0_intervals,
+        "dual_intervals": dual_intervals,
+        "row_count": len(channels),
+        "row_rank": scaled_rank(np.ones(n, dtype=bool)),
+        "shell_only_row_rank": scaled_rank(free < shell_size),
+        "beam_only_row_rank": scaled_rank(free >= shell_size),
+        "row_rank_threshold": "relative scaled singular value 1e-10",
+        "dual_norm_profile": dual_norm_profile,
+        "dual_norm_by_channel": (("H^-1",)*5+("L2",)
+                                 if dual_norm_profile == "finite_band" else
+                                 ("H^-1/2",)*6),
+        "characteristic_length_m": characteristic_length,
+        "decomposition_relative_error": decomposition_error,
+        "minimum_beta_lower": float(np.sqrt(max(0., eigen[0]))),
+        "minimum_beta_upper": float(np.sqrt(max(0., upper_eigen[0]))),
+        "torque_channels_fy_mx_mz_beta_lower_upper": torque_beta,
+        "shear_channels_fz_my_beta_lower_upper": shear_beta,
+        "weakest_channel_norm_shares_fx_fy_fz_mx_my_mz": tuple(
+            channel_shares),
+        "weakest_channel_sign_changes_fx_fy_fz_mx_my_mz": tuple(
+            channel_sign_changes),
+        "weakest_physical_work_share": physical_share,
+        "weakest_retained_work_share": 1.-physical_share,
+        "scope": "finite mixed algorithmic absolute-energy norm; no inf-sup or physical accuracy acceptance",
     }
 
 
