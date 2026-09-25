@@ -338,13 +338,19 @@ class NativeRetainedRoundPairAnalysis:
             1.0, float(np.max(np.abs(start.positions))),
             float(np.max(np.abs(end.positions))), self.contact.radius,
         )
-        stack = [(0.0, 1.0)]
+        stack = [(0.0, 1.0, start_gap, end_gap)]
         visited = 0
         while stack:
-            left, right = stack.pop()
+            left, right, left_gap, right_gap = stack.pop()
             visited += 1
             if visited > self.maximum_swept_intervals:
                 return False
+            # Every path point is within half this interval of one endpoint.
+            # Both stored gaps are conservative lower bounds, so this proves
+            # safety without constructing another contact candidate.
+            if (min(left_gap, right_gap)
+                    -0.5*(right-left)*speed-roundoff >= -self.gap_tolerance):
+                continue
             middle = 0.5*(left+right)
             state = self.context.advance(start, middle*increment)
             try:
@@ -357,7 +363,8 @@ class NativeRetainedRoundPairAnalysis:
                 return False
             if gap-0.5*(right-left)*speed-roundoff >= -self.gap_tolerance:
                 continue
-            stack.extend(((left, middle), (middle, right)))
+            stack.extend(((left, middle, left_gap, gap),
+                          (middle, right, gap, right_gap)))
         return True
 
     def solve(self, *, checkpoint: bytes | None = None,

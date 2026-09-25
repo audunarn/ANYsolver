@@ -99,6 +99,42 @@ def test_whole_pair_requires_model_bound_node_identities():
         _owner(node_ids_b=(4, 7, 6))
 
 
+def test_swept_endpoint_certificate_skips_safe_midpoint_work(monkeypatch):
+    owner = _owner(separation=0.3)
+    start = owner.initial.mechanical
+    increment = np.zeros(owner.context.count)
+    increment[6*owner.context.index[6]+1] = -0.01
+    end = owner.context.advance(start, increment)
+    start_gap = owner.initial.contact.conservative_lower_gap_m
+    end_gap = owner._contact(end).conservative_lower_gap_m
+    original = owner._contact
+    calls = []
+
+    def counted(state):
+        calls.append(state)
+        return original(state)
+
+    monkeypatch.setattr(owner, "_contact", counted)
+    assert owner._swept_admissible(start, increment, end,
+                                  start_gap, end_gap)
+    assert calls == []
+
+
+def test_swept_endpoint_certificate_still_rejects_penetrating_end():
+    owner = _owner(separation=0.13)
+    start = owner.initial.mechanical
+    increment = np.zeros(owner.context.count)
+    increment[6*owner.context.index[5]+1] = -0.025
+    increment[6*owner.context.index[6]+1] = -0.05
+    end = owner.context.advance(start, increment)
+    end_gap = owner._contact(end).conservative_lower_gap_m
+    assert end_gap < -owner.gap_tolerance
+    assert not owner._swept_admissible(
+        start, increment, end,
+        owner.initial.contact.conservative_lower_gap_m, end_gap,
+    )
+
+
 def test_active_affine_pose_assembles_both_retained_beams_and_tangent():
     owner = _owner(separation=0.13)
     increment = np.zeros(owner.context.count)

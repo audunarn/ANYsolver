@@ -325,6 +325,22 @@ two bounded omissions consumed at most 2.44e-19 J, 1.21e-16 N and
 resource performance remain open. The selected-cell checkpoint hash stayed
 unchanged (`c3-native-tiny-cell-selected-checkpoint.txt`).
 
+The whole-pair static owner's swept-path checker now first uses both
+endpoint conservative gap bounds and the physical path-speed bound to
+certify a safe interval without another contact evaluation. Uncertified
+intervals retain midpoint evaluation, subdivision and the existing finite
+interval budget. Focused safe and penetrating-path checks passed, as did
+the affected selected/whole owner set (13/13;
+`c3-native-swept-endpoint-affected.txt`). The selected-cell target-1
+checkpoint remains 5469 bytes with SHA-256
+`7ba6c34566ec72a09daedeed8ec3de1d18269ed595c7203b4a5e9e75063610ec`.
+On one bounded 25-second continuation observation at the 0.3 target,
+swept-check contact evaluations fell from 24 in four checks to 15 in five
+checks (`c3-native-whole-03-profile-first.txt`,
+`c3-native-whole-03-profile-after-endpoint.txt`). The samples performed
+different total work and neither completed the target, so they do not
+establish a whole-route speedup or active-contact acceptance.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization
