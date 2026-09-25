@@ -64,7 +64,8 @@ def _set_lines(indices: set[int] | list[int]) -> list[str]:
 
 def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           bond_policy: str = "full", contact_policy: str = "none",
-          reverse_tip_fz: bool = False, element_family: str = "C3D8"
+          reverse_tip_fz: bool = False, element_family: str = "C3D8",
+          tip_mx_gap_audit: bool = False
           ) -> tuple[str, dict]:
     """Return an exact-coordinate brick deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
@@ -84,6 +85,10 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                            boundary_policy != "left_root" or
                            contact_policy != "none"):
         raise ValueError("reverse Fz opening audit requires no-contact terminal tip load")
+    if tip_mx_gap_audit and (shear != "tip_mx" or bond_policy != "terminal" or
+                             boundary_policy != "left_root" or
+                             contact_policy != "none" or reverse_tip_fz):
+        raise ValueError("torque gap audit requires no-contact terminal torque")
     if element_family not in ("C3D8", "C3D20R") or (
             element_family == "C3D20R" and
             (bond_policy not in ("detached", "terminal") or
@@ -272,7 +277,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     else:
         unbonded_pairs = [(coordinates[key], bar_index)
                           for key, bar_index in sorted(detached.items())]
-    if reverse_tip_fz:
+    if reverse_tip_fz or tip_mx_gap_audit:
         lines.append("*NSET,NSET=UnbondedInterface")
         lines.extend(_set_lines([node for pair in unbonded_pairs for node in pair]))
     lines.extend(("*MATERIAL,NAME=Isotropic", "*ELASTIC", "210000000000,0.3",
@@ -323,7 +328,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     lines.extend(("*NODE PRINT,NSET=Probe", "U",
                   f"*NODE PRINT,NSET={support_set}", "RF",
                   "*END STEP"))
-    if reverse_tip_fz:
+    if reverse_tip_fz or tip_mx_gap_audit:
         lines[-1:-1] = ("*NODE PRINT,NSET=UnbondedInterface", "U")
     shared_ids=(sorted(i for i in plate_nodes & bar_nodes if inverse[i][2] == 35)
                 if element_family == "C3D20R" else
@@ -340,7 +345,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
               [.9,1.] if bond_policy=="terminal" else None),
           "contact_policy":contact_policy,
           "reverse_tip_fz":reverse_tip_fz,
-          "unbonded_interface_pairs":unbonded_pairs if reverse_tip_fz else [],
+          "tip_mx_gap_audit":tip_mx_gap_audit,
+          "unbonded_interface_pairs":(unbonded_pairs if reverse_tip_fz or tip_mx_gap_audit
+                                        else []),
           "plate_contact_face_element_ids":plate_contact,
           "bar_contact_face_element_ids":bar_contact,
           "boundary_nodes":len(boundary),"boundary_node_ids":sorted(boundary),
@@ -417,7 +424,7 @@ def audit_unbonded_open(meta: dict, displacement: dict[int,np.ndarray]) -> dict:
             "minimum_reference_normal_gap_m":float(gap.min()),
             "maximum_reference_normal_gap_m":float(gap.max()),
             "negative_nodal_gaps":int(np.count_nonzero(gap < -1e-12)),
-            "meaning":"reference-normal paired-node check on matching bilinear faces; contact and deformed-surface closest-point gap were not solved"}
+            "meaning":"reference-normal paired-node check on matching element faces; contact and deformed-surface closest-point gap were not solved"}
 
 
 def _wrench(forces: dict[int,np.ndarray], xyz: dict[str,list[float]]) -> list[float]:
@@ -553,6 +560,7 @@ def main() -> int:
     parser.add_argument("--element-family",choices=("C3D8","C3D20R"),
                         default="C3D8")
     parser.add_argument("--reverse-fz-open-audit",action="store_true")
+    parser.add_argument("--tip-mx-gap-audit",action="store_true")
     args=parser.parse_args()
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
@@ -572,6 +580,10 @@ def main() -> int:
             args.boundary!="left_root" or args.bond!="terminal" or
             args.contact!="none"):
         parser.error("reverse Fz opening audit requires no-contact terminal load suite")
+    if args.tip_mx_gap_audit and (args.suite!="loads" or
+            args.boundary!="left_root" or args.bond!="terminal" or
+            args.contact!="none" or args.reverse_fz_open_audit):
+        parser.error("torque gap audit requires no-contact terminal tip-load suite")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -582,7 +594,9 @@ def main() -> int:
     root=args.root.resolve()
     root.mkdir(parents=True,exist_ok=False)
     manifest={"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
-              "question":("Does replacing bending-stiff C3D8 with quadratic C3D20R on the same free-bar mesh reduce shear/torsion resolution error before advancing a terminal reference?"
+              "question":("Does terminal torque on the free, coincident no-contact faces produce a negative physical normal gap, invalidating this torque comparator?"
+                          if args.tip_mx_gap_audit else
+                          "Does replacing bending-stiff C3D8 with quadratic C3D20R on the same free-bar mesh reduce shear/torsion resolution error before advancing a terminal reference?"
                           if args.element_family=="C3D20R" and args.bond=="detached" else
                           "Can a C3D20R terminal model retain an open unbonded interface under reverse Fz while reducing the solid section error?"
                           if args.element_family=="C3D20R" and args.reverse_fz_open_audit else
@@ -597,7 +611,9 @@ def main() -> int:
                           "terminal last-0.1 m solid bond versus declared native terminal footprint under matched supports and loads"
                           if args.bond=="terminal" else
                           "effect of plate support on physical solid-bond end torque and transverse-force transfer"),
-              "decision":("If quadratic free-bar torque/shear approach the declared section values and change little over the bounded levels, advance the open-terminal shear check; otherwise stop this solid reference route. No footprint is selected."
+              "decision":("If any paired node overlaps under torque, reject no-contact torque as a physical comparator; if all remain open, assess face interiors and deformation before using it. Neither outcome selects a footprint."
+                          if args.tip_mx_gap_audit else
+                          "If quadratic free-bar torque/shear approach the declared section values and change little over the bounded levels, advance the open-terminal shear check; otherwise stop this solid reference route. No footprint is selected."
                           if args.element_family=="C3D20R" and args.bond=="detached" else
                           "If the quadratic reverse-Fz case has a fully open matching interface and section-resolved response, retain it as a directional shear comparator; otherwise stop. No torque or footprint accuracy is inferred."
                           if args.element_family=="C3D20R" and args.reverse_fz_open_audit else
@@ -614,6 +630,7 @@ def main() -> int:
               "executable":str(EXE),"executable_sha256":EXE_SHA,
               "cases":[(factor,shear) for factor in args.factor
                    for shear in (("tip_fz",) if args.reverse_fz_open_audit else
+                                 ("tip_mx",) if args.tip_mx_gap_audit else
                                  ("uy_x","ux_y") if args.suite=="shear"
                                  else ("tip_mx","tip_fz"))],
               "boundary_policy":args.boundary,
@@ -622,6 +639,7 @@ def main() -> int:
               "element_family":args.element_family,
               "element_reference":"https://www.dhondt.de/ccx_2.22.pdf, element types: C3D20R preferred for bending; no quadratic contact is used",
               "reverse_fz_open_audit":args.reverse_fz_open_audit,
+              "tip_mx_gap_audit":args.tip_mx_gap_audit,
               "contact_reference":"https://www.dhondt.de/ccx_2.22.pdf, sections on MORTAR contact and hard surface behavior (external-reference diagnostic only)",
               "limit":{"omp_threads":1,"timeout_seconds_each":TIMEOUT_SECONDS},
               "limits_of_claim":["3D solid idealization, not E4 or B3",
@@ -645,7 +663,8 @@ def main() -> int:
         deck,meta=build(factor,shear,boundary_policy=args.boundary,
                         bond_policy=args.bond,contact_policy=args.contact,
                         reverse_tip_fz=args.reverse_fz_open_audit,
-                        element_family=args.element_family)
+                        element_family=args.element_family,
+                        tip_mx_gap_audit=args.tip_mx_gap_audit and shear=="tip_mx")
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()
@@ -681,7 +700,7 @@ def main() -> int:
                 reactions=parse_nodal_vectors(dat,set(meta["boundary_node_ids"]),
                                               "forces",meta["support_set"])
                 parsed=recover(meta,probes,reactions)
-                if args.reverse_fz_open_audit:
+                if args.reverse_fz_open_audit or (args.tip_mx_gap_audit and shear=="tip_mx"):
                     expected={node for pair in meta["unbonded_interface_pairs"]
                               for node in pair}
                     interface=parse_nodal_vectors(dat,expected,"displacements",

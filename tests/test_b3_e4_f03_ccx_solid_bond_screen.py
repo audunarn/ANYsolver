@@ -177,6 +177,30 @@ def test_quadratic_contact_and_unsupported_scope_are_rejected():
                      element_family="C3D20R")
 
 
+def test_quadratic_terminal_torque_gap_audit_keeps_the_physical_wrench():
+    deck,meta=SCREEN.build(1,"tip_mx",boundary_policy="left_root",
+                           bond_policy="terminal",element_family="C3D20R",
+                           tip_mx_gap_audit=True)
+    assert "*NODE PRINT,NSET=UnbondedInterface\nU" in deck
+    assert len(meta["unbonded_interface_pairs"]) == meta["detached_interface_nodes"]
+    applied={int(node):np.array(force) for node,force in
+             meta["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(applied,meta["probe_coordinates_m"]) == pytest.approx(
+        [0.,0.,0.,100.,0.,0.],abs=1e-10)
+    motion={node:np.zeros(3) for pair in meta["unbonded_interface_pairs"]
+            for node in pair}
+    plate,bar=meta["unbonded_interface_pairs"][0]
+    motion[bar][2]=-1e-6
+    audit=SCREEN.audit_unbonded_open(meta,motion)
+    assert audit["paired_nodes"] == meta["detached_interface_nodes"]
+    assert audit["negative_nodal_gaps"] == 1
+    assert audit["minimum_reference_normal_gap_m"] == pytest.approx(-1e-6)
+    with pytest.raises(ValueError,match="torque gap audit"):
+        SCREEN.build(1,"tip_fz",boundary_policy="left_root",
+                     bond_policy="terminal",element_family="C3D20R",
+                     tip_mx_gap_audit=True)
+
+
 @pytest.mark.parametrize("factor", (1, 2, 4))
 def test_terminal_hard_mortar_faces_exclude_bonded_patch(factor):
     deck, meta = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",
