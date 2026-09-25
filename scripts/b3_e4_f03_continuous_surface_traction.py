@@ -218,7 +218,7 @@ def bounded_continuous_traction_screen(*, shell_x: int = 8,
                                        ) -> list[dict]:
     """Solve the same native torque/shear case with a distinct traction basis."""
     if (shell_x not in (8, 16) or shell_y not in (4, 8, 16) or
-            beam_half_cells not in (8, 16) or type(local_yaw) is not bool or
+            beam_half_cells not in (8, 16, 32) or type(local_yaw) is not bool or
             type(six_local_resultants) is not bool or
             (local_yaw and six_local_resultants) or
             line_kind not in ("continuous_linear", "piecewise_constant") or
@@ -365,8 +365,8 @@ def bounded_continuous_traction_screen(*, shell_x: int = 8,
     return results
 
 
-def run_six_local_decision(output_dir) -> None:
-    """Save the bounded P1/P0 six-resultant comparison with its failures."""
+def run_six_local_decision(output_dir, *, paired: bool = False) -> None:
+    """Save the bounded six-resultant work and resolution comparisons."""
     import hashlib
     import json
     import platform
@@ -384,31 +384,46 @@ def run_six_local_decision(output_dir) -> None:
     output_dir.mkdir(parents=True, exist_ok=False)
     manifest = {
         "status": "EXPLORATORY_NOT_G0_ACCEPTANCE",
-        "question": "Does adding six independent local finite-width traction resultants give a rank-stable, physically credible native torque/shear line at matched geometry?",
-        "outcome_rule": "P1 or P0 must pass full row rank, work, loaded torque/shear transfer and shell/beam partition before stability and mesh-ratio qualification. Rank or local wrench identity alone cannot select a line law.",
+        "question": ("Does paired shell/beam/interface refinement remove the P0 torque change seen when only interface rows increase?" if paired else
+                     "Does adding six independent local finite-width traction resultants give a rank-stable, physically credible native torque/shear line at matched geometry?"),
+        "outcome_rule": ("If paired refinement restores loaded torque and plate/root partition, develop a mesh-relative multiplier-resolution policy; otherwise revise the traction or shell/beam trace law. Two levels do not establish convergence." if paired else
+                         "P1 or P0 must pass full row rank, work, loaded torque/shear transfer and shell/beam partition before stability and mesh-ratio qualification. Rank or local wrench identity alone cannot select a line law."),
         "source_head": source,
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "comparison": "f03-matched-native-full-bond-dev-20260925-v2 and f03-ccx-full-bond-quadratic-face-dev-20260925-v1",
         "physical_scope": "Q4 E4 plate x[-.5,1.5] y[-.5,.5] t=.035 m; B3 x[0,1] axis z=.0675 m, square Saint-Venant J; full shell left-edge and beam root fixed; separate +100 N m tip Mx and +1000 N tip Fz",
-        "connection": "finite-width .1 m physical top/bottom traction with six independent local force/moment resultants, P1 and P0 rows, 2/4/8 intervals; bounded linearized Q4 diagnostic only",
-        "mesh": "shell x8/y4, native B3 16 half-cells; fixed while line rows change",
+        "connection": ("finite-width .1 m physical top/bottom traction with six independent local resultants, P0 rows; bounded linearized Q4 diagnostic" if paired else
+                       "finite-width .1 m physical top/bottom traction with six independent local force/moment resultants, P1 and P0 rows, 2/4/8 intervals; bounded linearized Q4 diagnostic only"),
+        "mesh": ("compare recorded shell x8/y4, B3 half16, P0 n4 with shell x16/y4, B3 half16 or 32, P0 n8; y mesh held fixed" if paired else
+                 "shell x8/y4, native B3 16 half-cells; fixed while line rows change"),
         "requested_blas_threads": 1,
         "python": platform.python_version(),
     }
     with threadpool_limits(limits=1):
         manifest["effective_threadpools"] = threadpool_info()
-        results = {}
-        for kind in ("continuous_linear", "piecewise_constant"):
-            rows = bounded_continuous_traction_screen(
-                shell_x=8, shell_y=4, beam_half_cells=16,
-                intervals=(2, 4, 8), six_local_resultants=True,
-                line_kind=kind)
-            results[kind] = rows
-            for row in rows:
-                print(kind, row["line_intervals"], row["status"],
-                      row["constraint_rank"],
-                      row.get("loaded", {}).get("torque_mx_100nm", {}).get(
-                          "tip_rx_rad"), flush=True)
+        if paired:
+            results = {"paired": [bounded_continuous_traction_screen(
+                shell_x=16, shell_y=4, beam_half_cells=beam_cells,
+                intervals=(8,), six_local_resultants=True,
+                line_kind="piecewise_constant")[0]
+                for beam_cells in (16, 32)]}
+            for row in results["paired"]:
+                print("paired", row["beam_half_cells"], row["status"],
+                      row["loaded"]["torque_mx_100nm"]["tip_rx_rad"],
+                      flush=True)
+        else:
+            results = {}
+            for kind in ("continuous_linear", "piecewise_constant"):
+                rows = bounded_continuous_traction_screen(
+                    shell_x=8, shell_y=4, beam_half_cells=16,
+                    intervals=(2, 4, 8), six_local_resultants=True,
+                    line_kind=kind)
+                results[kind] = rows
+                for row in rows:
+                    print(kind, row["line_intervals"], row["status"],
+                          row["constraint_rank"],
+                          row.get("loaded", {}).get("torque_mx_100nm", {}).get(
+                              "tip_rx_rad"), flush=True)
         (output_dir / "results.json").write_text(
             json.dumps(results, indent=2, allow_nan=False) + "\n")
         manifest["results_sha256"] = hashlib.sha256(
@@ -422,5 +437,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--six-local-decision", action="store_true",
                         required=True)
+    parser.add_argument("--paired", action="store_true")
     parser.add_argument("output_dir")
-    run_six_local_decision(parser.parse_args().output_dir)
+    arguments = parser.parse_args()
+    run_six_local_decision(arguments.output_dir, paired=arguments.paired)
