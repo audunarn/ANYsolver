@@ -21,7 +21,9 @@ from anysolver._ge_beam3_pose_joint import RigidPoseJoint
 from scripts._b3_e4_f03_coupled_point_work_candidate import directional_point_work
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts._b3_e4_f03_native_fixture import SECTION_DIAGONAL, build
-from scripts._b3_e4_f03_native_spatial_port import NativeNodalSpatialPort
+from scripts._b3_e4_f03_native_spatial_port import (
+    NativeHalfCellSpatialPort, NativeNodalSpatialPort,
+)
 from scripts._b3_e4_f03_shell_finite_pose_candidate import reference_nodes
 from scripts._b3_e4_f03_shell_spatial_linear_port import physical_shell_stiffness
 from scripts._b3_e4_f03_shell_strip_pose_candidate import (
@@ -107,6 +109,93 @@ def structured_q4_point_shape(xs: np.ndarray, ys: np.ndarray,
                     (j+1)*len(xs)+i+1,(j+1)*len(xs)+i))
     values=np.array(((1-xi)*(1-eta),xi*(1-eta),xi*eta,(1-xi)*eta))
     return nodes,values
+
+
+def distributed_surface_patch_trace(
+        xs: np.ndarray, ys: np.ndarray, beam, *,
+        plate_thickness: float) -> tuple[np.ndarray, dict]:
+    """Six exact weak position moments on a bounded physical top-surface bond.
+
+    This linearized G0 candidate ties the E4 top-surface *positions* to the
+    native retained B3 bottom-surface positions over x=[.9,1], y=[-.05,.05].
+    It does not equate the shell director to the surface normal or beam frame.
+    The reference second moment normalizes rotation-like rows so their duals
+    are physical moments. No penalty, drilling stiffness or tip-only port is
+    introduced.
+    """
+    if plate_thickness not in (.035,.07):
+        raise ValueError("bounded E4 plate thickness required")
+    xs,ys=np.asarray(xs,dtype=float),np.asarray(ys,dtype=float)
+    shell_size=6*len(xs)*len(ys)
+    total=shell_size+beam.context.count
+    mean=np.zeros((3,total))
+    first_moment=np.zeros((3,total))
+    inertia=np.zeros((3,3))
+    shell_top=plate_thickness/2
+    beam_axis_z=shell_top+.05
+    base=beam.context.initial.mechanical
+    roots,gauss_weights=np.polynomial.legendre.leggauss(3)
+    area=0.
+    max_reference_gap=0.
+    for x0,x1 in zip(xs[:-1],xs[1:]):
+        lo_x,hi_x=max(float(x0),.9),min(float(x1),1.)
+        if hi_x<=lo_x:
+            continue
+        for y0,y1 in zip(ys[:-1],ys[1:]):
+            lo_y,hi_y=max(float(y0),-.05),min(float(y1),.05)
+            if hi_y<=lo_y:
+                continue
+            jac=(hi_x-lo_x)*(hi_y-lo_y)/4.
+            for xi,wx in zip(roots,gauss_weights):
+                x=(lo_x+hi_x)/2+float(xi)*(hi_x-lo_x)/2
+                element,cell,weight,_=beam._locate(x)
+                port=NativeHalfCellSpatialPort(
+                    beam.context,element,cell,weight)
+                high,low,frame=port.pose_pair(base)
+                center=high+low
+                if (np.linalg.norm(center-(x,0.,beam_axis_z))>1e-11 or
+                        np.linalg.norm(frame-np.eye(3))>1e-11):
+                    raise ArithmeticError("native beam trace reference changed")
+                tangent=port.tangent(base)
+                for eta,wy in zip(roots,gauss_weights):
+                    y=(lo_y+hi_y)/2+float(eta)*(hi_y-lo_y)/2
+                    shell_indices,shape=structured_q4_point_shape(xs,ys,x,y)
+                    surface_offset=np.array((0.,y,-.05))
+                    shell_reference=np.array((x,y,shell_top))
+                    beam_reference=center+frame@surface_offset
+                    max_reference_gap=max(max_reference_gap,float(
+                        np.linalg.norm(shell_reference-beam_reference)))
+                    if max_reference_gap>1e-11:
+                        raise ArithmeticError("solid-like surface reference is open")
+                    dg=np.zeros((3,total))
+                    for node,value in zip(shell_indices,shape):
+                        start=6*int(node)
+                        dg[:,start:start+3]+=value*np.eye(3)
+                        dg[:,start+3:start+6]+=(
+                            -value*shell_top*skew(np.array((0.,0.,1.))))
+                    dg[:,shell_size:]-=(np.column_stack((
+                        np.eye(3),-skew(surface_offset)))@tangent)
+                    arm=np.array((x-.95,y,0.))
+                    quadrature=float(wx*wy*jac)/.01
+                    mean+=quadrature*dg
+                    first_moment+=quadrature*skew(arm)@dg
+                    inertia+=quadrature*((arm@arm)*np.eye(3)-
+                                         np.outer(arm,arm))
+                    area+=float(wx*wy*jac)
+    if abs(area-.01)>1e-12:
+        raise ArithmeticError("distributed bond area changed")
+    eigenvalues=np.linalg.eigvalsh(inertia)
+    if eigenvalues[0]<=1e-8:
+        raise ArithmeticError("degenerate physical footprint inertia")
+    constraint=np.vstack((mean,np.linalg.solve(inertia,first_moment)))
+    if (not np.isfinite(constraint).all() or
+            np.max(np.abs(constraint[:,:shell_size][:,5::6]))>0.):
+        raise ArithmeticError("distributed surface row is invalid or uses drilling")
+    return constraint,{"reference_gap_m":max_reference_gap,
+                       "area_m2":area,
+                       "inertia_eigenvalues_m2":eigenvalues.tolist(),
+                       "shell_drilling_column_max":0.,
+                       "definition":"mean top-surface position gap and normalized first moment of that gap against native bottom-surface half-cell traces"}
 
 
 def finite_rigid_work(shell: FlatE4TrialPanel, beam, port,
@@ -845,7 +934,8 @@ def run_terminal_interface(output_dir: Path) -> None:
 
 
 def graded_terminal_coupling(patch_cells: int, beam, *,
-                             plate_thickness: float = .07) -> dict:
+                             plate_thickness: float = .07,
+                             include_surface_moments: bool = False) -> dict:
     """Linearized native B3/E4 Q4 terminal KKT on a resolved local grid."""
     if plate_thickness not in (.07,.035):
         raise ValueError("bounded native plate thickness required")
@@ -905,8 +995,33 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
     def wrench(nodal,locations):
         return np.r_[nodal[:,:3].sum(axis=0),
                      (np.cross(locations,nodal[:,:3])+nodal[:,3:]).sum(axis=0)]
+    def retained_beam_wrench(generalized):
+        """Recover six physical resultants through common rigid variations."""
+        basis=np.eye(3)
+        result=np.zeros(6)
+        for axis,direction in enumerate(basis):
+            translation=np.zeros(beam.context.count)
+            rotation=np.zeros(beam.context.count)
+            for node,location in enumerate(beam_nodes):
+                start=6*node
+                translation[start:start+3]=direction
+                rotation[start:start+3]=np.cross(direction,location)
+                rotation[start+3:start+6]=direction
+            for element in range(beam.n_half_cells//2):
+                for cell in (0,1):
+                    start=beam.context.nodal_count+24*element+3*cell
+                    rotation[start:start+3]=direction
+            result[axis]=generalized@translation
+            result[3+axis]=generalized@rotation
+        return result
+    families=[("distributing",distributing),("rigid",rigid)]
+    surface_diagnostics=None
+    if include_surface_moments:
+        surface,surface_diagnostics=distributed_surface_patch_trace(
+            xs,ys,beam,plate_thickness=plate_thickness)
+        families.append(("surface_moments",surface))
     records={}
-    for family,constraint in (("distributing",distributing),("rigid",rigid)):
+    for family,constraint in families:
         rank=int(np.linalg.matrix_rank(constraint[:,free]))
         if rank!=len(constraint):
             raise ArithmeticError("graded terminal rows lost rank")
@@ -937,7 +1052,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
             beam_interface=interface[shell_size:shell_size+
                                      beam.context.nodal_count].reshape(-1,6)
             shell_wrench=wrench(shell_interface,shell_nodes)
-            beam_wrench=wrench(beam_interface,beam_nodes)
+            beam_wrench=(retained_beam_wrench(interface[shell_size:])
+                         if family=="surface_moments" else
+                         wrench(beam_interface,beam_nodes))
             work=float(load@full)
             physical_work=float(full[:shell_size]@physical@full[:shell_size])
             shell_total=float(full[:shell_size]@shell_k@full[:shell_size])
@@ -985,12 +1102,15 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
     return {"patch_cells_per_side":patch_cells,
             "plate_thickness_m":plate_thickness,
             "shell_nodes":len(shell_nodes),"e4_elements":(len(xs)-1)*(len(ys)-1),
-            "beam_half_cells":beam.n_half_cells,"results":records}
+            "beam_half_cells":beam.n_half_cells,"results":records,
+            **({"surface_moment_reference":surface_diagnostics}
+               if include_surface_moments else {})}
 
 
 def run_graded_terminal(output_dir: Path,
                         patch_levels: tuple[int,...] = (4,8), *,
-                        plate_thickness: float = .07) -> None:
+                        plate_thickness: float = .07,
+                        include_surface_moments: bool = False) -> None:
     if plate_thickness not in (.07,.035):
         raise ValueError("bounded native plate thickness required")
     beam_axis_z=plate_thickness/2+.05
@@ -1003,12 +1123,17 @@ def run_graded_terminal(output_dir: Path,
     manifest={
         "status":"EXPLORATORY_NOT_G0_ACCEPTANCE",
         "source_sha":source,
-        "question":"Does resolving the native coupled terminal patch change torque/shear work and interface-force distribution for rigid and distributing laws?",
-        "decision":"Settling work and transfer fields supports a matched 3D bond comparison; material drift requires revising patch trace or resolution policy first. Neither selects a production law or true-line multiplier.",
+        "question":("Does a six-resultant physical surface-position bond with a distributed native beam trace improve torque/shear transfer while preserving work and rigid motions?"
+                    if include_surface_moments else
+                    "Does resolving the native coupled terminal patch change torque/shear work and interface-force distribution for rigid and distributing laws?"),
+        "decision":("If reference, rank, work and physical response pass and the result settles from four to eight patch cells, advance finite variations and interface-stability assessment; failure or material drift requires revising the surface trace/section model. No law is production-selected by this screen."
+                    if include_surface_moments else
+                    "Settling work and transfer fields supports a matched 3D bond comparison; material drift requires revising patch trace or resolution policy first. Neither selects a production law or true-line multiplier."),
         "geometry":f"E4 Q4 plate [-.5,1.5]x[-.5,.5] m, t={plate_thickness:g} m; B3 centroid z={beam_axis_z:g} m; x=[.9,1], y=[-.05,.05] m patch",
         "plate_thickness_m":plate_thickness,
         "grids":"structured local Q4 with four/eight cells per patch direction; exact area-mean/director/polar-yaw trace and corner rows",
         "executed_patch_levels":list(patch_levels),
+        "include_surface_moments":include_surface_moments,
         "beam":"native generalized B3, eight half-cells, square-section Saint-Venant torsion; root fixed",
         "supports":"all E4 left-edge coordinates fixed and B3 root fixed",
         "loads":"separate +100 Nm tip Mx and +1000 N tip Fz",
@@ -1026,7 +1151,8 @@ def run_graded_terminal(output_dir: Path,
         for patch_cells in patch_levels:
             started=time.perf_counter()
             result=graded_terminal_coupling(
-                patch_cells,beam,plate_thickness=plate_thickness)
+                patch_cells,beam,plate_thickness=plate_thickness,
+                include_surface_moments=include_surface_moments)
             records.append({"patch_cells_per_side":patch_cells,
                             "seconds":time.perf_counter()-started,
                             "response":result})
@@ -1054,15 +1180,19 @@ if __name__ == "__main__":
     parser.add_argument("--graded-patch-cells",type=int,choices=(4,8),
                         nargs="+",default=(4,8))
     parser.add_argument("--half-plate-thickness",action="store_true")
+    parser.add_argument("--surface-moment-candidate",action="store_true")
     args = parser.parse_args()
     if sum((args.terminal_beam_resolution,args.terminal_shell_resolution,
             args.terminal_interface,args.graded_terminal))>1:
         parser.error("select one terminal resolution screen")
     if args.half_plate_thickness and not args.graded_terminal:
         parser.error("half plate thickness requires the graded terminal screen")
+    if args.surface_moment_candidate and not args.graded_terminal:
+        parser.error("surface moment candidate requires graded terminal screen")
     if args.graded_terminal:
         run_graded_terminal(args.output_dir,tuple(args.graded_patch_cells),
-                            plate_thickness=.035 if args.half_plate_thickness else .07)
+                            plate_thickness=.035 if args.half_plate_thickness else .07,
+                            include_surface_moments=args.surface_moment_candidate)
     elif args.terminal_interface:
         run_terminal_interface(args.output_dir)
     elif args.terminal_beam_resolution:

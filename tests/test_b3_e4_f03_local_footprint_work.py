@@ -6,8 +6,12 @@ import pytest
 from scripts._b3_e4_f03_shell_strip_pose_candidate import reference_spatial_trace_strip
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts.b3_e4_f03_local_footprint_work import (
-    case, structured_q4_patch_trace, structured_q4_point_shape,
+    case, distributed_surface_patch_trace, structured_q4_patch_trace,
+    structured_q4_point_shape,
 )
+from scripts.b3_e4_f03_plate_patch_work import local_grid
+from scripts._b3_e4_f03_native_fixture import build
+from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
 def test_structured_patch_trace_matches_existing_uniform_native_rows():
@@ -27,6 +31,50 @@ def test_structured_patch_trace_matches_existing_uniform_native_rows():
             expected=np.bincount(expected_nodes,weights=expected_values,
                                  minlength=panel.node_count)
             assert np.max(np.abs(observed-expected))<1e-12
+
+
+def test_distributed_surface_moments_preserve_physical_work_and_shear():
+    beam=build(8,z_offset=.0675,
+               torsion_constant=square_torsion_constant())
+    xs,ys=local_grid(4)
+    trace,reference=distributed_surface_patch_trace(
+        xs,ys,beam,plate_thickness=.035)
+    shell_size=6*len(xs)*len(ys)
+    assert trace.shape==(6,shell_size+beam.context.count)
+    assert np.linalg.matrix_rank(trace)==6
+    assert reference["reference_gap_m"]<1e-12
+    assert reference["area_m2"]==pytest.approx(.01,abs=1e-12)
+    assert np.max(np.abs(trace[:,:shell_size][:,5::6]))==0.
+
+    common=np.zeros(trace.shape[1])
+    translation=np.array((.001,-.002,.003))
+    rotation=np.array((.004,-.005,.006))
+    for j,y in enumerate(ys):
+        for i,x in enumerate(xs):
+            k=6*(j*len(xs)+i)
+            common[k:k+3]=translation+np.cross(rotation,(x,y,0.))
+            common[k+3:k+6]=rotation
+    for i in range(beam.n_half_cells+1):
+        k=shell_size+6*i
+        common[k:k+3]=translation+np.cross(
+            rotation,(i/beam.n_half_cells,0.,.0675))
+        common[k+3:k+6]=rotation
+    for element in range(beam.n_half_cells//2):
+        for cell in (0,1):
+            k=shell_size+beam.context.nodal_count+24*element+3*cell
+            common[k:k+3]=rotation
+    assert np.max(np.abs(trace@common))<1e-12
+
+    transverse=np.zeros_like(common)
+    for j,y in enumerate(ys):
+        for i in range(len(xs)):
+            transverse[6*(j*len(xs)+i)+2]=1e-5*y
+    assert (trace@transverse)[3]==pytest.approx(1e-5,abs=1e-14)
+    director=np.zeros_like(common)
+    director[3:shell_size:6]=1e-5
+    gap=trace@director
+    assert gap[1]==pytest.approx(-.0175e-5,abs=1e-14)
+    assert np.max(np.abs(gap[3:]))<1e-14
 
 
 @pytest.mark.parametrize("topology", ["Q4", "S3-V2D"])
