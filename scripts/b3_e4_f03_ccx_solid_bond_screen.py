@@ -232,10 +232,18 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
         lines.append(f"{index},"+",".join(_number(float(v)/1000) for v in xyz))
     lines.append(f"*ELEMENT,TYPE={element_family},ELSET=Plate")
     for eid,cell in enumerate(plate_cells,1):
-        lines.append(f"{eid},"+",".join(map(str,cell)))
+        if element_family == "C3D20R":
+            lines.append(f"{eid},"+",".join(map(str,cell[:15])))
+            lines.append(",".join(map(str,cell[15:])))
+        else:
+            lines.append(f"{eid},"+",".join(map(str,cell)))
     lines.append(f"*ELEMENT,TYPE={element_family},ELSET=Stiffener")
     for eid,cell in enumerate(bar_cells,len(plate_cells)+1):
-        lines.append(f"{eid},"+",".join(map(str,cell)))
+        if element_family == "C3D20R":
+            lines.append(f"{eid},"+",".join(map(str,cell[:15])))
+            lines.append(",".join(map(str,cell[15:])))
+        else:
+            lines.append(f"{eid},"+",".join(map(str,cell)))
     if contact_policy == "mortar_hard":
         lines.append("*ELSET,ELSET=PlateUnbondedFaces")
         lines.extend(_set_lines(plate_contact))

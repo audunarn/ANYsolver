@@ -146,7 +146,10 @@ def test_quadratic_solid_preserves_corner_mesh_and_complete_opening_audit(factor
         fields=line.split(",")
         coords[int(fields[0])]=np.array([float(v) for v in fields[1:]])
     start=lines.index("*ELEMENT,TYPE=C3D20R,ELSET=Plate")
-    cell=tuple(int(v) for v in lines[start+1].split(",")[1:])
+    assert len(lines[start+1].split(",")) == 16
+    assert len(lines[start+2].split(",")) == 5
+    cell=tuple(int(v) for v in
+               (*lines[start+1].split(",")[1:], *lines[start+2].split(",")))
     assert len(cell)==20
     for midpoint,(a,b) in zip(cell[8:],SCREEN.HEX20_EDGES):
         assert coords[midpoint] == pytest.approx(
