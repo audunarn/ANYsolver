@@ -18,6 +18,7 @@ PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 MIXED_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 SOURCE_Q4_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
 Q4_PAIR_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
+AUGMENTED_PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 
 
 def _selected(definition: ContactDefinition):
@@ -95,10 +96,14 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
         source, target, interaction = _selected(definition)
     except ValueError as exc:
         return ContactValidationReport("invalid", (str(exc),), profile)
-    if (interaction.normal_law != "penalty" or interaction.normal_stiffness is None
+    augmented = interaction.normal_law == "augmented"
+    if (interaction.normal_law not in {"penalty", "augmented"}
+            or interaction.normal_stiffness is None
             or interaction.line_stiffness is not None
             or interaction.endpoint_stiffness is not None):
-        issues.append("general S3 patch needs penalty surface-pressure stiffness only")
+        issues.append("general S3 patch needs surface-pressure stiffness only")
+    if augmented and settings.pressure_tolerance is None:
+        issues.append("augmented S3 patch needs explicit pressure_tolerance")
     from anymaterial import IsotropicMaterial
     target_q4 = [element_id for element_id in target.element_ids
                  if type(model.mesh.elements.get(element_id)) is QualifiedE4PLShellElement]
@@ -131,6 +136,10 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
     profile = (Q4_PAIR_PROFILE if q4_pair else
                SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
+    if augmented:
+        profile = AUGMENTED_PROFILE
+        if source_q4 or target_q4:
+            issues.append("augmented general patch currently admits S3 faces only")
     for side_index, surface in enumerate((source, target)):
         if surface.beam_radius is not None:
             issues.append(f"surface {surface.name} cannot declare beam radius")
@@ -213,13 +222,15 @@ class _PatchResults:
     weighted_gap_integration_error_m3: float = 0.0
     integration_triangles: int = 0
     area_integration_error_m2: float = 0.0
+    augmented_merit_j: float = 0.0
+    normal_multiplier_estimate_pa: tuple[float, ...] = ()
 
     def to_dict(self):
         result = dict(vars(self))
         for name in ("integration_force", "target_force", "integration_moment",
                      "target_moment", "source_pressure_node_ids",
                      "normalized_weighted_gap_m", "numerical_pressure_pa",
-                     "reference_support_m2"):
+                     "reference_support_m2", "normal_multiplier_estimate_pa"):
             result[name] = list(result[name])
         return result
 
@@ -238,6 +249,7 @@ class GeneralS3PatchManager:
         adapters = _adapters(model, (source, target))
         faces = _patch_faces(adapters)
         self.stiffness = interaction.normal_stiffness
+        self.augmented = interaction.normal_law == "augmented"
         self.gap_tolerance = interaction.gap_tolerance
         self.swept_trial_cutbacks = 0
         self.law = MovingS3PatchPrimalMortarPenalty(
@@ -250,6 +262,11 @@ class GeneralS3PatchManager:
             q4_source_weighted_gap_tolerance=self.settings.q4_source_weighted_gap_tolerance,
             maximum_q4_source_integration_triangles=self.settings.maximum_q4_source_integration_triangles,
         )
+        if self.augmented:
+            from .s3_patch_augmented import MovingS3PatchProjectedNormal
+
+            self.law = MovingS3PatchProjectedNormal(self.law)
+            self.normal_multipliers = np.zeros(len(self.law.source_node_ids))
         source_ref, source_map = _unique_work_map(adapters[0], self.law.source_node_ids)
         target_ref, target_map = _unique_work_map(adapters[1], self.law.target_node_ids)
         self.reference = source_ref, target_ref
@@ -288,14 +305,16 @@ class GeneralS3PatchManager:
     def evaluate(self, displacement, *, tangent=True):
         source, target = self._positions(displacement)
         lower = self._gap_lower((source, target))
-        state = self.law.evaluate(source, target)
-        if state.energy == 0.0:
+        state = (self.law.evaluate(source, target, self.normal_multipliers)
+                 if self.augmented else self.law.evaluate(source, target))
+        if state.active_pressure_dofs == 0:
             local_force = np.zeros(self.law.n_coordinates)
             local_tangent = (sparse.csr_matrix((self.law.n_coordinates, self.law.n_coordinates))
                              if tangent else None)
             evaluations = 1
         else:
-            work = self.law.work(source, target, tangent=tangent)
+            work = (self.law.work(source, target, self.normal_multipliers, tangent=tangent)
+                    if self.augmented else self.law.work(source, target, tangent=tangent))
             local_force = work.residual
             local_tangent = sparse.csr_matrix(work.tangent) if tangent else None
             evaluations = work.energy_evaluations
@@ -309,7 +328,8 @@ class GeneralS3PatchManager:
         source_moment = np.sum(np.cross(source, physical[:source_count]), axis=0)
         target_moment = np.sum(np.cross(target, physical[source_count:]), axis=0)
         result = _PatchResults(
-            self.profile, lower, state.minimum_physical_gap, state.energy,
+            self.profile, lower, state.minimum_physical_gap,
+            0.0 if self.augmented else state.energy,
             state.overlap_area, state.reference_overlap_area,
             state.overlapping_pairs,
             tuple(map(float, source_force)), tuple(map(float, target_force)),
@@ -322,8 +342,22 @@ class GeneralS3PatchManager:
             state.weighted_gap_integration_error,
             state.integration_triangles,
             state.area_integration_error,
+            state.energy if self.augmented else 0.0,
+            tuple(map(float, self.normal_multipliers)) if self.augmented else (),
         )
         return force, stiffness, result
+
+    def set_normal_multipliers(self, values):
+        if not self.augmented:
+            raise ValueError("penalty patch has no normal multipliers")
+        self.normal_multipliers = self.law._multipliers(values).copy()
+
+    def projected_normal_multipliers(self, displacement):
+        if not self.augmented:
+            raise ValueError("penalty patch has no normal multipliers")
+        source, target = self._positions(displacement)
+        state = self.law.evaluate(source, target, self.normal_multipliers)
+        return self.law.projected_multiplier(state, self.normal_multipliers)
 
     def _swept_admissible(self, start, end):
         first = self._positions(start)
@@ -404,6 +438,9 @@ class GeneralS3PatchManager:
                             "normal_law": interaction.normal_law},
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
+                         **({"pressure_tolerance": self.settings.pressure_tolerance,
+                             "maximum_augmentations": self.settings.maximum_augmentations}
+                            if self.augmented else {}),
                          "general_s3_difference_step": self.settings.general_s3_difference_step,
                          "maximum_general_s3_energy_evaluations": self.settings.maximum_general_s3_energy_evaluations,
                          "q4_target_weighted_gap_tolerance": self.settings.q4_target_weighted_gap_tolerance,

@@ -416,13 +416,20 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             "shell contact requires explicit normal_stiffness in pressure-law units",
         ))
     if any(item.normal_law == "augmented" for item in definition.interactions):
-        if (settings is None or settings.pair_motion != "restricted_sliding"
+        general_patch = (settings is not None and settings.pair_motion == "general"
+                         and not definition.rigid_bodies
+                         and len(definition.surfaces) == 2
+                         and any(len(item.element_ids) > 1 for item in definition.surfaces))
+        restricted_patch = (settings is not None
+                            and settings.pair_motion == "restricted_sliding"
+                            and not definition.rigid_bodies
+                            and len(definition.surfaces) == 2
+                            and any(len(item.element_ids) > 1 for item in definition.surfaces))
+        if (not (general_patch or restricted_patch)
                 or settings.pressure_tolerance is None
-                or definition.rigid_bodies
-                or len(definition.surfaces) != 2
-                or not any(len(item.element_ids) > 1 for item in definition.surfaces)):
+                or len(definition.interactions) != 1):
             return ContactValidationReport("invalid", (
-                "augmented law requires a multi-face restricted shell pair and explicit pressure_tolerance",
+                "augmented law requires an admitted multi-face shell path and explicit pressure_tolerance",
             ))
     if not definition.rigid_bodies:
         if settings is not None and settings.pair_motion == "general":
