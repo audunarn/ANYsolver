@@ -35,6 +35,26 @@ not establish a search bound, surface integration, contact law, nonlinear
 analysis owner, shell coupling, history, restart, native dynamics, or C3
 engineering acceptance.
 
+## Exact physical Q2 half-cell for beam pairing
+
+`native_retained_curve_cell.py` represents each physical native half-cell by
+its current endpoints and midpoint. The native reference lift is quadratic
+in half-cell parameter, so these three positions reconstruct every
+interior centreline point exactly. The 9×42 map differentiates all three
+positions with respect to authoritative nodal translations and the owning
+retained cell rotation. Its pullback maps an arbitrary curve-position
+potential gradient and Hessian to the 42 native coordinates, including the
+second variation of the midpoint's rotated lift. Algebraic
+constitutive/resultant columns remain zero until the coupled structural
+assembly supplies their interactions.
+
+The map passed four focused tests and nine affected station/cell checks
+(`c3-native-retained-curve-cell-final.txt`): exact curve reconstruction,
+fixed-node internal motion, virtual work and second directional derivative,
+rigid covariance and foreign-reference rejection. It is a work-map
+foundation for distributed line-to-line pairing; it does not declare
+point-contact or admit a native beam pair.
+
 ## Retained round-centreline/plane penalty kernel
 
 `native_retained_line_plane.py` adds a separate **line** penalty specialization
