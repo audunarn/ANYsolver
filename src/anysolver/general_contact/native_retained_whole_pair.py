@@ -59,6 +59,51 @@ def _straight_join_owner(source: np.ndarray,
     return None
 
 
+def _straight_join_partitions(source: np.ndarray,
+                              targets: tuple[np.ndarray, np.ndarray],
+                              left: float, right: float,
+                              ) -> tuple[tuple[float, float, int], ...] | None:
+    """Split a Q2 source interval at its exact straight-target Voronoi crossings."""
+    start, end = targets[0][0], targets[1][2]
+    span = end-start
+    length = float(np.linalg.norm(span))
+    if length == 0.0:
+        return None
+    axis = span/length
+    junction = targets[0][2]
+    ordinates = np.array([float(np.dot(point-junction, axis))
+                          for point in source])
+    quadratic = 2.0*(ordinates[0]-2.0*ordinates[1]+ordinates[2])
+    linear = -3.0*ordinates[0]+4.0*ordinates[1]-ordinates[2]
+    constant = ordinates[0]
+    scale = max(1.0, float(np.max(np.abs(ordinates))))
+    roundoff = 256.0*np.finfo(float).eps*scale
+    if abs(quadratic) > roundoff:
+        candidates = np.roots((quadratic, linear, constant))
+    elif abs(linear) > roundoff:
+        candidates = (-constant/linear,)
+    else:
+        candidates = ()
+    boundaries = [left]
+    for root in candidates:
+        if abs(complex(root).imag) > roundoff:
+            continue
+        value = float(complex(root).real)
+        if left+roundoff < value < right-roundoff:
+            boundaries.append(value)
+    boundaries.extend((right,))
+    boundaries.sort()
+    pieces = []
+    for begin, stop in zip(boundaries[:-1], boundaries[1:]):
+        if stop-begin <= roundoff:
+            return None
+        owner = _straight_join_owner(source, targets, begin, stop)
+        if owner is None:
+            return None
+        pieces.append((begin, stop, owner))
+    return tuple(pieces)
+
+
 @dataclass(frozen=True)
 class NativeRetainedWholePairResult:
     potential_j: float
@@ -282,20 +327,22 @@ class NativeRetainedWholeCurvePair:
                         continue
                     owner = interval.target_cell
                     if owner is None:
-                        owner = _straight_join_owner(
+                        pieces = _straight_join_partitions(
                             current[source_index], target_positions,
                             interval.left, interval.right,
                         )
-                        if owner is None:
+                        if pieces is None:
                             raise ValueError("native whole pair target ownership is unresolved")
-                    share = 0.25*(interval.right-interval.left)
-                    budget = np.array((self.energy_tolerance*share,
-                                       self.force_tolerance*share,
-                                       self.tangent_tolerance*share))
-                    total += 0.5*integrate(
-                        interval.left, interval.right,
-                        owner, budget,
-                    )
+                    else:
+                        pieces = ((interval.left, interval.right, owner),)
+                    for begin, stop, certified_owner in pieces:
+                        share = 0.25*(stop-begin)
+                        budget = np.array((self.energy_tolerance*share,
+                                           self.force_tolerance*share,
+                                           self.tangent_tolerance*share))
+                        total += 0.5*integrate(
+                            begin, stop, certified_owner, budget,
+                        )
 
         jacobian = np.zeros((36, 84))
         for global_cell, state in enumerate(states):

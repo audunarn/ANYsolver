@@ -192,10 +192,11 @@ shared junction. For **collinear, forward-ordered straight target cells**,
 the kernel also proves ownership from the junction half-space: a source
 point on one side is at least as close to the corresponding cell as to the
 other, and the source Bezier hull bounds the entire integration interval.
-An unproven curved or crossing ownership interval fails. This development
-route therefore does not yet support general sliding through an interior
-target junction or arbitrary curved whole-beam pairs. It is not connected
-to the native static owner or public admission.
+If the source crosses that junction, the exact Q2 axial polynomial splits
+integration at each interior Voronoi root. Each resulting interval must
+still pass the half-space certificate. Curved or ambiguous target ownership
+fails. This development route is not connected to the native static owner
+or public admission.
 
 The first parallel full-length run failed on a conservative false ownership
 alarm (`c3-native-whole-pair-first.txt`); a bounded diagnostic identified
@@ -209,6 +210,20 @@ energy/tangent directional checks, role exchange, common rigid motion,
 opening and resource failure. The affected native curve/selected-pair/static
 set passed 22/22 (`c3-native-whole-pair-affected.txt`). These are development
 checks, not full C3 qualification or evidence of nonlinear static coupling.
+
+The next interior-motion slice moved a beam's middle node axially while its
+physical ends remained aligned. This made each source beam cross the other
+beam's interior target junction without opening contact. The full-length
+potential remained 0.04 J and normal body forces were ±4 N; body exchange
+gave the same potential (`c3-native-whole-pair-crossing-third.txt`). The
+affected native curve/selected-pair/static set passed 23/23
+(`c3-native-whole-pair-crossing-affected.txt`). The
+first crossing run found a separate unresolved support edge when the whole
+beam was translated axially (`c3-native-whole-pair-crossing-first.txt`). It
+failed explicitly as a possible contact missed by quadrature. General
+finite sliding with contact activation at physical endpoints, curved
+whole-beam pairs, retained rotational work in this whole-pair route and
+qualification remain open.
 
 ## Retained round-centreline/plane penalty kernel
 

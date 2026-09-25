@@ -10,6 +10,7 @@ from anysolver._ge_beam3_centered_reference import (
 from anysolver.general_contact.native_retained_whole_pair import (
     NativeRetainedWholeCurvePair,
     _straight_join_owner,
+    _straight_join_partitions,
 )
 
 
@@ -87,6 +88,37 @@ def test_straight_junction_owner_is_certified_only_on_one_side():
     curved[0][1, 1] += 0.01
     assert _straight_join_owner(kernel.reference_curves[0], curved,
                                 0.98, 1.0) is None
+    partitions = _straight_join_partitions(spanning, target, 0.0, 1.0)
+    assert partitions is not None
+    assert tuple(piece[2] for piece in partitions) == (0, 1)
+    assert partitions[0][1] == pytest.approx(0.5)
+    assert partitions[1][0] == pytest.approx(0.5)
+    assert _straight_join_partitions(spanning, curved, 0.0, 1.0) is None
+
+
+def test_parallel_interior_cell_motion_crosses_target_junction():
+    a, b = _reference(0.0), _reference(0.08)
+    moved = b.coordinates.copy()
+    moved[1, 0] += 0.2
+    result = _kernel(a, b).evaluate(*_pose(a), moved,
+                                     np.zeros((3, 3)),
+                                     np.tile(np.eye(3), (2, 1, 1)))
+    assert result.potential_j == pytest.approx(0.04, rel=1e-7)
+    assert result.integration_intervals > 0
+    np.testing.assert_allclose(result.beam_a_force_n,
+                               (0.0, -4.0, 0.0), atol=1e-6)
+    np.testing.assert_allclose(result.beam_b_force_n,
+                               (0.0, 4.0, 0.0), atol=1e-6)
+    exchanged = _kernel(b, a).evaluate(
+        moved, np.zeros((3, 3)), np.tile(np.eye(3), (2, 1, 1)),
+        *_pose(a),
+    )
+    assert exchanged.potential_j == pytest.approx(result.potential_j,
+                                                   rel=1e-10)
+    np.testing.assert_allclose(result.beam_a_force_n+result.beam_b_force_n,
+                               0.0, atol=1e-8)
+    np.testing.assert_allclose(result.beam_a_moment_nm+result.beam_b_moment_nm,
+                               0.0, atol=1e-8)
 
 
 def test_whole_pair_energy_and_cross_beam_tangent_on_smooth_branch():
