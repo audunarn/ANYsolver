@@ -2,6 +2,25 @@
 
 ## Current state — 25 September 2026, native connection and physical reference
 
+**Decision sought:** A physically defensible native six-channel bond and a
+stable exact line space. **Established:** The transverse-order diagnosis is
+complete; the chord changes the loaded torque split substantially but is
+only modestly closer to one solid-section yaw projection. The matched C1
+opening-shear solve completes and has no negative gap in two saved-field
+samples, whereas the matched torque case still penetrates despite penalty
+contact. **Uncertainty:** Neither pose has an admitted torque/shear accuracy
+reference or a mesh-uniform line-stability result; the shear field still
+needs continuous-gap and mesh checks. **Next discriminating action:** Stop
+finer axial and gap sampling; establish a continuous nonintersection bound
+for the saved opening-shear geometry, then match that physical section,
+support and load in a native shear solve. In parallel, derive a truly
+physical line work law within the rigid B3 section contract and test its
+fixed-grid work/transfer and norm-correct modes before registered ratios.
+If the gap bound fails, revise the external reference; if the native law
+fails work/transfer, revise its mechanics, not the multiplier count. No
+multiplier or pose is selected. Formal F03 authority is unconsumed, G0B
+open and G1 barred.
+
 **Next bounded decision probe, before execution:** At the interior of the
 same saved C1 factor-four, 35 mm terminal bond under +100 N m, compare the
 three-dimensional plate's polar-band and transverse-material-chord frames
@@ -68,6 +87,36 @@ bond identities remain unchanged; the new shear deck has the exact applied
 force/moment wrench `[0,0,−1000,0,+1000,0]` in SI units. Focused builder
 checks pass `74/74`. This is deck preparation, not a completed physical
 shear result.
+
+**Opening-shear result and decision (development only):** Source
+`8dd140a6525a338fc4311f047e937ed1e663dd87`, pinned CalculiX 2.23,
+one thread, and a 120 s limit produced one completed factor-four C3D20R
+step in `18.612 s` with no solver failure. Protected root:
+`.qualification/b3-ge-e4-pl/f03-ccx-c1-opening-shear-dev-20260925-v1/`;
+deck/FRD SHA-256 `49b6e57d…`/`499dd3ea…`. The actual applied wrench is
+`[0,0,−1000,0,+1000,0]` within `2e-12` in SI units; DAT-derived total
+support imbalance reaches `0.000623 N` and `0.0000735 N m` in individual
+components. Final-state conjugate load displacement is `69.322 µm` and
+`F·u=0.069322 J`, not integrated path work. The existing 9×9 face sample
+has `0/10,368` negative same-deformed-XY gaps, minimum `10.329 nm`;
+the preregistered 17×17 near-seam check has `0/36,992`, minimum
+`3.040 nm` at face 127, `ξ=η=.990575`, with no projected point outside
+its paired face and XY residual below `1e-14 m`. The same projection
+reproduces the historical no-contact torque minimum `−7.113 nm` and the
+penalty torque minimum `−3.162 nm`; its slightly different penalty negative
+sample count reflects near-zero points and is not an acceptance metric.
+The positive shear samples retain a *directional* external candidate only.
+They approach the bonded seam and cannot certify nonintersection or mesh
+convergence. Do not add more sampling levels as a surrogate for proof.
+
+**Near-seam gap follow-up, before execution:** The source-bound C1 opening
+solve completed and the same-deformed-XY 9×9 face sample is positive, but
+its minimum is only `10.33 nm` near the bond seam. A denser 17×17 sample
+on the same saved 128 face pairs distinguishes an interior overlap missed
+by the coarser grid from a still-open *sampled* field. Any negative sample
+rejects the no-contact directional reference; all-positive samples retain
+it only for continuous-gap and mesh checks before accuracy scoring. This
+does not change geometry, loading, resource limits or native selection.
 
 **Numerical-completion discriminator, executed:** On the registered matched Q4/S3 torque cases, the diagnostic changed only E4's declared numerical tangent factor `0.5→1→2`. Both poses retained scaled linear residuals below `1.1e-16` and work errors below `2.8e-15 J`; factor `1` exactly reproduces the saved loaded responses. Across `0.5→2`, the largest shell support-torque change relative to factor `1` is about `0.53%` (S3 polar band); the chord changes by about `0.34%` (Q4) and `0.31%` (S3). Tip twist changes by under `0.5%`. Thus the roughly `30%` pose-law torque-partition difference is not primarily driven by this bounded stabilization variation. This does not prove zero-drilling or refinement independence, select a line law, or supply the missing physical torque reference. Stop stabilization tuning and continue the physical connection/reference discriminator.
 
