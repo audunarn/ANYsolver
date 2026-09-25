@@ -3,10 +3,12 @@
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"scripts"))
-from _b3_e4_ccx_3d_tip_work_parser import parse_tip_corner_displacements
+from _b3_e4_ccx_3d_tip_work_parser import (parse_tip_corner_displacements,
+                                          recover_tip_section_motion)
 
 
 def _row(node,x,y,z):
@@ -38,3 +40,33 @@ def test_missing_ambiguous_or_duplicate_corner_fails():
     with pytest.raises(ValueError,match="duplicate FRD displacement"):
         parse_tip_corner_displacements(src.replace(_row(229,0.,-4e-5,0.),
                                                _row(228,0.,-4e-5,0.)))
+
+
+def _motion_frd(translation, rotation, *, distortion=0.):
+    points=[(1.,-.05,.05),(1.,.05,.05),(1.,-.05,.15),(1.,.05,.15)]
+    center=np.array((1.,0.,.1))
+    coords=[_row(node,*point) for node,point in enumerate(points,226)]
+    disp=[]
+    for node,point in enumerate(points,226):
+        value=np.asarray(translation)+np.cross(rotation,np.asarray(point)-center)
+        if node==226:
+            value=value+np.array((distortion,0.,0.))
+        disp.append(_row(node,*value))
+    return "\n".join(["    2C",*coords," -3"," -4  DISP        4    1",
+                      " -5  D1          1    2    1    0",*disp," -3"," 9999"])+"\n"
+
+
+def test_section_fit_recovers_all_six_rigid_tip_work_coordinates():
+    translation=(1.2e-5,-2.3e-5,3.4e-5)
+    rotation=(2.0e-4,-3.0e-4,4.0e-4)
+    recovered=recover_tip_section_motion(_motion_frd(translation,rotation))
+    assert recovered["center_m"]==pytest.approx((1.,0.,.1),abs=1e-14)
+    assert recovered["translation_m"]==pytest.approx(translation,abs=1e-11)
+    assert recovered["rotation_rad"]==pytest.approx(rotation,abs=1e-10)
+    assert recovered["max_corner_fit_residual_m"]<1e-11
+
+
+def test_section_fit_reports_nonrigid_corner_motion():
+    recovered=recover_tip_section_motion(_motion_frd(
+        (0.,0.,0.),(0.,0.,0.),distortion=1e-5))
+    assert recovered["max_corner_fit_residual_m"]>1e-6

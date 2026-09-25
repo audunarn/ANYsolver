@@ -47,6 +47,29 @@ numerical completion and do not establish continuum inf-sup or choose a
 production space. The 12 direct single-thread diagnostic results are in
 the task trace; this summary is not a registered or immutable gate record.
 
+**25 September external reference advance (development only):** The
+*knot-corrected* CalculiX B31/S4 four-point rigid-footprint model already
+has separately accepted narrow rigid-mode, tip-translation work and
+reciprocal support-wrench screens. This corrects any impression that the
+original canary's failed reaction interpretation still applies to that
+new model. It remains a finite rigid footprint, not the native six-channel
+weak line; its B31 square-section torsion law has not been shown to equal
+the native generalized `J=1.6666667e-5 m^4` law. A new four-corner
+least-squares recovery passes synthetic six-motion and nonrigid controls.
+On the preserved `+1000 N` tip-y loaded baseline it recovers center
+translation `uy=1.81986e-5 m`, matching the previously recovered corner
+mean, but the maximum rigid-fit corner residual is `1.3546e-7 m`.
+Consequently its fitted rotation is only a candidate kinematic measure,
+not an established torque-work coordinate. Before any torque comparison,
+make one bounded signed tip-`Mx` conjugacy check against independently
+recovered external work. If it passes at printed precision, continue a
+section/connection-matched finite-footprint torque/shear comparison; if
+not, derive the B31 expansion's actual rotational work mapping or use a
+section-resolved continuum reference. No new external solve or F03 gate
+claim was made by this parser replay. The focused parser tests passed 4/4;
+an independent closed-form corner moment calculation reproduced the fitted
+`rx=-1.9522285e-6 rad` for this saved load case.
+
 **Previous bounded chord and strip observations (preserved):** The first fixed chord is not a
 strictly local attachment: a P0 tip yaw multiplier on `[.75,1]` acts at a
 shell sample beyond the declared beam end. On the aligned Q4 x8/y4 test,

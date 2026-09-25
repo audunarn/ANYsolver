@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 import re
 
+import numpy as np
+
 
 _NUMBER=re.compile(r"[+-]?\d\.\d{5}E[+-]\d{2,3}",re.I)
 _TIP_CORNERS={(1.,y,z) for y in (-.05,.05) for z in (.05,.15)}
@@ -69,3 +71,41 @@ def parse_tip_corner_displacements(frd:str)->dict:
                  displacement_m=list(vectors[node])) for node in sorted(corners)]
     return dict(corners=result,mean_tip_y_m=sum(
         item["displacement_m"][1] for item in result)/4)
+
+
+def recover_tip_section_motion(frd: str) -> dict:
+    """Fit six candidate small-motion coordinates of the expanded B31 tip.
+
+    Four geometric corners determine a least-squares rigid motion. A nonzero
+    residual exposes section deformation or an incompatible result field.
+    Neither the fitted rotation nor printed MPC forces are established as
+    work-conjugate quantities by this kinematic recovery alone.
+    """
+    corners = parse_tip_corner_displacements(frd)["corners"]
+    points = np.array([item["coordinate_m"] for item in corners], dtype=float)
+    displacement = np.array([item["displacement_m"] for item in corners],
+                            dtype=float)
+    center = points.mean(axis=0)
+    if np.max(np.abs(center-np.array([1., 0., .1]))) > 1e-7:
+        raise ValueError("expanded tip section center changed")
+    relative = points-center
+    design = np.zeros((12, 6))
+    for i, (x, y, z) in enumerate(relative):
+        design[3*i:3*i+3, :3] = np.eye(3)
+        # omega cross relative_position = -skew(relative_position) omega.
+        design[3*i:3*i+3, 3:] = ((0., z, -y),
+                                 (-z, 0., x),
+                                 (y, -x, 0.))
+    motion, _, rank, _ = np.linalg.lstsq(design, displacement.ravel(),
+                                        rcond=None)
+    if rank != 6 or not np.isfinite(motion).all():
+        raise ValueError("expanded tip corners do not define six motions")
+    error = (design@motion-displacement.ravel()).reshape(4, 3)
+    return {
+        "center_m": center.tolist(),
+        "translation_m": motion[:3].tolist(),
+        "rotation_rad": motion[3:].tolist(),
+        "rms_fit_residual_m": float(np.sqrt(np.mean(error**2))),
+        "max_corner_fit_residual_m": float(np.max(np.linalg.norm(error, axis=1))),
+        "scope": "four-corner small-motion fit; torque work conjugacy unverified",
+    }
