@@ -68,10 +68,23 @@ restart passed. One 0.04 mm closure with 10× normal stiffness met the declared
 tight-gap rejection still passed after this change
 (`q4-projected-v1-v0-regression.txt`).
 
+For a planar Q4/Q4 pair with half-face overlap, independent tensor-Gauss
+integration of the original Q1 pressure basis reproduced the implemented
+reference support and pressure Gram to `1e-10`. The pressure Gram had positive
+rank, its row sums equalled the support weights, and a fixed 10 Pa augmented
+pressure over 0.54 m² produced 5.4 N with balanced body forces. A separate
+2%-width overlap retained positive Gram rank. The Gram condition estimates
+were about 58 at half overlap and 86,000 at 2% overlap
+(`q4-partial-pressure-second.txt`, `q4-partial-pressure-conditioning.txt`).
+This is a local consistency and conditioning observation, not an inf-sup or
+mesh-refinement stability result. The first test attempt used a nonexistent
+test-side field and is retained as `q4-partial-pressure-first.txt`; the
+corrected tests passed without a production-kernel change.
+
 The 0.05 mm run is a single candidate, not mesh, integration or enforcement
 convergence. Numeric roundoff allowances are bounded development guards,
-not directed interval arithmetic. Pressure-space stability, partially
-contacting nonmatching meshes, edge ownership, reference-warped Q4, independent
+not directed interval arithmetic. Pressure-space stability across meshes,
+partially contacting nonmatching meshes, edge ownership, reference-warped Q4, independent
 review and application adapters remain
 open. No C1 engineering acceptance is claimed.
 
