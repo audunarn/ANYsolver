@@ -41,9 +41,23 @@ def test_refined_q4_s3_force_path_meets_gap_wrench_and_restart_gate():
             result.info["force_displacement_history"]] == [
                 0.25, 0.5, 0.75, 0.875, 1.0,
             ]
+    for row in result.info["force_displacement_history"]:
+        increment_contact = row["contact"]
+        assert increment_contact["profile"] == REFINED_Q4_S3_AUGMENTED_PROFILE
+        assert increment_contact["gap_tolerance_met"]
+        assert increment_contact["minimum_gap"] >= -GAP_BUDGET_M
+        assert increment_contact["active_pressure_dofs"] > 0
+        for first, second in (("integration_force", "target_force"),
+                              ("integration_moment", "target_moment")):
+            np.testing.assert_allclose(
+                np.asarray(increment_contact[first])+increment_contact[second],
+                0.0, atol=1.0e-6,
+            )
     for first, second in (("integration_force", "target_force"),
                           ("integration_moment", "target_moment")):
         np.testing.assert_allclose(
             np.asarray(contact[first])+contact[second], 0.0, atol=1.0e-6,
         )
     assert result.restart_checkpoint["version"] == 2
+    assert (result.restart_checkpoint["path_state"]["force_displacement_history"]
+            == result.info["force_displacement_history"])

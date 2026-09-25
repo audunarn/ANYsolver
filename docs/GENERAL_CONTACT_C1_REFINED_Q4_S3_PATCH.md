@@ -54,6 +54,20 @@ ran the same example from an isolated installation. The complete 623-byte
 source and installed outputs were identical (SHA-256
 `D559C85E4F3A8840F442DA14BAD066D6B211B384A80E5728C3EF714CD0F13E75`).
 This verifies packaging for this development example only.
+Ordinary augmented force and displacement histories now retain compact
+per-increment gap, pressure activity and integrated wrench summaries. The
+feasible force path's five records and checkpoint copy passed an integrated
+test; an existing ordinary displacement path also passed after this change.
+At 10× normal regularization the feasible two-Q4 case still met its gap
+budget, but contact force changed by 22% and active pressure nodes changed
+from six to two. The fixed 0.02 Pa multiplier-change threshold represented
+about 20 µm of normalized weighted-gap change at 1000 N/m³ and 2 µm at
+10000 N/m³, so the two cases do not isolate stiffness alone. A matched
+0.002 Pa attempt at 1000 N/m³ was stopped after more than ten minutes
+without a terminal result. Two-Q4/four-Q4 source-mesh responses at 1000 N/m³
+differed by 0.068% in z-force and at most 0.263% in the dominant moments,
+but this does not establish coupled convergence while enforcement changes
+remain so large. Response convergence remains open.
 
 This profile requires explicitly dimensioned Q4 area and weighted-gap
 tolerances, triangle and energy-evaluation budgets, and augmented-pressure

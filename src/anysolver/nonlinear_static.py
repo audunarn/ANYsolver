@@ -1093,6 +1093,20 @@ def _static_restart_path_payload(
     return payload
 
 
+def _augmented_contact_increment_summary(certificate: Any) -> Dict[str, Any]:
+    """Keep accepted contact history dimensional and bounded in size."""
+    return {
+        "profile": str(certificate.profile),
+        "minimum_gap": float(certificate.minimum_gap),
+        "gap_tolerance_met": bool(certificate.gap_tolerance_met),
+        "active_pressure_dofs": int(certificate.active_pressure_dofs),
+        "integration_force": list(map(float, certificate.integration_force)),
+        "target_force": list(map(float, certificate.target_force)),
+        "integration_moment": list(map(float, certificate.integration_moment)),
+        "target_moment": list(map(float, certificate.target_moment)),
+    }
+
+
 def _local_dof_index(dof: Union[str, int]) -> int:
     if isinstance(dof, str):
         key = dof.lower()
@@ -4131,6 +4145,7 @@ def _solve_static_displacement_control(
                     **({
                         "augmentation_iterations": augmentation_iterations,
                         "normal_multiplier_change": normal_multiplier_change,
+                        "contact": _augmented_contact_increment_summary(certificate),
                         "normal_multipliers": (
                             augmented_contact_manager.normal_multipliers.tolist()
                         ),
@@ -7171,6 +7186,7 @@ def _solve_static_nonlinear_under_lease(
                         **({
                             "augmentation_iterations": augmentation_iterations,
                             "normal_multiplier_change": normal_multiplier_change,
+                            "contact": _augmented_contact_increment_summary(certificate),
                             "normal_multipliers": (
                                 augmented_contact_manager.normal_multipliers.tolist()
                             ),
