@@ -13,6 +13,22 @@ from .core import ContactDefinition, ContactSolverSettings, ContactValidationRep
 
 
 PROFILE = "CLASSICAL_B3_B3_ROUND_TUBE_DISTRIBUTED_PAIR_STATIC_DEV_V1"
+MIXED_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_DISTRIBUTED_PAIR_STATIC_DEV_V0"
+
+
+def _virtual_b3(reference: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Embed a straight B2 centreline in Q2 coordinates without adding DOFs."""
+    if reference.shape == (3, 3):
+        return reference, np.eye(9)
+    if reference.shape != (2, 3):
+        raise ValueError("beam pair needs a B2 or B3 centreline")
+    positions = np.vstack((reference[0], 0.5 * (reference[0] + reference[1]),
+                           reference[1]))
+    embedding = np.zeros((9, 6))
+    for station, weights in enumerate(((1.0, 0.0), (0.5, 0.5), (0.0, 1.0))):
+        for node, weight in enumerate(weights):
+            embedding[3*station:3*station+3, 3*node:3*node+3] = weight*np.eye(3)
+    return positions, embedding
 
 
 def validate_b3_pair_contact(model, definition: ContactDefinition,
@@ -45,10 +61,11 @@ def validate_b3_pair_contact(model, definition: ContactDefinition,
     if (first.beam_radius is not None and second.beam_radius is not None
             and interaction.gap_tolerance >= first.beam_radius + second.beam_radius):
         issues.append("B3 pair gap tolerance must be smaller than combined radius")
-    from anysolver.elements import QuadraticBeamElement
+    from anysolver.elements import BeamElement, QuadraticBeamElement
     from anymaterial import IsotropicMaterial
 
     selected_nodes = []
+    element_types = []
     for surface in definition.surfaces:
         if (surface.beam_radius is None or surface.side != "midsurface"
                 or surface.beam_end_caps != "none"
@@ -58,10 +75,11 @@ def validate_b3_pair_contact(model, definition: ContactDefinition,
             continue
         element_id = surface.element_ids[0]
         element = model.mesh.elements.get(element_id)
-        if type(element) is not QuadraticBeamElement:
-            issues.append(f"element {element_id} is not an admitted classical B3")
+        if type(element) not in (BeamElement, QuadraticBeamElement):
+            issues.append(f"element {element_id} is not an admitted classical B2/B3")
             selected_nodes.append(set())
             continue
+        element_types.append(type(element))
         selected_nodes.append(set(map(int, element.node_ids)))
         if (element.generalized_section is not None
                 or element._fiber_plasticity is not None
@@ -75,8 +93,9 @@ def validate_b3_pair_contact(model, definition: ContactDefinition,
             issues.append(f"element {element_id} needs isotropic elastic material")
         reference = np.asarray(element.get_node_coordinates(model.mesh), dtype=float)
         try:
+            virtual_reference, _ = _virtual_b3(reference)
             B3PairPotential(
-                reference, reference + np.array((0.0, 1.0, 0.0)),
+                virtual_reference, virtual_reference + np.array((0.0, 1.0, 0.0)),
                 surface.beam_radius, 1.0,
                 integration_relative_tolerance=1.0,
                 maximum_subdivisions=1,
@@ -87,7 +106,8 @@ def validate_b3_pair_contact(model, definition: ContactDefinition,
         issues.append("B3 pair does not admit shared material nodes")
     if controls.maximum_candidate_pairs < 1:
         issues.append("B3 pair candidate budget is exhausted")
-    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE)
+    profile = (MIXED_PROFILE if BeamElement in element_types else PROFILE)
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
 class B3PairManager:
@@ -108,15 +128,19 @@ class B3PairManager:
         self.swept_trial_cutbacks = 0
         self.reference = []
         self.dofs = []
+        self.embeddings = []
         for surface in definition.surfaces:
             element = model.mesh.elements[surface.element_ids[0]]
-            self.reference.append(np.asarray(
+            reference, embedding = _virtual_b3(np.asarray(
                 element.get_node_coordinates(model.mesh), dtype=float,
             ))
+            self.reference.append(reference)
+            self.embeddings.append(embedding)
             self.dofs.append(np.asarray([
                 model.mesh.dof_manager.get_node_dofs(node)[:3]
                 for node in element.node_ids
             ], dtype=np.intp))
+        self.assembly_map = sparse.block_diag(self.embeddings).toarray()
         self.n_dof = model.mesh.dof_manager.total_dofs
         self.law = B3PairPotential(
             self.reference[0], self.reference[1], self.radius, self.stiffness,
@@ -139,8 +163,9 @@ class B3PairManager:
         u = np.asarray(displacement, dtype=float).reshape(-1)
         if u.size != self.n_dof or not np.all(np.isfinite(u)):
             raise ValueError("B3 pair displacement has invalid size or values")
-        return tuple(reference + u[dofs]
-                     for reference, dofs in zip(self.reference, self.dofs))
+        return tuple(reference + (embedding @ u[dofs.reshape(-1)]).reshape(3, 3)
+                     for reference, embedding, dofs in zip(
+                         self.reference, self.embeddings, self.dofs))
 
     def _certificate(self, displacement):
         a, b = self._positions(displacement)
@@ -161,13 +186,15 @@ class B3PairManager:
             else self.law.evaluate(a, b))
         self.last_projection_evaluations = state.projection_evaluations
         dofs = np.r_[self.dofs[0].reshape(-1), self.dofs[1].reshape(-1)]
+        local_residual = self.assembly_map.T @ state.residual
         force = np.zeros(self.n_dof)
-        np.add.at(force, dofs, state.residual)
+        np.add.at(force, dofs, local_residual)
         stiffness = None
         if tangent:
             rows, cols = np.meshgrid(dofs, dofs, indexing="ij")
+            local_tangent = self.assembly_map.T @ state.tangent @ self.assembly_map
             stiffness = sparse.coo_matrix(
-                (state.tangent.reshape(-1),
+                (local_tangent.reshape(-1),
                  (rows.reshape(-1), cols.reshape(-1))),
                 shape=(self.n_dof, self.n_dof),
             ).tocsr()

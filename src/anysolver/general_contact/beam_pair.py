@@ -73,10 +73,13 @@ def validate_beam_pair_contact(model, definition: ContactDefinition,
                                ) -> ContactValidationReport:
     if (len(definition.surfaces) == 2
             and all(len(surface.element_ids) == 1 for surface in definition.surfaces)):
-        from anysolver.elements import QuadraticBeamElement
+        from anysolver.elements import BeamElement, QuadraticBeamElement
 
-        if all(type(model.mesh.elements.get(surface.element_ids[0]))
-               is QuadraticBeamElement for surface in definition.surfaces):
+        element_types = tuple(type(model.mesh.elements.get(surface.element_ids[0]))
+                              for surface in definition.surfaces)
+        if (all(kind in (BeamElement, QuadraticBeamElement)
+                for kind in element_types)
+                and QuadraticBeamElement in element_types):
             from .beam_curve_pair_static import validate_b3_pair_contact
 
             return validate_b3_pair_contact(model, definition, settings)

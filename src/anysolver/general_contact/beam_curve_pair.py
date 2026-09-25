@@ -304,10 +304,10 @@ def _straight_target_contact_roots(source: np.ndarray,
                                      / np.sqrt(length_squared),
                                      float(np.max(np.abs(target)))
                                      / np.sqrt(length_squared)))
-        if np.max(projected) <= 0.0:
+        if np.max(projected) <= projection_roundoff:
             origin = target[0]
             interior = False
-        elif np.min(projected) >= 1.0:
+        elif np.min(projected) >= 1.0 - projection_roundoff:
             origin = target[2]
             interior = False
         elif (np.min(projected) >= -projection_roundoff

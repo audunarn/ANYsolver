@@ -26,7 +26,8 @@ Use `examples/general_contact_round_b3_pair.py`. Supply a separate
 accuracy/cell/depth controls. This profile currently admits one elastic,
 concentric, straight-reference B3 cell per surface, no shared material nodes,
 no endpoint caps, von Karman static analysis and force or displacement control.
-Restart binds the pair and numerical settings. B2/B3 mixed pairs and multi-cell
+Restart binds the pair and numerical settings. Mixed B2/B3 contact has a
+separate [development profile](GENERAL_CONTACT_C2_MIXED_PAIR.md); multi-cell
 B3 chains are not yet admitted.
 
 Focused tests cover exact parallel-line work, independent curved-line scalar

@@ -916,12 +916,16 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
 
                 manager = _BeamChainPairManager(model, definition, settings, initial_displacement)
             else:
-                from anysolver.elements import QuadraticBeamElement
+                from anysolver.elements import BeamElement, QuadraticBeamElement
 
-                if (len(definition.surfaces) == 2
-                        and all(type(model.mesh.elements.get(surface.element_ids[0]))
-                                is QuadraticBeamElement
-                                for surface in definition.surfaces)):
+                element_types = tuple(
+                    type(model.mesh.elements.get(surface.element_ids[0]))
+                    for surface in definition.surfaces
+                )
+                if (len(element_types) == 2
+                        and all(kind in (BeamElement, QuadraticBeamElement)
+                                for kind in element_types)
+                        and QuadraticBeamElement in element_types):
                     from .beam_curve_pair_static import B3PairManager
 
                     manager = B3PairManager(model, definition, settings,
