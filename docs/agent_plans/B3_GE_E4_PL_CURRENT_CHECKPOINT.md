@@ -8,41 +8,69 @@ idealization. Neither a footprint law nor a multiplier space is selected.
 **Established facts:** The confined chord passes bounded Q4/S3 work,
 chart, rigid-motion, balance and termination-support checks, but its shear
 yaw differs materially from finite-width measures. A conforming C3D8
-plate/stiffener bond with explicit common interface nodes confirms that
-distinction over three mesh levels: the local square-patch yaw stays near
-`0.675/-0.329 gamma` under the two affine shears, versus centerline
-`0.99/-0.015 gamma`. The solid stiffener section has a third, warped
-rotation measure. The solid end torque/transverse-force reactions balance,
-but their displacements have not converged; they are not quantitative native
-oracles. Existing P0/P1/dual weak alternating transverse modes and full
-row ranks do not select a stable space. Native retained-cell frames are
-one-sided at a junction, so a footprint needs an explicit nodal pose law.
+plate/stiffener bond confirms that distinction over three mesh levels;
+its end torque/transverse-force displacements have not converged and are
+not quantitative native oracles. A separate 0.1 m square *distributing*
+strip port now passes bounded native Q4/S3 reference, objectivity,
+derivative, physical-energy, torque/shear work and balance checks without
+drilling-component work. Its P0 weak line still develops an alternating
+transverse Fz mode as line resolution rises. A Neumann H^(-1/2) norm does
+not erase that finite-model sensitivity. Native retained-cell frames are
+one-sided at a junction, so a discrete footprint also needs an explicit
+shared nodal pose law.
 
-**Remaining uncertainty:** Derive and verify a finite-width native
-footprint that transfers torque without relying on E4 drilling completion
-or suppressing admissible transverse shear. The current first-order solid
-reference is too mesh-sensitive in torque and transverse displacement to
-set physical response tolerances. The historical Q6/finite-pad, classical
-axial, CalculiX B31/S4 knot and native six-channel cases have different
-connection or section laws. Norm-scaled interface stability and the
-required controlled mesh-ratio series remain open.
+**Remaining uncertainty:** The square strip is only a bounded distributing
+pose candidate, not a selected rigid/distributing production footprint.
+Its physical torque/shear transfer, drilling/thickness/refinement behavior,
+and stable line/beam/shell resolution policy still need qualification.
+The current first-order solid reference is too mesh-sensitive to set
+physical response tolerances. Historical Q6/finite-pad, classical axial,
+CalculiX B31/S4 knot and native six-channel cases have different laws.
+P1/dual comparison in an appropriate dual norm and the required complete
+mesh-ratio series remain open.
 
-**Next discriminating experiment:** Form one differentiable finite-width
-native pose/work functional with declared footprint geometry, physical
-moment map and exact reference. Compare its two affine-shear measures,
-end torque/transverse-force work and Q4/S3 drilling/shear sensitivity
-against the line idealization and the existing solid-bond evidence on
-bounded models. Then assess its six-channel interface modes at fixed
-physical meshes and registered beam:shell ratios with a norm appropriate
-to the selected law. Do not restart a finer C3D8 or classical axial sweep.
+**Next discriminating experiment:** At fixed physical Q4/S3 models and
+the same square-strip law, compare P0, continuous P1 and dual P1 using
+their appropriate H^(-1/2) density norms, shell/beam trace ranks and
+loaded torque/shear work. Then test a declared interface-resolution policy
+over the required beam:shell ratios. If the alternating mode persists
+despite supported trace resolution, revise the trace or multiplier law;
+if it is controlled, advance that candidate to the full G0B checks. Do
+not restart a finer C3D8 or classical axial sweep.
 
-**Resulting action:** Advance the finite-width law only if its reference,
-objectivity, virtual work, derivatives and physical torque/shear channels
-hold without artificial stabilization. Otherwise revise that law before
-line-space selection. A new higher-order or section-matched reference is
-needed before quantitative torque/shear parity; the present solid load
-case is not a convergence claim. F03 authority remains unconsumed, G0B
+**Resulting action:** Retain the square strip as an exploratory finite-width
+candidate. Do not select a multiplier, claim inf-sup stability, or advance
+G1 from small loaded residuals, a rank check or either spectral quotient.
+A higher-order or section-matched external reference is still needed for
+quantitative torque/shear parity. F03 authority remains unconsumed, G0B
 open and G1 barred.
+
+**25 September native square-strip and stability screen (development
+only):** The new `physical_strip_005_005` port uses a fixed 0.1 x 0.1 m
+reference area centered at each line station. For affine shears its
+reference polar yaw is `+gamma/2` or `-gamma/2`, with no shell `rz`
+work. Loaded Q4/S3 torque and transverse-force cases have positive
+directly evaluated physical shell energy, zero numerical shell-component
+energy, and small global work/wrench errors; the external solid model has
+different supports, section and material idealization, so the loaded
+displacements are not paired accuracy comparisons. With Q4/S3 shell
+x8/y4 fixed, P0 line intervals 4→8 and native beam half-cells 4/8/16,
+the reference Neumann H^(-1/2) transverse quotient changes respectively
+`1.293→0.0075`, `2.300→0.415`, `2.584→1.071` for Q4 and
+`1.579→0.0927`, `2.483→0.436`, `2.750→1.079` for S3. At line8 the
+weakest mode is >99.95% Fz in that dual norm and has seven sign changes.
+Complete rows remain full rank. At beam-half16/line8, doubling shell x8
+to x16 restores Q4 shell-only rank 42/48→48/48 but changes its quotient
+only 1.071→1.087; S3 changes 1.079→1.110. Thus shell-x resolution alone
+does not resolve the mode. These are bounded absolute-energy algorithmic
+diagnostics including E4 numerical completion, not a continuum inf-sup
+constant or multiplier selection. Immutable exploratory records and
+runner identities are under
+`C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-native-square-modes-dev-20260925-v3`
+and `-v4`; the import-failed `-v1` and earlier L2-only `-v2` remain
+preserved. Focused new mechanics checks pass 11/11; the pre-existing
+affected weak-line and strip suite passed 87/87 before the dual-norm
+addition.
 
 **25 September bounded physical-bond screen (development only):** The
 conforming 3D model is a 2.0 x 1.0 x 0.07 m plate with a 1.0 x 0.1 x
