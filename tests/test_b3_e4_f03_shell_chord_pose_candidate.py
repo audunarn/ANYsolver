@@ -247,6 +247,11 @@ def test_transverse_top_chord_has_distinct_objective_work_and_free_shear(topolog
         pose_from_e4_total_chord(
             panel, station, shear.ravel(), half_chord=.05,
             axis="transverse_top")[1], np.eye(3), atol=2e-14)
+    shear[:, 2] = gamma*nodes[:, 1]
+    np.testing.assert_allclose(
+        pose_from_e4_total_chord(
+            panel, station, shear.ravel(), half_chord=.05,
+            axis="transverse_top")[1], np.eye(3), atol=2e-14)
 
     angle = np.array((.13, -.21, .18))
     rotation = Rotation.from_rotvec(angle).as_matrix()
