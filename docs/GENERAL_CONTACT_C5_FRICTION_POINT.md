@@ -14,6 +14,24 @@ source-relative displacement increment. The law projects that increment onto
 the current tangent plane. Pressure and traction use Pa; displacement uses m;
 `tangential_stiffness` uses Pa/m; stored energy and dissipation use J/m².
 
+For a fixed pair of physical material points, the internal
+`objective_relative_tangent_increment` helper can compute that increment from
+committed/candidate positions and target material frames:
+
+```text
+R_t = F_target_candidate F_target_committed^T
+delta_u_t = P_target_candidate [
+    (x_source_candidate - x_target_candidate)
+    - R_t (x_source_committed - x_target_committed)
+]
+```
+
+Transporting the old separation before differencing removes apparent slip
+when a finite normal opening rotates with both bodies. The caller must supply
+the same source and target material points at both states. Neither this helper
+nor the local return map differentiates a frame supplied by a deforming
+element; the later coupled contact adapter must include those derivatives.
+
 Given committed elastic slip vector `z_old` and frame rotation
 `R = F_current F_old^T`, the trial elastic slip is
 
@@ -55,6 +73,7 @@ before any frictional shell or beam profile can be admitted.
 Focused checks in `tests/test_general_contact_friction_point.py` cover an
 independent scalar stick/slip slider, reversal, material spin and normal
 rotation with zero relative work, pressure reduction, opening/recontact,
-invalid state rejection and directional tangents on smooth branches. They do
+invalid state rejection, objective paired motion under common rigid rotation
+with a finite gap, and directional tangents on smooth branches. They do
 not qualify coupled equilibrium, frictional moment maps, finite sliding,
 restart, or energy accounting for a full structural step.

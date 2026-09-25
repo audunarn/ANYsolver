@@ -93,6 +93,43 @@ def initial_friction_point(material_frame) -> FrictionPointState:
     )
 
 
+def objective_relative_tangent_increment(
+    *,
+    source_committed,
+    target_committed,
+    source_candidate,
+    target_candidate,
+    target_frame_committed,
+    target_frame_candidate,
+) -> tuple[float, float, float]:
+    """Relative slip increment for one persistent pair of physical points.
+
+    The target material frame transports the *committed separation*, including
+    its normal gap, to the candidate pose before the relative change is
+    projected. A common rigid transformation therefore produces zero slip even
+    while an open pair rotates. The caller must retain the same material
+    points on both sides; projection changes and facet transfers need their
+    own history map.
+    """
+
+    source_old = _vector3(source_committed, "committed source position")
+    target_old = _vector3(target_committed, "committed target position")
+    source_new = _vector3(source_candidate, "candidate source position")
+    target_new = _vector3(target_candidate, "candidate target position")
+    frame_old = _frame3(target_frame_committed)
+    frame_new = _frame3(target_frame_candidate)
+    rotation = frame_new @ frame_old.T
+    previous_separation = source_old - target_old
+    current_separation = source_new - target_new
+    projector = frame_new[:, :2] @ frame_new[:, :2].T
+    increment = projector @ (
+        current_separation - rotation @ previous_separation
+    )
+    if not np.all(np.isfinite(increment)):
+        raise ValueError("relative material-point motion exceeded finite range")
+    return _frozen_vector(increment)
+
+
 def trial_coulomb_point(
     committed: FrictionPointState,
     *,

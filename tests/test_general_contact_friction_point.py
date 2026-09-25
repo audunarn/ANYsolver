@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 
 from anysolver.general_contact.friction_point import (
-    FrictionPointState, initial_friction_point, trial_coulomb_point,
+    FrictionPointState, initial_friction_point,
+    objective_relative_tangent_increment, trial_coulomb_point,
 )
 
 
@@ -138,3 +139,66 @@ def test_changed_normal_load_slips_and_invalid_frames_fail():
         trial(origin, (0.0, 0.0, 0.0), pressure=-1.0)
     with pytest.raises(ValueError, match="partner_key"):
         trial(origin, (0.0, 0.0, 0.0), partner=None)
+
+
+def test_objective_pair_motion_removes_rotation_of_a_finite_open_gap():
+    angle = 0.47
+    c, s = np.cos(angle), np.sin(angle)
+    rotation = np.array(((c, 0.0, s),
+                         (0.0, 1.0, 0.0),
+                         (-s, 0.0, c)))
+    translation = np.array((0.3, -0.2, 0.7))
+    source = np.array((0.0, 0.0, 0.02))
+    target = np.zeros(3)
+    common = objective_relative_tangent_increment(
+        source_committed=source, target_committed=target,
+        source_candidate=rotation @ source + translation,
+        target_candidate=translation,
+        target_frame_committed=FRAME,
+        target_frame_candidate=rotation,
+    )
+    np.testing.assert_allclose(common, 0.0, atol=1.0e-15)
+    # Directly subtracting source/target displacements would create false
+    # tangential slip from the rotation of the 20 mm normal opening.
+    naive = (rotation @ source) - source
+    projector = rotation[:, :2] @ rotation[:, :2].T
+    assert np.linalg.norm(projector @ naive) > 0.005
+
+    real_material_slip = np.array((0.001, -0.0004, 0.0))
+    moving = objective_relative_tangent_increment(
+        source_committed=source, target_committed=target,
+        source_candidate=rotation @ (source + real_material_slip) + translation,
+        target_candidate=translation,
+        target_frame_committed=FRAME,
+        target_frame_candidate=rotation,
+    )
+    np.testing.assert_allclose(moving, rotation @ real_material_slip,
+                               atol=1.0e-15)
+
+
+def test_objective_pair_motion_equal_and_independent_translations():
+    old_source = np.array((0.3, 0.1, 0.02))
+    old_target = np.array((0.3, 0.1, 0.0))
+    translation = np.array((0.002, -0.003, 0.004))
+    same = objective_relative_tangent_increment(
+        source_committed=old_source, target_committed=old_target,
+        source_candidate=old_source + translation,
+        target_candidate=old_target + translation,
+        target_frame_committed=FRAME, target_frame_candidate=FRAME,
+    )
+    np.testing.assert_allclose(same, 0.0, atol=1.0e-15)
+    target_only = objective_relative_tangent_increment(
+        source_committed=old_source, target_committed=old_target,
+        source_candidate=old_source,
+        target_candidate=old_target + (0.001, -0.002, 0.003),
+        target_frame_committed=FRAME, target_frame_candidate=FRAME,
+    )
+    np.testing.assert_allclose(target_only, (-0.001, 0.002, 0.0),
+                               atol=1.0e-15)
+    with pytest.raises(ValueError, match="orthonormal"):
+        objective_relative_tangent_increment(
+            source_committed=old_source, target_committed=old_target,
+            source_candidate=old_source, target_candidate=old_target,
+            target_frame_committed=FRAME,
+            target_frame_candidate=np.diag((2.0, 1.0, 1.0)),
+        )
