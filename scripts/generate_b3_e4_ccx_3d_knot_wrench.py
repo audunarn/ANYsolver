@@ -42,6 +42,17 @@ def build_loaded_baseline()->str:
     return _replace_supports(deck,zero,load=True)
 
 
+def build_loaded_tip_torque_x(sign: int)->str:
+    """Same knot/footprint/support model with signed 100 N m tip x moment."""
+    if type(sign) is not int or sign not in (-1,1):
+        raise ValueError("tip torque sign must be -1 or +1")
+    baseline=build_loaded_baseline()
+    force="*CLOAD\n48,2,1000\n"
+    if baseline.count(force)!=1:
+        raise ValueError("knot baseline tip load changed")
+    return baseline.replace(force,f"*CLOAD\n48,4,{100*sign}\n")
+
+
 def build_unloaded_influence(group:str,component:int,signed_delta:float)->str:
     """One prescribed support-work basis, with no tip force."""
     deck=knot.build_knot_rigid_deck(component,signed_delta)

@@ -70,3 +70,26 @@ def test_section_fit_reports_nonrigid_corner_motion():
     recovered=recover_tip_section_motion(_motion_frd(
         (0.,0.,0.),(0.,0.,0.),distortion=1e-5))
     assert recovered["max_corner_fit_residual_m"]>1e-6
+
+
+def test_nonrigid_fit_rotations_equal_calculix_meanrotbs_work_coordinates():
+    # Independent transcription of CalculiX 2.23 usermpc.f's linear
+    # MEANROTBS: average the tangential displacement/radius for each axis.
+    # gen3dforc.f sends the tip moment to this angle DOF. The four-corner
+    # symmetric section makes these three means identical to the LS fit.
+    frd=_motion_frd((1e-5,-2e-5,3e-5),(2e-4,-3e-4,4e-4),
+                    distortion=1e-5)
+    corners=parse_tip_corner_displacements(frd)["corners"]
+    xyz=np.array([item["coordinate_m"] for item in corners])
+    u=np.array([item["displacement_m"] for item in corners])
+    relative=xyz-xyz.mean(axis=0)
+    centered_u=u-u.mean(axis=0)
+    source_mean=[]
+    for axis in np.eye(3):
+        projected=relative-(relative@axis)[:,None]*axis
+        source_mean.append(float(np.mean([
+            np.cross(axis,p)@v/(p@p)
+            for p,v in zip(projected,centered_u)])))
+    fitted=recover_tip_section_motion(frd)
+    assert fitted["max_corner_fit_residual_m"]>1e-6
+    assert fitted["rotation_rad"]==pytest.approx(source_mean,abs=1e-11)

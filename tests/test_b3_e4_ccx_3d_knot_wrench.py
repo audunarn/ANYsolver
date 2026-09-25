@@ -36,6 +36,24 @@ def test_loaded_baseline_has_same_knot_model_and_zero_supports():
     assert baseline.count("*NODE FILE,OUTPUT=3D\nU\n")==1
 
 
+@pytest.mark.parametrize("sign",(-1,1))
+def test_tip_torque_keeps_exact_knot_footprint_and_support_model(sign):
+    force=wrench.build_loaded_baseline()
+    moment=wrench.build_loaded_tip_torque_x(sign)
+    assert moment.count(f"*CLOAD\n48,4,{100*sign}\n")==1
+    assert "*CLOAD\n48,2,1000\n" not in moment
+    assert _inventory(moment)==_inventory(force)
+    assert _model_without_step_supports_and_load(moment)==(
+        _model_without_step_supports_and_load(force))
+    assert moment.count("*EQUATION\n")==12
+    assert moment.count("*BEAM SECTION")==2
+
+
+def test_tip_torque_rejects_ambiguous_sign():
+    with pytest.raises(ValueError,match="tip torque sign"):
+        wrench.build_loaded_tip_torque_x(True)
+
+
 @pytest.mark.parametrize("group",("shell","beam"))
 @pytest.mark.parametrize("component",range(6))
 @pytest.mark.parametrize("sign",(-1,1))

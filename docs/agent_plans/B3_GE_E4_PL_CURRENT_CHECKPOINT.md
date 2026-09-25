@@ -59,16 +59,21 @@ least-squares recovery passes synthetic six-motion and nonrigid controls.
 On the preserved `+1000 N` tip-y loaded baseline it recovers center
 translation `uy=1.81986e-5 m`, matching the previously recovered corner
 mean, but the maximum rigid-fit corner residual is `1.3546e-7 m`.
-Consequently its fitted rotation is only a candidate kinematic measure,
-not an established torque-work coordinate. Before any torque comparison,
-make one bounded signed tip-`Mx` conjugacy check against independently
-recovered external work. If it passes at printed precision, continue a
-section/connection-matched finite-footprint torque/shear comparison; if
-not, derive the B31 expansion's actual rotational work mapping or use a
-section-resolved continuum reference. No new external solve or F03 gate
-claim was made by this parser replay. The focused parser tests passed 4/4;
-an independent closed-form corner moment calculation reproduced the fitted
-`rx=-1.9522285e-6 rad` for this saved load case.
+The initial inference that this residual makes fitted twist non-conjugate
+was too strong. In the pinned CalculiX 2.23 `gen3dforc.f`
+(`4585a7c0…`) the tip moment loads a `MEANROTBS` angle; `usermpc.f`
+(`d37704bb…`) forms that angle from mean tangential corner motion.
+For this symmetric four-corner section, the source formula equals the
+least-squares fitted rotation on each axis even for nonrigid corner
+motion. An independent source-formula calculation reproduces saved
+`rx=-1.9522285e-6 rad`, and a synthetic nonrigid parity test passes.
+This establishes the *external model's* linear tip-rotation work map,
+not a native comparison, physical section match or rigid section field.
+The focused parser/deck tests pass 33/33. Next run the bounded signed
+tip-`Mx` case on this same knot footprint, then decide whether its
+response merits a section/connection-matched comparison. The original
+canary and its failed reaction interpretation remain separate. No new
+external solve or F03 gate claim was made by the source derivation.
 
 **Previous bounded chord and strip observations (preserved):** The first fixed chord is not a
 strictly local attachment: a P0 tip yaw multiplier on `[.75,1]` acts at a

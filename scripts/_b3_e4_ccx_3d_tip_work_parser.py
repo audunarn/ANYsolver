@@ -74,12 +74,15 @@ def parse_tip_corner_displacements(frd:str)->dict:
 
 
 def recover_tip_section_motion(frd: str) -> dict:
-    """Fit six candidate small-motion coordinates of the expanded B31 tip.
+    """Fit six small-motion coordinates of this expanded B31 tip section.
 
     Four geometric corners determine a least-squares rigid motion. A nonzero
-    residual exposes section deformation or an incompatible result field.
-    Neither the fitted rotation nor printed MPC forces are established as
-    work-conjugate quantities by this kinematic recovery alone.
+    residual exposes section deformation; it does not invalidate the mean
+    rotation. For this symmetric rectangular corner set, each fitted rotation
+    equals the linear ``MEANROTBS`` rotation to which CalculiX 2.23 applies a
+    tip moment. The equivalence follows from ``gen3dforc.f``/``usermpc.f``
+    and is checked independently in tests. It is not a general claim for an
+    arbitrary expanded section or for printed MPC nodal forces.
     """
     corners = parse_tip_corner_displacements(frd)["corners"]
     points = np.array([item["coordinate_m"] for item in corners], dtype=float)
@@ -107,5 +110,5 @@ def recover_tip_section_motion(frd: str) -> dict:
         "rotation_rad": motion[3:].tolist(),
         "rms_fit_residual_m": float(np.sqrt(np.mean(error**2))),
         "max_corner_fit_residual_m": float(np.max(np.linalg.norm(error, axis=1))),
-        "scope": "four-corner small-motion fit; torque work conjugacy unverified",
+        "scope": "symmetric four-corner B31 MEANROTBS small-motion coordinates",
     }
