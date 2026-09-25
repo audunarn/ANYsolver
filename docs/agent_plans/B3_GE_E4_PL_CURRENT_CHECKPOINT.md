@@ -1,25 +1,115 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-## Current state — 25 September 2026, native connection and physical reference
+## Current state — 26 September 2026, native connection and physical reference
 
 **Decision sought:** A physically defensible native six-channel bond and a
 stable exact line space. **Established:** The transverse-order diagnosis is
-complete; the chord changes the loaded torque split substantially but is
-only modestly closer to one solid-section yaw projection. The matched C1
-opening-shear solve completes and has a continuous saved-field gap bound
-on its unbonded underside/top face, whereas the matched torque case still
-penetrates despite penalty contact. **Uncertainty:** Neither pose has an
-admitted torque/shear accuracy reference or a mesh-uniform line-stability
-result; the shear case still needs mesh convergence and a matched native
-solve. **Next discriminating action:** Stop finer axial and gap sampling;
-match the C1 physical section, support and opening load in a native shear
-solve and assess the corresponding solid mesh. In parallel, derive a truly
-physical line work law within the rigid B3 section contract and test its
-fixed-grid work/transfer and norm-correct modes before registered ratios.
-If the gap bound fails, revise the external reference; if the native law
-fails work/transfer, revise its mechanics, not the multiplier count. No
-multiplier or pose is selected. Formal F03 authority is unconsumed, G0B
-open and G1 barred.
+complete. The matched C1 opening-shear solid has a continuous saved-field
+gap bound on its unbonded underside/top face; the torque case still
+penetrates despite penalty contact. The exact C1 native B3 reference has
+zero virgin residual and sparse/dense operator parity. On two Q4 patch
+levels its six-resultant surface-position-moment footprint approaches the
+solid opening-shear work and support split more closely than the rigid or
+distributing pose ties. **Uncertainty:** The footprint is not mesh settled
+in plate support transfer, the solid and reduced idealizations still differ,
+the physical torque reference is inadmissible, and no exact line space has
+mesh-uniform stability evidence. **Next discriminating action:** Review the
+surface-position moment work and C1 chart mapping independently, then use
+a bounded sparse patch refinement only if that review sustains the law.
+Keep the true nonmatching line derivation separate; its next candidate must
+have distinct physical work and pass fixed-grid transfer/mode checks before
+registered ratios. Do not resume finer classical axial or arbitrary line
+row sweeps. No footprint, pose or multiplier is production-selected. Formal
+F03 authority is unconsumed, G0B open and G1 barred.
+
+**Next native C1 geometry discriminator, before execution:** The saved solid
+opening-shear field uses a 2 µm C1 tangent-aligned beam-axis lift over
+x=`.75–.9 m`; the existing native fixture is straight and uniformly
+spaced. Build two native retained B3 chains on the same bounded 12-half-
+cell stations, splitting the C1 quadratics at `.825` and `.9 m`: one
+straight, one with the exact C1 positions and section frames. Check
+reference continuity, local sparse/dense tangent parity, zero reference
+residual and the admitted B3 frame guard. Then run one unchanged Q4
+terminal-patch KKT with the external opening `−1000 N Fz` on both chains.
+If curvature materially alters work, tip response or plate/root transfer,
+retain it in the matched native comparator; if negligible at this grid,
+retain the exact C1 route anyway but avoid treating curvature as the main
+explanation of a solid/native discrepancy. Neither outcome scores physical
+accuracy, selects distributing versus rigid/line coupling, or changes G0.
+
+**Native C1 geometry result and next bounded patch test:** The 12-half-cell
+native C1 construction has exact reference continuity at `.75/.825/.9 m`,
+zero initial residual and zero local sparse/dense tangent difference on
+the tested fixture. At Q4 patch level four and `−1000 N Fz`, straight
+versus exact C1 gives distributing tip `−75.60015/−75.59814 µm` and rigid
+tip `−75.42529/−75.42327 µm`; plate support Fz changes by under
+`0.001 N`. The C1 curvature is therefore negligible for this bounded
+comparison, while the saved solid's conjugate tip displacement is
+`69.32220 µm`. External DAT reactions put `72.15187 N` on the plate and
+`927.84815 N` at the bar root; the native C1 distributing split is
+`85.49282/914.50718 N`, rigid `86.22476/913.77524 N`. These are
+different continuum and reduced models, and finite distributing/rigid
+laws are not the continuum bond; the numbers are diagnostics, not scored
+accuracy. An older *different-geometry/load-map* detached solid gives
+`190.541 µm` against `192.024 µm` for the native free B3, suggesting
+but not proving that bare beam compliance alone is not the full coupled
+gap explanation. The next discriminator holds the exact C1 beam, load,
+supports, laws and section fixed while changing only the bounded Q4
+terminal patch grid from two to four cells. Movement of tip work and
+plate/root split toward the solid values directs attention to shell/patch
+resolution; little movement directs attention to connection work or
+dimension-reduced shell/section idealization. Two levels cannot establish
+convergence or select a law; do not exceed the existing dense row cap.
+
+**Physical-work alternative, before execution:** The two-to-four-cell Q4
+patch screen below does not close the solid/native opening-shear gap.
+On the same exact C1 beam, Q4 patch grid, support, section and load, test
+the existing six-resultant *surface-position moment* functional alongside
+the distributing/rigid pose ties. Split its integration at the actual
+nonuniform native half-cell boundaries, verify zero reference gap, rank,
+work and balance, then compare tip work and plate/root wrenches. A
+substantial coherent move toward the solid keeps the physical surface
+law for further independent mechanics review and mesh study; no movement
+redirects effort to reduced shell/section idealization or bond extent.
+This finite footprint is not a true exact line law and cannot select a
+line multiplier from a single grid.
+
+**Physical-work fixed-grid result and next check:** At Q4 patch level four,
+the actual C1 surface-position-moment trace has zero reference gap,
+six independent rows, no drilling columns and a `0.01 m²` footprint.
+Under `−1000 N Fz`, its tip is `−70.25176 µm`, plate support is
+`Fz=73.07544 N`, `Fx=5947.899 N`, `My=−49.49825 N m`; work and
+global KKT balance close within `4.5e−12` in the recorded numerical
+measure. The same-grid distributing/rigid pose ties give
+`−75.59814/−75.42327 µm`, `Fz=85.49282/86.22476 N`. The saved solid
+gives conjugate tip `69.32220 µm` and plate `Fz=72.15187 N`,
+`Fx=5978.922 N`, `My=−48.13664 N m`. Surface moments therefore move
+the fixed-grid tip and support quantities coherently toward the solid;
+this is a *development discriminator* across different dimensional
+idealizations, not a qualified `1%` comparison. The next bounded check
+changes only Q4 patch cells two→four with the same C1 beam and physical
+surface law. If this change is small relative to the remaining solid
+gap, preserve the law for independent mechanics review and a sparse
+mesh study; if material, resolve Q4/interface discretization first.
+No multiplier space, true-line operator or footprint is production-selected.
+
+**Two-level result and bounded decision:** With the same C1 beam and
+`−1000 N Fz`, surface-position moments change from Q4 patch cells two→four:
+tip `−70.11908→−70.25176 µm`, plate Fz `71.99932→73.07544 N`,
+plate Fx `5950.563→5947.899 N`, plate My `−49.42810→−49.49825 N m`.
+The tip change is small but moves slightly *away* from the solid
+`69.32220 µm`; the Fz partition changes `1.076 N`, comparable to the
+remaining `0.924 N` four-cell difference from the solid. Rigid and
+distributing ties remain around `75.3–75.6 µm`. Thus the surface law is
+the strongest **finite-footprint development candidate** on these matched
+loads and support observables, but two levels do not establish
+convergence or the `1%` external threshold. The actual nonuniform native
+half-cell cuts now drive surface quadrature; at C1 patch level two the
+finite-chart reference gap and first directional row agree with the
+linearized trace within `1e−12`. Existing straight-reference mixed-chart
+checks remain separate. A sparse third level and independent mechanics
+review, not a raised dense row cap, are the next meaningful finite-patch
+steps. This does not settle a zero-width exact line law or torque transfer.
 
 **Continuous-gap precondition, before execution:** For the saved C1 opening
 field, convert each paired Q8 face's *corresponding-material-coordinate*

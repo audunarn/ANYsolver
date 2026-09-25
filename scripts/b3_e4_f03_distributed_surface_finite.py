@@ -49,7 +49,7 @@ class FiniteSurfaceMomentPatch:
             lx, hx = max(float(x0), .9), min(float(x1), 1.)
             if hx <= lx:
                 continue
-            for sx0, sx1 in bond_x_segments(lx, hx, beam.n_half_cells):
+            for sx0, sx1 in bond_x_segments(lx, hx, beam.abscissae):
                 for y0, y1 in zip(self.ys[:-1], self.ys[1:]):
                     ly, hy = max(float(y0), -.05), min(float(y1), .05)
                     if hy <= ly:

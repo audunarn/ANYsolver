@@ -112,15 +112,24 @@ def structured_q4_point_shape(xs: np.ndarray, ys: np.ndarray,
     return nodes,values
 
 
-def bond_x_segments(lo_x: float, hi_x: float, half_cells: int
+def bond_x_segments(lo_x: float, hi_x: float,
+                    half_cells: int | np.ndarray
                     ) -> tuple[tuple[float, float], ...]:
     """Split a shell-host interval at every retained B3 half-cell boundary."""
-    if (not np.isfinite((lo_x, hi_x)).all() or hi_x <= lo_x or
-            type(half_cells) is not int or half_cells <= 0):
+    if not np.isfinite((lo_x, hi_x)).all() or hi_x <= lo_x:
         raise ValueError("valid shell interval and native half-cell count required")
+    if type(half_cells) is int and half_cells > 0:
+        abscissae = np.arange(half_cells+1, dtype=float)/half_cells
+    else:
+        abscissae = np.asarray(half_cells, dtype=float)
+        if (abscissae.ndim != 1 or len(abscissae) < 2 or
+                not np.isfinite(abscissae).all() or
+                abscissae[0] != 0. or abscissae[-1] != 1. or
+                not np.all(np.diff(abscissae) > 0.)):
+            raise ValueError("valid ordered native half-cell stations required")
     cuts = [float(lo_x)]
-    cuts.extend(k/half_cells for k in range(1, half_cells)
-                if lo_x+1e-14 < k/half_cells < hi_x-1e-14)
+    cuts.extend(float(x) for x in abscissae[1:-1]
+                if lo_x+1e-14 < x < hi_x-1e-14)
     cuts.append(float(hi_x))
     return tuple(zip(cuts[:-1], cuts[1:]))
 
@@ -167,7 +176,7 @@ def distributed_surface_patch_trace(
         lo_x,hi_x=max(float(x0),line_lo),min(float(x1),line_hi)
         if hi_x<=lo_x:
             continue
-        for sx0,sx1 in bond_x_segments(lo_x,hi_x,beam.n_half_cells):
+        for sx0,sx1 in bond_x_segments(lo_x,hi_x,beam.abscissae):
             for y0,y1 in zip(ys[:-1],ys[1:]):
                 lo_y,hi_y=max(float(y0),-.05),min(float(y1),.05)
                 if hi_y<=lo_y:
@@ -1203,10 +1212,13 @@ def run_terminal_interface(output_dir: Path) -> None:
 
 def graded_terminal_coupling(patch_cells: int, beam, *,
                              plate_thickness: float = .07,
-                             include_surface_moments: bool = False) -> dict:
+                             include_surface_moments: bool = False,
+                             force_sign: float = 1.) -> dict:
     """Linearized native B3/E4 Q4 terminal KKT on a resolved local grid."""
     if plate_thickness not in (.07,.035):
         raise ValueError("bounded native plate thickness required")
+    if force_sign not in (-1., 1.):
+        raise ValueError("declared unit-sign terminal force required")
     beam_axis_z=plate_thickness/2+.05
     xs,ys=local_grid(patch_cells)
     shell_k,physical=raw_e4_tangent(xs,ys,thickness=plate_thickness)
@@ -1258,8 +1270,14 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
     primal_scale=np.r_[nodal_scale,retained_scale]
     if len(primal_scale)!=total:
         raise ArithmeticError("graded retained scale layout changed")
-    beam_nodes=np.array([(i/beam.n_half_cells,0.,beam_axis_z)
-                         for i in range(beam.n_half_cells+1)])
+    beam_nodes=(beam.context.initial.mechanical.positions+
+                beam.context.initial.mechanical.position_low)
+    stations=(0,250,500,750,1000)
+    station_nodes={station:int(np.argmin(np.abs(
+        beam_nodes[:,0]-station/1000))) for station in stations}
+    if any(abs(beam_nodes[index,0]-station/1000)>1e-12
+           for station,index in station_nodes.items()):
+        raise ValueError("terminal reference lacks required beam stations")
     def wrench(nodal,locations):
         return np.r_[nodal[:,:3].sum(axis=0),
                      (np.cross(locations,nodal[:,:3])+nodal[:,3:]).sum(axis=0)]
@@ -1306,7 +1324,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         lu,piv=linalg.lu_factor(scaled)
         cases={}
         for loading,axis,magnitude in (("tip_mx",3,100.),
-                                       ("tip_fz",2,1000.)):
+                                       ("tip_fz",2,1000.*force_sign)):
             load=np.zeros(total)
             load[shell_size+6*beam.n_half_cells+axis]=magnitude
             rhs=np.r_[load[free]*scale[:n]/energy,np.zeros(m)]
@@ -1346,8 +1364,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 "tip_uz_m":float(full[shell_size+6*beam.n_half_cells+2]),
                 "beam_section_rx_at_stations_rad":{
                     str(station):float(full[shell_size+
-                        6*(beam.n_half_cells*station//1000)+3])
-                    for station in (0,250,500,750,1000)},
+                        6*station_nodes[station]+3])
+                    for station in stations},
                 "total_external_work_j":work,
                 "physical_shell_work_j":physical_work,
                 "numerical_shell_work_j":shell_total-physical_work,

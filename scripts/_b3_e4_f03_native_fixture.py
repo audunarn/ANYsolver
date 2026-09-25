@@ -67,6 +67,7 @@ class Fixture:
     physical: np.ndarray
     internal: np.ndarray
     dense_oracle_max_error: float
+    abscissae: np.ndarray
 
     def blocks(self):
         k = self.tangent
@@ -78,10 +79,11 @@ class Fixture:
     def _locate(self, s):
         if not np.isfinite(s) or not 0 <= s <= 1:
             raise ValueError('station s must be finite and in [0, 1]')
-        h = 1 / self.n_half_cells
-        half = min(int(s / h), self.n_half_cells - 1)
+        half = min(int(np.searchsorted(self.abscissae, s, side="right"))-1,
+                   self.n_half_cells-1)
         element, cell = divmod(half, 2)
-        t = (s - half * h) / h
+        t = ((s-self.abscissae[half]) /
+             (self.abscissae[half+1]-self.abscissae[half]))
         return element, cell, t, cell - 1 + t
 
     def pose(self, s, step=None):
@@ -174,11 +176,32 @@ def _sparse_native_assembly(context):
     return residual, tangent
 
 
+_C1_HALF_STATIONS = np.array((0., .125, .25, .375, .5, .625,
+                              .75, .7875, .825, .8625, .9, .95, 1.))
+
+
+def _c1_offset_slope(x: float) -> tuple[float, float]:
+    clearance = 2e-6
+    if x <= .75:
+        return clearance, 0.
+    if x >= .9:
+        return 0., 0.
+    t = (x-.75)/.15
+    if t <= .5:
+        return clearance*(1.-2.*t*t), -4.*clearance*t/.15
+    return 2.*clearance*(1.-t)**2, -4.*clearance*(1.-t)/.15
+
+
 def build(n_half_cells: int, *, z_offset: float = 0.,
-          torsion_constant: float | None = None) -> Fixture:
+          torsion_constant: float | None = None,
+          reference_profile: str = "straight") -> Fixture:
     """Construct and assemble an actual virgin elastic retained B3 chain."""
-    if type(n_half_cells) is not int or n_half_cells not in (4, 8, 16, 32):
-        raise ValueError('n_half_cells must be exactly 4, 8, 16, or 32')
+    if (reference_profile not in ("straight", "straight_c1_stations",
+                                  "c1_tangent_2um") or
+            type(n_half_cells) is not int or
+            (n_half_cells not in (4, 8, 16, 32) if
+             reference_profile == "straight" else n_half_cells != 12)):
+        raise ValueError('bounded straight or 12-half-cell C1 native reference required')
     if (isinstance(z_offset, bool) or not np.isfinite(z_offset) or
             not -.2 <= z_offset <= .2):
         raise ValueError('bounded finite native beam reference offset required')
@@ -186,14 +209,21 @@ def build(n_half_cells: int, *, z_offset: float = 0.,
             isinstance(torsion_constant, bool) or
             not np.isfinite(torsion_constant) or torsion_constant <= 0.):
         raise ValueError('positive finite physical torsion constant required')
+    if reference_profile != "straight" and z_offset != .0675:
+        raise ValueError('C1 stations require the matched 67.5 mm beam axis')
     n_elements = n_half_cells // 2
-    h = 1 / n_half_cells
+    abscissae = (np.arange(n_half_cells+1, dtype=float)/n_half_cells if
+                 reference_profile == "straight" else _C1_HALF_STATIONS.copy())
     name = f'f03-native-virgin-{n_half_cells}'
     if z_offset:
         name += f'-z{z_offset:.17g}'
+    if reference_profile != "straight":
+        name += f'-{reference_profile}'
     model = FEModel(name)
-    for node in range(n_half_cells + 1):
-        model.add_node(node + 1, node*h, 0., z_offset)
+    for node, x in enumerate(abscissae):
+        offset = (_c1_offset_slope(float(x))[0] if
+                  reference_profile == "c1_tangent_2um" else 0.)
+        model.add_node(node + 1, float(x), 0., z_offset+offset)
     section_diagonal = SECTION_DIAGONAL.copy()
     if torsion_constant is not None:
         section_diagonal[3] = G * torsion_constant
@@ -203,6 +233,14 @@ def build(n_half_cells: int, *, z_offset: float = 0.,
         ids = (2*element+1, 2*element+2, 2*element+3)
         coords = np.array([model.mesh.nodes[node].coords() for node in ids])
         frames = np.tile(np.eye(3), (3, 1, 1))
+        if reference_profile == "c1_tangent_2um":
+            for local, x in enumerate(abscissae[2*element:2*element+3]):
+                slope = _c1_offset_slope(float(x))[1]
+                tangent = np.array((1., 0., slope))
+                tangent /= np.linalg.norm(tangent)
+                transverse = np.array((0., 1., 0.))
+                frames[local] = np.column_stack((
+                    tangent, transverse, np.cross(tangent, transverse)))
         reference = CenteredCurvedBeam3ReferenceGeometry(coords, frames)
         native = NativeGeneralizedStaticElement(element+1, ids, reference,
                                                 section, order=4)
@@ -223,4 +261,4 @@ def build(n_half_cells: int, *, z_offset: float = 0.,
                          if i not in context.fixed], dtype=int)
     internal = np.arange(context.nodal_count, context.count)
     return Fixture(n_half_cells, model, context, residual, tangent,
-                   physical, internal, parity)
+                   physical, internal, parity, abscissae)

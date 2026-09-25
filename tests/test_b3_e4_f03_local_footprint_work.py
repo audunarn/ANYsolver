@@ -2,18 +2,51 @@
 
 import numpy as np
 import pytest
+from threadpoolctl import threadpool_limits
 
 from scripts._b3_e4_f03_shell_strip_pose_candidate import reference_spatial_trace_strip
 from scripts._b3_e4_f03_shell_trace import make_shell
 from scripts.b3_e4_f03_local_footprint_work import (
     case, distributed_surface_patch_trace, distributed_surface_patch_trace_panel,
-    loaded_surface_patch_panel, structured_q4_patch_trace,
+    graded_terminal_coupling, loaded_surface_patch_panel,
+    structured_q4_patch_trace,
     structured_q4_point_shape,
 )
 from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
 from scripts.b3_e4_f03_plate_patch_work import local_grid
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
+
+
+def test_native_c1_terminal_reference_and_opening_shear_kkt():
+    with threadpool_limits(limits=1):
+        beam = build(12, z_offset=.0675,
+                     torsion_constant=square_torsion_constant(),
+                     reference_profile="c1_tangent_2um")
+        positions = (beam.context.initial.mechanical.positions+
+                     beam.context.initial.mechanical.position_low)
+        for station, expected_z in ((0., .067502), (.75, .067502),
+                                    (.825, .067501), (.9, .0675),
+                                    (1., .0675)):
+            index = int(np.argmin(abs(beam.abscissae-station)))
+            assert beam.abscissae[index] == pytest.approx(station, abs=1e-14)
+            assert positions[index, 2] == pytest.approx(expected_z, abs=1e-13)
+        assert beam.dense_oracle_max_error < 1e-9
+        assert np.max(np.abs(beam.residual)) < 1e-9
+        tangent = beam.pose(.825)[1][:, 0]
+        assert tangent[2]/tangent[0] == pytest.approx(
+            -4*2e-6*.5/.15, abs=1e-11)
+        result = graded_terminal_coupling(
+            2, beam, plate_thickness=.035, force_sign=-1.)
+    for family in ("distributing", "rigid"):
+        case = result["results"][family]["cases"]["tip_fz"]
+        assert case["tip_uz_m"] < 0.
+        assert case["total_external_work_j"] == pytest.approx(
+            -1000.*case["tip_uz_m"], rel=1e-10)
+        assert (case["shell_support_wrench_N_Nm"][2]+
+                case["beam_root_wrench_N_Nm"][2]) == pytest.approx(
+            1000., abs=1e-7)
+        assert case["mechanics_error"] < 1e-7
 
 
 def test_structured_patch_trace_matches_existing_uniform_native_rows():

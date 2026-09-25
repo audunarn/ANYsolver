@@ -29,6 +29,9 @@ def test_actual_e4_b3_surface_work_has_consistent_finite_derivatives():
 def test_reference_integration_splits_native_half_cell_inside_shell_host():
     assert bond_x_segments(.925, .95, 16) == (
         (.925, .9375), (.9375, .95))
+    c1_stations = np.array((0., .75, .7875, .825, .8625, .9, 1.))
+    assert bond_x_segments(.78, .85, c1_stations) == (
+        (.78, .7875), (.7875, .825), (.825, .85))
     xs, ys = local_grid(4)
     beam = build(16, z_offset=.0675,
                  torsion_constant=square_torsion_constant())
@@ -62,3 +65,26 @@ def test_interval_surface_means_partition_without_reprojecting_reference():
                second["reference_gap_m"]) < 1e-12
     assert abs(full["area_m2"]-.1) < 1e-12
     assert np.max(np.abs(whole[:3]-.5*(left[:3]+right[:3]))) < 1e-12
+
+
+def test_c1_surface_moment_chart_matches_linearized_native_trace():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    patch = FiniteSurfaceMomentPatch(xs, ys, beam, thickness=.035)
+    trace, reference = distributed_surface_patch_trace(
+        xs, ys, beam, plate_thickness=.035)
+    assert reference["reference_gap_m"] < 1e-12
+    frames = np.broadcast_to(np.eye(3), (patch.shell_count, 3, 3)).copy()
+    shell_direction = np.zeros((patch.shell_count, 6))
+    shell_direction[:, 2] = 1e-5*patch.reference_nodes[:, 1]
+    beam_direction = np.zeros(beam.context.count)
+    beam_direction[6*beam.n_half_cells+2] = 2e-5
+    direction = (shell_direction, beam_direction)
+    actual = patch.evaluate(
+        patch.reference_nodes, frames, beam.context.initial.mechanical,
+        direction, direction)
+    assert np.max(np.abs(actual[:, 0])) < 1e-12
+    expected = trace@np.r_[shell_direction.ravel(), beam_direction]
+    assert np.max(np.abs(actual[:, 1]-expected)) < 1e-12
