@@ -72,7 +72,7 @@ The 0.05 mm run is a single candidate, not mesh, integration or enforcement
 convergence. Numeric roundoff allowances are bounded development guards,
 not directed interval arithmetic. Pressure-space stability, partially
 contacting nonmatching meshes, edge ownership, reference-warped Q4, independent
-review, installed-package verification of V1 and application adapters remain
+review and application adapters remain
 open. No C1 engineering acceptance is claimed.
 
 The runnable [V1 Q4/Q4 example](../examples/general_contact_q4_q4_projected_gap.py)
@@ -84,3 +84,15 @@ default run completed with one active pressure DOF, seven augmentation passes,
 completed with zero multipliers on opening and four active pressure DOFs on
 recontact (`q4-projected-v1-example-four-source.txt`). These are development
 settings, not general regularization recommendations.
+
+A wheel built from clean source commit `590cb5ad` has SHA-256
+`941d9322e904afe78cf90bae81e101677f8bbbd41fdf67e53aa64022504bd10d`.
+It was installed offline without dependencies into an isolated target, and the
+import origin was checked there. Both example modes completed against that
+installed package. Their complete outputs matched the source outputs byte for
+byte (`q4-projected-v1-example-tight-installed-590cb5ad.txt`, output SHA-256
+`679562622b986036e6db48555a5d6cae5dbdd92206482388bfba24f933cc8806`;
+`q4-projected-v1-example-four-installed-590cb5ad.txt`, output SHA-256
+`352d47e244c1b4d12db0ab19a320c831afbb312af9fa085ee6e9a8a01fcb19f3`).
+No package was published. Installed agreement does not establish numerical
+qualification or application integration.
