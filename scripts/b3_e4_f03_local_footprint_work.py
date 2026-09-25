@@ -127,6 +127,24 @@ def finite_rigid_work(shell: FlatE4TrialPanel, beam, port,
                       abs(work.gradient[1]-(gp-gm)/(2*h)))
     mixed_fd = (fpp-fpm-fmp+fmm)/(4*h*h)
     mixed_error = abs(work.hessian[0, 1]-mixed_fd)
+    physical_forces = (frame @ multipliers.reshape(4, 3).T).T
+    shell_positions = np.array([
+        weights @ (nodes[indices] + q.reshape(-1, 6)[indices, :3])
+        for indices, weights in shape_rows])
+    beam_force = -physical_forces.sum(axis=0)
+    beam_moment = -np.cross(shell_positions-center, physical_forces).sum(axis=0)
+    force_balance = float(np.linalg.norm(physical_forces.sum(axis=0)+beam_force))
+    moment_balance = float(np.linalg.norm(
+        np.cross(shell_positions, physical_forces).sum(axis=0) +
+        np.cross(center, beam_force) + beam_moment))
+    def physical_work(shell_direction, beam_direction):
+        sampled = np.array([weights @ shell_direction.reshape(-1, 6)[indices, :3]
+                            for indices, weights in shape_rows])
+        return float(np.sum(physical_forces*sampled) +
+                     beam_force@beam_direction[start:start+3] +
+                     beam_moment@beam_direction[start+3:start+6])
+    work_error = max(abs(work.gradient[0]-physical_work(u_shell, u_beam)),
+                     abs(work.gradient[1]-physical_work(v_shell, v_beam)))
     from scipy.spatial.transform import Rotation
     motion = (Rotation.from_rotvec((.3, -.2, .4)).as_matrix(),
               np.array((2., -3., 1.)))
@@ -134,12 +152,16 @@ def finite_rigid_work(shell: FlatE4TrialPanel, beam, port,
     objective_error = max(abs(moved-f00), float(np.max(np.abs(moved_gap-gap))))
     if (abs(work.value-f00) > 1e-10 or first_error > 1e-6 or
             mixed_error > 1e-5 or objective_error > 1e-10 or
-            abs(work.hessian[0, 1]) < 1e-3):
+            abs(work.hessian[0, 1]) < 1e-3 or
+            max(force_balance, moment_balance, work_error) > 1e-9):
         raise ArithmeticError("finite rigid footprint work/chart check failed")
     return {"potential_j": f00, "first_error_j": first_error,
             "mixed_hessian_j": float(work.hessian[0, 1]),
             "mixed_error_j": mixed_error,
             "objective_gap_work_error": objective_error,
+            "force_balance_n": force_balance,
+            "moment_balance_nm": moment_balance,
+            "physical_work_error_j": work_error,
             "scope": "actual E4 position interpolation and native nodal Exp-chart, local nonzero-multiplier proof"}
 
 

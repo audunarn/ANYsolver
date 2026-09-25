@@ -16,3 +16,6 @@ def test_distinct_footprint_work_and_finite_rigid_pullback(topology):
     assert abs(chart["mixed_hessian_j"]) > 1e-3
     assert chart["mixed_error_j"] < 1e-5
     assert chart["objective_gap_work_error"] < 1e-10
+    assert chart["force_balance_n"] < 1e-9
+    assert chart["moment_balance_nm"] < 1e-9
+    assert chart["physical_work_error_j"] < 1e-9
