@@ -110,3 +110,20 @@ def test_end_face_recovery_is_conjugate_to_actual_discrete_load(load):
     measure = result["tip_work_conjugate_displacement"]
     assert measure["value"] == pytest.approx(amplitude, abs=1e-15)
     assert measure["unit"] == ("rad" if load == "tip_mx" else "m")
+
+
+def test_shared_face_trace_distinguishes_rigid_twist_from_section_warping():
+    _, meta = SCREEN.build(4, "tip_mx", boundary_policy="left_root")
+    twist = 1e-4
+    rigid = {int(node): np.array([0., -(xyz[2]-.085)*twist,
+                                  xyz[1]*twist])
+             for node, xyz in meta["probe_coordinates_m"].items()}
+    station = SCREEN.recover(meta, rigid)["station_motion"]["500"]
+    assert np.linalg.norm(station["shared_face_minus_fitted_bottom_m"]) < 1e-15
+    assert abs(station["shared_face_slope_minus_section_rx_rad"]) < 1e-14
+    warped = {node: value + np.array([0., 0., .01 *
+                                     meta["probe_coordinates_m"][str(node)][1] ** 3])
+              for node, value in rigid.items()}
+    station = SCREEN.recover(meta, warped)["station_motion"]["500"]
+    assert abs(station["shared_face_slope_minus_section_rx_rad"]) > 1e-6
+    assert station["max_warping_residual_m"] > 1e-8

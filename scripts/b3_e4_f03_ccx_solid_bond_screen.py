@@ -284,9 +284,29 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
             design[3*i:3*i+3,3:]=((0.,z,-y),(-z,0.,x),(y,-x,0.))
         fitted=np.linalg.lstsq(design,response,rcond=None)[0]
         residual=(response-design@fitted).reshape(-1,3)
+        top=np.flatnonzero(np.abs(xyz[:,2]-.035)<1e-12)
+        if len(top)!=2*meta["factor"]+1:
+            raise ValueError("incomplete shared solid-bond face trace")
+        top=top[np.argsort(xyz[top,1])]
+        if (abs(xyz[top[0],1]+.05)>1e-12 or
+                abs(xyz[top[-1],1]-.05)>1e-12):
+            raise ValueError("shared solid-bond face extent changed")
+        weights=np.ones(len(top))
+        weights[[0,-1]]=.5
+        top_mean=np.average(response.reshape(-1,3)[top],axis=0,weights=weights)
+        fitted_bottom=fitted[:3]+np.cross(fitted[3:],(0.,0.,-.05))
+        top_slope_z_y=float((displacement[indices[top[-1]]][2]-
+                             displacement[indices[top[0]]][2])/.1)
         stations[station]={"translation_m":fitted[:3].tolist(),
                            "section_rotation_rad":fitted[3:].tolist(),
                            "max_warping_residual_m":float(np.linalg.norm(residual,axis=1).max()),
+                           "shared_face_mean_translation_m":top_mean.tolist(),
+                           "fitted_section_bottom_translation_m":fitted_bottom.tolist(),
+                           "shared_face_minus_fitted_bottom_m":(
+                               top_mean-fitted_bottom).tolist(),
+                           "shared_face_slope_z_y_rad":top_slope_z_y,
+                           "shared_face_slope_minus_section_rx_rad":(
+                               top_slope_z_y-float(fitted[3])),
                            "node_count":len(indices)}
     result={"centerline_tangent_yaw_rad":float(tangent),
             "surface_square_patch_yaw_rad":patch_yaw,
