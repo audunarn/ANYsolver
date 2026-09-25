@@ -52,3 +52,12 @@ outputs were byte-identical (SHA-256
 `CD53FB37764490B12095608018AF0E004172091A81C575943D290D13539FC3AF`).
 This verifies package routing for this development slice; no package was
 published.
+
+Source `45ae92856bdcf4df2c70cc485b3e8186d0651aa8` built the updated
+offline wheel (SHA-256
+`AE55739E6F711FCA2BA824CBE0C57635751605EB898B5D73E89E980C55439BC6`).
+The isolated installed `--radius-scaled-gap` example matched its source
+output byte for byte (SHA-256
+`8A488231960305E0AC4DD89B0B6FE71E6938B34511FC66F7B93049F311DC69B6`).
+This checks the 50 micrometre development example through the installed
+package; it adds no scientific acceptance or release claim.
