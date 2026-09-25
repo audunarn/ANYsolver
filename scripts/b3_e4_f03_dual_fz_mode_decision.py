@@ -126,13 +126,16 @@ def run(output_dir: Path) -> None:
                     raise ValueError("bounded dense limit exceeded")
                 physical = int(np.count_nonzero(
                     free < 6 * shell.panel.node_count + beam.context.nodal_count))
+                shell_physical = int(np.count_nonzero(
+                    free < 6 * shell.panel.node_count))
                 scale = kkt.coordinate_scale[:n]
                 stiffness = kkt.primal_tangent[np.ix_(free, free)]
                 scaled = (scale[:, None] * stiffness) * scale[None, :] / kkt.energy_scale
                 kp, kpr = scaled[:physical, :physical], scaled[:physical, physical:]
                 krp, kr = scaled[physical:, :physical], scaled[physical:, physical:]
                 retained = linalg.solve(kr, krp, assume_a="sym")
-                ep, up = linalg.eigh(kp - kpr @ retained)
+                physical_schur = kp - kpr @ retained
+                ep, up = linalg.eigh(physical_schur)
                 er, ur = linalg.eigh(kr)
                 if ep[0] <= 1e-10 * ep[-1] or min(abs(er)) <= 1e-12 * max(abs(er)):
                     raise ArithmeticError("physical/retained energy split failed")
@@ -142,7 +145,8 @@ def run(output_dir: Path) -> None:
                 row_scale = np.array([1. if axis < 3 else .46 for axis in channels]) / displacement_scale
                 cbar = (row_scale[:, None] * kkt.constraint_jacobian[:, free]) * scale[None, :]
                 cp, cr = cbar[:, :physical], cbar[:, physical:]
-                bp = (cp - cr @ retained) @ (up / np.sqrt(ep)[None, :])
+                effective = cp - cr @ retained
+                bp = effective @ (up / np.sqrt(ep)[None, :])
                 br = cr @ (ur / np.sqrt(np.abs(er))[None, :])
                 action = bp @ bp.T + br @ br.T
                 selected = [i for i, axis in enumerate(channels) if axis in (2, 3, 4)]
@@ -166,6 +170,20 @@ def run(output_dir: Path) -> None:
                         part = mode[start:start + space.count]
                         shares.append(float(part @ g[1] @ part))
                         start += space.count
+                    force = effective[selected, :].T @ mode
+                    shell_force = force[:shell_physical]
+                    beam_force = force[shell_physical:]
+                    shell_action = float(shell_force @ linalg.solve(
+                        physical_schur[:shell_physical, :shell_physical],
+                        shell_force, assume_a="pos"))
+                    beam_action = float(beam_force @ linalg.solve(
+                        physical_schur[shell_physical:, shell_physical:],
+                        beam_force, assume_a="pos"))
+                    retained_action = float(np.linalg.norm(br[selected, :].T @ mode)**2)
+                    parts = np.array((shell_action, beam_action, retained_action))
+                    total_action = float(mode @ action @ mode)
+                    if abs(float(parts.sum()) - total_action) > 1e-8 * max(1., total_action):
+                        raise ArithmeticError("physical/retained action closure failed")
                     result[name] = {
                         "beta_lower": float(np.sqrt(max(0., eigen[0]))),
                         "beta_upper": float(np.sqrt(max(0., linalg.eigh(action, lower, eigvals_only=True)[0]))),
@@ -173,6 +191,8 @@ def run(output_dir: Path) -> None:
                         "fz_mx_my_shares": (np.array(shares) / sum(shares)).tolist(),
                         "fz_sign_changes": int(np.count_nonzero(signs[1:] != signs[:-1])),
                         "fz_coefficients": fz.tolist(),
+                        "shell_beam_physical_beam_retained_action_shares": (parts / parts.sum()).tolist(),
+                        "action_closure_error": float(parts.sum() - total_action),
                     }
                 stream.write(json.dumps(result, allow_nan=False) + "\n")
                 stream.flush()
