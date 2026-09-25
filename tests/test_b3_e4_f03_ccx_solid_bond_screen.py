@@ -102,6 +102,22 @@ def test_thickness_screen_rejects_undeclared_geometry():
         SCREEN.build(1,"tip_mx",plate_thickness_mm=50)
 
 
+def test_quadratic_face_bernstein_check_distinguishes_hidden_dip():
+    sites=((-1.,-1.),(1.,-1.),(1.,1.),(-1.,1.),
+           (0.,-1.),(1.,0.),(0.,1.),(-1.,0.))
+    positive=np.array([1e-6*(.25*x*x+.01) for x,_ in sites])
+    bounded=SCREEN.certify_quad8_normal_gap(positive)
+    assert bounded["root_bernstein_lower_m"]<0
+    assert bounded["certified_nonnegative"]
+    assert bounded["visited_subpatches"]>1
+    negative=np.array([1e-6*(x*x+y*y-.1) for x,y in sites])
+    penetrated=SCREEN.certify_quad8_normal_gap(negative)
+    assert not penetrated["certified_nonnegative"]
+    assert penetrated["negative_subpatches"]>0
+    with pytest.raises(ValueError,match="bounded finite"):
+        SCREEN.certify_quad8_normal_gap(np.ones(7))
+
+
 @pytest.mark.parametrize("factor", (1, 2, 4))
 def test_reverse_fz_audit_preserves_geometry_and_reverses_exact_tip_wrench(factor):
     forward, control = SCREEN.build(factor, "tip_fz", boundary_policy="left_root",

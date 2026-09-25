@@ -486,6 +486,93 @@ def _quad8_shape(xi: float, eta: float) -> np.ndarray:
         .5*(1.-xi)*(1.-eta*eta)])
 
 
+def certify_quad8_normal_gap(nodal_gap_m: np.ndarray, *,
+                             max_depth: int = 14,
+                             max_patches: int = 100000) -> dict:
+    """Bound one paired-face normal gap using quadratic Bernstein nets.
+
+    The certificate concerns corresponding material coordinates on matching
+    reference faces, not deformed closest-point contact or surface topology.
+    """
+    nodal=np.asarray(nodal_gap_m,dtype=float)
+    if (nodal.shape!=(8,) or not np.isfinite(nodal).all() or
+            type(max_depth) is not int or not 0<=max_depth<=20 or
+            type(max_patches) is not int or max_patches<1):
+        raise ValueError("bounded finite quadratic face gap required")
+    sites=(-1.,0.,1.)
+    values=np.array([[_quad8_shape(xi,eta)@nodal for eta in sites]
+                     for xi in sites])
+    transform=np.array(((1.,0.,0.),(-.5,2.,-.5),(0.,0.,1.)))
+    net=transform@values@transform.T
+    def split_axis0(controls):
+        a=(controls[0]+controls[1])/2
+        b=(controls[1]+controls[2])/2
+        c=(a+b)/2
+        return np.stack((controls[0],a,c)),np.stack((c,b,controls[2]))
+    def split_both(controls):
+        left,right=split_axis0(controls)
+        pieces=[]
+        for half in (left,right):
+            low,high=split_axis0(half.T)
+            pieces.extend((low.T,high.T))
+        return pieces
+    stack=[(net,0)]
+    visited=0
+    undecided=0
+    negative=0
+    while stack:
+        controls,depth=stack.pop()
+        visited+=1
+        lower=float(np.min(controls))
+        upper=float(np.max(controls))
+        if lower>=0.:
+            continue
+        if upper<0. or float(_quad8_shape(0.,0.)@nodal)<0. and depth==0:
+            negative+=1
+            continue
+        if depth==max_depth or visited+len(stack)+4>max_patches:
+            undecided+=1
+            continue
+        stack.extend((piece,depth+1) for piece in split_both(controls))
+    return {"certified_nonnegative":negative==0 and undecided==0,
+            "negative_subpatches":negative,"undecided_subpatches":undecided,
+            "visited_subpatches":visited,"max_depth":max_depth,
+            "max_patches":max_patches,
+            "root_bernstein_lower_m":float(np.min(net)),
+            "root_bernstein_upper_m":float(np.max(net)),
+            "meaning":"floating-point Bernstein control-net bound for reported matching-reference-coordinate quadratic nodal gaps; not an outward-rounded interval proof or deformed closest-point surface-intersection check"}
+
+
+def certify_unbonded_quadratic_faces(meta: dict,
+                                    displacement: dict[int,np.ndarray], *,
+                                    max_depth: int = 14) -> dict:
+    faces=meta.get("unbonded_face_pairs",())
+    initial=meta.get("unbonded_face_initial_gaps_m",())
+    if not faces or len(faces)!=len(initial):
+        raise ValueError("complete quadratic face inventory required")
+    expected={node for face in faces for plate,bar in face
+              if plate!=bar for node in (plate,bar)}
+    if set(displacement)!=expected:
+        raise ValueError("complete quadratic face displacement inventory required")
+    records=[]
+    for face,initial_face in zip(faces,initial):
+        if len(face)!=8 or len(initial_face)!=8:
+            raise ValueError("eight-node paired face required")
+        nodal=np.array([initial_face[k]+(displacement[bar][2]-
+                        displacement[plate][2] if plate!=bar else 0.)
+                        for k,(plate,bar) in enumerate(face)])
+        records.append(certify_quad8_normal_gap(nodal,max_depth=max_depth))
+    return {"face_count":len(records),
+            "certified_nonnegative_faces":sum(r["certified_nonnegative"]
+                                               for r in records),
+            "negative_faces":sum(r["negative_subpatches"]>0 for r in records),
+            "undecided_faces":sum(r["undecided_subpatches"]>0 for r in records),
+            "max_visited_subpatches":max(r["visited_subpatches"] for r in records),
+            "minimum_root_bernstein_lower_m":min(
+                r["root_bernstein_lower_m"] for r in records),
+            "meaning":"floating-point matching-coordinate reference-normal control-net check only; no outward-rounded or deformed closest-point/contact proof"}
+
+
 def audit_unbonded_open(meta: dict, displacement: dict[int,np.ndarray]) -> dict:
     """Reference-normal gap at every paired node of the matching free faces."""
     pairs=meta["unbonded_interface_pairs"]
