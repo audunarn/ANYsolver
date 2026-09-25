@@ -46,3 +46,19 @@ def test_reference_integration_splits_native_half_cell_inside_shell_host():
         patch.reference_nodes, frames, beam.context.initial.mechanical,
         direction, direction)[:, 1]
     assert np.max(np.abs(derivative-trace@np.r_[first.ravel(), beam_first])) < 1e-12
+
+
+def test_interval_surface_means_partition_without_reprojecting_reference():
+    xs, ys = local_grid(2)
+    beam = build(8, z_offset=.0675,
+                 torsion_constant=square_torsion_constant())
+    whole, full = distributed_surface_patch_trace(
+        xs, ys, beam, plate_thickness=.035, x_interval=(0., 1.))
+    left, first = distributed_surface_patch_trace(
+        xs, ys, beam, plate_thickness=.035, x_interval=(0., .5))
+    right, second = distributed_surface_patch_trace(
+        xs, ys, beam, plate_thickness=.035, x_interval=(.5, 1.))
+    assert max(full["reference_gap_m"], first["reference_gap_m"],
+               second["reference_gap_m"]) < 1e-12
+    assert abs(full["area_m2"]-.1) < 1e-12
+    assert np.max(np.abs(whole[:3]-.5*(left[:3]+right[:3]))) < 1e-12

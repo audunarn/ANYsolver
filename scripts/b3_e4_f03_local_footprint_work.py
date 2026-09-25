@@ -126,11 +126,13 @@ def bond_x_segments(lo_x: float, hi_x: float, half_cells: int
 
 def distributed_surface_patch_trace(
         xs: np.ndarray, ys: np.ndarray, beam, *,
-        plate_thickness: float) -> tuple[np.ndarray, dict]:
+        plate_thickness: float,
+        x_interval: tuple[float, float] = (.9, 1.)) -> tuple[np.ndarray, dict]:
     """Six exact weak position moments on a bounded physical top-surface bond.
 
     This linearized G0 candidate ties the E4 top-surface *positions* to the
-    native retained B3 bottom-surface positions over x=[.9,1], y=[-.05,.05].
+    native retained B3 bottom-surface positions over one specified material
+    interval and y=[-.05,.05]. The terminal interval is the default.
     It does not equate the shell director to the surface normal or beam frame.
     The reference second moment normalizes rotation-like rows so their duals
     are physical moments. No penalty, drilling stiffness or tip-only port is
@@ -138,7 +140,17 @@ def distributed_surface_patch_trace(
     """
     if plate_thickness not in (.035,.07):
         raise ValueError("bounded E4 plate thickness required")
+    if (not isinstance(x_interval, tuple) or len(x_interval)!=2 or
+            not np.isfinite(x_interval).all() or
+            not 0.<=x_interval[0]<x_interval[1]<=1.):
+        raise ValueError("bounded native material interval required")
+    line_lo,line_hi=map(float,x_interval)
+    line_center=(line_lo+line_hi)/2
+    reference_area=(line_hi-line_lo)*.1
     xs,ys=np.asarray(xs,dtype=float),np.asarray(ys,dtype=float)
+    if (xs[0]>line_lo or xs[-1]<line_hi or
+            ys[0]>-.05 or ys[-1]<.05):
+        raise ValueError("shell grid must cover the complete material strip")
     shell_size=6*len(xs)*len(ys)
     total=shell_size+beam.context.count
     mean=np.zeros((3,total))
@@ -151,7 +163,7 @@ def distributed_surface_patch_trace(
     area=0.
     max_reference_gap=0.
     for x0,x1 in zip(xs[:-1],xs[1:]):
-        lo_x,hi_x=max(float(x0),.9),min(float(x1),1.)
+        lo_x,hi_x=max(float(x0),line_lo),min(float(x1),line_hi)
         if hi_x<=lo_x:
             continue
         for sx0,sx1 in bond_x_segments(lo_x,hi_x,beam.n_half_cells):
@@ -189,14 +201,14 @@ def distributed_surface_patch_trace(
                                 -value*shell_top*skew(np.array((0.,0.,1.))))
                         dg[:,shell_size:]-=(np.column_stack((
                             np.eye(3),-skew(surface_offset)))@tangent)
-                        arm=np.array((x-.95,y,0.))
-                        quadrature=float(wx*wy*jac)/.01
+                        arm=np.array((x-line_center,y,0.))
+                        quadrature=float(wx*wy*jac)/reference_area
                         mean+=quadrature*dg
                         first_moment+=quadrature*skew(arm)@dg
                         inertia+=quadrature*((arm@arm)*np.eye(3)-
                                              np.outer(arm,arm))
                         area+=float(wx*wy*jac)
-    if abs(area-.01)>1e-12:
+    if abs(area-reference_area)>1e-12:
         raise ArithmeticError("distributed bond area changed")
     eigenvalues=np.linalg.eigvalsh(inertia)
     if eigenvalues[0]<=1e-8:
@@ -207,6 +219,7 @@ def distributed_surface_patch_trace(
         raise ArithmeticError("distributed surface row is invalid or uses drilling")
     return constraint,{"reference_gap_m":max_reference_gap,
                        "area_m2":area,
+                       "x_interval_m":[line_lo,line_hi],
                        "inertia_eigenvalues_m2":eigenvalues.tolist(),
                        "shell_drilling_column_max":0.,
                        "definition":"mean top-surface position gap and normalized first moment of that gap against native bottom-surface half-cell traces"}
