@@ -205,6 +205,13 @@ def test_refined_q4_pressure_failure_uses_path_transaction(monkeypatch):
     assert trace[0]["active_pressure_dofs"] == 0
     assert trace[0]["source_contact_force_n"] == [0.0, 0.0, 0.0]
     assert trace[0]["sampled_overlap_gap_m"] is not None
+    assert trace[0]["pressure_rank"] is None
+    assert isinstance(trace[0]["pressure_gram_rank"], int)
+    assert trace[0]["pressure_gram_condition_estimate"] is not None
+    assert trace[0]["minimum_weighted_gap_m"] is None
+    assert len(trace[0]["normalized_weighted_gap_m"]) == 6
+    assert len(trace[0]["normal_multiplier_estimate_pa"]) == 6
+    assert len(trace[0]["source_pressure_node_ids"]) == 6
     assert result.steps == []
     assert result.restart_checkpoint is None
     np.testing.assert_array_equal(result.displacements, 0.0)

@@ -508,6 +508,30 @@ def solve_static_contact_path(
                                 "sampled_overlap_gap_m": getattr(
                                     certificate, "sampled_overlap_gap", None,
                                 ),
+                                "pressure_rank": getattr(
+                                    certificate, "pressure_rank", None,
+                                ),
+                                "pressure_gram_rank": getattr(
+                                    certificate, "pressure_gram_rank", None,
+                                ),
+                                "pressure_gradient_condition": getattr(
+                                    certificate, "pressure_gradient_condition", None,
+                                ),
+                                "pressure_gram_condition_estimate": getattr(
+                                    certificate, "pressure_gram_condition_estimate", None,
+                                ),
+                                "minimum_weighted_gap_m": getattr(
+                                    certificate, "minimum_weighted_gap_m", None,
+                                ),
+                                "normalized_weighted_gap_m": list(
+                                    getattr(certificate, "normalized_weighted_gap_m", ())
+                                ),
+                                "normal_multiplier_estimate_pa": list(
+                                    getattr(certificate, "normal_multiplier_estimate_pa", ())
+                                ),
+                                "source_pressure_node_ids": list(
+                                    getattr(certificate, "source_pressure_node_ids", ())
+                                ),
                             })
                             if (hasattr(manager, "has_unresolved_weak_open_gap")
                                     and manager.has_unresolved_weak_open_gap(

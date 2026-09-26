@@ -101,3 +101,16 @@ include active count, global source-contact-force vector and sampled gap
 out a C1 response-convergence claim based on the small mesh difference
 at the original regularization. No stiffness or update tolerance is
 recommended as a universal application setting from this study.
+
+The bounded failure rerun also retained the mortar pressure-space state at
+each augmentation. Its six-node pressure Gram matrix had rank 6 and a
+condition estimate of about 24.8 throughout. The two active source nodes
+(IDs 3 and 6) ended with normalized weighted gaps of +0.0693 and −0.0991 µm
+respectively, while the multiplier update still exceeded tolerance. This
+evidence does not indicate full Gram rank loss. The coupled structural and
+contact response of those two active multipliers is the next numerical
+question; their projected update must not be accepted on the basis of
+integrated force settling alone. The raw trace is
+`c1-mixed-pressure-space-discriminator-source-first.txt`; its temporary
+`pressure_gradient_condition` key contains the Gram condition estimate.
+The source now gives Gram and gradient diagnostics separate names.
