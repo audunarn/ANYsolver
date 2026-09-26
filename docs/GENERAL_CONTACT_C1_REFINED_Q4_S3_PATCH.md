@@ -138,3 +138,27 @@ Build, installation, origin and run logs are retained in
 `wheel-5041e939` and `c1-refined-tight-example-*` names. This verifies
 package routing for the narrow development example; no publication or
 engineering acceptance is implied.
+
+## Underresolved weak-open pose
+
+A two-Q4/two-S3 fixed structural pose now reproduces a supported but
+weak-open corner. Its actual overlap sample is −100 µm, beyond the
+50 µm physical budget, while all six normalized weighted gaps are
+positive, all numerical pressures are zero and the projected augmented
+update changes no multiplier. The conservative whole-face lower bound is
+−360 µm; the diagnosis requires the violating physical sample as well as
+the bound, so bound looseness alone cannot trigger it. The coupled path
+reports `contact_pressure_space_underresolved` if it equilibrates at such
+a pose. Earlier swept-path admission can still stop a trial before an
+equilibrated pose is available, with its separate gap failure reason.
+An injected failure at the path transaction boundary returned no accepted
+step or checkpoint, and the resolved two-step press retained its prior
+force and gap values. Four focused checks passed; the injected check
+verifies rollback and reporting, while the physical fixed-pose check
+verifies the classification conditions.
+
+This diagnostic preserves the primal Q1 pressure space, the 50 µm gate
+and restart format. It does not repair the unresolved corner or establish
+pressure-space stability. The fixed-pose focused checks are in
+`tests/test_general_contact_q4_s3_refined_patch.py`; raw values and the
+reporter correction are retained as `c1-refined-weak-open-pose-*.txt`.

@@ -417,6 +417,29 @@ class GeneralS3PatchManager:
             raise ValueError("penalty patch has no normal multipliers")
         self.normal_multipliers = self.law._multipliers(values).copy()
 
+    def has_unresolved_weak_open_gap(self, result, projected_multipliers):
+        """Identify a sampled penetration that the pressure space cannot see.
+
+        A conservative lower bound alone is insufficient: it can lie below
+        the true minimum. Require an actual overlap sample beyond the gap
+        budget, nonzero supported area, no active pressure, and an unchanged
+        projected augmented update. No physical state is changed here.
+        """
+
+        if not self.augmented or type(result) is not _PatchResults:
+            return False
+        sampled = result.sampled_overlap_gap
+        projected = np.asarray(projected_multipliers, dtype=float)
+        return bool(
+            sampled is not None
+            and sampled < -self.gap_tolerance
+            and not result.gap_tolerance_met
+            and result.active_pressure_dofs == 0
+            and any(area > 0.0 for area in result.reference_support_m2)
+            and projected.shape == self.normal_multipliers.shape
+            and np.array_equal(projected, self.normal_multipliers)
+        )
+
     def restrict_tangent_to_reduced_variations(self, transform):
         """Keep Q4-source Hessian work on axes reached by free coordinates."""
         if self.profile not in {SOURCE_Q4_AUGMENTED_PROFILE,

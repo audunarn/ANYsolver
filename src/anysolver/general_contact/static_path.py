@@ -436,6 +436,12 @@ def solve_static_contact_path(
                                 "minimum_gap": float(certificate.minimum_gap),
                                 "residual_norm": residual_norm,
                             })
+                            if (hasattr(manager, "has_unresolved_weak_open_gap")
+                                    and manager.has_unresolved_weak_open_gap(
+                                        certificate, projected,
+                                    )):
+                                failure_reason = "contact_pressure_space_underresolved"
+                                break
                             if (normal_multiplier_change <= settings.pressure_tolerance
                                     and certificate.gap_tolerance_met):
                                 break
@@ -459,6 +465,10 @@ def solve_static_contact_path(
                             "minimum_gap": (
                                 None if certificate is None else
                                 certificate.minimum_gap
+                            ),
+                            "sampled_overlap_gap": (
+                                None if certificate is None else
+                                getattr(certificate, "sampled_overlap_gap", None)
                             ),
                             "gap_tolerance_met": (
                                 None if certificate is None else

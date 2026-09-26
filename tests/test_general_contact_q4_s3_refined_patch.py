@@ -129,6 +129,82 @@ def test_refined_q4_source_reduced_tangent_keeps_shared_node_work():
     np.testing.assert_allclose(predicted, measured, rtol=3.0e-3, atol=8.0e-4)
 
 
+def test_refined_q4_reports_sampled_weak_open_pressure_underresolution():
+    model, definition, settings = _two_q4_two_s3()
+    definition = replace(definition, interactions=(replace(
+        definition.interactions[0], gap_tolerance=5.0e-5,
+    ),))
+    manager = GeneralS3PatchManager(model, definition, settings)
+    displacement = np.zeros(manager.n_dof)
+    for node in range(1, 7):
+        displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.0149
+    displacement[model.mesh.dof_manager.get_node_dofs(1)[2]] -= 0.0002
+    force, _tangent, weak_open = manager.evaluate(displacement, tangent=False)
+    projected = manager.projected_normal_multipliers(displacement)
+    assert weak_open.sampled_overlap_gap == pytest.approx(-1.0e-4, abs=1.0e-8)
+    assert not weak_open.gap_tolerance_met
+    assert weak_open.active_pressure_dofs == 0
+    assert all(value > 0.0 for value in weak_open.normalized_weighted_gap_m)
+    assert np.linalg.norm(force) == 0.0
+    np.testing.assert_array_equal(projected, manager.normal_multipliers)
+    assert manager.has_unresolved_weak_open_gap(weak_open, projected)
+
+    # The conservative whole-face lower bound is insufficient by itself.
+    bound_only = replace(weak_open, sampled_overlap_gap=0.0)
+    assert not manager.has_unresolved_weak_open_gap(bound_only, projected)
+    assert not manager.has_unresolved_weak_open_gap(
+        replace(weak_open, reference_support_m2=(0.0,)*6), projected,
+    )
+
+    active_pose = np.zeros(manager.n_dof)
+    for node in range(1, 7):
+        active_pose[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.01501
+    _force, _tangent, active = manager.evaluate(active_pose, tangent=False)
+    assert active.active_pressure_dofs == 6
+    assert not manager.has_unresolved_weak_open_gap(
+        active, manager.projected_normal_multipliers(active_pose),
+    )
+
+
+def test_refined_q4_pressure_failure_uses_path_transaction(monkeypatch):
+    model, definition, settings = _two_q4_two_s3()
+    model.add_boundary_condition(BoundaryCondition(
+        "target_fixed", (7, 8, 9, 10),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "source_guide", (1, 2, 3, 4, 5, 6),
+        {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+    ))
+    program = ContactPathProgram(
+        controls=(ContactPathControl.node(1, "ux"),
+                  ContactPathControl.node(1, "uz")),
+        waypoints=((0.0, 0.0), (0.001, 0.001)),
+        steps_per_segment=1,
+    )
+    calls = []
+
+    def forced_failure(_manager, result, _projected):
+        calls.append(result.minimum_gap)
+        return True
+
+    monkeypatch.setattr(
+        GeneralS3PatchManager, "has_unresolved_weak_open_gap", forced_failure,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+    assert calls
+    assert result.status == "diverged"
+    assert result.failure_reason == "contact_pressure_space_underresolved"
+    assert result.info["contact_failure"]["sampled_overlap_gap"] is not None
+    assert result.steps == []
+    assert result.restart_checkpoint is None
+    np.testing.assert_array_equal(result.displacements, 0.0)
+
+
 @pytest.mark.skipif(os.environ.get("ANYSOLVER_LONG_CONTACT") != "1",
                     reason="opt-in coupled multi-Q4 contact path")
 def test_refined_q4_source_active_two_control_path():
