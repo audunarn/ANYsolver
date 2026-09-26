@@ -1424,9 +1424,23 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                     def shell_value(y, axis):
                         nodes,shape=structured_q4_point_shape(xs,ys,x,y)
                         return float(shape@nodal_shell[nodes,axis])
+                    half_index=int(np.flatnonzero(
+                        abs(beam.abscissae-x)<1e-12)[0])
+                    def port_rx(half, weight):
+                        element, cell=divmod(half,2)
+                        port=NativeHalfCellSpatialPort(
+                            beam.context,element,cell,weight)
+                        return float((port.tangent(base)@
+                                      full[shell_size:])[3])
                     local_kinematics[str(station)]={
-                        "beam_section_rx_rad":float(full[
+                        "beam_nodal_rx_rad":float(full[
                             shell_size+6*station_nodes[station]+3]),
+                        "beam_port_rx_left_rad":(
+                            port_rx(half_index-1,1.)
+                            if half_index>0 else None),
+                        "beam_port_rx_right_rad":(
+                            port_rx(half_index,0.)
+                            if half_index<beam.n_half_cells else None),
                         "shell_top_slope_z_y_rad":(
                             shell_value(.05,2)-shell_value(-.05,2))/.1,
                         "shell_director_rx_rad":shell_value(0.,3),

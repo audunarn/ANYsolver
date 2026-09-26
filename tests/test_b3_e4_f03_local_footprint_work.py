@@ -103,9 +103,13 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
         assert np.isfinite(case["constraint_multiplier_material_N_Nm"]).all()
         stations = case["terminal_station_kinematics"]
         assert set(stations) == {"900", "950", "1000"}
-        assert stations["1000"]["beam_section_rx_rad"] == pytest.approx(
+        assert stations["1000"]["beam_nodal_rx_rad"] == pytest.approx(
             case["beam_section_rx_at_stations_rad"]["1000"], abs=1e-12)
-        assert all(np.isfinite(list(values.values())).all()
+        assert stations["950"]["beam_port_rx_left_rad"] is not None
+        assert stations["950"]["beam_port_rx_right_rad"] is not None
+        assert stations["1000"]["beam_port_rx_right_rad"] is None
+        assert all(np.isfinite([v for v in values.values()
+                                if v is not None]).all()
                    for values in stations.values())
         assert case["physical_shell_work_j"] > 0.
         assert case["mechanics_error"] < 1e-7
