@@ -4,7 +4,8 @@ import numpy as np
 
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_distributed_surface_finite import (
-    FiniteSurfaceLineHybrid, FiniteSurfaceMomentPatch, finite_chart_screen,
+    FiniteSurfaceLineHybrid, FiniteSurfaceMomentPatch, c1_hybrid_line_space,
+    finite_chart_screen,
 )
 from anysolver.corotational import rotation_matrix_from_vector
 from scripts.b3_e4_f03_local_footprint_work import (
@@ -233,8 +234,9 @@ def test_c1_hybrid_uses_actual_additive_e4_total_rotation_chart():
     state = beam.context.advance(beam.context.initial.mechanical, beam_base)
     first = (first_shell, first_beam)
     second = (second_shell, second_beam)
-    actual = patch.evaluate_e4_total(total.ravel(), state, first, second)
     multipliers = np.array((18., -23., 31., 7., -100., 13.))
+
+    actual = patch.evaluate_e4_total(total.ravel(), state, first, second)
 
     def work(a, b):
         candidate = beam.context.advance(
@@ -252,6 +254,84 @@ def test_c1_hybrid_uses_actual_additive_e4_total_rotation_chart():
     assert abs(float(multipliers@actual[:, 2])-second_fd) < 1e-7
     assert abs(float(multipliers@actual[:, 3])-mixed_fd) < 1e-6
     assert np.linalg.norm(total[:, 3:]) > .1
+
+
+def test_c1_weighted_line_spaces_preserve_p0_and_are_distinct():
+    xs, ys = local_grid(4)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    traces = {}
+    for kind in ("piecewise_constant", "continuous_linear", "dual_linear"):
+        rows, masses, patches = c1_hybrid_line_space(
+            xs, ys, beam, kind=kind)
+        traces[kind] = rows
+        expected = ((.05, .05) if kind == "piecewise_constant" else
+                    (.025, .05, .025))
+        assert np.allclose(masses, expected, atol=1e-14)
+        assert np.linalg.matrix_rank(rows) == len(rows)
+        frames = np.broadcast_to(np.eye(3),
+                                 (patches[0].shell_count, 3, 3))
+        for candidate in patches:
+            assert np.max(np.abs(candidate.evaluate(
+                candidate.reference_nodes, frames,
+                beam.context.initial.mechanical)[:, 0])) < 1e-12
+    old = np.vstack([FiniteSurfaceLineHybrid(
+        xs, ys, beam, thickness=.035, x_interval=interval).reference_trace()
+        for interval in ((.9, .95), (.95, 1.))])
+    assert np.max(np.abs(traces["piecewise_constant"]-old)) < 1e-12
+    shell_size = 6*len(xs)*len(ys)
+    fixed_shell = {6*j*len(xs)+axis for j in range(len(ys))
+                   for axis in range(6)}
+    fixed_beam = {shell_size+i for i in beam.context.fixed}
+    free = [i for i in range(old.shape[1])
+            if i not in fixed_shell and i not in fixed_beam]
+    assert all(np.linalg.matrix_rank(rows[:, free]) == len(rows)
+               for rows in traces.values())
+    assert np.linalg.matrix_rank(np.vstack((
+        traces["continuous_linear"],
+        traces["dual_linear"]))[:, free]) == 24
+
+
+def test_c1_weighted_endpoint_work_uses_actual_e4_chart():
+    # Minimal valid shell grid keeps the same two bond hosts and beam trace.
+    xs = np.array((-.5, .9, .95, 1., 1.5))
+    ys = np.array((-.5, -.05, 0., .05, .5))
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    rng = np.random.default_rng(2048)
+    shell = rng.normal(size=(len(xs)*len(ys), 6))*np.array(
+        (.001, .001, .001, .08, .08, .08))
+    du = rng.normal(size=shell.shape)*np.array(
+        (.002, .002, .002, .04, .04, .04))
+    dv = rng.normal(size=shell.shape)*np.array(
+        (.002, .002, .002, .04, .04, .04))
+    beam_base = np.zeros(beam.context.count)
+    beam_base[6:beam.context.nodal_count] = rng.normal(
+        size=beam.context.nodal_count-6)*.001
+    bu = rng.normal(size=beam.context.count)*.001
+    bv = rng.normal(size=beam.context.count)*.001
+    bu[:6] = 0.
+    bv[:6] = 0.
+    state = beam.context.advance(beam.context.initial.mechanical, beam_base)
+    multiplier = np.array((18., -23., 31., 7., -100., 13.))
+    for kind in ("continuous_linear", "dual_linear"):
+        patch = c1_hybrid_line_space(xs, ys, beam, kind=kind)[2][0]
+        exact = patch.evaluate_e4_total(
+            shell.ravel(), state, (du, bu), (dv, bv))
+
+        def work(a, b):
+            candidate = beam.context.advance(state, a*bu+b*bv)
+            return float(multiplier@patch.evaluate_e4_total(
+                (shell+a*du+b*dv).ravel(), candidate)[:, 0])
+
+        h1, h2 = 1e-5, 2e-3
+        first = (work(h1, 0.)-work(-h1, 0.))/(2*h1)
+        mixed = (work(h2, h2)-work(h2, -h2)-
+                 work(-h2, h2)+work(-h2, -h2))/(4*h2*h2)
+        assert abs(float(multiplier@exact[:, 1])-first) < 1e-7
+        assert abs(float(multiplier@exact[:, 3])-mixed) < 1e-6
 
 
 def test_c1_hybrid_physical_director_spin_is_null_at_finite_tilt():

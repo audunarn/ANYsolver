@@ -115,6 +115,43 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
         assert case["mechanics_error"] < 1e-7
 
 
+def test_c1_weighted_spaces_preserve_p0_loaded_parity_and_balance():
+    with threadpool_limits(limits=1):
+        beam = build(12, z_offset=.0675,
+                     torsion_constant=square_torsion_constant(),
+                     reference_profile="c1_tangent_2um")
+        result = graded_terminal_coupling(
+            4, beam, plate_thickness=.035,
+            include_line_hybrid_segmented=True,
+            include_line_hybrid_spaces=True, force_sign=-1.)
+    families = result["results"]
+    p0 = families["line_hybrid_p0_weighted"]
+    old = families["line_hybrid_two_intervals"]
+    assert p0["constraint_rank"] == old["constraint_rank"] == 12
+    assert np.allclose(p0["basis_integrals_m"], (.05, .05), atol=1e-14)
+    for load in ("tip_mx", "tip_fz"):
+        for quantity in ("tip_rx_rad", "tip_uz_m", "total_external_work_j"):
+            assert p0["cases"][load][quantity] == pytest.approx(
+                old["cases"][load][quantity], abs=1e-12)
+    for name in ("line_hybrid_p1_weighted", "line_hybrid_dual_p1_weighted"):
+        family = families[name]
+        assert family["constraint_rank"] == 18
+        assert np.allclose(family["basis_integrals_m"],
+                           (.025, .05, .025), atol=1e-14)
+        for load, magnitude in (("tip_mx", 100.), ("tip_fz", -1000.)):
+            case = family["cases"][load]
+            displacement = (case["tip_rx_rad"] if load == "tip_mx"
+                            else case["tip_uz_m"])
+            assert case["total_external_work_j"] == pytest.approx(
+                magnitude*displacement, rel=1e-10)
+            assert case["physical_shell_work_j"] > 0.
+            assert case["mechanics_error"] < 1e-7
+            gap = case["sampled_line_position_gap"]
+            assert gap["quadrature_rms_position_gap_m"] > 0.
+            assert gap["quadrature_max_position_gap_m"] >= (
+                gap["quadrature_rms_position_gap_m"])
+
+
 def test_structured_patch_trace_matches_existing_uniform_native_rows():
     panel=make_shell(8,"Q4",n_y=8)
     xs=np.linspace(-.5,1.5,17)

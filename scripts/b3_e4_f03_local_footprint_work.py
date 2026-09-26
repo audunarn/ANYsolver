@@ -1215,6 +1215,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              include_surface_moments: bool = False,
                              include_line_hybrid: bool = False,
                              include_line_hybrid_segmented: bool = False,
+                             include_line_hybrid_spaces: bool = False,
                              include_line_hybrid_ablation: bool = False,
                              force_sign: float = 1.) -> dict:
     """Linearized native B3/E4 Q4 terminal KKT on a resolved local grid."""
@@ -1314,6 +1315,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
     families=[("distributing",distributing),("rigid",rigid)]
     surface_diagnostics=None
     surface_patch=None
+    line_gap_patch=None
     if include_surface_moments:
         from scripts.b3_e4_f03_distributed_surface_finite import (
             FiniteSurfaceMomentPatch,
@@ -1324,10 +1326,13 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
             xs,ys,beam,thickness=plate_thickness)
         families.append(("surface_moments",surface))
     if (include_line_hybrid or include_line_hybrid_segmented or
-            include_line_hybrid_ablation):
+            include_line_hybrid_spaces or include_line_hybrid_ablation):
         from scripts.b3_e4_f03_distributed_surface_finite import (
             FiniteSurfaceLineHybrid,
         )
+        if include_line_hybrid_spaces:
+            line_gap_patch=FiniteSurfaceLineHybrid(
+                xs,ys,beam,thickness=plate_thickness)
         if include_line_hybrid or include_line_hybrid_ablation:
             hybrid = FiniteSurfaceLineHybrid(
                 xs, ys, beam, thickness=plate_thickness)
@@ -1362,6 +1367,24 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                     ("line_hybrid_common_alt_fy_mx_mz", np.vstack((
                         common, alternating[[1, 3, 5]]))),
                 ))
+        space_masses={}
+        if include_line_hybrid_spaces:
+            from scripts.b3_e4_f03_distributed_surface_finite import (
+                c1_hybrid_line_space,
+            )
+            for kind,label in (("piecewise_constant", "p0"),
+                               ("continuous_linear", "p1"),
+                               ("dual_linear", "dual_p1")):
+                rows,masses,_=c1_hybrid_line_space(
+                    xs,ys,beam,kind=kind)
+                name=f"line_hybrid_{label}_weighted"
+                families.append((name,rows))
+                space_masses[name]=masses.tolist()
+            if include_line_hybrid_segmented and np.max(np.abs(
+                    families[-3][1]-np.vstack(pieces))) > 1e-12:
+                raise ArithmeticError("C1 weighted P0 changed existing rows")
+    else:
+        space_masses={}
     records={}
     for family,constraint in families:
         rank=int(np.linalg.matrix_rank(constraint[:,free]))
@@ -1477,6 +1500,15 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                    if local_kinematics else {}),
                 **({"interval_mean_kinematics":interval_kinematics}
                    if interval_kinematics else {}),
+                **({"sampled_line_position_gap":{
+                    key:value for key,value in
+                    line_gap_patch.linearized_gap_statistics(
+                        full[:shell_size],full[shell_size:]).items()
+                    if key in ("quadrature_rms_position_gap_m",
+                               "quadrature_max_position_gap_m",
+                               "quadrature_points")}}
+                   if line_gap_patch is not None and
+                      family.startswith("line_hybrid_") else {}),
                 "total_external_work_j":work,
                 "physical_shell_work_j":physical_work,
                 "numerical_shell_work_j":shell_total-physical_work,
@@ -1502,7 +1534,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                    if surface_patch is not None and family=="surface_moments"
                    else {}),
             }
-        records[family]={"constraint_rank":rank,"cases":cases}
+        records[family]={"constraint_rank":rank,"cases":cases,
+                         **({"basis_integrals_m":space_masses[family]}
+                            if family in space_masses else {})}
     return {"patch_cells_per_side":patch_cells,
             "plate_thickness_m":plate_thickness,
             "shell_nodes":len(shell_nodes),"e4_elements":(len(xs)-1)*(len(ys)-1),

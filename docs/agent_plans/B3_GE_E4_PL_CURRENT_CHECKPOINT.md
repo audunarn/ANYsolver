@@ -4018,3 +4018,40 @@ pose law; compatible stable responses permit a reviewed least-dimension
 space decision. Do not select P0 from small gaps, a positive quotient or
 the current near-match to solid work. No axial escalation follows.
 Formal F03 authority is unconsumed; G0B remains open and G1 barred.
+
+**Next bounded operator discriminator:** On the unchanged C1 Q4 four-cell,
+B3 12-half-cell reference, build P0, continuous P1 and dual-P1 weighted
+rows from the *same pointwise six-channel hybrid work integrand*. Normalize
+each row by its exact basis integral and preserve the physical dual map.
+First check P0 parity with the existing two-interval rows, stress-free
+reference, actual-chart first/mixed work, row independence and supported
+row-space distinction. Coincident spaces or failed work checks require
+revising the basis construction before a loaded solve. Passing those
+checks permits one fixed-grid loaded transfer comparison; it does not
+select a space or authorize a mesh-ratio claim.
+
+Two pytest invocations for weighted actual-chart derivatives were stopped
+after 900 s with no test output. Later timed stages showed a weighted
+mixed evaluation takes about `0.06 s`, and the exact 25-node P1/dual
+endpoint derivative function passes directly in `1.85 s`; the existing
+P0 actual-chart function passes directly in `1.51 s`. Pytest
+`--collect-only` also stalled, including with plugin autoload disabled,
+so the aborted runs indicate a local collection/runner anomaly rather
+than a failed mechanics derivative. The direct check is valid bounded
+development evidence, but the standard pytest route remains unresolved.
+
+**Fixed-grid weighted-line finding:** On C1 Q4 four-cell/B3 12-half-cell,
+P0 weighted rows reproduce the existing two-interval rows exactly;
+P1/dual basis integrals are `(.025,.05,.025) m`, reference gaps are below
+`1e-15`, each supported space has full row rank, and P1/dual combined
+supported rank is `24` rather than one coincident span. Direct test
+functions verify actual-E4-chart first/mixed work for endpoint P1/dual
+representatives. On the same loaded KKT, P0/P1/dual tip `Mx` rotations
+are `47.708/48.032/48.621 µrad`, tip opening `Fz` displacements
+`−69.319/−69.155/−69.251 µm`, and combined applied works
+`0.074090/0.073958/0.074113 J`; all reported balance errors are below
+`5.1e-12`. The P1/dual differences are real fixed-grid behavior, not a
+space-selection verdict. The sampled pointwise position gaps and
+force/moment partitions must be interpreted together with normed modes
+and the registered mesh ratios. The exact-source evidence root and
+independent review are pending; G0B remains open.

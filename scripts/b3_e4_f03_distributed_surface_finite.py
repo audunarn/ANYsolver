@@ -4,11 +4,12 @@ This is a G0B mechanics experiment, not a production attachment or a line
 mortar. The six rows are the mean material-frame surface-position gap and its
 reference-arm first moment over one flat terminal footprint.
 The optional hybrid replaces one position-moment row with a shell-director
-pitch row. Both remain exploratory single-interval operators.
+pitch row. Weighted hybrid rows remain exploratory line operators.
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
@@ -218,17 +219,27 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
 
     def __init__(self, xs: np.ndarray, ys: np.ndarray, beam, *,
                  thickness: float,
-                 x_interval: tuple[float, float] = (.9, 1.)):
+                 x_interval: tuple[float, float] = (.9, 1.),
+                 x_weight: Callable[[float], float] | None = None):
         super().__init__(xs, ys, beam, thickness=thickness)
         low, high = x_interval
         if (not (.9 <= low < high <= 1.) or
                 min(abs(self.xs-low)) > 1e-12 or
                 min(abs(self.xs-high)) > 1e-12):
             raise ValueError("C1 line interval requires shell-host endpoints")
-        scale = .1/(high-low)
+        selected = [p for p in self.points if low < p.x < high]
+        profile = [1. if x_weight is None else float(x_weight(p.x))
+                   for p in selected]
+        if not all(np.isfinite(profile)):
+            raise ValueError("finite line multiplier profile required")
+        mass = float(sum(p.weight*value for p,value in zip(selected,profile)))
+        if mass <= 1e-12:
+            raise ValueError("positive line multiplier basis integral required")
+        self.basis_integral_m = .1*mass
         self.points = [
-            _Point(p.x, p.y, scale*p.weight, p.nodes, p.shape, p.port)
-            for p in self.points if low < p.x < high]
+            _Point(p.x, p.y, p.weight*value/mass,
+                   p.nodes, p.shape, p.port)
+            for p,value in zip(selected,profile) if value != 0.]
         if not self.points or abs(sum(p.weight for p in self.points)-1.) > 1e-12:
             raise ValueError("C1 line interval lacks exact host quadrature")
         self.x_interval = x_interval
@@ -465,6 +476,34 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
                           a*np.cross(frame[:, 2], director))/denom
             trace[4, shell_size:] += point.weight*beam_pitch@port[3:]
         return trace
+
+
+def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
+                         kind: str) -> tuple[np.ndarray, np.ndarray, list[FiniteSurfaceLineHybrid]]:
+    """Two-cell P0/P1/dual rows of one six-channel C1 reference work law.
+
+    Each row is a basis-weighted *mean* gap. Its physical P0/P1/dual
+    density coefficient is the integrated row multiplier divided by the
+    returned basis integral in metres. The knots coincide with shell and
+    beam cuts in this bounded comparison; other mesh ratios need an explicit
+    quadrature segmentation audit before reuse.
+    """
+    from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
+
+    space = LineMultiplierSpace(kind, (0., .5, 1.))
+    patches = []
+    for index in range(space.count):
+        def basis(x: float, row: int = index) -> float:
+            return float(space.values((x-.9)/.1)[row])
+
+        patches.append(FiniteSurfaceLineHybrid(
+            xs, ys, beam, thickness=.035, x_weight=basis))
+    rows = np.vstack([patch.reference_trace() for patch in patches])
+    masses = np.array([patch.basis_integral_m for patch in patches])
+    if not (np.isfinite(rows).all() and np.isfinite(masses).all() and
+            np.all(masses > 0.)):
+        raise ArithmeticError("C1 line multiplier work is not finite")
+    return rows, masses, patches
 
 
 def finite_chart_screen(reference_profile: str = "straight", *,
