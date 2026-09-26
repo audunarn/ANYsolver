@@ -170,6 +170,34 @@ def test_c1_hybrid_six_channel_reference_is_distinct_and_non_drilling():
     assert np.max(np.abs(shear)) < 1e-12
 
 
+def test_c1_hybrid_has_a_support_admissible_transverse_section_null():
+    xs, ys = local_grid(4)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    hybrid = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
+    nodal_y2 = hybrid.reference_nodes[:, 1]**2
+    sampled_y2 = np.array([
+        point.shape @ nodal_y2[point.nodes] for point in hybrid.points])
+    weights = np.array([point.weight for point in hybrid.points])
+    mean_y2 = float(weights @ sampled_y2)
+    shell_step = np.zeros((hybrid.shell_count, 6))
+    terminal = ((hybrid.reference_nodes[:, 0] >= .9-1e-12) &
+                (np.abs(hybrid.reference_nodes[:, 1]) <= .05+1e-12))
+    shell_step[terminal, 2] = .01*(nodal_y2[terminal]-mean_y2)
+    direction = np.r_[shell_step.ravel(), np.zeros(beam.context.count)]
+
+    # The even transverse field is nonzero only on free terminal nodes.
+    # It probes the continuum section reduction; it is not a claim that
+    # an exact weak line law must enforce pointwise surface no-slip.
+    weak_gap = hybrid.reference_trace() @ direction
+    sampled_gap = np.array([
+        point.shape @ shell_step[point.nodes, 2] for point in hybrid.points])
+    rms_gap = float(np.sqrt(weights @ (sampled_gap**2)))
+    assert np.max(np.abs(weak_gap)) < 1e-12
+    assert rms_gap > 1e-6
+
+
 def test_c1_hybrid_actual_chart_has_objective_first_and_mixed_work():
     result = finite_chart_screen("c1_tangent_2um", hybrid=True)
     assert result["hybrid"] is True

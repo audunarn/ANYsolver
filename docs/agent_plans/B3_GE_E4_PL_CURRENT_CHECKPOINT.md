@@ -1,5 +1,64 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+## Active decision — 26 September 2026, revised basis 5
+
+**Decision sought:** Determine whether the current native six-channel C1
+connection has the intended continuous section work law, then assess its
+P0/P1/dual enforcement. The same fields must be measured as sampled local
+slip, continuous `g6(x)`, and integrated weak rows. A zero weak row alone
+does not classify the law or prove instability.
+
+**Established:** The bounded, actual-C1 mode check in
+`B3_GE_E4_PL_C1_CONTINUUM_MODES_DEV_V1.json` separates two effects. An even
+transverse field, confined to the declared 0.1 m bond width and zero at the
+root, has 7.439 µm sampled slip RMS, but every continuous six-channel gap is
+below 7e-20 and all projected rows are below 9e-20; physical E4 strain energy
+is 30.11 J without drilling completion. Thus the continuous reduced trace
+admits this local section deformation; that alone neither classifies the
+intended connection nor proves a mechanism. A separate longitudinal field
+has a nonzero continuous vertical gap (8.463 µm maximum, 2.973 µm weighted
+RMS), while its fixed two-cell P0/P1/dual rows stay below 2e-20; its physical
+E4 energy is 50.02 J. This is a fixed-space projection null, not a uniform
+stability result. Both are translation-only diagnostic fields, not loaded
+coupled solutions or multiplier selections. The prior F4/F5 findings remain
+bounded diagnostics. The earlier lost pytest terminal results are not passes;
+two resumed focused pytest runs stalled without test output and were stopped
+after exceeding the 900 s diagnostic envelope. A third current-source pytest
+run was stopped when the same known collection behavior appeared. None is a
+mechanics pass or failure. The current-source transverse-section test function
+passed by direct invocation with controlled threads, and the complete mode
+diagnostic exited 0. Standard pytest collection remains unresolved.
+B2 F09 fixed mixed-wrench independent checks passed 35 focused tests, but a
+provisional generalized-section conditioning rejection at a very weak SPD
+boundary remains an admission decision, not permission to relax the cutoff.
+
+**Remaining uncertainty and next action:** Declare whether the transverse
+section deformation is physically admissible for the intended bonded pose
+law. Check the native torque/shear work against the validated F5 common
+action at the same geometry, loads, supports and connection interpretation.
+Then grow the longitudinal interface space only under an explicit resolution
+policy and assess work, locking and the native mixed system as well as trace
+stability. If sided B3 work is essential to distinguish causes, obtain a
+reference that recovers actual side contributions before using it. Review F09
+conditioning separately. Formal F03 authority remains unconsumed; G0B is
+open, G1 barred.
+
+## Pause checkpoint — 26 September 2026
+
+Work paused at user request before a new mechanics decision. The integration
+worktree was clean at `85ede9d3` before one uncommitted focused test was added
+to `tests/test_b3_e4_f03_distributed_surface_finite.py`. That test asks whether
+the current six-resultant hybrid strip has an even transverse slip mode with
+zero weak gaps but nonzero sampled local slip. This is a kinematic reduction
+probe; its original automatic classification as a distributing strip was too
+strong. The F5 physical comparison and multiplier decision remain unresolved.
+
+At this historical pause, the focused pytest was running in session `57101`
+(Python PID `52940`) and the older pre-thin-SVD pytest in session `27660`
+(PID `57260`). Both later handles and PIDs were absent, with no recovered
+terminal output. Do not count either as passed or repeat completed F4/F5
+evidence. G0B remains open, G1 barred, formal F03 authority unconsumed.
+
 ## Current state — 26 September 2026
 
 **Decision sought:** Defend the native six-channel beam–shell connection and

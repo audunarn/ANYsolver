@@ -63,15 +63,17 @@ class Fixture:
     n_half_cells: int
     model: FEModel
     context: Context
-    residual: np.ndarray
-    tangent: sparse.csr_matrix
+    residual: np.ndarray | None
+    tangent: sparse.csr_matrix | None
     physical: np.ndarray
     internal: np.ndarray
-    dense_oracle_max_error: float
+    dense_oracle_max_error: float | None
     abscissae: np.ndarray
 
     def blocks(self):
         k = self.tangent
+        if k is None:
+            raise RuntimeError('kinematic-only native fixture has no tangent blocks')
         return (k[np.ix_(self.physical, self.physical)].toarray(),
                 k[np.ix_(self.physical, self.internal)].toarray(),
                 k[np.ix_(self.internal, self.physical)].toarray(),
@@ -195,8 +197,11 @@ def _c1_offset_slope(x: float) -> tuple[float, float]:
 
 def build(n_half_cells: int, *, z_offset: float = 0.,
           torsion_constant: float | None = None,
-          reference_profile: str = "straight") -> Fixture:
-    """Construct and assemble an actual virgin elastic retained B3 chain."""
+          reference_profile: str = "straight",
+          assemble: bool = True) -> Fixture:
+    """Build a native B3 chain; omit assembly for pose-only diagnostics."""
+    if type(assemble) is not bool:
+        raise ValueError('assemble must be a boolean')
     if (reference_profile not in ("straight", "straight_c1_stations",
                                   "c1_tangent_2um") or
             type(n_half_cells) is not int or
@@ -269,13 +274,16 @@ def build(n_half_cells: int, *, z_offset: float = 0.,
         'root', [1], {dof: 0. for dof in ('ux','uy','uz','rx','ry','rz')}))
     no_load = DistributedPattern(LinePattern(()), ())
     context = Context(model, Program((1.,), no_load))
-    residual, tangent = _sparse_native_assembly(context)
-    oracle_r, oracle_k, _, _, _ = context.assemble(
-        context.initial.mechanical, 0., context.initial.origins)
-    parity = max(float(np.max(np.abs(oracle_r-residual))),
-                 float(np.max(np.abs(oracle_k-tangent.toarray()))))
-    if parity > 1e-9:
-        raise AssertionError(f'native local sparse/dense parity failed: {parity}')
+    if assemble:
+        residual, tangent = _sparse_native_assembly(context)
+        oracle_r, oracle_k, _, _, _ = context.assemble(
+            context.initial.mechanical, 0., context.initial.origins)
+        parity = max(float(np.max(np.abs(oracle_r-residual))),
+                     float(np.max(np.abs(oracle_k-tangent.toarray()))))
+        if parity > 1e-9:
+            raise AssertionError(f'native local sparse/dense parity failed: {parity}')
+    else:
+        residual, tangent, parity = None, None, None
     physical = np.array([i for i in range(context.nodal_count)
                          if i not in context.fixed], dtype=int)
     internal = np.arange(context.nodal_count, context.count)

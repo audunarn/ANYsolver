@@ -480,9 +480,15 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
         frames = np.broadcast_to(np.eye(3),
                                  (self.shell_count, 3, 3))
         state = self.beam.context.initial.mechanical
+        station_ports = {}
+        station_directors = {}
         for point in self.points:
-            _, _, frame = point.port.pose_pair(state)
-            port = point.port.tangent(state)
+            key = (point.port.element_index, point.port.cell,
+                   point.port.weight)
+            if key not in station_ports:
+                _, _, frame = point.port.pose_pair(state)
+                station_ports[key] = (frame, point.port.tangent(state))
+            frame, port = station_ports[key]
             qc = frame.T
             shell_map = np.zeros((3, total))
             for node, shape in zip(point.nodes, point.shape):
@@ -498,7 +504,9 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
             trace[3] += point.weight*point.y*gap_map[2]/self.transverse_inertia
             trace[5] -= point.weight*point.y*gap_map[0]/self.transverse_inertia
 
-            nodes, shape, director = self._director(frames, point.x)
+            if point.x not in station_directors:
+                station_directors[point.x] = self._director(frames, point.x)
+            nodes, shape, director = station_directors[point.x]
             a, c = float(frame[:, 0]@director), float(frame[:, 2]@director)
             denom = a*a+c*c
             if c <= .2:

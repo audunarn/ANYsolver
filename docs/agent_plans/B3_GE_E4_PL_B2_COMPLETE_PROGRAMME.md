@@ -1,13 +1,94 @@
 # B3-GE / E4-PL multi-element stiffened shells, with an efficient B2 option
 
-Revision: 21 September 2026, programme revision 4 (F09 physical B2 operator decision).
+Revision: 26 September 2026, programme revision 5 (continuous connection-law decision and risk-proportionate execution).
 Status: governing development and qualification contract; no new product capability qualified.
 Accepted main at registration: be41a77a62e1cd7e1767bda6e955253af0819f91 (ANYsolver 0.4.7).
-Paused integration checkpoint: d831fd889cf06db8641a3751150224bf81d77c5d.
+Current reviewed integration head: 85ede9d356d0ee5ce5469cb02f33079ccde34351; the living checkpoint records subsequent uncommitted work.
 First application: eccentric stiffened flat panel.
 Release decision: one complete coordinated release after G0 through G6, including all B2 additions, pass. Intermediate milestones remain experimental.
 
 This contract replaces the prior conversational development plan and the staged-release proposal in B2_B3_GE_E4_PL_STIFFENED_SHELL_UPDATED_PLAN.md. Historical registration, failed runs, hashes and reviews remain immutable. The accepted G0 registration is amended, not restarted; results are reusable only under their actual input/evidence contracts. The B3-GE/E4-PL programme remains the principal objective. B2 is an explicitly selected additional execution option, mandatory for the complete programme but not compulsory in an individual model.
+
+## Revision 5 current decision and execution order
+
+This revision changes prospective development procedure, not the scientific
+criteria or complete G0–G6 release boundary below. The historical revision 4
+text and exact evidence identities remain recoverable from Git. The current
+integration state and unresolved findings are maintained in
+`B3_GE_E4_PL_CURRENT_CHECKPOINT.md`; that living note is not an acceptance
+record. G0B remains open, G1 is barred, and formal F03 authority remains
+unconsumed.
+
+The principal decision is the **continuous native beam–shell connection law**.
+For the existing hybrid candidate, declare its finite transverse support,
+shell-top position and E4 director, native retained B3 sides, eccentricity,
+and the physical meaning of its independent pitch-couple channel. Measure the
+same prescribed fields as (a) local shell-top/beam-bottom slip, (b) the
+continuous six-channel section gap `g6(x)`, and (c) the P0/P1/dual projected
+rows. A nonzero pointwise slip with zero weak rows does not, by itself,
+classify the connection or prove a zero-energy mode. The intended pose-line
+law may admit local transverse deformation; it cannot be called an equivalent
+pointwise welded surface bond without evidence. Bonded-line and distributing-
+footprint capabilities remain separate mandatory deliverables.
+
+Use one bounded mode-resolved discriminator before enlarging any mesh or
+selecting a multiplier. Include a support-admissible even transverse slip
+field, a finite-element-representable longitudinal field with nonzero
+`g6(x)` but zero coarse projection, and the existing rigid, torque, and
+transverse-shear patches. Measure physical shell energy when inferring
+supported-system behavior. A nonzero continuous gap hidden by discrete rows
+directs a targeted longitudinal-resolution check; a motion forbidden by the
+declared connection but invisible to `g6(x)` directs a change to the continuum
+work law; an admissible reduction retains its declared semantics and proceeds
+to physical transfer validation. A proposed law with the same supported row
+space stops before another loaded solve. Failed objective work, shear freedom,
+or tangent consistency stops before mesh-ratio studies. None of these single
+probes alone ranks P0, continuous P1, and dual P1.
+
+The saved, independently validated F5 common weak action and same-action E4
+response are reusable evidence for integrated wrench, low-order transfer
+moments, common virtual fields, and fixed-distance observables. The failed F4
+recovered force and F4/F5 face-stress cut partitions cannot supply exact
+one-sided native retained-port work. Obtain a new sided reference only if the
+continuous-law decision requires it; first verify its side cancellation,
+support wrench, and representable virtual work. Keep the classical axial,
+historical Q6/finite-pad, and native six-channel comparisons separate. No
+further classical axial refinement follows without a new stated hypothesis.
+
+The existing positive broken-trace metric is a fixed-space representability
+diagnostic. In its current endpoint screens the P0/P1/dual row counts stay
+12/18/18 while the primal mesh changes. After the continuous law is credible,
+evaluate growing interface spaces under the registered ratios and three-level
+refinements, compatible primal/multiplier norms, unsupported modes, locking,
+physical work, and convergence. Distinguish trace inf-sup from well-posedness
+of the actual retained-variable mixed KKT system. Do not impose positive
+definiteness on the complete native mixed tangent, and do not infer stability
+from row rank, a raw mixed-unit singular value, or one signed quotient.
+
+While F03 remains open, advance independent G0 foundations: F05–F08 mechanics
+and review, B2 F09 physical-range/conditioning and mass metadata, and the
+beam-side and fixed-affine portions of F10–F13. Their shell-side attachment
+proofs depend on the selected connection law. Private feasibility work is
+allowed within its authority; G1 production integration still waits for G0B.
+
+Apply `ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1` prospectively. For a
+substantial diagnostic, keep one short record of decision, competing
+explanations, bounded test, and actions for its outcomes. Reuse completed
+evidence and stop optional refinements once they cease to distinguish the
+decision. Routine Level-A fixtures and helper corrections use recoverable
+source and focused checks, without a separate qualification dossier for each.
+Formal scientific and installed-artifact acceptance retains its registered
+cases, limits, independent review, and immutable raw evidence.
+
+To reduce development cost, separate native pose-only fixtures from full
+sparse/dense assembly parity fixtures, reuse immutable reference geometry and
+compiled trace/quadrature tables within a run, and copy mutable trial state.
+The B2 compiled owner retains its physical operator and station tables once,
+uses compatible existing session/factorization services, and returns selected
+outputs for bounded load-case chunks. Measure preparation, JIT, solve,
+factorization, recovery, memory, and test-suite cost before claiming a saving.
+These shortcuts cannot replace the actual native local operators, independent
+oracles, final installed checks, or practical-scale workloads.
 
 ## 1. Required capability and preservation
 
