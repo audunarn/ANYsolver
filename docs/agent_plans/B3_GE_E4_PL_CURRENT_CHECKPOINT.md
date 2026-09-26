@@ -2,25 +2,26 @@
 
 ## Current decision — 26 September 2026
 
-**Decision sought:** Establish a physically defensible native six-channel
-beam–shell connection and exact line enforcement before G1 integration.
+**Decision sought:** Select a physically defensible native six-channel
+beam–shell trace and exact line enforcement before G1 integration.
 **Established:** The candidate is a reduced finite-strip section law, not a
-full-face pointwise bond. Its loaded wrenches close, but P0's reconstructed
-material dual becomes strongly cancelling as line rows grow. A fixed-shell
-positive-trace quotient also falls much faster for P0 than for P1/dual; its
-weakest vertical mode is distinct from the loaded torque's lateral action.
-The reviewed P1 quotient has a tiny un-ordered floating bound pair. The
-bounded native retained-variable KKT metric completed, but each weakest mode
-is about 99.93% shell numerical drilling chart norm, so its minimum singular
-value cannot decide line-space stability. **Remaining uncertainty:** The
-physical torque/shear meaning of the reduced law, a drilling-aware native
-mixed-system stability assessment, actual F06 rebase ownership, F09 physical
-B2 admission and other G0 foundations. **Next action:** Define the native
-retained-port-to-solid virtual map and its bonded seam work before comparing
-the newly recovered one-sided solid work with B3; continue the existing F5
-same-action E4 interpretation. Assess line modes separately without tuning
-drilling or repeating classical axial refinement. **Gate:**
-G0B open, G1 barred; formal F03 authority unconsumed.
+full-face pointwise bond. Its loaded wrenches close, but the growing P0
+material dual cancels strongly; neither the positive-trace quotient nor the
+native KKT minimum selects a line space (the latter is dominated by shell
+numerical drilling). The matched F5 common-action reference exposes a
+transfer-shape difference. The new sided F5 cut passes bounded stress and
+sampled-gap checks, but independent B3 retained side rotations cannot be
+identified with exact independent rigid traces on its one intact solid cut.
+**Remaining uncertainty:** Whether the reduced physical law transfers torque
+and shear appropriately, whether a separately specified conforming
+port-to-solid extension can resolve side work, growing-space interface
+stability with a justified drilling treatment, actual F06 rebase ownership,
+F09 B2 admission and the other G0 foundations. **Next action:** Stop direct
+sided-port accuracy scoring. Use validated common continuous F5 fields and
+same-action shell response; derive and test the intended native trace/work
+contract before any further sided comparison. Continue independent G0
+foundations without axial escalation or drilling tuning. **Gate:** G0B open,
+G1 barred; formal F03 authority unconsumed.
 
 **Next bounded physical discriminator:** The validated F5 common-action
 comparison shows a low-order transfer-shape difference, but it cannot assign
@@ -111,6 +112,25 @@ with the companion plate/seam work and test its representable work. If that
 map is not defensible, use only the already validated continuous common
 fields and same-action shell response; do not request another finer solid
 solve just to obtain a different scalar. G0B remains open and G1 barred.
+
+**Native-port trace compatibility audit:**
+`scripts/b3_e4_f03_c1_port_trace_compatibility.py` and
+`B3_GE_E4_PL_F03_C1_PORT_TRACE_COMPAT_DEV_V1.json` bind the above cut and
+actual B3 half-cell spatial ports. The left/right retained rotational tangent
+columns are independent at the same centreline position. A rigid-section
+displacement trace over the 341 shared solid cut nodes has rank six; equality
+of left and right traces leaves only a six-dimensional compatible subspace of
+their twelve independent rigid-port coordinates. The 21 plate-bonded nodes
+alone have rank five, which cannot be substituted for the full cut trace.
+For a declared equal-side projection of a left-only unit twist, the omitted
+*bar-only broken-space* work is `57.8468 Nm/rad`; this depends on the chosen
+projection and excludes unknown side allocation of plate/seam work. It is
+not an admissible intact-assembly work error or a bound on connection error.
+The bounded decision is to stop direct sided-port accuracy scoring until a
+conforming extension and complete work map are specified. This is not a
+failure of the native beam or of the connection law. Preserve the validated
+common-field F5 comparisons and proceed to the physical trace/torque/shear
+decision. G0B remains open, G1 barred.
 
 **Native KKT metric result:** Commit `2028c8d8` preserves the failed V1
 layout check and the completed V2 source/manifest/result in
