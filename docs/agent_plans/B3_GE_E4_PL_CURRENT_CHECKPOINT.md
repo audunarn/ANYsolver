@@ -523,6 +523,34 @@ F13 question is whether unchanged sparse affine operators can serve 1/10/100
 ordered RHS in bounded chunks with one factorization, complete-case
 cancellation and selected outputs. Keep G0B open and G1 barred.
 
+**F13 batch discriminator before execution:** On the already checked two-
+member generalized B2 elbow, assemble from retained local operators into a
+small sparse graph with an explicit clamped-root affine transform. Compare
+1/10/100 ordered, fixed-magnitude mixed-load cases against independent
+per-case solves; retain only selected tip values. Count one factorization
+for the unchanged operator, bound each RHS block to eight, and cancel after
+a completed case to check ordered-prefix publication. A failed factorization
+must publish no case or plausible offset-only result. Passing permits a
+later owner to integrate with `AnalysisSession` and full constraint audit;
+failure requires fixing the local batch semantics first. This is not G1
+dispatch or a practical-scale/performance qualification.
+
+**F13 private batch result (27 September):** The bounded two-member elbow
+assembles retained physical B2 local operators into a sparse affine graph
+and uses the existing sparse factorization handle for 1/10/100 ordered,
+fixed-magnitude mixed-load RHS. The selected six tip values agree with
+independent per-case sparse solves; the unchanged operator factors once and
+RHS blocks never exceed eight. An input transform/offset mutation after
+compilation does not change the owner. Cancellation after case five returns
+exactly the five complete ordered cases; a singular factorization raises
+before any case result is created. Focused tests pass `5/5`. This private
+beam-only feasibility code does not use the production `AnalysisSession` or
+constraint auditor, and does not admit shell attachments, prescribed-motion
+combinations, installed execution, scale or a speed claim. The next F13
+integration decision is how the mixed-profile owner will bind an actual
+audited `ConstraintPlan` and invalidate a factorization only when its
+structural dependencies change. F13/G0B remain open; G1 remains barred.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
