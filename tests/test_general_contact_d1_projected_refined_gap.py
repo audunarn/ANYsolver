@@ -1,5 +1,7 @@
 """Coupled regression for the opt-in refined projected gap certificate."""
 
+import numpy as np
+
 from scripts.general_contact_d1_coupled_refinement import build_case
 
 from anysolver import solve_static_nonlinear, validate_general_contact
@@ -32,3 +34,26 @@ def test_refined_projected_patch_press_slide_open_recontact_with_tight_gap():
         assert item["contact"]["pressure_gram_scaled_rank"] == 6
         assert abs(item["reaction_generalized"][1]
                    + item["contact"]["integration_force"][2]) <= 1e-6
+
+    opened = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True, max_load_factor=0.75,
+    )
+    assert opened.status == "completed", opened.info.get("contact_failure")
+    assert len(opened.steps) == 3
+    assert opened.restart_checkpoint is not None
+    resumed = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+        restart_checkpoint=opened.to_restart_checkpoint(),
+    )
+    assert resumed.status == "completed", resumed.info.get("contact_failure")
+    np.testing.assert_allclose(resumed.displacements, result.displacements,
+                               rtol=1e-7, atol=1e-9)
+    np.testing.assert_allclose(
+        resumed.info["general_contact"]["normal_multiplier_estimate_pa"],
+        result.info["general_contact"]["normal_multiplier_estimate_pa"],
+        rtol=1e-6, atol=1e-7,
+    )
