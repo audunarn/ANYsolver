@@ -24,18 +24,27 @@ detects it with all P0/P1/dual spaces at four and eight x intervals: the
 largest basis-mean gap at four intervals is 0.269/1.670/5.550 µm respectively.
 The two-interval means remain below 3e-21 m. Thus targeted longitudinal
 enrichment resolves this *specific detection* failure; it does not select a
-space or establish stability or locking freedom. A subsequent bounded
-native-retained Q4/B3-12 loaded screen assembled x4/m2, x4/m4, x8/m4 and
+space or establish stability or locking freedom. Both prescribed fields are
+translation-only diagnostics, not loaded coupled solutions. A subsequent
+bounded native-retained Q4/B3-12 loaded screen assembled x4/m2, x4/m4, x8/m4 and
 x8/m8 with all three spaces. Every assembled row set retained full rank and
-both load cases passed the existing mixed equilibrium/work checks (maximum
-reported mechanics error 2.85e-11). At fixed x8, m4→m8 lowered the torque
-tip rotation by 3.04% P0, 1.24% P1 and 1.26% dual; the added rows materially
+both load cases passed the existing runtime mixed equilibrium/work checks
+(maximum reported mechanics error 2.85e-11). At fixed x8, m4→m8 lowered the
+torque tip rotation by 3.04% P0, 1.24% P1 and 1.26% dual; the added rows materially
 change the response, but two shell levels and these linear influences do not
 establish locking freedom or convergence. The versioned raw results are
-`B3_GE_E4_PL_C1_ENRICHED_LOADED_Q4_*_DEV_V1.json`. Both prescribed fields
-are translation-only diagnostics, not loaded
-coupled solutions or multiplier selections. The prior F4/F5 findings remain
-bounded diagnostics. The implemented candidate expressly defines a
+`B3_GE_E4_PL_C1_ENRICHED_LOADED_Q4_*_DEV_V1.json`. The raw fixture-file
+hash in those results reflects mixed Windows line endings
+(`94d9e1a3`); normalizing CRLF to LF is byte-identical to the committed
+fixture blob (`912b55e5`). The other operator source hashes match commit
+`ea47fa83` directly; this is a provenance encoding difference, not a mechanics
+change. The JSON `source_git=7d16458` is the generation-time parent; the
+matching source and results were committed together at `ea47fa83`.
+Independent read-only review found no calculation blocker and confirmed the
+response changes. The compact results omit beam-root details and multiplier
+densities, so they do not independently reconstruct full balance or physical
+traction distribution. Neither bounded screen selects a multiplier. The prior
+F4/F5 findings remain bounded diagnostics. The implemented candidate expressly defines a
 six-channel reduced transverse-strip law; allowing the even local section
 field is consistent with that declaration, but whether this is the intended
 physical bonded-line idealization remains open. The F5 shared-node solid
