@@ -606,6 +606,18 @@ def solve_static_contact_path(
                                         "augmentation": augmentation,
                                         "pressure_change": normal_multiplier_change,
                                         "minimum_gap": _reported_lower_gap(certificate),
+                                        **({"schur_prior_pressure_change": prior_change,
+                                            "schur_actual_to_prior_ratio": (
+                                                normal_multiplier_change/prior_change
+                                                if prior_change > 0.0 else None),
+                                            "schur_predicted_active_indices": list(retained),
+                                            "schur_actual_active_indices": [
+                                                int(index) for index in actual_active],
+                                            "schur_active_changed": active_changed,
+                                            "schur_gap_tolerance_met": bool(
+                                                certificate.gap_tolerance_met)}
+                                           if settings.augmentation_acceleration
+                                           == "supported_schur_dev" else {}),
                                     })
                                     accelerator = (ProjectedAugmentationSecant()
                                                    if settings.augmentation_acceleration == "active_secant_pivot"

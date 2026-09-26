@@ -1,6 +1,7 @@
 """Bounded many-mode pressure proposal through the ordinary static path."""
 
 from dataclasses import replace
+import json
 
 import numpy as np
 
@@ -153,3 +154,36 @@ def test_two_bounded_projected_schur_updates_accept_node6_fixture():
     assert record["contact"]["gap_tolerance_met"]
     assert result.restart_checkpoint is not None
     assert result.restart_checkpoint["version"] == 2
+
+
+def test_original_control_rejects_inaccurate_second_proposal_and_rolls_back():
+    model, definition, settings, program = _case()
+    settings = replace(
+        settings, general_s3_differentiation="jet2_q4_s3_dev",
+        q4_source_support_gradient_tolerance=1e-5,
+        q4_source_support_hessian_tolerance=1e-5,
+        q4_source_weighted_gap_gradient_tolerance=1e-5,
+        q4_source_weighted_gap_hessian_tolerance=1e-5,
+        maximum_q4_source_integration_triangles=128,
+        augmentation_schur_maximum_attempts=2,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "diverged"
+    assert result.failure_reason == "maximum_augmentations_reached"
+    failure = result.info["contact_failure"]
+    assert failure["schur_attempts"] == 2
+    assert failure["schur_applied"] == failure["schur_rejected"] == 1
+    rejected = next(entry for entry in failure["augmentation_trace"]
+                    if entry.get("schur_rejected") == "nonlinear_verification")
+    assert rejected["schur_predicted_active_indices"] == [0]
+    assert rejected["schur_actual_active_indices"] == [0]
+    assert rejected["schur_gap_tolerance_met"]
+    assert rejected["schur_actual_to_prior_ratio"] >= 0.75
+    json.dumps(failure["augmentation_trace"], allow_nan=False)
+    assert result.steps == []
+    assert result.restart_checkpoint is None
+    np.testing.assert_array_equal(result.displacements, 0.0)
