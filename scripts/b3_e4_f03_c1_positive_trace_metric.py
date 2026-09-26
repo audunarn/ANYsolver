@@ -116,8 +116,12 @@ def _active_beam_trace(beam) -> tuple[np.ndarray, np.ndarray, dict]:
     scale = np.array([LENGTH_M if i < beam.context.nodal_count and
                       i % 6 < 3 else 1. for i in active])
     feature_scaled = feature[:, active] * scale
-    _, singular, vt = linalg.svd(feature_scaled, full_matrices=True,
+    if feature_scaled.shape[0] < feature_scaled.shape[1]:
+        raise ArithmeticError("broken B3 trace requires a full right basis")
+    _, singular, vt = linalg.svd(feature_scaled, full_matrices=False,
                                  check_finite=True)
+    if vt.shape != (len(active), len(active)):
+        raise ArithmeticError("broken B3 trace lost its right kernel basis")
     threshold = singular[0] * max(feature_scaled.shape) * np.finfo(float).eps * 10
     rank = int(np.count_nonzero(singular > threshold))
     if rank < 1:
