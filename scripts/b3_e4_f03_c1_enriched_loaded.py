@@ -20,7 +20,8 @@ FAMILIES = ("line_hybrid_p0_weighted", "line_hybrid_p1_weighted",
             "line_hybrid_dual_p1_weighted")
 
 
-def evaluate(shell_cells: int, line_intervals: int) -> dict:
+def evaluate(shell_cells: int, line_intervals: int, *,
+             detailed: bool = False) -> dict:
     if shell_cells not in (4, 8) or line_intervals not in (2, 4, 8) or (
             line_intervals > shell_cells):
         raise ValueError("bounded aligned C1 shell/line resolution required")
@@ -45,6 +46,25 @@ def evaluate(shell_cells: int, line_intervals: int) -> dict:
                 "interface_shell_wrench_N_Nm",
                 "shell_support_wrench_N_Nm",
                 "sampled_line_position_gap")}
+            if detailed:
+                masses = np.asarray(entry["basis_integrals_m"], dtype=float)
+                dual = np.asarray(
+                    case["constraint_multiplier_material_N_Nm"],
+                    dtype=float).reshape(-1, 6)
+                if (dual.shape[0] != len(masses) or
+                        not np.isfinite(dual).all() or
+                        not np.isfinite(masses).all() or
+                        np.any(masses <= 0.)):
+                    raise ArithmeticError("invalid material line dual")
+                cases[label].update({
+                    "beam_root_wrench_N_Nm": case["beam_root_wrench_N_Nm"],
+                    "interface_beam_wrench_N_Nm":
+                        case["interface_beam_wrench_N_Nm"],
+                    "interface_shell_work_j": case["interface_shell_work_j"],
+                    "constraint_multiplier_material_N_Nm": dual.tolist(),
+                    "basis_mean_material_dual_per_m":
+                        (dual / masses[:, None]).tolist(),
+                })
         records[family] = {
             "constraint_rank": entry["constraint_rank"],
             "basis_integrals_m": entry["basis_integrals_m"],
@@ -73,6 +93,7 @@ def evaluate(shell_cells: int, line_intervals: int) -> dict:
             "rank and loaded balance do not establish mesh-uniform inf-sup or full native mixed-system stability",
             "two shell resolutions are not a convergence qualification",
             "the shared-node F5 solid has a different full-width kinematic bond",
+            "material line duals divided by basis integrals are not display-ready spatial traction wrenches",
         ],
     }
 
@@ -81,8 +102,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--shell-cells", type=int, required=True)
     parser.add_argument("--line-intervals", type=int, required=True)
+    parser.add_argument("--detailed", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(evaluate(args.shell_cells, args.line_intervals),
+    print(json.dumps(evaluate(args.shell_cells, args.line_intervals,
+                              detailed=args.detailed),
                      indent=2, sort_keys=True, allow_nan=False))
 
 

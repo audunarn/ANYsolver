@@ -2,6 +2,47 @@
 
 ## Active decision — 26 September 2026, revised basis 5
 
+**Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
+loaded screen changed torque response, but its compact output omitted the
+beam-root/interface wrench and line duals. The competing explanations are a
+physically distributed change in connection work and a concentrated or
+cancelling enforcement artifact; the screen cannot distinguish them. Rerun
+only the existing x8/m4 and x8/m8 fixtures with the same geometry, loads,
+supports and operator, retaining those missing observables. Audit global and
+interface wrench closure and report basis-weighted material duals without
+calling them display-ready spatial tractions. If the added rows produce a
+balanced, bounded redistribution, proceed to the separately required physical
+norm and growing-space assessment; if they concentrate or cancel pathologically,
+revise the line-resolution policy before that assessment. If these observables
+still cannot distinguish the law from the F5 full-face reference, stop
+refining and obtain the specifically needed sided reference. This is a
+development discriminator, not a multiplier selection or G0B acceptance.
+
+**Result and decision:** The two detailed same-source reruns are retained in
+`B3_GE_E4_PL_C1_ENRICHED_LOADED_Q4_X8_M4_DEV_V2.json` and
+`B3_GE_E4_PL_C1_ENRICHED_LOADED_Q4_X8_M8_DEV_V2.json`. All 12 prior
+rank/response/work/gap summaries are exactly unchanged from V1. Across the
+six family/load cases at each resolution, the maximum absolute six-component
+global support-plus-root-plus-applied wrench defect is `2.65e-9` in the
+recorded N/Nm components; shell-plus-beam interface wrench defect is at most
+`2.29e-12`. The shell-side interface work stays positive for both separate
+linear influences. Thus the response change is not an unbalanced applied
+load or lost interface wrench in this fixture. For the torque influence,
+the sum of absolute material y-dual coefficients divided by the absolute
+signed sum grows from `34.3` to `124.0` for P0, `40.6` to `46.6` for P1,
+and `13.6` to `20.7` for dual P1 as m4→m8. P0's maximum basis-mean y-dual
+coefficient per metre grows `3.64x`. These are basis-dependent material
+coefficients, not display-ready spatial tractions or a norm-scaled inf-sup
+test; the increase signals unresolved oscillatory/cancelling enforcement,
+not a proven unstable formulation. It also prevents selecting P0 just from
+rank, balance, and tip response. Stop repeating this loaded resolution screen.
+The next native calculation must define the physical primal and dual norms,
+reconstruct work-conjugate interface distributions, and assess the growing
+space with shell/beam refinement and registered ratios. In parallel, use the
+matched F5 common-action observables for physical torque/shear interpretation;
+request actual sided B3 reference work only if the law-vs-reference cause
+still cannot be separated. No F03 formal authority was consumed.
+
 **Decision sought:** Determine whether the current native six-channel C1
 connection has the intended continuous section work law, then assess its
 P0/P1/dual enforcement. The same fields must be measured as sampled local
@@ -79,8 +120,8 @@ law. Check the native torque/shear work against the validated F5 common
 action at the same geometry, loads, supports and connection interpretation.
 Next use a frozen growing-interface policy and physical primal/multiplier
 norms to assess the native mixed system, work, locking and convergence over
-the registered mesh-ratio range; row detection and this bounded loaded screen
-have been answered. If sided B3 work is essential to distinguish causes,
+the registered mesh-ratio range; row detection and bounded loaded/dual
+screens have been answered. If sided B3 work is essential to distinguish causes,
 obtain a
 reference that recovers actual side contributions before using it. Review F09
 conditioning separately. Formal F03 authority remains unconsumed; G0B is
