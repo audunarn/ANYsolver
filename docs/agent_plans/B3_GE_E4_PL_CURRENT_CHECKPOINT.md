@@ -8,7 +8,10 @@ beam–shell trace and exact line enforcement before G1 integration.
 candidate. Its director-pitch row acts on a supported shell field whose whole
 top surface remains fixed; it is an extra couple beyond positional bonding.
 Its loaded wrenches close, but growing P0 dual cancellation and the existing
-positive-trace/KKT metrics do not select a line space. Validated F5 common
+positive-trace/KKT metrics do not select a line space. The bounded
+drill-quotient native KKT check isolates a line-dominated weak P0 mode at
+eight intervals; P1 and dual P1 do not show the same decline on that grid.
+Validated F5 common
 work exposes a transfer-shape difference. The sided F5 solid cut cannot
 directly score the actual nine-dimensional pair of B3 endpoint poses without
 a separate conforming extension and complete seam work. Bounded yielded Q4
@@ -172,6 +175,50 @@ physical rotational connection and its work reference before treating F5
 positional-bond agreement as an accuracy score; keep the registered torque,
 shear and growing-space checks. No multiplier or formulation is selected,
 F03/G0B remain open and G1 remains barred.
+
+**Bounded native stability discriminator (registered before execution):** The
+actual retained KKT minimum is dominated by E4's numerical drilling chart,
+while the physically positive trace quotient declines for growing P0 rows.
+Distinguish a drill-norm artifact from a line-coupled weak mode on the same
+C1 Q4 x8/y4, B3-12, P0/P1/dual m4/m8 fixtures. Verify the line rows have
+zero drilling columns. Eliminate *only* the unconstrained drilling coordinates
+by the exact Schur complement of the actual shell tangent, retaining the
+native B3 retained variables and actual indefinite mixed operator. Use the
+physical E4 energy on the remaining coordinates and the existing reviewed
+beam/line norm contracts, with no drilling coefficient tuning or product
+change. Check Schur reconstruction, transpose work, constraint rank and
+weakest-mode split. A line-dominant decline would send the law or resolution
+policy back for revision; absence of it would isolate the old KKT minimum
+from interface stability but would not offset the positive-trace concern or
+select a space. Preserve the 120 s and 1900-row diagnostic bounds.
+
+**Drill-quotient result and action (27 September):**
+`B3_GE_E4_PL_C1_DRILL_QUOTIENT_DEV_V2.json` retains the six finite-grid
+native KKT cases and captures exact source hashes, Python/package identities,
+effective one-thread pools, and configured environment inside the target
+process. V1 has the identical six minima but only an incomplete retrospective
+provenance sidecar; it is preserved and is not the source-bound evidence.
+An intermediate V2 attempt computed successfully but could not write its
+result under the filesystem sandbox; the permitted rerun saved the result.
+Exact elimination
+of 198 free E4 numerical drilling rows leaves 990 physical E4 rows and the
+216 complete native B3 rows. The line rows have zero drilling columns;
+Schur-action error is `3.66e-16`, drilling equilibrium error `1.25e-15`,
+and all normalized line row sets have full rank. From m4 to m8, the
+smallest normalized singular value changes P0 `0.0152313→0.0122832`,
+continuous P1 `0.0152309→0.0152539`, and dual P1
+`0.0152269→0.0152451`. The P0 m8 weakest vector is `98.78%` line-dual
+in this declared metric; P1 and dual P1 remain about `98.37%` native beam
+kinematic. The earlier drilling-dominated minimum masked this P0-specific
+finite-grid weak mode; drilling removal does not erase the positive-trace
+concern. Work transpose agrees to `5e-18 J` in the bounded tests.
+Independent read-only review found no algebra/indexing blocker in the exact
+drilling elimination, while noting this metric cannot establish uniform
+stability or physical fidelity. Do not select or reject a multiplier from
+one grid or one singular value. Prioritize P0's growing-space
+resolution/locking test only after the rotational-weld work reference is
+defined; carry P1 and dual P1 as comparators through the registered
+ratios and refinement levels. G0B/F03 remain open and G1 remains barred.
 
 **Native KKT metric result:** Commit `2028c8d8` preserves the failed V1
 layout check and the completed V2 source/manifest/result in
