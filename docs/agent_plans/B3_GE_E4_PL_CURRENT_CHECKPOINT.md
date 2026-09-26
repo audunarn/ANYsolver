@@ -19,7 +19,13 @@ intended connection nor proves a mechanism. A separate longitudinal field
 has a nonzero continuous vertical gap (8.463 µm maximum, 2.973 µm weighted
 RMS), while its fixed two-cell P0/P1/dual rows stay below 2e-20; its physical
 E4 energy is 50.02 J. This is a fixed-space projection null, not a uniform
-stability result. Both are translation-only diagnostic fields, not loaded
+stability result. The bounded V2 projection of that same continuous field
+detects it with all P0/P1/dual spaces at four and eight x intervals: the
+largest basis-mean gap at four intervals is 0.269/1.670/5.550 µm respectively.
+The two-interval means remain below 3e-21 m. Thus targeted longitudinal
+enrichment resolves this *specific detection* failure; it does not select a
+space or establish stability, locking freedom, or loaded work. Both fields
+are translation-only diagnostics, not loaded
 coupled solutions or multiplier selections. The prior F4/F5 findings remain
 bounded diagnostics. The earlier lost pytest terminal results are not passes;
 two resumed focused pytest runs stalled without test output and were stopped
@@ -36,9 +42,10 @@ boundary remains an admission decision, not permission to relax the cutoff.
 section deformation is physically admissible for the intended bonded pose
 law. Check the native torque/shear work against the validated F5 common
 action at the same geometry, loads, supports and connection interpretation.
-Then grow the longitudinal interface space only under an explicit resolution
+Next assemble the enriched longitudinal spaces under an explicit resolution
 policy and assess work, locking and the native mixed system as well as trace
-stability. If sided B3 work is essential to distinguish causes, obtain a
+stability; mere projected-row detection has been answered. If sided B3 work
+is essential to distinguish causes, obtain a
 reference that recovers actual side contributions before using it. Review F09
 conditioning separately. Formal F03 authority remains unconsumed; G0B is
 open, G1 barred.

@@ -17,6 +17,7 @@ from pathlib import Path
 import numpy as np
 
 from scripts._b3_e4_f03_native_fixture import build
+from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
 from scripts.b3_e4_f03_distributed_surface_finite import (
     FiniteSurfaceLineHybrid, c1_hybrid_line_space,
 )
@@ -75,6 +76,24 @@ def _report(patch: FiniteSurfaceLineHybrid, rows_by_kind: dict,
         raise ArithmeticError("continuous station work does not reproduce trace")
     row_max = {kind: float(np.max(np.abs(rows@direction)))
                for kind, rows in rows_by_kind.items()}
+    resolution = {}
+    for intervals in (2, 4, 8):
+        for kind in KINDS:
+            space = LineMultiplierSpace(
+                kind, tuple(np.linspace(0., 1., intervals+1)))
+            projected = np.zeros((space.count, 6))
+            mass = np.zeros(space.count)
+            for x, gap in stations.items():
+                basis = space.values(float((x-.9)/.1))
+                projected += grouped_weight[x]*basis[:, None]*gap
+                mass += grouped_weight[x]*basis
+            if np.min(mass) <= 0.:
+                raise ArithmeticError("nonpositive multiplier basis integral")
+            resolution[f"{kind}_{intervals}"] = {
+                "max_integrated_gap": float(np.max(np.abs(projected))),
+                "max_basis_mean_gap_m": float(np.max(np.abs(projected/mass[:, None]))),
+                "rows": space.count*6,
+            }
     profile = np.array(list(stations.values()))
     return {
         "sampled_local_slip_rms_m": slip_rms,
@@ -83,6 +102,7 @@ def _report(patch: FiniteSurfaceLineHybrid, rows_by_kind: dict,
             grouped_weight[x]*value**2 for x, value in stations.items())).tolist(),
         "integrated_mean_g6": integrated.tolist(),
         "weak_row_max_abs_by_space": row_max,
+        "longitudinal_resolution_detection": resolution,
         "station_count": len(stations),
     }
 
@@ -155,7 +175,7 @@ def evaluate() -> dict:
             <= 1e-7):
         raise ArithmeticError("longitudinal projection-null classification failed")
     return {
-        "classification": "bounded G0B development diagnostic; not a multiplier selection",
+        "classification": "bounded G0B development diagnostic; growing-space detection is not stability or multiplier selection",
         "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "geometry": "C1 35 mm Q4 x8/y4 terminal bond, native retained B3-12, reference shell translations only",
         "law": "six-channel transverse mean/first-moment and director-pitch pose trace",
@@ -167,6 +187,7 @@ def evaluate() -> dict:
             "translation-only linearized fields; no loaded coupled solution",
             "a transverse section null does not by itself classify the intended connection law",
             "a longitudinal projection null on fixed multiplier spans is not a uniform inf-sup result",
+            "growing-space row detection does not establish locking, loaded work, or mixed-system stability",
             "saved F5 common action does not provide one-sided retained B3 port work",
         ],
     }
