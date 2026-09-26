@@ -2,29 +2,29 @@
 
 ## Current decision — 27 September 2026
 
-**Decision sought:** Select a physically defensible native six-channel
-beam–shell trace and exact line enforcement before G1 integration.
-**Established:** C1 is a reduced finite-strip, six-channel *rotational weld*
-candidate. Its director-pitch row acts on a supported shell field whose whole
-top surface remains fixed; it is an extra couple beyond positional bonding.
-Its loaded wrenches close, but growing P0 dual cancellation and the existing
-positive-trace/KKT metrics do not select a line space. The bounded
-drill-quotient native KKT check isolates a line-dominated weak P0 mode at
-eight intervals; P1 and dual P1 do not show the same decline on that grid.
-Validated F5 common
-work exposes a transfer-shape difference. The sided F5 solid cut cannot
-directly score the actual nine-dimensional pair of B3 endpoint poses without
-a separate conforming extension and complete seam work. Bounded yielded Q4
-and S3 pullbacks and B2 rigid kinetic identity passed independent reviews,
-but no full foundation closed. **Remaining uncertainty:** Matched physical
-torque/shear work for the declared rotational weld, drilling-aware
-growing-space mixed stability, F06 rebase ownership, B2 admission and other
-G0 foundations. **Next action:** Define a physically matching rotational
-connection reference before another external solve; keep the F5 positional
-bond as a distinct comparator. Then assess torque/shear, work, locking and
-registered ratios with growing multiplier spaces. Do not repeat classical
-axial refinement or select P0/P1/dual from one quotient. **Gate:** G0B open,
-G1 barred; formal F03 authority unconsumed.
+**Decision sought:** Select the physical native beam–shell connection and its
+exact line enforcement before G1 integration. **Established:** C1 is a
+six-channel reduced finite-strip *rotational-weld* candidate, not the same law
+as the F5 top-face positional bond. Its pitch couple acts even when that face
+is positionally fixed. Loaded wrenches close; the drill-quotient KKT screen
+isolates a growing P0 line mode, while P1/dual do not show the same decline
+on the tested grid. Neither that result nor small weak gaps selects a line
+space. The saved F5 common work exposes a transfer-shape difference, but its
+sided cut lacks the conforming plate/seam virtual work needed to score native
+B3 ports. Independent Q4/S3 plastic, rebase and native descriptor development
+has advanced. B2 now has a private eccentric Q4 point candidate, matched
+low-mode mass convergence, an explicit mass-origin pullback and a bounded
+physical Q4/B2 massless-multiplier descriptor check. **Remaining uncertainty:**
+Whether the primary joint is a top-face positional bond, an intentional
+through-thickness rotational weld, or both separately admitted; its matched
+torque/shear transfer and growing-space stability; remaining G0 foundations.
+**Next discriminator/action:** Keep the existing physical-joint clarification
+pending. Once specified, compare that exact law's continuous work and
+physical transfer against the matching reference, then assess growing-space
+line stability and registered ratios. Do not resume classical axial
+refinement or infer a multiplier choice from one quotient. Independent B2 and
+state foundations may advance meanwhile. **Gate:** G0B open, G1 barred;
+formal F03 authority unconsumed.
 
 **Next bounded physical discriminator:** The validated F5 common-action
 comparison shows a low-order transfer-shape difference, but it cannot assign
