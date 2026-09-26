@@ -252,6 +252,10 @@ supports before assessing its physical torque/shear accuracy. The existing
 F5 top-surface positional bond remains a separate comparator. No formal
 F03 authority was consumed, no multiplier was selected, and G0B/G1 status
 is unchanged.
+Independent read-only mechanics review found the top/bottom pair and its
+zero-force, pitch-work interpretation correct. It emphasizes that this is
+an analytical representation of the *same* pitch functional, not an
+independent physical material or loaded reference.
 
 **Native KKT metric result:** Commit `2028c8d8` preserves the failed V1
 layout check and the completed V2 source/manifest/result in
@@ -315,6 +319,20 @@ not the full admission range, member reversal, attached shell, mass,
 prestress, public dispatch, installed package or speed. F09/G0B stay open;
 next work should target those missing contracts, not repeat these elbow
 loads at more side lengths.
+
+**F09 coupled graph reversal result (27 September):**
+`B3_GE_E4_PL_G0_F09_GRAPH_REVERSAL_DEV_V1.{md,json}` tests two mixed
+terminal wrenches on a two-member generalized-SPD B2 elbow. Reversing the
+second member while explicitly transforming its six-channel section tensor
+preserves the assembled matrix and tip response to binary64 reporting
+precision; an independent rational cut-wrench compliance integral agrees
+with the sparse work within `4.44e-16` on the declared unit-floor measure.
+Keeping the tensor unchanged changes the matrix by `9.35%` and the work by
+`0.75%/0.16%`, showing that the loads expose the orientation error. The
+five-station pose/Jacobian/work pullback also passed, as did `29/29` focused
+private B2 tests. This establishes a bounded explicit section-axis reversal
+contract, not a physical admission envelope, shell attachment, mass,
+prestress, installed behavior, speed or F09/G0B acceptance.
 
 **Next bounded B2 F12 mass-contract discriminator (before execution):**
 Can the implemented physical station trace, paired with separately supplied
