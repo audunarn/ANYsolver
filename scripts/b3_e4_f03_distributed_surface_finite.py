@@ -649,7 +649,8 @@ def finite_chart_screen(reference_profile: str = "straight", *,
 def bounded_physical_compliance_screen(*, hybrid: bool = False,
                                        segmented: bool = False,
                                        c1_beam_half_cells: int = 12,
-                                       c1_characteristic_length_m: float = 1.) -> list[dict]:
+                                       c1_characteristic_length_m: float = 1.,
+                                       line_space_kind: str | None = None) -> list[dict]:
     """Compare six physical interface actions on several bounded local grids.
 
     This is a finite-dimensional, support-conditioned compliance diagnostic,
@@ -666,6 +667,10 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
     results = []
     if segmented and not hybrid:
         raise ValueError("segmented diagnostic requires the hybrid law")
+    if line_space_kind is not None and (
+            not hybrid or not segmented or line_space_kind not in (
+                "piecewise_constant", "continuous_linear", "dual_linear")):
+        raise ValueError("weighted C1 line space requires a segmented hybrid law")
     if c1_beam_half_cells not in (12, 24) or (
             not hybrid and c1_beam_half_cells != 12):
         raise ValueError("bounded C1 beam resolution requires hybrid 12 or 24")
@@ -686,12 +691,17 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                 xs, ys, thickness=.035)
         shell_k, shell_physical = shell_operators[patch_cells]
         if hybrid:
-            intervals = (((.9, .95), (.95, 1.)) if segmented else
-                         ((.9, 1.),))
-            patches = [FiniteSurfaceLineHybrid(
-                xs, ys, beam, thickness=.035, x_interval=interval)
-                for interval in intervals]
-            rows = np.vstack([patch.reference_trace() for patch in patches])
+            if line_space_kind is None:
+                intervals = (((.9, .95), (.95, 1.)) if segmented else
+                             ((.9, 1.),))
+                patches = [FiniteSurfaceLineHybrid(
+                    xs, ys, beam, thickness=.035, x_interval=interval)
+                    for interval in intervals]
+                rows = np.vstack([patch.reference_trace() for patch in patches])
+                basis_integrals = np.full(len(patches), .1/len(patches))
+            else:
+                rows, basis_integrals, patches = c1_hybrid_line_space(
+                    xs, ys, beam, kind=line_space_kind)
             reference_gap = max(float(np.max(np.abs(patch.evaluate(
                 patch.reference_nodes,
                 np.broadcast_to(np.eye(3),
@@ -753,18 +763,25 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
         line_norm = None
         if segmented:
             from scripts._b3_e4_f03_p0_dual_norm import p0_dual_gram
+            from scripts._b3_e4_f03_p1_dual_norm import p1_dual_gram
+            from scripts._b3_e4_f03_dual_linear_norm import dual_linear_gram
 
-            # The rows are interval *mean* gaps and their duals are integrated
-            # N/Nm. A P0 density acts through interval length times each row.
-            # Rotation gaps use the declared 1 m characteristic length.
+            # Rows are basis-normalized gaps (signed for dual P1); their
+            # duals are integrated N/Nm. Convert density coefficients by
+            # each basis integral. Scale moments by the declared length.
             bond_length_m = .1
             characteristic_length_m = c1_characteristic_length_m
-            interval_length_m = bond_length_m/len(patches)
             density_to_integrated = np.tile(
-                np.r_[np.full(3, interval_length_m),
-                      np.full(3, interval_length_m*characteristic_length_m)],
-                len(patches))
-            lower, upper = p0_dual_gram(len(patches), bond_length_m, 4095)
+                np.r_[np.ones(3), np.full(3, characteristic_length_m)],
+                len(patches))*np.repeat(basis_integrals, 6)
+            gram_builder = {
+                None: p0_dual_gram,
+                "piecewise_constant": p0_dual_gram,
+                "continuous_linear": p1_dual_gram,
+                "dual_linear": dual_linear_gram,
+            }[line_space_kind]
+            lower, upper = gram_builder(2 if line_space_kind else
+                                        len(patches), bond_length_m, 4095)
             dual_lower = np.kron(lower, np.eye(6))
             dual_upper = np.kron(upper, np.eye(6))
             stiffness_n_per_m = 210e9*.035
@@ -804,15 +821,18 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                     transverse_shell_action+transverse_beam_action-
                     transverse_upper[0]) > 1e-8*max(
                         1., abs(transverse_upper[0])):
-                raise ArithmeticError("P0 density action split inconsistent")
+                raise ArithmeticError("line density action split inconsistent")
             line_norm = {
                 "status": "FINITE_GRID_SIGNED_COMPLIANCE_NOT_INF_SUP",
                 "bond_length_m": bond_length_m,
-                "interval_length_m": interval_length_m,
+                "basis_integrals_m": basis_integrals.tolist(),
+                **({"interval_length_m": bond_length_m/len(patches)}
+                   if line_space_kind is None else {}),
                 "characteristic_length_m": characteristic_length_m,
                 "reference_stiffness_n_per_m": stiffness_n_per_m,
                 "density_units": "N/m for forces; Nm/m for moments",
-                "sobolev_dual": "analytic Neumann H^-1/2 P0 density Gram",
+                "sobolev_dual": ("analytic Neumann H^-1/2 "
+                                 f"{line_space_kind or 'P0'} density Gram"),
                 "smallest_signed_quotient_upper": float(signed_upper[0]),
                 "smallest_signed_quotient_lower": float(signed_lower[0]),
                 "smallest_mode_density_equivalent_n_per_m": density_mode.tolist(),
@@ -851,6 +871,8 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                           "C1 single-interval line hybrid") if hybrid else
                          "finite surface-moment footprint"),
             "interpretation": "support-conditioned finite-grid physical action; not continuum inf-sup or line-space qualification",
-            **({"p0_density_norm": line_norm} if line_norm is not None else {}),
+            **({("p0_density_norm" if line_space_kind is None else
+                 "line_density_norm"): line_norm} if line_norm is not None else {}),
+            **({"line_space_kind": line_space_kind} if line_space_kind else {}),
         })
     return results

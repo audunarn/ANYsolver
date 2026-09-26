@@ -6,7 +6,7 @@ import pytest
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_distributed_surface_finite import (
     FiniteSurfaceLineHybrid, FiniteSurfaceMomentPatch, c1_hybrid_line_space,
-    finite_chart_screen,
+    bounded_physical_compliance_screen, finite_chart_screen,
 )
 from anysolver.corotational import rotation_matrix_from_vector
 from scripts.b3_e4_f03_local_footprint_work import (
@@ -307,6 +307,33 @@ def test_c1_weighted_line_spaces_reject_other_plate_reference():
         graded_terminal_coupling(
             4, beam, plate_thickness=.07,
             include_line_hybrid_spaces=True)
+
+
+def test_c1_weighted_spaces_use_own_density_norm():
+    from threadpoolctl import threadpool_limits
+
+    with pytest.raises(ValueError, match="segmented hybrid"):
+        bounded_physical_compliance_screen(line_space_kind="continuous_linear")
+    with threadpool_limits(limits=1):
+        old = bounded_physical_compliance_screen(
+            hybrid=True, segmented=True)[0]["p0_density_norm"]
+        for kind, count in (("piecewise_constant", 2),
+                            ("continuous_linear", 3),
+                            ("dual_linear", 3)):
+            result = bounded_physical_compliance_screen(
+                hybrid=True, segmented=True,
+                line_space_kind=kind)[0]
+            norm = result["line_density_norm"]
+            assert result["constraint_rank_on_free"] == 6*count
+            assert len(norm["basis_integrals_m"]) == count
+            assert norm["maximum_gram_bracket_ratio"] < 1.000001
+            assert norm["smallest_nonaxial_signed_quotient_upper"] > 0.
+            assert norm["smallest_nonaxial_mode_shell_action"] > 0.
+            assert norm["smallest_nonaxial_mode_beam_action"] > 0.
+            if kind == "piecewise_constant":
+                assert norm["smallest_nonaxial_signed_quotient_upper"] == (
+                    pytest.approx(old["smallest_nonaxial_signed_quotient_upper"],
+                                  rel=1e-11))
 
 
 def test_c1_weighted_endpoint_work_uses_actual_e4_chart():

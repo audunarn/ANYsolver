@@ -4019,6 +4019,27 @@ space decision. Do not select P0 from small gaps, a positive quotient or
 the current near-match to solid work. No axial escalation follows.
 Formal F03 authority is unconsumed; G0B remains open and G1 barred.
 
+**Current decision and bounded discriminator (26 September):** Retain a
+native six-channel line candidate only if its interface modes and loaded
+transfer remain interpretable under a basis-specific dual norm and changing
+beam:shell resolution. The fixed-grid P0/P1/dual work experiment at source
+`cd03575c` passed reference, rank, actual-chart work, loaded balance and P0
+parity; raw evidence is
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-spaces-fixed-dev-20260926-v1`.
+P1 and dual-P1 are distinct signed row spaces; the sampled physical
+position gap is not a weak six-channel or stability certificate. An
+independent mechanics review found no blocking weighted-row algebra defect
+and required a full **basis-specific** dual Gram for P1/dual. The 35 mm C1
+reference guard was added and directly tested after that review. The next
+single-axis diagnostic compares P0/P1/dual on the same two- and four-cell
+shell grids, with the same B3 reference and declared 1 m and 0.1 m moment
+scales. A collapsing or representation-sensitive torque-relevant nonaxial
+mode sends the line trace/pose or norm definition back for revision; stable,
+balanced modes permit the separately registered mesh-ratio and physical
+solid-reference work. Neither outcome by itself selects a multiplier space.
+The saved solid F4 has side-clearance and three-level convergence limits;
+these must be checked before accuracy scoring. G0B remains open, G1 barred.
+
 **Next bounded operator discriminator:** On the unchanged C1 Q4 four-cell,
 B3 12-half-cell reference, build P0, continuous P1 and dual-P1 weighted
 rows from the *same pointwise six-channel hybrid work integrand*. Normalize
