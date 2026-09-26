@@ -1290,6 +1290,18 @@ Current bounded code: `scripts/b3_e4_f03_local_footprint_work.py` and `scripts/b
 
 **F08 accepted-predecessor result:** Source `c5022326` passed the preregistered yielded-history test and the complete focused file (`5/5`, 8.43 s). The three-step accepted prefix has positive plastic history. Sparse local and dense-owner residual/tangent differences satisfy `<=1e-12` at the accepted state and one small trial from its accepted material predecessor; candidate histories are exactly identical, and the predecessor/checkpoint hashes remain unchanged. This closes that bounded extraction uncertainty, but does not establish the final F08 independent review, coupled material-state ownership, large sparse execution or G0B acceptance. The native connection F03 remains the primary unresolved foundation.
 
+**F08 read-only review of the bounded seam:** An independent reviewer checked
+the focused test and both native owners. The 42-coordinate gather calls local
+element operators and scatters to CSR without invoking the owners' dense
+assemblers; dense allocation is confined to the oracle and small comparison.
+Both paths intentionally share local physics and correction functions, so this
+is assembly-path parity, not an independent derivative or material-law oracle.
+The yielded accepted-predecessor case meaningfully checks one paused plastic
+prefix and immutable origins, mechanical state and checkpoint. The four virgin
+cases check origin immutability but do not separately snapshot mechanical
+state. This review leaves F08's complete acceptance and production owner/state
+contract open; it does not advance G0B or G1.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision
