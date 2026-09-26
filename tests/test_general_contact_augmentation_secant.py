@@ -104,6 +104,20 @@ def test_active_secant_setting_is_explicit_and_validated():
     pivot_report = validate_general_contact(model, definition, pivot_settings)
     assert pivot_report.valid
     assert "Q4_S3_PATCH_REFINED" in pivot_report.profile
+    with pytest.raises(ValueError, match="requires active_secant_pivot"):
+        ContactSolverSettings(augmentation_equilibrated_pressure_step_pa=0.01)
+    with pytest.raises(ValueError, match="finite and positive"):
+        replace(pivot_settings, augmentation_equilibrated_pressure_step_pa=-0.01)
+    mapped_settings = replace(
+        pivot_settings, augmentation_equilibrated_pressure_step_pa=0.01,
+    )
+    assert validate_general_contact(model, definition, mapped_settings).valid
+    assert (GeneralS3PatchManager(model, definition, mapped_settings)
+            .restart_contract()["settings"]["augmentation_equilibrated_pressure_step_pa"]
+            == 0.01)
+    assert ("augmentation_equilibrated_pressure_step_pa" not in
+            GeneralS3PatchManager(model, definition, pivot_settings)
+            .restart_contract()["settings"])
     penalty = replace(definition, interactions=(replace(
         definition.interactions[0], normal_law="penalty",
     ),))

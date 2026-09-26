@@ -51,6 +51,7 @@ from .core import (
 )
 from .augmentation import ProjectedAugmentationSecant
 from .linearized_pivot import refined_patch_pivot
+from .equilibrated_pressure_pivot import equilibrated_pressure_pivot
 
 
 PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_CONTACT_PATH_DEV_V0"
@@ -456,6 +457,7 @@ def solve_static_contact_path(
                     pivot_attempts = 0
                     pivot_applied = 0
                     pivot_rejected = 0
+                    pressure_map_attempts = 0
                     pivot_backup = None
                     support_resets: list[dict[str, object]] = []
                     augmentation_trace: list[dict[str, object]] = []
@@ -690,6 +692,43 @@ def solve_static_contact_path(
                                     augmentation_trace[-1]["pivot_schur_condition"] = pivot.schur_condition
                                     manager.set_normal_multipliers(pivot.multipliers)
                                     continue
+                            if (proposal is None
+                                    and settings.augmentation_equilibrated_pressure_step_pa is not None
+                                    and pressure_map_attempts == 0
+                                    and augmentation >= 10
+                                    and augmentation <= augmentation_limit - 2
+                                    and np.count_nonzero(projected > 0.0) == 2):
+                                pressure_map_attempts = 1
+                                try:
+                                    mapped = equilibrated_pressure_pivot(
+                                        manager, model, u, q, multipliers,
+                                        committed_states, num_layers, T, u0,
+                                        rows, reduced_external, target,
+                                        pressure_step=(
+                                            settings.augmentation_equilibrated_pressure_step_pa
+                                        ),
+                                        maximum_pressure=settings.augmentation_pivot_max_pressure_pa,
+                                        max_iterations=max_iterations,
+                                        tolerance=tolerance,
+                                        check_cancel=lambda: cancellation_safe_point(
+                                            cancellation_token,
+                                            f"contact_path.step:{step}.augmentation:{augmentation}.pressure_map",
+                                        ),
+                                    )
+                                except SolveCancelled:
+                                    raise
+                                except (ValueError, np.linalg.LinAlgError) as exc:
+                                    augmentation_trace[-1]["pressure_map_failure"] = str(exc)
+                                    mapped = None
+                                augmentation_trace[-1]["pressure_map_proposed"] = mapped is not None
+                                if mapped is not None:
+                                    pivot_backup = (q.copy(), multipliers.copy(),
+                                                    projected.copy(),
+                                                    normal_multiplier_change,
+                                                    len(mapped.retained_local_indices))
+                                    augmentation_trace[-1]["pressure_map_condition"] = mapped.schur_condition
+                                    manager.set_normal_multipliers(mapped.multipliers)
+                                    continue
                             manager.set_normal_multipliers(
                                 projected if proposal is None else proposal
                             )
@@ -718,6 +757,7 @@ def solve_static_contact_path(
                             "pivot_attempts": pivot_attempts,
                             "pivot_applied": pivot_applied,
                             "pivot_rejected": pivot_rejected,
+                            "pressure_map_attempts": pressure_map_attempts,
                             "minimum_gap": (
                                 None if certificate is None else
                                 _reported_lower_gap(certificate)
@@ -777,6 +817,8 @@ def solve_static_contact_path(
                         record["pivot_attempts"] = pivot_attempts
                         record["pivot_applied"] = pivot_applied
                         record["pivot_rejected"] = pivot_rejected
+                        if settings.augmentation_equilibrated_pressure_step_pa is not None:
+                            record["pressure_map_attempts"] = pressure_map_attempts
                     if program.nodal_forces:
                         previous_force_values = program.force_values_at(step-1)
                         start_u = np.asarray(T @ start_q + u0).reshape(-1)

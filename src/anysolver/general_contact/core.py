@@ -201,6 +201,7 @@ class ContactSolverSettings:
     augmentation_acceleration: str = "none"
     augmentation_pivot_max_pressure_pa: float | None = None
     augmentation_pivot_difference_step_m: float | None = None
+    augmentation_equilibrated_pressure_step_pa: float | None = None
     augmentation_support_resolution: str = "exact"
     augmentation_support_force_budget_n: float | None = None
 
@@ -306,6 +307,12 @@ class ContactSolverSettings:
                 raise ValueError("active_secant_pivot requires at least 15 augmentations")
         elif any(value is not None for value in pivot_bounds):
             raise ValueError("augmentation pivot bounds require active_secant_pivot")
+        pressure_step = self.augmentation_equilibrated_pressure_step_pa
+        if pressure_step is not None:
+            if self.augmentation_acceleration != "active_secant_pivot":
+                raise ValueError("equilibrated pressure step requires active_secant_pivot")
+            if not np.isfinite(pressure_step) or pressure_step <= 0.0:
+                raise ValueError("equilibrated pressure step must be finite and positive")
         if self.augmentation_support_resolution not in {"exact", "roundoff"}:
             raise ValueError("augmentation_support_resolution must be exact or roundoff")
         if self.augmentation_support_resolution == "roundoff":
