@@ -3913,3 +3913,63 @@ interface kinematics or work differ materially before that
 idealization boundary, revise the reduced pose law first. Do not
 resume classical axial refinement. Formal F03 authority is unconsumed,
 G0B remains open, and G1 barred.
+
+**Current-state summary, 26 September 2026 (supersedes the preceding next
+action):** Decide whether the native six-channel, two-interval reduced line
+weld has defensible physical transfer before choosing a multiplier space.
+The saved direct C1 solid F2/F4 decks have independently checked geometry,
+loads, supports and a pre-opened bond; pure zero-preload torque is still an
+inadmissible comparator. At F4, the native two-interval Q4 four-cell result
+has tip opening `−69.319 µm`, applied work `0.074090 J` and shell support
+`(Fz,Mx,My)=(71.498 N,−40.896 Nm,−48.816 Nm)`, versus saved solid
+`−69.320 µm`, `0.074262 J` and approximately
+`(72.152 N,−40.530 Nm,−48.137 Nm)`. Its tip *nodal* beam rotation is
+`47.708 µrad`, its one-sided retained *material port* rotation
+`46.089 µrad`, and its E4 top-face secant slope `45.467 µrad`. The solid
+stiffener fitted-section rotation is `49.317 µrad` and the bonded-face
+slope `45.770 µrad`; those observables and the 3D plate director proxy
+are distinct, so the apparent closeness is directional evidence only,
+not bond accuracy. The saved F2 comparison has the same trend. Native
+rank, force/moment/work balances and physical shell work pass their bounded
+checks; material-port rotations are one-sided at interior stations, so
+the earlier nodal-only station record must not be called a port result.
+Raw exact-source station root:
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-station-kinematics-dev-20260926-v2`
+(`dfd63c75`).
+
+The fixed two-interval, 12-half-cell transverse-action screen now compares
+Q4 two versus four patch cells. Its weakest diagonal-energy-normalized
+mode remains alternating interval `Fz` (`9.24e-5→1.29e-4`); the shell's
+physical share rises `7.80e-5→1.13e-4`, the beam share stays about
+`1.5e-5`, and numerical-shell work is below `1.3e-10`. Thus coarse shell
+resolution contributes but does not remove this weak finite-grid action.
+This is neither a physical multiplier-norm inf-sup bound nor evidence of
+locking or failure. The fixed bond hosts give only 1:1 and 1:2 local
+interval:shell-cell ratios, not the registered ratio envelope. Raw root:
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-segmented-shell-resolution-dev-20260926-v1`
+(`47ab9659`). The immediate transverse-order/line-resolution diagnosis
+is complete; no axial escalation follows.
+
+**Norm interpretation:** For the same two intervals, the integrated
+N/Nm duals were converted to P0 densities using their 0.05 m lengths;
+moments use a declared 1 m characteristic length. An independently
+analytic, bracketed Neumann `H^-1/2` P0 density Gram on the 0.1 m bond
+changes the weakest *full* signed-compliance action to alternating `Fx`
+(`0.750→0.906` on Q4 two→four cells). Restricted to nonaxial channels,
+the weakest action is alternating `Fy/Mz` (`1.499→1.786`), with positive
+shell/beam contributions and a Gram bracket ratio below `1.00000003`.
+About 99% of the saved native torque multiplier field projects onto this
+nonaxial mode in that dual norm; opening `Fz` does not. The earlier
+diagonal-energy `Fz` minimum was normalization-dependent. Neither norm
+turns the indefinite retained tangent into a coercive primal, and these
+two fixed meshes do not prove mesh-uniform inf-sup or select P0.
+
+**Remaining uncertainty and discriminating action:** The torque-active
+`Fy/Mz` mode and beam-port versus solid-section/face separation need a
+controlled beam:line resolution check, with the same physical norm,
+loads, supports and work. If the transverse action and loaded transfer
+settle, take this unqualified law into the registered 1:1–1:8 and
+reciprocal mesh-ratio comparison of P0/P1/dual candidates; if not,
+revise the beam/line trace or reduced pose first. Do not resume axial
+refinement from the full-mode quotient. Neither branch changes criteria
+or consumes formal F03 authority. G0B remains open; G1 remains barred.
