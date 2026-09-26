@@ -80,6 +80,35 @@ needs a physically justified treatment of the E4 drilling coordinate and
 independent norm review; do not tune a coefficient just to expose a desired
 singular mode.
 
+**Next independent F09 discriminator:** The bounded six-case B2 scaling
+screen passed exact rounded and independent force-method oracles, but held
+`Iy=Iz=J=1 m^4` while area tended to zero. That is a numerical stress
+family, not physical section admission. On the same two-member elbow,
+use a declared series of square sections with area, bending inertias and
+torsion linked to the side length, fixed mixed physical terminal loads,
+and a narrow independent force-method oracle. Check each nonzero response
+component, separate force/moment residuals and representability guards.
+Agreement permits a draft physically bounded scaling policy for further
+generalized SPD/attachment tests; failure separates operator, rounded
+assembly and sparse factorization errors. This is one G0 preparatory screen,
+not a production admission, B2 speed claim or G1 entry.
+
+**F09 square-section result:** The source-bound
+`B3_GE_E4_PL_G0_F09_SQUARE_SECTIONS_DEV_V1.json` tests side lengths
+`0.04/0.08/0.16 m` with `A=b²`, `Iy=Iz=b⁴/12`, the Fourier Saint-Venant
+square `J`, `E=210 GPa`, `ν=0.3`, fixed terminal
+`(50,-30,100 N; 2,-3,5 Nm)`, and the existing rooted two-member elbow.
+All 3/3 pass the declared componentwise `1e-8` and separate force/moment
+residual `1e-10` diagnostic limits. The maximum scaled-vs-independent
+force-method component error is `8.39e-13`; maximum free force and moment
+residual ratios are `2.33e-12` and `9.10e-14`. The record also retains the
+exact solve of the rounded assembled graph and complete tip vectors. This
+removes the earlier geometric-inconsistency objection for these finite
+square cases, but does not define the full physically admitted section
+range or cover off-diagonal generalized SPD, new attachments, mass,
+prestress, installed behavior, or B2 speed. F09/G0B stay open. Proceed to
+those missing contracts rather than another smaller square-section sweep.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
