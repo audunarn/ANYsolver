@@ -32,6 +32,19 @@ contract. The independent skew partial-overlap oracle checks normal wrench,
 zero frictionless lateral work and a smooth-branch directional tangent in
 `tests/test_general_contact_skew_partial_work.py`.
 
+On source `136f81539ec6859517b17cb20a498a7fb263f09d`, the affected
+source-controlled suite passed 46 tests; two opt-in coupled checks were
+skipped. A separate eight-step path with eight Q4 pressure faces and two
+nonmatching S3 target faces completed press, 50 mm slide, full opening and
+recontact under the unchanged 50 µm physical gap budget. Final minimum gap
+was −1.832 µm and normal force was 0.0223588 N. A six-step open checkpoint
+resumed through recontact and produced an exactly equal final checkpoint.
+The old-profile checkpoint was rejected by contract identity. These are
+local development results; pressure-space stability on partial contact,
+independent assessment and C1 engineering acceptance remain open. Raw runs
+are under `C:/ANYworkspaceWork/general-contact-evidence` with the
+`c1-eight-q4-normalized-*` prefix.
+
 The first admitted coupled case has two adjacent Q4 source faces and two
 nonmatching S3 target faces. Direct local work matches whole-patch projected
 normal residual to a maximum absolute difference of (5.6\times10^{-13})
