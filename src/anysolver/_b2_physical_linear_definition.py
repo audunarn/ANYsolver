@@ -61,8 +61,9 @@ def _exact_psd(matrix):
 class MassMetadata:
     """Explicit velocity-order sectional inertia per unit length.
 
-    Entries are in local [vx, vy, vz, wx, wy, wz] coordinates; source and
-    origin identify the physical data. No density or geometry is inferred.
+    Entries are in local [vx, vy, vz, wx, wy, wz] coordinates, with velocity
+    evaluated at ``origin_local_m`` relative to the member reference axis.
+    No density or geometry is inferred.
     """
 
     source_id: str
@@ -82,6 +83,23 @@ class MassMetadata:
         _exact_psd(matrix)
         object.__setattr__(self, "matrix_per_m", tuple(
             tuple(float(v) for v in row) for row in matrix))
+
+    def matrix_at_reference_axis(self) -> np.ndarray:
+        """Pull sectional kinetic work back to the member reference axis.
+
+        For the declared origin r, v_origin = v_axis + omega cross r.  The
+        returned owned array has velocity order [v_axis, omega].  This is a
+        kinematic transformation of supplied inertia, not inertia inferred
+        from the section stiffness or geometry.
+        """
+        x, y, z = self.origin_local_m
+        pullback = np.eye(6)
+        pullback[:3, 3:] = ((0., z, -y), (-z, 0., x), (y, -x, 0.))
+        with np.errstate(over="ignore", invalid="ignore"):
+            matrix = pullback.T @ np.asarray(self.matrix_per_m) @ pullback
+        if not np.isfinite(matrix).all():
+            raise RepresentabilityError("B2 mass-origin pullback is not representable")
+        return matrix
 
 
 @dataclass(frozen=True)

@@ -49,6 +49,33 @@ def test_owned_reference_and_separate_mass_geometry_metadata():
                              (0.,.1,0.),(0.,-.1,0.)).geometric_polar_radius_squared_m2 is None
 
 
+def test_mass_origin_pullback_matches_independent_particle_kinetic_work():
+    points=np.array([(0.,.25+y,-.125+z) for y in (-.3,.3)
+                     for z in (-.4,.4)])
+    velocity=np.array([.13,-.21,.31,-.17,.29,.11])
+    def kinetic_matrix(origin):
+        matrix=np.zeros((6,6))
+        for point in points:
+            x,y,z=point-origin
+            map_velocity=np.array([[1.,0.,0.,0.,z,-y],
+                                   [0.,1.,0.,-z,0.,x],
+                                   [0.,0.,1.,y,-x,0.]])
+            matrix+=2.*map_velocity.T@map_velocity
+        return matrix
+    direct=kinetic_matrix(np.zeros(3))
+    direct_energy=sum(np.linalg.norm(velocity[:3]+
+                     np.cross(velocity[3:],point))**2 for point in points)
+    assert .5*velocity@direct@velocity == pytest.approx(direct_energy,rel=1e-14)
+    for origin in (np.array([0.,.1,.05]),np.array([0.,-.2,.3])):
+        metadata=MassMetadata("particle-inertia",tuple(origin),
+                              kinetic_matrix(origin))
+        pulled=metadata.matrix_at_reference_axis()
+        np.testing.assert_allclose(pulled,direct,rtol=2e-15,atol=2e-15)
+        assert .5*velocity@pulled@velocity == pytest.approx(direct_energy,rel=1e-14)
+        pulled[0,0]=0.
+        assert metadata.matrix_at_reference_axis()[0,0] == 8.
+
+
 def test_admitted_roundoff_is_canonical_orthonormal_frame():
     beam=member(y=(5e-11,1.,0.))
     frame=beam.local_frame_rows()

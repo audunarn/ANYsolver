@@ -461,6 +461,17 @@ against the same physical particle cloud before coupled spectral work.
 No section density, centroidal inertia or mass center is inferred from
 stiffness; F12/G0B and spectral admission remain open.
 
+**F12 mass-origin pullback (27 September):** The private `MassMetadata` now
+states its velocity datum explicitly and returns an owned 6x6 inertia at the
+member reference axis using `v_origin = v_axis + omega × r`. Two nonzero
+metadata origins reproduce the same independently summed four-particle
+kinetic matrix and mixed translation/rotation work; mutation of the return
+does not change the record. The focused definition suite passes `6/6`.
+This supplies a missing local kinematic contract only. Coupled mass assembly,
+geometric stiffness, descriptor treatment, prestress/buckling and installed
+qualification remain open. Do not assign active-plastic or nonconservative
+spectral capability from this check.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
