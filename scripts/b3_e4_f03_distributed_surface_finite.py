@@ -621,7 +621,7 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
     if segmented and not hybrid:
         raise ValueError("segmented diagnostic requires the hybrid law")
     shell_operators = {}
-    cases = (((2, 12),) if segmented else ((2, 12), (4, 12))) if hybrid else (
+    cases = ((2, 12), (4, 12)) if hybrid else (
         (2, 4), (2, 8), (4, 4), (4, 8), (4, 16))
     for patch_cells, half_cells in cases:
         xs, ys = local_grid(patch_cells)
