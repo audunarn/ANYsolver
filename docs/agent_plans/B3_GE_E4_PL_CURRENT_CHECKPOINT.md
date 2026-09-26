@@ -1776,6 +1776,30 @@ found no remaining actionable admission or formula issue; it did not run
 tests or assess independent derivatives or scale. F08 and G0B remain open;
 G1 remains barred.
 
+**Next bounded F08 derivative decision:** Existing sparse/dense parity
+shares the same element formulas and cannot detect a shared tangent error.
+On the same two-element virgin generalized and physical-fibre fixtures,
+compare the extracted assembled tangent action with central differences
+of residuals obtained through each native physical state update. Use a
+fixed supported direction mixing nodal translation/rotation and retained
+coordinates, three step sizes, and the registered elastic `1e-6` relative
+threshold over a plateau. Agreement supports this local trial contract;
+failure identifies a derivative issue to diagnose before integration. This
+does not determine the beam–shell connection or close F08/G0B.
+
+**F08 derivative result and review:** The new two-family test first makes
+a supported nonzero trial from each virgin accepted predecessor, mixing
+nodal translation/rotation and native retained coordinates through its
+actual `advance` operation. It then compares central residual differences
+at `1e-5`, `3e-6`, and `1e-6` with the sparse tangent action. At least two
+steps in each family meet `1e-6` relative error; the focused file passed
+`10/10` after this nonzero-trial strengthening. Independent read-only
+review confirmed this checks a derivative rather than dense-owner parity.
+The unloaded generalized fixture still does not test line-work/couple-load
+derivatives; the physical-fibre fixture does not test a yielded plastic
+tangent. These are remaining coverage limits, not observed formula failures.
+This is not a full derivative envelope or independent material-law oracle.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision

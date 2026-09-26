@@ -162,3 +162,41 @@ def test_typed_adapter_rejects_invalid_generalized_state_like_owner():
     with pytest.raises(ValueError, match="fixed retained position changed"):
         evaluate_sparse_trial(context, invalid, origin, .25,
                               family="generalized")
+
+
+@pytest.mark.parametrize("family", ("generalized", "physical_fibre"))
+def test_typed_adapter_tangent_follows_native_state_update(family):
+    if family == "generalized":
+        context = build(4, z_offset=.0675,
+                        torsion_constant=square_torsion_constant()).context
+        layout = context
+        advance = context.advance
+    else:
+        context = FibreContext(
+            make_model(contrast=1.),
+            ForceProgram((.25,), ((5, .4, -.005, 0.),),
+                         max_iterations=24))
+        layout = context.layout
+        advance = layout.advance
+    state, origin = context.initial.mechanical, context.initial.origins
+    direction = np.zeros(layout.count)
+    first = layout.nodal_count-6
+    direction[first:first+6] = (.4, -.3, .2, .15, -.1, .12)
+    direction[layout.nodal_count:layout.nodal_count+7] = (
+        .11, -.09, .07, .05, -.04, .03, .015)
+    direction[np.asarray(layout.fixed, dtype=int)] = 0.
+    state = advance(state, 1e-3*direction)
+    base = evaluate_sparse_trial(context, state, origin, .25,
+                                 family=family)
+    assert np.linalg.norm(base.residual) > 1e-6
+    expected = base.tangent@direction
+    errors = []
+    for step in (1e-5, 3e-6, 1e-6):
+        plus = evaluate_sparse_trial(
+            context, advance(state, step*direction), origin, .25,
+            family=family).residual
+        minus = evaluate_sparse_trial(
+            context, advance(state, -step*direction), origin, .25,
+            family=family).residual
+        errors.append(_relative((plus-minus)/(2*step), expected))
+    assert sum(error <= 1e-6 for error in errors) >= 2, errors
