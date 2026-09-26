@@ -85,9 +85,13 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     c1_open_shear = (shear == "tip_fz" and reverse_tip_fz and
                      bar_reference_profile == "c1_tangent" and
                      contact_policy == "none")
+    c1_torque_basis = (shear == "tip_mx" and tip_mx_gap_audit and
+                       bar_reference_profile == "c1_tangent" and
+                       contact_policy == "none")
     if type(full_displacement_output) is not bool or (
             full_displacement_output and not (
-                (factor == 4 or (factor == 2 and c1_open_shear)) and
+                (factor == 4 or
+                 (factor == 2 and (c1_open_shear or c1_torque_basis))) and
                 shear in ("tip_mx", "tip_fz") and
                 boundary_policy == "left_root" and
                 contact_policy in ("none", "c1_penalty") and
@@ -142,7 +146,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     if bar_reference_profile not in ("legacy_linear", "c1_tangent") or (
             bar_reference_profile == "c1_tangent" and
             (bar_clearance_um != 2 or
-             not (factor == 4 or (factor == 2 and c1_open_shear)) or
+             not (factor == 4 or
+                  (factor == 2 and (c1_open_shear or c1_torque_basis))) or
              bond_policy != "terminal" or tip_load_map != "quadratic_face")):
         raise ValueError("C1 tangent profile requires the bounded quadratic terminal reference")
     if element_family not in ("C3D8", "C3D20R") or (
@@ -950,6 +955,8 @@ def main() -> int:
     c1_open_shear = (args.bar_reference_profile == "c1_tangent" and
                      args.reverse_fz_open_audit and
                      args.contact == "none")
+    c1_torque_basis = (args.bar_reference_profile == "c1_tangent" and
+                       args.tip_mx_gap_audit and args.contact == "none")
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
     if args.bond == "terminal" and (args.boundary != "left_root" or
@@ -979,7 +986,8 @@ def main() -> int:
         parser.error("declared bar clearance requires quadratic terminal torque or C1 opening-shear audit")
     if args.bar_reference_profile=="c1_tangent" and not (
             (list(args.factor)==[4] or
-             (list(args.factor)==[2] and c1_open_shear)) and
+             (list(args.factor)==[2] and
+              (c1_open_shear or c1_torque_basis))) and
             args.suite=="loads" and
             args.boundary=="left_root" and args.bond=="terminal" and
             args.contact in ("none","c1_penalty") and
@@ -1007,7 +1015,8 @@ def main() -> int:
         parser.error("quadratic face traction requires admitted no-contact C3D20R tip loading")
     if args.full_displacement_output and not (
             (list(args.factor)==[4] or
-             (list(args.factor)==[2] and c1_open_shear)) and
+             (list(args.factor)==[2] and
+              (c1_open_shear or c1_torque_basis))) and
             args.suite=="loads" and
             args.boundary=="left_root" and
             args.contact in ("none","c1_penalty") and
@@ -1170,13 +1179,38 @@ def main() -> int:
             for entry in manifest["limits_of_claim"]]
         manifest["limits_of_claim"].append(
             "paired reference-normal gaps are not a continuous deformed-contact certificate")
+        if list(args.factor)==[2] and c1_torque_basis:
+            manifest["question"] = (
+                "On the identical factor-two C1 tangent terminal model, "
+                "does the no-contact torque field supply a linear basis "
+                "whose superposition with the executed opening-shear field "
+                "has an open saved interface and stable incremental torque "
+                "transfer relative to factor four?")
+            manifest["decision"] = (
+                "Only a positive combined-field face-gap bound and stable "
+                "physical observables retain a pre-opened incremental torque "
+                "reference for further contact and mesh checks. Pure torque "
+                "penetration cannot be scored, and no native line law follows.")
+            manifest["limits_of_claim"].append(
+                "pure no-contact torque is a linear basis only; the physical "
+                "pre-opened state is derived with the separately executed "
+                "matching opening-shear solve")
         if args.full_displacement_output:
+            if c1_open_shear:
+                full_u_meaning = (
+                    "full displacement output on the C1 opening-shear model "
+                    "for deformed seam and surface projection")
+            elif list(args.factor)==[2] and c1_torque_basis:
+                full_u_meaning = (
+                    "factor-two C1 torque linear-basis field for the "
+                    "pre-opened incremental reference")
+            else:
+                full_u_meaning = (
+                    "output-only replay of the unchanged C1 terminal torque "
+                    "model for deformed seam and surface projection")
             manifest["limits_of_claim"]=[
-                (("full displacement output on the C1 opening-shear model "
-                  "for deformed seam and surface projection" if c1_open_shear
-                  else "output-only replay of the unchanged C1 terminal torque "
-                  "model for deformed seam and surface projection")
-                 if entry.startswith("output-only replay of factor-4 cases")
+                (full_u_meaning if
+                 entry.startswith("output-only replay of factor-4 cases")
                  else entry)
                 for entry in manifest["limits_of_claim"]]
     if args.contact == "c1_penalty":

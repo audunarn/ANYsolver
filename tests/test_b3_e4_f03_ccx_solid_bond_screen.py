@@ -457,6 +457,32 @@ def test_c1_opening_shear_keeps_torque_geometry_and_has_exact_reverse_wrench():
         SCREEN.build(4, "tip_mx", reverse_tip_fz=True, **common)
 
 
+def test_c1_factor_two_torque_basis_matches_opening_structural_deck():
+    common=dict(boundary_policy="left_root", bond_policy="terminal",
+                element_family="C3D20R", bar_clearance_um=2,
+                plate_thickness_mm=35, tip_load_map="quadratic_face",
+                full_displacement_output=True,
+                bar_reference_profile="c1_tangent")
+    torque, tm = SCREEN.build(2, "tip_mx", tip_mx_gap_audit=True, **common)
+    opening, om = SCREEN.build(2, "tip_fz", reverse_tip_fz=True, **common)
+    structural = lambda deck: "\n".join(
+        deck.split("*CLOAD", 1)[0].splitlines()[2:])
+    assert structural(torque) == structural(opening)
+    assert tm["unbonded_face_pairs"] == om["unbonded_face_pairs"]
+    assert len(tm["unbonded_face_pairs"]) == 32
+    assert tm["boundary_node_ids"] == om["boundary_node_ids"]
+    assert "*NODE FILE,OUTPUT=3D\nU" in torque
+    forces={int(node):np.array(force) for node,force in
+            tm["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(forces, tm["probe_coordinates_m"]) == pytest.approx(
+        [0.,0.,0.,100.,0.,0.], abs=1e-9)
+    with pytest.raises(ValueError, match="bounded full-bond or C1 terminal"):
+        SCREEN.build(1, "tip_mx", tip_mx_gap_audit=True, **common)
+    with pytest.raises(ValueError, match="bounded full-bond or C1 terminal"):
+        SCREEN.build(2, "tip_mx", tip_mx_gap_audit=True,
+                     contact_policy="c1_penalty", **common)
+
+
 def test_c1_penalty_runner_allows_only_its_known_static_notice():
     notice = " *WARNING reading *STATIC: a nonlinear analysis is requested"
     other = " *WARNING in contact: face search failed"

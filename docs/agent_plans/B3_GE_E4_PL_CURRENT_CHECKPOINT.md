@@ -16,34 +16,65 @@ RMS is `0.16919→0.16920 µm` from patch cells two→four while all six weak
 gaps close. **Uncertainty:** This law cannot substitute for a pointwise
 solid bond, the solid has one mesh level, torque remains contact-inadmissible,
 and no true line space has mesh-uniform stability evidence.
-**Next discriminating action:** Run one bounded factor-two C1 opening-shear
-solid reference at identical geometry, load, supports and shared bond;
-compare its tip/support transfer and continuous saved-field face gap with
-the retained factor-four result. Material drift or overlap blocks use as
-a directional reference; agreement supports further reference refinement,
-not native accuracy. In parallel, derive a distinct physical six-channel
-line work law and test fixed-grid transfer/modes before registered ratios.
+**Next discriminating action:** The bounded factor-two C1 opening-shear
+solid run now agrees directionally with factor four and has a positive
+continuous saved-field face-gap bound. The factor-four C1 pure-torque
+reference penetrates and remains inadmissible. However its executed linear
+field and the opening field have identical structural decks except a load
+comment, and their sum for `−1000 N Fz + 100 N m Mx` remains open on the
+opposed saved faces. Use the pure-torque solve only as a linear basis for
+an *incremental torque about a pre-opened state*. One factor-two torque
+basis solve, combined with the existing factor-two opening solve, will
+distinguish whether this admissible incremental response is mesh-stable;
+an overlapping or materially drifting combined state stops this reference
+route. Side-surface/contact admissibility and a third level remain open.
+In parallel, derive a distinct physical six-channel line work law and test
+fixed-grid transfer/modes before registered ratios.
 A sparse third patch grid would settle the distributing footprint only;
 it cannot remove its weak-moment null mode. Do not resume finer classical
 axial or arbitrary P0 row sweeps. No footprint, pose or multiplier is
 production-selected. Formal F03 authority is unconsumed, G0B open and G1
 barred.
 
-**Run preparation and current dependency:** The factor-two C1 deck and
-continuous-gap guard changes are present in the isolated worktree, with
-`80/80` focused tests passed and `git diff --check` clean. The external
-runner requires a clean source commit. The attempted commit was not
-executed because automatic approval review returned an authentication
-error (HTTP 401); do not bypass that review. Therefore the factor-two
-CalculiX run has not started and there is no new solid result. Preserve
-the existing factor-four reference and all historical evidence. Once the
-approval service works, commit the tested source, confirm clean status,
-and run the single bounded factor-two case in a new exclusive output root.
+**Executed factor-two opening reference:** Source `da1d2a0c` contains the
+tested factor-two C1 deck/gap guards (`80/80` focused tests). The
+CalculiX result at
+`.qualification/b3-ge-e4-pl/f03-ccx-c1-opening-shear-dev-20260926-v2`
+completed with one thread and the 120-second per-case cap. Its
+manifest/result SHA256 are `2474796056FFAC94E2FE8E8C2A3F7C4BAB4A14C4C791999F9D28829F28BFF993`
+and `C73C9B12C583F5A6F1B585361146B0E381BFF8D058167BDC17DB67FC2B16525D`.
+Factor two→four changes conjugate opening tip displacement
+`69.01466→69.32203 µm` (+0.445%), plate support Fz
+`71.84356→72.15187 N` (+0.429%), and plate My
+`−47.96981→−48.13664 N m` (+0.348%). Both have positive sufficient
+continuous face-gap bounds on the saved top/underside field: minimum
+nonseam margins `2.112→0.786 µm` and seam-factored margins
+`1.049→0.643 µm`. This is two-level directional evidence, not a
+three-level convergence or accuracy qualification. The earlier approval
+service HTTP 401 prevented the first commit attempt; an identical reviewed
+path later succeeded, so it is no longer the execution blocker.
 Direct deck-definition comparison confirms both levels use the same
 35 mm plate, terminal bond `x=.9–1 m`, C1 tangent beam axis at `z=.0675 m`,
 left/root supports, no contact, and applied end wrench
 `(Fz,My)=(-1000 N,+1000 N m)`; the factor-two/four models have
 `1024/8192` solid elements and `32/128` unbonded paired faces.
+
+**Pre-opened torque discriminator, read-only:** The factor-four C1
+no-contact pure-torque and opening-shear decks have identical 38,041 node
+positions and identical structural/support input through the load block
+after removing only the shear-name comment (normalized prefix SHA256
+`b695640939156c81a16d39f2ff45b1776968e35ca323be4e66947aa70538da4b`).
+The only differing model metadata are load forces and audit flags. Both
+saved complete FRD displacement inventories match. Their sum at the
+declared loads has a positive sufficient opposed-face gap bound:
+minimum nonseam margin `0.770 µm`, seam-factored margin `0.540 µm`;
+the opening-only margins are `0.786/0.643 µm`. This is exact linear
+superposition of the declared no-contact elastic equations, but a
+derived field rather than an executed combined-load solve. The pure
+torque field itself has 43 negative sampled face gaps and cannot be
+scored as a zero-preload physical reference. The derived pre-opened
+incremental torque is a candidate only; side-surface admissibility,
+actual combined-load execution and mesh convergence remain unchecked.
 
 **Next native C1 geometry discriminator, before execution:** The saved solid
 opening-shear field uses a 2 µm C1 tangent-aligned beam-axis lift over
