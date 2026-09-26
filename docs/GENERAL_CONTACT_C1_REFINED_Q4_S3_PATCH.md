@@ -116,8 +116,19 @@ establish routing and failure handling, not active coupled equilibrium.
 Releasing nine local normal DOFs produced a small contact response and kept
 the independent gap within budget, but also reached the 16-update limit at
 a 0.5018 Pa pressure change against its separately registered 0.2 Pa gate.
-That rejected step rolled back. Active partial-contact equilibrium remains
-unproven for this skew patch.
+That rejected step rolled back. A tighter 1e-8 equilibrium tolerance
+restored pressure convergence; with a bounded 17-update limit the path
+completed. Reducing pair-local differentiation from 20 µm to 2 µm lowered
+paired force and moment errors from about 1.1e-5 to 1.1e-7 relative to the
+contact wrench. The resulting source-controlled 24-Q4/two-S3 example and
+opt-in regression passed the active path and completed-checkpoint reload
+in 317.62 s (`examples/general_contact_fixed_projection_skew.py` and
+`tests/test_general_contact_fixed_projection_active_path.py`). It has one
+active pressure mode, a −33.975 µm certified lower gap, 0.1386 Pa final
+pressure change and about 0.004735 N source normal force. This is local
+feasibility under explicit development settings. Mesh/enforcement convergence,
+finite sliding, installed-package verification and independent acceptance
+remain open for this restricted profile.
 
 The first admitted coupled case has two adjacent Q4 source faces and two
 nonmatching S3 target faces. Direct local work matches whole-patch projected
