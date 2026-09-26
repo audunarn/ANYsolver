@@ -164,13 +164,14 @@ class MovingS3PatchProjectedNormal:
             (plus.reference_weighted_gap-minus.reference_weighted_gap)/(2*step)
             for plus, minus in zip(positive, negative)
         ])
-        residual = -(base.pressure @ jw)
-        if not tangent:
-            return MovingS3PatchMortarWork(base, residual, None, evaluations)
         js = np.column_stack([
             (plus.reference_support-minus.reference_support)/(2*step)
             for plus, minus in zip(positive, negative)
         ])
+        gap_variation = jw-base.normalized_gap[:, None]*js
+        residual = -(base.pressure @ gap_variation)
+        if not tangent:
+            return MovingS3PatchMortarWork(base, residual, None, evaluations)
         active_coordinates = (
             np.arange(count, dtype=np.intp)
             if self.tangent_active_coordinates is None else
@@ -178,11 +179,17 @@ class MovingS3PatchProjectedNormal:
         )
         hessian_w = np.empty((len(self.source_node_ids),
                               len(active_coordinates), len(active_coordinates)))
+        hessian_s = np.empty_like(hessian_w)
         for local_j, j in enumerate(active_coordinates):
             hessian_w[:, local_j, local_j] = (
                 positive[j].reference_weighted_gap
                 - 2*base.reference_weighted_gap
                 + negative[j].reference_weighted_gap
+            )/step**2
+            hessian_s[:, local_j, local_j] = (
+                positive[j].reference_support
+                - 2*base.reference_support
+                + negative[j].reference_support
             )/step**2
             for local_k in range(local_j+1, len(active_coordinates)):
                 k = int(active_coordinates[local_k])
@@ -194,17 +201,28 @@ class MovingS3PatchProjectedNormal:
                 )/(4*step**2)
                 hessian_w[:, local_j, local_k] = mixed
                 hessian_w[:, local_k, local_j] = mixed
+                mixed_support = (
+                    geometry_at(((j, 1), (k, 1))).reference_support
+                    - geometry_at(((j, 1), (k, -1))).reference_support
+                    - geometry_at(((j, -1), (k, 1))).reference_support
+                    + geometry_at(((j, -1), (k, -1))).reference_support
+                )/(4*step**2)
+                hessian_s[:, local_j, local_k] = mixed_support
+                hessian_s[:, local_k, local_j] = mixed_support
         dp = np.zeros((len(self.source_node_ids), len(active_coordinates)))
+        dg = np.zeros_like(dp)
         active = base.pressure > 0.0
         support = base.reference_support[active, None]
-        dp[active] = -self.stiffness*(
-            jw[np.ix_(active, active_coordinates)]/support
-            - base.reference_weighted_gap[active, None]
-            * js[np.ix_(active, active_coordinates)]/support**2
+        dg[active] = gap_variation[np.ix_(active, active_coordinates)]/support
+        dp[active] = -self.stiffness*dg[active]
+        support_variation = (
+            hessian_w
+            - np.einsum("ij,ik->ijk", js[:, active_coordinates], dg)
+            - base.normalized_gap[:, None, None]*hessian_s
         )
         reduced_tangent = -(
-            jw[:, active_coordinates].T @ dp
-            + np.einsum("i,ijk->jk", base.pressure, hessian_w)
+            gap_variation[:, active_coordinates].T @ dp
+            + np.einsum("i,ijk->jk", base.pressure, support_variation)
         )
         tangent_matrix = np.zeros((count, count))
         tangent_matrix[np.ix_(active_coordinates, active_coordinates)] = (
@@ -223,8 +241,9 @@ class MovingS3PatchProjectedNormal:
         source_count = len(self.source_node_ids)
         pressure_count = source_count
         jw = np.zeros((pressure_count, count))
-        js = np.zeros_like(jw) if tangent else None
+        js = np.zeros_like(jw)
         weighted_hessian = np.zeros((count, count)) if tangent else None
+        support_hessian = np.zeros((count, count)) if tangent else None
         step = self.geometry.difference_step
         evaluations = len(self.geometry.pair_laws)  # Base patch integration.
         source = np.asarray(current_source, dtype=float)
@@ -249,19 +268,24 @@ class MovingS3PatchProjectedNormal:
             local_count = len(coordinate_map)
             local_active = np.flatnonzero(np.isin(coordinate_map,
                                                   active_coordinates))
+            cache = {}
 
             def state_at(steps):
                 nonlocal evaluations
+                key = tuple(sorted(steps))
+                if key in cache:
+                    return cache[key]
                 evaluations += 1
                 if evaluations > self.geometry.maximum_energy_evaluations:
                     raise MemoryError("S3 patch pair-local differentiation budget exhausted")
                 trial = local_positions.copy()
                 for coordinate, sign in steps:
                     trial[coordinate] += sign*step
-                return law.evaluate(
+                cache[key] = law.evaluate(
                     trial[:source_local_count].reshape(-1, 3),
                     trial[source_local_count:].reshape(-1, 3),
                 )
+                return cache[key]
 
             middle = state_at(())
             positive = [state_at(((j, 1),)) for j in range(local_count)]
@@ -271,24 +295,35 @@ class MovingS3PatchProjectedNormal:
                 for plus, minus in zip(positive, negative)
             ])
             jw[np.ix_(source_nodes, coordinate_map)] += local_jw
+            local_js = np.column_stack([
+                (plus.reference_support-minus.reference_support)/(2*step)
+                for plus, minus in zip(positive, negative)
+            ])
+            js[np.ix_(source_nodes, coordinate_map)] += local_js
             if not tangent:
                 continue
             if not len(local_active):
                 continue
-            local_js = np.column_stack([
-                (positive[j].reference_support-negative[j].reference_support)/(2*step)
-                for j in local_active
-            ])
             active_map = coordinate_map[local_active]
-            js[np.ix_(source_nodes, active_map)] += local_js
             local_pressure = base.pressure[source_nodes]
+            local_support_weight = (
+                local_pressure*base.normalized_gap[source_nodes]
+            )
             local_hessian = np.empty((len(local_active), len(local_active)))
+            local_support_hessian = np.empty_like(local_hessian)
             for local_j, j in enumerate(local_active):
                 local_hessian[local_j, local_j] = float(local_pressure @ (
                     positive[j].reference_weighted_gap
                     - 2*middle.reference_weighted_gap
                     + negative[j].reference_weighted_gap
                 ))/step**2
+                local_support_hessian[local_j, local_j] = float(
+                    local_support_weight @ (
+                        positive[j].reference_support
+                        - 2*middle.reference_support
+                        + negative[j].reference_support
+                    )
+                )/step**2
                 for local_k in range(local_j+1, len(local_active)):
                     k = int(local_active[local_k])
                     mixed = (
@@ -300,22 +335,35 @@ class MovingS3PatchProjectedNormal:
                     local_hessian[local_j, local_k] = local_hessian[local_k, local_j] = float(
                         local_pressure @ mixed
                     )
+                    mixed_support = (
+                        state_at(((j, 1), (k, 1))).reference_support
+                        - state_at(((j, 1), (k, -1))).reference_support
+                        - state_at(((j, -1), (k, 1))).reference_support
+                        + state_at(((j, -1), (k, -1))).reference_support
+                    )/(4*step**2)
+                    weighted_support = float(local_support_weight @ mixed_support)
+                    local_support_hessian[local_j, local_k] = weighted_support
+                    local_support_hessian[local_k, local_j] = weighted_support
             weighted_hessian[np.ix_(active_map, active_map)] += local_hessian
+            support_hessian[np.ix_(active_map, active_map)] += local_support_hessian
 
-        residual = -(base.pressure @ jw)
+        gap_variation = jw-base.normalized_gap[:, None]*js
+        residual = -(base.pressure @ gap_variation)
         if not tangent:
             return MovingS3PatchMortarWork(base, residual, None, evaluations)
         dp = np.zeros((pressure_count, len(active_coordinates)))
+        dg = np.zeros_like(dp)
         active = base.pressure > 0.0
         support = base.reference_support[active, None]
-        dp[active] = -self.stiffness*(
-            jw[np.ix_(active, active_coordinates)]/support
-            - base.reference_weighted_gap[active, None]
-            * js[np.ix_(active, active_coordinates)]/support**2
-        )
+        dg[active] = gap_variation[np.ix_(active, active_coordinates)]/support
+        dp[active] = -self.stiffness*dg[active]
+        cross = np.einsum("i,ij,ik->jk", base.pressure,
+                          js[:, active_coordinates], dg)
         tangent_matrix = np.zeros((count, count))
         tangent_matrix[np.ix_(active_coordinates, active_coordinates)] = -(
-            jw[:, active_coordinates].T @ dp
+            gap_variation[:, active_coordinates].T @ dp
             + weighted_hessian[np.ix_(active_coordinates, active_coordinates)]
+            - cross
+            - support_hessian[np.ix_(active_coordinates, active_coordinates)]
         )
         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)

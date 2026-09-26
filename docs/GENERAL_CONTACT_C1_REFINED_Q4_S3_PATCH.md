@@ -1,13 +1,36 @@
 # C1 development profile: multiple Q4 pressure faces against S3
 
-`Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0`
-admits a conforming source patch of at least two qualified Q4 faces against an
+The current augmented static profile is
+`Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1`.
+The earlier `...DEV_V0` results below are historical source-bound development
+evidence. V0 produced spurious tangential work when partial overlap changed
+at a uniform physical gap; it is not an accepted frictionless sliding profile.
+
+The profile admits a conforming source patch of at least two qualified Q4 faces against an
 explicit S3 V2D target patch. Source Q1 pressure nodes are shared by material
 node identity. The projected augmented normal law uses the same physical Q4
 skin and S3 side/offset work maps as the one-Q4 route. Pair-local weighted-gap
 and support derivatives assemble into the shared pressure space. The complete
 residual is retained for both-body reactions; the tangent evaluates only
 physical coordinates reached by the solver's reduced unknowns.
+
+For each supported source pressure mode, let (w_i) be its weighted gap,
+(s_i>0) its reference support, (g_i=w_i/s_i) its normalized gap and
+(p_i=\max(0,\lambda_i-\epsilon_n g_i)) its projected pressure. The V1
+normal residual acts through (b_i=dw_i-g_i\,ds_i=s_i\,dg_i):
+
+\[
+R_c=-\sum_i p_i b_i.
+\]
+
+The tangent differentiates both the projection and (b_i), including mixed
+weighted-gap and support derivatives. This removes boundary-overlap work
+from a uniform-gap tangential translation while retaining the changing
+projection in the consistent, generally nonsymmetric tangent. Static and
+path profile versions were incremented together; restart rejects an old
+contract. The independent skew partial-overlap oracle checks normal wrench,
+zero frictionless lateral work and a smooth-branch directional tangent in
+`tests/test_general_contact_skew_partial_work.py`.
 
 The first admitted coupled case has two adjacent Q4 source faces and two
 nonmatching S3 target faces. Direct local work matches whole-patch projected
