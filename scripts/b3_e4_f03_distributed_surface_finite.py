@@ -698,6 +698,86 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                 beam_action <= 0. or physical_shell_action <= 0. or
                 abs(shell_action+beam_action-eigenvalues[0]) > 1e-8):
             raise ArithmeticError("physical interface mode action failed")
+        line_norm = None
+        if segmented:
+            from scripts._b3_e4_f03_p0_dual_norm import p0_dual_gram
+
+            # The rows are interval *mean* gaps and their duals are integrated
+            # N/Nm. A P0 density acts through interval length times each row.
+            # Rotation gaps use the declared 1 m characteristic length.
+            bond_length_m = .1
+            characteristic_length_m = 1.
+            interval_length_m = bond_length_m/len(patches)
+            density_to_integrated = np.tile(
+                np.r_[np.full(3, interval_length_m),
+                      np.full(3, interval_length_m*characteristic_length_m)],
+                len(patches))
+            lower, upper = p0_dual_gram(len(patches), bond_length_m, 4095)
+            dual_lower = np.kron(lower, np.eye(6))
+            dual_upper = np.kron(upper, np.eye(6))
+            stiffness_n_per_m = 210e9*.035
+            density_compliance = stiffness_n_per_m*(
+                density_to_integrated[:, None]*
+                (gram_shell+gram_beam)*density_to_integrated[None, :])
+            signed_upper, vectors = linalg.eigh(
+                density_compliance, dual_upper, check_finite=True)
+            signed_lower = linalg.eigh(
+                density_compliance, dual_lower,
+                eigvals_only=True, check_finite=True)
+            density_mode = vectors[:, 0]
+            integrated_mode = density_to_integrated*density_mode
+            shell_mode_work = float(stiffness_n_per_m*(
+                integrated_mode@gram_shell@integrated_mode))
+            beam_mode_work = float(stiffness_n_per_m*(
+                integrated_mode@gram_beam@integrated_mode))
+            nonaxial = np.array([i for i in range(len(density_to_integrated))
+                                 if i % 6 != 0], dtype=int)
+            transverse_upper, transverse_vectors = linalg.eigh(
+                density_compliance[np.ix_(nonaxial, nonaxial)],
+                dual_upper[np.ix_(nonaxial, nonaxial)], check_finite=True)
+            transverse_lower = linalg.eigh(
+                density_compliance[np.ix_(nonaxial, nonaxial)],
+                dual_lower[np.ix_(nonaxial, nonaxial)],
+                eigvals_only=True, check_finite=True)
+            transverse_density_mode = np.zeros(len(density_to_integrated))
+            transverse_density_mode[nonaxial] = transverse_vectors[:, 0]
+            transverse_integrated = (
+                density_to_integrated*transverse_density_mode)
+            transverse_shell_action = float(stiffness_n_per_m*(
+                transverse_integrated@gram_shell@transverse_integrated))
+            transverse_beam_action = float(stiffness_n_per_m*(
+                transverse_integrated@gram_beam@transverse_integrated))
+            if abs(shell_mode_work+beam_mode_work-signed_upper[0]) > 1e-8*max(
+                    1., abs(signed_upper[0])) or abs(
+                    transverse_shell_action+transverse_beam_action-
+                    transverse_upper[0]) > 1e-8*max(
+                        1., abs(transverse_upper[0])):
+                raise ArithmeticError("P0 density action split inconsistent")
+            line_norm = {
+                "status": "FINITE_GRID_SIGNED_COMPLIANCE_NOT_INF_SUP",
+                "bond_length_m": bond_length_m,
+                "interval_length_m": interval_length_m,
+                "characteristic_length_m": characteristic_length_m,
+                "reference_stiffness_n_per_m": stiffness_n_per_m,
+                "density_units": "N/m for forces; Nm/m for moments",
+                "sobolev_dual": "analytic Neumann H^-1/2 P0 density Gram",
+                "smallest_signed_quotient_upper": float(signed_upper[0]),
+                "smallest_signed_quotient_lower": float(signed_lower[0]),
+                "smallest_mode_density_equivalent_n_per_m": density_mode.tolist(),
+                "smallest_mode_shell_action": shell_mode_work,
+                "smallest_mode_beam_action": beam_mode_work,
+                "nonaxial_channels": ["Fy", "Fz", "Mx", "My", "Mz"],
+                "smallest_nonaxial_signed_quotient_upper": float(
+                    transverse_upper[0]),
+                "smallest_nonaxial_signed_quotient_lower": float(
+                    transverse_lower[0]),
+                "smallest_nonaxial_mode_density_equivalent_n_per_m": (
+                    transverse_density_mode.tolist()),
+                "smallest_nonaxial_mode_shell_action": transverse_shell_action,
+                "smallest_nonaxial_mode_beam_action": transverse_beam_action,
+                "maximum_gram_bracket_ratio": float(np.max(linalg.eigvalsh(
+                    dual_upper, dual_lower, check_finite=True))),
+            }
         results.append({
             "patch_cells_per_side": patch_cells,
             "beam_half_cells": half_cells,
@@ -719,5 +799,6 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                           "C1 single-interval line hybrid") if hybrid else
                          "finite surface-moment footprint"),
             "interpretation": "support-conditioned finite-grid physical action; not continuum inf-sup or line-space qualification",
+            **({"p0_density_norm": line_norm} if line_norm is not None else {}),
         })
     return results
