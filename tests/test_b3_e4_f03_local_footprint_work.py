@@ -38,7 +38,8 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
             -4*2e-6*.5/.15, abs=1e-11)
         result = graded_terminal_coupling(
             2, beam, plate_thickness=.035,
-            include_surface_moments=True, force_sign=-1.)
+            include_surface_moments=True, include_line_hybrid=True,
+            force_sign=-1.)
     for family in ("distributing", "rigid"):
         case = result["results"][family]["cases"]["tip_fz"]
         assert case["tip_uz_m"] < 0.
@@ -63,6 +64,16 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
             "surface_point_gap"]
         assert max(abs(value) for value in gap["weak_six_gap_m_rad"]) < 1e-9
         assert gap["quadrature_rms_position_gap_m"] > 0.
+    hybrid = result["results"]["line_hybrid_single_interval"]
+    assert hybrid["constraint_rank"] == 6
+    for load, magnitude in (("tip_mx", 100.), ("tip_fz", -1000.)):
+        case = hybrid["cases"][load]
+        displacement = (case["tip_rx_rad"] if load == "tip_mx"
+                        else case["tip_uz_m"])
+        assert case["total_external_work_j"] == pytest.approx(
+            magnitude*displacement, rel=1e-10)
+        assert case["physical_shell_work_j"] > 0.
+        assert case["mechanics_error"] < 1e-7
 
 
 def test_structured_patch_trace_matches_existing_uniform_native_rows():

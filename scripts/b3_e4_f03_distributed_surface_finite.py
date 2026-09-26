@@ -1,8 +1,10 @@
-"""Bounded finite-chart proof for the physical surface-moment bond candidate.
+"""Bounded finite-chart proofs for physical terminal-strip candidates.
 
 This is a G0B mechanics experiment, not a production attachment or a line
 mortar. The six rows are the mean material-frame surface-position gap and its
 reference-arm first moment over one flat terminal footprint.
+The optional hybrid replaces one position-moment row with a shell-director
+pitch row. Both remain exploratory single-interval operators.
 """
 
 from __future__ import annotations
@@ -202,7 +204,186 @@ class FiniteSurfaceMomentPatch:
                 self.beam.context.advance(beam_state, np.asarray(beam_step)))
 
 
-def finite_chart_screen(reference_profile: str = "straight") -> dict:
+class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
+    """Bounded six-channel transverse-strip line weld, not a 3D bond.
+
+    Mean shell-top/beam-bottom position supplies three force channels.
+    Transverse position moments supply Mx/Mz; an explicit E4 director-pitch
+    tie supplies My. The latter is a declared reduced-section assumption.
+    Material-frame duals and actual-chart variations remain separate from
+    display-ready spatial wrenches.
+    """
+
+    def __init__(self, xs: np.ndarray, ys: np.ndarray, beam, *, thickness: float):
+        super().__init__(xs, ys, beam, thickness=thickness)
+        self.transverse_inertia = float(sum(
+            point.weight*point.y**2 for point in self.points))
+        if self.transverse_inertia <= 1e-8:
+            raise ValueError("C1 line has degenerate transverse arm")
+
+    def _director(self, frames: np.ndarray, x: float):
+        nodes, shape = structured_q4_point_shape(self.xs, self.ys, x, 0.)
+        return nodes, shape, sum((weight*frames[int(node), :, 2]
+                                  for node, weight in zip(nodes, shape)),
+                                 np.zeros(3))
+
+    @staticmethod
+    def _pitch(frame: np.ndarray, director: np.ndarray,
+               frame_u=None, frame_v=None, frame_uv=None,
+               director_u=None, director_v=None, director_uv=None):
+        x_axis, z_axis = frame[:, 0], frame[:, 2]
+        a, c = float(x_axis@director), float(z_axis@director)
+        if (not np.isfinite((a, c)).all() or c <= .2 or
+                np.linalg.norm(director) <= .5):
+            raise ValueError("C1 line director pitch left its guarded chart")
+        angle = float(np.arctan2(a, c))
+        if frame_u is None:
+            return (angle,)
+        a_u = float(frame_u[:, 0]@director+x_axis@director_u)
+        c_u = float(frame_u[:, 2]@director+z_axis@director_u)
+        a_v = float(frame_v[:, 0]@director+x_axis@director_v)
+        c_v = float(frame_v[:, 2]@director+z_axis@director_v)
+        a_uv = float(frame_uv[:, 0]@director+
+                     frame_u[:, 0]@director_v+
+                     frame_v[:, 0]@director_u+x_axis@director_uv)
+        c_uv = float(frame_uv[:, 2]@director+
+                     frame_u[:, 2]@director_v+
+                     frame_v[:, 2]@director_u+z_axis@director_uv)
+        denom = a*a+c*c
+        n_u, n_v = c*a_u-a*c_u, c*a_v-a*c_v
+        mixed = ((c_v*a_u+c*a_uv-a_v*c_u-a*c_uv)/denom-
+                 n_u*(2*a*a_v+2*c*c_v)/denom**2)
+        return angle, n_u/denom, n_v/denom, mixed
+
+    def evaluate(self, shell_coordinates: np.ndarray, shell_frames: np.ndarray,
+                 beam_state, first=None, second=None) -> np.ndarray:
+        """Six gaps and optional exact first/mixed chart variations."""
+        coordinates = np.asarray(shell_coordinates, dtype=float)
+        frames = np.asarray(shell_frames, dtype=float)
+        if (coordinates.shape != (self.shell_count, 3) or
+                frames.shape != (self.shell_count, 3, 3) or
+                not (np.isfinite(coordinates).all() and np.isfinite(frames).all())):
+            raise ValueError("complete finite shell physical state required")
+        directional = first is not None or second is not None
+        if directional:
+            if first is None or second is None:
+                raise ValueError("two complete chart directions required")
+            su, bu = first
+            sv, bv = second
+            su = np.asarray(su, dtype=float).reshape(self.shell_count, 6)
+            sv = np.asarray(sv, dtype=float).reshape(self.shell_count, 6)
+            bu, bv = np.asarray(bu, dtype=float), np.asarray(bv, dtype=float)
+            if (bu.shape != (self.beam.context.count,) or
+                    bv.shape != bu.shape or
+                    not all(np.isfinite(a).all() for a in (su, sv, bu, bv))):
+                raise ValueError("complete finite C1 line directions required")
+        rows = np.zeros((6, 4 if directional else 1))
+        offset_shell = np.array((0., 0., self.top))
+        for point in self.points:
+            high, low, beam_frame = point.port.pose_pair(beam_state)
+            offset_beam = np.array((0., point.y, -.05))
+            beam_position = high+low+beam_frame@offset_beam
+            shell_position = self._shell(coordinates, frames, point)
+            gap = shell_position-beam_position
+            qc = beam_frame.T
+            values = [qc@gap]
+            center_nodes, center_shape, director = self._director(frames, point.x)
+            if directional:
+                port = point.port.tangent(beam_state)
+                pu, pv = port@bu, port@bv
+                position_uv, frame_uv = point.port.second_variation(
+                    beam_state, bu, bv)
+                frame_u = skew(pu[3:])@beam_frame
+                frame_v = skew(pv[3:])@beam_frame
+                qc_u, qc_v, qc_uv = frame_u.T, frame_v.T, frame_uv.T
+                shell_u = np.zeros(3)
+                shell_v = np.zeros(3)
+                shell_uv = np.zeros(3)
+                for node, shape in zip(point.nodes, point.shape):
+                    node = int(node)
+                    directed = frames[node]@offset_shell
+                    a, b = skew(su[node, 3:]), skew(sv[node, 3:])
+                    shell_u += shape*(su[node, :3]+a@directed)
+                    shell_v += shape*(sv[node, :3]+b@directed)
+                    shell_uv += shape*(.5*(a@b+b@a)@directed)
+                beam_u = pu[:3]+frame_u@offset_beam
+                beam_v = pv[:3]+frame_v@offset_beam
+                beam_uv = position_uv+frame_uv@offset_beam
+                gap_u, gap_v = shell_u-beam_u, shell_v-beam_v
+                values.extend((qc_u@gap+qc@gap_u,
+                               qc_v@gap+qc@gap_v,
+                               qc_uv@gap+qc_u@gap_v+qc_v@gap_u+
+                               qc@(shell_uv-beam_uv)))
+                director_u = np.zeros(3)
+                director_v = np.zeros(3)
+                director_uv = np.zeros(3)
+                for node, shape in zip(center_nodes, center_shape):
+                    node = int(node)
+                    directed = frames[node, :, 2]
+                    a, b = skew(su[node, 3:]), skew(sv[node, 3:])
+                    director_u += shape*(a@directed)
+                    director_v += shape*(b@directed)
+                    director_uv += shape*(.5*(a@b+b@a)@directed)
+                pitch = self._pitch(
+                    beam_frame, director, frame_u, frame_v, frame_uv,
+                    director_u, director_v, director_uv)
+            else:
+                pitch = self._pitch(beam_frame, director)
+            for column, value in enumerate(values):
+                rows[:3, column] += point.weight*value
+                rows[3, column] += (
+                    point.weight*point.y*value[2]/self.transverse_inertia)
+                rows[4, column] += point.weight*pitch[column]
+                rows[5, column] -= (
+                    point.weight*point.y*value[0]/self.transverse_inertia)
+        return rows
+
+    def reference_trace(self) -> np.ndarray:
+        """Analytic six-row Jacobian at the physical C1 reference state."""
+        shell_size = self.shell_size
+        total = shell_size+self.beam.context.count
+        trace = np.zeros((6, total))
+        frames = np.broadcast_to(np.eye(3),
+                                 (self.shell_count, 3, 3))
+        state = self.beam.context.initial.mechanical
+        for point in self.points:
+            _, _, frame = point.port.pose_pair(state)
+            port = point.port.tangent(state)
+            qc = frame.T
+            shell_map = np.zeros((3, total))
+            for node, shape in zip(point.nodes, point.shape):
+                start = 6*int(node)
+                shell_map[:, start:start+3] += shape*np.eye(3)
+                shell_map[:, start+3:start+6] -= shape*skew(
+                    np.array((0., 0., self.top)))
+            beam_map = np.column_stack((
+                np.eye(3), -skew(frame@np.array((0., point.y, -.05)))))@port
+            shell_map[:, shell_size:] -= beam_map
+            gap_map = qc@shell_map
+            trace[:3] += point.weight*gap_map
+            trace[3] += point.weight*point.y*gap_map[2]/self.transverse_inertia
+            trace[5] -= point.weight*point.y*gap_map[0]/self.transverse_inertia
+
+            nodes, shape, director = self._director(frames, point.x)
+            a, c = float(frame[:, 0]@director), float(frame[:, 2]@director)
+            denom = a*a+c*c
+            if c <= .2:
+                raise ValueError("C1 reference director pitch left its chart")
+            for node, weight in zip(nodes, shape):
+                start = 6*int(node)+3
+                dd = -skew(frames[int(node), :, 2])
+                da = frame[:, 0]@dd
+                dc = frame[:, 2]@dd
+                trace[4, start:start+3] += (
+                    point.weight*weight*(c*da-a*dc)/denom)
+            beam_pitch = (c*np.cross(frame[:, 0], director)-
+                          a*np.cross(frame[:, 2], director))/denom
+            trace[4, shell_size:] += point.weight*beam_pitch@port[3:]
+        return trace
+
+
+def finite_chart_screen(reference_profile: str = "straight", *,
+                        hybrid: bool = False) -> dict:
     """One deterministic, bounded nonzero-gap and nonzero-multiplier proof."""
     from scripts._b3_e4_f03_native_fixture import build
     from scripts.b3_e4_f03_square_section_control import square_torsion_constant
@@ -213,7 +394,8 @@ def finite_chart_screen(reference_profile: str = "straight") -> dict:
                  z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile=reference_profile)
-    patch = FiniteSurfaceMomentPatch(
+    patch_class = FiniteSurfaceLineHybrid if hybrid else FiniteSurfaceMomentPatch
+    patch = patch_class(
         np.linspace(-.5, 1.5, 5), np.linspace(-.5, .5, 3), beam,
         thickness=.035)
     count = patch.shell_count
@@ -261,8 +443,11 @@ def finite_chart_screen(reference_profile: str = "straight") -> dict:
     mixed_error = abs(mixed-mixed_fd)
 
     # The reference Jacobian must be the screened six-row linear operator.
-    trace, _ = distributed_surface_patch_trace(
-        patch.xs, patch.ys, beam, plate_thickness=.035)
+    if hybrid:
+        trace = patch.reference_trace()
+    else:
+        trace, _ = distributed_surface_patch_trace(
+            patch.xs, patch.ys, beam, plate_thickness=.035)
     reference_direction = np.r_[shell_u.ravel(), beam_u]
     reference_first = patch.evaluate(shell0, frame0, beam0, u, v)[:, 1]
     reference_error = float(np.max(np.abs(reference_first-trace@reference_direction)))
@@ -308,6 +493,7 @@ def finite_chart_screen(reference_profile: str = "straight") -> dict:
         coordinates, frames, state, rigid_direction, rigid_direction)[:, 1])
     return {
         "reference_profile": reference_profile,
+        "hybrid": hybrid,
         "reference_gap_max_m_rad": float(np.max(np.abs(reference))),
         "reference_jacobian_direction_error": reference_error,
         "nonzero_gap_norm_m_rad": float(np.linalg.norm(derivatives[:, 0])),
@@ -317,11 +503,14 @@ def finite_chart_screen(reference_profile: str = "straight") -> dict:
         "finite_common_rigid_gap_error": rigid_error,
         "common_rigid_virtual_work_j": rigid_virtual_work,
         "quadrature_points": len(patch.points),
-        "scope": "actual E4 director and retained B3 half-cell charts; bounded finite six-resultant surface-position law",
+        "scope": ("actual E4 director and retained B3 half-cell charts; "
+                  "bounded single-interval six-channel hybrid" if hybrid else
+                  "actual E4 director and retained B3 half-cell charts; "
+                  "bounded finite six-resultant surface-position law"),
     }
 
 
-def bounded_physical_compliance_screen() -> list[dict]:
+def bounded_physical_compliance_screen(*, hybrid: bool = False) -> list[dict]:
     """Compare six physical interface actions on several bounded local grids.
 
     This is a finite-dimensional, support-conditioned compliance diagnostic,
@@ -338,16 +527,31 @@ def bounded_physical_compliance_screen() -> list[dict]:
     results = []
     actions = np.diag((1000., 1000., 1000., 100., 100., 100.))
     shell_operators = {}
-    for patch_cells, half_cells in ((2, 4), (2, 8), (4, 4), (4, 8), (4, 16)):
+    cases = ((2, 12), (4, 12)) if hybrid else (
+        (2, 4), (2, 8), (4, 4), (4, 8), (4, 16))
+    for patch_cells, half_cells in cases:
         xs, ys = local_grid(patch_cells)
         beam = build(half_cells, z_offset=.0675,
-                     torsion_constant=square_torsion_constant())
+                     torsion_constant=square_torsion_constant(),
+                     reference_profile=("c1_tangent_2um" if hybrid
+                                        else "straight"))
         if patch_cells not in shell_operators:
             shell_operators[patch_cells] = raw_e4_tangent(
                 xs, ys, thickness=.035)
         shell_k, shell_physical = shell_operators[patch_cells]
-        rows, reference = distributed_surface_patch_trace(
-            xs, ys, beam, plate_thickness=.035)
+        if hybrid:
+            patch = FiniteSurfaceLineHybrid(
+                xs, ys, beam, thickness=.035)
+            rows = patch.reference_trace()
+            frames = np.broadcast_to(np.eye(3),
+                                     (patch.shell_count, 3, 3))
+            reference_gap = float(np.max(np.abs(patch.evaluate(
+                patch.reference_nodes, frames,
+                beam.context.initial.mechanical)[:, 0])))
+        else:
+            rows, reference = distributed_surface_patch_trace(
+                xs, ys, beam, plate_thickness=.035)
+            reference_gap = reference["reference_gap_m"]
         shell_size = shell_k.shape[0]
         total = shell_size+beam.context.count
         if total > 1900:
@@ -410,7 +614,9 @@ def bounded_physical_compliance_screen() -> list[dict]:
             "weakest_mode_numerical_shell_action": numerical_shell_action,
             "weakest_mode_beam_action": beam_action,
             "compliance_relative_skew": skew_relative,
-            "reference_gap_m": reference["reference_gap_m"],
+            "reference_gap_m": reference_gap,
+            "operator": ("C1 single-interval line hybrid" if hybrid else
+                         "finite surface-moment footprint"),
             "interpretation": "support-conditioned finite-grid physical action; not continuum inf-sup or line-space qualification",
         })
     return results

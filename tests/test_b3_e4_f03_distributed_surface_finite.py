@@ -4,7 +4,7 @@ import numpy as np
 
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_distributed_surface_finite import (
-    FiniteSurfaceMomentPatch, finite_chart_screen,
+    FiniteSurfaceLineHybrid, FiniteSurfaceMomentPatch, finite_chart_screen,
 )
 from scripts.b3_e4_f03_local_footprint_work import (
     bond_x_segments, distributed_surface_patch_trace,
@@ -118,3 +118,60 @@ def test_six_surface_moments_leave_a_real_local_slip_mode():
     assert abs(stats["quadrature_rms_position_gap_m"]-
                slope*.1/np.sqrt(12)) < 1e-12
     assert stats["quadrature_max_position_gap_m"] > 0.
+
+
+def test_c1_hybrid_six_channel_reference_is_distinct_and_non_drilling():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    hybrid = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
+    old, _ = distributed_surface_patch_trace(
+        xs, ys, beam, plate_thickness=.035)
+    trace = hybrid.reference_trace()
+    frames = np.broadcast_to(np.eye(3),
+                             (hybrid.shell_count, 3, 3)).copy()
+    state = beam.context.initial.mechanical
+    assert len(hybrid.points) == 36
+    assert np.max(np.abs(hybrid.evaluate(
+        hybrid.reference_nodes, frames, state)[:, 0])) < 1e-12
+    assert np.linalg.matrix_rank(trace) == 6
+    assert np.max(np.abs(trace[:, 5:hybrid.shell_size:6])) < 1e-12
+
+    # Terminal shell top positions stay fixed under this pitch field.
+    # The old six position moments cannot see it; the new physical
+    # director-pitch channel does.
+    shell_step = np.zeros((hybrid.shell_count, 6))
+    terminal = hybrid.reference_nodes[:, 0] >= .9-1e-12
+    angle = 1e-5
+    shell_step[terminal, 0] = -.0175*angle
+    shell_step[terminal, 4] = angle
+    direction = np.r_[shell_step.ravel(), np.zeros(beam.context.count)]
+    assert np.max(np.abs(old@direction)) < 1e-12
+    response = trace@direction
+    assert abs(response[4]-angle) < 1e-12
+    assert np.max(np.abs(np.delete(response, 4))) < 1e-12
+
+    # A common transverse displacement slope with unchanged directors
+    # leaves the connection closed while allowing shell shear.
+    shell_step[:] = 0.
+    shell_step[:, 2] = angle*hybrid.reference_nodes[:, 0]
+    beam_step = np.zeros(beam.context.count)
+    for i in range(beam.context.nodal_count//6):
+        beam_step[6*i+2] = angle*beam.abscissae[i]
+    shear = trace@np.r_[shell_step.ravel(), beam_step]
+    assert np.max(np.abs(shear)) < 1e-12
+
+
+def test_c1_hybrid_actual_chart_has_objective_first_and_mixed_work():
+    result = finite_chart_screen("c1_tangent_2um", hybrid=True)
+    assert result["hybrid"] is True
+    assert result["quadrature_points"] == 36
+    assert result["reference_gap_max_m_rad"] < 1e-12
+    assert result["reference_jacobian_direction_error"] < 1e-12
+    assert result["nonzero_gap_norm_m_rad"] > 1e-4
+    assert abs(result["nonzero_multiplier_mixed_work_j"]) > 1e-3
+    assert result["first_direction_error_j"] < 1e-7
+    assert result["mixed_direction_error_j"] < 1e-6
+    assert result["finite_common_rigid_gap_error"] < 1e-12
+    assert abs(result["common_rigid_virtual_work_j"]) < 1e-9
