@@ -1,6 +1,7 @@
 """One bounded finite-chart gate for the six-resultant surface candidate."""
 
 import numpy as np
+import pytest
 
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_distributed_surface_finite import (
@@ -10,6 +11,7 @@ from scripts.b3_e4_f03_distributed_surface_finite import (
 from anysolver.corotational import rotation_matrix_from_vector
 from scripts.b3_e4_f03_local_footprint_work import (
     bond_x_segments, distributed_surface_patch_trace,
+    graded_terminal_coupling,
 )
 from scripts.b3_e4_f03_plate_patch_work import local_grid
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
@@ -291,6 +293,20 @@ def test_c1_weighted_line_spaces_preserve_p0_and_are_distinct():
     assert np.linalg.matrix_rank(np.vstack((
         traces["continuous_linear"],
         traces["dual_linear"]))[:, free]) == 24
+
+
+def test_c1_weighted_line_spaces_reject_other_plate_reference():
+    xs, ys = local_grid(4)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    with pytest.raises(ValueError, match="35 mm C1 reference"):
+        c1_hybrid_line_space(xs, ys, beam,
+                             kind="continuous_linear", thickness=.07)
+    with pytest.raises(ValueError, match="35 mm plate"):
+        graded_terminal_coupling(
+            4, beam, plate_thickness=.07,
+            include_line_hybrid_spaces=True)
 
 
 def test_c1_weighted_endpoint_work_uses_actual_e4_chart():

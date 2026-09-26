@@ -1223,6 +1223,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         raise ValueError("bounded native plate thickness required")
     if force_sign not in (-1., 1.):
         raise ValueError("declared unit-sign terminal force required")
+    if include_line_hybrid_spaces and plate_thickness != .035:
+        raise ValueError("weighted C1 line spaces require the 35 mm plate")
     if include_line_hybrid_ablation and patch_cells != 2:
         raise ValueError("bounded hybrid ablation requires the fixed C1 two-cell grid")
     beam_axis_z=plate_thickness/2+.05
@@ -1376,7 +1378,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                                ("continuous_linear", "p1"),
                                ("dual_linear", "dual_p1")):
                 rows,masses,_=c1_hybrid_line_space(
-                    xs,ys,beam,kind=kind)
+                    xs,ys,beam,kind=kind,thickness=plate_thickness)
                 name=f"line_hybrid_{label}_weighted"
                 families.append((name,rows))
                 space_masses[name]=masses.tolist()

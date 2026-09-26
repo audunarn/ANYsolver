@@ -479,7 +479,9 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
 
 
 def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
-                         kind: str) -> tuple[np.ndarray, np.ndarray, list[FiniteSurfaceLineHybrid]]:
+                         kind: str,
+                         thickness: float = .035
+                         ) -> tuple[np.ndarray, np.ndarray, list[FiniteSurfaceLineHybrid]]:
     """Two-cell P0/P1/dual rows of one six-channel C1 reference work law.
 
     Each row is a basis-weighted *mean* gap. Its physical P0/P1/dual
@@ -490,6 +492,9 @@ def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
     """
     from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
 
+    if (thickness != .035 or beam.n_half_cells not in (12, 24) or
+            not beam.model.name.endswith("-c1_tangent_2um")):
+        raise ValueError("weighted line spaces require the bounded 35 mm C1 reference")
     space = LineMultiplierSpace(kind, (0., .5, 1.))
     patches = []
     for index in range(space.count):
@@ -497,7 +502,7 @@ def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
             return float(space.values((x-.9)/.1)[row])
 
         patches.append(FiniteSurfaceLineHybrid(
-            xs, ys, beam, thickness=.035, x_weight=basis))
+            xs, ys, beam, thickness=thickness, x_weight=basis))
     rows = np.vstack([patch.reference_trace() for patch in patches])
     masses = np.array([patch.basis_integral_m for patch in patches])
     if not (np.isfinite(rows).all() and np.isfinite(masses).all() and
