@@ -1,0 +1,117 @@
+"""Opt-in Q4/S3 differentiated patch through the ordinary static owner."""
+
+from dataclasses import replace
+
+import numpy as np
+import pytest
+from scipy import sparse
+
+from anysolver import (
+    BoundaryCondition, ContactPathControl, ContactPathProgram,
+    solve_static_nonlinear, validate_general_contact,
+)
+from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from test_general_contact_q4_s3_refined_patch import _two_q4_two_s3
+
+
+def _settings(settings):
+    return replace(
+        settings,
+        general_s3_differentiation="jet2_q4_s3_dev",
+        q4_source_support_gradient_tolerance=1.0e-5,
+        q4_source_support_hessian_tolerance=1.0e-5,
+        q4_source_weighted_gap_gradient_tolerance=1.0e-5,
+        q4_source_weighted_gap_hessian_tolerance=1.0e-5,
+        maximum_q4_source_integration_triangles=128,
+    )
+
+
+def test_q4_s3_jet2_mode_requires_explicit_derivative_resolution():
+    model, definition, settings = _two_q4_two_s3()
+    missing = replace(settings, general_s3_differentiation="jet2_q4_s3_dev")
+    assert not validate_general_contact(
+        model, definition, missing,
+    ).valid
+    with pytest.raises(ValueError, match="four explicit derivative tolerances"):
+        GeneralS3PatchManager(model, definition, missing)
+    assert validate_general_contact(model, definition, _settings(settings)).valid
+
+
+def test_q4_s3_jet2_static_work_matches_existing_smooth_patch():
+    model, definition, settings = _two_q4_two_s3()
+    reference = GeneralS3PatchManager(model, definition, settings)
+    candidate = GeneralS3PatchManager(model, definition, _settings(settings))
+    free = [model.mesh.dof_manager.get_node_dofs(node)[axis]
+            for node in range(1, 7) for axis in (0, 2)]
+    transform = sparse.eye(candidate.n_dof, format="csr")[:, free]
+    reference.restrict_tangent_to_reduced_variations(transform)
+    candidate.restrict_tangent_to_reduced_variations(transform)
+    displacement = np.zeros(candidate.n_dof)
+    for node in range(1, 7):
+        displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.02
+    old_force, old_tangent, old_state = reference.evaluate(displacement)
+    force, tangent, state = candidate.evaluate(displacement)
+    assert state.active_pressure_dofs == old_state.active_pressure_dofs == 6
+    np.testing.assert_allclose(force, old_force, rtol=3e-4, atol=1e-6)
+    np.testing.assert_allclose(tangent.toarray(), old_tangent.toarray(),
+                               rtol=3e-3, atol=3e-4)
+    assert state.energy_evaluations < old_state.energy_evaluations
+
+
+def test_q4_s3_jet2_partial_shared_pressure_work():
+    model, definition, settings = _two_q4_two_s3()
+    reference = GeneralS3PatchManager(model, definition, settings)
+    candidate = GeneralS3PatchManager(model, definition, _settings(settings))
+    free = [model.mesh.dof_manager.get_node_dofs(node)[axis]
+            for node in range(1, 7) for axis in (0, 2)]
+    transform = sparse.eye(candidate.n_dof, format="csr")[:, free]
+    reference.restrict_tangent_to_reduced_variations(transform)
+    candidate.restrict_tangent_to_reduced_variations(transform)
+    displacement = np.zeros(candidate.n_dof)
+    for node in range(1, 7):
+        position = model.mesh.get_node(node)
+        displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = (
+            -0.01505 + 0.002*(position.x-0.6)
+        )
+    old_force, old_tangent, old_state = reference.evaluate(displacement)
+    force, tangent, state = candidate.evaluate(displacement)
+    assert 0 < state.active_pressure_dofs < 6
+    assert state.active_pressure_dofs == old_state.active_pressure_dofs
+    np.testing.assert_allclose(force, old_force, rtol=3e-4, atol=1e-6)
+    np.testing.assert_allclose(tangent.toarray(), old_tangent.toarray(),
+                               rtol=3e-3, atol=3e-4)
+
+
+def test_q4_s3_jet2_runs_coupled_static_path_and_restart():
+    model, definition, settings = _two_q4_two_s3()
+    definition = replace(definition, interactions=(replace(
+        definition.interactions[0], gap_tolerance=0.005,
+    ),))
+    settings = replace(_settings(settings), maximum_augmentations=8)
+    model.add_boundary_condition(BoundaryCondition(
+        "target_fixed", (7, 8, 9, 10),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "source_guide", (1, 2, 3, 4, 5, 6),
+        {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+    ))
+    program = ContactPathProgram(
+        controls=(ContactPathControl.node(1, "ux"),
+                  ContactPathControl.node(1, "uz")),
+        waypoints=((0.0, 0.0), (0.0, -0.01505)),
+        steps_per_segment=1,
+    )
+    options = dict(contact=definition, contact_settings=settings,
+                   contact_path_program=program, max_iterations=12,
+                   emit_restart_checkpoint=True)
+    result = solve_static_nonlinear(model, **options)
+    assert result.status == "completed", result.failure_reason
+    assert result.info["general_contact"]["gap_tolerance_met"]
+    assert result.info["general_contact"]["active_pressure_dofs"] == 6
+    resumed = solve_static_nonlinear(
+        model, restart_checkpoint=result.to_restart_checkpoint(), **options,
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, result.displacements,
+                               atol=1.0e-10, rtol=0.0)

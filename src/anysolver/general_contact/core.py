@@ -209,6 +209,10 @@ class ContactSolverSettings:
     augmentation_schur_difference_step_m: float | None = None
     augmentation_support_resolution: str = "exact"
     augmentation_support_force_budget_n: float | None = None
+    q4_source_support_gradient_tolerance: float | None = None
+    q4_source_support_hessian_tolerance: float | None = None
+    q4_source_weighted_gap_gradient_tolerance: float | None = None
+    q4_source_weighted_gap_hessian_tolerance: float | None = None
 
     def __post_init__(self) -> None:
         if (self.q4_target_weighted_gap_tolerance is not None
@@ -220,7 +224,11 @@ class ContactSolverSettings:
                      or self.maximum_q4_target_integration_triangles < 1)):
             raise ValueError("maximum_q4_target_integration_triangles must be a positive integer")
         for name in ("q4_source_area_tolerance",
-                     "q4_source_weighted_gap_tolerance"):
+                     "q4_source_weighted_gap_tolerance",
+                     "q4_source_support_gradient_tolerance",
+                     "q4_source_support_hessian_tolerance",
+                     "q4_source_weighted_gap_gradient_tolerance",
+                     "q4_source_weighted_gap_hessian_tolerance"):
             value = getattr(self, name)
             if value is not None and (not np.isfinite(value) or value <= 0.0):
                 raise ValueError(f"{name} must be finite and positive")
@@ -289,8 +297,10 @@ class ContactSolverSettings:
             or self.general_s3_difference_step <= 0.0
         ):
             raise ValueError("general_s3_difference_step must be finite and positive")
-        if self.general_s3_differentiation not in {"existing", "jet2_s3_dev"}:
-            raise ValueError("general_s3_differentiation must be existing or jet2_s3_dev")
+        if self.general_s3_differentiation not in {
+            "existing", "jet2_s3_dev", "jet2_q4_s3_dev",
+        }:
+            raise ValueError("general_s3_differentiation is not an admitted development mode")
         if (type(self.maximum_general_s3_energy_evaluations) is not int
                 or self.maximum_general_s3_energy_evaluations < 1):
             raise ValueError("maximum_general_s3_energy_evaluations must be positive")
@@ -486,6 +496,21 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         if not selected:
             return ContactValidationReport("invalid", (
                 "Jet2 S3 development derivative requires an augmented general S3/S3 patch of at least three faces",
+            ))
+    if settings is not None and settings.general_s3_differentiation == "jet2_q4_s3_dev":
+        derivative_tolerances = (
+            settings.q4_source_support_gradient_tolerance,
+            settings.q4_source_support_hessian_tolerance,
+            settings.q4_source_weighted_gap_gradient_tolerance,
+            settings.q4_source_weighted_gap_hessian_tolerance,
+        )
+        if (settings.pair_motion != "general" or definition.rigid_bodies
+                or len(definition.interactions) != 1
+                or definition.interactions[0].normal_law != "augmented"
+                or not _refined_q4_s3_patch(model, definition)
+                or any(value is None for value in derivative_tolerances)):
+            return ContactValidationReport("invalid", (
+                "Jet2 Q4/S3 development derivative requires a refined augmented general patch and four derivative tolerances",
             ))
     if settings is not None and settings.augmentation_acceleration != "none":
         if (definition.rigid_bodies or len(definition.interactions) != 1

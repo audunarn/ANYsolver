@@ -72,12 +72,13 @@ class MovingS3PatchPrimalMortarPenalty:
                  q4_source_area_tolerance: float | None = None,
                  q4_source_weighted_gap_tolerance: float | None = None,
                  maximum_q4_source_integration_triangles: int | None = None,
+                 q4_source_derivative_tolerances: tuple[float | None, ...] | None = None,
                  differentiation: str = "global",
                  maximum_candidate_pairs: int = 4):
         self.source_faces = tuple(source_faces)
         self.target_faces = tuple(target_faces)
-        if differentiation not in {"global", "pair_local", "jet2_s3"}:
-            raise ValueError("S3 patch differentiation must be global, pair_local or jet2_s3")
+        if differentiation not in {"global", "pair_local", "jet2_s3", "jet2_q4_s3"}:
+            raise ValueError("S3 patch differentiation mode is invalid")
         self.differentiation = differentiation
         if (type(maximum_candidate_pairs) is not int or maximum_candidate_pairs < 1
                 or len(self.source_faces)*len(self.target_faces) > maximum_candidate_pairs):
@@ -93,17 +94,19 @@ class MovingS3PatchPrimalMortarPenalty:
                       and len(self.source_faces)+len(self.target_faces) >= 3
                       and all(len(face.node_ids) == 3
                               for face in (*self.source_faces, *self.target_faces)))
-        refined_q4 = (differentiation == "pair_local"
+        refined_q4 = (differentiation in {"pair_local", "jet2_q4_s3"}
                       and len(self.source_faces) >= 2
                       and all(len(face.node_ids) == 4 for face in self.source_faces)
                       and all(len(face.node_ids) == 3 for face in self.target_faces))
         refined = refined_s3 or refined_q4
         if not (bounded or refined):
             raise ValueError("development shell patch needs three faces or one Q4/Q4 pair")
-        if differentiation in {"pair_local", "jet2_s3"} and not refined:
+        if differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3"} and not refined:
             raise ValueError("local differentiation needs S3 faces or Q4 source/S3 target faces")
         if differentiation == "jet2_s3" and not refined_s3:
             raise ValueError("Jet2 overlap derivatives need at least three S3 faces")
+        if differentiation == "jet2_q4_s3" and not refined_q4:
+            raise ValueError("Jet2 Q4/S3 overlap derivatives need a refined Q4/S3 patch")
         source_q4 = all(len(face.node_ids) == 4 for face in self.source_faces)
         if not source_q4 and any(len(face.node_ids) != 3 for face in self.source_faces):
             raise ValueError("development patch pressure side needs S3 triangles or Q4 faces")
@@ -127,6 +130,10 @@ class MovingS3PatchPrimalMortarPenalty:
         ], dtype=np.intp) for face in self.target_faces)
         self.stiffness = float(stiffness)
         self.difference_step = float(difference_step)
+        self.q4_source_area_tolerance = q4_source_area_tolerance
+        self.q4_source_weighted_gap_tolerance = q4_source_weighted_gap_tolerance
+        self.maximum_q4_source_integration_triangles = maximum_q4_source_integration_triangles
+        self.q4_source_derivative_tolerances = q4_source_derivative_tolerances
         if (type(maximum_energy_evaluations) is not int
                 or maximum_energy_evaluations < 1):
             raise ValueError("S3 patch energy evaluation budget must be positive")
@@ -135,7 +142,7 @@ class MovingS3PatchPrimalMortarPenalty:
         self.required_hessian_evaluations = (
             1+2*self.n_coordinates**2 if differentiation == "global" else
             3*len(self.source_faces)*len(self.target_faces)
-            if differentiation == "jet2_s3" else
+            if differentiation in {"jet2_s3", "jet2_q4_s3"} else
             sum(2+2*(3*(len(source.node_ids)+len(target.node_ids)))**2
                 for source in self.source_faces for target in self.target_faces)
         )

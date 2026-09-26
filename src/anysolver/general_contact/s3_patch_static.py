@@ -145,6 +145,18 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             and not (augmented and not source_q4 and not target_q4
                      and len(source.element_ids)+len(target.element_ids) >= 3)):
         issues.append("Jet2 S3 development derivative needs an augmented S3/S3 patch of at least three faces")
+    if (settings.general_s3_differentiation == "jet2_q4_s3_dev"
+            and not refined_q4):
+        issues.append("Jet2 Q4/S3 development derivative needs a refined augmented Q4/S3 patch")
+    if settings.general_s3_differentiation == "jet2_q4_s3_dev" and any(
+        getattr(settings, name) is None for name in (
+            "q4_source_support_gradient_tolerance",
+            "q4_source_support_hessian_tolerance",
+            "q4_source_weighted_gap_gradient_tolerance",
+            "q4_source_weighted_gap_hessian_tolerance",
+        )
+    ):
+        issues.append("Jet2 Q4/S3 development derivative needs four explicit derivative tolerances")
     if not (bounded or refined):
         issues.append("general shell patch needs three faces or one Q4/Q4 pair")
     if len(source.element_ids)*len(target.element_ids) > settings.maximum_candidate_pairs:
@@ -225,6 +237,8 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             maximum_q4_source_integration_triangles=settings.maximum_q4_source_integration_triangles,
             differentiation=("jet2_s3"
                              if settings.general_s3_differentiation == "jet2_s3_dev"
+                             else "jet2_q4_s3"
+                             if settings.general_s3_differentiation == "jet2_q4_s3_dev"
                              else "pair_local" if refined else "global"),
             maximum_candidate_pairs=settings.maximum_candidate_pairs,
         )
@@ -353,7 +367,13 @@ class GeneralS3PatchManager:
             q4_source_area_tolerance=self.settings.q4_source_area_tolerance,
             q4_source_weighted_gap_tolerance=self.settings.q4_source_weighted_gap_tolerance,
             maximum_q4_source_integration_triangles=self.settings.maximum_q4_source_integration_triangles,
-            differentiation="jet2_s3" if self.settings.general_s3_differentiation == "jet2_s3_dev" else "pair_local" if self.profile in {
+            q4_source_derivative_tolerances=(
+                self.settings.q4_source_support_gradient_tolerance,
+                self.settings.q4_source_support_hessian_tolerance,
+                self.settings.q4_source_weighted_gap_gradient_tolerance,
+                self.settings.q4_source_weighted_gap_hessian_tolerance,
+            ),
+            differentiation="jet2_s3" if self.settings.general_s3_differentiation == "jet2_s3_dev" else "jet2_q4_s3" if self.settings.general_s3_differentiation == "jet2_q4_s3_dev" else "pair_local" if self.profile in {
                 REFINED_AUGMENTED_PROFILE, REFINED_Q4_S3_AUGMENTED_PROFILE,
                 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
@@ -433,7 +453,7 @@ class GeneralS3PatchManager:
                  if self.augmented else self.law.evaluate(source, target))
         local_derivatives = (self.augmented
                              and self.law.geometry.differentiation
-                             in {"pair_local", "jet2_s3"})
+                             in {"pair_local", "jet2_s3", "jet2_q4_s3"})
         pair_evaluations = len(self.law.geometry.pair_laws) if local_derivatives else 0
         if state.active_pressure_dofs == 0:
             local_force = np.zeros(self.law.n_coordinates)
@@ -694,6 +714,10 @@ class GeneralS3PatchManager:
                          "maximum_q4_target_integration_triangles": self.settings.maximum_q4_target_integration_triangles,
                          "q4_source_area_tolerance": self.settings.q4_source_area_tolerance,
                          "q4_source_weighted_gap_tolerance": self.settings.q4_source_weighted_gap_tolerance,
+                         "q4_source_support_gradient_tolerance": self.settings.q4_source_support_gradient_tolerance,
+                         "q4_source_support_hessian_tolerance": self.settings.q4_source_support_hessian_tolerance,
+                         "q4_source_weighted_gap_gradient_tolerance": self.settings.q4_source_weighted_gap_gradient_tolerance,
+                         "q4_source_weighted_gap_hessian_tolerance": self.settings.q4_source_weighted_gap_hessian_tolerance,
                          "maximum_q4_source_integration_triangles": self.settings.maximum_q4_source_integration_triangles,
                          **({"q4_source_gap_certificate": self.settings.q4_source_gap_certificate}
                             if self.settings.q4_source_gap_certificate != "whole_face" else {}),

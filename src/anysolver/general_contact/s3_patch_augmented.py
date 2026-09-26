@@ -14,6 +14,7 @@ import numpy as np
 from .moving import _has_shared_edge_transition
 from .overlap import PlanarFace, planar_projected_overlap
 from .q4_source_overlap import projected_q4_source_face
+from .q4_s3_overlap_derivatives import q4_s3_overlap_derivatives
 from .s3_overlap_derivatives import UnsupportedOverlapBranch, s3_overlap_derivatives
 from .s3_patch_mortar_energy import (
     MovingS3PatchMortarWork,
@@ -146,7 +147,7 @@ class MovingS3PatchProjectedNormal:
             return MovingS3PatchMortarWork(
                 base, np.zeros(count), np.zeros((count, count)) if tangent else None,
                 len(self.geometry.pair_laws)
-                if self.geometry.differentiation in {"pair_local", "jet2_s3"} else 1,
+                if self.geometry.differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3"} else 1,
             )
         for source_index in self.source_face_indices:
             source_positions = np.asarray(current_source)[source_index]
@@ -166,7 +167,7 @@ class MovingS3PatchProjectedNormal:
                         and _has_shared_edge_transition(first, second, overlap)):
                     raise ValueError("S3 patch shared-edge derivative is nonunique")
                 if (overlap is None
-                        and self.geometry.differentiation == "jet2_s3"
+                        and self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3"}
                         and _touching_projected_boundaries(first, second)):
                     raise UnsupportedOverlapBranch(
                         "S3 patch zero-area touching overlap has no smooth derivative"
@@ -174,7 +175,7 @@ class MovingS3PatchProjectedNormal:
         if self.geometry.differentiation == "pair_local":
             return self._pair_local_work(current_source, current_target,
                                          base, tangent=tangent)
-        if self.geometry.differentiation == "jet2_s3":
+        if self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3"}:
             return self._jet2_s3_work(current_source, current_target,
                                       base, tangent=tangent)
         step = self.geometry.difference_step
@@ -267,7 +268,7 @@ class MovingS3PatchProjectedNormal:
         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
 
     def _jet2_s3_work(self, current_source, current_target, base, *, tangent):
-        """Assemble differentiated S3 pair geometry into shared pressure nodes."""
+        """Assemble differentiated pair geometry into shared pressure nodes."""
         count = self.n_coordinates
         source_count = len(self.source_node_ids)
         active_coordinates = (
@@ -296,16 +297,32 @@ class MovingS3PatchProjectedNormal:
             evaluations += 1
             if local.reference_overlap_area == 0.0:
                 continue
-            derivative = s3_overlap_derivatives(
-                self.geometry.source_faces[source_face].reference_positions,
-                local_source, local_target,
-            )
+            if len(source_nodes) == 4:
+                derivative = q4_s3_overlap_derivatives(
+                    self.geometry.source_faces[source_face].reference_positions,
+                    local_source, local_target,
+                    area_tolerance=self.geometry.q4_source_area_tolerance,
+                    weighted_gap_tolerance=self.geometry.q4_source_weighted_gap_tolerance,
+                    maximum_triangles=self.geometry.maximum_q4_source_integration_triangles,
+                    allow_warped_source=True,
+                    **dict(zip((
+                        "support_gradient_tolerance",
+                        "support_hessian_tolerance",
+                        "weighted_gap_gradient_tolerance",
+                        "weighted_gap_hessian_tolerance",
+                    ), self.geometry.q4_source_derivative_tolerances or (None,)*4)),
+                )
+            else:
+                derivative = s3_overlap_derivatives(
+                    self.geometry.source_faces[source_face].reference_positions,
+                    local_source, local_target,
+                )
             evaluations += 1
             if (not np.allclose(derivative.reference_support,
-                                local.reference_support, rtol=1.0e-9, atol=1.0e-12)
+                                local.reference_support, rtol=1.0e-9, atol=0.0)
                     or not np.allclose(derivative.reference_weighted_gap,
                                        local.reference_weighted_gap,
-                                       rtol=1.0e-9, atol=1.0e-12)):
+                                       rtol=1.0e-9, atol=0.0)):
                 raise ValueError("differentiated S3 overlap disagrees with mortar geometry")
             assembled_support[source_nodes] += derivative.reference_support
             assembled_gap[source_nodes] += derivative.reference_weighted_gap
@@ -337,9 +354,9 @@ class MovingS3PatchProjectedNormal:
                     weighted_hessian[np.ix_(indices, indices)] += weighted
                     support_hessian[np.ix_(indices, indices)] += supported
         if (not np.allclose(assembled_support, base.reference_support,
-                            rtol=1.0e-9, atol=1.0e-12)
+                            rtol=1.0e-9, atol=0.0)
                 or not np.allclose(assembled_gap, base.reference_weighted_gap,
-                                   rtol=1.0e-9, atol=1.0e-12)):
+                                   rtol=1.0e-9, atol=0.0)):
             raise ValueError("differentiated S3 patch disagrees with shared pressure support")
         gap_variation = jw - base.normalized_gap[:, None]*js
         residual = -(base.pressure @ gap_variation)

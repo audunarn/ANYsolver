@@ -65,7 +65,7 @@ def test_supported_schur_settings_are_explicit_and_profile_bounded():
     assert contract["settings"]["augmentation_schur_maximum_modes"] == 8
 
 
-def test_ill_conditioned_schur_declines_and_preserves_static_failure():
+def test_projection_branch_declines_schur_and_preserves_static_failure():
     model, definition, settings, program = _case()
     result = solve_static_nonlinear(
         model, contact=definition, contact_settings=settings,
@@ -78,8 +78,8 @@ def test_ill_conditioned_schur_declines_and_preserves_static_failure():
     trace = failure["augmentation_trace"]
     assert len(trace) == settings.maximum_augmentations
     assert trace[1]["schur_proposed"] is False
-    assert trace[1]["schur_ineligible"] == "scaled_response_ill_conditioned"
-    assert trace[1]["schur_scaled_condition"] > 1.0e8
+    assert trace[1]["schur_ineligible"] == "projection_branch_or_nonfinite_response"
+    assert trace[1]["pressure_gram_scaled_rank"] == 4
     assert failure["schur_attempts"] == 1
     assert failure["schur_applied"] == failure["schur_rejected"] == 0
     assert trace[-1]["pressure_change"] > settings.pressure_tolerance

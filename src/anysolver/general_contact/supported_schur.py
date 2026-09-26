@@ -89,9 +89,13 @@ def propose_supported_schur_step(
     )
     scaled = jacobian/row_scale[:, None]/column_scale[None, :]
     try:
-        condition = float(np.linalg.cond(scaled))
+        singular_values = np.linalg.svd(scaled, compute_uv=False)
+        condition = (float(singular_values[0]/singular_values[-1])
+                     if singular_values[-1] > 0.0 else float("inf"))
         if diagnostics is not None:
             diagnostics["schur_scaled_condition"] = condition
+            diagnostics["schur_scaled_singular_values"] = list(
+                map(float, singular_values))
         if not np.isfinite(condition) or condition > 1.0e8:
             return decline("scaled_response_ill_conditioned")
         direction = np.linalg.solve(scaled, -residual/row_scale)/column_scale
