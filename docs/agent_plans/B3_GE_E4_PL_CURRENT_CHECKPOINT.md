@@ -3,40 +3,50 @@
 ## Current state — 26 September 2026
 
 **Decision sought:** Retain or revise the native six-channel beam/shell
-connection before selecting a P0/P1/dual line space. **Established:** The
-x2/y4 mixed Q4/S3-V2D line passes reference, actual-chart work, rank and
-loaded balance. Mirroring its four S3 diagonals changes work and signed
-modes only at numerical noise. Crossed-operator attribution shows the
-approximately `16%` P1/dual *full-mode* decrease follows the S3 shell
-operator, not the line trace; the nonaxial decrease is smaller. The seven
-saved axial/reciprocal ratios have positive finite-grid supported actions,
-but no mesh-uniform inf-sup proof. B3-12→26 reciprocal refinement changes
-P1/dual torque work by `−1.61/−3.17%`; P0 is much steadier, which alone
-does not select it. Executed F5 solid pure opening and the combined field
-with ±10 N m torque perturbations have positive continuous interpolated
-underside/top face-gap bounds; the isolated pure-torque field closes.
-The smallest perturbed nonseam bound is `0.243 µm`. Solid/native interior
-twist per *axis-corrected* root torque agrees within `0.000217%`, yet
-native P0/P1/dual torque work is `4.07/3.27/1.87%` below solid F5;
-opening work differs by less than `0.55%`. These are directional reference
-comparisons across different 3D/beam-shell section and tip-load ideals.
+connection before selecting P0/P1/dual. **Established:** The Q4/S3
+diagonal mirror changes loaded work and signed modes only at numerical
+noise; crossed-operator attribution puts the roughly `16%` P1/dual full
+mode decrease in the S3 shell operator, not the trace. Seven saved
+axial/reciprocal ratio cases retain finite-grid rank and positive selected
+actions, but P1/dual torque work changes `−1.61/−3.17%` under B3-12→26
+refinement, and no mesh-uniform inf-sup bound follows. Solid F5 pure
+opening and combined ±10 N m torque *superpositions* have positive
+continuous interpolated underside/top face-gap bounds; pure torque alone
+closes. The solid/native interior torsional compliance agrees within
+`0.000217%`. In the corrected fixed-grid tip comparison, native bonded
+top-edge torque translation differs from the solid by only `−4.5` to
+`+6.3 nm`, and width slope by `−0.156` to `+0.351 µrad`; native beam-tip
+nodal rotation differs from the 3D fitted section by `0.86–1.95 µrad`.
+The solid section-fit residual reaches `0.189 µm`, and native nodal and
+adjacent B3 port rotations differ, so this is not a measured bond-law
+error. Opening top-edge mean differs `0.10–0.27 µm`; the small shear
+remainder is only a qualitative director/gradient comparison. Scalar
+torque work remains `1.87–4.07%` below solid, with different concentrated
+versus distributed end loading and different section idealizations.
 
-**Remaining uncertainty:** Terminal transfer versus shell pose/physical
-response and 3D section-end effects; no recovered solid interface traction,
-full side/root contact proof or mesh-uniform multiplier stability.
-**Next discriminator and action:** From the saved F5 fields and native C1
-results, compare the two-load torque/opening port and plate kinematics at
-matched stations and frames, including projection residuals. If the plate
-response matches but relative beam/plate pose does not, revise terminal
-transfer; if plate response differs, investigate shell idealization first.
-If the ports cannot be made mechanically equivalent, derive a matched
-external port before ranking line spaces. Interpret this with the existing
-seven ratios; do not launch finer classical axial sweeps. Evidence roots:
-`f03-c1-mirrored-s3-diagonal-dev-20260926-v1`,
-`f03-c1-mixed-operator-attribution-dev-20260926-v1`, and
-`f03-c1-factor5-admissible-torque-direction-dev-20260926-v1` under
-`.qualification/b3-ge-e4-pl/`. Formal F03 authority remains unconsumed;
-G0B open and G1 barred.
+**Remaining uncertainty:** Work-conjugate terminal transfer versus 3D
+section-end distortion and shell idealization; no recovered solid interface
+traction, full side/root contact proof, or mesh-uniform line stability.
+**Next discriminator and action:** The saved F4 separate-tie and F5 shared
+solid FRDs contain displacement only; their DAT files report support RF,
+not bond traction, and neither deck requests element stress. Thus no
+work-conjugate interface wrench is recoverable directly from the saved
+outputs. Derive one bounded C3D20R element-side internal-force/traction
+oracle from the saved nodal displacement field, first checking a
+manufactured constant-stress patch and recovered support resultant/moment.
+If those checks pass, compare the bond-side distribution and virtual work
+with the native line on the same physical bond; if they fail, preserve the
+failure and consider a narrowly scoped external stress-output route.
+A discrepancy beyond section-fit and port-idealization uncertainty would
+send the native law for revision; otherwise retain it for a proper
+norm-scaled multi-ratio stability study.
+Do not choose a basis from the current quotient/work ordering or repeat
+finer classical axial grids. The first matched-tip run
+`f03-c1-factor5-matched-tip-ports-dev-20260926-v1` is preserved but its
+full-plate mean and tip arm were wrong; use corrected `-v2` under
+`.qualification/b3-ge-e4-pl/` at source `ea5e2c46`. Independent reviews
+confirm the comparison limits, not acceptance. Formal F03 authority
+unconsumed; G0B open, G1 barred.
 
 ## Prior bounded decision record — 26 September 2026
 
