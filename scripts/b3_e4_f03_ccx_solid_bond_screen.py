@@ -79,6 +79,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           full_displacement_output: bool = False,
           bar_reference_profile: str = "legacy_linear",
           torque_with_opening_fz: bool = False,
+          sided_port_cut: bool = False,
           ) -> tuple[str, dict]:
     """Return an exact-coordinate brick deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
@@ -89,6 +90,13 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     c1_torque_basis = (shear == "tip_mx" and tip_mx_gap_audit and
                        bar_reference_profile == "c1_tangent" and
                        contact_policy == "none")
+    if type(sided_port_cut) is not bool or (sided_port_cut and not (
+            factor == 5 and c1_torque_basis and torque_with_opening_fz and
+            boundary_policy == "left_root" and bond_policy == "terminal" and
+            element_family == "C3D20R" and bar_clearance_um == 2 and
+            plate_thickness_mm == 35 and tip_load_map == "quadratic_face" and
+            full_displacement_output)):
+        raise ValueError("sided port cut requires the bounded F5 C1 combined fixture")
     c1_detached = (factor == 4 and shear in ("tip_mx", "tip_fz") and
                    boundary_policy == "left_root" and
                    bond_policy == "detached" and contact_policy == "none" and
@@ -202,6 +210,12 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     if factor == 5:
         plate_x = tuple(sorted(set((*plate_x, 825))))
         bar_x = tuple(sorted(set((*bar_x, 825))))
+    if sided_port_cut:
+        # The saved F5 has x=.95 as a midside node in a .94-.96 element.
+        # Split both shared domains there so element-side weak work is
+        # recoverable without extrapolating a stress cut.
+        plate_x = tuple(sorted(set((*plate_x, 950))))
+        bar_x = tuple(sorted(set((*bar_x, 950))))
     px,py,pz=(_cuts(v,factor) for v in
               (plate_x,PLATE_Y_MM,plate_z))
     bx,by,bz=(_cuts(v,factor) for v in
@@ -623,6 +637,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
         meta["full_displacement_output"] = True
     if torque_with_opening_fz:
         meta["torque_with_opening_fz"] = True
+    if sided_port_cut:
+        meta["sided_port_cut_at_095_m"] = True
     if bar_reference_profile == "c1_tangent":
         meta["bar_reference_profile"] = "C1_TWO_QUADRATIC_TANGENT_ALIGNED_V1"
         meta["bar_reference_meaning"] = (

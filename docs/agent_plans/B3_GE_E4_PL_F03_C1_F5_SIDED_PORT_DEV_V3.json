@@ -1,0 +1,136 @@
+{
+  "classification": "bounded printed-stress sided solid work, not a native B3 port qualification",
+  "cut_balance": {
+    "cut_nodes": 341,
+    "element_partition_max_force_difference_N": 3.552713678800501e-15,
+    "interface_cut_wrench_N_Nm_about_axis": [
+      -131.12913869913206,
+      -2.2142237940453335,
+      -47.473757599806994,
+      0.861539125238498,
+      6.5564569349566035,
+      -1.2126963547856593
+    ],
+    "left_right_interface_cut_wrench_defect_N_Nm": [
+      1.9769046900819376e-05,
+      -2.5487027519588423e-06,
+      -2.7587218625058085e-06,
+      -1.0617301282600522e-07,
+      -8.411172611744178e-07,
+      -1.1844472069810763e-09
+    ],
+    "meaning": "element partition and seam action closure are algebraic bookkeeping identities, not independent force validation",
+    "nonbond_cut_max_left_plus_right_residual_N": 4.562142847497341e-06,
+    "shared_cut_max_left_plus_right_plus_interface_N": 1.7763568394002505e-15,
+    "shared_cut_nodes": 21
+  },
+  "cut_sides": {
+    "left": {
+      "cut_twist_virtual_work_J_per_rad": 57.41604220885509,
+      "cut_wrench_N_Nm_about_axis": [
+        1580.981699533717,
+        -228.06771795642956,
+        83.09738628590011,
+        57.41604220885509,
+        -59.296924290454314,
+        1.0411334912070538
+      ],
+      "elements": 3000,
+      "minimum_jacobian_m3": 1.249999999999927e-07
+    },
+    "right": {
+      "cut_twist_virtual_work_J_per_rad": -58.277581440266594,
+      "cut_wrench_N_Nm_about_axis": [
+        -1449.8525410655388,
+        230.28193920177188,
+        -35.62363144481572,
+        -58.277581440266594,
+        52.74046651438045,
+        0.17156286239416257
+      ],
+      "elements": 500,
+      "minimum_jacobian_m3": 1.249999999999936e-07
+    }
+  },
+  "inputs_sha256": {
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-sided-port-cut-dev-20260926-v1\\manifest.json": "6473f02968c4b8c3f4f441380261937b827602d5e66ac4b21aadf21e7a0208aa",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-sided-port-cut-dev-20260926-v1\\model.json": "4ee8c8b53df1ad7653b4b4b5b877359a95ed3781bdea5991bd06264a878ed608",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-sided-port-cut-dev-20260926-v1\\run_result.json": "e654194ad38797f9ce742981b5b75e16b68928b4e50d06cd6536cc6bde2dbdb8",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-sided-port-cut-dev-20260926-v1\\solid-5-sided-port.dat": "003444ccd420ef743a843b35aad1d5b460d017cded11e7fa1d02b1f7629c1a57",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-sided-port-cut-dev-20260926-v1\\solid-5-sided-port.frd": "077120547c45a6506803d8ceba86769201a7c044bc900ae7aa44f6cef5203037",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-sided-port-cut-dev-20260926-v1\\solid-5-sided-port.inp": "4d70bff15fa9b3c077133a562b678e3bcde3d84b7aa03380414c5988abdb6854"
+  },
+  "limitations": [
+    "element-side cut forces are dual to discontinuous solid virtual fields, not automatically native B3 retained-port rotations",
+    "the side-restricted twist at bonded cut nodes is not an admissible virtual displacement of the intact shared-node assembly unless companion plate/interface work is included",
+    "21 cut nodes share the plate/bar bond; side wrenches need not be opposite and cut closure is algebraic bookkeeping",
+    "local plate-side interface traction is not independently reconstructed",
+    "same x=.95 cut and physical setup but a changed terminal mesh; compare observables before accuracy scoring",
+    "sampled reference-normal gaps do not prove deformed nonintersection",
+    "one load and one grid; no line-space, G0B or external-accuracy acceptance"
+  ],
+  "physical_response": {
+    "applied_load_work_j": 0.07434823322175,
+    "applied_wrench_N_Nm": [
+      0.0,
+      5.329070518200751e-15,
+      -999.9999999999985,
+      100.00000000000016,
+      999.9999999999985,
+      5.329070518200751e-15
+    ],
+    "support_wrench_N_Nm": [
+      8.943000455019501e-05,
+      1.381150016754873e-05,
+      999.9999198100037,
+      -100.00000215182197,
+      -1000.0000376008209,
+      7.027502686440812e-07
+    ],
+    "wrench_imbalance_N_Nm": [
+      8.943000455019501e-05,
+      1.38115001728778e-05,
+      -8.018999483283551e-05,
+      -2.151821817619748e-06,
+      -3.760082233839057e-05,
+      7.027502739731517e-07
+    ]
+  },
+  "source_sha256": "7977b937cd2323a8e4fcf5c4f510efde6cc8f8a1a684750c717297c64b92f933",
+  "status": "PASSED_BOUNDED_STRESS_AND_SAMPLED_GAP_GUARDS",
+  "validation": {
+    "bar_free_max_residual_N": 4.2329923918060786e-05,
+    "bar_on_plate_work_J": 0.015216500577895867,
+    "bar_on_plate_wrench_N_Nm": [
+      -5974.514916808126,
+      54.60374846349725,
+      -72.19037474000217,
+      40.51910447120192,
+      48.19289040303831,
+      28.71295113803857
+    ],
+    "bar_root_RF_max_difference_N": 5.6650212016506885e-05,
+    "bond_vs_plate_support_max_wrench_difference_N_Nm": 0.0001728481274767546,
+    "minimum_jacobian_m3": 1.249999999999927e-07,
+    "plate_support_equivalent_wrench_N_Nm": [
+      -5974.514743959999,
+      54.603745763499894,
+      -72.19028309000159,
+      40.51910845324028,
+      48.19290027803924,
+      28.712950143549875
+    ],
+    "sampled_unbonded_gap": {
+      "maximum_reference_normal_gap_m": 1.7750059999995337e-05,
+      "meaning": "reference-normal paired-node check on matching element faces; contact and deformed-surface closest-point gap were not solved",
+      "minimum_reference_normal_gap_m": 1.1470017778095426e-07,
+      "negative_nodal_gaps": 0,
+      "paired_nodes": 800,
+      "sampled_face_count": 250,
+      "sampled_face_meaning": "nine-point Gauss grid per direction on paired quadratic faces, excluding the zero-gap bonded seam; not an exact minimum or deformed closest-point contact check",
+      "sampled_face_minimum_reference_normal_gap_m": 3.4836271311714624e-09,
+      "sampled_face_negative_points": 0,
+      "sampled_face_points_per_face": 81
+    }
+  }
+}

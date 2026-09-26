@@ -15,11 +15,11 @@ is about 99.93% shell numerical drilling chart norm, so its minimum singular
 value cannot decide line-space stability. **Remaining uncertainty:** The
 physical torque/shear meaning of the reduced law, a drilling-aware native
 mixed-system stability assessment, actual F06 rebase ownership, F09 physical
-B2 admission and other G0 foundations. **Next action:** Use the validated F5
-same-action E4 comparison and establish the one-sided native B3 port-work
-reference needed to allocate the remaining transfer difference; assess line
-modes separately without tuning drilling or repeating classical axial
-refinement. **Gate:**
+B2 admission and other G0 foundations. **Next action:** Define the native
+retained-port-to-solid virtual map and its bonded seam work before comparing
+the newly recovered one-sided solid work with B3; continue the existing F5
+same-action E4 interpretation. Assess line modes separately without tuning
+drilling or repeating classical axial refinement. **Gate:**
 G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Next bounded physical discriminator:** The validated F5 common-action
@@ -61,6 +61,56 @@ represented by that projection. It cannot establish six-channel fidelity or
 select P0/P1/dual. The existing same-solid-action E4 response and the
 missing sided B3 port work are now the discriminators; do not launch another
 transverse or classical axial refinement from this small remainder.
+
+**One bounded sided-reference execution (prospective):** The saved F5
+quadratic-solid grid places x=`0.95 m` inside a `.94–.96 m` element, so
+its integration-point stress cannot supply exact element-side virtual work
+for the native B3 retained-port cut. Insert `0.95 m` as a base cut in both
+solid domains while retaining the declared C1 geometry, supports, bond,
+pre-opening, loads and element family. The opt-in generator must reproduce
+the old deck and model with the flag off, and the new mesh must have no
+element crossing the cut. Execute only this combined case, with one thread
+and the existing 120 s limit, saving the full displacement and stiffener
+Gauss-stress output. A completed, balanced, open field with recoverable
+side contributions advances to one-sided work; timeout, failed mechanics or
+inconsistent side action stops this reference rather than triggering a finer
+run. This is preparatory Level-A external evidence, not the consumed formal
+F03 gate execution or a multiplier selection.
+
+**Sided-reference result and decision:** The opt-in generator preserves the
+historical F5 deck text and JSON model with the flag off. Its new x=`.95 m`
+base cut puts no plate or bar element across the section; the declared load
+resultant remains `(0,0,-1000 N; 100,1000,0 Nm)`. The pinned CalculiX 2.23
+one-thread run completed in `94.46 s`, inside the existing 120 s cap.
+Protected raw root:
+`.qualification/b3-ge-e4-pl/f03-c1-factor5-sided-port-cut-dev-20260926-v1`.
+Versioned validation is
+`B3_GE_E4_PL_F03_C1_F5_SIDED_PORT_DEV_V3.json`; V1/V2 remain unchanged.
+Printed Gauss-stress recovery gives maximum free-bar residual `4.23e-5 N`,
+bar-root RF difference `5.67e-5 N`, and bond-versus-independent plate-support
+wrench difference `1.73e-4 N/Nm`. The sampled unbonded reference-normal gap
+is positive at all recorded points, minimum `3.48 nm`; this is not a
+continuous deformed-intersection certificate. Applied-load work is
+`0.074348233 J` versus archived F5 `0.074342088 J` (`+0.0083%`) on the
+changed terminal mesh, supporting a close directional comparison only.
+
+The stress-conjugate *broken-space* unit section twist at x=`.95 m` gives
+left/right element-side work duals `+57.4160/−58.2776 Nm`. The cut contains
+`341` bar nodes, including `21` shared with the bonded plate; their
+bar-on-plate interface action has `+0.861539 Nm` about the same axis.
+The displayed left/right/seam closure is algebraic bookkeeping, not an
+independent traction validation. Independent read-only mechanics review
+confirmed Gauss ordering, force sign and the bounded broken-space work
+interpretation, and identified that a side-restricted twist at shared nodes
+is **not an admissible variation of the intact bonded assembly** when the
+plate is held fixed. V3 makes this limitation explicit and narrows the
+status to passed stress/reaction and sampled-gap guards. These numbers
+cannot score the native B3 retained port or select P0/P1/dual. Before any
+native comparison, derive a port-to-solid virtual displacement/warping map
+with the companion plate/seam work and test its representable work. If that
+map is not defensible, use only the already validated continuous common
+fields and same-action shell response; do not request another finer solid
+solve just to obtain a different scalar. G0B remains open and G1 barred.
 
 **Native KKT metric result:** Commit `2028c8d8` preserves the failed V1
 layout check and the completed V2 source/manifest/result in
