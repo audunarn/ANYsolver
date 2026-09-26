@@ -3810,3 +3810,26 @@ modes across the registered ratios, then obtain independent mechanics
 review before selecting a multiplier policy. No further classical axial
 refinement follows from this slice. Formal F03 authority is unconsumed;
 G0B remains open and G1 barred.
+
+**Two-interval result and bounded follow-up:** At fixed C1 Q4 two-cell
+grid, the two x-host intervals have 12/12 independent supported rows,
+each with stress-free reference, objective actual-chart work and zero
+reference drilling columns. Relative to the single-interval hybrid,
+tip Mx rotation moves `49.163→46.883 µrad` (−4.64%) and opening Fz
+tip-z moves `−70.237→−68.896 µm`; balance errors remain below
+`3e-12`. The normalized weakest action is alternating interval Fz,
+minimum `9.24e-5`; its work is shell-physical `7.8035e-5`, beam
+`1.4368e-5`, numerical shell `1.3e-10`. Under pure Mx, the two
+interval Fy multipliers are `+646.2/−713.1 N`; under pure Fz the Fz
+multipliers are `−990.6/+1059.7 N`. These are large opposing local
+actions, not a rank failure or proof of instability. Raw root:
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-segmented-dev-20260926-v1`,
+source `0962a554`. The external solid comparison and all historical
+failure records remain unchanged.
+
+The next one-axis discriminator is Q4 patch cells 2→4 at the *same two
+intervals*, B3 half-cells 12, C1 geometry, supports and loads. If the
+one→two-interval response shift shrinks with shell resolution, inspect
+shell trace interpolation/kinematics; if it persists, investigate the
+reduced line law against physical bond tractions and director freedom.
+Do not add line rows or select a multiplier space from this quotient.
