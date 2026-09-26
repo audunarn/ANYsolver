@@ -439,6 +439,20 @@ def test_c1_opening_shear_keeps_torque_geometry_and_has_exact_reverse_wrench():
         [0.,0.,-1000.,0.,1000.,0.], abs=1e-9)
     assert "*CONTACT PAIR" not in shear
     assert "*NODE FILE,OUTPUT=3D\nU" in shear
+    assert hashlib.sha256(shear.replace("\n", "\r\n").encode("ascii")).hexdigest() == (
+        "49b6e57dd3654048b7ba266365e9dd7be6898340589535fda6ca108c16efc76b")
+    coarse, coarse_meta = SCREEN.build(
+        2, "tip_fz", reverse_tip_fz=True, **common)
+    assert len(coarse_meta["unbonded_face_pairs"]) == 32
+    assert len(coarse_meta["shared_interface_node_ids"]) > 0
+    assert "*NODE FILE,OUTPUT=3D\nU" in coarse
+    coarse_applied = {int(node):np.array(force) for node,force in
+                      coarse_meta["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(
+        coarse_applied, coarse_meta["probe_coordinates_m"]) == pytest.approx(
+            [0.,0.,-1000.,0.,1000.,0.], abs=1e-9)
+    with pytest.raises(ValueError, match="bounded full-bond or C1 terminal"):
+        SCREEN.build(1, "tip_fz", reverse_tip_fz=True, **common)
     with pytest.raises(ValueError, match="displacement output required"):
         SCREEN.build(4, "tip_mx", reverse_tip_fz=True, **common)
 

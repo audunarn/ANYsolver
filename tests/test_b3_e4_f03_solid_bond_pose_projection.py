@@ -11,10 +11,11 @@ from scripts.b3_e4_f03_solid_bond_pose_projection import (
 )
 
 
+@pytest.mark.parametrize("factor,faces,seam_faces", ((2,32,4),(4,128,8)))
 def test_c1_saved_field_gap_bound_distinguishes_open_and_overlapping_faces(
-        tmp_path):
+        tmp_path, factor, faces, seam_faces):
     deck, meta = build(
-        4, "tip_fz", boundary_policy="left_root", bond_policy="terminal",
+        factor, "tip_fz", boundary_policy="left_root", bond_policy="terminal",
         element_family="C3D20R", reverse_tip_fz=True,
         bar_clearance_um=2, bar_reference_profile="c1_tangent",
         plate_thickness_mm=35, tip_load_map="quadratic_face",
@@ -30,8 +31,8 @@ def test_c1_saved_field_gap_bound_distinguishes_open_and_overlapping_faces(
     positive = bound_c1_unbonded_vertical_gap(
         coords, upward, meta["unbonded_face_pairs"])
     assert positive["status"] == "POSITIVE_SAVED_FIELD_FACE_GAP_BOUND"
-    assert positive["face_count"] == 128
-    assert positive["seam_face_count"] == 8
+    assert positive["face_count"] == faces
+    assert positive["seam_face_count"] == seam_faces
     assert positive["minimum_seam_factored_gap_bound_m"] > 0.
     downward = {node: -value for node, value in upward.items()}
     negative = bound_c1_unbonded_vertical_gap(

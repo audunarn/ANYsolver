@@ -393,8 +393,9 @@ def bound_c1_unbonded_vertical_gap(
     if set(coords) != set(u) or not all(np.isfinite(v).all() for v in u.values()):
         raise ValueError("complete finite C1 displacement inventory required")
     pairs = np.asarray(face_pairs, dtype=int)
-    if pairs.shape != (128, 8, 2) or not set(pairs.flat).issubset(coords):
-        raise ValueError("complete 128-face paired C1 inventory required")
+    if pairs.shape not in ((32, 8, 2), (128, 8, 2)) or not set(pairs.flat).issubset(coords):
+        raise ValueError("complete 128-face or 32-face paired C1 inventory required")
+    expected_grid = {32: (9, 5), 128: (17, 9)}[len(pairs)]
     transform = np.array(((1., 0., 0.), (-.5, 2., -.5), (0., 0., 1.)))
     sample = (-1., 0., 1.)
 
@@ -456,7 +457,8 @@ def bound_c1_unbonded_vertical_gap(
     ys = sorted({y for _, _, y0, y1 in cells for y in (y0, y1)})
     expected = {(xs[i], xs[i+1], ys[j], ys[j+1])
                 for i in range(len(xs)-1) for j in range(len(ys)-1)}
-    if (len(xs) != 17 or len(ys) != 9 or cells != expected or
+    if ((len(xs), len(ys)) != expected_grid or cells != expected or
+            sum(row[1] for row in rows) != len(ys)-1 or
             abs(xs[0]) > 1e-10 or abs(xs[-1]-.9) > 1e-10 or
             abs(ys[0]+.05) > 1e-10 or abs(ys[-1]-.05) > 1e-10):
         raise ValueError("C1 unbonded reference rectangle is incomplete")

@@ -5,24 +5,45 @@
 **Decision sought:** A physically defensible native six-channel bond and a
 stable exact line space. **Established:** The transverse-order diagnosis is
 complete. The matched C1 opening-shear solid has a continuous saved-field
-gap bound on its unbonded underside/top face; the torque case still
-penetrates despite penalty contact. The exact C1 native B3 reference has
-zero virgin residual and sparse/dense operator parity. On two Q4 patch
-levels its six-resultant surface-position-moment footprint approaches the
-solid opening-shear work and support split more closely than the rigid or
-distributing pose ties. A separate C1 torque load closes work and wrench
-balance with shell work overwhelmingly physical on both grids.
-**Uncertainty:** The footprint is not mesh settled
-in plate support transfer, the solid and reduced idealizations still differ,
-the physical torque reference is inadmissible, and no exact line space has
-mesh-uniform stability evidence. **Next discriminating action:** Review the
-surface-position moment work and C1 chart mapping independently, then use
-a bounded sparse patch refinement only if that review sustains the law.
-Keep the true nonmatching line derivation separate; its next candidate must
-have distinct physical work and pass fixed-grid transfer/mode checks before
-registered ratios. Do not resume finer classical axial or arbitrary line
-row sweeps. No footprint, pose or multiplier is production-selected. Formal
-F03 authority is unconsumed, G0B open and G1 barred.
+top/underside gap bound; torque still penetrates despite penalty contact.
+The exact C1 native B3 reference has zero virgin residual and sparse/dense
+operator parity. On two Q4 patch grids the six-resultant surface-position
+footprint gives closer opening-shear tip/support quantities than the old
+pose ties, with balanced physical torque work. Independent mechanics review
+found no algebraic blocker **for a distributing footprint**. Its six weak
+moments nevertheless admit local slip: under opening shear, pointwise gap
+RMS is `0.16919→0.16920 µm` from patch cells two→four while all six weak
+gaps close. **Uncertainty:** This law cannot substitute for a pointwise
+solid bond, the solid has one mesh level, torque remains contact-inadmissible,
+and no true line space has mesh-uniform stability evidence.
+**Next discriminating action:** Run one bounded factor-two C1 opening-shear
+solid reference at identical geometry, load, supports and shared bond;
+compare its tip/support transfer and continuous saved-field face gap with
+the retained factor-four result. Material drift or overlap blocks use as
+a directional reference; agreement supports further reference refinement,
+not native accuracy. In parallel, derive a distinct physical six-channel
+line work law and test fixed-grid transfer/modes before registered ratios.
+A sparse third patch grid would settle the distributing footprint only;
+it cannot remove its weak-moment null mode. Do not resume finer classical
+axial or arbitrary P0 row sweeps. No footprint, pose or multiplier is
+production-selected. Formal F03 authority is unconsumed, G0B open and G1
+barred.
+
+**Run preparation and current dependency:** The factor-two C1 deck and
+continuous-gap guard changes are present in the isolated worktree, with
+`80/80` focused tests passed and `git diff --check` clean. The external
+runner requires a clean source commit. The attempted commit was not
+executed because automatic approval review returned an authentication
+error (HTTP 401); do not bypass that review. Therefore the factor-two
+CalculiX run has not started and there is no new solid result. Preserve
+the existing factor-four reference and all historical evidence. Once the
+approval service works, commit the tested source, confirm clean status,
+and run the single bounded factor-two case in a new exclusive output root.
+Direct deck-definition comparison confirms both levels use the same
+35 mm plate, terminal bond `x=.9–1 m`, C1 tangent beam axis at `z=.0675 m`,
+left/root supports, no contact, and applied end wrench
+`(Fz,My)=(-1000 N,+1000 N m)`; the factor-two/four models have
+`1024/8192` solid elements and `32/128` unbonded paired faces.
 
 **Next native C1 geometry discriminator, before execution:** The saved solid
 opening-shear field uses a 2 µm C1 tangent-aligned beam-axis lift over
@@ -142,6 +163,31 @@ inf-sup bound or a multiplier selection. Next derive a physical six-channel
 line work law with a distinguishable shell trace, check its fixed-grid
 transfer and normalized modes, then assess the registered mesh ratios.
 Do not add P0 rows merely to reduce a gap or the quotient.
+
+**Independent footprint review and unresolved-gap result:** A read-only
+mechanics reviewer found no work-conjugacy, objectivity or finite-chart
+blocker in the six-resultant law at source `9c5e8093`. The dual traction
+of its mean/first-moment coordinates gives the stated force and moment;
+finite multipliers are material generalized duals, so current spatial
+wrenches require virtual-rigid-motion recovery. The law intentionally
+does **not** tie the solid face pointwise: the nonzero affine gap
+`g=(epsilon·(x−.95),0,0)` has zero mean and all three first-moment rows.
+The added analytic control passes this null mode without weakening the
+existing six-channel work checks. Complete C1 native records are retained
+in `B3_GE_E4_PL_C1_NATIVE_PATCH_DEV_20260926/{manifest,results}.json`
+(source `e95c43af`) and the immutable V2 sibling (source `cd7a1e52`).
+Their tip, reaction, physical/numerical-work and mechanics-error fields
+match exactly. V2 recovers the linearized shell-top/beam-bottom pointwise
+gap at the declared quadrature: for +100 N m torque, RMS
+`0.09617→0.09881 µm` and maximum `0.16301→0.17223 µm`; for −1000 N
+opening Fz, RMS `0.16919→0.16920 µm` and maximum
+`0.29191→0.32467 µm`. Six weak gaps remain below `7e−19` in the
+reported mixed units. Thus the footprint remains a credible **distributing
+connection** candidate; its proximity to one solid opening-shear tip and
+support split cannot establish a bonded-line or pointwise-bond claim.
+The bounded sparse third grid may later assess this footprint's support
+partition, but cannot eliminate its admitted unresolved mode. The
+independent review did not accept G0B or the physical torque reference.
 
 **Continuous-gap precondition, before execution:** For the saved C1 opening
 field, convert each paired Q8 face's *corresponding-material-coordinate*
@@ -326,7 +372,7 @@ does not change geometry, loading, resource limits or native selection.
 
 **Current decision:** Keep the transverse-chord native line pose experimental and stop its mesh-ratio escalation. Its final focused file passes `26/26`; on the same 35 mm Q4/S3 physical geometry it changes shell torque partition by about `30%` while improving the bounded positive-action lower quotient only `5.5–6.2%`. Torque still carries about `0.7–1.1%` numerical shell-component energy. Neither pose has a verified physical torque reference or mesh-uniform line-stability result, so neither selects P0. The matched C1 factor-4 contact solve executed, but same-deformed-XY projection still finds `31/10,368` negative samples, minimum `−3.1621 nm`; they occupy five faces, with the dominant 17 samples on the one face with eight active contact springs. Preserve its parser-marked failure and do not score native accuracy. The later runner change accepts only that exact generic *STATIC notice; its focused deck/parser file passes `73/73`, and the historical raw result is unchanged. The next reference discriminator must distinguish missed/underintegrated contact from an inadmissible connection geometry on the same load/support/section model; only a nonpenetrating, balanced and mesh-checked result can enter native comparison. Continue the already-running B2 F09 diagnostic independently. Formal F03 authority is unconsumed, G0B open and G1 barred.
 
-**In-flight work, do not duplicate or interrupt:** Session `87958` (PID `45760`) is the preregistered B2 F09 exact-rounded/sparse-scaling comparison and has not returned a result. Session `37844` (PID `49308`) is the original pre-fix transverse-chord pytest run; final fixed-source checks were run separately and passed `26/26`. Older session handles `82615` and `63398` remain unclosed. Poll for completed results once; an observation timeout is not a terminal result.
+**Process observation, 26 September:** The previously recorded session handles `87958` and `37844` now return unknown-process errors, and PIDs `45760` and `49308` are absent. No terminal output was recovered from either handle. The fixed-source transverse-chord check independently passed `26/26`; do not infer that the original pre-fix run passed. The F09 exact-rounded/sparse-scaling diagnostic has no recovered result and must not be marked passed or failed. Older handles `82615` and `63398` were not re-run. A new F09 experiment requires an explicit review of its surviving output and original authority before dispatch.
 
 **Operator interpretation:** A focused Q4 check disproved the initial assumption that center interpolation equals symmetric band averaging across the piecewise trace at `y=0`. The chord changes both Fz and yaw rows, and its supported row space is distinct. Actual-chart derivative, rigid-work and shell-shear checks pass on Q4/S3. The matched loaded and physical-mode screens above establish a finite-grid difference, not improved accuracy or stability under refinement. Source `112f62d6` corrected the selector-shadowing bug before final tests.
 

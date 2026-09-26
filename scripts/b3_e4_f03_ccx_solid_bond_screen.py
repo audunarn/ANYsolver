@@ -87,7 +87,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                      contact_policy == "none")
     if type(full_displacement_output) is not bool or (
             full_displacement_output and not (
-                factor == 4 and shear in ("tip_mx", "tip_fz") and
+                (factor == 4 or (factor == 2 and c1_open_shear)) and
+                shear in ("tip_mx", "tip_fz") and
                 boundary_policy == "left_root" and
                 contact_policy in ("none", "c1_penalty") and
                 element_family == "C3D20R" and
@@ -140,7 +141,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
         raise ValueError("declared bar clearance requires quadratic terminal torque or C1 opening-shear audit")
     if bar_reference_profile not in ("legacy_linear", "c1_tangent") or (
             bar_reference_profile == "c1_tangent" and
-            (bar_clearance_um != 2 or factor != 4 or
+            (bar_clearance_um != 2 or
+             not (factor == 4 or (factor == 2 and c1_open_shear)) or
              bond_policy != "terminal" or tip_load_map != "quadratic_face")):
         raise ValueError("C1 tangent profile requires the bounded quadratic terminal reference")
     if element_family not in ("C3D8", "C3D20R") or (
@@ -976,14 +978,16 @@ def main() -> int:
                                   args.element_family!="C3D20R"):
         parser.error("declared bar clearance requires quadratic terminal torque or C1 opening-shear audit")
     if args.bar_reference_profile=="c1_tangent" and not (
-            list(args.factor)==[4] and args.suite=="loads" and
+            (list(args.factor)==[4] or
+             (list(args.factor)==[2] and c1_open_shear)) and
+            args.suite=="loads" and
             args.boundary=="left_root" and args.bond=="terminal" and
             args.contact in ("none","c1_penalty") and
             args.element_family=="C3D20R" and
             (args.tip_mx_gap_audit or c1_open_shear) and
             args.bar_clearance_um==2 and
             args.half_plate_thickness and args.quadratic_face_traction):
-        parser.error("C1 tangent reference requires the bounded factor-4 terminal screen")
+        parser.error("C1 tangent reference requires the bounded terminal screen")
     if args.half_plate_thickness and (
             args.element_family!="C3D20R" or
             not (((args.tip_mx_gap_audit or c1_open_shear) and
@@ -1002,7 +1006,9 @@ def main() -> int:
             (args.reverse_fz_open_audit and args.bond!="terminal")):
         parser.error("quadratic face traction requires admitted no-contact C3D20R tip loading")
     if args.full_displacement_output and not (
-            list(args.factor)==[4] and args.suite=="loads" and
+            (list(args.factor)==[4] or
+             (list(args.factor)==[2] and c1_open_shear)) and
+            args.suite=="loads" and
             args.boundary=="left_root" and
             args.contact in ("none","c1_penalty") and
             args.element_family=="C3D20R" and
@@ -1012,7 +1018,7 @@ def main() -> int:
               (args.tip_mx_gap_audit or c1_open_shear) and
               args.bar_clearance_um==2 and
               args.bar_reference_profile=="c1_tangent"))):
-        parser.error("full-field reference requires the bounded factor-4 full bond or C1 terminal case")
+        parser.error("full-field reference requires the bounded full bond or C1 terminal case")
     if args.contact == "c1_penalty" and not (
             list(args.factor)==[4] and args.suite=="loads" and
             args.boundary=="left_root" and args.bond=="terminal" and
