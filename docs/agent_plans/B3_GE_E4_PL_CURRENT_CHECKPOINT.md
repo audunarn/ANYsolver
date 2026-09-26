@@ -2,6 +2,44 @@
 
 ## Current state — 26 September 2026
 
+**Decision sought:** Retain or revise the native six-channel beam/shell
+connection before selecting a P0/P1/dual line space. **Established:** The
+x2/y4 mixed Q4/S3-V2D line passes reference, actual-chart work, rank and
+loaded balance. Mirroring its four S3 diagonals changes work and signed
+modes only at numerical noise. Crossed-operator attribution shows the
+approximately `16%` P1/dual *full-mode* decrease follows the S3 shell
+operator, not the line trace; the nonaxial decrease is smaller. The seven
+saved axial/reciprocal ratios have positive finite-grid supported actions,
+but no mesh-uniform inf-sup proof. B3-12→26 reciprocal refinement changes
+P1/dual torque work by `−1.61/−3.17%`; P0 is much steadier, which alone
+does not select it. Executed F5 solid pure opening and the combined field
+with ±10 N m torque perturbations have positive continuous interpolated
+underside/top face-gap bounds; the isolated pure-torque field closes.
+The smallest perturbed nonseam bound is `0.243 µm`. Solid/native interior
+twist per *axis-corrected* root torque agrees within `0.000217%`, yet
+native P0/P1/dual torque work is `4.07/3.27/1.87%` below solid F5;
+opening work differs by less than `0.55%`. These are directional reference
+comparisons across different 3D/beam-shell section and tip-load ideals.
+
+**Remaining uncertainty:** Terminal transfer versus shell pose/physical
+response and 3D section-end effects; no recovered solid interface traction,
+full side/root contact proof or mesh-uniform multiplier stability.
+**Next discriminator and action:** From the saved F5 fields and native C1
+results, compare the two-load torque/opening port and plate kinematics at
+matched stations and frames, including projection residuals. If the plate
+response matches but relative beam/plate pose does not, revise terminal
+transfer; if plate response differs, investigate shell idealization first.
+If the ports cannot be made mechanically equivalent, derive a matched
+external port before ranking line spaces. Interpret this with the existing
+seven ratios; do not launch finer classical axial sweeps. Evidence roots:
+`f03-c1-mirrored-s3-diagonal-dev-20260926-v1`,
+`f03-c1-mixed-operator-attribution-dev-20260926-v1`, and
+`f03-c1-factor5-admissible-torque-direction-dev-20260926-v1` under
+`.qualification/b3-ge-e4-pl/`. Formal F03 authority remains unconsumed;
+G0B open and G1 barred.
+
+## Prior bounded decision record — 26 September 2026
+
 **Current decision and next bounded experiment (later 26 September):** The
 native six-channel weighted line remains a candidate; no multiplier space
 is selected. At source `ed18bea2`, the fixed C1 x2/y4, B3-12 Q4/S3-V2D
@@ -16,8 +54,8 @@ Relative to the same Q4 grid, separate torque applied work changes by
 nonaxial signed quotients change `1.575→1.572`, `0.584→0.568`, and
 `0.591→0.575`. The asymmetric diagonal causes small reciprocal
 torque/shear cross-action; it must not be read as a physical coupling
-accuracy result. Numerical drilling-completion work remains small beside
-physical shell work in these fixed-grid loaded cases. This result detects
+accuracy result. Numerical shell-component work remains below `0.151%`
+of physical shell work in these fixed-grid loaded cases. This detects
 no immediate mixed-host defect but is neither a mesh-uniform stability
 proof nor a basis choice. Existing axial and reciprocal ratios already
 show reference/rank and signed action; do not extend classical axial grids.
