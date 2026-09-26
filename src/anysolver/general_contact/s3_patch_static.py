@@ -708,6 +708,12 @@ class GeneralS3PatchManager:
                                 if self.settings.augmentation_equilibrated_pressure_step_pa is not None
                                 else {})}
                             if self.settings.augmentation_acceleration == "active_secant_pivot" else {}),
+                         **({"augmentation_acceleration": self.settings.augmentation_acceleration,
+                             "augmentation_schur_maximum_modes": self.settings.augmentation_schur_maximum_modes,
+                             "augmentation_schur_maximum_pressure_pa": self.settings.augmentation_schur_maximum_pressure_pa,
+                             "augmentation_schur_maximum_step_pa": self.settings.augmentation_schur_maximum_step_pa,
+                             "augmentation_schur_difference_step_m": self.settings.augmentation_schur_difference_step_m}
+                            if self.settings.augmentation_acceleration == "supported_schur_dev" else {}),
                          "maximum_swept_subdivisions": self.settings.maximum_swept_subdivisions,
                          "maximum_candidate_pairs": self.settings.maximum_candidate_pairs},
         }

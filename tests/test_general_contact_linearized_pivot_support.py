@@ -105,3 +105,88 @@ def test_schur_matches_independently_reequilibrated_multiplier_directions(monkey
     ])
     np.testing.assert_allclose(seen["schur"], independent, rtol=1.0e-9,
                                atol=1.0e-11)
+
+
+def test_supported_schur_uses_five_coupled_pressure_modes():
+    class Geometry:
+        def evaluate(self, source, _target):
+            x = source[:, 0]
+            area = 1.0+0.1*x
+            gap = -0.1+0.2*x
+            return SimpleNamespace(
+                reference_support=area,
+                reference_weighted_gap=area*gap,
+                normalized_gap=gap,
+                overlap_signature=(1,),
+            )
+
+    geometry = Geometry()
+    manager = SimpleNamespace(
+        _positions=lambda displacement: (
+            np.column_stack((displacement, np.zeros((5, 2)))),
+            np.empty((0, 3)),
+        ),
+        normal_multipliers=np.ones(5),
+        law=SimpleNamespace(
+            geometry=geometry,
+            evaluate=lambda source, target, pressure: SimpleNamespace(
+                reference_support=geometry.evaluate(source, target).reference_support,
+                normalized_gap=geometry.evaluate(source, target).normalized_gap,
+                pressure=np.maximum(0.0, pressure-geometry.evaluate(
+                    source, target,
+                ).normalized_gap),
+            ),
+        ),
+        map=sparse.csr_matrix(np.eye(15)[:, [0, 3, 6, 9, 12]]),
+        settings=SimpleNamespace(maximum_general_s3_energy_evaluations=100),
+        stiffness=1.0,
+    )
+    proposal = linearized_pivot.refined_patch_supported_schur(
+        manager, np.zeros(5), sparse.diags([2.0]*5, format="csr"),
+        sparse.eye(5, format="csr"), np.zeros((0, 5)),
+        difference_step=1.0e-6, maximum_pressure=20.0,
+        maximum_pressure_step=10.0, maximum_modes=5,
+    )
+    assert proposal is not None
+    np.testing.assert_allclose(proposal.multipliers, 6.0,
+                               rtol=1.0e-9, atol=1.0e-9)
+    assert proposal.active_indices == (0, 1, 2, 3, 4)
+    # Re-equilibrate the independent nonlinear spring/contact equations.
+    # At lambda=1, q=0 is balanced by a fixed external force of -0.2 per DOF.
+    q = (0.2*proposal.multipliers-0.2)/(2.0-0.02*proposal.multipliers)
+    actual_gap = -0.1+0.2*q
+    actual_residual = np.maximum(0.0, proposal.multipliers-actual_gap)
+    actual_residual -= proposal.multipliers
+    assert np.max(np.abs(actual_residual)) < 0.1*proposal.predicted_residual_before
+
+
+def test_pressure_response_rejects_a_clipping_edge_tie():
+    geometry = SimpleNamespace(
+        source_face_indices=(np.array((0, 1, 2, 3)),),
+        target_face_indices=(np.array((0, 1, 2)),),
+    )
+    source = np.array(((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
+                       (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)))
+    target = np.array(((0.2, 0.2, 0.1), (0.7, 0.2, 0.1),
+                       (0.2, 0.7, 0.1)))
+    assert linearized_pivot._projected_clip_signature(
+        geometry, source, target,
+    ) is not None
+    target[0, 0] = 0.0
+    assert linearized_pivot._projected_clip_signature(
+        geometry, source, target,
+    ) is None
+
+
+def test_distant_edge_line_extension_does_not_block_pressure_response():
+    geometry = SimpleNamespace(
+        source_face_indices=(np.array((0, 1, 2, 3)),),
+        target_face_indices=(np.array((0, 1, 2)),),
+    )
+    source = np.array(((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
+                       (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)))
+    target = np.array(((2.0, 0.0, 0.1), (3.0, 0.0, 0.1),
+                       (2.5, 1.0, 0.1)))
+    assert linearized_pivot._projected_clip_signature(
+        geometry, source, target,
+    ) is not None

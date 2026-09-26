@@ -31,6 +31,7 @@ def propose_supported_schur_step(
     maximum_pressure: float,
     maximum_pressure_step: float,
     maximum_modes: int,
+    diagnostics: dict[str, object] | None = None,
 ) -> SupportedSchurProposal | None:
     """Propose one projected-root Newton step on a stable active branch.
 
@@ -60,8 +61,13 @@ def propose_supported_schur_step(
             raise ValueError(f"{name} must be finite and positive")
     if count > maximum_modes:
         raise MemoryError("supported pressure modes exceed the declared Schur cap")
-    if not count:
+    def decline(reason: str) -> None:
+        if diagnostics is not None:
+            diagnostics["schur_ineligible"] = reason
         return None
+
+    if not count:
+        return decline("no_supported_pressure_modes")
     pressure = lam[modes]
     physical_gap = gap[modes]
     projected_argument = pressure - normal_stiffness*physical_gap
@@ -69,12 +75,12 @@ def propose_supported_schur_step(
         1.0, maximum_pressure, float(np.max(np.abs(projected_argument))),
     )
     if np.any(np.abs(projected_argument) <= roundoff):
-        return None
+        return decline("projected_active_set_kink")
     active = projected_argument > 0.0
     residual = np.maximum(0.0, projected_argument) - pressure
     before = float(np.linalg.norm(residual, ord=np.inf))
     if before == 0.0:
-        return None
+        return decline("projected_residual_zero")
     jacobian = -np.eye(count)
     jacobian[active] = -normal_stiffness*H[active]
     row_scale = np.maximum(np.max(np.abs(jacobian), axis=1), np.finfo(float).tiny)
@@ -84,13 +90,15 @@ def propose_supported_schur_step(
     scaled = jacobian/row_scale[:, None]/column_scale[None, :]
     try:
         condition = float(np.linalg.cond(scaled))
+        if diagnostics is not None:
+            diagnostics["schur_scaled_condition"] = condition
         if not np.isfinite(condition) or condition > 1.0e8:
-            return None
+            return decline("scaled_response_ill_conditioned")
         direction = np.linalg.solve(scaled, -residual/row_scale)/column_scale
     except np.linalg.LinAlgError:
-        return None
+        return decline("scaled_response_singular")
     if not np.all(np.isfinite(direction)):
-        return None
+        return decline("nonfinite_pressure_direction")
     for halvings in range(9):
         fraction = 0.5**halvings
         step = fraction*direction
@@ -115,4 +123,4 @@ def propose_supported_schur_step(
             proposed, tuple(int(modes[index]) for index in np.flatnonzero(active)),
             condition, fraction, before, after,
         )
-    return None
+    return decline("bounded_step_or_predicted_merit_failed")

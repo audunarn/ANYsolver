@@ -50,7 +50,7 @@ from .core import (
     validate_general_contact,
 )
 from .augmentation import ProjectedAugmentationSecant
-from .linearized_pivot import refined_patch_pivot
+from .linearized_pivot import refined_patch_pivot, refined_patch_supported_schur
 from .equilibrated_pressure_pivot import equilibrated_pressure_pivot
 
 
@@ -269,6 +269,9 @@ def solve_static_contact_path(
                 refined_q4_s3_augmented_profile, refined_q4_s3_roundoff_profile,
             }):
         raise ValueError("active-set pivot requires the refined Q4/S3 augmented patch profile")
+    if (settings.augmentation_acceleration == "supported_schur_dev"
+            and report.profile != refined_q4_s3_augmented_profile):
+        raise ValueError("supported Schur route requires the refined Q4/S3 augmented patch profile")
     profile = (GENERAL_Q4_Q4_PROFILE
                if report.profile == q4_pair_profile else
                GENERAL_Q4_S3_PATCH_PROFILE
@@ -533,11 +536,14 @@ def solve_static_contact_path(
                                 pivot_backup = None
                                 pivot_rejected += 1
                                 augmentation_trace.append({
-                                    "pivot_rejected": failure_reason,
+                                    ("schur_rejected" if settings.augmentation_acceleration
+                                     == "supported_schur_dev" else "pivot_rejected"): failure_reason,
                                     "augmentation": augmentation,
                                 })
                                 failure_reason = None
-                                accelerator = ProjectedAugmentationSecant()
+                                accelerator = (ProjectedAugmentationSecant()
+                                               if settings.augmentation_acceleration == "active_secant_pivot"
+                                               else None)
                                 continue
                             break
                         if not equilibrated:
@@ -547,10 +553,14 @@ def solve_static_contact_path(
                                 pivot_backup = None
                                 pivot_rejected += 1
                                 augmentation_trace.append({
-                                    "pivot_rejected": "maximum_iterations_reached",
+                                    ("schur_rejected" if settings.augmentation_acceleration
+                                     == "supported_schur_dev" else "pivot_rejected"):
+                                    "maximum_iterations_reached",
                                     "augmentation": augmentation,
                                 })
-                                accelerator = ProjectedAugmentationSecant()
+                                accelerator = (ProjectedAugmentationSecant()
+                                               if settings.augmentation_acceleration == "active_secant_pivot"
+                                               else None)
                                 continue
                             failure_reason = "maximum_iterations_reached"
                             break
@@ -570,28 +580,45 @@ def solve_static_contact_path(
                             normal_multiplier_change = float(np.max(np.abs(
                                 projected - manager.normal_multipliers
                             )))
+                            verified_schur = False
                             if pivot_backup is not None:
                                 (fallback_q, fallback_controls, fallback_pressure,
-                                 prior_change, retained_count) = pivot_backup
+                                 prior_change, retained) = pivot_backup
                                 pivot_backup = None
+                                actual_active = tuple(np.flatnonzero(
+                                    np.asarray(certificate.numerical_pressure_pa) > 0.0,
+                                ))
+                                active_changed = (
+                                    actual_active != retained if isinstance(retained, tuple)
+                                    else certificate.active_pressure_dofs > retained
+                                )
                                 if (not certificate.gap_tolerance_met
-                                        or certificate.active_pressure_dofs > retained_count
+                                        or active_changed
                                         or normal_multiplier_change >= 0.75*prior_change):
                                     q = fallback_q
                                     multipliers = fallback_controls
                                     manager.set_normal_multipliers(fallback_pressure)
                                     pivot_rejected += 1
                                     augmentation_trace.append({
-                                        "pivot_rejected": "nonlinear_verification",
+                                        ("schur_rejected" if settings.augmentation_acceleration
+                                         == "supported_schur_dev" else "pivot_rejected"):
+                                        "nonlinear_verification",
                                         "augmentation": augmentation,
                                         "pressure_change": normal_multiplier_change,
                                         "minimum_gap": _reported_lower_gap(certificate),
                                     })
-                                    accelerator = ProjectedAugmentationSecant()
+                                    accelerator = (ProjectedAugmentationSecant()
+                                                   if settings.augmentation_acceleration == "active_secant_pivot"
+                                                   else None)
                                     continue
                                 pivot_applied += 1
-                                accelerator = ProjectedAugmentationSecant()
+                                verified_schur = (settings.augmentation_acceleration
+                                                  == "supported_schur_dev")
+                                accelerator = (ProjectedAugmentationSecant()
+                                               if settings.augmentation_acceleration == "active_secant_pivot"
+                                               else None)
                             augmentation_trace.append({
+                                **({"schur_verified": True} if verified_schur else {}),
                                 "pressure_change": normal_multiplier_change,
                                 "minimum_gap": _reported_lower_gap(certificate),
                                 "residual_norm": residual_norm,
@@ -666,6 +693,49 @@ def solve_static_contact_path(
                                         accelerator.propose(manager.normal_multipliers,
                                                             projected))
                             augmentation_trace[-1]["acceleration_applied"] = proposal is not None
+                            if (proposal is None
+                                    and settings.augmentation_acceleration == "supported_schur_dev"
+                                    and pivot_attempts == 0
+                                    and augmentation >= 2
+                                    and augmentation <= augmentation_limit - 2
+                                    and certificate.active_pressure_dofs > 0):
+                                pivot_attempts = 1
+                                try:
+                                    schur = refined_patch_supported_schur(
+                                        manager, u, tangent, T, rows,
+                                        difference_step=settings.augmentation_schur_difference_step_m,
+                                        maximum_pressure=settings.augmentation_schur_maximum_pressure_pa,
+                                        maximum_pressure_step=settings.augmentation_schur_maximum_step_pa,
+                                        maximum_modes=settings.augmentation_schur_maximum_modes,
+                                        diagnostics=augmentation_trace[-1],
+                                        check_cancel=lambda: cancellation_safe_point(
+                                            cancellation_token,
+                                            f"contact_path.step:{step}.augmentation:{augmentation}.schur",
+                                        ),
+                                    )
+                                except SolveCancelled:
+                                    raise
+                                except (ValueError, MemoryError, np.linalg.LinAlgError) as exc:
+                                    augmentation_trace[-1]["schur_ineligible"] = str(exc)
+                                    schur = None
+                                except Exception as exc:
+                                    failure_reason = "contact_supported_schur_linearization_failed"
+                                    augmentation_trace[-1]["schur_failure"] = str(exc)
+                                    break
+                                augmentation_trace[-1]["schur_proposed"] = schur is not None
+                                if schur is not None:
+                                    pivot_backup = (q.copy(), multipliers.copy(),
+                                                    projected.copy(),
+                                                    normal_multiplier_change,
+                                                    schur.active_indices)
+                                    augmentation_trace[-1]["schur_active_indices"] = list(
+                                        schur.active_indices)
+                                    augmentation_trace[-1]["schur_scaled_condition"] = (
+                                        schur.scaled_condition)
+                                    augmentation_trace[-1]["schur_predicted_residual_pa"] = (
+                                        schur.predicted_residual_after)
+                                    manager.set_normal_multipliers(schur.multipliers)
+                                    continue
                             if (proposal is None
                                     and settings.augmentation_acceleration == "active_secant_pivot"
                                     and pivot_attempts == 0
@@ -770,6 +840,11 @@ def solve_static_contact_path(
                             "pivot_attempts": pivot_attempts,
                             "pivot_applied": pivot_applied,
                             "pivot_rejected": pivot_rejected,
+                            **({"schur_attempts": pivot_attempts,
+                                "schur_applied": pivot_applied,
+                                "schur_rejected": pivot_rejected}
+                               if settings.augmentation_acceleration == "supported_schur_dev"
+                               else {}),
                             "pressure_map_attempts": pressure_map_attempts,
                             "minimum_gap": (
                                 None if certificate is None else
@@ -832,6 +907,12 @@ def solve_static_contact_path(
                         record["pivot_rejected"] = pivot_rejected
                         if settings.augmentation_equilibrated_pressure_step_pa is not None:
                             record["pressure_map_attempts"] = pressure_map_attempts
+                    if settings.augmentation_acceleration == "supported_schur_dev":
+                        record["augmentation_acceleration"] = "supported_schur_dev"
+                        record["schur_attempts"] = pivot_attempts
+                        record["schur_applied"] = pivot_applied
+                        record["schur_rejected"] = pivot_rejected
+                        record["augmentation_trace"] = augmentation_trace
                     if program.nodal_forces:
                         previous_force_values = program.force_values_at(step-1)
                         start_u = np.asarray(T @ start_q + u0).reshape(-1)

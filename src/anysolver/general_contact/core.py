@@ -203,6 +203,10 @@ class ContactSolverSettings:
     augmentation_pivot_max_pressure_pa: float | None = None
     augmentation_pivot_difference_step_m: float | None = None
     augmentation_equilibrated_pressure_step_pa: float | None = None
+    augmentation_schur_maximum_modes: int | None = None
+    augmentation_schur_maximum_pressure_pa: float | None = None
+    augmentation_schur_maximum_step_pa: float | None = None
+    augmentation_schur_difference_step_m: float | None = None
     augmentation_support_resolution: str = "exact"
     augmentation_support_force_budget_n: float | None = None
 
@@ -299,8 +303,9 @@ class ContactSolverSettings:
         if (type(self.augmentation_acceleration) is not str
                 or self.augmentation_acceleration not in {
                     "none", "active_secant", "active_secant_pivot",
+                    "supported_schur_dev",
                 }):
-            raise ValueError("augmentation_acceleration must be none, active_secant or active_secant_pivot")
+            raise ValueError("augmentation_acceleration must be none, active_secant, active_secant_pivot or supported_schur_dev")
         pivot_bounds = (self.augmentation_pivot_max_pressure_pa,
                         self.augmentation_pivot_difference_step_m)
         if self.augmentation_acceleration == "active_secant_pivot":
@@ -317,6 +322,21 @@ class ContactSolverSettings:
                 raise ValueError("equilibrated pressure step requires active_secant_pivot")
             if not np.isfinite(pressure_step) or pressure_step <= 0.0:
                 raise ValueError("equilibrated pressure step must be finite and positive")
+        schur_bounds = (
+            self.augmentation_schur_maximum_modes,
+            self.augmentation_schur_maximum_pressure_pa,
+            self.augmentation_schur_maximum_step_pa,
+            self.augmentation_schur_difference_step_m,
+        )
+        if self.augmentation_acceleration == "supported_schur_dev":
+            if (type(schur_bounds[0]) is not int or schur_bounds[0] < 1
+                    or any(value is None or not np.isfinite(value) or value <= 0.0
+                           for value in schur_bounds[1:])):
+                raise ValueError("supported_schur_dev needs explicit positive mode, pressure, step and geometry-difference bounds")
+            if self.maximum_augmentations < 4:
+                raise ValueError("supported_schur_dev needs at least four augmentations")
+        elif any(value is not None for value in schur_bounds):
+            raise ValueError("Schur bounds require supported_schur_dev")
         if self.augmentation_support_resolution not in {"exact", "roundoff"}:
             raise ValueError("augmentation_support_resolution must be exact or roundoff")
         if self.augmentation_support_resolution == "roundoff":
@@ -478,6 +498,12 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                 and not _refined_q4_s3_patch(model, definition)):
             return ContactValidationReport("invalid", (
                 "active-set pivot requires the refined Q4/S3 augmented patch profile",
+            ))
+        if settings.augmentation_acceleration == "supported_schur_dev" and (
+                not _refined_q4_s3_patch(model, definition)
+                or settings.augmentation_support_resolution != "exact"):
+            return ContactValidationReport("invalid", (
+                "supported Schur development route requires a refined Q4/S3 augmented patch with exact pressure support",
             ))
     if settings is not None and settings.augmentation_support_resolution == "roundoff":
         if (definition.rigid_bodies or len(definition.interactions) != 1
