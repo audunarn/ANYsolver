@@ -44,6 +44,10 @@ local development results; pressure-space stability on partial contact,
 independent assessment and C1 engineering acceptance remain open. Raw runs
 are under `C:/ANYworkspaceWork/general-contact-evidence` with the
 `c1-eight-q4-normalized-*` prefix.
+An offline wheel from clean commit `d1e8393be709af5779fa840c59655226833c2088`
+was installed into an isolated target. Import origin was asserted there, and
+the installed eight-step example produced checkpoint bytes identical to the
+source run. The wheel was not published.
 
 The first admitted coupled case has two adjacent Q4 source faces and two
 nonmatching S3 target faces. Direct local work matches whole-patch projected
