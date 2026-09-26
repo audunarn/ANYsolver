@@ -220,6 +220,39 @@ resolution/locking test only after the rotational-weld work reference is
 defined; carry P1 and dual P1 as comparators through the registered
 ratios and refinement levels. G0B/F03 remain open and G1 remains barred.
 
+**Next physical-work discriminator (before execution):** C1's pitch row
+acts while every shell-top point remains fixed, so a top-surface positional
+bond cannot supply its work. Competing interpretations are a realizable
+through-thickness force couple in an explicitly embedded/stitched joint,
+or a purely kinematic rotational constraint with no such face-action
+representation. On the unchanged C1 reference and one small finite-rotation
+state, compare the actual E4-chart pitch derivative with the independently
+derived top/bottom face-pair virtual work. Check resultant force/moment and
+the already established compensated top-fixed field. Equality permits a
+specific two-sided reference definition; failure sends the pitch law back
+for mechanical revision. This is a kinematic work identity, not proof that
+the intended stiffener is physically two-sided, nor a substitute for a
+loaded matched reference, torque/shear or mesh-ratio acceptance.
+
+**Two-face pitch work result and decision (27 September):** Source-bound
+`B3_GE_E4_PL_C1_PITCH_FACE_PAIR_DEV_V1.json` evaluates the unchanged C1
+patch and actual E4 additive-chart pitch derivative. Independently, an
+equal/opposite top/bottom face-force pair uses the physical director
+separation `t n` and the derivative of `atan2(x_b·n,z_b·n)`; its net force
+vanishes and its moment is `1 N·m` about y at reference. Three finite-
+difference steps at reference and at a nonzero rotated state reproduce the
+actual pitch work with maximum normalized discrepancy `4.23e-10`. For the
+supported compensated field, the top-face-only work is `5.46e-22 J` while
+the pitch and two-face work are both `9.66667e-5 J` per unit pitch dual.
+This supplies an explicit *two-sided/through-thickness* work interpretation
+for the extra C1 row. It does not make a top-face welded stiffener into that
+idealization. Keep C1 labelled as an embedded rotational-weld candidate;
+define a resolved two-sided reference with matched geometry, loading and
+supports before assessing its physical torque/shear accuracy. The existing
+F5 top-surface positional bond remains a separate comparator. No formal
+F03 authority was consumed, no multiplier was selected, and G0B/G1 status
+is unchanged.
+
 **Native KKT metric result:** Commit `2028c8d8` preserves the failed V1
 layout check and the completed V2 source/manifest/result in
 `B3_GE_E4_PL_G0_F03_C1_NATIVE_MIXED_METRIC_DEV_V2`. The actual supported
