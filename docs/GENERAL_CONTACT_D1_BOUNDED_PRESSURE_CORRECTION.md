@@ -22,16 +22,22 @@ R_{\rm lin}(\lambda)=
 \]
 
 The first candidate is the existing fixed-active-set Newton direction,
-backtracked within declared pressure and step caps. If that fails, the
-existing projected directional search is tried. The new fallback solves a
-small, bounded least-squares problem for the same local projected residual.
+backtracked within declared pressure and step caps. If that fails, retain
+the first admissible projected directional candidate and compare it with a
+small, bounded least-squares solve for the same local projected residual.
 It uses the branch Jacobian \(-\epsilon_n H\) on positive projected
 arguments and \(-I\) on inactive rows. It starts deterministically from
 the current pressure and the lower pressure bound, with at most
 `min(8*m + 16, 256)` local evaluations per start for `m` supported modes.
 The existing cancellation hook is checked during local residual and Jacobian
-evaluation. Candidate choice minimizes the predicted infinity-norm residual, then step
-size and pressure norm. The declared supported-mode cap still applies.
+evaluation. The better admissible projected or bounded candidate is chosen
+by predicted infinity-norm residual. Between the two bounded starts, ties
+are resolved by step size and pressure norm. The declared supported-mode
+cap still applies.
+If the optional bounded optimizer encounters a numerical or memory failure,
+an already admissible projected directional candidate remains available.
+Cancellation and unexpected programming errors still propagate to the
+analysis owner's transaction handling.
 
 The local candidate must be finite, nonnegative, inside the pressure and
 step caps, away from a projected kink, and predicted to reduce the residual
@@ -77,10 +83,15 @@ accepted shell handoff. The historical 64-Q4 coupled rejection remains
 unchanged and has not been rerun.
 
 In the same one-row coupled family, eight Q4 columns completed with ten
-supported pressure modes. Sixteen columns rejected after seven
+supported pressure modes. Sixteen columns initially rejected after seven
 augmentations, despite full 16-mode pressure Gram rank: an active-set
-prediction mismatch rejected the first proposal and the pressure-change
-gate remained unmet after the second. The four-to-eight Q4 integrated force
-changed by 5.75%. These results prevent a mesh-convergence claim and point
-to the equilibrated response and active-set transition as the next local
-question. The full traces are retained in the 27 September reports.
+prediction mismatch rejected the first projected proposal. An independent
+bounded local oracle predicted a one-active-mode branch, which passed full
+nonlinear verification in a disposable trial. Comparing the two local
+candidates in the production route then completed the sixteen-Q4 step in
+four augmentations, with final pressure change \(4.33\times10^{-11}\) Pa
+under the unchanged 0.002 Pa gate. The earlier rejection remains retained.
+The integrated force changed by 5.75% from four to eight Q4 and 6.76% from
+eight to sixteen Q4. This one-row family changes structural and pressure
+resolution together and does not establish response convergence. The full
+traces are retained in the 27 September reports.

@@ -1,11 +1,11 @@
-"""Capture the failed six-mode pressure response and test bounded alternatives.
+"""Capture one coupled pressure response and test bounded alternatives.
 
 Development-only readout. No candidate is applied to the mechanical solve.
 """
 
+import argparse
 import json
 from pathlib import Path
-import sys
 
 import numpy as np
 from scipy.optimize import least_squares
@@ -16,7 +16,7 @@ from anysolver import solve_static_nonlinear
 from general_contact_d1_coupled_refinement import build_case
 
 
-def main(output):
+def main(output, columns, proposal_index):
     captured = []
     original = pivot.propose_supported_schur_step
 
@@ -24,6 +24,7 @@ def main(output):
                 equilibrated_gap_response, **kwargs):
         selected = np.flatnonzero(supported)
         captured.append({
+            "supported_indices": selected.copy(),
             "multipliers": np.asarray(multipliers)[selected].copy(),
             "gap": np.asarray(normalized_gap)[selected].copy(),
             "response": np.asarray(equilibrated_gap_response).copy(),
@@ -36,7 +37,7 @@ def main(output):
 
     pivot.propose_supported_schur_step = capture
     try:
-        model, definition, settings, program = build_case(4)
+        model, definition, settings, program = build_case(columns)
         result = solve_static_nonlinear(
             model, contact=definition, contact_settings=settings,
             contact_path_program=program, max_iterations=12,
@@ -44,9 +45,9 @@ def main(output):
         )
     finally:
         pivot.propose_supported_schur_step = original
-    if result.status != "diverged" or len(captured) != 2:
-        raise RuntimeError("the recorded two-proposal failure was not reproduced")
-    state = captured[1]
+    if len(captured) <= proposal_index:
+        raise RuntimeError("the requested pressure response was not reached")
+    state = captured[proposal_index]
     lam = state["multipliers"]
     gap = state["gap"]
     response = state["response"]
@@ -68,6 +69,9 @@ def main(output):
         candidate = optimum.x
         solutions.append({
             "pressure": candidate.tolist(),
+            "predicted_active_indices": state["supported_indices"][
+                candidate-epsilon*(gap+response @ (candidate-lam)) > 0.0
+            ].tolist(),
             "residual_inf_pa": float(np.linalg.norm(
                 projected_residual(candidate), ord=np.inf)),
             "residual_l2_pa": float(np.linalg.norm(
@@ -76,9 +80,12 @@ def main(output):
             "evaluations": int(optimum.nfev),
         })
     evidence = {
+        "columns": columns,
+        "proposal_index": proposal_index,
         "status": result.status,
         "failure_reason": result.failure_reason,
         "candidate_count": len(captured),
+        "supported_indices": state["supported_indices"].tolist(),
         "initial_pressure_pa": lam.tolist(),
         "initial_normalized_gap_m": gap.tolist(),
         "equilibrated_gap_response_m_per_pa": response.tolist(),
@@ -101,4 +108,9 @@ def main(output):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("output", type=Path)
+    parser.add_argument("--columns", type=int, default=4)
+    parser.add_argument("--proposal-index", type=int, default=1)
+    args = parser.parse_args()
+    main(args.output, args.columns, args.proposal_index)

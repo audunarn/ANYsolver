@@ -5,6 +5,7 @@ import pytest
 import json
 from pathlib import Path
 
+from anysolver.general_contact import supported_schur
 from anysolver.general_contact.supported_schur import propose_supported_schur_step
 
 
@@ -171,3 +172,68 @@ def test_bounded_branch_correction_checks_cancellation():
             maximum_pressure_step=evidence["maximum_pressure_step_pa"],
             maximum_modes=16, check_cancel=cancel,
         )
+
+
+def test_sixteen_mode_selects_better_bounded_branch_than_projected_direction():
+    evidence = json.loads((Path(__file__).resolve().parents[1] / "reports" /
+        "general_contact_d1_16q4_first_response_20260927.json"
+    ).read_text(encoding="utf-8"))
+    indices = np.asarray(evidence["supported_indices"], dtype=int)
+    pressure = np.zeros(indices.max()+1)
+    gap = np.zeros_like(pressure)
+    supported = np.zeros(len(pressure), dtype=bool)
+    pressure[indices] = evidence["initial_pressure_pa"]
+    gap[indices] = evidence["initial_normalized_gap_m"]
+    supported[indices] = True
+    diagnostics = {}
+    proposal = propose_supported_schur_step(
+        pressure, gap, supported,
+        np.asarray(evidence["equilibrated_gap_response_m_per_pa"]),
+        normal_stiffness=evidence["normal_stiffness_pa_per_m"],
+        maximum_pressure=evidence["maximum_pressure_pa"],
+        maximum_pressure_step=evidence["maximum_pressure_step_pa"],
+        maximum_modes=16, diagnostics=diagnostics,
+    )
+    assert proposal is not None
+    assert diagnostics["schur_proposal_kind"] == "bounded_semismooth_active_set"
+    assert proposal.active_indices == (0,)
+    assert proposal.predicted_residual_after < 1.0e-4
+    assert (proposal.predicted_residual_after
+            < diagnostics["schur_best_projected_residual_pa"])
+
+
+@pytest.mark.parametrize("failure", (
+    ValueError("optimizer failure"),
+    np.linalg.LinAlgError("optimizer failure"),
+    MemoryError("optimizer failure"),
+))
+def test_projected_candidate_survives_optional_optimizer_failure(
+        monkeypatch, failure):
+    evidence = json.loads((Path(__file__).resolve().parents[1] / "reports" /
+        "general_contact_d1_16q4_first_response_20260927.json"
+    ).read_text(encoding="utf-8"))
+    indices = np.asarray(evidence["supported_indices"], dtype=int)
+    pressure = np.zeros(indices.max()+1)
+    gap = np.zeros_like(pressure)
+    supported = np.zeros(len(pressure), dtype=bool)
+    pressure[indices] = evidence["initial_pressure_pa"]
+    gap[indices] = evidence["initial_normalized_gap_m"]
+    supported[indices] = True
+
+    def unavailable(*_args, **_kwargs):
+        raise failure
+
+    monkeypatch.setattr(supported_schur, "least_squares", unavailable)
+    diagnostics = {}
+    proposal = propose_supported_schur_step(
+        pressure, gap, supported,
+        np.asarray(evidence["equilibrated_gap_response_m_per_pa"]),
+        normal_stiffness=evidence["normal_stiffness_pa_per_m"],
+        maximum_pressure=evidence["maximum_pressure_pa"],
+        maximum_pressure_step=evidence["maximum_pressure_step_pa"],
+        maximum_modes=16, diagnostics=diagnostics,
+    )
+    assert proposal is not None
+    assert diagnostics["schur_proposal_kind"] == "projected_active_set"
+    assert "schur_ineligible" not in diagnostics
+    assert proposal.predicted_residual_after < 0.75*proposal.predicted_residual_before

@@ -195,6 +195,7 @@ def propose_supported_schur_step(
     # active set at the projected candidate; the owner re-equilibrates and
     # verifies this predicted set before accepting an algorithmic update.
     best_projected_residual = None
+    projected_proposal = None
     for halvings in range(9):
         fraction = 0.5**halvings
         candidate = np.maximum(0.0, pressure + fraction*direction)
@@ -221,13 +222,13 @@ def propose_supported_schur_step(
                                  np.flatnonzero(predicted_argument > 0.0))
         proposed = lam.copy()
         proposed[modes] = candidate
-        if diagnostics is not None:
-            diagnostics["schur_proposal_kind"] = "projected_active_set"
-        return SupportedSchurProposal(
+        trial = SupportedSchurProposal(
             proposed, predicted_active,
             condition if np.isfinite(condition) else None,
             fraction, before, after,
         )
+        projected_proposal = trial
+        break
     # The first Newton direction can point outside the pressure cone even
     # when another active branch has a small admissible root.  Search the
     # same local, equilibrated *linearized* gap map with a branch Jacobian.
@@ -236,6 +237,10 @@ def propose_supported_schur_step(
     lower = np.maximum(0.0, pressure-maximum_pressure_step)
     upper = np.minimum(maximum_pressure, pressure+maximum_pressure_step)
     if np.any(lower >= upper):
+        if projected_proposal is not None:
+            if diagnostics is not None:
+                diagnostics["schur_proposal_kind"] = "projected_active_set"
+            return projected_proposal
         return decline("bounded_step_or_predicted_merit_failed")
 
     def local_argument(candidate: np.ndarray) -> np.ndarray:
@@ -266,7 +271,7 @@ def propose_supported_schur_step(
                 bounds=(lower, upper), max_nfev=maximum_local_evaluations,
                 xtol=1.0e-12, ftol=1.0e-12, gtol=1.0e-12,
             )
-        except ValueError:
+        except (ValueError, np.linalg.LinAlgError, MemoryError):
             continue
         evaluations += int(bounded.nfev)
         candidate = bounded.x
@@ -286,13 +291,23 @@ def propose_supported_schur_step(
         diagnostics["schur_bounded_semismooth_evaluations"] = evaluations
         diagnostics["schur_bounded_semismooth_candidates"] = len(proposals)
     if not proposals:
+        if projected_proposal is not None:
+            if diagnostics is not None:
+                diagnostics["schur_proposal_kind"] = "projected_active_set"
+            return projected_proposal
         return decline("bounded_semismooth_local_solve_failed")
     after, _step_norm, _pressure_norm, candidate, argument = min(
         proposals, key=lambda item: item[:3],
     )
     if diagnostics is not None:
         diagnostics["schur_bounded_semismooth_residual_pa"] = after
-    if after >= 0.75*before:
+    if (after >= 0.75*before
+            or (projected_proposal is not None
+                and after >= projected_proposal.predicted_residual_after)):
+        if projected_proposal is not None:
+            if diagnostics is not None:
+                diagnostics["schur_proposal_kind"] = "projected_active_set"
+            return projected_proposal
         return decline("bounded_step_or_predicted_merit_failed")
     proposed = lam.copy()
     proposed[modes] = candidate

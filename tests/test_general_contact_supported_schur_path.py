@@ -4,14 +4,24 @@ from dataclasses import replace
 import json
 
 import numpy as np
+import pytest
 
 from anysolver import (
     BoundaryCondition, ContactPathControl, ContactPathProgram,
     solve_static_nonlinear, validate_general_contact,
 )
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
-from anysolver.general_contact import static_path
+from anysolver.general_contact import static_path, supported_schur
 from test_general_contact_q4_s3_refined_patch import _two_q4_two_s3
+
+
+@pytest.fixture
+def projected_only(monkeypatch):
+    """Exercise the retained directional fallback when the local solver fails."""
+    def unavailable(*_args, **_kwargs):
+        raise ValueError("bounded local pressure solve unavailable")
+
+    monkeypatch.setattr(supported_schur, "least_squares", unavailable)
 
 
 def _case():
@@ -98,7 +108,7 @@ def test_projection_branch_declines_schur_and_preserves_static_failure():
     np.testing.assert_array_equal(result.displacements, 0.0)
 
 
-def test_projected_active_set_re_equilibrates_without_committing_failed_step():
+def test_projected_active_set_re_equilibrates_without_committing_failed_step(projected_only):
     model, definition, settings, program = _case()
     program = replace(program, controls=(
         program.controls[0], ContactPathControl.node(6, "uz"),
@@ -131,7 +141,7 @@ def test_projected_active_set_re_equilibrates_without_committing_failed_step():
     np.testing.assert_array_equal(result.displacements, 0.0)
 
 
-def test_two_bounded_projected_schur_updates_accept_node6_fixture():
+def test_two_bounded_projected_schur_updates_accept_node6_fixture(projected_only):
     model, definition, settings, program = _case()
     program = replace(program, controls=(
         program.controls[0], ContactPathControl.node(6, "uz"),
@@ -161,7 +171,7 @@ def test_two_bounded_projected_schur_updates_accept_node6_fixture():
     assert result.restart_checkpoint["version"] == 2
 
 
-def test_original_control_rejects_inaccurate_second_proposal_and_rolls_back():
+def test_original_control_rejects_inaccurate_second_proposal_and_rolls_back(projected_only):
     model, definition, settings, program = _case()
     settings = replace(
         settings, general_s3_differentiation="jet2_q4_s3_dev",
@@ -194,7 +204,7 @@ def test_original_control_rejects_inaccurate_second_proposal_and_rolls_back():
     np.testing.assert_array_equal(result.displacements, 0.0)
 
 
-def test_relinearized_original_control_completes_and_restarts():
+def test_relinearized_original_control_completes_and_restarts(projected_only):
     model, definition, settings, program = _case()
     settings = replace(
         settings, general_s3_differentiation="jet2_q4_s3_dev",
@@ -238,7 +248,7 @@ def test_relinearized_original_control_completes_and_restarts():
     assert resumed.to_restart_checkpoint() == result.to_restart_checkpoint()
 
 
-def test_unexpected_relinearization_failure_restores_algorithmic_origin(monkeypatch):
+def test_unexpected_relinearization_failure_restores_algorithmic_origin(monkeypatch, projected_only):
     model, definition, settings, program = _case()
     settings = replace(
         settings, general_s3_differentiation="jet2_q4_s3_dev",
