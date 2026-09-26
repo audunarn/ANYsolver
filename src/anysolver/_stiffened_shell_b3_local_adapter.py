@@ -39,17 +39,23 @@ class NativeB3SparseTrial:
     production_qualified: bool = False
 
 
-def evaluate_local_trial(context, state, origin, parameter: float, *,
-                         family: str, element_index: int) -> NativeB3LocalTrial:
-    """Return one owned 42-coordinate response from an accepted predecessor."""
+def _validated_inputs(context, state, origin, parameter, family):
+    """Apply the bound owner's model, state and history admission once."""
     if family not in ("generalized", "physical_fibre"):
         raise ValueError("native B3 family must be generalized or physical_fibre")
     if not np.isfinite(parameter):
         raise ValueError("finite native B3 load parameter required")
     fibre = family == "physical_fibre"
     layout = context.layout if fibre else context
-    if len(origin) != len(layout.elements):
-        raise ValueError("one accepted native B3 history per element required")
+    context.guard()
+    state = (layout.make(state.descriptor()) if fibre else
+             context.make(state.descriptor()))
+    origin = context.history(origin) if fibre else context.histories(origin)
+    return layout, state, origin, fibre
+
+
+def _evaluate_local_validated(context, layout, state, origin, parameter,
+                              family, fibre, element_index):
     if type(element_index) is not int or not 0 <= element_index < len(layout.elements):
         raise ValueError("valid native B3 element index required")
     eid, element = layout.elements[element_index]
@@ -91,23 +97,28 @@ def evaluate_local_trial(context, state, origin, parameter: float, *,
                               family)
 
 
+def evaluate_local_trial(context, state, origin, parameter: float, *,
+                         family: str, element_index: int) -> NativeB3LocalTrial:
+    """Return one owned 42-coordinate response from an accepted predecessor."""
+    layout, state, origin, fibre = _validated_inputs(
+        context, state, origin, parameter, family)
+    local = _evaluate_local_validated(
+        context, layout, state, origin, parameter, family, fibre, element_index)
+    context.guard()
+    return local
+
+
 def evaluate_sparse_trial(context, state, origin, parameter: float, *,
                           family: str) -> NativeB3SparseTrial:
     """Scatter bounded local trials without invoking a global dense owner."""
-    if family not in ("generalized", "physical_fibre"):
-        raise ValueError("native B3 family must be generalized or physical_fibre")
-    if not np.isfinite(parameter):
-        raise ValueError("finite native B3 load parameter required")
-    fibre = family == "physical_fibre"
-    layout = context.layout if fibre else context
-    if len(origin) != len(layout.elements):
-        raise ValueError("one accepted native B3 history per element required")
+    layout, state, origin, fibre = _validated_inputs(
+        context, state, origin, parameter, family)
     residual = np.zeros(layout.count)
     row, column, data = [], [], []
     candidates = []
     for i in range(len(layout.elements)):
-        local = evaluate_local_trial(context, state, origin, parameter,
-                                     family=family, element_index=i)
+        local = _evaluate_local_validated(
+            context, layout, state, origin, parameter, family, fibre, i)
         np.add.at(residual, local.slots, local.residual)
         row.extend(np.repeat(local.slots, 42))
         column.extend(np.tile(local.slots, 42))
@@ -122,4 +133,5 @@ def evaluate_sparse_trial(context, state, origin, parameter: float, *,
     tangent.eliminate_zeros()
     if not np.isfinite(tangent.data).all():
         raise ValueError("finite native B3 assembled tangent required")
+    context.guard()
     return NativeB3SparseTrial(residual, tangent, tuple(candidates), family)

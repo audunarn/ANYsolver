@@ -1,6 +1,7 @@
 """F08 typed native local adapter parity and accepted-predecessor ownership."""
 
 from hashlib import sha256
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -125,4 +126,39 @@ def test_typed_adapter_rejects_bad_family_and_parameter():
     with pytest.raises(ValueError, match="finite"):
         evaluate_sparse_trial(context, context.initial.mechanical,
                               context.initial.origins, np.nan,
+                              family="generalized")
+
+
+def test_typed_adapter_rejects_mutated_fibre_model_like_owner():
+    model = make_model(contrast=1.)
+    context = FibreContext(model, ForceProgram(
+        (.25,), ((5, .4, -.005, 0.),), max_iterations=24))
+    state, origin = context.initial.mechanical, context.initial.origins
+    model.mesh.nodes[1].x += .001
+    with pytest.raises(ValueError, match="retained fibre node/reference mismatch"):
+        context.assemble(state, .25, origin)
+    with pytest.raises(ValueError, match="retained fibre node/reference mismatch"):
+        evaluate_local_trial(context, state, origin, .25,
+                             family="physical_fibre", element_index=0)
+    with pytest.raises(ValueError, match="retained fibre node/reference mismatch"):
+        evaluate_sparse_trial(context, state, origin, .25,
+                              family="physical_fibre")
+
+
+def test_typed_adapter_rejects_invalid_generalized_state_like_owner():
+    context = build(4, z_offset=.0675,
+                    torsion_constant=square_torsion_constant()).context
+    state, origin = context.initial.mechanical, context.initial.origins
+    dof = next(dof for dof in context.fixed if dof % 6 < 3)
+    node, component = divmod(dof, 6)
+    positions = state.positions.copy()
+    positions[node, component] += .001
+    invalid = replace(state, positions=positions)
+    with pytest.raises(ValueError, match="fixed retained position changed"):
+        context.assemble(invalid, .25, origin)
+    with pytest.raises(ValueError, match="fixed retained position changed"):
+        evaluate_local_trial(context, invalid, origin, .25,
+                             family="generalized", element_index=0)
+    with pytest.raises(ValueError, match="fixed retained position changed"):
+        evaluate_sparse_trial(context, invalid, origin, .25,
                               family="generalized")

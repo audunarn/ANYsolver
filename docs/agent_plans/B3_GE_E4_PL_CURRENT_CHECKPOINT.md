@@ -1761,6 +1761,21 @@ uses COO scattering rather than a compiled sparse pattern. It does not close
 independent derivative review, mixed atomic state, practical scale, F08/G0B,
 or the G1 bar.
 
+**F08 adapter review and repair (27 September):** Independent read-only
+review found two fail-closed differences from the bound owners: the fibre
+adapter skipped frozen-model/program guards, and the generalized adapter
+skipped retained-state admission. The adapter now invokes the native guard,
+reconstructs/validates the mechanical state, validates every accepted
+history, and guards again after evaluation. Sparse gather performs this
+admission once per trial, rather than once per local element. New negative
+tests show that a changed fibre reference node and a displaced fixed
+generalized DOF are rejected by both the native owner and local/sparse
+adapters. The focused file passed `8/8` after a test-only correction to
+the expected fibre error wording. A read-only independent repair review
+found no remaining actionable admission or formula issue; it did not run
+tests or assess independent derivatives or scale. F08 and G0B remain open;
+G1 remains barred.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision
