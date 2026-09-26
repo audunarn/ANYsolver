@@ -31,6 +31,15 @@ mixed-system coercivity. The v4 result corrects force-equivalent density
 units and lower/upper-bound labels identified by independent review;
 v1–v3 remain preserved. Source/test hashes and two focused pytest checks
 match `.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-dev-20260926-v4`.
+With the same frozen metric, registered `16:2` and `2:16` shell:beam bond
+resolutions retain physical-shell positivity, trace-kernel compatibility
+and P0/P1/dual row ranks `12/18/18`. Their nonaxial nominal lower values
+are `1.886/.713/.714` and `1.455/.681/.684`; the fixed case is
+`1.777/.616/.616`. An independent audit found no calculation defect;
+one P1 bracket inverts by `8.6e-14` from floating roundoff, so these are
+not rigorous floating intervals. Three finite ratios show no endpoint
+collapse under this metric, but no uniform inf-sup proof or space choice.
+Exact-source root: `.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-extreme-ratios-dev-20260926-v1`.
 
 **Remaining uncertainty, next discriminator and action:** F5's 11 seam nodes
 at `x=.95 m` have material `Fy/Mx/Mz` weak action but no left/right B3
@@ -40,10 +49,18 @@ sided work. First derive and independently verify a cut-flux correction or
 conforming virtual-work lift; only then execute a bounded F4 stress-output
 replay and compare interval-supported `Fy/Mx/Mz` work through actual B3 and
 E4 traces. If the lift cannot be defended, retain that comparison as
-unresolved. Separately extend the *frozen positive metrics* to registered
-mesh-ratio extremes only after checking their support/kernel contracts;
-interpret any trend with loaded transfer and physical observables, never
-alone. No new external solve was run here. Formal F03 authority is
+unresolved. The independently reviewed saved-F4 *kinematic* projection
+finds sampled combined-load RMS `0.125 µm` solid-to-rigid-section,
+`0.060 µm` rigid-section-to-retained-port, and `0.131 µm` solid-to-port;
+the two B3 port sides jump `0.180 µm RMS` at `.95 m`. These are not bond
+work, equilibrium B3 response or a pure-torque measure. Runner/root:
+`scripts/b3_e4_f03_c1_factor4_retained_kinematics.py` and
+`.qualification/b3-ge-e4-pl/f03-c1-factor4-retained-kinematic-projection-dev-20260926-v2`.
+The next physical discriminator remains a justified bond-face/cut-flux
+work reconstruction with an explicit residual bound; an IP-stress replay
+alone cannot supply it. Interpret ratio trends with loaded transfer and
+physical observables, never alone. No new external solve was run here.
+Formal F03 authority is
 unconsumed; G0B is open and G1 barred.
 
 ## Previous current-state summary — 26 September 2026
