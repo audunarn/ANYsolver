@@ -3758,3 +3758,55 @@ shell trace's interface modes and P0 policy at the registered mesh
 ratios. No drilling-penalty tuning, extra global axial order, or
 larger CalculiX collocation run follows from this audit. Formal F03
 authority remains unconsumed; G0B is open and G1 barred.
+
+## Current decision — C1 native connection, 26 September 2026
+
+**Decision sought:** whether a stationwise native six-channel reduced line
+weld merits development, rather than promoting the classical axial
+comparator or treating the historical Q6/finite-pad and six-moment
+footprint as that weld. The new single-interval C1 hybrid uses mean
+shell-top/beam-bottom position, transverse position moments for Mx/Mz,
+and E4 director pitch for My. It is a declared reduced-section law, not
+pointwise 3D bonding or a selected mortar space. Source `ddcfcc30`;
+17/17 affected tests passed. On the fixed C1 two-cell grid its reference
+gap is `5.15e-16`, actual-chart Jacobian error `2.95e-17`, first/mixed
+work derivative errors `5.65e-10/5.56e-10 J`, common-rigid gap error
+`3.19e-16`, and raw drilling columns vanish. A supported pitch witness
+is invisible to the old surface-position moments but activates the new
+My row; a common transverse-shear field remains admissible.
+
+**Established physical context:** independent review retained the
+executed F2/F4 *pre-opened incremental torque* solid reference without
+a blocking geometry, load, support, work or reaction finding. Its
+saved opposed faces stay open in the overlap region; pure zero-preload
+torque penetrates. Side clearance, contact, three-level convergence and
+native accuracy remain unproven. On exactly the corresponding C1
+geometry, loads and supports, the new native hybrid's combined tip rx
+is `49.163/49.607 µrad` versus direct-solid `49.040/49.317 µrad`, and
+tip z is `−70.237/−70.690 µm` versus `−69.010/−69.320 µm` at F2/F4.
+Its combined F·u is `0.075153/0.075651 J` versus solid
+`0.073934/0.074262 J`. The native beam uses a generalized square
+section and the external model a resolved square solid; these are
+directional comparisons, not the frozen cross-solver pass. The old
+six-moment footprint gives `50.024/50.428 µrad` under torque, but is a
+distinct distributing law. The hybrid's supported, energy-normalized
+six-row compliance minima are `0.15498/0.15938`; the weakest action is
+mostly Fy/Mz, with physical shell and beam work both positive and only
+small numerical-shell work. This is a finite-grid diagnostic, not an
+inf-sup certificate or multiplier-space selection. Raw root:
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-fixed-dev-20260926-v1`
+(manifest/results/compliance SHA256 prefixes `0c694837/2bb26e61/83d1d32f`).
+
+**Remaining uncertainty and next discriminating experiment:** the present
+six rows average the entire x=.9–1 strip, so they do not establish
+stationwise work, interface stability or the required 1:1 through 1:8
+mesh ratios. On the same C1 reference, first split the hybrid into the
+two native/shell host intervals and check reference closure, actual-chart
+derivatives, row independence, physical action and the shear/pitch
+witness. If rows become dependent or induce nonphysical shear/drilling
+work, revise the shell pose law before a loaded ratio study. If they
+pass, compare fixed-grid loaded response and norm-scaled interface
+modes across the registered ratios, then obtain independent mechanics
+review before selecting a multiplier policy. No further classical axial
+refinement follows from this slice. Formal F03 authority is unconsumed;
+G0B remains open and G1 barred.
