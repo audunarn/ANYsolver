@@ -50,3 +50,15 @@ This is implemented, locally tested development work. The contact
 pressure space still needs partial-contact stability and coupled
 mesh/enforcement convergence. The local test does not provide independent
 engineering acceptance, and application integration remains open.
+
+Clean source `f466eec2ec110554e98d680ee7a9274155249327` built an offline no-isolation wheel, installed it
+without dependencies into an isolated target, and asserted that `anysolver`
+was imported from that target. The wheel SHA-256 is
+`6CA3D97EF99D4557A5FF84178ABD3A8D417045800854456ABF5F87BA1FE1CE45`.
+The complete 1,003-byte source and installed example outputs were
+byte-identical (SHA-256
+`CF90DB1E471A42885FFE1484A555606FE06C67982281D064ABA9A8593115DDBB`).
+The build, install, import-origin and run logs are retained under
+`C:/ANYworkspaceWork/general-contact-evidence` with
+`wheel-f466eec2-*` and `c1-mixed-path-example-*` names. The wheel was
+not published; this checks package routing for this development case.
