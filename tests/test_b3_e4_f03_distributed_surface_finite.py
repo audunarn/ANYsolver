@@ -386,11 +386,20 @@ def test_c1_reciprocal_bond_refinement_preserves_exterior_and_reference():
             hybrid=True, segmented=True, sparse_action=True,
             line_space_kind="piecewise_constant", c1_beam_half_cells=26,
             reciprocal_shell_x_cells=2)[0]
+        p1 = bounded_physical_compliance_screen(
+            hybrid=True, segmented=True, sparse_action=True,
+            line_space_kind="continuous_linear", c1_beam_half_cells=26,
+            reciprocal_shell_x_cells=2)[0]
     assert (result["bond_x_cells"], result["bond_y_cells"]) == (2, 4)
     assert result["constraint_rank_on_free"] == 12
     assert result["reference_gap_m"] < 1e-12
     assert result["line_density_norm"]["smallest_nonaxial_mode_shell_action"] > 0.
     assert result["line_density_norm"]["smallest_nonaxial_mode_beam_action"] > 0.
+    assert p1["constraint_rank_on_free"] == 18
+    norm = p1["line_density_norm"]
+    assert (norm["smallest_nonaxial_mode_shell_action"]+
+            norm["smallest_nonaxial_mode_beam_action"] == pytest.approx(
+                norm["smallest_nonaxial_signed_quotient_upper"], abs=1e-8))
 
 
 def test_c1_weighted_endpoint_work_uses_actual_e4_chart():

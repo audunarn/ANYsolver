@@ -820,10 +820,16 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
             density_compliance = stiffness_n_per_m*(
                 density_to_integrated[:, None]*
                 (gram_shell+gram_beam)*density_to_integrated[None, :])
+            # The signed diagnostic is a quadratic action. eigh otherwise
+            # reads one triangle of the roundoff-skew Gram, while the split
+            # work below contracts the full Gram. This does not alter an
+            # element tangent, KKT solve, or physical response.
+            density_quadratic = .5*(density_compliance+
+                                    density_compliance.T)
             signed_upper, vectors = linalg.eigh(
-                density_compliance, dual_upper, check_finite=True)
+                density_quadratic, dual_upper, check_finite=True)
             signed_lower = linalg.eigh(
-                density_compliance, dual_lower,
+                density_quadratic, dual_lower,
                 eigvals_only=True, check_finite=True)
             density_mode = vectors[:, 0]
             integrated_mode = density_to_integrated*density_mode
@@ -834,10 +840,10 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
             nonaxial = np.array([i for i in range(len(density_to_integrated))
                                  if i % 6 != 0], dtype=int)
             transverse_upper, transverse_vectors = linalg.eigh(
-                density_compliance[np.ix_(nonaxial, nonaxial)],
+                density_quadratic[np.ix_(nonaxial, nonaxial)],
                 dual_upper[np.ix_(nonaxial, nonaxial)], check_finite=True)
             transverse_lower = linalg.eigh(
-                density_compliance[np.ix_(nonaxial, nonaxial)],
+                density_quadratic[np.ix_(nonaxial, nonaxial)],
                 dual_lower[np.ix_(nonaxial, nonaxial)],
                 eigvals_only=True, check_finite=True)
             transverse_density_mode = np.zeros(len(density_to_integrated))
