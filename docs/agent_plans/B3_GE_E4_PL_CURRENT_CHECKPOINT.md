@@ -36,6 +36,14 @@ coefficients, not display-ready spatial tractions or a norm-scaled inf-sup
 test; the increase signals unresolved oscillatory/cancelling enforcement,
 not a proven unstable formulation. It also prevents selecting P0 just from
 rank, balance, and tip response. Stop repeating this loaded resolution screen.
+Reconstructing the declared material y-channel density as
+`sum_i (lambda_i / basis_integral_i) * basis_i(x)` and integrating its
+piecewise-linear absolute value over the 0.1 m line gives L1/net ratios
+`34.3→124.0` (P0), `27.5→32.1` (continuous P1), and `20.3→27.4`
+(dual P1). Thus the P0 growth is not only a coefficient-basis artifact;
+the declared material density itself shows much stronger cancellation at
+this fixed shell resolution. This is still not the physical spatial wrench
+distribution, a convergence sequence, or a stability verdict.
 The next native calculation must define the physical primal and dual norms,
 reconstruct work-conjugate interface distributions, and assess the growing
 space with shell/beam refinement and registered ratios. In parallel, use the
