@@ -22,8 +22,12 @@ from scripts.b3_e4_f03_solid_bond_pose_projection import _read_frd_u, project
 
 
 GRID = np.linspace(.9, 1., 6)
+CUTS = np.sort(np.r_[GRID, .95])
 YCUTS = np.linspace(-.05, .05, 11)
 KINDS = ("piecewise_constant", "continuous_linear", "dual_linear")
+MODES = ("actual_solid_face", "solid_cell_Q4_proxy", "native_host_Q4_proxy")
+NATIVE_X = np.array((.9,.95,1.))
+NATIVE_Y = np.linspace(-.05,.05,5)
 
 
 def _sha(path: Path) -> str:
@@ -97,20 +101,46 @@ def _director(v: np.ndarray) -> np.ndarray:
     return v/length
 
 
+def _solid_face_sample(node, u, x: float, y: float, z: float) -> np.ndarray:
+    """Interpolate a solid F5 face at an arbitrary native Q4 host node."""
+    ix = min(len(GRID)-2, max(0, int(np.searchsorted(GRID,x,side="right")-1)))
+    iy = min(len(YCUTS)-2, max(0, int(np.searchsorted(YCUTS,y,side="right")-1)))
+    x0,x1 = GRID[ix:ix+2]
+    y0,y1 = YCUTS[iy:iy+2]
+    xi,eta = 2*(x-x0)/(x1-x0)-1,2*(y-y0)/(y1-y0)-1
+    face = _face_nodes(node,u,float(x0),float(x1),float(y0),float(y1),z)
+    return _quad8_shape(float(xi),float(eta))@face
+
+
+def _native_host(node,u,x: float,y: float):
+    mid = _solid_face_sample(node,u,x,y,0.)
+    top = _solid_face_sample(node,u,x,y,.0175)
+    bottom = _solid_face_sample(node,u,x,y,-.0175)
+    return mid,_director(np.array((0.,0.,.035))+top-bottom)
+
+
 def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
                translation: np.ndarray, rotation: np.ndarray) -> dict:
     node = _lookup(coords)
     roots, weights = np.polynomial.legendre.leggauss(3)
     spaces = {kind: LineMultiplierSpace(kind, (0., .5, 1.)) for kind in KINDS}
-    sums = {kind: {mode: np.zeros((space.count, 6))
-                   for mode in ("actual_solid_face", "inferred_E4_Q4_face")}
+    sums = {kind: {mode: np.zeros((space.count, 6)) for mode in MODES}
             for kind, space in spaces.items()}
     masses = {kind: np.zeros(space.count) for kind, space in spaces.items()}
     inertias = {kind: np.zeros(space.count) for kind, space in spaces.items()}
-    shell_approx_sq, area, max_approx = 0., 0., 0.
+    shell_approx_sq = {mode:0. for mode in MODES[1:]}
+    max_approx = {mode:0. for mode in MODES[1:]}
+    area = 0.
+    native = {(float(x),float(y)):_native_host(node,u,float(x),float(y))
+              for x in NATIVE_X for y in NATIVE_Y}
     center_rot = .5*(rotation[2]+rotation[3])
     center_frame = Rotation.from_rotvec(center_rot).as_matrix()
-    for ix, (x0, x1) in enumerate(zip(GRID[:-1], GRID[1:])):
+    # The multiplier basis changes at .95 m. Segment there exactly as the
+    # native line assembler does, while retaining the enclosing Q20 cell
+    # for interpolation of the saved solid field.
+    for sx0, sx1 in zip(CUTS[:-1], CUTS[1:]):
+        ix = min(len(GRID)-2, int(np.searchsorted(GRID, (sx0+sx1)/2.)-1))
+        x0, x1 = GRID[ix:ix+2]
         for y0, y1 in zip(YCUTS[:-1], YCUTS[1:]):
             top = _face_nodes(node, u, float(x0), float(x1),
                               float(y0), float(y1), .0175)
@@ -124,8 +154,9 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
                 _director(np.array((0.,0.,.035))+top[k]-bottom[k])
                 for k in range(4)])
             for xi, wx in zip(roots, weights):
-                x = (x0+x1)/2 + float(xi)*(x1-x0)/2
+                x = (sx0+sx1)/2 + float(xi)*(sx1-sx0)/2
                 f = (x-x0)/(x1-x0)
+                parent_xi = 2.*f-1.
                 move = (1-f)*translation[ix]+f*translation[ix+1]
                 spin = (1-f)*rotation[ix]+f*rotation[ix+1]
                 frame = Rotation.from_rotvec(spin).as_matrix()
@@ -138,30 +169,58 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
                         u[node(float((x0+x1)/2),0.,-.0175)])
                 qright = (np.array((0.,0.,.035))+
                           u[node(float(x1),0.,.0175)]-u[node(float(x1),0.,-.0175)])
-                axial = np.array((xi*(xi-1.)/2., 1.-xi*xi,
-                                  xi*(xi+1.)/2.))
+                axial = np.array((parent_xi*(parent_xi-1.)/2.,
+                                  1.-parent_xi*parent_xi,
+                                  parent_xi*(parent_xi+1.)/2.))
                 direct = _director(axial[0]*qleft+axial[1]*qmid+axial[2]*qright)
-                e4_direct = _director((1-f)*qleft+f*qright)
+                fine_direct = _director((1-f)*qleft+f*qright)
+                ni = min(len(NATIVE_X)-2,
+                         max(0,int(np.searchsorted(NATIVE_X,x,side="right")-1)))
+                nx0,nx1 = NATIVE_X[ni:ni+2]
+                nf = (x-nx0)/(nx1-nx0)
+                native_direct = _director((1-nf)*native[(float(nx0),0.)][1]+
+                                          nf*native[(float(nx1),0.)][1])
                 for eta, wy in zip(roots, weights):
                     y = (y0+y1)/2 + float(eta)*(y1-y0)/2
-                    shape = _quad8_shape(float(xi),float(eta))
+                    shape = _quad8_shape(float(parent_xi),float(eta))
                     true_u = shape@top
-                    n4 = np.array(((1-xi)*(1-eta), (1+xi)*(1-eta),
-                                   (1+xi)*(1+eta), (1-xi)*(1+eta)))/4.
-                    e4_u = n4@(middle[:4]+.0175*(nodal_directors-np.array((0.,0.,1.))))
-                    w = float(wx*wy*(x1-x0)*(y1-y0)/4.)
-                    delta = true_u-e4_u
-                    shell_approx_sq += w*float(delta@delta)
-                    max_approx = max(max_approx, float(np.linalg.norm(delta)))
+                    n4 = np.array(((1-parent_xi)*(1-eta),
+                                   (1+parent_xi)*(1-eta),
+                                   (1+parent_xi)*(1+eta),
+                                   (1-parent_xi)*(1+eta)))/4.
+                    fine_u = n4@(middle[:4]+.0175*(nodal_directors-np.array((0.,0.,1.))))
+                    nj = min(len(NATIVE_Y)-2,
+                             max(0,int(np.searchsorted(NATIVE_Y,y,side="right")-1)))
+                    ny0,ny1 = NATIVE_Y[nj:nj+2]
+                    nxi,neta = 2*nf-1,2*(y-ny0)/(ny1-ny0)-1
+                    coarse_shape = np.array(((1-nxi)*(1-neta),(1+nxi)*(1-neta),
+                                             (1+nxi)*(1+neta),(1-nxi)*(1+neta)))/4.
+                    coarse_nodes = (native[(float(nx0),float(ny0))],
+                                    native[(float(nx1),float(ny0))],
+                                    native[(float(nx1),float(ny1))],
+                                    native[(float(nx0),float(ny1))])
+                    coarse_u = coarse_shape@np.array([
+                        mid+.0175*(director-np.array((0.,0.,1.)))
+                        for mid,director in coarse_nodes])
+                    w = float(wx*wy*(sx1-sx0)*(y1-y0)/4.)
+                    for mode,proxy in (("solid_cell_Q4_proxy",fine_u),
+                                       ("native_host_Q4_proxy",coarse_u)):
+                        delta = true_u-proxy
+                        shell_approx_sq[mode] += w*float(delta@delta)
+                        max_approx[mode] = max(max_approx[mode],
+                                               float(np.linalg.norm(delta)))
                     area += w
                     beam_u = move+np.cross(spin, (0., y, -.05))
                     pitch = {
                         "actual_solid_face": float(np.arctan2(frame[:,0]@direct,
                                                                frame[:,2]@direct)),
-                        "inferred_E4_Q4_face": float(np.arctan2(frame[:,0]@e4_direct,
-                                                                 frame[:,2]@e4_direct))}
+                        "solid_cell_Q4_proxy": float(np.arctan2(frame[:,0]@fine_direct,
+                                                                 frame[:,2]@fine_direct)),
+                        "native_host_Q4_proxy": float(np.arctan2(frame[:,0]@native_direct,
+                                                                  frame[:,2]@native_direct))}
                     for mode, shell_u in (("actual_solid_face",true_u),
-                                          ("inferred_E4_Q4_face",e4_u)):
+                                          ("solid_cell_Q4_proxy",fine_u),
+                                          ("native_host_Q4_proxy",coarse_u)):
                         gap = frame.T@(shell_u-beam_u)
                         vals = np.r_[gap, y*gap[2], pitch[mode], -y*gap[0]]
                         for kind, space in spaces.items():
@@ -179,15 +238,22 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
         if np.any(masses[kind] <= 0.) or np.any(inertias[kind] <= 0.):
             raise ArithmeticError("invalid native line normalization")
         entry = {"basis_integrals_m":(.1*masses[kind]/.01).tolist()}
-        for mode in ("actual_solid_face", "inferred_E4_Q4_face"):
+        expected = ([.05,.05] if kind == "piecewise_constant"
+                    else [.025,.05,.025])
+        if not np.allclose(entry["basis_integrals_m"], expected,
+                           rtol=0., atol=1e-12):
+            raise ArithmeticError("line basis integration missed a knot")
+        for mode in MODES:
             rows = sums[kind][mode]/masses[kind][:,None]
             rows[:,3] *= masses[kind]/inertias[kind]
             rows[:,5] *= masses[kind]/inertias[kind]
             entry[mode] = rows.tolist()
         out[kind] = entry
-    return {"rows_by_space":out,"solid_to_E4_top_face_rms_m":float(np.sqrt(shell_approx_sq/area)),
-            "solid_to_E4_top_face_max_m":max_approx,"area_m2":area,
-            "quadrature_points":5*10*3*3,
+    return {"rows_by_space":out,
+            "solid_to_Q4_proxy_top_face_rms_m":{mode:float(np.sqrt(v/area))
+                                                 for mode,v in shell_approx_sq.items()},
+            "solid_to_Q4_proxy_top_face_max_m":max_approx,"area_m2":area,
+            "quadrature_points":6*10*3*3,
             "meaning":"Each six-vector is the basis-weighted mean [Fx,Fy,Fz,Mx,My,Mz] gap under the native hybrid law; positions in m and pitch/moments in rad-like units. These are kinematic gaps, not force residuals or physical bond slip."}
 
 
@@ -219,7 +285,7 @@ def main() -> None:
     zero = {n:np.zeros(3) for n in coords}
     reference = _integrate(coords,zero,np.zeros((6,3)),np.zeros((6,3)))
     max_ref = max(abs(v) for entry in reference["rows_by_space"].values()
-                  for mode in ("actual_solid_face","inferred_E4_Q4_face")
+                  for mode in MODES
                   for row in entry[mode] for v in row)
     if max_ref > 1e-12:
         raise ArithmeticError("nonzero native reference gap")
@@ -227,7 +293,7 @@ def main() -> None:
               "question":"Does the native six-channel line law fit this physically bonded 3D field within section-port and E4-reduction uncertainty?",
               "outcome_rule":"A material six-row mismatch robust to the two port fits directs revision of the trace/pose mechanics before basis ranking; a small mismatch retains the law as a candidate and shifts scrutiny to section/end-loading idealization. Neither result alone qualifies the law.",
               "geometry":"F5 35 mm C1 plate, 100 mm square bar, terminal x=.9–1.0 m shared-node bond, +100 Nm/−1000 N pre-opened combined load; no new external solve",
-              "fit_assumptions":"linear interpolation of six rigid solid-section fits at .02 m stations; inferred director is the deformed top-bottom thickness chord; E4 proxy uses Q4 midsurface translations and nodal directors; actual solid face uses Q20 interpolation",
+              "fit_assumptions":"linear interpolation of six rigid solid-section fits at .02 m stations; inferred director is the deformed top-bottom thickness chord; Q4 proxies use solid-cell or actual native 0.05 by 0.025 m hosts with inferred nodal directors; actual solid face uses Q20 interpolation; integration splits at the native x=.95 m line-space knot",
               "reference_max_abs_gap":max_ref,"results":reports,
               "limits":["3D-to-E4 director is inferred, not an independent E4 state",
                         "linear rigid-section interpolation is not a native B3 interpolation",
@@ -239,8 +305,8 @@ def main() -> None:
     root.mkdir(parents=True)
     (root/"result.json").write_text(json.dumps(result,indent=2,sort_keys=True)+"\n")
     print(json.dumps({"reference_max_abs_gap":max_ref,
-                      "area_p0":reports["area"]["rows_by_space"]["piecewise_constant"]["inferred_E4_Q4_face"],
-                      "nonbond_p0":reports["nonbond"]["rows_by_space"]["piecewise_constant"]["inferred_E4_Q4_face"]},indent=2))
+                      "area_p0":reports["area"]["rows_by_space"]["piecewise_constant"]["native_host_Q4_proxy"],
+                      "nonbond_p0":reports["nonbond"]["rows_by_space"]["piecewise_constant"]["native_host_Q4_proxy"]},indent=2))
 
 
 if __name__ == "__main__":
