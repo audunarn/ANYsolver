@@ -84,6 +84,87 @@ product, alter B2 admission, or close F09. The exact and physical references
 are the preserved independently reviewed record, not newly regenerated
 external evidence.
 
+The independently owned F09 follow-up at commit `c4236be9` extends the same
+diagonal-scaling idea across six declared mixed-elbow stiffness/area and
+load-rescaling samples. Its exact-rounded and independent rational force
+oracles agree with the scaled sparse response to at most `1.12e-15` by its
+component-scaled diagnostic measure; separate free-force/moment residual
+ratios are below `9e-16`. It explicitly rejects zero diagonal and erased
+subnormal coupling. The focused private B2 mechanics suites passed `27/27`.
+See `B3_GE_E4_PL_G0_F09_PHYSICAL_RANGE_DEV_V1.md` and its raw JSON. The
+fixed section inertias with vanishing areas are numerical stress cases, not
+a physically realizable admission range; F09/G0B stay open. Next define a
+physical section range and test more graphs and attachments before product
+admission.
+
+**Independent F05 bounded result:** At commit `610e4ef7`, a yielded
+three-layer Q4 fixed-predecessor trial was composed with an eccentric,
+nonzero-multiplier pose joint through actual additive rotation charts.
+Separated material, joint and combined directional errors were at most
+`8.86e-7`, `2.06e-8` and `8.86e-7` over sampled adjacent steps; all 12
+stations kept their sampled active mask, and the predecessor was byte-identical.
+The source, settings and raw measurements are in the F05 V2 manifest/result
+and `B3_GE_E4_PL_G0_F05_POSE_PULLBACK_DEV_V2.md`. This is one developmental
+pullback check; mixed-owner lifecycle, more port geometries, independent
+mechanics review and F05/G0B acceptance remain open. Preserve the elastic
+adapter guard.
+
+**Next C1 enforcement discriminator:** The x8/m4→m8 torque solve shows
+growing oscillation of the P0 material dual density while all six-channel
+global balances close. The competing explanations are a weakly controlled
+growing multiplier mode and a legitimate but steep redistribution under a
+still unresolved physical line law. Reuse the existing positive physical-E4
+and broken-retained-B3 trace quotient at *fixed x8/y4, B3-12*, changing only
+four to eight line intervals for P0/P1/dual. If the normalized lower quotient
+falls sharply for P0 but not the others, prioritize its interface-resolution
+policy and full mixed-system mode test; if all remain comparable, the loaded
+dual growth alone cannot choose a space, and proceed to work-conjugate
+physical transfer and native mixed-system tests. This quotient remains a
+bounded representability diagnostic, not inf-sup, physical fidelity, or G0B
+acceptance. Do not extend to another mesh or classical axial run from this
+screen without a new decision question.
+
+**C1 quotient result and action:** The two-case x8/y4/B3-12 run completed at
+`.qualification/b3-ge-e4-pl/f03-c1-positive-trace-growing-line-dev-20260926-v1`
+(manifest SHA-256 `63ec284010adbe604bf45fadcc2d1fc3d107861ca38051e5605b681867de0393`;
+result SHA-256 `86311ba41dbb3422442e5541c59a7d42cbb3714b0caef9268bf850c91da9ccba`).
+The run used `python -B`, local source, `NUMBA_DISABLE_JIT=1` and one BLAS/
+Numba thread. The manifest records generation-time HEAD `07cd0031` and
+the exact modified diagnostic source hash; the source and this interpretation
+are committed subsequently. All supported row sets retain full rank (m4: 24/30/30;
+m8: 48/54/54), with the same positive shell metric and B3 observable trace
+rank 15. The full lower quotient is `0.22039→0.01244` for P0,
+`0.17588→0.09087` for continuous P1, and `0.17142→0.09084` for dual P1.
+P0's m8 weakest mode is alternating **vertical** material action
+(`−13.24,+40.77,−62.39,+73.83,−73.82,+62.39,−40.71,+13.18` in the
+recorded force-equivalent coordinates) and about `99.5%` shell positive
+action. The prior loaded torque dual cancellation is mainly **lateral**;
+these are not shown to be the same mode or cause. The fixed-shell P0 drop
+prioritizes its growing-space/mixed-KKT and locking audit, while the reduced
+P1/dual quotients prevent selecting either without further physical and
+registered-ratio evidence. No quotient establishes native indefinite-system
+well-posedness or the intended connection law. The first unprivileged run
+stalled before evidence creation; a `python -B`/JIT-disabled import check
+passed, but the next attempt could not create the protected evidence root.
+The exact-path authorized run produced the result above. Neither failed
+attempt is a mechanics failure or a second result.
+
+**C1 law currently implemented, for the pending physical decision:** The
+candidate integrates over x=`.9–1 m` and the finite transverse
+y=`−.05…+.05 m` strip at the 35 mm shell top/beam bottom. In each material
+section its first three channels are the mean relative position expressed in
+the beam frame. Its fourth and sixth channels are the transverse first
+moments of vertical and axial position gap, normalized by transverse second
+moment; its fifth is the relative beam-frame/E4-director pitch at the strip
+centre. The beam pose comes from the actual retained half-cell port, including
+one-sided values. The pitch channel is a *declared director-couple transfer*,
+not a tie between director and geometric surface normal. This law excludes
+even transverse local slip from its six section actions and is not a
+pointwise full-width solid bond. It has bounded objective/reference/chart
+checks, but its physical transfer and mesh-stable exact enforcement have not
+been accepted. The rigid and distributing finite-footprint laws remain
+separate; neither can be inferred from a zero weak residual here.
+
 **Decision sought:** Determine whether the current native six-channel C1
 connection has the intended continuous section work law, then assess its
 P0/P1/dual enforcement. The same fields must be measured as sampled local

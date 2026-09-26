@@ -188,10 +188,13 @@ def _beam_action(rows: np.ndarray, active: np.ndarray,
 def _space(kind: str, xs: np.ndarray, ys: np.ndarray, beam,
            shell_free: np.ndarray, shell_scale: np.ndarray,
            shell: dict, beam_active: np.ndarray,
-           beam_feature: np.ndarray, beam_trace: dict) -> dict:
-    rows, masses, patches = c1_hybrid_line_space(xs, ys, beam, kind=kind)
+           beam_feature: np.ndarray, beam_trace: dict,
+           line_intervals: int = 2) -> dict:
+    rows, masses, patches = c1_hybrid_line_space(
+        xs, ys, beam, kind=kind, intervals=line_intervals)
     shell_size = len(xs)*len(ys)*6
-    if len(rows) not in (12, 18) or rows.shape[1] != shell_size+beam.context.count:
+    if (len(rows) != 6*len(masses) or
+            rows.shape[1] != shell_size+beam.context.count):
         raise ArithmeticError("unexpected six-channel row inventory")
     drilling_max = float(np.max(np.abs(rows[:, 5:shell_size:6])))
     if drilling_max > 1e-14:
@@ -208,7 +211,7 @@ def _space(kind: str, xs: np.ndarray, ys: np.ndarray, beam,
     gram_fn = {"piecewise_constant": p0_dual_gram,
                "continuous_linear": p1_dual_gram,
                "dual_linear": dual_linear_gram}[kind]
-    lower, upper = gram_fn(2, LENGTH_M, 4095)
+    lower, upper = gram_fn(line_intervals, LENGTH_M, 4095)
     lower, upper = np.kron(lower, np.eye(6)), np.kron(upper, np.eye(6))
     numerator = REFERENCE_STIFFNESS_N_PER_M * (
         density_to_integrated[:, None]*(shell_gram+beam_gram)*
@@ -337,7 +340,8 @@ def _fixture_contract(xs: np.ndarray, ys: np.ndarray, beam) -> dict:
 
 
 def _evaluate_case(name: str, shell_x_cells: int,
-                   shell_y_cells: int, beam_half_cells: int) -> dict:
+                   shell_y_cells: int, beam_half_cells: int,
+                   line_intervals: int = 2) -> dict:
     xs, ys = local_grid(shell_x_cells, transverse_cells=shell_y_cells)
     beam = build(beam_half_cells, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
@@ -346,11 +350,13 @@ def _evaluate_case(name: str, shell_x_cells: int,
     shell_free, shell_scale, shell = _shell_metric(xs, ys)
     beam_active, beam_feature, beam_trace = _active_beam_trace(beam)
     cases = [_space(kind, xs, ys, beam, shell_free, shell_scale, shell,
-                    beam_active, beam_feature, beam_trace) for kind in KINDS]
+                    beam_active, beam_feature, beam_trace,
+                    line_intervals) for kind in KINDS]
+    interval_label = ("two" if line_intervals == 2 else str(line_intervals))
     return {"classification": "one finite-grid positive trace-quotient development diagnostic; not inf-sup or G0B acceptance",
             "name": name,
             "model": (f"C1 35 mm Q4 x{shell_x_cells}/y{shell_y_cells}, "
-                      f"native retained B3-{beam_half_cells}, two line intervals"),
+                      f"native retained B3-{beam_half_cells}, {interval_label} line intervals"),
             "metric": {"shell": "left-supported drilling-free physical E4 strain energy",
                        "beam": "section-weighted broken half-cell H1-like bottom-position/spatial-rotation trace quotient",
                        "bond_length_m": LENGTH_M,
@@ -384,7 +390,23 @@ def evaluate_ratio_extremes() -> dict:
             "ratios": results,
             "limitations": ["two finite endpoints do not establish a mesh-uniform bound or select P0/P1/dual",
                             "positive B3 metric acts on its observable trace quotient, not all retained mixed coordinates",
-                            "no external or loaded solve"]}
+            "no external or loaded solve"]}
+
+
+def evaluate_growing_screen() -> dict:
+    """One x8 shell, m4/m8 row-growth discriminator; no uniform claim."""
+    results = [_evaluate_case(f"x8_m{count}", 8, 4, 12, count)
+               for count in (4, 8)]
+    return {
+        "classification": "fixed-shell growing-line-space development diagnostic; not inf-sup or G0B acceptance",
+        "question": "Does row growth expose a loss in the fixed positive trace quotient matching the loaded material-dual oscillation?",
+        "ratios": results,
+        "limitations": [
+            "fixed shell and two row counts are not a convergence or mesh-uniform stability sequence",
+            "positive B3 metric acts on its observable broken trace quotient, not the full native retained mixed system",
+            "the continuous physical connection law and external reference remain unresolved",
+        ],
+    }
 
 
 def main() -> None:
@@ -392,7 +414,11 @@ def main() -> None:
     parser.add_argument("--evidence-root", type=Path, required=True)
     parser.add_argument("--ratio-extremes", action="store_true",
                         help="evaluate only the two registered C1 ratio endpoints")
+    parser.add_argument("--growing-screen", action="store_true",
+                        help="evaluate only fixed x8/y4, m4/m8 line-row growth")
     args = parser.parse_args()
+    if args.ratio_extremes and args.growing_screen:
+        parser.error("choose only one bounded diagnostic")
     root = args.evidence_root.resolve()
     if root.exists():
         raise FileExistsError("development evidence root already exists")
@@ -410,13 +436,17 @@ def main() -> None:
     identity = {str(path.relative_to(repo)): _sha(path) for path in sources}
     head = subprocess.check_output(["git", "rev-parse", "HEAD"],
                                    cwd=repo, text=True).strip()
+    mode = ("growing_screen" if args.growing_screen else
+            "ratio_extremes" if args.ratio_extremes else "fixed_mid_ratio")
     manifest = {"git_head": head, "source_sha256": identity,
                 "python": platform.python_version(), "numpy": np.__version__,
                 "scipy": __import__("scipy").__version__,
-                "parameters": {"mode": ("ratio_extremes" if args.ratio_extremes
-                                        else "fixed_mid_ratio"),
+                "parameters": {"mode": mode,
                                "cases": ([list(case) for case in RATIO_EXTREMES]
                                          if args.ratio_extremes else
+                                         [["x8_m4", 8, 4, 12, 4],
+                                          ["x8_m8", 8, 4, 12, 8]]
+                                         if args.growing_screen else
                                          [["fixed_mid_ratio", GRID_CELLS,
                                            GRID_CELLS, BEAM_HALF_CELLS]]),
                                "quadrature_order": GAUSS_ORDER,
@@ -426,8 +456,9 @@ def main() -> None:
     (root/"manifest.json").write_text(json.dumps(manifest, indent=2,
                                                  sort_keys=True)+"\n")
     try:
-        result = (evaluate_ratio_extremes() if args.ratio_extremes
-                  else evaluate())
+        result = (evaluate_ratio_extremes() if args.ratio_extremes else
+                  evaluate_growing_screen() if args.growing_screen else
+                  evaluate())
     except Exception as error:
         (root/"failure.json").write_text(json.dumps({
             "status": "FAILED_CLOSED", "error_type": type(error).__name__,
@@ -435,7 +466,7 @@ def main() -> None:
         raise
     (root/"result.json").write_text(json.dumps(result, indent=2,
                                                sort_keys=True)+"\n")
-    reports = result["ratios"] if args.ratio_extremes else [result]
+    reports = result["ratios"] if args.ratio_extremes or args.growing_screen else [result]
     print(json.dumps({"status": "COMPLETED_FINITE_GRID_DIAGNOSTIC",
                       "root": str(root),
                       "ratios": [{"name": report["name"],
