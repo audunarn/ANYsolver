@@ -179,6 +179,26 @@ def test_c1_sparse_line_kkt_matches_four_cell_loaded_transfer():
             assert candidate["cases"][loading]["mechanics_error"] < 1e-7
 
 
+def test_c1_axial_only_sixteen_cell_line_transfer_is_balanced():
+    with threadpool_limits(limits=1):
+        beam = build(12, z_offset=.0675,
+                     torsion_constant=square_torsion_constant(),
+                     reference_profile="c1_tangent_2um")
+        result = graded_terminal_coupling(
+            16, beam, transverse_cells=4, plate_thickness=.035,
+            include_line_hybrid_spaces=True,
+            sparse_line_only=True, force_sign=-1.)
+    assert (result["bond_x_cells"], result["bond_y_cells"]) == (16, 4)
+    for name, family in result["results"].items():
+        assert family["constraint_rank"] == (
+            12 if name == "line_hybrid_p0_weighted" else 18)
+        for case in family["cases"].values():
+            assert case["mechanics_error"] < 1e-7
+            assert case["physical_shell_work_j"] > 0.
+            assert case["sampled_line_position_gap"][
+                "quadrature_max_position_gap_m"] > 0.
+
+
 def test_structured_patch_trace_matches_existing_uniform_native_rows():
     panel=make_shell(8,"Q4",n_y=8)
     xs=np.linspace(-.5,1.5,17)

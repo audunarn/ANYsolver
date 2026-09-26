@@ -56,6 +56,20 @@ this is **not** an axial-only beam:shell ratio test. The shell operator is
 dense within 1710 rows and only its solve is sparse. A later axial-only
 reference-cut fixture must hold y cuts fixed for ratio attribution.
 
+The exact loaded root at source `02411412` is
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-sparse-loaded-shell8-dev-20260926-v1`.
+P0/P1/dual four→eight x/y refinement changes torque tip work by
+`0.528/0.520/0.487%` and opening work by `0.152/0.176/0.203%`; all
+reported mechanics errors are below `2.2e-11`. This is balanced shell
+refinement, not an axial ratio result. Independent loaded-path review is
+pending. The next single-axis test holds four transverse shell cells,
+B3-12 and the two multiplier cells fixed while using 4/8/16 axial shell
+bond cells: beam-half-cell:shell-cell ratios `1:2`, `1:4`, `1:8`.
+The 16×4 bond grid has 1782 shell DOFs, below the retained dense-square
+1900 cap. Changed transfer or collapsing normed modes would return the
+line trace/pose law for revision; stable results permit a reciprocal-ratio
+fixture, never space selection by themselves.
+
 **Executed factor-two opening reference:** Source `da1d2a0c` contains the
 tested factor-two C1 deck/gap guards (`80/80` focused tests). The
 CalculiX result at

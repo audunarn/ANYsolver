@@ -11,6 +11,15 @@ from scripts.b3_e4_f03_plate_patch_work import (
 )
 
 
+def test_axial_only_sixteen_cell_grid_holds_transverse_cuts_and_dense_cap():
+    xs, ys = local_grid(16, transverse_cells=4)
+    assert 6*len(xs)*len(ys) == 1782
+    assert np.count_nonzero((xs >= .9) & (xs <= 1.)) - 1 == 16
+    assert np.count_nonzero((ys >= -.05) & (ys <= .05)) - 1 == 4
+    with pytest.raises(ValueError, match="bounded local patch"):
+        local_grid(16)
+
+
 @pytest.mark.parametrize("factor",(1,2))
 @pytest.mark.parametrize("loading",("tip_mx","tip_fz"))
 def test_quadratic_plate_deck_has_only_plate_and_exact_patch_wrench(factor,loading):

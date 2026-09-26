@@ -200,18 +200,20 @@ def shell_case(level: int,loading: str) -> dict:
             "applied_wrench_N_Nm":wrench.tolist(),"response":measured}
 
 
-def local_grid(patch_cells: int, *, outer_refined: bool = False
+def local_grid(patch_cells: int, *, outer_refined: bool = False,
+               transverse_cells: int | None = None
                ) -> tuple[np.ndarray,np.ndarray]:
-    if patch_cells not in (2,4,8):
+    transverse = patch_cells if transverse_cells is None else transverse_cells
+    if patch_cells not in (2,4,8,16) or transverse not in (2,4,8):
         raise ValueError("bounded local patch resolution required")
     xs=np.r_[(-.5,-.25,0.,.25,.5,.75,.85),
              np.linspace(.9,1.,patch_cells+1),
              (1.1,1.25,1.5)]
     ys=np.r_[(-.5,-.25,-.1),
-             np.linspace(-.05,.05,patch_cells+1),
+             np.linspace(-.05,.05,transverse+1),
              (.1,.25,.5)]
     if outer_refined:
-        if patch_cells!=4:
+        if patch_cells!=4 or transverse!=4:
             raise ValueError("outer refinement is bounded to the four-cell patch")
         xs=np.sort(np.r_[xs,(-.375,.125,.625,1.375)])
         ys=np.sort(np.r_[ys,(-.375,-.175,.175,.375)])

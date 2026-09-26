@@ -1212,6 +1212,7 @@ def run_terminal_interface(output_dir: Path) -> None:
 
 def graded_terminal_coupling(patch_cells: int, beam, *,
                              plate_thickness: float = .07,
+                             transverse_cells: int | None = None,
                              include_surface_moments: bool = False,
                              include_line_hybrid: bool = False,
                              include_line_hybrid_segmented: bool = False,
@@ -1227,12 +1228,12 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
     if include_line_hybrid_spaces and plate_thickness != .035:
         raise ValueError("weighted C1 line spaces require the 35 mm plate")
     if sparse_line_only and (not include_line_hybrid_spaces or
-                             patch_cells not in (4, 8)):
-        raise ValueError("sparse line comparison requires four/eight-cell weighted C1 case")
+                             patch_cells not in (4, 8, 16)):
+        raise ValueError("sparse line comparison requires bounded weighted C1 case")
     if include_line_hybrid_ablation and patch_cells != 2:
         raise ValueError("bounded hybrid ablation requires the fixed C1 two-cell grid")
     beam_axis_z=plate_thickness/2+.05
-    xs,ys=local_grid(patch_cells)
+    xs,ys=local_grid(patch_cells,transverse_cells=transverse_cells)
     shell_k,physical=raw_e4_tangent(xs,ys,thickness=plate_thickness)
     shell_nodes=np.array([(x,y,0.) for y in ys for x in xs])
     shell_size=6*len(shell_nodes)
@@ -1555,7 +1556,10 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         records[family]={"constraint_rank":rank,"cases":cases,
                          **({"basis_integrals_m":space_masses[family]}
                             if family in space_masses else {})}
-    return {"patch_cells_per_side":patch_cells,
+    return {"patch_cells_per_side":(patch_cells if transverse_cells is None
+                                     or transverse_cells==patch_cells else None),
+            "bond_x_cells":patch_cells,
+            "bond_y_cells":patch_cells if transverse_cells is None else transverse_cells,
             "plate_thickness_m":plate_thickness,
             "shell_nodes":len(shell_nodes),"e4_elements":(len(xs)-1)*(len(ys)-1),
             "beam_half_cells":beam.n_half_cells,"results":records,

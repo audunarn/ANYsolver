@@ -652,7 +652,9 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                                        c1_characteristic_length_m: float = 1.,
                                        line_space_kind: str | None = None,
                                        sparse_action: bool = False,
-                                       include_shell_eight: bool = False) -> list[dict]:
+                                       include_shell_eight: bool = False,
+                                       axial_shell_cells: tuple[int, ...] | None = None
+                                       ) -> list[dict]:
     """Compare six physical interface actions on several bounded local grids.
 
     This is a finite-dimensional, support-conditioned compliance diagnostic,
@@ -676,6 +678,11 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
     if include_shell_eight and not (hybrid and segmented and sparse_action and
                                     line_space_kind is not None):
         raise ValueError("eight-cell C1 screen requires sparse weighted line action")
+    if axial_shell_cells is not None and (
+            axial_shell_cells != (4, 8, 16) or include_shell_eight or
+            not (hybrid and segmented and sparse_action and
+                 line_space_kind is not None)):
+        raise ValueError("axial-only C1 screen requires bounded sparse weighted cells")
     if c1_beam_half_cells not in (12, 24) or (
             not hybrid and c1_beam_half_cells != 12):
         raise ValueError("bounded C1 beam resolution requires hybrid 12 or 24")
@@ -687,8 +694,12 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
         (2, 4), (2, 8), (4, 4), (4, 8), (4, 16))
     if include_shell_eight:
         cases += ((8, c1_beam_half_cells),)
+    if axial_shell_cells is not None:
+        cases = tuple((cells, c1_beam_half_cells)
+                      for cells in axial_shell_cells)
     for patch_cells, half_cells in cases:
-        xs, ys = local_grid(patch_cells)
+        ys_cells = 4 if axial_shell_cells is not None else patch_cells
+        xs, ys = local_grid(patch_cells, transverse_cells=ys_cells)
         beam = build(half_cells, z_offset=.0675,
                      torsion_constant=square_torsion_constant(),
                      reference_profile=("c1_tangent_2um" if hybrid
@@ -861,7 +872,10 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                     dual_upper, dual_lower, check_finite=True))),
             }
         results.append({
-            "patch_cells_per_side": patch_cells,
+            "patch_cells_per_side": (patch_cells if axial_shell_cells is None
+                                      else None),
+            "bond_x_cells": patch_cells,
+            "bond_y_cells": ys_cells,
             "beam_half_cells": half_cells,
             "shell_nodes": len(xs)*len(ys),
             "total_primal_rows": total,
