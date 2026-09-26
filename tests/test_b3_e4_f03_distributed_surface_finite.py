@@ -592,6 +592,9 @@ def test_c1_mixed_s3_line_modes_and_loaded_balance(diagonal):
             assert case["physical_shell_work_j"] > 0.
             assert case["total_external_work_j"] > 0.
             tip = case["terminal_station_kinematics"]["1000"]
+            np.testing.assert_allclose(
+                tip["shell_top_edge_sample_y_m"],
+                (-.05,-.025,0.,.025,.05), atol=1e-14)
             assert len(tip["shell_top_edge_mean_translation_m"]) == 3
             assert np.isfinite(tip["shell_top_edge_mean_translation_m"]).all()
             assert tip["beam_nodal_rotation_rad"][0] == pytest.approx(
@@ -599,7 +602,8 @@ def test_c1_mixed_s3_line_modes_and_loaded_balance(diagonal):
             assert tip["beam_nodal_translation_m"][2] == pytest.approx(
                 case["tip_uz_m"], abs=1e-14)
             assert np.isfinite((tip["shell_top_slope_z_x_rad"],
-                                tip["shell_director_ry_rad"])).all()
+                                tip["shell_director_ry_rad"],
+                                tip["shell_local_patch_mean_ry_rad"])).all()
 
 
 def test_c1_hybrid_physical_director_spin_is_null_at_finite_tilt():

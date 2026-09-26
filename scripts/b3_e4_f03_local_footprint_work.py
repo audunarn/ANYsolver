@@ -1533,12 +1533,23 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                             beam.context,element,cell,weight)
                         return float((port.tangent(base)@
                                       full[shell_size:])[3])
+                    footprint_ys=ys[(ys>=-.05-1e-12)&(ys<=.05+1e-12)]
+                    if (len(footprint_ys)<2 or
+                            abs(footprint_ys[0]+.05)>1e-12 or
+                            abs(footprint_ys[-1]-.05)>1e-12):
+                        raise ValueError("C1 shell top footprint edge incomplete")
+                    edge_weights=np.zeros(len(footprint_ys))
+                    half_intervals=.5*np.diff(footprint_ys)/.1
+                    edge_weights[:-1]+=half_intervals
+                    edge_weights[1:]+=half_intervals
                     shell_top_edge=np.array([
                         (shell_value(y,0)+.5*plate_thickness*shell_value(y,4),
                          shell_value(y,1)-.5*plate_thickness*shell_value(y,3),
-                         shell_value(y,2)) for y in ys])
-                    edge_weights=np.ones(len(ys))
-                    edge_weights[[0,-1]]=.5
+                         shell_value(y,2)) for y in footprint_ys])
+                    def patch_mean_at(x_sample, axis):
+                        return float(sum(edge_weights[i]*shell_value_at(
+                            x_sample,y,axis)
+                            for i,y in enumerate(footprint_ys)))
                     local_kinematics[str(station)]={
                         "beam_nodal_translation_m":full[
                             shell_size+6*station_nodes[station]:
@@ -1556,12 +1567,15 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                             if half_index<beam.n_half_cells else None),
                         "shell_top_slope_z_y_rad":(
                             shell_value(.05,2)-shell_value(-.05,2))/.1,
+                        "shell_top_edge_sample_y_m":footprint_ys.tolist(),
                         "shell_top_edge_mean_translation_m":np.average(
                             shell_top_edge,axis=0,weights=edge_weights).tolist(),
                         "shell_director_rx_rad":shell_value(0.,3),
                         **({"shell_top_slope_z_x_rad":(
-                            shell_value(0.,2)-shell_value_at(.96,0.,2))/.04,
-                            "shell_director_ry_rad":shell_value(0.,4)}
+                            patch_mean_at(1.,2)-patch_mean_at(.96,2))/.04,
+                            "shell_director_ry_rad":shell_value(0.,4),
+                            "shell_local_patch_mean_ry_rad":(
+                                patch_mean_at(.98,4))}
                            if station==1000 else {}),
                     }
                 if family == "line_hybrid_two_intervals":
