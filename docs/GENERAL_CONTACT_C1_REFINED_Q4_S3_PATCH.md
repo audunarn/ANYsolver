@@ -125,3 +125,16 @@ normal multipliers and complete checkpoint. It passed 2/2 checks in
 locally tested coupled path. Pressure-space stability on partial contact,
 mesh/enforcement convergence, independent assessment and C1 engineering
 acceptance remain open.
+
+The source state at `5041e939e179f50b92f37a4512200ce035fcde36` built a
+no-isolation wheel offline, then installed it without dependencies into
+an isolated local target. The wheel SHA-256 is
+`B833F1D19F422630210CE2429E0213639B4EF6A5CF39DD901A34B92910F33B7F`.
+The example asserted its `anysolver` import origin for both source and
+installed runs. Their complete 923-byte outputs matched byte for byte
+(SHA-256 `ED04F5477C7E6448CC9D32FC816732D7792B3B402E9E0853DC00CBAA9FFEAC07`).
+Build, installation, origin and run logs are retained in
+`C:/ANYworkspaceWork/general-contact-evidence` with the
+`wheel-5041e939` and `c1-refined-tight-example-*` names. This verifies
+package routing for the narrow development example; no publication or
+engineering acceptance is implied.
