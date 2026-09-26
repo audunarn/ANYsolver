@@ -16,17 +16,19 @@ RMS is `0.16919→0.16920 µm` from patch cells two→four while all six weak
 gaps close. **Uncertainty:** This law cannot substitute for a pointwise
 solid bond, the solid has one mesh level, torque remains contact-inadmissible,
 and no true line space has mesh-uniform stability evidence.
-**Next discriminating action:** The bounded factor-two C1 opening-shear
-and torque-basis solves are complete. At factors two and four, their
-superposed `−1000 N Fz + 100 N m Mx` fields have positive saved opposed-face
-gap bounds; incremental torque tip and plate-share quantities move under
-`0.5%`. Pure torque alone penetrates on both levels and remains
-inadmissible. Execute the same combined load directly at factors two and
-four to distinguish an actual balanced, open solver response from a
-derived superposition. Agreement retains only a directional pre-opened
-incremental-torque reference for further contact/mesh checks; discrepancy
-or overlap stops it. Side-surface admissibility and a third level remain
-open.
+**Next discriminating action:** The bounded factor-two/four C1 opening,
+torque-basis and directly executed combined-load solves are complete.
+Both direct combined `−1000 N Fz + 100 N m Mx` fields match their linear
+superpositions within the preregistered output bounds, preserve balance,
+and have positive continuous saved opposed-face gap bounds. Incremental
+torque tip and plate-share quantities move under `0.5%`. Pure torque
+alone penetrates on both levels and remains inadmissible. The combined
+state is a directional **pre-opened incremental-torque** reference only;
+side-surface admissibility, contact verification, a third mesh level and
+native/solid idealization matching remain open. Use it now to discriminate
+native six-channel line work on a fixed matched model, beginning with
+independent work/row-space and physical transfer checks. Do not launch
+another solid refinement merely because two levels were close.
 In parallel, derive a distinct physical six-channel line work law and test
 fixed-grid transfer/modes before registered ratios.
 A sparse third patch grid would settle the distributing footprint only;
@@ -104,6 +106,28 @@ criteria. A larger direct/superposed field discrepancy, failed wrench balance or
 negative continuous opposed-face bound rejects this route; agreement
 only advances side/contact and third-level assessment. No multiplier
 space or native bond is selected by the two-level comparison.
+
+**Executed pre-opened combined-load result:** Source `825f1445` adds the
+opt-in mixed load to the existing bounded CalculiX runner; `83/83`
+affected tests passed. Separate one-thread direct factor-two/four solves
+completed under the 120-second per-case cap. Immutable roots and hashes
+are in `B3_GE_E4_PL_C1_PREOPEN_COMBINED_DEV_20260926_V1.json` beside
+this checkpoint. Across all saved nodes, direct versus separately
+executed superposed displacement differs by at most
+`0.500/0.540 nm`, below the registered `2.917/2.925 nm` bounds.
+Largest plate/root support-component discrepancies are
+`0.00060/0.00134` in their N or N m units, below the `0.02` scaled
+decision bound. Direct mixed work is `0.073934/0.074262 J` at factors
+two/four. Full six-component wrench residuals are retained in raw
+results. Both direct saved fields have zero negative sampled opposed-face
+points and positive sufficient continuous bounds: nonseam
+`2.105/0.770 µm`, seam-factored `0.965/0.541 µm`.
+This makes the pre-opened incremental torque an executed directional
+external reference. It does **not** qualify virgin pure torque, guarantee
+all side-surface noncontact, establish three-level convergence or score
+any native law. The next native step must preserve matching C1 geometry,
+load, supports, terminal bond extent and work conjugacy before comparing
+tip or reaction numbers. G0B stays open and G1 barred.
 
 **Next native C1 geometry discriminator, before execution:** The saved solid
 opening-shear field uses a 2 µm C1 tangent-aligned beam-axis lift over
