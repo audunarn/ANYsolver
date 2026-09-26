@@ -116,9 +116,12 @@ def structured_q4_point_shape(xs: np.ndarray, ys: np.ndarray,
 
 def structured_c1_mixed_point_shape(
         xs: np.ndarray, ys: np.ndarray, x: float, y: float,
-        s3_cells: frozenset[tuple[int, int]]
+        s3_cells: frozenset[tuple[int, int]], *,
+        diagonal: str = "bl_tr",
         ) -> tuple[np.ndarray, np.ndarray]:
-    """Q4 or BL-to-TR S3-V2D host on the bounded C1 structured grid."""
+    """Q4 or declared-diagonal S3-V2D host on the bounded C1 grid."""
+    if diagonal not in ("bl_tr", "br_tl"):
+        raise ValueError("bounded C1 S3 diagonal required")
     nodes, values = structured_q4_point_shape(xs, ys, x, y)
     i = int(np.clip(np.searchsorted(xs, x, side="left")-1, 0, len(xs)-2))
     j = int(np.clip(np.searchsorted(ys, y, side="left")-1, 0, len(ys)-2))
@@ -126,9 +129,13 @@ def structured_c1_mixed_point_shape(
         return nodes, values
     xi = (x-xs[i])/(xs[i+1]-xs[i])
     eta = (y-ys[j])/(ys[j+1]-ys[j])
-    if eta <= xi:
-        return nodes[[0,1,2]], np.array((1.-xi, xi-eta, eta))
-    return nodes[[0,2,3]], np.array((1.-eta, xi, eta-xi))
+    if diagonal == "bl_tr":
+        if eta <= xi:
+            return nodes[[0,1,2]], np.array((1.-xi, xi-eta, eta))
+        return nodes[[0,2,3]], np.array((1.-eta, xi, eta-xi))
+    if xi+eta <= 1.:
+        return nodes[[0,1,3]], np.array((1.-xi-eta, xi, eta))
+    return nodes[[1,2,3]], np.array((1.-eta, xi+eta-1., 1.-xi))
 
 
 def bond_x_segments(lo_x: float, hi_x: float,
@@ -1240,6 +1247,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              sparse_line_only: bool = False,
                              line_quadrature_order: int = 3,
                              mixed_s3: bool = False,
+                             mixed_s3_diagonal: str = "bl_tr",
                              force_sign: float = 1.) -> dict:
     """Linearized native B3/E4 terminal KKT on a resolved local grid."""
     if plate_thickness not in (.07,.035):
@@ -1264,12 +1272,16 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                               include_line_hybrid_ablation or
                               include_surface_moments)):
         raise ValueError("mixed C1 Q4/S3 requires bounded sparse weighted line case")
+    if (mixed_s3_diagonal not in ("bl_tr", "br_tl") or
+            not mixed_s3 and mixed_s3_diagonal != "bl_tr"):
+        raise ValueError("mixed C1 S3 diagonal requires bounded mixed case")
     if include_line_hybrid_ablation and patch_cells != 2:
         raise ValueError("bounded hybrid ablation requires the fixed C1 two-cell grid")
     beam_axis_z=plate_thickness/2+.05
     xs,ys=local_grid(patch_cells,transverse_cells=transverse_cells)
     shell_k,physical=(raw_e4_mixed_c1_tangent(xs,ys,
-                        thickness=plate_thickness) if mixed_s3 else
+                        thickness=plate_thickness,
+                        diagonal=mixed_s3_diagonal) if mixed_s3 else
                       raw_e4_tangent(xs,ys,thickness=plate_thickness))
     s3_cells=c1_mixed_s3_cells(xs,ys) if mixed_s3 else frozenset()
     shell_nodes=np.array([(x,y,0.) for y in ys for x in xs])
@@ -1378,7 +1390,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         )
         if include_line_hybrid_spaces:
             line_gap_patch=FiniteSurfaceLineHybrid(
-                xs,ys,beam,thickness=plate_thickness,mixed_s3=mixed_s3)
+                xs,ys,beam,thickness=plate_thickness,mixed_s3=mixed_s3,
+                mixed_s3_diagonal=mixed_s3_diagonal)
         if include_line_hybrid or include_line_hybrid_ablation:
             hybrid = FiniteSurfaceLineHybrid(
                 xs, ys, beam, thickness=plate_thickness)
@@ -1424,7 +1437,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 rows,masses,_=c1_hybrid_line_space(
                     xs,ys,beam,kind=kind,thickness=plate_thickness,
                     quadrature_order=line_quadrature_order,
-                    mixed_s3=mixed_s3)
+                    mixed_s3=mixed_s3,
+                    mixed_s3_diagonal=mixed_s3_diagonal)
                 name=f"line_hybrid_{label}_weighted"
                 families.append((name,rows))
                 space_masses[name]=masses.tolist()
@@ -1505,7 +1519,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                     x=station/1000
                     def shell_value(y, axis):
                         nodes,shape=(structured_c1_mixed_point_shape(
-                            xs,ys,x,y,s3_cells) if mixed_s3 else
+                            xs,ys,x,y,s3_cells,
+                            diagonal=mixed_s3_diagonal) if mixed_s3 else
                             structured_q4_point_shape(xs,ys,x,y))
                         return float(shape@nodal_shell[nodes,axis])
                     half_index=int(np.flatnonzero(
@@ -1606,6 +1621,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
             "e4_elements":(len(xs)-1)*(len(ys)-1)+len(s3_cells),
             "beam_half_cells":beam.n_half_cells,"results":records,
             **({"shell_topology":"Q4/S3-V2D"} if mixed_s3 else {}),
+            **({"s3_diagonal":mixed_s3_diagonal} if mixed_s3 else {}),
             **({"surface_moment_reference":surface_diagnostics}
                if include_surface_moments else {})}
 

@@ -39,12 +39,17 @@ class FiniteSurfaceMomentPatch:
 
     def __init__(self, xs: np.ndarray, ys: np.ndarray, beam, *,
                  thickness: float, quadrature_order: int = 3,
-                 mixed_s3: bool = False):
+                 mixed_s3: bool = False,
+                 mixed_s3_diagonal: str = "bl_tr"):
         if quadrature_order not in (3, 5):
             raise ValueError("bounded surface quadrature order must be 3 or 5")
+        if (mixed_s3_diagonal not in ("bl_tr", "br_tl") or
+                not mixed_s3 and mixed_s3_diagonal != "bl_tr"):
+            raise ValueError("mixed C1 S3 diagonal requires bounded mixed case")
         self.xs = np.asarray(xs, dtype=float)
         self.ys = np.asarray(ys, dtype=float)
         self.beam = beam
+        self.s3_diagonal = mixed_s3_diagonal
         if mixed_s3:
             from scripts.b3_e4_f03_plate_patch_work import c1_mixed_s3_cells
             self.s3_cells = c1_mixed_s3_cells(self.xs, self.ys)
@@ -74,7 +79,10 @@ class FiniteSurfaceMomentPatch:
                         port = NativeHalfCellSpatialPort(
                             beam.context, element, cell, fraction)
                         if (i,j) in self.s3_cells:
-                            diagonal = float(y0+(x-x0)*(y1-y0)/(x1-x0))
+                            xi_cell = (x-x0)/(x1-x0)
+                            diagonal = float(y0+(
+                                xi_cell if self.s3_diagonal == "bl_tr" else
+                                1.-xi_cell)*(y1-y0))
                             y_ranges = ((ly,min(hy,diagonal)),
                                         (max(ly,diagonal),hy))
                         else:
@@ -103,7 +111,8 @@ class FiniteSurfaceMomentPatch:
     def _point_shape(self, x: float, y: float
                      ) -> tuple[np.ndarray, np.ndarray]:
         return (structured_c1_mixed_point_shape(
-            self.xs, self.ys, x, y, self.s3_cells) if self.s3_cells else
+            self.xs, self.ys, x, y, self.s3_cells,
+            diagonal=self.s3_diagonal) if self.s3_cells else
             structured_q4_point_shape(self.xs, self.ys, x, y))
 
     def _shell(self, coordinates: np.ndarray, frames: np.ndarray,
@@ -245,10 +254,12 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
                  x_interval: tuple[float, float] = (.9, 1.),
                  x_weight: Callable[[float], float] | None = None,
                  quadrature_order: int = 3,
-                 mixed_s3: bool = False):
+                 mixed_s3: bool = False,
+                 mixed_s3_diagonal: str = "bl_tr"):
         super().__init__(xs, ys, beam, thickness=thickness,
                          quadrature_order=quadrature_order,
-                         mixed_s3=mixed_s3)
+                         mixed_s3=mixed_s3,
+                         mixed_s3_diagonal=mixed_s3_diagonal)
         low, high = x_interval
         if (not (.9 <= low < high <= 1.) or
                 min(abs(self.xs-low)) > 1e-12 or
@@ -509,7 +520,8 @@ def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
                          kind: str,
                          thickness: float = .035,
                          quadrature_order: int = 3,
-                         mixed_s3: bool = False
+                         mixed_s3: bool = False,
+                         mixed_s3_diagonal: str = "bl_tr",
                          ) -> tuple[np.ndarray, np.ndarray, list[FiniteSurfaceLineHybrid]]:
     """Two-cell P0/P1/dual rows of one six-channel C1 reference work law.
 
@@ -532,7 +544,8 @@ def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
 
         patches.append(FiniteSurfaceLineHybrid(
             xs, ys, beam, thickness=thickness, x_weight=basis,
-            quadrature_order=quadrature_order, mixed_s3=mixed_s3))
+            quadrature_order=quadrature_order, mixed_s3=mixed_s3,
+            mixed_s3_diagonal=mixed_s3_diagonal))
     rows = np.vstack([patch.reference_trace() for patch in patches])
     masses = np.array([patch.basis_integral_m for patch in patches])
     if not (np.isfinite(rows).all() and np.isfinite(masses).all() and
@@ -685,7 +698,8 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                                        include_shell_eight: bool = False,
                                        axial_shell_cells: tuple[int, ...] | None = None,
                                        reciprocal_shell_x_cells: int | None = None,
-                                       mixed_s3: bool = False
+                                       mixed_s3: bool = False,
+                                       mixed_s3_diagonal: str = "bl_tr",
                                        ) -> list[dict]:
     """Compare six physical interface actions on several bounded local grids.
 
@@ -727,6 +741,9 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                          axial_shell_cells is None and
                          reciprocal_shell_x_cells is None):
         raise ValueError("mixed C1 Q4/S3 requires bounded sparse weighted cells")
+    if (mixed_s3_diagonal not in ("bl_tr", "br_tl") or
+            not mixed_s3 and mixed_s3_diagonal != "bl_tr"):
+        raise ValueError("mixed C1 S3 diagonal requires bounded mixed case")
     if c1_beam_half_cells not in (12, 14, 18, 24, 26) or (
             not hybrid and c1_beam_half_cells != 12):
         raise ValueError("bounded C1 beam resolution requires hybrid 12/14/18/24/26")
@@ -761,7 +778,8 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                 raw_e4_mixed_c1_tangent,
             )
             shell_operators[patch_cells] = (
-                raw_e4_mixed_c1_tangent(xs,ys,thickness=.035)
+                raw_e4_mixed_c1_tangent(
+                    xs,ys,thickness=.035,diagonal=mixed_s3_diagonal)
                 if mixed_s3 else raw_e4_tangent(xs,ys,thickness=.035))
         shell_k, shell_physical = shell_operators[patch_cells]
         if hybrid:
@@ -776,7 +794,8 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
             else:
                 rows, basis_integrals, patches = c1_hybrid_line_space(
                     xs, ys, beam, kind=line_space_kind,
-                    mixed_s3=mixed_s3)
+                    mixed_s3=mixed_s3,
+                    mixed_s3_diagonal=mixed_s3_diagonal)
             reference_gap = max(float(np.max(np.abs(patch.evaluate(
                 patch.reference_nodes,
                 np.broadcast_to(np.eye(3),
@@ -960,6 +979,7 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                           "C1 single-interval line hybrid") if hybrid else
                          "finite surface-moment footprint"),
             **({"shell_topology": "Q4/S3-V2D"} if mixed_s3 else {}),
+            **({"s3_diagonal": mixed_s3_diagonal} if mixed_s3 else {}),
             "interpretation": "support-conditioned finite-grid physical action; not continuum inf-sup or line-space qualification",
             **({("p0_density_norm" if line_space_kind is None else
                  "line_density_norm"): line_norm} if line_norm is not None else {}),

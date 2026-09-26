@@ -290,14 +290,15 @@ def c1_mixed_s3_cells(xs: np.ndarray, ys: np.ndarray
 
 
 def raw_e4_mixed_c1_tangent(xs: np.ndarray, ys: np.ndarray, *,
-                            thickness: float = .035
+                            thickness: float = .035,
+                            diagonal: str = "bl_tr",
                             ) -> tuple[np.ndarray, np.ndarray]:
     """Small dense Q4/S3-V2D assembly oracle for the fixed C1 transition."""
     x = np.asarray(xs, dtype=float)
     y = np.asarray(ys, dtype=float)
     cells = c1_mixed_s3_cells(x, y)
-    if thickness != .035 or not (np.all(np.diff(x)>0.) and
-                                  np.all(np.diff(y)>0.)):
+    if (thickness != .035 or diagonal not in ("bl_tr", "br_tl") or
+            not (np.all(np.diff(x)>0.) and np.all(np.diff(y)>0.))):
         raise ValueError("bounded 35 mm ordered C1 mixed grid required")
     model = FEModel("f03-c1-mixed-q4-s3-diagnostic")
     model.add_material("steel", 210e9, .3, density=7850.)
@@ -309,7 +310,8 @@ def raw_e4_mixed_c1_tangent(xs: np.ndarray, ys: np.ndarray, *,
             a = 1+j*len(x)+i
             b, d = a+1, a+len(x)
             c = d+1
-            groups = ((a,b,c),(a,c,d)) if (i,j) in cells else ((a,b,c,d),)
+            groups = (((a,b,c),(a,c,d)) if diagonal == "bl_tr" else
+                      ((a,b,d),(b,c,d))) if (i,j) in cells else ((a,b,c,d),)
             for nodes in groups:
                 eid = len(elements)+1
                 s3 = len(nodes) == 3

@@ -473,7 +473,8 @@ def test_c1_weighted_endpoint_work_uses_actual_e4_chart():
         assert abs(float(multiplier@exact[:, 3])-mixed) < 1e-6
 
 
-def test_c1_mixed_s3_host_reference_and_actual_chart_work():
+@pytest.mark.parametrize("diagonal", ("bl_tr", "br_tl"))
+def test_c1_mixed_s3_host_reference_and_actual_chart_work(diagonal):
     xs, ys = local_grid(2, transverse_cells=4)
     selected = c1_mixed_s3_cells(xs, ys)
     assert len(selected) == 4
@@ -481,7 +482,7 @@ def test_c1_mixed_s3_host_reference_and_actual_chart_work():
     for x, y in ((.925, -.0375), (.9125, -.0125),
                  (.925, .0125), (.9125, .0375)):
         nodes, shape = structured_c1_mixed_point_shape(
-            xs, ys, x, y, selected)
+            xs, ys, x, y, selected, diagonal=diagonal)
         assert len(nodes) == 3
         assert np.min(shape) >= -1e-14
         np.testing.assert_allclose(shape.sum(), 1., atol=1e-14)
@@ -490,16 +491,21 @@ def test_c1_mixed_s3_host_reference_and_actual_chart_work():
     # Both adjacent triangle traces have the same interpolated field on
     # their diagonal, including the rotational nodal chart variables.
     x, y = .925, -.0375
-    nodes, shape = structured_c1_mixed_point_shape(xs, ys, x, y, selected)
+    nodes, shape = structured_c1_mixed_point_shape(
+        xs, ys, x, y, selected, diagonal=diagonal)
     full, _ = structured_q4_point_shape(xs, ys, x, y)
     arbitrary_field = np.arange(len(nodes_xyz), dtype=float)**2
-    diagonal_value = .5*(arbitrary_field[full[0]]+arbitrary_field[full[2]])
+    endpoints = full[[0, 2]] if diagonal == "bl_tr" else full[[1, 3]]
+    diagonal_value = .5*sum(arbitrary_field[endpoints])
     assert shape@arbitrary_field[nodes] == pytest.approx(
         diagonal_value, abs=1e-11)
-    assert np.array((.5, .5, 0.)) @ arbitrary_field[full[[0, 2, 3]]] == (
-        pytest.approx(diagonal_value, abs=1e-14))
+    opposite = full[[0, 2, 3]] if diagonal == "bl_tr" else full[[1, 2, 3]]
+    opposite_weights = (.5, .5, 0.) if diagonal == "bl_tr" else (.5, 0., .5)
+    assert np.array(opposite_weights) @ arbitrary_field[opposite] == pytest.approx(
+        diagonal_value, abs=1e-14)
 
-    shell_k, physical = raw_e4_mixed_c1_tangent(xs, ys)
+    shell_k, physical = raw_e4_mixed_c1_tangent(
+        xs, ys, diagonal=diagonal)
     assert shell_k.shape == physical.shape == (6*len(xs)*len(ys),)*2
     assert np.isfinite(shell_k).all() and np.isfinite(physical).all()
     assert np.linalg.norm(shell_k-shell_k.T)/np.linalg.norm(shell_k) < 1e-9
@@ -524,7 +530,8 @@ def test_c1_mixed_s3_host_reference_and_actual_chart_work():
     multiplier = np.array((18., -23., 31., 7., -100., 13.))
     for kind in ("piecewise_constant", "continuous_linear", "dual_linear"):
         rows, masses, patches = c1_hybrid_line_space(
-            xs, ys, beam, kind=kind, mixed_s3=True)
+            xs, ys, beam, kind=kind, mixed_s3=True,
+            mixed_s3_diagonal=diagonal)
         assert rows.shape[0] == 6*len(masses)
         assert np.all(masses > 0.)
         patch = patches[0]
@@ -548,7 +555,8 @@ def test_c1_mixed_s3_host_reference_and_actual_chart_work():
         assert abs(float(multiplier@exact[:, 3])-mixed) < 1e-6
 
 
-def test_c1_mixed_s3_line_modes_and_loaded_balance():
+@pytest.mark.parametrize("diagonal", ("bl_tr", "br_tl"))
+def test_c1_mixed_s3_line_modes_and_loaded_balance(diagonal):
     from threadpoolctl import threadpool_limits
 
     beam = build(12, z_offset=.0675,
@@ -558,21 +566,24 @@ def test_c1_mixed_s3_line_modes_and_loaded_balance():
         loaded = graded_terminal_coupling(
             2, beam, transverse_cells=4, plate_thickness=.035,
             include_line_hybrid_spaces=True, sparse_line_only=True,
-            mixed_s3=True, force_sign=-1.)
+            mixed_s3=True, mixed_s3_diagonal=diagonal,
+            force_sign=-1.)
         for kind, count in (("piecewise_constant", 2),
                             ("continuous_linear", 3),
                             ("dual_linear", 3)):
             result = bounded_physical_compliance_screen(
                 hybrid=True, segmented=True, sparse_action=True,
                 reciprocal_shell_x_cells=None, line_space_kind=kind,
-                mixed_s3=True)[0]
+                mixed_s3=True, mixed_s3_diagonal=diagonal)[0]
             assert result["shell_topology"] == "Q4/S3-V2D"
+            assert result["s3_diagonal"] == diagonal
             assert result["constraint_rank_on_free"] == 6*count
             assert result["reference_gap_m"] < 1e-12
             norm = result["line_density_norm"]
             assert norm["smallest_nonaxial_mode_shell_action"] > 0.
             assert norm["smallest_nonaxial_mode_beam_action"] > 0.
     assert loaded["shell_topology"] == "Q4/S3-V2D"
+    assert loaded["s3_diagonal"] == diagonal
     assert loaded["e4_elements"] == 124
     for family in loaded["results"].values():
         assert family["constraint_rank"] in (12, 18)
