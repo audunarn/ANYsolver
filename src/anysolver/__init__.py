@@ -255,6 +255,9 @@ from .general_contact import (
     ContactValidationReport,
     RigidContactBody,
     solve_static_contact_path,
+    TransientContactResults,
+    TransientContactSettings,
+    solve_transient_contact,
     validate_general_contact,
 )
 from .fracture import (
@@ -719,6 +722,9 @@ __all__ = [
     "ContactValidationReport",
     "RigidContactBody",
     "solve_static_contact_path",
+    "TransientContactResults",
+    "TransientContactSettings",
+    "solve_transient_contact",
     "validate_general_contact",
     "DeletedElementRecord",
     "ElementDeletionConfig",

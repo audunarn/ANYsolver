@@ -54,7 +54,8 @@ impact API has a separate contract. Status terms are deliberately distinct:
 | Automatic pairing, triangulated obstacles, boundaries and self-contact | Static | Open | C4 |
 | Internal material-frame Coulomb law, objective paired motion and fixed S3 V2D material-point force map | Local prescribed-pressure paired force and bounded numerical development tangent; no public shell/beam friction admission, pressure coupling or solver history | Implemented, locally tested components; C5 open | Scalar stick/slip, reversal, objective frame motion, S3 physical offset/work, smooth local derivatives, paired virtual work, branch-preserving tangent and opening in `tests/test_general_contact_friction_point.py`, `tests/test_general_contact_s3_skin_work.py` and `tests/test_general_contact_s3_friction_pair.py`; see [local law limits](GENERAL_CONTACT_C5_FRICTION_POINT.md) |
 | Coulomb friction, swept beam sections, nonlinear material combinations, arc length | Static and history | Open | C5 |
-| Shell/classical-beam impact and free rigid bodies | Transient Newmark profile | Open | C6 |
+| Qualified planar Q4 elastic shell against one fixed rigid plane; positive-definite reduced mass | Frictionless implicit average-acceleration Newmark impact with bounded nonlinear steps and a cubic-path swept-gap check | Implemented, locally tested development profile; C6 open | Independent uniform mass–spring oracle, interior crossing and rejected-step reuse in `tests/test_general_contact_transient_plane.py`; runnable example; see [Q4 plane impact limits](GENERAL_CONTACT_C6_Q4_PLANE_DEV.md) |
+| Shell/classical-beam impact and free rigid bodies | General transient Newmark profile | Open | C6 |
 | Native finite-velocity B3-GE | Contact-free Lie-group midpoint profile | Open | C7 |
 | Native and coupled impact | Common-stage transient contact | Open | C8; requires C7 |
 | ANYfem/ANYstructure adapters, representative workflows and scale evidence | Installed applications | Open | C9 |
