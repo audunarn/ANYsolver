@@ -267,6 +267,83 @@ def raw_e4_tangent(xs: np.ndarray,ys: np.ndarray, *,
     return tangent,physical
 
 
+def c1_mixed_s3_cells(xs: np.ndarray, ys: np.ndarray
+                       ) -> frozenset[tuple[int, int]]:
+    """The bounded C1 Q4/S3 transition: triangulate the first bond cell."""
+    x = np.asarray(xs, dtype=float)
+    y = np.asarray(ys, dtype=float)
+    if (x.ndim != 1 or y.ndim != 1 or
+            not np.isfinite(x).all() or not np.isfinite(y).all() or
+            not np.all(np.diff(x) > 0.) or not np.all(np.diff(y) > 0.)):
+        raise ValueError("bounded C1 mixed grid requires ordered finite axes")
+    x0 = np.flatnonzero(np.isclose(x, .9, rtol=0., atol=1e-12))
+    x1 = np.flatnonzero(np.isclose(x, .95, rtol=0., atol=1e-12))
+    y0 = np.flatnonzero(np.isclose(y, -.05, rtol=0., atol=1e-12))
+    y1 = np.flatnonzero(np.isclose(y, .05, rtol=0., atol=1e-12))
+    if (len(x0) != 1 or len(x1) != 1 or
+            len(y0) != 1 or len(y1) != 1 or
+            int(x1[0]) != int(x0[0])+1 or int(y1[0]) != int(y0[0])+4 or
+            len(x)*len(y)*6 > 1800):
+        raise ValueError("bounded C1 mixed grid needs x2/y4 bond cuts")
+    return frozenset((int(x0[0]), j)
+                     for j in range(int(y0[0]), int(y1[0])))
+
+
+def raw_e4_mixed_c1_tangent(xs: np.ndarray, ys: np.ndarray, *,
+                            thickness: float = .035
+                            ) -> tuple[np.ndarray, np.ndarray]:
+    """Small dense Q4/S3-V2D assembly oracle for the fixed C1 transition."""
+    x = np.asarray(xs, dtype=float)
+    y = np.asarray(ys, dtype=float)
+    cells = c1_mixed_s3_cells(x, y)
+    if thickness != .035 or not (np.all(np.diff(x)>0.) and
+                                  np.all(np.diff(y)>0.)):
+        raise ValueError("bounded 35 mm ordered C1 mixed grid required")
+    model = FEModel("f03-c1-mixed-q4-s3-diagnostic")
+    model.add_material("steel", 210e9, .3, density=7850.)
+    for index, (xi, yi) in enumerate(((xi, yi) for yi in y for xi in x), 1):
+        model.add_node(index, float(xi), float(yi), 0.)
+    elements = []
+    for j in range(len(y)-1):
+        for i in range(len(x)-1):
+            a = 1+j*len(x)+i
+            b, d = a+1, a+len(x)
+            c = d+1
+            groups = ((a,b,c),(a,c,d)) if (i,j) in cells else ((a,b,c,d),)
+            for nodes in groups:
+                eid = len(elements)+1
+                s3 = len(nodes) == 3
+                element = create_shell_element(
+                    eid, list(nodes), "steel",
+                    formulation="e4-pl-s3-v2d" if s3 else "e4-pl",
+                    thickness=thickness, reference_normal=(0.,0.,1.))
+                model.add_element(eid, element)
+                elements.append((eid, nodes, element, s3))
+    material = model.get_material("steel")
+    size = 6*len(x)*len(y)
+    tangent = np.zeros((size, size))
+    physical = np.zeros((size, size))
+    for eid, nodes, element, s3 in elements:
+        origin = (element.init_model_bound_nonlinear_state(
+            model.mesh, material, 3) if s3 else
+            element.init_nonlinear_state(3))
+        force, stiffness, candidate = corotational_element_response(
+            model, eid, element, np.zeros(6*len(nodes)), True,
+            committed_state=origin, num_layers=3,
+            tangent_mode="consistent")
+        if (force is None or stiffness is None or candidate is None or
+                np.linalg.norm(force)>1e-7 or
+                not np.isfinite(stiffness).all()):
+            raise ArithmeticError("C1 mixed E4 zero-state operator unavailable")
+        local = np.asarray(element.compute_stiffness_components(
+            model.mesh, material)["physical"])
+        dofs = np.array([6*(node-1)+axis for node in nodes
+                         for axis in range(6)])
+        tangent[np.ix_(dofs,dofs)] += np.asarray(stiffness)
+        physical[np.ix_(dofs,dofs)] += local
+    return tangent, physical
+
+
 def graded_patch_force(xs: np.ndarray,ys: np.ndarray,
                        loading: str) -> tuple[np.ndarray,np.ndarray]:
     if loading not in LOADS:

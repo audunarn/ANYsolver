@@ -11,9 +11,12 @@ from scripts.b3_e4_f03_distributed_surface_finite import (
 from anysolver.corotational import rotation_matrix_from_vector
 from scripts.b3_e4_f03_local_footprint_work import (
     bond_x_segments, distributed_surface_patch_trace,
-    graded_terminal_coupling,
+    graded_terminal_coupling, structured_c1_mixed_point_shape,
+    structured_q4_point_shape,
 )
-from scripts.b3_e4_f03_plate_patch_work import local_grid
+from scripts.b3_e4_f03_plate_patch_work import (
+    c1_mixed_s3_cells, local_grid, raw_e4_mixed_c1_tangent,
+)
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
@@ -468,6 +471,115 @@ def test_c1_weighted_endpoint_work_uses_actual_e4_chart():
                  work(-h2, h2)+work(-h2, -h2))/(4*h2*h2)
         assert abs(float(multiplier@exact[:, 1])-first) < 1e-7
         assert abs(float(multiplier@exact[:, 3])-mixed) < 1e-6
+
+
+def test_c1_mixed_s3_host_reference_and_actual_chart_work():
+    xs, ys = local_grid(2, transverse_cells=4)
+    selected = c1_mixed_s3_cells(xs, ys)
+    assert len(selected) == 4
+    nodes_xyz = np.array([(x, y, 0.) for y in ys for x in xs])
+    for x, y in ((.925, -.0375), (.9125, -.0125),
+                 (.925, .0125), (.9125, .0375)):
+        nodes, shape = structured_c1_mixed_point_shape(
+            xs, ys, x, y, selected)
+        assert len(nodes) == 3
+        assert np.min(shape) >= -1e-14
+        np.testing.assert_allclose(shape.sum(), 1., atol=1e-14)
+        np.testing.assert_allclose(shape@nodes_xyz[nodes, :2],
+                                   (x, y), atol=1e-14)
+    # Both adjacent triangle traces have the same interpolated field on
+    # their diagonal, including the rotational nodal chart variables.
+    x, y = .925, -.0375
+    nodes, shape = structured_c1_mixed_point_shape(xs, ys, x, y, selected)
+    full, _ = structured_q4_point_shape(xs, ys, x, y)
+    arbitrary_field = np.arange(len(nodes_xyz), dtype=float)**2
+    diagonal_value = .5*(arbitrary_field[full[0]]+arbitrary_field[full[2]])
+    assert shape@arbitrary_field[nodes] == pytest.approx(
+        diagonal_value, abs=1e-11)
+    assert np.array((.5, .5, 0.)) @ arbitrary_field[full[[0, 2, 3]]] == (
+        pytest.approx(diagonal_value, abs=1e-14))
+
+    shell_k, physical = raw_e4_mixed_c1_tangent(xs, ys)
+    assert shell_k.shape == physical.shape == (6*len(xs)*len(ys),)*2
+    assert np.isfinite(shell_k).all() and np.isfinite(physical).all()
+    assert np.linalg.norm(shell_k-shell_k.T)/np.linalg.norm(shell_k) < 1e-9
+
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    rng = np.random.default_rng(2094)
+    shell = rng.normal(size=(len(xs)*len(ys), 6))*np.array(
+        (.001, .001, .001, .08, .08, .08))
+    du = rng.normal(size=shell.shape)*np.array(
+        (.002, .002, .002, .04, .04, .04))
+    dv = rng.normal(size=shell.shape)*np.array(
+        (.002, .002, .002, .04, .04, .04))
+    base = np.zeros(beam.context.count)
+    base[6:beam.context.nodal_count] = rng.normal(
+        size=beam.context.nodal_count-6)*.001
+    bu = rng.normal(size=beam.context.count)*.001
+    bv = rng.normal(size=beam.context.count)*.001
+    bu[:6] = bv[:6] = 0.
+    state = beam.context.advance(beam.context.initial.mechanical, base)
+    multiplier = np.array((18., -23., 31., 7., -100., 13.))
+    for kind in ("piecewise_constant", "continuous_linear", "dual_linear"):
+        rows, masses, patches = c1_hybrid_line_space(
+            xs, ys, beam, kind=kind, mixed_s3=True)
+        assert rows.shape[0] == 6*len(masses)
+        assert np.all(masses > 0.)
+        patch = patches[0]
+        assert len(patch.points) > 0
+        assert np.max(np.abs(patch.evaluate_e4_total(
+            np.zeros(6*len(nodes_xyz)),
+            beam.context.initial.mechanical)[:, 0])) < 1e-12
+        exact = patch.evaluate_e4_total(
+            shell.ravel(), state, (du, bu), (dv, bv))
+
+        def work(a, b):
+            candidate = beam.context.advance(state, a*bu+b*bv)
+            return float(multiplier@patch.evaluate_e4_total(
+                (shell+a*du+b*dv).ravel(), candidate)[:, 0])
+
+        h1, h2 = 1e-5, 2e-3
+        first = (work(h1, 0.)-work(-h1, 0.))/(2*h1)
+        mixed = (work(h2, h2)-work(h2, -h2)-
+                 work(-h2, h2)+work(-h2, -h2))/(4*h2*h2)
+        assert abs(float(multiplier@exact[:, 1])-first) < 1e-7
+        assert abs(float(multiplier@exact[:, 3])-mixed) < 1e-6
+
+
+def test_c1_mixed_s3_line_modes_and_loaded_balance():
+    from threadpoolctl import threadpool_limits
+
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    with threadpool_limits(limits=1):
+        loaded = graded_terminal_coupling(
+            2, beam, transverse_cells=4, plate_thickness=.035,
+            include_line_hybrid_spaces=True, sparse_line_only=True,
+            mixed_s3=True, force_sign=-1.)
+        for kind, count in (("piecewise_constant", 2),
+                            ("continuous_linear", 3),
+                            ("dual_linear", 3)):
+            result = bounded_physical_compliance_screen(
+                hybrid=True, segmented=True, sparse_action=True,
+                reciprocal_shell_x_cells=None, line_space_kind=kind,
+                mixed_s3=True)[0]
+            assert result["shell_topology"] == "Q4/S3-V2D"
+            assert result["constraint_rank_on_free"] == 6*count
+            assert result["reference_gap_m"] < 1e-12
+            norm = result["line_density_norm"]
+            assert norm["smallest_nonaxial_mode_shell_action"] > 0.
+            assert norm["smallest_nonaxial_mode_beam_action"] > 0.
+    assert loaded["shell_topology"] == "Q4/S3-V2D"
+    assert loaded["e4_elements"] == 124
+    for family in loaded["results"].values():
+        assert family["constraint_rank"] in (12, 18)
+        for case in family["cases"].values():
+            assert case["mechanics_error"] < 1e-7
+            assert case["physical_shell_work_j"] > 0.
+            assert case["total_external_work_j"] > 0.
 
 
 def test_c1_hybrid_physical_director_spin_is_null_at_finite_tilt():

@@ -32,7 +32,9 @@ from scripts._b3_e4_f03_shell_strip_pose_candidate import (
     reference_spatial_trace_strip, strip_weights, _clip, _quadrature,
 )
 from scripts._b3_e4_f03_shell_trace import make_shell
-from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
+from scripts.b3_e4_f03_plate_patch_work import (
+    c1_mixed_s3_cells, local_grid, raw_e4_mixed_c1_tangent, raw_e4_tangent,
+)
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
@@ -110,6 +112,23 @@ def structured_q4_point_shape(xs: np.ndarray, ys: np.ndarray,
                     (j+1)*len(xs)+i+1,(j+1)*len(xs)+i))
     values=np.array(((1-xi)*(1-eta),xi*(1-eta),xi*eta,(1-xi)*eta))
     return nodes,values
+
+
+def structured_c1_mixed_point_shape(
+        xs: np.ndarray, ys: np.ndarray, x: float, y: float,
+        s3_cells: frozenset[tuple[int, int]]
+        ) -> tuple[np.ndarray, np.ndarray]:
+    """Q4 or BL-to-TR S3-V2D host on the bounded C1 structured grid."""
+    nodes, values = structured_q4_point_shape(xs, ys, x, y)
+    i = int(np.clip(np.searchsorted(xs, x, side="left")-1, 0, len(xs)-2))
+    j = int(np.clip(np.searchsorted(ys, y, side="left")-1, 0, len(ys)-2))
+    if (i,j) not in s3_cells:
+        return nodes, values
+    xi = (x-xs[i])/(xs[i+1]-xs[i])
+    eta = (y-ys[j])/(ys[j+1]-ys[j])
+    if eta <= xi:
+        return nodes[[0,1,2]], np.array((1.-xi, xi-eta, eta))
+    return nodes[[0,2,3]], np.array((1.-eta, xi, eta-xi))
 
 
 def bond_x_segments(lo_x: float, hi_x: float,
@@ -1220,8 +1239,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              include_line_hybrid_ablation: bool = False,
                              sparse_line_only: bool = False,
                              line_quadrature_order: int = 3,
+                             mixed_s3: bool = False,
                              force_sign: float = 1.) -> dict:
-    """Linearized native B3/E4 Q4 terminal KKT on a resolved local grid."""
+    """Linearized native B3/E4 terminal KKT on a resolved local grid."""
     if plate_thickness not in (.07,.035):
         raise ValueError("bounded native plate thickness required")
     if force_sign not in (-1., 1.):
@@ -1235,11 +1255,23 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
     if line_quadrature_order not in (3, 5) or (
             line_quadrature_order != 3 and not sparse_line_only):
         raise ValueError("fifth-order quadrature requires bounded sparse line comparison")
+    if mixed_s3 and not (sparse_line_only and patch_cells == 2 and
+                         transverse_cells == 4 and
+                         plate_thickness == .035 and
+                         beam.n_half_cells == 12 and
+                         not (include_line_hybrid or
+                              include_line_hybrid_segmented or
+                              include_line_hybrid_ablation or
+                              include_surface_moments)):
+        raise ValueError("mixed C1 Q4/S3 requires bounded sparse weighted line case")
     if include_line_hybrid_ablation and patch_cells != 2:
         raise ValueError("bounded hybrid ablation requires the fixed C1 two-cell grid")
     beam_axis_z=plate_thickness/2+.05
     xs,ys=local_grid(patch_cells,transverse_cells=transverse_cells)
-    shell_k,physical=raw_e4_tangent(xs,ys,thickness=plate_thickness)
+    shell_k,physical=(raw_e4_mixed_c1_tangent(xs,ys,
+                        thickness=plate_thickness) if mixed_s3 else
+                      raw_e4_tangent(xs,ys,thickness=plate_thickness))
+    s3_cells=c1_mixed_s3_cells(xs,ys) if mixed_s3 else frozenset()
     shell_nodes=np.array([(x,y,0.) for y in ys for x in xs])
     shell_size=6*len(shell_nodes)
     total=shell_size+beam.context.count
@@ -1346,7 +1378,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         )
         if include_line_hybrid_spaces:
             line_gap_patch=FiniteSurfaceLineHybrid(
-                xs,ys,beam,thickness=plate_thickness)
+                xs,ys,beam,thickness=plate_thickness,mixed_s3=mixed_s3)
         if include_line_hybrid or include_line_hybrid_ablation:
             hybrid = FiniteSurfaceLineHybrid(
                 xs, ys, beam, thickness=plate_thickness)
@@ -1391,7 +1423,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                                ("dual_linear", "dual_p1")):
                 rows,masses,_=c1_hybrid_line_space(
                     xs,ys,beam,kind=kind,thickness=plate_thickness,
-                    quadrature_order=line_quadrature_order)
+                    quadrature_order=line_quadrature_order,
+                    mixed_s3=mixed_s3)
                 name=f"line_hybrid_{label}_weighted"
                 families.append((name,rows))
                 space_masses[name]=masses.tolist()
@@ -1471,7 +1504,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 for station in (900,950,1000):
                     x=station/1000
                     def shell_value(y, axis):
-                        nodes,shape=structured_q4_point_shape(xs,ys,x,y)
+                        nodes,shape=(structured_c1_mixed_point_shape(
+                            xs,ys,x,y,s3_cells) if mixed_s3 else
+                            structured_q4_point_shape(xs,ys,x,y))
                         return float(shape@nodal_shell[nodes,axis])
                     half_index=int(np.flatnonzero(
                         abs(beam.abscissae-x)<1e-12)[0])
@@ -1567,8 +1602,10 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
             "bond_x_cells":patch_cells,
             "bond_y_cells":patch_cells if transverse_cells is None else transverse_cells,
             "plate_thickness_m":plate_thickness,
-            "shell_nodes":len(shell_nodes),"e4_elements":(len(xs)-1)*(len(ys)-1),
+            "shell_nodes":len(shell_nodes),
+            "e4_elements":(len(xs)-1)*(len(ys)-1)+len(s3_cells),
             "beam_half_cells":beam.n_half_cells,"results":records,
+            **({"shell_topology":"Q4/S3-V2D"} if mixed_s3 else {}),
             **({"surface_moment_reference":surface_diagnostics}
                if include_surface_moments else {})}
 
