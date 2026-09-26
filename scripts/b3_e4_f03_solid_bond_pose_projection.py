@@ -397,9 +397,9 @@ def bound_c1_unbonded_vertical_gap(
     if set(coords) != set(u) or not all(np.isfinite(v).all() for v in u.values()):
         raise ValueError("complete finite C1 displacement inventory required")
     pairs = np.asarray(face_pairs, dtype=int)
-    if pairs.shape not in ((32, 8, 2), (128, 8, 2)) or not set(pairs.flat).issubset(coords):
-        raise ValueError("complete 128-face or 32-face paired C1 inventory required")
-    expected_grid = {32: (9, 5), 128: (17, 9)}[len(pairs)]
+    if pairs.shape not in ((32, 8, 2), (128, 8, 2), (250, 8, 2)) or not set(pairs.flat).issubset(coords):
+        raise ValueError("complete 250-face, 128-face or 32-face paired C1 inventory required")
+    expected_grid = {32: (9, 5), 128: (17, 9), 250: (26, 11)}[len(pairs)]
     transform = np.array(((1., 0., 0.), (-.5, 2., -.5), (0., 0., 1.)))
     sample = (-1., 0., 1.)
 

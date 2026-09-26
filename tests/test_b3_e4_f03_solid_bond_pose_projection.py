@@ -11,7 +11,7 @@ from scripts.b3_e4_f03_solid_bond_pose_projection import (
 )
 
 
-@pytest.mark.parametrize("factor,faces,seam_faces", ((2,32,4),(4,128,8)))
+@pytest.mark.parametrize("factor,faces,seam_faces", ((2,32,4),(4,128,8),(5,250,10)))
 def test_c1_saved_field_gap_bound_distinguishes_open_and_overlapping_faces(
         tmp_path, factor, faces, seam_faces):
     deck, meta = build(
@@ -39,7 +39,7 @@ def test_c1_saved_field_gap_bound_distinguishes_open_and_overlapping_faces(
         coords, downward, meta["unbonded_face_pairs"])
     assert negative["status"] == "INCONCLUSIVE_FACE_GAP_BOUND"
     assert negative["minimum_nonseam_gap_bound_m"] < 0.
-    with pytest.raises(ValueError, match="complete 128-face"):
+    with pytest.raises(ValueError, match="complete 250-face"):
         bound_c1_unbonded_vertical_gap(
             coords, upward, meta["unbonded_face_pairs"][:-1])
 
