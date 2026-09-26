@@ -160,3 +160,26 @@ state was identical before sliding. Raw development output is
 qualify the method across meshes, overlap transitions or installed packages.
 The source example reproduces the bounded first-slide profile with
 `python examples/general_contact_refined_q4_s3_eight_q4_press.py --first-slide --roundoff-support`.
+
+The eight-Q4/two-S3 continuation also completed its second 25 mm slide under
+the same settings after fixing adaptive Q4 overlap integration. Clipping had
+produced one tiny fan triangle whose area-scaled error allowance was below
+floating-point quadrature noise; equal root-fan shares preserve the declared
+global area and weighted-gap budgets. At the accepted 50 mm position, the
+independent lower gap was −1.832 µm and two pressure nodes were active.
+Complete unloading at that position opened to +40 µm with zero force and
+exactly zero stored normal multipliers. Raw development output and accepted
+restart checkpoints are under `C:/ANYworkspaceWork/general-contact-evidence`
+as `c1-eight-q4-second-slide-fanfix.txt` and `c1-eight-q4-open-zero.txt`.
+
+Reloading from that open checkpoint accepted the half-load step, then stopped
+at the declared 16-augmentation limit on final recontact. Its gap stayed
+within the 50 µm budget, but the pressure update was 0.01575 Pa against the
+0.0002 Pa criterion. The guarded smooth pivot declined across a projection
+signature change. Disposable collinear predictors reduced the update to about
+0.0016 Pa without meeting the unchanged gate. These probes were not added to
+the solver. The failed source-bound traces are
+`c1-eight-q4-recontact.txt` and
+`c1-eight-q4-recontact-aitken-two-probe.txt`. This refined eight-Q4 path is
+therefore a completed-step development subset, not a completed C1 handoff or
+engineering qualification.
