@@ -21,13 +21,18 @@ pure torque alone is a contact-inadmissible linear influence, and solid
 end-face traction differs from the native nodal load. Combined-minus-
 opening torque bond action matches independent support within
 `6.6e-5 N/N m`, while solid rigid-section fits exceed its final-state
-pairing by `6.91–7.19%`; these do not establish causation. Seven saved
+torque seam pairing by `6.91–7.19%`. The same projection on the validated
+opening-force field exceeds its own seam pairing by `6.24–7.02%`; its
+stress-derived bond wrench matches independent plate support within
+`2.1e-4 N/N m`. These are bilinear pairing remainders, not path energy,
+percentages of global load work, or a causal explanation. Seven saved
 native mesh ratios provide finite-grid rank, transfer and signed action,
 not inf-sup evidence. No P0/P1/dual choice follows from gaps or quotients.
 
 **Remaining uncertainty, next discriminator and action:** The station
-result prioritizes testing 3D section/end-port and load-map reduction
-against the existing common interface virtual work, while keeping the
+result and both load-specific remainders prioritize testing 3D
+section/end-port and load-map reduction against the existing common
+interface virtual work, while keeping the
 transverse `Fy/Mx/Mz` trace as a competing explanation. If a matched
 section/end-port projection explains the split, revise that reduction;
 if it does not, derive and test a mechanically distinct shell trace/law.
@@ -36,8 +41,9 @@ before any new external solve. Independently define and review positive
 C1 broken-trace and primal norms before interpreting the existing ratios
 as stability evidence; retained B3 yaw jumps bar an automatic continuous
 trace norm. No extra classical axial refinement is indicated. Corrected
-station evidence is `f03-c1-factor5-transverse-station-match-dev-20260926-v2`
-under `.qualification/b3-ge-e4-pl/`; v1 remains preserved. Formal F03
+station evidence is `f03-c1-factor5-transverse-station-match-dev-20260926-v2`;
+opening projection is `f03-c1-factor5-opening-weak-work-dev-20260926-v2`
+under `.qualification/b3-ge-e4-pl/`; both v1 roots remain preserved. Formal F03
 authority is unconsumed; G0B open and G1 barred. No external process is
 running.
 
