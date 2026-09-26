@@ -126,3 +126,32 @@ accepted history; changing the option invalidated the checkpoint. The
 original projected consistency and independent gap checks still decide each
 increment. This reduces iteration cost for the observed branch, but does not
 establish physical response convergence or a universal performance result.
+
+### Bending-direction mesh sensitivity at strict enforcement
+
+The earlier four-Q4 comparison split the source across its width, where this
+case has nearly uniform loading. Refining along the bending direction gives a
+different result under the same −0.1 N total force, 10000 Pa/m normal
+regularization, 0.0002 Pa multiplier tolerance and 50 µm physical gap budget:
+
+| Source mesh | Accepted press? | Source normal force | Conservative lower gap | Active pressure nodes |
+|---|---|---:|---:|---:|
+| 2 Q4 along x | Yes; 5 updates | 0.0195635 N | −7.452 µm | 2 |
+| 4 Q4 along x | Yes; 11 updates | 0.0264524 N | −2.790 µm | 2 |
+| 8 Q4 along x | No; 16-update cap | No accepted force | −3.584 µm trial | 4 trial |
+
+The accepted two- to four-Q4 force changes by 35.2% relative to the coarse
+result. A source-only load applied at x=0.85 m gives equal free tip motion but
+local displacement of −39.0 µm on two Q4s and −46.8 µm on four; local
+structural interpolation contributes to the coupled difference. The eight-Q4
+case required 14,144 declared pair-local Hessian energy evaluations. After
+resource admission it stopped because its final projected multiplier change
+was 0.025733 Pa, despite a small structural residual and a physical gap
+within budget. Its four-active-node secant samples were poorly conditioned;
+rank-truncated offline extrapolations either reduced the predicted residual
+only modestly or required inadmissible negative/very large multipliers. These
+results provide no three-level response convergence and no accepted eight-Q4
+reaction. Raw runs and the bounded offline audit are retained under
+`C:/ANYworkspaceWork/general-contact-evidence` with `c1-mixed-four-q4-x-*`,
+`c1-mixed-eight-q4-x-*`, `c1-source-*-mesh-*` and
+`c1-eight-q4-reduced-secant-audit-*` names.
