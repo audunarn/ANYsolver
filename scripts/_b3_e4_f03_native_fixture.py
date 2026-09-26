@@ -1,7 +1,8 @@
 """Unregistered F03 diagnostic fixture for the native retained generalized B3 chain.
 
-The straight reference axis is x=s in [0, 1] metres.  ``n_half_cells`` is
-4, 8, or 16; two half-cells form each actual three-node native B3 element.
+The straight reference axis is x=s in [0, 1] metres. Two half-cells form
+each actual three-node native B3 element. The C1 profile has explicit
+station cuts and bounded bond-only subdivisions.
 The law is a positive *generalized resultant* law, not a fibre surrogate:
 E=210 GPa, nu=.3, G=E/(2*(1+nu)), A=.01 m², Ay=Az=.008 m²,
 Iy=Iz=8.333333333333333e-6 m⁴, J=1.6666666666666667e-5 m⁴.

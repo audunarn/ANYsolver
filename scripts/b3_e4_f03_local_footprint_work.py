@@ -1219,6 +1219,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              include_line_hybrid_spaces: bool = False,
                              include_line_hybrid_ablation: bool = False,
                              sparse_line_only: bool = False,
+                             line_quadrature_order: int = 3,
                              force_sign: float = 1.) -> dict:
     """Linearized native B3/E4 Q4 terminal KKT on a resolved local grid."""
     if plate_thickness not in (.07,.035):
@@ -1231,6 +1232,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              patch_cells not in (2, 4, 8, 16) or
                              (patch_cells == 2 and transverse_cells != 4)):
         raise ValueError("sparse line comparison requires bounded weighted C1 case")
+    if line_quadrature_order not in (3, 5) or (
+            line_quadrature_order != 3 and not sparse_line_only):
+        raise ValueError("fifth-order quadrature requires bounded sparse line comparison")
     if include_line_hybrid_ablation and patch_cells != 2:
         raise ValueError("bounded hybrid ablation requires the fixed C1 two-cell grid")
     beam_axis_z=plate_thickness/2+.05
@@ -1386,7 +1390,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                                ("continuous_linear", "p1"),
                                ("dual_linear", "dual_p1")):
                 rows,masses,_=c1_hybrid_line_space(
-                    xs,ys,beam,kind=kind,thickness=plate_thickness)
+                    xs,ys,beam,kind=kind,thickness=plate_thickness,
+                    quadrature_order=line_quadrature_order)
                 name=f"line_hybrid_{label}_weighted"
                 families.append((name,rows))
                 space_masses[name]=masses.tolist()

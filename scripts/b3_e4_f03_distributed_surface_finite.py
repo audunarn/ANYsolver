@@ -37,7 +37,10 @@ class _Point:
 class FiniteSurfaceMomentPatch:
     """Actual E4 director and retained B3 half-cell chart at a bounded patch."""
 
-    def __init__(self, xs: np.ndarray, ys: np.ndarray, beam, *, thickness: float):
+    def __init__(self, xs: np.ndarray, ys: np.ndarray, beam, *,
+                 thickness: float, quadrature_order: int = 3):
+        if quadrature_order not in (3, 5):
+            raise ValueError("bounded surface quadrature order must be 3 or 5")
         self.xs = np.asarray(xs, dtype=float)
         self.ys = np.asarray(ys, dtype=float)
         self.beam = beam
@@ -47,7 +50,7 @@ class FiniteSurfaceMomentPatch:
         self.reference_nodes = np.array(
             [(x, y, 0.) for y in self.ys for x in self.xs], dtype=float)
         self.points = []
-        roots, weights = np.polynomial.legendre.leggauss(3)
+        roots, weights = np.polynomial.legendre.leggauss(quadrature_order)
         inertia = np.zeros((3, 3))
         area = 0.
         for x0, x1 in zip(self.xs[:-1], self.xs[1:]):
@@ -220,8 +223,10 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
     def __init__(self, xs: np.ndarray, ys: np.ndarray, beam, *,
                  thickness: float,
                  x_interval: tuple[float, float] = (.9, 1.),
-                 x_weight: Callable[[float], float] | None = None):
-        super().__init__(xs, ys, beam, thickness=thickness)
+                 x_weight: Callable[[float], float] | None = None,
+                 quadrature_order: int = 3):
+        super().__init__(xs, ys, beam, thickness=thickness,
+                         quadrature_order=quadrature_order)
         low, high = x_interval
         if (not (.9 <= low < high <= 1.) or
                 min(abs(self.xs-low)) > 1e-12 or
@@ -480,7 +485,8 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
 
 def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
                          kind: str,
-                         thickness: float = .035
+                         thickness: float = .035,
+                         quadrature_order: int = 3
                          ) -> tuple[np.ndarray, np.ndarray, list[FiniteSurfaceLineHybrid]]:
     """Two-cell P0/P1/dual rows of one six-channel C1 reference work law.
 
@@ -502,7 +508,8 @@ def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
             return float(space.values((x-.9)/.1)[row])
 
         patches.append(FiniteSurfaceLineHybrid(
-            xs, ys, beam, thickness=thickness, x_weight=basis))
+            xs, ys, beam, thickness=thickness, x_weight=basis,
+            quadrature_order=quadrature_order))
     rows = np.vstack([patch.reference_trace() for patch in patches])
     masses = np.array([patch.basis_integral_m for patch in patches])
     if not (np.isfinite(rows).all() and np.isfinite(masses).all() and

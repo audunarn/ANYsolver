@@ -402,6 +402,33 @@ def test_c1_reciprocal_bond_refinement_preserves_exterior_and_reference():
                 norm["smallest_nonaxial_signed_quotient_upper"], abs=1e-8))
 
 
+def test_c1_line_quadrature_control_preserves_reference_and_default():
+    from threadpoolctl import threadpool_limits
+
+    xs, ys = local_grid(2, transverse_cells=4)
+    with threadpool_limits(limits=1):
+        beam = build(12, z_offset=.0675,
+                     torsion_constant=square_torsion_constant(),
+                     reference_profile="c1_tangent_2um")
+        for kind in ("piecewise_constant", "continuous_linear", "dual_linear"):
+            default, masses, _ = c1_hybrid_line_space(
+                xs, ys, beam, kind=kind)
+            explicit, explicit_masses, _ = c1_hybrid_line_space(
+                xs, ys, beam, kind=kind, quadrature_order=3)
+            fine, fine_masses, patches = c1_hybrid_line_space(
+                xs, ys, beam, kind=kind, quadrature_order=5)
+            np.testing.assert_array_equal(default, explicit)
+            np.testing.assert_array_equal(masses, explicit_masses)
+            assert np.max(np.abs(fine-default)) < 1e-8
+            assert np.max(np.abs(fine_masses-masses)) < 1e-12
+            assert all(len(patch.points) > 0 for patch in patches)
+    with pytest.raises(ValueError, match="fifth-order quadrature"):
+        graded_terminal_coupling(2, beam, transverse_cells=4,
+                                 plate_thickness=.035,
+                                 include_line_hybrid_spaces=True,
+                                 line_quadrature_order=5)
+
+
 def test_c1_weighted_endpoint_work_uses_actual_e4_chart():
     # Minimal valid shell grid keeps the same two bond hosts and beam trace.
     xs = np.array((-.5, .9, .95, 1., 1.5))
