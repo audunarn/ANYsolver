@@ -129,6 +129,8 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
             for kind, space in spaces.items()}
     masses = {kind: np.zeros(space.count) for kind, space in spaces.items()}
     inertias = {kind: np.zeros(space.count) for kind, space in spaces.items()}
+    longitudinal_moment = {mode: np.zeros(2) for mode in MODES}
+    longitudinal_inertia = np.zeros(2)
     shell_approx_sq = {mode:0. for mode in MODES[1:]}
     max_approx = {mode:0. for mode in MODES[1:]}
     area = 0.
@@ -228,6 +230,11 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
                                           ("solid_cell_Q4_proxy",fine_u),
                                           ("native_host_Q4_proxy",coarse_u)):
                         gap = frame.T@(shell_u-beam_u)
+                        segment = 0 if x < .95 else 1
+                        arm_x = x-(.925 if segment == 0 else .975)
+                        longitudinal_moment[mode][segment] -= w*arm_x*gap[2]
+                        if mode == "actual_solid_face":
+                            longitudinal_inertia[segment] += w*arm_x*arm_x
                         vals = np.r_[gap, y*gap[2], pitch[mode], -y*gap[0]]
                         for kind, space in spaces.items():
                             basis = space.values((x-.9)/.1)
@@ -239,6 +246,9 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
                                     inertias[kind][row] += w*phi*y*y
     if abs(area-.01)>1e-12:
         raise ArithmeticError("bond area differs from declared 0.01 m2")
+    if not np.allclose(longitudinal_inertia,
+                       np.full(2,.1*.05**3/12.),rtol=0.,atol=1e-12):
+        raise ArithmeticError("longitudinal moment lost physical interval")
     out = {}
     for kind, space in spaces.items():
         if np.any(masses[kind] <= 0.) or np.any(inertias[kind] <= 0.):
@@ -256,6 +266,10 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
             entry[mode] = rows.tolist()
         out[kind] = entry
     return {"rows_by_space":out,
+            "p0_longitudinal_position_My_probe_rad":{
+                mode:(value/longitudinal_inertia).tolist()
+                for mode,value in longitudinal_moment.items()},
+            "p0_longitudinal_inertia_m4":longitudinal_inertia.tolist(),
             "solid_to_Q4_proxy_top_face_rms_m":{mode:float(np.sqrt(v/area))
                                                  for mode,v in shell_approx_sq.items()},
             "solid_to_Q4_proxy_top_face_max_m":max_approx,"area_m2":area,
@@ -297,13 +311,14 @@ def main() -> None:
         raise ArithmeticError("nonzero native reference gap")
     result = {"classification":"bounded saved-field native six-gap projection; no G0B acceptance",
               "question":"Does the native six-channel line law fit this physically bonded 3D field within section-port and E4-reduction uncertainty?",
-              "outcome_rule":"A material six-row mismatch robust to the two port fits directs revision of the trace/pose mechanics before basis ranking; a small mismatch retains the law as a candidate and shifts scrutiny to section/end-loading idealization. Neither result alone qualifies the law.",
+              "outcome_rule":"Compare the director-pitch My row with a separate longitudinal-position moment on the same saved bond. If the latter is small and independently rank-valid on the native fixture, derive and test its full finite work law before any basis ranking; if it is large or dependent, prioritize section/end-load idealization. Neither result qualifies a law by itself.",
               "geometry":"F5 35 mm C1 plate, 100 mm square bar, terminal x=.9–1.0 m shared-node bond, +100 Nm/−1000 N pre-opened combined load; no new external solve",
-              "fit_assumptions":"linear interpolation of six rigid solid-section fits at .02 m stations; inferred director is the deformed top-bottom thickness chord; Q4 proxies use solid-cell or actual native 0.05 by 0.025 m hosts with inferred nodal directors; actual solid face uses Q20 interpolation; integration splits at the native x=.95 m line-space knot",
+              "fit_assumptions":"linear interpolation of six rigid solid-section fits at .02 m stations; inferred director is the deformed top-bottom thickness chord; Q4 proxies use solid-cell or actual native 0.05 by 0.025 m hosts with inferred nodal directors; actual solid face uses Q20 interpolation; integration splits at native x=.95 m and y=±.025 m host cuts",
               "reference_max_abs_gap":max_ref,"results":reports,
               "limits":["3D-to-E4 director is inferred, not an independent E4 state",
                         "linear rigid-section interpolation is not a native B3 interpolation",
                         "the six weak rows can vanish despite local nonzero gap",
+                        "the P0 longitudinal moment is a diagnostic only: no finite law, rank, or stability qualification is implied",
                         "combined load alone does not isolate pure torque",
                         "positive gap audit covers only declared opposed faces"],
               "inputs_sha256":{str(p.relative_to(base)):_sha(p) for p in paths},
