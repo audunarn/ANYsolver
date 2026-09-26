@@ -1,4 +1,4 @@
-"""Bounded cut-flux check for the saved C1 F4 pre-opened solid reference.
+"""Bounded cut-flux check for saved C1 F4/F5 pre-opened solid references.
 
 This checks whether a cut at x=.95 m can separate the *weak* shared-node
 bond action into left/right work. It does not infer an exact Cauchy traction
@@ -20,12 +20,18 @@ from scripts.b3_e4_f03_c3d20r_bond_force_recovery import (
 from scripts.b3_e4_f03_solid_bond_pose_projection import _read_frd_u
 
 
-CUT = .95
 ROOT = Path('.qualification/b3-ge-e4-pl')
 
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _axis_wrench(force: np.ndarray, x: np.ndarray,
+                 nodes: np.ndarray, cut: float) -> np.ndarray:
+    origin = np.array((cut, 0., .0675))
+    f = force[nodes]
+    return np.r_[f.sum(axis=0), np.cross(x[nodes]-origin, f).sum(axis=0)]
 
 
 def _face_flux(x: np.ndarray, u: np.ndarray, sign: int,
@@ -95,23 +101,27 @@ def _patch() -> dict:
     return errors
 
 
-def evaluate(base: Path = ROOT) -> dict:
-    folder = base / 'f03-ccx-c1-preopen-combined-factor4-dev-20260926-v1/solid-4-tip_mx'
-    stem = folder / 'solid-4-tip_mx'
+def evaluate(base: Path = ROOT, *, factor: int = 4,
+             cut: float = .95) -> dict:
+    if (factor, cut) not in ((4, .95), (5, .94), (5, .96)):
+        raise ValueError('only registered F4 cut or bracketing F5 cuts admitted')
+    folder = (base / f'f03-ccx-c1-preopen-combined-factor{factor}-dev-20260926-v1'
+              / f'solid-{factor}-tip_mx')
+    stem = folder / f'solid-{factor}-tip_mx'
     paths = (stem.with_suffix('.inp'), stem.with_suffix('.frd'), folder/'model.json')
     model = json.loads(paths[2].read_text())
     if (model['element_family'] != 'C3D20R'
             or model['bond_policy'] != 'terminal' or model['contact_policy'] != 'none'
             or model['boundary_policy'] != 'left_root'
             or model['bond_interval_m'] != [.9, 1.]
-            or model['factor'] != 4 or model['shear'] != 'tip_mx'
+            or model['factor'] != factor or model['shear'] != 'tip_mx'
             or model['tip_load_map'] != 'quadratic_face'
             or not model['torque_with_opening_fz']
             or model['reverse_tip_fz']
-            or model['shared_interface_nodes'] != 121
+            or model['shared_interface_nodes'] != {4: 121, 5: 181}[factor]
             or model['plate_thickness_m'] != .035
             or model['bar_reference_profile'] != 'C1_TWO_QUADRATIC_TANGENT_ALIGNED_V1'):
-        raise ValueError('saved pre-opened C1 F4 model changed')
+        raise ValueError('saved pre-opened C1 solid model changed')
     x, domains = read_deck(paths[0])
     applied = np.zeros_like(x)
     for node, force in model['applied_nodal_forces_N'].items():
@@ -119,35 +129,36 @@ def evaluate(base: Path = ROOT) -> dict:
     total_wrench = wrench(applied, x, np.arange(1, len(x)))
     if not np.allclose(total_wrench, (0., 0., -1000., 100., 1000., 0.),
                        rtol=0., atol=1e-8):
-        raise ValueError('F4 applied wrench changed')
+        raise ValueError('saved applied wrench changed')
     if (not np.allclose(x[model['plate_boundary_node_ids'], 0], -.5,
                         rtol=0., atol=1e-10)
             or not np.allclose(x[model['beam_root_node_ids'], 0], 0.,
                                rtol=0., atol=1e-10)):
-        raise ValueError('F4 support geometry changed')
-    if len(domains['Stiffener']) != 1280:
-        raise ValueError('F4 bar element inventory changed')
+        raise ValueError('saved support geometry changed')
+    if len(domains['Stiffener']) != {4: 1280, 5: 3000}[factor]:
+        raise ValueError('saved bar element inventory changed')
     fields = _read_frd_u(paths[1])
     if set(fields) != set(range(1, len(x))):
-        raise ValueError('incomplete saved F4 displacements')
+        raise ValueError('incomplete saved solid displacements')
     u = np.array([[0., 0., 0.]]+[fields[i] for i in range(1, len(x))])
     conn = domains['Stiffener']
     xx = x[conn, 0]
-    left = np.flatnonzero(np.isclose(xx.max(axis=1), CUT, atol=1e-10)
-                          & (xx.min(axis=1) < CUT-1e-10))
-    right = np.flatnonzero(np.isclose(xx.min(axis=1), CUT, atol=1e-10)
-                           & (xx.max(axis=1) > CUT+1e-10))
-    if len(left) != 64 or len(right) != 64:
-        raise ValueError('F4 cut must have 64 elements on each side')
+    left = np.flatnonzero(np.isclose(xx.max(axis=1), cut, atol=1e-10, rtol=0.)
+                          & (xx.min(axis=1) < cut-1e-10))
+    right = np.flatnonzero(np.isclose(xx.min(axis=1), cut, atol=1e-10, rtol=0.)
+                           & (xx.max(axis=1) > cut+1e-10))
+    expected_cut_elements = {4: 64, 5: 100}[factor]
+    if len(left) != expected_cut_elements or len(right) != expected_cut_elements:
+        raise ValueError('saved cut element inventory changed')
     cut_actions = []
     high_order_actions = []
     cut_volume = []
     cut_ids = np.unique(conn[np.r_[left, right]].ravel())
-    cut_ids = cut_ids[np.isclose(x[cut_ids, 0], CUT, atol=1e-10)]
+    cut_ids = cut_ids[np.isclose(x[cut_ids, 0], cut, atol=1e-10, rtol=0.)]
     seam = np.asarray(model['shared_interface_node_ids'], dtype=int)
     seam_cut = np.intersect1d(cut_ids, seam)
-    if len(seam_cut) != 17:
-        raise ValueError('F4 seam cut must have 17 nodes')
+    if len(seam_cut) != {4: 17, 5: 21}[factor]:
+        raise ValueError('saved seam cut inventory changed')
     for indices, sign in ((left, 1), (right, -1)):
         action = np.zeros_like(x)
         high_order = np.zeros_like(x)
@@ -164,6 +175,12 @@ def evaluate(base: Path = ROOT) -> dict:
         cut_volume.append(volume)
     c0, c1 = cut_actions
     mismatch = c0+c1
+    axis_wrenches = [_axis_wrench(action, x, cut_ids, cut)
+                     for action in cut_actions]
+    axis_mismatch = axis_wrenches[0]+axis_wrenches[1]
+    channel_scale = np.array((1., 1., 1., 10., 10., 10.))
+    axis_scale = max(*(np.linalg.norm(w*channel_scale)
+                       for w in axis_wrenches), 1.)
     resultant_scale = max(np.linalg.norm(c0[cut_ids].sum(axis=0)),
                           np.linalg.norm(c1[cut_ids].sum(axis=0)), 1.)
     work_scale = max(abs(np.sum(c0[cut_ids]*u[cut_ids])),
@@ -172,11 +189,15 @@ def evaluate(base: Path = ROOT) -> dict:
                              max(np.linalg.norm(high[cut_ids]), 1e-12))
                              for low, high in zip(cut_actions, high_order_actions)]
     return {
-        'classification': 'saved-F4 reduced-integration Q20 face-stress cut diagnostic; not exact bond partition or native-line qualification',
+        'classification': 'saved C1 reduced-integration Q20 face-stress cut diagnostic; not exact bond partition or native-line qualification',
         'decision_question': 'Do displacement-derived opposing cut face actions cancel sufficiently to justify a bounded sided weak-work reconstruction?',
         'outcome_rule': 'If cut action or work mismatch is material, no exact sided comparison follows from these saved fields; if small, next derive the discrete side identity and error bound before comparing native ports.',
         'patch': _patch(),
-        'geometry': 'C1 35mm plate/square bar, terminal x=.9–1m shared bond, no contact outside, pre-opened -1000N Fz +100Nm Mx combined load; cut x=.95m',
+        'geometry': f'C1 35mm plate/square bar, terminal x=.9–1m shared bond, no contact outside, pre-opened -1000N Fz +100Nm Mx combined load; cut x={cut}m',
+        'factor': factor,
+        'cut_x_m': cut,
+        'axis_wrench_origin_m': [cut, 0., .0675],
+        'axis_wrench_moment_scale_m': .1,
         'applied_wrench_about_origin_N_Nm': total_wrench.tolist(),
         'inventory': {'left_cut_elements': len(left), 'right_cut_elements': len(right),
                       'cut_nodes': len(cut_ids), 'seam_cut_nodes': len(seam_cut)},
@@ -184,6 +205,10 @@ def evaluate(base: Path = ROOT) -> dict:
             'left_wrench_N_Nm': wrench(c0, x, cut_ids).tolist(),
             'right_wrench_N_Nm': wrench(c1, x, cut_ids).tolist(),
             'mismatch_wrench_N_Nm': wrench(mismatch, x, cut_ids).tolist(),
+            'left_axis_wrench_N_Nm': axis_wrenches[0].tolist(),
+            'right_axis_wrench_N_Nm': axis_wrenches[1].tolist(),
+            'mismatch_axis_wrench_N_Nm': axis_mismatch.tolist(),
+            'scaled_axis_wrench_mismatch_relative': float(np.linalg.norm(axis_mismatch*channel_scale)/axis_scale),
             'nodal_mismatch_rms_N': float(np.sqrt(np.mean(mismatch[cut_ids]**2))),
             'nodal_mismatch_max_N': float(np.max(np.abs(mismatch[cut_ids]))),
             'resultant_mismatch_relative': float(np.linalg.norm(mismatch[cut_ids].sum(axis=0))/resultant_scale),
@@ -206,8 +231,10 @@ def evaluate(base: Path = ROOT) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--factor', type=int, default=4)
+    parser.add_argument('--cut', type=float, default=.95)
     args = parser.parse_args()
-    result = evaluate()
+    result = evaluate(factor=args.factor, cut=args.cut)
     payload = json.dumps(result, indent=2, sort_keys=True)+'\n'
     if args.output:
         args.output.write_text(payload)

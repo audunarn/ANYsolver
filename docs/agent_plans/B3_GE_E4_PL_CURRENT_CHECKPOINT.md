@@ -39,29 +39,41 @@ are `1.886/.713/.714` and `1.455/.681/.684`; the fixed case is
 one P1 bracket inverts by `8.6e-14` from floating roundoff, so these are
 not rigorous floating intervals. Three finite ratios show no endpoint
 collapse under this metric, but no uniform inf-sup proof or space choice.
-Exact-source root: `.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-extreme-ratios-dev-20260926-v1`.
+The exact-source rerun on committed thin-SVD source `b39ddc4a` reproduces
+the v1 result byte-for-byte; source-bound root:
+`.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-extreme-ratios-dev-20260926-v2`.
 
-**Remaining uncertainty, next discriminator and action:** F5's 11 seam nodes
-at `x=.95 m` have material `Fy/Mx/Mz` weak action but no left/right B3
-half-cell allocation. F4 aligns at that cut, yet splitting volume residuals
-would include cancelling internal cross-section forces and create spurious
-sided work. First derive and independently verify a cut-flux correction or
-conforming virtual-work lift; only then execute a bounded F4 stress-output
-replay and compare interval-supported `Fy/Mx/Mz` work through actual B3 and
-E4 traces. If the lift cannot be defended, retain that comparison as
-unresolved. The independently reviewed saved-F4 *kinematic* projection
-finds sampled combined-load RMS `0.125 µm` solid-to-rigid-section,
-`0.060 µm` rigid-section-to-retained-port, and `0.131 µm` solid-to-port;
-the two B3 port sides jump `0.180 µm RMS` at `.95 m`. These are not bond
-work, equilibrium B3 response or a pure-torque measure. Runner/root:
+**Remaining uncertainty, next discriminator and action:** The independently
+reviewed saved-F4 *kinematic* projection finds sampled combined-load RMS
+`0.125 µm` solid-to-rigid-section, `0.060 µm` rigid-section-to-retained-port,
+and `0.131 µm` solid-to-port; the B3 port sides jump `0.180 µm RMS` at
+`.95 m`. These are not bond work or equilibrium B3 response. Runner/root:
 `scripts/b3_e4_f03_c1_factor4_retained_kinematics.py` and
 `.qualification/b3-ge-e4-pl/f03-c1-factor4-retained-kinematic-projection-dev-20260926-v2`.
-The next physical discriminator remains a justified bond-face/cut-flux
-work reconstruction with an explicit residual bound; an IP-stress replay
-alone cannot supply it. Interpret ratio trends with loaded transfer and
-physical observables, never alone. No new external solve was run here.
-Formal F03 authority is
-unconsumed; G0B is open and G1 barred.
+
+A bounded cut-flux check on that same pre-opened F4 solid used a
+basis-specific two-block constant-stress patch (maximum force error
+`6.4e-14 N`) and 3/5-point face quadrature agreement near `4e-13`.
+The actual opposing cut-face actions disagree by `4.95%` in the
+0.1 m-scaled axis wrench and `79.4%` in displacement work. Saved F5
+bracketing cuts at `.94/.96 m` reduce those to `2.67/3.50%` and
+`26.6/17.9%`, respectively; F5 has no element face at `.95 m`, so this is
+not same-station convergence. The earlier F5 bond-face extrapolation also
+failed as a conservative weak-action proxy. Thus face stress cannot yet
+provide an exact left/right bond partition or native-work oracle. Roots:
+`.qualification/b3-ge-e4-pl/f03-c1-factor4-cut-flux-dev-20260926-v1` and
+`.qualification/b3-ge-e4-pl/f03-c1-factor5-cut-flux-bracket-dev-20260926-v1`.
+
+Next use the *validated total solid weak bond action* on a continuous
+common-trace subset where the left/right B3 port ambiguity cancels.
+Check geometry, frames, supported `Fy/Mx/Mz` work, and native loaded
+response against that subset. If common-mode transfer fails materially,
+revise the reduced pose/connection law; if it passes, isolate the
+one-sided jump modes with an independently justified lift before ranking
+P0/P1/dual. Ratio trends alone do not select a space. No new external
+solve was run. The old pre-thin-SVD pytest remains permitted and running
+(session `27660`, PID `57260`); do not interrupt it. Formal F03 authority
+is unconsumed; G0B is open and G1 barred.
 
 ## Previous current-state summary — 26 September 2026
 
