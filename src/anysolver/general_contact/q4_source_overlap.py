@@ -347,12 +347,16 @@ def q4_source_overlap_integrals(
         return total
 
     total = np.zeros(24)
+    # Each fan triangle gets a finite share of the global error budget. An
+    # area-proportional share can fall below roundoff for a clipping sliver,
+    # although its absolute quadrature error remains far below the global
+    # tolerance. Child budgets still sum to their parent's budget.
+    root_share = 1.0/(len(overlap.polygon)-2)
     for index in range(1, len(overlap.polygon)-1):
         triangle = overlap.polygon[[0, index, index+1]]
-        share = _triangle_area(triangle)/overlap.area
         total += integrate(
-            triangle, area_tolerance*share,
-            weighted_gap_tolerance*share,
+            triangle, area_tolerance*root_share,
+            weighted_gap_tolerance*root_share,
         )
     support[:] = total[:4]
     weighted[:] = total[4:8]

@@ -78,6 +78,37 @@ def test_q4_source_fails_closed_on_inversion_and_resource_limit():
         _evaluate(current, maximum_triangles=1)
 
 
+def test_five_vertex_overlap_fan_sliver_keeps_global_error_budget():
+    # Captured from a finite-slide Q4/S3 candidate. Clipping leaves one
+    # 3.84e-10 m2 fan triangle beside two 0.045 m2 triangles. Its area-scaled
+    # budget was smaller than floating-point quadrature noise.
+    reference = np.array((
+        (.85, .1, .01504), (.975, .1, .01504),
+        (.975, 1.1, .01504), (.85, 1.1, .01504),
+    ))
+    current = np.array((
+        (.8999999991968173, .1, .015000876007947613),
+        (1.0249999990234167, .1, .014993759922196752),
+        (1.024999999017355, 1.1, .014993693383378352),
+        (.8999999991918018, 1.1, .015000817844115952),
+    ))
+    target = np.array((
+        (1., 0., .015), (1., 1., .015), (0., 1., .015),
+    ))
+    result = q4_source_overlap_integrals(
+        reference, current, target,
+        area_tolerance=1e-9, weighted_gap_tolerance=1e-10,
+        maximum_triangles=300,
+    )
+    assert result.overlap_vertices == 5
+    assert result.overlap_area == pytest.approx(.09, abs=1e-8)
+    assert np.sum(result.support) == pytest.approx(result.reference_overlap_area,
+                                                   abs=1e-9)
+    assert result.area_error <= 1e-9
+    assert result.weighted_gap_error <= 1e-10
+    assert result.integration_triangles <= 300
+
+
 def test_q4_source_pressure_law_has_constant_traction_and_balanced_work():
     reference, target = _faces()
     current = reference.copy()
