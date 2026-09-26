@@ -331,8 +331,13 @@ class MovingS3PatchProjectedNormal:
                 float(np.max(np.abs(local.reference_weighted_gap))),
                 float(np.max(np.abs(derivative.reference_weighted_gap))),
             )
-            support_roundoff = 512.0*np.finfo(float).eps*support_scale
-            weighted_gap_roundoff = 512.0*np.finfo(float).eps*weighted_gap_scale
+            # Both integrations sum work over the adaptive overlap triangles.
+            # Bound cancellation near zero by that operation count; the
+            # separate quadrature tolerances still govern approximation error.
+            roundoff_factor = (512.0*np.finfo(float).eps
+                               * max(1, local.integration_triangles))
+            support_roundoff = roundoff_factor*support_scale
+            weighted_gap_roundoff = roundoff_factor*weighted_gap_scale
             if (not np.allclose(derivative.reference_support,
                                 local.reference_support, rtol=1.0e-9,
                                 atol=support_roundoff)
@@ -353,7 +358,8 @@ class MovingS3PatchProjectedNormal:
                     f"support_scale_m2={support_scale:.12g}, "
                     f"weighted_gap_scale_m3={weighted_gap_scale:.12g}, "
                     f"support_roundoff_m2={support_roundoff:.12g}, "
-                    f"weighted_gap_roundoff_m3={weighted_gap_roundoff:.12g})"
+                    f"weighted_gap_roundoff_m3={weighted_gap_roundoff:.12g}, "
+                    f"integration_triangles={local.integration_triangles})"
                 )
             assembled_support[source_nodes] += derivative.reference_support
             assembled_gap[source_nodes] += derivative.reference_weighted_gap
