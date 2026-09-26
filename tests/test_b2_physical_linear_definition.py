@@ -1,8 +1,11 @@
 """Owned physical B2 definition and objective reference-frame oracles."""
 
+from dataclasses import replace
+
 import numpy as np
 import pytest
 
+import anysolver._b2_physical_linear_definition as definition_module
 from anysolver._b2_physical_flexibility_linear import LinearSection
 from anysolver._b2_physical_linear_definition import (
     GeometricMetadata, MassMetadata, PhysicalB2Member, PROFILE_ID,
@@ -74,6 +77,50 @@ def test_mass_origin_pullback_matches_independent_particle_kinetic_work():
         assert .5*velocity@pulled@velocity == pytest.approx(direct_energy,rel=1e-14)
         pulled[0,0]=0.
         assert metadata.matrix_at_reference_axis()[0,0] == 8.
+
+
+def test_compiled_member_reuses_one_operator_with_owned_outputs(monkeypatch):
+    mass=MassMetadata("explicit-mass",(0.,.1,-.05),
+                      np.diag([2.,2.,2.,.2,.3,.4]))
+    beam=member(mass=mass)
+    u=np.sin(np.arange(12)+.3)*.001
+    stations=(.125,.4,.9)
+    offset=(0.,.02,-.03)
+    reference=beam.trace_global(u,stations=stations,offset_local_m=offset)
+    reference_mass=beam.local_candidate_mass_matrix()
+    actual_operator=definition_module.LinearOperator
+    constructions=[]
+    def counted_operator(*args,**kwargs):
+        constructions.append(1)
+        return actual_operator(*args,**kwargs)
+    monkeypatch.setattr(definition_module,"LinearOperator",counted_operator)
+    compiled=beam.compile_local()
+    assert len(constructions)==1
+    assert compiled.definition is beam and not compiled.production_qualified
+    for _ in range(3):
+        trace=compiled.trace_global(u,stations=stations,offset_local_m=offset)
+        np.testing.assert_allclose(trace.reference_points_m,
+                                   reference.reference_points_m,rtol=0.,atol=0.)
+        np.testing.assert_allclose(trace.pose,reference.pose,rtol=0.,atol=0.)
+        np.testing.assert_allclose(trace.jacobian,reference.jacobian,rtol=0.,atol=0.)
+        np.testing.assert_allclose(compiled.local_candidate_mass_matrix(),
+                                   reference_mass,rtol=0.,atol=0.)
+    assert len(constructions)==1
+    trace.pose[0,0]=99.
+    trace.jacobian[0,0,0]=99.
+    frame=compiled.local_frame_rows();frame[0,0]=99.
+    assert compiled.trace_global(u,stations=stations,
+                                 offset_local_m=offset).pose[0,0]!=99.
+    assert compiled.local_frame_rows()[0,0]==1.
+    changed=replace(beam,reference_points_m=((0.,0.,0.),(3.,0.,0.)))
+    replacement=changed.compile_local()
+    assert len(constructions)==2 and replacement.definition is changed
+    assert replacement.operator is not compiled.operator
+    assert replacement.definition.length_m!=compiled.definition.length_m
+    with pytest.raises(ValueError,match="operator/definition mismatch"):
+        definition_module.CompiledPhysicalB2Member(
+            changed,compiled.operator,compiled._frame_bytes,
+            compiled._transform_bytes)
 
 
 def test_admitted_roundoff_is_canonical_orthonormal_frame():

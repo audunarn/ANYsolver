@@ -497,6 +497,32 @@ S3, free-free modes, changing frame/mesh, prestress, buckling, shell-side
 point-law admission and the growing-interface problem remain open. F12/G0B
 remain open and G1 barred.
 
+**Next F13 local compilation discriminator:** The immutable physical B2
+definition currently constructs its exact force-flexibility operator again
+for each `local_operator()` or `trace_global()` request. Test a private
+compiled member that owns one operator and fixed local/global maps, and
+returns independently owned traces and masses for repeated loads. Parity
+with the existing definition path, mutation isolation and fresh-definition
+invalidation would permit reuse by a later B2 model owner; any changed
+physical response or borrowed-array leak sends the adapter back for revision.
+This does not establish graph batching, factorization reuse, cancellation,
+resource scale, public dispatch or F13/G0B acceptance. Measure construction
+counts before making a performance claim.
+
+**F13 local compilation result (27 September):** A private compiled member
+retains one exact operator and owned fixed frame maps for its immutable
+definition. It shares one trace/mass mapping implementation with the
+ephemeral route. Three repeated trace/mass requests reproduced the prior
+values exactly while the counted operator construction stayed at one;
+returned arrays could be mutated without changing later results. A new
+definition compiled a separate operator, and a foreign operator/definition
+pair was rejected. Impacted focused suites passed `19/19`, followed by
+`7/7` definition checks after the owner guard. This is no public B2 session,
+batching, factorization, cancellation or speed claim. The next independent
+F13 question is whether unchanged sparse affine operators can serve 1/10/100
+ordered RHS in bounded chunks with one factorization, complete-case
+cancellation and selected outputs. Keep G0B open and G1 barred.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
