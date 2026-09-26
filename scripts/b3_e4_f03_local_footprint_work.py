@@ -1277,12 +1277,18 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         raise ArithmeticError("graded retained scale layout changed")
     beam_nodes=(beam.context.initial.mechanical.positions+
                 beam.context.initial.mechanical.position_low)
-    stations=(0,250,500,750,1000)
+    stations=(0,250,500,750,900,950,1000)
     station_nodes={station:int(np.argmin(np.abs(
         beam_nodes[:,0]-station/1000))) for station in stations}
-    if any(abs(beam_nodes[index,0]-station/1000)>1e-12
-           for station,index in station_nodes.items()):
+    required=(0,250,500,750,1000)
+    if any(abs(beam_nodes[station_nodes[station],0]-station/1000)>1e-12
+           for station in required):
         raise ValueError("terminal reference lacks required beam stations")
+    has_local_stations=all(
+        abs(beam_nodes[station_nodes[station],0]-station/1000)<1e-12
+        for station in (900,950))
+    if not has_local_stations:
+        station_nodes={station:station_nodes[station] for station in required}
     def wrench(nodal,locations):
         return np.r_[nodal[:,:3].sum(axis=0),
                      (np.cross(locations,nodal[:,:3])+nodal[:,3:]).sum(axis=0)]
@@ -1410,6 +1416,21 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                     f"shell_physical={physical_work:.6e}, "
                     f"shell_nonphysical={shell_total-physical_work:.6e}")
             active=np.flatnonzero(np.max(np.abs(shell_interface),axis=1)>1e-10)
+            local_kinematics={}
+            if has_local_stations and family.startswith("line_hybrid_"):
+                nodal_shell=full[:shell_size].reshape(-1,6)
+                for station in (900,950,1000):
+                    x=station/1000
+                    def shell_value(y, axis):
+                        nodes,shape=structured_q4_point_shape(xs,ys,x,y)
+                        return float(shape@nodal_shell[nodes,axis])
+                    local_kinematics[str(station)]={
+                        "beam_section_rx_rad":float(full[
+                            shell_size+6*station_nodes[station]+3]),
+                        "shell_top_slope_z_y_rad":(
+                            shell_value(.05,2)-shell_value(-.05,2))/.1,
+                        "shell_director_rx_rad":shell_value(0.,3),
+                    }
             cases[loading]={
                 "tip_rx_rad":float(full[shell_size+6*beam.n_half_cells+3]),
                 "tip_uz_m":float(full[shell_size+6*beam.n_half_cells+2]),
@@ -1417,6 +1438,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                     str(station):float(full[shell_size+
                         6*station_nodes[station]+3])
                     for station in stations},
+                **({"terminal_station_kinematics":local_kinematics}
+                   if local_kinematics else {}),
                 "total_external_work_j":work,
                 "physical_shell_work_j":physical_work,
                 "numerical_shell_work_j":shell_total-physical_work,
