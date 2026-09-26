@@ -1,6 +1,24 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-## Active decision — 26 September 2026, revised basis 5
+## Current decision — 26 September 2026
+
+**Decision sought:** Establish a physically defensible native six-channel
+beam–shell connection and exact line enforcement before G1 integration.
+**Established:** The candidate is a reduced finite-strip section law, not a
+full-face pointwise bond. Its loaded wrenches close, but P0's reconstructed
+material dual becomes strongly cancelling as line rows grow. A fixed-shell
+positive-trace quotient also falls much faster for P0 than for P1/dual; its
+weakest vertical mode is distinct from the loaded torque's lateral action.
+The reviewed P1 quotient has a tiny un-ordered floating bound pair.
+**Remaining uncertainty:** Physical torque/shear fidelity, complete native
+retained-variable mixed-system stability, F06 lifecycle, F09 physical B2
+admission and other G0 foundations. **Next action:** Complete the bounded
+mixed-KKT norm/mode discriminator and matched connection-work reference,
+then adjudicate the law and growing-space policy; advance independent F06/F09
+work without repeating classical axial refinement. **Gate:** G0B open,
+G1 barred; formal F03 authority unconsumed.
+
+## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
 loaded screen changed torque response, but its compact output omitted the
@@ -109,6 +127,18 @@ pullback check; mixed-owner lifecycle, more port geometries, independent
 mechanics review and F05/G0B acceptance remain open. Preserve the elastic
 adapter guard.
 
+**Independent F06 bounded result:** At commit `d5dcc74b`, one curved S3 /
+native-B3 accepted two-step loaded prefix was represented in reference and
+rebased beam charts with unchanged physical frames, material/resultant
+recovery, eccentric pose work/gap and support reactions. The largest
+solver-scaled residual difference was `1.38e-16`; accepted descriptor and
+checkpoint bytes stayed unchanged. The terminal v1e result and four earlier
+source-bound setup/reporting/numerical attempts are preserved in
+`B3_GE_E4_PL_G0_F06_BEAM_CHART_DEV_V1.md` and its reference-case JSON files.
+This is chart-description feasibility only. Actual owner-held beam anchors,
+atomic accepted rebase/continuation, direct restore, larger noncommuting
+motion and independent mechanics review remain required; F06/G0B stay open.
+
 **Next C1 enforcement discriminator:** The x8/m4→m8 torque solve shows
 growing oscillation of the P0 material dual density while all six-channel
 global balances close. The competing explanations are a weakly controlled
@@ -133,8 +163,37 @@ Numba thread. The manifest records generation-time HEAD `07cd0031` and
 the exact modified diagnostic source hash; the source and this interpretation
 are committed subsequently. All supported row sets retain full rank (m4: 24/30/30;
 m8: 48/54/54), with the same positive shell metric and B3 observable trace
-rank 15. The full lower quotient is `0.22039→0.01244` for P0,
+rank 15. The reported floating full quotient estimate is
+`0.22039→0.01244` for P0,
 `0.17588→0.09087` for continuous P1, and `0.17142→0.09084` for dual P1.
+Independent read-only review found that the x8/m8 continuous-P1 values
+labelled lower/upper in the raw result are reversed by `1.09e-11` (and the
+nonaxial pair by `1.43e-11`). They cannot be called an ordered numerical
+enclosure. Preserve the raw result; use the values only as floating
+diagnostic estimates until an outward error allowance or better-resolved
+Gram calculation repairs the bound status. This does not change the much
+larger finite-grid P0/P1 contrast, but blocks a certified bound claim.
+The same independent review recomputed all 12 V2/V1 retained summaries,
+wrench defects, material-density integrals, source hashes and P0 weak-mode
+channel/action split, finding no other calculation blocker. It confirmed
+that the material dual density is work-conjugate to the weighted-mean gap,
+but is not a display-ready spatial traction. The review is read-only G0
+development scrutiny, not F03 or G0B acceptance.
+
+**Full mixed-system next test:** A separate read-only mechanics design
+identified the actual support-reduced native KKT as the needed object:
+physical E4 coordinates, B3 nodal coordinates, both retained half-cell
+rotations, all retained generalized resultants, and exact multiplier rows.
+The positive broken-trace quotient omits part of that space and cannot stand
+in for its well-posedness. A proposed diagnostic Riesz metric separately
+norms physical shell energy, *all* independent native kinematic/resultant
+coordinates and physical H^(-1/2) line duals, with units and SPD checked;
+any E4 drilling coordinate must enter only a declared diagnostic norm,
+never an added physical tangent. A bounded x8/m4→m8 P0/P1/dual test may
+proceed only after the retained-variable and drilling norm can be defended.
+Compare its near-null directions and work to the positive quotient without
+identifying the two metrics. This remains a design under implementation,
+not a revised scientific criterion or an inf-sup acceptance.
 P0's m8 weakest mode is alternating **vertical** material action
 (`−13.24,+40.77,−62.39,+73.83,−73.82,+62.39,−40.71,+13.18` in the
 recorded force-equivalent coordinates) and about `99.5%` shell positive
