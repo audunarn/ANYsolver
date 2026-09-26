@@ -77,7 +77,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
           tip_mx_gap_audit: bool = False, bar_clearance_um: int = 0,
           plate_thickness_mm: int = 70, tip_load_map: str = "legacy",
           full_displacement_output: bool = False,
-          bar_reference_profile: str = "legacy_linear"
+          bar_reference_profile: str = "legacy_linear",
+          torque_with_opening_fz: bool = False,
           ) -> tuple[str, dict]:
     """Return an exact-coordinate brick deck and explicit bond identity."""
     if shear not in ("uy_x", "ux_y", "tip_mx", "tip_fz"):
@@ -88,6 +89,15 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     c1_torque_basis = (shear == "tip_mx" and tip_mx_gap_audit and
                        bar_reference_profile == "c1_tangent" and
                        contact_policy == "none")
+    if type(torque_with_opening_fz) is not bool or (
+            torque_with_opening_fz and not (
+                c1_torque_basis and factor in (2, 4) and
+                boundary_policy == "left_root" and bond_policy == "terminal" and
+                element_family == "C3D20R" and bar_clearance_um == 2 and
+                plate_thickness_mm == 35 and
+                tip_load_map == "quadratic_face" and
+                full_displacement_output)):
+        raise ValueError("combined C1 opening/torque requires bounded no-contact full-field case")
     if type(full_displacement_output) is not bool or (
             full_displacement_output and not (
                 (factor == 4 or
@@ -490,6 +500,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                                     100.*y/polar)) if shear=="tip_mx" else
                           np.array((0.,0.,(-1000. if reverse_tip_fz else
                                            1000.)/.01)))
+                if torque_with_opening_fz:
+                    traction[2] -= 1000./.01
                 for index,n in zip(ids,shape):
                     vectors[index]+=weight*n*traction
             applied={index:tuple(force) for index,force in vectors.items()}
@@ -587,6 +599,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                       "all three translations on plate perimeter follow declared affine shear; bar has no direct supports or loads")}
     if full_displacement_output:
         meta["full_displacement_output"] = True
+    if torque_with_opening_fz:
+        meta["torque_with_opening_fz"] = True
     if bar_reference_profile == "c1_tangent":
         meta["bar_reference_profile"] = "C1_TWO_QUADRATIC_TANGENT_ALIGNED_V1"
         meta["bar_reference_meaning"] = (
@@ -916,10 +930,15 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
                        for index,force in applied.items()))
         magnitude=(100. if meta["shear"]=="tip_mx" else 1000.)
         result["applied_load_work_j"]=work
-        result["tip_work_conjugate_displacement"]={
-            "value":work/magnitude,
-            "unit":"rad" if meta["shear"]=="tip_mx" else "m",
-            "definition":"sum(applied nodal force dot nodal displacement) / declared load magnitude"}
+        if meta.get("torque_with_opening_fz"):
+            result["applied_load_work_meaning"] = (
+                "mixed opening-force and torque work; no pure-load "
+                "tip displacement follows by dividing this value")
+        else:
+            result["tip_work_conjugate_displacement"]={
+                "value":work/magnitude,
+                "unit":"rad" if meta["shear"]=="tip_mx" else "m",
+                "definition":"sum(applied nodal force dot nodal displacement) / declared load magnitude"}
     if reactions is not None:
         applied_wrench=(_wrench(applied,meta["probe_coordinates_m"])
                         if applied else [0.]*6)
@@ -951,6 +970,7 @@ def main() -> int:
     parser.add_argument("--half-plate-thickness",action="store_true")
     parser.add_argument("--quadratic-face-traction",action="store_true")
     parser.add_argument("--full-displacement-output",action="store_true")
+    parser.add_argument("--torque-with-opening-fz",action="store_true")
     args=parser.parse_args()
     c1_open_shear = (args.bar_reference_profile == "c1_tangent" and
                      args.reverse_fz_open_audit and
@@ -1036,6 +1056,13 @@ def main() -> int:
             args.half_plate_thickness and args.quadratic_face_traction and
             args.full_displacement_output):
         parser.error("C1 penalty contact requires the matched factor-4 torque case")
+    if args.torque_with_opening_fz and not (
+            c1_torque_basis and list(args.factor) in ([2], [4]) and
+            args.suite == "loads" and args.boundary == "left_root" and
+            args.bond == "terminal" and args.element_family == "C3D20R" and
+            args.bar_clearance_um == 2 and args.half_plate_thickness and
+            args.quadratic_face_traction and args.full_displacement_output):
+        parser.error("combined C1 opening/torque requires bounded no-contact full-field case")
     if digest(EXE)!=EXE_SHA:
         raise ValueError("CalculiX executable identity changed")
     head=subprocess.run(("git","rev-parse","HEAD"),cwd=WORKTREE,
@@ -1179,7 +1206,8 @@ def main() -> int:
             for entry in manifest["limits_of_claim"]]
         manifest["limits_of_claim"].append(
             "paired reference-normal gaps are not a continuous deformed-contact certificate")
-        if list(args.factor)==[2] and c1_torque_basis:
+        if (list(args.factor)==[2] and c1_torque_basis and
+                not args.torque_with_opening_fz):
             manifest["question"] = (
                 "On the identical factor-two C1 tangent terminal model, "
                 "does the no-contact torque field supply a linear basis "
@@ -1200,6 +1228,10 @@ def main() -> int:
                 full_u_meaning = (
                     "full displacement output on the C1 opening-shear model "
                     "for deformed seam and surface projection")
+            elif args.torque_with_opening_fz:
+                full_u_meaning = (
+                    "full displacement output on the executed combined "
+                    "C1 opening/torque model for contact-gap assessment")
             elif list(args.factor)==[2] and c1_torque_basis:
                 full_u_meaning = (
                     "factor-two C1 torque linear-basis field for the "
@@ -1253,6 +1285,21 @@ def main() -> int:
             "not an exact hard-contact law",
             "one torque mesh and one contact stiffness do not establish "
             "nonpenetration, work convergence, or native accuracy"))
+    if args.torque_with_opening_fz:
+        manifest["torque_with_opening_fz"] = True
+        manifest["question"] = (
+            "Does an executed combined -1000 N Fz opening and +100 N m Mx "
+            "torque load on the unchanged C1 terminal model match the "
+            "superposed separately executed linear fields, remain open on "
+            "the saved opposed faces, and preserve wrench balance?")
+        manifest["decision"] = (
+            "Agreement and a positive continuous saved-face gap retain "
+            "the pre-opened incremental torque as a directional reference "
+            "for further contact and mesh checks; discrepancy or overlap "
+            "stops this route. Neither outcome selects a native line law.")
+        manifest["limits_of_claim"].append(
+            "combined loading is a pre-opened state, not pure torque from "
+            "the virgin reference; side-surface contact remains unchecked")
     (root/"manifest.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
     records=[]
     for factor,shear in manifest["cases"]:
@@ -1269,7 +1316,8 @@ def main() -> int:
                         tip_load_map=("quadratic_face" if args.quadratic_face_traction
                                       else "legacy"),
                         full_displacement_output=args.full_displacement_output,
-                        bar_reference_profile=args.bar_reference_profile)
+                        bar_reference_profile=args.bar_reference_profile,
+                        torque_with_opening_fz=args.torque_with_opening_fz)
         (folder/f"{name}.inp").write_text(deck,encoding="ascii")
         (folder/"model.json").write_text(json.dumps(meta,sort_keys=True,indent=2)+"\n")
         environment=os.environ.copy()

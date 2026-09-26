@@ -17,17 +17,16 @@ gaps close. **Uncertainty:** This law cannot substitute for a pointwise
 solid bond, the solid has one mesh level, torque remains contact-inadmissible,
 and no true line space has mesh-uniform stability evidence.
 **Next discriminating action:** The bounded factor-two C1 opening-shear
-solid run now agrees directionally with factor four and has a positive
-continuous saved-field face-gap bound. The factor-four C1 pure-torque
-reference penetrates and remains inadmissible. However its executed linear
-field and the opening field have identical structural decks except a load
-comment, and their sum for `−1000 N Fz + 100 N m Mx` remains open on the
-opposed saved faces. Use the pure-torque solve only as a linear basis for
-an *incremental torque about a pre-opened state*. One factor-two torque
-basis solve, combined with the existing factor-two opening solve, will
-distinguish whether this admissible incremental response is mesh-stable;
-an overlapping or materially drifting combined state stops this reference
-route. Side-surface/contact admissibility and a third level remain open.
+and torque-basis solves are complete. At factors two and four, their
+superposed `−1000 N Fz + 100 N m Mx` fields have positive saved opposed-face
+gap bounds; incremental torque tip and plate-share quantities move under
+`0.5%`. Pure torque alone penetrates on both levels and remains
+inadmissible. Execute the same combined load directly at factors two and
+four to distinguish an actual balanced, open solver response from a
+derived superposition. Agreement retains only a directional pre-opened
+incremental-torque reference for further contact/mesh checks; discrepancy
+or overlap stops it. Side-surface admissibility and a third level remain
+open.
 In parallel, derive a distinct physical six-channel line work law and test
 fixed-grid transfer/modes before registered ratios.
 A sparse third patch grid would settle the distributing footprint only;
@@ -75,6 +74,36 @@ torque field itself has 43 negative sampled face gaps and cannot be
 scored as a zero-preload physical reference. The derived pre-opened
 incremental torque is a candidate only; side-surface admissibility,
 actual combined-load execution and mesh convergence remain unchecked.
+
+**Two-level torque-basis result and direct-run decision:** The additional
+factor-two pure-torque **basis**, source `4e8f4980`, completed in the
+exclusive root
+`.qualification/b3-ge-e4-pl/f03-ccx-c1-torque-basis-dev-20260926-v1`.
+Manifest/result SHA256 are
+`0E5DCC97AED62EA589B0D9E5A553E06A183C47CB8FEAAA17678DE722AA6F2F84`
+and `4B4E337DA0D8E74103DC4637986F301AB171A07BDE9FFD3A9A2151687682228C`.
+Pure-torque saved sampling has 5 negative face points at factor two and
+43 at factor four, so neither standalone result is a physical contact
+reference. The factor-two torque/opening decks and full node inventories
+match exactly apart from load/comment/audit fields, as at factor four.
+Superposed fields have positive sufficient opposed-face gap bounds:
+nonseam `2.105/0.770 µm`, seam-factored `0.965/0.540 µm` at factors
+two/four. Incremental torque tip rotation is `49.1943→49.4000 µrad`
+(+0.418%); plate support `Mx` is `−40.5421→−40.5301 N m` (0.030% in
+magnitude). The existing Q4 four-cell six-moment footprint gives
+`50.4280 µrad` and plate `Mx=−41.7216 N m`; this is a different
+dimension-reduced connection and is **not** scored as accuracy. The
+specific next experiment is an executed combined-load solve on these
+same two C1 meshes with unchanged supports, end-face quadrature and
+bond. For this output-rounded external diagnostic, require maximum
+nodal displacement difference at most `2e−5` times the maximum saved
+displacement plus `5e−10 m`, and each support-wrench component difference
+at most `2e−5` of its declared force (`1000 N`) or moment (`1000 N m`)
+scale. These are decision-screen bounds, not relaxed G0 mechanical
+criteria. A larger direct/superposed field discrepancy, failed wrench balance or
+negative continuous opposed-face bound rejects this route; agreement
+only advances side/contact and third-level assessment. No multiplier
+space or native bond is selected by the two-level comparison.
 
 **Next native C1 geometry discriminator, before execution:** The saved solid
 opening-shear field uses a 2 µm C1 tangent-aligned beam-axis lift over

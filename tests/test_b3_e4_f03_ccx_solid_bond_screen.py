@@ -483,6 +483,43 @@ def test_c1_factor_two_torque_basis_matches_opening_structural_deck():
                      contact_policy="c1_penalty", **common)
 
 
+@pytest.mark.parametrize("factor", (2, 4))
+def test_c1_combined_opening_torque_load_is_exact_sum_and_not_pure_tip_metric(factor):
+    common=dict(boundary_policy="left_root", bond_policy="terminal",
+                element_family="C3D20R", bar_clearance_um=2,
+                plate_thickness_mm=35, tip_load_map="quadratic_face",
+                full_displacement_output=True,
+                bar_reference_profile="c1_tangent")
+    torque, tm = SCREEN.build(factor, "tip_mx", tip_mx_gap_audit=True, **common)
+    opening, om = SCREEN.build(factor, "tip_fz", reverse_tip_fz=True, **common)
+    combined, cm = SCREEN.build(
+        factor, "tip_mx", tip_mx_gap_audit=True,
+        torque_with_opening_fz=True, **common)
+    structural = lambda deck: "\n".join(
+        deck.split("*CLOAD", 1)[0].splitlines()[2:])
+    assert structural(torque) == structural(opening) == structural(combined)
+    assert cm["torque_with_opening_fz"] is True
+    assert cm["unbonded_face_pairs"] == tm["unbonded_face_pairs"]
+    nodes = set(tm["applied_nodal_forces_N"])
+    assert nodes == set(om["applied_nodal_forces_N"]) == set(cm["applied_nodal_forces_N"])
+    for node in nodes:
+        assert np.array(cm["applied_nodal_forces_N"][node]) == pytest.approx(
+            np.array(tm["applied_nodal_forces_N"][node])+
+            np.array(om["applied_nodal_forces_N"][node]), abs=1e-11)
+    forces={int(node):np.array(force) for node,force in
+            cm["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(forces, cm["probe_coordinates_m"]) == pytest.approx(
+        [0.,0.,-1000.,100.,1000.,0.], abs=1e-9)
+    zero = {int(node):np.zeros(3) for node in cm["probe_node_ids"]}
+    response = SCREEN.recover(cm, zero)
+    assert response["applied_load_work_j"] == 0.
+    assert "tip_work_conjugate_displacement" not in response
+    assert "mixed opening-force and torque work" in response["applied_load_work_meaning"]
+    with pytest.raises(ValueError, match="combined C1 opening/torque"):
+        SCREEN.build(factor, "tip_fz", reverse_tip_fz=True,
+                     torque_with_opening_fz=True, **common)
+
+
 def test_c1_penalty_runner_allows_only_its_known_static_notice():
     notice = " *WARNING reading *STATIC: a nonlinear analysis is requested"
     other = " *WARNING in contact: face search failed"
