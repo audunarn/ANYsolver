@@ -12,6 +12,7 @@ from .core import (
 )
 from .static_path import (
     ContactPathControl,
+    ContactPathNodalForce,
     ContactPathProgram,
     solve_static_contact_path,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "RigidContactBody",
     "validate_general_contact",
     "ContactPathControl",
+    "ContactPathNodalForce",
     "ContactPathProgram",
     "solve_static_contact_path",
 ]

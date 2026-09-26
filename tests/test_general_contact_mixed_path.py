@@ -1,0 +1,131 @@
+"""Mixed nodal-force and displacement static contact-path contracts."""
+
+import os
+from dataclasses import replace
+
+import numpy as np
+import pytest
+
+from anysolver import (
+    ContactPathControl, ContactPathNodalForce, ContactPathProgram,
+    solve_static_nonlinear,
+)
+from examples.general_contact_refined_q4_s3_mixed_path import (
+    GAP_BUDGET_M, make_case, solve_case,
+)
+
+
+def test_contact_path_force_interpolation_and_legacy_contract():
+    controls = (ContactPathControl.node(1, "ux"),
+                ContactPathControl.node(2, "uz"))
+    old = ContactPathProgram(controls, ((0.0, 0.0), (0.01, 0.0)), 2)
+    assert old.contract() == {
+        "controls": [{"terms": [[1, "ux", 1.0]]},
+                     {"terms": [[2, "uz", 1.0]]}],
+        "waypoints": [[0.0, 0.0], [0.01, 0.0]],
+        "steps_per_segment": 2,
+    }
+    assert old.force_values_at(1).size == 0
+
+    program = ContactPathProgram(
+        controls, ((0.0, 0.0), (0.0, 0.0), (0.05, 0.0),
+                   (0.05, 0.0), (0.05, 0.0)), 2,
+        (ContactPathNodalForce(3, "uz", (0.0, -0.1, -0.1, 0.0, -0.1)),),
+    )
+    assert program.total_steps == 8
+    assert program.force_values_at(0).tolist() == [0.0]
+    assert program.force_values_at(1).tolist() == [-0.05]
+    assert program.force_values_at(2).tolist() == [-0.1]
+    assert program.force_values_at(5).tolist() == [-0.05]
+    assert program.force_values_at(8).tolist() == [-0.1]
+    assert program.target_at(3).tolist() == [0.025, 0.0]
+    assert program.contract()["nodal_forces"] == [
+        {"node_id": 3, "dof": "uz",
+         "values_n": [0.0, -0.1, -0.1, 0.0, -0.1]},
+    ]
+
+
+def test_contact_path_force_contract_rejects_ambiguous_histories():
+    controls = (ContactPathControl.node(1, "ux"),
+                ContactPathControl.node(2, "uz"))
+    points = ((0.0, 0.0), (0.0, 0.0))
+    with pytest.raises(ValueError, match="zero-change"):
+        ContactPathProgram(controls, points)
+    with pytest.raises(ValueError, match="start at zero"):
+        ContactPathProgram(
+            controls, points, nodal_forces=(
+                ContactPathNodalForce(3, "uz", (1.0, 0.0)),
+            ),
+        )
+    with pytest.raises(ValueError, match="unique DOFs"):
+        ContactPathProgram(
+            controls, points, nodal_forces=(
+                ContactPathNodalForce(3, "uz", (0.0, -1.0)),
+                ContactPathNodalForce(3, "uz", (0.0, -2.0)),
+            ),
+        )
+    with pytest.raises(ValueError, match="match waypoints"):
+        ContactPathProgram(
+            controls, points, nodal_forces=(
+                ContactPathNodalForce(3, "uz", (0.0, -1.0, -2.0)),
+            ),
+        )
+
+
+@pytest.mark.skipif(
+    os.environ.get("ANY_RUN_C1_MIXED_PATH") != "1",
+    reason="opt-in coupled force/displacement four-phase path and restart",
+)
+def test_mixed_path_force_slide_unload_reload_and_split_restart():
+    full = solve_case()
+    assert full.status == "completed", full.failure_reason
+    history = full.info["force_displacement_history"]
+    assert len(history) == 8
+    assert [history[i]["contact"]["active_pressure_dofs"] > 0
+            for i in (1, 3, 5, 7)] == [True, True, False, True]
+    assert all(row["contact"]["gap_tolerance_met"] for row in history)
+    assert min(row["contact"]["minimum_gap"] for row in history) >= -GAP_BUDGET_M
+    assert history[5]["contact"]["integration_force"] == [0.0, 0.0, 0.0]
+    assert history[5]["contact"]["minimum_gap"] > 0.0
+    assert full.restart_checkpoint["version"] == 2
+    for row, step in zip(history, full.steps):
+        contact = row["contact"]
+        np.testing.assert_allclose(
+            np.asarray(contact["integration_force"]) + contact["target_force"],
+            0.0, atol=1.0e-6,
+        )
+        np.testing.assert_allclose(
+            np.asarray(contact["integration_moment"]) + contact["target_moment"],
+            0.0, atol=1.0e-6,
+        )
+        support_z = sum(value[2] for value in step.support_reactions.values())
+        assert support_z + sum(row["nodal_forces_n"]) == pytest.approx(
+            0.0, abs=1.0e-6,
+        )
+    assert history[1]["external_nodal_work_trapezoid_j"] > 0.0
+    assert history[5]["external_nodal_work_trapezoid_j"] < 0.0
+
+    prefix = solve_case(max_path_fraction=0.5)
+    assert prefix.status == "completed", prefix.failure_reason
+    assert len(prefix.steps) == 4
+    assert prefix.info["general_contact"]["active_pressure_dofs"] > 0
+    resumed = solve_case(restart_checkpoint=prefix.to_restart_checkpoint())
+    assert resumed.status == "completed", resumed.failure_reason
+    np.testing.assert_allclose(resumed.displacements, full.displacements,
+                               rtol=0.0, atol=1.0e-10)
+    assert resumed.to_restart_checkpoint() == full.to_restart_checkpoint()
+
+    model, definition, settings, program = make_case()
+    changed_force = replace(program.nodal_forces[0], values_n=(
+        0.0, -0.04, -0.04, 0.0, -0.04,
+    ))
+    changed_program = replace(
+        program, nodal_forces=(changed_force, program.nodal_forces[1]),
+    )
+    with pytest.raises(ValueError, match="incompatible|contract|restart"):
+        solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=changed_program,
+            restart_checkpoint=prefix.to_restart_checkpoint(),
+            max_iterations=18,
+        )

@@ -96,10 +96,28 @@ class ContactPathControl:
 
 
 @dataclass(frozen=True)
+class ContactPathNodalForce:
+    """One nodal translation-force history in N at the path waypoints."""
+
+    node_id: int
+    dof: str
+    values_n: tuple[float, ...]
+
+    def __post_init__(self) -> None:
+        if type(self.node_id) is not int or self.node_id <= 0 or self.dof not in _DOF:
+            raise ValueError("path force needs a positive node and translation DOF")
+        values = tuple(float(value) for value in self.values_n)
+        if not values or not np.all(np.isfinite(values)):
+            raise ValueError("path force values must be finite and nonempty")
+        object.__setattr__(self, "values_n", values)
+
+
+@dataclass(frozen=True)
 class ContactPathProgram:
     controls: tuple[ContactPathControl, ...]
     waypoints: tuple[tuple[float, ...], ...]
     steps_per_segment: int = 2
+    nodal_forces: tuple[ContactPathNodalForce, ...] = ()
 
     def __post_init__(self) -> None:
         controls = tuple(self.controls)
@@ -115,14 +133,26 @@ class ContactPathProgram:
             raise ValueError("contact path waypoints must be finite")
         if any(value != 0.0 for value in points[0]):
             raise ValueError("contact path must start at the reference pose")
-        if any(points[index] == points[index - 1] for index in range(1, len(points))):
-            raise ValueError("contact path cannot contain a zero-motion segment")
+        forces = tuple(self.nodal_forces)
+        if any(type(item) is not ContactPathNodalForce for item in forces):
+            raise TypeError("nodal_forces must contain ContactPathNodalForce")
+        if len({(item.node_id, item.dof) for item in forces}) != len(forces):
+            raise ValueError("contact path nodal forces must have unique DOFs")
+        if any(len(item.values_n) != len(points) or item.values_n[0] != 0.0
+               for item in forces):
+            raise ValueError("path force values must match waypoints and start at zero")
+        if any(points[index] == points[index - 1]
+               and all(item.values_n[index] == item.values_n[index - 1]
+                       for item in forces)
+               for index in range(1, len(points))):
+            raise ValueError("contact path cannot contain a zero-change segment")
         if type(self.steps_per_segment) is not int or self.steps_per_segment < 1:
             raise ValueError("steps_per_segment must be a positive integer")
         if (len(points) - 1) * self.steps_per_segment > 10_000:
             raise MemoryError("contact path exceeds 10000 accepted-step slots")
         object.__setattr__(self, "controls", controls)
         object.__setattr__(self, "waypoints", points)
+        object.__setattr__(self, "nodal_forces", forces)
 
     @property
     def total_steps(self) -> int:
@@ -139,13 +169,36 @@ class ContactPathProgram:
         return ((1.0 - fraction) * np.asarray(self.waypoints[segment])
                 + fraction * np.asarray(self.waypoints[segment + 1]))
 
+    def force_values_at(self, accepted_step: int) -> np.ndarray:
+        step = int(accepted_step)
+        if not 0 <= step <= self.total_steps:
+            raise ValueError("contact path step lies outside the program")
+        if not self.nodal_forces:
+            return np.zeros(0)
+        if step == self.total_steps:
+            return np.asarray([item.values_n[-1] for item in self.nodal_forces])
+        segment, local = divmod(step, self.steps_per_segment)
+        fraction = local / self.steps_per_segment
+        return np.asarray([
+            (1.0-fraction)*item.values_n[segment]
+            + fraction*item.values_n[segment+1]
+            for item in self.nodal_forces
+        ])
+
     def contract(self) -> dict[str, object]:
-        return {
+        result = {
             "controls": [{"terms": [list(term) for term in item.terms]}
                          for item in self.controls],
             "waypoints": [list(row) for row in self.waypoints],
             "steps_per_segment": self.steps_per_segment,
         }
+        if self.nodal_forces:
+            result["nodal_forces"] = [
+                {"node_id": item.node_id, "dof": item.dof,
+                 "values_n": list(item.values_n)}
+                for item in self.nodal_forces
+            ]
+        return result
 
 
 def solve_static_contact_path(
@@ -280,6 +333,14 @@ def solve_static_contact_path(
                 if np.any(np.abs(controls @ u0) > 1.0e-12):
                     raise ValueError("contact path requires zero reference control offsets")
                 reactions = rows.T
+                force_dofs = np.empty(len(program.nodal_forces), dtype=np.intp)
+                for index, force in enumerate(program.nodal_forces):
+                    if model.mesh.get_node(force.node_id) is None:
+                        raise ValueError(f"missing contact path force node {force.node_id}")
+                    dof = model.mesh.dof_manager.get_node_dofs(force.node_id)[
+                        _DOF[force.dof]
+                    ]
+                    force_dofs[index] = dof
                 info = {"control": "contact_path", "profile": profile,
                         "general_contact_profile": manager.profile}
                 accepted_step = 0
@@ -357,6 +418,10 @@ def solve_static_contact_path(
                     start_multipliers = multipliers.copy()
                     start_normal_multipliers = manager.normal_multipliers.copy() if augmented else None
                     target = program.target_at(step)
+                    force_values = program.force_values_at(step)
+                    external = np.zeros_like(zeros)
+                    external[force_dofs] = force_values
+                    reduced_external = np.asarray(T.T @ external).reshape(-1)
                     candidate_states = committed_states
                     normal_multiplier_change = 0.0
                     augmentation_trace: list[dict[str, float]] = []
@@ -383,13 +448,13 @@ def solve_static_contact_path(
                                 model, u, committed_states, num_layers,
                                 kinematics="von_karman",
                             )
-                            residual = (reactions @ multipliers
+                            residual = (reduced_external + reactions @ multipliers
                                         - np.asarray(T.T @ internal).reshape(-1))
                             constraint = target - rows @ q
                             residual_norm = float(np.linalg.norm(residual))
                             constraint_norm = float(np.max(np.abs(constraint)))
                             force_scale = max(1.0, float(np.linalg.norm(
-                                reactions @ multipliers)))
+                                reduced_external + reactions @ multipliers)))
                             if (residual_norm <= tolerance * force_scale and
                                     constraint_norm <= tolerance * scale):
                                 certificate = manager.evaluate(u, tangent=False)[2]
@@ -498,7 +563,7 @@ def solve_static_contact_path(
                     )
                     _discard_nonlinear_state_candidate(committed_states)
                     support = _support_reaction_resultants(
-                        model, recovered - controls.T @ multipliers,
+                        model, recovered - controls.T @ multipliers - external,
                     )
                     accepted_step = step
                     record = {
@@ -511,6 +576,14 @@ def solve_static_contact_path(
                         "normal_multiplier_change": normal_multiplier_change,
                         "contact": certificate.to_dict(),
                     }
+                    if program.nodal_forces:
+                        previous_force_values = program.force_values_at(step-1)
+                        start_u = np.asarray(T @ start_q + u0).reshape(-1)
+                        record["nodal_forces_n"] = force_values.tolist()
+                        record["external_nodal_work_trapezoid_j"] = float(
+                            0.5*(previous_force_values + force_values)
+                            @ (accepted_u-start_u)[force_dofs]
+                        )
                     history.append(record)
                     previous_steps.append(NonlinearStaticStep(
                         step_index=step,
@@ -549,6 +622,9 @@ def solve_static_contact_path(
                         "targets": program.target_at(accepted_step).tolist(),
                         "reaction_generalized": multipliers.tolist(),
                         "profile": profile,
+                        **({"nodal_forces_n": program.force_values_at(
+                            accepted_step,
+                        ).tolist()} if program.nodal_forces else {}),
                     },
                     "general_contact": manager.evaluate(final_u, tangent=False)[2].to_dict(),
                 })
