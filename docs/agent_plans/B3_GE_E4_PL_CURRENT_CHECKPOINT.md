@@ -2,59 +2,48 @@
 
 ## Current state — 26 September 2026
 
-**Decision sought:** Defend or revise the native six-channel connection
-before selecting a P0/P1/dual multiplier space. The bounded
-transverse-order/line-resolution diagnosis is complete. Classical axial,
-historical Q6/finite-pad and native six-channel comparisons remain
-distinct.
+**Decision sought:** Defend or revise the native six-channel beam–shell
+connection before selecting P0/P1/dual. The bounded transverse-order and
+line-resolution diagnosis is complete; classical axial, historical
+Q6/finite-pad and native six-channel evidence remain separate.
 
-**Established:** On matched C1 F5 geometry, supports and +100 N m torque
-resultant, the three-station RMS difference between the solid top-face
-endpoint slope and native Q4 face slope is `0.534/0.405/0.255 µrad` for
-P0/P1/dual. The corresponding native B3 rotation minus solid rigid-section
-fit differences are `1.479/1.362/1.116 µrad`. This is neither full-face
-field agreement nor a per-station ordering: P0 reverses it at x=`0.9 m`,
-and the solid x=`0.95 m` section fit is interpolated. Independent review
-verified the saved geometry, sampling and input hashes. The physically
-matched F5 torque and opening-force work comparisons remain separate;
-pure torque alone is a contact-inadmissible linear influence, and solid
-end-face traction differs from the native nodal load. Combined-minus-
-opening torque bond action matches independent support within
-`6.6e-5 N/N m`, while solid rigid-section fits exceed its final-state
-torque seam pairing by `6.91–7.19%`. The same projection on the validated
-opening-force field exceeds its own seam pairing by `6.24–7.02%`; its
-stress-derived bond wrench matches independent plate support within
-`2.1e-4 N/N m`. These are bilinear pairing remainders, not path energy,
-percentages of global load work, or a causal explanation. Seven saved
-native mesh ratios provide finite-grid rank, transfer and signed action,
-not inf-sup evidence. No P0/P1/dual choice follows from gaps or quotients.
+**Established:** The new detached C1 square-bar/plate experiment has no
+shared nodes or contact, matched bar reference axis, root support and end
+resultants. Native bare B3 versus factor-four C3D20R work differs by
+`−0.035%` for +100 N m torque and `+0.780%` for −1000 N opening force.
+The apparent `~2.3 µrad` native retained-pose/solid-section endpoint
+torque gap compares unlike measures: native rotation is constant per
+half-cell. Against the two solid half-cell Simpson section averages its
+differences are only `0.173/0.114 µrad`; native nodal tip work rotation
+differs from the solid fitted tip section by `0.082 µrad`. Independent
+review verified geometry, wrenches, completion and this interpretation.
+One solid level and Simpson averaging are diagnostics, not exact port
+equivalence. In the *coupled* F5 comparison, native torque `Fy` transfer
+still exceeds solid by `18–20%`, while the same-force opening channels
+are closer. Solid face slopes are closer than endpoint B3/solid section
+rotations in the three-station RMS, but that scalar does not rank spaces.
+The saved torque and opening rigid-section seam-pairing remainders are
+`6.91–7.19%` and `6.24–7.02%` of their own seam pairings; they are not
+path energy or a causal explanation. Seven native mesh ratios provide
+finite-grid rank, transfer and signed action, not inf-sup evidence.
 
-**Remaining uncertainty, next discriminator and action:** The station
-result and both load-specific remainders prioritize testing 3D
-section/end-port and load-map reduction against the existing common
-interface virtual work, while keeping the
-transverse `Fy/Mx/Mz` trace as a competing explanation. If a matched
-section/end-port projection explains the split, revise that reduction;
-if it does not, derive and test a mechanically distinct shell trace/law.
-Use the saved F5 torque/opening fields and current resource envelope
-before any new external solve. Their work-conjugate end-face coordinates
-and fitted solid tip-section motions differ by only `0.066 µrad` for
-torque and `0.002 µm` for opening, far below the corresponding native-tip
-differences; this does not rule out other end-load effects. The next
-bounded external discriminator is the same C1 square bar detached from
-the plate under these two end loads, against the native bare B3 with
-identical reference axis and section. If the detached fields differ,
-investigate the B3 section/end port before altering the line law; if
-they agree, focus on the six-channel interface trace. One solid mesh
-level is diagnostic, not physical acceptance. Independently define and review positive
-C1 broken-trace and primal norms before interpreting the existing ratios
-as stability evidence; retained B3 yaw jumps bar an automatic continuous
-trace norm. No extra classical axial refinement is indicated. Corrected
-station evidence is `f03-c1-factor5-transverse-station-match-dev-20260926-v2`;
-opening projection is `f03-c1-factor5-opening-weak-work-dev-20260926-v2`
-under `.qualification/b3-ge-e4-pl/`; both v1 roots remain preserved. Formal F03
-authority is unconsumed; G0B open and G1 barred. No external process is
-running.
+**Remaining uncertainty, next discriminator and action:** Bare torque
+work and cell-consistent rotations no longer justify blaming a gross
+square-section torsion error or endpoint load-coordinate extraction.
+Test the *coupled* retained half-cell trace and its work pullback against
+the saved F5 solid bond action, separating shell-side pose from beam-side
+port and checking the physical `Fy/Mx/Mz` transfer. A mismatch localized
+to the trace calls for a mechanically distinct law; a mismatch in the
+underlying shell response calls for that formulation/idealization audit.
+Do not change the line law from a small gap, residual, or quotient.
+Independently define/review positive C1 broken-trace and primal norms
+before using existing ratios as stability evidence; retained B3 yaw jumps
+preclude an automatic continuous-trace norm. No more classical axial
+refinement is indicated. New roots under `.qualification/b3-ge-e4-pl/`
+are `f03-c1-detached-port-dev-20260926-v1` (preserved F4 postprocessing
+failure), `-v2` (completed), and `f03-c1-detached-cell-rotation-dev-20260926-v2`;
+the earlier cell `-v1` remains preserved. Formal F03 authority is
+unconsumed; G0B open, G1 barred. No external process is running.
 
 ## Prior bounded decision record — 26 September 2026
 

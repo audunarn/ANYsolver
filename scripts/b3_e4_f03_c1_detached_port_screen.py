@@ -40,11 +40,12 @@ def _sha(path: Path) -> str:
 
 
 def _solid_section_fits(xyz: np.ndarray, u: dict[int, np.ndarray],
-                        elements: dict[str, np.ndarray]) -> dict:
+                        elements: dict[str, np.ndarray], *,
+                        stations: tuple[float, ...] = STATIONS) -> dict:
     """Fit the independent bar's actual factor-four section node planes."""
     bar_nodes = set(np.asarray(elements["Stiffener"]).ravel())
     out = {}
-    for station in STATIONS:
+    for station in stations:
         nodes = sorted(n for n in bar_nodes if abs(xyz[n, 0] - station) < 1e-12)
         if len(nodes) < 12:
             raise ValueError("insufficient actual factor-four section nodes")
