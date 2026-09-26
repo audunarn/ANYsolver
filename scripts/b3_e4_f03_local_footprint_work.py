@@ -1345,6 +1345,12 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 families.extend((
                     ("line_hybrid_common_alt_fz", np.vstack((
                         common, alternating[[2]]))),
+                    ("line_hybrid_common_alt_fx", np.vstack((
+                        common, alternating[[0]]))),
+                    ("line_hybrid_common_alt_my", np.vstack((
+                        common, alternating[[4]]))),
+                    ("line_hybrid_common_alt_fx_my", np.vstack((
+                        common, alternating[[0, 4]]))),
                     ("line_hybrid_common_alt_except_fz", np.vstack((
                         common, alternating[[0, 1, 3, 4, 5]]))),
                     ("line_hybrid_common_alt_fy_mx_mz", np.vstack((

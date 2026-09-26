@@ -3871,3 +3871,17 @@ require several channels, revisit the reduced line-law definition.
 Keep actual applied work distinct from the solid fitted tip pose: the
 solid end-face F·u includes warping and differs from a rigid-tip
 F·u reconstruction by `2.03e-5/1.08e-5 J` at F2/F4.
+
+The fixed-grid common/alternating ablation at source `48c5eb9c` passed
+rank, balance and work checks. Alternating Fz alone moves opening tip-z
+`−70.237→−69.965 µm`, only `0.272 µm` of the full `1.342 µm`
+shift. The other five alternating rows give `−69.178 µm`; their
+Fy/Mx/Mz subset does not change opening but accounts for the entire
+torque change `49.163→46.883 µrad`. Thus opening also depends on
+alternating Fx and/or director-pitch My. Raw root:
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-action-ablation-dev-20260926-v1`.
+The last bounded ablation will separate Fx from My on this same grid.
+If My controls the shift, check its director/shear assumption against
+the 3D bonded face; if Fx controls it, check axial trace and eccentric
+work. Either result requires physical interpretation before ratio or
+multiplier selection. Do not continue row addition after this split.

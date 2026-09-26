@@ -77,6 +77,9 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
         assert case["physical_shell_work_j"] > 0.
         assert case["mechanics_error"] < 1e-7
     for name, rows in (("line_hybrid_common_alt_fz", 7),
+                       ("line_hybrid_common_alt_fx", 7),
+                       ("line_hybrid_common_alt_my", 7),
+                       ("line_hybrid_common_alt_fx_my", 8),
                        ("line_hybrid_common_alt_except_fz", 11),
                        ("line_hybrid_common_alt_fy_mx_mz", 9)):
         family = result["results"][name]
