@@ -6,6 +6,7 @@ from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_distributed_surface_finite import (
     FiniteSurfaceLineHybrid, FiniteSurfaceMomentPatch, finite_chart_screen,
 )
+from anysolver.corotational import rotation_matrix_from_vector
 from scripts.b3_e4_f03_local_footprint_work import (
     bond_x_segments, distributed_surface_patch_trace,
 )
@@ -205,3 +206,69 @@ def test_c1_hybrid_two_host_intervals_preserve_chart_work_and_rank():
         assert result["mixed_direction_error_j"] < 1e-6
         assert result["finite_common_rigid_gap_error"] < 1e-12
         assert abs(result["common_rigid_virtual_work_j"]) < 1e-9
+
+
+def test_c1_hybrid_uses_actual_additive_e4_total_rotation_chart():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    patch = FiniteSurfaceLineHybrid(
+        xs, ys, beam, thickness=.035, x_interval=(.9, .95))
+    rng = np.random.default_rng(2047)
+    count = patch.shell_count
+    total = rng.normal(size=(count, 6))*np.array(
+        (.001, .001, .001, .08, .08, .08))
+    first_shell = rng.normal(size=(count, 6))*np.array(
+        (.002, .002, .002, .04, .04, .04))
+    second_shell = rng.normal(size=(count, 6))*np.array(
+        (.002, .002, .002, .04, .04, .04))
+    beam_base = np.zeros(beam.context.count)
+    beam_base[6:beam.context.nodal_count] = rng.normal(
+        size=beam.context.nodal_count-6)*.001
+    first_beam = rng.normal(size=beam.context.count)*.001
+    second_beam = rng.normal(size=beam.context.count)*.001
+    first_beam[:6] = 0.
+    second_beam[:6] = 0.
+    state = beam.context.advance(beam.context.initial.mechanical, beam_base)
+    first = (first_shell, first_beam)
+    second = (second_shell, second_beam)
+    actual = patch.evaluate_e4_total(total.ravel(), state, first, second)
+    multipliers = np.array((18., -23., 31., 7., -100., 13.))
+
+    def work(a, b):
+        candidate = beam.context.advance(
+            state, a*first_beam+b*second_beam)
+        shell = total+a*first_shell+b*second_shell
+        return float(multipliers@patch.evaluate_e4_total(
+            shell.ravel(), candidate)[:, 0])
+
+    h1, h2 = 1e-5, 2e-3
+    first_fd = (work(h1, 0.)-work(-h1, 0.))/(2*h1)
+    second_fd = (work(0., h1)-work(0., -h1))/(2*h1)
+    mixed_fd = (work(h2, h2)-work(h2, -h2)-
+                work(-h2, h2)+work(-h2, -h2))/(4*h2*h2)
+    assert abs(float(multipliers@actual[:, 1])-first_fd) < 1e-7
+    assert abs(float(multipliers@actual[:, 2])-second_fd) < 1e-7
+    assert abs(float(multipliers@actual[:, 3])-mixed_fd) < 1e-6
+    assert np.linalg.norm(total[:, 3:]) > .1
+
+
+def test_c1_hybrid_physical_director_spin_is_null_at_finite_tilt():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    patch = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
+    rng = np.random.default_rng(710)
+    theta = rng.normal(size=(patch.shell_count, 3))*.12
+    frames = np.array([rotation_matrix_from_vector(value)
+                       for value in theta])
+    coordinates = patch.reference_nodes.copy()
+    shell_spin = np.zeros((patch.shell_count, 6))
+    shell_spin[:, 3:] = frames[:, :, 2]
+    direction = (shell_spin, np.zeros(beam.context.count))
+    response = patch.evaluate(
+        coordinates, frames, beam.context.initial.mechanical,
+        direction, direction)
+    assert np.max(np.abs(response[:, 1:])) < 1e-12

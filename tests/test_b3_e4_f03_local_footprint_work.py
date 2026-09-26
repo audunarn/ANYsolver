@@ -40,6 +40,7 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
             2, beam, plate_thickness=.035,
             include_surface_moments=True, include_line_hybrid=True,
             include_line_hybrid_segmented=True,
+            include_line_hybrid_ablation=True,
             force_sign=-1.)
     for family in ("distributing", "rigid"):
         case = result["results"][family]["cases"]["tip_fz"]
@@ -75,6 +76,18 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
             magnitude*displacement, rel=1e-10)
         assert case["physical_shell_work_j"] > 0.
         assert case["mechanics_error"] < 1e-7
+    for name, rows in (("line_hybrid_common_alt_fz", 7),
+                       ("line_hybrid_common_alt_except_fz", 11),
+                       ("line_hybrid_common_alt_fy_mx_mz", 9)):
+        family = result["results"][name]
+        assert family["constraint_rank"] == rows
+        for load, magnitude in (("tip_mx", 100.), ("tip_fz", -1000.)):
+            case = family["cases"][load]
+            displacement = (case["tip_rx_rad"] if load == "tip_mx"
+                            else case["tip_uz_m"])
+            assert case["total_external_work_j"] == pytest.approx(
+                magnitude*displacement, rel=1e-10)
+            assert case["mechanics_error"] < 1e-7
     segmented = result["results"]["line_hybrid_two_intervals"]
     assert segmented["constraint_rank"] == 12
     for load, magnitude in (("tip_mx", 100.), ("tip_fz", -1000.)):

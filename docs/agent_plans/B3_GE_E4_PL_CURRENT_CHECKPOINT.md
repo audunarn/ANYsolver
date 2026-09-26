@@ -3769,7 +3769,7 @@ shell-top/beam-bottom position, transverse position moments for Mx/Mz,
 and E4 director pitch for My. It is a declared reduced-section law, not
 pointwise 3D bonding or a selected mortar space. Source `ddcfcc30`;
 17/17 affected tests passed. On the fixed C1 two-cell grid its reference
-gap is `5.15e-16`, actual-chart Jacobian error `2.95e-17`, first/mixed
+gap is `5.15e-16`, spatial-left chart Jacobian error `2.95e-17`, first/mixed
 work derivative errors `5.65e-10/5.56e-10 J`, common-rigid gap error
 `3.19e-16`, and raw drilling columns vanish. A supported pitch witness
 is invisible to the old surface-position moments but activates the new
@@ -3801,7 +3801,7 @@ inf-sup certificate or multiplier-space selection. Raw root:
 six rows average the entire x=.9–1 strip, so they do not establish
 stationwise work, interface stability or the required 1:1 through 1:8
 mesh ratios. On the same C1 reference, first split the hybrid into the
-two native/shell host intervals and check reference closure, actual-chart
+two native/shell host intervals and check reference closure, spatial-left chart
 derivatives, row independence, physical action and the shear/pitch
 witness. If rows become dependent or induce nonphysical shear/drilling
 work, revise the shell pose law before a loaded ratio study. If they
@@ -3813,7 +3813,7 @@ G0B remains open and G1 barred.
 
 **Two-interval result and bounded follow-up:** At fixed C1 Q4 two-cell
 grid, the two x-host intervals have 12/12 independent supported rows,
-each with stress-free reference, objective actual-chart work and zero
+each with stress-free reference, objective spatial-left work and zero
 reference drilling columns. Relative to the single-interval hybrid,
 tip Mx rotation moves `49.163→46.883 µrad` (−4.64%) and opening Fz
 tip-z moves `−70.237→−68.896 µm`; balance errors remain below
@@ -3833,3 +3833,41 @@ one→two-interval response shift shrinks with shell resolution, inspect
 shell trace interpolation/kinematics; if it persists, investigate the
 reduced line law against physical bond tractions and director freedom.
 Do not add line rows or select a multiplier space from this quotient.
+
+**Chart review and one-axis outcome:** Independent mechanics review found
+that the earlier finite derivative screen differentiated spatial-left E4
+frame updates, whereas the actual E4 trial uses additive total rotation
+coordinates. Its linear reference results remain valid; its nonlinear
+E4-chart claim was withdrawn. A new diagnostic adapter now uses the same
+`Exp(total_theta)` convention as the E4 corotational trial, including
+first and mixed director/top-surface variations. The nonzero-rotation
+finite-difference check exposed and fixed a mixed beam/shell position
+variable-shadowing bug. Physical spin about each current director is
+null. The independent read-only reviewer found no new blocking defect
+in this adapter; it verifies connection kinematics, not a coupled E4
+material tangent or G0B acceptance. Focused affected tests pass 20/20.
+
+The Q4 two→four-cell check at unchanged B3/line resolution did **not**
+remove the one→two-interval effect: torque tip rx shifts
+`49.607→47.708 µrad` (−3.83%) and opening tip-z
+`−70.690→−69.319 µm` (+1.94% in magnitude toward the solid).
+The two-interval four-cell shell support Mx under torque is
+`−40.896 Nm` and Fz/My under opening `71.498 N/−48.816 Nm`;
+the resolved F4 solid values are about `−40.530 Nm` and
+`72.152 N/−48.137 Nm`, but the native tip rotation is 3.26% below
+the solid fitted-section rotation. The solid bonded-face slope is
+`45.770 µrad` versus its fitted-section `49.317 µrad`, with
+`0.341 µm` maximum section warping residual. Native rigid-section
+rotation cannot be identified with both observables. Raw four-cell
+root: `.qualification/b3-ge-e4-pl/f03-c1-hybrid-shell4-two-interval-dev-20260926-v1`,
+source `d9dab27d`. No physical-accuracy or mortar-space verdict follows.
+
+**Next fixed-grid discriminator:** transform two interval rows into
+six common plus six alternating actions. On the unchanged two-cell C1
+model, ablate alternating Fz for opening and the remaining active
+alternating channels for torque. If one channel explains each response
+shift, focus the physical transfer/reference check there; if shifts
+require several channels, revisit the reduced line-law definition.
+Keep actual applied work distinct from the solid fitted tip pose: the
+solid end-face F·u includes warping and differs from a rigid-tip
+F·u reconstruction by `2.03e-5/1.08e-5 J` at F2/F4.

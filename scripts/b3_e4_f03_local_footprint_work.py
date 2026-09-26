@@ -1215,12 +1215,15 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              include_surface_moments: bool = False,
                              include_line_hybrid: bool = False,
                              include_line_hybrid_segmented: bool = False,
+                             include_line_hybrid_ablation: bool = False,
                              force_sign: float = 1.) -> dict:
     """Linearized native B3/E4 Q4 terminal KKT on a resolved local grid."""
     if plate_thickness not in (.07,.035):
         raise ValueError("bounded native plate thickness required")
     if force_sign not in (-1., 1.):
         raise ValueError("declared unit-sign terminal force required")
+    if include_line_hybrid_ablation and patch_cells != 2:
+        raise ValueError("bounded hybrid ablation requires the fixed C1 two-cell grid")
     beam_axis_z=plate_thickness/2+.05
     xs,ys=local_grid(patch_cells)
     shell_k,physical=raw_e4_tangent(xs,ys,thickness=plate_thickness)
@@ -1314,22 +1317,39 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         surface_patch=FiniteSurfaceMomentPatch(
             xs,ys,beam,thickness=plate_thickness)
         families.append(("surface_moments",surface))
-    if include_line_hybrid or include_line_hybrid_segmented:
+    if (include_line_hybrid or include_line_hybrid_segmented or
+            include_line_hybrid_ablation):
         from scripts.b3_e4_f03_distributed_surface_finite import (
             FiniteSurfaceLineHybrid,
         )
-        if include_line_hybrid:
+        if include_line_hybrid or include_line_hybrid_ablation:
             hybrid = FiniteSurfaceLineHybrid(
                 xs, ys, beam, thickness=plate_thickness)
-            families.append(("line_hybrid_single_interval",
-                             hybrid.reference_trace()))
-        if include_line_hybrid_segmented:
+            single_rows = hybrid.reference_trace()
+            if include_line_hybrid:
+                families.append(("line_hybrid_single_interval", single_rows))
+        if include_line_hybrid_segmented or include_line_hybrid_ablation:
             segments = [FiniteSurfaceLineHybrid(
                 xs, ys, beam, thickness=plate_thickness,
                 x_interval=interval)
                 for interval in ((.9, .95), (.95, 1.))]
-            families.append(("line_hybrid_two_intervals", np.vstack(
-                [segment.reference_trace() for segment in segments])))
+            pieces = [segment.reference_trace() for segment in segments]
+            if include_line_hybrid_segmented:
+                families.append(("line_hybrid_two_intervals",
+                                 np.vstack(pieces)))
+            if include_line_hybrid_ablation:
+                common, alternating = ((pieces[0]+pieces[1])/2,
+                                       (pieces[0]-pieces[1])/2)
+                if np.max(np.abs(common-single_rows)) > 1e-12:
+                    raise ArithmeticError("C1 common interval changed")
+                families.extend((
+                    ("line_hybrid_common_alt_fz", np.vstack((
+                        common, alternating[[2]]))),
+                    ("line_hybrid_common_alt_except_fz", np.vstack((
+                        common, alternating[[0, 1, 3, 4, 5]]))),
+                    ("line_hybrid_common_alt_fy_mx_mz", np.vstack((
+                        common, alternating[[1, 3, 5]]))),
+                ))
     records={}
     for family,constraint in families:
         rank=int(np.linalg.matrix_rank(constraint[:,free]))
@@ -1363,9 +1383,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                                      beam.context.nodal_count].reshape(-1,6)
             shell_wrench=wrench(shell_interface,shell_nodes)
             beam_wrench=(retained_beam_wrench(interface[shell_size:])
-                         if family in ("surface_moments",
-                                       "line_hybrid_single_interval",
-                                       "line_hybrid_two_intervals") else
+                         if family == "surface_moments" or
+                         family.startswith("line_hybrid_") else
                          wrench(beam_interface,beam_nodes))
             work=float(load@full)
             physical_work=float(full[:shell_size]@physical@full[:shell_size])

@@ -13,7 +13,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from anysolver import _ge_beam3_mixed_ad as ad
 from anysolver._ge_beam3_mixed_ad import rotation_exponential
+from anysolver.corotational import rotation_matrix_from_vector
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts.b3_e4_f03_local_footprint_work import (
     bond_x_segments, distributed_surface_patch_trace, skew,
@@ -270,8 +272,9 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
         return angle, n_u/denom, n_v/denom, mixed
 
     def evaluate(self, shell_coordinates: np.ndarray, shell_frames: np.ndarray,
-                 beam_state, first=None, second=None) -> np.ndarray:
-        """Six gaps and optional exact first/mixed chart variations."""
+                 beam_state, first=None, second=None, *,
+                 _shell_frame_variations=None) -> np.ndarray:
+        """Six gaps and optional exact spatial-left chart variations."""
         coordinates = np.asarray(shell_coordinates, dtype=float)
         frames = np.asarray(shell_frames, dtype=float)
         if (coordinates.shape != (self.shell_count, 3) or
@@ -291,6 +294,15 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
                     bv.shape != bu.shape or
                     not all(np.isfinite(a).all() for a in (su, sv, bu, bv))):
                 raise ValueError("complete finite C1 line directions required")
+            if _shell_frame_variations is not None:
+                frame_directions = tuple(np.asarray(a, dtype=float)
+                                         for a in _shell_frame_variations)
+                if (len(frame_directions) != 3 or any(
+                        a.shape != frames.shape or not np.isfinite(a).all()
+                        for a in frame_directions)):
+                    raise ValueError("complete E4 frame variations required")
+        elif _shell_frame_variations is not None:
+            raise ValueError("E4 frame variations require two directions")
         rows = np.zeros((6, 4 if directional else 1))
         offset_shell = np.array((0., 0., self.top))
         for point in self.points:
@@ -305,7 +317,7 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
             if directional:
                 port = point.port.tangent(beam_state)
                 pu, pv = port@bu, port@bv
-                position_uv, frame_uv = point.port.second_variation(
+                beam_position_uv, frame_uv = point.port.second_variation(
                     beam_state, bu, bv)
                 frame_u = skew(pu[3:])@beam_frame
                 frame_v = skew(pv[3:])@beam_frame
@@ -316,13 +328,21 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
                 for node, shape in zip(point.nodes, point.shape):
                     node = int(node)
                     directed = frames[node]@offset_shell
-                    a, b = skew(su[node, 3:]), skew(sv[node, 3:])
-                    shell_u += shape*(su[node, :3]+a@directed)
-                    shell_v += shape*(sv[node, :3]+b@directed)
-                    shell_uv += shape*(.5*(a@b+b@a)@directed)
+                    if _shell_frame_variations is None:
+                        a, b = skew(su[node, 3:]), skew(sv[node, 3:])
+                        position_u, position_v = a@directed, b@directed
+                        shell_position_uv = .5*(a@b+b@a)@directed
+                    else:
+                        fu, fv, fuv = frame_directions
+                        position_u = fu[node]@offset_shell
+                        position_v = fv[node]@offset_shell
+                        shell_position_uv = fuv[node]@offset_shell
+                    shell_u += shape*(su[node, :3]+position_u)
+                    shell_v += shape*(sv[node, :3]+position_v)
+                    shell_uv += shape*shell_position_uv
                 beam_u = pu[:3]+frame_u@offset_beam
                 beam_v = pv[:3]+frame_v@offset_beam
-                beam_uv = position_uv+frame_uv@offset_beam
+                beam_uv = beam_position_uv+frame_uv@offset_beam
                 gap_u, gap_v = shell_u-beam_u, shell_v-beam_v
                 values.extend((qc_u@gap+qc@gap_u,
                                qc_v@gap+qc@gap_v,
@@ -334,10 +354,18 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
                 for node, shape in zip(center_nodes, center_shape):
                     node = int(node)
                     directed = frames[node, :, 2]
-                    a, b = skew(su[node, 3:]), skew(sv[node, 3:])
-                    director_u += shape*(a@directed)
-                    director_v += shape*(b@directed)
-                    director_uv += shape*(.5*(a@b+b@a)@directed)
+                    if _shell_frame_variations is None:
+                        a, b = skew(su[node, 3:]), skew(sv[node, 3:])
+                        change_u, change_v = a@directed, b@directed
+                        change_uv = .5*(a@b+b@a)@directed
+                    else:
+                        fu, fv, fuv = frame_directions
+                        change_u = fu[node, :, 2]
+                        change_v = fv[node, :, 2]
+                        change_uv = fuv[node, :, 2]
+                    director_u += shape*change_u
+                    director_v += shape*change_v
+                    director_uv += shape*change_uv
                 pitch = self._pitch(
                     beam_frame, director, frame_u, frame_v, frame_uv,
                     director_u, director_v, director_uv)
@@ -351,6 +379,49 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
                 rows[5, column] -= (
                     point.weight*point.y*value[0]/self.transverse_inertia)
         return rows
+
+    def evaluate_e4_total(self, total_u: np.ndarray, beam_state,
+                          first=None, second=None) -> np.ndarray:
+        """Pull the line law through E4's additive total rotation chart."""
+        values = np.asarray(total_u, dtype=float)
+        if values.shape != (self.shell_size,) or not np.isfinite(values).all():
+            raise ValueError("complete finite E4 total coordinates required")
+        nodal = values.reshape(self.shell_count, 6)
+        coordinates = self.reference_nodes+nodal[:, :3]
+        frames = np.array([rotation_matrix_from_vector(theta)
+                           for theta in nodal[:, 3:]])
+        if first is None and second is None:
+            return self.evaluate(coordinates, frames, beam_state)
+        if first is None or second is None:
+            raise ValueError("two E4 total-coordinate directions required")
+        if (not isinstance(first, (tuple, list)) or len(first) != 2 or
+                not isinstance(second, (tuple, list)) or len(second) != 2):
+            raise ValueError("E4 and B3 direction pairs required")
+        su = np.asarray(first[0], dtype=float).reshape(self.shell_count, 6)
+        sv = np.asarray(second[0], dtype=float).reshape(self.shell_count, 6)
+        if not np.isfinite(su).all() or not np.isfinite(sv).all():
+            raise ValueError("finite E4 directions required")
+        epsilon = ad.Jet2.variable(0., 0, 2)
+        eta = ad.Jet2.variable(0., 1, 2)
+        frame_u = np.zeros_like(frames)
+        frame_v = np.zeros_like(frames)
+        frame_uv = np.zeros_like(frames)
+        for node in range(self.shell_count):
+            spin = [ad.Jet2.constant(nodal[node, 3+i], 2)+
+                    epsilon*su[node, 3+i]+eta*sv[node, 3+i]
+                    for i in range(3)]
+            jets = ad.so3_exp(spin)
+            for i in range(3):
+                for j in range(3):
+                    entry = jets[i][j]
+                    if abs(entry.value-frames[node, i, j]) > 1e-11:
+                        raise AssertionError("E4 total rotation charts disagree")
+                    frame_u[node, i, j] = entry.gradient[0]
+                    frame_v[node, i, j] = entry.gradient[1]
+                    frame_uv[node, i, j] = entry.hessian[0, 1]
+        return self.evaluate(
+            coordinates, frames, beam_state, first, second,
+            _shell_frame_variations=(frame_u, frame_v, frame_uv))
 
     def reference_trace(self) -> np.ndarray:
         """Analytic six-row Jacobian at the physical C1 reference state."""
@@ -524,9 +595,9 @@ def finite_chart_screen(reference_profile: str = "straight", *,
         "finite_common_rigid_gap_error": rigid_error,
         "common_rigid_virtual_work_j": rigid_virtual_work,
         "quadrature_points": len(patch.points),
-        "scope": ("actual E4 director and retained B3 half-cell charts; "
+        "scope": ("spatial-left E4 director and retained B3 half-cell charts; "
                   "bounded single-interval six-channel hybrid" if hybrid else
-                  "actual E4 director and retained B3 half-cell charts; "
+                  "spatial-left E4 director and retained B3 half-cell charts; "
                   "bounded finite six-resultant surface-position law"),
     }
 
