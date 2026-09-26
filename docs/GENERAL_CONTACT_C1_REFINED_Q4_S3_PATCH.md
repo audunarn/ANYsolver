@@ -127,8 +127,18 @@ in 317.62 s (`examples/general_contact_fixed_projection_skew.py` and
 active pressure mode, a −33.975 µm certified lower gap, 0.1386 Pa final
 pressure change and about 0.004735 N source normal force. This is local
 feasibility under explicit development settings. Mesh/enforcement convergence,
-finite sliding, installed-package verification and independent acceptance
+finite sliding and independent acceptance
 remain open for this restricted profile.
+
+The example also completed against an offline wheel built from clean source
+`11fe7fbd` and installed into an isolated target. Its process asserted the
+installed import origin and reproduced the source development summary. The
+wheel SHA-256 is
+`15291079CE7AF958BCDBBB9CEAA90E32A9CF34CA8B05A625E8F2ADA0501CDAFF`;
+build, install and run logs are under
+`C:/ANYworkspaceWork/general-contact-evidence` with the `wheel-11fe7fbd`
+prefix. This is package-route evidence for the stated candidate, not a
+released contact capability.
 
 The first admitted coupled case has two adjacent Q4 source faces and two
 nonmatching S3 target faces. Direct local work matches whole-patch projected
