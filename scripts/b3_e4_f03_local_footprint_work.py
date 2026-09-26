@@ -1246,6 +1246,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              include_line_hybrid_ablation: bool = False,
                              sparse_line_only: bool = False,
                              line_quadrature_order: int = 3,
+                             line_multiplier_intervals: int = 2,
                              mixed_s3: bool = False,
                              mixed_s3_diagonal: str = "bl_tr",
                              force_sign: float = 1.) -> dict:
@@ -1256,6 +1257,13 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         raise ValueError("declared unit-sign terminal force required")
     if include_line_hybrid_spaces and plate_thickness != .035:
         raise ValueError("weighted C1 line spaces require the 35 mm plate")
+    if (type(line_multiplier_intervals) is not int or
+            line_multiplier_intervals not in (2, 4, 8) or
+            (line_multiplier_intervals != 2 and
+             (not include_line_hybrid_spaces or
+              include_line_hybrid_segmented or
+              patch_cells % line_multiplier_intervals != 0))):
+        raise ValueError("multiplier refinement requires aligned bounded weighted line spaces")
     if sparse_line_only and (not include_line_hybrid_spaces or
                              patch_cells not in (2, 4, 8, 16) or
                              (patch_cells == 2 and transverse_cells != 4)):
@@ -1435,7 +1443,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                                ("continuous_linear", "p1"),
                                ("dual_linear", "dual_p1")):
                 rows,masses,_=c1_hybrid_line_space(
-                    xs,ys,beam,kind=kind,thickness=plate_thickness,
+                    xs,ys,beam,kind=kind,
+                    intervals=line_multiplier_intervals,
+                    thickness=plate_thickness,
                     quadrature_order=line_quadrature_order,
                     mixed_s3=mixed_s3,
                     mixed_s3_diagonal=mixed_s3_diagonal)

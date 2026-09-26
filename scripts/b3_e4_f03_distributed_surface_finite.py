@@ -526,25 +526,31 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
 
 def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
                          kind: str,
+                         intervals: int = 2,
                          thickness: float = .035,
                          quadrature_order: int = 3,
                          mixed_s3: bool = False,
                          mixed_s3_diagonal: str = "bl_tr",
                          ) -> tuple[np.ndarray, np.ndarray, list[FiniteSurfaceLineHybrid]]:
-    """Two-cell P0/P1/dual rows of one six-channel C1 reference work law.
+    """Bounded P0/P1/dual rows of one six-channel C1 reference work law.
 
     Each row is a basis-weighted *mean* gap. Its physical P0/P1/dual
     density coefficient is the integrated row multiplier divided by the
-    returned basis integral in metres. The knots coincide with shell and
-    beam cuts in this bounded comparison; other mesh ratios need an explicit
-    quadrature segmentation audit before reuse.
+    returned basis integral in metres. Multiplier knots coincide with shell
+    cuts; beam cuts are independently segmented by the patch constructor.
     """
     from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
 
     if (thickness != .035 or beam.n_half_cells not in (12, 14, 18, 24, 26) or
             not beam.model.name.endswith("-c1_tangent_2um")):
         raise ValueError("weighted line spaces require the bounded 35 mm C1 reference")
-    space = LineMultiplierSpace(kind, (0., .5, 1.))
+    if type(intervals) is not int or intervals not in (2, 4, 8):
+        raise ValueError("bounded 2/4/8 longitudinal multiplier intervals required")
+    knots = np.linspace(0., 1., intervals+1)
+    if any(not np.any(np.isclose(xs, .9+.1*value, rtol=0., atol=1e-12))
+           for value in knots):
+        raise ValueError("multiplier knots must coincide with shell host cuts")
+    space = LineMultiplierSpace(kind, tuple(knots))
     patches = []
     for index in range(space.count):
         def basis(x: float, row: int = index) -> float:

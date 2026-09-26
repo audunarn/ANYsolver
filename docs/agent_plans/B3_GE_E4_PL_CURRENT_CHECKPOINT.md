@@ -24,7 +24,15 @@ detects it with all P0/P1/dual spaces at four and eight x intervals: the
 largest basis-mean gap at four intervals is 0.269/1.670/5.550 µm respectively.
 The two-interval means remain below 3e-21 m. Thus targeted longitudinal
 enrichment resolves this *specific detection* failure; it does not select a
-space or establish stability, locking freedom, or loaded work. Both fields
+space or establish stability or locking freedom. A subsequent bounded
+native-retained Q4/B3-12 loaded screen assembled x4/m2, x4/m4, x8/m4 and
+x8/m8 with all three spaces. Every assembled row set retained full rank and
+both load cases passed the existing mixed equilibrium/work checks (maximum
+reported mechanics error 2.85e-11). At fixed x8, m4→m8 lowered the torque
+tip rotation by 3.04% P0, 1.24% P1 and 1.26% dual; the added rows materially
+change the response, but two shell levels and these linear influences do not
+establish locking freedom or convergence. The versioned raw results are
+`B3_GE_E4_PL_C1_ENRICHED_LOADED_Q4_*_DEV_V1.json`. Both prescribed fields
 are translation-only diagnostics, not loaded
 coupled solutions or multiplier selections. The prior F4/F5 findings remain
 bounded diagnostics. The implemented candidate expressly defines a
@@ -60,10 +68,11 @@ qualify actual coupled beam/shell mass or prestress.
 section deformation is physically admissible for the intended bonded pose
 law. Check the native torque/shear work against the validated F5 common
 action at the same geometry, loads, supports and connection interpretation.
-Next assemble the enriched longitudinal spaces under an explicit resolution
-policy and assess work, locking and the native mixed system as well as trace
-stability; mere projected-row detection has been answered. If sided B3 work
-is essential to distinguish causes, obtain a
+Next use a frozen growing-interface policy and physical primal/multiplier
+norms to assess the native mixed system, work, locking and convergence over
+the registered mesh-ratio range; row detection and this bounded loaded screen
+have been answered. If sided B3 work is essential to distinguish causes,
+obtain a
 reference that recovers actual side contributions before using it. Review F09
 conditioning separately. Formal F03 authority remains unconsumed; G0B is
 open, G1 barred.
