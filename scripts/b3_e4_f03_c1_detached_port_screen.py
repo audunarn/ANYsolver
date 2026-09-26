@@ -27,8 +27,6 @@ from scripts.b3_e4_f03_ccx_solid_bond_screen import (
     parse_nodal_vectors, parse_probe_displacements, recover,
     unexpected_solver_diagnostics, _wrench,
 )
-from scripts.b3_e4_f03_factor5_station_comparison import _section_rotation_at
-from scripts.b3_e4_f03_saved_six_gap_replay import _ports
 from scripts.b3_e4_f03_solid_bond_pose_projection import _read_frd_u
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
@@ -39,6 +37,33 @@ STATIONS = (.9, .95, 1.)
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _solid_section_fits(xyz: np.ndarray, u: dict[int, np.ndarray],
+                        elements: dict[str, np.ndarray]) -> dict:
+    """Fit the independent bar's actual factor-four section node planes."""
+    bar_nodes = set(np.asarray(elements["Stiffener"]).ravel())
+    out = {}
+    for station in STATIONS:
+        nodes = sorted(n for n in bar_nodes if abs(xyz[n, 0] - station) < 1e-12)
+        if len(nodes) < 12:
+            raise ValueError("insufficient actual factor-four section nodes")
+        design = np.zeros((3 * len(nodes), 6))
+        values = np.array([u[n] for n in nodes]).ravel()
+        for i, n in enumerate(nodes):
+            _, y, z = xyz[n] - np.array((station, 0., .0675))
+            design[3*i:3*i+3, :3] = np.eye(3)
+            design[3*i:3*i+3, 3:] = ((0., z, -y), (-z, 0., 0.), (y, 0., 0.))
+        motion, _, rank, _ = np.linalg.lstsq(design, values, rcond=None)
+        if rank != 6:
+            raise ArithmeticError("detached bar section fit rank deficient")
+        out[str(round(station * 1000))] = {
+            "translation_m": motion[:3].tolist(),
+            "rotation_rad": motion[3:].tolist(),
+            "rms_fit_m": float(np.sqrt(np.mean((design @ motion - values)**2))),
+            "node_count": len(nodes),
+        }
+    return out
 
 
 def _native_case(beam, load: str) -> dict:
@@ -134,18 +159,14 @@ def _solid_case(root: Path, load: str) -> dict:
     u = _read_frd_u(folder / f"{name}.frd")
     if set(u) != set(range(1, len(xyz))):
         raise ValueError("detached full-field output incomplete")
-    coords = {node: xyz[node] for node in range(1, len(xyz))}
-    _, rotations, fit_rms = _ports(coords, u, elements, method="area")
-    sections = {str(round(x * 1000)): _section_rotation_at(x, rotations)
-                for x in STATIONS}
+    sections = _solid_section_fits(xyz, u, elements)
     work = float(sum(force @ u[node] for node, force in applied.items()))
     if abs(work - recovered["applied_load_work_j"]) > 1e-7:
         raise ArithmeticError("printed/full-field load work disagrees")
     return {"status": "EXPLORATORY_COMPLETE", "seconds": elapsed,
             "tip_work_j": work, "tip_work_coordinate": recovered[
                 "tip_work_conjugate_displacement"],
-            "section_rx_rad": sections,
-            "section_fit_rms_m": fit_rms.tolist(),
+            "section_fits": sections,
             "support_wrench_N_Nm": recovered["support_wrench_N_Nm"],
             "model": model,
             "files_sha256": {path.name: _sha(path) for path in folder.iterdir()
@@ -179,7 +200,8 @@ def main() -> None:
         "geometry": "C1 2um tangent reference, 100mm square bar, 35mm plate disconnected, x=0–1m, root clamped, factor-4 C3D20R solid vs native B3-12 Saint-Venant square section",
         "limits": ["detached bare bar does not validate the shell connection",
                    "solid distributed end traction differs from native nodal resultant",
-                   "one 3D mesh level; pure torque is admissible only as a detached-bar load, not as the previously bonded no-contact reference"],
+                   "one 3D mesh level; section motion is a nodal least-squares fit on actual factor-four planes, not the earlier factor-five area-weighted fit",
+                   "pure torque is admissible only as a detached-bar load, not as the previously bonded no-contact reference"],
     }
     (root / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     with threadpool_limits(limits=1):
