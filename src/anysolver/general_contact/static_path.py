@@ -71,6 +71,13 @@ GENERAL_Q4_Q4_PROFILE = "Q4_Q4_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 _DOF = {"ux": 0, "uy": 1, "uz": 2}
 
 
+def _reported_lower_gap(certificate) -> float:
+    """Read the physical gap certificate from either admitted path manager."""
+    if hasattr(certificate, "minimum_gap"):
+        return float(certificate.minimum_gap)
+    return float(certificate.conservative_lower_gap)
+
+
 @dataclass(frozen=True)
 class ContactPathControl:
     terms: tuple[tuple[int, str, float], ...]
@@ -572,7 +579,7 @@ def solve_static_contact_path(
                                         "pivot_rejected": "nonlinear_verification",
                                         "augmentation": augmentation,
                                         "pressure_change": normal_multiplier_change,
-                                        "minimum_gap": float(certificate.minimum_gap),
+                                        "minimum_gap": _reported_lower_gap(certificate),
                                     })
                                     accelerator = ProjectedAugmentationSecant()
                                     continue
@@ -580,7 +587,7 @@ def solve_static_contact_path(
                                 accelerator = ProjectedAugmentationSecant()
                             augmentation_trace.append({
                                 "pressure_change": normal_multiplier_change,
-                                "minimum_gap": float(certificate.minimum_gap),
+                                "minimum_gap": _reported_lower_gap(certificate),
                                 "residual_norm": residual_norm,
                                 "active_pressure_dofs": certificate.active_pressure_dofs,
                                 "source_contact_force_n": (
@@ -629,6 +636,16 @@ def solve_static_contact_path(
                                 break
                             if (normal_multiplier_change <= settings.pressure_tolerance
                                     and certificate.gap_tolerance_met):
+                                if (certificate.active_pressure_dofs == 0
+                                        and not np.any(projected)):
+                                    # A fully open state has no contact work at
+                                    # either multiplier estimate. Store the
+                                    # exact projected zero for restart and
+                                    # report the certificate for that state.
+                                    manager.set_normal_multipliers(projected)
+                                    _force, _tangent, certificate = manager.evaluate(
+                                        u, tangent=False,
+                                    )
                                 break
                             proposal = (None if accelerator is None else
                                         accelerator.propose(manager.normal_multipliers,
@@ -703,7 +720,7 @@ def solve_static_contact_path(
                             "pivot_rejected": pivot_rejected,
                             "minimum_gap": (
                                 None if certificate is None else
-                                certificate.minimum_gap
+                                _reported_lower_gap(certificate)
                             ),
                             "sampled_overlap_gap": (
                                 None if certificate is None else
