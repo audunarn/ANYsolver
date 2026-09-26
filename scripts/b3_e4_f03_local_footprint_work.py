@@ -1228,7 +1228,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
     if include_line_hybrid_spaces and plate_thickness != .035:
         raise ValueError("weighted C1 line spaces require the 35 mm plate")
     if sparse_line_only and (not include_line_hybrid_spaces or
-                             patch_cells not in (4, 8, 16)):
+                             patch_cells not in (2, 4, 8, 16) or
+                             (patch_cells == 2 and transverse_cells != 4)):
         raise ValueError("sparse line comparison requires bounded weighted C1 case")
     if include_line_hybrid_ablation and patch_cells != 2:
         raise ValueError("bounded hybrid ablation requires the fixed C1 two-cell grid")

@@ -363,6 +363,36 @@ def test_c1_sparse_line_action_preserves_dense_and_bounds_eight_cells():
     assert fine["line_density_norm"]["smallest_nonaxial_mode_beam_action"] > 0.
 
 
+def test_c1_reciprocal_bond_refinement_preserves_exterior_and_reference():
+    from threadpoolctl import threadpool_limits
+
+    with pytest.raises(ValueError, match="reciprocal screen"):
+        bounded_physical_compliance_screen(
+            hybrid=True, segmented=True, sparse_action=True,
+            line_space_kind="piecewise_constant", c1_beam_half_cells=26)
+    with threadpool_limits(limits=1):
+        for half_cells, bond_cells in ((14, 4), (18, 8), (26, 16)):
+            beam = build(half_cells, z_offset=.0675,
+                         torsion_constant=square_torsion_constant(),
+                         reference_profile="c1_tangent_2um")
+            np.testing.assert_allclose(beam.abscissae[:11],
+                                       (0., .125, .25, .375, .5, .625,
+                                        .75, .7875, .825, .8625, .9),
+                                       rtol=0., atol=0.)
+            assert len(beam.abscissae) == half_cells+1
+            assert np.count_nonzero(np.diff(beam.abscissae[-bond_cells-1:]) > 0) == bond_cells
+            assert beam.dense_oracle_max_error < 1e-9
+        result = bounded_physical_compliance_screen(
+            hybrid=True, segmented=True, sparse_action=True,
+            line_space_kind="piecewise_constant", c1_beam_half_cells=26,
+            reciprocal_shell_x_cells=2)[0]
+    assert (result["bond_x_cells"], result["bond_y_cells"]) == (2, 4)
+    assert result["constraint_rank_on_free"] == 12
+    assert result["reference_gap_m"] < 1e-12
+    assert result["line_density_norm"]["smallest_nonaxial_mode_shell_action"] > 0.
+    assert result["line_density_norm"]["smallest_nonaxial_mode_beam_action"] > 0.
+
+
 def test_c1_weighted_endpoint_work_uses_actual_e4_chart():
     # Minimal valid shell grid keeps the same two bond hosts and beam trace.
     xs = np.array((-.5, .9, .95, 1., 1.5))

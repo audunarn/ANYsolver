@@ -492,7 +492,7 @@ def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
     """
     from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
 
-    if (thickness != .035 or beam.n_half_cells not in (12, 24) or
+    if (thickness != .035 or beam.n_half_cells not in (12, 14, 18, 24, 26) or
             not beam.model.name.endswith("-c1_tangent_2um")):
         raise ValueError("weighted line spaces require the bounded 35 mm C1 reference")
     space = LineMultiplierSpace(kind, (0., .5, 1.))
@@ -653,7 +653,8 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                                        line_space_kind: str | None = None,
                                        sparse_action: bool = False,
                                        include_shell_eight: bool = False,
-                                       axial_shell_cells: tuple[int, ...] | None = None
+                                       axial_shell_cells: tuple[int, ...] | None = None,
+                                       reciprocal_shell_x_cells: int | None = None
                                        ) -> list[dict]:
     """Compare six physical interface actions on several bounded local grids.
 
@@ -683,9 +684,16 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
             not (hybrid and segmented and sparse_action and
                  line_space_kind is not None)):
         raise ValueError("axial-only C1 screen requires bounded sparse weighted cells")
-    if c1_beam_half_cells not in (12, 24) or (
+    if reciprocal_shell_x_cells is not None and (
+            reciprocal_shell_x_cells != 2 or axial_shell_cells is not None or
+            include_shell_eight or not (hybrid and segmented and sparse_action
+                                        and line_space_kind is not None)):
+        raise ValueError("reciprocal C1 screen requires bounded sparse weighted cells")
+    if c1_beam_half_cells not in (12, 14, 18, 24, 26) or (
             not hybrid and c1_beam_half_cells != 12):
-        raise ValueError("bounded C1 beam resolution requires hybrid 12 or 24")
+        raise ValueError("bounded C1 beam resolution requires hybrid 12/14/18/24/26")
+    if c1_beam_half_cells in (14, 18, 26) and reciprocal_shell_x_cells is None:
+        raise ValueError("fine C1 beam resolution requires reciprocal screen")
     if (c1_characteristic_length_m not in (.1, 1.) or
             not hybrid and c1_characteristic_length_m != 1.):
         raise ValueError("bounded C1 moment scale must be 0.1 or 1 m")
@@ -697,8 +705,11 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
     if axial_shell_cells is not None:
         cases = tuple((cells, c1_beam_half_cells)
                       for cells in axial_shell_cells)
+    if reciprocal_shell_x_cells is not None:
+        cases = ((reciprocal_shell_x_cells, c1_beam_half_cells),)
     for patch_cells, half_cells in cases:
-        ys_cells = 4 if axial_shell_cells is not None else patch_cells
+        ys_cells = (4 if axial_shell_cells is not None or
+                    reciprocal_shell_x_cells is not None else patch_cells)
         xs, ys = local_grid(patch_cells, transverse_cells=ys_cells)
         beam = build(half_cells, z_offset=.0675,
                      torsion_constant=square_torsion_constant(),
@@ -872,7 +883,8 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                     dual_upper, dual_lower, check_finite=True))),
             }
         results.append({
-            "patch_cells_per_side": (patch_cells if axial_shell_cells is None
+            "patch_cells_per_side": (patch_cells if axial_shell_cells is None and
+                                      reciprocal_shell_x_cells is None
                                       else None),
             "bond_x_cells": patch_cells,
             "bond_y_cells": ys_cells,

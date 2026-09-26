@@ -201,10 +201,10 @@ def build(n_half_cells: int, *, z_offset: float = 0.,
             type(n_half_cells) is not int or
             (n_half_cells not in (4, 8, 16, 32) if
              reference_profile == "straight" else
-             n_half_cells not in ((12, 24) if
+             n_half_cells not in ((12, 14, 18, 24, 26) if
                                   reference_profile == "c1_tangent_2um"
                                   else (12,)))):
-        raise ValueError('bounded straight or 12/24-half-cell C1 native reference required')
+        raise ValueError('bounded straight or 12/14/18/24/26-half-cell C1 native reference required')
     if (isinstance(z_offset, bool) or not np.isfinite(z_offset) or
             not -.2 <= z_offset <= .2):
         raise ValueError('bounded finite native beam reference offset required')
@@ -219,10 +219,19 @@ def build(n_half_cells: int, *, z_offset: float = 0.,
         abscissae = np.arange(n_half_cells+1, dtype=float)/n_half_cells
     elif n_half_cells == 12:
         abscissae = _C1_HALF_STATIONS.copy()
-    else:
+    elif n_half_cells == 24:
         abscissae = np.empty(25)
         abscissae[::2] = _C1_HALF_STATIONS
         abscissae[1::2] = (_C1_HALF_STATIONS[:-1]+_C1_HALF_STATIONS[1:])/2
+    elif n_half_cells in (14, 18, 26):
+        bond_divisions = (n_half_cells-10)//2
+        abscissae = np.r_[
+            _C1_HALF_STATIONS[:10],
+            np.linspace(.9, .95, bond_divisions+1)[:-1],
+            np.linspace(.95, 1., bond_divisions+1),
+        ]
+    else:
+        raise AssertionError("unreachable C1 half-cell resolution")
     name = f'f03-native-virgin-{n_half_cells}'
     if z_offset:
         name += f'-z{z_offset:.17g}'
