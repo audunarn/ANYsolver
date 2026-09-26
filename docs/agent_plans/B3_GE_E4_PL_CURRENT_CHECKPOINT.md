@@ -2,48 +2,56 @@
 
 ## Current state — 26 September 2026
 
-**Decision sought:** Retain or revise the native six-channel connection
-before choosing P0/P1/dual. **Established:** Corrected F5 matched-port
-motion is close at the bonded top edge, but section fits and native nodal
-rotations are different ports. A bounded Q20 recovery at source `d478318d`
-passes its affine patch and reproduces printed support wrenches; six-digit
-FRD displacements produce up to `43 N` torque and `113 N` opening free-node
-residuals, so its local nodal traction is unusable. The printed plate-support
-reactions instead give the integrated bar-on-plate wrench by equilibrium.
-On the same C1 solid geometry, tip face load and supports, factor 2→4→5
-torque transfer converges directionally: `Fy 55.410→54.815→54.624 N`,
-`Mx 40.542→40.530→40.522 N m`. Native B3-12 P0/P1/dual has
-`Fy 64.582/64.325/65.012 N` (`+17.8–19.0%`) and `Mx` within `2.5%`;
-B3-26 still has `Fy 64.94–65.36 N`. F5 adds an x=.825 m solid
-transition split, so this is a mesh-and-alignment trend, not a strict
-fixed-topology convergence proof. Solid/native opening wrench channels
-are much closer. The old axial/reciprocal finite-grid quotients remain
-support-conditioned signed actions, not inf-sup or a basis choice. Q4/S3
-crossed operators locate the mixed-shell mode change in the S3 operator,
-not the trace. Pure solid torque is an algebraic influence that closes the
-unbonded gap; only registered pre-opened combinations are admissible fields.
+**Decision sought:** A defensible native six-channel beam–shell connection
+before choosing P0/P1/dual. **Established:** The saved F5 pre-opened
++100 N m/−1000 N solid field has validated weak bond wrench (agreement
+with independent plate support within `5.8e-5 N/N m`). The F2→F4→F5
+torque transfer `Fy 55.410→54.815→54.624 N` remains about 18–20% below
+native B3-12/26, while opening wrench channels are closer. F5 changes
+mesh alignment, so the trend is not strict convergence. The solid
+interface force–displacement pairing has a `−6.3%` remainder after an
+area-weighted rigid-section projection (`−7.0%` for a nonbond fit); this
+is not path-integrated energy, torque-only loss, or proof of bond slip.
+The saved positive gap check covers declared opposing faces, not full
+side/root contact. The earlier bounded transverse-order/line-resolution
+diagnosis is complete; classical axial and historical Q6/finite-pad
+references remain separate from the native six-channel line.
 
-**Remaining uncertainty:** Whether the persistent torsional `Fy` mismatch
-comes from 3D end-section warping/terminal load distribution or the native
-line pose and shell trace; local traction and mesh-uniform interface
-stability remain unresolved. **Next discriminator and resulting action:**
-Request integration-point stress only on the stiffener in one saved,
-pre-opened factor-five C1 solid case, leaving geometry, loads and supports
-identical; keep one thread and the 120-second cap. First require exact
-output-only deck diff, positive saved face-gap evidence, agreement of new
-displacements/support reactions with the archived solve, and stress-force
-reconstruction of the printed support wrench. If those pass, resolve the
-bond-side traction distribution and compare its six work-conjugate
-resultants with the native line; a concentrated 3D end/warp pattern directs
-a matched port-idealization study, while a smooth incompatible transfer
-directs native pose-law revision. Failed output or force reconstruction
-leaves this diagnostic inconclusive, not a formulation failure. Continue
-the independently needed norm-scaled multi-ratio stability analysis;
-do not select a multiplier from small gaps, work ranking, or the old
-signed quotient. Source-bound saved-field evidence is
-`.qualification/b3-ge-e4-pl/f03-c1-factor5-weak-bond-force-dev-20260926-v3`;
-earlier `v1/v2` are preserved. Formal F03 authority remains unconsumed;
-G0B open and G1 barred.
+**New connection discriminator:** A saved-field replay now splits x and y
+at the actual native line/Q4 host cuts. V1 had an unsplit x=.95 multiplier
+knot and is a failed exact-row comparison; V2 left y=±.025 unsplit; V3
+corrects both, with independent interpolation review. The actual native
+Q4-host proxy, using a solid-inferred director and area-fitted section,
+has P0 `My` gaps `−8.574/−2.882 µrad`; the independent nonbond section
+fit gives `−8.841/−3.088 µrad`. Actual solid-face values are
+`−7.594/−2.699 µrad`. These are reduced-port representability gaps in
+a physically shared-node solid, not weld slip or native E4/B3 solution
+errors. The direct alternative `My` row from a longitudinal position
+moment is smaller (`−3.125/−1.212 µrad` on the Q4-host proxy) but its
+P0 substitution drops native supported and full row rank `12→11` with
+null residual below `4e-16`; reject that substitution. Do not rank line
+spaces from the gap magnitudes. Independent review found no sign, port,
+normalization or rank error in the corrected V3–V5 diagnostics.
+
+**Remaining uncertainty and next action:** The E4 independent director,
+B3 retained section shear/warping, and solid terminal load are not yet
+matched well enough to assign the persistent torque split uniquely. Keep
+the current director-pitch line as an exploratory candidate, but do not
+freeze its `My` mechanics. Next compare the saved solid and native
+section/face shear and physical work at the same terminal stations and
+declared tip loading; determine whether their constituent idealization
+accounts for the mismatch before deriving a different sixth channel. Any
+revised law must preserve transverse shear and prove independent work,
+rank and actual-chart derivatives. Separately define and review a
+positive C1 broken-trace/primal norm before using the seven mesh-ratio
+cases as stability evidence: saved signed quotients are not inf-sup, and
+retained B3 yaw jumps prevent automatic use of a continuous trace norm.
+Current exact roots under `.qualification/b3-ge-e4-pl/` are
+`f03-c1-factor5-stress-force-recovery-dev-20260926-v1`,
+`f03-c1-factor5-bond-warp-work-dev-20260926-v1`, and
+`f03-c1-factor5-native-six-gap-dev-20260926-v1` through `-v5` (historical
+limitations retained). Formal F03 authority unconsumed; G0B open, G1
+barred. No new external process is running.
 
 ## Prior bounded decision record — 26 September 2026
 

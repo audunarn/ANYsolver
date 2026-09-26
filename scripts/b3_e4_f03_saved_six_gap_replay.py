@@ -277,6 +277,68 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
             "meaning":"Each six-vector is the basis-weighted mean [Fx,Fy,Fz,Mx,My,Mz] gap under the native hybrid law; positions in m and pitch/moments in rad-like units. These are kinematic gaps, not force residuals or physical bond slip."}
 
 
+def _native_longitudinal_rank() -> dict:
+    """Check one P0 substitution against the actual supported native trace."""
+    from scripts._b3_e4_f03_native_fixture import build
+    from scripts.b3_e4_f03_distributed_surface_finite import (
+        c1_hybrid_line_space, skew)
+    from scripts.b3_e4_f03_plate_patch_work import local_grid
+    from scripts.b3_e4_f03_square_section_control import square_torsion_constant
+
+    xs,ys = local_grid(2,transverse_cells=4)
+    beam = build(12,z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    original,_,patches = c1_hybrid_line_space(
+        xs,ys,beam,kind="piecewise_constant")
+    alternative = original.copy()
+    shell_size = patches[0].shell_size
+    for index,patch in enumerate(patches):
+        state = beam.context.initial.mechanical
+        center = sum(p.weight*p.x for p in patch.points)
+        inertia = sum(p.weight*(p.x-center)**2 for p in patch.points)
+        row = np.zeros(alternative.shape[1])
+        for point in patch.points:
+            _,_,frame = point.port.pose_pair(state)
+            port = point.port.tangent(state)
+            gap = np.zeros((3,alternative.shape[1]))
+            for node,shape in zip(point.nodes,point.shape):
+                j = 6*int(node)
+                gap[:,j:j+3] += shape*np.eye(3)
+                gap[:,j+3:j+6] -= shape*skew(
+                    np.array((0.,0.,patch.top)))
+            gap[:,shell_size:] -= np.column_stack((
+                np.eye(3),-skew(frame@np.array((0.,point.y,-.05)))))@port
+            row -= point.weight*(point.x-center)*(frame.T@gap)[2]/inertia
+        alternative[6*index+4] = row
+    fixed_shell = {6*j*len(xs)+a for j in range(len(ys)) for a in range(6)}
+    fixed_beam = {shell_size+i for i in beam.context.fixed}
+    free = [j for j in range(original.shape[1])
+            if j not in fixed_shell and j not in fixed_beam]
+    result = {}
+    for name,matrix in (("original_director_pitch",original),
+                        ("longitudinal_position_substitution",alternative)):
+        supported = matrix[:,free]
+        normalized = supported/np.linalg.norm(supported,axis=1)[:,None]
+        left,singular,_ = np.linalg.svd(normalized,full_matrices=False)
+        result[name] = {"full_row_rank":int(np.linalg.matrix_rank(matrix)),
+                        "supported_row_rank":int(np.linalg.matrix_rank(supported)),
+                        "row_normalized_singular_min":float(singular[-1]),
+                        "row_normalized_singular_max":float(singular[0]),
+                        "smallest_left_mode":left[:,-1].tolist(),
+                        "smallest_left_mode_residual":float(np.linalg.norm(
+                            left[:,-1]@normalized))}
+    if (result["original_director_pitch"]["supported_row_rank"] != 12 or
+            result["longitudinal_position_substitution"]["supported_row_rank"] != 11 or
+            result["longitudinal_position_substitution"]["smallest_left_mode_residual"]>1e-12):
+        raise ArithmeticError("unexpected bounded native row dependence")
+    return {"fixture":"C1 B3-12, Q4 bond x2/y4, fixed left shell edge and native beam root, P0 two intervals",
+            "row_order":"[Fx,Fy,Fz,Mx,My,Mz] per interval; only My is replaced",
+            "result":result,
+            "interpretation":"The direct longitudinal-position My substitution is algebraically dependent on existing Fz rows in this native fixture. Row normalization tests dependence only; it is not a physically normed inf-sup measure or stability qualification.",
+            "disposition":"REJECT_DIRECT_SUBSTITUTION"}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--evidence-root", type=Path, required=True)
@@ -309,12 +371,14 @@ def main() -> None:
                   for row in entry[mode] for v in row)
     if max_ref > 1e-12:
         raise ArithmeticError("nonzero native reference gap")
-    result = {"classification":"bounded saved-field native six-gap projection; no G0B acceptance",
+    rank = _native_longitudinal_rank()
+    result = {"classification":"bounded saved-field native six-gap projection and P0 substitution rank; no G0B acceptance",
               "question":"Does the native six-channel line law fit this physically bonded 3D field within section-port and E4-reduction uncertainty?",
               "outcome_rule":"Compare the director-pitch My row with a separate longitudinal-position moment on the same saved bond. If the latter is small and independently rank-valid on the native fixture, derive and test its full finite work law before any basis ranking; if it is large or dependent, prioritize section/end-load idealization. Neither result qualifies a law by itself.",
               "geometry":"F5 35 mm C1 plate, 100 mm square bar, terminal x=.9–1.0 m shared-node bond, +100 Nm/−1000 N pre-opened combined load; no new external solve",
               "fit_assumptions":"linear interpolation of six rigid solid-section fits at .02 m stations; inferred director is the deformed top-bottom thickness chord; Q4 proxies use solid-cell or actual native 0.05 by 0.025 m hosts with inferred nodal directors; actual solid face uses Q20 interpolation; integration splits at native x=.95 m and y=±.025 m host cuts",
               "reference_max_abs_gap":max_ref,"results":reports,
+              "longitudinal_substitution_rank":rank,
               "limits":["3D-to-E4 director is inferred, not an independent E4 state",
                         "linear rigid-section interpolation is not a native B3 interpolation",
                         "the six weak rows can vanish despite local nonzero gap",
