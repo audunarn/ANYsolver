@@ -2,6 +2,53 @@
 
 ## Current state — 26 September 2026
 
+**Decision sought:** Defend the native six-channel beam–shell connection and
+its exact line space, without inferring a choice from the classical axial
+comparator, the historical Q6/finite-pad reference, or small weak gaps.
+
+**Established by the latest bounded discriminator:** The completed
+transverse-order/line-resolution diagnosis and detached-bar comparison below
+remove the case for another classical axial refinement. In the fixed C1 F5
+geometry, the saved *solid* terminal bond action was pulled through the E4
+Q4 top-surface virtual-work map and applied to a shell-only model with the
+same left support. The full force/moment wrench is preserved to
+`9.1e-13 N/Nm`, and replay of the saved native shell actions reproduces the
+three reported native face means to `7.93e-15 m`. Under the same solid
+action, E4 opening tip-face mean differs from the solid by `+0.776 µm`
+(about `1.1%` of that mean). Torque tip mean `y` differs by just `+1.8 nm`,
+but the face-slope differences are `-1.13/-1.14/-1.27 µrad` at
+`x=.9/.95/1 m`. Thus the shell idealization/discretization remains
+material to opening and torque face shape; a close torque tip mean alone
+does not clear it. The native coupled problem uses a different interface
+action, so these observations do not assign causality or rank P0/P1/dual.
+Independent read-only review found no blocking defect in the work map or
+the input geometry/loads/supports. Evidence:
+`.qualification/b3-ge-e4-pl/f03-c1-factor5-shell-action-dev-20260926-v2`;
+runner: `scripts/b3_e4_f03_factor5_shell_action.py`. The first script
+attempt failed on a wrong diagnostic `wrench` call before creating a `v1`
+evidence root; `v2` is the completed run. Pure torque remains an algebraic
+linear influence of the pre-opened combined case, not a standalone
+contact-admissible load. One F5 solid level and a different Q4 shell
+discretization limit the comparison.
+
+**Remaining uncertainty and next discriminating experiment:** Keep the
+saved physical solid bond action fixed and evaluate interval-supported
+`Fy/Mx/Mz` virtual-work modes through the actual retained B3 half-cell
+trace and the E4 shell-top trace, comparing each side with its solid seam
+displacement. Use the native side actions `-C_B^T λ` and `-C_S^T λ` only as
+assembled generalized actions, never as pointwise tractions. A side-specific
+work mismatch identifies which trace/pose law needs revision; close trace
+work with materially different native coupled transfer points to the
+enforcement/space and equilibrium response. If the shell-side difference
+dominates, audit the shell idealization before changing the line law.
+Independently, define positive broken B3 trace and constrained primal norms
+before interpreting the seven mesh-ratio cases as interface stability;
+their existing signed quotients and rank are finite-grid diagnostics only.
+No multiplier space is selected. Formal F03 authority remains unconsumed,
+G0B remains open, and G1 remains barred.
+
+## Previous current-state summary — 26 September 2026
+
 **Decision sought:** Defend or revise the native six-channel beam–shell
 connection before selecting P0/P1/dual. The bounded transverse-order and
 line-resolution diagnosis is complete; classical axial, historical
