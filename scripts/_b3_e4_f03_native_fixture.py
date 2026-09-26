@@ -200,8 +200,11 @@ def build(n_half_cells: int, *, z_offset: float = 0.,
                                   "c1_tangent_2um") or
             type(n_half_cells) is not int or
             (n_half_cells not in (4, 8, 16, 32) if
-             reference_profile == "straight" else n_half_cells != 12)):
-        raise ValueError('bounded straight or 12-half-cell C1 native reference required')
+             reference_profile == "straight" else
+             n_half_cells not in ((12, 24) if
+                                  reference_profile == "c1_tangent_2um"
+                                  else (12,)))):
+        raise ValueError('bounded straight or 12/24-half-cell C1 native reference required')
     if (isinstance(z_offset, bool) or not np.isfinite(z_offset) or
             not -.2 <= z_offset <= .2):
         raise ValueError('bounded finite native beam reference offset required')
@@ -212,8 +215,14 @@ def build(n_half_cells: int, *, z_offset: float = 0.,
     if reference_profile != "straight" and z_offset != .0675:
         raise ValueError('C1 stations require the matched 67.5 mm beam axis')
     n_elements = n_half_cells // 2
-    abscissae = (np.arange(n_half_cells+1, dtype=float)/n_half_cells if
-                 reference_profile == "straight" else _C1_HALF_STATIONS.copy())
+    if reference_profile == "straight":
+        abscissae = np.arange(n_half_cells+1, dtype=float)/n_half_cells
+    elif n_half_cells == 12:
+        abscissae = _C1_HALF_STATIONS.copy()
+    else:
+        abscissae = np.empty(25)
+        abscissae[::2] = _C1_HALF_STATIONS
+        abscissae[1::2] = (_C1_HALF_STATIONS[:-1]+_C1_HALF_STATIONS[1:])/2
     name = f'f03-native-virgin-{n_half_cells}'
     if z_offset:
         name += f'-z{z_offset:.17g}'

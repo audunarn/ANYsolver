@@ -603,7 +603,8 @@ def finite_chart_screen(reference_profile: str = "straight", *,
 
 
 def bounded_physical_compliance_screen(*, hybrid: bool = False,
-                                       segmented: bool = False) -> list[dict]:
+                                       segmented: bool = False,
+                                       c1_beam_half_cells: int = 12) -> list[dict]:
     """Compare six physical interface actions on several bounded local grids.
 
     This is a finite-dimensional, support-conditioned compliance diagnostic,
@@ -620,8 +621,11 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
     results = []
     if segmented and not hybrid:
         raise ValueError("segmented diagnostic requires the hybrid law")
+    if c1_beam_half_cells not in (12, 24) or (
+            not hybrid and c1_beam_half_cells != 12):
+        raise ValueError("bounded C1 beam resolution requires hybrid 12 or 24")
     shell_operators = {}
-    cases = ((2, 12), (4, 12)) if hybrid else (
+    cases = ((2, c1_beam_half_cells), (4, c1_beam_half_cells)) if hybrid else (
         (2, 4), (2, 8), (4, 4), (4, 8), (4, 16))
     for patch_cells, half_cells in cases:
         xs, ys = local_grid(patch_cells)
