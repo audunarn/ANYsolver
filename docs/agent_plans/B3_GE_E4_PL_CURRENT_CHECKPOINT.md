@@ -1503,6 +1503,21 @@ does not change geometry, loading, resource limits or native selection.
 
 **G0 F07 bounded result:** `tests/test_b3_e4_g0_f07_massless_descriptor.py` passes `1/1` in `0.35 s` with the prescribed finite eigenvalue and algebraic-variable checks. This closes the small descriptor identity only. Physical B3/E4 inertia, retained-coordinate mass coupling, constrained sparse modes, free-free rigid modes and buckling remain open; G0B and G1 statuses do not change.
 
+**F07 native physical-mass development (27 September):** On one supported
+Q4/native-B3 owner, `test_b3_e4_g0_f07_native_physical_descriptor.py`
+checks rigid-translation mass work `4.4` against shell `0.4` plus beam
+`4.0`, positive retained-cell inertia, exact zero mass for six algebraic
+retained coordinates and six multipliers, and a full descriptor with 24
+finite and 18 infinite roots. Its first three finite roots match the
+native factor modes. Direct execution passed; an initial standard pytest
+collection stalled and was stopped, then the same focused file passed
+`1/1` in `2.57 s` with the worktree environment, non-JIT and single-thread
+settings. Details and source hashes are in
+`B3_GE_E4_PL_G0_F07_NATIVE_PHYSICAL_DESCRIPTOR_DEV.md`. This is one
+conservative current-rest mass/descriptor feasibility result. Mixed Q4/S3,
+free-free rigid modes, loaded/prestressed spectra, mesh convergence,
+release behavior and buckling still bar F07/G0B acceptance.
+
 ## Prior state — 25 September 2026, native connection decision
 
 **Decision sought:** Keep the six-position-moment 100×100 mm finite footprint as a provisional native connection while deriving a mechanically distinct, stable exact line law. No footprint or multiplier is production-selected. G0B remains open, G1 barred, and formal F03 authority unconsumed.
