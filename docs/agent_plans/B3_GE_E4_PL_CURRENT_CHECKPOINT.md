@@ -27,16 +27,34 @@ enrichment resolves this *specific detection* failure; it does not select a
 space or establish stability, locking freedom, or loaded work. Both fields
 are translation-only diagnostics, not loaded
 coupled solutions or multiplier selections. The prior F4/F5 findings remain
-bounded diagnostics. The earlier lost pytest terminal results are not passes;
+bounded diagnostics. The implemented candidate expressly defines a
+six-channel reduced transverse-strip law; allowing the even local section
+field is consistent with that declaration, but whether this is the intended
+physical bonded-line idealization remains open. The F5 shared-node solid
+bond constrains the full finite face, so its physical response is a demanding
+transfer reference, not an equivalent pointwise law for a 1D reduced strip.
+The earlier lost pytest terminal results are not passes;
 two resumed focused pytest runs stalled without test output and were stopped
 after exceeding the 900 s diagnostic envelope. A third current-source pytest
 run was stopped when the same known collection behavior appeared. None is a
 mechanics pass or failure. The current-source transverse-section test function
 passed by direct invocation with controlled threads, and the complete mode
 diagnostic exited 0. Standard pytest collection remains unresolved.
-B2 F09 fixed mixed-wrench independent checks passed 35 focused tests, but a
-provisional generalized-section conditioning rejection at a very weak SPD
-boundary remains an admission decision, not permission to relax the cutoff.
+B2 F09 fixed mixed-wrench independent checks passed 36 focused tests. An
+independent exact force-method matrix equals the private flexibility matrix;
+for the same weak generalized SPD section, the minimum provisional
+pivot/diagonal ratio changes from below 1e-12 to above 0.01 after a physically
+scaled shear/midspan-moment basis transformation. Thus this rejection is
+basis-dependent, not proof of unrepresentable physical response. Stable
+rounded global assembly/solve and a qualified range remain open; the cutoff
+is unchanged. The preserved 36-test JUnit predates a one-line exact-Fraction
+test refinement; the refined pivot-basis test passed by direct invocation
+with local source and JIT disabled (the B2 operator itself is pure Python).
+F07 now has a bounded existing-kernel descriptor check in addition to its
+analytical identity: massless retained coordinates give modal eigenvalue
+4.8 and full buckling multiplier 1.5, matching independent QZ; reusing the
+modal static lift would give 6. Direct invocation passed 2/2. This does not
+qualify actual coupled beam/shell mass or prestress.
 
 **Remaining uncertainty and next action:** Declare whether the transverse
 section deformation is physically admissible for the intended bonded pose
