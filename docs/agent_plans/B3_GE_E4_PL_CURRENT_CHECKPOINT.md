@@ -9,14 +9,58 @@ full-face pointwise bond. Its loaded wrenches close, but P0's reconstructed
 material dual becomes strongly cancelling as line rows grow. A fixed-shell
 positive-trace quotient also falls much faster for P0 than for P1/dual; its
 weakest vertical mode is distinct from the loaded torque's lateral action.
-The reviewed P1 quotient has a tiny un-ordered floating bound pair.
-**Remaining uncertainty:** Physical torque/shear fidelity, complete native
-retained-variable mixed-system stability, F06 lifecycle, F09 physical B2
-admission and other G0 foundations. **Next action:** Complete the bounded
-mixed-KKT norm/mode discriminator and matched connection-work reference,
-then adjudicate the law and growing-space policy; advance independent F06/F09
-work without repeating classical axial refinement. **Gate:** G0B open,
-G1 barred; formal F03 authority unconsumed.
+The reviewed P1 quotient has a tiny un-ordered floating bound pair. The
+bounded native retained-variable KKT metric completed, but each weakest mode
+is about 99.93% shell numerical drilling chart norm, so its minimum singular
+value cannot decide line-space stability. **Remaining uncertainty:** The
+physical torque/shear meaning of the reduced law, a drilling-aware native
+mixed-system stability assessment, actual F06 rebase ownership, F09 physical
+B2 admission and other G0 foundations. **Next action:** Use the validated F5
+same-action E4 comparison and establish the one-sided native B3 port-work
+reference needed to allocate the remaining transfer difference; assess line
+modes separately without tuning drilling or repeating classical axial
+refinement. **Gate:**
+G0B open, G1 barred; formal F03 authority unconsumed.
+
+**Next bounded physical discriminator:** The validated F5 common-action
+comparison shows a low-order transfer-shape difference, but it cannot assign
+that difference to shell response, native B3 one-sided ports, or reduction of
+the solid bond to six line components. The existing
+`f03-c1-factor5-native-six-gap-dev-20260926-v6` already projects the saved
+face onto the candidate rows, measures Q4 proxy errors, and rejects direct
+replacement of the pitch row by a longitudinal-position moment (rank 11/12).
+Do not repeat it. Its face/section fit is kinematic and its weak rows alone
+do not measure whether excluded transverse deformation carries physical
+interface work. On the same saved pre-opened F5 field, use the independently
+validated bar-on-plate bond nodal action to calculate work on a transverse
+affine projection and its complement at the actual shared face nodes. Check
+that the action and virtual fields recover the known bond wrench and work.
+If the complement carries material work, the reduced transverse idealization
+needs correction or a declared bound before choosing an enforcement space.
+If it is negligible, prioritize the already observed same-action E4 response
+and obtain a sided B3 reference only if that remains necessary. This is a
+single finite-grid discriminator, not a six-channel law qualification or
+substitute for the required shear/director and mesh-ratio checks. No new
+external solve or axial refinement follows automatically.
+
+**Result and action:** The source-bound saved-stress run is
+`B3_GE_E4_PL_F03_C1_F5_TRANSVERSE_WORK_DEV_V2.json`; V1's mismatched
+rounded-FRD force reconstruction stopped at its archive guard and is retained
+in `B3_GE_E4_PL_F03_C1_F5_TRANSVERSE_WORK_DEV_V1_FAILURE.md`. V2 exactly
+reproduces the validated F5 seam wrench and `0.0152174641 J` bond work.
+Fitting translation independently at all eleven x stations as an affine
+function of transverse y leaves a `13.30 nm` weighted component RMS and
+`111.47 nm` maximum vector residual. Its omitted signed weak work is
+`-4.119e-5 J`, `0.271%` of the signed bond work. A quadratic y fit leaves
+`5.06 nm` RMS and `-6.813e-6 J`, `0.0448%` of bond work. Thus this saved
+F5 field does not expose a large work contribution from transverse
+*face-position* content outside an affine section trace. The inference is
+limited to one mesh, one pre-opened combined load and a fitted face field;
+the E4 director-pitch and native B3 retained one-sided rotations are not
+represented by that projection. It cannot establish six-channel fidelity or
+select P0/P1/dual. The existing same-solid-action E4 response and the
+missing sided B3 port work are now the discriminators; do not launch another
+transverse or classical axial refinement from this small remainder.
 
 ## Latest bounded evidence and interpretation
 
