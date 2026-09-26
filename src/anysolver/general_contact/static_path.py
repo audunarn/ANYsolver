@@ -464,6 +464,7 @@ def solve_static_contact_path(
                     pivot_attempts = 0
                     pivot_applied = 0
                     pivot_rejected = 0
+                    schur_relinearizations = 0
                     pressure_map_attempts = 0
                     pivot_backup = None
                     support_resets: list[dict[str, object]] = []
@@ -487,10 +488,19 @@ def solve_static_contact_path(
                             )
                             total_iterations += 1
                             u = np.asarray(T @ q + u0).reshape(-1)
-                            internal, tangent, trial = _assemble_nonlinear_system(
-                                model, u, committed_states, num_layers,
-                                kinematics="von_karman",
-                            )
+                            try:
+                                internal, tangent, trial = _assemble_nonlinear_system(
+                                    model, u, committed_states, num_layers,
+                                    kinematics="von_karman",
+                                )
+                            except ValueError as exc:
+                                if (pivot_backup is None or
+                                        settings.augmentation_acceleration
+                                        != "supported_schur_dev"):
+                                    raise
+                                failure_reason = "contact_candidate_evaluation_failed"
+                                candidate_evaluation_error = str(exc)
+                                break
                             residual = (reduced_external + reactions @ multipliers
                                         - np.asarray(T.T @ internal).reshape(-1))
                             constraint = target - rows @ q
@@ -539,6 +549,10 @@ def solve_static_contact_path(
                                     ("schur_rejected" if settings.augmentation_acceleration
                                      == "supported_schur_dev" else "pivot_rejected"): failure_reason,
                                     "augmentation": augmentation,
+                                    **({"candidate_evaluation_error":
+                                        candidate_evaluation_error}
+                                       if failure_reason == "contact_candidate_evaluation_failed"
+                                       else {}),
                                 })
                                 failure_reason = None
                                 accelerator = (ProjectedAugmentationSecant()
@@ -595,6 +609,64 @@ def solve_static_contact_path(
                                 if (not certificate.gap_tolerance_met
                                         or active_changed
                                         or normal_multiplier_change >= 0.75*prior_change):
+                                    if (settings.augmentation_acceleration == "supported_schur_dev"
+                                            and settings.augmentation_schur_maximum_relinearizations
+                                            > schur_relinearizations
+                                            and certificate.gap_tolerance_met
+                                            and not active_changed
+                                            and normal_multiplier_change < prior_change
+                                            and augmentation <= augmentation_limit-2):
+                                        schur_relinearizations += 1
+                                        correction_trace = {
+                                            "augmentation": augmentation,
+                                            "schur_relinearization": schur_relinearizations,
+                                            "schur_intermediate_pressure_change":
+                                            normal_multiplier_change,
+                                            "schur_prior_pressure_change": prior_change,
+                                        }
+                                        try:
+                                            corrected = refined_patch_supported_schur(
+                                                manager, u, tangent, T, rows,
+                                                difference_step=settings.augmentation_schur_difference_step_m,
+                                                maximum_pressure=settings.augmentation_schur_maximum_pressure_pa,
+                                                maximum_pressure_step=settings.augmentation_schur_maximum_step_pa,
+                                                maximum_modes=settings.augmentation_schur_maximum_modes,
+                                                diagnostics=correction_trace,
+                                                check_cancel=lambda: cancellation_safe_point(
+                                                    cancellation_token,
+                                                    f"contact_path.step:{step}.augmentation:{augmentation}.schur_relinearization",
+                                                ),
+                                            )
+                                        except SolveCancelled:
+                                            q = fallback_q
+                                            multipliers = fallback_controls
+                                            manager.set_normal_multipliers(
+                                                fallback_pressure)
+                                            raise
+                                        except (ValueError, MemoryError, np.linalg.LinAlgError) as exc:
+                                            correction_trace["schur_relinearization_ineligible"] = str(exc)
+                                            corrected = None
+                                        except Exception as exc:
+                                            q = fallback_q
+                                            multipliers = fallback_controls
+                                            manager.set_normal_multipliers(
+                                                fallback_pressure)
+                                            correction_trace["schur_relinearization_failure"] = str(exc)
+                                            augmentation_trace.append(correction_trace)
+                                            failure_reason = "contact_supported_schur_relinearization_failed"
+                                            break
+                                        correction_trace["schur_relinearization_proposed"] = (
+                                            corrected is not None)
+                                        augmentation_trace.append(correction_trace)
+                                        if corrected is not None:
+                                            pivot_backup = (
+                                                fallback_q, fallback_controls,
+                                                fallback_pressure, prior_change,
+                                                corrected.active_indices,
+                                            )
+                                            manager.set_normal_multipliers(
+                                                corrected.multipliers)
+                                            continue
                                     q = fallback_q
                                     multipliers = fallback_controls
                                     manager.set_normal_multipliers(fallback_pressure)
@@ -857,6 +929,7 @@ def solve_static_contact_path(
                             "pivot_applied": pivot_applied,
                             "pivot_rejected": pivot_rejected,
                             **({"schur_attempts": pivot_attempts,
+                                "schur_relinearizations": schur_relinearizations,
                                 "schur_applied": pivot_applied,
                                 "schur_rejected": pivot_rejected}
                                if settings.augmentation_acceleration == "supported_schur_dev"
@@ -926,6 +999,7 @@ def solve_static_contact_path(
                     if settings.augmentation_acceleration == "supported_schur_dev":
                         record["augmentation_acceleration"] = "supported_schur_dev"
                         record["schur_attempts"] = pivot_attempts
+                        record["schur_relinearizations"] = schur_relinearizations
                         record["schur_applied"] = pivot_applied
                         record["schur_rejected"] = pivot_rejected
                         record["augmentation_trace"] = augmentation_trace

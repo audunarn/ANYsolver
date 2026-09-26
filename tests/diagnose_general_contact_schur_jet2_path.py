@@ -13,11 +13,14 @@ from test_general_contact_supported_schur_path import _case
 if __name__ == "__main__":
     model, definition, settings, program = _case()
     maximum_schur_attempts = 1
-    if len(sys.argv) == 2 or (len(sys.argv) == 3 and all(
+    maximum_relinearizations = 0
+    if len(sys.argv) == 2 or (len(sys.argv) in (3, 4) and all(
             value.isdigit() for value in sys.argv[1:])):
         normal_control_node = int(sys.argv[1])
-        if len(sys.argv) == 3:
+        if len(sys.argv) >= 3:
             maximum_schur_attempts = int(sys.argv[2])
+        if len(sys.argv) == 4:
+            maximum_relinearizations = int(sys.argv[3])
         program = replace(program, controls=(
             program.controls[0],
             ContactPathControl.node(normal_control_node, "uz"),
@@ -38,6 +41,7 @@ if __name__ == "__main__":
         q4_source_weighted_gap_hessian_tolerance=1e-5,
         maximum_q4_source_integration_triangles=128,
         augmentation_schur_maximum_attempts=maximum_schur_attempts,
+        augmentation_schur_maximum_relinearizations=maximum_relinearizations,
     )
     result = solve_static_nonlinear(
         model, contact=definition, contact_settings=settings,
@@ -69,6 +73,9 @@ if __name__ == "__main__":
               f"single_control_singular_values={entry.get('schur_force_map_single_control_singular_values')} "
               f"schur_applied={entry.get('schur_applied')} "
               f"schur_rejected={entry.get('schur_rejected')} "
+              f"candidate_evaluation_error={entry.get('candidate_evaluation_error')} "
+              f"schur_relinearization={entry.get('schur_relinearization')} "
+              f"schur_relinearization_proposed={entry.get('schur_relinearization_proposed')} "
               f"schur_actual_to_prior_ratio={entry.get('schur_actual_to_prior_ratio')} "
               f"schur_predicted_active_indices={entry.get('schur_predicted_active_indices')} "
               f"schur_actual_active_indices={entry.get('schur_actual_active_indices')} "
@@ -86,9 +93,11 @@ if __name__ == "__main__":
         print(f"gap_tolerance_met={failure.get('gap_tolerance_met')} "
               f"active_modes={failure.get('active_pressure_dofs')} "
               f"schur_attempts={failure.get('schur_attempts')} "
+              f"schur_relinearizations={failure.get('schur_relinearizations')} "
               f"schur_applied={failure.get('schur_applied')}")
     if accepted_record:
         print(f"accepted_pressure_change_pa={accepted_record.get('normal_multiplier_change')} "
               f"schur_attempts={accepted_record.get('schur_attempts')} "
+              f"schur_relinearizations={accepted_record.get('schur_relinearizations')} "
               f"schur_applied={accepted_record.get('schur_applied')} "
               f"checkpoint={result.restart_checkpoint is not None}")

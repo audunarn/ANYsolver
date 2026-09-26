@@ -82,6 +82,28 @@ def test_q4_s3_jet2_partial_shared_pressure_work():
                                rtol=3e-3, atol=3e-4)
 
 
+@pytest.mark.parametrize("corrupt_value", (0.01, np.nan))
+def test_q4_s3_shared_support_rejects_corrupt_aggregate(monkeypatch, corrupt_value):
+    model, definition, settings = _two_q4_two_s3()
+    candidate = GeneralS3PatchManager(model, definition, _settings(settings))
+    displacement = np.zeros(candidate.n_dof)
+    for node in range(1, 7):
+        displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.02
+    geometry = candidate.law.geometry
+    original = geometry.evaluate
+
+    def corrupt_aggregate(*args):
+        state = original(*args)
+        support = state.reference_support.copy()
+        support[0] = (support[0] + corrupt_value
+                      if np.isfinite(corrupt_value) else np.nan)
+        return replace(state, reference_support=support)
+
+    monkeypatch.setattr(geometry, "evaluate", corrupt_aggregate)
+    with pytest.raises(ValueError, match="shared pressure support"):
+        candidate.evaluate(displacement, tangent=False)
+
+
 def test_q4_s3_jet2_runs_coupled_static_path_and_restart():
     model, definition, settings = _two_q4_two_s3()
     definition = replace(definition, interactions=(replace(

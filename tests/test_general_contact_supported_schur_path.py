@@ -10,6 +10,7 @@ from anysolver import (
     solve_static_nonlinear, validate_general_contact,
 )
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from anysolver.general_contact import static_path
 from test_general_contact_q4_s3_refined_patch import _two_q4_two_s3
 
 
@@ -65,9 +66,13 @@ def test_supported_schur_settings_are_explicit_and_profile_bounded():
     assert contract != changed
     assert contract["settings"]["augmentation_schur_maximum_modes"] == 8
     assert contract["settings"]["augmentation_schur_maximum_attempts"] == 1
+    assert contract["settings"]["augmentation_schur_maximum_relinearizations"] == 0
     twice = replace(settings, augmentation_schur_maximum_attempts=2)
     assert validate_general_contact(model, definition, twice).valid
     assert GeneralS3PatchManager(model, definition, twice).restart_contract() != contract
+    relinearized = replace(settings, augmentation_schur_maximum_relinearizations=1)
+    assert validate_general_contact(model, definition, relinearized).valid
+    assert GeneralS3PatchManager(model, definition, relinearized).restart_contract() != contract
 
 
 def test_projection_branch_declines_schur_and_preserves_static_failure():
@@ -184,6 +189,90 @@ def test_original_control_rejects_inaccurate_second_proposal_and_rolls_back():
     assert rejected["schur_gap_tolerance_met"]
     assert rejected["schur_actual_to_prior_ratio"] >= 0.75
     json.dumps(failure["augmentation_trace"], allow_nan=False)
+    assert result.steps == []
+    assert result.restart_checkpoint is None
+    np.testing.assert_array_equal(result.displacements, 0.0)
+
+
+def test_relinearized_original_control_completes_and_restarts():
+    model, definition, settings, program = _case()
+    settings = replace(
+        settings, general_s3_differentiation="jet2_q4_s3_dev",
+        q4_source_support_gradient_tolerance=1e-5,
+        q4_source_support_hessian_tolerance=1e-5,
+        q4_source_weighted_gap_gradient_tolerance=1e-5,
+        q4_source_weighted_gap_hessian_tolerance=1e-5,
+        maximum_q4_source_integration_triangles=128,
+        augmentation_schur_maximum_attempts=2,
+        augmentation_schur_maximum_relinearizations=1,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "completed"
+    assert len(result.steps) == 1
+    record = result.info["force_displacement_history"][-1]
+    assert record["schur_relinearizations"] == 1
+    assert record["schur_applied"] == 2
+    assert record["schur_rejected"] == 0
+    assert record["normal_multiplier_change"] <= settings.pressure_tolerance
+    assert record["contact"]["gap_tolerance_met"]
+    trace = record["augmentation_trace"]
+    assert any(entry.get("schur_relinearization_proposed") for entry in trace)
+    assert not any(entry.get("schur_rejected") for entry in trace)
+    json.dumps(trace, allow_nan=False)
+    assert result.restart_checkpoint is not None
+    assert result.restart_checkpoint["version"] == 2
+
+    fresh_model, fresh_definition, _fresh_settings, fresh_program = _case()
+    resumed = solve_static_nonlinear(
+        fresh_model, contact=fresh_definition, contact_settings=settings,
+        contact_path_program=fresh_program, max_iterations=12,
+        emit_restart_checkpoint=True,
+        restart_checkpoint=result.to_restart_checkpoint(),
+    )
+    assert resumed.status == "completed"
+    np.testing.assert_array_equal(resumed.displacements, result.displacements)
+    assert resumed.to_restart_checkpoint() == result.to_restart_checkpoint()
+
+
+def test_unexpected_relinearization_failure_restores_algorithmic_origin(monkeypatch):
+    model, definition, settings, program = _case()
+    settings = replace(
+        settings, general_s3_differentiation="jet2_q4_s3_dev",
+        q4_source_support_gradient_tolerance=1e-5,
+        q4_source_support_hessian_tolerance=1e-5,
+        q4_source_weighted_gap_gradient_tolerance=1e-5,
+        q4_source_weighted_gap_hessian_tolerance=1e-5,
+        maximum_q4_source_integration_triangles=128,
+        augmentation_schur_maximum_attempts=2,
+        augmentation_schur_maximum_relinearizations=1,
+    )
+    original = static_path.refined_patch_supported_schur
+    calls = 0
+
+    def fail_third_call(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 3:
+            raise RuntimeError("injected relinearization failure")
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(static_path, "refined_patch_supported_schur", fail_third_call)
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+    assert calls == 3
+    assert result.status == "diverged"
+    assert result.failure_reason == "contact_supported_schur_relinearization_failed"
+    failure = result.info["contact_failure"]
+    assert any(entry.get("schur_relinearization_failure") ==
+               "injected relinearization failure"
+               for entry in failure["augmentation_trace"])
     assert result.steps == []
     assert result.restart_checkpoint is None
     np.testing.assert_array_equal(result.displacements, 0.0)

@@ -280,10 +280,13 @@ class MovingS3PatchProjectedNormal:
         js = np.zeros_like(jw)
         assembled_support = np.zeros(source_count)
         assembled_gap = np.zeros(source_count)
+        support_magnitude = np.zeros(source_count)
+        gap_magnitude = np.zeros(source_count)
         weighted_hessian = np.zeros((len(active_coordinates),
                                      len(active_coordinates))) if tangent else None
         support_hessian = np.zeros_like(weighted_hessian) if tangent else None
         evaluations = len(self.geometry.pair_laws)
+        zero_area_overlap_pairs = []
         source = np.asarray(current_source, dtype=float)
         target = np.asarray(current_target, dtype=float)
         for pair_index, law in enumerate(self.geometry.pair_laws):
@@ -296,6 +299,8 @@ class MovingS3PatchProjectedNormal:
             local = law.evaluate(local_source, local_target)
             evaluations += 1
             if local.reference_overlap_area == 0.0:
+                if local.overlap_vertices > 0:
+                    zero_area_overlap_pairs.append(pair_index)
                 continue
             if len(source_nodes) == 4:
                 derivative = q4_s3_overlap_derivatives(
@@ -326,6 +331,8 @@ class MovingS3PatchProjectedNormal:
                 raise ValueError("differentiated S3 overlap disagrees with mortar geometry")
             assembled_support[source_nodes] += derivative.reference_support
             assembled_gap[source_nodes] += derivative.reference_weighted_gap
+            support_magnitude[source_nodes] += np.abs(derivative.reference_support)
+            gap_magnitude[source_nodes] += np.abs(derivative.reference_weighted_gap)
             if not np.any(base.pressure[source_nodes]):
                 continue
             coordinate_map = np.asarray(
@@ -353,11 +360,25 @@ class MovingS3PatchProjectedNormal:
                     )
                     weighted_hessian[np.ix_(indices, indices)] += weighted
                     support_hessian[np.ix_(indices, indices)] += supported
-        if (not np.allclose(assembled_support, base.reference_support,
-                            rtol=1.0e-9, atol=0.0)
-                or not np.allclose(assembled_gap, base.reference_weighted_gap,
-                                   rtol=1.0e-9, atol=0.0)):
-            raise ValueError("differentiated S3 patch disagrees with shared pressure support")
+        # Pair-wise integration has already matched at 1e-9 relative error.
+        # Summing signed contributions can make the assembled total tiny;
+        # compare against the sum of contribution magnitudes so roundoff and
+        # allowed pair errors do not turn into a false zero-scale mismatch.
+        summation_tolerance = 1.0e-9 + 64.0*np.finfo(float).eps
+        if (not all(np.all(np.isfinite(values)) for values in (
+                    assembled_support, base.reference_support,
+                    assembled_gap, base.reference_weighted_gap,
+                    support_magnitude, gap_magnitude))
+                or np.any(np.abs(assembled_support-base.reference_support)
+                   > summation_tolerance*support_magnitude)
+                or np.any(np.abs(assembled_gap-base.reference_weighted_gap)
+                          > summation_tolerance*gap_magnitude)):
+            raise ValueError(
+                "differentiated S3 patch disagrees with shared pressure support: "
+                f"support_error={np.max(np.abs(assembled_support-base.reference_support)):.9g}, "
+                f"weighted_gap_error={np.max(np.abs(assembled_gap-base.reference_weighted_gap)):.9g}, "
+                f"zero_area_overlap_pairs={zero_area_overlap_pairs}"
+            )
         gap_variation = jw - base.normalized_gap[:, None]*js
         residual = -(base.pressure @ gap_variation)
         if not tangent:
