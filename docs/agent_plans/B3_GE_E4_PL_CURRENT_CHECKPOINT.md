@@ -6,33 +6,70 @@
 and stable exact line space, separate from the classical axial comparator
 and the historical Q6/finite-pad footprint.
 
-**Established:** On the fixed C1 geometry, weighted P0/P1/dual rows pass
-reference, actual-chart work, rank, loaded balance and P0 parity. The
-basis-specific H^-1/2 two-grid diagnostic has positive reported shell/beam
-mode work but scale-sensitive alternating Fy/Mz modes. Independent review
-found no blocking row or norm defect; neither the smaller P1/dual quotients
-nor pointwise gaps select a space. Exact-source roots are
-`.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-spaces-fixed-dev-20260926-v1`
-and `f03-c1-hybrid-weighted-density-norm-dev-20260926-v1` (source
-`cd03575c`/`500f3b1f`). The matched executed F2/F4 pre-opened solid is
-a directional torque/shear reference: nominal C1 taper, plate, support and
-load resultant align, but its resolved square section and distributed tip
-load differ from the native idealization.
+**Established:** On the fixed C1 geometry, the native weighted P0/P1/dual
+six-channel rows pass reference, actual-chart work, rank and loaded balance.
+Axial-only shell ratios through `1:8` and reciprocal beam-bond ratios through
+`8:1` retain rank and positive reported shell/beam signed action. The
+reciprocal x2/y4 Q4 fixture holds exterior C1 cuts fixed and uses 2/4/8/16
+bond half-cells at source `e915094d`; all loaded mechanics errors are below
+`5e-12`. P0/P1/dual final nonaxial quotients are `1.680/0.699/0.701`;
+last-step Mx applied-work changes are below `0.14%`. The exact-source root
+is `.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-reciprocal-ratios-dev-20260926-v2`.
+The v1 root preserves an 8:1 P1 diagnostic failure: a symmetric eigensolver
+read one triangle of a roundoff-skew compliance Gram while the work split
+used its full quadratic action. The corrected diagnostic evaluates the
+quadratic Gram explicitly without altering a tangent or solve. Focused
+reciprocal and existing weighted-norm tests passed directly.
 
-The new axial-only Q4 comparison holds four transverse cells and B3-12
-fixed while refining bond-length cells 4→8→16. P0/P1/dual retain rank,
-positive reported shell/beam mode work and balanced torque/opening transfer
-through the one-sided `1:8` half-cell ratio. This is local development
-evidence, not mesh-uniform stability or space selection.
+**Remaining uncertainty and next discriminating action:** No multiplier
+space is selected. The signed quotient is finite-grid/support/scale
+conditioned, and pointwise gaps are not weak stability certificates.
+The full-range P1/dual torque-work shifts are `-1.61%/-3.17%` although
+their last-step changes are below `0.14%`; bare B3 tip compliance is
+invariant across bond subdivisions. Exact-source Q3/Q5 loaded line
+integration at B3-12/26 leaves all six primary work values unchanged to
+printed precision. Root:
+`.qualification/b3-ge-e4-pl/f03-c1-line-quadrature-attribution-dev-20260926-v1`
+at source `b423c2a1`. Thus the drift belongs to the coupled trace/space
+discretization rather than free-beam compliance or three-point quadrature.
+The saved solid side/root-end seam question is now resolved for the
+interpolated F2/F4 fields by a positive seam-factored separation bound.
+The next physical discriminator is a third matched solid level within the
+existing 120-second cap. If contact or transfer changes materially, revise
+the native trace/pose or reference definition; if admissible solid response
+settles, compare physical work and wrenches before Q4/S3 and loaded
+finite-state tests. Do not extend classical axial refinement. Formal F03
+authority is unconsumed, G0B open and G1 barred.
 
-**Remaining uncertainty and next experiment:** Reciprocal ratios through
-`8:1`, Q4/S3 transitions, loaded finite-state work and a physically
-admissible, converged solid reference remain open. Build the reciprocal
-sparse fixture with explicit C1 cuts and retained resource bounds; audit
-the saved solid side surfaces and obtain a third physical level before
-accuracy scoring. A weak mode or material transfer drift returns the
-trace/pose law for revision. Do not resume finer classical axial screens.
-Formal F03 authority is unconsumed, G0B open and G1 barred.
+The saved F2/F4 solid underside/top bounds are positive. Initial AABB
+overcoverage left eight seam-adjacent side/plate pairs per level unresolved.
+An independent read-only seam-factored Q8 edge and plate-top Lipschitz
+check then bounded their positive bottom-edge separation by at least
+`0.965 µm` (F2) and `0.541 µm` (F4), and all exposed side/root-end faces
+rise above the top surface except their permitted shared x=.9 seam edge.
+This is a floating-point certificate for saved interpolated fields, not
+outward-rounded interval proof, solver-error bound or contact-law validation.
+These resolved 3D square-section, distributed-load cases are directional
+references, distinct from both the classical axial comparator and the
+native six-channel line law.
+
+The bounded third solid candidate at source `08290117` uses factor five,
+an explicit 825 mm transition knot, the unchanged C1 clearance/bond,
+`-1000 N Fz + 100 Nm Mx`, left plate/beam-root supports and quadratic
+face traction. Rebuilt F2/F4 deck bytes equal their saved input files.
+The expected F5 cost is only an estimate; enforce one thread and 120 s,
+retain any timeout, and compare applied work/support partition before
+pose quantities whose probe stencil changes at F5. Even a completed F5
+does not select a native multiplier space or qualify contact mechanics.
+
+The reciprocal discriminator holds the Q4 shell at two axial/four
+transverse bond cells, the physical C1 profile and two multiplier cells,
+then subdivides the native beam bond from 2 to 4/8/16 half-cells. It must
+use a fresh B3 context per case and keep each dense square block below
+1900 rows and each retained context within 120 s. A weak-mode collapse,
+loaded transfer drift or inability to execute inside these limits returns
+the fixture/law for review; balanced results still require Q4/S3, solid
+reference and mesh-uniform stability evidence before any space choice.
 
 The immediate bounded ratio discriminator holds B3-12/24, the 0.1 m bond,
 two multiplier cells and the C1 geometry fixed while doubling only Q4
