@@ -388,6 +388,34 @@ def test_c1_terminal_solid_sections_follow_native_tangent_without_changing_legac
                      **{**options,"bar_clearance_um":0})
 
 
+@pytest.mark.parametrize("load,reverse,expected", (
+    ("tip_mx",False,[0.,0.,0.,100.,0.,0.]),
+    ("tip_fz",True,[0.,0.,-1000.,0.,1000.,0.])))
+def test_c1_detached_section_control_keeps_geometry_load_and_independent_roots(
+        load, reverse, expected):
+    options=dict(boundary_policy="left_root",bond_policy="detached",
+                 contact_policy="none",element_family="C3D20R",
+                 bar_clearance_um=2,plate_thickness_mm=35,
+                 tip_load_map="quadratic_face",full_displacement_output=True,
+                 bar_reference_profile="c1_tangent",reverse_tip_fz=reverse)
+    deck,meta=SCREEN.build(4,load,**options)
+    assert meta["shared_interface_nodes"] == 0
+    assert meta["bond_interval_m"] is None
+    assert set(meta["beam_root_node_ids"]).isdisjoint(
+        meta["plate_boundary_node_ids"])
+    assert set(meta["boundary_node_ids"]) == (
+        set(meta["beam_root_node_ids"]) |
+        set(meta["plate_boundary_node_ids"]))
+    assert "*CONTACT PAIR" not in deck and "*TIE" not in deck
+    assert "*NODE FILE,OUTPUT=3D\nU\n" in deck
+    applied={int(node):np.array(force) for node,force in
+             meta["applied_nodal_forces_N"].items()}
+    assert SCREEN._wrench(applied,meta["probe_coordinates_m"]) == pytest.approx(
+        expected,abs=1e-9)
+    with pytest.raises(ValueError,match="bounded full-bond"):
+        SCREEN.build(2,load,**options)
+
+
 def test_c1_penalty_contact_preserves_the_matched_torque_geometry_and_load():
     options=dict(boundary_policy="left_root", bond_policy="terminal",
                  element_family="C3D20R", tip_mx_gap_audit=True,

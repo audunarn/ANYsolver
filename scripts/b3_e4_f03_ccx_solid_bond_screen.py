@@ -89,6 +89,14 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     c1_torque_basis = (shear == "tip_mx" and tip_mx_gap_audit and
                        bar_reference_profile == "c1_tangent" and
                        contact_policy == "none")
+    c1_detached = (factor == 4 and shear in ("tip_mx", "tip_fz") and
+                   boundary_policy == "left_root" and
+                   bond_policy == "detached" and contact_policy == "none" and
+                   element_family == "C3D20R" and
+                   bar_reference_profile == "c1_tangent" and
+                   bar_clearance_um == 2 and plate_thickness_mm == 35 and
+                   tip_load_map == "quadratic_face" and
+                   full_displacement_output)
     if type(torque_with_opening_fz) is not bool or (
             torque_with_opening_fz and not (
                 c1_torque_basis and factor in (2, 4, 5) and
@@ -113,7 +121,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                   ((shear == "tip_mx" and tip_mx_gap_audit) or
                    c1_open_shear) and
                   bar_clearance_um == 2 and
-                  bar_reference_profile == "c1_tangent")))):
+                  bar_reference_profile == "c1_tangent") or
+                 c1_detached))):
         raise ValueError("bounded full-bond or C1 terminal displacement output required")
     if type(plate_thickness_mm) is not int or plate_thickness_mm not in (35,70):
         raise ValueError("bounded 35/70 mm plate thickness required")
@@ -140,7 +149,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             tip_load_map == "quadratic_face" and full_displacement_output and
             bar_reference_profile == "c1_tangent"):
         raise ValueError("C1 penalty contact requires the matched bounded torque case")
-    if reverse_tip_fz and (shear != "tip_fz" or bond_policy != "terminal" or
+    if reverse_tip_fz and (shear != "tip_fz" or
+                           (bond_policy != "terminal" and not c1_detached) or
                            boundary_policy != "left_root" or
                            contact_policy != "none"):
         raise ValueError("reverse Fz opening audit requires no-contact terminal tip load")
@@ -150,7 +160,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                              reverse_tip_fz):
         raise ValueError("torque gap audit requires no-contact terminal torque")
     if bar_clearance_um not in (0, 1, 2) or (bar_clearance_um and
-            (not (tip_mx_gap_audit or c1_open_shear) or
+            (not (tip_mx_gap_audit or c1_open_shear or c1_detached) or
              element_family != "C3D20R")):
         raise ValueError("declared bar clearance requires quadratic terminal torque or C1 opening-shear audit")
     if bar_reference_profile not in ("legacy_linear", "c1_tangent") or (
@@ -158,7 +168,8 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
             (bar_clearance_um != 2 or
              not (factor in (4, 5) or
                   (factor == 2 and (c1_open_shear or c1_torque_basis))) or
-             bond_policy != "terminal" or tip_load_map != "quadratic_face")):
+             (bond_policy != "terminal" and not c1_detached) or
+             tip_load_map != "quadratic_face")):
         raise ValueError("C1 tangent profile requires the bounded quadratic terminal reference")
     if factor == 5 and not (
             (c1_open_shear or c1_torque_basis) and

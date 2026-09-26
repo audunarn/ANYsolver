@@ -37,7 +37,16 @@ transverse `Fy/Mx/Mz` trace as a competing explanation. If a matched
 section/end-port projection explains the split, revise that reduction;
 if it does not, derive and test a mechanically distinct shell trace/law.
 Use the saved F5 torque/opening fields and current resource envelope
-before any new external solve. Independently define and review positive
+before any new external solve. Their work-conjugate end-face coordinates
+and fitted solid tip-section motions differ by only `0.066 µrad` for
+torque and `0.002 µm` for opening, far below the corresponding native-tip
+differences; this does not rule out other end-load effects. The next
+bounded external discriminator is the same C1 square bar detached from
+the plate under these two end loads, against the native bare B3 with
+identical reference axis and section. If the detached fields differ,
+investigate the B3 section/end port before altering the line law; if
+they agree, focus on the six-channel interface trace. One solid mesh
+level is diagnostic, not physical acceptance. Independently define and review positive
 C1 broken-trace and primal norms before interpreting the existing ratios
 as stability evidence; retained B3 yaw jumps bar an automatic continuous
 trace norm. No extra classical axial refinement is indicated. Corrected
