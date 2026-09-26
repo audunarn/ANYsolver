@@ -4,76 +4,45 @@
 
 **Decision sought:** Defend the native six-channel beam–shell connection and
 its exact line space. The classical axial comparator, historical Q6/finite-pad
-reference, and native six-channel law remain distinct; small gaps, rank, and
-signed quotients do not choose P0/P1/dual.
+reference, and native six-channel law remain separate. No small gap,
+residual, rank or spectral quotient chooses P0/P1/dual.
 
 **Established:** The bounded transverse-order/line-resolution and detached
-bar diagnoses below do not justify another classical axial refinement.
-On the matched C1 F5 model, applying the saved solid bond action to E4 alone
-preserves its wrench to `9.1e-13 N/Nm` and replays native shell face means
-to `7.93e-15 m`. Under this *same action*, E4 opening tip-face mean differs
-from solid by `+0.776 µm` (~`1.1%`); torque tip mean `y` differs by only
-`+1.8 nm`, yet transverse face slopes differ by `1.13–1.27 µrad` over the
-three stations. Independent review found no blocking map/model error.
-This is one solid level, with different shell kinematics; native coupled
-actions also differ, so no causal allocation or space ranking follows.
-Pure torque is an algebraic influence of the pre-opened combined load.
-Runner/evidence: `scripts/b3_e4_f03_factor5_shell_action.py` and
-`.qualification/b3-ge-e4-pl/f03-c1-factor5-shell-action-dev-20260926-v2`.
+bar checks do not motivate further classical axial refinement. The fixed
+C1 positive trace metric and its registered `16:2`/`2:16` ratio endpoints
+retain physical-shell positivity, compatible full-rank B3 traces and
+P0/P1/dual row ranks `12/18/18`. The source-bound thin-SVD rerun exactly
+reproduces the previous endpoint result. These three finite grids show no
+collapse under this metric, not uniform inf-sup stability. On the saved F4
+pre-opened solid, actual B3 port sides jump `0.180 µm RMS` at `.95 m`.
+Face-stress cut actions fail to cancel sufficiently for exact sided work:
+F4 has `4.95%` scaled axis-wrench and `79.4%` displacement-work mismatch;
+F5 cuts at `.94/.96 m` have `2.67/3.50%` and `26.6/17.9%`. The older F5
+bond-face extrapolation also failed as a conservative weak-action proxy.
 
-The separate fixed Q4 x4/y4, B3-12 operator check has a positive
-left-supported, drilling-free physical E4 metric and a compatible broken
-B3 bond-trace quotient (rank `15/15`); P0/P1/dual row ranks are `12/18/18`.
-Its full lower quotient bounds are `1.5851/0.3417/0.3430`, and nonaxial
-lower bounds `1.7769/0.6164/0.6159`, respectively. These are metric-dependent
-*single-grid* trace-space numbers, not a mesh-uniform inf-sup bound or native
-mixed-system coercivity. The v4 result corrects force-equivalent density
-units and lower/upper-bound labels identified by independent review;
-v1–v3 remain preserved. Source/test hashes and two focused pytest checks
-match `.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-dev-20260926-v4`.
-With the same frozen metric, registered `16:2` and `2:16` shell:beam bond
-resolutions retain physical-shell positivity, trace-kernel compatibility
-and P0/P1/dual row ranks `12/18/18`. Their nonaxial nominal lower values
-are `1.886/.713/.714` and `1.455/.681/.684`; the fixed case is
-`1.777/.616/.616`. An independent audit found no calculation defect;
-one P1 bracket inverts by `8.6e-14` from floating roundoff, so these are
-not rigorous floating intervals. Three finite ratios show no endpoint
-collapse under this metric, but no uniform inf-sup proof or space choice.
-The exact-source rerun on committed thin-SVD source `b39ddc4a` reproduces
-the v1 result byte-for-byte; source-bound root:
-`.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-extreme-ratios-dev-20260926-v2`.
+The new saved-F4 common-*continuous*-trace comparison avoids cut allocation.
+The physically matched total solid weak action and native shell action
+differ by `76.5%` lateral, `53.7%` vertical and `57.9%` twist in the
+three-hat channel L2 measures. Opposite solid-side projections differ much
+less, and the integrated solid wrench checks against printed supports.
+This is a one-mesh difference between solid and native *coupled* models,
+not an allocation of cause to the shell, beam or connection.
 
-**Remaining uncertainty, next discriminator and action:** The independently
-reviewed saved-F4 *kinematic* projection finds sampled combined-load RMS
-`0.125 µm` solid-to-rigid-section, `0.060 µm` rigid-section-to-retained-port,
-and `0.131 µm` solid-to-port; the B3 port sides jump `0.180 µm RMS` at
-`.95 m`. These are not bond work or equilibrium B3 response. Runner/root:
-`scripts/b3_e4_f03_c1_factor4_retained_kinematics.py` and
-`.qualification/b3-ge-e4-pl/f03-c1-factor4-retained-kinematic-projection-dev-20260926-v2`.
+**Remaining uncertainty and next discriminator:** Apply the same F4 solid
+weak bond action to the matched Q4 x4/y4 E4 shell alone and compare its
+face motion/slope and action work with the saved solid and native response.
+If shell-only response accounts for the common-mode difference, investigate
+the shell-side idealization/pose; otherwise isolate the reduced connection
+and retained beam trace. Then assess one-sided port modes with a defensible
+lift before ranking line spaces. No new external solve was run. The old
+pre-thin-SVD pytest remains permitted and running (session `27660`, PID
+`57260`); do not interrupt it. Formal F03 authority remains unconsumed;
+G0B is open and G1 barred.
 
-A bounded cut-flux check on that same pre-opened F4 solid used a
-basis-specific two-block constant-stress patch (maximum force error
-`6.4e-14 N`) and 3/5-point face quadrature agreement near `4e-13`.
-The actual opposing cut-face actions disagree by `4.95%` in the
-0.1 m-scaled axis wrench and `79.4%` in displacement work. Saved F5
-bracketing cuts at `.94/.96 m` reduce those to `2.67/3.50%` and
-`26.6/17.9%`, respectively; F5 has no element face at `.95 m`, so this is
-not same-station convergence. The earlier F5 bond-face extrapolation also
-failed as a conservative weak-action proxy. Thus face stress cannot yet
-provide an exact left/right bond partition or native-work oracle. Roots:
-`.qualification/b3-ge-e4-pl/f03-c1-factor4-cut-flux-dev-20260926-v1` and
-`.qualification/b3-ge-e4-pl/f03-c1-factor5-cut-flux-bracket-dev-20260926-v1`.
-
-Next use the *validated total solid weak bond action* on a continuous
-common-trace subset where the left/right B3 port ambiguity cancels.
-Check geometry, frames, supported `Fy/Mx/Mz` work, and native loaded
-response against that subset. If common-mode transfer fails materially,
-revise the reduced pose/connection law; if it passes, isolate the
-one-sided jump modes with an independently justified lift before ranking
-P0/P1/dual. Ratio trends alone do not select a space. No new external
-solve was run. The old pre-thin-SVD pytest remains permitted and running
-(session `27660`, PID `57260`); do not interrupt it. Formal F03 authority
-is unconsumed; G0B is open and G1 barred.
+New roots: `.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-extreme-ratios-dev-20260926-v2`,
+`.qualification/b3-ge-e4-pl/f03-c1-factor4-cut-flux-dev-20260926-v1`,
+`.qualification/b3-ge-e4-pl/f03-c1-factor5-cut-flux-bracket-dev-20260926-v1`,
+and `.qualification/b3-ge-e4-pl/f03-c1-factor4-common-weak-work-dev-20260926-v1`.
 
 ## Previous current-state summary — 26 September 2026
 
