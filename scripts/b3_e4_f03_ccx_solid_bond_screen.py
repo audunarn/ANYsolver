@@ -53,8 +53,8 @@ def unexpected_solver_diagnostics(text: str, *, c1_penalty: bool) -> list[str]:
 
 
 def _cuts(values: tuple[int | Fraction, ...], factor: int) -> tuple[Fraction, ...]:
-    if type(factor) is not int or factor not in (1, 2, 4):
-        raise ValueError("bounded solid mesh factor must be 1, 2, or 4")
+    if type(factor) is not int or factor not in (1, 2, 4, 5):
+        raise ValueError("bounded solid mesh factor must be 1, 2, 4, or 5")
     return tuple(Fraction(a)+(Fraction(b-a)*k)/factor
                  for a,b in zip(values[:-1],values[1:])
                  for k in range(factor))+(Fraction(values[-1]),)
@@ -91,7 +91,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                        contact_policy == "none")
     if type(torque_with_opening_fz) is not bool or (
             torque_with_opening_fz and not (
-                c1_torque_basis and factor in (2, 4) and
+                c1_torque_basis and factor in (2, 4, 5) and
                 boundary_policy == "left_root" and bond_policy == "terminal" and
                 element_family == "C3D20R" and bar_clearance_um == 2 and
                 plate_thickness_mm == 35 and
@@ -100,7 +100,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
         raise ValueError("combined C1 opening/torque requires bounded no-contact full-field case")
     if type(full_displacement_output) is not bool or (
             full_displacement_output and not (
-                (factor == 4 or
+                (factor in (4, 5) or
                  (factor == 2 and (c1_open_shear or c1_torque_basis))) and
                 shear in ("tip_mx", "tip_fz") and
                 boundary_policy == "left_root" and
@@ -156,10 +156,12 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
     if bar_reference_profile not in ("legacy_linear", "c1_tangent") or (
             bar_reference_profile == "c1_tangent" and
             (bar_clearance_um != 2 or
-             not (factor == 4 or
+             not (factor in (4, 5) or
                   (factor == 2 and (c1_open_shear or c1_torque_basis))) or
              bond_policy != "terminal" or tip_load_map != "quadratic_face")):
         raise ValueError("C1 tangent profile requires the bounded quadratic terminal reference")
+    if factor == 5 and not torque_with_opening_fz:
+        raise ValueError("factor-five solid mesh requires combined C1 opening/torque")
     if element_family not in ("C3D8", "C3D20R") or (
             element_family == "C3D20R" and
             (bond_policy not in ("detached", "terminal", "full") or
@@ -181,6 +183,9 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                tuple(sorted(set((*PLATE_X_MM, 900)))))
     bar_x = (BAR_X_MM if bond_policy == "full" else
              tuple(sorted(set((*BAR_X_MM, 900)))))
+    if factor == 5:
+        plate_x = tuple(sorted(set((*plate_x, 825))))
+        bar_x = tuple(sorted(set((*bar_x, 825))))
     px,py,pz=(_cuts(v,factor) for v in
               (plate_x,PLATE_Y_MM,plate_z))
     bx,by,bz=(_cuts(v,factor) for v in
@@ -315,6 +320,7 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                    for s in STATIONS_MM}
     surface_x=((250,500,750) if factor==1 else
                (375,500,625) if factor==2 else
+               (450,500,550) if factor==5 else
                (437.5,500,562.5))
     surface={(x,y):coordinates[(Fraction(x),Fraction(y),plate_top)]
              for x in surface_x for y in (-50,0,50)}
@@ -830,6 +836,7 @@ def recover(meta: dict, displacement: dict[int,np.ndarray],
         return displacement[surface[f"{x},{y}"]]
     left,right=((250,750) if meta["factor"]==1 else
                 (375,625) if meta["factor"]==2 else
+                (450,550) if meta["factor"]==5 else
                 (437.5,562.5))
     def local(x,y):
         a,b=((left,500) if x<500 else (500,right))
@@ -954,7 +961,7 @@ def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root",type=Path,required=True)
     parser.add_argument("--suite",choices=("shear","loads"),default="shear")
-    parser.add_argument("--factor",type=int,choices=(1,2,4),nargs="+",default=(1,2))
+    parser.add_argument("--factor",type=int,choices=(1,2,4,5),nargs="+",default=(1,2))
     parser.add_argument("--boundary",choices=("perimeter","left","left_root"),default="perimeter")
     parser.add_argument("--bond",choices=("full","terminal","detached"),default="full")
     parser.add_argument("--contact",choices=("none","mortar_hard","c1_penalty"),
@@ -977,6 +984,13 @@ def main() -> int:
                      args.contact == "none")
     c1_torque_basis = (args.bar_reference_profile == "c1_tangent" and
                        args.tip_mx_gap_audit and args.contact == "none")
+    if 5 in args.factor and not (list(args.factor) == [5] and
+            args.torque_with_opening_fz and c1_torque_basis and
+            args.suite == "loads" and args.boundary == "left_root" and
+            args.bond == "terminal" and args.element_family == "C3D20R" and
+            args.bar_clearance_um == 2 and args.half_plate_thickness and
+            args.quadratic_face_traction and args.full_displacement_output):
+        parser.error("factor five requires the bounded combined C1 reference")
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
     if args.bond == "terminal" and (args.boundary != "left_root" or
@@ -1005,7 +1019,7 @@ def main() -> int:
                                   args.element_family!="C3D20R"):
         parser.error("declared bar clearance requires quadratic terminal torque or C1 opening-shear audit")
     if args.bar_reference_profile=="c1_tangent" and not (
-            (list(args.factor)==[4] or
+            (list(args.factor) in ([4], [5]) or
              (list(args.factor)==[2] and
               (c1_open_shear or c1_torque_basis))) and
             args.suite=="loads" and
@@ -1025,7 +1039,7 @@ def main() -> int:
                   args.bond=="terminal" and args.quadratic_face_traction) or
                  (args.quadratic_face_traction and args.bar_clearance_um==0 and
                   args.bond in ("detached","full"))) or
-            args.boundary!="left_root" or any(f not in (2,4) for f in args.factor)):
+            args.boundary!="left_root" or any(f not in (2,4,5) for f in args.factor)):
         parser.error("half-thickness diagnostic requires admitted quadratic terminal, detached, or full-bond control")
     if args.quadratic_face_traction and (
             args.element_family!="C3D20R" or args.suite!="loads" or
@@ -1034,7 +1048,7 @@ def main() -> int:
             (args.reverse_fz_open_audit and args.bond!="terminal")):
         parser.error("quadratic face traction requires admitted no-contact C3D20R tip loading")
     if args.full_displacement_output and not (
-            (list(args.factor)==[4] or
+            (list(args.factor) in ([4], [5]) or
              (list(args.factor)==[2] and
               (c1_open_shear or c1_torque_basis))) and
             args.suite=="loads" and
@@ -1057,7 +1071,7 @@ def main() -> int:
             args.full_displacement_output):
         parser.error("C1 penalty contact requires the matched factor-4 torque case")
     if args.torque_with_opening_fz and not (
-            c1_torque_basis and list(args.factor) in ([2], [4]) and
+            c1_torque_basis and list(args.factor) in ([2], [4], [5]) and
             args.suite == "loads" and args.boundary == "left_root" and
             args.bond == "terminal" and args.element_family == "C3D20R" and
             args.bar_clearance_um == 2 and args.half_plate_thickness and
