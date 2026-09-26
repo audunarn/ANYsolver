@@ -34,12 +34,18 @@ at source `b423c2a1`. Thus the drift belongs to the coupled trace/space
 discretization rather than free-beam compliance or three-point quadrature.
 The saved solid side/root-end seam question is now resolved for the
 interpolated F2/F4 fields by a positive seam-factored separation bound.
-The next physical discriminator is a third matched solid level within the
-existing 120-second cap. If contact or transfer changes materially, revise
-the native trace/pose or reference definition; if admissible solid response
-settles, compare physical work and wrenches before Q4/S3 and loaded
-finite-state tests. Do not extend classical axial refinement. Formal F03
-authority is unconsumed, G0B open and G1 barred.
+The third matched solid level completed inside the existing cap, with
+positive saved-field surface separation and a `0.108%` F4→F5 applied-work
+change. Native 8:1 P0/P1/dual superposed work is
+`0.074018/0.073448/0.073395 J` versus F5 `0.074342 J`; different solid
+section/warping and native line idealizations prevent selecting the nearest
+number. The next bounded mechanics discriminator is the same six-channel
+line law across an admitted Q4/S3 transition, with actual-chart work,
+drilling/shear, rank, scaled mode and loaded transfer checks. A defect
+returns the shell trace/pose law for revision; sound results permit the
+registered multi-ratio and physical-wrench assessment. Do not extend
+classical axial refinement. Formal F03 authority is unconsumed, G0B open
+and G1 barred.
 
 The saved F2/F4 solid underside/top bounds are positive. Initial AABB
 overcoverage left eight seam-adjacent side/plate pairs per level unresolved.
@@ -53,14 +59,22 @@ These resolved 3D square-section, distributed-load cases are directional
 references, distinct from both the classical axial comparator and the
 native six-channel line law.
 
-The bounded third solid candidate at source `08290117` uses factor five,
+The bounded third solid candidate at source `83dd50d4` uses factor five,
 an explicit 825 mm transition knot, the unchanged C1 clearance/bond,
 `-1000 N Fz + 100 Nm Mx`, left plate/beam-root supports and quadratic
 face traction. Rebuilt F2/F4 deck bytes equal their saved input files.
-The expected F5 cost is only an estimate; enforce one thread and 120 s,
-retain any timeout, and compare applied work/support partition before
-pose quantities whose probe stencil changes at F5. Even a completed F5
-does not select a native multiplier space or qualify contact mechanics.
+It completed in `73.38 s` at
+`.qualification/b3-ge-e4-pl/f03-ccx-c1-preopen-combined-factor5-dev-20260926-v1`:
+18,000 C3D20R elements, exact declared load/support/bond identity, no
+solver warning or failure, work `0.07434208825 J`, and balanced support
+wrench. F2/F4/F5 work is `0.073934/0.074262/0.074342 J`. Its 250
+unbonded matching-coordinate faces have no negative sampled or Bernstein
+reference-normal gap. Independent read-only Q8 saved-field bounds give
+`0.245 µm` nonseam and `0.221 µm` seam-factored underside/top margins,
+plus positive exposed side/root separation over 600 faces. The hashes of
+F5 deck, FRD, DAT and model match its result. These floating-point saved
+field bounds do not cover solver truncation, volume Jacobians or contact
+law qualification; pose/yaw probes also use a different F5 stencil.
 
 The reciprocal discriminator holds the Q4 shell at two axial/four
 transverse bond cells, the physical C1 profile and two multiplier cells,
