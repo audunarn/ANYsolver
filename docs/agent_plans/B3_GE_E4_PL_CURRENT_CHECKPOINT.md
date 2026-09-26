@@ -436,6 +436,31 @@ nonmatching line law, S3/generalized-section admission, or F10/F11/G0B
 qualification. Further point work depends on the primary physical connection
 choice; independent B2 mass and state foundations may continue meanwhile.
 
+**Next independent F12 metadata discriminator:** The matched cantilever used
+centered inertia and cannot establish the mass-center/section-origin contract.
+On one explicitly eccentric section, derive the 6x6 velocity-order inertia
+from density, center offset and centroidal tensor, then test rigid translation,
+rotation, cross work, frame rotation and member reversal against direct
+particle-level kinetic energy. Check whether the current exact-PSD metadata
+admission accepts an analytically physical matrix. If it does, retain the
+representation and advance the distinct coupled-mass/prestress assessment;
+if it rejects it or changes energy under equivalent frames, revise metadata
+admission/transform before spectral integration. This bounded experiment
+does not infer mass from stiffness or qualify F12.
+
+**F12 eccentric-metadata V1 result and next action:** The four physical
+section particles give an independently summed kinetic-energy matrix.
+Metadata expressed at the beam reference axis admits the resulting coupled
+6x6 inertia. Across an oblique section frame and reversed member, the
+maximum global-matrix relative error is `1.91e-16` and kinetic-energy error
+is `3.68e-16`; all masses are positive. The development result is
+`B3_GE_E4_PL_G0_F12_B2_MASS_METADATA_DEV_V1.json`. A nonzero metadata
+origin remains untested and no existing assembler pulls its velocity back
+to the beam axis. Next derive that exact kinematic congruence and check it
+against the same physical particle cloud before coupled spectral work.
+No section density, centroidal inertia or mass center is inferred from
+stiffness; F12/G0B and spectral admission remain open.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
