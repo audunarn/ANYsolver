@@ -1733,6 +1733,34 @@ cases check origin immutability but do not separately snapshot mechanical
 state. This review leaves F08's complete acceptance and production owner/state
 contract open; it does not advance G0B or G1.
 
+**Next F08 extraction decision (27 September):** The passing 42-coordinate
+local sparse gather still lives only inside its test. Move it behind one
+private typed adapter that returns actual candidate histories, residual and
+CSR tangent for both native section families without invoking their dense
+global assemblers. Reuse the same accepted-predecessor and virgin fixtures;
+compare all values and histories with the bounded dense owner, verify that
+predecessors and checkpoints remain unchanged, and reject nonfinite local
+outputs. Parity permits a later mixed owner to reuse the adapter; mismatch
+or aliased predecessor histories requires fixing the extraction contract.
+This is G0 feasibility, not precomputed production sparsity, scale, or G1
+entry. Do not alter element equations or the accepted F08 evidence.
+
+**F08 typed extraction result (27 September):** The formerly test-only seam
+now has a private single-element 42-coordinate response and sparse gather
+adapter for generalized and physical-fibre native B3. Both return actual
+candidate histories from the same accepted predecessor. The local residual,
+tangent and slot arrays are owned; repeated evaluations survive mutation of
+a returned array. Four virgin/small-trial cases and a yielded accepted-prefix
+case reproduce the earlier test seam exactly and the bounded dense owner to
+`<=1e-12` relative. Candidate histories are distinct objects with identical
+canonical values, while origins, accepted mechanical state and checkpoint
+remain unchanged. The dense assembler was patched to fail during adapter
+calls; the focused suite passed `6/6`. Existing historical F08 tests/evidence
+were not rewritten. The adapter still consumes bounded old-owner contexts and
+uses COO scattering rather than a compiled sparse pattern. It does not close
+independent derivative review, mixed atomic state, practical scale, F08/G0B,
+or the G1 bar.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision
