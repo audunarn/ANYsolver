@@ -76,7 +76,10 @@ New roots: `.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-extre
 `.qualification/b3-ge-e4-pl/f03-c1-factor4-common-weak-work-dev-20260926-v1`,
 and `.qualification/b3-ge-e4-pl/f03-c1-factor4-shell-action-dev-20260926-v1`.
 The validated F5 common-mode root is
-`.qualification/b3-ge-e4-pl/f03-c1-factor5-common-weak-work-dev-20260926-v1`.
+`.qualification/b3-ge-e4-pl/f03-c1-factor5-common-weak-work-dev-20260926-v2`;
+v1 is preserved. Independent read-only review found no calculation blocker
+and corrected one interpretation limit; see
+`docs/agent_plans/B3_GE_E4_PL_C1_F5_COMMON_WORK_INDEPENDENT_REVIEW_20260926.md`.
 
 ## Previous current-state summary — 26 September 2026
 

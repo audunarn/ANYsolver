@@ -168,7 +168,7 @@ def evaluate(base: Path = BASE) -> dict:
     return {
         'classification': 'validated saved-F5 common continuous weak-action comparison; finite-grid physical diagnostic, not multiplier selection',
         'question': 'Does the F4 stationwise difference persist in low-order lateral, vertical, and physical twist transfer when the saved solid weak action is recovered from validated F5 integration-point stresses?',
-        'outcome_rule': 'Persistent low-order differences require shell-side/connection attribution with same-action response; small differences would leave only one-sided retained-port modes. No single finite grid ranks P0/P1/dual.',
+        'outcome_rule': 'Persistent low-order differences require shell-side/connection attribution with same-action response. Small two-hat differences would still leave higher-order continuous modes, shell director/shear and one-sided retained B3 ports unresolved. No single finite grid ranks P0/P1/dual.',
         'physical_case': 'C1 35mm plate/0.1m square bar, terminal x=.9–1m bond, no contact, left plate and bar-root supports, pre-opened -1000N Fz +100Nm Mx; native separate linear cases superposed',
         'virtual_fields': 'Two continuous linear x hats over .9–1m, Ty, Tz and rigid Twist about beam z=.0675m; on solid bottom δu=(0,.05,y), on E4 reference δq=(uy=.0675,uz=y,rx=1)',
         'units': ['N', 'N', 'Nm'],
@@ -179,6 +179,7 @@ def evaluate(base: Path = BASE) -> dict:
             (solid_wrench-np.asarray(support)).tolist(),
         'native_candidates': candidates,
         'limitations': ['one saved F5 mesh and Q4/B3 versus Q20 solid idealization',
+                        'two smooth hats do not resolve all continuous interface modes or shell director/shear work',
                         'smooth common fields do not test one-sided B3 half-cell port modes',
                         'pure torque is an algebraic influence of the pre-opened combined case',
                         'physical transfer and finite-grid rank do not establish uniform inf-sup stability'],
