@@ -95,3 +95,33 @@ installed outputs were identical (SHA-256
 This checks packaging for that exact development case, not a supported release.
 Raw results are retained under `C:/ANYworkspaceWork/general-contact-evidence`
 with the `c1-multi-q4-*` and `c1-refined-q4-s3-*` prefixes.
+
+## Tight-gap four-phase development path
+
+`examples/general_contact_refined_q4_s3_tight_path.py` uses two connected
+Q4 source faces against two nonmatching S3 V2D target faces. The source
+bottom and offset target top skins begin 15 mm apart. A two-control path
+presses by 15.01 mm, slides 50 mm while pressed, opens to the initial
+normal separation and recontacts. Each segment uses two accepted steps.
+The normal law is projected augmented, with an explicit 50 µm independent
+gap budget (0.001 times shell thickness), 1000 Pa/m normal regularization
+and 0.02 Pa pressure-update tolerance. All controls and supports are in
+the example; no hidden rigid stabilization is added.
+
+The eight-step development probe completed in 114.09 s. Six shared Q1
+pressure nodes were active at press, both slide states and recontact.
+The conservative lower gaps at the four phase endpoints were −15.716 µm,
+−15.854 µm, +15 mm and −15.854 µm. Opening had zero contact force;
+the terminal source normal contact force was 0.005229 N. Every accepted
+step met the same 50 µm gap gate. Raw per-step values and the two earlier
+failed approach probes are preserved in the evidence directory under
+`c1-refined-path-*`.
+
+The opt-in `tests/test_general_contact_refined_q4_s3_tight_path.py` runs
+the uninterrupted path, splits after the slide, resumes from the version-2
+checkpoint and compares final displacements, paired contact wrench,
+normal multipliers and complete checkpoint. It passed 2/2 checks in
+246.94 s with `ANY_RUN_C1_REFINED_TIGHT_PATH=1`. This is an implemented,
+locally tested coupled path. Pressure-space stability on partial contact,
+mesh/enforcement convergence, independent assessment and C1 engineering
+acceptance remain open.
