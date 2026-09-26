@@ -1,29 +1,26 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-## Current decision — 26 September 2026
+## Current decision — 27 September 2026
 
 **Decision sought:** Select a physically defensible native six-channel
 beam–shell trace and exact line enforcement before G1 integration.
-**Established:** The candidate is a reduced finite-strip section law, not a
-full-face pointwise bond. Its loaded wrenches close, but the growing P0
-material dual cancels strongly; neither the positive-trace quotient nor the
-native KKT minimum selects a line space (the latter is dominated by shell
-numerical drilling). The matched F5 common-action reference exposes a
-transfer-shape difference. The new sided F5 cut passes bounded stress and
-sampled-gap checks, but independent B3 retained side rotations cannot be
-identified with exact independent rigid traces on its one intact solid cut.
-An independently reviewed compensated-director witness proves that C1's
-pitch row adds a local rotational weld action beyond top-surface positional
-bonding; it does not decide whether that idealization is appropriate.
-**Remaining uncertainty:** Whether the reduced physical law transfers torque
-and shear appropriately, whether a separately specified conforming
-port-to-solid extension can resolve side work, growing-space interface
-stability with a justified drilling treatment, actual F06 rebase ownership,
-F09 B2 admission and the other G0 foundations. **Next action:** Stop direct
-sided-port accuracy scoring. Use validated common continuous F5 fields and
-same-action shell response; derive and test the intended native trace/work
-contract before any further sided comparison. Continue independent G0
-foundations without axial escalation or drilling tuning. **Gate:** G0B open,
+**Established:** C1 is a reduced finite-strip, six-channel *rotational weld*
+candidate. Its director-pitch row acts on a supported shell field whose whole
+top surface remains fixed; it is an extra couple beyond positional bonding.
+Its loaded wrenches close, but growing P0 dual cancellation and the existing
+positive-trace/KKT metrics do not select a line space. Validated F5 common
+work exposes a transfer-shape difference. The sided F5 solid cut cannot
+directly score the actual nine-dimensional pair of B3 endpoint poses without
+a separate conforming extension and complete seam work. Bounded yielded Q4
+and S3 pullbacks and B2 rigid kinetic identity passed independent reviews,
+but no full foundation closed. **Remaining uncertainty:** Matched physical
+torque/shear work for the declared rotational weld, drilling-aware
+growing-space mixed stability, F06 rebase ownership, B2 admission and other
+G0 foundations. **Next action:** Define a physically matching rotational
+connection reference before another external solve; keep the F5 positional
+bond as a distinct comparator. Then assess torque/shear, work, locking and
+registered ratios with growing multiplier spaces. Do not repeat classical
+axial refinement or select P0/P1/dual from one quotient. **Gate:** G0B open,
 G1 barred; formal F03 authority unconsumed.
 
 **Next bounded physical discriminator:** The validated F5 common-action
