@@ -19,16 +19,20 @@ a directional torque/shear reference: nominal C1 taper, plate, support and
 load resultant align, but its resolved square section and distributed tip
 load differ from the native idealization.
 
-**Remaining uncertainty and next experiment:** The current bounded fixture
-covers only native half-cell:shell-cell ratios 1:1, 1:2, 1:4 and 2:1; its
-eight-cell dense cases exceed the 1900-row cap. Build a sparse,
-reference-cut-aware ratio diagnostic within retained resources. In
-parallel, audit saved solid side surfaces and obtain a third physical
-level before accuracy scoring. A ratio-dependent weak mode or material
-transfer drift returns the trace/pose law for revision; stable balanced
-results permit a reviewed space decision only after the full registered
-ratios and physical reference pass. Do not repeat finer classical axial
-screens. Formal F03 authority is unconsumed, G0B open and G1 barred.
+The new axial-only Q4 comparison holds four transverse cells and B3-12
+fixed while refining bond-length cells 4→8→16. P0/P1/dual retain rank,
+positive reported shell/beam mode work and balanced torque/opening transfer
+through the one-sided `1:8` half-cell ratio. This is local development
+evidence, not mesh-uniform stability or space selection.
+
+**Remaining uncertainty and next experiment:** Reciprocal ratios through
+`8:1`, Q4/S3 transitions, loaded finite-state work and a physically
+admissible, converged solid reference remain open. Build the reciprocal
+sparse fixture with explicit C1 cuts and retained resource bounds; audit
+the saved solid side surfaces and obtain a third physical level before
+accuracy scoring. A weak mode or material transfer drift returns the
+trace/pose law for revision. Do not resume finer classical axial screens.
+Formal F03 authority is unconsumed, G0B open and G1 barred.
 
 The immediate bounded ratio discriminator holds B3-12/24, the 0.1 m bond,
 two multiplier cells and the C1 geometry fixed while doubling only Q4
@@ -61,14 +65,36 @@ The exact loaded root at source `02411412` is
 P0/P1/dual four→eight x/y refinement changes torque tip work by
 `0.528/0.520/0.487%` and opening work by `0.152/0.176/0.203%`; all
 reported mechanics errors are below `2.2e-11`. This is balanced shell
-refinement, not an axial ratio result. Independent loaded-path review is
-pending. The next single-axis test holds four transverse shell cells,
+refinement, not an axial ratio result. Independent loaded-path review
+found no blocking KKT or work defect. The next single-axis test holds four transverse shell cells,
 B3-12 and the two multiplier cells fixed while using 4/8/16 axial shell
 bond cells: beam-half-cell:shell-cell ratios `1:2`, `1:4`, `1:8`.
 The 16×4 bond grid has 1782 shell DOFs, below the retained dense-square
 1900 cap. Changed transfer or collapsing normed modes would return the
 line trace/pose law for revision; stable results permit a reciprocal-ratio
 fixture, never space selection by themselves.
+
+**Axial-only result:** Source `814642d8` has exact-source P0/P1/dual norm
+and x4/x8 loaded files in
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-axial-ratios-dev-20260926-v1`.
+The x16 loaded case in that root aborted during gap recovery because the
+shared B3 context crossed its 120 s lifetime; `failure.json` preserves
+the incomplete run. The unchanged x16 case completed in a fresh context
+at `.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-axial-x16-fresh-dev-20260926-v1`.
+No prior result was replaced. On x4→x8→x16 with y4 fixed, the normed
+nonaxial actions are P0 `1.786→1.836→1.849`, P1
+`0.629→0.711→0.736`, dual-P1 `0.638→0.723→0.749`; rank remains
+`12/18/18`, reference gaps are ~`1e-16 m`, and reported weakest modes
+have positive shell and beam work. Combined separate-load applied work
+changes x4→x16 by about `0.079/0.113/0.149%` for P0/P1/dual;
+largest x16 mechanics error is `5.59e-11`. Point-gap RMS, especially
+dual-P1 opening, does not settle identically and is not a weak-gap or
+stability certificate. The one-sided axial sequence supports retaining
+all three as unqualified candidates pending reciprocal ratios, Q4/S3
+interfaces and physical reference. Independent read-only review found no
+blocking defect, confirmed x-only refinement and the fresh-context
+interpretation, and recommended a reciprocal fixture with a fresh B3
+context per case. It did not accept G0B.
 
 **Executed factor-two opening reference:** Source `da1d2a0c` contains the
 tested factor-two C1 deck/gap guards (`80/80` focused tests). The
