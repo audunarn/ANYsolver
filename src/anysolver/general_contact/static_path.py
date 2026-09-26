@@ -64,6 +64,7 @@ GENERAL_Q4_Q4_PATCH_AUGMENTED_PROFILE = "Q4_Q4_PATCH_GENERAL_AUGMENTED_PATH_DEV_
 GENERAL_Q4_Q4_PATCH_PROJECTED_AUGMENTED_PROFILE = "Q4_Q4_PATCH_GENERAL_AUGMENTED_PATH_DEV_V1"
 GENERAL_S3_PATCH_REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_AUGMENTED_PATH_DEV_V0"
 GENERAL_Q4_S3_PATCH_REFINED_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_AUGMENTED_PATH_DEV_V0"
+GENERAL_Q4_S3_PATCH_REFINED_ROUNDOFF_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_ROUNDOFF_AUGMENTED_PATH_DEV_V1"
 GENERAL_S3_Q4_PATCH_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 GENERAL_Q4_S3_PATCH_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 GENERAL_Q4_Q4_PROFILE = "Q4_Q4_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
@@ -232,11 +233,14 @@ def solve_static_contact_path(
     from .s3_patch_static import Q4_PAIR_PROJECTED_AUGMENTED_PROFILE as q4_pair_projected_augmented_profile
     from .s3_patch_static import REFINED_AUGMENTED_PROFILE as refined_augmented_profile
     from .s3_patch_static import REFINED_Q4_S3_AUGMENTED_PROFILE as refined_q4_s3_augmented_profile
+    from .s3_patch_static import REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE as refined_q4_s3_roundoff_profile
+    from .s3_patch_static import SupportResetForceBudgetExceeded
 
     general_s3_patch = report.profile in {
         s3_patch_profile, mixed_patch_profile, source_q4_patch_profile,
         q4_pair_profile, general_augmented_profile, mixed_augmented_profile,
         refined_augmented_profile, refined_q4_s3_augmented_profile,
+        refined_q4_s3_roundoff_profile,
         source_q4_augmented_profile,
         source_q4_projected_augmented_profile,
         q4_pair_augmented_profile, q4_pair_projected_augmented_profile,
@@ -251,7 +255,9 @@ def solve_static_contact_path(
     if settings.augmentation_acceleration != "none" and not augmented:
         raise ValueError("augmentation acceleration requires augmented contact")
     if (settings.augmentation_acceleration == "active_secant_pivot"
-            and report.profile != refined_q4_s3_augmented_profile):
+            and report.profile not in {
+                refined_q4_s3_augmented_profile, refined_q4_s3_roundoff_profile,
+            }):
         raise ValueError("active-set pivot requires the refined Q4/S3 augmented patch profile")
     profile = (GENERAL_Q4_Q4_PROFILE
                if report.profile == q4_pair_profile else
@@ -273,6 +279,8 @@ def solve_static_contact_path(
                if report.profile == refined_augmented_profile else
                GENERAL_Q4_S3_PATCH_REFINED_AUGMENTED_PROFILE
                if report.profile == refined_q4_s3_augmented_profile else
+               GENERAL_Q4_S3_PATCH_REFINED_ROUNDOFF_AUGMENTED_PROFILE
+               if report.profile == refined_q4_s3_roundoff_profile else
                GENERAL_S3_PATCH_AUGMENTED_PROFILE
                if report.profile == general_augmented_profile else
                GENERAL_S3_PATCH_PROFILE if general_s3_patch else
@@ -442,6 +450,7 @@ def solve_static_contact_path(
                     pivot_applied = 0
                     pivot_rejected = 0
                     pivot_backup = None
+                    support_resets: list[dict[str, object]] = []
                     augmentation_trace: list[dict[str, object]] = []
                     certificate = None
                     residual_norm = float("inf")
@@ -533,7 +542,18 @@ def solve_static_contact_path(
                             failure_reason = "maximum_iterations_reached"
                             break
                         if augmented:
-                            projected = manager.projected_normal_multipliers(u)
+                            if settings.augmentation_support_resolution == "roundoff":
+                                try:
+                                    projected = manager.projected_normal_multipliers(u)
+                                except SupportResetForceBudgetExceeded as exc:
+                                    failure_reason = "contact_multiplier_reset_force_budget_exceeded"
+                                    augmentation_trace.append({
+                                        "augmentation": augmentation,
+                                        "support_reset_failure": str(exc),
+                                    })
+                                    break
+                            else:
+                                projected = manager.projected_normal_multipliers(u)
                             normal_multiplier_change = float(np.max(np.abs(
                                 projected - manager.normal_multipliers
                             )))
@@ -595,6 +615,12 @@ def solve_static_contact_path(
                                     getattr(certificate, "source_pressure_node_ids", ())
                                 ),
                             })
+                            if (settings.augmentation_support_resolution == "roundoff"
+                                    and manager.last_support_reset is not None):
+                                reset = {"augmentation": augmentation,
+                                         **manager.last_support_reset}
+                                augmentation_trace[-1]["support_reset"] = reset
+                                support_resets.append(reset)
                             if (hasattr(manager, "has_unresolved_weak_open_gap")
                                     and manager.has_unresolved_weak_open_gap(
                                         certificate, projected,
@@ -724,6 +750,8 @@ def solve_static_contact_path(
                         "normal_multiplier_change": normal_multiplier_change,
                         "contact": certificate.to_dict(),
                     }
+                    if settings.augmentation_support_resolution == "roundoff":
+                        record["support_resets"] = support_resets
                     if accelerator is not None:
                         record["augmentation_acceleration"] = settings.augmentation_acceleration
                         record["augmentation_acceleration_attempts"] = accelerator.attempts

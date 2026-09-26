@@ -5,6 +5,8 @@ This development example is deliberately resource-intensive and reports the
 actual solver status; it does not imply engineering qualification.
 """
 
+import argparse
+from dataclasses import replace
 import json
 import time
 
@@ -87,13 +89,25 @@ program = ContactPathProgram(
         for node_id in (9, 18)
     ),
 )
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--first-slide", action="store_true",
+                    help="continue through the first sliding increment")
+parser.add_argument("--roundoff-support", action="store_true",
+                    help="opt into force-bounded multiplier transfer")
+args = parser.parse_args()
+if args.roundoff_support:
+    settings = replace(
+        settings, augmentation_support_resolution="roundoff",
+        augmentation_support_force_budget_n=1.0e-8,
+    )
 report = validate_general_contact(model, definition, settings)
 assert report.valid, report.issues
 start = time.perf_counter()
 result = solve_static_nonlinear(
     model, contact=definition, contact_settings=settings,
     contact_path_program=program, max_iterations=18,
-    max_load_factor=0.25, emit_restart_checkpoint=True,
+    max_load_factor=0.375 if args.first_slide else 0.25,
+    emit_restart_checkpoint=True,
 )
 contact = result.info["general_contact"]
 failure = result.info.get("contact_failure")
@@ -119,6 +133,7 @@ print(json.dumps({
         "pivot_attempts": row.get("pivot_attempts"),
         "pivot_applied": row.get("pivot_applied"),
         "pivot_rejected": row.get("pivot_rejected"),
+        "support_resets": row.get("support_resets"),
 } for row in result.info["force_displacement_history"]],
 }, sort_keys=True, default=lambda value: (
     value.item() if hasattr(value, "item") else str(value)

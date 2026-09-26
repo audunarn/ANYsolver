@@ -29,6 +29,11 @@ Q4_PAIR_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_
 Q4_PAIR_PROJECTED_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
 REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 REFINED_Q4_S3_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_ROUNDOFF_AUGMENTED_STATIC_DEV_V1"
+
+
+class SupportResetForceBudgetExceeded(ValueError):
+    """A proposed algorithmic multiplier reset changes too much local work."""
 
 
 def _selected(definition: ContactDefinition):
@@ -157,7 +162,9 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
     if augmented:
-        profile = (REFINED_Q4_S3_AUGMENTED_PROFILE if refined_q4 else
+        profile = (REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE
+                   if refined_q4 and settings.augmentation_support_resolution == "roundoff" else
+                   REFINED_Q4_S3_AUGMENTED_PROFILE if refined_q4 else
                    REFINED_AUGMENTED_PROFILE if refined_s3 else
                    Q4_PAIR_PROJECTED_AUGMENTED_PROFILE
                    if q4_pair and settings.q4_source_gap_certificate == "projected_matching" else
@@ -260,6 +267,8 @@ class _PatchResults:
     pair_geometry_evaluations: int = 0
     pressure_gram_rank: int | None = None
     pressure_gram_condition_estimate: float | None = None
+    multiplier_support_floor_m2: float = 0.0
+    unresolved_multiplier_node_ids: tuple[int, ...] = ()
 
     def to_dict(self):
         result = dict(vars(self))
@@ -268,6 +277,13 @@ class _PatchResults:
                      "normalized_weighted_gap_m", "numerical_pressure_pa",
                      "reference_support_m2", "normal_multiplier_estimate_pa"):
             result[name] = list(result[name])
+        if self.multiplier_support_floor_m2 > 0.0:
+            result["unresolved_multiplier_node_ids"] = list(
+                self.unresolved_multiplier_node_ids)
+        else:
+            for name in ("multiplier_support_floor_m2",
+                         "unresolved_multiplier_node_ids"):
+                result.pop(name)
         if self.pressure_gram_rank is None:
             result.pop("pressure_gram_rank")
             result.pop("pressure_gram_condition_estimate")
@@ -302,6 +318,7 @@ class GeneralS3PatchManager:
             maximum_q4_source_integration_triangles=self.settings.maximum_q4_source_integration_triangles,
             differentiation="pair_local" if self.profile in {
                 REFINED_AUGMENTED_PROFILE, REFINED_Q4_S3_AUGMENTED_PROFILE,
+                REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
             }
             else "global",
             maximum_candidate_pairs=self.settings.maximum_candidate_pairs,
@@ -309,8 +326,12 @@ class GeneralS3PatchManager:
         if self.augmented:
             from .s3_patch_augmented import MovingS3PatchProjectedNormal
 
-            self.law = MovingS3PatchProjectedNormal(self.law)
+            self.law = MovingS3PatchProjectedNormal(
+                self.law,
+                support_resolution=self.settings.augmentation_support_resolution,
+            )
             self.normal_multipliers = np.zeros(len(self.law.source_node_ids))
+            self.last_support_reset = None
         source_ref, source_map = _unique_work_map(adapters[0], self.law.source_node_ids)
         target_ref, target_map = _unique_work_map(adapters[1], self.law.target_node_ids)
         self.reference = source_ref, target_ref
@@ -382,7 +403,8 @@ class GeneralS3PatchManager:
         gram_rank = gram_condition = None
         if self.profile in {Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                             SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
-                            REFINED_Q4_S3_AUGMENTED_PROFILE}:
+                            REFINED_Q4_S3_AUGMENTED_PROFILE,
+                            REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE}:
             eigenvalues = np.linalg.eigvalsh(state.pressure_gram)
             greatest = max(0.0, float(eigenvalues[-1]))
             threshold = (len(eigenvalues)*np.finfo(float).eps*greatest)
@@ -390,6 +412,15 @@ class GeneralS3PatchManager:
             gram_rank = int(len(positive))
             if gram_rank == len(eigenvalues):
                 gram_condition = float(greatest/positive[0])
+        support_floor = 0.0
+        unresolved_nodes = ()
+        if self.augmented and self.settings.augmentation_support_resolution == "roundoff":
+            supported, support_floor = self.law.resolved_support(state)
+            unresolved_nodes = tuple(
+                node_id for node_id, area, active in zip(
+                    self.law.source_node_ids, state.reference_support, supported)
+                if area > 0.0 and not active
+            )
         result = _PatchResults(
             self.profile, lower, state.minimum_physical_gap,
             0.0 if self.augmented else state.energy,
@@ -409,6 +440,7 @@ class GeneralS3PatchManager:
             tuple(map(float, self.normal_multipliers)) if self.augmented else (),
             pair_evaluations,
             gram_rank, gram_condition,
+            support_floor, unresolved_nodes,
         )
         return force, stiffness, result
 
@@ -446,7 +478,8 @@ class GeneralS3PatchManager:
                                 SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
                                 Q4_PAIR_AUGMENTED_PROFILE,
                                 Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
-                                REFINED_Q4_S3_AUGMENTED_PROFILE}:
+                                REFINED_Q4_S3_AUGMENTED_PROFILE,
+                                REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE}:
             return
         variations = (self.map @ transform).tocsr()
         variations.eliminate_zeros()
@@ -458,7 +491,36 @@ class GeneralS3PatchManager:
             raise ValueError("penalty patch has no normal multipliers")
         source, target = self._positions(displacement)
         state = self.law.evaluate(source, target, self.normal_multipliers)
-        return self.law.projected_multiplier(state, self.normal_multipliers)
+        projected = self.law.projected_multiplier(state, self.normal_multipliers)
+        self.last_support_reset = None
+        if self.settings.augmentation_support_resolution == "roundoff":
+            ordinary = np.zeros_like(projected)
+            positive = state.reference_support > 0.0
+            ordinary[positive] = np.maximum(
+                0.0, self.normal_multipliers[positive]
+                - self.stiffness*state.normalized_gap[positive],
+            )
+            reset = np.flatnonzero(ordinary != projected)
+            if len(reset):
+                original_force = self.law.work(
+                    source, target, ordinary, tangent=False,
+                ).residual
+                transferred_force = self.law.work(
+                    source, target, projected, tangent=False,
+                ).residual
+                force_change = float(np.linalg.norm(
+                    original_force-transferred_force,
+                ))
+                if force_change > self.settings.augmentation_support_force_budget_n:
+                    raise SupportResetForceBudgetExceeded(
+                        "roundoff multiplier reset exceeds local force budget"
+                    )
+                self.last_support_reset = {
+                    "source_node_ids": [self.law.source_node_ids[int(j)] for j in reset],
+                    "local_force_change_n": force_change,
+                    "force_budget_n": self.settings.augmentation_support_force_budget_n,
+                }
+        return projected
 
     def _swept_admissible(self, start, end):
         first = self._positions(start)
@@ -556,6 +618,9 @@ class GeneralS3PatchManager:
                          "maximum_q4_source_integration_triangles": self.settings.maximum_q4_source_integration_triangles,
                          **({"q4_source_gap_certificate": self.settings.q4_source_gap_certificate}
                             if self.settings.q4_source_gap_certificate != "whole_face" else {}),
+                         **({"augmentation_support_resolution": self.settings.augmentation_support_resolution,
+                             "augmentation_support_force_budget_n": self.settings.augmentation_support_force_budget_n}
+                            if self.settings.augmentation_support_resolution != "exact" else {}),
                          **({"augmentation_acceleration": self.settings.augmentation_acceleration,
                              "augmentation_pivot_max_pressure_pa": self.settings.augmentation_pivot_max_pressure_pa,
                              "augmentation_pivot_difference_step_m": self.settings.augmentation_pivot_difference_step_m}

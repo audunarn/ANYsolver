@@ -21,10 +21,14 @@ from .s3_patch_mortar_energy import (
 
 
 class MovingS3PatchProjectedNormal:
-    def __init__(self, geometry: MovingS3PatchPrimalMortarPenalty):
+    def __init__(self, geometry: MovingS3PatchPrimalMortarPenalty, *,
+                 support_resolution: str = "exact"):
         if any(len(face.node_ids) not in {3, 4} for face in geometry.source_faces):
             raise ValueError("projected normal pressure space requires S3 or Q4 source faces")
+        if support_resolution not in {"exact", "roundoff"}:
+            raise ValueError("projected normal support resolution is invalid")
         self.geometry = geometry
+        self.support_resolution = support_resolution
         self.n_coordinates = geometry.n_coordinates
         self.source_node_ids = geometry.source_node_ids
         self.target_node_ids = geometry.target_node_ids
@@ -49,6 +53,15 @@ class MovingS3PatchProjectedNormal:
                 or not np.all(np.isfinite(values)) or np.any(values < 0.0)):
             raise ValueError("patch normal multipliers must be finite nonnegative pressures")
         return values
+
+    def resolved_support(self, state):
+        """Return resolved support for algorithmic multiplier transfer only."""
+
+        support = state.reference_support
+        floor = (0.0 if self.support_resolution == "exact" else
+                 np.finfo(float).eps*float(np.sum(support)))
+        supported = support > floor
+        return supported, floor
 
     def _project(self, state, multipliers):
         supported = state.reference_support > 0.0
@@ -78,7 +91,7 @@ class MovingS3PatchProjectedNormal:
     def projected_multiplier(self, state, multipliers):
         multipliers = self._multipliers(multipliers)
         result = np.zeros_like(multipliers)
-        supported = state.reference_support > 0.0
+        supported, _floor = self.resolved_support(state)
         result[supported] = np.maximum(
             0.0, multipliers[supported]
             - self.stiffness*state.normalized_gap[supported],

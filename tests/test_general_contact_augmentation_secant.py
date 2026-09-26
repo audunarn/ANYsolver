@@ -1,6 +1,7 @@
 """Safeguards for the optional projected augmented-contact predictor."""
 
 from dataclasses import replace
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -11,6 +12,7 @@ from anysolver import (
 from anysolver.general_contact.augmentation import (
     ProjectedAugmentationSecant, propose_active_set_pivot,
 )
+from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from examples.general_contact_refined_q4_s3_mixed_path import make_case
 
 
@@ -117,3 +119,55 @@ def test_active_secant_setting_is_explicit_and_validated():
                 settings, augmentation_acceleration="active_secant",
             ),
         )
+
+
+def test_roundoff_pressure_support_is_opt_in_and_force_bounded(monkeypatch):
+    model, definition, settings, _program = make_case()
+    with pytest.raises(ValueError, match="positive force budget"):
+        replace(settings, augmentation_support_resolution="roundoff")
+    admitted = replace(
+        settings, augmentation_support_resolution="roundoff",
+        augmentation_support_force_budget_n=1.0e-9,
+    )
+    report = validate_general_contact(model, definition, admitted)
+    assert report.valid
+    assert "ROUNDOFF" in report.profile
+    penalty = replace(definition, interactions=(replace(
+        definition.interactions[0], normal_law="penalty",
+    ),))
+    assert not validate_general_contact(model, penalty, admitted).valid
+    manager = GeneralS3PatchManager(model, definition, admitted)
+    source, target = manager._positions(np.zeros(manager.n_dof))
+    state = manager.law.geometry.evaluate(source, target)
+    support = np.full(len(manager.law.source_node_ids), 0.1)
+    support[-1] = 1.0e-18
+    trial = replace(state, reference_support=support,
+                    normalized_gap=np.zeros_like(support))
+    multipliers = np.full(len(support), 10.0)
+    resolved, floor = manager.law.resolved_support(trial)
+    assert floor == pytest.approx(np.finfo(float).eps*sum(support))
+    assert np.all(resolved[:-1]) and not resolved[-1]
+    assert manager.law._project(trial, multipliers).pressure[-1] == 10.0
+    np.testing.assert_array_equal(
+        manager.law.projected_multiplier(trial, multipliers),
+        np.r_[np.full(len(support)-1, 10.0), 0.0],
+    )
+    monkeypatch.setattr(manager.law, "evaluate", lambda *_: trial)
+    monkeypatch.setattr(
+        manager.law, "work",
+        lambda _source, _target, pressure, *, tangent: SimpleNamespace(
+            residual=np.array((pressure[-1]*1.0e-8,)),
+        ),
+    )
+    manager.set_normal_multipliers(multipliers)
+    with pytest.raises(ValueError, match="local force budget"):
+        manager.projected_normal_multipliers(np.zeros(manager.n_dof))
+    monkeypatch.setattr(
+        manager.law, "work",
+        lambda _source, _target, pressure, *, tangent: SimpleNamespace(
+            residual=np.array((pressure[-1]*1.0e-11,)),
+        ),
+    )
+    projected = manager.projected_normal_multipliers(np.zeros(manager.n_dof))
+    assert projected[-1] == 0.0
+    assert manager.last_support_reset["local_force_change_n"] == pytest.approx(1.0e-10)

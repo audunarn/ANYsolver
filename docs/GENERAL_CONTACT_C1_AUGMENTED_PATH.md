@@ -130,3 +130,33 @@ convergence nor independent engineering acceptance.
 The runnable source example is
 `examples/general_contact_refined_q4_s3_eight_q4_press.py`; installed-package
 verification of this option remains open.
+
+## Opt-in roundoff support for multiplier transfer
+
+`augmentation_support_resolution="roundoff"` is a separate developmental
+profile for refined Q4/S3 augmented contact. It requires an explicit
+`augmentation_support_force_budget_n`; the default remains `"exact"`.
+The fixed-multiplier contact residual and tangent retain all represented
+overlap work. Only the outer augmented update treats a pressure node as
+algorithmically unresolved when its positive reference support is at or
+below machine epsilon times the patch's total reference support. Before
+resetting that node's multiplier, the solver directly compares the local
+contact residual for the ordinary projected update and the reset update.
+Exceeding the stated force budget stops the increment explicitly. Results
+report the support floor, affected material node IDs and reset force changes.
+The option is part of the restart contract and has its own profile identity.
+
+This rule addressed a known first sliding step in the eight-Q4/two-S3 case:
+two departing edge pressure nodes had supports around 8×10⁻¹⁹ m² and
+retained multipliers of roughly 9 and 18 Pa while their contact-force
+contribution was near numerical resolution. The exact-support run stopped
+after 16 augmentations. With a 10⁻⁸ N reset budget and all other gates held
+fixed, the opt-in run accepted step 3 after 13 augmentations, with a
+−2.186 µm independent lower gap and 4.48×10⁻⁹ Pa final pressure change.
+Its largest reset force difference was 3.21×10⁻⁹ N. The accepted press
+state was identical before sliding. Raw development output is
+`c1-eight-q4-first-slide-roundoff.txt` under
+`C:/ANYworkspaceWork/general-contact-evidence`. This known case does not
+qualify the method across meshes, overlap transitions or installed packages.
+The source example reproduces the bounded first-slide profile with
+`python examples/general_contact_refined_q4_s3_eight_q4_press.py --first-slide --roundoff-support`.

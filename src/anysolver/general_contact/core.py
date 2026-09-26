@@ -201,6 +201,8 @@ class ContactSolverSettings:
     augmentation_acceleration: str = "none"
     augmentation_pivot_max_pressure_pa: float | None = None
     augmentation_pivot_difference_step_m: float | None = None
+    augmentation_support_resolution: str = "exact"
+    augmentation_support_force_budget_n: float | None = None
 
     def __post_init__(self) -> None:
         if (self.q4_target_weighted_gap_tolerance is not None
@@ -304,6 +306,14 @@ class ContactSolverSettings:
                 raise ValueError("active_secant_pivot requires at least 15 augmentations")
         elif any(value is not None for value in pivot_bounds):
             raise ValueError("augmentation pivot bounds require active_secant_pivot")
+        if self.augmentation_support_resolution not in {"exact", "roundoff"}:
+            raise ValueError("augmentation_support_resolution must be exact or roundoff")
+        if self.augmentation_support_resolution == "roundoff":
+            budget = self.augmentation_support_force_budget_n
+            if budget is None or not np.isfinite(budget) or budget <= 0.0:
+                raise ValueError("roundoff support requires a positive force budget")
+        elif self.augmentation_support_force_budget_n is not None:
+            raise ValueError("support force budget requires roundoff support")
         if self.pressure_tolerance is not None and (
             not np.isfinite(self.pressure_tolerance) or self.pressure_tolerance <= 0.0
         ):
@@ -440,6 +450,14 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                 and not _refined_q4_s3_patch(model, definition)):
             return ContactValidationReport("invalid", (
                 "active-set pivot requires the refined Q4/S3 augmented patch profile",
+            ))
+    if settings is not None and settings.augmentation_support_resolution == "roundoff":
+        if (definition.rigid_bodies or len(definition.interactions) != 1
+                or definition.interactions[0].normal_law != "augmented"
+                or settings.pair_motion != "general"
+                or not _refined_q4_s3_patch(model, definition)):
+            return ContactValidationReport("invalid", (
+                "roundoff pressure support requires the refined Q4/S3 augmented patch profile",
             ))
     if settings is not None and settings.q4_source_gap_certificate == "projected_matching":
         if not (settings.pair_motion == "general"
