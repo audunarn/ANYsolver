@@ -472,6 +472,31 @@ geometric stiffness, descriptor treatment, prestress/buckling and installed
 qualification remain open. Do not assign active-plastic or nonconservative
 spectral capability from this check.
 
+**Next F12 coupled-mass discriminator:** Assemble the physical B2 static-
+trace mass from explicit, axis-referred sectional inertia and combine it
+with the existing Q4 physical mass on the bounded F10 point system. The
+independent questions are whether rigid kinetic work equals mass-per-length
+times beam length, and whether the exact six multiplier coordinates remain
+massless in the full generalized eigenproblem. Compare finite roots with
+an independently eliminated constrained pencil; any mismatch sends the
+assembly or descriptor layout back for revision. Passing only permits
+broader mesh, frame, S3, prestress and free-free investigations; it cannot
+close F12 or admit production modes.
+
+**F12 bounded coupled-mass result (27 September):** The private B2 member
+now integrates its explicit, origin-pulled sectional inertia through the
+existing station trace with four Gauss points; the returned matrix is owned
+and no density is inferred. On the physical four-particle section, its
+rigid work equals an independent two-point axial kinetic-energy integral.
+One real Q4 mass, one physical B2 mass and the F10 six-row finite-support
+point law form a supported descriptor whose six multiplier rows have exact
+zero mass. Finite roots, equation/constraint residuals and an independent
+null-space reduction agree; both focused tests pass `2/2`. This is a small
+elastic development oracle, not an installed or production eigensolver.
+S3, free-free modes, changing frame/mesh, prestress, buckling, shell-side
+point-law admission and the growing-interface problem remain open. F12/G0B
+remain open and G1 barred.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8

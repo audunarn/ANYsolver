@@ -209,6 +209,27 @@ class PhysicalB2Member:
     def local_operator(self) -> LinearOperator:
         return LinearOperator(self.length_m, self.section)
 
+    def local_candidate_mass_matrix(self) -> np.ndarray:
+        """Integrate explicit sectional inertia through the static station trace.
+
+        This private candidate retains the supplied mass origin and the
+        physical B2 station kinematics. It does not admit coupled dynamics.
+        """
+        if self.mass is None:
+            raise ValueError("explicit B2 mass metadata required")
+        mass_per_m = self.mass.matrix_at_reference_axis()
+        abscissae, weights = np.polynomial.legendre.leggauss(4)
+        stations = tuple(float((x+1.)/2.) for x in abscissae)
+        trace = self.local_operator().trace(np.zeros(12), stations=stations)
+        matrix = np.zeros((12, 12))
+        with np.errstate(over="ignore", invalid="ignore"):
+            for weight, jacobian in zip(weights, trace.jacobian):
+                matrix += (self.length_m*weight/2.) * (
+                    jacobian.T @ mass_per_m @ jacobian)
+        if not np.isfinite(matrix).all():
+            raise RepresentabilityError("physical B2 candidate mass is not representable")
+        return matrix
+
     def trace_global(self, displacement, *, stations=(0.0, 0.5, 1.0),
                      offset_local_m=(0.0, 0.0, 0.0)) -> GlobalLinearTrace:
         """Private physical station port in the declared global nodal basis."""
