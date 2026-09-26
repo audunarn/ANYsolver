@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import json
 
 from anysolver.general_contact.supported_schur import propose_supported_schur_step
 
@@ -54,3 +55,28 @@ def test_singular_or_resource_exhausted_schur_does_not_soften_law():
             maximum_pressure=10.0, maximum_pressure_step=10.0,
             maximum_modes=2,
         )
+
+
+def test_rank_revealing_step_only_corrects_responsive_pressure_modes():
+    pressure = np.ones(3)
+    gap = np.array([-0.1, -0.1, -0.01])
+    response = np.diag([0.1, 0.1, 0.0])
+    diagnostics = {}
+    proposal = propose_supported_schur_step(
+        pressure, gap, np.ones(3, dtype=bool), response,
+        normal_stiffness=10.0, maximum_pressure=5.0,
+        maximum_pressure_step=2.0, maximum_modes=3,
+        diagnostics=diagnostics,
+    )
+    assert proposal is not None
+    assert diagnostics["schur_effective_rank"] == 2
+    assert diagnostics["schur_truncated_response"] is True
+    assert diagnostics["schur_scaled_condition"] is None
+    assert proposal.scaled_condition is None
+    json.dumps(diagnostics, allow_nan=False)
+    np.testing.assert_allclose(proposal.multipliers, [2.0, 2.0, 1.0])
+    equilibrated_gap = gap + response @ (proposal.multipliers-pressure)
+    actual_residual = (np.maximum(0.0, proposal.multipliers
+                                  - 10.0*equilibrated_gap)
+                       - proposal.multipliers)
+    assert np.linalg.norm(actual_residual, ord=np.inf) < 0.11

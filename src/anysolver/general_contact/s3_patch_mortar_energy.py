@@ -107,6 +107,13 @@ class MovingS3PatchPrimalMortarPenalty:
             raise ValueError("Jet2 overlap derivatives need at least three S3 faces")
         if differentiation == "jet2_q4_s3" and not refined_q4:
             raise ValueError("Jet2 Q4/S3 overlap derivatives need a refined Q4/S3 patch")
+        if differentiation == "jet2_q4_s3" and (
+            q4_source_derivative_tolerances is None
+            or len(q4_source_derivative_tolerances) != 4
+            or any(value is None or not np.isfinite(value) or value <= 0.0
+                   for value in q4_source_derivative_tolerances)
+        ):
+            raise ValueError("Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances")
         source_q4 = all(len(face.node_ids) == 4 for face in self.source_faces)
         if not source_q4 and any(len(face.node_ids) != 3 for face in self.source_faces):
             raise ValueError("development patch pressure side needs S3 triangles or Q4 faces")

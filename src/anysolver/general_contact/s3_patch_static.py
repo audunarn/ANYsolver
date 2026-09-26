@@ -235,6 +235,12 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             q4_source_area_tolerance=settings.q4_source_area_tolerance,
             q4_source_weighted_gap_tolerance=settings.q4_source_weighted_gap_tolerance,
             maximum_q4_source_integration_triangles=settings.maximum_q4_source_integration_triangles,
+            q4_source_derivative_tolerances=(
+                settings.q4_source_support_gradient_tolerance,
+                settings.q4_source_support_hessian_tolerance,
+                settings.q4_source_weighted_gap_gradient_tolerance,
+                settings.q4_source_weighted_gap_hessian_tolerance,
+            ),
             differentiation=("jet2_s3"
                              if settings.general_s3_differentiation == "jet2_s3_dev"
                              else "jet2_q4_s3"

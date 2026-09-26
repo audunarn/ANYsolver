@@ -15,7 +15,7 @@ import numpy as np
 class SupportedSchurProposal:
     multipliers: np.ndarray
     active_indices: tuple[int, ...]
-    scaled_condition: float
+    scaled_condition: float | None
     step_fraction: float
     predicted_residual_before: float
     predicted_residual_after: float
@@ -83,22 +83,47 @@ def propose_supported_schur_step(
         return decline("projected_residual_zero")
     jacobian = -np.eye(count)
     jacobian[active] = -normal_stiffness*H[active]
-    row_scale = np.maximum(np.max(np.abs(jacobian), axis=1), np.finfo(float).tiny)
-    column_scale = np.maximum(
-        np.max(np.abs(jacobian/row_scale[:, None]), axis=0), np.finfo(float).tiny,
-    )
+    row_magnitude = np.max(np.abs(jacobian), axis=1)
+    row_scale = np.where(row_magnitude > 0.0, row_magnitude, 1.0)
+    column_magnitude = np.max(np.abs(jacobian/row_scale[:, None]), axis=0)
+    column_scale = np.where(column_magnitude > 0.0, column_magnitude, 1.0)
     scaled = jacobian/row_scale[:, None]/column_scale[None, :]
     try:
-        singular_values = np.linalg.svd(scaled, compute_uv=False)
+        left_modes, singular_values, right_modes = np.linalg.svd(scaled)
         condition = (float(singular_values[0]/singular_values[-1])
                      if singular_values[-1] > 0.0 else float("inf"))
         if diagnostics is not None:
-            diagnostics["schur_scaled_condition"] = condition
+            diagnostics["schur_scaled_condition"] = (
+                condition if np.isfinite(condition) else None
+            )
             diagnostics["schur_scaled_singular_values"] = list(
                 map(float, singular_values))
-        if not np.isfinite(condition) or condition > 1.0e8:
-            return decline("scaled_response_ill_conditioned")
-        direction = np.linalg.solve(scaled, -residual/row_scale)/column_scale
+            scaled_rhs = -residual/row_scale
+            modal_rhs = left_modes.T @ scaled_rhs
+            diagnostics["schur_scaled_rhs_modal"] = list(map(float, modal_rhs))
+            diagnostics["schur_scaled_weak_right_mode"] = list(
+                map(float, right_modes[-1]))
+            diagnostics["schur_scaled_weak_rhs_fraction"] = float(
+                abs(modal_rhs[-1])/max(np.linalg.norm(scaled_rhs),
+                                        np.finfo(float).tiny)
+            )
+        if not np.isfinite(singular_values[0]) or singular_values[0] <= 0.0:
+            return decline("scaled_response_singular")
+        retained = singular_values > singular_values[0]/1.0e8
+        rank = int(np.count_nonzero(retained))
+        if diagnostics is not None:
+            diagnostics["schur_effective_rank"] = rank
+            diagnostics["schur_truncated_response"] = rank < count
+        if rank == 0:
+            return decline("scaled_response_singular")
+        if rank < count:
+            direction = (
+                right_modes[:rank].T
+                @ ((left_modes[:, :rank].T @ (-residual/row_scale))
+                   / singular_values[:rank])
+            )/column_scale
+        else:
+            direction = np.linalg.solve(scaled, -residual/row_scale)/column_scale
     except np.linalg.LinAlgError:
         return decline("scaled_response_singular")
     if not np.all(np.isfinite(direction)):
@@ -125,6 +150,7 @@ def propose_supported_schur_step(
         proposed[modes] = candidate
         return SupportedSchurProposal(
             proposed, tuple(int(modes[index]) for index in np.flatnonzero(active)),
-            condition, fraction, before, after,
+            condition if np.isfinite(condition) else None,
+            fraction, before, after,
         )
     return decline("bounded_step_or_predicted_merit_failed")

@@ -1,0 +1,9 @@
+status=diverged reason=maximum_augmentations_reached accepted_steps=0
+augmentation=1 pressure_change_pa=0.04420877658514535 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None pressure_gram_rank=4 schur_applied=None
+augmentation=2 pressure_change_pa=0.03928067816629111 schur_proposed=False schur_ineligible=scaled_response_ill_conditioned schur_condition=1276338030194.1477 schur_singular_values=[3.8834012682916668, 0.0625176359729071, 0.014763748800079284, 3.0426118915386003e-12] pressure_gram_rank=4 schur_applied=None
+augmentation=3 pressure_change_pa=0.03508691555650348 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None pressure_gram_rank=4 schur_applied=None
+augmentation=4 pressure_change_pa=0.031517916789725986 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None pressure_gram_rank=4 schur_applied=None
+augmentation=5 pressure_change_pa=0.028480459629322885 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None pressure_gram_rank=4 schur_applied=None
+augmentation=6 pressure_change_pa=0.025895231952320796 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None pressure_gram_rank=4 schur_applied=None
+augmentation=7 pressure_change_pa=0.023694756158241626 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None pressure_gram_rank=4 schur_applied=None
+gap_tolerance_met=True active_modes=4 schur_attempts=1 schur_applied=0

@@ -16,6 +16,8 @@ from anysolver.linalg import MatrixClass, factorize
 from .augmentation import ActiveSetPivot, propose_active_set_pivot
 from .overlap import PlanarFace
 from .q4_source_overlap import projected_q4_source_face
+from .q4_s3_overlap_derivatives import q4_s3_overlap_derivatives
+from .s3_overlap_derivatives import s3_overlap_derivatives
 from .supported_schur import SupportedSchurProposal, propose_supported_schur_step
 
 
@@ -64,6 +66,69 @@ def _projected_clip_signature(geometry, source, target) -> tuple[int, ...] | Non
     return tuple(signatures)
 
 
+def _jet2_integral_gradients(geometry, source, target,
+                             selected: np.ndarray, count: int,
+                             maximum_evaluations: int,
+                             check_cancel: Callable[[], None] | None = None):
+    """Differentiate W and S at one smooth pose in authoritative xyz order."""
+    pair_count = len(geometry.pair_laws)
+    if 3*pair_count > maximum_evaluations:
+        raise ValueError("pressure response geometry evaluation budget exceeded")
+    weighted = np.zeros((len(selected), count))
+    support = np.zeros_like(weighted)
+    selected_row = {int(node): row for row, node in enumerate(selected)}
+    source_count = len(source)
+    for pair_index, law in enumerate(geometry.pair_laws):
+        if check_cancel is not None:
+            check_cancel()
+        source_face = pair_index // len(geometry.target_faces)
+        target_face = pair_index % len(geometry.target_faces)
+        source_nodes = geometry.source_face_indices[source_face]
+        target_nodes = geometry.target_face_indices[target_face]
+        local_source = source[source_nodes]
+        local_target = target[target_nodes]
+        local = law.evaluate(local_source, local_target)
+        if local.reference_overlap_area == 0.0:
+            continue
+        reference = geometry.source_faces[source_face].reference_positions
+        if len(source_nodes) == 4:
+            derivative = q4_s3_overlap_derivatives(
+                reference, local_source, local_target,
+                area_tolerance=geometry.q4_source_area_tolerance,
+                weighted_gap_tolerance=geometry.q4_source_weighted_gap_tolerance,
+                maximum_triangles=geometry.maximum_q4_source_integration_triangles,
+                allow_warped_source=True,
+                **dict(zip((
+                    "support_gradient_tolerance",
+                    "support_hessian_tolerance",
+                    "weighted_gap_gradient_tolerance",
+                    "weighted_gap_hessian_tolerance",
+                ), geometry.q4_source_derivative_tolerances)),
+            )
+        else:
+            derivative = s3_overlap_derivatives(
+                reference, local_source, local_target,
+            )
+        if (not np.allclose(derivative.reference_support,
+                            local.reference_support, rtol=1e-9, atol=0.0)
+                or not np.allclose(derivative.reference_weighted_gap,
+                                   local.reference_weighted_gap,
+                                   rtol=1e-9, atol=0.0)):
+            raise ValueError("pressure response derivative disagrees with mortar geometry")
+        columns = np.asarray(
+            [3*int(node)+axis for node in source_nodes for axis in range(3)]
+            + [3*(source_count+int(node))+axis
+               for node in target_nodes for axis in range(3)],
+            dtype=np.intp,
+        )
+        for local_row, node in enumerate(source_nodes):
+            row = selected_row.get(int(node))
+            if row is not None:
+                weighted[row, columns] += derivative.weighted_gap_gradient[local_row]
+                support[row, columns] += derivative.support_gradient[local_row]
+    return weighted, support
+
+
 def _constrained_gap_response(manager, displacement, tangent, transform,
                               control_rows, selected: np.ndarray,
                               active: np.ndarray, *, difference_step: float,
@@ -83,52 +148,59 @@ def _constrained_gap_response(manager, displacement, tangent, transform,
     coordinates = np.concatenate((source, target)).reshape(-1)
     count = len(coordinates)
     pair_count = len(getattr(geometry, "pair_laws", (1,)))
-    if (2*count + 1)*pair_count > manager.settings.maximum_general_s3_energy_evaluations:
-        raise ValueError("pressure response geometry evaluation budget exceeded")
-    weighted = np.zeros((len(selected), count))
-    support = np.zeros_like(weighted)
-    source_count = len(source)
-    for coordinate in range(count):
-        if check_cancel is not None:
-            check_cancel()
-        shifted = coordinates.copy()
-        shifted[coordinate] += difference_step
-        plus = geometry.evaluate(
-            shifted[:3*source_count].reshape(-1, 3),
-            shifted[3*source_count:].reshape(-1, 3),
+    if getattr(geometry, "differentiation", "global") in {"jet2_s3", "jet2_q4_s3"}:
+        weighted, support = _jet2_integral_gradients(
+            geometry, source, target, selected, count,
+            manager.settings.maximum_general_s3_energy_evaluations,
+            check_cancel,
         )
-        shifted[coordinate] -= 2*difference_step
-        minus = geometry.evaluate(
-            shifted[:3*source_count].reshape(-1, 3),
-            shifted[3*source_count:].reshape(-1, 3),
-        )
-        plus_source = (coordinates.copy())
-        plus_source[coordinate] += difference_step
-        minus_source = (coordinates.copy())
-        minus_source[coordinate] -= difference_step
-        plus_clip = _projected_clip_signature(
-            geometry, plus_source[:3*source_count].reshape(-1, 3),
-            plus_source[3*source_count:].reshape(-1, 3),
-        )
-        minus_clip = _projected_clip_signature(
-            geometry, minus_source[:3*source_count].reshape(-1, 3),
-            minus_source[3*source_count:].reshape(-1, 3),
-        )
-        if (plus.overlap_signature != base.overlap_signature
-                or minus.overlap_signature != base.overlap_signature
-                or plus_clip != clip_signature
-                or minus_clip != clip_signature
-                or np.any(plus.reference_support[selected] <= 0.0)
-                or np.any(minus.reference_support[selected] <= 0.0)):
-            return None
-        weighted[:, coordinate] = (
-            plus.reference_weighted_gap[selected]
-            - minus.reference_weighted_gap[selected]
-        )/(2*difference_step)
-        support[:, coordinate] = (
-            plus.reference_support[selected]
-            - minus.reference_support[selected]
-        )/(2*difference_step)
+    else:
+        if (2*count + 1)*pair_count > manager.settings.maximum_general_s3_energy_evaluations:
+            raise ValueError("pressure response geometry evaluation budget exceeded")
+        weighted = np.zeros((len(selected), count))
+        support = np.zeros_like(weighted)
+        source_count = len(source)
+        for coordinate in range(count):
+            if check_cancel is not None:
+                check_cancel()
+            shifted = coordinates.copy()
+            shifted[coordinate] += difference_step
+            plus = geometry.evaluate(
+                shifted[:3*source_count].reshape(-1, 3),
+                shifted[3*source_count:].reshape(-1, 3),
+            )
+            shifted[coordinate] -= 2*difference_step
+            minus = geometry.evaluate(
+                shifted[:3*source_count].reshape(-1, 3),
+                shifted[3*source_count:].reshape(-1, 3),
+            )
+            plus_source = (coordinates.copy())
+            plus_source[coordinate] += difference_step
+            minus_source = (coordinates.copy())
+            minus_source[coordinate] -= difference_step
+            plus_clip = _projected_clip_signature(
+                geometry, plus_source[:3*source_count].reshape(-1, 3),
+                plus_source[3*source_count:].reshape(-1, 3),
+            )
+            minus_clip = _projected_clip_signature(
+                geometry, minus_source[:3*source_count].reshape(-1, 3),
+                minus_source[3*source_count:].reshape(-1, 3),
+            )
+            if (plus.overlap_signature != base.overlap_signature
+                    or minus.overlap_signature != base.overlap_signature
+                    or plus_clip != clip_signature
+                    or minus_clip != clip_signature
+                    or np.any(plus.reference_support[selected] <= 0.0)
+                    or np.any(minus.reference_support[selected] <= 0.0)):
+                return None
+            weighted[:, coordinate] = (
+                plus.reference_weighted_gap[selected]
+                - minus.reference_weighted_gap[selected]
+            )/(2*difference_step)
+            support[:, coordinate] = (
+                plus.reference_support[selected]
+                - minus.reference_support[selected]
+            )/(2*difference_step)
     area = base.reference_support[selected, None]
     selected_gap = base.normalized_gap[selected]
     gap_derivative = (weighted-selected_gap[:, None]*support)/area
