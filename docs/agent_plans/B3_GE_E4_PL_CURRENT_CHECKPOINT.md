@@ -1,41 +1,34 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-## Current state — 26 September 2026, native connection and physical reference
+## Current state — 26 September 2026
 
-**Decision sought:** A physically defensible native six-channel bond and a
-stable exact line space. **Established:** The transverse-order diagnosis is
-complete. The matched C1 opening-shear solid has a continuous saved-field
-top/underside gap bound; torque still penetrates despite penalty contact.
-The exact C1 native B3 reference has zero virgin residual and sparse/dense
-operator parity. On two Q4 patch grids the six-resultant surface-position
-footprint gives closer opening-shear tip/support quantities than the old
-pose ties, with balanced physical torque work. Independent mechanics review
-found no algebraic blocker **for a distributing footprint**. Its six weak
-moments nevertheless admit local slip: under opening shear, pointwise gap
-RMS is `0.16919→0.16920 µm` from patch cells two→four while all six weak
-gaps close. **Uncertainty:** This law cannot substitute for a pointwise
-solid bond, the solid has one mesh level, torque remains contact-inadmissible,
-and no true line space has mesh-uniform stability evidence.
-**Next discriminating action:** The bounded factor-two/four C1 opening,
-torque-basis and directly executed combined-load solves are complete.
-Both direct combined `−1000 N Fz + 100 N m Mx` fields match their linear
-superpositions within the preregistered output bounds, preserve balance,
-and have positive continuous saved opposed-face gap bounds. Incremental
-torque tip and plate-share quantities move under `0.5%`. Pure torque
-alone penetrates on both levels and remains inadmissible. The combined
-state is a directional **pre-opened incremental-torque** reference only;
-side-surface admissibility, contact verification, a third mesh level and
-native/solid idealization matching remain open. Use it now to discriminate
-native six-channel line work on a fixed matched model, beginning with
-independent work/row-space and physical transfer checks. Do not launch
-another solid refinement merely because two levels were close.
-In parallel, derive a distinct physical six-channel line work law and test
-fixed-grid transfer/modes before registered ratios.
-A sparse third patch grid would settle the distributing footprint only;
-it cannot remove its weak-moment null mode. Do not resume finer classical
-axial or arbitrary P0 row sweeps. No footprint, pose or multiplier is
-production-selected. Formal F03 authority is unconsumed, G0B open and G1
-barred.
+**Decision sought:** A defensible native six-channel beam–shell connection
+and stable exact line space, separate from the classical axial comparator
+and the historical Q6/finite-pad footprint.
+
+**Established:** On the fixed C1 geometry, weighted P0/P1/dual rows pass
+reference, actual-chart work, rank, loaded balance and P0 parity. The
+basis-specific H^-1/2 two-grid diagnostic has positive reported shell/beam
+mode work but scale-sensitive alternating Fy/Mz modes. Independent review
+found no blocking row or norm defect; neither the smaller P1/dual quotients
+nor pointwise gaps select a space. Exact-source roots are
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-spaces-fixed-dev-20260926-v1`
+and `f03-c1-hybrid-weighted-density-norm-dev-20260926-v1` (source
+`cd03575c`/`500f3b1f`). The matched executed F2/F4 pre-opened solid is
+a directional torque/shear reference: nominal C1 taper, plate, support and
+load resultant align, but its resolved square section and distributed tip
+load differ from the native idealization.
+
+**Remaining uncertainty and next experiment:** The current bounded fixture
+covers only native half-cell:shell-cell ratios 1:1, 1:2, 1:4 and 2:1; its
+eight-cell dense cases exceed the 1900-row cap. Build a sparse,
+reference-cut-aware ratio diagnostic within retained resources. In
+parallel, audit saved solid side surfaces and obtain a third physical
+level before accuracy scoring. A ratio-dependent weak mode or material
+transfer drift returns the trace/pose law for revision; stable balanced
+results permit a reviewed space decision only after the full registered
+ratios and physical reference pass. Do not repeat finer classical axial
+screens. Formal F03 authority is unconsumed, G0B open and G1 barred.
 
 **Executed factor-two opening reference:** Source `da1d2a0c` contains the
 tested factor-two C1 deck/gap guards (`80/80` focused tests). The
@@ -4019,27 +4012,6 @@ space decision. Do not select P0 from small gaps, a positive quotient or
 the current near-match to solid work. No axial escalation follows.
 Formal F03 authority is unconsumed; G0B remains open and G1 barred.
 
-**Current decision and bounded discriminator (26 September):** Retain a
-native six-channel line candidate only if its interface modes and loaded
-transfer remain interpretable under a basis-specific dual norm and changing
-beam:shell resolution. The fixed-grid P0/P1/dual work experiment at source
-`cd03575c` passed reference, rank, actual-chart work, loaded balance and P0
-parity; raw evidence is
-`.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-spaces-fixed-dev-20260926-v1`.
-P1 and dual-P1 are distinct signed row spaces; the sampled physical
-position gap is not a weak six-channel or stability certificate. An
-independent mechanics review found no blocking weighted-row algebra defect
-and required a full **basis-specific** dual Gram for P1/dual. The 35 mm C1
-reference guard was added and directly tested after that review. The next
-single-axis diagnostic compares P0/P1/dual on the same two- and four-cell
-shell grids, with the same B3 reference and declared 1 m and 0.1 m moment
-scales. A collapsing or representation-sensitive torque-relevant nonaxial
-mode sends the line trace/pose or norm definition back for revision; stable,
-balanced modes permit the separately registered mesh-ratio and physical
-solid-reference work. Neither outcome by itself selects a multiplier space.
-The saved solid F4 has side-clearance and three-level convergence limits;
-these must be checked before accuracy scoring. G0B remains open, G1 barred.
-
 **Next bounded operator discriminator:** On the unchanged C1 Q4 four-cell,
 B3 12-half-cell reference, build P0, continuous P1 and dual-P1 weighted
 rows from the *same pointwise six-channel hybrid work integrand*. Normalize
@@ -4076,3 +4048,64 @@ space-selection verdict. The sampled pointwise position gaps and
 force/moment partitions must be interpreted together with normed modes
 and the registered mesh ratios. The exact-source evidence root and
 independent review are pending; G0B remains open.
+
+## Weighted C1 operator and norm development result
+
+**Current decision and bounded discriminator (26 September):** Retain a
+native six-channel line candidate only if its interface modes and loaded
+transfer remain interpretable under a basis-specific dual norm and changing
+beam:shell resolution. The fixed-grid P0/P1/dual work experiment at source
+`cd03575c` passed reference, rank, actual-chart work, loaded balance and P0
+parity; raw evidence is
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-spaces-fixed-dev-20260926-v1`.
+P1 and dual-P1 are distinct signed row spaces; the sampled physical
+position gap is not a weak six-channel or stability certificate. An
+independent mechanics review found no blocking weighted-row algebra defect
+and required a full **basis-specific** dual Gram for P1/dual. The 35 mm C1
+reference guard was added and directly tested after that review. The next
+single-axis diagnostic compares P0/P1/dual on the same two- and four-cell
+shell grids, with the same B3 reference and declared 1 m and 0.1 m moment
+scales. A collapsing or representation-sensitive torque-relevant nonaxial
+mode sends the line trace/pose or norm definition back for revision; stable,
+balanced modes permit the separately registered mesh-ratio and physical
+solid-reference work. Neither outcome by itself selects a multiplier space.
+The saved solid F4 has side-clearance and three-level convergence limits;
+these must be checked before accuracy scoring. G0B remains open, G1 barred.
+
+**Discriminator result:** Source `500f3b1f` and raw root
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-density-norm-dev-20260926-v1`
+contain all six exact-source P0/P1/dual × 1/0.1 m cases. The focused
+basis-specific regression passed directly (`130.05 s`); standard pytest
+collection remains anomalous. At the declared 1 m scale, the Q4 two→four
+cell nonaxial signed-compliance minima are P0 `1.499→1.786`, P1
+`0.577→0.629`, and dual-P1 `0.585→0.638`. At 0.1 m they are P0
+`1.265→1.518`, P1 `0.558→0.615`, and dual-P1 `0.565→0.625`.
+The reported weakest full and nonaxial modes have positive shell and beam
+work; each space has full supported row rank and a basis-specific Gram
+bracket ratio below `1.000000034`. The weakest
+nonaxial action remains an alternating `Fy/Mz` family, but its component
+weights change materially with moment scale. P1/dual carry additional
+rows, so their smaller quotients are neither failure nor superiority.
+These are support-conditioned, indefinite-tangent finite-grid actions,
+not inf-sup bounds. The independent read-only norm review found no
+blocking normalization or Gram-orientation defect and confirmed that
+rankings remain convention-sensitive; it did not qualify G0B. Saved mode
+vectors are force-equivalent density coefficients in N/m for all channels;
+multiply their rotational entries by the declared characteristic length
+to read physical moment density in Nm/m.
+
+**Next discriminating action:** Existing C1 B3 fixtures give two or four
+bond half-cells; local Q4 grids give two, four or eight bond cells.
+The resulting native half-cell:shell-cell ratios are only `1:1`, `1:2`,
+`1:4`, `2:1`; the eight-cell grids need `1986/2202` dense KKT rows for
+B3 12/24 plus P1, beyond the retained `1900` cap. Thus the present
+fixture cannot establish the registered `1:8` and reciprocal envelope.
+Build a bounded sparse ratio diagnostic with explicit reference cuts and
+resource checks before claiming mesh-ratio stability. In parallel audit
+the saved F2/F4 solid side surfaces and obtain a third physical level;
+the saved models do match the C1 2 µm tapered axis, 35 mm plate, left/root
+supports and +100 Nm/−1000 N resultant, but use a resolved square solid
+and distributed tip-face load rather than the native generalized section
+and tip wrench. This is a directional comparison only. No further classical
+axial refinement or multiplier selection follows. Formal F03 authority is
+unconsumed; G0B open and G1 barred.
