@@ -79,6 +79,36 @@ def q4_source_gap_lower(source: np.ndarray, target: np.ndarray) -> float:
     )
 
 
+def q4_source_planar_overlap_gap_lower(
+        source: np.ndarray, target: np.ndarray) -> float | None:
+    """Bound the affine normal gap over a planar Q4/S3 projected overlap.
+
+    This is an instantaneous geometry ingredient, not a swept certificate.
+    ``None`` means there is no positive-area surface overlap. Nonplanar,
+    inverted or nearly grazing faces fail rather than using this bound.
+    """
+    first = PlanarFace((1, 1), source)
+    second = PlanarFace((2, 1), target)
+    if len(first.corners) != 4:
+        raise ValueError("planar overlap gap needs a Q4 source")
+    overlap = planar_projected_overlap(first, second)
+    if overlap is None:
+        return None
+    target_normal = np.cross(second.corners[1]-second.corners[0],
+                             second.corners[-1]-second.corners[0])
+    target_normal /= np.linalg.norm(target_normal)
+    cosine = float(target_normal @ overlap.normal)
+    if abs(cosine) < 0.25:
+        raise ValueError("planar overlap gap has ambiguous normal projection")
+    signed_gap = ((overlap.polygon-second.corners[0]) @ target_normal)/cosine
+    scale = max(1.0,
+                float(np.max(np.linalg.norm(first.corners-first.corners[0], axis=1))),
+                float(np.max(np.linalg.norm(second.corners-second.corners[0], axis=1))),
+                float(np.linalg.norm(second.corners[0]-first.corners[0])))
+    margin = 512.0*np.finfo(float).eps*scale/abs(cosine)
+    return float(np.min(signed_gap))-margin
+
+
 def q4_source_projected_gap_lower(source: np.ndarray,
                                   target: np.ndarray) -> float:
     """Lower bound the gap of Q4 points sharing the overlap projection.

@@ -70,6 +70,12 @@ conservative swept certificate require separate derivation and tests before
 this case can be admitted as a coupled path. The fixed-pose observation is
 not an accepted solution.
 
+An internal planar overlap-gap helper now computes the instantaneous affine
+plane-gap minimum over projected overlap vertices. Focused geometry tests
+cover the skew edge, a small cut, rigid transforms and invalid faces. The
+helper is not used by solver admission; its instantaneous result cannot
+certify a moving trial path.
+
 The first admitted coupled case has two adjacent Q4 source faces and two
 nonmatching S3 target faces. Direct local work matches whole-patch projected
 normal residual to a maximum absolute difference of (5.6\times10^{-13})
