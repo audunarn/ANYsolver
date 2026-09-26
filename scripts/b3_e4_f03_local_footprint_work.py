@@ -1531,7 +1531,16 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                             beam.context,element,cell,weight)
                         return float((port.tangent(base)@
                                       full[shell_size:])[3])
+                    shell_top_edge=np.array([
+                        (shell_value(y,0)+.5*plate_thickness*shell_value(y,4),
+                         shell_value(y,1)-.5*plate_thickness*shell_value(y,3),
+                         shell_value(y,2)) for y in ys])
+                    edge_weights=np.ones(len(ys))
+                    edge_weights[[0,-1]]=.5
                     local_kinematics[str(station)]={
+                        "beam_nodal_translation_m":full[
+                            shell_size+6*station_nodes[station]:
+                            shell_size+6*station_nodes[station]+3].tolist(),
                         "beam_nodal_rx_rad":float(full[
                             shell_size+6*station_nodes[station]+3]),
                         "beam_port_rx_left_rad":(
@@ -1542,6 +1551,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                             if half_index<beam.n_half_cells else None),
                         "shell_top_slope_z_y_rad":(
                             shell_value(.05,2)-shell_value(-.05,2))/.1,
+                        "shell_top_edge_mean_translation_m":np.average(
+                            shell_top_edge,axis=0,weights=edge_weights).tolist(),
                         "shell_director_rx_rad":shell_value(0.,3),
                     }
                 if family == "line_hybrid_two_intervals":
