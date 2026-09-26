@@ -604,7 +604,8 @@ def finite_chart_screen(reference_profile: str = "straight", *,
 
 def bounded_physical_compliance_screen(*, hybrid: bool = False,
                                        segmented: bool = False,
-                                       c1_beam_half_cells: int = 12) -> list[dict]:
+                                       c1_beam_half_cells: int = 12,
+                                       c1_characteristic_length_m: float = 1.) -> list[dict]:
     """Compare six physical interface actions on several bounded local grids.
 
     This is a finite-dimensional, support-conditioned compliance diagnostic,
@@ -624,6 +625,9 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
     if c1_beam_half_cells not in (12, 24) or (
             not hybrid and c1_beam_half_cells != 12):
         raise ValueError("bounded C1 beam resolution requires hybrid 12 or 24")
+    if (c1_characteristic_length_m not in (.1, 1.) or
+            not hybrid and c1_characteristic_length_m != 1.):
+        raise ValueError("bounded C1 moment scale must be 0.1 or 1 m")
     shell_operators = {}
     cases = ((2, c1_beam_half_cells), (4, c1_beam_half_cells)) if hybrid else (
         (2, 4), (2, 8), (4, 4), (4, 8), (4, 16))
@@ -710,7 +714,7 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
             # N/Nm. A P0 density acts through interval length times each row.
             # Rotation gaps use the declared 1 m characteristic length.
             bond_length_m = .1
-            characteristic_length_m = 1.
+            characteristic_length_m = c1_characteristic_length_m
             interval_length_m = bond_length_m/len(patches)
             density_to_integrated = np.tile(
                 np.r_[np.full(3, interval_length_m),
