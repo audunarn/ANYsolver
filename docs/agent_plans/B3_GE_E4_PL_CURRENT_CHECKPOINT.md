@@ -51,6 +51,39 @@ matched F5 common-action observables for physical torque/shear interpretation;
 request actual sided B3 reference work only if the law-vs-reference cause
 still cannot be separated. No F03 formal authority was consumed.
 
+**Independent F09 bounded question:** The preserved moderate/extreme elbow
+diagnostic and its read-only review show that the exact solve of the rounded
+12-free-row B2 graph agrees with the independent force method, while default
+sparse factorization loses the tiny applied-force response in the extreme
+case. Its 120 s/2 GiB preparatory envelope and unchanged mechanical inputs
+are reviewed; no formal F09 acceptance authority is invoked. On that same
+rounded matrix, compare a bounded set of sparse orderings/pivot choices with
+and without positive diagonal coordinate scaling. Separate force and moment
+residuals relative to their own applied scales and compare tip response to
+the exact rounded and physical oracles. If a sparse variant recovers both,
+design and review an admitted scaled route; if none does, retain the typed
+admission and investigate representation or a defensible physical range.
+No numerical floor, historical B2 law change, or F09 pass follows from a
+single extreme fixture.
+
+**F09 result and action:** The source-bound result is
+`B3_GE_E4_PL_G0_F09_SCALED_SPARSE_DEV_V1.json`; it reassembled the same
+moderate and extreme 12-free-row graph, checked the default sparse tip
+bit-for-bit against the preserved raw record, and tested 12 sparse variants
+per area. In the extreme case, every positive-diagonal-scaled variant
+(`NATURAL`/`COLAMD`/`MMD_AT_PLUS_A`, pivot thresholds 0/1) recovered the
+exact-rounded tip within `3.89e-16` under the diagnostic component floor,
+with separate free-force and free-moment residual ratios at most `4.45e-16`
+and `2.97e-16`. Unscaled threshold 0 also recovered this fixture, but
+unscaled threshold 1 retained errors of order `1e7–1e8`; default pivoting
+therefore remains unsafe for this weak-force case. The moderate scaled
+variants also agreed with the exact-rounded tip within `6.88e-16`. This
+supports designing a unit-aware scaled sparse route and testing it over a
+registered physical range; it does not justify disabling pivoting in the
+product, alter B2 admission, or close F09. The exact and physical references
+are the preserved independently reviewed record, not newly regenerated
+external evidence.
+
 **Decision sought:** Determine whether the current native six-channel C1
 connection has the intended continuous section work law, then assess its
 P0/P1/dual enforcement. The same fields must be measured as sampled local
