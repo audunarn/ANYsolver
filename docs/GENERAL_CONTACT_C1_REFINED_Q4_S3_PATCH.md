@@ -140,6 +140,19 @@ build, install and run logs are under
 prefix. This is package-route evidence for the stated candidate, not a
 released contact capability.
 
+A fixed-pose pressure-grid discriminator found that concentrating 64 Q4
+source faces around the skew contact wedge reduced the penalty-force error
+against an independent planar integral to 3.16%, compared with 2.86% on a
+180-face grid. Diagonal scaling of the supported pressure Gram gave full rank
+and condition about 13 on both. The unscaled Gram rank can undercount modes
+whose cut support approaches roundoff; it is not by itself a pressure-basis
+stability verdict. The 64-face **coupled** continuation did not pass: after
+906.46 s and 17 augmentations, its active step still changed pressure by
+1100.58 Pa against the declared 0.2 Pa gate, although its physical gap was
+within 50 µm. The step rolled back. Coupled mesh/enforcement convergence and
+resource scaling remain open. The raw fixed-pose and failed coupled outputs
+are retained with the `c1-skew-pressure-*` and `c1-skew-compact-*` prefixes.
+
 The first admitted coupled case has two adjacent Q4 source faces and two
 nonmatching S3 target faces. Direct local work matches whole-patch projected
 normal residual to a maximum absolute difference of (5.6\times10^{-13})
