@@ -14,16 +14,16 @@ and support derivatives assemble into the shared pressure space. The complete
 residual is retained for both-body reactions; the tangent evaluates only
 physical coordinates reached by the solver's reduced unknowns.
 
-For each supported source pressure mode, let (w_i) be its weighted gap,
-(s_i>0) its reference support, (g_i=w_i/s_i) its normalized gap and
-(p_i=\max(0,\lambda_i-\epsilon_n g_i)) its projected pressure. The V1
-normal residual acts through (b_i=dw_i-g_i\,ds_i=s_i\,dg_i):
+For each supported source pressure mode, let $w_i$ be its weighted gap,
+$s_i>0$ its reference support, $g_i=w_i/s_i$ its normalized gap and
+$p_i=\max(0,\lambda_i-\epsilon_n g_i)$ its projected pressure. The V1
+normal residual acts through $b_i=dw_i-g_i\,ds_i=s_i\,dg_i$:
 
 \[
 R_c=-\sum_i p_i b_i.
 \]
 
-The tangent differentiates both the projection and (b_i), including mixed
+The tangent differentiates both the projection and $b_i$, including mixed
 weighted-gap and support derivatives. This removes boundary-overlap work
 from a uniform-gap tangential translation while retaining the changing
 projection in the consistent, generally nonsymmetric tangent. Static and
@@ -44,10 +44,19 @@ local development results; pressure-space stability on partial contact,
 independent assessment and C1 engineering acceptance remain open. Raw runs
 are under `C:/ANYworkspaceWork/general-contact-evidence` with the
 `c1-eight-q4-normalized-*` prefix.
+
 An offline wheel from clean commit `d1e8393be709af5779fa840c59655226833c2088`
 was installed into an isolated target. Import origin was asserted there, and
 the installed eight-step example produced checkpoint bytes identical to the
 source run. The wheel was not published.
+
+The skew partial-overlap oracle now exercises two, four and eight Q4 source
+faces. It checks the independent constant-traction force and moment, paired
+wrench and the rank of physically supported pressure modes. The eight-face
+mesh has 16 supported modes; two nodes lie on a source strip entirely beyond
+the target. The supported Gram remains positive definite, but its condition
+depends on cut support. This fixed-pose evidence does not establish coupled
+pressure-space stability or mesh/enforcement convergence.
 
 The first admitted coupled case has two adjacent Q4 source faces and two
 nonmatching S3 target faces. Direct local work matches whole-patch projected

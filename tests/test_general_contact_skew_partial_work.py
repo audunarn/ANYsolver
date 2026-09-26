@@ -108,15 +108,21 @@ def _case(count):
     return model, manager, displacement
 
 
-@pytest.mark.parametrize("count", (2, 4))
-def test_skew_partial_uniform_gap_has_only_normal_work(count):
+@pytest.mark.parametrize("count, supported_count, unsupported_ids", (
+    (2, 6, ()), (4, 10, ()), (8, 16, (9, 18)),
+))
+def test_skew_partial_uniform_gap_has_only_normal_work(
+        count, supported_count, unsupported_ids):
     _model, manager, displacement = _case(count)
     _force, _tangent, result = manager.evaluate(displacement, tangent=False)
     area, expected_force, expected_moment = _reference_wrench(3.)
     assert result.reference_overlap_area == pytest.approx(area, abs=1.e-10)
     assert result.minimum_gap == pytest.approx(-.002, abs=1.e-10)
-    assert result.pressure_gram_rank == 2*(count+1)
-    assert sum(value > 0. for value in result.reference_support_m2) == 2*(count+1)
+    assert result.pressure_gram_rank == supported_count
+    assert sum(value > 0. for value in result.reference_support_m2) == supported_count
+    assert tuple(node_id for node_id, support in zip(
+        result.source_pressure_node_ids, result.reference_support_m2)
+        if support == 0.) == unsupported_ids
     np.testing.assert_allclose(result.integration_force, expected_force,
                                rtol=0., atol=1.e-5)
     np.testing.assert_allclose(result.integration_moment, expected_moment,
