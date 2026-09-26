@@ -155,3 +155,18 @@ reaction. Raw runs and the bounded offline audit are retained under
 `C:/ANYworkspaceWork/general-contact-evidence` with `c1-mixed-four-q4-x-*`,
 `c1-mixed-eight-q4-x-*`, `c1-source-*-mesh-*` and
 `c1-eight-q4-reduced-secant-audit-*` names.
+
+An assembled tangent audit at the failed eight-Q4 pose reproduced the last
+observed weighted-gap change to about 4.2×10⁻⁸ relative. The four-active-node
+linearized complementarity system has no nonnegative root on that active set;
+its locally feasible subset retains only source pressure nodes 9 and 18.
+The predicted pressures (about 9.16 and 18.60 Pa) are far beyond those in
+the failed trajectory, so this was tested only as a disposable algorithmic
+trial. Fixed-multiplier equilibrium was reachable with two active nodes.
+Ordinary projected updates remained slow, while one application of the
+existing guarded secant predictor brought a subsequent two-node trial below
+the declared 0.0002 Pa multiplier-change tolerance with a certified gap.
+That trial was not committed by the public solver. Deriving and safeguarding
+the active-set pivot in the production path remains necessary before an
+eight-Q4 result can be accepted. The tangent and pivot evidence is retained
+as `c1-eight-q4-schur-*` and `c1-eight-q4-pivot-*` files.
