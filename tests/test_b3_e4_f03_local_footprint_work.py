@@ -39,6 +39,7 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
         result = graded_terminal_coupling(
             2, beam, plate_thickness=.035,
             include_surface_moments=True, include_line_hybrid=True,
+            include_line_hybrid_segmented=True,
             force_sign=-1.)
     for family in ("distributing", "rigid"):
         case = result["results"][family]["cases"]["tip_fz"]
@@ -72,6 +73,18 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
                         else case["tip_uz_m"])
         assert case["total_external_work_j"] == pytest.approx(
             magnitude*displacement, rel=1e-10)
+        assert case["physical_shell_work_j"] > 0.
+        assert case["mechanics_error"] < 1e-7
+    segmented = result["results"]["line_hybrid_two_intervals"]
+    assert segmented["constraint_rank"] == 12
+    for load, magnitude in (("tip_mx", 100.), ("tip_fz", -1000.)):
+        case = segmented["cases"][load]
+        displacement = (case["tip_rx_rad"] if load == "tip_mx"
+                        else case["tip_uz_m"])
+        assert case["total_external_work_j"] == pytest.approx(
+            magnitude*displacement, rel=1e-10)
+        assert len(case["constraint_multiplier_material_N_Nm"]) == 12
+        assert np.isfinite(case["constraint_multiplier_material_N_Nm"]).all()
         assert case["physical_shell_work_j"] > 0.
         assert case["mechanics_error"] < 1e-7
 

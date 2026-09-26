@@ -214,8 +214,22 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
     display-ready spatial wrenches.
     """
 
-    def __init__(self, xs: np.ndarray, ys: np.ndarray, beam, *, thickness: float):
+    def __init__(self, xs: np.ndarray, ys: np.ndarray, beam, *,
+                 thickness: float,
+                 x_interval: tuple[float, float] = (.9, 1.)):
         super().__init__(xs, ys, beam, thickness=thickness)
+        low, high = x_interval
+        if (not (.9 <= low < high <= 1.) or
+                min(abs(self.xs-low)) > 1e-12 or
+                min(abs(self.xs-high)) > 1e-12):
+            raise ValueError("C1 line interval requires shell-host endpoints")
+        scale = .1/(high-low)
+        self.points = [
+            _Point(p.x, p.y, scale*p.weight, p.nodes, p.shape, p.port)
+            for p in self.points if low < p.x < high]
+        if not self.points or abs(sum(p.weight for p in self.points)-1.) > 1e-12:
+            raise ValueError("C1 line interval lacks exact host quadrature")
+        self.x_interval = x_interval
         self.transverse_inertia = float(sum(
             point.weight*point.y**2 for point in self.points))
         if self.transverse_inertia <= 1e-8:
@@ -383,7 +397,8 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
 
 
 def finite_chart_screen(reference_profile: str = "straight", *,
-                        hybrid: bool = False) -> dict:
+                        hybrid: bool = False,
+                        x_interval: tuple[float, float] = (.9, 1.)) -> dict:
     """One deterministic, bounded nonzero-gap and nonzero-multiplier proof."""
     from scripts._b3_e4_f03_native_fixture import build
     from scripts.b3_e4_f03_square_section_control import square_torsion_constant
@@ -395,9 +410,14 @@ def finite_chart_screen(reference_profile: str = "straight", *,
                  torsion_constant=square_torsion_constant(),
                  reference_profile=reference_profile)
     patch_class = FiniteSurfaceLineHybrid if hybrid else FiniteSurfaceMomentPatch
+    if hybrid:
+        from scripts.b3_e4_f03_plate_patch_work import local_grid
+        xs, ys = local_grid(2)
+    else:
+        xs, ys = np.linspace(-.5, 1.5, 5), np.linspace(-.5, .5, 3)
     patch = patch_class(
-        np.linspace(-.5, 1.5, 5), np.linspace(-.5, .5, 3), beam,
-        thickness=.035)
+        xs, ys, beam,
+        thickness=.035, **({"x_interval": x_interval} if hybrid else {}))
     count = patch.shell_count
     shell0 = patch.reference_nodes.copy()
     frame0 = np.broadcast_to(np.eye(3), (count, 3, 3)).copy()
@@ -494,6 +514,7 @@ def finite_chart_screen(reference_profile: str = "straight", *,
     return {
         "reference_profile": reference_profile,
         "hybrid": hybrid,
+        "x_interval": list(x_interval) if hybrid else None,
         "reference_gap_max_m_rad": float(np.max(np.abs(reference))),
         "reference_jacobian_direction_error": reference_error,
         "nonzero_gap_norm_m_rad": float(np.linalg.norm(derivatives[:, 0])),
@@ -510,7 +531,8 @@ def finite_chart_screen(reference_profile: str = "straight", *,
     }
 
 
-def bounded_physical_compliance_screen(*, hybrid: bool = False) -> list[dict]:
+def bounded_physical_compliance_screen(*, hybrid: bool = False,
+                                       segmented: bool = False) -> list[dict]:
     """Compare six physical interface actions on several bounded local grids.
 
     This is a finite-dimensional, support-conditioned compliance diagnostic,
@@ -525,9 +547,10 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False) -> list[dict]:
     from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
     results = []
-    actions = np.diag((1000., 1000., 1000., 100., 100., 100.))
+    if segmented and not hybrid:
+        raise ValueError("segmented diagnostic requires the hybrid law")
     shell_operators = {}
-    cases = ((2, 12), (4, 12)) if hybrid else (
+    cases = (((2, 12),) if segmented else ((2, 12), (4, 12))) if hybrid else (
         (2, 4), (2, 8), (4, 4), (4, 8), (4, 16))
     for patch_cells, half_cells in cases:
         xs, ys = local_grid(patch_cells)
@@ -540,18 +563,24 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False) -> list[dict]:
                 xs, ys, thickness=.035)
         shell_k, shell_physical = shell_operators[patch_cells]
         if hybrid:
-            patch = FiniteSurfaceLineHybrid(
-                xs, ys, beam, thickness=.035)
-            rows = patch.reference_trace()
-            frames = np.broadcast_to(np.eye(3),
-                                     (patch.shell_count, 3, 3))
-            reference_gap = float(np.max(np.abs(patch.evaluate(
-                patch.reference_nodes, frames,
+            intervals = (((.9, .95), (.95, 1.)) if segmented else
+                         ((.9, 1.),))
+            patches = [FiniteSurfaceLineHybrid(
+                xs, ys, beam, thickness=.035, x_interval=interval)
+                for interval in intervals]
+            rows = np.vstack([patch.reference_trace() for patch in patches])
+            reference_gap = max(float(np.max(np.abs(patch.evaluate(
+                patch.reference_nodes,
+                np.broadcast_to(np.eye(3),
+                                (patch.shell_count, 3, 3)),
                 beam.context.initial.mechanical)[:, 0])))
+                                for patch in patches)
         else:
             rows, reference = distributed_surface_patch_trace(
                 xs, ys, beam, plate_thickness=.035)
             reference_gap = reference["reference_gap_m"]
+        actions = np.diag(np.tile(
+            (1000., 1000., 1000., 100., 100., 100.), len(rows)//6))
         shell_size = shell_k.shape[0]
         total = shell_size+beam.context.count
         if total > 1900:
@@ -615,7 +644,8 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False) -> list[dict]:
             "weakest_mode_beam_action": beam_action,
             "compliance_relative_skew": skew_relative,
             "reference_gap_m": reference_gap,
-            "operator": ("C1 single-interval line hybrid" if hybrid else
+            "operator": (("C1 two-interval line hybrid" if segmented else
+                          "C1 single-interval line hybrid") if hybrid else
                          "finite surface-moment footprint"),
             "interpretation": "support-conditioned finite-grid physical action; not continuum inf-sup or line-space qualification",
         })

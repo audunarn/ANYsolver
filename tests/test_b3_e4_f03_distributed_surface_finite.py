@@ -175,3 +175,33 @@ def test_c1_hybrid_actual_chart_has_objective_first_and_mixed_work():
     assert result["mixed_direction_error_j"] < 1e-6
     assert result["finite_common_rigid_gap_error"] < 1e-12
     assert abs(result["common_rigid_virtual_work_j"]) < 1e-9
+
+
+def test_c1_hybrid_two_host_intervals_preserve_chart_work_and_rank():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    intervals = ((.9, .95), (.95, 1.))
+    pieces = [FiniteSurfaceLineHybrid(
+        xs, ys, beam, thickness=.035, x_interval=interval)
+        for interval in intervals]
+    trace = np.vstack([piece.reference_trace() for piece in pieces])
+    fixed_shell = {6*j*len(xs)+axis for j in range(len(ys))
+                   for axis in range(6)}
+    fixed_beam = {pieces[0].shell_size+index
+                  for index in beam.context.fixed}
+    free = [i for i in range(trace.shape[1])
+            if i not in fixed_shell and i not in fixed_beam]
+    assert [len(piece.points) for piece in pieces] == [18, 18]
+    assert np.linalg.matrix_rank(trace[:, free]) == 12
+    assert np.max(np.abs(trace[:, 5:pieces[0].shell_size:6])) < 1e-12
+    for interval in intervals:
+        result = finite_chart_screen(
+            "c1_tangent_2um", hybrid=True, x_interval=interval)
+        assert result["reference_gap_max_m_rad"] < 1e-12
+        assert result["reference_jacobian_direction_error"] < 1e-12
+        assert result["first_direction_error_j"] < 1e-7
+        assert result["mixed_direction_error_j"] < 1e-6
+        assert result["finite_common_rigid_gap_error"] < 1e-12
+        assert abs(result["common_rigid_virtual_work_j"]) < 1e-9

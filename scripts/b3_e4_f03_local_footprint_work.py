@@ -1214,6 +1214,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              plate_thickness: float = .07,
                              include_surface_moments: bool = False,
                              include_line_hybrid: bool = False,
+                             include_line_hybrid_segmented: bool = False,
                              force_sign: float = 1.) -> dict:
     """Linearized native B3/E4 Q4 terminal KKT on a resolved local grid."""
     if plate_thickness not in (.07,.035):
@@ -1313,14 +1314,22 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         surface_patch=FiniteSurfaceMomentPatch(
             xs,ys,beam,thickness=plate_thickness)
         families.append(("surface_moments",surface))
-    if include_line_hybrid:
+    if include_line_hybrid or include_line_hybrid_segmented:
         from scripts.b3_e4_f03_distributed_surface_finite import (
             FiniteSurfaceLineHybrid,
         )
-        hybrid = FiniteSurfaceLineHybrid(
-            xs, ys, beam, thickness=plate_thickness)
-        families.append(("line_hybrid_single_interval",
-                         hybrid.reference_trace()))
+        if include_line_hybrid:
+            hybrid = FiniteSurfaceLineHybrid(
+                xs, ys, beam, thickness=plate_thickness)
+            families.append(("line_hybrid_single_interval",
+                             hybrid.reference_trace()))
+        if include_line_hybrid_segmented:
+            segments = [FiniteSurfaceLineHybrid(
+                xs, ys, beam, thickness=plate_thickness,
+                x_interval=interval)
+                for interval in ((.9, .95), (.95, 1.))]
+            families.append(("line_hybrid_two_intervals", np.vstack(
+                [segment.reference_trace() for segment in segments])))
     records={}
     for family,constraint in families:
         rank=int(np.linalg.matrix_rank(constraint[:,free]))
@@ -1355,7 +1364,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
             shell_wrench=wrench(shell_interface,shell_nodes)
             beam_wrench=(retained_beam_wrench(interface[shell_size:])
                          if family in ("surface_moments",
-                                       "line_hybrid_single_interval") else
+                                       "line_hybrid_single_interval",
+                                       "line_hybrid_two_intervals") else
                          wrench(beam_interface,beam_nodes))
             work=float(load@full)
             physical_work=float(full[:shell_size]@physical@full[:shell_size])
@@ -1395,6 +1405,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 "interface_beam_wrench_N_Nm":beam_wrench.tolist(),
                 "interface_shell_work_j":float(interface[:shell_size]@
                                                full[:shell_size]),
+                **({"constraint_multiplier_material_N_Nm":
+                    multiplier.tolist()}
+                   if family.startswith("line_hybrid_") else {}),
                 "active_shell_nodes":[
                     {"node_row":int(i),"xyz_m":shell_nodes[i].tolist(),
                      "force_moment_N_Nm":shell_interface[i].tolist()}
