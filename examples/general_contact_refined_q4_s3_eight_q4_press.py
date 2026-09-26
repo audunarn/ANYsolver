@@ -8,6 +8,7 @@ actual solver status; it does not imply engineering qualification.
 import argparse
 from dataclasses import replace
 import json
+from pathlib import Path
 import time
 
 from anysolver import (
@@ -90,15 +91,28 @@ program = ContactPathProgram(
     ),
 )
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("--first-slide", action="store_true",
-                    help="continue through the first sliding increment")
+path = parser.add_mutually_exclusive_group()
+path.add_argument("--first-slide", action="store_true",
+                  help="continue through the first sliding increment")
+path.add_argument("--full-cycle", action="store_true",
+                  help="press, slide 50 mm, open and recontact")
 parser.add_argument("--roundoff-support", action="store_true",
                     help="opt into force-bounded multiplier transfer")
+parser.add_argument("--equilibrated-pressure-map", action="store_true",
+                    help="opt into a three-equilibrium pressure-map pivot")
+parser.add_argument("--checkpoint-output", type=Path,
+                    help="write a completed version-2 restart checkpoint")
 args = parser.parse_args()
+if args.equilibrated_pressure_map and not args.roundoff_support:
+    parser.error("the demonstrated pressure-map profile requires --roundoff-support")
 if args.roundoff_support:
     settings = replace(
         settings, augmentation_support_resolution="roundoff",
         augmentation_support_force_budget_n=1.0e-8,
+    )
+if args.equilibrated_pressure_map:
+    settings = replace(
+        settings, augmentation_equilibrated_pressure_step_pa=0.01,
     )
 report = validate_general_contact(model, definition, settings)
 assert report.valid, report.issues
@@ -106,9 +120,17 @@ start = time.perf_counter()
 result = solve_static_nonlinear(
     model, contact=definition, contact_settings=settings,
     contact_path_program=program, max_iterations=18,
-    max_load_factor=0.375 if args.first_slide else 0.25,
+    max_load_factor=(1.0 if args.full_cycle else
+                     0.375 if args.first_slide else 0.25),
     emit_restart_checkpoint=True,
 )
+if args.checkpoint_output is not None and result.status == "completed":
+    args.checkpoint_output.write_text(
+        json.dumps(result.to_restart_checkpoint(), sort_keys=True,
+                   default=lambda value: (value.tolist() if hasattr(value, "tolist")
+                                          else str(value))),
+        encoding="utf-8",
+    )
 contact = result.info["general_contact"]
 failure = result.info.get("contact_failure")
 print(json.dumps({
@@ -133,6 +155,7 @@ print(json.dumps({
         "pivot_attempts": row.get("pivot_attempts"),
         "pivot_applied": row.get("pivot_applied"),
         "pivot_rejected": row.get("pivot_rejected"),
+        "pressure_map_attempts": row.get("pressure_map_attempts"),
         "support_resets": row.get("support_resets"),
 } for row in result.info["force_displacement_history"]],
 }, sort_keys=True, default=lambda value: (

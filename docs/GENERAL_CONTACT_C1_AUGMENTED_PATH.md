@@ -183,3 +183,43 @@ the solver. The failed source-bound traces are
 `c1-eight-q4-recontact-aitken-two-probe.txt`. This refined eight-Q4 path is
 therefore a completed-step development subset, not a completed C1 handoff or
 engineering qualification.
+
+## Opt-in equilibrated pressure map
+
+For the refined Q4/S3 augmented path,
+`augmentation_equilibrated_pressure_step_pa` enables a bounded fallback when
+the coordinate-wise active-set pivot cannot differentiate across a projection
+boundary. It requires `augmentation_acceleration="active_secant_pivot"` and
+the existing explicit maximum pressure and geometric difference-step bounds.
+The fallback is absent by default and bound to the restart contract.
+
+At one accepted fixed-multiplier equilibrium with exactly two projected active
+pressure nodes, the fallback solves three disposable structural equilibria:
+the baseline and one positive pressure perturbation per active node. It
+differentiates the projected multiplier residual along those equilibrated
+paths, checks support, active modes, overlap signature, finite condition and
+pressure bounds, then proposes an iterate. The ordinary nonlinear path must
+re-equilibrate and pass the unchanged pressure and physical gap criteria. No
+material state is committed during these trials. This is a developmental
+two-mode solver option, not a general pressure-space stability certificate.
+
+The eight-Q4/two-S3 full cycle completed from a fresh start with a 0.01 Pa
+pressure perturbation, 20 Pa proposal cap, 16 augmentations, 0.0002 Pa
+pressure-change tolerance, 50 µm independent gap budget and a 10⁻⁸ N bound
+on roundoff-support transfers. Recontact finished at augmentation 14 with a
+3.18×10⁻¹⁰ Pa pressure change, −1.832 µm lower gap and 0.0223588 N source
+normal force. A fresh split after the force-free open step produced an exactly
+equal final checkpoint. Raw development evidence is
+`c1-eight-q4-equilibrated-map-full.txt` and
+`c1-eight-q4-equilibrated-map-split.txt` under
+`C:/ANYworkspaceWork/general-contact-evidence`, tied to source `e0a2ba68`.
+
+Run the source example with:
+
+```text
+python examples/general_contact_refined_q4_s3_eight_q4_press.py --full-cycle --roundoff-support --equilibrated-pressure-map --checkpoint-output contact-cycle.json
+```
+
+The full cycle is resource-intensive. This result still needs mesh and
+pressure-space refinement, independent mechanics review and installed-package
+verification before C1 engineering acceptance.
