@@ -58,6 +58,18 @@ the target. The supported Gram remains positive definite, but its condition
 depends on cut support. This fixed-pose evidence does not establish coupled
 pressure-space stability or mesh/enforcement convergence.
 
+One skew corner approach exposes the current profile's resolution boundary.
+Uniform strips in x leave every normalized pressure-mode gap positive while
+the independently checked physical gap closes near the target edge. A
+two-dimensional local Q4 grid represents an active pressure mode there, but
+the existing whole-face conservative gap lower is much looser than the
+planar overlap gap: −131.44 µm versus approximately −35.18 µm in the
+retained pose. The 50 µm swept-path gate correctly stops the present route
+under its current certificate. An overlap-aware static bound and a matching
+conservative swept certificate require separate derivation and tests before
+this case can be admitted as a coupled path. The fixed-pose observation is
+not an accepted solution.
+
 The first admitted coupled case has two adjacent Q4 source faces and two
 nonmatching S3 target faces. Direct local work matches whole-patch projected
 normal residual to a maximum absolute difference of (5.6\times10^{-13})

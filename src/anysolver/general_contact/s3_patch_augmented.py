@@ -1,8 +1,8 @@
 """Projected normal work for a moving, primal-pressure S3 or Q4 shell patch.
 
-Multipliers are held during structural equilibrium.  The residual is the
-weighted-gap virtual work, rather than the derivative of a shifted overlap
-energy; this matters when the overlap support changes during sliding.
+Multipliers are held during structural equilibrium. The residual acts through
+reference support times the normalized-gap variation, not the derivative of
+moving overlap support; this avoids frictionless boundary-motion work.
 """
 
 from __future__ import annotations
