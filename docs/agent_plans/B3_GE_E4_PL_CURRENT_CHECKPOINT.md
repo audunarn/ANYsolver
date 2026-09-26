@@ -344,6 +344,45 @@ and `B3_GE_E4_PL_G0_F05_POSE_PULLBACK_DEV_V2.md`. This is one developmental
 pullback check; mixed-owner lifecycle, more port geometries, independent
 mechanics review and F05/G0B acceptance remain open. Preserve the elastic
 adapter guard.
+An independent read-only mechanics review found no defect in the bounded Q4
+fixed-predecessor pullback or pose-chart check. Its sampled active masks do not
+prove branch continuity between finite-difference points. The reported
+`joint_cross_block_norm` includes shell-to-beam *and* shell-to-multiplier
+columns; it does not alone measure a pure shell–beam Hessian block. F05 stays
+open for S3 and direct mixed-owner lifecycle evidence.
+
+**Next bounded F05 discriminator (before execution):** The Q4 yielded
+fixed-predecessor material/pose pullback passed, but S3-V2D has a distinct
+local material update and chart mapping. On one admitted plastic S3 triangle,
+form a nonzero-multiplier eccentric point joint at a rotated trial from one
+yielded accepted predecessor. Compare material, independently computed joint,
+and combined directional actions through actual additive charts across an
+active-mask-stable finite-difference plateau; check predecessor immutability.
+A failure separates S3 material/chain-rule and pose-chart terms before any
+mixed-owner integration. A pass is bounded S3 feasibility only: it does not
+prove the full mixed material adapter, other port geometries, owner lifecycle
+or F05/G0B acceptance. Do not relax the existing elastic adapter guard.
+
+**S3 F05 bounded result:**
+`scripts/probe_b3_ge_e4_pl_g0_f05_s3_pose_pullback_dev_v1.py` and
+`B3_GE_E4_PL_G0_F05_S3_POSE_PULLBACK_DEV_V1.json` reproduced in this checkout from current
+source. A plastic S3 material update from virgin supplies one fixed yielded
+predecessor (`alpha_max=0.00760`); the checked trial activates 15 sampled
+station-layer points (three in-plane stations by five layers) relative to it.
+Independent SciPy/closed-Jacobian pose action agrees
+with the owner first variation to `2.51e-16` relative. Two actual-chart
+directions each have adjacent finite-difference steps below the registered
+`1e-5` developmental tolerance for separated material, joint and combined
+actions, with unchanged sampled active masks and byte-identical predecessor.
+The largest sampled directional error is `2.10e-6`, while finer adjacent
+steps are smaller. The result is a local S3 material-predecessor and joint
+composition check, not a global accepted owner or branch-continuity proof.
+Its `joint_cross_block_norm` groups beam and multiplier columns; it is not an
+isolated shell–beam stiffness norm. Independent S3 review and direct mixed
+accepted/rejected-state mechanics remain open; F05/G0B remain open.
+The read-only reviewer found no bounded mechanics defect, but the V1 JSON
+binds only its runner hash, not imported solver-module or environment
+identities. It remains development evidence, not exact-artifact qualification.
 
 **Independent F06 bounded result:** At commit `d5dcc74b`, one curved S3 /
 native-B3 accepted two-step loaded prefix was represented in reference and
