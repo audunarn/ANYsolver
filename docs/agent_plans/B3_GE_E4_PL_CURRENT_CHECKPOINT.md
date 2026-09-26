@@ -256,6 +256,14 @@ Independent read-only mechanics review found the top/bottom pair and its
 zero-force, pitch-work interpretation correct. It emphasizes that this is
 an analytical representation of the *same* pitch functional, not an
 independent physical material or loaded reference.
+For a top-face-only position bond at fixed longitudinal station, a purely
+transverse lever arm `(0,y,0)` produces no pitch moment about y from
+`r × F`; pitch transfer comes from longitudinally separated vertical
+forces. Thus a local independent My row requires a declared director/
+through-thickness couple, or a longitudinally nonlocal position law.
+The previously tested longitudinal-moment replacement lost one row of
+rank in its bounded two-interval layout. Do not repair that by relabelling
+the C1 director row as a surface-position weld.
 
 **Native KKT metric result:** Commit `2028c8d8` preserves the failed V1
 layout check and the completed V2 source/manifest/result in
@@ -512,6 +520,19 @@ composition check, not a global accepted owner or branch-continuity proof.
 Its `joint_cross_block_norm` groups beam and multiplier columns; it is not an
 isolated shell–beam stiffness norm. Independent S3 review and direct mixed
 accepted/rejected-state mechanics remain open; F05/G0B remain open.
+
+**F05 mixed-state rejection development (27 September):** The source-bound
+`b3_e4_g0_f05_mixed_rejection_dev_v1.json` and focused test pair an
+accepted yielded S3-V2D shell state with an accepted yielded retained-B3
+beam checkpoint. A deliberately rejected next beam trial leaves both
+accepted artifacts byte-identical; replay from the same predecessors
+reproduces the shell trial, and separately accepted/restored artifacts
+match. The test also evaluates a nonzero eccentric pose cross-block from
+those states. The focused run passed `1/1` in `4.24 s`; it preserves an
+initial test-harness chart-flag failure. This is test-local composition,
+not an atomic mixed-owner publication or production shell-plasticity
+adapter. Branch continuity, direct coupled rejection, independent mechanics
+review and F05/G0B acceptance remain open.
 The read-only reviewer found no bounded mechanics defect, but the V1 JSON
 binds only its runner hash, not imported solver-module or environment
 identities. It remains development evidence, not exact-artifact qualification.
