@@ -1,4 +1,4 @@
-"""One fixed C1 positive trace-metric experiment; no G0B qualification.
+"""Bounded C1 positive trace-metric experiments; no G0B qualification.
 
 The native retained B3 tangent is indefinite.  This experiment instead tests
 the six-channel line rows on the quotient of *observable* B3 bottom-surface
@@ -20,7 +20,9 @@ import numpy as np
 from scipy import linalg
 
 from scripts._b3_e4_f03_dual_linear_norm import dual_linear_gram
-from scripts._b3_e4_f03_native_fixture import G, SECTION_DIAGONAL, build
+from scripts._b3_e4_f03_native_fixture import (
+    G, SECTION_DIAGONAL, _c1_offset_slope, build,
+)
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts._b3_e4_f03_p0_dual_norm import p0_dual_gram
 from scripts._b3_e4_f03_p1_dual_norm import p1_dual_gram
@@ -35,6 +37,8 @@ LENGTH_M = .1
 WIDTH_M = .1
 GRID_CELLS = 4
 BEAM_HALF_CELLS = 12
+RATIO_EXTREMES = (("fine_shell_coarse_beam", 16, 4, 12),
+                  ("coarse_shell_fine_beam", 2, 4, 26))
 GAUSS_ORDER = 3
 MAX_SQUARE = 1900
 KINDS = ("piecewise_constant", "continuous_linear", "dual_linear")
@@ -58,9 +62,14 @@ def _active_beam_trace(beam) -> tuple[np.ndarray, np.ndarray, dict]:
     cuts = [(i, float(a), float(b)) for i, (a, b) in enumerate(
         zip(nodes[:-1], nodes[1:])) if a >= BOND[0] - 1e-12 and
         b <= BOND[1] + 1e-12]
-    if (len(cuts) != 2 or abs(cuts[0][1]-BOND[0]) > 1e-12 or
-            abs(cuts[-1][2]-BOND[1]) > 1e-12):
-        raise ValueError("expected two exact C1 retained bond half-cells")
+    expected = {12: 2, 26: 16}.get(beam.n_half_cells)
+    if (expected is None or len(cuts) != expected or
+            abs(cuts[0][1]-BOND[0]) > 1e-12 or
+            abs(cuts[-1][2]-BOND[1]) > 1e-12 or
+            any(abs(a[2]-b[1]) > 1e-12 for a, b in zip(cuts[:-1], cuts[1:])) or
+            any(right <= left for _, left, right in cuts) or
+            not np.any(np.isclose(nodes, .95, atol=1e-12))):
+        raise ValueError("unsupported or incomplete C1 retained bond half-cell partition")
     roots, weights = np.polynomial.legendre.leggauss(GAUSS_ORDER)
     # Differentiation at the Gauss nodes of their quadratic interpolant.
     vandermonde = np.vander(roots, N=GAUSS_ORDER, increasing=True)
@@ -267,21 +276,77 @@ def _space(kind: str, xs: np.ndarray, ys: np.ndarray, beam,
             "full": full, "nonaxial": nonaxial}
 
 
-def evaluate() -> dict:
-    xs, ys = local_grid(GRID_CELLS)
-    beam = build(BEAM_HALF_CELLS, z_offset=.0675,
+def _fixture_contract(xs: np.ndarray, ys: np.ndarray, beam) -> dict:
+    """Verify the supported C1 geometry, boundary and actual port chart."""
+    shell_size = 6*len(xs)*len(ys)
+    if (shell_size > 1800 or beam.context.count > MAX_SQUARE or
+            abs(xs[0]+.5) > 1e-12 or abs(xs[-1]-1.5) > 1e-12 or
+            abs(ys[0]+.5) > 1e-12 or abs(ys[-1]-.5) > 1e-12 or
+            any(not np.any(np.isclose(xs, x, atol=1e-12))
+                for x in (BOND[0], .95, BOND[1])) or
+            any(not np.any(np.isclose(ys, y, atol=1e-12))
+                for y in (-.05, 0., .05)) or
+            set(beam.context.fixed) != set(range(6))):
+        raise ValueError("C1 shell/beam geometry, support or resource contract changed")
+    maximum_node_error = 0.
+    for node, x in enumerate(beam.abscissae, 1):
+        offset, _ = _c1_offset_slope(float(x))
+        actual = np.asarray(beam.model.mesh.nodes[node].coords(), dtype=float)
+        expected = np.array((x, 0., .0675+offset))
+        maximum_node_error = max(maximum_node_error,
+                                 float(np.max(np.abs(actual-expected))))
+    if maximum_node_error > 1e-12:
+        raise ArithmeticError("native B3 nodes changed C1 tapered reference")
+    state = beam.context.initial.mechanical
+    maximum_port_position_error = 0.
+    maximum_port_frame_error = 0.
+    bond_cells = 0
+    for half, (left, right) in enumerate(zip(beam.abscissae[:-1],
+                                            beam.abscissae[1:])):
+        if left < BOND[0]-1e-12 or right > BOND[1]+1e-12:
+            continue
+        bond_cells += 1
+        element, cell = divmod(half, 2)
+        for fraction in (0., .5, 1.):
+            port = NativeHalfCellSpatialPort(beam.context, element, cell,
+                                             fraction)
+            high, low, frame = port.pose_pair(state)
+            x = (1.-fraction)*left+fraction*right
+            bottom = high+low+frame@np.array((0., 0., -.05))
+            maximum_port_position_error = max(maximum_port_position_error,
+                float(np.max(np.abs(bottom-np.array((x, 0., .0175))))))
+            maximum_port_frame_error = max(maximum_port_frame_error,
+                float(np.max(np.abs(frame-np.eye(3)))))
+    expected_cells = {12: 2, 26: 16}.get(beam.n_half_cells)
+    if (bond_cells != expected_cells or maximum_port_position_error > 1e-12 or
+            maximum_port_frame_error > 1e-12):
+        raise ArithmeticError("C1 bond bottom pose/reference frame changed")
+    return {"beam_root_fixed_dofs": sorted(beam.context.fixed),
+            "shell_fixed_edge_x_m": float(xs[0]),
+            "shell_top_reference_z_m": .0175,
+            "beam_axis_reference_z_m": .0675,
+            "beam_bond_half_cells": bond_cells,
+            "maximum_beam_node_geometry_error_m": maximum_node_error,
+            "maximum_bond_bottom_reference_error_m": maximum_port_position_error,
+            "maximum_bond_frame_reference_error": maximum_port_frame_error,
+            "largest_dense_square_rows": max(shell_size, beam.context.count)}
+
+
+def _evaluate_case(name: str, shell_x_cells: int,
+                   shell_y_cells: int, beam_half_cells: int) -> dict:
+    xs, ys = local_grid(shell_x_cells, transverse_cells=shell_y_cells)
+    beam = build(beam_half_cells, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um")
-    if (len(xs)*len(ys)*6 > MAX_SQUARE or beam.context.count > MAX_SQUARE or
-            not np.any(np.isclose(xs, .95)) or
-            not np.any(np.isclose(beam.abscissae, .95))):
-        raise ValueError("fixed C1 resource or cut contract changed")
+    fixture = _fixture_contract(xs, ys, beam)
     shell_free, shell_scale, shell = _shell_metric(xs, ys)
     beam_active, beam_feature, beam_trace = _active_beam_trace(beam)
     cases = [_space(kind, xs, ys, beam, shell_free, shell_scale, shell,
                     beam_active, beam_feature, beam_trace) for kind in KINDS]
-    return {"classification": "one fixed-grid positive trace-quotient development diagnostic; not inf-sup or G0B acceptance",
-            "model": "C1 35 mm Q4 x4/y4, native retained B3-12, two line intervals",
+    return {"classification": "one finite-grid positive trace-quotient development diagnostic; not inf-sup or G0B acceptance",
+            "name": name,
+            "model": (f"C1 35 mm Q4 x{shell_x_cells}/y{shell_y_cells}, "
+                      f"native retained B3-{beam_half_cells}, two line intervals"),
             "metric": {"shell": "left-supported drilling-free physical E4 strain energy",
                        "beam": "section-weighted broken half-cell H1-like bottom-position/spatial-rotation trace quotient",
                        "bond_length_m": LENGTH_M,
@@ -290,6 +355,7 @@ def evaluate() -> dict:
                        "reference_stiffness_n_per_m": REFERENCE_STIFFNESS_N_PER_M},
             "grid": {"xs_m": xs.tolist(), "ys_m": ys.tolist(),
                      "beam_half_stations_m": beam.abscissae.tolist()},
+            "fixture_contract": fixture,
             "shell_metric": {k:v for k,v in shell.items() if k != "factor"},
             "beam_trace_metric": {k:v for k,v in beam_trace.items() if k not in (
                 "samples", "scale", "right_vectors", "singular_values")},
@@ -300,9 +366,28 @@ def evaluate() -> dict:
                             "no external physical solve or loaded accuracy comparison"]}
 
 
+def evaluate() -> dict:
+    """Preserve the original fixed x4/y4, B3-12 experiment."""
+    return _evaluate_case("fixed_mid_ratio", GRID_CELLS, GRID_CELLS,
+                          BEAM_HALF_CELLS)
+
+
+def evaluate_ratio_extremes() -> dict:
+    """Only the two predeclared 1:8 and 8:1 C1 ratio endpoints."""
+    results = [_evaluate_case(*case) for case in RATIO_EXTREMES]
+    return {"classification": "two frozen-metric C1 extreme-ratio operator diagnostics; not inf-sup or G0B acceptance",
+            "metric_identity": "same shell physical and B3 broken-half-cell trace formula, square-section weights, 0.1 m bond/width/characteristic length, and H^-1/2 multiplier Gram as fixed-mid-ratio v4",
+            "ratios": results,
+            "limitations": ["two finite endpoints do not establish a mesh-uniform bound or select P0/P1/dual",
+                            "positive B3 metric acts on its observable trace quotient, not all retained mixed coordinates",
+                            "no external or loaded solve"]}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence-root", type=Path, required=True)
+    parser.add_argument("--ratio-extremes", action="store_true",
+                        help="evaluate only the two registered C1 ratio endpoints")
     args = parser.parse_args()
     root = args.evidence_root.resolve()
     if root.exists():
@@ -324,8 +409,12 @@ def main() -> None:
     manifest = {"git_head": head, "source_sha256": identity,
                 "python": platform.python_version(), "numpy": np.__version__,
                 "scipy": __import__("scipy").__version__,
-                "parameters": {"grid_cells": GRID_CELLS,
-                               "beam_half_cells": BEAM_HALF_CELLS,
+                "parameters": {"mode": ("ratio_extremes" if args.ratio_extremes
+                                        else "fixed_mid_ratio"),
+                               "cases": ([list(case) for case in RATIO_EXTREMES]
+                                         if args.ratio_extremes else
+                                         [["fixed_mid_ratio", GRID_CELLS,
+                                           GRID_CELLS, BEAM_HALF_CELLS]]),
                                "quadrature_order": GAUSS_ORDER,
                                "bond_length_m": LENGTH_M,
                                "moment_characteristic_length_m": LENGTH_M}}
@@ -333,7 +422,8 @@ def main() -> None:
     (root/"manifest.json").write_text(json.dumps(manifest, indent=2,
                                                  sort_keys=True)+"\n")
     try:
-        result = evaluate()
+        result = (evaluate_ratio_extremes() if args.ratio_extremes
+                  else evaluate())
     except Exception as error:
         (root/"failure.json").write_text(json.dumps({
             "status": "FAILED_CLOSED", "error_type": type(error).__name__,
@@ -341,16 +431,22 @@ def main() -> None:
         raise
     (root/"result.json").write_text(json.dumps(result, indent=2,
                                                sort_keys=True)+"\n")
+    reports = result["ratios"] if args.ratio_extremes else [result]
     print(json.dumps({"status": "COMPLETED_FINITE_GRID_DIAGNOSTIC",
-                      "root": str(root), "shell_relative_min": result[
-                          "shell_metric"]["relative_min_eigenvalue"],
-                      "beam_trace_rank": result["beam_trace_metric"]["trace_rank"],
-                      "cases": [{"space": c["space"],
-                                 "full_lower_bound": c["full"][
-                                     "quotient_lower_bound_from_upper_dual_gram"],
-                                 "nonaxial_lower_bound": c["nonaxial"][
-                                     "quotient_lower_bound_from_upper_dual_gram"]}
-                                for c in result["cases"]]}, sort_keys=True))
+                      "root": str(root),
+                      "ratios": [{"name": report["name"],
+                                  "shell_relative_min": report[
+                                      "shell_metric"]["relative_min_eigenvalue"],
+                                  "beam_trace_rank": report[
+                                      "beam_trace_metric"]["trace_rank"],
+                                  "spaces": [{"space": c["space"],
+                                              "full_lower_bound": c["full"][
+                                                  "quotient_lower_bound_from_upper_dual_gram"],
+                                              "nonaxial_lower_bound": c[
+                                                  "nonaxial"][
+                                                      "quotient_lower_bound_from_upper_dual_gram"]}
+                                             for c in report["cases"]]}
+                                 for report in reports]}, sort_keys=True))
 
 
 if __name__ == "__main__":
