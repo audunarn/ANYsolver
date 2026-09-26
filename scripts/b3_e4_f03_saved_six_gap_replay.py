@@ -339,6 +339,84 @@ def _native_longitudinal_rank() -> dict:
             "disposition":"REJECT_DIRECT_SUBSTITUTION"}
 
 
+def _influence_split(base: Path, combined_x: np.ndarray,
+                     combined_elements: dict, combined_u: dict,
+                     combined_model: dict, combined_rows: dict) -> dict:
+    """Attribute corrected rows to the two saved *linear* load influences."""
+    stems = {
+        "torque":base/"f03-ccx-c1-factor5-torque-influence-dev-20260926-v1/solid-5-tip_mx/solid-5-tip_mx",
+        "opening":base/"f03-ccx-c1-factor5-opening-influence-dev-20260926-v1/solid-5-tip_fz/solid-5-tip_fz",
+    }
+    load_flags = {"applied_nodal_forces_N", "reverse_tip_fz", "shear",
+                  "tip_mx_gap_audit", "torque_with_opening_fz"}
+    def structure(model):
+        return {k:v for k,v in model.items() if k not in load_flags}
+    def loads(model):
+        return {int(k):np.array(v) for k,v in
+                model["applied_nodal_forces_N"].items()}
+    if set(combined_u) != set(range(1,len(combined_x))):
+        raise ValueError("combined displacement inventory incomplete")
+    cases = {}
+    fields = {}
+    models = {}
+    for label,stem in stems.items():
+        inp,frd,metadata = (stem.with_suffix(".inp"),
+                            stem.with_suffix(".frd"),
+                            stem.parent/"model.json")
+        xyz,elements = read_deck(inp)
+        if not np.array_equal(xyz,combined_x) or any(
+                not np.array_equal(elements[k],combined_elements[k])
+                for k in combined_elements):
+            raise ValueError("load influences do not share solid geometry")
+        model = json.loads(metadata.read_text())
+        if structure(model) != structure(combined_model):
+            raise ValueError("load influences differ in support or model definition")
+        u = _read_frd_u(frd)
+        if set(u) != set(combined_u):
+            raise ValueError("load influence displacement inventory differs")
+        coords = {i:xyz[i] for i in range(1,len(xyz))}
+        move,spin,fit_rms = _ports(coords,u,elements,method="area")
+        report = _integrate(coords,u,move,spin)
+        cases[label] = {
+            "p0_rows_by_surface":{
+                mode:report["rows_by_space"]["piecewise_constant"][mode]
+                for mode in MODES},
+            "fit_vector_rms_m":fit_rms.tolist(),
+            "source_sha256":{str(p.relative_to(base)):_sha(p)
+                             for p in (inp,frd,metadata)},
+            "interpretation":("pure torque is a linear influence only; "
+                              "its zero-preload gap closes" if label=="torque"
+                              else "pure opening is the admissible load influence")}
+        fields[label],models[label] = u,model
+    all_nodes = set().union(*(loads(model) for model in
+                              (models["torque"],models["opening"],combined_model)))
+    force_difference = max(float(np.linalg.norm(
+        loads(models["torque"]).get(n,np.zeros(3))+
+        loads(models["opening"]).get(n,np.zeros(3))-
+        loads(combined_model).get(n,np.zeros(3)))) for n in all_nodes)
+    if force_difference > 1e-10:
+        raise ArithmeticError("declared combined loads do not superpose")
+    field_difference = max(float(np.linalg.norm(
+        fields["torque"][n]+fields["opening"][n]-combined_u[n]))
+        for n in combined_u)
+    field_scale = max(float(np.linalg.norm(u)) for u in combined_u.values())
+    if field_difference > 2e-5*field_scale+5e-10:
+        raise ArithmeticError("saved linear fields do not superpose")
+    row_differences = {}
+    for mode in MODES:
+        torque = np.array(cases["torque"]["p0_rows_by_surface"][mode])
+        opening = np.array(cases["opening"]["p0_rows_by_surface"][mode])
+        combined = np.array(combined_rows["piecewise_constant"][mode])
+        row_differences[mode] = float(np.max(np.abs(torque+opening-combined)))
+    return {"same_structure_and_support":True,
+            "max_declared_nodal_load_sum_difference_N":force_difference,
+            "max_saved_displacement_superposition_difference_m":field_difference,
+            "displacement_superposition_bound_m":2e-5*field_scale+5e-10,
+            "max_P0_weak_row_superposition_difference_by_surface":row_differences,
+            "cases":cases,
+            "interpretation":"This attributes saved linear influences under identical geometry, support and load maps. Pure torque remains contact-inadmissible without pre-opening; only the combined field carries the archived opposed-face admissibility screen."}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--evidence-root", type=Path, required=True)
@@ -372,6 +450,9 @@ def main() -> None:
     if max_ref > 1e-12:
         raise ArithmeticError("nonzero native reference gap")
     rank = _native_longitudinal_rank()
+    split = _influence_split(base,xyz,elements,u,
+                             json.loads(paths[3].read_text()),
+                             reports["area"]["rows_by_space"])
     result = {"classification":"bounded saved-field native six-gap projection and P0 substitution rank; no G0B acceptance",
               "question":"Does the native six-channel line law fit this physically bonded 3D field within section-port and E4-reduction uncertainty?",
               "outcome_rule":"Compare the director-pitch My row with a separate longitudinal-position moment on the same saved bond. If the latter is small and independently rank-valid on the native fixture, derive and test its full finite work law before any basis ranking; if it is large or dependent, prioritize section/end-load idealization. Neither result qualifies a law by itself.",
@@ -379,6 +460,7 @@ def main() -> None:
               "fit_assumptions":"linear interpolation of six rigid solid-section fits at .02 m stations; inferred director is the deformed top-bottom thickness chord; Q4 proxies use solid-cell or actual native 0.05 by 0.025 m hosts with inferred nodal directors; actual solid face uses Q20 interpolation; integration splits at native x=.95 m and y=±.025 m host cuts",
               "reference_max_abs_gap":max_ref,"results":reports,
               "longitudinal_substitution_rank":rank,
+              "saved_linear_influence_split":split,
               "limits":["3D-to-E4 director is inferred, not an independent E4 state",
                         "linear rigid-section interpolation is not a native B3 interpolation",
                         "the six weak rows can vanish despite local nonzero gap",

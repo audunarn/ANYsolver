@@ -96,13 +96,16 @@ def recover(folder: Path) -> dict:
     result=json.loads((folder/'result.json').read_text())
     if result['status']!='COMPLETE_OUTPUT_ONLY_REPLAY' or manifest['omp_threads']!=1:
         raise ValueError('completed, one-thread output-only replay required')
-    inp=folder/'solid-5-tip_mx.inp'
+    stem=Path(manifest['source_folder']).name
+    if stem not in ('solid-5-tip_mx','solid-5-tip_fz'):
+        raise ValueError('unsupported bounded F5 stress replay stem')
+    inp=folder/(stem+'.inp')
     dat=inp.with_suffix('.dat')
     frd=inp.with_suffix('.frd')
     model_path=Path(manifest['source_folder'])/'model.json'
     if not model_path.is_absolute():
         model_path=Path(__file__).resolve().parents[1]/model_path
-    archived_frd=model_path.parent/'solid-5-tip_mx.frd'
+    archived_frd=model_path.parent/(stem+'.frd')
     model=json.loads(model_path.read_text())
     x,elements=read_deck(inp)
     if len(elements['Plate'])!=model['plate_elements'] or len(elements['Stiffener'])!=model['bar_elements']:
@@ -155,6 +158,7 @@ def recover(folder: Path) -> dict:
                                 capture_output=True,text=True,check=True).stdout.strip()
     return {
         'classification':'bounded integration-point stress/weak-force diagnostic; not interface qualification',
+        'saved_case_stem':stem,
         'stress_replay_source_git':manifest['source_git'],
         'recovery_source_git':recovery_git,
         'recovery_script_sha256':sha(Path(__file__)),
@@ -182,7 +186,7 @@ def recover(folder: Path) -> dict:
         'meaning':'Stresses at gauss3d2 points integrated against Q20 shape gradients yield stiffener internal nodal forces. Minus stiffener residual at shared nodes is bar-on-plate action. Printed plate RF supplies an independent integrated wrench. The first x moment is a low-order dual descriptor; nodal force signs are not physical traction density.',
         'limits':['only stiffener stresses printed; plate-side local stress not reconstructed',
                   'pointwise interface traction and 3D/native pose equivalence not established',
-                  'one physical pre-opened combined-load case at F5; no basis selection']}
+                  'one saved F5 load case; no basis selection or contact qualification from this recovery']}
 
 
 def main() -> None:
