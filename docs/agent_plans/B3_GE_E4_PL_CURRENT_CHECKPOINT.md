@@ -3964,12 +3964,33 @@ diagonal-energy `Fz` minimum was normalization-dependent. Neither norm
 turns the indefinite retained tangent into a coercive primal, and these
 two fixed meshes do not prove mesh-uniform inf-sup or select P0.
 
-**Remaining uncertainty and discriminating action:** The torque-active
-`Fy/Mz` mode and beam-port versus solid-section/face separation need a
-controlled beam:line resolution check, with the same physical norm,
-loads, supports and work. If the transverse action and loaded transfer
-settle, take this unqualified law into the registered 1:1–1:8 and
-reciprocal mesh-ratio comparison of P0/P1/dual candidates; if not,
-revise the beam/line trace or reduced pose first. Do not resume axial
-refinement from the full-mode quotient. Neither branch changes criteria
-or consumes formal F03 authority. G0B remains open; G1 remains barred.
+**One-axis beam/line decision:** Each original C1 B3 half-cell was bisected
+while retaining the same physical geometry, 0.05 m P0 intervals, Q4
+four-cell trace, loads and supports. The 24-half-cell native local/dense
+parity is exact. Tip `Mx` rotation changes `47.708→47.730 µrad`, opening
+`Fz` displacement `−69.319→−69.408 µm`, and combined work
+`0.074090→0.074181 J` (saved solid F4 `0.074262 J`). The normed
+nonaxial `Fy/Mz` minimum changes `1.786→1.866`, still positive and
+torque-relevant; both domains carry work. Rank is 12/12 and maximum
+loaded mechanics error `4.37e-12`. This bounded refinement does not
+suggest beam underresolution is the dominant cause of the earlier
+one→two-interval response shift. Raw 24-half-cell root:
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-beam24-resolution-dev-20260926-v1`
+(`89747c9f`). Normed 12-half-cell root:
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-p0-density-norm-dev-20260926-v1`
+(`916a9153`); focused affected tests pass `17/17` for the norm change
+and `20/20` for the beam-fixture extension. These are development
+diagnostics, not qualified reference or continuum stability evidence.
+
+**Remaining uncertainty and next action:** Keep the two-interval native
+line weld as an *unqualified candidate*. Define P1 and dual-line test
+spaces from the same physical six-channel work law, then compare loaded
+transfer, pointwise gaps and the declared normed/signed modes over the
+registered 1:1–1:8 and reciprocal ratios, including Q4/S3 transitions.
+Also close the solid reference's side-clearance and three-level physical
+convergence limitations before accuracy scoring. A ratio-dependent weak
+mode or transfer drift sends the design back to the beam/line trace or
+pose law; compatible stable responses permit a reviewed least-dimension
+space decision. Do not select P0 from small gaps, a positive quotient or
+the current near-match to solid work. No axial escalation follows.
+Formal F03 authority is unconsumed; G0B remains open and G1 barred.

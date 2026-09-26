@@ -1417,6 +1417,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                     f"shell_nonphysical={shell_total-physical_work:.6e}")
             active=np.flatnonzero(np.max(np.abs(shell_interface),axis=1)>1e-10)
             local_kinematics={}
+            interval_kinematics={}
             if has_local_stations and family.startswith("line_hybrid_"):
                 nodal_shell=full[:shell_size].reshape(-1,6)
                 for station in (900,950,1000):
@@ -1445,6 +1446,26 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                             shell_value(.05,2)-shell_value(-.05,2))/.1,
                         "shell_director_rx_rad":shell_value(0.,3),
                     }
+                if family == "line_hybrid_two_intervals":
+                    def shell_trace(x, y, axis):
+                        nodes,shape=structured_q4_point_shape(xs,ys,x,y)
+                        return float(shape@nodal_shell[nodes,axis])
+                    for index,segment in enumerate(segments):
+                        interval_kinematics[str(index)]={
+                            "x_interval_m":list(segment.x_interval),
+                            "beam_port_mean_rx_rad":float(sum(
+                                point.weight*(point.port.tangent(base)@
+                                              full[shell_size:])[3]
+                                for point in segment.points)),
+                            "shell_top_mean_slope_z_y_rad":float(sum(
+                                point.weight*(
+                                    shell_trace(point.x,.05,2)-
+                                    shell_trace(point.x,-.05,2))/.1
+                                for point in segment.points)),
+                            "shell_director_mean_rx_rad":float(sum(
+                                point.weight*shell_trace(point.x,0.,3)
+                                for point in segment.points)),
+                        }
             cases[loading]={
                 "tip_rx_rad":float(full[shell_size+6*beam.n_half_cells+3]),
                 "tip_uz_m":float(full[shell_size+6*beam.n_half_cells+2]),
@@ -1454,6 +1475,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                     for station in stations},
                 **({"terminal_station_kinematics":local_kinematics}
                    if local_kinematics else {}),
+                **({"interval_mean_kinematics":interval_kinematics}
+                   if interval_kinematics else {}),
                 "total_external_work_j":work,
                 "physical_shell_work_j":physical_work,
                 "numerical_shell_work_j":shell_total-physical_work,
