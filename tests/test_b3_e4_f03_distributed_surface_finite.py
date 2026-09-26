@@ -594,6 +594,8 @@ def test_c1_mixed_s3_line_modes_and_loaded_balance(diagonal):
             tip = case["terminal_station_kinematics"]["1000"]
             assert len(tip["shell_top_edge_mean_translation_m"]) == 3
             assert np.isfinite(tip["shell_top_edge_mean_translation_m"]).all()
+            assert tip["beam_nodal_rotation_rad"][0] == pytest.approx(
+                tip["beam_nodal_rx_rad"], abs=1e-14)
             assert tip["beam_nodal_translation_m"][2] == pytest.approx(
                 case["tip_uz_m"], abs=1e-14)
 

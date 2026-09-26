@@ -1541,6 +1541,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                         "beam_nodal_translation_m":full[
                             shell_size+6*station_nodes[station]:
                             shell_size+6*station_nodes[station]+3].tolist(),
+                        "beam_nodal_rotation_rad":full[
+                            shell_size+6*station_nodes[station]+3:
+                            shell_size+6*station_nodes[station]+6].tolist(),
                         "beam_nodal_rx_rad":float(full[
                             shell_size+6*station_nodes[station]+3]),
                         "beam_port_rx_left_rad":(
