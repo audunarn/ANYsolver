@@ -2,6 +2,42 @@
 
 ## Current state — 26 September 2026
 
+**Current decision and next bounded experiment (later 26 September):** The
+native six-channel weighted line remains a candidate; no multiplier space
+is selected. At source `ed18bea2`, the fixed C1 x2/y4, B3-12 Q4/S3-V2D
+transition replaces the first bond cell's four Q4s with eight S3 triangles.
+Actual-chart first/mixed work, stress-free reference, row rank, loaded
+balance, and positive reported physical shell/beam mode action pass for
+P0/P1/dual. The paired raw root is
+`.qualification/b3-ge-e4-pl/f03-c1-mixed-q4-s3-transition-dev-20260926-v1`.
+Relative to the same Q4 grid, separate torque applied work changes by
+`+0.006/+0.039/+0.042%` and opening-force work by
+`+0.011/-0.049/-0.045%` for P0/P1/dual. The support-conditioned 1 m
+nonaxial signed quotients change `1.575→1.572`, `0.584→0.568`, and
+`0.591→0.575`. The asymmetric diagonal causes small reciprocal
+torque/shear cross-action; it must not be read as a physical coupling
+accuracy result. Numerical drilling-completion work remains small beside
+physical shell work in these fixed-grid loaded cases. This result detects
+no immediate mixed-host defect but is neither a mesh-uniform stability
+proof nor a basis choice. Existing axial and reciprocal ratios already
+show reference/rank and signed action; do not extend classical axial grids.
+
+**Next discriminating physical-reference question:** F2/F4 saved solid pure
+torque and pure opening-force work sum to their combined loads within
+`1.5e-9 J`, but the native Q4 P0 torque is about 4% below F4 while its
+opening work is about 0.3% below F4. Comparing only combined work hides
+this difference. Execute the two pure-load F5 *linear influence* fields on
+the already frozen C1 solid geometry, end-face traction, bond, supports,
+and 120 s/case limit, then compare each work and the combined
+superposition. If the separate solid responses settle, persistent native
+torque discrepancy directs the next study to section/warping and
+connection idealization; if they move materially, the F2/F4 solid
+reference was insufficient. A failed, overlapping, or unbalanced pure
+torque field remains a linear algebraic influence only; the saved
+pre-opened combined F5 field retains the physical gap assessment. No
+outcome alone selects P0/P1/dual, qualifies G0B, or consumes formal F03
+authority. This is one bounded extension, not a further axial refinement.
+
 **Decision sought:** A defensible native six-channel beam–shell connection
 and stable exact line space, separate from the classical axial comparator
 and the historical Q6/finite-pad footprint.

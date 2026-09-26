@@ -483,7 +483,7 @@ def test_c1_factor_two_torque_basis_matches_opening_structural_deck():
                      contact_policy="c1_penalty", **common)
 
 
-@pytest.mark.parametrize("factor", (2, 4))
+@pytest.mark.parametrize("factor", (2, 4, 5))
 def test_c1_combined_opening_torque_load_is_exact_sum_and_not_pure_tip_metric(factor):
     common=dict(boundary_policy="left_root", bond_policy="terminal",
                 element_family="C3D20R", bar_clearance_um=2,
@@ -527,8 +527,6 @@ def test_c1_factor_five_preserves_matched_model_and_transition_knot():
                 full_displacement_output=True,
                 bar_reference_profile="c1_tangent",
                 tip_mx_gap_audit=True)
-    with pytest.raises(ValueError, match="factor-five solid mesh"):
-        SCREEN.build(5, "tip_mx", **common)
     deck, meta = SCREEN.build(5, "tip_mx", torque_with_opening_fz=True,
                               **common)
     assert meta["factor"] == 5
@@ -543,6 +541,12 @@ def test_c1_factor_five_preserves_matched_model_and_transition_knot():
     assert SCREEN._wrench(forces, meta["probe_coordinates_m"]) == pytest.approx(
         [0.,0.,-1000.,100.,1000.,0.], abs=1e-9)
     assert "*NODE FILE,OUTPUT=3D\nU\n" in deck
+    with pytest.raises(ValueError, match="factor-five solid mesh"):
+        SCREEN.build(5, "tip_mx", tip_mx_gap_audit=True,
+                     torque_with_opening_fz=False,
+                     **{key: value for key, value in common.items()
+                        if key not in ("full_displacement_output",
+                                       "tip_mx_gap_audit")})
 
 
 def test_c1_penalty_runner_allows_only_its_known_static_notice():

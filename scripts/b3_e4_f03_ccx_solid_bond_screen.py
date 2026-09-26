@@ -160,8 +160,13 @@ def build(factor: int, shear: str, *, boundary_policy: str = "perimeter",
                   (factor == 2 and (c1_open_shear or c1_torque_basis))) or
              bond_policy != "terminal" or tip_load_map != "quadratic_face")):
         raise ValueError("C1 tangent profile requires the bounded quadratic terminal reference")
-    if factor == 5 and not torque_with_opening_fz:
-        raise ValueError("factor-five solid mesh requires combined C1 opening/torque")
+    if factor == 5 and not (
+            (c1_open_shear or c1_torque_basis) and
+            boundary_policy == "left_root" and bond_policy == "terminal" and
+            element_family == "C3D20R" and bar_clearance_um == 2 and
+            plate_thickness_mm == 35 and tip_load_map == "quadratic_face" and
+            full_displacement_output):
+        raise ValueError("factor-five solid mesh requires bounded C1 influence or combined load")
     if element_family not in ("C3D8", "C3D20R") or (
             element_family == "C3D20R" and
             (bond_policy not in ("detached", "terminal", "full") or
@@ -985,12 +990,12 @@ def main() -> int:
     c1_torque_basis = (args.bar_reference_profile == "c1_tangent" and
                        args.tip_mx_gap_audit and args.contact == "none")
     if 5 in args.factor and not (list(args.factor) == [5] and
-            args.torque_with_opening_fz and c1_torque_basis and
+            (c1_open_shear or c1_torque_basis) and
             args.suite == "loads" and args.boundary == "left_root" and
             args.bond == "terminal" and args.element_family == "C3D20R" and
             args.bar_clearance_um == 2 and args.half_plate_thickness and
             args.quadratic_face_traction and args.full_displacement_output):
-        parser.error("factor five requires the bounded combined C1 reference")
+        parser.error("factor five requires the bounded C1 influence or combined reference")
     if args.boundary != "perimeter" and args.suite != "loads":
         parser.error("left-edge support is admitted only for the tip-load suite")
     if args.bond == "terminal" and (args.boundary != "left_root" or
@@ -1314,6 +1319,20 @@ def main() -> int:
         manifest["limits_of_claim"].append(
             "combined loading is a pre-opened state, not pure torque from "
             "the virgin reference; side-surface contact remains unchecked")
+    elif list(args.factor) == [5]:
+        manifest["question"] = (
+            "What are the separate factor-five linear torque or opening-force "
+            "influences on the same C1 geometry, bond, supports and load map "
+            "as the saved combined factor-five field?")
+        manifest["decision"] = (
+            "If each influence and its sum settle and reproduce the saved "
+            "combined work, compare torque and shear separately with the "
+            "native idealization. Material drift or failed balance returns "
+            "the solid comparator for revision; no line space is selected.")
+        manifest["limits_of_claim"].append(
+            "pure torque is a linear influence field and may close the "
+            "unbonded gap; only the separately saved pre-opened combined "
+            "field has a positive-gap assessment")
     (root/"manifest.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
     records=[]
     for factor,shear in manifest["cases"]:
