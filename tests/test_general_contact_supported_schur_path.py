@@ -63,6 +63,10 @@ def test_supported_schur_settings_are_explicit_and_profile_bounded():
     ).restart_contract()
     assert contract != changed
     assert contract["settings"]["augmentation_schur_maximum_modes"] == 8
+    assert contract["settings"]["augmentation_schur_maximum_attempts"] == 1
+    twice = replace(settings, augmentation_schur_maximum_attempts=2)
+    assert validate_general_contact(model, definition, twice).valid
+    assert GeneralS3PatchManager(model, definition, twice).restart_contract() != contract
 
 
 def test_projection_branch_declines_schur_and_preserves_static_failure():
@@ -86,3 +90,66 @@ def test_projection_branch_declines_schur_and_preserves_static_failure():
     assert result.steps == []
     assert result.restart_checkpoint is None
     np.testing.assert_array_equal(result.displacements, 0.0)
+
+
+def test_projected_active_set_re_equilibrates_without_committing_failed_step():
+    model, definition, settings, program = _case()
+    program = replace(program, controls=(
+        program.controls[0], ContactPathControl.node(6, "uz"),
+    ))
+    settings = replace(
+        settings, general_s3_differentiation="jet2_q4_s3_dev",
+        q4_source_support_gradient_tolerance=1e-5,
+        q4_source_support_hessian_tolerance=1e-5,
+        q4_source_weighted_gap_gradient_tolerance=1e-5,
+        q4_source_weighted_gap_hessian_tolerance=1e-5,
+        maximum_q4_source_integration_triangles=128,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "diverged"
+    assert result.failure_reason == "maximum_augmentations_reached"
+    failure = result.info["contact_failure"]
+    trace = failure["augmentation_trace"]
+    assert trace[1]["schur_proposal_kind"] == "projected_active_set"
+    assert trace[1]["schur_predicted_residual_pa"] < 0.75*trace[1]["pressure_change"]
+    assert trace[2]["schur_verified"] is True
+    assert trace[2]["pressure_change"] < 0.75*trace[1]["pressure_change"]
+    assert failure["schur_applied"] == 1
+    assert trace[-1]["pressure_change"] > settings.pressure_tolerance
+    assert result.steps == []
+    assert result.restart_checkpoint is None
+    np.testing.assert_array_equal(result.displacements, 0.0)
+
+
+def test_two_bounded_projected_schur_updates_accept_node6_fixture():
+    model, definition, settings, program = _case()
+    program = replace(program, controls=(
+        program.controls[0], ContactPathControl.node(6, "uz"),
+    ))
+    settings = replace(
+        settings, general_s3_differentiation="jet2_q4_s3_dev",
+        q4_source_support_gradient_tolerance=1e-5,
+        q4_source_support_hessian_tolerance=1e-5,
+        q4_source_weighted_gap_gradient_tolerance=1e-5,
+        q4_source_weighted_gap_hessian_tolerance=1e-5,
+        maximum_q4_source_integration_triangles=128,
+        augmentation_schur_maximum_attempts=2,
+    )
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "completed"
+    assert len(result.steps) == 1
+    record = result.info["force_displacement_history"][-1]
+    assert record["schur_attempts"] == record["schur_applied"] == 2
+    assert record["schur_rejected"] == 0
+    assert record["normal_multiplier_change"] <= settings.pressure_tolerance
+    assert record["contact"]["gap_tolerance_met"]
+    assert result.restart_checkpoint is not None
+    assert result.restart_checkpoint["version"] == 2

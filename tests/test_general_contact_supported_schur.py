@@ -80,3 +80,43 @@ def test_rank_revealing_step_only_corrects_responsive_pressure_modes():
                                   - 10.0*equilibrated_gap)
                        - proposal.multipliers)
     assert np.linalg.norm(actual_residual, ord=np.inf) < 0.11
+
+
+def test_bounded_step_below_verification_reduction_is_declined():
+    diagnostics = {}
+    proposal = propose_supported_schur_step(
+        np.array([1.0]), np.array([-0.1]), np.array([True]),
+        np.array([[0.1]]), normal_stiffness=10.0,
+        maximum_pressure=5.0, maximum_pressure_step=0.05,
+        maximum_modes=1, diagnostics=diagnostics,
+    )
+    assert proposal is None
+    assert diagnostics["schur_ineligible"] == (
+        "bounded_step_or_predicted_merit_failed"
+    )
+    assert diagnostics["schur_full_step_max_pa"] == pytest.approx(1.0)
+    assert diagnostics["schur_best_fixed_branch_fraction"] == pytest.approx(1.0/32.0)
+    assert diagnostics["schur_best_fixed_branch_residual_pa"] == pytest.approx(0.96875)
+    assert diagnostics["schur_backtrack_rejections"] == {
+        "step_cap": 5,
+        "negative_pressure": 0,
+        "pressure_cap": 0,
+        "active_branch": 0,
+        "predicted_merit": 4,
+    }
+
+
+def test_projected_active_set_can_drop_a_nonnegative_pressure_mode():
+    diagnostics = {}
+    proposal = propose_supported_schur_step(
+        np.array([0.04, 0.04]), np.array([-0.1, 0.001]),
+        np.array([True, True]), np.diag([0.1, 0.01]),
+        normal_stiffness=10.0, maximum_pressure=5.0,
+        maximum_pressure_step=2.0, maximum_modes=2,
+        diagnostics=diagnostics,
+    )
+    assert proposal is not None
+    assert diagnostics["schur_proposal_kind"] == "projected_active_set"
+    assert proposal.active_indices == (0,)
+    np.testing.assert_allclose(proposal.multipliers, [1.04, 0.0])
+    assert proposal.predicted_residual_after < 1.0e-12

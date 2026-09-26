@@ -38,8 +38,9 @@ def propose_supported_schur_step(
     On an active branch, ``R=max(0,lambda-epsilon*g)-lambda`` has derivative
     ``-epsilon*H`` where ``H=dg_equilibrated/dlambda``.  Inactive rows have
     derivative ``-I``.  A bounded backtracking trial must reduce the linearized
-    projected residual without changing the active set.  The analysis owner
-    must re-equilibrate and verify the actual residual and physical gap.
+    projected residual by the existing nonlinear-verification threshold without
+    changing the active set.  The analysis owner must re-equilibrate and verify
+    the actual residual and physical gap.
     """
 
     lam = np.asarray(multipliers, dtype=float).reshape(-1)
@@ -128,28 +129,92 @@ def propose_supported_schur_step(
         return decline("scaled_response_singular")
     if not np.all(np.isfinite(direction)):
         return decline("nonfinite_pressure_direction")
+    if diagnostics is not None:
+        diagnostics["schur_full_step_max_pa"] = float(np.max(np.abs(direction)))
+        diagnostics["schur_initial_pressure_pa"] = list(map(float, pressure))
+        diagnostics["schur_full_direction_pa"] = list(map(float, direction))
+        diagnostics["schur_backtrack_rejections"] = {
+            "step_cap": 0, "negative_pressure": 0,
+            "pressure_cap": 0, "active_branch": 0, "predicted_merit": 0,
+        }
+    best_fixed_branch_residual = None
     for halvings in range(9):
         fraction = 0.5**halvings
         step = fraction*direction
         candidate = pressure + step
-        if (np.max(np.abs(step)) > maximum_pressure_step
-                or np.any(candidate < 0.0)
-                or np.max(candidate) > maximum_pressure):
+        if np.max(np.abs(step)) > maximum_pressure_step:
+            if diagnostics is not None:
+                diagnostics["schur_backtrack_rejections"]["step_cap"] += 1
+            continue
+        if np.any(candidate < 0.0):
+            if diagnostics is not None:
+                diagnostics["schur_backtrack_rejections"]["negative_pressure"] += 1
+            continue
+        if np.max(candidate) > maximum_pressure:
+            if diagnostics is not None:
+                diagnostics["schur_backtrack_rejections"]["pressure_cap"] += 1
             continue
         predicted_gap = physical_gap + H @ step
         predicted_argument = candidate - normal_stiffness*predicted_gap
         if np.any((predicted_argument > 0.0) != active):
+            if diagnostics is not None:
+                diagnostics["schur_backtrack_rejections"]["active_branch"] += 1
             continue
         after = float(np.linalg.norm(
             np.maximum(0.0, predicted_argument)-candidate,
             ord=np.inf,
         ))
-        if after >= (1.0-1.0e-4*fraction)*before:
+        if diagnostics is not None:
+            if (best_fixed_branch_residual is None
+                    or after < best_fixed_branch_residual):
+                best_fixed_branch_residual = after
+                diagnostics["schur_best_fixed_branch_fraction"] = fraction
+                diagnostics["schur_best_fixed_branch_residual_pa"] = after
+        # The static owner rejects a re-equilibrated proposal unless its
+        # projected residual falls below 75% of the previous value.  Do not
+        # spend a nonlinear solve on a linearly predicted rejection.
+        if after >= 0.75*before:
+            if diagnostics is not None:
+                diagnostics["schur_backtrack_rejections"]["predicted_merit"] += 1
             continue
         proposed = lam.copy()
         proposed[modes] = candidate
+        if diagnostics is not None:
+            diagnostics["schur_proposal_kind"] = "fixed_active_branch"
         return SupportedSchurProposal(
             proposed, tuple(int(modes[index]) for index in np.flatnonzero(active)),
+            condition if np.isfinite(condition) else None,
+            fraction, before, after,
+        )
+    # If positivity blocks the fixed branch, project the same response step
+    # to the admissible pressure cone.  Recompute the projected residual and
+    # active set at the projected candidate; the owner re-equilibrates and
+    # verifies this predicted set before accepting an algorithmic update.
+    for halvings in range(9):
+        fraction = 0.5**halvings
+        candidate = np.maximum(0.0, pressure + fraction*direction)
+        step = candidate-pressure
+        if (np.max(np.abs(step)) > maximum_pressure_step
+                or np.max(candidate) > maximum_pressure):
+            continue
+        predicted_gap = physical_gap + H @ step
+        predicted_argument = candidate - normal_stiffness*predicted_gap
+        if np.any(np.abs(predicted_argument) <= roundoff):
+            continue
+        after = float(np.linalg.norm(
+            np.maximum(0.0, predicted_argument)-candidate,
+            ord=np.inf,
+        ))
+        if after >= 0.75*before:
+            continue
+        predicted_active = tuple(int(modes[index]) for index in
+                                 np.flatnonzero(predicted_argument > 0.0))
+        proposed = lam.copy()
+        proposed[modes] = candidate
+        if diagnostics is not None:
+            diagnostics["schur_proposal_kind"] = "projected_active_set"
+        return SupportedSchurProposal(
+            proposed, predicted_active,
             condition if np.isfinite(condition) else None,
             fraction, before, after,
         )

@@ -695,11 +695,11 @@ def solve_static_contact_path(
                             augmentation_trace[-1]["acceleration_applied"] = proposal is not None
                             if (proposal is None
                                     and settings.augmentation_acceleration == "supported_schur_dev"
-                                    and pivot_attempts == 0
+                                    and pivot_attempts < settings.augmentation_schur_maximum_attempts
                                     and augmentation >= 2
                                     and augmentation <= augmentation_limit - 2
                                     and certificate.active_pressure_dofs > 0):
-                                pivot_attempts = 1
+                                pivot_attempts += 1
                                 try:
                                     schur = refined_patch_supported_schur(
                                         manager, u, tangent, T, rows,
@@ -734,6 +734,10 @@ def solve_static_contact_path(
                                         schur.scaled_condition)
                                     augmentation_trace[-1]["schur_predicted_residual_pa"] = (
                                         schur.predicted_residual_after)
+                                    augmentation_trace[-1]["schur_predicted_residual_before_pa"] = (
+                                        schur.predicted_residual_before)
+                                    augmentation_trace[-1]["schur_step_fraction"] = (
+                                        schur.step_fraction)
                                     manager.set_normal_multipliers(schur.multipliers)
                                     continue
                             if (proposal is None

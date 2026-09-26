@@ -10,6 +10,7 @@ from collections.abc import Callable
 
 import numpy as np
 from scipy import sparse
+from scipy.linalg import null_space
 
 from anysolver.linalg import MatrixClass, factorize
 
@@ -132,7 +133,8 @@ def _jet2_integral_gradients(geometry, source, target,
 def _constrained_gap_response(manager, displacement, tangent, transform,
                               control_rows, selected: np.ndarray,
                               active: np.ndarray, *, difference_step: float,
-                              check_cancel: Callable[[], None] | None = None
+                              check_cancel: Callable[[], None] | None = None,
+                              diagnostics: dict[str, object] | None = None,
                               ) -> np.ndarray | None:
     """Return d(g_selected)/d(lambda_active) from one constrained factorization."""
     source, target = manager._positions(displacement)
@@ -218,6 +220,39 @@ def _constrained_gap_response(manager, displacement, tangent, transform,
     gap_reduced = np.asarray(variations.T @ gap_derivative.T).T
     reduced_tangent = (transform.T @ tangent @ transform).tocsr()
     rows = np.asarray(control_rows, dtype=float)
+    if diagnostics is not None:
+        unconstrained_norms = np.linalg.norm(force_derivative, axis=0)
+        unconstrained_scaled = force_derivative / np.where(
+            unconstrained_norms > 0.0, unconstrained_norms, 1.0,
+        )[None, :]
+        diagnostics["schur_force_map_unconstrained_singular_values"] = list(
+            map(float, np.linalg.svd(unconstrained_scaled, compute_uv=False)))
+        if len(rows):
+            single_control_spectra = []
+            for row in rows:
+                single_force = null_space(row[None, :]).T @ force_derivative
+                single_norms = np.linalg.norm(single_force, axis=0)
+                single_scaled = single_force / np.where(
+                    single_norms > 0.0, single_norms, 1.0,
+                )[None, :]
+                single_control_spectra.append(list(map(
+                    float, np.linalg.svd(single_scaled, compute_uv=False),
+                )))
+            diagnostics["schur_force_map_single_control_singular_values"] = (
+                single_control_spectra
+            )
+        admissible_force = (
+            null_space(rows).T @ force_derivative
+            if len(rows) else force_derivative
+        )
+        column_norms = np.linalg.norm(admissible_force, axis=0)
+        scaled_force = admissible_force / np.where(
+            column_norms > 0.0, column_norms, 1.0,
+        )[None, :]
+        diagnostics["schur_force_map_column_norms"] = list(
+            map(float, column_norms))
+        diagnostics["schur_force_map_scaled_singular_values"] = list(
+            map(float, np.linalg.svd(scaled_force, compute_uv=False)))
     matrix = sparse.bmat([
         [reduced_tangent, sparse.csr_matrix(-rows.T)],
         [sparse.csr_matrix(rows),
@@ -284,7 +319,7 @@ def refined_patch_supported_schur(
     response_active = _constrained_gap_response(
         manager, displacement, tangent, transform, control_rows,
         selected, active, difference_step=difference_step,
-        check_cancel=check_cancel,
+        check_cancel=check_cancel, diagnostics=diagnostics,
     )
     if response_active is None:
         if diagnostics is not None:

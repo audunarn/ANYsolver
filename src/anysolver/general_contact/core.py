@@ -207,6 +207,7 @@ class ContactSolverSettings:
     augmentation_schur_maximum_pressure_pa: float | None = None
     augmentation_schur_maximum_step_pa: float | None = None
     augmentation_schur_difference_step_m: float | None = None
+    augmentation_schur_maximum_attempts: int = 1
     augmentation_support_resolution: str = "exact"
     augmentation_support_force_budget_n: float | None = None
     q4_source_support_gradient_tolerance: float | None = None
@@ -345,8 +346,15 @@ class ContactSolverSettings:
                 raise ValueError("supported_schur_dev needs explicit positive mode, pressure, step and geometry-difference bounds")
             if self.maximum_augmentations < 4:
                 raise ValueError("supported_schur_dev needs at least four augmentations")
+            if (type(self.augmentation_schur_maximum_attempts) is not int
+                    or self.augmentation_schur_maximum_attempts < 1
+                    or self.augmentation_schur_maximum_attempts
+                    > self.maximum_augmentations - 3):
+                raise ValueError("Schur attempt cap must be positive and fit the augmentation budget")
         elif any(value is not None for value in schur_bounds):
             raise ValueError("Schur bounds require supported_schur_dev")
+        elif self.augmentation_schur_maximum_attempts != 1:
+            raise ValueError("Schur attempts require supported_schur_dev")
         if self.augmentation_support_resolution not in {"exact", "roundoff"}:
             raise ValueError("augmentation_support_resolution must be exact or roundoff")
         if self.augmentation_support_resolution == "roundoff":

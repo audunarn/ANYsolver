@@ -742,7 +742,8 @@ class GeneralS3PatchManager:
                              "augmentation_schur_maximum_modes": self.settings.augmentation_schur_maximum_modes,
                              "augmentation_schur_maximum_pressure_pa": self.settings.augmentation_schur_maximum_pressure_pa,
                              "augmentation_schur_maximum_step_pa": self.settings.augmentation_schur_maximum_step_pa,
-                             "augmentation_schur_difference_step_m": self.settings.augmentation_schur_difference_step_m}
+                             "augmentation_schur_difference_step_m": self.settings.augmentation_schur_difference_step_m,
+                             "augmentation_schur_maximum_attempts": self.settings.augmentation_schur_maximum_attempts}
                             if self.settings.augmentation_acceleration == "supported_schur_dev" else {}),
                          "maximum_swept_subdivisions": self.settings.maximum_swept_subdivisions,
                          "maximum_candidate_pairs": self.settings.maximum_candidate_pairs},
