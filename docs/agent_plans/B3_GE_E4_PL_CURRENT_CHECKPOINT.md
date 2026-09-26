@@ -2,45 +2,44 @@
 
 ## Current state — 26 September 2026
 
-**Decision sought:** Defend or revise the native six-channel line
-connection before choosing P0/P1/dual. The immediate bounded
+**Decision sought:** Defend or revise the native six-channel connection
+before selecting a P0/P1/dual multiplier space. The bounded
 transverse-order/line-resolution diagnosis is complete. Classical axial,
-historical Q6/finite-pad and native six-channel evidence remain separate.
+historical Q6/finite-pad and native six-channel comparisons remain
+distinct.
 
-**Established:** F5 solid torque transfer `Fy=54.624 N` remains about
-18–20% below native B3-12/26, while opening wrench channels are closer;
-F5 also changes mesh alignment, so this is not strict convergence. Saved
-F5 combined +100 N m/−1000 N weak bond action agrees with independent
-plate support within `5.8e-5 N/N m`. The corrected six-row projection
-splits at native x/y host cuts. Its large P0 `My` pitch gap is
-opening-driven (`−8.574/−2.882 µrad` on an inferred E4 Q4-host proxy);
-the pure-torque influence has essentially zero `My` and carries the
-`Mx/Mz` gap. Replacing `My` with a longitudinal position moment is
-rejected: native P0 full/supported row rank falls `12→11`. Output-only
-opening stress replay preserved saved displacements and reactions exactly.
-Combined-minus-opening torque bond action agrees with independent pure
-torque support within `6.6e-5 N/N m`; rigid-section fits overpredict its
-final-state force–displacement pairing by `6.91–7.19%`. This is a
-projection remainder, not path energy or a causal explanation of native
-total-work error. Pure torque alone is a contact-inadmissible linear
-influence. Independent reviews found no blocking defects. Preserved V1
-six-gap evidence failed exact x-knot integration; V2 lacked a y host cut;
-V3–V6 and the opening/torque roots retain their corrections and limits.
+**Established:** On matched C1 F5 geometry, supports and +100 N m torque
+resultant, the three-station RMS difference between the solid top-face
+endpoint slope and native Q4 face slope is `0.534/0.405/0.255 µrad` for
+P0/P1/dual. The corresponding native B3 rotation minus solid rigid-section
+fit differences are `1.479/1.362/1.116 µrad`. This is neither full-face
+field agreement nor a per-station ordering: P0 reverses it at x=`0.9 m`,
+and the solid x=`0.95 m` section fit is interpolated. Independent review
+verified the saved geometry, sampling and input hashes. The physically
+matched F5 torque and opening-force work comparisons remain separate;
+pure torque alone is a contact-inadmissible linear influence, and solid
+end-face traction differs from the native nodal load. Combined-minus-
+opening torque bond action matches independent support within
+`6.6e-5 N/N m`, while solid rigid-section fits exceed its final-state
+pairing by `6.91–7.19%`; these do not establish causation. Seven saved
+native mesh ratios provide finite-grid rank, transfer and signed action,
+not inf-sup evidence. No P0/P1/dual choice follows from gaps or quotients.
 
-**Remaining uncertainty and next action:** Determine whether the
-3D-to-B3 section/end-load reduction or the transverse `Fy/Mx/Mz` trace
-causes the remaining torsional transfer split. Compare physical face,
-section and work quantities at the same terminal stations and loading;
-retain the director-pitch line only as an exploratory candidate until
-that discriminator is resolved. Define/review a positive C1 broken-trace
-and primal norm before using seven saved mesh ratios as stability
-evidence; the signed quotients are not inf-sup and retained B3 yaw jumps
-invalidate an automatic continuous trace norm. Relevant new roots under
-`.qualification/b3-ge-e4-pl/` are `f03-c1-factor5-native-six-gap-dev-20260926-v1`–`v6`,
-`f03-c1-factor5-opening-ip-stress-dev-20260926-v1`,
-`f03-c1-factor5-opening-stress-force-recovery-dev-20260926-v1`, and
-`f03-c1-factor5-torque-weak-work-dev-20260926-v1`. Formal F03 authority
-is unconsumed; G0B open, G1 barred. No external process is running.
+**Remaining uncertainty, next discriminator and action:** The station
+result prioritizes testing 3D section/end-port and load-map reduction
+against the existing common interface virtual work, while keeping the
+transverse `Fy/Mx/Mz` trace as a competing explanation. If a matched
+section/end-port projection explains the split, revise that reduction;
+if it does not, derive and test a mechanically distinct shell trace/law.
+Use the saved F5 torque/opening fields and current resource envelope
+before any new external solve. Independently define and review positive
+C1 broken-trace and primal norms before interpreting the existing ratios
+as stability evidence; retained B3 yaw jumps bar an automatic continuous
+trace norm. No extra classical axial refinement is indicated. Corrected
+station evidence is `f03-c1-factor5-transverse-station-match-dev-20260926-v2`
+under `.qualification/b3-ge-e4-pl/`; v1 remains preserved. Formal F03
+authority is unconsumed; G0B open and G1 barred. No external process is
+running.
 
 ## Prior bounded decision record — 26 September 2026
 
