@@ -1217,6 +1217,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              include_line_hybrid_segmented: bool = False,
                              include_line_hybrid_spaces: bool = False,
                              include_line_hybrid_ablation: bool = False,
+                             sparse_line_only: bool = False,
                              force_sign: float = 1.) -> dict:
     """Linearized native B3/E4 Q4 terminal KKT on a resolved local grid."""
     if plate_thickness not in (.07,.035):
@@ -1225,6 +1226,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         raise ValueError("declared unit-sign terminal force required")
     if include_line_hybrid_spaces and plate_thickness != .035:
         raise ValueError("weighted C1 line spaces require the 35 mm plate")
+    if sparse_line_only and (not include_line_hybrid_spaces or
+                             patch_cells not in (4, 8)):
+        raise ValueError("sparse line comparison requires four/eight-cell weighted C1 case")
     if include_line_hybrid_ablation and patch_cells != 2:
         raise ValueError("bounded hybrid ablation requires the fixed C1 two-cell grid")
     beam_axis_z=plate_thickness/2+.05
@@ -1266,7 +1270,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
     fixed_beam={shell_size+index for index in beam.context.fixed}
     free=np.array([i for i in range(total)
                    if i not in fixed_shell and i not in fixed_beam])
-    primal=linalg.block_diag(shell_k,beam.tangent.toarray())
+    primal=(sparse.block_diag((sparse.csr_matrix(shell_k),beam.tangent),
+                              format="csr") if sparse_line_only else
+            linalg.block_diag(shell_k,beam.tangent.toarray()))
     force_scale=1e6
     displacement_scale=force_scale/(210e9*plate_thickness)
     nodal_scale=np.tile(np.full(6,displacement_scale),
@@ -1387,6 +1393,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 raise ArithmeticError("C1 weighted P0 changed existing rows")
     else:
         space_masses={}
+    if sparse_line_only:
+        families=[item for item in families if item[0] in space_masses]
     records={}
     for family,constraint in families:
         rank=int(np.linalg.matrix_rank(constraint[:,free]))
@@ -1395,21 +1403,29 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         m=len(constraint)
         n=len(free)
         rows=constraint[:,free]
-        if n+m>1900:
+        if (n+m>1900 and not sparse_line_only or
+                sparse_line_only and max(shell_size,beam.context.count)>1900):
             raise ValueError("graded terminal KKT exceeds bounded row cap")
-        kkt=np.block([[primal[np.ix_(free,free)],rows.T],
-                      [rows,np.zeros((m,m))]])
         scale=np.r_[primal_scale[free],np.full(m,force_scale)]
         energy=force_scale*displacement_scale
-        scaled=(scale[:,None]*kkt)*scale[None,:]/energy
-        lu,piv=linalg.lu_factor(scaled)
+        if sparse_line_only:
+            kkt=sparse.bmat(((primal[free][:,free],sparse.csr_matrix(rows.T)),
+                             (sparse.csr_matrix(rows),None)),format="csc")
+            diagonal=sparse.diags(scale,format="csc")
+            solve=sparse.linalg.splu(diagonal@kkt@diagonal/energy).solve
+        else:
+            kkt=np.block([[primal[np.ix_(free,free)],rows.T],
+                          [rows,np.zeros((m,m))]])
+            scaled=(scale[:,None]*kkt)*scale[None,:]/energy
+            lu,piv=linalg.lu_factor(scaled)
+            solve=lambda rhs: linalg.lu_solve((lu,piv),rhs)
         cases={}
         for loading,axis,magnitude in (("tip_mx",3,100.),
                                        ("tip_fz",2,1000.*force_sign)):
             load=np.zeros(total)
             load[shell_size+6*beam.n_half_cells+axis]=magnitude
             rhs=np.r_[load[free]*scale[:n]/energy,np.zeros(m)]
-            answer=linalg.lu_solve((lu,piv),rhs)
+            answer=solve(rhs)
             full=np.zeros(total)
             full[free]=scale[:n]*answer[:n]
             multiplier=scale[n:]*answer[n:]

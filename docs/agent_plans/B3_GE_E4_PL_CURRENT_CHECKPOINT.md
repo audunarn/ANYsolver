@@ -38,6 +38,24 @@ work at eight. Collapse or material drift changes the trace/pose decision;
 stable results motivate a separate sparse fixture for the full registered
 ratio envelope. No dense matrix may exceed the retained 1900-row cap.
 
+At source `ccc6d965`, sparse/dense parity passed directly and the exact
+B3-12 sparse two/four/eight-cell result retained rank and reference
+closure. P0/P1/dual nonaxial actions respectively rise
+`1.499→1.786→1.858`, `0.577→0.629→0.715`, and
+`0.585→0.638→0.726`; weakest reported modes carry positive work in both
+domains. Raw root:
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-weighted-sparse-shell8-dev-20260926-v1`.
+This isolates shell resolution and does not include loaded transfer. The
+next bounded discriminator therefore compares the same weighted spaces'
+loaded torque/opening transfer on four and eight shell cells using a sparse
+KKT with no dense matrix above the 1900-row cap. Material drift would
+revise the law; stable transfer permits broader registered ratios, not
+space selection. Independent sparse-path review found no blocking defect
+but clarified that `local_grid` doubles both x and transverse y resolution;
+this is **not** an axial-only beam:shell ratio test. The shell operator is
+dense within 1710 rows and only its solve is sparse. A later axial-only
+reference-cut fixture must hold y cuts fixed for ratio attribution.
+
 **Executed factor-two opening reference:** Source `da1d2a0c` contains the
 tested factor-two C1 deck/gap guards (`80/80` focused tests). The
 CalculiX result at

@@ -152,6 +152,33 @@ def test_c1_weighted_spaces_preserve_p0_loaded_parity_and_balance():
                 gap["quadrature_rms_position_gap_m"])
 
 
+def test_c1_sparse_line_kkt_matches_four_cell_loaded_transfer():
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    with pytest.raises(ValueError, match="four/eight-cell weighted"):
+        graded_terminal_coupling(2, beam, plate_thickness=.035,
+                                 sparse_line_only=True)
+    with threadpool_limits(limits=1):
+        dense = graded_terminal_coupling(
+            4, beam, plate_thickness=.035,
+            include_line_hybrid_spaces=True, force_sign=-1.)
+        sparse_result = graded_terminal_coupling(
+            4, beam, plate_thickness=.035,
+            include_line_hybrid_spaces=True,
+            sparse_line_only=True, force_sign=-1.)
+    for name, candidate in sparse_result["results"].items():
+        reference = dense["results"][name]
+        assert candidate["constraint_rank"] == reference["constraint_rank"]
+        for loading in ("tip_mx", "tip_fz"):
+            for quantity in ("tip_rx_rad", "tip_uz_m",
+                             "total_external_work_j", "physical_shell_work_j"):
+                assert candidate["cases"][loading][quantity] == pytest.approx(
+                    reference["cases"][loading][quantity], rel=1e-8,
+                    abs=1e-12)
+            assert candidate["cases"][loading]["mechanics_error"] < 1e-7
+
+
 def test_structured_patch_trace_matches_existing_uniform_native_rows():
     panel=make_shell(8,"Q4",n_y=8)
     xs=np.linspace(-.5,1.5,17)
