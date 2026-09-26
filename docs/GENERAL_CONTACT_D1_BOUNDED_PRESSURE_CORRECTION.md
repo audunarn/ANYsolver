@@ -75,3 +75,12 @@ the earlier two-Q4 case establishes general pressure-space stability,
 engineering gap convergence, installed-package qualification or the first
 accepted shell handoff. The historical 64-Q4 coupled rejection remains
 unchanged and has not been rerun.
+
+In the same one-row coupled family, eight Q4 columns completed with ten
+supported pressure modes. Sixteen columns rejected after seven
+augmentations, despite full 16-mode pressure Gram rank: an active-set
+prediction mismatch rejected the first proposal and the pressure-change
+gate remained unmet after the second. The four-to-eight Q4 integrated force
+changed by 5.75%. These results prevent a mesh-convergence claim and point
+to the equilibrated response and active-set transition as the next local
+question. The full traces are retained in the 27 September reports.
