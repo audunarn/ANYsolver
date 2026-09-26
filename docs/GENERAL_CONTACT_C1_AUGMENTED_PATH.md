@@ -53,3 +53,39 @@ imported from its installation target and completed the `--augmented-cycle`
 example with four accepted phases (`c1-augmented-four-phase-example-installed-55d94dae.txt`).
 No package was published. This checks the installed workflow, not engineering
 acceptance.
+
+## Optional active-set secant predictor
+
+`ContactSolverSettings(augmentation_acceleration="active_secant")` enables a
+development-only predictor for the outer augmented iteration. The default
+remains `"none"`, and penalty contact rejects the option. Within one physical
+increment, the predictor fits the residual of the projected multiplier map
+on an unchanged active set of at most four pressure nodes. It requires more
+samples than active unknowns, a well-conditioned fit with a small residual,
+positive predicted pressures and a bounded step. A failed safeguard uses the
+ordinary projected update. After any prediction, the solver re-equilibrates
+and applies the original pressure-update tolerance and independently checked
+physical-gap tolerance. A prediction never commits material or contact state.
+The option is bound into contact-path restart identity; changing it rejects a
+checkpoint. The default no-acceleration restart contract is unchanged.
+
+The two-Q4/two-S3 mixed force path exposed a slow projected multiplier mode:
+the two-active-node secant map fitted from a failed 16-update run had
+eigenvalues 0.63276 and 0.97732. With the same 10000 Pa/m regularization,
+0.0002 Pa update tolerance and 16-update cap, the optional predictor completed
+the press in five augmentations (one prediction), with final update
+1.72×10⁻¹⁰ Pa and conservative lower gap −7.452 µm. The unaccelerated case
+stopped at its cap. The strict eight-step press, slide, open and recontact
+cycle completed; a split after step four reproduced its accepted history and
+changing the acceleration option was rejected on restart. Retained outputs
+are `c1-mixed-active-secant-first.txt`,
+`c1-mixed-active-secant-cycle-first.txt`, and
+`c1-mixed-active-secant-restart-first.txt` under
+`C:/ANYworkspaceWork/general-contact-evidence`. A maintained opt-in test uses
+`ANY_RUN_C1_ACTIVE_SECANT=1` in
+`tests/test_general_contact_mixed_path.py`.
+
+These are developmental solver results. The predictor does not repair an
+underresolved pressure space or qualify mesh, integration, enforcement or
+engineering response convergence. The full C1 and programme gates remain
+open.

@@ -7596,6 +7596,11 @@ def solve_static_nonlinear(
             raise TypeError("contact must be a ContactDefinition")
         if contact_settings is not None and type(contact_settings) is not ContactSolverSettings:
             raise TypeError("contact_settings must be ContactSolverSettings")
+        if (contact_settings is not None
+                and contact_settings.augmentation_acceleration != "none"):
+            raise ValueError(
+                "augmentation acceleration requires the contact path analysis owner"
+            )
         augmented_contact_requested = any(
             interaction.normal_law == "augmented"
             for interaction in contact.interactions
@@ -7728,6 +7733,10 @@ def solve_static_nonlinear(
                         Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                         REFINED_Q4_S3_AUGMENTED_PROFILE,
                     }:
+                        if "RESTRICTED_SLIDING" in contact_manager.profile:
+                            raise ValueError(
+                                "restricted sliding augmented contact requires the contact path analysis owner"
+                            )
                         raise ValueError("ordinary augmented contact requires an admitted general shell patch")
                 result = run_solver()
                 if hasattr(contact_manager, "set_path_factor"):

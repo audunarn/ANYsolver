@@ -114,3 +114,15 @@ integrated force settling alone. The raw trace is
 `c1-mixed-pressure-space-discriminator-source-first.txt`; its temporary
 `pressure_gradient_condition` key contains the Gram condition estimate.
 The source now gives Gram and gradient diagnostics separate names.
+
+Secant fitting of the two active multiplier coordinates across the retained
+failed augmentations gave a projected-map eigenvalue of 0.97732 in its slow
+mode. This explains the high iteration count on that branch. The optional
+`augmentation_acceleration="active_secant"` predictor described in the
+[augmented path guide](GENERAL_CONTACT_C1_AUGMENTED_PATH.md) completed the
+unchanged strict press in five updates and the eight-step cycle including
+opening and recontact. A four-step split restart reproduced the full
+accepted history; changing the option invalidated the checkpoint. The
+original projected consistency and independent gap checks still decide each
+increment. This reduces iteration cost for the observed branch, but does not
+establish physical response convergence or a universal performance result.

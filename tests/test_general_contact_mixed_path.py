@@ -129,3 +129,57 @@ def test_mixed_path_force_slide_unload_reload_and_split_restart():
             restart_checkpoint=prefix.to_restart_checkpoint(),
             max_iterations=18,
         )
+
+
+@pytest.mark.skipif(
+    os.environ.get("ANY_RUN_C1_ACTIVE_SECANT") != "1",
+    reason="opt-in strict projected augmentation cycle and split restart",
+)
+def test_strict_active_secant_path_and_split_restart():
+    def solve(*, fraction=1.0, checkpoint=None, acceleration="active_secant"):
+        model, definition, settings, program = make_case()
+        definition = replace(definition, interactions=(replace(
+            definition.interactions[0], normal_stiffness=10000.0,
+        ),))
+        settings = replace(settings, pressure_tolerance=0.0002,
+                           augmentation_acceleration=acceleration)
+        return solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=18,
+            max_load_factor=fraction, restart_checkpoint=checkpoint,
+            emit_restart_checkpoint=True,
+        )
+
+    full = solve()
+    assert full.status == "completed", full.failure_reason
+    history = full.info["force_displacement_history"]
+    assert len(history) == 8
+    assert [history[i]["contact"]["active_pressure_dofs"] > 0
+            for i in (1, 3, 5, 7)] == [True, True, False, True]
+    assert all(row["normal_multiplier_change"] <= 0.0002
+               and row["contact"]["gap_tolerance_met"] for row in history)
+    assert history[1]["augmentation_acceleration_applied"] > 0
+    assert history[7]["augmentation_acceleration_applied"] > 0
+    assert full.restart_checkpoint["version"] == 2
+
+    prefix = solve(fraction=0.5)
+    assert prefix.status == "completed", prefix.failure_reason
+    resumed = solve(checkpoint=prefix.to_restart_checkpoint())
+    assert resumed.status == "completed", resumed.failure_reason
+    resumed_history = resumed.info["force_displacement_history"]
+    for actual, expected in zip(resumed_history, history, strict=True):
+        assert actual["step_index"] == expected["step_index"]
+        assert (actual["augmentation_iterations"]
+                == expected["augmentation_iterations"])
+        assert (actual["contact"]["active_pressure_dofs"]
+                == expected["contact"]["active_pressure_dofs"])
+        np.testing.assert_allclose(
+            actual["contact"]["integration_force"],
+            expected["contact"]["integration_force"],
+            rtol=1.0e-10, atol=1.0e-12,
+        )
+        assert actual["contact"]["minimum_gap"] == pytest.approx(
+            expected["contact"]["minimum_gap"], abs=1.0e-12,
+        )
+    with pytest.raises(ValueError, match="incompatible|contract|restart"):
+        solve(checkpoint=prefix.to_restart_checkpoint(), acceleration="none")

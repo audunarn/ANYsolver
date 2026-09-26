@@ -198,6 +198,7 @@ class ContactSolverSettings:
     q4_source_weighted_gap_tolerance: float | None = None
     maximum_q4_source_integration_triangles: int | None = None
     q4_source_gap_certificate: str = "whole_face"
+    augmentation_acceleration: str = "none"
 
     def __post_init__(self) -> None:
         if (self.q4_target_weighted_gap_tolerance is not None
@@ -286,6 +287,9 @@ class ContactSolverSettings:
             raise ValueError("maximum_patch_normal_dofs must be a positive integer")
         if type(self.maximum_augmentations) is not int or self.maximum_augmentations < 1:
             raise ValueError("maximum_augmentations must be a positive integer")
+        if (type(self.augmentation_acceleration) is not str
+                or self.augmentation_acceleration not in {"none", "active_secant"}):
+            raise ValueError("augmentation_acceleration must be none or active_secant")
         if self.pressure_tolerance is not None and (
             not np.isfinite(self.pressure_tolerance) or self.pressure_tolerance <= 0.0
         ):
@@ -392,6 +396,13 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if settings is not None and settings.augmentation_acceleration != "none":
+        if (definition.rigid_bodies or len(definition.interactions) != 1
+                or definition.interactions[0].normal_law != "augmented"
+                or settings.pair_motion not in {"general", "restricted_sliding"}):
+            return ContactValidationReport("invalid", (
+                "active secant acceleration requires one augmented deformable shell patch pair",
+            ))
     if settings is not None and settings.q4_source_gap_certificate == "projected_matching":
         if not (settings.pair_motion == "general"
                 and not definition.rigid_bodies

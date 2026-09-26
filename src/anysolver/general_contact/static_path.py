@@ -49,6 +49,7 @@ from .core import (
     contact_scope,
     validate_general_contact,
 )
+from .augmentation import ProjectedAugmentationSecant
 
 
 PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_CONTACT_PATH_DEV_V0"
@@ -246,6 +247,8 @@ def solve_static_contact_path(
                                     else "restricted_sliding")):
         raise ValueError("contact path currently requires a deformable shell pair")
     augmented = definition.interactions[0].normal_law == "augmented"
+    if settings.augmentation_acceleration != "none" and not augmented:
+        raise ValueError("augmentation acceleration requires augmented contact")
     profile = (GENERAL_Q4_Q4_PROFILE
                if report.profile == q4_pair_profile else
                GENERAL_Q4_S3_PATCH_PROFILE
@@ -304,6 +307,8 @@ def solve_static_contact_path(
                     "max_iterations": max_iterations,
                     "tolerance": float(tolerance),
                 }
+                if settings.augmentation_acceleration != "none":
+                    contract["augmentation_acceleration"] = settings.augmentation_acceleration
                 validated = None
                 if restart_checkpoint is not None:
                     validated = validate_nonlinear_checkpoint(
@@ -424,6 +429,9 @@ def solve_static_contact_path(
                     reduced_external = np.asarray(T.T @ external).reshape(-1)
                     candidate_states = committed_states
                     normal_multiplier_change = 0.0
+                    accelerator = (ProjectedAugmentationSecant()
+                                   if settings.augmentation_acceleration == "active_secant"
+                                   else None)
                     augmentation_trace: list[dict[str, object]] = []
                     certificate = None
                     residual_norm = float("inf")
@@ -542,7 +550,13 @@ def solve_static_contact_path(
                             if (normal_multiplier_change <= settings.pressure_tolerance
                                     and certificate.gap_tolerance_met):
                                 break
-                            manager.set_normal_multipliers(projected)
+                            proposal = (None if accelerator is None else
+                                        accelerator.propose(manager.normal_multipliers,
+                                                            projected))
+                            augmentation_trace[-1]["acceleration_applied"] = proposal is not None
+                            manager.set_normal_multipliers(
+                                projected if proposal is None else proposal
+                            )
                         elif certificate.gap_tolerance_met:
                             break
                         else:
@@ -559,6 +573,12 @@ def solve_static_contact_path(
                             "constraint_norm": constraint_norm,
                             "normal_multiplier_change": normal_multiplier_change,
                             "augmentation_trace": augmentation_trace,
+                            "augmentation_acceleration_attempts": (
+                                0 if accelerator is None else accelerator.attempts
+                            ),
+                            "augmentation_acceleration_applied": (
+                                0 if accelerator is None else accelerator.applied
+                            ),
                             "minimum_gap": (
                                 None if certificate is None else
                                 certificate.minimum_gap
@@ -608,6 +628,10 @@ def solve_static_contact_path(
                         "normal_multiplier_change": normal_multiplier_change,
                         "contact": certificate.to_dict(),
                     }
+                    if accelerator is not None:
+                        record["augmentation_acceleration"] = "active_secant"
+                        record["augmentation_acceleration_attempts"] = accelerator.attempts
+                        record["augmentation_acceleration_applied"] = accelerator.applied
                     if program.nodal_forces:
                         previous_force_values = program.force_values_at(step-1)
                         start_u = np.asarray(T @ start_q + u0).reshape(-1)
@@ -654,6 +678,8 @@ def solve_static_contact_path(
                         "targets": program.target_at(accepted_step).tolist(),
                         "reaction_generalized": multipliers.tolist(),
                         "profile": profile,
+                        **({"augmentation_acceleration": settings.augmentation_acceleration}
+                           if settings.augmentation_acceleration != "none" else {}),
                         **({"nodal_forces_n": program.force_values_at(
                             accepted_step,
                         ).tolist()} if program.nodal_forces else {}),
