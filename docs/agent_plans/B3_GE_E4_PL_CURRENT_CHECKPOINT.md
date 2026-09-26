@@ -12,7 +12,9 @@ on the tested grid. Neither that result nor small weak gaps selects a line
 space. The saved F5 common work exposes a transfer-shape difference, but its
 sided cut lacks the conforming plate/seam virtual work needed to score native
 B3 ports. Independent Q4/S3 plastic, rebase and native descriptor development
-has advanced. B2 now has a private eccentric Q4 point candidate, matched
+has advanced; the private native B3 sparse adapter now enforces its owners'
+admission and passes bounded loaded-state tangent checks. B2 has a private
+eccentric Q4 point candidate, matched
 low-mode mass convergence, an explicit mass-origin pullback and a bounded
 physical Q4/B2 massless-multiplier descriptor check. **Remaining uncertainty:**
 Whether the primary joint is a top-face positional bond, an intentional
@@ -1799,6 +1801,22 @@ The unloaded generalized fixture still does not test line-work/couple-load
 derivatives; the physical-fibre fixture does not test a yielded plastic
 tangent. These are remaining coverage limits, not observed formula failures.
 This is not a full derivative envelope or independent material-law oracle.
+
+**Next bounded F08 loaded-path discriminator:** Repeat that same physical
+state-update derivative check with one nonzero generalized line force and
+cell couple on the existing model. This distinguishes an untested load
+correction or spatial chart term from the already passing unloaded operator;
+pass supports the extracted loaded trial contract, while failure isolates
+the load/tangent path for repair. Keep the fixture small and do not infer
+general loaded-model qualification from one direction.
+
+**F08 loaded-path result:** The one-element line-force/cell-couple load
+on the same two-element generalized model passes the physical-update
+directional plateau with the extracted sparse tangent. The focused file
+passes `11/11` including the previous unloaded and ownership checks.
+This resolves the narrow unloaded-path coverage concern for that fixture;
+yielded plastic tangents, other directions and larger compiled layouts
+remain outside this result. No additional loaded sweep is implied.
 
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 

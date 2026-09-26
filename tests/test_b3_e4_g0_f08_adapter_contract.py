@@ -9,6 +9,11 @@ import pytest
 from anysolver._ge_beam3_p5_seeded.core import canonical
 from anysolver._ge_beam3_retained_fibre_program import solve_force_program
 from anysolver._ge_beam3_retained_fibre_state import Context as FibreContext
+from anysolver._ge_beam3_retained_generalized_state import (
+    Context as GeneralizedContext, Program as GeneralizedProgram,
+)
+from anysolver._ge_beam3_native_generalized_loading import DistributedPattern
+from anysolver._ge_beam3_native_line_loading import LinePattern
 from anysolver._ge_beam3_seeded_load_program import ForceProgram
 from anysolver._stiffened_shell_b3_local_adapter import (
     evaluate_local_trial, evaluate_sparse_trial,
@@ -164,11 +169,19 @@ def test_typed_adapter_rejects_invalid_generalized_state_like_owner():
                               family="generalized")
 
 
-@pytest.mark.parametrize("family", ("generalized", "physical_fibre"))
-def test_typed_adapter_tangent_follows_native_state_update(family):
-    if family == "generalized":
-        context = build(4, z_offset=.0675,
-                        torsion_constant=square_torsion_constant()).context
+@pytest.mark.parametrize("case", (
+    "generalized", "generalized_loaded", "physical_fibre"))
+def test_typed_adapter_tangent_follows_native_state_update(case):
+    if case.startswith("generalized"):
+        fixture = build(4, z_offset=.0675,
+                        torsion_constant=square_torsion_constant())
+        context = fixture.context
+        if case == "generalized_loaded":
+            load = DistributedPattern(
+                LinePattern(((1, .09, -.03, .02),)),
+                ((1, .07, -.04, .05),))
+            context = GeneralizedContext(
+                fixture.model, GeneralizedProgram((1.,), load))
         layout = context
         advance = context.advance
     else:
@@ -179,6 +192,7 @@ def test_typed_adapter_tangent_follows_native_state_update(family):
         layout = context.layout
         advance = layout.advance
     state, origin = context.initial.mechanical, context.initial.origins
+    family = "physical_fibre" if case == "physical_fibre" else "generalized"
     direction = np.zeros(layout.count)
     first = layout.nodal_count-6
     direction[first:first+6] = (.4, -.3, .2, .15, -.1, .12)
