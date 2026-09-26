@@ -12,6 +12,12 @@ from test_general_contact_supported_schur_path import _case
 
 if __name__ == "__main__":
     model, definition, settings, program = _case()
+    if len(sys.argv) == 3:
+        shift_x, shift_y = map(float, sys.argv[1:])
+        for node in (7, 8, 9, 10):
+            model.mesh.get_node(node).x += shift_x
+            model.mesh.get_node(node).y += shift_y
+        print(f"additional_target_shift_m=({shift_x}, {shift_y})")
     settings = replace(
         settings,
         general_s3_differentiation="jet2_q4_s3_dev",
@@ -42,7 +48,8 @@ if __name__ == "__main__":
               f"weak_rhs_fraction={entry.get('schur_scaled_weak_rhs_fraction')} "
               f"weak_right_mode={entry.get('schur_scaled_weak_right_mode')} "
               f"pressure_gram_rank={entry.get('pressure_gram_scaled_rank')} "
-              f"schur_applied={entry.get('schur_applied')}")
+              f"schur_applied={entry.get('schur_applied')} "
+              f"schur_rejected={entry.get('schur_rejected')}")
     if failure:
         print(f"gap_tolerance_met={failure.get('gap_tolerance_met')} "
               f"active_modes={failure.get('active_pressure_dofs')} "
