@@ -424,7 +424,7 @@ def solve_static_contact_path(
                     reduced_external = np.asarray(T.T @ external).reshape(-1)
                     candidate_states = committed_states
                     normal_multiplier_change = 0.0
-                    augmentation_trace: list[dict[str, float]] = []
+                    augmentation_trace: list[dict[str, object]] = []
                     certificate = None
                     residual_norm = float("inf")
                     constraint_norm = float("inf")
@@ -500,6 +500,14 @@ def solve_static_contact_path(
                                 "pressure_change": normal_multiplier_change,
                                 "minimum_gap": float(certificate.minimum_gap),
                                 "residual_norm": residual_norm,
+                                "active_pressure_dofs": certificate.active_pressure_dofs,
+                                "source_contact_force_n": (
+                                    None if not hasattr(certificate, "integration_force")
+                                    else list(certificate.integration_force)
+                                ),
+                                "sampled_overlap_gap_m": getattr(
+                                    certificate, "sampled_overlap_gap", None,
+                                ),
                             })
                             if (hasattr(manager, "has_unresolved_weak_open_gap")
                                     and manager.has_unresolved_weak_open_gap(

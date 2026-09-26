@@ -200,6 +200,11 @@ def test_refined_q4_pressure_failure_uses_path_transaction(monkeypatch):
     assert result.status == "diverged"
     assert result.failure_reason == "contact_pressure_space_underresolved"
     assert result.info["contact_failure"]["sampled_overlap_gap"] is not None
+    trace = result.info["contact_failure"]["augmentation_trace"]
+    assert len(trace) == 1
+    assert trace[0]["active_pressure_dofs"] == 0
+    assert trace[0]["source_contact_force_n"] == [0.0, 0.0, 0.0]
+    assert trace[0]["sampled_overlap_gap_m"] is not None
     assert result.steps == []
     assert result.restart_checkpoint is None
     np.testing.assert_array_equal(result.displacements, 0.0)

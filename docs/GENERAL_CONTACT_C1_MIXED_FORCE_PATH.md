@@ -62,3 +62,42 @@ The build, install, import-origin and run logs are retained under
 `C:/ANYworkspaceWork/general-contact-evidence` with
 `wheel-f466eec2-*` and `c1-mixed-path-example-*` names. The wheel was
 not published; this checks package routing for this development case.
+
+## Mesh and enforcement sensitivity
+
+A conforming four-Q4 source patch replaced the two-Q4 source while
+retaining the same two-S3 target, physical supports, total −0.1 N uniform
+right-edge load, 50 mm x controls, 1000 Pa/m normal stiffness, 0.02 Pa
+pressure-update tolerance and 50 µm independent gap budget. The four-Q4
+path completed all eight steps (`c1-mixed-four-q4-full-first.txt`). Its
+active pressure count was 3/3/0/3 at phase endpoints, compared with
+2/2/0/2 for two Q4s. The largest active-step integrated normal-force
+difference was 0.0070% relative to two Q4s; the largest conservative-gap
+difference was 0.000256 µm (`c1-mixed-mesh-compare-first.txt`). This is
+two-level sensitivity for one load/regularization path. It does not prove
+mesh convergence, particularly for localized partial contact.
+
+The normal enforcement study on the **two-Q4 press only** shows that
+normal stiffness and multiplier consistency materially affect the
+integrated answer:
+
+| Stiffness (Pa/m) | Update tolerance (Pa) | Result within 16 updates | Source normal force (N) | Lower gap (µm) |
+|---:|---:|---|---:|---:|
+| 1000 | 0.02 | Completed | 0.0010670 | −15.736 |
+| 1000 | 0.002 | Stopped; final update 0.003255 Pa | No accepted force | −11.557 trial |
+| 10000 | 0.02 | Completed in 4 updates | 0.0163401 | −9.622 |
+| 10000 | 0.002 | Completed in 10 updates | 0.0192712 | −8.349 |
+| 10000 | 0.0002 | Stopped; final update 0.000991 Pa | No accepted force | −8.170 trial |
+
+The 10000 Pa/m response changes about 15% between the two **accepted**
+pressure-update tolerances. The stricter failed run reached a trial
+normal force of 0.0194703 N at update 16, about 1% above its update-10
+trial force, but did not meet its declared 0.0002 Pa criterion. Its
+structural residual and physical gap were small; neither overrides the
+failed contact-consistency gate. The failure retained and restored the
+last accepted open state. Failure-only augmentation diagnostics now
+include active count, global source-contact-force vector and sampled gap
+(`c1-mixed-enforcement-trace-force-first.txt`). These measurements rule
+out a C1 response-convergence claim based on the small mesh difference
+at the original regularization. No stiffness or update tolerance is
+recommended as a universal application setting from this study.
