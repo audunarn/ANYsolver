@@ -16,6 +16,7 @@ from .q4_source_overlap import (
     q4_source_projected_swept_gap_lower, q4_source_swept_gap_lower,
 )
 from .fixed_projection_graph import fixed_projection_graph_swept_certificate
+from .pressure_space import supported_pressure_gram
 
 
 PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
@@ -140,6 +141,10 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                   and len(source_q4) == len(source.element_ids)
                   and not target_q4 and len(target.element_ids) >= 1)
     refined = refined_s3 or refined_q4
+    if (settings.general_s3_differentiation == "jet2_s3_dev"
+            and not (augmented and not source_q4 and not target_q4
+                     and len(source.element_ids)+len(target.element_ids) >= 3)):
+        issues.append("Jet2 S3 development derivative needs an augmented S3/S3 patch of at least three faces")
     if not (bounded or refined):
         issues.append("general shell patch needs three faces or one Q4/Q4 pair")
     if len(source.element_ids)*len(target.element_ids) > settings.maximum_candidate_pairs:
@@ -218,7 +223,9 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             q4_source_area_tolerance=settings.q4_source_area_tolerance,
             q4_source_weighted_gap_tolerance=settings.q4_source_weighted_gap_tolerance,
             maximum_q4_source_integration_triangles=settings.maximum_q4_source_integration_triangles,
-            differentiation="pair_local" if refined else "global",
+            differentiation=("jet2_s3"
+                             if settings.general_s3_differentiation == "jet2_s3_dev"
+                             else "pair_local" if refined else "global"),
             maximum_candidate_pairs=settings.maximum_candidate_pairs,
         )
         if settings.q4_source_gap_certificate == "fixed_projection_graph":
@@ -292,6 +299,9 @@ class _PatchResults:
     pressure_gram_condition_estimate: float | None = None
     multiplier_support_floor_m2: float = 0.0
     unresolved_multiplier_node_ids: tuple[int, ...] = ()
+    pressure_gram_supported_modes: int | None = None
+    pressure_gram_scaled_rank: int | None = None
+    pressure_gram_scaled_condition_estimate: float | None = None
 
     def to_dict(self):
         result = dict(vars(self))
@@ -310,6 +320,10 @@ class _PatchResults:
         if self.pressure_gram_rank is None:
             result.pop("pressure_gram_rank")
             result.pop("pressure_gram_condition_estimate")
+        if self.pressure_gram_scaled_rank is None:
+            for name in ("pressure_gram_supported_modes", "pressure_gram_scaled_rank",
+                         "pressure_gram_scaled_condition_estimate"):
+                result.pop(name)
         return result
 
 
@@ -339,7 +353,7 @@ class GeneralS3PatchManager:
             q4_source_area_tolerance=self.settings.q4_source_area_tolerance,
             q4_source_weighted_gap_tolerance=self.settings.q4_source_weighted_gap_tolerance,
             maximum_q4_source_integration_triangles=self.settings.maximum_q4_source_integration_triangles,
-            differentiation="pair_local" if self.profile in {
+            differentiation="jet2_s3" if self.settings.general_s3_differentiation == "jet2_s3_dev" else "pair_local" if self.profile in {
                 REFINED_AUGMENTED_PROFILE, REFINED_Q4_S3_AUGMENTED_PROFILE,
                 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
@@ -417,21 +431,22 @@ class GeneralS3PatchManager:
         lower = self._gap_lower((source, target))
         state = (self.law.evaluate(source, target, self.normal_multipliers)
                  if self.augmented else self.law.evaluate(source, target))
-        pair_local = (self.augmented
-                      and self.law.geometry.differentiation == "pair_local")
-        pair_evaluations = len(self.law.geometry.pair_laws) if pair_local else 0
+        local_derivatives = (self.augmented
+                             and self.law.geometry.differentiation
+                             in {"pair_local", "jet2_s3"})
+        pair_evaluations = len(self.law.geometry.pair_laws) if local_derivatives else 0
         if state.active_pressure_dofs == 0:
             local_force = np.zeros(self.law.n_coordinates)
             local_tangent = (sparse.csr_matrix((self.law.n_coordinates, self.law.n_coordinates))
                              if tangent else None)
-            evaluations = pair_evaluations if pair_local else 1
+            evaluations = pair_evaluations if local_derivatives else 1
         else:
             work = (self.law.work(source, target, self.normal_multipliers, tangent=tangent)
                     if self.augmented else self.law.work(source, target, tangent=tangent))
             local_force = work.residual
             local_tangent = sparse.csr_matrix(work.tangent) if tangent else None
             evaluations = work.energy_evaluations
-            if pair_local:
+            if local_derivatives:
                 pair_evaluations += work.energy_evaluations
         force = np.asarray(self.map.T @ local_force).reshape(-1)
         stiffness = ((self.map.T @ local_tangent @ self.map).tocsr()
@@ -443,6 +458,7 @@ class GeneralS3PatchManager:
         source_moment = np.sum(np.cross(source, physical[:source_count]), axis=0)
         target_moment = np.sum(np.cross(target, physical[source_count:]), axis=0)
         gram_rank = gram_condition = None
+        gram_scaled = None
         if self.profile in {Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                             SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_AUGMENTED_PROFILE,
@@ -455,6 +471,9 @@ class GeneralS3PatchManager:
             gram_rank = int(len(positive))
             if gram_rank == len(eigenvalues):
                 gram_condition = float(greatest/positive[0])
+            gram_scaled = supported_pressure_gram(
+                state.pressure_gram, state.reference_support,
+            )
         support_floor = 0.0
         unresolved_nodes = ()
         if self.augmented and self.settings.augmentation_support_resolution == "roundoff":
@@ -484,6 +503,9 @@ class GeneralS3PatchManager:
             pair_evaluations,
             gram_rank, gram_condition,
             support_floor, unresolved_nodes,
+            gram_scaled.supported_modes if gram_scaled is not None else None,
+            gram_scaled.scaled_rank if gram_scaled is not None else None,
+            gram_scaled.scaled_condition if gram_scaled is not None else None,
         )
         return force, stiffness, result
 
@@ -665,6 +687,8 @@ class GeneralS3PatchManager:
                              "maximum_augmentations": self.settings.maximum_augmentations}
                             if self.augmented else {}),
                          "general_s3_difference_step": self.settings.general_s3_difference_step,
+                         **({"general_s3_differentiation": self.settings.general_s3_differentiation}
+                            if self.settings.general_s3_differentiation != "existing" else {}),
                          "maximum_general_s3_energy_evaluations": self.settings.maximum_general_s3_energy_evaluations,
                          "q4_target_weighted_gap_tolerance": self.settings.q4_target_weighted_gap_tolerance,
                          "maximum_q4_target_integration_triangles": self.settings.maximum_q4_target_integration_triangles,

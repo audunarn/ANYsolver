@@ -72,7 +72,11 @@ def refined_patch_pivot(manager, displacement, tangent, transform, control_rows,
                       - base.reference_weighted_gap[active, None]
                       * support/area**2)
     variations = manager.map @ transform
-    force_derivative = -np.asarray(variations.T @ weighted.T)
+    # The projected mortar residual is -sum_i p_i (dW_i-g_i dS_i).
+    # Differentiating it with respect to a held multiplier therefore uses
+    # the normalized-gap variation, including changing overlap support.
+    gap_variation = weighted - base.normalized_gap[active, None]*support
+    force_derivative = -np.asarray(variations.T @ gap_variation.T)
     gap_reduced = np.asarray(variations.T @ gap_derivative.T).T
     reduced_tangent = (transform.T @ tangent @ transform).tocsr()
     rows = np.asarray(control_rows, dtype=float)

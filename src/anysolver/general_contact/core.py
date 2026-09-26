@@ -191,6 +191,7 @@ class ContactSolverSettings:
     maximum_beam_pair_gap_cells: int | None = None
     maximum_beam_pair_gap_depth: int | None = None
     general_s3_difference_step: float | None = None
+    general_s3_differentiation: str = "existing"
     maximum_general_s3_energy_evaluations: int = 1500
     q4_target_weighted_gap_tolerance: float | None = None
     maximum_q4_target_integration_triangles: int | None = None
@@ -284,6 +285,8 @@ class ContactSolverSettings:
             or self.general_s3_difference_step <= 0.0
         ):
             raise ValueError("general_s3_difference_step must be finite and positive")
+        if self.general_s3_differentiation not in {"existing", "jet2_s3_dev"}:
+            raise ValueError("general_s3_differentiation must be existing or jet2_s3_dev")
         if (type(self.maximum_general_s3_energy_evaluations) is not int
                 or self.maximum_general_s3_energy_evaluations < 1):
             raise ValueError("maximum_general_s3_energy_evaluations must be positive")
@@ -447,6 +450,23 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if settings is not None and settings.general_s3_differentiation == "jet2_s3_dev":
+        from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
+        selected = (settings.pair_motion == "general"
+                    and not definition.rigid_bodies
+                    and len(definition.surfaces) == 2
+                    and len(definition.interactions) == 1
+                    and definition.interactions[0].normal_law == "augmented"
+                    and sum(len(surface.element_ids) for surface in definition.surfaces) >= 3
+                    and all(type(model.mesh.elements.get(element_id))
+                            is NativeParityE4PLS3V2DShellElement
+                            for surface in definition.surfaces
+                            for element_id in surface.element_ids))
+        if not selected:
+            return ContactValidationReport("invalid", (
+                "Jet2 S3 development derivative requires an augmented general S3/S3 patch of at least three faces",
+            ))
     if settings is not None and settings.augmentation_acceleration != "none":
         if (definition.rigid_bodies or len(definition.interactions) != 1
                 or definition.interactions[0].normal_law != "augmented"

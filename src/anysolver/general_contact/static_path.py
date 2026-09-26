@@ -615,6 +615,15 @@ def solve_static_contact_path(
                                 "pressure_gram_condition_estimate": getattr(
                                     certificate, "pressure_gram_condition_estimate", None,
                                 ),
+                                "pressure_gram_supported_modes": getattr(
+                                    certificate, "pressure_gram_supported_modes", None,
+                                ),
+                                "pressure_gram_scaled_rank": getattr(
+                                    certificate, "pressure_gram_scaled_rank", None,
+                                ),
+                                "pressure_gram_scaled_condition_estimate": getattr(
+                                    certificate, "pressure_gram_scaled_condition_estimate", None,
+                                ),
                                 "minimum_weighted_gap_m": getattr(
                                     certificate, "minimum_weighted_gap_m", None,
                                 ),

@@ -14,10 +14,37 @@ import numpy as np
 from .moving import _has_shared_edge_transition
 from .overlap import PlanarFace, planar_projected_overlap
 from .q4_source_overlap import projected_q4_source_face
+from .s3_overlap_derivatives import UnsupportedOverlapBranch, s3_overlap_derivatives
 from .s3_patch_mortar_energy import (
     MovingS3PatchMortarWork,
     MovingS3PatchPrimalMortarPenalty,
 )
+
+
+def _touching_projected_boundaries(first: PlanarFace, second: PlanarFace) -> bool:
+    """Conservatively identify a zero-area projection branch transition."""
+    tangent = first.corners[1] - first.corners[0]
+    tangent /= np.linalg.norm(tangent)
+    normal = np.cross(first.corners[1] - first.corners[0],
+                      first.corners[-1] - first.corners[0])
+    normal /= np.linalg.norm(normal)
+    binormal = np.cross(normal, tangent)
+    origin = first.corners[0]
+    polygons = tuple(np.column_stack(((face.corners-origin) @ tangent,
+                                      (face.corners-origin) @ binormal))
+                     for face in (first, second))
+    scale = max(float(np.max(np.linalg.norm(p-p[0], axis=1))) for p in polygons)
+    tolerance = 1.0e-11*scale
+    for vertices, edges in ((polygons[0], polygons[1]),
+                            (polygons[1], polygons[0])):
+        for point in vertices:
+            for start, end in zip(edges, np.roll(edges, -1, axis=0)):
+                edge = end-start
+                fraction = np.clip(np.dot(point-start, edge)/np.dot(edge, edge),
+                                   0.0, 1.0)
+                if np.linalg.norm(point-(start+fraction*edge)) <= tolerance:
+                    return True
+    return False
 
 
 class MovingS3PatchProjectedNormal:
@@ -119,7 +146,7 @@ class MovingS3PatchProjectedNormal:
             return MovingS3PatchMortarWork(
                 base, np.zeros(count), np.zeros((count, count)) if tangent else None,
                 len(self.geometry.pair_laws)
-                if self.geometry.differentiation == "pair_local" else 1,
+                if self.geometry.differentiation in {"pair_local", "jet2_s3"} else 1,
             )
         for source_index in self.source_face_indices:
             source_positions = np.asarray(current_source)[source_index]
@@ -138,9 +165,18 @@ class MovingS3PatchProjectedNormal:
                 if (overlap is not None
                         and _has_shared_edge_transition(first, second, overlap)):
                     raise ValueError("S3 patch shared-edge derivative is nonunique")
+                if (overlap is None
+                        and self.geometry.differentiation == "jet2_s3"
+                        and _touching_projected_boundaries(first, second)):
+                    raise UnsupportedOverlapBranch(
+                        "S3 patch zero-area touching overlap has no smooth derivative"
+                    )
         if self.geometry.differentiation == "pair_local":
             return self._pair_local_work(current_source, current_target,
                                          base, tangent=tangent)
+        if self.geometry.differentiation == "jet2_s3":
+            return self._jet2_s3_work(current_source, current_target,
+                                      base, tangent=tangent)
         step = self.geometry.difference_step
         evaluations = 1
         cache = {}
@@ -227,6 +263,99 @@ class MovingS3PatchProjectedNormal:
         tangent_matrix = np.zeros((count, count))
         tangent_matrix[np.ix_(active_coordinates, active_coordinates)] = (
             reduced_tangent
+        )
+        return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
+
+    def _jet2_s3_work(self, current_source, current_target, base, *, tangent):
+        """Assemble differentiated S3 pair geometry into shared pressure nodes."""
+        count = self.n_coordinates
+        source_count = len(self.source_node_ids)
+        active_coordinates = (
+            np.arange(count, dtype=np.intp)
+            if self.tangent_active_coordinates is None else
+            self.tangent_active_coordinates
+        )
+        jw = np.zeros((source_count, count))
+        js = np.zeros_like(jw)
+        assembled_support = np.zeros(source_count)
+        assembled_gap = np.zeros(source_count)
+        weighted_hessian = np.zeros((len(active_coordinates),
+                                     len(active_coordinates))) if tangent else None
+        support_hessian = np.zeros_like(weighted_hessian) if tangent else None
+        evaluations = len(self.geometry.pair_laws)
+        source = np.asarray(current_source, dtype=float)
+        target = np.asarray(current_target, dtype=float)
+        for pair_index, law in enumerate(self.geometry.pair_laws):
+            source_face = pair_index // len(self.geometry.target_faces)
+            target_face = pair_index % len(self.geometry.target_faces)
+            source_nodes = self.source_face_indices[source_face]
+            target_nodes = self.target_face_indices[target_face]
+            local_source = source[source_nodes]
+            local_target = target[target_nodes]
+            local = law.evaluate(local_source, local_target)
+            evaluations += 1
+            if local.reference_overlap_area == 0.0:
+                continue
+            derivative = s3_overlap_derivatives(
+                self.geometry.source_faces[source_face].reference_positions,
+                local_source, local_target,
+            )
+            evaluations += 1
+            if (not np.allclose(derivative.reference_support,
+                                local.reference_support, rtol=1.0e-9, atol=1.0e-12)
+                    or not np.allclose(derivative.reference_weighted_gap,
+                                       local.reference_weighted_gap,
+                                       rtol=1.0e-9, atol=1.0e-12)):
+                raise ValueError("differentiated S3 overlap disagrees with mortar geometry")
+            assembled_support[source_nodes] += derivative.reference_support
+            assembled_gap[source_nodes] += derivative.reference_weighted_gap
+            if not np.any(base.pressure[source_nodes]):
+                continue
+            coordinate_map = np.asarray(
+                [3*int(node)+axis for node in source_nodes for axis in range(3)]
+                + [3*(source_count+int(node))+axis
+                   for node in target_nodes for axis in range(3)],
+                dtype=np.intp,
+            )
+            jw[np.ix_(source_nodes, coordinate_map)] += derivative.weighted_gap_gradient
+            js[np.ix_(source_nodes, coordinate_map)] += derivative.support_gradient
+            if tangent:
+                local_active = np.flatnonzero(np.isin(coordinate_map, active_coordinates))
+                if len(local_active):
+                    global_active = coordinate_map[local_active]
+                    indices = np.searchsorted(active_coordinates, global_active)
+                    local_pressure = base.pressure[source_nodes]
+                    weighted = np.einsum(
+                        "i,ijk->jk", local_pressure,
+                        derivative.weighted_gap_hessian[:, local_active][:, :, local_active],
+                    )
+                    supported = np.einsum(
+                        "i,ijk->jk",
+                        local_pressure*base.normalized_gap[source_nodes],
+                        derivative.support_hessian[:, local_active][:, :, local_active],
+                    )
+                    weighted_hessian[np.ix_(indices, indices)] += weighted
+                    support_hessian[np.ix_(indices, indices)] += supported
+        if (not np.allclose(assembled_support, base.reference_support,
+                            rtol=1.0e-9, atol=1.0e-12)
+                or not np.allclose(assembled_gap, base.reference_weighted_gap,
+                                   rtol=1.0e-9, atol=1.0e-12)):
+            raise ValueError("differentiated S3 patch disagrees with shared pressure support")
+        gap_variation = jw - base.normalized_gap[:, None]*js
+        residual = -(base.pressure @ gap_variation)
+        if not tangent:
+            return MovingS3PatchMortarWork(base, residual, None, evaluations)
+        active = base.pressure > 0.0
+        dg = np.zeros((source_count, len(active_coordinates)))
+        dg[active] = (gap_variation[np.ix_(active, active_coordinates)]
+                      / base.reference_support[active, None])
+        dp = -self.stiffness*dg
+        cross = np.einsum("i,ij,ik->jk", base.pressure,
+                          js[:, active_coordinates], dg)
+        tangent_matrix = np.zeros((count, count))
+        tangent_matrix[np.ix_(active_coordinates, active_coordinates)] = -(
+            gap_variation[:, active_coordinates].T @ dp
+            + weighted_hessian - cross - support_hessian
         )
         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
 

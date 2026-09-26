@@ -76,6 +76,14 @@ def test_q4_partial_overlap_constant_augmented_pressure_balances_bodies():
         assert contact.pressure_gram_rank == 4
         np.testing.assert_allclose(contact.pressure_gram_condition_estimate,
                                    np.linalg.cond(expected_gram), rtol=1e-8)
+        diagonal = np.sqrt(np.diag(expected_gram))
+        scaled_gram = expected_gram/diagonal[:, None]/diagonal[None, :]
+        assert contact.pressure_gram_supported_modes == 4
+        assert contact.pressure_gram_scaled_rank == 4
+        np.testing.assert_allclose(
+            contact.pressure_gram_scaled_condition_estimate,
+            np.linalg.cond(scaled_gram), rtol=1e-8,
+        )
         assert contact.to_dict()["pressure_gram_rank"] == 4
         np.testing.assert_allclose(
             np.asarray(contact.integration_force)+contact.target_force,
