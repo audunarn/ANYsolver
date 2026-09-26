@@ -93,9 +93,10 @@ def project(coords: dict[int, np.ndarray],
             section_x: float = 1.,
             patch_x0: float = .9,
             patch_x1: float = 1.,
-            patch_grid: tuple[float, ...] = (.9, .925, .95, .975, 1.)
+            patch_grid: tuple[float, ...] = (.9, .925, .95, .975, 1.),
+            transverse_cells: int = 8,
             ) -> dict:
-    """Evaluate a declared mesh-aligned 35 mm, factor-four bond patch."""
+    """Evaluate a declared mesh-aligned 35 mm quadratic bond patch."""
     if set(coords) != set(u) or not all(np.isfinite(v).all() for v in u.values()):
         raise ValueError("complete finite solid displacement inventory required")
     grid = np.asarray(patch_grid, dtype=float)
@@ -107,7 +108,10 @@ def project(coords: dict[int, np.ndarray],
             not patch_x0 <= section_x <= patch_x1 or
             not any(abs(patch_x0-x) < 1e-12 for x in grid) or
             not any(abs(patch_x1-x) < 1e-12 for x in patch_grid) or
-            patch_x1 <= patch_x0):
+            patch_x1 <= patch_x0 or transverse_cells not in (8, 10) or
+            (transverse_cells == 10 and
+             (len(grid) != 6 or not np.allclose(
+                grid, np.linspace(.9, 1., 6), rtol=0., atol=1e-12)))):
         raise ValueError("mesh-aligned solid section and bond patch required")
     lookup: dict[tuple[float, float, float], list[int]] = {}
     for node, xyz in coords.items():
@@ -137,8 +141,8 @@ def project(coords: dict[int, np.ndarray],
 
     xcuts = np.array([x for x in grid
                       if patch_x0-1e-12 <= x <= patch_x1+1e-12])
-    ycuts = np.linspace(-.05, .05, 9)
-    zcuts = np.linspace(.0175, .1175, 9)
+    ycuts = np.linspace(-.05, .05, transverse_cells+1)
+    zcuts = np.linspace(.0175, .1175, transverse_cells+1)
     roots, gauss = np.polynomial.legendre.leggauss(3)
     h = 1e-5
     area = 0.
@@ -495,12 +499,24 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--station-series", action="store_true")
     parser.add_argument("--face-gap-bound", action="store_true")
+    parser.add_argument("--factor-five-stations", action="store_true")
     args = parser.parse_args()
     folder = args.case.resolve()
     inp,frd = (folder/(args.stem+suffix) for suffix in (".inp",".frd"))
     coords = _read_deck_nodes(inp)
     u = _read_frd_u(frd)
-    zero = project(coords,{node:np.zeros(3) for node in coords})
+    options = {}
+    if args.factor_five_stations:
+        model = json.loads((folder/"model.json").read_text())
+        if (model.get("factor") != 5 or
+                model.get("bar_reference_profile") !=
+                "C1_TWO_QUADRATIC_TANGENT_ALIGNED_V1" or
+                model.get("bond_policy") != "terminal" or
+                model.get("plate_thickness_m") != .035):
+            raise ValueError("factor-five station projection requires C1 terminal reference")
+        options = {"patch_grid": tuple(np.linspace(.9, 1., 6)),
+                   "transverse_cells": 10}
+    zero = project(coords,{node:np.zeros(3) for node in coords}, **options)
     if (np.max(np.abs(zero["distributing_translation_gap_m"])) > 1e-12 or
             np.max(np.abs(zero["distributing_rotation_gap_rad"])) > 1e-12 or
             zero["rigid_corner_gap_max_norm_m"] > 1e-12):
@@ -509,26 +525,26 @@ def main() -> None:
     shift = np.array((1e-4,-2e-4,3e-4))
     rigid_u = {node:rigid_matrix@xyz+shift-xyz
                for node,xyz in coords.items()}
-    rigid = project(coords,rigid_u)
+    rigid = project(coords,rigid_u, **options)
     rigid_error = max(
         np.max(np.abs(rigid["distributing_translation_gap_m"])),
         np.max(np.abs(rigid["distributing_rotation_gap_rad"])),
         rigid["rigid_corner_gap_max_norm_m"])
     if rigid_error > 1e-9:
         raise AssertionError("projected solid pose is not objective at physical rotation scale")
-    result = project(coords,u)
+    result = project(coords,u, **options)
     if args.face_gap_bound:
         model = json.loads((folder/"model.json").read_text())
         result["unbonded_face_gap_bound"] = bound_c1_unbonded_vertical_gap(
             coords, u, model["unbonded_face_pairs"])
     if args.station_series:
-        whole = [project(coords,u,section_x=station)
-                 for station in (.9,.925,.95,.975,1.)]
-        local = [project(coords,u,section_x=station,
-                         patch_x0=left,patch_x1=right)
-                 for station,left,right in ((.925,.9,.95),
-                                            (.95,.925,.975),
-                                            (.975,.95,1.))]
+        grid = options.get("patch_grid", (.9,.925,.95,.975,1.))
+        whole = [project(coords,u,section_x=float(station), **options)
+                 for station in grid]
+        local = [project(coords,u,section_x=float(grid[i]),
+                         patch_x0=float(grid[i-1]),
+                         patch_x1=float(grid[i+1]), **options)
+                 for i in range(1,len(grid)-1)]
         result["whole_patch_station_series"] = whole
         result["local_patch_station_series"] = local
     result.update({"status":"EXPLORATORY_NOT_G0_ACCEPTANCE",

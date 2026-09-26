@@ -67,6 +67,31 @@ def test_solid_bond_pose_projection_has_zero_reference_and_common_motion(tmp_pat
         assert moved["rigid_corner_gap_max_norm_m"] < 1e-10
 
 
+def test_factor_five_station_projection_uses_its_actual_quadratic_grid(tmp_path):
+    deck, _ = build(
+        5, "tip_fz", boundary_policy="left_root", bond_policy="terminal",
+        element_family="C3D20R", reverse_tip_fz=True,
+        bar_clearance_um=2, bar_reference_profile="c1_tangent",
+        plate_thickness_mm=35, tip_load_map="quadratic_face",
+        full_displacement_output=True)
+    path = tmp_path / "factor5.inp"
+    path.write_text(deck)
+    coords = _read_deck_nodes(path)
+    options = dict(patch_grid=tuple(np.linspace(.9, 1., 6)),
+                   transverse_cells=10)
+    zero = project(coords, {node: np.zeros(3) for node in coords},
+                   **options)
+    assert zero["patch_grid_x_m"] == pytest.approx(
+        (.9, .92, .94, .96, .98, 1.))
+    assert np.max(np.abs(zero["distributing_translation_gap_m"])) < 1e-12
+    rotation = Rotation.from_rotvec((4e-5, -3e-5, 2e-5)).as_matrix()
+    shift = np.array((1e-4, -2e-4, 3e-4))
+    moved = project(coords, {node: rotation@xyz+shift-xyz
+                             for node, xyz in coords.items()}, **options)
+    assert np.max(np.abs(moved["distributing_translation_gap_m"])) < 1e-10
+    assert np.max(np.abs(moved["distributing_rotation_gap_rad"])) < 1e-9
+
+
 def test_full_bond_interior_patch_is_objective_on_its_actual_grid(tmp_path):
     deck, _ = build(
         4, "tip_mx", boundary_policy="left_root", bond_policy="full",
