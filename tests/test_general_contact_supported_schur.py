@@ -97,6 +97,8 @@ def test_bounded_step_below_verification_reduction_is_declined():
     assert diagnostics["schur_full_step_max_pa"] == pytest.approx(1.0)
     assert diagnostics["schur_best_fixed_branch_fraction"] == pytest.approx(1.0/32.0)
     assert diagnostics["schur_best_fixed_branch_residual_pa"] == pytest.approx(0.96875)
+    assert diagnostics["schur_best_projected_fraction"] == pytest.approx(1.0/32.0)
+    assert diagnostics["schur_best_projected_residual_pa"] == pytest.approx(0.96875)
     assert diagnostics["schur_backtrack_rejections"] == {
         "step_cap": 5,
         "negative_pressure": 0,

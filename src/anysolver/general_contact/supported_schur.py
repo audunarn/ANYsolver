@@ -190,6 +190,7 @@ def propose_supported_schur_step(
     # to the admissible pressure cone.  Recompute the projected residual and
     # active set at the projected candidate; the owner re-equilibrates and
     # verifies this predicted set before accepting an algorithmic update.
+    best_projected_residual = None
     for halvings in range(9):
         fraction = 0.5**halvings
         candidate = np.maximum(0.0, pressure + fraction*direction)
@@ -205,6 +206,11 @@ def propose_supported_schur_step(
             np.maximum(0.0, predicted_argument)-candidate,
             ord=np.inf,
         ))
+        if diagnostics is not None and (best_projected_residual is None
+                                        or after < best_projected_residual):
+            best_projected_residual = after
+            diagnostics["schur_best_projected_fraction"] = fraction
+            diagnostics["schur_best_projected_residual_pa"] = after
         if after >= 0.75*before:
             continue
         predicted_active = tuple(int(modes[index]) for index in
