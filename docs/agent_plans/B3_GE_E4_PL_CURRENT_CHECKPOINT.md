@@ -28,13 +28,29 @@ less, and the integrated solid wrench checks against printed supports.
 This is a one-mesh difference between solid and native *coupled* models,
 not an allocation of cause to the shell, beam or connection.
 
-**Remaining uncertainty and next discriminator:** Apply the same F4 solid
-weak bond action to the matched Q4 x4/y4 E4 shell alone and compare its
-face motion/slope and action work with the saved solid and native response.
-If shell-only response accounts for the common-mode difference, investigate
-the shell-side idealization/pose; otherwise isolate the reduced connection
-and retained beam trace. Then assess one-sided port modes with a defensible
-lift before ranking line spaces. No new external solve was run. The old
+The matched F4 shell-only replay reproduces the saved native shell work
+within `8e-13 J` and preserves the pulled-back solid-action wrench to
+`3e-13 N/Nm`. Its solid-action route differs from the solid tip face by
+`3.43 µm RMS`, while native-action replay differs by `0.15 µm`.
+But the F4 reconstructed solid weak Fz differs from independent printed
+support by `1.96 N`, and opposite-side solid action is worse. That is
+material to the face gap, so no causal compensation claim follows.
+The independently reviewed F5 same-action shell comparison remains the
+better shell-side evidence: `+0.776 µm` opening tip-mean difference and
+`1.13–1.27 µrad` transverse slope differences, with a validated solid
+weak wrench. Pure torque there is a linear influence of the pre-opened
+combined load, not a standalone contact state.
+
+**Remaining uncertainty and next discriminator:** Project the *validated F5*
+stress-recovered total bond action and native P0/P1/dual actions onto the
+same smooth, continuous two-hat lateral/vertical/twist fields; this avoids
+F4 force-recovery error and the unallocated cut. Combine that low-order
+transfer with the existing F5 same-action shell response. Persistent common
+transfer discrepancy with accurate shell-only motion implicates the reduced
+connection/beam trace; substantial shell-only error directs shell-side
+pose/idealization work first. A small common discrepancy leaves one-sided
+retained-port modes to test with a justified lift. Do not select a multiplier
+from these finite diagnostics alone. No new external solve was run. The old
 pre-thin-SVD pytest remains permitted and running (session `27660`, PID
 `57260`); do not interrupt it. Formal F03 authority remains unconsumed;
 G0B is open and G1 barred.
@@ -42,7 +58,8 @@ G0B is open and G1 barred.
 New roots: `.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-extreme-ratios-dev-20260926-v2`,
 `.qualification/b3-ge-e4-pl/f03-c1-factor4-cut-flux-dev-20260926-v1`,
 `.qualification/b3-ge-e4-pl/f03-c1-factor5-cut-flux-bracket-dev-20260926-v1`,
-and `.qualification/b3-ge-e4-pl/f03-c1-factor4-common-weak-work-dev-20260926-v1`.
+`.qualification/b3-ge-e4-pl/f03-c1-factor4-common-weak-work-dev-20260926-v1`,
+and `.qualification/b3-ge-e4-pl/f03-c1-factor4-shell-action-dev-20260926-v1`.
 
 ## Previous current-state summary — 26 September 2026
 
