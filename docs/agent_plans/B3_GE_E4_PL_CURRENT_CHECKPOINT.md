@@ -3885,3 +3885,31 @@ If My controls the shift, check its director/shear assumption against
 the 3D bonded face; if Fx controls it, check axial trace and eccentric
 work. Either result requires physical interpretation before ratio or
 multiplier selection. Do not continue row addition after this split.
+
+**Current-state summary, 26 September 2026:** The decision remains whether
+the native six-channel reduced line weld has a physically defensible
+stationwise transfer law; no mortar space is selected. The last fixed-grid
+ablation (`7d318912`, raw
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-action-ablation-dev-20260926-v2`)
+shows alternating Fx alone moves opening tip-z `0.830 µm`, Fz alone
+`0.272 µm`, My alone `0.035 µm`, and Fx+My together `1.059 µm` from
+the single-interval result; all six alternating rows move it
+`1.342 µm`. Torque's full `2.280 µrad` change is carried by the
+Fy/Mx/Mz group. The changes are balanced and physically energized,
+but the large cancelling interval actions and the solid's warping /
+face-slope versus section-rotation split prevent an accuracy claim.
+The executed external reference has an additive independent review
+record in `B3_GE_E4_PL_C1_PREOPEN_COMBINED_DEV_20260926_V2.json`;
+V1 and raw evidence remain unchanged.
+
+Next use the *saved* C1 solid displacement fields and the native
+solutions at the same terminal stations to compare bonded-face slope,
+rigid-section fit, shell director and local work, with explicit geometry,
+load and support mapping. If the mismatch is localized to solid
+warping/rigid-section idealization while transferred shell wrenches
+remain consistent, retain the two-interval law as an unqualified
+candidate for the registered mesh-ratio/stability checks. If the
+interface kinematics or work differ materially before that
+idealization boundary, revise the reduced pose law first. Do not
+resume classical axial refinement. Formal F03 authority is unconsumed,
+G0B remains open, and G1 barred.
