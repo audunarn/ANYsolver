@@ -556,6 +556,10 @@ class GeneralS3PatchManager:
                          "maximum_q4_source_integration_triangles": self.settings.maximum_q4_source_integration_triangles,
                          **({"q4_source_gap_certificate": self.settings.q4_source_gap_certificate}
                             if self.settings.q4_source_gap_certificate != "whole_face" else {}),
+                         **({"augmentation_acceleration": self.settings.augmentation_acceleration,
+                             "augmentation_pivot_max_pressure_pa": self.settings.augmentation_pivot_max_pressure_pa,
+                             "augmentation_pivot_difference_step_m": self.settings.augmentation_pivot_difference_step_m}
+                            if self.settings.augmentation_acceleration == "active_secant_pivot" else {}),
                          "maximum_swept_subdivisions": self.settings.maximum_swept_subdivisions,
                          "maximum_candidate_pairs": self.settings.maximum_candidate_pairs},
         }

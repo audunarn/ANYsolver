@@ -89,3 +89,44 @@ These are developmental solver results. The predictor does not repair an
 underresolved pressure space or qualify mesh, integration, enforcement or
 engineering response convergence. The full C1 and programme gates remain
 open.
+
+## Refined Q4/S3 active-set pivot (development)
+
+The refined augmented Q4/S3 shell patch also admits the explicit
+`augmentation_acceleration="active_secant_pivot"` option. It requires
+`augmentation_pivot_max_pressure_pa` and
+`augmentation_pivot_difference_step_m`. Both are positive dimensional bounds;
+there is no automatic choice. Set `maximum_augmentations` to at least 15 so
+the single pivot trial leaves enough iterations for verification and the
+subsequent secant fit. The option retains the active secant predictor.
+
+After a fixed-multiplier equilibrium, one guarded attempt forms the constrained
+structural/contact Schur response of two to four active pressure nodes. It
+enumerates nonnegative complementarity subsets and proposes a pivot only when
+one subset is locally feasible, its pressure is below the stated cap, and the
+geometry derivative has unchanged overlap topology. The attempt is bounded by
+the existing geometry-evaluation budget. The solver then re-equilibrates the
+proposal, checks the active set, independent physical gap and improvement in
+the projected pressure change, and resets the secant history. A rejected
+nonlinear proposal restores the structural and control iterate and resumes
+ordinary projected updates. Failure to form the geometry or constrained solve
+is reported explicitly. No pivot state is committed before the original
+augmented acceptance tests pass.
+
+In a developmental eight-Q4/two-S3 strict press, with a 20 Pa pivot cap,
+0.1 µm difference step, 16 augmentation limit, 0.0002 Pa pressure tolerance
+and 50 µm gap budget, the public path accepted the press at augmentation 15.
+One pivot and one subsequent secant proposal were applied; the final pressure
+change was 1.08×10⁻⁶ Pa and the independent lower gap was −0.500 µm.
+A checkpoint after the open step reproduced the same contact state on resume.
+With a 2.5 Pa cap, the candidate was declined; the unchanged 16-update limit
+then stopped the press and retained only the previously accepted open step.
+The earlier unaccelerated and active-secant-only failures remain valid evidence.
+Development outputs are `c1-eight-q4-production-pivot-first.txt` and
+`c1-eight-q4-production-pivot-restart.txt`, with the declined-cap control in
+`c1-eight-q4-production-pivot-low-cap.txt`, under
+`C:/ANYworkspaceWork/general-contact-evidence`. This is neither mesh
+convergence nor independent engineering acceptance.
+The runnable source example is
+`examples/general_contact_refined_q4_s3_eight_q4_press.py`; installed-package
+verification of this option remains open.

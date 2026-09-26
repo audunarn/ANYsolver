@@ -7,7 +7,87 @@ independent physical gap before committing any state.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
+
+
+@dataclass(frozen=True)
+class ActiveSetPivot:
+    """One bounded linearized complementarity proposal, never an acceptance."""
+
+    multipliers: np.ndarray
+    retained_local_indices: tuple[int, ...]
+    schur_condition: float
+
+
+def propose_active_set_pivot(
+        multipliers: np.ndarray, normalized_gap: np.ndarray,
+        active_indices: np.ndarray, gap_schur: np.ndarray, *,
+        maximum_pressure: float, gap_consistency: float,
+        ) -> ActiveSetPivot | None:
+    """Enumerate nonnegative roots on subsets of one current active set.
+
+    `gap_schur[i, j]` is the equilibrated gap derivative in m/Pa. A proposal
+    must be re-equilibrated and checked against the actual projected law.
+    """
+
+    lam = np.asarray(multipliers, dtype=float)
+    gap = np.asarray(normalized_gap, dtype=float)
+    active = np.asarray(active_indices, dtype=np.intp)
+    schur = np.asarray(gap_schur, dtype=float)
+    count = len(active)
+    if (lam.ndim != 1 or gap.shape != lam.shape or count < 2 or count > 4
+            or active.ndim != 1 or len(np.unique(active)) != count
+            or np.any(active < 0) or np.any(active >= len(lam))
+            or schur.shape != (count, count)
+            or not all(np.all(np.isfinite(array)) for array in (lam, gap, schur))
+            or np.any(lam < 0.0)):
+        raise ValueError("active-set pivot inputs are invalid")
+    if (not np.isfinite(maximum_pressure) or maximum_pressure <= 0.0
+            or not np.isfinite(gap_consistency) or gap_consistency <= 0.0):
+        raise ValueError("active-set pivot bounds must be finite and positive")
+    if np.any(lam[np.setdiff1d(np.arange(len(lam)), active)] > 0.0):
+        return None
+    try:
+        condition = float(np.linalg.cond(schur))
+    except np.linalg.LinAlgError:
+        return None
+    if not np.isfinite(condition) or condition > 1.0e7:
+        return None
+    roots: list[tuple[np.ndarray, tuple[int, ...]]] = []
+    for mask in range(1, (1 << count) - 1):
+        keep = np.asarray([i for i in range(count) if mask & (1 << i)],
+                          dtype=np.intp)
+        drop = np.asarray([i for i in range(count) if not mask & (1 << i)],
+                          dtype=np.intp)
+        block = schur[np.ix_(keep, keep)]
+        try:
+            if np.linalg.cond(block) > 1.0e7:
+                continue
+            positive = (lam[active[keep]]
+                        - np.linalg.solve(
+                            block,
+                            gap[active[keep]]
+                            - schur[np.ix_(keep, drop)] @ lam[active[drop]],
+                        ))
+        except np.linalg.LinAlgError:
+            continue
+        candidate = np.zeros_like(lam)
+        candidate[active[keep]] = positive
+        if (not np.all(np.isfinite(candidate))
+                or np.any(positive <= 0.0)
+                or np.max(candidate) > maximum_pressure):
+            continue
+        predicted_gap = gap[active] + schur @ (candidate[active]-lam[active])
+        if (np.any(predicted_gap[drop] < -gap_consistency)
+                or np.max(np.abs(predicted_gap[keep])) > gap_consistency):
+            continue
+        roots.append((candidate, tuple(int(i) for i in keep)))
+    if len(roots) != 1:
+        return None
+    candidate, retained = roots[0]
+    return ActiveSetPivot(candidate, retained, condition)
 
 
 class ProjectedAugmentationSecant:

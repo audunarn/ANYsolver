@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 
 from anysolver.assembly import build_constraint_transformation
-from anysolver.control import CancellationToken, cancellation_safe_point
+from anysolver.control import CancellationToken, SolveCancelled, cancellation_safe_point
 from anysolver.linalg import MatrixClass, factorize
 from anysolver.matrix_assembly import (
     _run_with_qualified_assembly_runtime_lease,
@@ -50,6 +50,7 @@ from .core import (
     validate_general_contact,
 )
 from .augmentation import ProjectedAugmentationSecant
+from .linearized_pivot import refined_patch_pivot
 
 
 PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_CONTACT_PATH_DEV_V0"
@@ -249,6 +250,9 @@ def solve_static_contact_path(
     augmented = definition.interactions[0].normal_law == "augmented"
     if settings.augmentation_acceleration != "none" and not augmented:
         raise ValueError("augmentation acceleration requires augmented contact")
+    if (settings.augmentation_acceleration == "active_secant_pivot"
+            and report.profile != refined_q4_s3_augmented_profile):
+        raise ValueError("active-set pivot requires the refined Q4/S3 augmented patch profile")
     profile = (GENERAL_Q4_Q4_PROFILE
                if report.profile == q4_pair_profile else
                GENERAL_Q4_S3_PATCH_PROFILE
@@ -430,8 +434,14 @@ def solve_static_contact_path(
                     candidate_states = committed_states
                     normal_multiplier_change = 0.0
                     accelerator = (ProjectedAugmentationSecant()
-                                   if settings.augmentation_acceleration == "active_secant"
+                                   if settings.augmentation_acceleration in {
+                                       "active_secant", "active_secant_pivot",
+                                   }
                                    else None)
+                    pivot_attempts = 0
+                    pivot_applied = 0
+                    pivot_rejected = 0
+                    pivot_backup = None
                     augmentation_trace: list[dict[str, object]] = []
                     certificate = None
                     residual_norm = float("inf")
@@ -495,8 +505,31 @@ def solve_static_contact_path(
                             q += fraction * delta[:len(q)]
                             multipliers += fraction * delta[len(q):]
                         if failure_reason is not None:
+                            if pivot_backup is not None:
+                                q, multipliers, fallback_pressure, _prior_change, _retained = pivot_backup
+                                manager.set_normal_multipliers(fallback_pressure)
+                                pivot_backup = None
+                                pivot_rejected += 1
+                                augmentation_trace.append({
+                                    "pivot_rejected": failure_reason,
+                                    "augmentation": augmentation,
+                                })
+                                failure_reason = None
+                                accelerator = ProjectedAugmentationSecant()
+                                continue
                             break
                         if not equilibrated:
+                            if pivot_backup is not None:
+                                q, multipliers, fallback_pressure, _prior_change, _retained = pivot_backup
+                                manager.set_normal_multipliers(fallback_pressure)
+                                pivot_backup = None
+                                pivot_rejected += 1
+                                augmentation_trace.append({
+                                    "pivot_rejected": "maximum_iterations_reached",
+                                    "augmentation": augmentation,
+                                })
+                                accelerator = ProjectedAugmentationSecant()
+                                continue
                             failure_reason = "maximum_iterations_reached"
                             break
                         if augmented:
@@ -504,6 +537,27 @@ def solve_static_contact_path(
                             normal_multiplier_change = float(np.max(np.abs(
                                 projected - manager.normal_multipliers
                             )))
+                            if pivot_backup is not None:
+                                (fallback_q, fallback_controls, fallback_pressure,
+                                 prior_change, retained_count) = pivot_backup
+                                pivot_backup = None
+                                if (not certificate.gap_tolerance_met
+                                        or certificate.active_pressure_dofs > retained_count
+                                        or normal_multiplier_change >= 0.75*prior_change):
+                                    q = fallback_q
+                                    multipliers = fallback_controls
+                                    manager.set_normal_multipliers(fallback_pressure)
+                                    pivot_rejected += 1
+                                    augmentation_trace.append({
+                                        "pivot_rejected": "nonlinear_verification",
+                                        "augmentation": augmentation,
+                                        "pressure_change": normal_multiplier_change,
+                                        "minimum_gap": float(certificate.minimum_gap),
+                                    })
+                                    accelerator = ProjectedAugmentationSecant()
+                                    continue
+                                pivot_applied += 1
+                                accelerator = ProjectedAugmentationSecant()
                             augmentation_trace.append({
                                 "pressure_change": normal_multiplier_change,
                                 "minimum_gap": float(certificate.minimum_gap),
@@ -554,6 +608,45 @@ def solve_static_contact_path(
                                         accelerator.propose(manager.normal_multipliers,
                                                             projected))
                             augmentation_trace[-1]["acceleration_applied"] = proposal is not None
+                            if (proposal is None
+                                    and settings.augmentation_acceleration == "active_secant_pivot"
+                                    and pivot_attempts == 0
+                                    and augmentation >= 10
+                                    and augmentation <= augmentation_limit - 5
+                                    and 2 <= certificate.active_pressure_dofs <= 4):
+                                pivot_attempts = 1
+                                try:
+                                    pivot = refined_patch_pivot(
+                                        manager, u, tangent, T, rows,
+                                        difference_step=settings.augmentation_pivot_difference_step_m,
+                                        maximum_pressure=settings.augmentation_pivot_max_pressure_pa,
+                                        pressure_tolerance=settings.pressure_tolerance,
+                                        check_cancel=lambda: cancellation_safe_point(
+                                            cancellation_token,
+                                            f"contact_path.step:{step}.augmentation:{augmentation}.pivot",
+                                        ),
+                                    )
+                                except SolveCancelled:
+                                    raise
+                                except ValueError as exc:
+                                    failure_reason = "contact_active_set_pivot_resource_or_geometry_failure"
+                                    augmentation_trace[-1]["pivot_failure"] = str(exc)
+                                    break
+                                except Exception as exc:
+                                    failure_reason = "contact_active_set_pivot_linearization_failed"
+                                    augmentation_trace[-1]["pivot_failure"] = str(exc)
+                                    break
+                                augmentation_trace[-1]["pivot_proposed"] = pivot is not None
+                                if pivot is not None:
+                                    pivot_backup = (q.copy(), multipliers.copy(),
+                                                    projected.copy(),
+                                                    normal_multiplier_change,
+                                                    len(pivot.retained_local_indices))
+                                    augmentation_trace[-1]["pivot_retained_local_indices"] = list(
+                                        pivot.retained_local_indices)
+                                    augmentation_trace[-1]["pivot_schur_condition"] = pivot.schur_condition
+                                    manager.set_normal_multipliers(pivot.multipliers)
+                                    continue
                             manager.set_normal_multipliers(
                                 projected if proposal is None else proposal
                             )
@@ -579,6 +672,9 @@ def solve_static_contact_path(
                             "augmentation_acceleration_applied": (
                                 0 if accelerator is None else accelerator.applied
                             ),
+                            "pivot_attempts": pivot_attempts,
+                            "pivot_applied": pivot_applied,
+                            "pivot_rejected": pivot_rejected,
                             "minimum_gap": (
                                 None if certificate is None else
                                 certificate.minimum_gap
@@ -629,9 +725,13 @@ def solve_static_contact_path(
                         "contact": certificate.to_dict(),
                     }
                     if accelerator is not None:
-                        record["augmentation_acceleration"] = "active_secant"
+                        record["augmentation_acceleration"] = settings.augmentation_acceleration
                         record["augmentation_acceleration_attempts"] = accelerator.attempts
                         record["augmentation_acceleration_applied"] = accelerator.applied
+                    if settings.augmentation_acceleration == "active_secant_pivot":
+                        record["pivot_attempts"] = pivot_attempts
+                        record["pivot_applied"] = pivot_applied
+                        record["pivot_rejected"] = pivot_rejected
                     if program.nodal_forces:
                         previous_force_values = program.force_values_at(step-1)
                         start_u = np.asarray(T @ start_q + u0).reshape(-1)

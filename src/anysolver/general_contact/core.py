@@ -199,6 +199,8 @@ class ContactSolverSettings:
     maximum_q4_source_integration_triangles: int | None = None
     q4_source_gap_certificate: str = "whole_face"
     augmentation_acceleration: str = "none"
+    augmentation_pivot_max_pressure_pa: float | None = None
+    augmentation_pivot_difference_step_m: float | None = None
 
     def __post_init__(self) -> None:
         if (self.q4_target_weighted_gap_tolerance is not None
@@ -288,8 +290,20 @@ class ContactSolverSettings:
         if type(self.maximum_augmentations) is not int or self.maximum_augmentations < 1:
             raise ValueError("maximum_augmentations must be a positive integer")
         if (type(self.augmentation_acceleration) is not str
-                or self.augmentation_acceleration not in {"none", "active_secant"}):
-            raise ValueError("augmentation_acceleration must be none or active_secant")
+                or self.augmentation_acceleration not in {
+                    "none", "active_secant", "active_secant_pivot",
+                }):
+            raise ValueError("augmentation_acceleration must be none, active_secant or active_secant_pivot")
+        pivot_bounds = (self.augmentation_pivot_max_pressure_pa,
+                        self.augmentation_pivot_difference_step_m)
+        if self.augmentation_acceleration == "active_secant_pivot":
+            if any(value is None or not np.isfinite(value) or value <= 0.0
+                   for value in pivot_bounds):
+                raise ValueError("active_secant_pivot requires positive pressure and difference-step bounds")
+            if self.maximum_augmentations < 15:
+                raise ValueError("active_secant_pivot requires at least 15 augmentations")
+        elif any(value is not None for value in pivot_bounds):
+            raise ValueError("augmentation pivot bounds require active_secant_pivot")
         if self.pressure_tolerance is not None and (
             not np.isfinite(self.pressure_tolerance) or self.pressure_tolerance <= 0.0
         ):
@@ -386,6 +400,25 @@ def _exact_q4_s3_patch(model: FEModel,
                     for element_id in target.element_ids))
 
 
+def _refined_q4_s3_patch(model: FEModel,
+                         definition: ContactDefinition) -> bool:
+    from anysolver.e4_pl_element import QualifiedE4PLShellElement
+    from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
+    if len(definition.surfaces) != 2 or len(definition.interactions) != 1:
+        return False
+    names = {surface.name: surface for surface in definition.surfaces}
+    interaction = definition.interactions[0]
+    source = names.get(interaction.surface)
+    target = names.get(interaction.target)
+    return bool(source is not None and target is not None and source is not target
+                and len(source.element_ids) >= 2 and len(target.element_ids) >= 1
+                and all(type(model.mesh.elements.get(element_id))
+                        is QualifiedE4PLShellElement for element_id in source.element_ids)
+                and all(type(model.mesh.elements.get(element_id))
+                        is NativeParityE4PLS3V2DShellElement for element_id in target.element_ids))
+
+
 def validate_general_contact(model: FEModel, definition: ContactDefinition,
                              settings: ContactSolverSettings | None = None,
                              *, analysis_control: str = "force") -> ContactValidationReport:
@@ -402,6 +435,11 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                 or settings.pair_motion not in {"general", "restricted_sliding"}):
             return ContactValidationReport("invalid", (
                 "active secant acceleration requires one augmented deformable shell patch pair",
+            ))
+        if (settings.augmentation_acceleration == "active_secant_pivot"
+                and not _refined_q4_s3_patch(model, definition)):
+            return ContactValidationReport("invalid", (
+                "active-set pivot requires the refined Q4/S3 augmented patch profile",
             ))
     if settings is not None and settings.q4_source_gap_certificate == "projected_matching":
         if not (settings.pair_motion == "general"
