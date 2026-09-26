@@ -1,0 +1,28 @@
+{
+  "classification": "F12_LOCAL_RIGID_MASS_DEV_NOT_ADMISSION",
+  "four_point_rigid_spatial_inertia_relative_error": 9.733430059555008e-17,
+  "limits": [
+    "one local straight elastic B2 member and independent rigid-motion inertia only",
+    "cubic static trace used as an exploratory mass interpolation; deformational dynamics unqualified",
+    "no attached shell, prestress, buckling, spectral modes or production mass assembly"
+  ],
+  "mass_matrix_symmetry_relative_error": 3.498501828128926e-17,
+  "minimum_element_mass_eigenvalue": 0.005581453687804268,
+  "passed_bounded_identity": true,
+  "physical_data": {
+    "density_kg_m3": 7850.0,
+    "height_m": 0.04,
+    "length_m": 2.0,
+    "mass_origin_local_m": [
+      0.0,
+      0.01,
+      -0.005
+    ],
+    "width_m": 0.08
+  },
+  "question": "Does the physical B2 station trace with independently supplied offset mass data reproduce rigid kinetic work and member reversal?",
+  "reversed_member_mass_matrix_relative_error": 1.5061521512923757e-16,
+  "rigid_station_trace_max_absolute_error": 2.220446049250313e-16,
+  "runner_sha256": "a085a5871770417afb51fc0277563271a4d2dffceb2e37c23f803c7c4a24870c",
+  "threshold": 1e-10
+}

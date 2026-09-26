@@ -202,6 +202,40 @@ prestress, public dispatch, installed package or speed. F09/G0B stay open;
 next work should target those missing contracts, not repeat these elbow
 loads at more side lengths.
 
+**Next bounded B2 F12 mass-contract discriminator (before execution):**
+Can the implemented physical station trace, paired with separately supplied
+section mass at an offset mass center, reproduce the independently derived
+six-rigid-motion spatial inertia of one straight member? Compare four-point
+integrated trace mass against an analytic rod/parallel-axis inertia, verify
+station rigid velocities, and reverse member connectivity with the mass-center
+coordinates transformed into the new local frame. Failure distinguishes a
+trace/frame/offset defect from a metadata-definition ambiguity before any
+coupled modes are implemented. Passing would establish only this local rigid
+kinetic identity; it would not select a dynamic interpolation, qualify
+deformational mass, prestress, buckling, attachments or F12/G0B. Keep the
+declared 6x6 mass metadata independent of stiffness and invent no inertia.
+
+**B2 F12 local rigid-mass result:** Source-bound
+`scripts/probe_b3_ge_e4_pl_g0_f12_b2_rigid_mass.py` and
+`B3_GE_E4_PL_G0_F12_B2_RIGID_MASS_DEV_V1.json` use a 2 m rectangular
+member, 7850 kg/m³ density, and an explicitly offset mass center. The
+four-point integrated station-trace mass reproduces the independently
+derived rigid spatial inertia to `9.74e-17` relative, the reversed-member
+global matrix to `1.51e-16`, and rigid station velocities to `2.23e-16`
+absolute; the bounded matrix is symmetric and has minimum eigenvalue
+`0.00558`. The first script invocation failed before writing evidence because
+its local `np.block` argument used a tuple; the repaired source generated
+V1, which reproduces from the current source. This is a local rigid-motion
+identity only. The cubic static trace has not been accepted as the dynamic
+mass interpolation; deformational modes, coupled algebraic variables,
+prestress, buckling, attachment effects and independent review remain open.
+No F12/G0B status change follows.
+Independent read-only review found no mechanics error in the spatial-inertia
+formula, single offset application, reversal frame or exact-degree quadrature.
+Its analytic oracle reuses the supplied section mass matrix and member frame,
+so it validates the trace against that metadata, not the physical derivation
+of density-to-section inertia. That narrower interpretation is retained.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
