@@ -510,6 +510,21 @@ This is chart-description feasibility only. Actual owner-held beam anchors,
 atomic accepted rebase/continuation, direct restore, larger noncommuting
 motion and independent mechanics review remain required; F06/G0B stay open.
 
+**F06 accepted beam-chart development v5 (27 September):** A separate
+prototype now owns native B3 nodal and retained-cell anchor/coordinate
+arrays in its accepted checkpoint. On the existing curved S3 two-step
+loaded prefix, it stages the shell/beam rebase before moving the accepted
+head, restores that snapshot directly, and carries the beam anchors through
+one loaded cursor-three continuation with nonzero nodal and cell chart
+coordinates. Rehashed anchor and lineage corruption and stale continuation
+are rejected. The focused test passed `1/1`; source/test hashes and the
+earlier writable-array setup failure are recorded in
+`B3_GE_E4_PL_G0_F06_BEAM_CHART_V5_DEV.md`. This is an ownership/restart
+prototype, not a physical chart-coordinate B3 Newton operator: the native
+beam residual and tangent still use physical frame matrices. Q4, large
+noncommuting rotations, repeated rebases, cutback and independent mechanics
+review remain open. F06/G0B status and the G1 bar do not change.
+
 **Next C1 enforcement discriminator:** The x8/m4→m8 torque solve shows
 growing oscillation of the P0 material dual density while all six-channel
 global balances close. The competing explanations are a weakly controlled
