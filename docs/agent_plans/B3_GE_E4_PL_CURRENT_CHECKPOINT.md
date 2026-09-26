@@ -376,6 +376,66 @@ Its analytic oracle reuses the supplied section mass matrix and member frame,
 so it validates the trace against that metadata, not the physical derivation
 of density-to-section inertia. That narrower interpretation is retained.
 
+**Next F12 dynamic-interpolation discriminator (before execution):** The
+rigid mass identity does not show that the physical B2 static station trace
+is an adequate deformation velocity interpolation. Compare its assembled
+mass and stiffness on a uniform slender cantilever at 1/2/4/8 straight
+elements, with explicit density and section inertia, against the analytic
+Euler–Bernoulli first bending frequency. The competing outcomes are
+convergent low-mode behavior, which permits a broader modal and shell-
+attachment assessment, or a persistent bias/nonphysical mode, which sends
+the dynamic interpolation back for revision. Inspect mass positivity,
+symmetry, mode shape, and equation residuals; the analytically slender
+limit is not a full Timoshenko qualification. This is a bounded G0
+development check, not a B2 spectral admission or F12/G0B acceptance.
+
+**F12 V1 result and revised discriminator:**
+`B3_GE_E4_PL_G0_F12_B2_DYNAMIC_MASS_DEV_V1.json` preserves the failed
+strict-monotonic Euler–Bernoulli screen: relative first-frequency errors
+at 1/2/4/8 elements are `0.0047362/0.00046423/0.000012965/0.000017811`.
+All masses are positive, modes have small nodal-shape discrepancies and
+eigen-equation residuals remain below `7e-10`. The final small increase
+may be the physical shear/rotary-inertia offset from the Euler–Bernoulli
+asymptote, not a dynamic-interpolation failure. Before changing the
+interpolation, construct one *independent* high-order Timoshenko
+Rayleigh–Ritz reference with the same E, G, shear factor, density and
+rotary inertia. Confirm its polynomial-order convergence, then compare
+the unchanged B2 mesh results against it. Convergence toward the matched
+reference permits broader F12 checks; persistent nonconvergence or
+nonphysical modes requires revising the mass interpolation. Keep V1 as
+failed evidence; no tolerance or scientific gate is relaxed.
+
+**F12 matched-reference result (27 September):** V2 is retained as a failed
+binary64 polynomial Ritz attempt; severe bending/shear conditioning made its
+high-order estimates nonmonotone, so it is not a reference. V3 introduced an
+independently assembled 60-digit Decimal Timoshenko Rayleigh–Ritz model.
+Independent review found its energy integrals and inverse iteration sound,
+but V3 converted the order-10/12 convergence difference to binary64 before
+reporting it as zero. V4 retains the exact Decimal eigenvalues and records the
+relative frequency change as about `1.015e-17`, rather than zero. Its
+monotone Ritz upper bounds converge to `13.12400219865733 rad/s`. The
+unchanged physical B2 1/2/4/8-element first-mode errors against that matched
+reference are `0.0047563/0.00048418/0.000032911/0.0000021350`; reduced
+mass is positive and equation residuals pass the bounded screen. V1–V3
+remain as historical failed or superseded diagnostics, and V4 is the
+interpreted comparison. This supports proceeding to mixed shell/attachment
+mass, prestress and spectral algebra checks, not B2 modal/buckling admission
+or F12/G0B closure. The scalar cantilever comparison does not validate
+section mass-center, frame, reversal or parallel-axis metadata.
+
+**F10–F11 private B2 point result (27 September):** A physical B2 station
+trace was coupled to a finite four-vertex Q4 translation fit through the
+reference differential of the existing objective point law. The bounded
+development tests check the beam trace and composed actual joint derivative,
+nonzero-multiplier work, global force/moment balance, sparse KKT against an
+independent dense reduced solution, support reactions and invalid geometry.
+The focused B2 definition/trace set passed 15 tests. The private source and
+limits are in `B3_GE_E4_PL_G0_F10_F11_POINT_DEV_NOTE.md`. This identifies a
+viable finite-support point *candidate*, not a selected shell point port,
+nonmatching line law, S3/generalized-section admission, or F10/F11/G0B
+qualification. Further point work depends on the primary physical connection
+choice; independent B2 mass and state foundations may continue meanwhile.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
