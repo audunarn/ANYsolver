@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 import json
+from pathlib import Path
 
 from anysolver.general_contact.supported_schur import propose_supported_schur_step
 
@@ -122,3 +123,51 @@ def test_projected_active_set_can_drop_a_nonnegative_pressure_mode():
     assert proposal.active_indices == (0,)
     np.testing.assert_allclose(proposal.multipliers, [1.04, 0.0])
     assert proposal.predicted_residual_after < 1.0e-12
+
+
+def test_bounded_branch_correction_finds_independent_six_mode_root():
+    evidence = json.loads((Path(__file__).resolve().parents[1] / "reports" /
+        "general_contact_d1_active_set_bounded_diagnostic_20260927.json"
+    ).read_text(encoding="utf-8"))
+    pressure = np.asarray(evidence["initial_pressure_pa"])
+    gap = np.asarray(evidence["initial_normalized_gap_m"])
+    response = np.asarray(evidence["equilibrated_gap_response_m_per_pa"])
+    diagnostics = {}
+    proposal = propose_supported_schur_step(
+        pressure, gap, np.ones(len(pressure), dtype=bool), response,
+        normal_stiffness=evidence["normal_stiffness_pa_per_m"],
+        maximum_pressure=evidence["maximum_pressure_pa"],
+        maximum_pressure_step=evidence["maximum_pressure_step_pa"],
+        maximum_modes=16, diagnostics=diagnostics,
+    )
+    assert proposal is not None
+    assert diagnostics["schur_proposal_kind"] == "bounded_semismooth_active_set"
+    assert proposal.active_indices == (0,)
+    assert proposal.predicted_residual_after < 1.0e-4
+    assert proposal.predicted_residual_after < 0.75*proposal.predicted_residual_before
+    assert proposal.multipliers[0] == pytest.approx(2.82775, rel=1.0e-4)
+    assert np.max(proposal.multipliers[1:]) < 1.0e-5
+
+
+def test_bounded_branch_correction_checks_cancellation():
+    evidence = json.loads((Path(__file__).resolve().parents[1] / "reports" /
+        "general_contact_d1_active_set_bounded_diagnostic_20260927.json"
+    ).read_text(encoding="utf-8"))
+
+    class CancelProbe(Exception):
+        pass
+
+    def cancel():
+        raise CancelProbe()
+
+    pressure = np.asarray(evidence["initial_pressure_pa"])
+    with pytest.raises(CancelProbe):
+        propose_supported_schur_step(
+            pressure, np.asarray(evidence["initial_normalized_gap_m"]),
+            np.ones(len(pressure), dtype=bool),
+            np.asarray(evidence["equilibrated_gap_response_m_per_pa"]),
+            normal_stiffness=evidence["normal_stiffness_pa_per_m"],
+            maximum_pressure=evidence["maximum_pressure_pa"],
+            maximum_pressure_step=evidence["maximum_pressure_step_pa"],
+            maximum_modes=16, check_cancel=cancel,
+        )

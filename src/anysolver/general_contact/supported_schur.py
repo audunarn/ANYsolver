@@ -7,8 +7,10 @@ This module never accepts a mechanical increment or commits physical history.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Callable
 
 import numpy as np
+from scipy.optimize import least_squares
 
 
 @dataclass(frozen=True)
@@ -32,15 +34,17 @@ def propose_supported_schur_step(
     maximum_pressure_step: float,
     maximum_modes: int,
     diagnostics: dict[str, object] | None = None,
+    check_cancel: Callable[[], None] | None = None,
 ) -> SupportedSchurProposal | None:
     """Propose one projected-root Newton step on a stable active branch.
 
     On an active branch, ``R=max(0,lambda-epsilon*g)-lambda`` has derivative
-    ``-epsilon*H`` where ``H=dg_equilibrated/dlambda``.  Inactive rows have
-    derivative ``-I``.  A bounded backtracking trial must reduce the linearized
-    projected residual by the existing nonlinear-verification threshold without
-    changing the active set.  The analysis owner must re-equilibrate and verify
-    the actual residual and physical gap.
+    ``-epsilon*H`` where ``H=dg_equilibrated/dlambda``. Inactive rows have
+    derivative ``-I``. Fixed-branch backtracking is tried first; projected and
+    bounded branch-aware candidates may change the predicted active set. Every
+    proposal must reduce the local residual by the existing verification
+    threshold. The analysis owner re-equilibrates and verifies the actual
+    residual, active set and physical gap.
     """
 
     lam = np.asarray(multipliers, dtype=float).reshape(-1)
@@ -224,4 +228,79 @@ def propose_supported_schur_step(
             condition if np.isfinite(condition) else None,
             fraction, before, after,
         )
-    return decline("bounded_step_or_predicted_merit_failed")
+    # The first Newton direction can point outside the pressure cone even
+    # when another active branch has a small admissible root.  Search the
+    # same local, equilibrated *linearized* gap map with a branch Jacobian.
+    # This remains only a disposable proposal: the owner must solve the full
+    # mechanics again and verify the unchanged merit, gap and active-set gates.
+    lower = np.maximum(0.0, pressure-maximum_pressure_step)
+    upper = np.minimum(maximum_pressure, pressure+maximum_pressure_step)
+    if np.any(lower >= upper):
+        return decline("bounded_step_or_predicted_merit_failed")
+
+    def local_argument(candidate: np.ndarray) -> np.ndarray:
+        return candidate-normal_stiffness*(
+            physical_gap + H @ (candidate-pressure)
+        )
+
+    def local_residual(candidate: np.ndarray) -> np.ndarray:
+        if check_cancel is not None:
+            check_cancel()
+        return np.maximum(0.0, local_argument(candidate))-candidate
+
+    def local_branch_jacobian(candidate: np.ndarray) -> np.ndarray:
+        if check_cancel is not None:
+            check_cancel()
+        branch = local_argument(candidate) > 0.0
+        derivative = -np.eye(count)
+        derivative[branch] = -normal_stiffness*H[branch]
+        return derivative
+
+    maximum_local_evaluations = min(8*count+16, 256)
+    proposals = []
+    evaluations = 0
+    for seed in (pressure, lower):
+        try:
+            bounded = least_squares(
+                local_residual, seed, jac=local_branch_jacobian,
+                bounds=(lower, upper), max_nfev=maximum_local_evaluations,
+                xtol=1.0e-12, ftol=1.0e-12, gtol=1.0e-12,
+            )
+        except ValueError:
+            continue
+        evaluations += int(bounded.nfev)
+        candidate = bounded.x
+        if not bounded.success or not np.all(np.isfinite(candidate)):
+            continue
+        argument = local_argument(candidate)
+        after = float(np.linalg.norm(local_residual(candidate), ord=np.inf))
+        if (not np.all(np.isfinite(argument)) or not np.isfinite(after)
+                or np.any(candidate < lower-1.0e-12)
+                or np.any(candidate > upper+1.0e-12)
+                or np.any(np.abs(argument) <= roundoff)):
+            continue
+        proposals.append((after, float(np.linalg.norm(candidate-pressure)),
+                          float(np.linalg.norm(candidate)), candidate,
+                          argument))
+    if diagnostics is not None:
+        diagnostics["schur_bounded_semismooth_evaluations"] = evaluations
+        diagnostics["schur_bounded_semismooth_candidates"] = len(proposals)
+    if not proposals:
+        return decline("bounded_semismooth_local_solve_failed")
+    after, _step_norm, _pressure_norm, candidate, argument = min(
+        proposals, key=lambda item: item[:3],
+    )
+    if diagnostics is not None:
+        diagnostics["schur_bounded_semismooth_residual_pa"] = after
+    if after >= 0.75*before:
+        return decline("bounded_step_or_predicted_merit_failed")
+    proposed = lam.copy()
+    proposed[modes] = candidate
+    if diagnostics is not None:
+        diagnostics["schur_proposal_kind"] = "bounded_semismooth_active_set"
+    return SupportedSchurProposal(
+        proposed,
+        tuple(int(modes[index]) for index in np.flatnonzero(argument > 0.0)),
+        condition if np.isfinite(condition) else None,
+        1.0, before, after,
+    )

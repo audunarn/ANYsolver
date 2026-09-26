@@ -334,4 +334,5 @@ def refined_patch_supported_schur(
         maximum_pressure_step=maximum_pressure_step,
         maximum_modes=maximum_modes,
         diagnostics=diagnostics,
+        check_cancel=check_cancel,
     )
