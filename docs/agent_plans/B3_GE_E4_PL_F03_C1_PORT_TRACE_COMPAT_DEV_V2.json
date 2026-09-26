@@ -1,0 +1,29 @@
+{
+  "assumed_rigid_section_extension": {
+    "bonded_cut_nodes": 21,
+    "bonded_seam_formal_pose_rank": 5,
+    "bonded_seam_relative_rotation_trace_rank": 3,
+    "cut_nodes": 341,
+    "full_formal_pose_difference_rank": 6,
+    "full_relative_rotation_trace_rank": 3
+  },
+  "bounded_f5_validation_sha256": "5ec92531508ebf1476bc98e6ecb82cb98101c285e6951f9c6c6f568b70170c27",
+  "classification": "bounded actual-native image and assumed rigid-section cut algebra, not connection qualification",
+  "conclusion": "The actual B3 endpoint image has shared translation and three independent relative rotations. Under an assumed rigid-section extension to the intact solid cut, continuity removes those three relative rotations and leaves a six-dimensional compatible native image. This blocks direct independent-sided rigid scoring without a separately justified conforming extension and companion seam work; it does not establish a connection defect.",
+  "decision": "Do the two actual native endpoint poses have 12 independent rigid coordinates on the intact solid cut?",
+  "limits": [
+    "the spatial port defines position and frame, not a unique solid-section displacement extension",
+    "the rank result is kinematic and cannot select the physical shell trace or multiplier space",
+    "the V1 bar-only broken-field work remains projection-dependent and is not an intact-system error"
+  ],
+  "native": {
+    "actual_full_cut_compatible_image_dimension": 6,
+    "actual_pair_tangent_image_dimension": 9,
+    "formal_two_pose_coordinate_dimension": 12,
+    "independent_relative_rotation_rank": 3,
+    "shared_translation_jacobian_max_difference": 0.0
+  },
+  "runner_sha256": "3e53887b41ec1018618086ffc6198d94e3bf666f86eb148cf7346a1279c80586",
+  "v1_runner_sha256": "5a6db15fc2303086745a9d4e8fd2e316c94a2d779818634f4eb612857bc302f0",
+  "v1_sha256": "ae07bb2c8a460cfae4f33025726db5f87f4306431979e726f4007de20015d0ba"
+}

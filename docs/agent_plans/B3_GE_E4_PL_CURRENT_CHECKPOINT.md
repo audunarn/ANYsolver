@@ -114,21 +114,28 @@ fields and same-action shell response; do not request another finer solid
 solve just to obtain a different scalar. G0B remains open and G1 barred.
 
 **Native-port trace compatibility audit:**
-`scripts/b3_e4_f03_c1_port_trace_compatibility.py` and
-`B3_GE_E4_PL_F03_C1_PORT_TRACE_COMPAT_DEV_V1.json` bind the above cut and
-actual B3 half-cell spatial ports. The left/right retained rotational tangent
-columns are independent at the same centreline position. A rigid-section
-displacement trace over the 341 shared solid cut nodes has rank six; equality
-of left and right traces leaves only a six-dimensional compatible subspace of
-their twelve independent rigid-port coordinates. The 21 plate-bonded nodes
-alone have rank five, which cannot be substituted for the full cut trace.
+`scripts/b3_e4_f03_c1_port_trace_compatibility.py` and its V1 JSON bind the
+above cut and actual B3 half-cell spatial ports. Independent read-only review
+identified a needed distinction: V1's twelve coordinates are those of two
+*formal* independent rigid poses. Actual B3 endpoint ports share all three
+translation tangent rows; their paired image has dimension nine, with three
+independent relative retained rotations. The source-bound
+`scripts/b3_e4_f03_c1_port_trace_compatibility_v2.py` and V2 JSON check this
+actual image and bind the V3 F5 validation status and input hashes. Under an
+*assumed* rigid-section extension to all 341 common solid cut nodes, relative
+rotation trace rank is three and continuity leaves a six-dimensional native
+compatible image. The 21 plate-bonded nodes alone have formal pose rank five,
+but their relative-rotation trace rank is three; neither rank supplies a
+unique physical extension of the native spatial port.
 For a declared equal-side projection of a left-only unit twist, the omitted
 *bar-only broken-space* work is `57.8468 Nm/rad`; this depends on the chosen
 projection and excludes unknown side allocation of plate/seam work. It is
 not an admissible intact-assembly work error or a bound on connection error.
 The bounded decision is to stop direct sided-port accuracy scoring until a
 conforming extension and complete work map are specified. This is not a
-failure of the native beam or of the connection law. Preserve the validated
+failure of the native beam or of the connection law. Preserve V1 as the
+original formal-pose calculation and use V2 for the native interpretation.
+Preserve the validated
 common-field F5 comparisons and proceed to the physical trace/torque/shear
 decision. G0B remains open, G1 barred.
 
