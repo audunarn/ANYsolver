@@ -41,16 +41,31 @@ better shell-side evidence: `+0.776 µm` opening tip-mean difference and
 weak wrench. Pure torque there is a linear influence of the pre-opened
 combined load, not a standalone contact state.
 
-**Remaining uncertainty and next discriminator:** Project the *validated F5*
-stress-recovered total bond action and native P0/P1/dual actions onto the
-same smooth, continuous two-hat lateral/vertical/twist fields; this avoids
-F4 force-recovery error and the unallocated cut. Combine that low-order
-transfer with the existing F5 same-action shell response. Persistent common
-transfer discrepancy with accurate shell-only motion implicates the reduced
-connection/beam trace; substantial shell-only error directs shell-side
-pose/idealization work first. A small common discrepancy leaves one-sided
-retained-port modes to test with a justified lift. Do not select a multiplier
-from these finite diagnostics alone. No new external solve was run. The old
+The new *validated F5* two-hat common-trace comparison confirms a physical
+low-order transfer-shape difference without relying on F4 nodal-force
+recovery or a cut traction. Solid first x moments of `Fy/Fz` about `.95 m`
+are `16.67/−84.15 N·m`; native P0, P1 and dual give respectively
+`31.80/−63.62`, `32.48/−60.60` and `27.19/−60.13 N·m`. The recovered
+solid wrench agrees with independent support within `0.001 N/Nm`.
+At the F5 combined-load tip, the solid face mean z is `−69.287 µm`;
+E4 under the *same solid action* gives `−68.511 µm`, while native
+P0/P1/dual give `−69.187/−69.023/−69.174 µm` by linear superposition
+of the saved physical influences. Native action therefore changes the
+transfer shape in a way that improves this tip observable despite a
+shell/solid same-action difference. One scalar improvement does not
+establish correct six-channel connection mechanics or select a space.
+
+**Remaining uncertainty and next discriminator:** The shell-side pose,
+transverse shear/director interpretation and one-sided retained B3 port
+work must be reconciled before a native connection decision. Use the
+existing F5 same-action response and validated common-mode transfer to
+derive a specifically testable shell trace/footprint law. A one-sided
+port-work comparison needs a resolved reference with a verified sided
+force partition; the saved shared-node solid and face-stress extrapolation
+do not supply one. Check the candidate with objective/patch/work tangents
+and the registered mesh-ratio/interface-mode cases, then request the G0
+mechanics review. Do not select a multiplier from these finite diagnostics
+alone. No new external solve was run. The old
 pre-thin-SVD pytest remains permitted and running (session `27660`, PID
 `57260`); do not interrupt it. Formal F03 authority remains unconsumed;
 G0B is open and G1 barred.
@@ -60,6 +75,8 @@ New roots: `.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-extre
 `.qualification/b3-ge-e4-pl/f03-c1-factor5-cut-flux-bracket-dev-20260926-v1`,
 `.qualification/b3-ge-e4-pl/f03-c1-factor4-common-weak-work-dev-20260926-v1`,
 and `.qualification/b3-ge-e4-pl/f03-c1-factor4-shell-action-dev-20260926-v1`.
+The validated F5 common-mode root is
+`.qualification/b3-ge-e4-pl/f03-c1-factor5-common-weak-work-dev-20260926-v1`.
 
 ## Previous current-state summary — 26 September 2026
 
