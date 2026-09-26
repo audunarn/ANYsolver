@@ -62,6 +62,24 @@ select P0/P1/dual. The existing same-solid-action E4 response and the
 missing sided B3 port work are now the discriminators; do not launch another
 transverse or classical axial refinement from this small remainder.
 
+**Native KKT metric result:** Commit `2028c8d8` preserves the failed V1
+layout check and the completed V2 source/manifest/result in
+`B3_GE_E4_PL_G0_F03_C1_NATIVE_MIXED_METRIC_DEV_V2`. The actual supported
+KKT uses 1,188 E4 and 216 complete native B3 primal coordinates, including
+retained half-cell rotations and generalized resultants, plus 24/30 or
+48/54 line rows. With its declared auxiliary physical/unit Riesz factors,
+the m4→m8 smallest singular values are P0 `0.00187656→0.00187923`, P1
+`0.00187669→0.00188061`, and dual `0.00187673→0.00188068`. Every weakest
+vector has about `99.93%` of its norm in shell numerical drilling chart
+coordinates and at most `0.0051%` in the line dual. The work transpose,
+constraint ranks and scaled SVD residuals check numerically, but the
+minimum is governed by the auxiliary drilling norm, not the growing line
+space. This cannot offset the positive-trace P0 decline or establish native
+line stability. Preserve the raw V1/V2 evidence. Any next stability metric
+needs a physically justified treatment of the E4 drilling coordinate and
+independent norm review; do not tune a coefficient just to expose a desired
+singular mode.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
