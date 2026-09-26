@@ -28,6 +28,7 @@ KINDS = ("piecewise_constant", "continuous_linear", "dual_linear")
 MODES = ("actual_solid_face", "solid_cell_Q4_proxy", "native_host_Q4_proxy")
 NATIVE_X = np.array((.9,.95,1.))
 NATIVE_Y = np.linspace(-.05,.05,5)
+Y_INTEGRATION_CUTS = np.unique(np.r_[YCUTS,NATIVE_Y])
 
 
 def _sha(path: Path) -> str:
@@ -141,7 +142,11 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
     for sx0, sx1 in zip(CUTS[:-1], CUTS[1:]):
         ix = min(len(GRID)-2, int(np.searchsorted(GRID, (sx0+sx1)/2.)-1))
         x0, x1 = GRID[ix:ix+2]
-        for y0, y1 in zip(YCUTS[:-1], YCUTS[1:]):
+        for sy0, sy1 in zip(Y_INTEGRATION_CUTS[:-1],
+                            Y_INTEGRATION_CUTS[1:]):
+            iy = min(len(YCUTS)-2,
+                     int(np.searchsorted(YCUTS,(sy0+sy1)/2.)-1))
+            y0,y1 = YCUTS[iy:iy+2]
             top = _face_nodes(node, u, float(x0), float(x1),
                               float(y0), float(y1), .0175)
             middle = _face_nodes(node, u, float(x0), float(x1),
@@ -181,13 +186,14 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
                 native_direct = _director((1-nf)*native[(float(nx0),0.)][1]+
                                           nf*native[(float(nx1),0.)][1])
                 for eta, wy in zip(roots, weights):
-                    y = (y0+y1)/2 + float(eta)*(y1-y0)/2
-                    shape = _quad8_shape(float(parent_xi),float(eta))
+                    y = (sy0+sy1)/2 + float(eta)*(sy1-sy0)/2
+                    parent_eta = 2.*(y-y0)/(y1-y0)-1.
+                    shape = _quad8_shape(float(parent_xi),float(parent_eta))
                     true_u = shape@top
-                    n4 = np.array(((1-parent_xi)*(1-eta),
-                                   (1+parent_xi)*(1-eta),
-                                   (1+parent_xi)*(1+eta),
-                                   (1-parent_xi)*(1+eta)))/4.
+                    n4 = np.array(((1-parent_xi)*(1-parent_eta),
+                                   (1+parent_xi)*(1-parent_eta),
+                                   (1+parent_xi)*(1+parent_eta),
+                                   (1-parent_xi)*(1+parent_eta)))/4.
                     fine_u = n4@(middle[:4]+.0175*(nodal_directors-np.array((0.,0.,1.))))
                     nj = min(len(NATIVE_Y)-2,
                              max(0,int(np.searchsorted(NATIVE_Y,y,side="right")-1)))
@@ -202,7 +208,7 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
                     coarse_u = coarse_shape@np.array([
                         mid+.0175*(director-np.array((0.,0.,1.)))
                         for mid,director in coarse_nodes])
-                    w = float(wx*wy*(sx1-sx0)*(y1-y0)/4.)
+                    w = float(wx*wy*(sx1-sx0)*(sy1-sy0)/4.)
                     for mode,proxy in (("solid_cell_Q4_proxy",fine_u),
                                        ("native_host_Q4_proxy",coarse_u)):
                         delta = true_u-proxy
@@ -253,7 +259,7 @@ def _integrate(coords: dict[int, np.ndarray], u: dict[int, np.ndarray],
             "solid_to_Q4_proxy_top_face_rms_m":{mode:float(np.sqrt(v/area))
                                                  for mode,v in shell_approx_sq.items()},
             "solid_to_Q4_proxy_top_face_max_m":max_approx,"area_m2":area,
-            "quadrature_points":6*10*3*3,
+            "quadrature_points":6*12*3*3,
             "meaning":"Each six-vector is the basis-weighted mean [Fx,Fy,Fz,Mx,My,Mz] gap under the native hybrid law; positions in m and pitch/moments in rad-like units. These are kinematic gaps, not force residuals or physical bond slip."}
 
 
