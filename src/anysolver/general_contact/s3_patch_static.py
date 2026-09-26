@@ -15,6 +15,7 @@ from .q4_source_overlap import (
     q4_source_gap_lower, q4_source_projected_gap_lower,
     q4_source_projected_swept_gap_lower, q4_source_swept_gap_lower,
 )
+from .fixed_projection_graph import fixed_projection_graph_swept_certificate
 
 
 PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
@@ -30,6 +31,7 @@ Q4_PAIR_PROJECTED_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENT
 REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
 REFINED_Q4_S3_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_ROUNDOFF_AUGMENTED_STATIC_DEV_V2"
+REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_FIXED_PROJECTION_GRAPH_AUGMENTED_STATIC_DEV_V0"
 
 
 class SupportResetForceBudgetExceeded(ValueError):
@@ -162,7 +164,9 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
     if augmented:
-        profile = (REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE
+        profile = (REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE
+                   if refined_q4 and settings.q4_source_gap_certificate == "fixed_projection_graph" else
+                   REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE
                    if refined_q4 and settings.augmentation_support_resolution == "roundoff" else
                    REFINED_Q4_S3_AUGMENTED_PROFILE if refined_q4 else
                    REFINED_AUGMENTED_PROFILE if refined_s3 else
@@ -178,6 +182,11 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
         issues.append("projected-matching Q4 gap certificate requires augmented Q4/Q4 or Q4/two-S3")
     if refined_q4 and settings.q4_source_gap_certificate == "projected_matching":
         issues.append("refined Q4/S3 patch has no projected-matching gap profile")
+    if settings.q4_source_gap_certificate == "fixed_projection_graph" and not (
+            refined_q4 and augmented
+            and settings.augmentation_support_resolution == "exact"
+            and settings.augmentation_acceleration == "none"):
+        issues.append("fixed-projection graph gap requires refined augmented Q4/S3 with exact support and no acceleration")
     for side_index, surface in enumerate((source, target)):
         if surface.beam_radius is not None:
             issues.append(f"surface {surface.name} cannot declare beam radius")
@@ -212,6 +221,20 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             differentiation="pair_local" if refined else "global",
             maximum_candidate_pairs=settings.maximum_candidate_pairs,
         )
+        if settings.q4_source_gap_certificate == "fixed_projection_graph":
+            represented = False
+            for si in potential.source_face_indices:
+                for ti in potential.target_face_indices:
+                    certificate = fixed_projection_graph_swept_certificate(
+                        potential.reference_source[si],
+                        potential.reference_source[si],
+                        potential.reference_target[ti],
+                        potential.reference_target[ti],
+                        interaction.gap_tolerance,
+                    )
+                    represented |= certificate.expanded_overlap_vertices > 0
+            if not represented:
+                issues.append("fixed-projection graph patch needs reference projected overlap")
         _unique_work_map(adapters[0], potential.source_node_ids)
         _unique_work_map(adapters[1], potential.target_node_ids)
         normal = _normal(adapters[0][0].reference_positions)
@@ -319,6 +342,7 @@ class GeneralS3PatchManager:
             differentiation="pair_local" if self.profile in {
                 REFINED_AUGMENTED_PROFILE, REFINED_Q4_S3_AUGMENTED_PROFILE,
                 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
+                REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
             }
             else "global",
             maximum_candidate_pairs=self.settings.maximum_candidate_pairs,
@@ -361,6 +385,24 @@ class GeneralS3PatchManager:
 
     def _gap_lower(self, positions):
         source, target = positions
+        if self.settings.q4_source_gap_certificate == "fixed_projection_graph":
+            lowers = []
+            for si in self.law.source_face_indices:
+                for ti in self.law.target_face_indices:
+                    certificate = fixed_projection_graph_swept_certificate(
+                        source[si], source[si], target[ti], target[ti],
+                        self.gap_tolerance,
+                    )
+                    if certificate.expanded_overlap_vertices == 0:
+                        continue
+                    if certificate.admissible:
+                        vertical = certificate.vertical_lower_m
+                        lowers.append(vertical/certificate.normal_cosine_lower
+                                      if vertical < 0. else
+                                      vertical*certificate.normal_cosine_lower)
+                    else:
+                        lowers.append(q4_source_gap_lower(source[si], target[ti]))
+            return min(lowers) if lowers else float("inf")
         q4_lower = (q4_source_projected_gap_lower
                     if self.settings.q4_source_gap_certificate == "projected_matching"
                     else q4_source_gap_lower)
@@ -404,7 +446,8 @@ class GeneralS3PatchManager:
         if self.profile in {Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                             SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_AUGMENTED_PROFILE,
-                            REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE}:
+                            REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
+                            REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE}:
             eigenvalues = np.linalg.eigvalsh(state.pressure_gram)
             greatest = max(0.0, float(eigenvalues[-1]))
             threshold = (len(eigenvalues)*np.finfo(float).eps*greatest)
@@ -479,7 +522,8 @@ class GeneralS3PatchManager:
                                 Q4_PAIR_AUGMENTED_PROFILE,
                                 Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_AUGMENTED_PROFILE,
-                                REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE}:
+                                REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
+                                REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE}:
             return
         variations = (self.map @ transform).tocsr()
         variations.eliminate_zeros()
@@ -545,21 +589,32 @@ class GeneralS3PatchManager:
                         controls = _normal_controls(left[side][local], right[side][local])
                         if min(float(item@reference) for item in controls) <= 0.0:
                             orientation_ok = False
-            q4_swept_lower = (
-                q4_source_projected_swept_gap_lower
-                if self.settings.q4_source_gap_certificate == "projected_matching"
-                else q4_source_swept_gap_lower
-            )
-            gap_ok = all(
-                (q4_swept_lower(
-                    left[0][si], right[0][si],
-                    left[1][ti], right[1][ti], self.reference_normals[0],
-                ) if len(si) == 4 else
-                 _swept_gap_lower(left[0][si], right[0][si],
-                                  left[1][ti], right[1][ti])) >= -self.gap_tolerance
-                for si in self.law.source_face_indices
-                for ti in self.law.target_face_indices
-            )
+            if self.settings.q4_source_gap_certificate == "fixed_projection_graph":
+                gap_ok = all(
+                    fixed_projection_graph_swept_certificate(
+                        left[0][si], right[0][si],
+                        left[1][ti], right[1][ti],
+                        self.gap_tolerance,
+                    ).admissible
+                    for si in self.law.source_face_indices
+                    for ti in self.law.target_face_indices
+                )
+            else:
+                q4_swept_lower = (
+                    q4_source_projected_swept_gap_lower
+                    if self.settings.q4_source_gap_certificate == "projected_matching"
+                    else q4_source_swept_gap_lower
+                )
+                gap_ok = all(
+                    (q4_swept_lower(
+                        left[0][si], right[0][si],
+                        left[1][ti], right[1][ti], self.reference_normals[0],
+                    ) if len(si) == 4 else
+                     _swept_gap_lower(left[0][si], right[0][si],
+                                      left[1][ti], right[1][ti])) >= -self.gap_tolerance
+                    for si in self.law.source_face_indices
+                    for ti in self.law.target_face_indices
+                )
             if orientation_ok and gap_ok:
                 return True
             if depth >= self.settings.maximum_swept_subdivisions:

@@ -76,6 +76,49 @@ cover the skew edge, a small cut, rigid transforms and invalid faces. The
 helper is not used by solver admission; its instantaneous result cannot
 certify a moving trial path.
 
+## Restricted fixed-projection graph candidate
+
+`Q4_S3_PATCH_REFINED_FIXED_PROJECTION_GRAPH_AUGMENTED_STATIC_DEV_V0` is an
+opt-in development profile selected by
+`ContactSolverSettings(q4_source_gap_certificate="fixed_projection_graph")`.
+It admits the same refined augmented Q4/S3 pressure space with exact support
+and no augmentation acceleration. Each Q4 must remain a bilinear height graph
+over one fixed projected rectangle; the planar convex S3 target may translate
+only along its fixed normal. Any in-plane source or target motion, changing
+target tilt or unsuitable projected face raises a geometry error. This is a
+restricted normal-approach path, not the finite-sliding C1 capability.
+
+For a linear nodal trial path, the check expands the target's projected
+halfspaces by the largest in-plane projection of a normal contact offset at
+the declared gap threshold. It minimizes the bilinear vertical separation
+over that convex clipped region at both path endpoints. The spatial minimum
+is on a boundary edge, where the height is quadratic. Endpoint minima then
+bound the complete linear trial path at each fixed projected point. A
+normal-cosine bound turns this into a conservative threshold check; unsupported
+geometry fails explicitly. The independently measured instantaneous planar
+overlap gap remains a separate control. Tests exercise skew partial overlap,
+small cuts, common rigid transforms, unsupported motion and randomized
+bilinear paths. The profile has its own static-path and restart identities.
+
+This candidate needs coupled partial-contact equilibrium, pressure-space
+stability, enforcement refinement and independent review before C1
+qualification. The established whole-face profile and its historical failed
+skew trials remain unchanged.
+
+The first two-step skew path with two Q4 source faces completed under the
+50 µm gap budget and emitted a restart checkpoint; its supported pressure
+modes stayed open. A 24-Q4 fixed-pose control had one active supported mode.
+The corresponding unconstrained coupled paths relaxed to open configurations.
+A separate affine-MPC control retained the active mode and a −35.21 µm
+certified gap, but exhausted the unchanged augmentation limit because all
+normal motion was prescribed. Its rejected step rolled back. These controls
+establish routing and failure handling, not active coupled equilibrium.
+Releasing nine local normal DOFs produced a small contact response and kept
+the independent gap within budget, but also reached the 16-update limit at
+a 0.5018 Pa pressure change against its separately registered 0.2 Pa gate.
+That rejected step rolled back. Active partial-contact equilibrium remains
+unproven for this skew patch.
+
 The first admitted coupled case has two adjacent Q4 source faces and two
 nonmatching S3 target faces. Direct local work matches whole-patch projected
 normal residual to a maximum absolute difference of (5.6\times10^{-13})

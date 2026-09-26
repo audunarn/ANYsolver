@@ -223,8 +223,9 @@ class ContactSolverSettings:
                 and (type(self.maximum_q4_source_integration_triangles) is not int
                      or self.maximum_q4_source_integration_triangles < 1)):
             raise ValueError("maximum_q4_source_integration_triangles must be a positive integer")
-        if self.q4_source_gap_certificate not in {"whole_face", "projected_matching"}:
-            raise ValueError("q4_source_gap_certificate must be whole_face or projected_matching")
+        if self.q4_source_gap_certificate not in {
+                "whole_face", "projected_matching", "fixed_projection_graph"}:
+            raise ValueError("q4_source_gap_certificate must be whole_face, projected_matching or fixed_projection_graph")
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
             raise ValueError("maximum_candidate_pairs must be a positive integer")
         if self.pair_motion not in {"guided", "restricted_sliding", "general"}:
@@ -475,6 +476,17 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                      or _exact_q4_s3_patch(model, definition))):
             return ContactValidationReport("invalid", (
                 "projected-matching Q4 gap certificate requires an explicit augmented Q4/Q4 or Q4/two-S3 general pair",
+            ))
+    if settings is not None and settings.q4_source_gap_certificate == "fixed_projection_graph":
+        if not (settings.pair_motion == "general"
+                and not definition.rigid_bodies
+                and len(definition.interactions) == 1
+                and definition.interactions[0].normal_law == "augmented"
+                and settings.augmentation_support_resolution == "exact"
+                and settings.augmentation_acceleration == "none"
+                and _refined_q4_s3_patch(model, definition)):
+            return ContactValidationReport("invalid", (
+                "fixed-projection graph gap requires an explicit refined augmented Q4/S3 general patch with exact support and no acceleration",
             ))
     if settings is not None and settings.normal_discretization == "pointwise_penalty":
         general_s3 = (settings.pair_motion == "general"
