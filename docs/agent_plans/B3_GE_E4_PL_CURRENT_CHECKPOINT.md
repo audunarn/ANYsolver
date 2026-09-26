@@ -3,49 +3,48 @@
 ## Current state — 26 September 2026
 
 **Decision sought:** Defend the native six-channel beam–shell connection and
-its exact line space, without inferring a choice from the classical axial
-comparator, the historical Q6/finite-pad reference, or small weak gaps.
+its exact line space. The classical axial comparator, historical Q6/finite-pad
+reference, and native six-channel law remain distinct; small gaps, rank, and
+signed quotients do not choose P0/P1/dual.
 
-**Established by the latest bounded discriminator:** The completed
-transverse-order/line-resolution diagnosis and detached-bar comparison below
-remove the case for another classical axial refinement. In the fixed C1 F5
-geometry, the saved *solid* terminal bond action was pulled through the E4
-Q4 top-surface virtual-work map and applied to a shell-only model with the
-same left support. The full force/moment wrench is preserved to
-`9.1e-13 N/Nm`, and replay of the saved native shell actions reproduces the
-three reported native face means to `7.93e-15 m`. Under the same solid
-action, E4 opening tip-face mean differs from the solid by `+0.776 µm`
-(about `1.1%` of that mean). Torque tip mean `y` differs by just `+1.8 nm`,
-but the face-slope differences are `-1.13/-1.14/-1.27 µrad` at
-`x=.9/.95/1 m`. Thus the shell idealization/discretization remains
-material to opening and torque face shape; a close torque tip mean alone
-does not clear it. The native coupled problem uses a different interface
-action, so these observations do not assign causality or rank P0/P1/dual.
-Independent read-only review found no blocking defect in the work map or
-the input geometry/loads/supports. Evidence:
-`.qualification/b3-ge-e4-pl/f03-c1-factor5-shell-action-dev-20260926-v2`;
-runner: `scripts/b3_e4_f03_factor5_shell_action.py`. The first script
-attempt failed on a wrong diagnostic `wrench` call before creating a `v1`
-evidence root; `v2` is the completed run. Pure torque remains an algebraic
-linear influence of the pre-opened combined case, not a standalone
-contact-admissible load. One F5 solid level and a different Q4 shell
-discretization limit the comparison.
+**Established:** The bounded transverse-order/line-resolution and detached
+bar diagnoses below do not justify another classical axial refinement.
+On the matched C1 F5 model, applying the saved solid bond action to E4 alone
+preserves its wrench to `9.1e-13 N/Nm` and replays native shell face means
+to `7.93e-15 m`. Under this *same action*, E4 opening tip-face mean differs
+from solid by `+0.776 µm` (~`1.1%`); torque tip mean `y` differs by only
+`+1.8 nm`, yet transverse face slopes differ by `1.13–1.27 µrad` over the
+three stations. Independent review found no blocking map/model error.
+This is one solid level, with different shell kinematics; native coupled
+actions also differ, so no causal allocation or space ranking follows.
+Pure torque is an algebraic influence of the pre-opened combined load.
+Runner/evidence: `scripts/b3_e4_f03_factor5_shell_action.py` and
+`.qualification/b3-ge-e4-pl/f03-c1-factor5-shell-action-dev-20260926-v2`.
 
-**Remaining uncertainty and next discriminating experiment:** Keep the
-saved physical solid bond action fixed and evaluate interval-supported
-`Fy/Mx/Mz` virtual-work modes through the actual retained B3 half-cell
-trace and the E4 shell-top trace, comparing each side with its solid seam
-displacement. Use the native side actions `-C_B^T λ` and `-C_S^T λ` only as
-assembled generalized actions, never as pointwise tractions. A side-specific
-work mismatch identifies which trace/pose law needs revision; close trace
-work with materially different native coupled transfer points to the
-enforcement/space and equilibrium response. If the shell-side difference
-dominates, audit the shell idealization before changing the line law.
-Independently, define positive broken B3 trace and constrained primal norms
-before interpreting the seven mesh-ratio cases as interface stability;
-their existing signed quotients and rank are finite-grid diagnostics only.
-No multiplier space is selected. Formal F03 authority remains unconsumed,
-G0B remains open, and G1 remains barred.
+The separate fixed Q4 x4/y4, B3-12 operator check has a positive
+left-supported, drilling-free physical E4 metric and a compatible broken
+B3 bond-trace quotient (rank `15/15`); P0/P1/dual row ranks are `12/18/18`.
+Its full lower quotient bounds are `1.5851/0.3417/0.3430`, and nonaxial
+lower bounds `1.7769/0.6164/0.6159`, respectively. These are metric-dependent
+*single-grid* trace-space numbers, not a mesh-uniform inf-sup bound or native
+mixed-system coercivity. The v4 result corrects force-equivalent density
+units and lower/upper-bound labels identified by independent review;
+v1–v3 remain preserved. Source/test hashes and two focused pytest checks
+match `.qualification/b3-ge-e4-pl/f03-c1-positive-broken-trace-metric-dev-20260926-v4`.
+
+**Remaining uncertainty, next discriminator and action:** F5's 11 seam nodes
+at `x=.95 m` have material `Fy/Mx/Mz` weak action but no left/right B3
+half-cell allocation. F4 aligns at that cut, yet splitting volume residuals
+would include cancelling internal cross-section forces and create spurious
+sided work. First derive and independently verify a cut-flux correction or
+conforming virtual-work lift; only then execute a bounded F4 stress-output
+replay and compare interval-supported `Fy/Mx/Mz` work through actual B3 and
+E4 traces. If the lift cannot be defended, retain that comparison as
+unresolved. Separately extend the *frozen positive metrics* to registered
+mesh-ratio extremes only after checking their support/kernel contracts;
+interpret any trend with loaded transfer and physical observables, never
+alone. No new external solve was run here. Formal F03 authority is
+unconsumed; G0B is open and G1 barred.
 
 ## Previous current-state summary — 26 September 2026
 
