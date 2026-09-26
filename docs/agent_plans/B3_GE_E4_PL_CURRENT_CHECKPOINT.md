@@ -3959,22 +3959,41 @@ changes the weakest *full* signed-compliance action to alternating `Fx`
 the weakest action is alternating `Fy/Mz` (`1.499→1.786`), with positive
 shell/beam contributions and a Gram bracket ratio below `1.00000003`.
 About 99% of the saved native torque multiplier field projects onto this
-nonaxial mode in that dual norm; opening `Fz` does not. The earlier
+nonaxial mode under the **declared 1 m moment scale**; opening `Fz` does
+not. With the same mechanics but a 0.1 m moment scale, that torque
+projection is `0.782/0.790` on the two/four-cell grids and the nonaxial
+quotient `1.265/1.518`. The mode is still mainly alternating `Fy/Mz`,
+but its projection is materially scale-dependent. The analytic Gram's
+`1.00000003` bracket ratio bounds norm truncation only. The earlier
 diagonal-energy `Fz` minimum was normalization-dependent. Neither norm
 turns the indefinite retained tangent into a coercive primal, and these
 two fixed meshes do not prove mesh-uniform inf-sup or select P0.
 
 **One-axis beam/line decision:** Each original C1 B3 half-cell was bisected
 while retaining the same physical geometry, 0.05 m P0 intervals, Q4
-four-cell trace, loads and supports. The 24-half-cell native local/dense
-parity is exact. Tip `Mx` rotation changes `47.708→47.730 µrad`, opening
+four-cell trace, loads and supports. The 24-half-cell construction passed
+its native sparse/dense parity guard. Tip `Mx` rotation changes
+`47.708→47.730 µrad`, opening
 `Fz` displacement `−69.319→−69.408 µm`, and combined work
 `0.074090→0.074181 J` (saved solid F4 `0.074262 J`). The normed
 nonaxial `Fy/Mz` minimum changes `1.786→1.866`, still positive and
 torque-relevant; both domains carry work. Rank is 12/12 and maximum
 loaded mechanics error `4.37e-12`. This bounded refinement does not
 suggest beam underresolution is the dominant cause of the earlier
-one→two-interval response shift. Raw 24-half-cell root:
+one→two-interval response shift. The one-sided tip retained port moves
+`46.089→46.773 µrad` despite stable nodal rotation, so its apparent
+closeness to the solid tip bonded-face slope is a resolution artifact.
+In contrast, the quadrature-weighted port interval means change only
+`44.3490→44.3365` and `46.0892→46.1042 µrad`; native E4 top-face
+means change `44.0609→44.0500` and `45.5369→45.5510 µrad`. Saved F4
+solid bonded-face means are `44.567/45.775 µrad`, using its quadratic
+face interpolation. These are directional, distinct representations.
+The independent read-only mechanics review found no blocking algebraic
+or fixture defect and endorsed these limits; it did not qualify G0B.
+Raw interval-mean and saved-solid roots are
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-interval-mean-dev-20260926-v1`
+and `f03-c1-solid-face-interval-dev-20260926-v1` (`45f08f16`).
+Raw 24-half-cell root:
 `.qualification/b3-ge-e4-pl/f03-c1-hybrid-beam24-resolution-dev-20260926-v1`
 (`89747c9f`). Normed 12-half-cell root:
 `.qualification/b3-ge-e4-pl/f03-c1-hybrid-p0-density-norm-dev-20260926-v1`
@@ -3982,8 +4001,13 @@ one→two-interval response shift. Raw 24-half-cell root:
 and `20/20` for the beam-fixture extension. These are development
 diagnostics, not qualified reference or continuum stability evidence.
 
+The moment-scale sensitivity root is
+`.qualification/b3-ge-e4-pl/f03-c1-hybrid-moment-scale-dev-20260926-v1`
+(`6340f75b`).
+
 **Remaining uncertainty and next action:** Keep the two-interval native
-line weld as an *unqualified candidate*. Define P1 and dual-line test
+line weld as an *unqualified candidate*. Freeze a mechanically justified
+moment/force scaling convention with independent review. Define P1 and dual-line test
 spaces from the same physical six-channel work law, then compare loaded
 transfer, pointwise gaps and the declared normed/signed modes over the
 registered 1:1–1:8 and reciprocal ratios, including Q4/S3 transitions.
