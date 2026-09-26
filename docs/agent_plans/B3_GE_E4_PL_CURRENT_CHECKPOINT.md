@@ -159,6 +159,22 @@ range or cover off-diagonal generalized SPD, new attachments, mass,
 prestress, installed behavior, or B2 speed. F09/G0B stay open. Proceed to
 those missing contracts rather than another smaller square-section sweep.
 
+**F09 generalized-section result:** Source-bound
+`B3_GE_E4_PL_G0_F09_GENERALIZED_SPD_DEV_V1.json` adds two signs of
+dimensionally scaled off-diagonal `N–My`, `Vy–Mz` and `Vz–T` coupling to the
+0.08 m square-section diagonal. A separate exact rational inverse of the
+six-by-six section and cut-wrench Castigliano derivative supplies the
+physical response oracle; a rational solve of the rounded global graph
+separates operator from sparse-factorization error. Both 2/2 oriented-elbow
+fixed-load cases pass the declared `1e-8` component and `1e-10` separate
+residual limits. Maximum scaled-versus-independent component error is
+`3.73e-13`; force and moment residual ratios are `2.55e-13` and
+`1.53e-13`. This covers one modest SPD coupling family of both signs,
+not the full admission range, member reversal, attached shell, mass,
+prestress, public dispatch, installed package or speed. F09/G0B stay open;
+next work should target those missing contracts, not repeat these elbow
+loads at more side lengths.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
