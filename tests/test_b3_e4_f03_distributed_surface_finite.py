@@ -598,6 +598,8 @@ def test_c1_mixed_s3_line_modes_and_loaded_balance(diagonal):
                 tip["beam_nodal_rx_rad"], abs=1e-14)
             assert tip["beam_nodal_translation_m"][2] == pytest.approx(
                 case["tip_uz_m"], abs=1e-14)
+            assert np.isfinite((tip["shell_top_slope_z_x_rad"],
+                                tip["shell_director_ry_rad"])).all()
 
 
 def test_c1_hybrid_physical_director_spin_is_null_at_finite_tilt():

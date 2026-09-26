@@ -1517,12 +1517,14 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 nodal_shell=full[:shell_size].reshape(-1,6)
                 for station in (900,950,1000):
                     x=station/1000
-                    def shell_value(y, axis):
+                    def shell_value_at(x_sample, y, axis):
                         nodes,shape=(structured_c1_mixed_point_shape(
-                            xs,ys,x,y,s3_cells,
+                            xs,ys,x_sample,y,s3_cells,
                             diagonal=mixed_s3_diagonal) if mixed_s3 else
-                            structured_q4_point_shape(xs,ys,x,y))
+                            structured_q4_point_shape(xs,ys,x_sample,y))
                         return float(shape@nodal_shell[nodes,axis])
+                    def shell_value(y, axis):
+                        return shell_value_at(x,y,axis)
                     half_index=int(np.flatnonzero(
                         abs(beam.abscissae-x)<1e-12)[0])
                     def port_rx(half, weight):
@@ -1557,6 +1559,10 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                         "shell_top_edge_mean_translation_m":np.average(
                             shell_top_edge,axis=0,weights=edge_weights).tolist(),
                         "shell_director_rx_rad":shell_value(0.,3),
+                        **({"shell_top_slope_z_x_rad":(
+                            shell_value(0.,2)-shell_value_at(.96,0.,2))/.04,
+                            "shell_director_ry_rad":shell_value(0.,4)}
+                           if station==1000 else {}),
                     }
                 if family == "line_hybrid_two_intervals":
                     def shell_trace(x, y, axis):
