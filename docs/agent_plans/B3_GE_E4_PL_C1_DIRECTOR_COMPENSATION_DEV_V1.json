@@ -1,0 +1,27 @@
+{
+  "classification": "bounded continuous-law classification, not a connection or multiplier qualification",
+  "conclusion": "The pitch row is an independent director-couple law beyond a bond defined only by shell-top/beam-surface positions. Whether that rotational weld idealization is intended and accurate requires physical work evidence; no multiplier selection follows.",
+  "continuous_gap_change": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    9.666666666666661e-05,
+    0.0
+  ],
+  "decision": "Does the C1 pitch channel act on a supported shell director field invisible to top-surface positional bond work?",
+  "fixed_root_max_coordinate_change": 0.0,
+  "geometry": "C1 Q4 x8/y4, 35 mm plate, B3 retained 12-half-cell reference",
+  "limits": [
+    "one kinematic supported field at a flat reference, not a loaded solution",
+    "quadratic E4 reference energy shows physical stiffness only, not finite-motion energy",
+    "a true weld may intentionally transmit an independent director couple"
+  ],
+  "maximum_non_pitch_gap_change": 0.0,
+  "maximum_shell_top_nodal_position_change_m": 0.0,
+  "maximum_shell_top_quadrature_position_change_m": 0.0,
+  "pitch_gap_change_rad": 9.666666666666661e-05,
+  "prescribed_field": "beta_y(x)=1e-4*(x+0.5)/1.5; midsurface translation exactly cancels top director offset",
+  "reference_physical_shell_quadratic_energy_j": 13.93149956986363,
+  "runner_sha256": "0f60319a4d26240ec0777402467f2ce84ee9bfc44368864e47fe5fe2a3c66b28"
+}

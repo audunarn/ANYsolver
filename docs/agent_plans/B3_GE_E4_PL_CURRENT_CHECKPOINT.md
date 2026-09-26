@@ -12,6 +12,9 @@ numerical drilling). The matched F5 common-action reference exposes a
 transfer-shape difference. The new sided F5 cut passes bounded stress and
 sampled-gap checks, but independent B3 retained side rotations cannot be
 identified with exact independent rigid traces on its one intact solid cut.
+An independently reviewed compensated-director witness proves that C1's
+pitch row adds a local rotational weld action beyond top-surface positional
+bonding; it does not decide whether that idealization is appropriate.
 **Remaining uncertainty:** Whether the reduced physical law transfers torque
 and shear appropriately, whether a separately specified conforming
 port-to-solid extension can resolve side work, growing-space interface
@@ -138,6 +141,40 @@ original formal-pose calculation and use V2 for the native interpretation.
 Preserve the validated
 common-field F5 comparisons and proceed to the physical trace/torque/shear
 decision. G0B remains open, G1 barred.
+
+**Next bounded continuous-law discriminator (before execution):** The C1
+hybrid's independent director-pitch row may encode a real local rotational
+weld idealization or may overconstrain what is meant by a top-surface
+positional bond. On the unchanged C1 Q4/native B3 reference, prescribe a
+supported E4 director-pitch field and exactly compensate each midsurface
+translation so every shell-top surface point stays fixed while the beam stays
+fixed. Measure all six continuous hybrid gaps, the sampled top-surface gap,
+and physical E4 strain energy. A nonzero pitch row with zero top-surface
+position gap establishes that this row is an extra director-couple law, not
+an equivalent representation of surface-position traction. It does not by
+itself prove that the idealization is wrong: keep it only with an explicit
+physical connection and work reference; otherwise revise that component
+before multiplier selection. If the pitch row also vanishes, investigate the
+operator rather than attributing the F5 transfer difference to this channel.
+
+**Compensated-director result and action:**
+`scripts/b3_e4_f03_c1_director_compensation.py` and
+`B3_GE_E4_PL_C1_DIRECTOR_COMPENSATION_DEV_V1.json` show a supported actual
+E4 rotation field with midsurface translations chosen so every nodal and
+interpolated shell-top position is unchanged while the B3 reference stays
+fixed. The current continuous C1 gap changes only in director pitch:
+`+96.667 µrad`; its other five channels change by zero. The reference-state
+physical E4 quadratic energy is positive (`13.9315 J`) and excludes numerical
+stabilization. Independent read-only mechanics review found no blocking
+defect and confirmed the complete interpolated top surface remains fixed.
+This proves C1 includes an independent director-couple idealization that a
+bond defined solely by top/bottom surface positions does not contain. It does
+not imply a full face bond cannot transmit moments in other fields, nor that
+a deliberately rotationally welded line is wrong. Resolve the intended
+physical rotational connection and its work reference before treating F5
+positional-bond agreement as an accuracy score; keep the registered torque,
+shear and growing-space checks. No multiplier or formulation is selected,
+F03/G0B remain open and G1 remains barred.
 
 **Native KKT metric result:** Commit `2028c8d8` preserves the failed V1
 layout check and the completed V2 source/manifest/result in
