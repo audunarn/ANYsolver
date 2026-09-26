@@ -650,7 +650,9 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
                                        segmented: bool = False,
                                        c1_beam_half_cells: int = 12,
                                        c1_characteristic_length_m: float = 1.,
-                                       line_space_kind: str | None = None) -> list[dict]:
+                                       line_space_kind: str | None = None,
+                                       sparse_action: bool = False,
+                                       include_shell_eight: bool = False) -> list[dict]:
     """Compare six physical interface actions on several bounded local grids.
 
     This is a finite-dimensional, support-conditioned compliance diagnostic,
@@ -658,7 +660,7 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
     The positive-energy Gram is formed from actual retained B3 and E4
     operators without symmetrizing either operator to repair its tangent.
     """
-    from scipy import linalg
+    from scipy import linalg, sparse
 
     from scripts._b3_e4_f03_native_fixture import build
     from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
@@ -671,6 +673,9 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
             not hybrid or not segmented or line_space_kind not in (
                 "piecewise_constant", "continuous_linear", "dual_linear")):
         raise ValueError("weighted C1 line space requires a segmented hybrid law")
+    if include_shell_eight and not (hybrid and segmented and sparse_action and
+                                    line_space_kind is not None):
+        raise ValueError("eight-cell C1 screen requires sparse weighted line action")
     if c1_beam_half_cells not in (12, 24) or (
             not hybrid and c1_beam_half_cells != 12):
         raise ValueError("bounded C1 beam resolution requires hybrid 12 or 24")
@@ -680,6 +685,8 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
     shell_operators = {}
     cases = ((2, c1_beam_half_cells), (4, c1_beam_half_cells)) if hybrid else (
         (2, 4), (2, 8), (4, 4), (4, 8), (4, 16))
+    if include_shell_eight:
+        cases += ((8, c1_beam_half_cells),)
     for patch_cells, half_cells in cases:
         xs, ys = local_grid(patch_cells)
         beam = build(half_cells, z_offset=.0675,
@@ -716,7 +723,8 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
             (1000., 1000., 1000., 100., 100., 100.), len(rows)//6))
         shell_size = shell_k.shape[0]
         total = shell_size+beam.context.count
-        if total > 1900:
+        if (max(shell_size, beam.context.count) > 1900 or
+                total > 1900 and not sparse_action):
             raise ValueError("bounded local compliance matrix cap exceeded")
         fixed_shell = {6*j*len(xs)+axis for j in range(len(ys))
                        for axis in range(6)}
@@ -729,8 +737,10 @@ def bounded_physical_compliance_screen(*, hybrid: bool = False,
         beam_rows = rows[:, shell_size+beam_free]
         shell_block = shell_k[np.ix_(shell_free, shell_free)]
         beam_block = beam.tangent[np.ix_(beam_free, beam_free)].toarray()
-        shell_response = linalg.solve(
-            shell_block, shell_rows.T, assume_a="gen", check_finite=True)
+        shell_response = (sparse.linalg.splu(
+            sparse.csc_matrix(shell_block)).solve(shell_rows.T)
+            if sparse_action else linalg.solve(
+                shell_block, shell_rows.T, assume_a="gen", check_finite=True))
         beam_response = linalg.solve(
             beam_block, beam_rows.T, assume_a="gen", check_finite=True)
         gram_shell = shell_rows@ shell_response

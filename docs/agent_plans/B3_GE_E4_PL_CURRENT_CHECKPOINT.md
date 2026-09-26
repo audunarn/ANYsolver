@@ -30,6 +30,14 @@ results permit a reviewed space decision only after the full registered
 ratios and physical reference pass. Do not repeat finer classical axial
 screens. Formal F03 authority is unconsumed, G0B open and G1 barred.
 
+The immediate bounded ratio discriminator holds B3-12/24, the 0.1 m bond,
+two multiplier cells and the C1 geometry fixed while doubling only Q4
+bond resolution four→eight cells. It first checks sparse/dense action parity
+on four cells, then rank, reference, normed nonaxial mode and shell/beam
+work at eight. Collapse or material drift changes the trace/pose decision;
+stable results motivate a separate sparse fixture for the full registered
+ratio envelope. No dense matrix may exceed the retained 1900-row cap.
+
 **Executed factor-two opening reference:** Source `da1d2a0c` contains the
 tested factor-two C1 deck/gap guards (`80/80` focused tests). The
 CalculiX result at

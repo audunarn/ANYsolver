@@ -336,6 +336,33 @@ def test_c1_weighted_spaces_use_own_density_norm():
                                   rel=1e-11))
 
 
+def test_c1_sparse_line_action_preserves_dense_and_bounds_eight_cells():
+    from threadpoolctl import threadpool_limits
+
+    with pytest.raises(ValueError, match="sparse weighted"):
+        bounded_physical_compliance_screen(
+            hybrid=True, segmented=True,
+            line_space_kind="piecewise_constant", include_shell_eight=True)
+    with threadpool_limits(limits=1):
+        dense = bounded_physical_compliance_screen(
+            hybrid=True, segmented=True,
+            line_space_kind="piecewise_constant")
+        sparse = bounded_physical_compliance_screen(
+            hybrid=True, segmented=True,
+            line_space_kind="piecewise_constant",
+            sparse_action=True, include_shell_eight=True)
+    assert [r["patch_cells_per_side"] for r in sparse] == [2, 4, 8]
+    for old, new in zip(dense, sparse[:2]):
+        for key in ("smallest_signed_quotient_upper",
+                    "smallest_nonaxial_signed_quotient_upper"):
+            assert new["line_density_norm"][key] == pytest.approx(
+                old["line_density_norm"][key], rel=1e-9)
+    fine = sparse[-1]
+    assert fine["constraint_rank_on_free"] == 12
+    assert fine["line_density_norm"]["smallest_nonaxial_mode_shell_action"] > 0.
+    assert fine["line_density_norm"]["smallest_nonaxial_mode_beam_action"] > 0.
+
+
 def test_c1_weighted_endpoint_work_uses_actual_e4_chart():
     # Minimal valid shell grid keeps the same two bond hosts and beam trace.
     xs = np.array((-.5, .9, .95, 1., 1.5))
