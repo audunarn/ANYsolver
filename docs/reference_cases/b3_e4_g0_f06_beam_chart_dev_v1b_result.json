@@ -1,0 +1,5 @@
+{
+  "failure": "axis 2 is out of bounds for array of dimension 2",
+  "failure_type": "AxisError",
+  "status": "DEV_F06_BEAM_CHART_EXCEPTION"
+}
