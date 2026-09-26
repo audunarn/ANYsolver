@@ -558,9 +558,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                 and len(definition.interactions) == 1
                 and definition.interactions[0].normal_law == "augmented"
                 and (_exact_single_q4_pair(model, definition)
-                     or _exact_q4_s3_patch(model, definition))):
+                     or _exact_q4_s3_patch(model, definition)
+                     or _refined_q4_s3_patch(model, definition))):
             return ContactValidationReport("invalid", (
-                "projected-matching Q4 gap certificate requires an explicit augmented Q4/Q4 or Q4/two-S3 general pair",
+                "projected-matching Q4 gap certificate requires an explicit augmented Q4/Q4 or Q4/S3 general pair",
             ))
     if settings is not None and settings.q4_source_gap_certificate == "fixed_projection_graph":
         if not (settings.pair_motion == "general"

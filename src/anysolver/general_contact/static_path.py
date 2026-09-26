@@ -65,6 +65,7 @@ GENERAL_Q4_Q4_PATCH_AUGMENTED_PROFILE = "Q4_Q4_PATCH_GENERAL_AUGMENTED_PATH_DEV_
 GENERAL_Q4_Q4_PATCH_PROJECTED_AUGMENTED_PROFILE = "Q4_Q4_PATCH_GENERAL_AUGMENTED_PATH_DEV_V2"
 GENERAL_S3_PATCH_REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_AUGMENTED_PATH_DEV_V1"
 GENERAL_Q4_S3_PATCH_REFINED_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_AUGMENTED_PATH_DEV_V1"
+GENERAL_Q4_S3_PATCH_REFINED_PROJECTED_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_PROJECTED_AUGMENTED_PATH_DEV_V0"
 GENERAL_Q4_S3_PATCH_REFINED_ROUNDOFF_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_ROUNDOFF_AUGMENTED_PATH_DEV_V2"
 GENERAL_Q4_S3_PATCH_REFINED_GRAPH_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_FIXED_PROJECTION_GRAPH_AUGMENTED_PATH_DEV_V0"
 GENERAL_S3_Q4_PATCH_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
@@ -242,6 +243,7 @@ def solve_static_contact_path(
     from .s3_patch_static import Q4_PAIR_PROJECTED_AUGMENTED_PROFILE as q4_pair_projected_augmented_profile
     from .s3_patch_static import REFINED_AUGMENTED_PROFILE as refined_augmented_profile
     from .s3_patch_static import REFINED_Q4_S3_AUGMENTED_PROFILE as refined_q4_s3_augmented_profile
+    from .s3_patch_static import REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE as refined_q4_s3_projected_profile
     from .s3_patch_static import REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE as refined_q4_s3_roundoff_profile
     from .s3_patch_static import REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE as refined_q4_s3_graph_profile
     from .s3_patch_static import SupportResetForceBudgetExceeded
@@ -250,6 +252,7 @@ def solve_static_contact_path(
         s3_patch_profile, mixed_patch_profile, source_q4_patch_profile,
         q4_pair_profile, general_augmented_profile, mixed_augmented_profile,
         refined_augmented_profile, refined_q4_s3_augmented_profile,
+        refined_q4_s3_projected_profile,
         refined_q4_s3_roundoff_profile, refined_q4_s3_graph_profile,
         source_q4_augmented_profile,
         source_q4_projected_augmented_profile,
@@ -270,7 +273,9 @@ def solve_static_contact_path(
             }):
         raise ValueError("active-set pivot requires the refined Q4/S3 augmented patch profile")
     if (settings.augmentation_acceleration == "supported_schur_dev"
-            and report.profile != refined_q4_s3_augmented_profile):
+            and report.profile not in {
+                refined_q4_s3_augmented_profile, refined_q4_s3_projected_profile,
+            }):
         raise ValueError("supported Schur route requires the refined Q4/S3 augmented patch profile")
     profile = (GENERAL_Q4_Q4_PROFILE
                if report.profile == q4_pair_profile else
@@ -292,6 +297,8 @@ def solve_static_contact_path(
                if report.profile == refined_augmented_profile else
                GENERAL_Q4_S3_PATCH_REFINED_AUGMENTED_PROFILE
                if report.profile == refined_q4_s3_augmented_profile else
+               GENERAL_Q4_S3_PATCH_REFINED_PROJECTED_AUGMENTED_PROFILE
+               if report.profile == refined_q4_s3_projected_profile else
                GENERAL_Q4_S3_PATCH_REFINED_ROUNDOFF_AUGMENTED_PROFILE
                if report.profile == refined_q4_s3_roundoff_profile else
                GENERAL_Q4_S3_PATCH_REFINED_GRAPH_AUGMENTED_PROFILE

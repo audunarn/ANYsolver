@@ -31,6 +31,7 @@ Q4_PAIR_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_
 Q4_PAIR_PROJECTED_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V2"
 REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
 REFINED_Q4_S3_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
+REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_ROUNDOFF_AUGMENTED_STATIC_DEV_V2"
 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_FIXED_PROJECTION_GRAPH_AUGMENTED_STATIC_DEV_V0"
 
@@ -183,6 +184,8 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
     if augmented:
         profile = (REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE
                    if refined_q4 and settings.q4_source_gap_certificate == "fixed_projection_graph" else
+                   REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE
+                   if refined_q4 and settings.q4_source_gap_certificate == "projected_matching" else
                    REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE
                    if refined_q4 and settings.augmentation_support_resolution == "roundoff" else
                    REFINED_Q4_S3_AUGMENTED_PROFILE if refined_q4 else
@@ -197,8 +200,6 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
     if (settings.q4_source_gap_certificate == "projected_matching"
             and not (augmented and (q4_pair or source_q4))):
         issues.append("projected-matching Q4 gap certificate requires augmented Q4/Q4 or Q4/two-S3")
-    if refined_q4 and settings.q4_source_gap_certificate == "projected_matching":
-        issues.append("refined Q4/S3 patch has no projected-matching gap profile")
     if settings.q4_source_gap_certificate == "fixed_projection_graph" and not (
             refined_q4 and augmented
             and settings.augmentation_support_resolution == "exact"
@@ -381,6 +382,7 @@ class GeneralS3PatchManager:
             ),
             differentiation="jet2_s3" if self.settings.general_s3_differentiation == "jet2_s3_dev" else "jet2_q4_s3" if self.settings.general_s3_differentiation == "jet2_q4_s3_dev" else "pair_local" if self.profile in {
                 REFINED_AUGMENTED_PROFILE, REFINED_Q4_S3_AUGMENTED_PROFILE,
+                REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
                 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
             }
@@ -488,6 +490,7 @@ class GeneralS3PatchManager:
         if self.profile in {Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                             SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_AUGMENTED_PROFILE,
+                            REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE}:
             eigenvalues = np.linalg.eigvalsh(state.pressure_gram)
@@ -570,6 +573,7 @@ class GeneralS3PatchManager:
                                 Q4_PAIR_AUGMENTED_PROFILE,
                                 Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_AUGMENTED_PROFILE,
+                                REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE}:
             return

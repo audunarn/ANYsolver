@@ -282,6 +282,8 @@ class MovingS3PatchProjectedNormal:
         assembled_gap = np.zeros(source_count)
         support_magnitude = np.zeros(source_count)
         gap_magnitude = np.zeros(source_count)
+        support_roundoff_budget = np.zeros(source_count)
+        gap_roundoff_budget = np.zeros(source_count)
         weighted_hessian = np.zeros((len(active_coordinates),
                                      len(active_coordinates))) if tangent else None
         support_hessian = np.zeros_like(weighted_hessian) if tangent else None
@@ -323,16 +325,42 @@ class MovingS3PatchProjectedNormal:
                     local_source, local_target,
                 )
             evaluations += 1
+            support_scale = max(float(np.max(np.abs(local.reference_support))),
+                                float(np.max(np.abs(derivative.reference_support))))
+            weighted_gap_scale = max(
+                float(np.max(np.abs(local.reference_weighted_gap))),
+                float(np.max(np.abs(derivative.reference_weighted_gap))),
+            )
+            support_roundoff = 512.0*np.finfo(float).eps*support_scale
+            weighted_gap_roundoff = 512.0*np.finfo(float).eps*weighted_gap_scale
             if (not np.allclose(derivative.reference_support,
-                                local.reference_support, rtol=1.0e-9, atol=0.0)
+                                local.reference_support, rtol=1.0e-9,
+                                atol=support_roundoff)
                     or not np.allclose(derivative.reference_weighted_gap,
                                        local.reference_weighted_gap,
-                                       rtol=1.0e-9, atol=0.0)):
-                raise ValueError("differentiated S3 overlap disagrees with mortar geometry")
+                                       rtol=1.0e-9,
+                                       atol=weighted_gap_roundoff)):
+                support_error = float(np.max(np.abs(
+                    derivative.reference_support-local.reference_support,
+                )))
+                gap_error = float(np.max(np.abs(
+                    derivative.reference_weighted_gap-local.reference_weighted_gap,
+                )))
+                raise ValueError(
+                    "differentiated S3 overlap disagrees with mortar geometry "
+                    f"(pair={pair_index}, support_error_m2={support_error:.12g}, "
+                    f"weighted_gap_error_m3={gap_error:.12g}, "
+                    f"support_scale_m2={support_scale:.12g}, "
+                    f"weighted_gap_scale_m3={weighted_gap_scale:.12g}, "
+                    f"support_roundoff_m2={support_roundoff:.12g}, "
+                    f"weighted_gap_roundoff_m3={weighted_gap_roundoff:.12g})"
+                )
             assembled_support[source_nodes] += derivative.reference_support
             assembled_gap[source_nodes] += derivative.reference_weighted_gap
             support_magnitude[source_nodes] += np.abs(derivative.reference_support)
             gap_magnitude[source_nodes] += np.abs(derivative.reference_weighted_gap)
+            support_roundoff_budget[source_nodes] += support_roundoff
+            gap_roundoff_budget[source_nodes] += weighted_gap_roundoff
             if not np.any(base.pressure[source_nodes]):
                 continue
             coordinate_map = np.asarray(
@@ -368,11 +396,14 @@ class MovingS3PatchProjectedNormal:
         if (not all(np.all(np.isfinite(values)) for values in (
                     assembled_support, base.reference_support,
                     assembled_gap, base.reference_weighted_gap,
-                    support_magnitude, gap_magnitude))
+                    support_magnitude, gap_magnitude,
+                    support_roundoff_budget, gap_roundoff_budget))
                 or np.any(np.abs(assembled_support-base.reference_support)
-                   > summation_tolerance*support_magnitude)
+                   > summation_tolerance*support_magnitude
+                     + support_roundoff_budget)
                 or np.any(np.abs(assembled_gap-base.reference_weighted_gap)
-                          > summation_tolerance*gap_magnitude)):
+                          > summation_tolerance*gap_magnitude
+                            + gap_roundoff_budget)):
             raise ValueError(
                 "differentiated S3 patch disagrees with shared pressure support: "
                 f"support_error={np.max(np.abs(assembled_support-base.reference_support)):.9g}, "

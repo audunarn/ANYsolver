@@ -1,0 +1,53 @@
+{
+  "input": "reports\\general_contact_d1_edge_control_4x2_pose_20260927.json",
+  "cases": {
+    "whole_face": {
+      "profile": "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1",
+      "minimum_gap_lower_m": -0.0004295038808469912,
+      "sampled_overlap_gap_m": -5.000000964300063e-05,
+      "active_pressure_dofs": 0,
+      "normalized_weighted_gap_m": [
+        8.225004277894831e-07,
+        7.48802737434914e-05,
+        0.00010258229517310814,
+        0.0,
+        0.0,
+        1.168595525647346e-06,
+        7.559451344719239e-05,
+        0.00010315734140726974,
+        0.0,
+        0.0,
+        5.347052977424441e-07,
+        7.420713600868927e-05,
+        0.00010183420562648661,
+        0.0,
+        0.0
+      ],
+      "restart_certificate": "whole_face"
+    },
+    "projected_matching": {
+      "profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+      "minimum_gap_lower_m": -5.000000976805617e-05,
+      "sampled_overlap_gap_m": -5.000000964300063e-05,
+      "active_pressure_dofs": 0,
+      "normalized_weighted_gap_m": [
+        8.225004277894831e-07,
+        7.48802737434914e-05,
+        0.00010258229517310814,
+        0.0,
+        0.0,
+        1.168595525647346e-06,
+        7.559451344719239e-05,
+        0.00010315734140726974,
+        0.0,
+        0.0,
+        5.347052977424441e-07,
+        7.420713600868927e-05,
+        0.00010183420562648661,
+        0.0,
+        0.0
+      ],
+      "restart_certificate": "projected_matching"
+    }
+  }
+}

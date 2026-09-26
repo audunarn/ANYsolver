@@ -1,0 +1,10 @@
+{
+  "columns": 2,
+  "rows": 2,
+  "edge_control": true,
+  "elapsed_seconds": 35.46135040000081,
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 1,
+  "has_restart_checkpoint": true
+}

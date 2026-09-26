@@ -15,6 +15,7 @@ from anysolver import (
 from anysolver.fe_core import FEModel
 from anysolver.general_contact.s3_patch_static import (
     GeneralS3PatchManager, REFINED_Q4_S3_AUGMENTED_PROFILE,
+    REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
 )
 
 
@@ -100,9 +101,16 @@ def test_refined_q4_source_public_work_and_opening():
     )
     assert not exhausted.valid
     assert any("Hessian exceeds" in issue for issue in exhausted.issues)
-    assert not validate_general_contact(model, definition, replace(
-        settings, q4_source_gap_certificate="projected_matching",
-    )).valid
+    projected_settings = replace(settings, q4_source_gap_certificate="projected_matching")
+    projected_report = validate_general_contact(model, definition, projected_settings)
+    assert projected_report.valid, projected_report.issues
+    assert projected_report.profile == REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE
+    projected = GeneralS3PatchManager(model, definition, projected_settings)
+    assert projected.restart_contract()["profile"] == projected_report.profile
+    assert projected.restart_contract()["settings"]["q4_source_gap_certificate"] == "projected_matching"
+    projected_result = projected.evaluate(u, tangent=False)[2]
+    assert result.minimum_gap <= projected_result.minimum_gap
+    assert projected_result.minimum_gap <= projected_result.sampled_overlap_gap + 1e-12
 
 
 def test_refined_q4_source_reduced_tangent_keeps_shared_node_work():
