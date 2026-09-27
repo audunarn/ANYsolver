@@ -1035,6 +1035,36 @@ beam residual and tangent still use physical frame matrices. Q4, large
 noncommuting rotations, repeated rebases, cutback and independent mechanics
 review remain open. F06/G0B status and the G1 bar do not change.
 
+**Next F06 physical-chart discriminator:** The accepted anchor/checkpoint
+prototype does not yet establish Newton work in additive B3 rotation
+coordinates. On the already checked two-element elastic generalized B3
+fixture, impose one nonzero nodal and retained-cell chart state, keeping
+all other coordinates and the accepted material predecessor fixed. Pull
+the extracted spatial residual and Jacobian through the analytic left-Exp
+map, including the residual-weighted derivative of that map; independently
+perturb the actual native frames through `advance` according to the
+additive chart and compare chart-coordinate residual slopes over the
+registered elastic `1e-6` plateau. A pass establishes one bounded
+physical-chart tangent seam; a failure distinguishes representation or
+curvature terms for correction before mixed-owner use. Preserve the native
+spatial residual/tangent and existing checkpoint identities. This does not
+close F06, admit a charted production owner, or alter G1's bar.
+
+**F06 native chart-pullback result:** The bounded two-element generalized
+B3 fixture now tests nonzero free nodal and retained-cell additive chart
+coordinates against *actual* physical frame advances. Both the unloaded
+and native distributed-load cases reproduce the chart-coordinate residual
+slope over the three-step elastic finite-difference plateau at the
+registered `1e-6` limit. The analytic pullback includes the left-Exp
+Jacobian on both sides of the native spatial tangent and the
+residual-weighted derivative of that Jacobian; the same checks distinguish
+the omitted curvature term. The focused F06/F08 impacted set passed
+`14/14`. This supports one elastic generalized B3 chart-tangent seam, not
+a charted mixed owner or plastic-history transport. Noncommuting loaded
+rebases, Q4/mixed shell coupling, physical-fibre branches, cutback and
+independent mechanics review remain open. F06/G0B remain open and G1
+remains barred.
+
 **Next C1 enforcement discriminator:** The x8/m4→m8 torque solve shows
 growing oscillation of the P0 material dual density while all six-channel
 global balances close. The competing explanations are a weakly controlled
