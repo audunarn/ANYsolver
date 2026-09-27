@@ -166,7 +166,10 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
     code = None
     elapsed = 0.
     peak = 0
-    failure = row_failure
+    # Rank is required to enforce 24 independent constraints, but the
+    # transpose of any fixed dual remains a valid physical load. Keep the
+    # constraint-admission failure distinct from load-only solve status.
+    failure = row_failure if preflight_only else None
     work = None
     if not preflight_only and failure is None:
         code, stdout, stderr, elapsed, peak, failure = _run(stem, folder)
@@ -204,6 +207,8 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
         "factor": factor, "label": label, "failure": failure,
         "plate_action_work_J": work, "seconds": elapsed,
         "peak_solver_rss_bytes": peak, "exit_code": code,
+        "constraint_row_failure": row_failure,
+        "fixed_action_eligible": True,
         "source_commit": subprocess.check_output(("git", "rev-parse", "HEAD"),
                                                  cwd=ROOT, text=True).strip(),
         "solid_reconstruction_sha256": digest(reconstruction_path),
@@ -213,6 +218,7 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
         "solver_sha256": EXE_SHA, "preflight": preflight,
         "limitations": [
             "single fixed dual from factor-four coupled solid; no re-equilibration",
+            "factor-two dependent rows bar a 24-row constraint solve, not this fixed-action load",
             "two 3D levels only; not convergence or F03/G0B acceptance",
         ],
     }

@@ -10,12 +10,13 @@ dual, native B3 beam work is within 0.7% of the 3D bar; E4 shell work
 is 10–14% below the 3D plate. Targeted x/y refinement and local
 thickness-normal projection explain little of that shell difference.
 The coarser factor-2 solid plate supports only 21/24 P0 m4 rows, so
-no factor-2 accuracy comparison was run. **Remaining uncertainty:**
+it cannot enforce 24 independent constraints; its fixed-dual action
+is still defined. **Remaining uncertainty:**
 shell/3D support, trace traction and plate-theory differences, a
 representable 3D mesh comparison, and growing-space mixed stability.
-**Next discriminator and action:** Review the matched shell-side action
-and support contract before choosing a representable, resource-bounded
-3D reference; advance independent B2 F09 physical admission work.
+**Next discriminator and action:** Check factor-4 plate-only work parity,
+then compare the same fixed physical action on factors two and four;
+review shell-side support/trace interpretation and advance B2 F09.
 Stop repeated x/y or classical axial refinement. P0 and the continuous
 law remain unselected; G0B open, G1 barred, formal F03 authority
 unconsumed. The records and exact source/evidence identities follow.
@@ -203,6 +204,18 @@ continuous material-line law or a P0 selection. Further solid mesh
 testing requires a representable common law and a specific decision
 benefit; meanwhile advance the independent G0 foundations and review
 the shell-side mechanics with the matched action evidence.
+**Prospective correction, 28 September:** That stopping decision was too
+broad for a *load-only* comparison. Row independence is required for
+an exact 24-multiplier solve, while `C^Tλ` remains a valid fixed
+physical action even when `C` has dependent rows. The factor-two and
+factor-four actions have the same global force/moment to printed
+precision; a focused transpose-work/wrench control passes with the
+existing port tests (`7/7`). The earlier failed constraint-admission
+preflight remains failed. First run factor-four plate-only under the
+frozen dual and demand parity with the saved detached plate response.
+Only if it passes, run factor two. The factor-two→four comparison then
+measures load-only 3D plate mesh sensitivity, not exact-constraint
+stability, coupled accuracy or three-level convergence.
 This is development evidence, not F03/G0B acceptance. Formal F03
 authority remains unconsumed; G0B open and G1 barred. B2 F09 and other
 independent foundations remain available for bounded parallel progress.
