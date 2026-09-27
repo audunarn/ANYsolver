@@ -147,6 +147,53 @@ def _shell_trace_image_rows(line: MaterialLinePosition,
     }
 
 
+def _complete_trace_image_rows(line: MaterialLinePosition,
+                               characteristic_length: float = .1,
+                               ) -> tuple[np.ndarray, dict]:
+    """Full weighted six-channel trace image, only as a maximal comparator.
+
+    Zero singular values are exact discrete identities of the complete
+    physical generator image. Every independent direction is retained;
+    this is not a production multiplier-space selection.
+    """
+    if not np.isfinite(characteristic_length) or characteristic_length <= 0.:
+        raise ValueError("positive physical gap length required")
+    count = len(line.stations)
+    position = line.reference_jacobian().reshape(count, 3, -1)
+    orientation = line.reference_orientation_jacobian().reshape(count, 3, -1)
+    jacobian = np.concatenate((position,
+                               characteristic_length*orientation), axis=1)
+    weights = np.array([station.weight for station in line.stations])
+    if abs(np.sum(weights)-.1) > 1e-12 or np.min(weights) <= 0.:
+        raise ArithmeticError("complete positive material-line quadrature required")
+    weighted = (np.sqrt(weights)[:, None, None]*jacobian).reshape(
+        6*count, -1)
+    active = np.flatnonzero(np.linalg.norm(weighted, axis=0) > 1e-14)
+    if not 1 <= len(active) <= 60:
+        raise ValueError("bounded complete trace image required")
+    left, singular, _ = np.linalg.svd(weighted[:, active], full_matrices=False)
+    tolerance = max(weighted[:, active].shape)*np.finfo(float).eps*singular[0]
+    rank = int(np.count_nonzero(singular > tolerance))
+    if rank != 49 or singular[rank-1] < 1e-4 or singular[rank] > 1e-10:
+        raise ArithmeticError("fixed-grid complete trace rank separation changed")
+    basis = left[:, :rank]
+    rows = basis.T@weighted/np.sqrt(np.sum(weights))
+    reconstruction = basis@(basis.T@weighted)
+    defect = np.linalg.norm(weighted-reconstruction)/np.linalg.norm(weighted)
+    if not np.isfinite(rows).all() or defect > 1e-12:
+        raise ArithmeticError("complete physical trace image lost a generator")
+    return rows, {
+        "physical_gap_length_m": characteristic_length,
+        "active_physical_generator_columns": active.tolist(),
+        "generator_count": int(len(active)),
+        "image_dimension": rank,
+        "last_retained_singular": float(singular[rank-1]),
+        "first_zero_singular": float(singular[rank]),
+        "relative_image_reconstruction_defect": float(defect),
+        "meaning": "entire two-sided discrete trace image; maximal diagnostic, not mortar selection",
+    }
+
+
 def _one_topology(xs, ys, beam, *, mixed_s3: bool,
                   diagonal: str,
                   knots: tuple[float, ...] = (0., .5, 1.),
@@ -191,6 +238,9 @@ def _one_topology(xs, ys, beam, *, mixed_s3: bool,
             channel_kinds = None
         elif kind == "shell_trace_image":
             constraint, trace_metadata = _shell_trace_image_rows(line)
+            channel_kinds = None
+        elif kind == "complete_trace_image":
+            constraint, trace_metadata = _complete_trace_image_rows(line)
             channel_kinds = None
         elif isinstance(kind, tuple):
             channel_kinds = kind
@@ -387,13 +437,58 @@ def run_shell_trace() -> dict:
     }
 
 
+def run_complete_trace() -> dict:
+    root = Path(__file__).resolve().parents[1]
+    expected = (root/"src"/"anysolver").resolve()
+    if Path(anysolver.__file__).resolve().parent != expected:
+        raise RuntimeError("complete-trace screen imported another ANYsolver checkout")
+    source_paths = (
+        "scripts/b3_e4_f03_material_line_channel_screen.py",
+        "scripts/b3_e4_f03_material_line_loaded.py",
+        "scripts/b3_e4_f03_material_line_position.py",
+        "scripts/b3_e4_f03_material_line_space_screen.py",
+        "scripts/_b3_e4_f03_weak_line_candidate.py",
+        "scripts/_b3_e4_f03_native_fixture.py",
+        "scripts/b3_e4_f03_plate_patch_work.py",
+        "scripts/b3_e4_f03_square_section_control.py",
+    )
+    xs, ys = local_grid(8, transverse_cells=4)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    return {
+        "classification": "private fixed-primal maximal two-sided trace image screen",
+        "qualification": "development only; no multiplier selection or G0B pass",
+        "anysolver_import_path": str(Path(anysolver.__file__).resolve()),
+        "python_version": sys.version.split()[0],
+        "numpy_version": np.__version__,
+        "scipy_version": scipy.__version__,
+        "numba_disable_jit": os.environ.get("NUMBA_DISABLE_JIT"),
+        "thread_settings": {key: os.environ.get(key) for key in (
+            "OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")},
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), cwd=root, text=True).strip(),
+        "source_sha256": {name: sha256((root/name).read_bytes()).hexdigest()
+                          for name in source_paths},
+        "shell_bond_cells": 8,
+        "native_bond_half_cells": 2,
+        "topology": _one_topology(
+            xs, ys, beam, mixed_s3=False, diagonal="bl_tr",
+            extra_policies=(("complete_trace_image", "complete_trace_image"),),
+            include_standard_policies=False),
+    }
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] not in (
-            "--off-edge", "--beam-trace", "--shell-trace")):
-        raise SystemExit("usage: channel_screen.py [--off-edge|--beam-trace|--shell-trace]")
+            "--off-edge", "--beam-trace", "--shell-trace",
+            "--complete-trace")):
+        raise SystemExit("usage: channel_screen.py [--off-edge|--beam-trace|--shell-trace|--complete-trace]")
     result = (run_beam_trace() if len(sys.argv) == 2 and
               sys.argv[1] == "--beam-trace" else
               run_shell_trace() if len(sys.argv) == 2 and
               sys.argv[1] == "--shell-trace" else
+              run_complete_trace() if len(sys.argv) == 2 and
+              sys.argv[1] == "--complete-trace" else
               run(off_edge=len(sys.argv) == 2))
     print(json.dumps(result, indent=2, sort_keys=True))

@@ -118,6 +118,23 @@ physical transfer, then assess growing-space stability and the matched
 sided reference. F03/G0B remain open, G1 barred, formal F03 authority
 unconsumed.
 
+**Next complete-trace falsification (prospective):** The 49-dimensional
+image of the complete weighted shell-plus-retained-B3 gap Jacobian is the
+maximal exact discrete test space for this fixed reference law. Unlike an
+arbitrary row combination, an orthonormal basis of this *entire* image
+retains every independent tested trace direction; the 49/50 singular
+gap is already large, and all P0 m4 rows lie in it to `1.25e-15`
+relative. On the unchanged x8/B3-12 Q4 primal, use all 49 directions
+without truncating a nonzero mode. Compare the two supported torque/shear
+loads with the saved shell-only, beam-only and P0 m2/m4 responses, including
+physical shell work, balance and continuous gaps. A large physical
+transfer/work distortion rejects this maximal equality as a candidate
+and directs a lower-dimensional mechanically justified mortar. A bounded
+response merely nominates it for growing-space locking and matched
+reference checks; it cannot select a production space. Keep the 1,900-row,
+120-second, 2-GiB and one-thread limits, and do not run finer meshes from
+this one result.
+
 Raw result `B3_E4_F03_MATERIAL_LINE_SHELL_TRACE_X8_DEV_V1.json` has
 SHA256 `A9F0FCEB53FDA50FAC479954720B60B99482E4CCCA12F6228355DAE76D225696`.
 Its source commit is `885b4da4`; all six recorded source hashes were
