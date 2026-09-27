@@ -238,6 +238,48 @@ def test_c1_hybrid_six_channel_reference_is_distinct_and_non_drilling():
     assert np.max(np.abs(shear)) < 1e-12
 
 
+def test_c1_hybrid_shell_side_wrench_includes_all_six_channels_and_offset():
+    """Independent physical shell-side check, not a beam-side qualification."""
+    xs, ys = local_grid(2)
+    beam = build(16, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="straight", assemble=False)
+    line = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
+    multipliers = np.array((21., -32., 47., 11., -13., 19.))
+    nodal = -(line.reference_trace().T@multipliers)[:line.shell_size]
+    nodal = nodal.reshape(line.shell_count, 6)
+
+    # The physical reaction is -C.T lambda. Moments are taken about the
+    # center of the *top* connection, so the three force and three couple
+    # channels have separately known, work-conjugate resultants.
+    connection_center = np.array((.95, 0., .035/2))
+    force = nodal[:, :3].sum(axis=0)
+    moment = (np.cross(line.reference_nodes-connection_center,
+                       nodal[:, :3])+nodal[:, 3:]).sum(axis=0)
+    np.testing.assert_allclose(force, -multipliers[:3], rtol=0., atol=1e-11)
+    np.testing.assert_allclose(moment, -multipliers[3:], rtol=0., atol=1e-11)
+
+    translation = np.array((.003, -.002, .004))
+    spin = np.array((.005, .007, -.011))
+    virtual = np.zeros((line.shell_count, 6))
+    virtual[:, :3] = (translation+
+                      np.cross(spin, line.reference_nodes-connection_center))
+    virtual[:, 3:] = spin
+    np.testing.assert_allclose(
+        float(np.sum(nodal*virtual)),
+        float(force@translation+moment@spin), rtol=0., atol=1e-12)
+
+    # Moving the report origin down to the shell reference surface restores
+    # the eccentric lever arm without altering the underlying nodal work.
+    reference_moment = (np.cross(line.reference_nodes-
+                                 np.array((.95, 0., 0.)), nodal[:, :3])+
+                        nodal[:, 3:]).sum(axis=0)
+    np.testing.assert_allclose(
+        reference_moment,
+        moment+np.cross(np.array((0., 0., .035/2)), force),
+        rtol=0., atol=1e-11)
+
+
 def test_c1_segmented_top_face_law_preserves_positional_work():
     xs, ys = local_grid(2)
     beam = build(12, z_offset=.0675,

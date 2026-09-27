@@ -7924,3 +7924,17 @@ in continuous work calls for a targeted law correction; matching work
 permits the registered growing-space stability and mesh-ratio assessment.
 The one-sided top-face positional bond remains a separate comparator.
 Formal F03 authority is unconsumed; G0B remains open and G1 barred.
+
+**Native full-wrench shell-side check:** A new bounded reference-state test
+uses a straight native B3 half-cell trace, the actual six-channel hybrid
+Jacobian and nonzero force/moment duals in all six rows. Independent
+resultant summation of `−Cᵀlambda` over shell nodes gives exactly the
+expected opposite force and three moments about the physical top-face
+connection center; moving the origin to the shell reference surface adds
+the `17.5 mm` eccentric lever arm. A rigid virtual shell field confirms
+the same total work. The focused test passed `1/1` in `2.24 s` at the
+existing source identity plus this test. This establishes the shell-side
+reference wrench interpretation for the candidate; it does not recover
+the retained-coordinate B3-side physical wrench, validate the loaded
+two-sided joint, or close F03. The next continuous-law discriminator must
+include that beam-side native port and the supported torque/shear fields.
