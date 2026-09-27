@@ -23,7 +23,8 @@ from anysolver.fe_core import FEModel
 
 def build_case(columns, rows=1, edge_control=False, *,
                gap_certificate="whole_face", gap_tolerance=0.005,
-               normal_approach=0.01505, four_phase=False):
+               normal_approach=0.01505, four_phase=False,
+               slide_distance=0.05):
     if columns < 2 or columns % 2:
         raise ValueError("columns must be an even integer of at least two")
     if rows < 1:
@@ -124,8 +125,8 @@ def build_case(columns, rows=1, edge_control=False, *,
                   ContactPathControl.node(1, "uz")),
         waypoints=(
             ((0.0, 0.0), (0.0, -normal_approach),
-             (0.05, -normal_approach), (0.05, 0.0),
-             (0.05, -normal_approach))
+             (slide_distance, -normal_approach), (slide_distance, 0.0),
+             (slide_distance, -normal_approach))
             if four_phase else ((0.0, 0.0), (0.0, -normal_approach))
         ),
         steps_per_segment=1,
@@ -144,6 +145,7 @@ def main():
     parser.add_argument("--gap-tolerance", type=float, default=0.005)
     parser.add_argument("--normal-approach", type=float, default=0.01505)
     parser.add_argument("--four-phase", action="store_true")
+    parser.add_argument("--slide-distance", type=float, default=0.05)
     args = parser.parse_args()
     model, definition, settings, program = build_case(
         args.columns, args.rows, args.edge_control,
@@ -151,6 +153,7 @@ def main():
         gap_tolerance=args.gap_tolerance,
         normal_approach=args.normal_approach,
         four_phase=args.four_phase,
+        slide_distance=args.slide_distance,
     )
     capability = validate_general_contact(model, definition, settings)
     if not capability.valid:
@@ -169,6 +172,7 @@ def main():
         "gap_tolerance_m": args.gap_tolerance,
         "normal_approach_m": args.normal_approach,
         "four_phase": args.four_phase,
+        "slide_distance_m": args.slide_distance,
         "elapsed_seconds": time.perf_counter()-start,
         "status": result.status,
         "failure_reason": result.failure_reason,

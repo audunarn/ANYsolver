@@ -1,0 +1,57 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_coupled_refinement.py", line 198, in <module>
+    main()
+    ~~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_coupled_refinement.py", line 159, in main
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7579, in solve_static_nonlinear
+    return solve_static_contact_path(
+        model, contact, contact_settings, contact_path_program,
+    ...<4 lines>...
+        cancellation_token=cancellation_token,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1108, in solve_static_contact_path
+    return _run_with_qualified_assembly_runtime_lease(
+        model, context="solve_static_contact_path", operation=operation,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3651, in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3626, in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1106, in operation
+    return _run_with_nonlinear_state_cleanup(run)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_state.py", line 271, in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 500, in run
+    internal, tangent, trial = _assemble_nonlinear_system(
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        model, u, committed_states, num_layers,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        kinematics="von_karman",
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 1556, in _assemble_nonlinear_system
+    contact_force, contact_tangent, _ = contact_manager.evaluate(
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~^
+        displacements, tangent=tangent
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py", line 472, in evaluate
+    work = (self.law.work(source, target, self.normal_multipliers, tangent=tangent)
+            ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 181, in work
+    return self._jet2_s3_work(current_source, current_target,
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              base, tangent=tangent)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 363, in _jet2_s3_work
+    raise ValueError(
+    ...<15 lines>...
+    )
+ValueError: differentiated S3 overlap disagrees with mortar geometry (pair=2, support_error_m2=1.6575072024e-24, weighted_gap_error_m3=1.36210859668e-28, support_scale_m2=4.45786710751e-16, weighted_gap_scale_m3=3.66339738046e-20, support_roundoff_m2=2.02720325775e-28, weighted_gap_roundoff_m3=1.66592025401e-32, integration_triangles=4, overlap_area_local_m2=4.45786736357e-16, overlap_area_m2=4.45786737393e-16, overlap_area_resolution_m2=6.35274248175e-20, support_local_m2=[4.45786709093834e-16, 1.7747796266533232e-23, 2.6496774523813867e-31, 8.873898100202412e-24], support_derivative_m2=[4.457867107513412e-16, 1.7747796611449885e-23, 2.6496775353540103e-31, 8.873898182623974e-24], weighted_gap_local_m3=[3.663397366835156e-20, 1.4584829198127979e-27, 2.1774586823574876e-35, 7.292414571985389e-28], weighted_gap_derivative_m3=[3.663397380456242e-20, 1.4584829481574383e-27, 2.177458750542943e-35, 7.292414639717975e-28])

@@ -50,6 +50,72 @@ def _touching_projected_boundaries(first: PlanarFace, second: PlanarFace) -> boo
     return False
 
 
+def _touching_shared_target_edge(first: PlanarFace,
+                                 target_positions: np.ndarray,
+                                 target_node_ids: np.ndarray,
+                                 shared_node_ids: set[int]) -> bool:
+    """Require the touching target edge, excluding exterior/endpoint ties."""
+    edge = first.corners[1]-first.corners[0]
+    tangent = edge/np.linalg.norm(edge)
+    normal = np.cross(edge, first.corners[-1]-first.corners[0])
+    normal /= np.linalg.norm(normal)
+    binormal = np.cross(normal, tangent)
+    origin = first.corners[0]
+    source_xy = np.column_stack(((first.corners-origin) @ tangent,
+                                 (first.corners-origin) @ binormal))
+    target_xy = np.column_stack(((target_positions-origin) @ tangent,
+                                 (target_positions-origin) @ binormal))
+    scale = max(float(np.max(np.linalg.norm(source_xy-source_xy[0], axis=1))),
+                float(np.max(np.linalg.norm(target_xy-target_xy[0], axis=1))))
+    tolerance = 1.0e-11*scale
+
+    def near_segment(point, start, end):
+        span = end-start
+        squared = float(np.dot(span, span))
+        if squared <= 0.0:
+            return False
+        fraction = np.clip(np.dot(point-start, span)/squared,
+                           0.0, 1.0)
+        return np.linalg.norm(point-(start+fraction*span)) <= tolerance
+
+    shared_touch = False
+    exterior_touch = False
+    for point in source_xy:
+        for edge_index in range(3):
+            following = (edge_index+1) % 3
+            if near_segment(point, target_xy[edge_index], target_xy[following]):
+                if (int(target_node_ids[edge_index]) in shared_node_ids
+                        and int(target_node_ids[following]) in shared_node_ids):
+                    shared_touch = True
+                else:
+                    exterior_touch = True
+    # A target vertex on a source edge is an endpoint tie; it does not
+    # uniquely identify the shared material edge's one-sided branch.
+    for point in target_xy:
+        for start, end in zip(source_xy, np.roll(source_xy, -1, axis=0)):
+            if near_segment(point, start, end):
+                exterior_touch = True
+    return shared_touch and not exterior_touch
+
+
+def _q4_s3_pair_value_rtol(local_area: float, derivative_area: float,
+                           area_resolution: float) -> float:
+    """Bound a float/Jet2 value comparison by resolved polygon disagreement."""
+    if min(local_area, derivative_area) <= 0.0:
+        raise UnsupportedQ4S3Branch("Q4/S3 paired overlap area is not positive")
+    difference = abs(local_area-derivative_area)
+    relative = 2.0*difference/min(local_area, derivative_area)
+    if (not np.isfinite(relative) or not np.isfinite(area_resolution)
+            or difference > area_resolution or relative > 1.0e-6):
+        raise UnsupportedQ4S3Branch(
+            "Q4/S3 paired overlap area agreement is unresolved "
+            f"(area_difference_m2={difference:.12g}, "
+            f"area_resolution_m2={area_resolution:.12g}, "
+            f"relative_value_allowance={relative:.12g})"
+        )
+    return 1.0e-9+relative
+
+
 class MovingS3PatchProjectedNormal:
     def __init__(self, geometry: MovingS3PatchPrimalMortarPenalty, *,
                  support_resolution: str = "exact"):
@@ -160,7 +226,7 @@ class MovingS3PatchProjectedNormal:
                 normal = np.cross(first.corners[1]-first.corners[0],
                                   first.corners[2]-first.corners[0])
                 normal /= np.linalg.norm(normal)
-            for target_index in self.target_face_indices:
+            for target_position, target_index in enumerate(self.target_face_indices):
                 target = np.asarray(current_target)[target_index]
                 projected = target-((target-first.corners[0])@normal)[:, None]*normal
                 second = PlanarFace((2, 1), projected)
@@ -171,9 +237,42 @@ class MovingS3PatchProjectedNormal:
                 if (overlap is None
                         and self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3"}
                         and _touching_projected_boundaries(first, second)):
-                    raise UnsupportedOverlapBranch(
-                        "S3 patch zero-area touching overlap has no smooth derivative"
-                    )
+                    if self.geometry.differentiation == "jet2_s3":
+                        raise UnsupportedOverlapBranch(
+                            "S3 patch zero-area touching overlap has no smooth derivative"
+                        )
+                    # Use the inactive one-sided branch only for an artificial
+                    # diagonal with an overlapping material-edge neighbor.
+                    # Exterior rims and unmatched seams remain unresolved.
+                    target_nodes = set(map(int, target_index))
+                    adjacent_positive = False
+                    for other_position, other_index in enumerate(self.target_face_indices):
+                        shared = target_nodes.intersection(map(int, other_index))
+                        if other_position == target_position or len(shared) != 2:
+                            continue
+                        if not _touching_shared_target_edge(
+                                first, target, target_index, shared):
+                            continue
+                        other = np.asarray(current_target)[other_index]
+                        first_target_normal = np.cross(target[1]-target[0],
+                                                       target[2]-target[0])
+                        other_target_normal = np.cross(other[1]-other[0],
+                                                       other[2]-other[0])
+                        normal_product = (np.linalg.norm(first_target_normal)
+                                          * np.linalg.norm(other_target_normal))
+                        if (normal_product <= 0.0 or
+                                np.dot(first_target_normal, other_target_normal)
+                                < (1.0-1.0e-10)*normal_product):
+                            continue
+                        other_projected = other-((other-first.corners[0]) @ normal)[:, None]*normal
+                        other_face = PlanarFace((2, 1), other_projected)
+                        if planar_projected_overlap(first, other_face) is not None:
+                            adjacent_positive = True
+                            break
+                    if not adjacent_positive:
+                        raise UnsupportedQ4S3Branch(
+                            "Q4/S3 zero-area touch has no positive adjacent target face"
+                        )
         if self.geometry.differentiation == "pair_local":
             return self._pair_local_work(current_source, current_target,
                                          base, tangent=tangent)
@@ -347,12 +446,23 @@ class MovingS3PatchProjectedNormal:
                                * max(1, local.integration_triangles))
             support_roundoff = roundoff_factor*support_scale
             weighted_gap_roundoff = roundoff_factor*weighted_gap_scale
+            value_rtol = 1.0e-9
+            if len(source_nodes) == 4:
+                # The float and Jet2 clippers use different arithmetic paths.
+                # For a tiny wedge, compare their area discrepancy with the
+                # propagated polygon-coordinate resolution first. Permit only
+                # twice that observed relative discrepancy in the per-node
+                # integrals; this does not relax quadrature or tangent gates.
+                value_rtol = _q4_s3_pair_value_rtol(
+                    local.overlap_area, derivative.overlap_area,
+                    derivative.overlap_area_resolution,
+                )
             if (not np.allclose(derivative.reference_support,
-                                local.reference_support, rtol=1.0e-9,
+                                local.reference_support, rtol=value_rtol,
                                 atol=support_roundoff)
                     or not np.allclose(derivative.reference_weighted_gap,
                                        local.reference_weighted_gap,
-                                       rtol=1.0e-9,
+                                       rtol=value_rtol,
                                        atol=weighted_gap_roundoff)):
                 support_error = float(np.max(np.abs(
                     derivative.reference_support-local.reference_support,
@@ -368,7 +478,15 @@ class MovingS3PatchProjectedNormal:
                     f"weighted_gap_scale_m3={weighted_gap_scale:.12g}, "
                     f"support_roundoff_m2={support_roundoff:.12g}, "
                     f"weighted_gap_roundoff_m3={weighted_gap_roundoff:.12g}, "
-                    f"integration_triangles={local.integration_triangles})"
+                    f"geometry_value_rtol={value_rtol:.12g}, "
+                    f"integration_triangles={local.integration_triangles}, "
+                    f"overlap_area_local_m2={local.overlap_area:.12g}, "
+                    f"overlap_area_m2={derivative.overlap_area:.12g}, "
+                    f"overlap_area_resolution_m2={derivative.overlap_area_resolution:.12g}, "
+                    f"support_local_m2={local.reference_support.tolist()}, "
+                    f"support_derivative_m2={derivative.reference_support.tolist()}, "
+                    f"weighted_gap_local_m3={local.reference_weighted_gap.tolist()}, "
+                    f"weighted_gap_derivative_m3={derivative.reference_weighted_gap.tolist()})"
                 )
             assembled_support[source_nodes] += derivative.reference_support
             assembled_gap[source_nodes] += derivative.reference_weighted_gap

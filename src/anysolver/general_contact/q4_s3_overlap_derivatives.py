@@ -37,6 +37,7 @@ class Q4S3OverlapDerivatives:
     weighted_gap_gradient: np.ndarray
     weighted_gap_hessian: np.ndarray
     overlap_area: float
+    overlap_area_resolution: float
     reference_overlap_area: float
     branch_signature: tuple[int, ...]
     integration_triangles: int
@@ -77,41 +78,95 @@ def _normalize(a):
 
 
 def _signed_area(poly):
-    return _sum(_cross2(p, poly[(i+1) % len(poly)])
-                for i, p in enumerate(poly))/2
+    origin = poly[0]
+    return _sum(_cross2(_sub(poly[i], origin),
+                        _sub(poly[i+1], origin))
+                for i in range(1, len(poly)-1))/2
 
 
-def _clip(subject, target, threshold):
-    polygon = subject
+def _cross_resolution(a, b, first_error, second_error):
+    """Conservative roundoff scale for a 2D determinant of projected points."""
+    ax, ay = (abs(x.value) for x in a)
+    bx, by = (abs(x.value) for x in b)
+    eps = np.finfo(float).eps
+    return (64*eps*(ax*by+ay*bx)
+            + 2*first_error*(bx+by)
+            + 2*second_error*(ax+ay)
+            + 8*first_error*second_error)
+
+
+def _area_resolution(poly, errors):
+    origin = poly[0]
+    return sum(
+        _cross_resolution(_sub(poly[i], origin),
+                          _sub(poly[i+1], origin),
+                          errors[i]+errors[0], errors[i+1]+errors[0])/2
+        for i in range(1, len(poly)-1)
+    )
+
+
+def _clip(subject, target, coordinate_error):
+    polygon = [(point, coordinate_error) for point in subject]
     signature = []
     for edge_index in range(3):
         if not polygon:
             raise UnsupportedQ4S3Branch("zero projected overlap")
         start = target[edge_index]
         edge = _sub(target[(edge_index+1) % 3], start)
-        old = polygon[-1]
-        old_distance = _cross2(edge, _sub(old, start))
+        old, old_coordinate_error = polygon[-1]
+        old_relative = _sub(old, start)
+        old_distance = _cross2(edge, old_relative)
+        old_error = _cross_resolution(
+            edge, old_relative, 2*coordinate_error,
+            old_coordinate_error+coordinate_error,
+        )
         out = []
         signature.append(len(polygon))
-        for point in polygon:
-            distance = _cross2(edge, _sub(point, start))
-            if min(abs(old_distance.value), abs(distance.value)) <= threshold:
+        for point, point_coordinate_error in polygon:
+            relative = _sub(point, start)
+            distance = _cross2(edge, relative)
+            error = _cross_resolution(
+                edge, relative, 2*coordinate_error,
+                point_coordinate_error+coordinate_error,
+            )
+            if (abs(old_distance.value) <= old_error
+                    or abs(distance.value) <= error):
                 raise UnsupportedQ4S3Branch("vertex lies on a clipping boundary")
             old_inside = old_distance.value > 0
             inside = distance.value > 0
             signature.append(int(inside))
             if old_inside != inside:
                 denominator = old_distance-distance
-                if abs(denominator.value) <= threshold:
+                denominator_error = (old_error+error
+                                     + 64*np.finfo(float).eps*(
+                                         abs(old_distance.value)+abs(distance.value)))
+                if abs(denominator.value) <= denominator_error:
                     raise UnsupportedQ4S3Branch("degenerate clipping intersection")
                 alpha = old_distance/denominator
-                out.append([a+alpha*(b-a) for a, b in zip(old, point)])
+                alpha_error = (
+                    (old_error+abs(alpha.value)*denominator_error)
+                    /(abs(denominator.value)-denominator_error)
+                    + 16*np.finfo(float).eps
+                )
+                segment = _sub(point, old)
+                intersection = [a+alpha*b for a, b in zip(old, segment)]
+                segment_scale = max(abs(item.value) for item in segment)
+                endpoint_scale = max(abs(item.value) for item in (*old, *point))
+                intersection_error = (
+                    old_coordinate_error
+                    + abs(alpha.value)*(old_coordinate_error+point_coordinate_error)
+                    + alpha_error*segment_scale
+                    + 8*np.finfo(float).eps*endpoint_scale
+                )
+                out.append((intersection, intersection_error))
             if inside:
-                out.append(point)
-            old, old_distance = point, distance
+                out.append((point, point_coordinate_error))
+            old, old_coordinate_error = point, point_coordinate_error
+            old_distance, old_error = distance, error
         polygon = out
     signature.append(len(polygon))
-    return polygon, tuple(signature)
+    return ([point for point, _ in polygon],
+            [error for _, error in polygon], tuple(signature))
 
 
 def _q1(r, s):
@@ -245,28 +300,33 @@ def _evaluate(reference_source, current_source, current_target, *,
     triangle_xy = [projected(x) for x in t]
     scale = max(np.hypot(x[0].value, x[1].value)
                 for x in (*quad_xy, *triangle_xy))
-    threshold = relative_branch_tolerance*scale*scale
-    if _signed_area(quad_xy).value <= threshold:
+    face_threshold = relative_branch_tolerance*scale*scale
+    raw_scale = max(np.max(np.abs(source)), np.max(np.abs(target)), scale)
+    coordinate_error = 64*np.finfo(float).eps*raw_scale
+    if _signed_area(quad_xy).value <= face_threshold:
         raise UnsupportedQ4S3Branch("Q4 projection is degenerate or inverted")
     for i in range(4):
         edge1 = _sub(quad_xy[(i+1) % 4], quad_xy[i])
         edge2 = _sub(quad_xy[(i+2) % 4], quad_xy[(i+1) % 4])
-        if _cross2(edge1, edge2).value <= threshold:
+        if _cross2(edge1, edge2).value <= face_threshold:
             raise UnsupportedQ4S3Branch("Q4 projection is folded or degenerate")
-    if _signed_area(triangle_xy).value <= threshold:
+    if _signed_area(triangle_xy).value <= face_threshold:
         raise UnsupportedQ4S3Branch("S3 projection is degenerate or inverted")
-    polygon, clipping_signature = _clip(quad_xy, triangle_xy, threshold)
+    polygon, polygon_errors, clipping_signature = _clip(
+        quad_xy, triangle_xy, coordinate_error,
+    )
     if len(polygon) < 3:
         raise UnsupportedQ4S3Branch("zero projected overlap")
     overlap_area = _signed_area(polygon)
-    if overlap_area.value <= threshold:
+    overlap_area_resolution = _area_resolution(polygon, polygon_errors)
+    if overlap_area.value <= overlap_area_resolution:
         raise UnsupportedQ4S3Branch("zero projected overlap")
 
     ref_area_jacobian = np.linalg.norm(ref_cross)/4
-    def rule(vertices):
+    def rule(vertices, vertex_errors):
         area = _cross2(_sub(vertices[1], vertices[0]),
                        _sub(vertices[2], vertices[0]))/2
-        if area.value <= threshold:
+        if area.value <= _area_resolution(vertices, vertex_errors):
             raise UnsupportedQ4S3Branch("degenerate integration triangle")
         total = [_zero() for _ in range(24)]
         for bary, relative_weight in _TRIANGLE_RULE:
@@ -277,7 +337,7 @@ def _evaluate(reference_source, current_source, current_target, *,
             js = [_sum(ds[i]*q[i][k] for i in range(4)) for k in range(3)]
             cross = _cross(jr, js)
             projected_jacobian = _dot(cross, normal)
-            if projected_jacobian.value <= threshold/4:
+            if projected_jacobian.value <= face_threshold/4:
                 raise UnsupportedQ4S3Branch("Q4 projected Jacobian is near singular")
             physical_normal = _normalize(cross)
             source_point = [_sum(shape[i]*q[i][k] for i in range(4))
@@ -299,20 +359,31 @@ def _evaluate(reference_source, current_source, current_target, *,
     quadrature_signature: list[int] = []
     derivative_differences = np.zeros(4)
     roots = len(polygon)-2
-    def integrate(vertices, area_budget, gap_budget, derivative_budgets):
+    def integrate(vertices, vertex_errors, area_budget, gap_budget,
+                  derivative_budgets):
         nonlocal integration_triangles, visited_triangles
         visited_triangles += 1
         if visited_triangles > maximum_triangles:
             raise UnsupportedQ4S3Branch("adaptive integration exceeds triangle budget")
         a, b, c = vertices
-        coarse = rule(vertices)
+        coarse = rule(vertices, vertex_errors)
         ab = [(x+y)/2 for x, y in zip(a, b)]
         bc = [(x+y)/2 for x, y in zip(b, c)]
         ca = [(x+y)/2 for x, y in zip(c, a)]
         children = ((a, ab, ca), (ab, b, bc), (ca, bc, c), (ab, bc, ca))
+        eps = np.finfo(float).eps
+        def midpoint_error(first, second, first_error, second_error):
+            return ((first_error+second_error)/2
+                    + 4*eps*max(abs(x.value) for x in (*first, *second)))
+        ea, eb, ec = vertex_errors
+        eab = midpoint_error(a, b, ea, eb)
+        ebc = midpoint_error(b, c, eb, ec)
+        eca = midpoint_error(c, a, ec, ea)
+        children_errors = ((ea, eab, eca), (eab, eb, ebc),
+                           (eca, ebc, ec), (eab, ebc, eca))
         refined = [_zero() for _ in range(24)]
-        for child in children:
-            refined = [x+y for x, y in zip(refined, rule(child))]
+        for child, child_errors in zip(children, children_errors):
+            refined = [x+y for x, y in zip(refined, rule(child, child_errors))]
         area_error = max(abs(refined[i].value-coarse[i].value)
                          for i in (*range(4), *range(8, 24)))
         gap_error = max(abs(refined[i].value-coarse[i].value)
@@ -361,10 +432,10 @@ def _evaluate(reference_source, current_source, current_target, *,
         if integration_triangles+4 > maximum_triangles:
             raise UnsupportedQ4S3Branch("adaptive integration exceeds triangle budget")
         integrated = [_zero() for _ in range(24)]
-        for child in children:
+        for child, child_errors in zip(children, children_errors):
             integrated = [x+y for x, y in zip(
                 integrated, integrate(
-                    child, area_budget/4, gap_budget/4,
+                    child, child_errors, area_budget/4, gap_budget/4,
                     None if derivative_budgets is None else
                     tuple(budget/4 for budget in derivative_budgets),
                 )
@@ -373,8 +444,11 @@ def _evaluate(reference_source, current_source, current_target, *,
 
     for index in range(1, len(polygon)-1):
         vertices = (polygon[0], polygon[index], polygon[index+1])
+        vertex_errors = (polygon_errors[0], polygon_errors[index],
+                         polygon_errors[index+1])
         total = [x+y for x, y in zip(total, integrate(
-            vertices, area_tolerance/roots, weighted_gap_tolerance/roots,
+            vertices, vertex_errors, area_tolerance/roots,
+            weighted_gap_tolerance/roots,
             None if derivative_tolerances is None else
             tuple(tolerance/roots for tolerance in derivative_tolerances),
         ))]
@@ -387,6 +461,7 @@ def _evaluate(reference_source, current_source, current_target, *,
     return Q4S3OverlapDerivatives(
         support, gap, support_gradient, support_hessian,
         gap_gradient, gap_hessian, overlap_area.value,
+        overlap_area_resolution,
         float(np.sum(support)), clipping_signature+tuple(quadrature_signature),
         integration_triangles, derivative_differences,
     )
@@ -409,8 +484,10 @@ def q4_s3_overlap_derivatives(
     Q1 and accepted quadrature branch.  Warped current poses require explicit
     opt-in and four positive derivative-resolution tolerances; their integral
     and derivative accuracy depends on those controls and the triangle budget.
-    Clipping and quadrature decision ties
-    are unsupported.  Polygon fans create no physical faces.
+    ``relative_branch_tolerance`` qualifies whole-face geometry; local
+    determinant resolution governs tiny overlap branches.  Clipping and
+    quadrature decision ties are unsupported.  Polygon fans create no
+    physical faces.
     """
     if type(allow_warped_source) is not bool:
         raise ValueError("allow_warped_source must be boolean")
