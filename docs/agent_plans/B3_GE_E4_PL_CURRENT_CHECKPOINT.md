@@ -16,17 +16,20 @@ row identity and independent review establish a structural dependency,
 not a units artifact. No multiplier space or physical law is qualified.
 The matched detached-solid evidence remains limited by connection and
 contact idealization. B2 F09 fail-closed admission is unfinished.
-**Remaining uncertainty:** Whether a channel-compatible growing line
-space transfers physical torque/shear without locking, and whether the
-continuous material-line law matches a physically comparable reference.
-**Next discriminator:** On the same supported Q4 and mixed-S3 physical
-models, check the Mz trace dimension and a channel-specific space that
-does not add an unsupported yaw row; compare growing-row work,
-reactions and continuous gaps with P0. If the deficiency persists,
-revise interface resolution by channel before mesh-ratio assessment; if
-it is topology-specific, declare that condition and test admissible
-topologies separately. A physically matched two-sided torque/shear
-reference remains necessary. Do not resume finer classical axial work.
+**Remaining uncertainty:** Whether this channel-compatible growing line
+space remains well posed and physically convergent over registered mesh
+ratios, and whether the continuous material-line law matches a genuinely
+comparable torque/shear reference. The mixed-S3 line tested so far lies
+on a mesh edge; off-edge trace sensitivity is untested.
+**Next discriminator:** On a bounded first mismatched beam:shell ratio
+and its reciprocal, grow the actual native interface resolution using
+the now viable 17-row channel policy and P0, and compare supported work,
+reactions, physical gap shapes, unsupported modes, and mixed norms. If
+rank or work fails, revise channel resolution/trace before the full
+registered ratio series; if it survives, run the full ratios and
+refinement levels while completing the matched two-sided torque/shear
+reference. Check off-edge S3 mapping separately. Do not resume finer
+classical axial work.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Saved bounded row-growth screen:** Committed runner
@@ -50,6 +53,25 @@ An initial preflight attempt exposed a P1 torque equilibrium/work failure
 despite a tiny weak gap; that failure motivated the fail-closed scaled-rank
 check and was not reclassified as a successful solve. These fixed-grid
 results establish neither growing-space inf-sup nor physical accuracy.
+
+**Saved channel-compatible screen:** Independent read-only mechanics
+review found no blocking row/sign defect and corrected the Mz label to
+local-z yaw; beam-axis twist is Mx, which remains enriched. Source
+`fb2bc3c6c22c7d412061223dd27ca303d766aebd` generated immutable
+`B3_E4_F03_MATERIAL_LINE_CHANNEL_SCREEN_V1.json`, SHA256
+`F0C0B39306EB6CEF7FA85460ED31B3639D274DF690161751F4BA1FB0EBD32F23`,
+using the integration import, disabled JIT, one BLAS/OpenMP thread and
+Python 3.14.2/NumPy 2.4.6/SciPy 1.17.1. All Q4 and both mixed-S3
+diagonals have rank 12/12 for two-cell P0 and 17/17 for five enriched
+channels plus two P0 yaw rows. All 18 bounded torque/shear solves pass;
+the maximum free residual ratio is `4.26e-12`, work relative error
+`5.41e-12`, support force/moment imbalance under `3.77e-9`, and physical
+shell work is positive. Q4 torque tip Rx is `4.8684e-5` (P0),
+`4.9058e-5` (P1/P0-yaw), `4.9827e-5` rad (dual/P0-yaw);
+Q4 shear tip Uz is `7.0289e-5`, `7.0129e-5`, `7.0306e-5` m.
+The mixed-S3 line is on a mesh edge, so matching row ranks do not test
+off-edge host behavior. These fixed-grid solves select no multiplier
+space and establish neither physical accuracy nor mesh-uniform stability.
 
 ## Detailed reference state and saved-field decision — 27 September 2026
 
