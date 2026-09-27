@@ -27,10 +27,14 @@ native fixed-action work still lies `9.68%`/`14.13%` below the solid
 Mx/Fz work. **Remaining uncertainty:** physical two-sided torque/shear
 transfer and the cause of the persistent response difference; neither
 weak rank nor a face-displacement fit validates the connection law.
-**Next discriminator and action:** Interpret the existing supported
-native and matched solid action evidence together, then define one
-recoverable sided reference that distinguishes shell/section response
-from connection work. Advance B2 F09 independently. Do not automatically
+**Next discriminator and action:** Use the existing 24-column,
+six-channel P0 solid reconstruction and its recovered plate/bar actions
+alongside supported native torque/shear work. A saved-field tip-face
+audit finds only `0.0184%`/`0.00204%` nonrigid work under the solid Mx/Fz
+loads, but does not bound a different load's response. Prioritize the
+matched physical transfer and shell/section interpretation over another
+tip-load or classical axial solve; keep load-shape differences explicit.
+Advance B2 F09 independently. Do not automatically
 add finer x/y or classical axial runs. P0 and the
 continuous law remain unselected; G0B open, G1 barred, formal F03
 authority unconsumed. The records and exact source/evidence identities
@@ -10194,6 +10198,36 @@ the missing weak directions and part of the station mismatch, but
 cannot by itself account for the supported work difference. The trace
 law, shell/3D idealization and support differences remain open. No
 multiplier is selected; this is not interface stability, F03 or G0B
-acceptance. Next use a physically matched, recoverable sided reference
-for torque/shear and the registered growing-space mixed-norm assessment,
-without another automatic axial refinement.
+acceptance. The existing P0 solid reconstruction supplies a recoverable
+six-channel linear sided reference; its tip-face load and 3D section
+deformations are not identical to the native terminal wrench and B3
+section. Next compare matched torque/shear work and fixed-distance
+observables with those differences explicit, alongside the registered
+growing-space mixed-norm assessment. No new external mesh or automatic
+axial refinement follows.
+
+**Saved tip-face load-work discriminator:** Source `6a684389` reconstructs
+the accepted P0 solid tip-face displacement from the same 24 saved unit
+FRDs and the recorded dual. The source deck, source FRD, each unit FRD
+and the original applied work are checked before comparison. The applied
+tip-face loads have physical resultants `+100 Nm Mx` with negligible
+net force and `−1000 N Fz` with negligible net moment about the beam tip
+axis. An equal-loaded-node six-DOF rigid fit to the **saved solid field**
+partitions full tip load work as follows: Mx `0.0053865057895 J`,
+nonrigid residual `−9.91913e-7 J` (`0.0184%` of absolute full work);
+Fz `0.0725623819102 J`, nonrigid residual `+1.47912e-6 J`
+(`0.00204%`). Work reconstructed directly from nodal loads equals
+the rigid-resultant plus nonrigid split, and each case reproduces the
+saved coupled applied work. The raw result
+`B3_E4_F03_C1_TIP_FACE_WORK_DEV_V1.json` has SHA256
+`36437a2c33ba6d0592c90e7b504330ef440abf9d67fd5f09f07176e2ebe5a0fd`;
+two focused synthetic work tests pass.
+
+This small residual is specific to the equal-node rigid fit and the
+existing solid response. It is **not** the self-compliance of the
+discarded load shape and does not bound a re-solved solid under a
+terminal wrench. It does make an additional external tip-load solve
+low priority for the present action-work interpretation. Continue with
+the physical six-channel sided transfer, shell/section/support
+idealization and growing-space mixed-system assessment. G0B/F03 remain
+open, G1 barred and the formal F03 authority unconsumed.
