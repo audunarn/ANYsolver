@@ -253,11 +253,16 @@ class PhysicalB2Member:
     def local_operator(self) -> LinearOperator:
         return LinearOperator(self.length_m, self.section)
 
-    def compile_local(self) -> CompiledPhysicalB2Member:
+    def compile_local(self, *, operator_cache: PhysicalB2OperatorCache | None = None
+                      ) -> CompiledPhysicalB2Member:
         """Build one private, definition-bound local operator and frame map."""
+        if operator_cache is not None and not isinstance(
+                operator_cache, PhysicalB2OperatorCache):
+            raise TypeError("physical B2 operator cache required")
         frame = self.local_frame_rows()
         return CompiledPhysicalB2Member(
-            self, self.local_operator(), frame.tobytes(),
+            self, (self.local_operator() if operator_cache is None
+                   else operator_cache.for_member(self)), frame.tobytes(),
             np.kron(np.eye(4), frame).tobytes())
 
     def local_candidate_mass_matrix(self) -> np.ndarray:
@@ -330,6 +335,37 @@ class CompiledPhysicalB2Member:
             raise RepresentabilityError(
                 "global physical B2 prestress term is not representable")
         return global_matrix
+
+
+class PhysicalB2OperatorCache:
+    """Caller-owned reuse of immutable private operators for one compilation."""
+
+    __slots__ = ("_operators", "hits", "misses")
+
+    def __init__(self):
+        self._operators: dict[tuple[int, Fraction], LinearOperator] = {}
+        self.hits = 0
+        self.misses = 0
+
+    def for_member(self, member: PhysicalB2Member) -> LinearOperator:
+        if not isinstance(member, PhysicalB2Member):
+            raise TypeError("physical B2 member required")
+        # Keeping the operator alive also keeps its section alive, so an id
+        # cannot be recycled while this cache owns the corresponding entry.
+        key = (id(member.section), Fraction(member.length_m))
+        operator = self._operators.get(key)
+        if operator is not None:
+            if operator.section is not member.section:
+                raise RuntimeError("physical B2 section identity collision")
+            self.hits += 1
+            return operator
+        operator = LinearOperator(member.length_m, member.section)
+        self._operators[key] = operator
+        self.misses += 1
+        return operator
+
+    def clear(self) -> None:
+        self._operators.clear()
 
 
 def _candidate_mass_matrix(member: PhysicalB2Member,

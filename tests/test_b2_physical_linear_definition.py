@@ -8,7 +8,8 @@ import pytest
 import anysolver._b2_physical_linear_definition as definition_module
 from anysolver._b2_physical_flexibility_linear import LinearSection
 from anysolver._b2_physical_linear_definition import (
-    GeometricMetadata, MassMetadata, PhysicalB2Member, PROFILE_ID,
+    GeometricMetadata, MassMetadata, PhysicalB2Member,
+    PhysicalB2OperatorCache, PROFILE_ID,
 )
 
 
@@ -136,6 +137,39 @@ def test_compiled_member_reuses_one_operator_with_owned_outputs(monkeypatch):
         definition_module.CompiledPhysicalB2Member(
             changed,compiled.operator,compiled._frame_bytes,
             compiled._transform_bytes)
+
+
+def test_local_operator_cache_reuses_shared_section_and_length_only():
+    shared_section = section()
+    first = replace(member(), section=shared_section)
+    turned = replace(member((0., 0., 0.), (0., 2., 0.), (-1., 0., 0.)),
+                     member_id="beam-B", section=shared_section)
+    longer = replace(first, member_id="beam-C",
+                     reference_points_m=((0., 0., 0.), (3., 0., 0.)))
+    equal_but_distinct = replace(first, member_id="beam-D", section=section())
+    cache = PhysicalB2OperatorCache()
+    compiled = [beam.compile_local(operator_cache=cache)
+                for beam in (first, turned, longer, equal_but_distinct)]
+    assert (cache.hits, cache.misses) == (1, 3)
+    assert compiled[0].operator is compiled[1].operator
+    assert compiled[0].operator is not compiled[2].operator
+    assert compiled[0].operator is not compiled[3].operator
+    assert not np.array_equal(compiled[0].local_frame_rows(),
+                              compiled[1].local_frame_rows())
+    displacement = np.sin(np.arange(12))*.001
+    for beam, owned in zip((first, turned, longer, equal_but_distinct), compiled):
+        fresh = beam.compile_local()
+        np.testing.assert_array_equal(
+            owned.trace_global(displacement).pose,
+            fresh.trace_global(displacement).pose)
+        np.testing.assert_array_equal(
+            owned.operator.evaluate(beam.local_dof_map()@displacement).tangent,
+            fresh.operator.evaluate(beam.local_dof_map()@displacement).tangent)
+    with pytest.raises(TypeError, match="operator cache"):
+        first.compile_local(operator_cache={})
+    cache.clear()
+    assert first.compile_local(operator_cache=cache).operator is not compiled[0].operator
+    assert np.isfinite(compiled[0].operator.evaluate(np.zeros(12)).energy)
 
 
 def test_admitted_roundoff_is_canonical_orthonormal_frame():

@@ -195,6 +195,31 @@ balance need their separate fail-closed screen. These finite samples do
 not define a continuous section envelope or accept F09/G0B; the private
 `1e-12` pivot guard remains unchanged.
 
+**Next bounded B2 compile decision (27 September):** The private B2 member
+currently rebuilds exact-rational local stiffness and 12 station-trace
+polynomials for every member, even when an immutable section and length are
+shared. Measure cold and warm construction for one repeated physical section
+and one varied-length control, keeping evaluation and solve out of timing.
+If repeated preparation dominates and immutable sharing preserves
+definition-bound ownership, add a caller-owned local-operator cache to the
+private G0/F13 seam; if not, leave the operator unchanged and profile a
+complete route before optimization. The screen is a development cost check,
+not a practical-scale or B2 speedup claim.
+
+**B2 repeated-operator compile slice (27 September):** A single-thread
+development screen on the intermediate rotated physical rectangle measured
+five warm 12-member construction samples. Rebuilding the same
+section/2 m operator took median `0.174493 s`; rebuilding 12 varied lengths
+took median `0.187143 s`. Cold first construction was `0.015095 s`.
+The private definition now accepts an optional caller-owned cache keyed by
+the *same section object* and exact member length. Cached operators are
+immutable; compiled members still own distinct frames and definition
+identities. A focused ownership/parity test passes `1/1`, including changed
+length, value-equal but distinct section, cache clear, and invalid cache
+rejection. The broader definition/F13 suite is still running and has no
+reported result yet; its process handle is `54444` (exec session `54296`).
+Do not claim a timed cache gain or G1 scale acceptance from this slice.
+
 **F13 residual-admission decision (27 September):** The private B2 batch's
 fast residual route treats `eps * row_scale <= 1e-9 * physical_scale` as
 sufficient to trust a rounded sparse dot. That ignores row length and how
