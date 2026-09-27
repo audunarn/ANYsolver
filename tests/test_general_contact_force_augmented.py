@@ -46,6 +46,9 @@ def test_force_control_augmented_patch_restarts_after_contact():
     assert full.info["general_contact"]["gap_tolerance_met"]
     assert any(row["augmentation_iterations"] > 1 for row in
                full.info["force_displacement_history"])
+    assert full.info["last_contact_augmentation_trace"]
+    assert all("normal_multiplier_change_pa" in row for row in
+               full.info["last_contact_augmentation_trace"])
     half = solve_static_nonlinear(model, max_load_factor=0.5, **common)
     assert half.status == "completed", half.failure_reason
     assert max(half.to_restart_checkpoint()["path_state"]["normal_multipliers"]) > 0
@@ -75,6 +78,9 @@ def test_force_control_exhausted_augmentation_restores_committed_state():
     )
     assert result.status != "completed"
     assert result.failure_reason == "maximum_augmentations_reached"
+    trace = result.info["last_contact_augmentation_trace"]
+    assert len(trace) == 1
+    assert "normal_multiplier_change_pa" in trace[0]
     np.testing.assert_array_equal(result.displacements, 0.0)
     np.testing.assert_array_equal(
         result.info["general_contact"]["normal_multiplier_estimate_pa"], 0.0,

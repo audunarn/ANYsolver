@@ -1,0 +1,2264 @@
+{
+  "divisions": 2,
+  "total_load_n": 0.4,
+  "normal_law": "augmented",
+  "normal_stiffness": 100000.0,
+  "elapsed_seconds": 93.79135680000763,
+  "status": "diverged",
+  "failure_reason": "maximum_augmentations_reached",
+  "accepted_steps": 0,
+  "contact_failure": null,
+  "force_displacement_history": [],
+  "general_contact": {
+    "profile": "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1",
+    "minimum_gap": 4.999999996873582e-05,
+    "sampled_overlap_gap": 4.999999999999623e-05,
+    "penalty_energy": 0.0,
+    "current_overlap_area": 0.8100000000000002,
+    "reference_overlap_area": 0.8099999999999992,
+    "overlapping_pairs": 7,
+    "integration_force": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "target_force": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "integration_moment": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "target_moment": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "gap_tolerance_met": "True",
+    "active_pressure_dofs": 0,
+    "source_pressure_node_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "normalized_weighted_gap_m": [
+      4.999999999999952e-05,
+      4.999999999999949e-05,
+      4.999999999999981e-05,
+      4.999999999999953e-05,
+      4.999999999999963e-05,
+      4.999999999999991e-05,
+      4.999999999999966e-05,
+      4.999999999999966e-05,
+      4.9999999999999847e-05
+    ],
+    "numerical_pressure_pa": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reference_support_m2": [
+      0.0625,
+      0.12249999999999997,
+      0.03999999999999992,
+      0.12249999999999997,
+      0.24009999999999987,
+      0.0783999999999998,
+      0.03999999999999991,
+      0.07839999999999982,
+      0.025599999999999894
+    ],
+    "energy_evaluations": 8,
+    "weighted_gap_integration_error_m3": 1.3626642538953557e-19,
+    "integration_triangles": 56,
+    "area_integration_error_m2": 9.215718466126788e-17,
+    "augmented_merit_j": 0.0,
+    "normal_multiplier_estimate_pa": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pair_geometry_evaluations": 8,
+    "pressure_gram_rank": 9,
+    "pressure_gram_condition_estimate": 42.59410104980452,
+    "pressure_gram_supported_modes": 9,
+    "pressure_gram_scaled_rank": 9,
+    "pressure_gram_scaled_condition_estimate": 13.151300162242135,
+    "normal_law": "augmented",
+    "gap_tolerance": 5e-05,
+    "maximum_candidate_pairs": 100000,
+    "swept_trial_cutbacks": 20,
+    "normal_stiffness": 100000.0
+  },
+  "solver_info": {
+    "stiffness": {
+      "matrix_type": "stiffness",
+      "num_elements": 6,
+      "num_nodes": 13,
+      "total_dofs": 78,
+      "assembly_time": 0.014356136322021484,
+      "element_times": {
+        "1": 7.486343383789062e-05,
+        "2": 1.6927719116210938e-05,
+        "3": 1.2636184692382812e-05,
+        "4": 1.049041748046875e-05,
+        "5": 0.0004527568817138672,
+        "6": 0.0003724098205566406
+      },
+      "skipped_elements": [],
+      "diagnostics": {
+        "qualified_e4_pl_stiffness": {
+          "path": "shared_geometry_cache",
+          "element_count": 4,
+          "unique_geometry_count": 4
+        },
+        "assembled_symmetry_error": 1.5139088856321068e-18,
+        "vectorized_shell_groups": [
+          {
+            "shell_order": "S4",
+            "num_elements": 4,
+            "kernel": "e4_pl_shared_geometry_cache",
+            "parallel_kernel": false,
+            "unique_geometry_count": 4
+          }
+        ],
+        "vectorized_shell_element_count": 4,
+        "scalar_shell_element_count": 2
+      },
+      "revision_signature": {
+        "boundary": 3,
+        "geometry": 13,
+        "load": 0,
+        "mass": 0,
+        "material": 1,
+        "mpc": 6,
+        "result_state": 0,
+        "topology": 19
+      },
+      "sparsity_signature": "3f7445d49f7b89fc8fd35c67e91c0e2393795db80d5b62c1a240ae41b8e1f887"
+    },
+    "load": {
+      "vector_type": "load",
+      "load_case": "uniform_source_pressure",
+      "num_nodes": 13,
+      "total_dofs": 78,
+      "assembly_time": 0.014537811279296875,
+      "load_norm": 0.15000000000000002,
+      "pressure_configuration": "reference",
+      "element_activity": null
+    },
+    "constant_load": null,
+    "constraint_info": {
+      "method": "transformation",
+      "num_total_dofs": 78,
+      "num_independent_dofs": 6,
+      "num_fixed_dofs": 72,
+      "num_mpc_slave_dofs": 0,
+      "num_mpc_constraints": 0,
+      "num_generalized_constraint_equations": 0,
+      "fixed_dofs": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        10,
+        11,
+        12,
+        13,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        27,
+        28,
+        29,
+        30,
+        31,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        45,
+        46,
+        47,
+        48,
+        49,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77
+      ],
+      "slave_dofs": [],
+      "audit": {
+        "status": "ok",
+        "total_dofs": 78,
+        "equation_count": 72,
+        "structural_rank": 72,
+        "redundant_equations": 0,
+        "independent_dofs": 6,
+        "fixed_dofs": 72,
+        "mpc_slave_dofs": 0,
+        "homogeneous": true,
+        "feasible": true,
+        "max_dependency_depth": 0,
+        "origin_counts": {
+          "support": 72
+        },
+        "equations": [
+          {
+            "dependent_dof": 54,
+            "terms": [
+              {
+                "dof": 54,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 54,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 55,
+            "terms": [
+              {
+                "dof": 55,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 55,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 56,
+            "terms": [
+              {
+                "dof": 56,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 56,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 57,
+            "terms": [
+              {
+                "dof": 57,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 57,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 58,
+            "terms": [
+              {
+                "dof": 58,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 58,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 59,
+            "terms": [
+              {
+                "dof": 59,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 59,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 60,
+            "terms": [
+              {
+                "dof": 60,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 60,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 61,
+            "terms": [
+              {
+                "dof": 61,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 61,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 62,
+            "terms": [
+              {
+                "dof": 62,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 62,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 63,
+            "terms": [
+              {
+                "dof": 63,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 63,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 64,
+            "terms": [
+              {
+                "dof": 64,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 64,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 65,
+            "terms": [
+              {
+                "dof": 65,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 65,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 66,
+            "terms": [
+              {
+                "dof": 66,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 66,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 67,
+            "terms": [
+              {
+                "dof": 67,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 67,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 68,
+            "terms": [
+              {
+                "dof": 68,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 68,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 69,
+            "terms": [
+              {
+                "dof": 69,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 69,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 70,
+            "terms": [
+              {
+                "dof": 70,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 70,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 71,
+            "terms": [
+              {
+                "dof": 71,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 71,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 72,
+            "terms": [
+              {
+                "dof": 72,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 72,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 73,
+            "terms": [
+              {
+                "dof": 73,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 73,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 74,
+            "terms": [
+              {
+                "dof": 74,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 74,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 75,
+            "terms": [
+              {
+                "dof": 75,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 75,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 76,
+            "terms": [
+              {
+                "dof": 76,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 76,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 77,
+            "terms": [
+              {
+                "dof": 77,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_fixed",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 77,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_fixed"
+          },
+          {
+            "dependent_dof": 0,
+            "terms": [
+              {
+                "dof": 0,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 0,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 1,
+            "terms": [
+              {
+                "dof": 1,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 1,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 3,
+            "terms": [
+              {
+                "dof": 3,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 3,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 4,
+            "terms": [
+              {
+                "dof": 4,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 4,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 5,
+            "terms": [
+              {
+                "dof": 5,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 5,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 6,
+            "terms": [
+              {
+                "dof": 6,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 6,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 7,
+            "terms": [
+              {
+                "dof": 7,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 7,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 9,
+            "terms": [
+              {
+                "dof": 9,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 9,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 10,
+            "terms": [
+              {
+                "dof": 10,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 10,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 11,
+            "terms": [
+              {
+                "dof": 11,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 11,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 12,
+            "terms": [
+              {
+                "dof": 12,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 12,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 13,
+            "terms": [
+              {
+                "dof": 13,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 13,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 15,
+            "terms": [
+              {
+                "dof": 15,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 15,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 16,
+            "terms": [
+              {
+                "dof": 16,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 16,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 17,
+            "terms": [
+              {
+                "dof": 17,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 17,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 18,
+            "terms": [
+              {
+                "dof": 18,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 18,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 19,
+            "terms": [
+              {
+                "dof": 19,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 19,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 21,
+            "terms": [
+              {
+                "dof": 21,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 21,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 22,
+            "terms": [
+              {
+                "dof": 22,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 22,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 23,
+            "terms": [
+              {
+                "dof": 23,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 23,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 24,
+            "terms": [
+              {
+                "dof": 24,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 24,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 25,
+            "terms": [
+              {
+                "dof": 25,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 25,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 27,
+            "terms": [
+              {
+                "dof": 27,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 27,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 28,
+            "terms": [
+              {
+                "dof": 28,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 28,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 29,
+            "terms": [
+              {
+                "dof": 29,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 29,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 30,
+            "terms": [
+              {
+                "dof": 30,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 30,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 31,
+            "terms": [
+              {
+                "dof": 31,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 31,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 33,
+            "terms": [
+              {
+                "dof": 33,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 33,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 34,
+            "terms": [
+              {
+                "dof": 34,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 34,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 35,
+            "terms": [
+              {
+                "dof": 35,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 35,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 36,
+            "terms": [
+              {
+                "dof": 36,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 36,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 37,
+            "terms": [
+              {
+                "dof": 37,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 37,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 39,
+            "terms": [
+              {
+                "dof": 39,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 39,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 40,
+            "terms": [
+              {
+                "dof": 40,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 40,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 41,
+            "terms": [
+              {
+                "dof": 41,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 41,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 42,
+            "terms": [
+              {
+                "dof": 42,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 42,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 43,
+            "terms": [
+              {
+                "dof": 43,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 43,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 45,
+            "terms": [
+              {
+                "dof": 45,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 45,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 46,
+            "terms": [
+              {
+                "dof": 46,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 46,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 47,
+            "terms": [
+              {
+                "dof": 47,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 47,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 48,
+            "terms": [
+              {
+                "dof": 48,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 48,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 49,
+            "terms": [
+              {
+                "dof": 49,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 49,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 51,
+            "terms": [
+              {
+                "dof": 51,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 51,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 52,
+            "terms": [
+              {
+                "dof": 52,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 52,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 53,
+            "terms": [
+              {
+                "dof": 53,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_guide",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 53,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_guide"
+          },
+          {
+            "dependent_dof": 2,
+            "terms": [
+              {
+                "dof": 2,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_supported_edge",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 2,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_supported_edge"
+          },
+          {
+            "dependent_dof": 20,
+            "terms": [
+              {
+                "dof": 20,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_supported_edge",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 20,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_supported_edge"
+          },
+          {
+            "dependent_dof": 38,
+            "terms": [
+              {
+                "dof": 38,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:source_supported_edge",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 38,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:source_supported_edge"
+          }
+        ],
+        "issues": [],
+        "error_count": 0,
+        "warning_count": 0
+      }
+    },
+    "num_layers": 5,
+    "total_dofs": 78,
+    "reduced_dofs": 6,
+    "control": "force",
+    "kinematics": "von_karman",
+    "corotational_tangent_requested": "auto",
+    "corotational_tangent": "not_applicable",
+    "follower_pressure": false,
+    "equilibrium_tangent": "K_internal",
+    "convergence_settings": {
+      "profile": "auto",
+      "line_search": "auto",
+      "fast_iterations": 4,
+      "slow_iterations": 9,
+      "growth_factor": 1.5,
+      "cutback_factor": 0.5,
+      "max_step_factor": 2.0,
+      "min_step_fraction": null,
+      "max_line_search_cuts": 16,
+      "line_search_reduction": 0.5,
+      "characteristic_length": null
+    },
+    "resource_config": null,
+    "thread_policy": {
+      "requested_solver_threads": null,
+      "requested_assembly_threads": null,
+      "active_solver_threads": null,
+      "limiter_available": true,
+      "fallback_reason": null,
+      "runtime_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "prefix": "libscipy_openblas",
+          "num_threads": 1,
+          "version": "0.3.31.188.0"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "prefix": "libscipy_openblas",
+          "num_threads": 1,
+          "version": "0.3.30"
+        }
+      ]
+    },
+    "external_load_reduction": {
+      "preprojected": true,
+      "constant_vector": true,
+      "proportional_vector": true,
+      "stage_vector_count": 0
+    },
+    "armijo": {
+      "enabled": false,
+      "characteristic_length": null,
+      "residual_scaling": null,
+      "sufficient_decrease": null
+    },
+    "initial_condition_provenance": {
+      "geometric_imperfection": [],
+      "residual_stress_or_prestrain": [],
+      "coordinate_system": {
+        "geometric_imperfection": "global nodal coordinates",
+        "residual_stress_or_prestrain": "element-local reference coordinates"
+      }
+    },
+    "qualified_q4_committed_state_lifecycle": {
+      "schema": "ANYSOLVER_Q4_COMMITTED_STATE_LIFECYCLE_V1",
+      "ordinary_restart": false,
+      "preflight_count": 1,
+      "validated_bound_element_ids": [],
+      "migrated_historical_unbound_element_ids": [],
+      "stripped_internal_binding_element_ids": [],
+      "fresh_unbound_element_ids": [],
+      "explicit_initial_material_state_element_ids": [],
+      "restored_deleted_frozen_element_ids": [],
+      "input_states_deep_copied": true,
+      "final_state_policy": "DETERMINISTIC_RESEAL_AFTER_MATERIALIZATION",
+      "sealed_final_element_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "sealed_deleted_frozen_element_ids": [],
+      "origin_materialized_from_unevaluated_parent_element_ids": [],
+      "sealed_final_state_digests": [
+        {
+          "element_id": 1,
+          "state_integrity_sha256": "80C31202D73AEAD49470C9AAD807DD04402DEE6B010E314D4FB69C3818A72678"
+        },
+        {
+          "element_id": 2,
+          "state_integrity_sha256": "53CF777409957635E63B53E3420C73C56E2D34E40BDE301B87CB264E62D1777D"
+        },
+        {
+          "element_id": 3,
+          "state_integrity_sha256": "5D3BDFBD10C0CBF0C5A0503B2980343415044CA197D69845A30C669F6C4790CD"
+        },
+        {
+          "element_id": 4,
+          "state_integrity_sha256": "A4B18AB0FAF344680C8C5B0144C4EA01ED5F62067A22DEAD50FA0CECC0465435"
+        }
+      ]
+    },
+    "qualified_s3_committed_state_lifecycle": {
+      "schema": "ANYSOLVER_S3_COMMITTED_STATE_LIFECYCLE_V1",
+      "ordinary_restart": false,
+      "preflight_count": 1,
+      "validated_active_element_ids": [],
+      "restored_deleted_frozen_element_ids": [],
+      "input_states_deep_copied": true,
+      "final_state_policy": "ACTIVE_ONLY_OR_EXPLICIT_NONCURRENT_DISPOSITION",
+      "sealed_active_element_ids": [
+        5,
+        6
+      ],
+      "sealed_deleted_frozen_element_ids": [],
+      "sealed_final_state_digests": [
+        {
+          "element_id": 5,
+          "state_integrity_sha256": "61A134BE20EB395E44F869D10DC0934328F74B9E86D2970437C63EB575A279E0"
+        },
+        {
+          "element_id": 6,
+          "state_integrity_sha256": "4D8FE58F17E4072442AF32F06AEDDE6A54961E5F5DC58F1BAD3190F60C468671"
+        }
+      ]
+    },
+    "nonlinear_state_storage": {
+      "activated": false,
+      "eligible_batch_count": 0,
+      "fallback_reason": "no_plastic_shell_batch",
+      "batch_eligibility": []
+    },
+    "initial_state_equilibration": {
+      "requested": false,
+      "converged": true,
+      "iterations": 0,
+      "history": [],
+      "failure_reason": null
+    },
+    "prescribed_displacement_path": {
+      "mode": "proportional_to_load_factor",
+      "schema_mode": "PROPORTIONAL_PRESCRIBED_FIELD",
+      "restart_schema_disposition": "NOT_A_RESTART",
+      "initial_affine_scale": 0.0,
+      "affine_scale_slope": 1.0,
+      "target_max_abs": 0.0
+    },
+    "last_contact_augmentation_trace": [
+      {
+        "augmentation": 1,
+        "equilibrium_converged": true,
+        "equilibrium_residual_norm": 3.0984668863552855e-11,
+        "normal_multiplier_change_pa": 0.08680498070146266,
+        "active_pressure_dofs": 3,
+        "minimum_gap_m": -2.855393431062278e-05,
+        "gap_tolerance_met": true,
+        "contact_normal_force_n": 0.010841355326351365
+      },
+      {
+        "augmentation": 2,
+        "equilibrium_converged": true,
+        "equilibrium_residual_norm": 5.723436071974989e-13,
+        "normal_multiplier_change_pa": 0.021333955645136446,
+        "active_pressure_dofs": 3,
+        "minimum_gap_m": -2.7631847045885632e-05,
+        "gap_tolerance_met": true,
+        "contact_normal_force_n": 0.012445536257700316
+      },
+      {
+        "augmentation": 3,
+        "equilibrium_converged": true,
+        "equilibrium_residual_norm": 1.2843593417363887e-14,
+        "normal_multiplier_change_pa": 0.009679631933178959,
+        "active_pressure_dofs": 3,
+        "minimum_gap_m": -2.743590495020434e-05,
+        "gap_tolerance_met": true,
+        "contact_normal_force_n": 0.012689787787570812
+      },
+      {
+        "augmentation": 4,
+        "equilibrium_converged": true,
+        "equilibrium_residual_norm": 1.4691602425849634e-15,
+        "normal_multiplier_change_pa": 0.00658575984987908,
+        "active_pressure_dofs": 3,
+        "minimum_gap_m": -2.7364192691423934e-05,
+        "gap_tolerance_met": true,
+        "contact_normal_force_n": 0.012731782298165463
+      },
+      {
+        "augmentation": 5,
+        "equilibrium_converged": true,
+        "equilibrium_residual_norm": 4.528784606955608e-15,
+        "normal_multiplier_change_pa": 0.005180361529879232,
+        "active_pressure_dofs": 3,
+        "minimum_gap_m": -2.732237110611941e-05,
+        "gap_tolerance_met": true,
+        "contact_normal_force_n": 0.012742352371006582
+      },
+      {
+        "augmentation": 6,
+        "equilibrium_converged": true,
+        "equilibrium_residual_norm": 7.259024953699689e-16,
+        "normal_multiplier_change_pa": 0.004306087684351201,
+        "active_pressure_dofs": 3,
+        "minimum_gap_m": -2.729269856988312e-05,
+        "gap_tolerance_met": true,
+        "contact_normal_force_n": 0.012747159296919875
+      },
+      {
+        "augmentation": 7,
+        "equilibrium_converged": true,
+        "equilibrium_residual_norm": 9.087169734192997e-16,
+        "normal_multiplier_change_pa": 0.0036964897336182467,
+        "active_pressure_dofs": 3,
+        "minimum_gap_m": -2.7270033917363165e-05,
+        "gap_tolerance_met": true,
+        "contact_normal_force_n": 0.012750350716611247
+      }
+    ],
+    "failure_reason": "maximum_augmentations_reached",
+    "first_failed_load_factor": 0.5,
+    "first_failed_step_size": 0.5,
+    "first_failed_iteration_reason": "maximum_augmentations_reached",
+    "stop_reason": "maximum_augmentations_reached",
+    "status_category": "failed",
+    "last_converged_load_factor": 0.0,
+    "peak_load_factor": 0.0,
+    "force_displacement_history": [],
+    "convergence_adaptation": [
+      {
+        "step_index": 1,
+        "load_factor": 1.0,
+        "iterations": 20,
+        "line_search_used": true,
+        "attempted_step_size": 1.0,
+        "next_step_size": 0.5,
+        "action": "cutback_after_nonconvergence",
+        "previous_step_size": 1.0,
+        "residual_norm": 0.0036656642190788314
+      },
+      {
+        "step_index": 1,
+        "load_factor": 0.5,
+        "iterations": 15,
+        "line_search_used": true,
+        "attempted_step_size": 0.5,
+        "next_step_size": 0.25,
+        "action": "cutback_after_nonconvergence",
+        "previous_step_size": 0.5,
+        "residual_norm": 9.087169734192997e-16
+      }
+    ],
+    "reaction_force_recovery": {
+      "accepted_force_reuse_count": 0,
+      "full_reassembly_count": 0
+    },
+    "strain_summary": {
+      "max_equivalent_plastic_strain": 0.0,
+      "max_plastic_strain_component": 0.0,
+      "max_compressed_side_plastic_strain": 0.0,
+      "layer_strain_min": 0.0,
+      "layer_strain_max": 0.0,
+      "fiber_strain_min": null,
+      "fiber_strain_max": null,
+      "yielded_element_count": 0
+    },
+    "total_newton_iterations": 35,
+    "solve_time": 78.79960298538208,
+    "constraint_postcheck": {
+      "status": "passed",
+      "equation_count": 72,
+      "vector_count": 1,
+      "max_absolute_residual": 0.0,
+      "max_relative_residual": 0.0,
+      "residual_l2_norm": 0.0,
+      "relative_tolerance": 1e-10,
+      "worst_origin": "support:source_supported_edge",
+      "collection_issue_count": 0,
+      "homogeneous_variation": false,
+      "affine_scale": 0.0,
+      "issue_code": null
+    },
+    "result_case": {
+      "name": "nonlinear_static",
+      "analysis_case": {
+        "name": "nonlinear_static",
+        "analysis_type": "nonlinear_static",
+        "load_cases": [
+          {
+            "name": "uniform_source_pressure",
+            "factor": 1.0,
+            "metadata": {}
+          }
+        ],
+        "settings": {
+          "control": "force",
+          "max_load_factor": 1.0,
+          "num_steps": 1,
+          "num_layers": 5,
+          "kinematics": "von_karman",
+          "corotational_tangent": "not_applicable",
+          "convergence_settings": {
+            "profile": "auto",
+            "line_search": "auto",
+            "fast_iterations": 4,
+            "slow_iterations": 9,
+            "growth_factor": 1.5,
+            "cutback_factor": 0.5,
+            "max_step_factor": 2.0,
+            "min_step_fraction": null,
+            "max_line_search_cuts": 16,
+            "line_search_reduction": 0.5,
+            "characteristic_length": null
+          },
+          "fracture": null
+        },
+        "metadata": {}
+      },
+      "matrix_signature": "ea8455ec4b544e42dcaeb2153689e6252db3475948c5224180a4b479330e0116",
+      "load_signature": "32d927f48d5217074a6806707d2ee5680b53706af5bba869386862d075ccb2a4",
+      "solver_backend": null,
+      "recovery": {
+        "displacements": true,
+        "element_states": true,
+        "force_displacement_history": true
+      },
+      "warnings": [],
+      "metadata": {
+        "matrix_revisions": {
+          "stiffness": {
+            "boundary": 3,
+            "geometry": 13,
+            "load": 0,
+            "mass": 0,
+            "material": 1,
+            "mpc": 6,
+            "result_state": 0,
+            "topology": 19
+          }
+        }
+      }
+    },
+    "nonlinear_performance": {
+      "scope": "analysis_local_inclusive",
+      "nested_analysis_count": 0,
+      "assembly": {
+        "activated": false,
+        "fallback_reason": "persistent_assembly_plan_not_selected",
+        "fallback_reason_counts": {
+          "persistent_assembly_plan_not_selected": 36
+        },
+        "path_counts": {
+          "reference_full_coordinate": 36
+        },
+        "calls": 36,
+        "tangent_calls": 35,
+        "residual_only_calls": 1,
+        "elapsed_seconds": 2.2912142999412026,
+        "unique_plan_count": 0,
+        "plan_reused": false,
+        "plan_reuse_scope": "within_analysis",
+        "plans": []
+      },
+      "direct_reduced_assembly": {
+        "context_active": false,
+        "activated": false,
+        "fallback_reason": "direct_reduction_context_not_active",
+        "estimated_assemblies": 0,
+        "activation_threshold": 144,
+        "assembly_count": 0,
+        "residual_only_assembly_count": 0,
+        "plan_build_count": 0,
+        "plan_reused": false,
+        "plan_reuse_scope": "within_analysis",
+        "plan": null
+      },
+      "solver": {
+        "event_counts": {
+          "dead_load_projection_reuse": 37,
+          "failed_increment": 2,
+          "failed_increment_iteration": 35,
+          "linear_factorization": 28,
+          "linear_solve": 28
+        },
+        "failure_reason_counts": {
+          "contact_gap_exceeded": 1,
+          "maximum_augmentations_reached": 1
+        },
+        "linear_factorizations": 28,
+        "linear_solves": 28,
+        "rejected_full_steps": 0,
+        "backtracks": 0,
+        "promotion_evaluations": 0,
+        "recoverable_trial_failures": 0,
+        "failed_increments": 2,
+        "failed_work": {
+          "increment_count": 2,
+          "newton_iterations": 35,
+          "rejected_trial_evaluations": 0,
+          "recoverable_trial_failures": 0
+        },
+        "reaction_force_reuse_count": 0,
+        "reaction_force_reassembly_count": 0
+      },
+      "hill48": {
+        "public_call_count": 0,
+        "point_count": 0,
+        "compiled_call_count": 0,
+        "compiled_point_count": 0,
+        "scalar_fallback_call_count": 0,
+        "scalar_fallback_point_count": 0,
+        "row_fallback_count": 0,
+        "numerical_tangent_row_count": 0,
+        "fallback_reason_counts": {},
+        "last_call": null,
+        "eligible": true,
+        "activated": false,
+        "fallback_reason": "hill48_not_exercised",
+        "fast_path": "hill48_flattened_numba_return_map",
+        "jit_backend": "numba",
+        "jit_disabled_reason": null
+      },
+      "corotational": {
+        "eligible": false,
+        "activated": false,
+        "exercised": false,
+        "fallback_reason": "kinematics_not_corotational",
+        "tangent_mode": "not_applicable",
+        "force_block_rotations": 0,
+        "tangent_block_rotations": 0,
+        "dense_consistent_rotations": 0,
+        "force_block_activated": false,
+        "rotated_tangent_block_activated": false,
+        "dense_consistent_tangent_activated": false,
+        "fast_path_name": "corotational_direct_3x3_blocks",
+        "backend": "numba",
+        "jit_enabled": true,
+        "backend_fallback_reason": null
+      }
+    },
+    "general_contact": {
+      "profile": "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1",
+      "minimum_gap": 4.999999996873582e-05,
+      "sampled_overlap_gap": 4.999999999999623e-05,
+      "penalty_energy": 0.0,
+      "current_overlap_area": 0.8100000000000002,
+      "reference_overlap_area": 0.8099999999999992,
+      "overlapping_pairs": 7,
+      "integration_force": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "target_force": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "integration_moment": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "target_moment": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "gap_tolerance_met": "True",
+      "active_pressure_dofs": 0,
+      "source_pressure_node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "normalized_weighted_gap_m": [
+        4.999999999999952e-05,
+        4.999999999999949e-05,
+        4.999999999999981e-05,
+        4.999999999999953e-05,
+        4.999999999999963e-05,
+        4.999999999999991e-05,
+        4.999999999999966e-05,
+        4.999999999999966e-05,
+        4.9999999999999847e-05
+      ],
+      "numerical_pressure_pa": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reference_support_m2": [
+        0.0625,
+        0.12249999999999997,
+        0.03999999999999992,
+        0.12249999999999997,
+        0.24009999999999987,
+        0.0783999999999998,
+        0.03999999999999991,
+        0.07839999999999982,
+        0.025599999999999894
+      ],
+      "energy_evaluations": 8,
+      "weighted_gap_integration_error_m3": 1.3626642538953557e-19,
+      "integration_triangles": 56,
+      "area_integration_error_m2": 9.215718466126788e-17,
+      "augmented_merit_j": 0.0,
+      "normal_multiplier_estimate_pa": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pair_geometry_evaluations": 8,
+      "pressure_gram_rank": 9,
+      "pressure_gram_condition_estimate": 42.59410104980452,
+      "pressure_gram_supported_modes": 9,
+      "pressure_gram_scaled_rank": 9,
+      "pressure_gram_scaled_condition_estimate": 13.151300162242135,
+      "normal_law": "augmented",
+      "gap_tolerance": 5e-05,
+      "maximum_candidate_pairs": 100000,
+      "swept_trial_cutbacks": 20,
+      "normal_stiffness": 100000.0
+    }
+  },
+  "has_restart_checkpoint": true
+}

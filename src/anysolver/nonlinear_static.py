@@ -6931,6 +6931,7 @@ def _solve_static_nonlinear_under_lease(
             )
             augmentation_iterations = 0
             normal_multiplier_change = 0.0
+            contact_augmentation_trace: list[dict[str, object]] = []
             iterations_used = 0
             adaptation_iterations = 0
             line_search_used = bool(line_search_first)
@@ -6981,6 +6982,13 @@ def _solve_static_nonlinear_under_lease(
                     adaptation_iterations, equilibrium_iterations,
                 )
                 if not converged or augmented_contact_manager is None:
+                    if augmented_contact_manager is not None:
+                        contact_augmentation_trace.append({
+                            "augmentation": augmentation,
+                            "equilibrium_converged": bool(converged),
+                            "failure_reason": failure_reason,
+                            "equilibrium_residual_norm": float(residual_norm),
+                        })
                     break
                 candidate_u = full_displacement(q_new, lam_trial)
                 certificate = augmented_contact_manager.evaluate(
@@ -6992,6 +7000,16 @@ def _solve_static_nonlinear_under_lease(
                 normal_multiplier_change = float(np.max(np.abs(
                     projected - augmented_contact_manager.normal_multipliers
                 )))
+                contact_augmentation_trace.append({
+                    "augmentation": augmentation,
+                    "equilibrium_converged": True,
+                    "equilibrium_residual_norm": float(residual_norm),
+                    "normal_multiplier_change_pa": normal_multiplier_change,
+                    "active_pressure_dofs": int(certificate.active_pressure_dofs),
+                    "minimum_gap_m": float(certificate.minimum_gap),
+                    "gap_tolerance_met": bool(certificate.gap_tolerance_met),
+                    "contact_force_z_n": float(certificate.integration_force[2]),
+                })
                 if (normal_multiplier_change <=
                         augmented_contact_manager.settings.pressure_tolerance
                         and certificate.gap_tolerance_met):
@@ -7001,6 +7019,8 @@ def _solve_static_nonlinear_under_lease(
             else:
                 converged = False
                 failure_reason = "maximum_augmentations_reached"
+            if augmented_contact_manager is not None:
+                info["last_contact_augmentation_trace"] = contact_augmentation_trace
             if not converged and augmented_contact_manager is not None:
                 augmented_contact_manager.set_normal_multipliers(
                     start_normal_multipliers
