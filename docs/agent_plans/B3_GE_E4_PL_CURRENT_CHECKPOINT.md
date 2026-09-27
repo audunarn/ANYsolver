@@ -609,6 +609,34 @@ focused test passed `1/1`. This closes the per-basis quadrature question
 at that resolution; it does not explain the dual-eight discrete primal
 near-null or qualify a multiplier space.
 
+**Next dual-eight span discriminator:** Contract the saved P1 and
+dual-eight left-null coefficients with the common continuous
+normal-position gap integrand, using fixed longitudinal bases and
+independent high-order quadrature on smooth fields. P1 should vanish
+pointwise by its analytic affine identity. If dual-eight acts on a
+smooth gap while annihilating every current shell/B3 trial column, its
+near-null is a discrete primal representability issue; if it vanishes
+pointwise, derive the missing continuous identity before changing row
+policy. This is one bounded algebraic check, not a new mesh sweep or
+multiplier selection.
+
+**Dual-eight continuous-gap result:** Contracting the saved null
+tractions with the common scalar normal-position gap gives an exact
+continuous P1 identity to about `5e-16` relative L2 action, as the
+affine-hat derivation predicts. The dual-eight kernel instead has
+relative continuous L2 action `0.06922` for both B3-12 and B3-24, and
+its tested pointwise action is nonzero. Smooth low-order polynomial and
+first-harmonic pairings are small (maximum `6.1e-6` relative to absolute
+terms), showing that this is a high-frequency difference; they are not
+evidence of a large physical response. The raw source-bound result is
+`B3_GE_E4_PL_F03_DUAL_EIGHT_CONTINUOUS_GAP_20260927.json`. The dual-eight
+near-null belongs to the present discrete primal/trace pairing, not to
+an identity of the declared continuous six-moment law. The tested
+dual-eight configuration therefore cannot be admitted with all 54
+independent multiplier rows. This does not reject the dual-space family
+at other admissible resolutions or establish locking. G0B/F03 remain
+open and no multiplier space is selected.
+
 **Global work partition from the saved solves:** The fixture reports
 `uᵀKu` work, without a one-half energy factor. Equilibrium gives native
 beam work as external work minus physical and numerical shell work. Under
