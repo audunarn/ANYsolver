@@ -22,31 +22,34 @@ def _fixture(patch_cells=4):
     return xs, ys, beam, line
 
 
-def test_aligned_two_cell_p1_twist_row_is_exactly_dependent():
-    """A third Mz multiplier cannot see a two-value reference twist trace."""
+@pytest.mark.parametrize("mixed_s3,diagonal", (
+    (False, "bl_tr"), (True, "bl_tr"), (True, "br_tl")))
+def test_aligned_two_cell_p1_yaw_row_is_exactly_dependent(mixed_s3, diagonal):
+    """A third Mz multiplier cannot see a two-value reference yaw trace."""
     xs, ys = local_grid(2, transverse_cells=4)
     beam = build(12, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um", assemble=False)
-    line = MaterialLinePosition(xs, ys, beam)
-    station_twist = line.reference_orientation_jacobian().reshape(
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3,
+                                diagonal=diagonal)
+    station_yaw = line.reference_orientation_jacobian().reshape(
         len(line.stations), 3, -1)[:, 2, :]
     first = [i for i, station in enumerate(line.stations) if station.x < .95]
     second = [i for i, station in enumerate(line.stations) if station.x > .95]
     assert len(first) == len(second) == 3
     for cell in (first, second):
-        assert np.max(np.abs(station_twist[cell]-station_twist[cell[0]])) < 1e-12
+        assert np.max(np.abs(station_yaw[cell]-station_yaw[cell[0]])) < 1e-12
 
     p0, _ = _rows(line, LineMultiplierSpace("piecewise_constant", (0., .5, 1.)))
     for kind in ("continuous_linear", "dual_linear"):
         rows, measures = _rows(line, LineMultiplierSpace(kind, (0., .5, 1.)))
-        twist = rows[[5, 11, 17]]
-        relative = np.linalg.norm(twist[0]-2*twist[1]+twist[2]) / max(
-            1., np.linalg.norm(twist))
+        yaw = rows[[5, 11, 17]]
+        relative = np.linalg.norm(yaw[0]-2*yaw[1]+yaw[2]) / max(
+            1., np.linalg.norm(yaw))
         assert np.allclose(measures, (.025, .05, .025), rtol=0., atol=1e-14)
         assert relative < 1e-12
-        assert np.max(np.abs(twist[0]-p0[5])) < 1e-12
-        assert np.max(np.abs(twist[2]-p0[11])) < 1e-12
+        assert np.max(np.abs(yaw[0]-p0[5])) < 1e-12
+        assert np.max(np.abs(yaw[2]-p0[11])) < 1e-12
 
 
 def test_material_line_detects_even_slip_invisible_to_reduced_strip_pose():

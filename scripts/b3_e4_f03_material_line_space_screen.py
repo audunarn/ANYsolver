@@ -123,13 +123,13 @@ def run() -> dict:
         row_diagnostic = _scaled_row_diagnostics(
             constraint, free, scales[:len(free)])
         if label in ("p1_two", "dual_two"):
-            twist = constraint[[5, 11, 17]]
-            row_diagnostic["unscaled_twist_identity_relative"] = float(
-                np.linalg.norm(twist[0]-2*twist[1]+twist[2]) /
-                max(1., np.linalg.norm(twist)))
-            row_diagnostic["unscaled_twist_p0_end_max"] = float(max(
-                np.max(np.abs(twist[0]-p0_two_rows[5])),
-                np.max(np.abs(twist[2]-p0_two_rows[11]))))
+            yaw = constraint[[5, 11, 17]]
+            row_diagnostic["unscaled_yaw_identity_relative"] = float(
+                np.linalg.norm(yaw[0]-2*yaw[1]+yaw[2]) /
+                max(1., np.linalg.norm(yaw)))
+            row_diagnostic["unscaled_yaw_p0_end_max"] = float(max(
+                np.max(np.abs(yaw[0]-p0_two_rows[5])),
+                np.max(np.abs(yaw[2]-p0_two_rows[11]))))
         outputs = {}
         for load_name, axis, magnitude in (("tip_mx_100nm", 3, 100.),
                                            ("tip_fz_1000n", 2, 1000.)):

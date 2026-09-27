@@ -9,7 +9,8 @@ pointwise welded face bond. The bounded material-line candidate detects
 its missed even-slip field and passes Q4/S3 first/second variations. On
 one worktree-bound Q4/native-B3 model, P0 growth from one to two cells
 changes torque tip twist by -5.51% and shear tip motion by -1.23%, while
-both solves retain equilibrium and work. Three P1 or dual Mz rows on
+both solves retain equilibrium and work. Three P1 or dual local-z yaw
+(Mz) rows on
 these two aligned cells have only two independent traces; the unscaled
 row identity and independent review establish a structural dependency,
 not a units artifact. No multiplier space or physical law is qualified.
@@ -20,7 +21,7 @@ space transfers physical torque/shear without locking, and whether the
 continuous material-line law matches a physically comparable reference.
 **Next discriminator:** On the same supported Q4 and mixed-S3 physical
 models, check the Mz trace dimension and a channel-specific space that
-does not add an unsupported twist row; compare growing-row work,
+does not add an unsupported yaw row; compare growing-row work,
 reactions and continuous gaps with P0. If the deficiency persists,
 revise interface resolution by channel before mesh-ratio assessment; if
 it is topology-specific, declare that condition and test admissible
@@ -40,8 +41,11 @@ P0 one/two rows have scaled ranks 6/6 and 12/12 and bounded torque/shear
 solves pass. P1 and dual each have rank 17/18, smallest normalized row
 singular values `2.29e-16` and `1.15e-16`, and are recorded as
 `FAILED_DEPENDENT_ROWS` without an accepted solve. Direct full-coordinate
-Mz identities `R0-2 R1+R2` have relative errors `1.65e-15` and
+Mz yaw identities `R0-2 R1+R2` have relative errors `1.65e-15` and
 `2.97e-15`; their end rows equal the two P0 Mz rows to `3.55e-15`.
+The immutable V1 JSON calls these fields `unscaled_twist_*`; that name
+is wrong. Its numeric rows are local-z yaw, while physical beam torsion
+about x is the Mx channel, which this dependency does not assess.
 An initial preflight attempt exposed a P1 torque equilibrium/work failure
 despite a tiny weak gap; that failure motivated the fail-closed scaled-rank
 check and was not reclassified as a successful solve. These fixed-grid
