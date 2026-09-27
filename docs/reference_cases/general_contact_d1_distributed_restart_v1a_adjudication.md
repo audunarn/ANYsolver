@@ -17,3 +17,18 @@ the same registered reference and raw restart report, write a distinct v1a
 verdict, and perform no solver execution. The v1 failed verdict is not
 overwritten or reclassified. Independent review remains required for a
 claim-bearing restart disposition.
+
+Independent read-only review found that the v1a mechanical comparisons are
+correct for what the probe recorded: all twelve integration-force vectors,
+minimum gaps, pressure-change values and active-pressure **counts** matched
+exactly; final displacement and pressure arrays matched exactly; paired
+wrench and contact gates passed. The v1a verdict passes every automated
+predicate, but `all_active_nodes_match` in the registered probe compares only
+the integer `active_pressure_dofs`, not node identities. Therefore the
+literal active-node-identity claim is unverified, and this registration is
+not independently accepted as a complete restart gate. The report also does
+not attest target-process package versions or execution count by itself.
+The next probe must record pressure-node IDs, full per-step pressure vectors,
+checkpoint version and runtime identity; any claim-bearing rerun needs a new
+registration and distinct raw output. No solver rerun is authorized by this
+adjudicator correction alone.
