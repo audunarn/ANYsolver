@@ -184,6 +184,32 @@ distinguishes the chosen shear-corrected continuum limit in these two
 bounded circular sections. It does not qualify arbitrary sections,
 prestress distributions, shell attachments or production buckling.
 
+**Next bounded F12 descriptor composition:** Physical B2 mass, a constant
+member axial geometric term, and point-multiplier curvature each passed
+separate small checks, but have not entered one constrained descriptor.
+On the existing Q4/physical-B2 point specimen with the same explicit
+supports, add one declared compressive axial term and nonzero point
+multiplier curvature to its reference tangent. Check that both survive
+constraint projection, multiplier rows remain massless, finite eigenpairs
+match an independent nullspace reduction, and equation/constraint residuals
+meet the existing `1e-8` screen. Failure isolates assembly or descriptor
+treatment; passing is only a provisional point-law algebra check. It does
+not establish an equilibrated loaded shell/beam state, selected connection
+law, attached buckling prediction or F12/G0B acceptance.
+
+**F12 composition result:** The same Q4/physical-B2 point specimen now
+combines a declared compressive member axial term, nonzero objective joint
+multiplier curvature, physical shell/beam mass and massless multiplier rows.
+Both geometric contributions remain nonzero after the exact point rows are
+eliminated. The descriptor has the expected finite-root count; each finite
+eigenpair meets the bounded `1e-8` equation and constraint residual screen,
+and its roots match a separate constrained-nullspace reduction. The focused
+F12 and point-attachment files pass `15/15`. This checks composition of
+existing candidate operators, not an independently equilibrated prestressed
+mixed state or a physical buckling prediction. Selected connection law,
+attached material/geometric prestress, loaded curvature, sparse production
+spectra and F12/G0B acceptance remain open.
+
 ## F13 affine factorization dependency slice — 27 September 2026
 
 **Decision sought:** Can the private B2 route reuse an unchanged sparse

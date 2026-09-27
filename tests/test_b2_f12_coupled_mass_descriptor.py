@@ -203,3 +203,51 @@ def test_physical_b2_q4_point_free_free_rest_has_six_rigid_modes():
         scale = np.linalg.norm(saddle@vector)+abs(lam)*np.linalg.norm(descriptor@vector)
         assert np.linalg.norm(residual)/max(scale, 1.) <= 1e-8
         assert np.linalg.norm(constraint@vector[:36]) <= 1e-8
+
+
+def test_b2_q4_point_prestress_descriptor_keeps_mass_and_curvature_distinct():
+    member, law, shell_k, beam_k = specimen()
+    metadata, _ = _section_mass()
+    member = replace(member, mass=metadata)
+    frame = member.local_dof_map()
+    physical_mass = linalg.block_diag(
+        _shell_mass(), frame.T@member.local_candidate_mass_matrix()@frame)
+    axial = member.compile_local().global_candidate_constant_axial_geometric_stiffness(-.05)
+    multiplier = np.array((.04, -.03, .02, .005, -.004, .006))
+    connection = law.candidate_prestress_curvature(multiplier)
+    geometric = np.zeros((36, 36))
+    geometric[24:, 24:] = axial
+    stiffness = linalg.block_diag(shell_k, beam_k)+geometric+connection
+
+    fixed = set(range(6)) | set(range(18, 24)) | set(range(24, 30))
+    fixed.update(6*i+j for i in (1, 2) for j in (3, 4, 5))
+    free = np.array([i for i in range(36) if i not in fixed])
+    c = law.constraint[:, free]
+    null = linalg.null_space(c)
+    assert np.linalg.matrix_rank(c) == 6
+    assert np.linalg.norm(null.T@geometric[np.ix_(free, free)]@null) > 1e-8
+    assert np.linalg.norm(null.T@connection[np.ix_(free, free)]@null) > 1e-8
+
+    k = stiffness[np.ix_(free, free)]
+    m = physical_mass[np.ix_(free, free)]
+    saddle = np.block([[k, c.T], [c, np.zeros((6, 6))]])
+    descriptor = linalg.block_diag(m, np.zeros((6, 6)))
+    np.testing.assert_array_equal(descriptor[-6:, :], 0.)
+    np.testing.assert_array_equal(descriptor[:, -6:], 0.)
+    eigenvalues, eigenvectors = linalg.eig(saddle, descriptor)
+    assert not np.isnan(eigenvalues).any()
+    finite = np.isfinite(eigenvalues)
+    projected_mass = null.T@m@null
+    assert np.linalg.eigvalsh(projected_mass)[0] > 0.
+    assert finite.sum() == len(free)-6
+    assert max(abs(eigenvalues[finite].imag)) <= 1e-8
+    for value, vector in zip(eigenvalues[finite], eigenvectors[:, finite].T):
+        residual = saddle@vector-value*descriptor@vector
+        scale = max(np.linalg.norm(saddle@vector),
+                    abs(value)*np.linalg.norm(descriptor@vector), 1.)
+        assert np.linalg.norm(residual)/scale <= 1e-8
+        assert np.linalg.norm(c@vector[:len(free)]) <= 1e-8
+    projected = linalg.eigh(null.T@k@null, projected_mass,
+                            eigvals_only=True)
+    np.testing.assert_allclose(np.sort(eigenvalues[finite].real), projected,
+                               rtol=2e-8, atol=2e-8)
