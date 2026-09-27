@@ -3,33 +3,29 @@
 ## Current state — 27 September 2026
 
 **Decision sought:** Qualify a physical beam–shell connection before G1.
-**Established:** For an externally attached top-face stiffener, segmented
-finite-width positional work is the leading G0 candidate; C1's director-pitch
-channel is a distinct two-sided embedded-weld candidate. Top-face reference,
-finite-chart and loaded work checks pass. The x2 two-interval fixture has an
-exact row dependency; x4 does not. Saved F5 action and same-shell comparisons
-show mixed transfer changes and partly cancelling face-motion differences,
-so neither a smaller tip gap nor one spectral quotient selects a space. B2's
-private repeated-section compilation has batch parity; F09 admission remains
-open. **Uncertainty:** Growing-space stability/locking and physical transfer
-over the registered ratios, plus an independent two-sided reference for C1.
-**Next discriminator:** The x16 four/eight P0 comparisons have full rank,
-balanced work, and material beam–row interaction, but cannot select a
-space. A fixed-frame six-moment reference integrand reproduces the current
-P0 supported row spaces at four/eight intervals for both B3 traces. P0,
-P1 and signed dual rows can be assembled from that one integrand with
-partition work closure. P1's one-row dependency follows exactly from its
-affine hat reproduction and the derived longitudinal position moment;
-dual-eight also has one supported near-null mode confined to that channel
-pair. Resolve the latter's discrete cause and derive finite-chart work/
-dual mapping before a loaded space comparison. The P0
-nesting, local work and force oscillation remain finite-grid diagnostics,
-not line-law qualification. A physically matched sided reference remains
-needed for fidelity.
-Do not launch another automatic refinement or select P0/P1/dual from tip
-motion, F5 proximity or one quotient.
-Continue independent G0 foundations. **Gate:** G0B open, G1 barred;
-formal F03 authority unconsumed.
+**Established:** The externally attached top-face positional law has a
+common reference integrand, objective bounded finite-chart work, an E4
+total-rotation derivative check and a reference physical wrench dual.
+Its selected P0/P1/signed-dual rows preserve top-fixed director-pitch
+freedom. Four/eight-interval P0 spaces are nested and full rank on the
+tested x16 shell/B3-12/B3-24 cases. P1 has one exact continuous work-row
+dependency; the dual-eight 53/54 near-null belongs to the current
+discrete trial pairing, not the continuous law. The director-pitch hybrid
+remains a separate two-sided weld candidate. B2 physical-section samples
+and private batching pass bounded checks, but F09 admission remains open.
+**Uncertainty:** Growing-space mixed-system stability and locking,
+physical transfer against a matched sided reference, and an admissible
+interface-resolution policy across the registered ratios.
+**Next discriminator:** Assess P0 and a deliberately quotiented P1 with
+physically scaled primal/dual norms and the actual native retained mixed
+tangent while the interface space grows with the mesh; check work,
+unsupported modes, locking and converged physical transfer together.
+Treat dual-eight with 54 independent rows as inadmissible on the tested
+primal layout. A failed candidate prompts a law or resolution revision;
+a passing one advances the independent G0 mechanics review. Do not
+select a space from tip motion, F5 proximity or one spectral quotient,
+and do not repeat classical axial refinement without a new question.
+**Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Next local-mode discriminator (prospective):** First check whether the
 supported four-interval top-face row space is contained in the eight-
