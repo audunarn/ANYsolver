@@ -24,7 +24,7 @@ from anysolver.fe_core import FEModel
 def build_case(columns, rows=1, edge_control=False, *,
                gap_certificate="whole_face", gap_tolerance=0.005,
                normal_approach=0.01505, four_phase=False,
-               slide_distance=0.05):
+               slide_distance=0.05, pressure_tolerance=0.002):
     if columns < 2 or columns % 2:
         raise ValueError("columns must be an even integer of at least two")
     if rows < 1:
@@ -86,7 +86,7 @@ def build_case(columns, rows=1, edge_control=False, *,
         q4_source_area_tolerance=1.0e-9,
         q4_source_weighted_gap_tolerance=1.0e-10,
         maximum_q4_source_integration_triangles=128,
-        pressure_tolerance=0.002,
+        pressure_tolerance=pressure_tolerance,
         maximum_augmentations=7,
         augmentation_acceleration="supported_schur_dev",
         augmentation_schur_maximum_modes=16,
@@ -146,7 +146,11 @@ def main():
     parser.add_argument("--normal-approach", type=float, default=0.01505)
     parser.add_argument("--four-phase", action="store_true")
     parser.add_argument("--slide-distance", type=float, default=0.05)
+    parser.add_argument("--pressure-tolerance", type=float, default=0.002)
+    parser.add_argument("--stop-after-slide", action="store_true")
     args = parser.parse_args()
+    if args.stop_after_slide and not args.four_phase:
+        parser.error("--stop-after-slide requires --four-phase")
     model, definition, settings, program = build_case(
         args.columns, args.rows, args.edge_control,
         gap_certificate=args.gap_certificate,
@@ -154,7 +158,10 @@ def main():
         normal_approach=args.normal_approach,
         four_phase=args.four_phase,
         slide_distance=args.slide_distance,
+        pressure_tolerance=args.pressure_tolerance,
     )
+    if args.stop_after_slide:
+        program = replace(program, waypoints=program.waypoints[:3])
     capability = validate_general_contact(model, definition, settings)
     if not capability.valid:
         raise ValueError(f"contact model invalid: {capability.issues}")
@@ -173,6 +180,8 @@ def main():
         "normal_approach_m": args.normal_approach,
         "four_phase": args.four_phase,
         "slide_distance_m": args.slide_distance,
+        "pressure_tolerance_pa": args.pressure_tolerance,
+        "stop_after_slide": args.stop_after_slide,
         "elapsed_seconds": time.perf_counter()-start,
         "status": result.status,
         "failure_reason": result.failure_reason,
