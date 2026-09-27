@@ -42,7 +42,7 @@ def _branches(law, source, target, moved):
     return result
 
 
-def main(reference_path: Path, output_path: Path) -> None:
+def main(reference_path: Path, output_path: Path, *, wide_source: bool = False) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
@@ -70,7 +70,11 @@ def main(reference_path: Path, output_path: Path) -> None:
         for node in moved:
             source_direction[node, (0, 2)] = 0.5
         direction = np.concatenate((source_direction, np.zeros_like(target))).ravel()
-        axes = np.flatnonzero(direction)
+        axes = (np.asarray(sorted(
+            [3*node for node in range(len(source_ids))]
+            + [3*node+2 for node, material_id in enumerate(source_ids)
+               if material_id not in (1, 26)]), dtype=np.intp)
+            if wide_source else np.flatnonzero(direction))
         law.set_tangent_active_coordinates(axes)
         base = law.work(source, target, multipliers, tangent=True)
         pressure_error = float(np.max(np.abs(
@@ -78,7 +82,10 @@ def main(reference_path: Path, output_path: Path) -> None:
             - np.asarray(saved["contact"]["numerical_pressure_pa"], dtype=float))))
         force_z = float(base.residual[:3*len(source)].reshape(-1, 3)[:, 2].sum())
         force_error = abs(force_z+float(saved["contact"]["integration_force"][2]))
-        report.update({"source_nodes": [20, 45], "selected_axes": axes.tolist(),
+        report.update({"source_nodes": [20, 45],
+                       "axis_profile": ("all_free_source_ux_uz" if wide_source
+                                        else "four_local_axes"),
+                       "selected_axes": axes.tolist(),
                        "pressure_replay_error_pa": pressure_error,
                        "source_residual_z_n": force_z,
                        "force_replay_error_n": force_error,
@@ -127,6 +134,8 @@ def main(reference_path: Path, output_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: tangent_probe.py REFERENCE_JSON OUTPUT_JSON")
-    main(Path(sys.argv[1]), Path(sys.argv[2]))
+    if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4
+                                    and sys.argv[3] != "--wide-source"):
+        raise SystemExit(
+            "usage: tangent_probe.py REFERENCE_JSON OUTPUT_JSON [--wide-source]")
+    main(Path(sys.argv[1]), Path(sys.argv[2]), wide_source=len(sys.argv) == 4)
