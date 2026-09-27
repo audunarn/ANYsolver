@@ -51,6 +51,14 @@ def _zero() -> Jet2:
     return Jet2.constant(0.0, _SIZE)
 
 
+def _scale(value: Jet2, factor: float) -> Jet2:
+    """Scale an existing Jet2 without constructing a zero-derivative jet."""
+    scalar = float(factor)
+    return Jet2(value.value*scalar,
+                value.gradient*scalar,
+                value.hessian*scalar)
+
+
 def _sum(items) -> Jet2:
     return sum(items, start=_zero())
 
@@ -79,9 +87,9 @@ def _normalize(a):
 
 def _signed_area(poly):
     origin = poly[0]
-    return _sum(_cross2(_sub(poly[i], origin),
-                        _sub(poly[i+1], origin))
-                for i in range(1, len(poly)-1))/2
+    return _scale(_sum(_cross2(_sub(poly[i], origin),
+                               _sub(poly[i+1], origin))
+                       for i in range(1, len(poly)-1)), 0.5)
 
 
 def _cross_resolution(a, b, first_error, second_error):
@@ -171,10 +179,14 @@ def _clip(subject, target, coordinate_error):
 
 def _q1(r, s):
     one = Jet2.constant(1.0, _SIZE)
-    shape = [(one-r)*(one-s)/4, (one+r)*(one-s)/4,
-             (one+r)*(one+s)/4, (one-r)*(one+s)/4]
-    dr = [-(one-s)/4, (one-s)/4, (one+s)/4, -(one+s)/4]
-    ds = [-(one-r)/4, -(one+r)/4, (one+r)/4, (one-r)/4]
+    shape = [_scale((one-r)*(one-s), 0.25),
+             _scale((one+r)*(one-s), 0.25),
+             _scale((one+r)*(one+s), 0.25),
+             _scale((one-r)*(one+s), 0.25)]
+    dr = [_scale(-(one-s), 0.25), _scale(one-s, 0.25),
+          _scale(one+s, 0.25), _scale(-(one+s), 0.25)]
+    ds = [_scale(-(one-r), 0.25), _scale(-(one+r), 0.25),
+          _scale(one+r, 0.25), _scale(one-r, 0.25)]
     return shape, dr, ds
 
 
@@ -324,13 +336,13 @@ def _evaluate(reference_source, current_source, current_target, *,
 
     ref_area_jacobian = np.linalg.norm(ref_cross)/4
     def rule(vertices, vertex_errors):
-        area = _cross2(_sub(vertices[1], vertices[0]),
-                       _sub(vertices[2], vertices[0]))/2
+        area = _scale(_cross2(_sub(vertices[1], vertices[0]),
+                              _sub(vertices[2], vertices[0])), 0.5)
         if area.value <= _area_resolution(vertices, vertex_errors):
             raise UnsupportedQ4S3Branch("degenerate integration triangle")
         total = [_zero() for _ in range(24)]
         for bary, relative_weight in _TRIANGLE_RULE:
-            xy = [_sum(bary[j]*vertices[j][k] for j in range(3))
+            xy = [_sum(_scale(vertices[j][k], bary[j]) for j in range(3))
                   for k in range(2)]
             shape, dr, ds = _natural(xy, quad_xy)
             jr = [_sum(dr[i]*q[i][k] for i in range(4)) for k in range(3)]
@@ -346,7 +358,8 @@ def _evaluate(reference_source, current_source, current_target, *,
             target_point = [_sum(target_shape[i]*t[i][k] for i in range(3))
                             for k in range(3)]
             gap = _dot(physical_normal, _sub(source_point, target_point))
-            weight = area*relative_weight*ref_area_jacobian/projected_jacobian
+            weight = _scale(_scale(area, relative_weight),
+                            ref_area_jacobian)/projected_jacobian
             integrand = ([weight*x for x in shape]
                          + [weight*x*gap for x in shape]
                          + [weight*x*y for x in shape for y in shape])
@@ -367,9 +380,9 @@ def _evaluate(reference_source, current_source, current_target, *,
             raise UnsupportedQ4S3Branch("adaptive integration exceeds triangle budget")
         a, b, c = vertices
         coarse = rule(vertices, vertex_errors)
-        ab = [(x+y)/2 for x, y in zip(a, b)]
-        bc = [(x+y)/2 for x, y in zip(b, c)]
-        ca = [(x+y)/2 for x, y in zip(c, a)]
+        ab = [_scale(x+y, 0.5) for x, y in zip(a, b)]
+        bc = [_scale(x+y, 0.5) for x, y in zip(b, c)]
+        ca = [_scale(x+y, 0.5) for x, y in zip(c, a)]
         children = ((a, ab, ca), (ab, b, bc), (ca, bc, c), (ab, bc, ca))
         eps = np.finfo(float).eps
         def midpoint_error(first, second, first_error, second_error):
