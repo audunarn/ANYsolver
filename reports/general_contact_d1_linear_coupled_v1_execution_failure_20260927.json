@@ -1,0 +1,10 @@
+{
+  "case_id": "general_contact_d1_linear_coupled_v1",
+  "status": "execution_failure_no_numerical_verdict",
+  "execution_head": "3afb2578",
+  "contract_sha256": "9902acda3937b6b3410fdc5f11796f503ba6d475151c3566552ded748e3c20d6",
+  "reason": "runner JSON serialization rejected numpy.bool_ in checks.gap after the solve; no canonical result was written",
+  "stdout": "reports/general_contact_d1_linear_coupled_v1_formal_20260927.txt",
+  "canonical_output_exists": false,
+  "repeat_authorized": false
+}

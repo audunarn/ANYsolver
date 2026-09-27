@@ -294,4 +294,15 @@ def _loaded_augmented_patch_oracle():
 
 
 def test_loaded_augmented_patch_matches_independent_linear_solution():
-    _loaded_augmented_patch_oracle()
+    metrics = _loaded_augmented_patch_oracle()
+    np.testing.assert_allclose(
+        metrics["actual_pressure_pa"], metrics["expected_pressure_pa"],
+        rtol=0.0, atol=1.0e-4,
+    )
+    assert metrics["active_pressure_dofs"] == 2
+    assert abs(metrics["actual_minimum_gap_m"]
+               - metrics["expected_minimum_gap_m"]) <= 1.0e-9
+    assert metrics["equilibrium_residual_norm_n"] <= 1.0e-6 * 0.025
+    assert metrics["normal_multiplier_change_pa"] <= 1.0e-5
+    assert metrics["force_wrench_balance_n"] <= 1.0e-6 * 0.025
+    assert metrics["moment_wrench_balance_nm"] <= 1.0e-6 * 0.025

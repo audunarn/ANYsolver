@@ -39,7 +39,7 @@ def main() -> int:
         raise FileExistsError(f"formal output already exists: {output_path}")
     contract_bytes = contract_path.read_bytes()
     contract = json.loads(contract_bytes)
-    if contract["case_id"] != "general_contact_d1_linear_coupled_v1":
+    if contract["case_id"] != "general_contact_d1_linear_coupled_v2":
         raise ValueError("wrong case identity")
     if output_path != (ROOT / contract["runner"]["output"]).resolve():
         raise ValueError("output does not match registered path")
@@ -131,6 +131,7 @@ def main() -> int:
         == criteria["required_checkpoint"],
         "wall_budget": elapsed <= contract["runner"]["maximum_wall_seconds"],
     }
+    checks = {name: bool(passed) for name, passed in checks.items()}
     record = {
         "case_id": contract["case_id"],
         "status": "passed_numerical_gate" if all(checks.values())
