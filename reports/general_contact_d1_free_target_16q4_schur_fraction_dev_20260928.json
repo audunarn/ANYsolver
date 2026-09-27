@@ -1,0 +1,8 @@
+{
+  "candidate": "free_target_16q4_schur_small_fraction_dev",
+  "selected_attempt": 2,
+  "initial_fraction": 0.02,
+  "status": "failed",
+  "probe_failure": "TypeError: '>' not supported between instances of 'tuple' and 'float'",
+  "elapsed_seconds": 88.34676190000027
+}

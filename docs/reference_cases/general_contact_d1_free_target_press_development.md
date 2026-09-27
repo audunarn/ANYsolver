@@ -192,3 +192,27 @@ equilibrium, with a fresh mechanical equilibration and comparison of measured
 gap change to the local response matrix. Small-fraction agreement would
 implicate finite-step curvature or the planned branch transition; mismatch
 on the unchanged original branch would implicate the response derivative.
+
+The disposable local probe used 2% of the failed bounded proposal at the
+step-three, augmentation-two equilibrium. Both original active pressure
+modes (28 and 29) remained active, and the overlap signature was unchanged.
+Measured and predicted normalized-gap changes agreed within
+3.075e−14 m across all 34 supported modes; an independent reconstruction
+from the saved response matrix and pressure step gave zero prediction
+reconstruction difference and 4.36e−6 relative gap-response error. The
+[raw captured report](../../reports/general_contact_d1_free_target_16q4_schur_fraction_v2_dev_20260928.json)
+has SHA256 `25941525f3a778c1a047028401aedddc4271cb8402af1314bdb16ec9663b4d8d`.
+The first probe failed on a tuple/array diagnostic conversion and is
+retained (SHA256
+`ed39f19c0380d4c1aa2db31d791ffe680bfcc799102f6dee7628026257bbc4d1`).
+The corrected probe wrote its complete report, then exited with a JSON
+console-print formatting error; that log is also retained. The formatting
+code was repaired without repeating the expensive solve. These are probe
+defects and do not alter the original 16-Q4 solver failure.
+
+The local constrained gap derivative is supported at this saved state and
+direction. The full proposal's missed response arises over its much larger
+step or planned active-mode deactivation; those effects are not separated
+yet. A bounded trust-region or re-equilibrated line-search candidate should
+be designed against this evidence and then checked on small systems before
+another full 16-Q4 path. No pressure tolerance or augmentation gate changed.

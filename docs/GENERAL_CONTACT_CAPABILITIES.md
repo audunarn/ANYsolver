@@ -128,6 +128,10 @@ were rejected on re-equilibration. Its force, gap and pressure-rank checks
 passed, but it supplies no accepted sixteen-Q4 response; the local
 pressure-response diagnostic is the next action. The raw failure and bounded
 interpretation are retained in the free-target development record.
+The subsequent disposable 2%-fraction diagnostic matched the constrained
+gap-response prediction within 3.075e−14 m on the unchanged two-mode branch.
+This supports the local derivative while leaving finite-step/branch
+acceleration and the failed sixteen-Q4 path unresolved.
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as
