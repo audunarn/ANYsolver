@@ -1,4 +1,4 @@
-"""Independent checks for the fixed-plane Q4 Newmark development slice."""
+"""Independent checks for the fixed-plane Q4 and S3 Newmark development slices."""
 
 import math
 import json
@@ -20,7 +20,13 @@ from anysolver import (
     solve_transient_contact,
 )
 from anysolver.fe_core import FEModel
-from anysolver.general_contact.core import _PlanarQ4PlaneManager, active_contact_manager
+from anysolver.algebraic_dynamics import build_declared_algebraic_basis
+from anysolver.assembly import assemble_mass_matrix, build_constraint_transformation
+from anysolver.matrix_assembly import assemble_stiffness_matrix
+from anysolver.nonlinear_static import _assemble_nonlinear_system
+from anysolver.general_contact.core import (
+    _PlanarQ4PlaneManager, active_contact_manager, contact_scope,
+)
 from anysolver.general_contact.transient import _minimum_hermite_gap
 
 
@@ -52,6 +58,218 @@ def _guided_plate():
     for node_id in (1, 2, 3, 4):
         velocity[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -1.0
     return model, contact, velocity
+
+
+def _guided_s3_descriptor_impact(*, tilt=0.0, span=1.0):
+    director = np.asarray((tilt, 0.0, 1.0), dtype=float)
+    director /= np.linalg.norm(director)
+    tangent_x = span*np.asarray((director[2], 0.0, -director[0]))
+    tangent_y = np.asarray((0.0, span, 0.0))
+    model = FEModel("guided_s3_descriptor_impact")
+    model.add_material("elastic", 1.0e5, 0.3, density=1.0)
+    for node_id, corner in enumerate((np.zeros(3), tangent_x, tangent_y), 1):
+        model.add_node(node_id, *(corner + .035*director))
+    model.add_element(1, create_shell_element(
+        1, (1, 2, 3), "elastic", formulation="e4-pl-s3-v2d",
+        thickness=.05, reference_normal=tuple(director),
+        reference_surface_offset=.01,
+    ))
+    model.add_boundary_condition(BoundaryCondition(
+        "in_plane_guide", (1, 2, 3), {"ux": 0.0, "uy": 0.0},
+    ))
+    contact = ContactDefinition(
+        surfaces=(ContactSurface("physical_bottom", (1,), side="bottom"),),
+        rigid_bodies=(RigidContactBody(
+            "floor", "plane", (0.0, 0.0, -.01-span*director[0]),
+            (0.0, 0.0, 1.0),
+        ),),
+        interactions=(ContactInteraction(
+            "s3_floor", "physical_bottom", "floor", 1.0e5, .001,
+        ),),
+    )
+    velocity = np.zeros(model.mesh.dof_manager.total_dofs)
+    for node_id in (1, 2, 3):
+        velocity[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -1.0
+    return model, contact, velocity
+
+
+def test_s3_descriptor_impact_retains_massless_rotations_and_skin_offset():
+    model, contact, velocity = _guided_s3_descriptor_impact()
+    result = solve_transient_contact(
+        model, contact, TransientConfig(.0002, .012,
+                                        initial_velocity=velocity),
+        solver_controls=ContactTransientSolverControls(
+            allow_s3_descriptor_dev=True,
+        ),
+    )
+    assert result.profile.endswith("NEWMARK_DESCRIPTOR_DEV_V0")
+    assert result.contact[0].minimum_gap == pytest.approx(.01, abs=1e-12)
+    assert result.contact[-1].active_pressure_dofs > 0
+    assert result.contact[-1].gap_tolerance_met
+    assert max(result.equilibrium_residuals) < 1.0e-7
+    omega = math.sqrt(1.0e5/.05)
+    assert min(result.swept_minimum_gaps) == pytest.approx(
+        -1.0/omega, abs=3.0e-6,
+    )
+    exact_normal = -.01-math.sin(omega*.002)/omega
+    node_normal = model.mesh.dof_manager.get_node_dofs(1)[2]
+    coarse_error = abs(result.displacements[-1, node_normal]-exact_normal)
+    fine_model, fine_contact, fine_velocity = _guided_s3_descriptor_impact()
+    fine = solve_transient_contact(
+        fine_model, fine_contact,
+        TransientConfig(.0001, .012, initial_velocity=fine_velocity),
+        solver_controls=ContactTransientSolverControls(
+            allow_s3_descriptor_dev=True,
+        ),
+    )
+    assert abs(fine.displacements[-1, node_normal]-exact_normal) < coarse_error
+    mass = .5*.05
+    normal_speed = result.velocities[-1, node_normal]
+    gap = result.contact[-1].minimum_gap
+    energy = .5*mass*normal_speed**2 + .5*(1.0e5*.5)*min(gap, 0.0)**2
+    assert abs(energy-.5*mass)/(.5*mass) < .01
+
+
+def test_tilted_s3_descriptor_impact_couples_offset_torque():
+    model, contact, velocity = _guided_s3_descriptor_impact(
+        tilt=.002, span=.1,
+    )
+    result = solve_transient_contact(
+        model, contact, TransientConfig(.0002, .012,
+                                        initial_velocity=velocity),
+        solver_controls=ContactTransientSolverControls(
+            allow_s3_descriptor_dev=True,
+        ),
+    )
+    assert result.contact[0].minimum_gap == pytest.approx(.01, abs=1e-10)
+    assert result.contact[-1].active_pressure_dofs > 0
+    assert result.contact[-1].gap_tolerance_met
+    rotation_dofs = [model.mesh.dof_manager.get_node_dofs(node)[4]
+                     for node in (1, 2, 3)]
+    assert np.max(np.abs(result.displacements[-1, rotation_dofs])) > 1e-10
+    assert max(result.equilibrium_residuals) < 1.0e-7
+    K0, _ = assemble_stiffness_matrix(model)
+    M, _ = assemble_mass_matrix(model)
+    _, _, T, _, independent, _ = build_constraint_transformation(
+        K0, np.zeros(M.shape[0]), model,
+    )
+    basis = build_declared_algebraic_basis(
+        model, M, (T.T @ M @ T).tocsr(), T, independent,
+        dense_size_limit=512,
+    ).reduced_basis
+    assert basis.shape[1] == 9
+    with contact_scope(model, contact,
+                       initial_displacement=np.zeros(M.shape[0])) as manager:
+        final_position = result.displacements[-1]
+        final_velocity = result.velocities[-1]
+        final_acceleration = result.accelerations[-1]
+        force, tangent, _ = _assemble_nonlinear_system(
+            model, final_position, {}, 3, tangent=True,
+            kinematics="von_karman",
+        )
+        reduced_balance = np.asarray(T.T @ (
+            M @ final_acceleration + force
+        )).reshape(-1)
+        algebraic_balance = np.asarray(basis.T @ reduced_balance).reshape(-1)
+        assert np.linalg.norm(reduced_balance) < 1.0e-7
+        assert np.linalg.norm(algebraic_balance) < 1.0e-7
+        # Use a different perturbation from the rate recovery's 1e-5 s.
+        independent_step_s = 5.0e-6
+        direction = independent_step_s*final_velocity
+        _, tangent_plus, _ = _assemble_nonlinear_system(
+            model, final_position+direction, {}, 3, tangent=True,
+            kinematics="von_karman",
+        )
+        _, tangent_minus, _ = _assemble_nonlinear_system(
+            model, final_position-direction, {}, 3, tangent=True,
+            kinematics="von_karman",
+        )
+        velocity_rate = np.asarray(
+            basis.T @ T.T @ (tangent @ final_velocity)
+        ).reshape(-1)
+        curvature = np.asarray(
+            (tangent_plus-tangent_minus) @ final_velocity
+        ).reshape(-1)/(2.0*independent_step_s)
+        acceleration_rate = np.asarray(
+            basis.T @ T.T @ (tangent @ final_acceleration+curvature)
+        ).reshape(-1)
+        assert np.linalg.norm(velocity_rate) < 1.0e-8
+        assert np.linalg.norm(acceleration_rate) < 1.0e-7
+        contact_force, _, contact_state = manager.evaluate(
+            final_position, tangent=False,
+        )
+    step_s = result.times[-1]-result.times[-2]
+    inertial_velocity_defect = M @ (
+        result.velocities[-1]-result.velocities[-2]
+        - .5*step_s*(result.accelerations[-2]+result.accelerations[-1])
+    )
+    inertial_position_defect = M @ (
+        result.displacements[-1]-result.displacements[-2]
+        - step_s*result.velocities[-2]
+        - .25*step_s**2*(result.accelerations[-2]+result.accelerations[-1])
+    )
+    assert np.linalg.norm(inertial_velocity_defect) < 1.0e-10
+    assert np.linalg.norm(inertial_position_defect) < 1.0e-10
+    director = model.mesh.elements[1].physical_reference_director
+    actual_couple = -sum(contact_force[dof] for dof in rotation_dofs)
+    expected_couple = .035*director[0]*contact_state.shell_force[2]
+    assert actual_couple == pytest.approx(expected_couple, rel=1e-10, abs=1e-10)
+
+
+def test_s3_descriptor_impact_requires_opt_in_and_consistent_open_start():
+    model, contact, velocity = _guided_s3_descriptor_impact()
+    with pytest.raises(ValueError, match="opted-in single S3"):
+        solve_transient_contact(
+            model, contact, TransientConfig(.0002, .001,
+                                            initial_velocity=velocity),
+        )
+    controls = ContactTransientSolverControls(allow_s3_descriptor_dev=True)
+    nonuniform = velocity.copy()
+    nonuniform[model.mesh.dof_manager.get_node_dofs(1)[2]] = -.8
+    with pytest.raises(ValueError, match="uniform rigid-normal"):
+        solve_transient_contact(
+            model, contact, TransientConfig(.0002, .001,
+                                            initial_velocity=nonuniform),
+            solver_controls=controls,
+        )
+    touching = replace(
+        contact, rigid_bodies=(replace(contact.rigid_bodies[0],
+                                       point=(0.0, 0.0, 0.0)),),
+    )
+    with pytest.raises(ValueError, match="strictly open initial gap"):
+        solve_transient_contact(
+            model, touching, TransientConfig(.0002, .001,
+                                             initial_velocity=velocity),
+            solver_controls=controls,
+        )
+
+
+def test_s3_descriptor_active_contact_restart_matches_fresh_model():
+    controls = ContactTransientSolverControls(allow_s3_descriptor_dev=True)
+    model, contact, velocity = _guided_s3_descriptor_impact()
+    full = solve_transient_contact(
+        model, contact, TransientConfig(.0002, .012,
+                                        initial_velocity=velocity),
+        solver_controls=controls,
+    )
+    first_model, first_contact, first_velocity = _guided_s3_descriptor_impact()
+    first = solve_transient_contact(
+        first_model, first_contact,
+        TransientConfig(.0002, .011, initial_velocity=first_velocity),
+        solver_controls=controls, emit_restart_checkpoint=True,
+    )
+    assert first.contact[-1].active_pressure_dofs > 0
+    resume_model, resume_contact, resume_velocity = _guided_s3_descriptor_impact()
+    resumed = solve_transient_contact(
+        resume_model, resume_contact,
+        TransientConfig(.0002, .012, initial_velocity=resume_velocity),
+        solver_controls=controls, restart_checkpoint=first.restart_checkpoint,
+    )
+    for name in ("displacements", "velocities", "accelerations"):
+        combined = np.vstack((getattr(first, name),
+                              getattr(resumed, name)[1:]))
+        np.testing.assert_allclose(combined, getattr(full, name),
+                                   rtol=1e-10, atol=1e-10)
 
 
 def test_uniform_impact_matches_independent_mass_spring_solution():

@@ -1,9 +1,10 @@
-"""A narrowly admitted nonlinear Newmark contact development profile.
+"""Narrowly admitted nonlinear Newmark shell-contact development profiles.
 
 The coupled residual is evaluated by the ordinary nonlinear structural
-assembler inside one contact scope.  This first dynamic profile deliberately
-admits only elastic planar Q4 shells, fixed rigid planes and positive definite
-reduced mass.  It does not qualify the broader C6 impact capability.
+assembler inside one contact scope. The Q4 profile uses positive-definite
+reduced mass; a separate guided single-S3 V2D profile retains declared
+massless rotations and recovers their rates from algebraic equilibrium.
+Neither profile qualifies the broader C6 impact capability.
 """
 
 from __future__ import annotations
@@ -16,9 +17,11 @@ from scipy import sparse
 from scipy.sparse.linalg import spsolve
 from anymaterial.isotropic import IsotropicMaterial
 
+from anysolver.algebraic_dynamics import build_declared_algebraic_basis
 from anysolver.assembly import assemble_mass_matrix, build_constraint_transformation
 from anysolver.dynamics import TransientConfig
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
+from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.nonlinear_state import commit_state_candidate, discard_active_state_candidate
 from anysolver.nonlinear_restart import (
@@ -32,11 +35,13 @@ from .core import (
     ContactSolverSettings,
     _PlanarQ4PlaneManager,
     contact_scope,
+    suspend_contact,
     validate_general_contact,
 )
 
 
 _PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V1"
+_S3_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0"
 _RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
 
 
@@ -48,6 +53,8 @@ class ContactTransientSolverControls:
     maximum_cutbacks: int = 8
     minimum_dt: float = 1.0e-8
     equilibrium_tolerance: float = 1.0e-8
+    allow_s3_descriptor_dev: bool = False
+    s3_descriptor_difference_step_s: float = 1.0e-5
 
     def __post_init__(self) -> None:
         if type(self.maximum_newton_iterations) is not int or self.maximum_newton_iterations < 1:
@@ -58,6 +65,11 @@ class ContactTransientSolverControls:
             raise ValueError("minimum_dt must be finite and positive")
         if not np.isfinite(self.equilibrium_tolerance) or self.equilibrium_tolerance <= 0.0:
             raise ValueError("equilibrium_tolerance must be finite and positive")
+        if type(self.allow_s3_descriptor_dev) is not bool:
+            raise ValueError("allow_s3_descriptor_dev must be boolean")
+        if (not np.isfinite(self.s3_descriptor_difference_step_s)
+                or self.s3_descriptor_difference_step_s <= 0.0):
+            raise ValueError("s3_descriptor_difference_step_s must be finite and positive")
 
 
 @dataclass(frozen=True)
@@ -139,11 +151,11 @@ class TransientContactResults:
     restart_checkpoint: dict | None = None
 
 
-def _restart_analysis_contract(transient, controls, manager) -> dict:
+def _restart_analysis_contract(transient, controls, manager, profile) -> dict:
     # The requested end time is a continuation target, not a definition of
     # the already accepted state. All other integration inputs are bound.
     return {
-        "profile": _PROFILE,
+        "profile": profile,
         "dt": float(transient.dt),
         "beta": float(transient.beta),
         "gamma": float(transient.gamma),
@@ -158,6 +170,8 @@ def _restart_analysis_contract(transient, controls, manager) -> dict:
             "maximum_cutbacks": controls.maximum_cutbacks,
             "minimum_dt": controls.minimum_dt,
             "equilibrium_tolerance": controls.equilibrium_tolerance,
+            "allow_s3_descriptor_dev": controls.allow_s3_descriptor_dev,
+            "s3_descriptor_difference_step_s": controls.s3_descriptor_difference_step_s,
         },
         "contact": manager.restart_contract(),
     }
@@ -220,6 +234,64 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
     return time, steps, *arrays
 
 
+def _consistent_s3_descriptor_rates(
+    model, T, Mred, basis, full_position, reduced_velocity,
+    reduced_acceleration, full_tangent, committed_states, difference_step_s,
+):
+    """Recover massless rates from the current nonlinear algebraic manifold.
+
+    The physical mass equation fixes rates modulo the certified null basis Z.
+    For G(q)=Z.T*F(q)=0, smooth-branch rates satisfy
+    Z.T*K(q)*v=0 and Z.T*(K(q)*a+F''(q)[v,v])=0. The contact-plane
+    penalty tangent is constant on a fixed active branch, so the directional
+    second derivative comes only from the smooth structural force here.
+    """
+    Z = basis.reduced_basis.toarray()
+    gram = Z.T @ Z
+    K = (T.T @ full_tangent @ T).toarray()
+    algebraic = Z.T @ K @ Z
+
+    def physical_part(value):
+        return value - Z @ np.linalg.solve(gram, Z.T @ value)
+
+    try:
+        physical_velocity = physical_part(reduced_velocity)
+        velocity = physical_velocity + Z @ np.linalg.solve(
+            algebraic, -Z.T @ K @ physical_velocity,
+        )
+    except np.linalg.LinAlgError as exc:
+        raise ValueError("S3 descriptor algebraic velocity solve is singular") from exc
+    full_velocity = np.asarray(T @ velocity).reshape(-1)
+    h = float(difference_step_s)
+    with suspend_contact():
+        _, plus, _ = _assemble_nonlinear_system(
+            model, full_position+h*full_velocity, committed_states, 3,
+            tangent=True, kinematics="von_karman",
+        )
+        discard_active_state_candidate(committed_states)
+        _, minus, _ = _assemble_nonlinear_system(
+            model, full_position-h*full_velocity, committed_states, 3,
+            tangent=True, kinematics="von_karman",
+        )
+        discard_active_state_candidate(committed_states)
+    structural_curvature = np.asarray(
+        T.T @ ((plus-minus) @ full_velocity)
+    ).reshape(-1)/(2.0*h)
+    try:
+        physical_acceleration = physical_part(reduced_acceleration)
+        acceleration = physical_acceleration + Z @ np.linalg.solve(
+            algebraic,
+            -Z.T @ (K @ physical_acceleration+structural_curvature),
+        )
+    except np.linalg.LinAlgError as exc:
+        raise ValueError("S3 descriptor algebraic acceleration solve is singular") from exc
+    if (not np.all(np.isfinite(velocity)) or not np.all(np.isfinite(acceleration))
+            or np.linalg.norm(Mred @ (acceleration-reduced_acceleration))
+            > 1.0e-8*max(1.0, np.linalg.norm(Mred @ reduced_acceleration))):
+        raise ValueError("S3 descriptor rate recovery changed physical inertia")
+    return velocity, acceleration
+
+
 def _minimum_hermite_gap(
     manager: _PlanarQ4PlaneManager,
     start: np.ndarray,
@@ -256,7 +328,8 @@ def _minimum_hermite_gap(
     return minimum
 
 
-def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings) -> None:
+def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings,
+           controls: ContactTransientSolverControls) -> str:
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
         raise ValueError("unsupported transient contact: " + "; ".join(report.issues))
@@ -268,16 +341,26 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
             or definition.interactions[0].normal_law != "penalty"):
         raise ValueError("transient development profile requires one shell surface and one fixed penalty plane")
     surface = definition.surfaces[0]
-    if (set(surface.element_ids) != set(model.mesh.elements)
-            or any(type(element) is not QualifiedE4PLShellElement
-                   for element in model.mesh.elements.values())):
-        raise ValueError("transient development profile requires only qualified planar Q4 elements")
+    if set(surface.element_ids) != set(model.mesh.elements):
+        raise ValueError("transient development profile requires every shell element on the surface")
+    elements = tuple(model.mesh.elements.values())
+    if all(type(element) is QualifiedE4PLShellElement for element in elements):
+        if controls.allow_s3_descriptor_dev:
+            raise ValueError("S3 descriptor opt-in requires one qualified S3 V2D element")
+        profile = _PROFILE
+    elif (len(elements) == 1
+          and type(elements[0]) is NativeParityE4PLS3V2DShellElement
+          and controls.allow_s3_descriptor_dev):
+        profile = _S3_PROFILE
+    else:
+        raise ValueError("transient development profile requires qualified Q4 or opted-in single S3 V2D")
     for element in model.mesh.elements.values():
         material = model.get_material(element.material_name)
         if (type(material) is not IsotropicMaterial
                 or float(material.yield_stress) != 0.0
                 or material.hardening_curve is not None):
             raise ValueError("transient development profile admits only isotropic elastic material")
+    return profile
 
 
 def solve_transient_contact(
@@ -290,12 +373,14 @@ def solve_transient_contact(
     restart_checkpoint: Mapping | None = None,
     emit_restart_checkpoint: bool = False,
 ) -> TransientContactResults:
-    """Solve elastic Q4 impact against a fixed plane with implicit Newmark.
+    """Solve bounded elastic Q4 or S3 V2D fixed-plane impact.
 
     Every Newton evaluation starts from the last committed material state.
     A rejected step leaves both the displacement and material state at the
     last accepted time.  The affine fixed-plane gap is checked independently
     at every accepted endpoint and across the accepted displacement segment.
+    S3 descriptor admission additionally requires explicit opt-in and a
+    strictly open, stress-free rigid-normal initial state.
     """
 
     transient, controls = _resolve_transient_inputs(transient, solver_controls)
@@ -304,7 +389,7 @@ def solve_transient_contact(
     if emit_restart_checkpoint and transient.t_end <= 0.0:
         raise ValueError("transient contact checkpoint needs one accepted time step")
     settings = ContactSolverSettings() if contact_settings is None else contact_settings
-    _admit(model, definition, settings)
+    profile = _admit(model, definition, settings, controls)
     model.apply_boundary_conditions()
     size = model.mesh.dof_manager.total_dofs
     if transient.initial_velocity is None:
@@ -328,15 +413,40 @@ def solve_transient_contact(
         raise ValueError("transient development profile requires zero prescribed displacements")
     if not len(independent_dofs):
         raise ValueError("transient contact requires at least one free coordinate")
+    if profile == _S3_PROFILE:
+        element = next(iter(model.mesh.elements.values()))
+        expected_free = sorted(
+            int(model.mesh.dof_manager.get_node_dofs(node)[local])
+            for node in element.node_ids for local in (2, 3, 4, 5)
+        )
+        if (sorted(map(int, independent_dofs)) != expected_free
+                or (T - sparse.eye(size, format="csr")[:, independent_dofs]).nnz):
+            raise ValueError(
+                "S3 descriptor development requires each node guided in-plane "
+                "with free normal displacement and rotations"
+            )
     Mred = (T.T @ M @ T).tocsr()
-    # Reject massless algebraic coordinates rather than assigning fictitious
-    # inertia.  The descriptor shell adapter belongs to a later C6 slice.
     if Mred.shape[0] > 512:
         raise ValueError("transient development profile admits at most 512 free coordinates")
-    try:
-        np.linalg.cholesky(Mred.toarray())
-    except np.linalg.LinAlgError as exc:
-        raise ValueError("reduced mass is not positive definite; algebraic dynamics are not admitted") from exc
+    descriptor_basis = None
+    if profile == _PROFILE:
+        try:
+            np.linalg.cholesky(Mred.toarray())
+        except np.linalg.LinAlgError as exc:
+            raise ValueError("reduced mass is not positive definite; algebraic dynamics are not admitted") from exc
+    else:
+        descriptor_basis = build_declared_algebraic_basis(
+            model, M, Mred, T, independent_dofs, dense_size_limit=512,
+        )
+        nullity = descriptor_basis.reduced_basis.shape[1]
+        spectrum = np.linalg.eigvalsh(Mred.toarray())
+        mass_scale = float(np.max(np.abs(spectrum)))
+        if not np.isfinite(mass_scale) or mass_scale <= 0.0:
+            raise ValueError("S3 descriptor needs positive physical mass")
+        threshold = 1.0e-10*mass_scale
+        if (nullity < 1 or int(np.count_nonzero(spectrum <= threshold)) != nullity
+                or np.any(spectrum < -threshold)):
+            raise ValueError("S3 descriptor mass nullity disagrees with declared algebraic basis")
     q = np.asarray(initial_displacement[independent_dofs], dtype=float).copy()
     full_initial = np.asarray(T @ q).reshape(-1)
     if not np.allclose(full_initial, initial_displacement,
@@ -347,6 +457,24 @@ def solve_transient_contact(
     if not np.allclose(np.asarray(T @ vred).reshape(-1), vfull,
                        atol=1.0e-12, rtol=1.0e-12):
         raise ValueError("initial_velocity does not satisfy structural constraints")
+    if profile == _S3_PROFILE:
+        # This first descriptor impact admits a stress-free rigid normal
+        # approach. General DAE initial states require a separate consistency
+        # solve for algebraic displacement, velocity and acceleration.
+        if np.linalg.norm(full_initial, ord=np.inf) > 1.0e-13:
+            raise ValueError("S3 descriptor development needs zero initial displacement")
+        normal = np.asarray(definition.rigid_bodies[0].normal, dtype=float)
+        nodal_velocity = np.asarray([
+            initial_velocity[model.mesh.dof_manager.get_node_dofs(node)[:6]]
+            for node in model.mesh.elements[
+                definition.surfaces[0].element_ids[0]
+            ].node_ids
+        ])
+        speed = float(nodal_velocity[0, :3] @ normal)
+        expected_velocity = np.r_[speed*normal, np.zeros(3)]
+        if not np.allclose(nodal_velocity, expected_velocity[None, :],
+                           rtol=0.0, atol=1.0e-12):
+            raise ValueError("S3 descriptor development needs uniform rigid-normal initial velocity")
     committed_states = {}
     # The manager's fresh-start guard checks the original configured pose.
     # The resumed pose is validated separately against its accepted gap budget.
@@ -358,7 +486,7 @@ def solve_transient_contact(
         if restart_checkpoint is not None or emit_restart_checkpoint:
             model_fingerprint = model_configuration_fingerprint(model)
             analysis_fingerprint = analysis_configuration_fingerprint(
-                _restart_analysis_contract(transient, controls, manager)
+                _restart_analysis_contract(transient, controls, manager, profile)
             )
         if restart_checkpoint is None:
             current_time = 0.0
@@ -380,12 +508,31 @@ def solve_transient_contact(
             )
             return full, np.asarray(T.T @ force).reshape(-1), stiffness, trial
 
-        full0, force0, _, trial0 = evaluate(q, tangent=False)
+        full0, force0, initial_tangent, trial0 = evaluate(
+            q, tangent=(profile == _S3_PROFILE and restart_checkpoint is None),
+        )
         contact0 = manager.evaluate(full0, tangent=False)[2]
         if not contact0.gap_tolerance_met:
             raise ValueError("initial contact gap exceeds the registered tolerance")
+        if (profile == _S3_PROFILE and restart_checkpoint is None
+                and contact0.minimum_gap <= 1.0e-10):
+            raise ValueError("S3 descriptor development requires a strictly open initial gap")
         if resumed_acceleration is None:
-            acceleration = np.asarray(spsolve(Mred, -force0)).reshape(-1)
+            if profile == _S3_PROFILE:
+                basis = descriptor_basis.reduced_basis
+                reduced_tangent = (T.T @ initial_tangent @ T).tocsr()
+                algebraic_velocity_work = np.asarray(
+                    basis.T @ (reduced_tangent @ vred)
+                ).reshape(-1)
+                if (float(np.linalg.norm(force0)) > controls.equilibrium_tolerance
+                        or float(np.linalg.norm(algebraic_velocity_work))
+                        > controls.equilibrium_tolerance):
+                    raise ValueError("S3 descriptor initial algebraic state is inconsistent")
+                # Rigid-normal free motion has zero initial structural and
+                # contact acceleration. Massless rotations receive no inertia.
+                acceleration = np.zeros_like(q)
+            else:
+                acceleration = np.asarray(spsolve(Mred, -force0)).reshape(-1)
         else:
             acceleration = resumed_acceleration
             balance = Mred @ acceleration + force0
@@ -431,6 +578,15 @@ def solve_transient_contact(
                     if float(np.linalg.norm(residual)) <= controls.equilibrium_tolerance * scale:
                         contact_result = manager.evaluate(full, tangent=False)[2]
                         candidate_velocity = velocity_predictor + gamma * step * candidate_acceleration
+                        if profile == _S3_PROFILE:
+                            candidate_velocity, candidate_acceleration = (
+                                _consistent_s3_descriptor_rates(
+                                    model, T, Mred, descriptor_basis, full,
+                                    candidate_velocity, candidate_acceleration,
+                                    tangent, committed_states,
+                                    controls.s3_descriptor_difference_step_s,
+                                )
+                            )
                         full_velocity = np.asarray(T @ candidate_velocity).reshape(-1)
                         swept_gap = _minimum_hermite_gap(
                             manager, previous_full, full,
@@ -493,7 +649,7 @@ def solve_transient_contact(
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(
-        _PROFILE, np.asarray(times), np.asarray(positions),
+        profile, np.asarray(times), np.asarray(positions),
         np.asarray(velocities), np.asarray(accelerations), tuple(contacts),
         np.asarray(swept_gaps), np.asarray(residuals), cutbacks, tuple(iterations),
         checkpoint,

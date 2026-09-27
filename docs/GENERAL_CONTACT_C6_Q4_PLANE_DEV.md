@@ -1,6 +1,8 @@
 # Fixed-plane Q4 impact development profile
 
-`solve_transient_contact` provides a narrow opt-in C6 development slice. It
+This page describes the Q4 branch of `solve_transient_contact`; the separate
+[guided S3 V2D descriptor branch](GENERAL_CONTACT_C6_S3_DESCRIPTOR_DEV.md)
+has its own admission and evidence. The Q4 branch is a narrow opt-in C6 development slice. It
 combines the existing nonlinear shell residual with the planar-Q4 penalty
 contact owner in an implicit average-acceleration Newmark step. The currently
 admitted model contains only qualified planar E4-PL Q4 shell elements with
@@ -59,7 +61,7 @@ changed time-step/contact-definition and off-grid export rejection are also cove
 development tests, not
 registered C6 qualification or independent review.
 
-Prescribed loads, moving tools, free rigid bodies, shell descriptor dynamics,
+Prescribed loads, moving tools, free rigid bodies, descriptor dynamics in this Q4 branch,
 beam impact, general finite sliding, plasticity, friction, damping, general
 dynamic restart, work/energy accounting, cancellation and common-stage native
 coupling remain outside this profile. Contact result records retain the
