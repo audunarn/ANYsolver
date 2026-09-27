@@ -2,6 +2,26 @@
 
 ## Current state — 27 September 2026
 
+**Decision sought:** Establish a physically credible native two-sided
+beam–shell law and stable exact line space before G1.
+**Established:** Native side work and derivatives pass; the six-channel law
+is a reduced strip-pose candidate, not a pointwise welded face bond.
+Matched detached-solid work differs materially from the native action.
+The split-solid torque/opening fields show sampled overlap; the separate
+reverse-Fz opening field has positive same-XY samples on 120 available
+faces but lacks seam data and continuous separation. B2 physical-section
+checks pass at sampled points; fail-closed F09 admission remains unfinished.
+**Remaining uncertainty:** Allocate torque/shear differences among the
+continuous law, discrete enforcement, contact, and domain idealizations;
+assess growing-space stability and physical transfer together.
+**Next discriminator:** Design one physically matched torque/shear reference
+with a declared connection and admissible surface-order evidence, then use
+existing native work to choose a law or resolution change. Advance B2 F09
+and independent foundations without repeating axial/opening sweeps.
+**Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
+
+## Detailed reference state and saved-field decision — 27 September 2026
+
 **Decision sought:** Decide whether the declared native two-sided six-channel
 joint is physically credible and which exact line space remains stable and
 accurate before G1.
