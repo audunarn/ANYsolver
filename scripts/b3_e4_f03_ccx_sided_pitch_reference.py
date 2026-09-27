@@ -1,9 +1,10 @@
-"""One bounded, linearized two-sided pitch reference on the saved F5 solid.
+"""Bounded, linearized two-sided pitch references on saved C1 solids.
 
-The existing shared-node top-face bond is unchanged. One additional equation
-equates the *area-averaged* through-thickness x-motion gradient of the bar
-and plate on x=.9..1 m. It is an external diagnostic of a declared reduced
-two-sided joint, not a nonlinear native-line or G0 qualification result.
+The existing shared-node top-face bond is unchanged. One equation over the
+whole terminal bond, or two equations over its halves, equate the area-mean
+through-thickness x-motion gradients of bar and plate. These are external
+diagnostics of a declared reduced two-sided joint, not native-line or G0
+qualification results.
 """
 
 from __future__ import annotations
@@ -309,7 +310,7 @@ def main() -> int:
         "pitch_intervals_m": [list(interval) for interval in intervals],
         "response": response,
         "limitations": ["linearized area-average pitch, not finite-rotation native pose",
-                        "shared top-face nodes plus one additional weak two-sided constraint",
+                        f"shared top-face nodes plus {args.pitch_intervals} additional weak two-sided constraint(s)",
                         "solid section deformation and inferred shell director are not native B3/E4 states",
                         "contact and mesh convergence are not qualified"],
     }

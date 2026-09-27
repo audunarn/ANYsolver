@@ -8059,3 +8059,13 @@ Generated decks, solver logs, DAT and FRD are retained in the versioned
 `.qualification/b3-ge-e4-pl/f03-c1-factor4-sided-pitch-two-intervals-*`
 directories. This is Level-A development evidence, not independent G0B
 review or external-reference acceptance.
+
+Independent read-only mechanics/code review of the F4 split runner and
+V2/RF records found no blocking equation, sign, work or provenance issue.
+It confirmed both dependent nodes are distinct, unloaded and absent from
+the other equation; it independently recalculated both side-work pairs.
+The reviewer identified one P3 labeling defect: the runner's module text
+and result limitation said "one additional" for the two-interval mode.
+That wording is corrected prospectively. The numerical records remain
+bound to the exact runner source at commit `7e2f3b7f`; no numerical input
+or operator changed, and the solver was not rerun for a wording repair.
