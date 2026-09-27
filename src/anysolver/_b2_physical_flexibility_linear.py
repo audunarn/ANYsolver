@@ -120,6 +120,28 @@ def _flexibility(length, compliance):
     return result
 
 
+def _separated_basic_inverse(length, flexibility):
+    """Invert in a fixed midpoint shear/moment basis, return original q rows.
+
+    The exact congruence changes only the inversion coordinates.  Section
+    resultants, basic displacements and station traces retain their original
+    physical conventions.
+    """
+    change = [[Fraction(0) for _ in range(6)] for _ in range(6)]
+    change[0][0], change[1][1] = 1, length
+    change[2][2] = change[3][2] = length/2
+    change[2][3], change[3][3] = -length, length
+    change[4][4] = change[5][4] = -length/2
+    change[4][5], change[5][5] = -length, length
+    separated = [[sum(change[a][i]*flexibility[a][b]*change[b][j]
+                      for a in range(6) for b in range(6))
+                  for j in range(6)] for i in range(6)]
+    inverse = _inverse_spd(separated)
+    return [[sum(change[i][a]*inverse[a][b]*change[j][b]
+                 for a in range(6) for b in range(6))
+             for j in range(6)] for i in range(6)]
+
+
 @dataclass(frozen=True)
 class LinearSection:
     stiffness: tuple[tuple[float, ...], ...]
@@ -266,8 +288,9 @@ class LinearOperator:
             for value in self._modal:
                 _float(value)
         else:
-            self._basic_inverse = tuple(tuple(row) for row in _inverse_spd(
-                _flexibility(self.length, self._compliance)))
+            self._basic_inverse = tuple(tuple(row) for row in
+                _separated_basic_inverse(self.length,
+                    _flexibility(self.length, self._compliance)))
         h0 = _interpolation(self.length, Fraction(0))
         h1 = _interpolation(self.length, self.length)
         coefficients = [[[Fraction(0) for _ in range(4)] for _ in range(12)]

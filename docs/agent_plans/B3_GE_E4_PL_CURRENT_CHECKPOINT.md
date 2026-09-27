@@ -2462,6 +2462,24 @@ an extreme conditioning range, sparse-graph accuracy or F09/G0B acceptance.
 The primary C1 law still requires the pending physical-joint choice; neither
 this result nor the earlier mode/solid diagnostics selects it.
 
+**F09 generalized weak-shear basis candidate:** The private generalized B2
+operator now inverts its exact integrated flexibility in a fixed midpoint
+shear/moment basic-wrench basis, then transforms the inverse back to the
+original physical coordinates. It keeps the section SPD screen and the
+provisional `1e-12` normalized-pivot screen; the scalar branch is unchanged.
+The formerly rejected `2^-40` coupled-shear example still fails that screen
+in the original basis, but passes it in the fixed separated basis. Its
+recovered inverse equals an independent exact Gauss-Jordan inverse; fixed
+mixed-wrench forces, energy, three interior poses, section resultants and
+strains, and two pure weak-direction tangent actions match independent
+cut-wrench/integrated-strain references at the developmental `1e-8` checks.
+An independent read-only review found no algebraic defect in the congruence
+or force-coordinate recovery. The five physical-B2 test files and F13 file
+pass 56/56 in separate focused invocations. A broad one-command invocation
+was stopped without a result and is not counted. This does not establish a
+full conditioning envelope, attached or large-graph solve, production B2
+admission, F09/G0B acceptance, or a revised scientific tolerance.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision

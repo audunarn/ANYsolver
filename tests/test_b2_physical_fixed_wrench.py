@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from anysolver._b2_physical_flexibility_linear import (
-    ConditioningAdmissionError, LinearSection, _flexibility,
+    ConditioningAdmissionError, LinearSection, _flexibility, _inverse_spd,
 )
 from anysolver._b2_physical_linear_definition import PhysicalB2Member
 
@@ -134,7 +134,7 @@ def test_fixed_mixed_tip_wrench_matches_independent_cut_energy(points, local_y,
         np.testing.assert_allclose(resultant, expected_cut, rtol=3e-11, atol=1e-11)
 
 
-def test_generalized_very_weak_shear_has_explicit_provisional_admission_limit():
+def test_generalized_very_weak_shear_preserves_independent_cut_work():
     stiffness = np.diag([12., 2.**-40, 2.**-39, 4., 3., 5.])
     stiffness[0, 4] = stiffness[4, 0] = .5
     stiffness[1, 2] = stiffness[2, 1] = 2.**-42
@@ -145,8 +145,60 @@ def test_generalized_very_weak_shear_has_explicit_provisional_admission_limit():
     tip = _tip_compliance(member.length_m, stiffness) @ wrench
     assert np.isfinite(tip).all() and np.max(np.abs(tip)) > 1e10
     assert .5 * wrench @ tip > 0
+    operator = member.local_operator()
+    original_flexibility = _flexibility(
+        Fraction(float(member.length_m)), _inverse(stiffness))
     with pytest.raises(ConditioningAdmissionError, match="ill-conditioned"):
-        member.local_operator()
+        _inverse_spd(original_flexibility)
+    assert operator._basic_inverse == tuple(
+        tuple(row) for row in _inverse(original_flexibility))
+    stations = (.25, .5, .75)
+    response = operator.evaluate(np.r_[np.zeros(6), tip], stations=stations)
+    root = np.r_[-wrench[:3], -wrench[3:] -
+                 np.cross([member.length_m, 0., 0.], wrench[:3])]
+    np.testing.assert_allclose(response.force, np.r_[root, wrench],
+                               rtol=1e-8, atol=1e-8)
+    assert response.energy == pytest.approx(.5*wrench@tip, rel=1e-8)
+    exact_tip = _tip_compliance_exact(member.length_m, stiffness)
+    tip_tangent = response.tangent[6:, 6:]
+    for direction in (1, 2):
+        unit = [Fraction(int(i == direction)) for i in range(6)]
+        weak_displacement = np.array([float(sum(row[j]*unit[j]
+                                      for j in range(6))) for row in exact_tip])
+        recovered = tip_tangent@weak_displacement
+        np.testing.assert_allclose(recovered, np.asarray(unit, dtype=float),
+                                   rtol=1e-8, atol=1e-8)
+
+    compliance = _inverse(stiffness)
+    force = [Fraction(float(v)) for v in wrench]
+    length = Fraction(float(member.length_m))
+    def strain_at(x):
+        cut = _cut_map(length-x)
+        resultant = [sum(row[j]*force[j] for j in range(6)) for row in cut]
+        strain = [sum(row[j]*resultant[j] for j in range(6))
+                  for row in compliance]
+        return np.array([float(v) for v in resultant]), np.array(
+            [float(v) for v in strain])
+
+    _, e0 = strain_at(Fraction(0))
+    _, e1 = strain_at(length)
+    trace = operator.trace(np.r_[np.zeros(6), tip], stations=stations)
+    for station, pose, resultant, strain in zip(
+            stations, trace.pose, response.resultants,
+            response.strains, strict=True):
+        x = station*member.length_m
+        delta = e1-e0
+        integrated = e0*x+delta*x*x/(2*member.length_m)
+        rotations = integrated[3:]
+        y = integrated[1]+e0[5]*x*x/2+delta[5]*x**3/(6*member.length_m)
+        z = integrated[2]-e0[4]*x*x/2-delta[4]*x**3/(6*member.length_m)
+        expected_pose = np.array((integrated[0], y, z, *rotations))
+        expected_resultant, expected_strain = strain_at(Fraction(float(x)))
+        np.testing.assert_allclose(pose, expected_pose, rtol=1e-8, atol=1e-8)
+        np.testing.assert_allclose(resultant, expected_resultant,
+                                   rtol=1e-8, atol=1e-8)
+        np.testing.assert_allclose(strain, expected_strain,
+                                   rtol=1e-8, atol=1e-8)
 
 
 def test_weak_generalized_pivot_screen_depends_on_bending_wrench_basis():
