@@ -65,7 +65,11 @@ def _solve(primal: sparse.csr_matrix, residual: np.ndarray,
            scales: np.ndarray, energy_scale: float,
            load: np.ndarray) -> tuple[np.ndarray, np.ndarray, dict]:
     row_count = constraint.shape[0]
-    if (row_count < 1 or row_count > 36 or
+    # This bounded diagnostic now also covers the 45-row physical shell
+    # trace image. The complete system remains below the registered 1,900-row
+    # development cap; this does not enlarge that cap or production scope.
+    if (row_count < 1 or row_count > 60 or
+            len(free)+row_count > 1900 or
             scales.shape != (len(free)+row_count,)):
         raise ValueError("bounded constraint and scaling rows required")
     rows = sparse.csr_matrix(constraint[:, free])

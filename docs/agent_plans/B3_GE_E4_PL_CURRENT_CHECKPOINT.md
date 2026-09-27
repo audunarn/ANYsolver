@@ -55,6 +55,22 @@ refinement, reversal and Q4/S3 with supported work and appropriate mixed
 norms. The ratio-specific ablations are diagnostics, not a selected rule.
 Do not automatically drop rows by SVD or run the full ratio series on
 the failed enriched policy.
+
+**Next fixed-side trace discriminator (prospective):** The complete
+coarser native-port test space is independent yet tracks coarse P0,
+while the P0 m4 space contains additional shell-sensitive directions.
+On the same shell-fine x8/B3-12 fixture, form the physical shell-side
+trace image from its actual six-channel continuous-gap Jacobian, with
+the declared `.1 m` rotational length and exact line quadrature.
+First determine its generator dimension and any exact dependencies
+using the same supported coordinates; do not silently truncate a
+dependent image. If it is independent and bounded, compare only its
+unchanged-primal torque/shear work, reactions and continuous gaps with
+the saved beam-image and P0 m2/m4 cases. Agreement near m4 would point
+toward a shell-trace mortar test space for later stability review;
+coarse-like or divergent behavior would leave the joint law/space open.
+This is a side-derived candidate, not multiplier selection, external
+accuracy or formal F03 execution.
 Advance a physically matched two-sided torque/shear reference. The bounded
 off-edge S3 loaded mapping check is complete; do not resume finer
 classical axial work.
