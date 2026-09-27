@@ -15,8 +15,9 @@ B3 ports. Independent Q4/S3 plastic, rebase and native descriptor development
 has advanced; the private native B3 sparse adapter now enforces its owners'
 admission and passes bounded loaded-state tangent checks. B2 has a private
 eccentric Q4 point candidate, matched
-low-mode mass convergence, an explicit mass-origin pullback and a bounded
-physical Q4/B2 massless-multiplier descriptor check. **Remaining uncertainty:**
+low-mode mass convergence, an explicit mass-origin pullback, a bounded
+physical Q4/B2 massless-multiplier descriptor check, and a private scaled
+affine batch route. **Remaining uncertainty:**
 Whether the primary joint is a top-face positional bond, an intentional
 through-thickness rotational weld, or both separately admitted; its matched
 torque/shear transfer and growing-space stability; remaining G0 foundations.
