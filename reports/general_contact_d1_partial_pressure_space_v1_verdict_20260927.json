@@ -1,0 +1,57 @@
+{
+  "registration": "docs\\reference_cases\\general_contact_d1_partial_pressure_space_v1.json",
+  "registration_sha256": "7217dad25d6b592ff8fd7e446b7b5a6830b57ade2200aac4239fcc9c5909f906",
+  "raw_result": "reports\\general_contact_d1_partial_pressure_space_v1_formal_20260927.json",
+  "raw_result_sha256": "41572b8c5a73fef6766cd12fafc4df54b2b80546c347b7917f91a3bdc319df1e",
+  "checks": {
+    "row_count_and_divisions": true,
+    "row_count_per_division": true,
+    "reference_replay": true,
+    "full_supported_rank": true,
+    "active_modes_increase": true,
+    "absolute_force_error_decreases": true,
+    "finest_relative_reference_error": true,
+    "development_predictor": true,
+    "force_balance": true,
+    "moment_balance": true,
+    "finest_integration_indicator": true,
+    "gap_tolerances": true,
+    "wall_limit": true
+  },
+  "summary": [
+    {
+      "divisions": 16,
+      "force_n": 0.16976139758984216,
+      "absolute_reference_error_n": 0.002488602410157831,
+      "pressure_rank": 44,
+      "supported_modes": 44,
+      "active_modes": 24,
+      "force_balance_n": 5.551116920054093e-17,
+      "moment_balance_nm": 1.5515879729101362e-17,
+      "integration_indicator_n": 7.678393752032717e-15
+    },
+    {
+      "divisions": 32,
+      "force_n": 0.17177348497348763,
+      "absolute_reference_error_n": 0.00047651502651235855,
+      "pressure_rank": 76,
+      "supported_modes": 76,
+      "active_modes": 40,
+      "force_balance_n": 2.775559780356949e-17,
+      "moment_balance_nm": 1.5515843318859002e-17,
+      "integration_indicator_n": 7.086159437789822e-15
+    },
+    {
+      "divisions": 64,
+      "force_n": 0.17218069317077198,
+      "absolute_reference_error_n": 6.930682922801079e-05,
+      "pressure_rank": 144,
+      "supported_modes": 144,
+      "active_modes": 72,
+      "force_balance_n": 2.775566152156929e-17,
+      "moment_balance_nm": 5.00370841263282e-17,
+      "integration_indicator_n": 7.697962767034432e-15
+    }
+  ],
+  "status": "pass"
+}
