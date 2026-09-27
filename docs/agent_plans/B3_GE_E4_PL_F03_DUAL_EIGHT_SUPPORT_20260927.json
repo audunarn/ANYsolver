@@ -1,0 +1,100 @@
+{
+  "cases": {
+    "b3_half_12": {
+      "complete": {
+        "next_relative": 0.002322516813773249,
+        "rank_at_1e_10": 53,
+        "smallest_relative": 9.976306067064561e-17
+      },
+      "complete_near_null_norm": 5.673067257709817e-16,
+      "fixed_column_residual_norm": 0.0,
+      "fixed_columns": 72,
+      "near_null_channel_strength": {
+        "first_x": 1.1655740895539166e-16,
+        "first_y": 0.7157145840834566,
+        "first_z": 5.303543787574598e-16,
+        "mean_x": 2.1826352551178328e-16,
+        "mean_y": 2.991470001717543e-16,
+        "mean_z": 0.6983928938142515
+      },
+      "smallest_singular": 2.657471124070683e-16,
+      "supported": {
+        "next_relative": 0.002322516813773259,
+        "rank_at_1e_10": 53,
+        "smallest_relative": 9.58212734353392e-17
+      },
+      "supported_columns": 1932,
+      "supported_near_null_norm": 5.515846308132062e-16
+    },
+    "b3_half_24": {
+      "complete": {
+        "next_relative": 0.003025635798825335,
+        "rank_at_1e_10": 53,
+        "smallest_relative": 1.0366620415567358e-16
+      },
+      "complete_near_null_norm": 5.459342719889359e-16,
+      "fixed_column_residual_norm": 0.0,
+      "fixed_columns": 72,
+      "near_null_channel_strength": {
+        "first_x": 3.0365745160433823e-16,
+        "first_y": 0.713833875626092,
+        "first_z": 3.892482426606207e-16,
+        "mean_x": 1.9600176726613642e-16,
+        "mean_y": 4.257457291992659e-16,
+        "mean_z": 0.7003150705279968
+      },
+      "smallest_singular": 2.0054151915580718e-16,
+      "supported": {
+        "next_relative": 0.003025635798825361,
+        "rank_at_1e_10": 53,
+        "smallest_relative": 9.434389169150081e-17
+      },
+      "supported_columns": 2148,
+      "supported_near_null_norm": 5.437981214113835e-16
+    }
+  },
+  "classification": "bounded dual-eight support discriminator; no F03 selection",
+  "elapsed_s_not_benchmark": 9.934238900023047,
+  "limitations": [
+    "complete-versus-supported rank does not prove uniform inf-sup or locking",
+    "finite-chart law and physical dual map remain open"
+  ],
+  "model": "same x16/y4 C1 Q4/B3-12/B3-24 reference trace; all columns versus registered root supports",
+  "normalization": "same supported row norms for both matrices and fixture coordinate column scales",
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "question": "Does the dual-eight near-null persist on the complete primal columns, or arise from support elimination?",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_dual_eight_support_check.py": "492ddeec3b530fc3a69de6e83ceddbf590e3e902046e5f8f5c31f6952b7a1aa3",
+    "scripts\\b3_e4_f03_common_trace_spaces.py": "36555d56701137be47a001d2ffa9f9dc4390ae0369ec6e6f9a2e14f7397656f5",
+    "scripts\\b3_e4_f03_top_face_common_trace.py": "b9bde46d65cb764b409990d723682c3fa34f8f30a196eca04d600bf15eb0c963"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ]
+}

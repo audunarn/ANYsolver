@@ -479,15 +479,78 @@ the corresponding affine combination of normal mean-gap rows for every
 gap field. It does not indicate locking. The dual-eight smallest singular
 value is about `1e-16` of the largest, and its left-null vector is confined
 to the mean-normal/longitudinal-moment pair; dual-four is full rank.
-The remaining question is why that supported dual near-null relation arises at eight intervals
-on the supported discrete primal space. Source-bound results are
+The remaining question is why that dual near-null relation arises at
+eight intervals on the discrete primal space. Source-bound results are
 `B3_GE_E4_PL_F03_COMMON_TRACE_SPACES_20260927.json` and
 `B3_GE_E4_PL_F03_COMMON_TRACE_NULL_MODES_20260927.json`.
-Next test that one dual-eight mode against complete and supported primal
-columns and exact per-basis moments, then derive finite-chart work and
-signed dual mapping. Do not launch another mesh refinement from rank alone.
-G0B/F03 remain open, G1
-barred, formal F03 authority unconsumed.
+The complete-column check retains rank `53/54` for B3-12 and B3-24;
+smallest/next relative singular values are about `1e-16` and
+`0.0023/0.0030`. The supported left mode has zero residual on fixed
+columns, so eliminating root supports did not create it. Source-bound
+result: `B3_GE_E4_PL_F03_DUAL_EIGHT_SUPPORT_20260927.json`. Raising
+reference quadrature from order three to five, with geometry, primal
+columns and dual basis fixed, retains rank `53/54` for both beams; the
+next relative singular value stays at `0.00232/0.00303`. The tested
+quadrature is therefore not the cause. The evidence points to finite
+trial/trace representability, but does not establish physical locking
+or select another space. Raw result:
+`B3_GE_E4_PL_F03_DUAL_EIGHT_QUADRATURE_20260927.json`. Stop grid and
+quadrature escalation. Derive the exact discrete relation, check
+per-basis moments, then develop finite-chart work and signed dual
+mapping before the registered growing-space stability assessment. The
+next finite-chart discriminator uses one co-moving B3 frame at the fixed
+reference center and the existing top-face positional work, with P0,
+P1 and a signed dual basis row on one bounded Q4/B3 fixture. It checks
+reference closure, objective rigid motion, one-sided retained-port
+variation, and first/mixed formal-work derivatives in the spatial-left
+shell chart. Failure requires
+repair of the common work law; passing permits a physically interpreted
+growing-space assessment, but does not select a multiplier or close G0B.
+G0B/F03 remain open, G1 barred, formal F03 authority unconsumed.
+
+**Common finite-chart work outcome:** The bounded x4/y4 Q4/B3-12 C1
+fixture reuses one co-moving center frame and top-face positional law for
+selected P0, P1 and endpoint dual rows. The dual actually carries
+negative quadrature weights. All three have reference gaps below
+`1.0e-19`, reference *directional* Jacobian discrepancies below `2.3e-20`, nonzero
+deformed gaps, and finite common-rigid-motion errors below `1.3e-18`.
+First-direction formal-pairing finite-difference errors are at most
+`1.7e-12`; mixed-direction errors at most `2.6e-12` through spatial-left
+shell increments and retained B3 state updates. The source-bound raw result is
+`B3_GE_E4_PL_F03_COMMON_TRACE_FINITE_WORK_20260927.json`. This validates
+the selected spatial-increment rows' formal work and derivatives on
+one bounded state, not the E4 additive total-rotation chart, all basis
+functions, physical dual units,
+interface stability, or engineering fidelity. Continue the exact
+discrete-relation, per-basis moment and E4 chart derivations; then assess the same
+law's physically normalized growing-space behavior. G0B/F03 remain
+open, G1 barred, formal F03 authority unconsumed.
+
+The saved diagnostic labels the formal pairing-error fields `_J`; that
+unit label is not justified until the signed row multipliers receive
+their physical force/couple-density units. This limitation was identified
+by independent read-only review and is retained with the immutable raw
+result rather than recasting it as physical energy evidence.
+The next bounded check holds the same reference trace, finite state and
+signed rows but varies E4's *additive total rotation coordinates* at a
+nonzero configuration. It compares the AD pullback and finite-difference
+first/mixed derivatives through the actual E4 chart. A mismatch requires
+repair of the coordinate pullback; agreement closes only this chart
+uncertainty, not physical dual units or interface stability.
+
+**Actual E4 total-chart outcome:** On the same selected P0, P1 and signed
+dual rows, the existing E4 additive total-rotation AD pullback was
+evaluated at a nonzero shell rotation state and compared with finite
+differences that perturb those *total coordinates*. The B3 retained
+state advanced through the same native chart. Reference directional
+errors stay below `2.3e-20`; first formal-pairing errors are below
+`9.4e-13`, and mixed errors below `3.2e-12`. The dual row still includes
+negative weights. Raw source-bound result:
+`B3_GE_E4_PL_F03_COMMON_TRACE_E4_CHART_20260927.json`. This resolves
+the prior chart mismatch for the selected rows and state, but does not
+establish physical dual units, full-basis behavior, growing-space
+stability, or a connection selection. G0B/F03 remain open, G1 barred,
+formal F03 authority unconsumed.
 
 **Global work partition from the saved solves:** The fixture reports
 `uᵀKu` work, without a one-half energy factor. Equilibrium gives native
