@@ -1,5 +1,8 @@
 """One bounded finite-chart gate for the six-resultant surface candidate."""
 
+from fractions import Fraction
+from math import comb
+
 import numpy as np
 import pytest
 
@@ -17,8 +20,72 @@ from scripts.b3_e4_f03_local_footprint_work import (
 )
 from scripts.b3_e4_f03_plate_patch_work import (
     c1_mixed_s3_cells, local_grid, raw_e4_mixed_c1_tangent,
+    raw_e4_tangent,
 )
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
+from scripts.b3_e4_f03_common_trace_finite_work import _CommonRawWork
+from scripts.b3_e4_f03_common_trace_spaces import _assemble
+from scripts.b3_e4_f03_top_face_common_trace import _raw_rows
+
+
+def test_common_top_face_spaces_leave_physical_top_fixed_pitch_free():
+    xs, ys = local_grid(4, transverse_cells=4)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    shell_size = 6*len(xs)*len(ys)
+    shell = np.zeros((len(xs)*len(ys), 6))
+    terminal = np.array([(x >= .9-1e-12)
+                         for y in ys for x in xs])
+    shell[terminal, 0] = -.0175e-5
+    shell[terminal, 4] = 1e-5
+    field = np.r_[shell.ravel(), np.zeros(beam.context.count)]
+    _, physical = raw_e4_tangent(xs, ys, thickness=.035)
+    assert physical.shape == (shell_size, shell_size)
+    assert float(shell.ravel()@physical@shell.ravel()) > 0.
+    for kind, index in (("piecewise_constant", 1),
+                        ("continuous_linear", 2),
+                        ("dual_linear", 0)):
+        patch = _CommonRawWork(xs, ys, beam, kind=kind, index=index)
+        assert np.max(np.abs(_raw_rows(patch, np.eye(3))@field)) < 1e-12
+    hybrid = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
+    assert abs((hybrid.reference_trace()@field)[4]-1e-5) < 1e-12
+
+
+def test_common_top_face_signed_basis_moments_match_exact_polynomials():
+    xs, ys = local_grid(16, transverse_cells=4)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    intervals = 8
+    edges = np.linspace(.9, 1., intervals+1)
+    patches = [FiniteSurfaceTopFaceLine(
+        xs, ys, beam, thickness=.035,
+        x_interval=(float(low), float(high)))
+        for low, high in zip(edges[:-1], edges[1:])]
+    h = Fraction(1, 10*intervals)
+    center = Fraction(19, 20)
+    for kind in ("piecewise_constant", "continuous_linear", "dual_linear"):
+        _, masses, first, second = _assemble(
+            patches, np.eye(3), kind, intervals)
+        expected = [[Fraction(0) for _ in range(len(masses))]
+                    for _ in range(3)]
+        for cell in range(intervals):
+            left = Fraction(9, 10)+cell*h
+            basis = ({cell: (1, 0)} if kind == "piecewise_constant" else
+                     {cell: (1, -1), cell+1: (0, 1)}
+                     if kind == "continuous_linear" else
+                     {cell: (2, -3), cell+1: (-1, 3)})
+            for index, (constant, slope) in basis.items():
+                for power in range(3):
+                    expected[power][index] += h*sum(
+                        comb(power, term)*(left-center)**(power-term)*
+                        h**term*(Fraction(constant, term+1)+
+                                 Fraction(slope, term+2))
+                        for term in range(power+1))
+        for actual, exact in zip((masses, first, second), expected):
+            np.testing.assert_allclose(actual, [float(v) for v in exact],
+                                       rtol=0., atol=2e-15)
 
 
 def test_actual_e4_b3_surface_work_has_consistent_finite_derivatives():

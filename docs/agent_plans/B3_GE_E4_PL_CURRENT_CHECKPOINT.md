@@ -589,6 +589,26 @@ saved numerical wrench check is unaffected. The check integrates the
 same weighted point set as the operator; it does not independently
 sample a continuous traction field.
 
+**Top-fixed pitch distinction:** A supported terminal shell field
+rotates its director while compensating the shell reference translation
+so the top-face position is unchanged. Its physical E4 shell work is
+positive, while selected common P0/P1/signed-dual raw rows have zero
+reference work to `1e-12`. The separate two-sided hybrid pitch row
+responds by `1e-5 rad`, as expected for its different law. The focused
+mechanics test passed `1/1`. This demonstrates director-pitch freedom
+for the top-face law on one reference field. The positive *total*
+physical E4 work includes the transition region and does not isolate
+transverse-shear energy inside the bond or establish thickness/
+mesh-uniform behavior.
+
+**Per-basis integration check:** On the x16/y4 C1 B3-12 reference
+fixture, each of the eight-interval P0, P1 and signed dual basis
+integrals of `1`, `x−0.95`, and `(x−0.95)²` agrees with an independent
+exact rational polynomial integral to `2e-15` absolute tolerance. The
+focused test passed `1/1`. This closes the per-basis quadrature question
+at that resolution; it does not explain the dual-eight discrete primal
+near-null or qualify a multiplier space.
+
 **Global work partition from the saved solves:** The fixture reports
 `uᵀKu` work, without a one-half energy factor. Equilibrium gives native
 beam work as external work minus physical and numerical shell work. Under
