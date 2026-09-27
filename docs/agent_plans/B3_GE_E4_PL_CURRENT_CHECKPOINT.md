@@ -1,5 +1,19 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+## Current state — 27 September 2026
+
+**Decision sought:** Select the physical native beam–shell connection before
+G1. **Established:** C1 is a reduced rotational-weld candidate distinct from
+the F5 top-face positional bond; its loaded work closes, but neither its
+physical transfer nor a growing-space multiplier choice is accepted. Native
+B3 local extraction and independent B2 mass, affine batch, recovery and
+constant-axial prestress foundations have advanced. **Uncertainty:** Which
+joint law is intended, and whether its matched torque/shear transfer and
+interface stability pass. **Next action:** Keep the pending physical-joint
+choice open; then test that law against a matched reference and growing
+interface spaces. Continue independent foundations meanwhile. **Gate:** G0B
+open, G1 barred; formal F03 authority unconsumed.
+
 ## F12 constant-axial prestress discriminator — 27 September 2026
 
 **Decision sought:** Does the retained physical B2 station displacement
@@ -129,7 +143,7 @@ A cancellation injected during section recovery now discards that incomplete
 case before callback/publication. The focused F13 file passes 13/13 after
 this safe-point check; earlier completed cases remain a whole ordered prefix.
 
-## Current decision — 27 September 2026
+## Native connection decision record — 27 September 2026
 
 **Decision sought:** Select the physical native beam–shell connection and its
 exact line enforcement before G1 integration. **Established:** C1 is a
