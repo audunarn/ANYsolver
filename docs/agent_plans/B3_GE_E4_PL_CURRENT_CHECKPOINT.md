@@ -17,8 +17,9 @@ assess growing-space stability and physical transfer together.
 **Next discriminator:** Design one physically matched torque/shear reference
 with a declared connection and admissible surface-order evidence; the
 saved C1 half-load no-contact route also overlaps and is rejected. Use
-existing native work to choose a law or resolution change. Advance B2 F09
-and independent foundations without repeating axial/opening sweeps.
+existing native work to derive the separate bonded material-line trace;
+advance B2 F09 and independent foundations without repeating axial/opening
+sweeps.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 ## Detailed reference state and saved-field decision — 27 September 2026
@@ -129,6 +130,33 @@ The immutable source-bound result is
 `4A105B42C48C4EDEF501440EF12648DACD8FD25EE3A95836FB48B91D4B44EB66`.
 This is a sampled rejection, not a continuous contact or native accuracy
 assessment. F03/G0B remain open and formal F03 authority unconsumed.
+
+**F03 connection-law classification decision (27 September):** Independent
+read-only mechanics review of the actual operator and mode evidence found
+that the current six-channel transverse mean/first-moment plus director-pitch
+law is a *reduced distributing strip-pose line*. It is line-integrated, so
+it is not the same as a finite-area footprint, and its objective work and
+physical pitch transfer remain useful. However, the supported even
+transverse shell slip has zero continuous six-channel gap at every x while
+its local slip RMS is about `7.439 µm` and physical E4 strain energy about
+`30.11 J`. Longitudinal multiplier enrichment cannot detect this mode.
+For the programme's required **bonded material line**, a nonzero relative
+displacement on the declared weld/material path is inadmissible; permitting
+that displacement would change the intended connection to the reduced
+strip-pose idealization. Therefore the current candidate cannot, by itself,
+fulfil the bonded-line capability. This classifies its scope rather than
+declaring it a failed formulation or rejecting its other valid checks.
+
+**Next mechanics slice:** Derive a separate local shell-top/beam-surface
+material-line position trace at a declared transverse path, with a physical
+orientation transfer that uses the independent shell director and preserves
+admissible transverse shear. Compare its continuous gap on the existing
+even-slip, rigid-motion, torque, shear and nonmatching patches before
+choosing longitudinal multipliers. Verify first/second work variations,
+physical wrench balance and drilling independence before loaded accuracy
+or ratio sweeps. One ad hoc even-mode row or a higher-order x multiplier
+does not supply this law. The independent review does not close F03/G0B;
+G1 remains barred and formal F03 execution authority unconsumed.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8
