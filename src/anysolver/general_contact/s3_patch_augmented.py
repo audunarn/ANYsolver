@@ -725,6 +725,15 @@ class MovingS3PatchProjectedNormal:
                 if local.overlap_vertices > 0:
                     zero_area_overlap_pairs.append(pair_index)
                 continue
+            if not np.any(base.pressure[source_nodes]):
+                # This pair contributes to shared support and weighted gap,
+                # including at nodes active on other pairs. Its own smooth-
+                # branch work derivatives vanish with all local pressures.
+                assembled_support[source_nodes] += local.reference_support
+                assembled_gap[source_nodes] += local.reference_weighted_gap
+                support_magnitude[source_nodes] += np.abs(local.reference_support)
+                gap_magnitude[source_nodes] += np.abs(local.reference_weighted_gap)
+                continue
             if len(source_nodes) == 4:
                 try:
                     derivative = q4_s3_overlap_derivatives(

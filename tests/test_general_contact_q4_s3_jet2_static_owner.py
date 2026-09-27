@@ -58,7 +58,10 @@ def test_q4_s3_jet2_static_work_matches_existing_smooth_patch():
     assert state.energy_evaluations < old_state.energy_evaluations
 
 
-def test_q4_s3_jet2_partial_shared_pressure_work():
+@pytest.mark.parametrize(("press_shift", "inactive_faces"), (
+    (-0.01505, 0), (-0.01495, 1),
+))
+def test_q4_s3_jet2_partial_shared_pressure_work(press_shift, inactive_faces):
     model, definition, settings = _two_q4_two_s3()
     reference = GeneralS3PatchManager(model, definition, settings)
     candidate = GeneralS3PatchManager(model, definition, _settings(settings))
@@ -71,12 +74,14 @@ def test_q4_s3_jet2_partial_shared_pressure_work():
     for node in range(1, 7):
         position = model.mesh.get_node(node)
         displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = (
-            -0.01505 + 0.002*(position.x-0.6)
+            press_shift + 0.002*(position.x-0.6)
         )
     old_force, old_tangent, old_state = reference.evaluate(displacement)
     force, tangent, state = candidate.evaluate(displacement)
     assert 0 < state.active_pressure_dofs < 6
     assert state.active_pressure_dofs == old_state.active_pressure_dofs
+    assert sum(not np.any(np.asarray(state.numerical_pressure_pa)[face])
+               for face in candidate.law.source_face_indices) == inactive_faces
     np.testing.assert_allclose(force, old_force, rtol=3e-4, atol=1e-6)
     np.testing.assert_allclose(tangent.toarray(), old_tangent.toarray(),
                                rtol=3e-3, atol=3e-4)
