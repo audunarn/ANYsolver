@@ -20,22 +20,23 @@ split reproduces the original work and attributes `95%`/`89%` of the
 native-minus-solid Mx/Fz difference to mean-action self-work. The
 moment case concentrates in physical Mx and Mz; the force case is an
 axial-force/bending-couple block with substantial cancellation.
-The bounded x4→x8 trace comparison on the same solid field and fixed
-P0 m4 dual recovers shell-only weak rank `24/24` (from `21/24`) and
-halves the best Mx station residual, but the previously measured x8
-native fixed-action work still lies `9.68%`/`14.13%` below the solid
-Mx/Fz work. **Remaining uncertainty:** physical two-sided torque/shear
-transfer and the cause of the persistent response difference; neither
-weak rank nor a face-displacement fit validates the connection law.
-**Next discriminator and action:** Use the existing 24-column,
-six-channel P0 solid reconstruction and its recovered plate/bar actions
-alongside supported native torque/shear work. A saved-field tip-face
-audit finds only `0.0184%`/`0.00204%` nonrigid work under the solid Mx/Fz
-loads, but does not bound a different load's response. Prioritize the
-matched physical transfer and shell/section interpretation over another
-tip-load or classical axial solve; keep load-shape differences explicit.
-Advance B2 F09 independently. Do not automatically
-add finer x/y or classical axial runs. P0 and the
+The bounded x4→x8 trace comparison recovers shell-only weak rank
+`24/24`, but x8 fixed-action E4 work remains `9.68%`/`14.13%` below
+the 3D plate. A direct operator audit proves the earlier loaded
+finite-strip hybrid and the matched solid material-line reference have
+**different shell constraint spaces** (full union rank `44`, not `24`).
+One bounded native solve of the actual material-line P0 m4 law now
+closes its weak/work/equilibrium checks; its applied work is `12.96%`
+below the matched solid for Mx and `3.27%` below for Fz. **Remaining
+uncertainty:** physical sided torque/shear transfer and the shell,
+section, and support contributions to that same-law difference.
+**Next discriminator and action:** Compare the existing solid 24-column
+action compliance with the native same-law component operators by
+physical channel and interval, then assess supported transfer and
+growing-space stability. A saved-field tip-face audit found only
+`0.0184%`/`0.00204%` nonrigid work in the original Mx/Fz loads, but
+does not bound a changed-load response. Advance B2 F09 independently.
+Do not automatically add finer x/y or classical axial runs. P0 and the
 continuous law remain unselected; G0B open, G1 barred, formal F03
 authority unconsumed. The records and exact source/evidence identities
 follow.
@@ -10264,3 +10265,38 @@ not an inf-sup or physical accuracy result. Next run one bounded native
 and two loads, using the existing 1,900-row development cap. Then
 compare same-law work and physical wrenches with the saved solid P0
 reconstruction, retaining section and tip-load distinctions.
+
+**Same-law native loaded outcome:** Source `3c195f94` uses the actual
+`MaterialLinePosition` P0 m4 rows and native retained B3-12 coordinates
+on the unchanged Q4 x4/y4 C1 geometry and supports. Two separate
++100 Nm Mx and −1000 N Fz reference-linear cases solve a 1,164-row,
+21,216-nonzero sparse KKT, under the existing 1,900-row cap. Both
+have full `24/24` supported constraint rank, free residual ratios below
+`7e-12`, integrated gaps below `2.1e-20`, and complete interface work
+below `2e-18 J`; shell interface and support wrenches balance to the
+registered normalized check. Native applied work is
+`0.0046885082524 J` (Mx) and `0.0701898197642 J` (Fz), respectively
+`12.958%` and `3.270%` below the saved material-line solid reconstruction.
+Under Mx, native/solid plate-side shell wrench components include
+`Fy=67.263/32.304 N`, `Mx=38.490/38.263 Nm` and
+`Mz=32.548/23.026 Nm`; under Fz, `Fx=−5922.920/−5711.752 N`,
+`Fz=−63.201/−59.817 N`, and `My=49.411/50.563 Nm`. These are
+physical resultant comparisons about the same global origin, not
+matched local tractions. Native sampled pointwise orientation gaps
+remain up to `0.398/0.738 µrad` even with vanishing weak gaps.
+The source-bound raw result
+`B3_E4_F03_C1_NATIVE_MATERIAL_LINE_LOADED_DEV_V1.json` has SHA256
+`c01b45c2e20eb4afcd2896ca93107c6bdeffe01f2f17aebb3281523f7835c0bb`.
+The three focused
+material-line/solid-port/law-space suites pass `42/42`.
+
+This is the first small native-versus-solid loaded comparison under the
+same declared *linear* P0 material-line law. E4/B3 versus 3D
+plate/bar mechanics, shell/root support spaces, and terminal load
+distributions still differ. The previous finite-strip hybrid loaded
+record remains valid as a **different-law** comparator, not same-law
+validation. Next compare the same-law interface compliance operators
+by physical channel and interval using existing solid columns and
+native component operators, then test physical torque/shear and the
+registered growing-interface-space mixed system. Do not select P0 from
+this one work difference or close F03/G0B.
