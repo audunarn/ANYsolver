@@ -22,17 +22,16 @@ resolved-solid beam response, how it behaves under physical refinement and
 registered interface ratios, and whether a law or multiplier policy needs
 correction. One solid grid and a linear no-contact comparator cannot qualify
 physical fidelity or select P0/P1/dual.
-**Next discriminator and action:** The saved-field local trace diagnostic is
-complete. It finds beam-section residual work of 3.2% (torque) and 4.6%
-(opening) of that side's work, with much smaller plate-director residual
-work. These *local* fits do not reproduce the larger same-domain action
-differences and cannot allocate their cause. The next bounded comparison
-must use globally compatible E4/B3 trace fields on this same supported
-solid state, or a second explicitly matched physical connection law, to
-distinguish representation from the declared six-channel law. Only then
-decide on a targeted law correction, physical refinement, or growing-space
-line assessment. Do not resume finer classical axial sweeps or infer a
-line-space choice from a single spectral value.
+**Next discriminator and action:** The saved-field local and globally C0
+Q4 plate-patch trace diagnostics are complete. Their signed work pairings
+are smaller than the same-domain action differences but do not allocate
+their cause. Next fit the *beam* side to globally compatible retained B3
+open-half-cell traces on the same supported solid field. If its physical
+action pairing is large, test section/trace idealization under controlled
+matched refinement; if small, test a second explicit continuous connection
+law or a verified sided reference before changing the line space. Do not
+resume finer classical axial sweeps or select P0/P1/dual from one spectral
+value.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Local solid trace-residual diagnostic (27 September):** The same eight
@@ -58,6 +57,24 @@ within `6e-17 J`; two synthetic representability tests pass. These fits
 are pointwise and not a projection into globally compatible E4/B3 trial
 spaces. Their work residuals cannot by themselves explain the prior
 same-domain native-action differences or choose a multiplier space.
+
+**Compatible Q4 plate-patch fit (27 September):** Reusing the same saved
+solid fields and physical joint action, an equal-Q8-node least-squares fit
+to one C0 x4/y4 Q4 patch (25 shared nodes, 125 translations/director
+coordinates) has full rank and recovers an exactly representable synthetic
+field. A deliberate single-face displacement remains detectable. The
+reviewed final record is `global_plate_trace_v2.json` (SHA256
+`f747f7e34ec1e6d5f37b9cb22705dc65c9b57beda10f15823853e4eae69a5e01`);
+v1 remains preserved (SHA256
+`c9ac3441936a1ca3fec78e0c2d4a484446a5e01ccbb5184b4db09d0006b8528b`).
+The signed work outside this particular fit is `1.167e-5 J` in torque
+(0.624% of the absolute plate-side action work) and `2.276e-5 J` in
+opening (0.181%). The face-node RMS differences are `6.09e-9 m` and
+`8.19e-9 m`; fit condition is about `114`. Four focused trace tests pass.
+Independent read-only mechanics review found no scoped blocker. Equal-node
+least squares is not a physical L2 projection; these ratios are not energy
+fractions, error bounds, or a coupled beam/connection-law attribution.
+F03/G0B remain open.
 
 **Matched linear external reference and fixed-domain action replays (27
 September):** The source-bound C1 detached F4 C3D20R model has separate
