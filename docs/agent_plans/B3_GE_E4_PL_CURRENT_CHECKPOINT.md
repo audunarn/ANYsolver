@@ -18,17 +18,21 @@ The 17-row channel policy that avoids this aligned-grid yaw mode fails
 on the first reciprocal 1:2 and 2:1 beam:shell ratio screens: supported
 ranks are 28/29 and 27/29. Four-cell P0 has rank 24/24 and bounded
 equilibrium/work in both cases, but remains unselected.
+Independent trace-only checks establish the complete-row identities:
+Fy/Mz loses one joint row for finer shell cells; Mx and My each lose one
+row for finer native beam cells. Their SVD channel fractions are
+basis-dependent, while these block ranks are not.
 The matched detached-solid evidence remains limited by connection and
 contact idealization. B2 F09 fail-closed admission is unfinished.
 **Remaining uncertainty:** The admissible multi-channel test-space image
 changes with relative shell/beam resolution; the correct interface policy
 and physical torque/shear fidelity remain undecided. Mixed-S3 tested so
 far lies on a mesh edge; off-edge trace sensitivity is untested.
-**Next discriminator:** Derive the supported trace-image dimensions and
-cross-channel dependencies for the two failed ratios using the saved
-null modes, then construct only a physically interpretable independent
-row policy and test its work/locking against P0. Do not automatically
-drop rows by SVD or run the full ratio series on the failed 17-row policy.
+**Next discriminator:** Use the verified channel and cross-channel trace
+dimensions to derive a physically interpretable independent row policy,
+then compare its supported work, physical transfer and locking with P0
+on these same ratio cases. Do not automatically drop rows by SVD or run
+the full ratio series on the failed enriched policy.
 Advance a physically matched two-sided torque/shear reference and check
 off-edge S3 mapping separately. Do not resume finer classical axial work.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
