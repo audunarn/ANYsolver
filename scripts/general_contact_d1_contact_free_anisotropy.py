@@ -12,10 +12,13 @@ from scripts.general_contact_d1_finite_area_load import build_case
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("output", type=Path)
+    parser.add_argument("--case", nargs=2, type=int, action="append",
+                        metavar=("X_DIVISIONS", "Y_DIVISIONS"))
     args = parser.parse_args()
 
     rows = []
-    for x_divisions, y_divisions in ((8, 4), (8, 8), (16, 4)):
+    cases = args.case or ((8, 4), (8, 8), (16, 4))
+    for x_divisions, y_divisions in cases:
         model, load, _definition, _settings = build_case(
             x_divisions, rows=y_divisions, total_load_n=2.0,
             normal_stiffness=100_000.0, geometry_profile="central",

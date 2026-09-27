@@ -9,7 +9,11 @@ import argparse
 from dataclasses import replace
 import json
 from pathlib import Path
+import sys
 import time
+
+import anymaterial
+import anysolver
 
 from anysolver import (
     BoundaryCondition, ContactDefinition, ContactInteraction,
@@ -197,6 +201,12 @@ def main():
         "general_contact": result.info.get("general_contact"),
         "solver_info": result.info,
         "has_restart_checkpoint": result.restart_checkpoint is not None,
+        "final_displacements": result.displacements.tolist(),
+        "runtime_identity": {
+            "python": sys.version.split()[0],
+            "anysolver_module": str(Path(anysolver.__file__).resolve()),
+            "anymaterial_module": str(Path(anymaterial.__file__).resolve()),
+        },
     }
     args.output.write_text(json.dumps(record, indent=2, default=str) + "\n",
                            encoding="utf-8")

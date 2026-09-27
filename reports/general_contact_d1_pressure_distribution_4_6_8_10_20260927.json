@@ -1,0 +1,133 @@
+{
+  "profile": "saved_coupled_q4_s3_pressure_distribution_dev",
+  "rows": [
+    {
+      "divisions": 4,
+      "integrated_normal_force_n": 0.2940735629931439,
+      "support_pressure_sum_n": 0.2940735630315721,
+      "physical_resultant_center_xy_m": [
+        0.49835468466600047,
+        0.5030475377847985
+      ],
+      "active_nodes": 4,
+      "active_support_sum_m2": 0.15827679974970618,
+      "maximum_nodal_pressure_pa": 4.495918862095068,
+      "pressure_force_by_x_strip_n": [
+        0.0,
+        0.0047869531012169845,
+        0.28736165857624446,
+        0.00192495135411066,
+        0.0
+      ],
+      "pressure_force_by_y_strip_n": [
+        0.0,
+        0.0,
+        0.28680764956385657,
+        0.0072659134677155075,
+        0.0
+      ]
+    },
+    {
+      "divisions": 6,
+      "integrated_normal_force_n": 0.3000509699165552,
+      "support_pressure_sum_n": 0.3000509698452591,
+      "physical_resultant_center_xy_m": [
+        0.49978360260744625,
+        0.5009843389173257
+      ],
+      "active_nodes": 5,
+      "active_support_sum_m2": 0.12791666658611212,
+      "maximum_nodal_pressure_pa": 3.831286684635496,
+      "pressure_force_by_x_strip_n": [
+        0.0,
+        0.0,
+        0.04778203114906545,
+        0.20579499104285717,
+        0.04647394765333644,
+        0.0,
+        0.0
+      ],
+      "pressure_force_by_y_strip_n": [
+        0.0,
+        0.0,
+        0.04571542125671288,
+        0.20068060893116868,
+        0.05365493965737753,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "divisions": 8,
+      "integrated_normal_force_n": 0.30227696626506567,
+      "support_pressure_sum_n": 0.3022769662441989,
+      "physical_resultant_center_xy_m": [
+        0.5000000000016036,
+        0.49970674062160625
+      ],
+      "active_nodes": 9,
+      "active_support_sum_m2": 0.1400249999984493,
+      "maximum_nodal_pressure_pa": 3.2034497294915973,
+      "pressure_force_by_x_strip_n": [
+        0.0,
+        0.0,
+        0.0,
+        0.09154923274750663,
+        0.11917850073664911,
+        0.09154923276004318,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pressure_force_by_y_strip_n": [
+        0.0,
+        0.0,
+        0.0,
+        0.09164340129280316,
+        0.11863371430848323,
+        0.09199985064291255,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "divisions": 10,
+      "integrated_normal_force_n": 0.2977586403186216,
+      "support_pressure_sum_n": 0.2977586403040985,
+      "physical_resultant_center_xy_m": [
+        0.49963887989108824,
+        0.50225358710115
+      ],
+      "active_nodes": 15,
+      "active_support_sum_m2": 0.14134999996953043,
+      "maximum_nodal_pressure_pa": 4.359873643029075,
+      "pressure_force_by_x_strip_n": [
+        0.0,
+        0.0,
+        0.0,
+        0.010065680095472299,
+        0.10522747714193954,
+        0.06699505319599501,
+        0.10697906012765303,
+        0.008491369743038617,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pressure_force_by_y_strip_n": [
+        0.0,
+        0.0,
+        0.0,
+        0.006624404271572238,
+        0.10811331967021662,
+        0.06942995274822779,
+        0.09611633862798263,
+        0.017474624986099228,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}
