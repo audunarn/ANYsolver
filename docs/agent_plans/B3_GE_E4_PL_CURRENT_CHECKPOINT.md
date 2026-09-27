@@ -2480,6 +2480,50 @@ was stopped without a result and is not counted. This does not establish a
 full conditioning envelope, attached or large-graph solve, production B2
 admission, F09/G0B acceptance, or a revised scientific tolerance.
 
+**Next F09 graph discriminator:** The separated-basis inverse passes a weak
+local mixed wrench, but global assembly and binary64 factorization may still
+lose that mode. On the existing rooted two-member elbow, use the same
+`2^-40` generalized section on both members and one fixed order-one mixed
+tip wrench. Compare the bounded scaled sparse batch tip/work with an exact
+solve of its rounded assembled matrix and the independent cut-wrench work;
+check the batch's own residual and factorization status. Agreement permits
+broader physical-range admission work, while failure identifies assembly,
+rounding or factorization as the next repair target. Do not infer a scale
+envelope, attached behavior, speed or F09/G0B acceptance from one graph.
+
+**F09 weak-shear graph decision:** The same `2^-40` section was assembled on
+both members of the rooted elbow under the registered fixed mixed tip wrench
+`(0.7, -0.8, 0.5, 0.2, -0.3, 0.4)`. The rounded graph's exact rational solve
+and independent cut-wrench work agree closely, but the initial scaled sparse
+solution had a maximum row-scaled residual of `2.79219e-7`. One correction
+through the retained factorization reduced the *backward* row-scaled residual
+to `4.32304e-17`; its tip and work remained close to the exact rounded
+solution. That did **not** make the physical equilibrium acceptable: an
+independent exact-product evaluation of free-node force rows found a maximum
+`1.06534e-4 N` imbalance against the `0.8 N` applied-force scale, about
+`1.33e-4` normalized. This is a connected-solve conditioning/representation
+limit, not evidence that the local force-flexibility law is wrong or that a
+connection law has been qualified.
+
+The private batch now retains its backward-error check and also checks the
+reduced force/moment residual against provisional physical load scales pulled
+through the affine map. A failed or cancellation-risk fast check invokes
+accurate sparse products and at most two same-factorization corrections. The weak graph is
+rejected before selected recovery or callbacks; ordinary batch and affine
+cases remain accepted. The focused F13 suite passes `18/18`, and five related
+B2 graph/attachment/definition/trace files pass `30/30`. Independent read-only
+review found no correction-sign or publication-boundary defect and required
+this separate physical-balance check; the review did not accept a production
+scale or large-graph cost. The initial failure remains part of the evidence.
+
+**Next F09 decision:** Do not extend the section range merely from local
+inverse accuracy or graph tip/work agreement. Distinguish whether a better
+global variable basis or factorization preserves the weak graph's applied-
+scale force and moment balance within the existing criteria without dense
+production work; otherwise bound the admitted conditioning range explicitly.
+Use a small fixed graph and compare exact rounded residuals before any scale
+experiment. F09 and G0B remain open; G1 is barred.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision

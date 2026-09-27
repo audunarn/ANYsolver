@@ -1,6 +1,7 @@
 """Private B2 1/10/100 RHS and complete-case cancellation feasibility."""
 
 from dataclasses import replace
+from fractions import Fraction
 import math
 
 import numpy as np
@@ -8,6 +9,7 @@ import pytest
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
+import anysolver._b2_physical_linear_batch_dev as batch_module
 from anysolver.assembly import build_constraint_transformation
 from anysolver.boundary import BoundaryCondition
 from anysolver._b2_physical_linear_batch_dev import CompiledB2AffineBatch
@@ -35,6 +37,25 @@ def _cases(count):
                        .3+.02*np.sin(i+.7), .1+.01*np.cos(i+.9))
         cases.append((f"case-{i:03}", load))
     return cases
+
+
+@pytest.mark.parametrize("without_fma", (False, True))
+def test_accurate_sparse_residual_preserves_cancelling_row(without_fma,
+                                                           monkeypatch):
+    if without_fma:
+        monkeypatch.delattr(batch_module.math, "fma", raising=False)
+    matrix = sparse.csr_matrix(np.array(((1e16, 1., -1e16),)))
+    residual = batch_module._accurate_sparse_residual(
+        matrix, np.ones((3, 1)), np.zeros((1, 1)))
+    assert residual.shape == (1, 1) and residual[0, 0] == 1.
+    with pytest.raises(RuntimeError, match="residual is not representable"):
+        batch_module._accurate_sparse_residual(
+            sparse.csr_matrix(np.array(((1e308, -1e308),))),
+            np.full((2, 1), 2.), np.zeros((1, 1)))
+    with pytest.raises(RuntimeError, match="residual is not representable"):
+        batch_module._accurate_sparse_residual(
+            sparse.csr_matrix(np.full((1, 3), 1e308)),
+            np.ones((3, 1)), np.zeros((1, 1)))
 
 
 @pytest.mark.parametrize("count", (1, 10, 100))
@@ -284,6 +305,66 @@ def test_scaled_batch_preserves_coherent_circular_elbow_work(radius_m):
                                atol=1e-13)
     physical_work = float(_force_method_energy(physical, tip))
     assert abs(.5*tip@selected-physical_work)/physical_work <= 1e-9
+    batch.close()
+
+
+def test_weak_generalized_elbow_rejects_unbalanced_binary64_solution(monkeypatch):
+    section_matrix = np.diag([12., 2.**-40, 2.**-39, 4., 3., 5.])
+    section_matrix[0, 4] = section_matrix[4, 0] = .5
+    section_matrix[1, 2] = section_matrix[2, 1] = 2.**-42
+    section_matrix[3, 5] = section_matrix[5, 3] = .25
+    section = LinearSection.generalized(section_matrix)
+    members, _ = _members()
+    physical = tuple(replace(member, section_id="weak-generalized",
+                             section=section) for member in members)
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in physical),
+        transform, offset, np.arange(12, 18), max_chunk=2)
+    wrench = np.array((.7, -.8, .5, .2, -.3, .4))
+    load = np.zeros(18)
+    load[12:] = wrench
+    solve_columns = []
+    original_solve = batch._handle.solve_many
+
+    def capture_solve(rhs):
+        solved = np.asarray(original_solve(rhs), dtype=float)
+        solve_columns.append(solved.copy())
+        return solved
+
+    monkeypatch.setattr(batch._handle, "solve_many", capture_solve)
+    observed = []
+    with pytest.raises(RuntimeError, match="batch solve residual failed"):
+        batch.solve_many((("weak-mixed", load),), on_case=observed.append)
+    assert observed == []
+    assert batch._handle.factorization_count == 1
+    assert 2 <= len(solve_columns) <= 3
+    reduced_solution = batch._scaling[:, None]*solve_columns[0]
+    for correction in solve_columns[1:]:
+        reduced_solution -= batch._scaling[:, None]*correction
+    full_solution = np.asarray(batch._T@reduced_solution).reshape(-1)+batch._u0
+    full_stiffness = batch.full_stiffness.tocsr()
+    exact_defect = []
+    for row in range(18):
+        start, stop = full_stiffness.indptr[row:row+2]
+        exact = sum((Fraction(float(a))*Fraction(float(full_solution[col]))
+                     for a, col in zip(full_stiffness.data[start:stop],
+                                       full_stiffness.indices[start:stop])),
+                    Fraction(0))-Fraction(float(load[row]))
+        exact_defect.append(float(exact))
+    force_scale = np.max(np.abs(wrench[:3]))
+    moment_scale = max(np.max(np.abs(wrench[3:])),
+                       max(member.length_m for member in physical)*force_scale)
+    physical_imbalance = max(
+        max(abs(exact_defect[row]) for row in (6, 7, 8, 12, 13, 14))/force_scale,
+        max(abs(exact_defect[row]) for row in (9, 10, 11, 15, 16, 17))/moment_scale)
+    assert physical_imbalance > 1e-9
+    reduced = batch.full_stiffness[6:, 6:].toarray()
+    exact = np.asarray(_exact_linear_solve(reduced, load[6:]), dtype=float)
+    np.testing.assert_allclose(full_solution[12:18], exact[6:12],
+                               rtol=1e-8, atol=1e-8)
+    expected_work = float(_force_method_energy(physical, wrench))
+    assert abs(.5*wrench@exact[6:12]-expected_work)/expected_work <= 1e-8
     batch.close()
 
 
