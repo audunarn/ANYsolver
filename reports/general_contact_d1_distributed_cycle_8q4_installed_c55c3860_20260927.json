@@ -1,0 +1,106 @@
+{
+  "capability_profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+  "columns": 8,
+  "status": "completed",
+  "gap_tolerance_m": 5e-05,
+  "has_restart_checkpoint": true,
+  "anysolver_module": "C:\\ANYworkspaceWork\\general-contact-evidence\\install-c55c3860-20260927\\anysolver\\__init__.py",
+  "steps": [
+    {
+      "step": 1,
+      "normal_force_n": 0.0,
+      "support_vertical_reaction_n": 0.09999999999999984,
+      "minimum_gap_m": -1.4779288929099296e-13,
+      "active_pressure_modes": 0,
+      "pressure_change_pa": 0.0
+    },
+    {
+      "step": 2,
+      "normal_force_n": 0.03980671281183156,
+      "support_vertical_reaction_n": 0.20000000000013265,
+      "minimum_gap_m": -3.701203234369772e-08,
+      "active_pressure_modes": 4,
+      "pressure_change_pa": 3.8746783559417963e-14
+    },
+    {
+      "step": 3,
+      "normal_force_n": 0.10347981515520803,
+      "support_vertical_reaction_n": 0.3000000000001404,
+      "minimum_gap_m": -8.037223729084013e-08,
+      "active_pressure_modes": 6,
+      "pressure_change_pa": 3.469446951953614e-14
+    },
+    {
+      "step": 4,
+      "normal_force_n": 0.10347981515520265,
+      "support_vertical_reaction_n": 0.29999999999999927,
+      "minimum_gap_m": -8.037223729084013e-08,
+      "active_pressure_modes": 6,
+      "pressure_change_pa": 1.0469403122215226e-13
+    },
+    {
+      "step": 5,
+      "normal_force_n": 0.10347981515520513,
+      "support_vertical_reaction_n": 0.300000000000002,
+      "minimum_gap_m": -8.037223729084013e-08,
+      "active_pressure_modes": 6,
+      "pressure_change_pa": 1.0041967257734541e-13
+    },
+    {
+      "step": 6,
+      "normal_force_n": 0.10347981515520262,
+      "support_vertical_reaction_n": 0.2999999999999986,
+      "minimum_gap_m": -8.037223728817133e-08,
+      "active_pressure_modes": 6,
+      "pressure_change_pa": 1.0513812043200232e-13
+    },
+    {
+      "step": 7,
+      "normal_force_n": 0.03980671281149368,
+      "support_vertical_reaction_n": 0.19999999999997986,
+      "minimum_gap_m": -3.701203269864883e-08,
+      "active_pressure_modes": 4,
+      "pressure_change_pa": 4.587608071204841e-12
+    },
+    {
+      "step": 8,
+      "normal_force_n": 0.0,
+      "support_vertical_reaction_n": 0.10000000000081705,
+      "minimum_gap_m": -1.4779288929099296e-13,
+      "active_pressure_modes": 0,
+      "pressure_change_pa": 1e-10
+    },
+    {
+      "step": 9,
+      "normal_force_n": 0.0,
+      "support_vertical_reaction_n": 6.0039329618004816e-21,
+      "minimum_gap_m": 3.999999996304835e-05,
+      "active_pressure_modes": 0,
+      "pressure_change_pa": 0.0
+    },
+    {
+      "step": 10,
+      "normal_force_n": 0.0,
+      "support_vertical_reaction_n": 0.09999999999999987,
+      "minimum_gap_m": -1.4779288929099296e-13,
+      "active_pressure_modes": 0,
+      "pressure_change_pa": 0.0
+    },
+    {
+      "step": 11,
+      "normal_force_n": 0.03980671281182943,
+      "support_vertical_reaction_n": 0.2000000000001339,
+      "minimum_gap_m": -3.701203234369772e-08,
+      "active_pressure_modes": 4,
+      "pressure_change_pa": 2.0872192862952943e-14
+    },
+    {
+      "step": 12,
+      "normal_force_n": 0.10347981515520958,
+      "support_vertical_reaction_n": 0.30000000000014077,
+      "minimum_gap_m": -8.037223729084013e-08,
+      "active_pressure_modes": 6,
+      "pressure_change_pa": 3.2585045772748344e-14
+    }
+  ]
+}
