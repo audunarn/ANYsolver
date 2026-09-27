@@ -4,33 +4,48 @@
 
 **Decision sought:** Establish a physically credible native two-sided
 beam–shell law and stable exact line space before G1.
-**Established:** Native side work and derivatives pass; the six-channel law
-is a reduced strip-pose candidate, not a pointwise welded face bond.
-Matched detached-solid work differs materially from the native action.
-The split-solid torque/opening fields show sampled overlap; the separate
-reverse-Fz opening field has positive same-XY samples on 120 available
-faces but lacks seam data and continuous separation. B2 physical-section
-checks pass at sampled points; fail-closed F09 admission remains unfinished.
-A bonded material-line candidate detects the even-slip mode and passes
-bounded Q4/S3 six-channel first/second variations and six-mode reference
-work. Its provisional Q4 loaded KKT and the reduced strip-pose comparator
-both have rank six, small equilibrium/work errors, and balanced support
-wrenches on the same primal model. The validated material-line response
-differs by 3.99% in tip twist under torque and 0.72% in tip vertical motion
-under shear; neither difference establishes physical fidelity. B2 F09
-fail-closed admission remains unfinished.
-**Remaining uncertainty:** Allocate torque/shear differences among the
-continuous law, discrete enforcement, contact, and domain idealizations;
-assess growing-space stability and physical transfer together.
-**Next discriminator:** Grow the material-line interface rows on fixed
-physical Q4/S3 torque/shear models to distinguish a coarse P0 resolution
-effect from continuous-law transfer, checking work, unsupported modes,
-locking and mixed-system norms together. A failed growing-space check
-revises the enforcement/trace; a stable result advances the registered
-mesh-ratio series and a physically matched external torque/shear reference.
-P0 in the loaded screen was provisional, not a selected multiplier.
-Advance B2 F09 and independent foundations without axial/opening sweeps.
+**Established:** The prior native strip-pose law is reduced, not a
+pointwise welded face bond. The bounded material-line candidate detects
+its missed even-slip field and passes Q4/S3 first/second variations. On
+one worktree-bound Q4/native-B3 model, P0 growth from one to two cells
+changes torque tip twist by -5.51% and shear tip motion by -1.23%, while
+both solves retain equilibrium and work. Three P1 or dual Mz rows on
+these two aligned cells have only two independent traces; the unscaled
+row identity and independent review establish a structural dependency,
+not a units artifact. No multiplier space or physical law is qualified.
+The matched detached-solid evidence remains limited by connection and
+contact idealization. B2 F09 fail-closed admission is unfinished.
+**Remaining uncertainty:** Whether a channel-compatible growing line
+space transfers physical torque/shear without locking, and whether the
+continuous material-line law matches a physically comparable reference.
+**Next discriminator:** On the same supported Q4 and mixed-S3 physical
+models, check the Mz trace dimension and a channel-specific space that
+does not add an unsupported twist row; compare growing-row work,
+reactions and continuous gaps with P0. If the deficiency persists,
+revise interface resolution by channel before mesh-ratio assessment; if
+it is topology-specific, declare that condition and test admissible
+topologies separately. A physically matched two-sided torque/shear
+reference remains necessary. Do not resume finer classical axial work.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
+
+**Saved bounded row-growth screen:** Committed runner
+`5f852bda0553b2db84b8fb785355b5ea24cf46a7`, worktree import,
+16/16 focused material-line tests, and unchanged four-route
+loaded-comparator parity. The run used `python -m
+scripts.b3_e4_f03_material_line_space_screen` with the integration `src`
+on `PYTHONPATH`, disabled Numba JIT and one BLAS/OpenMP thread. The immutable
+`B3_E4_F03_MATERIAL_LINE_SPACE_SCREEN_V1.json` has SHA256
+`E8EFA845974AE3D175D4DE1BF40FCACA1170C251213BB7AE4BA5DC48EB6DA744`.
+P0 one/two rows have scaled ranks 6/6 and 12/12 and bounded torque/shear
+solves pass. P1 and dual each have rank 17/18, smallest normalized row
+singular values `2.29e-16` and `1.15e-16`, and are recorded as
+`FAILED_DEPENDENT_ROWS` without an accepted solve. Direct full-coordinate
+Mz identities `R0-2 R1+R2` have relative errors `1.65e-15` and
+`2.97e-15`; their end rows equal the two P0 Mz rows to `3.55e-15`.
+An initial preflight attempt exposed a P1 torque equilibrium/work failure
+despite a tiny weak gap; that failure motivated the fail-closed scaled-rank
+check and was not reclassified as a successful solve. These fixed-grid
+results establish neither growing-space inf-sup nor physical accuracy.
 
 ## Detailed reference state and saved-field decision — 27 September 2026
 
