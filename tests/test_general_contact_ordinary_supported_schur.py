@@ -8,8 +8,31 @@ import pytest
 
 from anysolver import solve_static_nonlinear
 from anysolver.general_contact import linearized_pivot
+from anysolver.general_contact.core import contact_scope
 from anysolver.general_contact.supported_schur import SupportedSchurProposal
 from scripts.general_contact_d1_finite_area_load import build_case
+
+
+@pytest.mark.parametrize("divisions", (2, 8))
+def test_central_uniform_pressure_reproduces_analytic_integrated_force(divisions):
+    model, _load, definition, settings = build_case(
+        divisions, total_load_n=2.0, normal_stiffness=100_000.0,
+        geometry_profile="central",
+    )
+    with contact_scope(model, definition, settings, allow_augmented=True) as manager:
+        displacement = np.zeros(manager.n_dof)
+        for node in range(1, (divisions + 1)**2 + 1):
+            displacement[model.mesh.get_node(node).dofs[2]] = -75.0e-6
+        _force, _tangent, summary = manager.evaluate(displacement, tangent=True)
+    # A rigid translation closes the initial 50 um skin clearance by 25 um.
+    # P1/Q1 partition of unity gives pressure times the exact target area.
+    expected = 100_000.0 * 25.0e-6 * (0.77 - 0.24) * (0.73 - 0.21)
+    np.testing.assert_allclose(summary.integration_force[2], expected,
+                               rtol=1.0e-9, atol=1.0e-9)
+    np.testing.assert_allclose(summary.target_force[2], -expected,
+                               rtol=1.0e-9, atol=1.0e-9)
+    assert summary.gap_tolerance_met
+    assert summary.active_pressure_dofs > 0
 
 
 def test_ordinary_force_control_verifies_schur_before_committing():
