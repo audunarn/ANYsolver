@@ -254,6 +254,14 @@ independent sparse solves. The focused F13 file passes 14/14. This establishes
 outer sequence ownership, not invocation-time ownership of mutable numerical
 arrays or F13 acceptance.
 
+**F13 active-owner guard:** The private batch now rejects `close` and
+recursive `solve_many` while an operation holds its factorization. A callback
+that catches either error leaves the ten-case result complete; a callback
+exception releases the operation guard so a subsequent solve can run, and
+closing afterward still rejects use. The focused file passes 15/15. This is
+bounded single-owner lifetime evidence, not concurrent throughput, public
+B2 dispatch, or F13/G0B acceptance.
+
 ## Native connection decision record — 27 September 2026
 
 **Decision sought:** Select the physical native beam–shell connection and its

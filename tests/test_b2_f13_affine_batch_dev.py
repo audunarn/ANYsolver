@@ -94,6 +94,35 @@ def test_callback_cannot_change_submitted_case_inventory():
     batch.close()
 
 
+def test_active_batch_cannot_be_closed_or_reentered_from_callback():
+    members, _ = _members()
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in members),
+        transform, offset, np.arange(12, 18), max_chunk=4)
+
+    def check_active_owner(identity):
+        if identity == "case-000":
+            with pytest.raises(RuntimeError, match="operation is active"):
+                batch.close()
+            with pytest.raises(RuntimeError, match="operation is active"):
+                batch.solve_many(_cases(1))
+
+    result = batch.solve_many(_cases(10), on_case=check_active_owner)
+    assert result.status == "completed" and len(result.cases) == 10
+    assert result.factorization_count == 1
+
+    def fail_callback(_identity):
+        raise LookupError("caller callback failed")
+
+    with pytest.raises(LookupError, match="caller callback failed"):
+        batch.solve_many(_cases(1), on_case=fail_callback)
+    assert batch.solve_many(_cases(1)).status == "completed"
+    batch.close()
+    with pytest.raises(RuntimeError, match="closed"):
+        batch.solve_many(_cases(1))
+
+
 def test_cancellation_publishes_only_ordered_complete_cases():
     members, _ = _members()
     transform, offset = _plan()

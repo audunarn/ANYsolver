@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from threading import Lock
 from typing import Callable, Mapping, Sequence
 
 import numpy as np
@@ -123,6 +124,7 @@ class CompiledB2AffineBatch:
         self._scaling = scaling
         self._max_chunk = max_chunk
         self._closed = False
+        self._operation_lock = Lock()
         self.node_ids = ordered
         self.members = compiled
         self._member_layout = {
@@ -142,14 +144,33 @@ class CompiledB2AffineBatch:
         return self._K.copy()
 
     def close(self) -> None:
-        self._closed = True
-        self._handle = None
+        if not self._operation_lock.acquire(blocking=False):
+            raise RuntimeError("physical B2 batch operation is active")
+        try:
+            self._closed = True
+            self._handle = None
+        finally:
+            self._operation_lock.release()
 
     def solve_many(self, cases: Sequence[tuple[str, np.ndarray]], *,
                    cancellation_token: CancellationToken | None = None,
                    on_case: Callable[[str], None] | None = None,
                    recover_members: Mapping[str, Sequence[float]] | None = None,
                    ) -> BatchResult:
+        if not self._operation_lock.acquire(blocking=False):
+            raise RuntimeError("physical B2 batch operation is active")
+        try:
+            return self._solve_many_locked(
+                cases, cancellation_token=cancellation_token,
+                on_case=on_case, recover_members=recover_members)
+        finally:
+            self._operation_lock.release()
+
+    def _solve_many_locked(self, cases: Sequence[tuple[str, np.ndarray]], *,
+                           cancellation_token: CancellationToken | None,
+                           on_case: Callable[[str], None] | None,
+                           recover_members: Mapping[str, Sequence[float]] | None,
+                           ) -> BatchResult:
         if self._closed:
             raise RuntimeError("physical B2 batch is closed")
         # Freeze the case inventory before callbacks can change the caller's
