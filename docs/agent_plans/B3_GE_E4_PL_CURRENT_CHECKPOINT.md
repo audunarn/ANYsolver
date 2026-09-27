@@ -13,8 +13,9 @@ faces but lacks seam data and continuous separation. B2 physical-section
 checks pass at sampled points; fail-closed F09 admission remains unfinished.
 A new material-line proof detects the even-slip mode and passes bounded
 position/Jacobian checks. Its value-only orientation probe is objective,
-non-drilling, and preserves the tested shear mode; orientation work
-derivatives and coupled transfer remain open.
+non-drilling, and preserves the tested shear mode. Its reference orientation
+Jacobian passes Q4/S3 chart differences; orientation curvature and coupled
+transfer remain open.
 **Remaining uncertainty:** Allocate torque/shear differences among the
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
@@ -209,6 +210,23 @@ ordering, loaded torque/shear transfer, and growing-space stability remain
 unverified. The next discriminating work is the orientation virtual-work
 derivative through actual chart updates, followed by its second variation;
 failure would revise the frame law before any multiplier selection.
+
+**Reference orientation-work derivative (27 September):** The material-line
+probe now differentiates the normalized E4 director and its projected
+deformed top-line tangent, converts their frame variation to a spatial
+angular variation, and subtracts it from the actual B3 retained-port
+angular derivative in the reference beam frame. Q4 and mixed-S3 random
+directional differences through `Context.advance` pass `2/2` at maximum
+absolute error below `2e-8`; uniform shell drilling has zero derivative.
+Independent read-only mechanics review found no blocking sign or
+normalization defect in the reference Jacobian. It identified the missing
+nonzero-multiplier dual wrench and nontrivial reference-frame checks.
+This establishes only the reference first variation for the tested chart.
+It does not establish finite-state Log derivatives, multiplier-dependent
+curvature, physical couple work, or loaded torque transfer. The next
+bounded discriminator is a nonzero-gap first variation and mixed second
+variation under the actual finite-rotation updates; disagreement would
+revise the chain rule or frame definition before forming a KKT tangent.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8

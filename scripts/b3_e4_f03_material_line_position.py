@@ -1,8 +1,8 @@
 """Private G0 material-line pose feasibility on E4 and retained B3 states.
 
-The three position channels have a reference Jacobian. The orientation
-channel is value-only; its work variations, multiplier space, stability,
-and production ownership remain separate.
+The three position channels and orientation gap have reference Jacobians.
+Finite-state work curvature, multiplier space, stability, and production
+ownership remain separate.
 """
 
 from __future__ import annotations
@@ -56,7 +56,7 @@ def _shape_derivative_x(reference_nodes, nodes, shape, x, y):
     return np.array((-(1.-eta), 1.-eta, eta, -eta))/dx
 
 
-def _shell_frame(coordinates, frames, station, top):
+def _shell_frame_terms(coordinates, frames, station, top):
     nodes, shape = station.nodes, station.shape
     director = sum((weight*frames[int(node), :, 2]
                     for node, weight in zip(nodes, shape)), np.zeros(3))
@@ -74,11 +74,35 @@ def _shell_frame(coordinates, frames, station, top):
         raise ValueError("material-line projected tangent is degenerate")
     x_axis = projected/projected_length
     y_axis = np.cross(director, x_axis)
-    return np.column_stack((x_axis, y_axis, director))
+    return (np.column_stack((x_axis, y_axis, director)), director,
+            tangent, projected_length)
+
+
+def _shell_frame(coordinates, frames, station, top):
+    return _shell_frame_terms(coordinates, frames, station, top)[0]
+
+
+def _shell_angular_variation(frame, director, tangent, projected_length,
+                             delta_director_raw, delta_tangent, raw_length):
+    """Spatial angular variation of the projected-tangent shell frame."""
+    delta_director = (delta_director_raw-director*np.dot(
+        director, delta_director_raw))/raw_length
+    delta_projected = (delta_tangent
+                       -delta_director*np.dot(director, tangent)
+                       -director*(np.dot(delta_director, tangent)
+                                  +np.dot(director, delta_tangent)))
+    x_axis = frame[:, 0]
+    delta_x = (delta_projected-x_axis*np.dot(
+        x_axis, delta_projected))/projected_length
+    delta_y = (np.cross(delta_director, x_axis)
+               +np.cross(director, delta_x))
+    return .5*(np.cross(x_axis, delta_x)
+               +np.cross(frame[:, 1], delta_y)
+               +np.cross(director, delta_director))
 
 
 class MaterialLinePosition:
-    """Bounded position map with a value-only relative orientation probe."""
+    """Bounded position map with reference-level orientation variation."""
 
     def __init__(self, xs, ys, beam, *, thickness=.035, beam_depth=.1,
                  quadrature_order=3, mixed_s3=False, diagonal="bl_tr"):
@@ -178,7 +202,7 @@ class MaterialLinePosition:
         return result
 
     def orientation_gap(self, shell_coordinates, shell_frames, beam_state):
-        """Value-level objective relative Log; work variations remain open."""
+        """Objective relative Log; finite-state work curvature remains open."""
         coordinates = np.asarray(shell_coordinates, dtype=float)
         frames = np.asarray(shell_frames, dtype=float)
         if (coordinates.shape != (self.shell_count, 3) or
@@ -196,3 +220,41 @@ class MaterialLinePosition:
                 raise ValueError("material-line relative rotation left chart")
             gaps.append(gap)
         return np.asarray(gaps)
+
+    def reference_orientation_jacobian(self):
+        """First Log variation in the actual native accepted reference chart."""
+        state = self.beam.context.initial.mechanical
+        coordinates = self.reference_nodes
+        frames = np.broadcast_to(np.eye(3), (self.shell_count, 3, 3))
+        result = np.zeros((3*len(self.stations),
+                           6*self.shell_count+self.beam.context.count))
+        basis = np.eye(3)
+        for k, station in enumerate(self.stations):
+            shell_frame, director, tangent, projected_length = (
+                _shell_frame_terms(coordinates, frames, station, self.top))
+            raw_director = sum((weight*frames[int(node), :, 2]
+                                for node, weight in zip(station.nodes,
+                                                        station.shape)),
+                               np.zeros(3))
+            raw_length = np.linalg.norm(raw_director)
+            _, _, beam_frame = station.port.pose_pair(state)
+            block = result[3*k:3*k+3]
+            for node, weight, derivative in zip(
+                    station.nodes, station.shape, station.dshape_dx):
+                node = int(node)
+                for axis, vector in enumerate(basis):
+                    column = 6*node+axis
+                    omega = _shell_angular_variation(
+                        shell_frame, director, tangent, projected_length,
+                        np.zeros(3), derivative*vector, raw_length)
+                    block[:, column] = -beam_frame.T@omega
+                    column += 3
+                    omega = _shell_angular_variation(
+                        shell_frame, director, tangent, projected_length,
+                        weight*np.cross(vector, frames[node, :, 2]),
+                        derivative*np.cross(vector, frames[node]@self.top),
+                        raw_length)
+                    block[:, column] = -beam_frame.T@omega
+            block[:, 6*self.shell_count:] = (
+                beam_frame.T@station.port.tangent(state)[3:])
+        return result

@@ -162,3 +162,33 @@ def test_material_line_orientation_uses_director_without_drilling():
     drilling[bond] = Rotation.from_rotvec((0., 0., 1e-3)).as_matrix()
     assert np.max(np.abs(line.orientation_gap(
         line.reference_nodes, drilling, state))) < 1e-12
+
+
+@pytest.mark.parametrize("mixed_s3", (False, True))
+def test_material_line_orientation_jacobian_uses_native_chart(mixed_s3):
+    xs, ys, beam, _ = _fixture(patch_cells=2)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3)
+    rng = np.random.default_rng(345 if mixed_s3 else 346)
+    shell = rng.normal(size=(line.shell_count, 6))*.1
+    beam_step = rng.normal(size=beam.context.count)*.1
+    shell[line.reference_nodes[:, 0] <= -.5+1e-12] = 0.
+    beam_step[list(beam.context.fixed)] = 0.
+    direction = np.r_[shell.ravel(), beam_step]
+    predicted = (line.reference_orientation_jacobian()@direction).reshape(-1, 3)
+    step_size = 1e-6
+
+    def trial(sign):
+        coordinates = line.reference_nodes+sign*step_size*shell[:, :3]
+        frames = Rotation.from_rotvec(
+            sign*step_size*shell[:, 3:]).as_matrix()
+        candidate = beam.context.advance(
+            beam.context.initial.mechanical, sign*step_size*beam_step)
+        return line.orientation_gap(coordinates, frames, candidate)
+
+    finite_difference = (trial(1)-trial(-1))/(2*step_size)
+    assert np.max(np.abs(finite_difference-predicted)) < 2e-8
+
+    drilling = np.zeros_like(direction)
+    bond = line.reference_nodes[:, 0] >= .9-1e-12
+    drilling[:6*line.shell_count].reshape(-1, 6)[bond, 5] = 1.
+    assert np.max(np.abs(line.reference_orientation_jacobian()@drilling)) < 1e-12
