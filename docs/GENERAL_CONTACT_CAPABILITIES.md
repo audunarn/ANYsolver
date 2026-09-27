@@ -81,6 +81,12 @@ impact API has a separate contract. Status terms are deliberately distinct:
 | Eight, sixteen or twenty-four Q4 source faces against an interior two-S3 target with 0.3 N distributed source loading | Opt-in Jet2/projected-matching augmented von Karman static press/slide/open/recontact with supported-pressure Schur | **Independently accepted only for registered planar elastic 24-Q4 integrated-force refinement, active/open/active sequence and identity-aware split restart**; installed eight-Q4 example locally tested; complete tangent, installed 24-Q4 handoff and general C1 remain open | All three twelve-step cycles completed. At 24 Q4, full-load force was 0.1038788373 N and first-unload force 0.0398439617 N; changes from 16 Q4 were 0.007006% and 0.001840%. The registered response, pressure rank, equilibrium, wrench, gap, integration and support gates passed. A fresh-model 6/12 split exactly reproduced all twelve ordered pressure identities/vectors and recorded mechanics under independent review. The original 16-Q4 press failure and two preserved adjudicator metadata failures remain visible. See [mixed path limits](GENERAL_CONTACT_C1_MIXED_FORCE_PATH.md), [response review](reference_cases/general_contact_d1_distributed_cycle_response_v1_review.md), [restart review](reference_cases/general_contact_d1_distributed_restart_identity_v2a_adjudication.md) and [installed example](reference_cases/general_contact_d1_distributed_installed_example_c55c3860.md). |
 | ANYfem/ANYstructure adapters, representative workflows and scale evidence | Installed applications | Open | C9 |
 
+For the distributed 24-Q4 row, a [saved-pose contact-law tangent development
+audit](reference_cases/general_contact_d1_distributed_tangent_development.md)
+passed on four selected axes and 98 free source translation rows. This is
+local development evidence; the coupled structural/contact tangent status in
+the matrix remains open.
+
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as
 `31e60277`. A disposable C0 candidate wheel built from that commit as

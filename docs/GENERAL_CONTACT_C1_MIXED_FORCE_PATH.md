@@ -376,3 +376,12 @@ eight-Q4 source development cycle; see the [installed example record](reference_
 The installed eight-Q4 example does not qualify the accepted 24-Q4 mesh.
 Complete tangent and pressure-space qualification, installed 24-Q4 handoff
 and general C1 admission remain open.
+
+At the saved 24-Q4 distributed pose, a [bounded tangent development
+audit](reference_cases/general_contact_d1_distributed_tangent_development.md)
+replayed the pressure exactly and compared a fixed-multiplier contact-law
+tangent against central differences. The four-axis and wider 98-free-source-row
+checks stayed on the same active/overlap branches and met the 1e−5
+directional target by several orders of magnitude. The first diagnostic's
+residual/reaction sign error is preserved. The assembled structural-plus-contact
+free-DOF tangent and pressure-space gates remain open.
