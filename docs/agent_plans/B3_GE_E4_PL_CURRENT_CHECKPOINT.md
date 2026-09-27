@@ -16,25 +16,25 @@ for torque. On the same retained B3 beam, the native-action work is about
 2% higher for opening and 12–17% higher for torque. The earlier shared-node
 F5 bond remains a distinct idealization.
 The x16/m16 alternating P0 Fz dual near-kernel persists under two norms but
-is not proven primal locking. B2 F09 remains open.
-**Uncertainty:** How much of the action difference arises from the B3 versus
-resolved-solid beam response, how it behaves under physical refinement and
-registered interface ratios, and whether a law or multiplier policy needs
-correction. One solid grid and a linear no-contact comparator cannot qualify
-physical fidelity or select P0/P1/dual.
-**Next discriminator and action:** Both globally compatible Q4 plate-patch
-and retained B3 open-half-cell trace fits on the saved supported solid
-fields are complete. Their signed action pairings do not explain or bound
-the larger same-domain native-action differences. The next experiment must
-isolate *longitudinal connection resolution*: on this same detached solid,
-split the six physical channels into two exact half-patch intervals and
-compare the reconstructed supported action with the global-six result and
-native two-interval P0. Reuse one unchanged geometry, loads, supports and
-source identity; cap each external action solve at 120 s/2 GiB. If the
-split action moves toward native transfer, investigate line-resolution
-policy; otherwise review the continuous trace and domain idealizations.
-Neither outcome selects a multiplier space or closes F03. Do not resume
-finer classical axial sweeps.
+is not proven primal locking. The exact two-interval solid split lowers
+load work by 1.214% opening and 1.533% torque versus the global-six solid.
+Its action moves same-domain E4 and B3 work toward native P0, especially
+for opening, but a substantial torque gap remains. B2 F09 remains open.
+**Uncertainty:** Whether the remaining physical torque/shear transfer
+difference is a defect in the continuous six-channel trace or arises from
+the solid-versus-E4/B3 section and shell idealizations. A one-grid linear
+no-contact comparison cannot allocate that cause, establish refinement
+behavior or select P0/P1/dual.
+**Next discriminator and action:** On the existing matched two-interval
+fields, compare continuous physical surface gaps and actual six-channel
+gaps under support-admissible torque/shear virtual motions, including E4
+director, drilling and transverse-shear response and retained B3 sided
+ports. If a physically prohibited motion has zero continuous six-channel
+gap, correct that work law; if the law detects it, carry the same action
+through controlled physical refinement and registered growing-space
+stability/mesh ratios. Do not run a third finer axial or longitudinal
+split merely because two intervals changed the answer. The split result
+does not select a multiplier space or close F03.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Next split-law experiment, pre-execution (27 September):** The competing
@@ -54,6 +54,49 @@ Compare the 12-row supported action with the saved global-six and native
 P0-two-interval actions only after compliance reciprocity, rank, work and
 physical balance checks. No formal F03 authority is consumed by this
 development diagnostic.
+
+**Exact split-law result and decision (27 September):** Twelve serial
+CalculiX unit-action solves completed, each in `17.17–20.19 s` and at most
+`1,289,195,520` bytes RSS, within the unchanged `120 s/2 GiB` per-run
+limits. The 12×12 scaled work compliance has relative skew `2.09e-7`,
+smallest symmetric eigenvalue `9.615e-5 J`, and condition `3.08e4`.
+Exact KKT reconstruction closes both gap norms below `2e-18`; joint side
+work cancels within numerical precision and physical joint wrench is near
+zero. The supported external/support imbalance is at most `8.10e-4 N`
+against the 1000 N opening scale. Independent review found no scoped
+correctness blocker. Authoritative `reconstruction_v2.json` SHA256 is
+`404801872bb7558c7ae5d315af4e4b0028d3386c6afc04df4286984ebafe5267`;
+v1 is preserved (SHA256
+`d0779f3901f09b7586f6c032a6447097142c80b92cfbd9c9ef6dbed58eccc093`).
+The v2 change checks the actual runner hash against all 12 records.
+
+On the *same solid*, load work moves from `0.0703462` to `0.0694925 J`
+for opening and from `0.00508602` to `0.00500805 J` for torque. The
+native P0 x4/m2 values are `0.0693193` and `0.00477082 J`, respectively;
+the remaining cross-model differences mix continuum and E4/B3 mechanics.
+On the *same E4 shell*, global-six → split-twelve → native P0 action work
+is `0.012321 → 0.012393 → 0.013263 J` (opening) and
+`0.00181094 → 0.00181377 → 0.00196900 J` (torque). On the *same retained
+B3 beam*, it is `0.107188 → 0.107841 → 0.109441 J` (opening) and
+`0.00176505 → 0.00177222 → 0.00206741 J` (torque). Physical wrench,
+three/five-point open-half-cell quadrature and reciprocal cross-work checks
+pass; independent mechanics review found no blocker. Authoritative replay
+hashes are `same_shell_v2.json`:
+`d18788b95dc9bd26da72f9a44f3337ccf62700b3dde0ae19d935b5d9fa72ec86`
+and `same_beam_v2.json`:
+`61c85fcfb74621c04fe6decabc71ad912680c684a12dec1eab69f37b7a6dfd1d`.
+Earlier v1 replays remain preserved; v2 removes mixed-unit covector-norm
+quotients from the reported physical comparison.
+
+The 128 raw files total `96,526,501` bytes and remain in the active ignored
+evidence directory. Their versioned hash/size manifest is
+`raw_manifest_v1.json`, SHA256
+`3286b7aa8e768a1b7c7c233c86871028b609aadcb12bcfd99e98457068129d11`.
+Nineteen JSON evidence records were copied byte-for-byte into tracked
+`docs/agent_plans/B3_GE_E4_PL_F03_SPLIT_SIX_CHANNEL_DEV_20260927_V1/`;
+all 19 copy hashes match. Keep the active worktree and raw evidence until a
+durable programme evidence transfer is verified. F03/G0B remain open and
+G1 remains barred.
 
 **Local solid trace-residual diagnostic (27 September):** The same eight
 source-bound solid FRD fields and `reconstruction_v5.json` were reused with
