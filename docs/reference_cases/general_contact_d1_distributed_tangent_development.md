@@ -29,8 +29,28 @@ the action scale is 78.86 N/m. This broadens the contact-law cross-row
 check but does not include target reaction rows or the structural shell
 tangent, contact-to-structure mapping and constraint reduction.
 
-The governing next check is an assembled structural-plus-contact free-DOF
-directional tangent audit at this saved smooth pose, with the same ≤1e−5
-target and explicit branch control. Pressure-space stability and installed
-24-Q4 verification also remain open. None of these development probes
-changes a frozen acceptance criterion or establishes general C1.
+The [coupled assembled report](../../reports/general_contact_d1_distributed_24q4_coupled_tangent_importfix_dev_20260927.json)
+(SHA256 `4c1ccb1549cb4b6d88efb84a23c0aca1318c1686dfa99a747f33c162a4383490`)
+adds the structural Q4/S3 work, contact pullback and 98-DOF constraint
+reduction. Its directional errors are 6.929e−11 and 1.746e−11. The first
+probe attempt stopped before mechanics evaluation because it imported
+`assemble_stiffness_matrix` from the wrong module; the corrected run used
+`anysolver.matrix_assembly`. Structural stiffness dominates this coupled
+action, so the total relative error alone could mask a contact error.
+
+The [mapped-contact report](../../reports/general_contact_d1_distributed_24q4_mapped_contact_tangent_dev_20260927.json)
+(SHA256 `94495b587daeef1bf640e18589e75ae05b1d4bcf557a07d3cceddfbc3e04ac03`)
+subtracts structural-only force and tangent assembled at each identical pose.
+At fixed saved multipliers, the reduced contact action is 78.8628 N/m;
+its errors are 2.892e−10 and 7.278e−11 at h=1e−6 and 5e−7 m.
+The active, support, overlap and four touched-pair projection branches stay
+unchanged. Every structural material trial is discarded. Independent read-only
+review found the subtraction and state handling sound for this elastic pose.
+These are meaningful **development** checks of the implemented mapped residual,
+not an independent physics oracle or claim-bearing complete C1 tangent result.
+
+The next decision is whether to register a distinct claim-bearing tangent
+case with frozen source, direction, steps and reference, then obtain independent
+assessment. Pressure-space stability and installed 24-Q4 verification also
+remain open. None of these development probes changes a frozen criterion or
+establishes general C1.
