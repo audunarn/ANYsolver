@@ -796,6 +796,19 @@ permutation. The related definition, mass/descriptor and prestress tests pass
 17/17. This checks frame and reversal covariance for one physical section;
 it does not admit general mass laws, attached spectra, or F12/G0B.
 
+**Independent F12 mechanics review:** A read-only reviewer found no
+actionable algebraic defect in the private mass-origin congruence, oblique
+frame/reversal treatment, exact-degree trace-mass quadrature, or the stated
+constant-reference-axis axial geometric term. The reference point candidate
+still pulls a joint Hessian through affine shell and beam ports; that does not
+include their loaded-state second derivatives or an equilibrated multiplier.
+The next useful F12 discriminator is one loaded, equilibrated B2/Q4 point
+state with nonzero axial resultant and multiplier, checking total shell,
+beam, port and joint curvature against independent physical-work variation.
+Its point-law interpretation follows the pending primary connection choice.
+The reviewer's separate focused test process was stopped without a result;
+no new pass is attributed to that review. F12/G0B remain open.
+
 **Next bounded F12 point-prestress discriminator:** The private B2/Q4 point
 law currently retains only six affine reference rows. For conservative
 buckling about a prestressed connected state, determine whether the
