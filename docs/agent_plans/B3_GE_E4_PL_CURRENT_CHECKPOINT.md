@@ -15,14 +15,15 @@ discrete trial pairing, not the continuous law. The director-pitch hybrid
 remains a separate two-sided weld candidate. B2 physical-section samples
 and private batching pass bounded checks, but F09 admission remains open.
 **Uncertainty:** A resolution policy that avoids dependent interface rows,
-then growing-space mixed-system stability and locking,
+then a physically justified dual norm, growing-space mixed-system stability and locking,
 physical transfer against a matched sided reference, and an admissible
 interface-resolution policy across the registered ratios.
-**Next discriminator:** Use the x8/m8 rank loss and x16/m8 full rank to
-define a candidate host-to-multiplier resolution policy, then assess P0
-and a deliberately quotiented P1 with physically scaled primal/dual norms
-and the actual native retained mixed tangent as the interface grows; check work,
-unsupported modes, locking and converged physical transfer together.
+**Next discriminator:** Interpret the same-primal P0 mode under a physical
+trace-dual norm, then use the x8/m8 rank loss and x16/m8 full rank to
+define a candidate host-to-multiplier resolution policy. Assess P0 and a
+deliberately quotiented P1 with the actual native retained mixed tangent
+as the interface grows; check work, unsupported modes, locking and
+converged physical transfer together.
 Treat dual-eight with 54 independent rows as inadmissible on the tested
 primal layout. A failed candidate prompts a law or resolution revision;
 a passing one advances the independent G0 mechanics review. Do not
@@ -156,6 +157,74 @@ inherited H^(-1/2) diagnostic, reporting physical action and virtual work.
 If weakness is norm-dependent, revise the norm/scales before stability
 claims; if it persists, examine interface-space resolution/locking. Do
 not tune a norm merely to raise the minimum or repeat beam refinement.
+
+**Finite-width traction-norm sensitivity result:** An independently derived
+L2 norm of the actual raw P0 force/first-moment traction, with one fixed
+dimensional multiplier scale `W²/(E*t)`, was applied to the unchanged
+x16/y4, B3-24 exact-Schur mixed operator. Its analytic finite-width Gram
+matches independent two-point quadrature to `5.4e-18` relative; the raw
+and centered work rows agree to `3.0e-17`. For P0-four/eight, the inherited
+restricted-norm minima are `0.0152115/0.00714263`, whereas this traction
+L2 sensitivity gives `0.00276896/0.0000357945`. The eight-interval mode
+has `99.9964%` of its L2 diagnostic norm in the line dual; its relative
+eigen-equation residual is `4.8e-11`. The one-preparation run took
+`75.16 s`, peaked at `488 MB`, and stayed within existing limits. Raw
+source-bound result:
+`B3_GE_E4_PL_F03_TOP_FACE_X16_B24_TRACTION_NORM_20260927.json`.
+The scalar minimum is highly norm-dependent; L2 traction is neither the
+canonical trace-dual H^(-1/2) norm nor actual E4 compliance. The common
+line-dominated eight-interval mode warrants a physical work/locking and
+growing-space assessment, but does not prove instability or select P0.
+Next derive an appropriate trace-dual norm from the declared continuous
+work law, with its scaling fixed before comparing spaces. If that norm
+retains a weak line mode, test its supported physical deformation and
+transfer on the registered ratios; if it does not, revise the prior
+diagnostic interpretation. Do not tune the norm to increase the minimum.
+Formal F03 authority remains unconsumed; G0B open and G1 barred.
+
+**Next bounded mode-shape check (prospective):** The question is whether
+the 77-fold P0-four/eight drop in the finite-width L2 diagnostic reflects
+an oscillatory traction pattern poorly represented by the current trace,
+or mainly conversion between this norm and the inherited diagnostic.
+Reuse the unchanged x16/B3-24 assembly and both spaces. For each weak
+mode, inspect raw piecewise traction coefficients and cross-evaluate its
+dual component under both norms. Compare a fixed smooth physical traction
+represented on each partition as a normalization control, and retain the
+actual work and eigen residuals. If the weak eight-interval mode develops
+short-scale oscillation absent from the smooth control, inspect supported
+physical deformation/work and interface resolution before further ratios;
+if the apparent difference is chiefly norm conversion, derive the
+continuous trace-dual norm before classifying the mode. This diagnostic
+does not consume F03 authority or select a multiplier space. The first
+L2 result omitted three imported helper hashes; preserve it and add the
+complete source identity to the next version.
+
+**Mode-shape outcome and decision:** The source-complete V2 run used the
+same x16/B3-24 KKT operator and reproduced every prior minimum within
+roundoff (`75.72 s`, `488 MB`). Its fixed smooth axial traction has
+identical dual norm `1.36054e-12 J` on P0-four/eight under both metrics,
+so the comparison is not a blanket partition normalization shift. The
+P0-eight restricted and L2 near modes have essentially the same smooth,
+long-wavelength raw pattern: transverse force changes sign through the
+centre while the pitch-moment density forms a symmetric arch. Neither
+shows interval-to-interval alternation. For these two eight-interval
+modes, the L2/inherited dual norm-squared ratios are `200.57/201.35`;
+their minima differ by almost the same factor (`0.00714263` versus
+`0.0000357945`). The P0-four inherited minimum is instead beam-dominated,
+while its L2 minimum switches to a smooth line-dominated mode. Thus the
+77-fold four→eight L2 minimum decrease does not expose the proposed
+oscillatory high-frequency traction mode. It is primarily a change in
+which smooth mode is smallest plus the norm assigned to the pitch-moment
+traction. The exact continuous trace-dual norm and supported physical
+work/locking remain unresolved; this observation cannot establish a
+uniform stability constant or select P0. Stop repeated spectral quotient
+comparisons. Next derive the norm for the declared trace/work spaces and
+compare supported transfer on registered ratios with the physically
+matched sided reference. The raw result is
+`B3_GE_E4_PL_F03_TOP_FACE_X16_B24_TRACTION_MODE_V2_20260927.json`;
+it hashes all eight directly used source files. The V1 result remains
+preserved with its narrower provenance. G0B remains open, G1 barred,
+formal F03 authority unconsumed.
 
 **Next bounded growing-row diagnostic (prospective, 27 September):** On the
 already assembled x8/y4 C1 Q4/B3-12 native retained system, grow the exact
