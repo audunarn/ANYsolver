@@ -285,3 +285,31 @@ That trial was not committed by the public solver. Deriving and safeguarding
 the active-set pivot in the production path remains necessary before an
 eight-Q4 result can be accepted. The tangent and pivot evidence is retained
 as `c1-eight-q4-schur-*` and `c1-eight-q4-pivot-*` files.
+
+### Later differentiated interior-overlap development and narrow press gate
+
+The opt-in Jet2 geometry and supported-pressure Schur route subsequently
+completed twelve-step press/slide/open/recontact cycles at 8 and 16 Q4 on
+the physical-edge target. Their loaded press forces differed by 0.253%, but
+their full-slide forces differed by 6.399%; this does not qualify edge
+sliding. Moving only the fixed S3 target's right edge to x=1.3 m gave an
+interior-overlap development route. Its 8/16/24-Q4 cycles completed under
+the same 50 µm physical-gap and 1e-5 Pa multiplier-change criteria. Loaded
+forces were 0.03409873708, 0.03503043719 and 0.03532628509 N. The eight-Q4
+cycle also replayed all twelve force/gap/active/multiplier-change records
+exactly from a fresh-model midpoint restart. These cycles remain development
+evidence; first-unload contact differs between 8 and finer meshes.
+
+A separately frozen 32-Q4 **two-step press-only** case completed in 249.114 s
+at 0.03547159554 N. Its 24-to-32 force change was 0.40965%, and the
+16/24/32 inverse-mesh fit placed the 24-Q4 force within 1.63611% of its
+extrapolated limit. Full supported pressure rank, equilibrium, wrench,
+accepted load, integration indicator, multiplier and independent gap gates
+passed. An independent reviewer checked the immutable source and evidence
+identities and the numerical calculations, accepting only this registered
+integrated press-force refinement claim. The frozen prediction was fitted
+from development data, not derived from an analytical force oracle. The
+[registration](reference_cases/general_contact_d1_mixed_interior_response_v1.json),
+[review](reference_cases/general_contact_d1_mixed_interior_response_v1_review.md)
+and retained raw reports provide the exact boundary. Full-cycle response,
+physical-edge behavior, installed verification and C1 remain open.
