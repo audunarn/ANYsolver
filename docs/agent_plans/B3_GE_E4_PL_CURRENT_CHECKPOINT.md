@@ -155,6 +155,21 @@ accuracy comparison: coarser P0 is not a sufficient fixed resolution
 rule on this evidence. Derive a joint enriched trace space and compare
 it to a matched two-sided physical reference before another mesh sweep.
 
+**Next joint-trace candidate (prospective):** On that same x8/B3-12
+shell-fine fixture, generate multiplier test functions from the actual
+coarser native beam bond-port translation and retained half-cell
+rotation columns in the six-channel reference gap Jacobian. Keep the
+physical `.1 m` moment/translation length scale, exact reference-cut
+quadrature, and all nonzero physical generators if independent; no
+SVD row deletion or production admission. First check the generator
+Gram and supported constraint rank. A dependency stops this candidate.
+If independent, compare its unchanged-primal torque/shear work,
+reactions, continuous gaps and tip response to the saved P0 m2/m4
+results. Movement toward m4 would implicate omitted coarser-side trace
+modes; persistent difference leaves the joint shell/beam trace or law
+question open. Neither outcome substitutes for a matched physical
+reference or mesh-uniform stability.
+
 The planned x8 fixture has about 1,404 globally free primal columns,
 above the private rank helper's 1,200-column SVD cap, although only a
 small attachment-local subset enters its rows. The helper now removes
