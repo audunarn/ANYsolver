@@ -10231,3 +10231,36 @@ low priority for the present action-work interpretation. Continue with
 the physical six-channel sided transfer, shell/section/support
 idealization and growing-space mixed-system assessment. G0B/F03 remain
 open, G1 barred and the formal F03 authority unconsumed.
+
+**Immediate law-identity check (prospective):** Before comparing the
+existing native loaded P0 m4 wrench to the saved material-line solid P0
+reference, distinguish their source operators. The native loaded file
+uses `FiniteSurfaceLineHybrid`; the solid reconstruction uses the
+`MaterialLinePosition`-matched two-sided solid port. On the identical
+x4/y4, B3-12, fixed-support, P0 m4 fixture, compare the complete
+supported row spaces and separately the shell and retained-beam traces.
+If the full spaces coincide, the loaded comparison is admissible at
+this level with its section/load caveats; if they differ, use a bounded
+native `MaterialLinePosition` solve before attributing response or
+transfer differences. Row-space equality is a law-identity test only,
+not multiplier stability or F03 acceptance.
+
+**Law-identity outcome:** Source `d88f94f0` evaluates both P0 m4
+operators on the same supported Q4 x4/y4, native B3-12 retained fixture.
+Both have 24 independent **full** rows, but their union has rank `44`;
+the relative row-space projection defects are `0.8445/0.8433` in the
+declared common scaling. The material-line shell side has rank `21/24`,
+the finite-strip hybrid shell side `24/24`, and their shell union rank
+is `41`. Their retained-beam-side row spaces coincide to approximately
+`1e-15` and each has rank `15`. Thus the loaded hybrid and external
+material-line P0 records are **different shell connection laws**, not
+different bases for the same law. Do not attribute their loaded wrench
+or displacement differences solely to E4/3D shell, B3/solid section,
+or load shape. Raw `B3_E4_F03_C1_LINE_LAW_SPACE_DEV_V1.json` has SHA256
+`68d987cf084b4e19521e1cb2586823d3764631f3349a869a0a0a1c7e38926023`;
+two focused row-space tests pass. This fixed-space rank comparison is
+not an inf-sup or physical accuracy result. Next run one bounded native
+`MaterialLinePosition` P0 m4 solve with the unchanged support, section
+and two loads, using the existing 1,900-row development cap. Then
+compare same-law work and physical wrenches with the saved solid P0
+reconstruction, retaining section and tip-load distinctions.
