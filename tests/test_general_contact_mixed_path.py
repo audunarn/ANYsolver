@@ -13,6 +13,47 @@ from anysolver import (
 from examples.general_contact_refined_q4_s3_mixed_path import (
     GAP_BUDGET_M, make_case, solve_case,
 )
+from anysolver.general_contact.core import contact_scope
+from scripts.general_contact_d1_mixed_jet2_schur_probe import make_candidate
+
+
+def test_jet2_schur_patch_uniform_slide_matches_independent_overlap_force():
+    model, definition, settings, _program, _capability = make_candidate()
+    source_nodes = range(1, 7)
+    normal_dofs = [model.mesh.get_node(node).dofs[2]
+                   for node in source_nodes]
+    with contact_scope(model, definition, settings,
+                       allow_augmented=True) as manager:
+        for shift in (0.0, 0.05):
+            displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+            for node in source_nodes:
+                dofs = model.mesh.get_node(node).dofs
+                displacement[dofs[0]] = shift
+                displacement[dofs[2]] = -50.0e-6
+            _force, tangent, contact = manager.evaluate(
+                displacement, tangent=True,
+            )
+            # The translated 1 m square source intersects the fixed target
+            # over x=[0.1+shift,1] and y=[0.1,1]. Both physical skins have
+            # a uniform 10 um compression, so epsilon*area*compression is
+            # the exact resultant of this bounded penalty specialization.
+            expected_area = (0.9-shift)*0.9
+            expected_force = 10000.0*expected_area*10.0e-6
+            assert contact.current_overlap_area == pytest.approx(
+                expected_area, abs=1.0e-10,
+            )
+            assert contact.integration_force[2] == pytest.approx(
+                expected_force, rel=1.0e-6,
+            )
+            assert contact.minimum_gap == pytest.approx(-10.0e-6, abs=1.0e-9)
+            assert contact.active_pressure_dofs == 6
+            assert contact.gap_tolerance_met
+            assert (float(tangent[np.ix_(normal_dofs, normal_dofs)].sum())
+                    == pytest.approx(10000.0*expected_area, rel=1.0e-5))
+            np.testing.assert_allclose(
+                np.asarray(contact.integration_force)
+                + np.asarray(contact.target_force), 0.0, atol=1.0e-10,
+            )
 
 
 def test_contact_path_force_interpolation_and_legacy_contract():

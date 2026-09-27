@@ -1,5 +1,66 @@
 # C1 development: mixed force and displacement shell-contact path
 
+## Bending-direction refinement and sliding limit (27 September 2026)
+
+At unchanged 1 m source span, two fixed S3 targets, physical skins,
+total −0.1 N right-edge force and strict 1e-5 Pa multiplier-change gate,
+the solver-accepted **press steps** gave 0.01956348, 0.02645245, 0.02857212 and
+0.02849993 N contact force on 2, 4, 8 and 16 Q4 source faces. The 8-to-16
+change is 0.253%; the 2-to-4 change is 35.2%. All reported press states met
+their 50 µm physical-gap gate. The 8-Q4 press used a 100 Pa explicit Schur
+pressure cap because its accepted pressure peaked at 17.87 Pa; a 10 Pa cap
+had rejected the loaded step. These are development comparisons, not a
+registered independent structural reference or C1 acceptance.
+
+An 8-Q4 four-phase right-edge-force route accepted press but rejected the
+first slide step at the seven-augmentation limit. Both two- and three-step
+phase sampling encountered a changing, weakly supported pressure space near
+the target's physical edge. Increasing the bounded Schur step from 5 to
+50 Pa also rejected the slide step. A trapezoidally distributed −0.1 N load
+completed eight steps but never activated contact. A −0.2 N distributed
+load activated contact and rejected the press step; one bounded Schur
+relinearization lowered, but did not close, its multiplier residual. The
+raw records and exact settings are listed in `GENERAL_CONTACT_RESTART.md`.
+
+Float and Jet2 overlap values have a shared, explicitly capped comparison
+for numerically subresolved Q4/S3 wedges. Focused pair and Schur checks
+passed. Independent review found that its scalar captured-pose checks do
+not establish gradient or Hessian accuracy at a nearly vanishing wedge;
+that qualification remains open. The numerical polygon-area resolution is
+an indicator for this development comparison, not a certified error bound.
+
+## Differentiated strict-pressure development route (27 September 2026)
+
+An opt-in candidate selects the existing Jet2 Q4/S3 overlap derivative,
+projected-matching physical-gap certificate and supported-pressure Schur
+acceleration mode for the same force-driven eight-step path. The saved
+record does not establish whether a Schur proposal was applied. The explicit normal
+stiffness is 10,000 Pa/m, the pressure-change tolerance is 1e-5 Pa, the
+physical-gap tolerance remains 50 µm, and at most seven augmentations are
+allowed per step. Other Schur and derivative budgets are in
+`scripts/general_contact_d1_mixed_jet2_schur_probe.py`.
+
+The path completed press, 50 mm slide, open and recontact in 51.65 s. Its
+phase-end active-node counts were 2/2/0/2 and normal contact forces were
+0.0195634815/0.0151600225/0/0.0151600225 N. The most negative phase-end
+gap was −7.4519 µm. A fresh-model restart after the slide reproduced all
+eight saved force, gap, activity and multiplier-change records exactly.
+The first probe's console serialization failed after it wrote the completed
+JSON; the traceback and raw result are retained separately. The probe now
+uses native JSON booleans and refuses to overwrite saved outputs.
+
+An independent planar-overlap calculation for uniform 10 µm compression
+predicts 0.81 and 0.765 m² overlap at 0 and 50 mm lateral shift. Its 0.081
+and 0.0765 N contact-force and 8100 and 7650 N/m uniform normal-tangent
+predictions pass a focused local regression. This tests changing overlap
+and the bounded normal work map at prescribed uniform poses. The coupled
+path still has the earlier 35.2% two-to-four-Q4 bending-direction response
+change at strict enforcement; it lacks a refined response reference and
+independent acceptance. The saved path does not include external/support
+reactions or deformed overlap areas, so the local prescribed-pose oracle does
+not independently verify whole-path equilibrium or overlap. The new route is
+a tested development profile.
+
 `ContactPathNodalForce` adds explicit translation-force values, in newtons,
 at a `ContactPathProgram`'s waypoints. Force values and displacement targets
 interpolate at the same accepted path steps. A segment may change force

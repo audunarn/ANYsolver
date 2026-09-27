@@ -20,6 +20,7 @@ from .q4_source_overlap import projected_q4_source_face
 from .q4_s3_tiny_wedge import verify_tiny_wedge_derivatives
 from .q4_s3_overlap_derivatives import q4_s3_overlap_derivatives
 from .s3_overlap_derivatives import s3_overlap_derivatives
+from .s3_patch_augmented import _q4_s3_pair_value_rtol
 from .supported_schur import SupportedSchurProposal, propose_supported_schur_step
 
 
@@ -114,11 +115,30 @@ def _jet2_integral_gradients(geometry, source, target,
             derivative = s3_overlap_derivatives(
                 reference, local_source, local_target,
             )
+        if len(source_nodes) == 4:
+            value_rtol = _q4_s3_pair_value_rtol(
+                local.overlap_area, derivative.overlap_area,
+                derivative.overlap_area_resolution,
+            )
+            roundoff_factor = (512.0*np.finfo(float).eps
+                               * max(1, local.integration_triangles))
+            support_atol = roundoff_factor*max(
+                float(np.max(np.abs(local.reference_support))),
+                float(np.max(np.abs(derivative.reference_support))),
+            )
+            gap_atol = roundoff_factor*max(
+                float(np.max(np.abs(local.reference_weighted_gap))),
+                float(np.max(np.abs(derivative.reference_weighted_gap))),
+            )
+        else:
+            value_rtol = 1.0e-9
+            support_atol = gap_atol = 0.0
         if (not np.allclose(derivative.reference_support,
-                            local.reference_support, rtol=1e-9, atol=0.0)
+                            local.reference_support,
+                            rtol=value_rtol, atol=support_atol)
                 or not np.allclose(derivative.reference_weighted_gap,
                                    local.reference_weighted_gap,
-                                   rtol=1e-9, atol=0.0)):
+                                   rtol=value_rtol, atol=gap_atol)):
             verified = False
             if (not tiny_wedge_used and manager is not None and base is not None
                     and len(source_nodes) == 4

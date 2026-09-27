@@ -121,7 +121,11 @@ def _q4_s3_pair_value_rtol(local_area: float, derivative_area: float,
     if min(local_area, derivative_area) <= 0.0:
         raise UnsupportedQ4S3Branch("Q4/S3 paired overlap area is not positive")
     difference = abs(local_area-derivative_area)
-    relative = 2.0*difference/min(local_area, derivative_area)
+    # Q1 support and weighted-gap values vary across a moving wedge, so
+    # their float/Jet2 discrepancy may exceed the relative area discrepancy.
+    # Keep the ordinary allowance tied to observed geometry disagreement.
+    minimum_area = min(local_area, derivative_area)
+    relative = 4.0*difference/minimum_area
     if (not np.isfinite(relative) or not np.isfinite(area_resolution)
             or difference > area_resolution or relative > 1.0e-6):
         raise UnsupportedQ4S3Branch(
@@ -130,6 +134,13 @@ def _q4_s3_pair_value_rtol(local_area: float, derivative_area: float,
             f"area_resolution_m2={area_resolution:.12g}, "
             f"relative_value_allowance={relative:.12g})"
         )
+    # At a physical edge, the area alone can agree more closely than its Q1
+    # support moments when propagated polygon-coordinate area resolution is
+    # material relative to the tiny overlap. Allow a bounded 1e-6 comparison
+    # only in that subresolved geometry regime. The wedge is still integrated
+    # and its derivative and mechanical gates remain in force.
+    if area_resolution >= 1.0e-3*minimum_area:
+        return 1.0e-6
     return 1.0e-9+relative
 
 
@@ -812,9 +823,9 @@ class MovingS3PatchProjectedNormal:
             if len(source_nodes) == 4:
                 # The float and Jet2 clippers use different arithmetic paths.
                 # For a tiny wedge, compare their area discrepancy with the
-                # propagated polygon-coordinate resolution first. Permit only
-                # twice that observed relative discrepancy in the per-node
-                # integrals; this does not relax quadrature or tangent gates.
+                # propagated polygon-coordinate resolution first. The bounded
+                # value allowance also covers Q1 variation over a subresolved
+                # overlap; derivative and integration gates remain separate.
                 try:
                     value_rtol = _q4_s3_pair_value_rtol(
                         local.overlap_area, derivative.overlap_area,
@@ -943,7 +954,7 @@ class MovingS3PatchProjectedNormal:
                     )
                     weighted_hessian[np.ix_(indices, indices)] += weighted
                     support_hessian[np.ix_(indices, indices)] += supported
-        # Pair-wise integration has already matched at 1e-9 relative error.
+        # Pair-wise values have passed the bounded geometry comparison.
         # Summing signed contributions can make the assembled total tiny;
         # compare against the sum of contribution magnitudes so roundoff and
         # allowed pair errors do not turn into a false zero-scale mismatch.

@@ -20,7 +20,35 @@ def test_tiny_wedge_area_disagreement_has_small_bounded_value_allowance():
     local = 4.45786736357e-16
     derivative = 4.45786737393e-16
     tolerance = _q4_s3_pair_value_rtol(local, derivative, 6.35274248175e-20)
-    assert 1.0e-9 < tolerance < 1.0e-8
+    assert 1.0e-9 < tolerance < 2.0e-8
+
+
+def test_moving_physical_edge_wedge_value_agreement_stays_bounded():
+    # Captured at the 50 mm slide of an eight-Q4/two-S3 force path. Both
+    # clippers retained this physical-edge wedge; their positive areas agree
+    # far inside the polygon-coordinate resolution. Q1 support varies across
+    # the wedge and has a slightly larger relative float/Jet2 difference.
+    local_area = 5.32271210325e-10
+    derivative_area = 5.32271200712e-10
+    area_resolution = 2.65519977967e-12
+    support_local = 2.9259797572551105e-10
+    support_derivative = 2.925979576395046e-10
+    allowance = _q4_s3_pair_value_rtol(
+        local_area, derivative_area, area_resolution,
+    )
+    assert abs(local_area-derivative_area) < area_resolution
+    assert allowance == 1.0e-6
+    assert abs(support_local-support_derivative) <= allowance*support_local
+    second_area = 6.73575833514e-10
+    second_derivative_area = 6.73575838977e-10
+    second_support = 3.0309933156822006e-10
+    second_derivative_support = 3.0309930687616105e-10
+    second_allowance = _q4_s3_pair_value_rtol(
+        second_area, second_derivative_area, 2.65519978062e-12,
+    )
+    assert second_allowance == 1.0e-6
+    assert (abs(second_support-second_derivative_support)
+            <= second_allowance*second_support)
 
 
 def test_near_resolution_area_cannot_open_unbounded_value_tolerance():
