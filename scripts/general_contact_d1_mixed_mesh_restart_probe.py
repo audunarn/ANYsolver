@@ -106,6 +106,14 @@ def main(reference_path: Path, output_path: Path) -> None:
                 + np.asarray(contact["target_moment"])
             )),
         })
+    final_displacement_difference_m = float(np.max(np.abs(
+        np.asarray(resumed.displacements, dtype=float)
+        - np.asarray(full["final_displacements"], dtype=float)
+    )))
+    final_pressure_difference_pa = float(np.max(np.abs(
+        np.asarray(history[-1]["contact"]["normal_multiplier_estimate_pa"], dtype=float)
+        - np.asarray(full["history"][-1]["contact"]["normal_multiplier_estimate_pa"], dtype=float)
+    )))
     record = {
         "candidate": "mixed_q4_s3_split_restart_dev",
         "reference": str(reference_path),
@@ -120,6 +128,8 @@ def main(reference_path: Path, output_path: Path) -> None:
         "maximum_multiplier_change_difference_pa": max(
             x["multiplier_change_difference_pa"] for x in differences
         ),
+        "final_displacement_difference_m": final_displacement_difference_m,
+        "final_pressure_difference_pa": final_pressure_difference_pa,
         "all_active_nodes_match": all(x["active_nodes_match"] for x in differences),
         "all_gap_and_pressure_gates_met": all(
             x["gap_tolerance_met"] and x["pressure_gate_met"]
