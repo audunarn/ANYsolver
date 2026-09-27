@@ -1,0 +1,22 @@
+{
+  "profile": "fixed_pose_q4_pressure_overlay_development",
+  "rows": [
+    {
+      "structural_divisions": 2,
+      "pressure_nodes": 25,
+      "force_n": 0.12415408553677361,
+      "supported_modes": 20,
+      "active_modes": 12,
+      "elapsed_seconds": 0.23279249999905005
+    },
+    {
+      "structural_divisions": 4,
+      "pressure_nodes": 25,
+      "force_n": 0.12415408553676555,
+      "supported_modes": 20,
+      "active_modes": 12,
+      "elapsed_seconds": 0.22555140001350082
+    }
+  ],
+  "relative_force_difference": 6.494345056371518e-14
+}
