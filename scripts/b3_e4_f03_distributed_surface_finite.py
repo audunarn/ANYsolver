@@ -544,8 +544,8 @@ def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
     if (thickness != .035 or beam.n_half_cells not in (12, 14, 18, 24, 26) or
             not beam.model.name.endswith("-c1_tangent_2um")):
         raise ValueError("weighted line spaces require the bounded 35 mm C1 reference")
-    if type(intervals) is not int or intervals not in (2, 4, 8):
-        raise ValueError("bounded 2/4/8 longitudinal multiplier intervals required")
+    if type(intervals) is not int or intervals not in (2, 4, 8, 16):
+        raise ValueError("bounded 2/4/8/16 longitudinal multiplier intervals required")
     knots = np.linspace(0., 1., intervals+1)
     if any(not np.any(np.isclose(xs, .9+.1*value, rtol=0., atol=1e-12))
            for value in knots):

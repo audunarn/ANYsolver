@@ -6403,3 +6403,90 @@ mutation concurrent with snapshot creation is outside this synchronous
 callback check; eventual public definitions must own their arrays. Batch
 timing and F13 acceptance remain unmeasured/open; G0B remains open and G1
 barred.
+
+**F03 growing-interface decision (27 September):** The earlier x4/x8/x16
+axial-only shell sequence held two multiplier cells fixed, so it established
+a bounded fixed-space response rather than the required growing-space
+behavior. On the existing 35 mm C1 Q4 x16/y4, B3-12 fixture, test one
+aligned sixteen-interval exact line space with the same geometry, loads,
+supports and 1900-row dense-component cap. Rank loss, failed work/balance or
+material transfer drift relative to x8/m8 sends the trace or interface
+resolution policy back for revision. Otherwise proceed to the reviewed
+basis-specific norm and reciprocal ratios; neither outcome selects a space
+or closes G0B. This is a development diagnostic, not formal F03 execution.
+
+**First outcome and next discriminator:** The x16/m16 sparse C1 run completed
+in 66.01 s at `.qualification/b3-ge-e4-pl/f03-c1-growing-x16-m16-dev-20260927-v1`.
+P0/P1/dual supported ranks are 96/102/102 and all reported balance/work
+errors are below `8.9e-11`. Relative to existing x8/m8, separate torque
+work changes by `-0.644/-1.074/-1.110%`; opening work changes by
+`-0.077/-0.064/-0.062%`. This coupled refinement cannot allocate the
+torque change to shell or multiplier resolution. Run the same x16 shell and
+B3-12 with m8 to isolate row enrichment. If m8→m16 changes torque materially,
+review interface resolution and physical transfer before norm extension;
+if it does not, assess shell-resolution convergence and the reviewed norm.
+Neither result establishes physical fidelity or multiplier-space selection.
+
+**Fixed-shell result and action:** The x16/m8 control completed in 67.34 s at
+`.qualification/b3-ge-e4-pl/f03-c1-fixed-x16-m8-dev-20260927-v1`.
+At unchanged x16/y4 shell, B3-12, loads and supports, m8→m16 changes
+separate torque work by `-2.536/-1.269/-1.190%` for P0/P1/dual and
+opening work by `-0.238/-0.117/-0.092%`. Torque tip rotations move
+`46.447→45.269`, `47.106→46.508`, and `47.494→46.928 µrad`;
+shell-interface Mx changes `40.778→40.471`, `41.045→40.888`, and
+`41.179→41.022 Nm`. The sampled position gaps also change, but cannot
+choose an enforcement space. All m8/m16 row sets retain their expected
+rank (`48/54/54` and `96/102/102`) and the largest reported mechanics
+error is `8.9e-11`. Conversely x8/m8→x16/m8 changes P0 torque work by
+`+1.942%`, P1 by `+0.198%`, and dual by `+0.082%`; coupled shell/row
+refinement had concealed the opposing P0 effects. These finite-grid results
+show a material row-resolution dependence without proving locking or a
+formulation defect. Review whether the added longitudinal modes enforce the
+declared physical work and how transfer approaches a stable limit before
+another refinement or multiplier selection; retain the native mixed-system
+and physical-reference checks. Raw SHA256: x16/m16
+`5C7BADB7AB7645D473DC02D258A5724D7116162D72D0EEC9AAA5B7B74AEE0B00`,
+x16/m8 `D59F793BF13D26D70CEA91D265750F20F8F79D7B00EBE5D77747DE2CAEE70940`.
+Each result embeds source hashes; the `source_git` is the pre-edit
+`ed3d4f14`, so the hashes, not that commit alone, bind the changed allowlists.
+Both runs used one BLAS/MKL/OMP thread and completed under the 120 s cap.
+Formal F03 authority remains unconsumed; G0B open and G1 barred.
+
+**Independent reading and next bounded check:** A read-only mechanics review
+confirmed the comparisons and noted that complete supported row rank alone
+does not show whether m16 rows are represented by shell deformation. A
+historical *different local-center trace* P0 m16 audit had whole/beam-only
+rank 96 but shell-only rank 69; it is a caution, not a rank result for the
+current hybrid. Check the current x16/m16 P0 shell-only and beam-only ranks
+with the declared row scaling before interpreting its transfer. A deficiency
+sends interface resolution or trace design back for review; full rank still
+requires normed stability and physical transfer checks. A separate six-build
+quadrature comparison produced no output within 120 s and was stopped; it
+supplies no quadrature result and is not a reason to extend that sweep.
+An inline stdin-piped rank probe likewise yielded no fixture-ready output
+within 120 s and was stopped. No rank claim follows. Use the existing
+bounded standalone C1 runner with a shell/beam row inventory instead of
+another piped one-off probe; this changes the diagnostic output, not the
+mechanical law.
+
+**Current hybrid rank outcome:** The bounded standalone x16/m16 rerun
+completed in 65.42 s at
+`.qualification/b3-ge-e4-pl/f03-c1-growing-x16-m16-rank-dev-20260927-v1`;
+SHA256 is `83A6119E3A1481F8793A0C32E0EECC5C2D5E1A4378133ABA656061676DF4947B`.
+The new inventory scales columns with the existing mixed-coordinate scales,
+normalizes each row, and applies a declared `1e-10` relative singular-value
+cut. Whole/shell-only ranks are P0 `96/96`, P1 `102/102`, dual-P1
+`102/102`; beam-only rank is 15 for each. Thus this particular current
+hybrid grid does not reproduce the historical *different-law* P0 shell-rank
+deficit. It only shows algebraic shell representability; the row singular
+ratios are not physical inf-sup constants or a space ranking. The separate
+torque/opening work values are exactly unchanged from the previous x16/m16
+run. The row-resolution transfer effect therefore remains to be judged by
+physical work and normed growing-space behavior, including integration
+accuracy. Formal F03 authority remains unconsumed; G0B open and G1 barred.
+
+Independent read-only mechanics review confirmed that the support-reduced
+column ordering and common row normalization make the shell/beam split valid
+for this narrow algebraic claim. It found no blocking rank-code defect and
+explicitly did not accept inf-sup, energy-weighted transfer, uniformity or
+physical fidelity.

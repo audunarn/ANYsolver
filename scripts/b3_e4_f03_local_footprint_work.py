@@ -1258,7 +1258,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
     if include_line_hybrid_spaces and plate_thickness != .035:
         raise ValueError("weighted C1 line spaces require the 35 mm plate")
     if (type(line_multiplier_intervals) is not int or
-            line_multiplier_intervals not in (2, 4, 8) or
+            line_multiplier_intervals not in (2, 4, 8, 16) or
             (line_multiplier_intervals != 2 and
              (not include_line_hybrid_spaces or
               include_line_hybrid_segmented or
@@ -1467,6 +1467,34 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         m=len(constraint)
         n=len(free)
         rows=constraint[:,free]
+        row_inventory = None
+        if sparse_line_only:
+            # This is an algebraic representability check, not an inf-sup
+            # or physical stability measure. Use the existing coordinate
+            # scales and normalize each mixed-unit row before the split.
+            scaled_rows = rows*primal_scale[free][None, :]
+            row_norm = np.linalg.norm(scaled_rows, axis=1)
+            if not np.isfinite(row_norm).all() or np.any(row_norm <= 0.):
+                raise ArithmeticError("bounded line row scale is invalid")
+            scaled_rows /= row_norm[:, None]
+            shell_free = int(np.count_nonzero(free < shell_size))
+
+            def inventory(part):
+                singular = linalg.svdvals(part, check_finite=True)
+                largest = float(singular[0])
+                return {
+                    "rank_at_relative_1e_minus_10": int(np.count_nonzero(
+                        singular > 1e-10*largest)),
+                    "rows": m,
+                    "smallest_over_largest": (
+                        float(singular[-1]/largest) if largest else 0.),
+                }
+
+            row_inventory = {
+                "whole": inventory(scaled_rows),
+                "shell_only": inventory(scaled_rows[:, :shell_free]),
+                "beam_only": inventory(scaled_rows[:, shell_free:]),
+            }
         if (n+m>1900 and not sparse_line_only or
                 sparse_line_only and max(shell_size,beam.context.count)>1900):
             raise ValueError("graded terminal KKT exceeds bounded row cap")
@@ -1654,6 +1682,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                    else {}),
             }
         records[family]={"constraint_rank":rank,"cases":cases,
+                         **({"scaled_row_inventory":row_inventory}
+                            if row_inventory is not None else {}),
                          **({"basis_integrals_m":space_masses[family]}
                             if family in space_masses else {})}
     return {"patch_cells_per_side":(patch_cells if transverse_cells is None

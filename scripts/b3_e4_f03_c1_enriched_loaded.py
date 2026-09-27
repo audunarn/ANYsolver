@@ -22,7 +22,7 @@ FAMILIES = ("line_hybrid_p0_weighted", "line_hybrid_p1_weighted",
 
 def evaluate(shell_cells: int, line_intervals: int, *,
              detailed: bool = False) -> dict:
-    if shell_cells not in (4, 8) or line_intervals not in (2, 4, 8) or (
+    if shell_cells not in (4, 8, 16) or line_intervals not in (2, 4, 8, 16) or (
             line_intervals > shell_cells):
         raise ValueError("bounded aligned C1 shell/line resolution required")
     start = time.perf_counter()
@@ -67,6 +67,7 @@ def evaluate(shell_cells: int, line_intervals: int, *,
                 })
         records[family] = {
             "constraint_rank": entry["constraint_rank"],
+            "scaled_row_inventory": entry["scaled_row_inventory"],
             "basis_integrals_m": entry["basis_integrals_m"],
             "cases": cases,
         }
