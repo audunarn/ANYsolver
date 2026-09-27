@@ -1,0 +1,34 @@
+.....F....                                                               [100%]
+================================== FAILURES ===================================
+__ test_projected_active_set_re_equilibrates_without_committing_failed_step ___
+
+projected_only = None
+
+    def test_projected_active_set_re_equilibrates_without_committing_failed_step(projected_only):
+        model, definition, settings, program = _case()
+        program = replace(program, controls=(
+            program.controls[0], ContactPathControl.node(6, "uz"),
+        ))
+        settings = replace(
+            settings, general_s3_differentiation="jet2_q4_s3_dev",
+            q4_source_support_gradient_tolerance=1e-5,
+            q4_source_support_hessian_tolerance=1e-5,
+            q4_source_weighted_gap_gradient_tolerance=1e-5,
+            q4_source_weighted_gap_hessian_tolerance=1e-5,
+            maximum_q4_source_integration_triangles=128,
+        )
+        result = solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=12,
+            emit_restart_checkpoint=True,
+        )
+>       assert result.status == "diverged"
+E       AssertionError: assert 'completed' == 'diverged'
+E
+E         - diverged
+E         + completed
+
+tests\test_general_contact_supported_schur_path.py:129: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_supported_schur_path.py::test_projected_active_set_re_equilibrates_without_committing_failed_step
+1 failed, 9 passed in 210.12s (0:03:30)

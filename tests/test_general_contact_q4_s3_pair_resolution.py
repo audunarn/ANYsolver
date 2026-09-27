@@ -249,3 +249,34 @@ def test_tiny_wedge_requires_verified_reduced_derivatives():
     assert work.energy_evaluations <= settings.maximum_general_s3_energy_evaluations
     force = work.residual.reshape(-1, 3)
     np.testing.assert_allclose(force.sum(axis=0), 0.0, atol=1.0e-8)
+
+
+def test_exact_seam_uses_resolved_outer_directional_quotient():
+    fixture = json.loads((Path(__file__).parent / "fixtures" /
+                          "general_contact_q4_s3_neighbor_value_gate_pose.json").read_text())
+    model, definition, settings, _ = build_case(
+        4, 2, True, gap_certificate="projected_matching",
+        gap_tolerance=5.0e-5, normal_approach=0.01504,
+    )
+    settings = replace(
+        settings, q4_s3_shared_edge_tie_step_m=3.0e-8,
+        q4_s3_shared_edge_tie_direction=(1.0, 0.0, 0.0),
+        q4_s3_shared_edge_tie_relative_tolerance=1.0e-6,
+    )
+    owner = GeneralS3PatchManager(model, definition, settings)
+    owner.law.set_tangent_active_coordinates([
+        3*node+axis for node in range(len(owner.law.source_node_ids))
+        for axis in (0, 2)
+    ])
+    # A saved rejected Schur proposal at this pose has concentrated pressure.
+    multipliers = np.asarray((
+        21.541356, 0.0, 0.0, 0.0, 0.0,
+        13.067722, 1.0e-6, 0.0, 0.0, 0.0,
+        43.148131, 0.0, 0.0, 0.0, 0.0,
+    ))
+    work = owner.law.work(
+        np.asarray(fixture["source"]), np.asarray(fixture["target"]),
+        multipliers, tangent=True,
+    )
+    assert work.tie_resolution_relative_error < 1.0e-6
+    assert work.energy_evaluations <= settings.maximum_general_s3_energy_evaluations

@@ -565,6 +565,19 @@ def solve_static_contact_path(
                             multipliers += fraction * delta[len(q):]
                         if failure_reason is not None:
                             if pivot_backup is not None:
+                                rejected_candidate = {}
+                                if (failure_reason == "contact_candidate_evaluation_failed"
+                                        and settings.q4_s3_shared_edge_tie_step_m is not None):
+                                    # Retain the bounded failed development pose
+                                    # before restoring the accepted algorithmic
+                                    # origin. No candidate state is committed.
+                                    candidate_source, candidate_target = manager._positions(u)
+                                    rejected_candidate = {
+                                        "candidate_source_positions_m": candidate_source.tolist(),
+                                        "candidate_target_positions_m": candidate_target.tolist(),
+                                        "candidate_normal_multipliers_pa":
+                                        manager.normal_multipliers.tolist(),
+                                    }
                                 q, multipliers, fallback_pressure, _prior_change, _retained = pivot_backup
                                 manager.set_normal_multipliers(fallback_pressure)
                                 pivot_backup = None
@@ -577,6 +590,7 @@ def solve_static_contact_path(
                                         candidate_evaluation_error}
                                        if failure_reason == "contact_candidate_evaluation_failed"
                                        else {}),
+                                    **rejected_candidate,
                                 })
                                 failure_reason = None
                                 accelerator = (ProjectedAugmentationSecant()
@@ -848,6 +862,16 @@ def solve_static_contact_path(
                                     raise
                                 except (ValueError, MemoryError, np.linalg.LinAlgError) as exc:
                                     augmentation_trace[-1]["schur_ineligible"] = str(exc)
+                                    if (settings.q4_s3_shared_edge_tie_step_m is not None
+                                            and "pressure response derivative disagrees"
+                                            in str(exc)):
+                                        source_pose, target_pose = manager._positions(u)
+                                        augmentation_trace[-1]["schur_ineligible_pose"] = {
+                                            "source_positions_m": source_pose.tolist(),
+                                            "target_positions_m": target_pose.tolist(),
+                                            "normal_multipliers_pa":
+                                            manager.normal_multipliers.tolist(),
+                                        }
                                     schur = None
                                 except Exception as exc:
                                     failure_reason = "contact_supported_schur_linearization_failed"

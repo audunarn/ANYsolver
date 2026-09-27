@@ -115,7 +115,13 @@ def _jet2_integral_gradients(geometry, source, target,
                 or not np.allclose(derivative.reference_weighted_gap,
                                    local.reference_weighted_gap,
                                    rtol=1e-9, atol=0.0)):
-            raise ValueError("pressure response derivative disagrees with mortar geometry")
+            raise ValueError(
+                "pressure response derivative disagrees with mortar geometry "
+                f"(pair={pair_index}, "
+                f"overlap_area_m2={local.overlap_area:.12g}, "
+                f"support_error_m2={np.max(np.abs(derivative.reference_support-local.reference_support)):.12g}, "
+                f"weighted_gap_error_m3={np.max(np.abs(derivative.reference_weighted_gap-local.reference_weighted_gap)):.12g})"
+            )
         columns = np.asarray(
             [3*int(node)+axis for node in source_nodes for axis in range(3)]
             + [3*(source_count+int(node))+axis
@@ -130,6 +136,86 @@ def _jet2_integral_gradients(geometry, source, target,
     return weighted, support
 
 
+def _exact_artificial_seam_gap_gradient(
+        manager, source, target, base, selected, *, check_cancel=None,
+        diagnostics=None):
+    """Bound a centered generalized gap derivative at the opt-in D1 diagonal.
+
+    This is only an algorithmic pressure-response candidate. A coupled proposal
+    must still be re-equilibrated under the ordinary acceptance gates.
+    """
+    law = manager.law
+    tie = getattr(law, "shared_edge_tie", None)
+    if (tie is None or getattr(law.geometry, "differentiation", None)
+            != "jet2_q4_s3"
+            or not law._only_artificial_shared_edge_ties(source, target)):
+        return None
+    step = float(tie[0])
+    if not np.isfinite(step) or step <= 0.0:
+        return None
+    geometry = law.geometry
+    coordinates = np.concatenate((source, target)).reshape(-1)
+    source_count = len(source)
+    count = len(coordinates)
+    pair_count = len(geometry.pair_laws)
+    # Include the caller's exact geometry state and this helper's active-set
+    # reference state as well as both signs at two resolutions.
+    evaluations = (4*count+2)*pair_count
+    if evaluations > manager.settings.maximum_general_s3_energy_evaluations:
+        raise ValueError("exact-seam pressure response geometry budget exceeded")
+    baseline_active = law.evaluate(
+        source, target, manager.normal_multipliers,
+    ).pressure > 0.0
+    center = base.normalized_gap[selected]
+    estimates = []
+    largest_one_sided = 0.0
+    for h in (step, step/2.0):
+        derivative = np.zeros((len(selected), count))
+        for coordinate in range(count):
+            if check_cancel is not None:
+                check_cancel()
+            sides = []
+            for sign in (-1.0, 1.0):
+                shifted = coordinates.copy()
+                shifted[coordinate] += sign*h
+                moved_source = shifted[:3*source_count].reshape(-1, 3)
+                moved_target = shifted[3*source_count:].reshape(-1, 3)
+                candidate = law.evaluate(
+                    moved_source, moved_target, manager.normal_multipliers,
+                )
+                if (np.any(candidate.reference_support[selected] <= 0.0)
+                        or not np.array_equal(candidate.pressure > 0.0,
+                                              baseline_active)):
+                    return None
+                sides.append(candidate.normalized_gap[selected])
+            minus, plus = sides
+            left = (center-minus)/h
+            right = (plus-center)/h
+            largest_one_sided = max(largest_one_sided, float(np.max(
+                np.abs(left-right), initial=0.0,
+            )))
+            derivative[:, coordinate] = 0.5*(left+right)
+        estimates.append(derivative)
+    stability = float(np.max(np.abs(estimates[0]-estimates[1]), initial=0.0))
+    # Both are dimensionless derivatives of a length gap by a length DOF.
+    # The threshold is a development response-accuracy guard; the final
+    # coupled proposal is checked against unchanged dimensional gates.
+    if (not all(np.all(np.isfinite(item)) for item in estimates)
+            or not np.isfinite(largest_one_sided)
+            or max(largest_one_sided, stability) > 1.0e-7):
+        if diagnostics is not None:
+            diagnostics["schur_exact_seam_derivative_failure"] = {
+                "one_sided": largest_one_sided, "step_stability": stability,
+            }
+        return None
+    if diagnostics is not None:
+        diagnostics["schur_exact_seam_generalized_gradient"] = True
+        diagnostics["schur_exact_seam_one_sided_error"] = largest_one_sided
+        diagnostics["schur_exact_seam_step_error"] = stability
+        diagnostics["schur_exact_seam_geometry_evaluations"] = evaluations
+    return estimates[1]
+
+
 def _constrained_gap_response(manager, displacement, tangent, transform,
                               control_rows, selected: np.ndarray,
                               active: np.ndarray, *, difference_step: float,
@@ -141,7 +227,13 @@ def _constrained_gap_response(manager, displacement, tangent, transform,
     geometry = manager.law.geometry
     base = geometry.evaluate(source, target)
     clip_signature = _projected_clip_signature(geometry, source, target)
-    if clip_signature is None:
+    exact_gap_derivative = (
+        _exact_artificial_seam_gap_gradient(
+            manager, source, target, base, selected,
+            check_cancel=check_cancel, diagnostics=diagnostics,
+        ) if clip_signature is None else None
+    )
+    if clip_signature is None and exact_gap_derivative is None:
         return None
     if np.any(base.reference_support[selected] <= 0.0):
         return None
@@ -150,7 +242,9 @@ def _constrained_gap_response(manager, displacement, tangent, transform,
     coordinates = np.concatenate((source, target)).reshape(-1)
     count = len(coordinates)
     pair_count = len(getattr(geometry, "pair_laws", (1,)))
-    if getattr(geometry, "differentiation", "global") in {"jet2_s3", "jet2_q4_s3"}:
+    if exact_gap_derivative is not None:
+        weighted = support = None
+    elif getattr(geometry, "differentiation", "global") in {"jet2_s3", "jet2_q4_s3"}:
         weighted, support = _jet2_integral_gradients(
             geometry, source, target, selected, count,
             manager.settings.maximum_general_s3_energy_evaluations,
@@ -203,16 +297,23 @@ def _constrained_gap_response(manager, displacement, tangent, transform,
                 plus.reference_support[selected]
                 - minus.reference_support[selected]
             )/(2*difference_step)
-    area = base.reference_support[selected, None]
-    selected_gap = base.normalized_gap[selected]
-    gap_derivative = (weighted-selected_gap[:, None]*support)/area
     active_positions = np.searchsorted(selected, active)
     if np.any(selected[active_positions] != active):
         raise ValueError("active pressure mode lacks positive reference support")
-    gap_variation_active = (
-        weighted[active_positions]
-        - selected_gap[active_positions, None]*support[active_positions]
-    )
+    if exact_gap_derivative is not None:
+        gap_derivative = exact_gap_derivative
+        gap_variation_active = (
+            base.reference_support[active, None]
+            * exact_gap_derivative[active_positions]
+        )
+    else:
+        area = base.reference_support[selected, None]
+        selected_gap = base.normalized_gap[selected]
+        gap_derivative = (weighted-selected_gap[:, None]*support)/area
+        gap_variation_active = (
+            weighted[active_positions]
+            - selected_gap[active_positions, None]*support[active_positions]
+        )
     variations = manager.map @ transform
     # Contact residual is -sum_i p_i(dW_i-g_i dS_i); held-multiplier
     # coupling therefore contains the moving-support term.

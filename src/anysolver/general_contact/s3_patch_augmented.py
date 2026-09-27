@@ -141,7 +141,7 @@ class MovingS3PatchProjectedNormal:
         self.shared_edge_tie: tuple[float, np.ndarray, float] | None = None
 
     def set_shared_edge_tie(self, step_m, direction, relative_tolerance):
-        """Opt in to a bounded local limit at an artificial planar S3 seam."""
+        """Opt in to a bounded local limit at the D1 two-face S3 diagonal."""
         self.shared_edge_tie = (float(step_m), np.asarray(direction, dtype=float),
                                 float(relative_tolerance))
 
@@ -239,7 +239,46 @@ class MovingS3PatchProjectedNormal:
 
     def _only_artificial_shared_edge_ties(self, current_source, current_target,
                                           *, failed_pair=None):
-        """Classify every projected boundary touch, including zero-area pairs."""
+        """Admit only a smooth two-S3 reference quad's internal diagonal."""
+        # This development route is tied to the D1 two-face target topology.
+        # A larger S3 mesh needs explicit physical-feature ownership before
+        # its interior edges can share this generalized projection branch.
+        faces = self.target_face_indices
+        if len(faces) != 2 or any(len(face) != 3 for face in faces):
+            return False
+        first_ids, second_ids = (tuple(map(int, face)) for face in faces)
+        shared = sorted(set(first_ids).intersection(second_ids))
+        if (len(shared) != 2
+                or len(set(first_ids).union(second_ids)) != 4):
+            return False
+        first_tip = next(node for node in first_ids if node not in shared)
+        second_tip = next(node for node in second_ids if node not in shared)
+        reference = np.asarray(self.reference_target, dtype=float)
+        first_reference = reference[list(first_ids)]
+        second_reference = reference[list(second_ids)]
+        first_normal = np.cross(first_reference[1]-first_reference[0],
+                                first_reference[2]-first_reference[0])
+        second_normal = np.cross(second_reference[1]-second_reference[0],
+                                 second_reference[2]-second_reference[0])
+        normal_scale = np.linalg.norm(first_normal)*np.linalg.norm(second_normal)
+        if (normal_scale <= 0.0 or np.dot(first_normal, second_normal)
+                < (1.0-1.0e-10)*normal_scale):
+            return False
+        quad = reference[[first_tip, shared[0], second_tip, shared[1]]]
+        edge_scale = max(np.linalg.norm(quad[(index+1) % 4]-quad[index])
+                         for index in range(4))
+        if (abs(float((second_reference[0]-first_reference[0]) @ first_normal))
+                > 1.0e-10*edge_scale*np.linalg.norm(first_normal)):
+            return False
+        turns = np.asarray([
+            float(first_normal @ np.cross(
+                quad[(index+1) % 4]-quad[index],
+                quad[(index+2) % 4]-quad[(index+1) % 4],
+            )) for index in range(4)
+        ])
+        turn_floor = 1.0e-10*edge_scale*edge_scale*np.linalg.norm(first_normal)
+        if not (np.all(turns > turn_floor) or np.all(turns < -turn_floor)):
+            return False
         source = np.asarray(current_source, dtype=float)
         target = np.asarray(current_target, dtype=float)
         direction = self.shared_edge_tie[1]
@@ -396,8 +435,12 @@ class MovingS3PatchProjectedNormal:
             action = np.concatenate((trial_direction.reshape(-1),
                                      np.zeros(3*len(self.target_node_ids))))
             if np.all(np.isin(np.flatnonzero(action), active)):
-                centered = (observations[1][1].residual
-                            - observations[1][0].residual)/step
+                # Use the already verified outer ±step residual pair for this
+                # directional quotient. At nanometre offsets the inner pair's
+                # subtraction can amplify roundoff even as the tangent limit
+                # itself remains stable; the tolerance is unchanged.
+                centered = (observations[0][1].residual
+                            - observations[0][0].residual)/(2.0*step)
                 differentiated = tangent_matrix @ action
                 if relative_difference(centered[active],
                                        differentiated[active]) > tolerance:

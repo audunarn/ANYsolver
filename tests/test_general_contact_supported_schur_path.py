@@ -108,7 +108,7 @@ def test_projection_branch_declines_schur_and_preserves_static_failure():
     np.testing.assert_array_equal(result.displacements, 0.0)
 
 
-def test_projected_active_set_re_equilibrates_without_committing_failed_step(projected_only):
+def test_projected_active_set_re_equilibrates_before_committing_step(projected_only):
     model, definition, settings, program = _case()
     program = replace(program, controls=(
         program.controls[0], ContactPathControl.node(6, "uz"),
@@ -126,19 +126,19 @@ def test_projected_active_set_re_equilibrates_without_committing_failed_step(pro
         contact_path_program=program, max_iterations=12,
         emit_restart_checkpoint=True,
     )
-    assert result.status == "diverged"
-    assert result.failure_reason == "maximum_augmentations_reached"
-    failure = result.info["contact_failure"]
-    trace = failure["augmentation_trace"]
+    assert result.status == "completed"
+    assert result.failure_reason is None
+    assert len(result.steps) == 1
+    assert result.restart_checkpoint is not None
+    record = result.info["force_displacement_history"][0]
+    trace = record["augmentation_trace"]
     assert trace[1]["schur_proposal_kind"] == "projected_active_set"
     assert trace[1]["schur_predicted_residual_pa"] < 0.75*trace[1]["pressure_change"]
     assert trace[2]["schur_verified"] is True
     assert trace[2]["pressure_change"] < 0.75*trace[1]["pressure_change"]
-    assert failure["schur_applied"] == 1
-    assert trace[-1]["pressure_change"] > settings.pressure_tolerance
-    assert result.steps == []
-    assert result.restart_checkpoint is None
-    np.testing.assert_array_equal(result.displacements, 0.0)
+    assert record["schur_applied"] > 0
+    assert trace[-1]["pressure_change"] <= settings.pressure_tolerance
+    assert record["contact"]["gap_tolerance_met"]
 
 
 def test_two_bounded_projected_schur_updates_accept_node6_fixture(projected_only):
