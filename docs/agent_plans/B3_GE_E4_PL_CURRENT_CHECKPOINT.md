@@ -11,24 +11,25 @@ The split-solid torque/opening fields show sampled overlap; the separate
 reverse-Fz opening field has positive same-XY samples on 120 available
 faces but lacks seam data and continuous separation. B2 physical-section
 checks pass at sampled points; fail-closed F09 admission remains unfinished.
-A new material-line proof detects the even-slip mode and passes bounded
-position/Jacobian checks. Its value-only orientation probe is objective,
-non-drilling, and preserves the tested shear mode. Its reference orientation
-Jacobian passes Q4/S3 reference and nonzero-gap chart differences;
-explicit mixed position and orientation second variations pass bounded
-checks. Six-mode reference interface work balances; independent physical
-wrench recovery and coupled transfer remain open.
+A bonded material-line candidate detects the even-slip mode and passes
+bounded Q4/S3 six-channel first/second variations and six-mode reference
+work. Its provisional Q4 loaded KKT and the reduced strip-pose comparator
+both have rank six, small equilibrium/work errors, and balanced support
+wrenches on the same primal model. The validated material-line response
+differs by 3.99% in tip twist under torque and 0.72% in tip vertical motion
+under shear; neither difference establishes physical fidelity. B2 F09
+fail-closed admission remains unfinished.
 **Remaining uncertainty:** Allocate torque/shear differences among the
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
-**Next discriminator:** On the same bounded E4/native-B3 primal fixture,
-assemble a provisional six-channel exact material-line KKT and compare
-torque/shear work and physical response with the reduced strip-pose law.
-Failure in rank, work or physical transfer revises the line law before
-space growth; a clean bounded result advances the required growing-space
-assessment and a physically matched external torque/shear reference. P0
-in this screen is provisional, not a selected multiplier. Advance B2 F09
-and independent foundations without repeating axial/opening sweeps.
+**Next discriminator:** Grow the material-line interface rows on fixed
+physical Q4/S3 torque/shear models to distinguish a coarse P0 resolution
+effect from continuous-law transfer, checking work, unsupported modes,
+locking and mixed-system norms together. A failed growing-space check
+revises the enforcement/trace; a stable result advances the registered
+mesh-ratio series and a physically matched external torque/shear reference.
+P0 in the loaded screen was provisional, not a selected multiplier.
+Advance B2 F09 and independent foundations without axial/opening sweeps.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 ## Detailed reference state and saved-field decision — 27 September 2026
@@ -301,6 +302,40 @@ valid for this interface action check. Because both actions arise from
 the same Jacobian transpose, this does not independently reconstruct
 physical nodal wrenches, verify finite-state or loaded support reactions,
 or qualify torque/shear fidelity and multiplier stability.
+
+**Same-primal loaded line discriminator (27 September):**
+`scripts/b3_e4_f03_material_line_loaded.py` assembles one Q4 E4 35 mm
+panel (143 nodes) and one 12-half-cell retained generalized B3 at the
+same C1 67.5 mm axis. Both six-row laws use the same primal tangent,
+left-edge/root supports, +100 Nm tip torque, +1000 N tip vertical force,
+and diagonal congruence scaling. The new line rows are the 0.1 m
+quadrature means of its continuous six-channel derivatives; the comparator
+uses the existing reduced strip-pose rows. Both provisional P0 systems
+have rank six, free residual ratios below `4.2e-12`, weak gaps below
+`1.2e-19`, relative work errors below `2.4e-12`, and support force/moment
+balances below `2.0e-9` in their respective units. The material-line tip
+twist under torque is `5.1521065e-5 rad` versus `4.9546099e-5 rad`
+(+3.99%); tip vertical displacement under shear is `7.1167958e-5 m`
+versus `7.0658829e-5 m` (+0.72%). Its nonzero continuous station RMS
+gaps show that one global mean does not enforce a pointwise bond.
+Independent review found no blocking assembly/sign defect, but no
+physical-fidelity conclusion follows.
+
+The initial raw [V1 loaded output](B3_E4_F03_MATERIAL_LINE_LOADED_P0_V1.json)
+imported ANYsolver from the main checkout, so it is retained as
+**provenance-invalid**. The corrected runner fails closed on a mismatched
+import. The [V2 raw output](B3_E4_F03_MATERIAL_LINE_LOADED_P0_V2.json)
+uses integration source `f258ea3a`, imports this worktree's `src/anysolver`,
+and records Python 3.14.2, NumPy 2.4.6, SciPy 1.17.1 and single-thread/JIT
+settings. The command was `C:\Python\Python314\python.exe -m
+scripts.b3_e4_f03_material_line_loaded` with `PYTHONPATH` set to this
+worktree's `src`, `NUMBA_DISABLE_JIT=1`, and OpenBLAS/OMP/MKL threads set
+to one. V2 SHA-256 is
+`3285C80C37F94E8B8315F30B492509C723C61A3D80DDB02CC7C10C99225145CE`.
+The two numerical result payloads happen to match exactly; V1 does not
+inherit V2's valid source identity. The worktree-bound material-line suite
+passes `15/15`. This remains Level-A development evidence; F03/G0B and
+G1 status are unchanged.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8
