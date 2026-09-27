@@ -167,6 +167,34 @@ the admitted continuous section range or F09/G0B acceptance. Next design
 the physical-range representability and fail-closed graph admission screen,
 with the retained weak-graph counterexample as a negative control.
 
+**Next F09 local-versus-graph bound (27 September):** The sampled physical
+elbows pass and the retained `2^-40` graph is rejected by per-load balance,
+but that does not allocate error to local operator storage or global
+assembly. For the same three physical sections and the retained weak
+generalized section, calculate an exact-rational, diagonally scaled
+operator perturbation bound using `F=K_basic^-1` and the actually rounded
+binary64 `K_basic`. Compare the dimensionless response bound with the
+existing `1e-8` development diagnostic. If the weak case already fails
+locally, investigate a local admission rule; if it passes locally while the
+graph fails, keep local and graph screens distinct. Do not replace the
+provisional pivot guard or infer a continuous section range from four
+samples.
+
+**F09 local-versus-graph result (27 September):** The exact-rational
+identity `K_basic F=I` and the rounded binary64 `K_basic` were checked in
+the same six-basic, power-of-two-scaled coordinates. With
+`eta=||A^-1||_inf ||A_rounded-A||_inf`, the rigorous local inverse-response
+bound `eta/(1-eta)` is at most `2.702e-15` across the six physical
+rectangle/length samples and `1.802e-12` for the retained `2^-40`
+generalized section. All are below the `1e-8` development discriminator;
+the affected F09 file passes `19/19`. The previously retained weak elbow
+still fails the private batch's per-load physical-balance check, so its
+failure cannot be attributed to storage of one local basic operator.
+Global assembly, factorization/state representation and load-specific
+balance need their separate fail-closed screen. These finite samples do
+not define a continuous section envelope or accept F09/G0B; the private
+`1e-12` pivot guard remains unchanged.
+
 **F13 residual-admission decision (27 September):** The private B2 batch's
 fast residual route treats `eps * row_scale <= 1e-9 * physical_scale` as
 sufficient to trust a rounded sparse dot. That ignores row length and how

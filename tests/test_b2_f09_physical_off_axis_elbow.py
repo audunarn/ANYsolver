@@ -17,7 +17,9 @@ PROBE = runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts"
                            / "probe_b3_ge_e4_pl_g0_f09_graph_reversal.py"))
 
 from anysolver._b2_physical_linear_batch_dev import CompiledB2AffineBatch
-from anysolver._b2_physical_flexibility_linear import LinearOperator, LinearSection
+from anysolver._b2_physical_flexibility_linear import (
+    LinearOperator, LinearSection, _flexibility,
+)
 
 
 def _physical_section(width=.040, depth=.012):
@@ -84,6 +86,47 @@ def test_physical_basic_actions_survive_binary64_storage(width, depth, length):
         assert exact_work > 0. and rounded_work > 0.
         assert applied_scale_error < 1e-8
         assert abs(rounded_work-exact_work)/exact_work < 1e-8
+
+
+def _basic_rounding_response_bound(operator):
+    """Exact norm bound for the inverse response of a rounded basic law."""
+    exact_k = operator._basic_inverse
+    exact_f = _flexibility(operator.length, operator._compliance)
+    assert all(sum(exact_k[i][j]*exact_f[j][k] for j in range(6))
+               == int(i == k) for i in range(6) for k in range(6))
+    # Exact powers of two normalize the declared SI coordinate magnitudes
+    # without introducing a second rounding in this bound.
+    scales = [Fraction(2)**(-round(math.log2(float(exact_k[i][i]))/2))
+              for i in range(6)]
+    inverse_norm = max(sum(abs(exact_f[i][j]/(scales[i]*scales[j]))
+                           for j in range(6)) for i in range(6))
+    perturbation_norm = max(sum(abs(scales[i]*scales[j]*(
+        Fraction(float(exact_k[i][j]))-exact_k[i][j]))
+                                for j in range(6)) for i in range(6))
+    return inverse_norm*perturbation_norm
+
+
+@pytest.mark.parametrize("width,depth", ((.08, .04), (.04, .012), (.012, .003)))
+@pytest.mark.parametrize("length", (2., 1.5))
+def test_physical_basic_rounding_inverse_response_bound(width, depth, length):
+    stiffness, _ = _physical_section(width, depth)
+    operator = LinearOperator(length, LinearSection.generalized(stiffness))
+    eta = _basic_rounding_response_bound(operator)
+    assert 0 < eta < 1
+    assert eta/(1-eta) < Fraction(1, 10**8)
+
+
+def test_weak_generalized_basic_rounding_inverse_response_bound():
+    stiffness = np.diag([12., 2.**-40, 2.**-39, 4., 3., 5.])
+    stiffness[0, 4] = stiffness[4, 0] = .5
+    stiffness[1, 2] = stiffness[2, 1] = 2.**-42
+    stiffness[3, 5] = stiffness[5, 3] = .25
+    operator = LinearOperator(2., LinearSection.generalized(stiffness))
+    eta = _basic_rounding_response_bound(operator)
+    # This local rounded law is certifiable even though the existing
+    # two-member binary64 graph fails the per-load physical balance screen.
+    assert 0 < eta < 1
+    assert eta/(1-eta) < Fraction(1, 10**8)
 
 
 def _cut_work(members, tip, compliance):
