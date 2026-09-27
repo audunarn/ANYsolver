@@ -103,3 +103,37 @@ active counts and pressure ranks; the original full-cycle summary did
 not retain full pressure vectors or feature identities, so exact vector
 identity is not established by this development comparison. Independent
 response qualification and installed free-target verification remain open.
+
+The next mechanics question was whether the mixed source/target tangent
+previously checked at an admissible but unequilibrated pose also agrees
+at an actual free-target equilibrium. A separately saved [three-step
+press pose](../../reports/general_contact_d1_free_target_8q4_press_pose_dev_20260927.json)
+(SHA256 `05b2fce85013d6db44b2db9235687993f55247757f3c5425d1371da9a6d213a2`)
+reproduced the earlier press mechanics and retained final displacement
+and pressure vectors. Its replay has zero constraint and pressure-state
+error, one active mode and 46 reduced structural coordinates.
+
+The first [mixed tangent development run](../../reports/general_contact_d1_free_target_8q4_equilibrium_tangent_dev_20260927.json)
+(SHA256 `22f27dd499c94ed0180f152becd22277e324f5ea1c4f76112e9f37930678b3f5`)
+is retained as **inconclusive**: a second-order negative one-sided
+8e-7 m stencil changed the active pressure branch and produced 0.232
+relative mapped-contact error. Its 4e-7 m stencil kept active/support,
+overlap and projection branches and had 9.59e-12 mapped-contact error.
+The follow-up [4e-7/2e-7 m development comparison](../../reports/general_contact_d1_free_target_8q4_equilibrium_tangent_smaller_dev_20260927.json)
+(SHA256 `4fb996763ad472e4e3ca810cab5c3075104c127da4eaf87f91ac416d001926b5`)
+kept all 16 pair branches at both steps. Across 40 reduced force and six
+moment rows, the largest isolated mapped-contact force and moment errors
+were 9.59e-12 and 1.10e-10, with nontrivial actions of about 108 N/m
+and 5.99e-5 Nm/m. This supports the selected smooth branch at the
+equilibrated pose; the first crossed-branch result remains failed
+development evidence. Neither run is a registered, independently reviewed
+complete-tangent gate.
+
+Independent read-only scrutiny found no stencil or structural-subtraction
+flaw in this bounded probe. It confirmed the actual equilibrium residual,
+second-order backward stencil, both free target and source directions,
+40/6 force/moment split and branch checks. The reviewed claim is limited
+to the selected fixed-multiplier elastic smooth direction: element states
+are rebuilt from fresh elastic initial states, and multiplier-update,
+other directions, nonsmooth crossing and complete C1 qualification were
+not checked.

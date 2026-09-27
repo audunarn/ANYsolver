@@ -67,6 +67,8 @@ def main(output_path: Path, *, columns: int,
             "failure_reason": result.failure_reason,
             "accepted_steps": len(result.steps),
             "has_checkpoint": result.restart_checkpoint is not None,
+            "final_displacements": result.displacements.tolist(),
+            "final_contact": result.info.get("general_contact"),
             "history": [{
                 "step": int(row["step_index"]),
                 "normal_force_n": float(row["contact"][
