@@ -245,6 +245,33 @@ is retained and routed to the responsible layer; six passes give sampled
 physical-range evidence only, not continuous admission or F09/G0B
 acceptance. Keep the existing physical-balance and oracle criteria.
 
+**B2 physical homothety outcome:** The six predeclared cases (three
+`λ` values and the second-member reversal) completed as a private
+development diagnostic in `1.480 s`, peak `91.7 MB`, with one numerical
+thread. An independent source/result audit found all nine recorded source
+hashes current and all six cases passed. The maximum sparse ordinary
+force/moment balance ratios are `1.144e-10/3.134e-13` against the existing
+`1e-9` limit; the largest sparse physical-work relative error is
+`1.301e-11`. At `λ=2^-10`, the ordinary stored state and retained `(D,z)`
+factored state both satisfy the physical balance, as does the high-
+precision rounded-matrix reference; no correction was needed and each
+batch had one factorization. Thus the artificial generalized `2^-40`
+failure does not transfer merely from its bending-stiffness exponent to
+this coherent, load-scaled physical rectangle family. It establishes no
+continuous admission range or full F09/G0B acceptance. Retain the weak
+generalized-graph failure as a separate negative.
+
+The immutable raw result is
+`B3_GE_E4_PL_G0_F09_PHYSICAL_HOMOTHETY_STATE_DEV_V1.json` from source
+HEAD `b0b065ae`; the successful command was
+`C:\Python\Python314\python.exe -B -u scripts/b2_f09_physical_homothety_state_dev.py`
+in this worktree, exit `0`. Two earlier launch attempts produced no raw
+result (a sandbox output-write rejection after computation and an approved
+shell selecting Python without NumPy); they are execution failures, not
+numerical failures. Next F09 work must define a reviewed prospective
+physical-section envelope and a fail-closed graph/state rule; do not hunt
+an arbitrary smaller exponent or infer qualification from these samples.
+
 **Continuous-law gauge discriminator (prospective, 27 September):** The
 top-face candidate's raw force/first-moment work is an affine surface
 traction `t=[F+M×(x−.95,y,0)]/W`. The suspected distinction is whether
@@ -263,7 +290,7 @@ action is not zero, revisit the raw-row algebra before any norm study.
 The bounded analytic test changes no registered criterion or authority.
 
 **Continuous-law gauge result and action:** The source algebra and an
-independent eight-test analytic fixture confirm an exact continuum gauge.
+independent nine-test analytic fixture confirm an exact continuum gauge.
 For `s=x−.95` and a flat width coordinate `y`, the declared raw work has
 `t=[F+M×(s,y,0)]/W`, hence `t_z=(Fz−s*My+Mx*y)/W`. The nonzero coefficient
 field `Fz=s*μ(x), My=μ(x)` gives zero traction and zero virtual work for
@@ -272,11 +299,15 @@ not six. A midpoint P0 representation of this field has squared traction
 and supported linear-gap work proportional to `h²`; the independent
 quadrature agrees with the exact formulas for 2/4/8/16 intervals. The
 saved x16/B3-24 P0-eight weak-mode coefficients follow the gauge:
-`corr(Fz,s*My)=0.999950/0.999952` under the inherited/L2 metrics, and only
+uncentered cosine `cos(Fz,s*My)=0.999950/0.999952` under the inherited/L2
+metrics, and only
 `1.300/1.295%` of their vertical traction-square decomposition comes
 from the interval-centre mismatch; the rest is the unavoidable within-cell
-variation of `s`. The P0-four values are `0.999578/0.999680` correlation.
+variation of `s`. The P0-four cosine values are `0.999578/0.999680`.
 These are source-bound mode postprocesses, not a stability constant.
+An independent idealized transverse-strip action with a *separate*
+director-pitch couple has rank six at each station; that distinguishes a
+possible two-sided law algebraically without qualifying its physical use.
 
 The previous finite-dimensional Gram and eigen calculations remain
 arithmetically valid, but the conclusion that their small mode was chiefly

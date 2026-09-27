@@ -52,6 +52,26 @@ def test_local_traction_action_has_exactly_five_independent_fields(x):
     np.testing.assert_allclose(map_rows@gauge, 0.0, rtol=0.0, atol=2e-15)
 
 
+def test_independent_director_pitch_couple_lifts_positional_gauge():
+    """A two-sided pitch law is algebraically distinct from surface traction."""
+    columns = np.eye(6)
+    rows = []
+    for y in (-WIDTH_M/2, 0.0, WIDTH_M/2):
+        rows.append(np.column_stack([
+            np.array((column[0]-column[5]*y,
+                      column[1], column[2]+column[3]*y))/WIDTH_M
+            for column in columns
+        ]))
+    rows.append(np.array(((0., 0., 0., 0., 1., 0.),)))
+    action = np.vstack(rows)
+    singular = np.linalg.svd(action, compute_uv=False)
+    assert singular[-1] > 1e-12*singular[0]
+    # The sixth independent action is a declared director-couple coordinate,
+    # not a second way to name a top-face positional traction. Algebraic
+    # rank does not qualify the physical connection.
+    assert np.linalg.norm(action@np.array((0., 0., 0., 0., 1., 0.))) == 1.0
+
+
 @pytest.mark.parametrize("intervals", (2, 4, 8, 16))
 def test_midpoint_p0_approximation_of_gauge_has_exact_h_squared_work(intervals):
     length = HIGH_M-LOW_M
