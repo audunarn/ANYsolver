@@ -2359,6 +2359,34 @@ coherent scalar-section range on the same elbow graph, but does not
 establish generalized SPD admission, all attachments, resource scale, or
 a production sparse solver policy. F09/G0B remain open.
 
+**Next bounded F09 coherent-coupling discriminator:** The same elbow has
+passed a physically coherent scalar circular-section range, while the
+existing generalized-section graph and reversal cases use moderate
+dimensionless coefficients. Keep the three circular radii, graph, supports
+and mixed force/moment loading, but introduce a non-diagonal SPD sectional
+correlation with the correct force/moment dimensions. Compare the
+diagonal-scaled sparse solve with the exact rounded assembled system and
+the independent cut-wrench compliance work, including explicit member
+reversal and section-axis transformation. Agreement supports the coupled
+section representation over this bounded physical range; failure
+identifies a scaling, frame or assembly defect before admission. Do not
+infer attachment, full conditioning-envelope or F09/G0B acceptance.
+
+**F09 coherent generalized-range result:** The two-member elbow now uses
+non-diagonal SPD sectional stiffness formed from each physical circular
+section's `EA`, `GA`, `GJ` and `EI` scales, with explicit dimensionally
+consistent cross-couplings. Across radii `0.005/0.02/0.08 m`, two fixed
+mixed force/moment signs, and a reversed second member with its section
+axes transformed, the graph matrices and independent cut-wrench work agree
+within the focused `1e-9` relative checks. Positive-diagonal-scaled sparse
+solutions agree with rational exact solves of the rounded 12-free-row
+matrices; force and moment residuals pass separate applied-scale checks.
+The focused F09 file passes `11/11`. This extends the coherent scalar range
+to coupled generalized sections on one elbow graph. It does not establish
+attachment accuracy, a production sparse conditioning policy, large graph
+scale or F09/G0B admission. The physical connection choice and G1 bar are
+unchanged.
+
 **Next bounded F09 equivalent-unit discriminator:** The coherent elbow
 supports one SI scalar-section range; the generalized operator's coupled
 force/moment representation still needs an explicit unit-covariance check.

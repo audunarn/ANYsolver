@@ -83,3 +83,67 @@ def test_physical_circular_section_elbow_scaled_sparse_work(radius_m):
     residual = matrix@complete-load
     assert np.max(np.abs(residual[free].reshape(2, 6)[:, :3])) <= 1e-9*max(abs(v) for v in tip[:3])
     assert np.max(np.abs(residual[free].reshape(2, 6)[:, 3:])) <= 1e-9*max(abs(v) for v in tip[3:])
+
+
+@pytest.mark.parametrize("radius_m", (.005, .02, .08))
+@pytest.mark.parametrize("tip", (
+    (.1, -.08, .06, .01, -.012, .008),
+    (-.03, .05, -.07, -.004, .006, -.009)))
+def test_coherent_generalized_coupling_preserves_scaled_graph_and_cut_work(
+        radius_m, tip):
+    area = math.pi*radius_m**2
+    inertia = math.pi*radius_m**4/4
+    scalar = LinearSection.isotropic(
+        E=210e9, nu=.3, area=area, Iy=inertia, Iz=inertia,
+        J=2*inertia, ky=.9, kz=.9)
+    diagonal = np.diag(np.asarray(scalar.stiffness))
+    root = np.diag(np.sqrt(diagonal))
+    correlation = np.eye(6)
+    for i, j, value in ((0, 4, .12), (1, 5, -.08),
+                        (2, 3, .06), (4, 5, .04)):
+        correlation[i, j] = correlation[j, i] = value
+    assert np.linalg.eigvalsh(correlation)[0] > .7
+    sectional = root@correlation@root
+    forward_section = LinearSection.generalized(sectional)
+    forward = tuple(replace(member, section_id="coherent-coupled",
+                            section=forward_section)
+                    for member in PROBE["members"]())
+    reversed_original = PROBE["members"](True)
+    axis_reversal = np.diag([-1., 1., -1., -1., 1., -1.])
+    reverse = (
+        replace(reversed_original[0], section_id="coherent-coupled",
+                section=forward_section),
+        replace(reversed_original[1], section_id="coherent-coupled-reversed",
+                section=LinearSection.generalized(
+                    axis_reversal@sectional@axis_reversal)))
+    matrices = [PROBE["assemble"](members)
+                for members in (forward, reverse)]
+    matrix_error = np.linalg.norm((matrices[0]-matrices[1]).toarray()) / np.linalg.norm(matrices[0].toarray())
+    assert matrix_error <= 1e-10
+
+    free = np.arange(6, 18)
+    load = np.zeros(18)
+    load[12:] = tip
+    references = [PROBE["physical_work"](members, tip)
+                  for members in (forward, reverse)]
+    assert references[0] > 0.
+    assert abs(references[0]-references[1])/references[0] <= 1e-9
+    for matrix, reference in zip(matrices, references):
+        reduced = matrix[free, :][:, free].tocsc()
+        rhs = load[free]
+        pivot = reduced.diagonal()
+        assert np.isfinite(pivot).all() and np.all(pivot > 0.)
+        scale = 1/np.sqrt(pivot)
+        scaled = diags(scale)@reduced@diags(scale)
+        solution = scale*splu(scaled.tocsc()).solve(scale*rhs)
+        exact = np.asarray(PROBE["exact_solve"](
+            reduced.toarray(), rhs), dtype=float)
+        assert np.linalg.norm(solution-exact)/np.linalg.norm(exact) <= 1e-9
+        complete = np.zeros(18)
+        complete[free] = solution
+        work = .5*float(load@complete)
+        assert abs(work-reference)/reference <= 1e-9
+        residual = matrix@complete-load
+        rows = residual[free].reshape(2, 6)
+        assert np.max(np.abs(rows[:, :3])) <= 1e-9*max(abs(v) for v in tip[:3])
+        assert np.max(np.abs(rows[:, 3:])) <= 1e-9*max(abs(v) for v in tip[3:])
