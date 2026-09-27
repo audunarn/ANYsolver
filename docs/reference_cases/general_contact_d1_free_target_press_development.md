@@ -37,3 +37,14 @@ path resolution: use six rather than three force increments with the same
 full load, geometry, seven-augmentation limit and pressure/gap criteria.
 If activation still fails, inspect the coupled active-pressure response
 instead of automatically increasing budgets.
+
+The [six-increment run](../../reports/general_contact_d1_free_target_8q4_press_6steps_dev_20260927.json)
+(SHA256 `9ae4d8eae8e9c74e88f3319e98531fba30a2c326a085aac313f7936ebf2ef7f1`)
+accepted two opening steps and stopped at first contact (step 3). Its
+final pressure change was 2.521e−5 Pa, still above 1e−5 Pa; gap was
+−0.0371 µm, pressure rank 18/18, two active modes and both Schur proposals
+were rejected. Halving the load increment did not remove the convergence
+failure. The next investigation should compare the **predicted equilibrated
+gap response** with a genuinely re-equilibrated small pressure perturbation
+on this specific two-mode branch. This distinguishes a response-map error
+from large-step nonlinearity or the safeguard's 25% merit requirement.

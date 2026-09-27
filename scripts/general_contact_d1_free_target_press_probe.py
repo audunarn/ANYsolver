@@ -15,16 +15,18 @@ from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import (
 
 
 def main(output_path: Path, *, columns: int,
-         relinearizations: int = 0) -> None:
+         relinearizations: int = 0,
+         steps_per_segment: int = 3) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
     report = {"candidate": "free_target_left_clamped_press_dev",
               "columns": columns, "target_support": "left_edge_clamped",
-              "maximum_schur_relinearizations": relinearizations}
+              "maximum_schur_relinearizations": relinearizations,
+              "steps_per_segment": steps_per_segment}
     try:
         model, definition, settings, program = build_case(
-            columns, four_phase=False, steps_per_segment=3,
+            columns, four_phase=False, steps_per_segment=steps_per_segment,
             load_profile="distributed", total_force_n=0.3,
             target_right_x_m=1.3)
         settings = replace(settings,
@@ -86,6 +88,9 @@ if __name__ == "__main__":
     parser.add_argument("--columns", type=int, choices=(8, 16, 24), default=8)
     parser.add_argument("--relinearizations", type=int, choices=(0, 1),
                         default=0)
+    parser.add_argument("--steps-per-segment", type=int, choices=(3, 6),
+                        default=3)
     args = parser.parse_args()
     main(args.output, columns=args.columns,
-         relinearizations=args.relinearizations)
+         relinearizations=args.relinearizations,
+         steps_per_segment=args.steps_per_segment)
