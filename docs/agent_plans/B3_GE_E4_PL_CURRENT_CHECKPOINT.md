@@ -4,15 +4,17 @@
 
 **Decision sought:** Select the physical native beam–shell connection before
 G1. **Established:** C1 is a reduced rotational-weld candidate distinct from
-the F5 top-face positional bond; its loaded work closes, but neither its
-physical transfer nor a growing-space multiplier choice is accepted. Native
-B3 local extraction and independent B2 mass, affine batch, recovery and
-constant-axial prestress foundations have advanced. **Uncertainty:** Which
-joint law is intended, and whether its matched torque/shear transfer and
-interface stability pass. **Next action:** Keep the pending physical-joint
-choice open; then test that law against a matched reference and growing
-interface spaces. Continue independent foundations meanwhile. **Gate:** G0B
-open, G1 barred; formal F03 authority unconsumed.
+the F5 top-face positional bond. Its x16/m8→m16 torque response changes
+1.2–2.5% while work closes; an independently reviewed x16/m16 check finds
+all rows algebraically represented by the shell. This is not stability or
+physical-transfer acceptance. The private B2 batch now rejects callback
+mutation of future loads; B2 mass, recovery and prestress foundations have
+also advanced. **Uncertainty:** The intended rotational connection and its
+matched torque/shear transfer, integration accuracy and growing-space
+stability. **Next action:** Review the C1 physical work law against a matching
+reference before another mesh refinement or multiplier choice; continue
+independent G0 foundations. **Gate:** G0B open, G1 barred; formal F03
+authority unconsumed.
 
 **Bounded F09 physical-section decision (27 September):** The prior
 `2^-20`/`2^-40` weak-shear graph brackets a numerical issue in an artificial
