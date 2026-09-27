@@ -9,6 +9,7 @@ reduced mass.  It does not qualify the broader C6 impact capability.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Mapping
 
 import numpy as np
 from scipy import sparse
@@ -20,6 +21,9 @@ from anysolver.dynamics import TransientConfig
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.nonlinear_state import commit_state_candidate, discard_active_state_candidate
+from anysolver.nonlinear_restart import (
+    analysis_configuration_fingerprint, model_configuration_fingerprint,
+)
 from anysolver.nonlinear_static import _assemble_nonlinear_system
 
 from .core import (
@@ -33,6 +37,7 @@ from .core import (
 
 
 _PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V1"
+_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
 
 
 @dataclass(frozen=True)
@@ -131,6 +136,88 @@ class TransientContactResults:
     equilibrium_residuals: np.ndarray
     cutbacks: int
     newton_iterations: tuple[int, ...]
+    restart_checkpoint: dict | None = None
+
+
+def _restart_analysis_contract(transient, controls, manager) -> dict:
+    # The requested end time is a continuation target, not a definition of
+    # the already accepted state. All other integration inputs are bound.
+    return {
+        "profile": _PROFILE,
+        "dt": float(transient.dt),
+        "beta": float(transient.beta),
+        "gamma": float(transient.gamma),
+        "save_every": int(transient.save_every),
+        "initial_displacement": (
+            None if transient.initial_displacement is None
+            else np.asarray(transient.initial_displacement).tolist()
+        ),
+        "initial_velocity": np.asarray(transient.initial_velocity).tolist(),
+        "controls": {
+            "maximum_newton_iterations": controls.maximum_newton_iterations,
+            "maximum_cutbacks": controls.maximum_cutbacks,
+            "minimum_dt": controls.minimum_dt,
+            "equilibrium_tolerance": controls.equilibrium_tolerance,
+        },
+        "contact": manager.restart_contract(),
+    }
+
+
+def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
+                            current_time, q, velocity, acceleration,
+                            accepted_steps) -> dict:
+    payload = {
+        "schema": _RESTART_SCHEMA,
+        "version": 1,
+        "model_fingerprint": model_fingerprint,
+        "analysis_fingerprint": analysis_fingerprint,
+        "state": {
+            "time": float(current_time),
+            "q": np.asarray(q).tolist(),
+            "velocity": np.asarray(velocity).tolist(),
+            "acceleration": np.asarray(acceleration).tolist(),
+            "accepted_steps": int(accepted_steps),
+        },
+    }
+    payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
+    return payload
+
+
+def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
+                             reduced_size, t_end):
+    if not isinstance(value, Mapping) or set(value) != {
+        "schema", "version", "model_fingerprint", "analysis_fingerprint",
+        "state", "checkpoint_sha256",
+    }:
+        raise ValueError("transient contact checkpoint schema is incompatible")
+    payload = dict(value)
+    signature = payload.pop("checkpoint_sha256")
+    if (type(signature) is not str
+            or signature != analysis_configuration_fingerprint(payload)):
+        raise ValueError("transient contact checkpoint integrity mismatch")
+    if payload["schema"] != _RESTART_SCHEMA or payload["version"] != 1:
+        raise ValueError("transient contact checkpoint version is incompatible")
+    if payload["model_fingerprint"] != model_fingerprint:
+        raise ValueError("transient contact checkpoint model is incompatible")
+    if payload["analysis_fingerprint"] != analysis_fingerprint:
+        raise ValueError("transient contact checkpoint analysis is incompatible")
+    state = payload["state"]
+    if not isinstance(state, Mapping) or set(state) != {
+        "time", "q", "velocity", "acceleration", "accepted_steps",
+    }:
+        raise ValueError("transient contact checkpoint state is malformed")
+    time = float(state["time"])
+    steps = state["accepted_steps"]
+    if (not np.isfinite(time) or time <= 0.0 or time >= t_end
+            or type(steps) is not int or steps < 1):
+        raise ValueError("transient contact checkpoint time or step is invalid")
+    arrays = []
+    for name in ("q", "velocity", "acceleration"):
+        array = np.asarray(state[name], dtype=float)
+        if array.shape != (reduced_size,) or not np.all(np.isfinite(array)):
+            raise ValueError(f"transient contact checkpoint {name} is invalid")
+        arrays.append(array.copy())
+    return time, steps, *arrays
 
 
 def _minimum_hermite_gap(
@@ -200,6 +287,8 @@ def solve_transient_contact(
     *,
     contact_settings: ContactSolverSettings | None = None,
     solver_controls: ContactTransientSolverControls | None = None,
+    restart_checkpoint: Mapping | None = None,
+    emit_restart_checkpoint: bool = False,
 ) -> TransientContactResults:
     """Solve elastic Q4 impact against a fixed plane with implicit Newmark.
 
@@ -210,6 +299,10 @@ def solve_transient_contact(
     """
 
     transient, controls = _resolve_transient_inputs(transient, solver_controls)
+    if (restart_checkpoint is not None or emit_restart_checkpoint) and transient.save_every != 1:
+        raise ValueError("transient contact development restart requires save_every=1")
+    if emit_restart_checkpoint and transient.t_end <= 0.0:
+        raise ValueError("transient contact checkpoint needs one accepted time step")
     settings = ContactSolverSettings() if contact_settings is None else contact_settings
     _admit(model, definition, settings)
     model.apply_boundary_conditions()
@@ -256,9 +349,27 @@ def solve_transient_contact(
         raise ValueError("initial_velocity does not satisfy structural constraints")
     committed_states = {}
     with contact_scope(model, definition, settings,
-                       initial_displacement=full_initial) as manager:
+                       initial_displacement=(full_initial if restart_checkpoint is None
+                                             else np.zeros(size))) as manager:
         if type(manager) is not _PlanarQ4PlaneManager:
             raise ValueError("transient development profile selected an unsupported contact owner")
+
+        if restart_checkpoint is not None or emit_restart_checkpoint:
+            model_fingerprint = model_configuration_fingerprint(model)
+            analysis_fingerprint = analysis_configuration_fingerprint(
+                _restart_analysis_contract(transient, controls, manager)
+            )
+        if restart_checkpoint is None:
+            current_time = 0.0
+            accepted_steps = 0
+            resumed_acceleration = None
+        else:
+            current_time, accepted_steps, q, vred, resumed_acceleration = (
+                _read_restart_checkpoint(
+                    restart_checkpoint, model_fingerprint,
+                    analysis_fingerprint, Mred.shape[0], transient.t_end,
+                )
+            )
 
         def evaluate(position: np.ndarray, *, tangent: bool):
             full = np.asarray(T @ position).reshape(-1)
@@ -272,9 +383,17 @@ def solve_transient_contact(
         contact0 = manager.evaluate(full0, tangent=False)[2]
         if not contact0.gap_tolerance_met:
             raise ValueError("initial contact gap exceeds the registered tolerance")
-        acceleration = np.asarray(spsolve(Mred, -force0)).reshape(-1)
+        if resumed_acceleration is None:
+            acceleration = np.asarray(spsolve(Mred, -force0)).reshape(-1)
+        else:
+            acceleration = resumed_acceleration
+            balance = Mred @ acceleration + force0
+            scale = max(1.0, float(np.linalg.norm(Mred @ acceleration)),
+                        float(np.linalg.norm(force0)))
+            if float(np.linalg.norm(balance)) > controls.equilibrium_tolerance*scale:
+                raise ValueError("transient contact checkpoint acceleration is inconsistent")
         committed_states = commit_state_candidate(committed_states, trial0)
-        times = [0.0]
+        times = [current_time]
         positions = [full0.copy()]
         velocities = [np.asarray(T @ vred).reshape(-1)]
         accelerations = [np.asarray(T @ acceleration).reshape(-1)]
@@ -283,15 +402,19 @@ def solve_transient_contact(
         residuals = [float(np.linalg.norm(Mred @ acceleration + force0))]
         iterations = []
         cutbacks = 0
-        current_time = 0.0
         previous_full = full0.copy()
         previous_velocity = np.asarray(T @ vred).reshape(-1)
-        accepted_steps = 0
         pending_swept_gap = float("inf")
         pending_residual = 0.0
+        last_step_was_end_truncated = False
         _alpha, beta, gamma = transient.integration_parameters()
         while current_time < transient.t_end - 1.0e-14 * max(1.0, transient.t_end):
-            step = min(transient.dt, transient.t_end - current_time)
+            remaining = transient.t_end - current_time
+            step = min(transient.dt, remaining)
+            end_truncated = (
+                remaining < transient.dt
+                - 128.0*np.finfo(float).eps*max(1.0, abs(transient.t_end))
+            )
             local_cutbacks = 0
             while True:
                 predictor = q + step * vred + step * step * (0.5 - beta) * acceleration
@@ -328,6 +451,7 @@ def solve_transient_contact(
                     vred = candidate_velocity
                     acceleration = candidate_acceleration
                     current_time += step
+                    last_step_was_end_truncated = end_truncated
                     previous_full = full.copy()
                     previous_velocity = np.asarray(T @ vred).reshape(-1)
                     accepted_steps += 1
@@ -357,8 +481,19 @@ def solve_transient_contact(
                         f"transient contact step failed at t={current_time:.9g} s "
                         f"after {local_cutbacks} cutbacks; committed state retained"
                     )
+    if emit_restart_checkpoint and (accepted_steps == 0 or last_step_was_end_truncated):
+        raise ValueError(
+            "transient contact checkpoint requires an accepted untruncated final time step"
+        )
+    checkpoint = (
+        _new_restart_checkpoint(
+            model_fingerprint, analysis_fingerprint, current_time,
+            q, vred, acceleration, accepted_steps,
+        ) if emit_restart_checkpoint else None
+    )
     return TransientContactResults(
         _PROFILE, np.asarray(times), np.asarray(positions),
         np.asarray(velocities), np.asarray(accelerations), tuple(contacts),
         np.asarray(swept_gaps), np.asarray(residuals), cutbacks, tuple(iterations),
+        checkpoint,
     )

@@ -20,6 +20,19 @@ and endpoint gap. Its swept-gap and equilibrium-residual entries bound every
 accepted step since the preceding saved sample; iteration counts cover every
 accepted step. Event checks and committed state always advance at every step,
 including steps omitted from output by `save_every`.
+An opt-in development checkpoint is available with `save_every=1`:
+`emit_restart_checkpoint=True` returns a JSON-serializable
+`restart_checkpoint`, which a fresh compatible solve accepts through its
+`restart_checkpoint` argument with a later `t_end`. It binds the model,
+contact definitions, integration settings, initial state and nonlinear
+controls, and verifies an integrity hash and resumed acceleration balance.
+Export requires at least one accepted step and a final step that was not
+shortened merely to reach `t_end`; an off-grid split is rejected because it
+would change the uninterrupted Newmark path.
+The resumed result begins at the checkpoint time; concatenate it with the
+first result after omitting that duplicate state. A focused split during
+active contact matched the uninterrupted Newmark path within declared
+floating-point tolerance. Sparse-output restart remains unadmitted.
 Run `python examples/general_contact_q4_plane_impact.py` from an installed
 package or a source environment.
 
@@ -38,12 +51,14 @@ derived one-coordinate mass–spring impact solution. It also checks an
 interior path crossing with open endpoints and reuses the model after a
 rejected trial. Configuration tests cover nonzero admissible initial
 displacement, sparse output with conserved event diagnostics, and explicit
-rejection of unsupported settings. These are local development tests, not
+rejection of unsupported settings. Active-contact split restart, tampering,
+changed time-step/contact-definition and off-grid export rejection are also covered. These are local
+development tests, not
 registered C6 qualification or independent review.
 
 Prescribed loads, moving tools, free rigid bodies, shell descriptor dynamics,
-beam impact, general finite sliding, plasticity, friction, damping, dynamic
-restart, work/energy accounting, cancellation and common-stage native
+beam impact, general finite sliding, plasticity, friction, damping, general
+dynamic restart, work/energy accounting, cancellation and common-stage native
 coupling remain outside this profile. Contact result records retain the
 static plane kernel identity; the surrounding transient result declares the
 distinct Newmark development profile. Full C6 and programme acceptance remain

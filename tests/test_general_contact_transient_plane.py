@@ -1,6 +1,8 @@
 """Independent checks for the fixed-plane Q4 Newmark development slice."""
 
 import math
+import json
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -204,3 +206,103 @@ def test_transient_config_rejects_inconsistent_initial_displacement():
                             initial_displacement=initial,
                             initial_velocity=velocity),
         )
+
+
+def test_active_contact_restart_replays_newmark_path_from_fresh_model():
+    full_model, full_contact, velocity = _guided_plate()
+    full = solve_transient_contact(
+        full_model, full_contact,
+        TransientConfig(0.0002, 0.016, initial_velocity=velocity),
+    )
+    first_model, first_contact, first_velocity = _guided_plate()
+    first = solve_transient_contact(
+        first_model, first_contact,
+        TransientConfig(0.0002, 0.012, initial_velocity=first_velocity),
+        emit_restart_checkpoint=True,
+    )
+    assert first.contact[-1].active_pressure_dofs > 0
+    checkpoint = json.loads(json.dumps(first.restart_checkpoint))
+    resumed_model, resumed_contact, resumed_velocity = _guided_plate()
+    resumed = solve_transient_contact(
+        resumed_model, resumed_contact,
+        TransientConfig(0.0002, 0.016, initial_velocity=resumed_velocity),
+        restart_checkpoint=checkpoint,
+    )
+    for name in ("times", "displacements", "velocities", "accelerations"):
+        combined = np.concatenate((getattr(first, name),
+                                   getattr(resumed, name)[1:]), axis=0)
+        np.testing.assert_allclose(combined, getattr(full, name),
+                                   rtol=1.0e-11, atol=1.0e-11)
+    assert first.newton_iterations + resumed.newton_iterations == full.newton_iterations
+    np.testing.assert_allclose(
+        np.r_[first.swept_minimum_gaps, resumed.swept_minimum_gaps[1:]],
+        full.swept_minimum_gaps, rtol=0.0, atol=1.0e-11,
+    )
+
+
+def test_transient_restart_rejects_tampering_and_changed_time_step():
+    model, contact, velocity = _guided_plate()
+    first = solve_transient_contact(
+        model, contact, TransientConfig(0.0002, 0.012,
+                                        initial_velocity=velocity),
+        emit_restart_checkpoint=True,
+    )
+    tampered = json.loads(json.dumps(first.restart_checkpoint))
+    tampered["state"]["q"][2] += 0.001
+    resume_model, resume_contact, resume_velocity = _guided_plate()
+    with pytest.raises(ValueError, match="integrity mismatch"):
+        solve_transient_contact(
+            resume_model, resume_contact,
+            TransientConfig(0.0002, 0.016,
+                            initial_velocity=resume_velocity),
+            restart_checkpoint=tampered,
+        )
+    with pytest.raises(ValueError, match="analysis is incompatible"):
+        solve_transient_contact(
+            resume_model, resume_contact,
+            TransientConfig(0.0001, 0.016,
+                            initial_velocity=resume_velocity),
+            restart_checkpoint=first.restart_checkpoint,
+        )
+    changed_contact = replace(
+        resume_contact,
+        interactions=(replace(resume_contact.interactions[0],
+                              normal_stiffness=2.0e5),),
+    )
+    with pytest.raises(ValueError, match="analysis is incompatible"):
+        solve_transient_contact(
+            resume_model, changed_contact,
+            TransientConfig(0.0002, 0.016,
+                            initial_velocity=resume_velocity),
+            restart_checkpoint=first.restart_checkpoint,
+        )
+    with pytest.raises(ValueError, match="requires save_every=1"):
+        solve_transient_contact(
+            resume_model, resume_contact,
+            TransientConfig(0.0002, 0.016, save_every=2,
+                            initial_velocity=resume_velocity),
+            restart_checkpoint=first.restart_checkpoint,
+        )
+    assert active_contact_manager() is None
+
+
+def test_transient_restart_does_not_export_truncated_terminal_step():
+    model, contact, velocity = _guided_plate()
+    with pytest.raises(ValueError, match="untruncated final time step"):
+        solve_transient_contact(
+            model, contact,
+            TransientConfig(0.0002, 0.0121, initial_velocity=velocity),
+            emit_restart_checkpoint=True,
+        )
+    assert active_contact_manager() is None
+    with pytest.raises(ValueError, match="one accepted time step"):
+        solve_transient_contact(
+            model, contact,
+            TransientConfig(0.0002, 0.0, initial_velocity=velocity),
+            emit_restart_checkpoint=True,
+        )
+    reused = solve_transient_contact(
+        model, contact,
+        TransientConfig(0.0002, 0.0121, initial_velocity=velocity),
+    )
+    assert reused.times[-1] == pytest.approx(0.0121)
