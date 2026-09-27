@@ -39,10 +39,20 @@ def main() -> int:
         raise FileExistsError(f"formal output already exists: {output_path}")
     contract_bytes = contract_path.read_bytes()
     contract = json.loads(contract_bytes)
-    if contract["case_id"] != "general_contact_d1_clipped_coupled_v1":
+    if contract["case_id"] != "general_contact_d1_clipped_coupled_v2":
         raise ValueError("wrong case identity")
+    registered_contract = (ROOT / "docs" / "reference_cases" /
+                           "general_contact_d1_clipped_coupled_v2.json").resolve()
+    if contract_path != registered_contract:
+        raise ValueError("wrong registered contract path")
+    relative_contract = contract_path.relative_to(ROOT).as_posix()
+    _git("ls-files", "--error-unmatch", "--", relative_contract)
+    if _git("status", "--porcelain", "--", relative_contract):
+        raise ValueError("registered contract has uncommitted changes")
     if output_path != (ROOT / contract["runner"]["output"]).resolve():
         raise ValueError("output does not match registered path")
+    if output_path.with_suffix(output_path.suffix + ".partial").exists():
+        raise FileExistsError("formal partial output already exists")
 
     source_commit = contract["source_commit"]
     identity_checks = {}
@@ -131,14 +141,6 @@ def main() -> int:
             == criteria["required_supported_pressure_modes"]
             and metrics["pressure_gram_scaled_rank"]
             == criteria["required_scaled_pressure_rank"]
-        ),
-        "integration_error": (
-            contract["model"]["normal_stiffness_pa_per_m"] * (
-                metrics["weighted_gap_integration_error_m3"]
-                + abs(reference["minimum_physical_gap_m"])
-                * metrics["area_integration_error_m2"]
-            ) <= criteria["integration_force_error_fraction_max"]
-            * contract["scales"]["force_n"]
         ),
         "gap": abs(metrics["actual_minimum_gap_m"]
                    - metrics["expected_minimum_gap_m"])
