@@ -168,6 +168,40 @@ Raw `B3_E4_F03_MATERIAL_LINE_COMPLETE_TRACE_X8_DEV_V1.json` has SHA256
 It binds source commit `8957e486` and eight checked source hashes.
 No peak-memory measurement or external accuracy claim follows.
 
+**Next matched-field projection discriminator (prospective):** The saved
+detached F4 solid six-channel reconstruction has zero *solid* weak gap,
+while separate compatible Q4 plate and retained B3 fits each leave
+nonzero face-field work residual. Reconstruct both fits from the same
+hash-bound solid torque and opening states, map their coefficients into
+the actual native material-line reference Jacobian, and evaluate the
+continuous six-channel gap before projecting any P0/P1/dual rows. Check
+that fitting a synthetic native-compatible field reproduces its gap,
+and recover reference geometry, section axes and face offsets explicitly.
+If the jointly projected solid field has material native continuous gap,
+the observed cross-model work difference cannot be assigned uniquely to
+multiplier resolution; native kinematic representability or the chosen
+continuous law needs attention. If the projected gap is small, compare
+the already saved physical action/work partitions and advance the
+growing-space check. This reuses the executed reference and does not
+claim a new external comparison, energy projection, or G0B acceptance.
+
+**Matched-field preflight decision:** Do not execute that projection yet.
+The saved detached-solid six-channel constraint uses finite-face mean
+position, transverse first moments and a through-thickness pitch pair.
+The current material-line law uses a top-line position and a shell frame
+from its director and projected longitudinal tangent against the native
+retained B3 bottom port. Its yaw and transverse work functionals are
+different continuous observables. A gap formed by separately fitting the
+saved solid field to E4/B3 and applying the *new* law would mix this law
+change with representability and weak-enforcement error; either a large
+or small value would fail to distinguish the planned explanations.
+The separate global fits and their source-bound work residuals remain
+valid. First derive and validate a solid-side observable/action map
+work-conjugate to the declared material-line pose, with the same
+geometry, sides, support and load; only then reuse the saved fields or
+run a specifically required external action. No new solve or projection
+was launched from the premature proposal.
+
 Raw result `B3_E4_F03_MATERIAL_LINE_SHELL_TRACE_X8_DEV_V1.json` has
 SHA256 `A9F0FCEB53FDA50FAC479954720B60B99482E4CCCA12F6228355DAE76D225696`.
 Its source commit is `885b4da4`; all six recorded source hashes were
