@@ -14,6 +14,7 @@ from anysolver.assembly import build_constraint_transformation
 from anysolver.boundary import BoundaryCondition
 from anysolver._b2_physical_linear_batch_dev import CompiledB2AffineBatch
 from anysolver._b2_physical_flexibility_linear import LinearSection
+from anysolver._b2_physical_linear_definition import PhysicalB2OperatorCache
 from anysolver.control import CancellationToken
 from anysolver.fe_core import FEModel
 from anysolver.linalg import FactorizationCache
@@ -169,6 +170,42 @@ def test_ordered_selected_batch_matches_independent_sparse_solves(count):
     batch.close()
     with pytest.raises(RuntimeError, match="closed"):
         batch.solve_many(cases[:1])
+
+
+def test_shared_operator_cache_preserves_batch_and_selected_recovery():
+    members, _ = _members()
+    members = (members[0], replace(
+        members[1], reference_points_m=((2., 0., 0.), (2., 2., 0.))))
+    assert members[0].section is members[1].section
+    assert members[0].length_m == members[1].length_m == 2.
+    plain = tuple(member.compile_local() for member in members)
+    cache = PhysicalB2OperatorCache()
+    reused = tuple(member.compile_local(operator_cache=cache)
+                   for member in members)
+    assert (cache.hits, cache.misses) == (1, 1)
+    assert reused[0].operator is reused[1].operator
+    transform, offset = _plan()
+    plain_batch = CompiledB2AffineBatch(
+        plain, transform, offset, np.arange(12, 18), max_chunk=4)
+    reused_batch = CompiledB2AffineBatch(
+        reused, transform, offset, np.arange(12, 18), max_chunk=4)
+    cases = _cases(10)
+    selection = {"member-0": (.25, .75)}
+    plain_result = plain_batch.solve_many(cases, recover_members=selection)
+    reused_result = reused_batch.solve_many(cases, recover_members=selection)
+    assert plain_result.status == reused_result.status == "completed"
+    assert plain_result.factorization_count == reused_result.factorization_count == 1
+    np.testing.assert_array_equal(plain_batch.full_stiffness.toarray(),
+                                  reused_batch.full_stiffness.toarray())
+    for original, candidate in zip(plain_result.cases, reused_result.cases):
+        assert original.case_id == candidate.case_id
+        np.testing.assert_array_equal(original.values, candidate.values)
+        np.testing.assert_array_equal(original.members[0].resultants_local,
+                                      candidate.members[0].resultants_local)
+        np.testing.assert_array_equal(original.members[0].strains_local,
+                                      candidate.members[0].strains_local)
+    plain_batch.close()
+    reused_batch.close()
 
 
 def test_callback_cannot_change_submitted_case_inventory():

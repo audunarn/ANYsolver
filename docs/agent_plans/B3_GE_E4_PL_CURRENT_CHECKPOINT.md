@@ -8,7 +8,8 @@ the F5 top-face positional bond. Its x16/m8→m16 torque response changes
 1.2–2.5% while work closes; an independently reviewed x16/m16 check finds
 all rows algebraically represented by the shell. This is not stability or
 physical-transfer acceptance. Sampled B2 local rounding and six pure-load
-graph checks pass; continuous F09 admission remains open. **Uncertainty:**
+graph checks pass; private repeated-section compilation now reuses immutable
+operators with batch parity. Continuous F09 admission remains open. **Uncertainty:**
 The intended rotational connection and its matched torque/shear transfer
 and growing-space stability. **Next action:** Review C1's physical work law
 against a matching reference before another mesh refinement or multiplier
@@ -216,9 +217,28 @@ the *same section object* and exact member length. Cached operators are
 immutable; compiled members still own distinct frames and definition
 identities. A focused ownership/parity test passes `1/1`, including changed
 length, value-equal but distinct section, cache clear, and invalid cache
-rejection. The broader definition/F13 suite is still running and has no
-reported result yet; its process handle is `54444` (exec session `54296`).
-Do not claim a timed cache gain or G1 scale acceptance from this slice.
+rejection. The first broader definition/F13 process (PID `54444`, exec
+session `54296`) remained CPU-active without a collection or test result and
+was stopped at the announced 40-minute local resource ceiling. A separate
+selected F13 collection likewise exceeded 120 s without JIT disabled and
+was stopped. Both are incomplete runner attempts, not numerical failures.
+With `NUMBA_DISABLE_JIT=1`, the private assembly import completed in
+`0.705 s` and the affected definition/F13 suite passed `36/36` in `9.49 s`.
+A new connected, equal-length two-member case verifies one cache hit/one
+construction and exact equality of ten batch solutions, assembled matrices,
+selected section resultants/strains and one factorization per batch.
+
+Five serial alternating warm component pairs on twelve 2 m members sharing
+the declared 40 × 12 mm rotated section measured median private compilation
+`0.194872 s` without reuse and `0.017173 s` with the cache (an `11.35×`
+component ratio). Raw seconds in paired order: uncached
+`[.1939472,.1948717,.1956497,.1945395,.1973137]`, cached
+`[.0171726,.0163651,.0171755,.0165009,.0174021]`. The screen ran on
+Windows/Python 3.14.2 with JIT disabled and one BLAS/MKL/OMP thread.
+This source-run result excludes cold import/JIT, solve,
+recovery, shell assembly and installed artifacts. It is not a complete-route
+B2 speedup, practical-scale qualification or G1 entry. Keep JIT-enabled
+dispatch/verification and production compiler ownership open.
 
 **F13 residual-admission decision (27 September):** The private B2 batch's
 fast residual route treats `eps * row_scale <= 1e-9 * physical_scale` as
