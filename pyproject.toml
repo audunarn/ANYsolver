@@ -33,6 +33,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+general-contact = ["ANYgeometry>=0.4.3,<0.5"]
 numba = ["numba>=0.59"]
 pardiso = ["pypardiso>=0.4"]
 accelerated = ["numba>=0.59", "pypardiso>=0.4"]

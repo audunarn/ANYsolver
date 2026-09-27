@@ -1,0 +1,28 @@
+{
+  "candidate": "c4_patch_search_scale_dev",
+  "grid": 32,
+  "face_count": 1024,
+  "results_equal": true,
+  "rows": {
+    "historical": {
+      "build_seconds": 0.005762399989180267,
+      "query_seconds": 0.15527129999827594,
+      "rss_before_bytes": 158277632,
+      "rss_after_build_bytes": 158429184,
+      "rss_build_increment_bytes": 151552,
+      "query_count": 1000,
+      "candidate_count": 8650,
+      "responses_sha256": "a146c201003806b193b5bd6fa96641ff9c87f488d51db844d51cc8088ffa1988"
+    },
+    "owner": {
+      "build_seconds": 0.030194599996320903,
+      "query_seconds": 0.07393960002809763,
+      "rss_before_bytes": 158584832,
+      "rss_after_build_bytes": 159563776,
+      "rss_build_increment_bytes": 978944,
+      "query_count": 1000,
+      "candidate_count": 8650,
+      "responses_sha256": "a146c201003806b193b5bd6fa96641ff9c87f488d51db844d51cc8088ffa1988"
+    }
+  }
+}
