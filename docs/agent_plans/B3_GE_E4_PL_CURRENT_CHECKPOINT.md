@@ -1,5 +1,49 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+## F12 constant-axial prestress discriminator — 27 September 2026
+
+**Decision sought:** Does the retained physical B2 station displacement
+trace support a conservative, representable member geometric stiffness for
+one declared constant axial prestress, without adding inertia or changing
+the historical B2 route? **Established:** The private operator owns exact
+polynomial station maps; physical section mass and a bounded massless KKT
+descriptor have passed, but prestress and buckling have not. **Competing
+explanations:** The trace derivative gives the expected second variation of
+transverse centerline stretch, or it produces an inconsistent energy or
+nonconvergent buckling mode. **Bounded discriminator:** Integrate
+`N ∫ (Dv'ᵀDv' + Dw'ᵀDw') dx` from the existing trace coefficients; compare
+its quadratic work to independently differentiated station displacements,
+test symmetry/rigid translation, and check a slender cantilever's first
+compressive factor over 1/2/4/8 elements against the analytic Euler limit.
+**Action:** Passing permits later assembly, attached prestress, frame,
+external-load and descriptor work. Failure revises the candidate operator.
+This is not production buckling admission or F12/G0B acceptance.
+
+**Initial buckling screen:** The energy/rigid-translation check passed, but
+strict monotone convergence to the Euler–Bernoulli critical force failed:
+relative 1/2/4/8-element errors were `0.00748515`, `0.000469753`,
+`0.0000112182`, `0.0000423455`. The final upward error is of the same
+order as the finite-shear correction for the declared physical B2 section;
+the Euler comparison is not a matched asymptote. Retain this failure and
+compare the unchanged candidate against the [Engesser shear-corrected
+cantilever critical force](https://www.sciencedirect.com/science/article/pii/S0997753816303096)
+`P_EB/(1+P_EB/(kGA))`. A nonconvergent result against that matched limit
+requires revising the candidate; a pass advances only bounded F12 work.
+
+**Matched F12 result:** The constant-reference-axis axial term integrates
+the exact retained B2 transverse trace slopes in rational arithmetic and
+returns a physical 12×12 tangent. Independent station-difference work
+agrees for scalar and off-diagonal generalized sections; the matrix is
+symmetric, changes sign with axial force and annihilates rigid transverse
+translation. A 1/2/4/8-member cantilever gives a monotone decreasing error
+against the matched shear-corrected critical force, with the 8-member error
+below 1%; each selected generalized eigenpair satisfies a `1e-8` scaled
+equation residual. A tilted member and its reversed equivalent have the
+same global prestress work after node permutation. The bounded file passes
+4/4. This does not include follower/external geometric terms, variable
+prestress, attachment curvature, shell coupling, massless-descriptor
+buckling, or independent acceptance. F12/G0B remain open and G1 barred.
+
 ## F13 affine factorization dependency slice — 27 September 2026
 
 **Decision sought:** Can the private B2 route reuse an unchanged sparse

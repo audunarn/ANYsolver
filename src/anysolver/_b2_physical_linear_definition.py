@@ -274,6 +274,19 @@ class CompiledPhysicalB2Member:
     def local_candidate_mass_matrix(self) -> np.ndarray:
         return _candidate_mass_matrix(self.definition, self.operator)
 
+    def global_candidate_constant_axial_geometric_stiffness(
+            self, axial_force: float) -> np.ndarray:
+        """Private constant reference-axis N term in global nodal coordinates."""
+        transform = self.local_dof_map()
+        local = self.operator.candidate_constant_axial_geometric_stiffness(
+            axial_force)
+        with np.errstate(over="ignore", invalid="ignore"):
+            global_matrix = transform.T @ local @ transform
+        if not np.isfinite(global_matrix).all():
+            raise RepresentabilityError(
+                "global physical B2 prestress term is not representable")
+        return global_matrix
+
 
 def _candidate_mass_matrix(member: PhysicalB2Member,
                            operator: LinearOperator) -> np.ndarray:

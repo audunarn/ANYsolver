@@ -370,6 +370,34 @@ class LinearOperator:
         return LocalSectionRecovery(
             resultants, strains, np.array(x, dtype=float, copy=True))
 
+    def candidate_constant_axial_geometric_stiffness(self, axial_force):
+        """Private centerline-stretch Hessian for constant conservative N.
+
+        Positive ``axial_force`` denotes tension. This is a member-only
+        candidate, without attachment, load or support curvature.
+        """
+        if (type(axial_force) not in (int, float)
+                or not math.isfinite(axial_force)):
+            raise ValueError("finite constant physical axial force required")
+        force = Fraction(float(axial_force))
+        matrix = [[Fraction(0) for _ in range(12)] for _ in range(12)]
+        for position_row in (1, 2):
+            derivatives = [
+                tuple(degree*poly[degree]/self.length for degree in range(1, 4))
+                for poly in self._trace_polynomials[position_row]
+            ]
+            for i in range(12):
+                for j in range(i, 12):
+                    integral = sum(
+                        a*b/Fraction(p+q+1)
+                        for p, a in enumerate(derivatives[i])
+                        for q, b in enumerate(derivatives[j]))
+                    matrix[i][j] += force*self.length*integral
+        for i in range(12):
+            for j in range(i):
+                matrix[i][j] = matrix[j][i]
+        return _array(matrix)
+
     def evaluate(self, displacement, *, stations=(0.0, 0.5, 1.0)):
         try:
             u = np.asarray(displacement, dtype=float)
