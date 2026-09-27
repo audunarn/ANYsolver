@@ -344,14 +344,18 @@ def test_weak_generalized_elbow_rejects_unbalanced_binary64_solution(monkeypatch
         reduced_solution -= batch._scaling[:, None]*correction
     full_solution = np.asarray(batch._T@reduced_solution).reshape(-1)+batch._u0
     full_stiffness = batch.full_stiffness.tocsr()
-    exact_defect = []
-    for row in range(18):
-        start, stop = full_stiffness.indptr[row:row+2]
-        exact = sum((Fraction(float(a))*Fraction(float(full_solution[col]))
-                     for a, col in zip(full_stiffness.data[start:stop],
-                                       full_stiffness.indices[start:stop])),
-                    Fraction(0))-Fraction(float(load[row]))
-        exact_defect.append(float(exact))
+    def exact_row_defects(solution):
+        defects = []
+        for row in range(18):
+            start, stop = full_stiffness.indptr[row:row+2]
+            exact = sum((Fraction(float(a))*Fraction(float(solution[col]))
+                         for a, col in zip(full_stiffness.data[start:stop],
+                                           full_stiffness.indices[start:stop])),
+                        Fraction(0))-Fraction(float(load[row]))
+            defects.append(float(exact))
+        return defects
+
+    exact_defect = exact_row_defects(full_solution)
     force_scale = np.max(np.abs(wrench[:3]))
     moment_scale = max(np.max(np.abs(wrench[3:])),
                        max(member.length_m for member in physical)*force_scale)
@@ -363,6 +367,13 @@ def test_weak_generalized_elbow_rejects_unbalanced_binary64_solution(monkeypatch
     exact = np.asarray(_exact_linear_solve(reduced, load[6:]), dtype=float)
     np.testing.assert_allclose(full_solution[12:18], exact[6:12],
                                rtol=1e-8, atol=1e-8)
+    # Even exact algebra on the rounded matrix loses physical balance once
+    # its very large solution is stored as ordinary binary64 coordinates.
+    exact_as_float = np.zeros(18)
+    exact_as_float[6:] = exact
+    exact_float_defect = exact_row_defects(exact_as_float)
+    assert max(abs(exact_float_defect[row]) for row in
+               (6, 7, 8, 12, 13, 14))/force_scale > 1e-9
     expected_work = float(_force_method_energy(physical, wrench))
     assert abs(.5*wrench@exact[6:12]-expected_work)/expected_work <= 1e-8
     batch.close()
