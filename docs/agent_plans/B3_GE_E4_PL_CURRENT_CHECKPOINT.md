@@ -40,6 +40,8 @@ The shell-side trace image is also independent but does not recover the
 P0 m4 torque response. The full two-sided discrete trace image has 49
 dimensions; four beam-side directions remain outside the 45-dimensional
 shell image, and the P0 m4 space lies inside the full image.
+Enforcing that complete image closes sampled gaps but materially reduces
+torque response and shell work on the fixed model; it is not selected.
 An independently differentiated flat-reference line-pose contract now
 matches Q4 and interior S3 Jacobians and the eccentric torque/shear
 virtual work; it exposes the force/yaw derivative coupling without
@@ -134,6 +136,37 @@ response merely nominates it for growing-space locking and matched
 reference checks; it cannot select a production space. Keep the 1,900-row,
 120-second, 2-GiB and one-thread limits, and do not run finer meshes from
 this one result.
+
+**Complete-trace result and decision:** The unchanged-primal Q4 x8/B3-12
+screen completed in `34.30 s` with 49/49 supported rows in a 1,453-row,
+33,376-nonzero KKT. The entire 60-generator two-sided image is retained:
+its dimension is 49, reconstruction defect `1.42e-15`, last nonzero
+singular `0.0027589` and first exact-zero singular `7.83e-16`.
+Both +100 Nm tip torque and +1000 N tip Fz cases pass the bounded
+equilibrium and work checks; maximum applied force/moment balance is
+`7.02e-10` in its declared unit, and maximum relative work defect
+`1.09e-11`. Position and orientation gaps at the fixed quadrature are
+near `1e-20`; this is the expected algebraic effect of complete trace
+equality, not a physical-accuracy score.
+
+Relative to P0 m4 on the *same* physical primal, complete-image torque
+tip twist changes `−5.021%` and positive shell physical work `−9.159%`;
+opening tip-z changes `−0.601%` and shell physical work `−2.124%`.
+Relative to shell-only trace, the torque changes `−8.156%` and shell
+work `−8.348%`. The stronger discrete equality therefore has a
+material transfer effect; small gaps cannot select it. The same effect
+could be intended full-bond stiffness or refinement-dependent locking.
+Without the physically matched two-sided reference and systematic
+growing-space convergence, neither conclusion is justified. Hold the
+maximal image as a diagnostic upper-enforcement comparator, not a
+production mortar policy. Stop fixed-grid row combinations and move to
+the declared physical transfer/locking decision. F03/G0B remain open,
+G1 barred and formal F03 authority unconsumed.
+
+Raw `B3_E4_F03_MATERIAL_LINE_COMPLETE_TRACE_X8_DEV_V1.json` has SHA256
+`B7D20228F08FB6DB07517177F8A66565D2AAF89738F6F4DC403896902B7CFD61`.
+It binds source commit `8957e486` and eight checked source hashes.
+No peak-memory measurement or external accuracy claim follows.
 
 Raw result `B3_E4_F03_MATERIAL_LINE_SHELL_TRACE_X8_DEV_V1.json` has
 SHA256 `A9F0FCEB53FDA50FAC479954720B60B99482E4CCCA12F6228355DAE76D225696`.
