@@ -1,0 +1,39 @@
+{
+  "case_id": "general_contact_d1_partial_pressure_space_v1",
+  "status": "registered_pending_execution",
+  "claim_boundary": "Fixed-pose planar Q4/S3 partial-contact pressure-space rank and integrated force resolution for 16/32/64 source divisions with four rows; not coupled equilibrium, tangent or general C1 acceptance",
+  "policy": "ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1/2026-09-24.2",
+  "source_commit": "4becd969b9f2448a4eb8a18f23fa9463d463c0ab",
+  "source_blobs": {
+    "scripts/general_contact_d1_pressure_space_probe.py": "330f3195c028eb74341497843791f8b6d45d5d58",
+    "src/anysolver/general_contact/pressure_space.py": "2e8a324e5b25279ecc6719a97529a051232a5a75",
+    "src/anysolver/general_contact/q4_source_overlap.py": "7376c671c3b0429f48a590169f06ea32f2e9b371"
+  },
+  "development_predictors": {
+    "16": {"force_n": 0.16976139758984216, "raw_sha256": "5563b5a0a60c672ae7bdd9592d3dc1f97059d70345eacac71df486643a2af090"},
+    "32": {"force_n": 0.17177348497348763, "raw_sha256": "754aae4b8dd9205f45e0d9c669ad138596a6d4b5bc7472c6b1d8c3b4878f8444"},
+    "64": {"force_n": 0.17218069317077198, "raw_sha256": "ebd1e38b0b1134a7c38bd0d7c9bc6447f57ace8591351f6b8cd1eab7b40cd93b"}
+  },
+  "independent_reference": {
+    "force_n": 0.17225,
+    "derivation": "Integral over x=[0.24,0.77], y=[0.21,0.73] of 100000 Pa/m times the positive part of the prescribed affine penetration; local-plane continuum approximation"
+  },
+  "execution": {
+    "command": "python scripts/general_contact_d1_pressure_space_probe.py reports/general_contact_d1_partial_pressure_space_v1_formal_20260927.json 16 32 64 --rows 4",
+    "maximum_wall_seconds": 180,
+    "run_once": true
+  },
+  "criteria": {
+    "divisions": [16, 32, 64],
+    "rows": 4,
+    "scaled_pressure_rank": "equals_supported_modes_at_each_resolution",
+    "active_pressure_modes": "strictly_increase",
+    "absolute_force_error_n": "strictly_decrease",
+    "finest_relative_reference_error": 0.001,
+    "each_force_vs_development_relative": 0.01,
+    "force_balance_norm_n": 1e-6,
+    "moment_balance_norm_nm": 1e-6,
+    "finest_integration_indicator_fraction_of_force_error": 0.1,
+    "all_gap_tolerances_met": true
+  }
+}
