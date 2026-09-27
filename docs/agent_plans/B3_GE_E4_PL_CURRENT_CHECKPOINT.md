@@ -1090,6 +1090,20 @@ rebases, Q4/mixed shell coupling, physical-fibre branches, cutback and
 independent mechanics review remain open. F06/G0B remain open and G1
 remains barred.
 
+**F06 private sparse chart operator:** The analytic left-Exp pullback is now
+an owned sparse operator for native B3 nodal and retained-cell rotation
+coordinates. It keeps the F08 spatial trial and accepted material predecessor
+unchanged, returns a separate residual/CSR tangent, and carries the
+candidate-history tuple without regenerating local material updates. A
+separate dense calculation checks the block map and residual curvature;
+actual-frame finite differences pass the `1e-6` elastic plateau for two
+generalized cases (unloaded and distributed loading) and one physical-fibre
+case. The focused file passes `3/3`; the F06/F08 impacted suite passed
+`14/14` before the additional physical-fibre test. This is a reusable G0
+coordinate seam, not a mixed-owner Newton solve, a smooth-active plastic
+derivative, loaded chart rebase, production sparse-scale result or F06/G0B
+acceptance. The physical connection choice and G1 bar remain unchanged.
+
 **Next C1 enforcement discriminator:** The x8/m4→m8 torque solve shows
 growing oscillation of the P0 material dual density while all six-channel
 global balances close. The competing explanations are a weakly controlled
