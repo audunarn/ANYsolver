@@ -31,6 +31,9 @@ the reciprocal beam-fine cases remain full rank.
 Coarser-side P0 remains full rank but changes fixed-primal shell-fine
 1:4 torque twist by 2.566% when enriched from two to four intervals;
 it is not selected as a sufficient resolution rule.
+The complete 15-generator coarser native-port trace is also independent
+and balanced, but stays near coarse P0 rather than the four-interval
+response; missing beam-port modes alone do not explain that movement.
 The matched detached-solid evidence remains limited by connection and
 contact idealization. B2 F09 fail-closed admission is unfinished.
 **Remaining uncertainty:** The admissible multi-channel test-space image
@@ -40,7 +43,8 @@ reference/derivative checks and a bounded loaded screen pass for both
 triangle diagonals; mixed-mesh stability and physical fidelity remain open.
 **Next discriminator:** Use the explicit unscaled within- and
 cross-channel identities plus the failed union-P0 growth and coarse-P0
-torque movement to derive one fixed joint enriched trace rule. Test it across
+torque movement to derive one fixed shell/beam joint enriched trace rule.
+Test it across
 refinement, reversal and Q4/S3 with supported work and appropriate mixed
 norms. The ratio-specific ablations are diagnostics, not a selected rule.
 Do not automatically drop rows by SVD or run the full ratio series on
@@ -169,6 +173,29 @@ results. Movement toward m4 would implicate omitted coarser-side trace
 modes; persistent difference leaves the joint shell/beam trace or law
 question open. Neither outcome substitutes for a matched physical
 reference or mesh-uniform stability.
+
+**Joint native-trace result and decision:** All 15 active physical
+generators (nine bond-node translations and six retained half-cell
+rotations) are independent; the normalized generator minimum singular
+value is `0.7071`. Their complete QR change of basis yields supported
+constraint rank 15/15, minimum unit-row singular `0.6268`, and two
+balanced loaded solves. No generator was dropped. Torque tip twist is
+`+0.412%` relative to P0 m2 and `+3.056%` relative to P0 m4; torque
+shell work is `−0.288%` relative to m2. Shear tip-z is `−0.0235%`
+relative to m2. More concerning for a bonded-line interpretation,
+opening orientation RMS gap is `2.263 µrad`, versus `0.460/0.296 µrad`
+for P0 m2/m4. Maximum force/moment imbalance is
+`6.22e-10 N / 8.17e-10 Nm`. This refutes the bounded explanation that
+omitted *beam-port* trace modes alone caused the coarse-P0 to m4 torque
+movement. It does not prove the law invalid; shell-side/joint trace
+content and the matched two-sided physical reference are now the
+decision-changing work. Do not iterate arbitrary row combinations or
+additional meshes before deriving that work law and joint space.
+The source-bound raw record is
+`B3_E4_F03_MATERIAL_LINE_BEAM_TRACE_IMAGE_X8_DEV_V1.json`, SHA256
+`8cb16ecb1794c3b67a9b55b4b8815b9105c2b011f2e1f449d6acb3471f31c267`,
+run from committed source `6d5ea675`, runner SHA256
+`4508D3A09370B4715DB8F801B9F694C4D77AC7D2D31DD2A70CA20D623704F546`.
 
 The planned x8 fixture has about 1,404 globally free primal columns,
 above the private rank helper's 1,200-column SVD cap, although only a
