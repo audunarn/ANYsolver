@@ -758,6 +758,40 @@ not establish mixed shells, nonmatching attachment mass, prestress,
 buckling, production free-free execution or F12/G0B acceptance. The physical
 connection choice and G1 bar are unchanged.
 
+**Next bounded F12 point-prestress discriminator:** The private B2/Q4 point
+law currently retains only six affine reference rows. For conservative
+buckling about a prestressed connected state, determine whether the
+objective pose law contributes nonzero multiplier-dependent curvature after
+the existing finite shell fit and physical B2 station trace are composed.
+Use the same F10 geometry and fixed nonzero physical multiplier, compare
+the composed joint Hessian with an independent finite difference of joint
+work through the actual pose updates, and check symmetry, force/moment
+work and zero multiplier behavior. A consistent nonzero term becomes a
+private candidate for the later spectral tangent; a mismatch identifies a
+port/chart defect. This does not change the reference-linear static law,
+select a shell port, or admit B2 buckling/F12/G0B.
+
+**F12 point-prestress candidate result:** The private F10 point record now
+owns its two reference frames and can pull the objective pose joint's
+nonzero-multiplier chart Hessian through the existing affine four-vertex
+shell fit and physical B2 station trace. The returned 36×36 curvature is
+owned, symmetric to numerical precision and exactly zero for zero
+multiplier. A three-step mixed finite difference of independently updated
+shell/beam poses agrees with its virtual-work action at the bounded
+`1e-6` screen. F10/F12/mass/definition checks pass `20/20`. This is a
+conservative *reference* attachment-curvature candidate only. It is not
+assembled with member geometric stiffness, a loaded prestress state, sparse
+buckling, an accepted shell port or a production B2 profile. Independent
+read-only mechanics review found no algebraic defect in this reference
+affine-port composition. It identified the material boundary: the four-
+vertex shell fit and B2 station trace have only reference differentials,
+with no nonlinear second derivatives; a true loaded-state attachment
+tangent needs current poses, equilibrated multiplier and those missing port
+terms alongside member/shell geometric stiffness. The record's input arrays
+are now bytes-backed so callers cannot re-enable writing and make curvature
+inconsistent with stored rows; the impacted `20/20` tests still pass.
+This does not admit B2 buckling. F12/G0B remain open and G1 barred.
+
 **Next F13 local compilation discriminator:** The immutable physical B2
 definition currently constructs its exact force-flexibility operator again
 for each `local_operator()` or `trace_global()` request. Test a private

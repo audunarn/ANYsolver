@@ -38,8 +38,22 @@ class ReferencePointLaw:
     shell_port: np.ndarray
     beam_port: np.ndarray
     constraint: np.ndarray
+    reference_frames: np.ndarray
     law_id: str = LAW_ID
     production_qualified: bool = False
+
+    def __post_init__(self):
+        for name, shape in (("shell_reference_m", (3,)),
+                            ("beam_reference_m", (3,)),
+                            ("shell_port", (6, 24)),
+                            ("beam_port", (6, 12)),
+                            ("constraint", (6, 36)),
+                            ("reference_frames", (2, 3, 3))):
+            owned = _finite(getattr(self, name), shape, name)
+            # A bytes-backed view cannot be made writable by a caller, so
+            # the reference curvature cannot drift from its stored rows.
+            sealed = np.frombuffer(owned.tobytes(), dtype=np.float64).reshape(shape)
+            object.__setattr__(self, name, sealed)
 
     def gap(self, shell_displacement, beam_displacement):
         shell = _finite(shell_displacement, (24,), "shell displacement")
@@ -54,6 +68,22 @@ class ReferencePointLaw:
         lam = _finite(multiplier, (6,), "point multiplier")
         action = self.constraint.T @ lam
         return action[:24], action[24:]
+
+    def candidate_prestress_curvature(self, multiplier):
+        """Reference Hessian of objective multiplier work through affine ports.
+
+        This is a private conservative spectral candidate.  The ordinary
+        reference-linear static gap and stiffness remain affine.
+        """
+        lam = _finite(multiplier, (6,), "point multiplier")
+        positions = np.stack((self.shell_reference_m, self.beam_reference_m))
+        joint = RigidPoseJoint(positions, self.reference_frames)
+        pose = joint.evaluate(positions, self.reference_frames, lam)
+        port = np.zeros((12, 36))
+        port[:6, :24] = self.shell_port
+        port[6:, 24:] = self.beam_port
+        return np.array(port.T @ pose.chart_hessian[:12, :12] @ port,
+                        copy=True)
 
 
 def compile_reference_point(member: PhysicalB2Member, shell_vertices_m, *,
@@ -108,6 +138,5 @@ def compile_reference_point(member: PhysicalB2Member, shell_vertices_m, *,
                                 np.zeros(6)).constraint_jacobian
     constraint = np.column_stack((derivative[:, :6] @ shell_port,
                                   derivative[:, 6:] @ beam_port))
-    for a in (origin, point, shell_port, beam_port, constraint):
-        a.setflags(write=False)
-    return ReferencePointLaw(origin, point, shell_port, beam_port, constraint)
+    return ReferencePointLaw(origin, point, shell_port, beam_port, constraint,
+                             reference_frames)

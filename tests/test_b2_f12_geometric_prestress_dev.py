@@ -5,9 +5,12 @@ import math
 import numpy as np
 import pytest
 from scipy.linalg import eig
+from scipy.spatial.transform import Rotation
 
 from anysolver._b2_physical_flexibility_linear import LinearOperator, LinearSection
 from anysolver._b2_physical_linear_definition import PhysicalB2Member
+from anysolver._ge_beam3_pose_joint import RigidPoseJoint
+from test_b2_f10_f11_point_attachment import specimen
 
 
 def _section(radius_m=.005):
@@ -15,6 +18,50 @@ def _section(radius_m=.005):
     return LinearSection.isotropic(
         E=210e9, nu=.3, area=math.pi*radius_m**2,
         Iy=inertia, Iz=inertia, J=2*inertia, ky=.9, kz=.9)
+
+
+def test_reference_point_prestress_curvature_matches_objective_joint_work():
+    _, law, _, _ = specimen()
+    for array in (law.shell_reference_m, law.beam_reference_m,
+                  law.shell_port, law.beam_port, law.constraint,
+                  law.reference_frames):
+        assert not array.flags.writeable
+        with pytest.raises(ValueError):
+            array.setflags(write=True)
+    multiplier = np.array((.4, -.2, .3, .07, -.05, .11))
+    curvature = law.candidate_prestress_curvature(multiplier)
+    assert curvature.shape == (36, 36)
+    assert np.linalg.norm(curvature) > 1e-5
+    np.testing.assert_allclose(curvature, curvature.T, rtol=2e-13, atol=2e-13)
+    np.testing.assert_allclose(
+        law.candidate_prestress_curvature(np.zeros(6)), 0.,
+        rtol=0., atol=0.)
+
+    reference = np.stack((law.shell_reference_m, law.beam_reference_m))
+    joint = RigidPoseJoint(reference, law.reference_frames)
+
+    def work(q):
+        shell = law.shell_port@q[:24]
+        beam = law.beam_port@q[24:]
+        port = np.stack((shell, beam))
+        positions = reference+port[:, :3]
+        frames = np.array([
+            Rotation.from_rotvec(row[3:]).as_matrix()@frame
+            for row, frame in zip(port, law.reference_frames)])
+        return joint.evaluate(positions, frames, multiplier).potential
+
+    u = np.sin(np.arange(36)+.3)
+    v = np.cos(np.arange(36)+.7)
+    expected = float(u@curvature@v)
+    assert abs(expected) > 1e-4
+    errors = []
+    for h in (1e-3, 3e-4, 1e-4):
+        actual = (work(h*(u+v))-work(h*(u-v))
+                  -work(h*(-u+v))+work(-h*(u+v)))/(4*h*h)
+        errors.append(abs(actual-expected)/max(1., abs(expected)))
+    assert sum(error <= 1e-6 for error in errors) >= 2, errors
+    curvature[0, 0] = 123.
+    assert law.candidate_prestress_curvature(multiplier)[0, 0] != 123.
 
 
 @pytest.mark.parametrize("generalized", (False, True))
