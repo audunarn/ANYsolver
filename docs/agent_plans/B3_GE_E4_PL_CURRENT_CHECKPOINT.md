@@ -50,6 +50,54 @@ stored binary64 state.
 The full physical geometry/conditioning envelope, attachment behavior,
 production admission, independent review, F09 and G0B remain open.
 
+**Next F09 component discriminator:** The off-axis cut-wrench energy and
+station-resultant checks could still miss a compensating component mapping
+error in the six tip responses. On the same two fixed mixed wrenches and
+forward/reversed elbow, differentiate the independently derived sectional
+cut energy with respect to each physical tip force and couple. Compare all six
+predicted tip translations/rotations with the sparse solution in a bounded
+component diagnostic. Its `rtol=1e-8, atol=1e-10` check was not a frozen F09
+gate measure and cannot replace the registered physical normalization. A
+mismatch points to the force/displacement or frame mapping; agreement strengthens this one
+physical-section case only and does not establish a conditioning envelope or
+qualify F09/G0B.
+
+**F09 six-component result:** Both fixed mixed wrenches and the reversed
+second member pass the independent energy-gradient comparison for all six
+physical tip components. The identity `0.5 * tip_wrench · predicted_tip =
+cut_energy` also passes. Independent read-only review found the cut lever arm,
+axis reversal and tip-DOF ordering consistent, and required the diagnostic
+tolerance wording above. This extends the one-section physical response
+evidence without establishing the F09 admitted range or G0B acceptance.
+
+**Next bounded F09 physical-range screen (registered before execution):**
+Hold the elbow, material (`E=210 GPa`, `nu=0.3`), 31° section-axis rotation,
+two mixed tip wrenches and forward/reversed definitions fixed. Evaluate solid
+rectangles `(width, depth)` in metres at `(.08,.04)`, `(.04,.012)` and
+`(.012,.003)`, using the same declared Saint-Venant approximation and 5/6
+shear factors. These sample compact, intermediate and thin physical sections;
+they do not prove a continuous range or local buckling validity. For each,
+check independent cut work, all six tip components, station resultants and
+strains, applied-scale `1e-8` force/moment balance, and one-factorization
+batch behavior. A failing endpoint remains a recorded numerical or
+idealization boundary for diagnosis; passing samples support only these
+points and a prospective envelope design, not F09/G0B admission. Do not
+substitute another dimension to obtain a pass.
+
+**F09 sampled physical-range result:** All three predeclared rectangles pass
+the independent cut-work, six-component tip, station response, reversal,
+registered `1e-8` applied-scale balance, and private two-load batch checks.
+The thin endpoint initially stopped before mechanics evaluation because the
+test's `2e-15` absolute `S*C≈I` assertion rejected a `2.438e-15`
+floating-point off-diagonal. The identity guard was corrected to a
+dimensionless `32*eps` roundoff bound, without changing a physical or gate
+tolerance; the original setup failure remains recorded here. The focused
+physical-section file passes `6/6`. These three samples do not prove a
+continuous physical range, attachment response, practical scale or F09/G0B
+acceptance. The next F09 decision is whether a section/load/graph-dependent
+balance screen can be made an explicit fail-closed numerical admission policy,
+while the physical joint law remains separately open.
+
 ## F07 free-free descriptor discriminator — 27 September 2026
 
 **Decision sought:** Does the existing native Q4/B3 point-candidate rest

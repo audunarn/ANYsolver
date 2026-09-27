@@ -8,6 +8,7 @@ import math
 import runpy
 
 import numpy as np
+import pytest
 from scipy import sparse
 from scipy.sparse import diags
 from scipy.sparse.linalg import splu
@@ -20,9 +21,8 @@ PROBE = runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts"
                            / "probe_b3_ge_e4_pl_g0_f09_graph_reversal.py"))
 
 
-def _physical_section():
-    """A 40 x 12 mm rectangle with principal axes rotated 31 degrees."""
-    width, depth = .040, .012
+def _physical_section(width=.040, depth=.012):
+    """A physical rectangle with principal axes rotated 31 degrees."""
     young, poisson = 210e9, .3
     shear = young/(2*(1+poisson))
     area = width*depth
@@ -44,8 +44,8 @@ def _physical_section():
     # from the same rounded value for the definition's exact symmetry contract.
     stiffness = np.triu(stiffness)+np.triu(stiffness, 1).T
     compliance = transform@np.diag(1/principal)@transform.T
-    np.testing.assert_allclose(stiffness@compliance, np.eye(6),
-                               rtol=2e-15, atol=2e-15)
+    assert np.max(np.abs(stiffness@compliance-np.eye(6))) <= (
+        32*np.finfo(float).eps)
     return stiffness, compliance
 
 
@@ -68,6 +68,32 @@ def _cut_work(members, tip, compliance):
             density.append(float(local@local_compliance@local))
         total += member.length_m*(density[0]+4*density[1]+density[2])/12
     return total
+
+
+def _cut_tip_response(members, tip, compliance):
+    """Differentiate independent cut strain energy by each physical tip load."""
+    force, moment = np.asarray(tip[:3]), np.asarray(tip[3:])
+    tip_position = np.asarray(PROBE["POINTS"][2])
+    sign = np.diag([-1., 1., -1., -1., 1., -1.])
+    result = np.zeros(6)
+    basis = np.eye(6)
+    for member in members:
+        start, end = map(np.asarray, member.reference_points_m)
+        frame = member.local_frame_rows()
+        local_compliance = (sign@compliance@sign if member.node_ids == (2, 1)
+                            else compliance)
+        for fraction, weight in ((0., 1.), (.5, 4.), (1., 1.)):
+            cut = start+fraction*(end-start)
+            lever = tip_position-cut
+            local = np.concatenate((frame@force,
+                                    frame@(moment+np.cross(lever, force))))
+            strain = local_compliance@local
+            for i, unit in enumerate(basis):
+                df, dm = unit[:3], unit[3:]
+                dlocal = np.concatenate((frame@df,
+                                         frame@(dm+np.cross(lever, df))))
+                result[i] += member.length_m*weight/6*float(dlocal@strain)
+    return result
 
 
 def _exact_product_residual(matrix, solution, rhs):
@@ -104,8 +130,9 @@ def _high_precision_rounded_matrix_solve(matrix, rhs):
         return np.array([float(value) for value in answer])
 
 
-def test_off_axis_rectangular_section_graph_work_reversal_and_balance():
-    stiffness, compliance = _physical_section()
+@pytest.mark.parametrize("width,depth", ((.08, .04), (.04, .012), (.012, .003)))
+def test_off_axis_rectangular_section_graph_work_reversal_and_balance(width, depth):
+    stiffness, compliance = _physical_section(width, depth)
     assert abs(stiffness[4, 5]) > 0.1*math.sqrt(stiffness[4, 4]*stiffness[5, 5])
     section = LinearSection.generalized(stiffness)
     original = tuple(replace(member, section_id="rotated-rectangle", section=section)
@@ -127,8 +154,12 @@ def test_off_axis_rectangular_section_graph_work_reversal_and_balance():
         load = np.zeros(18)
         load[12:] = tip
         expected = _cut_work(original, tip, compliance)
+        expected_tip = _cut_tip_response(original, tip, compliance)
         assert expected > 0.
+        assert abs(.5*float(np.asarray(tip)@expected_tip)-expected)/expected < 1e-12
         assert abs(_cut_work(reversed_members, tip, compliance)-expected)/expected < 1e-12
+        np.testing.assert_allclose(_cut_tip_response(reversed_members, tip, compliance),
+                                   expected_tip, rtol=1e-12, atol=1e-12)
         for members, matrix in zip((original, reversed_members), matrices):
             reduced = matrix[free, :][:, free].tocsc()
             rhs = load[free]
@@ -136,6 +167,8 @@ def test_off_axis_rectangular_section_graph_work_reversal_and_balance():
             answer = scale*splu((diags(scale)@reduced@diags(scale)).tocsc()).solve(scale*rhs)
             rounded_reference = _high_precision_rounded_matrix_solve(reduced, rhs)
             np.testing.assert_allclose(answer, rounded_reference, rtol=1e-9, atol=1e-12)
+            np.testing.assert_allclose(answer[6:], expected_tip,
+                                       rtol=1e-8, atol=1e-10)
             stored_work = .5*float(rhs@answer)
             assert abs(stored_work-expected)/expected < 1e-9
             assert abs(PROBE["physical_work"](members, tip)-expected)/expected < 1e-9
@@ -172,8 +205,9 @@ def test_off_axis_rectangular_section_graph_work_reversal_and_balance():
                                                rtol=1e-8, atol=1e-10)
 
 
-def test_off_axis_rectangle_private_batch_reuses_one_factorization():
-    stiffness, _ = _physical_section()
+@pytest.mark.parametrize("width,depth", ((.08, .04), (.04, .012), (.012, .003)))
+def test_off_axis_rectangle_private_batch_reuses_one_factorization(width, depth):
+    stiffness, _ = _physical_section(width, depth)
     members = tuple(replace(member, section_id="rotated-rectangle",
                             section=LinearSection.generalized(stiffness))
                     for member in PROBE["members"]())
