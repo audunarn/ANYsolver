@@ -33,7 +33,13 @@ section, and support contributions to that same-law difference.
 **Next discriminator and action:** Compare the existing solid 24-column
 action compliance with the native same-law component operators by
 physical channel and interval, then assess supported transfer and
-growing-space stability. A saved-field tip-face audit found only
+growing-space stability. That comparison reproduces the fixed-dual
+work and places over `95%` of the Mx and over `99%` of the Fz
+native-minus-solid component-work differences on the **shell** side.
+The Mx difference lies mainly in Mx/Mz work; Fz lies mainly in Fx.
+Next examine the shell trace, kinematic/tangent idealization and root
+support mapping on the same physical torque/shear case before changing
+the line law. A saved-field tip-face audit found only
 `0.0184%`/`0.00204%` nonrigid work in the original Mx/Fz loads, but
 does not bound a changed-load response. Advance B2 F09 independently.
 Do not automatically add finer x/y or classical axial runs. P0 and the
@@ -10300,3 +10306,53 @@ by physical channel and interval using existing solid columns and
 native component operators, then test physical torque/shear and the
 registered growing-interface-space mixed system. Do not select P0 from
 this one work difference or close F03/G0B.
+
+**Next bounded component decision (prospective):** The same-law loaded
+Mx work differs by `12.96%` and its shell interface Fy/Mz differ
+materially; Fz work differs by `3.27%`. The question is whether the
+existing fixed-dual response gap is concentrated in E4/3D plate
+compliance, B3/3D bar compliance, or a particular six-channel action
+block. Reconstruct the solid 24×24 work-compliance matrix and its
+separate plate/bar portions from the existing saved unit fields; build
+native shell/beam component matrices under the identical P0 integrated
+dual basis. Check source hashes, sum/reciprocity and the two saved
+fixed-dual action works. If the gap localizes to the shell's physical
+Mx/Mz/Fy coupling, review that trace/idealization and support mapping;
+if the beam or another block dominates, direct the next physical check
+there. Neither outcome selects P0 or replaces growing-space stability.
+No new external solve, mesh level, or resource allowance is implied.
+
+**Same-law component-compliance outcome:** Source `00ef20cd` reconstructs
+the solid 24×24 work matrix from all saved unit FRDs, split by actual
+plate/bar nodes, and assembles native E4/B3 component matrices under
+the identical physical P0 integrated action basis. Source hashes,
+side partition, component reciprocity, native component equilibrium
+and both previously saved fixed-dual action works pass. The solid
+shell/bar matrix relative skew is `2.12e-6`/`1.14e-6` at printed FRD
+precision; native shell/bar skew is below `2.7e-12`. At the declared
+relative `1e-10` numerical rank cut, solid shell/bar component work
+matrices are `24/24`, native E4 shell is `21/24`, and native retained
+B3 beam is `15/24`. Component ranks are fixed-grid properties, not
+mixed-system stability measures.
+
+For the saved solid dual under Mx, native-minus-solid shell action
+work is `−2.0203966e-4 J`, versus beam `−9.1133e-6 J`; the shell
+accounts for about `95.7%` of their combined signed difference. The
+shell difference decomposes into Mx `−1.6034484e-4 J`, Mz
+`−4.7351348e-5 J`, and Fy `+5.6565e-6 J`. Under Fz, shell difference
+is `−2.1710420e-3 J`, versus beam `−1.9258e-5 J`, about `99.1%`
+shell. Its signed shell contributions are Fx `−2.1513084e-3 J`,
+Fz `−4.0833e-5 J`, and My `+2.1100e-5 J`. These channel terms may
+cancel; they are not independent strain energies. The source-bound
+`B3_E4_F03_C1_COMPONENT_COMPLIANCE_DEV_V1.json` has SHA256
+`cc63bd8bba094bfa5499eedd68510b3b5840b1101978563f88818305980b70f7`;
+one focused signed-channel test passes.
+
+The result directs the next *physical* discriminator to the E4/3D
+plate trace and root-support/kinematic idealization under the same
+torque/shear work, while preserving beam and tip-load caveats. The
+x8 Q4 fixed-dual shortfall already persists after the shell-only
+weak rank becomes full, so further automatic x refinement is not
+justified by this matrix. Do not infer a faulty E4 equation, a better
+multiplier space, or a production law from component work alone.
+F03/G0B remain open and G1 barred.
