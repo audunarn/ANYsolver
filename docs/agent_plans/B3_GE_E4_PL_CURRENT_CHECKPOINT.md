@@ -21,12 +21,14 @@ wrench recovery and coupled transfer remain open.
 **Remaining uncertainty:** Allocate torque/shear differences among the
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
-**Next discriminator:** Design one physically matched torque/shear reference
-with a declared connection and admissible surface-order evidence; the
-saved C1 half-load no-contact route also overlaps and is rejected. Use
-existing native work to derive the separate bonded material-line trace;
-advance B2 F09 and independent foundations without repeating axial/opening
-sweeps.
+**Next discriminator:** On the same bounded E4/native-B3 primal fixture,
+assemble a provisional six-channel exact material-line KKT and compare
+torque/shear work and physical response with the reduced strip-pose law.
+Failure in rank, work or physical transfer revises the line law before
+space growth; a clean bounded result advances the required growing-space
+assessment and a physically matched external torque/shear reference. P0
+in this screen is provisional, not a selected multiplier. Advance B2 F09
+and independent foundations without repeating axial/opening sweeps.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 ## Detailed reference state and saved-field decision — 27 September 2026
