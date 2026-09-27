@@ -58,11 +58,25 @@ def main():
             )
             elapsed = time.perf_counter() - started
         reaction = float(summary.integration_force[2])
+        source_force = np.asarray(summary.integration_force, dtype=float)
+        target_force = np.asarray(summary.target_force, dtype=float)
+        source_moment = np.asarray(summary.integration_moment, dtype=float)
+        target_moment = np.asarray(summary.target_moment, dtype=float)
         rows.append({
             "divisions": divisions,
             "rows": divisions if row_divisions is None else row_divisions,
             "elapsed_seconds": elapsed,
             "reaction_z_n": reaction,
+            "source_force_n": source_force.tolist(),
+            "target_force_n": target_force.tolist(),
+            "force_balance_norm_n": float(np.linalg.norm(
+                source_force + target_force
+            )),
+            "source_moment_about_origin_nm": source_moment.tolist(),
+            "target_moment_about_origin_nm": target_moment.tolist(),
+            "moment_balance_norm_nm": float(np.linalg.norm(
+                source_moment + target_moment
+            )),
             "continuous_local_plane_reference_z_n": reference_force_z,
             "relative_reference_error": abs(reaction - reference_force_z)
                                         / reference_force_z,
@@ -76,6 +90,10 @@ def main():
             "area_integration_error_m2": float(summary.area_integration_error_m2),
             "weighted_gap_integration_error_m3": float(
                 summary.weighted_gap_integration_error_m3
+            ),
+            "integration_force_error_indicator_n": stiffness * (
+                float(summary.weighted_gap_integration_error_m3)
+                + left_penetration * float(summary.area_integration_error_m2)
             ),
         })
     args.output.write_text(json.dumps({
