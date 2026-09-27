@@ -31,23 +31,37 @@ from scripts.b3_e4_f03_plate_patch_work import (
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
+def _channel_basis_rows(line: MaterialLinePosition,
+                        kinds: tuple[str, ...],
+                        knots: tuple[float, ...]) -> np.ndarray:
+    """Group exact weak rows by their declared physical-channel basis."""
+    if (len(kinds) != 6 or any(kind not in (
+            "piecewise_constant", "continuous_linear", "dual_linear")
+            for kind in kinds)):
+        raise ValueError("six declared line-channel spaces required")
+    cache = {}
+    for kind in set(kinds):
+        cache[kind], _ = _rows(line, LineMultiplierSpace(kind, knots))
+    return np.vstack([cache[kind][axis::6]
+                      for axis, kind in enumerate(kinds)]).copy()
+
+
 def _channel_rows(line: MaterialLinePosition, kind: str,
                   knots: tuple[float, ...] = (0., .5, 1.)) -> np.ndarray:
-    p0, _ = _rows(line, LineMultiplierSpace(
-        "piecewise_constant", knots))
     if kind == "p0":
-        return p0
-    if kind not in ("continuous_linear", "dual_linear"):
+        kinds = ("piecewise_constant",)*6
+    elif kind in ("continuous_linear", "dual_linear"):
+        kinds = (kind,)*5+("piecewise_constant",)
+    else:
         raise ValueError("bounded candidate space required")
-    enriched, _ = _rows(line, LineMultiplierSpace(kind, knots))
-    # Rows grouped by physical channel; no new Mz direction is invented.
-    return np.vstack([enriched[axis::6] for axis in range(5)]
-                     + [p0[5::6]]).copy()
+    return _channel_basis_rows(line, kinds, knots)
 
 
 def _one_topology(xs, ys, beam, *, mixed_s3: bool,
                   diagonal: str,
-                  knots: tuple[float, ...] = (0., .5, 1.)) -> dict:
+                  knots: tuple[float, ...] = (0., .5, 1.),
+                  extra_policies: tuple[tuple[str, tuple[str, ...]], ...] = (),
+                  ) -> dict:
     shell_size = 6*len(xs)*len(ys)
     shell_tangent, shell_physical = (
         raw_e4_mixed_c1_tangent(xs, ys, thickness=.035,
@@ -75,10 +89,17 @@ def _one_topology(xs, ys, beam, *, mixed_s3: bool,
     weights = np.array([station.weight for station in line.stations])
     result = {}
     p0_label = "p0_two" if len(knots) == 3 else f"p0_{len(knots)-1}"
-    for label, kind in ((p0_label, "p0"),
-                        ("p1_non_yaw_p0_yaw", "continuous_linear"),
-                        ("dual_non_yaw_p0_yaw", "dual_linear")):
-        constraint = _channel_rows(line, kind, knots)
+    policies = ((p0_label, "p0"),
+                ("p1_non_yaw_p0_yaw", "continuous_linear"),
+                ("dual_non_yaw_p0_yaw", "dual_linear")) + extra_policies
+    for label, kind in policies:
+        if isinstance(kind, tuple):
+            channel_kinds = kind
+            constraint = _channel_basis_rows(line, channel_kinds, knots)
+        else:
+            constraint = _channel_rows(line, kind, knots)
+            channel_kinds = (("piecewise_constant",)*6 if kind == "p0" else
+                             (kind,)*5+("piecewise_constant",))
         scales, energy_scale = _scales(
             shell_size, beam, free, row_count=len(constraint))
         rank = _scaled_row_diagnostics(
@@ -146,9 +167,10 @@ def _one_topology(xs, ys, beam, *, mixed_s3: bool,
                 continue
             diagnostics["status"] = "BOUNDED_SOLVE_PASSED"
             loads[load_name] = diagnostics
-        channel_rows = ([len(knots)-1]*6 if kind == "p0" else
-                        [len(knots)]*5+[len(knots)-1])
+        channel_rows = [len(knots)-1 if basis == "piecewise_constant"
+                        else len(knots) for basis in channel_kinds]
         result[label] = {"row_count": int(len(constraint)),
+                         "channel_basis_fx_fy_fz_mx_my_mz": channel_kinds,
                          "channel_rows_fx_fy_fz_mx_my_mz": channel_rows,
                          "rank": rank, "loads": loads}
     return {"station_count": len(line.stations),

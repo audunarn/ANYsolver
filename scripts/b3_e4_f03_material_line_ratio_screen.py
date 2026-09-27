@@ -47,13 +47,18 @@ def run() -> dict:
                                                 shell_bond_cuts]),
                                 expected_cuts, rtol=0., atol=1e-12)):
             raise ArithmeticError("declared reciprocal reference cuts changed")
+        p0, p1 = "piecewise_constant", "continuous_linear"
+        policy = ((p1, p0, p1, p1, p1, p0) if shell_cells == 4 else
+                  (p1, p1, p1, p0, p0, p0))
         results[label] = {
             "shell_bond_cells": shell_cells,
             "native_bond_half_cells": int(len(beam_bond_cuts)-1),
             "shell_bond_cuts_m": shell_bond_cuts.tolist(),
             "native_bond_cuts_m": beam_bond_cuts.tolist(),
             "q4": _one_topology(xs, ys, beam, mixed_s3=False,
-                                 diagonal="bl_tr", knots=knots),
+                                 diagonal="bl_tr", knots=knots,
+                                 extra_policies=(("rank_compatible_ablation",
+                                                  policy),)),
         }
     return {
         "classification": "private first reciprocal material-line ratio screen",

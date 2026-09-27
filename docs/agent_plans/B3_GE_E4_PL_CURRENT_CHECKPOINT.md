@@ -22,20 +22,47 @@ Independent trace-only checks establish the complete-row identities:
 Fy/Mz loses one joint row for finer shell cells; Mx and My each lose one
 row for finer native beam cells. Their SVD channel fractions are
 basis-dependent, while these block ranks are not.
+Ratio-specific P0/P1 ablations restore full rank (28/28, 27/27) and pass
+four bounded torque/shear work and balance checks, but independent review
+finds no derivation of a fixed general multiplier policy from those facts.
 The matched detached-solid evidence remains limited by connection and
 contact idealization. B2 F09 fail-closed admission is unfinished.
 **Remaining uncertainty:** The admissible multi-channel test-space image
 changes with relative shell/beam resolution; the correct interface policy
 and physical torque/shear fidelity remain undecided. Mixed-S3 tested so
 far lies on a mesh edge; off-edge trace sensitivity is untested.
-**Next discriminator:** Use the verified channel and cross-channel trace
-dimensions to derive a physically interpretable independent row policy,
-then compare its supported work, physical transfer and locking with P0
-on these same ratio cases. Do not automatically drop rows by SVD or run
-the full ratio series on the failed enriched policy.
+**Next discriminator:** Derive unscaled channel and cross-channel
+row-span identities over the reference-cut union, then state one fixed
+local basis rule before another loaded sweep. Test that rule across
+refinement, reversal and Q4/S3 with supported work and appropriate mixed
+norms. The ratio-specific ablations are diagnostics, not a selected rule.
+Do not automatically drop rows by SVD or run the full ratio series on
+the failed enriched policy.
 Advance a physically matched two-sided torque/shear reference and check
 off-edge S3 mapping separately. Do not resume finer classical axial work.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
+
+**Next bounded row-policy probe (prospective):** The first reciprocal
+failures identify different trace dimensions. On shell-fine 1:2, test
+cellwise P0 Fy/Mz with continuous P1 in the other four channels; on
+beam-fine 2:1, test cellwise P0 Mx/My/Mz with continuous P1 translations.
+These are local polynomial-order choices tied to the measured trace
+blocks, not SVD row deletion or a production policy. First check
+supported full-coordinate rank; if independent, compare the same loaded
+work, reactions and continuous gaps with all-P0. If either remains
+dependent or gives inconsistent work/balance, stop this componentwise
+route and derive a coupled test space. Passing only nominates a candidate
+for physical-reference, locking and growing-space assessment.
+
+**Row-policy probe outcome and review:** The ratio-specific choices rank
+28/28 and 27/27 and all four bounded torque/shear solves pass work,
+reaction balance and positive physical shell work. Same-primal P0
+comparisons are valid *within* each ratio; the primals and chosen bases
+differ across ratios. Independent review found no row-assembly or KKT
+defect, but the null spaces do not uniquely prescribe which physical
+channel to coarsen. Near-P0 tip response and reduced sampled gaps do not
+rule out locking or prove torque/shear transfer. This remains a
+rank-compatible ablation diagnostic, not a trace-order formulation.
 
 **Saved bounded row-growth screen:** Committed runner
 `5f852bda0553b2db84b8fb785355b5ea24cf46a7`, worktree import,
