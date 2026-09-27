@@ -142,6 +142,26 @@ law. The prior smooth-traction `.035 m` plate-only screen was within
 `2.31%` torque and `0.89%` shear at its finest tested grids, but its
 traction is different from the current multiplier action and cannot
 be substituted as an accuracy score here.
+**Director-work result:** The 23 paired active plate-face sites preserve
+the full solid action work under a local director-compatible projection
+except `2.80e-7 J` in Fz and below `1e-22 J` in Mx. The Fz excluded
+work is only `0.013%` of the `0.002171 J` solid-minus-native shell-work
+gap; the Mx fraction is negligible. The maximum local thickness-normal
+stretch is `37.6 nm` (Fz) and `4.0 nm` (Mx). This rules out that one
+mode as the main cause, but the projection is local and does not test
+global Q4 interpolation, transverse shear, support equivalence or 3D
+mesh convergence. Raw `B3_E4_F03_C1_MATERIAL_LINE_DIRECTOR_WORK_DEV_V1.json`
+has SHA256 `CA79E91F9AB3FC5012E743EED9D1D7B7BE95C3875D12D4C8315B983FB0244B67`.
+**Next bounded physical-reference check:** Apply the *same frozen 24-row
+line dual* as a load to standalone 35 mm C3D20R plates at factors 2
+and 4, with the same left-edge translational clamp. First verify factor-4
+plate-only geometry and action-work parity against the saved detached
+solid plate. If parity fails, repair mapping before any mesh claim.
+If parity passes, factor-2→4 movement assesses whether the present 3D
+reference work is mesh-sensitive; a small movement leaves the E4/3D
+shell theory, trace load and support interpretation as the principal
+uncertainty. This is a diagnostic, not the required three-level
+convergence or a connection-law selection.
 This is development evidence, not F03/G0B acceptance. Formal F03
 authority remains unconsumed; G0B open and G1 barred. B2 F09 and other
 independent foundations remain available for bounded parallel progress.
