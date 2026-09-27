@@ -228,6 +228,20 @@ def test_material_line_orientation_jacobian_at_nonzero_gap(mixed_s3):
     finite_difference = (trial(1)-trial(-1))/(2*step_size)
     assert np.max(np.abs(finite_difference-predicted)) < 2e-8
 
+    position_predicted = (line.position_jacobian(
+        coordinates, frames, state)@direction).reshape(-1, 3)
+
+    def position_trial(sign):
+        trial_coordinates = coordinates+sign*step_size*shell_direction[:, :3]
+        update = Rotation.from_rotvec(
+            sign*step_size*shell_direction[:, 3:]).as_matrix()
+        trial_frames = update@frames
+        trial_state = beam.context.advance(state, sign*step_size*beam_direction)
+        return line.evaluate(trial_coordinates, trial_frames, trial_state)
+
+    position_difference = (position_trial(1)-position_trial(-1))/(2*step_size)
+    assert np.max(np.abs(position_difference-position_predicted)) < 2e-8
+
     second_shell = rng.normal(size=(line.shell_count, 6))*.1
     second_beam = rng.normal(size=beam.context.count)*.1
     second_shell[fixed_shell] = 0.
@@ -238,7 +252,7 @@ def test_material_line_orientation_jacobian_at_nonzero_gap(mixed_s3):
     reversed_mixed = line.orientation_second_variation(
         coordinates, frames, state, other, direction)
 
-    def two_direction_trial(first_scale, second_scale):
+    def two_direction_state(first_scale, second_scale):
         translation = (first_scale*shell_direction[:, :3]
                        +second_scale*second_shell[:, :3])
         rotation = (first_scale*shell_direction[:, 3:]
@@ -246,8 +260,11 @@ def test_material_line_orientation_jacobian_at_nonzero_gap(mixed_s3):
         trial_frames = Rotation.from_rotvec(rotation).as_matrix()@frames
         trial_state = beam.context.advance(
             state, first_scale*beam_direction+second_scale*second_beam)
-        return line.orientation_gap(coordinates+translation,
-                                    trial_frames, trial_state)
+        return coordinates+translation, trial_frames, trial_state
+
+    def two_direction_trial(first_scale, second_scale):
+        return line.orientation_gap(
+            *two_direction_state(first_scale, second_scale))
 
     def mixed_stencil(h):
         return (two_direction_trial(h, h)-two_direction_trial(h, -h)
@@ -261,6 +278,25 @@ def test_material_line_orientation_jacobian_at_nonzero_gap(mixed_s3):
     difference_mixed = (4*fine-coarse)/3
     assert np.max(np.abs(analytic_mixed-difference_mixed)) < 5e-7
     assert np.max(np.abs(analytic_mixed-reversed_mixed)) < 1e-9
+
+    position_mixed = line.position_second_variation(
+        coordinates, frames, state, direction, other)
+    position_reversed = line.position_second_variation(
+        coordinates, frames, state, other, direction)
+
+    def position_stencil(h):
+        return (
+            line.evaluate(*two_direction_state(h, h))
+            -line.evaluate(*two_direction_state(h, -h))
+            -line.evaluate(*two_direction_state(-h, h))
+            +line.evaluate(*two_direction_state(-h, -h))
+            )/(4*h*h)
+
+    position_fine = position_stencil(1e-4)
+    position_coarse = position_stencil(2e-4)
+    position_difference = (4*position_fine-position_coarse)/3
+    assert np.max(np.abs(position_mixed-position_difference)) < 5e-7
+    assert np.max(np.abs(position_mixed-position_reversed)) < 1e-9
 
 
 def test_material_line_orientation_couple_work_cancels_on_common_rigid_motion():

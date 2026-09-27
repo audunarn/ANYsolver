@@ -15,8 +15,8 @@ A new material-line proof detects the even-slip mode and passes bounded
 position/Jacobian checks. Its value-only orientation probe is objective,
 non-drilling, and preserves the tested shear mode. Its reference orientation
 Jacobian passes Q4/S3 reference and nonzero-gap chart differences;
-an explicit mixed orientation second variation passes bounded checks.
-Complete position/orientation work and coupled transfer remain open.
+explicit mixed position and orientation second variations pass bounded
+checks. Six-direction physical work and coupled transfer remain open.
 **Remaining uncertainty:** Allocate torque/shear differences among the
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
@@ -274,6 +274,19 @@ bound on the extrapolated estimate. All focused material-line tests pass
 Log-chain defect. This does not bound the raw stencil, implement a global
 KKT tangent, verify the three position-channel second variations, or
 qualify physical torque/shear, line spaces, and G0B.
+
+**Position-channel completion within the private trace (27 September):**
+The finite-state beam-frame position Jacobian now includes current E4 top
+lever arms and native B3 center/rotation variations; the reference method
+specializes it. Its mixed second variation differentiates the same work,
+including shell-top curvature, retained center lift, beam-frame curvature,
+and cross terms. Q4 and mixed-S3 nonzero-state first differences pass the
+existing `2e-8` absolute check; mixed directional differences pass the
+unchanged `5e-7` Richardson comparison and reverse-direction symmetry.
+Independent mechanics review found no blocking second-variation sign or
+offset defect. This completes a bounded local six-channel derivative
+candidate, not a six-basis physical wrench balance, assembled multiplier
+tangent, growing-space stability, loaded transfer, or F03/G0B acceptance.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8

@@ -290,23 +290,88 @@ class MaterialLinePosition:
             gaps.append(frame.T@(shell_top-beam_bottom)-station.reference_gap)
         return np.asarray(gaps)
 
-    def reference_jacobian(self):
-        """Exact first variation in the native accepted reference chart."""
-        state = self.beam.context.initial.mechanical
+    def position_jacobian(self, shell_coordinates, shell_frames, beam_state):
+        """Position-gap variation through current spatial shell/B3 updates."""
+        coordinates = np.asarray(shell_coordinates, dtype=float)
+        frames = np.asarray(shell_frames, dtype=float)
+        if (coordinates.shape != (self.shell_count, 3) or
+                frames.shape != (self.shell_count, 3, 3) or
+                not np.isfinite(coordinates).all() or not np.isfinite(frames).all()):
+            raise ValueError("complete finite shell state required")
         result = np.zeros((3*len(self.stations), 6*self.shell_count+self.beam.context.count))
         for k, station in enumerate(self.stations):
-            high, low, frame = station.port.pose_pair(state)
-            shell_top = station.shape@(self.reference_nodes[station.nodes]+self.top)
+            high, low, frame = station.port.pose_pair(beam_state)
+            shell_top = sum((weight*(coordinates[int(node)]+frames[int(node)]@self.top)
+                             for node, weight in zip(station.nodes, station.shape)),
+                            np.zeros(3))
             center = high+low
-            tangent = station.port.tangent(state)
+            tangent = station.port.tangent(beam_state)
             block = result[3*k:3*k+3]
             for node, weight in zip(station.nodes, station.shape):
                 node = int(node)
                 block[:, 6*node:6*node+3] += weight*frame.T
-                block[:, 6*node+3:6*node+6] -= weight*frame.T@_skew(self.top)
+                block[:, 6*node+3:6*node+6] -= (
+                    weight*frame.T@_skew(frames[node]@self.top))
             block[:, 6*self.shell_count:] = frame.T@(
                 -tangent[:3]+_skew(shell_top-center)@tangent[3:])
         return result
+
+    def reference_jacobian(self):
+        """Specialize the position Jacobian to the accepted reference."""
+        return self.position_jacobian(
+            self.reference_nodes,
+            np.broadcast_to(np.eye(3), (self.shell_count, 3, 3)),
+            self.beam.context.initial.mechanical)
+
+    def position_second_variation(self, shell_coordinates, shell_frames,
+                                  beam_state, first, second):
+        """Mixed position-gap variation in one left-exponential chart."""
+        coordinates = np.asarray(shell_coordinates, dtype=float)
+        frames = np.asarray(shell_frames, dtype=float)
+        first = np.asarray(first, dtype=float)
+        second = np.asarray(second, dtype=float)
+        total = 6*self.shell_count+self.beam.context.count
+        if (coordinates.shape != (self.shell_count, 3) or
+                frames.shape != (self.shell_count, 3, 3) or
+                first.shape != (total,) or second.shape != (total,) or
+                not all(np.isfinite(item).all() for item in
+                        (coordinates, frames, first, second))):
+            raise ValueError("complete finite material-line state and directions required")
+        split = 6*self.shell_count
+        shell_u = first[:split].reshape(-1, 6)
+        shell_v = second[:split].reshape(-1, 6)
+        beam_u, beam_v = first[split:], second[split:]
+        result = []
+        for station in self.stations:
+            shell_top = np.zeros(3)
+            shell_first = np.zeros(3)
+            shell_second = np.zeros(3)
+            shell_mixed = np.zeros(3)
+            for node, weight in zip(station.nodes, station.shape):
+                node = int(node)
+                u, v = shell_u[node], shell_v[node]
+                top = frames[node]@self.top
+                rotation_u, rotation_v = _skew(u[3:]), _skew(v[3:])
+                shell_top += weight*(coordinates[node]+top)
+                shell_first += weight*(u[:3]+rotation_u@top)
+                shell_second += weight*(v[:3]+rotation_v@top)
+                shell_mixed += .5*weight*(
+                    rotation_u@rotation_v+rotation_v@rotation_u)@top
+            beam_high, beam_low, frame = station.port.pose_pair(beam_state)
+            center = beam_high+beam_low
+            tangent = station.port.tangent(beam_state)
+            center_u, center_v = tangent[:3]@beam_u, tangent[:3]@beam_v
+            angular_u, angular_v = tangent[3:]@beam_u, tangent[3:]@beam_v
+            frame_u, frame_v = _skew(angular_u)@frame, _skew(angular_v)@frame
+            center_uv, frame_uv = station.port.second_variation(
+                beam_state, beam_u, beam_v)
+            relative = shell_top-center
+            result.append(
+                frame_uv.T@relative
+                +frame_u.T@(shell_second-center_v)
+                +frame_v.T@(shell_first-center_u)
+                +frame.T@(shell_mixed-center_uv))
+        return np.asarray(result)
 
     def orientation_gap(self, shell_coordinates, shell_frames, beam_state):
         """Objective beam-relative Log on the admitted finite rotation chart."""
