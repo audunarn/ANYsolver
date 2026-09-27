@@ -9,21 +9,24 @@ total-rotation derivative check and a reference physical wrench dual.
 Its selected P0/P1/signed-dual rows preserve top-fixed director-pitch
 freedom. Four/eight-interval P0 spaces are nested and full rank on the
 tested x16 shell/B3-12/B3-24 cases, while P0 eight intervals on x8/B3-12
-has rank 41/48. P1 has one exact continuous work-row
-dependency; the dual-eight 53/54 near-null belongs to the current
-discrete trial pairing, not the continuous law. The director-pitch hybrid
+has rank 41/48. P1 has one exact work-row dependency; the dual-eight
+53/54 near-null was observed on the current discrete trial pairing, but
+its relation to the newly proved continuous gauge must be reassessed.
+The director-pitch hybrid
 remains a separate two-sided weld candidate. B2 physical-section samples
 and private batching pass bounded checks, but F09 admission remains open.
-**Uncertainty:** A resolution policy that avoids dependent interface rows,
-then a physically justified dual norm, growing-space mixed-system stability and locking,
-physical transfer against a matched sided reference, and an admissible
-interface-resolution policy across the registered ratios.
-**Next discriminator:** Interpret the same-primal P0 mode under a physical
-trace-dual norm, then use the x8/m8 rank loss and x16/m8 full rank to
-define a candidate host-to-multiplier resolution policy. Assess P0 and a
-deliberately quotiented P1 with the actual native retained mixed tangent
-as the interface grows; check work, unsupported modes, locking and
-converged physical transfer together.
+**Uncertainty:** The six-channel top-face positional line has an exact
+continuous force/pitch-moment gauge; its finite P0 rank cannot qualify a
+six-pose bond. The required independent rotational work law, physical
+transfer against a matched sided reference, and then an admissible
+multiplier policy and growing-space stability remain unresolved.
+**Next discriminator:** Treat the top-face positional law as a finite-width
+footprint or a five-field quotient, not as the completed six-pose line.
+Compare an explicitly defined independent rotational trace or physical
+finite-extent weld with the supported torque/shear and compensated-pitch
+patches. Only after the continuous law survives should P0 and a deliberately
+quotiented P1 be assessed under an appropriate dual norm with the actual
+native retained mixed tangent, work, locking and registered ratios.
 Treat dual-eight with 54 independent rows as inadmissible on the tested
 primal layout. A failed candidate prompts a law or resolution revision;
 a passing one advances the independent G0 mechanics review. Do not
@@ -225,6 +228,73 @@ matched sided reference. The raw result is
 it hashes all eight directly used source files. The V1 result remains
 preserved with its narrower provenance. G0B remains open, G1 barred,
 formal F03 authority unconsumed.
+
+**Next B2 F09 bounded physical-range discriminator (prospective):** The
+passing heterogeneous elbow and the retained weak artificial generalized
+graph do not locate the representability boundary for a coherent physical
+section family. Keep the rooted 2 m + 1.5 m elbow, the fixed 80×3 mm first
+member, the rotated 12×3 mm second member and its reversal control. Scale
+only the second section homothetically by `λ=1,2^-5,2^-10` and the complete
+tip wrench by `λ^4`; stay inside the existing linear-eligibility and
+120 s/2 GiB/one-thread bounds. For each of six cases compare the exact
+physical cut-work oracle, a high-precision solve of the rounded matrix,
+ordinary stored-coordinate residual, sparse factorization, and a residual
+formed from factored `(D,z)` without first rounding `D*z`. This separates
+local/assembly, factorization and physical-state storage errors. A failure
+is retained and routed to the responsible layer; six passes give sampled
+physical-range evidence only, not continuous admission or F09/G0B
+acceptance. Keep the existing physical-balance and oracle criteria.
+
+**Continuous-law gauge discriminator (prospective, 27 September):** The
+top-face candidate's raw force/first-moment work is an affine surface
+traction `t=[F+M×(x−.95,y,0)]/W`. The suspected distinction is whether
+the smooth eight-interval `Fz/My` mode reflects an exact continuous
+coefficient gauge, rather than only a choice of norm or finite-grid
+resolution. Derive the coefficient-to-traction map explicitly; test the
+field `Fz=(x−.95)μ(x), My=μ(x)` against independent polynomial virtual
+gaps, and test its piecewise-constant midpoint representation at 2/4/8/16
+intervals against an analytic residual. If the continuous action is zero
+for nonzero coefficients, stop treating six raw top-face positional
+resultants as six independent local line-pose constraints. Keep the
+finite-width footprint result, then decide whether a quotient five-field
+one-sided law can meet the declared physical connection or whether an
+explicitly different rotational/finite-extent law is required. If the
+action is not zero, revisit the raw-row algebra before any norm study.
+The bounded analytic test changes no registered criterion or authority.
+
+**Continuous-law gauge result and action:** The source algebra and an
+independent eight-test analytic fixture confirm an exact continuum gauge.
+For `s=x−.95` and a flat width coordinate `y`, the declared raw work has
+`t=[F+M×(s,y,0)]/W`, hence `t_z=(Fz−s*My+Mx*y)/W`. The nonzero coefficient
+field `Fz=s*μ(x), My=μ(x)` gives zero traction and zero virtual work for
+every gap. At each station the coefficient-to-traction map has rank five,
+not six. A midpoint P0 representation of this field has squared traction
+and supported linear-gap work proportional to `h²`; the independent
+quadrature agrees with the exact formulas for 2/4/8/16 intervals. The
+saved x16/B3-24 P0-eight weak-mode coefficients follow the gauge:
+`corr(Fz,s*My)=0.999950/0.999952` under the inherited/L2 metrics, and only
+`1.300/1.295%` of their vertical traction-square decomposition comes
+from the interval-centre mismatch; the rest is the unavoidable within-cell
+variation of `s`. The P0-four values are `0.999578/0.999680` correlation.
+These are source-bound mode postprocesses, not a stability constant.
+
+The previous finite-dimensional Gram and eigen calculations remain
+arithmetically valid, but the conclusion that their small mode was chiefly
+an arbitrary norm conversion is superseded: the mode also approaches a
+**true continuous-law gauge**. No positive-definite physical traction norm
+exists on six unrestricted coefficient fields without quotienting it.
+Do not choose P0/P1/dual or derive a six-channel inf-sup claim for this
+positional top-face law. Retain its finite-footprint evidence. The required
+full-pose bonded line needs a separately declared physical rotational or
+finite-extent work component; the existing director-pitch hybrid is a
+distinct two-sided candidate, not an automatically qualified one-sided
+replacement. Test that law's top-fixed pitch, objectivity, shear, torque,
+work and matched geometry before a multiplier-space comparison. The
+published [beam-to-surface construction](https://link.springer.com/article/10.1007/s00466-025-02647-9)
+uses a separate surface orientation tensor with a Kirchhoff–Love shell,
+so it informs this decision without
+qualifying an E4-PL adaptation. G0B remains open, G1 barred, and formal
+F03 authority unconsumed.
 
 **Next bounded growing-row diagnostic (prospective, 27 September):** On the
 already assembled x8/y4 C1 Q4/B3-12 native retained system, grow the exact
