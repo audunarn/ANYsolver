@@ -5,7 +5,8 @@ import pytest
 
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_distributed_surface_finite import (
-    FiniteSurfaceLineHybrid, FiniteSurfaceMomentPatch, c1_hybrid_line_space,
+    FiniteSurfaceLineHybrid, FiniteSurfaceMomentPatch,
+    FiniteSurfaceTopFaceLine, c1_hybrid_line_space,
     bounded_physical_compliance_screen, finite_chart_screen,
 )
 from anysolver.corotational import rotation_matrix_from_vector
@@ -168,6 +169,108 @@ def test_c1_hybrid_six_channel_reference_is_distinct_and_non_drilling():
         beam_step[6*i+2] = angle*beam.abscissae[i]
     shear = trace@np.r_[shell_step.ravel(), beam_step]
     assert np.max(np.abs(shear)) < 1e-12
+
+
+def test_c1_segmented_top_face_law_preserves_positional_work():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    top = FiniteSurfaceTopFaceLine(xs, ys, beam, thickness=.035)
+    hybrid = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
+    state = beam.context.initial.mechanical
+    zero = np.zeros(top.shell_size)
+    assert np.max(np.abs(top.evaluate_e4_total(zero, state)[:, 0])) < 1e-12
+    trace = top.reference_trace()
+    assert np.linalg.matrix_rank(trace) == 6
+
+    rng = np.random.default_rng(731)
+    shell_step = rng.normal(size=top.shell_size)*1e-5
+    beam_step = rng.normal(size=beam.context.count)*1e-5
+    direction = np.r_[shell_step, beam_step]
+    actual = top.evaluate_e4_total(
+        zero, state, first=(shell_step, beam_step),
+        second=(shell_step, beam_step))[:, 1]
+    np.testing.assert_allclose(actual, trace@direction, rtol=0., atol=1e-10)
+
+    # A supported, top-fixed pitch field is invisible to positional work,
+    # while the distinct two-sided director-pitch weld does work.
+    shell_step = np.zeros((top.shell_count, 6))
+    terminal = top.reference_nodes[:, 0] >= .9-1e-12
+    shell_step[terminal, 0] = -.0175e-5
+    shell_step[terminal, 4] = 1e-5
+    field = np.r_[shell_step.ravel(), np.zeros(beam.context.count)]
+    assert np.max(np.abs(trace@field)) < 1e-12
+    assert abs((hybrid.reference_trace()@field)[4]-1e-5) < 1e-12
+
+    intervals = ((.9, .95), (.95, 1.))
+    pieces = [FiniteSurfaceTopFaceLine(
+        xs, ys, beam, thickness=.035, x_interval=interval)
+        for interval in intervals]
+    rows = np.vstack([piece.reference_trace() for piece in pieces])
+    fixed_shell = {6*j*len(xs)+axis for j in range(len(ys))
+                   for axis in range(6)}
+    fixed_beam = {top.shell_size+index for index in beam.context.fixed}
+    free = [i for i in range(rows.shape[1])
+            if i not in fixed_shell and i not in fixed_beam]
+    # One linear host per interval makes the two mean-z gaps and two
+    # longitudinal pitch moments algebraically dependent. This is a
+    # genuine discrete continuity relation, not a mixed-unit rank cutoff.
+    np.testing.assert_allclose(
+        rows[2]-rows[8]-.025*(rows[4]+rows[10]), 0.,
+        rtol=0., atol=1e-12)
+    assert np.linalg.matrix_rank(rows[:, free]) == 11
+
+    # Two hosts per interval permit curvature inside each interval. This
+    # distinguishes coarse primal representability from a duplicate in
+    # the continuous six-channel positional law.
+    finer_xs, finer_ys = local_grid(4)
+    finer_beam = build(24, z_offset=.0675,
+                       torsion_constant=square_torsion_constant(),
+                       reference_profile="c1_tangent_2um", assemble=False)
+    finer = [FiniteSurfaceTopFaceLine(
+        finer_xs, finer_ys, finer_beam, thickness=.035,
+        x_interval=interval) for interval in intervals]
+    finer_rows = np.vstack([piece.reference_trace() for piece in finer])
+    finer_shell_size = finer[0].shell_size
+    finer_fixed = {6*j*len(finer_xs)+axis for j in range(len(finer_ys))
+                   for axis in range(6)}
+    finer_fixed |= {finer_shell_size+index
+                    for index in finer_beam.context.fixed}
+    finer_free = [i for i in range(finer_rows.shape[1])
+                  if i not in finer_fixed]
+    assert np.linalg.matrix_rank(finer_rows[:, finer_free]) == 12
+
+
+def test_c1_top_face_line_actual_e4_chart_work_at_nonzero_rotation():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    top = FiniteSurfaceTopFaceLine(xs, ys, beam, thickness=.035)
+    state = beam.context.initial.mechanical
+    rng = np.random.default_rng(910)
+    q = np.zeros((top.shell_count, 6))
+    q[:, 3:] = .02*rng.normal(size=(top.shell_count, 3))
+    u = rng.normal(size=q.shape)*np.array((.001, .001, .001, .02, .02, .02))
+    v = rng.normal(size=q.shape)*np.array((.001, .001, .001, .02, .02, .02))
+    beam_zero = np.zeros(beam.context.count)
+    multipliers = np.array((18., -23., 31., 7., -100., 13.))
+    response = top.evaluate_e4_total(
+        q.ravel(), state, first=(u.ravel(), beam_zero),
+        second=(v.ravel(), beam_zero))
+
+    def work(a, b):
+        return float(multipliers@top.evaluate_e4_total(
+            (q+a*u+b*v).ravel(), state)[:, 0])
+
+    h = 1e-5
+    first_fd = (work(h, 0.)-work(-h, 0.))/(2*h)
+    mixed_h = 2e-3
+    mixed_fd = (work(mixed_h, mixed_h)-work(mixed_h, -mixed_h)-
+                work(-mixed_h, mixed_h)+work(-mixed_h, -mixed_h))/(4*mixed_h**2)
+    assert abs(float(multipliers@response[:, 1])-first_fd) < 1e-7
+    assert abs(float(multipliers@response[:, 3])-mixed_fd) < 1e-6
 
 
 def test_c1_hybrid_has_a_support_admissible_transverse_section_null():

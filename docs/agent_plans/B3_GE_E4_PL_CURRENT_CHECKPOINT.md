@@ -3,18 +3,76 @@
 ## Current state — 27 September 2026
 
 **Decision sought:** Select the physical native beam–shell connection before
-G1. **Established:** C1 is a reduced rotational-weld candidate distinct from
-the F5 top-face positional bond. Its x16/m8→m16 torque response changes
-1.2–2.5% while work closes; an independently reviewed x16/m16 check finds
-all rows algebraically represented by the shell. This is not stability or
-physical-transfer acceptance. Sampled B2 local rounding and six pure-load
-graph checks pass; private repeated-section compilation now reuses immutable
-operators with batch parity. Continuous F09 admission remains open. **Uncertainty:**
-The intended rotational connection and its matched torque/shear transfer
-and growing-space stability. **Next action:** Review C1's physical work law
-against a matching reference before another mesh refinement or multiplier
-choice; continue independent G0 foundations. **Gate:** G0B open, G1 barred;
-formal F03 authority unconsumed.
+G1. **Established:** C1's independent director-pitch channel is a reduced
+two-sided rotational-weld candidate, distinct from a top-face positional
+bond. The new segmented top-face moment candidate passes reference and actual
+finite-chart work checks, but a two-interval x2 mesh has one exact redundant
+row; x4 restores all 12 rows. Saved fixed-grid C1 comparisons show material
+changes in support-wrench transfer despite similar tip motion. B2's private
+repeated-section compilation has batch parity, while F09 admission remains
+open. **Uncertainty:** Which declared physical law matches the required
+torque/shear transfer, and which resolution-aware interface space is stable
+without locking. **Next discriminator:** Use F5 only for the top-face
+physical-transfer comparison; define an independently resolved two-sided
+stitch for the hybrid law, then assess growing-space constraints. Continue
+independent G0 foundations. **Gate:** G0B open, G1 barred; formal F03
+authority unconsumed.
+
+**Next C1 connection-law decision (27 September):** The saved matched
+fixed-grid C1 experiment already contains both six position-moment
+`surface_moments` and six-channel director-pitch `line_hybrid_single_interval`
+under the same 35 mm Q4 plate, 2 µm tapered B3 reference axis, terminal
+patch, supports and separate tip torque/shear loads. At x2/y2, torque tip
+rotation is `50.0238` versus `49.1629 µrad`; at x4/y4 it is `50.4280`
+versus `49.6074 µrad`. These are different *laws*, not a P0/P1 space
+comparison. The existing compensated top-fixed pitch witness gives zero
+top-face positional work but nonzero hybrid pitch work, already interpreted
+as a two-sided face couple. Therefore keep the top-face and two-sided weld
+semantics separate and do not use the F5 top-face solid to score hybrid
+accuracy. The bounded next implementation question is whether the existing
+top-face finite-width positional work can be segmented longitudinally into
+a differentiable six-resultant line candidate without changing its
+continuous law. Test reference consistency, actual E4/B3 chart work,
+supported rank and the compensated pitch distinction before a loaded solve.
+If those pass, F5 supplies a compatible top-face *physical-transfer*
+comparator, though its shared-node bond remains stronger than six projected
+moments and cannot by itself qualify that weak law; if not, revise the
+segmentation. Neither outcome selects
+a multiplier space, qualifies C1, changes formal F03 authority, or enters
+G1. Independent read-only review confirmed the two distinct laws and found
+no contradiction in the compensated-pitch or face-pair virtual-work checks.
+It also found that fixed-grid torque and shear support-wrench partitions
+change appreciably, so matching tip motion alone is not a physical-transfer
+score. The F5 solid supports only the top-face positional comparison; a
+separately defined two-sided stitch is needed to assess the hybrid weld.
+
+**Top-face segmentation discriminator:** The first bounded test found rank
+`11/12` for two six-row intervals on an x2 terminal shell grid, although
+the one-interval reference, chart derivative and nonzero-chart work checks
+passed. Row-normalized SVD gives smallest singular value `1.56e-16`; the
+same left-null combination exists in shell-only and beam-only columns. It
+links the two interval mean-z rows to their pitch-moment rows and is an
+exact discrete continuity relation, not a raw-unit rank cutoff. **Question:**
+is this an inherent duplicate in the proposed line law or the consequence
+of one linear shell host per interval? Compare the same two-interval law on
+one x4 terminal grid with two hosts per interval, without a loaded solve.
+The x4 grid has rank `12/12` in full, shell-only and beam-only supported
+traces, with row-normalized smallest singular value `0.57735`; x2 has the
+exact identity `mean_z[0] - mean_z[1] - 0.025*(pitch_y[0] +
+pitch_y[1]) = 0` (maximum coefficient error `2.1e-15`). This identifies
+coarse primal representability as the immediate source: one linear host
+per interval cannot support twelve independent moment equations, while two
+hosts can. The next production decision needs a resolution-aware row policy
+or a different admissible multiplier basis, then work, locking, and
+growing-space stability checks. This diagnostic does not itself choose
+that policy, establish stability, or select a multiplier space.
+The bounded two-test first pass recorded the x2 `11/12` failure against an
+initially incorrect full-rank expectation. After identifying the exact
+relation and adding the x4 discriminator, the complete focused file passed
+`25/25` (`NUMBA_DISABLE_JIT=1`, plugin autoload off, one BLAS/MKL/OMP thread;
+400.51 s). The initial failed check is retained as the discovery, not
+silently described as an accepted x2 full-rank result. No loaded solve,
+formal F03 run, G0 acceptance or multiplier selection follows.
 
 **Bounded F09 physical-section decision (27 September):** The prior
 `2^-20`/`2^-40` weak-shear graph brackets a numerical issue in an artificial

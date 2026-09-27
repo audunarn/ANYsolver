@@ -56,6 +56,7 @@ class FiniteSurfaceMomentPatch:
         else:
             self.s3_cells = frozenset()
         self.top = thickness / 2
+        self.moment_center_x = .95
         self.shell_count = len(self.xs) * len(self.ys)
         self.shell_size = 6 * self.shell_count
         self.reference_nodes = np.array(
@@ -96,7 +97,7 @@ class FiniteSurfaceMomentPatch:
                                 nodes, shape = self._point_shape(x, y)
                                 w = float(wx*wy*jac)/.01
                                 self.points.append(_Point(x, y, w, nodes, shape, port))
-                                arm = np.array((x-.95, y, 0.))
+                                arm = np.array((x-self.moment_center_x, y, 0.))
                                 inertia += w*((arm@arm)*np.eye(3)-np.outer(arm, arm))
                                 area += float(wx*wy*jac)
         if abs(area-.01) > 1e-12 or len(self.points) == 0:
@@ -149,7 +150,7 @@ class FiniteSurfaceMomentPatch:
             beam_displacement = pose[:3]+np.cross(
                 pose[3:], (0., point.y, -.05))
             gap = material @ (shell_displacement-beam_displacement)
-            arm = np.array((point.x-.95, point.y, 0.))
+            arm = np.array((point.x-self.moment_center_x, point.y, 0.))
             mean += point.weight*gap
             moment += point.weight*np.cross(arm, gap)
             square += point.weight*float(gap @ gap)
@@ -164,7 +165,8 @@ class FiniteSurfaceMomentPatch:
         }
 
     def evaluate(self, shell_coordinates: np.ndarray, shell_frames: np.ndarray,
-                 beam_state, first=None, second=None):
+                 beam_state, first=None, second=None, *,
+                 _shell_frame_variations=None):
         """Return six gaps and, optionally, exact first and mixed variations.
 
         Both directions are applied with spatial Exp updates from the same
@@ -183,6 +185,15 @@ class FiniteSurfaceMomentPatch:
             sv, bv = second
             su, sv = np.asarray(su).reshape(self.shell_count, 6), np.asarray(sv).reshape(self.shell_count, 6)
             bu, bv = np.asarray(bu), np.asarray(bv)
+            if _shell_frame_variations is not None:
+                frame_directions = tuple(np.asarray(a, dtype=float)
+                                         for a in _shell_frame_variations)
+                if (len(frame_directions) != 3 or any(
+                        a.shape != frames.shape or not np.isfinite(a).all()
+                        for a in frame_directions)):
+                    raise ValueError("complete E4 frame variations required")
+        elif _shell_frame_variations is not None:
+            raise ValueError("E4 frame variations require two directions")
         _, _, center_frame = self.center.pose_pair(beam_state)
         qc = center_frame.T
         if directional:
@@ -209,10 +220,18 @@ class FiniteSurfaceMomentPatch:
                 for node, shape in zip(point.nodes, point.shape):
                     node = int(node)
                     directed = frames[node] @ directed_offset
-                    a, b = skew(su[node, 3:]), skew(sv[node, 3:])
-                    shell_u += shape*(su[node, :3]+a @ directed)
-                    shell_v += shape*(sv[node, :3]+b @ directed)
-                    shell_uv += shape*(.5*(a@b+b@a) @ directed)
+                    if _shell_frame_variations is None:
+                        a, b = skew(su[node, 3:]), skew(sv[node, 3:])
+                        directed_u, directed_v = a@directed, b@directed
+                        directed_uv = .5*(a@b+b@a)@directed
+                    else:
+                        fu, fv, fuv = frame_directions
+                        directed_u = fu[node]@directed_offset
+                        directed_v = fv[node]@directed_offset
+                        directed_uv = fuv[node]@directed_offset
+                    shell_u += shape*(su[node, :3]+directed_u)
+                    shell_v += shape*(sv[node, :3]+directed_v)
+                    shell_uv += shape*directed_uv
                 port = point.port.tangent(beam_state)
                 pu, pv = port@bu, port@bv
                 beam_u = pu[:3]+np.cross(pu[3:], beam_frame @ offset)
@@ -223,7 +242,7 @@ class FiniteSurfaceMomentPatch:
                 values.extend((qc_u@gap+qc@gap_u,
                                qc_v@gap+qc@gap_v,
                                qc_uv@gap+qc_u@gap_v+qc_v@gap_u+qc@(shell_uv-beam_uv)))
-            arm = np.array((point.x-.95, point.y, 0.))
+            arm = np.array((point.x-self.moment_center_x, point.y, 0.))
             for column, value in enumerate(values):
                 rows[:, column] += point.weight*value
                 moments[:, column] += point.weight*np.cross(arm, value)
@@ -522,6 +541,63 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
                           a*np.cross(frame[:, 2], director))/denom
             trace[4, shell_size:] += point.weight*beam_pitch@port[3:]
         return trace
+
+
+class FiniteSurfaceTopFaceLine(FiniteSurfaceLineHybrid):
+    """Segmented top-face positional work, distinct from the pitch weld.
+
+    This bounded candidate keeps the parent patch's six position-moment
+    functionals over each selected longitudinal interval. Its pitch action
+    comes from the longitudinal arm of top-face position, never from an
+    independent shell-director tie.
+    """
+
+    def __init__(self, xs: np.ndarray, ys: np.ndarray, beam, **kwargs):
+        super().__init__(xs, ys, beam, **kwargs)
+        self.moment_center_x = float(sum(p.weight*p.x for p in self.points))
+        self.inertia = np.zeros((3, 3))
+        for point in self.points:
+            arm = np.array((point.x-self.moment_center_x, point.y, 0.))
+            self.inertia += point.weight*((arm@arm)*np.eye(3)-np.outer(arm, arm))
+        if np.linalg.eigvalsh(self.inertia)[0] <= 1e-8:
+            raise ValueError("top-face line interval has degenerate footprint inertia")
+        element, cell, fraction, _ = beam._locate(self.moment_center_x)
+        self.center = NativeHalfCellSpatialPort(
+            beam.context, element, cell, fraction)
+
+    def evaluate(self, shell_coordinates: np.ndarray, shell_frames: np.ndarray,
+                 beam_state, first=None, second=None, *,
+                 _shell_frame_variations=None):
+        return FiniteSurfaceMomentPatch.evaluate(
+            self, shell_coordinates, shell_frames, beam_state, first, second,
+            _shell_frame_variations=_shell_frame_variations)
+
+    def reference_trace(self) -> np.ndarray:
+        """Six positional mean/moment rows in the centered material frame."""
+        shell_size = self.shell_size
+        total = shell_size+self.beam.context.count
+        mean = np.zeros((3, total))
+        moment = np.zeros((3, total))
+        state = self.beam.context.initial.mechanical
+        _, _, center_frame = self.center.pose_pair(state)
+        qc = center_frame.T
+        for point in self.points:
+            _, _, frame = point.port.pose_pair(state)
+            port = point.port.tangent(state)
+            gap_map = np.zeros((3, total))
+            for node, shape in zip(point.nodes, point.shape):
+                start = 6*int(node)
+                gap_map[:, start:start+3] += shape*np.eye(3)
+                gap_map[:, start+3:start+6] -= shape*skew(
+                    np.array((0., 0., self.top)))
+            beam_offset = frame@np.array((0., point.y, -.05))
+            gap_map[:, shell_size:] -= np.column_stack((
+                np.eye(3), -skew(beam_offset)))@port
+            material_gap = qc@gap_map
+            arm = np.array((point.x-self.moment_center_x, point.y, 0.))
+            mean += point.weight*material_gap
+            moment += point.weight*skew(arm)@material_gap
+        return np.vstack((mean, np.linalg.solve(self.inertia, moment)))
 
 
 def c1_hybrid_line_space(xs: np.ndarray, ys: np.ndarray, beam, *,
