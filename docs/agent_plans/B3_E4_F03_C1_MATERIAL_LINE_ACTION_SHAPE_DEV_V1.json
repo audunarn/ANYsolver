@@ -1,0 +1,98 @@
+{
+  "cases": {
+    "tip_fz": {
+      "maximum_zero_mean_density_sum": 2.1827872842550278e-11,
+      "mean_density": [
+        57117.52094127371,
+        1.1200415933611569e-07,
+        598.1746577975038,
+        3.756359874914408e-07,
+        944.5254369736233,
+        1.6584737837288387e-07
+      ],
+      "native_E4": {
+        "mean_self_J": 0.013144660473121045,
+        "mean_variation_cross_J": -0.00025362240876820115,
+        "variation_self_J": 0.00010218507639503113
+      },
+      "native_minus_solid_J": {
+        "mean_self_J": -0.0019347983249490587,
+        "mean_variation_cross_J": 5.3439650400122067e-05,
+        "variation_self_J": -0.00028968331383554755
+      },
+      "native_reconstructed_total_J": 0.012993223140747875,
+      "solid_plate": {
+        "mean_self_J": 0.015079458798070104,
+        "mean_variation_cross_J": -0.0003070620591683232,
+        "variation_self_J": 0.00039186839023057867
+      },
+      "solid_reconstructed_total_J": 0.015164265129132359
+    },
+    "tip_mx": {
+      "maximum_zero_mean_density_sum": 9.094947017729282e-13,
+      "mean_density": [
+        -3.4862634475837984e-06,
+        -323.03754000360345,
+        3.291371760466873e-07,
+        388.28292553150965,
+        -2.2993030704645384e-08,
+        -134.6607311537145
+      ],
+      "native_E4": {
+        "mean_self_J": 0.0017904288013247814,
+        "mean_variation_cross_J": -1.873238373420429e-05,
+        "variation_self_J": 6.400857782168937e-06
+      },
+      "native_minus_solid_J": {
+        "mean_self_J": -0.00019188208817702947,
+        "mean_variation_cross_J": 1.0206861506116063e-06,
+        "variation_self_J": -1.1178253655232964e-05
+      },
+      "native_reconstructed_total_J": 0.001778097275372746,
+      "solid_plate": {
+        "mean_self_J": 0.001982310889501811,
+        "mean_variation_cross_J": -1.9753069884815896e-05,
+        "variation_self_J": 1.75791114374019e-05
+      },
+      "solid_reconstructed_total_J": 0.0019801369310543967
+    }
+  },
+  "classification": "saved fixed-line-dual plate action-shape decomposition",
+  "limitations": [
+    "mean/variation is a descriptive longitudinal action split, not a physical material law",
+    "same fixed dual and saved linear action fields; no new external execution",
+    "different native and 3D plate discretizations, support spaces and theories",
+    "not interface-space selection, F03 or G0B acceptance"
+  ],
+  "same_action_sha256": "b61ad12d112e5dc1a4d7046e60c0a1a8f4c3dda8344dd43cc4eebcee6e243a7b",
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "solid_source_deck_sha256": "4792273d1efe3957de336436d7398d3eb6ee7960c50fe1eea1aab70fa504fdec",
+  "source_commit": "87fc4eebf47121e6d165224b04f2d8eed7f868f7",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
+  "unit_frd_sha256": [
+    "ce1a5c2cdf6ae6c464962cddaa7492154b14a4103ad50a401d2576a124f37560",
+    "727897c977b0477551584e0795d1a81b08df1b9c4782c0bc194394d0bdf11ce5",
+    "8eedb81264254c9d0b67ca80b79e7c27081d1e20553d0d101052257b6cf3dd75",
+    "a63fe887d56f438547421abee4baa249dc739bcdaf833de26eb8c5413641d995",
+    "41e2c1b63b1cf2e9e752e760ec83076f52116602022b1f922eb96601189fc6d2",
+    "987bb585af269676d990b3bba4ff68a85ef438f18b85303524ab6371fdaa307d",
+    "0360eaa79a920bc8b0e15ef3d25fb4514711202630d21ff353dd7d232b1250bd",
+    "e7e6a7adf41853d3b7224acc0b3a89ec14a84d08b332ad66725a96b295e875cf",
+    "4ade4489ce452a95b0d56ca75774b18e942a12771e900cebd6f3c7b6d371940d",
+    "303885d58fb44021e386842980739ea157328bd3d17501cf148b2e9eda34f6ae",
+    "5ef490195117dfdf060f96d17d80fe7c710091aba24583df74f6acb0dea058d3",
+    "ce3b5039c28a5c0d464011ae8405127cd1e6fa75e01c298b00f907040cb1918d",
+    "a1116874d5d6687e7969c9ab49928cfe8988d9bbd3d02ec154e9858a1eaeaf5c",
+    "6ec6097598a681e7174cc5575a8ce586126302a24ec3fb1fc831ffa29abb048a",
+    "f569b9c81003912afd1c997482b8a4e531a5a522be927a818b179dea22fd322c",
+    "4c930e9ccfc743466912d060aa287e27c19a7c077ec24b6635ae6a565ca555b5",
+    "ff77314a1a6281ea307b1ec20f54fdf44ca521054b79a0373cc0a7eccd6673fd",
+    "5f2d99847cdad68960eb3a251e2652998c88e5604f73b44f8c1c55084a3b9f66",
+    "039b791b5c44a739f552a9f2b24ad4c903de4e02b0e9c6caca31321e6bda54be",
+    "caddc7000fd49685528f3304357d0c4f5ff5e9f9d130e05d1b0fccdb043aaf0a",
+    "c8143103505e15c63ab00b8488294232c4035b33a8ce4f5d600b2d7158d1b3a4",
+    "d1e1c3ed87c87becc5be9079be7c9bf91cc7b350fbc698808b6b55aa62480bfa",
+    "b4560c30cd76c591ce027f8c3dd38e1a79875ae1e3e139f810ed4a52da3d3367",
+    "7f11696e291806452b2e68ecfb409180ed9814bc12de93189107dd149c515076"
+  ]
+}

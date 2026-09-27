@@ -17,15 +17,16 @@ this fixed action. Source inspection confirms the thickness, material,
 clamp location and fixed dual, while shell and solid support spaces are
 not algebraically identical. A read-only longitudinal mean/variation
 split reproduces the original work and attributes `95%`/`89%` of the
-native-minus-solid Mx/Fz difference to mean-action self-work.
-**Remaining uncertainty:** which physical mean-resultant channels and
-shell/3D support or plate-theory differences cause this; the physical
-continuous law; and growing-space mixed stability. **Next discriminator
-and action:** Resolve the six-channel mean-action work contributions
-from the same saved fields. If one physical channel or coupled pair
-dominates, review its matched plate/shell kinematics and support;
-otherwise review the whole low-order plate idealization. Advance
-independent B2 F09. Do not
+native-minus-solid Mx/Fz difference to mean-action self-work. The
+moment case concentrates in physical Mx and Mz; the force case is an
+axial-force/bending-couple block with substantial cancellation.
+**Remaining uncertainty:** global E4 versus 3D kinematic/energy and
+support differences for those actions; the physical continuous law;
+and growing-space mixed stability. **Next discriminator and action:**
+Project the saved 3D plate response through the *global* E4 shell
+trace for the identified actions, distinguishing unrepresented 3D
+kinematics from an E4 stiffness/support difference. Only then design
+a new physical reference if needed. Advance independent B2 F09. Do not
 automatically add finer x/y or classical axial runs. P0 and the
 continuous law remain unselected; G0B open, G1 barred, formal F03
 authority unconsumed. The records and exact source/evidence identities
@@ -10051,3 +10052,27 @@ its signed work contributions from those same unit fields. A dominant
 physical channel or pair directs the next matched plate/shell patch
 check; diffuse contributions require a broader low-order idealization
 review. No new CalculiX execution or mesh refinement is needed.
+
+**Six-channel mean-work result:** The source-bound V2 read-only
+extension reconstructs each mean self-work within `1e-9 J` and
+partitions the signed native-minus-solid work exactly by channel.
+For tip Mx, the mean difference `−0.000191882088178 J` consists mainly
+of Mx self-work `−0.000148157 J` and Mz self-work `−0.000045608 J`;
+Fy and cross terms are small. For tip Fz, the mean difference
+`−0.001934798324953 J` is an **Fx/My coupled action with cancellation**:
+Fx self `−0.003134901 J`, both Fx–My cross terms together
+`+0.002349296 J`, My self `−0.001109979 J`; smaller Fz terms close
+the sum. Thus it is misleading to assign the force-case discrepancy
+to Fx alone. `B3_E4_F03_C1_MATERIAL_LINE_ACTION_SHAPE_DEV_V2.json`
+has SHA256
+`061a98af3c72bc58c8972f19880abb86a6210abfdb1c52139daf180aeae182f7`
+at source `49f07274`. The 24 saved external unit fields were reused;
+no new CalculiX solve was launched. **Next bounded discriminator:**
+for the saved Mx/Mz and Fx/My response fields, fit one global Q4
+mid-surface/director field on the existing native grid and compare
+its physical line-action work with the full 3D work, preserving the
+clamp and fixed dual. Large excluded work directs a shell-kinematic
+admission review; small excluded work directs a matched stiffness and
+support-energy check. Existing local director projection excluded
+almost no work but did not test global interpolation. Neither outcome
+selects the interface law, P0 space, or G0B acceptance.
