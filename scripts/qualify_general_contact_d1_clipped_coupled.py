@@ -107,6 +107,9 @@ def main() -> int:
                     - reference["integrated_normal_force_n"]) <= 1.0e-15
             and abs(metrics["expected_minimum_gap_m"]
                     - reference["minimum_physical_gap_m"]) <= 1.0e-15
+            and np.allclose(expected_moment,
+                            reference["source_moment_about_origin_nm"],
+                            rtol=0.0, atol=1.0e-14)
         ),
         "status": metrics["status"] == "completed",
         "accepted_steps": metrics["accepted_steps"]
