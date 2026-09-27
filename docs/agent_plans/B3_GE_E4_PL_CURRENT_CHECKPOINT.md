@@ -779,6 +779,15 @@ not establish mixed shells, nonmatching attachment mass, prestress,
 buckling, production free-free execution or F12/G0B acceptance. The physical
 connection choice and G1 bar are unchanged.
 
+**F12 oblique mass-frame check:** An explicit four-particle section on an
+oblique straight B2 member reproduces independent integrated rigid kinetic
+work with its offset mass origin. Reversing the member and rebuilding the
+sectional inertia from the same physical particles in the reversed frame
+gives the same complete global 12-by-12 candidate mass matrix after nodal
+permutation. The related definition, mass/descriptor and prestress tests pass
+17/17. This checks frame and reversal covariance for one physical section;
+it does not admit general mass laws, attached spectra, or F12/G0B.
+
 **Next bounded F12 point-prestress discriminator:** The private B2/Q4 point
 law currently retains only six affine reference rows. For conservative
 buckling about a prestressed connected state, determine whether the

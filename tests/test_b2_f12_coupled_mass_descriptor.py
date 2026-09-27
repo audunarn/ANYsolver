@@ -67,6 +67,52 @@ def test_candidate_b2_mass_reproduces_independent_rigid_particle_work():
         replace(member, mass=None).local_candidate_mass_matrix()
 
 
+def test_oblique_member_mass_preserves_particle_work_and_reversal():
+    member, _, _, _ = specimen()
+    p0 = np.array((.4, -.2, .5))
+    p1 = np.array((1.6, .7, 1.3))
+    axis = (p1-p0)/np.linalg.norm(p1-p0)
+    local_y = np.array((0., 0., 1.))-axis[2]*axis
+    local_y /= np.linalg.norm(local_y)
+    metadata, particles = _section_mass()
+    forward = replace(member, reference_points_m=(tuple(p0), tuple(p1)),
+                      local_y_global=tuple(local_y), mass=metadata)
+    forward_frame = forward.local_frame_rows()
+    forward_map = forward.local_dof_map()
+    forward_mass = forward_map.T@forward.local_candidate_mass_matrix()@forward_map
+
+    velocity = np.array((.13, -.21, .31))
+    angular = np.array((-.17, .29, .11))
+    nodal = np.r_[velocity, angular,
+                  velocity+np.cross(angular, p1-p0), angular]
+    stations = (.5-.5/np.sqrt(3.), .5+.5/np.sqrt(3.))
+    direct = sum(np.linalg.norm(velocity+np.cross(angular,
+                 station*(p1-p0)+forward_frame.T@particle))**2
+                 for station in stations for particle in particles)
+    direct *= forward.length_m
+    assert nodal@forward_mass@nodal == pytest.approx(direct, rel=3e-12)
+
+    reverse = replace(forward, reference_points_m=(tuple(p1), tuple(p0)))
+    reverse_frame = reverse.local_frame_rows()
+    change = reverse_frame@forward_frame.T
+    reverse_origin = change@np.asarray(metadata.origin_local_m)
+    reverse_particles = particles@change.T
+    reverse_inertia = np.zeros((6, 6))
+    for particle in reverse_particles-reverse_origin:
+        x, y, z = particle
+        velocity_map = np.array(((1.,0.,0.,0.,z,-y),
+                                 (0.,1.,0.,-z,0.,x),
+                                 (0.,0.,1.,y,-x,0.)))
+        reverse_inertia += 2.*velocity_map.T@velocity_map
+    reverse = replace(reverse, mass=MassMetadata(
+        "four-particles/reversed", tuple(reverse_origin), reverse_inertia))
+    reverse_map = reverse.local_dof_map()
+    reverse_mass = reverse_map.T@reverse.local_candidate_mass_matrix()@reverse_map
+    swap = np.kron(np.array(((0., 1.), (1., 0.))), np.eye(6))
+    np.testing.assert_allclose(reverse_mass, swap@forward_mass@swap,
+                               rtol=3e-12, atol=3e-12)
+
+
 def test_physical_b2_q4_point_descriptor_matches_independent_elimination():
     member, law, shell_k, beam_k = specimen()
     metadata, _ = _section_mass()
