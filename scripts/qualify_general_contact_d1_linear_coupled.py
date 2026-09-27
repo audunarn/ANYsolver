@@ -50,12 +50,15 @@ def main() -> int:
         identity_checks[path] = (
             _git("rev-parse", f"HEAD:{path}")
             == _git("rev-parse", f"{source_commit}:{path}")
+            and not _git("status", "--porcelain", "--", path)
         )
     material_root = Path(contract["environment"]["anymaterial_source_root"]).parent
     material_identity = _git("rev-parse", "HEAD:src/anymaterial",
                              cwd=material_root)
     identity_checks["anymaterial_tree"] = (
         material_identity == contract["environment"]["anymaterial_tree"]
+        and not _git("status", "--porcelain", "--", "src/anymaterial",
+                     cwd=material_root)
     )
     identity_checks["python"] = (
         sys.version.split()[0] == contract["environment"]["python"]
@@ -84,11 +87,23 @@ def main() -> int:
     metrics.pop("contact_augmentation_attempts")
     elapsed = time.perf_counter() - start
     criteria = contract["criteria"]
+    reference = contract["independent_reference"]
     expected_pressure = np.asarray(metrics["expected_pressure_pa"])
     actual_pressure = np.asarray(metrics["actual_pressure_pa"])
     checks = {
+        "reference_identity": (
+            np.allclose(metrics["expected_source_uz_m"],
+                        reference["source_uz_m"], rtol=0.0, atol=1.0e-15)
+            and np.allclose(expected_pressure, reference["pressure_pa"],
+                            rtol=0.0, atol=1.0e-15)
+            and abs(metrics["expected_integrated_normal_force_n"]
+                    - reference["integrated_normal_force_n"]) <= 1.0e-15
+            and abs(metrics["expected_minimum_gap_m"]
+                    - reference["minimum_physical_gap_m"]) <= 1.0e-15
+        ),
         "status": metrics["status"] == "completed",
-        "accepted_steps": metrics["accepted_steps"] == 1,
+        "accepted_steps": metrics["accepted_steps"]
+        == criteria["required_accepted_steps"],
         "displacement": metrics["maximum_absolute_uz_error_m"]
         <= criteria["maximum_absolute_uz_error_m"],
         "integrated_force": metrics["relative_integrated_force_error"]
@@ -99,7 +114,8 @@ def main() -> int:
                    - metrics["expected_minimum_gap_m"])
         <= criteria["minimum_gap_absolute_error_m"],
         "gap_tolerance": metrics["gap_tolerance_met"],
-        "active_modes": metrics["active_pressure_dofs"] == 2,
+        "active_modes": metrics["active_pressure_dofs"]
+        == criteria["required_active_pressure_dofs"],
         "equilibrium": metrics["equilibrium_residual_norm_n"]
         <= criteria["normalized_equilibrium_max"]
         * contract["scales"]["force_n"],
@@ -111,7 +127,8 @@ def main() -> int:
         "moment_balance": metrics["moment_wrench_balance_nm"]
         <= criteria["normalized_moment_balance_max"]
         * contract["scales"]["moment_nm"],
-        "checkpoint": metrics["has_restart_checkpoint"],
+        "checkpoint": metrics["has_restart_checkpoint"]
+        == criteria["required_checkpoint"],
         "wall_budget": elapsed <= contract["runner"]["maximum_wall_seconds"],
     }
     record = {
