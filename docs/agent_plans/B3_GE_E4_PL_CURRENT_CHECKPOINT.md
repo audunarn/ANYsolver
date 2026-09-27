@@ -162,6 +162,27 @@ reference work is mesh-sensitive; a small movement leaves the E4/3D
 shell theory, trace load and support interpretation as the principal
 uncertainty. This is a diagnostic, not the required three-level
 convergence or a connection-law selection.
+**Plate-only preflight outcome and decision:** The standalone factor-4
+plate has the exact detached-plate geometry and all 24 shell-side P0
+action rows match by coordinate with maximum defect zero; 46 active
+plate nodes give rank `24/24`. The factor-2 plate has 26 active nodes
+and rank `21/24` for that *same* four-interval action. The first factor-2
+preflight stopped before writing a result; its generated files remain
+untouched. A corrected fail-closed V2 records
+`DEPENDENT_P0_M4_ROWS` and launched no external solve. Factor-4
+preflight `result.json` SHA256 is
+`C059829B2A3568D95EB77FBBF972EB920ACD3EBB2545541F4385786A3082B92E`;
+factor-2 failed V2 `result.json` SHA256 is
+`882C35B4D24080F0F73A47CFDA0AAE3504C25F5D4AB84E1C11B339009B97DD27`.
+Do not compare factor-2 and factor-4 work under a supposedly identical
+24-row law; factor two cannot represent three directions. The factor-4
+plate-only external solve would repeat the already solved independent
+plate component, so it was not launched. This negative test informs the
+solid reference's discrete interface resolution, not a failure of the
+continuous material-line law or a P0 selection. Further solid mesh
+testing requires a representable common law and a specific decision
+benefit; meanwhile advance the independent G0 foundations and review
+the shell-side mechanics with the matched action evidence.
 This is development evidence, not F03/G0B acceptance. Formal F03
 authority remains unconsumed; G0B open and G1 barred. B2 F09 and other
 independent foundations remain available for bounded parallel progress.
