@@ -5,6 +5,7 @@ from math import comb
 
 import numpy as np
 import pytest
+from scipy import linalg
 
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_distributed_surface_finite import (
@@ -246,6 +247,41 @@ def test_c1_hybrid_six_channel_reference_is_distinct_and_non_drilling():
     assert continuous["quadrature_max_abs_director_pitch_gap_rad"] < 1e-12
     assert continuous["quadrature_max_position_gap_m"] < 1e-12
 
+
+def test_c1_pitch_couple_drives_physical_shell_work_and_balances():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
+    pitch_couple = -100.*line.reference_trace()[4, :line.shell_size]
+    assert np.max(np.abs(pitch_couple[5::6])) < 1e-12
+    tangent, physical = raw_e4_tangent(xs, ys, thickness=.035)
+    fixed = {6*j*len(xs)+axis for j in range(len(ys)) for axis in range(6)}
+    free = np.array([i for i in range(len(pitch_couple)) if i not in fixed])
+    solution = np.zeros(len(pitch_couple))
+    solution[free] = linalg.solve(
+        tangent[np.ix_(free, free)], pitch_couple[free], assume_a="gen")
+    reaction = tangent@solution-pitch_couple
+    assert np.linalg.norm(reaction[free])/max(
+        1., np.linalg.norm(pitch_couple[free])) < 1e-8
+    locations = line.reference_nodes
+
+    def wrench(force):
+        nodal = force.reshape(-1, 6)
+        return np.r_[nodal[:, :3].sum(axis=0),
+                     (np.cross(locations, nodal[:, :3])+nodal[:, 3:]).sum(axis=0)]
+
+    np.testing.assert_allclose(wrench(pitch_couple),
+                               (0., 0., 0., 0., -100., 0.), atol=1e-10)
+    np.testing.assert_allclose(wrench(pitch_couple+reaction),
+                               0., atol=1e-7)
+    work = float(pitch_couple@solution)
+    physical_work = float(solution@(physical@solution))
+    numerical_work = float(solution@((tangent-physical)@solution))
+    assert work > 0.
+    assert abs(work-physical_work-numerical_work)/work < 1e-8
+    assert abs(numerical_work)/work < 1e-8
 
 def test_c1_hybrid_physical_wrench_includes_all_six_channels_and_offset():
     """Check reference resultant and beam/shell rigid work conjugacy."""

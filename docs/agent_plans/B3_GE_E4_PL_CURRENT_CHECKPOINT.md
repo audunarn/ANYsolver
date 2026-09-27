@@ -20,6 +20,9 @@ is not proven primal locking. The exact two-interval solid split lowers
 load work by 1.214% opening and 1.533% torque versus the global-six solid.
 Its action moves same-domain E4 and B3 work toward native P0, especially
 for opening, but a substantial torque gap remains. B2 F09 remains open.
+An isolated supported director-pitch couple does work through physical E4
+bending with negligible numerical drilling work; this does not validate the
+loaded coupled connection.
 The saved split-solid no-contact fields have independently reviewed sampled
 same-deformed-XY surface-order overlap witnesses: 81 torque and 20 opening
 samples among the initially negative paired-parametric subset, with minimum
@@ -49,6 +52,58 @@ finer classical axial solves, or a contact stiffness/mesh sweep. Advance B2
 F09 and other independent foundations while F03 remains unresolved.
 No multiplier space is selected and F03 remains open.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
+
+**F03 continuous-law interpretation for review (27 September):** In the
+current candidate, the shell top and native beam underside are distinct
+kinematic traces that coincide spatially on the bonded reference patch;
+the declared eccentricity separates shell midsurface and beam axis. At each longitudinal
+material station, let `g(x,y)` be their relative position in the native
+beam material frame and `I_y=<y²>_y`. The six *continuous* section channels
+are `(<g_x>,<g_y>,<g_z>,<y g_z>/I_y,pitch(d_shell,R_beam),
+-<y g_x>/I_y)`, before longitudinal multiplier projection. The pitch is the
+beam-frame x–z projected E4 director angle at the strip centre; its work couples
+to shell director bending and native beam section rotation. The first
+transverse moments transfer local x/z couples through finite positional
+arms. This is a reduced strip-pose connection: higher transverse slip
+shapes, including the demonstrated positive-energy even mode, remain
+admissible when all six channels vanish. A common longitudinal slope of
+transverse displacement with unchanged directors has zero reference-linearized
+gap and retains admissible shell shear. It must therefore be
+offered, if eventually accepted, with explicit reduced-line semantics;
+rigid/distributing footprints and a full surface bond are different laws.
+The existing finite-chart, wrench and shear tests support this meaning,
+but loaded physical transfer, independent reference agreement and
+growing-space mixed stability still decide whether it is usable. This
+interpretation selects neither the production law nor P0/P1/dual. Independent
+read-only mechanics review confirmed the channel order, signs and moment
+arms and prompted the three wording corrections above; it did not accept
+the production connection.
+
+**Next F02/F03 pitch-work discriminator (prospective):** Existing tests
+establish the pure director-pitch row kinematically and the mixed six-channel
+work, but do not isolate its supported shell energy. On the existing bounded
+C1 Q4 shell/beam reference at 35 mm thickness, apply only the pitch-channel
+unit couple through the exact reference row to the shell, fix the declared
+left edge, and decompose the solved E4 work into physical and numerical
+stiffness components. Verify the applied wrench and force/moment balance.
+Dominant numerical work or a failed balance sends the pitch map back for
+revision; dominant physical work supports retaining it as a candidate for
+subsequent thickness, mixed-mesh and loaded-coupling checks. One supported
+linear case does not qualify torque transfer, the line law or G0B.
+
+**Pitch-work result (27 September):** The supported 35 mm Q4 C1 shell
+under the isolated `−100 Nm` pitch-row action has zero applied force and
+the declared `−100 Nm` moment about the reference origin. Free-row
+equilibrium, complete force/moment balance and work identity pass. Total
+load work (twice linear elastic strain energy) is `0.02008690486007 J`,
+physical E4 work `0.02008690486060 J`,
+and numerical-component work `−1.45e-13 J`; the pitch action has no shell
+drilling column. The new physical-work and existing kinematic controls
+pass `2/2`. Thus this isolated supported pitch transfer is not supplied
+by drilling completion. It does not yet validate thickness/refinement,
+mixed Q4/S3, a coupled native beam load or the production line law.
+Independent mechanics review confirmed the applied couple, reaction sign,
+wrench balance and work split without extending that scope.
 
 **Independent B2 F10/F11 S3 discriminator, before implementation (27
 September):** The private B2 reference point proof uses a finite least-squares
