@@ -73,16 +73,21 @@ def test_cancellation_publishes_only_ordered_complete_cases():
         tuple(member.compile_local() for member in members),
         transform, offset, np.arange(12, 18), max_chunk=8)
     token = CancellationToken()
+    stations = [.25]
     def stop_after_five(identity):
+        stations[0] = .75
         if identity == "case-004":
             token.cancel("bounded prefix")
     result = batch.solve_many(_cases(100), cancellation_token=token,
-                              on_case=stop_after_five)
+                              on_case=stop_after_five,
+                              recover_members={members[0].member_id: stations})
     assert result.status == "cancelled"
     assert [case.case_id for case in result.cases] == [
         f"case-{i:03}" for i in range(5)]
     assert result.factorization_count == 1
     assert result.maximum_rhs_chunk == 8
+    assert all(case.members[0].stations == (.25,) for case in result.cases)
+    batch.close()
 
 
 def test_failed_factorization_does_not_return_offset_only_case():
@@ -112,6 +117,59 @@ def test_inaccurate_backend_solution_is_not_published(monkeypatch):
     observed = []
     with pytest.raises(RuntimeError, match="solve residual failed"):
         batch.solve_many(_cases(1), on_case=observed.append)
+    assert observed == []
+    batch.close()
+
+
+def test_selected_member_recovery_matches_independent_physical_states():
+    members, _ = _members()
+    compiled = tuple(member.compile_local() for member in members)
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        compiled, transform, offset, np.arange(12, 18), max_chunk=8)
+    requested = {member.definition.member_id: (.2, .8)
+                 for member in compiled}
+    cases = _cases(100)
+    result = batch.solve_many(cases, recover_members=requested)
+    assert result.status == "completed" and len(result.cases) == 100
+    assert result.maximum_rhs_chunk == 8
+    stiffness = batch.full_stiffness
+    for (identity, load), selected in zip(cases, result.cases):
+        state = np.zeros(18)
+        state[6:] = spsolve(stiffness[6:, 6:], load[6:])
+        assert selected.case_id == identity
+        assert len(selected.members) == 2
+        for recovery, member in zip(selected.members, compiled):
+            dofs = [6*batch.node_ids.index(node)+j
+                    for node in member.definition.node_ids for j in range(6)]
+            oracle = member.operator.evaluate(
+                member.local_dof_map()@state[dofs], stations=(.2, .8))
+            assert recovery.member_id == member.definition.member_id
+            np.testing.assert_allclose(recovery.resultants_local,
+                                       oracle.resultants, rtol=1e-10, atol=1e-12)
+            np.testing.assert_allclose(recovery.strains_local,
+                                       oracle.strains, rtol=1e-10, atol=1e-12)
+    assert all(len(case.members) == 2 for case in result.cases)
+    batch.close()
+
+
+def test_selected_recovery_rejects_invalid_requests_before_case_publication():
+    members, _ = _members()
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in members),
+        transform, offset, np.arange(12, 18))
+    observed = []
+    with pytest.raises(ValueError, match="not compiled"):
+        batch.solve_many(_cases(1), recover_members={"unknown": (.5,)},
+                         on_case=observed.append)
+    with pytest.raises(ValueError, match="recovery mapping"):
+        batch.solve_many(_cases(1), recover_members=(.5,),
+                         on_case=observed.append)
+    with pytest.raises(ValueError, match="recovery stations"):
+        batch.solve_many(_cases(1),
+                         recover_members={members[0].member_id: (1.1,)},
+                         on_case=observed.append)
     assert observed == []
     batch.close()
 

@@ -197,6 +197,17 @@ class LocalResponse:
 
 
 @dataclass(frozen=True)
+class LocalSectionRecovery:
+    """Selected station quantities without a force/tangent evaluation."""
+
+    resultants: np.ndarray
+    strains: np.ndarray
+    stations: np.ndarray
+    operator_id: str = OPERATOR_ID
+    production_qualified: bool = False
+
+
+@dataclass(frozen=True)
 class LinearTrace:
     """Owned local reference points, offset poses, and their nodal derivatives."""
 
@@ -332,6 +343,33 @@ class LinearOperator:
                            _array(np.asarray(poses, dtype=object).reshape(n, 6)),
                            _array(np.asarray(maps, dtype=object).reshape(n, 6, 12)))
 
+    def _section_response(self, basic_force, stations):
+        resultants, strains = [], []
+        for t in stations:
+            resultant = _multiply(
+                _interpolation(self.length, self.length*Fraction(float(t))),
+                basic_force)
+            resultants.append(resultant)
+            strains.append(_multiply(self._compliance, resultant))
+        return _array(resultants), _array(strains)
+
+    def recover_sections(self, displacement, *, stations=(0.0, 0.5, 1.0)):
+        """Recover only requested local resultants and strains from a state."""
+        try:
+            u = np.asarray(displacement, dtype=float)
+            x = np.asarray(stations, dtype=float)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("finite local coordinates and stations required") from exc
+        if u.shape != (12,) or not np.isfinite(u).all():
+            raise ValueError("twelve finite local coordinates required")
+        if x.ndim != 1 or not np.isfinite(x).all() or np.any((x < 0) | (x > 1)):
+            raise ValueError("stations must be finite normalized coordinates in [0,1]")
+        basic = _multiply(self._B, [Fraction(float(v)) for v in u])
+        q = self._basic_action(basic)
+        resultants, strains = self._section_response(q, x)
+        return LocalSectionRecovery(
+            resultants, strains, np.array(x, dtype=float, copy=True))
+
     def evaluate(self, displacement, *, stations=(0.0, 0.5, 1.0)):
         try:
             u = np.asarray(displacement, dtype=float)
@@ -349,12 +387,8 @@ class LinearOperator:
         # subtraction is used to recover the weak symmetric bending mode.
         tangent = [[sum(self._B[j][i]*self._basic_action([self._B[k][column] for k in range(6)])[j]
                         for j in range(6)) for column in range(12)] for i in range(12)]
-        resultants, strains = [], []
-        for t in x:
-            resultant = _multiply(_interpolation(self.length, self.length*Fraction(float(t))), q)
-            resultants.append(resultant)
-            strains.append(_multiply(self._compliance, resultant))
+        resultants, strains = self._section_response(q, x)
         return LocalResponse(
             _float(sum(b*v for b, v in zip(basic, q))/2), _array(force), _array(tangent),
-            _array(q), _array(resultants), _array(strains), np.array(x, dtype=float, copy=True),
+            _array(q), resultants, strains, np.array(x, dtype=float, copy=True),
         )

@@ -33,6 +33,28 @@ This demonstrates dependency-key feasibility only. The private result's
 handle counters are not yet per-owner accounting across cache reuse;
 production diagnostics and owner/cache lifetime remain G1 design work.
 
+**Next F13 decision:** Can the same bounded B2 batch return requested local
+member resultants/strains without retaining full-model solutions for every
+case? A selected result must come from the solved physical affine state, not
+the reduced vector or an unowned caller array. Compare requested stations
+against an independent per-case full-state element evaluation for both
+member orientations; verify a 100-case selected route, invalid requests,
+and complete-case cancellation. If parity holds, retain the opt-in local
+recovery seam; if not, correct the physical/state mapping. This is private
+feasibility, not B07 or G1 acceptance.
+
+**Result:** The private batch now accepts requested compiled member IDs and
+normalized stations, reconstructs only those members' physical nodal states
+from each solved affine column, and returns owned local section resultants
+and strains with each complete case. The local operator has a section-only
+path so recovery does not recompute its full tangent. A 100-case, two-member
+screen matches independent full-state `evaluate` results at both requested
+stations; invalid member/station requests are rejected before publication.
+Cancellation still returns only a complete ordered prefix, and mutating the
+caller station list in a callback does not alter later results. This is local
+section recovery only, with no coupled reaction or public B2 B07
+qualification.
+
 ## Current decision — 27 September 2026
 
 **Decision sought:** Select the physical native beam–shell connection and its

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Sequence
+from typing import Callable, Mapping, Sequence
 
 import numpy as np
 from scipy import sparse
@@ -14,9 +14,18 @@ from .linalg import FactorizationCache, MatrixClass, factorize_cached
 
 
 @dataclass(frozen=True)
+class SelectedMemberRecovery:
+    member_id: str
+    stations: tuple[float, ...]
+    resultants_local: tuple[tuple[float, ...], ...]
+    strains_local: tuple[tuple[float, ...], ...]
+
+
+@dataclass(frozen=True)
 class SelectedCase:
     case_id: str
     values: tuple[float, ...]
+    members: tuple[SelectedMemberRecovery, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -116,6 +125,15 @@ class CompiledB2AffineBatch:
         self._closed = False
         self.node_ids = ordered
         self.members = compiled
+        self._member_layout = {
+            member.definition.member_id: (
+                member,
+                np.array([6*node_index[node]+j
+                          for node in member.definition.node_ids
+                          for j in range(6)], dtype=int),
+                member.local_dof_map(),
+            ) for member in compiled
+        }
 
     @property
     def full_stiffness(self) -> sparse.csr_matrix:
@@ -129,13 +147,31 @@ class CompiledB2AffineBatch:
 
     def solve_many(self, cases: Sequence[tuple[str, np.ndarray]], *,
                    cancellation_token: CancellationToken | None = None,
-                   on_case: Callable[[str], None] | None = None) -> BatchResult:
+                   on_case: Callable[[str], None] | None = None,
+                   recover_members: Mapping[str, Sequence[float]] | None = None,
+                   ) -> BatchResult:
         if self._closed:
             raise RuntimeError("physical B2 batch is closed")
         ids = [identity for identity, _ in cases]
         if (any(not isinstance(identity, str) or not identity.strip()
                 for identity in ids) or len(set(ids)) != len(ids)):
             raise ValueError("unique nonempty ordered B2 case IDs required")
+        recovery = []
+        if recover_members is not None:
+            if not isinstance(recover_members, Mapping):
+                raise ValueError("selected B2 recovery mapping required")
+            for member_id, requested in recover_members.items():
+                if member_id not in self._member_layout:
+                    raise ValueError("selected B2 member ID is not compiled")
+                try:
+                    stations = np.asarray(requested, dtype=float).copy()
+                except (TypeError, ValueError, OverflowError) as exc:
+                    raise ValueError("finite normalized B2 recovery stations required") from exc
+                if (stations.ndim != 1 or stations.size == 0 or
+                        not np.isfinite(stations).all() or
+                        np.any(stations < 0.) or np.any(stations > 1.)):
+                    raise ValueError("finite normalized B2 recovery stations required")
+                recovery.append((member_id, tuple(float(x) for x in stations)))
         completed = []
         largest = 0
         for start in range(0, len(cases), self._max_chunk):
@@ -174,8 +210,22 @@ class CompiledB2AffineBatch:
             for j, (identity, _value) in enumerate(block):
                 if cancellation_token is not None and cancellation_token.is_cancelled:
                     break
+                member_results = []
+                for member_id, stations in recovery:
+                    member, dofs, frame = self._member_layout[member_id]
+                    physical = np.asarray(self._T[dofs]@solved[:, j]).reshape(-1)
+                    physical += self._u0[dofs]
+                    response = member.operator.recover_sections(
+                        frame@physical, stations=stations)
+                    member_results.append(SelectedMemberRecovery(
+                        member_id, stations,
+                        tuple(tuple(float(value) for value in row)
+                              for row in response.resultants),
+                        tuple(tuple(float(value) for value in row)
+                              for row in response.strains)))
                 completed.append(SelectedCase(
-                    identity, tuple(float(v) for v in selected[:, j])))
+                    identity, tuple(float(v) for v in selected[:, j]),
+                    tuple(member_results)))
                 if on_case is not None:
                     on_case(identity)
             if cancellation_token is not None and cancellation_token.is_cancelled:
