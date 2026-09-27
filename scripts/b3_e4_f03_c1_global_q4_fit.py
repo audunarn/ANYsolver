@@ -16,12 +16,14 @@ from scipy import sparse
 from scipy.sparse.linalg import lsqr
 
 from scripts._b3_e4_f03_native_fixture import build
+from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
 from scripts.b3_e4_f03_c1_material_line_p0_reference import integrated_rows
 from scripts.b3_e4_f03_ccx_six_channel_compliance import _source
 from scripts.b3_e4_f03_ccx_six_channel_preflight import _element_domain_nodes
 from scripts.b3_e4_f03_ccx_solid_bond_screen import digest
 from scripts.b3_e4_f03_local_footprint_work import structured_q4_point_shape
 from scripts.b3_e4_f03_material_line_position import MaterialLinePosition
+from scripts.b3_e4_f03_material_line_space_screen import _rows
 from scripts.b3_e4_f03_plate_patch_work import local_grid
 from scripts.b3_e4_f03_solid_bond_pose_projection import _read_frd_u
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
@@ -119,6 +121,8 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
     position = line.reference_jacobian().reshape(count, 3, -1)
     orientation = line.reference_orientation_jacobian().reshape(count, 3, -1)
     shell_size = 6*line.shell_count
+    native_rows, interval_measure = _rows(
+        line, LineMultiplierSpace("piecewise_constant", tuple(np.linspace(0., 1., 5))))
     dual = {label: np.asarray(reconstruction["cases"][label][
         "dual_physical_line_density"]) for label in ("tip_mx", "tip_fz")}
     scale = np.array([40000. if j%6 < 3 else 4000. for j in range(24)])
@@ -163,6 +167,10 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
                                      "six_channel_solid_minus_native": residual.tolist()})
         solid_work = float(-np.sum(dual[label].reshape(4, 6)*solid_rows_integrated))
         fitted_work = float(-np.sum(dual[label].reshape(4, 6)*native_rows_integrated))
+        native_force = -(native_rows.T@(
+            dual[label].reshape(4, 6)*interval_measure[:, None]).ravel())[:shell_size]
+        if abs(fitted_work-float(native_force@q)) > 1e-9:
+            raise ArithmeticError("native station work does not match assembled rows")
         saved_work = same_action["cases"][label]["solid_shell_action_only_work_J"]
         if abs(solid_work-saved_work) > 1e-9:
             raise ArithmeticError("solid station work does not reproduce saved plate work")
