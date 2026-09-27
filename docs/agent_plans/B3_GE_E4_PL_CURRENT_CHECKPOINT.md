@@ -15,13 +15,15 @@ its interpretation. B2 F09 admission remains open.
 **Uncertainty:** Which joint semantics meet the required torque/shear and
 virtual-work contract: top-surface positional bonding, an explicitly
 two-sided director-couple weld, or distinct admitted alternatives? The
-completed F2/F4 runs lack equation multipliers and per-side work; neither
-they nor the existing native rows establish physical fidelity or a mortar
-space.
-**Next discriminator and action:** Derive and recover the sided interface
-force/work for the two-sided option, or revise the sixth channel for a
-top-surface option; test the selected continuous law against the supported
-torque/shear and compensated-pitch patches. Only then assess growing
+F2 equation multiplier and side work are now directly recoverable, while
+F4's multiplier is inferred from paired work. Neither these bounded
+linear solid checks nor the existing native rows establish physical
+fidelity, measured contact traction or a mortar space.
+**Next discriminator and action:** Match the external equation's recovered
+side work to the native B3/E4 port under the same declared two-sided joint,
+or revise the sixth channel for a top-surface joint. Test the selected
+continuous law against the supported torque/shear and compensated-pitch
+patches. Only then assess growing
 interface spaces with the actual native mixed tangent, work, locking and
 registered ratios. Do not repeat F5 under a higher resource cap or finer
 classical axial sweeps without a decision-changing hypothesis.
@@ -7833,7 +7835,57 @@ decision. G1 remains barred; formal F03 authority is unconsumed.
 
 Independent read-only mechanics/code review found no blocking equation,
 parser or provenance defect in this bounded external diagnostic. It
-explicitly limits the F2/F4 claim: algebraic opposite moments and global
-work change do not validate sided interface transfer because the external
-equation multiplier and per-side forces/work were not recovered. That is
-the next qualification-relevant measurement, not a passed G0B row.
+explicitly limited the initial F2/F4 claim: algebraic opposite moments
+and global work change did not validate sided transfer because the
+external equation multiplier and per-side forces/work had not yet been
+recovered. The subsequent F2 output probe below narrows that limitation;
+the native port and G0B remain unqualified.
+
+**Paired-work dual inference and direct-output discriminator:** On the
+saved F2/F4 one-sided displacement fields, the new equation gaps are
+`4.283573/4.592387 µrad`. With unchanged physical loading and the
+linear rank-one constrained equations, the decrease in applied-load work
+implies dual moments `69.59/72.47 N m` by
+`lambda=(W_one_sided−W_two_sided)/g_one_sided`. The F2/F4 difference is
+about `4.1%`; this is an *energetic inference*, not direct CalculiX
+multiplier output or per-side traction recovery. Test only whether the
+pinned solver can print a force on the F2 equation's dependent node from
+an otherwise identical deck. A printed force consistent with
+`lambda * coefficient_dependent` would independently support the dual
+interpretation and enable side-force reconstruction. A missing/zero or
+ambiguous force leaves the paired-work inference at its present level;
+do not tune the physical law or run another mesh merely for this output.
+
+**F2 direct dual result and sided work:** An output-only F2 rerun printed
+`−165.6942 N` at the equation's dependent x-DOF. That DOF carries no
+applied load; its equation coefficient is `+2.38095238095238 m⁻¹`, so the
+external solver's reaction sign gives `lambda=+69.591564 N m`. The
+independent paired-work inference was `+69.591326 N m` (relative
+difference `3.4e-6`, consistent with printed-force precision).
+The full displacement field and applied-load work are identical at the
+saved output precision to the F2 run without the extra output request.
+The declared equation's gradient `Cᵀlambda` has zero net force and
+`−69.591564/+69.591564 N m` plate/bar moments. The *physical interface
+reaction* is `−Cᵀlambda`, hence `+69.591564/−69.591564 N m` on the
+plate/bar. On the accepted final displacement field, its separately
+partitioned plate/bar work is `+0.0043051578/−0.0043051615 J`, summing
+to `−3.67e-9 J` at the printed precision; this is final-state
+virtual-work pairing, not accumulated loading-path energy. The
+source-bound record is
+`B3_GE_E4_PL_F03_C1_F2_SIDED_PITCH_RF_DEV_V1.json`, identical to
+`.qualification/b3-ge-e4-pl/f03-c1-factor2-sided-pitch-rf-probe-dev-20260927-v1/result.json`
+(SHA256 `C0AFE23A31EFBBCC87F148E41CEAABBB1C9722A867B0CC86348A2B8A66BC23D9`).
+F4 has only the paired-work inferred `+72.465921 N m` dual; the same
+physical-reaction partition gives `+0.0044901795/−0.0044901791 J`
+and a `+4.27e-10 J` sum. This validates the *linear external equation's*
+side-force/work accounting at F2 and supports it directionally at F4.
+It does not validate the native finite-rotation port or select a
+production six-channel connection. Stop the output probe.
+
+Independent read-only review found no blocking defect in the RF sign,
+dependent-node admission, or recalculated F2/F4 work values. It cautioned
+that the top-face shared nodes are split into *conceptual plate and bar
+ports* for equation bookkeeping: this is not a measured contact-traction
+field or native B3/E4 interface force. A follow-up review confirmed the
+explicit `Cᵀlambda` versus physical `−Cᵀlambda` sign distinction against
+both the CalculiX RF and native KKT convention. The F4 dual remains inferred.

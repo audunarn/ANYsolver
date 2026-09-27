@@ -165,7 +165,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--factor", type=int, choices=tuple(SOURCE_HASHES), required=True)
+    parser.add_argument("--print-dependent-reaction", action="store_true")
     args = parser.parse_args()
+    if args.print_dependent_reaction and args.factor != 2:
+        raise ValueError("bounded direct-reaction probe is F2 only")
     root = args.output_root.resolve()
     if root.exists():
         raise FileExistsError(root)
@@ -192,8 +195,16 @@ def main() -> int:
     if deck.count(marker) != 1:
         raise ValueError("material insertion point changed")
     stem = f"solid-{factor}-sided-pitch"
+    inserted = _cards(terms)+marker
+    if args.print_dependent_reaction:
+        inserted = (f"*NSET,NSET=PitchDependent\n"
+                    f"{mechanics['dependent_node']}\n"+inserted)
+        if deck.count("*END STEP") != 1:
+            raise ValueError("output insertion point changed")
+        deck = deck.replace("*END STEP",
+                            "*NODE PRINT,NSET=PitchDependent\nRF\n*END STEP")
     root.mkdir(parents=True)
-    (root/(stem+".inp")).write_text(deck.replace(marker, _cards(terms)+marker))
+    (root/(stem+".inp")).write_text(deck.replace(marker, inserted))
     (root/"model.json").write_text(json.dumps(meta, sort_keys=True, indent=2)+"\n")
     code, stdout, stderr, elapsed, peak, failure = _run(stem, root)
     (root/"stdout.log").write_bytes(stdout)
@@ -225,6 +236,12 @@ def main() -> int:
                 raise ValueError("incomplete full-field displacement")
             response["sided_pitch_equation_rad"] = sum(
                 c*field[node][0] for node,c in terms)
+            if args.print_dependent_reaction:
+                reaction = parse_nodal_vectors(
+                    dat,{mechanics["dependent_node"]},"forces","PITCHDEPENDENT")
+                response["dependent_node_printed_force_N"] = reaction[
+                    mechanics["dependent_node"]].tolist()
+                response["dependent_node_coefficient_per_m"] = terms[0][1]
         except (OSError, ValueError, KeyError) as exc:
             failure = f"PARSE_{type(exc).__name__}: {exc}"
     result = {
@@ -238,6 +255,7 @@ def main() -> int:
                           for path in (Path(__file__),source_deck,source_model)},
         "solver_sha256": digest(EXE),
         "mechanics_preflight": mechanics,
+        "dependent_reaction_probe": args.print_dependent_reaction,
         "equation_node_x_coefficients": [[node,c] for node,c in terms],
         "response": response,
         "limitations": ["linearized area-average pitch, not finite-rotation native pose",
