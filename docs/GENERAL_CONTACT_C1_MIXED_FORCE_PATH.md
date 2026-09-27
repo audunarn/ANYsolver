@@ -352,6 +352,13 @@ The corrected 16-Q4 full cycle completed with loaded/recontact force
 0.10387155975 N and first-unload force 0.03984469493 N. Changes from eight
 Q4 are 0.37714% and 0.09533%, respectively, and both meshes fully open.
 A final Cartesian-bound press check reproduced the 16-Q4 force exactly.
-These two mesh levels are promising development evidence. A frozen refined
-full-cycle reference, independent response adjudication, restart and
-installed-package qualification remain open; no C1 row is promoted.
+The registered 24-Q4 full cycle completed all twelve steps in 905.791 s.
+Full-load force was 0.1038788373 N and first-unload force was
+0.0398439617 N, changing 0.007006% and 0.001840% from sixteen Q4. The
+active/open/active sequence, full pressure rank, physical gap, equilibrium,
+wrench, integration and support gates passed. The [frozen record and
+independent review](reference_cases/general_contact_d1_distributed_cycle_response_v1_review.md)
+accept only this planar elastic integrated-force refinement and state
+sequence. The failed sixteen-Q4 attempt remains historical evidence.
+Split restart, complete tangent qualification, installed-package handoff
+and general C1 admission remain open.
