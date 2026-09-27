@@ -2,21 +2,30 @@
 
 ## Current state — 27 September 2026
 
-**Decision sought:** Select the physical native beam–shell connection before
-G1. **Established:** C1's independent director-pitch channel is a reduced
-two-sided rotational-weld candidate, distinct from a top-face positional
-bond. The new segmented top-face moment candidate passes reference and actual
-finite-chart work checks, but a two-interval x2 mesh has one exact redundant
-row; x4 restores all 12 rows. Saved fixed-grid C1 comparisons show material
-changes in support-wrench transfer despite similar tip motion. B2's private
-repeated-section compilation has batch parity, while F09 admission remains
-open. **Uncertainty:** Which declared physical law matches the required
-torque/shear transfer, and which resolution-aware interface space is stable
-without locking. **Next discriminator:** Use F5 only for the top-face
-physical-transfer comparison; define an independently resolved two-sided
-stitch for the hybrid law, then assess growing-space constraints. Continue
-independent G0 foundations. **Gate:** G0B open, G1 barred; formal F03
-authority unconsumed.
+**Decision sought:** Qualify a physical beam–shell connection before G1.
+**Established:** For an externally attached top-face stiffener, segmented
+finite-width positional work is the leading G0 candidate; C1's director-pitch
+channel is a distinct two-sided embedded-weld candidate. Top-face reference,
+finite-chart and loaded work checks pass. The x2 two-interval fixture has an
+exact row dependency; x4 does not. Saved F5 action and same-shell comparisons
+show mixed transfer changes and partly cancelling face-motion differences,
+so neither a smaller tip gap nor one spectral quotient selects a space. B2's
+private repeated-section compilation has batch parity; F09 admission remains
+open. **Uncertainty:** Growing-space stability/locking and physical transfer
+over the registered ratios, plus an independent two-sided reference for C1.
+**Next discriminator:** On fixed x16, four→eight P0 intervals change
+torque rotation by `−0.622 µrad` for B3-12 and `−0.950 µrad` for B3-24.
+Both cases retain rank and balance. Low-order lateral/twist agreement with
+the stronger F5 bond reverses direction across those beam resolutions,
+so neither coarse-beam underresolution nor simple interface locking is
+established. The x8 mixed minimum is 99.935% auxiliary drilling chart.
+Audit the newly enforced physical work modes and shell/beam strain-energy
+partition against the declared top-face law before choosing a resolution
+policy. A physically matched sided reference is still needed for fidelity.
+Do not launch another automatic refinement or select P0/P1/dual from tip
+motion, F5 proximity or one quotient.
+Continue independent G0 foundations. **Gate:** G0B open, G1 barred;
+formal F03 authority unconsumed.
 
 **Next C1 connection-law decision (27 September):** The saved matched
 fixed-grid C1 experiment already contains both six position-moment
@@ -126,6 +135,211 @@ checks first, second and mixed multiplier-work derivatives through actual
 state advances; the three focused top-face checks pass `3/3` (6.42 s).
 This closes that local test gap without changing the physical-law or
 stability status.
+
+**Next F5 action discriminator (prospective):** Use the saved validated F5
+bar-on-plate action and the x4 native one-/two-interval top-face actions;
+make no new solid or native solve. Project each onto the same continuous
+two-hat lateral, vertical and physical-twist virtual fields over the
+terminal bond. Check action sign, reference geometry, global wrench and
+the first longitudinal moment before interpreting the difference. A
+coherent contraction of all relevant action discrepancies would justify
+the same-action shell-response comparison; mixed changes instead require
+that comparison without ranking either law from tip motion. Both outcomes
+leave higher modes, shell idealization and retained one-sided work open.
+
+**F5 two-hat action result:** Existing hash-bound F5 combined action and
+the saved x4 native cases have matching physical reference geometry,
+supports, section, and `+100 N m Mx −1000 N Fz` linear combination. The
+one→two-interval top-face lateral-force hat relative L2 discrepancy changes
+`1.684→0.530` and physical-twist discrepancy `0.797→0.336`, but vertical
+force changes `0.000531→0.0283`. The solid total lateral force is
+`54.6236 N`: one interval gives `55.3359 N`, two give `67.2982 N`.
+Its lateral-force first x moment is `16.6724 N m`, versus `−11.7720`
+and `25.6106 N m`. This is a mixed change, not coherent improvement;
+do not rank the laws or multiplier by one lower norm. **Next bounded
+discriminator:** Replay the validated saved F5 action and the new native
+two-interval action through the *same* Q4 x4/y4 shell and compare their
+top-face fields at fixed stations, with the saved solid face field as a
+separate idealization check. If the F5-action E4 response already differs
+materially from the solid, shell discretization, kinematics, action
+projection and the stronger pointwise bond remain possible contributors; if it agrees
+but native-action E4 differs, investigate the connection/beam action.
+Either outcome remains finite-grid diagnostic, not G0B acceptance.
+
+**F5/native same-shell result (saved-output replay):** The bounded runner
+`scripts/b3_e4_f03_c1_top_face_f5_same_action.py` verifies the protected
+F5 inputs, reconstructs the validated bar-on-plate stress action, checks
+its wrench, and applies it and the native two-interval action separately
+to the same E4 Q4 x4/y4 shell. It reads the saved pre-opened combined F5
+displacements; no CalculiX or new native coupled solve runs. Complete v1
+and v2 outputs remain in this directory; v2 adds the solid face slope.
+At x=.95 m, the solid top-face mean z is `−66.19777 µm`; E4 under the
+*F5 action* gives `−65.43089 µm` (`+0.76688 µm`), while E4 under the
+*native action* gives `−66.26292 µm` (`−0.06515 µm` relative to solid).
+The native-versus-F5-action E4 change is `−0.83202 µm`. The physical
+transverse face slope is `45.342 µrad`, versus `44.2065` and `45.0138
+µrad` for F5-action and native-action E4 respectively. The same pattern
+appears at x=.9 and 1 m. Thus shell response to the same recovered F5
+action and changed interface action are of comparable magnitude and
+opposite sign in mean z. The native result's closer finite-grid face
+motion may be cancellation; it cannot validate its law or allocate the
+remaining beam/joint difference. Same-shell reciprocal cross-work error
+is `5.67e-16 J`; both shell solves pass equilibrium. One mesh and the
+stronger F5 pointwise bond remain limitations. Independent read-only review
+found no sign or top-face projection defect, verified the saved F5 and native
+wrench signs, and independently checked all native active-node moments
+against the +17.5 mm top-face pullback (maximum defect `2.7e-15 N m`). It
+also confirmed that the sampled mean-z cancellation is descriptive, not a
+unique causal allocation; solid/E4 kinematics, mesh resolution and the
+pointwise-versus-weak bond remain unresolved. The slope cancellation is
+incomplete. G0B and the multiplier decision remain open.
+
+**Next top-face resolution discriminator (prospective):** Keep the same C1
+reference section, loads, supports, 35 mm shell and B3-12 predecessor.
+Compare the saved x4/two-interval route with x8/two and x8/four; on the
+same x8 primal mesh, the latter pair isolates multiplier enrichment. Four
+intervals have two shell hosts each. Check exact reference gaps, full
+supported row rank, loaded equilibrium/work/wrench, and physically scaled
+constraint inventory. A rank failure or unsupported mode revises the
+resolution policy; a large x8 two→four transfer shift requires locking and
+physical-mode analysis before extension. If x8 remains well behaved, move
+to the actual retained mixed-tangent norm and the registered ratio/three-
+level programme. The x4→x8 comparison alone cannot prove convergence
+because shell resolution changes.
+
+**Top-face x8 same-primal result:** The private sparse route checks exact
+reference closure, supported rows and full E4/B3-12 KKT load/work balance
+for x8/two and x8/four intervals. The first output is retained as v1;
+the v2 source adds explicit reference-gap preflight. In v2, maximum
+reference gaps are `1.64e-16` and `3.58e-16`; every interval has the
+expected `.05` or `.025 m` basis integral. Combined and shell-only
+row-normalized ranks are `12/12` and `24/24`. Beam-only ranks are `11/12`
+and `14/24` on this *fixed B3-12 trace*; the missing beam-only rows do not
+make the combined system singular, but must be interpreted in the native
+broken-trace/mixed norm. Torque tip rotation changes `47.5318→46.9399
+µrad` for x8 two→four (about `−1.25%`), opening tip motion
+`−69.4260→−69.2719 µm`, and both cases balance to the registered
+development tolerance. The saved x4/two route has torque `47.4128 µrad`;
+the x4→x8 difference also includes shell refinement. Do not infer locking
+absence or choose a multiplier from these smooth outputs. **Next bounded
+test:** Apply the already defined native retained mixed KKT and physical
+primal/dual auxiliary norms to x8/two versus x8/four, with a near-null
+decomposition, not a positive trace quotient alone. A materially collapsing
+mixed inf-sup or unsupported mode would revise the interface resolution;
+otherwise advance the registered ratio/convergence programme. G0B stays
+open and formal F03 authority unconsumed.
+
+**Retained mixed-system norm result:** The actual indefinite E4/B3-12 KKT
+with the existing physical-plus-chart primal and P0 density-dual diagnostic
+norm gives normalized constraint ranks `12/12` and `24/24` for x8/two and
+x8/four. Its smallest normalized singular values are `0.0018764829` and
+`0.0018765553`, with conditions `52695.02` and `52694.95`; normalized
+work errors are near machine precision. The near-null metric is 99.935%
+auxiliary shell drilling chart in both cases, with physical shell about
+0.0645% and negligible beam/line shares. Thus two→four does not expose a
+new mixed weak mode on this grid; the global minimum is dominated by a
+nonphysical norm component and does not establish uniform interface
+stability, locking absence, or fidelity. The raw result
+`B3_GE_E4_PL_F03_TOP_FACE_X8_MIXED_METRIC_20260927.json` records source
+hashes, finite reference gaps, scaling and limitations.
+
+**Next decision-oriented physical check:** Compare x4/two, x8/four and
+x16/eight with two Q4 hosts per interval, the same B3-12 and same loads,
+supports and 35 mm section. Check reference closure, supported rank,
+separate torque/shear work and support/interface wrench. A persistent or
+growing physical-transfer shift sends the top-face trace or interface
+resolution policy back for review; a settling response permits the
+registered ratio/growing-space and independent physical-reference work.
+Changing shell resolution together with multiplier resolution cannot
+isolate their separate effects; the saved x8/two→four pair supplies that
+control. This bounded three-level sequence is not formal F03 execution or
+a production multiplier choice.
+
+**Aligned three-level result and control decision:** The x16/eight route
+passed rank `48/48`, reference closure `3.23e-16`, and torque/opening
+mechanics errors below `6.7e-11`. Its first raw output used the opposite
+shear sign from x4/x8; it is preserved as v1 and excluded from the opening
+comparison. Corrected v2 uses the matching `−1000 N Fz` and includes an
+explicit sign assertion. Across x4/two, x8/four and x16/eight, torque tip
+rotation is `47.41278, 46.93986, 46.42699 µrad`; the successive changes
+do not shrink. Opening tip motion is `−69.38174, −69.27193, −69.16948 µm`.
+Torque shell-interface Fy is `67.2982, 66.1857, 67.4918 N`, so this
+fixed-beam three-level sequence has no demonstrated transfer limit yet.
+At fixed x8, two→four rows change torque by `−0.59198 µrad`; shell and row
+changes are confounded in the next x8/four→x16/eight shift. The single
+bounded x16/four control separates x16 shell refinement at fixed four
+intervals from row enrichment at fixed x16. If the latter dominates,
+review interface resolution/locking and physical work; if the former
+dominates, check shell/beam idealization and convergence before further
+line-space changes. Neither outcome selects a multiplier or closes G0B.
+
+**Fixed-shell control outcome:** The x16/four run passed rank `24/24`,
+reference gap `2.37e-16`, and mechanics balance. With four intervals held
+fixed, x8→x16 shell refinement changes torque tip rotation
+`46.93986→47.04893 µrad` (`+0.10907 µrad`). At fixed x16, four→eight
+rows change it `47.04893→46.42699 µrad` (`−0.62193 µrad`). Thus row
+enrichment dominates the combined `−0.51287 µrad` change and continues
+the material row-resolution dependence observed at fixed x8
+(`−0.59198 µrad` for two→four). Torque shell-interface Fy at x16 changes
+`66.0252→67.4918 N`; opening displacement changes
+`−69.30418→−69.16948 µm`. All full and shell-only scaled rows retain
+rank; beam-only rank stays 14 for both x16 spaces. These bounded outcomes
+point to interface resolution/physical-work and locking analysis as the
+next decision, not another automatic refinement. They do not prove
+locking, establish a transfer limit, or select P0. An independent
+read-only review of this allocation is pending. The selected existing
+terminal tests initially gave `1/2` because one expected an obsolete
+validation message; its expectation now matches the existing bounded-C1
+admission and the same two tests pass `2/2` (56.94 s). G0B remains open,
+G1 barred, formal F03 authority unconsumed.
+
+**Saved F5 common-action replay and next bounded test:** No new solid or
+coupled solve was used. The saved x8/four, x16/four and x16/eight native
+actions were projected onto the same validated two-hat lateral, vertical
+and physical-twist fields. Relative L2 deviations from the F5 action are
+respectively `(0.4033, 0.01927, 0.2508)`, `(0.2993, 0.01427, 0.1847)`
+and `(0.6818, 0.01720, 0.4301)`. At fixed x16, adding four intervals
+therefore worsens these low-order lateral and twist differences even though
+the x8→x16 shell-only change at four intervals improves all three. F5's
+shared-node pointwise bond is stronger than the native weak law, so this
+is a directional warning, not a target tolerance, accuracy ranking or
+multiplier selection. Independent read-only review confirmed matched
+models, the response decomposition and the drilling-norm limitation; it
+found no calculation blocker. The next discriminating pair holds x16 Q4
+and the declared top-face law fixed, refines native B3-12→B3-24, and
+compares four versus eight intervals with actual work and a physical-mode
+measure that excludes the auxiliary drilling direction. If the row effect
+shrinks substantially, investigate beam-trace resolution and locking; if
+it persists, investigate the continuous trace and enforcement policy.
+Neither result alone qualifies a multiplier. The action replay is saved
+as `B3_GE_E4_PL_F03_TOP_FACE_X16_COMMON_ACTION_20260927.json` with
+protected-input and script hashes. G0B remains open, G1 barred.
+
+**Beam-resolution discriminator result:** At the same x16 shell and
+35 mm top-face law, B3-24 completes four/eight interval cases in 69.61/66.85
+s, with full/shell ranks `24/24` and `48/48`, reference closure below
+`3.24e-16`, and mechanics balance. The beam-only row ranks are `21/24`
+and `26/48` versus B3-12's `14/24` and `14/48`. Torque tip rotation is
+`47.25236→46.30221 µrad` for B3-24 (`−0.95015 µrad`) versus
+`47.04893→46.42699 µrad` for B3-12 (`−0.62193 µrad`); beam refinement
+does not eliminate the row effect. Opening motion is
+`−69.04278→−68.92262 µm` for B3-24. The extended read-only F5 common-hat
+comparison gives lateral/vertical/twist relative L2 deviations
+`(0.8608, 0.01653, 0.5469)→(0.1652, 0.02451, 0.1014)` for B3-24,
+opposite the B3-12 lateral/twist direction
+`(0.2993, 0.01427, 0.1847)→(0.6818, 0.01720, 0.4301)`. F5's pointwise
+shared-node bond and continuum shell are different idealizations, so this
+reversal cannot rank row spaces or prove locking. It instead shows strong
+interaction between native beam trace resolution and enforcement. Stop
+mesh escalation. Next inspect the *physical* newly constrained modes,
+actual half-cell port work and shell strain-energy distribution on these
+saved matched cases; derive an admissible interface-resolution policy and
+test its work/locking/stability on registered ratios. If these outputs
+cannot be reconstructed from saved cases, add only the needed selected
+recovery to this bounded fixture, then rerun the minimum matched pair.
+The validated F5 action lacks verified sided retained-port work, so use
+it only at common continuous fields until that reference is resolved.
+G0B/F03 remain open, G1 barred, formal F03 authority unconsumed.
 
 **Bounded F09 physical-section decision (27 September):** The prior
 `2^-20`/`2^-40` weak-shear graph brackets a numerical issue in an artificial

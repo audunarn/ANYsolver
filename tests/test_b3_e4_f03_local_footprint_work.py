@@ -156,7 +156,7 @@ def test_c1_sparse_line_kkt_matches_four_cell_loaded_transfer():
     beam = build(12, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um")
-    with pytest.raises(ValueError, match="four/eight-cell weighted"):
+    with pytest.raises(ValueError, match="bounded weighted C1 case"):
         graded_terminal_coupling(2, beam, plate_thickness=.035,
                                  sparse_line_only=True)
     with threadpool_limits(limits=1):

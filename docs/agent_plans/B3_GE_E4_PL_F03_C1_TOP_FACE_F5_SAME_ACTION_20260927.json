@@ -1,0 +1,167 @@
+{
+  "classification": "saved-F5/new-top-face same-Q4-shell development diagnostic; not G0B acceptance",
+  "geometry": "same 35 mm plate, tapered C1 B3-12 axis, terminal x=.9\u20131 m bond and left/root supports; F5 C3D20R versus E4 Q4 x4/y4",
+  "inputs_sha256": {
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-common-weak-work-dev-20260926-v2\\result.json": "d061624e305227918d77e23a0d23e79814b66d545c080ab183cee3f3134f9edf",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-stiffener-ip-stress-dev-20260926-v1\\solid-5-tip_mx.dat": "9df0f2deae16047c14268c7f6f60039a485fa5988c0bfba78fb2e0cc07127dfa",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-stiffener-ip-stress-dev-20260926-v1\\solid-5-tip_mx.inp": "5468cb18f61d1a80ebacd8c14ea1834da3d817e91b110aa0694a19124edd14cf",
+    ".qualification\\b3-ge-e4-pl\\f03-ccx-c1-preopen-combined-factor5-dev-20260926-v1\\solid-5-tip_mx\\model.json": "bf41b8bd670243c59d1d63a73b137304f515a94e123e58d687bbd807ea39cf75",
+    ".qualification\\b3-ge-e4-pl\\f03-ccx-c1-preopen-combined-factor5-dev-20260926-v1\\solid-5-tip_mx\\solid-5-tip_mx.frd": "a4c11d5b42a08b9964525c08b09fc651172820436cec1e92b355ba6d9cf61b62",
+    "docs\\agent_plans\\B3_GE_E4_PL_F03_C1_TOP_FACE_SEGMENTED_DEV_20260927.json": "9885b6d772c779b6d3f896734df4200fb166c7cdd2193b117cca7d7cc02e14b4"
+  },
+  "limitations": [
+    "F5 uses pointwise shared top-face nodes; native uses projected six-moment weak work",
+    "one solid and one native grid, not convergence or connection-law acceptance",
+    "F5 solid face and E4 top-face have distinct element kinematics",
+    "pure torque is only a linear influence of the pre-opened combined case",
+    "same-shell response separates actions but cannot alone allocate beam versus joint law"
+  ],
+  "loading": "pre-opened combined +100 N m Mx -1000 N Fz; native linear influences superposed",
+  "native_two_hat_action_N_N_Nm": [
+    [
+      -222.45665725612994,
+      829.8824651712512,
+      -2.1974651819106614
+    ],
+    [
+      289.7548774734889,
+      -900.7935800335401,
+      47.42670147699278
+    ]
+  ],
+  "native_wrench_N_Nm": [
+    -6003.064603566581,
+    67.29822021735887,
+    -70.91111486228911,
+    40.68660643041038,
+    48.84573081699912,
+    32.18313321225769
+  ],
+  "question": "Does shell idealization or connection transfer dominate the saved combined-load face difference?",
+  "reciprocal_cross_work_difference_J": -5.672545766444159e-16,
+  "responses": {
+    "F5_action": {
+      "applied_final_state_work_j": 0.014643273875712178,
+      "free_relative_residual": 2.0994820588354064e-12,
+      "numerical_shell_work_j": 1.880002277439806e-05,
+      "physical_shell_work_j": 0.014624473853287776,
+      "support_wrench_N_Nm": [
+        5974.983704674215,
+        -54.62361059511154,
+        72.20733066054545,
+        -40.521992346257264,
+        -48.18880567750888,
+        -28.71827206838747
+      ]
+    },
+    "native_action": {
+      "applied_final_state_work_j": 0.01523307947585794,
+      "free_relative_residual": 1.8897277644674557e-12,
+      "numerical_shell_work_j": 2.1168357286108913e-05,
+      "physical_shell_work_j": 0.015211911118860768,
+      "support_wrench_N_Nm": [
+        6003.064603566507,
+        -67.29822021732433,
+        70.91111485948002,
+        -40.68660643021222,
+        -48.84573081470041,
+        -32.183133212228995
+      ]
+    }
+  },
+  "solid_wrench_N_Nm": [
+    -5974.983704674281,
+    54.62361059514069,
+    -72.20733066508228,
+    40.52199234654318,
+    48.18880568181669,
+    28.71827206842103
+  ],
+  "source_sha256": "d0770ae919ebdf069328acd4c1093a28dca5f222e3a5f078820b2499c53cdcd8",
+  "stations": {
+    "1000": {
+      "native_minus_F5_action_rms_m": 8.65503884336373e-07,
+      "routes": {
+        "F5_action": {
+          "mean_m": [
+            -3.8951587874849595e-07,
+            -6.672950325755475e-07,
+            -6.852297228419992e-05
+          ],
+          "rms_minus_solid_m": 7.663387141096891e-07,
+          "slope_z_y_rad": 4.4527746225566e-05
+        },
+        "native_action": {
+          "mean_m": [
+            -3.643349777076778e-07,
+            -6.599213275001358e-07,
+            -6.93876690851197e-05
+          ],
+          "rms_minus_solid_m": 1.1486519191519195e-07,
+          "slope_z_y_rad": 4.5137033684023424e-05
+        }
+      },
+      "solid_mean_m": [
+        -4.09840375e-07,
+        -6.6877e-07,
+        -6.92873875e-05
+      ]
+    },
+    "900": {
+      "native_minus_F5_action_rms_m": 7.788456915289476e-07,
+      "routes": {
+        "F5_action": {
+          "mean_m": [
+            -5.406280637829033e-07,
+            -6.620072434487027e-07,
+            -6.23639472144223e-05
+          ],
+          "rms_minus_solid_m": 7.302573973088994e-07,
+          "slope_z_y_rad": 4.264447404076188e-05
+        },
+        "native_action": {
+          "mean_m": [
+            -4.989771613316704e-07,
+            -6.518234255695785e-07,
+            -6.313976485674578e-05
+          ],
+          "rms_minus_solid_m": 1.745665367519612e-07,
+          "slope_z_y_rad": 4.294867569908427e-05
+        }
+      },
+      "solid_mean_m": [
+        -6.42067625e-07,
+        -6.79845125e-07,
+        -6.3083775e-05
+      ]
+    },
+    "950": {
+      "native_minus_F5_action_rms_m": 8.336684592158789e-07,
+      "routes": {
+        "F5_action": {
+          "mean_m": [
+            -4.606427656360173e-07,
+            -6.75555019943086e-07,
+            -6.543089446574635e-05
+          ],
+          "rms_minus_solid_m": 7.688687605415053e-07,
+          "slope_z_y_rad": 4.420647359483105e-05
+        },
+        "native_action": {
+          "mean_m": [
+            -5.137210993301164e-07,
+            -6.82589572973338e-07,
+            -6.626291624335264e-05
+          ],
+          "rms_minus_solid_m": 8.242912281466053e-08,
+          "slope_z_y_rad": 4.5013830598636715e-05
+        }
+      },
+      "solid_mean_m": [
+        -4.862475e-07,
+        -6.886967499999999e-07,
+        -6.619776875e-05
+      ]
+    }
+  }
+}
