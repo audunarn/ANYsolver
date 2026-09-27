@@ -93,6 +93,13 @@ accepted only a selected smooth-branch directional tangent at the same saved
 fixed-target pose, with mapped-contact errors 2.882e−10 and 7.171e−11.
 Claim-bearing complete tangent status in the matrix remains open.
 
+A [partially supported target directional gate](reference_cases/general_contact_d1_free_target_tangent_v2_review.md)
+also passed independent review with separate force and moment scales at the
+saved 24-Q4 geometry. Its source and target coordinates are free in the
+110-DOF variation space, but the pose has not been re-equilibrated after
+changing target supports. The first-order [v1 moment gate failed](reference_cases/general_contact_d1_free_target_tangent_v1_failure.md);
+the prospective second-order v2 gate passed without changing that verdict.
+
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as
 `31e60277`. A disposable C0 candidate wheel built from that commit as
