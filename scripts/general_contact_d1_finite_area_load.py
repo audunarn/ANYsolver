@@ -23,24 +23,32 @@ def build_case(divisions: int, *, total_load_n: float = 0.4,
                normal_stiffness: float = 1000.0,
                supported_schur: bool = False,
                geometry_profile: str = "overhang",
-               schur_mode_cap: int = 16):
+               schur_mode_cap: int = 16,
+               rows: int | None = None):
     if divisions < 2 or divisions % 2:
         raise ValueError("divisions must be an even integer of at least two")
+    rows = divisions if rows is None else rows
+    if type(rows) is not int or rows < 2 or rows % 2:
+        raise ValueError("rows must be an even integer of at least two")
     if geometry_profile not in {"overhang", "central"}:
         raise ValueError("geometry_profile must be overhang or central")
-    model = FEModel(f"general_contact_finite_area_{divisions}")
+    model = FEModel(
+        f"general_contact_finite_area_{divisions}"
+        if rows == divisions else f"general_contact_finite_area_{divisions}x{rows}"
+    )
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
     stride = divisions + 1
-    source_nodes = tuple(range(1, stride*stride + 1))
-    for row in range(stride):
+    source_nodes = tuple(range(1, (rows+1)*stride + 1))
+    for row in range(rows+1):
         for column in range(stride):
             model.add_node(1 + row*stride + column,
                            (0.1 if geometry_profile == "overhang" else 0.0)
                            + column/divisions,
                            (0.1 if geometry_profile == "overhang" else 0.0)
-                           + row/divisions,
+                           + row/rows,
                            0.04005)
-    target_nodes = tuple(range(stride*stride + 1, stride*stride + 5))
+    target_nodes = tuple(range((rows+1)*stride + 1,
+                               (rows+1)*stride + 5))
     target_corners = (
         ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
         if geometry_profile == "overhang" else
@@ -51,7 +59,7 @@ def build_case(divisions: int, *, total_load_n: float = 0.4,
 
     source_elements = []
     load_weights = {node: 0.0 for node in source_nodes}
-    for row in range(divisions):
+    for row in range(rows):
         for column in range(divisions):
             element_id = 1 + row*divisions + column
             first = 1 + row*stride + column
@@ -62,10 +70,10 @@ def build_case(divisions: int, *, total_load_n: float = 0.4,
             ))
             source_elements.append(element_id)
             for node in nodes:
-                load_weights[node] += 0.25/divisions**2
+                load_weights[node] += 0.25/(divisions*rows)
     for element_id, nodes in (
-        (divisions**2+1, (target_nodes[0], target_nodes[1], target_nodes[3])),
-        (divisions**2+2, (target_nodes[1], target_nodes[2], target_nodes[3])),
+        (divisions*rows+1, (target_nodes[0], target_nodes[1], target_nodes[3])),
+        (divisions*rows+2, (target_nodes[1], target_nodes[2], target_nodes[3])),
     ):
         model.add_element(element_id, create_shell_element(
             element_id, nodes, "elastic", thickness=0.05,
@@ -82,11 +90,11 @@ def build_case(divisions: int, *, total_load_n: float = 0.4,
         {axis: 0.0 for axis in ("ux", "uy", "rx", "ry", "rz")},
     ))
     supported_edge = (
-        tuple(1 + row*stride for row in range(stride))
+        tuple(1 + row*stride for row in range(rows+1))
         if geometry_profile == "overhang" else
         tuple(1 + row*stride + column
-              for row in range(stride) for column in range(stride)
-              if row in {0, divisions} or column in {0, divisions})
+              for row in range(rows+1) for column in range(stride)
+              if row in {0, rows} or column in {0, divisions})
     )
     model.add_boundary_condition(BoundaryCondition(
         "source_supported_edge", supported_edge, {"uz": 0.0},
@@ -96,7 +104,7 @@ def build_case(divisions: int, *, total_load_n: float = 0.4,
         load.add_nodal_load(node, forces=(0.0, 0.0, -total_load_n*weight))
     definition = ContactDefinition(
         surfaces=(ContactSurface("q4_source", tuple(source_elements), "bottom"),
-                  ContactSurface("s3_target", (divisions**2+1, divisions**2+2),
+                  ContactSurface("s3_target", (divisions*rows+1, divisions*rows+2),
                                  "top")),
         rigid_bodies=(),
         interactions=(ContactInteraction(
@@ -111,7 +119,7 @@ def build_case(divisions: int, *, total_load_n: float = 0.4,
             else "projected_matching"
         ),
         general_s3_difference_step=2.0e-5,
-        maximum_general_s3_energy_evaluations=5000*divisions**2,
+        maximum_general_s3_energy_evaluations=5000*divisions*rows,
         q4_source_area_tolerance=1.0e-9,
         q4_source_weighted_gap_tolerance=1.0e-10,
         maximum_q4_source_integration_triangles=128,
@@ -140,6 +148,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("divisions", type=int)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--rows", type=int)
     parser.add_argument("--normal-stiffness", type=float, default=1000.0)
     parser.add_argument("--supported-schur", action="store_true")
     parser.add_argument("--min-step-fraction", type=float, default=0.5)
@@ -155,6 +164,7 @@ def main():
         supported_schur=args.supported_schur,
         geometry_profile=args.geometry_profile,
         schur_mode_cap=args.schur_mode_cap,
+        rows=args.rows,
     )
     capability = validate_general_contact(model, definition, settings)
     if not capability.valid:
@@ -169,6 +179,7 @@ def main():
     )
     record = {
         "divisions": args.divisions,
+        "rows": args.divisions if args.rows is None else args.rows,
         "total_load_n": args.total_load,
         "geometry_profile": args.geometry_profile,
         "normal_law": "augmented",
