@@ -14,7 +14,9 @@ import numpy as np
 from .moving import _has_shared_edge_transition
 from .overlap import PlanarFace, planar_projected_overlap
 from .q4_source_overlap import projected_q4_source_face
-from .q4_s3_overlap_derivatives import q4_s3_overlap_derivatives
+from .q4_s3_overlap_derivatives import (
+    UnsupportedQ4S3Branch, q4_s3_overlap_derivatives,
+)
 from .s3_overlap_derivatives import UnsupportedOverlapBranch, s3_overlap_derivatives
 from .s3_patch_mortar_energy import (
     MovingS3PatchMortarWork,
@@ -305,20 +307,27 @@ class MovingS3PatchProjectedNormal:
                     zero_area_overlap_pairs.append(pair_index)
                 continue
             if len(source_nodes) == 4:
-                derivative = q4_s3_overlap_derivatives(
-                    self.geometry.source_faces[source_face].reference_positions,
-                    local_source, local_target,
-                    area_tolerance=self.geometry.q4_source_area_tolerance,
-                    weighted_gap_tolerance=self.geometry.q4_source_weighted_gap_tolerance,
-                    maximum_triangles=self.geometry.maximum_q4_source_integration_triangles,
-                    allow_warped_source=True,
-                    **dict(zip((
-                        "support_gradient_tolerance",
-                        "support_hessian_tolerance",
-                        "weighted_gap_gradient_tolerance",
-                        "weighted_gap_hessian_tolerance",
-                    ), self.geometry.q4_source_derivative_tolerances or (None,)*4)),
-                )
+                try:
+                    derivative = q4_s3_overlap_derivatives(
+                        self.geometry.source_faces[source_face].reference_positions,
+                        local_source, local_target,
+                        area_tolerance=self.geometry.q4_source_area_tolerance,
+                        weighted_gap_tolerance=self.geometry.q4_source_weighted_gap_tolerance,
+                        maximum_triangles=self.geometry.maximum_q4_source_integration_triangles,
+                        allow_warped_source=True,
+                        **dict(zip((
+                            "support_gradient_tolerance",
+                            "support_hessian_tolerance",
+                            "weighted_gap_gradient_tolerance",
+                            "weighted_gap_hessian_tolerance",
+                        ), self.geometry.q4_source_derivative_tolerances or (None,)*4)),
+                    )
+                except UnsupportedQ4S3Branch as exc:
+                    raise UnsupportedQ4S3Branch(
+                        f"pair={pair_index}, overlap_area_m2={local.overlap_area:.12g}, "
+                        f"reference_overlap_area_m2={local.reference_overlap_area:.12g}, "
+                        f"integration_triangles={local.integration_triangles}: {exc}"
+                    ) from exc
             else:
                 derivative = s3_overlap_derivatives(
                     self.geometry.source_faces[source_face].reference_positions,

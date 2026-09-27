@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from anysolver.general_contact import static_path
+from anysolver.general_contact.q4_s3_overlap_derivatives import UnsupportedQ4S3Branch
 from scripts.general_contact_d1_coupled_refinement import build_case
 
 from anysolver import solve_static_nonlinear, validate_general_contact
@@ -57,3 +59,26 @@ def test_refined_projected_patch_press_slide_open_recontact_with_tight_gap():
         result.info["general_contact"]["normal_multiplier_estimate_pa"],
         rtol=1e-6, atol=1e-7,
     )
+
+
+def test_unresolved_derivative_branch_returns_structured_failure(monkeypatch):
+    model, definition, settings, program = build_case(
+        2, 2, True, gap_certificate="projected_matching",
+        gap_tolerance=5.0e-5, normal_approach=0.01504,
+    )
+
+    def unresolved(*_args, **_kwargs):
+        raise UnsupportedQ4S3Branch("positive overlap predicate unresolved")
+
+    monkeypatch.setattr(static_path, "_assemble_nonlinear_system", unresolved)
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "diverged"
+    assert result.failure_reason == "contact_derivative_branch_unresolved"
+    assert not result.steps
+    assert result.restart_checkpoint is None
+    assert result.info["contact_failure"]["augmentation_trace"][0][
+        "derivative_branch_failure"] == "positive overlap predicate unresolved"

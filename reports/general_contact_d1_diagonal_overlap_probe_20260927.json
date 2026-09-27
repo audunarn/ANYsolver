@@ -1,0 +1,87 @@
+[
+  {
+    "shift_m": 0.0499999999,
+    "pairs": [
+      {
+        "pair": 2,
+        "overlap_area_m2": 5.0000049907412014e-21,
+        "reference_overlap_area_m2": 5.000007766300527e-21,
+        "support_sum_m2": 5.000007766300527e-21
+      },
+      {
+        "pair": 3,
+        "overlap_area_m2": 0.05000000005000002,
+        "reference_overlap_area_m2": 0.05000000004999996,
+        "support_sum_m2": 0.05000000004999996
+      }
+    ]
+  },
+  {
+    "shift_m": 0.049999999999000004,
+    "pairs": [
+      {
+        "pair": 2,
+        "overlap_area_m2": 0.0,
+        "reference_overlap_area_m2": 0.0,
+        "support_sum_m2": 0.0
+      },
+      {
+        "pair": 3,
+        "overlap_area_m2": 0.050000000000500006,
+        "reference_overlap_area_m2": 0.050000000000499964,
+        "support_sum_m2": 0.050000000000499964
+      }
+    ]
+  },
+  {
+    "shift_m": 0.05,
+    "pairs": [
+      {
+        "pair": 2,
+        "overlap_area_m2": 0.0,
+        "reference_overlap_area_m2": 0.0,
+        "support_sum_m2": 0.0
+      },
+      {
+        "pair": 3,
+        "overlap_area_m2": 0.05000000000000002,
+        "reference_overlap_area_m2": 0.04999999999999996,
+        "support_sum_m2": 0.04999999999999996
+      }
+    ]
+  },
+  {
+    "shift_m": 0.050000000001,
+    "pairs": [
+      {
+        "pair": 2,
+        "overlap_area_m2": 0.0,
+        "reference_overlap_area_m2": 0.0,
+        "support_sum_m2": 0.0
+      },
+      {
+        "pair": 3,
+        "overlap_area_m2": 0.0499999999995,
+        "reference_overlap_area_m2": 0.04999999999949996,
+        "support_sum_m2": 0.04999999999949996
+      }
+    ]
+  },
+  {
+    "shift_m": 0.050000000100000004,
+    "pairs": [
+      {
+        "pair": 2,
+        "overlap_area_m2": 0.0,
+        "reference_overlap_area_m2": 0.0,
+        "support_sum_m2": 0.0
+      },
+      {
+        "pair": 3,
+        "overlap_area_m2": 0.04999999995000001,
+        "reference_overlap_area_m2": 0.04999999994999994,
+        "support_sum_m2": 0.04999999994999994
+      }
+    ]
+  }
+]

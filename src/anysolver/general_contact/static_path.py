@@ -247,6 +247,7 @@ def solve_static_contact_path(
     from .s3_patch_static import REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE as refined_q4_s3_roundoff_profile
     from .s3_patch_static import REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE as refined_q4_s3_graph_profile
     from .s3_patch_static import SupportResetForceBudgetExceeded
+    from .q4_s3_overlap_derivatives import UnsupportedQ4S3Branch
 
     general_s3_patch = report.profile in {
         s3_patch_profile, mixed_patch_profile, source_q4_patch_profile,
@@ -500,6 +501,19 @@ def solve_static_contact_path(
                                     model, u, committed_states, num_layers,
                                     kinematics="von_karman",
                                 )
+                            except UnsupportedQ4S3Branch as exc:
+                                candidate_evaluation_error = str(exc)
+                                failure_reason = (
+                                    "contact_candidate_evaluation_failed"
+                                    if pivot_backup is not None else
+                                    "contact_derivative_branch_unresolved"
+                                )
+                                if pivot_backup is None:
+                                    augmentation_trace.append({
+                                        "augmentation": augmentation,
+                                        "derivative_branch_failure": str(exc),
+                                    })
+                                break
                             except ValueError as exc:
                                 if (pivot_backup is None or
                                         settings.augmentation_acceleration

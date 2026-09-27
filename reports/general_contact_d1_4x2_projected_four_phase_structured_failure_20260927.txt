@@ -1,0 +1,14 @@
+{
+  "columns": 4,
+  "rows": 2,
+  "edge_control": true,
+  "gap_certificate": "projected_matching",
+  "gap_tolerance_m": 5e-05,
+  "normal_approach_m": 0.01504,
+  "four_phase": true,
+  "elapsed_seconds": 27.243670199997723,
+  "status": "stopped_at_limit",
+  "failure_reason": "contact_derivative_branch_unresolved",
+  "accepted_steps": 1,
+  "has_restart_checkpoint": false
+}
