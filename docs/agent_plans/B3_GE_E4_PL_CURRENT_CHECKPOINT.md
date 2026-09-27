@@ -37,6 +37,24 @@ Neither outcome selects a multiplier space or closes F03. Do not resume
 finer classical axial sweeps.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
+**Next split-law experiment, pre-execution (27 September):** The competing
+explanations are insufficient longitudinal enforcement of the declared
+six-channel work law versus a different continuous trace/domain response.
+On the *same* C1 detached solid source, construct exact Q8-normalized six
+physical rows on each of two half-patch intervals, then reconstruct the
+linear constrained response from 12 serial unit-action compliance solves.
+The preflight has rank `12/12`, maximum common-rigid gap `5.22e-15`, and
+mean recomposition defect `4.22e-15`. A plate-top longitudinal Fz field
+with zero global mean produces split gaps `-0.025 m` and `+0.025 m`.
+Focused tests pass `2/2`; independent read-only mechanics review found no
+blocking issue. Its two provenance/failure-record hardening suggestions
+(runner SHA and missing convergence-log handling) are implemented.
+Each action solve retains the 120 s/2 GiB cap and one-thread setting.
+Compare the 12-row supported action with the saved global-six and native
+P0-two-interval actions only after compliance reciprocity, rank, work and
+physical balance checks. No formal F03 authority is consumed by this
+development diagnostic.
+
 **Local solid trace-residual diagnostic (27 September):** The same eight
 source-bound solid FRD fields and `reconstruction_v5.json` were reused with
 no new external solve. The deck- and field-bound result is
