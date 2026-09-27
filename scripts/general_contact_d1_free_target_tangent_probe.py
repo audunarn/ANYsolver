@@ -22,7 +22,9 @@ from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
 
 def main(reference_path: Path, output_path: Path,
          target_z_weights: tuple[float, float] = (0.5, 0.5),
-         source_weight: float = 0.0) -> None:
+         source_weight: float = 0.0,
+         difference_order: int = 1,
+         steps: tuple[float, ...] = (1e-6, 5e-7)) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
@@ -103,34 +105,71 @@ def main(reference_path: Path, output_path: Path,
             contact_action = np.asarray(transform.T@(
                 (base_tangent-structural_tangent)@direction)).reshape(-1)
             runs = []
-            for step in (1e-6, 5e-7):
+            for step in steps:
                 minus_pose = pose-step*direction
                 minus_force, _ = _assemble(
                     model, minus_pose, states, tangent=False)
                 with suspend_contact():
                     minus_structural, _ = _assemble(
                         model, minus_pose, states, tangent=False)
-                coupled_finite = np.asarray(transform.T@(
-                    (base_force-minus_force)/step)).reshape(-1)
-                contact_finite = np.asarray(transform.T@(
-                    ((base_force-structural_force)
-                     -(minus_force-minus_structural))/step)).reshape(-1)
+                if difference_order == 2:
+                    minus2_pose = pose-2*step*direction
+                    minus2_force, _ = _assemble(
+                        model, minus2_pose, states, tangent=False)
+                    with suspend_contact():
+                        minus2_structural, _ = _assemble(
+                            model, minus2_pose, states, tangent=False)
+                    coupled_difference = (
+                        3*base_force-4*minus_force+minus2_force)/(2*step)
+                    contact_difference = (
+                        3*(base_force-structural_force)
+                        -4*(minus_force-minus_structural)
+                        +(minus2_force-minus2_structural))/(2*step)
+                else:
+                    coupled_difference = (base_force-minus_force)/step
+                    contact_difference = (
+                        (base_force-structural_force)
+                        -(minus_force-minus_structural))/step
+                coupled_finite = np.asarray(
+                    transform.T@coupled_difference).reshape(-1)
+                contact_finite = np.asarray(
+                    transform.T@contact_difference).reshape(-1)
                 minus_source, minus_target = manager._positions(minus_pose)
                 minus_state = manager.law.evaluate(
                     minus_source, minus_target, multipliers)
+                if difference_order == 2:
+                    minus2_source, minus2_target = manager._positions(
+                        minus2_pose)
+                    minus2_state = manager.law.evaluate(
+                        minus2_source, minus2_target, multipliers)
+                else:
+                    minus2_source = minus2_target = minus2_state = None
                 branch_checks = {
                     "pressure_active": bool(np.array_equal(
                         minus_state.pressure > 0,
-                        base_state.pressure > 0)),
+                        base_state.pressure > 0)
+                        and (minus2_state is None or np.array_equal(
+                            minus2_state.pressure > 0,
+                            base_state.pressure > 0))),
                     "reference_support": bool(np.array_equal(
                         minus_state.reference_support > 0,
-                        base_state.reference_support > 0)),
+                        base_state.reference_support > 0)
+                        and (minus2_state is None or np.array_equal(
+                            minus2_state.reference_support > 0,
+                            base_state.reference_support > 0))),
                     "overlap_signature": (
                         minus_state.overlap_signature
-                        == base_state.overlap_signature),
+                        == base_state.overlap_signature
+                        and (minus2_state is None or
+                             minus2_state.overlap_signature
+                             == base_state.overlap_signature)),
                     "pair_derivatives": (
                         _branches(manager.law, minus_source, minus_target,
-                                  moved_source) == branches),
+                                  moved_source) == branches
+                        and (minus2_state is None or
+                             _branches(manager.law, minus2_source,
+                                       minus2_target, moved_source)
+                             == branches)),
                 }
                 total_norm = max(float(np.linalg.norm(coupled_action)),
                                  float(np.linalg.norm(coupled_finite)))
@@ -169,6 +208,8 @@ def main(reference_path: Path, output_path: Path,
                 "free_moment_rows": len(moment_rows),
                 "target_z_weights": list(target_z_weights),
                 "source_weight": source_weight,
+                "difference_order": difference_order,
+                "steps_m": list(steps),
                 "pose_constraint_error_m": pose_error,
                 "pressure_replay_error_pa": pressure_error,
                 "base_active_modes": base_state.active_pressure_dofs,
@@ -204,7 +245,13 @@ if __name__ == "__main__":
     parser.add_argument("--target-z-weights", nargs=2, type=float,
                         default=(0.5, 0.5))
     parser.add_argument("--source-weight", type=float, default=0.0)
+    parser.add_argument("--difference-order", type=int, choices=(1, 2),
+                        default=1)
+    parser.add_argument("--steps", nargs="+", type=float,
+                        default=(1e-6, 5e-7))
     args = parser.parse_args()
     main(args.reference, args.output,
          target_z_weights=tuple(args.target_z_weights),
-         source_weight=args.source_weight)
+         source_weight=args.source_weight,
+         difference_order=args.difference_order,
+         steps=tuple(args.steps))

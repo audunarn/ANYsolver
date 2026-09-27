@@ -23,3 +23,16 @@ The next bounded diagnostic compares a second-order one-sided difference
 on the same negative active-set branch at the original step sizes. That
 new calculation cannot change this failed verdict. The full contact
 programme and general C1 remain open.
+
+The [second-order development diagnostic](../../reports/general_contact_d1_free_target_tangent_second_order_dev_20260927.json)
+(SHA256 `896f99b0d53ffe6d4e0c2b07d7b5f6a2b41b28b808d25242705ffddce2c8a97d`)
+used the selected h=5e−7 m and the 0, −h, −2h stencil on the same branch.
+Its mapped-contact moment relative error is 1.124e−10 on the unchanged
+0.000318640 Nm/m action, while force and coupled-moment checks also pass.
+Independent read-only review checked the second-order formula, force and
+moment row separation, both negative-pose branch signatures and trial
+discard. This strongly identifies first-order quotient truncation as the
+local cause of v1's moment mismatch. It is **development evidence** and
+does not retrospectively change v1's FAIL status. A prospective new
+registration must use distinct steps and retain the same 1e−5 component
+criteria.
