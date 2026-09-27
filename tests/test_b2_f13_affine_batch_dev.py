@@ -8,11 +8,14 @@ import pytest
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
+from anysolver.assembly import build_constraint_transformation
+from anysolver.boundary import BoundaryCondition
 from anysolver._b2_physical_linear_batch_dev import CompiledB2AffineBatch
 from anysolver._b2_physical_flexibility_linear import LinearSection
 from anysolver.control import CancellationToken
+from anysolver.fe_core import FEModel
 from test_b2_physical_linear_oriented_graph import (
-    _exact_linear_solve, _force_method_energy, _members,
+    _exact_linear_solve, _force_method_energy, _members, _solve,
 )
 
 
@@ -140,3 +143,51 @@ def test_scaled_batch_preserves_coherent_circular_elbow_work(radius_m):
     physical_work = float(_force_method_energy(physical, tip))
     assert abs(.5*tip@selected-physical_work)/physical_work <= 1e-9
     batch.close()
+
+
+def test_existing_auditor_builds_b2_affine_map_and_tracks_its_dependencies():
+    members, points = _members()
+    _, _, stiffness = _solve(members, np.zeros(18))
+    model = FEModel("bounded-B2-audited-affine")
+    for node_id, point in enumerate(points):
+        model.add_node(node_id, *point)
+    model.add_boundary_condition(BoundaryCondition(
+        "root", [0], {name: 0. for name in
+                       ("ux", "uy", "uz", "rx", "ry", "rz")}))
+
+    def equation(coefficient, value):
+        model.constraint_equations.clear()
+        model.add_constraint_equation(
+            terms=((12, 1.), (7, -coefficient)), rhs=value,
+            dependent_dof=12, source_id="tip-x-to-mid-y")
+        return build_constraint_transformation(
+            stiffness, np.zeros(18), model)
+
+    _, _, first_t, first_u0, independent, _ = equation(.25, .001)
+    assert first_t.shape == (18, 11) and independent.size == 11
+    load = _cases(1)[0][1]
+    first_k = (first_t.T@stiffness@first_t).tocsc()
+    reduced_load = first_t.T@(load-stiffness@first_u0)
+    state = first_t@spsolve(first_k, reduced_load)+first_u0
+    assert abs(state[12]-.25*state[7]-.001) <= 1e-13
+    np.testing.assert_allclose(first_t.T@(stiffness@state-load), 0.,
+                               atol=1e-11)
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in members),
+        first_t, first_u0, np.arange(12, 18), max_chunk=8)
+    selected = batch.solve_many((("audited", load),)).cases[0].values
+    np.testing.assert_allclose(selected, state[12:18],
+                               rtol=1e-11, atol=1e-11)
+    batch.close()
+
+    _, _, value_t, value_u0, value_independent, _ = equation(.25, .002)
+    np.testing.assert_array_equal(value_t.toarray(), first_t.toarray())
+    np.testing.assert_array_equal(value_independent, independent)
+    assert value_u0[12] == .002 and first_u0[12] == .001
+    _, _, structural_t, _, _, _ = equation(.5, .002)
+    assert not np.array_equal(structural_t.toarray(), first_t.toarray())
+
+    model.add_boundary_condition(BoundaryCondition("conflict", [0],
+                                                   {"ux": 1.}))
+    with pytest.raises(ValueError, match="Invalid constraint system"):
+        build_constraint_transformation(stiffness, np.zeros(18), model)

@@ -579,6 +579,32 @@ This remains private beam-only feasibility: no audited mixed constraint
 plan, shell attachment, installed validation, performance measurement or
 F09/F13/G0B acceptance follows.
 
+**Next bounded F13 audited-affine decision:** `AnalysisSession.ConstraintPlan`
+is tied to a session-owned structural matrix and cannot truthfully be
+fabricated for the private B2 graph. Test the actual shared constraint
+auditor and `build_constraint_transformation` against that graph's sparse
+physical stiffness, with a fixed root and one declared translation MPC.
+Check solved work/compatibility, a value-only prescribed refresh, a changed
+MPC coefficient, and contradictory supports. If the auditor produces
+correct affine maps, the later mixed owner can bind them to its structural
+identity; if not, resolve that interface before F13 integration. This
+does not imply a session-owned B2 `ConstraintPlan` or enter G1.
+
+**F13 audited-affine result:** The actual shared constraint auditor and
+`build_constraint_transformation` accept the private two-member B2 sparse
+stiffness with a fixed root and one translation MPC. The resulting 11-free-
+coordinate solve satisfies the declared MPC and projected equilibrium;
+the private scaled batch consumes that audited `T/u0` and reproduces the
+independent selected tip values to `1e-11` relative/absolute;
+changing only the prescribed value preserves `T`/independent indices and
+changes `u0`, while changing the MPC coefficient changes `T`. A
+contradictory root support is rejected before numerical reduction. The
+focused batch/audit file passes `10/10`. This establishes a usable
+one-shot affine transformation source, not session ownership, automatic
+cache invalidation or permission to use the affine auditor for nonlinear
+beam–shell attachments. Binding a true mixed-owner structural identity
+remains an F13/G0B requirement; G1 is still barred.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
