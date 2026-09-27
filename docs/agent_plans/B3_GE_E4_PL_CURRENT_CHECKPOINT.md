@@ -8182,7 +8182,9 @@ corrected after independent read-only review without changing the law.
 The reviewer confirmed the derivative decomposition and actual retained
 B3 port use, while noting that constructed global wrench cancellation is
 an internal sign check, not an independent finite-state rigid-motion test.
-Four focused tests pass with JIT disabled and one BLAS thread. This supports
+The separate existing finite-chart screen supplies that common-rigid test;
+it was rerun with the new work test and both passed. Four focused tests
+pass with JIT disabled and one BLAS thread. This supports
 the declared two-sided law's finite-state work representation only;
 independent loaded physical fidelity, growing-space stability, the exact
 line-space choice, F03 and G0B remain open, and G1 remains barred.
