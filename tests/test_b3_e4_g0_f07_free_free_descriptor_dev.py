@@ -66,6 +66,18 @@ def test_native_point_candidate_has_six_free_free_physical_modes(topology):
                         assembly.beam.reference_positions))
     nodal_count = assembly.shell_count+assembly.beam.nodal_count
     rigid = _rigid_nodal_basis(points)
+    analytic = np.zeros((count, 6))
+    analytic[:nodal_count] = rigid
+    for retained in range(packet.internal_cell_coordinates//3):
+        first = nodal_count+3*retained
+        analytic[first:first+3, 3:] = np.eye(3)
+    assert np.linalg.norm(packet.full_stiffness@analytic)/(
+        np.linalg.norm(packet.full_stiffness)*np.linalg.norm(analytic)) <= 1e-9
+    assert np.linalg.norm(packet.constraints@analytic)/(
+        np.linalg.norm(packet.constraints)*np.linalg.norm(analytic)) <= 1e-9
+    represented = rigid_modes@np.linalg.lstsq(rigid_modes, analytic,
+                                             rcond=None)[0]
+    assert np.linalg.norm(analytic-represented)/np.linalg.norm(analytic) <= 1e-8
     rigid_coefficients = []
     for value, vector in near:
         displacement = vector[:count]

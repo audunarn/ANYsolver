@@ -77,6 +77,33 @@ finite-count concerns for this diagnostic; the independent full K/C rigid
 action and unsupported-block witness remain open. This is not F07/G0B
 acceptance or permission for a public free-free owner.
 
+**Next F07 rigid-action discriminator:** The eigenvectors' nodal fit and
+positive mass do not directly test the full captured operator on a
+mechanically prescribed rigid variation. At unloaded rest, build six
+analytic common translations/rotations from the shell and beam reference
+points, assigning each of the two native retained cell frames the same
+infinitesimal spatial rotation. Check `K R` and `C R` under fixed physical
+normalization and compare their six-dimensional image with the counted
+eigenspace. A failure identifies a full unsupported block or retained-chart
+issue; a pass strengthens only this small rest-state descriptor screen.
+Do not infer mixed-mesh, loaded or public free-free qualification.
+
+**Direct rigid-action result:** On both Q4 and S3 rest fixtures, the six
+analytic common rigid variations assign their spatial rotation to both
+retained cell frames and satisfy the full captured stiffness and point-row
+annihilation checks at relative `1e-9`. Their physical coordinate span
+matches the six counted near-zero descriptor modes to `1e-8` relative.
+The focused new file passes 2/2. This resolves the missing direct K/C
+rigid action for these two small rest cases; the capture remains a rounded
+diagnostic, and independent unsupported-block assembly, loaded/geometric
+terms, mixed meshes, scalable sparse modes and F07/G0B acceptance remain
+open.
+Independent read-only follow-up confirmed that native cell-frame updates
+use left spatial multiplication, so the common infinitesimal rotation is
+the correct rest-state retained variation and the new K/C action resolves
+the review's specific rigid-action finding. It does not independently
+verify the captured rounded unsupported blocks.
+
 ## F12 constant-axial prestress discriminator — 27 September 2026
 
 **Decision sought:** Does the retained physical B2 station displacement
