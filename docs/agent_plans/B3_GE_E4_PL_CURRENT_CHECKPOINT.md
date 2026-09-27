@@ -20,14 +20,17 @@ split reproduces the original work and attributes `95%`/`89%` of the
 native-minus-solid Mx/Fz difference to mean-action self-work. The
 moment case concentrates in physical Mx and Mz; the force case is an
 axial-force/bending-couple block with substantial cancellation.
-**Remaining uncertainty:** quadrature-station trace work, shell/3D
-stiffness and support differences, the physical continuous law, and
-growing-space mixed stability. **Next discriminator and action:**
-Fit one clamp-compatible global Q4 mid-surface/director field to the
-saved plate top/bottom face displacements, including midside nodes.
-Compare the solid and native six-channel traces at each matched Gauss
-station and their signed fixed-dual work. Only then consider a matched
-stiffness/support-energy check. Advance independent B2 F09. Do not
+**Remaining uncertainty:** whether the solid trace lies in the native
+Q4 station/weak trace space at an acceptable face-fit cost, followed
+by shell/3D stiffness and support differences, the physical continuous
+law, and growing-space mixed stability. **Next discriminator and action:**
+Constrain the same global Q4 face fit to match the 24 integrated solid
+line rows and independently find the minimum six-channel Gauss-station
+trace residual. Record the face-fit penalty and actual line work. A
+small penalty sends the apparent mismatch to fit weighting and then
+to a matched stiffness/support check; a large penalty or irreducible
+station residual directs trace-law/resolution review. Advance B2 F09.
+Do not
 automatically add finer x/y or classical axial runs. P0 and the
 continuous law remain unselected; G0B open, G1 barred, formal F03
 authority unconsumed. The records and exact source/evidence identities
@@ -10092,3 +10095,31 @@ top-face x derivative for yaw can differ between sampled nodes from
 the native Q4 tangent. Zero sampled drilling is harmless for this
 port. Complete the global fit and station-wise work comparison above;
 do not use the V3 subtraction as an energy partition or G0 decision.
+
+**Global Q4 face fit and station-work outcome:** Source `fe5cbae8`
+fits one clamped 770-variable Q4 mid-surface/director field to all
+5,426 saved plate top/bottom face nodes, including midsides; equal
+nodal weights are an explicit diagnostic choice. The fit reproduces
+the original solid plate work and independently cross-checks native
+station-integrated work against assembled rows. Global component RMS
+fit error is `1.9434e-8 m` for tip Mx and `8.7035e-8 m` for tip Fz,
+versus field RMS `4.1500e-6` and `3.2525e-5 m`. Yet solid-minus-fitted
+native line work is `1.116435e-4 J` (Mx) and `1.063634e-3 J` (Fz):
+`5.64%`/`7.01%` of solid plate work, or `55.3%`/`49.0%` of the
+native-minus-solid work gap in magnitude. Mx/Mz dominate the Mx
+case; Fx with My cancellation dominates Fz. Raw V1/V2 SHA256 are
+`912820f271035c08e0c1267a1bdce561af01383620860f44c7ea8a4df4d6f9b2`/
+`54f94e5307b448663e42f759edc5ac345c424f68f0da3d197051fe93636d1fe4`;
+V2 adds a passed native assembled-row/station-work identity. The
+synthetic clamped global-fit test passes. Independent mechanics/code
+review found no LS matrix, clamp, port-sign or quadrature-order defect.
+It cautions that this is **specific to equal-node face-displacement
+least squares**: a trace-focused fit may move line work with little
+change in bulk RMS. These results neither bound the best possible Q4
+trace match nor allocate the rest of the compliance gap to stiffness.
+**Next bounded saved-field test:** impose the 24 integrated solid trace
+values in the face fit and quantify the required face-error increase;
+also minimize all six Gauss-station trace residuals independently.
+If the weak rows match cheaply but stations cannot, separate discrete
+P0 enforcement from continuous trace resolution. No new external
+solver or mesh refinement is needed, and F03/G0B remain open.

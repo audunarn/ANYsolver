@@ -13,7 +13,7 @@ import subprocess
 
 import numpy as np
 from scipy import sparse
-from scipy.sparse.linalg import lsqr
+from scipy.sparse.linalg import lsqr, splu
 
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
@@ -88,6 +88,78 @@ def fit_field(matrix, free, displacement, shell_count):
     }
 
 
+def trace_matrices(position, orientation, stations, free, shell_size):
+    """Pointwise and integrated native shell trace maps in fit coordinates."""
+    point = np.zeros((len(stations), 6, len(free)))
+    for j in range(len(stations)):
+        jacobian = np.vstack((position[j, :, :shell_size],
+                              orientation[j, :, :shell_size]))
+        for (node, component), column in free.items():
+            point[j, :, column] = jacobian[:, 6*node+component]/(
+                THICKNESS if component >= 3 else 1.)
+    integrated = np.zeros((4, 6, len(free)))
+    for j, station in enumerate(stations):
+        integrated[j//3] += station.weight*point[j]
+    return point.reshape(-1, len(free)), integrated.reshape(-1, len(free))
+
+
+def constrained_trace_fit(matrix, free, q, solid_points, stations,
+                          station_matrix, integrated_matrix, face_u):
+    """Compare exact weak-row matching with best station trace residual."""
+    p0 = np.zeros(len(free))
+    for (node, component), column in free.items():
+        p0[column] = q[6*node+component]*(
+            THICKNESS if component >= 3 else 1.)
+    target = np.asarray(face_u).ravel()
+    solid_integrated = np.zeros((4, 6))
+    for j, value in enumerate(solid_points):
+        solid_integrated[j//3] += stations[j].weight*value
+    length = .1
+    row_scale = np.tile((1., 1., 1., length, length, length), 4)
+    constraint = integrated_matrix*row_scale[:, None]
+    gap = solid_integrated.ravel()*row_scale
+    normal = (matrix.T@matrix).tocsc()
+    factor = splu(normal)
+    influence = factor.solve(constraint.T)
+    schur = constraint@influence
+    correction = influence@np.linalg.solve(schur, gap-constraint@p0)
+    constrained = p0+correction
+    weak_residual = constraint@constrained-gap
+    if np.max(np.abs(weak_residual)) > 1e-10:
+        raise ArithmeticError("constrained Q4 fit failed to match weak rows")
+    initial_face_error = matrix@p0-target
+    constrained_face_error = matrix@constrained-target
+    point_scale = np.tile((1., 1., 1., length, length, length),
+                          len(stations))
+    point_operator = station_matrix*point_scale[:, None]
+    point_target = np.asarray(solid_points).ravel()*point_scale
+    best, _, rank, singular = np.linalg.lstsq(
+        point_operator, point_target, rcond=1e-10)
+    best_residual = (point_operator@best-point_target).reshape(-1, 6)
+    constrained_residual = (
+        point_operator@constrained-point_target).reshape(-1, 6)
+    return {
+        "weak_row_constrained_face_rms_m": float(np.sqrt(np.mean(
+            constrained_face_error**2))),
+        "unconstrained_face_rms_m": float(np.sqrt(np.mean(initial_face_error**2))),
+        "weak_row_constrained_face_max_abs_m": float(np.max(np.abs(
+            constrained_face_error))),
+        "scaled_weak_row_max_defect_m": float(np.max(np.abs(weak_residual))),
+        "weak_row_schur_condition": float(np.linalg.cond(schur)),
+        "station_map_rank": int(rank),
+        "station_map_rows": int(point_operator.shape[0]),
+        "station_map_smallest_nonzero_singular": float(singular[rank-1]),
+        "minimum_scaled_station_component_rms_m": float(np.sqrt(np.mean(
+            best_residual**2))),
+        "minimum_scaled_station_component_max_abs_m": float(np.max(np.abs(
+            best_residual))),
+        "weak_constrained_scaled_station_component_rms_m": float(np.sqrt(
+            np.mean(constrained_residual**2))),
+        "minimum_scaled_station_abs_max_by_channel_m": np.max(
+            np.abs(best_residual), axis=0).tolist(),
+    }
+
+
 def evaluate(reconstruction_path: Path, same_action_path: Path,
              prior_projection_path: Path) -> dict:
     reconstruction = json.loads(reconstruction_path.read_text())
@@ -123,6 +195,8 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
     shell_size = 6*line.shell_count
     native_rows, interval_measure = _rows(
         line, LineMultiplierSpace("piecewise_constant", tuple(np.linspace(0., 1., 5))))
+    station_matrix, integrated_matrix = trace_matrices(
+        position, orientation, line.stations, free, shell_size)
     dual = {label: np.asarray(reconstruction["cases"][label][
         "dual_physical_line_density"]) for label in ("tip_mx", "tip_fz")}
     scale = np.array([40000. if j%6 < 3 else 4000. for j in range(24)])
@@ -147,6 +221,7 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
         native_rows_integrated = np.zeros((4, 6))
         maximum_pointwise = np.zeros(6)
         station_rows = []
+        solid_points = []
         for interval_index, interval in enumerate(point_ports):
             for local_index, (weight, port) in enumerate(interval):
                 j = 3*interval_index+local_index
@@ -157,6 +232,7 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
                                    for node in port.node_ids]).ravel()
                 solid_trace = np.r_[port.shell_top_jacobian@port_u,
                                     -port.shell_orientation_jacobian@port_u]
+                solid_points.append(solid_trace)
                 native_trace = np.r_[position[j, :, :shell_size]@q,
                                      orientation[j, :, :shell_size]@q]
                 residual = solid_trace-native_trace
@@ -178,8 +254,12 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
             solid_rows_integrated-native_rows_integrated), axis=0)
         if abs(float(np.sum(by_channel))-(solid_work-fitted_work)) > 1e-10:
             raise ArithmeticError("station work decomposition failed")
+        trace_fit = constrained_trace_fit(
+            matrix, free, q, solid_points, line.stations,
+            station_matrix, integrated_matrix, face_u)
         cases[label] = {
             "fit": fit,
+            "trace_fit": trace_fit,
             "solid_plate_work_J": solid_work,
             "fitted_Q4_trace_work_J": fitted_work,
             "solid_minus_fitted_work_J": solid_work-fitted_work,
