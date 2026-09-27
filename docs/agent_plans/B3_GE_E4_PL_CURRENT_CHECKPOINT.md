@@ -28,6 +28,9 @@ finds no derivation of a fixed general multiplier policy from those facts.
 Union-cut six-vector P0 is also ruled out as a general resolution rule:
 shell-fine 1:4 and 1:8 trace-only ranks fall to 44/48 and 84/96, while
 the reciprocal beam-fine cases remain full rank.
+Coarser-side P0 remains full rank but changes fixed-primal shell-fine
+1:4 torque twist by 2.566% when enriched from two to four intervals;
+it is not selected as a sufficient resolution rule.
 The matched detached-solid evidence remains limited by connection and
 contact idealization. B2 F09 fail-closed admission is unfinished.
 **Remaining uncertainty:** The admissible multi-channel test-space image
@@ -36,8 +39,8 @@ and physical torque/shear fidelity remain undecided. Off-edge S3
 reference/derivative checks and a bounded loaded screen pass for both
 triangle diagonals; mixed-mesh stability and physical fidelity remain open.
 **Next discriminator:** Use the explicit unscaled within- and
-cross-channel identities and the failed union-P0 growth to derive one
-fixed joint/coarser-side trace rule before another loaded sweep. Test it across
+cross-channel identities plus the failed union-P0 growth and coarse-P0
+torque movement to derive one fixed joint enriched trace rule. Test it across
 refinement, reversal and Q4/S3 with supported work and appropriate mixed
 norms. The ratio-specific ablations are diagnostics, not a selected rule.
 Do not automatically drop rows by SVD or run the full ratio series on
@@ -133,6 +136,24 @@ coarser P0 as a sufficient resolution policy; derive enriched joint
 rows. If close, retain the candidate for matched physical reference
 and growing-space stability, not acceptance. No additional mesh or
 formal F03 execution follows automatically.
+
+**Fixed-primal outcome:** Source-bound `febc925f` result
+`B3_E4_F03_MATERIAL_LINE_COARSE_P0_X8_M2_M4_DEV_V1.json` has SHA256
+`e2e57d680e781350b77a2fa1d057b6563de59430bb8a6292fac6e9b7d05c562d`.
+On the same shell-fine 1:4 model, P0 m2 and m4 have supported ranks
+12/12 and 24/24 and each completes torque and shear with positive
+shell work. Maximum force/moment imbalances are `1.75e-9 N` and
+`1.45e-9 Nm`; maximum relative work error is `8.86e-12`.
+Increasing only the multiplier intervals changes torque tip twist by
+`−2.566%`, torque shell physical work by `−1.440%`, shear tip-z by
+`−0.261%`, and shear shell work by `−0.670%`. Torque orientation RMS
+gap increases from `5.06` to `6.10 µrad` despite the added rows, so
+smaller or larger pointwise gap alone cannot rank spaces. The m4 P1
+and dual variants each retain the known 28/29 dependency and were not
+solved. The physical torque/work movement is material to the planned
+accuracy comparison: coarser P0 is not a sufficient fixed resolution
+rule on this evidence. Derive a joint enriched trace space and compare
+it to a matched two-sided physical reference before another mesh sweep.
 
 The planned x8 fixture has about 1,404 globally free primal columns,
 above the private rank helper's 1,200-column SVD cap, although only a
