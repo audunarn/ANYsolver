@@ -8188,3 +8188,53 @@ pass with JIT disabled and one BLAS thread. This supports
 the declared two-sided law's finite-state work representation only;
 independent loaded physical fidelity, growing-space stability, the exact
 line-space choice, F03 and G0B remain open, and G1 remains barred.
+
+**Next growing-space mode discriminator (prospective):** The existing
+drill-eliminated native retained KKT shows a line-dual-dominant P0 minimum
+falling on x8/y4 m4→m8, while P1/dual minima remain beam-kinematic. That
+single shell grid cannot tell whether the P0 trend persists through a
+systematic physical/interface refinement or reflects its fixture. Reuse
+the *same* exact-drilling Schur and declared physical/retained/dual norms
+on x4 m2/m4 and x16 m8/m16, bracketing the saved x8 m4/m8 case. Preserve
+the actual indefinite tangent, all six rows, 1900-row/120-second limits,
+work/Schur/rank checks and physical-mode decomposition. A persistent
+line-dominant decline calls for an interface-resolution/locking review
+before P0 selection; a nonpersistent decline sends the x8 diagnosis back
+to mesh/trace interpretation. Neither outcome alone proves uniform
+inf-sup, physical fidelity or G0B acceptance. Do not add a fourth level
+automatically.
+
+**Three-level drill-quotient outcome (27 September):** The existing x8
+m4/m8 result is bracketed by new source-bound x4 m2/m4 and x16 m8/m16
+outputs, all using the same actual native indefinite tangent, exact
+free-drilling elimination and declared physical/retained/dual diagnostic
+norm. P0 minima are `0.0151967→0.0152498` on x4,
+`0.0152313→0.0122832` on x8, and `0.0152550→0.00155703` on x16.
+At x16 m16, the weakest vector's declared metric share is `99.844%`
+line dual and `0.155%` physical shell; P1 and dual P1 minima remain
+near `0.0152–0.0153` and about `98.4%` beam kinematic. All six x16
+line sets retain full normalized rank, the Schur reconstruction error is
+`9.24e-16`, and transpose-work discrepancies are below `1e-17 J`.
+The x16 cases use 1,694–1,748 of the 1,900-row cap, one BLAS thread,
+and finish in `74.81 s` inside the 120-second limit. The x4 case
+finishes in `23.19 s`. Raw SHA256 identities: x4
+`810C46470C02CB9FA3F3FFDD892EA07CE2869DE8D896F87063BC892550EF0EFF`,
+x16 `7867179F8E2F913758CECCB7A6AE9F57EACC0136D1C247665C3231B6D37EDA69`;
+their paths are `B3_GE_E4_PL_F03_C1_DRILL_QUOTIENT_X4_DEV_V1.json` and
+`B3_GE_E4_PL_F03_C1_DRILL_QUOTIENT_X16_DEV_V1.json`. The x8 V2 source
+predates parameterization; the only runner changes are bounded shell-level
+selection and matching output labels. The result supports a growing P0
+line-dominant weak-mode concern, not a continuum inf-sup constant or a
+failure verdict. Interpret its physical mode, loaded transfer and norm
+sensitivity before revising an interface policy; do not select P1/dual
+solely because their diagnostic minima are larger. F03/G0B remain open.
+Independent read-only review found no blocking arithmetic/source defect and
+verified rank, Schur, transpose-work and weakest-SVD residuals across all
+18 cases. It confirmed the x8 predecessor used the same mechanics/norm
+sources despite subsequent additive diagnostics and a center refactor.
+The next bounded check is the P0 m8/m16 weak dual's longitudinal/channel
+shape and matching shell/retained-B3 response/work, compared with the
+already observed loaded torque-transfer drift. This distinguishes a
+supported physical line action from a high-frequency or norm-dependent
+mode before any P0 resolution-policy change; P1/dual's beam-dominated
+*minimum* does not rule out their own line-specific modes.

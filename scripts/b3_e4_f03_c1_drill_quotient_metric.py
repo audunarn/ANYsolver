@@ -33,10 +33,12 @@ def _relative(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.linalg.norm(a-b)/max(1., np.linalg.norm(b)))
 
 
-def evaluate() -> dict:
+def evaluate(shell_cells: int = 8) -> dict:
+    if shell_cells not in (4, 8, 16):
+        raise ValueError("bounded C1 drill-quotient shell level required")
     started = monotonic()
     deadline = started+120.
-    xs, ys = local_grid(8, transverse_cells=4)
+    xs, ys = local_grid(shell_cells, transverse_cells=4)
     shell, physical = raw_e4_tangent(xs, ys, thickness=prior.T)
     beam = build(12, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
@@ -82,7 +84,7 @@ def evaluate() -> dict:
     free_physical = np.r_[shell_physical, ns+beam_free]
     free_full = np.r_[shell_free, ns+beam_free]
     cases = {}
-    for intervals in (4, 8):
+    for intervals in (shell_cells//2, shell_cells):
         for kind in prior.KINDS:
             if monotonic() > deadline:
                 raise TimeoutError("bounded drill quotient mixed deadline")
@@ -134,7 +136,8 @@ def evaluate() -> dict:
     return {
         "classification": "bounded drill-quotient native retained KKT diagnostic, not G0B acceptance",
         "question": "Was the prior smallest native KKT mode only a numerical drilling metric mode, and do line-coupled modes decline under growing rows?",
-        "model": "unchanged C1 Q4 x8/y4 35 mm shell, native B3-12, P0/P1/dual m4/m8",
+        "model": (f"C1 Q4 x{shell_cells}/y4 35 mm shell, native B3-12, "
+                  f"P0/P1/dual m{shell_cells//2}/m{shell_cells}"),
         "operator": "actual E4 tangent with exact free-drilling Schur complement; actual native retained B3 tangent and line rows",
         "metric": "physical E4 energy on non-drilling coordinates; previous native B3 and basis-specific line norms",
         "shell_physical_rows": len(shell_physical),
@@ -170,11 +173,12 @@ def evaluate() -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--shell-cells", type=int, choices=(4, 8, 16), default=8)
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     with threadpool_limits(limits=1):
-        result = evaluate()
+        result = evaluate(args.shell_cells)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"elapsed_s": result["elapsed_s"],
                       "minima": {key: value["beta_min"]
