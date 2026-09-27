@@ -120,6 +120,74 @@ def test_typed_adapter_retains_yielded_accepted_predecessor():
         assert canonical(origin) == before
         assert canonical(restored.mechanical.descriptor()) == state_before
         assert sha256(accepted.checkpoint).hexdigest() == checkpoint_hash
+    direction = np.zeros(context.layout.count)
+    first = context.layout.nodal_count-6
+    direction[first:first+6] = (.4, -.3, .2, .15, -.1, .12)
+    direction[context.layout.nodal_count:context.layout.nodal_count+7] = (
+        .11, -.09, .07, .05, -.04, .03, .015)
+    direction[np.asarray(context.layout.fixed, dtype=int)] = 0.
+    base = evaluate_sparse_trial(context, restored.mechanical, origin, 1.,
+                                 family="physical_fibre")
+    expected = base.tangent@direction
+    errors = []
+    for step in (1e-5, 3e-6, 1e-6):
+        plus_result = evaluate_sparse_trial(
+            context, context.layout.advance(restored.mechanical,
+                                            step*direction), origin, 1.,
+            family="physical_fibre")
+        minus_result = evaluate_sparse_trial(
+            context, context.layout.advance(restored.mechanical,
+                                            -step*direction), origin, 1.,
+            family="physical_fibre")
+        plus, minus = plus_result.residual, minus_result.residual
+        errors.append(_relative((plus-minus)/(2*step), expected))
+
+    def plastic_changes(candidate):
+        differences = [made_row[2]-old_row[2]
+                       for made_cell, old_cell in zip(candidate, origin)
+                       for made_station, old_station in zip(
+                           made_cell.stations, old_cell.stations)
+                       for made_row, old_row in zip(
+                           made_station.rows, old_station.rows)]
+        return sum(value > 1e-12 for value in differences)
+
+    # The accepted state is within this tested yield-switch interval:
+    # positive perturbations activate plastic rows, negative ones remain
+    # elastic. Side-specific tangents and a nearby smooth branch are
+    # checked; the accepted-state semismooth tangent remains open.
+    assert min(errors) > 1e-5
+    assert plastic_changes(base.candidate_histories) == 0
+    assert plastic_changes(plus_result.candidate_histories) > 0
+    assert plastic_changes(minus_result.candidate_histories) == 0
+    base_negative_error = _relative(
+        expected, (base.residual-minus)/step)
+    assert np.isfinite(base_negative_error)
+    assert _relative(plus_result.tangent@direction,
+                     (plus-base.residual)/step) <= 1e-5
+    assert _relative(minus_result.tangent@direction,
+                     (base.residual-minus)/step) <= 1e-5
+
+    active_state = context.layout.advance(restored.mechanical,
+                                          1e-4*direction)
+    active = evaluate_sparse_trial(context, active_state, origin, 1.,
+                                   family="physical_fibre")
+    active_count = plastic_changes(active.candidate_histories)
+    assert active_count > 0
+    active_expected = active.tangent@direction
+    active_errors = []
+    for step in (1e-5, 3e-6, 1e-6):
+        plus_result = evaluate_sparse_trial(
+            context, context.layout.advance(active_state, step*direction),
+            origin, 1., family="physical_fibre")
+        minus_result = evaluate_sparse_trial(
+            context, context.layout.advance(active_state, -step*direction),
+            origin, 1., family="physical_fibre")
+        assert plastic_changes(plus_result.candidate_histories) == active_count
+        assert plastic_changes(minus_result.candidate_histories) == active_count
+        active_errors.append(_relative(
+            (plus_result.residual-minus_result.residual)/(2*step),
+            active_expected))
+    assert sum(error <= 1e-5 for error in active_errors) >= 2, active_errors
 
 
 def test_typed_adapter_rejects_bad_family_and_parameter():

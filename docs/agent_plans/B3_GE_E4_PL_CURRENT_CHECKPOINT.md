@@ -1818,6 +1818,40 @@ This resolves the narrow unloaded-path coverage concern for that fixture;
 yielded plastic tangents, other directions and larger compiled layouts
 remain outside this result. No additional loaded sweep is implied.
 
+**Next bounded F08 yielded-branch discriminator:** Reuse the existing
+three-step accepted physical-fibre prefix already proved to contain
+positive plastic history. From that exact predecessor, perturb the same
+supported nodal/retained direction through the actual state update at
+three central-difference sizes, and compare with the adapter's consistent
+tangent under the registered smooth-plastic `1e-5` limit. A plateau pass
+supports this one active-branch derivative; failure requires checking
+active-set transition before attributing an operator defect. No new load
+history or adjusted target is authorized by this diagnostic.
+
+**F08 yielded-branch result and retained failure:** A central derivative
+at the exact three-step accepted state failed the smooth-plastic test at
+`0.00248489946` relative error, unchanged over `1e-5`, `3e-6`, and
+`1e-6`; this failed diagnostic is retained. One-sided inspection shows a
+material branch switch: the accepted-state candidate has no further
+plastic increment, positive perturbations activate 14 fibre rows, and
+negative perturbations activate none. The tangents evaluated on the
+positive and negative sides match their respective one-sided residual
+slopes at `8.28e-9` and `8.22e-9` relative for `1e-6`. Applying the
+registered smooth-plastic limit to a nearby positive trial from the same
+accepted predecessor, with unchanged active-row count on both sides,
+passes the three-step plateau check; the focused file passes `11/11`.
+This locates a yield-branch switch within the tested interval and finds no
+smooth-active-branch tangent defect for this direction. It does not prove
+that the accepted point is exactly on the yield surface. Independent
+read-only mechanics review identified a remaining acceptance question:
+the tangent *at the accepted state* differs from the negative one-sided
+slope by `3.078e-4` relative and from the positive slope by `5.235e-3`;
+the side-specific checks use tangents evaluated at the perturbed states.
+No semismooth tangent policy is accepted from these data. The failed
+central check and accepted-state discrepancy remain visible for a later
+targeted constitutive/chart review. Other active branches and F08/G0B
+remain open.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision
