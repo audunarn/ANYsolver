@@ -1,0 +1,202 @@
+"""Bounded F09 physical-section graph check; no production admission claim."""
+
+from dataclasses import replace
+from decimal import Decimal, localcontext
+from fractions import Fraction
+from pathlib import Path
+import math
+import runpy
+
+import numpy as np
+from scipy import sparse
+from scipy.sparse import diags
+from scipy.sparse.linalg import splu
+
+from anysolver._b2_physical_linear_batch_dev import CompiledB2AffineBatch
+from anysolver._b2_physical_flexibility_linear import LinearSection
+
+
+PROBE = runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts"
+                           / "probe_b3_ge_e4_pl_g0_f09_graph_reversal.py"))
+
+
+def _physical_section():
+    """A 40 x 12 mm rectangle with principal axes rotated 31 degrees."""
+    width, depth = .040, .012
+    young, poisson = 210e9, .3
+    shear = young/(2*(1+poisson))
+    area = width*depth
+    iy, iz = width*depth**3/12, depth*width**3/12
+    # Standard thin-rectangle Saint-Venant approximation; this diagnostic
+    # tests a declared engineering section, not an exact 3-D torsion solution.
+    torsion = width*depth**3*(1/3-.21*depth/width*(1-depth**4/(12*width**4)))
+    principal = np.array([young*area, shear*area*5/6,
+                          shear*area*5/6, shear*torsion,
+                          young*iy, young*iz])
+    angle = math.radians(31)
+    c, s = math.cos(angle), math.sin(angle)
+    rotation = np.array([[c, -s], [s, c]])
+    transform = np.eye(6)
+    transform[np.ix_([1, 2], [1, 2])] = rotation
+    transform[np.ix_([4, 5], [4, 5])] = rotation
+    stiffness = transform@np.diag(principal)@transform.T
+    # The analytical section is symmetric; construct both stored triangles
+    # from the same rounded value for the definition's exact symmetry contract.
+    stiffness = np.triu(stiffness)+np.triu(stiffness, 1).T
+    compliance = transform@np.diag(1/principal)@transform.T
+    np.testing.assert_allclose(stiffness@compliance, np.eye(6),
+                               rtol=2e-15, atol=2e-15)
+    return stiffness, compliance
+
+
+def _cut_work(members, tip, compliance):
+    """Integrate physical cut wrenches using derived sectional compliance."""
+    force, moment = np.asarray(tip[:3]), np.asarray(tip[3:])
+    tip_position = np.asarray(PROBE["POINTS"][2])
+    sign = np.diag([-1., 1., -1., -1., 1., -1.])
+    total = 0.
+    for member in members:
+        start, end = map(np.asarray, member.reference_points_m)
+        frame = member.local_frame_rows()
+        local_compliance = (sign@compliance@sign if member.node_ids == (2, 1)
+                            else compliance)
+        density = []
+        for fraction in (0., .5, 1.):
+            cut = start+fraction*(end-start)
+            cut_moment = moment+np.cross(tip_position-cut, force)
+            local = np.concatenate((frame@force, frame@cut_moment))
+            density.append(float(local@local_compliance@local))
+        total += member.length_m*(density[0]+4*density[1]+density[2])/12
+    return total
+
+
+def _exact_product_residual(matrix, solution, rhs):
+    """Multiply the stored binary64 state by the stored binary64 matrix exactly."""
+    dense = matrix.toarray()
+    return np.array([float(sum(Fraction(float(a))*Fraction(float(x))
+                               for a, x in zip(row, solution))
+                           - Fraction(float(target)))
+                     for row, target in zip(dense, rhs)])
+
+
+def _high_precision_rounded_matrix_solve(matrix, rhs):
+    """Solve the stored matrix independently at 100 decimal digits."""
+    with localcontext() as context:
+        context.prec = 100
+        rows = [[Decimal(float(value)) for value in row]
+                + [Decimal(float(target))]
+                for row, target in zip(matrix.toarray(), rhs)]
+        n = len(rows)
+        for k in range(n):
+            pivot = max(range(k, n), key=lambda i: abs(rows[i][k]))
+            rows[k], rows[pivot] = rows[pivot], rows[k]
+            denominator = rows[k][k]
+            assert denominator != 0
+            for i in range(k+1, n):
+                factor = rows[i][k]/denominator
+                for j in range(k+1, n+1):
+                    rows[i][j] -= factor*rows[k][j]
+                rows[i][k] = Decimal(0)
+        answer = [Decimal(0)]*n
+        for i in range(n-1, -1, -1):
+            answer[i] = (rows[i][-1]-sum(rows[i][j]*answer[j]
+                                         for j in range(i+1, n)))/rows[i][i]
+        return np.array([float(value) for value in answer])
+
+
+def test_off_axis_rectangular_section_graph_work_reversal_and_balance():
+    stiffness, compliance = _physical_section()
+    assert abs(stiffness[4, 5]) > 0.1*math.sqrt(stiffness[4, 4]*stiffness[5, 5])
+    section = LinearSection.generalized(stiffness)
+    original = tuple(replace(member, section_id="rotated-rectangle", section=section)
+                     for member in PROBE["members"]())
+    sign = np.diag([-1., 1., -1., -1., 1., -1.])
+    reversed_base = PROBE["members"](True)
+    reversed_members = (
+        replace(reversed_base[0], section_id="rotated-rectangle", section=section),
+        replace(reversed_base[1], section_id="rotated-rectangle-reversed",
+                section=LinearSection.generalized(sign@stiffness@sign)))
+    matrices = [PROBE["assemble"](members)
+                for members in (original, reversed_members)]
+    np.testing.assert_allclose(matrices[0].toarray(), matrices[1].toarray(),
+                               rtol=1e-10, atol=1e-5)
+
+    free = np.arange(6, 18)
+    for tip in ((100., -80., 60., 12., -9., 7.),
+                (-45., 75., -95., -5., 8., -11.)):
+        load = np.zeros(18)
+        load[12:] = tip
+        expected = _cut_work(original, tip, compliance)
+        assert expected > 0.
+        assert abs(_cut_work(reversed_members, tip, compliance)-expected)/expected < 1e-12
+        for members, matrix in zip((original, reversed_members), matrices):
+            reduced = matrix[free, :][:, free].tocsc()
+            rhs = load[free]
+            scale = 1/np.sqrt(reduced.diagonal())
+            answer = scale*splu((diags(scale)@reduced@diags(scale)).tocsc()).solve(scale*rhs)
+            rounded_reference = _high_precision_rounded_matrix_solve(reduced, rhs)
+            np.testing.assert_allclose(answer, rounded_reference, rtol=1e-9, atol=1e-12)
+            stored_work = .5*float(rhs@answer)
+            assert abs(stored_work-expected)/expected < 1e-9
+            assert abs(PROBE["physical_work"](members, tip)-expected)/expected < 1e-9
+            residual = _exact_product_residual(reduced, answer, rhs).reshape(2, 6)
+            force_error = np.max(np.abs(residual[:, :3]))/max(map(abs, tip[:3]))
+            # Scaling by the applied couple alone is conservative relative to
+            # the batch's length-times-force moment scale on these cases.
+            moment_error = np.max(np.abs(residual[:, 3:]))/max(map(abs, tip[3:]))
+            assert max(force_error, moment_error) < 1e-8
+            full = np.zeros(18)
+            full[free] = answer
+            for member in members:
+                indices = [6*node+j for node in member.node_ids for j in range(6)]
+                recovered = member.local_operator().recover_sections(
+                    member.local_dof_map()@full[indices], stations=(0., .5, 1.))
+                start, end = map(np.asarray, member.reference_points_m)
+                frame = member.local_frame_rows()
+                local_compliance = (sign@compliance@sign if member.node_ids == (2, 1)
+                                    else compliance)
+                for i, fraction in enumerate((0., .5, 1.)):
+                    cut = start+fraction*(end-start)
+                    cut_moment = np.asarray(tip[3:])+np.cross(
+                        np.asarray(PROBE["POINTS"][2])-cut, tip[:3])
+                    expected_resultant = np.concatenate((frame@tip[:3],
+                                                          frame@cut_moment))
+                    # The reversed member's positive internal cut is on the
+                    # opposite side of the free body from the physical tip.
+                    if member.node_ids == (2, 1):
+                        expected_resultant = -expected_resultant
+                    np.testing.assert_allclose(recovered.resultants[i],
+                                               expected_resultant, rtol=1e-8, atol=1e-7)
+                    np.testing.assert_allclose(recovered.strains[i],
+                                               local_compliance@expected_resultant,
+                                               rtol=1e-8, atol=1e-10)
+
+
+def test_off_axis_rectangle_private_batch_reuses_one_factorization():
+    stiffness, _ = _physical_section()
+    members = tuple(replace(member, section_id="rotated-rectangle",
+                            section=LinearSection.generalized(stiffness))
+                    for member in PROBE["members"]())
+    transform = sparse.eye(18, format="csr")[:, 6:]
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in members),
+        transform, np.zeros(18), np.arange(12, 18), max_chunk=2)
+    tips = ((100., -80., 60., 12., -9., 7.),
+            (-45., 75., -95., -5., 8., -11.))
+    cases = []
+    for i, tip in enumerate(tips):
+        load = np.zeros(18)
+        load[12:] = tip
+        cases.append((f"rect-{i}", load))
+    result = batch.solve_many(cases, recover_members={"m0": (0., .5, 1.)})
+    assert result.status == "completed"
+    assert result.factorization_count == 1
+    assert result.maximum_rhs_chunk == 2
+    for case, tip in zip(result.cases, tips):
+        assert len(case.members) == 1
+        reduced = batch.full_stiffness[6:, 6:]
+        rhs = np.zeros(12)
+        rhs[6:] = tip
+        exact = _high_precision_rounded_matrix_solve(reduced, rhs)
+        np.testing.assert_allclose(case.values, exact[6:], rtol=1e-9, atol=1e-12)
+    batch.close()

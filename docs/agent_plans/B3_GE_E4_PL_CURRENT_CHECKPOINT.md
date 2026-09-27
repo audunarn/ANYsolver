@@ -14,6 +14,42 @@ choice open; then test that law against a matched reference and growing
 interface spaces. Continue independent foundations meanwhile. **Gate:** G0B
 open, G1 barred; formal F03 authority unconsumed.
 
+**Bounded F09 physical-section decision (27 September):** The prior
+`2^-20`/`2^-40` weak-shear graph brackets a numerical issue in an artificial
+section family, not a physical admission limit. Test one specified off-axis
+rectangular elastic section on the existing two-member elbow under fixed mixed
+tip wrenches and a reversed-member control. Derive its stiffness and compliance
+from dimensions, material constants and section rotation independently; compare
+cut-wrench work, rounded assembled solutions, exact-product force/moment balance,
+and local section response. Agreement supports this one physical case only and
+leaves the admission envelope open. A cut-work discrepancy points to section or
+frame assembly; exact-rounded agreement with failed stored-state balance requires
+a fail-closed range or verified state representation. No F03 decision, G0B
+acceptance or G1 entry follows from this diagnostic.
+
+**F09 off-axis rectangle result (27 September):** A 40 × 12 mm rectangular
+section at 31° with `E = 210 GPa`, `nu = 0.3`, declared approximate
+Saint-Venant `J`, and 5/6 shear factors produces a coupled bending block.
+Two fixed mixed tip wrenches were applied to the 2 m + 1.5 m elbow, forward
+and with its second member physically reversed. Analytic section compliance
+and cut-wrench integration agree with the assembled work; station resultants
+and strains agree with the oriented physical cuts. On the first forward case,
+an exact product of the stored matrix and sparse-solver state has scaled force
+residual `1.0746248336e-11` and moment residual `1.8317402206e-13`.
+The high-precision rounded-matrix solution, after binary64 storage, still has
+scaled force residual `7.9054984781e-12`. Thus this case exceeds the existing
+`2e-12` *F09 diagnostic* while meeting the registered `1e-8` physical-balance
+limit; the diagnostic failure is retained, not reclassified as F09 acceptance.
+The private batch solves both cases with one factorization and selected station
+recovery. The new physical-section tests and existing F13 tests pass `21/21`.
+The broader focused F09/F13 set passes `32/32`. Two exploratory stdin probes
+that attempted repeated full rational graph elimination were interrupted after
+excessive runtime; they produced no accepted data. The bounded test instead
+uses a 100-digit solve of the stored rounded matrix and exact products of the
+stored binary64 state.
+The full physical geometry/conditioning envelope, attachment behavior,
+production admission, independent review, F09 and G0B remain open.
+
 ## F07 free-free descriptor discriminator — 27 September 2026
 
 **Decision sought:** Does the existing native Q4/B3 point-candidate rest
