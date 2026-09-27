@@ -115,7 +115,10 @@ and coupled refinement remain open.
 A later actual free-target equilibrium pose passed a selected mixed
 source/target smooth directional development check at 4e-7 and 2e-7 m;
 an 8e-7 m comparison crossed pressure activation and remains inconclusive.
-Complete tangent acceptance remains open.
+The prospective 3e-7/1.5e-7 m [formal gate and independent review](reference_cases/general_contact_d1_free_target_equilibrium_tangent_v1_review.md)
+accepted **only this selected fixed-multiplier smooth tangent direction**
+after a separately checked one-field source-hash amendment. Complete
+tangent acceptance remains open.
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as
