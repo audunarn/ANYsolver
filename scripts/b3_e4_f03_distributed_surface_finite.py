@@ -259,11 +259,13 @@ class FiniteSurfaceMomentPatch:
 
 
 class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
-    """Bounded six-channel transverse-strip line weld, not a 3D bond.
+    """Bounded six-channel reduced strip-pose line connection.
 
     Mean shell-top/beam-bottom position supplies three force channels.
     Transverse position moments supply Mx/Mz; an explicit E4 director-pitch
     tie supplies My. The latter is a declared reduced-section assumption.
+    Higher transverse slip shapes can remain while all six continuous
+    section gaps vanish: this is not a pointwise welded surface bond.
     Material-frame duals and actual-chart variations remain separate from
     display-ready spatial wrenches.
     """
