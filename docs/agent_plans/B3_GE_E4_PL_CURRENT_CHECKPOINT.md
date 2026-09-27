@@ -1,6 +1,26 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
-## Current decision — 27 September 2026
+## Current state — 28 September 2026
+
+**Decision sought:** A physically defensible native material-line law and
+stable exact multiplier policy before G1. **Established:** The
+law-matched detached-solid P0 m4 action passed 24/24 row and work
+preflight and all 24 bounded external columns. Under the same line
+dual, native B3 beam work is within 0.7% of the 3D bar; E4 shell work
+is 10–14% below the 3D plate. Targeted x/y refinement and local
+thickness-normal projection explain little of that shell difference.
+The coarser factor-2 solid plate supports only 21/24 P0 m4 rows, so
+no factor-2 accuracy comparison was run. **Remaining uncertainty:**
+shell/3D support, trace traction and plate-theory differences, a
+representable 3D mesh comparison, and growing-space mixed stability.
+**Next discriminator and action:** Review the matched shell-side action
+and support contract before choosing a representable, resource-bounded
+3D reference; advance independent B2 F09 physical admission work.
+Stop repeated x/y or classical axial refinement. P0 and the continuous
+law remain unselected; G0B open, G1 barred, formal F03 authority
+unconsumed. The records and exact source/evidence identities follow.
+
+## Detailed 27 September development record
 
 **Decision sought:** A native material-line connection with defensible
 physical transfer and a stable exact multiplier policy, before G1.
