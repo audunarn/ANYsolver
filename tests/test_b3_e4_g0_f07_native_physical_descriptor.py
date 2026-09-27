@@ -6,6 +6,7 @@ changes the G0/G1 qualification status.
 """
 
 import numpy as np
+import pytest
 from scipy import linalg
 
 from anysolver._ge_beam3_coupled_modes import capture, modes
@@ -72,10 +73,11 @@ def test_native_beam_shell_mass_survives_exact_joint_and_descriptor():
                                rtol=1e-10, atol=1e-10)
 
 
-def test_connected_free_free_reference_has_six_physical_rigid_modes():
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_connected_free_free_reference_has_six_physical_rigid_modes(topology):
     # The bounded legacy owner rightly refuses an unsupported static solve.
     # Inspect the *full* rest operators before applying its support mask.
-    owner = fixture("Q4", curved=False)
+    owner = fixture(topology, curved=False)
     assembly = owner.assembly
     solved = owner.solve(stop_after=0)
     assert solved.status == "paused", solved.failure
@@ -111,9 +113,14 @@ def test_connected_free_free_reference_has_six_physical_rigid_modes():
     values = linalg.eigvals(saddle, descriptor_mass)
     finite = values[np.isfinite(values)]
     assert np.max(np.abs(finite.imag)) < 1e-7
-    assert len(finite) == 36
-    assert len(values) == 54
-    assert np.count_nonzero(~np.isfinite(values)) == 18
+    if topology == "Q4":
+        assert len(finite) == 36
+        assert len(values) == 54
+        assert np.count_nonzero(~np.isfinite(values)) == 18
+    else:
+        assert len(finite) == 23
+        assert len(values) == 48
+        assert np.count_nonzero(~np.isfinite(values)) == 25
     zero = np.sort(np.abs(finite.real))[:7]
     assert np.max(zero[:6]) < 1e-7
     assert zero[6] > 1e-5

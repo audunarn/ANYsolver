@@ -4836,6 +4836,27 @@ and one BLAS thread. This resolves the small connected Q4 reference
 rigid-mode question, but does not admit a production free-free modal API,
 mixed Q4/S3 inertia, sparse scale, prestress, buckling, F07 or G0B.
 
+**Next bounded F07 S3 discriminator (prospective):** Repeat only the full
+reference rigid-field and descriptor check on the existing connected
+S3-V2D/native-B3 fixture. Unlike Q4, its shell rotations have no
+physical inertia. Six joint-compatible stiffness-null fields and exactly
+six finite zero roots would support the same physical rigid subspace;
+extra finite zeros or missing rigid fields would require investigating
+S3 rotation/drilling completion or the joint lift before mixed spectral
+design. The finite/infinite root inventory may differ from Q4. This is
+still one bounded reference result, not a mesh or production qualification.
+
+**F07 S3 reference result:** The connected S3-V2D/native-B3 reference also
+has six independent physical rigid fields satisfying the joint,
+stiffness-null and positive kinetic-Gram checks. Its full 48-row descriptor
+has 23 finite and 25 infinite roots; the sixth finite absolute eigenvalue
+is `3.99e-13` and the seventh is `4.0085`. Q4's corresponding sixth and
+seventh are `5.27e-13` and `0.6168`. The focused file passes `3/3`
+under the same one-thread non-JIT environment. S3's additional algebraic
+roots are consistent with its massless shell rotations; these bounded
+counts do not establish mixed-mesh modal accuracy, sparse free-free
+execution, prestress or buckling. F07/G0B remain open and G1 barred.
+
 ## Prior state — 25 September 2026, native connection decision
 
 **Decision sought:** Keep the six-position-moment 100×100 mm finite footprint as a provisional native connection while deriving a mechanically distinct, stable exact line law. No footprint or multiplier is production-selected. G0B remains open, G1 barred, and formal F03 authority unconsumed.
