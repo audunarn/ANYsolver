@@ -313,3 +313,13 @@ from development data, not derived from an analytical force oracle. The
 [review](reference_cases/general_contact_d1_mixed_interior_response_v1_review.md)
 and retained raw reports provide the exact boundary. Full-cycle response,
 physical-edge behavior, installed verification and C1 remain open.
+
+One subsequent 32-Q4 twelve-step development cycle with three increments
+per phase completed in 687.515 s. Loaded press, full slide and recontact
+each gave 0.03547159554 N, matching the separately accepted two-step press
+force within 4e−14 N. The first unloading increment gave 0.00190269093 N,
+versus 0.00167699597 N at 24 Q4, an 11.862% change relative to 32 Q4.
+Both then reached zero contact force during full opening. This local
+unloading response is not yet refined or accepted. The
+[32-Q4 raw cycle](../reports/general_contact_d1_mixed_32q4_interior_four_phase_20260927.json)
+is development evidence; it does not extend the frozen press-only claim.
