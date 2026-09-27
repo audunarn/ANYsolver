@@ -23,11 +23,11 @@ from anysolver.fe_core import FEModel
 from anysolver.general_contact.core import contact_scope
 
 
-def _case_and_local_check():
+def _case_and_local_check(*, target_left_x=-0.2):
     gap = 50.0e-6
     selected_displacement = 90.0e-6
     epsilon = 100_000.0
-    model = FEModel("q4_s3_linear_full_overlap_oracle")
+    model = FEModel("q4_s3_linear_clipped_overlap_oracle")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
     for node, x, y, z in (
         (1, 0.0, 0.0, 0.04005),
@@ -36,10 +36,10 @@ def _case_and_local_check():
         (4, 0.0, 1.0, 0.04005),
         (5, 0.5, 1.0, 0.04005),
         (6, 1.0, 1.0, 0.04005),
-        (7, -0.2, -0.1, 0.0),
+        (7, target_left_x, -0.1, 0.0),
         (8, 1.2, -0.1, 0.0),
         (9, 1.2, 1.1, 0.0),
-        (10, -0.2, 1.1, 0.0),
+        (10, target_left_x, 1.1, 0.0),
     ):
         model.add_node(node, x, y, z)
     for element_id, nodes in ((1, (1, 2, 5, 4)),
@@ -72,15 +72,28 @@ def _case_and_local_check():
     one_dimensional_mass = np.array([[1.0 / 3.0, 1.0 / 6.0],
                                       [1.0 / 6.0, 1.0 / 3.0]])
     q1_corners = ((0, 0), (1, 0), (1, 1), (0, 1))
-    local_mass = np.array([
-        [one_dimensional_mass[ix, jx] * one_dimensional_mass[iy, jy]
-         for jx, jy in q1_corners]
-        for ix, iy in q1_corners
-    ])
     mortar_mass = np.zeros((6, 6))
-    for nodes in ((0, 1, 4, 3), (1, 2, 5, 4)):
+    for face_index, nodes in enumerate(((0, 1, 4, 3), (1, 2, 5, 4))):
+        # Exact integrals of (1-t)^2, t(1-t), and t^2 on the clipped
+        # reference x interval. This oracle does not query contact geometry.
+        lower = max(0.0, min(1.0, (target_left_x-0.5*face_index)/0.5))
+        primitive = lambda t: np.array((
+            t-t*t+t**3/3.0, t*t/2.0-t**3/3.0, t**3/3.0,
+        ))
+        a, b, c = primitive(1.0)-primitive(lower)
+        x_mass = np.array(((a, b), (b, c)))
+        local_mass = np.array([
+            [x_mass[ix, jx] * one_dimensional_mass[iy, jy]
+             for jx, jy in q1_corners]
+            for ix, iy in q1_corners
+        ])
         mortar_mass[np.ix_(nodes, nodes)] += 0.5 * local_mass
     support = np.sum(mortar_mass, axis=1)
+    if target_left_x > 0.0:
+        np.testing.assert_allclose(
+            support, (0.045, 0.23, 0.125, 0.045, 0.23, 0.125),
+            rtol=0.0, atol=1.0e-14,
+        )
     prescribed_shape = np.array((0.0, -0.5, -1.0, 0.0, -0.5, -1.0))
     weighted_gap = gap + mortar_mass @ (
         prescribed_shape * selected_displacement
@@ -136,7 +149,8 @@ def _case_and_local_check():
     np.testing.assert_array_equal(contact.source_pressure_node_ids,
                                   (1, 2, 3, 4, 5, 6))
     np.testing.assert_allclose(contact.reference_support_m2, support,
-                               rtol=1.0e-8, atol=1.0e-10)
+                               rtol=1.0e-8,
+                               atol=settings.q4_source_area_tolerance)
     np.testing.assert_allclose(contact.normalized_weighted_gap_m,
                                weighted_gap, rtol=1.0e-3, atol=1.0e-8)
     np.testing.assert_allclose(contact.numerical_pressure_pa,
@@ -175,8 +189,14 @@ def test_q4_against_nonmatching_s3_partial_pressure_oracle():
     _case_and_local_check()
 
 
-def _loaded_augmented_patch_oracle():
-    model, definition, settings, mortar_mass, support = _case_and_local_check()
+def test_q4_against_s3_clipped_overlap_pressure_oracle():
+    _case_and_local_check(target_left_x=0.2)
+
+
+def _loaded_augmented_patch_oracle(*, target_left_x=-0.2):
+    model, definition, settings, mortar_mass, support = _case_and_local_check(
+        target_left_x=target_left_x,
+    )
     structural = FEModel("structural_only_linear_oracle")
     structural.add_material("elastic", 1.0e5, 0.3, density=1.0)
     for node in range(1, 7):
@@ -196,17 +216,31 @@ def _loaded_augmented_patch_oracle():
         indices = [6 * (node - 1) + axis for node in nodes for axis in range(6)]
         stiffness[np.ix_(indices, indices)] += local
 
-    expected_displacement = 60.0e-6
-    expected_pressure = np.array((0.0, 0.0, 0.1, 0.0, 0.0, 0.1))
+    if target_left_x > 0.0:
+        expected_pressure = np.array((0.0, 0.1, 0.2, 0.0, 0.1, 0.2))
+        # Two independent weighted-gap constraints on the clipped mortar
+        # domain determine the middle and right nodal displacements.
+        nodal_shape = np.array(((0.0, 0.0), (1.0, 0.0), (0.0, 1.0),
+                                (0.0, 0.0), (1.0, 0.0), (0.0, 1.0)))
+        normal_map = mortar_mass @ nodal_shape / support[:, None]
+        middle_right = np.linalg.solve(
+            normal_map[[1, 2]], -50.0e-6*np.ones(2),
+        )
+        expected_normal = nodal_shape @ middle_right
+        expected_minimum_gap = 50.0e-6 + float(np.min(middle_right))
+    else:
+        expected_pressure = np.array((0.0, 0.0, 0.1, 0.0, 0.0, 0.1))
+        expected_normal = -60.0e-6*np.array((0.0, 0.5, 1.0,
+                                               0.0, 0.5, 1.0))
+        expected_minimum_gap = -1.0e-5
     q = np.zeros(36)
     for node in range(1, 7):
-        q[6 * (node - 1) + 2] = (
-            -expected_displacement * structural.mesh.get_node(node).x
-        )
+        q[6 * (node - 1) + 2] = expected_normal[node-1]
     normalized_gap = 50.0e-6 + mortar_mass @ q[2::6] / support
-    np.testing.assert_allclose(normalized_gap[[2, 5]], 0.0,
+    active_nodes = np.flatnonzero(expected_pressure > 0.0)
+    np.testing.assert_allclose(normalized_gap[active_nodes], 0.0,
                                atol=1.0e-15)
-    assert np.min(normalized_gap[[0, 1, 3, 4]]) > 0.0
+    assert np.min(normalized_gap[expected_pressure == 0.0]) > 0.0
     source_contact_force = mortar_mass @ expected_pressure
     external_force = stiffness @ q
     external_force[2::6] -= source_contact_force
@@ -248,6 +282,17 @@ def _loaded_augmented_patch_oracle():
         model.mesh.get_node(node).dofs[2]
     ]) for node in range(1, 7)]
     reference_force = float(np.dot(support, expected_pressure))
+    actual_linear_q = np.zeros_like(q)
+    actual_linear_q[2::6] = actual_uz
+    independent_linear_residual = stiffness @ actual_linear_q - external_force
+    independent_linear_residual[2::6] -= source_contact_force
+    free_normal = [6*(node-1)+2 for node in (2, 3, 5, 6)]
+    expected_source_moment = np.zeros(3)
+    for node, force in enumerate(source_contact_force, start=1):
+        position = structural.mesh.get_node(node).coords()
+        expected_source_moment += np.cross(
+            position, (0.0, 0.0, float(force)),
+        )
     final_trace = result.info["contact_augmentation_attempts"][-1]["trace"][-1]
     force_wrench_balance = float(np.linalg.norm(
         np.asarray(contact["integration_force"])
@@ -275,7 +320,7 @@ def _loaded_augmented_patch_oracle():
         "actual_pressure_pa": contact["numerical_pressure_pa"],
         "expected_pressure_pa": expected_pressure.tolist(),
         "actual_minimum_gap_m": contact["minimum_gap"],
-        "expected_minimum_gap_m": -1.0e-5,
+        "expected_minimum_gap_m": expected_minimum_gap,
         "gap_tolerance_met": bool(contact["gap_tolerance_met"]),
         "active_pressure_dofs": int(contact["active_pressure_dofs"]),
         "equilibrium_residual_norm_n": float(
@@ -286,6 +331,11 @@ def _loaded_augmented_patch_oracle():
         ),
         "force_wrench_balance_n": force_wrench_balance,
         "moment_wrench_balance_nm": moment_wrench_balance,
+        "independent_linear_free_residual_norm_n": float(np.linalg.norm(
+            independent_linear_residual[free_normal]
+        )),
+        "expected_source_moment_nm": expected_source_moment.tolist(),
+        "actual_source_moment_nm": contact["integration_moment"],
         "has_restart_checkpoint": result.restart_checkpoint is not None,
         "contact_augmentation_attempts": result.info.get(
             "contact_augmentation_attempts"
@@ -306,3 +356,28 @@ def test_loaded_augmented_patch_matches_independent_linear_solution():
     assert metrics["normal_multiplier_change_pa"] <= 1.0e-5
     assert metrics["force_wrench_balance_n"] <= 1.0e-6 * 0.025
     assert metrics["moment_wrench_balance_nm"] <= 1.0e-6 * 0.025
+
+
+def test_loaded_clipped_patch_matches_independent_linear_solution():
+    metrics = _loaded_augmented_patch_oracle(target_left_x=0.2)
+    np.testing.assert_allclose(
+        metrics["actual_pressure_pa"], metrics["expected_pressure_pa"],
+        rtol=0.0, atol=1.0e-4,
+    )
+    assert metrics["active_pressure_dofs"] == 4
+    assert abs(metrics["actual_minimum_gap_m"]
+               - metrics["expected_minimum_gap_m"]) <= 1.0e-8
+    assert metrics["relative_integrated_force_error"] <= 1.0e-3
+    scale = metrics["expected_integrated_normal_force_n"]
+    assert metrics["equilibrium_residual_norm_n"] <= 1.0e-6*scale
+    assert metrics["force_wrench_balance_n"] <= 1.0e-6*scale
+    assert metrics["moment_wrench_balance_nm"] <= 1.0e-6*scale
+    assert metrics["independent_linear_free_residual_norm_n"] <= 1.0e-3*scale
+    np.testing.assert_allclose(
+        metrics["actual_source_moment_nm"],
+        metrics["expected_source_moment_nm"],
+        rtol=1.0e-3, atol=1.0e-3*scale,
+    )
+    assert metrics["normal_multiplier_change_pa"] <= 1.0e-5
+    assert metrics["gap_tolerance_met"]
+    assert metrics["has_restart_checkpoint"]
