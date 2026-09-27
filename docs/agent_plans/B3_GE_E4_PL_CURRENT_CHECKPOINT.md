@@ -1,5 +1,44 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+## Current decision — 27 September 2026
+
+**Decision sought:** A native material-line connection with defensible
+physical transfer and a stable exact multiplier policy, before G1.
+**Established:** A flat two-sided Q8 solid-face pose now has an explicit
+six-channel Jacobian and transpose-work map. Rigid, shear, torque and
+section-warp checks pass; the actual detached F4 face geometry passes
+rank, work and balance preflight at three stations. On exactly
+representable synthetic fields, this solid map agrees with the native
+Q4/B3 material-line Jacobian (five focused tests pass). The saved F4
+area-mean-tied solid state has its original six gaps near zero, yet the
+candidate material-line gaps reach `3.98e-6 rad` under tip Mx and
+`3.12e-6 rad` under tip Fz. Thus F4 is not a same-law accuracy reference;
+the result does not prove either connection is physically superior.
+**Remaining uncertainty:** Whether a matched two-sided material-line
+reference reproduces physical torque/shear transfer, and which growing
+multiplier space passes rank, work, locking and mixed-system stability
+over the registered ratios. The saved F5 comparison has a transfer-shape
+difference but a different connection law.
+**Next discriminating experiment and action:** Define a bounded external
+action-basis solve enforcing this same material-line trace on the existing
+physical geometry, support and loads. Preflight its side wrenches,
+representable virtual work and conditioning before any loaded comparison;
+then compare matched physical work and fixed-distance observables with
+the native candidate. A work/sign failure returns to the port law; a
+consistent but different response motivates a targeted shell/beam-versus-
+connection allocation. Do not infer multiplier selection from the
+three-station gap sample or revive finer classical axial screens.
+Raw developmental files are
+`B3_E4_F03_C1_MATERIAL_LINE_SOLID_PORT_DEV_V1.json` (SHA256
+`9607D529156C28D02F428856AB69407959A5326DE97093C4BD822BBFE0BC5D4C`)
+and `B3_E4_F03_C1_MATERIAL_LINE_SAVED_F4_FIELD_DEV_V1.json`
+(SHA256 `2757B370DB60E525F19CF6045B59F3BA8E872C9961A9FABCCD0AF82D8899E82D`).
+This is development evidence, not F03/G0B acceptance. Formal F03
+authority remains unconsumed; G0B open and G1 barred. B2 F09 and other
+independent foundations remain available for bounded parallel progress.
+
+## Previous decision record and detailed evidence
+
 ## Current state — 27 September 2026
 
 **Decision sought:** Establish a physically credible native two-sided

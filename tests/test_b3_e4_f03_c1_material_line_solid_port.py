@@ -6,6 +6,10 @@ from scripts.b3_e4_f03_c1_material_line_solid_port import (
     _quad8_dx, build_flat_solid_line_port,
 )
 from scripts.b3_e4_f03_ccx_solid_bond_screen import _quad8_shape
+from scripts._b3_e4_f03_native_fixture import build
+from scripts.b3_e4_f03_local_footprint_work import structured_q4_point_shape
+from scripts.b3_e4_f03_material_line_position import MaterialLinePosition
+from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
 def _faces():
@@ -115,3 +119,46 @@ def test_section_warp_orthogonal_to_rigid_port_remains_free():
             for node, xyz in coords.items()}
     assert max(np.linalg.norm(value) for value in warp.values()) > 1e-3
     np.testing.assert_allclose(port.gap(warp), 0., atol=2e-15)
+
+
+def test_solid_port_agrees_with_native_line_on_representable_fields():
+    """A Q8 face and rigid section recover the declared native Q4/B3 trace."""
+    coords, plate, bar = _faces()
+    station_x = .9375
+    port = build_flat_solid_line_port(coords, plate, bar, station_x)
+    xs = np.linspace(.9, 1., 5)
+    ys = np.linspace(-.05, .05, 5)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam)
+    station_index = next(k for k, station in enumerate(line.stations)
+                         if abs(station.x-station_x) < 1e-12)
+    station = line.stations[station_index]
+    native = np.vstack((
+        line.reference_jacobian().reshape(len(line.stations), 3, -1)[station_index],
+        line.reference_orientation_jacobian().reshape(len(line.stations), 3, -1)[station_index],
+    ))
+    beam_tangent = station.port.tangent(beam.context.initial.mechanical)
+    rng = np.random.default_rng(733)
+    for _ in range(3):
+        shell_q = rng.normal(scale=1e-4, size=(line.shell_count, 6))
+        beam_q = rng.normal(scale=1e-4, size=beam.context.count)
+        spatial = beam_tangent@beam_q
+        displacement = {}
+        for node in port.node_ids:
+            xyz = coords[node]
+            if node in plate:
+                support, shape = structured_q4_point_shape(xs, ys, xyz[0], xyz[1])
+                displacement[node] = sum(
+                    (weight*(shell_q[int(i), :3] +
+                             np.cross(shell_q[int(i), 3:], (0., 0., xyz[2]))))
+                    for i, weight in zip(support, shape)
+                )
+            else:
+                assert node in bar
+                displacement[node] = (spatial[:3] + np.cross(
+                    spatial[3:], xyz-np.array((station_x, 0., .0675))))
+        np.testing.assert_allclose(
+            port.gap(displacement), native@np.r_[shell_q.ravel(), beam_q],
+            rtol=1e-10, atol=2e-11)
