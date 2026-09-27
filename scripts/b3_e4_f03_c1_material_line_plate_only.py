@@ -138,11 +138,17 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
         parity, detached_hash = _factor_four_parity(coords, nodes, rows)
     dual = np.asarray(reconstruction["cases"][label]["dual_physical_line_density"])
     force = -(rows.T@dual).reshape(-1, 3)
-    threshold = 1e-12*float(np.max(np.abs(force)))
+    # The shell-side physical action contains roundoff-size components
+    # below 1e-6 N; CalculiX rejects those *CLOAD cards even after a
+    # uniform 1e3 linear influence scale. Bound their removal explicitly.
+    threshold = max(1e-6, 1e-12*float(np.max(np.abs(force))))
     discarded = np.where(np.abs(force) < threshold, force, 0.)
     applied = force-discarded
-    if float(np.sum(np.abs(discarded))) > 1e-7:
-        raise ArithmeticError("plate action filtering is not numerical zero")
+    discarded_total = float(np.sum(np.abs(discarded)))
+    discarded_wrench = _wrench(coords, nodes, discarded)
+    if (discarded_total > 1e-6 or
+            np.max(np.abs(discarded_wrench)) > 1e-6):
+        raise ArithmeticError("plate action filtering changes physical wrench")
     nodal = {(node, axis): float(value)
              for node, values in zip(nodes, applied)
              for axis, value in enumerate(values) if value != 0.}
@@ -164,7 +170,9 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
         "active_action_nodes": len(nodes),
         "row_rank": int(np.linalg.matrix_rank(rows, tol=1e-10)),
         "applied_wrench_N_Nm": _wrench(coords, nodes, applied).tolist(),
-        "discarded_absolute_nodal_load_N": float(np.sum(np.abs(discarded))),
+        "discarded_absolute_nodal_load_N": discarded_total,
+        "discarded_wrench_N_Nm": discarded_wrench.tolist(),
+        "physical_nodal_filter_threshold_N": threshold,
     }
     row_failure = ("DEPENDENT_P0_M4_ROWS" if preflight["row_rank"] != 24
                    else None)
@@ -176,6 +184,8 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
     # constraint-admission failure distinct from load-only solve status.
     failure = row_failure if preflight_only else None
     work = None
+    applied_work = None
+    omitted_work = None
     if not preflight_only and failure is None:
         code, stdout, stderr, elapsed, peak, failure = _run(stem, folder)
         (folder / "stdout.log").write_bytes(stdout)
@@ -203,6 +213,10 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
                             u = (np.array([field[node] for node in nodes]) /
                                  SOLVER_ACTION_SCALE)
                             work = float(np.sum(force*u))
+                            applied_work = float(np.sum(applied*u))
+                            omitted_work = work-applied_work
+                            if abs(omitted_work) > 1e-9:
+                                failure = "RESPONSE_OMITTED_ACTION_WORK_EXCEEDS_BOUND"
                             if work <= 0. or not np.isfinite(work):
                                 failure = "RESPONSE_NONPOSITIVE_WORK"
     result = {
@@ -212,6 +226,8 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
         "classification": "fixed matched-line dual on standalone 35 mm quadratic plate",
         "factor": factor, "label": label, "failure": failure,
         "plate_action_work_J": work, "seconds": elapsed,
+        "applied_action_work_J": applied_work,
+        "omitted_action_work_J": omitted_work,
         "peak_solver_rss_bytes": peak, "exit_code": code,
         "solver_action_scale": SOLVER_ACTION_SCALE,
         "constraint_row_failure": row_failure,
