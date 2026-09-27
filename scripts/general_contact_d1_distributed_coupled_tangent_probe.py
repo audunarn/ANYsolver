@@ -31,7 +31,8 @@ def _assemble(model, displacement, states, *, tangent):
         _discard_nonlinear_state_candidate(states)
 
 
-def main(reference_path: Path, output_path: Path) -> None:
+def main(reference_path: Path, output_path: Path,
+         nodes: tuple[int, int] = (20, 45)) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
@@ -68,7 +69,7 @@ def main(reference_path: Path, output_path: Path) -> None:
             states, _provenance = _prepare_initial_states(model, None, None, 5)
             index = {int(dof): column for column, dof in enumerate(independent)}
             direction_reduced = np.zeros(transform.shape[1])
-            for node in (20, 45):
+            for node in nodes:
                 dofs = model.mesh.dof_manager.get_node_dofs(node)
                 direction_reduced[index[int(dofs[0])]] = 0.5
                 direction_reduced[index[int(dofs[2])]] = 0.5
@@ -80,7 +81,7 @@ def main(reference_path: Path, output_path: Path) -> None:
                 - np.asarray(saved["contact"]["numerical_pressure_pa"],
                              dtype=float))))
             moved = {tuple(int(node) for node in manager.law.source_node_ids).index(
-                node) for node in (20, 45)}
+                node) for node in nodes}
             base_branches = _branches(manager.law, source, target, moved)
             base_force, base_tangent = _assemble(model, pose, states, tangent=True)
             with suspend_contact():
@@ -92,6 +93,7 @@ def main(reference_path: Path, output_path: Path) -> None:
                 (base_tangent-structural_tangent)@direction)).reshape(-1)
             report.update({
                 "free_dofs": int(transform.shape[1]),
+                "source_nodes": list(nodes),
                 "pose_constraint_error_m": pose_error,
                 "pressure_replay_error_pa": pressure_error,
                 "base_active_modes": state.active_pressure_dofs,
@@ -168,6 +170,10 @@ def main(reference_path: Path, output_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: coupled_tangent_probe.py REFERENCE_JSON OUTPUT_JSON")
-    main(Path(sys.argv[1]), Path(sys.argv[2]))
+    if len(sys.argv) not in (3, 6) or (len(sys.argv) == 6
+                                     and sys.argv[3] != "--nodes"):
+        raise SystemExit(
+            "usage: coupled_tangent_probe.py REF OUTPUT [--nodes NODE1 NODE2]")
+    selected = ((int(sys.argv[4]), int(sys.argv[5]))
+                if len(sys.argv) == 6 else (20, 45))
+    main(Path(sys.argv[1]), Path(sys.argv[2]), nodes=selected)
