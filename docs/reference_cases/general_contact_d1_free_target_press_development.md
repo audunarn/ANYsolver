@@ -302,3 +302,68 @@ and verified convergence in five augmentations. The default route remains
 unchanged. The reviewer found no other concrete rollback, budget or
 restart-identity defect in the bounded source review; this was not an
 independent C1 qualification.
+
+## Sixteen-Q4 full cycle on the guarded owner
+
+The [sixteen-Q4 full-cycle report](../../reports/general_contact_d1_free_target_16q4_cycle_backtrack_dev_20260928.json)
+(SHA256 `df33a062b008763d22afaa5bda09e4a1a8c75b429d67d191cee81cf8aa8fde0f`)
+was run from committed source `b6201a6c` with the same three steps per
+phase, 0.3 N distributed load, left-clamped two-S3 target, 1e−8 N inner
+equilibrium tolerance, pressure/gap gates and attempt budgets as the
+earlier eight-Q4 development cycle. It completed press, slide, opening
+and recontact in twelve accepted steps (462.955 s). All 34 pressure modes
+remained supported. The largest saved equilibrium residual was
+4.470e−12 N, accepted pressure change was at most 4.821e−6 Pa, and the
+minimum physical gap was −1.570 µm against the 50 µm declared budget.
+The cycle used twelve Schur attempts: nine accepted and three rejected.
+
+At full press (step 3), the sixteen-Q4 force was 1.913498163e−4 N versus
+1.754535425e−4 N for eight Q4, an 8.31% difference relative to sixteen Q4.
+After full slide (step 6), it was 1.651632255e−4 N versus
+1.565670338e−4 N (5.20%). Opening gave zero pressure/force, and the
+recontact forces at steps 11 and 12 agreed with their corresponding
+first-unload/full-slide forces to 1.49e−16 N and 1.17e−12 N respectively.
+The ordered pressure vectors are retained in the raw report. This confirms
+the bounded full-cycle development route; the force trend is not within
+the 2% representative-response target. The next one-factor question is
+whether a 24-Q4 source press reduces that difference under unchanged
+target mesh, enforcement and resource limits. This does not replace
+target-mesh, tangent, independent reference or installed-package checks.
+
+## Twenty-four-Q4 press at the original increment size
+
+The [three-step 24-Q4 development press](../../reports/general_contact_d1_free_target_24q4_press_backtrack_dev_20260928.json)
+stopped at step 2 under the unchanged seven-augmentation and two-attempt
+limits. Its equilibrium residual was 1.483e−13 N, physical gap −0.056 µm,
+and scaled pressure rank 50/50, while multiplier change was 6.419e−5 Pa
+against the 1e−5 Pa criterion. The first full Schur proposal was rejected:
+the re-equilibrated pressure residual was 0.750131 of its prior value,
+just above the unchanged 0.75 threshold. The 0.30 bounded backtrack
+predicted 4.055028e−4 Pa and re-equilibrated to the same value within
+4e−13 Pa. Subsequent projected updates did not meet the pressure gate
+within the remaining augmentations. No force at full press was accepted,
+so this case contributes no 24-Q4 response point. A six-step loading
+path is the next bounded test of increment sensitivity at unchanged
+local mechanics, tolerances and budgets.
+
+The [six-step path](../../reports/general_contact_d1_free_target_24q4_press_6steps_backtrack_dev_20260928.json)
+accepted three increments, then failed at the same physical state as
+the three-step path's second increment. Its final pressure change was
+6.419245886e−5 Pa, essentially identical to the previous failure.
+Smaller load increments therefore did not address this local pressure
+transition. A disposable 0.80 fraction of the first Schur direction is
+the next check of whether the current smallest predicted-safe fraction
+(0.30 in this case) leaves useful reduction unused.
+
+Disposable [0.80](../../reports/general_contact_d1_free_target_24q4_schur_080_dev_20260928.json)
+and [0.95](../../reports/general_contact_d1_free_target_24q4_schur_095_dev_20260928.json)
+fractions used the same first Schur direction with one pressure attempt.
+The 0.80 trial predicted and achieved 2.287502e−4 Pa residual and
+accepted the formerly failing second load step. The 0.95 trial predicted
+5.719e−5 Pa but actually reached 3.390e−4 Pa; it also accepted that step,
+but was worse than 0.80. Both retained active pressure IDs 20/45 and the
+overlap signature, and both later stopped at step three. These are
+disposable measurements only; they show that the smallest predicted-safe
+fraction can leave reduction unused and that a nearly full fraction can
+expose substantial nonlinear response error without a discrete branch
+change. The production selector still uses its original bounded rule.

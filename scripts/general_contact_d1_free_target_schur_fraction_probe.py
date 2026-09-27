@@ -1,4 +1,4 @@
-"""Disposable small-step pressure response check at the 16-Q4 failure."""
+"""Disposable pressure-response check at a selected free-target Schur call."""
 
 from __future__ import annotations
 
@@ -16,14 +16,16 @@ from scripts.general_contact_d1_free_target_press_probe import build_free_target
 
 
 def main(output_path: Path, *, fraction_requested: float = 0.02,
-         require_same_branch: bool = True) -> None:
+         require_same_branch: bool = True, columns: int = 16,
+         selected_attempt: int = 2) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
     if not np.isfinite(fraction_requested) or not 0.0 < fraction_requested <= 1.0:
         raise ValueError("requested pressure fraction must lie in (0, 1]")
-    report = {"candidate": "free_target_16q4_schur_fraction_dev",
-              "selected_attempt": 2, "initial_fraction": fraction_requested,
+    report = {"candidate": "free_target_schur_fraction_dev",
+              "columns": columns, "selected_attempt": selected_attempt,
+              "initial_fraction": fraction_requested,
               "require_same_branch": require_same_branch}
     original_schur = static_path.refined_patch_supported_schur
     calls = 0
@@ -35,7 +37,7 @@ def main(output_path: Path, *, fraction_requested: float = 0.02,
         calls += 1
         full = original_schur(manager, displacement, tangent, transform,
                               control_rows, **kwargs)
-        if calls != 2 or full is None:
+        if calls != selected_attempt or full is None:
             return full
         source, target = manager._positions(displacement)
         state = manager.law.evaluate(source, target,
@@ -115,7 +117,7 @@ def main(output_path: Path, *, fraction_requested: float = 0.02,
 
     static_path.refined_patch_supported_schur = probe
     try:
-        model, definition, settings, program = build_free_target_case(16)
+        model, definition, settings, program = build_free_target_case(columns)
         settings = replace(settings, augmentation_schur_maximum_attempts=1)
         result = solve_static_nonlinear(
             model, contact=definition, contact_settings=settings,
@@ -182,6 +184,9 @@ if __name__ == "__main__":
     parser.add_argument("output", type=Path)
     parser.add_argument("--fraction", type=float, default=0.02)
     parser.add_argument("--allow-branch-change", action="store_true")
+    parser.add_argument("--columns", type=int, choices=(8, 16, 24), default=16)
+    parser.add_argument("--selected-attempt", type=int, default=2)
     args = parser.parse_args()
     main(args.output, fraction_requested=args.fraction,
-         require_same_branch=not args.allow_branch_change)
+         require_same_branch=not args.allow_branch_change,
+         columns=args.columns, selected_attempt=args.selected_attempt)
