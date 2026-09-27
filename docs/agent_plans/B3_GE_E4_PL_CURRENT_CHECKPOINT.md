@@ -14,6 +14,69 @@ choice open; then test that law against a matched reference and growing
 interface spaces. Continue independent foundations meanwhile. **Gate:** G0B
 open, G1 barred; formal F03 authority unconsumed.
 
+## F07 free-free descriptor discriminator — 27 September 2026
+
+**Decision sought:** Does the existing native Q4/B3 point-candidate rest
+operator retain exactly six physical rigid motions when supports are removed
+from its *spectral diagnostic*, with retained cell coordinates, shell
+drilling treatment and multipliers kept algebraic? **Established:** The
+supported physical-mass descriptor passed its bounded work and eigenvalue
+checks, but cannot demonstrate the required free-free modes. **Competing
+explanations:** The full reference operators have the six objective null
+motions, or an extra/deficient null reveals a kinematic or mass/constraint
+problem. **Bounded discriminator:** Use the already captured full K, M and
+six exact point rows at the unloaded rest state, without modifying the
+supported owner or its admission. Form the small full massless-multiplier
+descriptor; count finite near-zero roots, check eigen/constraint residuals
+and physical rigid-motion content. Passing permits broader mixed Q4/S3 and
+mesh checks; failure sends the exact operator or interpretation back for
+diagnosis. This is not a selected point law, production free-free owner or
+F07/G0B acceptance.
+
+**Q4 result and immediate S3 check:** The unloaded Q4/native-B3 full
+descriptor has exactly six finite near-zero modes after removing supports
+from the *diagnostic* matrices; each nodal mode fits a common physical rigid
+field and satisfies the eigen/constraint residual checks. The focused test
+passed 1/1. Before interpreting this as a formulation-family property,
+repeat only the same check on the existing S3-V2D rest fixture, whose shell
+rotations are algebraic. An S3 extra/deficient mode would identify its
+separate mass/kinematic treatment for review; a six-mode result extends the
+bounded observation, without admitting production free-free analysis.
+
+**S3 result and boundary:** The same support-free *descriptor diagnostic*
+has exactly six finite near-zero modes for S3-V2D as for Q4. Every mode's
+shell and beam nodal field fits one common rigid displacement/rotation to
+`1e-8` relative, the six fitted rigid coordinates span dimension six,
+and eigen/constraint residuals pass the bounded `1e-8` checks. The three
+F07 focused files pass 5/5. The capture still comes from a supported owner
+at rest; this is not a public free-free solve, a mixed mesh, an accepted
+point-law choice, a large sparse descriptor or F07/G0B acceptance.
+
+**Independent F07 review and bounded follow-up:** The reviewer confirmed
+that capture forms full K/M/C before the supported owner's free set enters
+the reduced lift, so removing supports in this *diagnostic* is valid. The
+six nodal rigid fits are useful, but the eigen residual uses the same
+captured matrices and the shell factor is built on a known rigid
+complement; neither is an independent formulation oracle. Before relying
+on the six roots even as a rest-state descriptor screen, check full rest
+residual including reactions, positive mass in the counted subspace and
+finite-root count against the constrained mass rank. Failure revises the
+screen; passing retains only bounded Q4/S3 evidence. Direct full K/C
+annihilation by analytically constructed rigid fields with retained cell
+coordinates, unsupported-block independent witnesses, mixed meshes and
+production free-free analysis remain open.
+
+**F07 review follow-up result:** Both Q4 and S3 rest fixtures have zero
+full-owner scaled residual, including the coordinates held by the ordinary
+static fixture. All finite descriptor roots are real within the declared
+`1e-8` screen, their number equals the rank of physical mass restricted to
+the independent constraint nullspace, and the six near-zero eigenvectors
+span a positive-mass rigid subspace. The focused F07 set remains 5/5.
+These guards resolve the review's supported-reaction, positive-mass and
+finite-count concerns for this diagnostic; the independent full K/C rigid
+action and unsupported-block witness remain open. This is not F07/G0B
+acceptance or permission for a public free-free owner.
+
 ## F12 constant-axial prestress discriminator — 27 September 2026
 
 **Decision sought:** Does the retained physical B2 station displacement
@@ -890,8 +953,17 @@ The largest sampled directional error is `2.10e-6`, while finer adjacent
 steps are smaller. The result is a local S3 material-predecessor and joint
 composition check, not a global accepted owner or branch-continuity proof.
 Its `joint_cross_block_norm` groups beam and multiplier columns; it is not an
-isolated shell–beam stiffness norm. Independent S3 review and direct mixed
-accepted/rejected-state mechanics remain open; F05/G0B remain open.
+isolated shell–beam stiffness norm. Direct mixed accepted/rejected-state
+mechanics remain open; F05/G0B remain open.
+
+**Independent S3 F05 review (27 September):** Read-only mechanics review
+found no actionable defect in the fixed-predecessor material pullback,
+actual additive-chart pose composition, or the source-bound directional
+checks. It verified the runner hash against current source and retained the
+existing limitations: sampled masks do not establish branch continuity or
+hardening-segment invariance, and the mixed-owner lifecycle is not tested by
+this local composition. The bounded S3 review obligation is addressed;
+direct coupled atomic-state mechanics and F05/G0B acceptance remain open.
 
 **F05 mixed-state rejection development (27 September):** The source-bound
 `b3_e4_g0_f05_mixed_rejection_dev_v1.json` and focused test pair an
