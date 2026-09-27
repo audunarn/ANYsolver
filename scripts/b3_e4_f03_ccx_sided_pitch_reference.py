@@ -43,7 +43,7 @@ TIME_LIMIT_SECONDS = 120
 
 
 def _weights(coords: dict[int, np.ndarray], z: float,
-             factor: int) -> dict[int, float]:
+             factor: int, interval: tuple[float, float] = (.9, 1.)) -> dict[int, float]:
     """Reference-area Q8 weights on one flat mesh-aligned surface."""
     lookup: dict[tuple[float, float, float], list[int]] = defaultdict(list)
     for node, xyz in coords.items():
@@ -55,7 +55,9 @@ def _weights(coords: dict[int, np.ndarray], z: float,
             raise ValueError(f"ambiguous surface node at {(x, y, z)}: {len(ids)}")
         return ids[0]
 
-    xs = np.linspace(.9, 1., factor+1)
+    low, high = interval
+    xs = (np.linspace(.9, 1., factor+1) if interval == (.9, 1.) else
+          np.linspace(low, high, round(factor*(high-low)/.1)+1))
     ys = np.linspace(-.05, .05, 2*factor+1)
     roots, gauss = np.polynomial.legendre.leggauss(3)
     weights: dict[int, float] = defaultdict(float)
@@ -64,7 +66,9 @@ def _weights(coords: dict[int, np.ndarray], z: float,
             xm, ym = (x0+x1)/2, (y0+y1)/2
             ids = (node(x0,y0), node(x1,y0), node(x1,y1), node(x0,y1),
                    node(xm,y0), node(x1,ym), node(xm,y1), node(x0,ym))
-            scale = (x1-x0)*(y1-y0)/(.04)  # cell Jacobian / 0.01 m2
+            area_fourfold = (.04 if interval == (.9, 1.) else
+                             4*(high-low)*.1)
+            scale = (x1-x0)*(y1-y0)/area_fourfold
             for xi, wx in zip(roots, gauss):
                 for eta, wy in zip(roots, gauss):
                     shape = _quad8_shape(float(xi), float(eta))
@@ -76,7 +80,9 @@ def _weights(coords: dict[int, np.ndarray], z: float,
 
 
 def _equation(coords: dict[int, np.ndarray], supports: set[int],
-              factor: int) -> tuple[list[tuple[int, float]], dict]:
+              factor: int, interval: tuple[float, float] = (.9, 1.),
+              reserved: frozenset[int] = frozenset()
+              ) -> tuple[list[tuple[int, float]], dict]:
     # theta_b - theta_s = (u_x^bar,top-u_x^bar,bottom)/.1
     #                  - (u_x^plate,top-u_x^plate,bottom)/.035.
     surfaces = (
@@ -88,18 +94,28 @@ def _equation(coords: dict[int, np.ndarray], supports: set[int],
     coefficients: dict[int, float] = defaultdict(float)
     groups = {}
     for name, z, scale in surfaces:
-        weights = _weights(coords, z, factor)
+        weights = _weights(coords, z, factor, interval)
         groups[name] = {node: scale*weight for node, weight in weights.items()}
         for node, value in groups[name].items():
             coefficients[node] += value
     if any(node in supports for node in coefficients):
         raise AssertionError("pitch equation touches a directly supported node")
-    dependent = max(groups["plate_bottom"],
-                    key=lambda node: abs(coefficients[node]))
+    if interval == (.9, 1.) and not reserved:
+        dependent = max(groups["plate_bottom"],
+                        key=lambda node: abs(coefficients[node]))
+    else:
+        low, high = interval
+        candidates = [node for node in groups["plate_bottom"]
+                      if low+1e-12 < coords[node][0] < high-1e-12 and
+                      node not in reserved and abs(coefficients[node]) > 1e-15]
+        if not candidates:
+            raise ValueError("sided interval lacks independent interior equation node")
+        dependent = max(candidates, key=lambda node: abs(coefficients[node]))
     terms = [(dependent, coefficients.pop(dependent))] + sorted(
         ((node, value) for node, value in coefficients.items()
          if abs(value) > 1e-15))
-    result = {"translation_x": sum(c for _, c in terms),
+    result = {"interval_m": list(interval),
+              "translation_x": sum(c for _, c in terms),
               "rigid_y_rotation": sum(c*coords[n][2] for n,c in terms),
               "rigid_z_rotation": -sum(c*coords[n][1] for n,c in terms),
               "group_force_x": {name: sum(g.values())
@@ -166,9 +182,13 @@ def main() -> int:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--factor", type=int, choices=tuple(SOURCE_HASHES), required=True)
     parser.add_argument("--print-dependent-reaction", action="store_true")
+    parser.add_argument("--pitch-intervals", type=int, choices=(1, 2), default=1)
     args = parser.parse_args()
-    if args.print_dependent_reaction and args.factor != 2:
-        raise ValueError("bounded direct-reaction probe is F2 only")
+    if args.print_dependent_reaction and (args.factor,args.pitch_intervals) not in (
+            (2, 1), (4, 2)):
+        raise ValueError("bounded direct-reaction probe requires F2 single or F4 split")
+    if args.pitch_intervals == 2 and args.factor != 4:
+        raise ValueError("bounded two-interval sided diagnostic is F4 only")
     root = args.output_root.resolve()
     if root.exists():
         raise FileExistsError(root)
@@ -189,20 +209,36 @@ def main() -> int:
             meta["bar_reference_profile"] != "C1_TWO_QUADRATIC_TANGENT_ALIGNED_V1"):
         raise ValueError("unexpected physical F5 model")
     coords = _read_deck_nodes(source_deck)
-    terms, mechanics = _equation(coords, set(meta["boundary_node_ids"]),factor)
+    intervals = (((.9, 1.),) if args.pitch_intervals == 1 else
+                 ((.9, .95), (.95, 1.)))
+    equations = []
+    mechanics_list = []
+    reserved = set()
+    for interval in intervals:
+        terms, mechanics = _equation(
+            coords, set(meta["boundary_node_ids"]), factor, interval,
+            frozenset(reserved))
+        equations.append(terms)
+        mechanics_list.append(mechanics)
+        reserved.add(mechanics["dependent_node"])
     deck = source_deck.read_text()
     marker = "*MATERIAL,NAME=Isotropic"
     if deck.count(marker) != 1:
         raise ValueError("material insertion point changed")
-    stem = f"solid-{factor}-sided-pitch"
-    inserted = _cards(terms)+marker
+    stem = (f"solid-{factor}-sided-pitch" if args.pitch_intervals == 1 else
+            f"solid-{factor}-sided-pitch-two-intervals")
+    inserted = "".join(_cards(terms) for terms in equations)+marker
     if args.print_dependent_reaction:
-        inserted = (f"*NSET,NSET=PitchDependent\n"
-                    f"{mechanics['dependent_node']}\n"+inserted)
+        names = (["PitchDependent"] if args.pitch_intervals == 1 else
+                 [f"PitchDependent{i+1}" for i in range(len(equations))])
+        inserted = "".join(
+            f"*NSET,NSET={name}\n{mechanics['dependent_node']}\n"
+            for name,mechanics in zip(names,mechanics_list))+inserted
         if deck.count("*END STEP") != 1:
             raise ValueError("output insertion point changed")
         deck = deck.replace("*END STEP",
-                            "*NODE PRINT,NSET=PitchDependent\nRF\n*END STEP")
+                            "".join(f"*NODE PRINT,NSET={name}\nRF\n"
+                                    for name in names)+"*END STEP")
     root.mkdir(parents=True)
     (root/(stem+".inp")).write_text(deck.replace(marker, inserted))
     (root/"model.json").write_text(json.dumps(meta, sort_keys=True, indent=2)+"\n")
@@ -234,14 +270,24 @@ def main() -> int:
             field = _read_frd_u(root/(stem+".frd"))
             if set(field) != set(coords):
                 raise ValueError("incomplete full-field displacement")
-            response["sided_pitch_equation_rad"] = sum(
-                c*field[node][0] for node,c in terms)
+            gaps = [sum(c*field[node][0] for node,c in terms)
+                    for terms in equations]
+            if args.pitch_intervals == 1:
+                response["sided_pitch_equation_rad"] = gaps[0]
+            else:
+                response["sided_pitch_equations_rad"] = gaps
             if args.print_dependent_reaction:
-                reaction = parse_nodal_vectors(
-                    dat,{mechanics["dependent_node"]},"forces","PITCHDEPENDENT")
-                response["dependent_node_printed_force_N"] = reaction[
-                    mechanics["dependent_node"]].tolist()
-                response["dependent_node_coefficient_per_m"] = terms[0][1]
+                printed = [parse_nodal_vectors(
+                    dat,{mechanics["dependent_node"]},"forces",name.upper())[
+                        mechanics["dependent_node"]].tolist()
+                    for name,mechanics in zip(names,mechanics_list)]
+                if args.pitch_intervals == 1:
+                    response["dependent_node_printed_force_N"] = printed[0]
+                    response["dependent_node_coefficient_per_m"] = equations[0][0][1]
+                else:
+                    response["dependent_node_printed_forces_N"] = printed
+                    response["dependent_node_coefficients_per_m"] = [
+                        terms[0][1] for terms in equations]
         except (OSError, ValueError, KeyError) as exc:
             failure = f"PARSE_{type(exc).__name__}: {exc}"
     result = {
@@ -254,9 +300,13 @@ def main() -> int:
         "source_hashes": {str(path.relative_to(WORKTREE)):digest(path)
                           for path in (Path(__file__),source_deck,source_model)},
         "solver_sha256": digest(EXE),
-        "mechanics_preflight": mechanics,
+        "mechanics_preflight": (mechanics_list[0] if args.pitch_intervals == 1
+                                else mechanics_list),
         "dependent_reaction_probe": args.print_dependent_reaction,
-        "equation_node_x_coefficients": [[node,c] for node,c in terms],
+        "equation_node_x_coefficients": (
+            [[node,c] for node,c in equations[0]] if args.pitch_intervals == 1
+            else [[[node,c] for node,c in terms] for terms in equations]),
+        "pitch_intervals_m": [list(interval) for interval in intervals],
         "response": response,
         "limitations": ["linearized area-average pitch, not finite-rotation native pose",
                         "shared top-face nodes plus one additional weak two-sided constraint",
@@ -268,7 +318,9 @@ def main() -> int:
     print(json.dumps({"status":result["status"],"failure":failure,
                       "seconds":elapsed,"peak_solver_rss_bytes":peak,
                       "pitch_equation_rad":None if response is None else
-                      response["sided_pitch_equation_rad"]}),flush=True)
+                      (response["sided_pitch_equation_rad"]
+                       if args.pitch_intervals == 1 else
+                       response["sided_pitch_equations_rad"])}),flush=True)
     return 0 if failure is None else 1
 
 

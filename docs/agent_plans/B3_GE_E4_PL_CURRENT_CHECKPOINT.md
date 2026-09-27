@@ -23,12 +23,15 @@ fidelity, measured contact traction or a mortar space. The complete native
 six-channel reference wrench and opposite beam/shell rigid work now pass
 with retained B3 half-cell rotations included. On the existing F4 solid,
 one added area-mean sided equation closes its own mean pitch but leaves
-a signed local fitted pitch variation along the bond.
+a signed local fitted pitch variation along the bond. Splitting only that
+equation into two F4 intervals reduces the largest three local projections
+from `2.92` to `0.74 µrad`, while whole-strip endpoint differences persist.
 **Next discriminator and action:** Treat the six-channel candidate as an
 explicitly two-sided director-couple joint. A bounded F4 segmented-sided
-reference would distinguish equation resolution from law mismatch; in
-parallel, test loaded finite native port work, torque/shear and
-compensated-pitch patches against that law.
+reference supports equation resolution as part of the local discrepancy;
+do not add further rows automatically. Review the remaining solid pose-fit
+and native E4/B3 trace meaning, while testing loaded finite native port
+work, torque/shear and compensated-pitch patches against the declared law.
 Keep the one-sided top-face bond as a distinct reference; if that is the
 intended production joint, revise its continuous rotational work instead
 of treating multiplier refinement as a repair. Only after the continuous
@@ -7987,3 +7990,72 @@ resolution rather than the two-sided law; it must preserve the same model,
 load and resource limits, and assess each equation's dual/work and global
 balance. Do not infer a production multiplier policy from this external
 row-count experiment. G0B remains open; G1 barred; F03 authority unconsumed.
+
+**Bounded F4 split-sided follow-up (prospective):** Use the same pinned F4
+deck, solver, physical load, shared top-face nodes and 120 s/2 GiB/one-
+thread limit. Replace the single added area-mean pitch equation with two
+independent equations on x=`.90–.95` and `.95–1.00 m`; each must pass the
+same rigid-motion, unit-couple, top-fixed-pitch and unique-dependent-node
+preflights. Keep the original one-equation generated deck byte-identical
+in its default path. If the two-row solve completes with balanced work
+and support reactions, project its saved full field onto the same five
+stations and compare the local pitch spread with the one-row case. A
+substantial reduction isolates equation resolution as the main bounded
+cause; a persistent spread points to solid-to-native pose reduction or
+the continuous law and calls for reviewing those before more rows. A
+resource/solver failure is retained and does not trigger a cap increase.
+This experiment cannot select a native multiplier space or close F03.
+
+**F4 split-sided outcome and terminal action for this slice:** The two
+independent equations have 207 terms each, distinct interior dependent
+nodes, unit opposite plate/bar My, zero common-rigid work to `1.8e-15`,
+and top-fixed-pitch witnesses `−1`. The final source-matched run completed
+under the unchanged cap in `23.46 s`, peak solver RSS `1,308,680,192`
+bytes, with residuals `−1.62e-11/+2.46e-11 rad`. Its applied-load work is
+`0.073773739207487 J`, compared with `0.0739292397 J` for the one-row
+two-sided case and `0.0742620313 J` for the one-sided bond. Its printed
+support-wrench discrepancies are at most `1.44e-4 N` and `4.90e-5 Nm`;
+sampled unbonded-face normal gaps are positive with a `0.513 nm` minimum,
+which remains a directional pre-opened check, not contact qualification.
+
+The same five whole-strip projected pitches after two equations are
+`3.231,1.006,0.072,-0.201,-0.355 µrad`, versus
+`3.722,1.417,0.085,-0.597,-0.860 µrad` after one equation. The three
+local projections change from `2.915,-0.715,-2.095 µrad` to
+`0.660,-0.741,0.144 µrad`; the largest local magnitude falls by about
+`75%`. The output-only reaction run has identical full FRD displacement
+values at printed precision and identical applied work. Printed
+dependent-node forces and coefficients give equation duals
+`+71.10075/+3.76924 Nm`. Applying the *physical* `−Cᵀlambda` partition
+gives plate/bar final-state virtual-work pairs
+`+0.004430966/−0.004430965 J` and
+`+0.000232291/−0.000232291 J`, with pair sums about `1.15e-9` and
+`−9.25e-11 J`. These are equation-work partitions, not measured contact
+tractions or integrated path energies.
+
+The split resolves a substantial part of the local averaged-pitch
+discrepancy, but the nonzero whole-strip endpoint gap and solid-to-E4/B3
+pose-fit differences remain. Stop this external row-count sequence.
+Next compare the declared continuous native work and physical supported
+torque/shear transfer, then assess growing native spaces and ratios with
+the reviewed mixed-system norms. Do not infer a production multiplier
+space from two external equations. Formal F03 authority is unconsumed;
+G0B open and G1 barred.
+
+Final runner `scripts/b3_e4_f03_ccx_sided_pitch_reference.py` reproduces
+the historical F2/F4 single-equation deck text exactly. The initial
+split run and its output remain preserved, but the canonical split result
+is the final-source run
+`B3_GE_E4_PL_F03_C1_F4_TWO_INTERVAL_SIDED_DEV_V2.json`
+(SHA256 `9EC49035630C123E84BEB9F1F12F18CD9C443B64A15CC5DB0E8B7FB615976918`),
+with generated-deck SHA256
+`5A678DAEC5FF004D0309359464487865F9ADF2FD556A335F540BC1FA55FBD6FF`.
+The final-source output-only record is
+`B3_GE_E4_PL_F03_C1_F4_TWO_INTERVAL_SIDED_RF_DEV_V1.json`
+(SHA256 `266A52E614E0EA0319818CA656759AD9D0EAD687B8979B849FF0A8C43655C3A2`),
+and its matched station projection is
+`B3_GE_E4_PL_F03_C1_F4_TWO_INTERVAL_SIDED_STATION_PROJECTION_DEV_V2.json`.
+Generated decks, solver logs, DAT and FRD are retained in the versioned
+`.qualification/b3-ge-e4-pl/f03-c1-factor4-sided-pitch-two-intervals-*`
+directories. This is Level-A development evidence, not independent G0B
+review or external-reference acceptance.
