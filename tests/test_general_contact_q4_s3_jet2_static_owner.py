@@ -87,6 +87,59 @@ def test_q4_s3_jet2_partial_shared_pressure_work(press_shift, inactive_faces):
                                rtol=3e-3, atol=3e-4)
 
 
+def test_q4_s3_manager_reuses_its_candidate_geometry(monkeypatch):
+    model, definition, settings = _two_q4_two_s3()
+    manager = GeneralS3PatchManager(model, definition, _settings(settings))
+    displacement = np.zeros(manager.n_dof)
+    for node in range(1, 7):
+        position = model.mesh.get_node(node)
+        displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = (
+            -0.01495 + 0.002*(position.x-0.6)
+        )
+    source, target = manager._positions(displacement)
+    prepared = manager.law.prepare_work_state(
+        source, target, manager.normal_multipliers,
+    )
+    ordinary = manager.law.work(source, target, manager.normal_multipliers)
+    reused = manager.law.work(
+        source, target, manager.normal_multipliers,
+        _prepared_state=prepared,
+    )
+    np.testing.assert_array_equal(reused.residual, ordinary.residual)
+    np.testing.assert_array_equal(reused.tangent, ordinary.tangent)
+    changed_multipliers = manager.normal_multipliers.copy()
+    changed_multipliers[0] += 0.1
+    with pytest.raises(ValueError, match="does not match this candidate"):
+        manager.law.work(
+            source, target, changed_multipliers, _prepared_state=prepared,
+        )
+    changed_source = source.copy()
+    changed_source[0, 2] += 1.0e-6
+    with pytest.raises(ValueError, match="does not match this candidate"):
+        manager.law.work(
+            changed_source, target, manager.normal_multipliers,
+            _prepared_state=prepared,
+        )
+    other = GeneralS3PatchManager(model, definition, _settings(settings))
+    with pytest.raises(ValueError, match="does not match this candidate"):
+        other.law.work(
+            source, target, other.normal_multipliers,
+            _prepared_state=prepared,
+        )
+
+    original = manager.law.geometry.evaluate
+    calls = 0
+
+    def counted(*args):
+        nonlocal calls
+        calls += 1
+        return original(*args)
+
+    monkeypatch.setattr(manager.law.geometry, "evaluate", counted)
+    manager.evaluate(displacement)
+    assert calls == 1
+
+
 @pytest.mark.parametrize("corrupt_value", (0.01, np.nan))
 def test_q4_s3_shared_support_rejects_corrupt_aggregate(monkeypatch, corrupt_value):
     model, definition, settings = _two_q4_two_s3()

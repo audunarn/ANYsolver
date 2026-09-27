@@ -7,7 +7,7 @@ moving overlap support; this avoids frictionless boundary-motion work.
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 import re
 
 import numpy as np
@@ -21,9 +21,22 @@ from .q4_s3_overlap_derivatives import (
 from .q4_s3_tiny_wedge import verify_tiny_wedge_derivatives
 from .s3_overlap_derivatives import UnsupportedOverlapBranch, s3_overlap_derivatives
 from .s3_patch_mortar_energy import (
-    MovingS3PatchMortarWork,
+    MovingS3PatchMortarState, MovingS3PatchMortarWork,
     MovingS3PatchPrimalMortarPenalty,
 )
+
+
+@dataclass(frozen=True)
+class _PreparedProjectedPatch:
+    owner: object
+    state: MovingS3PatchMortarState
+    inputs: tuple[tuple[tuple[int, ...], bytes], ...]
+
+
+def _prepared_inputs(*arrays):
+    return tuple((item.shape, item.tobytes()) for item in (
+        np.ascontiguousarray(value, dtype=float) for value in arrays
+    ))
 
 
 def _touching_projected_boundaries(first: PlanarFace, second: PlanarFace,
@@ -194,6 +207,15 @@ class MovingS3PatchProjectedNormal:
             self.geometry.evaluate(current_source, current_target), multipliers,
         )
 
+    def prepare_work_state(self, current_source, current_target, multipliers):
+        """Bind one disposable projected state to its law, pose and iterate."""
+        validated = self._multipliers(multipliers)
+        state = self.evaluate(current_source, current_target, validated)
+        return _PreparedProjectedPatch(
+            self, state,
+            _prepared_inputs(current_source, current_target, validated),
+        )
+
     def projected_multiplier(self, state, multipliers):
         multipliers = self._multipliers(multipliers)
         result = np.zeros_like(multipliers)
@@ -204,13 +226,16 @@ class MovingS3PatchProjectedNormal:
         )
         return result
 
-    def work(self, current_source, current_target, multipliers, *, tangent=True):
+    def work(self, current_source, current_target, multipliers, *, tangent=True,
+             _prepared_state=None):
         if self.shared_edge_tie is None:
             return self._work_unresolved(current_source, current_target,
-                                         multipliers, tangent=tangent)
+                                         multipliers, tangent=tangent,
+                                         prepared_state=_prepared_state)
         try:
             return self._work_unresolved(current_source, current_target,
-                                         multipliers, tangent=tangent)
+                                         multipliers, tangent=tangent,
+                                         prepared_state=_prepared_state)
         except (UnsupportedQ4S3Branch, ValueError) as exc:
             message = str(exc)
             pair_match = re.search(r"\bpair=(\d+)\b", message)
@@ -508,7 +533,8 @@ class MovingS3PatchProjectedNormal:
                                        max(residual_error, tangent_error))
 
     def _work_unresolved(self, current_source, current_target, multipliers, *,
-                         tangent=True, tiny_wedge_pair=None):
+                         tangent=True, tiny_wedge_pair=None,
+                         prepared_state=None):
         multipliers = self._multipliers(multipliers)
         coordinates = np.concatenate((np.asarray(current_source, dtype=float),
                                       np.asarray(current_target, dtype=float))).reshape(-1)
@@ -522,8 +548,15 @@ class MovingS3PatchProjectedNormal:
                 values[source_count:].reshape(-1, 3),
             )
 
-        base_geometry = state_at(coordinates)
-        base = self._project(base_geometry, multipliers)
+        if prepared_state is None:
+            base = self._project(state_at(coordinates), multipliers)
+        elif (isinstance(prepared_state, _PreparedProjectedPatch)
+              and prepared_state.owner is self
+              and prepared_state.inputs == _prepared_inputs(
+                  current_source, current_target, multipliers)):
+            base = prepared_state.state
+        else:
+            raise ValueError("prepared projected patch state does not match this candidate")
         count = self.n_coordinates
         if not base.active_pressure_dofs:
             return MovingS3PatchMortarWork(

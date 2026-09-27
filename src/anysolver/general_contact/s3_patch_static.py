@@ -466,8 +466,10 @@ class GeneralS3PatchManager:
     def evaluate(self, displacement, *, tangent=True):
         source, target = self._positions(displacement)
         lower = self._gap_lower((source, target))
-        state = (self.law.evaluate(source, target, self.normal_multipliers)
-                 if self.augmented else self.law.evaluate(source, target))
+        prepared = (self.law.prepare_work_state(
+            source, target, self.normal_multipliers,
+        ) if self.augmented else None)
+        state = prepared.state if self.augmented else self.law.evaluate(source, target)
         local_derivatives = (self.augmented
                              and self.law.geometry.differentiation
                              in {"pair_local", "jet2_s3", "jet2_q4_s3"})
@@ -479,7 +481,8 @@ class GeneralS3PatchManager:
             evaluations = pair_evaluations if local_derivatives else 1
             tie_error = None
         else:
-            work = (self.law.work(source, target, self.normal_multipliers, tangent=tangent)
+            work = (self.law.work(source, target, self.normal_multipliers,
+                                  tangent=tangent, _prepared_state=prepared)
                     if self.augmented else self.law.work(source, target, tangent=tangent))
             local_force = work.residual
             local_tangent = sparse.csr_matrix(work.tangent) if tangent else None
