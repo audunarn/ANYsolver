@@ -22,16 +22,19 @@ resolved-solid beam response, how it behaves under physical refinement and
 registered interface ratios, and whether a law or multiplier policy needs
 correction. One solid grid and a linear no-contact comparator cannot qualify
 physical fidelity or select P0/P1/dual.
-**Next discriminator and action:** The saved-field local and globally C0
-Q4 plate-patch trace diagnostics are complete. Their signed work pairings
-are smaller than the same-domain action differences but do not allocate
-their cause. Next fit the *beam* side to globally compatible retained B3
-open-half-cell traces on the same supported solid field. If its physical
-action pairing is large, test section/trace idealization under controlled
-matched refinement; if small, test a second explicit continuous connection
-law or a verified sided reference before changing the line space. Do not
-resume finer classical axial sweeps or select P0/P1/dual from one spectral
-value.
+**Next discriminator and action:** Both globally compatible Q4 plate-patch
+and retained B3 open-half-cell trace fits on the saved supported solid
+fields are complete. Their signed action pairings do not explain or bound
+the larger same-domain native-action differences. The next experiment must
+isolate *longitudinal connection resolution*: on this same detached solid,
+split the six physical channels into two exact half-patch intervals and
+compare the reconstructed supported action with the global-six result and
+native two-interval P0. Reuse one unchanged geometry, loads, supports and
+source identity; cap each external action solve at 120 s/2 GiB. If the
+split action moves toward native transfer, investigate line-resolution
+policy; otherwise review the continuous trace and domain idealizations.
+Neither outcome selects a multiplier space or closes F03. Do not resume
+finer classical axial sweeps.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Local solid trace-residual diagnostic (27 September):** The same eight
@@ -75,6 +78,27 @@ Independent read-only mechanics review found no scoped blocker. Equal-node
 least squares is not a physical L2 projection; these ratios are not energy
 fractions, error bounds, or a coupled beam/connection-law attribution.
 F03/G0B remain open.
+
+**Compatible retained B3 open-half-cell fit (27 September):** The same
+source-bound solid state was projected onto 15 active, full-rank native
+retained coordinates through the actual station tangent on the *open*
+half-cells. Q8 face displacement and the physical solid action density
+were integrated at 576 two-face quadrature points; action work recovers
+the saved bar-side value. The final record is `global_beam_trace_v2.json`
+(SHA256 `a375e030a1ce1acc0794f69107fb78b4a852a447fe5a89651af5f4952bf1a17d`);
+v1 remains preserved (SHA256
+`a16f2979984b8fa77e9efe8a35b95b398558aa3e8141b309f6ee822cb0044d54`).
+The signed action pairing outside this fit is `4.930e-5 J` in torque
+(2.636% relative to |bar-side work|) and `1.848e-6 J` in opening
+(0.0147%). Face RMS differences remain `6.59e-8 m` and `9.25e-8 m`:
+the small opening work pairing does not imply small warping. The fit
+condition is about `30.8`. Four focused tests pass: common translation,
+common rotation, a nonrepresentable face warp, and independent action
+virtual-work parity with the retained-beam port integration. Independent
+read-only mechanics review found no blocking issue in the base source;
+the subsequent action-parity check strengthens it. This physical L2 face
+fit is not a coupled equilibrium solution, accuracy bound, or F03
+acceptance. G0B remains open, G1 barred.
 
 **Matched linear external reference and fixed-domain action replays (27
 September):** The source-bound C1 detached F4 C3D20R model has separate
