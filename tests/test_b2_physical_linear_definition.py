@@ -72,6 +72,21 @@ def test_mass_origin_pullback_matches_independent_particle_kinetic_work():
     for origin in (np.array([0.,.1,.05]),np.array([0.,-.2,.3])):
         metadata=MassMetadata("particle-inertia",tuple(origin),
                               kinetic_matrix(origin))
+        matrix=np.asarray(metadata.matrix_per_m)
+        mass=matrix[0,0]
+        coupling=matrix[:3,3:]
+        center=np.array((coupling[1,2],coupling[2,0],
+                         coupling[0,1]))/mass
+        expected_center=points.mean(axis=0)-origin
+        np.testing.assert_allclose(center,expected_center,rtol=2e-15,
+                                   atol=2e-15)
+        central=matrix[3:,3:]-mass*((center@center)*np.eye(3)-
+                                     np.outer(center,center))
+        recovered_second=.5*np.trace(central)*np.eye(3)-central
+        direct_second=sum(2.*np.outer(p-points.mean(axis=0),
+                                        p-points.mean(axis=0)) for p in points)
+        np.testing.assert_allclose(recovered_second,direct_second,
+                                   rtol=2e-14,atol=2e-14)
         pulled=metadata.matrix_at_reference_axis()
         np.testing.assert_allclose(pulled,direct,rtol=2e-15,atol=2e-15)
         assert .5*velocity@pulled@velocity == pytest.approx(direct_energy,rel=1e-14)
@@ -200,6 +215,35 @@ def test_precise_definition_negatives():
     coupled=np.eye(6);coupled[0,1]=coupled[1,0]=2.
     with pytest.raises(ValueError,match="positive-semidefinite"):
         MassMetadata("m",(0.,0.,0.),coupled)
+    with pytest.raises(ValueError,match="translational mass"):
+        MassMetadata("anisotropic-translation",(0.,0.,0.),
+                     np.diag([1.,2.,1.,1.,1.,1.]))
+    nonphysical_first=np.eye(6)
+    nonphysical_first[0,3]=nonphysical_first[3,0]=.1
+    with pytest.raises(ValueError,match="first mass moment"):
+        MassMetadata("non-skew-first-moment",(0.,0.,0.),nonphysical_first)
+    with pytest.raises(ValueError,match="central inertia"):
+        MassMetadata("impossible-principal-moments",(0.,0.,0.),
+                     np.diag([1.,1.,1.,.1,.1,1.]))
+    offset_without_valid_central=np.eye(6)
+    offset_without_valid_central[0,5]=-1.
+    offset_without_valid_central[5,0]=-1.
+    offset_without_valid_central[2,3]=1.
+    offset_without_valid_central[3,2]=1.
+    with pytest.raises(ValueError,match="central inertia"):
+        MassMetadata("impossible-offset-inertia",(0.,0.,0.),
+                     offset_without_valid_central)
+    distant=np.eye(6)
+    distant[1,5]=distant[5,1]=1e7
+    distant[2,4]=distant[4,2]=-1e7
+    distant[3:,3:]=np.diag([0.,1e14,1e14])
+    assert MassMetadata("distant-point",(0.,0.,0.),distant).matrix_per_m[4][4] == 1e14
+    distant[3,3]=2.
+    with pytest.raises(ValueError,match="central inertia"):
+        MassMetadata("distant-impossible-central",(0.,0.,0.),distant)
+    large_central=np.diag([1.,1.,1.,1e14,1e14,2e14+2.])
+    with pytest.raises(ValueError,match="central inertia"):
+        MassMetadata("large-impossible-central",(0.,0.,0.),large_central)
     massless_rotations=MassMetadata("translational",(0.,0.,0.),
                                     np.diag([1.,1.,1.,0.,0.,0.]))
     assert massless_rotations.matrix_per_m[5][5] == 0.

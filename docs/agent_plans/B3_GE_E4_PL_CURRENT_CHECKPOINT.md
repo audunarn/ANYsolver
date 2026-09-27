@@ -210,6 +210,40 @@ mixed state or a physical buckling prediction. Selected connection law,
 attached material/geometric prestress, loaded curvature, sparse production
 spectra and F12/G0B acceptance remain open.
 
+**Next F12 physical-mass admission decision:** The private B2 mass record
+currently requires only a positive-semidefinite six-channel matrix. That
+does not prove a rigid cross-section's physical kinetic inertia: its
+translation block must be scalar mass, translation/rotation coupling must
+encode a first mass moment, and its central second-moment tensor must be
+positive semidefinite. Check those structural identities for owned metadata
+without inferring mass from stiffness. Preserve admitted particle-derived,
+offset and reversed examples; reject deliberately PSD but physically
+impossible matrices. A pass strengthens the B2 mass contract, while a
+rejection of a valid particle example requires revisiting the numerical
+admission arithmetic. This remains private F12 feasibility, not production
+mass, spectra, or G0B acceptance.
+
+**F12 rigid-mass admission result and review:** The private `MassMetadata`
+record now requires scalar translational mass, a skew first-moment block,
+and a numerically nonnegative central second-moment tensor, in addition to
+the existing exact full-matrix PSD check. Centralization uses rational
+arithmetic on the supplied binary64 entries so an offset cannot mask a
+negative central mode through floating subtraction. A first version scaled
+its negative-eigen tolerance by the inertia about the *declared origin*;
+independent mechanics review found an exact PSD matrix with center at
+`10^7 m` and impossible central covariance `diag(-1,1,1)` that it would
+admit. The corrected central-scale check rejects that case and a separate
+large-central-inertia negative mode, while admitting the exact distant
+point mass and existing particle, offset and reversed records. The focused
+definition/mass tests pass `12/12`, and the affected B2 definition, F12 and
+F13 tests pass `37/37` after tightening the central tolerance from `128`
+to `16` binary64 epsilons. The read-only follow-up found no further defect
+in the reviewed rigid-section contract and did not run tests. Very small negative
+central eigenvalues relative to the central scale remain within the stated
+roundoff allowance. Generalized or added mass is not admitted by this
+private record; it would need a distinct contract. Physical density,
+cross-section geometry, attached modes, scale and F12/G0B remain open.
+
 ## F13 affine factorization dependency slice — 27 September 2026
 
 **Decision sought:** Can the private B2 route reuse an unchanged sparse

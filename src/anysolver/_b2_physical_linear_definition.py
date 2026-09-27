@@ -57,13 +57,56 @@ def _exact_psd(matrix):
             a[k][i] = a[i][k] = Fraction(0)
 
 
+def _physical_rigid_inertia(matrix):
+    """Admit kinetic inertia of a rigid section about its declared origin."""
+    eps = np.finfo(float).eps
+    translational = matrix[:3, :3]
+    mass = float(np.trace(translational)/3.)
+    if (mass <= 0. or not math.isfinite(mass) or
+            np.max(np.abs(translational-mass*np.eye(3))) > 64.*eps*mass):
+        raise ValueError("physical rigid-section translational mass required")
+    first_moment = matrix[:3, 3:]
+    scale = float(np.max(np.abs(first_moment)))
+    if np.max(np.abs(first_moment+first_moment.T)) > 64.*eps*scale:
+        raise ValueError("physical rigid-section first mass moment required")
+    # Compute the central covariance from the supplied binary64 entries
+    # exactly. Subtracting a distant-origin parallel-axis term in binary64
+    # can conceal a genuinely negative central moment.
+    m = Fraction(float(translational[0, 0]))
+    center = (Fraction(float(first_moment[1, 2]))/m,
+              Fraction(float(first_moment[2, 0]))/m,
+              Fraction(float(first_moment[0, 1]))/m)
+    radius2 = sum((value*value for value in center), Fraction(0))
+    central = [[Fraction(float(matrix[3+i, 3+j]))-
+                m*((radius2 if i == j else 0)-center[i]*center[j])
+                for j in range(3)] for i in range(3)]
+    trace = sum((central[i][i] for i in range(3)), Fraction(0))
+    second = [[(trace/2 if i == j else 0)-central[i][j]
+               for j in range(3)] for i in range(3)]
+    try:
+        central_float = np.array([[float(value) for value in row]
+                                  for row in central])
+        second_float = np.array([[float(value) for value in row]
+                                 for row in second])
+    except OverflowError as exc:
+        raise ValueError("physical rigid-section central inertia required") from exc
+    central_scale = max(float(np.max(np.abs(central_float))),
+                        float(np.max(np.abs(second_float))))
+    if (not np.isfinite(central_float).all() or
+            not np.isfinite(second_float).all() or
+            np.linalg.eigvalsh(second_float)[0] < -16.*eps*central_scale):
+        raise ValueError("physical rigid-section central inertia required")
+
+
 @dataclass(frozen=True)
 class MassMetadata:
     """Explicit velocity-order sectional inertia per unit length.
 
     Entries are in local [vx, vy, vz, wx, wy, wz] coordinates, with velocity
     evaluated at ``origin_local_m`` relative to the member reference axis.
-    No density or geometry is inferred.
+    The matrix must represent a nonnegative rigid mass distribution. No
+    density or geometry is inferred; generalized or added mass requires a
+    separate contract.
     """
 
     source_id: str
@@ -81,6 +124,7 @@ class MassMetadata:
                 or not np.array_equal(matrix, matrix.T)):
             raise ValueError("finite symmetric 6x6 mass per length required")
         _exact_psd(matrix)
+        _physical_rigid_inertia(matrix)
         object.__setattr__(self, "matrix_per_m", tuple(
             tuple(float(v) for v in row) for row in matrix))
 
