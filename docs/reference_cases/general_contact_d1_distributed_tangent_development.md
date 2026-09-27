@@ -54,3 +54,35 @@ case with frozen source, direction, steps and reference, then obtain independent
 assessment. Pressure-space stability and installed 24-Q4 verification also
 remain open. None of these development probes changes a frozen criterion or
 establishes general C1.
+
+## Fixed-target coordinates and a pressure kink
+
+The accepted 24-Q4 case constrains all four S3 target nodes. Its 98 reduced
+coordinates therefore test mapped source work but cannot vary target motion.
+A separate unconstrained **contact-law** probe used the same saved geometry and
+pressure estimates. A two-node target tilt gave central-difference errors
+3.21% and 0.946% and failed its smooth-branch condition
+([raw tilt](../../reports/general_contact_d1_distributed_24q4_target_tangent_dev_20260927.json),
+SHA256 `0e1eb8aab24fdb6841fe257a4d1118796570fcb0ea1163894200325ba8e38fb9`).
+A rigid target z motion also failed its central-difference branch condition,
+despite unchanged overlap and pair derivative signatures
+([raw rigid shift](../../reports/general_contact_d1_distributed_24q4_target_rigid_tangent_dev_20260927.json),
+SHA256 `41c29d6d99c7e1d6ad54848ce3f13727b03b778af5bc3f5b59e87494f93b4f1b`).
+
+The [pressure-margin diagnostic](../../reports/general_contact_d1_distributed_24q4_target_pressure_margin_dev_20260927.json)
+(SHA256 `2abb69b8d2f9664cdb04e4aac8f9da4763829f5bc33e28720a26d3c8f785edb9`)
+identified the cause: modes 15 and 40 activate under both positive target
+motions at h=1e−6 and 5e−7 m, while negative motions retain the original
+18-mode set. A central difference crosses a contact-law kink.
+
+The [negative one-sided target check](../../reports/general_contact_d1_distributed_24q4_target_rigid_one_sided_dev_20260927.json)
+(SHA256 `1f993b60cf50e631f79ad0789ccc4d9ece312b02b578a4fba6022f5a269082c4`)
+kept the 18-mode branch, all 50 support nodes and every checked overlap and
+projection signature. Its 162-row contact-law action has source and target
+components of 376.22 and 933.08 N/m; one-sided relative errors are
+5.128e−12 and 2.725e−12. This checks the selected generalized derivative
+from the inactive side at a pressure kink. It does not qualify the active
+side, a deformable target's structural pullback or general target motion.
+Independent read-only review checked target-coordinate indexing, the
+one-sided quotient sign, all 48 pair signatures and the pressure-mode changes;
+it found no narrow code or sign issue in this development result.

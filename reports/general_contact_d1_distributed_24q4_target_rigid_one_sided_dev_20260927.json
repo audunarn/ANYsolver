@@ -1,0 +1,49 @@
+{
+  "reference": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+  "candidate": "distributed_24q4_target_tangent_dev",
+  "target_nodes": [
+    51,
+    52,
+    53,
+    54
+  ],
+  "target_direction": "0.5 uz each",
+  "difference_scheme": "negative_one_sided",
+  "physical_rows": 162,
+  "pressure_replay_error_pa": 0.0,
+  "base_active_modes": 18,
+  "overlap_pair_branches": 48,
+  "action_scale_n_per_m": 1006.0736089631458,
+  "runs": [
+    {
+      "step_m": 1e-06,
+      "smooth_branch": true,
+      "branch_checks": {
+        "pressure_active": true,
+        "reference_support": true,
+        "overlap_signature": true,
+        "pair_derivatives": true
+      },
+      "relative_tangent_error": 5.1278909103253636e-12,
+      "action_scale_n_per_m": 1006.0736089641554,
+      "source_action_scale_n_per_m": 376.2154780830835,
+      "target_action_scale_n_per_m": 933.0841444922563
+    },
+    {
+      "step_m": 5e-07,
+      "smooth_branch": true,
+      "branch_checks": {
+        "pressure_active": true,
+        "reference_support": true,
+        "overlap_signature": true,
+        "pair_derivatives": true
+      },
+      "relative_tangent_error": 2.725325860122492e-12,
+      "action_scale_n_per_m": 1006.0736089642303,
+      "source_action_scale_n_per_m": 376.2154780830835,
+      "target_action_scale_n_per_m": 933.0841444922563
+    }
+  ],
+  "status": "passed_development",
+  "elapsed_seconds": 41.1724424000131
+}
