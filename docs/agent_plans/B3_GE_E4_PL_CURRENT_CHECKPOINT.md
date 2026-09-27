@@ -30,6 +30,87 @@ select a space from tip motion, F5 proximity or one spectral quotient,
 and do not repeat classical axial refinement without a new question.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
+**Next bounded sparse mixed diagnostic (prospective, 27 September):** The
+co-refined x16/y4 P0-eight case has full row rank but exceeds the existing
+1900-row *dense* mixed-metric cap. The uncertainty is whether its actual
+native retained indefinite KKT develops a weak mode despite the row rank,
+or whether the observed loaded transfer difference is primarily physical
+resolution/law response. Assemble the same diagnostic primal/dual metric
+and unchanged native tangent sparsely; use a diagonal congruence and
+near-zero generalized eigenpairs, keeping the 120 s and 2 GiB limits.
+First reproduce the saved x8/y4 P0-four dense minimum to its numerical
+accuracy. If that cross-check fails, stop and repair the sparse method.
+If it passes, evaluate x16/y4 P0-eight, report equation/constraint/work
+residuals and physical/chart near-mode shares, then interpret jointly with
+the already saved x16 loaded transfer. A small or nonconverged mode calls
+for norm/interface-resolution diagnosis; a comparable mode permits the
+registered ratio and locking checks. Neither outcome alone selects P0 or
+closes F03. No larger dense assembly or changed resource authority follows.
+
+**Sparse mixed outcome and next discriminator:** The source-bound x8/y4
+P0-four sparse generalized minimum is `0.00187655527545041`, agreeing
+with the saved dense SVD to about `5e-14` relative. The x16/y4 P0-eight
+minimum is `0.00022722462502004843`, with relative eigen-equation
+residual `3.3e-13`, full `48/48` rows, `1980` sparse mixed variables,
+`42,301` nonzeros, `64.45 s`, and `349 MB` peak. Both are under the
+unchanged limits. The x16 weakest mode has `0.9999764` of its diagnostic
+norm in the auxiliary shell drilling chart, only `2.36e-5` in physical
+shell work, and negligible line-dual/beam shares. The numerical decrease
+therefore does not by itself identify interface instability. The first two
+x8 attempts reached eigensolution but failed in result bookkeeping
+(`len(sparse_matrix)` and drilling-index interpretation); the corrected
+run is the saved result. The next bounded check asks whether drilling is
+an uncoupled gauge for this reference problem: measure the top-face row
+columns on shell drilling DOFs and the actual E4 tangent cross-block in
+the same work scales. If both vanish to numerical precision, a physical
+quotient can remove the irrelevant chart spectrum. If the tangent couples
+them, derive an exact chart elimination or an appropriate physical norm
+before interpreting another mixed minimum. Do not tune drilling stiffness
+or classify this spectrum as a formulation failure. Raw x8/x16 results:
+`B3_GE_E4_PL_F03_TOP_FACE_SPARSE_MIXED_X8_20260927.json` and
+`B3_GE_E4_PL_F03_TOP_FACE_SPARSE_MIXED_X16_20260927.json`.
+
+**Drilling-coupling result and exact-elimination decision:** On the
+unchanged x16/y4 P0-eight fixture, the reference top-face rows have
+exactly zero shell-drilling columns. The *actual* E4 tangent does not
+decouple: its diagonally work-scaled physical↔drill block has Frobenius
+norm `0.06952` of the scaled full shell tangent and `0.10816` relative
+to the geometric mean of its diagonal-block norms. The bounded check
+used `66.09 s` and stayed inside the 120 s/2 GiB limits. Raw result:
+`B3_GE_E4_PL_F03_TOP_FACE_DRILL_COUPLING_X16_20260927.json`.
+The next physical mixed-mode check must therefore retain this coupling.
+If the drilling block is nonsingular, eliminate only those shell chart
+coordinates by an exact Schur complement of the same tangent, retain all
+native beam internal coordinates and the exact weak rows, and compare
+the reduced equilibrium/operator with the full system on the bounded
+fixture. Then inspect its physically normed near mode and work. If the
+drilling block is singular or elimination disagrees, stop and derive a
+gauge-compatible norm or alternative exact projection; do not merely
+delete drilling rows or tune the stabilization. This is diagnostic
+operator analysis, not production static condensation or F03 acceptance.
+
+**Exact chart-elimination result and next decision:** The actual E4
+drilling block is positive definite on the supported x8/x16 fixtures;
+its exact static Schur lift solves the block to about `4.3e-16` relative,
+preserves symmetry, and reconstructs the full physical response within
+`1.6e-10` (x8) and `8.8e-14` (x16) relative. The condensed shell tangent
+differs from simply deleting drill rows by `3.39%/3.51%` in the recorded
+Frobenius measure. All B3 retained variables and original weak rows stay
+in the mixed operator. In the *restricted non-drill auxiliary norm*, the
+first mixed magnitude is `0.0152021` on x8/P0-four and `0.00713953` on
+x16/P0-eight. The x16 mode has `99.2949%` of that norm in the line dual
+and `0.7034%` in physical shell work; it is an interface warning in this
+chosen norm, not proof of physical instability. These runs used
+`33.53/69.38 s`, `280/391 MB`, and `1230/1694` mixed rows. Source-bound
+results: `B3_GE_E4_PL_F03_TOP_FACE_DRILL_SCHUR_X8_20260927.json` and
+`...X16_20260927.json`. Independent review found no elimination or work
+defect and emphasized that the restricted norm is **not** the full metric
+pulled through the Schur lift. Next hold the x16 primal/B3 model fixed,
+compare P0-four with P0-eight under the same exact Schur tangent, and
+report sensitivity to the pulled-back norm as well as the restricted
+physical norm. Interpret both with the existing loaded physical transfer;
+neither quotient nor F5 proximity alone selects a multiplier space.
+
 **Next bounded growing-row diagnostic (prospective, 27 September):** On the
 already assembled x8/y4 C1 Q4/B3-12 native retained system, grow the exact
 top-face P0 space from the saved two/four intervals to eight while keeping
