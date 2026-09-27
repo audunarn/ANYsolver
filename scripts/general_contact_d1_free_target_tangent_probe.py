@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import argparse
 from dataclasses import replace
 import json
 from pathlib import Path
-import sys
 import time
 
 import numpy as np
@@ -21,7 +21,8 @@ from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
 
 
 def main(reference_path: Path, output_path: Path,
-         target_z_weights: tuple[float, float] = (0.5, 0.5)) -> None:
+         target_z_weights: tuple[float, float] = (0.5, 0.5),
+         source_weight: float = 0.0) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
@@ -66,6 +67,10 @@ def main(reference_path: Path, output_path: Path,
             for node, weight in zip((52, 53), target_z_weights):
                 dof = model.mesh.dof_manager.get_node_dofs(node)[2]
                 direction_reduced[index[int(dof)]] = weight
+            for node in (18, 43):
+                dofs = model.mesh.dof_manager.get_node_dofs(node)
+                direction_reduced[index[int(dofs[0])]] = source_weight
+                direction_reduced[index[int(dofs[2])]] = source_weight
             direction = np.asarray(transform@direction_reduced).reshape(-1)
             translational_dofs = {
                 int(dof) for node in model.mesh.nodes
@@ -163,6 +168,7 @@ def main(reference_path: Path, output_path: Path,
                 "free_force_rows": len(force_rows),
                 "free_moment_rows": len(moment_rows),
                 "target_z_weights": list(target_z_weights),
+                "source_weight": source_weight,
                 "pose_constraint_error_m": pose_error,
                 "pressure_replay_error_pa": pressure_error,
                 "base_active_modes": base_state.active_pressure_dofs,
@@ -192,11 +198,13 @@ def main(reference_path: Path, output_path: Path,
 
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (3, 6) or (len(sys.argv) == 6
-                                     and sys.argv[3] != "--target-z-weights"):
-        raise SystemExit(
-            "usage: free_target_tangent_probe.py REF OUTPUT "
-            "[--target-z-weights NODE52 NODE53]")
-    weights = ((float(sys.argv[4]), float(sys.argv[5]))
-               if len(sys.argv) == 6 else (0.5, 0.5))
-    main(Path(sys.argv[1]), Path(sys.argv[2]), target_z_weights=weights)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("reference", type=Path)
+    parser.add_argument("output", type=Path)
+    parser.add_argument("--target-z-weights", nargs=2, type=float,
+                        default=(0.5, 0.5))
+    parser.add_argument("--source-weight", type=float, default=0.0)
+    args = parser.parse_args()
+    main(args.reference, args.output,
+         target_z_weights=tuple(args.target_z_weights),
+         source_weight=args.source_weight)
