@@ -100,6 +100,21 @@ acceptance. The next F09 decision is whether a section/load/graph-dependent
 balance screen can be made an explicit fail-closed numerical admission policy,
 while the physical joint law remains separately open.
 
+**Independent F09 admission review (27 September):** Keep the provisional
+`1e-12` exact-LDL pivot screen in this private operator until a replacement
+is tested; its value and basis are not physical criteria. A defensible
+replacement separates exact SPD and representability of the stored law,
+physically scaled preservation of weak local actions after binary64 rounding,
+and per-load global applied-force/moment balance plus backward error before
+selected outputs. Independent cut-wrench or high-precision physical-graph
+references still establish forward accuracy. Merely removing the cutoff
+could admit a rounded K that loses a weak combination or fails physical
+balance, as the retained `2^-40` graph illustrates. The next bounded F09
+design task is to freeze the physical reference scales and action-error
+measure for the already tested rectangular family, then test the proposed
+local screen against those cases and one retained failure. Do not infer a
+section cutoff from the artificial exponent bracket. F09/G0B remain open.
+
 **F13 residual-admission decision (27 September):** The private B2 batch's
 fast residual route treats `eps * row_scale <= 1e-9 * physical_scale` as
 sufficient to trust a rounded sparse dot. That ignores row length and how
