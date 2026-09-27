@@ -175,7 +175,7 @@ def test_q4_against_nonmatching_s3_partial_pressure_oracle():
     _case_and_local_check()
 
 
-def test_loaded_augmented_patch_matches_independent_linear_solution():
+def _loaded_augmented_patch_oracle():
     model, definition, settings, mortar_mass, support = _case_and_local_check()
     structural = FEModel("structural_only_linear_oracle")
     structural.add_material("elastic", 1.0e5, 0.3, density=1.0)
@@ -244,3 +244,54 @@ def test_loaded_augmented_patch_matches_independent_linear_solution():
     )
     assert contact["gap_tolerance_met"]
     assert result.restart_checkpoint is not None
+    actual_uz = [float(result.displacements[
+        model.mesh.get_node(node).dofs[2]
+    ]) for node in range(1, 7)]
+    reference_force = float(np.dot(support, expected_pressure))
+    final_trace = result.info["contact_augmentation_attempts"][-1]["trace"][-1]
+    force_wrench_balance = float(np.linalg.norm(
+        np.asarray(contact["integration_force"])
+        + np.asarray(contact["target_force"])
+    ))
+    moment_wrench_balance = float(np.linalg.norm(
+        np.asarray(contact["integration_moment"])
+        + np.asarray(contact["target_moment"])
+    ))
+    return {
+        "status": result.status,
+        "accepted_steps": len(result.steps),
+        "expected_source_uz_m": q[2::6].tolist(),
+        "actual_source_uz_m": actual_uz,
+        "maximum_absolute_uz_error_m": float(np.max(np.abs(
+            np.asarray(actual_uz) - q[2::6]
+        ))),
+        "expected_integrated_normal_force_n": reference_force,
+        "actual_integrated_normal_force_n": float(
+            contact["integration_force"][2]
+        ),
+        "relative_integrated_force_error": float(abs(
+            contact["integration_force"][2] - reference_force
+        ) / reference_force),
+        "actual_pressure_pa": contact["numerical_pressure_pa"],
+        "expected_pressure_pa": expected_pressure.tolist(),
+        "actual_minimum_gap_m": contact["minimum_gap"],
+        "expected_minimum_gap_m": -1.0e-5,
+        "gap_tolerance_met": bool(contact["gap_tolerance_met"]),
+        "active_pressure_dofs": int(contact["active_pressure_dofs"]),
+        "equilibrium_residual_norm_n": float(
+            final_trace["equilibrium_residual_norm"]
+        ),
+        "normal_multiplier_change_pa": float(
+            final_trace["normal_multiplier_change_pa"]
+        ),
+        "force_wrench_balance_n": force_wrench_balance,
+        "moment_wrench_balance_nm": moment_wrench_balance,
+        "has_restart_checkpoint": result.restart_checkpoint is not None,
+        "contact_augmentation_attempts": result.info.get(
+            "contact_augmentation_attempts"
+        ),
+    }
+
+
+def test_loaded_augmented_patch_matches_independent_linear_solution():
+    _loaded_augmented_patch_oracle()
