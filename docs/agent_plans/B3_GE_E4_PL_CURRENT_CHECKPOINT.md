@@ -233,6 +233,17 @@ A cancellation injected during section recovery now discards that incomplete
 case before callback/publication. The focused F13 file passes 13/13 after
 this safe-point check; earlier completed cases remain a whole ordered prefix.
 
+**F13 ordered-input discriminator:** The private batch previously validated
+case IDs before solving but sliced the caller's sequence between chunks. A
+callback could replace or remove a future pair after validation, changing the
+promised ordered inventory. The batch now freezes case IDs and load references
+before callbacks, while copying numerical loads only at each bounded chunk.
+On the ten-case elbow, a callback replaced case six and removed the last
+submitted list entry; all ten original IDs and selected results still matched
+independent sparse solves. The focused F13 file passes 14/14. This establishes
+outer sequence ownership, not invocation-time ownership of mutable numerical
+arrays or F13 acceptance.
+
 ## Native connection decision record — 27 September 2026
 
 **Decision sought:** Select the physical native beam–shell connection and its

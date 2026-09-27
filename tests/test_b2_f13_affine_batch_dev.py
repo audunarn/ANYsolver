@@ -66,6 +66,34 @@ def test_ordered_selected_batch_matches_independent_sparse_solves(count):
         batch.solve_many(cases[:1])
 
 
+def test_callback_cannot_change_submitted_case_inventory():
+    members, _ = _members()
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in members),
+        transform, offset, np.arange(12, 18), max_chunk=4)
+    submitted = _cases(10)
+    expected = tuple(submitted)
+
+    def mutate_future_cases(identity):
+        if identity == "case-000":
+            submitted[5] = ("replacement", np.full(18, 42.))
+            submitted.pop()
+
+    result = batch.solve_many(submitted, on_case=mutate_future_cases)
+    assert result.status == "completed"
+    assert [case.case_id for case in result.cases] == [
+        identity for identity, _ in expected]
+    assert result.maximum_rhs_chunk == 4
+    stiffness = batch.full_stiffness[6:, 6:]
+    for (identity, load), selected in zip(expected, result.cases):
+        oracle = spsolve(stiffness, load[6:])
+        np.testing.assert_allclose(selected.values, oracle[6:12],
+                                   rtol=3e-12, atol=3e-12)
+        assert selected.case_id == identity
+    batch.close()
+
+
 def test_cancellation_publishes_only_ordered_complete_cases():
     members, _ = _members()
     transform, offset = _plan()

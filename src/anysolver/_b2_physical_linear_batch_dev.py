@@ -152,7 +152,10 @@ class CompiledB2AffineBatch:
                    ) -> BatchResult:
         if self._closed:
             raise RuntimeError("physical B2 batch is closed")
-        ids = [identity for identity, _ in cases]
+        # Freeze the case inventory before callbacks can change the caller's
+        # sequence. Copy numerical loads only when their bounded chunk begins.
+        submitted = tuple((identity, value) for identity, value in cases)
+        ids = [identity for identity, _ in submitted]
         if (any(not isinstance(identity, str) or not identity.strip()
                 for identity in ids) or len(set(ids)) != len(ids)):
             raise ValueError("unique nonempty ordered B2 case IDs required")
@@ -174,10 +177,10 @@ class CompiledB2AffineBatch:
                 recovery.append((member_id, tuple(float(x) for x in stations)))
         completed = []
         largest = 0
-        for start in range(0, len(cases), self._max_chunk):
+        for start in range(0, len(submitted), self._max_chunk):
             if cancellation_token is not None and cancellation_token.is_cancelled:
                 break
-            block = cases[start:start+self._max_chunk]
+            block = submitted[start:start+self._max_chunk]
             loads = []
             for _identity, value in block:
                 load = np.asarray(value, dtype=float)
