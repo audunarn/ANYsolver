@@ -2,6 +2,53 @@
 
 ## Current state — 27 September 2026
 
+**Current physical-reference discriminator (prospective):** The saved F5
+combined-load solid field has an actual top-face positional bond, while the
+native six-row hybrid adds a separate E4-director/beam-pitch condition.
+The saved six-gap projection reports nonzero hybrid pitch on that field, but
+the station-pose projection was run only on separate influence cases. Run the
+existing read-only station projection on the *same* pre-opened combined field,
+with unchanged F5 geometry and no new external solve. Compare its
+director/section pitch by station with the saved weak hybrid pitch and the
+section-fit residual. If the mismatch persists, the one-sided F5 bond cannot
+validate the hybrid's added pitch channel; specify a physically matched
+two-sided reference before any accuracy ranking. If it vanishes, review the
+six-gap reduction/projection discrepancy before changing the law. Either
+outcome leaves G0B open, G1 barred and formal F03 authority unconsumed.
+
+**Outcome and connection decision:** The unchanged F5 pre-opened combined
+solid field completed this read-only projection in `5.34 s`. On the six
+whole-strip section stations x=`.90,.92,.94,.96,.98,1.00 m`, the fitted
+bar-section versus solid-inferred plate-director pitch gaps are
+`8.29,6.43,5.21,4.49,4.13,3.91 µrad`; local interior patches give
+`8.45,4.86,3.16,2.68 µrad`. The section-fit RMS is `42–83 nm`.
+Stress-free and common-rigid projection errors are below `1e-15` and
+`6.1e-10`, respectively. This agrees qualitatively with the previously
+saved combined-field six-gap P0 hybrid pitch rows
+`−7.594/−2.699 µrad`; different pose and weak-row conventions prevent a
+direct numeric equality claim. Raw projection:
+`B3_GE_E4_PL_F03_C1_F5_COMBINED_STATION_PROJECTION_DEV_V1.json`
+(identical local `.qualification/b3-ge-e4-pl/f03-c1-factor5-combined-station-projection-dev-20260927-v1/combined.json`),
+SHA256 `D2487D3118CA697515DFDED0CA9D313067D15021556948456C408314650D835F`;
+source/deck/FRD SHA256 `505E6331`/`A9D7BA21`/`A4C11D5B` (full
+identities in the raw file). This is a saved-field reduction, not a new
+external solve or an E4 material-state measurement.
+
+**Resulting action:** Treat the C1 hybrid as a distinct two-sided
+director-couple connection. The actual F5 solid is bonded on its top
+face only and permits the observed through-thickness pitch difference;
+therefore proximity of its tip motion cannot select the hybrid or prove
+its sixth channel physically faithful. Before another loaded comparison,
+define the intended top/bottom force-pair or equivalent connection work,
+including beam-section port, shell director/shear, supports, eccentricity
+and reaction recovery. Obtain a matching sided reference with validated
+force/moment and virtual-work balance, then compare the hybrid and any
+five-field/top-face alternative against their *own* declared physical
+connection. Existing F5 same-action and positional evidence remains
+valid at its stated level. This decision does not select P0/P1/dual or
+relax the registered stability and mesh-ratio requirements. G0B remains
+open, G1 barred, and formal F03 authority unconsumed.
+
 **Decision sought:** Qualify a physical beam–shell connection before G1.
 **Established:** The externally attached top-face positional law has a
 common reference integrand, objective bounded finite-chart work, an E4

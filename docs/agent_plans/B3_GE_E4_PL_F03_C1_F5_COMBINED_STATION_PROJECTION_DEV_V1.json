@@ -1,0 +1,957 @@
+{
+  "beam_center_m": [
+    1.0000026345367143,
+    -3.106155698332259e-06,
+    0.06743060162325001
+  ],
+  "beam_rotation_vector_rad": [
+    4.943709446000523e-05,
+    6.253064212249352e-05,
+    -1.5409886990645817e-06
+  ],
+  "beam_section_max_sample_fit_residual_m": 3.328482183328377e-07,
+  "beam_section_rms_fit_residual_m": 8.346026951879407e-08,
+  "case": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\.qualification\\b3-ge-e4-pl\\f03-ccx-c1-preopen-combined-factor5-dev-20260926-v1\\solid-5-tip_mx",
+  "common_rigid_gap_max_m_rad": 5.999825281718388e-10,
+  "deck_sha256": "a9d7ba21525f1177e4e75bc2b4c8a657806de4bfe0e993049999bfe580a8d28b",
+  "distributing_rotation_gap_rad": [
+    5.100814867853585e-06,
+    3.909447192207869e-06,
+    -1.425453870829584e-06
+  ],
+  "distributing_translation_gap_m": [
+    1.8500108801139392e-07,
+    -1.9892702118772483e-07,
+    -2.7701129025337057e-07
+  ],
+  "frd_sha256": "a4c11d5b42a08b9964525c08b09fc651172820436cec1e92b355ba6d9cf61b62",
+  "local_patch_station_series": [
+    {
+      "beam_center_m": [
+        0.9200025696942018,
+        -2.9360818449987488e-06,
+        0.06743565003941668
+      ],
+      "beam_rotation_vector_rad": [
+        4.497152237000723e-05,
+        6.50537659438014e-05,
+        -1.980714734055085e-06
+      ],
+      "beam_section_max_sample_fit_residual_m": 2.3718523250971352e-07,
+      "beam_section_rms_fit_residual_m": 4.6165158786525705e-08,
+      "distributing_rotation_gap_rad": [
+        1.0769592961238904e-06,
+        8.45270703905888e-06,
+        -1.7994716697070446e-06
+      ],
+      "distributing_translation_gap_m": [
+        2.7337867983936984e-07,
+        -5.722477875642676e-08,
+        -2.0828613264689544e-08
+      ],
+      "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+      "patch_grid_x_m": [
+        0.9,
+        0.92,
+        0.9400000000000001,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "patch_interval_x_m": [
+        0.9,
+        0.9400000000000001
+      ],
+      "rigid_corner_gap_m": [
+        [
+          4.5748850519000683e-07,
+          -7.76555586015637e-08,
+          -3.065381715617514e-08
+        ],
+        [
+          4.237232233972321e-07,
+          3.5922419337752753e-08,
+          1.0009859939975191e-07
+        ],
+        [
+          2.747054718144071e-07,
+          1.57432374012223e-08,
+          9.31528097355554e-08
+        ],
+        [
+          3.0565075370692085e-07,
+          -4.370214053833754e-08,
+          -1.6099960680650017e-07
+        ]
+      ],
+      "rigid_corner_gap_max_norm_m": 4.6504384166329096e-07,
+      "section_station_x_m": 0.92,
+      "shell_center_m": [
+        0.9199984757481668,
+        8.402880583526141e-08,
+        -6.432894083333336e-05
+      ],
+      "shell_midplane_gradient_x": [
+        0.9999992417765546,
+        1.3320224999427547e-07,
+        -6.0147583333426964e-05
+      ],
+      "shell_midplane_gradient_y": [
+        4.958666670681099e-07,
+        0.9999999901723908,
+        4.4319166666735657e-05
+      ],
+      "shell_rotation_vector_rad": [
+        4.3894613231962894e-05,
+        5.660101950998513e-05,
+        -1.813981006877577e-07
+      ],
+      "solid_inferred_director": [
+        5.660101548038732e-05,
+        -4.3894618328088455e-05,
+        0.9999999974347937
+      ]
+    },
+    {
+      "beam_center_m": [
+        0.9400025933407778,
+        -2.980797881665565e-06,
+        0.06743438279833334
+      ],
+      "beam_rotation_vector_rad": [
+        4.5872308666675285e-05,
+        6.383230374610941e-05,
+        -1.8876812613500923e-06
+      ],
+      "beam_section_max_sample_fit_residual_m": 2.0752318465428865e-07,
+      "beam_section_rms_fit_residual_m": 4.237929477134522e-08,
+      "distributing_rotation_gap_rad": [
+        1.5349582490415514e-06,
+        4.858860445742111e-06,
+        -1.765013720510462e-06
+      ],
+      "distributing_translation_gap_m": [
+        1.3857956561170398e-07,
+        -7.586773420094747e-08,
+        -5.796932342483352e-08
+      ],
+      "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+      "patch_grid_x_m": [
+        0.9,
+        0.92,
+        0.9400000000000001,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "patch_interval_x_m": [
+        0.92,
+        0.96
+      ],
+      "rigid_corner_gap_m": [
+        [
+          3.1485328322311545e-07,
+          -6.92789564951668e-08,
+          9.785861015997651e-08
+        ],
+        [
+          3.2654484571903453e-07,
+          2.7740631174111297e-08,
+          1.1465248920843518e-07
+        ],
+        [
+          1.8101031307171667e-07,
+          -2.6924772134062636e-09,
+          6.37276520314324e-08
+        ],
+        [
+          1.7654875050787666e-07,
+          -7.412826488056856e-08,
+          -5.6366227030906955e-08
+        ]
+      ],
+      "rigid_corner_gap_max_norm_m": 3.4719774216618474e-07,
+      "section_station_x_m": 0.9400000000000001,
+      "shell_center_m": [
+        0.9399984740600397,
+        8.784218666494176e-08,
+        -6.555903708333323e-05
+      ],
+      "shell_midplane_gradient_x": [
+        1.0000005061890551,
+        2.394866666707389e-07,
+        -6.244712500009713e-05
+      ],
+      "shell_midplane_gradient_y": [
+        4.848249995007941e-07,
+        0.9999998029767216,
+        4.4885416666736515e-05
+      ],
+      "shell_rotation_vector_rad": [
+        4.4337402163351014e-05,
+        5.897340426695814e-05,
+        -1.227299953529368e-07
+      ],
+      "solid_inferred_director": [
+        5.8973401492688135e-05,
+        -4.433740574202738e-05,
+        0.9999999972781661
+      ]
+    },
+    {
+      "beam_center_m": [
+        0.9600026106940772,
+        -3.024694234165391e-06,
+        0.06743312500533334
+      ],
+      "beam_rotation_vector_rad": [
+        4.6849339875000754e-05,
+        6.311424836814553e-05,
+        -1.808574499728943e-06
+      ],
+      "beam_section_max_sample_fit_residual_m": 2.0025318727127543e-07,
+      "beam_section_rms_fit_residual_m": 4.214823627432431e-08,
+      "distributing_rotation_gap_rad": [
+        2.2079705233744353e-06,
+        3.1563078320187383e-06,
+        -1.740521399672268e-06
+      ],
+      "distributing_translation_gap_m": [
+        7.298291025810592e-08,
+        -1.046689356085008e-07,
+        -6.332161323063801e-08
+      ],
+      "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+      "patch_grid_x_m": [
+        0.9,
+        0.92,
+        0.9400000000000001,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "patch_interval_x_m": [
+        0.9400000000000001,
+        0.98
+      ],
+      "rigid_corner_gap_m": [
+        [
+          2.431176031603144e-07,
+          -7.79486312302291e-08,
+          1.5566447438431635e-07
+        ],
+        [
+          2.80067336766443e-07,
+          1.3158911474353552e-08,
+          1.5243610112012198e-07
+        ],
+        [
+          1.3407204391135963e-07,
+          -2.613158196079768e-08,
+          3.0207825797598465e-08
+        ],
+        [
+          1.1131231025807153e-07,
+          -9.81192246618523e-08,
+          -3.906380093819672e-08
+        ]
+      ],
+      "rigid_corner_gap_max_norm_m": 3.19135762645527e-07,
+      "section_station_x_m": 0.96,
+      "shell_center_m": [
+        0.9599984905567084,
+        9.326796042020758e-08,
+        -6.681147541666671e-05
+      ],
+      "shell_midplane_gradient_x": [
+        1.0000010774640598,
+        2.936349583229454e-07,
+        -6.255937500009753e-05
+      ],
+      "shell_midplane_gradient_y": [
+        4.296749990613012e-07,
+        0.9999996972169737,
+        4.5331916666737217e-05
+      ],
+      "shell_rotation_vector_rad": [
+        4.464142142319738e-05,
+        5.99579017616311e-05,
+        -6.805735921802499e-08
+      ],
+      "solid_inferred_director": [
+        5.995790018670356e-05,
+        -4.464142342191096e-05,
+        0.9999999972060969
+      ]
+    },
+    {
+      "beam_center_m": [
+        0.9800026231269516,
+        -3.0672406216654248e-06,
+        0.06743186695083334
+      ],
+      "beam_rotation_vector_rad": [
+        4.797514806001764e-05,
+        6.274711293312942e-05,
+        -1.7104146799362572e-06
+      ],
+      "beam_section_max_sample_fit_residual_m": 2.233888454579858e-07,
+      "beam_section_rms_fit_residual_m": 5.200674936770141e-08,
+      "distributing_rotation_gap_rad": [
+        3.2965358859333987e-06,
+        2.6835141937117935e-06,
+        -1.6502470286915463e-06
+      ],
+      "distributing_translation_gap_m": [
+        5.265995117285004e-08,
+        -1.5019574105374995e-07,
+        -7.901099800811107e-08
+      ],
+      "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+      "patch_grid_x_m": [
+        0.9,
+        0.92,
+        0.9400000000000001,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "patch_interval_x_m": [
+        0.96,
+        1.0
+      ],
+      "rigid_corner_gap_m": [
+        [
+          2.145669876219003e-07,
+          -9.966529524590984e-08,
+          2.0405024614172007e-07
+        ],
+        [
+          2.6795579022298455e-07,
+          -1.3745914156926275e-08,
+          2.4653640201038527e-07
+        ],
+        [
+          1.2046380726271622e-07,
+          -6.359608713951692e-08,
+          1.7269671819024552e-09
+        ],
+        [
+          8.675500473565023e-08,
+          -1.300885682231634e-07,
+          -5.71591886867716e-08
+        ]
+      ],
+      "rigid_corner_gap_max_norm_m": 3.643754289002758e-07,
+      "section_station_x_m": 0.98,
+      "shell_center_m": [
+        0.9799985161814168,
+        9.876137292222915e-08,
+        -6.805383916666669e-05
+      ],
+      "shell_midplane_gradient_x": [
+        1.0000014432848916,
+        2.2330645836900344e-07,
+        -6.156358333342916e-05
+      ],
+      "shell_midplane_gradient_y": [
+        3.4354999999132943e-07,
+        0.9999996021739742,
+        4.5566000000070856e-05
+      ],
+      "shell_rotation_vector_rad": [
+        4.467866165364683e-05,
+        6.0063561972855096e-05,
+        -6.012859903908616e-08
+      ],
+      "solid_inferred_director": [
+        6.006356057352489e-05,
+        -4.4678663417687235e-05,
+        0.9999999971980928
+      ]
+    }
+  ],
+  "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+  "patch_grid_x_m": [
+    0.9,
+    0.92,
+    0.9400000000000001,
+    0.96,
+    0.98,
+    1.0
+  ],
+  "patch_interval_x_m": [
+    0.9,
+    1.0
+  ],
+  "reference_zero_gap_max_m_rad": 9.992007221626409e-16,
+  "rigid_corner_gap_m": [
+    [
+      2.002001486811622e-07,
+      -3.2337648941255237e-07,
+      2.8904659554251173e-07
+    ],
+    [
+      2.3342577160079259e-07,
+      -1.0769358632645165e-07,
+      3.3001461025910703e-07
+    ],
+    [
+      1.0287233509487237e-07,
+      -1.575366662745492e-07,
+      -6.0990012552687e-08
+    ],
+    [
+      9.232671238645906e-08,
+      -2.894020693575139e-07,
+      -2.8785802726928334e-07
+    ]
+  ],
+  "rigid_corner_gap_max_norm_m": 4.777032424334823e-07,
+  "section_station_x_m": 1.0,
+  "shell_center_m": [
+    0.9499984927094316,
+    9.116958850275955e-08,
+    -6.619010516666662e-05
+  ],
+  "shell_midplane_gradient_x": [
+    1.0000004465315566,
+    1.9806821667467737e-07,
+    -6.125581666676196e-05
+  ],
+  "shell_midplane_gradient_y": [
+    4.2893333326391046e-07,
+    0.9999997855862571,
+    4.498330000006995e-05
+  ],
+  "shell_rotation_vector_rad": [
+    4.4336321147898e-05,
+    5.862116362469408e-05,
+    -1.1547198622025228e-07
+  ],
+  "solid_inferred_director": [
+    5.8621161012112375e-05,
+    -4.4336324492530424e-05,
+    0.9999999972989249
+  ],
+  "source_sha256": "505e63318747d31924320e55468bf6db947e1cc79afeeede2c56b9ef201ccd33",
+  "status": "EXPLORATORY_NOT_G0_ACCEPTANCE",
+  "whole_patch_station_series": [
+    {
+      "beam_center_m": [
+        0.9000025390935223,
+        -2.8907965241655484e-06,
+        0.06743694549216668
+      ],
+      "beam_rotation_vector_rad": [
+        4.4098886038324243e-05,
+        6.691496234452021e-05,
+        -2.1218322944979057e-06
+      ],
+      "beam_section_max_sample_fit_residual_m": 2.6892835714917244e-07,
+      "beam_section_rms_fit_residual_m": 5.2394830733658036e-08,
+      "distributing_rotation_gap_rad": [
+        -2.373767768275269e-07,
+        8.29375422600936e-06,
+        -2.006551124024397e-06
+      ],
+      "distributing_translation_gap_m": [
+        8.935780927005199e-08,
+        5.036254461760418e-09,
+        2.0472636484691886e-07
+      ],
+      "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+      "patch_grid_x_m": [
+        0.9,
+        0.92,
+        0.9400000000000001,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "patch_interval_x_m": [
+        0.9,
+        1.0
+      ],
+      "rigid_corner_gap_m": [
+        [
+          6.208186595912935e-07,
+          -2.445140248608091e-08,
+          -6.866817011331376e-08
+        ],
+        [
+          6.540727652826206e-07,
+          2.493228829780758e-07,
+          4.107327356927501e-07
+        ],
+        [
+          4.65441992281157e-07,
+          1.994549436654114e-07,
+          5.535512356978682e-07
+        ],
+        [
+          4.5486788657900235e-07,
+          9.498158204390705e-09,
+          -1.117496701081967e-07
+        ]
+      ],
+      "rigid_corner_gap_max_norm_m": 8.115876184557056e-07,
+      "section_station_x_m": 0.9,
+      "shell_center_m": [
+        0.9499984927094316,
+        9.116958850275955e-08,
+        -6.619010516666662e-05
+      ],
+      "shell_midplane_gradient_x": [
+        1.0000004465315566,
+        1.9806821667467737e-07,
+        -6.125581666676196e-05
+      ],
+      "shell_midplane_gradient_y": [
+        4.2893333326391046e-07,
+        0.9999997855862571,
+        4.498330000006995e-05
+      ],
+      "shell_rotation_vector_rad": [
+        4.4336321147898e-05,
+        5.862116362469408e-05,
+        -1.1547198622025228e-07
+      ],
+      "solid_inferred_director": [
+        5.8621161012112375e-05,
+        -4.4336324492530424e-05,
+        0.9999999972989249
+      ]
+    },
+    {
+      "beam_center_m": [
+        0.9200025696942018,
+        -2.9360818449987488e-06,
+        0.06743565003941668
+      ],
+      "beam_rotation_vector_rad": [
+        4.497152237000723e-05,
+        6.50537659438014e-05,
+        -1.980714734055085e-06
+      ],
+      "beam_section_max_sample_fit_residual_m": 2.3718523250971352e-07,
+      "beam_section_rms_fit_residual_m": 4.6165158786525705e-08,
+      "distributing_rotation_gap_rad": [
+        6.352555246366612e-07,
+        6.432561004954127e-06,
+        -1.865366726944327e-06
+      ],
+      "distributing_translation_gap_m": [
+        1.2000007023824089e-07,
+        -3.7971068168683625e-08,
+        8.17006402115128e-08
+      ],
+      "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+      "patch_grid_x_m": [
+        0.9,
+        0.92,
+        0.9400000000000001,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "patch_interval_x_m": [
+        0.9,
+        1.0
+      ],
+      "rigid_corner_gap_m": [
+        [
+          4.5748850519000683e-07,
+          -7.76555586015637e-08,
+          -3.065381715617514e-08
+        ],
+        [
+          4.907303009504815e-07,
+          1.8200823625330598e-07,
+          2.6262722422670446e-07
+        ],
+        [
+          3.162125493672008e-07,
+          1.321441543133961e-07,
+          3.181814345763805e-07
+        ],
+        [
+          3.0565075370692085e-07,
+          -4.370214053833754e-08,
+          -1.6099960680650017e-07
+        ]
+      ],
+      "rigid_corner_gap_max_norm_m": 5.855905440151959e-07,
+      "section_station_x_m": 0.92,
+      "shell_center_m": [
+        0.9499984927094316,
+        9.116958850275955e-08,
+        -6.619010516666662e-05
+      ],
+      "shell_midplane_gradient_x": [
+        1.0000004465315566,
+        1.9806821667467737e-07,
+        -6.125581666676196e-05
+      ],
+      "shell_midplane_gradient_y": [
+        4.2893333326391046e-07,
+        0.9999997855862571,
+        4.498330000006995e-05
+      ],
+      "shell_rotation_vector_rad": [
+        4.4336321147898e-05,
+        5.862116362469408e-05,
+        -1.1547198622025228e-07
+      ],
+      "solid_inferred_director": [
+        5.8621161012112375e-05,
+        -4.4336324492530424e-05,
+        0.9999999972989249
+      ]
+    },
+    {
+      "beam_center_m": [
+        0.9400025933407778,
+        -2.980797881665565e-06,
+        0.06743438279833334
+      ],
+      "beam_rotation_vector_rad": [
+        4.5872308666675285e-05,
+        6.383230374610941e-05,
+        -1.8876812613500923e-06
+      ],
+      "beam_section_max_sample_fit_residual_m": 2.0752318465428865e-07,
+      "beam_section_rms_fit_residual_m": 4.237929477134522e-08,
+      "distributing_rotation_gap_rad": [
+        1.5360391638437802e-06,
+        5.211100922434607e-06,
+        -1.772279774189637e-06
+      ],
+      "distributing_translation_gap_m": [
+        1.4368657394459028e-07,
+        -8.040785664392739e-08,
+        -1.3113850727553e-08
+      ],
+      "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+      "patch_grid_x_m": [
+        0.9,
+        0.92,
+        0.9400000000000001,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "patch_interval_x_m": [
+        0.9,
+        1.0
+      ],
+      "rigid_corner_gap_m": [
+        [
+          3.467025019299186e-07,
+          -1.296080003321265e-07,
+          2.9411670621863075e-08
+        ],
+        [
+          3.79936408334558e-07,
+          1.2075231885233517e-07,
+          2.005463682707673e-07
+        ],
+        [
+          2.1472187561322187e-07,
+          7.089231045948052e-08,
+          1.6602153107989558e-07
+        ],
+        [
+          2.0416796930877723e-07,
+          -9.565050872184511e-08,
+          -1.910131665690097e-07
+        ]
+      ],
+      "rigid_corner_gap_max_norm_m": 4.4626409525411545e-07,
+      "section_station_x_m": 0.9400000000000001,
+      "shell_center_m": [
+        0.9499984927094316,
+        9.116958850275955e-08,
+        -6.619010516666662e-05
+      ],
+      "shell_midplane_gradient_x": [
+        1.0000004465315566,
+        1.9806821667467737e-07,
+        -6.125581666676196e-05
+      ],
+      "shell_midplane_gradient_y": [
+        4.2893333326391046e-07,
+        0.9999997855862571,
+        4.498330000006995e-05
+      ],
+      "shell_rotation_vector_rad": [
+        4.4336321147898e-05,
+        5.862116362469408e-05,
+        -1.1547198622025228e-07
+      ],
+      "solid_inferred_director": [
+        5.8621161012112375e-05,
+        -4.4336324492530424e-05,
+        0.9999999972989249
+      ]
+    },
+    {
+      "beam_center_m": [
+        0.9600026106940772,
+        -3.024694234165391e-06,
+        0.06743312500533334
+      ],
+      "beam_rotation_vector_rad": [
+        4.6849339875000754e-05,
+        6.311424836814553e-05,
+        -1.808574499728943e-06
+      ],
+      "beam_section_max_sample_fit_residual_m": 2.0025318727127543e-07,
+      "beam_section_rms_fit_residual_m": 4.214823627432431e-08,
+      "distributing_rotation_gap_rad": [
+        2.5130680940481528e-06,
+        4.4930473551962244e-06,
+        -1.6931284573219336e-06
+      ],
+      "distributing_translation_gap_m": [
+        1.610792471438277e-07,
+        -1.2202454279463717e-07,
+        -9.848066361006769e-08
+      ],
+      "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+      "patch_grid_x_m": [
+        0.9,
+        0.92,
+        0.9400000000000001,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "patch_interval_x_m": [
+        0.9,
+        1.0
+      ],
+      "rigid_corner_gap_m": [
+        [
+          2.7688786952140276e-07,
+          -1.846403739277913e-07,
+          1.0249284764850904e-07
+        ],
+        [
+          3.1011720358353756e-07,
+          5.7807832819223304e-08,
+          2.018219144949671e-07
+        ],
+        [
+          1.52811910680839e-07,
+          7.952339384220686e-09,
+          6.959363915857097e-08
+        ],
+        [
+          1.4226257682992127e-07,
+          -1.506783673596579e-07,
+          -2.1563542767401035e-07
+        ]
+      ],
+      "rigid_corner_gap_max_norm_m": 3.7449500752899544e-07,
+      "section_station_x_m": 0.96,
+      "shell_center_m": [
+        0.9499984927094316,
+        9.116958850275955e-08,
+        -6.619010516666662e-05
+      ],
+      "shell_midplane_gradient_x": [
+        1.0000004465315566,
+        1.9806821667467737e-07,
+        -6.125581666676196e-05
+      ],
+      "shell_midplane_gradient_y": [
+        4.2893333326391046e-07,
+        0.9999997855862571,
+        4.498330000006995e-05
+      ],
+      "shell_rotation_vector_rad": [
+        4.4336321147898e-05,
+        5.862116362469408e-05,
+        -1.1547198622025228e-07
+      ],
+      "solid_inferred_director": [
+        5.8621161012112375e-05,
+        -4.4336324492530424e-05,
+        0.9999999972989249
+      ]
+    },
+    {
+      "beam_center_m": [
+        0.9800026231269516,
+        -3.0672406216654248e-06,
+        0.06743186695083334
+      ],
+      "beam_rotation_vector_rad": [
+        4.797514806001764e-05,
+        6.274711293312942e-05,
+        -1.7104146799362572e-06
+      ],
+      "beam_section_max_sample_fit_residual_m": 2.233888454579858e-07,
+      "beam_section_rms_fit_residual_m": 5.200674936770141e-08,
+      "distributing_rotation_gap_rad": [
+        3.638873422305547e-06,
+        4.125914161828754e-06,
+        -1.5949275008073336e-06
+      ],
+      "distributing_translation_gap_m": [
+        1.7355151045797546e-07,
+        -1.6229127611539493e-07,
+        -1.8410932479950848e-07
+      ],
+      "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+      "patch_grid_x_m": [
+        0.9,
+        0.92,
+        0.9400000000000001,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "patch_interval_x_m": [
+        0.9,
+        1.0
+      ],
+      "rigid_corner_gap_m": [
+        [
+          2.3472878385444318e-07,
+          -2.4637546687522605e-07,
+          1.8392101235952614e-07
+        ],
+        [
+          2.6795579022298455e-07,
+          -1.3745914156926275e-08,
+          2.4653640201038527e-07
+        ],
+        [
+          1.2046380726271622e-07,
+          -6.359608713951692e-08,
+          1.7269671819024552e-09
+        ],
+        [
+          1.0991680099436962e-07,
+          -2.1240813985468066e-07,
+          -2.467884224828355e-07
+        ]
+      ],
+      "rigid_corner_gap_max_norm_m": 3.86814440572123e-07,
+      "section_station_x_m": 0.98,
+      "shell_center_m": [
+        0.9499984927094316,
+        9.116958850275955e-08,
+        -6.619010516666662e-05
+      ],
+      "shell_midplane_gradient_x": [
+        1.0000004465315566,
+        1.9806821667467737e-07,
+        -6.125581666676196e-05
+      ],
+      "shell_midplane_gradient_y": [
+        4.2893333326391046e-07,
+        0.9999997855862571,
+        4.498330000006995e-05
+      ],
+      "shell_rotation_vector_rad": [
+        4.4336321147898e-05,
+        5.862116362469408e-05,
+        -1.1547198622025228e-07
+      ],
+      "solid_inferred_director": [
+        5.8621161012112375e-05,
+        -4.4336324492530424e-05,
+        0.9999999972989249
+      ]
+    },
+    {
+      "beam_center_m": [
+        1.0000026345367143,
+        -3.106155698332259e-06,
+        0.06743060162325001
+      ],
+      "beam_rotation_vector_rad": [
+        4.943709446000523e-05,
+        6.253064212249352e-05,
+        -1.5409886990645817e-06
+      ],
+      "beam_section_max_sample_fit_residual_m": 3.328482183328377e-07,
+      "beam_section_rms_fit_residual_m": 8.346026951879407e-08,
+      "distributing_rotation_gap_rad": [
+        5.100814867853585e-06,
+        3.909447192207869e-06,
+        -1.425453870829584e-06
+      ],
+      "distributing_translation_gap_m": [
+        1.8500108801139392e-07,
+        -1.9892702118772483e-07,
+        -2.7701129025337057e-07
+      ],
+      "meaning": "area-integrated solid-inferred midsurface/director patch pose versus area-weighted solid tip section fit; not an E4 state or accepted contact/reference comparison",
+      "patch_grid_x_m": [
+        0.9,
+        0.92,
+        0.9400000000000001,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "patch_interval_x_m": [
+        0.9,
+        1.0
+      ],
+      "rigid_corner_gap_m": [
+        [
+          2.002001486811622e-07,
+          -3.2337648941255237e-07,
+          2.8904659554251173e-07
+        ],
+        [
+          2.3342577160079259e-07,
+          -1.0769358632645165e-07,
+          3.3001461025910703e-07
+        ],
+        [
+          1.0287233509487237e-07,
+          -1.575366662745492e-07,
+          -6.0990012552687e-08
+        ],
+        [
+          9.232671238645906e-08,
+          -2.894020693575139e-07,
+          -2.8785802726928334e-07
+        ]
+      ],
+      "rigid_corner_gap_max_norm_m": 4.777032424334823e-07,
+      "section_station_x_m": 1.0,
+      "shell_center_m": [
+        0.9499984927094316,
+        9.116958850275955e-08,
+        -6.619010516666662e-05
+      ],
+      "shell_midplane_gradient_x": [
+        1.0000004465315566,
+        1.9806821667467737e-07,
+        -6.125581666676196e-05
+      ],
+      "shell_midplane_gradient_y": [
+        4.2893333326391046e-07,
+        0.9999997855862571,
+        4.498330000006995e-05
+      ],
+      "shell_rotation_vector_rad": [
+        4.4336321147898e-05,
+        5.862116362469408e-05,
+        -1.1547198622025228e-07
+      ],
+      "solid_inferred_director": [
+        5.8621161012112375e-05,
+        -4.4336324492530424e-05,
+        0.9999999972989249
+      ]
+    }
+  ]
+}
