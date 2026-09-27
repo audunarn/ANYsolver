@@ -348,9 +348,10 @@ def solve_transient_contact(
                        atol=1.0e-12, rtol=1.0e-12):
         raise ValueError("initial_velocity does not satisfy structural constraints")
     committed_states = {}
+    # The manager's fresh-start guard checks the original configured pose.
+    # The resumed pose is validated separately against its accepted gap budget.
     with contact_scope(model, definition, settings,
-                       initial_displacement=(full_initial if restart_checkpoint is None
-                                             else np.zeros(size))) as manager:
+                       initial_displacement=full_initial) as manager:
         if type(manager) is not _PlanarQ4PlaneManager:
             raise ValueError("transient development profile selected an unsupported contact owner")
 

@@ -26,6 +26,9 @@ An opt-in development checkpoint is available with `save_every=1`:
 `restart_checkpoint` argument with a later `t_end`. It binds the model,
 contact definitions, integration settings, initial state and nonlinear
 controls, and verifies an integrity hash and resumed acceleration balance.
+The original configured initial pose is still checked for unresolved
+penetration; the saved active-contact pose is checked against its accepted
+gap budget.
 Export requires at least one accepted step and a final step that was not
 shortened merely to reach `t_end`; an off-grid split is rejected because it
 would change the uninterrupted Newmark path.

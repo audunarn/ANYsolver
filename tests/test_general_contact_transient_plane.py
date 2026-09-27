@@ -240,6 +240,37 @@ def test_active_contact_restart_replays_newmark_path_from_fresh_model():
     )
 
 
+def test_restart_preserves_configured_nonzero_initial_pose():
+    full_model, full_contact, velocity = _guided_plate()
+    initial = np.zeros_like(velocity)
+    for node_id in (1, 2, 3, 4):
+        initial[full_model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -0.002
+    full = solve_transient_contact(
+        full_model, full_contact,
+        TransientConfig(0.0002, 0.012, initial_displacement=initial,
+                        initial_velocity=velocity),
+    )
+    split_model, split_contact, split_velocity = _guided_plate()
+    first = solve_transient_contact(
+        split_model, split_contact,
+        TransientConfig(0.0002, 0.010, initial_displacement=initial,
+                        initial_velocity=split_velocity),
+        emit_restart_checkpoint=True,
+    )
+    assert first.contact[-1].active_pressure_dofs > 0
+    resume_model, resume_contact, resume_velocity = _guided_plate()
+    resumed = solve_transient_contact(
+        resume_model, resume_contact,
+        TransientConfig(0.0002, 0.012, initial_displacement=initial,
+                        initial_velocity=resume_velocity),
+        restart_checkpoint=first.restart_checkpoint,
+    )
+    np.testing.assert_allclose(
+        np.vstack((first.displacements, resumed.displacements[1:])),
+        full.displacements, rtol=1.0e-11, atol=1.0e-11,
+    )
+
+
 def test_transient_restart_rejects_tampering_and_changed_time_step():
     model, contact, velocity = _guided_plate()
     first = solve_transient_contact(
