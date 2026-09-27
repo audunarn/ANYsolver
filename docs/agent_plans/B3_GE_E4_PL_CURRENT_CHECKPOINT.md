@@ -14,8 +14,8 @@ checks pass at sampled points; fail-closed F09 admission remains unfinished.
 A new material-line proof detects the even-slip mode and passes bounded
 position/Jacobian checks. Its value-only orientation probe is objective,
 non-drilling, and preserves the tested shear mode. Its reference orientation
-Jacobian passes Q4/S3 chart differences; orientation curvature and coupled
-transfer remain open.
+Jacobian passes Q4/S3 reference and nonzero-gap chart differences;
+orientation curvature and coupled transfer remain open.
 **Remaining uncertainty:** Allocate torque/shear differences among the
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
@@ -227,6 +227,23 @@ curvature, physical couple work, or loaded torque transfer. The next
 bounded discriminator is a nonzero-gap first variation and mixed second
 variation under the actual finite-rotation updates; disagreement would
 revise the chain rule or frame definition before forming a KKT tangent.
+
+**Nonzero-gap orientation derivative (27 September):** A finite-state
+`orientation_jacobian` now applies the SO(3) left-Log Jacobian inverse to
+the current shell/beam spatial angular difference, including the stored
+reference orientation. Q4 and mixed-S3 nonzero-gap directional checks
+through actual left-multiplicative shell updates and native
+`Context.advance` pass `2/2`, with maximum absolute error below `2e-8`.
+The earlier reference and drilling checks also pass after specializing
+this general derivative. A nonzero distributed multiplier gives nonzero
+separate shell and beam couple work that cancels under one supported common
+rigid twist. Independent read-only mechanics review found no blocking
+left-Log sign/order or pullback defect. This tests finite-state first
+variation and one dual-work identity, not all six wrench directions,
+the mixed second variation, or loaded torque transfer. Next, a
+nonzero-multiplier curvature check must distinguish a correct constraint
+Hessian from a merely correct residual Jacobian before any exact-multiplier
+production tangent is adopted.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8

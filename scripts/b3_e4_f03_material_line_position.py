@@ -101,6 +101,17 @@ def _shell_angular_variation(frame, director, tangent, projected_length,
                +np.cross(director, delta_director))
 
 
+def _log_left_inverse(vector):
+    """SO(3) left-Jacobian inverse inside the admitted relative chart."""
+    angle = np.linalg.norm(vector)
+    cross = _skew(vector)
+    if angle < 1e-4:
+        coefficient = 1./12.+angle**2/720.+angle**4/30240.
+    else:
+        coefficient = (1.-.5*angle/np.tan(.5*angle))/angle**2
+    return np.eye(3)-.5*cross+coefficient*cross@cross
+
+
 class MaterialLinePosition:
     """Bounded position map with reference-level orientation variation."""
 
@@ -221,11 +232,14 @@ class MaterialLinePosition:
             gaps.append(gap)
         return np.asarray(gaps)
 
-    def reference_orientation_jacobian(self):
-        """First Log variation in the actual native accepted reference chart."""
-        state = self.beam.context.initial.mechanical
-        coordinates = self.reference_nodes
-        frames = np.broadcast_to(np.eye(3), (self.shell_count, 3, 3))
+    def orientation_jacobian(self, shell_coordinates, shell_frames, beam_state):
+        """First Log variation through current left-multiplicative updates."""
+        coordinates = np.asarray(shell_coordinates, dtype=float)
+        frames = np.asarray(shell_frames, dtype=float)
+        if (coordinates.shape != (self.shell_count, 3) or
+                frames.shape != (self.shell_count, 3, 3) or
+                not np.isfinite(coordinates).all() or not np.isfinite(frames).all()):
+            raise ValueError("complete finite shell state required")
         result = np.zeros((3*len(self.stations),
                            6*self.shell_count+self.beam.context.count))
         basis = np.eye(3)
@@ -237,7 +251,14 @@ class MaterialLinePosition:
                                                         station.shape)),
                                np.zeros(3))
             raw_length = np.linalg.norm(raw_director)
-            _, _, beam_frame = station.port.pose_pair(state)
+            _, _, beam_frame = station.port.pose_pair(beam_state)
+            relative = station.reference_orientation.T@(
+                shell_frame.T@beam_frame)
+            gap = Rotation.from_matrix(relative).as_rotvec()
+            if not np.isfinite(gap).all() or np.linalg.norm(gap) >= np.pi-.1:
+                raise ValueError("material-line relative rotation left chart")
+            pullback = (_log_left_inverse(gap)@
+                        station.reference_orientation.T@shell_frame.T)
             block = result[3*k:3*k+3]
             for node, weight, derivative in zip(
                     station.nodes, station.shape, station.dshape_dx):
@@ -247,14 +268,21 @@ class MaterialLinePosition:
                     omega = _shell_angular_variation(
                         shell_frame, director, tangent, projected_length,
                         np.zeros(3), derivative*vector, raw_length)
-                    block[:, column] = -beam_frame.T@omega
+                    block[:, column] = -pullback@omega
                     column += 3
                     omega = _shell_angular_variation(
                         shell_frame, director, tangent, projected_length,
                         weight*np.cross(vector, frames[node, :, 2]),
                         derivative*np.cross(vector, frames[node]@self.top),
                         raw_length)
-                    block[:, column] = -beam_frame.T@omega
+                    block[:, column] = -pullback@omega
             block[:, 6*self.shell_count:] = (
-                beam_frame.T@station.port.tangent(state)[3:])
+                pullback@station.port.tangent(beam_state)[3:])
         return result
+
+    def reference_orientation_jacobian(self):
+        """Specialize the orientation Jacobian to the accepted reference."""
+        return self.orientation_jacobian(
+            self.reference_nodes,
+            np.broadcast_to(np.eye(3), (self.shell_count, 3, 3)),
+            self.beam.context.initial.mechanical)

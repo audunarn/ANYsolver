@@ -192,3 +192,73 @@ def test_material_line_orientation_jacobian_uses_native_chart(mixed_s3):
     bond = line.reference_nodes[:, 0] >= .9-1e-12
     drilling[:6*line.shell_count].reshape(-1, 6)[bond, 5] = 1.
     assert np.max(np.abs(line.reference_orientation_jacobian()@drilling)) < 1e-12
+
+
+@pytest.mark.parametrize("mixed_s3", (False, True))
+def test_material_line_orientation_jacobian_at_nonzero_gap(mixed_s3):
+    xs, ys, beam, _ = _fixture(patch_cells=2)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3)
+    rng = np.random.default_rng(349 if mixed_s3 else 350)
+    shell_base = rng.normal(size=(line.shell_count, 6))*.02
+    shell_direction = rng.normal(size=(line.shell_count, 6))*.1
+    base_step = rng.normal(size=beam.context.count)*.02
+    beam_direction = rng.normal(size=beam.context.count)*.1
+    fixed_shell = line.reference_nodes[:, 0] <= -.5+1e-12
+    shell_base[fixed_shell] = 0.
+    shell_direction[fixed_shell] = 0.
+    base_step[list(beam.context.fixed)] = 0.
+    beam_direction[list(beam.context.fixed)] = 0.
+    coordinates = line.reference_nodes+shell_base[:, :3]
+    frames = Rotation.from_rotvec(shell_base[:, 3:]).as_matrix()
+    state = beam.context.advance(beam.context.initial.mechanical, base_step)
+    direction = np.r_[shell_direction.ravel(), beam_direction]
+    predicted = (line.orientation_jacobian(
+        coordinates, frames, state)@direction).reshape(-1, 3)
+    assert np.max(np.abs(line.orientation_gap(coordinates, frames, state))) > 1e-4
+    step_size = 1e-6
+
+    def trial(sign):
+        trial_coordinates = coordinates+sign*step_size*shell_direction[:, :3]
+        update = Rotation.from_rotvec(
+            sign*step_size*shell_direction[:, 3:]).as_matrix()
+        trial_frames = update@frames
+        trial_state = beam.context.advance(state, sign*step_size*beam_direction)
+        return line.orientation_gap(trial_coordinates, trial_frames, trial_state)
+
+    finite_difference = (trial(1)-trial(-1))/(2*step_size)
+    assert np.max(np.abs(finite_difference-predicted)) < 2e-8
+
+
+def test_material_line_orientation_couple_work_cancels_on_common_rigid_motion():
+    _, _, beam, line = _fixture(patch_cells=2)
+    shell_coordinates = line.reference_nodes.copy()
+    shell_frames = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3)).copy()
+    beam_state = beam.context.initial.mechanical
+    omega = np.array((.03, -.04, .05))
+    translation = np.array((.002, -.003, .004))
+    shell_step = np.zeros((line.shell_count, 6))
+    shell_bond = line.reference_nodes[:, 0] >= .9-1e-12
+    shell_step[shell_bond, :3] = (
+        np.cross(omega, shell_coordinates[shell_bond])+translation)
+    shell_step[shell_bond, 3:] = omega
+    beam_step = np.zeros(beam.context.count)
+    for node, x in enumerate(beam.abscissae):
+        if x < .9-1e-12:
+            continue
+        position = beam_state.positions[node]+beam_state.position_low[node]
+        beam_step[6*node:6*node+3] = np.cross(omega, position)+translation
+        beam_step[6*node+3:6*node+6] = omega
+    for element in range(len(beam.context.elements)):
+        for cell in (0, 1):
+            if beam.abscissae[2*element+cell] < .9-1e-12:
+                continue
+            first = beam.context.nodal_count+24*element+3*cell
+            beam_step[first:first+3] = omega
+    jacobian = line.reference_orientation_jacobian()
+    weights = np.repeat([station.weight for station in line.stations], 3)
+    multiplier = weights*np.tile((1.3, -2.1, 3.2), len(line.stations))
+    split = 6*line.shell_count
+    shell_work = shell_step.ravel()@(jacobian[:, :split].T@multiplier)
+    beam_work = beam_step@(jacobian[:, split:].T@multiplier)
+    assert abs(shell_work) > 1e-6
+    assert abs(shell_work+beam_work) < 1e-10*abs(shell_work)
