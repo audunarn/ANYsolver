@@ -30,6 +30,7 @@ from scripts.b3_e4_f03_solid_bond_pose_projection import (
 ROOT = Path(__file__).resolve().parents[1]
 DETACHED = ROOT / ".qualification/b3-ge-e4-pl/f03-c1-detached-port-dev-20260926-v2/tip_mx"
 X_P0 = (.9, .925, .95, .975, 1.)
+SOLVER_ACTION_SCALE = 1000.
 
 
 def _reference_grid(factor):
@@ -151,7 +152,11 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
     if deck_with_output == deck_text:
         raise ValueError("plate-only step ending changed")
     generated = folder / f"{stem}.inp"
-    generated.write_text(_replace_load(deck_with_output, nodal, 1.),
+    # The linear elastic plate has no geometric nonlinearity or contact.
+    # Scale the entire action so CalculiX does not reject physically tiny
+    # (but nonzero) nodal entries, then divide the displacement back.
+    generated.write_text(_replace_load(deck_with_output, nodal,
+                                       SOLVER_ACTION_SCALE),
                          encoding="utf-8")
     preflight = {
         "factor_four_row_max_defect": parity,
@@ -195,7 +200,8 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
                         if set(field) != set(coords):
                             failure = "RESPONSE_INCOMPLETE_PLATE_FIELD"
                         else:
-                            u = np.array([field[node] for node in nodes])
+                            u = (np.array([field[node] for node in nodes]) /
+                                 SOLVER_ACTION_SCALE)
                             work = float(np.sum(force*u))
                             if work <= 0. or not np.isfinite(work):
                                 failure = "RESPONSE_NONPOSITIVE_WORK"
@@ -207,6 +213,7 @@ def run_one(factor: int, label: str, reconstruction_path: Path,
         "factor": factor, "label": label, "failure": failure,
         "plate_action_work_J": work, "seconds": elapsed,
         "peak_solver_rss_bytes": peak, "exit_code": code,
+        "solver_action_scale": SOLVER_ACTION_SCALE,
         "constraint_row_failure": row_failure,
         "fixed_action_eligible": True,
         "source_commit": subprocess.check_output(("git", "rev-parse", "HEAD"),
