@@ -37,6 +37,13 @@ gaps `-45.58 nm` and `-33.78 nm`, respectively. The witnesses are interior
 to the paired Q8 faces with negligible XY projection defect. This is not a
 global contact or penetration certificate. It does rule out treating these
 linear no-contact fields as an admissible physical accuracy reference.
+The previously executed factor-4 reverse-Fz solid has **no sampled overlap
+witness** on the 120 detached faces with saved interface displacements:
+all 9,720 interior same-deformed-XY projections succeeded, minimum gap
+`+0.547735 µm`, maximum XY defect `1.77e-14 m`. Eight seam-adjacent faces
+lack saved shared-node displacement, and sampling does not certify
+continuous separation. This is an opening-only candidate, not the missing
+torque/shear reference.
 **Uncertainty:** Whether the remaining torque/shear difference is a defect
 in the continuous six-channel trace or arises from contact and differing
 solid-versus-E4/B3 idealizations. The existing C1 penalty reference also
@@ -59,6 +66,32 @@ finer classical axial solves, or a contact stiffness/mesh sweep. Advance B2
 F09 and other independent foundations while F03 remains unresolved.
 No multiplier space is selected and F03 remains open.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
+
+**Saved reverse-Fz discriminator outcome (27 September):** The negative
+witness branch did not occur. The saved field is therefore retained only
+for a future complete-face/continuous separation check if opening-reference
+accuracy becomes the decision bottleneck; it is not promoted to a physical
+no-contact comparator. Versioned results are
+`B3_GE_E4_PL_F03_REVERSE_FZ_SAME_XY_DEV_V1.json` (initial face-local
+indexing) and `B3_GE_E4_PL_F03_REVERSE_FZ_SAME_XY_DEV_V2.json` (original
+face IDs and omitted seam IDs), whose SHA256 is
+`856AEE36E922833011227EF2602B9096CBCD036E339D045FF81D3DD7096D38EC`.
+The next F03 physical-reference effort must target torque/shear with a
+declared connection and an admissible surface-order check. No further
+reverse-Fz refinement follows automatically; independent F09 and other
+foundations can proceed while that reference is designed.
+
+**Bounded saved-field discriminator (prospective, 27 September):** The
+already-executed reverse-Fz C3D20R case has positive paired-parameter Q8
+gaps, but those are not same-deformed-XY separation. On its saved factor-4
+field, project an interior 9×9 Gauss grid of each of the 128 detached bar
+faces into the matching deformed plate face; record successful projections,
+unprojected points, minimum gap, and any negative witness. A negative
+interior witness rejects this no-contact field as a physical comparator;
+no witness retains it only as a candidate for a continuous deformed-face
+certificate and idealization matching. The field is reverse-Fz, not the
+unresolved torque/shear reference. This check uses saved artifacts and no
+new external solve or resource authority.
 
 **F03 continuous-law interpretation for review (27 September):** In the
 current candidate, the shell top and native beam underside are distinct
