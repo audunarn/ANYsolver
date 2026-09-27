@@ -49,21 +49,25 @@ def test_force_control_augmented_patch_restarts_after_contact():
     assert full.info["last_contact_augmentation_trace"]
     assert all("normal_multiplier_change_pa" in row for row in
                full.info["last_contact_augmentation_trace"])
-    half = solve_static_nonlinear(model, max_load_factor=0.5, **common)
+    # Match the full run's first accepted load increment at 0.5. Two steps
+    # to 0.5 would instead create a distinct 0.25, 0.5 pressure history.
+    half = solve_static_nonlinear(
+        model, max_load_factor=0.5, **{**common, "num_steps": 1},
+    )
     assert half.status == "completed", half.failure_reason
+    assert [row["load_factor"] for row in half.info["force_displacement_history"]] == [0.5]
     assert max(half.to_restart_checkpoint()["path_state"]["normal_multipliers"]) > 0
     resumed = solve_static_nonlinear(
         model, restart_checkpoint=half.to_restart_checkpoint(), **common,
     )
     assert resumed.status == "completed", resumed.failure_reason
-    # This is a development smoke gate. Pressure is stopped at 0.02 Pa,
-    # so path splitting can move the tiny free-edge deflection by O(1e-7 m).
+    assert [row["load_factor"] for row in resumed.info["force_displacement_history"]] == [0.5, 1.0]
     np.testing.assert_allclose(resumed.displacements, full.displacements,
-                               rtol=1e-2, atol=1e-6)
+                               rtol=1e-10, atol=1e-12)
     np.testing.assert_allclose(
         resumed.info["general_contact"]["normal_multiplier_estimate_pa"],
         full.info["general_contact"]["normal_multiplier_estimate_pa"],
-        rtol=5e-2, atol=2e-2,
+        rtol=1e-10, atol=1e-12,
     )
 
 
