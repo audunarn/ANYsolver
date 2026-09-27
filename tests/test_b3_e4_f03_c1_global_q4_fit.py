@@ -5,7 +5,7 @@ import numpy as np
 from types import SimpleNamespace
 
 from scripts.b3_e4_f03_c1_global_q4_fit import (
-    THICKNESS, constrained_trace_fit, fit_field, fit_matrix,
+    THICKNESS, constrained_trace_fit, fit_field, fit_matrix, p0_interval,
 )
 
 
@@ -30,7 +30,8 @@ def test_clamped_global_q4_face_fit_recovers_representable_field():
     np.testing.assert_allclose(recovered.reshape(-1, 6), q, rtol=0., atol=1e-10)
     assert report["fit_component_max_abs_m"] < 1e-11
     station_matrix = rng.normal(size=(72, matrix.shape[1]))
-    stations = [SimpleNamespace(weight=.025/3) for _ in range(12)]
+    stations = [SimpleNamespace(weight=.025/3, x=.9+(j//3+.5)*.025)
+                for j in range(12)]
     integrated = np.zeros((4, 6, matrix.shape[1]))
     for j in range(12):
         integrated[j//3] += stations[j].weight*station_matrix.reshape(
@@ -45,3 +46,8 @@ def test_clamped_global_q4_face_fit_recovers_representable_field():
     assert constrained["weak_row_constrained_face_rms_m"] < 1e-10
     assert constrained["minimum_scaled_station_component_rms_m"] < 1e-10
     assert abs(constrained["native_minus_solid_weak_work_J"]) < 1e-10
+
+
+def test_refined_station_groups_stay_in_fixed_four_interval_dual():
+    xs = [.9+(j+.5)*.1/24 for j in range(24)]
+    assert [p0_interval(x) for x in xs] == [j//6 for j in range(24)]

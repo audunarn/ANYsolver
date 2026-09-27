@@ -18,6 +18,7 @@ from scipy.sparse.linalg import lsqr, splu
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
 from scripts.b3_e4_f03_c1_material_line_p0_reference import integrated_rows
+from scripts.b3_e4_f03_c1_material_line_solid_port import build_flat_solid_line_port
 from scripts.b3_e4_f03_ccx_six_channel_compliance import _source
 from scripts.b3_e4_f03_ccx_six_channel_preflight import _element_domain_nodes
 from scripts.b3_e4_f03_ccx_solid_bond_screen import digest
@@ -31,6 +32,14 @@ from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 THICKNESS = .035
 CHANNELS = ("Fx", "Fy", "Fz", "Mx", "My", "Mz")
+P0_EDGES = np.linspace(.9, 1., 5)
+
+
+def p0_interval(x):
+    index = int(np.searchsorted(P0_EDGES, x, side="right")-1)
+    if index < 0 or index >= 4 or not P0_EDGES[index] < x < P0_EDGES[index+1]:
+        raise ValueError("station must be inside one fixed P0 interval")
+    return index
 
 
 def fit_matrix(coords, face_nodes, xs, ys):
@@ -99,7 +108,7 @@ def trace_matrices(position, orientation, stations, free, shell_size):
                 THICKNESS if component >= 3 else 1.)
     integrated = np.zeros((4, 6, len(free)))
     for j, station in enumerate(stations):
-        integrated[j//3] += station.weight*point[j]
+        integrated[p0_interval(station.x)] += station.weight*point[j]
     return point.reshape(-1, len(free)), integrated.reshape(-1, len(free))
 
 
@@ -113,7 +122,7 @@ def constrained_trace_fit(matrix, free, q, solid_points, stations,
     target = np.asarray(face_u).ravel()
     solid_integrated = np.zeros((4, 6))
     for j, value in enumerate(solid_points):
-        solid_integrated[j//3] += stations[j].weight*value
+        solid_integrated[p0_interval(stations[j].x)] += stations[j].weight*value
     length = .1
     row_scale = np.tile((1., 1., 1., length, length, length), 4)
     constraint = integrated_matrix*row_scale[:, None]
@@ -189,7 +198,9 @@ def constrained_trace_fit(matrix, free, q, solid_points, stations,
 
 
 def evaluate(reconstruction_path: Path, same_action_path: Path,
-             prior_projection_path: Path) -> dict:
+             prior_projection_path: Path, patch_cells: int = 4) -> dict:
+    if patch_cells not in (4, 8):
+        raise ValueError("only bounded x4/x8 comparison is admitted")
     reconstruction = json.loads(reconstruction_path.read_text())
     same_action = json.loads(same_action_path.read_text())
     prior = json.loads(prior_projection_path.read_text())
@@ -209,13 +220,13 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
         raise ValueError("solid plate faces missing")
     all_nodes = tuple(sorted(set(face_nodes)|set(solid_nodes)))
     all_index = {node: i for i, node in enumerate(all_nodes)}
-    xs, ys = local_grid(4, transverse_cells=4)
+    xs, ys = local_grid(patch_cells, transverse_cells=4)
     matrix, free = fit_matrix(coords, face_nodes, xs, ys)
     beam = build(12, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um", assemble=False)
     line = MaterialLinePosition(xs, ys, beam)
-    if len(line.stations) != 12:
+    if len(line.stations) != 3*patch_cells:
         raise ValueError("native Gauss inventory changed")
     count = len(line.stations)
     position = line.reference_jacobian().reshape(count, 3, -1)
@@ -223,6 +234,13 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
     shell_size = 6*line.shell_count
     native_rows, interval_measure = _rows(
         line, LineMultiplierSpace("piecewise_constant", tuple(np.linspace(0., 1., 5))))
+    if patch_cells == 4:
+        station_ports = [item for interval in point_ports for item in interval]
+    else:
+        station_ports = [(station.weight, build_flat_solid_line_port(
+            coords, plate, bar, station.x)) for station in line.stations]
+    if not all(set(port.node_ids) <= set(all_nodes) for _, port in station_ports):
+        raise ArithmeticError("refined stations require unregistered solid nodes")
     station_matrix, integrated_matrix = trace_matrices(
         position, orientation, line.stations, free, shell_size)
     dual = {label: np.asarray(reconstruction["cases"][label][
@@ -250,25 +268,24 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
         maximum_pointwise = np.zeros(6)
         station_rows = []
         solid_points = []
-        for interval_index, interval in enumerate(point_ports):
-            for local_index, (weight, port) in enumerate(interval):
-                j = 3*interval_index+local_index
-                if (abs(port.station_x_m-line.stations[j].x) > 1e-12 or
-                        abs(weight-line.stations[j].weight) > 1e-12):
-                    raise ArithmeticError("solid/native quadrature differs")
-                port_u = np.array([displacement[all_index[node]]
-                                   for node in port.node_ids]).ravel()
-                solid_trace = np.r_[port.shell_top_jacobian@port_u,
-                                    -port.shell_orientation_jacobian@port_u]
-                solid_points.append(solid_trace)
-                native_trace = np.r_[position[j, :, :shell_size]@q,
-                                     orientation[j, :, :shell_size]@q]
-                residual = solid_trace-native_trace
-                maximum_pointwise = np.maximum(maximum_pointwise, np.abs(residual))
-                solid_rows_integrated[interval_index] += weight*solid_trace
-                native_rows_integrated[interval_index] += weight*native_trace
-                station_rows.append({"x_m": float(port.station_x_m),
-                                     "six_channel_solid_minus_native": residual.tolist()})
+        for j, (weight, port) in enumerate(station_ports):
+            interval_index = p0_interval(line.stations[j].x)
+            if (abs(port.station_x_m-line.stations[j].x) > 1e-12 or
+                    abs(weight-line.stations[j].weight) > 1e-12):
+                raise ArithmeticError("solid/native quadrature differs")
+            port_u = np.array([displacement[all_index[node]]
+                               for node in port.node_ids]).ravel()
+            solid_trace = np.r_[port.shell_top_jacobian@port_u,
+                                -port.shell_orientation_jacobian@port_u]
+            solid_points.append(solid_trace)
+            native_trace = np.r_[position[j, :, :shell_size]@q,
+                                 orientation[j, :, :shell_size]@q]
+            residual = solid_trace-native_trace
+            maximum_pointwise = np.maximum(maximum_pointwise, np.abs(residual))
+            solid_rows_integrated[interval_index] += weight*solid_trace
+            native_rows_integrated[interval_index] += weight*native_trace
+            station_rows.append({"x_m": float(port.station_x_m),
+                                 "six_channel_solid_minus_native": residual.tolist()})
         solid_work = float(-np.sum(dual[label].reshape(4, 6)*solid_rows_integrated))
         fitted_work = float(-np.sum(dual[label].reshape(4, 6)*native_rows_integrated))
         native_force = -(native_rows.T@(
@@ -310,6 +327,9 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
         "prior_projection_sha256": digest(prior_projection_path),
         "solid_source_deck_sha256": digest(deck),
         "face_node_count": len(face_nodes),
+        "native_longitudinal_patch_cells": patch_cells,
+        "native_transverse_cells": 4,
+        "fixed_p0_intervals": 4,
         "fit_matrix_nnz": matrix.nnz,
         "channel_order": CHANNELS,
         "cases": cases,
@@ -328,11 +348,12 @@ def main() -> None:
     parser.add_argument("--same-action", type=Path, required=True)
     parser.add_argument("--prior-projection", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--patch-cells", type=int, choices=(4, 8), default=4)
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError("preserve prior global fit result")
     result = evaluate(args.reconstruction.resolve(), args.same_action.resolve(),
-                      args.prior_projection.resolve())
+                      args.prior_projection.resolve(), args.patch_cells)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n", encoding="utf-8")
     print(json.dumps({key: {"work_J": value["solid_minus_fitted_work_J"],
