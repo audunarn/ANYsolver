@@ -38,8 +38,23 @@ def run_one(channel: int, output_root: Path) -> dict:
     # Integrated gap rows contain dx. These densities yield approximately
     # 1 kN or 100 Nm total action on a 25 mm P0 interval.
     scale = 40000. if channel % 6 < 3 else 4000.
+    physical_action = scale*action
+    threshold = 1e-12*float(np.max(np.abs(physical_action)))
+    if threshold <= 0.:
+        raise ArithmeticError("empty material-line action")
+    discarded = np.where(np.abs(physical_action) < threshold,
+                         physical_action, 0.)
+    retained = physical_action-discarded
+    coordinates = np.array([coords[node] for node in nodes])
+    origin = np.array((.95, 0., .0175))
+    discarded_force = np.sum(discarded, axis=0)
+    discarded_moment = np.sum(np.cross(coordinates-origin, discarded), axis=0)
+    if (np.linalg.norm(discarded_force) > 1e-8 or
+            np.linalg.norm(discarded_moment) > 1e-8 or
+            float(np.sum(np.abs(discarded))) > 1e-7):
+        raise ArithmeticError("near-zero CLOAD filtering changes physical action")
     nodal = {(node, axis): float(value)
-             for node, values in zip(nodes, action)
+             for node, values in zip(nodes, retained)
              for axis, value in enumerate(values) if value != 0.}
     folder = output_root / f"channel-{channel}"
     if folder.exists():
@@ -47,13 +62,14 @@ def run_one(channel: int, output_root: Path) -> dict:
     folder.mkdir(parents=True)
     stem = f"material-line-p0-{channel}"
     generated = folder / f"{stem}.inp"
-    generated.write_text(_replace_load(deck.read_text(), nodal, scale),
+    generated.write_text(_replace_load(deck.read_text(), nodal, 1.),
                          encoding="utf-8")
     code, stdout, stderr, elapsed, peak, failure = _run(stem, folder)
     (folder / "stdout.log").write_bytes(stdout)
     (folder / "stderr.log").write_bytes(stderr)
     response = None
     self_work = None
+    applied_work_defect = None
     if failure is None:
         if code != 0:
             failure = f"CALCULIX_EXIT_{code}"
@@ -79,6 +95,9 @@ def run_one(channel: int, output_root: Path) -> dict:
                         raise ValueError("nonfinite solid displacement")
                     response = (rows@values).tolist()
                     self_work = float(scale*response[channel])
+                    applied_work_defect = abs(float(retained.ravel()@values)-self_work)
+                    if applied_work_defect > 1e-8:
+                        raise ArithmeticError("generated nodal action loses dual work")
                     if self_work <= 0.:
                         raise ArithmeticError("nonpositive supported self compliance")
                 except (OSError, ValueError, KeyError, ArithmeticError) as exc:
@@ -89,8 +108,13 @@ def run_one(channel: int, output_root: Path) -> dict:
         "failure": failure,
         "channel": channel,
         "applied_density_scale": scale,
+        "cload_filter_threshold_n": threshold,
+        "discarded_absolute_nodal_load_n": float(np.sum(np.abs(discarded))),
+        "discarded_force_norm_n": float(np.linalg.norm(discarded_force)),
+        "discarded_moment_norm_nm": float(np.linalg.norm(discarded_moment)),
         "gap_response": response,
         "self_work_j": self_work,
+        "applied_nodal_work_defect_j": applied_work_defect,
         "seconds": elapsed,
         "peak_solver_rss_bytes": peak,
         "exit_code": code,
