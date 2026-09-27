@@ -216,3 +216,10 @@ step or planned active-mode deactivation; those effects are not separated
 yet. A bounded trust-region or re-equilibrated line-search candidate should
 be designed against this evidence and then checked on small systems before
 another full 16-Q4 path. No pressure tolerance or augmentation gate changed.
+Independent read-only review verified the saved H·Δλ arithmetic, the
+actual-gap capture at the equilibrium certificate, and the unchanged active
+and overlap signatures. This is a nonlinear re-equilibration check of one
+direction, not an independent implementation of H or an all-direction
+derivative gate. The 2% trial predicts only about 2% pressure-residual
+improvement, so its later failure under the unchanged 25% proposal-merit
+rule is expected and does not contradict the local result.
