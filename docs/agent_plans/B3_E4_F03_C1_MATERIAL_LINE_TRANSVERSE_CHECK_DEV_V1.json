@@ -1,0 +1,31 @@
+{
+  "cases": {
+    "tip_fz": {
+      "equilibrium_ratio": 5.612909431546734e-12,
+      "solid_plate_work_J": 0.01516426512913236,
+      "x8_y4_relative_to_solid": -0.14126751817474215,
+      "x8_y4_work_J": 0.013022047029396046,
+      "x8_y8_relative_to_solid": -0.1365614971925827,
+      "x8_y8_work_J": 0.013093410379272773
+    },
+    "tip_mx": {
+      "equilibrium_ratio": 5.552703059079724e-12,
+      "solid_plate_work_J": 0.0019801369310543967,
+      "x8_y4_relative_to_solid": -0.09678776182384263,
+      "x8_y4_work_J": 0.001788483909392909,
+      "x8_y8_relative_to_solid": -0.09633525168794987,
+      "x8_y8_work_J": 0.0017893799414246668
+    }
+  },
+  "classification": "fixed material-line dual and x8 E4; y4\u2192y8 only",
+  "limitations": [
+    "one y doubling is a discriminator, not convergence evidence",
+    "fixed solid dual and P0; not a re-equilibrated coupled model",
+    "no physical accuracy, connection-law or G0B acceptance"
+  ],
+  "longitudinal_result_sha256": "34eb92b41aac74c463355f985bf536ddb85d8179bf509564921886a114bd668a",
+  "shell_dof": 1710,
+  "shell_nodes": 285,
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

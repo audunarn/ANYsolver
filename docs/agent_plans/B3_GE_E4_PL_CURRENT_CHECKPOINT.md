@@ -43,6 +43,105 @@ and `B3_E4_F03_C1_MATERIAL_LINE_SAVED_F4_FIELD_DEV_V1.json`
 The integrated P0 preflight is
 `B3_E4_F03_C1_MATERIAL_LINE_P0_SOLID_PREFLIGHT_DEV_V1.json`
 (SHA256 `5C5D52890AD5607C0D8DB82B650F2CF4E17038093F7C4D345ACD8C7BF09F94AC`).
+**External action launch update:** The first channel-0 deck failed at
+CalculiX input parsing because roundoff `~1e-15` nodal `*CLOAD` entries
+were emitted; keep the V1 failure. The V2 runner filters only numerical
+zeros and audits discarded force, moment and work. Channels 0, 2, 3
+and 4 completed in `17.4–17.5 s` each, peak RSS below `1.25 GB`,
+under the retained one-thread/120-second/2-GiB limits. Their self-work
+is positive. Force/torque cross-work differs by `4.37e-18 J` on a
+near-zero coupling; transverse-force/bending-moment cross-work differs
+by `1.19e-7 J` (`7.86e-7` relative), consistent with the saved-output
+precision at this exploratory level. No constrained response is inferred.
+**Next bounded batch:** Complete only the other 20 columns on the same
+four-interval law and limits, serially and fail-fast. If the full work
+compliance is reciprocal within output precision and positive definite,
+reconstruct the matched P0-tied solid tip Mx/Fz cases from saved source
+and unit fields; otherwise diagnose the first failed column or mode.
+This comparison may reveal a physical transfer discrepancy, but P0
+remains unselected and contact-free solid geometry remains a limitation.
+**Completed matched-law solid diagnostic:** All `24/24` V2 action columns
+completed serially, each below `22.51 s` and `1.31 GB` peak solver RSS.
+The work-scaled matrix has relative skew `1.926e-6` from FRD-output
+precision, positive symmetric-part minimum `1.7943e-4 J`, and condition
+`3.2994e4`; the measured unsymmetrized matrix was used to reconstruct
+the exact weak P0 m4 response. Both tip-load cases close all 24 weak
+constraints below `2.4e-21` in raw integrated units, cancel shell/bar
+interface work and global joint wrench, and retain the saved source
+stiffness and physical support/load identities. The law-matched solid
+work-conjugate coordinates are `53.865 µrad` (+100 Nm Mx) and
+`72.562 µm` (+1000 N Fz). Under the *different* previous F4 area-mean
+tie, they were `50.860 µrad` and `70.346 µm`. The native Q4/B3 P0 m4
+screen gives `46.167 µrad` and `69.048 µm`, but the native terminal
+nodal wrench and solid quadratic face load differ in distribution and
+section kinematics. These numbers diagnose a material difference; they
+are not matched-idealization accuracy scores or proof of the cause.
+The V1 action parse failure remains preserved. Full V2 external records
+are under `.qualification/b3-ge-e4-pl/f03-c1-material-line-p0-actions-dev-20260927-v2/`;
+the source-bound reconstruction is
+`B3_E4_F03_C1_MATERIAL_LINE_P0_SOLID_RECON_DEV_V1.json`
+(SHA256 `118AEF26CF0766FA50A6D42929A095440E142F7177216E5B85DC2C7E51FA7F92`).
+**Next decision-oriented slice:** Hold the *reconstructed solid interface
+dual* fixed, pull it through the native P0 trace with the exact interval
+measure, and compare separate shell and beam action-only responses.
+The solid plate and native E4 use the same `E=210 GPa`, `ν=.3`, 35 mm
+thickness and left-edge support; the solid bar/native B3 use the same
+100 mm square section and root support but different section kinematics.
+If shell same-action work differs substantially, examine E4/solid plate
+idealization and trace transfer; if beam work differs, examine B3/3D
+section response. If both agree but the loaded total differs, isolate
+tip-load distribution. Check side wrench, supports and virtual work at
+each comparison. This does not qualify the law or select P0.
+**Same-action result:** Under each reconstructed solid P0 m4 dual,
+native B3/solid-bar action-only work differs by `−0.019%` (Fz) and
+`−0.631%` (Mx). Native E4/solid-plate action-only work differs by
+`−14.317%` (Fz) and `−10.203%` (Mx); native component equilibrium and
+dual-work identities pass. The external and native tip load *shapes*
+still differ, and the solid face/section and E4/B3 reduction differ.
+Raw `B3_E4_F03_C1_MATERIAL_LINE_SAME_ACTION_DEV_V1.json` has SHA256
+`B61AD12D112E5DC1A4D7046E60C0A1A8F4C3DDA8344DD43CC4EEBCEE6E243A7B`.
+**Next bounded discriminator:** Hold the same dual and P0 four-interval
+law fixed while increasing only native E4 longitudinal resolution
+`x4→x8→x16` at fixed y4, support and material. Movement toward the
+3D plate work points to shell resolution; a stable shortfall points
+to shell/solid theory or boundary/trace interpretation. Neither outcome
+alone justifies a law or multiplier change. Do not resume classical
+axial refinement for this question.
+**Longitudinal result and decision:** At x4/x8/x16 with y4 fixed,
+the E4 same-action shell-work deficit is `−10.203/−9.679/−9.518%`
+for Mx and `−14.317/−14.127/−14.082%` for Fz. The first level
+reproduces the prior same-action result; all three levels satisfy free
+equilibrium and trace-dual work. Longitudinal refinement explains only
+a small part of the observed difference, so stop that axis. Raw
+`B3_E4_F03_C1_MATERIAL_LINE_SHELL_RESOLUTION_DEV_V1.json` has SHA256
+`34EB92B41AAC74C463355F985BF536DDB85D8179BF509564921886A114BD668A`.
+**Next one-step transverse discriminator:** At fixed x8 and fixed
+solid dual/P0 law, increase only native E4 y cells across the 100 mm
+connection from four to eight. A material movement toward the 3D
+work points to transverse resolution and requires later physical
+convergence checks; a small movement ends this mesh-sweep route and
+shifts the question to shell/solid theory, support and traction shape.
+No additional x refinement or classical axial screen is implied.
+**Transverse result and decision:** At x8, y4→y8 changes the native
+same-action shell-work deficit from `−9.679%→−9.634%` for Mx and
+`−14.127%→−13.656%` for Fz. This one doubling does not establish
+convergence, but together with x4→x16 it does not explain away the
+roughly 10–14% shell-side difference. Stop the current mesh sweep.
+Raw `B3_E4_F03_C1_MATERIAL_LINE_TRANSVERSE_CHECK_DEV_V1.json`
+has SHA256 `3C9DBA559A1945BB7698C35BC2C71E6A573DA652E7FEECC92C0707A8B05DCD90`.
+**Next discriminating experiment:** On the already saved, action-only
+solid plate displacement, separate work in a local E4 director-compatible
+top/bottom field from work in through-thickness displacement modes.
+Use the *same* reconstructed line action and both physical sides; check
+virtual-work identity and support admissibility. If the excluded modes
+account for much of the shell-work gap, document the 3D-versus-E4
+kinematic limitation and its admissible domain. If they do not, test
+the remaining traction/support and plate-theory difference with a
+physically matched plate-only reference before revising the connection
+law. The prior smooth-traction `.035 m` plate-only screen was within
+`2.31%` torque and `0.89%` shear at its finest tested grids, but its
+traction is different from the current multiplier action and cannot
+be substituted as an accuracy score here.
 This is development evidence, not F03/G0B acceptance. Formal F03
 authority remains unconsumed; G0B open and G1 barred. B2 F09 and other
 independent foundations remain available for bounded parallel progress.
