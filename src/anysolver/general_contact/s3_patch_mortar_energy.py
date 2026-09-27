@@ -58,6 +58,7 @@ class MovingS3PatchMortarWork:
     residual: np.ndarray
     tangent: np.ndarray | None
     energy_evaluations: int
+    tie_resolution_relative_error: float | None = None
 
 
 class MovingS3PatchPrimalMortarPenalty:

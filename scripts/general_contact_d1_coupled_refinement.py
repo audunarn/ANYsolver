@@ -147,6 +147,8 @@ def main():
     parser.add_argument("--normal-approach", type=float, default=0.01505)
     parser.add_argument("--four-phase", action="store_true")
     parser.add_argument("--slide-distance", type=float, default=0.05)
+    parser.add_argument("--shared-edge-tie-step", type=float)
+    parser.add_argument("--shared-edge-tie-relative-tolerance", type=float, default=1.0e-6)
     parser.add_argument("--pressure-tolerance", type=float, default=0.002)
     parser.add_argument("--schur-pressure-cap", type=float, default=100.0)
     parser.add_argument("--schur-step-cap", type=float, default=50.0)
@@ -165,6 +167,13 @@ def main():
         schur_pressure_cap=args.schur_pressure_cap,
         schur_step_cap=args.schur_step_cap,
     )
+    if args.shared_edge_tie_step is not None:
+        settings = replace(
+            settings,
+            q4_s3_shared_edge_tie_step_m=args.shared_edge_tie_step,
+            q4_s3_shared_edge_tie_direction=(1.0, 0.0, 0.0),
+            q4_s3_shared_edge_tie_relative_tolerance=args.shared_edge_tie_relative_tolerance,
+        )
     if args.stop_after_slide:
         program = replace(program, waypoints=program.waypoints[:3])
     capability = validate_general_contact(model, definition, settings)
@@ -185,6 +194,7 @@ def main():
         "normal_approach_m": args.normal_approach,
         "four_phase": args.four_phase,
         "slide_distance_m": args.slide_distance,
+        "shared_edge_tie_step_m": args.shared_edge_tie_step,
         "pressure_tolerance_pa": args.pressure_tolerance,
         "schur_pressure_cap_pa": args.schur_pressure_cap,
         "schur_step_cap_pa": args.schur_step_cap,

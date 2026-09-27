@@ -323,6 +323,7 @@ class _PatchResults:
     pressure_gram_supported_modes: int | None = None
     pressure_gram_scaled_rank: int | None = None
     pressure_gram_scaled_condition_estimate: float | None = None
+    tie_resolution_relative_error: float | None = None
 
     def to_dict(self):
         result = dict(vars(self))
@@ -345,6 +346,8 @@ class _PatchResults:
             for name in ("pressure_gram_supported_modes", "pressure_gram_scaled_rank",
                          "pressure_gram_scaled_condition_estimate"):
                 result.pop(name)
+        if self.tie_resolution_relative_error is None:
+            result.pop("tie_resolution_relative_error")
         return result
 
 
@@ -396,6 +399,12 @@ class GeneralS3PatchManager:
                 self.law,
                 support_resolution=self.settings.augmentation_support_resolution,
             )
+            if self.settings.q4_s3_shared_edge_tie_step_m is not None:
+                self.law.set_shared_edge_tie(
+                    self.settings.q4_s3_shared_edge_tie_step_m,
+                    self.settings.q4_s3_shared_edge_tie_direction,
+                    self.settings.q4_s3_shared_edge_tie_relative_tolerance,
+                )
             self.normal_multipliers = np.zeros(len(self.law.source_node_ids))
             self.last_support_reset = None
         source_ref, source_map = _unique_work_map(adapters[0], self.law.source_node_ids)
@@ -468,12 +477,14 @@ class GeneralS3PatchManager:
             local_tangent = (sparse.csr_matrix((self.law.n_coordinates, self.law.n_coordinates))
                              if tangent else None)
             evaluations = pair_evaluations if local_derivatives else 1
+            tie_error = None
         else:
             work = (self.law.work(source, target, self.normal_multipliers, tangent=tangent)
                     if self.augmented else self.law.work(source, target, tangent=tangent))
             local_force = work.residual
             local_tangent = sparse.csr_matrix(work.tangent) if tangent else None
             evaluations = work.energy_evaluations
+            tie_error = work.tie_resolution_relative_error
             if local_derivatives:
                 pair_evaluations += work.energy_evaluations
         force = np.asarray(self.map.T @ local_force).reshape(-1)
@@ -535,6 +546,7 @@ class GeneralS3PatchManager:
             gram_scaled.supported_modes if gram_scaled is not None else None,
             gram_scaled.scaled_rank if gram_scaled is not None else None,
             gram_scaled.scaled_condition if gram_scaled is not None else None,
+            tie_error,
         )
         return force, stiffness, result
 
@@ -720,6 +732,10 @@ class GeneralS3PatchManager:
                          **({"general_s3_differentiation": self.settings.general_s3_differentiation}
                             if self.settings.general_s3_differentiation != "existing" else {}),
                          "maximum_general_s3_energy_evaluations": self.settings.maximum_general_s3_energy_evaluations,
+                         **({"q4_s3_shared_edge_tie_step_m": self.settings.q4_s3_shared_edge_tie_step_m,
+                             "q4_s3_shared_edge_tie_direction": list(self.settings.q4_s3_shared_edge_tie_direction),
+                             "q4_s3_shared_edge_tie_relative_tolerance": self.settings.q4_s3_shared_edge_tie_relative_tolerance}
+                            if self.settings.q4_s3_shared_edge_tie_step_m is not None else {}),
                          "q4_target_weighted_gap_tolerance": self.settings.q4_target_weighted_gap_tolerance,
                          "maximum_q4_target_integration_triangles": self.settings.maximum_q4_target_integration_triangles,
                          "q4_source_area_tolerance": self.settings.q4_source_area_tolerance,

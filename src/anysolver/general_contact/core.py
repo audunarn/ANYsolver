@@ -192,6 +192,9 @@ class ContactSolverSettings:
     maximum_beam_pair_gap_depth: int | None = None
     general_s3_difference_step: float | None = None
     general_s3_differentiation: str = "existing"
+    q4_s3_shared_edge_tie_step_m: float | None = None
+    q4_s3_shared_edge_tie_direction: tuple[float, float, float] | None = None
+    q4_s3_shared_edge_tie_relative_tolerance: float | None = None
     maximum_general_s3_energy_evaluations: int = 1500
     q4_target_weighted_gap_tolerance: float | None = None
     maximum_q4_target_integration_triangles: int | None = None
@@ -303,6 +306,22 @@ class ContactSolverSettings:
             "existing", "jet2_s3_dev", "jet2_q4_s3_dev",
         }:
             raise ValueError("general_s3_differentiation is not an admitted development mode")
+        tie_values = (self.q4_s3_shared_edge_tie_step_m,
+                      self.q4_s3_shared_edge_tie_direction,
+                      self.q4_s3_shared_edge_tie_relative_tolerance)
+        if any(value is not None for value in tie_values):
+            if any(value is None for value in tie_values):
+                raise ValueError("Q4/S3 shared-edge tie needs step, direction and relative tolerance")
+            if self.general_s3_differentiation != "jet2_q4_s3_dev":
+                raise ValueError("Q4/S3 shared-edge tie needs Jet2 Q4/S3 development differentiation")
+            if (not np.isfinite(self.q4_s3_shared_edge_tie_step_m)
+                    or self.q4_s3_shared_edge_tie_step_m <= 0.0
+                    or not np.isfinite(self.q4_s3_shared_edge_tie_relative_tolerance)
+                    or not 0.0 < self.q4_s3_shared_edge_tie_relative_tolerance <= 1.0e-3):
+                raise ValueError("Q4/S3 shared-edge tie step and tolerance must be finite and positive")
+            direction = np.asarray(self.q4_s3_shared_edge_tie_direction, dtype=float)
+            if direction.shape != (3,) or not np.all(np.isfinite(direction)) or not np.isclose(np.linalg.norm(direction), 1.0, rtol=0.0, atol=1.0e-12):
+                raise ValueError("Q4/S3 shared-edge tie direction must be a unit 3-vector")
         if (type(self.maximum_general_s3_energy_evaluations) is not int
                 or self.maximum_general_s3_energy_evaluations < 1):
             raise ValueError("maximum_general_s3_energy_evaluations must be positive")

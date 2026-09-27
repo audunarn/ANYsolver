@@ -8,6 +8,7 @@ moving overlap support; this avoids frictionless boundary-motion work.
 from __future__ import annotations
 
 from dataclasses import replace
+import re
 
 import numpy as np
 
@@ -24,7 +25,8 @@ from .s3_patch_mortar_energy import (
 )
 
 
-def _touching_projected_boundaries(first: PlanarFace, second: PlanarFace) -> bool:
+def _touching_projected_boundaries(first: PlanarFace, second: PlanarFace,
+                                   *, relative_tolerance=1.0e-11) -> bool:
     """Conservatively identify a zero-area projection branch transition."""
     tangent = first.corners[1] - first.corners[0]
     tangent /= np.linalg.norm(tangent)
@@ -37,7 +39,7 @@ def _touching_projected_boundaries(first: PlanarFace, second: PlanarFace) -> boo
                                       (face.corners-origin) @ binormal))
                      for face in (first, second))
     scale = max(float(np.max(np.linalg.norm(p-p[0], axis=1))) for p in polygons)
-    tolerance = 1.0e-11*scale
+    tolerance = relative_tolerance*scale
     for vertices, edges in ((polygons[0], polygons[1]),
                             (polygons[1], polygons[0])):
         for point in vertices:
@@ -53,7 +55,8 @@ def _touching_projected_boundaries(first: PlanarFace, second: PlanarFace) -> boo
 def _touching_shared_target_edge(first: PlanarFace,
                                  target_positions: np.ndarray,
                                  target_node_ids: np.ndarray,
-                                 shared_node_ids: set[int]) -> bool:
+                                 shared_node_ids: set[int],
+                                 *, relative_tolerance=1.0e-11) -> bool:
     """Require the touching target edge, excluding exterior/endpoint ties."""
     edge = first.corners[1]-first.corners[0]
     tangent = edge/np.linalg.norm(edge)
@@ -67,7 +70,7 @@ def _touching_shared_target_edge(first: PlanarFace,
                                  (target_positions-origin) @ binormal))
     scale = max(float(np.max(np.linalg.norm(source_xy-source_xy[0], axis=1))),
                 float(np.max(np.linalg.norm(target_xy-target_xy[0], axis=1))))
-    tolerance = 1.0e-11*scale
+    tolerance = relative_tolerance*scale
 
     def near_segment(point, start, end):
         span = end-start
@@ -134,6 +137,12 @@ class MovingS3PatchProjectedNormal:
         self.reference_target = geometry.reference_target
         self.stiffness = geometry.stiffness
         self.tangent_active_coordinates: np.ndarray | None = None
+        self.shared_edge_tie: tuple[float, np.ndarray, float] | None = None
+
+    def set_shared_edge_tie(self, step_m, direction, relative_tolerance):
+        """Opt in to a bounded local limit at an artificial planar S3 seam."""
+        self.shared_edge_tie = (float(step_m), np.asarray(direction, dtype=float),
+                                float(relative_tolerance))
 
     def set_tangent_active_coordinates(self, coordinates):
         """Limit Hessian work to physical axes reached by reduced unknowns."""
@@ -195,6 +204,210 @@ class MovingS3PatchProjectedNormal:
         return result
 
     def work(self, current_source, current_target, multipliers, *, tangent=True):
+        if self.shared_edge_tie is None:
+            return self._work_unresolved(current_source, current_target,
+                                         multipliers, tangent=tangent)
+        try:
+            return self._work_unresolved(current_source, current_target,
+                                         multipliers, tangent=tangent)
+        except (UnsupportedQ4S3Branch, ValueError) as exc:
+            message = str(exc)
+            pair_match = re.match(r"pair=(\d+), overlap_area_m2=", message)
+            degenerate_shared_pair = (
+                ("degenerate integration triangle" in message
+                 or "paired overlap area agreement is unresolved" in message)
+                and pair_match is not None
+            )
+            if (self.geometry.differentiation != "jet2_q4_s3"
+                    or not ("vertex lies on a clipping boundary" in message
+                            or "shared-edge derivative is nonunique" in message
+                            or degenerate_shared_pair)
+                    or not self._only_artificial_shared_edge_ties(
+                        current_source, current_target,
+                        failed_pair=int(pair_match.group(1))
+                        if pair_match is not None else None)):
+                raise
+            return self._shared_edge_limit(current_source, current_target,
+                                           multipliers, tangent=tangent)
+
+    def _only_artificial_shared_edge_ties(self, current_source, current_target,
+                                          *, failed_pair=None):
+        """Classify every projected boundary touch, including zero-area pairs."""
+        source = np.asarray(current_source, dtype=float)
+        target = np.asarray(current_target, dtype=float)
+        direction = self.shared_edge_tie[1]
+        found = False
+        failed_pair_seen = False
+        for source_face, source_ids in enumerate(self.source_face_indices):
+            positions = source[source_ids]
+            first, normal = projected_q4_source_face(positions)
+            if abs(float(normal @ direction)) > 1.0e-4:
+                return False
+            for target_face, target_ids in enumerate(self.target_face_indices):
+                positions = target[target_ids]
+                projected = positions-((positions-first.corners[0]) @ normal)[:, None]*normal
+                second = PlanarFace((2, 1), projected)
+                if not _touching_projected_boundaries(
+                        first, second, relative_tolerance=1.0e-10):
+                    continue
+                admitted = False
+                for other_ids in self.target_face_indices:
+                    shared = set(map(int, target_ids)).intersection(map(int, other_ids))
+                    if np.array_equal(other_ids, target_ids) or len(shared) != 2:
+                        continue
+                    other = target[other_ids]
+                    first_normal = np.cross(positions[1]-positions[0],
+                                            positions[2]-positions[0])
+                    other_normal = np.cross(other[1]-other[0], other[2]-other[0])
+                    scale = np.linalg.norm(first_normal)*np.linalg.norm(other_normal)
+                    if (scale <= 0.0 or np.dot(first_normal, other_normal)
+                            < (1.0-1.0e-10)*scale):
+                        continue
+                    if abs(float(direction @ first_normal)) > 1.0e-10*np.linalg.norm(first_normal):
+                        continue
+                    face_size = max(np.linalg.norm(positions[1]-positions[0]),
+                                    np.linalg.norm(other[1]-other[0]))
+                    plane_error = abs(float((other[0]-positions[0]) @ first_normal))
+                    if plane_error > 1.0e-10*face_size*np.linalg.norm(first_normal):
+                        continue
+                    shared_positions = target[list(shared)]
+                    edge = shared_positions[1]-shared_positions[0]
+                    crossing = np.cross(normal, edge)
+                    if abs(float(direction @ crossing)) < 0.05*np.linalg.norm(crossing):
+                        continue
+                    if _touching_shared_target_edge(first, positions, target_ids,
+                                                    shared,
+                                                    relative_tolerance=1.0e-10):
+                        admitted = True
+                        break
+                if not admitted:
+                    return False
+                found = True
+                if failed_pair == source_face*len(self.target_face_indices)+target_face:
+                    failed_pair_seen = True
+        return found and (failed_pair is None or failed_pair_seen)
+
+    def _shared_edge_limit(self, current_source, current_target, multipliers, *, tangent):
+        step, direction, tolerance = self.shared_edge_tie
+        lengths = [np.linalg.norm(face[i]-face[(i+1) % len(face)])
+                   for faces, positions in (
+                       (self.source_face_indices, self.reference_source),
+                       (self.target_face_indices, self.reference_target))
+                   for ids in faces for face in (positions[ids],)
+                   for i in range(len(face))]
+        if step > 1.0e-4*min(lengths):
+            raise UnsupportedQ4S3Branch("shared-edge tie step exceeds local geometry scale")
+        exact = self.evaluate(current_source, current_target, multipliers)
+        exact_supported, _ = self.resolved_support(exact)
+        exact_active = exact.pressure > 0.0
+        observations = []
+        # The failed first Jet2 attempt does not return its partial count.
+        # Charge its full possible base-plus-pair budget conservatively.
+        evaluations = 2*len(self.geometry.pair_laws)
+        for offset in (step, step/2.0):
+            sides = []
+            for sign in (-1.0, 1.0):
+                shifted = np.asarray(current_source, dtype=float).copy()
+                shifted += sign*offset*direction
+                try:
+                    candidate = self._work_unresolved(
+                        shifted, current_target, multipliers, tangent=tangent,
+                    )
+                except (UnsupportedQ4S3Branch, ValueError) as exc:
+                    raise UnsupportedQ4S3Branch(
+                        f"shared-edge tie smooth neighbor unresolved "
+                        f"(offset_m={sign*offset:.12g}): {exc}"
+                    ) from exc
+                evaluations += candidate.energy_evaluations
+                if evaluations > self.geometry.maximum_energy_evaluations:
+                    raise MemoryError("Q4/S3 shared-edge tie evaluation budget exhausted")
+                supported, _ = self.resolved_support(candidate.state)
+                if (not np.array_equal(supported, exact_supported)
+                        or not np.array_equal(candidate.state.pressure > 0.0,
+                                              exact_active)):
+                    raise UnsupportedQ4S3Branch("shared-edge tie changes pressure support or active set")
+                for name in ("reference_support", "reference_weighted_gap",
+                             "normalized_gap", "pressure"):
+                    observed = getattr(candidate.state, name)
+                    reference = getattr(exact, name)
+                    scale = max(float(np.max(np.abs(reference))), 1.0e-20)
+                    if np.any(np.abs(observed-reference)
+                              > tolerance*np.maximum(np.abs(reference),
+                                                     1.0e-8*scale)):
+                        raise UnsupportedQ4S3Branch(
+                            f"shared-edge tie {name} disagrees with exact state"
+                        )
+                sides.append(candidate)
+            observations.append(sides)
+
+        def relative_difference(a, b):
+            return float(np.linalg.norm(a-b)/max(np.linalg.norm(a),
+                                                  np.linalg.norm(b), 1.0e-12))
+
+        def limit(field):
+            values = [[getattr(candidate, field) for candidate in sides]
+                      for sides in observations]
+            means = [0.5*(side[0]+side[1]) for side in values]
+            extrapolated = (4.0*means[1]-means[0])/3.0
+            errors = [relative_difference(side[0], side[1]) for side in values]
+            errors.append(relative_difference(means[0], means[1]))
+            errors.append(relative_difference(means[1], extrapolated))
+            if (not np.all(np.isfinite(extrapolated))
+                    or max(errors) > tolerance):
+                raise UnsupportedQ4S3Branch(
+                    f"shared-edge tie {field} limit unresolved (relative_error={max(errors):.12g})"
+                )
+            return extrapolated, max(errors)
+
+        residual, residual_error = limit("residual")
+        tangent_matrix, tangent_error = limit("tangent") if tangent else (None, 0.0)
+        if tangent:
+            active = (np.arange(self.n_coordinates, dtype=np.intp)
+                      if self.tangent_active_coordinates is None else
+                      self.tangent_active_coordinates)
+            for offset_index, sides in enumerate(observations):
+                if len(active) == 0:
+                    break
+                first = sides[0].tangent[:, active]
+                second = sides[1].tangent[:, active]
+                column_scale = max(np.max(np.linalg.norm(first, axis=0)),
+                                   np.max(np.linalg.norm(second, axis=0)),
+                                   1.0e-12)
+                relative_columns = np.linalg.norm(first-second, axis=0) / np.maximum(
+                    np.maximum(np.linalg.norm(first, axis=0),
+                               np.linalg.norm(second, axis=0)),
+                    1.0e-6*column_scale,
+                )
+                if np.max(relative_columns) > (2.0 if offset_index == 0 else 1.0)*tolerance:
+                    raise UnsupportedQ4S3Branch(
+                        "shared-edge tie reduced tangent columns disagree"
+                    )
+            trial_direction = np.zeros_like(np.asarray(current_source, dtype=float))
+            trial_direction[:] = direction
+            action = np.concatenate((trial_direction.reshape(-1),
+                                     np.zeros(3*len(self.target_node_ids))))
+            if np.all(np.isin(np.flatnonzero(action), active)):
+                centered = (observations[1][1].residual
+                            - observations[1][0].residual)/step
+                differentiated = tangent_matrix @ action
+                if relative_difference(centered, differentiated) > tolerance:
+                    raise UnsupportedQ4S3Branch(
+                        "shared-edge tie residual/tangent directional limit disagrees"
+                    )
+        positions = np.vstack((current_source, current_target))
+        forces = residual.reshape(-1, 3)
+        force_scale = max(float(np.sum(np.linalg.norm(forces, axis=1))), 1.0e-20)
+        length_scale = max(float(np.max(np.linalg.norm(positions-positions[0],
+                                                       axis=1))), 1.0e-20)
+        if (np.linalg.norm(forces.sum(axis=0)) > tolerance*force_scale
+                or np.linalg.norm(np.cross(positions, forces).sum(axis=0))
+                > tolerance*length_scale*force_scale):
+            raise UnsupportedQ4S3Branch("shared-edge tie exact-pose wrench is unbalanced")
+        return MovingS3PatchMortarWork(exact, residual, tangent_matrix,
+                                       evaluations,
+                                       max(residual_error, tangent_error))
+
+    def _work_unresolved(self, current_source, current_target, multipliers, *, tangent=True):
         multipliers = self._multipliers(multipliers)
         coordinates = np.concatenate((np.asarray(current_source, dtype=float),
                                       np.asarray(current_target, dtype=float))).reshape(-1)
@@ -453,10 +666,15 @@ class MovingS3PatchProjectedNormal:
                 # propagated polygon-coordinate resolution first. Permit only
                 # twice that observed relative discrepancy in the per-node
                 # integrals; this does not relax quadrature or tangent gates.
-                value_rtol = _q4_s3_pair_value_rtol(
-                    local.overlap_area, derivative.overlap_area,
-                    derivative.overlap_area_resolution,
-                )
+                try:
+                    value_rtol = _q4_s3_pair_value_rtol(
+                        local.overlap_area, derivative.overlap_area,
+                        derivative.overlap_area_resolution,
+                    )
+                except UnsupportedQ4S3Branch as exc:
+                    raise UnsupportedQ4S3Branch(
+                        f"pair={pair_index}, overlap_area_m2={local.overlap_area:.12g}: {exc}"
+                    ) from exc
             if (not np.allclose(derivative.reference_support,
                                 local.reference_support, rtol=value_rtol,
                                 atol=support_roundoff)
