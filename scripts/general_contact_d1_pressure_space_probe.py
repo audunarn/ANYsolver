@@ -22,6 +22,7 @@ def main():
     parser.add_argument("divisions", type=int, nargs="+")
     parser.add_argument("--rows", type=int)
     args = parser.parse_args()
+    started_total = time.perf_counter()
 
     target_x0, target_x1 = 0.24, 0.77
     target_y0, target_y1 = 0.21, 0.73
@@ -107,6 +108,7 @@ def main():
             "continuous local-plane positive-part pressure over the fixed "
             "target rectangle; finite-slope projection differences remain"
         ),
+        "elapsed_seconds_total": time.perf_counter() - started_total,
         "rows": rows,
     }, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(rows, indent=2))
