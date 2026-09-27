@@ -128,6 +128,40 @@ def test_reciprocal_line_rows_expose_unscaled_channel_identities():
                         < 1e-12*np.linalg.norm(rows))
 
 
+@pytest.mark.parametrize("shell_cells,beam_half_cells,intervals,expected_rank", (
+    (8, 12, 8, 44), (2, 18, 8, 48),
+    (16, 12, 16, 84), (2, 26, 16, 96),
+))
+def test_union_cut_p0_growth_is_not_uniformly_independent(
+        shell_cells, beam_half_cells, intervals, expected_rank):
+    """A six-vector on every union cut over-resolves the shell-fine trace."""
+    xs, ys = local_grid(shell_cells, transverse_cells=4)
+    beam = build(beam_half_cells, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam)
+    rows, _ = _rows(line, LineMultiplierSpace(
+        "piecewise_constant", tuple(np.linspace(0., 1., intervals+1))))
+    shell_size = 6*len(xs)*len(ys)
+    fixed_shell = {6*(j*len(xs)+i)+axis
+                   for j in range(len(ys)) for i, x in enumerate(xs)
+                   if abs(x+.5) < 1e-12 for axis in range(6)}
+    fixed_beam = {shell_size+int(index) for index in beam.context.fixed}
+    free = np.setdiff1d(
+        np.arange(rows.shape[1]), np.array(sorted(fixed_shell|fixed_beam)))
+    # Trace-only screen: the first entries of _scales do not depend on
+    # multiplier count, and the loaded oracle deliberately caps that count.
+    scales, _ = _scales(shell_size, beam, free, row_count=1)
+    mapped = rows[:, free]*scales[:len(free)]
+    norms = np.linalg.norm(mapped, axis=1)
+    assert np.min(norms) > 0.
+    unit_rows = mapped/norms[:, None]
+    singular = np.linalg.svd(unit_rows, compute_uv=False)
+    tolerance = max(unit_rows.shape)*np.finfo(float).eps*singular[0]
+    assert np.sum(singular > tolerance) == expected_rank
+    assert len(rows) == 6*intervals
+
+
 def test_material_line_detects_even_slip_invisible_to_reduced_strip_pose():
     xs, ys, beam, line = _fixture()
     hybrid = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)

@@ -76,6 +76,31 @@ do not derive a universal multiplier rule. They rule out independent
 per-channel truncation as a complete general policy and direct the
 next design to a joint physical trace image.
 
+**Next bounded P0 growth discriminator (prospective):** Four-cell P0
+has full supported rank on both reciprocal 1:2 grids, but that fact
+does not establish a fixed union-cut rule. Without assembling a loaded
+system, test six-vector P0 on the existing bounded 1:4 and 1:8
+reciprocal Q4/reference-cut grids, using the same physical-coordinate
+scaling and fixed supports. If P0 loses rank as cuts grow, reject
+"one six-vector per union cut" as a general rule and derive a joint
+trace-image basis. If it stays independent, retain it only as a
+candidate for physical work, locking, and mixed-system stability.
+No formal F03 authority or production policy follows from rank alone.
+
+**P0 growth result:** The first trace-only attempt called the bounded
+loaded-solve scale helper with more than its 36-row limit and stopped
+before a rank result; the corrected calculation reused its identical
+physical primal scales with one dummy multiplier scale. On the existing
+Q4/native-B3 reference cuts, one six-vector P0 row set per *union*
+interval has supported ranks 44/48 (shell-fine 1:4) and 84/96
+(shell-fine 1:8). The reciprocal beam-fine 4:1 and 8:1 cases retain
+48/48 and 96/96, with smallest unit-row singular value about `0.0353`.
+The shell-fine nulls are exact at the stated numerical rank threshold;
+these cases reject union-cut P0 as a universal production resolution
+rule. They do not establish that the continuous law is invalid or that
+coarser P0 is stable. Stop union-cut loaded growth and derive a fixed
+joint/coarser-side trace policy with work and unsupported-mode checks.
+
 **Next bounded off-edge loaded check (prospective):** The first and second
 variations pass with interior S3 hosts, but a supported loaded transfer
 may still reveal host-dependent assembly, rank, or wrench/work defects.
