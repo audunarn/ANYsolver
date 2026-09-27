@@ -27,6 +27,36 @@ select a space from tip motion, F5 proximity or one spectral quotient,
 and do not repeat classical axial refinement without a new question.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
+**Next norm-construction discriminator:** On the existing bounded x8
+P0 two/four-interval fixture, express each current centered mean/rotation
+row in the common raw force/first-moment rows by an explicit invertible
+six-by-six center/inertia transform. Transport the old multiplier norm
+with its work-dual transform and verify reference rows, conjugate work
+and the actual indefinite native mixed spectrum against the saved old
+representation. If that equivalence fails, repair units or frame/arm
+mapping before growing-space stability tests; if it passes, carry the
+physically interpreted raw norm into the registered ratio assessment.
+This is a bounded metric-construction check, not F03 acceptance.
+
+**P0 work-dual norm outcome:** On the bounded x8/y4 C1 B3-12 native
+retained mixed operator, the explicit interval center/inertia transform
+maps the current centered P0 rows into the common raw P0 rows with
+relative defects below `8e-18`. Transporting the multiplier norm by
+the conjugate work map preserves a random primal/dual virtual-work
+pairing to `1.4e-17` relative and the smallest normed singular value
+of the *actual indefinite mixed tangent* to `1.6e-13` relative for
+two and four intervals. Raw source-bound result:
+`B3_GE_E4_PL_F03_COMMON_TRACE_P0_METRIC_20260927.json`. This is an
+equivalence of representations of the existing **diagnostic** norm,
+not an independent proof that the norm is mesh-uniform or physically
+complete. It permits use of the raw P0 coordinates in the next
+registered growing-space test without changing that comparator's
+mechanics or numerical metric. G0B/F03 remain open, G1 barred.
+Independent review found no transform or mixed-operator defect. The
+saved `transported_line_norm.physical_density_units` field is inherited
+from the *centered* representation; it must not be read as units of the
+raw dual, which are `N/m` and `N/m²` for these rows.
+
 **Next local-mode discriminator (prospective):** First check whether the
 supported four-interval top-face row space is contained in the eight-
 interval space for each B3-12/B3-24 trace on the same x16 shell. Use
