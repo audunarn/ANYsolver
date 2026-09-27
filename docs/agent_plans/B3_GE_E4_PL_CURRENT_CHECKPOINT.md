@@ -22,15 +22,42 @@ resolved-solid beam response, how it behaves under physical refinement and
 registered interface ratios, and whether a law or multiplier policy needs
 correction. One solid grid and a linear no-contact comparator cannot qualify
 physical fidelity or select P0/P1/dual.
-**Next discriminator and action:** Diagnose the solid-to-native trace
-idealization on the *same saved supported fields*: separate E4/B3-compatible
-section motion from solid through-thickness/director and section-warping
-residuals in interface work. If residual work explains the same-action
-difference, carry that idealization into a controlled refinement/reference
-comparison. If it does not, revise the declared continuous trace or
-enforcement before ratio qualification. Do not resume finer classical axial
-sweeps or infer a line-space choice from a single spectral value.
+**Next discriminator and action:** The saved-field local trace diagnostic is
+complete. It finds beam-section residual work of 3.2% (torque) and 4.6%
+(opening) of that side's work, with much smaller plate-director residual
+work. These *local* fits do not reproduce the larger same-domain action
+differences and cannot allocate their cause. The next bounded comparison
+must use globally compatible E4/B3 trace fields on this same supported
+solid state, or a second explicitly matched physical connection law, to
+distinguish representation from the declared six-channel law. Only then
+decide on a targeted law correction, physical refinement, or growing-space
+line assessment. Do not resume finer classical axial sweeps or infer a
+line-space choice from a single spectral value.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
+
+**Local solid trace-residual diagnostic (27 September):** The same eight
+source-bound solid FRD fields and `reconstruction_v5.json` were reused with
+no new external solve. The deck- and field-bound result is
+`trace_residual_v3.json` (SHA256
+`27ee50adc2270c1a6187e8f656171503ff0712a114eb3aca4aa3546950e06ef4`);
+v2 is preserved (SHA256
+`3edb8bdcdbbf33bed24ebf00b9501d80dae99742daea2b62d8cff3f5738aa13f`)
+as is v1 (SHA256
+`2dec54cb392a6f4220434c7c02a780b3f11765b6b23b671b081feba26e62a230`).
+Both source-deck, all six unit-action, and both loaded-field hashes are
+checked before use. Independent read-only review of v2 and its mechanics
+found no blocking finding; v3 adds the requested deck-identity check and
+reproduces the same results.
+At 121 plate sites, fitting local through-thickness director motion leaves
+`6.68e-6 J` torque work (0.36% of that side) and `-1.31e-7 J` opening
+work (~0.001%). At nine bar stations, fitting local rigid cross-section
+motion leaves `5.91e-5 J` torque work (3.16% of |bar-side work|) and
+`5.78e-4 J` opening work (4.59%). The exact solid six-channel gap is near
+zero; the local-fit gaps are nonzero. The action/gap work identity closes
+within `6e-17 J`; two synthetic representability tests pass. These fits
+are pointwise and not a projection into globally compatible E4/B3 trial
+spaces. Their work residuals cannot by themselves explain the prior
+same-domain native-action differences or choose a multiplier space.
 
 **Matched linear external reference and fixed-domain action replays (27
 September):** The source-bound C1 detached F4 C3D20R model has separate
