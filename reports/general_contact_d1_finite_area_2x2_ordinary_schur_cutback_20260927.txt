@@ -1,0 +1,13 @@
+{
+  "divisions": 2,
+  "total_load_n": 0.4,
+  "normal_law": "augmented",
+  "normal_stiffness": 1000.0,
+  "supported_schur": true,
+  "min_step_fraction": 0.1,
+  "elapsed_seconds": 159.653694299981,
+  "status": "contact_gap_exceeded",
+  "failure_reason": "contact_gap_exceeded",
+  "accepted_steps": 2,
+  "has_restart_checkpoint": true
+}

@@ -6,6 +6,7 @@ physical region at every mesh size. Results are exploratory, not qualification.
 """
 
 import argparse
+from dataclasses import replace
 import json
 from pathlib import Path
 import time
@@ -19,9 +20,14 @@ from anysolver.fe_core import FEModel
 
 
 def build_case(divisions: int, *, total_load_n: float = 0.4,
-               normal_stiffness: float = 1000.0):
+               normal_stiffness: float = 1000.0,
+               supported_schur: bool = False,
+               geometry_profile: str = "overhang",
+               schur_mode_cap: int = 16):
     if divisions < 2 or divisions % 2:
         raise ValueError("divisions must be an even integer of at least two")
+    if geometry_profile not in {"overhang", "central"}:
+        raise ValueError("geometry_profile must be overhang or central")
     model = FEModel(f"general_contact_finite_area_{divisions}")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
     stride = divisions + 1
@@ -29,12 +35,18 @@ def build_case(divisions: int, *, total_load_n: float = 0.4,
     for row in range(stride):
         for column in range(stride):
             model.add_node(1 + row*stride + column,
-                           0.1 + column/divisions, 0.1 + row/divisions,
+                           (0.1 if geometry_profile == "overhang" else 0.0)
+                           + column/divisions,
+                           (0.1 if geometry_profile == "overhang" else 0.0)
+                           + row/divisions,
                            0.04005)
     target_nodes = tuple(range(stride*stride + 1, stride*stride + 5))
-    for node, (x, y) in zip(target_nodes, (
-        (0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0),
-    )):
+    target_corners = (
+        ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0))
+        if geometry_profile == "overhang" else
+        ((0.24, 0.21), (0.77, 0.21), (0.77, 0.73), (0.24, 0.73))
+    )
+    for node, (x, y) in zip(target_nodes, target_corners):
         model.add_node(node, x, y, 0.0)
 
     source_elements = []
@@ -69,7 +81,13 @@ def build_case(divisions: int, *, total_load_n: float = 0.4,
         "source_guide", source_nodes,
         {axis: 0.0 for axis in ("ux", "uy", "rx", "ry", "rz")},
     ))
-    supported_edge = tuple(1 + row*stride for row in range(stride))
+    supported_edge = (
+        tuple(1 + row*stride for row in range(stride))
+        if geometry_profile == "overhang" else
+        tuple(1 + row*stride + column
+              for row in range(stride) for column in range(stride)
+              if row in {0, divisions} or column in {0, divisions})
+    )
     model.add_boundary_condition(BoundaryCondition(
         "source_supported_edge", supported_edge, {"uz": 0.0},
     ))
@@ -88,7 +106,10 @@ def build_case(divisions: int, *, total_load_n: float = 0.4,
     )
     settings = ContactSolverSettings(
         pair_motion="general", normal_discretization="primal_mortar",
-        q4_source_gap_certificate="whole_face",
+        q4_source_gap_certificate=(
+            "whole_face" if geometry_profile == "overhang"
+            else "projected_matching"
+        ),
         general_s3_difference_step=2.0e-5,
         maximum_general_s3_energy_evaluations=5000*divisions**2,
         q4_source_area_tolerance=1.0e-9,
@@ -102,6 +123,16 @@ def build_case(divisions: int, *, total_load_n: float = 0.4,
         q4_source_weighted_gap_gradient_tolerance=1.0e-5,
         q4_source_weighted_gap_hessian_tolerance=1.0e-5,
     )
+    if supported_schur:
+        settings = replace(
+            settings, augmentation_acceleration="supported_schur_dev",
+            augmentation_schur_maximum_modes=schur_mode_cap,
+            augmentation_schur_maximum_pressure_pa=200.0,
+            augmentation_schur_maximum_step_pa=100.0,
+            augmentation_schur_difference_step_m=2.0e-6,
+            augmentation_schur_maximum_attempts=2,
+            augmentation_schur_maximum_relinearizations=0,
+        )
     return model, load, definition, settings
 
 
@@ -110,9 +141,20 @@ def main():
     parser.add_argument("divisions", type=int)
     parser.add_argument("output", type=Path)
     parser.add_argument("--normal-stiffness", type=float, default=1000.0)
+    parser.add_argument("--supported-schur", action="store_true")
+    parser.add_argument("--min-step-fraction", type=float, default=0.5)
+    parser.add_argument("--geometry-profile", choices=("overhang", "central"),
+                        default="overhang")
+    parser.add_argument("--total-load", type=float, default=0.4)
+    parser.add_argument("--schur-mode-cap", type=int, default=16)
+    parser.add_argument("--max-load-factor", type=float, default=1.0)
     args = parser.parse_args()
     model, load, definition, settings = build_case(
-        args.divisions, normal_stiffness=args.normal_stiffness,
+        args.divisions, total_load_n=args.total_load,
+        normal_stiffness=args.normal_stiffness,
+        supported_schur=args.supported_schur,
+        geometry_profile=args.geometry_profile,
+        schur_mode_cap=args.schur_mode_cap,
     )
     capability = validate_general_contact(model, definition, settings)
     if not capability.valid:
@@ -121,14 +163,20 @@ def main():
     result = solve_static_nonlinear(
         model, load, contact=definition, contact_settings=settings,
         control="force", kinematics="von_karman", num_steps=1,
-        max_iterations=12, min_step_fraction=0.5,
+        max_iterations=12, min_step_fraction=args.min_step_fraction,
+        max_load_factor=args.max_load_factor,
         emit_restart_checkpoint=True,
     )
     record = {
         "divisions": args.divisions,
-        "total_load_n": 0.4,
+        "total_load_n": args.total_load,
+        "geometry_profile": args.geometry_profile,
         "normal_law": "augmented",
         "normal_stiffness": args.normal_stiffness,
+        "supported_schur": args.supported_schur,
+        "min_step_fraction": args.min_step_fraction,
+        "schur_mode_cap": args.schur_mode_cap,
+        "max_load_factor": args.max_load_factor,
         "elapsed_seconds": time.perf_counter() - start,
         "status": result.status,
         "failure_reason": result.failure_reason,

@@ -6377,10 +6377,13 @@ def _solve_static_nonlinear_under_lease(
             return assemble_at(path_factor, *args, **kwargs)
         return _assemble_nonlinear_system(*args, **kwargs)
 
+    last_contact_equilibrium_tangent = None
+
     def newton_increment(q_start, path_factor, reference, line_search_mode,
                          *, swept_origin_q=None, augmentation=0):
         """Solve one load increment with plain, decrease, or Armijo Newton."""
-        nonlocal total_iterations
+        nonlocal total_iterations, last_contact_equilibrium_tangent
+        last_contact_equilibrium_tangent = None
         cancellation_safe_point(
             cancellation_token,
             f"nonlinear_static.force.step:{step_index}.start",
@@ -6489,6 +6492,7 @@ def _solve_static_nonlinear_under_lease(
                         "contact_gap_exceeded",
                         None,
                     )
+                last_contact_equilibrium_tangent = K_T
                 return (
                     True,
                     q_trial,
@@ -6936,6 +6940,9 @@ def _solve_static_nonlinear_under_lease(
             adaptation_iterations = 0
             line_search_used = bool(line_search_first)
             augmentation_start_q = q
+            schur_active_signature = None
+            schur_epoch_attempts = 0
+            schur_backup = None
             for augmentation in range(1, augmentation_limit + 1):
                 augmentation_iterations = augmentation
                 (
@@ -6983,12 +6990,26 @@ def _solve_static_nonlinear_under_lease(
                 )
                 if not converged or augmented_contact_manager is None:
                     if augmented_contact_manager is not None:
-                        contact_augmentation_trace.append({
+                        failed_row = {
                             "augmentation": augmentation,
                             "equilibrium_converged": bool(converged),
                             "failure_reason": failure_reason,
                             "equilibrium_residual_norm": float(residual_norm),
-                        })
+                        }
+                        if schur_backup is not None:
+                            fallback_q, fallback_pressure, _prior_change, _active = (
+                                schur_backup
+                            )
+                            augmented_contact_manager.set_normal_multipliers(
+                                fallback_pressure
+                            )
+                            _discard_nonlinear_state_candidate(committed_states)
+                            augmentation_start_q = fallback_q
+                            schur_backup = None
+                            failed_row["schur_rejected"] = "equilibrium_failure"
+                            contact_augmentation_trace.append(failed_row)
+                            continue
+                        contact_augmentation_trace.append(failed_row)
                     break
                 candidate_u = full_displacement(q_new, lam_trial)
                 certificate = augmented_contact_manager.evaluate(
@@ -7010,10 +7031,96 @@ def _solve_static_nonlinear_under_lease(
                     "gap_tolerance_met": bool(certificate.gap_tolerance_met),
                     "contact_force_z_n": float(certificate.integration_force[2]),
                 })
+                row = contact_augmentation_trace[-1]
+                active_signature = tuple(int(index) for index in np.flatnonzero(
+                    np.asarray(certificate.numerical_pressure_pa) > 0.0,
+                ))
+                if schur_backup is not None:
+                    fallback_q, fallback_pressure, prior_change, predicted_active = (
+                        schur_backup
+                    )
+                    schur_backup = None
+                    if (not certificate.gap_tolerance_met
+                            or active_signature != predicted_active
+                            or normal_multiplier_change >= 0.75*prior_change):
+                        augmented_contact_manager.set_normal_multipliers(
+                            fallback_pressure
+                        )
+                        _discard_nonlinear_state_candidate(committed_states)
+                        augmentation_start_q = fallback_q
+                        row["schur_rejected"] = "nonlinear_verification"
+                        row["schur_prior_pressure_change_pa"] = prior_change
+                        continue
+                    row["schur_verified"] = True
+                if (augmented_contact_manager.settings.augmentation_acceleration
+                        == "supported_schur_dev"
+                        and active_signature != schur_active_signature):
+                    if schur_active_signature is not None:
+                        row["schur_active_epoch_reset"] = {
+                            "prior_active_indices": list(schur_active_signature),
+                            "current_active_indices": list(active_signature),
+                            "prior_epoch_attempts": schur_epoch_attempts,
+                        }
+                    schur_active_signature = active_signature
+                    schur_epoch_attempts = 0
                 if (normal_multiplier_change <=
                         augmented_contact_manager.settings.pressure_tolerance
                         and certificate.gap_tolerance_met):
                     break
+                if (augmented_contact_manager.settings.augmentation_acceleration
+                        == "supported_schur_dev"
+                        and active_signature
+                        and schur_epoch_attempts
+                        < augmented_contact_manager.settings.augmentation_schur_maximum_attempts
+                        and augmentation >= 2
+                        and augmentation <= augmentation_limit - 2):
+                    from .general_contact.linearized_pivot import (
+                        refined_patch_supported_schur,
+                    )
+
+                    schur_epoch_attempts += 1
+                    if last_contact_equilibrium_tangent is None:
+                        raise RuntimeError("equilibrated contact tangent is missing")
+                    try:
+                        schur = refined_patch_supported_schur(
+                            augmented_contact_manager, candidate_u,
+                            last_contact_equilibrium_tangent, T,
+                            np.zeros((0, T.shape[1])),
+                            difference_step=(augmented_contact_manager.settings
+                                             .augmentation_schur_difference_step_m),
+                            maximum_pressure=(augmented_contact_manager.settings
+                                              .augmentation_schur_maximum_pressure_pa),
+                            maximum_pressure_step=(augmented_contact_manager.settings
+                                                   .augmentation_schur_maximum_step_pa),
+                            maximum_modes=(augmented_contact_manager.settings
+                                           .augmentation_schur_maximum_modes),
+                            diagnostics=row,
+                            check_cancel=lambda: cancellation_safe_point(
+                                cancellation_token,
+                                f"nonlinear_static.force.step:{step_index}."
+                                f"augmentation:{augmentation}.schur",
+                            ),
+                        )
+                    except (ValueError, MemoryError, np.linalg.LinAlgError) as exc:
+                        row["schur_ineligible"] = str(exc)
+                        schur = None
+                    row["schur_proposed"] = schur is not None
+                    if schur is not None:
+                        schur_backup = (
+                            q_new.copy(), projected.copy(), normal_multiplier_change,
+                            schur.active_indices,
+                        )
+                        row["schur_predicted_active_indices"] = list(
+                            schur.active_indices
+                        )
+                        row["schur_predicted_residual_pa"] = (
+                            schur.predicted_residual_after
+                        )
+                        augmented_contact_manager.set_normal_multipliers(
+                            schur.multipliers
+                        )
+                        augmentation_start_q = q_new
+                        continue
                 augmented_contact_manager.set_normal_multipliers(projected)
                 augmentation_start_q = q_new
             else:
@@ -7021,6 +7128,13 @@ def _solve_static_nonlinear_under_lease(
                 failure_reason = "maximum_augmentations_reached"
             if augmented_contact_manager is not None:
                 info["last_contact_augmentation_trace"] = contact_augmentation_trace
+                info.setdefault("contact_augmentation_attempts", []).append({
+                    "step_index": step_index + 1,
+                    "target_load_factor": float(lam_trial),
+                    "equilibrium_converged": bool(converged),
+                    "failure_reason": failure_reason,
+                    "trace": contact_augmentation_trace,
+                })
             if not converged and augmented_contact_manager is not None:
                 augmented_contact_manager.set_normal_multipliers(
                     start_normal_multipliers
@@ -7618,9 +7732,35 @@ def solve_static_nonlinear(
             raise TypeError("contact_settings must be ContactSolverSettings")
         if (contact_settings is not None
                 and contact_settings.augmentation_acceleration != "none"):
-            raise ValueError(
-                "augmentation acceleration requires the contact path analysis owner"
-            )
+            if contact_settings.augmentation_acceleration != "supported_schur_dev":
+                raise ValueError(
+                    "augmentation acceleration requires the contact path analysis owner"
+                )
+            if (len(contact.interactions) != 1
+                    or contact.interactions[0].normal_law != "augmented"):
+                raise ValueError(
+                    "ordinary supported Schur development requires one augmented contact interaction"
+                )
+            from .boundary import LoadCase
+            from .fe_core import Material
+
+            if (control != "force" or kinematics != "von_karman"
+                    or type(load_case) is not LoadCase
+                    or not load_case.nodal_loads or load_case.element_loads
+                    or load_case.pressure_loads or load_case.gravity is not None
+                    or load_case.follower_pressure
+                    or any(value is not None for value in (
+                        constant_load_case, load_program, displacement_control,
+                        fracture_config, imperfection,
+                    ))
+                    or any(type(material) is not Material
+                           or float(getattr(material, "yield_stress", 0.0)) != 0.0
+                           or getattr(material, "hardening_curve", None) is not None
+                           for material in model.materials.values())):
+                raise ValueError(
+                    "ordinary supported Schur development requires elastic "
+                    "von Karman force control with one dead nodal load case"
+                )
         augmented_contact_requested = any(
             interaction.normal_law == "augmented"
             for interaction in contact.interactions
@@ -7743,6 +7883,7 @@ def solve_static_nonlinear(
                         Q4_PAIR_AUGMENTED_PROFILE,
                         Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                         REFINED_Q4_S3_AUGMENTED_PROFILE,
+                        REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
                     )
 
                     if contact_manager.profile not in {
@@ -7752,6 +7893,7 @@ def solve_static_nonlinear(
                         Q4_PAIR_AUGMENTED_PROFILE,
                         Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                         REFINED_Q4_S3_AUGMENTED_PROFILE,
+                        REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
                     }:
                         if "RESTRICTED_SLIDING" in contact_manager.profile:
                             raise ValueError(

@@ -1,0 +1,16 @@
+{
+  "divisions": 2,
+  "total_load_n": 2.0,
+  "geometry_profile": "central",
+  "normal_law": "augmented",
+  "normal_stiffness": 100000.0,
+  "supported_schur": true,
+  "min_step_fraction": 0.1,
+  "schur_mode_cap": 24,
+  "max_load_factor": 0.625,
+  "elapsed_seconds": 20.03837100000237,
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 1,
+  "has_restart_checkpoint": true
+}
