@@ -36,6 +36,10 @@ and balanced, but stays near coarse P0 rather than the four-interval
 response; missing beam-port modes alone do not explain that movement.
 The native-port and P0 m4 row spaces have combined rank 30, so neither
 contains the other; every physical channel contributes omitted directions.
+The shell-side trace image is also independent but does not recover the
+P0 m4 torque response. The full two-sided discrete trace image has 49
+dimensions; four beam-side directions remain outside the 45-dimensional
+shell image, and the P0 m4 space lies inside the full image.
 An independently differentiated flat-reference line-pose contract now
 matches Q4 and interior S3 Jacobians and the eccentric torque/shear
 virtual work; it exposes the force/yaw derivative coupling without
@@ -84,6 +88,41 @@ matching `_scales` guard before rerunning once.
 The next launch reached the rank screen and stopped at its separate
 36-row guard, with no assembly or loaded result. Correct that bounded
 guard to 60 as well; do not infer mechanics from these launcher failures.
+
+**Shell-side trace result and joint-space decision:** The source-bound
+fixed-primal Q4 x8/B3-12 screen completed in `34.15 s` under one BLAS
+thread, JIT disabled, with 45/45 supported physical shell-trace rows.
+Both +100 Nm torque and +1000 N Fz cases passed the bounded equilibrium
+and work checks: largest force/moment balance `7.07e-10` in their
+respective units and largest relative work defect `1.24e-11`.
+Compared with the unchanged-primal four-interval P0 case, shell-trace
+torque tip twist is `+3.414%` and shell physical work `−0.885%`;
+opening tip-z is `−0.243%` and shell work `−0.701%`. Its torque
+orientation RMS gap is `0.488 µrad` versus P0 m4's `6.105 µrad`.
+The smaller gap does not establish a better physical connection. The
+shell-only image does not explain the m2→m4 torque movement and is not
+selected as the multiplier policy.
+
+Independent direct row-span arithmetic on this same fixed model finds
+supported ranks shell `45`, beam `15`, P0 m4 `24`, shell+beam `49`,
+shell+P0 m4 `49`, beam+P0 m4 `30`, and all three `49`. The complete
+weighted six-channel Jacobian has 49 nonzero singular directions, with
+`s49=0.0027589` and `s50=7.83e-16`; its projection defect for all P0 m4
+rows is `1.25e-15` relative. Four independent beam-side directions
+therefore supplement the shell image, while the complete trace image
+contains P0 m4. This is a finite-grid row-space identity, not a stable
+production mortar construction. A maximal 49-row equality may lock;
+do not select it or run another loaded row combination simply from rank.
+Derive a joint test-space policy from the declared two-sided work and
+physical transfer, then assess growing-space stability and the matched
+sided reference. F03/G0B remain open, G1 barred, formal F03 authority
+unconsumed.
+
+Raw result `B3_E4_F03_MATERIAL_LINE_SHELL_TRACE_X8_DEV_V1.json` has
+SHA256 `A9F0FCEB53FDA50FAC479954720B60B99482E4CCCA12F6228355DAE76D225696`.
+Its source commit is `885b4da4`; all six recorded source hashes were
+checked against that revision. No peak-memory measurement or external
+accuracy claim is attached to this bounded result.
 Advance a physically matched two-sided torque/shear reference. The bounded
 off-edge S3 loaded mapping check is complete; do not resume finer
 classical axial work.
