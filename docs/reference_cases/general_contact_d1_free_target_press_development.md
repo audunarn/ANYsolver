@@ -223,3 +223,82 @@ direction, not an independent implementation of H or an all-direction
 derivative gate. The 2% trial predicts only about 2% pressure-residual
 improvement, so its later failure under the unchanged 25% proposal-merit
 rule is expected and does not contradict the local result.
+
+## Finite-step safeguarded proposal exploration
+
+The disposable probe next captured the original full Schur proposal at the
+same augmentation-two state without altering its pressure step. The predicted
+and actual active sets both contained only mode 28, and the overlap signature
+was unchanged. The measured normalized gap nevertheless differed from the
+local H prediction by up to 2.575e−7 m; the projected pressure residual was
+1.522e−3 Pa against a predicted 2.98e−11 Pa. The [full-step report](../../reports/general_contact_d1_free_target_16q4_schur_full_step_dev_20260928.json)
+has SHA256 `b5b68cb5df4e60d0dac2eac348c9b867e1a3031eb7cca90d15bbb0b10db61b7b`.
+This identifies a finite-step nonlinear response on the branch-changing
+direction. It does not imply a wrong local H at the original state.
+
+One 0.75 fraction retained the predicted one-mode active set and produced
+7.311e−4 Pa actual residual. Its 16% improvement did not meet the unchanged
+25% proposal rule, so the solver rejected it. The [0.75 report](../../reports/general_contact_d1_free_target_16q4_schur_075_dev_20260928.json)
+has SHA256 `b0c33a5f151febac1c2ad261d28201cab888b2b4fc1cc4b5d2c362bdc882c1f7`.
+At a separately chosen 0.80 fraction, actual residual was 5.849e−4 Pa,
+a 32.9% reduction from 8.713e−4 Pa. The predicted and actual active sets
+again contained only mode 28; the unchanged nonlinear verification accepted
+the proposal, and the disposable diagnostic route completed all three
+press steps. The [0.80 report](../../reports/general_contact_d1_free_target_16q4_schur_080_dev_20260928.json)
+has SHA256 `ec771c95da1f7f419fac060af3a8e9395e0da2e60f4f014fff4a6d21c1b2d753`.
+The diagnostic restricted Schur attempts to one per active epoch and did not
+save the accepted force/gap history, so it is evidence of a viable local
+safeguard, not a qualified sixteen-Q4 response or a production solver fix.
+
+The next implementation candidate is a bounded re-equilibrated fraction of
+a rejected full Schur proposal, with explicit attempt accounting and the
+same nonnegative pressure, active-set, physical-gap and actual-residual
+verification. General fraction selection and its cost need focused tests;
+0.80 is a fixture observation, not a universal constant.
+
+## Opt-in owner backtrack candidate
+
+The development owner now has an explicit
+`augmentation_schur_nonlinear_backtrack_dev` setting, off by default. After a
+full Schur proposal fails actual re-equilibration, the owner may spend one
+remaining per-epoch Schur attempt and augmentation on a smaller pressure
+fraction from the *same saved linear response*. A bounded scan of nineteen
+interior fractions selects the smallest pressure move whose predicted
+projected residual is at most 70% of the original. That margin does not
+replace the unchanged actual 75% verification rule. The selected pressure
+must remain nonnegative and within the declared pressure and step caps;
+its active set is predicted anew. The owner restores the preproposal
+equilibrated coordinates and controls, then re-equilibrates and checks
+active set, physical gap, pressure residual and structural equilibrium.
+Failed candidates return to the ordinary projected update. The new setting
+is included in the contact definition identity only when enabled, retaining
+the previous checkpoint identity for the default route.
+
+A [single sixteen-Q4 three-step development press](../../reports/general_contact_d1_free_target_16q4_press_backtrack_dev_20260928.json)
+(SHA256 `b62312f0d577c9f3a93c5bcb514862abab4077b33381a2d9968d0db18cb27cb6`)
+completed in 176.88 s. At the final step, the original full Schur trial was
+rejected, the bounded scan examined sixteen fractions and selected 0.80,
+and actual re-equilibration verified 5.849e−4 Pa projected residual versus
+8.713e−4 Pa before correction. A subsequent one-mode Schur trial reached
+5.614e−11 Pa. The step accepted in five augmentations with 7.14e−13 N
+equilibrium residual, 34/34 scaled pressure rank, −1.570 µm independent
+gap against the unchanged 50 µm budget, and equal/opposite paired force.
+The accepted normal contact force was 1.913498e−4 N; its difference from
+the eight-Q4 press force is 8.31% relative to sixteen Q4. This demonstrates
+the owner candidate and retained gates, but does not establish mesh response
+convergence, the full cycle, a general acceleration policy or C1 acceptance.
+
+An independent read-only source review found that overlap vertex counts alone
+could hide a changed clipping edge. The opt-in owner now also compares the
+existing projected clip-branch signature and declines backtracking when it
+is ambiguous. A degenerate trial-signature evaluation is handled as a
+rejected disposable candidate with rollback. The final
+[clip-guarded development press](../../reports/general_contact_d1_free_target_16q4_press_backtrack_clip_guard_v2_dev_20260928.json)
+(SHA256 `069f8d3f9d16d15aec10280765e98e3d47e9b89aa2209d9498e1c5c85d78bf16`)
+also completed three steps. Its step-three force, gap and ordered pressure
+vectors match the earlier opt-in report exactly. The trace records one
+rejected full step, a 0.80 backtrack selected after sixteen bounded scans,
+and verified convergence in five augmentations. The default route remains
+unchanged. The reviewer found no other concrete rollback, budget or
+restart-identity defect in the bounded source review; this was not an
+independent C1 qualification.

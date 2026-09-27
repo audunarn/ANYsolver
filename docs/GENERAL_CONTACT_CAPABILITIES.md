@@ -132,6 +132,14 @@ The subsequent disposable 2%-fraction diagnostic matched the constrained
 gap-response prediction within 3.075e−14 m on the unchanged two-mode branch.
 This supports the local derivative while leaving finite-step/branch
 acceleration and the failed sixteen-Q4 path unresolved.
+Disposable full, 0.75 and 0.80 fraction captures then found a 0.80
+re-equilibrated proposal that passed the unchanged 25% merit rule and let
+the diagnostic three-step press finish. This is a candidate safeguard only;
+the production route and sixteen-Q4 response qualification remain open.
+The new opt-in owner backtrack completed a three-step sixteen-Q4 free-target
+press under unchanged mechanics and contact gates, including the reviewed
+overlap/clip-branch guard. Its accepted full-load contact force differs by
+8.31% from eight Q4, so mesh response and C1 acceptance are still open.
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as

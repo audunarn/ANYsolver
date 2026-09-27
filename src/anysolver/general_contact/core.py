@@ -212,6 +212,7 @@ class ContactSolverSettings:
     augmentation_schur_difference_step_m: float | None = None
     augmentation_schur_maximum_attempts: int = 1
     augmentation_schur_maximum_relinearizations: int = 0
+    augmentation_schur_nonlinear_backtrack_dev: bool = False
     augmentation_support_resolution: str = "exact"
     augmentation_support_force_budget_n: float | None = None
     q4_source_support_gradient_tolerance: float | None = None
@@ -374,12 +375,19 @@ class ContactSolverSettings:
             if (type(self.augmentation_schur_maximum_relinearizations) is not int
                     or self.augmentation_schur_maximum_relinearizations not in {0, 1}):
                 raise ValueError("Schur relinearization cap must be zero or one")
+            if type(self.augmentation_schur_nonlinear_backtrack_dev) is not bool:
+                raise ValueError("Schur nonlinear backtrack opt-in must be boolean")
+            if (self.augmentation_schur_nonlinear_backtrack_dev
+                    and self.augmentation_schur_maximum_attempts < 2):
+                raise ValueError("Schur nonlinear backtrack needs at least two attempts")
         elif any(value is not None for value in schur_bounds):
             raise ValueError("Schur bounds require supported_schur_dev")
         elif self.augmentation_schur_maximum_attempts != 1:
             raise ValueError("Schur attempts require supported_schur_dev")
         elif self.augmentation_schur_maximum_relinearizations != 0:
             raise ValueError("Schur relinearization requires supported_schur_dev")
+        elif self.augmentation_schur_nonlinear_backtrack_dev:
+            raise ValueError("Schur nonlinear backtrack requires supported_schur_dev")
         if self.augmentation_support_resolution not in {"exact", "roundoff"}:
             raise ValueError("augmentation_support_resolution must be exact or roundoff")
         if self.augmentation_support_resolution == "roundoff":

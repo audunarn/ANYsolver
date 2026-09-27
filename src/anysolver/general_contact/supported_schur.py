@@ -21,6 +21,116 @@ class SupportedSchurProposal:
     step_fraction: float
     predicted_residual_before: float
     predicted_residual_after: float
+    backtrack_data: SupportedSchurBacktrackData | None = None
+
+
+@dataclass(frozen=True)
+class SupportedSchurBacktrackData:
+    """The frozen local response used only to propose a smaller trial step."""
+
+    base_multipliers: np.ndarray
+    supported_indices: np.ndarray
+    base_gap: np.ndarray
+    equilibrated_gap_response: np.ndarray
+    normal_stiffness: float
+    maximum_pressure: float
+    maximum_pressure_step: float
+    maximum_modes: int
+    kink_roundoff: float
+
+
+def propose_supported_schur_backtrack(
+    full_proposal: SupportedSchurProposal,
+    *,
+    diagnostics: dict[str, object] | None = None,
+) -> SupportedSchurProposal | None:
+    """Find the first predicted-safe interior fraction of an existing step.
+
+    This only evaluates the saved linearized gap map. The static owner must
+    restore the base equilibrium and verify the candidate after a new solve.
+    """
+    data = full_proposal.backtrack_data
+    if data is None:
+        if diagnostics is not None:
+            diagnostics["schur_backtrack_reason"] = "response_unavailable"
+        return None
+    base = data.base_multipliers
+    full = np.asarray(full_proposal.multipliers, dtype=float)
+    modes = data.supported_indices
+    H = data.equilibrated_gap_response
+    if (base.ndim != 1 or full.shape != base.shape or not len(base)
+            or modes.ndim != 1 or not len(modes)
+            or not np.issubdtype(modes.dtype, np.integer)
+            or np.any(modes < 0) or np.any(modes >= len(base))
+            or np.any(np.diff(modes) <= 0)
+            or len(modes) > data.maximum_modes
+            or data.base_gap.shape != (len(modes),)
+            or H.shape != (len(modes), len(modes))
+            or not np.isfinite(data.normal_stiffness)
+            or data.normal_stiffness <= 0.0
+            or not np.isfinite(data.maximum_pressure)
+            or data.maximum_pressure <= 0.0
+            or not np.isfinite(data.maximum_pressure_step)
+            or data.maximum_pressure_step <= 0.0
+            or not np.isfinite(data.kink_roundoff)
+            or data.kink_roundoff < 0.0
+            or not np.all(np.isfinite(full))
+            or not np.all(np.isfinite(base))
+            or not np.all(np.isfinite(data.base_gap))
+            or not np.all(np.isfinite(H))
+            or not np.isfinite(full_proposal.predicted_residual_before)
+            or full_proposal.predicted_residual_before <= 0.0
+            or np.any(base < 0.0) or np.any(full < 0.0)
+            or np.any(base[np.setdiff1d(np.arange(len(base)), modes)] != 0.0)
+            or np.any(full[np.setdiff1d(np.arange(len(full)), modes)] != 0.0)
+            or np.max(base, initial=0.0) > data.maximum_pressure
+            or np.max(full, initial=0.0) > data.maximum_pressure
+            or np.max(np.abs(full-base), initial=0.0)
+            > data.maximum_pressure_step):
+        if diagnostics is not None:
+            diagnostics["schur_backtrack_reason"] = "inconsistent_full_proposal"
+        return None
+    direction = full-base
+    examined = 0
+    # Nineteen interior grid points give a bounded, deterministic search.
+    # Ascending order minimizes the nonlinear pressure move among candidates
+    # with a predicted 30% merit margin (owner requires only 25% in reality).
+    for tick in range(1, 20):
+        examined += 1
+        fraction = tick/20.0
+        candidate = base + fraction*direction
+        step = candidate-base
+        if (np.any(candidate < 0.0)
+                or np.max(candidate, initial=0.0) > data.maximum_pressure
+                or np.max(np.abs(step), initial=0.0)
+                > data.maximum_pressure_step):
+            continue
+        local_pressure = candidate[modes]
+        argument = local_pressure-data.normal_stiffness*(
+            data.base_gap + H @ step[modes]
+        )
+        if (not np.all(np.isfinite(argument))
+                or np.any(np.abs(argument) <= data.kink_roundoff)):
+            continue
+        residual = float(np.max(np.abs(
+            np.maximum(0.0, argument)-local_pressure), initial=0.0))
+        if residual > 0.70*full_proposal.predicted_residual_before:
+            continue
+        active = tuple(int(modes[index]) for index in
+                       np.flatnonzero(argument > 0.0))
+        if diagnostics is not None:
+            diagnostics["schur_backtrack_examined"] = examined
+            diagnostics["schur_backtrack_fraction"] = fraction
+            diagnostics["schur_backtrack_predicted_residual_pa"] = residual
+        return SupportedSchurProposal(
+            candidate, active, full_proposal.scaled_condition,
+            fraction*full_proposal.step_fraction,
+            full_proposal.predicted_residual_before, residual,
+        )
+    if diagnostics is not None:
+        diagnostics["schur_backtrack_examined"] = examined
+        diagnostics["schur_backtrack_reason"] = "no_predicted_safe_interior_fraction"
+    return None
 
 
 def propose_supported_schur_step(
@@ -35,6 +145,7 @@ def propose_supported_schur_step(
     maximum_modes: int,
     diagnostics: dict[str, object] | None = None,
     check_cancel: Callable[[], None] | None = None,
+    retain_backtrack: bool = False,
 ) -> SupportedSchurProposal | None:
     """Propose one projected-root Newton step on a stable active branch.
 
@@ -86,6 +197,18 @@ def propose_supported_schur_step(
     before = float(np.linalg.norm(residual, ord=np.inf))
     if before == 0.0:
         return decline("projected_residual_zero")
+    backtrack_data = None
+    if retain_backtrack:
+        def frozen(values: np.ndarray) -> np.ndarray:
+            copy = np.array(values, copy=True)
+            copy.setflags(write=False)
+            return copy
+
+        backtrack_data = SupportedSchurBacktrackData(
+            frozen(lam), frozen(modes), frozen(physical_gap), frozen(H),
+            normal_stiffness, maximum_pressure, maximum_pressure_step,
+            maximum_modes, roundoff,
+        )
     jacobian = -np.eye(count)
     jacobian[active] = -normal_stiffness*H[active]
     row_magnitude = np.max(np.abs(jacobian), axis=1)
@@ -188,6 +311,7 @@ def propose_supported_schur_step(
             proposed, tuple(int(modes[index]) for index in np.flatnonzero(active)),
             condition if np.isfinite(condition) else None,
             fraction, before, after,
+            backtrack_data,
         )
         break
     if (fixed_proposal is not None
@@ -231,6 +355,7 @@ def propose_supported_schur_step(
             proposed, predicted_active,
             condition if np.isfinite(condition) else None,
             fraction, before, after,
+            backtrack_data,
         )
         projected_proposal = trial
         break
@@ -340,4 +465,5 @@ def propose_supported_schur_step(
         tuple(int(modes[index]) for index in np.flatnonzero(argument > 0.0)),
         condition if np.isfinite(condition) else None,
         1.0, before, after,
+        backtrack_data,
     )

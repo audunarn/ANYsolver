@@ -41,7 +41,8 @@ def main(output_path: Path, *, columns: int,
          relinearizations: int = 0,
          steps_per_segment: int = 3,
          equilibrium_tolerance: float = 1.0e-6,
-         four_phase: bool = False) -> None:
+         four_phase: bool = False,
+         nonlinear_backtrack: bool = False) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
@@ -50,11 +51,15 @@ def main(output_path: Path, *, columns: int,
               "maximum_schur_relinearizations": relinearizations,
               "steps_per_segment": steps_per_segment,
               "equilibrium_tolerance": equilibrium_tolerance,
-              "four_phase": four_phase}
+              "four_phase": four_phase,
+              "nonlinear_backtrack": nonlinear_backtrack}
     try:
         model, definition, settings, program = build_free_target_case(
             columns, relinearizations=relinearizations,
             steps_per_segment=steps_per_segment, four_phase=four_phase)
+        if nonlinear_backtrack:
+            settings = replace(
+                settings, augmentation_schur_nonlinear_backtrack_dev=True)
         result = solve_static_nonlinear(
             model, contact=definition, contact_settings=settings,
             contact_path_program=program, max_iterations=18,
@@ -86,6 +91,12 @@ def main(output_path: Path, *, columns: int,
                 "schur_attempts": row.get("schur_attempts"),
                 "schur_applied": row.get("schur_applied"),
                 "schur_rejected": row.get("schur_rejected"),
+                **({"augmentation_trace": row.get("augmentation_trace"),
+                    "source_pressure_node_ids": row["contact"].get(
+                        "source_pressure_node_ids"),
+                    "normal_multiplier_estimate_pa": row["contact"].get(
+                        "normal_multiplier_estimate_pa")}
+                   if nonlinear_backtrack else {}),
             } for row in history],
             "contact_failure": result.info.get("contact_failure"),
         })
@@ -113,9 +124,11 @@ if __name__ == "__main__":
     parser.add_argument("--equilibrium-tolerance", type=float,
                         default=1.0e-6)
     parser.add_argument("--four-phase", action="store_true")
+    parser.add_argument("--nonlinear-backtrack", action="store_true")
     args = parser.parse_args()
     main(args.output, columns=args.columns,
          relinearizations=args.relinearizations,
          steps_per_segment=args.steps_per_segment,
          equilibrium_tolerance=args.equilibrium_tolerance,
-         four_phase=args.four_phase)
+         four_phase=args.four_phase,
+         nonlinear_backtrack=args.nonlinear_backtrack)

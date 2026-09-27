@@ -528,6 +528,7 @@ def refined_patch_supported_schur(
     maximum_pressure_step: float, maximum_modes: int,
     check_cancel: Callable[[], None] | None = None,
     diagnostics: dict[str, object] | None = None,
+    retain_backtrack: bool = False,
 ) -> SupportedSchurProposal | None:
     """Propose a bounded projected-root correction for every supported mode."""
     source, target = manager._positions(displacement)
@@ -561,4 +562,5 @@ def refined_patch_supported_schur(
         maximum_modes=maximum_modes,
         diagnostics=diagnostics,
         check_cancel=check_cancel,
+        retain_backtrack=retain_backtrack,
     )

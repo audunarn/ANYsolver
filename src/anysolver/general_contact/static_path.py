@@ -50,7 +50,12 @@ from .core import (
     validate_general_contact,
 )
 from .augmentation import ProjectedAugmentationSecant
-from .linearized_pivot import refined_patch_pivot, refined_patch_supported_schur
+from .linearized_pivot import (
+    _projected_clip_signature,
+    refined_patch_pivot,
+    refined_patch_supported_schur,
+)
+from .supported_schur import propose_supported_schur_backtrack
 from .equilibrated_pressure_pivot import equilibrated_pressure_pivot
 
 
@@ -478,6 +483,8 @@ def solve_static_contact_path(
                     schur_active_signature = None
                     pressure_map_attempts = 0
                     pivot_backup = None
+                    schur_backtrack_source = None
+                    schur_backtrack_signature = None
                     support_resets: list[dict[str, object]] = []
                     augmentation_trace: list[dict[str, object]] = []
                     certificate = None
@@ -581,6 +588,8 @@ def solve_static_contact_path(
                                 q, multipliers, fallback_pressure, _prior_change, _retained = pivot_backup
                                 manager.set_normal_multipliers(fallback_pressure)
                                 pivot_backup = None
+                                schur_backtrack_source = None
+                                schur_backtrack_signature = None
                                 pivot_rejected += 1
                                 augmentation_trace.append({
                                     ("schur_rejected" if settings.augmentation_acceleration
@@ -603,6 +612,8 @@ def solve_static_contact_path(
                                 q, multipliers, fallback_pressure, _prior_change, _retained = pivot_backup
                                 manager.set_normal_multipliers(fallback_pressure)
                                 pivot_backup = None
+                                schur_backtrack_source = None
+                                schur_backtrack_signature = None
                                 pivot_rejected += 1
                                 augmentation_trace.append({
                                     ("schur_rejected" if settings.augmentation_acceleration
@@ -644,14 +655,34 @@ def solve_static_contact_path(
                                     actual_active != retained if isinstance(retained, tuple)
                                     else certificate.active_pressure_dofs > retained
                                 )
+                                signature_changed = False
+                                signature_error = None
+                                if schur_backtrack_signature is not None:
+                                    try:
+                                        source_pose, target_pose = manager._positions(u)
+                                        signature_changed = (
+                                            (manager.law.geometry.evaluate(
+                                                source_pose, target_pose,
+                                            ).overlap_signature,
+                                             _projected_clip_signature(
+                                                 manager.law.geometry,
+                                                 source_pose, target_pose))
+                                            != schur_backtrack_signature
+                                        )
+                                    except Exception as exc:
+                                        signature_changed = True
+                                        signature_error = (
+                                            f"{type(exc).__name__}: {exc}")[:240]
                                 if (not certificate.gap_tolerance_met
                                         or active_changed
+                                        or signature_changed
                                         or normal_multiplier_change >= 0.75*prior_change):
                                     if (settings.augmentation_acceleration == "supported_schur_dev"
                                             and settings.augmentation_schur_maximum_relinearizations
                                             > schur_epoch_relinearizations
                                             and certificate.gap_tolerance_met
                                             and not active_changed
+                                            and not signature_changed
                                             and normal_multiplier_change < prior_change
                                             and augmentation <= augmentation_limit-2):
                                         schur_relinearizations += 1
@@ -698,6 +729,8 @@ def solve_static_contact_path(
                                             corrected is not None)
                                         augmentation_trace.append(correction_trace)
                                         if corrected is not None:
+                                            schur_backtrack_source = None
+                                            schur_backtrack_signature = None
                                             pivot_backup = (
                                                 fallback_q, fallback_controls,
                                                 fallback_pressure, prior_change,
@@ -710,7 +743,7 @@ def solve_static_contact_path(
                                     multipliers = fallback_controls
                                     manager.set_normal_multipliers(fallback_pressure)
                                     pivot_rejected += 1
-                                    augmentation_trace.append({
+                                    rejection_trace = {
                                         ("schur_rejected" if settings.augmentation_acceleration
                                          == "supported_schur_dev" else "pivot_rejected"):
                                         "nonlinear_verification",
@@ -725,16 +758,67 @@ def solve_static_contact_path(
                                             "schur_actual_active_indices": [
                                                 int(index) for index in actual_active],
                                             "schur_active_changed": active_changed,
+                                            "schur_overlap_signature_changed": signature_changed,
+                                            **({"schur_overlap_signature_error": signature_error}
+                                               if signature_error is not None else {}),
                                             "schur_gap_tolerance_met": bool(
                                                 certificate.gap_tolerance_met)}
                                            if settings.augmentation_acceleration
                                            == "supported_schur_dev" else {}),
-                                    })
+                                    }
+                                    augmentation_trace.append(rejection_trace)
+                                    if (schur_backtrack_source is not None
+                                            and certificate.gap_tolerance_met
+                                            and not active_changed
+                                            and not signature_changed
+                                            and schur_backtrack_signature[1] is not None
+                                            and schur_epoch_attempts
+                                            < settings.augmentation_schur_maximum_attempts
+                                            and augmentation <= augmentation_limit-2):
+                                        cancellation_safe_point(
+                                            cancellation_token,
+                                            f"contact_path.step:{step}.augmentation:{augmentation}.schur_backtrack",
+                                        )
+                                        schur_epoch_attempts += 1
+                                        pivot_attempts += 1
+                                        try:
+                                            backtrack = propose_supported_schur_backtrack(
+                                                schur_backtrack_source,
+                                                diagnostics=rejection_trace,
+                                            )
+                                        except (ValueError, MemoryError,
+                                                np.linalg.LinAlgError) as exc:
+                                            rejection_trace["schur_backtrack_ineligible"] = str(exc)
+                                            backtrack = None
+                                        schur_backtrack_source = None
+                                        rejection_trace["schur_backtrack_proposed"] = (
+                                            backtrack is not None)
+                                        if backtrack is not None:
+                                            pivot_backup = (
+                                                fallback_q.copy(),
+                                                fallback_controls.copy(),
+                                                fallback_pressure.copy(),
+                                                prior_change,
+                                                backtrack.active_indices,
+                                            )
+                                            rejection_trace["schur_backtrack_fraction"] = (
+                                                backtrack.step_fraction)
+                                            rejection_trace["schur_backtrack_predicted_residual_pa"] = (
+                                                backtrack.predicted_residual_after)
+                                            rejection_trace["schur_backtrack_predicted_active_indices"] = (
+                                                list(backtrack.active_indices))
+                                            manager.set_normal_multipliers(
+                                                backtrack.multipliers)
+                                            continue
+                                    schur_backtrack_source = None
+                                    schur_backtrack_signature = None
                                     accelerator = (ProjectedAugmentationSecant()
                                                    if settings.augmentation_acceleration == "active_secant_pivot"
                                                    else None)
                                     continue
                                 pivot_applied += 1
+                                schur_backtrack_source = None
+                                schur_backtrack_signature = None
                                 verified_schur = (settings.augmentation_acceleration
                                                   == "supported_schur_dev")
                                 accelerator = (ProjectedAugmentationSecant()
@@ -855,6 +939,7 @@ def solve_static_contact_path(
                                         maximum_pressure=settings.augmentation_schur_maximum_pressure_pa,
                                         maximum_pressure_step=settings.augmentation_schur_maximum_step_pa,
                                         maximum_modes=settings.augmentation_schur_maximum_modes,
+                                        retain_backtrack=settings.augmentation_schur_nonlinear_backtrack_dev,
                                         diagnostics=augmentation_trace[-1],
                                         check_cancel=lambda: cancellation_safe_point(
                                             cancellation_token,
@@ -882,6 +967,28 @@ def solve_static_contact_path(
                                     break
                                 augmentation_trace[-1]["schur_proposed"] = schur is not None
                                 if schur is not None:
+                                    schur_backtrack_source = (
+                                        schur if settings.augmentation_schur_nonlinear_backtrack_dev
+                                        else None
+                                    )
+                                    if schur_backtrack_source is not None:
+                                        try:
+                                            source_pose, target_pose = manager._positions(u)
+                                            schur_backtrack_signature = (
+                                                manager.law.geometry.evaluate(
+                                                    source_pose, target_pose,
+                                                ).overlap_signature,
+                                                _projected_clip_signature(
+                                                    manager.law.geometry,
+                                                    source_pose, target_pose,
+                                                ),
+                                            )
+                                        except Exception as exc:
+                                            schur_backtrack_source = None
+                                            schur_backtrack_signature = None
+                                            augmentation_trace[-1][
+                                                "schur_backtrack_signature_unavailable"
+                                            ] = f"{type(exc).__name__}: {exc}"[:240]
                                     pivot_backup = (q.copy(), multipliers.copy(),
                                                     projected.copy(),
                                                     normal_multiplier_change,

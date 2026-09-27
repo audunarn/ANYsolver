@@ -15,12 +15,16 @@ from anysolver.general_contact.supported_schur import SupportedSchurProposal
 from scripts.general_contact_d1_free_target_press_probe import build_free_target_case
 
 
-def main(output_path: Path) -> None:
+def main(output_path: Path, *, fraction_requested: float = 0.02,
+         require_same_branch: bool = True) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
-    report = {"candidate": "free_target_16q4_schur_small_fraction_dev",
-              "selected_attempt": 2, "initial_fraction": 0.02}
+    if not np.isfinite(fraction_requested) or not 0.0 < fraction_requested <= 1.0:
+        raise ValueError("requested pressure fraction must lie in (0, 1]")
+    report = {"candidate": "free_target_16q4_schur_fraction_dev",
+              "selected_attempt": 2, "initial_fraction": fraction_requested,
+              "require_same_branch": require_same_branch}
     original_schur = static_path.refined_patch_supported_schur
     calls = 0
     observed: dict[str, object] = {}
@@ -51,7 +55,7 @@ def main(output_path: Path) -> None:
         full_step = full.multipliers-base_pressure
         base_signature = manager.law.geometry.evaluate(
             source, target).overlap_signature
-        fraction = 0.02
+        fraction = fraction_requested
         while fraction >= 0.0003125:
             small_pressure = base_pressure+fraction*full_step
             predicted_gap = base_gap.copy()
@@ -61,11 +65,12 @@ def main(output_path: Path) -> None:
             predicted_active = tuple(int(i) for i in np.flatnonzero(
                 predicted_argument > 0.0))
             if (np.all(small_pressure >= 0.0)
-                    and predicted_active == tuple(map(int, active))):
+                    and (not require_same_branch
+                         or predicted_active == tuple(map(int, active)))):
                 break
             fraction *= 0.5
         else:
-            raise RuntimeError("no small fraction retains the original branch")
+            raise RuntimeError("no admissible fraction retains the requested branch")
         predicted_residual = float(np.max(np.abs(
             np.maximum(0.0, predicted_argument)-small_pressure)))
         observed.update({
@@ -81,6 +86,7 @@ def main(output_path: Path) -> None:
             "predicted_active": predicted_active,
             "predicted_residual": predicted_residual,
             "base_signature": base_signature,
+            "normal_stiffness": float(manager.stiffness),
             "full_proposal_kind": kwargs.get("diagnostics", {}).get(
                 "schur_proposal_kind"),
         })
@@ -104,7 +110,7 @@ def main(output_path: Path) -> None:
 
         manager.evaluate = capture_evaluate
         return SupportedSchurProposal(
-            small_pressure, tuple(map(int, active)), full.scaled_condition,
+            small_pressure, predicted_active, full.scaled_condition,
             fraction, full.predicted_residual_before, predicted_residual)
 
     static_path.refined_patch_supported_schur = probe
@@ -145,6 +151,11 @@ def main(output_path: Path) -> None:
             "maximum_gap_response_error_m": float(np.max(np.abs(
                 actual-predicted))),
             "predicted_projected_residual_pa": observed["predicted_residual"],
+            "actual_projected_residual_pa": float(np.max(np.abs(
+                np.maximum(0.0, observed["small_pressure"][selected]
+                           -observed["normal_stiffness"]
+                           *actual)
+                -observed["small_pressure"][selected]))),
             "response_matrix_active_m_per_pa": observed["H"].tolist(),
             "status": "captured",
         })
@@ -161,6 +172,7 @@ def main(output_path: Path) -> None:
         "accepted_steps", "schur_calls", "fraction",
         "active_indices", "predicted_active_indices", "actual_active_indices",
         "overlap_signature_matches", "maximum_gap_response_error_m",
+        "predicted_projected_residual_pa", "actual_projected_residual_pa",
         "elapsed_seconds") if k in report}, indent=2, default=str))
 
 
@@ -168,4 +180,8 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
-    main(parser.parse_args().output)
+    parser.add_argument("--fraction", type=float, default=0.02)
+    parser.add_argument("--allow-branch-change", action="store_true")
+    args = parser.parse_args()
+    main(args.output, fraction_requested=args.fraction,
+         require_same_branch=not args.allow_branch_change)
