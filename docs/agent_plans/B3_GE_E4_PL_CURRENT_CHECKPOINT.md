@@ -81,6 +81,9 @@ mechanical results. Preserve their command outputs; no passing result is
 inferred. The intended 45-row candidate is within the unchanged
 1,900-row/120-second/2-GiB development envelope. Correct only the
 matching `_scales` guard before rerunning once.
+The next launch reached the rank screen and stopped at its separate
+36-row guard, with no assembly or loaded result. Correct that bounded
+guard to 60 as well; do not infer mechanics from these launcher failures.
 Advance a physically matched two-sided torque/shear reference. The bounded
 off-edge S3 loaded mapping check is complete; do not resume finer
 classical axial work.

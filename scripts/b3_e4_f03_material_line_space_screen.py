@@ -54,7 +54,7 @@ def _rows(line: MaterialLinePosition, space: LineMultiplierSpace):
 
 def _scaled_row_diagnostics(constraint, free, primal_scales):
     """Bounded physical-coordinate rank screen, never a stability verdict."""
-    if (constraint.shape[0] > 36 or
+    if (constraint.shape[0] > 60 or
             primal_scales.shape != (len(free),)):
         raise ValueError("bounded line row diagnostic only")
     mapped = constraint[:, free]*primal_scales[None, :]
