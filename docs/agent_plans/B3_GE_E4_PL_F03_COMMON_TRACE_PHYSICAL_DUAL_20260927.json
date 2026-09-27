@@ -1,0 +1,162 @@
+{
+  "cases": {
+    "continuous_linear": {
+      "action_reaction_relative_error": 0.0,
+      "beam_relative_wrench_error": 8.881784197001238e-16,
+      "beam_virtual_force_moment": [
+        -2.0000000000000058,
+        3.0000000000000075,
+        -4.000000000000014,
+        -0.0712500000000001,
+        3.7678645833333433,
+        2.8335937500000044
+      ],
+      "minimum_signed_integration_weight_m": 5.4350725973793586e-05,
+      "physical_force_N": [
+        2.0000000000000044,
+        -3.000000000000005,
+        4.000000000000012
+      ],
+      "physical_moment_about_origin_Nm": [
+        0.07125000000000015,
+        -3.767864583333346,
+        -2.8335937500000052
+      ],
+      "quadrature_points": 72,
+      "reference_gap_max_m2_m3": 4.4346081614446714e-20,
+      "shell_relative_wrench_error": 8.881784197001238e-16,
+      "shell_virtual_force_moment": [
+        2.0000000000000058,
+        -3.0000000000000075,
+        4.000000000000014,
+        0.0712500000000001,
+        -3.7678645833333433,
+        -2.8335937500000044
+      ]
+    },
+    "dual_linear": {
+      "action_reaction_relative_error": 0.0,
+      "beam_relative_wrench_error": 7.64144272544649e-16,
+      "beam_virtual_force_moment": [
+        -0.9999999999999855,
+        1.9374999999999716,
+        -1.3124999999999816,
+        -0.04328124999999935,
+        1.162317708333317,
+        1.7373697916666413
+      ],
+      "minimum_signed_integration_weight_m": -0.0005107214535973998,
+      "physical_force_N": [
+        0.9999999999999851,
+        -1.9374999999999714,
+        1.3124999999999811
+      ],
+      "physical_moment_about_origin_Nm": [
+        0.04328124999999936,
+        -1.162317708333316,
+        -1.7373697916666406
+      ],
+      "quadrature_points": 36,
+      "reference_gap_max_m2_m3": 4.660645138587156e-20,
+      "shell_relative_wrench_error": 7.64144272544649e-16,
+      "shell_virtual_force_moment": [
+        0.9999999999999855,
+        -1.9374999999999716,
+        1.3124999999999816,
+        0.04328124999999935,
+        -1.162317708333317,
+        -1.7373697916666413
+      ]
+    },
+    "piecewise_constant": {
+      "action_reaction_relative_error": 0.0,
+      "beam_relative_wrench_error": 3.33066907387548e-16,
+      "beam_virtual_force_moment": [
+        -1.9999999999999931,
+        3.218749999999988,
+        -3.656249999999989,
+        -0.07507812499999975,
+        3.3941666666666563,
+        3.002083333333322
+      ],
+      "minimum_signed_integration_weight_m": 0.00048225308641975154,
+      "physical_force_N": [
+        1.9999999999999938,
+        -3.2187499999999876,
+        3.656249999999989
+      ],
+      "physical_moment_about_origin_Nm": [
+        0.07507812499999975,
+        -3.3941666666666563,
+        -3.002083333333323
+      ],
+      "quadrature_points": 36,
+      "reference_gap_max_m2_m3": 9.637352644315555e-20,
+      "shell_relative_wrench_error": 3.33066907387548e-16,
+      "shell_virtual_force_moment": [
+        1.9999999999999931,
+        -3.218749999999988,
+        3.656249999999989,
+        0.07507812499999975,
+        -3.3941666666666563,
+        -3.002083333333322
+      ]
+    }
+  },
+  "classification": "bounded reference physical-dual work check; no F03 acceptance",
+  "development_relative_wrench_limit": 1e-08,
+  "elapsed_s_not_benchmark": 5.8915942999883555,
+  "lambda_force_N_per_m": [
+    80.0,
+    -120.0,
+    160.0
+  ],
+  "lambda_moment_N_per_m2": [
+    900.0,
+    -1100.0,
+    700.0
+  ],
+  "law": "q_F=integral(phi * transverse_average(g) dx), q_M=integral(phi * transverse_average(a cross g) dx); traction=R*(lambda_F+lambda_M cross a)/width",
+  "limitations": [
+    "reference state and selected basis rows only",
+    "finite-chart recovered display wrenches and full external transfer remain open"
+  ],
+  "model": "Q4 x4/y4 35mm, C1 B3-12, selected P0/P1/signed-dual rows",
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "question": "Do N/m mean-gap and N/m\u00b2 first-moment duals recover the same physical force/moment and equal-opposite shell/beam virtual work?",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_common_trace_physical_dual.py": "326dfb0ecafc950302ab723ef486f359c30ab2673a851f5957d0a6e7659eb737",
+    "scripts\\b3_e4_f03_common_trace_finite_work.py": "e8e605bd9b46a9c904fe4ad7f5f7a7a88ca8fd6a1ff22141f5fce96b2632e11f",
+    "scripts\\b3_e4_f03_distributed_surface_finite.py": "2cedbdc73564d6ffee0efa54825065dd10cb02329ca505ef49815d636ccc7cca"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "width_m": 0.1
+}

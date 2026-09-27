@@ -552,6 +552,43 @@ establish physical dual units, full-basis behavior, growing-space
 stability, or a connection selection. G0B/F03 remain open, G1 barred,
 formal F03 authority unconsumed.
 
+**Next physical-dual discriminator:** Because raw mean-gap rows have
+units `m²` and raw first-position moments `m³`, assign their duals
+`N/m` and `N/m²` for energy work. The corresponding surface traction
+at quadrature point `p` is the co-moving frame applied to
+`(λ_F + λ_M × a_p)/width`, with `a_p` the fixed material arm. On one
+reference fixture, compute physical resultant and moment about a common
+origin from that traction, then compare them with the actual shell and
+native B3 virtual work under separate rigid motions. If conjugacy or
+action–reaction fails, repair the dual map before any multiplier-norm or
+external transfer comparison. Agreement establishes only this bounded
+map, not the full loaded connection law.
+
+**Reference physical-dual outcome:** On the same selected P0, P1 and
+signed dual rows, assign mean-gap duals `N/m` and first-position-moment
+duals `N/m²`. With the 0.1 m transverse average, the corresponding
+surface traction for one basis row is
+`φ_i(x)R_c(λ_F+λ_M×a)/0.1 m`. Direct quadrature of that
+traction gives a force and moment about the common origin. The actual
+E4 shell and native retained B3 reference variations under each of six
+independent rigid translations/rotations recover respectively the same
+and opposite wrench, with maximum componentwise relative discrepancy
+`8.9e-16` and zero action–reaction residual at displayed precision.
+The signed endpoint dual includes negative weights. Raw source-bound
+result: `B3_GE_E4_PL_F03_COMMON_TRACE_PHYSICAL_DUAL_20260927.json`.
+This establishes a dimensionally defined reference dual and its bounded
+work conjugacy; it does not recover display-ready finite-state wrenches,
+qualify stability or validate external physical transfer. G0B/F03
+remain open and G1 barred.
+
+Independent review confirmed the units, cross-product sign and B3
+retained-port rigid variation. It identified a documentation erratum in
+the immutable raw JSON: the displayed traction formula omits `φ_i(x)`.
+The code includes that basis factor in each quadrature weight, so the
+saved numerical wrench check is unaffected. The check integrates the
+same weighted point set as the operator; it does not independently
+sample a continuous traction field.
+
 **Global work partition from the saved solves:** The fixture reports
 `uᵀKu` work, without a one-half energy factor. Equilibrium gives native
 beam work as external work minus physical and numerical shell work. Under
