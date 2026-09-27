@@ -49,6 +49,44 @@ from the two-interval change.
 No multiplier space is selected and F03 remains open.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
+**Next contact-method discriminator, before execution (27 September):**
+The saved C1 quadratic terminal-bond torque deck has 128 plate and 128 bar
+unbonded contact faces, but its finite penalty formulation activates only
+one face's eight contact entries while a same-XY audit finds sampled overlap
+on five faces. The competing explanations are finite/underresolved penalty
+contact versus an unsuitable shared-seam contact geometry. On the identical
+source deck, change only the contact interaction from finite linear penalty
+surface-to-surface to hard dual-multiplier mortar and retain the existing
+load, supports, section, face inventory, single thread, 120-second and 2-GiB
+limits. Check exact deck transformation, solver completion, warnings, contact
+activity, sampled same-XY face gaps and balance. If mortar executes without
+sampled overlap and balances, advance to matched shear and contact/mesh
+convergence before native scoring. If it fails or overlaps, preserve the
+failure and revise the reference contact/seam geometry; do not infer native
+law failure or run a stiffness/mesh sweep. CalculiX documents mortar as
+weak exact contact and warns against additional MPCs at slave edge nodes;
+this motivates the method screen but does not predict its result.
+
+**Matched hard-mortar outcome:** The source and solver hashes matched the
+saved penalty case; the contact-only transformation was reversible, and the
+same 128+128 face inventory, geometry, supports and torque load were retained.
+Pinned CalculiX 2.23 exited `201` during its first stiffness calculation
+after `1.737 s` (peak solver RSS `251 MB`), without a complete field or
+contact result. Its log also warns that no elastic constants were assigned
+to the `HARDUNBONDED` interaction name. The official CalculiX 2.22 manual,
+Sections 7.129–7.130, explicitly permits omitting `*SURFACE BEHAVIOR` for
+true hard mortar ([manual](https://www.dhondt.de/ccx_2.22.pdf)), so that
+warning alone does not show an invalid contact declaration. The present
+evidence still does not prove that seam-edge contact
+topology caused the exit. Preserve the warning and raw failure rather than
+relabeling the exit as convergence.
+This method switch cannot qualify the reference. The next bounded task is a
+seam-edge geometry/contact audit that can separate a shared-edge limitation
+from another solver failure; only then choose a revised contact geometry or
+solver route. The earlier penalty overlap and split-solid no-contact overlap
+remain in force. No native-law
+or multiplier-space decision follows, and no G0 status changes.
+
 **Next split-law experiment, pre-execution (27 September):** The competing
 explanations are insufficient longitudinal enforcement of the declared
 six-channel work law versus a different continuous trace/domain response.
