@@ -1,8 +1,8 @@
 """Private G0 material-line pose feasibility on E4 and retained B3 states.
 
-The three position channels and orientation gap have reference Jacobians.
-Finite-state work curvature, multiplier space, stability, and production
-ownership remain separate.
+The position and orientation gaps have bounded Jacobian checks. The
+orientation gap has a private mixed second variation; complete six-channel
+work, multiplier space, stability and production ownership remain separate.
 """
 
 from __future__ import annotations
@@ -112,8 +112,104 @@ def _log_left_inverse(vector):
     return np.eye(3)-.5*cross+coefficient*cross@cross
 
 
+def _normalized_variations(value, first, second, mixed):
+    """Value, two first variations and symmetric mixed variation of v/|v|."""
+    length = np.linalg.norm(value)
+    if not np.isfinite(length) or length <= 0.:
+        raise ValueError("degenerate material-line normalization")
+    unit = value/length
+    projection = np.eye(3)-np.outer(unit, unit)
+    du = projection@first/length
+    dv = projection@second/length
+    duv = ((projection@mixed
+            -np.dot(unit, first)*dv-np.dot(unit, second)*du)/length
+           -unit*np.dot(du, dv))
+    return unit, du, dv, duv
+
+
+def _log_left_inverse_variation(vector, variation):
+    """Directional derivative of the SO(3) left-Log Jacobian inverse."""
+    angle = np.linalg.norm(vector)
+    cross, delta_cross = _skew(vector), _skew(variation)
+    if angle < 1e-4:
+        coefficient = 1./12.+angle**2/720.+angle**4/30240.
+        coefficient_direction = (1./360.+angle**2/7560.)*np.dot(
+            vector, variation)
+    else:
+        half = .5*angle
+        cotangent = 1./np.tan(half)
+        f = 1.-half*cotangent
+        df = -.5*cotangent+.25*angle/(np.sin(half)**2)
+        coefficient = f/angle**2
+        coefficient_direction = (df/angle**3-2.*f/angle**4)*np.dot(
+            vector, variation)
+    return (-.5*delta_cross+coefficient_direction*cross@cross
+            +coefficient*(delta_cross@cross+cross@delta_cross))
+
+
+def _vee_skew(matrix):
+    skew = .5*(matrix-matrix.T)
+    return np.array((skew[2, 1], skew[0, 2], skew[1, 0]))
+
+
+def _shell_frame_second_variation(coordinates, frames, station, top,
+                                  first_shell, second_shell):
+    """Material-line shell frame and mixed variation in one exponential chart."""
+    director_raw = np.zeros(3)
+    director_u = np.zeros(3)
+    director_v = np.zeros(3)
+    director_uv = np.zeros(3)
+    tangent = np.zeros(3)
+    tangent_u = np.zeros(3)
+    tangent_v = np.zeros(3)
+    tangent_uv = np.zeros(3)
+    normal = np.array((0., 0., 1.))
+    for node, weight, derivative in zip(
+            station.nodes, station.shape, station.dshape_dx):
+        node = int(node)
+        frame = frames[node]
+        u, v = first_shell[node], second_shell[node]
+        rotation_u, rotation_v = _skew(u[3:]), _skew(v[3:])
+        rotation_uv = .5*(rotation_u@rotation_v+rotation_v@rotation_u)
+        current_normal, current_top = frame@normal, frame@top
+        director_raw += weight*current_normal
+        director_u += weight*rotation_u@current_normal
+        director_v += weight*rotation_v@current_normal
+        director_uv += weight*rotation_uv@current_normal
+        tangent += derivative*(coordinates[node]+current_top)
+        tangent_u += derivative*(u[:3]+rotation_u@current_top)
+        tangent_v += derivative*(v[:3]+rotation_v@current_top)
+        tangent_uv += derivative*rotation_uv@current_top
+    if np.linalg.norm(director_raw) <= .5:
+        raise ValueError("material-line director is degenerate")
+    d, du, dv, duv = _normalized_variations(
+        director_raw, director_u, director_v, director_uv)
+    c = np.dot(d, tangent)
+    cu = np.dot(du, tangent)+np.dot(d, tangent_u)
+    cv = np.dot(dv, tangent)+np.dot(d, tangent_v)
+    cuv = (np.dot(duv, tangent)+np.dot(du, tangent_v)
+           +np.dot(dv, tangent_u)+np.dot(d, tangent_uv))
+    projected = tangent-d*c
+    projected_u = tangent_u-du*c-d*cu
+    projected_v = tangent_v-dv*c-d*cv
+    projected_uv = tangent_uv-duv*c-du*cv-dv*cu-d*cuv
+    if np.linalg.norm(projected) <= .2*np.linalg.norm(tangent):
+        raise ValueError("material-line projected tangent is degenerate")
+    e, eu, ev, euv = _normalized_variations(
+        projected, projected_u, projected_v, projected_uv)
+    b = np.cross(d, e)
+    bu = np.cross(du, e)+np.cross(d, eu)
+    bv = np.cross(dv, e)+np.cross(d, ev)
+    buv = (np.cross(duv, e)+np.cross(du, ev)
+           +np.cross(dv, eu)+np.cross(d, euv))
+    return (np.column_stack((e, b, d)),
+            np.column_stack((eu, bu, du)),
+            np.column_stack((ev, bv, dv)),
+            np.column_stack((euv, buv, duv)))
+
+
 class MaterialLinePosition:
-    """Bounded position map with reference-level orientation variation."""
+    """Bounded position map and private material-line orientation probe."""
 
     def __init__(self, xs, ys, beam, *, thickness=.035, beam_depth=.1,
                  quadrature_order=3, mixed_s3=False, diagonal="bl_tr"):
@@ -213,7 +309,7 @@ class MaterialLinePosition:
         return result
 
     def orientation_gap(self, shell_coordinates, shell_frames, beam_state):
-        """Objective relative Log; finite-state work curvature remains open."""
+        """Objective beam-relative Log on the admitted finite rotation chart."""
         coordinates = np.asarray(shell_coordinates, dtype=float)
         frames = np.asarray(shell_frames, dtype=float)
         if (coordinates.shape != (self.shell_count, 3) or
@@ -286,3 +382,55 @@ class MaterialLinePosition:
             self.reference_nodes,
             np.broadcast_to(np.eye(3), (self.shell_count, 3, 3)),
             self.beam.context.initial.mechanical)
+
+    def orientation_second_variation(self, shell_coordinates, shell_frames,
+                                     beam_state, first, second):
+        """Mixed Log variation in one chart for the private G0 proof."""
+        coordinates = np.asarray(shell_coordinates, dtype=float)
+        frames = np.asarray(shell_frames, dtype=float)
+        first = np.asarray(first, dtype=float)
+        second = np.asarray(second, dtype=float)
+        total = 6*self.shell_count+self.beam.context.count
+        if (coordinates.shape != (self.shell_count, 3) or
+                frames.shape != (self.shell_count, 3, 3) or
+                first.shape != (total,) or second.shape != (total,) or
+                not all(np.isfinite(item).all() for item in
+                        (coordinates, frames, first, second))):
+            raise ValueError("complete finite material-line state and directions required")
+        split = 6*self.shell_count
+        shell_u = first[:split].reshape(-1, 6)
+        shell_v = second[:split].reshape(-1, 6)
+        beam_u, beam_v = first[split:], second[split:]
+        result = []
+        for station in self.stations:
+            shell, shell_first, shell_second, shell_mixed = (
+                _shell_frame_second_variation(
+                    coordinates, frames, station, self.top, shell_u, shell_v))
+            _, _, beam = station.port.pose_pair(beam_state)
+            port_tangent = station.port.tangent(beam_state)[3:]
+            beam_first = _skew(port_tangent@beam_u)@beam
+            beam_second = _skew(port_tangent@beam_v)@beam
+            _, beam_mixed = station.port.second_variation(
+                beam_state, beam_u, beam_v)
+            reference = station.reference_orientation.T
+            relative = reference@shell.T@beam
+            relative_first = reference@(
+                shell_first.T@beam+shell.T@beam_first)
+            relative_second = reference@(
+                shell_second.T@beam+shell.T@beam_second)
+            relative_mixed = reference@(
+                shell_mixed.T@beam+shell_first.T@beam_second
+                +shell_second.T@beam_first+shell.T@beam_mixed)
+            gap = Rotation.from_matrix(relative).as_rotvec()
+            if not np.isfinite(gap).all() or np.linalg.norm(gap) >= np.pi-.1:
+                raise ValueError("material-line relative rotation left chart")
+            inverse = _log_left_inverse(gap)
+            eta_first = _vee_skew(relative_first@relative.T)
+            eta_second = _vee_skew(relative_second@relative.T)
+            eta_mixed = _vee_skew(
+                relative_mixed@relative.T
+                +relative_first@relative_second.T)
+            gap_second = inverse@eta_second
+            result.append(_log_left_inverse_variation(
+                gap, gap_second)@eta_first+inverse@eta_mixed)
+        return np.asarray(result)

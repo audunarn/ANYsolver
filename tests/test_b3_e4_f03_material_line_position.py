@@ -228,6 +228,40 @@ def test_material_line_orientation_jacobian_at_nonzero_gap(mixed_s3):
     finite_difference = (trial(1)-trial(-1))/(2*step_size)
     assert np.max(np.abs(finite_difference-predicted)) < 2e-8
 
+    second_shell = rng.normal(size=(line.shell_count, 6))*.1
+    second_beam = rng.normal(size=beam.context.count)*.1
+    second_shell[fixed_shell] = 0.
+    second_beam[list(beam.context.fixed)] = 0.
+    other = np.r_[second_shell.ravel(), second_beam]
+    analytic_mixed = line.orientation_second_variation(
+        coordinates, frames, state, direction, other)
+    reversed_mixed = line.orientation_second_variation(
+        coordinates, frames, state, other, direction)
+
+    def two_direction_trial(first_scale, second_scale):
+        translation = (first_scale*shell_direction[:, :3]
+                       +second_scale*second_shell[:, :3])
+        rotation = (first_scale*shell_direction[:, 3:]
+                    +second_scale*second_shell[:, 3:])
+        trial_frames = Rotation.from_rotvec(rotation).as_matrix()@frames
+        trial_state = beam.context.advance(
+            state, first_scale*beam_direction+second_scale*second_beam)
+        return line.orientation_gap(coordinates+translation,
+                                    trial_frames, trial_state)
+
+    def mixed_stencil(h):
+        return (two_direction_trial(h, h)-two_direction_trial(h, -h)
+                -two_direction_trial(-h, h)+two_direction_trial(-h, -h)
+                )/(4*h*h)
+
+    # The raw stencil has observed O(h²) truncation on this curved state.
+    # Richardson cancellation retains the same absolute acceptance bound.
+    fine = mixed_stencil(1e-4)
+    coarse = mixed_stencil(2e-4)
+    difference_mixed = (4*fine-coarse)/3
+    assert np.max(np.abs(analytic_mixed-difference_mixed)) < 5e-7
+    assert np.max(np.abs(analytic_mixed-reversed_mixed)) < 1e-9
+
 
 def test_material_line_orientation_couple_work_cancels_on_common_rigid_motion():
     _, _, beam, line = _fixture(patch_cells=2)
@@ -336,7 +370,17 @@ def test_material_line_orientation_work_has_chart_corrected_mixed_curvature():
     scalar_difference = (work(h*(first+second))-work(h*(first-second))
                          -work(h*(-first+second))+work(-h*(first+second))
                          )/(4*h*h)
+    analytic = multiplier@line.orientation_second_variation(
+        line.reference_nodes,
+        np.broadcast_to(np.eye(3), (line.shell_count, 3, 3)),
+        base, first, second).ravel()
+    analytic_reversed = multiplier@line.orientation_second_variation(
+        line.reference_nodes,
+        np.broadcast_to(np.eye(3), (line.shell_count, 3, 3)),
+        base, second, first).ravel()
     assert abs(mixed_ab) > 1e-5
     assert abs(mixed_ab-mixed_ba) < 2e-7
     assert abs(mixed_ab-scalar_difference) < 2e-7
+    assert abs(analytic-mixed_ab) < 2e-7
+    assert abs(analytic-analytic_reversed) < 2e-9
     assert abs(naive_mixed-mixed_ab) > 1e-6

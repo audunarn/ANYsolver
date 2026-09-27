@@ -15,8 +15,8 @@ A new material-line proof detects the even-slip mode and passes bounded
 position/Jacobian checks. Its value-only orientation probe is objective,
 non-drilling, and preserves the tested shear mode. Its reference orientation
 Jacobian passes Q4/S3 reference and nonzero-gap chart differences;
-one chart-corrected mixed-curvature diagnostic passes. A general
-second-variation operator and coupled transfer remain open.
+an explicit mixed orientation second variation passes bounded checks.
+Complete position/orientation work and coupled transfer remain open.
 **Remaining uncertainty:** Allocate torque/shear differences among the
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
@@ -257,6 +257,23 @@ read-only mechanics review found the base-chart correction and stencil
 valid for this fixture. This is a numerical curvature oracle for one
 direction pair, not an implemented general constraint Hessian, loaded
 coupling tangent, physical wrench qualification, or G0B acceptance.
+
+**Explicit orientation mixed variation (27 September):** The private
+material-line probe now differentiates director normalization, deformed
+top-line tangent, its director-orthogonal projection, and beam-relative
+SO(3) Log in one finite-state exponential chart. It uses the native
+retained port's symmetric second variation. The analytic mixed result is
+symmetric under direction exchange and agrees with a four-state stencil
+for one reference direction pair and Q4/mixed-S3 finite states. The raw
+finite-state stencil at `h=1e-4` initially missed the strict `5e-7`
+absolute comparison (Q4 `3.34e-5`, S3 `8.41e-6`); a bounded step-size
+diagnosis showed approximately quadratic truncation. Richardson
+cancellation using `h=1e-4` and `2e-4` retains the same `5e-7` absolute
+bound on the extrapolated estimate. All focused material-line tests pass
+`13/13`; independent read-only review found no blocking derivative or
+Log-chain defect. This does not bound the raw stencil, implement a global
+KKT tangent, verify the three position-channel second variations, or
+qualify physical torque/shear, line spaces, and G0B.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8
