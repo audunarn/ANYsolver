@@ -11,6 +11,9 @@ The split-solid torque/opening fields show sampled overlap; the separate
 reverse-Fz opening field has positive same-XY samples on 120 available
 faces but lacks seam data and continuous separation. B2 physical-section
 checks pass at sampled points; fail-closed F09 admission remains unfinished.
+A new three-channel material-line position proof detects the even-slip
+mode and passes bounded chart, shear, rigid-motion and reference checks;
+its orientation and coupled transfer remain open.
 **Remaining uncertainty:** Allocate torque/shear differences among the
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
@@ -157,6 +160,26 @@ physical wrench balance and drilling independence before loaded accuracy
 or ratio sweeps. One ad hoc even-mode row or a higher-order x multiplier
 does not supply this law. The independent review does not close F03/G0B;
 G1 remains barred and formal F03 execution authority unconsumed.
+
+**Material-line position feasibility slice (27 September):** Private
+`scripts/b3_e4_f03_material_line_position.py` now samples the shell top
+at the declared material path `y=0` against the actual native retained
+B3 underside, splitting at shell and half-cell cuts. The three-component
+beam-frame position gap owns its reference correspondence and rejects raw
+reference mismatch above `1e-10 m`; it cannot erase a geometric gap by
+redefining an offset. The analytic reference Jacobian includes the E4
+top-surface lever arm and B3 underside/spatial-chart lever arm. Six focused
+tests pass with JIT disabled: the supported positive-energy even-slip mode
+is detected while the old six-channel strip mean remains zero; a common
+supported shear slope and common translation have zero line gap; actual
+chart directional differences, a finite common rigid motion localized to
+the bond, Q4/S3 geometric interpolation and mismatch rejection pass.
+Independent read-only review found no blocking sign/work defect for the
+three-channel derivation and identified the reference-offset loophole,
+which the raw-gap guard and negative test closed. This is not a full pose
+law: shell director orientation, couple work, second variation, mixed-S3
+mechanics, global stability and loaded torque/shear are unqualified.
+No production owner, F03 gate acceptance or G1 entry follows.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8
