@@ -1,0 +1,45 @@
+{
+  "case_id": "general_contact_d1_free_target_equilibrium_tangent_v1",
+  "status": "registered_pending_execution",
+  "claim_boundary": "One smooth fixed-multiplier mixed source/target tangent direction at a completed 8-Q4/two-S3 free-target elastic static press equilibrium; not the multiplier-update derivative or complete tangent",
+  "policy": "ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1/2026-09-24.2",
+  "source_commit": "ee5518b9233e3915c0608b713c8e788ba7460032",
+  "source_blobs": {
+    "scripts/general_contact_d1_free_target_equilibrium_tangent_probe.py": "49e0ad5400fba58d150e0d79a1e60866ce23931c",
+    "scripts/general_contact_d1_free_target_press_probe.py": "a3eb2704024d9cd3fe1df0f1af6c805f1debbb9e",
+    "scripts/general_contact_d1_distributed_coupled_tangent_probe.py": "cfd7522dff18675b596ee38d1ad3e98a4a7b2ff7",
+    "scripts/general_contact_d1_distributed_tangent_probe.py": "8e21292ae13f8eac1ed3414ab88b5a22add43245",
+    "src/anysolver/general_contact/s3_patch_static.py": "b69d4b271ce7c7bbbca1f76a3c6e48d8a0b2573a6253ec",
+    "src/anysolver/general_contact/q4_s3_overlap_derivatives.py": "7a7497f7a2f4e2fe864c6b2bd8a0b2573a6253ec"
+  },
+  "saved_pose_report": "reports/general_contact_d1_free_target_8q4_press_pose_dev_20260927.json",
+  "saved_pose_sha256": "05b2fce85013d6db44b2db9235687993f55247757f3c5425d1371da9a6d213a2",
+  "retained_inconclusive_development": "reports/general_contact_d1_free_target_8q4_equilibrium_tangent_dev_20260927.json",
+  "direction": {
+    "target_nodes_20_21_uz_weights": [0.5, 0.5],
+    "source_nodes_8_17_ux_uz_weight": 0.1,
+    "stencil": "[3F(0)-4F(-h)+F(-2h)]/(2h), separately for contact-on and contact-off assemblies"
+  },
+  "execution": {
+    "command": "python -m scripts.general_contact_d1_free_target_equilibrium_tangent_probe.py reports/general_contact_d1_free_target_8q4_press_pose_dev_20260927.json reports/general_contact_d1_free_target_8q4_equilibrium_tangent_v1_formal_20260927.json --steps 3e-7 1.5e-7",
+    "maximum_wall_seconds": 180,
+    "run_once": true
+  },
+  "criteria": {
+    "status": "passed_development",
+    "difference_order": 2,
+    "free_dofs": 46,
+    "free_force_rows": 40,
+    "free_moment_rows": 6,
+    "base_active_modes": 1,
+    "overlap_pair_branches": 16,
+    "pressure_replay_error_pa": 1e-12,
+    "pose_constraint_error_m": 1e-12,
+    "steps_m": [3e-7, 1.5e-7],
+    "smooth_branch": true,
+    "minimum_force_action_n_per_m": 1e-8,
+    "minimum_moment_action_nm_per_m": 1e-8,
+    "maximum_relative_force_error": 1e-5,
+    "maximum_relative_moment_error": 1e-5
+  }
+}
