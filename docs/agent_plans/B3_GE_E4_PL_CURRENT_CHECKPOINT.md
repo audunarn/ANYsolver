@@ -7,19 +7,24 @@ stable exact multiplier policy before G1. **Established:** The
 law-matched detached-solid P0 m4 action passed 24/24 row and work
 preflight and all 24 bounded external columns. Under the same line
 dual, native B3 beam work is within 0.7% of the 3D bar; E4 shell work
-is 10–14% below the 3D plate. Targeted x/y refinement and local
-thickness-normal projection explain little of that shell difference.
-The coarser factor-2 solid plate supports only 21/24 P0 m4 rows, so
-it cannot enforce 24 independent constraints; its fixed-dual action
-is still defined. **Remaining uncertainty:**
-shell/3D support, trace traction and plate-theory differences, a
-representable 3D mesh comparison, and growing-space mixed stability.
-**Next discriminator and action:** Check factor-4 plate-only work parity,
-then compare the same fixed physical action on factors two and four;
-review shell-side support/trace interpretation and advance B2 F09.
-Stop repeated x/y or classical axial refinement. P0 and the continuous
-law remain unselected; G0B open, G1 barred, formal F03 authority
-unconsumed. The records and exact source/evidence identities follow.
+is 10–14% below the factor-4 3D plate. A standalone factor-4 plate
+reproduces the saved detached-solid plate work within `3.5e-7`
+relative. The fixed-dual action on factor-2 and factor-4 plates raises
+plate work by `4.54%` (tip Mx) and `4.71%` (tip Fz); this does not
+remove the native/3D difference. Factor 2 supports only 21/24 P0 m4
+rows and cannot enforce 24 independent constraints, but it can carry
+this fixed action. **Remaining uncertainty:** shell/3D support, trace
+traction and plate-theory differences; the physical continuous law;
+and growing-space mixed stability. **Next discriminator and action:**
+Audit the shell and solid plate supports, load/action reconstruction and
+reference-surface conventions at the two compared cases. If they
+match, use one bounded physical plate-theory discriminator before
+attributing the work difference to the connection; if they do not,
+correct the comparison first. Advance independent B2 F09. Do not
+automatically add finer x/y or classical axial runs. P0 and the
+continuous law remain unselected; G0B open, G1 barred, formal F03
+authority unconsumed. The records and exact source/evidence identities
+follow.
 
 ## Detailed 27 September development record
 
@@ -9964,3 +9969,56 @@ factor. Hold P0 selection and distinguish supported physical convergence
 from multiplier oscillation in the registered ratios and matched two-sided
 reference before any resolution-policy or law change. F03/G0B remain open;
 G1 remains barred.
+
+**Fixed-dual plate-only factor comparison (28 September):** The
+standalone 35-mm C3D20R plate factor-4 geometry and all 24 line rows
+match the saved detached plate by coordinate and row mapping (maximum
+row defect zero). The same reconstructed physical P0 m4 dual was
+applied to standalone factor-2 and factor-4 plates without updating the
+dual or enforcing a new constraint solve. All four runs in
+`.qualification/b3-ge-e4-pl/f03-c1-material-line-plate-only-action-20260928-v4/`
+completed at source `88fba15b`, one thread, below 120 seconds and 2 GiB.
+Factor-2/factor-4 action work is `0.001890241950852976`/
+`0.001980136843172689 J` for tip Mx and `0.014450566416321137`/
+`0.015164270418287886 J` for tip Fz. Factor-4 differs from the prior
+detached-plate work by `−4.44e-8`/`+3.49e-7` relative, respectively.
+Native E4 work is `5.93%`/`10.09%` below the factor-2 plate and
+`10.20%`/`14.32%` below the factor-4 plate. This is a two-level
+fixed-action component comparison, not mesh convergence, matched
+coupled accuracy, an interface-law verdict, or an independent F03
+qualification. Factor-2 row rank is `21/24`: its previous failed
+24-constraint preflight remains valid and preserved. The physical
+load-card filter omitted less than `5.37e-6 N` total absolute nodal
+action in any case, under `1e-9` of total absolute nodal action; its
+largest discarded wrench component was `1.39e-6` in physical units,
+and the computed omitted displacement work was zero at saved precision.
+Earlier parse failures and the stricter filter rejection remain in
+the V1–V3 output roots. Result SHA256 values for factor-2 Mx/Fz are
+`3150214d9136c628fff30685df20fd0d5d20a2b49f085d84ff135997a2e77bc5`/
+`c176cb40ec617263aea908abb5c2a1dee5a5d497412e2946b85591e5724effbb`;
+factor-4 Mx/Fz are
+`224500aa9c36026bd5e7493cb99f017b5738d739d1ebaa60c43219d6752650de`/
+`a48537501550fbd78f5ef26d7acc3529bfa8739ec6d02db3f214a05ff913903a`.
+The factor-4 solver used approximately 1.1 GiB; factor-2 used about
+99 MiB. No broad performance claim follows from these diagnostic runs.
+
+**Next bounded action-shape discriminator:** Source inspection confirms
+the matched `.035 m` plate thickness and isotropic material, a clamp
+at `x=-.5 m`, and identical physical line-dual components for the
+factor-4 plate/action comparison. Solid translations are fixed through
+the left-edge thickness; native E4 translations and rotations are
+fixed along the corresponding shell edge. These are related but not
+algebraically identical boundary spaces. The saved *different*
+smooth-traction plate-only screen had only `2.31%` torque and `0.89%`
+shear E4/3D work differences at its finest levels, so the present
+`10–14%` line-action difference merits action-shape attribution before
+a new shell law or mesh. Decompose the existing four-interval physical
+dual into its six-channel longitudinal mean and zero-mean variation.
+Using only saved solid unit fields and the existing E4 stiffness,
+compute mean self-work, variation self-work and cross-work on both
+plates. Require exact reconstruction of the preserved total work and
+source hashes. If most of the *difference* resides in the varying
+action, review the physical trace/line-resolution and shell load-map
+domain; if mean action dominates, test plate-theory and support
+idealization at matched low-order action. Neither result selects a
+multiplier space or qualifies a connection.
