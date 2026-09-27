@@ -14,6 +14,7 @@ from anysolver._b2_physical_linear_batch_dev import CompiledB2AffineBatch
 from anysolver._b2_physical_flexibility_linear import LinearSection
 from anysolver.control import CancellationToken
 from anysolver.fe_core import FEModel
+from anysolver.linalg import FactorizationCache
 from test_b2_physical_linear_oriented_graph import (
     _exact_linear_solve, _force_method_energy, _members, _solve,
 )
@@ -172,20 +173,51 @@ def test_existing_auditor_builds_b2_affine_map_and_tracks_its_dependencies():
     assert abs(state[12]-.25*state[7]-.001) <= 1e-13
     np.testing.assert_allclose(first_t.T@(stiffness@state-load), 0.,
                                atol=1e-11)
+    compiled = tuple(member.compile_local() for member in members)
+    cache = FactorizationCache(name="bounded-b2-affine", max_entries=2)
     batch = CompiledB2AffineBatch(
-        tuple(member.compile_local() for member in members),
-        first_t, first_u0, np.arange(12, 18), max_chunk=8)
+        compiled, first_t, first_u0, np.arange(12, 18),
+        max_chunk=8, factorization_cache=cache)
+    assert (cache.hits, cache.misses) == (0, 1)
     selected = batch.solve_many((("audited", load),)).cases[0].values
     np.testing.assert_allclose(selected, state[12:18],
                                rtol=1e-11, atol=1e-11)
+    first_handle = batch._handle
     batch.close()
 
     _, _, value_t, value_u0, value_independent, _ = equation(.25, .002)
     np.testing.assert_array_equal(value_t.toarray(), first_t.toarray())
     np.testing.assert_array_equal(value_independent, independent)
     assert value_u0[12] == .002 and first_u0[12] == .001
-    _, _, structural_t, _, _, _ = equation(.5, .002)
+    value_batch = CompiledB2AffineBatch(
+        compiled, value_t, value_u0, np.arange(12, 18),
+        factorization_cache=cache)
+    assert (cache.hits, cache.misses) == (1, 1)
+    assert value_batch._handle is first_handle
+    value_state = value_t@spsolve(
+        (value_t.T@stiffness@value_t).tocsc(),
+        value_t.T@(load-stiffness@value_u0))+value_u0
+    value_u0[12] = 9.
+    value_selected = value_batch.solve_many((("new-value", load),)).cases[0].values
+    np.testing.assert_allclose(value_selected, value_state[12:18],
+                               rtol=1e-11, atol=1e-11)
+    assert not np.array_equal(value_selected, selected)
+    value_batch.close()
+
+    _, _, structural_t, structural_u0, _, _ = equation(.5, .002)
     assert not np.array_equal(structural_t.toarray(), first_t.toarray())
+    structural_batch = CompiledB2AffineBatch(
+        compiled, structural_t, structural_u0, np.arange(12, 18),
+        factorization_cache=cache)
+    assert (cache.hits, cache.misses) == (1, 2)
+    assert structural_batch._handle is not first_handle
+    structural_state = structural_t@spsolve(
+        (structural_t.T@stiffness@structural_t).tocsc(),
+        structural_t.T@(load-stiffness@structural_u0))+structural_u0
+    np.testing.assert_allclose(
+        structural_batch.solve_many((("new-structure", load),)).cases[0].values,
+        structural_state[12:18], rtol=1e-11, atol=1e-11)
+    structural_batch.close()
 
     model.add_boundary_condition(BoundaryCondition("conflict", [0],
                                                    {"ux": 1.}))

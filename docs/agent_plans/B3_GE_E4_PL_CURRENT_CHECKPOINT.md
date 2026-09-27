@@ -1,5 +1,38 @@
 # Current B3-GE / E4-PL / B2 development checkpoint
 
+## F13 affine factorization dependency slice — 27 September 2026
+
+**Decision sought:** Can the private B2 route reuse an unchanged sparse
+factorization when only an audited prescribed value changes, while rebuilding
+for a structural MPC change? **Established:** The real common constraint
+auditor supplies the B2 graph's affine `T` and `u0`; a value-only change keeps
+`T`, whereas an MPC coefficient change alters it. The private batch already
+owns its operator and affine arrays and certifies its reduced residual.
+**Competing explanations:** Cached factorization may be safely keyed by the
+scaled reduced matrix, or hidden structural/prescribed dependencies may make
+that key insufficient. **Bounded discriminator:** Recompile the same physical
+two-member graph with a local owner-supplied factorization cache under the
+original plan, a value-only offset change, and a changed MPC coefficient.
+Compare each selected solution to independent audited affine solves, check
+cache hit/miss counts, and retain cancellation/invalid-plan behavior.
+**Action:** If value-only reuses the factorization and structural change
+misses with solution parity, retain this private seam for G1 owner design. If
+not, fix the identified dependency before any public route or performance
+claim. This does not close F13 or admit G1.
+
+**Result:** A caller-owned, local `FactorizationCache` now enters the private
+B2 batch through the existing `factorize_cached` service. On the audited
+two-member graph, first/value-only/changed-MPC constructions produce cache
+`(hits, misses)` of `(0,1)`, `(1,1)`, and `(1,2)` respectively. The value-only
+batch retains the original handle even after the previous batch closes;
+changed MPC gets a different handle. All three selected solutions match
+independent audited affine solves, and mutation of the caller's prescribed
+array after construction does not change the batch. The focused F13 suite
+passes 10/10, including earlier cancellation and numerical-failure checks.
+This demonstrates dependency-key feasibility only. The private result's
+handle counters are not yet per-owner accounting across cache reuse;
+production diagnostics and owner/cache lifetime remain G1 design work.
+
 ## Current decision — 27 September 2026
 
 **Decision sought:** Select the physical native beam–shell connection and its

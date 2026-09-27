@@ -10,7 +10,7 @@ from scipy import sparse
 
 from ._b2_physical_linear_definition import CompiledPhysicalB2Member
 from .control import CancellationToken
-from .linalg import MatrixClass, factorize
+from .linalg import FactorizationCache, MatrixClass, factorize_cached
 
 
 @dataclass(frozen=True)
@@ -34,13 +34,17 @@ class CompiledB2AffineBatch:
 
     def __init__(self, members: Sequence[CompiledPhysicalB2Member],
                  transformation: sparse.spmatrix, prescribed_offset,
-                 selected_dofs, *, max_chunk: int = 8):
+                 selected_dofs, *, max_chunk: int = 8,
+                 factorization_cache: FactorizationCache | None = None):
         compiled = tuple(members)
         if not compiled or any(not isinstance(m, CompiledPhysicalB2Member)
                                for m in compiled):
             raise ValueError("compiled physical B2 members required")
         if type(max_chunk) is not int or max_chunk <= 0:
             raise ValueError("positive bounded RHS chunk required")
+        if factorization_cache is not None and not isinstance(
+                factorization_cache, FactorizationCache):
+            raise ValueError("local factorization cache required")
         ids = [m.definition.member_id for m in compiled]
         if len(set(ids)) != len(ids):
             raise ValueError("unique physical B2 member IDs required")
@@ -94,7 +98,8 @@ class CompiledB2AffineBatch:
                 np.any(scaled.diagonal() <= 0.)):
             raise RuntimeError(
                 "physical B2 batch factorization failed: diagonal scaling is not representable")
-        handle = factorize(scaled, MatrixClass.SPD)
+        handle = factorize_cached(
+            scaled, MatrixClass.SPD, cache=factorization_cache)
         if handle.status != "ok":
             raise RuntimeError("physical B2 batch factorization failed: " +
                                str(handle.failure_reason))
