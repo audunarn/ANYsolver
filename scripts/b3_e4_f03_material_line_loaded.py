@@ -43,7 +43,7 @@ def material_line_mean_rows(line: MaterialLinePosition) -> np.ndarray:
 
 def _scales(shell_size: int, beam, free: np.ndarray,
             row_count: int = 6) -> tuple[np.ndarray, float]:
-    if type(row_count) is not int or not 1 <= row_count <= 24:
+    if type(row_count) is not int or not 1 <= row_count <= 36:
         raise ValueError("bounded loaded line row count required")
     force_scale = 1e6
     displacement_scale = force_scale/(210e9*.035)
@@ -65,7 +65,7 @@ def _solve(primal: sparse.csr_matrix, residual: np.ndarray,
            scales: np.ndarray, energy_scale: float,
            load: np.ndarray) -> tuple[np.ndarray, np.ndarray, dict]:
     row_count = constraint.shape[0]
-    if (row_count < 1 or row_count > 24 or
+    if (row_count < 1 or row_count > 36 or
             scales.shape != (len(free)+row_count,)):
         raise ValueError("bounded constraint and scaling rows required")
     rows = sparse.csr_matrix(constraint[:, free])

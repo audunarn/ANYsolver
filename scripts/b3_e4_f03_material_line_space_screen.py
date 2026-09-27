@@ -54,7 +54,7 @@ def _rows(line: MaterialLinePosition, space: LineMultiplierSpace):
 
 def _scaled_row_diagnostics(constraint, free, primal_scales):
     """Bounded physical-coordinate rank screen, never a stability verdict."""
-    if (constraint.shape[0] > 24 or len(free) > 1200 or
+    if (constraint.shape[0] > 36 or len(free) > 1200 or
             primal_scales.shape != (len(free),)):
         raise ValueError("bounded line row diagnostic only")
     mapped = constraint[:, free]*primal_scales[None, :]
@@ -70,6 +70,7 @@ def _scaled_row_diagnostics(constraint, free, primal_scales):
         "scaled_row_norm_min": float(np.min(row_norms)),
         "scaled_row_norm_max": float(np.max(row_norms)),
         "left_smallest_mode": left[:, -1].tolist(),
+        "left_null_modes": left[:, singular <= tolerance].T.tolist(),
         "rank_tolerance": float(tolerance),
         "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
     }

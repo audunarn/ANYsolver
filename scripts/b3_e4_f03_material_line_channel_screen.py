@@ -31,21 +31,23 @@ from scripts.b3_e4_f03_plate_patch_work import (
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
-def _channel_rows(line: MaterialLinePosition, kind: str) -> np.ndarray:
+def _channel_rows(line: MaterialLinePosition, kind: str,
+                  knots: tuple[float, ...] = (0., .5, 1.)) -> np.ndarray:
     p0, _ = _rows(line, LineMultiplierSpace(
-        "piecewise_constant", (0., .5, 1.)))
+        "piecewise_constant", knots))
     if kind == "p0":
         return p0
     if kind not in ("continuous_linear", "dual_linear"):
         raise ValueError("bounded candidate space required")
-    enriched, _ = _rows(line, LineMultiplierSpace(kind, (0., .5, 1.)))
+    enriched, _ = _rows(line, LineMultiplierSpace(kind, knots))
     # Rows grouped by physical channel; no new Mz direction is invented.
     return np.vstack([enriched[axis::6] for axis in range(5)]
                      + [p0[5::6]]).copy()
 
 
 def _one_topology(xs, ys, beam, *, mixed_s3: bool,
-                  diagonal: str) -> dict:
+                  diagonal: str,
+                  knots: tuple[float, ...] = (0., .5, 1.)) -> dict:
     shell_size = 6*len(xs)*len(ys)
     shell_tangent, shell_physical = (
         raw_e4_mixed_c1_tangent(xs, ys, thickness=.035,
@@ -72,10 +74,11 @@ def _one_topology(xs, ys, beam, *, mixed_s3: bool,
         len(line.stations), 3, -1)
     weights = np.array([station.weight for station in line.stations])
     result = {}
-    for label, kind in (("p0_two", "p0"),
+    p0_label = "p0_two" if len(knots) == 3 else f"p0_{len(knots)-1}"
+    for label, kind in ((p0_label, "p0"),
                         ("p1_non_yaw_p0_yaw", "continuous_linear"),
                         ("dual_non_yaw_p0_yaw", "dual_linear")):
-        constraint = _channel_rows(line, kind)
+        constraint = _channel_rows(line, kind, knots)
         scales, energy_scale = _scales(
             shell_size, beam, free, row_count=len(constraint))
         rank = _scaled_row_diagnostics(
@@ -143,9 +146,13 @@ def _one_topology(xs, ys, beam, *, mixed_s3: bool,
                 continue
             diagnostics["status"] = "BOUNDED_SOLVE_PASSED"
             loads[load_name] = diagnostics
+        channel_rows = ([len(knots)-1]*6 if kind == "p0" else
+                        [len(knots)]*5+[len(knots)-1])
         result[label] = {"row_count": int(len(constraint)),
+                         "channel_rows_fx_fy_fz_mx_my_mz": channel_rows,
                          "rank": rank, "loads": loads}
-    return {"station_count": len(line.stations), "spaces": result}
+    return {"station_count": len(line.stations),
+            "multiplier_knots": knots, "spaces": result}
 
 
 def run() -> dict:
