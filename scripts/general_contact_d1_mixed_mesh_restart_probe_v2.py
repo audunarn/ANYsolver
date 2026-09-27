@@ -107,6 +107,12 @@ def main(reference_path: Path, output_path: Path) -> None:
             ),
             "pressure_node_ids_match": actual_ids == source_ids,
             "active_pressure_node_ids_match": actual_active_ids == source_active_ids,
+            "reference_pressure_node_ids": list(source_ids),
+            "resumed_pressure_node_ids": list(actual_ids),
+            "reference_active_pressure_node_ids": list(source_active_ids),
+            "resumed_active_pressure_node_ids": list(actual_active_ids),
+            "reference_pressure_vector_pa": source_pressures.tolist(),
+            "resumed_pressure_vector_pa": actual_pressures.tolist(),
             "active_membership_consistent": (
                 len(source_active_ids) == int(source["active_pressure_dofs"])
                 and len(actual_active_ids) == int(contact["active_pressure_dofs"])
