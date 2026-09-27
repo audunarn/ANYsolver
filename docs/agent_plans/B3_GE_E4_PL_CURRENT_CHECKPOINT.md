@@ -19,8 +19,10 @@ Both cases retain rank and balance. Low-order lateral/twist agreement with
 the stronger F5 bond reverses direction across those beam resolutions,
 so neither coarse-beam underresolution nor simple interface locking is
 established. The x8 mixed minimum is 99.935% auxiliary drilling chart.
-Audit the newly enforced physical work modes and shell/beam strain-energy
-partition against the declared top-face law before choosing a resolution
+Global work partition shows both physical shell and beam changes, with
+negligible drilling completion. Audit the *local* newly enforced gap/work
+modes and strain-energy distribution against the declared top-face law
+before choosing a resolution
 policy. A physically matched sided reference is still needed for fidelity.
 Do not launch another automatic refinement or select P0/P1/dual from tip
 motion, F5 proximity or one quotient.
@@ -340,6 +342,21 @@ recovery to this bounded fixture, then rerun the minimum matched pair.
 The validated F5 action lacks verified sided retained-port work, so use
 it only at common continuous fields until that reference is resolved.
 G0B/F03 remain open, G1 barred, formal F03 authority unconsumed.
+
+**Global work partition from the saved solves:** The fixture reports
+`uᵀKu` work, without a one-half energy factor. Equilibrium gives native
+beam work as external work minus physical and numerical shell work. Under
+torque, B3-12 four→eight intervals change physical shell work
+`1.954615→1.921030 mJ` and inferred beam work
+`2.749470→2.720912 mJ`; B3-24 changes them
+`1.977298→1.949419 mJ` and `2.746697→2.679713 mJ`. The numerical
+shell completion remains `0.00076–0.00124 mJ`, far smaller than the
+physical transfer changes. Thus the extra rows alter both physical
+domains and cannot be attributed to drilling completion alone. These
+global totals do not identify which local gap/strain modes are suppressed
+or distinguish intended surface bonding from locking. Selected
+per-interval work and strain-energy recovery is the next useful
+diagnostic; no additional mesh level follows from these totals.
 
 **Bounded F09 physical-section decision (27 September):** The prior
 `2^-20`/`2^-40` weak-shear graph brackets a numerical issue in an artificial
