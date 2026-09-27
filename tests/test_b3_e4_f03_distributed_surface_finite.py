@@ -330,6 +330,84 @@ def test_c1_continuous_pitch_sample_matches_actual_native_port_derivative():
     assert sampled["quadrature_max_abs_director_pitch_gap_rad"] > 0.
 
 
+def test_c1_six_channel_finite_state_matches_physical_side_actions():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    patch = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
+    rng = np.random.default_rng(1921)
+    total_shell = rng.normal(size=(patch.shell_count, 6))*np.array(
+        (.001, .001, .001, .06, .06, .06))
+    shell_direction = rng.normal(size=total_shell.shape)*np.array(
+        (.002, .002, .002, .03, .03, .03))
+    fixed = patch.reference_nodes[:, 0] == xs[0]
+    total_shell[fixed] = 0.
+    shell_direction[fixed] = 0.
+    beam_total = rng.normal(scale=.001, size=beam.context.count)
+    beam_direction = rng.normal(scale=.002, size=beam.context.count)
+    beam_total[:6] = 0.
+    beam_direction[:6] = 0.
+    state = beam.context.advance(beam.context.initial.mechanical, beam_total)
+    coordinates = patch.reference_nodes+total_shell[:, :3]
+    frames = np.array([rotation_matrix_from_vector(theta)
+                       for theta in total_shell[:, 3:]])
+    multiplier = np.array((18., -23., 31., 7., -100., 13.))
+    # KKT interface reaction is -C.T @ multiplier, so physical side
+    # actions use its negative material-frame row coefficients.
+    action = -multiplier
+    native = float(-multiplier@patch.evaluate(
+        coordinates, frames, state,
+        (shell_direction, beam_direction),
+        (shell_direction, beam_direction))[:, 1])
+
+    shell_work = beam_work = 0.
+    shell_wrench = np.zeros(6)
+    beam_wrench = np.zeros(6)
+    for point in patch.points:
+        high, low, beam_frame = point.port.pose_pair(state)
+        offset = np.array((0., point.y, -.05))
+        beam_position = high+low+beam_frame@offset
+        shell_position = patch._shell(coordinates, frames, point)
+        gap = shell_position-beam_position
+        force_material = action[:3]+np.array((
+            -action[5]*point.y/patch.transverse_inertia,
+            0., action[3]*point.y/patch.transverse_inertia))
+        force = beam_frame@force_material
+        port_step = point.port.tangent(state)@beam_direction
+        spin = port_step[3:]
+        beam_velocity = port_step[:3]+np.cross(spin, beam_frame@offset)
+        shell_velocity = sum((shape*(shell_direction[int(node), :3]+
+            np.cross(shell_direction[int(node), 3:],
+                     frames[int(node)]@np.array((0., 0., patch.top))))
+            for node, shape in zip(point.nodes, point.shape)), np.zeros(3))
+
+        center_nodes, center_shape, director = patch._director(frames, point.x)
+        x_axis, z_axis = beam_frame[:, 0], beam_frame[:, 2]
+        a, c = float(x_axis@director), float(z_axis@director)
+        pitch_gradient = (c*x_axis-a*z_axis)/(a*a+c*c)
+        director_velocity = sum((shape*np.cross(
+            shell_direction[int(node), 3:], frames[int(node), :, 2])
+            for node, shape in zip(center_nodes, center_shape)), np.zeros(3))
+        couple = action[4]*np.cross(director, pitch_gradient)
+        weight = point.weight
+        shell_work += weight*(force@shell_velocity+
+                              action[4]*pitch_gradient@director_velocity)
+        beam_work += weight*(-force@beam_velocity-
+                             np.cross(gap, force)@spin-couple@spin)
+        shell_wrench += weight*np.r_[force,
+            np.cross(shell_position, force)+couple]
+        beam_wrench += weight*np.r_[-force,
+            -np.cross(beam_position, force)-np.cross(gap, force)-couple]
+
+    np.testing.assert_allclose(native, shell_work+beam_work,
+                               rtol=1e-11, atol=1e-12)
+    np.testing.assert_allclose(shell_wrench+beam_wrench, 0.,
+                               rtol=0., atol=1e-10)
+    assert abs(shell_work) > 1e-6
+    assert abs(beam_work) > 1e-6
+
+
 def test_c1_segmented_top_face_law_preserves_positional_work():
     xs, ys = local_grid(2)
     beam = build(12, z_offset=.0675,

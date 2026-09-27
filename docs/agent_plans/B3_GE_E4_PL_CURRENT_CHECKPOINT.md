@@ -8156,3 +8156,33 @@ physical fidelity. The reviewer recommends testing the declared two-sided
 torque/shear/compensated-pitch work with actual retained ports alongside the
 registered growing-space mixed-norm and reciprocal-ratio assessment; revise
 the law/trace if transfer mismatches before selecting a space.
+
+**Next finite-state work discriminator (prospective):** The reference-state
+six-channel wrench check and the separate finite pitch-face-pair identity do
+not yet check all six actions together at a nonzero E4/B3 configuration.
+On the existing small C1 fixture, use nonzero supported shell/retained-beam
+states and all six nonzero dual channels. Independently assemble the spatial
+face-force work, eccentric lever arms, material-frame gap correction and
+two-sided director couple, then compare with the native finite-chart first
+variation and check opposite global wrenches. A discrepancy revises the
+continuous law or coordinate pullback before more meshes; agreement supports
+only this declared work representation and permits the matched physical
+reference and growing-space studies. It does not validate a one-sided bond,
+finite loaded equilibrium, or a multiplier policy. Preserve existing
+virtual-work criteria and resource limits.
+
+**Finite-state work outcome and review:** On the small supported C1 fixture,
+one nonzero E4 total configuration and native B3 retained state, with all
+six multiplier channels nonzero, pass the independently assembled spatial
+face-force, eccentric-frame and director-couple virtual-work identity at
+`1e-11` relative / `1e-12` absolute test tolerances. The global shell/beam
+wrench sum passes `1e-10` absolute. The physical KKT action is explicitly
+`−Cᵀλ`; the first test wording treated `Cᵀdual` as the reaction, and was
+corrected after independent read-only review without changing the law.
+The reviewer confirmed the derivative decomposition and actual retained
+B3 port use, while noting that constructed global wrench cancellation is
+an internal sign check, not an independent finite-state rigid-motion test.
+Four focused tests pass with JIT disabled and one BLAS thread. This supports
+the declared two-sided law's finite-state work representation only;
+independent loaded physical fidelity, growing-space stability, the exact
+line-space choice, F03 and G0B remain open, and G1 remains barred.
