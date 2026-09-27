@@ -20,13 +20,14 @@ split reproduces the original work and attributes `95%`/`89%` of the
 native-minus-solid Mx/Fz difference to mean-action self-work. The
 moment case concentrates in physical Mx and Mz; the force case is an
 axial-force/bending-couple block with substantial cancellation.
-**Remaining uncertainty:** global E4 versus 3D kinematic/energy and
-support differences for those actions; the physical continuous law;
-and growing-space mixed stability. **Next discriminator and action:**
-Project the saved 3D plate response through the *global* E4 shell
-trace for the identified actions, distinguishing unrepresented 3D
-kinematics from an E4 stiffness/support difference. Only then design
-a new physical reference if needed. Advance independent B2 F09. Do not
+**Remaining uncertainty:** quadrature-station trace work, shell/3D
+stiffness and support differences, the physical continuous law, and
+growing-space mixed stability. **Next discriminator and action:**
+Fit one clamp-compatible global Q4 mid-surface/director field to the
+saved plate top/bottom face displacements, including midside nodes.
+Compare the solid and native six-channel traces at each matched Gauss
+station and their signed fixed-dual work. Only then consider a matched
+stiffness/support-energy check. Advance independent B2 F09. Do not
 automatically add finer x/y or classical axial runs. P0 and the
 continuous law remain unselected; G0B open, G1 barred, formal F03
 authority unconsumed. The records and exact source/evidence identities
@@ -10071,8 +10072,23 @@ no new CalculiX solve was launched. **Next bounded discriminator:**
 for the saved Mx/Mz and Fx/My response fields, fit one global Q4
 mid-surface/director field on the existing native grid and compare
 its physical line-action work with the full 3D work, preserving the
-clamp and fixed dual. Large excluded work directs a shell-kinematic
-admission review; small excluded work directs a matched stiffness and
-support-energy check. Existing local director projection excluded
-almost no work but did not test global interpolation. Neither outcome
+clamp and fixed dual. Resolve pointwise/interval six-channel trace
+differences before attributing any remainder to stiffness/support.
+Existing local director projection excluded almost no work but did
+not test global interpolation. Neither outcome
 selects the interface law, P0 space, or G0B acceptance.
+
+**Five-node sampling and independent review:** Source `39bc2bd4`
+sampled top/bottom 3D response at only the five native line-action
+nodes. Full 3D minus sampled native line-action work is
+`5.3742991e-5 J` for Mx and `3.5548443e-4 J` for Fz. Raw V3 SHA256
+is `0fc52ae19b6d594a3887c1fdf45f4f7d8647a8bc5106b3ba21b1868141bb684f`.
+The focused representable-field suite passes `8/8`. Independent
+read-only mechanics review confirms these as **signed differences
+between two load-work functionals**, not projected strain energy,
+an upper bound on unrepresented 3D work, or proof that their remainder
+is a stiffness/support defect. Solid Q8 face interpolation and its
+top-face x derivative for yaw can differ between sampled nodes from
+the native Q4 tangent. Zero sampled drilling is harmless for this
+port. Complete the global fit and station-wise work comparison above;
+do not use the V3 subtraction as an energy partition or G0 decision.
