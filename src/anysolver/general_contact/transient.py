@@ -16,6 +16,7 @@ from scipy.sparse.linalg import spsolve
 from anymaterial.isotropic import IsotropicMaterial
 
 from anysolver.assembly import assemble_mass_matrix, build_constraint_transformation
+from anysolver.dynamics import TransientConfig
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.nonlinear_state import commit_state_candidate, discard_active_state_candidate
@@ -31,12 +32,32 @@ from .core import (
 )
 
 
-_PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V0"
+_PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V1"
+
+
+@dataclass(frozen=True)
+class ContactTransientSolverControls:
+    """Nonlinear iteration limits for the developing contact driver."""
+
+    maximum_newton_iterations: int = 20
+    maximum_cutbacks: int = 8
+    minimum_dt: float = 1.0e-8
+    equilibrium_tolerance: float = 1.0e-8
+
+    def __post_init__(self) -> None:
+        if type(self.maximum_newton_iterations) is not int or self.maximum_newton_iterations < 1:
+            raise ValueError("maximum_newton_iterations must be a positive integer")
+        if type(self.maximum_cutbacks) is not int or self.maximum_cutbacks < 0:
+            raise ValueError("maximum_cutbacks must be a nonnegative integer")
+        if not np.isfinite(self.minimum_dt) or self.minimum_dt <= 0.0:
+            raise ValueError("minimum_dt must be finite and positive")
+        if not np.isfinite(self.equilibrium_tolerance) or self.equilibrium_tolerance <= 0.0:
+            raise ValueError("equilibrium_tolerance must be finite and positive")
 
 
 @dataclass(frozen=True)
 class TransientContactSettings:
-    """Explicit limits for the fixed-plane, average-acceleration profile."""
+    """Compatibility adapter for the original fixed-plane development call."""
 
     dt: float
     t_end: float
@@ -51,19 +72,49 @@ class TransientContactSettings:
             raise ValueError("dt must be finite and positive")
         if not np.isfinite(self.t_end) or self.t_end < 0.0:
             raise ValueError("t_end must be finite and nonnegative")
-        if type(self.maximum_newton_iterations) is not int or self.maximum_newton_iterations < 1:
-            raise ValueError("maximum_newton_iterations must be a positive integer")
-        if type(self.maximum_cutbacks) is not int or self.maximum_cutbacks < 0:
-            raise ValueError("maximum_cutbacks must be a nonnegative integer")
-        if not np.isfinite(self.minimum_dt) or self.minimum_dt <= 0.0:
-            raise ValueError("minimum_dt must be finite and positive")
-        if not np.isfinite(self.equilibrium_tolerance) or self.equilibrium_tolerance <= 0.0:
-            raise ValueError("equilibrium_tolerance must be finite and positive")
+        ContactTransientSolverControls(
+            self.maximum_newton_iterations, self.maximum_cutbacks,
+            self.minimum_dt, self.equilibrium_tolerance,
+        )
         velocity = np.array(self.initial_velocity, dtype=float, copy=True).reshape(-1)
         if not np.all(np.isfinite(velocity)):
             raise ValueError("initial_velocity must be finite")
         velocity.setflags(write=False)
         object.__setattr__(self, "initial_velocity", velocity)
+
+
+def _resolve_transient_inputs(transient, solver_controls):
+    if type(transient) is TransientContactSettings:
+        if solver_controls is not None:
+            raise ValueError("legacy transient settings already contain solver controls")
+        controls = ContactTransientSolverControls(
+            transient.maximum_newton_iterations, transient.maximum_cutbacks,
+            transient.minimum_dt, transient.equilibrium_tolerance,
+        )
+        transient = TransientConfig(
+            dt=transient.dt, t_end=transient.t_end,
+            initial_velocity=transient.initial_velocity,
+        )
+    elif type(transient) is TransientConfig:
+        controls = (ContactTransientSolverControls() if solver_controls is None
+                    else solver_controls)
+        if type(controls) is not ContactTransientSolverControls:
+            raise TypeError("ContactTransientSolverControls required")
+    else:
+        raise TypeError("TransientConfig required")
+    if (not np.isfinite(transient.dt) or not np.isfinite(transient.t_end)
+            or transient.beta != 0.25 or transient.gamma != 0.5
+            or transient.hht_alpha != 0.0
+            or transient.rayleigh_alpha != 0.0
+            or transient.rayleigh_beta != 0.0):
+        raise ValueError("fixed-plane contact admits only undamped average-acceleration Newmark")
+    if (transient.output_nodes is not None or transient.output_elements is not None
+            or transient.include_stress_history or transient.recovery is not None
+            or transient.resource_config is not None):
+        raise ValueError("selected recovery and resource options are not admitted in this contact profile")
+    if type(transient.save_every) is not int or transient.save_every < 1:
+        raise ValueError("save_every must be a positive integer")
+    return transient, controls
 
 
 @dataclass(frozen=True)
@@ -145,9 +196,10 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
 def solve_transient_contact(
     model,
     definition: ContactDefinition,
-    transient: TransientContactSettings,
+    transient: TransientConfig | TransientContactSettings,
     *,
     contact_settings: ContactSolverSettings | None = None,
+    solver_controls: ContactTransientSolverControls | None = None,
 ) -> TransientContactResults:
     """Solve elastic Q4 impact against a fixed plane with implicit Newmark.
 
@@ -157,14 +209,23 @@ def solve_transient_contact(
     at every accepted endpoint and across the accepted displacement segment.
     """
 
-    if type(transient) is not TransientContactSettings:
-        raise TypeError("TransientContactSettings required")
+    transient, controls = _resolve_transient_inputs(transient, solver_controls)
     settings = ContactSolverSettings() if contact_settings is None else contact_settings
     _admit(model, definition, settings)
     model.apply_boundary_conditions()
     size = model.mesh.dof_manager.total_dofs
-    if transient.initial_velocity.shape != (size,):
+    if transient.initial_velocity is None:
+        raise ValueError("initial_velocity is required for transient contact")
+    initial_velocity = np.asarray(transient.initial_velocity, dtype=float)
+    if initial_velocity.shape != (size,) or not np.all(np.isfinite(initial_velocity)):
         raise ValueError(f"initial_velocity must have {size} structural components")
+    initial_displacement = (
+        np.zeros(size, dtype=float) if transient.initial_displacement is None
+        else np.asarray(transient.initial_displacement, dtype=float)
+    )
+    if (initial_displacement.shape != (size,)
+            or not np.all(np.isfinite(initial_displacement))):
+        raise ValueError(f"initial_displacement must have {size} structural components")
     K0, _ = assemble_stiffness_matrix(model)
     M, _ = assemble_mass_matrix(model)
     _, _, T, u0, independent_dofs, _ = build_constraint_transformation(
@@ -183,14 +244,19 @@ def solve_transient_contact(
         np.linalg.cholesky(Mred.toarray())
     except np.linalg.LinAlgError as exc:
         raise ValueError("reduced mass is not positive definite; algebraic dynamics are not admitted") from exc
-    q = np.zeros(T.shape[1], dtype=float)
-    vfull = np.asarray(transient.initial_velocity, dtype=float)
+    q = np.asarray(initial_displacement[independent_dofs], dtype=float).copy()
+    full_initial = np.asarray(T @ q).reshape(-1)
+    if not np.allclose(full_initial, initial_displacement,
+                       atol=1.0e-12, rtol=1.0e-12):
+        raise ValueError("initial_displacement does not satisfy structural constraints")
+    vfull = initial_velocity
     vred = np.asarray(vfull[independent_dofs], dtype=float)
     if not np.allclose(np.asarray(T @ vred).reshape(-1), vfull,
                        atol=1.0e-12, rtol=1.0e-12):
         raise ValueError("initial_velocity does not satisfy structural constraints")
     committed_states = {}
-    with contact_scope(model, definition, settings, initial_displacement=np.zeros(size)) as manager:
+    with contact_scope(model, definition, settings,
+                       initial_displacement=full_initial) as manager:
         if type(manager) is not _PlanarQ4PlaneManager:
             raise ValueError("transient development profile selected an unsupported contact owner")
 
@@ -218,8 +284,12 @@ def solve_transient_contact(
         iterations = []
         cutbacks = 0
         current_time = 0.0
-        beta = 0.25
-        gamma = 0.5
+        previous_full = full0.copy()
+        previous_velocity = np.asarray(T @ vred).reshape(-1)
+        accepted_steps = 0
+        pending_swept_gap = float("inf")
+        pending_residual = 0.0
+        _alpha, beta, gamma = transient.integration_parameters()
         while current_time < transient.t_end - 1.0e-14 * max(1.0, transient.t_end):
             step = min(transient.dt, transient.t_end - current_time)
             local_cutbacks = 0
@@ -228,18 +298,19 @@ def solve_transient_contact(
                 velocity_predictor = vred + step * (1.0 - gamma) * acceleration
                 candidate = predictor.copy()
                 converged = False
-                for iteration in range(1, transient.maximum_newton_iterations + 1):
+                for iteration in range(1, controls.maximum_newton_iterations + 1):
                     full, internal, tangent, trial = evaluate(candidate, tangent=True)
                     candidate_acceleration = (candidate - predictor) / (beta * step * step)
                     residual = Mred @ candidate_acceleration + internal
                     scale = max(1.0, float(np.linalg.norm(Mred @ candidate_acceleration)),
                                 float(np.linalg.norm(internal)))
-                    if float(np.linalg.norm(residual)) <= transient.equilibrium_tolerance * scale:
+                    if float(np.linalg.norm(residual)) <= controls.equilibrium_tolerance * scale:
                         contact_result = manager.evaluate(full, tangent=False)[2]
                         candidate_velocity = velocity_predictor + gamma * step * candidate_acceleration
                         full_velocity = np.asarray(T @ candidate_velocity).reshape(-1)
                         swept_gap = _minimum_hermite_gap(
-                            manager, positions[-1], full, velocities[-1], full_velocity, step,
+                            manager, previous_full, full,
+                            previous_velocity, full_velocity, step,
                         )
                         if (contact_result.gap_tolerance_met
                                 and swept_gap >= -manager.gap_tolerance):
@@ -257,20 +328,31 @@ def solve_transient_contact(
                     vred = candidate_velocity
                     acceleration = candidate_acceleration
                     current_time += step
-                    times.append(current_time)
-                    positions.append(full.copy())
-                    velocities.append(np.asarray(T @ vred).reshape(-1))
-                    accelerations.append(np.asarray(T @ acceleration).reshape(-1))
-                    contacts.append(contact_result)
-                    swept_gaps.append(swept_gap)
-                    residuals.append(float(np.linalg.norm(residual)))
+                    previous_full = full.copy()
+                    previous_velocity = np.asarray(T @ vred).reshape(-1)
+                    accepted_steps += 1
+                    pending_swept_gap = min(pending_swept_gap, swept_gap)
+                    pending_residual = max(pending_residual,
+                                           float(np.linalg.norm(residual)))
+                    if (accepted_steps % transient.save_every == 0
+                            or current_time >= transient.t_end - 1.0e-14
+                            * max(1.0, transient.t_end)):
+                        times.append(current_time)
+                        positions.append(full.copy())
+                        velocities.append(np.asarray(T @ vred).reshape(-1))
+                        accelerations.append(np.asarray(T @ acceleration).reshape(-1))
+                        contacts.append(contact_result)
+                        swept_gaps.append(pending_swept_gap)
+                        residuals.append(pending_residual)
+                        pending_swept_gap = float("inf")
+                        pending_residual = 0.0
                     iterations.append(iteration)
                     break
                 discard_active_state_candidate(committed_states)
                 local_cutbacks += 1
                 cutbacks += 1
                 step *= 0.5
-                if local_cutbacks > transient.maximum_cutbacks or step < transient.minimum_dt:
+                if local_cutbacks > controls.maximum_cutbacks or step < controls.minimum_dt:
                     raise RuntimeError(
                         f"transient contact step failed at t={current_time:.9g} s "
                         f"after {local_cutbacks} cutbacks; committed state retained"

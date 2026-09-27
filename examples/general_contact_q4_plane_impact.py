@@ -8,7 +8,7 @@ from anysolver import (
     ContactInteraction,
     ContactSurface,
     RigidContactBody,
-    TransientContactSettings,
+    TransientConfig,
     create_shell_element,
     solve_transient_contact,
 )
@@ -44,7 +44,7 @@ def main() -> None:
     result = solve_transient_contact(
         model,
         contact,
-        TransientContactSettings(0.0002, 0.016, initial_velocity),
+        TransientConfig(0.0002, 0.016, initial_velocity=initial_velocity),
     )
     print(f"profile: {result.profile}")
     print(f"accepted steps: {len(result.times) - 1}; cutbacks: {result.cutbacks}")

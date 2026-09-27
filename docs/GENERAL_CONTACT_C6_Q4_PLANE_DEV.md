@@ -8,11 +8,18 @@ isotropic elastic materials, one declared physical shell skin and one fixed
 rigid plane. The reduced mass must be positive definite. Constraints must be
 fixed at zero, and the initial velocity must satisfy them.
 
-The caller supplies a pressure-law normal stiffness and dimensional gap
-tolerance in `ContactInteraction`, plus `dt`, `t_end`, initial structural
-velocity and bounded Newton/cutback controls in `TransientContactSettings`.
-The result stores accepted displacement, velocity, acceleration, contact
-reaction, endpoint gap, swept gap, equilibrium residual and iteration counts.
+The caller supplies pressure-law normal stiffness and dimensional gap tolerance
+in `ContactInteraction`. The ordinary `TransientConfig` now owns `dt`, `t_end`,
+initial displacement and velocity, and `save_every`. Optional
+`ContactTransientSolverControls` owns Newton and cutback limits. The former
+`TransientContactSettings` remains a thin compatibility adapter for existing
+development callers. Only undamped average-acceleration Newmark is admitted;
+unsupported integration, selected recovery and resource options fail explicitly.
+The result stores sampled displacement, velocity, acceleration, contact reaction
+and endpoint gap. Its swept-gap and equilibrium-residual entries bound every
+accepted step since the preceding saved sample; iteration counts cover every
+accepted step. Event checks and committed state always advance at every step,
+including steps omitted from output by `save_every`.
 Run `python examples/general_contact_q4_plane_impact.py` from an installed
 package or a source environment.
 
@@ -29,8 +36,10 @@ with the last accepted state retained.
 The uniform guided-plate test compares the response with an independently
 derived one-coordinate mass–spring impact solution. It also checks an
 interior path crossing with open endpoints and reuses the model after a
-rejected trial. These are local development tests, not registered C6
-qualification or independent review.
+rejected trial. Configuration tests cover nonzero admissible initial
+displacement, sparse output with conserved event diagnostics, and explicit
+rejection of unsupported settings. These are local development tests, not
+registered C6 qualification or independent review.
 
 Prescribed loads, moving tools, free rigid bodies, shell descriptor dynamics,
 beam impact, general finite sliding, plasticity, friction, damping, dynamic
