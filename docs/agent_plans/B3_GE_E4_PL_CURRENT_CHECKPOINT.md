@@ -16,7 +16,8 @@ position/Jacobian checks. Its value-only orientation probe is objective,
 non-drilling, and preserves the tested shear mode. Its reference orientation
 Jacobian passes Q4/S3 reference and nonzero-gap chart differences;
 explicit mixed position and orientation second variations pass bounded
-checks. Six-direction physical work and coupled transfer remain open.
+checks. Six-mode reference interface work balances; independent physical
+wrench recovery and coupled transfer remain open.
 **Remaining uncertainty:** Allocate torque/shear differences among the
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
@@ -287,6 +288,17 @@ Independent mechanics review found no blocking second-variation sign or
 offset defect. This completes a bounded local six-channel derivative
 candidate, not a six-basis physical wrench balance, assembled multiplier
 tangent, growing-space stability, loaded transfer, or F03/G0B acceptance.
+
+**Six-mode interface virtual work (27 September):** For Q4 and mixed-S3
+hosts, one nonzero distributed force/couple density produces nonzero
+shell-side work in each of three translations and three rotations.
+The matching native retained beam-side work cancels each reference
+common-rigid mode while the root supports remain fixed. Independent
+read-only review found the localized terminal field and six directions
+valid for this interface action check. Because both actions arise from
+the same Jacobian transpose, this does not independently reconstruct
+physical nodal wrenches, verify finite-state or loaded support reactions,
+or qualify torque/shear fidelity and multiplier stability.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8

@@ -334,6 +334,51 @@ def test_material_line_orientation_couple_work_cancels_on_common_rigid_motion():
     assert abs(shell_work+beam_work) < 1e-10*abs(shell_work)
 
 
+@pytest.mark.parametrize("mixed_s3", (False, True))
+def test_material_line_six_channel_work_balances_six_rigid_modes(mixed_s3):
+    xs, ys, beam, _ = _fixture(patch_cells=2)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3)
+    frames = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3))
+    state = beam.context.initial.mechanical
+    weights = np.repeat([station.weight for station in line.stations], 3)
+    forces = weights*np.tile((2.3, -1.7, 3.1), len(line.stations))
+    couples = weights*np.tile((-.8, 1.2, .5), len(line.stations))
+    actions = (line.reference_jacobian().T@forces
+               +line.reference_orientation_jacobian().T@couples)
+    split = 6*line.shell_count
+    shell_bond = line.reference_nodes[:, 0] >= .9-1e-12
+    modes = []
+    for axis in np.eye(3):
+        modes.append((axis, np.zeros(3)))
+        modes.append((np.zeros(3), axis))
+    shell_works = []
+    beam_works = []
+    for translation, omega in modes:
+        shell_step = np.zeros((line.shell_count, 6))
+        shell_step[shell_bond, :3] = (
+            np.cross(omega, line.reference_nodes[shell_bond])+translation)
+        shell_step[shell_bond, 3:] = omega
+        beam_step = np.zeros(beam.context.count)
+        for node, x in enumerate(beam.abscissae):
+            if x < .9-1e-12:
+                continue
+            position = state.positions[node]+state.position_low[node]
+            beam_step[6*node:6*node+3] = np.cross(omega, position)+translation
+            beam_step[6*node+3:6*node+6] = omega
+        for element in range(len(beam.context.elements)):
+            for cell in (0, 1):
+                if beam.abscissae[2*element+cell] < .9-1e-12:
+                    continue
+                first = beam.context.nodal_count+24*element+3*cell
+                beam_step[first:first+3] = omega
+        shell_works.append(shell_step.ravel()@actions[:split])
+        beam_works.append(beam_step@actions[split:])
+    shell_works, beam_works = np.array(shell_works), np.array(beam_works)
+    assert np.min(np.abs(shell_works)) > 1e-6
+    assert np.max(np.abs(shell_works+beam_works)) < 1e-9*np.max(
+        np.abs(shell_works))
+
+
 def test_material_line_orientation_work_has_chart_corrected_mixed_curvature():
     _, _, beam, line = _fixture(patch_cells=2)
     rng = np.random.default_rng(351)
