@@ -27,7 +27,9 @@ A bounded loaded My case transfers about `4.1 Nm` to the shell support and
 `95.9 Nm` to the beam root, with balanced work but `0.16%` numerical shell
 work. Per-channel recovery assigns about `28%` of shell interface work to
 pitch and the remainder mainly to Fx/Fz; those channels' large My wrenches
-partly cancel, so pitch necessity remains unproven.
+partly cancel. Removing pitch rows raises loaded tip ry `1.2–2.3%` but
+barely changes shell support My, so this channel affects the bounded
+response without establishing the physical connection's fidelity.
 The saved split-solid no-contact fields have independently reviewed sampled
 same-deformed-XY surface-order overlap witnesses: 81 torque and 20 opening
 samples among the initially negative paired-parametric subset, with minimum
@@ -179,6 +181,37 @@ multiplier-selection test.
 Independent mechanics review found no code or work-conjugacy blocker and
 confirmed those interpretation limits. The existing default weighted-line
 control passed `1/1` after the opt-in helper change.
+
+**Pitch-row ablation protocol (before execution):** On exactly the same
+x4/y4 shell, B3-half12 predecessor, supports and `+100 Nm` terminal My,
+remove only channel 4 from every longitudinal basis of P0, P1 and dual
+P1. Keep all other rows and scales. Compare rank, tip ry, shell/root
+support shares, physical/numerical shell work, complete balance and the
+omitted continuous pitch gap. A rank failure identifies a required
+constraint direction in this discretization; a supported response shift
+identifies pitch causality for this load; near parity would show that the
+observed pitch-channel work did not make it necessary for this specific
+output. None of these outcomes selects a production five-channel law or
+changes the required six-channel G0 criteria.
+
+**Pitch-row ablation result (27 September):** With only every basis's
+channel-4 row removed, the same supported KKT retains full row ranks
+`10/15/15` and mechanics errors below `7.2e-12`. Relative to the full
+P0/P1/dual laws, terminal My tip ry rises by about
+`2.28%/1.56%/1.22%`; the omitted mean continuous pitch gaps are
+`−1.630/−1.481/−1.386 µrad`. Shell support My remains near `−4.1 Nm`
+and physical shell work remains positive, with numerical shell work
+still around `6.3–6.5e-7 J`. Thus the pitch row measurably stiffens this
+particular My response but is not required for row rank or for the main
+shell-support resultant in this fixture. The six-channel law's physical
+fidelity still needs a matched connection reference and growing-space
+assessment. The focused ablation test passes `1/1`; this diagnostic does
+not propose a five-channel production law or select a multiplier.
+The reported omitted gap is an unweighted continuous mean, not a
+per-basis gap or accepted nonlinear result. Independent mechanics review
+found no row-deletion or balance defect and confirmed that the inference
+is limited to this fixture; persistence of shell load transfer does not
+make the ablated law physically adequate.
 
 **Independent B2 F10/F11 S3 discriminator, before implementation (27
 September):** The private B2 reference point proof uses a finite least-squares

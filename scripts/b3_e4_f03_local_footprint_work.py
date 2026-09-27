@@ -1254,7 +1254,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              mixed_s3: bool = False,
                              mixed_s3_diagonal: str = "bl_tr",
                              force_sign: float = 1.,
-                             include_tip_my: bool = False) -> dict:
+                             include_tip_my: bool = False,
+                             include_pitch_ablation: bool = False) -> dict:
     """Linearized native B3/E4 terminal KKT on a resolved local grid."""
     if plate_thickness not in (.07,.035):
         raise ValueError("bounded native plate thickness required")
@@ -1266,6 +1267,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
             plate_thickness == .035 and beam.n_half_cells == 12 and
             not mixed_s3):
         raise ValueError("loaded pitch screen requires bounded sparse C1 line")
+    if include_pitch_ablation and not include_tip_my:
+        raise ValueError("pitch ablation requires the bounded loaded My screen")
     if include_top_face_two_intervals and top_face_intervals is not None:
         raise ValueError("choose one top-face interval selector")
     top_face_counts = ((2,) if include_top_face_two_intervals else
@@ -1537,6 +1540,10 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                   if item[0].startswith("top_face_")]
     if sparse_line_only:
         families=[item for item in families if item[0] in space_masses]
+    if include_pitch_ablation:
+        families += [(name+"_without_pitch",
+                      np.delete(rows,np.arange(4,len(rows),6),axis=0))
+                     for name,rows in families]
     records={}
     for family,constraint in families:
         rank=int(np.linalg.matrix_rank(constraint[:,free]))
@@ -1719,7 +1726,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                                 for point in segment.points)),
                         }
             line_recovery={}
-            if line_gap_patch is not None and family.startswith("line_hybrid_"):
+            if (line_gap_patch is not None and
+                    family.startswith("line_hybrid_") and
+                    not family.endswith("_without_pitch")):
                 continuous = line_gap_patch.linearized_continuous_gap_statistics(
                     full[:shell_size], full[shell_size:])
                 basis_work=[]
@@ -1865,6 +1874,10 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                       family.startswith("line_hybrid_") else {}),
                 **({"continuous_line_recovery":line_recovery}
                    if line_recovery else {}),
+                **({"omitted_pitch_gap":
+                    line_gap_patch.linearized_continuous_gap_statistics(
+                        full[:shell_size],full[shell_size:])}
+                   if family.endswith("_without_pitch") else {}),
                 "total_external_work_j":work,
                 "physical_shell_work_j":physical_work,
                 "numerical_shell_work_j":shell_total-physical_work,
