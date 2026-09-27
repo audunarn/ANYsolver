@@ -99,7 +99,9 @@ def test_s3_physical_sparse_kkt_matches_reduced_solution_and_reactions():
     stiffness[:18, :18] = shell_k
     stiffness[18:, 18:] = beam_k
     fixed = set(range(6)) | set(range(18, 24))
-    fixed.update(6*i+j for i in (1, 2) for j in (3, 4, 5))
+    # Keep the S3 bending rotations active; restrain only the two unneeded
+    # drilling coordinates in this isolated, root-supported triangle.
+    fixed.update(6*i+5 for i in (1, 2))
     free = np.array([i for i in range(30) if i not in fixed])
     k = stiffness[np.ix_(free, free)]
     c = law.constraint[:, free]
@@ -119,6 +121,7 @@ def test_s3_physical_sparse_kkt_matches_reduced_solution_and_reactions():
     assert np.linalg.norm(c@u) < 1e-11
     assert np.linalg.norm(k@u+c.T@lam-f) < 1e-10
     full = np.zeros(30); full[free] = u
+    assert np.linalg.norm(full[[9, 10, 15, 16]]) > 1e-8
     reaction = stiffness@full+law.constraint.T@lam-load
     np.testing.assert_allclose(reaction[free], 0., atol=1e-10)
     assert np.linalg.norm(reaction[list(fixed)]) > 0.

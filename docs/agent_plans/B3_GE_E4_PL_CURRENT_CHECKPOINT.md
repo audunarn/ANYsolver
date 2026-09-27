@@ -72,9 +72,29 @@ derivative and multiplier work agree, and force/moment balances close. A
 supported sparse KKT solution agrees with an independent reduced solution
 and reactions; malformed support and caller mutation checks pass. Focused
 Q4/S3 tests: `7/7`. Independent mechanics review found no blocking defect.
-The KKT fixture fixes shell rotational DOFs, so this proves a bounded S3
-translation-port feasibility case, not free S3 rotational coupling or a
+The initial KKT fixture fixed shell rotational DOFs; the following
+discriminator tests whether that restriction hid a failure. This is not a
 production attachment. F10/F11 and G0B remain open.
+
+**Next S3 support discriminator (prospective):** The supported KKT fixes all
+shell rotations. Determine whether this only removes expected isolated-
+element modes or hides an attachment inconsistency: retain the same element,
+beam, load, rows and supports, but free S3 bending rotations at the two
+non-root vertices while restraining only drilling there. Check finite rank,
+equilibrium, interface work, and independent reduced-solve parity. If it
+passes, strengthen the private S3 fixture; if singular or inconsistent,
+identify the physical/auxiliary mode before changing the attachment law.
+Neither outcome qualifies a production point connection.
+
+**S3 bending-active result (27 September):** With only non-root drilling
+rotations restrained, the same S3/B2 KKT has full rank `22/22` and its
+constrained primal reduction full rank `10/10`. Bending rotations respond
+under the load. Sparse versus independent reduced solution differs by
+`6.01e-16`, equilibrium by `1.27e-16`, and work by `6.94e-18` on the
+bounded fixture. The focused Q4/S3 tests still pass `7/7`. This removes the
+all-rotations-fixed limitation for this supported element, but does not
+qualify the continuous attachment, other support layouts or the public
+B2 route. F10/F11 and G0B remain open.
 
 **Next contact-method discriminator, before execution (27 September):**
 The saved C1 quadratic terminal-bond torque deck has 128 plate and 128 bar
