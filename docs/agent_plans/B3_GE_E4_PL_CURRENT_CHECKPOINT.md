@@ -63,6 +63,18 @@ defect, but the null spaces do not uniquely prescribe which physical
 channel to coarsen. Near-P0 tip response and reduced sampled gaps do not
 rule out locking or prove torque/shear transfer. This remains a
 rank-compatible ablation diagnostic, not a trace-order formulation.
+The source-bound V2 run used commit
+`db0d6be0003df94d70ec2357031e9ab1d26956f7` and retained
+`B3_E4_F03_MATERIAL_LINE_RATIO_SCREEN_V2.json`, SHA256
+`E7CFD6094ACCA34BB58B6B90CA377CEE25988BA4E753EAAE6749EEA4F8F838CE`.
+The worktree import, Python 3.14.2, NumPy 2.4.6, SciPy 1.17.1,
+disabled JIT and single-thread settings are recorded there. The four
+candidate loads have maximum free residual ratio `5.39e-12`, relative
+work error `3.07e-12`, force balance `2.58e-9 N`, moment balance
+`2.06e-9 Nm`, and positive shell physical work. Relative to P0 on the
+*same* ratio, candidate tip twist changes `-0.152%` (1:2) and `+0.615%`
+(2:1); shear tip motion changes `+0.012%` and `+0.018%`. These small
+response differences are descriptive, not physical-accuracy evidence.
 
 **Saved bounded row-growth screen:** Committed runner
 `5f852bda0553b2db84b8fb785355b5ea24cf46a7`, worktree import,
