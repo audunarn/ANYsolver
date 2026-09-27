@@ -2,37 +2,28 @@
 
 ## Current state — 27 September 2026
 
-**Decision sought:** Validate the declared two-sided beam–shell connection
-work before choosing an exact line-multiplier space or entering G1.
+**Decision sought:** Establish whether the declared two-sided beam–shell
+joint transfers physical torque/shear correctly and admits a stable exact
+line multiplier space before entering G1.
 **Established:** The top-face positional law has a continuous force/pitch
-gauge, so finite P0 rank cannot establish six-pose bonding. The native
-hybrid adds independent two-sided director-pitch work. On the saved F5
-one-sided solid bond its pitch gap is nonzero; adding a linearized sided
-pitch equation changes combined-load work by −0.403%/−0.448% on F2/F4.
-F5 with that wide equation was stopped at the retained 2 GiB limit.
-Independent review found no blocking defect in the bounded equation or
-its interpretation. B2 F09 admission remains open.
-**Uncertainty:** Whether the declared two-sided joint's complete loaded
-continuous work and physical transfer meet the torque/shear contract. The
-F2 equation multiplier and side work are directly recoverable; F4's
-multiplier is inferred from paired work. Native and external pitch-channel
-reactions have the same physical sign but different model idealizations;
-neither their magnitudes nor the existing native rows establish physical
-fidelity, measured contact traction or a mortar space. The complete native
-six-channel reference wrench and opposite beam/shell rigid work now pass
-with retained B3 half-cell rotations included. On the existing F4 solid,
-one added area-mean sided equation closes its own mean pitch but leaves
-a signed local fitted pitch variation along the bond. Splitting only that
-equation into two F4 intervals reduces the largest three local projections
-from `2.92` to `0.74 µrad`, while whole-strip endpoint differences persist.
-**Next discriminator and action:** Keep the six-channel candidate explicitly
-two-sided and the top-face bond distinct. Test the complete native
-continuous gap and physical side work on supported loaded torque, shear
-and compensated-pitch fields before applying P0/P1/dual projection. A
-law/trace mismatch calls for correction; a match permits the registered
-mixed-norm, growing-space and mesh-ratio assessment. The F4 split-sided
-result supports equation resolution as part of the local discrepancy;
-do not add further external rows automatically.
+gauge; the native six-channel hybrid is a distinct, explicitly two-sided
+director-couple candidate. Bounded reference-linear native KKT work and
+wrench balance pass with retained B3 half-cell frames. On a fixed supported
+Q4/B3 fixture, increasing only line resolution m2→m4 reduces the maximum
+continuous opening pitch by 40–63% across P0/P1/dual, while torque work
+changes by 1.17–3.23%. A split-sided external F4 equation also reduces
+local fitted pitch; it is a different linear solid idealization. B2 F09
+admission remains open.
+**Uncertainty:** The native law's physical fidelity to a matched sided
+reference and uniform stability with growing interface spaces remain
+unproven. Small weak residuals, balanced side work, rank, and reduced
+pointwise gaps alone cannot choose P0/P1/dual.
+**Next discriminator and action:** Stop fixed-primal row-count refinement.
+Review the native loaded-port recovery, then use the declared physical
+connection and existing matched reference only at comparable geometry,
+loads, supports and work measures. Assess growing-space mixed norms and
+registered mesh ratios with the actual native tangent; correct a failed
+law/trace or enrichment policy according to the observed mode.
 Keep the one-sided top-face bond as a distinct reference; if that is the
 intended production joint, revise its continuous rotational work instead
 of treating multiplier refinement as a repair. Only after the continuous
@@ -8089,3 +8080,79 @@ registered normed growing-space and mesh-ratio assessment. No P0/P1/dual
 selection follows from the current small residuals, rank or external
 row-count result. F03/G0B remain open, G1 barred, formal F03 execution
 authority unconsumed.
+
+**Next native loaded-port discriminator (prospective):** The existing
+supported KKT cases store weak rows, total interface work and pointwise
+position-gap bounds, but omit the *continuous director pitch* and each
+basis action's beam/shell work. Add read-only recovery to the same
+bounded native operator: sample reference-linearized local pitch using
+the actual B3 half-cell port and E4 director at line quadrature, and
+partition `−Cᵀlambda` work by six-row basis with all retained B3
+coordinates. First exercise one small Q4 C1 supported torque/opening
+fixture with unchanged section, supports and load. If weak constraints
+close but continuous pitch remains material, interface resolution must
+be examined before law acceptance; if both close but physical torque
+partition still differs from the declared two-sided reference, review
+the shell/section idealization. A work imbalance or sign failure is a
+mechanics defect to fix before more meshes. A passing small fixture
+only authorizes the registered growing-space/ratio assessment; it does
+not select a multiplier space or close F03. Keep existing resource caps.
+
+**Small loaded native outcome:** On the unchanged Q4 C1 x4/y4,
+B3-12, m2 supported reference-linear KKT, all three P0/P1/dual families
+complete separate +100 Nm tip torque and −1000 N tip-z opening. The new
+unprojected pitch sampler agrees with the actual C1 director/retained-port
+derivative in a focused test; the three focused mechanics tests pass.
+Torque-case continuous pitch is below `1e-17 rad`. In opening, the weak
+mean pitch is below `3e-20 rad` while the pointwise maximum is
+`1.852/0.998/1.327 µrad` for P0/P1/dual and RMS is
+`0.774/0.460/0.545 µrad`. Maximum sampled position gaps are
+`0.155/0.103/0.117 µm`. Each six-row basis's physical `−Cᵀlambda`
+beam/shell work sums to within `2.8e-17 J` and its global wrench to
+within `3.1e-12` in the saved units, including retained B3 coordinates;
+basis shell work sums to the previously reported total. This is a
+balanced *linear loaded* result, not finite-rotation physical fidelity.
+The source-bound raw record is
+`B3_GE_E4_PL_F03_NATIVE_LOADED_CONTINUOUS_X4_M2_DEV_V1.json`, SHA256
+`CCB70EEE675F2D114F510C2C6072B37BDB0DAAB334292E2398408AFAC533FFF5`.
+
+**Next fixed-primal discriminator:** Hold the exact x4/y4 Q4, B3-12,
+section, supports, two loads and three bases; increase only multiplier
+intervals from m2 to m4 in the existing bounded runner, with the same
+continuous-gap and basis-work recovery. If pointwise pitch decreases
+while basis work/wrench remains balanced, attribute part of the m2 gap
+to discrete line resolution and move to reviewed growing-space norms and
+the already registered ratios. If it does not decrease or work fails,
+review trace representability or the physical law before more rows.
+Either outcome leaves the finite loaded two-sided reference and G0B open;
+do not automatically run m8 or a finer shell.
+
+**Fixed-primal discriminator outcome:** The identical x4/y4 Q4,
+B3-12, supported two-load fixture completed with m4. The row counts
+grow from 12 to 24 for P0 and 18 to 30 for P1/dual. In the opening
+case, the pointwise maximum continuous pitch falls from
+`1.852/0.998/1.327` to `0.683/0.603/0.721 µrad` for P0/P1/dual;
+maximum position gaps fall from `0.155/0.103/0.117` to
+`0.109/0.0938/0.0988 µm`. The maximum per-basis side-work sum stays
+below `1.4e-16 J` and side-wrench imbalance below `6.5e-13` in saved
+units. Opening work changes by `−0.391/−0.127/−0.226%` and torque
+work by `−3.231/−1.172/−1.288%` for P0/P1/dual. Therefore discrete
+line resolution explains part of the pointwise pitch gap, but work
+movement remains material, especially under torque. This neither
+selects a multiplier space nor validates the physical two-sided law.
+The m4 source-bound raw record is
+`B3_GE_E4_PL_F03_NATIVE_LOADED_CONTINUOUS_X4_M4_DEV_V1.json`, SHA256
+`2890DF180868A0FB076E9EBD34A47C55AC40FB0E47B0BF708B8A12C6C1E8A648`.
+Stop this fixed-primal refinement sequence. The next decision is whether
+the declared two-sided physical transfer survives a matched sided
+reference and the registered growing-interface-space mixed-norm/mesh-ratio
+assessment; no G0B conclusion follows from these linear loaded cases.
+Independent read-only review found no blocking code or mechanics defect in
+the sampler, basis split or paired interpretation. Here “continuous gap”
+means unprojected *reference-linearized values sampled at fixed line
+quadrature*, neither the supremum along the line nor a loaded finite-rotation
+gap. Algebraic side balance establishes native bookkeeping, not external
+physical fidelity. The reviewer recommends testing the declared two-sided
+torque/shear/compensated-pitch work with actual retained ports alongside the
+registered growing-space mixed-norm and reciprocal-ratio assessment; revise
+the law/trace if transfer mismatches before selecting a space.

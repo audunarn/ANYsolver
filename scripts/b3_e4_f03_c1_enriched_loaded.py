@@ -65,6 +65,7 @@ def evaluate(shell_cells: int, line_intervals: int, *,
                     "interface_beam_wrench_N_Nm":
                         case["interface_beam_wrench_N_Nm"],
                     "interface_shell_work_j": case["interface_shell_work_j"],
+                    "continuous_line_recovery": case["continuous_line_recovery"],
                     "constraint_multiplier_material_N_Nm": dual.tolist(),
                     "basis_mean_material_dual_per_m":
                         (dual / masses[:, None]).tolist(),

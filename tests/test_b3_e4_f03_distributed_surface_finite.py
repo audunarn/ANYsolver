@@ -226,6 +226,11 @@ def test_c1_hybrid_six_channel_reference_is_distinct_and_non_drilling():
     response = trace@direction
     assert abs(response[4]-angle) < 1e-12
     assert np.max(np.abs(np.delete(response, 4))) < 1e-12
+    continuous = hybrid.linearized_continuous_gap_statistics(
+        shell_step.ravel(), np.zeros(beam.context.count))
+    assert abs(continuous["quadrature_mean_director_pitch_gap_rad"]-angle) < 1e-12
+    assert abs(continuous["quadrature_max_abs_director_pitch_gap_rad"]-angle) < 1e-12
+    assert continuous["quadrature_max_position_gap_m"] < 1e-12
 
     # A common transverse displacement slope with unchanged directors
     # leaves the connection closed while allowing shell shear.
@@ -236,6 +241,10 @@ def test_c1_hybrid_six_channel_reference_is_distinct_and_non_drilling():
         beam_step[6*i+2] = angle*beam.abscissae[i]
     shear = trace@np.r_[shell_step.ravel(), beam_step]
     assert np.max(np.abs(shear)) < 1e-12
+    continuous = hybrid.linearized_continuous_gap_statistics(
+        shell_step.ravel(), beam_step)
+    assert continuous["quadrature_max_abs_director_pitch_gap_rad"] < 1e-12
+    assert continuous["quadrature_max_position_gap_m"] < 1e-12
 
 
 def test_c1_hybrid_physical_wrench_includes_all_six_channels_and_offset():
@@ -297,6 +306,28 @@ def test_c1_hybrid_physical_wrench_includes_all_six_channels_and_offset():
         reference_moment,
         moment+np.cross(np.array((0., 0., .035/2)), force),
         rtol=0., atol=1e-11)
+
+
+def test_c1_continuous_pitch_sample_matches_actual_native_port_derivative():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
+    rng = np.random.default_rng(1907)
+    shell = rng.normal(scale=1e-5, size=(line.shell_count, 6))
+    shell[line.reference_nodes[:, 0] == xs[0]] = 0.
+    native = rng.normal(scale=1e-5, size=beam.context.count)
+    native[:6] = 0.
+    sampled = line.linearized_continuous_gap_statistics(shell.ravel(), native)
+    frames = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3))
+    derivative = line.evaluate(
+        line.reference_nodes, frames, beam.context.initial.mechanical,
+        first=(shell, native), second=(shell, native))[4, 1]
+    np.testing.assert_allclose(
+        sampled["quadrature_mean_director_pitch_gap_rad"],
+        derivative, rtol=0., atol=1e-12)
+    assert sampled["quadrature_max_abs_director_pitch_gap_rad"] > 0.
 
 
 def test_c1_segmented_top_face_law_preserves_positional_work():

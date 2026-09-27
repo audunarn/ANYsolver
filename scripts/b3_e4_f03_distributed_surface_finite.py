@@ -339,6 +339,44 @@ class FiniteSurfaceLineHybrid(FiniteSurfaceMomentPatch):
                  n_u*(2*a*a_v+2*c*c_v)/denom**2)
         return angle, n_u/denom, n_v/denom, mixed
 
+    def linearized_continuous_gap_statistics(self, shell_step, beam_step) -> dict:
+        """Sample the unprojected line pitch alongside the positional gap."""
+        report = self.linearized_gap_statistics(shell_step, beam_step)
+        shell = np.asarray(shell_step, dtype=float).reshape(self.shell_count, 6)
+        beam = np.asarray(beam_step, dtype=float)
+        base = self.beam.context.initial.mechanical
+        frames = np.broadcast_to(np.eye(3),
+                                 (self.shell_count, 3, 3))
+        pitches = []
+        for point in self.points:
+            _, _, frame = point.port.pose_pair(base)
+            nodes, shape, director = self._director(frames, point.x)
+            director_step = sum((weight*np.cross(shell[int(node), 3:],
+                                                  frames[int(node), :, 2])
+                                 for node, weight in zip(nodes, shape)),
+                                np.zeros(3))
+            spin = (point.port.tangent(base)@beam)[3:]
+            x_axis, z_axis = frame[:, 0], frame[:, 2]
+            a, c = float(x_axis@director), float(z_axis@director)
+            a_step = float(np.cross(spin, x_axis)@director+
+                           x_axis@director_step)
+            c_step = float(np.cross(spin, z_axis)@director+
+                           z_axis@director_step)
+            pitches.append((c*a_step-a*c_step)/(a*a+c*c))
+        weights = np.array([point.weight for point in self.points])
+        values = np.asarray(pitches)
+        report.update({
+            "quadrature_rms_director_pitch_gap_rad": float(
+                np.sqrt(weights@(values*values))),
+            "quadrature_max_abs_director_pitch_gap_rad": float(
+                np.max(np.abs(values))),
+            "quadrature_mean_director_pitch_gap_rad": float(weights@values),
+            "meaning": ("reference-linearized unprojected shell-top minus "
+                        "native beam-bottom position and E4 director minus "
+                        "B3 section pitch; not an accepted finite-state gap"),
+        })
+        return report
+
     def evaluate(self, shell_coordinates: np.ndarray, shell_frames: np.ndarray,
                  beam_state, first=None, second=None, *,
                  _shell_frame_variations=None) -> np.ndarray:

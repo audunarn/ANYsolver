@@ -1708,6 +1708,43 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                                 point.weight*shell_trace(point.x,0.,3)
                                 for point in segment.points)),
                         }
+            line_recovery={}
+            if line_gap_patch is not None and family.startswith("line_hybrid_"):
+                continuous = line_gap_patch.linearized_continuous_gap_statistics(
+                    full[:shell_size], full[shell_size:])
+                basis_work=[]
+                for index in range(m//6):
+                    row_slice=slice(6*index,6*(index+1))
+                    local_action=-constraint[row_slice].T@multiplier[row_slice]
+                    shell_part=local_action[:shell_size]
+                    beam_part=local_action[shell_size:]
+                    shell_work=float(shell_part@full[:shell_size])
+                    beam_work=float(beam_part@full[shell_size:])
+                    shell_resultant=wrench(
+                        shell_part.reshape(-1,6),shell_nodes)
+                    beam_resultant=retained_beam_wrench(beam_part)
+                    if (abs(shell_work+beam_work)>1e-8 or
+                            np.linalg.norm(shell_resultant+beam_resultant)>1e-8):
+                        raise ArithmeticError(
+                            "native line basis side work/wrench does not balance")
+                    basis_work.append({
+                        "basis_index":index,
+                        "shell_work_j":shell_work,
+                        "beam_work_j":beam_work,
+                        "shell_wrench_N_Nm":shell_resultant.tolist(),
+                        "beam_wrench_N_Nm":beam_resultant.tolist(),
+                    })
+                if abs(sum(row["shell_work_j"] for row in basis_work)-
+                       float(interface[:shell_size]@full[:shell_size]))>1e-8:
+                    raise ArithmeticError("native line basis work does not sum")
+                line_recovery={
+                    "continuous_reference_linearized_gap":continuous,
+                    "basis_interface_side_work_and_wrench":basis_work,
+                    "meaning": ("physical -C.T lambda work on accepted "
+                                "reference-linear KKT coordinates, including "
+                                "native retained B3 half-cell variables; "
+                                "not nonlinear accepted-state recovery"),
+                }
             selected_recovery={}
             if recover_top_face_local:
                 probes={}
@@ -1786,6 +1823,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                                "quadrature_points")}}
                    if line_gap_patch is not None and
                       family.startswith("line_hybrid_") else {}),
+                **({"continuous_line_recovery":line_recovery}
+                   if line_recovery else {}),
                 "total_external_work_j":work,
                 "physical_shell_work_j":physical_work,
                 "numerical_shell_work_j":shell_total-physical_work,
