@@ -35,8 +35,8 @@ def build_case(columns: int, *, four_phase: bool = False,
                load_profile: str = "tip",
                total_force_n: float = 0.1,
                target_right_x_m: float = 1.0):
-    if columns not in (4, 8, 16, 24):
-        raise ValueError("only the bounded four/eight/sixteen/twenty-four-Q4 refinements are admitted")
+    if columns not in (4, 8, 16, 24, 32):
+        raise ValueError("only the bounded four/eight/sixteen/twenty-four/thirty-two-Q4 refinements are admitted")
     if target_right_x_m not in (1.0, 1.3):
         raise ValueError("this probe admits only 1.0 or 1.3 m target right edges")
     stride = columns+1

@@ -1,4 +1,4 @@
-"""Check a fresh-model restart of the eight-Q4 mixed-shell four-phase path."""
+"""Check a fresh-model restart of a mixed-shell four-phase path."""
 
 from __future__ import annotations
 
@@ -20,18 +20,19 @@ def main(reference_path: Path, output_path: Path) -> None:
         raise FileExistsError(f"development output already exists: {output_path}")
     full = json.loads(reference_path.read_text(encoding="utf-8"))
     if (full.get("status") != "completed"
-            or full.get("columns") != 8
+            or full.get("columns") not in (8, 16, 24)
             or full.get("four_phase") is not True
             or full.get("steps_per_segment") != 3
             or full.get("accepted_steps") != 12
             or len(full.get("history", ())) != 12):
-        raise ValueError("reference is not a completed twelve-step eight-Q4 path")
+        raise ValueError("reference is not a completed twelve-step mixed path")
 
     def candidate():
         model, definition, settings, program = build_case(
-            8, four_phase=True, steps_per_segment=3,
+            full["columns"], four_phase=True, steps_per_segment=3,
             load_profile=full["load_profile"],
             total_force_n=full["total_downward_force_n"],
+            target_right_x_m=full.get("target_right_x_m", 1.0),
         )
         settings = replace(
             settings,
@@ -41,6 +42,8 @@ def main(reference_path: Path, output_path: Path) -> None:
                 full["schur_maximum_step_pa"]),
             augmentation_schur_maximum_relinearizations=(
                 full["schur_maximum_relinearizations"]),
+            augmentation_schur_maximum_attempts=(
+                full.get("schur_maximum_attempts", 2)),
         )
         return model, definition, settings, program
 
@@ -104,8 +107,10 @@ def main(reference_path: Path, output_path: Path) -> None:
             )),
         })
     record = {
-        "candidate": "mixed_eight_q4_s3_split_restart_dev",
+        "candidate": "mixed_q4_s3_split_restart_dev",
         "reference": str(reference_path),
+        "columns": full["columns"],
+        "target_right_x_m": full.get("target_right_x_m", 1.0),
         "prefix_steps": len(prefix.steps),
         "resumed_steps": len(resumed.steps),
         "prefix_checkpoint_sha256": hashlib.sha256(checkpoint_bytes).hexdigest(),

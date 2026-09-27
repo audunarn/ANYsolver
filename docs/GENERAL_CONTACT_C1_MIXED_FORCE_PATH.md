@@ -51,9 +51,13 @@ proposal released contact at first unloading. The sixteen-Q4 cycle completed
 with 0.035030437 N at the same loaded phases. Its first unloading increment
 retained a small 0.00121749 N contact force, while both meshes fully opened
 and recontacted. The loaded-force change is 2.6597% relative to sixteen Q4s,
-so the 2% target is still unmet. A twenty-four-Q4 development comparison is
-the next bounded refinement; this interior variant has no independent C1
-acceptance or installed-package verification.
+above the proposed 2% target. A twenty-four-Q4 cycle also completed, with
+0.035326285 N at press, full slide and recontact, and zero force at complete
+opening. The sixteen-to-twenty-four change is 0.8375% relative to the finer
+mesh; first unloading still retains a small 0.0016770 N force before release.
+This three-level development trend supports a refined response reference,
+but none has been frozen or independently accepted. The interior variant
+also still needs its own split restart and installed-package verification.
 
 A trapezoidally distributed −0.1 N load
 completed eight steps but never activated contact. A −0.2 N distributed
