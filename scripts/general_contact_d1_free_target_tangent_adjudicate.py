@@ -32,6 +32,8 @@ def main(registration_path: Path, raw_path: Path, verdict_path: Path) -> None:
         == registration["direction"]["target_nodes_52_53_uz_weights"],
         "source_weight": raw.get("source_weight")
         == registration["direction"]["source_nodes_18_43_ux_uz_weight"],
+        "difference_order": raw.get("difference_order", 1)
+        == criteria.get("difference_order", 1),
         "active_modes": raw.get("base_active_modes")
         == criteria["base_active_modes"],
         "pair_branches": raw.get("overlap_pair_branches")
@@ -41,6 +43,8 @@ def main(registration_path: Path, raw_path: Path, verdict_path: Path) -> None:
         "pose_constraints": raw.get("pose_constraint_error_m", float("inf"))
         <= criteria["pose_constraint_error_m"],
         "steps": [row["step_m"] for row in runs] == criteria["steps_m"],
+        "reported_steps": raw.get("steps_m", [row["step_m"] for row in runs])
+        == criteria["steps_m"],
         "smooth_branch": all(row["smooth_branch"]
                              == criteria["smooth_branch"] for row in runs),
         "wall_limit": raw.get("elapsed_seconds", float("inf"))
