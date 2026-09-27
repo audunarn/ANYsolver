@@ -142,6 +142,7 @@ def propose_supported_schur_step(
             "pressure_cap": 0, "active_branch": 0, "predicted_merit": 0,
         }
     best_fixed_branch_residual = None
+    fixed_proposal = None
     for halvings in range(9):
         fraction = 0.5**halvings
         step = fraction*direction
@@ -183,13 +184,17 @@ def propose_supported_schur_step(
             continue
         proposed = lam.copy()
         proposed[modes] = candidate
-        if diagnostics is not None:
-            diagnostics["schur_proposal_kind"] = "fixed_active_branch"
-        return SupportedSchurProposal(
+        fixed_proposal = SupportedSchurProposal(
             proposed, tuple(int(modes[index]) for index in np.flatnonzero(active)),
             condition if np.isfinite(condition) else None,
             fraction, before, after,
         )
+        break
+    if (fixed_proposal is not None
+            and fixed_proposal.predicted_residual_after <= 1.0e-8*before):
+        if diagnostics is not None:
+            diagnostics["schur_proposal_kind"] = "fixed_active_branch"
+        return fixed_proposal
     # If positivity blocks the fixed branch, project the same response step
     # to the admissible pressure cone.  Recompute the projected residual and
     # active set at the projected candidate; the owner re-equilibrates and
@@ -229,6 +234,25 @@ def propose_supported_schur_step(
         )
         projected_proposal = trial
         break
+
+    def fallback_proposal():
+        candidates = [
+            (trial, kind) for trial, kind in (
+                (fixed_proposal, "fixed_active_branch"),
+                (projected_proposal, "projected_active_set"),
+            ) if trial is not None
+        ]
+        if not candidates:
+            return None
+        selected, kind = candidates[0]
+        tie_tolerance = 1.0e-12+1.0e-10*before
+        for trial, trial_kind in candidates[1:]:
+            if (trial.predicted_residual_after
+                    < selected.predicted_residual_after-tie_tolerance):
+                selected, kind = trial, trial_kind
+        if diagnostics is not None:
+            diagnostics["schur_proposal_kind"] = kind
+        return selected
     # The first Newton direction can point outside the pressure cone even
     # when another active branch has a small admissible root.  Search the
     # same local, equilibrated *linearized* gap map with a branch Jacobian.
@@ -237,10 +261,9 @@ def propose_supported_schur_step(
     lower = np.maximum(0.0, pressure-maximum_pressure_step)
     upper = np.minimum(maximum_pressure, pressure+maximum_pressure_step)
     if np.any(lower >= upper):
-        if projected_proposal is not None:
-            if diagnostics is not None:
-                diagnostics["schur_proposal_kind"] = "projected_active_set"
-            return projected_proposal
+        fallback = fallback_proposal()
+        if fallback is not None:
+            return fallback
         return decline("bounded_step_or_predicted_merit_failed")
 
     def local_argument(candidate: np.ndarray) -> np.ndarray:
@@ -291,23 +314,22 @@ def propose_supported_schur_step(
         diagnostics["schur_bounded_semismooth_evaluations"] = evaluations
         diagnostics["schur_bounded_semismooth_candidates"] = len(proposals)
     if not proposals:
-        if projected_proposal is not None:
-            if diagnostics is not None:
-                diagnostics["schur_proposal_kind"] = "projected_active_set"
-            return projected_proposal
+        fallback = fallback_proposal()
+        if fallback is not None:
+            return fallback
         return decline("bounded_semismooth_local_solve_failed")
     after, _step_norm, _pressure_norm, candidate, argument = min(
         proposals, key=lambda item: item[:3],
     )
     if diagnostics is not None:
         diagnostics["schur_bounded_semismooth_residual_pa"] = after
+    fallback = fallback_proposal()
+    tie_tolerance = 1.0e-12+1.0e-10*before
     if (after >= 0.75*before
-            or (projected_proposal is not None
-                and after >= projected_proposal.predicted_residual_after)):
-        if projected_proposal is not None:
-            if diagnostics is not None:
-                diagnostics["schur_proposal_kind"] = "projected_active_set"
-            return projected_proposal
+            or (fallback is not None
+                and after >= fallback.predicted_residual_after-tie_tolerance)):
+        if fallback is not None:
+            return fallback
         return decline("bounded_step_or_predicted_merit_failed")
     proposed = lam.copy()
     proposed[modes] = candidate

@@ -30,27 +30,54 @@ counts and multiplier changes. These exploratory settings have not been
 frozen as an independent response reference or verified in an installed
 package. The earlier failed routes remain in the living note and raw reports.
 
+The same twelve-step cycle also completed at 16 Q4s in 343.46 s after the
+pairwise Q4 weighted-gap value allowance was propagated consistently into
+the assembled patch comparison. Its press/full-slide/open/recontact forces
+were 0.028499927/0.023887460/0/0.023887460 N, peak pressure was 77.01 Pa
+and worst independent gap was −0.965 µm. The full-slide force differs from
+the eight-Q4 value by 6.399% relative to the finer result, well above the
+proposed 2% response target. Both meshes place their two active Q1 pressure
+nodes near the target's physical x=1 m edge. The finer mesh reduces each
+node's overlap support and increases its pressure; this edge response needs
+further resolution or a separately bounded interior-overlap qualification
+case. The earlier two sixteen-Q4 recontact failures are retained separately.
+
+An interior-overlap development variant widens only the S3 target to x=1.3 m
+and keeps the Q4 source, right-edge force, 50 mm slide and all numerical gates.
+The branch-aware pressure proposal now considers a projected release candidate
+even when a safe fixed-active-set half-step exists. The eight-Q4 cycle
+completed with 0.034098737 N at press, full slide and recontact; a projected
+proposal released contact at first unloading. The sixteen-Q4 cycle completed
+with 0.035030437 N at the same loaded phases. Its first unloading increment
+retained a small 0.00121749 N contact force, while both meshes fully opened
+and recontacted. The loaded-force change is 2.6597% relative to sixteen Q4s,
+so the 2% target is still unmet. A twenty-four-Q4 development comparison is
+the next bounded refinement; this interior variant has no independent C1
+acceptance or installed-package verification.
+
 A trapezoidally distributed −0.1 N load
 completed eight steps but never activated contact. A −0.2 N distributed
 load activated contact and rejected the press step; one bounded Schur
 relinearization lowered, but did not close, its multiplier residual. The
 raw records and exact settings are listed in `GENERAL_CONTACT_RESTART.md`.
 
-Float and Jet2 overlap values have a shared, explicitly capped comparison
-for numerically subresolved Q4/S3 wedges. The final candidate caps actual
-relative area disagreement and full Q1-vector disagreement separately at
-1e-6; it retains resolved-overlap component checks. Twenty-two affected
-geometry, sliver-derivative and pressure-response checks passed. Independent
-review of the earlier comparison found that its scalar captured-pose checks do
-not establish gradient or Hessian accuracy at a nearly vanishing wedge;
-that qualification remains open. The numerical polygon-area resolution is
-an indicator for this development comparison, not a certified error bound.
-At one captured physical-edge pose, an independent float-geometry directional
-quotient agreed with the Jet2 pressure-weighted-gap gradient to about 1e-7
-relative at the largest branch-preserving perturbation. The corresponding
-second quotient was noise-limited and differed by 1.9%; it cannot qualify the
-Hessian against the retained 1e-5 tangent target. A higher-precision reference
-or independently justified generalized derivative is still required.
+Float and Jet2 overlap values have a shared, explicitly capped comparison.
+Numerically subresolved Q4/S3 wedges have separate 1e-6 actual-area and
+full-vector value caps. Resolved support retains component checks; weighted
+gap is compared normwise to handle components near zero by cancellation.
+The assembled patch comparison accumulates only the pairwise weighted-gap
+allowances already admitted. Twenty-eight affected owner, geometry,
+pressure-response and high-precision wedge checks passed. The numerical
+polygon-area resolution is an indicator, not a certified error bound.
+
+At one captured physical-edge pose, an independent 80-digit polygon clip
+and physical-Q4-work integral reproduced the Jet2 frozen-pressure
+directional weighted-gap Hessian to about 4e-15 relative across three
+quadrature orders and five smooth perturbations. Independent review checked
+the fixture against the captured coordinates and found no circular call or
+geometric mapping defect. This qualifies only that local derivative direction;
+the full mortar tangent, other tiny-wedge branches, pressure response and
+coupled C1 acceptance remain open.
 
 ## Differentiated strict-pressure development route (27 September 2026)
 

@@ -151,11 +151,13 @@ def _q4_s3_pair_value_rtol(local_area: float, derivative_area: float,
 def _q4_s3_pair_values_agree(local_values, derivative_values, *,
                              value_rtol: float, roundoff_atol: float,
                              local_area: float, derivative_area: float,
-                             area_resolution: float) -> bool:
-    """Compare subresolved Q1 moments using a vector absolute scale."""
+                             area_resolution: float,
+                             normwise: bool = False) -> bool:
+    """Compare Q1 moments; use a vector scale for subresolution or cancellation."""
     local_values = np.asarray(local_values)
     derivative_values = np.asarray(derivative_values)
-    if area_resolution >= 1.0e-3*min(local_area, derivative_area):
+    if (normwise
+            or area_resolution >= 1.0e-3*min(local_area, derivative_area)):
         scale = max(float(np.max(np.abs(local_values))),
                     float(np.max(np.abs(derivative_values))))
         return bool(np.max(np.abs(local_values-derivative_values))
@@ -765,6 +767,7 @@ class MovingS3PatchProjectedNormal:
         gap_magnitude = np.zeros(source_count)
         support_roundoff_budget = np.zeros(source_count)
         gap_roundoff_budget = np.zeros(source_count)
+        gap_pair_value_budget = np.zeros(source_count)
         absolute_support_difference = np.zeros(source_count)
         absolute_gap_difference = np.zeros(source_count)
         tiny_wedge_verified = False
@@ -877,6 +880,7 @@ class MovingS3PatchProjectedNormal:
                     local_area=local.overlap_area,
                     derivative_area=derivative.overlap_area,
                     area_resolution=derivative.overlap_area_resolution,
+                    normwise=True,
                 )
             else:
                 support_agrees = np.allclose(
@@ -968,6 +972,15 @@ class MovingS3PatchProjectedNormal:
             gap_magnitude[source_nodes] += np.abs(derivative.reference_weighted_gap)
             support_roundoff_budget[source_nodes] += support_roundoff
             gap_roundoff_budget[source_nodes] += weighted_gap_roundoff
+            if len(source_nodes) == 4:
+                # The pairwise Q4 weighted-gap certificate is normwise.
+                # Each node in the assembled sum inherits at most this
+                # pair's admitted vector discrepancy by triangle inequality.
+                pair_gap_scale = max(
+                    float(np.max(np.abs(local.reference_weighted_gap))),
+                    float(np.max(np.abs(derivative.reference_weighted_gap))),
+                )
+                gap_pair_value_budget[source_nodes] += value_rtol*pair_gap_scale
             if not np.any(base.pressure[source_nodes]):
                 continue
             coordinate_map = np.asarray(
@@ -1068,13 +1081,15 @@ class MovingS3PatchProjectedNormal:
                     assembled_support, base.reference_support,
                     assembled_gap, base.reference_weighted_gap,
                     support_magnitude, gap_magnitude,
-                    support_roundoff_budget, gap_roundoff_budget))
+                    support_roundoff_budget, gap_roundoff_budget,
+                    gap_pair_value_budget))
                 or np.any(np.abs(assembled_support-base.reference_support)
                    > summation_tolerance*support_magnitude
                      + support_roundoff_budget)
                 or np.any(np.abs(assembled_gap-base.reference_weighted_gap)
                           > summation_tolerance*gap_magnitude
-                            + gap_roundoff_budget)):
+                            + gap_roundoff_budget
+                            + gap_pair_value_budget)):
             raise ValueError(
                 "differentiated S3 patch disagrees with shared pressure support: "
                 f"support_error={np.max(np.abs(assembled_support-base.reference_support)):.9g}, "

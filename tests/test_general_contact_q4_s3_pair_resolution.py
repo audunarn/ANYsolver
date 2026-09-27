@@ -99,6 +99,33 @@ def test_subresolved_area_agreement_uses_its_own_relative_cap():
         _q4_s3_pair_value_rtol(local, local*(1.0+2.0e-6), resolution)
 
 
+def test_resolved_q4_weighted_gap_cancellation_uses_vector_value_bound():
+    # Captured from a rejected sixteen-Q4 recontact Schur trial at pair 27.
+    # The positive overlap and resolved support are substantial, but two
+    # weighted-gap components nearly cancel and cannot carry a useful
+    # componentwise relative comparison.
+    local = np.array([
+        6.461447169920361e-9, -9.054382905387276e-17,
+        -7.707115119329735e-17, 5.295586592146162e-9,
+    ])
+    derivative = np.array([
+        6.461447169913053e-9, -9.053425443828246e-17,
+        -7.707468951006633e-17, 5.295586592148127e-9,
+    ])
+    options = dict(value_rtol=1.00000328955e-9,
+                   roundoff_atol=5.87665196683e-21,
+                   local_area=0.0337500006879,
+                   derivative_area=0.0337500006879,
+                   area_resolution=2.94233915524e-12)
+    assert not _q4_s3_pair_values_agree(local, derivative, **options)
+    assert _q4_s3_pair_values_agree(local, derivative,
+                                    normwise=True, **options)
+    gross = derivative.copy()
+    gross[1] += 1.0e-15
+    assert not _q4_s3_pair_values_agree(local, gross,
+                                        normwise=True, **options)
+
+
 def test_shared_edge_tie_settings_require_explicit_bounded_jet2_profile():
     with pytest.raises(ValueError, match="needs step, direction and relative tolerance"):
         ContactSolverSettings(q4_s3_shared_edge_tie_step_m=3.0e-8)

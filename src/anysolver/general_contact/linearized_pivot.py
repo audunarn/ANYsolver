@@ -150,6 +150,7 @@ def _jet2_integral_gradients(geometry, source, target,
                 local_area=local.overlap_area,
                 derivative_area=derivative.overlap_area,
                 area_resolution=derivative.overlap_area_resolution,
+                normwise=True,
             )
         else:
             support_agrees = np.allclose(

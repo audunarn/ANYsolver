@@ -33,9 +33,12 @@ def _json_default(value):
 def build_case(columns: int, *, four_phase: bool = False,
                steps_per_segment: int = 2,
                load_profile: str = "tip",
-               total_force_n: float = 0.1):
-    if columns not in (4, 8, 16):
-        raise ValueError("only the bounded four/eight/sixteen-Q4 refinements are admitted")
+               total_force_n: float = 0.1,
+               target_right_x_m: float = 1.0):
+    if columns not in (4, 8, 16, 24):
+        raise ValueError("only the bounded four/eight/sixteen/twenty-four-Q4 refinements are admitted")
+    if target_right_x_m not in (1.0, 1.3):
+        raise ValueError("this probe admits only 1.0 or 1.3 m target right edges")
     stride = columns+1
     source_nodes = tuple(range(1, 2*stride+1))
     target_nodes = tuple(range(2*stride+1, 2*stride+5))
@@ -46,8 +49,8 @@ def build_case(columns: int, *, four_phase: bool = False,
             model.add_node(1+row*stride+column,
                            0.1+column/columns, y, 0.04004)
     for node, position in zip(target_nodes, (
-        (0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-        (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
+        (0.0, 0.0, 0.0), (target_right_x_m, 0.0, 0.0),
+        (target_right_x_m, 1.0, 0.0), (0.0, 1.0, 0.0),
     )):
         model.add_node(node, *position)
     for column in range(columns):
@@ -94,7 +97,7 @@ def build_case(columns: int, *, four_phase: bool = False,
         q4_source_gap_certificate="projected_matching",
         general_s3_difference_step=2.0e-5,
         maximum_general_s3_energy_evaluations=14144,
-        maximum_candidate_pairs=32,
+        maximum_candidate_pairs=max(32, 2*columns),
         q4_source_area_tolerance=1.0e-9,
         q4_source_weighted_gap_tolerance=1.0e-10,
         maximum_q4_source_integration_triangles=300,
@@ -145,23 +148,30 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
          four_phase: bool = False, steps_per_segment: int = 2,
          schur_step_cap_pa: float = 5.0,
          load_profile: str = "tip", total_force_n: float = 0.1,
-         schur_relinearizations: int = 0) -> None:
+         schur_relinearizations: int = 0,
+         target_right_x_m: float = 1.0,
+         schur_maximum_attempts: int = 2) -> None:
     if output.exists():
         raise FileExistsError(f"development output already exists: {output}")
     model, definition, settings, program = build_case(
         columns, four_phase=four_phase,
         steps_per_segment=steps_per_segment, load_profile=load_profile,
         total_force_n=total_force_n,
+        target_right_x_m=target_right_x_m,
     )
     if pressure_cap_pa <= 0.0 or schur_step_cap_pa <= 0.0:
         raise ValueError("Schur pressure and step caps must be positive")
     if schur_relinearizations not in (0, 1):
         raise ValueError("this probe admits zero or one Schur relinearization")
+    if schur_maximum_attempts not in (2, 4):
+        raise ValueError("this probe admits two or four Schur proposals")
     settings = replace(settings,
                        augmentation_schur_maximum_pressure_pa=pressure_cap_pa,
                        augmentation_schur_maximum_step_pa=schur_step_cap_pa,
                        augmentation_schur_maximum_relinearizations=(
-                           schur_relinearizations))
+                           schur_relinearizations),
+                       augmentation_schur_maximum_attempts=(
+                           schur_maximum_attempts))
     capability = validate_general_contact(model, definition, settings)
     if not capability.valid:
         raise ValueError(f"unsupported refinement: {capability.issues}")
@@ -179,6 +189,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         "steps_per_segment": steps_per_segment,
         "load_profile": load_profile,
         "total_downward_force_n": total_force_n,
+        "target_right_x_m": target_right_x_m,
         "columns": columns,
         "status": result.status,
         "failure_reason": result.failure_reason,
@@ -192,6 +203,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         "schur_maximum_pressure_pa": pressure_cap_pa,
         "schur_maximum_step_pa": schur_step_cap_pa,
         "schur_maximum_relinearizations": schur_relinearizations,
+        "schur_maximum_attempts": schur_maximum_attempts,
         "has_checkpoint": result.restart_checkpoint is not None,
         "contact_failure": result.info.get("contact_failure"),
         "contact": result.info.get("general_contact"),
@@ -229,8 +241,11 @@ if __name__ == "__main__":
                         default="tip")
     parser.add_argument("--total-force-n", type=float, default=0.1)
     parser.add_argument("--schur-relinearizations", type=int, default=0)
+    parser.add_argument("--target-right-x-m", type=float, default=1.0)
+    parser.add_argument("--schur-maximum-attempts", type=int, default=2)
     args = parser.parse_args()
     main(args.columns, args.output, args.pressure_cap_pa, args.four_phase,
          args.steps_per_segment, args.schur_step_cap_pa,
          args.load_profile, args.total_force_n,
-         args.schur_relinearizations)
+         args.schur_relinearizations, args.target_right_x_m,
+         args.schur_maximum_attempts)

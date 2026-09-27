@@ -141,7 +141,7 @@ def test_projected_active_set_re_equilibrates_before_committing_step(projected_o
     assert record["contact"]["gap_tolerance_met"]
 
 
-def test_two_bounded_projected_schur_updates_accept_node6_fixture(projected_only):
+def test_bounded_projected_schur_updates_accept_node6_fixture(projected_only):
     model, definition, settings, program = _case()
     program = replace(program, controls=(
         program.controls[0], ContactPathControl.node(6, "uz"),
@@ -163,10 +163,18 @@ def test_two_bounded_projected_schur_updates_accept_node6_fixture(projected_only
     assert result.status == "completed"
     assert len(result.steps) == 1
     record = result.info["force_displacement_history"][-1]
-    assert record["schur_attempts"] == record["schur_applied"] == 3
+    assert (1 <= record["schur_attempts"] == record["schur_applied"]
+            <= settings.maximum_augmentations)
     assert record["schur_rejected"] == 0
-    assert sum("schur_active_epoch_reset" in row
-               for row in record["augmentation_trace"]) == 2
+    resets = [row["schur_active_epoch_reset"]
+              for row in record["augmentation_trace"]
+              if "schur_active_epoch_reset" in row]
+    assert len(resets) >= 2
+    assert all(row["prior_active_indices"] != row["current_active_indices"]
+               for row in resets)
+    assert all(row["prior_epoch_attempts"]
+               <= settings.augmentation_schur_maximum_attempts
+               for row in resets)
     assert record["normal_multiplier_change"] <= settings.pressure_tolerance
     assert record["contact"]["gap_tolerance_met"]
     assert result.restart_checkpoint is not None

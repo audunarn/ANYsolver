@@ -126,6 +126,32 @@ def test_projected_active_set_can_drop_a_nonnegative_pressure_mode():
     assert proposal.predicted_residual_after < 1.0e-12
 
 
+def test_branch_candidate_beats_admissible_fixed_branch_half_step():
+    # Both projected arguments are initially positive. The fixed-branch
+    # Newton direction would make pressure 1 negative, so its admissible
+    # half-step reduces the residual by half. Releasing that mode reaches
+    # the exact local complementarity root under the same pressure caps.
+    diagnostics = {}
+    proposal = propose_supported_schur_step(
+        np.array([0.2, 0.2]), np.array([-0.03, 0.03]),
+        np.array([True, True]), 0.1*np.eye(2),
+        normal_stiffness=1.0, maximum_pressure=2.0,
+        maximum_pressure_step=1.0, maximum_modes=2,
+        diagnostics=diagnostics,
+    )
+    assert proposal is not None
+    assert diagnostics["schur_best_fixed_branch_fraction"] == 0.5
+    assert diagnostics["schur_best_fixed_branch_residual_pa"] == pytest.approx(
+        0.015,
+    )
+    assert diagnostics["schur_proposal_kind"] in {
+        "projected_active_set", "bounded_semismooth_active_set",
+    }
+    np.testing.assert_allclose(proposal.multipliers, [0.5, 0.0], atol=1e-9)
+    assert proposal.active_indices == (0,)
+    assert proposal.predicted_residual_after < 1e-9
+
+
 def test_bounded_branch_correction_finds_independent_six_mode_root():
     evidence = json.loads((Path(__file__).resolve().parents[1] / "reports" /
         "general_contact_d1_active_set_bounded_diagnostic_20260927.json"
