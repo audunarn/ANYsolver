@@ -96,6 +96,24 @@ all-rotations-fixed limitation for this supported element, but does not
 qualify the continuous attachment, other support layouts or the public
 B2 route. F10/F11 and G0B remain open.
 
+**Next S3 identity discriminator (prospective):** The finite three-vertex
+point support uses a winding-dependent material frame. Reorder the same
+physical triangle and its displacement columns through all six vertex
+permutations, keeping the member and offset fixed. If the six-row nullspace
+changes, the private law depends on arbitrary node order and needs a frame
+contract correction. If it is invariant, retain the winding-specific
+display components but establish physical constraint-space invariance for
+this bounded point; this is not a shell element orientation or public
+renumbering qualification.
+
+**S3 winding result (27 September):** After mapping the three shell column
+blocks back to physical vertex IDs, all six permutations retain rank six
+and the same constraint nullspace. The maximum normalized action on the
+original nullspace is `2.01e-16`. The Q4/S3 focused set passes `8/8`.
+Material-frame component labels do change with winding, so a public model
+still needs its explicit frame/orientation contract. This bounded result
+does not qualify shell-element reversal or the B2 production route.
+
 **Next contact-method discriminator, before execution (27 September):**
 The saved C1 quadratic terminal-bond torque deck has 128 plate and 128 bar
 unbonded contact faces, but its finite penalty formulation activates only

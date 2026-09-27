@@ -1,5 +1,7 @@
 """Bounded physical S3 support for the private B2 reference-point law."""
 
+from itertools import permutations
+
 import numpy as np
 import pytest
 from scipy.linalg import null_space
@@ -135,3 +137,19 @@ def test_s3_invalid_support_and_input_mutation_rejected():
         compile_reference_point(member, bad, station=.4)
     with pytest.raises(ValueError, match="shell displacement"):
         law.gap(np.zeros(24), np.zeros(12))
+
+
+def test_s3_vertex_winding_preserves_physical_constraint_space():
+    member, base, _, _, _ = _specimen()
+    free_mode = null_space(base.constraint)
+    for order in permutations(range(3)):
+        candidate = compile_reference_point(
+            member, TRIANGLE[list(order)], station=.4,
+            offset_local_m=(0., .08, -.03))
+        canonical = np.zeros_like(base.constraint)
+        for input_row, original_row in enumerate(order):
+            canonical[:, 6*original_row:6*original_row+6] = (
+                candidate.constraint[:, 6*input_row:6*input_row+6])
+        canonical[:, 18:] = candidate.constraint[:, 18:]
+        assert np.linalg.matrix_rank(canonical) == 6
+        assert np.linalg.norm(canonical@free_mode)/np.linalg.norm(canonical) < 1e-12
