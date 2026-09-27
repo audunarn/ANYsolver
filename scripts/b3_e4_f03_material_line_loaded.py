@@ -41,7 +41,10 @@ def material_line_mean_rows(line: MaterialLinePosition) -> np.ndarray:
     return rows
 
 
-def _scales(shell_size: int, beam, free: np.ndarray) -> tuple[np.ndarray, float]:
+def _scales(shell_size: int, beam, free: np.ndarray,
+            row_count: int = 6) -> tuple[np.ndarray, float]:
+    if type(row_count) is not int or not 1 <= row_count <= 24:
+        raise ValueError("bounded loaded line row count required")
     force_scale = 1e6
     displacement_scale = force_scale/(210e9*.035)
     nodal_scale = np.full(shell_size+beam.context.nodal_count,
@@ -53,7 +56,7 @@ def _scales(shell_size: int, beam, free: np.ndarray) -> tuple[np.ndarray, float]
     primal = np.r_[nodal_scale, retained]
     if len(primal) != shell_size+beam.context.count:
         raise ArithmeticError("native retained scaling layout changed")
-    return np.r_[primal[free], np.full(6, force_scale)], (
+    return np.r_[primal[free], np.full(row_count, force_scale)], (
         force_scale*displacement_scale)
 
 
@@ -61,13 +64,17 @@ def _solve(primal: sparse.csr_matrix, residual: np.ndarray,
            constraint: np.ndarray, free: np.ndarray,
            scales: np.ndarray, energy_scale: float,
            load: np.ndarray) -> tuple[np.ndarray, np.ndarray, dict]:
+    row_count = constraint.shape[0]
+    if (row_count < 1 or row_count > 24 or
+            scales.shape != (len(free)+row_count,)):
+        raise ValueError("bounded constraint and scaling rows required")
     rows = sparse.csr_matrix(constraint[:, free])
     system = sparse.bmat(((primal[free, :][:, free], rows.T),
                           (rows, None)), format="csr")
     scaled = (sparse.diags(scales)@system@sparse.diags(scales)
               /energy_scale).tocsc()
     rhs = np.r_[(load-residual)[free]*scales[:len(free)]/energy_scale,
-                np.zeros(6)]
+                np.zeros(row_count)]
     with warnings.catch_warnings():
         warnings.simplefilter("error", MatrixRankWarning)
         answer = spsolve(scaled, rhs)
@@ -91,11 +98,12 @@ def _solve(primal: sparse.csr_matrix, residual: np.ndarray,
         "work_relative_error": float(work_error/max(
             1e-12, abs(effective_load@state))),
     }
-    if (diagnostics["row_rank"] != 6 or
+    if (diagnostics["row_rank"] != row_count or
             max(diagnostics["free_residual_ratio"],
                 diagnostics["constraint_max"],
                 diagnostics["work_relative_error"]) > 1e-7):
-        raise ArithmeticError("bounded loaded material-line KKT failed")
+        raise ArithmeticError(
+            f"bounded loaded material-line KKT failed: {diagnostics}")
     return state, equation, diagnostics
 
 
