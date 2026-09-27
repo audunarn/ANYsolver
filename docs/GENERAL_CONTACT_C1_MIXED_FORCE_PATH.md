@@ -360,5 +360,19 @@ wrench, integration and support gates passed. The [frozen record and
 independent review](reference_cases/general_contact_d1_distributed_cycle_response_v1_review.md)
 accept only this planar elastic integrated-force refinement and state
 sequence. The failed sixteen-Q4 attempt remains historical evidence.
-Split restart, complete tangent qualification, installed-package handoff
+An identity-aware fresh-model split restart after step 6 reproduced all
+twelve recorded forces, gaps, multiplier changes, ordered pressure-node IDs
+and full pressure vectors, with exact active IDs and final-state difference
+scalars. It completed in 1140.093 s under the 1200 s cap. The frozen first
+adjudicator failed only because it used the analysis-contract schema name
+for the emitted checkpoint; the [separately recorded v2a adjudication and
+independent review](reference_cases/general_contact_d1_distributed_restart_identity_v2a_adjudication.md)
+accepted the narrow restart result from the same immutable run.
+
+An isolated wheel built from `c55c3860` completed the eight-Q4 twelve-step
+example, importing `anysolver` from the install target. Its force, gap,
+pressure-change and active-count histories exactly match the earlier
+eight-Q4 source development cycle; see the [installed example record](reference_cases/general_contact_d1_distributed_installed_example_c55c3860.md).
+The installed eight-Q4 example does not qualify the accepted 24-Q4 mesh.
+Complete tangent and pressure-space qualification, installed 24-Q4 handoff
 and general C1 admission remain open.

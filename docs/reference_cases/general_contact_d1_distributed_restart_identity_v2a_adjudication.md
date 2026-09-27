@@ -19,3 +19,26 @@ source, input, pressure identities, thresholds and all other checks. It
 writes a distinct verdict and performs no solver execution. The original
 failed verdict is not overwritten or reclassified. Independent review is
 still required for claim-bearing restart acceptance.
+
+## Independent disposition
+
+An independent read-only reviewer **accepted the narrow identity-aware
+fresh-model split restart under v2a**. The v2a verdict is
+`reports/general_contact_d1_distributed_restart_identity_v2a_verdict_20260927.json`
+(SHA256 `6b33b43e44609f281d59373fad9c816086b8a6a3f561457cebfc792f89d93a90`).
+All twelve ordered pressure-node lists and pressure vectors agree with the
+hashed full-cycle reference; positive-pressure active IDs agree with the
+reported active counts. Independently recomputed row maxima are zero for
+integrated force, gap, multiplier change and pressure-vector difference.
+Prefix/resumed counts are 6/12; maximum force/moment wrench imbalances are
+2.776e−17 N and 2.861e−17 Nm. The raw report records Python 3.14.2,
+NumPy 2.4.6, SciPy 1.17.1, source module paths and a version-2 checkpoint.
+The reported final displacement and pressure differences are zero and pass
+their frozen limits.
+
+The raw report retains final-state difference scalars rather than the full
+resumed arrays, so independent final-state recalculation relies on the
+source-bound probe. Single execution is supported by the owner run record,
+not by the JSON alone. This disposition is limited to the registered planar
+elastic 24-Q4 distributed-force path; complete tangent, general C1 and
+application release remain open.
