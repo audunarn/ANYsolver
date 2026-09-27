@@ -92,13 +92,13 @@ def _near_mode(A: sparse.csc_matrix, R: sparse.csc_matrix,
     }
 
 
-def evaluate() -> dict:
+def evaluate(beam_half_cells: int) -> dict:
     started = monotonic()
     xs, ys = local_grid(16, transverse_cells=4)
     shell, physical = raw_e4_tangent(xs, ys, thickness=T)
     if len(shell) > 1900:
         raise ValueError("dense shell-local operator exceeded existing cap")
-    beam = build(12, z_offset=.0675,
+    beam = build(beam_half_cells, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um")
     ns = len(shell)
@@ -174,8 +174,9 @@ def evaluate() -> dict:
             "piecewise_constant", intervals, masses)
         Csp = sparse.csc_matrix(C)
         A = sparse.bmat([[K, Csp.T], [Csp, None]], format="csc")
-        if A.shape[0] > 1900:
-            raise ValueError("physical mixed diagnostic exceeds dense row cap")
+        # A is sparse; only the shell-local and Schur matrices are dense.
+        if Kcond.shape[0] > 1900:
+            raise ValueError("dense Schur diagnostic exceeds the row cap")
         cases = {}
         for variant, shell_norm, chart_part in (
                 ("restricted_physical", Rpp, np.zeros_like(Rpp)),
@@ -202,12 +203,14 @@ def evaluate() -> dict:
     return {
         "classification": "same-primal exact-Schur P0 and norm sensitivity diagnostic; not F03/G0B acceptance",
         "question": "On one native x16 primal, does four-to-eight P0 growth create a weaker line mode and does its interpretation depend on chart norm?",
-        "model": "C1 Q4 x16/y4 35 mm, B3-12 2 um tangent, fixed left roots",
+        "model": (f"C1 Q4 x16/y4 35 mm, B3-{beam_half_cells} "
+                  "2 um tangent, fixed left roots"),
         "norms": {"restricted_physical": "inherited physical shell+beam+P0 dual metric, excluding eliminated chart norm",
                   "pulled_full": "same metric with exact full shell chart norm pulled along static Schur lift"},
         "shell_physical_dofs": n_phys,
         "shell_drill_dofs_eliminated": len(drill_shell),
         "beam_free_dofs": n_beam,
+        "beam_half_cells": beam_half_cells,
         "pulled_chart_over_restricted_shell_norm_frobenius": float(
             linalg.norm(Rchart)/max(linalg.norm(Rpp), 1e-300)),
         "layout": layout,
@@ -225,10 +228,12 @@ def evaluate() -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--beam-half-cells", type=int, choices=(12, 24),
+                        required=True)
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
-    result = evaluate()
+    result = evaluate(args.beam_half_cells)
     sources = [Path(__file__),
                Path("scripts/b3_e4_f03_c1_native_mixed_metric.py"),
                Path("scripts/b3_e4_f03_distributed_surface_finite.py"),
