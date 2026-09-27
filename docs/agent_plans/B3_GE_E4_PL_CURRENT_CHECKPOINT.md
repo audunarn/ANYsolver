@@ -2,35 +2,115 @@
 
 ## Current state — 27 September 2026
 
-**Decision sought:** Establish whether the declared two-sided beam–shell
-joint transfers physical torque/shear correctly and admits a stable exact
-line multiplier space before entering G1.
-**Established:** The top-face positional law has a continuous force/pitch
-gauge; the native six-channel hybrid is a distinct, explicitly two-sided
-director-couple candidate. Its all-six-channel finite-state physical
-side-work identity passes with retained B3 ports. Three native mixed-tangent
-levels expose an alternating P0 transverse-force dual near-kernel at x16/m16:
-neighboring cell actions cancel in the Q4 trace. The same shape persists
-under H^(-1/2) and L2 diagnostic norms; their different singular values
-are normalization-sensitive. On the same shell, P0 m8→m16 changes
-opening/torque work by `−0.238%/−2.536%`. The saved two-sided external F4
-equation remains a different linear solid idealization. B2 F09 is open.
-**Uncertainty:** Whether the declared two-sided law matches a resolved
-physical torque/shear reference, whether P0's weak dual action affects
-physical convergence or only multiplier recovery, and which interface
-policy remains stable and accurate over registered ratios. The P0 mode is
-not a demonstrated primal locking mechanism. Small gaps, row rank and
-auxiliary minima cannot select P0/P1/dual.
-**Next discriminator and action:** Hold multiplier selection and stop further
-fixed-primal spectral refinement. Define the matched two-sided resolved
-connection work and compare actual supported torque/shear transfer at
-identical geometry, supports and loading; a mismatch revises the law/trace.
-Then assess candidate interface-resolution policies over the registered
-reciprocal ratios and physical convergence, separating dual stability from
-primal locking. Preserve the one-sided top-face bond as a distinct reference;
-do not repeat F5 above its cap or resume classical axial sweeps without a
-decision-changing hypothesis.
+**Decision sought:** Decide whether the declared native two-sided six-channel
+joint is physically credible and which exact line space remains stable and
+accurate before G1.
+**Established:** Finite-state native side work and derivatives pass. A
+matched, detached C3D20R solid now has an independently reviewed *linear*
+six-channel plate/bar work map. Six capped external action solves give a
+positive, reciprocal 6×6 compliance; exact KKT reconstruction closes both
+supported load gaps near `1e-19`. On the same E4 x4/y4 shell, replay of its
+physical plate action differs materially from native P0/P1/dual actions:
+the native-action shell work is about 7–8% higher for opening and 9% higher
+for torque. On the same retained B3 beam, the native-action work is about
+2% higher for opening and 12–17% higher for torque. The earlier shared-node
+F5 bond remains a distinct idealization.
+The x16/m16 alternating P0 Fz dual near-kernel persists under two norms but
+is not proven primal locking. B2 F09 remains open.
+**Uncertainty:** How much of the action difference arises from the B3 versus
+resolved-solid beam response, how it behaves under physical refinement and
+registered interface ratios, and whether a law or multiplier policy needs
+correction. One solid grid and a linear no-contact comparator cannot qualify
+physical fidelity or select P0/P1/dual.
+**Next discriminator and action:** Diagnose the solid-to-native trace
+idealization on the *same saved supported fields*: separate E4/B3-compatible
+section motion from solid through-thickness/director and section-warping
+residuals in interface work. If residual work explains the same-action
+difference, carry that idealization into a controlled refinement/reference
+comparison. If it does not, revise the declared continuous trace or
+enforcement before ratio qualification. Do not resume finer classical axial
+sweeps or infer a line-space choice from a single spectral value.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
+
+**Matched linear external reference and fixed-domain action replays (27
+September):** The source-bound C1 detached F4 C3D20R model has separate
+plate/bar nodes and unchanged geometry, elements, elastic material, supports
+and static controls between the saved `tip_mx` and `tip_fz` load cases. A
+new exact-Q8 area-mean six-channel map includes top-face position, transverse
+first moments and a plate/bar through-thickness pitch difference. Its six
+rows are independent and common-rigid gaps are at most `5.14e-15`;
+independent affine force/moment/pitch and action-card checks pass `2/2`.
+Six serial CalculiX action solves took `17.36–17.52 s` each and peaked at
+`1.248–1.249 GB` RSS, under the unchanged per-run `120 s/2 GiB` limits.
+The exact linear Schur reconstruction (authoritative `reconstruction_v5.json`)
+has work-compliance relative skew `3.79e-8`, smallest symmetric eigenvalue
+`0.002056 J`, condition about `719`, both constrained gap norms below
+`1e-18`, and source-bound generated-deck/solver identities. The supported
+external-force balance norms are `7.91e-6` in the torque case and
+`3.18e-4` in opening against 100 Nm/1000 N applied scales; the assembled
+joint's global wrench is near zero. The earlier v1–v4 reconstructions remain
+preserved; v2 corrected the physical KKT sign, v4 bound common stiffness,
+and v5 completed generated-deck/solver provenance. Independent read-only
+mechanics review found no remaining scoped correctness finding. This exact
+linear constraint avoids the historical wide-MPC F5 memory failure; it
+does not execute or validate nonlinear/contact behavior.
+
+Against the saved native x4/m2 loaded cases, native external load work is
+`1.46–1.69%` lower for opening and `4.40–6.20%` lower for torque than the
+solid six-channel reconstruction. At x4/m4 the torque difference grows to
+`5.63–9.23%`; this is not a convergence claim. The physical *full plate*
+wrench and load-conjugate work are the comparable quantities, not the raw
+pitch dual. The common E4 shell replay (`same_shell_v2.json`) validates
+native shell wrench, interface work, physical shell work and reciprocal
+cross-work (maximum defect `4.44e-15 J`): native-action shell work exceeds
+solid-action shell work by `7.10–7.65%` in opening and `8.73–9.26%` in
+torque. Independent review found no scoped issue. The common retained B3
+replay (`same_beam_v2.json`) integrates the solid surface density on open
+half-cells, avoiding ambiguous nodal assignment at sided ports. Third- and
+fifth-order quadrature agree to `1.03e-15` relative; physical global wrench
+matches both saved solid and native actions. Native-action beam work exceeds
+solid-action beam work by `2.10–2.31%` in opening and `11.77–17.13%` in
+torque. Independent read-only review found no blocking mechanics or source
+identity issue in either fixed-domain replay. These action differences
+persist, but one solid mesh,
+solid warping, E4 director assumptions and B3 section idealization prevent
+causal assignment to the connection law or multiplier space. The historical
+shared-node F5 bond remains distinct. F03/G0B stay open; G1 remains barred.
+
+Authoritative SHA256: `reconstruction_v5.json`
+`291ada8e4ea51e80cdcce7c06f946484652ca0fc96ab35cd32b5da11a604fa9c`,
+`same_shell_v2.json`
+`50972551755ac95144efb5eb8db3304e3e6025b9d8434ddff689bf50a311d0dd`,
+`same_beam_v2.json`
+`4bc19a16444c3a17accd7739bfa4619bd8cfe7f2fa086e302dbbe7c7baee2557`.
+All three are under
+`.qualification/b3-ge-e4-pl/f03-c1-six-channel-compliance-dev-20260927-v1/`;
+the six raw channel subdirectories remain immutable. All 15 versioned JSON
+records, including earlier corrected reconstructions, are copied byte-for-byte
+into tracked `docs/agent_plans/B3_GE_E4_PL_F03_SIX_CHANNEL_REFERENCE_DEV_20260927_V1/`
+(`15/15` SHA256 copy matches). The 48 MB raw solver decks, fields and logs
+remain in the ignored local evidence directory; keep this active worktree
+until they are transferred to durable programme evidence storage.
+
+**Next bounded matched-sided reference (prospective, 27 September):**
+The saved C1 detached C3D20R solid has separate plate-top and bar-bottom
+nodes, unlike the historical shared-node bond. A six-channel *linear solid*
+work map uses face-mean positional gaps, transverse first moments, and a
+through-thickness pitch difference over the same terminal 0.1 m patch.
+The competing explanations are a physically different native trace law,
+insufficient discrete line enforcement, and the earlier shared-node
+reference's different bond. First require exact Q8 quadrature, six-row rank,
+common rigid-motion nullity, signed affine-field gaps and transpose work.
+Then, within the retained 120 s/2 GiB per-solve caps, apply each row as an
+ordinary nodal action to the *detached* external solid. Reconstruct the
+linear six-constraint response from its 6x6 compliance only if independent
+load solves, reciprocity, positive constrained compliance and force/work
+balance pass. This avoids the existing wide-MPC memory failure without
+weakening the exact linear constraint. Compare the reconstructed supported
+torque/shear outputs to the native six-channel case only after confirming
+geometry, loads, supports and connection normalization. A mismatch directs
+trace-law revision; agreement permits the registered growing-space study.
+No result here selects P0/P1/dual or closes F03/G0B.
 
 **Next bounded sparse mixed diagnostic (prospective, 27 September):** The
 co-refined x16/y4 P0-eight case has full row rank but exceeds the existing
