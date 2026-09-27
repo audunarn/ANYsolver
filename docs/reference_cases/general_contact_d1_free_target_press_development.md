@@ -137,3 +137,29 @@ to the selected fixed-multiplier elastic smooth direction: element states
 are rebuilt from fresh elastic initial states, and multiplier-update,
 other directions, nonsmooth crossing and complete C1 qualification were
 not checked.
+
+## Fresh-model restart pressure identity
+
+The original uninterrupted eight-Q4 full-cycle summary retained contact
+forces, gaps and pressure-change scalars but not its pressure vectors. The
+fresh-model split report did retain ordered source pressure IDs and vectors
+for all twelve steps. A new uninterrupted replay from the current development
+branch compared those complete algorithmic pressure states with the split
+report and the original full-cycle scalars. It completed all twelve steps in
+217.78 s. Every step, active count and ordered pressure ID matched; maximum
+pressure-vector, normal-force, gap and multiplier-change differences were
+exactly zero in the saved numerical values. All declared gap and pressure
+gates passed. The raw [identity comparison](../../reports/general_contact_d1_free_target_8q4_state_identity_dev_20260928.json)
+has SHA256 `760f93bac7604a37055d8c229a4cf96139b852e19428a4a6651e57895efa0563`.
+It binds the retained split report (SHA256
+`4f483f38c0c1e27bf36fedae6da511b64a31ce5ced74d9f4a2550db95a77081f`)
+and original full-cycle summary (SHA256
+`b932e1520c113a39587522a9126b9183c83777f0c98cfccde4d55064de0f4570`).
+The first command used an unrelated editable ANYsolver installation and
+failed at import before a solve; its log is retained separately. The replay
+used the isolated worktree source path.
+
+This is development evidence for restart multiplier identity in this elastic
+fixture. It is not an independent response reference or full physical-state
+identity assessment. Mesh/enforcement refinement, installed free-target
+verification and C1 acceptance remain open.

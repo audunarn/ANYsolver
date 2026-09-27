@@ -111,8 +111,10 @@ press steps. Each contact step accepted one supported-Schur correction;
 the same eight-Q4 setup then locally completed a 12-step
 press/slide/open/recontact cycle. A fresh-model six/twelve split restart
 reproduced all saved integrated-force, gap and multiplier-change scalars;
-full pressure-vector identity, independent integrated-response reference
-and coupled refinement remain open.
+an uninterrupted development replay subsequently matched all twelve
+ordered pressure-feature IDs and multiplier vectors exactly against that
+split run. Independent integrated-response reference and coupled refinement
+remain open.
 A later actual free-target equilibrium pose passed a selected mixed
 source/target smooth directional development check at 4e-7 and 2e-7 m;
 an 8e-7 m comparison crossed pressure activation and remains inconclusive.

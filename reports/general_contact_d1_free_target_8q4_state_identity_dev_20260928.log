@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 12,
+  "all_steps_and_pressure_ids_match": true,
+  "maximum_pressure_vector_difference_pa": 0.0,
+  "all_contact_gates_met": true,
+  "elapsed_seconds": 217.77838189998874
+}
