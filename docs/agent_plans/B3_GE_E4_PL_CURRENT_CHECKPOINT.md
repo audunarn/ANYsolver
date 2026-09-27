@@ -34,6 +34,12 @@ it is not selected as a sufficient resolution rule.
 The complete 15-generator coarser native-port trace is also independent
 and balanced, but stays near coarse P0 rather than the four-interval
 response; missing beam-port modes alone do not explain that movement.
+The native-port and P0 m4 row spaces have combined rank 30, so neither
+contains the other; every physical channel contributes omitted directions.
+An independently differentiated flat-reference line-pose contract now
+matches Q4 and interior S3 Jacobians and the eccentric torque/shear
+virtual work; it exposes the force/yaw derivative coupling without
+using numerical drilling stiffness.
 The matched detached-solid evidence remains limited by connection and
 contact idealization. B2 F09 fail-closed admission is unfinished.
 **Remaining uncertainty:** The admissible multi-channel test-space image
@@ -43,8 +49,8 @@ reference/derivative checks and a bounded loaded screen pass for both
 triangle diagonals; mixed-mesh stability and physical fidelity remain open.
 **Next discriminator:** Use the explicit unscaled within- and
 cross-channel identities plus the failed union-P0 growth and coarse-P0
-torque movement to derive one fixed shell/beam joint enriched trace rule.
-Test it across
+torque movement and the analytic shell-top/native-port work law to
+derive one fixed shell/beam joint enriched trace rule. Test it across
 refinement, reversal and Q4/S3 with supported work and appropriate mixed
 norms. The ratio-specific ablations are diagnostics, not a selected rule.
 Do not automatically drop rows by SVD or run the full ratio series on
@@ -196,6 +202,65 @@ The source-bound raw record is
 `8cb16ecb1794c3b67a9b55b4b8815b9105c2b011f2e1f449d6acb3471f31c267`,
 run from committed source `6d5ea675`, runner SHA256
 `4508D3A09370B4715DB8F801B9F694C4D77AC7D2D31DD2A70CA20D623704F546`.
+
+**Next bounded shell-side trace discriminator (prospective):** Keep the
+same x8/B3-12 reference Jacobian and physical primal scales. Compare
+the already executed 15-row native-port image with the already executed
+24-row P0 m4 space by row-span projection, reporting union rank and
+per-physical-channel residuals. This is an identification calculation,
+not a candidate solve or SVD-based row deletion. If only a declared
+shell position/director channel is missing, derive its shell-side work
+generator; if several channels are genuinely joint, derive a coupled
+shell/beam trace law before further loaded rows. The result determines
+which physical virtual field the matched two-sided reference must test.
+
+**Shell-side span result:** The same x8/B3-12 reference, supports and
+physical coordinate scales give ranks 15 for the native-port image, 24
+for P0 m4 and 30 for their union (60 active primal columns). Of each
+four-row physical P0 channel, Fx/Fy/Fz/Mx/My adds three dimensions to
+the beam space and Mz adds two. The six separate increments overlap
+across channels, as the total union adds only 15 dimensions. Under the
+declared column scale, per-row projection residuals are roughly
+`0.11–0.28` (Fx/Fy), `0.14–0.37` (Fz), `0.52–0.53` (Mx/My), and `0.80`
+(Mz). The residual magnitudes are norm-dependent diagnostics; the
+rank intersections are structural on this fixture. A single added
+pitch or position channel cannot span the omitted work. Derive a
+coupled shell-position/director and native-port test space, including
+its physical meaning, rather than another channel-specific ablation.
+Before another loaded candidate, check its continuous virtual work
+on the supported torque, shear and compensated-pitch fields against
+the declared two-sided joint and a matched reference.
+
+**Next continuous-law derivation (prospective):** At a flat straight
+reference, derive the shell-top line pose variation independently from
+the source Jacobian. The director and projected top tangent should give
+shell spatial rotations
+`(sum N*theta_x, sum N*theta_y, sum N_x*(u_y-t*theta_x))`,
+with `t=thickness/2`, while top position varies as
+`sum N*(u+theta cross (t*e_z))`. Check these formulas against the
+actual Q4 and interior S3 Jacobians, then pair them with the native
+half-cell spatial port in force/moment virtual work. If the formulas
+fail, correct the shell pose before choosing a multiplier; if they hold,
+they expose the physical force/yaw derivative coupling needed by a
+joint test space and a matched two-sided reference. This is a mechanics
+identity check, not a new qualification threshold.
+
+**Continuous-law derivation result:** The independently assembled
+reference shell-top and beam-bottom Jacobians match the candidate
+position rows exactly at printed precision and orientation rows within
+`2.85e-14` on Q4 and both off-edge S3 diagonals. Supported compensated
+roll and pitch require the signed `67.5 mm` beam-axis shifts; removing
+them gives the expected eccentric force work. Matched transverse shear
+closes, shell-only transverse motion gives its physical force work,
+and lateral top-line slope gives the expected yaw-couple work. Pure
+shell `rz` is null at this flat reference; shell `u_z` slope does not
+force director pitch. The three parameterized analytic-work tests pass
+`3/3`. The exact candidate and its limits are derived in
+`B3_E4_F03_MATERIAL_LINE_WORK_CONTRACT.md`. This validates a bounded
+continuous *linearized* two-sided line-pose work convention, not the
+finite-width welded face, nonlinear transfer, multiplier stability or
+G0B. The next physical comparison must use the declared center-line
+pose meaning or explicitly state a distinct footprint idealization.
 
 The planned x8 fixture has about 1,404 globally free primal columns,
 above the private rank helper's 1,200-column SVD cap, although only a

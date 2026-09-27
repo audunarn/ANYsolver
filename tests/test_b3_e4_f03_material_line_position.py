@@ -128,6 +128,132 @@ def test_reciprocal_line_rows_expose_unscaled_channel_identities():
                         < 1e-12*np.linalg.norm(rows))
 
 
+@pytest.mark.parametrize("mixed_s3,off_edge,diagonal", (
+    (False, False, "bl_tr"),
+    (True, True, "bl_tr"),
+    (True, True, "br_tl"),
+))
+def test_straight_material_line_has_analytic_two_sided_work_contract(
+        mixed_s3, off_edge, diagonal):
+    """Independent flat-reference pose rows include both physical offsets."""
+    xs, ys = local_grid(2, transverse_cells=4)
+    if off_edge:
+        ys = ys.copy()
+        ys[np.argmin(np.abs(ys))] = .01
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="straight_c1_stations", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3,
+                                diagonal=diagonal)
+    count, shell_size = len(line.stations), 6*line.shell_count
+    position = np.zeros((count, 3, shell_size+beam.context.count))
+    rotation = np.zeros_like(position)
+    shell_top, beam_bottom = .035/2, -.1/2
+    for k, station in enumerate(line.stations):
+        for node, shape, derivative in zip(
+                station.nodes, station.shape, station.dshape_dx):
+            c = 6*int(node)
+            for axis in range(3):
+                position[k, axis, c+axis] += shape
+            position[k, 0, c+4] += shell_top*shape
+            position[k, 1, c+3] -= shell_top*shape
+            rotation[k, 0, c+3] -= shape
+            rotation[k, 1, c+4] -= shape
+            rotation[k, 2, c+1] -= derivative
+            rotation[k, 2, c+3] += shell_top*derivative
+        port = station.port
+        left, right = beam.context.nodes[port.element_index][port.cell:port.cell+2]
+        for node, shape in ((left, 1-port.weight), (right, port.weight)):
+            for axis in range(3):
+                position[k, axis, shell_size+6*node+axis] -= shape
+        c = shell_size+beam.context.nodal_count+24*port.element_index+3*port.cell
+        position[k, 0, c+1] -= beam_bottom
+        position[k, 1, c] += beam_bottom
+        for axis in range(3):
+            rotation[k, axis, c+axis] += 1.
+    np.testing.assert_allclose(
+        line.reference_jacobian().reshape(count, 3, -1),
+        position, rtol=0., atol=5e-13)
+    np.testing.assert_allclose(
+        line.reference_orientation_jacobian().reshape(count, 3, -1),
+        rotation, rtol=0., atol=5e-13)
+
+    # Equal surface motions leave the line gap closed even though their
+    # reference axes are eccentric. Removing the beam-center compensation
+    # exposes the physical 67.5 mm force lever arm.
+    shell_bond = line.reference_nodes[:, 0] >= .9-1e-12
+    beam_bond = beam.abscissae >= .9-1e-12
+    alpha = 1e-3
+    for shell_axis, beam_axis, translation_axis, translation_sign, gap_axis in (
+            (3, 0, 1, -1., 1),  # roll / transverse force
+            (4, 1, 0, +1., 0),  # pitch / axial force
+    ):
+        step = np.zeros(shell_size+beam.context.count)
+        shell = step[:shell_size].reshape(-1, 6)
+        shell[shell_bond, shell_axis] = alpha
+        for node in np.flatnonzero(beam_bond):
+            step[shell_size+6*node+translation_axis] = (
+                translation_sign*.0675*alpha)
+        for station in line.stations:
+            port = station.port
+            c = (shell_size+beam.context.nodal_count
+                 +24*port.element_index+3*port.cell+beam_axis)
+            step[c] = alpha
+        assert np.max(np.abs(position.reshape(3*count, -1)@step)) < 1e-12
+        assert np.max(np.abs(rotation.reshape(3*count, -1)@step)) < 1e-12
+        uncompensated = step.copy()
+        for node in np.flatnonzero(beam_bond):
+            uncompensated[shell_size+6*node+translation_axis] = 0.
+        gap = (position.reshape(3*count, -1)@uncompensated).reshape(count, 3)
+        expected_gap = translation_sign*.0675*alpha
+        np.testing.assert_allclose(gap[:, gap_axis], expected_gap,
+                                   rtol=0., atol=1e-12)
+        density = 1000./sum(station.weight for station in line.stations)
+        weights = np.array([station.weight for station in line.stations])
+        multiplier = np.zeros((count, 3))
+        multiplier[:, gap_axis] = weights*density
+        assert (uncompensated@(position.reshape(3*count, -1).T
+                               @multiplier.ravel())) == pytest.approx(
+                                   1000.*expected_gap, abs=1e-11)
+
+    shear = np.zeros(shell_size+beam.context.count)
+    shear[:shell_size].reshape(-1, 6)[shell_bond, 2] = 2e-5
+    for node in np.flatnonzero(beam_bond):
+        shear[shell_size+6*node+2] = 2e-5
+    assert np.max(np.abs(position.reshape(3*count, -1)@shear)) < 1e-12
+    assert np.max(np.abs(rotation.reshape(3*count, -1)@shear)) < 1e-12
+    for node in np.flatnonzero(beam_bond):
+        shear[shell_size+6*node+2] = 0.
+    gap = (position.reshape(3*count, -1)@shear).reshape(count, 3)
+    np.testing.assert_allclose(gap[:, 2], 2e-5, rtol=0., atol=1e-12)
+    multiplier = np.zeros((count, 3))
+    multiplier[:, 2] = np.array([station.weight for station in line.stations])*1e4
+    assert (shear@(position.reshape(3*count, -1).T
+                   @multiplier.ravel())) == pytest.approx(.02, abs=1e-11)
+
+    slope = 1e-3
+    yaw = np.zeros(shell_size+beam.context.count)
+    yaw_shell = yaw[:shell_size].reshape(-1, 6)
+    yaw_shell[shell_bond, 1] = (
+        slope*(line.reference_nodes[shell_bond, 0]-.9))
+    yaw_gap = (rotation.reshape(3*count, -1)@yaw).reshape(count, 3)
+    np.testing.assert_allclose(yaw_gap[:, 2], -slope,
+                               rtol=0., atol=1e-12)
+    couple = np.zeros((count, 3))
+    couple[:, 2] = np.array([station.weight for station in line.stations])*1e3
+    assert (yaw@(rotation.reshape(3*count, -1).T
+                 @couple.ravel())) == pytest.approx(-.1, abs=1e-11)
+    drilling = np.zeros_like(yaw)
+    drilling[:shell_size].reshape(-1, 6)[shell_bond, 5] = 1e-3
+    assert np.max(np.abs(position.reshape(3*count, -1)@drilling)) < 1e-12
+    assert np.max(np.abs(rotation.reshape(3*count, -1)@drilling)) < 1e-12
+    transverse_shear = np.zeros_like(yaw)
+    transverse_shear[:shell_size].reshape(-1, 6)[shell_bond, 2] = (
+        slope*(line.reference_nodes[shell_bond, 0]-.9))
+    assert np.max(np.abs(rotation.reshape(3*count, -1)@transverse_shear)) < 1e-12
+    assert np.max(np.abs(position.reshape(3*count, -1)@transverse_shear)) > 1e-5
+
+
 @pytest.mark.parametrize("shell_cells,beam_half_cells,intervals,expected_rank", (
     (8, 12, 8, 44), (2, 18, 8, 48),
     (16, 12, 16, 84), (2, 26, 16, 96),
