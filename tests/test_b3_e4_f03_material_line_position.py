@@ -262,3 +262,81 @@ def test_material_line_orientation_couple_work_cancels_on_common_rigid_motion():
     beam_work = beam_step@(jacobian[:, split:].T@multiplier)
     assert abs(shell_work) > 1e-6
     assert abs(shell_work+beam_work) < 1e-10*abs(shell_work)
+
+
+def test_material_line_orientation_work_has_chart_corrected_mixed_curvature():
+    _, _, beam, line = _fixture(patch_cells=2)
+    rng = np.random.default_rng(351)
+    directions = [rng.normal(size=6*line.shell_count+beam.context.count)*.1
+                  for _ in range(2)]
+    split = 6*line.shell_count
+    for direction in directions:
+        shell = direction[:split].reshape(-1, 6)
+        shell[line.reference_nodes[:, 0] <= -.5+1e-12] = 0.
+        direction[split+np.asarray(beam.context.fixed)] = 0.
+    first, second = directions
+    multiplier = np.repeat([station.weight for station in line.stations], 3)
+    multiplier *= np.tile((1.3, -2.1, 3.2), len(line.stations))
+    base = beam.context.initial.mechanical
+
+    def state_for(step):
+        shell = step[:split].reshape(-1, 6)
+        coordinates = line.reference_nodes+shell[:, :3]
+        frames = Rotation.from_rotvec(shell[:, 3:]).as_matrix()
+        state = beam.context.advance(base, step[split:])
+        return coordinates, frames, state
+
+    def left_exp_jacobian(vector):
+        angle = np.linalg.norm(vector)
+        cross = np.array(((0., -vector[2], vector[1]),
+                          (vector[2], 0., -vector[0]),
+                          (-vector[1], vector[0], 0.)))
+        if angle < 1e-4:
+            a = .5-angle**2/24.+angle**4/720.
+            b = 1./6.-angle**2/120.+angle**4/5040.
+        else:
+            a = (1.-np.cos(angle))/angle**2
+            b = (angle-np.sin(angle))/angle**3
+        return np.eye(3)+a*cross+b*cross@cross
+
+    def base_chart_direction(current_step, direction):
+        result = direction.copy()
+        current_shell = current_step[:split].reshape(-1, 6)
+        result_shell = result[:split].reshape(-1, 6)
+        for node in range(line.shell_count):
+            result_shell[node, 3:] = (
+                left_exp_jacobian(current_shell[node, 3:])@
+                result_shell[node, 3:])
+        for element in range(len(beam.context.elements)):
+            for cell in (0, 1):
+                start = split+beam.context.nodal_count+24*element+3*cell
+                result[start:start+3] = (
+                    left_exp_jacobian(current_step[start:start+3])@
+                    result[start:start+3])
+        return result
+
+    def work(step):
+        return multiplier@line.orientation_gap(*state_for(step)).ravel()
+
+    def first_work_derivative(step, direction):
+        coordinates, frames, state = state_for(step)
+        return multiplier@(
+            line.orientation_jacobian(coordinates, frames, state)@
+            base_chart_direction(step, direction))
+
+    h = 1e-4
+    mixed_ab = (first_work_derivative(h*second, first)
+                -first_work_derivative(-h*second, first))/(2*h)
+    mixed_ba = (first_work_derivative(h*first, second)
+                -first_work_derivative(-h*first, second))/(2*h)
+    naive_mixed = (
+        multiplier@(line.orientation_jacobian(*state_for(h*second))@first)
+        -multiplier@(line.orientation_jacobian(*state_for(-h*second))@first)
+        )/(2*h)
+    scalar_difference = (work(h*(first+second))-work(h*(first-second))
+                         -work(h*(-first+second))+work(-h*(first+second))
+                         )/(4*h*h)
+    assert abs(mixed_ab) > 1e-5
+    assert abs(mixed_ab-mixed_ba) < 2e-7
+    assert abs(mixed_ab-scalar_difference) < 2e-7
+    assert abs(naive_mixed-mixed_ab) > 1e-6

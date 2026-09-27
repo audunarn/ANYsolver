@@ -15,7 +15,8 @@ A new material-line proof detects the even-slip mode and passes bounded
 position/Jacobian checks. Its value-only orientation probe is objective,
 non-drilling, and preserves the tested shear mode. Its reference orientation
 Jacobian passes Q4/S3 reference and nonzero-gap chart differences;
-orientation curvature and coupled transfer remain open.
+one chart-corrected mixed-curvature diagnostic passes. A general
+second-variation operator and coupled transfer remain open.
 **Remaining uncertainty:** Allocate torque/shear differences among the
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
@@ -244,6 +245,18 @@ the mixed second variation, or loaded torque transfer. Next, a
 nonzero-multiplier curvature check must distinguish a correct constraint
 Hessian from a merely correct residual Jacobian before any exact-multiplier
 production tangent is adopted.
+
+**Chart-corrected curvature oracle (27 September):** One nonzero-multiplier
+orientation work functional now has a bounded mixed directional check in
+the actual base chart: the first derivative uses the finite-state analytic
+Jacobian with the SO(3) exponential's left Jacobian to convert each base
+direction into the current local update. The two mixed orders agree and
+match the independent four-state scalar-work stencil within `2e-7`;
+omitting the chart conversion disagrees by more than `1e-6`. Independent
+read-only mechanics review found the base-chart correction and stencil
+valid for this fixture. This is a numerical curvature oracle for one
+direction pair, not an implemented general constraint Hessian, loaded
+coupling tangent, physical wrench qualification, or G0B acceptance.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8
