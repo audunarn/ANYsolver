@@ -15,7 +15,8 @@ checks pass at sampled points; fail-closed F09 admission remains unfinished.
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
 **Next discriminator:** Design one physically matched torque/shear reference
-with a declared connection and admissible surface-order evidence, then use
+with a declared connection and admissible surface-order evidence; the
+saved C1 half-load no-contact route also overlaps and is rejected. Use
 existing native work to choose a law or resolution change. Advance B2 F09
 and independent foundations without repeating axial/opening sweeps.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
@@ -100,6 +101,34 @@ The next F03 physical-reference effort must target torque/shear with a
 declared connection and an admissible surface-order check. No further
 reverse-Fz refinement follows automatically; independent F09 and other
 foundations can proceed while that reference is designed.
+
+**Next bounded torque-reference discriminator (prospective):** The saved
+linear C1 full-displacement solid has a 2 µm tapered clearance and a
+100 Nm no-contact torque field with a previously observed same-XY overlap.
+Scale only that saved displacement field by one-half, corresponding to a
+50 Nm load on the unchanged linear geometry, and sample all 128 paired Q8
+faces at the same interior 9×9 points. First reproduce the full-load
+negative witness. A half-load negative witness rejects this route; an
+all-positive half-load sample retains a 50 Nm candidate for continuous
+gap, idealization and mesh checks. It is not a torque accuracy score or
+formal F03 execution, and no solver run or clearance tuning follows from
+this diagnostic.
+
+**Torque half-load outcome and decision (27 September):** All 10,368
+same-deformed-XY face-interior projections succeeded. The full 100 Nm
+field reproduces a `−7.11249 nm` minimum and 43 negative samples; the
+linearly scaled 50 Nm field still has 27 negative samples, minimum
+`−2.20022 nm`, on the unchanged 2 µm-clearance C1 geometry. Both are
+interior surface-order overlap witnesses with XY defects below `5e-16 m`.
+The bounded half-load branch therefore fails as a physically admissible
+no-contact torque comparator. Do not chase success by another load or
+clearance sweep. The next external reference needs a declared, matched
+connection whose open/contact state can be independently validated.
+The immutable source-bound result is
+`B3_GE_E4_PL_F03_C1_TORQUE_HALF_LOAD_GAP_DEV_V1.json`, SHA256
+`4A105B42C48C4EDEF501440EF12648DACD8FD25EE3A95836FB48B91D4B44EB66`.
+This is a sampled rejection, not a continuous contact or native accuracy
+assessment. F03/G0B remain open and formal F03 authority unconsumed.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8
