@@ -50,6 +50,32 @@ F09 and other independent foundations while F03 remains unresolved.
 No multiplier space is selected and F03 remains open.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
+**Independent B2 F10/F11 S3 discriminator, before implementation (27
+September):** The private B2 reference point proof uses a finite least-squares
+rigid pose from four physical Q4 vertex translations; it has no S3 point
+proof. A three-vertex noncollinear support may retain six physical pose rows,
+or it may lose a moment channel or produce an inconsistent shell action.
+Generalize only the private support size, preserving the Q4 law and no-drill
+definition. On one actual elastic S3-V2D stiffness, compare objective
+reference derivatives, force/moment/virtual-work balance, sparse KKT and an
+independent reduced solution under fixed supports and a nonzero eccentric
+load. Negative and mutation checks must remain. A pass gives bounded S3
+point feasibility only; it does not select the GE line law, qualify a public
+B2 route, or close F10/F11/G0B. A failure revises the support law before
+topology expansion.
+
+**Outcome (27 September):** The private point compiler now admits an S3
+three-vertex physical-translation support with its own development law ID;
+the historical Q4 ID and port remain unchanged. On an actual S3 stiffness,
+the reference fit has six independent pose rows, the finite-rotation joint
+derivative and multiplier work agree, and force/moment balances close. A
+supported sparse KKT solution agrees with an independent reduced solution
+and reactions; malformed support and caller mutation checks pass. Focused
+Q4/S3 tests: `7/7`. Independent mechanics review found no blocking defect.
+The KKT fixture fixes shell rotational DOFs, so this proves a bounded S3
+translation-port feasibility case, not free S3 rotational coupling or a
+production attachment. F10/F11 and G0B remain open.
+
 **Next contact-method discriminator, before execution (27 September):**
 The saved C1 quadratic terminal-bond torque deck has 128 plate and 128 bar
 unbonded contact faces, but its finite penalty formulation activates only
