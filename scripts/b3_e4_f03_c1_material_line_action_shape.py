@@ -58,6 +58,60 @@ def _mean_compliance(rows, plate_selector, scale, unit,
     return solid, native
 
 
+def _project_solid_trace_work(part, *, coords, solid_nodes, plate_selector,
+                              solid_rows, scale, unit, native_rows,
+                              measure, shell_size, xs, ys, thickness):
+    """Sample the saved solid's top/bottom centerline into E4 nodal poses.
+
+    The native action has support on five centerline nodes. Q4 trace
+    interpolation between these nodes is implicit in the native rows.
+    This is a load-work projection, not a shell strain-energy fit.
+    """
+    solid_u = -(part/scale)@unit
+    solid_force = -(solid_rows.T@part)
+    solid_work = float(solid_force[plate_selector]@solid_u[plate_selector])
+    force = -(native_rows.T@(part.reshape(4, 6)*measure[:, None]).ravel())[:shell_size]
+    active = np.flatnonzero(np.linalg.norm(force.reshape(-1, 6), axis=1) > 1e-10)
+    if len(active) != 5:
+        raise ValueError("five-node centerline action support changed")
+    location = {}
+    for i, node in enumerate(solid_nodes):
+        if plate_selector[3*i]:
+            key = tuple(np.round(coords[node], 9))
+            if key in location:
+                raise ValueError("ambiguous solid plate location")
+            location[key] = i
+    q = np.zeros(shell_size)
+    stretch = 0.
+    mapped = []
+    for k in active:
+        x, y = float(xs[k % len(xs)]), float(ys[k // len(xs)])
+        top = location[(round(x, 9), round(y, 9), round(thickness/2, 9))]
+        bottom = location[(round(x, 9), round(y, 9), round(-thickness/2, 9))]
+        u_top = solid_u[3*top:3*top+3]
+        u_bottom = solid_u[3*bottom:3*bottom+3]
+        center = (u_top+u_bottom)/2.
+        difference = u_top-u_bottom
+        q[6*k:6*k+6] = (center[0], center[1], center[2],
+                         -difference[1]/thickness,
+                         difference[0]/thickness, 0.)
+        stretch = max(stretch, abs(float(difference[2])))
+        mapped.append((x, y))
+        if not np.allclose(
+                q[6*k:6*k+2] +
+                np.array((q[6*k+4], -q[6*k+3]))*thickness/2,
+                u_top[:2], rtol=0., atol=1e-12):
+            raise ArithmeticError("sampled top pose does not reconstruct")
+    projected_work = float(force@q)
+    return {
+        "solid_full_plate_action_work_J": solid_work,
+        "projected_native_trace_action_work_J": projected_work,
+        "unrepresented_trace_work_J": solid_work-projected_work,
+        "maximum_sampled_thickness_stretch_m": stretch,
+        "native_action_nodes_xy_m": mapped,
+    }
+
+
 def evaluate(reconstruction_path: Path, same_action_path: Path) -> dict:
     reconstruction = json.loads(reconstruction_path.read_text())
     same_action = json.loads(same_action_path.read_text())
@@ -150,6 +204,25 @@ def evaluate(reconstruction_path: Path, same_action_path: Path) -> dict:
         channel_contributions = mean_coefficients*(symmetric_delta@mean_coefficients)
         if abs(float(np.sum(channel_contributions))-difference["mean_self_J"]) > 1e-9:
             raise ArithmeticError("channel contributions do not reconstruct difference")
+        projection = {
+            "full_action": _project_solid_trace_work(
+                dual, coords=coords, solid_nodes=solid_nodes,
+                plate_selector=plate_selector, solid_rows=solid_rows,
+                scale=scale, unit=unit, native_rows=native_rows,
+                measure=measure, shell_size=shell_size, xs=xs, ys=ys,
+                thickness=.035),
+            "longitudinal_mean": _project_solid_trace_work(
+                mean, coords=coords, solid_nodes=solid_nodes,
+                plate_selector=plate_selector, solid_rows=solid_rows,
+                scale=scale, unit=unit, native_rows=native_rows,
+                measure=measure, shell_size=shell_size, xs=xs, ys=ys,
+                thickness=.035),
+        }
+        if (abs(projection["full_action"]["solid_full_plate_action_work_J"]-
+                solid_total) > 1e-9 or
+                abs(projection["longitudinal_mean"]["solid_full_plate_action_work_J"]-
+                    solid["mean_self_J"]) > 1e-9):
+            raise ArithmeticError("projection source work does not reconstruct")
         cases[label] = {
             "solid_plate": solid,
             "native_E4": native,
@@ -158,6 +231,7 @@ def evaluate(reconstruction_path: Path, same_action_path: Path) -> dict:
             "native_reconstructed_total_J": native_total,
             "mean_density": mean.reshape(4, 6)[0].tolist(),
             "mean_native_minus_solid_by_channel_J": channel_contributions.tolist(),
+            "solid_to_native_trace_projection": projection,
             "maximum_zero_mean_density_sum": float(np.max(np.abs(
                 variation.reshape(4, 6).sum(axis=0)))),
         }
@@ -178,6 +252,7 @@ def evaluate(reconstruction_path: Path, same_action_path: Path) -> dict:
             "mean/variation is a descriptive longitudinal action split, not a physical material law",
             "same fixed dual and saved linear action fields; no new external execution",
             "different native and 3D plate discretizations, support spaces and theories",
+            "sampled global-Q4 line-trace work is not projected shell strain energy",
             "not interface-space selection, F03 or G0B acceptance",
         ],
     }
