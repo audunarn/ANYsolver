@@ -1,7 +1,8 @@
-"""Private G0 material-line position trace on actual E4 and retained B3 poses.
+"""Private G0 material-line pose feasibility on E4 and retained B3 states.
 
-This derives only the three translational channels. A physical orientation
-law, line multipliers, stability and production ownership remain separate.
+The three position channels have a reference Jacobian. The orientation
+channel is value-only; its work variations, multiplier space, stability,
+and production ownership remain separate.
 """
 
 from __future__ import annotations
@@ -9,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts.b3_e4_f03_local_footprint_work import (
@@ -28,12 +30,55 @@ class _Station:
     weight: float
     nodes: np.ndarray
     shape: np.ndarray
+    dshape_dx: np.ndarray
     port: NativeHalfCellSpatialPort
     reference_gap: np.ndarray
+    reference_orientation: np.ndarray
+
+
+def _shape_derivative_x(reference_nodes, nodes, shape, x, y):
+    """Physical longitudinal derivative of the selected Q4 or S3 host."""
+    xy = reference_nodes[nodes, :2]
+    if len(nodes) == 3:
+        matrix = np.vstack((np.ones(3), xy.T))
+        if abs(np.linalg.det(matrix)) <= 1e-14:
+            raise ValueError("degenerate material-line triangle")
+        return np.linalg.solve(matrix, (0., 1., 0.))
+    if len(nodes) != 4:
+        raise ValueError("Q4 or S3 material-line host required")
+    dx = xy[1, 0]-xy[0, 0]
+    dy = xy[3, 1]-xy[0, 1]
+    if dx <= 0 or dy <= 0:
+        raise ValueError("oriented material-line Q4 host required")
+    eta = (y-xy[0, 1])/dy
+    if not -1e-12 <= eta <= 1.+1e-12 or abs(sum(shape)-1.) > 1e-12:
+        raise ValueError("material-line interpolation left host")
+    return np.array((-(1.-eta), 1.-eta, eta, -eta))/dx
+
+
+def _shell_frame(coordinates, frames, station, top):
+    nodes, shape = station.nodes, station.shape
+    director = sum((weight*frames[int(node), :, 2]
+                    for node, weight in zip(nodes, shape)), np.zeros(3))
+    length = np.linalg.norm(director)
+    if not np.isfinite(length) or length <= .5:
+        raise ValueError("material-line director is degenerate")
+    director /= length
+    top_points = np.array([coordinates[int(node)]+frames[int(node)]@top
+                           for node in nodes])
+    tangent = station.dshape_dx@top_points
+    projected = tangent-director*np.dot(director, tangent)
+    projected_length = np.linalg.norm(projected)
+    if (not np.isfinite(projected_length) or
+            projected_length <= .2*np.linalg.norm(tangent)):
+        raise ValueError("material-line projected tangent is degenerate")
+    x_axis = projected/projected_length
+    y_axis = np.cross(director, x_axis)
+    return np.column_stack((x_axis, y_axis, director))
 
 
 class MaterialLinePosition:
-    """Bounded, local shell-top to beam-bottom material-line position map."""
+    """Bounded position map with a value-only relative orientation probe."""
 
     def __init__(self, xs, ys, beam, *, thickness=.035, beam_depth=.1,
                  quadrature_order=3, mixed_s3=False, diagonal="bl_tr"):
@@ -78,9 +123,21 @@ class MaterialLinePosition:
                     reference_gap = frame.T@(shell_top-beam_bottom)
                     if np.max(np.abs(reference_gap)) > 1e-10:
                         raise ValueError("material-line reference geometry is not coincident")
-                    stations.append(_Station(x, float(weight)*(b-a)/2,
-                                             nodes.copy(), shape.copy(), port,
-                                             reference_gap.copy()))
+                    derivative = _shape_derivative_x(
+                        self.reference_nodes, nodes, shape, x, 0.)
+                    provisional = _Station(x, float(weight)*(b-a)/2,
+                                           nodes.copy(), shape.copy(),
+                                           derivative.copy(), port,
+                                           reference_gap.copy(), np.eye(3))
+                    shell_frame = _shell_frame(
+                        self.reference_nodes,
+                        np.broadcast_to(np.eye(3), (self.shell_count, 3, 3)),
+                        provisional, self.top)
+                    stations.append(_Station(x, provisional.weight,
+                                             nodes.copy(), shape.copy(),
+                                             derivative.copy(), port,
+                                             reference_gap.copy(),
+                                             (shell_frame.T@frame).copy()))
         if not stations or abs(sum(s.weight for s in stations)-.1) > 1e-12:
             raise ValueError("complete 0.1 m material line required")
         self.stations = tuple(stations)
@@ -119,3 +176,23 @@ class MaterialLinePosition:
             block[:, 6*self.shell_count:] = frame.T@(
                 -tangent[:3]+_skew(shell_top-center)@tangent[3:])
         return result
+
+    def orientation_gap(self, shell_coordinates, shell_frames, beam_state):
+        """Value-level objective relative Log; work variations remain open."""
+        coordinates = np.asarray(shell_coordinates, dtype=float)
+        frames = np.asarray(shell_frames, dtype=float)
+        if (coordinates.shape != (self.shell_count, 3) or
+                frames.shape != (self.shell_count, 3, 3) or
+                not np.isfinite(coordinates).all() or not np.isfinite(frames).all()):
+            raise ValueError("complete finite shell state required")
+        gaps = []
+        for station in self.stations:
+            shell_frame = _shell_frame(coordinates, frames, station, self.top)
+            _, _, beam_frame = station.port.pose_pair(beam_state)
+            relative = station.reference_orientation.T@(
+                shell_frame.T@beam_frame)
+            gap = Rotation.from_matrix(relative).as_rotvec()
+            if not np.isfinite(gap).all() or np.linalg.norm(gap) >= np.pi-.1:
+                raise ValueError("material-line relative rotation left chart")
+            gaps.append(gap)
+        return np.asarray(gaps)

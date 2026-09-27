@@ -11,9 +11,10 @@ The split-solid torque/opening fields show sampled overlap; the separate
 reverse-Fz opening field has positive same-XY samples on 120 available
 faces but lacks seam data and continuous separation. B2 physical-section
 checks pass at sampled points; fail-closed F09 admission remains unfinished.
-A new three-channel material-line position proof detects the even-slip
-mode and passes bounded chart, shear, rigid-motion and reference checks;
-its orientation and coupled transfer remain open.
+A new material-line proof detects the even-slip mode and passes bounded
+position/Jacobian checks. Its value-only orientation probe is objective,
+non-drilling, and preserves the tested shear mode; orientation work
+derivatives and coupled transfer remain open.
 **Remaining uncertainty:** Allocate torque/shear differences among the
 continuous law, discrete enforcement, contact, and domain idealizations;
 assess growing-space stability and physical transfer together.
@@ -180,6 +181,34 @@ which the raw-gap guard and negative test closed. This is not a full pose
 law: shell director orientation, couple work, second variation, mixed-S3
 mechanics, global stability and loaded torque/shear are unqualified.
 No production owner, F03 gate acceptance or G1 entry follows.
+
+**Next bounded orientation discriminator (prospective):** At the same
+material-line stations, form a shell pose from the independently interpolated
+E4 director and the material longitudinal tangent projected perpendicular
+to that director. The competing outcomes are an objective, non-drilling
+frame that permits director/tangent shear versus a degenerate or
+mesh-sensitive frame that cannot support the required line pose. Check the
+reference, finite common rigid motions, a director-tilt/shear field, and
+Q4/S3 host behavior. A pass only licenses derivation of the orientation
+work variations and beam-relative Log constraint; a failure returns the
+pose construction to G0 mechanics. No longitudinal multiplier selection or
+loaded accuracy inference follows from this value-level test.
+
+**Orientation discriminator outcome (27 September):** The private probe
+forms a proper shell frame from the interpolated director and projected
+top material-line tangent, stores the reference beam-relative frame, and
+evaluates its relative rotation through the actual B3 retained pose. The
+focused material-line file passes 7/7 checks, including Q4/S3 reference
+orientation, deformed S3 director tilt, finite common rigid motion, Q4
+director tilt, drilling insensitivity, and the tested shear slope. An
+independent read-only mechanics review found no blocking value-level
+objectivity or work-convention issue. This resolves only the frame-value
+choice for the next bounded derivation: the orientation first and second
+variations, couple work, physical wrench, nontrivial reference-frame
+ordering, loaded torque/shear transfer, and growing-space stability remain
+unverified. The next discriminating work is the orientation virtual-work
+derivative through actual chart updates, followed by its second variation;
+failure would revise the frame law before any multiplier selection.
 
 **Bounded saved-field discriminator (prospective, 27 September):** The
 already-executed reverse-Fz C3D20R case has positive paired-parameter Q8

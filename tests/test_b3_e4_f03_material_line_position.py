@@ -1,4 +1,4 @@
-"""Bounded G0 translational material-line feasibility; no full pose claim."""
+"""Bounded G0 material-line position and value-only orientation checks."""
 
 import numpy as np
 import pytest
@@ -46,6 +46,8 @@ def test_material_line_reference_rigid_translation_and_shear_patch():
     state = beam.context.initial.mechanical
     identity = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3))
     assert np.max(np.abs(line.evaluate(line.reference_nodes, identity, state))) < 1e-12
+    assert np.max(np.abs(line.orientation_gap(
+        line.reference_nodes, identity, state))) < 1e-12
     jacobian = line.reference_jacobian()
     shell = np.zeros((line.shell_count, 6))
     beam_step = np.zeros(beam.context.count)
@@ -62,6 +64,10 @@ def test_material_line_reference_rigid_translation_and_shear_patch():
     assert np.max(np.abs(jacobian@np.r_[shell.ravel(), beam_step])) < 1e-12
     assert np.max(np.abs(shell[line.reference_nodes[:, 0] <= -.5+1e-12])) == 0.
     assert beam_step[2] == 0.
+    shell_coordinates = line.reference_nodes+shell[:, :3]
+    candidate = beam.context.advance(state, beam_step)
+    assert np.max(np.abs(line.orientation_gap(
+        shell_coordinates, identity, candidate))) < 1e-10
 
 
 def test_material_line_jacobian_uses_actual_native_chart():
@@ -95,6 +101,12 @@ def test_mixed_s3_material_line_detects_centerline_slip():
     frames = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3))
     assert np.max(np.abs(line.evaluate(
         line.reference_nodes, frames, beam.context.initial.mechanical))) < 1e-12
+    assert np.max(np.abs(line.orientation_gap(
+        line.reference_nodes, frames, beam.context.initial.mechanical))) < 1e-12
+    tilted = frames.copy()
+    tilted[terminal] = Rotation.from_rotvec((0., 1e-3, 0.)).as_matrix()
+    assert np.max(np.abs(line.orientation_gap(
+        line.reference_nodes, tilted, beam.context.initial.mechanical))) > 5e-4
 
 
 def test_material_line_rejects_unexplained_reference_gap():
@@ -133,3 +145,20 @@ def test_material_line_finite_common_rigid_motion_is_objective():
     candidate = beam.context.advance(base, step)
     assert np.max(np.abs(line.evaluate(
         shell_coordinates, shell_frames, candidate))) < 1e-10
+    assert np.max(np.abs(line.orientation_gap(
+        shell_coordinates, shell_frames, candidate))) < 1e-10
+
+
+def test_material_line_orientation_uses_director_without_drilling():
+    _, _, beam, line = _fixture(patch_cells=2)
+    identity = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3)).copy()
+    bond = line.reference_nodes[:, 0] >= .9-1e-12
+    pitch = identity.copy()
+    pitch[bond] = Rotation.from_rotvec((0., 1e-3, 0.)).as_matrix()
+    state = beam.context.initial.mechanical
+    assert np.max(np.abs(line.orientation_gap(
+        line.reference_nodes, pitch, state))) > 5e-4
+    drilling = identity.copy()
+    drilling[bond] = Rotation.from_rotvec((0., 0., 1e-3)).as_matrix()
+    assert np.max(np.abs(line.orientation_gap(
+        line.reference_nodes, drilling, state))) < 1e-12
