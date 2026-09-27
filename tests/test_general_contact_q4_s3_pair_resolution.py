@@ -218,3 +218,23 @@ def test_recontact_tiny_shared_edge_wedge_uses_resolved_limit(
     np.testing.assert_allclose(force.sum(axis=0), 0.0, atol=1.0e-8)
     np.testing.assert_allclose(np.cross(points, force).sum(axis=0),
                                0.0, atol=1.0e-8)
+
+
+def test_unresolved_smooth_neighbor_preserves_pair_value_gate():
+    fixture = json.loads((Path(__file__).parent / "fixtures" /
+                          "general_contact_q4_s3_neighbor_value_gate_pose.json").read_text())
+    model, definition, settings, _ = build_case(
+        4, 2, True, gap_certificate="projected_matching",
+        gap_tolerance=5.0e-5, normal_approach=0.01504,
+    )
+    settings = replace(
+        settings, q4_s3_shared_edge_tie_step_m=3.0e-8,
+        q4_s3_shared_edge_tie_direction=(1.0, 0.0, 0.0),
+        q4_s3_shared_edge_tie_relative_tolerance=1.0e-6,
+    )
+    owner = GeneralS3PatchManager(model, definition, settings)
+    with pytest.raises(UnsupportedQ4S3Branch,
+                       match="shared-edge tie smooth neighbor unresolved"):
+        owner.law.work(np.asarray(fixture["source"]),
+                       np.asarray(fixture["target"]),
+                       np.asarray(fixture["multipliers"]), tangent=True)
