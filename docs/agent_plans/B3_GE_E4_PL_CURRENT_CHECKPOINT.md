@@ -2540,6 +2540,28 @@ script removed. Neither aborted run is evidence. The committed fixed-graph
 test is the completed check; a later range study needs an explicit time bound.
 No large-scale or production conditioning claim follows. F09/G0B remain open.
 
+**Next bounded F09 admission bracket:** The `2^-40` generalized-shear
+graph fails applied-scale balance even after exact rounded-matrix algebra is
+stored in binary64, while coherent physical sections previously passed.
+On the same rooted elbow and identical mixed wrench, check just one
+`2^-20` coupled-shear section with an exact-product free-row balance oracle.
+A pass establishes a bounded passing point below the extreme failure and
+directs later admission to physical section families; a failure calls for
+diagnosing the batch graph representation before defining a range. This is
+not a new tolerance, a production cutoff or an unbounded refinement sweep.
+
+**F09 admission-bracket result:** The `2^-20` coupled-shear section on that
+same two-member graph and mixed wrench completes through one sparse
+factorization. Independently evaluated exact products of its stored
+binary64 solution satisfy separate `1e-9` applied-force and applied-moment
+free-row balances. The F13 focused suite passes `19/19`; the `2^-40` case
+continues to reject before publication. This brackets numerical behavior
+for one deliberately nonphysical generalized section family; it does not
+set an admitted cutoff. Further F09 work should use explicitly physical
+section geometry, orientation and units, with attachment and graph checks
+where technically possible. Do not refine this exponent sequence merely
+to locate a floating-point threshold. F09/G0B remain open.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision

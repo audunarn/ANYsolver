@@ -308,6 +308,45 @@ def test_scaled_batch_preserves_coherent_circular_elbow_work(radius_m):
     batch.close()
 
 
+def test_moderately_weak_generalized_elbow_preserves_physical_balance():
+    exponent = 20
+    section_matrix = np.diag([12., 2.**-exponent,
+                              2.**(1-exponent), 4., 3., 5.])
+    section_matrix[0, 4] = section_matrix[4, 0] = .5
+    section_matrix[1, 2] = section_matrix[2, 1] = 2.**(-exponent-2)
+    section_matrix[3, 5] = section_matrix[5, 3] = .25
+    section = LinearSection.generalized(section_matrix)
+    members, _ = _members()
+    physical = tuple(replace(member, section_id="moderately-weak",
+                             section=section) for member in members)
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in physical),
+        transform, offset, np.arange(6, 18), max_chunk=1)
+    wrench = np.array((.7, -.8, .5, .2, -.3, .4))
+    load = np.zeros(18)
+    load[12:] = wrench
+    result = batch.solve_many((("moderate-mixed", load),))
+    assert result.status == "completed" and result.factorization_count == 1
+    solution = np.zeros(18)
+    solution[6:] = result.cases[0].values
+    matrix = batch.full_stiffness.tocsr()
+    exact_defect = []
+    for row in range(6, 18):
+        start, stop = matrix.indptr[row:row+2]
+        exact = sum((Fraction(float(a))*Fraction(float(solution[col]))
+                     for a, col in zip(matrix.data[start:stop],
+                                       matrix.indices[start:stop])),
+                    Fraction(0))-Fraction(float(load[row]))
+        exact_defect.append(float(exact))
+    force_scale = np.max(np.abs(wrench[:3]))
+    moment_scale = max(np.max(np.abs(wrench[3:])),
+                       max(member.length_m for member in physical)*force_scale)
+    assert max(abs(exact_defect[row]) for row in (0, 1, 2, 6, 7, 8))/force_scale <= 1e-9
+    assert max(abs(exact_defect[row]) for row in (3, 4, 5, 9, 10, 11))/moment_scale <= 1e-9
+    batch.close()
+
+
 def test_weak_generalized_elbow_rejects_unbalanced_binary64_solution(monkeypatch):
     section_matrix = np.diag([12., 2.**-40, 2.**-39, 4., 3., 5.])
     section_matrix[0, 4] = section_matrix[4, 0] = .5
