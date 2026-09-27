@@ -273,6 +273,47 @@ def test_c1_top_face_line_actual_e4_chart_work_at_nonzero_rotation():
     assert abs(float(multipliers@response[:, 3])-mixed_fd) < 1e-6
 
 
+def test_c1_top_face_interval_work_with_finite_b3_port_motion():
+    xs, ys = local_grid(2)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    patch = FiniteSurfaceTopFaceLine(
+        xs, ys, beam, thickness=.035, x_interval=(.9, .95))
+    rng = np.random.default_rng(917)
+    shell = rng.normal(size=(patch.shell_count, 6))*np.array(
+        (.001, .001, .001, .03, .03, .03))
+    shell_u = rng.normal(size=shell.shape)*np.array(
+        (.002, .002, .002, .04, .04, .04))
+    shell_v = rng.normal(size=shell.shape)*np.array(
+        (.002, .002, .002, .04, .04, .04))
+    beam_base = np.zeros(beam.context.count)
+    beam_base[6:] = rng.normal(size=beam.context.count-6)*.001
+    beam_u = rng.normal(size=beam.context.count)*.001
+    beam_v = rng.normal(size=beam.context.count)*.001
+    beam_u[:6] = beam_v[:6] = 0.
+    state = beam.context.advance(beam.context.initial.mechanical, beam_base)
+    multipliers = np.array((18., -23., 31., 7., -100., 13.))
+    actual = patch.evaluate_e4_total(
+        shell.ravel(), state,
+        first=(shell_u.ravel(), beam_u),
+        second=(shell_v.ravel(), beam_v))
+
+    def work(a, b):
+        candidate = beam.context.advance(state, a*beam_u+b*beam_v)
+        return float(multipliers@patch.evaluate_e4_total(
+            (shell+a*shell_u+b*shell_v).ravel(), candidate)[:, 0])
+
+    h1, h2 = 1e-5, 2e-3
+    first_fd = (work(h1, 0.)-work(-h1, 0.))/(2*h1)
+    second_fd = (work(0., h1)-work(0., -h1))/(2*h1)
+    mixed_fd = (work(h2, h2)-work(h2, -h2)-
+                work(-h2, h2)+work(-h2, -h2))/(4*h2*h2)
+    assert abs(float(multipliers@actual[:, 1])-first_fd) < 1e-7
+    assert abs(float(multipliers@actual[:, 2])-second_fd) < 1e-7
+    assert abs(float(multipliers@actual[:, 3])-mixed_fd) < 1e-6
+
+
 def test_c1_hybrid_has_a_support_admissible_transverse_section_null():
     xs, ys = local_grid(4)
     beam = build(12, z_offset=.0675,

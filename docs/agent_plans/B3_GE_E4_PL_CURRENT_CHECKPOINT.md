@@ -120,6 +120,12 @@ read-only mechanics review found no concrete work-map, frame, source-identity
 or loaded-comparison defect. It emphasized that the rank-11 relation belongs
 to this one-host-per-interval discrete fixture, not every two-interval
 space. The review does not confer G0 acceptance. G0B and F03 remain open.
+The review's sole coverage limit was a missing finite B3 mixed-direction
+check at a recentered interval. A new nonzero E4/B3 port-state test now
+checks first, second and mixed multiplier-work derivatives through actual
+state advances; the three focused top-face checks pass `3/3` (6.42 s).
+This closes that local test gap without changing the physical-law or
+stability status.
 
 **Bounded F09 physical-section decision (27 September):** The prior
 `2^-20`/`2^-40` weak-shear graph brackets a numerical issue in an artificial
