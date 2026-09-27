@@ -40,6 +40,9 @@ new exact-Q8 area-mean six-channel map includes top-face position, transverse
 first moments and a plate/bar through-thickness pitch difference. Its six
 rows are independent and common-rigid gaps are at most `5.14e-15`;
 independent affine force/moment/pitch and action-card checks pass `2/2`.
+The complete focused six-channel/finite-connection regression subsequently
+passed `33/33` with JIT disabled and one BLAS thread (`440.65 s`); this
+expensive clean run need not be repeated without changed mechanics inputs.
 Six serial CalculiX action solves took `17.36–17.52 s` each and peaked at
 `1.248–1.249 GB` RSS, under the unchanged per-run `120 s/2 GiB` limits.
 The exact linear Schur reconstruction (authoritative `reconstruction_v5.json`)
