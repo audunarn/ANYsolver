@@ -157,3 +157,53 @@ def test_explicit_input_and_representability_negatives():
         scalar(2.**-1074).evaluate([0., 0., 0., 0., 0., 0., 0., 0., 1e-100, 0., 0., 0.])
     with pytest.raises(RepresentabilityError, match="overflow"):
         LinearSection.isotropic(E=1e308, nu=0., area=1e308, Iy=1., Iz=1., J=1., ky=1., kz=1.)
+
+
+def test_generalized_coupled_operator_has_equivalent_numerical_length_units():
+    """Private operator identity; public physical definitions still require SI."""
+    section = np.diag([22., 13., 17., 9., 7., 11.])
+    section[0, 4] = section[4, 0] = 1.5
+    section[1, 5] = section[5, 1] = -.7
+    factor = 1000.
+    wrench_scale = np.diag([1., 1., 1., factor, factor, factor])
+    pose_scale = np.diag([factor, factor, factor, 1., 1., 1.])
+    nodal_scale = np.kron(np.eye(2), pose_scale)
+    nodal_inverse = np.linalg.inv(nodal_scale)
+    original = LinearOperator(2., LinearSection.generalized(section))
+    converted = LinearOperator(
+        2.*factor,
+        LinearSection.generalized(wrench_scale@section@wrench_scale))
+    displacement = np.array((.01, -.02, .03, .004, -.006, .008,
+                             -.013, .025, -.017, .003, .005, -.007))
+    stations = (.0, .23, .77, 1.)
+    a = original.evaluate(displacement, stations=stations)
+    b = converted.evaluate(nodal_scale@displacement, stations=stations)
+
+    assert b.energy == pytest.approx(factor*a.energy, rel=2e-12)
+    np.testing.assert_allclose(
+        b.force, factor*nodal_inverse.T@a.force, rtol=2e-12, atol=2e-11)
+    np.testing.assert_allclose(
+        b.tangent, factor*nodal_inverse.T@a.tangent@nodal_inverse,
+        rtol=2e-12, atol=2e-11)
+    np.testing.assert_allclose(
+        b.resultants, a.resultants@wrench_scale.T,
+        rtol=2e-12, atol=2e-11)
+    np.testing.assert_allclose(
+        b.strains, a.strains@np.linalg.inv(wrench_scale).T,
+        rtol=2e-12, atol=2e-11)
+
+    offset = np.array((.02, .015, -.01))
+    trace_a = original.trace(displacement, stations=stations,
+                             offset_local_m=offset)
+    trace_b = converted.trace(nodal_scale@displacement, stations=stations,
+                              offset_local_m=factor*offset)
+    np.testing.assert_allclose(
+        trace_b.reference_points, factor*trace_a.reference_points,
+        rtol=2e-12, atol=2e-11)
+    np.testing.assert_allclose(
+        trace_b.pose, trace_a.pose@pose_scale.T,
+        rtol=2e-12, atol=2e-11)
+    for jac_a, jac_b in zip(trace_a.jacobian, trace_b.jacobian):
+        np.testing.assert_allclose(
+            jac_b, pose_scale@jac_a@nodal_inverse,
+            rtol=2e-12, atol=2e-11)

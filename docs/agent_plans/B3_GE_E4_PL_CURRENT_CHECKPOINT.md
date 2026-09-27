@@ -2264,6 +2264,30 @@ coherent scalar-section range on the same elbow graph, but does not
 establish generalized SPD admission, all attachments, resource scale, or
 a production sparse solver policy. F09/G0B remain open.
 
+**Next bounded F09 equivalent-unit discriminator:** The coherent elbow
+supports one SI scalar-section range; the generalized operator's coupled
+force/moment representation still needs an explicit unit-covariance check.
+On one non-diagonal SPD generalized section, convert metres/Nm to
+millimetres/Nmm analytically, scaling length, translational coordinates,
+section resultants and curvature strains with their physical dimensions.
+Compare local energy, force, tangent, selected section response and offset
+station trace against the original through the exact congruence. Agreement
+retains the operator representation for later graph/admission checks;
+failure identifies a dimension or trace-map defect. This private numerical
+conversion does not change the public SI-only definition policy, set a
+conditioning envelope, or close F09/G0B.
+
+**F09 generalized unit-covariance result:** A non-diagonal SPD generalized
+section was converted numerically from metres/Nm to millimetres/Nmm using
+the declared force/moment and translation/rotation congruences. The private
+B2 operator's energy, nodal force, tangent, section resultants/strains and
+eccentric station trace agree with the original under those transforms.
+The focused local operator suite passes `15/15`. This is a dimension and
+trace-map check on one moderate section, not public unit-system admission,
+an extreme conditioning range, sparse-graph accuracy or F09/G0B acceptance.
+The primary C1 law still requires the pending physical-joint choice; neither
+this result nor the earlier mode/solid diagnostics selects it.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision
