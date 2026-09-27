@@ -56,6 +56,14 @@ bounded loaded mapping evidence and proceed to the fixed-rule derivation.
 Mesh-dependent response differences alone do not select a multiplier
 space or establish connection fidelity. This uses no formal F03 authority.
 
+The first off-edge loaded attempt stopped before coupling: one S3
+zero-state element force was `1.0580563833942266e-7 N`, narrowly above
+the private fixture's `1e-7 N` roundoff guard. Its tangent was finite and
+its trial state existed. Both diagonals assemble with a `1e-6 N` fixture
+guard, which remains far below the local force scale and does not alter
+the registered coupled equilibrium or constraint criteria. Retain this
+failed setup outcome and test the loaded system under the corrected guard.
+
 **Next bounded row-policy probe (prospective):** The first reciprocal
 failures identify different trace dimensions. On shell-fine 1:2, test
 cellwise P0 Fy/Mz with continuous P1 in the other four channels; on

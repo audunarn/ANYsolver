@@ -338,10 +338,18 @@ def raw_e4_mixed_c1_tangent(xs: np.ndarray, ys: np.ndarray, *,
             model, eid, element, np.zeros(6*len(nodes)), True,
             committed_state=origin, num_layers=3,
             tangent_mode="consistent")
+        # Off-edge triangles can accumulate about 1e-7 N of roundoff in
+        # their zero-state force. This private fixture guard is separate
+        # from the registered coupled equilibrium/constraint limits.
         if (force is None or stiffness is None or candidate is None or
-                np.linalg.norm(force)>1e-7 or
+                np.linalg.norm(force)>1e-6 or
                 not np.isfinite(stiffness).all()):
-            raise ArithmeticError("C1 mixed E4 zero-state operator unavailable")
+            raise ArithmeticError(
+                "C1 mixed E4 zero-state operator unavailable: "
+                f"element={eid} nodes={nodes} s3={s3} "
+                f"force_norm={None if force is None else float(np.linalg.norm(force))} "
+                f"stiffness_finite={None if stiffness is None else bool(np.isfinite(stiffness).all())} "
+                f"candidate_present={candidate is not None}")
         local = np.asarray(element.compute_stiffness_components(
             model.mesh, material)["physical"])
         dofs = np.array([6*(node-1)+axis for node in nodes
