@@ -98,6 +98,74 @@ acceptance. The next F09 decision is whether a section/load/graph-dependent
 balance screen can be made an explicit fail-closed numerical admission policy,
 while the physical joint law remains separately open.
 
+**F13 residual-admission decision (27 September):** The private B2 batch's
+fast residual route treats `eps * row_scale <= 1e-9 * physical_scale` as
+sufficient to trust a rounded sparse dot. That ignores row length and how
+close the rounded residual is to the acceptance threshold. A bounded
+synthetic 2,002-entry row with coefficients `1e10`, 2,000 copies of `1e-8`,
+and `-1e10` produces rounded residual zero, while its exact small-term sum is
+`2e-5`. Here `eps * row_scale = 4.44e-6`, so an applied-scale threshold
+`1e-5` would be incorrectly fast-accepted. This is a numerical admission
+counterexample, not a physical stiffness matrix or F09 failure. A first
+probe importing the full batch helper was interrupted after prolonged
+startup and produced no result; a standalone sparse-dot reproduction
+produced the values above. Next replace the single-epsilon gate with a
+row-operation-count roundoff bound including residual margin. If the bound
+cannot certify fast acceptance, use the existing accurate-product/refinement
+route and fail closed. Ordinary short rows should retain the fast path.
+
+**F13 independent numerical review:** The row-count bound is appropriate for
+ordinary finite binary64 rows, but the existing physical scale samples only
+`Fx` and `Mx` (`driving[0::6]` and `[3::6]`), omitting both transverse forces
+and both bending couples. Before relying on the new gate, test pure `Fy`,
+`Fz`, `My` and `Mz` batch cases and derive the scales from all six nodal
+components. A failure of the old path is a real admission defect, not a new
+formulation failure. Treat the roundoff gate as a conservative fast screen;
+subnormal or numerically marginal rows must take accurate products. Large
+graph overhead and formal numerical certification remain unproven.
+
+**F13 pure-load failure and second admission decision:** Before repair, all
+four prescribed pure `Fy/Fz/My/Mz` cases failed the batch residual gate,
+confirming the missing-component scale bug. After including all six
+components, the two transverse-force cases pass; the two pure bending-couple
+cases still fail. Independent sparse solutions and the batch's initial
+scaled factorization have applied-scale force/moment residuals about
+`1e-15`, far below the unchanged `1e-9` private physical-equilibrium bound.
+The rejecting rows have `~1e-18` residuals against `~1e-16` local absolute
+row scales, so a *per-row* relative backward-error test spuriously rejects
+near-zero uncoupled rows. Keep the rowwise applied-physical-scale limit and
+use a per-case global backward scale as the supplementary numerical check.
+If the repaired route passes, this corrects a false numerical rejection; it
+does not relax the registered physical balance criterion or qualify F13.
+
+**F13 reviewer follow-up:** The six-component scale repair and row-count
+fallback have no identified correctness blocker. The first per-case backward
+supplement uses a raw maximum across force and moment rows, however, and is
+not invariant under equivalent units. Before retaining it, normalize each
+row's backward scale by its own physical equilibrium scale, take the maximum
+of those dimensionless ratios per case, and map that limit back to each row's
+units. Keep the independent `1e-9` rowwise physical criterion. Verify the
+normalization under a force/moment unit change; zero-scale rows must still
+fall back to accurate evaluation. This is numerical screening, not a formal
+sparse-backend rounding certificate or a large-graph performance claim.
+
+**F13 private admission result:** The batch now scales all `Fx/Fy/Fz` and
+`Mx/My/Mz` components. Its fast residual screen includes row operation count
+and acceptance margin; uncertain and tiny-scale rows take the existing
+accurate-product/refinement path. The supplementary backward check uses a
+per-case maximum of dimensionless row-scale ratios, mapped back to each
+row's units, while the separate rowwise physical `1e-9` condition remains
+unchanged. All four pure transverse/bending cases, including the two that
+still failed after only the component-scale fix, now solve and agree with an
+independent sparse solution. The ordinary ten-case fixture keeps one
+factorization and makes no accurate-product calls. The 2,002-entry
+counterexample is sent to accurate evaluation. Focused F09/F13 tests pass
+`43/43`. Independent read-only numerical review found no remaining definite
+defect within this private scope. Its rounding allowance is an engineering
+screen, not a formal backend certificate; the unit test checks algebraic
+row-unit covariance, not a fully converted model. Large sparse cost,
+physical-range admission, F13/G0B acceptance and G1 entry remain open.
+
 ## F07 free-free descriptor discriminator — 27 September 2026
 
 **Decision sought:** Does the existing native Q4/B3 point-candidate rest

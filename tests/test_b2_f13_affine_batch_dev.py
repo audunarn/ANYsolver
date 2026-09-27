@@ -39,6 +39,90 @@ def _cases(count):
     return cases
 
 
+def test_fast_residual_gate_rejects_many_lost_terms_and_boundary_margin():
+    small_count = 2000
+    entries = np.r_[1e10, np.full(small_count, 1e-8), -1e10]
+    row = sparse.csr_matrix((entries,
+                             (np.zeros(small_count+2, dtype=int),
+                              np.arange(small_count+2))),
+                            shape=(1, small_count+2))
+    solution = np.ones((small_count+2, 1))
+    rhs = np.zeros((1, 1))
+    fast = row@solution-rhs
+    scale = abs(row)@abs(solution)+abs(rhs)
+    applied_scale = np.array([[1e4]])
+    assert fast[0, 0] == 0.
+    assert np.finfo(float).eps*scale[0, 0] < 1e-9*applied_scale[0, 0]
+    accurate = batch_module._accurate_sparse_residual(row, solution, rhs)
+    assert accurate[0, 0] == pytest.approx(2e-5, rel=1e-14)
+    assert accurate[0, 0] > 1e-9*applied_scale[0, 0]
+    assert not batch_module._fast_residual_within_margin(
+        fast, scale, applied_scale, np.array([row.nnz], dtype=float))
+
+    ordinary = sparse.csr_matrix([[2., -1.]])
+    answer = np.ones((2, 1))
+    target = np.ones((1, 1))
+    ordinary_scale = abs(ordinary)@abs(answer)+abs(target)
+    assert batch_module._fast_residual_within_margin(
+        ordinary@answer-target, ordinary_scale, target,
+        np.array([ordinary.nnz], dtype=float))
+    near_limit = np.array([[1e-9-1e-18]])
+    assert not batch_module._fast_residual_within_margin(
+        near_limit, np.ones((1, 1)), np.ones((1, 1)),
+        np.array([ordinary.nnz], dtype=float))
+
+
+def test_backward_supplement_is_invariant_to_force_moment_unit_change():
+    backward = np.array(((2., 3.), (.01, 5.), (.7, 2.)))
+    equilibrium = np.array(((1., 4.), (3., 2.), (0., 1.)))
+    units = np.array((1e3, 1e6, 1e6))[:, None]
+    reference = batch_module._normalized_backward_limit(
+        backward, equilibrium)
+    np.testing.assert_allclose(batch_module._normalized_backward_limit(
+        units*backward, units*equilibrium), units*reference,
+                               rtol=2e-15, atol=0.)
+    assert reference[2, 0] == 0.
+
+
+def test_ordinary_batch_keeps_bounded_fast_residual_path(monkeypatch):
+    members, _ = _members()
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in members),
+        transform, offset, np.arange(12, 18), max_chunk=4)
+    accurate = batch_module._accurate_sparse_residual
+    calls = []
+
+    def counted(*args):
+        calls.append(1)
+        return accurate(*args)
+
+    monkeypatch.setattr(batch_module, "_accurate_sparse_residual", counted)
+    result = batch.solve_many(_cases(10))
+    assert result.status == "completed" and len(result.cases) == 10
+    assert result.factorization_count == 1
+    assert calls == []
+    batch.close()
+
+
+@pytest.mark.parametrize("tip_component", (1, 2, 4, 5))
+def test_pure_transverse_or_bending_load_has_physical_equilibrium_scale(
+        tip_component):
+    members, _ = _members()
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in members),
+        transform, offset, np.arange(12, 18))
+    load = np.zeros(18)
+    load[12+tip_component] = .73
+    result = batch.solve_many(((f"component-{tip_component}", load),))
+    assert result.status == "completed" and len(result.cases) == 1
+    expected = spsolve(batch.full_stiffness[6:, 6:], load[6:])
+    np.testing.assert_allclose(result.cases[0].values, expected[6:],
+                               rtol=1e-10, atol=1e-10)
+    batch.close()
+
+
 @pytest.mark.parametrize("without_fma", (False, True))
 def test_accurate_sparse_residual_preserves_cancelling_row(without_fma,
                                                            monkeypatch):

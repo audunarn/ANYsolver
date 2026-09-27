@@ -72,6 +72,52 @@ def _accurate_sparse_residual(matrix: sparse.spmatrix, solution: np.ndarray,
     return result
 
 
+def _normalized_backward_limit(row_scale: np.ndarray,
+                               equilibrium_scale: np.ndarray) -> np.ndarray:
+    """Per-case backward bound in each reduced row's own physical units."""
+    relative = np.zeros_like(row_scale)
+    with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
+        np.divide(row_scale, equilibrium_scale, out=relative,
+                  where=equilibrium_scale > 0.)
+        return (1e-9*np.max(relative, axis=0, keepdims=True)
+                * equilibrium_scale)
+
+
+def _fast_residual_within_margin(defect: np.ndarray, row_scale: np.ndarray,
+                                 equilibrium_scale: np.ndarray,
+                                 row_nnz: np.ndarray) -> bool:
+    """Screen a rounded sparse dot against a conservative rowwise error bound.
+
+    A row with ``n`` entries has at most ``2*n+2`` product/sum/subtraction
+    roundings. The factor also accounts for rounding in the computed absolute
+    row scale. Rows outside that bound take the accurate-product path.
+    """
+    if (not np.isfinite(defect).all() or not np.isfinite(row_scale).all() or
+            not np.isfinite(equilibrium_scale).all() or
+            np.any(row_scale <= np.finfo(float).tiny*1e9) or
+            np.any(equilibrium_scale <= np.finfo(float).tiny*1e9)):
+        return False
+    unit_roundoff = np.finfo(float).eps/2
+    mu = (2.*row_nnz+2.)*unit_roundoff
+    if np.any(mu >= .25):
+        return False
+    # gamma_(2n+2)/(1-gamma_(2n+2)) = mu/(1-2*mu).
+    # Fourfold allowance covers rounding of the bound arithmetic itself;
+    # near-subnormal scales always use accurate products instead.
+    factor = 4.*mu/(1.-2.*mu)
+    smallest = np.nextafter(0., 1.)
+    with np.errstate(over="ignore", invalid="ignore"):
+        uncertainty = np.nextafter(factor[:, None]*row_scale, np.inf)
+        uncertainty += (2.*row_nnz[:, None]+2.)*smallest
+        margin = np.nextafter(np.abs(defect)+uncertainty, np.inf)
+        backward_limit = _normalized_backward_limit(
+            row_scale, equilibrium_scale)
+    return bool(np.isfinite(margin).all() and
+                np.isfinite(backward_limit).all() and
+                np.all(margin <= backward_limit) and
+                np.all(margin <= 1e-9*equilibrium_scale))
+
+
 class CompiledB2AffineBatch:
     """Bounded graph/affine prototype with one owned sparse factorization."""
 
@@ -128,6 +174,7 @@ class CompiledB2AffineBatch:
         K = sparse.coo_matrix((values, (rows, cols)),
                               shape=(size, size)).tocsr()
         reduced = (T.T@K@T).tocsc()
+        row_nnz = np.diff(reduced.tocsr().indptr).astype(float)
         diagonal = reduced.diagonal()
         if not np.isfinite(diagonal).all() or np.any(diagonal <= 0.):
             raise RuntimeError(
@@ -148,6 +195,8 @@ class CompiledB2AffineBatch:
                                str(handle.failure_reason))
         self._K = K
         self._reduced = reduced
+        row_nnz.setflags(write=False)
+        self._row_nnz = row_nnz
         self._T = T
         self._u0 = u0
         self._ku0 = np.asarray(K@u0).reshape(-1)
@@ -249,9 +298,10 @@ class CompiledB2AffineBatch:
             # physical imbalance when a weak section creates huge motions.
             # Scale force and moment rows from the applied generalized loads,
             # then pull those work-conjugate scales through the affine map.
-            force_scale = np.max(np.abs(driving[0::6, :]), axis=0)
+            nodal_wrenches = np.abs(driving).reshape(-1, 6, len(loads))
+            force_scale = np.max(nodal_wrenches[:, :3, :], axis=(0, 1))
             moment_scale = np.maximum(
-                np.max(np.abs(driving[3::6, :]), axis=0),
+                np.max(nodal_wrenches[:, 3:, :], axis=(0, 1)),
                 self._length_scale*force_scale)
             force_scale = np.maximum(force_scale,
                                      moment_scale/self._length_scale)
@@ -276,17 +326,18 @@ class CompiledB2AffineBatch:
                 row_scale = (np.abs(self._reduced)@np.abs(solved) +
                              np.abs(rhs))
             def acceptable(error, backward_scale):
+                backward_limit = _normalized_backward_limit(
+                    backward_scale, equilibrium_scale)
                 return (np.isfinite(error).all() and
                         np.isfinite(backward_scale).all() and
-                        np.all(np.abs(error) <= 1e-9*backward_scale) and
+                        np.isfinite(backward_limit).all() and
+                        np.all(np.abs(error) <= backward_limit) and
                         np.all(np.abs(error) <= 1e-9*equilibrium_scale))
 
-            # A rounded sparse dot can cancel to zero while its true binary64
-            # products violate the physical threshold. In that regime verify
-            # with accurate products even when the fast residual appears small.
-            fast_reliable = np.all(
-                np.finfo(float).eps*row_scale <= 1e-9*equilibrium_scale)
-            if not fast_reliable or not acceptable(defect, row_scale):
+            # A rounded sparse dot can hide many small terms. Trust it only
+            # when a row-length bound fits below both acceptance margins.
+            if not _fast_residual_within_margin(
+                    defect, row_scale, equilibrium_scale, self._row_nnz):
                 if not np.isfinite(row_scale).all():
                     raise RuntimeError("physical B2 batch solve residual failed")
                 for _ in range(2):
