@@ -11,7 +11,8 @@ from anysolver.general_contact.core import ContactSolverSettings
 from anysolver.general_contact.overlap import PlanarFace
 from anysolver.general_contact.q4_s3_overlap_derivatives import UnsupportedQ4S3Branch
 from anysolver.general_contact.s3_patch_augmented import (
-    _q4_s3_pair_value_rtol, _touching_shared_target_edge,
+    _q4_s3_pair_value_rtol, _q4_s3_pair_values_agree,
+    _touching_shared_target_edge,
 )
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 
@@ -51,11 +52,51 @@ def test_moving_physical_edge_wedge_value_agreement_stays_bounded():
             <= second_allowance*second_support)
 
 
+def test_subresolved_wedge_compares_full_q1_vector_at_shared_scale():
+    # Captured from pair 12 during the eight-Q4 slide. One almost-zero Q1
+    # component has large relative error while the whole support vector
+    # differs by less than 1e-6 of its leading component.
+    local_area = 3.19672221464e-19
+    derivative_area = 3.19672249205e-19
+    resolution = 1.93440972087e-21
+    local = np.array([
+        3.1967222082844646e-19, 6.824979926081431e-28,
+        1.3649028736265628e-37, 8.520318350401215e-29,
+    ])
+    derivative = np.array([
+        3.19672248366244e-19, 6.816181601628408e-28,
+        1.3625379198364865e-37, 8.520226095437441e-29,
+    ])
+    allowance = _q4_s3_pair_value_rtol(
+        local_area, derivative_area, resolution,
+    )
+    roundoff = 1.45370108096e-31
+    assert allowance == 1.0e-6
+    assert not np.allclose(local, derivative, rtol=allowance, atol=roundoff)
+    options = dict(value_rtol=allowance, roundoff_atol=roundoff,
+                   local_area=local_area, derivative_area=derivative_area,
+                   area_resolution=resolution)
+    assert _q4_s3_pair_values_agree(local, derivative, **options)
+    gross = derivative.copy()
+    gross[1] += 1.0e-22
+    assert not _q4_s3_pair_values_agree(local, gross, **options)
+
+
 def test_near_resolution_area_cannot_open_unbounded_value_tolerance():
     with pytest.raises(UnsupportedQ4S3Branch, match="area agreement is unresolved"):
         _q4_s3_pair_value_rtol(1.0e-16, 1.1e-16, 2.0e-17)
     with pytest.raises(UnsupportedQ4S3Branch, match="area agreement is unresolved"):
         _q4_s3_pair_value_rtol(1.0e-4, 1.00000001e-4, 1.0e-14)
+
+
+def test_subresolved_area_agreement_uses_its_own_relative_cap():
+    local = 4.29448513597e-19
+    derivative = local + 1.15753273864e-25
+    resolution = 2.24164536308e-21
+    assert _q4_s3_pair_value_rtol(local, derivative, resolution) == 1.0e-6
+    with pytest.raises(UnsupportedQ4S3Branch,
+                       match="area agreement is unresolved"):
+        _q4_s3_pair_value_rtol(local, local*(1.0+2.0e-6), resolution)
 
 
 def test_shared_edge_tie_settings_require_explicit_bounded_jet2_profile():

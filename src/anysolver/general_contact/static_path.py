@@ -780,6 +780,9 @@ def solve_static_contact_path(
                                 "normalized_weighted_gap_m": list(
                                     getattr(certificate, "normalized_weighted_gap_m", ())
                                 ),
+                                "reference_support_m2": list(
+                                    getattr(certificate, "reference_support_m2", ())
+                                ),
                                 "normal_multiplier_estimate_pa": list(
                                     getattr(certificate, "normal_multiplier_estimate_pa", ())
                                 ),

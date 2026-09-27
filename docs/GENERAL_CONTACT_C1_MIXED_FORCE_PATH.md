@@ -14,20 +14,43 @@ registered independent structural reference or C1 acceptance.
 
 An 8-Q4 four-phase right-edge-force route accepted press but rejected the
 first slide step at the seven-augmentation limit. Both two- and three-step
-phase sampling encountered a changing, weakly supported pressure space near
-the target's physical edge. Increasing the bounded Schur step from 5 to
-50 Pa also rejected the slide step. A trapezoidally distributed −0.1 N load
+phase sampling encountered a weak coupled pressure-response direction near
+the target's physical edge. Terminal Q1 support remained positive and the
+scaled pressure Gram retained full rank. A local equilibrated-gap response
+oracle identified a terminal two-mode root around 77.69 and 159.00 Pa,
+explaining why 100 Pa pressure and 5 Pa step caps could not reach it. With
+250 Pa pressure and 200 Pa step caps, the unchanged mechanical gates and a
+three-step sampling of each phase, the development route completed all 12
+steps in 181.29 s. It had 0.028572125 N force at loaded press, 0.022358829 N
+at full slide, zero contact force while open and 0.022358829 N at recontact.
+The largest accepted pressure was 154.07 Pa; worst reported penetration was
+2.0735 µm against the 50 µm registered development gate. A fresh-model
+six-step split restart exactly reproduced all 12 saved forces, gaps, active
+counts and multiplier changes. These exploratory settings have not been
+frozen as an independent response reference or verified in an installed
+package. The earlier failed routes remain in the living note and raw reports.
+
+A trapezoidally distributed −0.1 N load
 completed eight steps but never activated contact. A −0.2 N distributed
 load activated contact and rejected the press step; one bounded Schur
 relinearization lowered, but did not close, its multiplier residual. The
 raw records and exact settings are listed in `GENERAL_CONTACT_RESTART.md`.
 
 Float and Jet2 overlap values have a shared, explicitly capped comparison
-for numerically subresolved Q4/S3 wedges. Focused pair and Schur checks
-passed. Independent review found that its scalar captured-pose checks do
+for numerically subresolved Q4/S3 wedges. The final candidate caps actual
+relative area disagreement and full Q1-vector disagreement separately at
+1e-6; it retains resolved-overlap component checks. Twenty-two affected
+geometry, sliver-derivative and pressure-response checks passed. Independent
+review of the earlier comparison found that its scalar captured-pose checks do
 not establish gradient or Hessian accuracy at a nearly vanishing wedge;
 that qualification remains open. The numerical polygon-area resolution is
 an indicator for this development comparison, not a certified error bound.
+At one captured physical-edge pose, an independent float-geometry directional
+quotient agreed with the Jet2 pressure-weighted-gap gradient to about 1e-7
+relative at the largest branch-preserving perturbation. The corresponding
+second quotient was noise-limited and differed by 1.9%; it cannot qualify the
+Hessian against the retained 1e-5 tangent target. A higher-precision reference
+or independently justified generalized derivative is still required.
 
 ## Differentiated strict-pressure development route (27 September 2026)
 

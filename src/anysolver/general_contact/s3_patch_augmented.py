@@ -125,9 +125,13 @@ def _q4_s3_pair_value_rtol(local_area: float, derivative_area: float,
     # their float/Jet2 discrepancy may exceed the relative area discrepancy.
     # Keep the ordinary allowance tied to observed geometry disagreement.
     minimum_area = min(local_area, derivative_area)
-    relative = 4.0*difference/minimum_area
+    relative_area = difference/minimum_area
+    relative = 4.0*relative_area
+    subresolved = area_resolution >= 1.0e-3*minimum_area
+    maximum_area_disagreement = 1.0e-6 if subresolved else 2.5e-7
     if (not np.isfinite(relative) or not np.isfinite(area_resolution)
-            or difference > area_resolution or relative > 1.0e-6):
+            or difference > area_resolution
+            or relative_area > maximum_area_disagreement):
         raise UnsupportedQ4S3Branch(
             "Q4/S3 paired overlap area agreement is unresolved "
             f"(area_difference_m2={difference:.12g}, "
@@ -139,9 +143,25 @@ def _q4_s3_pair_value_rtol(local_area: float, derivative_area: float,
     # material relative to the tiny overlap. Allow a bounded 1e-6 comparison
     # only in that subresolved geometry regime. The wedge is still integrated
     # and its derivative and mechanical gates remain in force.
-    if area_resolution >= 1.0e-3*minimum_area:
+    if subresolved:
         return 1.0e-6
     return 1.0e-9+relative
+
+
+def _q4_s3_pair_values_agree(local_values, derivative_values, *,
+                             value_rtol: float, roundoff_atol: float,
+                             local_area: float, derivative_area: float,
+                             area_resolution: float) -> bool:
+    """Compare subresolved Q1 moments using a vector absolute scale."""
+    local_values = np.asarray(local_values)
+    derivative_values = np.asarray(derivative_values)
+    if area_resolution >= 1.0e-3*min(local_area, derivative_area):
+        scale = max(float(np.max(np.abs(local_values))),
+                    float(np.max(np.abs(derivative_values))))
+        return bool(np.max(np.abs(local_values-derivative_values))
+                    <= value_rtol*scale+roundoff_atol)
+    return bool(np.allclose(local_values, derivative_values,
+                            rtol=value_rtol, atol=roundoff_atol))
 
 
 class MovingS3PatchProjectedNormal:
@@ -841,13 +861,34 @@ class MovingS3PatchProjectedNormal:
                 derivative.reference_weighted_gap-local.reference_weighted_gap)
             absolute_support_difference[source_nodes] += support_difference
             absolute_gap_difference[source_nodes] += gap_difference
-            if (not np.allclose(derivative.reference_support,
-                                local.reference_support, rtol=value_rtol,
-                                atol=support_roundoff)
-                    or not np.allclose(derivative.reference_weighted_gap,
-                                       local.reference_weighted_gap,
-                                       rtol=value_rtol,
-                                       atol=weighted_gap_roundoff)):
+            if len(source_nodes) == 4:
+                support_agrees = _q4_s3_pair_values_agree(
+                    local.reference_support, derivative.reference_support,
+                    value_rtol=value_rtol, roundoff_atol=support_roundoff,
+                    local_area=local.overlap_area,
+                    derivative_area=derivative.overlap_area,
+                    area_resolution=derivative.overlap_area_resolution,
+                )
+                gap_agrees = _q4_s3_pair_values_agree(
+                    local.reference_weighted_gap,
+                    derivative.reference_weighted_gap,
+                    value_rtol=value_rtol,
+                    roundoff_atol=weighted_gap_roundoff,
+                    local_area=local.overlap_area,
+                    derivative_area=derivative.overlap_area,
+                    area_resolution=derivative.overlap_area_resolution,
+                )
+            else:
+                support_agrees = np.allclose(
+                    derivative.reference_support, local.reference_support,
+                    rtol=value_rtol, atol=support_roundoff,
+                )
+                gap_agrees = np.allclose(
+                    derivative.reference_weighted_gap,
+                    local.reference_weighted_gap,
+                    rtol=value_rtol, atol=weighted_gap_roundoff,
+                )
+            if not support_agrees or not gap_agrees:
                 if (pair_index == tiny_wedge_pair
                         and len(source_nodes) == 4
                         and self.shared_edge_tie is not None):
