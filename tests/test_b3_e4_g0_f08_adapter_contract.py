@@ -28,6 +28,27 @@ def _relative(a, b):
     return np.linalg.norm(a-b)/max(1., np.linalg.norm(b))
 
 
+def _spatial_fibre_dense(layout, residual, chart_hessian, parameter):
+    """Independent global conversion of the dense owner's Exp Hessian."""
+    result = np.array(chart_hessian, copy=True)
+    starts = [6*i+3 for i in range(len(layout.node_ids))]
+    for i in range(len(layout.elements)):
+        starts.extend((layout.nodal_count+24*i,
+                       layout.nodal_count+24*i+3))
+    for start in starts:
+        moment = np.array(residual[start:start+3], copy=True)
+        if start < layout.nodal_count:
+            # The fibre owner's dense residual has the applied nodal load
+            # subtracted after element evaluation.  Its Exp Hessian is
+            # internal, so the moment correction must use the internal row.
+            moment += parameter*layout.force[start:start+3]
+        skew = np.array(((0., -moment[2], moment[1]),
+                         (moment[2], 0., -moment[0]),
+                         (-moment[1], moment[0], 0.)))
+        result[start:start+3, start:start+3] -= .5*skew
+    return result
+
+
 @pytest.mark.parametrize("family", ("generalized", "physical_fibre"))
 @pytest.mark.parametrize("trial", (False, True))
 def test_typed_adapter_matches_old_local_seam_and_dense_owner(
@@ -76,9 +97,13 @@ def test_typed_adapter_matches_old_local_seam_and_dense_owner(
     assert all(candidate is not previous for candidate, previous
                in zip(result.candidate_histories, origin))
     assert _relative(result.residual, old_r) == 0.
-    assert _relative(result.tangent.toarray(), old_k.toarray()) == 0.
+    expected_old = (old_k.toarray() if family == "generalized" else
+                    _spatial_fibre_dense(layout, old_r, old_k.toarray(), .25))
+    assert _relative(result.tangent.toarray(), expected_old) <= 1e-12
     assert _relative(result.residual, dense[0]) <= 1e-12
-    assert _relative(result.tangent.toarray(), dense[1]) <= 1e-12
+    expected_dense = (dense[1] if family == "generalized" else
+                      _spatial_fibre_dense(layout, dense[0], dense[1], .25))
+    assert _relative(result.tangent.toarray(), expected_dense) <= 1e-12
     assert tuple(canonical(history) for history in result.candidate_histories) == old_histories
     assert tuple(canonical(history) for history in result.candidate_histories) == tuple(
         canonical(response.history) for response in dense[3])
@@ -114,7 +139,9 @@ def test_typed_adapter_retains_yielded_accepted_predecessor():
                    in zip(result.candidate_histories, origin))
         dense = context.assemble(state, 1., origin)
         assert _relative(result.residual, dense[0]) <= 1e-12
-        assert _relative(result.tangent.toarray(), dense[1]) <= 1e-12
+        assert _relative(result.tangent.toarray(),
+                         _spatial_fibre_dense(context.layout, dense[0],
+                                              dense[1], 1.)) <= 1e-12
         assert tuple(canonical(history) for history in result.candidate_histories) == tuple(
             canonical(response.history) for response in dense[3])
         assert canonical(origin) == before

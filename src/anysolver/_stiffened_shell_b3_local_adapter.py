@@ -73,7 +73,11 @@ def _evaluate_local_validated(context, layout, state, origin, parameter,
             state.resultants[element_index], origin=origin[element_index]))
     if fibre:
         local_r = response.residual
-        local_k = response.hessian+response.hessian_low
+        # The fibre operator returns the symmetric left-Exp energy Hessian.
+        # The mixed sparse seam consumes a spatial residual Jacobian, just
+        # like the generalized branch below.
+        local_k = spatial_jacobian(
+            local_r, response.hessian+response.hessian_low)
     else:
         work = line_work(
             operator.reference, state.positions[nodes],

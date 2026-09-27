@@ -1104,6 +1104,53 @@ coordinate seam, not a mixed-owner Newton solve, a smooth-active plastic
 derivative, loaded chart rebase, production sparse-scale result or F06/G0B
 acceptance. The physical connection choice and G1 bar remain unchanged.
 
+**Next F06/F08 fixed-predecessor chart discriminator:** The sparse chart
+operator passes elastic physical-fibre work, while the accepted yielded
+three-step state lies within a tested branch-switch interval. Reuse the
+existing `1e-4` positive trial from that exact accepted predecessor, where
+the F08 spatial tangent already passes a constant-active-row plateau.
+Represent its nodal and cell rotations in a nonzero additive chart anchored
+at the accepted physical frames. Compare chart-coordinate residual slopes
+from actual native advances with the sparse pulled tangent while requiring
+unchanged active-row counts and unchanged predecessor/checkpoint identity.
+A pass extends this seam to one smooth active branch; a failure separates a
+chart defect from a new branch crossing before any correction. Do not apply
+the smooth criterion to the original accepted-state branch switch or close
+F06/F08/G0B from this one direction.
+
+**F06/F08 smooth-active chart result:** From the unchanged accepted
+three-step physical-fibre predecessor, the nearby `1e-4` positive trial has
+active plastic rows and keeps the same active-row identities on both sides
+of all three tested chart-coordinate perturbations. The private sparse
+pullback's directional residual slope meets the registered smooth-plastic
+`1e-5` limit on the plateau, using actual native physical-frame advances;
+the accepted material history, configuration descriptor and checkpoint
+hash remain unchanged. The focused F06 file passes `4/4`. This establishes
+one bounded active-branch chart seam, not the accepted-state semismooth
+tangent policy, other material branches, coupled plastic ownership or
+F06/F08/G0B acceptance. Preserve the earlier failed accepted-state central
+difference and its independent interpretation.
+
+**F06/F08 independent-review correction:** Read-only review of the first
+sparse chart implementation found that its physical-fibre input was an
+Exp-chart energy Hessian, although the pullback requires a spatial residual
+Jacobian. The fibre local adapter now applies the same residual-moment
+`−0.5 skew` block correction used for the generalized family. The native
+dense fibre owner remains unchanged; F08 adapter parity explicitly converts
+that owner's chart Hessian before comparison. At a nonzero-moment elastic
+state, a zero-coordinate chart now recovers the dense energy Hessian on a
+rotation block, and rotation-focused actual-frame finite differences pass
+the elastic plateau. The smooth-active fixed-predecessor chart test also
+passes with the corrected representation. Focused F06/F08/ownership tests
+pass `21/21`. Earlier passing global-norm tests were insufficient to reveal
+this block defect; preserve their historical result but use this corrected
+contract for subsequent work. Bounded independent re-review found the
+original representation defect resolved and no new definite defect in the
+reviewed scope. The dense parity oracle now reconstructs internal moments
+before conversion, so a later nodal-couple fixture is not silently judged
+against the total residual. The sampled active-row identity check does not
+prove an unobserved branch margin. F06/F08/G0B remain open and G1 barred.
+
 **Next C1 enforcement discriminator:** The x8/m4→m8 torque solve shows
 growing oscillation of the P0 material dual density while all six-channel
 global balances close. The competing explanations are a weakly controlled

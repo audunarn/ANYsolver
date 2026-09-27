@@ -1,10 +1,14 @@
-"""Bounded F06 chart-coordinate derivative of the native generalized B3 operator."""
+"""Bounded F06 chart derivatives of both native B3 section families."""
+
+from hashlib import sha256
 
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
 
 from anysolver._ge_beam3_p5.chart import exp_chart_terms
+from anysolver._ge_beam3_p5_seeded.core import canonical
+from anysolver._ge_beam3_retained_fibre_program import solve_force_program
 from anysolver._ge_beam3_retained_fibre_state import Context as FibreContext
 from anysolver._ge_beam3_retained_generalized_state import (
     Context as GeneralizedContext, Program as GeneralizedProgram,
@@ -133,6 +137,38 @@ def test_native_physical_fibre_elastic_chart_tangent_uses_same_sparse_contract()
     state = layout.advance(state, q)
     base = evaluate_sparse_trial(context, state, origin, .25,
                                  family="physical_fibre")
+    # The dense fibre owner returns an Exp-chart energy Hessian.  At a new
+    # zero-coordinate chart over this nonzero-moment state, the sparse
+    # spatial-Jacobian pullback must recover that Hessian exactly.
+    dense_hessian = context.assemble(state, .25, origin)[1]
+    zero_chart = pullback_sparse_trial(layout, base, np.zeros(layout.count))
+    starts = _rotation_blocks(layout)
+    start = max(starts, key=lambda s: np.linalg.norm(base.residual[s:s+3]))
+    block = slice(start, start+3)
+    moment = base.residual[block]
+    assert np.linalg.norm(moment) > 1e-6
+    assert np.linalg.norm(base.tangent[block, block].toarray()
+                          -dense_hessian[block, block]) > 1e-6
+    np.testing.assert_allclose(
+        zero_chart.tangent[block, block].toarray(),
+        dense_hessian[block, block], rtol=2e-13, atol=2e-11)
+    focused = np.zeros(layout.count)
+    focused[start+int(np.argmin(abs(moment)))] = 1.
+    focused_errors = []
+    for h in (1e-5, 3e-6, 1e-6):
+        residuals = []
+        for sign in (1., -1.):
+            target_q = sign*h*focused
+            target_state = layout.advance(state, target_q)
+            trial = evaluate_sparse_trial(context, target_state, origin, .25,
+                                          family="physical_fibre")
+            residuals.append(pullback_sparse_trial(
+                layout, trial, target_q).residual[block])
+        actual = (residuals[0]-residuals[1])/(2*h)
+        expected = (zero_chart.tangent@focused)[block]
+        focused_errors.append(np.linalg.norm(actual-expected)
+                              / max(1., np.linalg.norm(expected)))
+    assert sum(error <= 1e-6 for error in focused_errors) >= 2, focused_errors
     chart, curvature = _chart_map(layout, q, base.residual)
     pulled = pullback_sparse_trial(layout, base, q)
     np.testing.assert_allclose(pulled.residual, chart.T@base.residual,
@@ -156,3 +192,63 @@ def test_native_physical_fibre_elastic_chart_tangent_uses_same_sparse_contract()
         errors.append(np.linalg.norm(actual-expected)
                       / max(1., np.linalg.norm(expected)))
     assert sum(error <= 1e-6 for error in errors) >= 2, errors
+
+
+def test_native_physical_fibre_smooth_active_chart_keeps_accepted_predecessor():
+    program = ForceProgram((.25, .5, 1., .5, 0., -.5, 0.),
+                           ((5, .4, -.005, 0.),), max_iterations=24)
+    accepted = solve_force_program(make_model(contrast=1.), program,
+                                   stop_after=3)
+    assert accepted.status == "paused" and accepted.completed_targets == 3
+    checksum = sha256(accepted.checkpoint).hexdigest()
+    context = FibreContext(make_model(contrast=1.), program)
+    predecessor, _ = context.restore(
+        accepted.checkpoint, expected_sha256=checksum)
+    origin = predecessor.histories
+    before = canonical(origin)
+    state_before = canonical(predecessor.mechanical.descriptor())
+    layout = context.layout
+    direction = np.zeros(layout.count)
+    free_node = layout.nodal_count-6
+    direction[free_node:free_node+6] = (.4, -.3, .2, .15, -.1, .12)
+    direction[layout.nodal_count:layout.nodal_count+7] = (
+        .11, -.09, .07, .05, -.04, .03, .015)
+    direction[np.asarray(layout.fixed, dtype=int)] = 0.
+    q = 1e-4*direction
+    active_state = layout.advance(predecessor.mechanical, q)
+
+    def active_rows(candidate):
+        return frozenset(
+            (cell_i, station_i, row_i)
+            for cell_i, (made_cell, old_cell) in enumerate(zip(candidate, origin))
+            for station_i, (made_station, old_station) in enumerate(zip(
+                made_cell.stations, old_cell.stations))
+            for row_i, (made_row, old_row) in enumerate(zip(
+                made_station.rows, old_station.rows))
+            if made_row[2]-old_row[2] > 1e-12)
+
+    base = evaluate_sparse_trial(context, active_state, origin, 1.,
+                                 family="physical_fibre")
+    active_set = active_rows(base.candidate_histories)
+    assert active_set
+    pulled = pullback_sparse_trial(layout, base, q)
+    expected = pulled.tangent@direction
+    errors = []
+    for h in (1e-5, 3e-6, 1e-6):
+        residuals = []
+        for sign in (1., -1.):
+            target_q = q+sign*h*direction
+            target_state = _advance_from_chart(layout, active_state, q,
+                                               target_q)
+            trial = evaluate_sparse_trial(context, target_state, origin, 1.,
+                                          family="physical_fibre")
+            assert active_rows(trial.candidate_histories) == active_set
+            residuals.append(pullback_sparse_trial(
+                layout, trial, target_q).residual)
+        actual = (residuals[0]-residuals[1])/(2*h)
+        errors.append(np.linalg.norm(actual-expected)
+                      / max(1., np.linalg.norm(expected)))
+    assert sum(error <= 1e-5 for error in errors) >= 2, errors
+    assert canonical(origin) == before
+    assert canonical(predecessor.mechanical.descriptor()) == state_before
+    assert sha256(accepted.checkpoint).hexdigest() == checksum
