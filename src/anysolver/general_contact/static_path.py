@@ -473,6 +473,9 @@ def solve_static_contact_path(
                     pivot_applied = 0
                     pivot_rejected = 0
                     schur_relinearizations = 0
+                    schur_epoch_attempts = 0
+                    schur_epoch_relinearizations = 0
+                    schur_active_signature = None
                     pressure_map_attempts = 0
                     pivot_backup = None
                     support_resets: list[dict[str, object]] = []
@@ -632,12 +635,13 @@ def solve_static_contact_path(
                                         or normal_multiplier_change >= 0.75*prior_change):
                                     if (settings.augmentation_acceleration == "supported_schur_dev"
                                             and settings.augmentation_schur_maximum_relinearizations
-                                            > schur_relinearizations
+                                            > schur_epoch_relinearizations
                                             and certificate.gap_tolerance_met
                                             and not active_changed
                                             and normal_multiplier_change < prior_change
                                             and augmentation <= augmentation_limit-2):
                                         schur_relinearizations += 1
+                                        schur_epoch_relinearizations += 1
                                         correction_trace = {
                                             "augmentation": augmentation,
                                             "schur_relinearization": schur_relinearizations,
@@ -769,6 +773,27 @@ def solve_static_contact_path(
                                     getattr(certificate, "source_pressure_node_ids", ())
                                 ),
                             })
+                            if settings.augmentation_acceleration == "supported_schur_dev":
+                                active_signature = tuple(np.flatnonzero(
+                                    np.asarray(certificate.numerical_pressure_pa) > 0.0,
+                                ))
+                                if active_signature != schur_active_signature:
+                                    if schur_active_signature is not None:
+                                        augmentation_trace[-1]["schur_active_epoch_reset"] = {
+                                            "prior_active_indices": [
+                                                int(index) for index in schur_active_signature
+                                            ],
+                                            "current_active_indices": [
+                                                int(index) for index in active_signature
+                                            ],
+                                            "prior_epoch_attempts": schur_epoch_attempts,
+                                            "prior_epoch_relinearizations": (
+                                                schur_epoch_relinearizations
+                                            ),
+                                        }
+                                    schur_active_signature = active_signature
+                                    schur_epoch_attempts = 0
+                                    schur_epoch_relinearizations = 0
                             if (settings.augmentation_support_resolution == "roundoff"
                                     and manager.last_support_reset is not None):
                                 reset = {"augmentation": augmentation,
@@ -800,11 +825,12 @@ def solve_static_contact_path(
                             augmentation_trace[-1]["acceleration_applied"] = proposal is not None
                             if (proposal is None
                                     and settings.augmentation_acceleration == "supported_schur_dev"
-                                    and pivot_attempts < settings.augmentation_schur_maximum_attempts
+                                    and schur_epoch_attempts < settings.augmentation_schur_maximum_attempts
                                     and augmentation >= 2
                                     and augmentation <= augmentation_limit - 2
                                     and certificate.active_pressure_dofs > 0):
                                 pivot_attempts += 1
+                                schur_epoch_attempts += 1
                                 try:
                                     schur = refined_patch_supported_schur(
                                         manager, u, tangent, T, rows,

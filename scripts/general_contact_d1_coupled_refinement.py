@@ -24,7 +24,8 @@ from anysolver.fe_core import FEModel
 def build_case(columns, rows=1, edge_control=False, *,
                gap_certificate="whole_face", gap_tolerance=0.005,
                normal_approach=0.01505, four_phase=False,
-               slide_distance=0.05, pressure_tolerance=0.002):
+               slide_distance=0.05, pressure_tolerance=0.002,
+               schur_pressure_cap=100.0, schur_step_cap=50.0):
     if columns < 2 or columns % 2:
         raise ValueError("columns must be an even integer of at least two")
     if rows < 1:
@@ -90,8 +91,8 @@ def build_case(columns, rows=1, edge_control=False, *,
         maximum_augmentations=7,
         augmentation_acceleration="supported_schur_dev",
         augmentation_schur_maximum_modes=16,
-        augmentation_schur_maximum_pressure_pa=100.0,
-        augmentation_schur_maximum_step_pa=50.0,
+        augmentation_schur_maximum_pressure_pa=schur_pressure_cap,
+        augmentation_schur_maximum_step_pa=schur_step_cap,
         augmentation_schur_difference_step_m=2.0e-6,
         augmentation_schur_maximum_attempts=2,
         augmentation_schur_maximum_relinearizations=1,
@@ -147,6 +148,8 @@ def main():
     parser.add_argument("--four-phase", action="store_true")
     parser.add_argument("--slide-distance", type=float, default=0.05)
     parser.add_argument("--pressure-tolerance", type=float, default=0.002)
+    parser.add_argument("--schur-pressure-cap", type=float, default=100.0)
+    parser.add_argument("--schur-step-cap", type=float, default=50.0)
     parser.add_argument("--stop-after-slide", action="store_true")
     args = parser.parse_args()
     if args.stop_after_slide and not args.four_phase:
@@ -159,6 +162,8 @@ def main():
         four_phase=args.four_phase,
         slide_distance=args.slide_distance,
         pressure_tolerance=args.pressure_tolerance,
+        schur_pressure_cap=args.schur_pressure_cap,
+        schur_step_cap=args.schur_step_cap,
     )
     if args.stop_after_slide:
         program = replace(program, waypoints=program.waypoints[:3])
@@ -181,6 +186,8 @@ def main():
         "four_phase": args.four_phase,
         "slide_distance_m": args.slide_distance,
         "pressure_tolerance_pa": args.pressure_tolerance,
+        "schur_pressure_cap_pa": args.schur_pressure_cap,
+        "schur_step_cap_pa": args.schur_step_cap,
         "stop_after_slide": args.stop_after_slide,
         "elapsed_seconds": time.perf_counter()-start,
         "status": result.status,

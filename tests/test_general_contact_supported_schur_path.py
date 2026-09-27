@@ -163,8 +163,10 @@ def test_two_bounded_projected_schur_updates_accept_node6_fixture(projected_only
     assert result.status == "completed"
     assert len(result.steps) == 1
     record = result.info["force_displacement_history"][-1]
-    assert record["schur_attempts"] == record["schur_applied"] == 2
+    assert record["schur_attempts"] == record["schur_applied"] == 3
     assert record["schur_rejected"] == 0
+    assert sum("schur_active_epoch_reset" in row
+               for row in record["augmentation_trace"]) == 2
     assert record["normal_multiplier_change"] <= settings.pressure_tolerance
     assert record["contact"]["gap_tolerance_met"]
     assert result.restart_checkpoint is not None
@@ -190,8 +192,11 @@ def test_original_control_rejects_inaccurate_second_proposal_and_rolls_back(proj
     assert result.status == "diverged"
     assert result.failure_reason == "maximum_augmentations_reached"
     failure = result.info["contact_failure"]
-    assert failure["schur_attempts"] == 2
-    assert failure["schur_applied"] == failure["schur_rejected"] == 1
+    assert failure["schur_attempts"] == 3
+    assert failure["schur_applied"] == 1
+    assert failure["schur_rejected"] == 2
+    assert sum("schur_active_epoch_reset" in row
+               for row in failure["augmentation_trace"]) == 1
     rejected = next(entry for entry in failure["augmentation_trace"]
                     if entry.get("schur_rejected") == "nonlinear_verification")
     assert rejected["schur_predicted_active_indices"] == [0]
