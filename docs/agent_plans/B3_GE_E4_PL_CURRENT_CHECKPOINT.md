@@ -14,22 +14,23 @@ both solves retain equilibrium and work. Three P1 or dual local-z yaw
 these two aligned cells have only two independent traces; the unscaled
 row identity and independent review establish a structural dependency,
 not a units artifact. No multiplier space or physical law is qualified.
+The 17-row channel policy that avoids this aligned-grid yaw mode fails
+on the first reciprocal 1:2 and 2:1 beam:shell ratio screens: supported
+ranks are 28/29 and 27/29. Four-cell P0 has rank 24/24 and bounded
+equilibrium/work in both cases, but remains unselected.
 The matched detached-solid evidence remains limited by connection and
 contact idealization. B2 F09 fail-closed admission is unfinished.
-**Remaining uncertainty:** Whether this channel-compatible growing line
-space remains well posed and physically convergent over registered mesh
-ratios, and whether the continuous material-line law matches a genuinely
-comparable torque/shear reference. The mixed-S3 line tested so far lies
-on a mesh edge; off-edge trace sensitivity is untested.
-**Next discriminator:** On a bounded first mismatched beam:shell ratio
-and its reciprocal, grow the actual native interface resolution using
-the now viable 17-row channel policy and P0, and compare supported work,
-reactions, physical gap shapes, unsupported modes, and mixed norms. If
-rank or work fails, revise channel resolution/trace before the full
-registered ratio series; if it survives, run the full ratios and
-refinement levels while completing the matched two-sided torque/shear
-reference. Check off-edge S3 mapping separately. Do not resume finer
-classical axial work.
+**Remaining uncertainty:** The admissible multi-channel test-space image
+changes with relative shell/beam resolution; the correct interface policy
+and physical torque/shear fidelity remain undecided. Mixed-S3 tested so
+far lies on a mesh edge; off-edge trace sensitivity is untested.
+**Next discriminator:** Derive the supported trace-image dimensions and
+cross-channel dependencies for the two failed ratios using the saved
+null modes, then construct only a physically interpretable independent
+row policy and test its work/locking against P0. Do not automatically
+drop rows by SVD or run the full ratio series on the failed 17-row policy.
+Advance a physically matched two-sided torque/shear reference and check
+off-edge S3 mapping separately. Do not resume finer classical axial work.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Saved bounded row-growth screen:** Committed runner
@@ -72,6 +73,24 @@ Q4 shear tip Uz is `7.0289e-5`, `7.0129e-5`, `7.0306e-5` m.
 The mixed-S3 line is on a mesh edge, so matching row ranks do not test
 off-edge host behavior. These fixed-grid solves select no multiplier
 space and establish neither physical accuracy nor mesh-uniform stability.
+
+**Saved first reciprocal-ratio failure:** Source
+`831918957cbdc0fa1f3c16371fbe3a104042ddf2` used four multiplier
+intervals following the union of native
+and shell reference cuts. The immutable
+`B3_E4_F03_MATERIAL_LINE_RATIO_SCREEN_V1.json`, SHA256
+`9966B4723CF30D9E9E2187834449A9AF9BCEB4FAC396F5686915677448443FDA`,
+records the actual Q4
+geometry, worktree import and environment. Beam:shell 1:2 has four shell
+cells over two native half-cells: P1/P0-yaw and dual/P0-yaw rank 28/29,
+with a left null combining Fy and Mz. Beam:shell 2:1 has two shell cells
+over four native half-cells: both enriched candidates rank 27/29, with
+two left nulls concentrated in Mx and My. All four enriched load cases
+remain `FAILED_DEPENDENT_ROWS`; no solve was accepted. Four-cell P0 ranks
+24/24 in both models and its four bounded torque/shear solves pass
+equilibrium/work, but this single ratio pair does not establish inf-sup,
+physical fidelity, or a selected P0 policy. The full registered ratio
+series waits on a revised independent policy and the physical reference.
 
 ## Detailed reference state and saved-field decision — 27 September 2026
 
