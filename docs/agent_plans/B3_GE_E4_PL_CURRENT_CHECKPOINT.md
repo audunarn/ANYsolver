@@ -15,15 +15,18 @@ its interpretation. B2 F09 admission remains open.
 **Uncertainty:** Which joint semantics meet the required torque/shear and
 virtual-work contract: top-surface positional bonding, an explicitly
 two-sided director-couple weld, or distinct admitted alternatives? The
-F2 equation multiplier and side work are now directly recoverable, while
-F4's multiplier is inferred from paired work. Neither these bounded
-linear solid checks nor the existing native rows establish physical
+F2 equation multiplier and side work are directly recoverable; F4's
+multiplier is inferred from paired work. Native and external pitch-channel
+reactions have the same physical sign but different model idealizations;
+neither their magnitudes nor the existing native rows establish physical
 fidelity, measured contact traction or a mortar space.
-**Next discriminator and action:** Match the external equation's recovered
-side work to the native B3/E4 port under the same declared two-sided joint,
-or revise the sixth channel for a top-surface joint. Test the selected
-continuous law against the supported torque/shear and compensated-pitch
-patches. Only then assess growing
+**Next discriminator and action:** Declare the six-channel candidate as an
+explicitly two-sided director-couple joint and test its *complete* native
+port work, torque/shear and compensated-pitch patches against that law.
+Keep the one-sided top-face bond as a distinct reference; if that is the
+intended production joint, revise its continuous rotational work instead
+of treating multiplier refinement as a repair. Only after the continuous
+law passes assess growing
 interface spaces with the actual native mixed tangent, work, locking and
 registered ratios. Do not repeat F5 under a higher resource cap or finer
 classical axial sweeps without a decision-changing hypothesis.
@@ -7889,3 +7892,35 @@ ports* for equation bookkeeping: this is not a measured contact-traction
 field or native B3/E4 interface force. A follow-up review confirmed the
 explicit `Cᵀlambda` versus physical `−Cᵀlambda` sign distinction against
 both the CalculiX RF and native KKT convention. The F4 dual remains inferred.
+
+**Saved native/external pitch-channel comparison and next action:** On the
+existing C1 x=.9–1.0 m single-interval hybrid results, the native pitch
+constraint is shell-director minus beam-section rotation, opposite to the
+external linear equation's bar-section minus plate-director rotation.
+The normalized native line weights sum to one. Superposing its separately
+saved tip-Mx and tip-Fz linear cases gives physical *plate pitch-channel*
+moments `+80.257910/+75.876099 N m` on F2/F4; the tip-Mx pitch
+contribution is negligible at printed precision. The external two-sided
+equation gives `+69.591564/+72.465921 N m`, with the F4 value still
+inferred from paired work. These are directionally aligned, but the native
+six-channel *total* plate interface My is only
+`+49.431629/+49.686768 N m` under tip-Fz because other native rows also
+transfer moment. The native shell director and section kinematics are not
+the solid's through-thickness area-mean traces, and the native cases and
+external combined-load case use distinct section idealizations. Thus the
+comparison is neither a relative-error estimate nor a basis for choosing
+P0/P1/dual or declaring the hybrid connection physically qualified.
+Independent read-only review confirmed the signs, normalization and this
+restriction against the saved results and source. No new solve was run.
+
+The decision-changing next test is at the *continuous work-law* level:
+hold the reference geometry, eccentricity and physical virtual fields
+fixed, and compare the complete six-channel native port work (including
+position/offset contributions) with the explicitly declared two-sided
+director-couple joint. Exercise supported torque, transverse shear and
+compensated pitch, and distinguish a law mismatch from a projected-row
+resolution failure by checking continuous gap before weak rows. A mismatch
+in continuous work calls for a targeted law correction; matching work
+permits the registered growing-space stability and mesh-ratio assessment.
+The one-sided top-face positional bond remains a separate comparator.
+Formal F03 authority is unconsumed; G0B remains open and G1 barred.
