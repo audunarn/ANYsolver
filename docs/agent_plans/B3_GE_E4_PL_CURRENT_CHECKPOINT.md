@@ -4808,6 +4808,34 @@ conservative current-rest mass/descriptor feasibility result. Mixed Q4/S3,
 free-free rigid modes, loaded/prestressed spectra, mesh convergence,
 release behavior and buckling still bar F07/G0B acceptance.
 
+**Next bounded F07 free-free discriminator (prospective, 27 September):**
+The supported Q4 descriptor has the expected physical mass and algebraic
+zero-inertia blocks, but it does not test the required connected free-free
+rigid modes. On the same one-shell/one-native-beam reference owner, remove
+supports and loads at the undeformed state. Evaluate the physical rigid
+translation/rotation null fields directly against the captured stiffness,
+mass and exact joint, then count finite zero eigenvalues of the small
+descriptor independently of the modal extractor. Six constrained, inertial
+rigid fields and exactly six finite zero roots would support this bounded
+formulation; missing or extra roots would identify a shell, joint, beam or
+algebraic-mode issue for diagnosis before F07 admission. No result from
+this one model closes the mixed-mesh, sparse-scale, prestress or buckling
+requirements, and it does not affect F03/G0B/G1 authority.
+
+**F07 free-free reference result:** The legacy owner correctly rejects a
+free-free static solve by its support preflight. Its supported zero-load
+state nevertheless exposes the full, pre-support reference operators, so
+the bounded check formed their unconstrained joint descriptor without
+changing the owner or element equations. Six independently constructed
+physical translations/rotations satisfy the exact joint to `1e-11`,
+have a rank-six positive kinetic Gram, and are stiffness-null to a
+relative `1e-10`. The 54-row descriptor has 36 finite and 18 infinite
+roots; exactly six finite roots have magnitude below `1e-7`, with the
+seventh above `1e-5`. The focused F07 file passes `2/2` with JIT disabled
+and one BLAS thread. This resolves the small connected Q4 reference
+rigid-mode question, but does not admit a production free-free modal API,
+mixed Q4/S3 inertia, sparse scale, prestress, buckling, F07 or G0B.
+
 ## Prior state — 25 September 2026, native connection decision
 
 **Decision sought:** Keep the six-position-moment 100×100 mm finite footprint as a provisional native connection while deriving a mechanically distinct, stable exact line law. No footprint or multiplier is production-selected. G0B remains open, G1 barred, and formal F03 authority unconsumed.

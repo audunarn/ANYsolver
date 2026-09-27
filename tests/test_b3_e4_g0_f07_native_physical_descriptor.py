@@ -1,7 +1,8 @@
 """F07 development check of physical coupled inertia and algebraic coordinates.
 
-This is one supported, straight Q4 current-rest state.  It does not admit a
-coupled modal range or change the G0/G1 qualification status.
+The supported straight Q4 owner also supplies full reference operators for a
+free-free descriptor oracle. Neither check admits a coupled modal range or
+changes the G0/G1 qualification status.
 """
 
 import numpy as np
@@ -69,3 +70,50 @@ def test_native_beam_shell_mass_survives_exact_joint_and_descriptor():
                       num_modes=3)
     np.testing.assert_allclose(actual.eigenvalues, finite[:3],
                                rtol=1e-10, atol=1e-10)
+
+
+def test_connected_free_free_reference_has_six_physical_rigid_modes():
+    # The bounded legacy owner rightly refuses an unsupported static solve.
+    # Inspect the *full* rest operators before applying its support mask.
+    owner = fixture("Q4", curved=False)
+    assembly = owner.assembly
+    solved = owner.solve(stop_after=0)
+    assert solved.status == "paused", solved.failure
+    packet = capture(owner, solved.state, **arguments(owner))
+    sh = assembly.shell_count
+    bn = assembly.beam.nodal_count
+    rigid = np.zeros((len(packet.full_kinematic_dofs), 6))
+    shell_xyz = assembly.coordinates
+    beam_xyz = solved.state.mechanical.positions
+    for first, points in ((0, shell_xyz), (sh, beam_xyz)):
+        for index, xyz in enumerate(points):
+            rows = first + 6 * index
+            rigid[rows:rows+3, :3] = np.eye(3)
+            rigid[rows:rows+3, 3:] = -np.array(
+                ((0., -xyz[2], xyz[1]),
+                 (xyz[2], 0., -xyz[0]),
+                 (-xyz[1], xyz[0], 0.)))
+            rigid[rows+3:rows+6, 3:] = np.eye(3)
+    for start in range(sh+bn, len(rigid), 6):
+        rigid[start:start+3, 3:] = np.eye(3)
+        rigid[start+3:start+6, 3:] = np.eye(3)
+
+    np.testing.assert_allclose(packet.constraints @ rigid, 0., atol=1e-11)
+    mass = packet.full_mass
+    stiffness = packet.full_stiffness
+    assert np.linalg.matrix_rank(rigid.T @ mass @ rigid, tol=1e-9) == 6
+    scale = max(1., np.linalg.norm(stiffness) * np.linalg.norm(rigid))
+    assert np.linalg.norm(stiffness @ rigid) / scale < 1e-10
+
+    saddle = np.block([[stiffness, packet.constraints.T],
+                       [packet.constraints, np.zeros((6, 6))]])
+    descriptor_mass = linalg.block_diag(mass, np.zeros((6, 6)))
+    values = linalg.eigvals(saddle, descriptor_mass)
+    finite = values[np.isfinite(values)]
+    assert np.max(np.abs(finite.imag)) < 1e-7
+    assert len(finite) == 36
+    assert len(values) == 54
+    assert np.count_nonzero(~np.isfinite(values)) == 18
+    zero = np.sort(np.abs(finite.real))[:7]
+    assert np.max(zero[:6]) < 1e-7
+    assert zero[6] > 1e-5
