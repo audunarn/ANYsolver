@@ -19,9 +19,11 @@ F2 equation multiplier and side work are directly recoverable; F4's
 multiplier is inferred from paired work. Native and external pitch-channel
 reactions have the same physical sign but different model idealizations;
 neither their magnitudes nor the existing native rows establish physical
-fidelity, measured contact traction or a mortar space.
+fidelity, measured contact traction or a mortar space. The complete native
+six-channel reference wrench and opposite beam/shell rigid work now pass
+with retained B3 half-cell rotations included.
 **Next discriminator and action:** Declare the six-channel candidate as an
-explicitly two-sided director-couple joint and test its *complete* native
+explicitly two-sided director-couple joint and test loaded finite native
 port work, torque/shear and compensated-pitch patches against that law.
 Keep the one-sided top-face bond as a distinct reference; if that is the
 intended production joint, revise its continuous rotational work instead
@@ -7925,16 +7927,18 @@ permits the registered growing-space stability and mesh-ratio assessment.
 The one-sided top-face positional bond remains a separate comparator.
 Formal F03 authority is unconsumed; G0B remains open and G1 barred.
 
-**Native full-wrench shell-side check:** A new bounded reference-state test
+**Native full-wrench reference check:** A new bounded reference-state test
 uses a straight native B3 half-cell trace, the actual six-channel hybrid
 Jacobian and nonzero force/moment duals in all six rows. Independent
 resultant summation of `−Cᵀlambda` over shell nodes gives exactly the
 expected opposite force and three moments about the physical top-face
 connection center; moving the origin to the shell reference surface adds
-the `17.5 mm` eccentric lever arm. A rigid virtual shell field confirms
-the same total work. The focused test passed `1/1` in `2.24 s` at the
-existing source identity plus this test. This establishes the shell-side
-reference wrench interpretation for the candidate; it does not recover
-the retained-coordinate B3-side physical wrench, validate the loaded
-two-sided joint, or close F03. The next continuous-law discriminator must
-include that beam-side native port and the supported torque/shear fields.
+the `17.5 mm` eccentric lever arm. A common rigid virtual field confirms
+opposite beam/shell work when the native B3's retained half-cell frames
+rotate with its nodes; omitting those rotations produces a false beam-side
+moment. The focused test passed `1/1` after this extension.
+This establishes the candidate's complete six-channel *reference rigid*
+wrench/work interpretation. It does not validate loaded finite-rotation
+work, torque/shear response, the two-sided engineering idealization or F03.
+The next continuous-law discriminator must use supported torque/shear and
+compensated-pitch fields with the actual native retained-coordinate port.

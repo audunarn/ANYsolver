@@ -238,16 +238,17 @@ def test_c1_hybrid_six_channel_reference_is_distinct_and_non_drilling():
     assert np.max(np.abs(shear)) < 1e-12
 
 
-def test_c1_hybrid_shell_side_wrench_includes_all_six_channels_and_offset():
-    """Independent physical shell-side check, not a beam-side qualification."""
+def test_c1_hybrid_physical_wrench_includes_all_six_channels_and_offset():
+    """Check reference resultant and beam/shell rigid work conjugacy."""
     xs, ys = local_grid(2)
     beam = build(16, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="straight", assemble=False)
     line = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
     multipliers = np.array((21., -32., 47., 11., -13., 19.))
-    nodal = -(line.reference_trace().T@multipliers)[:line.shell_size]
-    nodal = nodal.reshape(line.shell_count, 6)
+    trace = line.reference_trace()
+    reaction = -(trace.T@multipliers)
+    nodal = reaction[:line.shell_size].reshape(line.shell_count, 6)
 
     # The physical reaction is -C.T lambda. Moments are taken about the
     # center of the *top* connection, so the three force and three couple
@@ -268,6 +269,24 @@ def test_c1_hybrid_shell_side_wrench_includes_all_six_channels_and_offset():
     np.testing.assert_allclose(
         float(np.sum(nodal*virtual)),
         float(force@translation+moment@spin), rtol=0., atol=1e-12)
+
+    # A native B3 rigid variation also rotates each retained half-cell
+    # frame. Omitting those coordinates gives a false beam-side moment.
+    beam_virtual = np.zeros(beam.context.count)
+    beam_nodes = (beam.context.initial.mechanical.positions+
+                  beam.context.initial.mechanical.position_low)
+    beam_virtual[:beam.context.nodal_count] = np.column_stack((
+        translation+np.cross(spin, beam_nodes-connection_center),
+        np.broadcast_to(spin, beam_nodes.shape))).ravel()
+    for element in range(len(beam.context.elements)):
+        start = beam.context.nodal_count+24*element
+        beam_virtual[start:start+6] = np.tile(spin, 2)
+    np.testing.assert_allclose(
+        trace@np.r_[virtual.ravel(), beam_virtual], 0.,
+        rtol=0., atol=1e-12)
+    np.testing.assert_allclose(
+        float(reaction[line.shell_size:]@beam_virtual),
+        -float(force@translation+moment@spin), rtol=0., atol=1e-12)
 
     # Moving the report origin down to the shell reference surface restores
     # the eccentric lever arm without altering the underlying nodal work.
