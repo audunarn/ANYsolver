@@ -319,6 +319,15 @@ def _loaded_augmented_patch_oracle(*, target_left_x=-0.2):
         ) / reference_force),
         "actual_pressure_pa": contact["numerical_pressure_pa"],
         "expected_pressure_pa": expected_pressure.tolist(),
+        "independent_source_support_m2": support.tolist(),
+        "actual_source_support_m2": contact["reference_support_m2"],
+        "source_pressure_node_ids": contact["source_pressure_node_ids"],
+        "pressure_gram_supported_modes": contact.get("pressure_gram_supported_modes"),
+        "pressure_gram_scaled_rank": contact.get("pressure_gram_scaled_rank"),
+        "area_integration_error_m2": contact["area_integration_error_m2"],
+        "weighted_gap_integration_error_m3": contact[
+            "weighted_gap_integration_error_m3"
+        ],
         "actual_minimum_gap_m": contact["minimum_gap"],
         "expected_minimum_gap_m": expected_minimum_gap,
         "gap_tolerance_met": bool(contact["gap_tolerance_met"]),
