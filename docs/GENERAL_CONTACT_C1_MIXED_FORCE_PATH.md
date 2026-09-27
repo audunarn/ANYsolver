@@ -323,3 +323,35 @@ Both then reached zero contact force during full opening. This local
 unloading response is not yet refined or accepted. The
 [32-Q4 raw cycle](../reports/general_contact_d1_mixed_32q4_interior_four_phase_20260927.json)
 is development evidence; it does not extend the frozen press-only claim.
+
+### Distributed-force interior contact development
+
+The tip-loaded interior route concentrates its Q1 pressure at the two
+terminal source nodes as the mesh refines. An existing distributed nodal
+force option at 0.1 N remained open through the full eight-Q4 path; a
+0.3 N distributed load created a pressure patch across three columns on
+both rows. Its eight-Q4 twelve-step cycle completed with loaded and
+recontact force 0.10347981516 N, first-unload force 0.03980671281 N and
+zero contact during full opening.
+
+The first 16-Q4 press attempt failed its 1e−5 Pa multiplier-change gate after
+seven augmentations. Two proposed corrections were rejected by a float/Jet2
+weighted-gap value comparison at pair 28; the original failed trace is
+preserved. The exact seven-node trial pose was captured without changing
+the rejection. Independent 80-digit Decimal integration of all four Q1 gap
+moments found stable clipping and quadrature and differences of order
+10⁻²¹ m³ between the production paths. A bounded, weighted-gap-only
+Cartesian operand roundoff floor now handles this cancellation after the
+ordinary comparison fails, with a local-resolution guard and finite-value
+checks. Area, support, derivative, integration and mechanical gates remain
+unchanged. The independent reviewer found no remaining specific blocker to
+using this as a development candidate; [the captured Decimal result](../reports/general_contact_d1_distributed_pair28_decimal_20260927.json)
+and original failed report remain available.
+
+The corrected 16-Q4 full cycle completed with loaded/recontact force
+0.10387155975 N and first-unload force 0.03984469493 N. Changes from eight
+Q4 are 0.37714% and 0.09533%, respectively, and both meshes fully open.
+A final Cartesian-bound press check reproduced the 16-Q4 force exactly.
+These two mesh levels are promising development evidence. A frozen refined
+full-cycle reference, independent response adjudication, restart and
+installed-package qualification remain open; no C1 row is promoted.

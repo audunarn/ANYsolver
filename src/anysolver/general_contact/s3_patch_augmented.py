@@ -166,6 +166,54 @@ def _q4_s3_pair_values_agree(local_values, derivative_values, *,
                             rtol=value_rtol, atol=roundoff_atol))
 
 
+def _q4_s3_gap_operand_roundoff(source, target, support_scale: float) -> float:
+    """Bound weighted-gap cancellation from interpolated position operands.
+
+    The ordinary summation allowance scales with the already-cancelled gap.
+    Nearly coincident physical skins also incur subtraction error at the
+    scale of their absolute Cartesian operands. Keep that allowance
+    below a billionth of the smallest source edge times Q1 support; very
+    distant model origins must be recentered rather than accepted loosely.
+    """
+    source = np.asarray(source, dtype=float)
+    target = np.asarray(target, dtype=float)
+    if (source.shape != (4, 3) or target.shape != (3, 3)
+            or not np.all(np.isfinite(source))
+            or not np.all(np.isfinite(target))
+            or not np.isfinite(support_scale) or support_scale <= 0.0):
+        raise UnsupportedQ4S3Branch("Q4/S3 gap operands are invalid")
+    edges = np.roll(source, -1, axis=0)-source
+    lengths = np.linalg.norm(edges, axis=1)
+    normal_length = np.linalg.norm(np.cross(
+        source[1]-source[0], source[3]-source[0],
+    ))
+    if (not np.all(np.isfinite(lengths))
+            or not np.isfinite(normal_length)
+            or np.any(lengths <= 0.0) or normal_length <= 0.0):
+        raise UnsupportedQ4S3Branch("Q4/S3 gap operand frame is degenerate")
+    operands = np.concatenate((source, target))
+    # Sum absolute Cartesian operands so one corner normal cannot understate
+    # cancellation when the bilinear Q4's physical normal varies. This
+    # covers interpolation/subtraction/projection arithmetic; the existing
+    # integral-summation allowance and derivative gates remain separate.
+    coordinate_operand_scale = float(np.max(np.sum(
+        np.abs(operands), axis=1,
+    )))
+    distance_roundoff = (64.0*np.finfo(float).eps
+                         * coordinate_operand_scale)
+    if (not np.isfinite(coordinate_operand_scale)
+            or not np.isfinite(distance_roundoff)):
+        raise UnsupportedQ4S3Branch("Q4/S3 gap operand bound is not finite")
+    if distance_roundoff > 1.0e-9*float(np.min(lengths)):
+        raise UnsupportedQ4S3Branch(
+            "Q4/S3 gap coordinate cancellation exceeds local resolution"
+        )
+    allowance = distance_roundoff*support_scale
+    if not np.isfinite(allowance):
+        raise UnsupportedQ4S3Branch("Q4/S3 gap operand allowance is not finite")
+    return allowance
+
+
 class MovingS3PatchProjectedNormal:
     def __init__(self, geometry: MovingS3PatchPrimalMortarPenalty, *,
                  support_resolution: str = "exact"):
@@ -882,6 +930,23 @@ class MovingS3PatchProjectedNormal:
                     area_resolution=derivative.overlap_area_resolution,
                     normwise=True,
                 )
+                if not gap_agrees:
+                    weighted_gap_roundoff = max(
+                        weighted_gap_roundoff,
+                        _q4_s3_gap_operand_roundoff(
+                            local_source, local_target, support_scale,
+                        ),
+                    )
+                    gap_agrees = _q4_s3_pair_values_agree(
+                        local.reference_weighted_gap,
+                        derivative.reference_weighted_gap,
+                        value_rtol=value_rtol,
+                        roundoff_atol=weighted_gap_roundoff,
+                        local_area=local.overlap_area,
+                        derivative_area=derivative.overlap_area,
+                        area_resolution=derivative.overlap_area_resolution,
+                        normwise=True,
+                    )
             else:
                 support_agrees = np.allclose(
                     derivative.reference_support, local.reference_support,

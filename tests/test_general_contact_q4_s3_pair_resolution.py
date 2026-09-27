@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from dataclasses import replace
 import json
+from decimal import Decimal
 from pathlib import Path
 
 from scripts.general_contact_d1_coupled_refinement import build_case
@@ -12,6 +13,7 @@ from anysolver.general_contact.overlap import PlanarFace
 from anysolver.general_contact.q4_s3_overlap_derivatives import UnsupportedQ4S3Branch
 from anysolver.general_contact.s3_patch_augmented import (
     _q4_s3_pair_value_rtol, _q4_s3_pair_values_agree,
+    _q4_s3_gap_operand_roundoff,
     _touching_shared_target_edge,
 )
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
@@ -124,6 +126,61 @@ def test_resolved_q4_weighted_gap_cancellation_uses_vector_value_bound():
     gross[1] += 1.0e-15
     assert not _q4_s3_pair_values_agree(local, gross,
                                         normwise=True, **options)
+
+
+def test_resolved_pair_gap_operand_roundoff_is_bounded_and_specific():
+    fixture = json.loads((Path(__file__).parent / "fixtures" /
+                          "general_contact_d1_distributed_pair28.json"
+                          ).read_text(encoding="utf-8"))
+    source = np.asarray(fixture["local_source"])
+    target = np.asarray(fixture["local_target"])
+    support_scale = 0.00390423719797
+    ordinary = fixture["comparison"]["roundoff_atol"]
+    operand = _q4_s3_gap_operand_roundoff(source, target, support_scale)
+    local = np.asarray(fixture["local_values_m3"])
+    derivative = np.asarray(fixture["derivative_values_m3"])
+    comparison = dict(fixture["comparison"])
+    assert operand > ordinary
+    assert operand/support_scale < 1.0e-9*min(
+        np.linalg.norm(np.roll(source, -1, axis=0)-source, axis=1)
+    )
+    assert not _q4_s3_pair_values_agree(local, derivative, **comparison)
+    comparison["roundoff_atol"] = max(ordinary, operand)
+    assert _q4_s3_pair_values_agree(local, derivative, **comparison)
+    gross = derivative.copy()
+    gross[1] += 1.0e-15
+    assert not _q4_s3_pair_values_agree(local, gross, **comparison)
+    oracle = json.loads((Path(__file__).parent / "fixtures" /
+                         "general_contact_d1_distributed_pair28_decimal.json"
+                         ).read_text(encoding="utf-8"))
+    rows = oracle["rows"]
+    assert all(row["clip_signature"] == rows[0]["clip_signature"]
+               for row in rows)
+    for index in range(4):
+        reference = Decimal(rows[-1]["weighted_gap_m3"][index])
+        assert max(abs(Decimal(row["weighted_gap_m3"][index])-reference)
+                   for row in rows[:-1]) < Decimal("1e-25")
+        assert (abs(Decimal.from_float(float(local[index]))-reference)
+                < Decimal.from_float(operand))
+        assert (abs(Decimal.from_float(float(derivative[index]))-reference)
+                < Decimal.from_float(operand))
+    assert abs(Decimal(rows[-1]["projected_area_m2"])
+               - Decimal.from_float(comparison["local_area"])) < Decimal("1e-14")
+    warped = source.copy()
+    warped[2, 2] += 0.005
+    assert _q4_s3_gap_operand_roundoff(warped, target, support_scale) > 0.0
+    with pytest.raises(UnsupportedQ4S3Branch,
+                       match="coordinate cancellation exceeds"):
+        _q4_s3_gap_operand_roundoff(
+            warped+[0.0, 0.0, 1.0e6],
+            target+[0.0, 0.0, 1.0e6], support_scale,
+        )
+    with np.errstate(over="ignore", invalid="ignore"):
+        with pytest.raises(UnsupportedQ4S3Branch,
+                           match="frame is degenerate|not finite"):
+            _q4_s3_gap_operand_roundoff(
+                source*1.0e308, target*1.0e308, support_scale,
+            )
 
 
 def test_shared_edge_tie_settings_require_explicit_bounded_jet2_profile():
