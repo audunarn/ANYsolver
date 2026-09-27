@@ -35,17 +35,18 @@ allocates that cause, establishes refinement behavior, or selects P0/P1/dual.
 **Next discriminator and action:** Reuse the completed C1 mode-resolved
 evidence: supported positive-energy even transverse slip has zero continuous
 six-channel gap; a distinct longitudinal gap is nonzero continuously and
-detected by a growing row space. Do not repeat those fields or finer classical
-axial solves. The next bounded reference task is to distinguish missed or
-underintegrated contact from an incompatible connection geometry on the same
-loads, supports, sections and contact faces. Preflight face coverage and the
-contact algorithm against the historical C1 penalty deck, then seek a
-non-overlapping, balanced torque/shear field before physical scoring. If
-that cannot be obtained within the existing resource envelope, preserve the
-failed result and revise the reference strategy within G0; do not infer
-native formulation failure. In parallel, complete independent B2 F09 and
-other nondependent foundations. No third longitudinal split follows solely
-from the two-interval change.
+detected by a growing row space. Thus the current continuous law is a
+*reduced strip-pose* candidate; it cannot be called a pointwise welded face
+bond. Decide its permitted local deformation and physical pitch/torque work
+explicitly, then assess the growing multiplier space, supported work and
+locking on the registered ratios. A distinct full-bond law needs its own
+trace and evidence if full surface bonding is required. The matched
+hard-mortar contact method exited `201`; removing the seam-adjacent column
+hit the 2-GiB cap, so this factor-4 route cannot now provide a valid physical
+torque reference. Reuse executed F5 and pre-opened C1 evidence only at their
+valid levels while redesigning the reference. Do not repeat completed fields,
+finer classical axial solves, or a contact stiffness/mesh sweep. Advance B2
+F09 and other independent foundations while F03 remains unresolved.
 No multiplier space is selected and F03 remains open.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
