@@ -11,6 +11,8 @@ from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
 from scripts.b3_e4_f03_material_line_space_screen import _rows
+from scripts.b3_e4_f03_material_line_channel_screen import _channel_rows
+from scripts.b3_e4_f03_material_line_loaded import _scales
 
 
 def _fixture(patch_cells=4):
@@ -50,6 +52,55 @@ def test_aligned_two_cell_p1_yaw_row_is_exactly_dependent(mixed_s3, diagonal):
         assert relative < 1e-12
         assert np.max(np.abs(yaw[0]-p0[5])) < 1e-12
         assert np.max(np.abs(yaw[2]-p0[11])) < 1e-12
+
+
+@pytest.mark.parametrize("shell_cells,beam_half_cells,expected_rank,block", (
+    (4, 12, 28, (1, 5)),
+    (2, 14, 27, (3, 4)),
+))
+@pytest.mark.parametrize("kind", ("continuous_linear", "dual_linear"))
+def test_mismatched_line_rows_have_full_coordinate_dependencies(
+        shell_cells, beam_half_cells, expected_rank, block, kind):
+    """The reciprocal-ratio nulls are trace identities, not solver failures."""
+    xs, ys = local_grid(shell_cells, transverse_cells=4)
+    beam = build(beam_half_cells, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam)
+    rows = _channel_rows(line, kind, (0., .25, .5, .75, 1.))
+    shell_size = 6*len(xs)*len(ys)
+    fixed_shell = {6*(j*len(xs)+i)+axis
+                   for j in range(len(ys)) for i, x in enumerate(xs)
+                   if abs(x+.5) < 1e-12 for axis in range(6)}
+    fixed_beam = {shell_size+int(index) for index in beam.context.fixed}
+    free = np.setdiff1d(
+        np.arange(shell_size+beam.context.count),
+        np.array(sorted(fixed_shell|fixed_beam)))
+    scales, _ = _scales(shell_size, beam, free, row_count=len(rows))
+    mapped = rows[:, free]*scales[:len(free)]
+    norms = np.linalg.norm(mapped, axis=1)
+    left, singular, _ = np.linalg.svd(mapped/norms[:, None],
+                                     full_matrices=False)
+    tolerance = max(mapped.shape)*np.finfo(float).eps*singular[0]
+    assert np.sum(singular > tolerance) == expected_rank
+    assert singular[expected_rank-1] > 1e-3
+    assert singular[expected_rank] < 1e-12
+    for index in np.flatnonzero(singular <= tolerance):
+        coefficients = left[:, index]/norms
+        relative = np.linalg.norm(coefficients@rows)/sum(
+            abs(c)*np.linalg.norm(row) for c, row in zip(coefficients, rows))
+        assert relative < 1e-12
+    counts = [5, 5, 5, 5, 5, 4]
+    offsets = np.cumsum([0]+counts)
+    first, second = (mapped[offsets[i]:offsets[i+1]] for i in block)
+    if shell_cells == 4:
+        assert np.linalg.matrix_rank(first) == 5
+        assert np.linalg.matrix_rank(second) == 4
+        assert np.linalg.matrix_rank(np.vstack((first, second))) == 8
+    else:
+        assert np.linalg.matrix_rank(first) == 4
+        assert np.linalg.matrix_rank(second) == 4
+        assert np.linalg.matrix_rank(np.vstack((first, second))) == 8
 
 
 def test_material_line_detects_even_slip_invisible_to_reduced_strip_pose():

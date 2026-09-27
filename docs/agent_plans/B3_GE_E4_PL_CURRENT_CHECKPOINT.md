@@ -91,6 +91,15 @@ remain `FAILED_DEPENDENT_ROWS`; no solve was accepted. Four-cell P0 ranks
 equilibrium/work, but this single ratio pair does not establish inf-sup,
 physical fidelity, or a selected P0 policy. The full registered ratio
 series waits on a revised independent policy and the physical reference.
+Independent read-only review found no defect in the declared bonded-cut
+ratios, reference segmentation, row assembly, or fail-closed status. It
+emphasized that null-vector channel fractions depend on scaling and SVD
+basis. A separate trace-only check with no shell or beam assembly confirms
+full-coordinate row identities below `4.1e-16` relative for all three
+null directions, with 4/4 focused tests. For the 1:2 case, Fy and Mz
+blocks separately rank 5/5 and 4/4 but jointly rank 8/9. For 2:1, Mx
+and My each rank 4/5 and jointly 8/10. This locates discrete trace
+representability; it does not select a physical line law or multiplier.
 
 ## Detailed reference state and saved-field decision — 27 September 2026
 
