@@ -96,6 +96,18 @@ source or rank-interpretation defect. The displayed Fz/My left vector is
 one member of the seven-dimensional nullspace, not a characterization of
 all seven modes; the fixture scaling is not a canonical inf-sup norm.
 
+**Combined F03 interpretation:** The saved x16 common-action projection
+shows that four-to-eight P0 growth changes the lateral/twist two-hat
+differences from F5 `0.299/0.185` to `0.682/0.430` for B3-12, but from
+`0.861/0.547` to `0.165/0.101` for B3-24. The vertical difference stays
+around `0.014–0.025`. Thus the x8 row dependency and x16 full rank do not
+license an eight-interval production policy or an accuracy ranking: loaded
+transfer still depends strongly on native beam resolution. F5 has a
+stronger shared-node bond and cannot select the weak multiplier by itself.
+The next useful matched assessment must vary beam and shell resolution
+under an explicitly admissible row policy and report physical work and
+locking, not only a rank or tip displacement.
+
 **B2 heterogeneous-junction result:** A separate private F09 diagnostic
 places 80×3 mm and 12×3 mm rotated physical sections at a two-member
 elbow, including a reversed-second-member control. Both passed the
