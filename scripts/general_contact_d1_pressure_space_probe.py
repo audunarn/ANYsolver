@@ -82,6 +82,10 @@ def main():
             "relative_reference_error": abs(reaction - reference_force_z)
                                         / reference_force_z,
             "minimum_gap_m": float(summary.minimum_gap),
+            "sampled_overlap_gap_m": (
+                None if summary.sampled_overlap_gap is None
+                else float(summary.sampled_overlap_gap)
+            ),
             "gap_tolerance_met": bool(summary.gap_tolerance_met),
             "active_pressure_dofs": int(summary.active_pressure_dofs),
             "supported_pressure_modes": int(summary.pressure_gram_supported_modes),
