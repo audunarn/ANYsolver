@@ -2,8 +2,8 @@
 
 ## Current state — 27 September 2026
 
-**Decision sought:** Select a defensible physical beam–shell connection
-law before choosing an exact line-multiplier space or entering G1.
+**Decision sought:** Validate the declared two-sided beam–shell connection
+work before choosing an exact line-multiplier space or entering G1.
 **Established:** The top-face positional law has a continuous force/pitch
 gauge, so finite P0 rank cannot establish six-pose bonding. The native
 hybrid adds independent two-sided director-pitch work. On the saved F5
@@ -12,9 +12,8 @@ pitch equation changes combined-load work by −0.403%/−0.448% on F2/F4.
 F5 with that wide equation was stopped at the retained 2 GiB limit.
 Independent review found no blocking defect in the bounded equation or
 its interpretation. B2 F09 admission remains open.
-**Uncertainty:** Which joint semantics meet the required torque/shear and
-virtual-work contract: top-surface positional bonding, an explicitly
-two-sided director-couple weld, or distinct admitted alternatives? The
+**Uncertainty:** Whether the declared two-sided joint's complete loaded
+continuous work and physical transfer meet the torque/shear contract. The
 F2 equation multiplier and side work are directly recoverable; F4's
 multiplier is inferred from paired work. Native and external pitch-channel
 reactions have the same physical sign but different model idealizations;
@@ -26,12 +25,14 @@ one added area-mean sided equation closes its own mean pitch but leaves
 a signed local fitted pitch variation along the bond. Splitting only that
 equation into two F4 intervals reduces the largest three local projections
 from `2.92` to `0.74 µrad`, while whole-strip endpoint differences persist.
-**Next discriminator and action:** Treat the six-channel candidate as an
-explicitly two-sided director-couple joint. A bounded F4 segmented-sided
-reference supports equation resolution as part of the local discrepancy;
-do not add further rows automatically. Review the remaining solid pose-fit
-and native E4/B3 trace meaning, while testing loaded finite native port
-work, torque/shear and compensated-pitch patches against the declared law.
+**Next discriminator and action:** Keep the six-channel candidate explicitly
+two-sided and the top-face bond distinct. Test the complete native
+continuous gap and physical side work on supported loaded torque, shear
+and compensated-pitch fields before applying P0/P1/dual projection. A
+law/trace mismatch calls for correction; a match permits the registered
+mixed-norm, growing-space and mesh-ratio assessment. The F4 split-sided
+result supports equation resolution as part of the local discrepancy;
+do not add further external rows automatically.
 Keep the one-sided top-face bond as a distinct reference; if that is the
 intended production joint, revise its continuous rotational work instead
 of treating multiplier refinement as a repair. Only after the continuous
@@ -8069,3 +8070,22 @@ and result limitation said "one additional" for the two-interval mode.
 That wording is corrected prospectively. The numerical records remain
 bound to the exact runner source at commit `7e2f3b7f`; no numerical input
 or operator changed, and the solver was not rerun for a wording repair.
+
+**Independent G0 design decision:** A separate read-only mechanics review
+finds it defensible to *designate* the native six-channel candidate as an
+explicitly two-sided director-couple joint for development, while keeping
+the one-sided top-face positional bond as a distinct comparator. The
+top-face law's exact force/pitch gauge cannot justify an independent sixth
+channel. This is a declared engineering idealization, not physical
+validation or an accepted default. The contrary evidence is retained:
+residual F4 pose-fit/end effects, a linear solid sided equation rather
+than a native E4/B3 state, and `1.2–2.5%` native torque-work movement under
+x16 m8→m16 multiplier refinement despite negligible quadrature effect.
+The minimum decision-changing check is complete *continuous loaded*
+native gap and `−Cᵀlambda` side work, including offsets and retained B3
+frames, on controlled supported torque, transverse-shear and compensated-
+pitch fields. A mismatch revises the law or trace; a match permits the
+registered normed growing-space and mesh-ratio assessment. No P0/P1/dual
+selection follows from the current small residuals, rank or external
+row-count result. F03/G0B remain open, G1 barred, formal F03 execution
+authority unconsumed.
