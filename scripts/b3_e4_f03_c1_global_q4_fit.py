@@ -118,15 +118,25 @@ def constrained_trace_fit(matrix, free, q, solid_points, stations,
     row_scale = np.tile((1., 1., 1., length, length, length), 4)
     constraint = integrated_matrix*row_scale[:, None]
     gap = solid_integrated.ravel()*row_scale
+    left, singular_weak, _ = np.linalg.svd(constraint, full_matrices=False)
+    weak_rank = int(np.sum(singular_weak > 1e-10))
+    if weak_rank <= 0:
+        raise ArithmeticError("zero native shell weak-row rank")
+    reachable = left[:, :weak_rank]
+    unreachable = left[:, weak_rank:]@(
+        left[:, weak_rank:].T@gap)
+    independent = reachable.T@constraint
+    independent_gap = reachable.T@gap
     normal = (matrix.T@matrix).tocsc()
     factor = splu(normal)
-    influence = factor.solve(constraint.T)
-    schur = constraint@influence
-    correction = influence@np.linalg.solve(schur, gap-constraint@p0)
+    influence = factor.solve(independent.T)
+    schur = independent@influence
+    correction = influence@np.linalg.solve(
+        schur, independent_gap-independent@p0)
     constrained = p0+correction
     weak_residual = constraint@constrained-gap
-    if np.max(np.abs(weak_residual)) > 1e-10:
-        raise ArithmeticError("constrained Q4 fit failed to match weak rows")
+    if np.max(np.abs(weak_residual+unreachable)) > 1e-10:
+        raise ArithmeticError("reachable Q4 weak rows did not match")
     initial_face_error = matrix@p0-target
     constrained_face_error = matrix@constrained-target
     point_scale = np.tile((1., 1., 1., length, length, length),
@@ -144,7 +154,18 @@ def constrained_trace_fit(matrix, free, q, solid_points, stations,
         "unconstrained_face_rms_m": float(np.sqrt(np.mean(initial_face_error**2))),
         "weak_row_constrained_face_max_abs_m": float(np.max(np.abs(
             constrained_face_error))),
-        "scaled_weak_row_max_defect_m": float(np.max(np.abs(weak_residual))),
+        "weak_row_rank": weak_rank,
+        "weak_row_count": int(constraint.shape[0]),
+        "weak_row_rank_tolerance": 1e-10,
+        "scaled_weak_unreachable_component_rms_m": float(np.sqrt(
+            np.mean(unreachable**2))),
+        "scaled_weak_unreachable_component_max_abs_m": float(np.max(
+            np.abs(unreachable))),
+        "scaled_weak_row_actual_max_defect_m": float(np.max(
+            np.abs(weak_residual))),
+        "scaled_reachable_weak_row_max_defect_m": float(np.max(np.abs(
+            weak_residual+unreachable))),
+        "physical_weak_row_residual": (weak_residual/row_scale).tolist(),
         "weak_row_schur_condition": float(np.linalg.cond(schur)),
         "station_map_rank": int(rank),
         "station_map_rows": int(point_operator.shape[0]),

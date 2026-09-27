@@ -39,6 +39,7 @@ def test_clamped_global_q4_face_fit_recovers_representable_field():
     constrained = constrained_trace_fit(
         matrix, free, recovered, solid_points, stations,
         station_matrix, integrated.reshape(24, -1), target.reshape(-1, 3))
-    assert constrained["scaled_weak_row_max_defect_m"] < 1e-10
+    assert constrained["weak_row_rank"] == 24
+    assert constrained["scaled_reachable_weak_row_max_defect_m"] < 1e-10
     assert constrained["weak_row_constrained_face_rms_m"] < 1e-10
     assert constrained["minimum_scaled_station_component_rms_m"] < 1e-10
