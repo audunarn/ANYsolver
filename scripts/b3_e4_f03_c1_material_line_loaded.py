@@ -24,10 +24,42 @@ from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
-def evaluate(reconstruction_path: Path) -> dict:
-    solid = json.loads(reconstruction_path.read_text())
-    if solid["status"] != "EXPLORATORY_COMPLETE":
+SOLID_RECONSTRUCTION_SHA256 = (
+    "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92"
+)
+SOLID_SOURCE_SHA256 = {
+    "tip_mx": (
+        "a5a75cc744d71489e20d0cadf8d3412ebe8e8fee3297faad07423ea5bfd7e40a",
+        "4792273d1efe3957de336436d7398d3eb6ee7960c50fe1eea1aab70fa504fdec",
+    ),
+    "tip_fz": (
+        "28708a263789131180afd261a83a4e38b44e81a9979165a0bb6dd07dc11912f4",
+        "ffdc4182aaf4bc0103eae30ecee1a2d122c6bed67e4ebac7111290fa9f4fd107",
+    ),
+}
+
+
+def _validated_solid_reconstruction(path: Path) -> dict:
+    """Admit only the reviewed C1 geometry and exact P0 material-line action."""
+    if digest(path) != SOLID_RECONSTRUCTION_SHA256:
+        raise ValueError("reviewed C1 solid P0 reconstruction identity changed")
+    solid = json.loads(path.read_text())
+    if (solid.get("status") != "EXPLORATORY_COMPLETE" or
+            solid.get("classification") !=
+            "matched detached-solid linear exact P0 material-line KKT reconstruction" or
+            set(solid.get("cases", {})) != set(SOLID_SOURCE_SHA256) or
+            len(solid.get("unit_records", ())) != 24):
         raise ValueError("completed same-law solid P0 reconstruction required")
+    for label, (model_sha, deck_sha) in SOLID_SOURCE_SHA256.items():
+        case = solid["cases"][label]
+        if (case.get("source_model_sha256") != model_sha or
+                case.get("source_deck_sha256") != deck_sha):
+            raise ValueError("matched C1 source geometry or load identity changed")
+    return solid
+
+
+def evaluate(reconstruction_path: Path) -> dict:
+    solid = _validated_solid_reconstruction(reconstruction_path)
     xs, ys = local_grid(4, transverse_cells=4)
     beam = build(12, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
