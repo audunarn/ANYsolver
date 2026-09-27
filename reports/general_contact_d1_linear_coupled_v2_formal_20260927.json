@@ -1,0 +1,92 @@
+{
+  "case_id": "general_contact_d1_linear_coupled_v2",
+  "status": "passed_numerical_gate",
+  "checks": {
+    "reference_identity": true,
+    "status": true,
+    "accepted_steps": true,
+    "displacement": true,
+    "integrated_force": true,
+    "pressure": true,
+    "gap": true,
+    "gap_tolerance": true,
+    "active_modes": true,
+    "equilibrium": true,
+    "multiplier_change": true,
+    "force_balance": true,
+    "moment_balance": true,
+    "checkpoint": true,
+    "wall_budget": true
+  },
+  "metrics": {
+    "status": "completed",
+    "accepted_steps": 1,
+    "expected_source_uz_m": [
+      -0.0,
+      -3e-05,
+      -6e-05,
+      -0.0,
+      -3e-05,
+      -6e-05
+    ],
+    "actual_source_uz_m": [
+      0.0,
+      -3.0000000028258223e-05,
+      -5.999999998525114e-05,
+      0.0,
+      -3.0000000028519824e-05,
+      -5.999999998596029e-05
+    ],
+    "maximum_absolute_uz_error_m": 2.851982295075037e-14,
+    "expected_integrated_normal_force_n": 0.025,
+    "actual_integrated_normal_force_n": 0.024999999315626794,
+    "relative_integrated_force_error": 2.737492829640864e-08,
+    "actual_pressure_pa": [
+      0.0,
+      0.0,
+      0.09999999709519895,
+      0.0,
+      0.0,
+      0.09999999706981565
+    ],
+    "expected_pressure_pa": [
+      0.0,
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.1
+    ],
+    "actual_minimum_gap_m": -1.000000014038377e-05,
+    "expected_minimum_gap_m": -1e-05,
+    "gap_tolerance_met": true,
+    "active_pressure_dofs": 2,
+    "equilibrium_residual_norm_n": 2.888074978650114e-14,
+    "normal_multiplier_change_pa": 2.2618115713690656e-11,
+    "force_wrench_balance_n": 3.46945534698169e-18,
+    "moment_wrench_balance_nm": 1.734729712487124e-18,
+    "has_restart_checkpoint": true
+  },
+  "elapsed_seconds": 25.14886889999616,
+  "contract_sha256": "bee013e4868ba2e1ce74810c1a3185626da548c5b19723b1c7ea169916dbfd9c",
+  "source_commit": "3251fcf39869bd6bb0b3360a4e6ed6c942c7f179",
+  "execution_head": "8ff9cf9bd28b37c081f22e9c4cd84a62980dd6de",
+  "identity_checks": {
+    "src/anysolver": true,
+    "tests/test_general_contact_linear_patch_oracle.py": true,
+    "scripts/qualify_general_contact_d1_linear_coupled.py": true,
+    "anymaterial_tree": true,
+    "python": true,
+    "numpy": true,
+    "scipy": true,
+    "anysolver_module": true,
+    "anymaterial_module": true
+  },
+  "runtime_identity": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py"
+  }
+}
