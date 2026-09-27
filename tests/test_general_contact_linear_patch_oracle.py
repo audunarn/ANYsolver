@@ -174,6 +174,13 @@ def _case_and_local_check(*, target_left_x=-0.2):
     expected_contact_tangent = (
         epsilon * mortar_mass @ np.diag(active / support) @ mortar_mass
     )
+    source_normal_dofs = [model.mesh.get_node(node).dofs[2]
+                          for node in range(1, 7)]
+    actual_normal_tangent = contact_tangent[np.ix_(
+        source_normal_dofs, source_normal_dofs,
+    )].toarray()
+    assert (np.linalg.norm(actual_normal_tangent-expected_contact_tangent)
+            / np.linalg.norm(expected_contact_tangent)) <= 1.0e-5
     right_dofs = [model.mesh.get_node(node).dofs[2] for node in (3, 6)]
     np.testing.assert_allclose(
         np.sum(contact_tangent[np.ix_(right_dofs, right_dofs)]),
