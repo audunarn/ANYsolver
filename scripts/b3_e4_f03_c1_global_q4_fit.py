@@ -159,17 +159,19 @@ def constrained_trace_fit(matrix, free, q, solid_points, stations,
             constrained_face_error))),
         "weak_row_rank": weak_rank,
         "weak_row_count": int(constraint.shape[0]),
-        "weak_row_rank_tolerance": 1e-10,
-        "scaled_weak_unreachable_component_rms_m": float(np.sqrt(
+        "weak_row_rank_tolerance_m": 1e-10,
+        "scaled_weak_unreachable_component_rms_m2": float(np.sqrt(
             np.mean(unreachable**2))),
-        "scaled_weak_unreachable_component_max_abs_m": float(np.max(
+        "scaled_weak_unreachable_component_max_abs_m2": float(np.max(
             np.abs(unreachable))),
-        "scaled_weak_row_actual_max_defect_m": float(np.max(
+        "scaled_weak_row_actual_max_defect_m2": float(np.max(
             np.abs(weak_residual))),
-        "scaled_reachable_weak_row_max_defect_m": float(np.max(np.abs(
+        "scaled_reachable_weak_row_max_defect_m2": float(np.max(np.abs(
             weak_residual+unreachable))),
-        "physical_weak_row_residual": physical_weak_residual.tolist(),
-        "weak_row_signed_work_residual_J": float(
+        "physical_integrated_weak_row_residual": physical_weak_residual.tolist(),
+        "physical_integrated_weak_row_units": ["m2", "m2", "m2",
+                                               "rad_m", "rad_m", "rad_m"]*4,
+        "native_minus_solid_weak_work_J": float(
             -np.asarray(dual)@physical_weak_residual),
         "weak_row_schur_condition": float(np.linalg.cond(schur)),
         "station_map_rank": int(rank),

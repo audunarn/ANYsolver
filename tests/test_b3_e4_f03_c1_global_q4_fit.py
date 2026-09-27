@@ -41,7 +41,7 @@ def test_clamped_global_q4_face_fit_recovers_representable_field():
         station_matrix, integrated.reshape(24, -1), target.reshape(-1, 3),
         np.ones(24))
     assert constrained["weak_row_rank"] == 24
-    assert constrained["scaled_reachable_weak_row_max_defect_m"] < 1e-10
+    assert constrained["scaled_reachable_weak_row_max_defect_m2"] < 1e-10
     assert constrained["weak_row_constrained_face_rms_m"] < 1e-10
     assert constrained["minimum_scaled_station_component_rms_m"] < 1e-10
-    assert abs(constrained["weak_row_signed_work_residual_J"]) < 1e-10
+    assert abs(constrained["native_minus_solid_weak_work_J"]) < 1e-10
