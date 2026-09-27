@@ -1240,6 +1240,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              plate_thickness: float = .07,
                              transverse_cells: int | None = None,
                              include_surface_moments: bool = False,
+                             include_top_face_two_intervals: bool = False,
+                             top_face_only: bool = False,
                              include_line_hybrid: bool = False,
                              include_line_hybrid_segmented: bool = False,
                              include_line_hybrid_spaces: bool = False,
@@ -1255,6 +1257,13 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         raise ValueError("bounded native plate thickness required")
     if force_sign not in (-1., 1.):
         raise ValueError("declared unit-sign terminal force required")
+    if include_top_face_two_intervals and not (
+            patch_cells == 4 and transverse_cells == 4 and
+            plate_thickness == .035 and beam.n_half_cells == 12 and
+            beam.model.name.endswith("-c1_tangent_2um")):
+        raise ValueError("top-face two-interval screen requires bounded x4/y4 C1")
+    if top_face_only and not include_top_face_two_intervals:
+        raise ValueError("top-face-only screen requires its declared candidate")
     if include_line_hybrid_spaces and plate_thickness != .035:
         raise ValueError("weighted C1 line spaces require the 35 mm plate")
     if (type(line_multiplier_intervals) is not int or
@@ -1391,6 +1400,16 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         surface_patch=FiniteSurfaceMomentPatch(
             xs,ys,beam,thickness=plate_thickness)
         families.append(("surface_moments",surface))
+    if include_top_face_two_intervals:
+        from scripts.b3_e4_f03_distributed_surface_finite import (
+            FiniteSurfaceTopFaceLine,
+        )
+        top_face_pieces = [FiniteSurfaceTopFaceLine(
+            xs, ys, beam, thickness=plate_thickness,
+            x_interval=interval)
+            for interval in ((.9, .95), (.95, 1.))]
+        families.append(("top_face_two_intervals", np.vstack(
+            [piece.reference_trace() for piece in top_face_pieces])))
     if (include_line_hybrid or include_line_hybrid_segmented or
             include_line_hybrid_spaces or include_line_hybrid_ablation):
         from scripts.b3_e4_f03_distributed_surface_finite import (
@@ -1457,6 +1476,9 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 raise ArithmeticError("C1 weighted P0 changed existing rows")
     else:
         space_masses={}
+    if top_face_only:
+        families=[item for item in families
+                  if item[0] == "top_face_two_intervals"]
     if sparse_line_only:
         families=[item for item in families if item[0] in space_masses]
     records={}
@@ -1528,7 +1550,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                                      beam.context.nodal_count].reshape(-1,6)
             shell_wrench=wrench(shell_interface,shell_nodes)
             beam_wrench=(retained_beam_wrench(interface[shell_size:])
-                         if family == "surface_moments" or
+                         if family in ("surface_moments",
+                                       "top_face_two_intervals") or
                          family.startswith("line_hybrid_") else
                          wrench(beam_interface,beam_nodes))
             work=float(load@full)

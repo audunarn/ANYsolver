@@ -74,6 +74,53 @@ relation and adding the x4 discriminator, the complete focused file passed
 silently described as an accepted x2 full-rank result. No loaded solve,
 formal F03 run, G0 acceptance or multiplier selection follows.
 
+**Next bounded loaded discriminator:** For the first application, an
+externally attached top-face stiffener provisionally uses positional
+finite-width work as its leading physical law; the C1 director-pitch
+channel remains an explicitly two-sided/embedded candidate. The available
+x4 shell has two hosts per each of two top-face intervals and full local
+row rank. Solve its existing +100 N m tip torque and -1000 N tip shear
+influences once with those two intervals, under the saved C1 geometry,
+supports, section and loading. Compare complete work, support/interface
+wrenches and tip response with the saved one-interval top-face and hybrid
+calculations. If segmentation materially changes transfer, carry both
+physical transfer and growing-space stability into the selection; if it
+does not, prioritize the independently resolved reference and stability
+over further loaded interval sweeps. This local solve cannot score accuracy
+against F5's stronger shared-node bond or qualify a multiplier space.
+
+**Loaded top-face segmentation result:** The x4/y4, B3-12, 35 mm, one-thread
+two-interval solve has rank `12/12` and maximum mechanics error
+`5.40e-12`; its complete raw result and source hashes are in
+`B3_GE_E4_PL_F03_C1_TOP_FACE_SEGMENTED_DEV_20260927.json` beside this note.
+Compared with the saved one-interval top-face result under exactly matched
+reference geometry, supports, section, and separate loads, torque tip
+rotation changes `50.42799→47.41278 µrad` (`−5.98%`), opening tip motion
+`−70.25176→−69.38174 µm`, torque shell-support `Fy`
+`−55.3359→−67.2982 N`, and torque shell-support `Mz`
+`−29.0251→−32.1831 N m`. Thus longitudinal resolution materially changes
+physical transfer on this grid. The hybrid remains a different continuous
+law; its saved x4 torque tip is `49.60736 µrad`, shell `Fy=−68.0414 N`
+and `Mz=−32.7149 N m`, while its opening shell `Fz=82.4897 N` versus
+`70.9111 N` for the segmented top-face law. Proximity of any isolated
+quantity to F5 is not accuracy evidence because F5 enforces a pointwise
+shared-node bond. Do not stop at the one-interval law or select a multiplier
+from these numbers. Next: match top-face integrated transfer and shell
+response against F5 at its valid level, then assess growing-space stability;
+keep a separate independently resolved two-sided reference for the optional
+embedded pitch law. The first two identical numerical solves passed their
+rank/work assertions but evidence-file creation was denied by the normal
+sandbox; the third run saved the full output after using the installed
+Python in the isolated worktree. The selected existing loaded tests first
+gave `1/2`: a station-finiteness assertion fed mixed scalar/vector values
+to NumPy's ragged-array conversion. The assertion now checks each numeric
+value directly; the same two tests pass `2/2` (39.63 s). This was a test
+compatibility correction, not a change to solved mechanics. Independent
+read-only mechanics review found no concrete work-map, frame, source-identity
+or loaded-comparison defect. It emphasized that the rank-11 relation belongs
+to this one-host-per-interval discrete fixture, not every two-interval
+space. The review does not confer G0 acceptance. G0B and F03 remain open.
+
 **Bounded F09 physical-section decision (27 September):** The prior
 `2^-20`/`2^-40` weak-shear graph brackets a numerical issue in an artificial
 section family, not a physical admission limit. Test one specified off-axis

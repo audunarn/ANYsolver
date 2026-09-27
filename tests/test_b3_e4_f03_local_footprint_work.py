@@ -108,9 +108,9 @@ def test_native_c1_terminal_reference_and_opening_shear_kkt():
         assert stations["950"]["beam_port_rx_left_rad"] is not None
         assert stations["950"]["beam_port_rx_right_rad"] is not None
         assert stations["1000"]["beam_port_rx_right_rad"] is None
-        assert all(np.isfinite([v for v in values.values()
-                                if v is not None]).all()
-                   for values in stations.values())
+        assert all(np.isfinite(np.asarray(value, dtype=float)).all()
+                   for values in stations.values()
+                   for value in values.values() if value is not None)
         assert case["physical_shell_work_j"] > 0.
         assert case["mechanics_error"] < 1e-7
 
