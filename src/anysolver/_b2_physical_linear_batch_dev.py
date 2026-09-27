@@ -223,6 +223,10 @@ class CompiledB2AffineBatch:
                               for row in response.resultants),
                         tuple(tuple(float(value) for value in row)
                               for row in response.strains)))
+                    if cancellation_token is not None and cancellation_token.is_cancelled:
+                        break
+                if cancellation_token is not None and cancellation_token.is_cancelled:
+                    break
                 completed.append(SelectedCase(
                     identity, tuple(float(v) for v in selected[:, j]),
                     tuple(member_results)))

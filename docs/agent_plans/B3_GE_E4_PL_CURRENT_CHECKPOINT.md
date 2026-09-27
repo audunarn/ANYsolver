@@ -55,6 +55,10 @@ caller station list in a callback does not alter later results. This is local
 section recovery only, with no coupled reaction or public B2 B07
 qualification.
 
+A cancellation injected during section recovery now discards that incomplete
+case before callback/publication. The focused F13 file passes 13/13 after
+this safe-point check; earlier completed cases remain a whole ordered prefix.
+
 ## Current decision — 27 September 2026
 
 **Decision sought:** Select the physical native beam–shell connection and its

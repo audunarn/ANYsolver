@@ -174,6 +174,32 @@ def test_selected_recovery_rejects_invalid_requests_before_case_publication():
     batch.close()
 
 
+def test_cancellation_during_selected_recovery_discards_incomplete_case(monkeypatch):
+    members, _ = _members()
+    compiled = tuple(member.compile_local() for member in members)
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        compiled, transform, offset, np.arange(12, 18))
+    token = CancellationToken()
+    original = type(compiled[0].operator).recover_sections
+
+    def cancel_during_recovery(operator, displacement, *, stations):
+        response = original(operator, displacement, stations=stations)
+        token.cancel("during selected recovery")
+        return response
+
+    monkeypatch.setattr(type(compiled[0].operator), "recover_sections",
+                        cancel_during_recovery)
+    observed = []
+    result = batch.solve_many(
+        _cases(10), cancellation_token=token,
+        recover_members={compiled[0].definition.member_id: (.5,)},
+        on_case=observed.append)
+    assert result.status == "cancelled"
+    assert result.cases == () and observed == []
+    batch.close()
+
+
 @pytest.mark.parametrize("radius_m", (.005, .02, .08))
 def test_scaled_batch_preserves_coherent_circular_elbow_work(radius_m):
     area = math.pi*radius_m**2
