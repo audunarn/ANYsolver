@@ -115,6 +115,34 @@ measure for the already tested rectangular family, then test the proposed
 local screen against those cases and one retained failure. Do not infer a
 section cutoff from the artificial exponent bracket. F09/G0B remain open.
 
+**Next bounded F09 rounding discriminator (27 September):** For the three
+already declared rotated rectangular sections and the elbow's 2 m/1.5 m
+member lengths, compare the private exact-rational six-basic inverse with
+its binary64 storage on six force/couple basis actions
+and fixed mixed-sign actions at declared `1000 N` and `1000 Nm` scales.
+Check applied-scale action residual, work and positivity of the diagonally
+scaled rounded basic operator. Loss of a positive mode or material action
+error sends local representation/admission back for revision. Agreement
+supports only these physical section samples and shifts the remaining
+numerical question to graph/factorization and the prospective admitted
+range. It neither replaces independent cut-wrench mechanics nor changes
+the provisional private pivot guard or any F09/G0B criterion.
+
+**F09 local rounding result (27 September):** All six predeclared
+rectangle/length combinations passed nine exact-rational versus binary64
+basic actions apiece. The rounded dimensionless basic matrices remained
+positive definite; applied-scale force/couple and positive-work comparisons
+met the `1e-8` development discriminator. The affected file passed `12/12`
+with single-thread numerical libraries and pytest plugin autoload disabled.
+The test-file import order was corrected to load its lightweight private
+probe before importing the package, eliminating a package-wide collection
+stall. Two earlier runs were stopped without a numerical result at the
+existing 120 s diagnostic bound; their empty runner logs are retained at
+`%TEMP%/b2-f09-local-rounding-20260927-v1.log` and `-v2.log`. This sampled
+rounding result does not establish F09 admission: next assess physical
+applied-scale graph/factorization error and the prospective admitted range
+without changing the provisional pivot guard or frozen criteria.
+
 **F13 residual-admission decision (27 September):** The private B2 batch's
 fast residual route treats `eps * row_scale <= 1e-9 * physical_scale` as
 sufficient to trust a rounded sparse dot. That ignores row length and how

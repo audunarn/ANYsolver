@@ -13,12 +13,11 @@ from scipy import sparse
 from scipy.sparse import diags
 from scipy.sparse.linalg import splu
 
-from anysolver._b2_physical_linear_batch_dev import CompiledB2AffineBatch
-from anysolver._b2_physical_flexibility_linear import LinearSection
-
-
 PROBE = runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts"
                            / "probe_b3_ge_e4_pl_g0_f09_graph_reversal.py"))
+
+from anysolver._b2_physical_linear_batch_dev import CompiledB2AffineBatch
+from anysolver._b2_physical_flexibility_linear import LinearOperator, LinearSection
 
 
 def _physical_section(width=.040, depth=.012):
@@ -47,6 +46,44 @@ def _physical_section(width=.040, depth=.012):
     assert np.max(np.abs(stiffness@compliance-np.eye(6))) <= (
         32*np.finfo(float).eps)
     return stiffness, compliance
+
+
+@pytest.mark.parametrize("width,depth", ((.08, .04), (.04, .012), (.012, .003)))
+@pytest.mark.parametrize("length", (2., 1.5))
+def test_physical_basic_actions_survive_binary64_storage(width, depth, length):
+    stiffness, _ = _physical_section(width, depth)
+    section = LinearSection.generalized(stiffness)
+    operator = LinearOperator(length, section)
+    exact_basic = operator._basic_inverse
+    rounded_basic = np.array(exact_basic, dtype=float)
+    diagonal = np.array([float(exact_basic[i][i]) for i in range(6)])
+    assert np.isfinite(rounded_basic).all()
+    assert np.isfinite(diagonal).all() and np.all(diagonal > 0.)
+    normalized = rounded_basic/np.sqrt(diagonal)[:, None]/np.sqrt(diagonal)[None, :]
+    assert np.linalg.eigvalsh(normalized)[0] > 0.
+
+    # Each isolated basic deformation induces 1000 N or 1000 Nm on its
+    # conjugate diagonal; mixed signs probe cancellation in coupled modes.
+    basic_scales = [Fraction(1000)/exact_basic[i][i] for i in range(6)]
+    actions = [tuple(1 if i == j else 0 for i in range(6))
+               for j in range(6)]
+    actions += [(1, -1, 1, -1, 1, -1),
+                (-1, 1, -1, 1, -1, 1),
+                (0, 0, 1, -1, 1, -1)]
+    for action in actions:
+        deformation = [basic_scales[i]*action[i] for i in range(6)]
+        exact_force = [sum(exact_basic[i][j]*deformation[j]
+                           for j in range(6)) for i in range(6)]
+        stored_deformation = np.array([float(value) for value in deformation])
+        stored_force = rounded_basic@stored_deformation
+        applied_scale_error = np.max(np.abs(stored_force-np.array(
+            [float(value) for value in exact_force]))/1000.)
+        exact_work = float(sum(deformation[i]*exact_force[i]
+                               for i in range(6)))
+        rounded_work = float(stored_deformation@stored_force)
+        assert exact_work > 0. and rounded_work > 0.
+        assert applied_scale_error < 1e-8
+        assert abs(rounded_work-exact_work)/exact_work < 1e-8
 
 
 def _cut_work(members, tip, compliance):
