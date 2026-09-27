@@ -2533,8 +2533,11 @@ coordinates of this exact solution, does not admit this extreme section.
 This does not prove that every neighboring binary64 vector fails; the
 remaining bounded choice is to establish a defensible conditioning admission
 range or a verified state representation that passes physical balance.
-The focused F13 file remains `18/18`. A piped read-only diagnostic was
-interrupted without output; the committed test is the completed check.
+The focused F13 file remains `18/18`. A piped read-only diagnostic and a
+six-case exploratory sweep were stopped without outputs after excessive
+runtime; their owned child processes were stopped and the temporary sweep
+script removed. Neither aborted run is evidence. The committed fixed-graph
+test is the completed check; a later range study needs an explicit time bound.
 No large-scale or production conditioning claim follows. F09/G0B remain open.
 
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
