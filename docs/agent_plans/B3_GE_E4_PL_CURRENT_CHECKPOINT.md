@@ -44,6 +44,32 @@ same global prestress work after node permutation. The bounded file passes
 prestress, attachment curvature, shell coupling, massless-descriptor
 buckling, or independent acceptance. F12/G0B remain open and G1 barred.
 
+**Independent F12 review and next discriminator:** Read-only mechanics
+review found no algebraic error in the stated member-only term or its
+global congruence. It noted that the original slender case has
+`P_EB/(kGA)≈4.45e-5`, far below its 1% error bound; that screen alone cannot
+separate the Engesser limit from Euler. The station-difference check reuses
+the same trace coefficients, and reversal currently covers one isotropic
+tilted member. On the same length and material, run one declared stockier
+radius with 1/2/4/8 members and compare the unchanged candidate to both
+Euler and Engesser; require the finer mesh to move materially toward the
+shear-corrected limit. If it does, retain the narrow member result; if not,
+revisit the geometric energy/trace before any attached buckling claim.
+The axial force here means an equilibrated conservative resultant on the
+reference centerline. Eccentricity, variable force, attached curvature and
+external/follower load terms remain separate.
+
+**Stockier result:** With radius `.05 m` instead of `.005 m` at the same
+`1 m` span, the Engesser/Euler separation exceeds `0.3%`. The unchanged
+candidate's first compressive factor converges monotonically across
+1/2/4/8 members and the 8-member relative error to Engesser is below
+`1e-4`, less than one tenth of that separation. The slender case also
+meets the stronger `1e-4` bound; all selected eigenpairs retain the
+`1e-8` equation-residual check. The focused file passes 5/5. This
+distinguishes the chosen shear-corrected continuum limit in these two
+bounded circular sections. It does not qualify arbitrary sections,
+prestress distributions, shell attachments or production buckling.
+
 ## F13 affine factorization dependency slice — 27 September 2026
 
 **Decision sought:** Can the private B2 route reuse an unchanged sparse

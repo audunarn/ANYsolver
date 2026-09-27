@@ -56,8 +56,8 @@ def test_constant_axial_hessian_matches_independent_trace_slope_work(generalized
         operator.candidate_constant_axial_geometric_stiffness(float("nan"))
 
 
-def test_slender_cantilever_first_compressive_factor_converges_to_matched_shear_limit():
-    radius = .005
+@pytest.mark.parametrize("radius", (.005, .05))
+def test_cantilever_first_compressive_factor_converges_to_matched_shear_limit(radius):
     inertia = math.pi*radius**4/4
     euler = math.pi**2*210e9*inertia/4.
     shear_rigidity = .9*(210e9/(2*(1+.3)))*math.pi*radius**2
@@ -87,8 +87,12 @@ def test_slender_cantilever_first_compressive_factor_converges_to_matched_shear_
         scale = np.linalg.norm(reduced_k@mode)+first*np.linalg.norm(reduced_g@mode)
         assert np.linalg.norm(residual)/scale <= 1e-8
         errors.append(abs(first/matched-1.))
-    assert errors[-1] < .01
+    assert errors[-1] < 1e-4, errors
     assert all(later < earlier for earlier, later in zip(errors, errors[1:])), errors
+    if radius == .05:
+        shear_gap = abs(matched/euler-1.)
+        assert shear_gap > .003
+        assert errors[-1] < shear_gap/10.
 
 
 def test_global_constant_axial_term_preserves_work_on_member_reversal():
