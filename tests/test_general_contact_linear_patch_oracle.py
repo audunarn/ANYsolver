@@ -6,6 +6,7 @@ have been calculated independently.
 """
 
 import numpy as np
+from dataclasses import replace
 
 from anysolver import (
     BoundaryCondition,
@@ -13,14 +14,16 @@ from anysolver import (
     ContactInteraction,
     ContactSolverSettings,
     ContactSurface,
+    LoadCase,
     create_shell_element,
+    solve_static_nonlinear,
     validate_general_contact,
 )
 from anysolver.fe_core import FEModel
 from anysolver.general_contact.core import contact_scope
 
 
-def test_q4_against_nonmatching_s3_partial_pressure_oracle():
+def _case_and_local_check():
     gap = 50.0e-6
     selected_displacement = 90.0e-6
     epsilon = 100_000.0
@@ -165,3 +168,79 @@ def test_q4_against_nonmatching_s3_partial_pressure_oracle():
     )
     assert contact.gap_tolerance_met
     assert contact.active_pressure_dofs == 2
+    return model, definition, settings, mortar_mass, support
+
+
+def test_q4_against_nonmatching_s3_partial_pressure_oracle():
+    _case_and_local_check()
+
+
+def test_loaded_augmented_patch_matches_independent_linear_solution():
+    model, definition, settings, mortar_mass, support = _case_and_local_check()
+    structural = FEModel("structural_only_linear_oracle")
+    structural.add_material("elastic", 1.0e5, 0.3, density=1.0)
+    for node in range(1, 7):
+        position = model.mesh.get_node(node).coords()
+        structural.add_node(node, *map(float, position))
+    stiffness = np.zeros((36, 36))
+    for element_id, nodes in ((1, (1, 2, 5, 4)),
+                              (2, (2, 3, 6, 5))):
+        element = create_shell_element(
+            element_id, nodes, "elastic", thickness=0.05,
+            reference_normal=(0.0, 0.0, 1.0),
+        )
+        structural.add_element(element_id, element)
+        local = element.compute_stiffness_matrix(
+            structural.mesh, structural.get_material("elastic")
+        )
+        indices = [6 * (node - 1) + axis for node in nodes for axis in range(6)]
+        stiffness[np.ix_(indices, indices)] += local
+
+    expected_displacement = 60.0e-6
+    expected_pressure = np.array((0.0, 0.0, 0.1, 0.0, 0.0, 0.1))
+    q = np.zeros(36)
+    for node in range(1, 7):
+        q[6 * (node - 1) + 2] = (
+            -expected_displacement * structural.mesh.get_node(node).x
+        )
+    normalized_gap = 50.0e-6 + mortar_mass @ q[2::6] / support
+    np.testing.assert_allclose(normalized_gap[[2, 5]], 0.0,
+                               atol=1.0e-15)
+    assert np.min(normalized_gap[[0, 1, 3, 4]]) > 0.0
+    source_contact_force = mortar_mass @ expected_pressure
+    external_force = stiffness @ q
+    external_force[2::6] -= source_contact_force
+    load = LoadCase("manufactured_augmented_right_edge")
+    for node in (2, 3, 5, 6):
+        load.add_nodal_load(node, forces=(
+            0.0, 0.0, float(external_force[6 * (node - 1) + 2]),
+        ))
+    settings = replace(
+        settings, augmentation_acceleration="supported_schur_dev",
+        augmentation_schur_maximum_modes=6,
+        augmentation_schur_maximum_pressure_pa=10.0,
+        augmentation_schur_maximum_step_pa=5.0,
+        augmentation_schur_difference_step_m=2.0e-6,
+        augmentation_schur_maximum_attempts=2,
+        augmentation_schur_maximum_relinearizations=0,
+    )
+    result = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        control="force", kinematics="von_karman", num_steps=1,
+        max_iterations=12, min_step_fraction=0.25,
+        emit_restart_checkpoint=True,
+    )
+    assert result.status == "completed", result.failure_reason
+    np.testing.assert_allclose(
+        [result.displacements[model.mesh.get_node(node).dofs[2]]
+         for node in range(1, 7)],
+        q[2::6], rtol=1.0e-3, atol=1.0e-8,
+    )
+    contact = result.info["general_contact"]
+    np.testing.assert_allclose(
+        contact["integration_force"][2],
+        float(np.dot(support, expected_pressure)),
+        rtol=1.0e-3, atol=1.0e-6,
+    )
+    assert contact["gap_tolerance_met"]
+    assert result.restart_checkpoint is not None
