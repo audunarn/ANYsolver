@@ -20,19 +20,18 @@ split reproduces the original work and attributes `95%`/`89%` of the
 native-minus-solid Mx/Fz difference to mean-action self-work. The
 moment case concentrates in physical Mx and Mz; the force case is an
 axial-force/bending-couple block with substantial cancellation.
-**Remaining uncertainty:** whether targeted Q4 line resolution recovers
-the missing physical Mx weak work and Gauss-station yaw without locking
-or changing the intended connection law; shell/3D stiffness and support
-differences, the continuous law, and growing-space mixed stability
-follow. **Next discriminator and action:** On the same saved solid field
-and fixed P0 m4 dual, make one x4→x8 native Q4 trace/fit comparison at
-unchanged transverse resolution. The shell-only weak rank rises from
-21/24 to 24/24 in a read-only operator check. Measure station work,
-face-fit cost and physical transfer before deciding whether to adopt
-an interface-resolution policy or revisit the law. Do not add x16
-automatically. Advance B2 F09.
-Do not
-automatically add finer x/y or classical axial runs. P0 and the
+The bounded x4→x8 trace comparison on the same solid field and fixed
+P0 m4 dual recovers shell-only weak rank `24/24` (from `21/24`) and
+halves the best Mx station residual, but the previously measured x8
+native fixed-action work still lies `9.68%`/`14.13%` below the solid
+Mx/Fz work. **Remaining uncertainty:** physical two-sided torque/shear
+transfer and the cause of the persistent response difference; neither
+weak rank nor a face-displacement fit validates the connection law.
+**Next discriminator and action:** Interpret the existing supported
+native and matched solid action evidence together, then define one
+recoverable sided reference that distinguishes shell/section response
+from connection work. Advance B2 F09 independently. Do not automatically
+add finer x/y or classical axial runs. P0 and the
 continuous law remain unselected; G0B open, G1 barred, formal F03
 authority unconsumed. The records and exact source/evidence identities
 follow.
@@ -10165,3 +10164,36 @@ physical response remains stable, define a candidate interface
 resolution policy for registered mesh-ratio/stability testing. If
 they persist, revisit the physical trace definition. No classical
 axial refinement or new external solve is implied.
+
+**Bounded x8 result and decision:** Source `af491c60` compares an x8/y4
+native Q4 trace to the **same** saved factor-4 detached-solid field,
+beam definition, four P0 intervals and physical dual as x4; the solid
+ports are evaluated at the x8 native stations. Both quadratures
+reproduce prior saved solid work within `1e-9 J`, and assembled native
+row work agrees with station work. The shell-only weak map gains full
+`24/24` rank, and reachable weak matching has negligible residual.
+For Mx, the best scaled station RMS falls from `5.238e-7` to
+`2.607e-7 m`, and the maximum Mz/yaw scaled component falls from
+`2.467e-6` to `1.232e-6 m`; the face-fit RMS penalty for matching all
+weak rows falls from `2.19%` to `0.90%`. For Fz, best station RMS
+falls from `1.974e-8` to `4.238e-9 m` and face-fit penalty from
+`0.63%` to `0.24%`. The ordinary equal-node face fit still leaves
+solid-minus-fitted line work `8.84984e-5 J` (Mx) and `8.46879e-4 J`
+(Fz), each about `20%` below its x4 difference, not zero.
+
+The existing independent fixed-dual E4 response record shows x8 shell
+work `0.0017884839094 J` for Mx and `0.0130220470294 J` for Fz,
+still `9.68%`/`14.13%` below the same solid plate action work. Its
+source-bound record `B3_E4_F03_C1_MATERIAL_LINE_SHELL_RESOLUTION_DEV_V1.json`
+has SHA256 `34eb92b41aac74c463355f985bf536ddb85d8179bf509564921886a114bd668a`.
+The new raw V6
+`B3_E4_F03_C1_GLOBAL_Q4_FIT_DEV_V6.json` has SHA256
+`8499f8e1eeac06e6917033c1efa512c5eb2ab15ee98f7e51a3df525d402b0298`;
+two focused x4/x8 diagnostic tests pass. Thus x-resolution explains
+the missing weak directions and part of the station mismatch, but
+cannot by itself account for the supported work difference. The trace
+law, shell/3D idealization and support differences remain open. No
+multiplier is selected; this is not interface stability, F03 or G0B
+acceptance. Next use a physically matched, recoverable sided reference
+for torque/shear and the registered growing-space mixed-norm assessment,
+without another automatic axial refinement.
