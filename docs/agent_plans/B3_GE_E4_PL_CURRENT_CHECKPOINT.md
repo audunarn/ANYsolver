@@ -20,16 +20,17 @@ split reproduces the original work and attributes `95%`/`89%` of the
 native-minus-solid Mx/Fz difference to mean-action self-work. The
 moment case concentrates in physical Mx and Mz; the force case is an
 axial-force/bending-couple block with substantial cancellation.
-**Remaining uncertainty:** whether the solid trace lies in the native
-Q4 station/weak trace space at an acceptable face-fit cost, followed
-by shell/3D stiffness and support differences, the physical continuous
-law, and growing-space mixed stability. **Next discriminator and action:**
-Constrain the same global Q4 face fit to match the 24 integrated solid
-line rows and independently find the minimum six-channel Gauss-station
-trace residual. Record the face-fit penalty and actual line work. A
-small penalty sends the apparent mismatch to fit weighting and then
-to a matched stiffness/support check; a large penalty or irreducible
-station residual directs trace-law/resolution review. Advance B2 F09.
+**Remaining uncertainty:** whether targeted Q4 line resolution recovers
+the missing physical Mx weak work and Gauss-station yaw without locking
+or changing the intended connection law; shell/3D stiffness and support
+differences, the continuous law, and growing-space mixed stability
+follow. **Next discriminator and action:** On the same saved solid field
+and fixed P0 m4 dual, make one x4→x8 native Q4 trace/fit comparison at
+unchanged transverse resolution. The shell-only weak rank rises from
+21/24 to 24/24 in a read-only operator check. Measure station work,
+face-fit cost and physical transfer before deciding whether to adopt
+an interface-resolution policy or revisit the law. Do not add x16
+automatically. Advance B2 F09.
 Do not
 automatically add finer x/y or classical axial runs. P0 and the
 continuous law remain unselected; G0B open, G1 barred, formal F03
@@ -10123,3 +10124,44 @@ also minimize all six Gauss-station trace residuals independently.
 If the weak rows match cheaply but stations cannot, separate discrete
 P0 enforcement from continuous trace resolution. No new external
 solver or mesh refinement is needed, and F03/G0B remain open.
+
+**Rank-aware fit and physical-work decision:** The first exact 24-row
+shell-only constraint attempt failed. Source `e6b69c5e` diagnosed the
+actual map: the x4 shell side has rank `21/24`, so three weak-row
+combinations cannot be imposed independently, although the full
+beam–shell KKT may have a different rank. A bounded SVD separates the
+21 reachable rows from their left-null complement. Matching reachable
+rows increases global face-fit RMS by `2.19%` for Mx and `0.63%`
+for Fz; the reachable scaled residual is below `8e-22 m²`. The
+unreachable Mx component has maximum `2.504e-9 m²` after the declared
+`0.1 m` moment scale and **native-minus-solid weak work**
+`−1.8401464e-5 J`, about `9.1%` of the total Mx action-only work gap.
+For Fz that signed weak-work residual is below `1e-18 J`. A separate
+best 72-channel Gauss-station fit has rank `25/72` and minimum scaled
+RMS `5.238e-7 m` (Mx), with its largest Mz/yaw residual equivalent
+to `24.67 µrad`; Fz minimum is `1.974e-8 m`. The station minimum does
+not require closeness to the saved 3D face field. Source `5fcad21c`
+corrects earlier V3/V4 weak-residual labels from metres to **m²** and
+names the signed work orientation explicitly; their numerical records
+remain preserved. Corrected V5
+`B3_E4_F03_C1_GLOBAL_Q4_FIT_DEV_V5.json` has SHA256
+`b8c1d8ef3693910175627da5136578384c3fe19c8ddefe3387ec0598a47a6c6d`.
+Independent read-only review found no matrix, clamp, port-sign or
+quadrature defect and confirmed the rank/work interpretation after
+the unit and sign corrections. One synthetic constrained-fit test
+passes. These are fixed-mesh development diagnostics, not an inf-sup,
+accuracy or formulation verdict.
+
+**One bounded resolution discriminator:** Reusing the existing native
+row builder with the same four P0 intervals, `0.1 m` moment scale,
+beam and y4 shell layout, the x4 shell-side integrated map has rank
+`21/24` (last three singular values below `2e-18`); x8 has rank
+`24/24` (smallest `0.0013081` in the chosen coordinates). This is a
+read-only operator result at source `5fcad21c`, not a stability or
+loaded-transfer pass. Next compare x8 against the **same saved factor-4
+solid field and fixed dual**, including weak/station traces, work and
+face-fit cost. If the missing Mx work and yaw residual shrink while
+physical response remains stable, define a candidate interface
+resolution policy for registered mesh-ratio/stability testing. If
+they persist, revisit the physical trace definition. No classical
+axial refinement or new external solve is implied.
