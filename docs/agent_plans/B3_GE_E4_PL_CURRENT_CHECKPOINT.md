@@ -111,6 +111,29 @@ report sensitivity to the pulled-back norm as well as the restricted
 physical norm. Interpret both with the existing loaded physical transfer;
 neither quotient nor F5 proximity alone selects a multiplier space.
 
+**Fixed-primal space/norm result and next discriminator:** A single x16/y4
+Q4/B3-12 assembly reused the exact Schur tangent for P0-four/eight and
+both declared norms. In the restricted non-drill physical norm, P0-four
+has `β=0.0151963` with `98.40%` of the weakest mode in beam kinematics;
+P0-eight has `β=0.00713953` with `99.2949%` in the line dual. In the
+full metric pulled through the exact chart lift, both minima are
+`≈0.00040945` and `99.986%` chart-induced, so the full scalar minimum
+masks the interface-mode change. All four eigen residuals are below
+`2.1e-11`, both row spaces have full scaled rank, and the run used
+`65.88 s` and `466 MB`, within the unchanged limits. Raw result:
+`B3_GE_E4_PL_F03_TOP_FACE_X16_FIXED_PRIMAL_SPACES_20260927.json`.
+This separates row-growth from shell refinement on one primal, but the
+restricted norm is still diagnostic. Combined with saved loaded F5 common
+actions (m8 worsens B3-12 but improves B3-24), the next bounded question
+is whether more native beam trace resolution stabilizes the new line mode.
+Hold the x16 shell, supports, loads, exact work law and P0-four/eight
+spaces fixed; change only B3 half-cells 12→24. Reuse the same shell/Schur
+preparation, record physical-mode and pulled-norm sensitivity plus the
+already saved loaded work. If the line mode recovers, formulate a beam-
+to-interface resolution admission rule before ratios. If it does not,
+revisit the P0 space/dual norm or law rather than automatically refining.
+This is not a multiplier selection or F03 acceptance.
+
 **Next bounded growing-row diagnostic (prospective, 27 September):** On the
 already assembled x8/y4 C1 Q4/B3-12 native retained system, grow the exact
 top-face P0 space from the saved two/four intervals to eight while keeping
