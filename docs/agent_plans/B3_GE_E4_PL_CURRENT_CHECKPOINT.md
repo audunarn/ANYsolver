@@ -14,25 +14,35 @@ area-mean-tied solid state has its original six gaps near zero, yet the
 candidate material-line gaps reach `3.98e-6 rad` under tip Mx and
 `3.12e-6 rad` under tip Fz. Thus F4 is not a same-law accuracy reference;
 the result does not prove either connection is physically superior.
+The four-interval P0 weak action of this same solid trace is now
+assembled by three-point quadrature per interval. It has `24/24`
+independent rows on `288` actual face nodes, balanced side/global
+wrenches and transpose work to `1.1e-16 J`. Its normalized shell-side
+rows agree with the native P0 shell trace on representable fields
+(six focused tests pass). Rank is not an inf-sup or accuracy verdict.
 **Remaining uncertainty:** Whether a matched two-sided material-line
 reference reproduces physical torque/shear transfer, and which growing
 multiplier space passes rank, work, locking and mixed-system stability
 over the registered ratios. The saved F5 comparison has a transfer-shape
 difference but a different connection law.
-**Next discriminating experiment and action:** Define a bounded external
-action-basis solve enforcing this same material-line trace on the existing
-physical geometry, support and loads. Preflight its side wrenches,
-representable virtual work and conditioning before any loaded comparison;
-then compare matched physical work and fixed-distance observables with
-the native candidate. A work/sign failure returns to the port law; a
-consistent but different response motivates a targeted shell/beam-versus-
-connection allocation. Do not infer multiplier selection from the
-three-station gap sample or revive finer classical axial screens.
+**Next discriminating experiment and action:** Run one bounded external
+unit-action column using the preflighted 24-row P0 map on the unchanged
+detached geometry, support and solver limits. Check the applied nodal
+wrench, returned displacement, reciprocity and resource use before
+further columns. A work/sign or solver failure returns to the action
+route; a valid column supports a bounded compliance reconstruction of
+the same law for tip Mx/Fz. Compare matched physical work and
+fixed-distance observables only after that reconstruction. Do not infer
+multiplier selection from this P0 comparator or revive finer classical
+axial screens.
 Raw developmental files are
 `B3_E4_F03_C1_MATERIAL_LINE_SOLID_PORT_DEV_V1.json` (SHA256
 `9607D529156C28D02F428856AB69407959A5326DE97093C4BD822BBFE0BC5D4C`)
 and `B3_E4_F03_C1_MATERIAL_LINE_SAVED_F4_FIELD_DEV_V1.json`
 (SHA256 `2757B370DB60E525F19CF6045B59F3BA8E872C9961A9FABCCD0AF82D8899E82D`).
+The integrated P0 preflight is
+`B3_E4_F03_C1_MATERIAL_LINE_P0_SOLID_PREFLIGHT_DEV_V1.json`
+(SHA256 `5C5D52890AD5607C0D8DB82B650F2CF4E17038093F7C4D345ACD8C7BF09F94AC`).
 This is development evidence, not F03/G0B acceptance. Formal F03
 authority remains unconsumed; G0B open and G1 barred. B2 F09 and other
 independent foundations remain available for bounded parallel progress.

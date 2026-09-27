@@ -10,6 +10,9 @@ from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_local_footprint_work import structured_q4_point_shape
 from scripts.b3_e4_f03_material_line_position import MaterialLinePosition
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
+from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
+from scripts.b3_e4_f03_material_line_space_screen import _rows
+from scripts.b3_e4_f03_c1_material_line_p0_reference import integrated_rows
 
 
 def _faces():
@@ -162,3 +165,38 @@ def test_solid_port_agrees_with_native_line_on_representable_fields():
         np.testing.assert_allclose(
             port.gap(displacement), native@np.r_[shell_q.ravel(), beam_q],
             rtol=1e-10, atol=2e-11)
+
+
+def test_integrated_solid_p0_rows_match_native_shell_trace():
+    """The independent solid and native P0 maps integrate the same shell law."""
+    coords, plate, bar = _faces()
+    nodes, solid_rows, _ = integrated_rows(coords, plate, bar)
+    xs = np.linspace(.9, 1., 5)
+    ys = np.linspace(-.05, .05, 5)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam)
+    space = LineMultiplierSpace("piecewise_constant", tuple(np.linspace(0., 1., 5)))
+    native_rows, measure = _rows(line, space)
+    rng = np.random.default_rng(811)
+    for _ in range(2):
+        shell_q = rng.normal(scale=1e-4, size=(line.shell_count, 6))
+        field = []
+        for node in nodes:
+            xyz = coords[node]
+            if node in plate:
+                support, shape = structured_q4_point_shape(xs, ys, xyz[0], xyz[1])
+                field.append(sum(
+                    (weight*(shell_q[int(i), :3] +
+                             np.cross(shell_q[int(i), 3:], (0., 0., xyz[2]))))
+                    for i, weight in zip(support, shape)
+                ))
+            else:
+                assert node in bar
+                field.append(np.zeros(3))
+        solid_gap = (solid_rows@np.asarray(field).ravel()).reshape(4, 6)
+        native_gap = (native_rows@np.r_[shell_q.ravel(),
+                                        np.zeros(beam.context.count)]).reshape(4, 6)
+        np.testing.assert_allclose(solid_gap/measure[:, None], native_gap,
+                                   rtol=2e-10, atol=2e-11)
