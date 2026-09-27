@@ -200,8 +200,26 @@ def test_material_line_rejects_unexplained_reference_gap():
         MaterialLinePosition(xs, ys, beam, beam_depth=.09)
 
 
-def test_material_line_finite_common_rigid_motion_is_objective():
-    _, _, beam, line = _fixture(patch_cells=2)
+@pytest.mark.parametrize("mixed_s3,off_edge,diagonal", (
+    (False, False, "bl_tr"),
+    (True, True, "bl_tr"),
+    (True, True, "br_tl"),
+))
+def test_material_line_finite_common_rigid_motion_is_objective(
+        mixed_s3, off_edge, diagonal):
+    xs, ys = local_grid(2, transverse_cells=4)
+    if off_edge:
+        ys = ys.copy()
+        ys[np.flatnonzero(np.abs(ys) < 1e-12)[0]] = .01
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3,
+                                diagonal=diagonal)
+    if off_edge:
+        assert [len(station.nodes) for station in line.stations] == [3]*3+[4]*3
+        assert min(np.min(station.shape) for station in line.stations) > 0.
+        assert len({tuple(station.nodes) for station in line.stations[:3]}) == 2
     rotation_vector = np.array((.2, -.15, .1))
     rotation = Rotation.from_rotvec(rotation_vector).as_matrix()
     translation = np.array((.03, -.02, .04))
@@ -277,10 +295,33 @@ def test_material_line_orientation_jacobian_uses_native_chart(mixed_s3):
     assert np.max(np.abs(line.reference_orientation_jacobian()@drilling)) < 1e-12
 
 
-@pytest.mark.parametrize("mixed_s3", (False, True))
-def test_material_line_orientation_jacobian_at_nonzero_gap(mixed_s3):
-    xs, ys, beam, _ = _fixture(patch_cells=2)
-    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3)
+@pytest.mark.parametrize("mixed_s3,off_edge,diagonal", (
+    (False, False, "bl_tr"),
+    (True, False, "bl_tr"),
+    (True, True, "bl_tr"),
+    (True, True, "br_tl"),
+))
+def test_material_line_orientation_jacobian_at_nonzero_gap(
+        mixed_s3, off_edge, diagonal):
+    xs, ys = local_grid(2, transverse_cells=4)
+    if off_edge:
+        ys = ys.copy()
+        ys[np.flatnonzero(np.abs(ys) < 1e-12)[0]] = .01
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3,
+                                diagonal=diagonal)
+    if off_edge:
+        assert [len(station.nodes) for station in line.stations] == [3]*3+[4]*3
+        assert len({tuple(station.nodes) for station in line.stations[:3]}) == 2
+        identity = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3))
+        assert np.max(np.abs(line.evaluate(
+            line.reference_nodes, identity,
+            beam.context.initial.mechanical))) < 1e-12
+        assert np.max(np.abs(line.orientation_gap(
+            line.reference_nodes, identity,
+            beam.context.initial.mechanical))) < 1e-12
     rng = np.random.default_rng(349 if mixed_s3 else 350)
     shell_base = rng.normal(size=(line.shell_count, 6))*.02
     shell_direction = rng.normal(size=(line.shell_count, 6))*.1

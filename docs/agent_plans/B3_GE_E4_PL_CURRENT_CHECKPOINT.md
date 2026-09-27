@@ -29,8 +29,9 @@ The matched detached-solid evidence remains limited by connection and
 contact idealization. B2 F09 fail-closed admission is unfinished.
 **Remaining uncertainty:** The admissible multi-channel test-space image
 changes with relative shell/beam resolution; the correct interface policy
-and physical torque/shear fidelity remain undecided. Mixed-S3 tested so
-far lies on a mesh edge; off-edge trace sensitivity is untested.
+and physical torque/shear fidelity remain undecided. Off-edge S3
+reference/derivative checks now pass for both triangle diagonals, while
+loaded off-edge transfer and mixed-mesh stability remain untested.
 **Next discriminator:** Derive unscaled channel and cross-channel
 row-span identities over the reference-cut union, then state one fixed
 local basis rule before another loaded sweep. Test that rule across
@@ -39,7 +40,7 @@ norms. The ratio-specific ablations are diagnostics, not a selected rule.
 Do not automatically drop rows by SVD or run the full ratio series on
 the failed enriched policy.
 Advance a physically matched two-sided torque/shear reference and check
-off-edge S3 mapping separately. Do not resume finer classical axial work.
+off-edge S3 loaded transfer separately. Do not resume finer classical axial work.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Next bounded row-policy probe (prospective):** The first reciprocal
@@ -75,6 +76,22 @@ work error `3.07e-12`, force balance `2.58e-9 N`, moment balance
 *same* ratio, candidate tip twist changes `-0.152%` (1:2) and `+0.615%`
 (2:1); shear tip motion changes `+0.012%` and `+0.018%`. These small
 response differences are descriptive, not physical-accuracy evidence.
+
+**Off-edge S3 kinematic check:** The center transverse mesh row was moved
+from `y=0` to `y=+0.01 m`, leaving the physical material line at `y=0`.
+For either S3 diagonal, the first three bond stations have positive
+three-node interior shapes across both triangles, and the remaining three
+use Q4 hosts. Focused
+finite common-rigid, reference-closure, nonzero-gap first and mixed
+second-variation tests passed `7/7` through the actual native update
+and rotation chart. A first exploratory direction touched a fixed native
+coordinate and was rejected by state ownership; the corrected admissible
+direction passed, so that setup error is not a mechanics failure.
+These are kinematic checks, not an off-edge loaded response, interface
+stability, or G0B acceptance.
+Independent read-only review found no reference-correspondence or host
+derivative defect in this bounded probe. Host-boundary switching, seam
+differentiability and loaded physical fidelity remain untested.
 
 **Saved bounded row-growth screen:** Committed runner
 `5f852bda0553b2db84b8fb785355b5ea24cf46a7`, worktree import,
