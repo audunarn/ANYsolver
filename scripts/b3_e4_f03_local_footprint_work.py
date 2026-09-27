@@ -1253,12 +1253,19 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              line_multiplier_intervals: int = 2,
                              mixed_s3: bool = False,
                              mixed_s3_diagonal: str = "bl_tr",
-                             force_sign: float = 1.) -> dict:
+                             force_sign: float = 1.,
+                             include_tip_my: bool = False) -> dict:
     """Linearized native B3/E4 terminal KKT on a resolved local grid."""
     if plate_thickness not in (.07,.035):
         raise ValueError("bounded native plate thickness required")
     if force_sign not in (-1., 1.):
         raise ValueError("declared unit-sign terminal force required")
+    if include_tip_my and not (
+            sparse_line_only and include_line_hybrid_spaces and
+            patch_cells == 4 and transverse_cells == 4 and
+            plate_thickness == .035 and beam.n_half_cells == 12 and
+            not mixed_s3):
+        raise ValueError("loaded pitch screen requires bounded sparse C1 line")
     if include_top_face_two_intervals and top_face_intervals is not None:
         raise ValueError("choose one top-face interval selector")
     top_face_counts = ((2,) if include_top_face_two_intervals else
@@ -1583,8 +1590,11 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
             lu,piv=linalg.lu_factor(scaled)
             solve=lambda rhs: linalg.lu_solve((lu,piv),rhs)
         cases={}
-        for loading,axis,magnitude in (("tip_mx",3,100.),
-                                       ("tip_fz",2,1000.*force_sign)):
+        load_cases = (("tip_mx",3,100.),
+                      ("tip_fz",2,1000.*force_sign))
+        if include_tip_my:
+            load_cases += (("tip_my",4,100.),)
+        for loading,axis,magnitude in load_cases:
             load=np.zeros(total)
             load[shell_size+6*beam.n_half_cells+axis]=magnitude
             rhs=np.r_[load[free]*scale[:n]/energy,np.zeros(m)]
@@ -1737,9 +1747,38 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 if abs(sum(row["shell_work_j"] for row in basis_work)-
                        float(interface[:shell_size]@full[:shell_size]))>1e-8:
                     raise ArithmeticError("native line basis work does not sum")
+                channel_work=[]
+                if include_tip_my and loading == "tip_my":
+                    channel_action=np.zeros(total)
+                    for channel,name in enumerate(("Fx","Fy","Fz",
+                                                   "Mx","My","Mz")):
+                        indices=np.arange(channel,m,6)
+                        action=-(constraint[indices].T@multiplier[indices])
+                        channel_action+=action
+                        shell_part=action[:shell_size]
+                        beam_part=action[shell_size:]
+                        shell_work=float(shell_part@full[:shell_size])
+                        beam_work=float(beam_part@full[shell_size:])
+                        shell_resultant=wrench(
+                            shell_part.reshape(-1,6),shell_nodes)
+                        beam_resultant=retained_beam_wrench(beam_part)
+                        if (abs(shell_work+beam_work)>1e-8 or
+                                np.linalg.norm(shell_resultant+beam_resultant)>1e-8):
+                            raise ArithmeticError(
+                                "native line channel work/wrench does not balance")
+                        channel_work.append({
+                            "channel":name,"shell_work_j":shell_work,
+                            "beam_work_j":beam_work,
+                            "shell_wrench_N_Nm":shell_resultant.tolist(),
+                            "beam_wrench_N_Nm":beam_resultant.tolist(),
+                        })
+                    if np.linalg.norm(channel_action-interface)>1e-8:
+                        raise ArithmeticError("native line channel actions do not sum")
                 line_recovery={
                     "continuous_reference_linearized_gap":continuous,
                     "basis_interface_side_work_and_wrench":basis_work,
+                    **({"channel_interface_side_work_and_wrench":channel_work}
+                       if channel_work else {}),
                     "meaning": ("physical -C.T lambda work on accepted "
                                 "reference-linear KKT coordinates, including "
                                 "native retained B3 half-cell variables; "
@@ -1805,6 +1844,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 }
             cases[loading]={
                 "tip_rx_rad":float(full[shell_size+6*beam.n_half_cells+3]),
+                "tip_ry_rad":float(full[shell_size+6*beam.n_half_cells+4]),
                 "tip_uz_m":float(full[shell_size+6*beam.n_half_cells+2]),
                 "beam_section_rx_at_stations_rad":{
                     str(station):float(full[shell_size+

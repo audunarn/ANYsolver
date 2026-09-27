@@ -23,6 +23,11 @@ for opening, but a substantial torque gap remains. B2 F09 remains open.
 An isolated supported director-pitch couple does work through physical E4
 bending with negligible numerical drilling work; this does not validate the
 loaded coupled connection.
+A bounded loaded My case transfers about `4.1 Nm` to the shell support and
+`95.9 Nm` to the beam root, with balanced work but `0.16%` numerical shell
+work. Per-channel recovery assigns about `28%` of shell interface work to
+pitch and the remainder mainly to Fx/Fz; those channels' large My wrenches
+partly cancel, so pitch necessity remains unproven.
 The saved split-solid no-contact fields have independently reviewed sampled
 same-deformed-XY surface-order overlap witnesses: 81 torque and 20 opening
 samples among the initially negative paired-parametric subset, with minimum
@@ -104,6 +109,76 @@ by drilling completion. It does not yet validate thickness/refinement,
 mixed Q4/S3, a coupled native beam load or the production line law.
 Independent mechanics review confirmed the applied couple, reaction sign,
 wrench balance and work split without extending that scope.
+
+**Next F03 loaded pitch discriminator (prospective):** The isolated shell
+couple does not show whether the retained B3 and an exact weak line transmit
+a terminal physical My load into that E4 pitch field. Extend only the
+existing bounded x4/y4, B3-half12 sparse C1 fixture with an optional
+`+100 Nm` terminal My load. For P0, P1 and dual P1, report tip ry,
+shell/root My support shares, physical/numerical shell work, complete
+interface wrench/work and scaled equilibrium. If all three transfer a
+physical My share with balance and negligible numerical shell work, retain
+the candidate and assess physical accuracy and growing-space behavior
+separately. If any fails, distinguish trace/row, shell constitutive and
+mixed-solve causes before changing the law. No multiplier is selected from
+this one loaded case, and formal F03 authority is not consumed.
+
+**Loaded My result (27 September):** The opt-in x4/y4, retained B3-half12
+`+100 Nm` My solve completed for P0/P1/dual P1 with ranks `12/18/18` and
+mechanics errors `5.86e-12/4.80e-12/3.78e-12`. Tip ry is
+`13.079/13.109/13.277 µrad`. Shell support My is
+`−4.173/−4.159/−4.111 Nm`; beam root My supplies the corresponding
+`−95.827/−95.841/−95.889 Nm`. Physical shell work is
+`0.00041075/0.00040544/0.00040130 J`, while numerical shell work is
+`6.58e-7/6.50e-7/6.28e-7 J` (about `0.16%` of shell work). The loaded
+and isolated-pitch focused tests pass `2/2`. The numerical contribution is
+larger than the isolated pitch-only case and is not silently called zero;
+the loaded response also includes all positional channels. The next
+discriminator must apportion pitch versus positional-row transfer on the
+same physical fixture and identify the numerical work's mode before this
+case can support the physical-connection decision. This result neither
+selects a multiplier nor qualifies F03/G0B.
+Independent mechanics review confirmed signs and balance but emphasized
+that this is combined-six-channel transfer: positional force rows can
+also carry My through their arms. The new test guards balance and positive
+physical work, not the measured work magnitude or numerical fraction.
+Per-channel action/work recovery or a controlled pitch-row ablation is
+required before any pitch-specific loaded claim.
+
+**Next loaded-My allocation (prospective):** Keep the just-solved x4/y4
+KKT states and all rows unchanged. Recover each of the six channel actions
+as `−C_jᵀλ_j`, including native retained coordinates, and calculate its
+shell/beam virtual work and physical resultant. Their sums must reproduce
+the complete interface action, work and wrench. If the pitch-row shell
+work is substantial, it establishes participation in this solved state,
+not necessity or a causal ablation. If positional rows dominate, do not
+use total shell My as evidence for the director-pitch channel. This
+bounded decomposition does not rank line spaces or close the numerical-
+work question.
+
+**Loaded My channel allocation (27 September):** Exact `−C_jᵀλ_j`
+aggregation over each longitudinal basis reproduces the total interface
+action, shell/beam work and wrench; the focused test passes `1/1`.
+P0 shell-side interface My has contributions `Fx −18.796`, `Fz +13.322`,
+and projected-director `My +9.647 Nm`, summing to `+4.173 Nm`.
+P1 and dual P1 have corresponding triples
+`(−18.826,+13.321,+9.664)` and `(−18.892,+13.754,+9.249) Nm`.
+P0 shell interface work is `0.00011743 J` from Fx,
+`0.00017756 J` from Fz and `0.00011642 J` from My, summing to
+`0.00041141 J`; pitch supplies about `28%` of that work, with similar
+shares for P1/dual. Thus pitch participates materially in this solved
+state, while positional channels supply most shell-side work and their
+large My wrench contributions about the global origin partly cancel;
+individual positional-channel moments change with the chosen origin when
+that channel has net force. These signed channel work terms are not
+independent E4 strain-energy partitions. The net `4.1 Nm` shell
+support share cannot establish pitch necessity. A same-fixture pitch-row
+ablation, with rank and physical-work controls, is the next bounded
+causal discriminator; it is not a replacement production law or a
+multiplier-selection test.
+Independent mechanics review found no code or work-conjugacy blocker and
+confirmed those interpretation limits. The existing default weighted-line
+control passed `1/1` after the opt-in helper change.
 
 **Independent B2 F10/F11 S3 discriminator, before implementation (27
 September):** The private B2 reference point proof uses a finite least-squares

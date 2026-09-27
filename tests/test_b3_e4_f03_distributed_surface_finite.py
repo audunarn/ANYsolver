@@ -283,6 +283,43 @@ def test_c1_pitch_couple_drives_physical_shell_work_and_balances():
     assert abs(work-physical_work-numerical_work)/work < 1e-8
     assert abs(numerical_work)/work < 1e-8
 
+
+def test_c1_loaded_native_my_transfers_a_balanced_physical_shell_share():
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    result = graded_terminal_coupling(
+        4, beam, transverse_cells=4, plate_thickness=.035,
+        include_line_hybrid_spaces=True, sparse_line_only=True,
+        include_tip_my=True, force_sign=-1.)
+    assert set(result["results"]) == {
+        "line_hybrid_p0_weighted", "line_hybrid_p1_weighted",
+        "line_hybrid_dual_p1_weighted"}
+    for family in result["results"].values():
+        case = family["cases"]["tip_my"]
+        assert case["tip_ry_rad"] > 0.
+        assert case["mechanics_error"] < 1e-8
+        assert case["physical_shell_work_j"] > 0.
+        assert case["total_external_work_j"] == pytest.approx(
+            100.*case["tip_ry_rad"], rel=1e-10)
+        shell_my = case["shell_support_wrench_N_Nm"][4]
+        root_my = case["beam_root_wrench_N_Nm"][4]
+        assert shell_my < -1.
+        np.testing.assert_allclose(shell_my+root_my, -100., atol=1e-7)
+        np.testing.assert_allclose(
+            np.asarray(case["interface_shell_wrench_N_Nm"])+
+            np.asarray(case["interface_beam_wrench_N_Nm"]),
+            0., atol=1e-8)
+        channels = case["continuous_line_recovery"][
+            "channel_interface_side_work_and_wrench"]
+        assert [item["channel"] for item in channels] == [
+            "Fx", "Fy", "Fz", "Mx", "My", "Mz"]
+        assert sum(item["shell_work_j"] for item in channels) == pytest.approx(
+            case["interface_shell_work_j"], abs=1e-9)
+        np.testing.assert_allclose(
+            np.sum([item["shell_wrench_N_Nm"] for item in channels], axis=0),
+            case["interface_shell_wrench_N_Nm"], atol=1e-8)
+
 def test_c1_hybrid_physical_wrench_includes_all_six_channels_and_offset():
     """Check reference resultant and beam/shell rigid work conjugacy."""
     xs, ys = local_grid(2)
