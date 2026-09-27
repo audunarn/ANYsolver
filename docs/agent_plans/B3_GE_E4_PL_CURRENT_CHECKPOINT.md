@@ -30,8 +30,8 @@ contact idealization. B2 F09 fail-closed admission is unfinished.
 **Remaining uncertainty:** The admissible multi-channel test-space image
 changes with relative shell/beam resolution; the correct interface policy
 and physical torque/shear fidelity remain undecided. Off-edge S3
-reference/derivative checks now pass for both triangle diagonals, while
-loaded off-edge transfer and mixed-mesh stability remain untested.
+reference/derivative checks and a bounded loaded screen pass for both
+triangle diagonals; mixed-mesh stability and physical fidelity remain open.
 **Next discriminator:** Derive unscaled channel and cross-channel
 row-span identities over the reference-cut union, then state one fixed
 local basis rule before another loaded sweep. Test that rule across
@@ -39,8 +39,9 @@ refinement, reversal and Q4/S3 with supported work and appropriate mixed
 norms. The ratio-specific ablations are diagnostics, not a selected rule.
 Do not automatically drop rows by SVD or run the full ratio series on
 the failed enriched policy.
-Advance a physically matched two-sided torque/shear reference and check
-off-edge S3 loaded transfer separately. Do not resume finer classical axial work.
+Advance a physically matched two-sided torque/shear reference. The bounded
+off-edge S3 loaded mapping check is complete; do not resume finer
+classical axial work.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Next bounded off-edge loaded check (prospective):** The first and second
@@ -113,6 +114,23 @@ stability, or G0B acceptance.
 Independent read-only review found no reference-correspondence or host
 derivative defect in this bounded probe. Host-boundary switching, seam
 differentiability and loaded physical fidelity remain untested.
+
+**Off-edge loaded screen:** Committed runner `1cf08a47` and worktree
+import produced `B3_E4_F03_MATERIAL_LINE_CHANNEL_OFFEDGE_V1.json`,
+SHA256 `c9ec812f58769bf14f0c53418bebcce95887f902d753d23af835c3cf632b80d8`.
+Shifted Q4 and both interior-S3 diagonals each retained full supported
+rank for the provisional 12-row P0 and 17-row P1/dual-non-yaw spaces.
+All 18 torque/shear loads passed bounded solution, positive shell work,
+and balance: maximum free residual ratio `4.27e-12`, relative work error
+`3.93e-12`, force imbalance `1.57e-9 N`, moment imbalance `1.98e-9 Nm`,
+and assembled constraint maximum `3.39e-20`. Pointwise RMS gaps remain
+nonzero (up to `5.56e-8 m` and `1.11e-6 rad`), consistent with weak
+enforcement. Relative to the edge-aligned fixture, torque tip twist
+changed by about `-1.6%` on Q4 and `-1.0%` to `-1.4%` on S3, so an
+edge/off-edge response equality is not assumed across changed meshes.
+Existing mixed-S3 host/chart and loaded checks passed `4/4` after the
+private fixture guard correction. This closes the bounded host-mapping
+question, not physical accuracy, multiplier selection, or G0B.
 
 **Saved bounded row-growth screen:** Committed runner
 `5f852bda0553b2db84b8fb785355b5ea24cf46a7`, worktree import,
