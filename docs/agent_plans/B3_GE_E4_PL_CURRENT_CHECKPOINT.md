@@ -1852,6 +1852,40 @@ central check and accepted-state discrepancy remain visible for a later
 targeted constitutive/chart review. Other active branches and F08/G0B
 remain open.
 
+**Next accepted-tangent discriminator:** The side-specific tangents match
+their slopes, but the accepted-state tangent differs from both one-sided
+slopes. Inspect the native cell response's recorded `derivative_kind` at
+the accepted state and at the two perturbations using the same predecessor,
+without changing its load history. A semismooth boundary classification
+keeps central differencing outside the smooth-plastic criterion and leaves
+the local generalized-derivative policy to review; a claimed smooth branch
+with this persistent mismatch is a tangent defect to correct. Do not use
+the passing nearby smooth test to erase the accepted-state observation.
+
+**Accepted-tangent result and action:** Direct native material inspection
+reports `CLASSICAL_SMOOTH_BRANCH` in both elements at the accepted state
+and at both signs of the `1e-6` perturbation. The actual fibre branches
+show why that label cannot validate a finite-difference plateau here:
+element 1 has `17` plastic-positive rows at the accepted state, `26` at
+the positive perturbation and `11` at the negative; element 2 stays at
+`14`. The central tangent discrepancy remains about `0.002485` as the
+perturbation shrinks from `1e-7` to `1e-10`, while the same differing
+branch counts persist. These finite binary64 perturbations cross multiple
+nearby yield boundaries; they do not establish the derivative at the
+mathematical accepted point or prove a constitutive tangent defect.
+The `derivative_kind` records exact local branch equality, not a distance
+to the nearest branch switch. Stop shrinking this central difference.
+Retain the failed check and the separate passing one-sided and nearby
+smooth-active results. The accepted-state semismooth policy needs targeted
+constitutive/chart review before F08 acceptance; no material tolerance or
+element equation is changed by this development diagnosis.
+Independent read-only review confirmed this interpretation and the
+finite-step limit: `CLASSICAL_SMOOTH_BRANCH` is assigned from exact
+branch labels at each point and does not imply a common smooth
+neighborhood. The observed count changes prove crossings for the tested
+steps, not exact yield equality at the accepted state. No product tangent
+defect or F08 acceptance is inferred.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision
