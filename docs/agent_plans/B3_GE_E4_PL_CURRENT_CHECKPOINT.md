@@ -104,6 +104,16 @@ the correct rest-state retained variation and the new K/C action resolves
 the review's specific rigid-action finding. It does not independently
 verify the captured rounded unsupported blocks.
 
+**Separate F07 rest-block check:** Direct calls to the existing shell response
+and native retained-beam assembly, without spectral capture or its factor
+reconstruction, each annihilate six analytic rigid variations on the Q4 and
+S3 rest fixtures at relative `1e-9`. The retained beam variations include
+both cell-frame rotations and zero resultant changes. Both separate residuals
+also vanish at the reference state. The three focused F07 files pass 7/7.
+This checks constituent rest blocks independently of the captured combined
+matrix, but shares their production kernels; it does not test loaded joint
+curvature, mixed meshes, scalable sparse modes, or F07/G0B acceptance.
+
 ## F12 constant-axial prestress discriminator — 27 September 2026
 
 **Decision sought:** Does the retained physical B2 station displacement

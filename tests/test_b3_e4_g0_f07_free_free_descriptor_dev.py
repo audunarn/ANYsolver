@@ -5,6 +5,8 @@ import pytest
 from scipy import linalg
 
 from anysolver._ge_beam3_coupled_modes import capture
+from anysolver._ge_beam3_shell_joint_state import decode
+from anysolver._ge_beam3_variational_shell import response as shell_response
 from test_ge_beam3_coupled_modes import arguments, fixture
 
 
@@ -20,6 +22,35 @@ def _rigid_nodal_basis(points):
         basis[6*index:6*index+3, 3:] = -skew
         basis[6*index+3:6*index+6, 3:] = np.eye(3)
     return basis
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_separately_assembled_shell_and_retained_beam_blocks_annihilate_rigid_fields(topology):
+    owner = fixture(topology, curved=False)
+    solved = owner.solve(stop_after=0)
+    assert solved.status == "paused", solved.failure
+    state = solved.state
+    assembly = owner.assembly
+    shell_residual, shell_tangent, _ = shell_response(
+        assembly.model, assembly.element, state.shell_u,
+        decode(state.shell_history), assembly.layers)
+    shell_rigid = _rigid_nodal_basis(assembly.coordinates)
+    assert np.linalg.norm(shell_residual) <= 1e-11
+    assert np.linalg.norm(shell_tangent@shell_rigid)/(
+        np.linalg.norm(shell_tangent)*np.linalg.norm(shell_rigid)) <= 1e-9
+
+    beam = assembly.beam
+    beam_residual, beam_tangent, _, _, _ = beam.assemble(
+        state.mechanical, 0., state.beam_histories)
+    beam_rigid = np.zeros((beam.count, 6))
+    beam_rigid[:beam.nodal_count] = _rigid_nodal_basis(beam.reference_positions)
+    for element in range(len(beam.elements)):
+        first = beam.nodal_count+24*element
+        beam_rigid[first:first+3, 3:] = np.eye(3)
+        beam_rigid[first+3:first+6, 3:] = np.eye(3)
+    assert np.linalg.norm(beam_residual/beam.scale) <= 1e-11
+    assert np.linalg.norm(beam_tangent@beam_rigid)/(
+        np.linalg.norm(beam_tangent)*np.linalg.norm(beam_rigid)) <= 1e-9
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
