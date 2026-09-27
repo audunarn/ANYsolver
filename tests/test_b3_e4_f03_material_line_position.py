@@ -103,6 +103,31 @@ def test_mismatched_line_rows_have_full_coordinate_dependencies(
         assert np.linalg.matrix_rank(np.vstack((first, second))) == 8
 
 
+def test_reciprocal_line_rows_expose_unscaled_channel_identities():
+    """Keep the physical-channel identities behind the rank loss visible."""
+    knots = (0., .25, .5, .75, 1.)
+    for shell_cells, beam_half_cells in ((4, 12), (2, 14)):
+        xs, ys = local_grid(shell_cells, transverse_cells=4)
+        beam = build(beam_half_cells, z_offset=.0675,
+                     torsion_constant=square_torsion_constant(),
+                     reference_profile="c1_tangent_2um", assemble=False)
+        line = MaterialLinePosition(xs, ys, beam)
+        rows, _ = _rows(line, LineMultiplierSpace(
+            "continuous_linear", knots))
+        channel = lambda axis: rows[[6*i+axis for i in range(5)]]
+        alternating = np.array((.5, -1., 1., -1., .5))
+        if shell_cells == 4:
+            fy, mz = channel(1), channel(5)
+            cross = np.array((-.5, 1., -1., 1., -.5))@fy
+            cross += np.array((1., -1., 0., 1., -1.))@mz/120.
+            assert np.linalg.norm(cross) < 1e-12*np.linalg.norm(rows)
+            assert np.linalg.norm(alternating@mz) < 1e-12*np.linalg.norm(rows)
+        else:
+            for axis in (3, 4, 5):
+                assert (np.linalg.norm(alternating@channel(axis))
+                        < 1e-12*np.linalg.norm(rows))
+
+
 def test_material_line_detects_even_slip_invisible_to_reduced_strip_pose():
     xs, ys, beam, line = _fixture()
     hybrid = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)

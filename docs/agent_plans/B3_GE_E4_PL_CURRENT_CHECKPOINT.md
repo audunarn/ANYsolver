@@ -32,9 +32,9 @@ changes with relative shell/beam resolution; the correct interface policy
 and physical torque/shear fidelity remain undecided. Off-edge S3
 reference/derivative checks and a bounded loaded screen pass for both
 triangle diagonals; mixed-mesh stability and physical fidelity remain open.
-**Next discriminator:** Derive unscaled channel and cross-channel
-row-span identities over the reference-cut union, then state one fixed
-local basis rule before another loaded sweep. Test that rule across
+**Next discriminator:** Use the now explicit unscaled within- and
+cross-channel identities to derive one fixed joint local basis rule
+before another loaded sweep. Test that rule across
 refinement, reversal and Q4/S3 with supported work and appropriate mixed
 norms. The ratio-specific ablations are diagnostics, not a selected rule.
 Do not automatically drop rows by SVD or run the full ratio series on
@@ -43,6 +43,38 @@ Advance a physically matched two-sided torque/shear reference. The bounded
 off-edge S3 loaded mapping check is complete; do not resume finer
 classical axial work.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
+
+**Prospective row-span diagnostic:** On the two existing reciprocal
+Q4/native-B3 grids, use the same reference-cut union and supported
+coordinate set to separate rank losses within each physical channel
+from rank losses that appear only when channels are combined. Inspect
+the corresponding unscaled row identities, not just singular values.
+If a channel lacks independent trace moments, derive a local basis
+from that trace image; if dependence is cross-channel, derive a joint
+rule. Either outcome defines a candidate to review, not a selected
+production space or a reason to rerun loaded mesh ratios immediately.
+
+**Row-span diagnostic result:** For five continuous-P1 stations over
+the reference-cut union, write the unscaled rows as (F_{y,i}) and
+(M_{a,i}), (i=0,\ldots,4). On the shell-fine 1:2 grid, 30 rows have
+rank 28. One identity is
+
+\[
+(-\tfrac12,1,-1,1,-\tfrac12)\cdot F_y
++(M_{z,0}-M_{z,1}+M_{z,3}-M_{z,4})/120=0,
+\]
+
+and the other is
+\((\tfrac12,-1,1,-1,\tfrac12)\cdot M_z=0\).
+The first is a genuine unscaled cross-channel identity, not a
+normalization or solver artifact. On the beam-fine 2:1 grid, rank is
+27/30 and \((\tfrac12,-1,1,-1,\tfrac12)\cdot M_a=0\) separately for
+the three moment channels (a=x,y,z). The identities hold on the full
+reference-coordinate rows at relative residual below `1e-12`; the
+focused identity/dependency tests pass `5/5`. These two configurations
+do not derive a universal multiplier rule. They rule out independent
+per-channel truncation as a complete general policy and direct the
+next design to a joint physical trace image.
 
 **Next bounded off-edge loaded check (prospective):** The first and second
 variations pass with interior S3 hosts, but a supported loaded transfer
