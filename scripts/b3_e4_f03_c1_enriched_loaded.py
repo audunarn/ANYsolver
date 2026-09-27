@@ -21,10 +21,13 @@ FAMILIES = ("line_hybrid_p0_weighted", "line_hybrid_p1_weighted",
 
 
 def evaluate(shell_cells: int, line_intervals: int, *,
-             detailed: bool = False) -> dict:
+             detailed: bool = False,
+             quadrature_order: int = 3) -> dict:
     if shell_cells not in (4, 8, 16) or line_intervals not in (2, 4, 8, 16) or (
             line_intervals > shell_cells):
         raise ValueError("bounded aligned C1 shell/line resolution required")
+    if quadrature_order not in (3, 5):
+        raise ValueError("bounded C1 line quadrature order required")
     start = time.perf_counter()
     beam = build(12, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
@@ -32,7 +35,8 @@ def evaluate(shell_cells: int, line_intervals: int, *,
     result = graded_terminal_coupling(
         shell_cells, beam, transverse_cells=4, plate_thickness=.035,
         include_line_hybrid_spaces=True, sparse_line_only=True,
-        line_multiplier_intervals=line_intervals, force_sign=-1.)
+        line_multiplier_intervals=line_intervals,
+        line_quadrature_order=quadrature_order, force_sign=-1.)
     elapsed = time.perf_counter()-start
     records = {}
     for family in FAMILIES:
@@ -88,6 +92,7 @@ def evaluate(shell_cells: int, line_intervals: int, *,
         "loading": "+100 Nm tip Mx and -1000 N tip Fz as separate linear influences",
         "shell_bond_cells": shell_cells,
         "line_multiplier_intervals": line_intervals,
+        "line_quadrature_order": quadrature_order,
         "elapsed_s_not_benchmark": elapsed,
         "families": records,
         "limitations": [
@@ -103,10 +108,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--shell-cells", type=int, required=True)
     parser.add_argument("--line-intervals", type=int, required=True)
+    parser.add_argument("--quadrature-order", type=int, choices=(3, 5),
+                        default=3)
     parser.add_argument("--detailed", action="store_true")
     args = parser.parse_args()
     print(json.dumps(evaluate(args.shell_cells, args.line_intervals,
-                              detailed=args.detailed),
+                              detailed=args.detailed,
+                              quadrature_order=args.quadrature_order),
                      indent=2, sort_keys=True, allow_nan=False))
 
 

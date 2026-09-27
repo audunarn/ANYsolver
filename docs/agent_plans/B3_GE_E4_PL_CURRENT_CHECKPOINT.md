@@ -10,7 +10,7 @@ all rows algebraically represented by the shell. This is not stability or
 physical-transfer acceptance. The private B2 batch now rejects callback
 mutation of future loads; B2 mass, recovery and prestress foundations have
 also advanced. **Uncertainty:** The intended rotational connection and its
-matched torque/shear transfer, integration accuracy and growing-space
+matched torque/shear transfer and growing-space
 stability. **Next action:** Review the C1 physical work law against a matching
 reference before another mesh refinement or multiplier choice; continue
 independent G0 foundations. **Gate:** G0B open, G1 barred; formal F03
@@ -6507,3 +6507,32 @@ column ordering and common row normalization make the shell/beam split valid
 for this narrow algebraic claim. It found no blocking rank-code defect and
 explicitly did not accept inf-sup, energy-weighted transfer, uniformity or
 physical fidelity.
+
+**Next bounded integration discriminator (27 September):** Before treating
+the x16/m8→m16 torque shift as an enforcement effect, rerun the unchanged
+x16/m16 C1 geometry, supports, loads and P0/P1/dual spaces with five-point
+instead of three-point longitudinal line quadrature. Use the existing
+standalone sparse runner, one thread and 120 s cap; retain a new raw result.
+If the work/transfer difference explains a material part of the observed
+row-resolution shift, revise or qualify the integration rule before
+interpreting the multiplier study. If it is far smaller and mechanical
+guards remain satisfied, retain the row-resolution observation and move to
+physical work and normed stability. This is an integration diagnostic, not
+a relaxed criterion or new mesh-refinement milestone.
+
+**Integration outcome:** The five-point x16/m16 run completed in 68.39 s
+at `.qualification/b3-ge-e4-pl/f03-c1-x16-m16-quadrature5-dev-20260927-v1`;
+raw SHA256 is
+`D40F80D4DABBBC6DC5679C20C2F0E1A2DEB68DC9FD544075F07235BED018DC37`.
+At identical source geometry, loads, supports, beam and multiplier spaces,
+three→five-point longitudinal quadrature changes P0/P1/dual separate-load
+applied work by at most `3.01e-9%` in magnitude and the torque-case shell
+Mx by at most `1.99e-9 Nm`. Whole/shell-only row ranks remain
+`96/96`, `102/102`, `102/102`; all reported mechanics errors are below
+`8.8e-11`. Near-zero torque rotations under the opening-only load are not
+compared by relative percent. Integration order therefore cannot explain
+the percent-level m8→m16 torque-work changes on this bounded case. This
+does not qualify quadrature for every geometry or line law. Stop this
+quadrature check; return to the physical rotational connection and reviewed
+growing-space norm/transfer assessment. G0B remains open, G1 barred, and
+formal F03 authority unconsumed.
