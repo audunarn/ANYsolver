@@ -102,3 +102,58 @@ def test_physical_b2_q4_point_descriptor_matches_independent_elimination():
                           eigvals_only=True)
     np.testing.assert_allclose(np.sort(eigenvalues[finite].real),
                                reduced, rtol=2e-9, atol=2e-9)
+
+
+def test_physical_b2_q4_point_free_free_rest_has_six_rigid_modes():
+    member, law, shell_k, beam_k = specimen()
+    metadata, _ = _section_mass()
+    member = replace(member, mass=metadata)
+    transform = member.local_dof_map()
+    stiffness = linalg.block_diag(shell_k, beam_k)
+    physical_mass = linalg.block_diag(
+        _shell_mass(),
+        transform.T@member.local_candidate_mass_matrix()@transform)
+    constraint = law.constraint
+    assert np.linalg.matrix_rank(constraint) == 6
+
+    points = np.vstack((VERTICES, member.reference_points_m))
+    center = points.mean(axis=0)
+    rigid = np.zeros((36, 6))
+    for i, point in enumerate(points):
+        lever = point-center
+        for j in range(3):
+            axis = np.eye(3)[j]
+            rigid[6*i:6*i+3, j] = axis
+            rigid[6*i:6*i+3, j+3] = np.cross(axis, lever)
+            rigid[6*i+3:6*i+6, j+3] = axis
+    assert np.linalg.norm(stiffness@rigid)/(
+        np.linalg.norm(stiffness)*np.linalg.norm(rigid)) <= 1e-9
+    assert np.linalg.norm(constraint@rigid)/(
+        np.linalg.norm(constraint)*np.linalg.norm(rigid)) <= 1e-9
+    rigid_mass = rigid.T@physical_mass@rigid
+    assert np.linalg.eigvalsh(rigid_mass)[0] > 1e-10
+
+    saddle = np.block([[stiffness, constraint.T],
+                       [constraint, np.zeros((6, 6))]])
+    descriptor = linalg.block_diag(physical_mass, np.zeros((6, 6)))
+    np.testing.assert_array_equal(descriptor[-6:], 0.)
+    eigenvalues, eigenvectors = linalg.eig(saddle, descriptor)
+    assert not np.isnan(eigenvalues).any()
+    null = linalg.null_space(constraint)
+    expected_finite = np.linalg.matrix_rank(
+        null.T@physical_mass@null, tol=1e-10)
+    finite = np.isfinite(eigenvalues)
+    assert finite.sum() == expected_finite
+    near = np.flatnonzero(finite & (abs(eigenvalues) <= 1e-7))
+    assert len(near) == 6
+    near_primal = eigenvectors[:36, near]
+    represented = near_primal@np.linalg.lstsq(near_primal, rigid,
+                                             rcond=None)[0]
+    assert np.linalg.norm(rigid-represented)/np.linalg.norm(rigid) <= 1e-8
+    for index in near:
+        lam = eigenvalues[index]
+        vector = eigenvectors[:, index]
+        residual = saddle@vector-lam*descriptor@vector
+        scale = np.linalg.norm(saddle@vector)+abs(lam)*np.linalg.norm(descriptor@vector)
+        assert np.linalg.norm(residual)/max(scale, 1.) <= 1e-8
+        assert np.linalg.norm(constraint@vector[:36]) <= 1e-8

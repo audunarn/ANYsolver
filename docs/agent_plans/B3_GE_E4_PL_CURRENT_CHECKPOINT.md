@@ -733,6 +733,31 @@ S3, free-free modes, changing frame/mesh, prestress, buckling, shell-side
 point-law admission and the growing-interface problem remain open. F12/G0B
 remain open and G1 barred.
 
+**Next bounded F12 free-free discriminator:** The supported Q4/B2 descriptor
+does not test the six common rigid motions of a connected free-free point
+assembly. On the *same* bounded physical-mass and six-row point fixture,
+remove only supports in the diagnostic pencil. Check the analytic common
+rigid translation/rotation fields against the full stiffness and constraint
+rows, check positive physical mass on their span, and count finite near-zero
+roots against the constrained-mass rank. Exactly six consistent roots would
+extend the bounded spectral feasibility to this unsupported Q4/B2 fixture;
+extra or missing roots would identify a shell, beam, constraint or mass
+contract to diagnose. This does not admit free-free production modes, select
+the shell port, or close F12/G0B.
+
+**F12 bounded free-free result:** The unsupported diagnostic of the same
+Q4/B2 point fixture has six finite near-zero roots. Analytic common rigid
+translations and rotations annihilate its full elastic stiffness and six
+constraint rows within the `1e-9` normalized screen, have positive physical
+mass, and span the six computed zero-mode vectors within `1e-8`. The finite
+root count matches the independent constrained physical-mass rank; full
+descriptor equation and compatibility residuals pass `1e-8`. The focused
+F10/F12/definition tests pass `14/14`. This is a single small elastic
+rest-state descriptor screen using the provisional F10 point law. It does
+not establish mixed shells, nonmatching attachment mass, prestress,
+buckling, production free-free execution or F12/G0B acceptance. The physical
+connection choice and G1 bar are unchanged.
+
 **Next F13 local compilation discriminator:** The immutable physical B2
 definition currently constructs its exact force-flexibility operator again
 for each `local_operator()` or `trace_global()` request. Test a private
