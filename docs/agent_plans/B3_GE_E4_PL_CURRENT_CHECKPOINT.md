@@ -13,21 +13,91 @@ so neither a smaller tip gap nor one spectral quotient selects a space. B2's
 private repeated-section compilation has batch parity; F09 admission remains
 open. **Uncertainty:** Growing-space stability/locking and physical transfer
 over the registered ratios, plus an independent two-sided reference for C1.
-**Next discriminator:** On fixed x16, four→eight P0 intervals change
-torque rotation by `−0.622 µrad` for B3-12 and `−0.950 µrad` for B3-24.
-Both cases retain rank and balance. Low-order lateral/twist agreement with
-the stronger F5 bond reverses direction across those beam resolutions,
-so neither coarse-beam underresolution nor simple interface locking is
-established. The x8 mixed minimum is 99.935% auxiliary drilling chart.
-Global work partition shows both physical shell and beam changes, with
-negligible drilling completion. Audit the *local* newly enforced gap/work
-modes and strain-energy distribution against the declared top-face law
-before choosing a resolution
-policy. A physically matched sided reference is still needed for fidelity.
+**Next discriminator:** The x16 four/eight P0 comparisons have full rank,
+balanced work, and material beam–row interaction, but cannot select a
+space. A fixed-frame six-moment reference integrand reproduces the current
+P0 supported row spaces at four/eight intervals for both B3 traces. P0,
+P1 and signed dual rows can be assembled from that one integrand with
+partition work closure. P1's one-row dependency follows exactly from its
+affine hat reproduction and the derived longitudinal position moment;
+dual-eight also has one supported near-null mode confined to that channel
+pair. Resolve the latter's discrete cause and derive finite-chart work/
+dual mapping before a loaded space comparison. The P0
+nesting, local work and force oscillation remain finite-grid diagnostics,
+not line-law qualification. A physically matched sided reference remains
+needed for fidelity.
 Do not launch another automatic refinement or select P0/P1/dual from tip
 motion, F5 proximity or one quotient.
 Continue independent G0 foundations. **Gate:** G0B open, G1 barred;
 formal F03 authority unconsumed.
+
+**Next local-mode discriminator (prospective):** First check whether the
+supported four-interval top-face row space is contained in the eight-
+interval space for each B3-12/B3-24 trace on the same x16 shell. Use
+declared physical column scales and report rank and projection defect,
+without interpreting that number as inf-sup. If containment fails,
+the row-count comparison changes the represented law and its segmentation
+must be revisited before another loaded solve. If it holds, recover the
+eight-interval weak modes and local physical shell work from the *four-
+interval solution* in the minimum matched loaded pair; those modes
+identify what enforcement adds. This is a bounded development diagnostic,
+not formal F03 execution or multiplier selection.
+
+**Row-containment result:** The bounded x16 Q4/B3-12 and B3-24 reference-
+chart matrices each have supported ranks `24`, `48`, and union `48` for
+four rows, eight rows, and their union. With the fixture's physical
+coordinate scales, the maximum rowwise projection defect of the four-
+interval space into the eight-interval space is `3.82e-15` (B3-12) and
+`6.23e-15` (B3-24). This establishes algebraic nesting on these supported
+fixtures, not inf-sup or absence of locking. The raw source-bound result
+is `B3_GE_E4_PL_F03_TOP_FACE_X16_ROW_NESTING_20260927.json`. Next recover
+the eight-interval gaps of the four-interval loaded solution, interval
+interface work, and physical shell work by cell in one paired solve for
+each beam trace. Nonzero added modes identify what the refined law
+suppresses; their physical strain/work interpretation determines whether
+to revise the row policy or advance the registered stability assessment.
+
+**Selected local-mode outcome:** The paired x16 B3-12 and B3-24 routes
+reproduce the earlier separate four/eight solutions within `1e-8`
+relative and `1e-12` absolute checks on tip, external, shell and
+interface work. Each included per-element physical E4 matrices during its
+single shell assembly; their recovered work sums to the global physical
+shell work. The four-interval solution has its own weak rows closed to
+about `1e-17`, but the eight-interval probe detects new modes: under
+torque, the largest angular moments are `rx=0.245/rz=0.225 µrad` for
+B3-12 and `rx=0.278/rz=0.135 µrad` for B3-24; under opening, `ry` peaks
+at `1.465` and `1.809 µrad`. Translational mean gaps are at most
+`0.017/0.018 µm` under opening and `0.010/0.012 µm` under torque. The
+eight-interval solutions close both nested weak spaces to numerical
+precision. The angular rows have radians while mean rows have metres;
+raw maxima cannot rank them. With a 0.05 m transverse lever for `rx/rz`
+and 0.00625 m half-interval longitudinal lever for `ry`, their implied
+face motions are roughly `7–14 nm`, comparable with the `10–18 nm`
+translational means. The added enforcement therefore constrains both
+subinterval mean and angular position modes, not only one channel.
+
+Sampled maximum pointwise position gaps fall from `0.062→0.047 µm`
+(B3-12 torque), `0.054→0.041 µm` (B3-24 torque),
+`0.150→0.130 µm` (B3-12 opening) and `0.153→0.140 µm` (B3-24 opening).
+Physical E4 work in the bonded x=[.9,1] m cells changes from
+`0.285→0.255 mJ` for B3-12 torque, `0.272→0.273 mJ` for B3-24 torque,
+`1.079→0.998 mJ` for B3-12 opening, and `1.097→1.047 mJ` for B3-24
+opening. The torque-case sum of absolute interval Fy divided by net Fy
+rises `29.6→37.1` for B3-12 and `18.2→62.2` for B3-24; each interval's
+shell/beam work cancels and all work balances pass. This highlights
+self-equilibrated high-frequency transfer, but may include a legitimate
+couple and is not a locking diagnosis by itself. The raw source-bound
+results are `B3_GE_E4_PL_F03_TOP_FACE_X16_B12_LOCAL_MODES_20260927.json`
+and the corresponding `B24` file. One selected old-route regression
+passed `1/1`. Independent read-only review found no algebra or work-unit
+defect: element work sums within `1.3e-12 J`, interval shell/beam work
+cancels within `2.9e-16 J`, and interval work sums to global within
+`4e-17 J`. Signed interval interface work is a force-displacement pairing,
+not nonnegative strain energy. Next distinguish physical couple transfer from unstable
+multiplier oscillation using a norm and reference that resolve these
+angular modes, without using F5's coarser two hats or a new mesh sweep
+as a surrogate. G0B remains open, G1 barred, formal F03 authority
+unconsumed.
 
 **Next C1 connection-law decision (27 September):** The saved matched
 fixed-grid C1 experiment already contains both six position-moment
@@ -343,6 +413,82 @@ The validated F5 action lacks verified sided retained-port work, so use
 it only at common continuous fields until that reference is resolved.
 G0B/F03 remain open, G1 barred, formal F03 authority unconsumed.
 
+**Continuous-law correction (independent mechanics review):** The current
+`FiniteSurfaceTopFaceLine` normalizes each multiplier-weighted footprint,
+recomputes its center and inertia, and evaluates its material frame at that
+center. Its longitudinal `My` row is a weighted least-squares slope of
+the mean top-face normal-position gap, not a pointwise independent
+director-pitch channel. For the *complete six rows in one common gap
+frame*, moving the center and applying invertible inertia normalization
+are block-invertible row changes of the basis-weighted zeroth/first
+position moments; center dependence alone does not change their zero
+subspace. This does not settle physical multiplier densities, norms or
+the meaning of a pointwise six-channel trace. The C1 helper also changes
+its material frame with basis center; because its fixed reference arm
+and frame rotation need not commute with the cross product, strict
+same-law equivalence requires either a common frame/arm convention or
+an explicit covariant row-transform proof. A signed endpoint dual basis
+has negative normalized longitudinal variance `−h²/6`, so the current
+positive-inertia guard rejects it despite a potentially invertible
+raw-moment representation. The exact x2 `11/12` row relation and full
+x16 P0 supported ranks show resolution-dependent representability, not
+proof of locking or law failure. Preserve all P0 evidence; do not reuse
+the helper's named rows as P1/dual physical densities without proof.
+
+**Next derivation and executable discriminator:** Define a basis-independent
+raw top-face position-work integrand with one reference material frame,
+one reference arm convention and fixed transverse width. Keep its three
+zeroth and three first moment components and derive each P0/P1/dual row
+as `∫ φ_i(x) q[g](x) dx`; put any invertible center/inertia transform and
+the physical dual mapping outside that common integral. Test exact
+reference-chart row-space equivalence against the current P0 helper,
+and an invertible signed dual construction without a positive-covariance
+assumption. Derive finite-chart work, one-sided native port behavior,
+boundary terms and physical dual units. Check whether the longitudinal
+moment is a derived position-slope constraint and whether continuous
+mean-position enforcement already supplies its physical bending work;
+do not silently drop moment transfer. Then test affine reproduction,
+rigid work, transverse shear freedom, top-fixed pitch distinction,
+reference rank/nesting and first/mixed
+derivatives before any loaded P0/P1/dual comparison. Failure revises the
+trace; success advances the registered same-law stability and physical
+reference assessment. G0B remains open, G1 barred, formal F03 authority
+unconsumed.
+
+**Fixed-frame same-integrand outcome:** One reference material frame at
+`x=0.95 m` and one shell-top arm convention yield raw zeroth/first
+position-work rows. On supported x16 Q4/y4 C1 B3-12/B3-24 fixtures,
+their P0 four/eight spaces and the current centered P0 helper have ranks
+`24/48`, union ranks `24/48`, and bidirectional maximum unit-row
+projection defects from `3.1e-15` to `4.5e-14`. This validates P0
+reference-chart row-space equivalence on these fixtures, not finite-chart
+equivalence or physical fidelity. The source-bound result is
+`B3_GE_E4_PL_F03_TOP_FACE_COMMON_TRACE_20260927.json`.
+
+The same raw integrand admits P0, continuous P1, and signed dual basis
+pairings without requiring a positive weighted inertia. Their full-bond
+partition work closes with relative error at most `8.3e-16`, and the
+global constant/affine/quadratic *partition sums* close under the
+existing quadrature; individual basis-function moment reproduction has
+not been checked. Supported ranks are `24/24` and `48/48` for P0;
+`29/30` and `53/54` for P1; `30/30` and `53/54` for dual, for both B3
+traces. These are rank diagnostics, not inf-sup or locking acceptance.
+P1's single exact dependency is analytic: its hats reproduce the affine
+function `x−0.95`, so the sum of longitudinal first-moment rows equals
+the corresponding affine combination of normal mean-gap rows for every
+gap field. It does not indicate locking. The dual-eight smallest singular
+value is about `1e-16` of the largest, and its left-null vector is confined
+to the mean-normal/longitudinal-moment pair; dual-four is full rank.
+The remaining question is why that supported dual near-null relation arises at eight intervals
+on the supported discrete primal space. Source-bound results are
+`B3_GE_E4_PL_F03_COMMON_TRACE_SPACES_20260927.json` and
+`B3_GE_E4_PL_F03_COMMON_TRACE_NULL_MODES_20260927.json`.
+Next test that one dual-eight mode against complete and supported primal
+columns and exact per-basis moments, then derive finite-chart work and
+signed dual mapping. Do not launch another mesh refinement from rank alone.
+G0B/F03 remain open, G1
+barred, formal F03 authority unconsumed.
+
 **Global work partition from the saved solves:** The fixture reports
 `uᵀKu` work, without a one-half energy factor. Equilibrium gives native
 beam work as external work minus physical and numerical shell work. Under
@@ -413,6 +559,19 @@ cut_energy` also passes. Independent read-only review found the cut lever arm,
 axis reversal and tip-DOF ordering consistent, and required the diagnostic
 tolerance wording above. This extends the one-section physical response
 evidence without establishing the F09 admitted range or G0B acceptance.
+
+**Additional thin physical-section point:** A private 80 × 3 mm steel
+rectangle with rational 3-4-5 axis rotation, the declared approximate
+Saint-Venant torsion constant and 5/6 shear factors passed forward and
+reversed two-member elbow checks under one small fixed mixed tip wrench.
+Independent rational cut-wrench work, six tip responses, station resultants
+and strains, and a 100-digit solve of the stored rounded matrix agreed.
+The stored sparse state had exact-product relative force residual
+`3.89e-10`, length-scaled moment residual `8.27e-13`, and relative work
+error `9.86e-11`; both cases used one numerical thread and finished in
+`0.59 s` at `92 MB` peak RSS. This is one admissible linear-response
+diagnostic, not a continuous section range or F09 qualification. Its
+source-bound raw result is `B3_GE_E4_PL_G0_F09_THIN_SECTION_DEV_V1.json`.
 
 **Next bounded F09 physical-range screen (registered before execution):**
 Hold the elbow, material (`E=210 GPa`, `nu=0.3`), 31° section-axis rotation,

@@ -1243,6 +1243,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                              include_top_face_two_intervals: bool = False,
                              top_face_intervals: int | tuple[int, ...] | None = None,
                              top_face_only: bool = False,
+                             recover_top_face_local: bool = False,
                              include_line_hybrid: bool = False,
                              include_line_hybrid_segmented: bool = False,
                              include_line_hybrid_spaces: bool = False,
@@ -1265,7 +1266,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                        top_face_intervals if type(top_face_intervals) is tuple else
                        ())
     if top_face_counts and not (
-            top_face_counts in ((2,), (4,), (8,), (2, 4)) and
+            top_face_counts in ((2,), (4,), (8,), (2, 4), (4, 8)) and
             patch_cells in (4, 8, 16) and
             all(patch_cells >= 2*count and patch_cells % count == 0
                 for count in top_face_counts) and transverse_cells == 4 and
@@ -1273,11 +1274,15 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
             beam.model.name.endswith("-c1_tangent_2um")):
         raise ValueError("top-face screen requires two shell hosts per interval")
     if top_face_intervals is not None and not top_face_counts:
-        raise ValueError("top-face interval count must be 2, 4, 8 or (2, 4)")
+        raise ValueError("top-face interval count must be 2, 4, 8, (2, 4) or (4, 8)")
     if top_face_only and not top_face_counts:
         raise ValueError("top-face-only screen requires its declared candidate")
     if top_face_only and sparse_line_only:
         raise ValueError("choose one bounded sparse candidate route")
+    if recover_top_face_local and not (
+            top_face_only and top_face_counts == (4, 8) and
+            patch_cells == 16 and not mixed_s3):
+        raise ValueError("selected local recovery requires x16 top-face four/eight Q4 pair")
     sparse_selected_only = sparse_line_only or top_face_only
     if include_line_hybrid_spaces and plate_thickness != .035:
         raise ValueError("weighted C1 line spaces require the 35 mm plate")
@@ -1311,10 +1316,16 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
         raise ValueError("bounded hybrid ablation requires the fixed C1 two-cell grid")
     beam_axis_z=plate_thickness/2+.05
     xs,ys=local_grid(patch_cells,transverse_cells=transverse_cells)
-    shell_k,physical=(raw_e4_mixed_c1_tangent(xs,ys,
-                        thickness=plate_thickness,
-                        diagonal=mixed_s3_diagonal) if mixed_s3 else
-                      raw_e4_tangent(xs,ys,thickness=plate_thickness))
+    if recover_top_face_local:
+        shell_k,physical,shell_elements=raw_e4_tangent(
+            xs,ys,thickness=plate_thickness,
+            return_element_operators=True)
+    else:
+        shell_k,physical=(raw_e4_mixed_c1_tangent(xs,ys,
+                            thickness=plate_thickness,
+                            diagonal=mixed_s3_diagonal) if mixed_s3 else
+                          raw_e4_tangent(xs,ys,thickness=plate_thickness))
+        shell_elements=None
     s3_cells=c1_mixed_s3_cells(xs,ys) if mixed_s3 else frozenset()
     shell_nodes=np.array([(x,y,0.) for y in ys for x in xs])
     shell_size=6*len(shell_nodes)
@@ -1407,6 +1418,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
     surface_patch=None
     line_gap_patch=None
     top_face_reference={}
+    top_face_patches={}
     if include_surface_moments:
         from scripts.b3_e4_f03_distributed_surface_finite import (
             FiniteSurfaceMomentPatch,
@@ -1444,6 +1456,7 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 "quadrature_points": [len(piece.points)
                                       for piece in top_face_pieces],
             }
+            top_face_patches[top_face_name]=top_face_pieces
             families.append((top_face_name, np.vstack(
                 [piece.reference_trace() for piece in top_face_pieces])))
     if (include_line_hybrid or include_line_hybrid_segmented or
@@ -1695,6 +1708,64 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                                 point.weight*shell_trace(point.x,0.,3)
                                 for point in segment.points)),
                         }
+            selected_recovery={}
+            if recover_top_face_local:
+                probes={}
+                for probe_name, probe_pieces in top_face_patches.items():
+                    sampled=[piece.linearized_gap_statistics(
+                        full[:shell_size],full[shell_size:])
+                        for piece in probe_pieces]
+                    maximum=max(float(np.max(np.abs(
+                        item["weak_six_gap_m_rad"]))) for item in sampled)
+                    if (probe_name == family or
+                            family == "top_face_eight_intervals") and maximum > 1e-8:
+                        raise ArithmeticError("nested top-face weak gap did not close")
+                    probes[probe_name]={
+                        "per_interval":sampled,
+                        "max_abs_weak_six_gap_m_rad":maximum,
+                        "max_quadrature_position_gap_m":max(
+                            item["quadrature_max_position_gap_m"]
+                            for item in sampled),
+                    }
+                by_x=np.zeros(len(xs)-1)
+                by_y=np.zeros(len(ys)-1)
+                for i,j,dofs,local in shell_elements:
+                    local_u=full[dofs]
+                    local_work=float(local_u@local@local_u)
+                    by_x[i]+=local_work
+                    by_y[j]+=local_work
+                if abs(float(by_x.sum())-physical_work)>1e-9:
+                    raise ArithmeticError("selected shell work does not reassemble")
+                intervals=[]
+                for index,piece in enumerate(top_face_patches[family]):
+                    row_slice=slice(6*index,6*(index+1))
+                    local_action=-constraint[row_slice].T@multiplier[row_slice]
+                    shell_work=float(local_action[:shell_size]@full[:shell_size])
+                    beam_work=float(local_action[shell_size:]@full[shell_size:])
+                    if abs(shell_work+beam_work)>1e-9:
+                        raise ArithmeticError("interval interface work imbalance")
+                    intervals.append({
+                        "x_interval_m":list(piece.x_interval),
+                        "basis_integral_m":piece.basis_integral_m,
+                        "shell_work_j":shell_work,
+                        "beam_work_j":beam_work,
+                        "shell_wrench_N_Nm":wrench(
+                            local_action[:shell_size].reshape(-1,6),
+                            shell_nodes).tolist(),
+                    })
+                if abs(sum(item["shell_work_j"] for item in intervals)-
+                       float(interface[:shell_size]@full[:shell_size]))>1e-9:
+                    raise ArithmeticError("interval work does not sum")
+                selected_recovery={
+                    "gap_on_both_spaces":probes,
+                    "physical_shell_work_by_x_cell_j":by_x.tolist(),
+                    "physical_shell_work_by_y_cell_j":by_y.tolist(),
+                    "shell_x_cell_intervals_m":[
+                        [float(low),float(high)]
+                        for low,high in zip(xs[:-1],xs[1:])],
+                    "interface_interval_work_and_wrench":intervals,
+                    "meaning":"u^T K_physical u work without one-half energy factor; gaps are sampled top-face minus native beam-bottom from the same solved state",
+                }
             cases[loading]={
                 "tip_rx_rad":float(full[shell_size+6*beam.n_half_cells+3]),
                 "tip_uz_m":float(full[shell_size+6*beam.n_half_cells+2]),
@@ -1728,6 +1799,8 @@ def graded_terminal_coupling(patch_cells: int, beam, *,
                 "interface_beam_wrench_N_Nm":beam_wrench.tolist(),
                 "interface_shell_work_j":float(interface[:shell_size]@
                                                full[:shell_size]),
+                **({"selected_top_face_local_recovery":selected_recovery}
+                   if recover_top_face_local else {}),
                 **({"constraint_multiplier_material_N_Nm":
                     multiplier.tolist()}
                    if family.startswith("line_hybrid_") else {}),

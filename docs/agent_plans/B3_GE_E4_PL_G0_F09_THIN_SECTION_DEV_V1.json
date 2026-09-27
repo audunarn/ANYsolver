@@ -1,0 +1,178 @@
+{
+  "axis_rotation": {
+    "cos": "4/5",
+    "sin": "3/5"
+  },
+  "cases": [
+    {
+      "batch_factorization_count": 1,
+      "batch_status": "completed",
+      "batch_vs_100_digit_tip_ratio_to_development_limit": 0.07784228798909508,
+      "orientation": "forward",
+      "passed_development_diagnostic": true,
+      "physical_cut_work_J": 0.0007054113501339883,
+      "physical_tip_m_rad": [
+        0.0069533158134920635,
+        -0.004876381333333333,
+        0.01322577953699795,
+        0.005022513284365476,
+        -0.00537851886324529,
+        -0.005036321428571428
+      ],
+      "rounded_matrix_100_digit_tip_m_rad": [
+        0.006953315813792662,
+        -0.004876381333599568,
+        0.013225779537360921,
+        0.005022513284372403,
+        -0.0053785188635103835,
+        -0.005036321428772329
+      ],
+      "rounded_reduced_matrix_sha256": "1cb05d5391736efe51d44d361878b3cf4c7286b1b0fe276171c1530c00cecb73",
+      "rounded_reference_stored_force_residual_ratio": 2.0239078637531734e-10,
+      "rounded_reference_stored_moment_residual_ratio": 3.1221762249653606e-13,
+      "rounded_tip_component_ratio_to_development_limit": 0.0017896486032897999,
+      "small_rotation_and_displacement_eligibility": true,
+      "sparse_vs_100_digit_ratio_to_development_limit": 0.0810619609908812,
+      "station_resultant_ratio_to_development_limit": 0.0005585155570998225,
+      "station_strain_ratio_to_development_limit": 0.004950011856035739,
+      "stored_exact_product_force_residual_ratio": 3.8869548325233695e-10,
+      "stored_exact_product_moment_residual_ratio": 8.269623764026602e-13,
+      "stored_sparse_tip_m_rad": [
+        0.006953315814304014,
+        -0.004876381334056999,
+        0.013225779537967766,
+        0.0050225132843715985,
+        -0.005378518863964214,
+        -0.005036321429112974
+      ],
+      "stored_sparse_work_J": 0.000705411350203543,
+      "tip_component_ratio_to_development_limit": 0.004864529233560013,
+      "work_relative_error": 9.860163653169722e-11
+    },
+    {
+      "batch_factorization_count": 1,
+      "batch_status": "completed",
+      "batch_vs_100_digit_tip_ratio_to_development_limit": 0.07784228798909508,
+      "orientation": "reversed-second",
+      "passed_development_diagnostic": true,
+      "physical_cut_work_J": 0.0007054113501339883,
+      "physical_tip_m_rad": [
+        0.0069533158134920635,
+        -0.004876381333333333,
+        0.01322577953699795,
+        0.005022513284365476,
+        -0.00537851886324529,
+        -0.005036321428571428
+      ],
+      "rounded_matrix_100_digit_tip_m_rad": [
+        0.006953315813792662,
+        -0.004876381333599568,
+        0.013225779537360921,
+        0.005022513284372403,
+        -0.0053785188635103835,
+        -0.005036321428772329
+      ],
+      "rounded_reduced_matrix_sha256": "1cb05d5391736efe51d44d361878b3cf4c7286b1b0fe276171c1530c00cecb73",
+      "rounded_reference_stored_force_residual_ratio": 2.0239078637531734e-10,
+      "rounded_reference_stored_moment_residual_ratio": 3.1221762249653606e-13,
+      "rounded_tip_component_ratio_to_development_limit": 0.0017896486032897999,
+      "small_rotation_and_displacement_eligibility": true,
+      "sparse_vs_100_digit_ratio_to_development_limit": 0.0810619609908812,
+      "station_resultant_ratio_to_development_limit": 0.0005585155570998225,
+      "station_strain_ratio_to_development_limit": 0.004950011856035739,
+      "stored_exact_product_force_residual_ratio": 3.8869548325233695e-10,
+      "stored_exact_product_moment_residual_ratio": 8.269623764026602e-13,
+      "stored_sparse_tip_m_rad": [
+        0.006953315814304014,
+        -0.004876381334056999,
+        0.013225779537967766,
+        0.0050225132843715985,
+        -0.005378518863964214,
+        -0.005036321429112974
+      ],
+      "stored_sparse_work_J": 0.000705411350203543,
+      "tip_component_ratio_to_development_limit": 0.004864529233560013,
+      "work_relative_error": 9.860163653169722e-11
+    }
+  ],
+  "claim": "bounded private development diagnostic; no F09/G0B admission",
+  "elapsed_seconds": 0.5917361000028905,
+  "geometry_m": {
+    "depth": "3/1000",
+    "member_lengths": [
+      2.0,
+      1.5
+    ],
+    "width": "2/25"
+  },
+  "limits": {
+    "linear_eligibility": "tip translation <= 1% shortest member; tip rotation <= 0.01 rad",
+    "numerical_threads": 1,
+    "physical_force_moment_relative": 1e-08,
+    "rss_bytes": 2147483648,
+    "station_resultant": "rtol=1e-8, atol=1e-7 (development)",
+    "station_strain": "rtol=1e-8, atol=1e-10 (development)",
+    "tip_component": "rtol=1e-8, atol=1e-10 (development)",
+    "wall_seconds": 120.0,
+    "work_relative": 1e-08
+  },
+  "material": {
+    "E_Pa": "210000000000",
+    "nu": "3/10",
+    "shear_factors": [
+      "5/6",
+      "5/6"
+    ],
+    "torsion": "declared Saint-Venant rectangle approximation"
+  },
+  "numpy": "2.4.6",
+  "peak_rss_bytes": 92008448,
+  "platform": "win32",
+  "python": "3.14.2",
+  "scipy": "1.17.1",
+  "section": {
+    "A_m2": "3/12500",
+    "Iy_m4": "9/50000000000",
+    "Iz_m4": "1/7812500",
+    "J_approx_m4": "11517788205927/16384000000000000000000",
+    "principal_stiffness": [
+      "50400000",
+      "210000000/13",
+      "210000000/13",
+      "241873552324467/4259840000000",
+      "189/5",
+      "26880"
+    ],
+    "stored_stiffness_sha256": "71dd3b569d5f79b8cf99c2c9e7608851f4d44e24a06b10471ec77f8e11939662"
+  },
+  "source_head": "17ada060c4feabcad76ace83a1390e17fec50f98",
+  "source_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b2_f09_thin_section_dev.py",
+  "source_sha256": "34513b16c83f0ac359249dd0cb1a7349fba79948dc49fbdf9087c8d8a919947f",
+  "status": "passed_development_diagnostic",
+  "threadpools": [
+    {
+      "internal_api": "openblas",
+      "num_threads": 1
+    },
+    {
+      "internal_api": "openblas",
+      "num_threads": 1
+    }
+  ],
+  "tip_wrench_N_Nm": [
+    0.025,
+    -0.08,
+    0.06,
+    0.008,
+    -0.009,
+    0.007
+  ],
+  "tip_wrench_exact_N_Nm": [
+    "1/40",
+    "-2/25",
+    "3/50",
+    "1/125",
+    "-9/1000",
+    "7/1000"
+  ]
+}

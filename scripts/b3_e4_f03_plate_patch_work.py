@@ -224,7 +224,8 @@ def local_grid(patch_cells: int, *, outer_refined: bool = False,
 
 
 def raw_e4_tangent(xs: np.ndarray,ys: np.ndarray, *,
-                   thickness: float = .07) -> tuple[np.ndarray,np.ndarray]:
+                   thickness: float = .07,
+                   return_element_operators: bool = False):
     """Assemble the same zero-state Q4 E4 operator without uniform-grid ports."""
     x=np.asarray(xs,dtype=float)
     y=np.asarray(ys,dtype=float)
@@ -241,6 +242,7 @@ def raw_e4_tangent(xs: np.ndarray,ys: np.ndarray, *,
     count=6*len(positions)
     tangent=np.zeros((count,count))
     physical=np.zeros((count,count))
+    element_operators=[] if return_element_operators else None
     material=model.get_material("steel")
     for j in range(len(y)-1):
         for i in range(len(x)-1):
@@ -264,7 +266,10 @@ def raw_e4_tangent(xs: np.ndarray,ys: np.ndarray, *,
                            for axis in range(6)])
             tangent[np.ix_(dofs,dofs)]+=np.asarray(stiffness)
             physical[np.ix_(dofs,dofs)]+=local
-    return tangent,physical
+            if element_operators is not None:
+                element_operators.append((i,j,dofs,local.copy()))
+    return ((tangent,physical,element_operators)
+            if element_operators is not None else (tangent,physical))
 
 
 def c1_mixed_s3_cells(xs: np.ndarray, ys: np.ndarray
