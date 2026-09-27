@@ -143,6 +143,31 @@ rounding result does not establish F09 admission: next assess physical
 applied-scale graph/factorization error and the prospective admitted range
 without changing the provisional pivot guard or frozen criteria.
 
+**Next F09 graph discriminator (27 September):** Existing physical elbow
+checks cover two mixed wrenches. Reuse the same three rotated rectangles,
+independent cut-wrench reference and high-precision rounded-matrix solve;
+add six pure `Fx/Fy/Fz/Mx/My/Mz` cases at fixed `1000 N`/`1000 Nm` scales.
+These distinguish load-component or near-zero-response failures concealed by
+mixed cases from a general graph/factorization error. If any fails, inspect
+the physical cut, stored assembly and solve before changing admission. If all
+pass, retain the sampled evidence and design the prospective continuous
+section-range screen; do not infer F09 qualification from these points.
+
+**F09 pure-action graph result (27 September):** All six pure wrench
+channels passed for each of the three rotated physical rectangles, in both
+member orientations, against the same independent cut-work/cut-resultant
+reference and 100-digit solve of the stored matrix. The first run failed
+only the new pure-action componentwise comparison at near-zero cross
+responses on the thinnest section: its largest reported discrepancy was
+`3.3161e-12` against the old mixed-case `1e-12` absolute floor. The pure
+comparison now uses the existing physical tip-response floor `1e-10`, while
+mixed cases retain `1e-12`; no equilibrium or registered physical criterion
+changed. The affected file then passed `12/12` in `3.28 s`. This excludes an
+observed pure-channel failure on the sampled graph; it does not establish
+the admitted continuous section range or F09/G0B acceptance. Next design
+the physical-range representability and fail-closed graph admission screen,
+with the retained weak-graph counterexample as a negative control.
+
 **F13 residual-admission decision (27 September):** The private B2 batch's
 fast residual route treats `eps * row_scale <= 1e-9 * physical_scale` as
 sufficient to trust a rounded sparse dot. That ignores row length and how

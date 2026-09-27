@@ -186,8 +186,11 @@ def test_off_axis_rectangular_section_graph_work_reversal_and_balance(width, dep
                                rtol=1e-10, atol=1e-5)
 
     free = np.arange(6, 18)
-    for tip in ((100., -80., 60., 12., -9., 7.),
-                (-45., 75., -95., -5., 8., -11.)):
+    mixed_tips = ((100., -80., 60., 12., -9., 7.),
+                  (-45., 75., -95., -5., 8., -11.))
+    pure_tips = tuple(tuple(1000. if i == j else 0. for i in range(6))
+                      for j in range(6))
+    for tip in mixed_tips + pure_tips:
         load = np.zeros(18)
         load[12:] = tip
         expected = _cut_work(original, tip, compliance)
@@ -203,17 +206,23 @@ def test_off_axis_rectangular_section_graph_work_reversal_and_balance(width, dep
             scale = 1/np.sqrt(reduced.diagonal())
             answer = scale*splu((diags(scale)@reduced@diags(scale)).tocsc()).solve(scale*rhs)
             rounded_reference = _high_precision_rounded_matrix_solve(reduced, rhs)
-            np.testing.assert_allclose(answer, rounded_reference, rtol=1e-9, atol=1e-12)
+            # Pure actions may have physically zero cross-components with
+            # binary64 solve noise; retain the tighter mixed-case floor.
+            response_floor = 1e-12 if tip in mixed_tips else 1e-10
+            np.testing.assert_allclose(answer, rounded_reference,
+                                       rtol=1e-9, atol=response_floor)
             np.testing.assert_allclose(answer[6:], expected_tip,
                                        rtol=1e-8, atol=1e-10)
             stored_work = .5*float(rhs@answer)
             assert abs(stored_work-expected)/expected < 1e-9
             assert abs(PROBE["physical_work"](members, tip)-expected)/expected < 1e-9
             residual = _exact_product_residual(reduced, answer, rhs).reshape(2, 6)
-            force_error = np.max(np.abs(residual[:, :3]))/max(map(abs, tip[:3]))
-            # Scaling by the applied couple alone is conservative relative to
-            # the batch's length-times-force moment scale on these cases.
-            moment_error = np.max(np.abs(residual[:, 3:]))/max(map(abs, tip[3:]))
+            # Retain the tighter mixed-load scales; pure cases use declared
+            # 1000 N and 1000 Nm floors for their undriven wrench channel.
+            force_scale = max(map(abs, tip[:3])) or 1000.
+            moment_scale = max(map(abs, tip[3:])) or 1000.
+            force_error = np.max(np.abs(residual[:, :3]))/force_scale
+            moment_error = np.max(np.abs(residual[:, 3:]))/moment_scale
             assert max(force_error, moment_error) < 1e-8
             full = np.zeros(18)
             full[free] = answer
