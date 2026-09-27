@@ -122,6 +122,12 @@ The prospective 3e-7/1.5e-7 m [formal gate and independent review](reference_cas
 accepted **only this selected fixed-multiplier smooth tangent direction**
 after a separately checked one-field source-hash amendment. Complete
 tangent acceptance remains open.
+The first sixteen-Q4 free-target source-refinement press failed its unchanged
+pressure consistency gate at step three after two nonlinear Schur proposals
+were rejected on re-equilibration. Its force, gap and pressure-rank checks
+passed, but it supplies no accepted sixteen-Q4 response; the local
+pressure-response diagnostic is the next action. The raw failure and bounded
+interpretation are retained in the free-target development record.
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as

@@ -163,3 +163,32 @@ This is development evidence for restart multiplier identity in this elastic
 fixture. It is not an independent response reference or full physical-state
 identity assessment. Mesh/enforcement refinement, installed free-target
 verification and C1 acceptance remain open.
+
+## Sixteen-Q4 source refinement attempt
+
+A single sixteen-Q4, three-step press kept the same two-S3 target, supports,
+distributed 0.3 N load, 1e−8 N inner equilibrium setting and unchanged
+contact gates. It accepted two steps, then stopped at step three with
+`maximum_augmentations_reached`. The [raw failure](../../reports/general_contact_d1_free_target_16q4_press_inner1e8_dev_20260928.json)
+has SHA256 `c1d9e39a4bda80a3d75b454fb0c597b95f9627ebd4211d6fd3537f0654fd63e1`.
+At rejection, force equilibrium was about 2.09e−13 N and the physical gap
+was −1.64 µm, within the declared 50 µm budget. Scaled pressure rank was
+34/34, but the final projected multiplier change was 7.33e−4 Pa against
+the unchanged 1e−5 Pa gate. Two bounded Schur proposals predicted residuals
+below 3e−11 Pa; after nonlinear re-equilibration their actual projected
+residuals rose to about 1.52e−3 Pa, so both were correctly rejected.
+The accepted second-step contact force was 6.48462e−5 N; an unaccepted
+third-step force is not a response result. The failure is a pressure
+consistency/acceleration issue for this path, not a demonstrated pressure
+Gram rank, gap or force-equilibrium failure. It does not establish a
+sixteen-Q4 mesh response or justify relaxing the augmentation budget.
+
+Read-only diagnostic review found that the active Schur response is dominated
+by a weak opposing-pressure mode. The full proposal intentionally deactivates
+one pressure mode; its predicted and actual candidate active sets agree, but
+its finite-step gap response does not. The next bounded diagnostic is one
+small admissible fraction of the saved proposal at the augmentation-two
+equilibrium, with a fresh mechanical equilibration and comparison of measured
+gap change to the local response matrix. Small-fraction agreement would
+implicate finite-step curvature or the planned branch transition; mismatch
+on the unchanged original branch would implicate the response derivative.
