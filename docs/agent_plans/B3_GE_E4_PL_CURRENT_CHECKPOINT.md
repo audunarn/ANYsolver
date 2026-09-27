@@ -87,6 +87,33 @@ solver route. The earlier penalty overlap and split-solid no-contact overlap
 remain in force. No native-law
 or multiplier-space decision follows, and no G0 status changes.
 
+**Next seam discriminator, before execution:** On the same failed C1
+hard-mortar deck, remove only the eight plate and eight bar contact faces
+in the final x=`0.8625–0.9 m` column adjoining the shared terminal bond;
+retain all elements, loads, supports, interaction and 120 s/2 GiB/one-thread
+limits. Establish the element-face coordinate map before editing the two
+contact sets. If the reduced-contact solve completes while the full-contact
+solve fails, the shared-edge neighborhood is implicated in this solver
+route, but the resulting untreated column makes it physically inadmissible
+for native accuracy. If it still fails, do not blame the seam; examine the
+solver method or reference representation. Neither outcome selects a native
+connection or licenses a wider contact sweep.
+
+**Seam discriminator outcome:** The C3D20R element-face map uniquely matched
+all 128 paired faces. Only the last eight faces on each contact side, in
+x=`0.8625–0.9 m`, were removed; all 120 remaining faces per side and all
+other deck content were retained. The pinned one-thread CalculiX run reached
+the registered 2-GiB solver-memory cap after `20.763 s` (observed peak
+`2,158,915,584` bytes) and was killed before a completed increment or field.
+The untrimmed run exited `201` much earlier, but the trimmed resource failure
+does not prove that the shared seam caused that exit or establish contact
+admissibility. Both raw failures are preserved. Stop this factor-4 hard-mortar
+route under the registered resources; no larger cap, mesh sweep, native
+accuracy score or formulation verdict follows. Reuse the already executed
+fully bonded F5 and pre-opened C1 evidence at their valid levels while
+designing a physically and computationally admissible reference path. G0B
+remains open and G1 barred.
+
 **Next split-law experiment, pre-execution (27 September):** The competing
 explanations are insufficient longitudinal enforcement of the declared
 six-channel work law versus a different continuous trace/domain response.
