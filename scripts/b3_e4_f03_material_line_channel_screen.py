@@ -177,12 +177,18 @@ def _one_topology(xs, ys, beam, *, mixed_s3: bool,
             "multiplier_knots": knots, "spaces": result}
 
 
-def run() -> dict:
+def run(*, off_edge: bool = False) -> dict:
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     actual = Path(anysolver.__file__).resolve().parent
     if actual != expected:
         raise RuntimeError("channel screen imported another ANYsolver checkout")
     xs, ys = local_grid(2, transverse_cells=4)
+    if off_edge:
+        ys = ys.copy()
+        center = np.flatnonzero(np.abs(ys) < 1e-12)
+        if len(center) != 1:
+            raise ArithmeticError("single transverse center row required")
+        ys[center[0]] = .01
     beam = build(12, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um")
@@ -206,9 +212,16 @@ def run() -> dict:
             "OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")},
         "shell_nodes": len(xs)*len(ys),
         "beam_half_cells": beam.n_half_cells,
+        "transverse_grid_m": ys.tolist(),
+        "material_line_y_m": 0.,
+        "off_edge": off_edge,
         "topologies": topologies,
     }
 
 
 if __name__ == "__main__":
-    print(json.dumps(run(), indent=2, sort_keys=True))
+    if len(sys.argv) > 2 or (len(sys.argv) == 2 and
+                              sys.argv[1] != "--off-edge"):
+        raise SystemExit("usage: channel_screen.py [--off-edge]")
+    print(json.dumps(run(off_edge=len(sys.argv) == 2), indent=2,
+                     sort_keys=True))

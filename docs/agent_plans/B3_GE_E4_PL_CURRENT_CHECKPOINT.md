@@ -43,6 +43,19 @@ Advance a physically matched two-sided torque/shear reference and check
 off-edge S3 loaded transfer separately. Do not resume finer classical axial work.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
+**Next bounded off-edge loaded check (prospective):** The first and second
+variations pass with interior S3 hosts, but a supported loaded transfer
+may still reveal host-dependent assembly, rank, or wrench/work defects.
+Use the same flat reference surface, bond path, beam, loads, supports,
+and provisional row spaces on the edge-aligned and center-row-shifted
+Q4/S3 meshes, with both S3 diagonals. Check supported row rank, accepted
+solve status, force/moment balance, work, gaps, and tip response. If an
+off-edge S3 case fails while the corresponding shifted Q4 succeeds,
+investigate the S3 host/trace implementation; if all pass, retain only
+bounded loaded mapping evidence and proceed to the fixed-rule derivation.
+Mesh-dependent response differences alone do not select a multiplier
+space or establish connection fidelity. This uses no formal F03 authority.
+
 **Next bounded row-policy probe (prospective):** The first reciprocal
 failures identify different trace dimensions. On shell-fine 1:2, test
 cellwise P0 Fy/Mz with continuous P1 in the other four channels; on
