@@ -112,8 +112,8 @@ def test_reciprocal_line_rows_expose_unscaled_channel_identities():
                      torsion_constant=square_torsion_constant(),
                      reference_profile="c1_tangent_2um", assemble=False)
         line = MaterialLinePosition(xs, ys, beam)
-        rows, _ = _rows(line, LineMultiplierSpace(
-            "continuous_linear", knots))
+        space = LineMultiplierSpace("continuous_linear", knots)
+        rows, measures = _rows(line, space)
         channel = lambda axis: rows[[6*i+axis for i in range(5)]]
         alternating = np.array((.5, -1., 1., -1., .5))
         if shell_cells == 4:
@@ -122,6 +122,25 @@ def test_reciprocal_line_rows_expose_unscaled_channel_identities():
             cross += np.array((1., -1., 0., 1., -1.))@mz/120.
             assert np.linalg.norm(cross) < 1e-12*np.linalg.norm(rows)
             assert np.linalg.norm(alternating@mz) < 1e-12*np.linalg.norm(rows)
+            force_coeff = np.array((-.5, 1., -1., 1., -.5))
+            moment_coeff = np.array((1., -1., 0., 1., -1.))/120.
+
+            def density(coefficients, coordinate):
+                return space.values(coordinate)@(coefficients/measures)
+
+            # The row identity is a *projected* null, not a zero continuous
+            # physical force/moment field or a functional gauge.
+            assert abs(density(force_coeff, .0625)) > 10.
+            assert abs(density(moment_coeff, 0.)) > .6
+            derivative = (density(moment_coeff, .25)
+                          -density(moment_coeff, 0.))/.025
+            assert abs(density(force_coeff, .0625)+derivative) > 10.
+            for a, b, c in ((0., .25, .5), (.5, .75, 1.)):
+                integral = .1*((b-a)*(density(moment_coeff, a)
+                                    +density(moment_coeff, b))/2
+                                +(c-b)*(density(moment_coeff, b)
+                                    +density(moment_coeff, c))/2)
+                assert abs(integral) < 1e-12
         else:
             for axis in (3, 4, 5):
                 assert (np.linalg.norm(alternating@channel(axis))

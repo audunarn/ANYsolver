@@ -83,6 +83,35 @@ through `-m_z N'_a u_{a,y}` and on shell roll through
 chart transformation must be applied before displaying physical wrenches;
 raw rotation-constraint multipliers are not automatically spatial moments.
 
+## What the force/yaw row null means
+
+On the bounded shell-fine 1:2 grid with five continuous-P1 multiplier
+knots, the normalized weak rows have the exact unscaled identity
+
+\[
+(-\tfrac12,1,-1,1,-\tfrac12)\cdot F_y+
+(M_{z,0}-M_{z,1}+M_{z,3}-M_{z,4})/120=0.
+\]
+
+The two terms are coupled because the shell-top yaw variation contains
+`∂x(u_y-t theta_x)` while the lateral position gap contains the same
+displacement and rotation fields. This identity holds after testing
+against the *discrete* shell and native-beam trace coordinates. It is
+not a zero continuous multiplier field: the reconstructed force density
+is `−20/+20` at quarter-points within the first subinterval, the
+moment density is `+2/3` at the left endpoint and `−2/3` at the right,
+and force density plus moment-density derivative is nonzero. Segmented
+exact integration gives zero moment-density mean on each native
+half-cell. A Gauss rule crossing the interior knot without segmentation
+does not preserve that cancellation.
+
+The null therefore shows that this **discrete test space is too rich for
+the available trace image on that mesh**. It is not a physical stress
+gauge and does not authorize automatic SVD row deletion. A candidate
+joint space needs a derived physical interpolation, a compatible
+resolution policy, and checks of work, unsupported modes, locking and
+the constrained mixed operator as the interface grows.
+
 ## Eccentric patches and checked boundary
 
 The surface separation between reference axes is `t-b=.0675 m`. Equal

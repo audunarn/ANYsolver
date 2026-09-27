@@ -262,6 +262,30 @@ finite-width welded face, nonlinear transfer, multiplier stability or
 G0B. The next physical comparison must use the declared center-line
 pose meaning or explicitly state a distinct footprint idealization.
 
+**Next force/yaw identity interpretation (prospective):** On the already
+used shell-fine 1:2 reference, reconstruct the exact unscaled
+Fy/Mz null combination as continuous multiplier densities before
+projection. Check whether its moment density vanishes at both bond
+ends, has zero native half-cell means, and whether its derivative
+cancels its force density pointwise or only after testing against the
+discrete shell/native traces. A true continuous gauge would motivate a
+functional quotient; a merely projected null requires a compatible
+mesh-dependent dual space. This calculation does not select rows,
+change norms, or launch another loaded solve.
+
+**Force/yaw interpretation:** The exact unscaled weak-row null is
+projection-specific, not a continuous stress gauge. The reconstructed
+force density is `−20/+20` at quarter-points of the first subinterval,
+the moment density is `+2/3` and `−2/3` at the bond endpoints, and
+force density plus moment-density derivative is nonzero. Exact
+cut-segmented integration gives zero moment-density mean separately on
+both native half-cells; an unsplit Gauss rule does not preserve that
+identity. The focused regression test passes. The physical work law is
+therefore not degenerate; the candidate discrete multiplier/primal
+pairing is. Preserve both force and moment meaning when deriving a
+compatible joint space. No row may be erased merely because a sampled
+SVD found this projected null.
+
 The planned x8 fixture has about 1,404 globally free primal columns,
 above the private rank helper's 1,200-column SVD cap, although only a
 small attachment-local subset enters its rows. The helper now removes
