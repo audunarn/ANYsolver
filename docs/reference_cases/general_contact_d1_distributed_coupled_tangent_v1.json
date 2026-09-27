@@ -1,0 +1,38 @@
+{
+  "case_id": "general_contact_d1_distributed_coupled_tangent_v1",
+  "status": "registered_pending_execution",
+  "claim_boundary": "Smooth-branch fixed-multiplier assembled and isolated mapped-contact directional tangent for the saved planar elastic 24-Q4/S3 constrained pose, source nodes 18 and 43; not a complete C1 tangent or deformable-target tangent",
+  "policy": "ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1/2026-09-24.2",
+  "source_commit": "22c6d2ebc6210c546a7b4f73ebd5c6559286e5ed",
+  "source_blobs": {
+    "scripts/general_contact_d1_distributed_coupled_tangent_probe.py": "cfd7522dff18675b596ee38d1ad3e98a4a7b2ff7",
+    "src/anysolver/general_contact/s3_patch_augmented.py": "1688a6294622fc96a23c780e1a2e6b917ad94bf0",
+    "src/anysolver/general_contact/q4_s3_overlap_derivatives.py": "7a7497f7a2f4e2fe864c6b2bd8a0b2573a6253ec"
+  },
+  "saved_pose_report": "reports/general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+  "saved_pose_sha256": "f4a3942b2bf3c0112f4774b6593464a80c8da479582b586eff7962570f935815",
+  "direction": {
+    "source_nodes": [18, 43],
+    "axes": ["ux", "uz"],
+    "weight_per_axis": 0.5,
+    "target_coordinates": "fixed by structural constraints"
+  },
+  "execution": {
+    "command": "python scripts/general_contact_d1_distributed_coupled_tangent_probe.py reports/general_contact_d1_distributed_cycle_response_v1_formal_20260927.json reports/general_contact_d1_distributed_coupled_tangent_v1_formal_20260927.json --nodes 18 43",
+    "maximum_wall_seconds": 180,
+    "run_once": true
+  },
+  "criteria": {
+    "status": "passed_development",
+    "free_dofs": 98,
+    "base_active_modes": 18,
+    "pressure_replay_error_pa": 1e-6,
+    "pose_constraint_error_m": 1e-12,
+    "steps_m": [1e-6, 5e-7],
+    "smooth_branch": true,
+    "minimum_coupled_action_n_per_m": 1e-6,
+    "minimum_mapped_contact_action_n_per_m": 1e-6,
+    "maximum_relative_coupled_tangent_error": 1e-5,
+    "maximum_relative_mapped_contact_tangent_error": 1e-5
+  }
+}
