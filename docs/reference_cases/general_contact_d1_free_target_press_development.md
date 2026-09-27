@@ -1,0 +1,27 @@
+# Deformable-target Q4/S3 press: bounded development
+
+An eight-Q4 source with distributed 0.3 N full load was pressed in three
+increments against the two-S3 target. Target nodes 51 and 54 were fully
+clamped and nodes 52 and 53 were free. The ordinary nonlinear static route
+used the existing 1e−5 Pa multiplier tolerance, 50 µm gap tolerance and
+seven-augmentation limit.
+
+The first [raw development run](../../reports/general_contact_d1_free_target_8q4_press_dev_20260927.json)
+(SHA256 `fa38d8c51fb38b415caf464c7ba31ec05a817c9167a5ae61b165c2a553ad8a07`)
+accepted the opening step and stopped at the next contact step with
+`maximum_augmentations_reached`. At that step the independent gap was
+−0.334 µm, within tolerance; scaled pressure rank was 18/18 supported
+modes, with two active modes. The final multiplier change was
+3.265e−5 Pa, above the unchanged 1e−5 Pa criterion. Two supported-Schur
+proposals predicted zero residual on the active modes, but subsequent
+equilibration reduced the actual projected residual by only 0% and 7%,
+below the required 25% reduction. They were rejected as
+`nonlinear_verification`; no proposal was silently accepted. The pressure
+Gram condition was about 10.94 after scaling.
+
+The governing question is whether one bounded relinearization after the
+nonlinear verification failure improves the pressure response without
+changing mechanical inputs, tolerances or augmentation count. A separate
+development run may set `augmentation_schur_maximum_relinearizations=1`;
+it must report its actual proposal, re-equilibration and accepted-step
+trace. A failure does not justify automatically increasing the limit.
