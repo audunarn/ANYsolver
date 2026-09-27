@@ -2,83 +2,29 @@
 
 ## Current state — 27 September 2026
 
-**Current physical-reference discriminator (prospective):** The saved F5
-combined-load solid field has an actual top-face positional bond, while the
-native six-row hybrid adds a separate E4-director/beam-pitch condition.
-The saved six-gap projection reports nonzero hybrid pitch on that field, but
-the station-pose projection was run only on separate influence cases. Run the
-existing read-only station projection on the *same* pre-opened combined field,
-with unchanged F5 geometry and no new external solve. Compare its
-director/section pitch by station with the saved weak hybrid pitch and the
-section-fit residual. If the mismatch persists, the one-sided F5 bond cannot
-validate the hybrid's added pitch channel; specify a physically matched
-two-sided reference before any accuracy ranking. If it vanishes, review the
-six-gap reduction/projection discrepancy before changing the law. Either
-outcome leaves G0B open, G1 barred and formal F03 authority unconsumed.
-
-**Outcome and connection decision:** The unchanged F5 pre-opened combined
-solid field completed this read-only projection in `5.34 s`. On the six
-whole-strip section stations x=`.90,.92,.94,.96,.98,1.00 m`, the fitted
-bar-section versus solid-inferred plate-director pitch gaps are
-`8.29,6.43,5.21,4.49,4.13,3.91 µrad`; local interior patches give
-`8.45,4.86,3.16,2.68 µrad`. The section-fit RMS is `42–83 nm`.
-Stress-free and common-rigid projection errors are below `1e-15` and
-`6.1e-10`, respectively. This agrees qualitatively with the previously
-saved combined-field six-gap P0 hybrid pitch rows
-`−7.594/−2.699 µrad`; different pose and weak-row conventions prevent a
-direct numeric equality claim. Raw projection:
-`B3_GE_E4_PL_F03_C1_F5_COMBINED_STATION_PROJECTION_DEV_V1.json`
-(identical local `.qualification/b3-ge-e4-pl/f03-c1-factor5-combined-station-projection-dev-20260927-v1/combined.json`),
-SHA256 `D2487D3118CA697515DFDED0CA9D313067D15021556948456C408314650D835F`;
-source/deck/FRD SHA256 `505E6331`/`A9D7BA21`/`A4C11D5B` (full
-identities in the raw file). This is a saved-field reduction, not a new
-external solve or an E4 material-state measurement.
-
-**Resulting action:** Treat the C1 hybrid as a distinct two-sided
-director-couple connection. The actual F5 solid is bonded on its top
-face only and permits the observed through-thickness pitch difference;
-therefore proximity of its tip motion cannot select the hybrid or prove
-its sixth channel physically faithful. Before another loaded comparison,
-define the intended top/bottom force-pair or equivalent connection work,
-including beam-section port, shell director/shear, supports, eccentricity
-and reaction recovery. Obtain a matching sided reference with validated
-force/moment and virtual-work balance, then compare the hybrid and any
-five-field/top-face alternative against their *own* declared physical
-connection. Existing F5 same-action and positional evidence remains
-valid at its stated level. This decision does not select P0/P1/dual or
-relax the registered stability and mesh-ratio requirements. G0B remains
-open, G1 barred, and formal F03 authority unconsumed.
-
-**Decision sought:** Qualify a physical beam–shell connection before G1.
-**Established:** The externally attached top-face positional law has a
-common reference integrand, objective bounded finite-chart work, an E4
-total-rotation derivative check and a reference physical wrench dual.
-Its selected P0/P1/signed-dual rows preserve top-fixed director-pitch
-freedom. Four/eight-interval P0 spaces are nested and full rank on the
-tested x16 shell/B3-12/B3-24 cases, while P0 eight intervals on x8/B3-12
-has rank 41/48. P1 has one exact work-row dependency; the dual-eight
-53/54 near-null was observed on the current discrete trial pairing, but
-its relation to the newly proved continuous gauge must be reassessed.
-The director-pitch hybrid
-remains a separate two-sided weld candidate. B2 physical-section samples
-and private batching pass bounded checks, but F09 admission remains open.
-**Uncertainty:** The six-channel top-face positional line has an exact
-continuous force/pitch-moment gauge; its finite P0 rank cannot qualify a
-six-pose bond. The required independent rotational work law, physical
-transfer against a matched sided reference, and then an admissible
-multiplier policy and growing-space stability remain unresolved.
-**Next discriminator:** Treat the top-face positional law as a finite-width
-footprint or a five-field quotient, not as the completed six-pose line.
-Compare an explicitly defined independent rotational trace or physical
-finite-extent weld with the supported torque/shear and compensated-pitch
-patches. Only after the continuous law survives should P0 and a deliberately
-quotiented P1 be assessed under an appropriate dual norm with the actual
-native retained mixed tangent, work, locking and registered ratios.
-Treat dual-eight with 54 independent rows as inadmissible on the tested
-primal layout. A failed candidate prompts a law or resolution revision;
-a passing one advances the independent G0 mechanics review. Do not
-select a space from tip motion, F5 proximity or one spectral quotient,
-and do not repeat classical axial refinement without a new question.
+**Decision sought:** Select a defensible physical beam–shell connection
+law before choosing an exact line-multiplier space or entering G1.
+**Established:** The top-face positional law has a continuous force/pitch
+gauge, so finite P0 rank cannot establish six-pose bonding. The native
+hybrid adds independent two-sided director-pitch work. On the saved F5
+one-sided solid bond its pitch gap is nonzero; adding a linearized sided
+pitch equation changes combined-load work by −0.403%/−0.448% on F2/F4.
+F5 with that wide equation was stopped at the retained 2 GiB limit.
+Independent review found no blocking defect in the bounded equation or
+its interpretation. B2 F09 admission remains open.
+**Uncertainty:** Which joint semantics meet the required torque/shear and
+virtual-work contract: top-surface positional bonding, an explicitly
+two-sided director-couple weld, or distinct admitted alternatives? The
+completed F2/F4 runs lack equation multipliers and per-side work; neither
+they nor the existing native rows establish physical fidelity or a mortar
+space.
+**Next discriminator and action:** Derive and recover the sided interface
+force/work for the two-sided option, or revise the sixth channel for a
+top-surface option; test the selected continuous law against the supported
+torque/shear and compensated-pitch patches. Only then assess growing
+interface spaces with the actual native mixed tangent, work, locking and
+registered ratios. Do not repeat F5 under a higher resource cap or finer
+classical axial sweeps without a decision-changing hypothesis.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Next bounded sparse mixed diagnostic (prospective, 27 September):** The
@@ -7751,3 +7697,143 @@ does not qualify quadrature for every geometry or line law. Stop this
 quadrature check; return to the physical rotational connection and reviewed
 growing-space norm/transfer assessment. G0B remains open, G1 barred, and
 formal F03 authority unconsumed.
+
+## Latest F03 sided-reference decision — 27 September 2026
+
+**Current physical-reference discriminator (prospective):** The saved F5
+combined-load solid field has an actual top-face positional bond, while the
+native six-row hybrid adds a separate E4-director/beam-pitch condition.
+The saved six-gap projection reports nonzero hybrid pitch on that field, but
+the station-pose projection was run only on separate influence cases. Run the
+existing read-only station projection on the *same* pre-opened combined field,
+with unchanged F5 geometry and no new external solve. Compare its
+director/section pitch by station with the saved weak hybrid pitch and the
+section-fit residual. If the mismatch persists, the one-sided F5 bond cannot
+validate the hybrid's added pitch channel; specify a physically matched
+two-sided reference before any accuracy ranking. If it vanishes, review the
+six-gap reduction/projection discrepancy before changing the law. Either
+outcome leaves G0B open, G1 barred and formal F03 authority unconsumed.
+
+**Outcome and connection decision:** The unchanged F5 pre-opened combined
+solid field completed this read-only projection in `5.34 s`. On the six
+whole-strip section stations x=`.90,.92,.94,.96,.98,1.00 m`, the fitted
+bar-section versus solid-inferred plate-director pitch gaps are
+`8.29,6.43,5.21,4.49,4.13,3.91 µrad`; local interior patches give
+`8.45,4.86,3.16,2.68 µrad`. The section-fit RMS is `42–83 nm`.
+Stress-free and common-rigid projection errors are below `1e-15` and
+`6.1e-10`, respectively. This agrees qualitatively with the previously
+saved combined-field six-gap P0 hybrid pitch rows
+`−7.594/−2.699 µrad`; different pose and weak-row conventions prevent a
+direct numeric equality claim. Raw projection:
+`B3_GE_E4_PL_F03_C1_F5_COMBINED_STATION_PROJECTION_DEV_V1.json`
+(identical local `.qualification/b3-ge-e4-pl/f03-c1-factor5-combined-station-projection-dev-20260927-v1/combined.json`),
+SHA256 `D2487D3118CA697515DFDED0CA9D313067D15021556948456C408314650D835F`;
+source/deck/FRD SHA256 `505E6331`/`A9D7BA21`/`A4C11D5B` (full
+identities in the raw file). This is a saved-field reduction, not a new
+external solve or an E4 material-state measurement.
+
+**Resulting action:** Treat the C1 hybrid as a distinct two-sided
+director-couple connection. The actual F5 solid is bonded on its top
+face only and permits the observed through-thickness pitch difference;
+therefore proximity of its tip motion cannot select the hybrid or prove
+its sixth channel physically faithful. Before another loaded comparison,
+define the intended top/bottom force-pair or equivalent connection work,
+including beam-section port, shell director/shear, supports, eccentricity
+and reaction recovery. Obtain a matching sided reference with validated
+force/moment and virtual-work balance, then compare the hybrid and any
+five-field/top-face alternative against their *own* declared physical
+connection. Existing F5 same-action and positional evidence remains
+valid at its stated level. This decision does not select P0/P1/dual or
+relax the registered stability and mesh-ratio requirements. G0B remains
+open, G1 barred, and formal F03 authority unconsumed.
+
+**Next bounded sided-reference feasibility (prospective):** On the *same*
+saved F5 solid mesh, support and combined pre-opened load, add exactly one
+linear averaged pitch equation over the existing bonded x=`.9–1.0 m`
+strip. Its beam side is the area-averaged bar top-minus-bottom x-motion
+divided by the 100 mm section depth; its plate side is the area-averaged
+plate top-minus-bottom x-motion divided by the 35 mm thickness. Keep the
+existing shared top-face nodes and all other deck cards. Before solving,
+check the discretized equation's reference zero, six rigid motions,
+top-fixed director witness, and equal/opposite physical moment work.
+Then run only this one external combined case under the existing one-thread,
+120 s and 2 GiB development limits. A complete balanced solve measures
+how much this *explicitly two-sided linearized joint* changes the existing
+one-sided response; a solver or balance failure requires correcting the
+external construction. Neither outcome alone qualifies the nonlinear
+native hybrid, surface contact, mesh convergence or multiplier policy.
+
+**Resource-limited first outcome and bounded adjustment:** The preflight
+passed 543-term integration, rigid-motion errors below `3.2e-15`, a unit
+top-fixed pitch witness, and balanced opposite unit plate/bar moments.
+The pinned F5 CalculiX run stopped at `33.77 s` when solver RSS reached
+`2,181,611,520 bytes`, above the retained 2 GiB cap. No displacement,
+reaction or connection response was produced. Preserve
+`.qualification/b3-ge-e4-pl/f03-c1-factor5-sided-pitch-dev-20260927-v1/result.json`
+(SHA256 `EFDD89F2D66201772CC27EA46DC4D8B7712FB98C7D678A259CF075A1CE2F2211`)
+and its logs. This is a resource failure of a wide eliminated equation,
+not evidence that the physical pitch law failed. Do not raise the cap.
+The generalized runner reproduces the failed F5 generated deck byte-for-byte
+(SHA256 `4F38B20D284A90BD3749E45C021240E45BAE5C8EE3A2418086CDB28D861C5222`);
+the failure record is also tracked as
+`B3_GE_E4_PL_F03_C1_F5_SIDED_PITCH_DEV_V1.json`.
+Use the already saved physically identical F2 and F4 one-sided decks to
+check the same one-equation construction at smaller matrix sizes, first F2
+and only then F4 if F2 is balanced and below the cap. An F2/F4 solve
+isolates feasibility and directional work on those meshes; it does not
+replace F5 convergence or the eventual sparse native multiplier law. If
+either exceeds the cap, stop and redesign the external enforcement rather
+than enlarging the resource allowance.
+
+**F2/F4 sided-reference outcome and decision:** The same physical C1
+geometry, 35 mm plate, 100 mm bar, support, pre-opened combined load and
+shared top-face bond, with exactly one added *linear area-averaged*
+through-thickness pitch equation, completed on F2 and F4. The generated
+equations have 111/363 terms. Rigid-motion and dual-wrench
+preflight errors are below `3e-15`;
+the top-fixed pitch witness is `−1`.
+F2/F4 solver times are `0.788/19.276 s`, peak RSS
+`106,176,512/1,322,917,888 bytes`, and assembled pitch gaps
+`5.28e-11/−5.89e-12 rad`. Baseline one-sided versus two-sided
+combined-load applied work is `0.0739340872→0.0736359877 J` on F2
+(`−0.4032%`) and `0.0742620313→0.0739292397 J` on F4 (`−0.4481%`).
+The fitted tip-section y-rotation falls by `1.279/1.392 µrad`.
+DAT-recovered component support-wrench discrepancies are at most
+`4.95e-4 N`/`3.68e-5 N m` (F2) and
+`2.58e-5 N`/`1.86e-5 N m` (F4); these are exploratory printed-output
+balances, not the registered final tolerance. Sampled unbonded-face
+minimum normal gaps remain `8.52/3.07 nm` and therefore remain
+directional, not a contact certificate. The F2/F4 raw result SHA256 values
+are `26FA7BDA53E17C776D0A1F76F17ED3CC1DF5A99495CC7D08D6F8CA6A23D8C503`
+and `AF630923FA5E30AD262D6CBF99393CE5484160DEB5AFE718C2CA14D1ED1445DF`
+under `.qualification/b3-ge-e4-pl/f03-c1-factor{2,4}-sided-pitch-dev-20260927-v1/`.
+Identical tracked records are
+`B3_GE_E4_PL_F03_C1_F2_SIDED_PITCH_DEV_V1.json` and
+`B3_GE_E4_PL_F03_C1_F4_SIDED_PITCH_DEV_V1.json`; generated-deck SHA256
+values are `A990414F4280B53CD9868B431AA21C52A9991FD195FF36FE22978E31152049E8`
+and `9532351E9F2E04E6473253B61E2FD87115098777E0685CCC22DE2437C750161A`.
+The generated decks, stdout, DAT and FRD remain beside them. F5 remains
+the preserved resource failure above. Stop this external mesh sequence.
+
+**Interpretation and next action:** The sixth, two-sided pitch work has
+a measurable stiffening effect on the *solid* joint; it is not an inert
+basis change. It also moves the solid's work farther below the previously
+saved native-hybrid work, so the native/solid difference cannot be assigned
+to this one constraint alone. The area-averaged linear solid equation is
+only a small-motion realization of a two-sided director connection.
+Next specify the intended engineering joint as a top-surface positional
+bond, a two-sided director-couple weld, or two explicit alternatives, using
+the established torque/shear and connection-work requirements. For a
+two-sided choice, validate sided interface force and work recovery and
+native port matching; for a top-surface choice, revise the continuous
+sixth channel or admit a five-field law. The current F2/F4 pair cannot
+select P0/P1/dual, certify contact or close G0B. Do not retry F5 without
+a sparser external enforcement design and a reason it changes the law
+decision. G1 remains barred; formal F03 authority is unconsumed.
+
+Independent read-only mechanics/code review found no blocking equation,
+parser or provenance defect in this bounded external diagnostic. It
+explicitly limits the F2/F4 claim: algebraic opposite moments and global
+work change do not validate sided interface transfer because the external
+equation multiplier and per-side forces/work were not recovered. That is
+the next qualification-relevant measurement, not a passed G0B row.
