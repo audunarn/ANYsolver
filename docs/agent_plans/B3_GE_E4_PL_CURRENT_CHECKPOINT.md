@@ -20,21 +20,33 @@ is not proven primal locking. The exact two-interval solid split lowers
 load work by 1.214% opening and 1.533% torque versus the global-six solid.
 Its action moves same-domain E4 and B3 work toward native P0, especially
 for opening, but a substantial torque gap remains. B2 F09 remains open.
-**Uncertainty:** Whether the remaining physical torque/shear transfer
-difference is a defect in the continuous six-channel trace or arises from
-the solid-versus-E4/B3 section and shell idealizations. A one-grid linear
-no-contact comparison cannot allocate that cause, establish refinement
-behavior or select P0/P1/dual.
-**Next discriminator and action:** On the existing matched two-interval
-fields, compare continuous physical surface gaps and actual six-channel
-gaps under support-admissible torque/shear virtual motions, including E4
-director, drilling and transverse-shear response and retained B3 sided
-ports. If a physically prohibited motion has zero continuous six-channel
-gap, correct that work law; if the law detects it, carry the same action
-through controlled physical refinement and registered growing-space
-stability/mesh ratios. Do not run a third finer axial or longitudinal
-split merely because two intervals changed the answer. The split result
-does not select a multiplier space or close F03.
+The saved split-solid no-contact fields have independently reviewed sampled
+same-deformed-XY surface-order overlap witnesses: 81 torque and 20 opening
+samples among the initially negative paired-parametric subset, with minimum
+gaps `-45.58 nm` and `-33.78 nm`, respectively. The witnesses are interior
+to the paired Q8 faces with negligible XY projection defect. This is not a
+global contact or penetration certificate. It does rule out treating these
+linear no-contact fields as an admissible physical accuracy reference.
+**Uncertainty:** Whether the remaining torque/shear difference is a defect
+in the continuous six-channel trace or arises from contact and differing
+solid-versus-E4/B3 idealizations. The existing C1 penalty reference also
+retains sampled overlap (`31/10,368`, minimum `-3.162 nm`); neither field
+allocates that cause, establishes refinement behavior, or selects P0/P1/dual.
+**Next discriminator and action:** Reuse the completed C1 mode-resolved
+evidence: supported positive-energy even transverse slip has zero continuous
+six-channel gap; a distinct longitudinal gap is nonzero continuously and
+detected by a growing row space. Do not repeat those fields or finer classical
+axial solves. The next bounded reference task is to distinguish missed or
+underintegrated contact from an incompatible connection geometry on the same
+loads, supports, sections and contact faces. Preflight face coverage and the
+contact algorithm against the historical C1 penalty deck, then seek a
+non-overlapping, balanced torque/shear field before physical scoring. If
+that cannot be obtained within the existing resource envelope, preserve the
+failed result and revise the reference strategy within G0; do not infer
+native formulation failure. In parallel, complete independent B2 F09 and
+other nondependent foundations. No third longitudinal split follows solely
+from the two-interval change.
+No multiplier space is selected and F03 remains open.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Next split-law experiment, pre-execution (27 September):** The competing
