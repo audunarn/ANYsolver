@@ -21,10 +21,14 @@ reactions have the same physical sign but different model idealizations;
 neither their magnitudes nor the existing native rows establish physical
 fidelity, measured contact traction or a mortar space. The complete native
 six-channel reference wrench and opposite beam/shell rigid work now pass
-with retained B3 half-cell rotations included.
-**Next discriminator and action:** Declare the six-channel candidate as an
-explicitly two-sided director-couple joint and test loaded finite native
-port work, torque/shear and compensated-pitch patches against that law.
+with retained B3 half-cell rotations included. On the existing F4 solid,
+one added area-mean sided equation closes its own mean pitch but leaves
+a signed local fitted pitch variation along the bond.
+**Next discriminator and action:** Treat the six-channel candidate as an
+explicitly two-sided director-couple joint. A bounded F4 segmented-sided
+reference would distinguish equation resolution from law mismatch; in
+parallel, test loaded finite native port work, torque/shear and
+compensated-pitch patches against that law.
 Keep the one-sided top-face bond as a distinct reference; if that is the
 intended production joint, revise its continuous rotational work instead
 of treating multiplier refinement as a repair. Only after the continuous
@@ -7942,3 +7946,44 @@ wrench/work interpretation. It does not validate loaded finite-rotation
 work, torque/shear response, the two-sided engineering idealization or F03.
 The next continuous-law discriminator must use supported torque/shear and
 compensated-pitch fields with the actual native retained-coordinate port.
+
+**Next saved-field discriminator (prospective):** The completed F4 sided
+solid case has a vanishing *one-equation area-mean* pitch gap, but that
+does not imply a locally closed director/section pitch trace. Reuse the
+unchanged F4 deck and FRD through the existing station-pose projector,
+with reference and common-rigid preflights, at the five F4 bond stations.
+If the local pitch mismatch persists, treat the single external equation
+as insufficient longitudinal resolution for this law and require a
+segmented sided comparator before accuracy ranking. If it is locally
+small relative to the one-sided F4 projection and fit residual, proceed
+to native complete-port transfer/work and growing-space assessment.
+Either outcome leaves the native E4/B3 versus solid idealization and
+formal acceptance unresolved; no F5 retry, resource change or new
+external solve follows from this read-only projection.
+
+**F4 saved-field projection result and decision:** The existing projector
+completed on the *same* one-sided and one-equation two-sided F4 solid
+geometries, supports and combined load; no external solve was launched.
+Reference gaps are `1.19e-15` and common-rigid errors `6.00e-10` in both
+projections. Whole-strip fitted bar-section minus solid-inferred plate-
+director pitch at x=`.900,.925,.950,.975,1.000 m` is
+`8.132,5.975,4.717,4.123,3.840 µrad` for the one-sided bond and
+`3.722,1.417,0.085,-0.597,-0.860 µrad` after the single sided equation.
+Local three-station projections are `7.387,3.836,2.711` versus
+`2.915,-0.715,-2.095 µrad`. The sided equation's own assembled mean is
+`−5.89e-12 rad`, so it closes its declared *one* mean but leaves a
+signed local variation. The fitted section RMS is about `39–65 nm` on
+the sided run; these pose projections remain model reductions, not
+measured E4 director states or contact tractions. Source-bound raw records
+are `B3_GE_E4_PL_F03_C1_F4_ONE_SIDED_STATION_PROJECTION_DEV_V1.json`
+and `B3_GE_E4_PL_F03_C1_F4_SIDED_STATION_PROJECTION_DEV_V1.json`, SHA256
+`ADEB37A1204A4A793179DD29152A649CC97862990BA1187EC78960A39E3D6D3F`
+and `EB5F44D7F0B6652B0722C341B3F34AECE90790A76724D5CFF1D5F5048520C273`.
+The single area-mean external equation is therefore not a locally matched
+six-channel sided reference; it cannot rank native P0/P1/dual or complete
+physical transfer. A later *bounded F4 only* segmented sided comparator
+may be justified if it tests whether local mismatch comes from equation
+resolution rather than the two-sided law; it must preserve the same model,
+load and resource limits, and assess each equation's dual/work and global
+balance. Do not infer a production multiplier policy from this external
+row-count experiment. G0B remains open; G1 barred; F03 authority unconsumed.
