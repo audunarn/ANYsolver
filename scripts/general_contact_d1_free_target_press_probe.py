@@ -14,36 +14,51 @@ from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import (
 )
 
 
+def build_free_target_case(columns: int, *, relinearizations: int = 0,
+                           steps_per_segment: int = 3,
+                           four_phase: bool = False):
+    model, definition, settings, program = build_case(
+        columns, four_phase=four_phase,
+        steps_per_segment=steps_per_segment,
+        load_profile="distributed", total_force_n=0.3,
+        target_right_x_m=1.3)
+    settings = replace(settings,
+                       augmentation_schur_maximum_pressure_pa=250,
+                       augmentation_schur_maximum_step_pa=200,
+                       augmentation_schur_maximum_relinearizations=(
+                           relinearizations))
+    target_ids = tuple(range(2*(columns+1)+1, 2*(columns+1)+5))
+    model.boundary_conditions = [
+        bc for bc in model.boundary_conditions if bc.name != "target_fixed"]
+    model.add_boundary_condition(BoundaryCondition(
+        "target_left_clamp", (target_ids[0], target_ids[3]),
+        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+    ))
+    return model, definition, settings, program
+
+
 def main(output_path: Path, *, columns: int,
          relinearizations: int = 0,
-         steps_per_segment: int = 3) -> None:
+         steps_per_segment: int = 3,
+         equilibrium_tolerance: float = 1.0e-6,
+         four_phase: bool = False) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
     report = {"candidate": "free_target_left_clamped_press_dev",
               "columns": columns, "target_support": "left_edge_clamped",
               "maximum_schur_relinearizations": relinearizations,
-              "steps_per_segment": steps_per_segment}
+              "steps_per_segment": steps_per_segment,
+              "equilibrium_tolerance": equilibrium_tolerance,
+              "four_phase": four_phase}
     try:
-        model, definition, settings, program = build_case(
-            columns, four_phase=False, steps_per_segment=steps_per_segment,
-            load_profile="distributed", total_force_n=0.3,
-            target_right_x_m=1.3)
-        settings = replace(settings,
-                           augmentation_schur_maximum_pressure_pa=250,
-                           augmentation_schur_maximum_step_pa=200,
-                           augmentation_schur_maximum_relinearizations=(
-                               relinearizations))
-        target_ids = tuple(range(2*(columns+1)+1, 2*(columns+1)+5))
-        model.boundary_conditions = [
-            bc for bc in model.boundary_conditions if bc.name != "target_fixed"]
-        model.add_boundary_condition(BoundaryCondition(
-            "target_left_clamp", (target_ids[0], target_ids[3]),
-            {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
-        ))
+        model, definition, settings, program = build_free_target_case(
+            columns, relinearizations=relinearizations,
+            steps_per_segment=steps_per_segment, four_phase=four_phase)
         result = solve_static_nonlinear(
             model, contact=definition, contact_settings=settings,
             contact_path_program=program, max_iterations=18,
+            tolerance=equilibrium_tolerance,
             emit_restart_checkpoint=True,
         )
         history = result.info.get("force_displacement_history", ())
@@ -66,6 +81,9 @@ def main(output_path: Path, *, columns: int,
                 "residual_norm": float(row["residual_norm"]),
                 "augmentation_iterations": int(row[
                     "augmentation_iterations"]),
+                "schur_attempts": row.get("schur_attempts"),
+                "schur_applied": row.get("schur_applied"),
+                "schur_rejected": row.get("schur_rejected"),
             } for row in history],
             "contact_failure": result.info.get("contact_failure"),
         })
@@ -90,7 +108,12 @@ if __name__ == "__main__":
                         default=0)
     parser.add_argument("--steps-per-segment", type=int, choices=(3, 6),
                         default=3)
+    parser.add_argument("--equilibrium-tolerance", type=float,
+                        default=1.0e-6)
+    parser.add_argument("--four-phase", action="store_true")
     args = parser.parse_args()
     main(args.output, columns=args.columns,
          relinearizations=args.relinearizations,
-         steps_per_segment=args.steps_per_segment)
+         steps_per_segment=args.steps_per_segment,
+         equilibrium_tolerance=args.equilibrium_tolerance,
+         four_phase=args.four_phase)

@@ -1,0 +1,233 @@
+{
+  "candidate": "free_target_left_clamped_press_dev",
+  "columns": 8,
+  "target_support": "left_edge_clamped",
+  "maximum_schur_relinearizations": 0,
+  "steps_per_segment": 3,
+  "equilibrium_tolerance": 1e-08,
+  "four_phase": true,
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 12,
+  "has_checkpoint": true,
+  "history": [
+    {
+      "step": 1,
+      "normal_force_n": 0.0,
+      "target_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "minimum_gap_m": -1.4779288929099296e-13,
+      "active_pressure_dofs": 0,
+      "pressure_change_pa": 0.0,
+      "pressure_rank": 18,
+      "residual_norm": 8.924558049423857e-17,
+      "augmentation_iterations": 1,
+      "schur_attempts": 0,
+      "schur_applied": 0,
+      "schur_rejected": 0
+    },
+    {
+      "step": 2,
+      "normal_force_n": 5.955874602150683e-05,
+      "target_force_n": [
+        -1.2868759511037499e-09,
+        3.248056264763494e-13,
+        -5.9558746021506826e-05
+      ],
+      "minimum_gap_m": -3.2522929780448447e-07,
+      "active_pressure_dofs": 2,
+      "pressure_change_pa": 3.007737331764404e-11,
+      "pressure_rank": 18,
+      "residual_norm": 1.220176418077528e-14,
+      "augmentation_iterations": 3,
+      "schur_attempts": 1,
+      "schur_applied": 1,
+      "schur_rejected": 0
+    },
+    {
+      "step": 3,
+      "normal_force_n": 0.0001754535424706643,
+      "target_force_n": [
+        -9.677975278626946e-09,
+        6.020713766765909e-11,
+        -0.00017545354247066428
+      ],
+      "minimum_gap_m": -9.575050229045826e-07,
+      "active_pressure_dofs": 1,
+      "pressure_change_pa": 5.242178392761421e-11,
+      "pressure_rank": 18,
+      "residual_norm": 1.670760801812048e-14,
+      "augmentation_iterations": 3,
+      "schur_attempts": 1,
+      "schur_applied": 1,
+      "schur_rejected": 0
+    },
+    {
+      "step": 4,
+      "normal_force_n": 0.00016881212933060507,
+      "target_force_n": [
+        -9.162504394477626e-09,
+        2.948996872537967e-11,
+        -0.00016881212933060505
+      ],
+      "minimum_gap_m": -7.100388763576783e-07,
+      "active_pressure_dofs": 1,
+      "pressure_change_pa": 9.127117518137849e-07,
+      "pressure_rank": 18,
+      "residual_norm": 1.0774855339091854e-13,
+      "augmentation_iterations": 2,
+      "schur_attempts": 0,
+      "schur_applied": 0,
+      "schur_rejected": 0
+    },
+    {
+      "step": 5,
+      "normal_force_n": 0.00016252229879870896,
+      "target_force_n": [
+        -8.681299266291132e-09,
+        2.6676802291867455e-12,
+        -0.00016252229879870896
+      ],
+      "minimum_gap_m": -4.898374814480813e-07,
+      "active_pressure_dofs": 2,
+      "pressure_change_pa": 3.821271393097871e-06,
+      "pressure_rank": 18,
+      "residual_norm": 5.050986369123131e-13,
+      "augmentation_iterations": 2,
+      "schur_attempts": 0,
+      "schur_applied": 0,
+      "schur_rejected": 0
+    },
+    {
+      "step": 6,
+      "normal_force_n": 0.00015656703380843856,
+      "target_force_n": [
+        -8.208717151407037e-09,
+        2.431869029731084e-12,
+        -0.0001565670338084386
+      ],
+      "minimum_gap_m": -4.888535833121574e-07,
+      "active_pressure_dofs": 2,
+      "pressure_change_pa": 7.459874731829963e-13,
+      "pressure_rank": 18,
+      "residual_norm": 4.077329301009852e-13,
+      "augmentation_iterations": 3,
+      "schur_attempts": 1,
+      "schur_applied": 1,
+      "schur_rejected": 0
+    },
+    {
+      "step": 7,
+      "normal_force_n": 5.38979002996533e-05,
+      "target_force_n": [
+        -1.1079448774399647e-09,
+        2.0577857087056953e-13,
+        -5.3897900299653305e-05
+      ],
+      "minimum_gap_m": -3.2496570794848597e-07,
+      "active_pressure_dofs": 2,
+      "pressure_change_pa": 1.4359625793124164e-11,
+      "pressure_rank": 18,
+      "residual_norm": 3.508556815251582e-13,
+      "augmentation_iterations": 3,
+      "schur_attempts": 1,
+      "schur_applied": 1,
+      "schur_rejected": 0
+    },
+    {
+      "step": 8,
+      "normal_force_n": 0.0,
+      "target_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "minimum_gap_m": -1.4779288929099296e-13,
+      "active_pressure_dofs": 0,
+      "pressure_change_pa": 0.0,
+      "pressure_rank": 18,
+      "residual_norm": 4.657754215104427e-13,
+      "augmentation_iterations": 2,
+      "schur_attempts": 0,
+      "schur_applied": 0,
+      "schur_rejected": 0
+    },
+    {
+      "step": 9,
+      "normal_force_n": 0.0,
+      "target_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "minimum_gap_m": 3.999999996304835e-05,
+      "active_pressure_dofs": 0,
+      "pressure_change_pa": 0.0,
+      "pressure_rank": 18,
+      "residual_norm": 4.77078726239744e-13,
+      "augmentation_iterations": 1,
+      "schur_attempts": 0,
+      "schur_applied": 0,
+      "schur_rejected": 0
+    },
+    {
+      "step": 10,
+      "normal_force_n": 0.0,
+      "target_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "minimum_gap_m": -1.4779288929099296e-13,
+      "active_pressure_dofs": 0,
+      "pressure_change_pa": 0.0,
+      "pressure_rank": 18,
+      "residual_norm": 5.397788244796581e-13,
+      "augmentation_iterations": 1,
+      "schur_attempts": 0,
+      "schur_applied": 0,
+      "schur_rejected": 0
+    },
+    {
+      "step": 11,
+      "normal_force_n": 5.389790028503343e-05,
+      "target_force_n": [
+        -1.1079448772238045e-09,
+        2.0577850413265906e-13,
+        -5.389790028503343e-05
+      ],
+      "minimum_gap_m": -3.2496570879983434e-07,
+      "active_pressure_dofs": 2,
+      "pressure_change_pa": 2.1873330295456295e-11,
+      "pressure_rank": 18,
+      "residual_norm": 6.798090060363756e-13,
+      "augmentation_iterations": 3,
+      "schur_attempts": 1,
+      "schur_applied": 1,
+      "schur_rejected": 0
+    },
+    {
+      "step": 12,
+      "normal_force_n": 0.0001565670370271373,
+      "target_force_n": [
+        -8.20871733328652e-09,
+        2.4318608334232333e-12,
+        -0.0001565670370271373
+      ],
+      "minimum_gap_m": -4.888536226529502e-07,
+      "active_pressure_dofs": 2,
+      "pressure_change_pa": 3.0471501624024233e-10,
+      "pressure_rank": 18,
+      "residual_norm": 1.6660627751694918e-11,
+      "augmentation_iterations": 3,
+      "schur_attempts": 1,
+      "schur_applied": 1,
+      "schur_rejected": 0
+    }
+  ],
+  "contact_failure": null,
+  "elapsed_seconds": 219.72930359997554
+}

@@ -100,6 +100,19 @@ saved 24-Q4 geometry. Its source and target coordinates are free in the
 changing target supports. The first-order [v1 moment gate failed](reference_cases/general_contact_d1_free_target_tangent_v1_failure.md);
 the prospective second-order v2 gate passed without changing that verdict.
 
+An eight-Q4 distributed-force press against the partially supported,
+deformable two-S3 target is [locally tested in development](reference_cases/general_contact_d1_free_target_press_development.md),
+not independently accepted. Three runs with the ordinary 1e-6 inner
+force tolerance failed at first contact despite passing gap and pressure
+rank checks. Holding mechanics, pressure criteria and augmentation limit
+fixed while tightening only inner equilibrium to 1e-8 completed all three
+press steps. Each contact step accepted one supported-Schur correction;
+the same eight-Q4 setup then locally completed a 12-step
+press/slide/open/recontact cycle. A fresh-model six/twelve split restart
+reproduced all saved integrated-force, gap and multiplier-change scalars;
+full pressure-vector identity, independent integrated-response reference
+and coupled refinement remain open.
+
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as
 `31e60277`. A disposable C0 candidate wheel built from that commit as
