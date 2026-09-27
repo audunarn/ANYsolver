@@ -220,7 +220,7 @@ def test_recontact_tiny_shared_edge_wedge_uses_resolved_limit(
                                0.0, atol=1.0e-8)
 
 
-def test_unresolved_smooth_neighbor_preserves_pair_value_gate():
+def test_tiny_wedge_requires_verified_reduced_derivatives():
     fixture = json.loads((Path(__file__).parent / "fixtures" /
                           "general_contact_q4_s3_neighbor_value_gate_pose.json").read_text())
     model, definition, settings, _ = build_case(
@@ -238,3 +238,14 @@ def test_unresolved_smooth_neighbor_preserves_pair_value_gate():
         owner.law.work(np.asarray(fixture["source"]),
                        np.asarray(fixture["target"]),
                        np.asarray(fixture["multipliers"]), tangent=True)
+    owner.law.set_tangent_active_coordinates([
+        3*node+axis for node in range(len(owner.law.source_node_ids))
+        for axis in (0, 2)
+    ])
+    work = owner.law.work(np.asarray(fixture["source"]),
+                          np.asarray(fixture["target"]),
+                          np.asarray(fixture["multipliers"]), tangent=True)
+    assert work.tie_resolution_relative_error < 1.0e-6
+    assert work.energy_evaluations <= settings.maximum_general_s3_energy_evaluations
+    force = work.residual.reshape(-1, 3)
+    np.testing.assert_allclose(force.sum(axis=0), 0.0, atol=1.0e-8)

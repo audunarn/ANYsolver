@@ -18,6 +18,7 @@ from .q4_source_overlap import projected_q4_source_face
 from .q4_s3_overlap_derivatives import (
     UnsupportedQ4S3Branch, q4_s3_overlap_derivatives,
 )
+from .q4_s3_tiny_wedge import verify_tiny_wedge_derivatives
 from .s3_overlap_derivatives import UnsupportedOverlapBranch, s3_overlap_derivatives
 from .s3_patch_mortar_energy import (
     MovingS3PatchMortarWork,
@@ -212,10 +213,11 @@ class MovingS3PatchProjectedNormal:
                                          multipliers, tangent=tangent)
         except (UnsupportedQ4S3Branch, ValueError) as exc:
             message = str(exc)
-            pair_match = re.match(r"pair=(\d+), overlap_area_m2=", message)
+            pair_match = re.search(r"\bpair=(\d+)\b", message)
             degenerate_shared_pair = (
                 ("degenerate integration triangle" in message
-                 or "paired overlap area agreement is unresolved" in message)
+                 or "paired overlap area agreement is unresolved" in message
+                 or "differentiated S3 overlap disagrees with mortar geometry" in message)
                 and pair_match is not None
             )
             if (self.geometry.differentiation != "jet2_q4_s3"
@@ -226,9 +228,14 @@ class MovingS3PatchProjectedNormal:
                         current_source, current_target,
                         failed_pair=int(pair_match.group(1))
                         if pair_match is not None else None)):
+                if degenerate_shared_pair:
+                    raise UnsupportedQ4S3Branch(message) from exc
                 raise
             return self._shared_edge_limit(current_source, current_target,
-                                           multipliers, tangent=tangent)
+                                           multipliers, tangent=tangent,
+                                           recoverable_pair=(
+                                               int(pair_match.group(1))
+                                               if pair_match is not None else None))
 
     def _only_artificial_shared_edge_ties(self, current_source, current_target,
                                           *, failed_pair=None):
@@ -287,7 +294,8 @@ class MovingS3PatchProjectedNormal:
                     failed_pair_seen = True
         return found and (failed_pair is None or failed_pair_seen)
 
-    def _shared_edge_limit(self, current_source, current_target, multipliers, *, tangent):
+    def _shared_edge_limit(self, current_source, current_target, multipliers, *,
+                           tangent, recoverable_pair):
         step, direction, tolerance = self.shared_edge_tie
         lengths = [np.linalg.norm(face[i]-face[(i+1) % len(face)])
                    for faces, positions in (
@@ -301,9 +309,9 @@ class MovingS3PatchProjectedNormal:
         exact_supported, _ = self.resolved_support(exact)
         exact_active = exact.pressure > 0.0
         observations = []
-        # The failed first Jet2 attempt does not return its partial count.
-        # Charge its full possible base-plus-pair budget conservatively.
-        evaluations = 2*len(self.geometry.pair_laws)
+        # Failed first work: base patch plus local float/Jet2 pair passes.
+        # The exact state is evaluated again below; charge all four passes.
+        evaluations = 4*len(self.geometry.pair_laws)
         for offset in (step, step/2.0):
             sides = []
             for sign in (-1.0, 1.0):
@@ -312,6 +320,7 @@ class MovingS3PatchProjectedNormal:
                 try:
                     candidate = self._work_unresolved(
                         shifted, current_target, multipliers, tangent=tangent,
+                        tiny_wedge_pair=recoverable_pair,
                     )
                 except (UnsupportedQ4S3Branch, ValueError) as exc:
                     raise UnsupportedQ4S3Branch(
@@ -390,7 +399,8 @@ class MovingS3PatchProjectedNormal:
                 centered = (observations[1][1].residual
                             - observations[1][0].residual)/step
                 differentiated = tangent_matrix @ action
-                if relative_difference(centered, differentiated) > tolerance:
+                if relative_difference(centered[active],
+                                       differentiated[active]) > tolerance:
                     raise UnsupportedQ4S3Branch(
                         "shared-edge tie residual/tangent directional limit disagrees"
                     )
@@ -407,7 +417,8 @@ class MovingS3PatchProjectedNormal:
                                        evaluations,
                                        max(residual_error, tangent_error))
 
-    def _work_unresolved(self, current_source, current_target, multipliers, *, tangent=True):
+    def _work_unresolved(self, current_source, current_target, multipliers, *,
+                         tangent=True, tiny_wedge_pair=None):
         multipliers = self._multipliers(multipliers)
         coordinates = np.concatenate((np.asarray(current_source, dtype=float),
                                       np.asarray(current_target, dtype=float))).reshape(-1)
@@ -491,7 +502,8 @@ class MovingS3PatchProjectedNormal:
                                          base, tangent=tangent)
         if self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3"}:
             return self._jet2_s3_work(current_source, current_target,
-                                      base, tangent=tangent)
+                                      base, tangent=tangent,
+                                      tiny_wedge_pair=tiny_wedge_pair)
         step = self.geometry.difference_step
         evaluations = 1
         cache = {}
@@ -581,7 +593,8 @@ class MovingS3PatchProjectedNormal:
         )
         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
 
-    def _jet2_s3_work(self, current_source, current_target, base, *, tangent):
+    def _jet2_s3_work(self, current_source, current_target, base, *, tangent,
+                      tiny_wedge_pair=None):
         """Assemble differentiated pair geometry into shared pressure nodes."""
         count = self.n_coordinates
         source_count = len(self.source_node_ids)
@@ -598,6 +611,10 @@ class MovingS3PatchProjectedNormal:
         gap_magnitude = np.zeros(source_count)
         support_roundoff_budget = np.zeros(source_count)
         gap_roundoff_budget = np.zeros(source_count)
+        absolute_support_difference = np.zeros(source_count)
+        absolute_gap_difference = np.zeros(source_count)
+        tiny_wedge_verified = False
+        tiny_wedge_scenarios = None
         weighted_hessian = np.zeros((len(active_coordinates),
                                      len(active_coordinates))) if tangent else None
         support_hessian = np.zeros_like(weighted_hessian) if tangent else None
@@ -675,6 +692,12 @@ class MovingS3PatchProjectedNormal:
                     raise UnsupportedQ4S3Branch(
                         f"pair={pair_index}, overlap_area_m2={local.overlap_area:.12g}: {exc}"
                     ) from exc
+            support_difference = np.abs(
+                derivative.reference_support-local.reference_support)
+            gap_difference = np.abs(
+                derivative.reference_weighted_gap-local.reference_weighted_gap)
+            absolute_support_difference[source_nodes] += support_difference
+            absolute_gap_difference[source_nodes] += gap_difference
             if (not np.allclose(derivative.reference_support,
                                 local.reference_support, rtol=value_rtol,
                                 atol=support_roundoff)
@@ -682,30 +705,79 @@ class MovingS3PatchProjectedNormal:
                                        local.reference_weighted_gap,
                                        rtol=value_rtol,
                                        atol=weighted_gap_roundoff)):
-                support_error = float(np.max(np.abs(
-                    derivative.reference_support-local.reference_support,
-                )))
-                gap_error = float(np.max(np.abs(
-                    derivative.reference_weighted_gap-local.reference_weighted_gap,
-                )))
-                raise ValueError(
-                    "differentiated S3 overlap disagrees with mortar geometry "
-                    f"(pair={pair_index}, support_error_m2={support_error:.12g}, "
-                    f"weighted_gap_error_m3={gap_error:.12g}, "
-                    f"support_scale_m2={support_scale:.12g}, "
-                    f"weighted_gap_scale_m3={weighted_gap_scale:.12g}, "
-                    f"support_roundoff_m2={support_roundoff:.12g}, "
-                    f"weighted_gap_roundoff_m3={weighted_gap_roundoff:.12g}, "
-                    f"geometry_value_rtol={value_rtol:.12g}, "
-                    f"integration_triangles={local.integration_triangles}, "
-                    f"overlap_area_local_m2={local.overlap_area:.12g}, "
-                    f"overlap_area_m2={derivative.overlap_area:.12g}, "
-                    f"overlap_area_resolution_m2={derivative.overlap_area_resolution:.12g}, "
-                    f"support_local_m2={local.reference_support.tolist()}, "
-                    f"support_derivative_m2={derivative.reference_support.tolist()}, "
-                    f"weighted_gap_local_m3={local.reference_weighted_gap.tolist()}, "
-                    f"weighted_gap_derivative_m3={derivative.reference_weighted_gap.tolist()})"
-                )
+                if (pair_index == tiny_wedge_pair
+                        and len(source_nodes) == 4
+                        and self.shared_edge_tie is not None):
+                    if tiny_wedge_verified:
+                        raise UnsupportedQ4S3Branch(
+                            "multiple tiny seam wedges need separate derivative qualification"
+                        )
+                    tie_step = self.shared_edge_tie[0]
+                    if (local.overlap_area > 4.0*tie_step*tie_step
+                            or np.any(base.reference_support[source_nodes]
+                                      - local.reference_support
+                                      < 1.0e6*local.reference_support)):
+                        raise UnsupportedQ4S3Branch(
+                            "tiny seam wedge exceeds area or independent support budget"
+                        )
+                    coordinate_map = np.asarray(
+                        [3*int(node)+axis for node in source_nodes for axis in range(3)]
+                        + [3*(source_count+int(node))+axis
+                           for node in target_nodes for axis in range(3)],
+                        dtype=np.intp,
+                    )
+                    local_active = np.flatnonzero(np.isin(
+                        coordinate_map, active_coordinates))
+                    reference_face = self.geometry.source_faces[source_face].reference_positions
+                    edge_lengths = [np.linalg.norm(reference_face[index]
+                                                   - reference_face[(index+1) % 4])
+                                    for index in range(4)]
+                    force_scale = float(base.pressure @ base.reference_support)
+                    if force_scale <= 0.0:
+                        raise UnsupportedQ4S3Branch(
+                            "tiny seam wedge has no resolved integrated pressure force"
+                        )
+                    used, scenarios = verify_tiny_wedge_derivatives(
+                        law, local_source, local_target, derivative,
+                        base.pressure[source_nodes],
+                        base.normalized_gap[source_nodes], local_active,
+                        difference_step_m=tie_step/20.0,
+                        force_scale_n=force_scale,
+                        length_scale_m=min(edge_lengths),
+                        maximum_evaluations=(
+                            self.geometry.maximum_energy_evaluations-evaluations),
+                    )
+                    evaluations += used
+                    tiny_wedge_verified = True
+                    tiny_wedge_scenarios = (
+                        source_nodes.copy(), coordinate_map,
+                        local_active, scenarios, force_scale, min(edge_lengths),
+                    )
+                else:
+                    support_error = float(np.max(np.abs(
+                        derivative.reference_support-local.reference_support,
+                    )))
+                    gap_error = float(np.max(np.abs(
+                        derivative.reference_weighted_gap-local.reference_weighted_gap,
+                    )))
+                    raise ValueError(
+                        "differentiated S3 overlap disagrees with mortar geometry "
+                        f"(pair={pair_index}, support_error_m2={support_error:.12g}, "
+                        f"weighted_gap_error_m3={gap_error:.12g}, "
+                        f"support_scale_m2={support_scale:.12g}, "
+                        f"weighted_gap_scale_m3={weighted_gap_scale:.12g}, "
+                        f"support_roundoff_m2={support_roundoff:.12g}, "
+                        f"weighted_gap_roundoff_m3={weighted_gap_roundoff:.12g}, "
+                        f"geometry_value_rtol={value_rtol:.12g}, "
+                        f"integration_triangles={local.integration_triangles}, "
+                        f"overlap_area_local_m2={local.overlap_area:.12g}, "
+                        f"overlap_area_m2={derivative.overlap_area:.12g}, "
+                        f"overlap_area_resolution_m2={derivative.overlap_area_resolution:.12g}, "
+                        f"support_local_m2={local.reference_support.tolist()}, "
+                        f"support_derivative_m2={derivative.reference_support.tolist()}, "
+                        f"weighted_gap_local_m3={local.reference_weighted_gap.tolist()}, "
+                        f"weighted_gap_derivative_m3={derivative.reference_weighted_gap.tolist()})"
+                    )
             assembled_support[source_nodes] += derivative.reference_support
             assembled_gap[source_nodes] += derivative.reference_weighted_gap
             support_magnitude[source_nodes] += np.abs(derivative.reference_support)
@@ -744,6 +816,70 @@ class MovingS3PatchProjectedNormal:
         # compare against the sum of contribution magnitudes so roundoff and
         # allowed pair errors do not turn into a false zero-scale mismatch.
         summation_tolerance = 1.0e-9 + 64.0*np.finfo(float).eps
+        if tiny_wedge_verified:
+            reference_length = min(
+                np.linalg.norm(face.reference_positions[index]
+                               - face.reference_positions[(index+1) % 4])
+                for face in self.geometry.source_faces
+                for index in range(4)
+            )
+            support_budget = 1.0e-10*base.reference_support
+            gap_budget = (1.0e-10*base.reference_support
+                          * np.maximum(np.abs(base.normalized_gap),
+                                       1.0e-8*reference_length))
+            if (np.any(absolute_support_difference > support_budget)
+                    or np.any(absolute_gap_difference > gap_budget)):
+                raise UnsupportedQ4S3Branch(
+                    "tiny seam wedge exceeds non-cancelling nodal value budget"
+                )
+            (tiny_source, tiny_coordinate_map, tiny_active, scenarios,
+             force_scale, length_scale) = tiny_wedge_scenarios
+            selected = active_coordinates
+            D = (jw[:, selected]
+                 - base.normalized_gap[:, None]*js[:, selected])
+            for gradient_error, hessian_error in scenarios:
+                delta_support = np.zeros((source_count, len(selected)))
+                delta_weighted = np.zeros_like(delta_support)
+                selected_global = tiny_coordinate_map[tiny_active]
+                selected_columns = np.searchsorted(selected, selected_global)
+                delta_support[np.ix_(tiny_source, selected_columns)] = (
+                    gradient_error[0][:, tiny_active])
+                delta_weighted[np.ix_(tiny_source, selected_columns)] = (
+                    gradient_error[1][:, tiny_active])
+                E = delta_weighted-base.normalized_gap[:, None]*delta_support
+                tangent_error_bound = 0.0
+                for node in np.flatnonzero(base.pressure > 0.0):
+                    support = base.reference_support[node]
+                    if support <= 0.0:
+                        raise UnsupportedQ4S3Branch(
+                            "tiny seam wedge active pressure lacks support"
+                        )
+                    p = base.pressure[node]
+                    d_norm = float(np.linalg.norm(D[node]))
+                    e_norm = float(np.linalg.norm(E[node]))
+                    ds_norm = float(np.linalg.norm(delta_support[node]))
+                    js_norm = float(np.linalg.norm(js[node, selected]))
+                    tangent_error_bound += (
+                        self.stiffness/support
+                        * (2.0*d_norm*e_norm+e_norm*e_norm)
+                        + p/support*(ds_norm*d_norm+js_norm*e_norm
+                                     + ds_norm*e_norm)
+                    )
+                for local_node, node in enumerate(tiny_source):
+                    p = base.pressure[node]
+                    g = base.normalized_gap[node]
+                    tangent_error_bound += p*(
+                        np.linalg.norm(hessian_error[1][local_node])
+                        + abs(g)*np.linalg.norm(hessian_error[0][local_node])
+                    )
+                budget = 1.0e-5*force_scale/length_scale
+                if (not np.isfinite(tangent_error_bound)
+                        or tangent_error_bound > budget):
+                    raise UnsupportedQ4S3Branch(
+                        "tiny seam wedge projected tangent error is unresolved "
+                        f"(bound_n_per_m={tangent_error_bound:.12g}, "
+                        f"budget_n_per_m={budget:.12g})"
+                    )
         if (not all(np.all(np.isfinite(values)) for values in (
                     assembled_support, base.reference_support,
                     assembled_gap, base.reference_weighted_gap,

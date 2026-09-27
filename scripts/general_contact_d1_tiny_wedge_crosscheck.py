@@ -17,6 +17,7 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--slide-offset", type=float, default=-3.0e-8)
     parser.add_argument("--difference-step", type=float, default=3.0e-9)
+    parser.add_argument("--full-reduced", action="store_true")
     args = parser.parse_args()
     saved = json.loads(args.pose.read_text(encoding="utf-8"))
     model, definition, settings, _ = build_case(
@@ -62,6 +63,17 @@ def main():
         if pair_index != 2:
             continue
         local_coordinate_count = 3*(len(source_ids)+len(target_ids))
+        original_local = np.concatenate((local_source, local_target)).reshape(-1)
+
+        def float_at(shift):
+            trial = original_local+shift
+            current = law.evaluate(
+                trial[:3*len(source_ids)].reshape(-1, 3),
+                trial[3*len(source_ids):].reshape(-1, 3),
+            )
+            return np.stack((current.reference_support,
+                             current.reference_weighted_gap))
+
         directions = {}
         for name, axes in (("source_slide", (0,)), ("source_normal", (2,))):
             direction = np.zeros(local_coordinate_count)
@@ -71,13 +83,7 @@ def main():
             step = args.difference_step
 
             def float_values(scale):
-                trial = np.concatenate((local_source, local_target)).reshape(-1)
-                trial += scale*direction
-                current = law.evaluate(
-                    trial[:3*len(source_ids)].reshape(-1, 3),
-                    trial[3*len(source_ids):].reshape(-1, 3),
-                )
-                return current.reference_support, current.reference_weighted_gap
+                return float_at(scale*direction)
 
             plus = float_values(step)
             minus = float_values(-step)
@@ -112,6 +118,68 @@ def main():
             "absolute_weighted_gap_error_m3": dw.tolist(),
             "directions": directions,
         })
+        if args.full_reduced:
+            # Only source ux/uz coordinates are differential in this controlled
+            # fixture; target motion and source uy are prescribed. Check every
+            # Hessian entry in that actual reduced local subspace.
+            selected = np.array([3*node+axis for node in range(len(source_ids))
+                                 for axis in (0, 2)], dtype=np.intp)
+            h = args.difference_step
+            basis = np.eye(local_coordinate_count)[selected]
+            center = float_at(np.zeros(local_coordinate_count))
+            float_gradient = np.zeros((2, len(source_ids), len(selected)))
+            float_hessian = np.zeros((2, len(source_ids), len(selected),
+                                      len(selected)))
+            positive = []
+            negative = []
+            for index, vector in enumerate(basis):
+                plus = float_at(h*vector)
+                minus = float_at(-h*vector)
+                positive.append(plus)
+                negative.append(minus)
+                float_gradient[:, :, index] = (plus-minus)/(2*h)
+                float_hessian[:, :, index, index] = (
+                    plus-2*center+minus)/(h*h)
+            for i in range(len(selected)):
+                for k in range(i+1, len(selected)):
+                    mixed = (float_at(h*(basis[i]+basis[k]))
+                             - float_at(h*(basis[i]-basis[k]))
+                             - float_at(h*(-basis[i]+basis[k]))
+                             + float_at(-h*(basis[i]+basis[k])))/(4*h*h)
+                    float_hessian[:, :, i, k] = mixed
+                    float_hessian[:, :, k, i] = mixed
+            jet_gradient = np.stack((derivative.support_gradient[:, selected],
+                                     derivative.weighted_gap_gradient[:, selected]))
+            jet_hessian = np.stack((
+                derivative.support_hessian[:, selected][:, :, selected],
+                derivative.weighted_gap_hessian[:, selected][:, :, selected],
+            ))
+            gradient_error = float_gradient-jet_gradient
+            hessian_error = float_hessian-jet_hessian
+            projected = owner.law.evaluate(source, target,
+                                           np.asarray(saved["multipliers"]))
+            pressure = projected.pressure[source_ids]
+            normalized_gap = projected.normalized_gap[source_ids]
+            force_error = np.einsum("i,ij->j", pressure,
+                gradient_error[1]-normalized_gap[:, None]*gradient_error[0])
+            hessian_work_error = np.einsum("i,ijk->jk", pressure,
+                hessian_error[1]-normalized_gap[:, None, None]*hessian_error[0])
+            pair_rows[-1]["full_reduced"] = {
+                "local_selected_coordinates": selected.tolist(),
+                "float_gradient": float_gradient.tolist(),
+                "jet2_gradient": jet_gradient.tolist(),
+                "float_hessian": float_hessian.tolist(),
+                "jet2_hessian": jet_hessian.tolist(),
+                "force_error_n": force_error.tolist(),
+                "hessian_work_error_n_per_m": hessian_work_error.tolist(),
+                "force_error_norm_n": float(np.linalg.norm(force_error)),
+                "hessian_work_error_norm_n_per_m": float(
+                    np.linalg.norm(hessian_work_error)),
+                "maximum_support_gradient_error_m": float(np.max(
+                    np.abs(gradient_error[0]))),
+                "maximum_support_hessian_error": float(np.max(
+                    np.abs(hessian_error[0]))),
+            }
     record = {
         "pose": str(args.pose), "slide_offset_m": args.slide_offset,
         "difference_step_m": args.difference_step,
@@ -126,7 +194,12 @@ def main():
         support_error/np.maximum(total.reference_support, 1.0e-20))))
     print("max_relative_node_weighted_gap_error", float(np.max(
         gap_error/np.maximum(np.abs(total.reference_weighted_gap), 1.0e-20))))
-    print("pair2", pair_rows)
+    if args.full_reduced:
+        print("force_error_norm_n", pair_rows[0]["full_reduced"]["force_error_norm_n"])
+        print("hessian_work_error_norm_n_per_m",
+              pair_rows[0]["full_reduced"]["hessian_work_error_norm_n_per_m"])
+    else:
+        print("pair2", pair_rows)
 
 
 if __name__ == "__main__":
