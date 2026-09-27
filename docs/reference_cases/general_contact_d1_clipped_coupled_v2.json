@@ -1,0 +1,72 @@
+{
+  "case_id": "general_contact_d1_clipped_coupled_v2",
+  "status": "frozen_pending_single_execution",
+  "claim_boundary": "Planar two-Q4/two-S3 fixed clipped overlap beginning at x=0.2 m; smooth guided-normal primal Q1 mortar, four active pressure nodes and ordinary augmented force control. Direct analytical Q1 support, pressure, integrated force and moment checks test contact integration and coupled assembly with production Q4 stiffness in the manufactured load. Quadrature error indicators are recorded but not interpreted as certified bounds. This does not qualify independent structural stiffness, nodal force distribution, full tangent, arbitrary clipping, finite sliding, central refinement, general C1 or release.",
+  "policy": "ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1/2026-09-24.2",
+  "source_commit": "78989b072529181da05b5309e9ba0272a90720c9",
+  "source_paths": [
+    "src/anysolver",
+    "tests/test_general_contact_linear_patch_oracle.py",
+    "scripts/qualify_general_contact_d1_clipped_coupled.py"
+  ],
+  "environment": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "anysolver_source_root": "C:/ANYworkspaceWork/ANYsolver-general-contact/src",
+    "anymaterial_source_root": "C:/Github/ANYmaterial/src",
+    "anymaterial_tree": "73d570970b43f4653995bdd1e75a57e1f3484176"
+  },
+  "runner": {
+    "script": "scripts/qualify_general_contact_d1_clipped_coupled.py",
+    "output": "reports/general_contact_d1_clipped_coupled_v2_formal_20260927.json",
+    "stdout": "reports/general_contact_d1_clipped_coupled_v2_formal_20260927.txt",
+    "maximum_wall_seconds": 120,
+    "single_execution": true
+  },
+  "model": {
+    "source": "two 0.5 m by 1 m Q4 bottom-skin faces, 0.05 m thickness, left normal edge supported and other source rotations/in-plane coordinates guided",
+    "target": "two fixed S3 V2D top-skin faces spanning x=[0.2,1.2] m and y=[-0.1,1.1] m, 0.05 m thickness and 0.01 m reference-surface offset",
+    "physical_overlap": "clipped source x=[0.2,1] m, y=[0,1] m; target triangle diagonal is internal rather than a physical edge",
+    "initial_skin_clearance_m": 0.00005,
+    "normal_stiffness_pa_per_m": 100000,
+    "normal_law": "projected_augmented_primal_Q1",
+    "external_load": "production Q4 stiffness assembled in a separate structural-only model times the analytically selected displacement, minus analytically integrated Q1 contact force on free source uz coordinates",
+    "gap_tolerance_m": 0.00005,
+    "pressure_tolerance_pa": 0.00001
+  },
+  "independent_reference": {
+    "source_uz_m": [0, -0.00005960854092526691, -0.00004519572953736655, 0, -0.00005960854092526691, -0.00004519572953736655],
+    "source_pressure_node_ids": [1, 2, 3, 4, 5, 6],
+    "active_pressure_node_ids": [2, 3, 5, 6],
+    "source_support_m2": [0.045, 0.23, 0.125, 0.045, 0.23, 0.125],
+    "pressure_pa": [0, 0.1, 0.2, 0, 0.1, 0.2],
+    "integrated_normal_force_n": 0.096,
+    "minimum_physical_gap_m": -0.000009608540925266907,
+    "source_moment_about_origin_nm": [0.048, -0.06613333333333334, 0]
+  },
+  "scales": {
+    "length_m": 1,
+    "force_n": 0.096,
+    "moment_nm": 0.096,
+    "energy_j": 0.00000576
+  },
+  "criteria": {
+    "maximum_absolute_uz_error_m": 0.00000006,
+    "relative_integrated_force_error": 0.001,
+    "maximum_absolute_pressure_error_pa": 0.0001,
+    "maximum_absolute_support_error_m2": 0.000000001,
+    "minimum_gap_absolute_error_m": 0.00000001,
+    "normalized_equilibrium_max": 0.000001,
+    "normal_multiplier_change_pa": 0.00001,
+    "normalized_force_balance_max": 0.000001,
+    "normalized_moment_balance_max": 0.000001,
+    "independent_linear_free_residual_fraction_max": 0.001,
+    "source_moment_fraction_max": 0.001,
+    "required_accepted_steps": 1,
+    "required_active_pressure_dofs": 4,
+    "required_supported_pressure_modes": 6,
+    "required_scaled_pressure_rank": 6,
+    "required_checkpoint": true
+  }
+}
