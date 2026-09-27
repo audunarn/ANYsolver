@@ -8,17 +8,20 @@ common reference integrand, objective bounded finite-chart work, an E4
 total-rotation derivative check and a reference physical wrench dual.
 Its selected P0/P1/signed-dual rows preserve top-fixed director-pitch
 freedom. Four/eight-interval P0 spaces are nested and full rank on the
-tested x16 shell/B3-12/B3-24 cases. P1 has one exact continuous work-row
+tested x16 shell/B3-12/B3-24 cases, while P0 eight intervals on x8/B3-12
+has rank 41/48. P1 has one exact continuous work-row
 dependency; the dual-eight 53/54 near-null belongs to the current
 discrete trial pairing, not the continuous law. The director-pitch hybrid
 remains a separate two-sided weld candidate. B2 physical-section samples
 and private batching pass bounded checks, but F09 admission remains open.
-**Uncertainty:** Growing-space mixed-system stability and locking,
+**Uncertainty:** A resolution policy that avoids dependent interface rows,
+then growing-space mixed-system stability and locking,
 physical transfer against a matched sided reference, and an admissible
 interface-resolution policy across the registered ratios.
-**Next discriminator:** Assess P0 and a deliberately quotiented P1 with
-physically scaled primal/dual norms and the actual native retained mixed
-tangent while the interface space grows with the mesh; check work,
+**Next discriminator:** Use the x8/m8 rank loss and x16/m8 full rank to
+define a candidate host-to-multiplier resolution policy, then assess P0
+and a deliberately quotiented P1 with physically scaled primal/dual norms
+and the actual native retained mixed tangent as the interface grows; check work,
 unsupported modes, locking and converged physical transfer together.
 Treat dual-eight with 54 independent rows as inadmissible on the tested
 primal layout. A failed candidate prompts a law or resolution revision;
@@ -26,6 +29,19 @@ a passing one advances the independent G0 mechanics review. Do not
 select a space from tip motion, F5 proximity or one spectral quotient,
 and do not repeat classical axial refinement without a new question.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
+
+**Next bounded growing-row diagnostic (prospective, 27 September):** On the
+already assembled x8/y4 C1 Q4/B3-12 native retained system, grow the exact
+top-face P0 space from the saved two/four intervals to eight while keeping
+the physical model, supports, and diagnostic primal/dual norms fixed. The
+uncertainty is whether new rows expose a weak mixed mode or simply resolve
+the same law more finely. Check scaled row rank, the smallest singular mode
+of the actual indefinite KKT tangent, virtual work, and its physical/chart
+metric partition under the existing 120 s and 1900-row limits. Rank loss or
+a new weak mode redirects work to the interface resolution/norm design;
+preserved rank and a comparable mode permit the registered ratio and
+physical-transfer assessment, without proving mesh-uniform stability or
+selecting P0. Do not rerun the already accepted two/four-interval cases.
 
 **Next norm-construction discriminator:** On the existing bounded x8
 P0 two/four-interval fixture, express each current centered mean/rotation
@@ -56,6 +72,49 @@ Independent review found no transform or mixed-operator defect. The
 saved `transported_line_norm.physical_density_units` field is inherited
 from the *centered* representation; it must not be read as units of the
 raw dual, which are `N/m` and `N/m²` for these rows.
+
+**P0 eight-interval result and action:** The predeclared x8/y4 B3-12
+test has rank `41/48` in both the inherited mixed norm and the separate
+declared fixture-coordinate row scaling, with seven relative singular values at
+`4.5e-16` or below and the next at `0.0435`. Its weakest left-row mode
+combines mean-z and longitudinal first-moment rows. The reference gap is
+within the existing guard. An initial execution stopped at the rank guard;
+a corrected result writer then hit worktree write permission before an
+escalated run saved the immutable source-bound result
+`B3_GE_E4_PL_F03_TOP_FACE_P0_EIGHT_MIXED_20260927.json`. No mixed
+singular value was calculated for dependent rows. Combined with full
+`48/48` rank for x16/B3-12 P0-eight, this points to an over-resolved
+discrete interface on the x8 host rather than a failed continuous law.
+The earlier x2/m2 versus x4/m2 experiment likewise identified a discrete
+continuity dependency when only one shell host lies in each interval.
+Two shell hosts per multiplier interval is a provisional resolution
+candidate, not yet a qualified policy; its work, locking, native KKT,
+physical transfer, and registered ratio behavior remain to be tested.
+This exact rank result is a dependency diagnosis, not F03 acceptance or a
+declaration of formulation failure. Independent read-only review found no
+source or rank-interpretation defect. The displayed Fz/My left vector is
+one member of the seven-dimensional nullspace, not a characterization of
+all seven modes; the fixture scaling is not a canonical inf-sup norm.
+
+**B2 heterogeneous-junction result:** A separate private F09 diagnostic
+places 80×3 mm and 12×3 mm rotated physical sections at a two-member
+elbow, including a reversed-second-member control. Both passed the
+unchanged bounded development checks: maximum stored exact-product
+force ratio `1.14e-10` against `1e-8`, and one eligible factorization per
+case. The V1 result is retained, but independent review found it omitted
+hashes for dynamically loaded probe/product modules. A provenance-only
+V2 rerun records the actual resolved paths and SHA-256 of all six direct
+sources and uses repository-root HEAD. All source hashes match; ten
+selected mechanics fields per case are exactly unchanged from V1. The
+current source-bound result is
+`B3_GE_E4_PL_G0_F09_HETEROGENEOUS_JUNCTION_DEV_V2.json`. This adds one
+sampled heterogeneous graph, not continuous conditioning or F09 admission.
+Independent V2 review noted that `source_graph` lists the direct runner,
+probe and product modules but not transitive `linalg.py`, `control.py` or
+`threading_policy.py`. All three and the listed product files are tracked
+and clean against the recorded `4fee957c` HEAD, which binds their bytes for
+this Level-A diagnostic. V2 does not record every installed dependency;
+it must not be promoted as standalone F09 qualification evidence.
 
 **Next local-mode discriminator (prospective):** First check whether the
 supported four-interval top-face row space is contained in the eight-

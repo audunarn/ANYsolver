@@ -1,0 +1,215 @@
+{
+  "axis_rotation": {
+    "cos": "4/5",
+    "sin": "3/5"
+  },
+  "cases": [
+    {
+      "batch_factorization_count": 1,
+      "batch_status": "completed",
+      "batch_vs_100_digit_tip_ratio_to_development_limit": 0.007470600430660089,
+      "orientation": "forward",
+      "passed_development_diagnostic": true,
+      "physical_cut_work_J": 1.0757451073370212e-05,
+      "physical_tip_m_rad": [
+        0.0013289927182539682,
+        -0.0004876394825396825,
+        0.0022218402130251918,
+        0.0014139752702354894,
+        -0.0006977583705394873,
+        -0.001141285052910053
+      ],
+      "rounded_matrix_100_digit_tip_m_rad": [
+        0.001328992718257871,
+        -0.00048763948254318076,
+        0.002221840213029833,
+        0.0014139752702354855,
+        -0.0006977583705429427,
+        -0.0011412850529126544
+      ],
+      "rounded_reduced_matrix_sha256": "13209c168f9147b40bc697b95d79786f2478f4c4d29050d4666cd940cf429094",
+      "rounded_reference_stored_force_residual_ratio": 8.926156498441569e-12,
+      "rounded_reference_stored_moment_residual_ratio": 1.4260184884627856e-13,
+      "rounded_tip_component_ratio_to_development_limit": 3.797507232200287e-05,
+      "small_rotation_and_displacement_eligibility": true,
+      "sparse_vs_100_digit_ratio_to_development_limit": 0.008948579623906574,
+      "station_resultant_ratio_to_development_limit": 1.1504800435992524e-05,
+      "station_strain_ratio_to_development_limit": 0.0001393350830061222,
+      "stored_exact_product_force_residual_ratio": 1.1438170718802182e-10,
+      "stored_exact_product_moment_residual_ratio": 2.1872730693059577e-13,
+      "stored_sparse_tip_m_rad": [
+        0.0013289927182703887,
+        -0.0004876394825542943,
+        0.0022218402130446007,
+        0.0014139752702354916,
+        -0.0006977583705540221,
+        -0.0011412850529210013
+      ],
+      "stored_sparse_work_J": 1.0757451073510121e-05,
+      "tip_component_ratio_to_development_limit": 0.00015880549305727124,
+      "work_relative_error": 1.3005823883505142e-11
+    },
+    {
+      "batch_factorization_count": 1,
+      "batch_status": "completed",
+      "batch_vs_100_digit_tip_ratio_to_development_limit": 0.007470600430660089,
+      "orientation": "reversed-second",
+      "passed_development_diagnostic": true,
+      "physical_cut_work_J": 1.0757451073370212e-05,
+      "physical_tip_m_rad": [
+        0.0013289927182539682,
+        -0.0004876394825396825,
+        0.0022218402130251918,
+        0.0014139752702354894,
+        -0.0006977583705394873,
+        -0.001141285052910053
+      ],
+      "rounded_matrix_100_digit_tip_m_rad": [
+        0.001328992718257871,
+        -0.00048763948254318076,
+        0.002221840213029833,
+        0.0014139752702354855,
+        -0.0006977583705429427,
+        -0.0011412850529126544
+      ],
+      "rounded_reduced_matrix_sha256": "13209c168f9147b40bc697b95d79786f2478f4c4d29050d4666cd940cf429094",
+      "rounded_reference_stored_force_residual_ratio": 8.926156498441569e-12,
+      "rounded_reference_stored_moment_residual_ratio": 1.4260184884627856e-13,
+      "rounded_tip_component_ratio_to_development_limit": 3.797507232200287e-05,
+      "small_rotation_and_displacement_eligibility": true,
+      "sparse_vs_100_digit_ratio_to_development_limit": 0.008948579623906574,
+      "station_resultant_ratio_to_development_limit": 1.1504800435992524e-05,
+      "station_strain_ratio_to_development_limit": 0.0001393350830061222,
+      "stored_exact_product_force_residual_ratio": 1.1438170718802182e-10,
+      "stored_exact_product_moment_residual_ratio": 2.1872730693059577e-13,
+      "stored_sparse_tip_m_rad": [
+        0.0013289927182703887,
+        -0.0004876394825542943,
+        0.0022218402130446007,
+        0.0014139752702354916,
+        -0.0006977583705540221,
+        -0.0011412850529210013
+      ],
+      "stored_sparse_work_J": 1.0757451073510121e-05,
+      "tip_component_ratio_to_development_limit": 0.00015880549305727124,
+      "work_relative_error": 1.3005823883505142e-11
+    }
+  ],
+  "claim": "bounded private development diagnostic; no F09/G0B admission",
+  "elapsed_seconds": 0.5532961999997497,
+  "geometry_m": {
+    "member_lengths": [
+      2.0,
+      1.5
+    ],
+    "sections": "m0=80x3 mm, m1=12x3 mm"
+  },
+  "limits": {
+    "linear_eligibility": "tip translation <= 1% shortest member; tip rotation <= 0.01 rad",
+    "numerical_threads": 1,
+    "physical_force_moment_relative": 1e-08,
+    "rss_bytes": 2147483648,
+    "station_resultant": "rtol=1e-8, atol=1e-7 (development)",
+    "station_strain": "rtol=1e-8, atol=1e-10 (development)",
+    "tip_component": "rtol=1e-8, atol=1e-10 (development)",
+    "wall_seconds": 120,
+    "work_relative": 1e-08
+  },
+  "material": {
+    "E_Pa": "210000000000",
+    "nu": "3/10",
+    "shear_factors": [
+      "5/6",
+      "5/6"
+    ],
+    "torsion": "declared Saint-Venant rectangle approximation"
+  },
+  "peak_rss_bytes": 90550272,
+  "python": "3.14.2",
+  "sections": {
+    "m0": {
+      "A_m2": "3/12500",
+      "Iy_m4": "9/50000000000",
+      "Iz_m4": "1/7812500",
+      "J_approx_m4": "11517788205927/16384000000000000000000",
+      "depth_m": "3/1000",
+      "principal_stiffness": [
+        "50400000",
+        "210000000/13",
+        "210000000/13",
+        "241873552324467/4259840000000",
+        "189/5",
+        "26880"
+      ],
+      "stored_stiffness_sha256": "71dd3b569d5f79b8cf99c2c9e7608851f4d44e24a06b10471ec77f8e11939662",
+      "width_m": "2/25"
+    },
+    "m1": {
+      "A_m2": "9/250000",
+      "Iy_m4": "27/1000000000000",
+      "Iz_m4": "27/62500000000",
+      "J_approx_m4": "9317943/102400000000000000",
+      "depth_m": "3/1000",
+      "principal_stiffness": [
+        "7560000",
+        "31500000/13",
+        "31500000/13",
+        "195676803/26624000",
+        "567/100",
+        "2268/25"
+      ],
+      "stored_stiffness_sha256": "b393829abc6e10f91f0c3a1a752711b8ccf15b4dd3011f8d9ce73bb865315ff6",
+      "width_m": "3/250"
+    }
+  },
+  "source_graph": [
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b2_f09_heterogeneous_junction_dev_v2.py",
+      "sha256": "9e94eec777d9c474988663295c9bad471d6a89e16969ce7f8ff80d6bdc9f7bd3"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b2_f09_thin_section_dev.py",
+      "sha256": "34513b16c83f0ac359249dd0cb1a7349fba79948dc49fbdf9087c8d8a919947f"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\probe_b3_ge_e4_pl_g0_f09_graph_reversal.py",
+      "sha256": "341d20087651535e85c978be01a68dc06612133be308998f7af1bf105493f119"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\_b2_physical_flexibility_linear.py",
+      "sha256": "b2fedd1e8751c1801372e20b9b9c3a8a374cbbbb3d4719a642761216436738dc"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\_b2_physical_linear_batch_dev.py",
+      "sha256": "ca6f60c7ee152da3b86cd8b479e63c442740281ecab66852d631595ae61f3cce"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\_b2_physical_linear_definition.py",
+      "sha256": "264114db883eee64305ebc22b0891a367bf37c3560cb7a32d8e7c9573b8d9be7"
+    }
+  ],
+  "source_head": "4fee957cb9413ba9d16d50adcf4b1dc7dbe59e8f",
+  "source_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b2_f09_heterogeneous_junction_dev_v2.py",
+  "source_sha256": "9e94eec777d9c474988663295c9bad471d6a89e16969ce7f8ff80d6bdc9f7bd3",
+  "status": "passed_development_diagnostic",
+  "thin_dependency_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b2_f09_thin_section_dev.py",
+  "thin_dependency_sha256": "34513b16c83f0ac359249dd0cb1a7349fba79948dc49fbdf9087c8d8a919947f",
+  "threadpools": [
+    {
+      "internal_api": "openblas",
+      "num_threads": 1
+    },
+    {
+      "internal_api": "openblas",
+      "num_threads": 1
+    }
+  ],
+  "tip_wrench_exact_N_Nm": [
+    "1/400",
+    "-1/125",
+    "3/500",
+    "1/1250",
+    "-9/10000",
+    "7/10000"
+  ]
+}

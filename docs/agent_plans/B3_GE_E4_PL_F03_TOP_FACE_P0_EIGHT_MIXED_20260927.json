@@ -1,0 +1,186 @@
+{
+  "beam_rows": 216,
+  "case": {
+    "constraint_rows": 48,
+    "line_norm": {
+      "basis_integrals_m": [
+        0.012499999999999959,
+        0.01250000000000007,
+        0.012499999999999959,
+        0.012499999999999959,
+        0.01250000000000007,
+        0.012499999999999959,
+        0.01250000000000007,
+        0.012499999999999959
+      ],
+      "density_gram_ordering_defect": -1.016438284170338e-20,
+      "moment_to_force_equivalent_length_m": 0.1,
+      "physical_density_units": [
+        "N/m",
+        "N/m",
+        "N/m",
+        "Nm/m",
+        "Nm/m",
+        "Nm/m"
+      ]
+    },
+    "max_reference_gap_m_rad": 5.478564923766058e-16,
+    "normalized_constraint_rank": 41,
+    "reason": "A mixed singular value cannot establish stability when the proposed constraint rows are dependent in the inherited norm.",
+    "row_diagnostic": {
+      "inherited_norm_tail_relative": [
+        0.0021848496021497736,
+        1.7672377328040025e-16,
+        5.1384434315550714e-17,
+        4.1789733261375564e-17,
+        2.889530076617757e-17,
+        2.6425955759398235e-17,
+        2.109403186315526e-17,
+        1.5893009071107608e-17
+      ],
+      "physical_coordinate_rank_1e_10": 41,
+      "physical_row_tail_relative": [
+        0.04352657011880273,
+        4.440892085996889e-16,
+        1.0412390000288138e-16,
+        9.701652018252134e-17,
+        9.701652018252134e-17,
+        9.701652018252134e-17,
+        9.701652018252134e-17,
+        9.701652018252134e-17
+      ],
+      "physical_weak_left_mode_by_interval": [
+        [
+          -4.6004653249464917e-17,
+          -2.2367820419787134e-16,
+          -0.3886420257097903,
+          -2.0473267816048546e-16,
+          0.15443068151037645,
+          2.2036901130036098e-16
+        ],
+        [
+          1.1102230246251565e-16,
+          -7.371274916083705e-17,
+          0.2814484668827534,
+          9.71445146547012e-17,
+          0.1769967654681638,
+          -3.642919299551295e-16
+        ],
+        [
+          -8.326672684688674e-17,
+          4.85722573273506e-17,
+          -0.0430080326670354,
+          6.938893903907228e-17,
+          0.06528234667468871,
+          3.7470027081099033e-16
+        ],
+        [
+          3.5388358909926865e-16,
+          -3.0878077872387166e-16,
+          -0.2486717703878358,
+          -1.3183898417423734e-16,
+          0.1842446672840069,
+          -2.706168622523819e-16
+        ],
+        [
+          -3.3306690738754696e-16,
+          6.938893903907228e-17,
+          0.1393279777584569,
+          5.551115123125783e-17,
+          0.2276934846985502,
+          1.942890293094024e-16
+        ],
+        [
+          2.7755575615628914e-17,
+          -5.551115123125783e-17,
+          -0.3592746296458117,
+          4.163336342344337e-17,
+          0.3406579716516409,
+          -4.163336342344337e-17
+        ],
+        [
+          1.1102230246251565e-16,
+          -1.942890293094024e-16,
+          0.3928170503734129,
+          5.551115123125783e-17,
+          0.324942633567979,
+          5.204170427930421e-18
+        ],
+        [
+          -2.6020852139652106e-17,
+          -4.163336342344337e-17,
+          0.17729462948942484,
+          -4.163336342344337e-17,
+          0.07044974204778033,
+          5.551115123125783e-17
+        ]
+      ],
+      "physical_weak_left_mode_residual": 9.440945059545228e-16,
+      "rank_in_inherited_mixed_norm": 41
+    },
+    "rows": 1452,
+    "status": "rank_deficient_before_mixed_svd"
+  },
+  "classification": "bounded eight-interval native retained mixed diagnostic; not F03/G0B acceptance",
+  "elapsed_s_not_benchmark": 36.537462400010554,
+  "layout": {
+    "cell_rotations": 36,
+    "complementary_min_diagonal_J_per_resultant_squared": 1.7857142859640813e-11,
+    "free": 216,
+    "nodal": 78,
+    "resultants": 108
+  },
+  "limitations": [
+    "one primal mesh and ratio; no mesh-uniform stability claim",
+    "diagnostic norm is not an independently established physical norm",
+    "no loaded physical-transfer or locking comparison"
+  ],
+  "model": "saved x8/y4 C1 Q4/B3-12, 35 mm shell, 2 um tangent beam, fixed left roots",
+  "norm": "unchanged diagnostic physical/chart primal and P0 H^-1/2 dual norm",
+  "numpy": "2.4.6",
+  "operator": "actual virgin E4 and full native B3 retained tangents; exact weak top-face rows",
+  "previous_beta": {
+    "p0_m2": 0.0018764829361650308,
+    "p0_m4": 0.0018765552754503093
+  },
+  "previous_sha256": "a8737c6c1361cc7857b43c4036106d0444c541dcde9e48d8fd4b7e257dfc7c2b",
+  "python": "3.14.2",
+  "question": "Does P0 growth on the same native primal expose a weak mixed mode?",
+  "shell_rows": 1188,
+  "source_git": "4fee957cb9413ba9d16d50adcf4b1dc7dbe59e8f",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_top_face_p0_eight_mixed.py": "c82ddbe012058c1361021648d7035810e72fd6bf474f97f2ad057fbc6e598e0e",
+    "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+    "scripts\\b3_e4_f03_c1_native_mixed_metric.py": "9e5be04e9757b9ad365d0f89c74ee9027447dbf74773da43b9a4ced3ee47c390",
+    "scripts\\b3_e4_f03_distributed_surface_finite.py": "2cedbdc73564d6ffee0efa54825065dd10cb02329ca505ef49815d636ccc7cca",
+    "scripts\\b3_e4_f03_top_face_native_mixed_metric.py": "405677f1e552a25d07671f13586d79d4d12b6fc3287a086ad07ec9eabeece4a0"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ]
+}
