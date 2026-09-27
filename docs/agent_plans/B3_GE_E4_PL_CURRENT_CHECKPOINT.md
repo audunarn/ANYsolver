@@ -25,6 +25,9 @@ basis-dependent, while these block ranks are not.
 Ratio-specific P0/P1 ablations restore full rank (28/28, 27/27) and pass
 four bounded torque/shear work and balance checks, but independent review
 finds no derivation of a fixed general multiplier policy from those facts.
+Union-cut six-vector P0 is also ruled out as a general resolution rule:
+shell-fine 1:4 and 1:8 trace-only ranks fall to 44/48 and 84/96, while
+the reciprocal beam-fine cases remain full rank.
 The matched detached-solid evidence remains limited by connection and
 contact idealization. B2 F09 fail-closed admission is unfinished.
 **Remaining uncertainty:** The admissible multi-channel test-space image
@@ -32,9 +35,9 @@ changes with relative shell/beam resolution; the correct interface policy
 and physical torque/shear fidelity remain undecided. Off-edge S3
 reference/derivative checks and a bounded loaded screen pass for both
 triangle diagonals; mixed-mesh stability and physical fidelity remain open.
-**Next discriminator:** Use the now explicit unscaled within- and
-cross-channel identities to derive one fixed joint local basis rule
-before another loaded sweep. Test that rule across
+**Next discriminator:** Use the explicit unscaled within- and
+cross-channel identities and the failed union-P0 growth to derive one
+fixed joint/coarser-side trace rule before another loaded sweep. Test it across
 refinement, reversal and Q4/S3 with supported work and appropriate mixed
 norms. The ratio-specific ablations are diagnostics, not a selected rule.
 Do not automatically drop rows by SVD or run the full ratio series on
@@ -100,6 +103,43 @@ these cases reject union-cut P0 as a universal production resolution
 rule. They do not establish that the continuous law is invalid or that
 coarser P0 is stable. Stop union-cut loaded growth and derive a fixed
 joint/coarser-side trace policy with work and unsupported-mode checks.
+
+**Next coarser-side candidate check (prospective):** Define one physical
+six-vector P0 multiplier per interval of the side with fewer bond trace
+intervals; keep quadrature segmented on the union of shell and native
+half-cell cuts. On the four existing 1:4 and 1:8 reciprocal Q4/native
+fixtures, first require supported full row rank without a loaded solve.
+A failure rejects this simple fixed rule; success only nominates it for
+continuous-gap detection, physical work, locking and mixed-system norm
+checks. The rule is not adopted for production from this rank screen.
+
+**Coarser-side rank result:** The fixed rule gives 12/12 supported rows
+on all four reciprocal 1:4 and 1:8 grids; smallest unit-row singular
+values are `0.665/0.378/0.687/0.304` in shell-fine 1:4, beam-fine
+4:1, shell-fine 1:8, beam-fine 8:1 order. The equal 4:4 control gives
+24/24 and `0.265`. This nominates only an algebraically admissible
+candidate. The already recorded supported longitudinal field with
+nonzero continuous gap and zero two-interval weak rows remains an
+under-resolution warning; full row rank does not erase it.
+
+**Next fixed-primal loaded discriminator (prospective):** On the
+shell-fine 1:4 Q4/native-B3 fixture, hold geometry, supports, section,
+and +100 Nm torque/−1000 N shear loads fixed. Compare 2-interval
+coarser P0 with independent 4-interval P0, recording physical tip
+motion, positive shell work, continuous gaps, and balance. If four
+intervals are dependent, stop this comparison and derive the joint
+basis. If both solve but response/work changes materially, do not use
+coarser P0 as a sufficient resolution policy; derive enriched joint
+rows. If close, retain the candidate for matched physical reference
+and growing-space stability, not acceptance. No additional mesh or
+formal F03 execution follows automatically.
+
+The planned x8 fixture has about 1,404 globally free primal columns,
+above the private rank helper's 1,200-column SVD cap, although only a
+small attachment-local subset enters its rows. The helper now removes
+identically zero columns before SVD and retains the same 1,200 active-
+column cap. This changes diagnostic preparation only; the loaded KKT,
+mechanics, scientific criteria, and resource limits remain unchanged.
 
 **Next bounded off-edge loaded check (prospective):** The first and second
 variations pass with interior S3 hosts, but a supported loaded transfer

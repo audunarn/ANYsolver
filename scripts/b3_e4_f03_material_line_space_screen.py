@@ -54,10 +54,16 @@ def _rows(line: MaterialLinePosition, space: LineMultiplierSpace):
 
 def _scaled_row_diagnostics(constraint, free, primal_scales):
     """Bounded physical-coordinate rank screen, never a stability verdict."""
-    if (constraint.shape[0] > 36 or len(free) > 1200 or
+    if (constraint.shape[0] > 36 or
             primal_scales.shape != (len(free),)):
         raise ValueError("bounded line row diagnostic only")
     mapped = constraint[:, free]*primal_scales[None, :]
+    active = np.flatnonzero(np.any(mapped != 0., axis=0))
+    if len(active) > 1200:
+        raise ValueError("bounded line row diagnostic only")
+    # Zero columns outside the attachment cannot affect row rank. Keep the
+    # same 1200-column SVD cap while allowing a larger supported model.
+    mapped = mapped[:, active]
     row_norms = np.linalg.norm(mapped, axis=1)
     if not np.isfinite(row_norms).all() or np.min(row_norms) <= 0.:
         raise ArithmeticError("zero or nonfinite physical line row")
@@ -69,6 +75,7 @@ def _scaled_row_diagnostics(constraint, free, primal_scales):
         "scaled_row_singular_values": singular.tolist(),
         "scaled_row_norm_min": float(np.min(row_norms)),
         "scaled_row_norm_max": float(np.max(row_norms)),
+        "active_primal_columns": int(len(active)),
         "left_smallest_mode": left[:, -1].tolist(),
         "left_null_modes": left[:, singular <= tolerance].T.tolist(),
         "rank_tolerance": float(tolerance),
