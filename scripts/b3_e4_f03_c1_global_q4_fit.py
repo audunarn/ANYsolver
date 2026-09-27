@@ -104,7 +104,7 @@ def trace_matrices(position, orientation, stations, free, shell_size):
 
 
 def constrained_trace_fit(matrix, free, q, solid_points, stations,
-                          station_matrix, integrated_matrix, face_u):
+                          station_matrix, integrated_matrix, face_u, dual):
     """Compare exact weak-row matching with best station trace residual."""
     p0 = np.zeros(len(free))
     for (node, component), column in free.items():
@@ -148,6 +148,9 @@ def constrained_trace_fit(matrix, free, q, solid_points, stations,
     best_residual = (point_operator@best-point_target).reshape(-1, 6)
     constrained_residual = (
         point_operator@constrained-point_target).reshape(-1, 6)
+    physical_weak_residual = weak_residual/row_scale
+    if np.asarray(dual).shape != (24,):
+        raise ValueError("fixed 24-row physical dual required")
     return {
         "weak_row_constrained_face_rms_m": float(np.sqrt(np.mean(
             constrained_face_error**2))),
@@ -165,7 +168,9 @@ def constrained_trace_fit(matrix, free, q, solid_points, stations,
             np.abs(weak_residual))),
         "scaled_reachable_weak_row_max_defect_m": float(np.max(np.abs(
             weak_residual+unreachable))),
-        "physical_weak_row_residual": (weak_residual/row_scale).tolist(),
+        "physical_weak_row_residual": physical_weak_residual.tolist(),
+        "weak_row_signed_work_residual_J": float(
+            -np.asarray(dual)@physical_weak_residual),
         "weak_row_schur_condition": float(np.linalg.cond(schur)),
         "station_map_rank": int(rank),
         "station_map_rows": int(point_operator.shape[0]),
@@ -277,7 +282,7 @@ def evaluate(reconstruction_path: Path, same_action_path: Path,
             raise ArithmeticError("station work decomposition failed")
         trace_fit = constrained_trace_fit(
             matrix, free, q, solid_points, line.stations,
-            station_matrix, integrated_matrix, face_u)
+            station_matrix, integrated_matrix, face_u, dual[label])
         cases[label] = {
             "fit": fit,
             "trace_fit": trace_fit,
