@@ -8,9 +8,14 @@ Q4 E4 and native retained B3 tangent, supports, loads and scaling.
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
+import sys
 import warnings
 
+import anysolver
 import numpy as np
+import scipy
 from scipy import sparse
 from scipy.sparse.linalg import MatrixRankWarning, spsolve
 
@@ -95,6 +100,11 @@ def _solve(primal: sparse.csr_matrix, residual: np.ndarray,
 
 
 def run() -> dict:
+    expected_package = (Path(__file__).resolve().parents[1]
+                        /"src"/"anysolver").resolve()
+    actual_package = Path(anysolver.__file__).resolve().parent
+    if actual_package != expected_package:
+        raise RuntimeError("bounded loaded screen imported another ANYsolver checkout")
     xs, ys = local_grid(2, transverse_cells=4)
     beam = build(12, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
@@ -188,6 +198,13 @@ def run() -> dict:
         "classification": "private same-primal provisional-P0 loaded discriminator",
         "scope": "Q4 35 mm C1 E4/native retained generalized B3, two loads",
         "qualification": "development only; F03 and G0B remain open",
+        "anysolver_import_path": str(Path(anysolver.__file__).resolve()),
+        "python_version": sys.version.split()[0],
+        "numpy_version": np.__version__,
+        "scipy_version": scipy.__version__,
+        "thread_environment": {name: os.environ.get(name) for name in
+                               ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS",
+                                "MKL_NUM_THREADS", "NUMBA_DISABLE_JIT")},
         "shell_nodes": int(len(shell_reference)),
         "beam_half_cells": int(beam.n_half_cells),
         "material_line_station_count": len(material.stations),
