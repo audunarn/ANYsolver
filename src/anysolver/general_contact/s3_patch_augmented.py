@@ -237,20 +237,19 @@ class MovingS3PatchProjectedNormal:
                                                int(pair_match.group(1))
                                                if pair_match is not None else None))
 
-    def _only_artificial_shared_edge_ties(self, current_source, current_target,
-                                          *, failed_pair=None):
-        """Admit only a smooth two-S3 reference quad's internal diagonal."""
+    def _d1_reference_diagonal(self):
+        """Return the internal edge of the smooth two-S3 reference quad."""
         # This development route is tied to the D1 two-face target topology.
         # A larger S3 mesh needs explicit physical-feature ownership before
         # its interior edges can share this generalized projection branch.
         faces = self.target_face_indices
         if len(faces) != 2 or any(len(face) != 3 for face in faces):
-            return False
+            return None
         first_ids, second_ids = (tuple(map(int, face)) for face in faces)
         shared = sorted(set(first_ids).intersection(second_ids))
         if (len(shared) != 2
                 or len(set(first_ids).union(second_ids)) != 4):
-            return False
+            return None
         first_tip = next(node for node in first_ids if node not in shared)
         second_tip = next(node for node in second_ids if node not in shared)
         reference = np.asarray(self.reference_target, dtype=float)
@@ -263,13 +262,13 @@ class MovingS3PatchProjectedNormal:
         normal_scale = np.linalg.norm(first_normal)*np.linalg.norm(second_normal)
         if (normal_scale <= 0.0 or np.dot(first_normal, second_normal)
                 < (1.0-1.0e-10)*normal_scale):
-            return False
+            return None
         quad = reference[[first_tip, shared[0], second_tip, shared[1]]]
         edge_scale = max(np.linalg.norm(quad[(index+1) % 4]-quad[index])
                          for index in range(4))
         if (abs(float((second_reference[0]-first_reference[0]) @ first_normal))
                 > 1.0e-10*edge_scale*np.linalg.norm(first_normal)):
-            return False
+            return None
         turns = np.asarray([
             float(first_normal @ np.cross(
                 quad[(index+1) % 4]-quad[index],
@@ -278,6 +277,54 @@ class MovingS3PatchProjectedNormal:
         ])
         turn_floor = 1.0e-10*edge_scale*edge_scale*np.linalg.norm(first_normal)
         if not (np.all(turns > turn_floor) or np.all(turns < -turn_floor)):
+            return None
+        return tuple(shared)
+
+    def near_d1_diagonal_tiny_wedge(self, current_source, current_target,
+                                   pair_index):
+        """Locate one tiny smooth overlap beside the D1 internal diagonal."""
+        shared = self._d1_reference_diagonal()
+        if shared is None or self.shared_edge_tie is None:
+            return False
+        face_count = len(self.target_face_indices)
+        source_face, target_face = divmod(pair_index, face_count)
+        if (source_face >= len(self.source_face_indices)
+                or target_face >= face_count
+                or len(self.source_face_indices[source_face]) != 4):
+            return False
+        source = np.asarray(current_source, dtype=float)
+        target = np.asarray(current_target, dtype=float)
+        positions = target[self.target_face_indices[target_face]]
+        other = target[self.target_face_indices[1-target_face]]
+        normal = np.cross(positions[1]-positions[0],
+                          positions[2]-positions[0])
+        other_normal = np.cross(other[1]-other[0], other[2]-other[0])
+        scale = np.linalg.norm(normal)*np.linalg.norm(other_normal)
+        if (scale <= 0.0 or np.dot(normal, other_normal)
+                < (1.0-1.0e-10)*scale):
+            return False
+        edge = target[shared[1]]-target[shared[0]]
+        edge_length = np.linalg.norm(edge)
+        if (edge_length <= 0.0
+                or abs(float((other[0]-positions[0]) @ normal))
+                > 1.0e-10*edge_length*np.linalg.norm(normal)):
+            return False
+        unit_normal = normal/np.linalg.norm(normal)
+        vertices = source[self.source_face_indices[source_face]]
+        projected = vertices-((vertices-positions[0]) @ unit_normal)[:, None]*unit_normal
+        along = ((projected-target[shared[0]]) @ edge)/(edge_length*edge_length)
+        distance = np.linalg.norm(
+            np.cross(projected-target[shared[0]], edge), axis=1,
+        )/edge_length
+        return bool(np.any(
+            (along >= -1.0e-10) & (along <= 1.0+1.0e-10)
+            & (distance <= self.shared_edge_tie[0])
+        ))
+
+    def _only_artificial_shared_edge_ties(self, current_source, current_target,
+                                          *, failed_pair=None):
+        """Admit only projected touches on the D1 reference quad diagonal."""
+        if self._d1_reference_diagonal() is None:
             return False
         source = np.asarray(current_source, dtype=float)
         target = np.asarray(current_target, dtype=float)

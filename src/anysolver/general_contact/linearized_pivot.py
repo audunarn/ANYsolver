@@ -17,6 +17,7 @@ from anysolver.linalg import MatrixClass, factorize
 from .augmentation import ActiveSetPivot, propose_active_set_pivot
 from .overlap import PlanarFace
 from .q4_source_overlap import projected_q4_source_face
+from .q4_s3_tiny_wedge import verify_tiny_wedge_derivatives
 from .q4_s3_overlap_derivatives import q4_s3_overlap_derivatives
 from .s3_overlap_derivatives import s3_overlap_derivatives
 from .supported_schur import SupportedSchurProposal, propose_supported_schur_step
@@ -70,7 +71,9 @@ def _projected_clip_signature(geometry, source, target) -> tuple[int, ...] | Non
 def _jet2_integral_gradients(geometry, source, target,
                              selected: np.ndarray, count: int,
                              maximum_evaluations: int,
-                             check_cancel: Callable[[], None] | None = None):
+                             check_cancel: Callable[[], None] | None = None,
+                             *, manager=None, base=None,
+                             diagnostics: dict[str, object] | None = None):
     """Differentiate W and S at one smooth pose in authoritative xyz order."""
     pair_count = len(geometry.pair_laws)
     if 3*pair_count > maximum_evaluations:
@@ -79,6 +82,7 @@ def _jet2_integral_gradients(geometry, source, target,
     support = np.zeros_like(weighted)
     selected_row = {int(node): row for row, node in enumerate(selected)}
     source_count = len(source)
+    tiny_wedge_used = False
     for pair_index, law in enumerate(geometry.pair_laws):
         if check_cancel is not None:
             check_cancel()
@@ -115,13 +119,78 @@ def _jet2_integral_gradients(geometry, source, target,
                 or not np.allclose(derivative.reference_weighted_gap,
                                    local.reference_weighted_gap,
                                    rtol=1e-9, atol=0.0)):
-            raise ValueError(
-                "pressure response derivative disagrees with mortar geometry "
-                f"(pair={pair_index}, "
-                f"overlap_area_m2={local.overlap_area:.12g}, "
-                f"support_error_m2={np.max(np.abs(derivative.reference_support-local.reference_support)):.12g}, "
-                f"weighted_gap_error_m3={np.max(np.abs(derivative.reference_weighted_gap-local.reference_weighted_gap)):.12g})"
-            )
+            verified = False
+            if (not tiny_wedge_used and manager is not None and base is not None
+                    and len(source_nodes) == 4
+                    and manager.law.near_d1_diagonal_tiny_wedge(
+                        source, target, pair_index,
+                    )):
+                tie_step = manager.law.shared_edge_tie[0]
+                support_nodes = base.reference_support[source_nodes]
+                gap_nodes = base.normalized_gap[source_nodes]
+                local_support = local.reference_support
+                reference_face = geometry.source_faces[source_face].reference_positions
+                length = min(np.linalg.norm(reference_face[index]
+                                            - reference_face[(index+1) % 4])
+                             for index in range(4))
+                support_error = np.abs(
+                    derivative.reference_support-local_support,
+                )
+                gap_error = np.abs(
+                    derivative.reference_weighted_gap-local.reference_weighted_gap,
+                )
+                if (local.overlap_area <= 4.0*tie_step*tie_step
+                        and np.all(support_nodes-local_support
+                                   >= 1.0e6*local_support)
+                        and np.all(support_error <= 1.0e-10*support_nodes)
+                        and np.all(gap_error <= 1.0e-10*support_nodes
+                                   * np.maximum(np.abs(gap_nodes),
+                                                1.0e-8*length))):
+                    pressure_state = manager.law.evaluate(
+                        source, target, manager.normal_multipliers,
+                    )
+                    force_scale = float(pressure_state.pressure
+                                        @ pressure_state.reference_support)
+                    if force_scale > 0.0:
+                        active_local = np.asarray([
+                            3*node+axis for node in range(4)
+                            for axis in (0, 2)
+                        ])
+                        used, scenarios = verify_tiny_wedge_derivatives(
+                            law, local_source, local_target, derivative,
+                            pressure_state.pressure[source_nodes],
+                            gap_nodes, active_local,
+                            difference_step_m=tie_step/20.0,
+                            force_scale_n=force_scale,
+                            length_scale_m=length,
+                            maximum_evaluations=(maximum_evaluations
+                                                 - 4*pair_count),
+                        )
+                        response_errors = []
+                        for gradient_error, _hessian_error in scenarios:
+                            delta = (gradient_error[1]
+                                     - gap_nodes[:, None]*gradient_error[0])
+                            response_errors.append(float(np.max(
+                                np.linalg.norm(delta, axis=1)/support_nodes,
+                            )))
+                        if max(response_errors) <= 1.0e-7:
+                            verified = True
+                            tiny_wedge_used = True
+                            if diagnostics is not None:
+                                diagnostics["schur_tiny_wedge_gap_response"] = {
+                                    "pair": pair_index,
+                                    "overlap_area_m2": local.overlap_area,
+                                    "maximum_gradient_error": max(response_errors),
+                                    "float_evaluations": used,
+                                }
+            if not verified:
+                raise ValueError(
+                    "pressure response derivative disagrees with mortar geometry "
+                    f"(pair={pair_index}, "
+                    f"overlap_area_m2={local.overlap_area:.12g}, "
+                    f"support_error_m2={np.max(np.abs(derivative.reference_support-local.reference_support)):.12g}, "
+                    f"weighted_gap_error_m3={np.max(np.abs(derivative.reference_weighted_gap-local.reference_weighted_gap)):.12g})"
+                )
         columns = np.asarray(
             [3*int(node)+axis for node in source_nodes for axis in range(3)]
             + [3*(source_count+int(node))+axis
@@ -248,7 +317,8 @@ def _constrained_gap_response(manager, displacement, tangent, transform,
         weighted, support = _jet2_integral_gradients(
             geometry, source, target, selected, count,
             manager.settings.maximum_general_s3_energy_evaluations,
-            check_cancel,
+            check_cancel, manager=manager, base=base,
+            diagnostics=diagnostics,
         )
     else:
         if (2*count + 1)*pair_count > manager.settings.maximum_general_s3_energy_evaluations:

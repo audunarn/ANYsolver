@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from anysolver.general_contact.linearized_pivot import (
-    _exact_artificial_seam_gap_gradient,
+    _exact_artificial_seam_gap_gradient, _jet2_integral_gradients,
 )
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from scripts.general_contact_d1_coupled_refinement import build_case
@@ -83,4 +83,56 @@ def test_exact_seam_response_requires_opt_in_and_declared_geometry_budget():
     with pytest.raises(ValueError, match="geometry budget exceeded"):
         _exact_artificial_seam_gap_gradient(
             owner, source, target, base, selected,
+        )
+
+
+def test_smooth_near_diagonal_wedge_bounds_inactive_gap_response():
+    fixture = json.loads((Path(__file__).parent / "fixtures" /
+                          "general_contact_q4_s3_schur_tiny_wedge_pose.json").read_text())
+    owner, _, _, _, _ = _saved_pose()
+    source = np.asarray(fixture["source_positions_m"])
+    target = np.asarray(fixture["target_positions_m"])
+    owner.set_normal_multipliers(
+        np.asarray(fixture["normal_multipliers_pa"]),
+    )
+    base = owner.law.geometry.evaluate(source, target)
+    selected = np.flatnonzero(base.reference_support > 0.0)
+    assert owner.law.near_d1_diagonal_tiny_wedge(source, target, 2)
+    assert not owner.law._only_artificial_shared_edge_ties(source, target)
+    diagnostics = {}
+    weighted, support = _jet2_integral_gradients(
+        owner.law.geometry, source, target, selected,
+        3*(len(source)+len(target)),
+        owner.settings.maximum_general_s3_energy_evaluations,
+        manager=owner, base=base, diagnostics=diagnostics,
+    )
+    waiver = diagnostics["schur_tiny_wedge_gap_response"]
+    assert waiver["pair"] == 2
+    assert waiver["maximum_gradient_error"] < 1.0e-7
+    gap_gradient = (
+        weighted-base.normalized_gap[selected, None]*support
+    )/base.reference_support[selected, None]
+    coordinates = np.concatenate((source, target)).reshape(-1)
+    for coordinate in (3*1, 3*2+2, 3*(len(source)+1)):
+        h = 7.5e-9
+        observed = []
+        for sign in (-1.0, 1.0):
+            shifted = coordinates.copy()
+            shifted[coordinate] += sign*h
+            state = owner.law.geometry.evaluate(
+                shifted[:3*len(source)].reshape(-1, 3),
+                shifted[3*len(source):].reshape(-1, 3),
+            )
+            observed.append(state.normalized_gap[selected])
+        np.testing.assert_allclose(
+            gap_gradient[:, coordinate], (observed[1]-observed[0])/(2*h),
+            atol=1.0e-7, rtol=1.0e-5,
+        )
+    owner.law.shared_edge_tie = None
+    with pytest.raises(ValueError, match="pair=2"):
+        _jet2_integral_gradients(
+            owner.law.geometry, source, target, selected,
+            3*(len(source)+len(target)),
+            owner.settings.maximum_general_s3_energy_evaluations,
+            manager=owner, base=base,
         )

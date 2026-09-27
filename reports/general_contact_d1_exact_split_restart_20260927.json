@@ -1,0 +1,15 @@
+{
+  "reference": "reports\\general_contact_d1_4x2_exact_tie_smooth_wedge_schur_four_phase_20260927.json",
+  "source": "development split restart",
+  "prefix_steps": 3,
+  "resumed_steps": 4,
+  "prefix_checkpoint_version": 2,
+  "resumed_checkpoint_version": 2,
+  "maximum_nodal_displacement_error_m": 0.0,
+  "maximum_multiplier_error_pa": 0.0,
+  "maximum_contact_force_error_n": 0.0,
+  "resumed_gap_tolerance_met": true,
+  "resumed_pressure_change_pa": 2.0392576516314875e-10,
+  "elapsed_seconds": 199.24653159998707,
+  "development_check_passed": true
+}
