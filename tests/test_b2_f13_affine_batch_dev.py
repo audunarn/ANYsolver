@@ -199,6 +199,27 @@ def test_callback_cannot_change_submitted_case_inventory():
     batch.close()
 
 
+def test_callback_mutation_of_future_load_is_rejected_before_next_chunk():
+    members, _ = _members()
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in members),
+        transform, offset, np.arange(12, 18), max_chunk=4)
+    submitted = _cases(10)
+    completed = []
+
+    def mutate_future_load(identity):
+        completed.append(identity)
+        if identity == "case-000":
+            submitted[5][1][12] += 1.
+
+    with pytest.raises(ValueError, match="changed after submission"):
+        batch.solve_many(submitted, on_case=mutate_future_load)
+    assert completed == [f"case-{i:03}" for i in range(4)]
+    assert batch.solve_many(_cases(1)).status == "completed"
+    batch.close()
+
+
 def test_active_batch_cannot_be_closed_or_reentered_from_callback():
     members, _ = _members()
     transform, offset = _plan()

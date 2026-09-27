@@ -6380,3 +6380,26 @@ and distributed tip-face load rather than the native generalized section
 and tip wrench. This is a directional comparison only. No further classical
 axial refinement or multiplier selection follows. Formal F03 authority is
 unconsumed; G0B open and G1 barred.
+
+**B2 F13 ownership decision (27 September):** The private affine batch freezes
+case IDs but reads later numerical load arrays only when their chunk starts.
+A callback may therefore mutate a submitted future load. The bounded
+discriminator is to mutate a later array after the first completed case and
+check whether the batch silently solves the changed load. If so, retain bounded
+RHS chunks but fingerprint finite value snapshots at submission and reject a
+changed future array before its chunk is solved. If no mutation can affect a
+later numerical load, leave this path unchanged. This is a private ownership
+check, not F13 qualification or a measured performance claim.
+
+**Outcome:** The discriminator failed as expected before the change: the
+callback altered a future load and the batch returned a completed result.
+The private batch now validates and fingerprints each finite load at
+submission, retaining only digests; each bounded chunk copies and checks its
+loads before solving. A changed future input raises a typed value error,
+while mutation of the outer case list still cannot change the submitted
+inventory. The active-operation lock is released after this error and the
+batch remains reusable. The focused F09–F13 set passed 59 tests. Input
+mutation concurrent with snapshot creation is outside this synchronous
+callback check; eventual public definitions must own their arrays. Batch
+timing and F13 acceptance remain unmeasured/open; G0B remains open and G1
+barred.

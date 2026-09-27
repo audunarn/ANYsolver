@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from fractions import Fraction
+from hashlib import sha256
 import math
 from threading import Lock
 from typing import Callable, Mapping, Sequence
@@ -39,6 +40,18 @@ class BatchResult:
     solve_count: int
     maximum_rhs_chunk: int
     production_qualified: bool = False
+
+
+def _load_value_snapshot(value: np.ndarray, shape: tuple[int, ...]
+                         ) -> tuple[np.ndarray, bytes]:
+    """Copy one submitted load and fingerprint its finite binary64 values."""
+    try:
+        load = np.array(value, dtype=np.float64, order="C", copy=True)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("finite B2 load vector required") from exc
+    if load.shape != shape or not np.isfinite(load).all():
+        raise ValueError("finite B2 load vector required")
+    return load, sha256(memoryview(load).cast("B")).digest()
 
 
 def _accurate_sparse_residual(matrix: sparse.spmatrix, solution: np.ndarray,
@@ -257,7 +270,8 @@ class CompiledB2AffineBatch:
         if self._closed:
             raise RuntimeError("physical B2 batch is closed")
         # Freeze the case inventory before callbacks can change the caller's
-        # sequence. Copy numerical loads only when their bounded chunk begins.
+        # sequence. Fingerprint each load without retaining an unbounded RHS
+        # batch; each numerical load is copied again when its chunk begins.
         submitted = tuple((identity, value) for identity, value in cases)
         ids = [identity for identity, _ in submitted]
         if (any(not isinstance(identity, str) or not identity.strip()
@@ -279,6 +293,13 @@ class CompiledB2AffineBatch:
                         np.any(stations < 0.) or np.any(stations > 1.)):
                     raise ValueError("finite normalized B2 recovery stations required")
                 recovery.append((member_id, tuple(float(x) for x in stations)))
+        fingerprints = []
+        for _identity, value in submitted:
+            if cancellation_token is not None and cancellation_token.is_cancelled:
+                break
+            snapshot, fingerprint = _load_value_snapshot(value, self._u0.shape)
+            fingerprints.append(fingerprint)
+            del snapshot
         completed = []
         largest = 0
         for start in range(0, len(submitted), self._max_chunk):
@@ -286,11 +307,11 @@ class CompiledB2AffineBatch:
                 break
             block = submitted[start:start+self._max_chunk]
             loads = []
-            for _identity, value in block:
-                load = np.asarray(value, dtype=float)
-                if load.shape != self._u0.shape or not np.isfinite(load).all():
-                    raise ValueError("finite B2 load vector required")
-                loads.append(load.copy())
+            for j, (_identity, value) in enumerate(block):
+                load, fingerprint = _load_value_snapshot(value, self._u0.shape)
+                if fingerprint != fingerprints[start+j]:
+                    raise ValueError("B2 load case changed after submission")
+                loads.append(load)
             largest = max(largest, len(loads))
             driving = np.column_stack(loads)-self._ku0[:, None]
             rhs = self._T.T@driving
