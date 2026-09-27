@@ -13,14 +13,19 @@ relative. The fixed-dual action on factor-2 and factor-4 plates raises
 plate work by `4.54%` (tip Mx) and `4.71%` (tip Fz); this does not
 remove the native/3D difference. Factor 2 supports only 21/24 P0 m4
 rows and cannot enforce 24 independent constraints, but it can carry
-this fixed action. **Remaining uncertainty:** shell/3D support, trace
-traction and plate-theory differences; the physical continuous law;
-and growing-space mixed stability. **Next discriminator and action:**
-Audit the shell and solid plate supports, load/action reconstruction and
-reference-surface conventions at the two compared cases. If they
-match, use one bounded physical plate-theory discriminator before
-attributing the work difference to the connection; if they do not,
-correct the comparison first. Advance independent B2 F09. Do not
+this fixed action. Source inspection confirms the thickness, material,
+clamp location and fixed dual, while shell and solid support spaces are
+not algebraically identical. A read-only longitudinal mean/variation
+split reproduces the original work and attributes `95%`/`89%` of the
+native-minus-solid Mx/Fz difference to mean-action self-work.
+**Remaining uncertainty:** which physical mean-resultant channels and
+shell/3D support or plate-theory differences cause this; the physical
+continuous law; and growing-space mixed stability. **Next discriminator
+and action:** Resolve the six-channel mean-action work contributions
+from the same saved fields. If one physical channel or coupled pair
+dominates, review its matched plate/shell kinematics and support;
+otherwise review the whole low-order plate idealization. Advance
+independent B2 F09. Do not
 automatically add finer x/y or classical axial runs. P0 and the
 continuous law remain unselected; G0B open, G1 barred, formal F03
 authority unconsumed. The records and exact source/evidence identities
@@ -10022,3 +10027,27 @@ action, review the physical trace/line-resolution and shell load-map
 domain; if mean action dominates, test plate-theory and support
 idealization at matched low-order action. Neither result selects a
 multiplier space or qualifies a connection.
+
+**Longitudinal action-shape result:** A source-bound read-only split of
+the saved 24 unit fields and unchanged native E4 stiffness reconstructs
+the previously recorded same-action plate work within `1e-9 J`. For
+tip Mx the native-minus-solid difference is `−0.000202039655682 J`:
+mean self-work contributes `−0.000191882088177 J` (`94.97%`),
+zero-mean self-work `−0.000011178253655 J` (`5.53%`), and cross-work
+`+0.000001020686151 J` (`−0.51%` of the signed difference). For tip
+Fz the difference is `−0.002171041988384 J`: corresponding terms are
+`−0.001934798324949 J` (`89.12%`), `−0.000289683313836 J`
+(`13.34%`), and `+0.000053439650400 J` (`−2.46%`). The total-work
+reconstruction, not any single signed percentage, is the control.
+Raw `B3_E4_F03_C1_MATERIAL_LINE_ACTION_SHAPE_DEV_V1.json` has SHA256
+`db7a25f421ce90dae7c0509c12bb487ce01e6d7dffab43601191f70c8242fccf`
+at source `87fc4eeb`. The line-dual mean includes mixed force and
+couple channels, so the earlier pure smooth-traction screen is not a
+direct low-order-action comparator. This rules out attributing the
+*majority* of the work gap to longitudinal P0 oscillation alone; it
+does not establish a shell theory defect or connection law. **Next
+bounded discriminator:** recover the six-channel mean compliance and
+its signed work contributions from those same unit fields. A dominant
+physical channel or pair directs the next matched plate/shell patch
+check; diffuse contributions require a broader low-order idealization
+review. No new CalculiX execution or mesh refinement is needed.

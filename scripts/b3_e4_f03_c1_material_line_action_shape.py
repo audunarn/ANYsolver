@@ -38,6 +38,26 @@ def _parts(force, displacement):
     }
 
 
+def _mean_compliance(rows, plate_selector, scale, unit,
+                     native_rows, measure, shell_size, shell_k, fixed_shell):
+    """Return work matrices for six constant physical line densities."""
+    basis = np.tile(np.eye(6), (4, 1))
+    solid_force, solid_u, native_force, native_u = [], [], [], []
+    for j in range(6):
+        part = basis[:, j]
+        solid_force.append((-(rows.T@part))[plate_selector])
+        solid_u.append((-(part/scale)@unit)[plate_selector])
+        force = -(native_rows.T@(part.reshape(4, 6)*measure[:, None]).ravel())[:shell_size]
+        response, equilibrium = _solve_component(shell_k, force, fixed_shell)
+        if equilibrium > 1e-9:
+            raise ArithmeticError("mean-channel native equilibrium failed")
+        native_force.append(force)
+        native_u.append(response)
+    solid = np.array(solid_force)@np.array(solid_u).T
+    native = np.array(native_force)@np.array(native_u).T
+    return solid, native
+
+
 def evaluate(reconstruction_path: Path, same_action_path: Path) -> dict:
     reconstruction = json.loads(reconstruction_path.read_text())
     same_action = json.loads(same_action_path.read_text())
@@ -83,6 +103,11 @@ def evaluate(reconstruction_path: Path, same_action_path: Path) -> dict:
     fixed_shell = {6*(j*len(xs)+i)+axis
                    for j in range(len(ys)) for i, x in enumerate(xs)
                    if abs(x+.5) < 1e-12 for axis in range(6)}
+    solid_mean_matrix, native_mean_matrix = _mean_compliance(
+        solid_rows, plate_selector, scale, unit, native_rows, measure,
+        shell_size, shell_k, fixed_shell)
+    delta_matrix = native_mean_matrix-solid_mean_matrix
+    symmetric_delta = (delta_matrix+delta_matrix.T)/2.
 
     cases = {}
     for label in ("tip_mx", "tip_fz"):
@@ -116,6 +141,15 @@ def evaluate(reconstruction_path: Path, same_action_path: Path) -> dict:
                 abs(native_total-previous["native_shell_action_only_work_J"]) > 1e-9):
             raise ArithmeticError("decomposition does not recover saved total work")
         difference = {key: native[key]-solid[key] for key in solid}
+        mean_coefficients = mean.reshape(4, 6)[0]
+        if (abs(float(mean_coefficients@solid_mean_matrix@mean_coefficients)-
+                solid["mean_self_J"]) > 1e-9 or
+                abs(float(mean_coefficients@native_mean_matrix@mean_coefficients)-
+                    native["mean_self_J"]) > 1e-9):
+            raise ArithmeticError("six-channel mean compliance does not reconstruct work")
+        channel_contributions = mean_coefficients*(symmetric_delta@mean_coefficients)
+        if abs(float(np.sum(channel_contributions))-difference["mean_self_J"]) > 1e-9:
+            raise ArithmeticError("channel contributions do not reconstruct difference")
         cases[label] = {
             "solid_plate": solid,
             "native_E4": native,
@@ -123,6 +157,7 @@ def evaluate(reconstruction_path: Path, same_action_path: Path) -> dict:
             "solid_reconstructed_total_J": solid_total,
             "native_reconstructed_total_J": native_total,
             "mean_density": mean.reshape(4, 6)[0].tolist(),
+            "mean_native_minus_solid_by_channel_J": channel_contributions.tolist(),
             "maximum_zero_mean_density_sum": float(np.max(np.abs(
                 variation.reshape(4, 6).sum(axis=0)))),
         }
@@ -135,6 +170,9 @@ def evaluate(reconstruction_path: Path, same_action_path: Path) -> dict:
         "same_action_sha256": digest(same_action_path),
         "solid_source_deck_sha256": digest(deck),
         "unit_frd_sha256": [r["frd_sha256"] for r in reconstruction["unit_records"]],
+        "mean_channel_order": ["Fx", "Fy", "Fz", "Mx", "My", "Mz"],
+        "solid_mean_compliance": solid_mean_matrix.tolist(),
+        "native_mean_compliance": native_mean_matrix.tolist(),
         "cases": cases,
         "limitations": [
             "mean/variation is a descriptive longitudinal action split, not a physical material law",
