@@ -71,6 +71,16 @@ toward a shell-trace mortar test space for later stability review;
 coarse-like or divergent behavior would leave the joint law/space open.
 This is a side-derived candidate, not multiplier selection, external
 accuracy or formal F03 execution.
+
+**Shell-side diagnostic launch correction:** The first invocation used a
+script path instead of `-m` and could not import the `scripts` package.
+The source-bound invocation then stopped before assembly at an older
+36-row guard in `_scales`; `_solve` had already been bounded to 60 rows
+and 1,900 total equations. These are execution/guard failures, not
+mechanical results. Preserve their command outputs; no passing result is
+inferred. The intended 45-row candidate is within the unchanged
+1,900-row/120-second/2-GiB development envelope. Correct only the
+matching `_scales` guard before rerunning once.
 Advance a physically matched two-sided torque/shear reference. The bounded
 off-edge S3 loaded mapping check is complete; do not resume finer
 classical axial work.

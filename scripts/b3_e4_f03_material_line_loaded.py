@@ -43,7 +43,7 @@ def material_line_mean_rows(line: MaterialLinePosition) -> np.ndarray:
 
 def _scales(shell_size: int, beam, free: np.ndarray,
             row_count: int = 6) -> tuple[np.ndarray, float]:
-    if type(row_count) is not int or not 1 <= row_count <= 36:
+    if type(row_count) is not int or not 1 <= row_count <= 60:
         raise ValueError("bounded loaded line row count required")
     force_scale = 1e6
     displacement_scale = force_scale/(210e9*.035)
