@@ -25,3 +25,15 @@ changing mechanical inputs, tolerances or augmentation count. A separate
 development run may set `augmentation_schur_maximum_relinearizations=1`;
 it must report its actual proposal, re-equilibration and accepted-step
 trace. A failure does not justify automatically increasing the limit.
+
+The [one-relinearization run](../../reports/general_contact_d1_free_target_8q4_press_relinearize1_dev_20260927.json)
+(SHA256 `8d52e516052de8b6ff7c5eb7d56c4e5a9f3923ccda1718b77288c33990ea7d3d`)
+again accepted only the opening step and stopped at the same contact step
+with the same 3.265e−5 Pa final change. It formed one correction, but the
+subsequent re-equilibration rejected it as `nonlinear_verification`;
+neither supported-Schur proposal was accepted. This falsifies the simple
+stale-linearization remedy for this path. The next bounded distinction is
+path resolution: use six rather than three force increments with the same
+full load, geometry, seven-augmentation limit and pressure/gap criteria.
+If activation still fails, inspect the coupled active-pressure response
+instead of automatically increasing budgets.

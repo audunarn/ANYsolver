@@ -14,12 +14,14 @@ from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import (
 )
 
 
-def main(output_path: Path, *, columns: int) -> None:
+def main(output_path: Path, *, columns: int,
+         relinearizations: int = 0) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
     report = {"candidate": "free_target_left_clamped_press_dev",
-              "columns": columns, "target_support": "left_edge_clamped"}
+              "columns": columns, "target_support": "left_edge_clamped",
+              "maximum_schur_relinearizations": relinearizations}
     try:
         model, definition, settings, program = build_case(
             columns, four_phase=False, steps_per_segment=3,
@@ -27,7 +29,9 @@ def main(output_path: Path, *, columns: int) -> None:
             target_right_x_m=1.3)
         settings = replace(settings,
                            augmentation_schur_maximum_pressure_pa=250,
-                           augmentation_schur_maximum_step_pa=200)
+                           augmentation_schur_maximum_step_pa=200,
+                           augmentation_schur_maximum_relinearizations=(
+                               relinearizations))
         target_ids = tuple(range(2*(columns+1)+1, 2*(columns+1)+5))
         model.boundary_conditions = [
             bc for bc in model.boundary_conditions if bc.name != "target_fixed"]
@@ -80,5 +84,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
     parser.add_argument("--columns", type=int, choices=(8, 16, 24), default=8)
+    parser.add_argument("--relinearizations", type=int, choices=(0, 1),
+                        default=0)
     args = parser.parse_args()
-    main(args.output, columns=args.columns)
+    main(args.output, columns=args.columns,
+         relinearizations=args.relinearizations)
