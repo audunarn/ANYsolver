@@ -2,8 +2,15 @@
 
 import runpy
 from pathlib import Path
+from dataclasses import replace
+import math
 
 import numpy as np
+import pytest
+from scipy.sparse import diags
+from scipy.sparse.linalg import splu
+
+from anysolver._b2_physical_flexibility_linear import LinearSection
 
 
 PROBE = runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts"
@@ -42,3 +49,37 @@ def test_reversed_member_station_trace_and_work_pullback():
     np.testing.assert_allclose(a.jacobian[2].T @ station_force,
                                swap @ b.jacobian[2].T @ station_force,
                                rtol=2e-12, atol=2e-12)
+
+
+@pytest.mark.parametrize("radius_m", (.005, .02, .08))
+def test_physical_circular_section_elbow_scaled_sparse_work(radius_m):
+    area = math.pi*radius_m**2
+    inertia = math.pi*radius_m**4/4
+    section = LinearSection.isotropic(
+        E=210e9, nu=.3, area=area, Iy=inertia, Iz=inertia,
+        J=2*inertia, ky=.9, kz=.9)
+    members = tuple(replace(member, section_id=f"circle-{radius_m}",
+                            section=section) for member in PROBE["members"]())
+    matrix = PROBE["assemble"](members)
+    free = np.arange(6, 18)
+    submatrix = matrix[free, :][:, free].tocsc()
+    tip = (.1, -.08, .06, .01, -.012, .008)
+    load = np.zeros(18)
+    load[12:] = tip
+    rhs = load[free]
+    diagonal = submatrix.diagonal()
+    assert np.isfinite(diagonal).all() and np.all(diagonal > 0)
+    scaling = 1/np.sqrt(diagonal)
+    scaled = diags(scaling) @ submatrix @ diags(scaling)
+    solution = scaling*splu(scaled.tocsc()).solve(scaling*rhs)
+    exact = np.asarray(PROBE["exact_solve"](submatrix.toarray(), rhs),
+                       dtype=float)
+    assert np.linalg.norm(solution-exact)/np.linalg.norm(exact) <= 1e-9
+    complete = np.zeros(18)
+    complete[free] = solution
+    work = .5*float(load@complete)
+    independent = PROBE["physical_work"](members, tip)
+    assert abs(work-independent)/abs(independent) <= 1e-9
+    residual = matrix@complete-load
+    assert np.max(np.abs(residual[free].reshape(2, 6)[:, :3])) <= 1e-9*max(abs(v) for v in tip[:3])
+    assert np.max(np.abs(residual[free].reshape(2, 6)[:, 3:])) <= 1e-9*max(abs(v) for v in tip[3:])

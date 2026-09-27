@@ -1886,6 +1886,35 @@ neighborhood. The observed count changes prove crossings for the tested
 steps, not exact yield equality at the accepted state. No product tangent
 defect or F08 acceptance is inferred.
 
+**Next bounded F09 physical-range decision:** Existing scaled sparse
+successes used fixed bending/torsion inertias while area vanished, which
+is a numerical stress case rather than a coherent section family. On the
+already reviewed two-member elbow, use solid circular elastic sections
+with area `pi r²`, both second moments `pi r⁴/4`, and polar torsion
+`pi r⁴/2` at three declared radii spanning slender to stocky members.
+Keep the same member lengths, frames, supports and a fixed nonzero mixed
+tip force/moment. Compare scaled sparse work and free force/moment
+residuals with the independent cut-wrench Castigliano integral and an
+exact solve of the rounded assembled matrix. Agreement makes this
+physical section range a candidate for later admission; failure isolates
+section representation or global conditioning. This bounded local graph
+check does not admit B2 attachments or close F09/G0B.
+
+**F09 coherent-section result:** The bounded elbow check uses `E=210 GPa`,
+`nu=0.3`, a declared `0.9` shear factor, radii `0.005/0.02/0.08 m`,
+the corresponding solid-circle `A/Iy/Iz/J`, unchanged 2 m + 1.5 m
+members, and tip `(0.1,-0.08,0.06 N; 0.01,-0.012,0.008 Nm)`.
+Diagonal-scaled sparse solutions agree with exact solves of the rounded
+12-free-row matrix to relative displacement norms
+`1.16e-11/5.32e-13/4.52e-14`; total work agrees with the independent
+cut-wrench Castigliano integral to
+`1.88e-11/1.18e-13/6.68e-15`. Separate free force/moment residual checks
+meet `1e-9` of their applied scales. The focused file passed `5/5`.
+This extends the earlier nonphysical area-only stress case with one
+coherent scalar-section range on the same elbow graph, but does not
+establish generalized SPD admission, all attachments, resource scale, or
+a production sparse solver policy. F09/G0B remain open.
+
 **Finite-footprint classification:** At one unchanged 70 mm Q4/S3 x4/y4 panel, eight-half-cell native B3, 100×100 mm terminal patch and identical supports, the existing six-row tip-pose distributing footprint and the provisional six-row distributed surface-position-moment footprint each have supported rank `6`. Their combined supported row rank is `12` on both Q4 and S3-V2D (row-normalized smallest union singular values `0.04855/0.04984`, well separated from the `1e-9` numerical rank cut). The provisional law is therefore a distinct constraint space, not a row-basis rewrite of the old tip-pose footprint. This exact finite-dimensional distinction does not rank accuracy, show continuum stability, or make either law production-selected; the scalar singular values are not mixed-unit inf-sup measures. Preserve the separate 35 mm physically matched work screens for connection assessment.
 
 ## Prior state — 25 September 2026, native connection decision
