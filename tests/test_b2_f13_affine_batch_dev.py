@@ -1,13 +1,19 @@
 """Private B2 1/10/100 RHS and complete-case cancellation feasibility."""
 
+from dataclasses import replace
+import math
+
 import numpy as np
 import pytest
 from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
 from anysolver._b2_physical_linear_batch_dev import CompiledB2AffineBatch
+from anysolver._b2_physical_flexibility_linear import LinearSection
 from anysolver.control import CancellationToken
-from test_b2_physical_linear_oriented_graph import _members
+from test_b2_physical_linear_oriented_graph import (
+    _exact_linear_solve, _force_method_energy, _members,
+)
 
 
 def _plan():
@@ -89,3 +95,48 @@ def test_failed_factorization_does_not_return_offset_only_case():
         CompiledB2AffineBatch(
             compiled,
             singular.tocsr(), offset, np.arange(12, 18), max_chunk=8)
+
+
+def test_inaccurate_backend_solution_is_not_published(monkeypatch):
+    members, _ = _members()
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in members),
+        transform, offset, np.arange(12, 18), max_chunk=8)
+    monkeypatch.setattr(batch._handle, "solve_many",
+                        lambda rhs: np.zeros_like(rhs))
+    observed = []
+    with pytest.raises(RuntimeError, match="solve residual failed"):
+        batch.solve_many(_cases(1), on_case=observed.append)
+    assert observed == []
+    batch.close()
+
+
+@pytest.mark.parametrize("radius_m", (.005, .02, .08))
+def test_scaled_batch_preserves_coherent_circular_elbow_work(radius_m):
+    area = math.pi*radius_m**2
+    inertia = math.pi*radius_m**4/4
+    section = LinearSection.isotropic(
+        E=210e9, nu=.3, area=area, Iy=inertia, Iz=inertia,
+        J=2*inertia, ky=.9, kz=.9)
+    members, _ = _members()
+    physical = tuple(replace(member, section_id=f"circle-{radius_m}",
+                             section=section) for member in members)
+    transform, offset = _plan()
+    batch = CompiledB2AffineBatch(
+        tuple(member.compile_local() for member in physical),
+        transform, offset, np.arange(12, 18), max_chunk=8)
+    tip = np.array((.1, -.08, .06, .01, -.012, .008))
+    load = np.zeros(18)
+    load[12:] = tip
+    result = batch.solve_many((("mixed", load),))
+    assert result.status == "completed" and result.factorization_count == 1
+    selected = np.asarray(result.cases[0].values)
+    reduced = batch.full_stiffness[6:, 6:].toarray()
+    exact = np.asarray(_exact_linear_solve(reduced, load[6:]),
+                       dtype=float)
+    np.testing.assert_allclose(selected, exact[6:12], rtol=1e-9,
+                               atol=1e-13)
+    physical_work = float(_force_method_energy(physical, tip))
+    assert abs(.5*tip@selected-physical_work)/physical_work <= 1e-9
+    batch.close()

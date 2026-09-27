@@ -81,16 +81,32 @@ class CompiledB2AffineBatch:
         K = sparse.coo_matrix((values, (rows, cols)),
                               shape=(size, size)).tocsr()
         reduced = (T.T@K@T).tocsc()
-        handle = factorize(reduced, MatrixClass.SPD)
+        diagonal = reduced.diagonal()
+        if not np.isfinite(diagonal).all() or np.any(diagonal <= 0.):
+            raise RuntimeError(
+                "physical B2 batch factorization failed: positive finite diagonal required")
+        with np.errstate(over="ignore", under="ignore", divide="ignore",
+                         invalid="ignore"):
+            scaling = 1./np.sqrt(diagonal)
+            scaled = (sparse.diags(scaling)@reduced@sparse.diags(scaling)).tocsc()
+        if (not np.isfinite(scaling).all() or np.any(scaling == 0.) or
+                not np.isfinite(scaled.data).all() or
+                np.any(scaled.diagonal() <= 0.)):
+            raise RuntimeError(
+                "physical B2 batch factorization failed: diagonal scaling is not representable")
+        handle = factorize(scaled, MatrixClass.SPD)
         if handle.status != "ok":
             raise RuntimeError("physical B2 batch factorization failed: " +
                                str(handle.failure_reason))
         self._K = K
+        self._reduced = reduced
         self._T = T
         self._u0 = u0
         self._ku0 = np.asarray(K@u0).reshape(-1)
         self._selected = selected
         self._handle = handle
+        scaling.setflags(write=False)
+        self._scaling = scaling
         self._max_chunk = max_chunk
         self._closed = False
         self.node_ids = ordered
@@ -129,7 +145,23 @@ class CompiledB2AffineBatch:
                 loads.append(load.copy())
             largest = max(largest, len(loads))
             rhs = self._T.T@(np.column_stack(loads)-self._ku0[:, None])
-            solved = np.asarray(self._handle.solve_many(rhs), dtype=float)
+            with np.errstate(over="ignore", invalid="ignore"):
+                scaled_rhs = self._scaling[:, None]*rhs
+            if not np.isfinite(scaled_rhs).all():
+                raise RuntimeError("physical B2 scaled load is not representable")
+            solved = np.asarray(self._handle.solve_many(scaled_rhs), dtype=float)
+            with np.errstate(over="ignore", invalid="ignore"):
+                solved = self._scaling[:, None]*solved
+            if not np.isfinite(solved).all():
+                raise RuntimeError("physical B2 solution is not representable")
+            with np.errstate(over="ignore", invalid="ignore"):
+                defect = np.asarray(self._reduced@solved-rhs)
+                row_scale = (np.abs(self._reduced)@np.abs(solved) +
+                             np.abs(rhs))
+            if (not np.isfinite(defect).all() or
+                    not np.isfinite(row_scale).all() or
+                    np.any(np.abs(defect) > 1e-9*row_scale)):
+                raise RuntimeError("physical B2 batch solve residual failed")
             selected = self._T[self._selected]@solved
             selected = np.asarray(selected)+self._u0[self._selected, None]
             if not np.isfinite(selected).all():

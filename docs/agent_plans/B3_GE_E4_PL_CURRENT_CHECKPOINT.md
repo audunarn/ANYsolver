@@ -553,6 +553,31 @@ integration decision is how the mixed-profile owner will bind an actual
 audited `ConstraintPlan` and invalidate a factorization only when its
 structural dependencies change. F13/G0B remain open; G1 remains barred.
 
+**Next bounded B2 batch-scaling decision:** F09's rounded-graph checks
+show that positive diagonal scaling can recover a weak mixed-load response,
+but the private F13 batch prototype still factors its unscaled affine
+matrix. Apply the same reversible coordinate scaling inside that private
+owner, leaving the physical `K`, affine plan and selected outputs in their
+original coordinates. Reject nonpositive, nonfinite or unrepresentable
+diagonals before factorization. Recheck 1/10/100 ordered cases, one
+factorization, bounded RHS chunks, complete-case cancellation and failed
+factorization; add the coherent slender circular elbow as a physical
+screen. If results or failure semantics change, repair or revert the
+prototype. This is not production scaling admission or a performance claim.
+
+**B2 private batch-scaling result:** The compiled affine batch now factors
+`D (Tᵀ K T) D`, with `D` from the positive reduced diagonal, and maps
+loads and solutions back to physical coordinates. It rejects nonfinite,
+nonpositive or unrepresentable scaling, and checks each solved block's
+componentwise reduced residual before publishing selected case values.
+An injected backend that returns zeros is rejected without a case callback.
+The unchanged 1/10/100 case, cancellation and singular-factorization
+checks pass; the three coherent solid-circle elbow cases match an exact
+rounded solve and independent cut-wrench work. Focused tests pass `9/9`.
+This remains private beam-only feasibility: no audited mixed constraint
+plan, shell attachment, installed validation, performance measurement or
+F09/F13/G0B acceptance follows.
+
 ## Latest bounded evidence and interpretation
 
 **Current bounded discriminator (after `2c87ee7c`):** The x8 shell/m4→m8
