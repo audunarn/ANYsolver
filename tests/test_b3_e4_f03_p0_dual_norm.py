@@ -67,6 +67,29 @@ def test_units_and_force_work_pairing() -> None:
     assert np.isclose(work_j, work_in_mm_units)
 
 
+def test_p0_line_density_l2_sensitivity_matches_quadrature() -> None:
+    from scripts.b3_e4_f03_c1_drill_quotient_metric import _p0_l2_line_metric
+    from scripts.b3_e4_f03_c1_native_mixed_metric import K_REF, L_LINE
+
+    lengths = np.array([.025, .05, .025])
+    actions = np.array([
+        [12., -8., 31., 4., -2., 3.],
+        [-7., 1., -19., 2., 5., -6.],
+        [17., -3., 11., -1., 4., 2.],
+    ])
+    metric, identity = _p0_l2_line_metric(lengths)
+    direct = 0.
+    for length, action in zip(lengths, actions):
+        force_equivalent_density = action.copy()/length
+        force_equivalent_density[3:] /= L_LINE
+        direct += quad(lambda _: float(force_equivalent_density @
+                                       force_equivalent_density)/K_REF,
+                       0., length, epsabs=1e-16)[0]
+    np.testing.assert_allclose(actions.ravel()@metric@actions.ravel(), direct,
+                               rtol=2e-15, atol=1e-20)
+    assert identity["not_registered_acceptance_norm"] is True
+
+
 def test_hminus_one_p0_gram_has_constant_and_alternating_mode_order() -> None:
     import pytest
 

@@ -162,7 +162,8 @@ def _line_metric(kind: str, intervals: int, masses: np.ndarray) -> tuple[np.ndar
 
 
 def _case(A: np.ndarray, R: np.ndarray, pieces: dict,
-          row_count: int, deadline: float) -> dict:
+          row_count: int, deadline: float, *,
+          include_weak_vector: bool = False) -> dict:
     if len(A) > MAX_ROWS or len(A) != len(R):
         raise ValueError("bounded mixed KKT row cap exceeded")
     if monotonic() > deadline:
@@ -188,7 +189,7 @@ def _case(A: np.ndarray, R: np.ndarray, pieces: dict,
     work_right = float(primal @ (C.T@dual))
     if abs(work_left-work_right) > 1e-10*max(1., abs(work_left), abs(work_right)):
         raise ArithmeticError("coupled interface transpose work failed")
-    return {"rows": len(A), "constraint_rows": row_count,
+    report = {"rows": len(A), "constraint_rows": row_count,
         "beta_min": float(singular[-1]), "operator_max": float(singular[0]),
         "normed_condition": float(singular[0]/singular[-1]),
         "weak_vector_metric_norm_sq": float(x@R@x),
@@ -199,6 +200,11 @@ def _case(A: np.ndarray, R: np.ndarray, pieces: dict,
         "weak_constraint_euclidean": float(np.linalg.norm(C@primal)),
         "left_right_svd_defect": float(np.linalg.norm(B@y-singular[-1]*u[:, -1])),
         "assembly_asymmetry_relative": float(np.linalg.norm(A-A.T)/max(1., np.linalg.norm(A)))}
+    if include_weak_vector:
+        # Sign is arbitrary for a singular vector. Keep the actual KKT
+        # coordinates and declare their layout in the caller's record.
+        report["weak_vector"] = x.tolist()
+    return report
 
 
 def evaluate() -> dict:

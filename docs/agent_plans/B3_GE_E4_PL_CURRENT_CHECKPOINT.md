@@ -7,30 +7,29 @@ joint transfers physical torque/shear correctly and admits a stable exact
 line multiplier space before entering G1.
 **Established:** The top-face positional law has a continuous force/pitch
 gauge; the native six-channel hybrid is a distinct, explicitly two-sided
-director-couple candidate. Bounded reference-linear native KKT work and
-wrench balance pass with retained B3 half-cell frames. On a fixed supported
-Q4/B3 fixture, increasing only line resolution m2→m4 reduces the maximum
-continuous opening pitch by 40–63% across P0/P1/dual, while torque work
-changes by 1.17–3.23%. A split-sided external F4 equation also reduces
-local fitted pitch; it is a different linear solid idealization. B2 F09
-admission remains open.
-**Uncertainty:** The native law's physical fidelity to a matched sided
-reference and uniform stability with growing interface spaces remain
-unproven. Small weak residuals, balanced side work, rank, and reduced
-pointwise gaps alone cannot choose P0/P1/dual.
-**Next discriminator and action:** Stop fixed-primal row-count refinement.
-Review the native loaded-port recovery, then use the declared physical
-connection and existing matched reference only at comparable geometry,
-loads, supports and work measures. Assess growing-space mixed norms and
-registered mesh ratios with the actual native tangent; correct a failed
-law/trace or enrichment policy according to the observed mode.
-Keep the one-sided top-face bond as a distinct reference; if that is the
-intended production joint, revise its continuous rotational work instead
-of treating multiplier refinement as a repair. Only after the continuous
-law passes assess growing
-interface spaces with the actual native mixed tangent, work, locking and
-registered ratios. Do not repeat F5 under a higher resource cap or finer
-classical axial sweeps without a decision-changing hypothesis.
+director-couple candidate. Its all-six-channel finite-state physical
+side-work identity passes with retained B3 ports. Three native mixed-tangent
+levels expose an alternating P0 transverse-force dual near-kernel at x16/m16:
+neighboring cell actions cancel in the Q4 trace. The same shape persists
+under H^(-1/2) and L2 diagnostic norms; their different singular values
+are normalization-sensitive. On the same shell, P0 m8→m16 changes
+opening/torque work by `−0.238%/−2.536%`. The saved two-sided external F4
+equation remains a different linear solid idealization. B2 F09 is open.
+**Uncertainty:** Whether the declared two-sided law matches a resolved
+physical torque/shear reference, whether P0's weak dual action affects
+physical convergence or only multiplier recovery, and which interface
+policy remains stable and accurate over registered ratios. The P0 mode is
+not a demonstrated primal locking mechanism. Small gaps, row rank and
+auxiliary minima cannot select P0/P1/dual.
+**Next discriminator and action:** Hold multiplier selection and stop further
+fixed-primal spectral refinement. Define the matched two-sided resolved
+connection work and compare actual supported torque/shear transfer at
+identical geometry, supports and loading; a mismatch revises the law/trace.
+Then assess candidate interface-resolution policies over the registered
+reciprocal ratios and physical convergence, separating dual stability from
+primal locking. Preserve the one-sided top-face bond as a distinct reference;
+do not repeat F5 above its cap or resume classical axial sweeps without a
+decision-changing hypothesis.
 **Gate:** G0B open, G1 barred; formal F03 authority unconsumed.
 
 **Next bounded sparse mixed diagnostic (prospective, 27 September):** The
@@ -8238,3 +8237,84 @@ already observed loaded torque-transfer drift. This distinguishes a
 supported physical line action from a high-frequency or norm-dependent
 mode before any P0 resolution-policy change; P1/dual's beam-dominated
 *minimum* does not rule out their own line-specific modes.
+
+**Selected P0 weak-mode interpretation:** A single x16/m16 P0 extraction
+reproduces `β=0.001557025359` in `65.57 s` and saves the R-normalized,
+sign-arbitrary native KKT coordinates. The 16 integrated Fz actions
+alternate in sign under a smooth central envelope; Fz contributes
+`0.998232` of the unit mode metric, and its integrated resultant divided
+by the sum of absolute cell actions is `1.90e-6`. The physical KKT
+reaction `−Cᵀλ` does `0.00155340 J` shell work and `0.000001197 J`
+native-beam-coordinate work on this weak vector. Thus the mode is a
+high-frequency, nearly self-equilibrated transverse line action with a
+small physical shell response under the declared metric. It is not a
+tip-like physical resultant or a demonstrated locking failure.
+The raw `B3_GE_E4_PL_F03_C1_P0_X16_M16_WEAK_MODE_DEV_V1.json` has SHA256
+`359915B5C105A9ECA168A1F5AB256871A5DF5C2095CD0C67BF0C99287709D48A`.
+Its `line_basis_intervals_m` metadata incorrectly repeats the parent
+`[.9,1.0]` interval for all weighted patches; the numerical vector is
+unchanged. Use the separate
+`B3_GE_E4_PL_F03_C1_P0_X16_M16_WEAK_MODE_INTERVAL_CORRECTION_DEV_V1.json`
+for the 16 actual P0 supports. An independent cheap reconstruction verified
+all 16 quadrature supports, 96 rows and `.00625 m` basis integrals.
+
+The saved x16/m16 loaded P0 material duals have the same basis masses.
+Under the same declared line norm, the weak/loaded dual absolute cosine
+is `1.73e-11` for tip Mx and `0.351` for tip Fz; loaded Fz carries
+`3.96e-22` and `0.177` of total line metric respectively. These are
+diagnostic vector alignments across impact-checked source revisions, not
+physical participation factors. The weak Fz mode cannot be assigned as
+the cause of the observed torque-work shift. Under tip Fz, x16 m8→m16
+changes total work by `−0.238%` and physical shell work by about `−1.11%`;
+the aligned x4/m2→x8/m4→x16/m8 opening work changes more gradually.
+
+**Next norm discriminator (prospective):** Test this *same* x16/m16 P0
+actual tangent once under an independently derived finite-width P0 L2
+force/moment-density norm while retaining the H^(-1/2) result and all
+primal scales. P0 cell-integrated actions divided by their basis length
+give constant physical density, so its exact L2 Gram is diagonal with
+cell lengths; keep the existing force/moment characteristic-length scale.
+If the alternating Fz weak mode persists, review P0 trace resolution and
+supported opening work; if the weakest mode changes materially, revise
+the stability interpretation and norm contract before any P0 policy.
+This alternate norm is a sensitivity diagnostic, not a replacement for
+registered acceptance, an inf-sup bound or a multiplier selection.
+
+**P0 norm/physical-action result and decision:** The analytic P0 L2
+line-density comparator passed its independent quadrature test (`1/1`).
+It is a six-resultant *line-density* norm with the already declared
+`.1 m` moment-to-force length, not an independently derived surface
+traction norm. The selected x16/m16 actual KKT uses the unchanged E4
+Schur, native B3 tangent and six-channel rows; changing only the line
+Riesz block gives `β=2.678405239e-6` rather than `0.001557025359`
+under H^(-1/2). The two R-normalized dual shapes have absolute cosine
+`0.999999985` under either line norm. L2 assigns `0.9999973` of the
+mode norm to line dual, with `0.9998286` of the total mode norm in Fz.
+The 1,742-row KKT retains rank `96/96`, drill/Schur errors
+`1.23e-15/9.24e-16`, SVD defect `2.48e-16` and transpose-work error
+`5.1e-21 J`; the run took `63.87 s`, one BLAS thread, below the retained
+caps. Raw L2 result:
+`B3_GE_E4_PL_F03_C1_P0_X16_M16_L2_MODE_DEV_V1.json`, SHA256
+`00B2FC989584D2538B3E6E323764BCBF9839967406B1F5F91B9796D293EBE430`.
+All underlying fixture/operator/norm-source hashes match the H^(-1/2)
+extraction; only the runner's selected line norm and corrected support
+metadata differ. Independent read-only review found no blocking defect.
+It confirms the large beta ratio is norm normalization, not a physical
+stability deterioration or a new mode.
+
+The saved H^(-1/2) mode's physical shell z-cut reaction matches the
+independently expected continuous-Q4/P0 rule
+`−[A₀/2,(A₀+A₁)/2,…,(A₁₄+A₁₅)/2,A₁₅/2]` at all 17 bond cuts:
+maximum difference `5.12e-10 N` (`9.17e-14` relative); the L2 mode also
+matches. Alternating neighboring P0 Fz actions therefore cancel at shared
+shell trace nodes. This is a weak *dual* action, not proof that the primal
+solution locks. Existing supported x16 m8→m16 loaded work changes are
+P0 `−0.238%` opening and `−2.536%` torque, P1 `−0.117%/−1.269%`,
+dual P1 `−0.092%/−1.190%`; P0 physical shell work changes about `−1.11%`
+in opening. The H^(-1/2) weak dual aligns with the loaded opening dual
+(`0.351` absolute line-metric cosine) but essentially not the loaded torque
+dual (`1.73e-11`); alignment is descriptive, not a load participation
+factor. Hold P0 selection and distinguish supported physical convergence
+from multiplier oscillation in the registered ratios and matched two-sided
+reference before any resolution-policy or law change. F03/G0B remain open;
+G1 remains barred.

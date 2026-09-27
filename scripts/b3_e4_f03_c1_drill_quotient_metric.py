@@ -33,9 +33,32 @@ def _relative(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.linalg.norm(a-b)/max(1., np.linalg.norm(b)))
 
 
-def evaluate(shell_cells: int = 8) -> dict:
+def _p0_l2_line_metric(masses: np.ndarray) -> tuple[np.ndarray, dict]:
+    """Exact P0 physical-density L2 comparator with the frozen force scale."""
+    if masses.ndim != 1 or not np.all(np.isfinite(masses)) or np.any(masses <= 0.):
+        raise ValueError("finite positive P0 basis lengths required")
+    scales = np.tile(np.r_[np.ones(3), np.full(3, 1/prior.L_LINE)],
+                     len(masses))
+    diagonal = scales**2/(np.repeat(masses, 6)*prior.K_REF)
+    return np.diag(diagonal), {
+        "kind": "exact_P0_L2_physical_density_sensitivity",
+        "basis_integrals_m": masses.tolist(),
+        "physical_density_units": ["N/m"]*3+["Nm/m"]*3,
+        "moment_to_force_equivalent_length_m": prior.L_LINE,
+        "analytic_L2_gram_diagonal_m": masses.tolist(),
+        "not_registered_acceptance_norm": True,
+    }
+
+
+def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
+             weak_mode_line_norm: str = "hminus_half") -> dict:
     if shell_cells not in (4, 8, 16):
         raise ValueError("bounded C1 drill-quotient shell level required")
+    if weak_mode_only and shell_cells != 16:
+        raise ValueError("bounded P0 weak-mode inspection requires x16")
+    if (weak_mode_line_norm not in ("hminus_half", "p0_l2") or
+            (weak_mode_line_norm != "hminus_half" and not weak_mode_only)):
+        raise ValueError("alternate line norm is only a selected P0 weak-mode sensitivity")
     started = monotonic()
     deadline = started+120.
     xs, ys = local_grid(shell_cells, transverse_cells=4)
@@ -84,11 +107,14 @@ def evaluate(shell_cells: int = 8) -> dict:
     free_physical = np.r_[shell_physical, ns+beam_free]
     free_full = np.r_[shell_free, ns+beam_free]
     cases = {}
-    for intervals in (shell_cells//2, shell_cells):
-        for kind in prior.KINDS:
+    tested_intervals = ((shell_cells,) if weak_mode_only else
+                        (shell_cells//2, shell_cells))
+    tested_kinds = (("piecewise_constant",) if weak_mode_only else prior.KINDS)
+    for intervals in tested_intervals:
+        for kind in tested_kinds:
             if monotonic() > deadline:
                 raise TimeoutError("bounded drill quotient mixed deadline")
-            rows, masses, _ = c1_hybrid_line_space(
+            rows, masses, patches = c1_hybrid_line_space(
                 xs, ys, beam, kind=kind, intervals=intervals)
             cd = rows[:, shell_drill]
             drill_column_max = float(np.max(np.abs(cd)))
@@ -100,7 +126,10 @@ def evaluate(shell_cells: int = 8) -> dict:
                     np.flatnonzero(shell_free % 6 != 5),
                     len(shell_free)+np.arange(len(beam_free))]]) > 1e-12:
                 raise ArithmeticError("physical line-column extraction changed")
-            r_line, line_info = prior._line_metric(kind, intervals, masses)
+            r_line, line_info = (
+                _p0_l2_line_metric(masses)
+                if weak_mode_line_norm == "p0_l2" else
+                prior._line_metric(kind, intervals, masses))
             chol_line = linalg.cholesky(r_line, lower=True)
             chol_primal = linalg.cholesky(r_primal, lower=True)
             scaled_c = linalg.solve_triangular(chol_line, c, lower=True)
@@ -120,7 +149,49 @@ def evaluate(shell_cells: int = 8) -> dict:
                 ("beam_complementary", slice(shell_n, shell_n+beam_n),
                  r_resultant),
                 ("line_dual", slice(shell_n+beam_n, None), r_line)]}
-            report = prior._case(a, r, pieces, len(c), deadline)
+            report = prior._case(a, r, pieces, len(c), deadline,
+                                 include_weak_vector=weak_mode_only)
+            if weak_mode_only:
+                vector = np.asarray(report.pop("weak_vector"))
+                primal = vector[:-len(c)]
+                material_dual = vector[-len(c):].reshape(-1, 6)
+                shell_vector = np.zeros(ns)
+                shell_vector[shell_physical] = primal[:shell_n]
+                shell_vector[shell_drill] = -lift@primal[:shell_n]
+                beam_vector = np.zeros(beam.context.count)
+                beam_vector[beam_free] = primal[shell_n:shell_n+beam_n]
+                # The singular vector is R-normalized and sign-arbitrary.
+                # Its dual entries are integrated material actions, not
+                # display-ready spatial point wrenches.
+                report["weak_mode"] = {
+                    "normalization": "x.T R x = 1; sign arbitrary",
+                    "shell_full_coordinates": shell_vector.tolist(),
+                    "beam_full_native_coordinates": beam_vector.tolist(),
+                    "line_material_actions_N_Nm": material_dual.tolist(),
+                    "line_material_densities_N_per_m_Nm_per_m":
+                        (material_dual/masses[:, None]).tolist(),
+                    "line_basis_support_intervals_m": [
+                        [.9+.1*i/intervals, .9+.1*(i+1)/intervals]
+                        for i in range(intervals)],
+                    "basis_support_check": all(
+                        low < point.x < high
+                        for patch, (low, high) in zip(
+                            patches, ([.9+.1*i/intervals,
+                                       .9+.1*(i+1)/intervals]
+                                      for i in range(intervals)))
+                        for point in patch.points),
+                    "weak_constraint_gap_by_basis":
+                        (c@primal).reshape(-1, 6).tolist(),
+                    "physical_shell_and_beam_coordinate_reaction":
+                        (-c.T@vector[-len(c):]).tolist(),
+                    "sampled_unprojected_gaps": [
+                        p.linearized_continuous_gap_statistics(
+                            shell_vector, beam_vector) for p in patches],
+                    "scope": ("reference-linearized weak KKT mode in exact "
+                              "drill quotient; coordinate reactions include "
+                              "native retained B3 variables, not recovered "
+                              "spatial point tractions"),
+                }
             report["drill_constraint_column_max"] = drill_column_max
             report["normalized_constraint_rank"] = rank
             report["line_norm"] = line_info
@@ -135,11 +206,18 @@ def evaluate(shell_cells: int = 8) -> dict:
         Path("scripts/_b3_e4_f03_dual_linear_norm.py")]
     return {
         "classification": "bounded drill-quotient native retained KKT diagnostic, not G0B acceptance",
-        "question": "Was the prior smallest native KKT mode only a numerical drilling metric mode, and do line-coupled modes decline under growing rows?",
-        "model": (f"C1 Q4 x{shell_cells}/y4 35 mm shell, native B3-12, "
-                  f"P0/P1/dual m{shell_cells//2}/m{shell_cells}"),
+        "question": ("Does the selected P0 high-frequency line mode persist under "
+                     "the exact physical-density L2 sensitivity norm?"
+                     if weak_mode_line_norm == "p0_l2" else
+                     "Was the prior smallest native KKT mode only a numerical drilling metric mode, and do line-coupled modes decline under growing rows?"),
+        "model": (f"C1 Q4 x{shell_cells}/y4 35 mm shell, native B3-12, " +
+                  (f"P0 m{shell_cells} weak-mode inspection" if weak_mode_only
+                   else f"P0/P1/dual m{shell_cells//2}/m{shell_cells}")),
         "operator": "actual E4 tangent with exact free-drilling Schur complement; actual native retained B3 tangent and line rows",
-        "metric": "physical E4 energy on non-drilling coordinates; previous native B3 and basis-specific line norms",
+        "metric": ("physical E4 energy on non-drilling coordinates; previous "
+                   "native B3 norm; exact P0 physical-density L2 line comparator"
+                   if weak_mode_line_norm == "p0_l2" else
+                   "physical E4 energy on non-drilling coordinates; previous native B3 and basis-specific line norms"),
         "shell_physical_rows": len(shell_physical),
         "shell_drilling_rows_eliminated": len(shell_drill),
         "beam_rows": len(beam_free),
@@ -151,7 +229,9 @@ def evaluate(shell_cells: int = 8) -> dict:
         "elapsed_s": monotonic()-started,
         "limits": ["exact bounded diagnostic elimination, not a production assembler or changed mechanics",
                    "physical-coordinate restriction is not a full continuum quotient proof",
-                   "two interface resolutions on one shell grid, not registered ratio/refinement acceptance",
+                   ("one R-normalized P0 weak mode, not a locking or stability verdict"
+                    if weak_mode_only else
+                    "two interface resolutions on one shell grid, not registered ratio/refinement acceptance"),
                    "no multiplier selection or physical connection accuracy claim"],
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "provenance": {
@@ -174,11 +254,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--shell-cells", type=int, choices=(4, 8, 16), default=8)
+    parser.add_argument("--weak-mode-only", action="store_true")
+    parser.add_argument("--weak-mode-line-norm", choices=("hminus_half", "p0_l2"),
+                        default="hminus_half")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     with threadpool_limits(limits=1):
-        result = evaluate(args.shell_cells)
+        result = evaluate(args.shell_cells,
+                          weak_mode_only=args.weak_mode_only,
+                          weak_mode_line_norm=args.weak_mode_line_norm)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"elapsed_s": result["elapsed_s"],
                       "minima": {key: value["beta_min"]
