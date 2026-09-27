@@ -1,0 +1,95 @@
+{
+  "case_id": "general_contact_d1_mixed_interior_response_v1",
+  "status": "registered_pending_execution",
+  "claim_boundary": "Refined integrated normal-force response for the elastic Q4/S3 interior-overlap force-controlled press only; full-cycle state, complete tangent, C1 acceptance, applications and release remain open",
+  "policy": "ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1/2026-09-24.2",
+  "source_commit": "f03ac6c9dc779d7b0381c369b1aa14c416693589",
+  "source_tree": "774c340e060897238e1724055f68b89b8858f4de",
+  "source_blobs": {
+    "src/anysolver/general_contact/s3_patch_augmented.py": "fdfc5b456e2fd3d4490fb03362c9a92b20cc789c",
+    "src/anysolver/general_contact/linearized_pivot.py": "34455a884b1c2ca038e04b517f9182c63ff16be1",
+    "src/anysolver/general_contact/static_path.py": "9afc7363f33dc4f8490f6a04a0b3babc8a4a111c",
+    "src/anysolver/general_contact/q4_s3_overlap_derivatives.py": "7a7497f7a2f4e2fe864c6b2bd8a0b2573a6253ec",
+    "src/anysolver/general_contact/core.py": "19523f5e8b72ee60cceaa0700497c91c292f0a2c",
+    "src/anysolver/general_contact/supported_schur.py": "f20929a4e2f8421aec4b7b228c3cfe637961b68b",
+    "scripts/general_contact_d1_mixed_mesh_jet2_schur_press.py": "e70097501c4b9407b777601aa4a68459237fd2c4"
+  },
+  "environment": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "anysolver_source_root": "C:/ANYworkspaceWork/ANYsolver-general-contact/src",
+    "anymaterial_source_root": "C:/Github/ANYmaterial/src"
+  },
+  "prior_development_inputs": [
+    {
+      "columns": 8,
+      "path": "reports/general_contact_d1_mixed_8q4_interior_branch_choice_four_phase_20260927.json",
+      "sha256": "9c1100c29d717c0625a371e228419d8dd259a73e774df4a3a0c2292fcf0a8fc4",
+      "loaded_force_n": 0.034098737083814466
+    },
+    {
+      "columns": 16,
+      "path": "reports/general_contact_d1_mixed_16q4_interior_branch_choice_four_phase_20260927.json",
+      "sha256": "7fc49bc848c4e8026184029cd60c3a35976863f446a6bcb1cc754b013814a88d",
+      "loaded_force_n": 0.03503043718808131
+    },
+    {
+      "columns": 24,
+      "path": "reports/general_contact_d1_mixed_24q4_interior_branch_choice_four_phase_20260927.json",
+      "sha256": "0b582619d2f5be5920e86f75f38ca330220d710b8f26f3148a4663ee9cbf15dc",
+      "loaded_force_n": 0.035326285088696674
+    }
+  ],
+  "runner": {
+    "script": "scripts/general_contact_d1_mixed_mesh_jet2_schur_press.py",
+    "columns": 32,
+    "output": "reports/general_contact_d1_mixed_interior_response_v1_formal_20260927.json",
+    "maximum_wall_seconds": 1200,
+    "single_execution": true,
+    "arguments": [
+      "--pressure-cap-pa", "250",
+      "--schur-step-cap-pa", "200",
+      "--target-right-x-m", "1.3"
+    ]
+  },
+  "model": {
+    "source": "32 Q4 faces along the x direction, y=[0.1,1.1] m, physical bottom skin, 0.05 m elastic thickness",
+    "target": "two fixed S3 V2D faces spanning x=[0,1.3] m and y=[0,1] m, physical top skin, 0.05 m thickness and 0.01 m reference offset",
+    "material": "existing isotropic elastic E=100000 Pa, nu=0.3",
+    "normal_law": "projected augmented primal Q1 mortar",
+    "normal_regularization_pa_per_m": 10000,
+    "gap_tolerance_m": 0.00005,
+    "pressure_tolerance_pa": 0.00001,
+    "maximum_augmentations": 7,
+    "force_control": "-0.1 N total downward force, equally divided between the two right-edge source nodes, in two press steps",
+    "candidate_pair_cap": 64,
+    "supported_pressure_mode_cap": 66,
+    "schur_maximum_pressure_pa": 250,
+    "schur_maximum_step_pa": 200,
+    "schur_maximum_attempts_per_active_epoch": 2,
+    "schur_maximum_relinearizations": 0
+  },
+  "frozen_prediction": {
+    "method": "unweighted least-squares fit of loaded 8/16/24-Q4 development forces to F(N)=F_infinity+a/N",
+    "force_32_n": 0.03548524813960954,
+    "interpretation": "prediction check only; not an independent analytical force oracle"
+  },
+  "criteria": {
+    "status": "completed",
+    "accepted_steps": 2,
+    "loaded_force_relative_prediction_error_max": 0.01,
+    "loaded_force_relative_change_24_to_32_max": 0.01,
+    "fit_method_after_run": "unweighted least-squares F(N)=F_infinity+a/N for N=16,24,32",
+    "force_24_relative_extrapolated_limit_error_max": 0.02,
+    "full_scaled_pressure_rank": true,
+    "positive_active_pressure_modes": true,
+    "normalized_force_and_moment_wrench_error_max": 0.000001,
+    "normalized_equilibrium_error_max": 0.000001,
+    "pressure_change_pa_max": 0.00001,
+    "independent_minimum_gap_m_min": -0.00005,
+    "contact_integration_error_fraction_of_2pct_response_budget_max": 0.1,
+    "force_scale_n": 0.1,
+    "moment_scale_nm": 0.1
+  }
+}
