@@ -87,8 +87,11 @@ audit](reference_cases/general_contact_d1_distributed_tangent_development.md)
 passed selected contact-law rows, all 98 reduced assembled rows and a separately
 isolated mapped-contact action. The mapped-contact relative errors were
 2.892e−10 and 7.278e−11 at two perturbation sizes. These remain development
-checks of one smooth direction; claim-bearing complete tangent status in the
-matrix remains open.
+checks of one smooth direction. A distinct [registered direction and independent
+review](reference_cases/general_contact_d1_distributed_coupled_tangent_v1_review.md)
+accepted only a selected smooth-branch directional tangent at the same saved
+fixed-target pose, with mapped-contact errors 2.882e−10 and 7.171e−11.
+Claim-bearing complete tangent status in the matrix remains open.
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as
