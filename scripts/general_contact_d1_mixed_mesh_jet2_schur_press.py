@@ -51,7 +51,7 @@ def build_case(columns: int, *, four_phase: bool = False,
                full_width_target: bool = False,
                source_rows: int = 1,
                source_y_profile: str | None = None):
-    if columns not in (4, 8, 16, 24, 32):
+    if columns not in (4, 8, 12, 16, 24, 32):
         raise ValueError("only the bounded four/eight/sixteen/twenty-four/thirty-two-Q4 refinements are admitted")
     if target_right_x_m not in (1.0, 1.3):
         raise ValueError("this probe admits only 1.0 or 1.3 m target right edges")
