@@ -337,6 +337,27 @@ space decision, derive a sided interface-work reference or an equivalent
 operator partition with matching physical virtual fields; if unavailable,
 state the obstructing equation for focused mechanics review. F03 and G0B
 remain open, and no production connection choice follows from these controls.
+Next bounded feasibility question: can the pinned external route print the six
+shell-node coordinates needed to impose the coupled seam motion separately on
+each wall and recover its conjugate side reactions? The competing explanations
+are missing output coordinates versus recoverable sided work despite the shared
+seam. Add an all-node displacement print to one existing small matched deck;
+if all six components are available, derive and test the isolated-side
+prescription, while missing rotational output redirects the design to an
+independent element-residual partition. This output-format smoke does not
+score the connection or repeat a refinement series.
+That smoke completed with CalculiX 2.23 at one reported CPU. An added
+`*NODE PRINT,NSET=AllNodes` / `U` produced only `(vx,vy,vz)` at original
+shell nodes, not rotations 4--6. Its source deck, modified deck and output
+are preserved under
+`.qualification/b3-ge-e4-pl/f03-sided-output-feasibility-dev-20260928-v1/`;
+the modified deck/DAT SHA-256 values are `bf951d1632fadfeef4ef73505466dcfa0c830839c3cb5b2c7c9d50882f3cd0c3`
+and `1c5119ee99a284ece76c242b053e106d98b01fab4ae463ed9b2106259eb06014`.
+Direct six-DOF sided-motion replay from this print is therefore unavailable.
+The next design choice is a verified shell-face-pair rotation reconstruction
+plus isolated-side energy work, or a bounded independent element-residual
+partition; neither is yet an accepted reference. Do not infer zero rotational
+work from missing output.
 
 ## Execution boundary
 
