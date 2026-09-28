@@ -32,7 +32,11 @@ parser.add_argument(
     "--saved", type=Path,
     default=Path(__file__).with_name("d1_saved_16x8_near_rim_field_20260928.json"),
 )
+parser.add_argument("--structural-energy", action="store_true")
+parser.add_argument("--output", type=Path)
 args = parser.parse_args()
+if args.structural_energy and (args.output is None or args.output.exists()):
+    parser.error("--structural-energy requires a new --output path")
 started = time.perf_counter()
 path = args.saved.resolve()
 saved_bytes = path.read_bytes()
@@ -67,10 +71,11 @@ np.testing.assert_allclose(base.state.normalized_gap,
                            rtol=0.0, atol=1e-9)
 geometry_seconds = time.perf_counter()-started
 
-structural_tangent = _assemble_nonlinear_system(
-    model, pose, {}, 5, tangent=True, kinematics="von_karman",
-    require_full_coordinates=True,
-)[1]
+if not args.structural_energy:
+    structural_tangent = _assemble_nonlinear_system(
+        model, pose, {}, 5, tangent=True, kinematics="von_karman",
+        require_full_coordinates=True,
+    )[1]
 linear_stiffness = assemble_stiffness_matrix(model)[0]
 _reduced, _rhs, transform, offset, _fixed, _info = (
     build_constraint_transformation(linear_stiffness, np.zeros_like(pose), model)
@@ -89,6 +94,88 @@ free_coordinates = np.setdiff1d(np.arange(transform.shape[1]),
 physical_transform = transform[:, free_coordinates]
 active = np.flatnonzero(pressure > 0.0)
 assert len(active) == certificate["active_pressure_dofs"]
+if args.structural_energy:
+    # The physical pressure coefficient acts through S_i * D(gbar_i),
+    # whereas the old active-response probe used D(gbar_i) with K_contact.
+    energy = (physical_transform.T @ linear_stiffness
+              @ physical_transform).toarray()
+    symmetry = float(np.linalg.norm(energy-energy.T)
+                     /max(np.linalg.norm(energy), 1e-30))
+    diagonal = np.diag(energy)
+    metric = None
+    if np.all(diagonal > 0):
+        scale = np.sqrt(diagonal)
+        metric = np.linalg.eigvalsh(
+            (energy+energy.T)/2/np.outer(scale, scale))
+    record = {
+        "status": "development_shell_structural_energy_detection",
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "saved_source_sha256": hashlib.sha256(saved_bytes).hexdigest(),
+        "saved_runtime_identity": saved["runtime_identity"],
+        "anysolver_module": str(Path(anysolver.__file__).resolve()),
+        "structural_metric_symmetry_relative": symmetry,
+        "structural_metric_scaled_minimum_eigenvalue": (
+            None if metric is None else float(metric[0])),
+        "free_structural_coordinates": int(physical_transform.shape[1]),
+        "supported_pressure_modes": int(len(support)),
+        "settled_active_pressure_modes": int(len(active)),
+        "geometry_seconds": geometry_seconds,
+    }
+    if (symmetry > 1e-10 or metric is None or metric[0] <= 1e-10):
+        record["status"] = "development_shell_energy_metric_unavailable"
+    else:
+        force_work = support[:, None]*np.asarray(
+            base.gap_gradient @ physical_transform)
+        factor = splu(sparse.csc_matrix(energy))
+        source_stride = saved["columns"]+1
+        if len(support) != source_stride*(saved["source_rows"]+1):
+            raise AssertionError("saved source grid no longer matches pressure modes")
+        boundary_excluded = np.flatnonzero(
+            np.arange(len(support)) % source_stride != 0)
+        for name, rows in (("full_supported", np.arange(len(support))),
+                           ("source_clamp_column_excluded", boundary_excluded),
+                           ("settled_active", active)):
+            work = force_work[rows]
+            response = factor.solve(work.T)
+            compliance = work @ response
+            compliance = (compliance+compliance.T)/2
+            row_scale = np.sqrt(np.diag(compliance))
+            if np.any(row_scale <= 0):
+                raise AssertionError("shell pressure work has a zero row")
+            normalized = compliance/np.outer(row_scale, row_scale)
+            spectrum, vectors = np.linalg.eigh(normalized)
+            smallest = vectors[:, 0]/row_scale
+            dominant = np.argsort(abs(smallest))[-5:][::-1]
+            record[name] = {
+                "scaled_smallest_eigenvalue": float(spectrum[0]),
+                "scaled_largest_eigenvalue": float(spectrum[-1]),
+                "scaled_rank_1e_10": int(np.count_nonzero(
+                    spectrum > 1e-10*spectrum[-1])),
+                "modes": int(len(rows)),
+                "weakest_pressure_node_ids": [
+                    int(manager.law.pressure_mode_ids[rows[k]])
+                    for k in dominant],
+                "weakest_pressure_mode_ij": [
+                    [int(rows[k] % source_stride),
+                     int(rows[k] // source_stride)] for k in dominant],
+                "relative_linear_solve_residual": float(
+                    np.linalg.norm(energy @ response-work.T)
+                    /max(np.linalg.norm(work.T), 1e-30)),
+            }
+    record["elapsed_seconds"] = time.perf_counter()-started
+    record["peak_process_working_set_mb"] = (
+        psutil.Process().memory_info().peak_wset/1e6)
+    args.output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps({key: value for key, value in record.items()
+                      if key in ("status", "full_supported",
+                                 "source_clamp_column_excluded", "settled_active",
+                                 "structural_metric_scaled_minimum_eigenvalue",
+                                 "elapsed_seconds")}, indent=2))
+    raise SystemExit(0 if record["status"] ==
+                     "development_shell_structural_energy_detection" else 2)
+
 full_tangent = sparse.csr_matrix(structural_tangent)+base.tangent
 reduced_tangent = (physical_transform.T @ full_tangent
                    @ physical_transform).tocsc()
