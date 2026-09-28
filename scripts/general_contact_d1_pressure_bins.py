@@ -27,7 +27,8 @@ def _linear_integrals(left: float, right: float, cell_left: float,
 
 
 def integrate_q1_bins(pressure_grid: np.ndarray, bins_x: int, bins_y: int,
-                      obstacle_y_right: float = 0.9) -> np.ndarray:
+                      obstacle_y_right: float = 0.9,
+                      source_y_knots: tuple[float, ...] | None = None) -> np.ndarray:
     """Return exact bilinear Q1 pressure integrals on physical [0,1]^2 bins."""
     pressure = np.asarray(pressure_grid, dtype=float)
     if (pressure.ndim != 2 or min(pressure.shape) < 2
@@ -36,9 +37,15 @@ def integrate_q1_bins(pressure_grid: np.ndarray, bins_x: int, bins_y: int,
             or not 0.0 < obstacle_y_right <= 1.0):
         raise ValueError("invalid Q1 field or physical comparison bins")
     ny, nx = pressure.shape[0]-1, pressure.shape[1]-1
+    y_knots = (np.linspace(0.0, 1.0, ny+1) if source_y_knots is None
+               else np.asarray(source_y_knots, dtype=float))
+    if (y_knots.shape != (ny+1,) or not np.all(np.isfinite(y_knots))
+            or y_knots[0] != 0.0 or y_knots[-1] != 1.0
+            or np.min(np.diff(y_knots)) <= 0.0):
+        raise ValueError("invalid source y knots")
     forces = np.zeros((bins_y, bins_x))
     for j in range(ny):
-        cy0, cy1 = j/ny, (j+1)/ny
+        cy0, cy1 = y_knots[j:j+2]
         for by in range(bins_y):
             y0 = max(cy0, by/bins_y)
             y1 = min(cy1, (by+1)/bins_y, obstacle_y_right)
@@ -70,20 +77,29 @@ def finite_volume_bins(pressure_force: np.ndarray, bins_x: int,
 def main(output: Path, *, source_nx: int = 4, source_ny: int = 8,
          fv_nx: int = 128, fv_ny: int = 160,
          bins_x: int = 16, bins_y: int = 16,
+         source_y_profile: str | None = None,
          reference_file: Path | None = None,
          reference_sha256: str | None = None) -> None:
     if output.exists():
         raise FileExistsError(output)
-    if (source_nx not in (4, 8, 16, 32) or source_ny not in (4, 8, 16, 32)
+    if (source_nx not in (4, 8, 16, 32) or source_ny not in (4, 8, 16, 32, 40, 80)
             or (fv_nx, fv_ny) not in ((128, 160), (128, 320), (256, 320))
             or bins_x not in (8, 16, 32) or bins_y not in (8, 16, 32)
             or fv_nx % bins_x or fv_ny % bins_y):
         raise ValueError("outside bounded development comparison grids")
     if (reference_file is None) != (reference_sha256 is None):
         raise ValueError("saved reference requires its expected SHA-256")
-    source = run(source_nx, source_ny, obstacle_y_right=0.9)
+    if source_y_profile not in (None, "rim8"):
+        raise ValueError("unknown bounded source y profile")
+    if source_y_profile == "rim8" and source_ny != 8:
+        raise ValueError("rim8 profile requires eight source rows")
+    source_y_knots = (None if source_y_profile is None else
+                      (0.0, 0.2, 0.4, 0.6, 0.75, 0.825, 0.875, 0.9, 1.0))
+    source = run(source_nx, source_ny, obstacle_y_right=0.9,
+                 source_y_knots=source_y_knots)
     source_bins = integrate_q1_bins(
         source["pressure_grid_pa"], bins_x, bins_y,
+        source_y_knots=source_y_knots,
     )
     if reference_file is None:
         continuum = solve(fv_nx, fv_ny, 0.9)
@@ -138,6 +154,8 @@ def main(output: Path, *, source_nx: int = 4, source_ny: int = 8,
     record = {
         "method": "development independent Q1/FV conservative 2D common-bin pressure-force comparison; not acceptance",
         "source_grid": [source_nx, source_ny],
+        "source_y_profile": source_y_profile,
+        "source_y_knots_m": source["source_y_knots_m"],
         "finite_volume_grid": [fv_nx, fv_ny],
         "finite_volume_reference_file": (str(reference_file)
                                          if reference_file is not None else None),
@@ -182,11 +200,13 @@ if __name__ == "__main__":
     parser.add_argument("--fv-ny", type=int, default=160)
     parser.add_argument("--bins-x", type=int, default=16)
     parser.add_argument("--bins-y", type=int, default=16)
+    parser.add_argument("--source-y-profile", choices=("rim8",), default=None)
     parser.add_argument("--reference-file", type=Path, default=None)
     parser.add_argument("--reference-sha256", default=None)
     args = parser.parse_args()
     main(args.output, source_nx=args.source_nx, source_ny=args.source_ny,
          fv_nx=args.fv_nx, fv_ny=args.fv_ny,
          bins_x=args.bins_x, bins_y=args.bins_y,
+         source_y_profile=args.source_y_profile,
          reference_file=args.reference_file,
          reference_sha256=args.reference_sha256)

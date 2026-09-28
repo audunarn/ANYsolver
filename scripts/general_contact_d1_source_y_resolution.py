@@ -44,6 +44,35 @@ def _q1_mass(cells: int, right: float) -> sparse.csr_matrix:
     return matrix.tocsr()
 
 
+def _q1_mass_knots(knots: np.ndarray, right: float) -> sparse.csr_matrix:
+    """Exact clipped P1 mass on a declared nonuniform physical grid."""
+    coordinates = np.asarray(knots, dtype=float)
+    if (coordinates.ndim != 1 or len(coordinates) < 2
+            or not np.all(np.isfinite(coordinates))
+            or coordinates[0] != 0.0 or coordinates[-1] != 1.0
+            or np.min(np.diff(coordinates)) <= 0.0
+            or right <= 0.0 or right > 1.0):
+        raise ValueError("invalid nonuniform Q1 interval")
+    cells = len(coordinates)-1
+    matrix = sparse.lil_matrix((cells+1, cells+1))
+    points = (0.5*(1.0-1.0/np.sqrt(3.0)),
+              0.5*(1.0+1.0/np.sqrt(3.0)))
+    for cell in range(cells):
+        left, cell_right = coordinates[cell:cell+2]
+        end = min(cell_right, right)
+        if end <= left:
+            continue
+        interval = end-left
+        for fraction in points:
+            coordinate = left+fraction*interval
+            local = (coordinate-left)/(cell_right-left)
+            shape = np.array((1.0-local, local))
+            matrix[cell:cell+2, cell:cell+2] += (
+                0.5*interval*np.outer(shape, shape)
+            )
+    return matrix.tocsr()
+
+
 def _aligned_q1_cross_mass(structural_cells: int,
                            pressure_cells: int) -> sparse.csr_matrix:
     """Exact pressure P1 × structural Q1 work on nested x grids."""
@@ -89,14 +118,16 @@ def _aligned_q1_cross_knots(structural_cells: int,
     return matrix.tocsr()
 
 
-def _model(nx: int, ny: int) -> FEModel:
+def _model(nx: int, ny: int,
+           source_y_knots: np.ndarray | None = None) -> FEModel:
     model = FEModel(f"source_y_resolution_{nx}_{ny}")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
     stride = nx+1
     for row in range(ny+1):
         for column in range(nx+1):
             node = 1+row*stride+column
-            model.add_node(node, 0.1+column/nx, 0.1+row/ny, 0.04004)
+            y = row/ny if source_y_knots is None else source_y_knots[row]
+            model.add_node(node, 0.1+column/nx, 0.1+y, 0.04004)
     for row in range(ny):
         for column in range(nx):
             bottom = 1+row*stride+column
@@ -122,11 +153,19 @@ def _model(nx: int, ny: int) -> FEModel:
 def run(nx: int, ny: int, pressure_nx: int | None = None,
         comparison_nx: int | None = None,
         pressure_knots: tuple[float, ...] | None = None,
-        obstacle_y_right: float = 0.9) -> dict:
+        obstacle_y_right: float = 0.9,
+        source_y_knots: tuple[float, ...] | None = None) -> dict:
     if obstacle_y_right not in (0.9, 1.0):
         raise ValueError("development obstacle must end at y=0.9 or y=1.0")
     if pressure_knots is not None and pressure_nx is not None:
         raise ValueError("choose uniform pressure cells or selected knots")
+    y_knots = (None if source_y_knots is None
+               else np.asarray(source_y_knots, dtype=float))
+    if y_knots is not None and (
+            y_knots.shape != (ny+1,) or not np.all(np.isfinite(y_knots))
+            or y_knots[0] != 0.0 or y_knots[-1] != 1.0
+            or np.min(np.diff(y_knots)) <= 0.0):
+        raise ValueError("source y knots must increase from zero to one")
     knots = (np.asarray(pressure_knots, dtype=float)
              if pressure_knots is not None else None)
     pressure_nx = (len(knots)-1 if knots is not None
@@ -140,7 +179,7 @@ def run(nx: int, ny: int, pressure_nx: int | None = None,
                                np.rint(pressure_coordinates*comparison_nx),
                                rtol=0.0, atol=1.0e-12)):
         raise ValueError("comparison x bins must be a nested pressure grid dividing 256")
-    model = _model(nx, ny)
+    model = _model(nx, ny, y_knots)
     model.apply_boundary_conditions()
     stiffness, _ = assemble_stiffness_matrix(model)
     stride = nx+1
@@ -155,7 +194,9 @@ def run(nx: int, ny: int, pressure_nx: int | None = None,
                 row*stride+column, row*stride+column+1,
                 (row+1)*stride+column+1, (row+1)*stride+column,
             )
-            load[node_z[list(nodes)]] -= 0.3/(4.0*nx*ny)
+            cell_height = (1.0/ny if y_knots is None
+                           else y_knots[row+1]-y_knots[row])
+            load[node_z[list(nodes)]] -= 0.3*cell_height/(4.0*nx)
     if abs(np.sum(load)+0.3) > 1.0e-13:
         raise AssertionError("distributed source load is invalid")
     reduced_k, reduced_load, transform, offset, _, _ = (
@@ -167,7 +208,8 @@ def run(nx: int, ny: int, pressure_nx: int | None = None,
     mx = (_aligned_q1_cross_knots(nx, knots) if knots is not None
           else _q1_mass(nx, 1.0) if pressure_nx == nx
           else _aligned_q1_cross_mass(nx, pressure_nx))
-    my = _q1_mass(ny, obstacle_y_right)
+    my = (_q1_mass(ny, obstacle_y_right) if y_knots is None
+          else _q1_mass_knots(y_knots, obstacle_y_right))
     pressure_work_on_z = sparse.kron(my, mx, format="coo")
     work = sparse.coo_matrix((
         pressure_work_on_z.data,
@@ -225,14 +267,19 @@ def run(nx: int, ny: int, pressure_nx: int | None = None,
     if abs(float(np.sum(x_force)-support @ pressure)) > 1.0e-12:
         raise AssertionError("common-bin pressure force differs from Q1 support integral")
     boundary = obstacle_y_right*ny
-    lower = int(np.floor(boundary))
+    lower = (int(np.floor(boundary)) if y_knots is None
+             else int(np.searchsorted(y_knots, obstacle_y_right, side="right")-1))
     if lower == ny:
         boundary_vertical = vertical[-1]
-    elif abs(boundary-lower) < 1.0e-14:
+    elif (abs(boundary-lower) < 1.0e-14 if y_knots is None
+          else abs(y_knots[lower]-obstacle_y_right) < 1.0e-14):
         boundary_vertical = vertical[lower]
     else:
-        boundary_vertical = ((1.0-(boundary-lower))*vertical[lower]
-                             +(boundary-lower)*vertical[lower+1])
+        fraction = (boundary-lower if y_knots is None else
+                    (obstacle_y_right-y_knots[lower])
+                    /(y_knots[lower+1]-y_knots[lower]))
+        boundary_vertical = ((1.0-fraction)*vertical[lower]
+                             +fraction*vertical[lower+1])
     represented_gap = min(
         float(np.min(initial_gap+vertical[:lower+1])),
         float(np.min(initial_gap+boundary_vertical)),
@@ -242,6 +289,7 @@ def run(nx: int, ny: int, pressure_nx: int | None = None,
     return {
         "nx": nx, "ny": ny, "pressure_nx": pressure_nx,
         "obstacle_y_right": obstacle_y_right,
+        "source_y_knots_m": (y_knots.tolist() if y_knots is not None else None),
         "pressure_knots": (knots.tolist() if knots is not None else None),
         "comparison_x_bins": comparison_nx,
         "pressure_modes": len(pressure),
