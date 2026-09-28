@@ -1,0 +1,174 @@
+{
+  "cases": {
+    "tip_fz": {
+      "intervals": [
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            1.2467987815306348e-08,
+            -4.342494479218793e-17,
+            1.657279996380521e-08,
+            -2.1727794393861817e-15,
+            9.316049597697094e-09,
+            1.8270173848929726e-17
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 6.733922066357923e-07,
+          "native_minus_solid_work_J": -0.0012658560137464607,
+          "native_shell_action_work_J": 0.00416767452895353,
+          "solid_shell_action_work_J": 0.005433530542699991,
+          "x_interval_m": [
+            0.9,
+            0.925
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            8.074551947176581e-09,
+            -3.5858306022759226e-17,
+            1.697179776868439e-08,
+            -2.369245273522217e-15,
+            -1.2490185945503873e-08,
+            2.2625038661004973e-16
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 6.873647616341888e-07,
+          "native_minus_solid_work_J": -0.00038520959101403813,
+          "native_shell_action_work_J": 0.00496138857513669,
+          "solid_shell_action_work_J": 0.005346598166150728,
+          "x_interval_m": [
+            0.925,
+            0.9500000000000001
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            6.62003049013e-09,
+            -3.1807630406535376e-17,
+            1.720529429366035e-08,
+            -2.1124831281007797e-15,
+            -1.5196983877372018e-08,
+            2.5712324994167373e-16
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 6.890294308418846e-07,
+          "native_minus_solid_work_J": -0.0002781852126743558,
+          "native_shell_action_work_J": 0.003283824199788206,
+          "solid_shell_action_work_J": 0.0035620094124625616,
+          "x_interval_m": [
+            0.9500000000000001,
+            0.9750000000000001
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            6.330387923011922e-09,
+            -3.87139030328861e-17,
+            1.696710333108866e-08,
+            -1.9299394857955998e-15,
+            -2.975541057466648e-08,
+            -2.1831280786634674e-16
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 6.848308307846863e-07,
+          "native_minus_solid_work_J": -0.000241791170950467,
+          "native_shell_action_work_J": 0.000580335836868613,
+          "solid_shell_action_work_J": 0.00082212700781908,
+          "x_interval_m": [
+            0.9750000000000001,
+            1.0
+          ]
+        }
+      ],
+      "native_shell_action_work_J": 0.012993223140747039,
+      "native_shell_equilibrium_ratio": 1.5192495484517917e-12,
+      "solid_shell_action_work_J": 0.01516426512913236
+    },
+    "tip_mx": {
+      "intervals": [
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            3.3255157702817673e-17,
+            1.4861789023389723e-09,
+            -1.578332606795922e-15,
+            9.399477644934396e-08,
+            -1.9370243821087184e-15,
+            -3.202521959386386e-08
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 2.584779175684682e-06,
+          "native_minus_solid_work_J": -3.847146166863707e-05,
+          "native_shell_action_work_J": 0.00042422122029665935,
+          "solid_shell_action_work_J": 0.0004626926819652964,
+          "x_interval_m": [
+            0.9,
+            0.925
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            3.381809851760019e-17,
+            1.2734725027723067e-09,
+            -1.6274191543178464e-15,
+            7.358492698930291e-08,
+            -1.9604207759061175e-15,
+            -8.740959097305188e-08
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 1.5379797818365303e-06,
+          "native_minus_solid_work_J": -3.610950608392725e-05,
+          "native_shell_action_work_J": 0.0003681649059584049,
+          "solid_shell_action_work_J": 0.00040427441204233215,
+          "x_interval_m": [
+            0.925,
+            0.9500000000000001
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            3.405119747698842e-17,
+            1.4310741034137878e-09,
+            -1.6752740162640622e-15,
+            7.900494606451506e-08,
+            -1.971371992350018e-15,
+            -6.414929937888673e-08
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 3.987877279066314e-07,
+          "native_minus_solid_work_J": -3.704206638195954e-05,
+          "native_shell_action_work_J": 0.0004088781288765776,
+          "solid_shell_action_work_J": 0.00044592019525853714,
+          "x_interval_m": [
+            0.9500000000000001,
+            0.9750000000000001
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            3.397116923492993e-17,
+            2.151673918799329e-09,
+            -1.7242382815240267e-15,
+            1.3739512104885213e-07,
+            -1.9653971823726136e-15,
+            -1.4559633939506862e-07
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 2.0993855416427203e-06,
+          "native_minus_solid_work_J": -9.041662154749854e-05,
+          "native_shell_action_work_J": 0.0005768330202407326,
+          "solid_shell_action_work_J": 0.0006672496417882311,
+          "x_interval_m": [
+            0.9750000000000001,
+            1.0
+          ]
+        }
+      ],
+      "native_shell_action_work_J": 0.0017780972753723744,
+      "native_shell_equilibrium_ratio": 1.6943455477625352e-12,
+      "solid_shell_action_work_J": 0.0019801369310543967
+    }
+  },
+  "classification": "fixed-action shell material-station trace comparison",
+  "limitations": [
+    "same P0 action but E4 and 3D plate kinematics/supports differ",
+    "linear fixed-dual action-only responses, not coupled loaded sensitivity",
+    "interval work terms may cancel; they are not independent strain energies",
+    "not F03/G0B acceptance or multiplier selection"
+  ],
+  "solid_action_node_count": 288,
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "solid_unit_field_count": 24,
+  "source_commit": "21c955d1dcf035dcf416c49710a0c70fea7604d2",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

@@ -13,14 +13,19 @@ component-work difference; the separate loaded duals do not make that
 allocation. Increasing native shell x-resolution to full 24-row rank
 does not remove its fixed-action work shortfall. The unchanged x4 E4
 response puts only `0.00482%` (Mx) and `0.5388%` (Fz) of its quadratic
-work in the element-reported completion operator. Independent review
+work in the element-reported completion operator. Same-action material
+station traces reproduce both component works and place the signed
+shell-work difference in all four P0 intervals, rather than one
+misassembled station. Independent review
 found no blocking algebra/sign defect in these diagnostics, and their
 solid input is now identity-guarded. **Remaining uncertainty:** Physical
 sided torque/shear transfer, shell/3D kinematic and support idealization,
 and growing-space mixed-system stability. **Next discriminator and
 action:** Compare the already saved same-action physical plate and E4
 trace/support responses at fixed physical locations before changing
-the law; evaluate the registered growing-interface policy separately.
+the law; the material-station comparison is complete, while physical
+support/torque/shear attribution and the registered growing-interface
+policy remain. Avoid another general axial or x/y refinement.
 Advance B2 F09 independently. No automatic finer classical axial or
 x/y sweep follows. G0B/F03 remain open, G1 barred, formal F03 authority
 unconsumed; evidence and limitations follow.
@@ -10386,3 +10391,28 @@ drilling stabilization or resolve E4-versus-3D kinematics. Continue
 with matched physical trace/support observables and the registered
 growing-space assessment; do not tune drilling or select P0 from
 this partition. F03/G0B remain open and G1 barred.
+
+**Same-action material-station trace outcome:** Source `21c955d1`
+reconstructs the saved 24 solid unit fields and solves the unchanged
+x4 E4 shell under the same P0 dual. Its shell-side material traces
+respect the gap convention: shell-minus-beam position and
+beam-minus-shell rotation. The first test exposed a sign mistake in
+the diagnostic's solid rotational partition; correcting that sign
+reproduces the independently saved solid and native component works,
+and the focused test passes. The native-minus-solid signed shell-work
+differences for intervals `[.9,.925]`, `[.925,.95]`, `[.95,.975]`,
+`[.975,1.] m` are Mx `−3.8471`, `−3.6110`, `−3.7042`, `−9.0417`
+times `1e−5 J`, and Fz `−1.26586`, `−0.38521`, `−0.27819`,
+`−0.24179` times `1e−3 J`. Each interval has the same sign; the
+largest scaled station differences are `2.585e−6 m` (Mx) and
+`6.890e−7 m` (Fz), with moments scaled by `0.1 m`. The raw
+`B3_E4_F03_C1_SHELL_TRACE_ACTION_DEV_V1.json` has SHA256
+`7f4cda5564d855ce341a63af0e2d78d730c2a5a3116af2db3619e3cced105d96`.
+This does not uniquely allocate the mismatch to E4 kinematics,
+root supports, or continuum section effects, and interval terms are
+not independent energies. It removes a single-station sign/assembly
+error as the obvious explanation and argues against automatic
+longitudinal refinement. The next mechanics work is the physically
+matched torque/shear and support interpretation of this same-law
+reference, followed by the registered growing-space mixed-system
+assessment. Do not select P0 or close F03/G0B from these diagnostics.
