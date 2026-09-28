@@ -17,6 +17,10 @@ from .control import CancellationToken
 from .linalg import FactorizationCache, MatrixClass, factorize_cached
 
 
+class B2NumericalSolveFailure(RuntimeError):
+    """A compiled B2 factorization or solve failed numerically."""
+
+
 @dataclass(frozen=True)
 class SelectedMemberRecovery:
     member_id: str
@@ -70,18 +74,18 @@ def _accurate_sparse_residual(matrix: sparse.spmatrix, solution: np.ndarray,
                     x = float(solution[k, column])
                     product = float(a)*x
                     if not math.isfinite(product):
-                        raise RuntimeError("physical B2 residual is not representable")
+                        raise B2NumericalSolveFailure("physical B2 residual is not representable")
                     if fused is None:
                         exact += Fraction(float(a))*Fraction(x)
                     else:
                         terms.extend((product, fused(float(a), x, -product)))
                 value = float(exact) if fused is None else math.fsum(terms)
             except (OverflowError, ValueError) as exc:
-                raise RuntimeError(
+                raise B2NumericalSolveFailure(
                     "physical B2 residual is not representable") from exc
             result[row, column] = value
     if not np.isfinite(result).all():
-        raise RuntimeError("physical B2 residual is not representable")
+        raise B2NumericalSolveFailure("physical B2 residual is not representable")
     return result
 
 
@@ -190,7 +194,7 @@ class CompiledB2AffineBatch:
         row_nnz = np.diff(reduced.tocsr().indptr).astype(float)
         diagonal = reduced.diagonal()
         if not np.isfinite(diagonal).all() or np.any(diagonal <= 0.):
-            raise RuntimeError(
+            raise B2NumericalSolveFailure(
                 "physical B2 batch factorization failed: positive finite diagonal required")
         with np.errstate(over="ignore", under="ignore", divide="ignore",
                          invalid="ignore"):
@@ -199,12 +203,12 @@ class CompiledB2AffineBatch:
         if (not np.isfinite(scaling).all() or np.any(scaling == 0.) or
                 not np.isfinite(scaled.data).all() or
                 np.any(scaled.diagonal() <= 0.)):
-            raise RuntimeError(
+            raise B2NumericalSolveFailure(
                 "physical B2 batch factorization failed: diagonal scaling is not representable")
         handle = factorize_cached(
             scaled, MatrixClass.SPD, cache=factorization_cache)
         if handle.status != "ok":
-            raise RuntimeError("physical B2 batch factorization failed: " +
+            raise B2NumericalSolveFailure("physical B2 batch factorization failed: " +
                                str(handle.failure_reason))
         self._K = K
         self._reduced = reduced
@@ -332,16 +336,20 @@ class CompiledB2AffineBatch:
                     force_scale if component < 3 else moment_scale)
             equilibrium_scale = np.asarray(abs(self._T).T@physical_scale)
             if not np.isfinite(equilibrium_scale).all():
-                raise RuntimeError("physical B2 equilibrium scale is not representable")
+                raise B2NumericalSolveFailure("physical B2 equilibrium scale is not representable")
             with np.errstate(over="ignore", invalid="ignore"):
                 scaled_rhs = self._scaling[:, None]*rhs
             if not np.isfinite(scaled_rhs).all():
-                raise RuntimeError("physical B2 scaled load is not representable")
-            solved = np.asarray(self._handle.solve_many(scaled_rhs), dtype=float)
+                raise B2NumericalSolveFailure("physical B2 scaled load is not representable")
+            try:
+                solved = np.asarray(self._handle.solve_many(scaled_rhs), dtype=float)
+            except RuntimeError as exc:
+                raise B2NumericalSolveFailure(
+                    "physical B2 sparse solve failed: " + str(exc)) from exc
             with np.errstate(over="ignore", invalid="ignore"):
                 solved = self._scaling[:, None]*solved
             if not np.isfinite(solved).all():
-                raise RuntimeError("physical B2 solution is not representable")
+                raise B2NumericalSolveFailure("physical B2 solution is not representable")
             with np.errstate(over="ignore", invalid="ignore"):
                 defect = np.asarray(self._reduced@solved-rhs)
                 row_scale = (np.abs(self._reduced)@np.abs(solved) +
@@ -360,7 +368,7 @@ class CompiledB2AffineBatch:
             if not _fast_residual_within_margin(
                     defect, row_scale, equilibrium_scale, self._row_nnz):
                 if not np.isfinite(row_scale).all():
-                    raise RuntimeError("physical B2 batch solve residual failed")
+                    raise B2NumericalSolveFailure("physical B2 batch solve residual failed")
                 for _ in range(2):
                     defect = _accurate_sparse_residual(self._reduced, solved, rhs)
                     row_scale = (np.abs(self._reduced)@np.abs(solved) +
@@ -369,22 +377,26 @@ class CompiledB2AffineBatch:
                         break
                     correction_rhs = self._scaling[:, None]*defect
                     if not np.isfinite(correction_rhs).all():
-                        raise RuntimeError("physical B2 batch solve residual failed")
-                    correction = np.asarray(self._handle.solve_many(
-                        correction_rhs), dtype=float)
+                        raise B2NumericalSolveFailure("physical B2 batch solve residual failed")
+                    try:
+                        correction = np.asarray(self._handle.solve_many(
+                            correction_rhs), dtype=float)
+                    except RuntimeError as exc:
+                        raise B2NumericalSolveFailure(
+                            "physical B2 sparse correction failed: " + str(exc)) from exc
                     solved -= self._scaling[:, None]*correction
                     if not np.isfinite(solved).all():
-                        raise RuntimeError("physical B2 batch solve residual failed")
+                        raise B2NumericalSolveFailure("physical B2 batch solve residual failed")
                 else:
                     defect = _accurate_sparse_residual(self._reduced, solved, rhs)
                     row_scale = (np.abs(self._reduced)@np.abs(solved) +
                                  np.abs(rhs))
                     if not acceptable(defect, row_scale):
-                        raise RuntimeError("physical B2 batch solve residual failed")
+                        raise B2NumericalSolveFailure("physical B2 batch solve residual failed")
             selected = self._T[self._selected]@solved
             selected = np.asarray(selected)+self._u0[self._selected, None]
             if not np.isfinite(selected).all():
-                raise RuntimeError("physical B2 selected solution is not finite")
+                raise B2NumericalSolveFailure("physical B2 selected solution is not finite")
             for j, (identity, _value) in enumerate(block):
                 if cancellation_token is not None and cancellation_token.is_cancelled:
                     break

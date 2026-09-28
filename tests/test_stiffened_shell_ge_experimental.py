@@ -1,0 +1,133 @@
+"""Integrated experimental Q4/native-B3 point-panel checks."""
+
+import anysolver
+import numpy as np
+import pytest
+from dataclasses import replace
+
+from anysolver import b3_ge
+from anysolver._stiffened_shell_ge_experimental import (
+    PROFILE, ExperimentalGEAnalysis, FixedCoordinate, LinearDefinition,
+    NodalAction, PointConnection, ShellPanel,
+)
+
+
+def _panel():
+    e = 210e9
+    nu = .3
+    g = e/(2*(1+nu))
+    section = b3_ge.EllipsoidalGeneralizedSection(
+        np.diag((e*.01, g*.008, g*.008, g*1.6666666666666667e-5,
+                 e*8.333333333333333e-6, e*8.333333333333333e-6)),
+        np.eye(6), 1e20, 1e9)
+    beam_points = [(x, -.5, .1) for x in (0., .5, 1., 1.5, 2.)]
+    beams = tuple(b3_ge.define_beam(
+        "b3-ge", i+1, (101+2*i, 102+2*i, 103+2*i),
+        np.array(beam_points[2*i:2*i+3]), np.tile(np.eye(3), (3, 1, 1)),
+        section, np.eye(6)) for i in range(2))
+    shell = ShellPanel(
+        (1, 2, 3, 4, 5, 6),
+        ((0., -.5, 0.), (1., -.5, 0.), (2., -.5, 0.),
+         (0., .5, 0.), (1., .5, 0.), (2., .5, 0.)),
+        ((1, 2, 5, 4), (2, 3, 6, 5)), .07, e, nu, 7850.)
+    return LinearDefinition(
+        PROFILE, shell, beams,
+        (PointConnection(1, 101), PointConnection(2, 103),
+         PointConnection(3, 105)),
+        tuple(FixedCoordinate("shell", node, axis)
+              for node in (1, 4) for axis in range(6)))
+
+
+def test_sparse_mixed_panel_solve_recovery_and_restart():
+    definition = _panel()
+    analysis = anysolver.stiffened_shell.create_analysis(definition=definition)
+    details = analysis.preflight()
+    assert details["retained_dofs"] == 48
+    assert details["constraints"] == 18
+    assert details["production_qualified"] is False
+    assert analysis._K.nnz < analysis._K.shape[0]**2
+    actions = (NodalAction("beam", 105, (0., 0., 100., 0., 0., 0.)),)
+    result = analysis.solve_linear(actions)
+    assert result.status == "completed"
+    assert result.free_equilibrium_ratio < 1e-8
+    assert result.constraint_max < 1e-9
+    assert result.beam_coordinates[6*4+2] > 0.
+    assert np.linalg.norm(result.reactions[analysis._fixed]) > 0.
+    support = result.reactions[:analysis._shell_count].reshape(-1, 6)
+    support_force = support[:, :3].sum(axis=0)
+    support_moment = (support[:, 3:].sum(axis=0) +
+                      np.cross(np.asarray(definition.shell.coordinates_m),
+                               support[:, :3]).sum(axis=0))
+    np.testing.assert_allclose(support_force, (0., 0., -100.), atol=1e-6)
+    np.testing.assert_allclose(support_moment, (50., 200., 0.), atol=1e-5)
+    assert not result.shell_displacement.flags.writeable
+    saved = analysis.checkpoint()
+    with pytest.raises(ValueError):
+        result.shell_displacement.setflags(write=True)
+    assert analysis.checkpoint() == saved
+    resumed = b3_ge.create_stiffened_shell_analysis(
+        formulation="b3-ge", definition=definition)
+    restored = resumed.restore(saved)
+    np.testing.assert_allclose(restored.shell_displacement,
+                               result.shell_displacement, rtol=0, atol=0)
+    np.testing.assert_allclose(restored.beam_coordinates,
+                               result.beam_coordinates, rtol=0, atol=0)
+    second = resumed.solve_linear((NodalAction(
+        "beam", 105, (0., 0., 200., 0., 0., 0.)),))
+    np.testing.assert_allclose(second.beam_coordinates,
+                               2*result.beam_coordinates, rtol=1e-7, atol=1e-12)
+    assert second.generation == restored.generation+1
+    corrupted = bytearray(saved)
+    corrupted[-3] = ord('9')
+    fresh = ExperimentalGEAnalysis(definition)
+    with pytest.raises(ValueError):
+        fresh.restore(bytes(corrupted))
+    with pytest.raises(RuntimeError, match="fresh"):
+        resumed.restore(saved)
+    assert resumed.recover().generation == second.generation
+
+
+def test_invalid_action_does_not_change_accepted_prefix():
+    analysis = ExperimentalGEAnalysis(_panel())
+    first = analysis.solve_linear((NodalAction(
+        "beam", 105, (0., 0., 10., 0., 0., 0.)),))
+    saved = analysis.checkpoint()
+    with pytest.raises(ValueError, match="unknown"):
+        analysis.solve_linear((NodalAction(
+            "beam", 999, (0., 0., 1., 0., 0., 0.)),))
+    assert analysis.recover().generation == first.generation
+    assert analysis.checkpoint() == saved
+
+
+@pytest.mark.parametrize("q4,s3", [
+    (((1, 2, 5, 4),), ((2, 3, 6), (2, 6, 5))),
+    ((), ((1, 2, 5), (1, 5, 4), (2, 3, 6), (2, 6, 5))),
+])
+def test_mixed_and_s3_point_panel_sparse_recovery_restart(q4, s3):
+    original = _panel()
+    definition = replace(original, shell=replace(
+        original.shell, q4_elements=q4, s3_elements=s3))
+    analysis = ExperimentalGEAnalysis(definition)
+    assert analysis.preflight()["retained_dofs"] == 48
+    actions = (NodalAction("beam", 105, (0., 0., 100., 0., 0., 0.)),)
+    first = analysis.solve_linear(actions)
+    assert first.free_equilibrium_ratio < 1e-8
+    assert first.constraint_max < 1e-9
+    support = first.reactions.reshape(-1, 6)
+    np.testing.assert_allclose(support[:, :3].sum(axis=0),
+                               (0., 0., -100.), atol=1e-5)
+    restored = ExperimentalGEAnalysis(definition).restore(analysis.checkpoint())
+    np.testing.assert_array_equal(restored.shell_displacement,
+                                  first.shell_displacement)
+    np.testing.assert_array_equal(restored.beam_coordinates,
+                                  first.beam_coordinates)
+
+
+def test_disconnected_shell_cells_fail_before_sparse_solve():
+    original = _panel()
+    shell = replace(original.shell, q4_elements=((1, 2, 5, 4), (3, 7, 8, 6)),
+                    node_ids=original.shell.node_ids+(7, 8),
+                    coordinates_m=original.shell.coordinates_m+
+                    ((3., -.5, 0.), (3., .5, 0.)))
+    with pytest.raises(ValueError, match="connected"):
+        ExperimentalGEAnalysis(replace(original, shell=shell))

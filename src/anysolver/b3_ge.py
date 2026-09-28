@@ -117,6 +117,15 @@ def create_coupled_analysis(formulation: str, definitions: Any, boundaries: Any,
     )
 
 
+def create_stiffened_shell_analysis(*, formulation: str, definition: Any,
+                                    resources: Any = None):
+    """Select the developing mixed owner explicitly, without altering legacy routes."""
+    _select(formulation)
+    from .stiffened_shell import create_analysis
+
+    return create_analysis(definition=definition, resources=resources)
+
+
 def workflow_provenance(analysis: Any) -> bytes:
     """Return canonical public-selection and immutable native provenance."""
 
@@ -164,6 +173,7 @@ __all__ = [
     "DistributedPattern", "DistributedProgram", "NodalDeadForces", "NodalProgram",
     "TranslationProgram", "FibreTranslationProgram", "SpatialNodalMoments",
     "define_beam", "create_analysis", "create_coupled_analysis",
+    "create_stiffened_shell_analysis",
     "workflow_provenance", "ActivityEpochLease", "GeneralizedInitialField",
     "ConsumerPolicy", "ObjectivePoseJoint", "evaluate_initial_field",
 ]
