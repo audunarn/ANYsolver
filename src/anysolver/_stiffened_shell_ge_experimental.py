@@ -329,6 +329,8 @@ class ExperimentalGEAnalysis:
         self._finite_driver = None
         self._generation = 0
         self._closed = False
+        self._linear_factor = None
+        self._linear_factorizations = 0
 
     def _require_open(self):
         if self._closed:
@@ -347,7 +349,9 @@ class ExperimentalGEAnalysis:
         return {"identity": self._identity, "physical_dofs": self._shell_count+
                 6*len(self._beam_ids), "retained_dofs": self._beam_count-
                 6*len(self._beam_ids), "constraints": self._C.shape[0],
-                "matrix_nnz": self._A.nnz, "production_qualified": False}
+                "matrix_nnz": self._A.nnz,
+                "reference_linear_factorizations": self._linear_factorizations,
+                "production_qualified": False}
 
     def solve_linear(self, actions: tuple[NodalAction, ...], *,
                      cancellation_token=None) -> LinearResult:
@@ -366,9 +370,10 @@ class ExperimentalGEAnalysis:
             offset = 0 if action.domain == "shell" else self._shell_count
             load[offset+6*index[action.node]:offset+6*index[action.node]+6] += wrench
         rhs = np.r_[load[self._free], np.zeros(self._C.shape[0])]
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", spla.MatrixRankWarning)
-            solution = spla.spsolve(self._A, rhs)
+        if self._linear_factor is None:
+            self._linear_factor = spla.splu(self._A)
+            self._linear_factorizations += 1
+        solution = self._linear_factor.solve(rhs)
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.solved")
         if not np.isfinite(solution).all():
             raise RuntimeError("finite mixed linear solution required")
@@ -484,4 +489,5 @@ class ExperimentalGEAnalysis:
     def close(self):
         self._accepted = None
         self._finite_driver = None
+        self._linear_factor = None
         self._closed = True

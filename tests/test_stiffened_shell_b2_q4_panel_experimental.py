@@ -1,6 +1,8 @@
 """Two Q4s, two native physical B2 members, and two F10 point joints."""
 
 import numpy as np
+import pytest
+from dataclasses import replace
 from scipy import sparse
 from scipy.linalg import null_space
 from anysolver import stiffened_shell
@@ -144,3 +146,27 @@ def test_multi_q4_multi_b2_panel_matches_bounded_dense_oracle():
         assert len(result.beam_resultants_local) == 2
         assert len(result.point_gaps) == 2
     analysis.close()
+
+
+def test_disconnected_supported_panels_fail_topology_preflight():
+    nodes, shells, members, points, _ = _panel()
+    separated_nodes = {node_id: nodes[node_id] for node_id in (1, 2, 4, 5)}
+    separated_nodes.update({
+        7: (4., 0., 0.), 8: (5., 0., 0.),
+        9: (5., 1., 0.), 10: (4., 1., 0.),
+    })
+    separated_shells = (
+        shells[0], replace(shells[1], shell_id="far", node_ids=(7, 8, 9, 10)))
+    separated_members = (
+        members[0], replace(members[1], node_ids=(20, 21),
+                            reference_points_m=((4.2, .5, .2),
+                                                (5.2, .5, .2))))
+    separated_points = (
+        points[0], replace(points[1], shell_id="far"))
+    with pytest.raises(ValueError, match="connected shell/beam point panel"):
+        stiffened_shell.create_analysis(definition=
+            stiffened_shell.B2Q4PanelDefinition(
+                stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+                separated_nodes, separated_shells, separated_members,
+                separated_points, sparse.eye(72, format="csr"),
+                np.zeros(72)))

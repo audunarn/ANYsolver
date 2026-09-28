@@ -1,9 +1,46 @@
 # B3-GE / E4-PL / B2 active state
 
-Updated 28 September 2026. Living note for Revision 6. The historical checkpoint
+Updated 28 September 2026. Living note for Revision 7. The historical checkpoint
 `B3_GE_E4_PL_CURRENT_CHECKPOINT.md`, complete programme, protected evidence,
 scientific limits and one-use F03 authority retain their original meaning.
 `ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1` governs prospective process.
+
+Revision 7 resumes experimental integration while G0/F03 remain open. The user
+approved a prospective, independently reviewed replacement F03 assessment and
+repeatable versioned execution; historical failed runs and consumed authorities
+are not re-scored or replayed. New development diagnostics may use up to 100,000
+rows, 600 seconds, 8 numerical threads and 8 GiB per process tree, with one
+heavy numerical job at a time. Existing protected evidence and other limits
+retain their original contracts. The immediate delivery is the consolidated
+installed GE/ANYfem and B2 workflows; the separate mechanics question is
+whether a six-channel drill-free line trace and compatible multiplier pairing
+passes objective work, shear, transfer and growing-space stability. No F03
+candidate or assessment metric has been selected. G1 acceptance remains open.
+
+## Revision 7 integration evidence
+
+Source is `7061c555` plus the targeted Revision 7 GE factorization, B2 topology,
+local L1 probe, tests and this note. A development wheel built from a copy of
+those `src/anysolver` files has SHA-256
+`68D142DE2CAF86239E5BE64A235AD7447B7492F8827F0F2BFF19C36C51DDA02B`.
+Its bytes and full build/install/test logs are preserved under
+`.qualification/b3-ge-e4-pl/r7-integration-dev-20260928-v2/`; the wheel is
+stored as `anysolver-0.4.7-wheel.bin` with the same hash. The installed import
+was `C:/Users/AudunArnesenNyhus/AppData/Local/Temp/anysolver-r7-installed-integration-dev-20260928-v2/venv/Lib/site-packages/anysolver/__init__.py`.
+With `NUMBA_DISABLE_JIT=1`, a temporary pytest configuration outside both
+repositories and the installed wheel, 33/33 focused solver/L1 checks and 3/3
+ANYfem consumer checks passed. The consumer imported from the separate
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/src/anyfem/solve/stiffened_shell.py`.
+The installed environment was Windows 11, Python 3.14.2, NumPy 2.4.6,
+SciPy 1.17.1, ANYmaterial 0.2.0, ANYmesher 0.5.0, ANYfileio 0.3.2 and
+threadpoolctl 3.6.0; effective OpenBLAS threads were 1 (`OMP_NUM_THREADS=1`).
+The consumer test now compares restored factor-2 state and reactions with an
+uninterrupted run. The earlier ordinary JIT-enabled source test was interrupted
+during import and is not a passing check. The snapshot wheel omits optional
+repository documentation and is a development artifact, not a G6 wheel/sdist.
+Independent read-only review found no consequential defect in the targeted
+factorization, topology and local-chart guards; F03 formulation and the other
+scientific foundations remain unaccepted.
 
 ## Decision sought
 
@@ -106,6 +143,20 @@ error; interpret it with the native continuous gap and all-channel row work.
 
 ## Next integration action
 
-Begin ANYfem construction-persistence. Test finite mixed/S3 before advertising
-that path; retain replaceable line/footprint interfaces. Complete F01-F13 and
-G0-G6 without weaker criteria, hidden exclusions or interim release.
+Commit and review the consolidated solver and consumer slices, then resolve the
+unit-scaled stress-free check and checkpoint scale contract without changing
+historical checkpoint decoding. Keep line/footprint mechanics behind replaceable
+interfaces. Complete F01-F13 and G0-G6 without weaker physical criteria or an
+interim release.
+
+**Earlier pause snapshot, 28 September 2026 (historical).** Solver HEAD was
+`7061c555`; the only uncommitted solver source then was
+`scripts/b3_e4_f03_c1_fy_supported_reference.py`, alongside this living note.
+Its factor-4 pure-Fy fallback is prepared in source but has not been preflighted
+or executed. The factor-5 Fy run timed out and remains failed evidence. The
+native Fy pair is saved and independently read-only reviewed; its smooth load
+does not demonstrate excitation of the alternating least mode or select a law.
+At that pause no numerical process was running. ANYfem's separate experimental
+consumer worktree had three untracked files and 2 focused/38 nearby checks
+passed; its note then named the prior solver commit. Revision 7 work has since
+resumed and the updated installed checks are recorded above.

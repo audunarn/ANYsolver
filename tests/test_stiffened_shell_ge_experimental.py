@@ -6,6 +6,7 @@ import pytest
 from dataclasses import replace
 
 from anysolver import b3_ge
+from anysolver import _stiffened_shell_ge_experimental as ge_experimental
 from anysolver.control import CancellationToken, SolveCancelled
 from anysolver._stiffened_shell_ge_experimental import (
     PROFILE, ExperimentalGEAnalysis, FixedCoordinate, LinearDefinition,
@@ -98,6 +99,42 @@ def test_invalid_action_does_not_change_accepted_prefix():
             "beam", 999, (0., 0., 1., 0., 0., 0.)),))
     assert analysis.recover().generation == first.generation
     assert analysis.checkpoint() == saved
+
+
+def test_reference_linear_load_cases_reuse_one_factorization():
+    analysis = ExperimentalGEAnalysis(_panel())
+    assert analysis.preflight()["reference_linear_factorizations"] == 0
+    first = analysis.solve_linear((NodalAction(
+        "beam", 105, (0., 0., 100., 0., 0., 0.)),))
+    second = analysis.solve_linear((NodalAction(
+        "beam", 105, (0., 0., 200., 0., 0., 0.)),))
+    np.testing.assert_allclose(second.beam_coordinates,
+                               2*first.beam_coordinates, rtol=1e-10, atol=1e-12)
+    assert analysis.preflight()["reference_linear_factorizations"] == 1
+    assert second.generation == first.generation+1
+
+
+def test_cancellation_after_linear_factorization_preserves_empty_prefix(monkeypatch):
+    analysis = ExperimentalGEAnalysis(_panel())
+    action = (NodalAction("beam", 105, (0., 0., 100., 0., 0., 0.)),)
+    token = CancellationToken()
+    safe_point = ge_experimental.cancellation_safe_point
+
+    def cancel_after_solve(current_token, phase):
+        if phase == "stiffened-shell.linear.solved":
+            current_token.cancel("after sparse solve")
+        return safe_point(current_token, phase)
+
+    monkeypatch.setattr(ge_experimental, "cancellation_safe_point",
+                        cancel_after_solve)
+    with pytest.raises(SolveCancelled, match="after sparse solve"):
+        analysis.solve_linear(action, cancellation_token=token)
+    assert analysis._generation == 0 and analysis._accepted is None
+    assert analysis.preflight()["reference_linear_factorizations"] == 1
+    monkeypatch.setattr(ge_experimental, "cancellation_safe_point", safe_point)
+    accepted = analysis.solve_linear(action)
+    assert accepted.generation == 1
+    assert analysis.preflight()["reference_linear_factorizations"] == 1
 
 
 @pytest.mark.parametrize("q4,s3", [

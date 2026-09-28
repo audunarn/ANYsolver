@@ -97,6 +97,42 @@ def _flat_vertices(vertices):
         raise ValueError("nondegenerate flat Q4 shell required")
 
 
+def _require_connected_panel(shells, members, points):
+    """Check physical incidence without forming a numerical constraint matrix."""
+    neighbours = {(0, shell.shell_id): set() for shell in shells}
+    neighbours.update({(1, member.member_id): set() for member in members})
+
+    def join(a, b):
+        neighbours[a].add(b)
+        neighbours[b].add(a)
+
+    for kind, entities in ((0, shells), (1, members)):
+        owners = {}
+        for entity in entities:
+            key = (kind, entity.shell_id if kind == 0 else entity.member_id)
+            if (kind == 0 and (type(entity.node_ids) is not tuple or
+                    len(entity.node_ids) != 4 or
+                    any(type(node_id) is not int for node_id in entity.node_ids))):
+                raise ValueError("four integer Q4 nodes required")
+            for node_id in entity.node_ids:
+                previous = owners.setdefault(node_id, key)
+                join(key, previous)
+    for point in points:
+        shell_key, member_key = (0, point.shell_id), (1, point.member_id)
+        if shell_key not in neighbours or member_key not in neighbours:
+            raise ValueError("point host IDs must identify declared elements")
+        join(shell_key, member_key)
+    first = next(iter(neighbours))
+    visited = {first}
+    pending = [first]
+    while pending:
+        for other in neighbours[pending.pop()]-visited:
+            visited.add(other)
+            pending.append(other)
+    if len(visited) != len(neighbours):
+        raise ValueError("connected shell/beam point panel required")
+
+
 class ExperimentalB2Q4PanelAnalysis:
     """Own one connected point-coupled reference-linear panel and factorization.
 
@@ -127,6 +163,7 @@ class ExperimentalB2Q4PanelAnalysis:
             member, CompiledPhysicalB2Member) else member
             for member in supplied_members)
         _unique_ids(definitions, "member_id")
+        _require_connected_panel(shells, definitions, points)
         cache = PhysicalB2OperatorCache()
         compiled = tuple(
             member if isinstance(member, CompiledPhysicalB2Member)
