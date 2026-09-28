@@ -106,8 +106,7 @@ def test_weak_line_rejects_repeated_material_connection():
 
 
 def test_line_owner_rejects_finite_checkpoint_before_point_driver():
-    definition = replace(_definition(), points=(
-        stiffened_shell.PointConnection(1, 101),))
+    definition = _definition()
     owner = stiffened_shell.create_analysis(definition=definition)
     payload = json.dumps({"schema": FINITE_CHECKPOINT,
                           "model": owner._identity}).encode("ascii")
@@ -117,6 +116,13 @@ def test_line_owner_rejects_finite_checkpoint_before_point_driver():
     with pytest.raises(ValueError, match="reference-linear checkpoints"):
         owner.restore(binary)
     assert owner._accepted is None and owner._finite_driver is None
+
+
+def test_supported_endpoint_point_overlapping_line_is_rejected():
+    definition = replace(_definition(), points=(
+        stiffened_shell.PointConnection(1, 101),))
+    with pytest.raises(ValueError, match="line 0 shell=1..5"):
+        stiffened_shell.create_analysis(definition=definition)
 
 
 @pytest.mark.parametrize("space", (SPACE_A, SPACE_B))

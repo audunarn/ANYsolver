@@ -1,6 +1,6 @@
 # B3-GE / E4-PL / B2 active state
 
-Updated 28 September 2026 under Revision 7 and
+Updated 29 September 2026 under Revision 7 and
 `ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1`. The complete earlier record
 is preserved at commit `a52042d1`. The
 [complete programme](B3_GE_E4_PL_B2_COMPLETE_PROGRAMME.md), frozen
@@ -75,6 +75,19 @@ slice; do not edit or run it by default.
   cannot parse `project.license`; the successful wheel used this worktree's
   compatible environment. Both logs are retained in
   `.qualification/b3-ge-e4-pl/r7-ge-finite-scaling-installed-dev-20260929-v1/`.
+- GE preflight now checks supported point/experimental-line rows for small
+  numerical dependence using frozen physical row/coordinate scales and a
+  capped dense audit. Larger rows use sparse structural matching; numerical
+  dependence still requires the later sparse factorization check. The audit
+  exposes row provenance. It found two dependent rows in a prior supported
+  point plus line test fixture, which now has a separate negative test;
+  line-only checkpoint behavior remains tested. Source and same-process
+  installed-wheel checks pass 35/35. Wheel SHA-256
+  `9EC354DE46676B7768DFFDB9382B4241B518B237D71A08F4AE98FEE9D1CC79A1`;
+  logs are in
+  `.qualification/b3-ge-e4-pl/r7-ge-constraint-audit-installed-dev-20260929-v1/`.
+  This is an experimental point/line guard, not the complete nonlinear
+  constraint audit or G1 acceptance.
 
 ## Connection facts and uncertainty
 

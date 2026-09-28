@@ -6,6 +6,7 @@ import json
 import numpy as np
 import pytest
 from dataclasses import replace
+from scipy import sparse
 
 from anysolver import b3_ge
 from anysolver import _stiffened_shell_ge_experimental as ge_experimental
@@ -353,6 +354,35 @@ def test_duplicate_point_equations_fail_during_preflight():
     with pytest.raises(ValueError, match="duplicate experimental point"):
         ExperimentalGEAnalysis(replace(
             definition, points=definition.points+(definition.points[0],)))
+
+
+def test_point_constraint_supported_on_both_sides_fails_preflight():
+    definition = _panel()
+    additional = tuple(FixedCoordinate(domain, node, axis)
+                       for domain, node in (("shell", 2), ("beam", 103))
+                       for axis in range(6))
+    with pytest.raises(ValueError, match="point shell=2 beam=103"):
+        ExperimentalGEAnalysis(replace(
+            definition, fixed=definition.fixed+additional))
+
+
+def test_large_attachment_rank_screen_stays_sparse(monkeypatch):
+    rows = sparse.eye(60, 100, format="csr")
+    free = np.arange(100)
+    scales = np.ones(100)
+    row_scales = np.ones(60)
+
+    def forbid_dense(_self):
+        raise AssertionError("large attachment audit materialized dense rows")
+
+    monkeypatch.setattr(sparse.csr_matrix, "toarray", forbid_dense)
+    ge_experimental._require_independent_supported_rows(
+        rows, free, scales, row_scales)
+    dependent = rows.tolil()
+    dependent[59, :] = rows[0, :]
+    with pytest.raises(ValueError, match="structurally independent"):
+        ge_experimental._require_independent_supported_rows(
+            dependent.tocsr(), free, scales, row_scales)
 
 
 def test_sparse_solution_matches_bounded_dense_kkt_and_cancel_keeps_prefix():

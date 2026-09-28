@@ -14,8 +14,9 @@ import json
 import warnings
 
 import numpy as np
-from scipy import sparse
+from scipy import linalg, sparse
 from scipy.sparse import linalg as spla
+from scipy.sparse.csgraph import maximum_bipartite_matching
 
 from ._ge_beam3_native_definition import NativeBeamDefinition
 from ._ge_beam3_pose_joint import RigidPoseJoint
@@ -30,6 +31,7 @@ from ._stiffened_shell_ge_checkpoint_binary import (
 )
 from ._stiffened_shell_l1_assembly_experimental import (
     ExperimentalL1Line, compile_lines as _compile_l1_lines,
+    _row_count as _l1_row_count,
 )
 
 
@@ -38,6 +40,43 @@ CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_LINEAR_V1"
 FINITE_CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"
 MAX_JSON_CHECKPOINT_BYTES = 2_000_000
 MAX_JSON_CHECKPOINT_VALUES = 50_000
+_MAX_DENSE_CONSTRAINT_ROWS = 48
+_MAX_DENSE_CONSTRAINT_VALUES = 16_384
+
+
+def _require_independent_supported_rows(constraints, free, coordinate_scale,
+                                        row_scale, sources=()):
+    """Check small numerical ranks; keep large structural checks sparse.
+
+    Structural rank cannot certify numerical independence. The subsequent
+    sparse mixed factorization remains the numerical check for large models.
+    """
+    reduced = constraints[:, free].tocsr()
+    rows, columns = reduced.shape
+    if sources and len(sources) != rows:
+        raise ValueError("complete attachment row provenance required")
+
+    def failure(message, row):
+        suffix = f": {sources[row]}" if sources else ""
+        raise ValueError(message+suffix)
+
+    if rows > columns:
+        failure("independent supported attachment rows required", columns)
+    if rows <= _MAX_DENSE_CONSTRAINT_ROWS and rows*columns <= _MAX_DENSE_CONSTRAINT_VALUES:
+        scaled = (sparse.diags(1./row_scale) @ reduced @
+                  sparse.diags(coordinate_scale[free])).toarray()
+        rank = np.linalg.matrix_rank(scaled)
+        if rank != rows:
+            _, _, pivot = linalg.qr(scaled.T, pivoting=True, mode="economic")
+            failure("independent supported attachment rows required",
+                    int(pivot[rank]))
+        return
+    pattern = reduced.copy()
+    pattern.eliminate_zeros()
+    matching = maximum_bipartite_matching(pattern, perm_type="column")
+    if np.any(matching < 0):
+        failure("structurally independent supported attachment rows required",
+                int(np.flatnonzero(matching < 0)[0]))
 
 
 @dataclass(frozen=True)
@@ -428,6 +467,7 @@ class ExperimentalGEAnalysis:
         self._connections = []
         self._joint_slots = []
         constraint_rows = []
+        row_sources = []
         if not definition.points and not definition.lines:
             raise ValueError("explicit native connection required")
         seen_points = set()
@@ -451,6 +491,9 @@ class ExperimentalGEAnalysis:
             slots = np.r_[np.arange(shell_slot, shell_slot+6),
                           np.arange(beam_slot, beam_slot+6)]
             constraint_rows.append((slots, evaluation.constraint_jacobian))
+            row_sources.extend(
+                f"point shell={tie.shell_node} beam={tie.beam_node} row={row}"
+                for row in range(6))
             self._connections.append(joint)
             self._joint_slots.append(slots)
         c_row, c_col, c_data = [], [], []
@@ -469,6 +512,10 @@ class ExperimentalGEAnalysis:
                 beam_nodes=beam_nodes, beam_parts=beam_parts,
                 shell_count=shell_count, beam_count=beam_count)
             self._C = sparse.vstack((self._C, line_c), format="csr")
+            row_sources.extend(
+                f"line {index} shell={line.shell_nodes[0]}..{line.shell_nodes[-1]} row={row}"
+                for index, line in enumerate(definition.lines)
+                for row in range(_l1_row_count(line)))
         else:
             self._line_samples = ()
         self._constraint_scale = _owned(
@@ -491,6 +538,9 @@ class ExperimentalGEAnalysis:
         self._free = np.setdiff1d(np.arange(count), self._fixed)
         if not len(self._fixed) or not len(self._free):
             raise ValueError("physical supports and free coordinates required")
+        _require_independent_supported_rows(
+            self._C, self._free, self._coordinate_scale,
+            self._constraint_scale, tuple(row_sources))
         self._A = sparse.bmat([
             [self._K[self._free, :][:, self._free], self._C[:, self._free].T],
             [self._C[:, self._free], None]], format="csc")
