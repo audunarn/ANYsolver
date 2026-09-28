@@ -81,6 +81,37 @@ def _check_target_clamp_wrench(model, manager, snapshot, record, support):
     assert np.linalg.norm(clamp_moment + target_moment)/moment_scale < 1e-6
 
 
+def _check_smooth_path_work(model, manager, snapshot, record):
+    """Check both-body mapped work only while the local overlap branch persists."""
+    certificate = record["contact"]
+    nodal_forces = (np.asarray(certificate["numerical_pressure_pa"])
+                    * np.asarray(certificate["reference_support_m2"]))
+    pose = snapshot.displacements
+    base = linearize(manager, pose, nodal_forces, tangent=True)
+    assert np.count_nonzero(nodal_forces > 0.0) > 0
+    for node, axis in ((3, 0), (3, 2), (13, 0), (13, 2), (13, 4)):
+        direction = np.zeros_like(pose)
+        direction[model.mesh.dof_manager.get_node_dofs(node)[axis]] = 1.0
+        step = 1e-7
+        plus = linearize(manager, pose+step*direction, nodal_forces,
+                         tangent=False)
+        minus = linearize(manager, pose-step*direction, nodal_forces,
+                          tangent=False)
+        assert (base.state.overlap_signature == plus.state.overlap_signature
+                == minus.state.overlap_signature)
+        assert (base.state.integration_triangles
+                == plus.state.integration_triangles
+                == minus.state.integration_triangles)
+        observed = (plus.force-minus.force)/(2*step)
+        predicted = base.tangent @ direction
+        scale = max(np.linalg.norm(observed), np.linalg.norm(predicted))
+        assert scale > 1e-7
+        assert np.linalg.norm(observed-predicted)/scale < 1e-5
+        work = (np.dot(nodal_forces, plus.state.normalized_gap
+                       -minus.state.normalized_gap)/(2*step))
+        assert abs(work+float(base.force @ direction)) < 1e-12
+
+
 def _independent_skin_vertices(model, element, displacement, side):
     """Small-rotation physical skin built without the contact work adapter."""
     nodes = [model.mesh.nodes[node_id] for node_id in element.node_ids]
@@ -270,6 +301,8 @@ def test_free_target_press_slide_open_recontact_split_restart():
                    + external_z) <= 3e-7
         _check_target_clamp_wrench(model, manager, full.snapshots[step-1],
                                    row, support)
+        if step in (4, 8):
+            _check_smooth_path_work(model, manager, full.snapshots[step-1], row)
         pose = full.snapshots[step-1].displacements
         _check_independent_skin_vertices(model, definition, manager, pose)
         sampled_16 = _sampled_physical_gap(model, definition, pose, 16)
