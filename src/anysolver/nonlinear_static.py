@@ -827,7 +827,7 @@ def _static_restart_analysis_contract(
         "kinematics": str(kinematics),
         "corotational_tangent": str(resolved_corotational_tangent),
     }
-    from .general_contact.core import active_contact_manager
+    from .general_contact.runtime import active_contact_manager
 
     contact_manager = active_contact_manager()
     if contact_manager is not None:
@@ -1549,7 +1549,7 @@ def _assemble_nonlinear_system(
             corotational_tangent=corotational_tangent,
             require_full_coordinates=require_full_coordinates,
         )
-        from .general_contact.core import active_contact_manager
+        from .general_contact.runtime import active_contact_manager
 
         contact_manager = active_contact_manager()
         if contact_manager is not None:
@@ -3808,7 +3808,7 @@ def _solve_static_displacement_control(
     target_scale = max(abs(target_increment), abs(target_total), 1.0e-9)
     info["displacement_control_initial_value"] = initial_control
 
-    from .general_contact.core import active_contact_manager
+    from .general_contact.runtime import active_contact_manager
 
     contact_manager = active_contact_manager()
     augmented_contact_manager = (
@@ -3949,7 +3949,7 @@ def _solve_static_displacement_control(
                     )
 
                     if residual_norm <= tolerance * reference and constraint_error <= tolerance * target_scale:
-                        from .general_contact.core import active_contact_manager
+                        from .general_contact.runtime import active_contact_manager
 
                         contact_manager = active_contact_manager()
                         if (contact_manager is not None
@@ -3999,7 +3999,7 @@ def _solve_static_displacement_control(
                     if np.any(~np.isfinite(delta)):
                         failure_reason = "nonfinite_augmented_solution"
                         break
-                    from .general_contact.core import active_contact_manager
+                    from .general_contact.runtime import active_contact_manager
 
                     contact_manager = active_contact_manager()
                     if contact_manager is not None:
@@ -5199,7 +5199,7 @@ def _solve_static_nonlinear_under_lease(
         kinematics=kinematics,
         resolved_corotational_tangent=resolved_corotational_tangent,
     )
-    from .general_contact.core import active_contact_manager
+    from .general_contact.runtime import active_contact_manager
 
     active_manager = active_contact_manager()
     augmented_contact_manager = (
@@ -6360,7 +6360,7 @@ def _solve_static_nonlinear_under_lease(
     def assemble_force_system(path_factor, *args, **kwargs):
         # Private load-aware candidate only; all existing formulations retain
         # their original assembler and load semantics.
-        from .general_contact.core import active_contact_manager
+        from .general_contact.runtime import active_contact_manager
 
         contact_manager = active_contact_manager()
         if contact_manager is not None and hasattr(contact_manager, "set_path_factor"):
@@ -6393,7 +6393,7 @@ def _solve_static_nonlinear_under_lease(
         )
         q_trial = q_start.copy()
         u = full_displacement(q_trial, path_factor)
-        from .general_contact.core import active_contact_manager
+        from .general_contact.runtime import active_contact_manager
 
         contact_manager = active_contact_manager()
         if (contact_manager is not None
@@ -6457,7 +6457,7 @@ def _solve_static_nonlinear_under_lease(
                 )
             total_iterations += 1
             if residual_norm <= tolerance * reference:
-                from .general_contact.core import active_contact_manager
+                from .general_contact.runtime import active_contact_manager
 
                 contact_manager = active_contact_manager()
                 if (contact_manager is not None
@@ -6569,7 +6569,7 @@ def _solve_static_nonlinear_under_lease(
                     None,
                 )
 
-            from .general_contact.core import active_contact_manager
+            from .general_contact.runtime import active_contact_manager
 
             contact_manager = active_contact_manager()
             if contact_manager is not None:
@@ -7141,7 +7141,7 @@ def _solve_static_nonlinear_under_lease(
                 )
 
             if converged:
-                from .general_contact.core import active_contact_manager
+                from .general_contact.runtime import active_contact_manager
 
                 contact_manager = active_contact_manager()
                 contact_tool_work_increment = 0.0
@@ -8003,7 +8003,7 @@ def solve_static_nonlinear(
                     )
                 result.info["general_contact"] = summary_payload
                 return result
-        from .general_contact.core import suspend_contact
+        from .general_contact.runtime import suspend_contact
 
         with suspend_contact():
             return run_solver()

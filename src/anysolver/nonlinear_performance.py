@@ -1345,7 +1345,7 @@ def _optimized_assemble_nonlinear_system(
         committed_states,
         deleted,
     )
-    from .general_contact.core import active_contact_manager
+    from .general_contact.runtime import active_contact_manager
 
     if (active_contact_manager() is not None or extra
             or kinematics != "von_karman" or deleted_s3_reference):
@@ -1468,7 +1468,7 @@ def _solve_static_displacement_control_block(
         context="nonlinear displacement-control block preflight",
     )
 
-    from .general_contact.core import active_contact_manager
+    from .general_contact.runtime import active_contact_manager
 
     checkpoint_path = (
         active_contact_manager() is not None

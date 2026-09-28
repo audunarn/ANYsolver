@@ -10,12 +10,13 @@ an intentionally narrow coupled-solver slice, not a general-contact claim.
 from __future__ import annotations
 
 from contextlib import contextmanager
-from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Iterator
 
 import numpy as np
 from scipy import sparse
+
+from .runtime import _ACTIVE_CONTACT, active_contact_manager, suspend_contact
 
 
 _Q4_PLANE_PROFILE = "PLANAR_Q4_RIGID_PLANE_PENALTY_MORTAR_V1"
@@ -1103,26 +1104,6 @@ class _PlanarQ4PlaneManager:
         if not np.isfinite(work):
             raise ValueError("rigid-plane contact work is nonfinite")
         return work
-
-
-_ACTIVE_CONTACT: ContextVar[object | None] = ContextVar(
-    "anysolver_general_contact", default=None
-)
-
-
-def active_contact_manager() -> object | None:
-    return _ACTIVE_CONTACT.get()
-
-
-@contextmanager
-def suspend_contact() -> Iterator[None]:
-    """Keep a nested contact-free solve independent of its calling solve."""
-
-    token = _ACTIVE_CONTACT.set(None)
-    try:
-        yield
-    finally:
-        _ACTIVE_CONTACT.reset(token)
 
 
 @contextmanager

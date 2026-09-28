@@ -16,6 +16,8 @@ See the project README and ``docs/`` directory in the source repository for
 the capability boundary, architecture, theory, and qualification evidence.
 """
 
+from importlib import import_module
+
 from .fe_core import DOFManager, FEMesh, FEModel, Material, Node
 from .control import (
     CancellationToken,
@@ -243,25 +245,15 @@ from .contact import (
     solve_transient_sphere_impact,
     validate_contact_configuration,
 )
-from .general_contact import (
-    ContactDefinition,
-    ContactInteraction,
-    ContactPathControl,
-    ContactPathNodalForce,
-    ContactPathProgram,
-    ContactResults,
-    ContactSolverSettings,
-    ContactSurface,
-    ContactValidationReport,
-    RigidContactBody,
-    solve_static_contact_path,
-    ContactNodalLoadHistory,
-    ContactTransientSolverControls,
-    TransientContactResults,
-    TransientContactSettings,
-    solve_transient_contact,
-    validate_general_contact,
-)
+_GENERAL_CONTACT_EXPORTS = frozenset({
+    "ContactDefinition", "ContactInteraction", "ContactPathControl",
+    "ContactPathNodalForce", "ContactPathProgram", "ContactResults",
+    "ContactSolverSettings", "ContactSurface", "ContactValidationReport",
+    "RigidContactBody", "solve_static_contact_path",
+    "ContactNodalLoadHistory", "ContactTransientSolverControls",
+    "TransientContactResults", "TransientContactSettings",
+    "solve_transient_contact", "validate_general_contact",
+})
 from .fracture import (
     DeletedElementRecord,
     ElementDeletionConfig,
@@ -957,6 +949,18 @@ __all__ = [
     "validate_sesam_fem_document",
     "write_sesam_fem_document",
 ]
+
+
+def __getattr__(name: str):
+    if name not in _GENERAL_CONTACT_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(import_module(".general_contact", __name__), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__():
+    return sorted(set(globals()) | set(__all__))
 
 # Stable-ID, array-based progressive damage and hard-deletion lifecycle.
 from .activity import (

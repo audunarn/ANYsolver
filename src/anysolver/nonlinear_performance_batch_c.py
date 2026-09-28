@@ -512,7 +512,7 @@ def _batch_c_assemble_nonlinear_system(
     # reference assembler's contact-contributor hook.  Keep contact candidates
     # on that transactional full-coordinate path until a reduced contact
     # assembly is derived and checked against it.
-    from .general_contact.core import active_contact_manager
+    from .general_contact.runtime import active_contact_manager
 
     if (active_contact_manager() is not None or require_full_coordinates
             or deleted_tuple or extra or kinematics != "von_karman"):
