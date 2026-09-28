@@ -46,9 +46,25 @@ slice; do not edit or run it by default.
   field consistent without changing analysis or checkpoint identity. Source
   `6e83d5ec`, wheel SHA-256
   `0809b913bafd54e29ef86ebb220334956b52d64a795934e108d02c471c373d69`;
-  21/21 installed point/line owner checks passed with the imported site path
-  recorded in
-  `.qualification/b3-ge-e4-pl/r7-ge-capabilities-installed-dev-20260928-v1/`.
+  its original 21/21 pytest log had a separate site-import check but pytest's
+  repository configuration could import `src`. The later same-process
+  installed suite below verifies the current capability behavior. Preserve
+  `.qualification/b3-ge-e4-pl/r7-ge-capabilities-installed-dev-20260928-v1/`
+  as historically run, without treating that pytest count as wheel evidence.
+- GE reference-linear acceptance now uses actual applied-work and active-load
+  row ratios rather than a fixed 1 N work floor. A prior installed wheel
+  falsely accepted zero response to a 1e-12 N load and a missed 1e-12 N
+  component beside a 1 N load; both negative cases are retained in the
+  verified before/after logs. The tiny-load physical solution and checkpoint
+  still reproduce the ordinary-load solution proportionally. Source
+  `93f404f3`, wheel SHA-256
+  `89afe61b894efd44f0a44d41ec42426afa64da5a993c36c33d373ca08eca4baa`;
+  34/34 point, line, finite and matched-case checks pass with the installed
+  wheel imported **in the pytest process** and its source-path override
+  disabled. Evidence is in
+  `.qualification/b3-ge-e4-pl/r7-ge-linear-scaling-installed-dev-20260929-v1/`.
+  This changes reference-linear acceptance and restore; the separate finite
+  nonlinear convergence scale still needs its own review.
 
 ## Connection facts and uncertainty
 
@@ -234,9 +250,11 @@ plate-load case; that failed output and row-level diagnosis are preserved in
 One correction using the unchanged cached sparse factor reduces its ratio
 from 2.01e-7 to 1.01e-10, without changing the 1e-8 acceptance limit or
 accepted prefix. Product source `4773cfef` and the strengthened matched-case
-test pass 24/24 installed checks; the wheel SHA-256 is
+test pass 24/24 source checks; the historical wheel SHA-256 is
 `bf38641fd1009f98a7dcff48ab1905c39cbe22c232a1fc6cab20f825731933ee`.
-The installed native run used one factorization and one P1 refinement; source
+That 24-test pytest log also had a source-path ambiguity, now resolved by the
+34-test same-process installed suite above. The installed native run used one
+factorization and one P1 refinement; source
 and installed results are retained in the versioned `r7-flat-web-native-energy`
 v2 and `r7-ge-linear-refinement-installed` v1 directories.
 
