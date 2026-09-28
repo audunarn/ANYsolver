@@ -13,11 +13,16 @@ x4/m2 to x8/m4 loaded cases pass work and balance; their Mx tip work
 changes by at most 2.2%, Fz by at most 0.22%, with nonmonotone pointwise
 gaps. Deficient row combinations at x8/m8 occupy the in-plane `uy` and
 yaw channels, not the other four; beam refinement changes their count.
-**Remaining uncertainty:** Whether these `uy`/yaw dependencies reflect
-the trace law or this discretization, and whether supported spaces avoid locking over
-registered ratios, and whether sided torque/shear transfer matches the
+The existing flat-reference test already proves an x4 P1 projected
+Fy/Mz row identity, while its continuous traction remains nonzero.
+Transporting the B3-12 x8/m8 null actions to B3-18 lifts all four P0
+directions but only five of six P1/dual directions. **Remaining
+uncertainty:** Which interface-resolution policy avoids these aliases
+and locking over the registered discretizations, and whether
+sided torque/shear transfer matches the
 declared connection idealization. **Next discriminator and action:**
-Inspect the `uy`/yaw work identity and physically matched transfer, then
+Use the proven identity to design the admissible resolution policy;
+check physically matched transfer and then
 run the required ratio/refinement assessment before selecting or revising
 the law and policy. No automatic finer classical axial or x/y sweep.
 Advance B2 F09 independently. G0B/F03 remain open, G1 barred, and formal
@@ -10658,3 +10663,55 @@ position/yaw work identity and beam/shell trace approximation, not a
 general six-channel or torsional loss. These are algebraic null spaces
 of this reference-linearized fixture; they do not alone classify
 physical connection adequacy or prescribe dropping rows.
+The existing `test_mismatched_line_rows_have_full_coordinate_dependencies`
+in `tests/test_b3_e4_f03_material_line_position.py` proves an exact
+x4 continuous-P1 projected Fy/Mz identity and explicitly checks that
+the corresponding continuous density is nonzero. The new x8 screen
+extends the observed deficiency but does not need a new generic null-
+vector experiment to rediscover that x4 result.
+
+**Next bounded alias discriminator, before execution:** Independent
+read-only mechanics review confirms the x8/m8 nulls are projected
+row dependencies rather than continuous-law gauges. Retain each B3-12
+x8/m8 null dual in the existing physical-density Riesz normalization,
+then apply it to the same Q4 x8 shell trace with B3-18 and inspect
+shell/beam transpose actions and virtual work on a declared lateral
+beam-displacement field with zero yaw. Nonzero finer-beam action would
+locate the alias in discrete trace/cut resolution; zero action would
+require another explanation. This uses no new coupled solve or altered
+criteria, and does not select a multiplier or consume formal F03 authority.
+
+**Projected-null transport outcome:** The source keeps Q4 x8/y4 and
+the six-channel material-line law fixed, converts each B3-12 x8/m8
+unit-row left-null vector into integrated physical action, and normalizes
+it in the existing physical-density Riesz metric. It then changes only
+native beam resolution to B3-18. Shell rows and basis measures match
+exactly. Old supported and new shell scaled transpose-action norms are
+at most `2.71e-14 J` and `2.21e-14 J`; the new beam action is nonzero
+for each listed SVD basis vector. The **full transported null subspace**
+has new-beam action rank `4/4` (P0), `5/6` (continuous P1), and `5/6`
+(dual P1). Thus beam refinement resolves all tested P0 aliases, while
+one P1/dual dependency persists. The nonzero singular values are bounded
+away from the numerical rank cutoff in the saved output. A declared
+support-admissible lateral beam virtual field with zero yaw does nonzero
+work on the listed modes. Reported `+lambda.T C u` is the KKT constraint-
+term work; the physical interface traction uses `-C.T lambda`, so its
+signed work is the negative. The result locates a discrete trace/cut
+alias and does not prove the continuous connection law correct or choose
+a production multiplier policy.
+
+Independent read-only mechanics review found the left-null-to-integrated-
+dual conversion, Riesz normalization, fixed-shell comparison, and virtual
+field work consistent. It identified the sign-convention and whole-
+subspace-rank caveats; the current V3 source/output state both explicitly.
+The initial summary V1 and coefficient-complete V2 remain preserved.
+Source SHA256 `2bd7dabd109a7457d58d6ab9dca67139ed22b8bd7eeae50865c114f18e55fd`.
+Raw `B3_E4_F03_C1_MATERIAL_LINE_NULL_TRANSPORT_DEV_V1.json` SHA256
+`22441993a5999f7a41fb364a9d12e9c0f0490c143fb991a7ceec4e5f093419b5`,
+V2 SHA256 `8a8b165be1166248c490b7df047e13ae8a88f1a927f1c358764c2bc2f00a12ac`,
+and reviewed/corrected V3 SHA256
+`480741765258ee34f86531df9a5f69af2888c88b6445deaa9cf462b6796ea108`.
+The next development step must combine this resolution evidence with
+physically matched torque/shear and the registered ratio/refinement
+requirements. F03/G0B remain open; G1 is barred and formal F03
+authority remains unconsumed.
