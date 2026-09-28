@@ -19,7 +19,7 @@ from ._ge_beam3_p5.algebra import rotation
 from .control import cancellation_safe_point
 from .corotational import corotational_element_response
 from ._stiffened_shell_ge_experimental import (
-    NodalAction, _owned, _relative_equilibrium, _scaled_constraint_gap,
+    NodalAction, _owned, _linear_equilibrium, _scaled_constraint_gap,
 )
 from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_checkpoint
 
@@ -177,9 +177,9 @@ class FinitePointDriver:
             (data, (rows, columns)), shape=(size, size)).tocsc()
         if not np.isfinite(residual).all() or not np.isfinite(matrix.data).all():
             raise RuntimeError("finite global mixed trial required")
-        relative = _relative_equilibrium(
+        relative = _linear_equilibrium(
             residual[owner._free], (factor*load_pattern)[owner._free],
-            owner._coordinate_scale[owner._free], owner._reference_length)
+            owner._coordinate_scale[owner._free])
         constraint = _scaled_constraint_gap(
             residual[count:], owner._constraint_scale)
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)

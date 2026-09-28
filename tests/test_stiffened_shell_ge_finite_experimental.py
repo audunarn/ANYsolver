@@ -19,6 +19,22 @@ def _actions():
     return (NodalAction("beam", 105, (0., 0., 1000., 0., 0., 0.)),)
 
 
+def test_finite_tiny_load_cannot_accept_zero_response(monkeypatch):
+    analysis = ExperimentalGEAnalysis(_panel())
+    tiny = (NodalAction("beam", 105, (1e-12, 0., 0., 0., 0., 0.)),)
+    attempts = []
+
+    def zero_step(_matrix, rhs):
+        attempts.append(True)
+        return np.zeros_like(rhs)
+
+    monkeypatch.setattr(finite_experimental.spla, "spsolve", zero_step)
+    with pytest.raises(RuntimeError, match="backtrack budget exhausted"):
+        analysis.solve(tiny, (1.,))
+    assert attempts
+    assert analysis._generation == 0 and analysis._finite_driver is None
+
+
 def test_finite_point_panel_accepts_two_complete_elastic_increments():
     analysis = ExperimentalGEAnalysis(_panel())
     result = analysis.solve(_actions(), (.5, 1.))

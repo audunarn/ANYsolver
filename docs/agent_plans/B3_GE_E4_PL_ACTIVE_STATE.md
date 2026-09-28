@@ -64,7 +64,17 @@ slice; do not edit or run it by default.
   disabled. Evidence is in
   `.qualification/b3-ge-e4-pl/r7-ge-linear-scaling-installed-dev-20260929-v1/`.
   This changes reference-linear acceptance and restore; the separate finite
-  nonlinear convergence scale still needs its own review.
+  nonlinear convergence scale used a fixed work floor too. The finite driver
+  now uses the same actual-load and active-row check, so zero response to a
+  1e-12 N trial cannot be committed as equilibrium. A zero-step backend
+  control preserves generation zero; ordinary Q4, mixed and S3 finite
+  stepping/restart checks remain green. Source and correctly imported wheel
+  checks pass 25/25; the wheel SHA-256 is
+  `5AC5C43FF407D9E85B9F3A58D4C4B6647CC7F2E60D8B076B2C3E5EAA83E50D1C`.
+  The first system-Python build attempt failed because its older setuptools
+  cannot parse `project.license`; the successful wheel used this worktree's
+  compatible environment. Both logs are retained in
+  `.qualification/b3-ge-e4-pl/r7-ge-finite-scaling-installed-dev-20260929-v1/`.
 
 ## Connection facts and uncertainty
 
@@ -269,6 +279,20 @@ topology, so their work cannot be subtracted as an exact partition. The next
 comparison needs verified sided work or an otherwise genuinely same-law
 reference before scoring the interface. No finer axial or new external mesh
 follows automatically. F03 stays open.
+
+**Saved sided-work decision already closed:** The previously executed C3D20R
+F5 cut at x=.95 m was validated and independently reviewed in the historical
+checkpoint's V3 sided-port and V2 native-port compatibility records. Its
+free-bar/root/support residuals and sampled opening pass; left/right broken
+cut twist duals are +57.416/−58.278 Nm, with a +0.862 Nm seam action at the
+shared cut. A side-restricted twist of shared bonded nodes is not admissible
+for the intact assembly, and no unique conforming extension from the native
+retained port to all solid cut nodes is established. Direct sided-port
+accuracy scoring therefore remains stopped. The September 29 validator rerun
+in `.qualification/b3-ge-e4-pl/r7-f03-saved-sided-port-validation-dev-20260929-v1/`
+reproduces that completed bounded result; it is not a new gate milestone.
+Use the validated common-field F5 actions and same-action shell response while
+the connection law and physical torque/shear transfer are decided.
 
 **Six-channel paired-screen result:** With the same supported 8x2 and 16x4
 grids, finite strip, and growing P0 rows, the complete shell-side work map
