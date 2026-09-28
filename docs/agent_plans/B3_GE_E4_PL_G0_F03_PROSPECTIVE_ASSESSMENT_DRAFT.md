@@ -465,6 +465,87 @@ trace dual *before* inspecting A/B scores; do not tune channel weights to
 rescue a candidate. A finite set of positive generalized eigenvalues does
 not prove uniform stability or physical fidelity.
 
+### Native broken trace: a conditional mesh-independent route
+
+For the straight virgin retained B3 chain with root translation and rotation
+fixed, let half-cell lengths be \(h_i>0\), \(\sum_i h_i=L\). Write nodal
+translations \(u_i\), nodal spins \(\omega_i\), and retained half-cell spins
+\(\theta_i\). The actual operator's linearized kinematic rows are
+\[
+z_i=u_{i+1}-u_i-\theta_i\times(h_i e_1),\qquad
+\ell_i^-=\theta_i-\omega_i,\qquad
+\ell_i^+=\omega_{i+1}-\theta_i.
+\]
+The native off-diagonal Hessian block agrees with this independent map on
+the bounded 4/8/16-half-cell straight fixtures; this establishes the
+kinematic identity there, not an energy estimate. Set
+\[
+A_h=\sum_i |z_i|^2/h_i,\qquad
+B_h=\sum_i (|\ell_i^-|^2+|\ell_i^+|^2)/h_i.
+\]
+Since \(\omega_{i+1}-\omega_i=\ell_i^-+\ell_i^+\) and \(\omega_0=0\),
+Cauchy--Schwarz gives \(\max_i|\omega_i|^2\le 2LB_h\) and
+\(\sum_i h_i|\theta_i|^2\le 6L^2B_h\). Using
+\(u_{i+1}-u_i=z_i+\theta_i\times h_ie_1\) and \(u_0=0\), the piecewise
+linear translation satisfies
+\[
+\int_0^L |u_h|^2 ds\le 2L^2A_h+12L^4B_h.
+\]
+Thus the broken pose trace is uniformly L2-bounded **if** the actual
+stationary-resultant physical energy has an \(h\)-independent coercivity
+bound \(q^TK_{\rm phys,h}q\ge c_AA_h+c_BB_h\), with positive physical
+\(c_A,c_B\). The cases below establish that inequality for affine-straight
+virgin generalized sections; other admitted section/reference families need
+their own argument. The finite-grid quotient plateau alone did not prove it.
+Curved lifts, nonuniform frames, free components and loaded plastic states
+need separate hypotheses; none follows from this straight virgin lemma.
+
+For an **affine straight reference within each three-node element** (constant
+Jacobian and frame), virgin zero-resultant state, and **constant diagonal
+generalized section**
+\(C=\operatorname{diag}(C_t,C_r)\), the local complementary calculation
+supplies the missing bound. The cell's station-force constraint is a
+quadrature-weighted mean; its minimizing translational force is constant.
+Its rotational resultant interpolates as
+\(M(t)=(1-t)M^-+tM^+\). With order-four quadrature exact on these quadratic
+products, the cell compliance is
+\[
+H_{\rm cell}=\operatorname{diag}\!\left(
+ h C_t^{-1},\;\frac h6
+ \begin{bmatrix}2&1\\1&2\end{bmatrix}\!\otimes C_r^{-1}\right).
+\]
+Its inverse gives translational strain stiffness \(C_t/h\) and rotational
+endpoint-strain stiffness
+\(\frac1h\begin{bmatrix}4&-2\\-2&4\end{bmatrix}\otimes C_r\).
+The latter has weighted eigenvalues 2 and 6; the former has ratio 1 to the
+canonical weighted \(A_h\) term. Thus the assembled root-supported virgin
+straight operator obeys the required bound with its declared physical
+section weights, independently of the number and positive lengths of
+affine three-node elements (each with equal half-cell lengths).
+The independently assembled closed form matches the actual stationary
+native operator on 4/8/16 bounded fixtures to approximately \(10^{-16}\)
+relative matrix error. These numerical checks corroborate the local
+calculation; they are not the reason it holds for arbitrary positive element
+lengths with an affine midpoint and equal half-cell lengths within each
+three-node element.
+
+The same virgin affine-straight kinematics admit **constant coupled SPD
+generalized sections** by a physically scaled Loewner comparison. If
+\(C\succeq\alpha C_{\rm ref}\) for a declared diagonal work-coordinate
+reference and dimensionless \(\alpha>0\), then
+\(C^{-1}\preceq\alpha^{-1}C_{\rm ref}^{-1}\). Minimization over the
+unchanged constrained station-force set preserves this complementary
+compliance order, and inversion gives
+\(K_{\rm phys}(C)\succeq\alpha K_{\rm phys}(C_{\rm ref})\) on the
+supported physical strain space, even with force--moment coupling. This
+supplies an \(h\)-independent straight-chain bound whenever the registered
+section comparison \(\alpha\) is bounded below. Independent mechanics
+review found the derivation valid under these exact hypotheses.
+The result does **not** cover a straight but non-affinely parameterized Q2
+reference with varying Jacobian, curved lifts, physical fibres, loaded
+geometric stiffness, plastic history, or the shell-side rail estimate.
+Those require separate derivation and checks before F03 acceptance.
+
 For the virgin symmetric native system, exact stationary elimination of
 negative-definite generalized-resultant block \(H_{pp}\) makes the supported
 KKT congruent to a physical saddle system with \(K_{\rm phys}>0\). With an

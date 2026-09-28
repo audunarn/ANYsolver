@@ -64,6 +64,18 @@ A bare native B3 broken-half-cell L2 screen at 4/8/16 half-cells produced
 upper quotients 9.260/9.222/9.213 × 10⁻⁶ J⁻¹. This finite-grid diagnostic
 neither proves a uniform trace bound nor selects A/B. Its raw evidence is in
 `.qualification/b3-ge-e4-pl/r7-f03-native-broken-l2-dev-20260928-v3/`.
+The actual virgin retained Jacobian matches independent half-cell difference,
+shear and nodal/cell spin rows on the same three bounded meshes. Those rows
+give a mesh-independent broken-pose L2 estimate conditional on a local
+energy lower bound. For the affine-straight virgin **constant diagonal
+generalized section**, the cell's constant-force and linear-moment compliance gives
+exact local energy ratios 1, 2 and 6 against that canonical strain norm,
+independent of affine element length. The assembled 4/8/16 checks reproduce
+the closed form to about 1e-16 relative matrix error. Independent mechanics
+review confirmed that derivation and its Loewner extension to constant coupled
+SPD generalized sections; a bounded coupled-section check passes. Curved or
+non-affine references, fibres and loaded plastic states remain outside it.
+This does not close F03.
 Exact coarse-to-fine action transport is not an energy isometry, and three
 reference levels do not bound the unseen same-law compliance tail. Historical
 F5/S4 comparisons cannot allocate the physical difference to this connection.
@@ -72,10 +84,10 @@ those limits and the mathematical obstruction.
 
 ## Next discriminating action
 
-Review the flat physical Gram and derive its curved/variable-map extension and
-a mathematical native trace bound or counterexample. Then compare complete
-A/B spaces only under an independently
-reviewed F03 contract. The full seven ratios, growing spaces, three refinement
+Prove whole-segment shell-rail work continuity and physical norm integration;
+extend native bounds only where the required curved/non-affine or fibre family
+demands it. Then compare complete A/B spaces under an independently reviewed
+F03 contract. The full seven ratios, growing spaces, three refinement
 levels, physical transfer, locking, shear, drilling, and mixed-system checks
 remain mandatory. No automatic finer axial sweep or new external reference is
 justified without a specific discriminating hypothesis.
