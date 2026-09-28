@@ -12158,3 +12158,34 @@ reintroduces a weak or dependent mode, revise the interface-resolution
 rule before a wide sweep. This is one diagnostic within the existing
 1900-row, 120-second, single-thread limits; it cannot qualify the
 physical connection law or G0B.
+
+**Paused for planning — 28 September 2026.** The bounded 2:1 pair is
+complete and no numerical process remains active. On the unchanged
+x8/y4 shell with B3-14 (four bonded native half-cells), six-channel
+P0 m8 has rank `48/48`, beta `0.277593`, and 99.96% fz share in the
+least trace mode. Five P0 m8 channels plus fz P0 m4 have rank `44/44`,
+beta `0.364430`, and a new least mode with 97.98% Fy and 1.96% Mx.
+The matched x8/B3-18 selective result was `0.953559`. Both 2:1
+results use the same source, exact-drilling physical primal and
+H^-1/2 line-dual metric, and pass the bounded checks. The source-bound
+files are `B3_E4_F03_C1_MATERIAL_LINE_X8_B14_P0_M8_TRACE_DEV_V1.json`
+(SHA256 `4b7cd0954b61cdbaad84681d30ae128cd7fb556b0920fb2f27c1ac33784d467a`)
+and `B3_E4_F03_C1_MATERIAL_LINE_X8_B14_FZ_M4_TRACE_DEV_V1.json`
+(SHA256 `b056a794ebc2bd52ebb88ee3c15bb80feb7ba530fea5551d23d433f7f560520b`).
+Independent read-only review confirmed the 2:1 ratio, source identity,
+row/metric ordering and least-channel interpretation. **Decision on
+resumption:** stop an automatic seven-ratio selective-fz sweep. First
+inspect the 2:1 Fy/rotation trace compatibility and the declared
+physical torque/shear transfer; specify the bounded discriminator and
+its branch actions before another run. This is no formal rejection or
+multiplier selection. G0B/F03 remain open, G1 barred, formal F03
+authority unconsumed. No release/merge authority is used. The current
+worktree is `C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling`
+on `codex/b3-ge-e4-pl-integration`; preserve this checkpoint, the
+private metric runner, and both raw results before altering the runner
+again. The user requested a pause for planning;
+do not launch new work until resumed.
+Reviewer follow-up: the private runner admits a bond count from the
+allowed pair set rather than binding it to the requested B3 count.
+The saved B3-14 count is correct, so this is not a result defect; use
+an exact requested-pair mapping if the runner is extended later.

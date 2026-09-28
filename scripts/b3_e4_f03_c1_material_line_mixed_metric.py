@@ -1,8 +1,8 @@
 """Bounded native retained-KKT metric for the current C1 material-line rows.
 
 This is a private G0 diagnostic. The auxiliary Riesz metric is not assembled
-into the mechanics tangent and these three 1:1 levels are not a stability
-certificate or a multiplier-space selection.
+into the mechanics tangent. These bounded levels and one off-ratio comparison
+are not a stability certificate or a multiplier-space selection.
 """
 
 from __future__ import annotations
@@ -85,11 +85,18 @@ def _riesz_work_sq(metric: np.ndarray, action: np.ndarray) -> float:
 
 
 def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
-             trace_only: bool = False, fz_riesz_audit: bool = False) -> dict:
+             trace_only: bool = False, fz_riesz_audit: bool = False,
+             beam_half_cells: int | None = None) -> dict:
     if shell_cells not in BEAM_HALVES or kind not in KINDS:
         raise ValueError("registered 1:1 material-line fixture required")
-    if kind == "fz_half_p0" and shell_cells not in (4, 8):
-        raise ValueError("fz half-resolution screen is bounded to x4/B3-14 or x8/B3-18")
+    beam_halves = (BEAM_HALVES[shell_cells] if beam_half_cells is None
+                   else beam_half_cells)
+    if (shell_cells, beam_halves) not in ((2, 12), (4, 14), (8, 18),
+                                         (8, 14)):
+        raise ValueError("material-line metric is bounded to registered pairs")
+    if kind == "fz_half_p0" and (shell_cells, beam_halves) not in (
+            (4, 14), (8, 18), (8, 14)):
+        raise ValueError("fz half-resolution screen is bounded to x4/14, x8/18 or x8/14")
     if fz_riesz_audit and not (trace_only and exact_drill_quotient and
                                kind == "piecewise_constant"):
         raise ValueError("fz audit requires exact-quotient P0 trace metric")
@@ -98,7 +105,6 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
         raise RuntimeError("mixed metric imported another ANYsolver checkout")
     start = monotonic()
     deadline = start+120.
-    beam_halves = BEAM_HALVES[shell_cells]
     xs, ys = local_grid(shell_cells, transverse_cells=4)
     shell, shell_physical = raw_e4_tangent(xs, ys, thickness=T)
     beam = build(beam_halves, z_offset=.0675,
@@ -106,6 +112,11 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
                  reference_profile="c1_tangent_2um")
     if beam.tangent is None:
         raise ArithmeticError("native retained tangent required")
+    beam_bond_halves = int(np.sum(np.diff(beam.abscissae)[
+        beam.abscissae[:-1] >= .9-1e-12] > 0.))
+    if (shell_cells, beam_bond_halves) not in ((2, 2), (4, 4), (8, 8),
+                                              (8, 4)):
+        raise ArithmeticError("registered beam bond inventory changed")
     ns = len(shell)
     shell_free = np.array([i for i in range(ns)
                            if (i//6) % len(xs) != 0])
@@ -317,7 +328,9 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
         "classification": "private material-line native retained KKT metric",
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
         "decision": "finite-level trace or mixed behavior only; no uniform stability or multiplier selection",
-        "geometry": f"C1 Q4 x{shell_cells}/y4; B3-{beam_halves}; 1:1 bond",
+        "geometry": (f"C1 Q4 x{shell_cells}/y4; B3-{beam_halves}; "
+                     f"{shell_cells}:{beam_bond_halves} shell:beam bond"),
+        "beam_bond_half_cells": beam_bond_halves,
         "space_kind": kind,
         "trace_only": trace_only,
         "fz_riesz_audit": fz_riesz_audit,
@@ -352,6 +365,7 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--shell-cells", type=int, required=True)
+    parser.add_argument("--beam-half-cells", type=int)
     parser.add_argument("--space-kind", choices=KINDS, required=True)
     parser.add_argument("--exact-drill-quotient", action="store_true")
     parser.add_argument("--trace-only", action="store_true")
@@ -364,7 +378,8 @@ def main() -> None:
         result = evaluate(args.shell_cells, args.space_kind,
                           exact_drill_quotient=args.exact_drill_quotient,
                           trace_only=args.trace_only,
-                          fz_riesz_audit=args.fz_riesz_audit)
+                          fz_riesz_audit=args.fz_riesz_audit,
+                          beam_half_cells=args.beam_half_cells)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n")
     print(json.dumps({"rows": result["report"]["rows"],
