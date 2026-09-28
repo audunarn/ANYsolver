@@ -1,0 +1,185 @@
+{
+  "cases": [
+    {
+      "columns": 16,
+      "supported_modes": 34,
+      "active_modes": 12,
+      "first_active_reference_x": 0.6875,
+      "maximum_pressure_pa": 0.5047834383704556,
+      "minimum_weighted_gap_m": -2.8438513392871484e-13,
+      "maximum_active_weighted_gap_m": 2.8438513392871484e-13,
+      "integrated_force_n": 0.1038715596951261,
+      "reduced_equilibrium_residual_n": 8.174342836690786e-16,
+      "pressure_compliance_asymmetry": 2.6469779601696886e-22,
+      "saved_report": "reports\\general_contact_d1_mixed_16q4_interior_distributed_0p3n_cartesian_roundoff_press_20260927.json",
+      "saved_pressure_l2_relative_to_linearized": 1.6127002738023349e-06,
+      "saved_front_l2_absolute_pa_sqrt_m": 6.684262591723348e-08
+    },
+    {
+      "columns": 24,
+      "supported_modes": 50,
+      "active_modes": 18,
+      "first_active_reference_x": 0.6666666666666666,
+      "maximum_pressure_pa": 0.5975405934297224,
+      "minimum_weighted_gap_m": -4.0557466280667375e-13,
+      "maximum_active_weighted_gap_m": 4.0557466280667375e-13,
+      "integrated_force_n": 0.10387883643867787,
+      "reduced_equilibrium_residual_n": 9.117212785806538e-16,
+      "pressure_compliance_asymmetry": 5.029258124322408e-22,
+      "saved_report": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+      "saved_pressure_l2_relative_to_linearized": 2.2062106085945956e-06,
+      "saved_front_l2_absolute_pa_sqrt_m": 1.3693164532359957e-07
+    },
+    {
+      "columns": 32,
+      "supported_modes": 66,
+      "active_modes": 24,
+      "first_active_reference_x": 0.65625,
+      "maximum_pressure_pa": 0.6914022322394444,
+      "minimum_weighted_gap_m": -6.190938714209171e-13,
+      "maximum_active_weighted_gap_m": 6.190938714209171e-13,
+      "integrated_force_n": 0.10385726616080544,
+      "reduced_equilibrium_residual_n": 2.388544616506363e-15,
+      "pressure_compliance_asymmetry": 2.779326858178173e-22,
+      "saved_report": "reports\\general_contact_d1_distributed_32q4_fine_press_dev_20260928.json",
+      "saved_pressure_l2_relative_to_linearized": 1.1438841575268818e-05,
+      "saved_front_l2_absolute_pa_sqrt_m": 1.056103481651978e-06
+    },
+    {
+      "columns": 48,
+      "supported_modes": 98,
+      "active_modes": 34,
+      "first_active_reference_x": 0.6666666666666666,
+      "maximum_pressure_pa": 0.5265574893241752,
+      "minimum_weighted_gap_m": -3.975943598614829e-13,
+      "maximum_active_weighted_gap_m": 1.2862158975754593e-12,
+      "integrated_force_n": 0.10387995452732812,
+      "reduced_equilibrium_residual_n": 4.1845467592610475e-15,
+      "pressure_compliance_asymmetry": 1.1911400820763599e-22
+    },
+    {
+      "columns": 64,
+      "supported_modes": 130,
+      "active_modes": 46,
+      "first_active_reference_x": 0.65625,
+      "maximum_pressure_pa": 0.657900991960623,
+      "minimum_weighted_gap_m": -1.963062545294764e-13,
+      "maximum_active_weighted_gap_m": 5.453284616355775e-13,
+      "integrated_force_n": 0.10388003179141402,
+      "reduced_equilibrium_residual_n": 6.71153289350632e-15,
+      "pressure_compliance_asymmetry": 3.771943593241806e-22
+    },
+    {
+      "columns": 96,
+      "supported_modes": 194,
+      "active_modes": 68,
+      "first_active_reference_x": 0.65625,
+      "maximum_pressure_pa": 0.6247436677372007,
+      "minimum_weighted_gap_m": -1.2849978767459439e-12,
+      "maximum_active_weighted_gap_m": 1.2849978767459439e-12,
+      "integrated_force_n": 0.10388305663542502,
+      "reduced_equilibrium_residual_n": 1.1071269916358126e-14,
+      "pressure_compliance_asymmetry": 1.1415092453231782e-22
+    },
+    {
+      "columns": 128,
+      "supported_modes": 258,
+      "active_modes": 90,
+      "first_active_reference_x": 0.65625,
+      "maximum_pressure_pa": 0.5921876896291404,
+      "minimum_weighted_gap_m": -4.4622256927632703e-14,
+      "maximum_active_weighted_gap_m": 6.385511981537614e-13,
+      "integrated_force_n": 0.1038837278882408,
+      "reduced_equilibrium_residual_n": 1.6756630834983766e-14,
+      "pressure_compliance_asymmetry": 1.3234889800848443e-22
+    }
+  ],
+  "adjacent": [
+    {
+      "columns": [
+        16,
+        24
+      ],
+      "full_relative_l2": 0.07039537577265238,
+      "front_absolute_l2_pa_sqrt_m": 0.012091825155564576
+    },
+    {
+      "columns": [
+        24,
+        32
+      ],
+      "full_relative_l2": 0.13815866766924959,
+      "front_absolute_l2_pa_sqrt_m": 0.027914931453004405
+    },
+    {
+      "columns": [
+        32,
+        48
+      ],
+      "full_relative_l2": 0.12841560324857096,
+      "front_absolute_l2_pa_sqrt_m": 0.026490046406203126
+    },
+    {
+      "columns": [
+        48,
+        64
+      ],
+      "full_relative_l2": 0.05218135869476063,
+      "front_absolute_l2_pa_sqrt_m": 0.01083129618075284
+    },
+    {
+      "columns": [
+        64,
+        96
+      ],
+      "full_relative_l2": 0.07159509357215083,
+      "front_absolute_l2_pa_sqrt_m": 0.014850088476518331
+    },
+    {
+      "columns": [
+        96,
+        128
+      ],
+      "full_relative_l2": 0.04135206760523197,
+      "front_absolute_l2_pa_sqrt_m": 0.008576267064468235
+    }
+  ],
+  "finest_comparisons": [
+    {
+      "columns": 16,
+      "relative_full_l2": 0.11539157321800182,
+      "absolute_front_l2_pa_sqrt_m": 0.02361564661150873,
+      "absolute_interior_l2_pa_sqrt_m": 0.00226519375938103
+    },
+    {
+      "columns": 24,
+      "relative_full_l2": 0.13453286836355643,
+      "absolute_front_l2_pa_sqrt_m": 0.02750497492987212,
+      "absolute_interior_l2_pa_sqrt_m": 0.0012045258724262228
+    },
+    {
+      "columns": 32,
+      "relative_full_l2": 0.14614874848347617,
+      "absolute_front_l2_pa_sqrt_m": 0.0302102558036148,
+      "absolute_interior_l2_pa_sqrt_m": 0.0003146682099291878
+    },
+    {
+      "columns": 48,
+      "relative_full_l2": 0.04179485829643941,
+      "absolute_front_l2_pa_sqrt_m": 0.00866786468114224,
+      "absolute_interior_l2_pa_sqrt_m": 1.6643751628459067e-05
+    },
+    {
+      "columns": 64,
+      "relative_full_l2": 0.08611577106553453,
+      "absolute_front_l2_pa_sqrt_m": 0.01786008588969214,
+      "absolute_interior_l2_pa_sqrt_m": 1.4143567905302303e-05
+    },
+    {
+      "columns": 96,
+      "relative_full_l2": 0.04135206760523197,
+      "absolute_front_l2_pa_sqrt_m": 0.008576267064468235,
+      "absolute_interior_l2_pa_sqrt_m": 2.4786046374285074e-05
+    }
+  ]
+}
