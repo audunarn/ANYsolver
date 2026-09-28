@@ -2,12 +2,15 @@
 
 import hashlib
 import json
+import platform
 import subprocess
+import sys
 import time
 from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
+import anysolver
 
 from anysolver import solve_static_nonlinear
 from anysolver.boundary import BoundaryCondition
@@ -71,8 +74,15 @@ record = {
     "status": "development_free_target_ordinary_displacement_oracle",
     "source_commit": subprocess.check_output(
         ("git", "rev-parse", "HEAD"), text=True).strip(),
+    "command": "python docs/d1_review_support/d1_two_body_displacement_compare.py",
+    "python": sys.version.split()[0],
+    "platform": platform.platform(),
+    "anysolver_module": str(Path(anysolver.__file__).resolve()),
     "oracle_source_sha256": hashlib.sha256(Path(
         "docs/d1_review_support/d1_two_body_displacement_oracle.py"
+    ).read_bytes()).hexdigest(),
+    "reference_oracle_source_sha256": hashlib.sha256(Path(
+        "docs/d1_review_support/d1_two_body_reference_oracle.py"
     ).read_bytes()).hexdigest(),
     "production_status": production.status,
     "accepted_steps": len(production.steps),
@@ -101,11 +111,13 @@ record = {
     "control_reaction_relative_error": float(
         abs(control_reaction+oracle["control_reaction"])
         /abs(oracle["control_reaction"])),
-    "oracle_mapped_contact_work_j": oracle["mapped_contact_work"],
-    "production_mapped_contact_work_j": production_work,
-    "mapped_work_relative_error": float(
-        abs(production_work-oracle["mapped_contact_work"])
-        /abs(oracle["mapped_contact_work"])),
+    "oracle_endpoint_contact_force_displacement_pairing_j": oracle[
+        "endpoint_contact_force_displacement_pairing"],
+    "production_endpoint_contact_force_displacement_pairing_j": production_work,
+    "endpoint_pairing_relative_error": float(
+        abs(production_work-oracle[
+            "endpoint_contact_force_displacement_pairing"])
+        /abs(oracle["endpoint_contact_force_displacement_pairing"])),
     "target_translation_max_difference_m": float(np.max(abs(
         production.displacements[target_translation]
         -oracle["displacement"][target_translation]))),

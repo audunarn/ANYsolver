@@ -82,6 +82,7 @@ def solve_displacement_reference(model, definition, control):
         "area": area,
         "integrated_force": float(support @ pressure),
         "control_reaction": control_reaction,
-        "mapped_contact_work": float(contact_force @ pose),
+        "endpoint_contact_force_displacement_pairing": float(
+            contact_force @ pose),
         "active_set_iterations": iteration+1,
     }
