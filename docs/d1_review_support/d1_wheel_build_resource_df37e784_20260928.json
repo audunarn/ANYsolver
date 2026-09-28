@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 8.211025699994934,
+  "peak_process_tree_memory_mb": 80.22016,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "build",
+    "--wheel",
+    "--no-isolation",
+    "--outdir",
+    "reports/d1_wheel_df37e784"
+  ],
+  "log": "reports\\d1_wheel_build_df37e784_20260928.txt"
+}

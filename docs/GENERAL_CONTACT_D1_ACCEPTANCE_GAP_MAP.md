@@ -1,5 +1,12 @@
 # D1 shell-static acceptance gap map
 
+**Current installed development check:** A fresh `df37e784` wheel ran the
+standalone eight-step deformable Q4/S3 example outside the checkout with
+identical mechanics fields to the prior installed run. The [source-bound
+record](d1_review_support/d1_installed_cycle_df37e784_20260928.md) confirms
+package routing and bounded resource use, while final independent acceptance
+and application gates remain open.
+
 **Clipping ownership follow-up:** Smooth artificial S3 shared-edge ties are now
 tested on an effectively two-face active patch inside a three-face target.
 Independent review led to a guard against three positively overlapped target
