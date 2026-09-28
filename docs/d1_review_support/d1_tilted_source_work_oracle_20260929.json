@@ -1,0 +1,61 @@
+{
+  "status": "development_independent_source_virtual_work",
+  "oracle_sha256": "2a9d9002c5ab206dc10ef6c84c41e4701395e04d728430384f6a69d1dedc3760",
+  "saved_sha256": "342576f0ce1b354adcc830e6791d498b78500f59b0750eae527e896a4410a19a",
+  "screen_sha256": "e11434b75d01a1bf47f4e639b920224c37ff38cabb7c892d17c170502552cef0",
+  "reference_geometry": {
+    "source_x_m": [
+      0.1,
+      1.1
+    ],
+    "source_y_m": [
+      0.1,
+      1.1
+    ],
+    "target_x_m": [
+      0.0,
+      1.3
+    ],
+    "target_y_m": [
+      0.0,
+      1.0
+    ],
+    "source_columns": 8,
+    "source_bottom_offset_m": -0.025,
+    "target_slope_dz_dx": 1e-05
+  },
+  "analytical_reference_support_m2": [
+    0.0309375,
+    0.061875,
+    0.061875,
+    0.061875,
+    0.061875,
+    0.061875,
+    0.061875,
+    0.061875,
+    0.0309375,
+    0.0253125,
+    0.050625,
+    0.050625,
+    0.050625,
+    0.050625,
+    0.050625,
+    0.050625,
+    0.050625,
+    0.0253125
+  ],
+  "support_relative_error": 1.4511384092450122e-15,
+  "normal_resultant_n": 0.10691712301802192,
+  "predicted_source_force_n": [
+    -1.0691712301267607e-06,
+    0.0,
+    0.10691712301267606
+  ],
+  "source_force_relative_error": 2.4066123039464113e-12,
+  "predicted_source_contact_ry_nm": -2.672928075316902e-08,
+  "observed_source_contact_ry_nm": -2.6729280753231355e-08,
+  "contact_ry_relative_error": 2.3320127022875613e-12,
+  "predicted_source_guide_ry_reaction_nm": -0.056922497030362326,
+  "reported_source_guide_ry_reaction_nm": -0.056922497030362326,
+  "reaction_absolute_error_nm": 0.0
+}

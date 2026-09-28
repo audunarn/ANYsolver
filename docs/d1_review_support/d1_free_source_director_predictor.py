@@ -22,16 +22,22 @@ from scripts.general_contact_d1_free_target_press_probe import (
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--output", type=Path, required=True)
+parser.add_argument("--common-slope", type=float, default=0.0)
+parser.add_argument("--load-n", type=float, default=0.15)
+parser.add_argument("--only-left-clamp", action="store_true")
 args = parser.parse_args()
 if args.output.exists():
     parser.error("output already exists")
+if not 0.0 < args.load_n <= 0.3:
+    parser.error("load-n must be in (0, 0.3] N")
 started = time.perf_counter()
 
 
 def predict(free_ry, left_ry_clamp=False):
     model, definition, settings, program = build_free_target_case(
         4, steps_per_segment=2, four_phase=False,
-        enforcement_solver="monolithic_active_set")
+        enforcement_solver="monolithic_active_set",
+        common_reference_slope=args.common_slope)
     if free_ry:
         guide = next(bc for bc in model.boundary_conditions
                      if bc.name == "source_guide")
@@ -57,7 +63,7 @@ def predict(free_ry, left_ry_clamp=False):
         if load.dof != "uz" or len(load.values_n) != 2:
             raise AssertionError("unexpected nodal load profile")
         rhs[model.mesh.dof_manager.get_node_dofs(load.node_id)[2]] += (
-            0.5*load.values_n[-1])
+            (args.load_n/0.3)*load.values_n[-1])
     _k, _f, transform, offset, _fixed, _info = (
         build_constraint_transformation(stiffness, rhs, model))
     if np.linalg.norm(offset) != 0.0:
@@ -108,6 +114,9 @@ def predict(free_ry, left_ry_clamp=False):
     solution = spsolve(reduced, reduced_rhs)
     displacement = np.asarray(physical @ solution).reshape(-1)
     manager = GeneralS3PatchManager(model, definition, settings)
+    initial_positions = manager._positions(np.zeros_like(displacement))
+    initial_state = manager.law.evaluate(
+        *initial_positions, np.zeros(len(manager.law.pressure_mode_ids)))
     source, target = manager._positions(displacement)
     state = manager.law.evaluate(
         source, target, np.zeros(len(manager.law.pressure_mode_ids)))
@@ -124,6 +133,9 @@ def predict(free_ry, left_ry_clamp=False):
             /max(np.linalg.norm(reduced_rhs), 1e-30)),
         "maximum_source_ry_rad": float(np.max(np.abs(displacement[ry]))),
         "minimum_sampled_physical_gap_m": float(state.minimum_physical_gap),
+        "initial_minimum_sampled_physical_gap_m": float(
+            initial_state.minimum_physical_gap),
+        "initial_gap_lower_m": float(manager._gap_lower(initial_positions)),
         "minimum_normalized_gap_m": float(np.min(state.normalized_gap)),
         "maximum_normalized_gap_m": float(np.max(state.normalized_gap)),
         "source_uz_range_m": [float(np.min(displacement[[
@@ -140,9 +152,11 @@ record = {
     "source_commit": subprocess.check_output(
         ("git", "rev-parse", "HEAD"), text=True).strip(),
     "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-    "load_fraction": 0.5,
-    "guided": predict(False),
-    "free_ry": predict(True),
+    "load_fraction": args.load_n/0.3,
+    "load_n": args.load_n,
+    "common_reference_slope": args.common_slope,
+    "guided": None if args.only_left_clamp else predict(False),
+    "free_ry": None if args.only_left_clamp else predict(True),
     "free_interior_ry": predict(True, left_ry_clamp=True),
     "elapsed_seconds": time.perf_counter()-started,
 }

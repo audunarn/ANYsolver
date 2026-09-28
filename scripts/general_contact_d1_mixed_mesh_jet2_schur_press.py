@@ -47,6 +47,7 @@ def build_case(columns: int, *, four_phase: bool = False,
                total_force_n: float = 0.1,
                target_right_x_m: float = 1.0,
                target_reference_slope: float = 0.0,
+               common_reference_slope: float = 0.0,
                target_columns: int = 1,
                full_width_target: bool = False,
                source_rows: int = 1,
@@ -61,6 +62,9 @@ def build_case(columns: int, *, four_phase: bool = False,
         raise ValueError("this probe admits only 1.0 or 1.3 m target right edges")
     if not 0.0 <= target_reference_slope <= 1.0e-4:
         raise ValueError("target reference slope must be in [0, 1e-4]")
+    if not 0.0 <= common_reference_slope <= 0.1 or (
+            common_reference_slope and target_reference_slope):
+        raise ValueError("common slope must be in [0, 0.1] without target-only slope")
     if target_columns not in (1, 2):
         raise ValueError("this development case admits one or two target columns")
     if source_rows not in (1, 2, 4, 8):
@@ -89,11 +93,16 @@ def build_case(columns: int, *, four_phase: bool = False,
                                (source_rows+1)*stride+1+2*(target_columns+1)))
     model = FEModel(f"mixed_{columns}_q4_x_jet2_schur_press")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
+    common_normal = np.asarray((-common_reference_slope, 0.0, 1.0))
+    common_normal /= np.linalg.norm(common_normal)
+    source_reference_height = 0.04004/common_normal[2]
     for row in range(source_rows+1):
         y = 0.1+source_y_knots[row]
         for column in range(stride):
+            x = 0.1+column/columns
             model.add_node(1+row*stride+column,
-                           0.1+column/columns, y, 0.04004)
+                           x, y, source_reference_height
+                           +common_reference_slope*(x-0.5*target_right_x_m))
     target_positions = (
         ((0.0, target_y0, 0.0), (target_right_x_m, target_y0, 0.0),
          (target_right_x_m, target_y1, 0.0), (0.0, target_y1, 0.0))
@@ -104,8 +113,10 @@ def build_case(columns: int, *, four_phase: bool = False,
     for node, position in zip(target_nodes, target_positions):
         x, y, z = position
         model.add_node(node, x, y,
-                       z+target_reference_slope*(x-0.5*target_right_x_m))
-    target_normal = np.asarray((-target_reference_slope, 0.0, 1.0))
+                       z+(target_reference_slope+common_reference_slope)
+                       *(x-0.5*target_right_x_m))
+    target_normal = np.asarray((-(target_reference_slope+common_reference_slope),
+                                0.0, 1.0))
     target_normal /= np.linalg.norm(target_normal)
     for row in range(source_rows):
         for column in range(columns):
@@ -114,7 +125,8 @@ def build_case(columns: int, *, four_phase: bool = False,
             model.add_element(element_id, create_shell_element(
                 element_id,
                 (bottom, bottom+1, bottom+stride+1, bottom+stride),
-                "elastic", thickness=0.05, reference_normal=(0.0, 0.0, 1.0),
+                "elastic", thickness=0.05,
+                reference_normal=tuple(common_normal),
             ))
     if target_columns == 1:
         target_faces = ((target_nodes[0], target_nodes[1], target_nodes[3]),

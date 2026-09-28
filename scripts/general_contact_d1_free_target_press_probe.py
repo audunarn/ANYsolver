@@ -17,12 +17,14 @@ from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import (
 def build_free_target_case(columns: int, *, relinearizations: int = 0,
                            steps_per_segment: int = 3,
                            four_phase: bool = False,
-                           enforcement_solver: str = "nested_augmented"):
+                           enforcement_solver: str = "nested_augmented",
+                           common_reference_slope: float = 0.0):
     model, definition, settings, program = build_case(
         columns, four_phase=four_phase,
         steps_per_segment=steps_per_segment,
         load_profile="distributed", total_force_n=0.3,
-        target_right_x_m=1.3)
+        target_right_x_m=1.3,
+        common_reference_slope=common_reference_slope)
     settings = replace(settings,
                        augmentation_schur_maximum_pressure_pa=250,
                        augmentation_schur_maximum_step_pa=200,

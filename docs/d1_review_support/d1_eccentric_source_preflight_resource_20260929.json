@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.7460143999996944,
+  "peak_process_tree_memory_mb": 157.794304,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_free_source_director_predictor",
+    "--common-slope",
+    "0.1",
+    "--load-n",
+    "0.0005",
+    "--only-left-clamp",
+    "--output",
+    "docs/d1_review_support/d1_eccentric_source_preflight_20260929.json"
+  ],
+  "log": "reports\\d1_eccentric_source_preflight_log_dev_20260929.txt"
+}

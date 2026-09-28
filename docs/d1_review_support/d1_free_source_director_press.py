@@ -31,6 +31,7 @@ parser.add_argument("--left-ry-clamp", action="store_true")
 parser.add_argument("--first-load-n", type=float)
 parser.add_argument("--next-load-n", type=float)
 parser.add_argument("--diagnose-admission", action="store_true")
+parser.add_argument("--common-slope", type=float, default=0.0)
 args = parser.parse_args()
 if args.output.exists():
     parser.error("output already exists")
@@ -44,6 +45,7 @@ started = time.perf_counter()
 model, definition, settings, program = build_free_target_case(
     4, steps_per_segment=2, four_phase=False,
     enforcement_solver="monolithic_active_set",
+    common_reference_slope=args.common_slope,
 )
 guide = next(bc for bc in model.boundary_conditions
              if bc.name == "source_guide")
@@ -159,6 +161,7 @@ record = {
         if args.left_ry_clamp else "all source ry released; uy/rx/rz retained"),
     "first_load_n": args.first_load_n,
     "next_load_n": args.next_load_n,
+    "common_reference_slope": args.common_slope,
     "contact_failure": result.info.get("contact_failure"),
     "admission_diagnostics": admission_diagnostics,
     "maximum_ry_rad": None,
