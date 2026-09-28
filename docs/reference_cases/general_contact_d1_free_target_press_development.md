@@ -414,3 +414,14 @@ mechanical comparison. An explicitly selected coarser positive Q1
 pressure space on the same Q4 integration geometry is under design
 review as a way to test the weak-mode hypothesis without changing the
 integration side.
+
+The standalone topology-only [pressure-basis builder](../../src/anysolver/general_contact/pressure_basis.py)
+forms a fixed nonnegative 50×26 interpolation B for the actual 24-Q4
+source strip. At its reference pose, B has full column rank; transformed
+Gram BᵀGB is positive definite with eigenvalues 0.002497–0.03762 m²,
+and transformed support sums to the same 0.9 m². The basis has not been
+used in a mechanical solve. A future macro-pressure profile must transform
+support and weighted gap before normalization, including their derivatives
+and moving-support work; multiplying coarse pressures through the existing
+fine-node law would change the equations. This is a development design
+slice, with no free-target response or pressure-space acceptance.
