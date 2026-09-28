@@ -114,101 +114,106 @@ def integrate_current_skin(model, definition, pose):
     return support, weighted_gap, current_xy_area, quadrature_points, tuple(polygon_sizes)
 
 
-path = Path(__file__).with_name("d1_two_body_reference_compare_full_20260928.json")
-saved_bytes = path.read_bytes()
-saved = json.loads(saved_bytes)
-assert saved["production_status"] == "completed"
-assert saved["production_accepted_steps"] == 4
-model, definition, settings, _program = build_free_target_case(
-    4, steps_per_segment=2, four_phase=True,
-    enforcement_solver="monolithic_active_set",
-)
-pose = np.asarray(saved["production_displacements"])
-assert pose.shape == (model.mesh.dof_manager.total_dofs,)
-support, weighted_gap, current_xy_area, quadrature_points, signature = (
-    integrate_current_skin(model, definition, pose))
-saved_support = np.asarray(saved["production_support_m2"])
-saved_gap = np.asarray(saved["production_normalized_gap_m"])
-normalized_gap = weighted_gap/support
-manager = GeneralS3PatchManager(model, definition, settings)
-pressure = np.asarray(saved["production_pressure_pa"])
-assert tuple(manager.law.pressure_mode_ids) == tuple(sorted({
-    node for element_id in definition.surfaces[0].element_ids
-    for node in model.mesh.elements[element_id].node_ids
-}))
-base = linearize(manager, pose, pressure*saved_support, tangent=False)
-np.testing.assert_allclose(base.state.reference_support, saved_support,
-                           rtol=1e-9, atol=1e-12)
-directions = (
-    ("source_4_ux", 4, 0, 2e-6),
-    ("source_4_uz", 4, 2, 2e-6),
-    ("source_9_ux", 9, 0, 2e-6),
-    ("source_9_uz", 9, 2, 2e-6),
-    ("target_12_ux", 12, 0, 2e-6),
-    ("target_12_uz", 12, 2, 2e-6),
-    ("target_12_ry", 12, 4, 2e-5),
-    ("target_13_uz", 13, 2, 2e-6),
-    ("target_13_ry", 13, 4, 2e-5),
-)
-derivative_checks = []
-for label, node, axis, step in directions:
-    dof = int(model.mesh.dof_manager.get_node_dofs(node)[axis])
-    plus_pose = pose.copy()
-    minus_pose = pose.copy()
-    plus_pose[dof] += step
-    minus_pose[dof] -= step
-    plus_support, plus_weighted, _area, _count, plus_signature = (
-        integrate_current_skin(model, definition, plus_pose))
-    minus_support, minus_weighted, _area, _count, minus_signature = (
-        integrate_current_skin(model, definition, minus_pose))
-    assert plus_signature == signature == minus_signature
-    independent = ((plus_weighted/plus_support
-                    -minus_weighted/minus_support)/(2*step))
-    production = base.gap_gradient[:, dof]
-    difference = float(np.linalg.norm(independent-production))
-    scale = max(float(np.linalg.norm(production)), 1e-8)
-    independent_work = float((pressure*saved_support) @ independent)
-    production_work = float(-base.force[dof])
-    derivative_checks.append({
-        "direction": label,
-        "step": step,
-        "independent_gap_gradient_norm": float(np.linalg.norm(independent)),
-        "production_gap_gradient_norm": float(np.linalg.norm(production)),
-        "gradient_difference_norm": difference,
-        "gradient_scaled_difference": difference/scale,
-        "independent_contact_work_derivative": independent_work,
-        "production_contact_work_derivative": production_work,
-        "contact_work_derivative_difference": abs(
-            independent_work-production_work),
-    })
-record = {
-    "status": "development_independent_current_skin_values_at_saved_slide",
-    "source_commit": subprocess.check_output(("git", "rev-parse", "HEAD"),
-                                              text=True).strip(),
-    "saved_source_sha256": hashlib.sha256(saved_bytes).hexdigest(),
-    "oracle_source_sha256": hashlib.sha256(Path(
-        "docs/d1_review_support/d1_two_body_reference_oracle.py"
-    ).read_bytes()).hexdigest(),
-    "python": sys.version.split()[0],
-    "platform": platform.platform(),
-    "anysolver_module": str(Path(anysolver.__file__).resolve()),
-    "quadrature_points": quadrature_points,
-    "current_xy_overlap_area_m2": current_xy_area,
-    "reference_overlap_area_m2": float(np.sum(support)),
-    "saved_production_reference_overlap_area_m2": float(np.sum(saved_support)),
-    "support_relative_l2": float(np.linalg.norm(support-saved_support)
-                                 /np.linalg.norm(saved_support)),
-    "maximum_normalized_gap_difference_m": float(
-        np.max(abs(normalized_gap-saved_gap))),
-    "normalized_gap_difference_l2_m": float(np.linalg.norm(
-        normalized_gap-saved_gap)),
-    "directional_checks": derivative_checks,
-    "maximum_scaled_directional_gradient_difference": max(
-        item["gradient_scaled_difference"] for item in derivative_checks),
-    "maximum_contact_work_derivative_difference": max(
-        item["contact_work_derivative_difference"]
-        for item in derivative_checks),
-    "independent_support_m2": support.tolist(),
-    "independent_normalized_gap_m": normalized_gap.tolist(),
-}
-print(json.dumps(record, indent=2))
+def main():
+    path = Path(__file__).with_name("d1_two_body_reference_compare_full_20260928.json")
+    saved_bytes = path.read_bytes()
+    saved = json.loads(saved_bytes)
+    assert saved["production_status"] == "completed"
+    assert saved["production_accepted_steps"] == 4
+    model, definition, settings, _program = build_free_target_case(
+        4, steps_per_segment=2, four_phase=True,
+        enforcement_solver="monolithic_active_set",
+    )
+    pose = np.asarray(saved["production_displacements"])
+    assert pose.shape == (model.mesh.dof_manager.total_dofs,)
+    support, weighted_gap, current_xy_area, quadrature_points, signature = (
+        integrate_current_skin(model, definition, pose))
+    saved_support = np.asarray(saved["production_support_m2"])
+    saved_gap = np.asarray(saved["production_normalized_gap_m"])
+    normalized_gap = weighted_gap/support
+    manager = GeneralS3PatchManager(model, definition, settings)
+    pressure = np.asarray(saved["production_pressure_pa"])
+    assert tuple(manager.law.pressure_mode_ids) == tuple(sorted({
+        node for element_id in definition.surfaces[0].element_ids
+        for node in model.mesh.elements[element_id].node_ids
+    }))
+    base = linearize(manager, pose, pressure*saved_support, tangent=False)
+    np.testing.assert_allclose(base.state.reference_support, saved_support,
+                               rtol=1e-9, atol=1e-12)
+    directions = (
+        ("source_4_ux", 4, 0, 2e-6),
+        ("source_4_uz", 4, 2, 2e-6),
+        ("source_9_ux", 9, 0, 2e-6),
+        ("source_9_uz", 9, 2, 2e-6),
+        ("target_12_ux", 12, 0, 2e-6),
+        ("target_12_uz", 12, 2, 2e-6),
+        ("target_12_ry", 12, 4, 2e-5),
+        ("target_13_uz", 13, 2, 2e-6),
+        ("target_13_ry", 13, 4, 2e-5),
+    )
+    derivative_checks = []
+    for label, node, axis, step in directions:
+        dof = int(model.mesh.dof_manager.get_node_dofs(node)[axis])
+        plus_pose = pose.copy()
+        minus_pose = pose.copy()
+        plus_pose[dof] += step
+        minus_pose[dof] -= step
+        plus_support, plus_weighted, _area, _count, plus_signature = (
+            integrate_current_skin(model, definition, plus_pose))
+        minus_support, minus_weighted, _area, _count, minus_signature = (
+            integrate_current_skin(model, definition, minus_pose))
+        assert plus_signature == signature == minus_signature
+        independent = ((plus_weighted/plus_support
+                        -minus_weighted/minus_support)/(2*step))
+        production = base.gap_gradient[:, dof]
+        difference = float(np.linalg.norm(independent-production))
+        scale = max(float(np.linalg.norm(production)), 1e-8)
+        independent_work = float((pressure*saved_support) @ independent)
+        production_work = float(-base.force[dof])
+        derivative_checks.append({
+            "direction": label,
+            "step": step,
+            "independent_gap_gradient_norm": float(np.linalg.norm(independent)),
+            "production_gap_gradient_norm": float(np.linalg.norm(production)),
+            "gradient_difference_norm": difference,
+            "gradient_scaled_difference": difference/scale,
+            "independent_contact_work_derivative": independent_work,
+            "production_contact_work_derivative": production_work,
+            "contact_work_derivative_difference": abs(
+                independent_work-production_work),
+        })
+    record = {
+        "status": "development_independent_current_skin_values_at_saved_slide",
+        "source_commit": subprocess.check_output(("git", "rev-parse", "HEAD"),
+                                                  text=True).strip(),
+        "saved_source_sha256": hashlib.sha256(saved_bytes).hexdigest(),
+        "oracle_source_sha256": hashlib.sha256(Path(
+            "docs/d1_review_support/d1_two_body_reference_oracle.py"
+        ).read_bytes()).hexdigest(),
+        "python": sys.version.split()[0],
+        "platform": platform.platform(),
+        "anysolver_module": str(Path(anysolver.__file__).resolve()),
+        "quadrature_points": quadrature_points,
+        "current_xy_overlap_area_m2": current_xy_area,
+        "reference_overlap_area_m2": float(np.sum(support)),
+        "saved_production_reference_overlap_area_m2": float(np.sum(saved_support)),
+        "support_relative_l2": float(np.linalg.norm(support-saved_support)
+                                     /np.linalg.norm(saved_support)),
+        "maximum_normalized_gap_difference_m": float(
+            np.max(abs(normalized_gap-saved_gap))),
+        "normalized_gap_difference_l2_m": float(np.linalg.norm(
+            normalized_gap-saved_gap)),
+        "directional_checks": derivative_checks,
+        "maximum_scaled_directional_gradient_difference": max(
+            item["gradient_scaled_difference"] for item in derivative_checks),
+        "maximum_contact_work_derivative_difference": max(
+            item["contact_work_derivative_difference"]
+            for item in derivative_checks),
+        "independent_support_m2": support.tolist(),
+        "independent_normalized_gap_m": normalized_gap.tolist(),
+    }
+    print(json.dumps(record, indent=2))
+
+
+if __name__ == "__main__":
+    main()
