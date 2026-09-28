@@ -40,19 +40,23 @@ choice. An isolated physical fz witness on those same three meshes
 has E4/beam supremal work `25.253/0.269→0.624/0.0376→0.0886/0.0050 J`;
 an independent auxiliary scalar Q4 trace gives `17.679→9.956→2.121 J`.
 Both weaken, while E4 weakens faster. This localizes the trend mainly
-to the shell-side trace but does not establish physical locking.
+to the shell-side trace but does not establish physical locking. At
+fixed x8, external S8R work changes from `0.72024 J` under the
+continuous quadratic line action to `0.26794 J` under the exact native
+Q4 nodal action. External S4 with that same Q4 action gives
+`0.07549 J` versus E4 `0.08861 J`; S8R continuous work rises to
+`1.18130 J` on x16. This supports a strong trial/trace-space
+contribution but not a converged physical reference or law selection.
 **Remaining uncertainty:**
 Physical torque/shear fidelity of the declared pose, growing-space
 trace stability and locking, and the allocation of shell/section versus
 connection error. **Next discriminator:** Compare work-conjugate
 physical transfer on matching idealizations and assess interface
 trace norms, locking, and growing spaces over the registered ratios.
-Use those outcomes to retain or revise the law and
-multiplier policy. The next targeted physical comparison is the fixed
-x8 isolated fz action on a shear-deformable plate reference with enough
-resolution for its eight alternating intervals. Existing four-cell
-solid bond discretization cannot resolve that action and is not an
-automatic substitute.
+Use those outcomes to retain or revise the law and multiplier policy.
+The bounded fixed-x8 plate comparisons are complete. Advance physical
+torque/shear transfer and the growing-space/mesh-ratio assessment;
+do not repeat the axial or S8R refinement series automatically.
 The independent B2 F09 private energy-admission study found a
 canonical-SI rule that removes a sampled direct-unit discrepancy and
 fails closed on erased stiffness, but F09 physical-range and product
@@ -11996,6 +12000,67 @@ has only four longitudinal bond cells and is not adequate for this
 x8 discriminator without a justified refinement/resource check. The
 matched torque/shear comparison also remains necessary. F03/G0B stay
 open, G1 barred, and formal F03 authority unconsumed.
+
+**Next x8 projection discriminator (prospective, 28 September):** The
+independent CalculiX S8R plate preflight passes exact force/moment
+integration for the fixed eight-interval fz density. Full-action
+S8R work is `0.72024 J` on x8 and `1.18130 J` on x16, against the
+native E4 shell action-only `0.08861 J`. The S8R response changes
+substantially with refinement, so neither value is a converged
+physical benchmark or proof of E4 locking. A competing explanation
+is that P0 alternating densities project to nearly cancelling Q4
+corner forces, while S8R quadratic line shape retains midside work.
+Run one fixed x8 S8R solve using precisely the native Q4-projected
+nodal action, after matching its force vector to the native shell
+transpose row. If its work is close to E4, prioritize the discrete
+P0/Q4 trace compatibility problem; if still materially larger,
+investigate E4 constitutive/shear stiffness or shell kinematics.
+Keep the continuous S8R runs, including x8/x16 nonconvergence, distinct
+from this discrete-action comparison. Do not add a finer sweep or
+select a multiplier from this result alone.
+
+**x8 projection result and next discriminator:** The same native
+Q4-projected fz nodal action matches `C_shell^T λ` to relative
+`2.23e-14`. On S8R x8 it gives `0.26794 J`, compared with
+`0.72024 J` for the continuous quadratic edge action and
+`0.08861 J` for E4 under that Q4 projection. The independent
+read-only review confirmed geometry, material, supports, load units,
+force/moment integration and unique through-thickness FRD mapping.
+The `0.72024→0.26794 J` change shows substantial load-representation
+effect. The remaining S8R/E4 difference cannot be assigned to E4
+locking or material stiffness: S8R retains extra quadratic trace DOFs.
+The continuous S8R x16 result `1.18130 J` remains mesh-sensitive.
+Raw preflights and two failed output-recovery attempts are preserved.
+The next *single* decision-changing check is a same-Q4-trace S4
+physical plate under precisely this nodal action on the existing x8
+grid and support. Agreement with E4 would direct attention to
+discrete P0/Q4 compatibility; a large difference would direct a
+targeted shell formulation/shear inquiry. Neither outcome alone
+selects a line space or closes F03. Do not repeat the S8R sweep.
+
+**x8 plate trace comparator outcome (28 September):** The single
+matched-Q4-trace CalculiX S4 run gives `0.0754915 J`, versus native
+E4 `0.0886099 J` under the *same* Q4 nodal action and S8R
+`0.267944 J` under that action. S4 and S8R x8 have identical
+180 element corner geometries, E/nu/thickness, nine nodal forces,
+and the physical left-edge clamp; S4 has 209 Q4 original nodes,
+while S8R has 597 including midsides. The independent read-only
+review reproduced S4 work from the uniquely matched top/bottom FRD
+displacements and found no result-affecting defect. FRD rounding is
+far below the S4/E4 difference. This strongly supports a
+trial/trace-space contribution to the larger S8R gap, but cannot
+identify a unique shell mechanism or establish convergence or
+physical correctness. No external support-reaction balance was
+checked, and the very short process RSS samples are not reliable
+peak-memory values. The source-bound adjudication is
+`B3_E4_F03_C1_X8_PLATE_TRACE_ADJUDICATION_DEV_V1.json`, SHA256
+`12fab0a04d24586af9039ae86f192e973269225d9273c77f59cecf47290ee514`.
+The two tracked raw hash manifests bind all 64 external files,
+including the two failed S8R output-recovery attempts. These are
+bounded development results, not F03/G0B acceptance. Next work
+returns to the declared physical torque/shear law and the registered
+growing-space/mesh-ratio requirements rather than finer axial or
+S8R calculations.
 
 **F05 S3 local branch-path screen (28 September):** A bounded sampled
 check around the existing yielded accepted predecessor covers 35

@@ -1,0 +1,55 @@
+{
+  "classification": "private G0 fixed-x8 vertical-action physical-trace diagnostic",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE_NOT_QUALIFICATION",
+  "source_git_before_external_runs": "846a0531e89bedf56fafc14ccd93f5f599e8810f",
+  "fixed_native_action_sha256": "1ba05a44d9ad989c63299174e5be5e9e3f6caa8f982e9c5afb3b75c8c6421c6c",
+  "solver_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "runners_sha256": {
+    "scripts/b3_e4_f03_c1_x8_s8r_fz_reference.py": "635349c59fc09470371eec595a01bf1999209a81aa5df27926b00a256b3d8f12",
+    "scripts/b3_e4_f03_c1_x8_s8r_q4_action.py": "0983c900ee1c4a7741ebbee958230aacc2f134f4ce98cedaba5d63d7fa8d8e35",
+    "scripts/b3_e4_f03_c1_x8_s4_q4_action.py": "e3ddea0283e2e0ed6bc03c3582190066a1be41406b43b401eaa1213d7cc995d0"
+  },
+  "raw_manifests_sha256": {
+    "B3_E4_F03_C1_X8_S8R_RAW_MANIFEST_DEV_V1.json": "1addaa085488f3b7a777c3d8ef964a1bbc366a43bc9c88d0bfd7fb74bda12e6e",
+    "B3_E4_F03_C1_X8_S4_RAW_MANIFEST_DEV_V1.json": "4a27697deee43dd26df9e7e8ea68f012ab97bb2f05f9732d196b931891ca32c7"
+  },
+  "raw_file_count": 64,
+  "raw_total_bytes": 1788076,
+  "preserved_attempts": [
+    "v1: both S8R action preflights passed",
+    "v2: CalculiX solved x8 but AllNodes-set output lacked shell displacement records",
+    "v3: complete FRD output solved x8 but original S8R node ids were absent after brick expansion",
+    "v4: unique centre or averaged face-node mapping recovered both S8R results",
+    "separate x8 Q4-projected S8R and matched-trace S4 results completed"
+  ],
+  "work_J": {
+    "native_E4_Q4_projected": 0.08860988932729294,
+    "S8R_continuous_action_x8": 0.7202397228945566,
+    "S8R_continuous_action_x16": 1.1813043549983715,
+    "S8R_Q4_projected_action_x8": 0.26794393470845945,
+    "S4_Q4_projected_action_x8": 0.07549149831233859
+  },
+  "result_sha256": {
+    "S8R_continuous_x8": "e26bfa2075c4a511a8cf6aedb22e1175a1c046958fbaa026c35c8dc8a375da7d",
+    "S8R_continuous_x16": "4957941833e12666215c043780ebf3188966cb421e80ecec40db40e1e4d7db40",
+    "S8R_Q4_projected_x8": "8301c2cbac0710cbd24000b19a45ff33e77d379fe9a4dd334b1260dc68491520",
+    "S4_Q4_projected_x8": "04b4ba55183fbb9d40d86c80dd315ca60129fea887effcf8a8a1d44de164fe3c"
+  },
+  "validated_matching": [
+    "Same 35 mm isotropic plate, E=210 GPa, nu=0.3, reference midsurface and left-root clamp",
+    "Same x8 S4/S8R element corners and nine Q4 nodal load positions and values",
+    "Q4-projected nodal action matches native C_shell transpose to relative 2.23e-14",
+    "Continuous S8R action integrates force and moment to relative about 2e-15",
+    "All mapped FRD expanded nodes are unique and at the expected through-thickness positions"
+  ],
+  "independent_read_only_review": "No result-affecting geometry, action, units, source, solver, or FRD mapping defect found. S4 work independently recomputed from force times mean face displacement. FRD rounding is far below the observed S4-E4 work gap.",
+  "interpretation": "The x8-to-x16 S8R continuous-action work increase shows this independent reference has not converged. At fixed S8R x8, Q4 nodal projection lowers work substantially. At fixed Q4 nodal action and grid, S4 and E4 are close in scale while S8R is substantially more compliant. This supports a strong trial/trace-space contribution to the earlier discrepancy, not a unique constitutive, locking, or physical connection diagnosis.",
+  "limits": [
+    "No selected multiplier space or accepted continuous connection law",
+    "No physical mesh convergence or G0B acceptance",
+    "No support-reaction-balance evidence from these external runs",
+    "Fast-solve sampled RSS is not a reliable peak-memory measurement",
+    "The documented 120 s and 2 GiB bounds were not changed"
+  ],
+  "gate": "F03/G0B open; G1 barred; formal F03 authority unconsumed"
+}
