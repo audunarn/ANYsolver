@@ -222,6 +222,12 @@ multiplier selection, or F03 acceptance. The next mechanics work is a
 three-level same-law sparse reference and the registered growing-space,
 mesh-ratio, physical-transfer and mixed-system checks; do not extrapolate the
 small panel result.
+An isolated wheel built from the clean `fa9d9e4d` source archive passed seven
+fresh-process installed checks for both A/B weak-line candidates, the sampled
+work oracle, negatives and restart. Actual package import, wheel hash,
+dependency identities and effective one-thread OpenBLAS settings are in
+[the installed development report](B3_E4_L1_INSTALLED_DEV_V1.json). This is
+installed wiring evidence, not G0/G2 qualification or final-platform CI.
 An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
 for plate/web Fy and web torque. Its clamped-root option matches the declared
 six-DOF support type but lacks verified rotational reaction output; the hinged
