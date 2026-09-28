@@ -12,6 +12,8 @@ import sys
 import time
 
 import numpy as np
+import scipy.sparse as sparse
+import scipy.sparse.linalg as sparse_linalg
 
 from docs.d1_review_support import d1_rim_oracle as oracle
 
@@ -30,6 +32,44 @@ def _errors(bins, reference):
         "rim_force_relative": float(abs(bins[8].sum()-reference[8].sum())
                                     / abs(reference[8].sum())),
         "empty_row_force_n": float(bins[9].sum()),
+    }
+
+
+def _active_compliance(nx, ynodes, pressure):
+    """Diagnose the source-only active pressure-to-gap response."""
+    ny = len(ynodes)-1
+    kx = oracle.stiff1d(nx)
+    mx = oracle.mass1d(nx)
+    ky = oracle.stiff1d(ny, ynodes)
+    my = oracle.mass1d(ny, nodes=ynodes)
+    stiffness = oracle.D*(
+        sparse.kron(sparse.csr_matrix(my), sparse.csr_matrix(kx))
+        +sparse.kron(sparse.csr_matrix(ky), sparse.csr_matrix(mx)))
+    bx = oracle.mass1d(nx)
+    by = oracle.mass1d(ny, oracle.YR, ynodes)
+    work = sparse.kron(sparse.csr_matrix(by), sparse.csr_matrix(bx)).tocsr()
+    support = np.asarray(work.sum(axis=1)).ravel()
+    active = np.flatnonzero(np.asarray(pressure).reshape(-1) > 1e-9)
+    if len(active) == 0 or np.any(support[active] <= 0):
+        raise AssertionError("active pressure lacks positive support")
+    free = np.ones((nx+1)*(ny+1), dtype=bool)
+    free[np.arange(0, len(free), nx+1)] = False
+    factor = sparse_linalg.splu(stiffness.tocsr()[free][:, free].tocsc())
+    active_work = work[active][:, free]
+    response = np.asarray(active_work @ factor.solve(active_work.T.toarray()))
+    response = 0.5*(response+response.T)
+    diagonal = np.diag(response)
+    if np.any(diagonal <= 0):
+        raise AssertionError("active pressure compliance has nonpositive diagonal")
+    scaled = response/np.sqrt(np.outer(diagonal, diagonal))
+    eigenvalues = np.linalg.eigvalsh(scaled)
+    return {
+        "active_modes": len(active),
+        "minimum_support_m2": float(np.min(support[active])),
+        "maximum_support_m2": float(np.max(support[active])),
+        "unit_diagonal_minimum_eigenvalue": float(eigenvalues[0]),
+        "unit_diagonal_maximum_eigenvalue": float(eigenvalues[-1]),
+        "unit_diagonal_eigenvalue_ratio": float(eigenvalues[0]/eigenvalues[-1]),
     }
 
 
@@ -86,6 +126,7 @@ def main(output):
             "complementarity_pa_m": solution["comp"],
             "minimum_normalized_gap_m": solution["min_wgap"],
             "active_pressure_modes": int(np.count_nonzero(solution["p"] > 1e-9)),
+            "active_compliance": _active_compliance(nx, ynodes, solution["p"]),
             "fv_error": _errors(field, reference),
             "bins_n": field.tolist(),
         }
