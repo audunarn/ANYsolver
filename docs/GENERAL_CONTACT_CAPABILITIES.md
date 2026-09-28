@@ -93,6 +93,10 @@ review](reference_cases/general_contact_d1_distributed_coupled_tangent_v1_review
 accepted only a selected smooth-branch directional tangent at the same saved
 fixed-target pose, with mapped-contact errors 2.882e−10 and 7.171e−11.
 Claim-bearing complete tangent status in the matrix remains open.
+The [bounded interior-shell usage note](GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF.md)
+groups the independently reviewed properties and exact historical wheel
+identity for a runnable development handoff; integrated D1/C1 disposition
+remains open.
 
 A [partially supported target directional gate](reference_cases/general_contact_d1_free_target_tangent_v2_review.md)
 also passed independent review with separate force and moment scales at the
