@@ -603,6 +603,8 @@ def solve_static_contact_path(
                             "constraint_error": step_result.constraint_norm,
                             "augmentation_iterations": 0,
                             "semismooth_iterations": step_result.iterations,
+                            "semismooth_linear_solver": settings.monolithic_linear_solver,
+                            "semismooth_maximum_pivots": settings.monolithic_maximum_pivots,
                             "complementarity_relative_force":
                             step_result.complementarity_norm,
                             "candidate_evaluations": step_result.candidate_evaluations,
@@ -1430,6 +1432,9 @@ def solve_static_contact_path(
                         "reaction_generalized": multipliers.tolist(),
                         "profile": profile,
                         **({"enforcement_solver": settings.enforcement_solver}
+                           if semismooth else {}),
+                        **({"monolithic_linear_solver": settings.monolithic_linear_solver,
+                            "monolithic_maximum_pivots": settings.monolithic_maximum_pivots}
                            if semismooth else {}),
                         **({"augmentation_acceleration": settings.augmentation_acceleration}
                            if settings.augmentation_acceleration != "none" else {}),

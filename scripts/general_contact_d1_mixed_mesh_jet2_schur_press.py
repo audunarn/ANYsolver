@@ -231,7 +231,8 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
          source_rows: int = 1,
          source_y_profile: str | None = None,
          enforcement_solver: str = "nested_augmented",
-         monolithic_maximum_pivots: int = 12) -> None:
+         monolithic_maximum_pivots: int = 12,
+         monolithic_linear_solver: str = "direct") -> None:
     if output.exists():
         raise FileExistsError(f"development output already exists: {output}")
     model, definition, settings, program = build_case(
@@ -264,6 +265,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
             settings, enforcement_solver=enforcement_solver,
             complementarity_force_scale_n=total_force_n,
             monolithic_maximum_pivots=monolithic_maximum_pivots,
+            monolithic_linear_solver=monolithic_linear_solver,
             augmentation_acceleration="none",
             augmentation_schur_maximum_modes=None,
             augmentation_schur_maximum_pressure_pa=None,
@@ -292,6 +294,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
                       "mixed_bending_refinement_jet2_schur_press_dev"),
         "enforcement_solver": enforcement_solver,
         "monolithic_maximum_pivots": monolithic_maximum_pivots,
+        "monolithic_linear_solver": monolithic_linear_solver,
         "four_phase": four_phase,
         "steps_per_segment": steps_per_segment,
         "load_profile": load_profile,
@@ -373,6 +376,8 @@ if __name__ == "__main__":
         "nested_augmented", "monolithic_active_set"),
         default="nested_augmented")
     parser.add_argument("--monolithic-maximum-pivots", type=int, default=12)
+    parser.add_argument("--monolithic-linear-solver", choices=(
+        "direct", "block_response_dev"), default="direct")
     args = parser.parse_args()
     main(args.columns, args.output, args.pressure_cap_pa, args.four_phase,
          args.steps_per_segment, args.schur_step_cap_pa,
@@ -381,4 +386,5 @@ if __name__ == "__main__":
          args.schur_maximum_attempts, args.pressure_basis,
          args.target_reference_slope, args.target_columns,
          args.full_width_target, args.source_rows, args.source_y_profile,
-         args.enforcement_solver, args.monolithic_maximum_pivots)
+         args.enforcement_solver, args.monolithic_maximum_pivots,
+         args.monolithic_linear_solver)

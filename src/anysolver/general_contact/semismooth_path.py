@@ -14,6 +14,7 @@ from anysolver.nonlinear_static import _discard_nonlinear_state_candidate
 
 from .core import suspend_contact
 from .semismooth import complementarity, linearize, reference_nodal_support
+from .semismooth_block import prepare_frozen_block_response
 
 
 @dataclass(frozen=True)
@@ -122,6 +123,24 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
         kqq = (transform.T @ stiffness @ transform).tocsr()
         kqz = sparse.csr_matrix(-transform.T @ contact.gap_gradient.T)
         q_size, mu_size = len(q), len(mu)
+        block_response = None
+        if settings.monolithic_linear_solver == "block_response_dev":
+            try:
+                block_response = prepare_frozen_block_response(
+                    kqq=kqq, control_reactions=control_reactions,
+                    control_rows=control_rows, kqz=kqz,
+                    gap_q=np.asarray(contact.gap_gradient @ transform),
+                    residual=residual, constraint=constraint,
+                    signature=f"contact_path:{step}:semismooth:{iteration}:block",
+                )
+            except Exception as exc:
+                _discard_nonlinear_state_candidate(committed_states)
+                return SemismoothStep(
+                    False, "contact_semismooth_block_response_failed",
+                    q, mu, z, None, None, iteration, residual_norm,
+                    constraint_norm, ncp_norm, evaluations, backtracks,
+                    {"detail": f"{type(exc).__name__}: {exc}"[:200]},
+                )
         pivot_active = active.copy()
         seen_sets = set()
         pivot_trace = []
@@ -137,35 +156,49 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                                       constraint_norm, ncp_norm, evaluations, backtracks,
                                       {"pivot_trace": pivot_trace})
             seen_sets.add(signature)
-            branch_c = np.where(pivot_active,
-                                c*contact.state.normalized_gap, z)
-            branch_q = np.zeros_like(contact.gap_gradient)
-            branch_q[pivot_active] = (
-                c[pivot_active, None]*contact.gap_gradient[pivot_active]
-            )
-            branch_z = np.ones(modes)
-            branch_z[pivot_active] = 0.0
-            matrix = sparse.bmat((
-                (kqq, sparse.csr_matrix(-control_reactions), kqz),
-                (sparse.csr_matrix(control_rows),
-                 sparse.csr_matrix((len(target), len(target))),
-                 sparse.csr_matrix((len(target), modes))),
-                (sparse.csr_matrix(branch_q @ transform),
-                 sparse.csr_matrix((modes, len(target))),
-                 sparse.diags(branch_z, format="csr")),
-            ), format="csr")
-            rhs = np.r_[residual, constraint, -branch_c]
             try:
-                delta = np.asarray(factorize(
-                    matrix, MatrixClass.GENERAL,
-                    signature=f"contact_path:{step}:semismooth:{iteration}:pivot:{pivot}",
-                ).solve(rhs)).reshape(-1)
-            except Exception:
+                if block_response is None:
+                    branch_c = np.where(pivot_active,
+                                        c*contact.state.normalized_gap, z)
+                    branch_q = np.zeros_like(contact.gap_gradient)
+                    branch_q[pivot_active] = (
+                        c[pivot_active, None]*contact.gap_gradient[pivot_active]
+                    )
+                    branch_z = np.ones(modes)
+                    branch_z[pivot_active] = 0.0
+                    matrix = sparse.bmat((
+                        (kqq, sparse.csr_matrix(-control_reactions), kqz),
+                        (sparse.csr_matrix(control_rows),
+                         sparse.csr_matrix((len(target), len(target))),
+                         sparse.csr_matrix((len(target), modes))),
+                        (sparse.csr_matrix(branch_q @ transform),
+                         sparse.csr_matrix((modes, len(target))),
+                         sparse.diags(branch_z, format="csr")),
+                    ), format="csr")
+                    rhs = np.r_[residual, constraint, -branch_c]
+                    delta = np.asarray(factorize(
+                        matrix, MatrixClass.GENERAL,
+                        signature=f"contact_path:{step}:semismooth:{iteration}:pivot:{pivot}",
+                    ).solve(rhs)).reshape(-1)
+                else:
+                    parts = block_response.direction(
+                        pivot_active, z, contact.state.normalized_gap,
+                    )
+                    delta = np.concatenate(parts)
+            except ArithmeticError as exc:
+                _discard_nonlinear_state_candidate(committed_states)
+                return SemismoothStep(False, "contact_semismooth_block_backward_error",
+                                      q, mu, z, None, None, iteration, residual_norm,
+                                      constraint_norm, ncp_norm, evaluations, backtracks,
+                                      {"pivot_trace": pivot_trace,
+                                       "detail": f"{type(exc).__name__}: {exc}"[:200]})
+            except Exception as exc:
                 _discard_nonlinear_state_candidate(committed_states)
                 return SemismoothStep(False, "singular_contact_semismooth_tangent",
                                       q, mu, z, None, None, iteration, residual_norm,
                                       constraint_norm, ncp_norm, evaluations, backtracks,
-                                      {"pivot_trace": pivot_trace})
+                                      {"pivot_trace": pivot_trace,
+                                       "detail": f"{type(exc).__name__}: {exc}"[:200]})
             if not np.all(np.isfinite(delta)):
                 _discard_nonlinear_state_candidate(committed_states)
                 return SemismoothStep(False, "nonfinite_contact_semismooth_increment",

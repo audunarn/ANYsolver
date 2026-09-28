@@ -117,3 +117,11 @@ def test_monolithic_active_contact_split_restart_and_mode_identity():
             contact_path_program=program, max_iterations=18,
             restart_checkpoint=half.to_restart_checkpoint(),
         )
+    changed_linear_solver = replace(settings,
+                                    monolithic_linear_solver="block_response_dev")
+    with pytest.raises(ValueError, match="incompatible"):
+        solve_static_nonlinear(
+            model, contact=definition, contact_settings=changed_linear_solver,
+            contact_path_program=program, max_iterations=18,
+            restart_checkpoint=half.to_restart_checkpoint(),
+        )
