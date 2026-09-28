@@ -314,6 +314,43 @@ def _relative_equilibrium(residual, applied, coordinate_scale, floor_work):
                      float(np.linalg.norm(weighted_applied/scale))))
 
 
+def _linear_equilibrium(residual, applied, coordinate_scale):
+    """Scale linear equilibrium to its actual load, including quiet load rows.
+
+    A fixed work floor can accept zero response to a small applied load. The
+    active-row check also prevents a large load from hiding a missed smaller
+    load in a separate physical coordinate. A numerically unresolved mixed
+    load fails closed; it is not declared an equilibrium state.
+    """
+    residual = np.asarray(residual, dtype=float)
+    applied = np.asarray(applied, dtype=float)
+    coordinate_scale = np.asarray(coordinate_scale, dtype=float)
+    if (residual.ndim != 1 or residual.shape != applied.shape or
+            residual.shape != coordinate_scale.shape or
+            not np.isfinite(residual).all() or
+            not np.isfinite(applied).all() or
+            not np.isfinite(coordinate_scale).all() or
+            np.any(coordinate_scale <= 0.)):
+        raise ValueError("finite positive mixed work scales required")
+    weighted_residual = residual*coordinate_scale
+    weighted_applied = applied*coordinate_scale
+    if (not np.isfinite(weighted_residual).all() or
+            not np.isfinite(weighted_applied).all()):
+        raise ValueError("representable mixed work residual required")
+    magnitude = max(float(np.max(np.abs(weighted_residual), initial=0.)),
+                    float(np.max(np.abs(weighted_applied), initial=0.)))
+    if magnitude == 0.:
+        return 0.
+    applied_norm = float(np.linalg.norm(weighted_applied/magnitude))
+    global_ratio = (float(np.linalg.norm(weighted_residual/magnitude)) /
+                    applied_norm if applied_norm else float("inf"))
+    active = applied != 0.
+    with np.errstate(divide="ignore", over="ignore"):
+        active_ratio = float(np.max(np.abs(residual[active]/applied[active]),
+                                    initial=0.))
+    return max(global_ratio, active_ratio)
+
+
 def _scaled_constraint_gap(gap, row_scale):
     """Normalize each translation/rotation or weak-line row by fixed work map."""
     gap = np.asarray(gap, dtype=float)
@@ -500,7 +537,7 @@ class ExperimentalGEAnalysis:
                 "reference_linear_refinements": self._linear_refinements,
                 "reference_length_m": self._reference_length,
                 "stress_free_scaled_max": self._reference_error,
-                "equilibrium_norm": "frozen_work_weighted_l2",
+                "equilibrium_norm": "frozen_work_weighted_l2_plus_active_load_rows",
                 "constraint_norm": "reference_row_scaled_max",
                 "production_qualified": False}
 
@@ -534,9 +571,9 @@ class ExperimentalGEAnalysis:
             multipliers = solution[len(self._free):]
             equilibrium = self._K@q + self._C.T@multipliers-load
             gap = self._C@q
-            relative = _relative_equilibrium(
+            relative = _linear_equilibrium(
                 equilibrium[self._free], load[self._free],
-                self._coordinate_scale[self._free], self._reference_length)
+                self._coordinate_scale[self._free])
             constraint = _scaled_constraint_gap(gap, self._constraint_scale)
             if np.isfinite(relative) and relative <= 1e-8 and constraint <= 1e-9:
                 break
@@ -675,9 +712,9 @@ class ExperimentalGEAnalysis:
         lam = _owned(value["multipliers"], (self._C.shape[0],))
         load = _owned(value["load"], (self._K.shape[0],))
         equilibrium = self._K@q+self._C.T@lam-load
-        relative = _relative_equilibrium(
+        relative = _linear_equilibrium(
             equilibrium[self._free], load[self._free],
-            self._coordinate_scale[self._free], self._reference_length)
+            self._coordinate_scale[self._free])
         constraint = _scaled_constraint_gap(
             self._C@q, self._constraint_scale)
         if (not np.isfinite(relative) or relative > 1e-8 or constraint > 1e-9 or

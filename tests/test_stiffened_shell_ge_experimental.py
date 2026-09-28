@@ -217,6 +217,12 @@ def test_mixed_equilibrium_and_constraint_checks_are_work_covariant():
         units@residual, units@applied,
         np.linalg.solve(units, coordinate_scale), .2)
     np.testing.assert_allclose(converted, original, rtol=1.e-14)
+    linear = ge_experimental._linear_equilibrium(
+        residual, applied, coordinate_scale)
+    converted_linear = ge_experimental._linear_equilibrium(
+        units@residual, units@applied,
+        np.linalg.solve(units, coordinate_scale))
+    np.testing.assert_allclose(converted_linear, linear, rtol=1.e-14)
 
     jacobian = np.array(((1., -2., 0.), (0., 3., .5)))
     gap = np.array((.003, -.02))
@@ -231,11 +237,57 @@ def test_mixed_equilibrium_and_constraint_checks_are_work_covariant():
     np.testing.assert_allclose(converted_gap, original_gap, rtol=1.e-14)
 
 
+def test_reference_linear_tiny_load_requires_an_actual_response(monkeypatch):
+    definition = _panel()
+    tiny = (NodalAction("beam", 105, (1e-12, 0., 0., 0., 0., 0.)),)
+    normal = (NodalAction("beam", 105, (1., 0., 0., 0., 0., 0.)),)
+    reference = ExperimentalGEAnalysis(definition).solve_linear(normal)
+    tiny_owner = ExperimentalGEAnalysis(definition)
+    actual = tiny_owner.solve_linear(tiny)
+    np.testing.assert_allclose(actual.beam_coordinates,
+                               1e-12*reference.beam_coordinates,
+                               rtol=1e-6, atol=1e-22)
+    restored = ExperimentalGEAnalysis(definition).restore(tiny_owner.checkpoint())
+    np.testing.assert_allclose(restored.beam_coordinates,
+                               actual.beam_coordinates, rtol=0., atol=0.)
+
+    class ZeroFactor:
+        def solve(self, rhs):
+            return np.zeros_like(rhs)
+
+    monkeypatch.setattr(ge_experimental.spla, "splu", lambda _matrix: ZeroFactor())
+    failed = ExperimentalGEAnalysis(definition)
+    with pytest.raises(RuntimeError, match="mixed reference linear equilibrium"):
+        failed.solve_linear(tiny)
+    assert failed._generation == 0 and failed._accepted is None
+
+
+def test_reference_linear_large_load_cannot_hide_a_missed_small_component(
+        monkeypatch):
+    analysis = ExperimentalGEAnalysis(_panel())
+    tip_y = analysis._shell_count+6*analysis._beam_index[105]+1
+    reduced_y = int(np.flatnonzero(analysis._free == tip_y)[0])
+    actual_factor = ge_experimental.spla.splu(analysis._A)
+
+    class DropSmallComponent:
+        def solve(self, rhs):
+            omitted = np.array(rhs, copy=True)
+            omitted[reduced_y] = 0.
+            return actual_factor.solve(omitted)
+
+    monkeypatch.setattr(ge_experimental.spla, "splu",
+                        lambda _matrix: DropSmallComponent())
+    mixed = (NodalAction("beam", 105, (1., 1e-12, 0., 0., 0., 0.)),)
+    with pytest.raises(RuntimeError, match="mixed reference linear equilibrium"):
+        analysis.solve_linear(mixed)
+    assert analysis._generation == 0 and analysis._accepted is None
+
+
 def test_compiled_stress_free_reference_reports_physical_scale():
     details = ExperimentalGEAnalysis(_panel()).preflight()
     assert details["reference_length_m"] > 0.
     assert details["stress_free_scaled_max"] <= 32.*np.finfo(float).eps
-    assert details["equilibrium_norm"] == "frozen_work_weighted_l2"
+    assert details["equilibrium_norm"] == "frozen_work_weighted_l2_plus_active_load_rows"
     assert details["constraint_norm"] == "reference_row_scaled_max"
 
 
