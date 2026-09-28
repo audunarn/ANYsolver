@@ -74,7 +74,7 @@ def main(output: Path, *, source_nx: int = 4, source_ny: int = 8,
          reference_sha256: str | None = None) -> None:
     if output.exists():
         raise FileExistsError(output)
-    if (source_nx not in (4, 8, 16, 32) or source_ny not in (4, 8, 16)
+    if (source_nx not in (4, 8, 16, 32) or source_ny not in (4, 8, 16, 32)
             or (fv_nx, fv_ny) not in ((128, 160), (128, 320), (256, 320))
             or bins_x not in (8, 16, 32) or bins_y not in (8, 16, 32)
             or fv_nx % bins_x or fv_ny % bins_y):

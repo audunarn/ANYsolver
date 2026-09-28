@@ -13,15 +13,19 @@ import json
 from pathlib import Path
 import time
 
+import numpy as np
+
 import anysolver.nonlinear_static as nonlinear_static
 import anysolver.general_contact.s3_patch_augmented as augmented
 import anysolver.general_contact.s3_patch_mortar_energy as mortar
 import anysolver.general_contact.s3_patch_static as patch_static
 import anysolver.general_contact.static_path as static_path
 from scripts.general_contact_d1_selected_vs_fine_coupled_dev import _run
+from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
 
 
-def main(output: Path) -> None:
+def main(output: Path, *, candidate_rows: int | None = None,
+         candidate_columns: int = 4) -> None:
     if output.exists():
         raise FileExistsError(output)
     records = defaultdict(lambda: {"calls": 0, "inclusive_seconds": 0.0,
@@ -72,6 +76,42 @@ def main(output: Path) -> None:
     watch(patch_static, "supported_pressure_gram", "pressure_rank_diagnostics")
 
     started = time.perf_counter()
+    if candidate_rows is not None:
+        model, definition, settings, _path = build_case(
+            candidate_columns, source_rows=candidate_rows,
+            load_profile="distributed", total_force_n=0.3,
+            target_right_x_m=1.3,
+        )
+        manager = patch_static.GeneralS3PatchManager(
+            model, definition, settings,
+        )
+        displacement = np.zeros(manager.n_dof)
+        for node in range(1, (candidate_rows+1)*(candidate_columns+1)+1):
+            displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = -50e-6
+        force, tangent, contact = manager.evaluate(displacement, tangent=True)
+        elapsed = time.perf_counter()-started
+        if stack:
+            raise AssertionError("timing stack did not close")
+        record = {
+            "method": "process-local single active uniform-close candidate; not a coupled solve or acceptance",
+            "source_grid": [candidate_columns, candidate_rows],
+            "target_s3_faces": len(definition.surfaces[1].element_ids),
+            "closing_shift_m": -50e-6,
+            "elapsed_seconds": elapsed,
+            "unwrapped_seconds": elapsed-sum(
+                item["exclusive_seconds"] for item in records.values()),
+            "timings": dict(sorted(records.items())),
+            "overlapping_pairs": contact.overlapping_pairs,
+            "active_pressure_dofs": contact.active_pressure_dofs,
+            "contact_force_z_n": float(contact.integration_force[2]),
+            "minimum_gap_m": float(contact.minimum_gap),
+            "force_norm_n": float(np.linalg.norm(force)),
+            "tangent_nonzeros": int(tangent.nnz),
+        }
+        output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+        print(json.dumps({key: value for key, value in record.items()
+                          if key != "timings"}, indent=2))
+        return
     case = _run("fine_nodal_q1", 8)
     elapsed = time.perf_counter() - started
     if stack:
@@ -111,4 +151,9 @@ def main(output: Path) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
-    main(parser.parse_args().output)
+    parser.add_argument("--candidate-rows", type=int, choices=(1, 2, 4, 8))
+    parser.add_argument("--candidate-columns", type=int, choices=(4, 8),
+                        default=4)
+    args = parser.parse_args()
+    main(args.output, candidate_rows=args.candidate_rows,
+         candidate_columns=args.candidate_columns)
