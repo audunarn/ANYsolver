@@ -179,9 +179,10 @@ def _beam_reference(definitions: tuple[NativeBeamDefinition, ...]):
     return ids, index, nodes, pieces, nodal+24*len(pieces)
 
 
-def _assemble_shell(model, pieces, count):
+def _assemble_shell(model, pieces, count, coordinate_scale):
     rows, columns, data = [], [], []
     residual = np.zeros(count)
+    local_error = 0.
     for eid, element, slots, origin in pieces:
         if len(slots) == 18:
             force, tangent, candidate = element.compute_nonlinear_response(
@@ -195,17 +196,20 @@ def _assemble_shell(model, pieces, count):
         if (force is None or tangent is None or candidate is None or
                 not np.isfinite(force).all() or not np.isfinite(tangent).all()):
             raise RuntimeError("finite Q4 reference operator unavailable")
+        local_error = max(local_error, _scaled_reference_residual(
+            force, tangent, coordinate_scale[slots]))
         np.add.at(residual, slots, force)
         rows.extend(np.repeat(slots, len(slots)))
         columns.extend(np.tile(slots, len(slots)))
         data.extend(np.asarray(tangent).ravel())
-    return residual, sparse.coo_matrix((data, (rows, columns)),
-                                       shape=(count, count)).tocsr()
+    return (residual, sparse.coo_matrix((data, (rows, columns)),
+                                        shape=(count, count)).tocsr(), local_error)
 
 
-def _assemble_beam(pieces, nodes, index, count):
+def _assemble_beam(pieces, nodes, index, count, coordinate_scale):
     rows, columns, data = [], [], []
     residual = np.zeros(count)
+    local_error = 0.
     for element, slots, origin in pieces:
         ref = element.operator.reference
         position = np.array([nodes[node][0] for node in element.node_ids])
@@ -218,12 +222,51 @@ def _assemble_beam(pieces, nodes, index, count):
                                  response.hessian+response.hessian_low)
         if local.shape != (42, 42) or not np.isfinite(local).all():
             raise RuntimeError("finite native B3 reference operator unavailable")
+        local_error = max(local_error, _scaled_reference_residual(
+            response.residual, local, coordinate_scale[slots]))
         np.add.at(residual, slots, response.residual)
         rows.extend(np.repeat(slots, 42))
         columns.extend(np.tile(slots, 42))
         data.extend(local.ravel())
-    return residual, sparse.coo_matrix((data, (rows, columns)),
-                                       shape=(count, count)).tocsr()
+    return (residual, sparse.coo_matrix((data, (rows, columns)),
+                                        shape=(count, count)).tocsr(), local_error)
+
+
+def _reference_scales(shell_xyz, beam_nodes, beam_parts, shell_count,
+                      beam_count):
+    """Freeze coordinate scales with their physical units at compilation."""
+    positions = np.vstack((shell_xyz, [value[0] for value in beam_nodes.values()]))
+    centered = positions-np.mean(positions, axis=0)
+    length = float(np.sqrt(np.mean(np.sum(centered*centered, axis=1))))
+    if not np.isfinite(length) or length <= np.finfo(float).eps:
+        raise ValueError("nondegenerate reference length required")
+    pose_scale = np.array((length, length, length, 1., 1., 1.))
+    shell_scale = np.tile(pose_scale, shell_count//6)
+    nodal_count = beam_count-24*len(beam_parts)
+    beam_scale = np.empty(beam_count)
+    beam_scale[:nodal_count] = np.tile(pose_scale, nodal_count//6)
+    strain_scale = np.array((1., 1., 1., 1./length, 1./length, 1./length))
+    for i, (element, _slots, _origin) in enumerate(beam_parts):
+        base = nodal_count+24*i
+        beam_scale[base:base+6] = 1.
+        resultant_scale = np.abs(element.section.elastic)@strain_scale
+        beam_scale[base+6:base+24] = np.tile(resultant_scale, 3)
+    if not np.isfinite(shell_scale).all() or not np.isfinite(beam_scale).all():
+        raise ValueError("finite reference coordinate scales required")
+    return length, shell_scale, beam_scale
+
+
+def _scaled_reference_residual(residual, tangent, coordinate_scale):
+    """Compare each covector row with a same-unit tangent action."""
+    row_scale = np.asarray(np.abs(tangent)@coordinate_scale).reshape(-1)
+    if (not np.isfinite(residual).all() or not np.isfinite(row_scale).all() or
+            np.any(row_scale < 0.)):
+        raise ValueError("finite stress-free reference operator required")
+    error = np.zeros_like(residual)
+    np.divide(np.abs(residual), row_scale, out=error, where=row_scale > 0.)
+    if np.any((row_scale == 0.) & (residual != 0.)):
+        return float("inf")
+    return float(np.max(error))
 
 
 class ExperimentalGEAnalysis:
@@ -240,11 +283,20 @@ class ExperimentalGEAnalysis:
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count = _beam_reference(
             definition.beams)
         shell_count = 6*len(shell_ids)
-        shell_r, shell_k = _assemble_shell(shell_model, shell_parts, shell_count)
-        beam_r, beam_k = _assemble_beam(beam_parts, beam_nodes, beam_index,
-                                       beam_count)
-        if max(np.linalg.norm(shell_r), np.linalg.norm(beam_r)) > 1e-5:
+        reference_length, shell_scale, beam_scale = _reference_scales(
+            shell_xyz, beam_nodes, beam_parts, shell_count, beam_count)
+        shell_r, shell_k, shell_local_error = _assemble_shell(
+            shell_model, shell_parts, shell_count, shell_scale)
+        beam_r, beam_k, beam_local_error = _assemble_beam(
+            beam_parts, beam_nodes, beam_index, beam_count, beam_scale)
+        reference_error = max(
+            _scaled_reference_residual(shell_r, shell_k, shell_scale),
+            _scaled_reference_residual(beam_r, beam_k, beam_scale),
+            shell_local_error, beam_local_error)
+        if reference_error > 32.*np.finfo(float).eps:
             raise ValueError("reference state must be stress free")
+        self._reference_length = reference_length
+        self._reference_error = reference_error
         self._K = sparse.block_diag((shell_k, beam_k), format="csr")
         self._shell_count = shell_count
         self._beam_count = beam_count
@@ -351,6 +403,8 @@ class ExperimentalGEAnalysis:
                 6*len(self._beam_ids), "constraints": self._C.shape[0],
                 "matrix_nnz": self._A.nnz,
                 "reference_linear_factorizations": self._linear_factorizations,
+                "reference_length_m": self._reference_length,
+                "stress_free_scaled_max": self._reference_error,
                 "production_qualified": False}
 
     def solve_linear(self, actions: tuple[NodalAction, ...], *,

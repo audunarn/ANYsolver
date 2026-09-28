@@ -114,6 +114,27 @@ def test_reference_linear_load_cases_reuse_one_factorization():
     assert second.generation == first.generation+1
 
 
+def test_stress_free_reference_check_is_rowwise_and_unit_covariant():
+    tangent = np.array(((2., -3., 0.), (0., 4., 5.), (0., 0., 0.)))
+    residual = np.array((1.e-7, -2.e-7, 0.))
+    coordinate_scale = np.array((3., 2., 4.))
+    original = ge_experimental._scaled_reference_residual(
+        residual, tangent, coordinate_scale)
+    units = np.diag((1.e3, 1.e-3, 1.e6))
+    converted = ge_experimental._scaled_reference_residual(
+        units@residual, units@tangent@units,
+        np.linalg.solve(units, coordinate_scale))
+    np.testing.assert_allclose(converted, original, rtol=1.e-14)
+    assert np.isinf(ge_experimental._scaled_reference_residual(
+        np.array((0., 0., 1.)), tangent, coordinate_scale))
+
+
+def test_compiled_stress_free_reference_reports_physical_scale():
+    details = ExperimentalGEAnalysis(_panel()).preflight()
+    assert details["reference_length_m"] > 0.
+    assert details["stress_free_scaled_max"] <= 32.*np.finfo(float).eps
+
+
 def test_cancellation_after_linear_factorization_preserves_empty_prefix(monkeypatch):
     analysis = ExperimentalGEAnalysis(_panel())
     action = (NodalAction("beam", 105, (0., 0., 100., 0., 0., 0.)),)

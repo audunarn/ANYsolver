@@ -7,7 +7,7 @@ from anysolver.corotational import rotation_matrix_from_vector
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts.b3_e4_f03_l1_native_connection_probe import (
-    shell_trace, six_gap, spatial_gap,
+    L1LogConnection, shell_trace, six_gap, spatial_gap,
 )
 
 
@@ -113,6 +113,100 @@ def test_degenerate_projected_material_tangent_fails_closed():
     reference = np.array(((0., 0., 0.), (0., 0., 1.)))
     with pytest.raises(ValueError, match="projected E4 material-line tangent"):
         shell_trace(reference, np.zeros((2, 6)), .035)
+
+
+def test_reference_offset_log_is_stress_free_at_nontrivial_reference():
+    beam, port, reference = _case()
+    base = np.zeros(beam.context.count)
+    base[6:9] = np.array((.002, -.001, .0005))
+    state = beam.context.advance(beam.context.initial.mechanical, base)
+    total = np.array(((.001, .002, .0003, .02, -.01, .03),
+                      (.002, -.001, -.0004, -.01, .025, -.015)))
+    connection = L1LogConnection.at_reference(reference, total, .035, port, state)
+    gap, derivative = connection.evaluate(total, state)
+    np.testing.assert_allclose(gap, 0., atol=2e-15)
+    assert derivative is None
+    assert np.linalg.norm(connection.joint._offset) > 0.
+    assert np.linalg.norm(connection.joint._relative-np.eye(3)) > 1e-4
+
+
+def test_log_connection_owns_immutable_reference_geometry():
+    beam, port, reference = _case()
+    state = beam.context.initial.mechanical
+    connection = L1LogConnection.at_reference(
+        reference, np.zeros((2, 6)), .035, port, state)
+    expected = connection.evaluate(np.zeros((2, 6)), state)[0]
+    reference[0, 0] += .1
+    np.testing.assert_array_equal(
+        connection.evaluate(np.zeros((2, 6)), state)[0], expected)
+    with pytest.raises(ValueError):
+        connection.reference.setflags(write=True)
+
+
+def test_log_first_variation_at_nonzero_relative_rotation_actual_updates():
+    beam, port, reference = _case()
+    state = beam.context.initial.mechanical
+    connection = L1LogConnection.at_reference(
+        reference, np.zeros((2, 6)), .035, port, state)
+    rng = np.random.default_rng(832)
+    base = rng.normal(size=beam.context.count)*4e-4
+    base[:6] = 0.
+    trial_state = beam.context.advance(state, base)
+    total = np.array(((.001, -.002, .0003, .23, -.12, .05),
+                      (.002, .001, -.0004, .18, .09, -.02)))
+    shell_direction = rng.normal(size=(2, 6))*np.array((.001, .001, .001, .04, .04, .04))
+    beam_direction = rng.normal(size=beam.context.count)*.001
+    beam_direction[:6] = 0.
+    gap, derivative = connection.evaluate(
+        total, trial_state, shell_direction=shell_direction,
+        beam_direction=beam_direction)
+    assert np.linalg.norm(gap[3:]) > .1
+    dual = np.array((2., -3., 5., 7., -11., 13.))
+    step = 2e-5
+
+    def actual_update(sign):
+        updated = beam.context.advance(trial_state, sign*step*beam_direction)
+        return connection.evaluate(total+sign*step*shell_direction, updated)[0]
+
+    finite = (actual_update(1.)-actual_update(-1.))/(2*step)
+    np.testing.assert_allclose(derivative, finite, rtol=4e-7, atol=2e-10)
+    np.testing.assert_allclose(dual@derivative, dual@finite,
+                               rtol=4e-7, atol=2e-9)
+
+
+def test_reference_offset_log_is_objective_under_common_rigid_motion():
+    beam, port, reference = _case()
+    state = beam.context.initial.mechanical
+    connection = L1LogConnection.at_reference(
+        reference, np.zeros((2, 6)), .035, port, state)
+    total = np.array(((.001, -.002, .0003, .14, -.07, .03),
+                      (.002, .001, -.0004, .11, .06, -.02)))
+    shell, shell_frame, _, _ = shell_trace(reference, total, .035)
+    high, low, beam_frame = port.pose_pair(state)
+    beam_position = high+low+beam_frame@np.array((0., 0., -.05))
+    positions = np.array((shell, beam_position))
+    frames = np.array((shell_frame, beam_frame))
+    original = connection.joint.evaluate(positions, frames, np.zeros(6))
+    rigid = rotation_matrix_from_vector(np.array((.3, -.2, .1)))
+    shift = np.array((.4, -.7, .2))
+    transformed = connection.joint.evaluate(positions@rigid.T+shift,
+                                            rigid@frames, np.zeros(6))
+    np.testing.assert_allclose(transformed.constraints,
+                               original.constraints, atol=2e-14)
+    np.testing.assert_allclose(connection.evaluate(total, state)[0],
+                               original.constraints, atol=2e-14)
+
+
+def test_log_rejects_relative_rotation_outside_chart():
+    beam, port, reference = _case()
+    state = beam.context.initial.mechanical
+    connection = L1LogConnection.at_reference(
+        reference, np.zeros((2, 6)), .035, port, state)
+    reversed_line = np.zeros((2, 6))
+    reversed_line[0, 0] = -.8
+    reversed_line[1, 0] = -1.0
+    with pytest.raises(ValueError, match="relative rotation must remain below"):
+        connection.evaluate(reversed_line, state)
 
 
 @pytest.mark.parametrize("angle", (np.pi/2, np.pi))

@@ -19,9 +19,9 @@ candidate or assessment metric has been selected. G1 acceptance remains open.
 
 ## Revision 7 integration evidence
 
-Source is `7061c555` plus the targeted Revision 7 GE factorization, B2 topology,
-local L1 probe, tests and this note. A development wheel built from a copy of
-those `src/anysolver` files has SHA-256
+The first consolidated solver slice is committed at `d2b05423`; the separate
+ANYfem consumer is committed at `c7035a7`. A development wheel built from a
+copy of the `d2b05423` solver source has SHA-256
 `68D142DE2CAF86239E5BE64A235AD7447B7492F8827F0F2BFF19C36C51DDA02B`.
 Its bytes and full build/install/test logs are preserved under
 `.qualification/b3-ge-e4-pl/r7-integration-dev-20260928-v2/`; the wheel is
@@ -41,6 +41,34 @@ repository documentation and is a development artifact, not a G6 wheel/sdist.
 Independent read-only review found no consequential defect in the targeted
 factorization, topology and local-chart guards; F03 formulation and the other
 scientific foundations remain unaccepted.
+
+The current candidate adds a rowwise, unit-covariant tangent-relative reference
+residual screen at both the element and assembled levels, plus the reference-
+offset SO(3) Log L1 point-trace prototype with an owned immutable reference.
+The 23 focused source checks pass with JIT disabled. Fresh development wheels
+have solver SHA-256 `E7BA4EF774558C5AB0D666810B96C2F722816269ADF0971CD53C37EEB23C8D7E`
+and ANYfem SHA-256 `C7E9D005DFEDDDC6D23C1D6757E29B3F314A7E94F614C98E0EEA76C87236D467`.
+Their actual installed imports passed 40 solver and 3 consumer checks with
+one numerical thread and JIT disabled. Both byte-identical wheels and the
+build/install/test logs are preserved under
+`.qualification/b3-ge-e4-pl/r7-integration-dev-20260928-v3/`. The wheels
+exclude optional repository documentation and are development artifacts; these
+checks do not establish a selected line law or formal G0/G1 acceptance.
+A matched all-shell flat-bar/T reference
+cannot yet be executed: the current CalculiX deck lacks the folded-web model,
+partitioned action/work parser and matched Fy/torque loading. The next reference
+work is to build and validate that distinct model before a bounded coarse run;
+the historical F5 evidence retains its original interpretation.
+
+The L1 Log probe uses the point joint's shell-frame translation
+`R_s^T(r_b-r_s)-e_s`. The saved candidate material-line derivation uses
+beam-frame translation `R_b^T(r_s-r_b)-e_b`. Their constrained zero sets can
+agree with transformed reference offsets, but off-constraint derivatives,
+multiplier bases and work differ. A prospective F03 contract must choose and
+derive one convention. A native mixed-tangent inverse is not automatically a
+positive compliance: a proposed reference-relative metric first needs a
+certified physical reduction, support/nullspace treatment and common action
+map. These are open derivations, not a frozen replacement criterion.
 
 ## Decision sought
 
