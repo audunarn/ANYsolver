@@ -14,14 +14,19 @@ metric. The weak vector is dominated by the beam kinematic norm, so
 this does not independently establish interface inf-sup stability.
 P1/dual still have dependencies at the full-resolution matched levels.
 The same-action shell/reference difference remains strongest in torque
-and axial/bending work. The `1:8` ratio extreme passes loaded Mx/Fz
+and axial/bending work. A pure-torque width probe finds a `2.0–3.2%`
+E4/3D director discrepancy from pre-bond to bond, with small measured
+3D mid-thickness displacement warp. Pure Fz displacement differs by
+`0.9–1.2%` without a similar local rise. The `1:8` ratio extreme passes loaded Mx/Fz
 checks, while the registered x16/y4 `8:1` fixture needs 1,956 rows
 and stops at the unchanged 1,900-row development cap before solution.
 **Remaining uncertainty:** Whether P0 avoids locking and unsupported
 modes across ratios and whether physically matched sided torque/shear
 transfer validates the declared law. **Next discriminator and action:**
-Obtain a same-law sided physical reference that separates shell, beam
-and connection effects. Revisit the `8:1` loaded check through an exact
+Establish a physically matched torque/section/support comparator that
+separates shell idealization from connection transfer; the saved
+pure-action fields alone cannot do that. Revisit the `8:1` loaded
+check through an exact
 bounded drill quotient if its result changes the policy decision; the
 size guard alone is no mechanics verdict. Do not infer selection from
 rank or the quotient alone. Advance B2 F09 independently.
@@ -2576,6 +2581,7 @@ This establishes a dimensionally defined reference dual and its bounded
 work conjugacy; it does not recover display-ready finite-state wrenches,
 qualify stability or validate external physical transfer. G0B/F03
 remain open and G1 barred.
+
 
 Independent review confirmed the units, cross-product sign and B3
 retained-port rigid variation. It identified a documentation erratum in
@@ -10850,3 +10856,57 @@ multiplier policy, use the already checked drill-free exact quotient
 and reconstruct the full equilibrium; do not present a coarser
 transverse fixture as the registered x16/y4 comparison. F03/G0B
 remain open and G1 barred.
+
+**Pure-action physical-width discriminator (prospective):** The saved
+same-law 24-channel solid unit fields show a `7.50%` E4/3D plate
+uniform-torque work difference and a `0.898%` pure transverse-force
+difference; the earlier physical pose probes sampled only the
+centerline under mixed loaded duals. Reconstruct *pure* uniform Mx
+and Fz interface actions from those unchanged fields, and solve the
+unchanged x4 E4 shell under identical integrated P0 duals. At common
+`x=.5/.75/.9/.95 m` and the eleven exact common shell y nodes,
+compare thickness-mean translations and director rotations. Also
+measure the 3D mid-thickness departure from its own top/bottom
+linear-director interpolation, separating plate kinematics from
+shell-versus-solid response. If differences concentrate inside the
+bond or if solid thickness warping is material, revisit the local
+pose/section interpretation; if differences are distributed and
+warping is small, focus on plate stiffness, support, and model
+idealization before changing the line law. Confirm pure-action work
+against the saved 24×24 component matrices. This reuses existing
+fields, has no new external solve, and cannot qualify the connection
+or multiplier space by itself.
+
+**Pure-action physical-width outcome:** The reviewed 24 solid unit
+fields and unchanged x4 E4 shell were subjected to the same uniform
+P0 interface torque (`100 Nm`) and transverse force (`1000 N`).
+Reconstructed solid-plate and E4 action works reproduce the saved
+independent component matrix values: Mx `0.0131049381` versus
+`0.0121222270 J`, and Fz `1.2973839583` versus `1.2857315873 J`.
+At exact common x planes `.5/.75/.9/.95 m`, across eleven common
+width nodes and top/middle/bottom 3D plate nodes, E4-minus-solid
+director-rx RMS discrepancies under pure Mx are `2.021/2.388/3.046/
+3.195%` of the solid director RMS. At `.95 m`, the under-stiffener
+and outside-stiffener relative differences are `3.546%` and `2.696%`.
+For pure Fz, thickness-mean vertical displacement RMS discrepancies
+are `1.150/1.054/0.938/0.902%`; they do not rise into the bond.
+The 3D mid-thickness displacement departure from its own top/bottom
+linear-director interpolation is at most `8.63e-9 m` RMS for Mx and
+`1.50e-8 m` RMS for Fz on these planes. It is below `0.063%` of the
+corresponding 3D face-displacement RMS for Mx. This is a kinematic
+probe, not an energetic bound on warping. It weakens a *large visible*
+through-thickness-warp explanation for the `7.50%` pure-torque work
+difference, but does not allocate that difference uniquely to shell
+stiffness, root support, trace, or section effects. The direct pure-Fz
+path remains comparatively close; the saved mixed-Fz Fx/My cross-work
+interpretation remains separate. The raw
+`B3_E4_F03_C1_PURE_ACTION_WIDTH_DEV_V1.json` SHA256 is
+`31aafbf3ad37f9e07afa08a6e45a86a69afff6e6d212d36ac0324298a4e4f166`;
+runner SHA256 is
+`4499cd634d432b453bc1985852587aa8181685b21243d24228fd7dbb8bf629d6`.
+Three focused width/trace tests pass, including an independent rigid
+torsion and mid-thickness-warp sign oracle. The next physically
+discriminating reference must match the pure torque action, section
+origin and root/support idealization and distinguish shell constitutive
+response from local connection transfer before changing the law.
+No multiplier space is selected; F03/G0B remain open, G1 barred.

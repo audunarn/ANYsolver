@@ -1,0 +1,245 @@
+{
+  "cases": {
+    "torsion_Mx": {
+      "applied_resultant": 100.0,
+      "applied_resultant_unit": "Nm",
+      "cross_sections": [
+        {
+          "native_minus_solid_primary_max": 1.6767858964763979e-06,
+          "native_minus_solid_primary_rms": 1.3411044764112926e-06,
+          "native_primary_rms": 6.5022654607427e-05,
+          "regions": {
+            "outside_stiffener": {
+              "count": 6,
+              "native_minus_solid_primary_max": 1.2556012003775272e-06,
+              "native_minus_solid_primary_rms": 1.1344235258063705e-06,
+              "solid_primary_rms": 6.557546715003698e-05
+            },
+            "under_0p1m_stiffener": {
+              "count": 5,
+              "native_minus_solid_primary_max": 1.6767858964763979e-06,
+              "native_minus_solid_primary_rms": 1.5532335927178974e-06,
+              "solid_primary_rms": 6.725906979276293e-05
+            }
+          },
+          "relative_primary_rms": 0.020213784059137225,
+          "solid_face_displacement_vector_rms_m": 9.273829431196203e-06,
+          "solid_mid_thickness_linear_director_residual_max_m": 8.500000000018638e-10,
+          "solid_mid_thickness_linear_director_residual_vector_rms_m": 3.0523866717684786e-10,
+          "solid_primary_rms": 6.63460375597054e-05,
+          "width_samples": 11,
+          "x_m": 0.5
+        },
+        {
+          "native_minus_solid_primary_max": 2.8773765203355328e-06,
+          "native_minus_solid_primary_rms": 2.0729736956761486e-06,
+          "native_primary_rms": 8.480629635004514e-05,
+          "regions": {
+            "outside_stiffener": {
+              "count": 6,
+              "native_minus_solid_primary_max": 2.8773765203355328e-06,
+              "native_minus_solid_primary_rms": 2.133937448494869e-06,
+              "solid_primary_rms": 8.382883614972645e-05
+            },
+            "under_0p1m_stiffener": {
+              "count": 5,
+              "native_minus_solid_primary_max": 2.240915228859014e-06,
+              "native_minus_solid_primary_rms": 1.9973625193281637e-06,
+              "solid_primary_rms": 9.028064892427254e-05
+            }
+          },
+          "relative_primary_rms": 0.023876427021736566,
+          "solid_face_displacement_vector_rms_m": 1.1927620591149085e-05,
+          "solid_mid_thickness_linear_director_residual_max_m": 2.9250000000047196e-09,
+          "solid_mid_thickness_linear_director_residual_vector_rms_m": 1.1448163806728033e-09,
+          "solid_primary_rms": 8.682093404465248e-05,
+          "width_samples": 11,
+          "x_m": 0.75
+        },
+        {
+          "native_minus_solid_primary_max": 6.8529040538430395e-06,
+          "native_minus_solid_primary_rms": 3.0408985827511786e-06,
+          "native_primary_rms": 9.706226969305385e-05,
+          "regions": {
+            "outside_stiffener": {
+              "count": 6,
+              "native_minus_solid_primary_max": 2.6400761334151936e-06,
+              "native_minus_solid_primary_rms": 2.465191580358217e-06,
+              "solid_primary_rms": 9.17972453935124e-05
+            },
+            "under_0p1m_stiffener": {
+              "count": 5,
+              "native_minus_solid_primary_max": 6.8529040538430395e-06,
+              "native_minus_solid_primary_rms": 3.6126081694295366e-06,
+              "solid_primary_rms": 0.00010872554486535989
+            }
+          },
+          "relative_primary_rms": 0.030455170660223633,
+          "solid_face_displacement_vector_rms_m": 1.32335742594902e-05,
+          "solid_mid_thickness_linear_director_residual_max_m": 1.6045000000000115e-08,
+          "solid_mid_thickness_linear_director_residual_vector_rms_m": 5.882154911384313e-09,
+          "solid_primary_rms": 9.984835142371352e-05,
+          "width_samples": 11,
+          "x_m": 0.9
+        },
+        {
+          "native_minus_solid_primary_max": 8.11594571183477e-06,
+          "native_minus_solid_primary_rms": 3.3203439820882345e-06,
+          "native_primary_rms": 0.00010097016575610317,
+          "regions": {
+            "outside_stiffener": {
+              "count": 6,
+              "native_minus_solid_primary_max": 2.707894561224168e-06,
+              "native_minus_solid_primary_rms": 2.5328547184221208e-06,
+              "solid_primary_rms": 9.394989011930013e-05
+            },
+            "under_0p1m_stiffener": {
+              "count": 5,
+              "native_minus_solid_primary_max": 8.11594571183477e-06,
+              "native_minus_solid_primary_rms": 4.06889192792057e-06,
+              "solid_primary_rms": 0.00011474692852961072
+            }
+          },
+          "relative_primary_rms": 0.03195086141293046,
+          "solid_face_displacement_vector_rms_m": 1.358096487109384e-05,
+          "solid_mid_thickness_linear_director_residual_max_m": 2.6124999999999686e-08,
+          "solid_mid_thickness_linear_director_residual_vector_rms_m": 8.622212318491521e-09,
+          "solid_primary_rms": 0.00010392032750467558,
+          "width_samples": 11,
+          "x_m": 0.95
+        }
+      ],
+      "native_e4_equilibrium_ratio": 1.3261370734317847e-11,
+      "native_e4_work_j": 0.012122226959156419,
+      "primary_observable": "director_rx_rad",
+      "solid_plate_work_j": 0.013104938095238095
+    },
+    "transverse_Fz": {
+      "applied_resultant": 1000.0,
+      "applied_resultant_unit": "N",
+      "cross_sections": [
+        {
+          "native_minus_solid_primary_max": 8.592020256586422e-06,
+          "native_minus_solid_primary_rms": 8.115643350587665e-06,
+          "native_primary_rms": 0.0006974490045818913,
+          "regions": {
+            "outside_stiffener": {
+              "count": 6,
+              "native_minus_solid_primary_max": 8.592020256586422e-06,
+              "native_minus_solid_primary_rms": 8.208840869999515e-06,
+              "solid_primary_rms": 0.0007010023622040116
+            },
+            "under_0p1m_stiffener": {
+              "count": 5,
+              "native_minus_solid_primary_max": 8.00244639718008e-06,
+              "native_minus_solid_primary_rms": 8.002373727332028e-06,
+              "solid_primary_rms": 0.0007109863823398821
+            }
+          },
+          "relative_primary_rms": 0.011502445689830412,
+          "solid_face_displacement_vector_rms_m": 0.0004075377105611909,
+          "solid_mid_thickness_linear_director_residual_max_m": 2.775000004417672e-08,
+          "solid_mid_thickness_linear_director_residual_vector_rms_m": 1.5039233260581168e-08,
+          "solid_primary_rms": 0.0007055580673389225,
+          "width_samples": 11,
+          "x_m": 0.5
+        },
+        {
+          "native_minus_solid_primary_max": 1.1243487347497834e-05,
+          "native_minus_solid_primary_rms": 1.0793669023475335e-05,
+          "native_primary_rms": 0.0010129220771845932,
+          "regions": {
+            "outside_stiffener": {
+              "count": 6,
+              "native_minus_solid_primary_max": 1.1243487347497834e-05,
+              "native_minus_solid_primary_rms": 1.089090734265061e-05,
+              "solid_primary_rms": 0.0010194651400170683
+            },
+            "under_0p1m_stiffener": {
+              "count": 5,
+              "native_minus_solid_primary_max": 1.0677893845474802e-05,
+              "native_minus_solid_primary_rms": 1.0675814014813441e-05,
+              "solid_primary_rms": 0.001028784356860094
+            }
+          },
+          "relative_primary_rms": 0.010543661263818744,
+          "solid_face_displacement_vector_rms_m": 0.0005911911486412,
+          "solid_mid_thickness_linear_director_residual_max_m": 1.3250001628009158e-08,
+          "solid_mid_thickness_linear_director_residual_vector_rms_m": 4.320730713218457e-09,
+          "solid_primary_rms": 0.0010237116646107088,
+          "width_samples": 11,
+          "x_m": 0.75
+        },
+        {
+          "native_minus_solid_primary_max": 1.1821523106933605e-05,
+          "native_minus_solid_primary_rms": 1.1484308568758282e-05,
+          "native_primary_rms": 0.0012130825311978378,
+          "regions": {
+            "outside_stiffener": {
+              "count": 6,
+              "native_minus_solid_primary_max": 1.1821523106933605e-05,
+              "native_minus_solid_primary_rms": 1.154907314820736e-05,
+              "solid_primary_rms": 0.001220332371749641
+            },
+            "under_0p1m_stiffener": {
+              "count": 5,
+              "native_minus_solid_primary_max": 1.1414707514656409e-05,
+              "native_minus_solid_primary_rms": 1.1406105670483139e-05,
+              "solid_primary_rms": 0.001229624013170032
+            }
+          },
+          "relative_primary_rms": 0.009378279192813069,
+          "solid_face_displacement_vector_rms_m": 0.0007071342818923246,
+          "solid_mid_thickness_linear_director_residual_max_m": 1.6282836310317712e-08,
+          "solid_mid_thickness_linear_director_residual_vector_rms_m": 5.653206711271756e-09,
+          "solid_primary_rms": 0.0012245645851063107,
+          "width_samples": 11,
+          "x_m": 0.9
+        },
+        {
+          "native_minus_solid_primary_max": 1.1948334574972668e-05,
+          "native_minus_solid_primary_rms": 1.1650189918902652e-05,
+          "native_primary_rms": 0.0012804812212298474,
+          "regions": {
+            "outside_stiffener": {
+              "count": 6,
+              "native_minus_solid_primary_max": 1.1948334574972668e-05,
+              "native_minus_solid_primary_rms": 1.1706691541056713e-05,
+              "solid_primary_rms": 0.0012879801083631153
+            },
+            "under_0p1m_stiffener": {
+              "count": 5,
+              "native_minus_solid_primary_max": 1.1595068257421511e-05,
+              "native_minus_solid_primary_rms": 1.1582024137315704e-05,
+              "solid_primary_rms": 0.0012970915161913692
+            }
+          },
+          "relative_primary_rms": 0.009016270286985373,
+          "solid_face_displacement_vector_rms_m": 0.0007461363774559064,
+          "solid_mid_thickness_linear_director_residual_max_m": 2.009586736049909e-08,
+          "solid_mid_thickness_linear_director_residual_vector_rms_m": 7.3885269408270184e-09,
+          "solid_primary_rms": 0.0012921296221253746,
+          "width_samples": 11,
+          "x_m": 0.95
+        }
+      ],
+      "native_e4_equilibrium_ratio": 1.4589682183642808e-10,
+      "native_e4_work_j": 1.2857315872646697,
+      "primary_observable": "thickness_mean_uz_m",
+      "solid_plate_work_j": 1.2973839583333333
+    }
+  },
+  "classification": "same-P0-action pure torque/shear physical-width and thickness probe",
+  "limits": [
+    "open-interface component influence, not a coupled or contact state",
+    "different 3D-plate and E4 shell kinematic idealizations",
+    "displacement probe and through-thickness chord, not strain energy decomposition",
+    "one width grid and four longitudinal planes, not convergence or F03/G0B acceptance"
+  ],
+  "prior_pure_action_sha256": "a8b322fb5eb6e241c3274c36b221d6834c4845c84651139afdb67719d4635020",
+  "runner_sha256": "4499cd634d432b453bc1985852587aa8181685b21243d24228fd7dbb8bf629d6",
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "source_commit": "bbc5a7eb1fa51fad2472743ee45277de4dec8922",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
+  "unit_fields": 24
+}
