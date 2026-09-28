@@ -8,6 +8,8 @@ import pytest
 
 from anysolver import solve_static_nonlinear
 from anysolver.control import SolveCancelled
+from anysolver.general_contact import semismooth_path
+from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from anysolver.nonlinear_restart import _checkpoint_without_hash, _sha256
 from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
 
@@ -158,3 +160,114 @@ def test_monolithic_cancellation_after_accepted_step_allows_clean_rerun():
         fresh.info["general_contact"]["integration_force"],
         rtol=0.0, atol=1e-10,
     )
+
+
+@pytest.mark.parametrize("failure_type", (RuntimeError, ValueError))
+def test_monolithic_contact_trial_failure_restores_reusable_model(
+        monkeypatch, failure_type):
+    """Candidate exceptions and rejected steps cannot leak trial state."""
+    entered_second_step = [False]
+
+    class MarkSecondStep:
+        def raise_if_cancelled(self, stage=""):
+            if stage == "contact_path.step:2":
+                entered_second_step[0] = True
+
+    original = semismooth_path.linearize
+    failed_after_contact = []
+
+    def raise_after_contact(*args, **kwargs):
+        work = original(*args, **kwargs)
+        if entered_second_step[0] and not failed_after_contact:
+            failed_after_contact.append(True)
+            raise failure_type("injected post-contact candidate failure")
+        return work
+
+    monkeypatch.setattr(semismooth_path, "linearize", raise_after_contact)
+    model, definition, settings, program = _case()
+    def interrupted_solve():
+        return solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=18,
+            cancellation_token=MarkSecondStep(),
+        )
+    if failure_type is RuntimeError:
+        with pytest.raises(RuntimeError,
+                           match="injected post-contact candidate failure"):
+            interrupted_solve()
+    else:
+        stopped = interrupted_solve()
+        assert stopped.status == "stopped_at_limit"
+        assert len(stopped.steps) == 1
+        assert "contact_semismooth_candidate_failed" in stopped.failure_reason
+    assert failed_after_contact
+    monkeypatch.setattr(semismooth_path, "linearize", original)
+
+    rerun = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    fresh_model, fresh_definition, fresh_settings, fresh_program = _case()
+    fresh = solve_static_nonlinear(
+        fresh_model, contact=fresh_definition, contact_settings=fresh_settings,
+        contact_path_program=fresh_program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    assert rerun.status == fresh.status == "completed"
+    np.testing.assert_allclose(rerun.displacements, fresh.displacements,
+                               rtol=0.0, atol=1e-10)
+    np.testing.assert_allclose(
+        rerun.info["general_contact"]["integration_force"],
+        fresh.info["general_contact"]["integration_force"],
+        rtol=0.0, atol=1e-10,
+    )
+    assert rerun.to_restart_checkpoint() == fresh.to_restart_checkpoint()
+
+
+def test_monolithic_zero_swept_fraction_rolls_back_accepted_prefix(monkeypatch):
+    """An unresolved swept trial must fail cleanly without leaking step two."""
+    entered_second_step = [False]
+
+    class MarkSecondStep:
+        def raise_if_cancelled(self, stage=""):
+            if stage == "contact_path.step:2":
+                entered_second_step[0] = True
+
+    original = GeneralS3PatchManager.admissible_step_fraction
+    blocked = []
+
+    def refuse_second_step(self, start, end):
+        if entered_second_step[0]:
+            blocked.append(True)
+            return 0.0
+        return original(self, start, end)
+
+    monkeypatch.setattr(GeneralS3PatchManager, "admissible_step_fraction",
+                        refuse_second_step)
+    model, definition, settings, program = _case()
+    stopped = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        cancellation_token=MarkSecondStep(),
+    )
+    assert blocked
+    assert stopped.status == "stopped_at_limit"
+    assert len(stopped.steps) == 1
+    assert stopped.failure_reason == "contact_semismooth_backtracking_failed"
+    monkeypatch.setattr(GeneralS3PatchManager, "admissible_step_fraction",
+                        original)
+
+    rerun = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    fresh_model, fresh_definition, fresh_settings, fresh_program = _case()
+    fresh = solve_static_nonlinear(
+        fresh_model, contact=fresh_definition, contact_settings=fresh_settings,
+        contact_path_program=fresh_program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    assert rerun.status == fresh.status == "completed"
+    assert rerun.to_restart_checkpoint() == fresh.to_restart_checkpoint()

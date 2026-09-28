@@ -275,7 +275,9 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
             y = z-c*contact.state.normalized_gap
             dy = dz-c*(contact.gap_gradient @ (transform @ dq))
             crossing = active & (dy < 0.0)
-            if np.any(crossing):
+            # A swept certificate can forbid every trial, leaving no
+            # backtrack sample from which an active-set event may be taken.
+            if attempts and np.any(crossing):
                 event = float(np.min(y[crossing]/(-dy[crossing])))
                 event_fraction = min(1.0, 0.5*event)
                 if 1.0e-12 < event_fraction < attempts[-1]["fraction"]:
