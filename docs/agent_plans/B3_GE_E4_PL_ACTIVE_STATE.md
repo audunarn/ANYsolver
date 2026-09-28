@@ -358,6 +358,23 @@ The next design choice is a verified shell-face-pair rotation reconstruction
 plus isolated-side energy work, or a bounded independent element-residual
 partition; neither is yet an accepted reference. Do not infer zero rotational
 work from missing output.
+The expanded FRD face pairs provide a bounded geometric alternative: a
+plate-through-thickness director, a web-through-thickness director, and their
+longitudinal material-line tangents can be reconstructed at each of the five
+saved seam stations. A common finite rigid-motion synthetic control preserves
+the relative triad; missing face data is rejected. In the saved plate-Fy and
+web-Mx models the reconstructed seam positions agree within `7e-18 m`, while
+the relative-triad Frobenius discrepancies reach `3.37e-6` and `2.09e-6`.
+These are diagnostics of S4 expanded-face kinematics, not a weld tolerance or
+an L1 rotation-gap score. The source is
+`scripts/b3_e4_f03_ccx_expanded_seam_trace.py`; the two JSON outputs are under
+`.qualification/b3-ge-e4-pl/f03-expanded-face-trace-dev-20260928-v1/`.
+Their SHA-256 identities are `7da6db3ff3341798d129659f7beb8c6d2fcbe4fe7546f467b957c0dbfec7826a`
+and `4c94da71b4412f7186deccdc60d1c77cd9e35a6bb30076bbd882324138a16c7f`.
+Next, establish the conjugate *side work* for a chosen supported virtual
+field, with correct plate/web geometry and face interpolation. Kinematic
+reconstruction alone cannot allocate the coupled response difference or
+select the continuous law, A/B space, or F03 assessment metric.
 
 ## Execution boundary
 
