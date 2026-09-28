@@ -1,4 +1,4 @@
-"""Topology-only candidate basis for a refined Q4 source pressure strip.
+"""Topology-only candidate bases for a refined Q4 source pressure strip.
 
 This builds pressure interpolation data. It does not change the contact law,
 integration side, virtual work, tangent, or solver admission.
@@ -14,14 +14,16 @@ import numpy as np
 
 
 MACRO_Q1_PAIR_VERSION = "q4_source_macro_q1_pair_v1"
+SELECTED_Q1_KNOTS_VERSION = "q4_source_selected_q1_knots_v1"
 MAX_STRIP_CELLS = 32
+MAX_SELECTED_STRIP_CELLS = 128
 
 
 @dataclass(frozen=True)
 class PressureBasis:
-    """Immutable fine-node to macro-pressure interpolation on one Q4 strip.
+    """Immutable fine-node to coarse-pressure interpolation on one Q4 strip.
 
-    ``B[i][a]`` is the value of macro basis function ``a`` at fine source
+    ``B[i][a]`` is the value of coarse basis function ``a`` at fine source
     node ``i``. The node and mode orders are explicit and both use stable
     material IDs, never current coordinates.
     """
@@ -42,7 +44,8 @@ class PressureBasis:
         object.__setattr__(self, "fine_source_node_ids", fine)
         object.__setattr__(self, "mode_ids", modes)
         object.__setattr__(self, "B", matrix)
-        if self.version != MACRO_Q1_PAIR_VERSION:
+        if self.version not in {MACRO_Q1_PAIR_VERSION,
+                                SELECTED_Q1_KNOTS_VERSION}:
             raise ValueError("unsupported Q4 source pressure-basis version")
         if (not fine or not modes
                 or any(type(node) is not int or node <= 0 for node in (*fine, *modes))
@@ -170,5 +173,69 @@ def build_q4_source_macro_q1_pair_basis(
             weights[node] = tuple(values)
     return PressureBasis(
         MACRO_Q1_PAIR_VERSION, fine, modes,
+        tuple(weights[node] for node in fine),
+    )
+
+
+def build_q4_source_selected_q1_basis(
+    ordered_faces: Iterable[tuple[int, int, int, int]],
+    selected_columns: Iterable[int],
+) -> PressureBasis:
+    """Build a fixed nonnegative Q1 pressure subspace from structural columns.
+
+    Selected knots are material-node columns, including both strip ends.
+    Between knots, pressure is linear in the ordered reference face index.
+    The contact owner still integrates physical work on the original Q4 faces;
+    this transform introduces no new contact geometry or multiplier on a
+    quadrature subdivision. Its topology and mode IDs remain fixed during
+    the analysis.
+    """
+    try:
+        faces = tuple(tuple(face) for face in ordered_faces)
+        knots = tuple(selected_columns)
+    except TypeError as exc:
+        raise ValueError("selected Q1 basis needs faces and knot columns") from exc
+    cells = len(faces)
+    if cells < 2 or cells > MAX_SELECTED_STRIP_CELLS:
+        raise ValueError("selected Q1 basis needs 2–128 ordered Q4 cells")
+    if (len(knots) < 2 or knots[0] != 0 or knots[-1] != cells
+            or any(type(column) is not int or column < 0 or column > cells
+                   for column in knots)
+            or any(right <= left for left, right in zip(knots, knots[1:]))):
+        raise ValueError("selected pressure columns must strictly span the Q4 strip")
+    for face in faces:
+        if (len(face) != 4
+                or any(type(node) is not int or node <= 0 for node in face)
+                or len(set(face)) != 4):
+            raise ValueError("each Q4 face needs four distinct positive material node IDs")
+    lower = [faces[0][0]]
+    upper = [faces[0][3]]
+    for face in faces:
+        if face[0] != lower[-1] or face[3] != upper[-1]:
+            raise ValueError("Q4 faces must share one oriented cross-strip edge")
+        lower.append(face[1])
+        upper.append(face[2])
+    rows = (tuple(lower), tuple(upper))
+    if len(set(lower+upper)) != 2*(cells+1):
+        raise ValueError("Q4 strip reuses a node outside its shared edges")
+    fine = tuple(sorted(lower+upper))
+    modes = tuple(sorted(row[column] for row in rows for column in knots))
+    mode_index = {node: index for index, node in enumerate(modes)}
+    weights = {}
+    for row in rows:
+        for column, node in enumerate(row):
+            values = [0.0]*len(modes)
+            if column in knots:
+                values[mode_index[node]] = 1.0
+            else:
+                right_index = next(index for index, knot in enumerate(knots)
+                                   if knot > column)
+                left, right = knots[right_index-1:right_index+1]
+                fraction = (column-left)/(right-left)
+                values[mode_index[row[left]]] = 1.0-fraction
+                values[mode_index[row[right]]] = fraction
+            weights[node] = tuple(values)
+    return PressureBasis(
+        SELECTED_Q1_KNOTS_VERSION, fine, modes,
         tuple(weights[node] for node in fine),
     )

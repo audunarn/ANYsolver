@@ -33,17 +33,19 @@ without rerunning them. For 24 Q4, the first full-press state of the frozen
 four-phase report was read without changing its authority. Full load,
 geometry, pressure basis, step and pressure-node identities are checked before
 comparison. The 48/64/96/128 cases are **linearized-reference-only** solves.
-The raw report and execution log are
-`reports/general_contact_d1_linearized_front_16_to_128_validated_dev_20260928.json`
-and its `.log` companion.
+The current raw report and execution log are
+`reports/general_contact_d1_linearized_front_stationary_dev_20260928.json`
+and its `.log` companion. The earlier
+`general_contact_d1_linearized_front_16_to_128_validated_dev_20260928.json`
+is retained as development history.
 
 ## Result
 
 | Q4 columns | Relative L2 difference: saved coupled vs linearized | First active reference x | Peak nodal pressure (Pa) | Integrated pressure force (N) |
 |---:|---:|---:|---:|---:|
-| 16 | 1.61×10⁻⁶ | 0.68750 | 0.5048 | 0.103872 |
-| 24 | 2.21×10⁻⁶ | 0.66667 | 0.5975 | 0.103879 |
-| 32 | 1.14×10⁻⁵ | 0.65625 | 0.6914 | 0.103857 |
+| 16 | 1.82×10⁻¹¹ | 0.68750 | 0.5048 | 0.103872 |
+| 24 | 1.40×10⁻¹¹ | 0.66667 | 0.5975 | 0.103879 |
+| 32 | 1.52×10⁻¹¹ | 0.65625 | 0.6914 | 0.103857 |
 | 48 | coupled run absent | 0.66667 | 0.5266 | 0.103880 |
 | 64 | coupled run absent | 0.65625 | 0.6579 | 0.103880 |
 | 96 | coupled run absent | 0.65625 | 0.6247 | 0.103883 |
@@ -61,6 +63,14 @@ The pressure optimum has 34 through 258 supported modes across these meshes,
 with maximum active weighted-gap error below 1.3×10⁻¹² m and reduced
 equilibrium residual below 1.7×10⁻¹⁴ N. These are discrete checks. They do
 not certify independent physical gap or pressure-space stability.
+
+The first reference used a bounded optimizer whose small projected gradient
+left pressure errors at roughly 10⁻⁵ relative L2. A direct active-set
+stationarity solve removes that numerical error and yields the table's
+near-machine-precision agreement with the saved coupled fields. The original
+raw output is preserved; its interpretation of the nonmonotone mesh trend is
+unchanged. The final active pressure-work maps have full numerical row rank
+at 16/24/32 Q4.
 
 ## Decision
 

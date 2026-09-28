@@ -17,7 +17,10 @@ from .q4_source_overlap import (
 )
 from .fixed_projection_graph import fixed_projection_graph_swept_certificate
 from .pressure_space import supported_pressure_gram
-from .pressure_basis import build_q4_source_macro_q1_pair_basis
+from .pressure_basis import (
+    build_q4_source_macro_q1_pair_basis,
+    build_q4_source_selected_q1_basis,
+)
 
 
 PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
@@ -163,6 +166,21 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                 ))
             except ValueError as exc:
                 issues.append(f"macro Q1 pressure topology: {exc}")
+    if settings.q4_source_pressure_basis == "selected_q1_knots_dev":
+        if (not refined_q4
+                or settings.general_s3_differentiation != "jet2_q4_s3_dev"
+                or settings.augmentation_support_resolution != "exact"):
+            issues.append("selected Q1 pressure needs refined augmented Q4/S3 Jet2 with exact support")
+        else:
+            try:
+                build_q4_source_selected_q1_basis(
+                    tuple(tuple(int(node) for node in
+                                model.mesh.elements[element_id].node_ids)
+                          for element_id in source.element_ids),
+                    settings.q4_source_pressure_knot_columns,
+                )
+            except ValueError as exc:
+                issues.append(f"selected Q1 pressure topology: {exc}")
     if settings.general_s3_differentiation == "jet2_q4_s3_dev" and any(
         getattr(settings, name) is None for name in (
             "q4_source_support_gradient_tolerance",
@@ -385,9 +403,15 @@ class GeneralS3PatchManager:
         source, target, interaction = _selected(definition)
         adapters = _adapters(model, (source, target))
         faces = _patch_faces(adapters)
-        pressure_basis = (build_q4_source_macro_q1_pair_basis(
-            tuple(face.node_ids for face in faces[0]),
-        ) if self.settings.q4_source_pressure_basis == "macro_q1_pair_dev" else None)
+        source_faces = tuple(face.node_ids for face in faces[0])
+        pressure_basis = (
+            build_q4_source_macro_q1_pair_basis(source_faces)
+            if self.settings.q4_source_pressure_basis == "macro_q1_pair_dev"
+            else build_q4_source_selected_q1_basis(
+                source_faces, self.settings.q4_source_pressure_knot_columns,
+            ) if self.settings.q4_source_pressure_basis == "selected_q1_knots_dev"
+            else None
+        )
         self.stiffness = interaction.normal_stiffness
         self.augmented = interaction.normal_law == "augmented"
         self.gap_tolerance = interaction.gap_tolerance
@@ -756,6 +780,10 @@ class GeneralS3PatchManager:
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
                          **({"q4_source_pressure_basis": self.settings.q4_source_pressure_basis,
+                             **({"q4_source_pressure_knot_columns": list(
+                                 self.settings.q4_source_pressure_knot_columns)}
+                                if self.settings.q4_source_pressure_basis == "selected_q1_knots_dev"
+                                else {}),
                              "pressure_basis_version": self.law.pressure_basis.version,
                              "pressure_basis_fine_ids": list(self.law.pressure_basis.fine_source_node_ids),
                              "pressure_basis_mode_ids": list(self.law.pressure_basis.mode_ids),

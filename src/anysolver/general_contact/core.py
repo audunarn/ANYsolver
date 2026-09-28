@@ -203,6 +203,7 @@ class ContactSolverSettings:
     maximum_q4_source_integration_triangles: int | None = None
     q4_source_gap_certificate: str = "whole_face"
     q4_source_pressure_basis: str = "fine_nodal_q1"
+    q4_source_pressure_knot_columns: tuple[int, ...] | None = None
     augmentation_acceleration: str = "none"
     augmentation_pivot_max_pressure_pa: float | None = None
     augmentation_pivot_difference_step_m: float | None = None
@@ -247,8 +248,16 @@ class ContactSolverSettings:
                 "whole_face", "projected_matching", "fixed_projection_graph"}:
             raise ValueError("q4_source_gap_certificate must be whole_face, projected_matching or fixed_projection_graph")
         if self.q4_source_pressure_basis not in {
-                "fine_nodal_q1", "macro_q1_pair_dev"}:
-            raise ValueError("q4_source_pressure_basis must be fine_nodal_q1 or macro_q1_pair_dev")
+                "fine_nodal_q1", "macro_q1_pair_dev",
+                "selected_q1_knots_dev"}:
+            raise ValueError("unsupported q4_source_pressure_basis")
+        knots = self.q4_source_pressure_knot_columns
+        if self.q4_source_pressure_basis == "selected_q1_knots_dev":
+            if (type(knots) is not tuple or len(knots) < 2
+                    or any(type(column) is not int for column in knots)):
+                raise ValueError("selected Q1 pressure needs immutable integer knot columns")
+        elif knots is not None:
+            raise ValueError("pressure knot columns require selected_q1_knots_dev")
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
             raise ValueError("maximum_candidate_pairs must be a positive integer")
         if self.pair_motion not in {"guided", "restricted_sliding", "general"}:

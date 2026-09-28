@@ -24,17 +24,48 @@ from anysolver.nonlinear_static import _assemble_nonlinear_system
 from scripts.general_contact_d1_pressure_field_compare import _squared_norm
 
 
-def _planar_q1_matrix(columns: int) -> tuple[np.ndarray, np.ndarray]:
-    """Integrate source Q1 products over x∈[0.1,1.1], y∈[0.1,1]."""
-    stride = columns + 1
-    mx = np.zeros((stride, stride))
-    local = np.array(((2.0, 1.0), (1.0, 2.0))) / (6.0*columns)
-    for cell in range(columns):
-        mx[cell:cell+2, cell:cell+2] += local
+def _planar_q1_matrix(structural_columns: int,
+                      pressure_columns: int | None = None,
+                      pressure_knots: tuple[float, ...] | None = None,
+                      ) -> tuple[np.ndarray, np.ndarray]:
+    """Integrate pressure Q1 × structural Q1 over the planar overlap."""
+    if pressure_knots is not None:
+        if pressure_columns is not None:
+            raise ValueError("choose pressure columns or pressure knots")
+        knots = np.asarray(pressure_knots, dtype=float)
+        if (knots.ndim != 1 or len(knots) < 2
+                or not np.all(np.isfinite(knots))
+                or knots[0] != 0.0 or knots[-1] != 1.0
+                or np.min(np.diff(knots)) <= 0.0):
+            raise ValueError("pressure knots must strictly span [0,1]")
+        pressure_columns = len(knots)-1
+    else:
+        pressure_columns = (structural_columns if pressure_columns is None
+                            else pressure_columns)
+        knots = np.linspace(0.0, 1.0, pressure_columns+1)
+    if structural_columns < 1 or pressure_columns < 1:
+        raise ValueError("structural and pressure columns must be positive")
+    mx = np.zeros((pressure_columns+1, structural_columns+1))
+    breaks = sorted({i/structural_columns for i in range(structural_columns+1)}
+                    | set(float(knot) for knot in knots))
+    for left, right in zip(breaks, breaks[1:]):
+        for point in (0.5*(left+right-(right-left)/np.sqrt(3.0)),
+                      0.5*(left+right+(right-left)/np.sqrt(3.0))):
+            pressure_cell = min(pressure_columns-1,
+                                int(np.searchsorted(knots, point, side="right")-1))
+            structural_cell = min(structural_columns-1, int(point*structural_columns))
+            pressure_local = ((point-knots[pressure_cell])
+                              /(knots[pressure_cell+1]-knots[pressure_cell]))
+            structural_local = point*structural_columns-structural_cell
+            mx[pressure_cell:pressure_cell+2,
+               structural_cell:structural_cell+2] += 0.5*(right-left)*np.outer(
+                   (1.0-pressure_local, pressure_local),
+                   (1.0-structural_local, structural_local),
+               )
     # eta=y-0.1 on [0,0.9]; shape functions are (1-eta,eta).
     my = np.array(((0.333, 0.162), (0.162, 0.243)))
     mass = np.kron(my, mx)
-    support = mass @ np.ones(2*stride)
+    support = mass @ np.ones(2*(structural_columns+1))
     if (np.min(support) <= 0.0 or
             abs(np.sum(support)-0.9) > 1.0e-13):
         raise AssertionError("independent Q1 overlap integration is invalid")
@@ -56,13 +87,35 @@ def _nonnegative_quadratic(hessian: np.ndarray, linear: np.ndarray,
         options={"maxiter": 10000, "ftol": 1.0e-16,
                  "gtol": 1.0e-15, "maxls": 100},
     )
-    pressure = result.x
+    # The projected optimizer identifies the active set; solve its stationarity
+    # equations directly so a small optimizer gradient does not masquerade as
+    # contact-front mesh sensitivity in the finest comparisons.
+    active = set(int(i) for i in np.flatnonzero(result.x > 1.0e-8))
+    for _ in range(2*len(c)+1):
+        indices = np.asarray(sorted(active), dtype=int)
+        pressure = np.zeros(len(c))
+        if len(indices):
+            stationary = np.linalg.solve(
+                hessian[np.ix_(indices, indices)], -linear[indices],
+            )
+            if np.min(stationary) < -1.0e-9:
+                active.remove(int(indices[np.argmin(stationary)]))
+                continue
+            pressure[indices] = np.maximum(stationary, 0.0)
+        gap = (linear+hessian @ pressure)/support
+        inactive = np.asarray(sorted(set(range(len(c)))-active), dtype=int)
+        if len(inactive) and np.min(gap[inactive]) < -1.0e-11:
+            active.add(int(inactive[np.argmin(gap[inactive])]))
+            continue
+        break
+    else:
+        raise RuntimeError("linearized pressure active set did not settle")
     weighted_gap = linear+hessian @ pressure
     gap = weighted_gap/support
     complementarity = np.max(np.abs(pressure*gap))
     if (not result.success or np.min(pressure) < -1.0e-10
-            or np.min(gap) < -1.0e-10
-            or complementarity > 1.0e-10):
+            or np.min(gap) < -1.0e-11
+            or complementarity > 1.0e-11):
         raise RuntimeError(
             f"linearized pressure solve failed: {result.message}; "
             f"minimum gap={np.min(gap):.4g} m, "
@@ -104,9 +157,14 @@ def _source_model(columns: int) -> FEModel:
     return model
 
 
-def _linearized_case(columns: int) -> dict:
+def _linearized_case(columns: int,
+                     pressure_columns: int | None = None,
+                     pressure_knots: tuple[float, ...] | None = None) -> dict:
     model = _source_model(columns)
     stride = columns+1
+    pressure_columns = (len(pressure_knots)-1 if pressure_knots is not None
+                        else columns if pressure_columns is None
+                        else pressure_columns)
     model.apply_boundary_conditions()
     size = model.mesh.dof_manager.total_dofs
     zero = np.zeros(size)
@@ -131,8 +189,11 @@ def _linearized_case(columns: int) -> dict:
     )
     if np.linalg.norm(offset) > 0.0:
         raise ValueError("linearized reference requires zero prescribed pose")
-    mass, support = _planar_q1_matrix(columns)
-    work = sparse.lil_matrix((2*stride, size))
+    mass, support = _planar_q1_matrix(
+        columns, None if pressure_knots is not None else pressure_columns,
+        pressure_knots,
+    )
+    work = sparse.lil_matrix((2*(pressure_columns+1), size))
     for i, dof in enumerate(source_z):
         work[:, dof] = mass[:, i].reshape(-1, 1)
     reduced_work = (work.tocsr() @ transform).toarray()
@@ -149,24 +210,59 @@ def _linearized_case(columns: int) -> dict:
     )
     q = free_q+response @ pressure
     gap = (support*initial_gap+reduced_work @ q)/support
+    full_displacement = np.asarray(transform @ q).reshape(-1)
+    source_vertical = full_displacement[np.asarray(source_z)].reshape(2, stride)
+    physical_overlap_gap = np.r_[
+        initial_gap+source_vertical[0],
+        initial_gap+0.1*source_vertical[0]+0.9*source_vertical[1],
+    ]
     residual = reduced_k @ q-reduced_load-reduced_work.T @ pressure
     if np.linalg.norm(residual) > 1.0e-7:
         raise RuntimeError("linearized structural equilibrium is invalid")
+    active = pressure > 1.0e-8
+    active_compliance = compliance[np.ix_(active, active)]
+    active_diagonal = np.sqrt(np.diag(active_compliance))
+    active_scaled = active_compliance / np.outer(active_diagonal,
+                                                 active_diagonal)
+    active_eigenvalues = np.linalg.eigvalsh(active_scaled)
+    active_condition = float(
+        active_eigenvalues[-1]/active_eigenvalues[0]
+        if active_eigenvalues[0] > 0.0 else np.inf
+    )
+    active_work_singular = np.linalg.svd(reduced_work[active],
+                                         compute_uv=False)
+    active_work_rank = int(np.count_nonzero(
+        active_work_singular > active_work_singular[0]*1.0e-10
+    ))
+    first_active = int(np.flatnonzero(
+        pressure.reshape(2, pressure_columns+1)[0] > 1.0e-8
+    )[0])
+    first_active_x = (pressure_knots[first_active]
+                      if pressure_knots is not None
+                      else first_active/pressure_columns)
     return {
         "columns": columns,
-        "pressure": pressure.reshape(2, stride),
+        "pressure": pressure.reshape(2, pressure_columns+1),
+        "pressure_columns": pressure_columns,
+        "pressure_knots": (
+            list(pressure_knots) if pressure_knots is not None else None
+        ),
         "supported_modes": len(pressure),
         "active_modes": int(np.count_nonzero(pressure > 1.0e-8)),
-        "first_active_reference_x": float(
-            np.flatnonzero(pressure.reshape(2, stride)[0] > 1.0e-8)[0]
-            / columns
+        "active_work_rank": active_work_rank,
+        "active_compliance_scaled_condition": active_condition,
+        "active_compliance_scaled_smallest_eigenvalue": float(
+            active_eigenvalues[0]
         ),
+        "first_active_reference_x": float(first_active_x),
         "maximum_pressure_pa": float(np.max(pressure)),
         "minimum_weighted_gap_m": float(np.min(gap)),
         "maximum_active_weighted_gap_m": float(
             np.max(np.abs(gap[pressure > 1.0e-8]))
         ),
         "integrated_force_n": float(support @ pressure),
+        "tip_vertical_displacement_m": float(np.mean(source_vertical[:, -1])),
+        "minimum_physical_overlap_gap_m": float(np.min(physical_overlap_gap)),
         "reduced_equilibrium_residual_n": float(np.linalg.norm(residual)),
         "pressure_compliance_asymmetry": asymmetry,
     }

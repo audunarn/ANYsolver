@@ -7,8 +7,10 @@ import pytest
 
 from anysolver.general_contact.pressure_basis import (
     MACRO_Q1_PAIR_VERSION,
+    SELECTED_Q1_KNOTS_VERSION,
     PressureBasis,
     build_q4_source_macro_q1_pair_basis,
+    build_q4_source_selected_q1_basis,
 )
 
 
@@ -192,3 +194,67 @@ def test_saved_weak_three_node_pattern_has_small_euclidean_macro_projection():
         weak[basis.fine_source_node_ids.index(node)] = value
     projection = B @ np.linalg.lstsq(B, weak, rcond=None)[0]
     assert np.linalg.norm(projection)/np.linalg.norm(weak) < 0.03
+
+
+def test_selected_knots_match_direct_piecewise_q1_work_on_each_fine_face():
+    cells = 8
+    knots = (0, 1, 3, 6, 8)
+    basis = build_q4_source_selected_q1_basis(_strip_faces(cells), knots)
+    B = basis.as_array()
+    assert basis.version == SELECTED_Q1_KNOTS_VERSION
+    assert B.shape == (18, 10)
+    assert np.linalg.matrix_rank(B) == 10
+    assert np.all(B >= 0.0)
+    np.testing.assert_allclose(B.sum(axis=1), 1.0, atol=1e-15)
+    points, _weights = np.polynomial.legendre.leggauss(4)
+    mode_order = {node: index for index, node in enumerate(basis.mode_ids)}
+    for cell, face in enumerate(_strip_faces(cells)):
+        fine_indices = [basis.fine_source_node_ids.index(node) for node in face]
+        for xi in points:
+            x = cell+0.5*(xi+1.0)
+            local_x = x-cell
+            left = max(knot for knot in knots if knot <= x)
+            right = min(knot for knot in knots if knot >= x)
+            if left == right:
+                left = knots[knots.index(left)-1] if left else left
+                right = knots[knots.index(right)+1] if right < cells else right
+            fraction = (x-left)/(right-left)
+            for eta in points:
+                y = 0.5*(eta+1.0)
+                fine_shape = np.array((
+                    (1-local_x)*(1-y), local_x*(1-y),
+                    local_x*y, (1-local_x)*y,
+                ))
+                direct = np.zeros(len(basis.mode_ids))
+                for row, y_weight in ((0, 1-y), (1, y)):
+                    offset = row*(cells+1)
+                    direct[mode_order[1+offset+left]] = (1-fraction)*y_weight
+                    direct[mode_order[1+offset+right]] = fraction*y_weight
+                np.testing.assert_allclose(fine_shape @ B[fine_indices],
+                                           direct, atol=2e-15, rtol=0.0)
+
+
+def test_selected_nested_front_knots_reduce_modes_without_changing_macro_pair():
+    cells = 128
+    knots = [0]
+    for cell in range(16):
+        parts = 8 if 9 <= cell < 13 else 1
+        knots.extend((cell*8+part*8//parts) for part in range(1, parts+1))
+    selected = build_q4_source_selected_q1_basis(_strip_faces(cells), knots)
+    assert len(selected.mode_ids) == 90
+    assert selected.B[0][selected.mode_ids.index(1)] == 1.0
+    paired = build_q4_source_macro_q1_pair_basis(_strip_faces(16))
+    equivalent = build_q4_source_selected_q1_basis(
+        _strip_faces(16), range(0, 17, 2),
+    )
+    assert equivalent.B == paired.B
+    assert equivalent.mode_ids == paired.mode_ids
+
+
+@pytest.mark.parametrize("knots", (
+    (), (0,), (1, 8), (0, 7), (0, 4, 4, 8),
+    (0, 9), (0, 3.0, 8), (0, True, 8),
+))
+def test_selected_knots_reject_invalid_material_columns(knots):
+    with pytest.raises(ValueError):
+        build_q4_source_selected_q1_basis(_strip_faces(8), knots)

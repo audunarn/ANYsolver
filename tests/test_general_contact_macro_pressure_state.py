@@ -11,6 +11,7 @@ from anysolver.general_contact import linearized_pivot
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from test_general_contact_q4_s3_jet2_static_owner import _settings
 from test_general_contact_q4_s3_refined_patch import _two_q4_two_s3
+from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
 
 from anysolver.general_contact.pressure_basis import (
     build_q4_source_macro_q1_pair_basis,
@@ -177,6 +178,59 @@ def test_macro_manager_rejects_nonstrip_source_topology():
     report = validate_general_contact(model, reordered, settings)
     assert not report.valid
     assert any("macro Q1 pressure topology" in issue for issue in report.issues)
+
+
+def test_selected_knot_manager_maps_fine_geometry_and_binds_restart():
+    model, definition, settings, _program = build_case(4)
+    settings = replace(
+        settings,
+        q4_source_pressure_basis="selected_q1_knots_dev",
+        q4_source_pressure_knot_columns=(0, 1, 3, 4),
+    )
+    report = validate_general_contact(model, definition, settings)
+    assert report.valid, report.issues
+    manager = GeneralS3PatchManager(model, definition, settings)
+    assert len(manager.law.source_node_ids) == 10
+    assert len(manager.law.pressure_mode_ids) == 8
+    assert manager.normal_multipliers.shape == (8,)
+    contract = manager.restart_contract()
+    assert contract["settings"]["q4_source_pressure_knot_columns"] == [0, 1, 3, 4]
+    assert contract["settings"]["pressure_basis_version"] == (
+        "q4_source_selected_q1_knots_v1"
+    )
+    changed = replace(settings, q4_source_pressure_knot_columns=(0, 2, 4))
+    other = GeneralS3PatchManager(model, definition, changed)
+    assert other.restart_contract() != contract
+
+    displacement = np.zeros(manager.n_dof)
+    for node in range(1, 11):
+        displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = -6.0e-5
+    force, tangent, result = manager.evaluate(displacement, tangent=True)
+    assert result.active_pressure_dofs == 8
+    assert result.source_pressure_node_ids == manager.law.pressure_mode_ids
+    assert result.gap_tolerance_met
+    assert np.all(np.isfinite(force))
+    assert np.all(np.isfinite(tangent.data))
+    direction = np.zeros(manager.n_dof)
+    direction[model.mesh.dof_manager.get_node_dofs(3)[2]] = 1.0
+    step = 2.0e-7
+    plus = manager.evaluate(displacement+step*direction, tangent=False)[0]
+    minus = manager.evaluate(displacement-step*direction, tangent=False)[0]
+    finite_difference = (plus-minus)/(2.0*step)
+    predicted = tangent @ direction
+    assert np.linalg.norm(finite_difference-predicted)/np.linalg.norm(predicted) < 1e-5
+
+
+def test_selected_knot_admission_rejects_out_of_strip_mode_identity():
+    model, definition, settings, _program = build_case(4)
+    settings = replace(
+        settings,
+        q4_source_pressure_basis="selected_q1_knots_dev",
+        q4_source_pressure_knot_columns=(0, 2, 5),
+    )
+    report = validate_general_contact(model, definition, settings)
+    assert not report.valid
+    assert any("selected Q1 pressure topology" in issue for issue in report.issues)
 
 
 def test_macro_pressure_response_transforms_fine_derivatives_before_gap_law(monkeypatch):
