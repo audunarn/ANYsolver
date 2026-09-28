@@ -174,12 +174,21 @@ of Fy work fell from about 9.97% to 2.76% to 0.72%. Yet the final 4-to-8
 change remains about 2.7% in Fy work and 2.4% in A torque work; this is not
 a converged reference. The source-bound one-thread results are preserved in
 [the whole-panel development evidence](B3_E4_F03_L1_WHOLE_PANEL_DEV_V1.json).
-Next distinguish shell discretization error from line/beam resolution with
-matched uncoupled shell and native controls on these already defined levels;
-if shell error dominates, target shell resolution, otherwise inspect the
-interface and retained beam trace. Do not set F03 floors from these candidate
-values or automatically launch a fourth refinement. Physical engineering
-transfer and the reviewed mixed-system contract remain open.
+Matched uncoupled controls on those same grids give shell-only Fy work
+0.05898/0.06659/0.06901 N m and shell-completion fractions
+13.0%/3.71%/0.98%. The native-only torque work is invariant at
+0.00742857 N m and matches the independent uniform-GJ torsion oracle.
+The coupled Fy shift follows the shell-only trend, though that does not
+uniquely allocate coupled error; native beam discretization alone cannot
+explain the coupled torque trend on this fixture. The source-bound outputs
+are in [the matched controls](B3_E4_F03_L1_UNCOUPLED_CONTROLS_DEV_V1.json).
+Next compare x-only and y-only Q4 refinement around the fixed eight-edge
+shell-only control to locate the remaining shell error before extending the
+coupled reference. If shell work barely changes in either direction while
+coupled work does, inspect the interface resolution and retained trace.
+Do not set F03 floors from candidate values or automatically launch another
+coupled refinement. Physical engineering transfer and the reviewed
+mixed-system contract remain open.
 An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
 for plate/web Fy and web torque. Its clamped-root option matches the declared
 six-DOF support type but lacks verified rotational reaction output; the hinged
