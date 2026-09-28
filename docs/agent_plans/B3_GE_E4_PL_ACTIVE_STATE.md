@@ -88,6 +88,20 @@ The H^-1/2 prototype was discarded; A/B remain unselected. Continue
 independent GE/B2 work. New external sided output requires a specific
 discriminating hypothesis.
 
+The bounded 0.1 m flat Q4 rail now integrates its declared interpolated top
+position/director across width and composes one station with the unchanged
+native B3 port. Eight focused checks pass: independent width quadrature,
+finite rigid motions, actual-chart derivatives, six selected local channels,
+width-distributed virgin yaw work, selected E4 physical energy, shear/drill
+kinematics, and reference station/offset negatives. Independent read-only
+review confirmed the kinematic composition but identified material-station
+and virgin-reference guards; both were added and checked. This is a *point
+prototype*, not E4 owner-field equivalence, full torque/shear transfer,
+nonmatching line work, second variation or F03 acceptance. Next derive and
+check the complete rail/native multiplier work and curvature, then the
+native broken-trace L2 energy bound, before multiplier scoring. No loaded
+refinement or F03 authority has been used.
+
 ## Execution boundary
 
 Revision 7 allows experimental integration during open G0 with at most three
