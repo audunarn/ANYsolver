@@ -90,23 +90,26 @@ discriminating hypothesis.
 
 The bounded 0.1 m flat Q4 rail integrates its declared interpolated top
 position/director across width and composes one station with the unchanged
-native B3 port. Eleven focused checks pass, including width quadrature, finite
-rigid motions, six selected channels, distributed yaw work, selected E4
-physical energy, shear/drill kinematics and reference guards. Its constant-
-multiplier point work now has a composed local Hessian; same-parent finite
-differences check value, gradient, curvature and shell/native cross curvature
-at small and finite rotations. Read-only mechanics review found no missing
-term in that declared point chart. The shell chart remains additive; production
-Complete torque/shear transfer, segmented line measure, a native broken-trace
-L2 bound and F03 assessment remain open.
+native B3 port. Thirteen focused checks pass, including width quadrature,
+finite rigid motions, six selected channels, distributed yaw work, and
+reference guards. Its constant-multiplier point work has a composed local
+Hessian; same-parent finite differences check shell/native cross curvature
+at small and finite rotations. At 35/70 mm thickness, pure Mx/My/Mz and a
+mixed wrench balance about one origin, pull back through the eccentric beam
+arm, apply zero shell drilling load, and produce positive supported Q4
+physical-only compliance. Read-only mechanics review found no point-work
+term or wrench-sign defect. This is bounded point influence, **not** a
+continuum-bounded line torque/shear transfer: point evaluation of the rail's
+longitudinal slope remains unbounded on H1. Segmented line integration, a
+native broken-trace L2 bound and F03 assessment remain open.
 Independent source review found no unique finite Q4 interior director field
 to claim exact rail equivalence. An eleventh check instead verifies first-
 order virgin rail top/complete-frame variations against the E4 owner's Q4
 shape functions, gradients and Mindlin signs; it passes. Treat the rail as a
 separate finite connection law and qualify its transfer, charts and physical
 domain directly.
-Next establish the native trace energy pairing and the rail's finite physical
-transfer before scoring multiplier spaces.
+Next establish the line-integrated rail work and physical transfer before
+scoring multiplier spaces.
 No loaded refinement or F03 authority has been used.
 
 Native pairing discriminator: the actual stationary-reduced, root-supported

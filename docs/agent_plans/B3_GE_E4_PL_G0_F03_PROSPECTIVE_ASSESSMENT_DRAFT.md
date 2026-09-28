@@ -303,6 +303,11 @@ The averaged director and its projected longitudinal tangent need uniform
 nondegeneracy, and the relative Log needs an admitted chart. An L2 multiplier
 pairing also needs a mesh-uniform L2 bound for the *broken native B3 pose*
 from its stationary-reduced physical energy.
+Positive transverse width alone does not bound the point value of the
+longitudinal slope \(\partial_s\bar u(s_0)\) by the shell H1 norm. A
+single-station rail operator is a derivative/work prototype only; the
+regularity argument applies to its material-line integral against an L2
+moment density, with the declared longitudinal measure and segmentation.
 For a uniform width \(w\), the bound grows as \(w^{-1/2}\), so width must be
 a declared positive physical connection measure, not a mesh-dependent tuning
 parameter. This candidate changes the shell-side trace and must re-pass

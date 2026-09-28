@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from scipy import linalg
 from scipy.spatial.transform import Rotation
 
 from anysolver.corotational import rotation_matrix_from_vector
@@ -14,11 +15,11 @@ from scripts.b3_e4_f03_l1_physical_rail import (
 )
 
 
-def _rail():
+def _rail(thickness=.035):
     y = np.array((-.1, 0., .1))
     reference = np.array([[(x, value, 0.) for value in y]
                           for x in (.9, 1.)])
-    return FlatQ4PhysicalRail.from_reference(reference, y, (-.05, .05), .035)
+    return FlatQ4PhysicalRail.from_reference(reference, y, (-.05, .05), thickness)
 
 
 def test_transverse_integral_is_width_owned_and_not_centerline_sampling():
@@ -334,6 +335,87 @@ def test_normal_moment_virtual_work_is_width_distributed():
     assert connection.evaluate(
         zero, state, shell_direction=zero,
         beam_direction=beam_spin)[1][5] == pytest.approx(1., abs=2e-13)
+
+
+@pytest.mark.parametrize("thickness", (.035, .07))
+def test_rail_transfers_physical_wrench_without_shell_drilling_completion(
+        thickness):
+    rail = _rail(thickness)
+    beam = build(4, z_offset=.5*thickness+.05, assemble=False)
+    element, cell, weight, _ = beam._locate(.95)
+    port = NativeHalfCellSpatialPort(beam.context, element, cell, weight)
+    state = beam.context.initial.mechanical
+    zero = np.zeros((2, 3, 6))
+    connection = RailL1LogConnection.at_reference(rail, zero, port, state)
+    shell, shell_frame, _, _ = rail.pose(zero)
+    high, low, beam_frame = port.pose_pair(state)
+    beam_point = high+low+beam_frame@connection.beam_offset
+    xs, ys = np.array((0., .45, .9, 1.)), rail.y_cuts
+    _, physical = raw_e4_tangent(xs, ys, thickness=rail.thickness)
+    free = np.array([6*(j*len(xs)+i)+axis
+                     for j in range(len(ys)) for i in range(1, len(xs))
+                     for axis in range(5)])
+    factor = linalg.cho_factor(physical[np.ix_(free, free)], lower=True)
+
+    for multiplier in (np.array((0., 0., 0., 1., 0., 0.)),
+                       np.array((0., 0., 0., 0., 1., 0.)),
+                       np.array((0., 0., 0., 0., 0., 1.)),
+                       np.array((2., -3., 5., 1., 2., -1.))):
+        _, gap, gradient, _ = connection.work_tangent(
+            zero, state, multiplier)
+        np.testing.assert_allclose(gap, 0., rtol=0., atol=2e-14)
+        local_shell = gradient[:zero.size].reshape(2, 3, 6)
+        force = np.zeros(physical.shape[0])
+        for i in range(2):
+            for j in range(3):
+                node = j*len(xs)+(i+2)
+                force[6*node:6*node+6] += local_shell[i, j]
+        np.testing.assert_array_equal(force[5::6], 0.)
+        nodal = local_shell.reshape(-1, 6)
+        shell_force = nodal[:, :3].sum(axis=0)
+        shell_moment = np.sum(
+            np.cross(rail.reference.reshape(-1, 3), nodal[:, :3])+
+            nodal[:, 3:], axis=0)
+        pose = connection.joint.evaluate(
+            np.array((shell, beam_point)),
+            np.array((shell_frame, beam_frame)), multiplier)
+        beam_force, beam_moment = pose.residual[6:9], pose.residual[9:12]
+        np.testing.assert_allclose(shell_force, pose.residual[:3],
+                                   rtol=0., atol=2e-13)
+        np.testing.assert_allclose(
+            shell_moment, pose.residual[3:6]+np.cross(shell, shell_force),
+            rtol=0., atol=3e-13)
+        np.testing.assert_allclose(shell_force+beam_force, 0.,
+                                   rtol=0., atol=2e-13)
+        np.testing.assert_allclose(
+            shell_moment+beam_moment+np.cross(beam_point, beam_force),
+            0., rtol=0., atol=3e-13)
+        arm = beam_frame@connection.beam_offset
+        beam_axis_wrench = np.r_[beam_force,
+                                 beam_moment+np.cross(arm, beam_force)]
+        np.testing.assert_allclose(
+            gradient[zero.size:], port.pullback(state, beam_axis_wrench),
+            rtol=0., atol=3e-13)
+        displacement = linalg.cho_solve(factor, force[free])
+        physical_work = float(force[free]@displacement)
+        assert physical_work > 0.
+        full_displacement = np.zeros_like(force)
+        full_displacement[free] = displacement
+        reactions = physical@full_displacement-force
+        np.testing.assert_allclose(reactions[free], 0., rtol=0., atol=2e-7)
+        reaction_nodes = reactions.reshape(-1, 6)
+        points = np.array([(x, y, 0.) for y in ys for x in xs])
+        reaction_force = reaction_nodes[:, :3].sum(axis=0)
+        reaction_moment = np.sum(
+            np.cross(points, reaction_nodes[:, :3])+reaction_nodes[:, 3:],
+            axis=0)
+        np.testing.assert_allclose(shell_force+reaction_force, 0.,
+                                   rtol=0., atol=2e-7)
+        np.testing.assert_allclose(shell_moment+reaction_moment, 0.,
+                                   rtol=0., atol=2e-7)
+        np.testing.assert_allclose(
+            displacement@physical[np.ix_(free, free)]@displacement,
+            physical_work, rtol=2e-12, atol=1e-16)
 
 
 @pytest.mark.parametrize("shell_scale,native_scale",
