@@ -23,10 +23,17 @@ from .corotational import corotational_element_response
 from .elements import create_shell_element
 from .fe_core import FEModel
 from .control import cancellation_safe_point
+from ._stiffened_shell_ge_checkpoint_binary import (
+    MAGIC as BINARY_CHECKPOINT_MAGIC, decode as _decode_binary_checkpoint,
+    encode as _encode_binary_checkpoint,
+)
 
 
 PROFILE = "B3_GE_E4_PL_STIFFENED_SHELL_V1"
 CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_LINEAR_V1"
+FINITE_CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"
+MAX_JSON_CHECKPOINT_BYTES = 2_000_000
+MAX_JSON_CHECKPOINT_VALUES = 50_000
 
 
 @dataclass(frozen=True)
@@ -269,6 +276,18 @@ def _scaled_reference_residual(residual, tangent, coordinate_scale):
     return float(np.max(error))
 
 
+def _relative_equilibrium(residual, applied):
+    """Evaluate the existing Euclidean residual ratio without norm overflow."""
+    residual = np.asarray(residual, dtype=float)
+    applied = np.asarray(applied, dtype=float)
+    if not np.isfinite(residual).all() or not np.isfinite(applied).all():
+        raise ValueError("finite mixed equilibrium vectors required")
+    scale = max(1., float(np.max(np.abs(residual), initial=0.)),
+                float(np.max(np.abs(applied), initial=0.)))
+    return float(np.linalg.norm(residual/scale) /
+                 max(1./scale, float(np.linalg.norm(applied/scale))))
+
+
 class ExperimentalGEAnalysis:
     """Owned linear reference slice; no nonlinear or accepted gate claim."""
 
@@ -436,10 +455,10 @@ class ExperimentalGEAnalysis:
         multipliers = solution[len(self._free):]
         equilibrium = self._K@q + self._C.T@multipliers-load
         gap = self._C@q
-        relative = float(np.linalg.norm(equilibrium[self._free]) /
-                         max(1., np.linalg.norm(load[self._free])))
+        relative = _relative_equilibrium(equilibrium[self._free],
+                                         load[self._free])
         constraint = float(np.max(np.abs(gap)))
-        if relative > 1e-8 or constraint > 1e-9:
+        if not np.isfinite(relative) or relative > 1e-8 or constraint > 1e-9:
             raise RuntimeError("mixed reference linear equilibrium failed")
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.commit")
         support = np.zeros_like(equilibrium)
@@ -487,14 +506,23 @@ class ExperimentalGEAnalysis:
         if self._accepted is None:
             raise RuntimeError("no accepted mixed linear result")
         result, load = self._accepted
+        arrays = (("q", np.r_[result.shell_displacement,
+                               result.beam_coordinates]),
+                  ("multipliers", result.multipliers), ("load", load))
+        if sum(value.size for _name, value in arrays) > MAX_JSON_CHECKPOINT_VALUES:
+            return _encode_binary_checkpoint(
+                "linear", self._identity, self._generation, arrays)
         payload = {"schema": CHECKPOINT, "model": self._identity,
                    "generation": self._generation,
-                   "q": np.r_[result.shell_displacement,
-                              result.beam_coordinates].tolist(),
-                   "multipliers": result.multipliers.tolist(),
-                   "load": load.tolist()}
-        return json.dumps(payload, sort_keys=True, separators=(",", ":"),
-                          allow_nan=False).encode("ascii")
+                   "q": arrays[0][1].tolist(),
+                   "multipliers": arrays[1][1].tolist(),
+                   "load": arrays[2][1].tolist()}
+        raw = json.dumps(payload, sort_keys=True, separators=(",", ":"),
+                         allow_nan=False).encode("ascii")
+        if len(raw) > MAX_JSON_CHECKPOINT_BYTES:
+            return _encode_binary_checkpoint(
+                "linear", self._identity, self._generation, arrays)
+        return raw
 
     def restore(self, raw: bytes) -> LinearResult:
         self._require_open()
@@ -502,14 +530,39 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if self._accepted is not None:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
-        if type(raw) is not bytes or len(raw) > 2_000_000:
+        if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
-        try:
-            value = json.loads(raw.decode("ascii"))
-        except (UnicodeError, json.JSONDecodeError) as exc:
-            raise ValueError("invalid mixed linear checkpoint") from exc
-        if type(value) is dict and value.get("schema") == (
-                "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"):
+        if raw.startswith(BINARY_CHECKPOINT_MAGIC):
+            def expected_shapes(kind, generation):
+                count = self._K.shape[0]
+                constraints = self._C.shape[0]
+                if kind == "linear":
+                    return (("q", (count,)), ("multipliers", (constraints,)),
+                            ("load", (count,)))
+                members = len(self._beam_parts)
+                return (("q", (count,)),
+                        ("frames", (len(self._beam_ids), 3, 3)),
+                        ("cells", (members, 2, 3, 3)),
+                        ("resultants", (members, 18)),
+                        ("multipliers", (constraints,)),
+                        ("pattern", (count,)),
+                        ("accepted_factors", (generation,)))
+
+            kind, generation, arrays = _decode_binary_checkpoint(
+                raw, self._identity, expected_shapes)
+            value = {"schema": CHECKPOINT if kind == "linear" else
+                     FINITE_CHECKPOINT, "model": self._identity,
+                     "generation": generation, **arrays}
+            if kind == "finite":
+                value["accepted_factors"] = arrays["accepted_factors"].tolist()
+        else:
+            if len(raw) > MAX_JSON_CHECKPOINT_BYTES:
+                raise ValueError("bounded mixed linear checkpoint required")
+            try:
+                value = json.loads(raw.decode("ascii"))
+            except (UnicodeError, json.JSONDecodeError, RecursionError) as exc:
+                raise ValueError("invalid mixed linear checkpoint") from exc
+        if type(value) is dict and value.get("schema") == FINITE_CHECKPOINT:
             from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
             driver = FinitePointDriver(self)
             result = driver.restore(value)
@@ -524,10 +577,10 @@ class ExperimentalGEAnalysis:
         lam = _owned(value["multipliers"], (self._C.shape[0],))
         load = _owned(value["load"], (self._K.shape[0],))
         equilibrium = self._K@q+self._C.T@lam-load
-        relative = float(np.linalg.norm(equilibrium[self._free]) /
-                         max(1., np.linalg.norm(load[self._free])))
+        relative = _relative_equilibrium(equilibrium[self._free],
+                                         load[self._free])
         constraint = float(np.max(np.abs(self._C@q)))
-        if (relative > 1e-8 or constraint > 1e-9 or
+        if (not np.isfinite(relative) or relative > 1e-8 or constraint > 1e-9 or
                 np.max(np.abs(q[self._fixed])) > 1e-12):
             raise ValueError("mechanically inconsistent mixed linear checkpoint")
         support = np.zeros_like(equilibrium)

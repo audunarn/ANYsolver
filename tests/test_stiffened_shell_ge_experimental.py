@@ -7,6 +7,10 @@ from dataclasses import replace
 
 from anysolver import b3_ge
 from anysolver import _stiffened_shell_ge_experimental as ge_experimental
+from anysolver._stiffened_shell_ge_checkpoint_binary import (
+    MAGIC as BINARY_CHECKPOINT_MAGIC, decode as decode_binary_checkpoint,
+    encode as encode_binary_checkpoint,
+)
 from anysolver.control import CancellationToken, SolveCancelled
 from anysolver._stiffened_shell_ge_experimental import (
     PROFILE, ExperimentalGEAnalysis, FixedCoordinate, LinearDefinition,
@@ -112,6 +116,63 @@ def test_reference_linear_load_cases_reuse_one_factorization():
                                2*first.beam_coordinates, rtol=1e-10, atol=1e-12)
     assert analysis.preflight()["reference_linear_factorizations"] == 1
     assert second.generation == first.generation+1
+
+
+def test_binary_checkpoint_restores_linear_state_and_rejects_corruption(monkeypatch):
+    analysis = ExperimentalGEAnalysis(_panel())
+    accepted = analysis.solve_linear((NodalAction(
+        "beam", 105, (0., 0., 100., 0., 0., 0.)),))
+    monkeypatch.setattr(ge_experimental, "MAX_JSON_CHECKPOINT_VALUES", 0)
+    raw = analysis.checkpoint()
+    assert raw.startswith(BINARY_CHECKPOINT_MAGIC)
+    restored = ExperimentalGEAnalysis(_panel()).restore(raw)
+    np.testing.assert_array_equal(restored.shell_displacement,
+                                  accepted.shell_displacement)
+    np.testing.assert_array_equal(restored.beam_coordinates,
+                                  accepted.beam_coordinates)
+    np.testing.assert_array_equal(restored.reactions, accepted.reactions)
+    damaged = bytearray(raw)
+    damaged[-35] ^= 1
+    fresh = ExperimentalGEAnalysis(_panel())
+    with pytest.raises(ValueError, match="digest"):
+        fresh.restore(bytes(damaged))
+    assert fresh._accepted is None and fresh._generation == 0
+    nonphysical_q = np.r_[accepted.shell_displacement,
+                          accepted.beam_coordinates].copy()
+    nonphysical_q[0] = 1.e-3  # fixed support, despite a valid byte digest
+    forged = encode_binary_checkpoint(
+        "linear", analysis._identity, accepted.generation,
+        (("q", nonphysical_q), ("multipliers", accepted.multipliers),
+         ("load", analysis._accepted[1])))
+    with pytest.raises(ValueError, match="mechanically inconsistent"):
+        fresh.restore(forged)
+    assert fresh._accepted is None and fresh._generation == 0
+    huge_load = np.zeros(analysis._K.shape[0])
+    huge_load[analysis._free[0]] = 1.e308
+    overflow_norm = encode_binary_checkpoint(
+        "linear", analysis._identity, 1,
+        (("q", np.zeros_like(nonphysical_q)),
+         ("multipliers", np.zeros_like(accepted.multipliers)),
+         ("load", huge_load)))
+    with pytest.raises(ValueError, match="mechanically inconsistent"):
+        fresh.restore(overflow_norm)
+    assert fresh._accepted is None and fresh._generation == 0
+
+
+def test_binary_checkpoint_supports_model_sized_arrays_beyond_json_limit():
+    values = np.arange(300_000, dtype=float) / 16.
+    raw = encode_binary_checkpoint("linear", "a" * 64, 1,
+                                   (("q", values), ("multipliers", np.zeros(2)),
+                                    ("load", np.zeros(3))))
+    assert len(raw) > 2_000_000
+    kind, generation, recovered = decode_binary_checkpoint(
+        raw, "a" * 64,
+        lambda _kind, _generation: (("q", (300_000,)),
+                                    ("multipliers", (2,)), ("load", (3,))))
+    assert (kind, generation) == ("linear", 1)
+    np.testing.assert_array_equal(recovered["q"], values)
+    with pytest.raises(ValueError, match="incompatible"):
+        decode_binary_checkpoint(raw, "b" * 64, lambda *_: ())
 
 
 def test_stress_free_reference_check_is_rowwise_and_unit_covariant():

@@ -18,7 +18,12 @@ from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._ge_beam3_p5.algebra import rotation
 from .control import cancellation_safe_point
 from .corotational import corotational_element_response
-from ._stiffened_shell_ge_experimental import NodalAction, _owned
+from ._stiffened_shell_ge_experimental import NodalAction, _owned, _relative_equilibrium
+from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_checkpoint
+
+
+MAX_JSON_CHECKPOINT_BYTES = 2_000_000
+MAX_JSON_CHECKPOINT_VALUES = 50_000
 
 
 @dataclass(frozen=True)
@@ -169,8 +174,8 @@ class FinitePointDriver:
             (data, (rows, columns)), shape=(size, size)).tocsc()
         if not np.isfinite(residual).all() or not np.isfinite(matrix.data).all():
             raise RuntimeError("finite global mixed trial required")
-        scale = max(1., float(np.linalg.norm(factor*load_pattern[owner._free])))
-        relative = float(np.linalg.norm(residual[owner._free])/scale)
+        relative = _relative_equilibrium(residual[owner._free],
+                                         (factor*load_pattern)[owner._free])
         constraint = float(np.max(np.abs(residual[count:])))
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)
 
@@ -300,6 +305,14 @@ class FinitePointDriver:
         if self._accepted is None:
             raise RuntimeError("no accepted finite mixed increment")
         state = self._state
+        arrays = (("q", state.q), ("frames", state.frames),
+                  ("cells", state.cells), ("resultants", state.resultants),
+                  ("multipliers", state.multipliers),
+                  ("pattern", self._pattern),
+                  ("accepted_factors", np.asarray(self._accepted_factors)))
+        if sum(value.size for _name, value in arrays) > MAX_JSON_CHECKPOINT_VALUES:
+            return _encode_binary_checkpoint(
+                "finite", self.owner._identity, self.owner._generation, arrays)
         payload = {
             "schema": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1",
             "model": self.owner._identity,
@@ -314,8 +327,9 @@ class FinitePointDriver:
         }
         raw = json.dumps(payload, sort_keys=True, separators=(",", ":"),
                          allow_nan=False).encode("ascii")
-        if len(raw) > 2_000_000:
-            raise ValueError("bounded experimental finite checkpoint required")
+        if len(raw) > MAX_JSON_CHECKPOINT_BYTES:
+            return _encode_binary_checkpoint(
+                "finite", self.owner._identity, self.owner._generation, arrays)
         return raw
 
     def restore(self, value):
@@ -355,10 +369,10 @@ class FinitePointDriver:
                    abs(np.linalg.det(frame)-1.) > 1e-9 for frame in family):
                 raise ValueError("nonphysical finite checkpoint rotation")
         trial = _State(q, frames, cells, resultants, multipliers)
-        self._pattern = pattern
         residual, _, relative, gap, shell_next, beam_next = self._assemble(
-            trial, factors[-1], self._shell_origins, self._beam_origins)
-        if (relative > 1e-8 or gap > 1e-9 or
+            trial, factors[-1], self._shell_origins, self._beam_origins,
+            pattern=pattern)
+        if (not np.isfinite(relative) or relative > 1e-8 or gap > 1e-9 or
                 any(station.accumulated != (0., 0.)
                     for history in beam_next for station in history.stations)):
             raise ValueError("mechanically inconsistent finite checkpoint")
@@ -370,6 +384,7 @@ class FinitePointDriver:
             multipliers, _owned(support), relative, gap, 0,
             value["generation"], tuple(factors))
         self._state = trial
+        self._pattern = pattern
         self._shell_origins = shell_next
         self._beam_origins = beam_next
         self._load_factor = factors[-1]
