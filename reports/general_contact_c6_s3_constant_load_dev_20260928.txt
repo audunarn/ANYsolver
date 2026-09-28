@@ -1,0 +1,35 @@
+Guided S3 V2D fixed-plane constant nodal load: development evidence
+Date: 2026-09-28
+Source commit: ee0527e6ccb99bceb15ffec064fc7fd86819d780
+Worktree: C:\ANYworkspaceWork\ANYsolver-general-contact
+Python: C:\Python\Python314\python.exe
+
+Focused source check:
+  PYTHONPATH=C:\ANYworkspaceWork\ANYsolver-general-contact\src;C:\ANYworkspaceWork\ANYsolver-general-contact
+  python -m pytest -q tests/test_general_contact_transient_plane.py
+  26 passed in 29.65s
+
+The first nonuniform-load test attempt failed because its independent
+algebraic-basis fixture supplied a dense reduced mass to an API requiring a
+sparse matrix. The fixture was corrected before the successful focused run.
+
+Installed development check:
+  python -m pip wheel . --no-deps --no-build-isolation --no-cache-dir --wheel-dir reports/wheel_s3_load_dev
+  python -m pip install --no-deps --no-index --no-cache-dir --target reports/installed_s3_load_dev <built wheel>
+  PYTHONPATH=C:\ANYworkspaceWork\ANYsolver-general-contact\reports\installed_s3_load_dev
+  Imported module: C:\ANYworkspaceWork\ANYsolver-general-contact\reports\installed_s3_load_dev\anysolver\__init__.py
+  python examples/general_contact_s3_plane_impact.py --constant-downward-load-n 0.0002
+  profile: PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0
+  accepted_steps: 60
+  cutbacks: 0
+  minimum_swept_gap_m: -0.0008303152689919837
+  final_active_pressure_nodes: 3
+  maximum_final_ry_rad: 0.00036869876297481764
+  maximum_residual_n: 1.1105620015365121e-14
+  external_nodal_work_j: 2.089714923068734e-06
+
+Wheel: anysolver-0.4.7-py3-none-any.whl
+SHA256: 890fba7b8a8578722854d7b7972f1c01b641db85ddbd06621df1c78b489436ce
+
+Scope: local and installed development verification only. C6 qualification,
+general S3 descriptor states and discrete nullspace Newmark kinematics remain open.
