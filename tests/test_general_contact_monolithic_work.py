@@ -3,6 +3,8 @@
 import numpy as np
 
 from anysolver import solve_static_nonlinear
+from anysolver.nonlinear_static import _assemble_nonlinear_system
+from anysolver.general_contact.core import suspend_contact
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from anysolver.general_contact.semismooth import (
     linearize, raw_certificate, reference_nodal_support,
@@ -136,3 +138,46 @@ def test_deformed_s3_target_translation_and_rotation_contact_work():
         np.cross(positions, physical_forces).sum(axis=0),
         0.0, atol=1.0e-9,
     )
+
+    # Recover the two individual clamp reactions from the accepted structural
+    # residual. The public result sums their components, so checking only that
+    # six-vector would lose the force lever arm between the two clamp nodes.
+    with suspend_contact():
+        structural_force, _tangent, _states = _assemble_nonlinear_system(
+            model, u, accepted.element_states, 5, tangent=False,
+            kinematics="von_karman", require_full_coordinates=True,
+        )
+    imbalance = structural_force + base.force
+    clamp_force = np.zeros(3)
+    clamp_moment = np.zeros(3)
+    clamp_components = np.zeros(6)
+    for node in (manager.law.target_node_ids[0],
+                 manager.law.target_node_ids[-1]):
+        node_dofs = model.mesh.dof_manager.get_node_dofs(node)
+        reaction = imbalance[node_dofs]
+        reference = model.mesh.nodes[node]
+        current = (np.array((reference.x, reference.y, reference.z))
+                   + u[node_dofs[:3]])
+        clamp_components += reaction
+        clamp_force += reaction[:3]
+        clamp_moment += np.cross(current, reaction[:3]) + reaction[3:6]
+    np.testing.assert_allclose(
+        clamp_components,
+        accepted.steps[-1].support_reactions["target_left_clamp"],
+        rtol=0.0, atol=1.0e-12,
+    )
+    target_force = np.zeros(3)
+    target_moment = np.zeros(3)
+    for node in manager.law.target_node_ids:
+        node_dofs = model.mesh.dof_manager.get_node_dofs(node)
+        reference = model.mesh.nodes[node]
+        current = (np.array((reference.x, reference.y, reference.z))
+                   + u[node_dofs[:3]])
+        physical = -base.force[node_dofs]
+        target_force += physical[:3]
+        target_moment += np.cross(current, physical[:3]) + physical[3:6]
+    force_scale = np.linalg.norm(target_force)
+    moment_scale = max(np.linalg.norm(target_moment), 1.3*force_scale)
+    assert force_scale > 1.0e-5
+    assert np.linalg.norm(clamp_force + target_force)/force_scale < 1.0e-6
+    assert np.linalg.norm(clamp_moment + target_moment)/moment_scale < 1.0e-6
