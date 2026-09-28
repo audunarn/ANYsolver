@@ -6,7 +6,23 @@ from copy import deepcopy
 
 import pytest
 
-from scripts.b3_e4_f03_ccx_matched_t_reference import build_bundle, parse_outputs
+from scripts.b3_e4_f03_ccx_matched_t_reference import (
+    build_bundle, main, parse_outputs,
+)
+
+
+def test_generated_deck_bytes_match_manifest_on_windows(tmp_path, monkeypatch):
+    stem = tmp_path / "folded"
+    monkeypatch.setattr("sys.argv", [
+        "matched_t_reference", "generate", "--stem", str(stem),
+        "--variant", "flat", "--case", "web_mx", "--nx", "4",
+        "--root", "clamped",
+    ])
+    main()
+    expected, _manifest = build_bundle("flat", "web_mx", 4, "clamped")
+    assert stem.with_suffix(".inp").read_bytes() == expected.encode("ascii")
+    assert b"\r\n" not in stem.with_suffix(".inp").read_bytes()
+    assert stem.with_suffix(".json").exists()
 
 
 def _synthetic_output(manifest):

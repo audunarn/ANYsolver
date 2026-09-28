@@ -263,6 +263,34 @@ decision. Preserve all seven ratios, growing spaces, three refinement levels,
 physical transfer/locking and the registered G0-G6, F01-F13, V01-V28 and
 B01-B18 scope. None of F01-F13 is fully accepted yet.
 
+Next bounded external-route discriminator: determine whether the inert folded
+S4 flat-web/T deck can produce and parse actual clamped-root Fy/torque work
+and support output under the pinned CalculiX binary. Competing explanations
+are an untested output/parser route and a valid but mechanically unmatched
+reference. Run only the smallest fixed deck as a smoke, first checking the
+binary identity, thread setting and resource bounds. A parsing failure calls
+for a targeted output-contract repair; a passing smoke permits a separately
+designed geometry/load/section-matched comparison, not an F03 score or a new
+refinement series. Rotational reaction and seam-sided work remain explicitly
+unverified even if the smoke passes.
+The first actual clamped flat-web/Mx smoke completed in 0.24 s but its parser
+correctly rejected the generated deck: Windows text-mode output changed the
+LF bytes after their hash was recorded. The generator now writes exact ASCII
+bytes, and 11 focused tests pass. A fresh pinned CalculiX 2.23 run completed
+and parsed the same smallest deck; the loaded action work was `0.001579051 J`
+and the force-balance residual was below `8.1e-7 N`. CalculiX reported one
+CPU for assembly, stress and factorization. This validates the external output
+route only. The current flat-web/T geometry and section are not matched to
+the native square B3 fixture; clamped rotational reactions and internal seam
+tractions are still unavailable. Do not compare the work against native L1 or
+advance F03 from this smoke. Both raw runs and their source-bound hashes are
+retained in [the smoke record](B3_E4_F03_CCX_FOLDED_SMOKE_DEV_V1.json).
+Independent review of the prospective F03 contract found the stationary
+reduction and exact-gauge quotient sound under its stated assumptions, but
+requires an explicit support-preserving physical-field map `T_h` and a frozen
+same-law reference-error rule. The draft now records both as open
+prerequisites; no formal assessment has started.
+
 ## Execution boundary
 
 Revision 7 permits experimental integration during open G0, at most three

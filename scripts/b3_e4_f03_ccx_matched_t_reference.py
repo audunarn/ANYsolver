@@ -368,7 +368,10 @@ def main() -> None:
     stem = args.stem
     if args.command == "generate":
         deck, manifest = build_bundle(args.variant, args.case, args.nx, args.root)
-        stem.with_suffix(".inp").open("x", encoding="ascii").write(deck)
+        # Keep the on-disk deck identical to the bytes hashed in the manifest.
+        # Text-mode writes translate LF to CRLF on Windows.
+        with stem.with_suffix(".inp").open("xb") as output:
+            output.write(deck.encode("ascii"))
         stem.with_suffix(".json").open("x", encoding="utf-8").write(
             json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False)+"\n")
         print(json.dumps({"deck": str(stem.with_suffix(".inp")),

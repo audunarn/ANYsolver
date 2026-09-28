@@ -1,0 +1,46 @@
+{
+  "schema": "B3_E4_F03_CCX_FOLDED_SMOKE_DEV_V1",
+  "classification": "development_external_output_smoke_not_mechanics_comparison",
+  "source_head_before_fix": "d9e31c1c25ae0e854e0aaf09f37d01057423f947",
+  "current_runner_sha256": "1853bf3793367bc363ff55ae0856bce0d81d7503d276896c1c4a230def0ff578",
+  "focused_test_sha256": "26b40bb0acbe6e76c64bb3e930aa899cd572f1a40c471b67bb2b54aa92d7ffe0",
+  "calculix_version": "2.23",
+  "calculix_exe_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "case": {
+    "variant": "flat",
+    "action": "web_mx",
+    "nx": 4,
+    "root": "clamped",
+    "applied_torque_nm": 10.0,
+    "deck_manifest_sha256": "8917c3511c099dd8074c0e813885137d315443ddc5d81f0ecdb0a0724e244f39"
+  },
+  "raw_evidence_directory": ".qualification/b3-ge-e4-pl/f03-ccx-folded-s4-smoke-20260928-v1",
+  "failed_first_run": {
+    "solver_exit": 0,
+    "parse_status": "rejected_saved_deck_identity_changed",
+    "cause": "Windows text-mode LF-to-CRLF translation after manifest hashing",
+    "deck_sha256": "3cac1f80642a07745d69e58635181851bde5e3d6362b0349068951f99e17cbdd",
+    "expected_deck_sha256": "c64f208a715e8b177a6978be0c4b83cb3c9c7bec352ab3ea4803f2732ff9c80b",
+    "frd_sha256": "6f365d35a7861420e76116cbaa11a017b93621efc01b0c8e71824ee47fad769b"
+  },
+  "passing_rerun": {
+    "solver_exit": 0,
+    "parse_exit": 0,
+    "deck_sha256": "c64f208a715e8b177a6978be0c4b83cb3c9c7bec352ab3ea4803f2732ff9c80b",
+    "dat_sha256": "da0cc9e64cd93a4e1c6fb7a31cda705b33ebc1b3e7643c0b75c116773e351802",
+    "frd_sha256": "7e1702cf23e92785d1d35c98f7021374449957a84b4bb148129b79c4ddade0ac",
+    "parsed_result_sha256": "fd0f9278d00d711b1c929a4423f324663bc0824802226214139b77e89da2b275",
+    "loaded_case_work_j": 0.001579051,
+    "force_balance_residual_n": [4.122569436892661e-11, 7.999999995789153e-07, -1.144284779513403e-11],
+    "elapsed_s_approx": 0.24,
+    "thread_request": 1,
+    "effective_cpu_reported_by_solver": 1,
+    "peak_memory_measured": false
+  },
+  "focused_tests": "11 passed",
+  "limitations": [
+    "Clamped rotational support reactions and seam-sided work were not recovered.",
+    "This folded-shell geometry and section are not matched to the native square-B3 fixture.",
+    "A successful solver exit and parser smoke do not qualify F03 or an external mechanical comparison."
+  ]
+}

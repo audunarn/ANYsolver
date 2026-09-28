@@ -119,16 +119,29 @@ Construct a converged same-law reference operator on the **same** geometry,
 supports, physical line length, six-channel units and applied multiplier
 action. Specify a work-preserving injection \(J_h\) into its interface space,
 giving \(C_{\rm ref,h}=J_h^TC_{\rm ref}J_h\). The reference must converge on
-the action subspace under at least three systematic levels; two refinements
-or a full-face weld do not make it a same-law reference. The external all-shell
+the action subspace under at least three systematic levels (a base and two
+successive refinements). Those levels are necessary, not sufficient: before a
+formal run, freeze a candidate-independent bound on reference-compliance error
+in the six-channel physical work norm and an executable rule for establishing
+it from those levels or further levels. Two levels or a full-face weld do not
+make a same-law reference. The external all-shell
 flat-bar/T models are separate engineering-fidelity comparisons unless their
 connection and work maps are shown equivalent.
 
 "Work-preserving" has an executable meaning on the **entire admitted**
-multiplier-action and physical virtual-field spaces: establish
-\(J_h^TB_{\rm ref}T_h=B_h\), or a uniform operator-error bound justified by
-integration and reference approximation. Checks on selected patches alone do
-not establish this identity. Define \(J_h\) by physical traction/couple
+multiplier-action and physical virtual-field spaces. Here \(T_h\) must be a
+specified support-preserving map from every candidate physical virtual field
+to a reference physical virtual field on the same material geometry. It must
+transport shell position/director variations and native beam pose/retained
+cell-rotation variations; the stationary generalized resultants are not
+independent physical fields. Derive its interpolation and trace restrictions
+from the two discretizations, rather than fitting it to a candidate response.
+Then establish \(J_h^TB_{\rm ref}T_h=B_h\), or freeze a uniform bound on
+\(J_h^TB_{\rm ref}T_h-B_h\) in declared physical energy and dual-work norms,
+including supported nullspaces. Checks on selected patches alone do not
+establish this identity. No such \(T_h\) or bound has yet been constructed
+for the native L1/E4 reference, so this prerequisite remains open. Define
+\(J_h\) by physical traction/couple
 density, orientation, line measure and units; verify basis-change and
 equivalent-unit covariance. An arbitrary rescaling of even one untested
 multiplier mode is forbidden because it would rescale the quotient without
