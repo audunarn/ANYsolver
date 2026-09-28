@@ -111,6 +111,31 @@ therefore remains an experimental endpoint consistency check; path
 reachability needs independent replay or trusted provenance. This does not
 admit shell J2, fibre sections, reversal, or G3 acceptance.
 
+**Positive unloading/reloading development slice:** The same point owner now
+accepts changing positive load factors, preserves material history on
+unload/reload, and uses the separate V3 checkpoint for a nonmonotone elastic
+history. Historical monotone elastic checkpoints retain V1/V2. The bounded
+plastic path `1.0, 0.7, 0.4, 0.2, 0.5, 1.1` agrees exactly after restore;
+12/12 source checks passed before the capability correction, and 30/30
+same-process installed-wheel GE checks passed on the final product code. Final
+candidate wheel SHA-256
+`D1A8ABE1D2C7E69E9D5F3CDE66F334D05AE682C9FE212E81C64B308141930758`;
+installed logs are in
+`.qualification/b3-ge-e4-pl/r7-ge-unload-installed-dev-20260929-v2/`.
+Independent read-only review identified a capability exclusion that was too
+broad; it now excludes nonpositive finite load factors and the corrected wheel
+passed the same installed checks. Preserve earlier failed screens under
+`.qualification/b3-ge-e4-pl/r7-ge-reversal-dev-20260929-v1/`:
+a `0.4 → -0.2` jump exhausted backtracking,
+and a finer `0.2 → 0.1` unload also exhausted it. The latter distinguishes the
+problem from a large sign-crossing step alone. Current load-relative
+equilibrium normalization is unresolved near zero load with residual material
+state. No tolerance was relaxed and sign reversal remains unsupported. The next
+technical decision requires a physically justified convergence scale for
+loaded-history states before another crossing experiment; more step refinement
+alone is not a justified discriminator. This slice is experimental, not G3 or
+G4 acceptance.
+
 A separate finite-support flat-Q4 shell-pose prototype has exact box-window
 centroid/covariance weights, objective rigid-motion recovery, a bounded
 endpoint-witness screen, and first variations through actual shell/native

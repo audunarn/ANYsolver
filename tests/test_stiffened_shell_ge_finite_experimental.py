@@ -136,6 +136,62 @@ def test_generalized_beam_plastic_history_is_atomic_and_restartable(monkeypatch)
                                   continued.cell_resultants)
 
 
+def test_generalized_beam_unload_reload_preserves_history_across_restart():
+    definition = _plastic_panel()
+    actions = _actions()
+    uninterrupted = ExperimentalGEAnalysis(definition)
+    loaded = uninterrupted.solve(actions, (1.,), max_iterations=20,
+                                  max_backtracks=12)
+    restored_owner = ExperimentalGEAnalysis(definition)
+    restored_owner.restore(uninterrupted.checkpoint())
+    targets = (.7, .4, .2, .5, 1.1)
+    for factor in targets:
+        try:
+            direct = uninterrupted.solve(actions, (factor,), max_iterations=20,
+                                         max_backtracks=12)
+            resumed = restored_owner.solve(actions, (factor,), max_iterations=20,
+                                           max_backtracks=12)
+        except RuntimeError as exc:
+            pytest.fail(f"unload/reload target {factor}: {exc}")
+    assert direct.accepted_factors == resumed.accepted_factors == (1.,)+targets
+    assert direct.beam_station_accumulated == resumed.beam_station_accumulated
+    assert max(value for member in direct.beam_station_accumulated
+               for value in member) >= max(
+                   value for member in loaded.beam_station_accumulated
+                   for value in member)
+    np.testing.assert_array_equal(direct.beam_positions,
+                                  resumed.beam_positions)
+    np.testing.assert_array_equal(direct.cell_resultants,
+                                  resumed.cell_resultants)
+    final_checkpoint = uninterrupted.checkpoint()
+    reopened = ExperimentalGEAnalysis(definition).restore(final_checkpoint)
+    assert reopened.accepted_factors == direct.accepted_factors
+    assert reopened.beam_station_accumulated == direct.beam_station_accumulated
+
+
+def test_elastic_unload_uses_new_checkpoint_without_changing_legacy_format():
+    analysis = ExperimentalGEAnalysis(_panel())
+    assert "nonpositive finite load factors" in analysis.capabilities["excluded"]
+    assert "nonmonotone loads" not in analysis.capabilities["excluded"]
+    analysis.solve(_actions(), (.5, 1.))
+    legacy = analysis.checkpoint()
+    assert not legacy.startswith(BINARY_CHECKPOINT_MAGIC)
+    unloaded = analysis.solve(_actions(), (.5,))
+    assert unloaded.accepted_factors == (.5, 1., .5)
+    saved = analysis.checkpoint()
+    assert saved.startswith(BINARY_CHECKPOINT_MAGIC)
+    restored_owner = ExperimentalGEAnalysis(_panel())
+    restored = restored_owner.restore(saved)
+    assert restored.accepted_factors == unloaded.accepted_factors
+    assert all(value == 0. for member in restored.beam_station_accumulated
+               for value in member)
+    np.testing.assert_array_equal(restored.beam_positions,
+                                  unloaded.beam_positions)
+    with pytest.raises(ValueError, match="positive finite load factors"):
+        analysis.solve(_actions(), (0.,))
+    assert analysis.recover() is unloaded
+
+
 def test_finite_tiny_load_cannot_accept_zero_response(monkeypatch):
     analysis = ExperimentalGEAnalysis(_panel())
     tiny = (NodalAction("beam", 105, (1e-12, 0., 0., 0., 0., 0.)),)

@@ -566,7 +566,8 @@ class ExperimentalGEAnalysis:
         if self._line_samples:
             attachment += ("experimental L1 weak-line candidate",)
         excluded = (("shell J2 plastic", "physical-fibre B3 finite",
-                     "nonmonotone loads", "line", "footprint", "modes", "buckling")
+                     "nonpositive finite load factors", "line", "footprint",
+                     "modes", "buckling")
                     if not self._line_samples else
                     ("shell J2 plastic", "physical-fibre B3 finite",
                      "qualified bonded line", "footprint",

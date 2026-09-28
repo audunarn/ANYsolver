@@ -253,10 +253,13 @@ class FinitePointDriver:
               max_iterations=12, max_backtracks=8):
         owner = self.owner
         if (type(targets) is not tuple or not targets or
-                any(not np.isfinite(v) or v <= self._load_factor
+                any(not isinstance(v, (int, float, np.integer, np.floating))
+                    or isinstance(v, (bool, np.bool_)) or
+                    not np.isfinite(v) or v <= 0.
                     for v in targets) or
-                tuple(targets) != tuple(sorted(set(targets)))):
-            raise ValueError("strictly increasing finite load factors required")
+                any(a == b for a, b in zip((self._load_factor,)+targets,
+                                            targets))):
+            raise ValueError("positive finite load factors must change at each increment")
         if (type(max_iterations) is not int or not 1 <= max_iterations <= 24 or
                 type(max_backtracks) is not int or not 0 <= max_backtracks <= 12):
             raise ValueError("bounded finite Newton controls required")
@@ -349,9 +352,11 @@ class FinitePointDriver:
                   ("multipliers", state.multipliers),
                   ("pattern", self._pattern),
                   ("accepted_factors", np.asarray(self._accepted_factors)))
-        if any(station.accumulated != (0., 0.)
+        nonmonotone = any(b <= a for a, b in zip(
+            self._accepted_factors, self._accepted_factors[1:]))
+        if (nonmonotone or any(station.accumulated != (0., 0.)
                for history in self._beam_origins
-               for station in history.stations):
+               for station in history.stations)):
             plastic, accumulated = _material_arrays(self._beam_origins)
             return _encode_binary_checkpoint(
                 "finite_material", self.owner._identity,
@@ -408,7 +413,11 @@ class FinitePointDriver:
         if (type(factors) is not list or len(factors) != value["generation"] or
                 not factors or any(type(v) is not float or not np.isfinite(v)
                                    for v in factors) or
-                factors[0] <= 0. or any(b <= a for a, b in zip(factors, factors[1:]))):
+                (not material and (factors[0] <= 0. or
+                    any(b <= a for a, b in zip(factors, factors[1:])))) or
+                (material and (factors[0] <= 0. or
+                    any(b <= 0. or b == a for a, b in
+                        zip(factors, factors[1:]))))):
             raise ValueError("invalid accepted finite load history")
         q = _owned(value["q"], (owner._K.shape[0],))
         frames = _owned(value["frames"], self._reference_frames.shape)
@@ -422,8 +431,9 @@ class FinitePointDriver:
             plastic = _owned(value["beam_plastic"], (stations, 6, 2))
             accumulated = _owned(value["beam_accumulated"], (stations, 2))
             beam_origins = _material_histories(owner, plastic, accumulated)
-            if not np.any(accumulated):
-                raise ValueError("material checkpoint requires yielded history")
+            if not np.any(accumulated) and all(
+                    b > a for a, b in zip(factors, factors[1:])):
+                raise ValueError("material checkpoint requires yielded or reversed history")
         else:
             beam_origins = self._beam_origins
         beam_nodal = q[owner._shell_count:
