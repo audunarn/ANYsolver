@@ -150,7 +150,8 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
          load_profile: str = "tip", total_force_n: float = 0.1,
          schur_relinearizations: int = 0,
          target_right_x_m: float = 1.0,
-         schur_maximum_attempts: int = 2) -> None:
+         schur_maximum_attempts: int = 2,
+         pressure_basis: str = "fine_nodal_q1") -> None:
     if output.exists():
         raise FileExistsError(f"development output already exists: {output}")
     model, definition, settings, program = build_case(
@@ -171,7 +172,8 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
                        augmentation_schur_maximum_relinearizations=(
                            schur_relinearizations),
                        augmentation_schur_maximum_attempts=(
-                           schur_maximum_attempts))
+                           schur_maximum_attempts),
+                       q4_source_pressure_basis=pressure_basis)
     capability = validate_general_contact(model, definition, settings)
     if not capability.valid:
         raise ValueError(f"unsupported refinement: {capability.issues}")
@@ -191,6 +193,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         "total_downward_force_n": total_force_n,
         "target_right_x_m": target_right_x_m,
         "columns": columns,
+        "pressure_basis": pressure_basis,
         "status": result.status,
         "failure_reason": result.failure_reason,
         "accepted_steps": len(result.steps),
@@ -245,9 +248,11 @@ if __name__ == "__main__":
     parser.add_argument("--schur-relinearizations", type=int, default=0)
     parser.add_argument("--target-right-x-m", type=float, default=1.0)
     parser.add_argument("--schur-maximum-attempts", type=int, default=2)
+    parser.add_argument("--pressure-basis", choices=("fine_nodal_q1", "macro_q1_pair_dev"),
+                        default="fine_nodal_q1")
     args = parser.parse_args()
     main(args.columns, args.output, args.pressure_cap_pa, args.four_phase,
          args.steps_per_segment, args.schur_step_cap_pa,
          args.load_profile, args.total_force_n,
          args.schur_relinearizations, args.target_right_x_m,
-         args.schur_maximum_attempts)
+         args.schur_maximum_attempts, args.pressure_basis)
