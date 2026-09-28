@@ -21,15 +21,16 @@ director difference near the bond, while Fz midpoint vertical response
 stays within about `1%` of the 3D plate across the sampled range.
 Pure uniform Mx interface action has `7.50%` lower E4 shell work than
 the 3D plate, while pure uniform Fz differs by only `0.90%`; the saved
-mixed Fz case therefore calls for axial/bending cross-work review.
+mixed Fz gap comes mainly from Fx/My self-work differences partly
+cancelled by their cross term, not pure Fz transfer.
 Independent review
 found no blocking algebra/sign defect in these diagnostics, and their
 solid input is now identity-guarded. **Remaining uncertainty:** Physical
 sided torque/shear transfer, shell/3D kinematic and support idealization,
 and growing-space mixed-system stability. **Next discriminator and
-action:** Resolve the saved mixed Fz action into Fx/My and cross-work
-with the same component matrices, then assess the physical Mx torque
-trace and registered growing-interface mixed system. The physical
+action:** Review the physical axial/bending and torsional transfer of
+the declared material-line trace, then assess that law under the
+registered growing-interface mixed-system criteria. The physical
 support and section idealization remain distinct. Avoid another
 general axial or x/y refinement.
 Advance B2 F09 independently. No automatic finer classical axial or
@@ -10543,3 +10544,28 @@ component matrices. If those dominate, review the axial/bending pose
 and eccentric transfer; if they do not, revisit longitudinal action
 shape. The Mx physical torque trace still needs matched shell/3D
 interpretation and growing-space stability. F03/G0B remain open.
+
+**Axial/bending follow-up and decision:** Source `9a6b916f` extends
+the same validated physical action matrices to uniform Fx/My and
+partitions the saved Fz dual into same-channel and pair cross-work.
+Uniform `1000 N` Fx shell work is `0.000915409 J` in E4 versus
+`0.001011500 J` in the 3D plate (`−9.50%`); uniform `100 Nm` My is
+`0.02051562` versus `0.02175981 J` (`−5.72%`). The B3/bar differences
+are `−0.688%` and `−0.128%`. For the saved mixed Fz dual, the E4-minus-
+3D plate self-work differences are Fx `−0.00358953 J`, My
+`−0.00137747 J`, and Fz only `−0.00004203 J`. The Fx–My cross-work
+difference is `+0.00283559 J`, leaving the previously observed net
+shell difference `−0.00217104 J` after the smaller pair terms. These
+signed terms cancel and are not independent strain energies. All pure
+component works are positive, and a focused test reproduces the
+independently saved mixed component totals and decomposition closure.
+The raw `B3_E4_F03_C1_PURE_ACTION_MODES_DEV_V2.json` has SHA256
+`49e646a0b019ebcfe4cce4f8d213caa01f7afcd91f484928e4b3458f15a17c73`.
+This directs physical review to axial/bending pose and eccentric
+transfer for the Fz case, while retaining a separate torsional Mx
+question. It does not support changing the pure transverse-shear
+channel or selecting P0. The next G0B mechanics slice must test this
+declared transfer and the *current material-line law's* growing-space
+mixed-system behavior under the registered ratios and norms; the
+historical growing-space hybrid is a different law. F03/G0B stay open,
+G1 barred and the formal F03 authority unconsumed.
