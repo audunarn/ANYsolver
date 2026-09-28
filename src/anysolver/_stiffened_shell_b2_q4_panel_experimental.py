@@ -38,7 +38,7 @@ _MAX_DENSE_AUDIT_VALUES = 16_384
 
 
 def _require_independent_supported_point_rows(reduced_c: sparse.spmatrix) -> None:
-    """Bound the dense numerical audit; defer large numerical rank to KKT LU.
+    """Bound the dense audit; defer large numerical rank to KKT factorization.
 
     A matching proves only structural rank. The subsequent sparse KKT
     factorization must still reject numerical row dependence for larger models.

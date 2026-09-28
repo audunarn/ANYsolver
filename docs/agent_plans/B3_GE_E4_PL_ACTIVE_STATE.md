@@ -37,6 +37,11 @@ fallback is dirty, unrun and outside this task's edits.
   selected recovery and eligible factorization reuse. Physical-range admission,
   attachment, mass/prestress, large-scale and installed qualification remain
   open. Existing public B2 behavior is unchanged.
+- The experimental multi-Q4/B2 point panel now bounds its dense supported-row
+  audit and uses sparse structural matching before the numerical KKT factor
+  on larger layouts. Focused source and installed-wheel checks pass 3/3 at
+  `.qualification/b3-ge-e4-pl/r7-b2-rank-dev-20260928-v1/`; this does not
+  establish large-model performance or numerical rank under every backend.
 - ANYfem has an experimental panel consumer/save-reopen path distinct from
   ordinary projects. Development installed wheels passed recorded checks at
   `.qualification/b3-ge-e4-pl/r7-integration-dev-20260928-v4/` retain evidence.
