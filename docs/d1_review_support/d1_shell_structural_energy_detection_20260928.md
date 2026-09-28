@@ -14,6 +14,9 @@ structural constraints. This deliberately excludes contact tangent and
 multiplier-update response. The metric is symmetric to machine precision;
 its unit-diagonal-scaled smallest eigenvalue is `0.0016688`, so the
 discrete energy norm is positive for the tested free coordinates.
+In the active-set production path, `nodal_force_linearization` returns
+`D(gbar_i) = (D(weighted_gap_i) − gbar_i D(S_i))/S_i`; the probe multiplies
+that returned gradient by `S_i` exactly once to obtain pressure work.
 
 | Pressure rows | Modes | Work rank at `1e-10` relative threshold | Smallest unit-diagonal compliance eigenvalue |
 |---|---:|---:|---:|
@@ -21,13 +24,17 @@ discrete energy norm is positive for the tested free coordinates.
 | Excluding only prescribed source `x=0` column | 144 | 144 | `5.461e−6` |
 | Settled active set, with all physical modes retained | 48 | 48 | `0.003156` |
 
-Nine full-space nulls match the nine pressure nodes along the source's
-prescribed edge. The weakest full-space mode includes node 137 at `(i=0,
+The nine full-space null combinations disappear when the nine source
+`x=0` pressure rows are excluded. This associates the discrete defect
+with that boundary column; it does not mean each edge basis function is
+individually null or that the continuum trace annihilates it. Those Q1
+hats have positive area support, and tangential structural coordinates
+remain free. The weakest full-space mode includes node 137 at `(i=0,
 j=8)` and other `i=0` modes. Once that column is excluded *for diagnosis
-only*, the weakest remaining modes lie in the narrow last source row near
-the obstacle rim. The weakest active mode also lies there. Its positive
-eigenvalue establishes local independence only; the last-row support is
-very small and no reference-mesh ratio was calculated.
+only*, the weakest unit-diagonal-scaled modes lie in the narrow last
+source row near the obstacle rim. The weakest active mode also lies
+there. Its positive eigenvalue establishes local independence only; the
+last-row support is very small and no reference-mesh ratio was calculated.
 
 The full work solve residual is `5.38e−15` relative and the active solve
 residual is `7.06e−15`. The final bounded run completed in `12.37 s` and
@@ -43,11 +50,23 @@ and clamp-follow-up outputs remain available. The first command failed
 before mechanics evaluation because the local `src` path was absent from
 `PYTHONPATH`; the corrected bounded run imported that source explicitly.
 
-**Decision:** The full-space defect at this pose is attributable to
-prescribed-boundary work nulls, not a demonstrated interior or active
-rank loss. A production pressure-mode change would affect contact reactions
-and needs its own mechanics decision. For D1, derive a pressure-space
-criterion on the admissible shell trace or its quotient by boundary work
-nulls, then test the active partial-front modes and pressure response under
+**Decision:** The full-space defect at this pose is associated with the
+prescribed-edge pressure column; there is no demonstrated active rank loss
+at this pose. A richer structural test space might detect these discrete
+null combinations, as in the scalar fixture. Do not remove production
+pressure modes or declare a physical quotient from this result. For D1,
+derive the admissible shell trace norm and any true annihilator, then test
+the active partial-front modes and pressure response under bounded
 structural, pressure and integration refinement. The present result does
 not close that acceptance row or warrant a larger coupled solve.
+
+An independent read-only mechanics review traced the active-set
+`nodal_force_linearization` path and confirmed the single support factor
+in the pressure work map, the saved/probe hashes, and the rank arithmetic.
+It found no further numerical or code defect in this bounded check. It
+also confirmed that no settled active mode lies at `i=0`, while six lie in
+the final `j=8` row. Its proposed next discriminator uses the same physical
+pressure basis/work on an independently enriched shell structural test
+space, with reference convergence and explicit treatment of any true
+continuous trace annihilator. A coarse null with positive refined dual
+norm is a discrete detection gap, not a mode to drop by declaration.

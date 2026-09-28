@@ -87,10 +87,13 @@ The [actual-shell saved-pose energy check](d1_review_support/d1_shell_structural
 uses `diag(S) Dgbar` and contact-free constrained shell stiffness. The
 metric is positive; full supported pressure work has rank 144/153, while
 exclusion of the nine prescribed-edge source modes gives 144/144 and the
-settled active set gives 48/48. This identifies boundary-work nullity at
-this pose; the weakest remaining modes cluster near the thin support rim.
-It does not establish a mesh-uniform trace-space bound or spatial pressure
-convergence. Production pressure and reaction mapping are unchanged.
+settled active set gives 48/48. This associates the discrete null
+combinations with the prescribed-edge pressure column; it does not show
+that each edge basis function is individually null or define a physical
+quotient. The weakest normalized remaining modes cluster near the thin
+support rim. It does not establish a mesh-uniform trace-space bound or
+spatial pressure convergence. Production pressure and reaction mapping
+are unchanged.
 
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
