@@ -202,6 +202,17 @@ Next advance the replaceable L1 local operator through the experimental sparse
 owner, prove small sparse/dense and lifecycle parity, then obtain a further
 same-law reference level without raising dense prototype limits. External
 physical transfer and independently reviewed F03 floors remain separate.
+The first product-private L1 local operator is now extracted. It returns the
+six gaps, their 21-coordinate Jacobian, multiplier-work gradient/Hessian and
+nine native retained gather slots without a model-wide dense derivative or
+the development Context's 120-second lifetime. Independent read-only review
+found and then confirmed repair of a large-origin low-part loss in the work;
+the added sub-ULP gap/work check and 44 focused probe/port/local tests pass.
+This is operator extraction only: the sparse owner does not yet assemble this
+line candidate, no multiplier policy is selected, and F03/G0B remain open.
+Next connect it through a replaceable elastic sparse-assembly interface and
+check bounded sparse/dense, reactions and lifecycle parity before any larger
+same-law reference run.
 An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
 for plate/web Fy and web torque. Its clamped-root option matches the declared
 six-DOF support type but lacks verified rotational reaction output; the hinged
