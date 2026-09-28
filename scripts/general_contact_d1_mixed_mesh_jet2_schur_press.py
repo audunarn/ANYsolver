@@ -36,7 +36,8 @@ def build_case(columns: int, *, four_phase: bool = False,
                total_force_n: float = 0.1,
                target_right_x_m: float = 1.0,
                target_reference_slope: float = 0.0,
-               target_columns: int = 1):
+               target_columns: int = 1,
+               full_width_target: bool = False):
     if columns not in (4, 8, 16, 24, 32):
         raise ValueError("only the bounded four/eight/sixteen/twenty-four/thirty-two-Q4 refinements are admitted")
     if target_right_x_m not in (1.0, 1.3):
@@ -45,6 +46,8 @@ def build_case(columns: int, *, four_phase: bool = False,
         raise ValueError("target reference slope must be in [0, 1e-4]")
     if target_columns not in (1, 2):
         raise ValueError("this development case admits one or two target columns")
+    target_y0, target_y1 = ((-0.1, 1.2) if full_width_target
+                            else (0.0, 1.0))
     stride = columns+1
     source_nodes = tuple(range(1, 2*stride+1))
     target_nodes = tuple(range(2*stride+1,
@@ -56,11 +59,11 @@ def build_case(columns: int, *, four_phase: bool = False,
             model.add_node(1+row*stride+column,
                            0.1+column/columns, y, 0.04004)
     target_positions = (
-        ((0.0, 0.0, 0.0), (target_right_x_m, 0.0, 0.0),
-         (target_right_x_m, 1.0, 0.0), (0.0, 1.0, 0.0))
+        ((0.0, target_y0, 0.0), (target_right_x_m, target_y0, 0.0),
+         (target_right_x_m, target_y1, 0.0), (0.0, target_y1, 0.0))
         if target_columns == 1 else tuple(
             (target_right_x_m*column/target_columns, y, 0.0)
-            for y in (0.0, 1.0)
+            for y in (target_y0, target_y1)
             for column in range(target_columns+1)))
     for node, position in zip(target_nodes, target_positions):
         x, y, z = position
@@ -180,7 +183,8 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
          schur_maximum_attempts: int = 2,
          pressure_basis: str = "fine_nodal_q1",
          target_reference_slope: float = 0.0,
-         target_columns: int = 1) -> None:
+         target_columns: int = 1,
+         full_width_target: bool = False) -> None:
     if output.exists():
         raise FileExistsError(f"development output already exists: {output}")
     model, definition, settings, program = build_case(
@@ -190,6 +194,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         target_right_x_m=target_right_x_m,
         target_reference_slope=target_reference_slope,
         target_columns=target_columns,
+        full_width_target=full_width_target,
     )
     if pressure_cap_pa <= 0.0 or schur_step_cap_pa <= 0.0:
         raise ValueError("Schur pressure and step caps must be positive")
@@ -225,6 +230,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         "target_right_x_m": target_right_x_m,
         "target_reference_slope": target_reference_slope,
         "target_columns": target_columns,
+        "full_width_target": full_width_target,
         "columns": columns,
         "pressure_basis": pressure_basis,
         "status": result.status,
@@ -285,10 +291,12 @@ if __name__ == "__main__":
                         default="fine_nodal_q1")
     parser.add_argument("--target-reference-slope", type=float, default=0.0)
     parser.add_argument("--target-columns", type=int, choices=(1, 2), default=1)
+    parser.add_argument("--full-width-target", action="store_true")
     args = parser.parse_args()
     main(args.columns, args.output, args.pressure_cap_pa, args.four_phase,
          args.steps_per_segment, args.schur_step_cap_pa,
          args.load_profile, args.total_force_n,
          args.schur_relinearizations, args.target_right_x_m,
          args.schur_maximum_attempts, args.pressure_basis,
-         args.target_reference_slope, args.target_columns)
+         args.target_reference_slope, args.target_columns,
+         args.full_width_target)

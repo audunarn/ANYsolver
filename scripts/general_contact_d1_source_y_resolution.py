@@ -121,7 +121,10 @@ def _model(nx: int, ny: int) -> FEModel:
 
 def run(nx: int, ny: int, pressure_nx: int | None = None,
         comparison_nx: int | None = None,
-        pressure_knots: tuple[float, ...] | None = None) -> dict:
+        pressure_knots: tuple[float, ...] | None = None,
+        obstacle_y_right: float = 0.9) -> dict:
+    if obstacle_y_right not in (0.9, 1.0):
+        raise ValueError("development obstacle must end at y=0.9 or y=1.0")
     if pressure_knots is not None and pressure_nx is not None:
         raise ValueError("choose uniform pressure cells or selected knots")
     knots = (np.asarray(pressure_knots, dtype=float)
@@ -164,14 +167,15 @@ def run(nx: int, ny: int, pressure_nx: int | None = None,
     mx = (_aligned_q1_cross_knots(nx, knots) if knots is not None
           else _q1_mass(nx, 1.0) if pressure_nx == nx
           else _aligned_q1_cross_mass(nx, pressure_nx))
-    my = _q1_mass(ny, 0.9)
+    my = _q1_mass(ny, obstacle_y_right)
     pressure_work_on_z = sparse.kron(my, mx, format="coo")
     work = sparse.coo_matrix((
         pressure_work_on_z.data,
         (pressure_work_on_z.row, node_z[pressure_work_on_z.col]),
     ), shape=(pressure_work_on_z.shape[0], stiffness.shape[0])).tocsr()
     full_support = np.asarray(pressure_work_on_z.tocsr() @ np.ones(len(node_z)))
-    if np.min(full_support) < -1.0e-14 or abs(np.sum(full_support)-0.9) > 1.0e-12:
+    if (np.min(full_support) < -1.0e-14
+            or abs(np.sum(full_support)-obstacle_y_right) > 1.0e-12):
         raise ValueError("clipped Q1 pressure support is invalid")
     supported = full_support > 1.0e-14
     support = full_support[supported]
@@ -220,7 +224,7 @@ def run(nx: int, ny: int, pressure_nx: int | None = None,
     x_force = (shared_line[:-1]+shared_line[1:])/(2.0*comparison_nx)
     if abs(float(np.sum(x_force)-support @ pressure)) > 1.0e-12:
         raise AssertionError("common-bin pressure force differs from Q1 support integral")
-    boundary = 0.9*ny
+    boundary = obstacle_y_right*ny
     lower = int(np.floor(boundary))
     if lower == ny:
         boundary_vertical = vertical[-1]
@@ -237,6 +241,7 @@ def run(nx: int, ny: int, pressure_nx: int | None = None,
         raise RuntimeError("source y-resolution case exceeds its 50 µm represented-gap budget")
     return {
         "nx": nx, "ny": ny, "pressure_nx": pressure_nx,
+        "obstacle_y_right": obstacle_y_right,
         "pressure_knots": (knots.tolist() if knots is not None else None),
         "comparison_x_bins": comparison_nx,
         "pressure_modes": len(pressure),
