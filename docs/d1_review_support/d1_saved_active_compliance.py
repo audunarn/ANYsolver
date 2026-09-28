@@ -97,6 +97,12 @@ singular = np.linalg.svd(compliance, compute_uv=False)
 symmetric_eigen = np.linalg.eigvalsh((compliance+compliance.T)/2)
 scaled = np.sqrt(support[active])[:, None]*compliance*np.sqrt(support[active])[None, :]
 scaled_singular = np.linalg.svd(scaled, compute_uv=False)
+diagonal = np.diag(compliance)
+assert np.all(diagonal > 0.0)
+unit_diagonal = (compliance/np.sqrt(diagonal)[:, None]
+                 /np.sqrt(diagonal)[None, :])
+unit_diagonal_eigen = np.linalg.eigvalsh(
+    (unit_diagonal+unit_diagonal.T)/2)
 record = {
     "status": "development_saved_active_pressure_compliance",
     "source_commit": subprocess.check_output(("git", "rev-parse", "HEAD"),
@@ -119,6 +125,14 @@ record = {
     "maximum_singular_value_m_per_n": float(singular[0]),
     "unscaled_singular_ratio": float(singular[-1]/singular[0]),
     "support_scaled_singular_ratio": float(scaled_singular[-1]/scaled_singular[0]),
+    "minimum_active_support_m2": float(np.min(support[active])),
+    "maximum_active_support_m2": float(np.max(support[active])),
+    "active_support_ratio": float(np.min(support[active])
+                                  /np.max(support[active])),
+    "unit_diagonal_minimum_eigenvalue": float(unit_diagonal_eigen[0]),
+    "unit_diagonal_maximum_eigenvalue": float(unit_diagonal_eigen[-1]),
+    "unit_diagonal_eigen_ratio": float(unit_diagonal_eigen[0]
+                                       /unit_diagonal_eigen[-1]),
     "geometry_seconds": geometry_seconds,
     "elapsed_seconds": time.perf_counter()-started,
 }
