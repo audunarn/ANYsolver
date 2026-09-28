@@ -109,3 +109,94 @@ def test_same_side_search_near_touch_at_large_coordinates(offset):
                         if offset < 0.0 else None)
     assert outcome(MovingS3PatchPrimalMortarPenalty._check_same_side_overlap) \
         == expected
+
+
+@pytest.mark.parametrize("kind", ("q4", "s3"))
+def test_same_side_tree_retains_projected_overlap_across_normal_separation(kind):
+    first = np.array(((0., 0., 0.), (1., 0., 0.),
+                      (1., 1., 0.), (0., 1., 0.)))
+    second = first + np.array((0., 0., 12.))
+    faces = ((first, second) if kind == "q4" else
+             (first[[0, 1, 2]], second[[0, 1, 2]]))
+    positions = np.vstack(faces)
+    count = len(faces[0])
+    indices = (np.arange(count), np.arange(count, 2*count))
+    with pytest.raises(ValueError, match="overlapping faces"):
+        _exhaustive_overlap(positions, indices)
+    with pytest.raises(ValueError, match="overlapping faces"):
+        MovingS3PatchPrimalMortarPenalty._check_same_side_overlap(
+            positions, indices,
+        )
+
+
+@pytest.mark.parametrize("seed", range(6))
+def test_same_side_tree_matches_exhaustive_with_varying_face_normals(seed):
+    positions, indices = _scene("s3", seed)
+    random = np.random.default_rng(seed+123)
+    for nodes in indices:
+        positions[nodes] += random.normal(0.0, 0.08, size=(3, 3))
+
+    def outcome(check):
+        try:
+            check(positions, indices)
+        except ValueError as exc:
+            return str(exc)
+        return None
+
+    assert outcome(MovingS3PatchPrimalMortarPenalty._check_same_side_overlap) \
+        == outcome(_exhaustive_overlap)
+
+
+def test_same_side_tree_finds_late_remote_projection_after_many_empty_queries():
+    faces = []
+    for row in range(5):
+        for column in range(5):
+            x, y = 3.0*column, 3.0*row
+            faces.append(np.array(((x, y, 0.), (x+1., y, 0.02),
+                                   (x, y+1., -0.01))))
+    positions = np.vstack(faces)
+    indices = tuple(np.arange(3*i, 3*i+3) for i in range(len(faces)))
+    _exhaustive_overlap(positions, indices)
+    MovingS3PatchPrimalMortarPenalty._check_same_side_overlap(positions, indices)
+
+    remote = faces[0] + np.array((0., 0., 40.))
+    positions = np.vstack((positions, remote))
+    indices += (np.arange(len(positions)-3, len(positions)),)
+    with pytest.raises(ValueError, match="overlapping faces"):
+        _exhaustive_overlap(positions, indices)
+    with pytest.raises(ValueError, match="overlapping faces"):
+        MovingS3PatchPrimalMortarPenalty._check_same_side_overlap(
+            positions, indices,
+        )
+
+
+def test_same_side_tree_keeps_oblique_crossing_with_vertices_outside():
+    first = np.array(((0., 0., 0.), (1., 0., 0.),
+                      (1., 1., 0.), (0., 1., 0.)))
+    second = np.array(((-2., .5, 4.), (3., .5, 4.), (.5, 3., 4.)))
+    positions = np.vstack((first, second))
+    indices = (np.arange(4), np.arange(4, 7))
+    with pytest.raises(ValueError, match="overlapping faces"):
+        _exhaustive_overlap(positions, indices)
+    with pytest.raises(ValueError, match="overlapping faces"):
+        MovingS3PatchPrimalMortarPenalty._check_same_side_overlap(
+            positions, indices,
+        )
+
+
+def test_same_side_tree_keeps_valid_warped_q4_across_rotated_normal():
+    first = np.array(((0., 0., 0.), (1., 0., .08),
+                      (1., 1., .04), (0., 1., -.02)))
+    second = first + np.array((0., 0., 6.))
+    angle = 0.43
+    rotation = np.array(((1., 0., 0.),
+                         (0., np.cos(angle), -np.sin(angle)),
+                         (0., np.sin(angle), np.cos(angle))))
+    positions = np.vstack((first, second)) @ rotation.T
+    indices = (np.arange(4), np.arange(4, 8))
+    with pytest.raises(ValueError, match="overlapping faces"):
+        _exhaustive_overlap(positions, indices)
+    with pytest.raises(ValueError, match="overlapping faces"):
+        MovingS3PatchPrimalMortarPenalty._check_same_side_overlap(
+            positions, indices,
+        )

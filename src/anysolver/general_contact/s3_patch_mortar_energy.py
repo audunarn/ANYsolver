@@ -216,24 +216,62 @@ class MovingS3PatchPrimalMortarPenalty:
                 normal /= np.linalg.norm(normal)
             checked.append((face, normal))
         margin = 64.0*np.finfo(float).eps*scale
+        # A projected overlap can occur at any separation along the first
+        # face normal. Query a conservative world-space box around that whole
+        # normal prism, then retain the original exact projected check.
+        from .contact_search import ContactAABBIndex
+
+        face_boxes = np.asarray([
+            np.r_[np.min(positions[nodes], axis=0),
+                  np.max(positions[nodes], axis=0)]
+            for nodes in indices
+        ])
+        search = ContactAABBIndex(
+            tuple(("same_side_face", i) for i in range(len(indices))),
+            face_boxes,
+        )
+        scene_min = np.min(positions, axis=0)
+        scene_max = np.max(positions, axis=0)
+        scene_corners = np.asarray([
+            (x, y, z) for x in (scene_min[0], scene_max[0])
+            for y in (scene_min[1], scene_max[1])
+            for z in (scene_min[2], scene_max[2])
+        ])
         for first_index, (first, normal) in enumerate(checked):
             tangent = first.corners[1]-first.corners[0]
             tangent /= np.linalg.norm(tangent)
             binormal = np.cross(normal, tangent)
-            relative = positions-first.corners[0]
-            projected_xy = np.column_stack((relative@tangent,
-                                            relative@binormal))
-            first_xy = projected_xy[indices[first_index]]
+            origin = first.corners[0]
+            first_relative = positions[indices[first_index]]-origin
+            first_xy = np.column_stack((first_relative@tangent,
+                                        first_relative@binormal))
             first_min = np.min(first_xy, axis=0)
             first_max = np.max(first_xy, axis=0)
-            for second_index in range(first_index+1, len(indices)):
-                second_xy = projected_xy[indices[second_index]]
+            normal_coordinates = (scene_corners-origin) @ normal
+            normal_limits = (np.min(normal_coordinates)-margin,
+                             np.max(normal_coordinates)+margin)
+            prism_corners = np.asarray([
+                origin + a*tangent + b*binormal + c*normal
+                for a in (first_min[0]-margin, first_max[0]+margin)
+                for b in (first_min[1]-margin, first_max[1]+margin)
+                for c in normal_limits
+            ])
+            prism_box = np.r_[np.min(prism_corners, axis=0),
+                              np.max(prism_corners, axis=0)]
+            candidate_indices = sorted(
+                key[1] for key in search.query(prism_box, padding=4*margin)
+                if key[1] > first_index
+            )
+            for second_index in candidate_indices:
+                second_positions = positions[indices[second_index]]
+                second_relative = second_positions-origin
+                second_xy = np.column_stack((second_relative@tangent,
+                                             second_relative@binormal))
                 if np.any(np.max(second_xy, axis=0) < first_min-margin) or np.any(
                         np.min(second_xy, axis=0) > first_max+margin):
                     continue
-                second_positions = positions[indices[second_index]]
                 projected = second_positions - (
-                    (second_positions-first.corners[0]) @ normal
+                    second_relative @ normal
                 )[:, None]*normal
                 second = PlanarFace((1, second_index+1), projected)
                 overlap = planar_projected_overlap(first, second)

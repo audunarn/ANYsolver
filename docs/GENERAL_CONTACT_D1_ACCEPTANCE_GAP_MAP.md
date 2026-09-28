@@ -7,8 +7,13 @@ review, reduced one matched no-checkpoint solver run from 125.56 to 82.07 s
 with identical saved mechanical fields and 495.24/493.67 MB peak memory.
 The [source-bound development record](d1_review_support/d1_same_side_search_20260928.md)
 is one timing pair, not a stable speedup claim or pressure-space acceptance.
-The search still scans face pairs. A larger coupled mesh requires a separate
-resource and mechanics preflight.
+The follow-up [tree query](d1_review_support/d1_same_side_tree_20260928.md)
+removed the exhaustive face-pair scan while retaining exact projected-overlap
+checks. Twenty-two small-scene search controls and four related bounded tests
+passed. One matched 16×8 run gave exactly equal saved mechanical fields and
+79.46 versus 82.07 s instrumented solver time (487.62 versus 493.67 MB peak).
+This is one development pair, not a repeatable complete-route speed claim.
+A larger coupled mesh still requires separate resource and mechanics preflight.
 
 **Current coupled x-refinement:** A 32×8 near-rim fine-Q1 partial-contact run
 completed with the sparse direct monolithic solver under 180 s/1 GB after the
