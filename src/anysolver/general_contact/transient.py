@@ -10,6 +10,7 @@ Neither profile qualifies the broader C6 impact capability.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from bisect import bisect_right
 from typing import Mapping
 
 import numpy as np
@@ -44,6 +45,60 @@ from .core import (
 _PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V1"
 _S3_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0"
 _RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
+_HISTORY_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V2"
+
+
+@dataclass(frozen=True)
+class ContactNodalLoadHistory:
+    """Piecewise-linear scale of one fixed nodal LoadCase in physical time."""
+
+    points: tuple[tuple[float, float], ...]
+
+    def __post_init__(self) -> None:
+        try:
+            points = tuple(tuple(point) for point in self.points)
+        except TypeError as exc:
+            raise ValueError("nodal load history needs time-factor pairs") from exc
+        if (len(points) < 2 or any(len(point) != 2 for point in points)
+                or any(not all(
+                    type(value) is not bool
+                    and isinstance(value, (int, float, np.integer, np.floating))
+                    and np.isfinite(value)
+                    for value in point)
+                       for point in points)
+                or points[0][0] != 0.0
+                or any(right[0] <= left[0]
+                       for left, right in zip(points, points[1:]))):
+            raise ValueError("nodal load history needs finite increasing time-factor pairs from zero")
+        object.__setattr__(self, "points", tuple((float(t), float(f))
+                                                 for t, f in points))
+
+    def factor(self, time_s: float) -> float:
+        if time_s < 0.0 or time_s > self.points[-1][0]:
+            raise ValueError("nodal load history does not cover the requested time")
+        if time_s == self.points[-1][0]:
+            return float(self.points[-1][1])
+        index = max(0, bisect_right(self.points, (time_s, float("inf")))-1)
+        first, last = self.points[index:index+2]
+        fraction = (time_s-first[0])/(last[0]-first[0])
+        return float(first[1]+fraction*(last[1]-first[1]))
+
+
+def _hermite_linear_load_work(
+    start: np.ndarray, end: np.ndarray,
+    start_velocity: np.ndarray, end_velocity: np.ndarray,
+    start_force: np.ndarray, end_force: np.ndarray, dt: float,
+) -> float:
+    """Exact work of linear dead load on the declared cubic Hermite step path."""
+    total = 0.0
+    for s in (0.5-0.5/np.sqrt(3.0), 0.5+0.5/np.sqrt(3.0)):
+        derivative = (
+            (6*s*s-6*s)*start + (3*s*s-4*s+1)*dt*start_velocity
+            + (-6*s*s+6*s)*end + (3*s*s-2*s)*dt*end_velocity
+        )
+        force = (1-s)*start_force+s*end_force
+        total += 0.5*float(force @ derivative)
+    return total
 
 
 @dataclass(frozen=True)
@@ -154,7 +209,8 @@ class TransientContactResults:
 
 
 def _restart_analysis_contract(transient, controls, manager, profile,
-                               base_load_case, external_load) -> dict:
+                               base_load_case, external_load,
+                               load_history) -> dict:
     # The requested end time is a continuation target, not a definition of
     # the already accepted state. All other integration inputs are bound.
     contract = {
@@ -183,15 +239,19 @@ def _restart_analysis_contract(transient, controls, manager, profile,
             "name": base_load_case.name,
             "generalized_vector_si": np.asarray(external_load).tolist(),
         }
+    if load_history is not None:
+        contract["nodal_load_history"] = [list(point)
+                                          for point in load_history.points]
     return contract
 
 
 def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             current_time, q, velocity, acceleration,
-                            accepted_steps) -> dict:
+                            accepted_steps, external_work_j=None) -> dict:
     payload = {
-        "schema": _RESTART_SCHEMA,
-        "version": 1,
+        "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
+                   else _RESTART_SCHEMA),
+        "version": 2 if external_work_j is not None else 1,
         "model_fingerprint": model_fingerprint,
         "analysis_fingerprint": analysis_fingerprint,
         "state": {
@@ -202,12 +262,14 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
             "accepted_steps": int(accepted_steps),
         },
     }
+    if external_work_j is not None:
+        payload["state"]["external_work_j"] = float(external_work_j)
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
 
 def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
-                             reduced_size, t_end):
+                             reduced_size, t_end, *, load_history):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -218,16 +280,22 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
     if (type(signature) is not str
             or signature != analysis_configuration_fingerprint(payload)):
         raise ValueError("transient contact checkpoint integrity mismatch")
-    if payload["schema"] != _RESTART_SCHEMA or payload["version"] != 1:
+    expected_version = 2 if load_history is not None else 1
+    expected_schema = (_HISTORY_RESTART_SCHEMA if load_history is not None
+                       else _RESTART_SCHEMA)
+    if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
         raise ValueError("transient contact checkpoint model is incompatible")
     if payload["analysis_fingerprint"] != analysis_fingerprint:
         raise ValueError("transient contact checkpoint analysis is incompatible")
     state = payload["state"]
-    if not isinstance(state, Mapping) or set(state) != {
+    expected_state_keys = {
         "time", "q", "velocity", "acceleration", "accepted_steps",
-    }:
+    }
+    if load_history is not None:
+        expected_state_keys.add("external_work_j")
+    if not isinstance(state, Mapping) or set(state) != expected_state_keys:
         raise ValueError("transient contact checkpoint state is malformed")
     time = float(state["time"])
     steps = state["accepted_steps"]
@@ -240,7 +308,10 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         if array.shape != (reduced_size,) or not np.all(np.isfinite(array)):
             raise ValueError(f"transient contact checkpoint {name} is invalid")
         arrays.append(array.copy())
-    return time, steps, *arrays
+    work = float(state["external_work_j"]) if load_history is not None else None
+    if work is not None and not np.isfinite(work):
+        raise ValueError("transient contact checkpoint external work is invalid")
+    return time, steps, *arrays, work
 
 
 def _consistent_s3_descriptor_rates(
@@ -379,6 +450,7 @@ def solve_transient_contact(
     *,
     contact_settings: ContactSolverSettings | None = None,
     base_load_case: LoadCase | None = None,
+    nodal_load_history: ContactNodalLoadHistory | None = None,
     solver_controls: ContactTransientSolverControls | None = None,
     restart_checkpoint: Mapping | None = None,
     emit_restart_checkpoint: bool = False,
@@ -400,6 +472,22 @@ def solve_transient_contact(
         raise ValueError("transient contact checkpoint needs one accepted time step")
     settings = ContactSolverSettings() if contact_settings is None else contact_settings
     profile = _admit(model, definition, settings, controls)
+    if nodal_load_history is not None:
+        if type(nodal_load_history) is not ContactNodalLoadHistory:
+            raise TypeError("nodal_load_history must be ContactNodalLoadHistory")
+        if base_load_case is None or profile != _PROFILE:
+            raise ValueError("nodal load history requires one Q4 plane nodal LoadCase")
+        if nodal_load_history.points[-1][0] < transient.t_end:
+            raise ValueError("nodal load history must cover t_end")
+        if any(
+            right[0]-left[0] < max(
+                controls.minimum_dt,
+                16.0*np.finfo(float).eps*max(1.0, abs(right[0])),
+            )
+            for left, right in zip(nodal_load_history.points,
+                                   nodal_load_history.points[1:])
+        ):
+            raise ValueError("nodal load history knots are closer than the admitted minimum_dt or time resolution")
     if base_load_case is not None:
         if profile != _PROFILE:
             raise ValueError("constant nodal loads are admitted only for the Q4 plane development profile")
@@ -513,32 +601,40 @@ def solve_transient_contact(
             analysis_fingerprint = analysis_configuration_fingerprint(
                 _restart_analysis_contract(
                     transient, controls, manager, profile,
-                    base_load_case, external_load,
+                    base_load_case, external_load, nodal_load_history,
                 )
             )
         if restart_checkpoint is None:
             current_time = 0.0
             accepted_steps = 0
             resumed_acceleration = None
+            resumed_work = None
         else:
-            current_time, accepted_steps, q, vred, resumed_acceleration = (
+            current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work = (
                 _read_restart_checkpoint(
                     restart_checkpoint, model_fingerprint,
                     analysis_fingerprint, Mred.shape[0], transient.t_end,
+                    load_history=nodal_load_history,
                 )
             )
 
-        def evaluate(position: np.ndarray, *, tangent: bool):
+        def load_at(time_s: float) -> np.ndarray:
+            if nodal_load_history is None:
+                return external_reduced
+            return nodal_load_history.factor(time_s)*external_reduced
+
+        def evaluate(position: np.ndarray, time_s: float, *, tangent: bool):
             full = np.asarray(T @ position).reshape(-1)
             force, stiffness, trial = _assemble_nonlinear_system(
                 model, full, committed_states, 3, tangent=tangent,
                 kinematics="von_karman",
             )
             return (full, np.asarray(T.T @ force).reshape(-1)
-                    - external_reduced, stiffness, trial)
+                    - load_at(time_s), stiffness, trial)
 
         full0, force0, initial_tangent, trial0 = evaluate(
-            q, tangent=(profile == _S3_PROFILE and restart_checkpoint is None),
+            q, current_time,
+            tangent=(profile == _S3_PROFILE and restart_checkpoint is None),
         )
         contact0 = manager.evaluate(full0, tangent=False)[2]
         if not contact0.gap_tolerance_met:
@@ -575,7 +671,12 @@ def solve_transient_contact(
         velocities = [np.asarray(T @ vred).reshape(-1)]
         accelerations = [np.asarray(T @ acceleration).reshape(-1)]
         contacts = [contact0]
-        external_work = [float(external_load @ (full0 - full_initial))]
+        accumulated_work = (
+            float(resumed_work) if resumed_work is not None
+            else float(external_load @ (full0 - full_initial))
+            if nodal_load_history is None else 0.0
+        )
+        external_work = [accumulated_work]
         swept_gaps = [contact0.minimum_gap]
         residuals = [float(np.linalg.norm(Mred @ acceleration + force0))]
         iterations = []
@@ -589,9 +690,26 @@ def solve_transient_contact(
         while current_time < transient.t_end - 1.0e-14 * max(1.0, transient.t_end):
             remaining = transient.t_end - current_time
             step = min(transient.dt, remaining)
+            if nodal_load_history is not None:
+                knot_index = bisect_right(
+                    nodal_load_history.points, (current_time, float("inf")),
+                )
+                next_knot = (nodal_load_history.points[knot_index][0]
+                             if knot_index < len(nodal_load_history.points)
+                             else transient.t_end)
+                if (knot_index < len(nodal_load_history.points)
+                        and next_knot-current_time < controls.minimum_dt):
+                    raise ValueError(
+                        "nodal load history knot is too close to the current time"
+                    )
+                step = min(step, next_knot-current_time)
             end_truncated = (
                 remaining < transient.dt
                 - 128.0*np.finfo(float).eps*max(1.0, abs(transient.t_end))
+                and (nodal_load_history is None or not any(
+                    transient.t_end == point[0]
+                    for point in nodal_load_history.points
+                ))
             )
             local_cutbacks = 0
             while True:
@@ -600,7 +718,9 @@ def solve_transient_contact(
                 candidate = predictor.copy()
                 converged = False
                 for iteration in range(1, controls.maximum_newton_iterations + 1):
-                    full, internal, tangent, trial = evaluate(candidate, tangent=True)
+                    full, internal, tangent, trial = evaluate(
+                        candidate, current_time+step, tangent=True,
+                    )
                     candidate_acceleration = (candidate - predictor) / (beta * step * step)
                     residual = Mred @ candidate_acceleration + internal
                     scale = max(1.0, float(np.linalg.norm(Mred @ candidate_acceleration)),
@@ -633,7 +753,18 @@ def solve_transient_contact(
                     candidate += correction
                     discard_active_state_candidate(committed_states)
                 if converged:
+                    step_work = 0.0
+                    if nodal_load_history is not None:
+                        start_force = (nodal_load_history.factor(current_time)
+                                       * external_load)
+                        end_force = (nodal_load_history.factor(current_time+step)
+                                     * external_load)
+                        step_work = _hermite_linear_load_work(
+                            previous_full, full, previous_velocity,
+                            full_velocity, start_force, end_force, step,
+                        )
                     committed_states = commit_state_candidate(committed_states, trial)
+                    accumulated_work += step_work
                     q = candidate
                     vred = candidate_velocity
                     acceleration = candidate_acceleration
@@ -653,10 +784,12 @@ def solve_transient_contact(
                         velocities.append(np.asarray(T @ vred).reshape(-1))
                         accelerations.append(np.asarray(T @ acceleration).reshape(-1))
                         contacts.append(contact_result)
-                        # The admitted load is a constant dead generalized
-                        # force. Its path integral is exact at every sample,
-                        # including the first sample of a resumed solve.
-                        external_work.append(float(external_load @ (full - full_initial)))
+                        if nodal_load_history is None:
+                            # Constant dead-load path integral is exact.
+                            accumulated_work = float(
+                                external_load @ (full - full_initial)
+                            )
+                        external_work.append(accumulated_work)
                         swept_gaps.append(pending_swept_gap)
                         residuals.append(pending_residual)
                         pending_swept_gap = float("inf")
@@ -680,6 +813,7 @@ def solve_transient_contact(
         _new_restart_checkpoint(
             model_fingerprint, analysis_fingerprint, current_time,
             q, vred, acceleration, accepted_steps,
+            accumulated_work if nodal_load_history is not None else None,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(

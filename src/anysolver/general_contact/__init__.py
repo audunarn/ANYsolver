@@ -17,6 +17,7 @@ from .static_path import (
     solve_static_contact_path,
 )
 from .transient import (
+    ContactNodalLoadHistory,
     ContactTransientSolverControls,
     TransientContactResults,
     TransientContactSettings,
@@ -36,6 +37,7 @@ __all__ = [
     "ContactPathNodalForce",
     "ContactPathProgram",
     "solve_static_contact_path",
+    "ContactNodalLoadHistory",
     "ContactTransientSolverControls",
     "TransientContactResults",
     "TransientContactSettings",

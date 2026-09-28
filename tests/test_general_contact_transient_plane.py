@@ -11,6 +11,7 @@ from anysolver import (
     BoundaryCondition,
     ContactDefinition,
     ContactInteraction,
+    ContactNodalLoadHistory,
     ContactSurface,
     ContactTransientSolverControls,
     LoadCase,
@@ -151,6 +152,129 @@ def test_q4_constant_nodal_load_matches_free_acceleration_and_restart():
         )
 
 
+def test_q4_linear_nodal_load_history_work_and_knot_restart():
+    history = ContactNodalLoadHistory(((0.0, 0.0), (.005, .5), (.01, 1.0)))
+    model, contact, velocity = _guided_plate()
+    velocity[:] = 0.0
+    full = solve_transient_contact(
+        model, contact, TransientConfig(.003, .01, initial_velocity=velocity),
+        base_load_case=_constant_q4_load(), nodal_load_history=history,
+        emit_restart_checkpoint=True,
+    )
+    np.testing.assert_allclose(full.times, (0.0, .003, .005, .008, .01),
+                               rtol=0.0, atol=1e-14)
+    dof = model.mesh.dof_manager.get_node_dofs(1)[2]
+    assert full.accelerations[0, dof] == pytest.approx(0.0, abs=1e-12)
+    assert full.velocities[-1, dof] == pytest.approx(-.002, abs=1e-9)
+    assert full.displacements[-1, dof] == pytest.approx(
+        -.4*.01**2/6.0, abs=4e-7,
+    )
+    assert full.external_nodal_work_j[0] == 0.0
+    coarse_work_error = abs(full.external_nodal_work_j[-1]-1e-7)
+    assert coarse_work_error < 3e-9
+    refined_model, refined_contact, refined_velocity = _guided_plate()
+    refined_velocity[:] = 0.0
+    refined = solve_transient_contact(
+        refined_model, refined_contact,
+        TransientConfig(.0015, .01, initial_velocity=refined_velocity),
+        base_load_case=_constant_q4_load(), nodal_load_history=history,
+    )
+    assert abs(refined.external_nodal_work_j[-1]-1e-7) < coarse_work_error/3.0
+    assert all(state.active_pressure_dofs == 0 for state in full.contact)
+    assert full.restart_checkpoint["version"] == 2
+    assert full.restart_checkpoint["state"]["external_work_j"] == pytest.approx(
+        full.external_nodal_work_j[-1], abs=1e-16,
+    )
+
+    first_model, first_contact, first_velocity = _guided_plate()
+    first_velocity[:] = 0.0
+    first = solve_transient_contact(
+        first_model, first_contact,
+        TransientConfig(.003, .005, initial_velocity=first_velocity),
+        base_load_case=_constant_q4_load(), nodal_load_history=history,
+        emit_restart_checkpoint=True,
+    )
+    assert first.restart_checkpoint["version"] == 2
+    resumed_model, resumed_contact, resumed_velocity = _guided_plate()
+    resumed_velocity[:] = 0.0
+    resumed = solve_transient_contact(
+        resumed_model, resumed_contact,
+        TransientConfig(.003, .01, initial_velocity=resumed_velocity),
+        base_load_case=_constant_q4_load(), nodal_load_history=history,
+        restart_checkpoint=first.restart_checkpoint,
+    )
+    for name in ("times", "displacements", "velocities", "accelerations",
+                 "external_nodal_work_j"):
+        combined = np.concatenate((getattr(first, name),
+                                   getattr(resumed, name)[1:]), axis=0)
+        np.testing.assert_allclose(combined, getattr(full, name),
+                                   rtol=0.0, atol=1e-12)
+
+    changed_model, changed_contact, changed_velocity = _guided_plate()
+    changed_velocity[:] = 0.0
+    with pytest.raises(ValueError, match="checkpoint analysis is incompatible"):
+        solve_transient_contact(
+            changed_model, changed_contact,
+            TransientConfig(.003, .01, initial_velocity=changed_velocity),
+            base_load_case=_constant_q4_load(),
+            nodal_load_history=ContactNodalLoadHistory(
+                ((0.0, 0.0), (.005, .4), (.01, 1.0)),
+            ),
+            restart_checkpoint=first.restart_checkpoint,
+        )
+    tampered = json.loads(json.dumps(first.restart_checkpoint))
+    tampered["state"]["external_work_j"] += 1e-9
+    with pytest.raises(ValueError, match="checkpoint integrity mismatch"):
+        solve_transient_contact(
+            changed_model, changed_contact,
+            TransientConfig(.003, .01, initial_velocity=changed_velocity),
+            base_load_case=_constant_q4_load(), nodal_load_history=history,
+            restart_checkpoint=tampered,
+        )
+
+
+def test_q4_nodal_load_history_rejects_invalid_or_unsupported_input():
+    for points in (((.001, 0.0), (.01, 1.0)),
+                   ((0.0, 0.0), (.005, 1.0), (.004, 2.0)),
+                   ((0.0, 0.0), (.01, float("nan")))):
+        with pytest.raises(ValueError, match="nodal load history"):
+            ContactNodalLoadHistory(points)
+    history = ContactNodalLoadHistory(((0.0, 0.0), (.01, 1.0)))
+    model, contact, velocity = _guided_plate()
+    with pytest.raises(ValueError, match="nodal LoadCase"):
+        solve_transient_contact(
+            model, contact, TransientConfig(.001, .01,
+                                            initial_velocity=velocity),
+            nodal_load_history=history,
+        )
+    with pytest.raises(ValueError, match="cover t_end"):
+        solve_transient_contact(
+            model, contact, TransientConfig(.001, .011,
+                                            initial_velocity=velocity),
+            base_load_case=_constant_q4_load(), nodal_load_history=history,
+        )
+    near_coincident = ContactNodalLoadHistory(
+        ((0.0, 0.0), (1e-12, .5), (.01, 1.0)),
+    )
+    with pytest.raises(ValueError, match="knots are closer"):
+        solve_transient_contact(
+            model, contact, TransientConfig(.001, .01,
+                                            initial_velocity=velocity),
+            base_load_case=_constant_q4_load(),
+            nodal_load_history=near_coincident,
+        )
+    s3_model, s3_contact, s3_velocity = _guided_s3_descriptor_impact()
+    with pytest.raises(ValueError, match="Q4 plane nodal LoadCase"):
+        solve_transient_contact(
+            s3_model, s3_contact,
+            TransientConfig(.001, .01, initial_velocity=s3_velocity),
+            base_load_case=_constant_q4_load(), nodal_load_history=history,
+            solver_controls=ContactTransientSolverControls(
+                allow_s3_descriptor_dev=True,
+            ),
+        )
+
+
 def test_q4_constant_nodal_load_and_contact_match_mass_spring_impact():
     model, contact, velocity = _guided_plate()
     result = solve_transient_contact(
@@ -177,6 +301,39 @@ def test_q4_constant_nodal_load_and_contact_match_mass_spring_impact():
     assert result.displacements[-1, dof] == pytest.approx(
         expected_displacement, abs=2.0e-5,
     )
+
+
+def test_q4_ramped_nodal_load_during_contact_matches_forced_oscillator():
+    model, contact, velocity = _guided_plate()
+    history = ContactNodalLoadHistory(((0.0, 0.0), (.012, 1.0)))
+    result = solve_transient_contact(
+        model, contact, TransientConfig(.0001, .011,
+                                        initial_velocity=velocity),
+        base_load_case=_constant_q4_load(), nodal_load_history=history,
+    )
+    mass, stiffness, force_rate = .05, 1.0e5, .02/.012
+    acceleration_rate = force_rate/mass
+    hit_time = .01
+    for _ in range(5):
+        hit_time -= (
+            hit_time+acceleration_rate*hit_time**3/6.0-.01
+        )/(1.0+acceleration_rate*hit_time**2/2.0)
+    impact_speed = 1.0+acceleration_rate*hit_time**2/2.0
+    duration = .011-hit_time
+    omega = math.sqrt(stiffness/mass)
+    force_hit = force_rate*hit_time
+    penetration = (
+        (force_hit+force_rate*duration)/stiffness
+        - force_hit/stiffness*math.cos(omega*duration)
+        + (impact_speed-force_rate/stiffness)/omega
+        * math.sin(omega*duration)
+    )
+    dof = model.mesh.dof_manager.get_node_dofs(1)[2]
+    assert result.contact[-1].active_pressure_dofs > 0
+    assert result.displacements[-1, dof] == pytest.approx(
+        -.01-penetration, abs=2.0e-5,
+    )
+    assert result.external_nodal_work_j[-1] > 0.0
 
 
 def test_transient_development_load_admission_is_nodal_q4_only():

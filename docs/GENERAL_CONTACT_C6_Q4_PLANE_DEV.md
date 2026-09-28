@@ -27,7 +27,23 @@ name and generalized vector, so changing either rejects continuation. This
 development slice reports cumulative constant-nodal-load work in joules as
 `external_nodal_work_j = F_nodal · (u - u_initial)` at each saved state. The
 work is measured from the configured initial pose, including after restart.
-It does not yet admit varying loads.
+
+An optional immutable `ContactNodalLoadHistory` now scales that same dead
+nodal `LoadCase` by a piecewise-linear time history. Its points start at zero,
+have strictly increasing physical times and cover `t_end`; the driver splits
+steps at history knots. Adjacent knots below the declared minimum step or
+floating time resolution are rejected before solving; a residual sub-minimum
+knot step also fails explicitly. The load at zero enters initial acceleration, and
+the load at each candidate's end time enters its Newmark residual. At each accepted step, reported
+external work is the exact integral of the linear load over the declared
+cubic Hermite displacement path, evaluated by two-point Gauss quadrature.
+This is discrete path work, not an exact continuum-energy claim. Rejected
+trials add no work. A history-enabled version-2 checkpoint binds the history
+and stores cumulative work; version-1 constant-load checkpoints retain their
+original contract. Restart at a history knot reproduces the uninterrupted
+path; changed history or work tampering is rejected. This route remains Q4
+fixed-plane development only and does not admit a moving tool, follower load
+or S3 descriptor load.
 The result stores sampled displacement, velocity, acceleration, contact reaction
 and endpoint gap. Its swept-gap and equilibrium-residual entries bound every
 accepted step since the preceding saved sample; iteration counts cover every
@@ -51,7 +67,8 @@ active contact matched the uninterrupted Newmark path within declared
 floating-point tolerance. Sparse-output restart remains unadmitted.
 Run `python examples/general_contact_q4_plane_impact.py` from an installed
 package or a source environment. Add `--constant-downward-load-n 0.02` to
-exercise the bounded constant-nodal-load branch.
+exercise the bounded constant-nodal-load branch; add
+`--ramp-duration-s 0.012` to ramp that load from zero.
 
 At each candidate, the coupled residual is
 `M a + F_structural + F_contact - F_nodal`, with `F_nodal = 0` in the
@@ -89,8 +106,20 @@ one Newton iteration and no cutbacks, then reused the same model and load for
 a successful solve; displacement, velocity, acceleration and cumulative work
 matched a fresh model to 1e−12. A nontrivial reduced projection remains
 untested. This check is local development evidence, not C6 qualification.
+The history checks compare a free guided ramp with independently integrated
+acceleration and energy, verify work-error improvement under time refinement,
+split and resume at an internal load knot, reject a changed history and
+tampered work checkpoint, and compare an active-contact ramp with an
+independent forced-oscillator solution. The first coarse work check failed a
+2% tolerance by 0.13 percentage points; the check now records its actual
+2.13% defect and requires improvement on a finer step. This historical
+development failure is retained in the task record; no impact-energy
+acceptance is inferred from the revised local check. Independent read-only
+review found that the first knot search could skip an arbitrarily close
+allowed knot, invalidating the exact-work claim across it. The search and
+admission were corrected, and a near-coincident-knot rejection test passes.
 
-General prescribed or varying loads, moving tools, free rigid bodies, descriptor dynamics in this Q4 branch,
+General time-varying spatial loads, moving tools, free rigid bodies, descriptor dynamics in this Q4 branch,
 beam impact, general finite sliding, plasticity, friction, damping, general
 dynamic restart, complete work/energy accounting, cancellation and common-stage native
 coupling remain outside this profile. Contact result records retain the
