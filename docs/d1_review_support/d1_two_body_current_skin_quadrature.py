@@ -14,6 +14,8 @@ from pathlib import Path
 import numpy as np
 
 import anysolver
+from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from anysolver.general_contact.semismooth import linearize
 from d1_two_body_reference_oracle import (
     _clip, _source_shape, _target_shape, _triangle_quadrature,
 )
@@ -56,66 +58,129 @@ def q4_derivatives(vertices, xi, eta):
     return along_x, along_y
 
 
+def integrate_current_skin(model, definition, pose):
+    pressure_nodes = sorted({
+        node for element_id in definition.surfaces[0].element_ids
+        for node in model.mesh.elements[element_id].node_ids
+    })
+    pressure_index = {node: index for index, node in enumerate(pressure_nodes)}
+    support = np.zeros(len(pressure_nodes))
+    weighted_gap = np.zeros(len(pressure_nodes))
+    current_xy_area = 0.0
+    quadrature_points = 0
+    polygon_sizes = []
+    for source_id in definition.surfaces[0].element_ids:
+        source_element = model.mesh.elements[source_id]
+        reference_source, current_source = physical_vertices(
+            model, source_element, pose, "bottom")
+        source_xy = current_source[:, :2]
+        assert np.max(abs(source_xy[[0, 1], 1]-source_xy[0, 1])) < 1e-12
+        assert np.max(abs(source_xy[[2, 3], 1]-source_xy[2, 1])) < 1e-12
+        for target_id in definition.surfaces[1].element_ids:
+            target_element = model.mesh.elements[target_id]
+            _reference_target, current_target = physical_vertices(
+                model, target_element, pose, "top")
+            polygon = _clip(source_xy, current_target[:, :2])
+            polygon_sizes.append(len(polygon))
+            for fan in range(1, len(polygon)-1):
+                triangle = polygon[[0, fan, fan+1]]
+                for point, weight in _triangle_quadrature(triangle):
+                    source_shape = _source_shape(point, source_xy)
+                    target_shape = _target_shape(point, current_target[:, :2])
+                    xi = source_shape[1]+source_shape[2]
+                    eta = source_shape[2]+source_shape[3]
+                    assert np.max(abs(source_shape-q4_shape(xi, eta))) < 1e-12
+                    dx, dy = q4_derivatives(current_source, xi, eta)
+                    rdx, rdy = q4_derivatives(reference_source, xi, eta)
+                    physical_normal = np.cross(dx, dy)
+                    projected_jacobian = float(physical_normal[2])
+                    assert projected_jacobian > 0
+                    reference_jacobian = float(np.linalg.norm(
+                        np.cross(rdx, rdy)))
+                    physical_normal /= np.linalg.norm(physical_normal)
+                    source_point = source_shape @ current_source
+                    target_point = target_shape @ current_target
+                    gap = float(physical_normal @ (source_point-target_point))
+                    reference_weight = (weight*reference_jacobian
+                                        /projected_jacobian)
+                    for local, node in enumerate(source_element.node_ids):
+                        index = pressure_index[node]
+                        value = reference_weight*source_shape[local]
+                        support[index] += value
+                        weighted_gap[index] += value*gap
+                    current_xy_area += weight
+                    quadrature_points += 1
+    assert np.all(support > 0)
+    return support, weighted_gap, current_xy_area, quadrature_points, tuple(polygon_sizes)
+
+
 path = Path(__file__).with_name("d1_two_body_reference_compare_full_20260928.json")
 saved_bytes = path.read_bytes()
 saved = json.loads(saved_bytes)
 assert saved["production_status"] == "completed"
 assert saved["production_accepted_steps"] == 4
-model, definition, _settings, _program = build_free_target_case(
+model, definition, settings, _program = build_free_target_case(
     4, steps_per_segment=2, four_phase=True,
     enforcement_solver="monolithic_active_set",
 )
 pose = np.asarray(saved["production_displacements"])
 assert pose.shape == (model.mesh.dof_manager.total_dofs,)
-pressure_nodes = sorted({node for element_id in definition.surfaces[0].element_ids
-                         for node in model.mesh.elements[element_id].node_ids})
-pressure_index = {node: index for index, node in enumerate(pressure_nodes)}
-support = np.zeros(len(pressure_nodes))
-weighted_gap = np.zeros(len(pressure_nodes))
-current_xy_area = 0.0
-quadrature_points = 0
-for source_id in definition.surfaces[0].element_ids:
-    source_element = model.mesh.elements[source_id]
-    reference_source, current_source = physical_vertices(
-        model, source_element, pose, "bottom")
-    source_xy = current_source[:, :2]
-    assert np.max(abs(source_xy[[0, 1], 1]-source_xy[0, 1])) < 1e-12
-    assert np.max(abs(source_xy[[2, 3], 1]-source_xy[2, 1])) < 1e-12
-    for target_id in definition.surfaces[1].element_ids:
-        target_element = model.mesh.elements[target_id]
-        _reference_target, current_target = physical_vertices(
-            model, target_element, pose, "top")
-        polygon = _clip(source_xy, current_target[:, :2])
-        for fan in range(1, len(polygon)-1):
-            triangle = polygon[[0, fan, fan+1]]
-            for point, weight in _triangle_quadrature(triangle):
-                source_shape = _source_shape(point, source_xy)
-                target_shape = _target_shape(point, current_target[:, :2])
-                xi = source_shape[1]+source_shape[2]
-                eta = source_shape[2]+source_shape[3]
-                assert np.max(abs(source_shape-q4_shape(xi, eta))) < 1e-12
-                dx, dy = q4_derivatives(current_source, xi, eta)
-                rdx, rdy = q4_derivatives(reference_source, xi, eta)
-                physical_normal = np.cross(dx, dy)
-                projected_jacobian = float(physical_normal[2])
-                assert projected_jacobian > 0
-                reference_jacobian = float(np.linalg.norm(np.cross(rdx, rdy)))
-                physical_normal /= np.linalg.norm(physical_normal)
-                source_point = source_shape @ current_source
-                target_point = target_shape @ current_target
-                gap = float(physical_normal @ (source_point-target_point))
-                reference_weight = weight*reference_jacobian/projected_jacobian
-                for local, node in enumerate(source_element.node_ids):
-                    index = pressure_index[node]
-                    value = reference_weight*source_shape[local]
-                    support[index] += value
-                    weighted_gap[index] += value*gap
-                current_xy_area += weight
-                quadrature_points += 1
-assert np.all(support > 0)
+support, weighted_gap, current_xy_area, quadrature_points, signature = (
+    integrate_current_skin(model, definition, pose))
 saved_support = np.asarray(saved["production_support_m2"])
 saved_gap = np.asarray(saved["production_normalized_gap_m"])
 normalized_gap = weighted_gap/support
+manager = GeneralS3PatchManager(model, definition, settings)
+pressure = np.asarray(saved["production_pressure_pa"])
+assert tuple(manager.law.pressure_mode_ids) == tuple(sorted({
+    node for element_id in definition.surfaces[0].element_ids
+    for node in model.mesh.elements[element_id].node_ids
+}))
+base = linearize(manager, pose, pressure*saved_support, tangent=False)
+np.testing.assert_allclose(base.state.reference_support, saved_support,
+                           rtol=1e-9, atol=1e-12)
+directions = (
+    ("source_4_ux", 4, 0, 2e-6),
+    ("source_4_uz", 4, 2, 2e-6),
+    ("source_9_ux", 9, 0, 2e-6),
+    ("source_9_uz", 9, 2, 2e-6),
+    ("target_12_ux", 12, 0, 2e-6),
+    ("target_12_uz", 12, 2, 2e-6),
+    ("target_12_ry", 12, 4, 2e-5),
+    ("target_13_uz", 13, 2, 2e-6),
+    ("target_13_ry", 13, 4, 2e-5),
+)
+derivative_checks = []
+for label, node, axis, step in directions:
+    dof = int(model.mesh.dof_manager.get_node_dofs(node)[axis])
+    plus_pose = pose.copy()
+    minus_pose = pose.copy()
+    plus_pose[dof] += step
+    minus_pose[dof] -= step
+    plus_support, plus_weighted, _area, _count, plus_signature = (
+        integrate_current_skin(model, definition, plus_pose))
+    minus_support, minus_weighted, _area, _count, minus_signature = (
+        integrate_current_skin(model, definition, minus_pose))
+    assert plus_signature == signature == minus_signature
+    independent = ((plus_weighted/plus_support
+                    -minus_weighted/minus_support)/(2*step))
+    production = base.gap_gradient[:, dof]
+    difference = float(np.linalg.norm(independent-production))
+    scale = max(float(np.linalg.norm(production)), 1e-8)
+    independent_work = float((pressure*saved_support) @ independent)
+    production_work = float(-base.force[dof])
+    derivative_checks.append({
+        "direction": label,
+        "step": step,
+        "independent_gap_gradient_norm": float(np.linalg.norm(independent)),
+        "production_gap_gradient_norm": float(np.linalg.norm(production)),
+        "gradient_difference_norm": difference,
+        "gradient_scaled_difference": difference/scale,
+        "independent_contact_work_derivative": independent_work,
+        "production_contact_work_derivative": production_work,
+        "contact_work_derivative_difference": abs(
+            independent_work-production_work),
+    })
 record = {
     "status": "development_independent_current_skin_values_at_saved_slide",
     "source_commit": subprocess.check_output(("git", "rev-parse", "HEAD"),
@@ -137,6 +202,12 @@ record = {
         np.max(abs(normalized_gap-saved_gap))),
     "normalized_gap_difference_l2_m": float(np.linalg.norm(
         normalized_gap-saved_gap)),
+    "directional_checks": derivative_checks,
+    "maximum_scaled_directional_gradient_difference": max(
+        item["gradient_scaled_difference"] for item in derivative_checks),
+    "maximum_contact_work_derivative_difference": max(
+        item["contact_work_derivative_difference"]
+        for item in derivative_checks),
     "independent_support_m2": support.tolist(),
     "independent_normalized_gap_m": normalized_gap.tolist(),
 }
