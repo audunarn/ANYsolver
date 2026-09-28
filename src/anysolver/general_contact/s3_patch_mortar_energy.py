@@ -202,19 +202,36 @@ class MovingS3PatchPrimalMortarPenalty:
         if len(indices) < 2:
             return
         scale = max(1.0, float(np.max(np.abs(positions))))
-        for first_index in range(len(indices)):
-            first_positions = positions[indices[first_index]]
-            if len(first_positions) == 4:
-                first, normal = projected_q4_source_face(first_positions)
+        checked = []
+        for face_index, nodes in enumerate(indices):
+            face_positions = positions[nodes]
+            # Validate every face, including those later excluded by the
+            # conservative projected bound.
+            if len(face_positions) == 4:
+                face, normal = projected_q4_source_face(face_positions)
             else:
-                first = PlanarFace((1, first_index+1), first_positions)
-                normal = np.cross(first_positions[1]-first_positions[0],
-                                  first_positions[2]-first_positions[0])
+                face = PlanarFace((1, face_index+1), face_positions)
+                normal = np.cross(face_positions[1]-face_positions[0],
+                                  face_positions[2]-face_positions[0])
                 normal /= np.linalg.norm(normal)
+            checked.append((face, normal))
+        margin = 64.0*np.finfo(float).eps*scale
+        for first_index, (first, normal) in enumerate(checked):
+            tangent = first.corners[1]-first.corners[0]
+            tangent /= np.linalg.norm(tangent)
+            binormal = np.cross(normal, tangent)
+            relative = positions-first.corners[0]
+            projected_xy = np.column_stack((relative@tangent,
+                                            relative@binormal))
+            first_xy = projected_xy[indices[first_index]]
+            first_min = np.min(first_xy, axis=0)
+            first_max = np.max(first_xy, axis=0)
             for second_index in range(first_index+1, len(indices)):
+                second_xy = projected_xy[indices[second_index]]
+                if np.any(np.max(second_xy, axis=0) < first_min-margin) or np.any(
+                        np.min(second_xy, axis=0) > first_max+margin):
+                    continue
                 second_positions = positions[indices[second_index]]
-                if len(second_positions) == 4:
-                    projected_q4_source_face(second_positions)
                 projected = second_positions - (
                     (second_positions-first.corners[0]) @ normal
                 )[:, None]*normal

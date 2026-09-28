@@ -33,7 +33,10 @@ def main(output: Path, *, candidate_rows: int | None = None,
          candidate_y_profile: str | None = None,
          compare_residual_only: bool = False,
          monolithic_route: bool = False,
-         checkpoint_guard_counts: bool = False) -> None:
+         checkpoint_guard_counts: bool = False,
+         omit_checkpoint: bool = False,
+         monolithic_maximum_pivots: int = 12,
+         monolithic_linear_solver: str = "direct") -> None:
     if output.exists():
         raise FileExistsError(output)
     records = defaultdict(lambda: {"calls": 0, "inclusive_seconds": 0.0,
@@ -131,6 +134,8 @@ def main(output: Path, *, candidate_rows: int | None = None,
         settings = replace(
             settings, enforcement_solver="monolithic_active_set",
             complementarity_force_scale_n=0.3,
+            monolithic_maximum_pivots=monolithic_maximum_pivots,
+            monolithic_linear_solver=monolithic_linear_solver,
             augmentation_acceleration="none",
             augmentation_schur_maximum_modes=None,
             augmentation_schur_maximum_pressure_pa=None,
@@ -143,12 +148,15 @@ def main(output: Path, *, candidate_rows: int | None = None,
         result = nonlinear_static.solve_static_nonlinear(
             model, contact=definition, contact_settings=settings,
             contact_path_program=program, max_iterations=18,
-            emit_restart_checkpoint=True,
+            emit_restart_checkpoint=not omit_checkpoint,
         )
         record = {
             "method": "development whole-route coarse timing; unchanged mechanics",
             "source_grid": [candidate_columns, candidate_rows],
             "source_y_profile": candidate_y_profile,
+            "checkpoint_requested": not omit_checkpoint,
+            "monolithic_maximum_pivots": monolithic_maximum_pivots,
+            "monolithic_linear_solver": monolithic_linear_solver,
             "status": result.status,
             "failure_reason": result.failure_reason,
             "elapsed_seconds": time.perf_counter()-started,
@@ -374,10 +382,17 @@ if __name__ == "__main__":
     parser.add_argument("--compare-residual-only", action="store_true")
     parser.add_argument("--monolithic-route", action="store_true")
     parser.add_argument("--checkpoint-guard-counts", action="store_true")
+    parser.add_argument("--omit-checkpoint", action="store_true")
+    parser.add_argument("--monolithic-maximum-pivots", type=int, default=12)
+    parser.add_argument("--monolithic-linear-solver",
+                        choices=("direct", "block_response_dev"), default="direct")
     args = parser.parse_args()
     main(args.output, candidate_rows=args.candidate_rows,
          candidate_columns=args.candidate_columns,
          candidate_y_profile=args.candidate_y_profile,
          compare_residual_only=args.compare_residual_only,
          monolithic_route=args.monolithic_route,
-         checkpoint_guard_counts=args.checkpoint_guard_counts)
+         checkpoint_guard_counts=args.checkpoint_guard_counts,
+         omit_checkpoint=args.omit_checkpoint,
+         monolithic_maximum_pivots=args.monolithic_maximum_pivots,
+         monolithic_linear_solver=args.monolithic_linear_solver)

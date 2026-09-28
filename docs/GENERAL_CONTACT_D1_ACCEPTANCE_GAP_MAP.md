@@ -1,5 +1,15 @@
 # D1 shell-static acceptance gap map
 
+**Current cost discriminator:** Same-side overlap validation dominated one
+saved 16×8 ordinary geometry evaluation. Conservative projected-bound
+pruning, with exhaustive small-scene controls and independent read-only
+review, reduced one matched no-checkpoint solver run from 125.56 to 82.07 s
+with identical saved mechanical fields and 495.24/493.67 MB peak memory.
+The [source-bound development record](d1_review_support/d1_same_side_search_20260928.md)
+is one timing pair, not a stable speedup claim or pressure-space acceptance.
+The search still scans face pairs. A larger coupled mesh requires a separate
+resource and mechanics preflight.
+
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
 bound at all eight accepted poses. Local and installed fields match; a forced
