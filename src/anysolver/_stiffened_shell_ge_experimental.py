@@ -269,10 +269,15 @@ class ExperimentalGEAnalysis:
         constraint_rows = []
         if not definition.points:
             raise ValueError("at least one explicit native point connection required")
+        seen_points = set()
         for tie in definition.points:
             if (type(tie) is not PointConnection or
                     tie.shell_node not in shell_index or tie.beam_node not in beam_index):
                 raise ValueError("known point connection nodes required")
+            pair = (tie.shell_node, tie.beam_node)
+            if pair in seen_points:
+                raise ValueError("duplicate experimental point connection")
+            seen_points.add(pair)
             shell_slot = 6*shell_index[tie.shell_node]
             beam_slot = shell_count+6*beam_index[tie.beam_node]
             positions = np.array((shell_xyz[shell_index[tie.shell_node]],

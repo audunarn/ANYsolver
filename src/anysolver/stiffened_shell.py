@@ -13,6 +13,9 @@ from ._b2_physical_linear_definition import (
     PhysicalB2Member, CompiledPhysicalB2Member,
 )
 from ._stiffened_shell_b2_experimental import ExperimentalB2Analysis
+from ._stiffened_shell_b2_q4_point_experimental import (
+    ExperimentalB2Q4PointAnalysis,
+)
 
 from ._stiffened_shell_ge_experimental import (
     PROFILE as B3_GE_E4_PL_STIFFENED_SHELL_V1,
@@ -38,6 +41,23 @@ class B2LinearDefinition:
     max_rhs_chunk: int = 8
 
 
+@dataclass(frozen=True)
+class B2Q4PointDefinition:
+    """One elastic Q4 and one physical B2 member with a reference point tie."""
+
+    profile: str
+    member: PhysicalB2Member | CompiledPhysicalB2Member
+    shell_vertices_m: object
+    shell_E: float
+    shell_nu: float
+    shell_thickness_m: float
+    station: float
+    transformation: object
+    prescribed_offset: object
+    offset_local_m: tuple[float, float, float] = (0., 0., 0.)
+    reference_normal: tuple[float, float, float] = (0., 0., 1.)
+
+
 def create_analysis(*, definition, resources=None):
     """Create the explicitly selected experimental owner for an admitted profile."""
     if type(definition) is LinearDefinition:
@@ -49,6 +69,18 @@ def create_analysis(*, definition, resources=None):
             definition.members, definition.transformation,
             definition.prescribed_offset, definition.selected_dofs,
             max_rhs_chunk=definition.max_rhs_chunk)
+    if type(definition) is B2Q4PointDefinition:
+        if definition.profile != B2_E4_PL_FAST_LINEAR_V1 or resources is not None:
+            raise ValueError("explicit experimental B2/Q4 point definition required")
+        return ExperimentalB2Q4PointAnalysis(
+            definition.member, definition.shell_vertices_m,
+            shell_E=definition.shell_E, shell_nu=definition.shell_nu,
+            shell_thickness_m=definition.shell_thickness_m,
+            station=definition.station,
+            transformation=definition.transformation,
+            prescribed_offset=definition.prescribed_offset,
+            offset_local_m=definition.offset_local_m,
+            reference_normal=definition.reference_normal)
     raise ValueError("unsupported stiffened-shell definition/profile")
 
 
@@ -56,6 +88,6 @@ __all__ = [
     "B3_GE_E4_PL_STIFFENED_SHELL_V1", "B2_E4_PL_FAST_LINEAR_V1",
     "ShellPanel", "PointConnection",
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",
-    "B2LinearDefinition",
+    "B2LinearDefinition", "B2Q4PointDefinition",
     "create_analysis",
 ]

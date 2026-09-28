@@ -25,14 +25,19 @@ production qualification or release is implied.
   This is **reference-linear only**, with no nonlinear sequence or accepted G1.
 - Separate physical B2 connected beam graph runs 1/10/100 compatible loads,
   selected recovery and one factorization through the public facade. It has
-  no shell attachment. Typed numerical failure gives non-success; callback
-  errors propagate. B2 profile remains experimental/not qualified.
-- Focused new/legacy regression: 62 passed before the final disconnected-cell
-  addition; 10 new GE/B2 tests passed after it. The updated wheel SHA256 is
-  `C57D44CCE1DF46DC728BB0B351345FCF07B7A956A866884D0F1F4EEE1EEBCA91`.
-  A temp-installed wheel was confirmed as the actual import; its Q4 example,
-  mixed/all-S3 runs and B2 1/10/100 route passed. Independent read-only
-  review found no new blocker in the S3 and typed B2 changes.
+  no shell attachment. A second bounded public route joins one Q4 and one
+  physical B2 member through the existing F10 point law and matches a dense
+  reduced oracle for two loads, reactions, multipliers and work. Neither B2
+  route yet provides a multi-shell panel. Typed numerical failure gives
+  non-success; programming errors propagate. Both remain experimental.
+- Focused new/legacy regression: 71 passed after Q4/S3, B2 graph, and bounded
+  B2/Q4 point integration; the three B2/Q4 point tests passed after review
+  fixes. Temp-installed wheel SHA256
+  `26DDDEA1F7DDC6D7FC08F3D60CDEC592F45347C17D26CDAE56ED3D1D2F08E055`
+  was the actual imported package for the Q4 example, mixed/all-S3 runs,
+  B2 1/10/100, and B2/Q4 point solve. Independent read-only reviews found
+  no unresolved blocker in these bounded slices. B2/Q4 now rejects overflow
+  and names general affine-plan reactions accurately.
 - F01-F13 have useful bounded evidence but none is fully accepted. The
   independent foundation inventory remains in the prior handoff; do not
   infer G0 closure from local implementation tests.
@@ -64,7 +69,8 @@ numerical thread remain binding.
 ## Next integration action
 
 Build the short nonlinear GE accepted/trial sequence with atomic
-rejection/cancellation/restart on existing point operators, then shell-coupled
-physical B2 and headless/ANYfem construction-persistence. Keep line and
+rejection/cancellation/restart on existing point operators, then extend the
+bounded B2/Q4 point route to the planned multi-element panel and begin
+ANYfem construction-persistence. Keep line and
 footprint interfaces replaceable. Complete F01-F13 and G0-G6 without weaker
 criteria, hidden exclusions, or interim release.

@@ -6,6 +6,7 @@ import pytest
 from dataclasses import replace
 
 from anysolver import b3_ge
+from anysolver.control import CancellationToken, SolveCancelled
 from anysolver._stiffened_shell_ge_experimental import (
     PROFILE, ExperimentalGEAnalysis, FixedCoordinate, LinearDefinition,
     NodalAction, PointConnection, ShellPanel,
@@ -131,3 +132,32 @@ def test_disconnected_shell_cells_fail_before_sparse_solve():
                     ((3., -.5, 0.), (3., .5, 0.)))
     with pytest.raises(ValueError, match="connected"):
         ExperimentalGEAnalysis(replace(original, shell=shell))
+
+
+def test_duplicate_point_equations_fail_during_preflight():
+    definition = _panel()
+    with pytest.raises(ValueError, match="duplicate experimental point"):
+        ExperimentalGEAnalysis(replace(
+            definition, points=definition.points+(definition.points[0],)))
+
+
+def test_sparse_solution_matches_bounded_dense_kkt_and_cancel_keeps_prefix():
+    analysis = ExperimentalGEAnalysis(_panel())
+    action = (NodalAction("beam", 105, (0., 0., 100., 0., 0., 0.)),)
+    observed = analysis.solve_linear(action)
+    load = np.zeros(analysis._K.shape[0])
+    load[analysis._shell_count+6*analysis._beam_index[105]+2] = 100.
+    dense = np.linalg.solve(analysis._A.toarray(),
+                            np.r_[load[analysis._free],
+                                  np.zeros(analysis._C.shape[0])])
+    np.testing.assert_allclose(
+        np.r_[observed.shell_displacement, observed.beam_coordinates]
+        [analysis._free], dense[:len(analysis._free)], rtol=1e-9, atol=1e-10)
+    np.testing.assert_allclose(observed.multipliers,
+                               dense[len(analysis._free):], rtol=1e-9, atol=1e-9)
+    saved = analysis.checkpoint()
+    token = CancellationToken()
+    token.cancel("fixture cancellation")
+    with pytest.raises(SolveCancelled, match="fixture cancellation"):
+        analysis.solve_linear(action, cancellation_token=token)
+    assert analysis.checkpoint() == saved
