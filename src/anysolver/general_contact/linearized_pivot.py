@@ -21,7 +21,8 @@ from .q4_s3_tiny_wedge import verify_tiny_wedge_derivatives
 from .q4_s3_overlap_derivatives import q4_s3_overlap_derivatives
 from .s3_overlap_derivatives import s3_overlap_derivatives
 from .s3_patch_augmented import (
-    _q4_s3_pair_value_rtol, _q4_s3_pair_values_agree,
+    _q4_s3_gap_operand_roundoff, _q4_s3_pair_value_rtol,
+    _q4_s3_pair_values_agree,
 )
 from .supported_schur import SupportedSchurProposal, propose_supported_schur_step
 
@@ -152,6 +153,25 @@ def _jet2_integral_gradients(geometry, source, target,
                 area_resolution=derivative.overlap_area_resolution,
                 normwise=True,
             )
+            if not gap_agrees:
+                # Match the projected work owner's bounded cancellation
+                # allowance when nearly coincident skin coordinates are
+                # subtracted. Its edge-scale guard still rejects remote
+                # origins and genuinely unresolved geometry.
+                gap_atol = max(gap_atol, _q4_s3_gap_operand_roundoff(
+                    local_source, local_target,
+                    max(float(np.max(np.abs(local.reference_support))),
+                        float(np.max(np.abs(derivative.reference_support)))),
+                ))
+                gap_agrees = _q4_s3_pair_values_agree(
+                    local.reference_weighted_gap,
+                    derivative.reference_weighted_gap,
+                    value_rtol=value_rtol, roundoff_atol=gap_atol,
+                    local_area=local.overlap_area,
+                    derivative_area=derivative.overlap_area,
+                    area_resolution=derivative.overlap_area_resolution,
+                    normwise=True,
+                )
         else:
             support_agrees = np.allclose(
                 derivative.reference_support, local.reference_support,

@@ -95,6 +95,15 @@ support rim. It does not establish a mesh-uniform trace-space bound or
 spatial pressure convergence. Production pressure and reaction mapping
 are unchanged.
 
+The [x-only enriched-shell saved-pose check](d1_review_support/d1_enriched_shell_nested_work_20260929.md)
+keeps the same 153 Q1 pressure modes, interpolates the represented skin,
+and doubles source displacement resolution in x. Coarse admissible motions
+prolong exactly; their pressure work agrees within 5.05e−10 relative, while
+restricted structural energy differs by 3.806%. The refined pressure work
+detects all supported modes at this pose, but the ratio is only a finite
+reference comparison. Mesh-uniform stability, partial-front convergence,
+two-body work and coupled acceptance remain open.
+
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
 bound at all eight accepted poses. Local and installed fields match; a forced

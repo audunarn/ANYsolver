@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from anysolver.general_contact import linearized_pivot
 from anysolver.general_contact.linearized_pivot import (
     _exact_artificial_seam_gap_gradient, _jet2_integral_gradients,
 )
@@ -147,3 +148,25 @@ def test_smooth_near_diagonal_wedge_bounds_inactive_gap_response():
         )
         np.testing.assert_array_equal(untied_weighted, weighted)
         np.testing.assert_array_equal(untied_support, support)
+
+
+def test_gap_operand_roundoff_does_not_admit_material_value_error(monkeypatch):
+    owner, source, target, base, selected = _saved_pose()
+    original = linearized_pivot.q4_s3_overlap_derivatives
+
+    def biased_derivative(*args, **kwargs):
+        derivative = original(*args, **kwargs)
+        return replace(
+            derivative,
+            reference_weighted_gap=derivative.reference_weighted_gap+1e-8,
+        )
+
+    monkeypatch.setattr(linearized_pivot, "q4_s3_overlap_derivatives",
+                        biased_derivative)
+    with pytest.raises(ValueError, match="pressure response derivative disagrees"):
+        _jet2_integral_gradients(
+            owner.law.geometry, source, target, selected,
+            3*(len(source)+len(target)),
+            owner.settings.maximum_general_s3_energy_evaluations,
+            manager=owner, base=base,
+        )

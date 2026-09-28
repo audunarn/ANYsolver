@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -15,12 +16,22 @@ from pathlib import Path
 
 import numpy as np
 import psutil
-from scipy import sparse
+from scipy import linalg, sparse
 from scipy.sparse.linalg import splu
 
 import anysolver
 from anysolver.assembly import build_constraint_transformation
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from anysolver.general_contact.linearized_pivot import _jet2_integral_gradients
+from anysolver.general_contact.pressure_basis import (
+    PressureBasis, SELECTED_Q1_KNOTS_VERSION,
+)
+from anysolver.general_contact.q4_s3_overlap_derivatives import (
+    q4_s3_overlap_derivatives,
+)
+from anysolver.general_contact.s3_patch_augmented import (
+    _q4_s3_pair_value_rtol, _q4_s3_pair_values_agree,
+)
 from anysolver.general_contact.semismooth import linearize
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.nonlinear_static import _assemble_nonlinear_system
@@ -33,10 +44,14 @@ parser.add_argument(
     default=Path(__file__).with_name("d1_saved_16x8_near_rim_field_20260928.json"),
 )
 parser.add_argument("--structural-energy", action="store_true")
+parser.add_argument("--enriched-source-x2", action="store_true")
 parser.add_argument("--output", type=Path)
 args = parser.parse_args()
-if args.structural_energy and (args.output is None or args.output.exists()):
-    parser.error("--structural-energy requires a new --output path")
+if args.structural_energy and args.enriched_source_x2:
+    parser.error("select one pressure diagnostic")
+if ((args.structural_energy or args.enriched_source_x2)
+        and (args.output is None or args.output.exists())):
+    parser.error("selected diagnostic requires a new --output path")
 started = time.perf_counter()
 path = args.saved.resolve()
 saved_bytes = path.read_bytes()
@@ -71,7 +86,7 @@ np.testing.assert_allclose(base.state.normalized_gap,
                            rtol=0.0, atol=1e-9)
 geometry_seconds = time.perf_counter()-started
 
-if not args.structural_energy:
+if not (args.structural_energy or args.enriched_source_x2):
     structural_tangent = _assemble_nonlinear_system(
         model, pose, {}, 5, tangent=True, kinematics="von_karman",
         require_full_coordinates=True,
@@ -94,6 +109,330 @@ free_coordinates = np.setdiff1d(np.arange(transform.shape[1]),
 physical_transform = transform[:, free_coordinates]
 active = np.flatnonzero(pressure > 0.0)
 assert len(active) == certificate["active_pressure_dofs"]
+if args.enriched_source_x2:
+    # Keep the physical pressure field fixed while enriching only source
+    # structural virtual displacements. No coupled fine-mesh solve occurs.
+    fine_columns = 2*saved["columns"]
+    fine_model, fine_definition, fine_settings, _program = build_case(
+        fine_columns, source_rows=saved["source_rows"],
+        source_y_profile=saved["source_y_profile"],
+        target_right_x_m=saved["target_right_x_m"],
+        target_reference_slope=saved["target_reference_slope"],
+        target_columns=saved["target_columns"],
+        full_width_target=saved["full_width_target"],
+        load_profile=saved["load_profile"],
+        total_force_n=saved["total_downward_force_n"],
+        steps_per_segment=saved["steps_per_segment"],
+        four_phase=saved["four_phase"],
+    )
+    fine_model.apply_boundary_conditions()
+    fine_manager = GeneralS3PatchManager(
+        fine_model, fine_definition, fine_settings)
+    coarse_stride = saved["columns"]+1
+    fine_stride = fine_columns+1
+    coarse_source_count = coarse_stride*(saved["source_rows"]+1)
+    fine_source_count = fine_stride*(saved["source_rows"]+1)
+    if (len(support) != coarse_source_count
+            or fine_manager.law.source_node_ids !=
+            tuple(range(1, fine_source_count+1))):
+        raise AssertionError("source pressure order does not match refined grid")
+    fine_pose = np.zeros(fine_model.mesh.dof_manager.total_dofs)
+    coarse_dofs = model.mesh.dof_manager
+    fine_dofs = fine_model.mesh.dof_manager
+    pose_prolongation = sparse.lil_matrix((fine_pose.size, pose.size))
+    for row in range(saved["source_rows"]+1):
+        for column in range(fine_stride):
+            left = column//2
+            first = 1+row*coarse_stride+left
+            coarse_indices = coarse_dofs.get_node_dofs(first)
+            value = np.asarray(pose[coarse_indices])
+            if column % 2:
+                second = first+1
+                second_indices = coarse_dofs.get_node_dofs(second)
+                value = 0.5*(value+pose[second_indices])
+            node = 1+row*fine_stride+column
+            fine_indices = fine_dofs.get_node_dofs(node)
+            fine_pose[fine_indices] = value
+            for component, fine_dof in enumerate(fine_indices):
+                pose_prolongation[fine_dof, coarse_indices[component]] = (
+                    0.5 if column % 2 else 1.0)
+                if column % 2:
+                    pose_prolongation[fine_dof, second_indices[component]] = 0.5
+    pose_prolongation = pose_prolongation.tocsr()
+    coarse_source, _coarse_target = manager._positions(pose)
+    fine_source, fine_target = fine_manager._positions(fine_pose)
+    expected_source = np.asarray([
+        coarse_source[row*coarse_stride+column//2]
+        if column % 2 == 0 else 0.5*(
+            coarse_source[row*coarse_stride+column//2]
+            + coarse_source[row*coarse_stride+column//2+1])
+        for row in range(saved["source_rows"]+1)
+        for column in range(fine_stride)
+    ])
+    geometry_error = float(np.max(np.linalg.norm(
+        fine_source-expected_source, axis=1)))
+    matrix = np.zeros((fine_source_count, coarse_source_count))
+    for row in range(saved["source_rows"]+1):
+        for column in range(fine_stride):
+            index = row*fine_stride+column
+            coarse_index = row*coarse_stride+column//2
+            if column % 2:
+                matrix[index, coarse_index:coarse_index+2] = 0.5
+            else:
+                matrix[index, coarse_index] = 1.0
+    anchors = tuple(1+row*fine_stride+2*column
+                    for row in range(saved["source_rows"]+1)
+                    for column in range(coarse_stride))
+    basis = PressureBasis(
+        SELECTED_Q1_KNOTS_VERSION,
+        fine_manager.law.source_node_ids, anchors,
+        tuple(tuple(value for value in row) for row in matrix),
+    )
+    geometry = fine_manager.law.geometry
+    fine_state = geometry.evaluate(fine_source, fine_target)
+    fine_support, fine_weighted, _fine_gram = basis.transform_integrals(
+        fine_state.reference_support, fine_state.reference_weighted_gap,
+        fine_state.pressure_gram,
+    )
+    fine_gap = fine_weighted/fine_support
+    support_error = float(np.linalg.norm(fine_support-support)
+                          /np.linalg.norm(support))
+    gap_error = float(np.max(abs(fine_gap-base.state.normalized_gap)))
+    area_error = float(abs(fine_state.reference_overlap_area
+                           -base.state.reference_overlap_area)
+                       /base.state.reference_overlap_area)
+    record = {
+        "status": "development_enriched_shell_source_x2",
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "saved_source_sha256": hashlib.sha256(saved_bytes).hexdigest(),
+        "saved_runtime_identity": saved["runtime_identity"],
+        "anysolver_module": str(Path(anysolver.__file__).resolve()),
+        "coarse_source_cells": [saved["columns"], saved["source_rows"]],
+        "fine_source_cells": [fine_columns, saved["source_rows"]],
+        "pressure_modes": int(len(support)),
+        "settled_active_modes": int(len(active)),
+        "source_skin_interpolation_error_m": geometry_error,
+        "pressure_support_l2_relative": support_error,
+        "normalized_gap_maximum_error_m": gap_error,
+        "reference_overlap_area_relative_error": area_error,
+    }
+    if (geometry_error > 1e-10 or support_error > 1e-8
+            or gap_error > 1e-8 or area_error > 1e-8
+            or np.any(fine_support <= 0.0)):
+        record["status"] = "development_enriched_shell_geometry_mismatch"
+    else:
+        try:
+            weighted_gradient, support_gradient = _jet2_integral_gradients(
+                geometry, fine_source, fine_target,
+                np.arange(fine_source_count),
+                3*(len(fine_source)+len(fine_target)),
+                fine_settings.maximum_general_s3_energy_evaluations,
+                manager=fine_manager, base=fine_state,
+            )
+        except ValueError as exc:
+            match = re.search(r"\bpair=(\d+)\b", str(exc))
+            if match is None:
+                raise
+            pair_index = int(match.group(1))
+            source_face, target_face = divmod(
+                pair_index, len(geometry.target_faces))
+            source_nodes = geometry.source_face_indices[source_face]
+            target_nodes = geometry.target_face_indices[target_face]
+            local_source = fine_source[source_nodes]
+            local_target = fine_target[target_nodes]
+            local = geometry.pair_laws[pair_index].evaluate(
+                local_source, local_target)
+            tolerances = geometry.q4_source_derivative_tolerances
+            derivative = q4_s3_overlap_derivatives(
+                geometry.source_faces[source_face].reference_positions,
+                local_source, local_target,
+                area_tolerance=geometry.q4_source_area_tolerance,
+                weighted_gap_tolerance=geometry.q4_source_weighted_gap_tolerance,
+                maximum_triangles=geometry.maximum_q4_source_integration_triangles,
+                allow_warped_source=True,
+                support_gradient_tolerance=tolerances[0],
+                support_hessian_tolerance=tolerances[1],
+                weighted_gap_gradient_tolerance=tolerances[2],
+                weighted_gap_hessian_tolerance=tolerances[3],
+            )
+            value_rtol = _q4_s3_pair_value_rtol(
+                local.overlap_area, derivative.overlap_area,
+                derivative.overlap_area_resolution)
+            factor = 512.0*np.finfo(float).eps*max(
+                1, local.integration_triangles)
+
+            def comparison(name, old, new, normwise):
+                scale = max(float(np.max(abs(old))), float(np.max(abs(new))))
+                atol = factor*scale
+                return {
+                    "local": old.tolist(), "derivative": new.tolist(),
+                    "maximum_absolute_difference": float(np.max(abs(old-new))),
+                    "value_scale": scale, "roundoff_atol": atol,
+                    "agrees": _q4_s3_pair_values_agree(
+                        old, new, value_rtol=value_rtol,
+                        roundoff_atol=atol,
+                        local_area=local.overlap_area,
+                        derivative_area=derivative.overlap_area,
+                        area_resolution=derivative.overlap_area_resolution,
+                        normwise=normwise),
+                }
+
+            record["status"] = "development_enriched_shell_pair_value_non_success"
+            record["pair_guard"] = {
+                "error": str(exc), "pair": pair_index,
+                "source_face": source_face, "target_face": target_face,
+                "local_overlap_area_m2": local.overlap_area,
+                "derivative_overlap_area_m2": derivative.overlap_area,
+                "area_resolution_m2": derivative.overlap_area_resolution,
+                "integration_triangles": local.integration_triangles,
+                "value_rtol": value_rtol,
+                "support": comparison(
+                    "support", local.reference_support,
+                    derivative.reference_support, False),
+                "weighted_gap": comparison(
+                    "weighted_gap", local.reference_weighted_gap,
+                    derivative.reference_weighted_gap, True),
+            }
+            record["elapsed_seconds"] = time.perf_counter()-started
+            record["peak_process_working_set_mb"] = (
+                psutil.Process().memory_info().peak_wset/1e6)
+            args.output.write_text(json.dumps(record, indent=2)+"\n",
+                                   encoding="utf-8")
+            print(json.dumps({"status": record["status"],
+                              "pair_guard": record["pair_guard"]}, indent=2))
+            raise SystemExit(2)
+        support_gradient, weighted_gradient = basis.transform_derivatives(
+            support_gradient, weighted_gradient,
+        )
+        fine_work = (weighted_gradient
+                     -fine_gap[:, None]*support_gradient)
+        fine_stiffness = assemble_stiffness_matrix(fine_model)[0]
+        _r, _f, fine_transform, fine_offset, _fixed, _info = (
+            build_constraint_transformation(
+                fine_stiffness, np.zeros(fine_pose.size), fine_model,
+            ))
+        if np.linalg.norm(fine_offset) != 0.0:
+            raise AssertionError("enriched source has unexpected constraint offset")
+        fine_transform = fine_transform.tocsr()
+        control_nodes = (1, fine_stride+1)
+        controlled = []
+        for node in control_nodes:
+            dof = int(fine_dofs.get_node_dofs(node)[0])
+            row = fine_transform.getrow(dof)
+            if row.nnz != 1 or row.data[0] != 1.0:
+                raise AssertionError("enriched control coordinate is ambiguous")
+            controlled.append(int(row.indices[0]))
+        free = np.setdiff1d(np.arange(fine_transform.shape[1]), controlled)
+        physical_fine = fine_transform[:, free]
+        fine_work = np.asarray(fine_work @ fine_manager.map @ physical_fine)
+        coarse_work = support[:, None]*np.asarray(
+            base.gap_gradient @ physical_transform)
+        coarse_energy = np.asarray(
+            (physical_transform.T @ linear_stiffness @ physical_transform)
+            .toarray())
+        fine_energy = np.asarray(
+            (physical_fine.T @ fine_stiffness @ physical_fine).toarray())
+        # The pressure basis is shared, but a finite-reference ratio is a
+        # nested shell test only if coarse admissible motions have the same
+        # physical work and comparable energy after prolongation.
+        restricted_prolongation = pose_prolongation @ physical_transform
+        fine_gram = (physical_fine.T @ physical_fine).toarray()
+        gram_error = float(np.linalg.norm(
+            fine_gram-np.eye(fine_gram.shape[0]), ord="fro")
+                            /max(np.sqrt(fine_gram.shape[0]), 1.0))
+        if gram_error > 1e-10:
+            raise AssertionError("fine constraint transform is not orthonormal")
+        prolongation = (physical_fine.T @ restricted_prolongation).toarray()
+        reconstructed = physical_fine @ prolongation
+        reconstruction_error = float(np.linalg.norm(
+            reconstructed-restricted_prolongation.toarray(), ord="fro")
+            /max(np.linalg.norm(restricted_prolongation.toarray(),
+                                ord="fro"), 1e-30))
+        work_error = float(np.linalg.norm(
+            fine_work @ prolongation-coarse_work, ord="fro")
+            /max(np.linalg.norm(coarse_work, ord="fro"), 1e-30))
+        restricted_energy = prolongation.T @ fine_energy @ prolongation
+        energy_error = float(np.linalg.norm(
+            restricted_energy-coarse_energy, ord="fro")
+            /max(np.linalg.norm(coarse_energy, ord="fro"), 1e-30))
+        record.update({
+            "constraint_orthonormality_relative": gram_error,
+            "structural_prolongation_reconstruction_relative":
+                reconstruction_error,
+            "prolongated_pressure_work_relative": work_error,
+            "prolongated_structural_energy_relative": energy_error,
+        })
+        if reconstruction_error > 1e-12 or work_error > 1e-8:
+            record["status"] = "development_enriched_shell_work_non_nested"
+        elif energy_error > 1e-3:
+            record["status"] = "development_enriched_shell_energy_non_nested"
+
+        def compliance(work, energy):
+            diagonal = np.diag(energy)
+            if np.any(diagonal <= 0):
+                raise AssertionError("nonpositive structural energy diagonal")
+            scaled = energy/np.sqrt(np.outer(diagonal, diagonal))
+            minimum = float(np.linalg.eigvalsh((scaled+scaled.T)/2)[0])
+            if minimum <= 1e-10:
+                raise AssertionError("structural energy metric is not positive")
+            factor = splu(sparse.csc_matrix(energy))
+            response = factor.solve(work.T)
+            result = work @ response
+            return 0.5*(result+result.T), minimum, float(
+                np.linalg.norm(energy @ response-work.T)
+                /max(np.linalg.norm(work.T), 1e-30))
+
+        coarse_c, coarse_min, coarse_residual = compliance(
+            coarse_work, coarse_energy)
+        fine_c, fine_min, fine_residual = compliance(
+            fine_work, fine_energy)
+        record.update({
+            "coarse_free_coordinates": int(coarse_energy.shape[0]),
+            "fine_free_coordinates": int(fine_energy.shape[0]),
+            "coarse_metric_scaled_minimum_eigenvalue": coarse_min,
+            "fine_metric_scaled_minimum_eigenvalue": fine_min,
+            "coarse_response_relative_residual": coarse_residual,
+            "fine_response_relative_residual": fine_residual,
+        })
+        for name, rows in (("full_supported", np.arange(len(support))),
+                           ("settled_active", active)):
+            a = coarse_c[np.ix_(rows, rows)]
+            b = fine_c[np.ix_(rows, rows)]
+            diagonal = np.sqrt(np.diag(b))
+            reference = b/np.outer(diagonal, diagonal)
+            minimum = float(np.linalg.eigvalsh(reference)[0])
+            if minimum <= 1e-11:
+                record["status"] = "development_enriched_shell_reference_singular"
+                record[name] = {"reference_scaled_minimum_eigenvalue": minimum}
+                break
+            eigenvalues, vectors = linalg.eigh(
+                a/np.outer(diagonal, diagonal), reference,
+                subset_by_index=(0, 0),
+            )
+            coefficients = vectors[:, 0]/diagonal
+            dominant = np.argsort(abs(coefficients))[-5:][::-1]
+            record[name] = {
+                "modes": int(len(rows)),
+                "beta_reference_squared": float(eigenvalues[0]),
+                "reference_scaled_minimum_eigenvalue": minimum,
+                "weakest_pressure_mode_ij": [
+                    [int(rows[k] % coarse_stride),
+                     int(rows[k] // coarse_stride)] for k in dominant],
+            }
+    record["elapsed_seconds"] = time.perf_counter()-started
+    record["peak_process_working_set_mb"] = (
+        psutil.Process().memory_info().peak_wset/1e6)
+    args.output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps({key: value for key, value in record.items()
+                      if key in ("status", "full_supported", "settled_active",
+                                 "pressure_support_l2_relative",
+                                 "normalized_gap_maximum_error_m",
+                                 "elapsed_seconds")}, indent=2))
+    raise SystemExit(0 if record["status"] ==
+                     "development_enriched_shell_source_x2" else 2)
+
 if args.structural_energy:
     # The physical pressure coefficient acts through S_i * D(gbar_i),
     # whereas the old active-response probe used D(gbar_i) with K_contact.
