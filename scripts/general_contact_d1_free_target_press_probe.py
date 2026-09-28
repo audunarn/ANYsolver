@@ -16,7 +16,8 @@ from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import (
 
 def build_free_target_case(columns: int, *, relinearizations: int = 0,
                            steps_per_segment: int = 3,
-                           four_phase: bool = False):
+                           four_phase: bool = False,
+                           enforcement_solver: str = "nested_augmented"):
     model, definition, settings, program = build_case(
         columns, four_phase=four_phase,
         steps_per_segment=steps_per_segment,
@@ -27,6 +28,20 @@ def build_free_target_case(columns: int, *, relinearizations: int = 0,
                        augmentation_schur_maximum_step_pa=200,
                        augmentation_schur_maximum_relinearizations=(
                            relinearizations))
+    if enforcement_solver == "monolithic_active_set":
+        settings = replace(
+            settings, enforcement_solver=enforcement_solver,
+            complementarity_force_scale_n=0.3,
+            augmentation_acceleration="none",
+            augmentation_schur_maximum_modes=None,
+            augmentation_schur_maximum_pressure_pa=None,
+            augmentation_schur_maximum_step_pa=None,
+            augmentation_schur_difference_step_m=None,
+            augmentation_schur_maximum_attempts=1,
+            augmentation_schur_maximum_relinearizations=0,
+        )
+    elif enforcement_solver != "nested_augmented":
+        raise ValueError("unknown enforcement solver")
     target_ids = tuple(range(2*(columns+1)+1, 2*(columns+1)+5))
     model.boundary_conditions = [
         bc for bc in model.boundary_conditions if bc.name != "target_fixed"]
@@ -44,7 +59,8 @@ def main(output_path: Path, *, columns: int,
          four_phase: bool = False,
          nonlinear_backtrack: bool = False,
          integration_side: str = "q4",
-         pressure_basis: str = "fine_nodal_q1") -> None:
+         pressure_basis: str = "fine_nodal_q1",
+         enforcement_solver: str = "nested_augmented") -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
@@ -57,10 +73,12 @@ def main(output_path: Path, *, columns: int,
               "nonlinear_backtrack": nonlinear_backtrack,
               "integration_side": integration_side,
               "pressure_basis": pressure_basis}
+    report["enforcement_solver"] = enforcement_solver
     try:
         model, definition, settings, program = build_free_target_case(
             columns, relinearizations=relinearizations,
-            steps_per_segment=steps_per_segment, four_phase=four_phase)
+            steps_per_segment=steps_per_segment, four_phase=four_phase,
+            enforcement_solver=enforcement_solver)
         if integration_side == "s3":
             definition = replace(definition, interactions=(replace(
                 definition.interactions[0], surface="s3_target",
@@ -94,12 +112,16 @@ def main(output_path: Path, *, columns: int,
                 "minimum_gap_m": float(row["contact"]["minimum_gap"]),
                 "active_pressure_dofs": int(row["contact"][
                     "active_pressure_dofs"]),
-                "pressure_change_pa": float(row["normal_multiplier_change"]),
+                "pressure_change_pa": (float(row["normal_multiplier_change"])
+                                       if "normal_multiplier_change" in row else None),
                 "pressure_rank": row["contact"].get(
                     "pressure_gram_scaled_rank"),
                 "residual_norm": float(row["residual_norm"]),
                 "augmentation_iterations": int(row[
                     "augmentation_iterations"]),
+                "semismooth_iterations": row.get("semismooth_iterations"),
+                "complementarity_relative_force": row.get(
+                    "complementarity_relative_force"),
                 "schur_attempts": row.get("schur_attempts"),
                 "schur_applied": row.get("schur_applied"),
                 "schur_rejected": row.get("schur_rejected"),
@@ -128,12 +150,12 @@ def main(output_path: Path, *, columns: int,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
-    parser.add_argument("--columns", type=int, choices=(8, 16, 24), default=8)
+    parser.add_argument("--columns", type=int, choices=(4, 8, 16, 24), default=8)
     parser.add_argument("--pressure-basis", choices=("fine_nodal_q1", "macro_q1_pair_dev"),
                         default="fine_nodal_q1")
     parser.add_argument("--relinearizations", type=int, choices=(0, 1),
                         default=0)
-    parser.add_argument("--steps-per-segment", type=int, choices=(3, 6),
+    parser.add_argument("--steps-per-segment", type=int, choices=(2, 3, 6),
                         default=3)
     parser.add_argument("--equilibrium-tolerance", type=float,
                         default=1.0e-6)
@@ -141,6 +163,9 @@ if __name__ == "__main__":
     parser.add_argument("--nonlinear-backtrack", action="store_true")
     parser.add_argument("--integration-side", choices=("q4", "s3"),
                         default="q4")
+    parser.add_argument("--enforcement-solver",
+                        choices=("nested_augmented", "monolithic_active_set"),
+                        default="nested_augmented")
     args = parser.parse_args()
     main(args.output, columns=args.columns,
          relinearizations=args.relinearizations,
@@ -149,4 +174,5 @@ if __name__ == "__main__":
          four_phase=args.four_phase,
          nonlinear_backtrack=args.nonlinear_backtrack,
          integration_side=args.integration_side,
-         pressure_basis=args.pressure_basis)
+         pressure_basis=args.pressure_basis,
+         enforcement_solver=args.enforcement_solver)

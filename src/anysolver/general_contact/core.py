@@ -217,12 +217,26 @@ class ContactSolverSettings:
     augmentation_schur_nonlinear_backtrack_dev: bool = False
     augmentation_support_resolution: str = "exact"
     augmentation_support_force_budget_n: float | None = None
+    enforcement_solver: str = "nested_augmented"
+    complementarity_force_scale_n: float | None = None
     q4_source_support_gradient_tolerance: float | None = None
     q4_source_support_hessian_tolerance: float | None = None
     q4_source_weighted_gap_gradient_tolerance: float | None = None
     q4_source_weighted_gap_hessian_tolerance: float | None = None
 
     def __post_init__(self) -> None:
+        if self.enforcement_solver not in {"nested_augmented", "monolithic_active_set"}:
+            raise ValueError("enforcement_solver must be nested_augmented or monolithic_active_set")
+        if (self.enforcement_solver == "monolithic_active_set"
+                and self.augmentation_acceleration != "none"):
+            raise ValueError("monolithic_active_set does not use augmentation acceleration")
+        if self.enforcement_solver == "monolithic_active_set":
+            if (self.complementarity_force_scale_n is None
+                    or not np.isfinite(self.complementarity_force_scale_n)
+                    or self.complementarity_force_scale_n <= 0.0):
+                raise ValueError("monolithic_active_set requires a positive complementarity force scale")
+        elif self.complementarity_force_scale_n is not None:
+            raise ValueError("complementarity force scale requires monolithic_active_set")
         if (self.q4_target_weighted_gap_tolerance is not None
                 and (not np.isfinite(self.q4_target_weighted_gap_tolerance)
                      or self.q4_target_weighted_gap_tolerance <= 0.0)):

@@ -300,3 +300,21 @@ def test_warped_derivative_resolution_exhausts_budget_closed():
             **dict(OPTIONS, maximum_triangles=20),
             allow_warped_source=True, **tight,
         )
+
+
+def test_jet2_batches_coarse_and_child_rules_with_value_only_mass(monkeypatch):
+    original = derivative_module._rule_batched
+    batches = []
+
+    def recording_rule(vertex_sets, areas, context, threshold, reference_jacobian):
+        result = original(vertex_sets, areas, context, threshold,
+                          reference_jacobian)
+        batches.append(len(vertex_sets))
+        assert all(isinstance(value, derivative_module._FloatOnly)
+                   for row in result for value in row[8:])
+        return result
+
+    monkeypatch.setattr(derivative_module, "_rule_batched", recording_rule)
+    result = q4_s3_overlap_derivatives(REFERENCE, SOURCE, TARGET, **OPTIONS)
+    assert batches and set(batches) == {5}
+    assert result.integration_triangles > 0

@@ -7731,6 +7731,11 @@ def solve_static_nonlinear(
         if contact_settings is not None and type(contact_settings) is not ContactSolverSettings:
             raise TypeError("contact_settings must be ContactSolverSettings")
         if (contact_settings is not None
+                and contact_settings.enforcement_solver == "monolithic_active_set"):
+            raise ValueError(
+                "monolithic_active_set currently requires contact_path_program"
+            )
+        if (contact_settings is not None
                 and contact_settings.augmentation_acceleration != "none"):
             if contact_settings.augmentation_acceleration != "supported_schur_dev":
                 raise ValueError(

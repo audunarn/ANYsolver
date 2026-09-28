@@ -47,6 +47,7 @@ from .core import (
     ContactDefinition,
     ContactSolverSettings,
     contact_scope,
+    suspend_contact,
     validate_general_contact,
 )
 from .augmentation import ProjectedAugmentationSecant
@@ -60,6 +61,8 @@ from .supported_schur import (
     propose_supported_schur_secant_backtrack,
 )
 from .equilibrated_pressure_pivot import equilibrated_pressure_pivot
+from .semismooth_path import solve_increment as solve_semismooth_increment
+from .semismooth import raw_certificate
 
 
 PROFILE = "PLANAR_Q4_S3_MULTI_CONTROL_CONTACT_PATH_DEV_V0"
@@ -274,6 +277,31 @@ def solve_static_contact_path(
                                     else "restricted_sliding")):
         raise ValueError("contact path currently requires a deformable shell pair")
     augmented = definition.interactions[0].normal_law == "augmented"
+    semismooth = settings.enforcement_solver == "monolithic_active_set"
+    if semismooth and (
+            not augmented
+            or report.profile not in {
+                refined_q4_s3_augmented_profile,
+                refined_q4_s3_projected_profile,
+            }
+            or settings.general_s3_differentiation != "jet2_q4_s3_dev"
+            or settings.q4_source_pressure_basis != "fine_nodal_q1"
+            or settings.augmentation_support_resolution != "exact"):
+        raise ValueError("monolithic_active_set requires fine Q1 refined Q4/S3 Jet2 augmented contact")
+    if semismooth:
+        declared_force = max(
+            (sum(abs(item.values_n[index]) for item in program.nodal_forces)
+             for index in range(len(program.waypoints))),
+            default=0.0,
+        )
+        if (declared_force <= 0.0
+                or settings.complementarity_force_scale_n
+                > declared_force*(1.0+1.0e-12)):
+            raise ValueError(
+                "monolithic_active_set force scale must be bounded by the "
+                "declared maximum absolute path load; displacement-only "
+                "paths need a separate physical force reference"
+            )
     if settings.augmentation_acceleration != "none" and not augmented:
         raise ValueError("augmentation acceleration requires augmented contact")
     if (settings.augmentation_acceleration == "active_secant_pivot"
@@ -352,6 +380,8 @@ def solve_static_contact_path(
                 }
                 if settings.augmentation_acceleration != "none":
                     contract["augmentation_acceleration"] = settings.augmentation_acceleration
+                if semismooth:
+                    contract["enforcement_solver"] = "monolithic_active_set"
                 validated = None
                 if restart_checkpoint is not None:
                     validated = validate_nonlinear_checkpoint(
@@ -393,6 +423,7 @@ def solve_static_contact_path(
                         "general_contact_profile": manager.profile}
                 accepted_step = 0
                 multipliers = np.zeros(len(program.controls))
+                normal_forces = np.zeros(len(manager.law.pressure_mode_ids)) if semismooth else None
                 previous_steps: list[NonlinearStaticStep] = []
                 history: list[dict[str, object]] = []
                 total_iterations = 0
@@ -409,6 +440,8 @@ def solve_static_contact_path(
                                      "total_iterations", "terminal_status"}
                     if augmented:
                         expected_keys.add("normal_multipliers")
+                    if semismooth:
+                        expected_keys.add("normal_forces")
                     if set(state) != expected_keys or state["mode"] != "contact_path":
                         raise ValueError("contact path checkpoint state is incompatible")
                     if state["terminal_status"] != "completed":
@@ -442,10 +475,29 @@ def solve_static_contact_path(
                         manager.set_normal_multipliers(
                             np.asarray(state["normal_multipliers"], dtype=float)
                         )
+                    if semismooth:
+                        normal_forces = np.asarray(state["normal_forces"], dtype=float)
+                        if (normal_forces.shape != (len(manager.law.pressure_mode_ids),)
+                                or not np.all(np.isfinite(normal_forces))
+                                or np.any(normal_forces < 0.0)):
+                            raise ValueError("contact path checkpoint nodal forces are invalid")
                     committed_states = validated.element_states
                 if accepted_step > requested_step:
                     raise ValueError("contact path checkpoint is beyond requested target")
                 initial_u = np.asarray(T @ q + u0).reshape(-1)
+                if semismooth and restart_checkpoint is not None:
+                    source, target_points = manager._positions(initial_u)
+                    support_area = manager.law.geometry.evaluate(
+                        source, target_points,
+                    ).reference_support
+                    if np.any((support_area <= 0.0) & (normal_forces != 0.0)):
+                        raise ValueError("contact path checkpoint nodal forces are unsupported")
+                    expected_pressure = np.zeros_like(support_area)
+                    np.divide(normal_forces, support_area, out=expected_pressure,
+                              where=support_area > 0.0)
+                    if not np.allclose(manager.normal_multipliers, expected_pressure,
+                                       rtol=1.0e-10, atol=1.0e-12):
+                        raise ValueError("contact path checkpoint pressure and nodal forces are incompatible")
                 committed_states = _prepare_qualified_q4_states_for_nonlinear_solve(
                     model, initial_u, committed_states, num_layers, info,
                     supplied_element_ids=tuple(sorted(int(k) for k in committed_states)),
@@ -465,11 +517,121 @@ def solve_static_contact_path(
                     start_q = q.copy()
                     start_multipliers = multipliers.copy()
                     start_normal_multipliers = manager.normal_multipliers.copy() if augmented else None
+                    start_normal_forces = normal_forces.copy() if semismooth else None
                     target = program.target_at(step)
                     force_values = program.force_values_at(step)
                     external = np.zeros_like(zeros)
                     external[force_dofs] = force_values
                     reduced_external = np.asarray(T.T @ external).reshape(-1)
+                    if semismooth:
+                        step_result = solve_semismooth_increment(
+                            model=model, manager=manager, settings=settings,
+                            q=q, reactions=multipliers,
+                            nodal_forces=normal_forces,
+                            committed_states=committed_states,
+                            transform=T, offset=u0, control_rows=rows,
+                            control_reactions=reactions, target=target,
+                            reduced_external=reduced_external,
+                            num_layers=num_layers, max_iterations=max_iterations,
+                            tolerance=tolerance, control_scale=scale,
+                            path_force_magnitude=float(np.sum(np.abs(force_values))),
+                            cancellation_token=cancellation_token, step=step,
+                        )
+                        total_iterations += step_result.iterations
+                        if not step_result.completed:
+                            failure_reason = step_result.reason
+                            info["contact_failure"] = step_result.diagnostics
+                            _discard_nonlinear_state_candidate(committed_states)
+                            q = start_q
+                            multipliers = start_multipliers
+                            manager.set_normal_multipliers(start_normal_multipliers)
+                            status = "stopped_at_limit" if previous_steps else "diverged"
+                            break
+                        q = step_result.q
+                        multipliers = step_result.reactions
+                        normal_forces = step_result.nodal_forces
+                        accepted_u = np.asarray(T @ q + u0).reshape(-1)
+                        raw_contact = step_result.contact
+                        support_area = np.asarray(raw_contact.state.reference_support)
+                        pressure = np.zeros_like(support_area)
+                        np.divide(normal_forces, support_area, out=pressure,
+                                  where=support_area > 0.0)
+                        manager.set_normal_multipliers(pressure)
+                        reported_force, _reported_tangent, certificate = (
+                            manager.evaluate(accepted_u, tangent=False)
+                        )
+                        force_scale = max(1.0, float(np.linalg.norm(
+                            reduced_external + reactions @ multipliers)))
+                        if (np.linalg.norm(reported_force-raw_contact.force)
+                                > tolerance*force_scale
+                                or not certificate.gap_tolerance_met
+                                or manager.has_unresolved_weak_open_gap(
+                                    certificate, manager.normal_multipliers)):
+                            failure_reason = "contact_semismooth_report_or_gap_mismatch"
+                            _discard_nonlinear_state_candidate(committed_states)
+                            q = start_q
+                            multipliers = start_multipliers
+                            normal_forces = start_normal_forces
+                            manager.set_normal_multipliers(start_normal_multipliers)
+                            status = "stopped_at_limit" if previous_steps else "diverged"
+                            break
+                        projected_pair_evaluations = certificate.pair_geometry_evaluations
+                        certificate = raw_certificate(
+                            manager, accepted_u, raw_contact, certificate,
+                        )
+                        committed_states = _commit_nonlinear_state_candidate(
+                            committed_states, step_result.candidate_states,
+                            model=model, accepted_displacements=accepted_u,
+                        )
+                        with suspend_contact():
+                            recovered, _K, _states = _assemble_nonlinear_system(
+                                model, accepted_u, committed_states, num_layers,
+                                tangent=False, kinematics="von_karman",
+                                require_full_coordinates=True,
+                            )
+                        _discard_nonlinear_state_candidate(committed_states)
+                        support = _support_reaction_resultants(
+                            model, recovered + raw_contact.force
+                            - controls.T @ multipliers - external,
+                        )
+                        accepted_step = step
+                        record = {
+                            "step_index": step,
+                            "target": target.tolist(),
+                            "reaction_generalized": multipliers.tolist(),
+                            "residual_norm": step_result.residual_norm,
+                            "constraint_error": step_result.constraint_norm,
+                            "augmentation_iterations": 0,
+                            "semismooth_iterations": step_result.iterations,
+                            "complementarity_relative_force":
+                            step_result.complementarity_norm,
+                            "candidate_evaluations": step_result.candidate_evaluations,
+                            "projected_diagnostic_pair_evaluations":
+                            projected_pair_evaluations,
+                            "backtracks": step_result.backtracks,
+                            "contact": certificate.to_dict(),
+                        }
+                        if program.nodal_forces:
+                            previous_force_values = program.force_values_at(step-1)
+                            start_u = np.asarray(T @ start_q + u0).reshape(-1)
+                            record["nodal_forces_n"] = force_values.tolist()
+                            record["external_nodal_work_trapezoid_j"] = float(
+                                0.5*(previous_force_values + force_values)
+                                @ (accepted_u-start_u)[force_dofs]
+                            )
+                        history.append(record)
+                        previous_steps.append(NonlinearStaticStep(
+                            step_index=step,
+                            load_factor=step / program.total_steps,
+                            iterations=step_result.iterations,
+                            residual_norm=step_result.residual_norm,
+                            displacement_norm=float(np.linalg.norm(accepted_u)),
+                            max_equivalent_plastic_strain=_max_plastic_strain(
+                                committed_states),
+                            active_stage=f"segment_{(step - 1) // program.steps_per_segment + 1}",
+                            support_reactions=support,
+                        ))
+                        continue
                     candidate_states = committed_states
                     normal_multiplier_change = 0.0
                     accelerator = (ProjectedAugmentationSecant()
@@ -1267,13 +1429,16 @@ def solve_static_contact_path(
                         "targets": program.target_at(accepted_step).tolist(),
                         "reaction_generalized": multipliers.tolist(),
                         "profile": profile,
+                        **({"enforcement_solver": settings.enforcement_solver}
+                           if semismooth else {}),
                         **({"augmentation_acceleration": settings.augmentation_acceleration}
                            if settings.augmentation_acceleration != "none" else {}),
                         **({"nodal_forces_n": program.force_values_at(
                             accepted_step,
                         ).tolist()} if program.nodal_forces else {}),
                     },
-                    "general_contact": manager.evaluate(final_u, tangent=False)[2].to_dict(),
+                    "general_contact": (history[-1]["contact"] if semismooth and history
+                                        else manager.evaluate(final_u, tangent=False)[2].to_dict()),
                 })
                 checkpoint = None
                 if emit_restart_checkpoint and status == "completed":
@@ -1292,6 +1457,8 @@ def solve_static_contact_path(
                             "terminal_status": status,
                             **({"normal_multipliers": manager.normal_multipliers.tolist()}
                                if augmented else {}),
+                            **({"normal_forces": normal_forces.tolist()}
+                               if semismooth else {}),
                         },
                     )
                 return NonlinearStaticResult(

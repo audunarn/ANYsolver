@@ -1,0 +1,31 @@
+FV256x320 reaction 0.103804402 N (FV last supported cell row carries 0.010335 N = rim line load)
+FV128x160 vs FV256x320: 16x16 bins 0.103%, 16x9 support-aligned 0.090%
+
+A. Bin-force L2 vs FV256x320 (source-only Q1 FE + clipped Q1 mortar pressure)
+mesh    rim-node 16x16 orig  rim-rows  16x9 aligned 8x9 aligned reaction N
+4x8     no       36.34       29.4      26.93        24.42       0.103558617
+16x8    no       25.29       74.5      3.86         1.54        0.103816377
+16x16   no       22.41       78.3      4.04         2.04        0.103807014
+32x16   no       22.23       80.1      3.14         2.01        0.103808466
+32x32   no       18.01       80.4      2.35         0.84        0.103793911
+16x20   yes      4.95        46.3      3.50         1.08        0.103783336
+32x20   yes      4.22        47.3      2.39         0.98        0.103789122
+32x40   yes      11.75       75.4      2.19         0.58        0.103784221
+64x64   no       4.57        86.7      0.47         0.10        0.103809420
+64x80   yes      2.73        79.0      0.45         0.03        0.103803625
+
+B. Uzawa map spectrum (k=1e4 Pa/m) and monolithic SSN iterations on the same discrete problem
+mesh    k*mu_min   k*mu_max   rho       augs for 1e-6  SSN its   reaction N
+8x1     8.04e-04   1.39       0.99920   17175          6         0.103479815
+24x1    6.01e-05   1.53       0.99994   229861         12        0.103878837
+64x1    8.15e-06   1.53       0.99999   1694541        28        0.103880032
+4x8     2.22e-04   1.42       0.99978   62153          5         0.103558617
+16x20   9.38e-05   1.43       0.99991   147333         12        0.103783336
+32x40   2.24e-05   1.52       0.99998   617711         22        0.103784221
+
+C. Nodal pressure near the rim (x=0.9 column): interior p=q, rim spike ~ line load / h
+32x40  y=0.8500:0.077 y=0.8750:0.000 y=0.9000:3.533 y=0.9250:0.000
+64x80  y=0.8500:0.316 y=0.8625:0.311 y=0.8750:0.000 y=0.8875:0.000 y=0.9000:6.223 y=0.9125:0.000 y=0.9250:0.000
+64x64  y=0.8438:0.349 y=0.8594:0.249 y=0.8750:0.000 y=0.8906:0.000 y=0.9062:14.199 y=0.9219:0.000
+
+total 87 s

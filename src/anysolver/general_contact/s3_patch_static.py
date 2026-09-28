@@ -254,6 +254,14 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                     or (type(element) is QualifiedE4PLShellElement
                         and element.shell_section is not None)):
                 issues.append(f"element {element_id} needs isotropic elastic material")
+    if settings.enforcement_solver == "monolithic_active_set" and (
+            not augmented
+            or profile not in {REFINED_Q4_S3_AUGMENTED_PROFILE,
+                               REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE}
+            or settings.general_s3_differentiation != "jet2_q4_s3_dev"
+            or settings.q4_source_pressure_basis != "fine_nodal_q1"
+            or settings.augmentation_support_resolution != "exact"):
+        issues.append("monolithic_active_set requires fine Q1 refined Q4/S3 Jet2 augmented contact")
     if issues:
         return ContactValidationReport("invalid", tuple(issues), profile)
     try:
@@ -779,6 +787,11 @@ class GeneralS3PatchManager:
                             "normal_law": interaction.normal_law},
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
+                         **({"enforcement_solver": self.settings.enforcement_solver}
+                            if self.settings.enforcement_solver != "nested_augmented" else {}),
+                         **({"complementarity_force_scale_n":
+                             self.settings.complementarity_force_scale_n}
+                            if self.settings.enforcement_solver == "monolithic_active_set" else {}),
                          **({"q4_source_pressure_basis": self.settings.q4_source_pressure_basis,
                              **({"q4_source_pressure_knot_columns": list(
                                  self.settings.q4_source_pressure_knot_columns)}

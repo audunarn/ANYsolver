@@ -18,6 +18,7 @@ from .pressure_basis import PressureBasis
 from .q4_source_overlap import projected_q4_source_face
 from .q4_s3_overlap_derivatives import (
     UnsupportedQ4S3Branch, q4_s3_overlap_derivatives,
+    q4_s3_overlap_first_derivatives,
 )
 from .q4_s3_tiny_wedge import verify_tiny_wedge_derivatives
 from .s3_overlap_derivatives import UnsupportedOverlapBranch, s3_overlap_derivatives
@@ -32,6 +33,17 @@ class _PreparedProjectedPatch:
     owner: object
     state: MovingS3PatchMortarState
     inputs: tuple[tuple[tuple[int, ...], bytes], ...]
+
+
+@dataclass(frozen=True)
+class NodalForceLinearization:
+    """Unprojected mortar work and normalized-gap derivatives at one pose."""
+
+    state: MovingS3PatchMortarState
+    residual: np.ndarray
+    tangent: np.ndarray | None
+    gap_gradient: np.ndarray
+    energy_evaluations: int
 
 
 def _prepared_inputs(*arrays):
@@ -329,6 +341,34 @@ class MovingS3PatchProjectedNormal:
         return _PreparedProjectedPatch(
             self, state,
             _prepared_inputs(current_source, current_target, validated),
+        )
+
+    def nodal_force_linearization(self, current_source, current_target,
+                                  nodal_forces, *, tangent=True):
+        """Evaluate the fine Q1 work with independent nodal forces in N.
+
+        All supported gap rows are differentiated, even at zero pressure, so
+        an inactive mode can enter the semismooth active set. No multiplier or
+        physical material state is changed by this disposable evaluation.
+        """
+        if self.pressure_basis is not None or self.geometry.differentiation != "jet2_q4_s3":
+            raise ValueError("nodal-force linearization requires fine Q1 Q4/S3 Jet2 geometry")
+        z = np.asarray(nodal_forces, dtype=float)
+        if z.shape != (len(self.pressure_mode_ids),) or not np.all(np.isfinite(z)):
+            raise ValueError("nodal contact forces must be finite")
+        base = self.geometry.evaluate(current_source, current_target)
+        support = base.reference_support
+        if np.any(support < 0.0):
+            raise ValueError("contact pressure support must be nonnegative")
+        # A disappearing overlap can leave a disposable Newton iterate with
+        # force on a now-unsupported node. It has no physical work there; its
+        # inactive complementarity row drives that algorithmic force to zero.
+        pressure = np.zeros_like(support)
+        np.divide(z, support, out=pressure, where=support > 0.0)
+        base = replace(base, pressure=pressure, energy=0.0)
+        return self._jet2_s3_work(
+            current_source, current_target, base, tangent=tangent,
+            nodal_force_mode=True,
         )
 
     def projected_multiplier(self, state, multipliers):
@@ -837,7 +877,7 @@ class MovingS3PatchProjectedNormal:
         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
 
     def _jet2_s3_work(self, current_source, current_target, base, *, tangent,
-                      tiny_wedge_pair=None):
+                      tiny_wedge_pair=None, nodal_force_mode=False):
         """Assemble differentiated pair geometry into shared pressure nodes."""
         count = self.n_coordinates
         source_count = len(self.source_node_ids)
@@ -880,8 +920,11 @@ class MovingS3PatchProjectedNormal:
             fine_pressure = B @ base.pressure
             fine_support_pressure = B @ (base.pressure*base.normalized_gap)
         fine_work_gap = np.zeros(source_count)
-        np.divide(fine_support_pressure, fine_pressure, out=fine_work_gap,
-                  where=fine_pressure > 0.0)
+        if nodal_force_mode:
+            fine_work_gap[:] = base.normalized_gap
+        else:
+            np.divide(fine_support_pressure, fine_pressure, out=fine_work_gap,
+                      where=fine_pressure > 0.0)
         for pair_index, law in enumerate(self.geometry.pair_laws):
             source_face = pair_index // len(self.geometry.target_faces)
             target_face = pair_index % len(self.geometry.target_faces)
@@ -898,7 +941,7 @@ class MovingS3PatchProjectedNormal:
                 if local.overlap_vertices > 0:
                     zero_area_overlap_pairs.append(pair_index)
                 continue
-            if not np.any(fine_pressure[source_nodes]):
+            if not nodal_force_mode and not np.any(fine_pressure[source_nodes]):
                 # This pair contributes to shared support and weighted gap,
                 # including at nodes active on other pairs. Its own smooth-
                 # branch work derivatives vanish with all local pressures.
@@ -909,6 +952,13 @@ class MovingS3PatchProjectedNormal:
                 continue
             if len(source_nodes) == 4:
                 try:
+                    tolerances = self.geometry.q4_source_derivative_tolerances or (None,)*4
+                    derivative_options = {
+                        "support_gradient_tolerance": tolerances[0],
+                        "weighted_gap_gradient_tolerance": tolerances[2],
+                        "support_hessian_tolerance": tolerances[1],
+                        "weighted_gap_hessian_tolerance": tolerances[3],
+                    }
                     derivative = q4_s3_overlap_derivatives(
                         self.geometry.source_faces[source_face].reference_positions,
                         local_source, local_target,
@@ -916,12 +966,7 @@ class MovingS3PatchProjectedNormal:
                         weighted_gap_tolerance=self.geometry.q4_source_weighted_gap_tolerance,
                         maximum_triangles=self.geometry.maximum_q4_source_integration_triangles,
                         allow_warped_source=True,
-                        **dict(zip((
-                            "support_gradient_tolerance",
-                            "support_hessian_tolerance",
-                            "weighted_gap_gradient_tolerance",
-                            "weighted_gap_hessian_tolerance",
-                        ), self.geometry.q4_source_derivative_tolerances or (None,)*4)),
+                        **derivative_options,
                     )
                 except UnsupportedQ4S3Branch as exc:
                     raise UnsupportedQ4S3Branch(
@@ -1108,7 +1153,7 @@ class MovingS3PatchProjectedNormal:
                     float(np.max(np.abs(derivative.reference_weighted_gap))),
                 )
                 gap_pair_value_budget[source_nodes] += value_rtol*pair_gap_scale
-            if not np.any(fine_pressure[source_nodes]):
+            if not nodal_force_mode and not np.any(fine_pressure[source_nodes]):
                 continue
             coordinate_map = np.asarray(
                 [3*int(node)+axis for node in source_nodes for axis in range(3)]
@@ -1227,6 +1272,30 @@ class MovingS3PatchProjectedNormal:
             js, jw = basis.transform_derivatives(js, jw)
         gap_variation = jw - base.normalized_gap[:, None]*js
         residual = -(base.pressure @ gap_variation)
+        if nodal_force_mode:
+            dg = np.zeros_like(gap_variation)
+            supported = base.reference_support > 0.0
+            dg[supported] = (gap_variation[supported]
+                             / base.reference_support[supported, None])
+            if not tangent:
+                return NodalForceLinearization(base, residual, None, dg,
+                                               evaluations)
+            dp_geometry = np.zeros((len(base.pressure), len(active_coordinates)))
+            dp_geometry[supported] = (
+                -base.pressure[supported, None]
+                * js[np.ix_(supported, active_coordinates)]
+                / base.reference_support[supported, None]
+            )
+            cross = np.einsum("i,ij,ik->jk", base.pressure,
+                              js[:, active_coordinates],
+                              dg[:, active_coordinates])
+            tangent_matrix = np.zeros((count, count))
+            tangent_matrix[np.ix_(active_coordinates, active_coordinates)] = -(
+                gap_variation[:, active_coordinates].T @ dp_geometry
+                + weighted_hessian - cross - support_hessian
+            )
+            return NodalForceLinearization(base, residual, tangent_matrix, dg,
+                                           evaluations)
         if not tangent:
             return MovingS3PatchMortarWork(base, residual, None, evaluations)
         active = base.pressure > 0.0
