@@ -113,3 +113,10 @@ discriminator for tangential geometry derivatives. A future complete-tangent
 gate needs a separate admitted pose with finite overlap-gradient/contact
 action or a declared one-sided geometry feature. No additional direction on
 this pose is automatically warranted.
+
+## Subsequent local tilted-target discriminator
+
+The later [finite-area tilted-target local screen](general_contact_d1_tilted_target_local_tangent_development.md)
+found a smooth target-x direction with measurable mapped force and moment
+action. Its physical target tilt was disposable and not an equilibrated solver
+state, so the complete coupled tangent and C1 disposition remain open.
