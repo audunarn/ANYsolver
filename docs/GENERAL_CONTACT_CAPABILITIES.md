@@ -5,6 +5,15 @@ impact API has a separate contract. Status terms are deliberately distinct:
 **implemented**, **locally tested**, **independently accepted**, and
 **released**. A local passing test does not confer engineering acceptance.
 
+The current fine-Q1 monolithic Q4/S3 D1 profile remains **implemented and
+locally tested**, with independent acceptance and release open. Conservative
+same-side overlap pruning has [source-bound development parity and cost
+evidence](d1_review_support/d1_same_side_search_20260928.md). A bounded
+[16×8→32×8 coupled x-refinement](d1_review_support/d1_16_32_near_rim_coupled_comparison_20260928.md)
+completed with the sparse direct solver; common-bin forces shifted 0.2521%
+L2 while physical-support Q1 pressure shifted 7.8166% L2. These observations
+do not close pressure-space stability, y/rim convergence or D1 acceptance.
+
 | Profile and geometry | Analysis and lifecycle | Status | Evidence and dependency |
 |---|---|---|---|
 | Planar qualified E4-PL Q4 skin against one fixed rigid plane; midsurface/top/bottom; frictionless penalty mortar | Nonlinear static force or displacement control; version-2 penalty checkpoint under von Karman kinematics | Implemented, locally tested | `tests/test_general_contact_plane.py`, `examples/general_contact_planar_plate.py`; corotational restart, independent review and registered numerical qualification open |
