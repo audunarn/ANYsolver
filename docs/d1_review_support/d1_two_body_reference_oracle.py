@@ -58,9 +58,11 @@ def _triangle_quadrature(vertices: np.ndarray):
 
 def _source_shape(point: np.ndarray, corners: np.ndarray) -> np.ndarray:
     x0, y0 = corners[0]
-    x1, y1 = corners[2]
-    xi = (point[0]-x0)/(x1-x0)
+    y1 = corners[2, 1]
     eta = (point[1]-y0)/(y1-y0)
+    left = (1-eta)*x0+eta*corners[3, 0]
+    right = (1-eta)*corners[1, 0]+eta*corners[2, 0]
+    xi = (point[0]-left)/(right-left)
     return np.array(((1-xi)*(1-eta), xi*(1-eta), xi*eta,
                      (1-xi)*eta))
 
@@ -74,7 +76,8 @@ def _target_shape(point: np.ndarray, triangle: np.ndarray) -> np.ndarray:
 
 
 def independent_gap_work(model, definition, source_shift_x: float,
-                         target_skin_xy: dict[int, np.ndarray] | None = None):
+                         target_skin_xy: dict[int, np.ndarray] | None = None,
+                         source_skin_xy: dict[int, np.ndarray] | None = None):
     """Return reference support and the full-coordinate weighted gap map."""
     source_ids = sorted({node for element_id in definition.surfaces[0].element_ids
                          for node in model.mesh.elements[element_id].node_ids})
@@ -89,13 +92,13 @@ def independent_gap_work(model, definition, source_shift_x: float,
         source_element = model.mesh.elements[source_element_id]
         source_nodes = tuple(source_element.node_ids)
         source_xy = np.array([
-            (model.mesh.nodes[node].x+source_shift_x,
-             model.mesh.nodes[node].y) for node in source_nodes])
+            ((model.mesh.nodes[node].x+source_shift_x,
+              model.mesh.nodes[node].y)
+             if source_skin_xy is None else source_skin_xy[node])
+            for node in source_nodes])
         if not (abs(source_xy[0, 1]-source_xy[1, 1]) < 1e-13
-                and abs(source_xy[2, 1]-source_xy[3, 1]) < 1e-13
-                and abs(source_xy[0, 0]-source_xy[3, 0]) < 1e-13
-                and abs(source_xy[1, 0]-source_xy[2, 0]) < 1e-13):
-            raise ValueError("oracle admits axis-aligned reference Q4 only")
+                and abs(source_xy[2, 1]-source_xy[3, 1]) < 1e-13):
+            raise ValueError("oracle admits horizontal Q4 rows only")
         for target_element_id in definition.surfaces[1].element_ids:
             target_element = model.mesh.elements[target_element_id]
             target_nodes = tuple(target_element.node_ids)
@@ -134,7 +137,8 @@ def independent_gap_work(model, definition, source_shift_x: float,
 
 
 def solve_reference(model, definition, program, accepted_step: int,
-                    target_skin_xy: dict[int, np.ndarray] | None = None):
+                    target_skin_xy: dict[int, np.ndarray] | None = None,
+                    source_skin_xy: dict[int, np.ndarray] | None = None):
     """Solve the small linearized two-body contact KKT system."""
     controls = program.target_at(accepted_step)
     if len(controls) != 2 or abs(controls[0]-controls[1]) > 1e-14:
@@ -147,7 +151,8 @@ def solve_reference(model, definition, program, accepted_step: int,
     if np.linalg.norm(offset) != 0.0:
         raise ValueError("oracle requires zero model boundary values")
     source_ids, support, work, area = independent_gap_work(
-        model, definition, float(controls[0]), target_skin_xy)
+        model, definition, float(controls[0]), target_skin_xy,
+        source_skin_xy)
     source_element = model.mesh.elements[definition.surfaces[0].element_ids[0]]
     target_element = model.mesh.elements[definition.surfaces[1].element_ids[0]]
     source_node = model.mesh.nodes[source_element.node_ids[0]]

@@ -20,6 +20,8 @@ production_gap = np.asarray(saved["production_normalized_gap_m"])
 model, definition, _settings, program = _case()
 target_ids = sorted({node for element_id in definition.surfaces[1].element_ids
                      for node in model.mesh.elements[element_id].node_ids})
+source_ids = sorted({node for element_id in definition.surfaces[0].element_ids
+                     for node in model.mesh.elements[element_id].node_ids})
 target_element = model.mesh.elements[definition.surfaces[1].element_ids[0]]
 assert np.allclose(target_element.physical_reference_director,
                    (0.0, 0.0, 1.0), atol=1e-12)
@@ -35,11 +37,24 @@ for node in target_ids:
 max_skin_xy_shift = max(float(np.linalg.norm(
     skin[node]-np.array((model.mesh.nodes[node].x, model.mesh.nodes[node].y))))
     for node in target_ids)
+source_skin = {}
+for node in source_ids:
+    dofs = model.mesh.dof_manager.get_node_dofs(node)
+    reference = model.mesh.nodes[node]
+    source_skin[node] = np.array((
+        reference.x+pose[dofs[0]]-0.5*model.mesh.elements[1].thickness*pose[dofs[4]],
+        reference.y+pose[dofs[1]]+0.5*model.mesh.elements[1].thickness*pose[dofs[3]],
+    ))
+max_source_extra_xy = max(float(np.linalg.norm(
+    source_skin[node]-np.array((model.mesh.nodes[node].x
+                                +program.target_at(4)[0],
+                                model.mesh.nodes[node].y))))
+    for node in source_ids)
 
-def summarize(label, override):
+def summarize(label, target_override, source_override=None):
     fresh_model, fresh_definition, _settings, fresh_program = _case()
     oracle = solve_reference(fresh_model, fresh_definition, fresh_program, 4,
-                             override)
+                             target_override, source_override)
     gap_at_pose = (oracle["initial_gap"]
                    +oracle["weighted_gap_work"] @ pose/oracle["support"])
     return {
@@ -68,7 +83,10 @@ print(json.dumps({
         "docs/d1_review_support/d1_two_body_reference_oracle.py").read_bytes()
     ).hexdigest(),
     "maximum_target_skin_xy_shift_m": max_skin_xy_shift,
+    "maximum_source_extra_skin_xy_shift_m": max_source_extra_xy,
     "reference_footprint": summarize("reference_footprint", None),
     "frozen_production_target_skin_xy": summarize(
         "frozen_production_target_skin_xy", skin),
+    "frozen_production_both_skin_xy": summarize(
+        "frozen_production_both_skin_xy", skin, source_skin),
 }, indent=2))
