@@ -1,5 +1,7 @@
 """Deformable-target contact cycle with a checkpoint at the open state."""
 
+from dataclasses import replace
+
 import numpy as np
 import pytest
 
@@ -343,7 +345,20 @@ def test_free_target_press_slide_open_recontact_split_restart():
     assert [snapshot.step_index for snapshot in opened.snapshots] == list(range(1, 7))
     assert opened.info["force_displacement_history"][-1]["contact"][
         "active_pressure_dofs"] == 0
-    resumed = _solve(checkpoint=opened.to_restart_checkpoint(), snapshots=True)
+    checkpoint = opened.to_restart_checkpoint()
+    changed_model, changed_definition, changed_settings, changed_program = _case()
+    interaction = changed_definition.interactions[0]
+    changed_definition = replace(changed_definition, interactions=(
+        replace(interaction, normal_stiffness=2*interaction.normal_stiffness),
+    ))
+    with pytest.raises(ValueError, match="incompatible"):
+        solve_static_nonlinear(
+            changed_model, contact=changed_definition,
+            contact_settings=changed_settings,
+            contact_path_program=changed_program, max_iterations=18,
+            restart_checkpoint=checkpoint,
+        )
+    resumed = _solve(checkpoint=checkpoint, snapshots=True)
     assert resumed.status == "completed"
     assert [snapshot.step_index for snapshot in resumed.snapshots] == [7, 8]
     np.testing.assert_array_equal(resumed.snapshots[-1].displacements,
