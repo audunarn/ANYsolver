@@ -1,0 +1,128 @@
+{
+  "status": "development_free_source_director_press",
+  "source_commit": "085d53d8a436fc6f28d5ddaf142bb82482622499",
+  "probe_sha256": "def84a5c77ca6e741b1d14652eda42cce0dd7ceb1e66d43e8c5e14134c639828",
+  "solver_status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 1,
+  "source_rotational_constraint": "left-edge ry fixed; other source ry free; uy/rx/rz retained",
+  "first_load_n": 0.0005,
+  "contact_failure": null,
+  "maximum_ry_rad": 6.981061120178451e-05,
+  "maximum_source_contact_ry_moment_nm": 7.009555269787182e-13,
+  "maximum_free_ry_equilibrium_nm": 2.6555694793769837e-18,
+  "final_contact": {
+    "profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+    "minimum_gap": -5.314317384364879e-06,
+    "sampled_overlap_gap": -5.3143172365720746e-06,
+    "penalty_energy": 0.0,
+    "current_overlap_area": 0.8999984300032642,
+    "reference_overlap_area": 0.9000000005689646,
+    "overlapping_pairs": 8,
+    "integration_force": [
+      7.555197795319085e-11,
+      -3.4206125971994873e-14,
+      1.4132759126490685e-05
+    ],
+    "target_force": [
+      -7.555197795319239e-11,
+      3.4206125969014115e-14,
+      -1.4132759126490683e-05
+    ],
+    "integration_moment": [
+      9.280663360738582e-06,
+      -1.4368279469417733e-05,
+      -4.3698504037310994e-11
+    ],
+    "target_moment": [
+      -9.28066336073858e-06,
+      1.4368279469417731e-05,
+      4.369850403730848e-11
+    ],
+    "gap_tolerance_met": true,
+    "active_pressure_dofs": 2,
+    "source_pressure_node_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "normalized_weighted_gap_m": [
+      3.928287304866086e-05,
+      3.5517260106291187e-05,
+      2.4869501838691874e-05,
+      1.0441611151990191e-05,
+      -7.063955322632804e-20,
+      3.928282359238196e-05,
+      3.5517092632737885e-05,
+      2.486911044814791e-05,
+      1.0441259002957357e-05,
+      -5.631037113944407e-19
+    ],
+    "numerical_pressure_pa": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      3.6282550215413937e-05,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0002348202721475781
+    ],
+    "reference_support_m2": [
+      0.06187500000217315,
+      0.12375000000831611,
+      0.12375000001420562,
+      0.1237500000201521,
+      0.06187500001204921,
+      0.05062500001955811,
+      0.10125000007468374,
+      0.10125000012800994,
+      0.10125000018136146,
+      0.05062500010845503
+    ],
+    "energy_evaluations": 16,
+    "weighted_gap_integration_error_m3": 2.0954329528734184e-18,
+    "integration_triangles": 64,
+    "area_integration_error_m2": 9.577885359823846e-14,
+    "augmented_merit_j": 0.0,
+    "normal_multiplier_estimate_pa": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      3.6282550215413937e-05,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0002348202721475781
+    ],
+    "pair_geometry_evaluations": 16,
+    "pressure_gram_rank": 10,
+    "pressure_gram_condition_estimate": 14.712890590390643,
+    "pressure_gram_supported_modes": 10,
+    "pressure_gram_scaled_rank": 10,
+    "pressure_gram_scaled_condition_estimate": 10.93711378955745
+  },
+  "steps": [
+    {
+      "step": 1,
+      "active_pressure_modes": 2,
+      "maximum_ry_rad": 6.981061120178451e-05,
+      "maximum_source_contact_ry_moment_nm": 7.009555269787182e-13,
+      "maximum_free_ry_equilibrium_nm": 2.6555694793769837e-18,
+      "contact_ry_norm_nm": 1.0018566211972623e-12,
+      "internal_ry_norm_nm": 0.00016761610496683843
+    }
+  ],
+  "elapsed_seconds": 6.00353449999966
+}

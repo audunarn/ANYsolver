@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 2.0556304000056116,
+  "peak_process_tree_memory_mb": 153.88672,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_free_source_director_predictor",
+    "--output",
+    "docs/d1_review_support/d1_free_source_director_predictor_20260929.json"
+  ],
+  "log": "reports\\d1_free_source_director_predictor_retry_log_dev_20260929.txt"
+}
