@@ -147,6 +147,21 @@ secant-informed retry improves an earlier pressure transition, but does not
 resolve that full-load failure. The raw failed routes and next diagnostic
 are retained in the free-target development record.
 
+An explicitly selected `macro_q1_pair_dev` pressure basis is now locally
+implemented for ordered even-cell Q4-source/S3-target Jet2 augmented patches.
+It transforms shared mortar integrals before the pressure law while retaining
+fine Q4 physical geometry and its independent gap certificate. The three-step
+eight- and twenty-four-Q4 free-target development presses completed after an
+internal force-equilibrium resolution tied to the existing explicit pressure
+tolerance was added. The twenty-four-Q4 run had 26/26 supported modes and
+passed its local gap, pressure, equilibrium, integration and wrench checks.
+The 8/16/24-Q4 macro reactions do not converge monotonically, and each
+full-load state has only one active pressure mode on shrinking support. This row is
+**implemented and locally tested only**; response convergence, full cycle,
+restart, installed package and independent acceptance remain open. The
+[development record](reference_cases/general_contact_d1_free_target_press_development.md)
+retains the initial failed macro trial and both later solves.
+
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as
 `31e60277`. A disposable C0 candidate wheel built from that commit as

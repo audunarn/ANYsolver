@@ -542,12 +542,30 @@ def solve_static_contact_path(
                             constraint_norm = float(np.max(np.abs(constraint)))
                             force_scale = max(1.0, float(np.linalg.norm(
                                 reduced_external + reactions @ multipliers)))
-                            if (residual_norm <= tolerance * force_scale and
+                            equilibrium_force_limit = tolerance * force_scale
+                            if (residual_norm <= equilibrium_force_limit and
                                     constraint_norm <= tolerance * scale):
-                                certificate = manager.evaluate(u, tangent=False)[2]
-                                candidate_states = trial
-                                equilibrated = True
-                                break
+                                proposed_certificate = manager.evaluate(
+                                    u, tangent=False,
+                                )[2]
+                                if (augmented and getattr(
+                                        manager.law, "pressure_basis", None) is not None):
+                                    supported_area = np.asarray(
+                                        proposed_certificate.reference_support_m2,
+                                        dtype=float,
+                                    )
+                                    supported_area = supported_area[supported_area > 0.0]
+                                    if len(supported_area):
+                                        equilibrium_force_limit = min(
+                                            equilibrium_force_limit,
+                                            0.1*settings.pressure_tolerance
+                                            *float(np.min(supported_area)),
+                                        )
+                                if residual_norm <= equilibrium_force_limit:
+                                    certificate = proposed_certificate
+                                    candidate_states = trial
+                                    equilibrated = True
+                                    break
                             reduced_tangent = (T.T @ tangent @ T).tocsr()
                             matrix = sparse.bmat([
                                 [reduced_tangent, sparse.csr_matrix(-reactions)],
@@ -846,6 +864,8 @@ def solve_static_contact_path(
                                 "pressure_change": normal_multiplier_change,
                                 "minimum_gap": _reported_lower_gap(certificate),
                                 "residual_norm": residual_norm,
+                                **({"macro_equilibrium_force_limit_n": equilibrium_force_limit}
+                                   if getattr(manager.law, "pressure_basis", None) is not None else {}),
                                 "active_pressure_dofs": certificate.active_pressure_dofs,
                                 "source_contact_force_n": (
                                     None if not hasattr(certificate, "integration_force")

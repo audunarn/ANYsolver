@@ -419,9 +419,62 @@ The standalone topology-only [pressure-basis builder](../../src/anysolver/genera
 forms a fixed nonnegative 50×26 interpolation B for the actual 24-Q4
 source strip. At its reference pose, B has full column rank; transformed
 Gram BᵀGB is positive definite with eigenvalues 0.002497–0.03762 m²,
-and transformed support sums to the same 0.9 m². The basis has not been
-used in a mechanical solve. A future macro-pressure profile must transform
-support and weighted gap before normalization, including their derivatives
-and moving-support work; multiplying coarse pressures through the existing
-fine-node law would change the equations. This is a development design
-slice, with no free-target response or pressure-space acceptance.
+and transformed support sums to the same 0.9 m². That topology-only
+observation preceded the mechanical integration below.
+
+An explicit `macro_q1_pair_dev` pressure option now transforms assembled
+support, weighted gap, Gram and their derivatives before normalization.
+The virtual-work tangent retains the fine physical Q4 map while solving
+for macro pressure modes. A small direct-integral and directional-work
+check and a synthetic constrained-response check passed. The first
+[eight-Q4 macro press](../../reports/general_contact_d1_free_target_8q4_macro_press_dev_20260928.json)
+failed at step 2 after seven augmentations: 3.02e−5 Pa projected pressure
+residual remained, although the Schur prediction gave zero on its fixed
+branch. Its re-equilibrated force residual was 5.53e−7 N, within the
+ordinary 1e−6 N stopping scale but too coarse to resolve the requested
+1e−5 Pa pressure consistency. The active pressure and overlap signatures
+were unchanged. This is a retained failure, not an accepted result.
+
+For this opt-in development basis, inner equilibrium now also requires a
+force residual no greater than one tenth of the explicit pressure tolerance
+times the smallest positive macro support. The external equilibrium,
+pressure, gap and augmentation gates remain unchanged. With this tighter
+internal resolution, the [eight-Q4 three-step press](../../reports/general_contact_d1_free_target_8q4_macro_resolved_press_dev_20260928.json)
+completed in 79.43 s with final pressure change 6.43e−6 Pa. The single
+bounded [24-Q4 three-step press](../../reports/general_contact_d1_free_target_24q4_macro_resolved_press_dev_20260928.json)
+completed in 289.94 s. At full load it had 26/26 supported scaled pressure
+rank, 9.98e−11 Pa projected pressure change, −2.07 µm independent gap
+against the unchanged 50 µm limit, 0.0001958717404 N integrated normal
+reaction and opposite body wrench to reported precision. The 8-Q4 macro
+full-load reaction was 0.0001727643286 N, a material difference; the
+24-Q4 macro reaction is also about 2.36% above the earlier 16-Q4 fine-space
+development result. These are different pressure discretizations and
+provide no response-convergence or C1 acceptance claim. The next useful
+check is a same-basis refinement and independent tangent/pressure-space
+review, followed by restart and full-cycle evidence if it passes.
+
+The same-basis [sixteen-Q4 press](../../reports/general_contact_d1_free_target_16q4_macro_resolved_press_dev_20260928.json)
+also completed in 179.35 s, with 18/18 supported scaled modes and
+0.0001761305200 N full-load reaction. The 8→16 change is 1.91% relative
+to sixteen Q4; the 16→24 change is 10.08% relative to twenty-four Q4.
+Only one pressure mode is active at full load in each mesh. Its reference
+support falls from 0.10125 to 0.050625 to 0.03375 m² while its pressure
+rises from 0.0017063 to 0.0034791 to 0.0058036 Pa. The coarser basis
+removed the saved fine-space three-node pressure mode but did not remove
+the localized-contact response uncertainty. Further mesh refinement of
+this fixture is deferred until its contact footprint is redesigned or
+independently justified as a reference.
+
+An independent read-only review found that the first equilibrium check
+of each load step could bypass the new inner force limit and later checks
+could use the preceding pose's support. The candidate now evaluates
+support at the current pose before accepting equilibrium. A bounded
+[eight-Q4 current-support replay](../../reports/general_contact_d1_free_target_8q4_macro_current_support_press_dev_20260928.json)
+completed under the same outer gates in 91.59 s. Its full-load force
+changed by 4.69e−9 N (0.0027%) from the earlier eight-Q4 candidate;
+the first contact trace records a 5.0625e−8 N inner limit. The sixteen-
+and twenty-four-Q4 traces' first-contact residuals were already below
+the corresponding current-support limits; those pre-fix runs remain
+development evidence and are not represented as current-source reruns.
+The reviewer found no concrete smooth-branch algebra or restart-identity
+defect, but did not independently accept the capability.

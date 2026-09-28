@@ -43,7 +43,8 @@ def main(output_path: Path, *, columns: int,
          equilibrium_tolerance: float = 1.0e-6,
          four_phase: bool = False,
          nonlinear_backtrack: bool = False,
-         integration_side: str = "q4") -> None:
+         integration_side: str = "q4",
+         pressure_basis: str = "fine_nodal_q1") -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
@@ -54,7 +55,8 @@ def main(output_path: Path, *, columns: int,
               "equilibrium_tolerance": equilibrium_tolerance,
               "four_phase": four_phase,
               "nonlinear_backtrack": nonlinear_backtrack,
-              "integration_side": integration_side}
+              "integration_side": integration_side,
+              "pressure_basis": pressure_basis}
     try:
         model, definition, settings, program = build_free_target_case(
             columns, relinearizations=relinearizations,
@@ -68,6 +70,8 @@ def main(output_path: Path, *, columns: int,
         if nonlinear_backtrack:
             settings = replace(
                 settings, augmentation_schur_nonlinear_backtrack_dev=True)
+        if pressure_basis != "fine_nodal_q1":
+            settings = replace(settings, q4_source_pressure_basis=pressure_basis)
         result = solve_static_nonlinear(
             model, contact=definition, contact_settings=settings,
             contact_path_program=program, max_iterations=18,
@@ -125,6 +129,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
     parser.add_argument("--columns", type=int, choices=(8, 16, 24), default=8)
+    parser.add_argument("--pressure-basis", choices=("fine_nodal_q1", "macro_q1_pair_dev"),
+                        default="fine_nodal_q1")
     parser.add_argument("--relinearizations", type=int, choices=(0, 1),
                         default=0)
     parser.add_argument("--steps-per-segment", type=int, choices=(3, 6),
@@ -142,4 +148,5 @@ if __name__ == "__main__":
          equilibrium_tolerance=args.equilibrium_tolerance,
          four_phase=args.four_phase,
          nonlinear_backtrack=args.nonlinear_backtrack,
-         integration_side=args.integration_side)
+         integration_side=args.integration_side,
+         pressure_basis=args.pressure_basis)

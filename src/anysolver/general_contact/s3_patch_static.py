@@ -17,6 +17,7 @@ from .q4_source_overlap import (
 )
 from .fixed_projection_graph import fixed_projection_graph_swept_certificate
 from .pressure_space import supported_pressure_gram
+from .pressure_basis import build_q4_source_macro_q1_pair_basis
 
 
 PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
@@ -149,6 +150,19 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
     if (settings.general_s3_differentiation == "jet2_q4_s3_dev"
             and not refined_q4):
         issues.append("Jet2 Q4/S3 development derivative needs a refined augmented Q4/S3 patch")
+    if settings.q4_source_pressure_basis == "macro_q1_pair_dev":
+        if (not refined_q4
+                or settings.general_s3_differentiation != "jet2_q4_s3_dev"
+                or settings.augmentation_support_resolution != "exact"):
+            issues.append("macro Q1 pressure needs refined augmented Q4/S3 Jet2 with exact support")
+        else:
+            try:
+                build_q4_source_macro_q1_pair_basis(tuple(
+                    tuple(int(node) for node in model.mesh.elements[element_id].node_ids)
+                    for element_id in source.element_ids
+                ))
+            except ValueError as exc:
+                issues.append(f"macro Q1 pressure topology: {exc}")
     if settings.general_s3_differentiation == "jet2_q4_s3_dev" and any(
         getattr(settings, name) is None for name in (
             "q4_source_support_gradient_tolerance",
@@ -324,6 +338,8 @@ class _PatchResults:
     pressure_gram_scaled_rank: int | None = None
     pressure_gram_scaled_condition_estimate: float | None = None
     tie_resolution_relative_error: float | None = None
+    pressure_basis_version: str | None = None
+    source_geometry_node_ids: tuple[int, ...] = ()
 
     def to_dict(self):
         result = dict(vars(self))
@@ -348,6 +364,11 @@ class _PatchResults:
                 result.pop(name)
         if self.tie_resolution_relative_error is None:
             result.pop("tie_resolution_relative_error")
+        if self.pressure_basis_version is None:
+            result.pop("pressure_basis_version")
+            result.pop("source_geometry_node_ids")
+        else:
+            result["source_geometry_node_ids"] = list(self.source_geometry_node_ids)
         return result
 
 
@@ -364,6 +385,9 @@ class GeneralS3PatchManager:
         source, target, interaction = _selected(definition)
         adapters = _adapters(model, (source, target))
         faces = _patch_faces(adapters)
+        pressure_basis = (build_q4_source_macro_q1_pair_basis(
+            tuple(face.node_ids for face in faces[0]),
+        ) if self.settings.q4_source_pressure_basis == "macro_q1_pair_dev" else None)
         self.stiffness = interaction.normal_stiffness
         self.augmented = interaction.normal_law == "augmented"
         self.gap_tolerance = interaction.gap_tolerance
@@ -398,6 +422,7 @@ class GeneralS3PatchManager:
             self.law = MovingS3PatchProjectedNormal(
                 self.law,
                 support_resolution=self.settings.augmentation_support_resolution,
+                pressure_basis=pressure_basis,
             )
             if self.settings.q4_s3_shared_edge_tie_step_m is not None:
                 self.law.set_shared_edge_tie(
@@ -405,7 +430,7 @@ class GeneralS3PatchManager:
                     self.settings.q4_s3_shared_edge_tie_direction,
                     self.settings.q4_s3_shared_edge_tie_relative_tolerance,
                 )
-            self.normal_multipliers = np.zeros(len(self.law.source_node_ids))
+            self.normal_multipliers = np.zeros(len(self.law.pressure_mode_ids))
             self.last_support_reset = None
         source_ref, source_map = _unique_work_map(adapters[0], self.law.source_node_ids)
         target_ref, target_map = _unique_work_map(adapters[1], self.law.target_node_ids)
@@ -523,7 +548,7 @@ class GeneralS3PatchManager:
             supported, support_floor = self.law.resolved_support(state)
             unresolved_nodes = tuple(
                 node_id for node_id, area, active in zip(
-                    self.law.source_node_ids, state.reference_support, supported)
+                    self.law.pressure_mode_ids, state.reference_support, supported)
                 if area > 0.0 and not active
             )
         result = _PatchResults(
@@ -534,7 +559,7 @@ class GeneralS3PatchManager:
             tuple(map(float, source_force)), tuple(map(float, target_force)),
             tuple(map(float, source_moment)), tuple(map(float, target_moment)),
             lower >= -self.gap_tolerance, state.active_pressure_dofs,
-            self.law.source_node_ids,
+            self.law.pressure_mode_ids if self.augmented else self.law.source_node_ids,
             tuple(map(float, state.normalized_gap)),
             tuple(map(float, state.pressure)),
             tuple(map(float, state.reference_support)), evaluations,
@@ -550,6 +575,8 @@ class GeneralS3PatchManager:
             gram_scaled.scaled_rank if gram_scaled is not None else None,
             gram_scaled.scaled_condition if gram_scaled is not None else None,
             tie_error,
+            self.law.pressure_basis.version if self.augmented and self.law.pressure_basis is not None else None,
+            self.law.source_node_ids if self.augmented and self.law.pressure_basis is not None else (),
         )
         return force, stiffness, result
 
@@ -627,7 +654,7 @@ class GeneralS3PatchManager:
                         "roundoff multiplier reset exceeds local force budget"
                     )
                 self.last_support_reset = {
-                    "source_node_ids": [self.law.source_node_ids[int(j)] for j in reset],
+                    "source_node_ids": [self.law.pressure_mode_ids[int(j)] for j in reset],
                     "local_force_change_n": force_change,
                     "force_budget_n": self.settings.augmentation_support_force_budget_n,
                 }
@@ -728,6 +755,12 @@ class GeneralS3PatchManager:
                             "normal_law": interaction.normal_law},
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
+                         **({"q4_source_pressure_basis": self.settings.q4_source_pressure_basis,
+                             "pressure_basis_version": self.law.pressure_basis.version,
+                             "pressure_basis_fine_ids": list(self.law.pressure_basis.fine_source_node_ids),
+                             "pressure_basis_mode_ids": list(self.law.pressure_basis.mode_ids),
+                             "pressure_basis_matrix": [list(row) for row in self.law.pressure_basis.B]}
+                            if self.augmented and self.law.pressure_basis is not None else {}),
                          **({"pressure_tolerance": self.settings.pressure_tolerance,
                              "maximum_augmentations": self.settings.maximum_augmentations}
                             if self.augmented else {}),

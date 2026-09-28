@@ -202,6 +202,7 @@ class ContactSolverSettings:
     q4_source_weighted_gap_tolerance: float | None = None
     maximum_q4_source_integration_triangles: int | None = None
     q4_source_gap_certificate: str = "whole_face"
+    q4_source_pressure_basis: str = "fine_nodal_q1"
     augmentation_acceleration: str = "none"
     augmentation_pivot_max_pressure_pa: float | None = None
     augmentation_pivot_difference_step_m: float | None = None
@@ -245,6 +246,9 @@ class ContactSolverSettings:
         if self.q4_source_gap_certificate not in {
                 "whole_face", "projected_matching", "fixed_projection_graph"}:
             raise ValueError("q4_source_gap_certificate must be whole_face, projected_matching or fixed_projection_graph")
+        if self.q4_source_pressure_basis not in {
+                "fine_nodal_q1", "macro_q1_pair_dev"}:
+            raise ValueError("q4_source_pressure_basis must be fine_nodal_q1 or macro_q1_pair_dev")
         if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs < 1:
             raise ValueError("maximum_candidate_pairs must be a positive integer")
         if self.pair_motion not in {"guided", "restricted_sliding", "general"}:
@@ -521,6 +525,15 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if (settings is not None
+            and settings.q4_source_pressure_basis == "macro_q1_pair_dev"
+            and (not _refined_q4_s3_patch(model, definition)
+                 or settings.general_s3_differentiation != "jet2_q4_s3_dev"
+                 or settings.normal_discretization != "primal_mortar"
+                 or settings.augmentation_support_resolution != "exact")):
+        return ContactValidationReport("invalid", (
+            "macro Q1 pressure basis needs refined Q4-source/S3-target Jet2 augmented mortar with exact support",
+        ))
     if settings is not None and settings.general_s3_differentiation == "jet2_s3_dev":
         from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 

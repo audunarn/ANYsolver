@@ -14,6 +14,7 @@ import numpy as np
 
 from .moving import _has_shared_edge_transition
 from .overlap import PlanarFace, planar_projected_overlap
+from .pressure_basis import PressureBasis
 from .q4_source_overlap import projected_q4_source_face
 from .q4_s3_overlap_derivatives import (
     UnsupportedQ4S3Branch, q4_s3_overlap_derivatives,
@@ -216,15 +217,22 @@ def _q4_s3_gap_operand_roundoff(source, target, support_scale: float) -> float:
 
 class MovingS3PatchProjectedNormal:
     def __init__(self, geometry: MovingS3PatchPrimalMortarPenalty, *,
-                 support_resolution: str = "exact"):
+                 support_resolution: str = "exact",
+                 pressure_basis: PressureBasis | None = None):
         if any(len(face.node_ids) not in {3, 4} for face in geometry.source_faces):
             raise ValueError("projected normal pressure space requires S3 or Q4 source faces")
         if support_resolution not in {"exact", "roundoff"}:
             raise ValueError("projected normal support resolution is invalid")
         self.geometry = geometry
+        if (pressure_basis is not None
+                and pressure_basis.fine_source_node_ids != geometry.source_node_ids):
+            raise ValueError("macro pressure basis must match physical source node order")
+        self.pressure_basis = pressure_basis
         self.support_resolution = support_resolution
         self.n_coordinates = geometry.n_coordinates
         self.source_node_ids = geometry.source_node_ids
+        self.pressure_mode_ids = (geometry.source_node_ids if pressure_basis is None
+                                  else pressure_basis.mode_ids)
         self.target_node_ids = geometry.target_node_ids
         self.source_face_indices = geometry.source_face_indices
         self.target_face_indices = geometry.target_face_indices
@@ -249,10 +257,35 @@ class MovingS3PatchProjectedNormal:
 
     def _multipliers(self, multipliers):
         values = np.asarray(multipliers, dtype=float)
-        if (values.shape != (len(self.source_node_ids),)
+        if (values.shape != (len(self.pressure_mode_ids),)
                 or not np.all(np.isfinite(values)) or np.any(values < 0.0)):
             raise ValueError("patch normal multipliers must be finite nonnegative pressures")
         return values
+
+    def _pressure_state(self, fine_state):
+        basis = self.pressure_basis
+        if basis is None:
+            return fine_state
+        support, weighted_gap, gram = basis.transform_integrals(
+            fine_state.reference_support,
+            fine_state.reference_weighted_gap,
+            fine_state.pressure_gram,
+        )
+        normalized = np.zeros_like(support)
+        supported = support > 0.0
+        normalized[supported] = weighted_gap[supported]/support[supported]
+        pressure = np.zeros_like(support)
+        pressure[supported] = self.stiffness*np.maximum(
+            -normalized[supported], 0.0,
+        )
+        energy = 0.5*self.stiffness*float(
+            support @ np.minimum(normalized, 0.0)**2,
+        )
+        return replace(
+            fine_state, energy=energy, reference_support=support,
+            reference_weighted_gap=weighted_gap, normalized_gap=normalized,
+            pressure=pressure, pressure_gram=gram,
+        )
 
     def resolved_support(self, state):
         """Return resolved support for algorithmic multiplier transfer only."""
@@ -264,6 +297,7 @@ class MovingS3PatchProjectedNormal:
         return supported, floor
 
     def _project(self, state, multipliers):
+        state = self._pressure_state(state)
         supported = state.reference_support > 0.0
         pressure = np.zeros_like(state.pressure)
         pressure[supported] = np.maximum(
@@ -309,6 +343,9 @@ class MovingS3PatchProjectedNormal:
 
     def work(self, current_source, current_target, multipliers, *, tangent=True,
              _prepared_state=None):
+        if (self.pressure_basis is not None
+                and self.geometry.differentiation != "jet2_q4_s3"):
+            raise ValueError("macro pressure work needs the Q4/S3 Jet2 derivative")
         if self.shared_edge_tie is None:
             return self._work_unresolved(current_source, current_target,
                                          multipliers, tangent=tangent,
@@ -318,6 +355,8 @@ class MovingS3PatchProjectedNormal:
                                          multipliers, tangent=tangent,
                                          prepared_state=_prepared_state)
         except (UnsupportedQ4S3Branch, ValueError) as exc:
+            if self.pressure_basis is not None:
+                raise
             message = str(exc)
             pair_match = re.search(r"\bpair=(\d+)\b", message)
             degenerate_shared_pair = (
@@ -827,6 +866,19 @@ class MovingS3PatchProjectedNormal:
         zero_area_overlap_pairs = []
         source = np.asarray(current_source, dtype=float)
         target = np.asarray(current_target, dtype=float)
+        basis = self.pressure_basis
+        fine_base = (self.geometry.evaluate(source, target)
+                     if basis is not None else base)
+        if basis is None:
+            fine_pressure = base.pressure
+            fine_support_pressure = base.pressure*base.normalized_gap
+        else:
+            B = basis.as_array()
+            fine_pressure = B @ base.pressure
+            fine_support_pressure = B @ (base.pressure*base.normalized_gap)
+        fine_work_gap = np.zeros(source_count)
+        np.divide(fine_support_pressure, fine_pressure, out=fine_work_gap,
+                  where=fine_pressure > 0.0)
         for pair_index, law in enumerate(self.geometry.pair_laws):
             source_face = pair_index // len(self.geometry.target_faces)
             target_face = pair_index % len(self.geometry.target_faces)
@@ -840,7 +892,7 @@ class MovingS3PatchProjectedNormal:
                 if local.overlap_vertices > 0:
                     zero_area_overlap_pairs.append(pair_index)
                 continue
-            if not np.any(base.pressure[source_nodes]):
+            if not np.any(fine_pressure[source_nodes]):
                 # This pair contributes to shared support and weighted gap,
                 # including at nodes active on other pairs. Its own smooth-
                 # branch work derivatives vanish with all local pressures.
@@ -961,13 +1013,17 @@ class MovingS3PatchProjectedNormal:
                 if (pair_index == tiny_wedge_pair
                         and len(source_nodes) == 4
                         and self.shared_edge_tie is not None):
+                    if basis is not None:
+                        raise UnsupportedQ4S3Branch(
+                            "macro pressure tiny seam wedge needs separate qualification"
+                        )
                     if tiny_wedge_verified:
                         raise UnsupportedQ4S3Branch(
                             "multiple tiny seam wedges need separate derivative qualification"
                         )
                     tie_step = self.shared_edge_tie[0]
                     if (local.overlap_area > 4.0*tie_step*tie_step
-                            or np.any(base.reference_support[source_nodes]
+                            or np.any(fine_base.reference_support[source_nodes]
                                       - local.reference_support
                                       < 1.0e6*local.reference_support)):
                         raise UnsupportedQ4S3Branch(
@@ -992,8 +1048,8 @@ class MovingS3PatchProjectedNormal:
                         )
                     used, scenarios = verify_tiny_wedge_derivatives(
                         law, local_source, local_target, derivative,
-                        base.pressure[source_nodes],
-                        base.normalized_gap[source_nodes], local_active,
+                        fine_pressure[source_nodes],
+                        fine_work_gap[source_nodes], local_active,
                         difference_step_m=tie_step/20.0,
                         force_scale_n=force_scale,
                         length_scale_m=min(edge_lengths),
@@ -1046,7 +1102,7 @@ class MovingS3PatchProjectedNormal:
                     float(np.max(np.abs(derivative.reference_weighted_gap))),
                 )
                 gap_pair_value_budget[source_nodes] += value_rtol*pair_gap_scale
-            if not np.any(base.pressure[source_nodes]):
+            if not np.any(fine_pressure[source_nodes]):
                 continue
             coordinate_map = np.asarray(
                 [3*int(node)+axis for node in source_nodes for axis in range(3)]
@@ -1061,14 +1117,14 @@ class MovingS3PatchProjectedNormal:
                 if len(local_active):
                     global_active = coordinate_map[local_active]
                     indices = np.searchsorted(active_coordinates, global_active)
-                    local_pressure = base.pressure[source_nodes]
+                    local_pressure = fine_pressure[source_nodes]
                     weighted = np.einsum(
                         "i,ijk->jk", local_pressure,
                         derivative.weighted_gap_hessian[:, local_active][:, :, local_active],
                     )
                     supported = np.einsum(
                         "i,ijk->jk",
-                        local_pressure*base.normalized_gap[source_nodes],
+                        fine_support_pressure[source_nodes],
                         derivative.support_hessian[:, local_active][:, :, local_active],
                     )
                     weighted_hessian[np.ix_(indices, indices)] += weighted
@@ -1085,9 +1141,9 @@ class MovingS3PatchProjectedNormal:
                 for face in self.geometry.source_faces
                 for index in range(4)
             )
-            support_budget = 1.0e-10*base.reference_support
-            gap_budget = (1.0e-10*base.reference_support
-                          * np.maximum(np.abs(base.normalized_gap),
+            support_budget = 1.0e-10*fine_base.reference_support
+            gap_budget = (1.0e-10*fine_base.reference_support
+                          * np.maximum(np.abs(fine_base.normalized_gap),
                                        1.0e-8*reference_length))
             if (np.any(absolute_support_difference > support_budget)
                     or np.any(absolute_gap_difference > gap_budget)):
@@ -1098,7 +1154,7 @@ class MovingS3PatchProjectedNormal:
              force_scale, length_scale) = tiny_wedge_scenarios
             selected = active_coordinates
             D = (jw[:, selected]
-                 - base.normalized_gap[:, None]*js[:, selected])
+                 - fine_work_gap[:, None]*js[:, selected])
             for gradient_error, hessian_error in scenarios:
                 delta_support = np.zeros((source_count, len(selected)))
                 delta_weighted = np.zeros_like(delta_support)
@@ -1108,15 +1164,15 @@ class MovingS3PatchProjectedNormal:
                     gradient_error[0][:, tiny_active])
                 delta_weighted[np.ix_(tiny_source, selected_columns)] = (
                     gradient_error[1][:, tiny_active])
-                E = delta_weighted-base.normalized_gap[:, None]*delta_support
+                E = delta_weighted-fine_work_gap[:, None]*delta_support
                 tangent_error_bound = 0.0
-                for node in np.flatnonzero(base.pressure > 0.0):
-                    support = base.reference_support[node]
+                for node in np.flatnonzero(fine_pressure > 0.0):
+                    support = fine_base.reference_support[node]
                     if support <= 0.0:
                         raise UnsupportedQ4S3Branch(
                             "tiny seam wedge active pressure lacks support"
                         )
-                    p = base.pressure[node]
+                    p = fine_pressure[node]
                     d_norm = float(np.linalg.norm(D[node]))
                     e_norm = float(np.linalg.norm(E[node]))
                     ds_norm = float(np.linalg.norm(delta_support[node]))
@@ -1128,8 +1184,8 @@ class MovingS3PatchProjectedNormal:
                                      + ds_norm*e_norm)
                     )
                 for local_node, node in enumerate(tiny_source):
-                    p = base.pressure[node]
-                    g = base.normalized_gap[node]
+                    p = fine_pressure[node]
+                    g = fine_work_gap[node]
                     tangent_error_bound += p*(
                         np.linalg.norm(hessian_error[1][local_node])
                         + abs(g)*np.linalg.norm(hessian_error[0][local_node])
@@ -1143,30 +1199,32 @@ class MovingS3PatchProjectedNormal:
                         f"budget_n_per_m={budget:.12g})"
                     )
         if (not all(np.all(np.isfinite(values)) for values in (
-                    assembled_support, base.reference_support,
-                    assembled_gap, base.reference_weighted_gap,
+                    assembled_support, fine_base.reference_support,
+                    assembled_gap, fine_base.reference_weighted_gap,
                     support_magnitude, gap_magnitude,
                     support_roundoff_budget, gap_roundoff_budget,
                     gap_pair_value_budget))
-                or np.any(np.abs(assembled_support-base.reference_support)
+                or np.any(np.abs(assembled_support-fine_base.reference_support)
                    > summation_tolerance*support_magnitude
                      + support_roundoff_budget)
-                or np.any(np.abs(assembled_gap-base.reference_weighted_gap)
+                or np.any(np.abs(assembled_gap-fine_base.reference_weighted_gap)
                           > summation_tolerance*gap_magnitude
                             + gap_roundoff_budget
                             + gap_pair_value_budget)):
             raise ValueError(
                 "differentiated S3 patch disagrees with shared pressure support: "
-                f"support_error={np.max(np.abs(assembled_support-base.reference_support)):.9g}, "
-                f"weighted_gap_error={np.max(np.abs(assembled_gap-base.reference_weighted_gap)):.9g}, "
+                f"support_error={np.max(np.abs(assembled_support-fine_base.reference_support)):.9g}, "
+                f"weighted_gap_error={np.max(np.abs(assembled_gap-fine_base.reference_weighted_gap)):.9g}, "
                 f"zero_area_overlap_pairs={zero_area_overlap_pairs}"
             )
+        if basis is not None:
+            js, jw = basis.transform_derivatives(js, jw)
         gap_variation = jw - base.normalized_gap[:, None]*js
         residual = -(base.pressure @ gap_variation)
         if not tangent:
             return MovingS3PatchMortarWork(base, residual, None, evaluations)
         active = base.pressure > 0.0
-        dg = np.zeros((source_count, len(active_coordinates)))
+        dg = np.zeros((len(base.pressure), len(active_coordinates)))
         dg[active] = (gap_variation[np.ix_(active, active_coordinates)]
                       / base.reference_support[active, None])
         dp = -self.stiffness*dg

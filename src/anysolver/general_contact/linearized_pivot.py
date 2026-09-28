@@ -338,13 +338,16 @@ def _constrained_gap_response(manager, displacement, tangent, transform,
     """Return d(g_selected)/d(lambda_active) from one constrained factorization."""
     source, target = manager._positions(displacement)
     geometry = manager.law.geometry
-    base = geometry.evaluate(source, target)
+    basis = getattr(manager.law, "pressure_basis", None)
+    fine_base = geometry.evaluate(source, target)
+    base = (manager.law.evaluate(source, target, manager.normal_multipliers)
+            if basis is not None else fine_base)
     clip_signature = _projected_clip_signature(geometry, source, target)
     exact_gap_derivative = (
         _exact_artificial_seam_gap_gradient(
             manager, source, target, base, selected,
             check_cancel=check_cancel, diagnostics=diagnostics,
-        ) if clip_signature is None else None
+        ) if clip_signature is None and basis is None else None
     )
     if clip_signature is None and exact_gap_derivative is None:
         return None
@@ -358,12 +361,18 @@ def _constrained_gap_response(manager, displacement, tangent, transform,
     if exact_gap_derivative is not None:
         weighted = support = None
     elif getattr(geometry, "differentiation", "global") in {"jet2_s3", "jet2_q4_s3"}:
+        fine_selected = (np.arange(len(fine_base.reference_support))
+                         if basis is not None else selected)
         weighted, support = _jet2_integral_gradients(
-            geometry, source, target, selected, count,
+            geometry, source, target, fine_selected, count,
             manager.settings.maximum_general_s3_energy_evaluations,
-            check_cancel, manager=manager, base=base,
+            check_cancel, manager=manager, base=fine_base,
             diagnostics=diagnostics,
         )
+        if basis is not None:
+            support, weighted = basis.transform_derivatives(support, weighted)
+            support = support[selected]
+            weighted = weighted[selected]
     else:
         if (2*count + 1)*pair_count > manager.settings.maximum_general_s3_energy_evaluations:
             raise ValueError("pressure response geometry evaluation budget exceeded")
