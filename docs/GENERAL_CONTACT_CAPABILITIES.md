@@ -140,6 +140,12 @@ The new opt-in owner backtrack completed a three-step sixteen-Q4 free-target
 press under unchanged mechanics and contact gates, including the reviewed
 overlap/clip-branch guard. Its accepted full-load contact force differs by
 8.31% from eight Q4, so mesh response and C1 acceptance are still open.
+Its twelve-step press/slide/open/recontact development cycle also completed.
+The twenty-four-Q4 free-target press remains unaccepted: three- and six-step
+paths fail the unchanged pressure-consistency gate at full load. A bounded
+secant-informed retry improves an earlier pressure transition, but does not
+resolve that full-load failure. The raw failed routes and next diagnostic
+are retained in the free-target development record.
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as

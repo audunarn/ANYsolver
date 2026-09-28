@@ -55,7 +55,10 @@ from .linearized_pivot import (
     refined_patch_pivot,
     refined_patch_supported_schur,
 )
-from .supported_schur import propose_supported_schur_backtrack
+from .supported_schur import (
+    propose_supported_schur_backtrack,
+    propose_supported_schur_secant_backtrack,
+)
 from .equilibrated_pressure_pivot import equilibrated_pressure_pivot
 
 
@@ -782,10 +785,24 @@ def solve_static_contact_path(
                                         schur_epoch_attempts += 1
                                         pivot_attempts += 1
                                         try:
-                                            backtrack = propose_supported_schur_backtrack(
+                                            backtrack = propose_supported_schur_secant_backtrack(
                                                 schur_backtrack_source,
+                                                getattr(certificate,
+                                                        "normalized_weighted_gap_m",
+                                                        None),
                                                 diagnostics=rejection_trace,
                                             )
+                                            if backtrack is not None:
+                                                rejection_trace["schur_backtrack_model"] = (
+                                                    "full_trial_gap_secant")
+                                            else:
+                                                backtrack = propose_supported_schur_backtrack(
+                                                    schur_backtrack_source,
+                                                    diagnostics=rejection_trace,
+                                                )
+                                                if backtrack is not None:
+                                                    rejection_trace["schur_backtrack_model"] = (
+                                                        "local_linear")
                                         except (ValueError, MemoryError,
                                                 np.linalg.LinAlgError) as exc:
                                             rejection_trace["schur_backtrack_ineligible"] = str(exc)

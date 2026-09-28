@@ -133,6 +133,131 @@ def propose_supported_schur_backtrack(
     return None
 
 
+def propose_supported_schur_secant_backtrack(
+    full_proposal: SupportedSchurProposal,
+    actual_full_gap: np.ndarray,
+    *,
+    diagnostics: dict[str, object] | None = None,
+) -> SupportedSchurProposal | None:
+    """Suggest an interior trial from the observed full-step gap curvature.
+
+    The quadratic interpolant matches the base gap, its saved local slope,
+    and the rejected full-step gap. It is only a proposal: the owner must
+    re-equilibrate and apply its unchanged physical and merit checks.
+    """
+    data = full_proposal.backtrack_data
+
+    def decline(reason: str) -> None:
+        if diagnostics is not None:
+            diagnostics["schur_secant_backtrack_reason"] = reason
+        return None
+
+    if data is None:
+        return decline("response_unavailable")
+    base = data.base_multipliers
+    full = np.asarray(full_proposal.multipliers, dtype=float)
+    actual_gap = np.asarray(actual_full_gap, dtype=float)
+    modes = data.supported_indices
+    H = data.equilibrated_gap_response
+    if (base.ndim != 1 or not len(base) or full.shape != base.shape
+            or actual_gap.shape != base.shape
+            or modes.ndim != 1 or not len(modes)
+            or not np.issubdtype(modes.dtype, np.integer)
+            or np.any(modes < 0) or np.any(modes >= len(base))
+            or np.any(np.diff(modes) <= 0)
+            or len(modes) > data.maximum_modes
+            or data.base_gap.shape != (len(modes),)
+            or H.shape != (len(modes), len(modes))
+            or not np.isfinite(data.normal_stiffness)
+            or data.normal_stiffness <= 0.0
+            or not np.isfinite(data.maximum_pressure)
+            or data.maximum_pressure <= 0.0
+            or not np.isfinite(data.maximum_pressure_step)
+            or data.maximum_pressure_step <= 0.0
+            or not np.isfinite(data.kink_roundoff)
+            or data.kink_roundoff < 0.0
+            or not np.all(np.isfinite(base))
+            or not np.all(np.isfinite(full))
+            or not np.all(np.isfinite(actual_gap))
+            or not np.all(np.isfinite(data.base_gap))
+            or not np.all(np.isfinite(H))
+            or not np.isfinite(full_proposal.predicted_residual_before)
+            or full_proposal.predicted_residual_before <= 0.0
+            or np.any(base < 0.0) or np.any(full < 0.0)
+            or np.any(base[np.setdiff1d(np.arange(len(base)), modes)] != 0.0)
+            or np.any(full[np.setdiff1d(np.arange(len(full)), modes)] != 0.0)
+            or np.max(base, initial=0.0) > data.maximum_pressure
+            or np.max(full, initial=0.0) > data.maximum_pressure
+            or np.max(np.abs(full-base), initial=0.0)
+            > data.maximum_pressure_step):
+        return decline("inconsistent_full_proposal_or_gap")
+
+    direction = full-base
+    linear_gap_change = H @ direction[modes]
+    curvature = (actual_gap[modes]-data.base_gap-linear_gap_change)
+    if not np.all(np.isfinite(curvature)):
+        return decline("nonfinite_curvature")
+
+    best: SupportedSchurProposal | None = None
+    best_fraction = float("inf")
+    minimum_scanned_residual = float("inf")
+    minimum_scanned_fraction: float | None = None
+    examined = 0
+    eligible = 0
+    for tick in range(1, 20):
+        examined += 1
+        fraction = tick/20.0
+        candidate = base+fraction*direction
+        step = candidate-base
+        if (np.any(candidate < 0.0)
+                or np.max(candidate, initial=0.0) > data.maximum_pressure
+                or np.max(np.abs(step), initial=0.0)
+                > data.maximum_pressure_step):
+            continue
+        local_pressure = candidate[modes]
+        predicted_gap = (data.base_gap+fraction*linear_gap_change
+                         +fraction*fraction*curvature)
+        argument = local_pressure-data.normal_stiffness*predicted_gap
+        if (not np.all(np.isfinite(argument))
+                or np.any(np.abs(argument) <= data.kink_roundoff)):
+            continue
+        residual = float(np.max(np.abs(
+            np.maximum(0.0, argument)-local_pressure), initial=0.0))
+        if residual < minimum_scanned_residual:
+            minimum_scanned_residual = residual
+            minimum_scanned_fraction = fraction
+        if residual > 0.70*full_proposal.predicted_residual_before:
+            continue
+        eligible += 1
+        if (best is None
+                or residual < best.predicted_residual_after
+                or (residual == best.predicted_residual_after
+                    and fraction < best_fraction)):
+            active = tuple(int(modes[index]) for index in
+                           np.flatnonzero(argument > 0.0))
+            best = SupportedSchurProposal(
+                candidate, active, full_proposal.scaled_condition,
+                fraction*full_proposal.step_fraction,
+                full_proposal.predicted_residual_before, residual,
+            )
+            best_fraction = fraction
+    if diagnostics is not None:
+        diagnostics["schur_secant_backtrack_examined"] = examined
+        diagnostics["schur_secant_backtrack_eligible"] = eligible
+        diagnostics["schur_secant_backtrack_minimum_scanned_residual_pa"] = (
+            minimum_scanned_residual
+            if minimum_scanned_fraction is not None else None)
+        diagnostics["schur_secant_backtrack_minimum_scanned_fraction"] = (
+            minimum_scanned_fraction)
+        if best is not None:
+            diagnostics["schur_secant_backtrack_fraction"] = best.step_fraction
+            diagnostics["schur_secant_backtrack_predicted_residual_pa"] = (
+                best.predicted_residual_after)
+    if best is None:
+        return decline("no_predicted_safe_interior_fraction")
+    return best
+
+
 def propose_supported_schur_step(
     multipliers: np.ndarray,
     normalized_gap: np.ndarray,

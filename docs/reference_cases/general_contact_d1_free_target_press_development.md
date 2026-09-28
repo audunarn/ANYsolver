@@ -367,3 +367,50 @@ disposable measurements only; they show that the smallest predicted-safe
 fraction can leave reduction unused and that a nearly full fraction can
 expose substantial nonlinear response error without a discrete branch
 change. The production selector still uses its original bounded rule.
+
+## Secant-informed retry and full-load limit
+
+A [full-step gap capture](../../reports/general_contact_d1_free_target_24q4_schur_full_clip_dev_20260928.json)
+confirmed unchanged active pressure IDs, overlap signature and projected
+clipping signature at the first 24-Q4 failed retry. Its local gap prediction
+missed the re-equilibrated gap by up to 5.754e−8 m. A vector quadratic
+response through the measured full gap predicted residuals of
+2.288e−4 Pa at fraction 0.80 and 3.632e−4 Pa at 0.95, compared with
+measured 2.288e−4 and 3.390e−4 Pa. Its lowest bounded-grid residual was
+at 0.85. The corresponding saved sixteen-Q4 map had no secant fraction
+that met the 30% predicted margin, so the existing local-linear fallback
+remains necessary for that case.
+
+The opt-in owner now uses this measured full-gap secant to propose one
+interior retry when eligible. It retains the same two-attempt per-epoch
+cap and all actual re-equilibration, active/clip/gap/pressure, rollback
+and physical-state gates. The [24-Q4 three-step run](../../reports/general_contact_d1_free_target_24q4_press_secant_dev_20260928.json)
+accepted step 2 with the selected 0.85 fraction and a later correction,
+then stopped at full-load step 3 with 9.347e−4 Pa multiplier change.
+The [six-step run](../../reports/general_contact_d1_free_target_24q4_press_6steps_secant_dev_20260928.json)
+accepted five steps, then stopped at the equivalent full-load state with
+1.084e−3 Pa. Both exhausted seven augmentations while force equilibrium
+and physical gap passed. There is still no accepted 24-Q4 full-load
+force or free-target mesh-response claim. The full-load active-pressure
+transition, constrained response and force map are the next local
+diagnostic; further path subdivision or an automatic budget increase
+is not indicated by this evidence.
+
+The [best-fraction full-load diagnostic](../../reports/general_contact_d1_free_target_24q4_secant_min_trial_dev_20260928.json)
+selected 0.10 from the otherwise ineligible secant grid. It predicted
+9.669e−4 Pa pressure residual and measured 9.985e−4 Pa, a 10% actual
+reduction from 1.109e−3 Pa. The unchanged 25% merit rule rejected it.
+The saved weakest pressure mode is concentrated at pressure IDs 42–44
+with coefficients about −0.422, +0.813 and −0.400. This localized
+second-difference mode carries 96.7% of the scaled right-hand side
+despite 50/50 nominal pressure rank. The observed failure is not fixed
+by another fraction on the current Schur direction.
+
+An [eight-Q4 S3-side role exchange](../../reports/general_contact_d1_free_target_8q4_s3_side_press_dev_20260928.json)
+was rejected before solving by the exact Q4-source-only development
+admission for Jet2 differentiation, supported Schur and projected gap
+certification. It is a recorded capability boundary, not a failed
+mechanical comparison. An explicitly selected coarser positive Q1
+pressure space on the same Q4 integration geometry is under design
+review as a way to test the weak-mode hypothesis without changing the
+integration side.

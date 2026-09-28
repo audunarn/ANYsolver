@@ -42,7 +42,8 @@ def main(output_path: Path, *, columns: int,
          steps_per_segment: int = 3,
          equilibrium_tolerance: float = 1.0e-6,
          four_phase: bool = False,
-         nonlinear_backtrack: bool = False) -> None:
+         nonlinear_backtrack: bool = False,
+         integration_side: str = "q4") -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
@@ -52,11 +53,18 @@ def main(output_path: Path, *, columns: int,
               "steps_per_segment": steps_per_segment,
               "equilibrium_tolerance": equilibrium_tolerance,
               "four_phase": four_phase,
-              "nonlinear_backtrack": nonlinear_backtrack}
+              "nonlinear_backtrack": nonlinear_backtrack,
+              "integration_side": integration_side}
     try:
         model, definition, settings, program = build_free_target_case(
             columns, relinearizations=relinearizations,
             steps_per_segment=steps_per_segment, four_phase=four_phase)
+        if integration_side == "s3":
+            definition = replace(definition, interactions=(replace(
+                definition.interactions[0], surface="s3_target",
+                target="q4_source"),))
+        elif integration_side != "q4":
+            raise ValueError("integration_side must be q4 or s3")
         if nonlinear_backtrack:
             settings = replace(
                 settings, augmentation_schur_nonlinear_backtrack_dev=True)
@@ -125,10 +133,13 @@ if __name__ == "__main__":
                         default=1.0e-6)
     parser.add_argument("--four-phase", action="store_true")
     parser.add_argument("--nonlinear-backtrack", action="store_true")
+    parser.add_argument("--integration-side", choices=("q4", "s3"),
+                        default="q4")
     args = parser.parse_args()
     main(args.output, columns=args.columns,
          relinearizations=args.relinearizations,
          steps_per_segment=args.steps_per_segment,
          equilibrium_tolerance=args.equilibrium_tolerance,
          four_phase=args.four_phase,
-         nonlinear_backtrack=args.nonlinear_backtrack)
+         nonlinear_backtrack=args.nonlinear_backtrack,
+         integration_side=args.integration_side)

@@ -11,13 +11,14 @@ from anysolver.general_contact.supported_schur import (
     SupportedSchurBacktrackData,
     SupportedSchurProposal,
     propose_supported_schur_backtrack,
+    propose_supported_schur_secant_backtrack,
     propose_supported_schur_step,
 )
 
 
-def _saved_sixteen_q4_proposal():
+def _saved_probe(report_name):
     path = (Path(__file__).resolve().parents[1] / "reports" /
-            "general_contact_d1_free_target_16q4_schur_full_step_dev_20260928.json")
+            f"general_contact_d1_free_target_{report_name}_dev_20260928.json")
     evidence = json.loads(path.read_text(encoding="utf-8"))
     modes = np.asarray(evidence["selected_pressure_ids"], dtype=int)
     base = np.asarray(evidence["base_pressure_pa"], dtype=float)
@@ -34,14 +35,19 @@ def _saved_sixteen_q4_proposal():
         1.0, 250.0, float(np.max(np.abs(argument))),
     )
     data = SupportedSchurBacktrackData(
-        base, modes, gap, response, stiffness, 250.0, 200.0, 34, roundoff,
+        base, modes, gap, response, stiffness, 250.0, 200.0,
+        len(modes), roundoff,
     )
     full = base+np.asarray(evidence["full_pressure_step_pa"], dtype=float)
     proposal = SupportedSchurProposal(
         full, tuple(evidence["predicted_active_indices"]), None, 1.0,
         before, evidence["predicted_projected_residual_pa"], data,
     )
-    return proposal
+    return proposal, evidence
+
+
+def _saved_sixteen_q4_proposal():
+    return _saved_probe("16q4_schur_full_step")[0]
 
 
 def test_saved_sixteen_q4_map_selects_first_safe_interior_branch_change():
@@ -62,6 +68,54 @@ def test_saved_sixteen_q4_map_selects_first_safe_interior_branch_change():
     )
     assert diagnostics["schur_backtrack_examined"] == 16
     assert trial.backtrack_data is None
+
+
+def test_saved_twenty_four_q4_curvature_selects_interior_minimum():
+    full, evidence = _saved_probe("24q4_schur_full_clip")
+    diagnostics = {}
+    trial = propose_supported_schur_secant_backtrack(
+        full, np.asarray(evidence["actual_normalized_gap_m"], dtype=float),
+        diagnostics=diagnostics,
+    )
+    assert trial is not None
+    assert trial.step_fraction == pytest.approx(0.85)
+    assert trial.predicted_residual_after == pytest.approx(
+        0.00022706416731690287,
+    )
+    assert trial.active_indices == (20, 45)
+    assert trial.predicted_residual_after <= 0.70*trial.predicted_residual_before
+    assert diagnostics["schur_secant_backtrack_examined"] == 19
+    assert diagnostics["schur_secant_backtrack_eligible"] > 0
+
+
+def test_saved_sixteen_q4_curvature_declines_but_linear_fallback_remains():
+    full, evidence = _saved_probe("16q4_schur_full_step")
+    diagnostics = {}
+    assert propose_supported_schur_secant_backtrack(
+        full, np.asarray(evidence["actual_normalized_gap_m"], dtype=float),
+        diagnostics=diagnostics,
+    ) is None
+    assert diagnostics["schur_secant_backtrack_reason"] == (
+        "no_predicted_safe_interior_fraction"
+    )
+    assert propose_supported_schur_backtrack(full).step_fraction == pytest.approx(0.8)
+
+
+def test_curvature_helper_rejects_missing_invalid_or_uncertain_inputs():
+    full, evidence = _saved_probe("24q4_schur_full_clip")
+    actual = np.asarray(evidence["actual_normalized_gap_m"], dtype=float)
+    for proposal, gap in (
+        (replace(full, backtrack_data=None), actual),
+        (full, actual[:-1]),
+        (full, np.full_like(actual, np.nan)),
+        (replace(full, backtrack_data=replace(
+            full.backtrack_data, maximum_pressure_step=0.001,
+        )), actual),
+        (replace(full, backtrack_data=replace(
+            full.backtrack_data, kink_roundoff=1.0,
+        )), actual),
+    ):
+        assert propose_supported_schur_secant_backtrack(proposal, gap) is None
 
 
 def test_unavailable_or_insufficient_interior_merit_has_no_proposal():

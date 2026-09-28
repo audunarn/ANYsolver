@@ -57,6 +57,8 @@ def main(output_path: Path, *, fraction_requested: float = 0.02,
         full_step = full.multipliers-base_pressure
         base_signature = manager.law.geometry.evaluate(
             source, target).overlap_signature
+        base_clip_signature = linearized_pivot._projected_clip_signature(
+            manager.law.geometry, source, target)
         fraction = fraction_requested
         while fraction >= 0.0003125:
             small_pressure = base_pressure+fraction*full_step
@@ -88,6 +90,7 @@ def main(output_path: Path, *, fraction_requested: float = 0.02,
             "predicted_active": predicted_active,
             "predicted_residual": predicted_residual,
             "base_signature": base_signature,
+            "base_clip_signature": base_clip_signature,
             "normal_stiffness": float(manager.stiffness),
             "full_proposal_kind": kwargs.get("diagnostics", {}).get(
                 "schur_proposal_kind"),
@@ -108,6 +111,9 @@ def main(output_path: Path, *, fraction_requested: float = 0.02,
                 observed["actual_signature"] = (
                     manager.law.geometry.evaluate(
                         trial_source, trial_target).overlap_signature)
+                observed["actual_clip_signature"] = (
+                    linearized_pivot._projected_clip_signature(
+                        manager.law.geometry, trial_source, trial_target))
             return result
 
         manager.evaluate = capture_evaluate
@@ -140,6 +146,14 @@ def main(output_path: Path, *, fraction_requested: float = 0.02,
             "actual_active_indices": list(observed["actual_active"]),
             "overlap_signature_matches": (
                 observed["actual_signature"] == observed["base_signature"]),
+            "base_clip_signature_available": (
+                observed["base_clip_signature"] is not None),
+            "actual_clip_signature_available": (
+                observed["actual_clip_signature"] is not None),
+            "clip_signature_matches": (
+                observed["base_clip_signature"] is not None
+                and observed["actual_clip_signature"]
+                == observed["base_clip_signature"]),
             "full_proposal_kind": observed["full_proposal_kind"],
             "base_pressure_pa": observed["base_pressure"].tolist(),
             "full_pressure_step_pa": observed["full_step"].tolist(),
@@ -174,6 +188,8 @@ def main(output_path: Path, *, fraction_requested: float = 0.02,
         "accepted_steps", "schur_calls", "fraction",
         "active_indices", "predicted_active_indices", "actual_active_indices",
         "overlap_signature_matches", "maximum_gap_response_error_m",
+        "base_clip_signature_available", "actual_clip_signature_available",
+        "clip_signature_matches",
         "predicted_projected_residual_pa", "actual_projected_residual_pa",
         "elapsed_seconds") if k in report}, indent=2, default=str))
 

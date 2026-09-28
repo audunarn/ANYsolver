@@ -1,0 +1,5 @@
+{
+  "status": "exception",
+  "failure_reason": "ValueError: unsupported contact path: Jet2 Q4/S3 development derivative requires a refined augmented general patch and four derivative tolerances",
+  "elapsed_seconds": 0.00272910000057891
+}
