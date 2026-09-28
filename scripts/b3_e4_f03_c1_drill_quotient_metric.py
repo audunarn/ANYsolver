@@ -25,6 +25,9 @@ from threadpoolctl import threadpool_info, threadpool_limits
 from scripts import b3_e4_f03_c1_native_mixed_metric as prior
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_distributed_surface_finite import c1_hybrid_line_space
+from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
+from scripts.b3_e4_f03_material_line_position import MaterialLinePosition
+from scripts.b3_e4_f03_material_line_space_screen import _rows as material_line_rows
 from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
@@ -50,8 +53,19 @@ def _p0_l2_line_metric(masses: np.ndarray) -> tuple[np.ndarray, dict]:
     }
 
 
+def _material_line_space(xs, ys, beam, *, kind: str, intervals: int):
+    """Mean-gap rows for the declared top material line, with fixed cuts."""
+    knots = np.linspace(0., 1., intervals+1)
+    if any(not np.any(np.isclose(xs, .9+.1*k, rtol=0., atol=1e-12))
+           for k in knots):
+        raise ValueError("material-line multiplier knots must match shell cuts")
+    line = MaterialLinePosition(xs, ys, beam)
+    return material_line_rows(line, LineMultiplierSpace(kind, tuple(knots)))
+
+
 def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
-             weak_mode_line_norm: str = "hminus_half") -> dict:
+             weak_mode_line_norm: str = "hminus_half",
+             line_law: str = "hybrid") -> dict:
     if shell_cells not in (4, 8, 16):
         raise ValueError("bounded C1 drill-quotient shell level required")
     if weak_mode_only and shell_cells != 16:
@@ -59,6 +73,10 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
     if (weak_mode_line_norm not in ("hminus_half", "p0_l2") or
             (weak_mode_line_norm != "hminus_half" and not weak_mode_only)):
         raise ValueError("alternate line norm is only a selected P0 weak-mode sensitivity")
+    if line_law not in ("hybrid", "material_line"):
+        raise ValueError("bounded line law required")
+    if line_law == "material_line" and weak_mode_only:
+        raise ValueError("hybrid weak-mode reconstruction does not describe the material line")
     started = monotonic()
     deadline = started+120.
     xs, ys = local_grid(shell_cells, transverse_cells=4)
@@ -114,8 +132,13 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
         for kind in tested_kinds:
             if monotonic() > deadline:
                 raise TimeoutError("bounded drill quotient mixed deadline")
-            rows, masses, patches = c1_hybrid_line_space(
-                xs, ys, beam, kind=kind, intervals=intervals)
+            if line_law == "hybrid":
+                rows, masses, patches = c1_hybrid_line_space(
+                    xs, ys, beam, kind=kind, intervals=intervals)
+            else:
+                rows, masses = _material_line_space(
+                    xs, ys, beam, kind=kind, intervals=intervals)
+                patches = ()
             cd = rows[:, shell_drill]
             drill_column_max = float(np.max(np.abs(cd)))
             if drill_column_max > 1e-12:
@@ -135,9 +158,22 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
             scaled_c = linalg.solve_triangular(chol_line, c, lower=True)
             scaled_c = linalg.solve_triangular(
                 chol_primal, scaled_c.T, lower=True).T
-            rank = int(np.linalg.matrix_rank(scaled_c))
+            row_singular = linalg.svdvals(scaled_c)
+            rank_tolerance = max(scaled_c.shape)*np.finfo(float).eps*row_singular[0]
+            rank = int(np.sum(row_singular > rank_tolerance))
             if rank != len(c):
-                raise ArithmeticError("quotient line row rank lost")
+                if line_law == "hybrid":
+                    raise ArithmeticError("quotient line row rank lost")
+                cases[f"{kind}_m{intervals}"] = {
+                    "status": "ROW_RANK_DEFICIENT",
+                    "constraint_rows": len(c),
+                    "normalized_constraint_rank": rank,
+                    "rank_tolerance": float(rank_tolerance),
+                    "smallest_scaled_constraint_singular": float(row_singular[-1]),
+                    "line_norm": line_info,
+                    "drill_constraint_column_max": drill_column_max,
+                }
+                continue
             a = np.block([[k_primal, c.T],
                           [c, np.zeros((len(c), len(c)))]])
             r = linalg.block_diag(r_primal, r_line)
@@ -203,17 +239,25 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
         Path("scripts/b3_e4_f03_square_section_control.py"),
         Path("scripts/_b3_e4_f03_p0_dual_norm.py"),
         Path("scripts/_b3_e4_f03_p1_dual_norm.py"),
-        Path("scripts/_b3_e4_f03_dual_linear_norm.py")]
+        Path("scripts/_b3_e4_f03_dual_linear_norm.py"),
+        Path("scripts/b3_e4_f03_material_line_position.py"),
+        Path("scripts/b3_e4_f03_material_line_space_screen.py"),
+        Path("scripts/_b3_e4_f03_weak_line_candidate.py")]
     return {
         "classification": "bounded drill-quotient native retained KKT diagnostic, not G0B acceptance",
-        "question": ("Does the selected P0 high-frequency line mode persist under "
+        "line_law": line_law,
+        "question": ("Do the declared material-line P0/P1/dual spaces retain "
+                     "supported rows and normed mixed-system behavior as their "
+                     "interface resolution grows?" if line_law == "material_line"
+                     else "Does the selected P0 high-frequency line mode persist under "
                      "the exact physical-density L2 sensitivity norm?"
                      if weak_mode_line_norm == "p0_l2" else
                      "Was the prior smallest native KKT mode only a numerical drilling metric mode, and do line-coupled modes decline under growing rows?"),
         "model": (f"C1 Q4 x{shell_cells}/y4 35 mm shell, native B3-12, " +
+                  ("material-line " if line_law == "material_line" else "hybrid ") +
                   (f"P0 m{shell_cells} weak-mode inspection" if weak_mode_only
                    else f"P0/P1/dual m{shell_cells//2}/m{shell_cells}")),
-        "operator": "actual E4 tangent with exact free-drilling Schur complement; actual native retained B3 tangent and line rows",
+        "operator": "actual E4 tangent with exact free-drilling Schur complement; actual native retained B3 tangent and declared line-law rows",
         "metric": ("physical E4 energy on non-drilling coordinates; previous "
                    "native B3 norm; exact P0 physical-density L2 line comparator"
                    if weak_mode_line_norm == "p0_l2" else
@@ -257,17 +301,23 @@ def main() -> None:
     parser.add_argument("--weak-mode-only", action="store_true")
     parser.add_argument("--weak-mode-line-norm", choices=("hminus_half", "p0_l2"),
                         default="hminus_half")
+    parser.add_argument("--line-law", choices=("hybrid", "material_line"),
+                        default="hybrid")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     with threadpool_limits(limits=1):
         result = evaluate(args.shell_cells,
                           weak_mode_only=args.weak_mode_only,
-                          weak_mode_line_norm=args.weak_mode_line_norm)
+                          weak_mode_line_norm=args.weak_mode_line_norm,
+                          line_law=args.line_law)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"elapsed_s": result["elapsed_s"],
-                      "minima": {key: value["beta_min"]
-                                 for key, value in result["cases"].items()}}))
+                      "cases": {key: {
+                          "status": value.get("status", "MIXED_METRIC_COMPUTED"),
+                          "beta_min": value.get("beta_min"),
+                          "rank": value["normalized_constraint_rank"]}
+                          for key, value in result["cases"].items()}}))
 
 
 if __name__ == "__main__":

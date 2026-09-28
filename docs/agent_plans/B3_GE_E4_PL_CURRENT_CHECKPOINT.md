@@ -2,6 +2,32 @@
 
 ## Current state — 28 September 2026
 
+**Next bounded decision (material-line space):** The pure-action results
+separate axial/bending cross-work and torque from near-matched pure Fz;
+they do not select a multiplier. The next uncertainty is whether the
+declared material-line P0/P1/dual rows remain supported as their resolution
+grows, or instead exhibit deficient mixed modes or locking. Reuse the
+existing physical primal/dual norms and actual native retained KKT operator
+at bounded x4/x8 levels, with multiplier knots on shell cuts. If a space
+loses rank or mixed support, reject that resolution policy; if it remains
+supported, compare physical work, gaps and convergence before selection.
+A spectral quotient alone cannot settle physical fidelity. This development
+screen stays within the prior 1,900-row and 120-second limits and neither
+consumes formal F03 authority nor advances G0B.
+
+**Result of that bounded screen:** On Q4 x4/y4 with B3-12, material-line
+P0 m2/m4 and P1/dual m2 have full rows; P1/dual m4 each lose two.
+On Q4 x8/y4 with the same beam, all three m4 spaces have full rows,
+while P0 m8 has rank 44/48 and P1/dual m8 rank 48/54. The normed
+mixed KKT minima for supported x4/x8 cases cluster near 0.015, but this
+quotient does not choose a multiplier. A separate row-only beam-resolution
+probe at x8/m8 makes P0 full-rank with B3-18 or B3-24; P1/dual remain
+short by one or two rows. This points to joint shell/beam/interface
+resolution, not a simple P0/P1/dual ranking. **Next action:** Test
+physical loaded work and pointwise gaps for supported growing policies,
+then inspect deficient row modes and registered mesh ratios before
+freezing a policy. Do not advance to x16 solely for another quotient.
+
 **Decision sought:** Select a physically defensible native material-line
 law and stable exact multiplier policy. **Established:** The reviewed
 same-law P0 reconstruction has 24 complete solid action columns and
@@ -10579,3 +10605,49 @@ named only Fz/Mx even though V2 includes Fx/My; V2 remains preserved.
 The correctly classified V3 result has identical numerical `cases`
 and `saved_mixed_tip_fz_action` fields, SHA256
 `a8b322fb5eb6e241c3274c36b221d6834c4845c84651139afdb67719d4635020`.
+
+**Current material-line growing-space mixed diagnostic:** The existing
+drill-quotient native retained KKT runner now accepts an explicit
+`material_line` law and reuses the already frozen physical shell, native
+beam, and density-dual norms. Historical default `hybrid` behavior
+remains available. It eliminates only free numerical drilling columns,
+checks the exact shell action reconstruction, and preserves the actual
+indefinite native tangent. It reports a deficient scaled constraint
+space instead of applying a meaningless KKT quotient to it. Source
+SHA256 `cb2f35deb7af59c36a534d09c763a3090fdb59b5423b7480dd7864ee0ac3f27b`;
+the recorded pre-commit source identity is `b01223e7`.
+
+The x4/y4, B3-12 result has P0 m2 rank 12/12 and m4 rank 24/24;
+P1 and dual m2 rank 18/18, but m4 rank 28/30 each. The x8/y4,
+B3-12 result has all m4 rows independent (P0 24/24, P1/dual 30/30),
+but m8 P0 rank 44/48 and P1/dual rank 48/54. The deficient scaled
+singular values are about `1e-15`, below the recorded `~2e-11`
+rank tolerance. The supported cases' smallest normalized indefinite
+KKT singular values are `0.01498–0.01504`; their transpose-work and
+shell-drill checks pass. This is a bounded x4/x8 screen, not a mesh-
+uniform well-posedness proof, physical accuracy finding, or multiplier
+selection. The raw x4 result is
+`B3_E4_F03_C1_MATERIAL_LINE_MIXED_METRIC_X4_DEV_V1.json`, SHA256
+`9f6eb276d76df6f9d5f5e363749ba5a2063ea1c8eb7c18b236f4af6820621c45`;
+the raw x8 result is
+`B3_E4_F03_C1_MATERIAL_LINE_MIXED_METRIC_X8_DEV_V1.json`, SHA256
+`335e10f503b96e01de0bf0a1dfb27ec3e36fe7ee0e5ac663c609a74865dafb5`.
+
+A separate read-only, unit-row-scaled rank probe at x8/m8 held the
+shell grid fixed and varied native beam half-cells. With B3-12 the
+P0/P1/dual ranks are 44/48, 48/54, 48/54; with B3-18 they are
+48/48, 53/54, 53/54; with B3-24 they are 48/48, 52/54, 52/54.
+This rules out interpreting x8/m8 deficiency as a shell-only defect;
+it also does not imply that simply increasing beam resolution cures
+continuous or dual P1. The differing beam-cut alignment requires
+mode-level interpretation. Preserve the loaded work/gap and ratio
+tests before choosing a production resolution policy. Formal F03
+authority remains unconsumed; G0B open and G1 barred.
+
+Focused material-line position and loaded tests passed 36/36 under the
+worktree environment. Pytest then emitted a Windows temporary-directory
+cleanup permission warning at process exit; the test process returned
+success. A first diagnostic invocation computed the cases but could not
+write into protected `docs/agent_plans`; rerunning with the required
+workspace permission saved the immutable x4 result. Neither condition
+changes the numerical interpretation above.
