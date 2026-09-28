@@ -15,27 +15,33 @@ claim. The factor-4 Fy fallback script remains dirty and unrun.
 
 ## Delivered behavior and evidence
 
-- ANYsolver commits d2b05423 and a2bc9a3f provide the sparse GE development
+- ANYsolver commits d2b05423, a2bc9a3f and b6d2b8a9 provide the sparse GE development
   owner: multiple Q4/S3 shells and native B3 members, point connections,
   retained variables, reference-linear and short finite elastic solves,
   reactions, atomic stepping, cancellation, checkpoint/restore and continuation.
-  Eligible unchanged reference-linear cases reuse one factorization.
+  Eligible unchanged reference-linear cases reuse one factorization. Small
+  existing JSON checkpoints retain V1 decoding; model-sized states use a
+  bounded V2 binary-array format. Digest-valid but mechanically false states
+  are rejected, including extreme finite loads that formerly overflowed
+  the equilibrium norm.
 - The separate B2 development profile handles compatible 1/10/100 loads with
   selected recovery and factorization reuse. Bounded Q4/B2 point-panel and
-  dense-oracle parity exist. Wider B2 conditioning, mass/prestress and scale
-  qualification remain open.
+  dense-oracle parity exist. Commit 92423213 rejects B2 outputs whose finite
+  binary64 rounding loses more than the declared relative precision, including
+  an independently checked subnormal case. Wider B2 conditioning,
+  mass/prestress and scale qualification remain open.
 - ANYfem commit c7035a7 provides a separate experimental GE-panel format,
   save/reopen and headless restore/continue. Ordinary project formats retain
   their existing route.
 - Development installed wheels have SHA-256
-  E7BA4EF774558C5AB0D666810B96C2F722816269ADF0971CD53C37EEB23C8D7E
+  92F2E4DB51BBFCAA7F1AB5A07E03900209F601BFA17F036E0B8136E5FF778A88
   (ANYsolver) and
   C7E9D005DFEDDDC6D23C1D6757E29B3F314A7E94F614C98E0EEA76C87236D467
-  (ANYfem). Actual installed imports passed 40 solver and 3 consumer checks;
-  23 focused source checks passed. Windows/Python 3.14.2, one OpenBLAS thread
+  (ANYfem). Actual installed imports passed 61 solver and 3 consumer checks.
+  Windows/Python 3.14.2, one OpenBLAS thread
   and NUMBA_DISABLE_JIT=1 were effective. Wheel bytes, build/install/test logs,
   imports, dependencies and manifest are preserved under
-  .qualification/b3-ge-e4-pl/r7-integration-dev-20260928-v3/.
+  .qualification/b3-ge-e4-pl/r7-integration-dev-20260928-v4/.
   These development wheels do not satisfy G6.
 - Reference equilibrium is screened by tangent-relative, unit-covariant
   residuals per element and after assembly. This is a roundoff screen, not
@@ -50,11 +56,13 @@ without a physical result. Historical classical axial, Q6/finite-pad, F5 and
 native six-channel references remain distinct. Do not launch the prepared
 factor-4 fallback merely because it exists.
 
-The private L1 probe uses an objective reference-offset SO(3) Log pose gap,
+The private L1 probe, extended in commit 76180114, uses an objective
+reference-offset SO(3) Log pose gap,
 physical E4 projected-tangent/director trace and retained B3 half-cell port.
-Its reference, first-variation, objectivity and chart checks pass. Composed
-Hessian, integrated line work, physical transfer and multiplier stability
-remain open. Its shell-frame translation differs from the saved candidate's
+Its reference, first variation, local point-work Hessian at nonzero multiplier,
+objectivity and chart checks pass. Integrated line work, large-origin accuracy,
+physical transfer and multiplier stability remain open. Its shell-frame
+translation differs from the saved candidate's
 beam-frame translation; constrained zero sets can agree while multipliers and
 off-constraint work differ. The law must be chosen and derived.
 
