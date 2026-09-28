@@ -15,7 +15,7 @@ import subprocess
 import numpy as np
 
 from scripts.b3_e4_f03_c1_component_compliance import (
-    _native_matrices, _solid_matrices,
+    CHANNELS, SCALE, _native_matrices, _solid_matrices,
 )
 from scripts.b3_e4_f03_c1_material_line_loaded import (
     _validated_solid_reconstruction,
@@ -35,8 +35,10 @@ def evaluate(reconstruction_path: Path) -> dict:
 
     cases = {}
     for label, channel, resultant, unit in (
+            ("axial_Fx", 0, 1000., "N"),
             ("transverse_Fz", 2, 1000., "N"),
-            ("torsion_Mx", 3, 100., "Nm")):
+            ("torsion_Mx", 3, 100., "Nm"),
+            ("bending_My", 4, 100., "Nm")):
         interval = []
         for i in range(4):
             coefficient = np.zeros(24)
@@ -78,6 +80,28 @@ def evaluate(reconstruction_path: Path) -> dict:
             "uniform_minus_uncoupled_interval_work_J": {
                 name: uniform[name]-uncoupled[name] for name in matrices},
         }
+    saved_fz_density = np.asarray(solid["cases"]["tip_fz"][
+        "dual_physical_line_density"])
+    coefficient = saved_fz_density/SCALE
+    if coefficient.shape != (24,):
+        raise ValueError("saved mixed Fz action inventory changed")
+    grouped = {name: np.where(np.arange(24)%6 == i, coefficient, 0.)
+               for i, name in enumerate(CHANNELS)}
+    mixed_fz = {}
+    for domain, matrix in matrices.items():
+        self_work = {name: float(vector@matrix@vector)
+                     for name, vector in grouped.items()}
+        cross_work = {f"{left}×{right}": float(
+            grouped[left]@matrix@grouped[right]+grouped[right]@matrix@grouped[left])
+            for i, left in enumerate(CHANNELS)
+            for right in CHANNELS[i+1:]}
+        total = float(coefficient@matrix@coefficient)
+        if abs(total-sum(self_work.values())-sum(cross_work.values())) > (
+                1e-10*max(1., abs(total))):
+            raise ArithmeticError("saved mixed-channel work did not decompose")
+        mixed_fz[domain] = {"total_work_J": total,
+                            "same_channel_work_J": self_work,
+                            "cross_channel_work_J": cross_work}
     return {
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
         "classification": "pure P0 material-line transverse-force and torque action work",
@@ -86,11 +110,13 @@ def evaluate(reconstruction_path: Path) -> dict:
         "solid_reconstruction_sha256": digest(reconstruction_path),
         "native_component_diagnostics": native_diagnostics,
         "cases": cases,
+        "saved_mixed_tip_fz_action": mixed_fz,
         "limitations": [
             "linear open-interface influence with separate plate/bar and E4/B3 domains",
             "not a standalone contact state or re-equilibrated bonded comparison",
             "interval and uniform responses include different longitudinal action shapes",
             "pure positive work does not by itself establish physical torque/shear fidelity",
+            "mixed channel and cross terms are signed and may cancel; not independent energies",
             "not multiplier-space, F03 or G0B acceptance",
         ],
     }
