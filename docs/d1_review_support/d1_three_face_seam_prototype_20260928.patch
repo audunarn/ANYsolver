@@ -1,0 +1,372 @@
+diff --git a/src/anysolver/general_contact/s3_patch_augmented.py b/src/anysolver/general_contact/s3_patch_augmented.py
+index 578adcc7..9067c657 100644
+--- a/src/anysolver/general_contact/s3_patch_augmented.py
++++ b/src/anysolver/general_contact/s3_patch_augmented.py
+@@ -618,7 +618,8 @@ class MovingS3PatchProjectedNormal:
+                     or not self._only_artificial_shared_edge_ties(
+                         current_source, current_target,
+                         failed_pair=int(pair_match.group(1))
+-                        if pair_match is not None else None)):
++                        if pair_match is not None else None,
++                        allow_three=True)):
+                 if degenerate_shared_pair:
+                     raise UnsupportedQ4S3Branch(message) from exc
+                 raise
+@@ -748,7 +749,8 @@ class MovingS3PatchProjectedNormal:
+         return False
+ 
+     def _only_artificial_shared_edge_ties(self, current_source, current_target,
+-                                          *, failed_pair=None):
++                                          *, failed_pair=None, allow_three=False,
++                                          owner_out=None):
+         """Admit only projected touches on smooth shared S3 material edges."""
+         smooth = self._reference_smooth_target_edges()
+         if smooth is None:
+@@ -759,6 +761,8 @@ class MovingS3PatchProjectedNormal:
+         found = False
+         failed_pair_seen = False
+         positive_target_faces = set()
++        owners = set()
++        touched_faces = set()
+         for source_face, source_ids in enumerate(self.source_face_indices):
+             positions = source[source_ids]
+             first, normal = projected_q4_source_face(positions)
+@@ -771,6 +775,7 @@ class MovingS3PatchProjectedNormal:
+                 if not _touching_projected_boundaries(
+                         first, second, relative_tolerance=1.0e-10):
+                     continue
++                touched_faces.add((source_face, target_face))
+                 # The one-sided direction must resolve each actual tie. A
+                 # sloped face elsewhere in the patch has no clipping event
+                 # to own and is checked by the smooth neighbor work instead.
+@@ -803,6 +808,8 @@ class MovingS3PatchProjectedNormal:
+                                                     shared,
+                                                     relative_tolerance=1.0e-10):
+                         admitted = True
++                        owners.add((source_face, tuple(sorted((target_face, other_face))),
++                                    tuple(sorted(shared))))
+                         break
+                 if not admitted:
+                     return False
+@@ -812,12 +819,38 @@ class MovingS3PatchProjectedNormal:
+         # The verified limit compares complete patch work. Restrict it to an
+         # effectively two-face active target so unrelated active-face work
+         # cannot hide a local edge derivative discrepancy in that norm.
+-        return (found and len(positive_target_faces) <= 2
+-                and (failed_pair is None or failed_pair_seen))
++        if not found or (failed_pair is not None and not failed_pair_seen):
++            return False
++        if len(positive_target_faces) <= 2:
++            return True
++        # A third contributing face is admitted only when the touching edge
++        # has one source/target owner. Any other clipping tie can mask a local
++        # derivative mismatch in the full-patch norm.
++        if not (allow_three and len(positive_target_faces) == 3
++                and len(owners) == 1):
++            return False
++        owner = next(iter(owners))
++        if (not all(face in owner[1] and source_face == owner[0]
++                    for source_face, face in touched_faces)
++                or (failed_pair is not None
++                    and failed_pair % len(self.target_face_indices) not in owner[1])):
++            return False
++        if owner_out is not None:
++            owner_out.append(owner)
++        return True
+ 
+     def _shared_edge_limit(self, current_source, current_target, multipliers, *,
+                            tangent, recoverable_pair):
+         step, direction, tolerance = self.shared_edge_tie
++        owners = []
++        if not self._only_artificial_shared_edge_ties(
++                current_source, current_target, failed_pair=recoverable_pair,
++                allow_three=True, owner_out=owners):
++            raise UnsupportedQ4S3Branch("shared-edge tie has no unique artificial owner")
++        owner = owners[0] if owners else None
++        incident_indices = (frozenset(owner[0]*len(self.target_face_indices)+face
++                                      for face in owner[1])
++                            if owner is not None else None)
+         lengths = [np.linalg.norm(face[i]-face[(i+1) % len(face)])
+                    for faces, positions in (
+                        (self.source_face_indices, self.reference_source),
+@@ -830,18 +863,23 @@ class MovingS3PatchProjectedNormal:
+         exact_supported, _ = self.resolved_support(exact)
+         exact_active = exact.pressure > 0.0
+         observations = []
++        incident_observations = []
+         # Failed first work: base patch plus local float/Jet2 pair passes.
+         # The exact state is evaluated again below; charge all four passes.
+         evaluations = 4*len(self.geometry.pair_laws)
+         for offset in (step, step/2.0):
+             sides = []
++            incident_sides = []
+             for sign in (-1.0, 1.0):
+                 shifted = np.asarray(current_source, dtype=float).copy()
+                 shifted += sign*offset*direction
++                pair_certificate = ({"pair_indices": incident_indices}
++                                    if incident_indices is not None else None)
+                 try:
+                     candidate = self._work_unresolved(
+                         shifted, current_target, multipliers, tangent=tangent,
+                         tiny_wedge_pair=recoverable_pair,
++                        pair_certificate=pair_certificate,
+                     )
+                 except (UnsupportedQ4S3Branch, ValueError) as exc:
+                     raise UnsupportedQ4S3Branch(
+@@ -868,15 +906,20 @@ class MovingS3PatchProjectedNormal:
+                             f"shared-edge tie {name} disagrees with exact state"
+                         )
+                 sides.append(candidate)
++                if pair_certificate is not None:
++                    incident_sides.append(pair_certificate)
+             observations.append(sides)
++            if incident_indices is not None:
++                incident_observations.append(incident_sides)
+ 
+         def relative_difference(a, b):
+             return float(np.linalg.norm(a-b)/max(np.linalg.norm(a),
+                                                   np.linalg.norm(b), 1.0e-12))
+ 
+-        def limit(field):
+-            values = [[getattr(candidate, field) for candidate in sides]
+-                      for sides in observations]
++        def limit(field, records=observations):
++            values = [[(candidate[field] if isinstance(candidate, dict)
++                        else getattr(candidate, field)) for candidate in sides]
++                      for sides in records]
+             means = [0.5*(side[0]+side[1]) for side in values]
+             extrapolated = (4.0*means[1]-means[0])/3.0
+             errors = [relative_difference(side[0], side[1]) for side in values]
+@@ -891,6 +934,16 @@ class MovingS3PatchProjectedNormal:
+ 
+         residual, residual_error = limit("residual")
+         tangent_matrix, tangent_error = limit("tangent") if tangent else (None, 0.0)
++        incident_tangent = None
++        if incident_indices is not None:
++            try:
++                limit("residual", incident_observations)
++                if tangent:
++                    incident_tangent, _ = limit("tangent", incident_observations)
++            except UnsupportedQ4S3Branch as exc:
++                raise UnsupportedQ4S3Branch(
++                    f"shared-edge incident-pair local derivative unresolved: {exc}"
++                ) from exc
+         if tangent:
+             active = (np.arange(self.n_coordinates, dtype=np.intp)
+                       if self.tangent_active_coordinates is None else
+@@ -924,11 +977,29 @@ class MovingS3PatchProjectedNormal:
+                 centered = (observations[0][1].residual
+                             - observations[0][0].residual)/(2.0*step)
+                 differentiated = tangent_matrix @ action
+-                if relative_difference(centered[active],
+-                                       differentiated[active]) > tolerance:
++                directional_error = relative_difference(
++                    centered[active], differentiated[active])
++                if directional_error > tolerance:
+                     raise UnsupportedQ4S3Branch(
+-                        "shared-edge tie residual/tangent directional limit disagrees"
++                        "shared-edge tie residual/tangent directional limit disagrees "
++                        f"(relative_error={directional_error:.12g})"
++                    )
++                if incident_tangent is not None:
++                    incident_centered = (
++                        incident_observations[0][1]["residual"]
++                        - incident_observations[0][0]["residual"]
++                    )/(2.0*step)
++                    incident_differentiated = incident_tangent @ action
++                    incident_error = relative_difference(
++                        incident_centered[active],
++                        incident_differentiated[active],
+                     )
++                    if incident_error > tolerance:
++                        raise UnsupportedQ4S3Branch(
++                            "shared-edge incident-pair local residual/tangent "
++                            "directional limit disagrees "
++                            f"(relative_error={incident_error:.12g})"
++                        )
+         positions = np.vstack((current_source, current_target))
+         forces = residual.reshape(-1, 3)
+         force_scale = max(float(np.sum(np.linalg.norm(forces, axis=1))), 1.0e-20)
+@@ -944,7 +1015,7 @@ class MovingS3PatchProjectedNormal:
+ 
+     def _work_unresolved(self, current_source, current_target, multipliers, *,
+                          tangent=True, tiny_wedge_pair=None,
+-                         prepared_state=None):
++                         prepared_state=None, pair_certificate=None):
+         multipliers = self._multipliers(multipliers)
+         coordinates = np.concatenate((np.asarray(current_source, dtype=float),
+                                       np.asarray(current_target, dtype=float))).reshape(-1)
+@@ -1038,7 +1109,8 @@ class MovingS3PatchProjectedNormal:
+         if self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3"}:
+             return self._jet2_s3_work(current_source, current_target,
+                                       base, tangent=tangent,
+-                                      tiny_wedge_pair=tiny_wedge_pair)
++                                      tiny_wedge_pair=tiny_wedge_pair,
++                                      pair_certificate=pair_certificate)
+         step = self.geometry.difference_step
+         evaluations = 1
+         cache = {}
+@@ -1129,7 +1201,8 @@ class MovingS3PatchProjectedNormal:
+         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
+ 
+     def _jet2_s3_work(self, current_source, current_target, base, *, tangent,
+-                      tiny_wedge_pair=None, nodal_force_mode=False):
++                      tiny_wedge_pair=None, nodal_force_mode=False,
++                      pair_certificate=None):
+         """Assemble differentiated pair geometry into shared pressure nodes."""
+         count = self.n_coordinates
+         source_count = len(self.source_node_ids)
+@@ -1140,6 +1213,8 @@ class MovingS3PatchProjectedNormal:
+         )
+         jw = np.zeros((source_count, count))
+         js = np.zeros_like(jw)
++        edge_jw = np.zeros_like(jw) if pair_certificate is not None else None
++        edge_js = np.zeros_like(jw) if pair_certificate is not None else None
+         assembled_support = np.zeros(source_count)
+         assembled_gap = np.zeros(source_count)
+         support_magnitude = np.zeros(source_count)
+@@ -1154,6 +1229,12 @@ class MovingS3PatchProjectedNormal:
+         weighted_hessian = np.zeros((len(active_coordinates),
+                                      len(active_coordinates))) if tangent else None
+         support_hessian = np.zeros_like(weighted_hessian) if tangent else None
++        edge_weighted_hessian = (
++            np.zeros_like(weighted_hessian) if tangent and pair_certificate is not None
++            else None)
++        edge_support_hessian = (
++            np.zeros_like(weighted_hessian) if tangent and pair_certificate is not None
++            else None)
+         evaluations = len(self.geometry.pair_laws)
+         zero_area_overlap_pairs = []
+         source = np.asarray(current_source, dtype=float)
+@@ -1424,6 +1505,11 @@ class MovingS3PatchProjectedNormal:
+             )
+             jw[np.ix_(source_nodes, coordinate_map)] += derivative.weighted_gap_gradient
+             js[np.ix_(source_nodes, coordinate_map)] += derivative.support_gradient
++            edge_pair = (pair_certificate is not None
++                         and pair_index in pair_certificate["pair_indices"])
++            if edge_pair:
++                edge_jw[np.ix_(source_nodes, coordinate_map)] += derivative.weighted_gap_gradient
++                edge_js[np.ix_(source_nodes, coordinate_map)] += derivative.support_gradient
+             if tangent:
+                 local_active = np.flatnonzero(np.isin(coordinate_map, active_coordinates))
+                 if len(local_active):
+@@ -1441,6 +1527,9 @@ class MovingS3PatchProjectedNormal:
+                     )
+                     weighted_hessian[np.ix_(indices, indices)] += weighted
+                     support_hessian[np.ix_(indices, indices)] += supported
++                    if edge_pair:
++                        edge_weighted_hessian[np.ix_(indices, indices)] += weighted
++                        edge_support_hessian[np.ix_(indices, indices)] += supported
+         # Pair-wise values have passed the bounded geometry comparison.
+         # Summing signed contributions can make the assembled total tiny;
+         # compare against the sum of contribution magnitudes so roundoff and
+@@ -1545,6 +1634,9 @@ class MovingS3PatchProjectedNormal:
+             js, jw = basis.transform_derivatives(js, jw)
+         gap_variation = jw - base.normalized_gap[:, None]*js
+         residual = -(base.pressure @ gap_variation)
++        if pair_certificate is not None:
++            edge_gap_variation = edge_jw-base.normalized_gap[:, None]*edge_js
++            pair_certificate["residual"] = -(base.pressure @ edge_gap_variation)
+         if nodal_force_mode:
+             dg = np.zeros_like(gap_variation)
+             supported = base.reference_support > 0.0
+@@ -1583,6 +1675,17 @@ class MovingS3PatchProjectedNormal:
+             gap_variation[:, active_coordinates].T @ dp
+             + weighted_hessian - cross - support_hessian
+         )
++        if pair_certificate is not None:
++            edge_cross = np.einsum(
++                "i,ij,ik->jk", base.pressure,
++                edge_js[:, active_coordinates], dg,
++            )
++            edge_tangent = np.zeros((count, count))
++            edge_tangent[np.ix_(active_coordinates, active_coordinates)] = -(
++                edge_gap_variation[:, active_coordinates].T @ dp
++                + edge_weighted_hessian-edge_cross-edge_support_hessian
++            )
++            pair_certificate["tangent"] = edge_tangent
+         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
+ 
+     def _pair_local_work(self, current_source, current_target, base, *, tangent):
+diff --git a/tests/test_general_contact_q4_s3_pair_resolution.py b/tests/test_general_contact_q4_s3_pair_resolution.py
+index a9053bc7..95ac7efa 100644
+--- a/tests/test_general_contact_q4_s3_pair_resolution.py
++++ b/tests/test_general_contact_q4_s3_pair_resolution.py
+@@ -338,11 +338,24 @@ def test_opt_in_exact_shared_edge_limit_preserves_exact_state_and_wrench():
+     assert not owner.law._only_artificial_shared_edge_ties(source, warped)
+ 
+ 
+-def test_three_face_smooth_patch_owns_existing_internal_tie():
++def _three_face_patch_owner(*, single_source=False):
+     model, definition, settings, _ = build_case(
+-        4, 2, True, gap_certificate="projected_matching",
++        4, 2, True,
++        gap_certificate="projected_matching",
+         gap_tolerance=5.0e-5, normal_approach=0.01504,
+     )
++    if single_source:
++        # The development kernel requires two Q4 source faces. Keep the
++        # second disjoint and outside the target so this probes one Q4.
++        first_node = max(model.mesh.nodes) + 1
++        remote_face = max(model.mesh.elements) + 1
++        for node, (x, y) in enumerate(((3.0, 0.0), (4.0, 0.0),
++                                       (4.0, 1.0), (3.0, 1.0)), first_node):
++            model.add_node(node, x, y, 0.055)
++        model.add_element(remote_face, create_shell_element(
++            remote_face, tuple(range(first_node, first_node+4)),
++            "elastic", thickness=0.05, reference_normal=(0.0, 0.0, 1.0),
++        ))
+     # Extend the target along its left rim. The added face is adjacent to
+     # the original internal edge's owner, but does not touch the source.
+     new_node = max(model.mesh.nodes) + 1
+@@ -357,15 +370,22 @@ def test_three_face_smooth_patch_owns_existing_internal_tie():
+         reference_normal=(0.0, 0.0, 1.0), reference_surface_offset=0.01,
+     ))
+     definition = replace(definition, surfaces=(
+-        definition.surfaces[0],
++        (replace(definition.surfaces[0], element_ids=(1, remote_face))
++         if single_source else definition.surfaces[0]),
+         replace(definition.surfaces[1], element_ids=(*old_target, new_face)),
+     ))
+     settings = replace(
+         settings, q4_s3_shared_edge_tie_step_m=3.0e-8,
+         q4_s3_shared_edge_tie_direction=(1.0, 0.0, 0.0),
+         q4_s3_shared_edge_tie_relative_tolerance=1.0e-6,
++        maximum_q4_source_integration_triangles=(4096 if single_source else 128),
+     )
+     owner = GeneralS3PatchManager(model, definition, settings)
++    return owner
++
++
++def test_three_face_smooth_patch_owns_existing_internal_tie():
++    owner = _three_face_patch_owner()
+     law = owner.law
+     source = law.geometry.reference_source.copy()
+     source[:, 0] += 0.05
+@@ -404,6 +424,26 @@ def test_three_face_smooth_patch_owns_existing_internal_tie():
+         law.work(source, target, multipliers, tangent=True)
+ 
+ 
++def test_three_positive_faces_admit_unique_internal_seam_without_solving():
++    law = _three_face_patch_owner(single_source=True).law
++    law.shared_edge_tie = (3.0e-6, np.array((1.0, 0.0, 0.0)), 2.0e-5)
++    source = law.geometry.reference_source.copy()
++    source[law.source_face_indices[0]] = np.array((
++        (-0.6, 0.25, 0.1), (0.25, 0.25, 0.1),
++        (-0.1, 0.75, 0.1), (-0.6, 0.75, 0.1),
++    ))
++    target = law.geometry.reference_target
++    owner = []
++    assert law._only_artificial_shared_edge_ties(
++        source, target, allow_three=True, owner_out=owner)
++    assert owner == [(0, (0, 1), (1, 3))]
++    multipliers = np.full(len(law.geometry.source_node_ids), 100.0)
++    work = law.work(source, target, multipliers, tangent=True)
++    assert work.tie_resolution_relative_error < 1.0e-6
++    assert np.all(np.isfinite(work.residual))
++    assert np.all(np.isfinite(work.tangent))
++
++
+ def _three_face_tie_geometry():
+     law = object.__new__(MovingS3PatchProjectedNormal)
+     law.reference_target = np.array((

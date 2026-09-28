@@ -107,6 +107,10 @@ production matched fine-Q1 pressure space. [Original probe and failures](d1_revi
 **Candidate basis:** fine nodal Q1 pressure, batched Jet2 Q4/S3 derivatives and explicit monolithic active-set enforcement on the ordinary nonlinear static route. This is a development candidate, not an accepted profile. The nested supported-pressure Schur route remains available for comparison. The planar nonmatching Q4/S3 press, slide, opening and recontact scope is unchanged. The [capability ledger](GENERAL_CONTACT_CAPABILITIES.md) remains the status authority; [prior decisions and failures](GENERAL_CONTACT_RESTART_ARCHIVE_20260928.md) remain preserved.
 
 **Clipping scope after independent read-only review at `a306432d`:** The opt-in artificial S3 seam has deterministic ownership and checked one-sided work for its bounded two-positive-face planar subset. A transition with three positively overlapped target faces is still rejected; its local derivative/ownership qualification is missing. The seam kernel and focused tests are unchanged since `6c4d1887`; the intervening same-side broad-phase change affects search/preflight, not the reviewed seam limit. Do not describe the guided two-face slide as general clipping-transition acceptance.
+The [bounded three-face prototype](d1_review_support/d1_three_face_seam_prototype_20260928.md)
+reached a unique owner and seam fallback but failed the existing tangent
+limit checks; it did not cover monolithic raw-force work. The patch and
+failures are retained, and the production `<=2` guard remains intact.
 
 | Required D1 claim | Reusable evidence | Precise missing assessment |
 |---|---|---|
