@@ -478,3 +478,21 @@ the corresponding current-support limits; those pre-fix runs remain
 development evidence and are not represented as current-source reruns.
 The reviewer found no concrete smooth-branch algebra or restart-identity
 defect, but did not independently accept the capability.
+
+## Tangential force-map development at the actual eight-Q4 equilibrium
+
+The previously accepted eight-Q4 free-target equilibrium tangent direction
+combined normal and in-plane motion. The development probe now separates
+target/source x motion while retaining the saved equilibrium, fixed
+multipliers, second-order negative one-sided stencil and contact-on/off
+subtraction. [Target x only](../../reports/general_contact_d1_free_target_equilibrium_tangent_target_x_dev_20260928.json)
+kept pressure/support/overlap/pair branches fixed at 3e−7 and 1.5e−7 m.
+Its mapped contact **force** action was 0.0062757 N/m, with relative force
+errors about 4.13e−8 and 4.10e−8. [Source x only](../../reports/general_contact_d1_free_target_equilibrium_tangent_source_x_dev_20260928.json)
+also stayed on a smooth branch, with 0.00031979 N/m mapped force action
+and errors 3.49e−7 and 4.22e−7. Both are below the 1e−5 smooth-force
+directional target as development comparisons. Their mapped moment actions
+are only 3.46e−9 and 1.77e−10 Nm/m, below the probe's explicit 1e−8 Nm/m
+nontriviality floor; the full force-plus-moment probe status remains
+inconclusive. This does not establish a complete tangent or change the
+registered mixed-direction acceptance.

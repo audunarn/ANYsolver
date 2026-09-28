@@ -23,6 +23,9 @@ from scripts.general_contact_d1_free_target_press_probe import (
 def main(reference_path: Path, output_path: Path,
          target_z_weights: tuple[float, float] = (0.5, 0.5),
          source_weight: float = 0.1,
+         target_x_weights: tuple[float, float] = (0.0, 0.0),
+         source_x_weight: float | None = None,
+         source_z_weight: float | None = None,
          difference_order: int = 2,
          steps: tuple[float, ...] = (8e-7, 4e-7)) -> None:
     if output_path.exists():
@@ -56,13 +59,17 @@ def main(reference_path: Path, output_path: Path,
                 raise ValueError("saved pose violates new supports")
             index = {int(dof): column for column, dof in enumerate(independent)}
             direction_reduced = np.zeros(transform.shape[1])
-            for node, weight in zip((20, 21), target_z_weights):
-                dof = model.mesh.dof_manager.get_node_dofs(node)[2]
-                direction_reduced[index[int(dof)]] = weight
+            for node, weight_x, weight_z in zip(
+                    (20, 21), target_x_weights, target_z_weights):
+                dofs = model.mesh.dof_manager.get_node_dofs(node)
+                direction_reduced[index[int(dofs[0])]] = weight_x
+                direction_reduced[index[int(dofs[2])]] = weight_z
+            source_x = source_weight if source_x_weight is None else source_x_weight
+            source_z = source_weight if source_z_weight is None else source_z_weight
             for node in (8, 17):
                 dofs = model.mesh.dof_manager.get_node_dofs(node)
-                direction_reduced[index[int(dofs[0])]] = source_weight
-                direction_reduced[index[int(dofs[2])]] = source_weight
+                direction_reduced[index[int(dofs[0])]] = source_x
+                direction_reduced[index[int(dofs[2])]] = source_z
             direction = np.asarray(transform@direction_reduced).reshape(-1)
             translational_dofs = {
                 int(dof) for node in model.mesh.nodes
@@ -197,7 +204,10 @@ def main(reference_path: Path, output_path: Path,
                 "free_force_rows": len(force_rows),
                 "free_moment_rows": len(moment_rows),
                 "target_z_weights": list(target_z_weights),
+                "target_x_weights": list(target_x_weights),
                 "source_weight": source_weight,
+                "source_x_weight": source_x,
+                "source_z_weight": source_z,
                 "difference_order": difference_order,
                 "steps_m": list(steps),
                 "pose_constraint_error_m": pose_error,
@@ -234,7 +244,11 @@ if __name__ == "__main__":
     parser.add_argument("output", type=Path)
     parser.add_argument("--target-z-weights", nargs=2, type=float,
                         default=(0.5, 0.5))
+    parser.add_argument("--target-x-weights", nargs=2, type=float,
+                        default=(0.0, 0.0))
     parser.add_argument("--source-weight", type=float, default=0.1)
+    parser.add_argument("--source-x-weight", type=float)
+    parser.add_argument("--source-z-weight", type=float)
     parser.add_argument("--difference-order", type=int, choices=(1, 2),
                         default=2)
     parser.add_argument("--steps", nargs="+", type=float,
@@ -243,5 +257,8 @@ if __name__ == "__main__":
     main(args.reference, args.output,
          target_z_weights=tuple(args.target_z_weights),
          source_weight=args.source_weight,
+         target_x_weights=tuple(args.target_x_weights),
+         source_x_weight=args.source_x_weight,
+         source_z_weight=args.source_z_weight,
          difference_order=args.difference_order,
          steps=tuple(args.steps))
