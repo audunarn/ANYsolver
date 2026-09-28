@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.1982208999979775,
+  "peak_process_tree_memory_mb": 221.466624,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_monolithic_exact_seam.py::test_raw_nodal_force_seam_rejects_unresolved_topology_and_resource_limit"
+  ],
+  "log": "docs\\d1_review_support\\d1_clipping_rejection_pytest_20260929.log"
+}

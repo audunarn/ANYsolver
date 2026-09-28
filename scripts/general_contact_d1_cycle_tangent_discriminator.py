@@ -92,6 +92,10 @@ def run():
         axis = {"ux": 0, "uz": 2, "ry": 4}
         states, _ = _prepare_initial_states(replay_model, None, None, 5)
         records = []
+        source_ry_screen = []
+        source_ry_dofs = np.asarray([
+            replay_model.mesh.dof_manager.get_node_dofs(node)[4]
+            for node in manager.law.source_node_ids], dtype=int)
         for step_index in (4, 7):
             snapshot = result.snapshots[step_index-1]
             row = history[step_index-1]
@@ -111,6 +115,18 @@ def run():
             with suspend_contact():
                 structural_force, structural_tangent = _assemble(
                     replay_model, pose, states, tangent=True)
+            source_ry_contact = np.asarray(
+                base_force-structural_force).reshape(-1)[source_ry_dofs]
+            source_ry_screen.append({
+                "step": step_index,
+                "source_node_ids": list(manager.law.source_node_ids),
+                "contact_residual_nm": source_ry_contact.tolist(),
+                "maximum_absolute_contact_residual_nm": float(np.max(
+                    np.abs(source_ry_contact))),
+                "sum_contact_residual_nm": float(np.sum(source_ry_contact)),
+                "active_pressure_modes": base_state.active_pressure_dofs,
+                "integration_force_n": list(row["contact"]["integration_force"]),
+            })
             for name, components in directions.items():
                 reduced_direction = np.zeros(transform.shape[1])
                 for node, component, weight in components:
@@ -312,6 +328,7 @@ def run():
                 "reduced_row_counts": {key: len(rows)
                                        for key, rows in row_groups.items()},
                 "records": records,
+                "source_ry_screen": source_ry_screen,
                 "full_coordinate_source_director": {
                     "step": 4,
                     "active_pressure_modes": source_base.active_pressure_dofs,

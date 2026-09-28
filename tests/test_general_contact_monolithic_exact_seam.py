@@ -128,7 +128,10 @@ def test_raw_nodal_force_seam_rejects_missing_opt_in_and_accepts_signed_trial(
 def test_raw_nodal_force_seam_rejects_unresolved_topology_and_resource_limit():
     owner, source, target, _base, z = _case()
     saved_tie = owner.law.shared_edge_tie
-    shared = owner.law._d1_reference_diagonal()
+    smooth_edges = owner.law._reference_smooth_target_edges()
+    assert smooth_edges is not None and len(smooth_edges[0]) == 1
+    neighbor, shared = smooth_edges[0][0]
+    assert neighbor == 1
     edge = target[shared[1]]-target[shared[0]]
     owner.law.shared_edge_tie = (saved_tie[0], edge/np.linalg.norm(edge),
                                  saved_tie[2])
