@@ -118,19 +118,23 @@ completion, while its reported physical component has zero drill rows. Keep
 actual-matrix parity distinct from physical-work stability; do not count
 completion alone as beam torque-transfer evidence.
 The completed bounded 2/4-edge L1 design check found an exact alternating
-shell-normal zero-action row in the consistent full-P1 dual. The two mixed
-six-channel spaces have full local action rank: P1 translation/twist with
-edge-P0 pitch/normal represents the alternating field, while edge-P0
+shell-normal zero-action row in the consistent full-P1 dual's virgin
+reference-linearized work on these straight half-cells. The two mixed
+six-channel spaces have full numerical local rank in unscaled SI coordinates:
+P1 translation/twist with edge-P0 pitch/normal represents the alternating
+field, while edge-P0
 translation/twist with two-edge pitch/normal omits its alternating action.
 Both preserve the tested shear and native torque work without shell-drill
 work. These are local action results, not mixed-system stability or selection.
 On one supported virgin Q4/native B3 fixture, all 18 L1 nodal dual actions
 vanish on the 72 generalized resultants and act on retained cell rotations.
 Resultant-only stationary reduction matches full-retained compliance to
-1.4e-12 relative error. The actual supported tangent is positive but includes
-PL drill completion. The separately exposed drill-free physical component
-has an exact drill gauge and positive quotient on this fixture; its per-action
-work differs by up to 3.45% from the operative tangent. Neither result
+1.4e-12 relative error. The stationary-reduced supported physical block is
+positive on this fixture, but the actual full retained tangent is indefinite
+and includes PL drill completion. The separately exposed drill-free physical
+component has an exact drill gauge and positive quotient on this fixture; the
+18 tested diagonal coordinate-basis compliance actions differ by up to 3.45%
+from those of the operative tangent. Neither result
 certifies physical stability. The full-P1 dual as constructed cannot advance
 without a derived remedy for its exact null; do not select either mixed space
 from rank. Next targeted comparison holds supports, loads and geometry fixed

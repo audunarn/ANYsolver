@@ -164,7 +164,7 @@ def _weighted_projection_error(macro, samples, channel, pattern):
 
 
 def design_report(macro: Macroelement) -> dict:
-    """Small deterministic diagnostics; rank alone does not select a space."""
+    """Small deterministic diagnostics; raw SI-coordinate rank is not stability."""
     gap = reference_gap_jacobian(macro)
     spaces = sampled_dual_spaces(macro)
     n = macro.segments
@@ -189,6 +189,7 @@ def design_report(macro: Macroelement) -> dict:
     output = {"segments": n, "cuts": macro.cuts.tolist(),
               "stations": macro.stations.tolist(),
               "weights": macro.weights.tolist(),
+              "rank_convention": "unscaled declared-coordinate SVD; diagnostic only",
               "reference_gap_checked": True, "physical_response": response,
               "candidates": {}}
     weighted = np.repeat(macro.weights, 6)
