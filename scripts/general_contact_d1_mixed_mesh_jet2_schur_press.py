@@ -232,7 +232,8 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
          source_y_profile: str | None = None,
          enforcement_solver: str = "nested_augmented",
          monolithic_maximum_pivots: int = 12,
-         monolithic_linear_solver: str = "direct") -> None:
+         monolithic_linear_solver: str = "direct",
+         emit_restart_checkpoint: bool = True) -> None:
     if output.exists():
         raise FileExistsError(f"development output already exists: {output}")
     model, definition, settings, program = build_case(
@@ -281,7 +282,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
     result = solve_static_nonlinear(
         model, contact=definition, contact_settings=settings,
         contact_path_program=program, max_iterations=18,
-        emit_restart_checkpoint=True,
+        emit_restart_checkpoint=emit_restart_checkpoint,
     )
     derivative_module = importlib.import_module(
         "anysolver.general_contact.q4_s3_overlap_derivatives"
@@ -295,6 +296,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         "enforcement_solver": enforcement_solver,
         "monolithic_maximum_pivots": monolithic_maximum_pivots,
         "monolithic_linear_solver": monolithic_linear_solver,
+        "checkpoint_requested": emit_restart_checkpoint,
         "four_phase": four_phase,
         "steps_per_segment": steps_per_segment,
         "load_profile": load_profile,
@@ -378,6 +380,8 @@ if __name__ == "__main__":
     parser.add_argument("--monolithic-maximum-pivots", type=int, default=12)
     parser.add_argument("--monolithic-linear-solver", choices=(
         "direct", "block_response_dev"), default="direct")
+    parser.add_argument("--no-checkpoint", dest="emit_restart_checkpoint",
+                        action="store_false", default=True)
     args = parser.parse_args()
     main(args.columns, args.output, args.pressure_cap_pa, args.four_phase,
          args.steps_per_segment, args.schur_step_cap_pa,
@@ -387,4 +391,4 @@ if __name__ == "__main__":
          args.target_reference_slope, args.target_columns,
          args.full_width_target, args.source_rows, args.source_y_profile,
          args.enforcement_solver, args.monolithic_maximum_pivots,
-         args.monolithic_linear_solver)
+         args.monolithic_linear_solver, args.emit_restart_checkpoint)
