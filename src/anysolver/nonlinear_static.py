@@ -7726,12 +7726,14 @@ def solve_static_nonlinear(
                 and contact_settings.enforcement_solver == "monolithic_active_set"):
             from .general_contact.static_path import (
                 _program_from_dead_nodal_load_case,
+                _program_from_simple_displacement_control,
                 solve_static_contact_path,
             )
 
-            if (control != "force" or any(value is not None for value in (
+            if (control not in {"force", "displacement"}
+                    or any(value is not None for value in (
                     constant_load_case, imperfection, load_program,
-                    displacement_control, initial_element_states,
+                    initial_element_states,
                     convergence_settings, resource_config, fracture_config,
                     status_callback, progress_callback, initial_fields,
                     initial_displacements,
@@ -7741,12 +7743,21 @@ def solve_static_nonlinear(
                     or kinematics != "von_karman"
                     or corotational_tangent != "auto"):
                 raise ValueError(
-                    "monolithic ordinary force contact admits one dead nodal "
-                    "load case with default structural options"
+                    "monolithic ordinary contact admits one dead nodal load "
+                    "or displacement control with default structural options"
                 )
-            force_program = _program_from_dead_nodal_load_case(load_case, num_steps)
+            if control == "force":
+                if displacement_control is not None:
+                    raise ValueError("ordinary force contact rejects displacement_control")
+                owned_program = _program_from_dead_nodal_load_case(load_case, num_steps)
+            else:
+                if load_case is not None:
+                    raise ValueError("ordinary displacement contact rejects load_case")
+                owned_program = _program_from_simple_displacement_control(
+                    displacement_control, num_steps,
+                )
             return solve_static_contact_path(
-                model, contact, contact_settings, force_program,
+                model, contact, contact_settings, owned_program,
                 max_path_fraction=max_load_factor,
                 max_iterations=max_iterations, tolerance=tolerance,
                 num_layers=num_layers, restart_checkpoint=restart_checkpoint,
