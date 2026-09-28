@@ -33,13 +33,21 @@ causes the large same-mesh torque discrepancy.
 At fixed shell:beam `4:1`, joint x8/B3-12/m4 → x16/B3-14/m8
 refinement passes both loaded solves but the torque rotation-gap RMS
 increases `6.10e-6 → 9.11e-6 rad`; the policy is not qualified by
-the otherwise close tip response.
+the otherwise close tip response. Mode-resolved reconstruction locates
+the increase in local `rz` (`6.00e-6 → 9.08e-6 rad` RMS), with weak
+interval means below `2.8e-20`; `rx` contracts. On the *fixed*
+x16/B3-14 primal, m4 → m8 also increases `rz` RMS
+`7.51e-6 → 9.08e-6 rad` (`+21%`) despite valid full equilibrium,
+work and support balance. Thus simple P0 enrichment does not remove
+this unresolved within-interval mode at the second level.
 **Remaining uncertainty:** Whether P0 avoids locking and unsupported
 modes across ratios and whether physically matched sided torque/shear
 transfer validates the declared law. **Next discriminator and action:**
-Inspect the fixed-ratio torque gap's actual six-channel shape and
-weighted interval means before deciding whether another refinement
-can discriminate the policy's stability.
+Examine the actual shell/retained-beam `rz` trace and the longitudinal
+test-space pairing on this saved fixture before another mesh or loaded
+solve. Determine whether the observed mode is detectable by a stable
+alternative weak space or requires a trace-law correction; neither is
+selected from gap magnitude alone.
 Establish a work-conjugate torque/section/support comparator that
 separates shell idealization from connection transfer; neither the
 saved pure-action fields nor a displacement fit does that alone.
@@ -11136,3 +11144,59 @@ resolution rule needs a different stable enforcement/beam trace
 design before selection. If the apparent RMS rise comes from a
 sampling/scale artifact, correct the diagnostic and reassess. No
 new mesh, external solve, cap change, or automatic law selection.
+
+**Mode-resolved 4:1 outcome and next decision:** The two fixed-ratio Mx
+reconstructions pass their original equilibrium, weak-row, work and
+support checks. All independently integrated P0 interval means agree
+with assembled rows and remain below `2.8e-20`. At x8/B3-12/m4,
+continuous orientation RMS is dominated by local rotation channel
+`rz = 6.00044e-6 rad`, with `rx = 1.12353e-6 rad`. At
+x16/B3-14/m8, `rz` grows to `9.07561e-6 rad` while `rx` contracts to
+`8.30126e-7 rad`. Each interval contains oppositely signed `rz`
+station values despite its nearly zero weak mean. Thus the rise is a
+real within-interval mode of the solved six-channel trace, not an
+aggregate norm or weak-row integration artifact. The corresponding
+translation channels are below `2.2e-8 m` RMS. This identifies an
+unresolved *discrete* mode; it does not establish a physical zero-energy
+mode, locking, continuous-law error, or a multiplier selection.
+
+**Next bounded discriminator, before execution:** Hold the x16/y4,
+B3-14 primal model, Mx load, supports and exact-drill quotient fixed;
+compare P0 m4 with the completed m8 case. If m8 reduces the `rz` mode,
+the growing gap under joint 4:1 refinement is driven by the changed
+primal trace, and the resolution policy still needs a third-level and
+mixed-system assessment. If m8 retains or enlarges it, revisit the
+longitudinal weak-space/trace pairing before another refinement.
+Either result leaves the physically matched torque/shear comparator
+and formal F03 open. One Mx solve stays within the existing 1,900-row
+and 120-second private diagnostic limits; no new mesh or authority.
+
+**Fixed-primal x16 P0 outcome:** The new x16/B3-14/m4 Mx solve used
+1,706 quotient rows and 64.20 s; m8 used 1,730 rows and 70.84 s.
+Both are below the unchanged caps, have respectively `24/24` and
+`48/48` independent supported rows, reconstructed full-free residuals
+below `5.3e-11`, and pass weak-gap, work and support balance. At m4,
+tip Mx rotation is `5.00986836e-5 rad`, shell physical work
+`0.00199863835 J`, and continuous local `rz` gap RMS
+`7.50647e-6 rad`. At m8 those are `4.90025648e-5 rad`,
+`0.00196576105 J`, and `9.07561e-6 rad`. The `rz` RMS increases
+`20.9%` when only the P0 interval count doubles; local `rx` falls
+`1.15213e-6 → 8.30126e-7 rad`. All independently integrated
+interval means match the assembled weak rows below `2.8e-20`.
+The result returns the provisional P0 trace/test pairing to mechanics
+review. It is not evidence of a physical zero-energy mode, mesh-uniform
+instability, locking, or a continuous-law defect. No multiplier space
+is selected; F03/G0B remain open, G1 barred, formal F03 authority
+unconsumed.
+
+Immutable mode files are
+`B3_E4_F03_C1_MATERIAL_LINE_RATIO_4_TO_1_X8_B12_M4_MODES_DEV_V1.json`
+SHA256 `920a9fef8c7c878caa9a257273dd047346e419ebd175b21b6a47aed5d0de0dfd`,
+`B3_E4_F03_C1_MATERIAL_LINE_RATIO_4_TO_1_X16_B14_M8_MODES_DEV_V1.json`
+SHA256 `1a3f8376b4ededa16947748f5d0eca86ed62e8db99a30c08bc7ba2282f4b4b9f`,
+and `B3_E4_F03_C1_MATERIAL_LINE_RATIO_4_TO_1_X16_B14_M4_MODES_DEV_V1.json`
+SHA256 `1d4ec97066c5b9e151e01df01230dbebe41a1fc01a1b26eb5a39844b39612654`.
+Their exact respective runner hashes are
+`4e377d2c9553baa91791aa263c32871cd704f66a1f4556290ed6bc08001bd6ce`,
+`8d35f7d7878d022bd973ce34a84d9ed2b3df41f2fb87335ea45c2d35c29df8ac`,
+and `6f7073fadd391ac0ea0f37af626bc53777494e7dcabda5466b546e963141c0cc`.

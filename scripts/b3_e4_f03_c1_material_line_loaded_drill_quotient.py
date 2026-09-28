@@ -28,7 +28,7 @@ from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
 from scripts.b3_e4_f03_material_line_loaded import _scales
 from scripts.b3_e4_f03_material_line_position import MaterialLinePosition
 from scripts.b3_e4_f03_material_line_space_screen import (
-    _rows, _scaled_row_diagnostics,
+    _p0_gap_modes, _rows, _scaled_row_diagnostics,
 )
 from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
@@ -43,9 +43,12 @@ def _relative(left: np.ndarray, right: np.ndarray) -> float:
 
 
 def evaluate(*, beam_half_cells: int = 12,
-             p0_intervals: int = 4) -> dict:
-    if (beam_half_cells, p0_intervals) not in ((12, 4), (14, 8)):
+             p0_intervals: int = 4,
+             mode_resolved_mx_only: bool = False) -> dict:
+    if (beam_half_cells, p0_intervals) not in ((12, 4), (14, 4), (14, 8)):
         raise ValueError("bounded x16 P0 ratio fixture required")
+    if mode_resolved_mx_only and (beam_half_cells, p0_intervals) not in ((14, 4), (14, 8)):
+        raise ValueError("bounded fixed-4:1 x16/B3-14 P0 mode required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     if Path(anysolver.__file__).resolve().parent != expected:
         raise RuntimeError("bounded quotient imported another ANYsolver checkout")
@@ -126,8 +129,9 @@ def evaluate(*, beam_half_cells: int = 12,
         len(line.stations), 3, -1)
     weights = np.asarray([station.weight for station in line.stations])
     cases = {}
-    for label, axis, magnitude in (("tip_mx_100nm", 3, 100.),
-                                   ("tip_fz_1000n", 2, 1000.)):
+    load_specs = (("tip_mx_100nm", 3, 100.),) if mode_resolved_mx_only else (
+        ("tip_mx_100nm", 3, 100.), ("tip_fz_1000n", 2, 1000.))
+    for label, axis, magnitude in load_specs:
         if monotonic()-started > MAX_SECONDS:
             raise TimeoutError("bounded exact-drill loaded deadline")
         load = np.zeros(ns+beam.context.count)
@@ -195,6 +199,9 @@ def evaluate(*, beam_half_cells: int = 12,
             "position_max_m": float(np.max(np.linalg.norm(position_gap, axis=1))),
             "orientation_max_rad": float(np.max(np.linalg.norm(rotation_gap, axis=1))),
         }
+        if mode_resolved_mx_only:
+            case["continuous_gap_modes"] = _p0_gap_modes(
+                line, position_gap, rotation_gap, p0_intervals, gap)
         if (max(full_free_residual, weak_gap, work_relative) > 1e-7 or
                 case["support_force_balance_n"] > 1e-5 or
                 case["support_moment_balance_nm"] > 1e-5 or
@@ -202,7 +209,7 @@ def evaluate(*, beam_half_cells: int = 12,
             raise ArithmeticError(f"reconstructed full loaded system failed: {case}")
         cases[label] = case
     return {
-        "classification": "bounded exact-drill loaded 8:1 material-line P0 diagnostic",
+        "classification": "bounded exact-drill loaded x16 material-line P0 diagnostic",
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
         "source_git": subprocess.check_output(("git", "rev-parse", "HEAD"),
                                               text=True).strip(),
@@ -210,6 +217,7 @@ def evaluate(*, beam_half_cells: int = 12,
                   f"material-line P0 m{p0_intervals}, original full equations reconstructed"),
         "beam_half_cells": beam_half_cells,
         "p0_intervals": p0_intervals,
+        "mode_resolved_mx_only": mode_resolved_mx_only,
         "full_kkt_rows": len(full_free)+row_count,
         "quotient_kkt_rows": dimension,
         "quotient_nnz": int(scaled.nnz),
@@ -223,7 +231,7 @@ def evaluate(*, beam_half_cells: int = 12,
         "schur_test_relative_residual": schur_check,
         "cases": cases,
         "limits": ["private exact algebraic elimination, not production condensation",
-                   "one 8:1 level and two terminal nodal loads, not mesh-uniform stability",
+                   "one x16 level and terminal nodal loads, not mesh-uniform stability",
                    "no physical connection accuracy or multiplier-space selection"],
         "provenance": {
             "python": sys.version.split()[0], "numpy": np.__version__,
@@ -241,12 +249,14 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--beam-half-cells", type=int, choices=(12, 14), default=12)
     parser.add_argument("--p0-intervals", type=int, choices=(4, 8), default=4)
+    parser.add_argument("--mode-resolved-mx-only", action="store_true")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     with threadpool_limits(limits=1):
         result = evaluate(beam_half_cells=args.beam_half_cells,
-                          p0_intervals=args.p0_intervals)
+                          p0_intervals=args.p0_intervals,
+                          mode_resolved_mx_only=args.mode_resolved_mx_only)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n", encoding="utf-8")
     print(json.dumps({"elapsed_s": result["elapsed_s"],

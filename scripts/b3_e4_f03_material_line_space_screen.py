@@ -55,6 +55,46 @@ def _rows(line: MaterialLinePosition, space: LineMultiplierSpace):
     return rows, measure
 
 
+def _p0_gap_modes(line: MaterialLinePosition, position_gap: np.ndarray,
+                  orientation_gap: np.ndarray, intervals: int,
+                  weak_means: np.ndarray) -> dict:
+    """Report continuous six-channel gaps and independently integrated P0 means."""
+    stations = line.stations
+    gap = np.column_stack((position_gap, orientation_gap))
+    weights = np.asarray([station.weight for station in stations])
+    if (gap.shape != (len(stations), 6) or
+            weak_means.shape != (6*intervals,) or
+            not np.isfinite(gap).all() or not np.isfinite(weights).all()):
+        raise ValueError("finite six-channel P0 gap inventory required")
+    masses = np.zeros(intervals)
+    integrals = np.zeros((intervals, 6))
+    for station, weight, values in zip(stations, weights, gap):
+        abscissa = (station.x-.9)/.1
+        index = int(np.searchsorted(np.linspace(0., 1., intervals+1),
+                                    abscissa, side="right")-1)
+        if not 0 <= index < intervals:
+            raise ValueError("P0 gap station outside bonded material line")
+        masses[index] += weight
+        integrals[index] += weight*values
+    if np.any(masses <= 0.) or abs(np.sum(masses)-.1) > 1e-12:
+        raise ArithmeticError("P0 physical line measure changed")
+    means = integrals/masses[:, None]
+    if np.max(np.abs(means-weak_means.reshape(intervals, 6))) > 1e-12:
+        raise ArithmeticError("station integration and assembled P0 rows disagree")
+    rms = np.sqrt(np.sum(weights[:, None]*gap**2, axis=0)/.1)
+    return {
+        "channel_order": ["tx_m", "ty_m", "tz_m", "rx_rad", "ry_rad", "rz_rad"],
+        "station_x_m": [float(station.x) for station in stations],
+        "station_gap_m_rad": gap.tolist(),
+        "component_rms_m_rad": rms.tolist(),
+        "component_min_m_rad": np.min(gap, axis=0).tolist(),
+        "component_max_m_rad": np.max(gap, axis=0).tolist(),
+        "interval_measure_m": masses.tolist(),
+        "interval_mean_gap_m_rad": means.tolist(),
+        "assembled_weak_mean_max": float(np.max(np.abs(weak_means))),
+    }
+
+
 def _scaled_row_diagnostics(constraint, free, primal_scales):
     """Bounded physical-coordinate rank screen, never a stability verdict."""
     if (constraint.shape[0] > 60 or
@@ -87,7 +127,8 @@ def _scaled_row_diagnostics(constraint, free, primal_scales):
 
 
 def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
-        policy_p0_only: bool = False, p0_pair_only: bool = False) -> dict:
+        policy_p0_only: bool = False, p0_pair_only: bool = False,
+        mode_resolved_mx_only: bool = False) -> dict:
     if shell_cells not in ((2, 4, 8, 16) if policy_p0_only else (2, 4, 8)):
         raise ValueError("bounded material-line shell level required")
     if beam_half_cells not in (12, 14, 18, 24, 26):
@@ -98,6 +139,9 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
     if p0_pair_only and (policy_p0_only or
                          (shell_cells, beam_half_cells) != (8, 14)):
         raise ValueError("bounded fixed-x8/B3-14 P0 pair required")
+    if mode_resolved_mx_only and (not policy_p0_only or
+                                  (shell_cells, beam_half_cells) != (8, 12)):
+        raise ValueError("bounded fixed-4:1 x8/B3-12 P0 mode required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     actual = Path(anysolver.__file__).resolve().parent
     if actual != expected:
@@ -176,8 +220,9 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
                 np.max(np.abs(yaw[0]-p0_two_rows[5])),
                 np.max(np.abs(yaw[2]-p0_two_rows[11]))))
         outputs = {}
-        for load_name, axis, magnitude in (("tip_mx_100nm", 3, 100.),
-                                           ("tip_fz_1000n", 2, 1000.)):
+        load_specs = (("tip_mx_100nm", 3, 100.),) if mode_resolved_mx_only else (
+            ("tip_mx_100nm", 3, 100.), ("tip_fz_1000n", 2, 1000.))
+        for load_name, axis, magnitude in load_specs:
             if row_diagnostic["scaled_row_rank"] != len(constraint):
                 outputs[load_name] = {
                     "status": "FAILED_DEPENDENT_ROWS",
@@ -235,6 +280,10 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
                 "orientation_max_rad": float(np.max(np.linalg.norm(
                     gap_orientation, axis=1))),
             })
+            if mode_resolved_mx_only:
+                diagnostic["continuous_gap_modes"] = _p0_gap_modes(
+                    line, gap_position, gap_orientation, space.count,
+                    constraint@state)
             if (diagnostic["support_force_balance_n"] > 1e-5 or
                     diagnostic["support_moment_balance_nm"] > 1e-5 or
                     diagnostic["shell_physical_work_j"] <= 0.):
@@ -259,6 +308,7 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
         "beam_half_cells": beam.n_half_cells,
         "policy_p0_only": policy_p0_only,
         "p0_pair_only": p0_pair_only,
+        "mode_resolved_mx_only": mode_resolved_mx_only,
         "policy_bond_half_cells": bond_halves if policy_p0_only else None,
         "policy_intervals": intervals if policy_p0_only else None,
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -286,12 +336,14 @@ if __name__ == "__main__":
                         choices=(12, 14, 18, 24, 26), default=12)
     parser.add_argument("--policy-p0-only", action="store_true")
     parser.add_argument("--p0-pair-only", action="store_true")
+    parser.add_argument("--mode-resolved-mx-only", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     result = run(shell_cells=args.shell_cells,
                  beam_half_cells=args.beam_half_cells,
                  policy_p0_only=args.policy_p0_only,
-                 p0_pair_only=args.p0_pair_only)
+                 p0_pair_only=args.p0_pair_only,
+                 mode_resolved_mx_only=args.mode_resolved_mx_only)
     if args.output is None:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
