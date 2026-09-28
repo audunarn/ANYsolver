@@ -334,6 +334,46 @@ is therefore bitwise-unchanged by construction, and the performance budgets
    (then 15°), reusing `tests/_s3_angle_fixtures.py` and the runner's mesh
    families.
 
+### 8.1 Decision (28 September 2026): the solver serves the mesher
+
+The integration owner's direction: the mesher keeps aiming for good meshes, and
+the solver fails only when that is truly required. Consequences:
+
+* **Solver admission stays degeneracy-only (no change).** A probe of the
+  public V2D route beyond the campaign bands (right and obtuse-isosceles
+  shapes, t/L = 1e-2):
+
+  | smallest angle | result |
+  | --- | --- |
+  | 10° to 1° | exact to ≤ 1e-11 (patch tests, rigid body, 12 elastic modes) |
+  | 0.1° to 0.01° | patch errors ≤ 5e-8; conditioning 1e11 to 1e13 |
+  | 0.001° | bending patch error ~1e-5 |
+  | 0.00001° | patch errors up to 6%, still admitted |
+
+  The existing degeneracy check fires only near 1e-12°. The only floor that
+  might be called strictly required, around 0.001°, is far below anything a
+  mesher produces, so no solver guard is added. The accuracy envelope
+  qualified by this note is 15° with a maximum angle of 150°.
+* **Mesher admission follows the solver floor.** ANYmesher branch
+  `claude/s3-two-tier-admission`, off `main`, kept separate from the ongoing
+  `claude/anymesher-050-release-4xztmm`:
+  * `S3_ADMISSION_FLOOR_POLICY` (15°, q ≥ 0.30) becomes
+    `DEFAULT_S3_QUALITY_POLICY`.
+  * The former 30° envelope stays as `S3_TARGET_QUALITY_POLICY`. Bounded
+    repair and `prepare_qualified_s3_mesh` work towards it and report any
+    shortfall instead of raising.
+  * Shape limits are compared with a 1e-12 tolerance.
+  * The admission contract ID `ANYMESHER_QUALIFIED_S3_ADMISSION_V1`, which
+    ANYsolver pins in `production_readiness.py`, is unchanged. The production
+    preparation record becomes `..._PREPARATION_V2`.
+* **ANYsolver's runtime local-patch sizing keeps its 30° target.** It only
+  refines to reach good triangles and never fails, which matches "always try
+  to get good meshes".
+
+This settles decision 1 above (no fail-closed solver restriction) and decision
+3 (the mesher target stays 30°, while mesher admission moves to the 15° floor).
+Decisions 2 and 4 remain open.
+
 **Working-tree condition.** Only this task's branch
 (`claude/wizardly-ramanujan-pk88wc`) in this cloud checkout was used. No
 worktrees were created and no other branch was touched.
