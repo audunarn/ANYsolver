@@ -78,12 +78,55 @@ comparison above uses the later stationary report; the change affected the
 rounded force/weak-field metrics negligibly. This remains development
 review, not independent acceptance.
 
+## Source-only transverse-resolution discriminator
+
+`scripts/general_contact_d1_source_y_resolution.py` keeps the same guided
+flat Q4 structural tangent and independently integrates the distributed
+0.3 N load and clipped Q1 pressure work. Its one-row cases reproduce the
+earlier 16/32-Q4 linearized reactions to roundoff. The pressure solve checks
+stationarity, nonnegative pressure, weak gap and structural equilibrium.
+When a y grid places pressure nodes entirely above the 0.9 m overlap, the
+script removes their exactly zero-support modes before solving.
+
+| Q4 x×y cells | Reaction (N) | Weak x-force L2 error vs continuum | Maximum cumulative-force error |
+|---|---:|---:|---:|
+| 16×1, 16×2, 16×4 | 0.103871560 | 3.656% | 1.144% |
+| 16×8 | 0.103816377 | 3.156% | 0.978% |
+| 16×16 | 0.103807014 | 3.105% | 0.963% |
+| 32×1, 32×2, 32×4 | 0.103857267 | 6.065% | 1.192% |
+| 32×8 | 0.103815599 | 5.342% | 0.866% |
+| 32×16 | 0.103808466 | 5.272% | 0.827% |
+| 64×16 | 0.103825688 | 2.611% | 0.385% |
+
+All reported structural residuals were below 5×10⁻¹⁵ N and represented
+physical gaps were at worst −0.0771 µm. Transverse resolution changes the
+integrated reaction once the overlap rim is resolved locally. The weak
+pressure field remains nonmonotone in x, though the 64×16 result improves
+over 32×16. Neither integrated-force agreement nor the small gap establishes
+pressure-field convergence. A further x/pressure-resolution choice should
+be justified against this comparator before allocating a coupled nonlinear
+run. The first 16-row attempt failed in the diagnostic because it required
+positive support for modes entirely outside the overlap; the corrected
+support admission and the failed attempt are retained in the living note.
+An independent read-only review found no load, Q1 overlap, supported-mode,
+indexing, sign or comparison-bin defect in these reports; the one-row results
+match the previous linearized source cases to roundoff. It identified a
+command-line range check that allowed x grids unable to partition the
+256-cell continuum reference. That check and an explicit 50 µm represented
+gap budget are now enforced. A focused 16×16 rerun reproduced its saved
+reaction and weak-field error exactly; an invalid 24-column comparison
+rejects before solve. The review does not establish pressure convergence.
+
 Raw outputs:
 
 - `reports/general_contact_d1_continuum_obstacle_dev_20260928.json`
 - `reports/general_contact_d1_continuum_refinement_dev_20260928.json`
 - `reports/general_contact_d1_linearized_front_stationary_dev_20260928.json`
 - `reports/general_contact_d1_guided_scalar_work_dev_20260928.json`
+- `reports/general_contact_d1_source_y_resolution_dev_20260928.json`
+- `reports/general_contact_d1_source_y16_dev_20260928.json`
+- `reports/general_contact_d1_source_64x16_dev_20260928.json`
+- `reports/general_contact_d1_source_y16_guard_recheck_dev_20260928.json`
 
 All runs used Python 3.14, one BLAS/OpenMP thread and the isolated general
 contact worktree. The new continuum scripts have no production dependency.
