@@ -141,12 +141,27 @@ component has an exact drill gauge and positive quotient on this fixture; the
 from those of the operative tangent. Neither result
 certifies physical stability. The full-P1 dual as constructed cannot advance
 without a derived remedy for its exact null; do not select either mixed space
-from rank. Next targeted comparison holds supports, loads and geometry fixed
-for the two mixed spaces, examines physical Fy/torque transfer, work and
-locking against an applicable same-law reference, and separates drill
-sensitivity. A failed physical transfer requires law/space revision; viable
-responses proceed to an independently reviewed F03 assessment contract and
-the registered growing-space envelope. No formal F03 run has occurred.
+from rank. Physical transfer and locking still require a same-law reference
+and the growing-space envelope. No formal F03 run has occurred.
+The targeted two/four-edge A/B KKT screen now holds the 0.5--1 m eccentric
+line, full panel, supports and physical Fy/torque actions fixed. Equilibrium,
+weak compatibility, interface virtual work and spatial wrench balance pass.
+A/B Fy load-displacement work differs by about 0.009%; B torque work is
+3.95%/2.31% below A at two/four edges. On the actual PL response, shell
+completion contributes 8.8--10% of Fy work and 0.16--0.25% of torque work.
+Freezing every free drill coordinate reduces Fy compliance by about 95%, but
+adds kinematic supports and is not a stabilization-parameter sensitivity.
+Independent read-only review found no blocking input or KKT defect and warned
+that two-level partial refinement and balanced assembled work cannot certify
+physical transfer. The exact-source, one-thread result is preserved in
+[the development evidence](B3_E4_F03_L1_AB_MATCHED_LOAD_DEV_V2.json).
+Decision: retain A/B as development candidates, exclude the present full-P1
+dual with its reference-linearized null, and do not select a line law or
+multiplier space. The next discriminator is an independently constructed,
+work-preserving same-law reference for the unchanged physical supports and
+actions, with physical transfer, locking and drill/completion interpretation;
+if that map cannot be derived, obtain focused mechanics review of the missing
+equation. No further classical axial refinement or automatic mesh sweep.
 An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
 for plate/web Fy and web torque. Its clamped-root option matches the declared
 six-DOF support type but lacks verified rotational reaction output; the hinged
