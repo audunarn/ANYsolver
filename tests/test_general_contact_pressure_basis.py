@@ -18,6 +18,57 @@ def _strip_faces(cells):
                  for j in range(cells))
 
 
+def _direct_two_face_integrals():
+    """Integrate fine and macro shapes independently on [0,2]×[0,1]."""
+    faces = _strip_faces(2)
+    fine_support = np.zeros(6)
+    fine_weighted_gap = np.zeros(6)
+    fine_gram = np.zeros((6, 6))
+    fine_ds = np.zeros((6, 2))
+    fine_dw = np.zeros((6, 2))
+    macro_support = np.zeros(4)
+    macro_weighted_gap = np.zeros(4)
+    macro_gram = np.zeros((4, 4))
+    macro_ds = np.zeros((4, 2))
+    macro_dw = np.zeros((4, 2))
+    points, weights = np.polynomial.legendre.leggauss(4)
+    for cell, face in enumerate(faces):
+        indices = np.asarray(face, dtype=int)-1
+        for u, wu in zip(points, weights):
+            x = cell+0.5*(u+1.0)
+            local_x = 0.5*(u+1.0)
+            for v, wv in zip(points, weights):
+                y = 0.5*(v+1.0)
+                weight = 0.25*wu*wv
+                local = np.array([
+                    (1.0-local_x)*(1.0-y), local_x*(1.0-y),
+                    local_x*y, (1.0-local_x)*y,
+                ])
+                # Direct Q1 interpolation on the two-cell macro domain.
+                macro = np.array([
+                    (1.0-x/2.0)*(1.0-y), (x/2.0)*(1.0-y),
+                    (1.0-x/2.0)*y, (x/2.0)*y,
+                ])
+                gap = 0.15+0.25*x-0.4*y+0.12*x*y+0.03*x*x
+                gap_derivative = np.array([
+                    0.2*x*y-0.1*y*y, -0.3*x+0.05*x*y,
+                ])
+                jacobian_derivative = np.array([x, y])
+                weighted_derivative = gap_derivative+gap*jacobian_derivative
+                fine_support[indices] += weight*local
+                fine_weighted_gap[indices] += weight*local*gap
+                fine_gram[np.ix_(indices, indices)] += weight*np.outer(local, local)
+                fine_ds[indices] += weight*local[:, None]*jacobian_derivative
+                fine_dw[indices] += weight*local[:, None]*weighted_derivative
+                macro_support += weight*macro
+                macro_weighted_gap += weight*macro*gap
+                macro_gram += weight*np.outer(macro, macro)
+                macro_ds += weight*macro[:, None]*jacobian_derivative
+                macro_dw += weight*macro[:, None]*weighted_derivative
+    return ((fine_support, fine_weighted_gap, fine_gram, fine_ds, fine_dw),
+            (macro_support, macro_weighted_gap, macro_gram, macro_ds, macro_dw))
+
+
 @pytest.mark.parametrize("cells", (16, 24))
 def test_pairwise_macro_q1_is_positive_shared_and_partition_unity(cells):
     basis = build_q4_source_macro_q1_pair_basis(_strip_faces(cells))
@@ -41,6 +92,39 @@ def test_pairwise_macro_q1_is_positive_shared_and_partition_unity(cells):
             else:
                 assert np.count_nonzero(row) == 2
                 np.testing.assert_array_equal(row[row > 0.0], [0.5, 0.5])
+
+
+def test_transformed_integrals_match_direct_macro_quadrature():
+    basis = build_q4_source_macro_q1_pair_basis(_strip_faces(2))
+    fine, direct = _direct_two_face_integrals()
+    support, weighted_gap, gram = basis.transform_integrals(*fine[:3])
+    ds, dw = basis.transform_derivatives(*fine[3:])
+    for actual, expected in zip((support, weighted_gap, gram, ds, dw), direct):
+        np.testing.assert_allclose(actual, expected, rtol=0.0, atol=2.0e-15)
+    assert np.linalg.matrix_rank(gram) == len(basis.mode_ids)
+    assert np.ptp(weighted_gap/support) > 0.1
+
+
+def test_transform_rejects_invalid_integrals_and_gradient_shapes():
+    basis = build_q4_source_macro_q1_pair_basis(_strip_faces(2))
+    fine, _direct = _direct_two_face_integrals()
+    support, weighted_gap, gram, ds, dw = fine
+    for inputs in (
+        (support[:-1], weighted_gap, gram),
+        (support, np.full_like(weighted_gap, np.nan), gram),
+        (-support, weighted_gap, gram),
+        (support, weighted_gap, gram+np.triu(np.ones_like(gram), 1)),
+        (support, weighted_gap, -gram),
+    ):
+        with pytest.raises(ValueError):
+            basis.transform_integrals(*inputs)
+    for inputs in (
+        (ds[:-1], dw),
+        (ds, dw[:, :1]),
+        (ds, np.full_like(dw, np.inf)),
+    ):
+        with pytest.raises(ValueError):
+            basis.transform_derivatives(*inputs)
 
 
 def test_basis_identity_does_not_depend_on_current_coordinates():

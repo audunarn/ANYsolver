@@ -67,6 +67,57 @@ class PressureBasis:
         """Return a detached numeric copy of the immutable interpolation."""
         return np.asarray(self.B, dtype=float).copy()
 
+    def transform_integrals(
+        self,
+        fine_support: np.ndarray,
+        fine_weighted_gap: np.ndarray,
+        fine_gram: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Transform assembled reference integrals before gap normalization.
+
+        The caller must assemble all fine-face contributions using the exact
+        ``fine_source_node_ids`` order. This operation neither projects a
+        pressure nor changes the physical gap certificate.
+        """
+        count = len(self.fine_source_node_ids)
+        support = np.asarray(fine_support, dtype=float)
+        weighted_gap = np.asarray(fine_weighted_gap, dtype=float)
+        gram = np.asarray(fine_gram, dtype=float)
+        if (support.shape != (count,) or weighted_gap.shape != (count,)
+                or gram.shape != (count, count)
+                or not np.all(np.isfinite(support))
+                or not np.all(np.isfinite(weighted_gap))
+                or not np.all(np.isfinite(gram))
+                or np.any(support < 0.0)):
+            raise ValueError("fine mortar integrals have invalid shape or values")
+        scale = float(np.max(np.abs(gram), initial=0.0))
+        symmetry_tolerance = 64.0*np.finfo(float).eps*scale
+        if np.max(np.abs(gram-gram.T), initial=0.0) > symmetry_tolerance:
+            raise ValueError("fine pressure Gram must be symmetric")
+        symmetric_gram = 0.5*(gram+gram.T)
+        eigenvalues = np.linalg.eigvalsh(symmetric_gram)
+        if eigenvalues[0] < -count*symmetry_tolerance:
+            raise ValueError("fine pressure Gram must be positive semidefinite")
+        B = self.as_array()
+        return B.T @ support, B.T @ weighted_gap, B.T @ gram @ B
+
+    def transform_derivatives(
+        self,
+        fine_support_gradient: np.ndarray,
+        fine_weighted_gap_gradient: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Transform assembled integral gradients with unchanged coordinates."""
+        count = len(self.fine_source_node_ids)
+        support = np.asarray(fine_support_gradient, dtype=float)
+        weighted_gap = np.asarray(fine_weighted_gap_gradient, dtype=float)
+        if (support.ndim != 2 or support.shape[0] != count
+                or weighted_gap.shape != support.shape
+                or not np.all(np.isfinite(support))
+                or not np.all(np.isfinite(weighted_gap))):
+            raise ValueError("fine mortar gradients have invalid shape or values")
+        B = self.as_array()
+        return B.T @ support, B.T @ weighted_gap
+
 
 def build_q4_source_macro_q1_pair_basis(
     ordered_faces: Iterable[tuple[int, int, int, int]],
