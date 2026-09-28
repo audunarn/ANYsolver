@@ -10416,3 +10416,10 @@ longitudinal refinement. The next mechanics work is the physically
 matched torque/shear and support interpretation of this same-law
 reference, followed by the registered growing-space mixed-system
 assessment. Do not select P0 or close F03/G0B from these diagnostics.
+
+Independent read-only mechanics review at `78568606` found no actionable
+defect in the completion or station-trace diagnostics. It checked the
+reviewed solid/deck/unit-field identities, unchanged E4 tangent,
+solid/native position and rotation row signs, fixed-action work parity,
+and the narrow interpretation above. This review is development
+scrutiny, not formal F03/G0B acceptance.
