@@ -16,16 +16,18 @@ response puts only `0.00482%` (Mx) and `0.5388%` (Fz) of its quadratic
 work in the element-reported completion operator. Same-action material
 station traces reproduce both component works and place the signed
 shell-work difference in all four P0 intervals, rather than one
-misassembled station. Independent review
+misassembled station. Fixed physical probes show a sign-changing Mx
+director difference near the bond, while Fz midpoint vertical response
+stays within about `1%` of the 3D plate across the sampled range.
+Independent review
 found no blocking algebra/sign defect in these diagnostics, and their
 solid input is now identity-guarded. **Remaining uncertainty:** Physical
 sided torque/shear transfer, shell/3D kinematic and support idealization,
 and growing-space mixed-system stability. **Next discriminator and
-action:** Compare the already saved same-action physical plate and E4
-trace/support responses at fixed physical locations before changing
-the law; the material-station comparison is complete, while physical
-support/torque/shear attribution and the registered growing-interface
-policy remain. Avoid another general axial or x/y refinement.
+action:** Use the saved solid fields for a mode-resolved physical
+torque/shear work check, then apply the registered growing-interface
+mixed-system criteria. The physical support and section idealization
+remain distinct. Avoid another general axial or x/y refinement.
 Advance B2 F09 independently. No automatic finer classical axial or
 x/y sweep follows. G0B/F03 remain open, G1 barred, formal F03 authority
 unconsumed; evidence and limitations follow.
@@ -10460,3 +10462,29 @@ same source fields and no new solve. A sharp rise only in the bond
 region directs review to the local trace/warping idealization; a
 similar relative difference throughout directs review to plate and
 support response. Neither outcome alone selects a multiplier space.
+
+**Matched bond-region probe and decision:** Source `2432603b` extends
+the same-action physical midpoint/director observations to `x=.9`
+and `.95 m` without another solid solve. The V1 integrated interval
+works remain byte-for-byte numerically unchanged. For Mx, native-minus-
+solid director `rx` is `−0.501/−0.469 µrad` at `.5/.75 m`, then
+`+1.127/−2.390 µrad` at `.9/.95 m`: a sign-changing local difference
+with `2.76%/−4.89%` relative values in the bond region. For Fz,
+native-minus-solid midpoint vertical displacement is
+`+0.473/+0.626/+0.664/+0.675 µm` across `.5/.75/.9/.95 m`, or about
+`1.23/1.13/1.01/0.98%` of the corresponding 3D value; director `ry`
+differs by less than `0.71%` at these four points. The V3 raw record
+`B3_E4_F03_C1_SHELL_TRACE_ACTION_DEV_V3.json` has SHA256
+`ba9776e6c7cfce61b9a22cd1ed7c2dd70eb70e1cd96d1ad5b8c2d3b349ba6ffc`;
+the focused work/probe test passes. These centerline values do not
+explain all width-integrated work; relative comparisons to near-zero
+components are avoided. Together with the saved face-fit and channel
+work evidence, the Mx path warrants a review of local rotational trace
+and section/width warping, while the Fz work gap needs its axial-force
+and bending-couple transfer shape checked. A global support or E4
+equation defect is not established. Stop additional generic x or
+classical axial refinement. Use the existing 24 solid fields for a
+mode-resolved physical torque/shear work check, then apply the
+registered growing-space mixed-system criteria. The material-line law
+and multiplier policy remain candidates, not selections; F03/G0B
+remain open and G1 barred.
