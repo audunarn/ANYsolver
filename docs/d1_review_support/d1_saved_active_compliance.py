@@ -45,11 +45,14 @@ parser.add_argument(
 )
 parser.add_argument("--structural-energy", action="store_true")
 parser.add_argument("--enriched-source-x2", action="store_true")
+parser.add_argument("--enriched-source-x4", action="store_true")
 parser.add_argument("--output", type=Path)
 args = parser.parse_args()
-if args.structural_energy and args.enriched_source_x2:
+enriched_source = args.enriched_source_x2 or args.enriched_source_x4
+if sum((args.structural_energy, args.enriched_source_x2,
+        args.enriched_source_x4)) > 1:
     parser.error("select one pressure diagnostic")
-if ((args.structural_energy or args.enriched_source_x2)
+if ((args.structural_energy or enriched_source)
         and (args.output is None or args.output.exists())):
     parser.error("selected diagnostic requires a new --output path")
 started = time.perf_counter()
@@ -86,7 +89,7 @@ np.testing.assert_allclose(base.state.normalized_gap,
                            rtol=0.0, atol=1e-9)
 geometry_seconds = time.perf_counter()-started
 
-if not (args.structural_energy or args.enriched_source_x2):
+if not (args.structural_energy or enriched_source):
     structural_tangent = _assemble_nonlinear_system(
         model, pose, {}, 5, tangent=True, kinematics="von_karman",
         require_full_coordinates=True,
@@ -109,10 +112,11 @@ free_coordinates = np.setdiff1d(np.arange(transform.shape[1]),
 physical_transform = transform[:, free_coordinates]
 active = np.flatnonzero(pressure > 0.0)
 assert len(active) == certificate["active_pressure_dofs"]
-if args.enriched_source_x2:
+if enriched_source:
     # Keep the physical pressure field fixed while enriching only source
     # structural virtual displacements. No coupled fine-mesh solve occurs.
-    fine_columns = 2*saved["columns"]
+    refinement = 4 if args.enriched_source_x4 else 2
+    fine_columns = refinement*saved["columns"]
     fine_model, fine_definition, fine_settings, _program = build_case(
         fine_columns, source_rows=saved["source_rows"],
         source_y_profile=saved["source_y_profile"],
@@ -124,6 +128,7 @@ if args.enriched_source_x2:
         total_force_n=saved["total_downward_force_n"],
         steps_per_segment=saved["steps_per_segment"],
         four_phase=saved["four_phase"],
+        offline_structural_reference_64=args.enriched_source_x4,
     )
     fine_model.apply_boundary_conditions()
     fine_manager = GeneralS3PatchManager(
@@ -142,45 +147,51 @@ if args.enriched_source_x2:
     pose_prolongation = sparse.lil_matrix((fine_pose.size, pose.size))
     for row in range(saved["source_rows"]+1):
         for column in range(fine_stride):
-            left = column//2
+            left = column//refinement
+            fraction = (column % refinement)/refinement
             first = 1+row*coarse_stride+left
             coarse_indices = coarse_dofs.get_node_dofs(first)
             value = np.asarray(pose[coarse_indices])
-            if column % 2:
+            if fraction:
                 second = first+1
                 second_indices = coarse_dofs.get_node_dofs(second)
-                value = 0.5*(value+pose[second_indices])
+                value = (1.0-fraction)*value+fraction*pose[second_indices]
             node = 1+row*fine_stride+column
             fine_indices = fine_dofs.get_node_dofs(node)
             fine_pose[fine_indices] = value
             for component, fine_dof in enumerate(fine_indices):
                 pose_prolongation[fine_dof, coarse_indices[component]] = (
-                    0.5 if column % 2 else 1.0)
-                if column % 2:
-                    pose_prolongation[fine_dof, second_indices[component]] = 0.5
+                    1.0-fraction)
+                if fraction:
+                    pose_prolongation[fine_dof, second_indices[component]] = (
+                        fraction)
     pose_prolongation = pose_prolongation.tocsr()
     coarse_source, _coarse_target = manager._positions(pose)
     fine_source, fine_target = fine_manager._positions(fine_pose)
-    expected_source = np.asarray([
-        coarse_source[row*coarse_stride+column//2]
-        if column % 2 == 0 else 0.5*(
-            coarse_source[row*coarse_stride+column//2]
-            + coarse_source[row*coarse_stride+column//2+1])
-        for row in range(saved["source_rows"]+1)
-        for column in range(fine_stride)
-    ])
+    expected_source = []
+    for row in range(saved["source_rows"]+1):
+        for column in range(fine_stride):
+            left = row*coarse_stride+column//refinement
+            fraction = (column % refinement)/refinement
+            value = (1.0-fraction)*coarse_source[left]
+            if fraction:
+                value = value+fraction*coarse_source[left+1]
+            expected_source.append(value)
+    expected_source = np.asarray(expected_source)
     geometry_error = float(np.max(np.linalg.norm(
         fine_source-expected_source, axis=1)))
     matrix = np.zeros((fine_source_count, coarse_source_count))
     for row in range(saved["source_rows"]+1):
         for column in range(fine_stride):
             index = row*fine_stride+column
-            coarse_index = row*coarse_stride+column//2
-            if column % 2:
-                matrix[index, coarse_index:coarse_index+2] = 0.5
+            coarse_index = row*coarse_stride+column//refinement
+            fraction = (column % refinement)/refinement
+            if fraction:
+                matrix[index, coarse_index:coarse_index+2] = (
+                    1.0-fraction, fraction)
             else:
                 matrix[index, coarse_index] = 1.0
-    anchors = tuple(1+row*fine_stride+2*column
+    anchors = tuple(1+row*fine_stride+refinement*column
                     for row in range(saved["source_rows"]+1)
                     for column in range(coarse_stride))
     basis = PressureBasis(
@@ -388,6 +399,38 @@ if args.enriched_source_x2:
             coarse_work, coarse_energy)
         fine_c, fine_min, fine_residual = compliance(
             fine_work, fine_energy)
+        singular_values = linalg.svdvals(prolongation)
+        if singular_values[-1] <= 1e-10*singular_values[0]:
+            raise AssertionError("admissible prolongation is rank deficient")
+        exact_restricted_work = fine_work @ prolongation
+        restricted_c, restricted_min, restricted_residual = compliance(
+            exact_restricted_work, restricted_energy)
+        metric_bridge_c, _bridge_min, _bridge_residual = compliance(
+            coarse_work, restricted_energy)
+        bridge_error = float(np.linalg.norm(
+            restricted_c-metric_bridge_c, ord="fro")
+            /max(np.linalg.norm(restricted_c, ord="fro"), 1e-30))
+        fine_diagonal = np.sqrt(np.diag(fine_c))
+        enrichment_defect = ((fine_c-restricted_c)
+                             /np.outer(fine_diagonal, fine_diagonal))
+        enrichment_psd_minimum = float(np.linalg.eigvalsh(
+            0.5*(enrichment_defect+enrichment_defect.T))[0])
+        if enrichment_psd_minimum < -1e-8:
+            record["status"] = "development_enriched_shell_projector_non_success"
+
+        def generalized_range(numerator, denominator):
+            diagonal = np.sqrt(np.diag(denominator))
+            scale = np.outer(diagonal, diagonal)
+            normalized_denominator = denominator/scale
+            minimum = float(np.linalg.eigvalsh(
+                0.5*(normalized_denominator
+                     +normalized_denominator.T))[0])
+            if minimum <= 1e-11:
+                raise AssertionError("active reference compliance is singular")
+            values = linalg.eigvalsh(numerator/scale,
+                                     normalized_denominator)
+            return [float(values[0]), float(values[-1])]
+
         record.update({
             "coarse_free_coordinates": int(coarse_energy.shape[0]),
             "fine_free_coordinates": int(fine_energy.shape[0]),
@@ -395,6 +438,23 @@ if args.enriched_source_x2:
             "fine_metric_scaled_minimum_eigenvalue": fine_min,
             "coarse_response_relative_residual": coarse_residual,
             "fine_response_relative_residual": fine_residual,
+            "common_metric": {
+                "prolongation_minimum_singular_ratio": float(
+                    singular_values[-1]/singular_values[0]),
+                "restricted_energy_scaled_minimum_eigenvalue":
+                    restricted_min,
+                "restricted_response_relative_residual":
+                    restricted_residual,
+                "pressure_work_bridge_compliance_relative": bridge_error,
+                "fine_minus_restricted_scaled_minimum_eigenvalue":
+                    enrichment_psd_minimum,
+                "settled_active_enrichment_ratio_range": generalized_range(
+                    restricted_c[np.ix_(active, active)],
+                    fine_c[np.ix_(active, active)]),
+                "settled_active_metric_ratio_range": generalized_range(
+                    coarse_c[np.ix_(active, active)],
+                    metric_bridge_c[np.ix_(active, active)]),
+            },
         })
         for name, rows in (("full_supported", np.arange(len(support))),
                            ("settled_active", active)):

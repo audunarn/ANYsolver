@@ -1,0 +1,108 @@
+{
+  "status": "development_enriched_shell_energy_non_nested",
+  "source_commit": "6333ec9568cbccf09d4914dbf8642cce23fedd20",
+  "probe_sha256": "2ced0c457662d7804fab5e168fb5f030785d7b99f37fcfeaacd92765412f530d",
+  "saved_source_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "saved_runtime_identity": {
+    "python": "3.14.2",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py",
+    "compiled_bjet_mul_enabled": false
+  },
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "coarse_source_cells": [
+    16,
+    8
+  ],
+  "fine_source_cells": [
+    64,
+    8
+  ],
+  "pressure_modes": 153,
+  "settled_active_modes": 48,
+  "source_skin_interpolation_error_m": 2.220513810852149e-16,
+  "pressure_support_l2_relative": 1.7878828778735462e-13,
+  "normalized_gap_maximum_error_m": 1.7658942884357653e-17,
+  "reference_overlap_area_relative_error": 5.575786745894619e-14,
+  "constraint_orthonormality_relative": 0.0,
+  "structural_prolongation_reconstruction_relative": 0.0,
+  "prolongated_pressure_work_relative": 7.671456140578799e-10,
+  "prolongated_structural_energy_relative": 0.047578067982543465,
+  "coarse_free_coordinates": 295,
+  "fine_free_coordinates": 1159,
+  "coarse_metric_scaled_minimum_eigenvalue": 0.0016688263429592803,
+  "fine_metric_scaled_minimum_eigenvalue": 0.00012608769447719172,
+  "coarse_response_relative_residual": 5.375173902691149e-15,
+  "fine_response_relative_residual": 6.002671424196588e-14,
+  "common_metric": {
+    "prolongation_minimum_singular_ratio": 0.5990463494698693,
+    "restricted_energy_scaled_minimum_eigenvalue": 0.001600534213424135,
+    "restricted_response_relative_residual": 5.6012337662836674e-15,
+    "pressure_work_bridge_compliance_relative": 3.4337152996446986e-12,
+    "fine_minus_restricted_scaled_minimum_eigenvalue": 2.711745018613057e-10,
+    "settled_active_enrichment_ratio_range": [
+      0.7943599344024795,
+      0.9999403704927153
+    ],
+    "settled_active_metric_ratio_range": [
+      0.9999999999997697,
+      1.000000000000142
+    ]
+  },
+  "full_supported": {
+    "modes": 153,
+    "beta_reference_squared": -7.84979332437837e-15,
+    "reference_scaled_minimum_eigenvalue": 6.165498946547341e-06,
+    "weakest_pressure_mode_ij": [
+      [
+        0,
+        8
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        2,
+        8
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        0,
+        7
+      ]
+    ]
+  },
+  "settled_active": {
+    "modes": 48,
+    "beta_reference_squared": 0.7943599344024764,
+    "reference_scaled_minimum_eigenvalue": 0.0035860020566345356,
+    "weakest_pressure_mode_ij": [
+      [
+        16,
+        8
+      ],
+      [
+        13,
+        8
+      ],
+      [
+        15,
+        8
+      ],
+      [
+        12,
+        8
+      ],
+      [
+        14,
+        8
+      ]
+    ]
+  },
+  "elapsed_seconds": 55.18832919999841,
+  "peak_process_working_set_mb": 375.279616
+}

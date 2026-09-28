@@ -104,6 +104,25 @@ detects all supported modes at this pose, but the ratio is only a finite
 reference comparison. Mesh-uniform stability, partial-front convergence,
 two-body work and coupled acceptance remain open.
 
+The [component attribution](d1_review_support/d1_shell_energy_component_discriminator_20260929.md)
+locates the 3.806% restricted stiffness mismatch in the qualified E4-PL
+condensed core, not its explicit PL/hourglass terms. A separately reviewed
+[same-energy decomposition](d1_review_support/d1_shell_common_metric_detection_20260929.md)
+finds that the saved 48-mode active pressure compliance is essentially
+unchanged by that stiffness mismatch, while added fine structural motions
+give a restricted-to-fine squared response ratio of 0.854752–0.999958.
+These fixed-pose results do not provide reference convergence or a
+mesh-family pressure-space stability verdict.
+
+A [second offline structural reference](d1_review_support/d1_shell_second_reference_20260929.md)
+holds the saved 16×8 pose and Q1 pressure space fixed while enriching
+source displacements to 64×8. Its active same-energy minimum is 0.794360,
+down from 0.854752 on the 32×8 reference, with work/geometry and projector
+checks intact. Independent review confirms the first numerical reference
+is not saturated. The E4-PL energy is non-Galerkin and no 32×8-to-64×8
+common-energy comparison exists, so this is not a convergence rate or a
+mesh-uniform stability verdict. No further automatic refinement is scheduled.
+
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
 bound at all eight accepted poses. Local and installed fields match; a forced

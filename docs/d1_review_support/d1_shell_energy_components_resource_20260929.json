@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.589003100001719,
+  "peak_process_tree_memory_mb": 203.231232,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_shell_energy_components",
+    "--saved",
+    "docs/d1_review_support/d1_saved_16x8_near_rim_field_20260928.json",
+    "--output",
+    "docs/d1_review_support/d1_shell_energy_components_20260929.json"
+  ],
+  "log": "reports\\d1_shell_energy_components_retry_log_dev_20260929.txt"
+}
