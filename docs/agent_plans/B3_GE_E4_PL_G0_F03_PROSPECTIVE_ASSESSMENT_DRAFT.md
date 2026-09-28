@@ -177,6 +177,59 @@ equivalent-unit covariance. An arbitrary rescaling of even one untested
 multiplier mode is forbidden because it would rescale the quotient without
 changing candidate mechanics.
 
+An independent mathematical review identifies a strict limit on the present
+reference evidence. Let \(A_f=B_f^TJ\) be the complete fine-grid action and
+\(A_c=T^TA_f\) its exactly transported coarse action. Even for positive
+physical operators, with \(G=T^TK_fT\), the compliance difference decomposes as
+\[
+A_f^TK_f^{-1}A_f-A_c^TK_c^{-1}A_c
+=\underbrace{A_f^TK_f^{-1}A_f-A_c^TG^{-1}A_c}_{\text{nonnegative Ritz gain}}
++\underbrace{A_c^T(G^{-1}-K_c^{-1})A_c}_{\text{indefinite consistency defect}}.
+\]
+The measured non-isometry leaves the second term uncontrolled. More strongly,
+three apparently converged levels do not bound the unobserved tail even if
+\(G=K_c\): take \(V=\ell^2\), \(K=I\), three nested reference spaces that
+contain \(e_1,e_2\) but omit \(e_M\), and the same physical action
+\(A(a,b)=a e_1+b(\varepsilon e_2+e_M)\). All three observed compliances are
+\(\operatorname{diag}(1,\varepsilon^2)\), while the complete-space compliance is
+\(\operatorname{diag}(1,1+\varepsilon^2)\). The relative missed work in the
+second action is \(1/\varepsilon^2\), unbounded as \(\varepsilon\to0\).
+This is a mathematical counterexample, not a finding that the E4/B3 model has
+that hidden mode. It means three-grid agreement, exact work transport, and
+the existing 2→4→8 energy maps cannot justify a formal uniform reference
+error bound or a candidate score.
+
+The quotient remains a useful diagnostic if its positivity and gauge contract
+hold. Formal reference-compliance assessment would require a
+candidate-independent same-law enclosure \(L\preceq C_*\preceq U\) on the
+complete admitted action space modulo a proved physical gauge, with a
+precommitted bound on
+\(\sup_{\lambda\notin\ker L}\lambda^T(U-L)\lambda/\lambda^TL\lambda\).
+The enclosure needs a guaranteed residual/dual majorant or another proved
+tail estimate; differences between a few discrete levels are diagnostics,
+not that certificate. If no certificate can be justified, keep the quotient
+developmental and independently review a direct physically normed mixed
+assessment instead. The separate physical transfer, locking, ratio,
+refinement, and mixed-system requirements remain in force.
+
+The bounded straight, supported 2→4 and 4→8 development screen evaluated
+this split on the complete A+B density span and each candidate space. The
+union has a numerically null coarse action that becomes nonzero after
+refinement; A and B separately remain numerically full row rank. This warns
+against treating the union's coarse model as an adequate reference and does
+not demonstrate an unsupported A or B row. Within each individual space, the
+largest Ritz gains are 0.812–0.919 of fine compliance, while the most negative
+consistency eigenvalues are −0.748 to −0.946; coarse/fine relative compliance
+eigenvalues span 0.312–1.492. Opposing terms can mask error. Independent
+read-only review found the split and union basis correct on these fixtures,
+but numerical near-nulls are not gauge proofs and these finite-grid spectra
+are not a continuum-tail certificate. Further grid sampling is not the next
+discriminator. First derive whether a computable nonconforming consistency
+bound and guaranteed Ritz-tail majorant are feasible for the declared E4/B3
+law. If not, keep this quotient developmental while a physical multiplier
+norm and signed mixed-system criterion are prospectively reviewed; neither
+route may silently replace registered transfer or convergence checks.
+
 With justified positive supported-space bases \(P_{\rm ref}\) and \(P_h\),
 identify \(N_{\rm ref}=\ker(P_{\rm ref}^TB_{\rm ref}^TJ_h)\) and
 \(N_h=\ker(P_h^TB_h^T)\). Verify that each reference action annihilates any

@@ -19,37 +19,20 @@ fallback is dirty, unrun and outside this task's edits.
 
 ## Working behavior
 
-- The sparse GE development owner solves multiple Q4/S3 shells and native B3
-  members with point connections, retained coordinates, elastic steps,
-  physical recovery, atomic rejection/cancellation and restart. A replaceable
-  experimental L1 operator reaches the owner on a bounded matching line; it
-  is not qualified nonmatching coupling. The 512-Q4/16-B3 panel ran in 36.2 s
-  for A/B with sampled RSS ≤291 MB, not G5 qualification.
-- Linear and finite solve/restart acceptance now use frozen work-conjugate
-  equilibrium scaling and reference-row-scaled compatibility, covering point
-  and experimental weak-line rows. Focused source checks pass 29/29; the
-  installed wheel from `3a9e93c6` passes five GE and seven weak-line checks
-  at `.qualification/b3-ge-e4-pl/r7-ge-scale-dev-20260928-v1/`.
-  Independent read-only review
-  found no code blocker, but the SI floor and RMS-node length are not general
-  mesh/energy-unit invariants; weak L1 rows are not pointwise seam gaps.
-- The separate physical B2 profile executes 1/10/100 compatible load cases,
-  selected recovery and eligible factorization reuse. Physical-range admission,
-  attachment, mass/prestress, large-scale and installed qualification remain
-  open. Existing public B2 behavior is unchanged.
-- The experimental multi-Q4/B2 point panel now bounds its dense supported-row
-  audit and uses sparse structural matching before the numerical KKT factor
-  on larger layouts. Focused source and installed-wheel checks pass 3/3 at
-  `.qualification/b3-ge-e4-pl/r7-b2-rank-dev-20260928-v2/`; this does not
-  establish large-model performance or numerical rank under every backend.
-- ANYfem has an experimental panel consumer/save-reopen path distinct from
-  ordinary projects. The current solver and consumer wheels passed combined
-  installed GE/ANYfem and B2 batch workflows (5 checks), plus mixed Q4/S3 and
-  all-S3 installed GE paths (6 checks). Exact identities, an initial harness
-  error, and an independent read-only review with no code blocker are at
+- The sparse GE owner now solves multi-Q4/S3/native-B3 point panels with
+  retained variables, atomic elastic stepping, recovery, and restart. Frozen
+  work/row-scaled checks cover linear and finite trials. A replaceable L1
+  operator works on a bounded matching line, not qualified nonmatching lines.
+- The separate physical B2 profile batches 1/10/100 cases with selected
+  recovery and factorization reuse. Its experimental multi-Q4 point-panel
+  audit bounds dense work. Physical range, attachments, mass/prestress and
+  scale remain open; historical B2 is unchanged.
+- ANYfem has a separate experimental save/reopen consumer. The current solver
+  and consumer wheels passed 11 combined, mixed Q4/S3 and all-S3 installed
+  checks; independent read-only review found no code blocker. See
   `.qualification/b3-ge-e4-pl/r7-combined-integration-dev-20260928-v1/`.
-  The experimental first integration milestone is verified; these are not
-  G0/G1 acceptance or final G6 artifacts.
+  This closes the *experimental integration milestone only*. Earlier scaling
+  and B2 audit checks are preserved in versioned `.qualification` directories.
 
 ## Connection facts and remaining uncertainty
 
@@ -84,11 +67,28 @@ successful probes, hashes and review limits remain preserved.
 
 ## Next discriminating action
 
-Review a candidate-independent reference-error rule on the full
-multiplier-action subspace, accounting for non-isometric primal transport,
-supported nullspaces and native retained rotations. Do not score formal F03
-or select A/B before this contract and the required physical/mixed-system
-checks. Continue independent foundations and GE/B2 lifecycle work. New
+Independent review proves that exact work transport and three reference
+levels cannot bound the unseen same-law compliance tail; the [F03 draft](B3_GE_E4_PL_G0_F03_PROSPECTIVE_ASSESSMENT_DRAFT.md)
+records the counterexample. The existing supported 2→4 and 4→8 grids now
+decompose admitted action compliance into nonnegative Ritz gain and indefinite
+coarse/fine energy-consistency defect.
+The bounded union A+B screen found Ritz spectra 0.162–1.000 and
+0.096–1.000, while consistency spans −1.069–0 and −2.025–0 relative to the
+fine action compliance. The union has a numerically null coarse action on
+both pairs that becomes visible on the fine grid; each individual A/B action
+matrix remains full row rank numerically. This is cross-space reference
+resolution, not evidence that either candidate has an unsupported mode.
+The targeted per-space split confirms a material consistency defect in both
+A and B. Ritz maxima are 0.812–0.919 and negative consistency minima are
+−0.748 to −0.946 relative to fine
+compliance; coarse/fine ratios span 0.312–1.492. Their cancellation rules out
+a simple finite-grid agreement or monotone reference-error rule. Independent
+review found no formula defect. Next decide, by derivation rather than another
+grid sweep, whether a computable same-law enclosure can bound both the
+nonconforming consistency defect and Ritz tail with exact gauges. If not,
+develop a prospectively reviewed physical multiplier norm and signed mixed
+criterion. Neither path selects A/B or scores formal F03 yet. Continue
+independent foundations and GE/B2 lifecycle work. New
 external sided output needs a specific discriminating hypothesis; stop
 refining the low-precision saved S4 result. Early runs in this slice exhausted
 600 seconds during Numba cache creation denied by the sandbox; a disposable
