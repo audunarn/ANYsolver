@@ -11,7 +11,8 @@ from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts.b3_e4_f03_plate_patch_work import raw_e4_tangent
 from scripts.b3_e4_f03_l1_physical_rail import (
-    FlatQ4PhysicalRail, RailL1LogConnection, transverse_shape_integrals,
+    FlatQ4PhysicalRail, RailL1LogConnection, SegmentedRailWeakWork,
+    transverse_shape_integrals,
 )
 
 
@@ -416,6 +417,146 @@ def test_rail_transfers_physical_wrench_without_shell_drilling_completion(
         np.testing.assert_allclose(
             displacement@physical[np.ix_(free, free)]@displacement,
             physical_work, rtol=2e-12, atol=1e-16)
+
+
+def _segmented_rail():
+    beam = build(4, z_offset=.0675, assemble=False)
+    y = np.array((-.1, 0., .1))
+    reference = np.array([[(x, value, 0.) for value in y]
+                          for x in (.5, .75, 1.)])
+
+    def port_at(station):
+        element, cell, weight, _ = beam._locate(station)
+        return NativeHalfCellSpatialPort(
+            beam.context, element, cell, weight)
+
+    line = SegmentedRailWeakWork.at_reference(
+        reference, y, (-.05, .05), .035, port_at,
+        beam.context.initial.mechanical)
+    return line, beam
+
+
+def test_segmented_rail_constant_yaw_density_cancels_interior_shell_work():
+    line, beam = _segmented_rail()
+    density = np.zeros((4, 6))
+    density[:, 5] = 1.
+    work, gaps, gradient, hessian = line.work_tangent(
+        np.zeros((3, 3, 6)), beam.context.initial.mechanical, density)
+    assert work == pytest.approx(0., abs=1e-13)
+    np.testing.assert_allclose(gaps, 0., rtol=0., atol=2e-14)
+    np.testing.assert_allclose(line.weights.sum(), .5, rtol=0., atol=2e-15)
+    shell = gradient[:54].reshape(3, 3, 6)
+    expected = np.array((.125, .75, .125))
+    np.testing.assert_allclose(shell[:, :, 1],
+                               np.array((expected, np.zeros(3), -expected)),
+                               rtol=0., atol=2e-13)
+    np.testing.assert_array_equal(shell[:, :, 5], 0.)
+    assert np.linalg.norm(hessian-hessian.T, ord=np.inf) < 2e-9
+    nodal_count = beam.context.nodal_count
+    beam_rotation_z = sum(
+        gradient[54+nodal_count+24*element+3*cell+2]
+        for element in range(len(beam.context.elements)) for cell in (0, 1))
+    assert beam_rotation_z == pytest.approx(.5, abs=2e-13)
+
+
+def test_segmented_rail_constant_density_has_line_wrench_and_shell_compliance():
+    line, beam = _segmented_rail()
+    xs = np.array((0., .25, .5, .75, 1.))
+    ys = np.array((-.1, 0., .1))
+    _, physical = raw_e4_tangent(xs, ys, thickness=.035)
+    free = np.array([6*(j*len(xs)+i)+axis
+                     for j in range(len(ys)) for i in range(1, len(xs))
+                     for axis in range(5)])
+    factor = linalg.cho_factor(physical[np.ix_(free, free)], lower=True)
+    reference = np.array([[(x, y, 0.) for y in ys]
+                          for x in (.5, .75, 1.)])
+    mean_contact = np.array((.75, 0., .0175))
+    length = .5
+    for density in (np.array((0., 0., 0., 1., 0., 0.)),
+                    np.array((0., 0., 0., 0., 1., 0.)),
+                    np.array((0., 0., 0., 0., 0., 1.)),
+                    np.array((2., -3., 5., 1., 2., -1.))):
+        _, gaps, gradient, _ = line.work_tangent(
+            np.zeros((3, 3, 6)), beam.context.initial.mechanical,
+            np.tile(density, (4, 1)))
+        np.testing.assert_allclose(gaps, 0., rtol=0., atol=2e-14)
+        local_shell = gradient[:54].reshape(3, 3, 6)
+        force = np.zeros(physical.shape[0])
+        for i in range(3):
+            for j in range(3):
+                node = j*len(xs)+(i+2)
+                force[6*node:6*node+6] += local_shell[i, j]
+        np.testing.assert_array_equal(force[5::6], 0.)
+        nodal = local_shell.reshape(-1, 6)
+        shell_force = nodal[:, :3].sum(axis=0)
+        shell_moment = np.sum(
+            np.cross(reference.reshape(-1, 3), nodal[:, :3])+
+            nodal[:, 3:], axis=0)
+        np.testing.assert_allclose(shell_force, -length*density[:3],
+                                   rtol=0., atol=3e-13)
+        np.testing.assert_allclose(
+            shell_moment,
+            -length*(density[3:]+np.cross(mean_contact, density[:3])),
+            rtol=0., atol=5e-13)
+        context = beam.context
+        native = gradient[54:]
+        nodal = native[:context.nodal_count].reshape(-1, 6)
+        native_points = (context.initial.mechanical.positions+
+                         context.initial.mechanical.position_low)
+        native_force = nodal[:, :3].sum(axis=0)
+        native_moment = np.sum(
+            np.cross(native_points, nodal[:, :3])+nodal[:, 3:], axis=0)
+        for element in range(len(context.elements)):
+            base = context.nodal_count+24*element
+            native_moment += native[base:base+6].reshape(2, 3).sum(axis=0)
+            np.testing.assert_array_equal(native[base+6:base+24], 0.)
+        np.testing.assert_allclose(shell_force+native_force, 0.,
+                                   rtol=0., atol=3e-13)
+        np.testing.assert_allclose(shell_moment+native_moment, 0.,
+                                   rtol=0., atol=5e-13)
+        displacement = linalg.cho_solve(factor, force[free])
+        assert float(force[free]@displacement) > 0.
+        full = np.zeros_like(force)
+        full[free] = displacement
+        reactions = physical@full-force
+        np.testing.assert_allclose(reactions[free], 0., rtol=0., atol=5e-7)
+        supported = reactions.reshape(-1, 6)
+        positions = np.array([(x, y, 0.) for y in ys for x in xs])
+        np.testing.assert_allclose(
+            shell_force+supported[:, :3].sum(axis=0),
+            0., rtol=0., atol=5e-7)
+        np.testing.assert_allclose(
+            shell_moment+np.sum(np.cross(positions, supported[:, :3])+
+                                supported[:, 3:], axis=0),
+            0., rtol=0., atol=5e-7)
+
+
+def test_segmented_rail_shared_node_work_and_curvature_use_one_parent():
+    line, beam = _segmented_rail()
+    rng = np.random.default_rng(703)
+    shell = rng.normal(scale=.035, size=(3, 3, 6))
+    native_step = rng.normal(scale=.01, size=beam.context.count)
+    native_step[:6] = 0.
+    state = beam.context.advance(beam.context.initial.mechanical, native_step)
+    density = rng.normal(scale=.6, size=(4, 6))
+    work, gaps, gradient, hessian = line.work_tangent(shell, state, density)
+    assert np.isfinite(work) and np.isfinite(gaps).all()
+    shell_direction = rng.normal(scale=.02, size=shell.shape)
+    beam_direction = rng.normal(scale=.002, size=beam.context.count)
+    beam_direction[:6] = 0.
+    direction = np.r_[shell_direction.ravel(), beam_direction]
+    h = 1e-4
+    plus = line.work_tangent(
+        shell+h*shell_direction,
+        beam.context.advance(state, h*beam_direction), density)[0]
+    minus = line.work_tangent(
+        shell-h*shell_direction,
+        beam.context.advance(state, -h*beam_direction), density)[0]
+    np.testing.assert_allclose(gradient@direction, (plus-minus)/(2*h),
+                               rtol=3e-8, atol=3e-9)
+    np.testing.assert_allclose(direction@hessian@direction,
+                               (plus-2*work+minus)/h**2,
+                               rtol=3e-4, atol=2e-5)
 
 
 @pytest.mark.parametrize("shell_scale,native_scale",

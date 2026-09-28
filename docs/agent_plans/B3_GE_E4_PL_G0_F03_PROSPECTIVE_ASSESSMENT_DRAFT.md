@@ -308,6 +308,11 @@ longitudinal slope \(\partial_s\bar u(s_0)\) by the shell H1 norm. A
 single-station rail operator is a derivative/work prototype only; the
 regularity argument applies to its material-line integral against an L2
 moment density, with the declared longitudinal measure and segmentation.
+An implementation evaluates only a compiled finite-dimensional multiplier
+field at quadrature stations: generic L2 equivalence classes have no defined
+point values. Quadrature-defined discrete work therefore needs its own
+basis, integration-error and mesh-uniform work-continuity checks before the
+continuum L2 estimate can support an F03 assessment.
 For a uniform width \(w\), the bound grows as \(w^{-1/2}\), so width must be
 a declared positive physical connection measure, not a mesh-dependent tuning
 parameter. This candidate changes the shell-side trace and must re-pass

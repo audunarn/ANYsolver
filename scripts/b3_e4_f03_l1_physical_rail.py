@@ -327,3 +327,88 @@ class RailL1LogConnection:
         hessian[np.ix_(indices, indices)] = work.hessian
         return (work.value, np.array([gap.value for gap in gaps]),
                 residual, hessian)
+
+
+@dataclass(frozen=True)
+class SegmentedRailWeakWork:
+    """Two material segments with exact shared-node station-work assembly.
+
+    Two Gauss stations per segment define this bounded discrete weak action.
+    The line measure is fixed reference arclength and the four six-component
+    values are finite-dimensional density samples. They do not define point
+    values of an arbitrary L2 equivalence class. No production multiplier
+    basis, norm, or quadrature-error contract is selected.
+    """
+
+    connections: tuple[RailL1LogConnection, ...]
+    weights: np.ndarray
+    stations: np.ndarray
+    transverse_nodes: int
+
+    @classmethod
+    def at_reference(cls, reference: np.ndarray, y_cuts: np.ndarray,
+                     bounds: tuple[float, float], thickness: float,
+                     port_at, beam_state, *,
+                     beam_offset=(0., 0., -.05),
+                     expected_reference_offset_shell=(0., 0., 0.)):
+        y = np.asarray(y_cuts, dtype=float)
+        if y.ndim != 1 or len(y) < 2:
+            raise ValueError("transverse material cuts required")
+        ref = _owned(reference, (3, len(y), 3))
+        cuts = ref[:, 0, 0]
+        if not np.all(np.diff(cuts) > 0.):
+            raise ValueError("two ordered rail material segments required")
+        abscissae = (.5-.5/np.sqrt(3.), .5+.5/np.sqrt(3.))
+        connections, weights, stations = [], [], []
+        for segment in range(2):
+            rail = FlatQ4PhysicalRail.from_reference(
+                ref[segment:segment+2], y, bounds, thickness)
+            length = cuts[segment+1]-cuts[segment]
+            for station in abscissae:
+                physical_station = cuts[segment]+length*station
+                connections.append(RailL1LogConnection.at_reference(
+                    rail, np.zeros((2, len(y), 6)),
+                    port_at(float(physical_station)), beam_state,
+                    station=float(station), beam_offset=beam_offset,
+                    expected_reference_offset_shell=
+                    expected_reference_offset_shell))
+                weights.append(.5*length)
+                stations.append(physical_station)
+        context = connections[0].port.context
+        if any(c.port.context is not context for c in connections):
+            raise ValueError("one native retained context required")
+        return cls(tuple(connections),
+                   _owned(weights, (4,)), _owned(stations, (4,)), len(y))
+
+    def work_tangent(self, shell_total: np.ndarray, beam_state,
+                     multiplier_samples: np.ndarray
+                     ) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
+        shell = _owned(shell_total, (3, self.transverse_nodes, 6))
+        density = _owned(multiplier_samples, (4, 6))
+        context = self.connections[0].port.context
+        shell_size = shell.size
+        size = shell_size+context.count
+        gradient = np.zeros(size)
+        hessian = np.zeros((size, size))
+        gaps = np.empty((4, 6))
+        work = 0.
+        local_shell_size = 2*self.transverse_nodes*6
+        beam_indices = np.arange(shell_size, size)
+        for sample, connection in enumerate(self.connections):
+            segment = sample//2
+            local_work, gap, local_gradient, local_hessian = (
+                connection.work_tangent(
+                    shell[segment:segment+2], beam_state,
+                    self.weights[sample]*density[sample]))
+            shell_indices = np.arange(
+                segment*self.transverse_nodes*6,
+                (segment+2)*self.transverse_nodes*6)
+            indices = np.r_[shell_indices, beam_indices]
+            if len(indices) != len(local_gradient) or (
+                    local_hessian.shape != (len(indices), len(indices))):
+                raise AssertionError("shared rail/native scatter layout changed")
+            work += local_work
+            gaps[sample] = gap
+            gradient[indices] += local_gradient
+            hessian[np.ix_(indices, indices)] += local_hessian
+        return work, gaps, gradient, hessian
