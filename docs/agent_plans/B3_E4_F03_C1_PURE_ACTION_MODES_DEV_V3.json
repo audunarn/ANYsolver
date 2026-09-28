@@ -1,0 +1,472 @@
+{
+  "cases": {
+    "axial_Fx": {
+      "intervals": [
+        {
+          "component_work_J": {
+            "native_B3": 0.001739677620959004,
+            "native_E4": 0.0009919948359488112,
+            "solid_bar": 0.0017579564583333352,
+            "solid_plate": 0.0013248433333333354
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 0,
+          "native_B3_vs_solid_bar_relative": -0.010397775944724352,
+          "native_E4_vs_solid_plate_relative": -0.2512361190262926,
+          "x_interval_m": [
+            0.9,
+            0.925
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.0017515823828637516,
+            "native_E4": 0.0010071881713460793,
+            "solid_bar": 0.0018061204166666604,
+            "solid_plate": 0.0013475616666666621
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 1,
+          "native_B3_vs_solid_bar_relative": -0.03019623348456646,
+          "native_E4_vs_solid_plate_relative": -0.2525847267253699,
+          "x_interval_m": [
+            0.925,
+            0.9500000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.0018349157161971,
+            "native_E4": 0.001020997812085712,
+            "solid_bar": 0.0018574714583333353,
+            "solid_plate": 0.001360995000000002
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 2,
+          "native_B3_vs_solid_bar_relative": -0.012143250995885646,
+          "native_E4_vs_solid_plate_relative": -0.24981516310808594,
+          "x_interval_m": [
+            0.9500000000000001,
+            0.9750000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.0018468204781018618,
+            "native_E4": 0.0010386567210564522,
+            "solid_bar": 0.0019448177083333353,
+            "solid_plate": 0.0013563033333333352
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 3,
+          "native_B3_vs_solid_bar_relative": -0.05038890267790441,
+          "native_E4_vs_solid_plate_relative": -0.23420027398754162,
+          "x_interval_m": [
+            0.9750000000000001,
+            1.0
+          ]
+        }
+      ],
+      "resultant": 1000.0,
+      "resultant_unit": "N",
+      "uniform_component_work_J": {
+        "native_B3": 0.0017768800019113816,
+        "native_E4": 0.0009154086444625941,
+        "solid_bar": 0.0017891978515625,
+        "solid_plate": 0.0010115001770833333
+      },
+      "uniform_minus_uncoupled_interval_work_J": {
+        "native_B3": 0.0013285677395287743,
+        "native_E4": 0.0006617312981852782,
+        "solid_bar": 0.0013287999739583333,
+        "solid_plate": 0.0006746437187499998
+      },
+      "uniform_native_B3_vs_solid_bar_relative": -0.00688456541592708,
+      "uniform_native_E4_vs_solid_plate_relative": -0.09499902698763696
+    },
+    "bending_My": {
+      "intervals": [
+        {
+          "component_work_J": {
+            "native_B3": 0.005238095238196836,
+            "native_E4": 0.02215250070356813,
+            "solid_bar": 0.005225827083333339,
+            "solid_plate": 0.026886828571428607
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 0,
+          "native_B3_vs_solid_bar_relative": 0.002347600612853107,
+          "native_E4_vs_solid_plate_relative": -0.17608353678765332,
+          "x_interval_m": [
+            0.9,
+            0.925
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.005238095238196792,
+            "native_E4": 0.02250941737314785,
+            "solid_bar": 0.005369292499999979,
+            "solid_plate": 0.027364876190476096
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 1,
+          "native_B3_vs_solid_bar_relative": -0.02443473917712391,
+          "native_E4_vs_solid_plate_relative": -0.1774339771731951,
+          "x_interval_m": [
+            0.925,
+            0.9500000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.005523809523911123,
+            "native_E4": 0.022840143676600453,
+            "solid_bar": 0.00551370479166667,
+            "solid_plate": 0.027690780952380988
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 2,
+          "native_B3_vs_solid_bar_relative": 0.0018326574646732041,
+          "native_E4_vs_solid_plate_relative": -0.1751715592320069,
+          "x_interval_m": [
+            0.9500000000000001,
+            0.9750000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.005523809523911123,
+            "native_E4": 0.023309307083016425,
+            "solid_bar": 0.005708214166666672,
+            "solid_plate": 0.027720371428571464
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 3,
+          "native_B3_vs_solid_bar_relative": -0.03230513736369367,
+          "native_E4_vs_solid_plate_relative": -0.15912717320261238,
+          "x_interval_m": [
+            0.9750000000000001,
+            1.0
+          ]
+        }
+      ],
+      "resultant": 100.0,
+      "resultant_unit": "Nm",
+      "uniform_component_work_J": {
+        "native_B3": 0.00533333333343492,
+        "native_E4": 0.02051561888759249,
+        "solid_bar": 0.005340148515624999,
+        "solid_plate": 0.021759811309523806
+      },
+      "uniform_minus_uncoupled_interval_work_J": {
+        "native_B3": 0.003988095238171428,
+        "native_E4": 0.014839908335321686,
+        "solid_bar": 0.003976583606770832,
+        "solid_plate": 0.014905882738095233
+      },
+      "uniform_native_B3_vs_solid_bar_relative": -0.00127621585245008,
+      "uniform_native_E4_vs_solid_plate_relative": -0.05717845638609753
+    },
+    "torsion_Mx": {
+      "intervals": [
+        {
+          "component_work_J": {
+            "native_B3": 0.008073301565576362,
+            "native_E4": 0.01333758545482231,
+            "solid_bar": 0.00805217505729167,
+            "solid_plate": 0.016840742857142883
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 0,
+          "native_B3_vs_solid_bar_relative": 0.002623702059924904,
+          "native_E4_vs_solid_plate_relative": -0.20801679783589433,
+          "x_interval_m": [
+            0.9,
+            0.925
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.008073301565576292,
+            "native_E4": 0.01382828386535606,
+            "solid_bar": 0.008272885755208306,
+            "solid_plate": 0.017131333333333273
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 1,
+          "native_B3_vs_solid_bar_relative": -0.024125099214184487,
+          "native_E4_vs_solid_plate_relative": -0.19280749511483197,
+          "x_interval_m": [
+            0.925,
+            0.9500000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.008513663469152848,
+            "native_E4": 0.01403696679331972,
+            "solid_bar": 0.00849353084895834,
+            "solid_plate": 0.01735300952380955
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 2,
+          "native_B3_vs_solid_bar_relative": 0.0023703475683469755,
+          "native_E4_vs_solid_plate_relative": -0.19109323520741384,
+          "x_interval_m": [
+            0.9500000000000001,
+            0.9750000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.008513663469152848,
+            "native_E4": 0.013696292796756548,
+            "solid_bar": 0.008734758031250003,
+            "solid_plate": 0.017437171428571454
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 3,
+          "native_B3_vs_solid_bar_relative": -0.02531204199431214,
+          "native_E4_vs_solid_plate_relative": -0.21453471666197743,
+          "x_interval_m": [
+            0.9750000000000001,
+            1.0
+          ]
+        }
+      ],
+      "resultant": 100.0,
+      "resultant_unit": "Nm",
+      "uniform_component_work_J": {
+        "native_B3": 0.008220088866768506,
+        "native_E4": 0.01212222695910361,
+        "solid_bar": 0.008228916248860676,
+        "solid_plate": 0.013104938095238095
+      },
+      "uniform_minus_uncoupled_interval_work_J": {
+        "native_B3": 0.00614671823742736,
+        "native_E4": 0.008691031402212696,
+        "solid_bar": 0.006131831893066406,
+        "solid_plate": 0.008807297023809522
+      },
+      "uniform_native_B3_vs_solid_bar_relative": -0.0010727271763631974,
+      "uniform_native_E4_vs_solid_plate_relative": -0.07498785030442601
+    },
+    "transverse_Fz": {
+      "intervals": [
+        {
+          "component_work_J": {
+            "native_B3": 0.14612239583340123,
+            "native_E4": 1.1876610338562072,
+            "solid_bar": 0.14489989583333351,
+            "solid_plate": 1.1992783333333348
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 0,
+          "native_B3_vs_solid_bar_relative": 0.008436859067682434,
+          "native_E4_vs_solid_plate_relative": -0.009686908496743918,
+          "x_interval_m": [
+            0.9,
+            0.925
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.1583872767858316,
+            "native_E4": 1.252544044572993,
+            "solid_bar": 0.1570956249999995,
+            "solid_plate": 1.264323333333329
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 1,
+          "native_B3_vs_solid_bar_relative": 0.008222073567179855,
+          "native_E4_vs_solid_plate_relative": -0.009316674342535913,
+          "x_interval_m": [
+            0.925,
+            0.9500000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.17131733630970603,
+            "native_E4": 1.3197596225437713,
+            "solid_bar": 0.16995897916666677,
+            "solid_plate": 1.3317100000000013
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 2,
+          "native_B3_vs_solid_bar_relative": 0.007992264661152104,
+          "native_E4_vs_solid_plate_relative": -0.008973708582371454,
+          "x_interval_m": [
+            0.9500000000000001,
+            0.9750000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.18493936011930606,
+            "native_E4": 1.3893445653075172,
+            "solid_bar": 0.18351291666666686,
+            "solid_plate": 1.4014616666666684
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 3,
+          "native_B3_vs_solid_bar_relative": 0.007772986657011094,
+          "native_E4_vs_solid_plate_relative": -0.00864604551615844,
+          "x_interval_m": [
+            0.9750000000000001,
+            1.0
+          ]
+        }
+      ],
+      "resultant": 1000.0,
+      "resultant_unit": "N",
+      "uniform_component_work_J": {
+        "native_B3": 0.16475967261919616,
+        "native_E4": 1.2857315872156883,
+        "solid_bar": 0.16342319921874998,
+        "solid_plate": 1.2973839583333333
+      },
+      "uniform_minus_uncoupled_interval_work_J": {
+        "native_B3": 0.12346177455368085,
+        "native_E4": 0.9638997580731576,
+        "solid_bar": 0.12245648567708331,
+        "solid_plate": 0.972585625
+      },
+      "uniform_native_B3_vs_solid_bar_relative": 0.00817799068207714,
+      "uniform_native_E4_vs_solid_plate_relative": -0.008981436099005036
+    }
+  },
+  "classification": "pure P0 axial/shear/bending/torsion and mixed Fz work",
+  "limitations": [
+    "linear open-interface influence with separate plate/bar and E4/B3 domains",
+    "not a standalone contact state or re-equilibrated bonded comparison",
+    "interval and uniform responses include different longitudinal action shapes",
+    "pure positive work does not by itself establish physical torque/shear fidelity",
+    "mixed channel and cross terms are signed and may cancel; not independent energies",
+    "not multiplier-space, F03 or G0B acceptance"
+  ],
+  "native_component_diagnostics": {
+    "beam_equilibrium_ratio": 7.575213373277563e-17,
+    "beam_free_variables": 216,
+    "shell_equilibrium_ratio": 4.6164056457399356e-11,
+    "shell_free_variables": 924
+  },
+  "saved_mixed_tip_fz_action": {
+    "native_B3": {
+      "cross_channel_work_J": {
+        "Fx\u00d7Fy": 0.0,
+        "Fx\u00d7Fz": 0.00857572803347535,
+        "Fx\u00d7Mx": 0.0,
+        "Fx\u00d7My": 0.028568406776347307,
+        "Fx\u00d7Mz": 0.0,
+        "Fy\u00d7Fz": 0.0,
+        "Fy\u00d7Mx": -7.549157711612529e-23,
+        "Fy\u00d7My": 0.0,
+        "Fy\u00d7Mz": -3.206721837319513e-22,
+        "Fz\u00d7Mx": 0.0,
+        "Fz\u00d7My": 0.002836105966206988,
+        "Fz\u00d7Mz": 0.0,
+        "Mx\u00d7My": 0.0,
+        "Mx\u00d7Mz": -7.7074199922701805e-28,
+        "My\u00d7Mz": 0.0
+      },
+      "same_channel_work_J": {
+        "Fx": 0.05752451933103251,
+        "Fy": 3.234758511062937e-22,
+        "Fz": 0.0005663511718466076,
+        "Mx": 1.297878018814663e-21,
+        "My": 0.004721488729005674,
+        "Mz": 1.4463783815904544e-22
+      },
+      "total_work_J": 0.10279260000791443
+    },
+    "native_E4": {
+      "cross_channel_work_J": {
+        "Fx\u00d7Fy": -5.31059758690188e-24,
+        "Fx\u00d7Fz": -0.015786768145798418,
+        "Fx\u00d7Mx": 1.4155417386296219e-22,
+        "Fx\u00d7My": -0.0385505617146662,
+        "Fx\u00d7Mz": 1.371916980797687e-24,
+        "Fy\u00d7Fz": 9.889726420986596e-24,
+        "Fy\u00d7Mx": -1.4242916932175231e-21,
+        "Fy\u00d7My": 4.0678639205220515e-24,
+        "Fy\u00d7Mz": -3.220782617062356e-22,
+        "Fz\u00d7Mx": -1.1718557440151898e-22,
+        "Fz\u00d7My": 0.014919807306420046,
+        "Fz\u00d7Mz": 2.100899095071259e-24,
+        "Mx\u00d7My": -1.453387304306614e-22,
+        "Mx\u00d7Mz": -3.7946078471437967e-23,
+        "My\u00d7Mz": -2.6765931285913907e-24
+      },
+      "same_channel_work_J": {
+        "Fx": 0.029700201790252595,
+        "Fy": 1.1016411841976117e-21,
+        "Fz": 0.004479798105590972,
+        "Mx": 3.467446327910756e-21,
+        "My": 0.01823074579880094,
+        "Mz": 4.8846504357378864e-23
+      },
+      "total_work_J": 0.012993223140599943
+    },
+    "solid_bar": {
+      "cross_channel_work_J": {
+        "Fx\u00d7Fy": 3.310190243741982e-23,
+        "Fx\u00d7Fz": 0.008533962756428252,
+        "Fx\u00d7Mx": -4.0901433785787373e-22,
+        "Fx\u00d7My": 0.028477003247413164,
+        "Fx\u00d7Mz": 3.3765487566677855e-25,
+        "Fy\u00d7Fz": -7.60683766138413e-23,
+        "Fy\u00d7Mx": 1.9177747114512142e-22,
+        "Fy\u00d7My": -1.0115889507398333e-23,
+        "Fy\u00d7Mz": -3.1858596933782093e-22,
+        "Fz\u00d7Mx": 1.312378844113865e-23,
+        "Fz\u00d7My": 0.002822316681584343,
+        "Fz\u00d7Mz": -2.7546942476632347e-25,
+        "Mx\u00d7My": -9.540481485562987e-23,
+        "Mx\u00d7Mz": -1.2182562279241374e-27,
+        "My\u00d7Mz": 1.0581585818502795e-25
+      },
+      "same_channel_work_J": {
+        "Fx": 0.05771151941960107,
+        "Fy": 1.0469384472578009e-21,
+        "Fz": 0.0005617198660231873,
+        "Mx": 1.3760694453370772e-21,
+        "My": 0.004705335853217707,
+        "Mz": 1.4871303684639653e-22
+      },
+      "total_work_J": 0.10281185782426774
+    },
+    "solid_plate": {
+      "cross_channel_work_J": {
+        "Fx\u00d7Fy": 1.7327561028915315e-22,
+        "Fx\u00d7Fz": -0.015827622920301366,
+        "Fx\u00d7Mx": 1.6203927791944656e-20,
+        "Fx\u00d7My": -0.0413861529970516,
+        "Fx\u00d7Mz": -1.0528640436490799e-22,
+        "Fy\u00d7Fz": -9.023464961702368e-23,
+        "Fy\u00d7Mx": -4.3570875471977e-21,
+        "Fy\u00d7My": -1.6376415078655967e-22,
+        "Fy\u00d7Mz": -4.57128085875051e-22,
+        "Fz\u00d7Mx": -8.071472748809373e-21,
+        "Fz\u00d7My": 0.014958266503346192,
+        "Fz\u00d7Mz": 5.595990141280197e-23,
+        "Mx\u00d7My": -1.530937768783797e-20,
+        "Mx\u00d7Mz": -4.50999545754969e-23,
+        "My\u00d7Mz": 9.950906731524642e-23
+      },
+      "same_channel_work_J": {
+        "Fx": 0.03328972792814018,
+        "Fy": 3.648055312927542e-21,
+        "Fz": 0.004521832593623675,
+        "Mx": 6.343745530375653e-21,
+        "My": 0.01960821402137529,
+        "Mz": 2.365973189772806e-22
+      },
+      "total_work_J": 0.015164265129132357
+    }
+  },
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "source_commit": "0b505b0efb3bfaed331a36d5c096e5fb928e24a3",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

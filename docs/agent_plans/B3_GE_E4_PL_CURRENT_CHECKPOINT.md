@@ -10569,3 +10569,13 @@ declared transfer and the *current material-line law's* growing-space
 mixed-system behavior under the registered ratios and norms; the
 historical growing-space hybrid is a different law. F03/G0B stay open,
 G1 barred and the formal F03 authority unconsumed.
+
+Independent read-only mechanics review of V2 found no action-normalization
+or sign defect. It confirmed the `1000 N`/`100 Nm` per-interval and
+quarter-density uniform resultants and warned that signed Fx/My
+self/cross terms are not independent shares of the net difference.
+Source `0b505b0e` corrected a stale diagnostic classification that
+named only Fz/Mx even though V2 includes Fx/My; V2 remains preserved.
+The correctly classified V3 result has identical numerical `cases`
+and `saved_mixed_tip_fz_action` fields, SHA256
+`a8b322fb5eb6e241c3274c36b221d6834c4845c84651139afdb67719d4635020`.
