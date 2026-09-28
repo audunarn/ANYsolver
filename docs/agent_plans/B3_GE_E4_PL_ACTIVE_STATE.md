@@ -162,6 +162,24 @@ work-preserving same-law reference for the unchanged physical supports and
 actions, with physical transfer, locking and drill/completion interpretation;
 if that map cannot be derived, obtain focused mechanics review of the missing
 equation. No further classical axial refinement or automatic mesh sweep.
+The A/B multiplier fields nest exactly on the unchanged 0.5--1 m line at
+2/4/8 edges: their complete sampled quadrature work maps commute with the
+injection, including the actual four-edge native gap Jacobian. A subsequent
+same-law screen refined the entire Q4 panel and native beam together at those
+three levels, holding supports, material, offset and Fy/torque actions fixed.
+All supported KKT solves, work partitions and spatial balance checks passed.
+For A, Fy load-displacement work was 0.04514/0.04948/0.05080 N m; the A/B
+torque-work gap fell from 3.95% to 2.38% to 1.00%. The shell-completion share
+of Fy work fell from about 9.97% to 2.76% to 0.72%. Yet the final 4-to-8
+change remains about 2.7% in Fy work and 2.4% in A torque work; this is not
+a converged reference. The source-bound one-thread results are preserved in
+[the whole-panel development evidence](B3_E4_F03_L1_WHOLE_PANEL_DEV_V1.json).
+Next distinguish shell discretization error from line/beam resolution with
+matched uncoupled shell and native controls on these already defined levels;
+if shell error dominates, target shell resolution, otherwise inspect the
+interface and retained beam trace. Do not set F03 floors from these candidate
+values or automatically launch a fourth refinement. Physical engineering
+transfer and the reviewed mixed-system contract remain open.
 An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
 for plate/web Fy and web torque. Its clamped-root option matches the declared
 six-DOF support type but lacks verified rotational reaction output; the hinged
