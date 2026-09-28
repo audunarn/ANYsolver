@@ -11722,3 +11722,51 @@ The `source_git` field identifies the preceding committed baseline;
 the runner hashes identify these then-uncommitted diagnostic changes.
 Finite-pose rank, normed mixed stability, locking, and physically
 matched transfer remain unverified.
+
+**Next bounded mixed-system discriminator (prospective):** The matched
+1:1 x2/x4/x8 loaded cases retain full reference row rank, but rank
+alone cannot distinguish a stable growing exact interface from a
+poorly conditioned native retained-variable saddle system. Apply
+the already developed E4 physical-plus-chart, B3 kinematic-plus-
+complementary, and physical H^-1/2 dual norms to the *current*
+material-line P0 and selective P1/dual rows at those three levels.
+Use the actual indefinite native KKT, preserve the 1,900-row,
+120-second, one-thread limits, and record a near-weak-vector split.
+If a candidate loses normed rank or its mixed minimum collapses with
+growth, investigate that enforcement rule before physical accuracy
+claims. If the minima remain bounded over these three levels, retain
+the candidate only for registered ratios, locking, finite-pose, and
+matched-reference assessment. These levels are a diagnostic, not a
+mesh-uniform certificate or a frozen-criterion replacement.
+
+**Three-level actual-KKT metric outcome:** The current material-line
+P0 rows retain normalized rank `12/12`, `24/24`, `48/48` at matched
+1:1 x2/x4/x8, and the smallest normalized singular values of the
+actual indefinite retained KKT are `0.015016`, `0.012127`, and
+`0.001904`. The x8 near-weak vector has `0.999321` of its metric
+weight in the *auxiliary shell drilling-chart norm*. At x8 the
+selective P1/dual-yaw rows retain ranks `45/45`; their minima are
+`0.001892` and `0.001900`, with at least `0.999323` of the
+near-weak-vector weight in the same chart block. SVD residual defects
+are below `3e-14`, and the transpose interface works agree to the
+recorded precision. All five runs complete within the per-run
+`1,900`-row and `120 s` limits. Result SHA256 identities are:
+
+- x2 P0 `3ed927e64010a13ef74a66a70e68e0ba5a14d1a1c4cc69cadf6ba58a5796856e`;
+- x4 P0 `3eb7fd4aa579b93e3857b3b55ef411e2ed4421b114990b029a40b4c4f6d1d620`;
+- x8 P0 `35ed281e697bfa8df8e43a56655538f7f45e50b36c0d1b44c52a6698e6b409ed`;
+- x8 P1 yaw `36493f0e49a705d5728f0854f13df097b779d08d7dfebdab61d94f64aedc42d3`;
+- x8 dual yaw `7da7cf326121fbbe2c0ef451cdab9edb36572a91000b0800b29b1759fd569f74`.
+
+The current runner SHA256 is
+`e7733d6c00cea5b021f112843c5fd7fc2dcf666b0baf0658799d82add498eff8`.
+This falling minimum is **not** evidence by itself of interface
+instability: the observed mode is almost entirely the auxiliary
+drilling-chart block, and changing the yaw multiplier space hardly
+changes it. The next discriminator is the same native retained KKT
+after exact algebraic elimination of drilling coordinates that the
+material-line rows do not touch. If a near-weak mode then involves
+interface dual or beam coordinates, investigate the relevant law or
+space; if it does not, keep physical transfer and locking as the
+principal unresolved decisions. Exact drill elimination is only a
+bounded diagnostic representation, not a production condensation.
