@@ -104,6 +104,41 @@ Independent review of the prospective contract requires a new L1-specific
 p-only stationary-reduction/parity proof, a whole-space work-preserving
 reference injection, exact gauge inclusion, and explicit virgin zero-multiplier
 scope. The draft now records these prerequisites; formal assessment remains barred.
+Immediate bounded design question: can the L1 work act only on supported
+physical/cell-rotation coordinates after exact resultant elimination, and can
+complete six-channel growing P0/P1/dual candidate spaces resolve it without
+an unsupported mode or locking? A small coupled p-only parity/positivity check
+and one macroelement space comparison distinguish an invalid reduction, an
+underresolved discrete space, and a law-level work defect. Positive parity
+allows a same-law reference design; a failed reduction or physical work check
+requires correction before ratios. Surviving spaces proceed to the registered
+seven ratios, physical transfer and convergence; no single quotient selects one.
+The first p-only check found the actual Q4 tangent contains existing PL drill
+completion, while its reported physical component has zero drill rows. Keep
+actual-matrix parity distinct from physical-work stability; do not count
+completion alone as beam torque-transfer evidence.
+The completed bounded 2/4-edge L1 design check found an exact alternating
+shell-normal zero-action row in the consistent full-P1 dual. The two mixed
+six-channel spaces have full local action rank: P1 translation/twist with
+edge-P0 pitch/normal represents the alternating field, while edge-P0
+translation/twist with two-edge pitch/normal omits its alternating action.
+Both preserve the tested shear and native torque work without shell-drill
+work. These are local action results, not mixed-system stability or selection.
+On one supported virgin Q4/native B3 fixture, all 18 L1 nodal dual actions
+vanish on the 72 generalized resultants and act on retained cell rotations.
+Resultant-only stationary reduction matches full-retained compliance to
+1.4e-12 relative error. The actual supported tangent is positive but includes
+PL drill completion. The separately exposed drill-free physical component
+has an exact drill gauge and positive quotient on this fixture; its per-action
+work differs by up to 3.45% from the operative tangent. Neither result
+certifies physical stability. The full-P1 dual as constructed cannot advance
+without a derived remedy for its exact null; do not select either mixed space
+from rank. Next targeted comparison holds supports, loads and geometry fixed
+for the two mixed spaces, examines physical Fy/torque transfer, work and
+locking against an applicable same-law reference, and separates drill
+sensitivity. A failed physical transfer requires law/space revision; viable
+responses proceed to an independently reviewed F03 assessment contract and
+the registered growing-space envelope. No formal F03 run has occurred.
 An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
 for plate/web Fy and web torque. Its clamped-root option matches the declared
 six-DOF support type but lacks verified rotational reaction output; the hinged
