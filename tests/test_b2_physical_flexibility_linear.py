@@ -159,6 +159,29 @@ def test_explicit_input_and_representability_negatives():
         LinearSection.isotropic(E=1e308, nu=0., area=1e308, Iy=1., Iz=1., J=1., ky=1., kz=1.)
 
 
+def test_nonzero_subnormal_rounding_with_large_relative_error_is_rejected():
+    minimum = float(np.nextafter(0., 1.))
+    exact_axial_mode = Fraction(3, 2) * Fraction.from_float(minimum)
+    rounded = float(exact_axial_mode)
+    assert rounded == 2 * minimum
+    # Independent rational oracle: the finite, nonzero rounded mode is 1/3
+    # above its physical value.  A zero-only underflow check would admit it.
+    assert abs(Fraction.from_float(rounded) - exact_axial_mode) / exact_axial_mode == Fraction(1, 3)
+    section = LinearSection.isotropic(
+        E=1., nu=-.5, area=3 * minimum, Iy=1e-12, Iz=2e-12,
+        J=3e-12, ky=1., kz=1.,
+    )
+    with pytest.raises(RepresentabilityError, match="relative precision"):
+        LinearOperator(2., section)
+
+    # Nearby exactly representable physical modes retain the old route.
+    retained = LinearOperator(2., LinearSection.isotropic(
+        E=1., nu=-.5, area=4 * minimum, Iy=1e-12, Iz=2e-12,
+        J=3e-12, ky=1., kz=1.,
+    ))
+    assert retained.modal_stiffness[0] == 2 * minimum
+
+
 def test_generalized_coupled_operator_has_equivalent_numerical_length_units():
     """Private operator identity; public physical definitions still require SI."""
     section = np.diag([22., 13., 17., 9., 7., 11.])

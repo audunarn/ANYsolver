@@ -37,6 +37,16 @@ def _float(value):
         raise RepresentabilityError("physical B2 output overflow") from exc
     if not math.isfinite(result) or (value != 0 and result == 0):
         raise RepresentabilityError("physical B2 output overflow or underflow")
+    # A nonzero subnormal can still be a poor representation of an exact
+    # physical result.  Compare as rationals so the check itself does not
+    # underflow or round away the error.  Normal binary64 rounding satisfies
+    # this bound. This checks the declared numerical output units (public
+    # physical definitions use SI); it is not a physical or unit-covariant
+    # constitutive tolerance near binary64 underflow.
+    if value != 0:
+        exact = Fraction(value)
+        if abs(Fraction(result) - exact) > abs(exact) / (1 << 52):
+            raise RepresentabilityError("physical B2 output loses binary64 relative precision")
     return result
 
 
