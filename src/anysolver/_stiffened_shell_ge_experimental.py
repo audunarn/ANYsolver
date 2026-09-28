@@ -465,6 +465,7 @@ class ExperimentalGEAnalysis:
         self._closed = False
         self._linear_factor = None
         self._linear_factorizations = 0
+        self._linear_refinements = 0
 
     def _require_open(self):
         if self._closed:
@@ -496,6 +497,7 @@ class ExperimentalGEAnalysis:
                 "matrix_nnz": self._A.nnz,
                 "experimental_line_samples": len(self._line_samples),
                 "reference_linear_factorizations": self._linear_factorizations,
+                "reference_linear_refinements": self._linear_refinements,
                 "reference_length_m": self._reference_length,
                 "stress_free_scaled_max": self._reference_error,
                 "equilibrium_norm": "frozen_work_weighted_l2",
@@ -524,17 +526,28 @@ class ExperimentalGEAnalysis:
             self._linear_factorizations += 1
         solution = self._linear_factor.solve(rhs)
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.solved")
-        if not np.isfinite(solution).all():
-            raise RuntimeError("finite mixed linear solution required")
-        q = np.zeros(self._K.shape[0])
-        q[self._free] = solution[:len(self._free)]
-        multipliers = solution[len(self._free):]
-        equilibrium = self._K@q + self._C.T@multipliers-load
-        gap = self._C@q
-        relative = _relative_equilibrium(
-            equilibrium[self._free], load[self._free],
-            self._coordinate_scale[self._free], self._reference_length)
-        constraint = _scaled_constraint_gap(gap, self._constraint_scale)
+        for attempt in range(2):
+            if not np.isfinite(solution).all():
+                raise RuntimeError("finite mixed linear solution required")
+            q = np.zeros(self._K.shape[0])
+            q[self._free] = solution[:len(self._free)]
+            multipliers = solution[len(self._free):]
+            equilibrium = self._K@q + self._C.T@multipliers-load
+            gap = self._C@q
+            relative = _relative_equilibrium(
+                equilibrium[self._free], load[self._free],
+                self._coordinate_scale[self._free], self._reference_length)
+            constraint = _scaled_constraint_gap(gap, self._constraint_scale)
+            if np.isfinite(relative) and relative <= 1e-8 and constraint <= 1e-9:
+                break
+            if attempt == 0:
+                # Correct factorization roundoff in retained equations using
+                # the same operator; the physical acceptance limits stay fixed.
+                correction = self._linear_factor.solve(rhs-self._A@solution)
+                self._linear_refinements += 1
+                cancellation_safe_point(cancellation_token,
+                                        "stiffened-shell.linear.refined")
+                solution = solution+correction
         if not np.isfinite(relative) or relative > 1e-8 or constraint > 1e-9:
             raise RuntimeError("mixed reference linear equilibrium failed")
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.commit")

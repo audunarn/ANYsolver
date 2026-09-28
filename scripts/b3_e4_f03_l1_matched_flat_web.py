@@ -141,6 +141,7 @@ def evaluate() -> dict:
                 "matrix_rows": int(owner._A.shape[0]),
                 "matrix_nnz": int(owner._A.nnz),
                 "factorizations": owner.preflight()["reference_linear_factorizations"],
+                "linear_refinements": owner.preflight()["reference_linear_refinements"],
                 "line_rows": int(owner._C.shape[0]),
                 "web_section": web,
             }
