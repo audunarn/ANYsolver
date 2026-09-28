@@ -52,37 +52,36 @@ floors and thresholds before formal use. Preserve seven ratios, growing spaces,
 three refinements, physical transfer, locking, shear/drilling and the native
 indefinite mixed-system checks.
 
-The matched four-edge flat-web [comparison](B3_E4_F03_FLAT_WEB_MATCHED_DEV_V1.json)
-records external welded-S4 plate-Fy/web-Mx work of `0.000689073/0.001878843 J`
-and native A `0.000591246/0.001447212 J`. Isolated element controls show native
-E4 plate work 10.71% below S4, while native B3 torsion work is 25.67% above the
-isolated S4 web; they do not provide an additive connection counterfactual.
-The [case-bound energy partition](B3_E4_F03_FLAT_WEB_ENERGY_PARTITION_DEV_V2.json)
-closes against half applied work and puts 18.9% of S4 torque-case energy in
-the plate, versus 0.62%/1.51% in native A/B E4. This is a domain energy
-allocation difference. S4 applies a two-force couple to deformable web nodes;
-B3 applies a moment to one rotational coordinate. Web/section and connection
-idealizations also differ, so these values cannot isolate interface transfer.
+The matched [flat-web comparison](B3_E4_F03_FLAT_WEB_MATCHED_DEV_V1.json)
+and [energy partition](B3_E4_F03_FLAT_WEB_ENERGY_PARTITION_DEV_V2.json)
+show different work and plate/web energy allocations between welded S4 and
+native L1. They cannot allocate cause to the connection: S4 uses a deformable
+web force couple, native B3 a rotational moment, and web/section laws differ.
+The saved S4 near-zero seam gap follows shared-node kinematics, not independent
+bonding qualification.
 
-The saved expanded S4 faces permit objective plate/web director and line-trace
-reconstruction with source-bound FRD identity. The near-zero seam position gap
-largely follows from shared shell-node kinematics, and the relative-triad
-number includes deformation and line interpolation; neither is a connection
-acceptance score. Direct `*NODE PRINT U` lacks rotations 4-6. No verified
-sided interface force, moment or virtual work has yet been recovered.
+The new [bounded replay and work result](B3_E4_F03_EXPANDED_WORK_DEV_V1.json)
+reconstructs 32 expanded S4 bricks at 100 saved exterior displacements. Wall
+energy sums agree with the S4 output to 2.8e-7/5.1e-6 relative. The knot has
+one common expansion coordinate alongside its six pose coordinates. For a
+support-zero seven-coordinate virtual hat, separate wall energy derivatives
+agree with replay RF work within 5.2e-4/1.9e-5 relative. The apparent seam
+work imbalance is 9.0e-5 J; an adjoint estimate of one-last-place FRD-U
+sensitivity in the replayed linear operator is 4.35e-4 J. Independent review accepts the *diagnostic*
+pullback and finds the saved displacement precision insufficient to infer an
+original S4 sided transfer defect. The two failed input-card attempts, nine
+successful serial work probes, raw hashes and review limits are preserved.
 
 ## Next discriminating action
 
-Derive a **supported virtual side-work map** for the matched geometry and
-actual shell-face interpolation, or an equivalent independent operator
-partition. State the reference field, its conjugate action and treatment of
-root reactions before another external run. A valid map permits one bounded
-physical transfer comparison followed by independently reviewed F03 stability
-assessment; an invalid or unavailable map must identify the obstructing
-equation for focused mechanics review. Do not respond with automatic classical
-axial refinement, channel-by-channel multiplier tuning or a law change inferred
-from a percentage alone. Continue independent F01-F13 and GE/B2 lifecycle work
-that does not depend on this line-law decision.
+Stop refining the welded-S4 comparator with the saved low-precision FRD. Next
+resolve the native L1 physical trace and growing-space multiplier choice with
+support-preserving work/norm maps, torque/shear transfer and mixed-system
+checks. Obtain higher-precision external sided output only when it separates a
+specific native-law explanation from section/load idealization. Continue
+independent F01-F13 and GE/B2 lifecycle work. Do not infer a law change from
+an S4 percentage, repeat classical axial refinement or consume formal F03
+authority until the prospective assessment contract receives review.
 
 ## Execution boundary
 
