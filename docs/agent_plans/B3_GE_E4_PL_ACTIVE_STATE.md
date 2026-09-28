@@ -136,6 +136,25 @@ loaded-history states before another crossing experiment; more step refinement
 alone is not a justified discriminator. This slice is experimental, not G3 or
 G4 acceptance.
 
+**G3 near-zero decision:** On the failed `0.2 → 0.1` step, the present global
+work ratio stalls at `2.5501516e-8`, while its active-row ratio is about
+`1.4e-16` and constraint gap is below `6e-17`. A fixed-reference global ratio
+would be `2.5501516e-9`; this isolates normalization, not a demonstrated
+material-tangent defect. A development hybrid using peak historical load for
+global work and current load for active rows passed 13/13 focused tests,
+including tiny-load, rescaled-pattern and near-zero restart checks. It is
+**rejected for product integration**: V3 endpoint restore cannot authenticate
+historical peak factors. A re-encoded elastic checkpoint with forged factors
+`(1e12, 1., 0.5)` was accepted with unchanged physical endpoint and current
+load ratio, but its reported global ratio changed from `4.05e-9` to
+`2.75e-14`. Raw scripts and logs are preserved at
+`.qualification/b3-ge-e4-pl/r7-ge-nearzero-normalization-dev-20260929-v1/`.
+The hybrid source/test edits were discarded; no criterion or release claim
+changed. Next, establish a trusted or mechanically verified reference state,
+or derive a current-state physical scale that does not trust historical load
+metadata, before resuming sign-crossing work. Endpoint-only checks cannot
+prove path provenance; more load-step refinement does not resolve this issue.
+
 A separate finite-support flat-Q4 shell-pose prototype has exact box-window
 centroid/covariance weights, objective rigid-motion recovery, a bounded
 endpoint-witness screen, and first variations through actual shell/native
