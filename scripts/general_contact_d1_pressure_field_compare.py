@@ -23,6 +23,8 @@ def _field(path: Path) -> tuple[int, np.ndarray, dict]:
             or report["load_profile"] != "distributed"
             or report["total_downward_force_n"] != 0.3
             or report["target_right_x_m"] != 1.3
+            or report.get("target_reference_slope", 0.0) != 0.0
+            or report.get("target_columns", 1) not in (1, 2)
             or len(report["history"]) < 3):
         raise ValueError(f"incompatible distributed full-press report: {path}")
     contact = report["history"][2]["contact"]
@@ -32,7 +34,10 @@ def _field(path: Path) -> tuple[int, np.ndarray, dict]:
     pressure = np.asarray(contact["numerical_pressure_pa"], dtype=float)
     if len(ids) != len(pressure) or not np.all(np.isfinite(pressure)):
         raise ValueError(f"invalid pressure vector: {path}")
-    if contact.get("pressure_basis_version") == "q4_source_macro_q1_pair_v1":
+    basis = report.get("pressure_basis", "fine_nodal_q1")
+    if basis == "macro_q1_pair_dev":
+        if contact.get("pressure_basis_version") != "q4_source_macro_q1_pair_v1":
+            raise ValueError(f"unknown macro pressure basis: {path}")
         if (columns % 2 or contact.get("source_geometry_node_ids") != fine_ids
                 or ids != ([i for i in range(1, stride+1, 2)]
                            + [i for i in range(stride+1, 2*stride+1, 2)])):
@@ -43,7 +48,8 @@ def _field(path: Path) -> tuple[int, np.ndarray, dict]:
             else 0.5*(anchors[node-1]+anchors[node+1])
             for node in fine_ids
         ])
-    elif ids != fine_ids:
+    elif (basis != "fine_nodal_q1" or ids != fine_ids
+          or contact.get("pressure_basis_version") is not None):
         raise ValueError(f"unexpected fine strip topology: {path}")
     if np.min(pressure) < -1.0e-12:
         raise ValueError(f"negative reported pressure: {path}")
@@ -90,6 +96,7 @@ def main(paths: list[Path], output: Path) -> None:
         comparisons.append({
             "report": str(path),
             "columns": field[0],
+            "target_columns": field[2].get("target_columns", 1),
             "pressure_basis": field[2].get("pressure_basis", "fine_nodal_q1"),
             "relative_reference_l2": float(np.sqrt(
                 _squared_norm(field, reference)/_squared_norm(reference))),
@@ -98,6 +105,7 @@ def main(paths: list[Path], output: Path) -> None:
         "purpose": "development reference-surface pressure-field comparison",
         "reference_report": str(paths[-1]),
         "reference_columns": reference[0],
+        "reference_target_columns": reference[2].get("target_columns", 1),
         "measure": "exact squared piecewise-bilinear L2 over common-refined unit reference strip",
         "comparisons": comparisons,
     }

@@ -66,6 +66,12 @@ exact pressure solution; this derived analysis is not a pressure-space
 qualification result. The macro field is farther from that refined field
 than the 8-Q4 fine field despite its closer integrated force.
 
+An independent read-only development review found no concrete defect in the
+macro interpolation, common-refinement quadrature or stated comparison.
+It noted that future reports with a different target slope could confound
+the measure; the postprocessor now explicitly admits only matching
+flat-target metadata. This review does not promote pressure-space acceptance.
+
 ## Decision
 
 Keep the macro basis as an opt-in development candidate. The local comparison

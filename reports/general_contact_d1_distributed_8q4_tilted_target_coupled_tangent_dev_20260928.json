@@ -1,0 +1,40 @@
+{
+  "reference": "reports\\general_contact_d1_distributed_8q4_tilted_target_press_dev_20260928.json",
+  "candidate": "distributed_coupled_tangent_dev",
+  "axes": [
+    "ux"
+  ],
+  "columns": 8,
+  "target_reference_slope": 1e-05,
+  "free_dofs": 34,
+  "source_nodes": [
+    8,
+    17
+  ],
+  "pose_constraint_error_m": 0.0,
+  "pressure_replay_error_pa": 0.0,
+  "base_active_modes": 6,
+  "base_internal_force_norm_n": 0.15678454792766042,
+  "mapped_contact_force_norm_n": 0.04215612015120314,
+  "branch_pairs": 4,
+  "runs": [
+    {
+      "step_m": 1e-06,
+      "smooth_branch": true,
+      "relative_reduced_tangent_error": 8.194156813339508e-16,
+      "action_scale_n_per_m": 38067.05071789155,
+      "relative_mapped_contact_tangent_error": 1.2172053293040212e-08,
+      "mapped_contact_action_scale_n_per_m": 0.0024578974260799826
+    },
+    {
+      "step_m": 5e-07,
+      "smooth_branch": true,
+      "relative_reduced_tangent_error": 1.6926636576751385e-15,
+      "action_scale_n_per_m": 38067.05071789155,
+      "relative_mapped_contact_tangent_error": 2.547631306869822e-08,
+      "mapped_contact_action_scale_n_per_m": 0.0024578974260799826
+    }
+  ],
+  "status": "passed_development",
+  "elapsed_seconds": 16.557022899971344
+}

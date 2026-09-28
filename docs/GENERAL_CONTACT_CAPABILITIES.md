@@ -93,6 +93,12 @@ review](reference_cases/general_contact_d1_distributed_coupled_tangent_v1_review
 accepted only a selected smooth-branch directional tangent at the same saved
 fixed-target pose, with mapped-contact errors 2.882e−10 and 7.171e−11.
 Claim-bearing complete tangent status in the matrix remains open.
+An eight-Q4 supported tilted-target press subsequently completed with local
+gap, pressure-rank and equilibrium gates, and its equilibrated source-x
+direction passed a bounded coupled tangent screen with mapped contact action
+0.00246 N/m. The separate local target-x screen also mapped a small moment
+action. These are [development observations](reference_cases/general_contact_d1_tilted_supported_press_development.md),
+not a complete tangent or pressure-space acceptance claim.
 The [bounded interior-shell usage note](GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF.md)
 groups the independently reviewed properties and exact historical wheel
 identity for a runnable development handoff; integrated D1/C1 disposition
@@ -171,6 +177,11 @@ integrated force by 1.09% versus fine Q1. Its reference-surface pressure
 field differed from fine Q1 by 29.48% in L2 and was farther from the existing
 24-Q4 fine field. This is a development discriminator, not pressure-space
 acceptance; see the [comparison record](reference_cases/general_contact_d1_macro_distributed_press_development.md).
+At the flat eight-Q4 distributed full-press pose, changing the fixed planar
+target from two to four S3 faces left the integrated force unchanged to saved
+precision and changed the source pressure field by only 5.06e−13 relative
+L2. This [single target-partition development check](reference_cases/general_contact_d1_target_partition_development.md)
+does not settle source pressure convergence or general target-mesh admission.
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as

@@ -33,21 +33,33 @@ def _assemble(model, displacement, states, *, tangent):
 
 def main(reference_path: Path, output_path: Path,
          nodes: tuple[int, int] = (20, 45),
-         axes: tuple[str, ...] = ("ux", "uz")) -> None:
+         axes: tuple[str, ...] = ("ux", "uz"),
+         columns: int = 24,
+         target_reference_slope: float = 0.0) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
     report = {"reference": str(reference_path),
-              "candidate": "distributed_24q4_coupled_tangent_dev",
-              "axes": list(axes)}
+              "candidate": "distributed_coupled_tangent_dev",
+              "axes": list(axes), "columns": columns,
+              "target_reference_slope": target_reference_slope}
     try:
         saved = json.loads(reference_path.read_text(encoding="utf-8"))
+        expected_steps = ((4 if saved["four_phase"] else 1)
+                          * saved["steps_per_segment"])
         if (saved["status"], saved["columns"], saved["load_profile"],
-                saved["accepted_steps"]) != ("completed", 24, "distributed", 12):
-            raise ValueError("expected completed distributed 24-Q4 reference")
+                saved["accepted_steps"],
+                saved.get("target_reference_slope", 0.0)) != (
+                "completed", columns, "distributed", expected_steps,
+                target_reference_slope):
+            raise ValueError("expected completed matching distributed reference")
         model, definition, settings, _program = build_case(
-            24, four_phase=True, steps_per_segment=3, load_profile="distributed",
-            total_force_n=0.3, target_right_x_m=1.3)
+            columns, four_phase=saved["four_phase"],
+            steps_per_segment=saved["steps_per_segment"],
+            load_profile="distributed",
+            total_force_n=saved["total_downward_force_n"],
+            target_right_x_m=saved["target_right_x_m"],
+            target_reference_slope=target_reference_slope)
         settings = replace(settings, augmentation_schur_maximum_pressure_pa=250,
                            augmentation_schur_maximum_step_pa=200)
         pose = np.asarray(saved["final_displacements"], dtype=float)
@@ -62,7 +74,7 @@ def main(reference_path: Path, output_path: Path,
                 build_constraint_transformation(initial_stiffness, zeros, model))
             manager.restrict_tangent_to_reduced_variations(transform)
             manager.set_normal_multipliers(multipliers)
-            if pose.size != zeros.size or transform.shape[1] != 98:
+            if pose.size != zeros.size or transform.shape[1] != 4*columns+2:
                 raise ValueError("unexpected structural coordinate size")
             pose_error = float(np.max(np.abs(
                 pose-(prescribed+transform@pose[independent]))))
@@ -104,7 +116,8 @@ def main(reference_path: Path, output_path: Path,
                     transform.T@(base_force-structural_force))),
                 "branch_pairs": len(base_branches),
             })
-            if pressure_error > 1e-6 or state.active_pressure_dofs != 18:
+            if (pressure_error > 1e-6 or state.active_pressure_dofs
+                    != saved["contact"]["active_pressure_dofs"]):
                 raise ValueError("saved contact state did not replay")
             results = []
             for step in (1e-6, 5e-7):
@@ -177,6 +190,10 @@ if __name__ == "__main__":
     parser.add_argument("output", type=Path)
     parser.add_argument("--nodes", type=int, nargs=2, default=(20, 45))
     parser.add_argument("--axes", choices=("ux", "uz", "both"), default="both")
+    parser.add_argument("--columns", type=int, default=24)
+    parser.add_argument("--target-reference-slope", type=float, default=0.0)
     args = parser.parse_args()
     selected_axes = ("ux", "uz") if args.axes == "both" else (args.axes,)
-    main(args.reference, args.output, nodes=tuple(args.nodes), axes=selected_axes)
+    main(args.reference, args.output, nodes=tuple(args.nodes), axes=selected_axes,
+         columns=args.columns,
+         target_reference_slope=args.target_reference_slope)
