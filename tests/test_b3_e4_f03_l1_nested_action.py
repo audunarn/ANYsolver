@@ -12,7 +12,7 @@ from scripts.b3_e4_f03_l1_space_design import (
 )
 
 
-@pytest.mark.parametrize("coarse_edges", (2, 4))
+@pytest.mark.parametrize("coarse_edges", (2, 4, 8))
 @pytest.mark.parametrize("space", SPACES)
 def test_entire_coarse_multiplier_space_has_exact_fine_work(
         coarse_edges, space):
@@ -59,7 +59,7 @@ def test_non_nested_reference_is_rejected_and_report_is_bounded():
     with pytest.raises(ValueError, match="nested same-line"):
         injection(grid(2), grid(4, start=.4), SPACES[0])
     rows = report()
-    assert len(rows) == 4
+    assert len(rows) == 6
     assert all(row["line_interval_m"] == [.5, 1.] for row in rows)
     assert max(row["whole_basis_sample_error"] for row in rows) < 2e-15
     assert max(row["whole_space_work_map_error"] for row in rows) < 2e-15

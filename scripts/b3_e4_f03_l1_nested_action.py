@@ -1,7 +1,7 @@
 """Whole-space L1 multiplier injection on a fixed material line.
 
 This bounded algebra check covers the two surviving six-channel development
-spaces on nested two-, four-, and eight-edge grids over [0.5, 1] m. It proves
+spaces on nested two-, four-, eight-, and sixteen-edge grids over [0.5, 1] m. It proves
 identity of sampled multiplier density and quadrature work for every coarse
 coefficient and every fine station gap. It does not construct a reference
 stiffness, establish convergence, or assess F03 stability.
@@ -34,9 +34,9 @@ class Grid:
 
 def grid(segments: int, *, start: float = .5, end: float = 1.) -> Grid:
     """Two-point Gauss cuts for a bounded, consistently oriented straight line."""
-    if (type(segments) is not int or segments not in (2, 4, 8) or
+    if (type(segments) is not int or segments not in (2, 4, 8, 16) or
             not np.isfinite((start, end)).all() or end <= start):
-        raise ValueError("bounded ordered 2/4/8-edge reference grid required")
+        raise ValueError("bounded ordered 2/4/8/16-edge reference grid required")
     cuts = np.linspace(start, end, segments + 1)
     alpha = (.5 - .5 / np.sqrt(3.), .5 + .5 / np.sqrt(3.))
     stations = np.array([cuts[edge] + fraction * (cuts[edge+1]-cuts[edge])
@@ -52,7 +52,7 @@ def samples(cuts: np.ndarray, stations: np.ndarray, space: str) -> np.ndarray:
     cuts = np.asarray(cuts, dtype=float)
     stations = np.asarray(stations, dtype=float)
     n = len(cuts) - 1
-    if (space not in SPACES or n not in (2, 4, 8) or n % 2 or
+    if (space not in SPACES or n not in (2, 4, 8, 16) or n % 2 or
             cuts.ndim != 1 or stations.ndim != 1 or
             not np.isfinite(cuts).all() or not np.isfinite(stations).all() or
             not np.all(np.diff(cuts) > 0.)):
@@ -124,7 +124,7 @@ def work_map(coarse: Grid, fine: Grid, space: str) -> tuple[np.ndarray, np.ndarr
 def report() -> list[dict]:
     """Small algebraic results, not a compliance or stability score."""
     results = []
-    for nc in (2, 4):
+    for nc in (2, 4, 8):
         coarse, fine = grid(nc), grid(2*nc)
         for space in SPACES:
             j = injection(coarse, fine, space)

@@ -37,8 +37,8 @@ LOADS = ("shell_fy", "beam_tip_mx")
 
 
 def _assembled_macro(segments: int) -> Macroelement:
-    if type(segments) is not int or segments not in (2, 4, 8):
-        raise ValueError("bounded 2-, 4-, or 8-edge L1 comparison required")
+    if type(segments) is not int or segments not in (2, 4, 8, 16):
+        raise ValueError("bounded 2-, 4-, 8-, or 16-edge L1 comparison required")
     fixture = build(2*segments, z_offset=.0675, assemble=True)
     cuts = fixture.abscissae[segments:].copy()
     reference = np.column_stack((cuts, np.zeros(segments+1),
@@ -58,15 +58,23 @@ def _assembled_macro(segments: int) -> Macroelement:
     return Macroelement(fixture, blocks, cuts, stations, weights)
 
 
-def _supported_problem(macro: Macroelement, *, globally_refined: bool = False):
+def _supported_problem(macro: Macroelement, *, globally_refined: bool = False,
+                       transverse_segments: int | None = None):
     fixture = macro.fixture
     cuts = macro.cuts
+    if transverse_segments is not None and (
+            macro.segments != 16 or transverse_segments != 8 or
+            not globally_refined):
+        raise ValueError("only the bounded 16-edge longitudinal extension is admitted")
     if globally_refined:
         xs = np.linspace(0., 1., 2*macro.segments+1)
-        ys = np.linspace(-.1, .1, macro.segments+1)
+        ys = np.linspace(-.1, .1,
+                         (transverse_segments or macro.segments)+1)
     else:
         xs = np.r_[(0., .25), cuts]
         ys = np.array((-.1, 0., .1))
+    if 6*len(xs)*len(ys) > 1800:
+        raise ValueError("bounded E4 reference fixture excludes this shell grid")
     shell, physical_shell = raw_e4_tangent(xs, ys, thickness=.035)
     ns, nb = shell.shape[0], fixture.context.count
     nondrill = np.array([j for j in range(ns) if j % 6 != 5], dtype=int)
@@ -285,12 +293,18 @@ def _solve_variant(macro, problem, name: str, *,
             "cases": cases}
 
 
-def evaluate_level(segments: int, *, globally_refined: bool = False) -> dict:
+def evaluate_level(segments: int, *, globally_refined: bool = False,
+                   transverse_segments: int | None = None,
+                   actual_only: bool = False) -> dict:
     macro = _assembled_macro(segments)
-    problem = _supported_problem(macro, globally_refined=globally_refined)
+    problem = _supported_problem(macro, globally_refined=globally_refined,
+                                 transverse_segments=transverse_segments)
     candidates = {}
     for name in SPACES:
         actual = _solve_variant(macro, problem, name, variant="actual_PL")
+        if actual_only:
+            candidates[name] = {"actual_PL": actual}
+            continue
         frozen = _solve_variant(macro, problem, name,
                                 variant="actual_PL_drill_frozen")
         physical = _solve_variant(macro, problem, name,
@@ -310,8 +324,10 @@ def evaluate_level(segments: int, *, globally_refined: bool = False) -> dict:
                             "drill_coordinate_freeze_work_change_relative":
                             drill_change}
     return {"segments": segments, "line_interval_m": macro.cuts[[0, -1]].tolist(),
-            "grid_policy": ("whole_shell_and_beam" if globally_refined
-                            else "bond_shell_and_whole_beam"),
+            "grid_policy": ("longitudinal_shell_and_beam" if
+                            transverse_segments is not None else
+                            "whole_shell_and_beam" if globally_refined else
+                            "bond_shell_and_whole_beam"),
             "shell_grid_x_m": problem["xs"].tolist(),
             "shell_grid_y_m": problem["ys"].tolist(),
             "native_half_cells": 2*segments,
