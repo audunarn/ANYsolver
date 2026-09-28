@@ -39,6 +39,36 @@ def test_mapped_source_target_force_and_smooth_tangent():
         + local_physical[source_count:].sum(axis=0),
         0.0, atol=1e-9,
     )
+    source, target = manager._positions(u)
+    position = np.vstack((source, target))
+    np.testing.assert_allclose(
+        np.cross(position, local_physical).sum(axis=0),
+        0.0, atol=1e-9,
+    )
+    target_direction = np.zeros_like(u)
+    for node_id in manager.law.target_node_ids:
+        target_direction[model.mesh.dof_manager.get_node_dofs(node_id)] = (
+            rng.normal(size=6)
+        )
+    target_direction /= np.linalg.norm(target_direction)
+    target_plus = linearize(manager, u+step*target_direction, z, tangent=False)
+    target_minus = linearize(manager, u-step*target_direction, z, tangent=False)
+    target_work = (np.dot(z, target_plus.state.normalized_gap)
+                   - np.dot(z, target_minus.state.normalized_gap))/(2*step)
+    np.testing.assert_allclose(
+        target_work, -np.dot(base.force, target_direction),
+        rtol=1e-5, atol=1e-8,
+    )
+    target_force_fd = (target_plus.force-target_minus.force)/(2*step)
+    target_tangent = base.tangent @ target_direction
+    assert np.linalg.norm(target_force_fd-target_tangent)/np.linalg.norm(
+        target_tangent
+    ) < 1e-5
+    source_dofs = np.concatenate([
+        model.mesh.dof_manager.get_node_dofs(node_id)
+        for node_id in manager.law.source_node_ids
+    ])
+    assert np.linalg.norm(target_tangent[source_dofs]) > 1e-9
     _force, _tangent, projected = manager.evaluate(u, tangent=False)
     reported = raw_certificate(manager, u, base, projected)
     assert reported.energy_evaluations == base.evaluations
