@@ -412,3 +412,70 @@ class SegmentedRailWeakWork:
             gradient[indices] += local_gradient
             hessian[np.ix_(indices, indices)] += local_hessian
         return work, gaps, gradient, hessian
+
+
+@dataclass(frozen=True)
+class FiniteRailDensityBasis:
+    """Development-only P0/P1 six-channel line-density coefficients.
+
+    Two-point Gauss on each of two material segments integrates products of
+    these piecewise-linear basis functions exactly. ``raw_l2_gram`` is only
+    the unscaled coordinate-density L2 Gram. It is not the physical F03 norm:
+    the pose-covector-to-spatial-wrench map and force/moment scales still need
+    a separately reviewed contract.
+    """
+
+    cuts: np.ndarray
+    kinds: tuple[str, ...]
+    stations: np.ndarray
+    weights: np.ndarray
+    sample_matrix: np.ndarray
+    raw_l2_gram: np.ndarray
+
+    @classmethod
+    def on_two_segments(cls, cuts: np.ndarray, kinds: tuple[str, ...]):
+        x = _owned(cuts, (3,))
+        if not np.all(np.diff(x) > 0.):
+            raise ValueError("ordered positive material segments required")
+        if len(kinds) != 6 or any(kind not in ("P0", "P1") for kind in kinds):
+            raise ValueError("one P0/P1 density choice per pose channel required")
+        gauss = (.5-.5/np.sqrt(3.), .5+.5/np.sqrt(3.))
+        stations = np.array([x[segment]+(x[segment+1]-x[segment])*t
+                             for segment in range(2) for t in gauss])
+        weights = np.repeat(np.diff(x)/2., 2)
+        count = sum(2 if kind == "P0" else 3 for kind in kinds)
+        samples = np.zeros((24, count))
+        offset = 0
+        for channel, kind in enumerate(kinds):
+            for segment in range(2):
+                for station, t in enumerate(gauss):
+                    row = 6*(2*segment+station)+channel
+                    if kind == "P0":
+                        samples[row, offset+segment] = 1.
+                    else:
+                        samples[row, offset+segment] = 1.-t
+                        samples[row, offset+segment+1] = t
+            offset += 2 if kind == "P0" else 3
+        repeated_weights = np.repeat(weights, 6)
+        gram = samples.T @ (repeated_weights[:, None]*samples)
+        return cls(x, tuple(kinds), _owned(stations, (4,)),
+                   _owned(weights, (4,)), _owned(samples, (24, count)),
+                   _owned(gram, (count, count)))
+
+    def density_samples(self, coefficients: np.ndarray) -> np.ndarray:
+        values = _owned(coefficients, (self.sample_matrix.shape[1],))
+        return (self.sample_matrix @ values).reshape(4, 6)
+
+    def constraint_rows(self, gaps: np.ndarray) -> np.ndarray:
+        gap = _owned(gaps, (4, 6))
+        return self.sample_matrix.T @ (np.repeat(self.weights, 6)*gap.ravel())
+
+    def work_tangent(self, line: SegmentedRailWeakWork,
+                     shell_total: np.ndarray, beam_state,
+                     coefficients: np.ndarray
+                     ) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
+        if (not np.array_equal(self.stations, line.stations) or
+                not np.array_equal(self.weights, line.weights)):
+            raise ValueError("density basis and material line do not match")
+        return line.work_tangent(shell_total, beam_state,
+                                 self.density_samples(coefficients))

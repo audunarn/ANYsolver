@@ -44,11 +44,16 @@ fixed reference arclength weights and finite-dimensional sampled six-component
 densities. Constant yaw density cancels interior shared-node shell work. Pure
 moment and mixed densities produce the declared integrated shell/native wrench,
 zero resultant and drilling work, and supported physical-only shell compliance.
-Same-parent gradients and Hessians follow the actual native update. Sixteen
-focused checks passed; independent read-only review found no bounded discrete
-measure or scatter defect. **Generic L2 densities have no point values.** A
-compiled multiplier basis, quadrature and norm contract, growing-space
-stability, native trace bound, and full physical/convergence assessment remain.
+Same-parent gradients and Hessians follow the actual native update. A
+two-segment finite P0/P1 six-channel density basis now gives owned coefficients,
+exact piecewise-polynomial L2 Gram, and coefficient-conjugate projected gaps;
+18 focused checks pass. Independent read-only reviews found no bounded
+discrete measure, scatter, or factory-basis algebra defect. Gauss exactness
+applies to density products, not generally to nonlinear density-gap work.
+**Generic L2 densities have no point values.** This raw coordinate-density
+Gram is not the physical F03 norm: the actual dual-pose-to-spatial-wrench map,
+force/moment scales, quadrature error beyond these polynomials, growing-space
+stability, native trace bound, and full physical assessment remain.
 
 A bare native B3 broken-half-cell L2 screen at 4/8/16 half-cells produced
 upper quotients 9.260/9.222/9.213 × 10⁻⁶ J⁻¹. This finite-grid diagnostic
@@ -62,8 +67,8 @@ those limits and the mathematical obstruction.
 
 ## Next discriminating action
 
-Derive a finite multiplier basis, station quadrature and a candidate-independent
-common physical work norm. Establish a mathematical native trace bound or
+Review the finite density basis; derive its physical six-channel work map and
+candidate-independent norm, plus a mathematical native trace bound or
 counterexample. Then compare complete A/B spaces only under an independently
 reviewed F03 contract. The full seven ratios, growing spaces, three refinement
 levels, physical transfer, locking, shear, drilling, and mixed-system checks

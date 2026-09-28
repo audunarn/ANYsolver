@@ -416,6 +416,17 @@ positive lower bound for \(\beta_{0,h}\) and finite upper bound for
 \(\gamma_{0,h}\), not just nonzero finite-grid values. Exact L2 Gram integration is straightforward for piecewise P0/P1
 densities, but the multiplier-to-physical-wrench map, E4/B3 trace bounds,
 mesh-ratio behavior, tolerances and independent threshold are still missing.
+The bounded two-segment implementation now compiles P0 or continuous P1
+coefficients per six-channel component. With station interpolation \(D\) and
+reference Gauss weights \(Q\), its raw-coordinate Gram is \(D^TQD\);
+two interior Gauss points per segment integrate P0/P1 products exactly.
+Its projected constraint rows are \(D^TQ g_6\), conjugate to the same
+coefficient vector used for station work. This establishes a finite discrete
+pairing only: \(D^TQD\) is **not** \(M_{0,h}\) until the reference-state dual
+pose-to-physical-wrench conversion and frozen force/moment scales are applied.
+The same quadrature is not automatically exact for nonlinear density-gap work;
+its integration error needs a separate check. An independent read-only review
+found no algebra or factory-ownership defect in this bounded construction.
 If this common L2 norm proves too strong for a channel, derive its actual
 trace dual *before* inspecting A/B scores; do not tune channel weights to
 rescue a candidate. A finite set of positive generalized eigenvalues does

@@ -11,7 +11,8 @@ from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts.b3_e4_f03_plate_patch_work import raw_e4_tangent
 from scripts.b3_e4_f03_l1_physical_rail import (
-    FlatQ4PhysicalRail, RailL1LogConnection, SegmentedRailWeakWork,
+    FiniteRailDensityBasis, FlatQ4PhysicalRail, RailL1LogConnection,
+    SegmentedRailWeakWork,
     transverse_shape_integrals,
 )
 
@@ -434,6 +435,71 @@ def _segmented_rail():
         reference, y, (-.05, .05), .035, port_at,
         beam.context.initial.mechanical)
     return line, beam
+
+
+def test_finite_density_basis_has_exact_piecewise_l2_gram_and_owned_data():
+    cuts = np.array((.5, .7, 1.))
+    kinds = ("P0", "P1", "P0", "P1", "P0", "P1")
+    basis = FiniteRailDensityBasis.on_two_segments(cuts, kinds)
+    cuts[1] = .8
+    np.testing.assert_array_equal(basis.cuts, (.5, .7, 1.))
+    for array in (basis.cuts, basis.stations, basis.weights,
+                  basis.sample_matrix, basis.raw_l2_gram):
+        assert not array.flags.writeable
+    lengths = (.2, .3)
+    p0 = np.diag(lengths)
+    p1 = np.array(((lengths[0]/3, lengths[0]/6, 0.),
+                   (lengths[0]/6, sum(lengths)/3, lengths[1]/6),
+                   (0., lengths[1]/6, lengths[1]/3)))
+    expected = np.zeros_like(basis.raw_l2_gram)
+    offset = 0
+    for kind in kinds:
+        block = p0 if kind == "P0" else p1
+        n = len(block)
+        expected[offset:offset+n, offset:offset+n] = block
+        offset += n
+    np.testing.assert_allclose(basis.raw_l2_gram, expected,
+                               rtol=0., atol=2e-16)
+    assert np.linalg.eigvalsh(basis.raw_l2_gram).min() > 0.
+    coefficients = np.arange(offset, dtype=float)/7.
+    samples = basis.density_samples(coefficients)
+    coefficients[:] = 0.
+    assert np.linalg.norm(samples) > 0.
+    with pytest.raises(ValueError, match="P0/P1"):
+        FiniteRailDensityBasis.on_two_segments((.5, .7, 1.),
+                                               ("P0",)*5+("dual",))
+
+
+def test_finite_density_coefficients_are_conjugate_to_projected_line_gaps():
+    line, beam = _segmented_rail()
+    basis = FiniteRailDensityBasis.on_two_segments(
+        (.5, .75, 1.), ("P1", "P0", "P1", "P0", "P1", "P0"))
+    np.testing.assert_array_equal(basis.stations, line.stations)
+    rng = np.random.default_rng(119)
+    shell = rng.normal(scale=.008, size=(3, 3, 6))
+    coefficients = rng.normal(scale=.5, size=basis.raw_l2_gram.shape[0])
+    state = beam.context.initial.mechanical
+    work, gaps, gradient, hessian = basis.work_tangent(
+        line, shell, state, coefficients)
+    rows = basis.constraint_rows(gaps)
+    assert work == pytest.approx(coefficients@rows, rel=2e-12, abs=2e-12)
+    direct = line.work_tangent(shell, state,
+                               basis.density_samples(coefficients))
+    for actual, expected in zip((work, gaps, gradient, hessian), direct):
+        np.testing.assert_allclose(actual, expected, rtol=0., atol=0.)
+    direction = rng.normal(size=len(coefficients))
+    h = 1e-5
+    forward = basis.work_tangent(line, shell, state,
+                                 coefficients+h*direction)[0]
+    backward = basis.work_tangent(line, shell, state,
+                                  coefficients-h*direction)[0]
+    assert (forward-backward)/(2*h) == pytest.approx(
+        rows@direction, rel=2e-8, abs=2e-9)
+    wrong = FiniteRailDensityBasis.on_two_segments(
+        (.5, .74, 1.), ("P0",)*6)
+    with pytest.raises(ValueError, match="do not match"):
+        wrong.work_tangent(line, shell, state,
+                           np.zeros(wrong.raw_l2_gram.shape[0]))
 
 
 def test_segmented_rail_constant_yaw_density_cancels_interior_shell_work():
