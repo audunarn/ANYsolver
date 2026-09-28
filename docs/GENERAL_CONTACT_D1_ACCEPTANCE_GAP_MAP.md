@@ -1,5 +1,16 @@
 # D1 shell-static acceptance gap map
 
+**Independent gap in installed example:** The standalone deformable-target
+example now reconstructs physical Q4/S3 skins and checks a conservative gap
+bound at all eight accepted poses. Local and installed fields match; a forced
+interior penetration is rejected. The [source-bound result](d1_review_support/d1_example_independent_gap_4abcc181_20260928.md)
+is limited to the represented planar XY overlap and remains development
+evidence, not final D1 acceptance. The same final example also checkpoints the
+open sixth step, resumes on a fresh model through recontact and matches the
+uninterrupted final displacement and integrated contact force exactly in both
+local and isolated installed runs. This narrows the split-restart workflow gap;
+broader rollback and incompatible-checkpoint gates remain open.
+
 **Current installed development check:** A fresh `df37e784` wheel ran the
 standalone eight-step deformable Q4/S3 example outside the checkout with
 identical mechanics fields to the prior installed run. The [source-bound

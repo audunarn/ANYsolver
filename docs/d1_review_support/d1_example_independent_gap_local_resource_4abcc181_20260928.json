@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 22.07976339999732,
+  "peak_process_tree_memory_mb": 332.304384,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "examples/general_contact_free_target_cycle_dev.py",
+    "--output",
+    "reports/d1_example_independent_gap_local_result_4abcc181_20260928.json"
+  ],
+  "log": "reports\\d1_example_independent_gap_local_4abcc181_20260928.txt"
+}
