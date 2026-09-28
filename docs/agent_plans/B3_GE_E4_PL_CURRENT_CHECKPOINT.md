@@ -11887,6 +11887,9 @@ Compact source-bound adjudication
 `B3_E4_F03_C1_MATERIAL_LINE_PLATE_ONLY_LOAD_ADJUDICATION_DEV_V1.json`
 has SHA256
 `1bebdf402c39459e6f2049ef6a3068c727d6de929bd9f73377b32059c76b5125`.
+The 44 raw files total 19,107,823 bytes; their tracked hash inventory
+is `B3_E4_F03_C1_MATERIAL_LINE_PLATE_ONLY_RAW_MANIFEST_DEV_V1.json`,
+SHA256 `6be72f4e6b1da0e365c9bc12a1df17fda5051e427a69bc029c4537c43b17e8b5`.
 The `tip_fz` label denotes the reconstructed *mixed* interface dual,
 which includes a large axial component; it is not pure vertical
 traction. These two 3D levels expose material reference-mesh
