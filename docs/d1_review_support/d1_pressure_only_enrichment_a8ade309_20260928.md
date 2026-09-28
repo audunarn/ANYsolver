@@ -17,9 +17,9 @@ ran under the [180-second, 1-GB cap](d1_pressure_enrichment_resource_e_a8ade309_
 
 Neither enriched scalar pressure solve settled within the independent oracle's
 500 projected active-set iterations. The y-enriched space has one pressure
-mode with exactly zero physical support beyond the rim; the probe now removes
-only exactly unsupported modes before solving, preserving every positive
-support. Both enrichments still fail to settle. The initial x failure and the
+**row** (33 modes) with exactly zero physical support beyond the rim; the
+probe now removes only exactly unsupported modes before solving, preserving
+every positive support. Both enrichments still fail to settle. The initial x failure and the
 y unsupported-mode failure are retained in the [x failure](d1_pressure_enrichment_b_a8ade309_20260928.txt)
 and [y failure](d1_pressure_enrichment_d_a8ade309_20260928.txt) logs.
 

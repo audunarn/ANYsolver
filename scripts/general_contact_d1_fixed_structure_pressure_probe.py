@@ -12,6 +12,7 @@ import sys
 import time
 
 import numpy as np
+from scipy.optimize import minimize
 import scipy.sparse as sparse
 import scipy.sparse.linalg as sparse_linalg
 
@@ -43,7 +44,157 @@ def cross_mass(pressure_nodes, structure_nodes, clip):
     return result
 
 
-def solve_fixed_structure(pressure_x, structure_x, y, pressure_y=None):
+def scaled_qp_approximation(compliance, rhs):
+    """Return the bounded dual QP iterate before active-set certification."""
+    diagonal = np.sqrt(np.diag(compliance))
+    if np.any(diagonal <= 0):
+        raise RuntimeError("dual QP has nonpositive diagonal")
+    hessian = compliance/np.outer(diagonal, diagonal)
+    linear = rhs/diagonal
+    scale = max(float(np.max(-linear)), 1.0e-12)
+
+    def objective_and_gradient(scaled_pressure):
+        response = hessian @ scaled_pressure
+        return (float(0.5*scaled_pressure @ response
+                      + (linear/scale) @ scaled_pressure),
+                response+linear/scale)
+
+    result = minimize(
+        objective_and_gradient, np.zeros(len(rhs)), jac=True,
+        method="L-BFGS-B", bounds=[(0.0, None)]*len(rhs),
+        options={"maxiter": 20000, "gtol": 1.0e-11,
+                 "ftol": 1.0e-15, "maxls": 50},
+    )
+    return result.x*scale/diagonal, result
+
+
+def scaled_qp_lcp(compliance, rhs, support):
+    """Independent bound-constrained dual QP, certified in original units."""
+    pressure, result = scaled_qp_approximation(compliance, rhs)
+    active = result.x > 1.0e-10
+    switching_scale = 1.0/np.max(np.diag(compliance))
+    for _ in range(100):
+        pressure = np.zeros(len(rhs))
+        if np.any(active):
+            try:
+                pressure[active] = np.linalg.solve(
+                    compliance[np.ix_(active, active)], -rhs[active])
+            except np.linalg.LinAlgError as exc:
+                raise RuntimeError("scaled dual QP active block is singular") from exc
+        gap = compliance @ pressure+rhs
+        next_active = (pressure-switching_scale*gap) > 0
+        if np.array_equal(next_active, active):
+            break
+        active = next_active
+    else:
+        raise RuntimeError("scaled dual QP active-set polish did not settle")
+    gap = compliance @ pressure+rhs
+    normalized_gap = gap/support
+    certificate = max(
+        float(max(0.0, -np.min(normalized_gap))),
+        float(np.max(np.abs(pressure*normalized_gap))),
+    )
+    if (not result.success or np.min(pressure) < -1.0e-10
+            or certificate > 1.0e-12):
+        raise RuntimeError(
+            f"scaled dual QP unresolved: success={result.success}, "
+            f"iterations={result.nit}, certificate={certificate:.6g}"
+        )
+    return pressure
+
+
+def active_work_rank_record(pressure_x, pressure_y, structure_x, structure_y,
+                            saved_bins, saved_active_modes):
+    """Algebraic rank of the replayed QP active cross-mass work map."""
+    nx, ny = len(structure_x)-1, len(structure_y)-1
+    stiffness = oracle.D*(
+        sparse.kron(sparse.csr_matrix(oracle.mass1d(ny, nodes=structure_y)),
+                    sparse.csr_matrix(oracle.stiff1d(nx, structure_x)))
+        +sparse.kron(sparse.csr_matrix(oracle.stiff1d(ny, structure_y)),
+                     sparse.csr_matrix(oracle.mass1d(nx, nodes=structure_x))))
+    force = -oracle.Q*np.kron(
+        oracle.mass1d(ny, nodes=structure_y).sum(axis=1),
+        oracle.mass1d(nx, nodes=structure_x).sum(axis=1))
+    work_all = sparse.kron(
+        sparse.csr_matrix(cross_mass(pressure_y, structure_y, oracle.YR)),
+        sparse.csr_matrix(cross_mass(pressure_x, structure_x, 1.0)),
+    ).tocsr()
+    all_support = np.asarray(work_all.sum(axis=1)).ravel()
+    supported = all_support > 0
+    work = work_all[supported]
+    support = all_support[supported]
+    free = np.ones(len(force), dtype=bool)
+    free[::nx+1] = False
+    factor = sparse_linalg.splu(stiffness.tocsr()[free][:, free].tocsc())
+    work_free = work[:, free]
+    compliance = np.asarray(work_free @ factor.solve(work_free.T.toarray()))
+    compliance = 0.5*(compliance+compliance.T)
+    rhs = work_free @ factor.solve(force[free])+oracle.G0*support
+    pressure, result = scaled_qp_approximation(compliance, rhs)
+    active = pressure > 1.0e-9
+    full_pressure = np.zeros(len(all_support))
+    full_pressure[supported] = pressure
+    solution = {"nx": len(pressure_x)-1, "ny": len(pressure_y)-1,
+                "xn": pressure_x, "yn": pressure_y,
+                "p": full_pressure.reshape(len(pressure_y), len(pressure_x))}
+    edges_x = np.linspace(0.0, 1.0, 9)
+    edges_y = np.r_[np.linspace(0.0, oracle.YR, 10), 1.0]
+    bins = oracle.q1_bins(solution, edges_x, edges_y)
+    replay_bin_relative = float(
+        np.linalg.norm(bins-np.asarray(saved_bins))
+        /np.linalg.norm(saved_bins))
+    if (int(active.sum()) != saved_active_modes
+            or replay_bin_relative > 1.0e-10):
+        raise AssertionError("QP active-set replay differs from saved field")
+    active_work = work_free[active].T.toarray()
+    column_scale = np.linalg.norm(active_work, axis=0)
+    if np.any(column_scale <= 0):
+        raise AssertionError("active work has a zero column")
+    unit_work = active_work/column_scale
+    _, singular, right = np.linalg.svd(unit_work, full_matrices=False)
+    ratios = singular/singular[0]
+    result_record = {
+        "qp_optimizer_success": bool(result.success),
+        "qp_optimizer_iterations": int(result.nit),
+        "replay_bin_l2_relative": replay_bin_relative,
+        "supported_modes": int(supported.sum()),
+        "active_modes": int(active.sum()),
+        "free_structural_coordinates": int(free.sum()),
+        "active_supported_indices": np.flatnonzero(active).tolist(),
+        "active_unit_column_singular_min_relative": float(ratios[-1]),
+        "active_rank_relative_1e_10": int(np.count_nonzero(ratios > 1.0e-10)),
+        "active_rank_relative_1e_12": int(np.count_nonzero(ratios > 1.0e-12)),
+    }
+    if ratios[-1] <= 1.0e-10:
+        delta = right[-1]/column_scale
+        full_delta = np.zeros(len(all_support))
+        full_delta[np.flatnonzero(supported)[active]] = delta
+        solution["p"] = full_delta.reshape(len(pressure_y), len(pressure_x))
+        null_bins = oracle.q1_bins(solution, edges_x, edges_y)
+        feasible_plus = min(
+            (pressure[active][delta < 0]/-delta[delta < 0]).tolist()
+            or [float("inf")])
+        feasible_minus = min(
+            (pressure[active][delta > 0]/delta[delta > 0]).tolist()
+            or [float("inf")])
+        feasible_step = 0.5*min(feasible_plus, feasible_minus)
+        result_record.update({
+            "null_work_relative": float(
+                np.linalg.norm(active_work @ delta)
+                /max(np.linalg.norm(active_work, 2)*np.linalg.norm(delta),
+                     1.0e-30)),
+            "null_bin_l2_per_pressure_l2_relative": float(
+                np.linalg.norm(null_bins[:9])/np.linalg.norm(bins[:9])
+                *np.linalg.norm(pressure[active])/np.linalg.norm(delta)),
+            "half_feasible_null_bin_l2_relative": float(
+                feasible_step*np.linalg.norm(null_bins[:9])
+                /np.linalg.norm(bins[:9])),
+        })
+    return result_record
+
+
+def solve_fixed_structure(pressure_x, structure_x, y, pressure_y=None,
+                          lcp_method="pdas"):
     if pressure_y is None:
         pressure_y = y
     nx, ny = len(structure_x)-1, len(y)-1
@@ -74,7 +225,12 @@ def solve_fixed_structure(pressure_x, structure_x, y, pressure_y=None):
     compliance = np.asarray(work_free @ response)
     compliance = 0.5*(compliance+compliance.T)
     rhs = work_free @ open_displacement+oracle.G0*support
-    pressure = oracle.pdas_lcp(compliance, rhs, support)
+    if lcp_method == "pdas":
+        pressure = oracle.pdas_lcp(compliance, rhs, support)
+    elif lcp_method == "scaled_qp":
+        pressure = scaled_qp_lcp(compliance, rhs, support)
+    else:
+        raise ValueError("unsupported scalar pressure solver")
     displacement = np.zeros(len(force))
     displacement[free] = open_displacement+response @ pressure
     weighted_gap = work @ displacement+oracle.G0*support
@@ -128,7 +284,7 @@ def enrichment_y_grid(y):
     return result
 
 
-def run_enrichment(output):
+def run_enrichment(output, *, lcp_method="pdas"):
     """One fixed-structure, pressure-only refinement discriminator."""
     if output.exists():
         raise FileExistsError(output)
@@ -157,7 +313,8 @@ def run_enrichment(output):
         print(f"pressure case: {name}", flush=True)
         try:
             solution, diagnostics = solve_fixed_structure(
-                pressure_x, structure_x, structure_y, pressure_y)
+                pressure_x, structure_x, structure_y, pressure_y,
+                lcp_method="pdas" if name == "matching_32x8" else lcp_method)
         except RuntimeError as exc:
             if name == "matching_32x8":
                 raise
@@ -210,6 +367,7 @@ def run_enrichment(output):
         "structural_y_knots_m": structure_y.tolist(),
         "common_bins": [8, 9],
         "development_sensitivity_target_relative": 0.002,
+        "independent_lcp_method": lcp_method,
         "retained_spatial_response_target_relative": 0.02,
         "cases": cases,
         "pressure_only_sensitivity": sensitivity,
@@ -224,6 +382,47 @@ def run_enrichment(output):
                       if "fv_bin_l2_relative" in value},
         "elapsed_seconds": record["elapsed_seconds"],
     }, indent=2))
+
+
+def run_active_rank(output):
+    """Certify active work rank for the saved nonqualified QP field only."""
+    if output.exists():
+        raise FileExistsError(output)
+    saved_path = Path(
+        "docs/d1_review_support/d1_pressure_enrichment_qp_b_6c4d1887_20260928.json"
+    )
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    if (saved["independent_lcp_method"] != "scaled_qp"
+            or not saved["all_enrichments_solved"]):
+        raise ValueError("saved approximate QP field identity differs")
+    structure_x = np.linspace(0.0, 1.0, 33)
+    structure_y = np.asarray(saved["structural_y_knots_m"])
+    grids = {
+        "enriched_x_64x8": (np.linspace(0.0, 1.0, 65), structure_y),
+        "enriched_y_32x16": (structure_x, enrichment_y_grid(structure_y)),
+    }
+    cases = {}
+    for name, (pressure_x, pressure_y) in grids.items():
+        print(f"active rank case: {name}", flush=True)
+        prior = saved["cases"][name]
+        cases[name] = active_work_rank_record(
+            pressure_x, pressure_y, structure_x, structure_y,
+            prior["bins_n"], prior["active_pressure_modes"])
+    record = {
+        "status": "development_active_work_rank_discriminator",
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "saved_qp_field_sha256": hashlib.sha256(saved_path.read_bytes()).hexdigest(),
+        "cases": cases,
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps({key: {
+        "active": value["active_modes"],
+        "rank_1e_10": value["active_rank_relative_1e_10"],
+        "smallest_relative_singular": value["active_unit_column_singular_min_relative"],
+        "null_bin_response": value.get("half_feasible_null_bin_l2_relative"),
+    } for key, value in cases.items()}, indent=2))
 
 
 def main(output):
@@ -300,5 +499,9 @@ if __name__ == "__main__":
         main(Path(sys.argv[1]))
     elif len(sys.argv) == 3 and sys.argv[1] == "--enrichment":
         run_enrichment(Path(sys.argv[2]))
+    elif len(sys.argv) == 3 and sys.argv[1] == "--enrichment-qp":
+        run_enrichment(Path(sys.argv[2]), lcp_method="scaled_qp")
+    elif len(sys.argv) == 3 and sys.argv[1] == "--active-rank":
+        run_active_rank(Path(sys.argv[2]))
     else:
         raise SystemExit("usage: python general_contact_d1_fixed_structure_pressure_probe.py [--enrichment] OUTPUT")

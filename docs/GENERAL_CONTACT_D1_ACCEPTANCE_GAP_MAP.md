@@ -11,7 +11,11 @@ physical features and a complete clipping-transition qualification remain open.
 64×8 x and 32×16 rim-knot y enrichment was run under the 180-second/1-GB cap.
 The independent scalar oracle's projected active set did not settle for either
 space after exact zero-support removal; no sensitivity value or stability
-verdict follows. [Probe, failures and decision](d1_review_support/d1_pressure_only_enrichment_a8ade309_20260928.md).
+verdict follows. A separately reviewed [active work-rank replay](d1_review_support/d1_pressure_active_rank_6c4d1887_20260928.md)
+finds null modes in both **uncertified** enriched QP active fields, with a
+0.505% feasible bin-force change for one y null direction at unchanged
+structural work. These fixed-structure over-enrichments cannot qualify the
+production matched fine-Q1 pressure space. [Original probe and failures](d1_review_support/d1_pressure_only_enrichment_a8ade309_20260928.md).
 
 **Candidate basis:** fine nodal Q1 pressure, batched Jet2 Q4/S3 derivatives and explicit monolithic active-set enforcement on the ordinary nonlinear static route. This is a development candidate, not an accepted profile. The nested supported-pressure Schur route remains available for comparison. The planar nonmatching Q4/S3 press, slide, opening and recontact scope is unchanged. The [capability ledger](GENERAL_CONTACT_CAPABILITIES.md) remains the status authority; [prior decisions and failures](GENERAL_CONTACT_RESTART_ARCHIVE_20260928.md) remain preserved.
 

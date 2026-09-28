@@ -1,0 +1,184 @@
+{
+  "status": "development_pressure_only_enrichment_discriminator",
+  "source_commit": "6c4d1887a5a62010c4aef859e6be91e7d5af0aad",
+  "probe_sha256": "ad2998956a1275998a17cb3dc516cb9b0542c3940be7ba743a5243c9dce0b12d",
+  "oracle_sha256": "9cfa980753f094a8373661e70ccdb55f2634894b3b02566efee76d00817991b3",
+  "saved_comparison_sha256": "d27cf3e4908bb67170914fd9c980b1316d9afb734ddd8307a8912b3fc21290c2",
+  "structural_mesh": [
+    32,
+    8
+  ],
+  "structural_y_knots_m": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.75,
+    0.825,
+    0.875,
+    0.895,
+    1.0
+  ],
+  "common_bins": [
+    8,
+    9
+  ],
+  "development_sensitivity_target_relative": 0.002,
+  "independent_lcp_method": "scaled_qp",
+  "retained_spatial_response_target_relative": 0.02,
+  "cases": {
+    "matching_32x8": {
+      "reaction_n": 0.1038046604053521,
+      "equilibrium_n": 1.765961650862165e-15,
+      "complementarity_pa_m": 6.370289444677051e-18,
+      "minimum_weighted_gap_m": -3.388131789017202e-20,
+      "minimum_physical_q1_gap_m": -1.788866880179826e-08,
+      "active_pressure_modes": 96,
+      "supported_pressure_modes": 297,
+      "exactly_unsupported_pressure_modes": 0,
+      "minimum_active_support_m2": 1.8601190476190095e-06,
+      "maximum_active_support_m2": 0.00625,
+      "active_unit_diagonal_eigenvalue_ratio": 2.341181878312398e-05,
+      "active_unit_diagonal_minimum_eigenvalue": 0.0014646991698753246,
+      "pressure_mesh": [
+        32,
+        8
+      ],
+      "pressure_y_knots_m": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.75,
+        0.825,
+        0.875,
+        0.895,
+        1.0
+      ],
+      "fv_bin_l1_relative": 0.004079970287828253,
+      "fv_bin_l2_relative": 0.004811099036938613,
+      "fv_rim_force_relative": 0.00210502768824977,
+      "bins_n": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0028696872163192907,
+          0.003766381718521704,
+          0.003750044131643353
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.002870424969872725,
+          0.0037672180106841737,
+          0.003750922550220673
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.002870449608424764,
+          0.0037663806643806023,
+          0.0037500654147243693
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.002869761131975406,
+          0.0037638696796109864,
+          0.0037474727251544365
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.002873868744070475,
+          0.003767053136159888,
+          0.0037508568013446494
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.002882772444709973,
+          0.0037759310340273098,
+          0.003760217643295011
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0028792725812176213,
+          0.003755688748050429,
+          0.0037393657582417126
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0029108002828471206,
+          0.003772338885913558,
+          0.0037574354275555387
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.005743031675406786,
+          0.007410054972416778,
+          0.007483294448562762
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "enriched_y_32x16": {
+      "status": "pressure_lcp_unresolved",
+      "pressure_mesh": [
+        32,
+        16
+      ],
+      "reason": "scaled dual QP active-set polish did not settle"
+    },
+    "enriched_x_64x8": {
+      "status": "pressure_lcp_unresolved",
+      "pressure_mesh": [
+        64,
+        8
+      ],
+      "reason": "scaled dual QP active block is singular"
+    }
+  },
+  "pressure_only_sensitivity": {},
+  "all_enrichments_solved": false,
+  "elapsed_seconds": 0.1825914000000921
+}
