@@ -118,6 +118,20 @@ acceptance is inferred from the revised local check. Independent read-only
 review found that the first knot search could skip an arbitrarily close
 allowed knot, invalidating the exact-work claim across it. The search and
 admission were corrected, and a near-coincident-knot rejection test passes.
+The same reviewer rechecked the correction and found no remaining crossing
+or work inconsistency in this bounded path. The focused transient file passed
+24/24 before that final guard; the three affected history/contact tests passed
+after it.
+
+An isolated wheel built from source commit `1d8f8ca3` has SHA256
+`500137d0ac8c4de0d85b782f9ccff6485015b8cc939d1eec0154ccd13f27f8ca`.
+Its installed import resolved under `reports/installed_history_dev/anysolver`,
+and the installed example with 0.02 N load and 0.012 s ramp completed 80
+steps, reporting 5.92083517e−6 J external nodal work. Build, install and
+example logs are retained in `reports/general_contact_c6_history_*_dev_20260928.log`.
+The first wheel attempt failed because the default pip cache was inaccessible
+in the sandbox; the `--no-cache-dir` retry succeeded. This is a bounded
+installed-package development check, not C6 package acceptance.
 
 General time-varying spatial loads, moving tools, free rigid bodies, descriptor dynamics in this Q4 branch,
 beam impact, general finite sliding, plasticity, friction, damping, general
