@@ -10495,6 +10495,11 @@ Mx/Fz interpretation. It identified stale V3 limitation wording
 (`two` probes for four actual probes); V3 remains immutable, and the
 current source/result will correct it. A synthetic rigid-section
 sign-and-units test is added before relying on the director probe.
+Source `d036dcaf` adds that independent rigid-section oracle; both
+focused tests pass. The corrected V4 probe result preserves all V3
+numerical case fields exactly while changing the limitation to four
+probes. `B3_E4_F03_C1_SHELL_TRACE_ACTION_DEV_V4.json` has SHA256
+`6c134b4be38dde6d96d71d45da02a711b769f2ebc5a86b97b1a8b772c2b0e8e6`.
 
 **Next pure-action mode discriminator (prospective):** The current loaded
 Mx/Fz interface duals mix all six channel types, and their signed work

@@ -1,0 +1,419 @@
+{
+  "cases": {
+    "tip_fz": {
+      "fixed_distance_probes": [
+        {
+          "director_rotation_difference_rad": [
+            4.5716903622929374e-14,
+            -2.728530224577777e-07
+          ],
+          "native_director_rotation_xy_rad": [
+            2.4736493182118512e-14,
+            6.403931923520378e-05
+          ],
+          "native_midplane_translation_m": [
+            -7.993771236654854e-07,
+            -1.1701350775891557e-17,
+            -3.80453297228494e-05
+          ],
+          "solid_director_rotation_xy_rad": [
+            -2.0980410440810862e-14,
+            6.431217225766156e-05
+          ],
+          "solid_thickness_mean_translation_m": [
+            -8.122730838984411e-07,
+            -1.754807533450144e-17,
+            -3.8518628736322106e-05
+          ],
+          "translation_difference_m": [
+            1.2895960232955738e-08,
+            5.8467245586098826e-18,
+            4.732990134727078e-07
+          ],
+          "x_m": 0.5
+        },
+        {
+          "director_rotation_difference_rad": [
+            7.002952669104546e-14,
+            -2.018894666326517e-07
+          ],
+          "native_director_rotation_xy_rad": [
+            3.308884672138311e-14,
+            6.894076459337646e-05
+          ],
+          "native_midplane_translation_m": [
+            -1.111479076228869e-06,
+            -1.4855754796345443e-17,
+            -5.467534801413347e-05
+          ],
+          "solid_director_rotation_xy_rad": [
+            -3.694067996966235e-14,
+            6.914265406000911e-05
+          ],
+          "solid_thickness_mean_translation_m": [
+            -1.1229488883387056e-06,
+            -2.990064776225763e-17,
+            -5.530178986105936e-05
+          ],
+          "translation_difference_m": [
+            1.1469812109836657e-08,
+            1.5044892965912187e-17,
+            6.264418469258926e-07
+          ],
+          "x_m": 0.75
+        },
+        {
+          "director_rotation_difference_rad": [
+            7.886279075418747e-14,
+            -2.5713350991890787e-07
+          ],
+          "native_director_rotation_xy_rad": [
+            3.911000338701695e-14,
+            6.928386959959423e-05
+          ],
+          "native_midplane_translation_m": [
+            -1.5904884925398766e-06,
+            3.186491730350943e-17,
+            -6.506984896124029e-05
+          ],
+          "solid_director_rotation_xy_rad": [
+            -3.9752787367170516e-14,
+            6.954100310951314e-05
+          ],
+          "solid_thickness_mean_translation_m": [
+            -1.8738379914428909e-06,
+            -2.0898071304803702e-17,
+            -6.573382040166582e-05
+          ],
+          "translation_difference_m": [
+            2.833494989030143e-07,
+            5.2762988608313134e-17,
+            6.639714404255278e-07
+          ],
+          "x_m": 0.9
+        },
+        {
+          "director_rotation_difference_rad": [
+            9.28170883262529e-14,
+            4.708001622775695e-07
+          ],
+          "native_director_rotation_xy_rad": [
+            3.8649028006395917e-14,
+            6.722772599044553e-05
+          ],
+          "native_midplane_translation_m": [
+            -1.6521394735895726e-06,
+            -1.836131342370626e-16,
+            -6.851274389006956e-05
+          ],
+          "solid_director_rotation_xy_rad": [
+            -5.416806031985699e-14,
+            6.675692582816796e-05
+          ],
+          "solid_thickness_mean_translation_m": [
+            -1.8882377463761255e-06,
+            -2.360557698975314e-16,
+            -6.918796075891585e-05
+          ],
+          "translation_difference_m": [
+            2.3609827278655292e-07,
+            5.24426356604688e-17,
+            6.752168688462889e-07
+          ],
+          "x_m": 0.95
+        }
+      ],
+      "intervals": [
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            1.2467987815306348e-08,
+            -4.342494479218793e-17,
+            1.657279996380521e-08,
+            -2.1727794393861817e-15,
+            9.316049597697094e-09,
+            1.8270173848929726e-17
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 6.733922066357923e-07,
+          "native_minus_solid_work_J": -0.0012658560137464607,
+          "native_shell_action_work_J": 0.00416767452895353,
+          "solid_shell_action_work_J": 0.005433530542699991,
+          "x_interval_m": [
+            0.9,
+            0.925
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            8.074551947176581e-09,
+            -3.5858306022759226e-17,
+            1.697179776868439e-08,
+            -2.369245273522217e-15,
+            -1.2490185945503873e-08,
+            2.2625038661004973e-16
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 6.873647616341888e-07,
+          "native_minus_solid_work_J": -0.00038520959101403813,
+          "native_shell_action_work_J": 0.00496138857513669,
+          "solid_shell_action_work_J": 0.005346598166150728,
+          "x_interval_m": [
+            0.925,
+            0.9500000000000001
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            6.62003049013e-09,
+            -3.1807630406535376e-17,
+            1.720529429366035e-08,
+            -2.1124831281007797e-15,
+            -1.5196983877372018e-08,
+            2.5712324994167373e-16
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 6.890294308418846e-07,
+          "native_minus_solid_work_J": -0.0002781852126743558,
+          "native_shell_action_work_J": 0.003283824199788206,
+          "solid_shell_action_work_J": 0.0035620094124625616,
+          "x_interval_m": [
+            0.9500000000000001,
+            0.9750000000000001
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            6.330387923011922e-09,
+            -3.87139030328861e-17,
+            1.696710333108866e-08,
+            -1.9299394857955998e-15,
+            -2.975541057466648e-08,
+            -2.1831280786634674e-16
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 6.848308307846863e-07,
+          "native_minus_solid_work_J": -0.000241791170950467,
+          "native_shell_action_work_J": 0.000580335836868613,
+          "solid_shell_action_work_J": 0.00082212700781908,
+          "x_interval_m": [
+            0.9750000000000001,
+            1.0
+          ]
+        }
+      ],
+      "native_shell_action_work_J": 0.012993223140747039,
+      "native_shell_equilibrium_ratio": 1.5192495484517917e-12,
+      "solid_shell_action_work_J": 0.01516426512913236
+    },
+    "tip_mx": {
+      "fixed_distance_probes": [
+        {
+          "director_rotation_difference_rad": [
+            -5.006931047737753e-07,
+            6.364179754879355e-14
+          ],
+          "native_director_rotation_xy_rad": [
+            2.5149015064200636e-05,
+            5.878095293470967e-14
+          ],
+          "native_midplane_translation_m": [
+            4.876789594277161e-17,
+            3.4275842118377e-08,
+            -3.290534525955016e-14
+          ],
+          "solid_director_rotation_xy_rad": [
+            2.564970816897441e-05,
+            -4.860844614083879e-15
+          ],
+          "solid_thickness_mean_translation_m": [
+            4.983575795111663e-17,
+            3.8089392593690723e-08,
+            5.121548815380446e-16
+          ],
+          "translation_difference_m": [
+            -1.0678620083450178e-18,
+            -3.813550475313722e-09,
+            -3.34175001410882e-14
+          ],
+          "x_m": 0.5
+        },
+        {
+          "director_rotation_difference_rad": [
+            -4.686525200609093e-07,
+            7.415651879033496e-14
+          ],
+          "native_director_rotation_xy_rad": [
+            3.3873923453578294e-05,
+            6.744632896599325e-14
+          ],
+          "native_midplane_translation_m": [
+            6.761562063796106e-17,
+            4.7221919311066075e-08,
+            -4.86841708221848e-14
+          ],
+          "solid_director_rotation_xy_rad": [
+            3.43425759736392e-05,
+            -6.710189824341712e-15
+          ],
+          "solid_thickness_mean_translation_m": [
+            6.875370192549953e-17,
+            5.5971764224542595e-08,
+            2.025155924318824e-15
+          ],
+          "translation_difference_m": [
+            -1.138081287538469e-18,
+            -8.74984491347652e-09,
+            -5.0709326746503625e-14
+          ],
+          "x_m": 0.75
+        },
+        {
+          "director_rotation_difference_rad": [
+            1.126950865727135e-06,
+            7.762680835719542e-14
+          ],
+          "native_director_rotation_xy_rad": [
+            4.1942757408389065e-05,
+            7.270250599690682e-14
+          ],
+          "native_midplane_translation_m": [
+            9.529774766306205e-17,
+            6.321939147612197e-08,
+            -5.912962439185681e-14
+          ],
+          "solid_director_rotation_xy_rad": [
+            4.081580654266193e-05,
+            -4.924302360288609e-15
+          ],
+          "solid_thickness_mean_translation_m": [
+            1.0904272304678335e-16,
+            1.3221145686910433e-07,
+            3.0018200998129677e-15
+          ],
+          "translation_difference_m": [
+            -1.3744975383721303e-17,
+            -6.899206539298236e-08,
+            -6.213144449166978e-14
+          ],
+          "x_m": 0.9
+        },
+        {
+          "director_rotation_difference_rad": [
+            -2.3897407889167543e-06,
+            7.875586806723465e-14
+          ],
+          "native_director_rotation_xy_rad": [
+            4.651169093310547e-05,
+            7.458846496489803e-14
+          ],
+          "native_midplane_translation_m": [
+            1.0153704737518308e-16,
+            5.4983629520429916e-08,
+            -6.281898225981655e-14
+          ],
+          "solid_director_rotation_xy_rad": [
+            4.8901431722022225e-05,
+            -4.167403102336618e-15
+          ],
+          "solid_thickness_mean_translation_m": [
+            1.1891637590212026e-16,
+            6.608298830276082e-08,
+            3.230171636852486e-15
+          ],
+          "translation_difference_m": [
+            -1.7379328526937175e-17,
+            -1.10993587823309e-08,
+            -6.604915389666904e-14
+          ],
+          "x_m": 0.95
+        }
+      ],
+      "intervals": [
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            3.3255157702817673e-17,
+            1.4861789023389723e-09,
+            -1.578332606795922e-15,
+            9.399477644934396e-08,
+            -1.9370243821087184e-15,
+            -3.202521959386386e-08
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 2.584779175684682e-06,
+          "native_minus_solid_work_J": -3.847146166863707e-05,
+          "native_shell_action_work_J": 0.00042422122029665935,
+          "solid_shell_action_work_J": 0.0004626926819652964,
+          "x_interval_m": [
+            0.9,
+            0.925
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            3.381809851760019e-17,
+            1.2734725027723067e-09,
+            -1.6274191543178464e-15,
+            7.358492698930291e-08,
+            -1.9604207759061175e-15,
+            -8.740959097305188e-08
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 1.5379797818365303e-06,
+          "native_minus_solid_work_J": -3.610950608392725e-05,
+          "native_shell_action_work_J": 0.0003681649059584049,
+          "solid_shell_action_work_J": 0.00040427441204233215,
+          "x_interval_m": [
+            0.925,
+            0.9500000000000001
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            3.405119747698842e-17,
+            1.4310741034137878e-09,
+            -1.6752740162640622e-15,
+            7.900494606451506e-08,
+            -1.971371992350018e-15,
+            -6.414929937888673e-08
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 3.987877279066314e-07,
+          "native_minus_solid_work_J": -3.704206638195954e-05,
+          "native_shell_action_work_J": 0.0004088781288765776,
+          "solid_shell_action_work_J": 0.00044592019525853714,
+          "x_interval_m": [
+            0.9500000000000001,
+            0.9750000000000001
+          ]
+        },
+        {
+          "integrated_gap_side_difference_m_rad_times_m": [
+            3.397116923492993e-17,
+            2.151673918799329e-09,
+            -1.7242382815240267e-15,
+            1.3739512104885213e-07,
+            -1.9653971823726136e-15,
+            -1.4559633939506862e-07
+          ],
+          "maximum_station_gap_with_0p1m_moment_scale_m": 2.0993855416427203e-06,
+          "native_minus_solid_work_J": -9.041662154749854e-05,
+          "native_shell_action_work_J": 0.0005768330202407326,
+          "solid_shell_action_work_J": 0.0006672496417882311,
+          "x_interval_m": [
+            0.9750000000000001,
+            1.0
+          ]
+        }
+      ],
+      "native_shell_action_work_J": 0.0017780972753723744,
+      "native_shell_equilibrium_ratio": 1.6943455477625352e-12,
+      "solid_shell_action_work_J": 0.0019801369310543967
+    }
+  },
+  "classification": "fixed-action shell material-station trace comparison",
+  "limitations": [
+    "same P0 action but E4 and 3D plate kinematics/supports differ",
+    "linear fixed-dual action-only responses, not coupled loaded sensitivity",
+    "interval work terms may cancel; they are not independent strain energies",
+    "four fixed-distance probes compare physical poses, not stress convergence",
+    "not F03/G0B acceptance or multiplier selection"
+  ],
+  "solid_action_node_count": 288,
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "solid_unit_field_count": 24,
+  "source_commit": "d036dcaf80d6e1023fc1a478a112e4f985c75036",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}
