@@ -34,6 +34,20 @@ def _vee(matrix: np.ndarray) -> np.ndarray:
     return np.array((matrix[2, 1], matrix[0, 2], matrix[1, 0]))
 
 
+def _jet_unit(vector: list[ad.Jet2], label: str) -> list[ad.Jet2]:
+    squared = ad.dot(vector, vector)
+    if not np.isfinite(squared.value) or squared.value <= 1e-20:
+        raise ValueError(f"degenerate {label}")
+    length = ad.sqrt(squared)
+    return [entry/length for entry in vector]
+
+
+def _jet_cross(left: list[ad.Jet2], right: list[ad.Jet2]) -> list[ad.Jet2]:
+    return [left[1]*right[2]-left[2]*right[1],
+            left[2]*right[0]-left[0]*right[2],
+            left[0]*right[1]-left[1]*right[0]]
+
+
 def spatial_gap(shell: np.ndarray, shell_frame: np.ndarray,
                 beam: np.ndarray, beam_frame: np.ndarray) -> np.ndarray:
     """Early local axial-skew comparator for physical poses."""
@@ -141,8 +155,8 @@ class L1LogConnection:
     The supplied pose joint defines e=Fs0.T(rb0-rs0), A=Fs0.T Fb0 and
     c=[Fs.T(rb-rs)-e, Log(A.T Fs.T Fb)]. Its existing spatial Jacobian is
     pulled through the E4 total-coordinate and B3 retained-update maps.
-    Only first variation is composed here; the joint Hessian alone omits
-    curvature of these two maps.
+    ``evaluate`` composes first variation; ``work_tangent`` composes the
+    local-chart Hessian through both maps. Neither is integrated line work.
     """
 
     reference: np.ndarray
@@ -196,3 +210,81 @@ class L1LogConnection:
         pose_step = np.r_[shell_step, shell_spin, beam_step, spatial[3:]]
         return (evaluation.constraints.copy(),
                 evaluation.constraint_jacobian@pose_step)
+
+    def work_tangent(self, total: np.ndarray, beam_state,
+                     multipliers: np.ndarray
+                     ) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
+        """Local-chart value, six gaps, residual and composed Hessian.
+
+        The chart is additive E4 total coordinates and one native
+        ``Context.advance`` exponential from ``beam_state``. The 21 active
+        variables are 12 E4 coordinates, two B3 endpoint translations and
+        one retained half-cell rotation. Resultant and unrelated columns are
+        exactly zero in the returned full coordinate arrays. This is the
+        Hessian of multiplier work, not a material stiffness or assembled law.
+        The current high/low position sum is verified at ordinary coordinates;
+        large-origin compensated accuracy remains a separate check.
+        """
+        total = np.asarray(total, dtype=float)
+        multiplier = np.asarray(multipliers, dtype=float)
+        if total.shape != (2, 6) or not np.isfinite(total).all():
+            raise ValueError("finite two-node E4 total coordinates required")
+        if multiplier.shape != (6,) or not np.isfinite(multiplier).all():
+            raise ValueError("finite six-channel multipliers required")
+        self.joint.guard()
+        owned, left, right, lift, _, rotation = self.port._parts(beam_state)
+        high, low, beam_frame0 = self.port.pose_pair(owned)
+        local_size = 21
+        constant = lambda value: ad.Jet2.constant(float(value), local_size)
+        nodal = [[ad.Jet2.variable(total[i, j], 6*i+j, local_size)
+                  for j in range(6)] for i in range(2)]
+        ez = [constant(0.), constant(0.), constant(1.)]
+        directors = [ad.matvec(ad.so3_exp(node[3:]), ez) for node in nodal]
+        top = [[constant(self.reference[i, j])+nodal[i][j]+
+                .5*self.thickness*directors[i][j] for j in range(3)]
+               for i in range(2)]
+        shell = [(top[0][j]+top[1][j])*.5 for j in range(3)]
+        mean = [(directors[0][j]+directors[1][j])*.5 for j in range(3)]
+        normal = _jet_unit(mean, "E4 mean director")
+        raw = [top[1][j]-top[0][j] for j in range(3)]
+        component = ad.dot(normal, raw)
+        tangent = _jet_unit([raw[j]-normal[j]*component for j in range(3)],
+                            "projected E4 material-line tangent")
+        side = _jet_cross(normal, tangent)
+        shell_frame = [[tangent[j], side[j], normal[j]] for j in range(3)]
+
+        spin = [ad.Jet2.variable(0., 18+j, local_size) for j in range(3)]
+        increment = ad.so3_exp(spin)
+        beam_frame = ad.matmul(increment, ad.constant_matrix(beam_frame0, local_size))
+        rotated_lift = ad.matvec(increment,
+                                 [constant(v) for v in rotation@lift])
+        beam_origin = [constant(high[j]+low[j])+
+                       (1.-self.port.weight)*ad.Jet2.variable(0., 12+j, local_size)+
+                       self.port.weight*ad.Jet2.variable(0., 15+j, local_size)+
+                       rotated_lift[j]-constant((rotation@lift)[j])
+                       for j in range(3)]
+        arm = ad.matvec(beam_frame, [constant(v) for v in self.beam_offset])
+        beam = [beam_origin[j]+arm[j] for j in range(3)]
+
+        distance = [beam[j]-shell[j] for j in range(3)]
+        translation = [entry-constant(offset) for entry, offset in zip(
+            ad.matvec(ad.transpose(shell_frame), distance), self.joint._offset)]
+        relative = ad.matmul(
+            ad.constant_matrix(self.joint._relative.T, local_size),
+            ad.matmul(ad.transpose(shell_frame), beam_frame))
+        gaps = translation+ad.so3_log(relative)
+        work = sum((constant(multiplier[j])*gaps[j] for j in range(6)),
+                   start=constant(0.))
+        full_size = 12+self.port.context.count
+        indices = list(range(12))
+        indices.extend(12+6*left+j for j in range(3))
+        indices.extend(12+6*right+j for j in range(3))
+        cell_column = (self.port.context.nodal_count+
+                       24*self.port.element_index+3*self.port.cell)
+        indices.extend(12+cell_column+j for j in range(3))
+        residual = np.zeros(full_size)
+        hessian = np.zeros((full_size, full_size))
+        residual[indices] = work.gradient
+        hessian[np.ix_(indices, indices)] = work.hessian
+        return (work.value, np.array([entry.value for entry in gaps]),
+                residual, hessian)

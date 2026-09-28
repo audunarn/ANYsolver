@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from scipy.spatial.transform import Rotation
 
 from anysolver.corotational import rotation_matrix_from_vector
 from scripts._b3_e4_f03_native_fixture import build
@@ -214,3 +215,117 @@ def test_local_angular_chart_rejects_singular_relative_rotations(angle):
     rotated = rotation_matrix_from_vector(np.array((angle, 0., 0.)))
     with pytest.raises(ValueError, match="outside the local probe chart"):
         spatial_gap(np.zeros(3), np.eye(3), np.zeros(3), rotated)
+
+
+def test_composed_nonzero_multiplier_work_tangent_and_second_plateau():
+    beam, port, reference = _case()
+    initial = beam.context.initial.mechanical
+    connection = L1LogConnection.at_reference(reference, np.zeros((2, 6)),
+                                               .035, port, initial)
+    rng = np.random.default_rng(517)
+    beam_base = rng.normal(size=beam.context.count)*.002
+    beam_base[:6] = 0.
+    state = beam.context.advance(initial, beam_base)
+    total = np.array(((.002, -.001, .0003, .2, -.1, .04),
+                      (.003, .002, -.0004, .13, .09, -.03)))
+    dual = np.array((120., -85., 150., 5., -7., 11.))
+    value, gap, residual, hessian = connection.work_tangent(total, state, dual)
+    np.testing.assert_allclose(gap, connection.evaluate(total, state)[0], atol=2e-14)
+    np.testing.assert_allclose(value, dual@gap, atol=2e-13)
+    np.testing.assert_allclose(hessian, hessian.T, atol=2e-12)
+
+    shell_direction = rng.normal(size=(2, 6))*np.array((.03, .03, .03, .2, .2, .2))
+    beam_direction = rng.normal(size=beam.context.count)*.03
+    beam_direction[:6] = 0.
+    for element in range(len(beam.context.elements)):
+        begin = beam.context.nodal_count+24*element
+        beam_direction[begin:begin+6] *= 5.
+    direction = np.r_[shell_direction.ravel(), beam_direction]
+    analytic_first = float(residual@direction)
+    analytic_second = float(direction@hessian@direction)
+    assert abs(analytic_second) > 1e-5
+    first_gap = connection.evaluate(total, state,
+                                    shell_direction=shell_direction,
+                                    beam_direction=beam_direction)[1]
+    np.testing.assert_allclose(analytic_first, dual@first_gap, atol=3e-11)
+
+    def work(step):
+        updated = beam.context.advance(state, step*beam_direction)
+        return float(dual@connection.evaluate(total+step*shell_direction, updated)[0])
+
+    errors = []
+    for step in (.02, .01, .005):
+        finite = (work(step)-2*value+work(-step))/(step*step)
+        errors.append(abs(finite-analytic_second))
+    finite_first = (work(.005)-work(-.005))/.01
+    np.testing.assert_allclose(finite_first, analytic_first,
+                               rtol=3e-5, atol=2e-7)
+    assert errors[1] < .4*errors[0]
+    assert errors[2] < .4*errors[1]
+    assert errors[2] <= 3e-6*max(1., abs(analytic_second))
+
+    shell_second = rng.normal(size=(2, 6))*np.array((.02, .02, .02, .1, .1, .1))
+    beam_second = rng.normal(size=beam.context.count)*.02
+    beam_second[:6] = 0.
+    mixed = float(direction@hessian@np.r_[shell_second.ravel(), beam_second])
+
+    def work_mixed(first, second):
+        updated = beam.context.advance(
+            state, first*beam_direction+second*beam_second)
+        trial = total+first*shell_direction+second*shell_second
+        return float(dual@connection.evaluate(trial, updated)[0])
+
+    mixed_errors = []
+    for step in (.02, .01, .005):
+        finite = (work_mixed(step, step)-work_mixed(step, -step)-
+                  work_mixed(-step, step)+work_mixed(-step, -step))/(4*step*step)
+        mixed_errors.append(abs(finite-mixed))
+    assert mixed_errors[1] < .4*mixed_errors[0]
+    assert mixed_errors[2] < .4*mixed_errors[1]
+    assert mixed_errors[2] <= 2e-6*max(1., abs(mixed))
+
+    # Only the two endpoint translations and one retained half-cell rotation
+    # can carry B3 point work; the 18 resultants per element have zero columns.
+    for element in range(len(beam.context.elements)):
+        begin = 12+beam.context.nodal_count+24*element+6
+        np.testing.assert_array_equal(residual[begin:begin+18], 0.)
+        np.testing.assert_array_equal(hessian[begin:begin+18], 0.)
+
+
+def test_log_work_objectivity_and_reference_ownership():
+    beam, port, reference = _case()
+    initial = beam.context.initial.mechanical
+    connection = L1LogConnection.at_reference(reference, np.zeros((2, 6)),
+                                               .035, port, initial)
+    total = np.array(((.001, -.002, .0003, .12, -.08, .04),
+                      (.002, .001, -.0004, .09, .05, -.02)))
+    dual = np.array((2., -3., 5., 7., -11., 13.))
+    original = connection.work_tangent(total, initial, dual)
+    rigid_vector = np.array((.2, -.12, .08))
+    rigid = rotation_matrix_from_vector(rigid_vector)
+    shift = np.array((.3, -.2, .1))
+    transformed_total = total.copy()
+    for node in range(2):
+        transformed_total[node, :3] = (
+            rigid@(reference[node]+total[node, :3])+shift-reference[node])
+        transformed_total[node, 3:] = Rotation.from_matrix(
+            rigid@rotation_matrix_from_vector(total[node, 3:])).as_rotvec()
+    step = np.zeros(beam.context.count)
+    for node, position in enumerate(initial.positions):
+        if node == 0:  # the fixed support is outside the sampled half-cell
+            continue
+        step[6*node:6*node+3] = rigid@position+shift-position
+        step[6*node+3:6*node+6] = rigid_vector
+    for element in range(len(beam.context.elements)):
+        begin = beam.context.nodal_count+24*element
+        step[begin:begin+6] = np.tile(rigid_vector, 2)
+    transformed_state = beam.context.advance(initial, step)
+    transformed = connection.work_tangent(transformed_total, transformed_state, dual)
+    np.testing.assert_allclose(transformed[0], original[0], atol=4e-13)
+    np.testing.assert_allclose(transformed[1], original[1], atol=4e-14)
+    assert not connection.reference.flags.writeable
+    reference[0, 0] = -4.
+    np.testing.assert_allclose(connection.work_tangent(total, initial, dual)[0],
+                               original[0], atol=1e-14)
+    with pytest.raises(TypeError, match="retained native mechanical state"):
+        connection.work_tangent(total, object(), dual)
