@@ -1,0 +1,63 @@
+{
+  "boundary": "Finite path samples only; no continuous branch proof, mixed-owner integration, production adapter, F05 or G0B acceptance.",
+  "case": "B3_E4_G0_F05_S3_BRANCH_PATH_DEV_V1",
+  "command": "python -B scripts/probe_b3_ge_e4_pl_g0_f05_s3_branch_path_dev_v1.py",
+  "decision": "A pass strengthens the local smooth-branch interpretation; a failure returns to S3 local tangent diagnosis.",
+  "directions": [
+    {
+      "active_classification_changes": 0,
+      "derivative": [
+        {"relative_derivative_error": 8.288091400151744e-08, "step": 2e-06},
+        {"relative_derivative_error": 9.464613169157793e-09, "step": 2e-07}
+      ],
+      "hardening_segment_changes": 0,
+      "minimum_active_alpha_increment": 0.00017930687358861438,
+      "minimum_active_distance_to_hardening_break": 0.005780676984077754,
+      "phase": 0.3,
+      "sample_count": 35
+    },
+    {
+      "active_classification_changes": 0,
+      "derivative": [
+        {"relative_derivative_error": 2.0931862955568328e-06, "step": 2e-06},
+        {"relative_derivative_error": 2.258268980602452e-08, "step": 2e-07}
+      ],
+      "hardening_segment_changes": 0,
+      "minimum_active_alpha_increment": 0.00017853834989744934,
+      "minimum_active_distance_to_hardening_break": 0.005779908460386589,
+      "phase": 0.7,
+      "sample_count": 35
+    }
+  ],
+  "environment": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONPATH": "src;scripts;.",
+    "numba_disable_jit": true,
+    "numpy": "2.4.6",
+    "python": "3.14.2",
+    "scipy": "1.17.1"
+  },
+  "fixture": {
+    "accepted_alpha_max": 0.00760137011048914,
+    "active_station_count": 15,
+    "central_material_force_norm": 2016590.4808523674,
+    "grid_half_width": 2e-06,
+    "grid_points_per_direction": 35,
+    "hardening_breaks": [0.002, 0.02],
+    "predecessor_byte_identical": true,
+    "trial_alpha_max": 0.007833728187324439
+  },
+  "question": "Does the existing S3 derivative plateau hide a sampled active or hardening-segment change?",
+  "source_sha256": {
+    "scripts/probe_b3_ge_e4_pl_g0_f05_s3_branch_path_dev_v1.py": "51a7704a48e5264b22c735a236833011ea732edd176c74d3e7cfadcd1ad8c0fb",
+    "scripts/probe_b3_ge_e4_pl_g0_f05_s3_pose_pullback_dev_v1.py": "e611f4df7d1371eef942df7d5fbd804ab814ed740ab1d490d50fea19005fb87c",
+    "src/anysolver/_ge_beam3_variational_shell.py": "958cbf00f62e8af87724f909b793fa24391e02e3a0a2a5d5d62f05e9f1168320",
+    "src/anysolver/e4_pl_s3_v2d_element.py": "d0ad70f7c87718d60ee02a82420915b435d0cf66b466049f83ea9c2ad1b90a80",
+    "src/anysolver/e4_pl_s3_v2d_state.py": "d8f1429dcfb1bd575046cd064e506e36330c709f1e38e068f8e90a9dc0713e66",
+    "src/anysolver/material_curves.py": "5400ce65fe87a049a6d89f880b4bc8a19f48aeaf9c5cda0bef0e6e88a8116661",
+    "src/anysolver/plasticity.py": "1b6c5ab0af2eacbcc949cf473844d326869523f5a2e9fddb192be5f672726010"
+  },
+  "status": "passed_bounded_development_screen"
+}

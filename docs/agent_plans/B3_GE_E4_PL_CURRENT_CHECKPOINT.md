@@ -36,18 +36,29 @@ of `0.01502–0.01514`, dominated by beam kinematics, and does not
 separate P0 from selective P1/dual at x8. A separate normalized trace
 screen falls `1.718→0.665→0.286` across x2/x4/x8; the x8 least
 trace mode is 99.95% vertical-force channel and unaffected by yaw
-choice. **Remaining uncertainty:**
+choice. An isolated physical fz witness on those same three meshes
+has E4/beam supremal work `25.253/0.269→0.624/0.0376→0.0886/0.0050 J`;
+an independent auxiliary scalar Q4 trace gives `17.679→9.956→2.121 J`.
+Both weaken, while E4 weakens faster. This localizes the trend mainly
+to the shell-side trace but does not establish physical locking.
+**Remaining uncertainty:**
 Physical torque/shear fidelity of the declared pose, growing-space
 trace stability and locking, and the allocation of shell/section versus
 connection error. **Next discriminator:** Compare work-conjugate
 physical transfer on matching idealizations and assess interface
 trace norms, locking, and growing spaces over the registered ratios.
 Use those outcomes to retain or revise the law and
-multiplier policy.
+multiplier policy. The next targeted physical comparison is the fixed
+x8 isolated fz action on a shear-deformable plate reference with enough
+resolution for its eight alternating intervals. Existing four-cell
+solid bond discretization cannot resolve that action and is not an
+automatic substitute.
 The independent B2 F09 private energy-admission study found a
 canonical-SI rule that removes a sampled direct-unit discrepancy and
 fails closed on erased stiffness, but F09 physical-range and product
 graph admission remain open. Advance F05–F08 foundations where permitted.
+An S3 local smooth-branch screen now passes over two sampled path
+directions without accepted-state mutation; mixed-owner F05 work remains.
 No space or physical connection is selected.
 G0B/F03 remain open, G1 barred, and formal F03 authority unconsumed;
 detailed evidence follows.
@@ -11922,3 +11933,77 @@ relative-energy guard for the *private six-mode matrix*, not product
 admission. It does not establish a continuous physical section range,
 emitted 12×12 tangent fidelity, graph/state ownership, or a reason to
 change the provisional cutoff. F09 and G0B remain open.
+
+**Next vertical trace discriminator (prospective):** The falling x2/x4/x8
+trace minimum is finite-level vertical jump-trace weakness under the
+chosen norm. It does not yet distinguish an incompatible P0/Q4 trace
+space from an E4/B3 energy-norm effect. Reconstruct only these three
+tested least trace modes, retain the physical fz dual action and
+H^-1/2 normalization, and split its supremal work into exact-drilling
+E4 and native B3 contributions. Compare shell work with an independently
+assembled, dimensionally matched scalar H1 Q4 transverse-trace oracle
+on the same meshes and supports. If the scalar oracle weakens similarly,
+investigate discrete P0/Q4 compatibility and the fixed-primal resolution
+policy. If the scalar oracle remains bounded while E4 falls, investigate
+E4 trace energy or locking. This is one bounded discriminator, not a new
+acceptance metric, finer sweep, or multiplier selection. Physical
+torque/shear transfer remains separately necessary.
+
+**F03 vertical trace Riesz audit outcome (28 September):** The three
+registered x2/x4/x8 P0 levels completed with 888/1046/1362 total
+bounded rows, one numerical thread, and 16.7/22.1/34.3 s diagnostic
+time, respectively. The source SHA256 is
+`199cd323b7f6e9ec3391aef09eb62513201abc2ee6e53ffbb329c4dc563d5994`;
+the immutable result SHA256 values in level order are
+`3c57cc634bce184ca18bfa5d0d91baf305ee9f0e4b0145d69efc0352322e7070`,
+`4c15ecf377ed438083444a876970284b407eb248ce2766801c9d1b0e19edfa74`,
+and `1ba05a44d9ad989c63299174e5be5e9e3f6caa8f982e9c5afb3b75c8c6421c6c`.
+These bind `B3_E4_F03_C1_MATERIAL_LINE_X{2,4,8}_FZ_RIESZ_AUDIT_DEV_V1.json`.
+The first unprivileged x2 process completed calculation but could not
+write the protected evidence directory; it was rerun unchanged with
+the permitted filesystem escalation and no result file overwritten.
+
+The isolated physical fz component of each least full-trace dual was
+renormalized in the same H^-1/2 line metric. Its exact-drilling E4
+supremal work decreases `25.2532→0.623897→0.0886099 J`; native B3
+work decreases `0.268615→0.0376050→0.00500358 J`. An independently
+assembled, dimensionally matched scalar H1 Q4 comparator decreases
+`17.6792→9.95571→2.12086 J`. The shell action has zero non-fz
+components; split/whitened-work defects are at most `1.7e-11`.
+Independent read-only mechanics review found no algebra, units, or
+source-identity defect. These are *witnesses*, not separately minimized
+fz-only constants: the x2 isolated-fz beta is `5.052`, whereas the
+full-trace minimum is `1.718`. Both shell comparators weaken, but E4
+weakens much faster. B3 contributes only 1–6% of native side work
+in these witnesses. The scalar coefficient `D/L_line²` is an auxiliary
+norm, not physical transverse shear stiffness; the scalar/E4 ratio
+does not demonstrate E4 locking or a physical error. Independent
+scalar assembly agrees with the existing auxiliary Q4 H1 assembly
+after dimensional rescaling to relative `2.1e-16` at all levels.
+
+**Resulting decision:** Do not select a multiplier space, blame B3,
+declare E4 locking, or advance G1. The next single physical comparison
+is the saved x8 isolated-fz action against a separately validated
+shear-deformable plate/strip reference with identical 35 mm thickness,
+material, geometry, left-root support, and material-line work. Its
+discretization must resolve all eight alternating P0 intervals and
+its numerical error must be bounded before comparing to E4's
+`0.0886099 J` shell action-only compliance. Agreement would support
+physical high-frequency suppression plus a discrete trace-resolution
+issue; a materially larger physical reference work would implicate
+E4 trace energy/locking. The existing factor-four C3D20R reference
+has only four longitudinal bond cells and is not adequate for this
+x8 discriminator without a justified refinement/resource check. The
+matched torque/shear comparison also remains necessary. F03/G0B stay
+open, G1 barred, and formal F03 authority unconsumed.
+
+**F05 S3 local branch-path screen (28 September):** A bounded sampled
+check around the existing yielded accepted predecessor covers 35
+positions in each of two directions at half-width `2e-6`. All 15
+active stations retain active classification and hardening segment;
+the largest directional error is `2.093e-6` against the `1e-5`
+development check, and predecessor bytes are unchanged. Source-bound
+`B3_GE_E4_PL_G0_F05_S3_BRANCH_PATH_DEV_V1.json` has SHA256
+`04ee3c5704d3669c30eba56d3fca159efa85ed43b2447680048e1446e02789ea`.
+It strengthens local smooth-branch interpretation but is finite
+sampling, not a coupled mixed-owner or G0B acceptance.

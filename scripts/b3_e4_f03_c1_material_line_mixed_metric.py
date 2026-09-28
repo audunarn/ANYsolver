@@ -23,7 +23,8 @@ from threadpoolctl import threadpool_info, threadpool_limits
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
 from scripts.b3_e4_f03_c1_native_mixed_metric import (
-    _beam_metric, _case, _drilling_metric, _line_metric, L_LINE, MAX_ROWS, T,
+    _beam_metric, _case, _drilling_metric, _line_metric, E, NU, L_LINE,
+    MAX_ROWS, T,
 )
 from scripts.b3_e4_f03_material_line_position import MaterialLinePosition
 from scripts.b3_e4_f03_material_line_space_screen import _rows
@@ -44,10 +45,51 @@ def _channel(metric: np.ndarray, axis: int, count: int) -> np.ndarray:
     return metric[np.ix_(ids, ids)]
 
 
+def _scalar_q4_transverse_metric(xs: np.ndarray,
+                                 ys: np.ndarray) -> np.ndarray:
+    """Independent scalar H1/Q4 comparator, in joules for metre-valued w.
+
+    The bending rigidity divided by the fixed physical line length squared
+    sets the gradient scale. This is an auxiliary trace norm, not a shell law.
+    """
+    n = len(xs)*len(ys)
+    result = np.zeros((n, n))
+    coefficient = E*T**3/(12*(1-NU**2)*L_LINE**2)
+    gauss = (-1/np.sqrt(3), 1/np.sqrt(3))
+    for j in range(len(ys)-1):
+        for i in range(len(xs)-1):
+            hx, hy = xs[i+1]-xs[i], ys[j+1]-ys[j]
+            nodes = np.array((j*len(xs)+i, j*len(xs)+i+1,
+                              (j+1)*len(xs)+i+1, (j+1)*len(xs)+i))
+            local = np.zeros((4, 4))
+            for xi in gauss:
+                for eta in gauss:
+                    shape = np.array(((1-xi)*(1-eta), (1+xi)*(1-eta),
+                                      (1+xi)*(1+eta), (1-xi)*(1+eta)))/4
+                    dndx = np.array((-(1-eta), 1-eta, 1+eta,
+                                      -(1+eta)))/(2*hx)
+                    dndy = np.array((-(1-xi), -(1+xi), 1+xi,
+                                      1-xi))/(2*hy)
+                    local += (coefficient*hx*hy/4)*(
+                        np.outer(dndx, dndx)+np.outer(dndy, dndy)+
+                        np.outer(shape, shape)/L_LINE**2)
+            result[np.ix_(nodes, nodes)] += local
+    return result
+
+
+def _riesz_work_sq(metric: np.ndarray, action: np.ndarray) -> float:
+    factor = linalg.cho_factor(metric, lower=True, check_finite=True)
+    solution = linalg.cho_solve(factor, action, check_finite=True)
+    return float(action@solution)
+
+
 def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
-             trace_only: bool = False) -> dict:
+             trace_only: bool = False, fz_riesz_audit: bool = False) -> dict:
     if shell_cells not in BEAM_HALVES or kind not in KINDS:
         raise ValueError("registered 1:1 material-line fixture required")
+    if fz_riesz_audit and not (trace_only and exact_drill_quotient and
+                               kind == "piecewise_constant"):
+        raise ValueError("fz audit requires exact-quotient P0 trace metric")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     if Path(anysolver.__file__).resolve().parent != expected:
         raise RuntimeError("mixed metric imported another ANYsolver checkout")
@@ -181,6 +223,52 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
                 normed_C@vh[-1]-singular[-1]*u[:, -1])),
             "dual_metric_norm_sq": float(weak_dual@R_line@weak_dual),
         }
+        if fz_riesz_audit:
+            fz_rows = channels[2]
+            fz_dual = np.zeros_like(weak_dual)
+            fz_dual[fz_rows] = weak_dual[fz_rows]
+            fz_dual /= np.sqrt(fz_dual@R_line@fz_dual)
+            fz_action = C.T@fz_dual
+            shell_n = len(shell_active)
+            shell_action = fz_action[:shell_n]
+            beam_action = fz_action[shell_n:]
+            shell_w = shell_active % 6 == 2
+            other_shell_action = np.linalg.norm(shell_action[~shell_w])
+            shell_w_action = shell_action[shell_w]
+            scalar_metric = _scalar_q4_transverse_metric(xs, ys)
+            scalar_ids = shell_active[shell_w]//6
+            if len(np.unique(scalar_ids)) != len(scalar_ids):
+                raise ArithmeticError("scalar shell trace has duplicate nodes")
+            scalar_metric = scalar_metric[np.ix_(scalar_ids, scalar_ids)]
+            shell_work = _riesz_work_sq(shell_metric_active, shell_action)
+            beam_work = _riesz_work_sq(
+                R_beam[np.ix_(beam_free, beam_free)], beam_action)
+            scalar_work = _riesz_work_sq(scalar_metric, shell_w_action)
+            direct_work = float(np.linalg.norm(
+                normed_C.T@(line_chol.T@fz_dual))**2)
+            split_defect = abs(shell_work+beam_work-direct_work)/max(
+                1., abs(direct_work))
+            if (other_shell_action > 1e-9*max(1., np.linalg.norm(shell_action))
+                    or split_defect > 1e-9):
+                raise ArithmeticError("physical fz action or Riesz split changed")
+            report["fz_riesz_audit"] = {
+                "least_mode_fz_metric_share_before_isolation": shares["fz"],
+                "isolated_fz_dual_metric_norm_sq": float(
+                    fz_dual@R_line@fz_dual),
+                "isolated_fz_dual_action_N": fz_dual[fz_rows].tolist(),
+                "shell_other_channel_action_norm_N": float(
+                    other_shell_action),
+                "shell_exact_drill_supremal_work_sq": shell_work,
+                "beam_native_supremal_work_sq": beam_work,
+                "scalar_q4_h1_shell_supremal_work_sq": scalar_work,
+                "total_native_supremal_work_sq": direct_work,
+                "native_trace_beta_for_isolated_fz": float(np.sqrt(
+                    direct_work)),
+                "scalar_shell_to_e4_shell_work_ratio": scalar_work/shell_work,
+                "split_relative_defect": split_defect,
+                "scalar_norm": "independent Q4 H1; E*T^3/[12(1-nu^2)*L_line^2]; plus zeroth/L_line^2",
+                "status": "finite-level diagnostic; no interface or shell-law qualification",
+            }
     else:
         A = np.block([[K, C.T], [C, np.zeros((len(C), len(C)))]])
         shell_n = len(shell_active)
@@ -206,6 +294,7 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
         "geometry": f"C1 Q4 x{shell_cells}/y4; B3-{beam_halves}; 1:1 bond",
         "space_kind": kind,
         "trace_only": trace_only,
+        "fz_riesz_audit": fz_riesz_audit,
         "representation": ("exact_drilling_quotient" if exact_drill_quotient
                            else "full_shell_chart"),
         "drilling_quotient_check": drill_check,
@@ -237,6 +326,7 @@ def main() -> None:
     parser.add_argument("--space-kind", choices=KINDS, required=True)
     parser.add_argument("--exact-drill-quotient", action="store_true")
     parser.add_argument("--trace-only", action="store_true")
+    parser.add_argument("--fz-riesz-audit", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists():
@@ -244,7 +334,8 @@ def main() -> None:
     with threadpool_limits(limits=1):
         result = evaluate(args.shell_cells, args.space_kind,
                           exact_drill_quotient=args.exact_drill_quotient,
-                          trace_only=args.trace_only)
+                          trace_only=args.trace_only,
+                          fz_riesz_audit=args.fz_riesz_audit)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n")
     print(json.dumps({"rows": result["report"]["rows"],
