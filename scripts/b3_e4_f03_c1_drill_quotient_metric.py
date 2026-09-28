@@ -66,13 +66,18 @@ def _material_line_space(xs, ys, beam, *, kind: str, intervals: int):
 def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
              weak_mode_line_norm: str = "hminus_half",
              line_law: str = "hybrid", beam_half_cells: int = 12,
-             matched_p0_only: bool = False) -> dict:
+             matched_p0_only: bool = False,
+             trace_only: bool = False) -> dict:
     if shell_cells not in ((2, 4, 8) if matched_p0_only else (4, 8, 16)):
         raise ValueError("bounded C1 drill-quotient shell level required")
     if beam_half_cells not in (12, 14, 18):
         raise ValueError("bounded native beam half-cell count required")
-    if not matched_p0_only and beam_half_cells != 12:
-        raise ValueError("beam refinement is only admitted for the matched P0 diagnostic")
+    if not (matched_p0_only or trace_only) and beam_half_cells != 12:
+        raise ValueError("beam refinement is only admitted for bounded matched diagnostics")
+    if trace_only and ((shell_cells, beam_half_cells) not in ((8, 12), (16, 14)) or
+                       line_law != "material_line" or weak_mode_only or
+                       matched_p0_only or weak_mode_line_norm != "hminus_half"):
+        raise ValueError("bounded fixed-4:1 material-line trace diagnostic required")
     if matched_p0_only and (line_law != "material_line" or weak_mode_only or
                             weak_mode_line_norm != "hminus_half"):
         raise ValueError("matched P0 diagnostic requires the material-line law and standard norm")
@@ -127,13 +132,14 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
     r_beam, r_resultant, layout = prior._beam_metric(beam)
     r_beam = r_beam[np.ix_(beam_free, beam_free)]
     r_resultant = r_resultant[np.ix_(beam_free, beam_free)]
-    k_beam = beam.tangent.toarray()[np.ix_(beam_free, beam_free)]
-    k_primal = linalg.block_diag(quotient, k_beam)
+    k_primal = None if trace_only else linalg.block_diag(
+        quotient, beam.tangent.toarray()[np.ix_(beam_free, beam_free)])
     r_primal = linalg.block_diag(r_shell, r_beam)
     free_physical = np.r_[shell_physical, ns+beam_free]
     free_full = np.r_[shell_free, ns+beam_free]
     cases = {}
-    tested_intervals = ((shell_cells,) if (weak_mode_only or matched_p0_only) else
+    tested_intervals = ((shell_cells//2,) if trace_only else
+                        (shell_cells,) if (weak_mode_only or matched_p0_only) else
                         (shell_cells//2, shell_cells))
     tested_kinds = (("piecewise_constant",) if (weak_mode_only or matched_p0_only)
                     else prior.KINDS)
@@ -182,6 +188,30 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
                     "line_norm": line_info,
                     "drill_constraint_column_max": drill_column_max,
                 }
+                continue
+            if trace_only:
+                probe_primal = np.sin(np.arange(c.shape[1])*.173)
+                probe_dual = np.cos(np.arange(c.shape[0])*.219)
+                work_left = float(probe_dual@(c@probe_primal))
+                work_right = float(probe_primal@(c.T@probe_dual))
+                if abs(work_left-work_right) > 1e-10*max(
+                        1., abs(work_left), abs(work_right)):
+                    raise ArithmeticError("trace transpose work changed")
+                cases[f"{kind}_m{intervals}"] = {
+                    "status": "TRACE_NORM_DIAGNOSTIC_COMPUTED",
+                    "constraint_rows": len(c),
+                    "normalized_constraint_rank": rank,
+                    "trace_singular_min": float(row_singular[-1]),
+                    "trace_singular_max": float(row_singular[0]),
+                    "trace_singular_condition": float(row_singular[0]/row_singular[-1]),
+                    "rank_tolerance": float(rank_tolerance),
+                    "line_norm": line_info,
+                    "drill_constraint_column_max": drill_column_max,
+                    "transpose_work_discrepancy_J": abs(work_left-work_right),
+                    "scope": "single-grid auxiliary-norm trace map, not full KKT or uniform inf-sup",
+                }
+                if monotonic() > deadline:
+                    raise TimeoutError("bounded native trace diagnostic deadline")
                 continue
             a = np.block([[k_primal, c.T],
                           [c, np.zeros((len(c), len(c)))]])
@@ -253,11 +283,16 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
         Path("scripts/b3_e4_f03_material_line_space_screen.py"),
         Path("scripts/_b3_e4_f03_weak_line_candidate.py")]
     return {
-        "classification": "bounded drill-quotient native retained KKT diagnostic, not G0B acceptance",
+        "classification": ("bounded drill-quotient native trace diagnostic, not G0B acceptance"
+                           if trace_only else
+                           "bounded drill-quotient native retained KKT diagnostic, not G0B acceptance"),
         "line_law": line_law,
+        "trace_only": trace_only,
         "question": ("Does the actual retained, drill-quotiented material-line "
                      "P0 mixed KKT remain supported over three matched 1:1 "
                      "refinement levels?" if matched_p0_only else
+                     "How do three line spaces compare on the same fixed-4:1 "
+                     "auxiliary-norm trace map?" if trace_only else
                      "Do the declared material-line P0/P1/dual spaces retain "
                      "supported rows and normed mixed-system behavior as their "
                      "interface resolution grows?" if line_law == "material_line"
@@ -269,6 +304,8 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
                   ("material-line " if line_law == "material_line" else "hybrid ") +
                   (f"P0 m{shell_cells} weak-mode inspection" if weak_mode_only
                    else f"P0 m{shell_cells} matched 1:1 level" if matched_p0_only
+                   else f"P0/P1/dual m{shell_cells//2} fixed-primal trace norm"
+                   if trace_only
                    else f"P0/P1/dual m{shell_cells//2}/m{shell_cells}")),
         "beam_half_cells": beam_half_cells,
         "matched_p0_only": matched_p0_only,
@@ -288,7 +325,9 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
         "elapsed_s": monotonic()-started,
         "limits": ["exact bounded diagnostic elimination, not a production assembler or changed mechanics",
                    "physical-coordinate restriction is not a full continuum quotient proof",
-                   ("one R-normalized P0 weak mode, not a locking or stability verdict"
+                   ("one-grid trace singular values, not mixed KKT or mesh-uniform stability"
+                    if trace_only else
+                    "one R-normalized P0 weak mode, not a locking or stability verdict"
                     if weak_mode_only else
                     "one matched 1:1 refinement series, not registered ratio/refinement acceptance"
                     if matched_p0_only else
@@ -317,6 +356,7 @@ def main() -> None:
     parser.add_argument("--shell-cells", type=int, choices=(2, 4, 8, 16), default=8)
     parser.add_argument("--beam-half-cells", type=int, choices=(12, 14, 18), default=12)
     parser.add_argument("--matched-p0-only", action="store_true")
+    parser.add_argument("--trace-only", action="store_true")
     parser.add_argument("--weak-mode-only", action="store_true")
     parser.add_argument("--weak-mode-line-norm", choices=("hminus_half", "p0_l2"),
                         default="hminus_half")
@@ -331,12 +371,14 @@ def main() -> None:
                           weak_mode_line_norm=args.weak_mode_line_norm,
                           line_law=args.line_law,
                           beam_half_cells=args.beam_half_cells,
-                          matched_p0_only=args.matched_p0_only)
+                          matched_p0_only=args.matched_p0_only,
+                          trace_only=args.trace_only)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"elapsed_s": result["elapsed_s"],
                       "cases": {key: {
                           "status": value.get("status", "MIXED_METRIC_COMPUTED"),
                           "beta_min": value.get("beta_min"),
+                          "trace_singular_min": value.get("trace_singular_min"),
                           "rank": value["normalized_constraint_rank"]}
                           for key, value in result["cases"].items()}}))
 

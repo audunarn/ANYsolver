@@ -53,6 +53,12 @@ RMS to `3.42e-6` and `1.18e-6 rad` respectively, versus P0 m8
 so the next decision needs normed mixed-system, locking/refinement,
 and matched physical torque/shear evidence. Neither is selected from
 this one load or smaller gaps.
+At fixed shell:beam `4:1`, auxiliary-norm trace minima on the
+x8/B3-12/m4 → x16/B3-14/m8 levels fall comparably for all three
+spaces (P0 `0.692 → 0.544`, P1 `0.603 → 0.454`, dual
+`0.600 → 0.453`) without rank loss. This is only a two-level
+diagnostic; physical transfer and the registered growing-space
+stability/locking evidence remain the governing decisions.
 Establish a work-conjugate torque/section/support comparator that
 separates shell idealization from connection transfer; neither the
 saved pure-action fields nor a displacement fit does that alone.
@@ -11279,3 +11285,69 @@ SHA256 `1ef66bc026a6648a94a958807e360b91dd1b8232d0a866a4321b30b90bf5b26a`.
 Both record runner SHA256
 `00c915f6dd865fc4157168d74ae110632e195e9548999febdac8680cbb666acd`
 and predecessor source `18225263`.
+
+**Next interface-norm discriminator (prospective):** The full retained
+KKT minimum on three 1:1 P0 levels was dominated by the beam
+kinematic norm and does not isolate the line trace. On the unchanged
+x16/B3-14/m8 fixture, use the existing physical shell/complete native
+beam auxiliary primal norm and basis-specific multiplier dual norms
+to inspect singular values of `R_line^{-1/2} C R_primal^{-1/2}` for
+P0, P1 and dual P1. If a candidate loses rank or has a clear
+interface-specific near-null relative to the others, direct review to
+that trace/test pairing. If all remain supported, proceed to growing-
+space, cross-ratio mixed-system and locking checks. This one-grid
+metric is diagnostic, not the registered mesh-uniform inf-sup or
+physical accuracy decision; the actual indefinite KKT remains intact.
+
+**Single-grid trace-norm outcome:** On x16/B3-14/m8 the exact-drill
+fixture has 1,430 physical shell and 252 native beam free coordinates;
+286 numerical shell-drilling coordinates are eliminated and checked
+against the original shell action (`9.24e-16` relative defect).
+The supported trace matrices have ranks P0 `48/48`, P1 `54/54`, and
+dual P1 `54/54`. Under the declared auxiliary primal and basis-specific
+dual norms, their smallest singular values are respectively
+`0.54355`, `0.45414`, and `0.45308`; largest values are
+`103.81`, `97.97`, and `97.97`. The single run took `64.63 s`
+under the unchanged 120-second bound. This finds no rank loss or
+obvious near-null unique to P1/dual on this grid. It cannot prove
+mesh-uniform trace stability, constrained KKT well-posedness,
+nonlocking, or physical accuracy, and the slightly larger P0 minimum
+does not select P0. Raw
+`B3_E4_F03_C1_X16_B14_M8_TRACE_NORM_DEV_V1.json` SHA256 is
+`b0c14c9051a9b5859db8a0c1013715ee78925754ceae553eafd48113d7761cdd`;
+runner SHA256 `3c8c8fcb4e4bcf4052b8a555874646516a4fc743be79b66acfd5ccb3c7e8a021`.
+
+**Next fixed-ratio trace comparison (prospective):** Apply the same
+trace-only norm to the already solved first 4:1 level x8/B3-12/m4.
+If one basis loses rank or its minimum deteriorates sharply from
+x8 to x16, return to its trace/test pairing. If all remain
+comparable, retain only a two-level diagnostic and direct the next
+scientific effort to the required physical torque/shear reference,
+growing-space checks across ratios, and a feasible three-level
+stability design. Do not infer uniform stability from two levels or
+increase the existing diagnostic resource limits.
+
+**Two-level 4:1 trace-norm outcome:** The unchanged x8/B3-12/m4
+material-line fixture has supported ranks P0 `24/24`, P1 `30/30`,
+and dual P1 `30/30`; its exact-drill trace-only calculation finished
+in `33.02 s`. The same declared norm gives minimum singular values
+`0.691697`, `0.602986`, and `0.600122`; the x16/B3-14/m8 values
+are `0.543548`, `0.454145`, and `0.453083`, respectively. Their
+x16/x8 ratios are `0.786`, `0.753`, and `0.755`. Largest singular
+values are roughly `98–104` at both levels, so the diagnostic
+conditions grow from `142/162/163` to `191/216/216`. The three
+spaces show broadly similar direction, not an exceptional P1/dual
+rank collapse. Two levels cannot establish an asymptotic bound or
+locking behavior, and the auxiliary norm is not a substitute for the
+registered physical mixed-system criterion. Do not select the
+apparently larger P0 minimum or condemn any candidate from the
+decline. The immediate next physical decision is the matched sided
+torque/shear transfer and shell-versus-solid idealization; a later
+feasible three-level trace/mixed assessment must retain the native
+retained variables and unchanged resource limits. F03/G0B remain
+open, G1 barred, formal F03 authority unconsumed.
+
+Raw `B3_E4_F03_C1_X8_B12_M4_TRACE_NORM_DEV_V1.json` SHA256 is
+`0b1f0f4a0993b0eb3093f8eb4759ee125466faacc38c03f02c1a01010c6e9539`;
+its runner SHA256 is
+`fdb9ce737e8ef4b69af67ce8c7b08f9c38db00dcb64d2be062dc5123dc3f803f`.
