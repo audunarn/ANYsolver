@@ -354,9 +354,10 @@ the solver fails only when that is truly required. Consequences:
   might be called strictly required, around 0.001°, is far below anything a
   mesher produces, so no solver guard is added. The accuracy envelope
   qualified by this note is 15° with a maximum angle of 150°.
-* **Mesher admission follows the solver floor.** ANYmesher branch
-  `claude/s3-two-tier-admission`, off `main`, kept separate from the ongoing
-  `claude/anymesher-050-release-4xztmm`:
+* **Mesher admission follows the solver floor.** This lands in the next
+  ANYmesher release (after the published 0.5.0). It sits on branch
+  `claude/s3-two-tier-admission` as one commit on top of the release branch
+  `claude/anymesher-050-release-4xztmm`, so it fast-forwards onto it:
   * `S3_ADMISSION_FLOOR_POLICY` (15°, q ≥ 0.30) becomes
     `DEFAULT_S3_QUALITY_POLICY`.
   * The former 30° envelope stays as `S3_TARGET_QUALITY_POLICY`. Bounded
