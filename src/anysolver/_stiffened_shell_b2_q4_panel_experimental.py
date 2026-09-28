@@ -301,8 +301,12 @@ class ExperimentalB2Q4PanelAnalysis:
         self._K = K
         self._C = C
         self._T = T
-        self._abs_K = abs(K)
-        self._abs_C = abs(C)
+        # Reuse the immutable CSR patterns; only the absolute values need
+        # separate storage for repeated RHS validation.
+        self._abs_K = sparse.csr_matrix(
+            (np.abs(K.data), K.indices, K.indptr), shape=K.shape, copy=False)
+        self._abs_C = sparse.csr_matrix(
+            (np.abs(C.data), C.indices, C.indptr), shape=C.shape, copy=False)
         self._abs_Ct = abs(C.T.tocsr())
         self._abs_Tt = abs(T.T.tocsr())
         self._u0 = u0
