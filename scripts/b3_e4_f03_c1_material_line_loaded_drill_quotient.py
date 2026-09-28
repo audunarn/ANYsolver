@@ -48,13 +48,20 @@ def evaluate(*, shell_cells: int = 16,
              mode_resolved_mx_only: bool = False,
              space_kind: str = "piecewise_constant",
              selective_yaw: bool = False,
+             selective_fz: bool = False,
              yaw_intervals: int | None = None) -> dict:
+    if selective_fz:
+        if ((shell_cells, beam_half_cells, p0_intervals) != (8, 18, 8) or
+                selective_yaw or mode_resolved_mx_only or
+                space_kind != "piecewise_constant" or yaw_intervals is not None):
+            raise ValueError("bounded x8/B3-18 fz m4 versus five P0 m8 fixture required")
     if selective_yaw:
         if (shell_cells, beam_half_cells, p0_intervals) not in (
                 (2, 12, 2), (4, 14, 4), (8, 18, 8), (16, 14, 8)):
             raise ValueError("bounded selective-yaw refinement fixture required")
-    elif shell_cells != 16 or (beam_half_cells, p0_intervals) not in (
-            (12, 4), (14, 4), (14, 8)):
+    elif not selective_fz and (shell_cells != 16 or
+            (beam_half_cells, p0_intervals) not in (
+            (12, 4), (14, 4), (14, 8))):
         raise ValueError("bounded x16 P0 ratio fixture required")
     if space_kind not in ("piecewise_constant", "continuous_linear",
                           "dual_linear"):
@@ -108,6 +115,16 @@ def evaluate(*, shell_cells: int = 16,
                          np.min(yaw_measures) > 1e-12 and
                          abs(np.sum(p0_measures)-.1) <= 1e-12 and
                          abs(np.sum(yaw_measures)-.1) <= 1e-12)
+    elif selective_fz:
+        fz_count = 4
+        fz_rows, fz_measures = _rows(line, LineMultiplierSpace(
+            "piecewise_constant", tuple(np.linspace(0., 1., fz_count+1))))
+        rows = np.vstack([fz_rows[2::6] if axis == 2 else
+                          p0_rows[axis::6] for axis in range(6)])
+        valid_measure = (np.min(p0_measures) > 1e-12 and
+                         np.min(fz_measures) > 1e-12 and
+                         abs(np.sum(p0_measures)-.1) <= 1e-12 and
+                         abs(np.sum(fz_measures)-.1) <= 1e-12)
     else:
         rows, measures = _rows(line, LineMultiplierSpace(space_kind, knots))
         valid_measure = (np.min(measures) > 1e-12 and
@@ -243,7 +260,7 @@ def evaluate(*, shell_cells: int = 16,
             "position_max_m": float(np.max(np.linalg.norm(position_gap, axis=1))),
             "orientation_max_rad": float(np.max(np.linalg.norm(rotation_gap, axis=1))),
         }
-        if mode_resolved_mx_only or selective_yaw:
+        if mode_resolved_mx_only or selective_yaw or selective_fz:
             case["continuous_gap_modes"] = _p0_gap_modes(
                 line, position_gap, rotation_gap, p0_intervals,
                 p0_rows@state)
@@ -254,6 +271,7 @@ def evaluate(*, shell_cells: int = 16,
             raise ArithmeticError(f"reconstructed full loaded system failed: {case}")
         cases[label] = case
     yaw_model = f" / yaw m{yaw_count}" if selective_yaw else ""
+    fz_model = " / fz m4" if selective_fz else ""
     return {
         "classification": "bounded exact-drill loaded material-line space diagnostic",
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
@@ -261,13 +279,15 @@ def evaluate(*, shell_cells: int = 16,
                                               text=True).strip(),
         "model": (f"C1 Q4 x{shell_cells}/y4 35 mm shell, B3-{beam_half_cells}, "
                   f"material-line {'P0-five plus '+space_kind+' yaw' if selective_yaw else space_kind} "
-                  f"P0 m{p0_intervals}{yaw_model}, "
+                  f"P0 m{p0_intervals}{yaw_model}{fz_model}, "
                   "original full equations reconstructed"),
         "shell_cells": shell_cells,
         "beam_half_cells": beam_half_cells,
         "p0_intervals": p0_intervals,
         "space_kind": space_kind,
         "selective_yaw": selective_yaw,
+        "selective_fz": selective_fz,
+        "fz_intervals": fz_count if selective_fz else p0_intervals,
         "yaw_intervals": (yaw_count if selective_yaw else None),
         "mode_resolved_mx_only": mode_resolved_mx_only,
         "full_kkt_rows": len(full_free)+row_count,
@@ -304,6 +324,7 @@ def main() -> None:
     parser.add_argument("--p0-intervals", type=int, choices=(2, 4, 8), default=4)
     parser.add_argument("--mode-resolved-mx-only", action="store_true")
     parser.add_argument("--selective-yaw", action="store_true")
+    parser.add_argument("--selective-fz", action="store_true")
     parser.add_argument("--yaw-intervals", type=int)
     parser.add_argument("--space-kind", choices=("piecewise_constant",
                                                   "continuous_linear",
@@ -319,6 +340,7 @@ def main() -> None:
                           mode_resolved_mx_only=args.mode_resolved_mx_only,
                           space_kind=args.space_kind,
                           selective_yaw=args.selective_yaw,
+                          selective_fz=args.selective_fz,
                           yaw_intervals=args.yaw_intervals)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n", encoding="utf-8")

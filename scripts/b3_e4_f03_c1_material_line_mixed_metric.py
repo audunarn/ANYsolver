@@ -33,7 +33,8 @@ from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
 BEAM_HALVES = {2: 12, 4: 14, 8: 18}
-KINDS = ("piecewise_constant", "continuous_linear", "dual_linear")
+KINDS = ("piecewise_constant", "continuous_linear", "dual_linear",
+         "fz_half_p0")
 
 
 def _hash(path: Path) -> str:
@@ -87,6 +88,8 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
              trace_only: bool = False, fz_riesz_audit: bool = False) -> dict:
     if shell_cells not in BEAM_HALVES or kind not in KINDS:
         raise ValueError("registered 1:1 material-line fixture required")
+    if kind == "fz_half_p0" and shell_cells != 8:
+        raise ValueError("fz half-resolution screen is fixed to x8/B3-18")
     if fz_riesz_audit and not (trace_only and exact_drill_quotient and
                                kind == "piecewise_constant"):
         raise ValueError("fz audit requires exact-quotient P0 trace metric")
@@ -167,8 +170,25 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
         raise ArithmeticError("P0 line measure changed")
     p0_metric, p0_info = _line_metric(
         "piecewise_constant", shell_cells, p0_masses)
+    fz_info = None
     if kind == "piecewise_constant":
         rows, R_line = p0_rows, p0_metric
+        yaw_info = None
+    elif kind == "fz_half_p0":
+        fz_intervals = shell_cells//2
+        fz_rows, fz_masses = _rows(line, LineMultiplierSpace(
+            "piecewise_constant", tuple(np.linspace(0., 1.,
+                                                    fz_intervals+1))))
+        if abs(np.sum(fz_masses)-L_LINE) > 1e-12:
+            raise ArithmeticError("coarse fz line measure changed")
+        fz_metric, fz_info = _line_metric(
+            "piecewise_constant", fz_intervals, fz_masses)
+        rows = np.vstack([fz_rows[2::6] if axis == 2 else
+                          p0_rows[axis::6] for axis in range(6)])
+        R_line = linalg.block_diag(*[
+            _channel(fz_metric, 2, len(fz_masses)) if axis == 2 else
+            _channel(p0_metric, axis, len(p0_masses))
+            for axis in range(6)])
         yaw_info = None
     else:
         yaw_intervals = shell_cells//2
@@ -203,6 +223,12 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
             line_chol.T, u[:, -1], lower=False, check_finite=True)
         if kind == "piecewise_constant":
             channels = [np.arange(axis, len(C), 6) for axis in range(6)]
+        elif kind == "fz_half_p0":
+            counts = [len(p0_masses)]*6
+            counts[2] = len(fz_masses)
+            offsets = np.r_[0, np.cumsum(counts)]
+            channels = [np.arange(offsets[i], offsets[i+1])
+                        for i in range(6)]
         else:
             n_p0 = len(p0_masses)
             channels = [np.arange(axis*n_p0, (axis+1)*n_p0)
@@ -299,12 +325,15 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
                            else "full_shell_chart"),
         "drilling_quotient_check": drill_check,
         "p0_intervals": shell_cells,
-        "yaw_intervals": shell_cells//2 if kind != "piecewise_constant" else None,
+        "yaw_intervals": shell_cells//2 if kind in
+                         ("continuous_linear", "dual_linear") else None,
+        "fz_intervals": shell_cells//2 if kind == "fz_half_p0" else shell_cells,
         "row_rank": row_rank,
         "primal_rows": len(K),
         "beam_layout": layout,
         "p0_line_norm": p0_info,
         "yaw_line_norm": yaw_info,
+        "fz_line_norm": fz_info,
         "report": report,
         "elapsed_s": monotonic()-start,
         "runner_sha256": _hash(Path(__file__)),

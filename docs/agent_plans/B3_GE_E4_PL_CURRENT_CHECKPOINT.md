@@ -12075,3 +12075,51 @@ development check, and predecessor bytes are unchanged. Source-bound
 `04ee3c5704d3669c30eba56d3fca159efa85ed43b2447680048e1446e02789ea`.
 It strengthens local smooth-branch interpretation but is finite
 sampling, not a coupled mixed-owner or G0B acceptance.
+
+**Next fixed-primal vertical resolution check (prospective):** The
+matched Q4/S4 comparison points to a trace-space contribution, while
+the x8/B3-18 P0 m8 least trace mode is almost entirely vertical
+force. On that unchanged primal, compare current six-channel P0 m8
+with only the fz channel coarsened to P0 m4. Keep the exact-drilling
+quotient, physical shell/native-beam metric and H^-1/2 line-dual norm.
+If the fz-coarsened rows retain rank and eliminate the weak vertical
+mode, advance that channel-specific candidate to loaded work/gap,
+torque/shear and registered-ratio/locking checks. If rank or the weak
+mode does not improve, revisit the trace law/norm rather than add a
+finer mesh. This one bounded screen does not select the space or
+consume formal F03 authority; G0B remains open and G1 barred.
+
+**x8/B3-18 fz-only coarsening outcome (28 September):** At the same
+primal and physical trace/dual norms, five P0 m8 channels plus fz P0
+m4 have supported rank `44/44`. The smallest normalized trace value
+increases from the existing six-channel m8 `0.286237` to `0.953559`;
+the least-mode metric share moves from 99.95% fz to 79.96% Fx and
+19.98% My, with 0.058% fz. The SVD defect is `4.34e-14` and the
+1,358-row diagnostic takes 34.27 s, within the unchanged bounds.
+Both Mx/Fz loaded exact-drilling quotient solves pass full-equation,
+work, constraint and support-balance guards in 34.89 s. Against the
+saved six-channel m8 loaded control, Fz tip displacement changes by
+`4.29e-6` relative, tip rotation by `5.87e-5`, and shell work by
+`7.44e-5`; Mx changes below `2e-11` on those observables. The
+unselected m8 fz interval-mean gap is up to `1.83e-9 m` under Fz,
+while the selected m4 weak rows vanish. Independent read-only review
+found the channel order, H^-1/2 block metric and loaded rows consistent;
+old P0 paths remain unchanged and the x2 baseline check repeated at
+`1.7179024993`. Source-bound trace and loaded result files are
+`B3_E4_F03_C1_MATERIAL_LINE_X8_FZ_HALF_P0_TRACE_DEV_V1.json`, SHA256
+`07c6393d5e8902249c8f4f0d9fdc0144be056c4d15b296f1391d500e88d221b3`,
+and `B3_E4_F03_C1_MATERIAL_LINE_X8_B18_FZ_M4_LOADED_DEV_V1.json`, SHA256
+`243dd026c7fa3155a0e9de5dc8cca345b127f7a47d6e9c6fcb735f02b743afea`.
+This is a fixed-primal development screen, not a selected space or
+mesh-uniform stability/physical-transfer acceptance.
+
+**Next matched-level discriminator (prospective):** Before a seven-ratio
+sweep, repeat only the exact-drilling trace calculation at the already
+registered x4/B3-14 matched primal, with five P0 m4 channels plus fz
+P0 m2, and compare with the saved six-channel P0 m4 trace result.
+If row rank and the beta/least-channel trend are compatible with the
+x8 finding, advance to the registered ratio, loaded and locking
+requirements. If the mode simply shifts to a new weak channel or rank
+fails, revisit the resolution policy before a wider sweep. Keep
+`1900` rows, 120 s and one numerical thread; do not select a space
+from these two levels or consume formal F03 authority.
