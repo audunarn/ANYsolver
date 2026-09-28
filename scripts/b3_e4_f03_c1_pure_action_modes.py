@@ -1,4 +1,4 @@
-"""Compare pure P0 transverse-force and torque component work.
+"""Compare pure P0 physical actions and a saved mixed Fz action.
 
 Reuses the reviewed 24 saved solid unit responses and the native x4
 E4/B3 component operators. This is an open-interface linear influence,
@@ -104,7 +104,7 @@ def evaluate(reconstruction_path: Path) -> dict:
                             "cross_channel_work_J": cross_work}
     return {
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
-        "classification": "pure P0 material-line transverse-force and torque action work",
+        "classification": "pure P0 axial/shear/bending/torsion and mixed Fz work",
         "source_commit": subprocess.check_output(("git", "rev-parse", "HEAD"),
                                                  text=True).strip(),
         "solid_reconstruction_sha256": digest(reconstruction_path),
