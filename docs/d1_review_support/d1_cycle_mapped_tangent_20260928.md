@@ -1,0 +1,21 @@
+# Accepted-cycle mapped tangent discriminator — development evidence
+
+Solver source before this discriminator: clean commit `7202f2dc`, branch `codex/general-contact-core`. The probe source is `scripts/general_contact_d1_cycle_tangent_discriminator.py`, SHA-256 `5541203a30678c8bc67662fe8c33e357e4a9a5d1b1651107664b54c44b9e5ae0` before this record. Python 3.14.2, NumPy 2.4.6 and SciPy 1.17.1. The probe uses the actual four-Q4/two-S3 ordinary monolithic static cycle, eight accepted snapshots and their per-step numerical multiplier estimates. It constructs a fresh matching model, holds those multipliers fixed, and compares complete structural-plus-contact and isolated mapped-contact actions on both bodies. This is development code verification, not independent D1 acceptance.
+
+**Question.** Do the current mapped contact residual and tangent agree at accepted sliding and recontact poses for source in-plane motion, target normal motion and target director rotation? A branch transition must be identified before applying the smooth directional target.
+
+**Results.** The first attempt failed after the solve because the probe read the pressure vector from the wrong history key. That was a probe setup error; its traceback is retained. The corrected first run completed in 38.05 s/381.23 MB. It showed that target-normal central differences at steps four and seven change an active pressure mode on the negative side; their 27–43% errors are **invalid as smooth tangent comparisons**. The targeted follow-up completed in 44.84 s/411.00 MB under the same 180 s/1 GB development cap and checked the unchanged positive active branch with a second-order one-sided derivative.
+
+| Accepted pose and direction | Branch | Resolved mapped-contact comparison |
+|---|---|---|
+| Step 4 slide, source x | smooth | Max source/target force error 5.32e−8; target moment error 5.29e−8 at 2e−7 m |
+| Step 4 slide, target z | positive side smooth; negative side active-set change | One-sided source/target force and target moment errors ≤9.73e−12 at 2e−7 m |
+| Step 4 slide, target director y | smooth | Source/target force errors ≤1.92e−7 and target moment error 7.35e−7 at 8e−7 rad |
+| Step 7 recontact, target z | positive side smooth; negative side active-set change | One-sided source/target force and target moment errors ≤2.80e−11 at 2e−7 m |
+| Step 7 recontact, target director y | smooth | Source/target force errors ≤2.33e−6 at 8e−7 rad; the 1e−7 rad difference worsens, consistent with subtraction noise |
+
+At step seven the target-director contact moment action is only about 1.79e−12 in the reported directional units, so its relative moment error is unresolved. Step-seven source x has near-zero contact action and is not a meaningful tangential derivative check. The declared cycle constrains all source rotational DOFs: the reduced system has 18 source force rows, zero source moment rows, six target force rows and six target moment rows. Thus the cycle checks source translational and target translational/director work, but **does not establish source director work**. The positive-side target-normal action has meaningful target moment scale, about 2.97e−4 at step four and 2.19e−5 at step seven, and passes its one-sided check.
+
+The branch comparison included active pressure mask, supported modes, overlap incidence signature and differentiated pair signatures at each perturbed pose. These fixed-multiplier checks do not establish the derivative across an active-set kink, a clipping tie, full pressure-space stability, or a coupled acceptance claim. No production solver change followed from this discriminator.
+
+[First corrected result](d1_cycle_tangent_first_20260928.json), [probe setup failure](d1_cycle_tangent_setup_failure_20260928.txt), [follow-up result](d1_cycle_tangent_followup_20260928.json), [resource record](d1_cycle_tangent_followup_resource_20260928.json) and [console](d1_cycle_tangent_followup_console_20260928.txt) are retained. Next check: test source director work off the guided subspace at an accepted sliding pose with a local full-coordinate virtual-work comparison, or reuse a matching existing local result if it already covers that exact geometry and branch. Then address unresolved physical clipping ties separately.
