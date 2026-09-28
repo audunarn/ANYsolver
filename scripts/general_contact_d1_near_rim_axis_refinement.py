@@ -73,6 +73,22 @@ def _active_compliance(nx, ynodes, pressure):
     }
 
 
+def _physical_gap(solution):
+    """Minimum Q1 obstacle gap at grid corners and the clipped rim."""
+    y = np.asarray(solution["yn"])
+    displacement = np.asarray(solution["w"])
+    interior = displacement[y <= oracle.YR]
+    lower = int(np.searchsorted(y, oracle.YR, side="right")-1)
+    if y[lower] == oracle.YR:
+        rim = displacement[lower]
+    else:
+        fraction = (oracle.YR-y[lower])/(y[lower+1]-y[lower])
+        rim = (1-fraction)*displacement[lower]+fraction*displacement[lower+1]
+    # A bilinear Q1 field has its minimum over a clipped rectangular cell at
+    # one of these vertices. The rim values cover the cut cells.
+    return float(oracle.G0+min(np.min(interior), np.min(rim)))
+
+
 def main(output):
     if output.exists():
         raise FileExistsError(output)
@@ -109,9 +125,13 @@ def main(output):
         raise ValueError("saved physical-bin shapes differ")
     cases = {}
     bins = {(16, 8): base_bins, (32, 16): both_bins}
-    for nx, ny, ynodes in ((32, 8, y), (16, 16, refined_y)):
+    for nx, ny, ynodes in ((16, 8, y), (32, 8, y),
+                            (16, 16, refined_y), (32, 16, refined_y)):
         solution = oracle.solve_q1(nx, ny, ynodes=ynodes)
         field = oracle.q1_bins(solution, edges_x, edges_y)
+        if (nx, ny) in bins:
+            np.testing.assert_allclose(field, bins[nx, ny], rtol=1e-10,
+                                       atol=1e-12)
         if (solution["min_wgap"] < -1e-9
                 or solution["eq"] > 1e-7
                 or solution["comp"] > 1e-7
@@ -125,6 +145,7 @@ def main(output):
             "equilibrium_n": solution["eq"],
             "complementarity_pa_m": solution["comp"],
             "minimum_normalized_gap_m": solution["min_wgap"],
+            "minimum_physical_q1_gap_m": _physical_gap(solution),
             "active_pressure_modes": int(np.count_nonzero(solution["p"] > 1e-9)),
             "active_compliance": _active_compliance(nx, ynodes, solution["p"]),
             "fv_error": _errors(field, reference),
@@ -147,7 +168,7 @@ def main(output):
         "refined_y_knots_m": refined_y.tolist(),
         "base_16x8_fv_error": _errors(base_bins, reference),
         "both_32x16_fv_error": _errors(both_bins, reference),
-        "off_diagonal_cases": cases,
+        "all_four_source_only_cases": cases,
         "x_change_bin_l2_relative": float(np.linalg.norm(difference_x[:9])/scale),
         "y_change_bin_l2_relative": float(np.linalg.norm(difference_y[:9])/scale),
         "both_change_bin_l2_relative": float(np.linalg.norm(difference_both[:9])/scale),
@@ -157,7 +178,7 @@ def main(output):
     }
     output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
     print(json.dumps({
-        "off_diagonal_errors": {key: value["fv_error"]
+        "four_corner_errors": {key: value["fv_error"]
                                 for key, value in cases.items()},
         "x_change": record["x_change_bin_l2_relative"],
         "y_change": record["y_change_bin_l2_relative"],
