@@ -2,50 +2,28 @@
 
 ## Current state — 28 September 2026
 
-**Decision sought:** A physically defensible native material-line law and
-stable exact multiplier policy before G1. **Established:** The
-law-matched detached-solid P0 m4 action passed 24/24 row and work
-preflight and all 24 bounded external columns. Under the same line
-dual, native B3 beam work is within 0.7% of the 3D bar; E4 shell work
-is 10–14% below the factor-4 3D plate. A standalone factor-4 plate
-reproduces the saved detached-solid plate work within `3.5e-7`
-relative. The fixed-dual action on factor-2 and factor-4 plates raises
-plate work by `4.54%` (tip Mx) and `4.71%` (tip Fz); this does not
-remove the native/3D difference. Factor 2 supports only 21/24 P0 m4
-rows and cannot enforce 24 independent constraints, but it can carry
-this fixed action. Source inspection confirms the thickness, material,
-clamp location and fixed dual, while shell and solid support spaces are
-not algebraically identical. A read-only longitudinal mean/variation
-split reproduces the original work and attributes `95%`/`89%` of the
-native-minus-solid Mx/Fz difference to mean-action self-work. The
-moment case concentrates in physical Mx and Mz; the force case is an
-axial-force/bending-couple block with substantial cancellation.
-The bounded x4→x8 trace comparison recovers shell-only weak rank
-`24/24`, but x8 fixed-action E4 work remains `9.68%`/`14.13%` below
-the 3D plate. A direct operator audit proves the earlier loaded
-finite-strip hybrid and the matched solid material-line reference have
-**different shell constraint spaces** (full union rank `44`, not `24`).
-One bounded native solve of the actual material-line P0 m4 law now
-closes its weak/work/equilibrium checks; its applied work is `12.96%`
-below the matched solid for Mx and `3.27%` below for Fz. **Remaining
-uncertainty:** physical sided torque/shear transfer and the shell,
-section, and support contributions to that same-law difference.
-**Next discriminator and action:** Compare the existing solid 24-column
-action compliance with the native same-law component operators by
-physical channel and interval, then assess supported transfer and
-growing-space stability. That comparison reproduces the fixed-dual
-work and places over `95%` of the Mx and over `99%` of the Fz
-native-minus-solid component-work differences on the **shell** side.
-The Mx difference lies mainly in Mx/Mz work; Fz lies mainly in Fx.
-Next examine the shell trace, kinematic/tangent idealization and root
-support mapping on the same physical torque/shear case before changing
-the line law. A saved-field tip-face audit found only
-`0.0184%`/`0.00204%` nonrigid work in the original Mx/Fz loads, but
-does not bound a changed-load response. Advance B2 F09 independently.
-Do not automatically add finer x/y or classical axial runs. P0 and the
-continuous law remain unselected; G0B open, G1 barred, formal F03
-authority unconsumed. The records and exact source/evidence identities
-follow.
+**Decision sought:** Select a physically defensible native material-line
+law and stable exact multiplier policy. **Established:** The reviewed
+same-law P0 reconstruction has 24 complete solid action columns and
+passes work/rank checks. The bounded native loaded solve passes
+equilibrium, weak-gap and interface-work checks, but differs in applied
+work by `−12.96%` (Mx) and `−3.27%` (Fz). Under the *same fixed solid
+dual*, the shell accounts for over `95%`/`99%` of the native-minus-solid
+component-work difference; the separate loaded duals do not make that
+allocation. Increasing native shell x-resolution to full 24-row rank
+does not remove its fixed-action work shortfall. The unchanged x4 E4
+response puts only `0.00482%` (Mx) and `0.5388%` (Fz) of its quadratic
+work in the element-reported completion operator. Independent review
+found no blocking algebra/sign defect in these diagnostics, and their
+solid input is now identity-guarded. **Remaining uncertainty:** Physical
+sided torque/shear transfer, shell/3D kinematic and support idealization,
+and growing-space mixed-system stability. **Next discriminator and
+action:** Compare the already saved same-action physical plate and E4
+trace/support responses at fixed physical locations before changing
+the law; evaluate the registered growing-interface policy separately.
+Advance B2 F09 independently. No automatic finer classical axial or
+x/y sweep follows. G0B/F03 remain open, G1 barred, formal F03 authority
+unconsumed; evidence and limitations follow.
 
 ## Detailed 27 September development record
 
@@ -10388,3 +10366,23 @@ If completion carries material work, revisit the trace's physical torque
 path before law selection. If it is negligible, proceed to a matched
 physical plate/shear/root-support comparison instead. This diagnostic
 does not tune a drilling parameter or establish production mechanics.
+
+**Shell completion-work outcome:** Source `746ac313` uses the same x4
+material-line P0 duals and solves with the unchanged E4 tangent. Both
+action-only shell works reproduce the saved same-action record; free-row
+equilibrium ratios are below `1.7e-12`, and the zero-state physical and
+full operators are symmetric to numerical precision. The physical
+operator carries `0.00177801150 J` of `0.00177809728 J` for Mx and
+`0.01292321143 J` of `0.01299322314 J` for Fz. The residual
+completion work is `8.5779e-8 J` (`0.00482%`) and `7.00117e-5 J`
+(`0.5388%`). Direct nodal drilling-coordinate force work is zero in
+both fixed-dual cases. The raw
+`B3_E4_F03_C1_SHELL_COMPLETION_WORK_DEV_V1.json` has SHA256
+`69cb0c938f5eaf186951bbbd90c35f2ce5b8c7551f84e463a57e164e509249b0`;
+one focused same-action/partition test passes. Thus large *direct*
+completion work is not the explanation for the fixed-dual shell
+shortfall on this fixture. This does not prove insensitivity to
+drilling stabilization or resolve E4-versus-3D kinematics. Continue
+with matched physical trace/support observables and the registered
+growing-space assessment; do not tune drilling or select P0 from
+this partition. F03/G0B remain open and G1 barred.
