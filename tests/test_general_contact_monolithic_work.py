@@ -2,11 +2,13 @@
 
 import numpy as np
 
+from anysolver import solve_static_nonlinear
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from anysolver.general_contact.semismooth import (
     linearize, raw_certificate, reference_nodal_support,
 )
 from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
+from scripts.general_contact_d1_free_target_press_probe import build_free_target_case
 
 
 def test_mapped_source_target_force_and_smooth_tangent():
@@ -75,3 +77,62 @@ def test_mapped_source_target_force_and_smooth_tangent():
     assert reported.pair_geometry_evaluations == base.evaluations
     np.testing.assert_allclose(reported.numerical_pressure_pa,
                                base.state.pressure, rtol=0.0, atol=0.0)
+
+
+def test_deformed_s3_target_translation_and_rotation_contact_work():
+    """Check authoritative target work at an accepted coupled press pose."""
+    model, definition, settings, program = build_free_target_case(
+        4, steps_per_segment=2, enforcement_solver="monolithic_active_set",
+    )
+    accepted = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    assert accepted.status == "completed", accepted.failure_reason
+    assert len(accepted.steps) == 2
+    u = accepted.displacements
+    z = np.asarray(accepted.to_restart_checkpoint()["path_state"]["normal_forces"])
+    manager = GeneralS3PatchManager(model, definition, settings)
+    base = linearize(manager, u, z, tangent=True)
+    assert np.count_nonzero(z > 0.0) > 0
+    target_node = manager.law.target_node_ids[2]
+    dofs = model.mesh.dof_manager.get_node_dofs(target_node)
+    reference_target = manager._positions(np.zeros_like(u))[1]
+    current_target = manager._positions(u)[1]
+    assert np.linalg.norm(current_target[2]-reference_target[2]) > 1.0e-5
+    assert abs(u[dofs[4]]) > 1.0e-5
+    step = 1.0e-7
+    for axis in (2, 4):  # Normal displacement and physical director rotation.
+        direction = np.zeros_like(u)
+        direction[dofs[axis]] = 1.0
+        plus = linearize(manager, u+step*direction, z, tangent=False)
+        minus = linearize(manager, u-step*direction, z, tangent=False)
+        observed = (plus.force-minus.force)/(2.0*step)
+        predicted = base.tangent @ direction
+        assert np.linalg.norm(predicted) > 1.0e-6
+        assert np.linalg.norm(observed-predicted)/np.linalg.norm(predicted) < 1.0e-5
+        gap_work = np.dot(z, plus.state.normalized_gap
+                          - minus.state.normalized_gap)/(2.0*step)
+        np.testing.assert_allclose(gap_work, -np.dot(base.force, direction),
+                                   rtol=1.0e-5, atol=1.0e-16)
+        if axis == 4:
+            # Check the physical moment row explicitly; the full-vector norm
+            # otherwise lets translational force rows mask an error here.
+            assert abs(predicted[dofs[axis]]) > 5.0e-13
+            np.testing.assert_allclose(observed[dofs[axis]],
+                                       predicted[dofs[axis]],
+                                       rtol=1.0e-5, atol=0.0)
+            positive_target = manager._positions(u+step*direction)[1][2]
+            negative_target = manager._positions(u-step*direction)[1][2]
+            assert np.linalg.norm((positive_target-negative_target)
+                                  /(2.0*step)) > 0.01
+            assert abs(base.force[dofs[axis]]) > 1.0e-12
+    source, target = manager._positions(u)
+    positions = np.vstack((source, target))
+    physical_forces = -base.local_force.reshape(-1, 3)
+    np.testing.assert_allclose(physical_forces.sum(axis=0), 0.0, atol=1.0e-9)
+    np.testing.assert_allclose(
+        np.cross(positions, physical_forces).sum(axis=0),
+        0.0, atol=1.0e-9,
+    )
