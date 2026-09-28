@@ -44,7 +44,7 @@ def _channel(metric: np.ndarray, axis: int, count: int) -> np.ndarray:
     return metric[np.ix_(ids, ids)]
 
 
-def evaluate(shell_cells: int, kind: str) -> dict:
+def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False) -> dict:
     if shell_cells not in BEAM_HALVES or kind not in KINDS:
         raise ValueError("registered 1:1 material-line fixture required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
@@ -64,16 +64,58 @@ def evaluate(shell_cells: int, kind: str) -> dict:
     shell_free = np.array([i for i in range(ns)
                            if (i//6) % len(xs) != 0])
     beam_free = np.asarray(beam.context.free, dtype=int)
-    free = np.r_[shell_free, ns+beam_free]
-    R_shell = shell_physical.copy()
-    drill_ids = 6*np.arange(len(xs)*len(ys))+5
-    R_shell[np.ix_(drill_ids, drill_ids)] += _drilling_metric(xs, ys)
+    drill_check = None
+    if exact_drill_quotient:
+        drill = shell_free[shell_free % 6 == 5]
+        shell_active = shell_free[shell_free % 6 != 5]
+        dd = shell[np.ix_(drill, drill)]
+        dp = shell[np.ix_(drill, shell_active)]
+        pd = shell[np.ix_(shell_active, drill)]
+        pp = shell[np.ix_(shell_active, shell_active)]
+        linalg.cholesky(dd, lower=True, check_finite=True)
+        lift = linalg.solve(dd, dp, assume_a="pos", check_finite=True)
+        shell_quotient = pp-pd@lift
+        quotient_skew = float(np.linalg.norm(shell_quotient-shell_quotient.T)/
+                              max(1., np.linalg.norm(shell_quotient)))
+        if quotient_skew > 1e-10:
+            raise ArithmeticError("exact shell drilling quotient is asymmetric")
+        linalg.cholesky(shell_quotient, lower=True, check_finite=True)
+        probe = np.sin(np.arange(len(shell_active))*.173)
+        full_probe = np.zeros(ns)
+        full_probe[shell_active] = probe
+        full_probe[drill] = -lift@probe
+        drill_check = {
+            "quotient_relative_skew": quotient_skew,
+            "drill_equation_relative": float(np.linalg.norm(
+                (shell@full_probe)[drill])/max(1., np.linalg.norm(dp@probe))),
+            "physical_action_relative": float(np.linalg.norm(
+                (shell@full_probe)[shell_active]-shell_quotient@probe)/
+                max(1., np.linalg.norm(shell_quotient@probe))),
+            "drill_rows": len(drill),
+        }
+        if max(drill_check["drill_equation_relative"],
+               drill_check["physical_action_relative"]) > 1e-8:
+            raise ArithmeticError("exact shell drilling reconstruction failed")
+        shell_metric_active = shell_quotient
+        shell_tangent_active = shell_quotient
+        shell_physical_active = shell_quotient
+        shell_chart_active = np.zeros_like(shell_quotient)
+    else:
+        shell_active = shell_free
+        R_shell = shell_physical.copy()
+        drill_ids = 6*np.arange(len(xs)*len(ys))+5
+        R_shell[np.ix_(drill_ids, drill_ids)] += _drilling_metric(xs, ys)
+        shell_metric_active = R_shell[np.ix_(shell_free, shell_free)]
+        shell_tangent_active = shell[np.ix_(shell_free, shell_free)]
+        shell_physical_active = shell_physical[np.ix_(shell_free, shell_free)]
+        shell_chart_active = shell_metric_active-shell_physical_active
+    free = np.r_[shell_active, ns+beam_free]
     R_beam, R_resultant, layout = _beam_metric(beam)
     R_primal = linalg.block_diag(
-        R_shell[np.ix_(shell_free, shell_free)],
+        shell_metric_active,
         R_beam[np.ix_(beam_free, beam_free)])
     K = linalg.block_diag(
-        shell[np.ix_(shell_free, shell_free)],
+        shell_tangent_active,
         beam.tangent.toarray()[np.ix_(beam_free, beam_free)])
     line = MaterialLinePosition(xs, ys, beam)
     p0_rows, p0_masses = _rows(line, LineMultiplierSpace(
@@ -97,6 +139,8 @@ def evaluate(shell_cells: int, kind: str) -> dict:
         R_line = linalg.block_diag(*[
             _channel(p0_metric, axis, len(p0_masses)) for axis in range(5)
         ], _channel(yaw_metric, 5, len(yaw_masses)))
+    if exact_drill_quotient and np.max(np.abs(rows[:, drill])) > 1e-12:
+        raise ArithmeticError("line rows unexpectedly act on shell drilling")
     C = rows[:, free]
     R = linalg.block_diag(R_primal, R_line)
     A = np.block([[K, C.T], [C, np.zeros((len(C), len(C)))]])
@@ -110,15 +154,12 @@ def evaluate(shell_cells: int, kind: str) -> dict:
     row_rank = int(np.linalg.matrix_rank(normed_C))
     if row_rank != len(C):
         raise ArithmeticError("normed material-line rows lost rank")
-    shell_n = len(shell_free)
+    shell_n = len(shell_active)
     beam_n = len(beam_free)
     beam_resultant = R_resultant[np.ix_(beam_free, beam_free)]
     pieces = {"C": C, "blocks": [
-        ("shell_physical", slice(0, shell_n),
-         shell_physical[np.ix_(shell_free, shell_free)]),
-        ("shell_drilling_chart", slice(0, shell_n),
-         R_shell[np.ix_(shell_free, shell_free)]-
-         shell_physical[np.ix_(shell_free, shell_free)]),
+        ("shell_physical", slice(0, shell_n), shell_physical_active),
+        ("shell_drilling_chart", slice(0, shell_n), shell_chart_active),
         ("beam_kinematic", slice(shell_n, shell_n+beam_n),
          R_beam[np.ix_(beam_free, beam_free)]-beam_resultant),
         ("beam_complementary", slice(shell_n, shell_n+beam_n),
@@ -134,6 +175,9 @@ def evaluate(shell_cells: int, kind: str) -> dict:
         "decision": "three-level mixed behavior only; no uniform stability or multiplier selection",
         "geometry": f"C1 Q4 x{shell_cells}/y4; B3-{beam_halves}; 1:1 bond",
         "space_kind": kind,
+        "representation": ("exact_drilling_quotient" if exact_drill_quotient
+                           else "full_shell_chart"),
+        "drilling_quotient_check": drill_check,
         "p0_intervals": shell_cells,
         "yaw_intervals": shell_cells//2 if kind != "piecewise_constant" else None,
         "row_rank": row_rank,
@@ -160,12 +204,14 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--shell-cells", type=int, required=True)
     parser.add_argument("--space-kind", choices=KINDS, required=True)
+    parser.add_argument("--exact-drill-quotient", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     with threadpool_limits(limits=1):
-        result = evaluate(args.shell_cells, args.space_kind)
+        result = evaluate(args.shell_cells, args.space_kind,
+                          exact_drill_quotient=args.exact_drill_quotient)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n")
     print(json.dumps({"rows": result["report"]["rows"],

@@ -20,21 +20,24 @@ not a new policy. At the fixed 4:1 x16/B3-14 primal, an independent
 m8. Its Mx/Fz solves pass, eliminate the observed continuous yaw gap,
 and change Mx tip rotation by 5.45%. This implicates discrete yaw
 under-resolution in the provisional P0 m8 rule, not physical accuracy
-or a production multiplier selection.
-The existing solid
+or a production multiplier selection. The existing solid
 P0 action fields lacked two yaw dimensions. Two bounded external
 actions now span both variants on the unchanged solid grid; their
 26-action compliance has `1.925e-6` measured skew, consistent with
 but not bounded by saved-field precision, and
 gives valid same-law Mx/Fz reconstructions. The solid P1 and dual
 torque responses are close, but native and solid discretizations
-and terminal load distributions differ. **Remaining uncertainty:**
+and terminal load distributions differ. A three-level native mixed
+metric initially falls at x8 in an auxiliary drilling-chart mode;
+exact elimination of that chart gives nearly constant minimum values
+of `0.01502–0.01514`, dominated by beam kinematics, and does not
+separate P0 from selective P1/dual at x8. **Remaining uncertainty:**
 Physical torque/shear fidelity of the declared pose, growing-space
-mixed stability and locking, and the allocation of shell/section versus
+trace stability and locking, and the allocation of shell/section versus
 connection error. **Next discriminator:** Compare work-conjugate
-physical transfer on matching idealizations, then assess the actual
-normed mixed system, locking, and growing interface spaces over the
-registered ratios. Use those outcomes to retain or revise the law and
+physical transfer on matching idealizations and assess interface
+trace norms, locking, and growing spaces over the registered ratios.
+Use those outcomes to retain or revise the law and
 multiplier policy.
 Advance independent B2/F05–F08 foundations where permitted.
 No space or physical connection is selected.
@@ -11770,3 +11773,43 @@ interface dual or beam coordinates, investigate the relevant law or
 space; if it does not, keep physical transfer and locking as the
 principal unresolved decisions. Exact drill elimination is only a
 bounded diagnostic representation, not a production condensation.
+
+**Exact-drilling quotient outcome:** The first x8 attempt failed its
+new elementwise absolute symmetry guard before any mixed result. The
+unaveraged quotient's global relative skew is only `2.95e-16`;
+the inappropriate guard compared cancellation-scale entries to an
+absolute `1e-8`. The failure and measured blocks are preserved in
+`B3_E4_F03_C1_MATERIAL_LINE_MIXED_X8_P0_QUOTIENT_FAILED_V1.json`,
+SHA256 `9ad3aa9d9e5c486cf36b840fd382555e1f72f26c04241793268c5c96b8f5ebff`.
+The corrected guard uses global relative skew and does not average
+or alter the tangent.
+
+After exact algebraic elimination of the shell drilling coordinates,
+the native retained B3 variables and exact material-line rows remain
+in the indefinite KKT. Reconstruction of drill equations and the
+physical shell action is within `1.6e-15` relative across the
+three P0 levels. The normalized P0 mixed minima at x2/x4/x8 are
+`0.01501646`, `0.01510981`, `0.01514461`; their near-weak vectors
+have `0.9839–0.9843` of metric weight in native beam kinematics.
+At x8, selective P1 and dual yaw give the same minimum as P0 to
+`5e-14` absolute and the same near-weak-vector split. All five
+quotient runs retain full normalized row rank and complete within
+the bounded row/time limits. The current runner SHA256 is
+`9522279ad1759a759bc6d2c16cdadbaf62a6f4742332221db1a3c22e28c45f89`;
+result SHA256 identities are:
+
+- x2 P0 `14513a30f5d79c15f384090fc60c79e7b35af01b23ec8b5058f77bd3841f01db`;
+- x4 P0 `83b7b92f9a887a85425d2c75cc7f5ed4d7e5bdba238f38855496ac28f4aeeb1d`;
+- x8 P0 `af686a9f82070a194ad0466b290d4acfa6d1f34e377f130272a614d90173302c`;
+- x8 P1 yaw `b6a2b814295e182ad29cc54ed553ba619c86aa7430a142dde1d3a7f10e7f1c39`;
+- x8 dual yaw `ebe6685d50f786a3e0fa9dcd4a46912dcbe7b586a05b0c4b73e59e9b7037de72`.
+
+This distinguishes the earlier falling auxiliary chart mode from a
+physical quotient mode on these three levels. The smallest quotient
+mode is beam-dominated and therefore **does not rank the interface
+spaces**. Do not repeat the same full-KKT minimum at finer classical
+axial meshes. A trace inf-sup check, locking and solution convergence
+at registered ratios, finite-pose rank, and physically matched
+torque/shear transfer remain necessary. No multiplier space or
+connection law is selected; F03/G0B remain open, G1 barred, and formal
+F03 authority unconsumed.
