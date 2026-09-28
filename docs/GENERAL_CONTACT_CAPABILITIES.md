@@ -165,6 +165,12 @@ full-load state has only one active pressure mode on shrinking support. This row
 restart, installed package and independent acceptance remain open. The
 [development record](reference_cases/general_contact_d1_free_target_press_development.md)
 retains the initial failed macro trial and both later solves.
+On the finite-area distributed eight-Q4 press, macro pressure cut the two
+recorded scaled Schur conditions by about 5.45× and 6.51× and shifted the
+integrated force by 1.09% versus fine Q1. Its reference-surface pressure
+field differed from fine Q1 by 29.48% in L2 and was farther from the existing
+24-Q4 fine field. This is a development discriminator, not pressure-space
+acceptance; see the [comparison record](reference_cases/general_contact_d1_macro_distributed_press_development.md).
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as
