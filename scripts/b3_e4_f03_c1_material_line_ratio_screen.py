@@ -144,20 +144,22 @@ def evaluate(*, selective_yaw: bool = False) -> dict:
     }
 
 
-def evaluate_yaw_resolution() -> dict:
-    """Fixed x8/B3-18 row/work screen between m4 and aliased m8 yaw."""
+def evaluate_yaw_resolution(*, four_to_one: bool = False) -> dict:
+    """Fixed-primal yaw row/work screen, including the 4:1 missing mode."""
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     if Path(anysolver.__file__).resolve().parent != expected:
         raise RuntimeError("yaw screen imported another ANYsolver checkout")
     started = monotonic()
-    xs, ys = local_grid(8, transverse_cells=4)
-    beam = build(18, z_offset=.0675,
+    shell_cells = 16 if four_to_one else 8
+    beam_half_cells = 14 if four_to_one else 18
+    xs, ys = local_grid(shell_cells, transverse_cells=4)
+    beam = build(beam_half_cells, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um", assemble=False)
     bond_halves = int(np.sum(np.diff(beam.abscissae)[
         beam.abscissae[:-1] >= .9-1e-12] > 0.))
-    if bond_halves != 8:
-        raise ArithmeticError("fixed 1:1 beam bond inventory changed")
+    if bond_halves != (4 if four_to_one else 8):
+        raise ArithmeticError("fixed beam bond inventory changed")
     line = MaterialLinePosition(xs, ys, beam)
     ns = 6*len(xs)*len(ys)
     fixed_shell = {6*(j*len(xs)+i)+axis
@@ -170,6 +172,14 @@ def evaluate_yaw_resolution() -> dict:
         "piecewise_constant", tuple(np.linspace(0., 1., 9))))
     if len(p0_rows) != 48 or abs(np.sum(p0_masses)-.1) > 1e-12:
         raise ArithmeticError("fixed five-channel P0 work changed")
+    reference_intervals = 16 if four_to_one else 8
+    reference_p0, reference_masses = _rows(line, LineMultiplierSpace(
+        "piecewise_constant", tuple(np.linspace(0., 1., reference_intervals+1))))
+    if abs(np.sum(reference_masses)-.1) > 1e-12:
+        raise ArithmeticError("full-resolution P0 work changed")
+    # Only primal coordinate scales are needed here. The historical loaded
+    # helper admits at most 60 multiplier rows, while this read-only
+    # reference-space comparison has 96 rows and assembles no KKT.
     p0_scales, _ = _scales(ns, beam, free, row_count=len(p0_rows))
     primal_scale = p0_scales[:len(free)]
 
@@ -189,16 +199,18 @@ def evaluate_yaw_resolution() -> dict:
         return float(np.linalg.norm(rows-(rows@row_basis.T)@row_basis)/
                      np.linalg.norm(rows))
 
-    p0_unit = unit_rows(p0_rows)
+    p0_unit = unit_rows(reference_p0)
     p0_basis, p0_rank = basis(p0_unit)
-    if p0_rank != 48:
+    if not four_to_one and p0_rank != 48:
         raise ArithmeticError("fixed P0 reference row space changed")
     results = {}
-    for intervals in (4, 5, 6, 7, 8):
+    tested_intervals = (8, 12, 16) if four_to_one else (4, 5, 6, 7, 8)
+    for intervals in tested_intervals:
         if monotonic()-started > 120.:
             raise TimeoutError("bounded yaw-resolution row deadline")
         kinds = {}
-        for kind in KINDS[1:]:
+        row_spaces = {}
+        for kind in (KINDS if four_to_one else KINDS[1:]):
             yaw, measures = _rows(line, LineMultiplierSpace(
                 kind, tuple(np.linspace(0., 1., intervals+1))))
             if np.min(measures) <= 0. or abs(np.sum(measures)-.1) > 1e-12:
@@ -211,6 +223,7 @@ def evaluate_yaw_resolution() -> dict:
             diagnostic = _scaled_row_diagnostics(
                 rows, free, scales[:len(free)])
             candidate_unit = unit_rows(rows)
+            row_spaces[kind] = candidate_unit
             candidate_basis, candidate_rank = basis(candidate_unit)
             if candidate_rank != diagnostic["scaled_row_rank"]:
                 raise ArithmeticError("independent rank checks disagree")
@@ -234,14 +247,33 @@ def evaluate_yaw_resolution() -> dict:
                 "p0_into_candidate_row_span_relative_defect": defect(
                     p0_unit, candidate_basis),
             }
+        same_m_p0_span = {}
+        if four_to_one:
+            p0_yaw_basis, _ = basis(row_spaces["piecewise_constant"])
+            for kind in KINDS[1:]:
+                candidate_basis, _ = basis(row_spaces[kind])
+                same_m_p0_span[kind] = {
+                    "candidate_into_p0_relative_defect": defect(
+                        row_spaces[kind], p0_yaw_basis),
+                    "p0_into_candidate_relative_defect": defect(
+                        row_spaces["piecewise_constant"], candidate_basis),
+                }
         results[f"yaw_m{intervals}"] = {"yaw_intervals": intervals,
-                                        "spaces": kinds}
+                                        "spaces": kinds,
+                                        "same_m_p0_yaw_span": same_m_p0_span}
     return {
         "classification": "fixed-primal selective yaw resolution row/work diagnostic",
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
-        "question": "Can more longitudinal yaw test intervals remain independent before the known m8 alias?",
+        "question": ("Which exact yaw actions are missing from x16/B3-14 P0 m8, and can the m16 physical trace space be represented?"
+                     if four_to_one else
+                     "Can more longitudinal yaw test intervals remain independent before the known m8 alias?"),
         "decision": "rank/work admission only; physical loaded response and mixed stability remain separate",
-        "geometry": "C1 Q4 x8/y4, B3-18, 1:1 on 0.9-1.0 m line; P0 m8 on five channels",
+        "geometry": (f"C1 Q4 x{shell_cells}/y4, B3-{beam_half_cells}, "
+                     f"{'4:1' if four_to_one else '1:1'} on 0.9-1.0 m line; P0 m8 on five channels"),
+        "reference_p0_intervals": reference_intervals,
+        "reference_p0_rows": len(reference_p0),
+        "reference_p0_rank": p0_rank,
+        "base_p0_intervals": 8,
         "cases": results,
         "elapsed_s": monotonic()-started,
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -253,7 +285,7 @@ def evaluate_yaw_resolution() -> dict:
         "effective_threadpools": threadpool_info(),
         "env": {k: os.environ.get(k) for k in
                 ("NUMBA_DISABLE_JIT", "OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS")},
-        "limits": ["same supported x8/B3-18 primal and 120-second row deadline",
+        "limits": ["same supported fixed primal and 120-second row deadline",
                    "no KKT solve, physical load, or mesh-uniform stability claim"],
     }
 
@@ -263,13 +295,16 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--selective-yaw", action="store_true")
     parser.add_argument("--yaw-resolution-screen", action="store_true")
+    parser.add_argument("--x16-yaw-capacity", action="store_true")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
-    if args.selective_yaw and args.yaw_resolution_screen:
+    if sum((args.selective_yaw, args.yaw_resolution_screen,
+            args.x16_yaw_capacity)) > 1:
         raise ValueError("select one bounded row screen")
     with threadpool_limits(limits=1):
-        result = (evaluate_yaw_resolution() if args.yaw_resolution_screen
+        result = (evaluate_yaw_resolution(four_to_one=args.x16_yaw_capacity)
+                  if args.yaw_resolution_screen or args.x16_yaw_capacity
                   else evaluate(selective_yaw=args.selective_yaw))
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps({ratio: {name: [item["rank"], item["rows"]]

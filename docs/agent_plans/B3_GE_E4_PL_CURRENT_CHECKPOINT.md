@@ -15,7 +15,12 @@ levels. The 1:1 tip work trends are bounded, but local yaw-gap RMS
 grows from x4 to x8 with the coarser yaw rule. At x8/B3-18, a
 full-rank m7 P1/dual yaw space is exactly the existing P0 m8
 supported row space; its matching loaded response is a basis identity,
-not a new policy.
+not a new policy. At the fixed 4:1 x16/B3-14 primal, an independent
+56-row basis with yaw P0 m16 adds eight supported yaw actions over P0
+m8. Its Mx/Fz solves pass, eliminate the observed continuous yaw gap,
+and change Mx tip rotation by 5.45%. This implicates discrete yaw
+under-resolution in the provisional P0 m8 rule, not physical accuracy
+or a production multiplier selection.
 The existing solid
 P0 action fields lacked two yaw dimensions. Two bounded external
 actions now span both variants on the unchanged solid grid; their
@@ -27,11 +32,10 @@ and terminal load distributions differ. **Remaining uncertainty:**
 Physical torque/shear fidelity of the declared pose, growing-space
 mixed stability and locking, and the allocation of shell/section versus
 connection error. **Next discriminator:** Compare work-conjugate
-physical transfer on matching idealizations and resolve the yaw trace
-image and supported work at the problematic 4:1 x16/B3-14 mesh.
-Then assess the actual
-normed mixed system and registered ratios; use outcomes to retain or
-revise the law and multiplier policy.
+physical transfer on matching idealizations, then assess the actual
+normed mixed system, locking, and growing interface spaces over the
+registered ratios. Use those outcomes to retain or revise the law and
+multiplier policy.
 Advance independent B2/F05–F08 foundations where permitted.
 No space or physical connection is selected.
 G0B/F03 remain open, G1 barred, and formal F03 authority unconsumed;
@@ -11669,3 +11673,52 @@ norm. If the mode persists in the fully representable space, return
 to the continuous shell/beam pose law and physically matched
 torque/shear reference. Preserve the 1,900-row/120-second limits and
 the distinction between this diagnostic and G0B acceptance.
+
+**Fixed 4:1 yaw-capacity result and loaded decision:** On the same
+x16/B3-14 primal, the all-channel P0 m16 reference has supported
+rank `88/96`, so it cannot be installed as a 96-row exact KKT.
+Keeping the first five channels at P0 m8, yaw P0 m8/m12/m16
+gives independent supported dimensions `48/52/56`. Yaw P1/dual
+m8/m12 add one independent row (`49/53`), while m16 has `57`
+rows but rank `56`. At m16, P0-, P1-, and dual-yaw variants span
+the same 56-dimensional supported constraint space bidirectionally
+to `1.5e-15`; the latter two each contain one redundant row.
+At m8 and m12 their row spaces differ materially, so rank alone
+would not justify replacing one with another. The current V2 row
+comparison has SHA256
+`fbd8ae8835c18c0f11e08adf15e00ff57e2242016a23dbbceb14c55a3f43a0f5`.
+Use the independent 56-row five-P0-plus-P0-yaw-m16 basis for one
+fixed-primal Mx/Fz solve. It adds actual supported yaw actions and
+avoids the aliased 57th row. If equilibrium/work/support fail,
+reject this diagnostic basis. If they pass and the continuous yaw
+gap contracts, the under-resolved m8 policy is implicated; this
+still requires matched physical transfer, mixed-system norms,
+locking and the registered ratios before any production selection.
+
+**Fixed 4:1 loaded outcome:** The 56/56-row five-P0-plus-P0-yaw-m16
+KKT has 1,738 quotient rows and completes in 64.65 s within the
+bounded diagnostic limits. Both Mx and Fz pass full-free equilibrium,
+drilling, weak constraint, virtual-work, and support balance checks.
+For Mx, tip `rx` is `46.333255274 µrad`, shell physical work is
+`0.001780498612 J`, and continuous yaw-gap RMS is
+`2.28e-20 rad`. The provisional P0 m8 result on the same primal is
+`49.0025648 µrad`, `0.00196576105 J`, and `9.07561 µrad`.
+Thus the additional supported yaw actions remove the measured mode
+and alter tip rotation by about 5.45% and shell work by about 9.42%.
+Fz tip `uz` remains `69.8939453 µm`. The raw source-bound result is
+`B3_E4_F03_C1_X16_B14_P0_FIVE_P0_YAW_M16_LOADED_DEV_V1.json`,
+SHA256 `da8c3495fd265ebe655838f26c0b888f64b40cc62bb5d7320e925c459c23a0d9`.
+This resolves the immediate discrete yaw-resolution diagnosis on
+this primal. It does not select a production space, establish
+mesh-uniform mixed stability, or validate the physical connection
+against a matched torque/shear reference. Do not launch finer
+classical axial calculations on its account.
+
+An independent read-only review found no result-affecting defect in
+the V2 row-space comparison or 56-row loaded result. It confirmed
+the row normalization and work-conjugate units, the one-thread and
+resource records, current runner hashes, and the bounded inference.
+The `source_git` field identifies the preceding committed baseline;
+the runner hashes identify these then-uncommitted diagnostic changes.
+Finite-pose rank, normed mixed stability, locking, and physically
+matched transfer remain unverified.

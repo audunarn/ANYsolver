@@ -59,14 +59,16 @@ def evaluate(*, shell_cells: int = 16,
     if space_kind not in ("piecewise_constant", "continuous_linear",
                           "dual_linear"):
         raise ValueError("bounded material-line multiplier kind required")
-    if selective_yaw and (space_kind == "piecewise_constant" or
-                          mode_resolved_mx_only):
+    if selective_yaw and mode_resolved_mx_only:
         raise ValueError("bounded selective-yaw Mx/Fz comparison required")
+    yaw_fixture = (shell_cells, beam_half_cells, p0_intervals, yaw_intervals)
+    if selective_yaw and space_kind == "piecewise_constant" and (
+            yaw_fixture != (16, 14, 8, 16)):
+        raise ValueError("only independent x16/B3-14 P0 yaw m16 is admitted")
     if yaw_intervals is not None and (
             not selective_yaw or
-            (shell_cells, beam_half_cells, p0_intervals, yaw_intervals) !=
-            (8, 18, 8, 7)):
-        raise ValueError("only fixed x8/B3-18 selective yaw m7 is admitted")
+            yaw_fixture not in ((8, 18, 8, 7), (16, 14, 8, 16))):
+        raise ValueError("only fixed selective yaw m7/m16 diagnostics admitted")
     if space_kind != "piecewise_constant" and not selective_yaw and (
             (beam_half_cells, p0_intervals) != (14, 8) or
             not mode_resolved_mx_only):
