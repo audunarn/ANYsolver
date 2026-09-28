@@ -356,6 +356,37 @@ class MovingS3PatchProjectedNormal:
         z = np.asarray(nodal_forces, dtype=float)
         if z.shape != (len(self.pressure_mode_ids),) or not np.all(np.isfinite(z)):
             raise ValueError("nodal contact forces must be finite")
+        if self.shared_edge_tie is None:
+            return self._nodal_force_unresolved(current_source, current_target,
+                                                z, tangent=tangent)
+        try:
+            return self._nodal_force_unresolved(current_source, current_target,
+                                                z, tangent=tangent)
+        except (UnsupportedQ4S3Branch, ValueError) as exc:
+            message = str(exc)
+            pair_match = re.search(r"\bpair=(\d+)\b", message)
+            degenerate_shared_pair = (
+                ("degenerate integration triangle" in message
+                 or "paired overlap area agreement is unresolved" in message
+                 or "differentiated S3 overlap disagrees with mortar geometry" in message)
+                and pair_match is not None
+            )
+            failed_pair = (int(pair_match.group(1))
+                           if pair_match is not None else None)
+            if (not ("vertex lies on a clipping boundary" in message
+                     or "shared-edge derivative is nonunique" in message
+                     or degenerate_shared_pair)
+                    or not self._only_artificial_shared_edge_ties(
+                        current_source, current_target, failed_pair=failed_pair)):
+                raise
+            return self._shared_edge_nodal_force_limit(
+                current_source, current_target, z,
+                tangent=tangent, recoverable_pair=failed_pair,
+            )
+
+    def _nodal_force_unresolved(self, current_source, current_target, z, *,
+                                tangent, tiny_wedge_pair=None):
+        """Differentiate fixed nodal-force work on one smooth overlap branch."""
         base = self.geometry.evaluate(current_source, current_target)
         support = base.reference_support
         if np.any(support < 0.0):
@@ -368,8 +399,159 @@ class MovingS3PatchProjectedNormal:
         base = replace(base, pressure=pressure, energy=0.0)
         return self._jet2_s3_work(
             current_source, current_target, base, tangent=tangent,
-            nodal_force_mode=True,
+            tiny_wedge_pair=tiny_wedge_pair, nodal_force_mode=True,
         )
+
+    def _shared_edge_nodal_force_limit(self, current_source, current_target, z,
+                                      *, tangent, recoverable_pair):
+        """Guard a fixed-force generalized derivative at the artificial S3 seam."""
+        step, direction, tolerance = self.shared_edge_tie
+        lengths = [np.linalg.norm(face[i]-face[(i+1) % len(face)])
+                   for faces, positions in (
+                       (self.source_face_indices, self.reference_source),
+                       (self.target_face_indices, self.reference_target))
+                   for ids in faces for face in (positions[ids],)
+                   for i in range(len(face))]
+        if step > 1.0e-4*min(lengths):
+            raise UnsupportedQ4S3Branch("raw shared-edge tie step exceeds local geometry scale")
+        exact = self.geometry.evaluate(current_source, current_target)
+        support = exact.reference_support
+        supported = support > 0.0
+        pressure = np.zeros_like(support)
+        np.divide(z, support, out=pressure, where=supported)
+        exact = replace(exact, pressure=pressure, energy=0.0)
+        observations = []
+        evaluations = 4*len(self.geometry.pair_laws)
+        for offset in (step, step/2.0):
+            sides = []
+            for sign in (-1.0, 1.0):
+                shifted = np.asarray(current_source, dtype=float).copy()
+                shifted += sign*offset*direction
+                try:
+                    candidate = self._nodal_force_unresolved(
+                        shifted, current_target, z, tangent=tangent,
+                        tiny_wedge_pair=recoverable_pair,
+                    )
+                except (UnsupportedQ4S3Branch, ValueError) as exc:
+                    raise UnsupportedQ4S3Branch(
+                        f"raw shared-edge tie smooth neighbor unresolved "
+                        f"(offset_m={sign*offset:.12g}): {exc}"
+                    ) from exc
+                evaluations += candidate.energy_evaluations
+                if evaluations > self.geometry.maximum_energy_evaluations:
+                    raise MemoryError("raw Q4/S3 shared-edge tie evaluation budget exhausted")
+                if not np.array_equal(candidate.state.reference_support > 0.0, supported):
+                    raise UnsupportedQ4S3Branch("raw shared-edge tie changes pressure support")
+                for name in ("reference_support", "reference_weighted_gap",
+                             "normalized_gap"):
+                    observed = getattr(candidate.state, name)
+                    reference = getattr(exact, name)
+                    scale = max(float(np.max(np.abs(reference))), 1.0e-20)
+                    if np.any(np.abs(observed-reference)
+                              > tolerance*np.maximum(np.abs(reference),
+                                                     1.0e-8*scale)):
+                        raise UnsupportedQ4S3Branch(
+                            f"raw shared-edge tie {name} disagrees with exact state"
+                        )
+                sides.append(candidate)
+            observations.append(sides)
+
+        def relative_difference(a, b):
+            return float(np.linalg.norm(a-b)/max(np.linalg.norm(a),
+                                                  np.linalg.norm(b), 1.0e-12))
+
+        def limit(field):
+            values = [[getattr(candidate, field) for candidate in sides]
+                      for sides in observations]
+            means = [0.5*(side[0]+side[1]) for side in values]
+            extrapolated = (4.0*means[1]-means[0])/3.0
+            errors = [relative_difference(side[0], side[1]) for side in values]
+            errors.extend((relative_difference(means[0], means[1]),
+                           relative_difference(means[1], extrapolated)))
+            if (not np.all(np.isfinite(extrapolated)) or max(errors) > tolerance):
+                raise UnsupportedQ4S3Branch(
+                    f"raw shared-edge tie {field} limit unresolved "
+                    f"(relative_error={max(errors):.12g})"
+                )
+            return extrapolated
+
+        gap_gradient = limit("gap_gradient")
+        residual = limit("residual")
+        tangent_matrix = limit("tangent") if tangent else None
+        if relative_difference(residual, -(z @ gap_gradient)) > tolerance:
+            raise UnsupportedQ4S3Branch("raw shared-edge tie force/gap work disagrees")
+        for row in np.flatnonzero(supported):
+            first, second = observations
+            coarse = 0.5*(first[0].gap_gradient[row]
+                          + first[1].gap_gradient[row])
+            fine = 0.5*(second[0].gap_gradient[row]
+                        + second[1].gap_gradient[row])
+            errors = (
+                relative_difference(first[0].gap_gradient[row],
+                                    first[1].gap_gradient[row]),
+                relative_difference(second[0].gap_gradient[row],
+                                    second[1].gap_gradient[row]),
+                relative_difference(coarse, fine),
+                relative_difference(fine, gap_gradient[row]),
+            )
+            if max(errors) > tolerance:
+                raise UnsupportedQ4S3Branch(
+                    "raw shared-edge tie supported gap row is nonunique"
+                )
+        action = np.concatenate((np.tile(direction, len(current_source)),
+                                 np.zeros(3*len(current_target))))
+        # Geometry-value subtraction at nanometre offsets is less accurate
+        # than the directly differentiated row limit. Keep this independent
+        # directional check within the existing 1e-5 smooth-branch gate.
+        directional_tolerance = max(tolerance, 1.0e-5)
+        if (relative_difference((observations[0][1].state.normalized_gap
+                                - observations[0][0].state.normalized_gap)/(2.0*step),
+                                gap_gradient @ action) > directional_tolerance):
+            raise UnsupportedQ4S3Branch("raw shared-edge tie gap direction disagrees")
+        if tangent:
+            active = (np.arange(self.n_coordinates, dtype=np.intp)
+                      if self.tangent_active_coordinates is None else
+                      self.tangent_active_coordinates)
+            for sides in observations:
+                for column in active:
+                    if (relative_difference(sides[0].tangent[:, column],
+                                            sides[1].tangent[:, column])
+                            > 2.0*tolerance):
+                        raise UnsupportedQ4S3Branch(
+                            "raw shared-edge tie tangent column is nonunique"
+                        )
+            for column in active:
+                coarse = 0.5*(observations[0][0].tangent[:, column]
+                              + observations[0][1].tangent[:, column])
+                fine = 0.5*(observations[1][0].tangent[:, column]
+                            + observations[1][1].tangent[:, column])
+                if (max(relative_difference(coarse, fine),
+                        relative_difference(fine, tangent_matrix[:, column]))
+                        > tolerance):
+                    raise UnsupportedQ4S3Branch(
+                        "raw shared-edge tie tangent column changes with step"
+                    )
+            if ((np.all(np.isin(np.flatnonzero(action), active))
+                 and relative_difference(((observations[0][1].residual
+                                           - observations[0][0].residual)/(2.0*step))[active],
+                                         (tangent_matrix @ action)[active])
+                 > tolerance)
+                    or relative_difference(tangent_matrix, tangent_matrix.T)
+                    > tolerance):
+                raise UnsupportedQ4S3Branch(
+                    "raw shared-edge tie tangent direction or symmetry disagrees"
+                )
+        positions = np.vstack((current_source, current_target))
+        forces = residual.reshape(-1, 3)
+        force_scale = max(float(np.sum(np.linalg.norm(forces, axis=1))), 1.0e-20)
+        length_scale = max(float(np.max(np.linalg.norm(positions-positions[0],
+                                                       axis=1))), 1.0e-20)
+        if (np.linalg.norm(forces.sum(axis=0)) > tolerance*force_scale
+                or np.linalg.norm(np.cross(positions, forces).sum(axis=0))
+                > tolerance*length_scale*force_scale):
+            raise UnsupportedQ4S3Branch("raw shared-edge tie wrench is unbalanced")
+        return NodalForceLinearization(exact, residual, tangent_matrix,
+                                       gap_gradient, evaluations)
 
     def projected_multiplier(self, state, multipliers):
         multipliers = self._multipliers(multipliers)
@@ -1092,10 +1274,19 @@ class MovingS3PatchProjectedNormal:
                     edge_lengths = [np.linalg.norm(reference_face[index]
                                                    - reference_face[(index+1) % 4])
                                     for index in range(4)]
-                    force_scale = float(base.pressure @ base.reference_support)
+                    force_scale = (float(np.sum(np.abs(
+                        base.pressure*base.reference_support)))
+                        if nodal_force_mode else
+                        float(base.pressure @ base.reference_support))
+                    if nodal_force_mode and force_scale == 0.0:
+                        # All fixed-z work derivatives are exactly zero. The
+                        # sampler still needs a positive normalization to
+                        # return its geometry discrepancies; the unweighted
+                        # supported-row check below is the admission gate.
+                        force_scale = 1.0
                     if force_scale <= 0.0:
                         raise UnsupportedQ4S3Branch(
-                            "tiny seam wedge has no resolved integrated pressure force"
+                            "tiny seam wedge has no resolved absolute nodal force"
                         )
                     used, scenarios = verify_tiny_wedge_derivatives(
                         law, local_source, local_target, derivative,
@@ -1216,14 +1407,26 @@ class MovingS3PatchProjectedNormal:
                 delta_weighted[np.ix_(tiny_source, selected_columns)] = (
                     gradient_error[1][:, tiny_active])
                 E = delta_weighted-fine_work_gap[:, None]*delta_support
+                if nodal_force_mode:
+                    supported_rows = fine_base.reference_support > 0.0
+                    normalized_gap_error = np.linalg.norm(
+                        E[supported_rows], axis=1,
+                    )/fine_base.reference_support[supported_rows]
+                    if (not np.all(np.isfinite(normalized_gap_error))
+                            or np.any(normalized_gap_error > 1.0e-7)):
+                        raise UnsupportedQ4S3Branch(
+                            "tiny seam wedge raw supported gap derivative is unresolved"
+                        )
                 tangent_error_bound = 0.0
-                for node in np.flatnonzero(fine_pressure > 0.0):
+                for node in np.flatnonzero(
+                        fine_pressure != 0.0 if nodal_force_mode
+                        else fine_pressure > 0.0):
                     support = fine_base.reference_support[node]
                     if support <= 0.0:
                         raise UnsupportedQ4S3Branch(
                             "tiny seam wedge active pressure lacks support"
                         )
-                    p = fine_pressure[node]
+                    p = abs(fine_pressure[node])
                     d_norm = float(np.linalg.norm(D[node]))
                     e_norm = float(np.linalg.norm(E[node]))
                     ds_norm = float(np.linalg.norm(delta_support[node]))
@@ -1235,7 +1438,7 @@ class MovingS3PatchProjectedNormal:
                                      + ds_norm*e_norm)
                     )
                 for local_node, node in enumerate(tiny_source):
-                    p = fine_pressure[node]
+                    p = abs(fine_pressure[node])
                     g = fine_work_gap[node]
                     tangent_error_bound += p*(
                         np.linalg.norm(hessian_error[1][local_node])
