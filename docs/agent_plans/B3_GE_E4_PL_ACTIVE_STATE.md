@@ -103,6 +103,20 @@ Next establish the native trace energy pairing, then check the selected
 physical-width law against E4 owner fields before scoring multiplier spaces.
 No loaded refinement or F03 authority has been used.
 
+Native pairing discriminator: the actual stationary-reduced, root-supported
+B3 physical energy was compared with the six-component broken half-cell pose
+RMS in L2 on the fixed 0.5–1 m bond. At 4/8/16 half-cells its upper quotient
+is 9.260/9.222/9.213 × 10⁻⁶ J⁻¹. The local sparse/dense operators agree;
+3/4-point quadrature and analytic cell rotation/boundary translation Gram
+checks agree. Effective OpenBLAS pools use one thread. Independent read-only
+review found no code or interpretation defect. This bare-port screen excludes
+the section arm, Log map and shell rail; it neither proves a uniform B3 trace
+bound nor selects A/B. The next action is a mathematical coercivity/bound or
+counterexample for the actual retained beam family, alongside E4 owner-field
+equivalence and physical torque/shear checks; no finer native sweep is justified
+by these three values. Raw evidence is in
+`.qualification/b3-ge-e4-pl/r7-f03-native-broken-l2-dev-20260928-v3/`.
+
 ## Execution boundary
 
 Revision 7 allows experimental integration during open G0 with at most three
