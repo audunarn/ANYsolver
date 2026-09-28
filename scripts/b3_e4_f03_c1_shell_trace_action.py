@@ -116,7 +116,7 @@ def evaluate(reconstruction_path: Path) -> dict:
         fixed_distance = []
         shell_nodes = line.reference_nodes
         nodal = shell_u.reshape(-1, 6)
-        for x in (.5, .75):
+        for x in (.5, .75, .9, .95):
             shell_ids = np.flatnonzero(
                 (np.abs(shell_nodes[:, 0]-x) < 1e-10) &
                 (np.abs(shell_nodes[:, 1]) < 1e-10))
