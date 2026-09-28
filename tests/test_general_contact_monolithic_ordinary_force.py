@@ -7,6 +7,7 @@ import pytest
 
 from anysolver import solve_static_nonlinear
 from anysolver.boundary import BoundaryCondition, LoadCase
+from scripts.general_contact_d1_free_target_press_probe import build_free_target_case
 from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
 
 
@@ -88,3 +89,51 @@ def test_ordinary_force_rejects_moments_and_other_load_types():
     with pytest.raises(ValueError, match="translation forces only"):
         solve_static_nonlinear(model, load_case=load, num_steps=2,
                                contact=definition, contact_settings=settings)
+
+
+def test_deformable_s3_target_ordinary_force_matches_controlled_press():
+    """Compare two ordinary static interfaces on the same deformable pair."""
+    def free_target_case():
+        return build_free_target_case(
+            4, steps_per_segment=2, four_phase=False,
+            enforcement_solver="monolithic_active_set",
+        )
+
+    controlled_model, definition, settings, program = free_target_case()
+    controlled = solve_static_nonlinear(
+        controlled_model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+    )
+    assert controlled.status == "completed", controlled.failure_reason
+
+    ordinary_model, definition, settings, program = free_target_case()
+    ordinary_model.add_boundary_condition(BoundaryCondition(
+        "source_x_support", (1, 6), {"ux": 0.0},
+    ))
+    load = LoadCase("deformable target press")
+    for item in program.nodal_forces:
+        assert item.dof == "uz"
+        load.add_nodal_load(item.node_id, forces=np.array(
+            [0.0, 0.0, item.values_n[-1]], dtype=float,
+        ))
+    ordinary = solve_static_nonlinear(
+        ordinary_model, load_case=load, num_steps=2,
+        contact=definition, contact_settings=settings, max_iterations=18,
+    )
+    assert ordinary.status == "completed", (
+        ordinary.failure_reason, ordinary.info.get("contact_failure"),
+    )
+    np.testing.assert_allclose(
+        ordinary.displacements, controlled.displacements,
+        rtol=0.0, atol=1.0e-10,
+    )
+    for name in ("integration_force", "minimum_gap", "numerical_pressure_pa"):
+        np.testing.assert_allclose(
+            ordinary.info["general_contact"][name],
+            controlled.info["general_contact"][name],
+            rtol=0.0, atol=1.0e-9,
+        )
+    assert ordinary.info["general_contact"]["minimum_gap"] >= -5.0e-5
+    assert ordinary.info["general_contact"]["integration_force"][2] > 0.0
+    target_free_uz = ordinary_model.mesh.dof_manager.get_node_dofs(12)[2]
+    assert abs(ordinary.displacements[target_free_uz]) > 1.0e-10
