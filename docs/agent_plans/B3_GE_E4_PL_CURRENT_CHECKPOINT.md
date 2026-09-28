@@ -10715,3 +10715,39 @@ The next development step must combine this resolution evidence with
 physically matched torque/shear and the registered ratio/refinement
 requirements. F03/G0B remain open; G1 is barred and formal F03
 authority remains unconsumed.
+
+**Next bounded ratio-policy screen (prospective):** The x8/m8 B3-12
+nulls move when bond-side beam half-cell resolution changes, while
+supported x4/m2 and x8/m4 loaded checks leave the physical policy open.
+Test the provisional interval count `m=min(shell bond cells,
+2*beam bond half-cells)` at the seven registered beam:shell ratios
+from 1:8 through 8:1 on the unchanged C1 material-line geometry.
+Use only existing mean-gap rows, fixed supports, and the existing
+bounded scaled row diagnostic (at most 54 rows and 1,200 active
+columns); no new KKT or external solve. Full P0 rank across all ratios
+would nominate that policy for mixed stability, work and convergence;
+any P0 dependency would require a revised resolution rule. P1/dual
+results diagnose whether their yaw/Fy alias persists. Rank alone cannot
+select a space or close F03/G0B, and this screen does not spend the
+formal F03 authority.
+
+**Seven-ratio row result and decision:** On the unchanged C1 material
+line, the provisional `m=min(shell bond cells,2*beam bond half-cells)`
+policy gives independent P0 rows at all seven declared ratios from
+shell:beam 1:8 to 8:1. P1 and dual P1 each lose one row at 1:1
+(`53/54`) and two at 2:1 (`52/54`); their rows are independent at the
+other five tested ratios under this policy. This is only an algebraic
+necessary-condition screen: no loaded response, physical work, mixed
+KKT stability, locking or convergence claim follows. The run took
+`13.61 s`, at most `54` rows and `124` active columns, within the
+existing bounded row diagnostic. Source SHA256
+`4c43123e398efa456863429173f860ed30b0e0d60cdb3a9fb313cbe5b79584c3`;
+raw `B3_E4_F03_C1_MATERIAL_LINE_RATIO_POLICY_DEV_V1.json` SHA256
+`9683d049c316900ede2164b239503ab38e0245b6ecf0e77325566d1eaf7ed738`.
+The output explicitly records the ratio convention as shell bond
+cells : native beam bond half-cells. Next test three matched 1:1
+refinement levels of the full-rank P0 candidate under fixed physical
+tip Mx/Fz; a nonconvergent or failed-work trend returns to the law or
+resolution policy, while a plausible trend nominates it for the
+registered mixed-system and matched-reference checks. Do not infer
+selection from this screen. G0B/F03 remain open, G1 barred.
