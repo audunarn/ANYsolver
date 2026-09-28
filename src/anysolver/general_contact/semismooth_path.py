@@ -125,7 +125,7 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
         pivot_active = active.copy()
         seen_sets = set()
         pivot_trace = []
-        pivot_limit = min(12, modes+2)
+        pivot_limit = min(settings.monolithic_maximum_pivots, modes+2)
         for pivot in range(pivot_limit):
             cancellation_safe_point(cancellation_token,
                                     f"contact_path.step:{step}.semismooth.pivot:{pivot}")
@@ -192,7 +192,8 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
             return SemismoothStep(False, "contact_semismooth_pivot_limit",
                                   q, mu, z, None, None, iteration, residual_norm,
                                   constraint_norm, ncp_norm, evaluations, backtracks,
-                                  {"pivot_trace": pivot_trace})
+                                  {"pivot_limit": pivot_limit,
+                                   "pivot_trace": pivot_trace})
         proposed_u = np.asarray(transform @ (q+dq) + offset).reshape(-1)
         fraction = min(1.0, manager.admissible_step_fraction(u, proposed_u))
         _discard_nonlinear_state_candidate(committed_states)

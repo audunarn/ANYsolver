@@ -792,6 +792,9 @@ class GeneralS3PatchManager:
                          **({"complementarity_force_scale_n":
                              self.settings.complementarity_force_scale_n}
                             if self.settings.enforcement_solver == "monolithic_active_set" else {}),
+                         **({"monolithic_maximum_pivots":
+                             self.settings.monolithic_maximum_pivots}
+                            if self.settings.enforcement_solver == "monolithic_active_set" else {}),
                          **({"q4_source_pressure_basis": self.settings.q4_source_pressure_basis,
                              **({"q4_source_pressure_knot_columns": list(
                                  self.settings.q4_source_pressure_knot_columns)}

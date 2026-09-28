@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 from collections import defaultdict
+from dataclasses import replace
 from functools import wraps
 import json
 from pathlib import Path
@@ -20,6 +21,8 @@ import anysolver.general_contact.s3_patch_augmented as augmented
 import anysolver.general_contact.s3_patch_mortar_energy as mortar
 import anysolver.general_contact.s3_patch_static as patch_static
 import anysolver.general_contact.static_path as static_path
+import anysolver.general_contact.semismooth_path as semismooth_path
+import anysolver.nonlinear_restart as nonlinear_restart
 from scripts.general_contact_d1_selected_vs_fine_coupled_dev import _run
 from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
 from scripts.general_contact_d1_pressure_bins import integrate_q1_bins
@@ -28,11 +31,14 @@ from scripts.general_contact_d1_pressure_bins import integrate_q1_bins
 def main(output: Path, *, candidate_rows: int | None = None,
          candidate_columns: int = 4,
          candidate_y_profile: str | None = None,
-         compare_residual_only: bool = False) -> None:
+         compare_residual_only: bool = False,
+         monolithic_route: bool = False,
+         checkpoint_guard_counts: bool = False) -> None:
     if output.exists():
         raise FileExistsError(output)
     records = defaultdict(lambda: {"calls": 0, "inclusive_seconds": 0.0,
                                   "exclusive_seconds": 0.0, "exceptions": 0})
+    checkpoint_guard_contexts = defaultdict(lambda: {"calls": 0, "seconds": 0.0})
     stack: list[list[float]] = []
 
     def watch(owner, attribute: str, label: str) -> None:
@@ -78,6 +84,100 @@ def main(output: Path, *, candidate_rows: int | None = None,
     watch(static_path, "factorize", "structural_factorization")
     watch(static_path, "assemble_stiffness_matrix", "initial_linear_stiffness")
     watch(patch_static, "supported_pressure_gram", "pressure_rank_diagnostics")
+
+    if monolithic_route:
+        if candidate_rows is None or compare_residual_only:
+            raise ValueError("monolithic route profiling requires rows and no residual comparison")
+        for attribute, label in (
+            ("_prepare_qualified_q4_states_for_nonlinear_solve", "q4_state_prepare"),
+            ("_activate_nonlinear_state_storage", "state_storage_activate"),
+            ("_commit_nonlinear_state_candidate", "state_commit"),
+            ("_materialize_final_nonlinear_states", "state_materialize"),
+            ("_finalize_nonlinear_element_states", "state_finalize"),
+            ("_seal_final_qualified_q4_states", "q4_state_seal"),
+            ("create_nonlinear_checkpoint", "checkpoint_create"),
+            ("solve_semismooth_increment", "ssn_increment"),
+        ):
+            watch(static_path, attribute, label)
+        if checkpoint_guard_counts:
+            exact_guard = nonlinear_restart._EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD
+
+            def count_guard(model, *, context):
+                group = context.split(" at ", 1)[0]
+                started_guard = time.perf_counter()
+                try:
+                    return exact_guard(model, context=context)
+                finally:
+                    item = checkpoint_guard_contexts[group]
+                    item["calls"] += 1
+                    item["seconds"] += time.perf_counter()-started_guard
+
+            nonlinear_restart._EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD = count_guard
+        watch(nonlinear_restart, "validate_nonlinear_checkpoint",
+              "checkpoint_self_validation")
+        watch(semismooth_path, "_assemble_nonlinear_system", "ssn_structural_assembly")
+        watch(semismooth_path, "linearize", "ssn_contact_linearization")
+        watch(semismooth_path, "factorize", "ssn_factorization")
+        watch(augmented.MovingS3PatchProjectedNormal,
+              "nodal_force_linearization", "raw_nodal_force_work")
+        watch(patch_static.GeneralS3PatchManager,
+              "_gap_lower", "independent_gap_check")
+        model, definition, settings, program = build_case(
+            candidate_columns, source_rows=candidate_rows,
+            source_y_profile=candidate_y_profile,
+            load_profile="distributed", total_force_n=0.3,
+            target_right_x_m=1.3,
+        )
+        settings = replace(
+            settings, enforcement_solver="monolithic_active_set",
+            complementarity_force_scale_n=0.3,
+            augmentation_acceleration="none",
+            augmentation_schur_maximum_modes=None,
+            augmentation_schur_maximum_pressure_pa=None,
+            augmentation_schur_maximum_step_pa=None,
+            augmentation_schur_difference_step_m=None,
+            augmentation_schur_maximum_attempts=1,
+            augmentation_schur_maximum_relinearizations=0,
+        )
+        started = time.perf_counter()
+        result = nonlinear_static.solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=18,
+            emit_restart_checkpoint=True,
+        )
+        record = {
+            "method": "development whole-route coarse timing; unchanged mechanics",
+            "source_grid": [candidate_columns, candidate_rows],
+            "source_y_profile": candidate_y_profile,
+            "status": result.status,
+            "failure_reason": result.failure_reason,
+            "elapsed_seconds": time.perf_counter()-started,
+            "accepted_steps": len(result.steps),
+            "final_displacements": result.displacements.tolist(),
+            "contact": result.info.get("general_contact"),
+            "checkpoint_sha256": (None if result.restart_checkpoint is None
+                                  else result.restart_checkpoint["checkpoint_sha256"]),
+            "step_counters": [{
+                key: item.get(key) for key in (
+                    "step_index", "semismooth_iterations", "candidate_evaluations",
+                    "backtracks", "complementarity_relative_force",
+                )
+            } for item in result.info.get("force_displacement_history", ())],
+            "timings": dict(sorted(records.items())),
+            "checkpoint_guard_contexts": dict(sorted(
+                checkpoint_guard_contexts.items(),
+                key=lambda pair: pair[1]["seconds"], reverse=True,
+            )),
+        }
+        output.write_text(json.dumps(record, indent=2, default=str)+"\n",
+                          encoding="utf-8")
+        print(json.dumps({key: record[key] for key in (
+            "status", "failure_reason", "elapsed_seconds", "accepted_steps",
+            "step_counters",
+        )}, indent=2))
+        if result.status != "completed":
+            raise RuntimeError("timed monolithic fixture did not complete")
+        return
 
     started = time.perf_counter()
     if candidate_rows is not None:
@@ -268,12 +368,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--candidate-rows", type=int, choices=(1, 2, 4, 8))
-    parser.add_argument("--candidate-columns", type=int, choices=(4, 8),
+    parser.add_argument("--candidate-columns", type=int, choices=(4, 8, 16),
                         default=4)
     parser.add_argument("--candidate-y-profile", choices=("near_rim8",))
     parser.add_argument("--compare-residual-only", action="store_true")
+    parser.add_argument("--monolithic-route", action="store_true")
+    parser.add_argument("--checkpoint-guard-counts", action="store_true")
     args = parser.parse_args()
     main(args.output, candidate_rows=args.candidate_rows,
          candidate_columns=args.candidate_columns,
          candidate_y_profile=args.candidate_y_profile,
-         compare_residual_only=args.compare_residual_only)
+         compare_residual_only=args.compare_residual_only,
+         monolithic_route=args.monolithic_route,
+         checkpoint_guard_counts=args.checkpoint_guard_counts)

@@ -229,7 +229,9 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
          target_columns: int = 1,
          full_width_target: bool = False,
          source_rows: int = 1,
-         enforcement_solver: str = "nested_augmented") -> None:
+         source_y_profile: str | None = None,
+         enforcement_solver: str = "nested_augmented",
+         monolithic_maximum_pivots: int = 12) -> None:
     if output.exists():
         raise FileExistsError(f"development output already exists: {output}")
     model, definition, settings, program = build_case(
@@ -241,6 +243,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         target_columns=target_columns,
         full_width_target=full_width_target,
         source_rows=source_rows,
+        source_y_profile=source_y_profile,
     )
     if pressure_cap_pa <= 0.0 or schur_step_cap_pa <= 0.0:
         raise ValueError("Schur pressure and step caps must be positive")
@@ -260,6 +263,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         settings = replace(
             settings, enforcement_solver=enforcement_solver,
             complementarity_force_scale_n=total_force_n,
+            monolithic_maximum_pivots=monolithic_maximum_pivots,
             augmentation_acceleration="none",
             augmentation_schur_maximum_modes=None,
             augmentation_schur_maximum_pressure_pa=None,
@@ -287,6 +291,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
                       if four_phase else
                       "mixed_bending_refinement_jet2_schur_press_dev"),
         "enforcement_solver": enforcement_solver,
+        "monolithic_maximum_pivots": monolithic_maximum_pivots,
         "four_phase": four_phase,
         "steps_per_segment": steps_per_segment,
         "load_profile": load_profile,
@@ -297,6 +302,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         "full_width_target": full_width_target,
         "columns": columns,
         "source_rows": source_rows,
+        "source_y_profile": source_y_profile,
         "pressure_basis": pressure_basis,
         "status": result.status,
         "failure_reason": result.failure_reason,
@@ -362,9 +368,11 @@ if __name__ == "__main__":
     parser.add_argument("--target-columns", type=int, choices=(1, 2), default=1)
     parser.add_argument("--full-width-target", action="store_true")
     parser.add_argument("--source-rows", type=int, choices=(1, 2, 4, 8), default=1)
+    parser.add_argument("--source-y-profile", choices=("rim8", "near_rim8"))
     parser.add_argument("--enforcement-solver", choices=(
         "nested_augmented", "monolithic_active_set"),
         default="nested_augmented")
+    parser.add_argument("--monolithic-maximum-pivots", type=int, default=12)
     args = parser.parse_args()
     main(args.columns, args.output, args.pressure_cap_pa, args.four_phase,
          args.steps_per_segment, args.schur_step_cap_pa,
@@ -372,4 +380,5 @@ if __name__ == "__main__":
          args.schur_relinearizations, args.target_right_x_m,
          args.schur_maximum_attempts, args.pressure_basis,
          args.target_reference_slope, args.target_columns,
-         args.full_width_target, args.source_rows, args.enforcement_solver)
+         args.full_width_target, args.source_rows, args.source_y_profile,
+         args.enforcement_solver, args.monolithic_maximum_pivots)

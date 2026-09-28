@@ -219,6 +219,7 @@ class ContactSolverSettings:
     augmentation_support_force_budget_n: float | None = None
     enforcement_solver: str = "nested_augmented"
     complementarity_force_scale_n: float | None = None
+    monolithic_maximum_pivots: int = 12
     q4_source_support_gradient_tolerance: float | None = None
     q4_source_support_hessian_tolerance: float | None = None
     q4_source_weighted_gap_gradient_tolerance: float | None = None
@@ -237,6 +238,12 @@ class ContactSolverSettings:
                 raise ValueError("monolithic_active_set requires a positive complementarity force scale")
         elif self.complementarity_force_scale_n is not None:
             raise ValueError("complementarity force scale requires monolithic_active_set")
+        if (type(self.monolithic_maximum_pivots) is not int
+                or not 1 <= self.monolithic_maximum_pivots <= 64):
+            raise ValueError("monolithic_maximum_pivots must be an integer in [1, 64]")
+        if (self.enforcement_solver != "monolithic_active_set"
+                and self.monolithic_maximum_pivots != 12):
+            raise ValueError("monolithic pivot limit requires monolithic_active_set")
         if (self.q4_target_weighted_gap_tolerance is not None
                 and (not np.isfinite(self.q4_target_weighted_gap_tolerance)
                      or self.q4_target_weighted_gap_tolerance <= 0.0)):

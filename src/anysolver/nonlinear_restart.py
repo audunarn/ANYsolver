@@ -177,6 +177,15 @@ def _normalize_json(
     }
     if value is None or type(value) in {str, bool}:
         return value
+    # Exact Python scalars are already owned and their conversion invokes no
+    # caller code. Subclasses and NumPy scalars retain the post-conversion
+    # guard because their conversion may execute implementation-specific work.
+    if type(value) is int:
+        return value
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise NonlinearCheckpointError(f"{path} contains a nonfinite value")
+        return 0.0 if value == 0.0 else value
     if isinstance(value, (int, np.integer)) and not isinstance(value, (bool, np.bool_)):
         result = int(value)
         _checkpoint_observation_guard(
@@ -248,11 +257,15 @@ def _normalize_json(
         return result
     if isinstance(value, (list, tuple)):
         observed_items = tuple(value)
-        _checkpoint_observation_guard(
-            _exact_guard,
-            _guard_model,
-            context=f"nonlinear checkpoint sequence observation at {path}",
-        )
+        # Copying an exact built-in sequence cannot invoke caller code.  Its
+        # members are still normalized and guarded according to their types.
+        # Keep the post-observation check for subclasses with custom iteration.
+        if type(value) not in {list, tuple}:
+            _checkpoint_observation_guard(
+                _exact_guard,
+                _guard_model,
+                context=f"nonlinear checkpoint sequence observation at {path}",
+            )
         return [
             _normalize_json(
                 item,
