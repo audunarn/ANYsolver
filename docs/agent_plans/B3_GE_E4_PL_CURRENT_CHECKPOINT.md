@@ -30,11 +30,16 @@ On fixed x8/B3-14, P0 m4 leaves a `6.82e-6 rad` torque-gap RMS,
 while m8 reduces it to `1.55e-7 rad` and changes torque tip response
 by about `7.4%`. Thus the coarse weak space, not beam resolution alone,
 causes the large same-mesh torque discrepancy.
+At fixed shell:beam `4:1`, joint x8/B3-12/m4 → x16/B3-14/m8
+refinement passes both loaded solves but the torque rotation-gap RMS
+increases `6.10e-6 → 9.11e-6 rad`; the policy is not qualified by
+the otherwise close tip response.
 **Remaining uncertainty:** Whether P0 avoids locking and unsupported
 modes across ratios and whether physically matched sided torque/shear
 transfer validates the declared law. **Next discriminator and action:**
-Test a fixed `4:1` ratio at its next joint shell/beam refinement to
-see whether the policy's growing P0 space converges or remains weak.
+Inspect the fixed-ratio torque gap's actual six-channel shape and
+weighted interval means before deciding whether another refinement
+can discriminate the policy's stability.
 Establish a work-conjugate torque/section/support comparator that
 separates shell idealization from connection transfer; neither the
 saved pure-action fields nor a displacement fit does that alone.
@@ -11098,3 +11103,36 @@ response using the existing exact drilling quotient under the same
 third-level convergence design; a persistent large mode sends the
 policy or continuous trace back for revision. Two levels never prove
 convergence, and physical same-law torque accuracy remains independent.
+
+**Fixed-4:1 second-level outcome:** Preflight found x16/y4/B3-14/P0
+m8 supported rank `48/48`, `112` active constraint columns, and
+`1,730` rows after exact elimination of `286` free numerical drilling
+coordinates, below the unchanged `1,900`-row cap. The loaded run
+completed in `64.07 s`; both Mx/Fz cases pass the reconstructed full
+equilibrium, weak rows, work and support balance. Relative to the
+saved x8/B3-12/P0 m4 first level, Mx tip rotation changes
+`4.92966476e-5 → 4.90025648e-5 rad` (`−0.60%`) and shell physical
+work `0.001967620 → 0.001965761 J`, while *unprojected* Mx
+orientation-gap RMS rises `6.10472e-6 → 9.11349e-6 rad` (`+49%`).
+For Fz, tip translation changes `7.03037125e-5 → 6.98939453e-5 m`
+and position-gap RMS contracts `2.69675e-8 → 1.21651e-8 m`.
+The torque result does not show gap contraction under this fixed-ratio
+joint refinement. Neither two levels nor a small tip difference proves
+locking, instability or a law defect; it does leave the provisional
+P0 policy unqualified. Raw
+`B3_E4_F03_C1_MATERIAL_LINE_RATIO_4_TO_1_X16_B14_M8_DEV_V1.json`
+SHA256 is
+`0cb65fb408d5f32599a59ae5da3a3239f367e7815a505b3462e9419440d6507e`;
+runner SHA256 is
+`ee17b142f1d88eb88e9ffa636cb154337729968ec7794f95dc9bf72e38683922`.
+
+**Next mode-resolved discriminator (prospective):** Reconstruct only
+the two completed fixed-4:1 Mx states at their unchanged physical
+loads and P0 policies. Record continuous six-channel material-line
+gaps at existing quadrature stations, component-wise physical L2
+norms, and each interval's integrated weak row. If one alternating
+rotation component grows while its weak mean stays zero, the
+resolution rule needs a different stable enforcement/beam trace
+design before selection. If the apparent RMS rise comes from a
+sampling/scale artifact, correct the diagnostic and reassess. No
+new mesh, external solve, cap change, or automatic law selection.

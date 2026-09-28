@@ -1,4 +1,4 @@
-"""Bounded x16/y4 8:1 P0 loaded solve with exact E4 drill elimination.
+"""Bounded x16/y4 P0 loaded solves with exact E4 drill elimination.
 
 Numerical drilling coordinates are reconstructed and checked in the
 original full equations. This is a private development diagnostic only.
@@ -42,14 +42,17 @@ def _relative(left: np.ndarray, right: np.ndarray) -> float:
     return float(np.linalg.norm(left-right)/max(1., np.linalg.norm(right)))
 
 
-def evaluate() -> dict:
+def evaluate(*, beam_half_cells: int = 12,
+             p0_intervals: int = 4) -> dict:
+    if (beam_half_cells, p0_intervals) not in ((12, 4), (14, 8)):
+        raise ValueError("bounded x16 P0 ratio fixture required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     if Path(anysolver.__file__).resolve().parent != expected:
         raise RuntimeError("bounded quotient imported another ANYsolver checkout")
     started = monotonic()
     xs, ys = local_grid(16, transverse_cells=4)
     shell, shell_physical_operator = raw_e4_tangent(xs, ys, thickness=.035)
-    beam = build(12, z_offset=.0675,
+    beam = build(beam_half_cells, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um")
     if beam.tangent is None or beam.residual is None:
@@ -63,16 +66,18 @@ def evaluate() -> dict:
     reduced_free = np.r_[physical, ns+beam_free]
     line = MaterialLinePosition(xs, ys, beam)
     rows, measures = _rows(line, LineMultiplierSpace(
-        "piecewise_constant", tuple(np.linspace(0., 1., 5))))
-    if (rows.shape != (24, ns+beam.context.count) or
-            not np.allclose(measures, .025, rtol=0., atol=1e-12) or
+        "piecewise_constant", tuple(np.linspace(0., 1., p0_intervals+1))))
+    row_count = 6*p0_intervals
+    if (rows.shape != (row_count, ns+beam.context.count) or
+            not np.allclose(measures, .1/p0_intervals, rtol=0., atol=1e-12) or
             np.max(np.abs(rows[:, drill])) > 1e-12):
         raise ArithmeticError("reviewed P0 rows act on changed drilling coordinates")
-    full_scales, energy_scale = _scales(ns, beam, full_free, row_count=24)
+    full_scales, energy_scale = _scales(ns, beam, full_free,
+                                       row_count=row_count)
     row_check = _scaled_row_diagnostics(rows, full_free,
                                          full_scales[:len(full_free)])
-    if row_check["scaled_row_rank"] != 24:
-        raise ArithmeticError("8:1 P0 supported row rank changed")
+    if row_check["scaled_row_rank"] != row_count:
+        raise ArithmeticError("bounded P0 supported row rank changed")
 
     dd = shell[np.ix_(drill, drill)]
     dp = shell[np.ix_(drill, physical)]
@@ -105,7 +110,8 @@ def evaluate() -> dict:
     if dimension > MAX_ROWS:
         raise ValueError("bounded exact-drill KKT row cap exceeded")
     kkt = sparse.bmat(((k_reduced, c.T), (c, None)), format="csr")
-    scales, scale_energy = _scales(ns, beam, reduced_free, row_count=24)
+    scales, scale_energy = _scales(ns, beam, reduced_free,
+                                   row_count=row_count)
     if energy_scale != scale_energy:
         raise ArithmeticError("full/quotient physical scales changed")
     scaled = (sparse.diags(scales)@kkt@sparse.diags(scales)/energy_scale).tocsc()
@@ -130,7 +136,7 @@ def evaluate() -> dict:
         if np.max(np.abs(rhs_full[drill])) != 0.:
             raise ArithmeticError("external drill load would require RHS Schur shift")
         rhs = np.r_[rhs_full[reduced_free]*scales[:len(reduced_free)]/
-                    energy_scale, np.zeros(24)]
+                    energy_scale, np.zeros(row_count)]
         with warnings.catch_warnings():
             warnings.simplefilter("error", MatrixRankWarning)
             answer = spsolve(scaled, rhs)
@@ -200,8 +206,11 @@ def evaluate() -> dict:
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
         "source_git": subprocess.check_output(("git", "rev-parse", "HEAD"),
                                               text=True).strip(),
-        "model": "C1 Q4 x16/y4 35 mm shell, B3-12, material-line P0 m4, original full equations reconstructed",
-        "full_kkt_rows": len(full_free)+24,
+        "model": (f"C1 Q4 x16/y4 35 mm shell, B3-{beam_half_cells}, "
+                  f"material-line P0 m{p0_intervals}, original full equations reconstructed"),
+        "beam_half_cells": beam_half_cells,
+        "p0_intervals": p0_intervals,
+        "full_kkt_rows": len(full_free)+row_count,
         "quotient_kkt_rows": dimension,
         "quotient_nnz": int(scaled.nnz),
         "max_rows": MAX_ROWS,
@@ -230,11 +239,14 @@ def evaluate() -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--beam-half-cells", type=int, choices=(12, 14), default=12)
+    parser.add_argument("--p0-intervals", type=int, choices=(4, 8), default=4)
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     with threadpool_limits(limits=1):
-        result = evaluate()
+        result = evaluate(beam_half_cells=args.beam_half_cells,
+                          p0_intervals=args.p0_intervals)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n", encoding="utf-8")
     print(json.dumps({"elapsed_s": result["elapsed_s"],
