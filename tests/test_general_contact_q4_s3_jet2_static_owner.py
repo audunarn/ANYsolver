@@ -120,6 +120,13 @@ def test_q4_s3_manager_reuses_its_candidate_geometry(monkeypatch):
             changed_source, target, manager.normal_multipliers,
             _prepared_state=prepared,
         )
+    changed_target = target.copy()
+    changed_target[0, 2] += 1.0e-6
+    with pytest.raises(ValueError, match="does not match this candidate"):
+        manager.law.work(
+            source, changed_target, manager.normal_multipliers,
+            _prepared_state=prepared,
+        )
     other = GeneralS3PatchManager(model, definition, _settings(settings))
     with pytest.raises(ValueError, match="does not match this candidate"):
         other.law.work(
@@ -136,8 +143,18 @@ def test_q4_s3_manager_reuses_its_candidate_geometry(monkeypatch):
         return original(*args)
 
     monkeypatch.setattr(manager.law.geometry, "evaluate", counted)
+    pair_calls = [0]*len(manager.law.geometry.pair_laws)
+    for index, law in enumerate(manager.law.geometry.pair_laws):
+        original_pair = law.evaluate
+
+        def counted_pair(*args, _index=index, _original=original_pair, **kwargs):
+            pair_calls[_index] += 1
+            return _original(*args, **kwargs)
+
+        monkeypatch.setattr(law, "evaluate", counted_pair)
     manager.evaluate(displacement)
     assert calls == 1
+    assert pair_calls == [1]*len(pair_calls)
 
 
 @pytest.mark.parametrize("corrupt_value", (0.01, np.nan))

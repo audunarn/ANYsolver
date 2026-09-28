@@ -46,6 +46,9 @@ class MovingS3PatchMortarState:
     weighted_gap_integration_error: float = 0.0
     integration_triangles: int = 0
     area_integration_error: float = 0.0
+    # Disposable same-pose float evaluations. These remain independent of
+    # the Jet2 integration used to check the differentiated work values.
+    pair_states: tuple[object, ...] | None = None
 
     @property
     def active_pressure_dofs(self):
@@ -241,11 +244,13 @@ class MovingS3PatchPrimalMortarPenalty:
         weighted_error = 0.0
         integration_triangles = 0
         area_error = 0.0
+        pair_states = []
         for index, law in enumerate(self.pair_laws):
             source_face = index // len(self.target_faces)
             target_face = index % len(self.target_faces)
             state = law.evaluate(source[self.source_face_indices[source_face]],
                                  target[self.target_face_indices[target_face]])
+            pair_states.append(state)
             signature.append(state.overlap_vertices)
             if state.overlap_vertices == 0:
                 continue
@@ -275,6 +280,7 @@ class MovingS3PatchPrimalMortarPenalty:
             overlap_area, reference_overlap_area, minimum,
             tuple(signature), overlapping_pairs,
             weighted_error, integration_triangles, area_error,
+            tuple(pair_states),
         )
 
     def work(self, current_source: np.ndarray, current_target: np.ndarray,

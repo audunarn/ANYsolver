@@ -867,6 +867,9 @@ class MovingS3PatchProjectedNormal:
         source = np.asarray(current_source, dtype=float)
         target = np.asarray(current_target, dtype=float)
         basis = self.pressure_basis
+        pair_states = base.pair_states
+        if pair_states is not None and len(pair_states) != len(self.geometry.pair_laws):
+            raise ValueError("prepared contact pair count does not match geometry")
         fine_base = (self.geometry.evaluate(source, target)
                      if basis is not None else base)
         if basis is None:
@@ -886,8 +889,11 @@ class MovingS3PatchProjectedNormal:
             target_nodes = self.target_face_indices[target_face]
             local_source = source[source_nodes]
             local_target = target[target_nodes]
-            local = law.evaluate(local_source, local_target)
-            evaluations += 1
+            if pair_states is None:
+                local = law.evaluate(local_source, local_target)
+                evaluations += 1
+            else:
+                local = pair_states[pair_index]
             if local.reference_overlap_area == 0.0:
                 if local.overlap_vertices > 0:
                     zero_area_overlap_pairs.append(pair_index)

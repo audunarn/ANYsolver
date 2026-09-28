@@ -203,7 +203,7 @@ def _natural(point, corners):
     u, v = np.linalg.solve(np.column_stack((a, b)), rhs)
     r = Jet2.constant(2*u-1, _SIZE)
     s = Jet2.constant(2*v-1, _SIZE)
-    for _ in range(3):
+    for iteration in range(3):
         shape, dr, ds = _q1(r, s)
         mapped = _map_xy(shape, corners)
         first = _map_xy(dr, corners)
@@ -213,8 +213,18 @@ def _natural(point, corners):
         delta_r = _cross2(residual, second)/determinant
         delta_s = _cross2(first, residual)/determinant
         r, s = r-delta_r, s-delta_s
-    shape, dr, ds = _q1(r, s)
-    residual = _sub(_map_xy(shape, corners), point)
+        # For an affine base pose the starting value is exact.  Two Newton
+        # updates then resolve the first and second Jet2 variations.  Skip
+        # the third update only once the full residual is at roundoff scale.
+        if iteration >= 1:
+            shape, dr, ds = _q1(r, s)
+            residual = _sub(_map_xy(shape, corners), point)
+            if iteration == 1 and all(
+                abs(x.value) <= 1e-12 and
+                np.max(np.abs(x.gradient)) <= 1e-12 and
+                np.max(np.abs(x.hessian)) <= 1e-12 for x in residual
+            ):
+                return shape, dr, ds
     if any(abs(x.value) > 1e-11 or np.max(np.abs(x.gradient)) > 1e-9
            or np.max(np.abs(x.hessian)) > 1e-7 for x in residual):
         raise UnsupportedQ4S3Branch("Q1 projected inversion did not converge")
