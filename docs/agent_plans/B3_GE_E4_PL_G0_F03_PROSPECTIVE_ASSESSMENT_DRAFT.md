@@ -402,6 +402,19 @@ only a two-grid flat virgin Q4 yaw observation, not a uniform estimate or a
 native six-channel/mixed-system assessment. The corrected output is in
 .qualification/b3-ge-e4-pl/r7-f03-paired-yaw-upper-dev-20260928-v2/.
 
+A subsequent four-segment, flat virgin six-row P0 shell-pose map matches
+the physical-width rail's Gauss-integrated translation and frame-spin
+derivatives for mixed nodal motion, infinitesimal rigid motion and
+admissible transverse shear, without drilling work. With a centred native
+reference, the actual point-joint directional gaps equal the native
+retained-coordinate pose variation minus the shell map, including the beam
+offset arm. Independent mechanics review found no first-order sign or
+top-surface omission. The native comparison shares the port tangent with
+the point-joint implementation; earlier actual-update derivative checks
+remain the separate bounded port oracle. This does not prove nonlinear
+work curvature, a six-channel physical-energy bound, loaded transfer or
+native mixed-system stability.
+
 A distinct development alternative is a *line-indexed finite area patch*.
 At material station \(s\), freeze a normalized reference kernel
 \(\rho_s(X)\) with positive longitudinal and transverse support. Average

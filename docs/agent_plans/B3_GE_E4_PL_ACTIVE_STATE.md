@@ -158,16 +158,27 @@ raw output is at
 `.qualification/b3-ge-e4-pl/r7-f03-paired-yaw-upper-dev-20260928-v2/`.
 The roughly 0.81% increase over two grids is not a mesh-uniform theorem.
 
-**Next decision:** Keep the rail as a development candidate and extend the
-work-map check to all six physical channels and native broken half-cell
-variables before a loaded multiplier-space decision. In parallel, derive or
-refute a supported physical-core work bound over the intended mesh domain;
-do not treat two finite grid values as that proof. A failing channel or
-unsupported mode identifies the law/space correction. A satisfactory
-six-channel map permits the separately required mixed-system, physical
-torque/shear, ratio and refinement checks. Increasingly anisotropic Q4
-meshes are not silently excluded: the programme has no explicit aspect-ratio
-ceiling, and any new admission rule needs scientific review.
+**Six-channel reference result:** A bounded flat four-segment P0 shell-pose
+map now matches the actual rail's Gauss-integrated translation and spatial
+spin derivatives for mixed fields, infinitesimal rigid motion and free
+transverse shear. It has no drilling work. At the centred virgin connection,
+the integrated six-component relative-gap derivative equals native retained
+half-cell pose motion minus that shell map, including the beam offset arm.
+The focused rail suites pass 29/29. Independent mechanics review found no
+first-order sign or top-offset omission. The native comparison reuses the
+port tangent; existing actual-update derivative checks supply a separate
+bounded port check. This is not an assembled work-Hessian, loaded-transfer,
+finite-motion, physical-core bound or mixed-stability result.
+
+**Next decision:** Keep the rail as a development candidate. Derive or
+refute a supported six-channel physical-core/broken-native work bound over
+the intended mesh domain; independently compare matched torque/shear
+transfer and check the actual constrained mixed system before selecting an
+interface space. A failing channel or unsupported mode identifies the
+law/space correction. Do not treat two finite yaw-grid values or this
+reference map as proof. Increasingly anisotropic Q4 meshes are not silently
+excluded: the programme has no explicit aspect-ratio ceiling, and any new
+admission rule needs scientific review.
 F03 formal assessment stays barred. The seven ratios, growing spaces, three
 refinements, physical transfer, locking, shear, drilling, and mixed-system
 checks remain mandatory. No automatic axial sweep or new external reference
