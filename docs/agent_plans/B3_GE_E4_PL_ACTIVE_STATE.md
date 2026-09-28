@@ -66,8 +66,12 @@ The private L1 probe, extended in commit 76180114, uses an objective
 reference-offset SO(3) Log pose gap,
 physical E4 projected-tangent/director trace and retained B3 half-cell port.
 Its reference, first variation, local point-work Hessian at nonzero multiplier,
-objectivity and chart checks pass. Integrated line work, large-origin accuracy,
-physical transfer and multiplier stability remain open. Its shell-frame
+objectivity and chart checks pass. A bounded two-segment probe composes four
+interior L1 work stations and exact derivatives of that discrete weak action
+through E4 and native retained B3 ports. Independent review found missing
+reference-length and port-correspondence guards; these now reject changed
+geometry or an undeclared offset/wrong port. Continuum quadrature, large-origin
+accuracy, physical transfer and multiplier stability remain open. Its shell-frame
 translation differs from the saved candidate's
 beam-frame translation; constrained zero sets can agree while multipliers and
 off-constraint work differ. The law must be chosen and derived.
@@ -85,8 +89,9 @@ first virtual work under the derived dual map and balanced eccentric wrenches,
 but different fixed-multiplier curvature off the constraint. Retain the
 shell-frame pose-joint convention as the explicit L1 development candidate;
 freeze its dual/work convention before any formal F03 assessment. This result
-does not select a production line law or multiplier space. Integrated line
-work, physical transfer and growing-space stability remain next.
+does not select a production line law or multiplier space. The next comparison
+must use its declared weak work with growing candidate spaces, physical
+transfer and mixed-system stability; the three-node probe is not a policy.
 An existing bounded test already verifies exact native-retained condensation,
 including the interface action on cell rotations, for the earlier local-
 translation law and a supported Q4 panel. A no-JIT straight-beam check at 4/8
@@ -95,6 +100,10 @@ supported reduction; a JIT-enabled attempt exhausted its 600 s ceiling before
 returning a matrix. These facts do not establish positivity, nullspaces or a
 same-law reference for integrated L1. Carry its retained trace action through
 the reduction before interpreting a compliance quotient.
+Independent review of the prospective contract requires a new L1-specific
+p-only stationary-reduction/parity proof, a whole-space work-preserving
+reference injection, exact gauge inclusion, and explicit virgin zero-multiplier
+scope. The draft now records these prerequisites; formal assessment remains barred.
 An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
 for plate/web Fy and web torque. Its clamped-root option matches the declared
 six-DOF support type but lacks verified rotational reaction output; the hinged

@@ -8,7 +8,7 @@ from anysolver.corotational import rotation_matrix_from_vector
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts.b3_e4_f03_l1_native_connection_probe import (
-    L1LogConnection, beam_frame_gap_from_shell,
+    L1LogConnection, SegmentedL1WeakWork, beam_frame_gap_from_shell,
     constrained_beam_to_shell_multiplier, shell_trace, six_gap, spatial_gap,
 )
 
@@ -115,6 +115,29 @@ def test_degenerate_projected_material_tangent_fails_closed():
     reference = np.array(((0., 0., 0.), (0., 0., 1.)))
     with pytest.raises(ValueError, match="projected E4 material-line tangent"):
         shell_trace(reference, np.zeros((2, 6)), .035)
+
+
+def test_declared_non_midpoint_shell_station_and_domain():
+    reference = np.array(((.75, 0., 0.), (.875, 0., 0.)))
+    total = np.zeros((2, 6))
+    total[1, :3] = (.002, .003, -.001)
+    direction = np.zeros((2, 6))
+    direction[0, :3] = (.01, -.02, .03)
+    direction[1, 3:5] = (.04, -.03)
+    station = .21132486540518713
+    point, frame, point_step, frame_step = shell_trace(
+        reference, total, .035, direction, station=station)
+    h = 1e-6
+    plus = shell_trace(reference, total+h*direction, .035, station=station)
+    minus = shell_trace(reference, total-h*direction, .035, station=station)
+    np.testing.assert_allclose((plus[0]-minus[0])/(2*h), point_step,
+                               rtol=1e-8, atol=1e-9)
+    np.testing.assert_allclose((plus[1]-minus[1])/(2*h), frame_step,
+                               rtol=1e-8, atol=1e-9)
+    assert np.isfinite(point).all() and np.isfinite(frame).all()
+    for bad in (-.01, 1.01, np.nan):
+        with pytest.raises(ValueError, match="station"):
+            shell_trace(reference, total, .035, station=bad)
 
 
 def test_reference_offset_log_is_stress_free_at_nontrivial_reference():
@@ -495,3 +518,176 @@ def test_drill_only_shell_chart_has_no_point_stiffness_in_either_frame():
         np.testing.assert_allclose(work, 0., atol=2e-13)
         np.testing.assert_allclose(residual@direction, 0., atol=2e-12)
         np.testing.assert_allclose(direction@hessian@direction, 0., atol=2e-11)
+
+
+def _segmented_case():
+    beam = build(8, z_offset=.0675, assemble=False)
+    cuts = np.array((.75, .875, 1.))  # two actual native half-cell cuts
+    reference = np.column_stack((cuts, np.zeros(3), np.zeros(3)))
+    initial = beam.context.initial.mechanical
+
+    def port_at(station):
+        element, cell, weight, _ = beam._locate(station)
+        return NativeHalfCellSpatialPort(beam.context, element, cell, weight)
+
+    line = SegmentedL1WeakWork.at_reference(
+        reference, np.zeros((3, 6)), .035, cuts, port_at, initial)
+    return beam, line, reference, cuts
+
+
+def test_two_segment_reference_quadrature_and_half_cell_ownership():
+    beam, line, reference, cuts = _segmented_case()
+    assert len(line.connections) == 4
+    np.testing.assert_allclose(sum(line.weights), cuts[-1]-cuts[0], atol=1e-15)
+    for index, connection in enumerate(line.connections):
+        segment = index//2
+        port = connection.port
+        assert (port.element_index, port.cell) == tuple(
+            beam._locate(.5*(cuts[segment]+cuts[segment+1]))[:2])
+        assert 0. < port.weight < 1.
+        shell, frame, _, _ = shell_trace(
+            reference[segment:segment+2], np.zeros((2, 6)), .035,
+            station=connection.station)
+        high, low, beam_frame = port.pose_pair(beam.context.initial.mechanical)
+        np.testing.assert_allclose(shell, high+low+beam_frame@np.array((0., 0., -.05)),
+                                   atol=2e-15)
+        np.testing.assert_allclose(frame, beam_frame, atol=2e-15)
+    zero = np.zeros((3, 6))
+    value, gaps, residual, hessian = line.work_tangent(
+        zero, beam.context.initial.mechanical, np.ones((3, 6)))
+    np.testing.assert_allclose(gaps, 0., atol=2e-15)
+    np.testing.assert_allclose(value, 0., atol=2e-15)
+    assert residual.shape == (18+beam.context.count,)
+    assert hessian.shape == (residual.size, residual.size)
+
+    # This Gauss rule integrates the piecewise-affine dual field exactly.
+    dual = np.arange(18., dtype=float).reshape(3, 6)
+    sampled = sum(line.weights[i]*((1.-c.station)*dual[i//2]+c.station*dual[i//2+1])
+                  for i, c in enumerate(line.connections))
+    exact = sum(.5*(cuts[i+1]-cuts[i])*(dual[i]+dual[i+1]) for i in range(2))
+    np.testing.assert_allclose(sampled, exact, atol=5e-16)
+
+
+def test_segmented_reference_measure_and_port_correspondence_are_explicit():
+    beam, line, reference, cuts = _segmented_case()
+    initial = beam.context.initial.mechanical
+    total = np.zeros((3, 6))
+
+    def correct_port(station):
+        element, cell, weight, _ = beam._locate(station)
+        return NativeHalfCellSpatialPort(beam.context, element, cell, weight)
+
+    changed = reference.copy()
+    changed[1, 1] = .04
+    with pytest.raises(ValueError, match="reference length"):
+        SegmentedL1WeakWork.at_reference(
+            changed, total, .035, cuts, correct_port, initial)
+
+    def wrong_port(_station):
+        return correct_port(.5)
+
+    with pytest.raises(ValueError, match="correspondence mismatch"):
+        SegmentedL1WeakWork.at_reference(
+            reference, total, .035, cuts, wrong_port, initial)
+
+    offset_line = SegmentedL1WeakWork.at_reference(
+        reference, total, .035, cuts, correct_port, initial,
+        beam_offset=(0., 0., -.04),
+        expected_reference_offset_shell=(0., 0., .01))
+    np.testing.assert_allclose(offset_line.work_tangent(
+        total, initial, np.ones((3, 6)))[1], 0., atol=2e-15)
+
+    with pytest.raises(ValueError, match="four ordered"):
+        SegmentedL1WeakWork(line.connections[:2], line.weights[:2],
+                            line.stations[:2])
+
+
+def test_segmented_work_derivative_objectivity_wrench_and_retained_action():
+    beam, line, reference, _ = _segmented_case()
+    initial = beam.context.initial.mechanical
+    step = np.zeros(beam.context.count)
+    for connection in line.connections:
+        port = connection.port
+        cell = beam.context.nodal_count+24*port.element_index+3*port.cell
+        step[cell:cell+3] = (.014, -.009, .011)
+    state = beam.context.advance(initial, step)
+    total = np.array(((.001, -.002, .0005, .012, -.008, .003),
+                      (.002, .001, -.0003, -.009, .013, -.004),
+                      (-.001, .0007, .0002, .007, -.006, .002)))
+    dual = np.array(((3., -5., 7., 11., -13., 17.),
+                     (-2., 4., 6., -8., 10., -12.),
+                     (5., 3., -4., 9., -7., 2.)))
+    value, gaps, residual, hessian = line.work_tangent(total, state, dual)
+    expected = sum(line.weights[i]*gaps[i]@(
+        (1.-c.station)*dual[i//2]+c.station*dual[i//2+1])
+        for i, c in enumerate(line.connections))
+    np.testing.assert_allclose(value, expected, atol=5e-15)
+
+    direction = np.zeros(residual.size)
+    direction[:18] = np.linspace(-.03, .04, 18)
+    for connection in line.connections:
+        port = connection.port
+        cell = beam.context.nodal_count+24*port.element_index+3*port.cell
+        direction[18+cell:18+cell+3] = (.06, -.04, .03)
+    h = 2e-5
+
+    def updated(scale):
+        shell = total+scale*direction[:18].reshape(3, 6)
+        native = beam.context.advance(state, scale*direction[18:])
+        return line.work_tangent(shell, native, dual)[0]
+
+    first = (updated(h)-updated(-h))/(2*h)
+    second = (updated(h)-2*value+updated(-h))/(h*h)
+    np.testing.assert_allclose(first, residual@direction, rtol=2e-8, atol=2e-8)
+    np.testing.assert_allclose(second, direction@hessian@direction,
+                               rtol=2e-4, atol=3e-7)
+
+    rigid = rotation_matrix_from_vector((.17, -.11, .09))
+    shift = np.array((.3, -.2, .1))
+    for index, connection in enumerate(line.connections):
+        segment = index//2
+        shell, frame, _, _ = shell_trace(
+            reference[segment:segment+2], total[segment:segment+2], .035,
+            station=connection.station)
+        high, low, beam_frame = connection.port.pose_pair(state)
+        beam_point = high+low+beam_frame@np.asarray(connection.beam_offset)
+        dual_at = ((1.-connection.station)*dual[segment]+connection.station*
+                   dual[segment+1])
+        pose = connection.joint.evaluate(
+            np.array((shell, beam_point)), np.array((frame, beam_frame)), dual_at)
+        moved = connection.joint.evaluate(
+            np.array((rigid@shell+shift, rigid@beam_point+shift)),
+            np.array((rigid@frame, rigid@beam_frame)), dual_at)
+        np.testing.assert_allclose(moved.constraints, pose.constraints, atol=2e-15)
+        np.testing.assert_allclose(dual_at@moved.constraints,
+                                   dual_at@pose.constraints, atol=2e-14)
+        f_s, m_s, f_b, m_b = pose.residual[:12].reshape(4, 3)
+        np.testing.assert_allclose(f_s+f_b, 0., atol=2e-12)
+        np.testing.assert_allclose(m_s+m_b+np.cross(shell, f_s)+
+                                   np.cross(beam_point, f_b), 0., atol=2e-11)
+
+    shear = np.zeros((3, 6))
+    shear[:, 1] = .1
+    sheared = line.work_tangent(total+shear, state, dual)[1]
+    assert np.linalg.norm(sheared[:, 1]-gaps[:, 1]) > .15
+    retained = np.zeros(beam.context.count)
+    first_port = line.connections[0].port
+    cell = beam.context.nodal_count+24*first_port.element_index+3*first_port.cell
+    retained[cell+2] = .1
+    spun = line.work_tangent(total, beam.context.advance(state, retained), dual)[1]
+    assert np.linalg.norm(spun[:2, 5]-gaps[:2, 5]) > .1
+
+
+def test_segmented_common_shell_drill_has_no_stiffness():
+    beam, line, _, _ = _segmented_case()
+    total = np.zeros((3, 6))
+    total[:, 5] = .2
+    dual = np.ones((3, 6))
+    value, gaps, residual, hessian = line.work_tangent(
+        total, beam.context.initial.mechanical, dual)
+    drill = np.zeros(residual.size)
+    drill[5] = drill[11] = drill[17] = 1.
+    np.testing.assert_allclose(gaps, 0., atol=2e-15)
+    np.testing.assert_allclose(value, 0., atol=2e-15)
+    np.testing.assert_allclose(residual@drill, 0., atol=2e-12)
+    np.testing.assert_allclose(drill@hessian@drill, 0., atol=2e-11)

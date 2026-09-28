@@ -1,4 +1,4 @@
-"""One-point L1 six-channel kinematic probe; no selected law or F03 claim.
+"""L1 six-channel point and segmented probes; no selected law or F03 claim.
 
 The E4 line uses its physical top-face nodal positions and directors.  Its
 frame is made from the mean director and the projected top-face material-line
@@ -16,6 +16,7 @@ import numpy as np
 from anysolver import _ge_beam3_mixed_ad as ad
 from anysolver._ge_beam3_pose_joint import RigidPoseJoint
 from anysolver.corotational import rotation_matrix_from_vector
+from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 
 
 def _unit(vector: np.ndarray, label: str) -> np.ndarray:
@@ -96,15 +97,17 @@ def spatial_gap(shell: np.ndarray, shell_frame: np.ndarray,
 
 
 def shell_trace(reference: np.ndarray, total: np.ndarray, thickness: float,
-                direction: np.ndarray | None = None
+                direction: np.ndarray | None = None, *, station: float = .5
                 ) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray | None]:
-    """Physical E4 top point/frame and their total-coordinate variation."""
+    """Physical E4 top-line station/frame and total-coordinate variation."""
     reference = np.asarray(reference, dtype=float)
     total = np.asarray(total, dtype=float)
     if (reference.shape != (2, 3) or total.shape != (2, 6) or
             not np.isfinite(reference).all() or not np.isfinite(total).all() or
             not np.isfinite(thickness) or thickness <= 0):
         raise ValueError("two finite E4 line nodes and positive thickness required")
+    if not np.isfinite(station) or not 0. <= station <= 1.:
+        raise ValueError("finite E4 material-line station in [0, 1] required")
     if direction is not None:
         direction = np.asarray(direction, dtype=float)
         if direction.shape != (2, 6) or not np.isfinite(direction).all():
@@ -122,8 +125,8 @@ def shell_trace(reference: np.ndarray, total: np.ndarray, thickness: float,
             director_steps.append(np.array([jet[j][2].gradient[0]
                                             for j in range(3)]))
     top = reference + total[:, :3] + .5*thickness*np.asarray(directors)
-    center = .5*(top[0]+top[1])
-    mean_director = .5*(directors[0]+directors[1])
+    center = (1.-station)*top[0]+station*top[1]
+    mean_director = (1.-station)*directors[0]+station*directors[1]
     normal = _unit(mean_director, "E4 mean director")
     raw_tangent = top[1]-top[0]
     projection = raw_tangent-normal*(normal@raw_tangent)
@@ -132,8 +135,8 @@ def shell_trace(reference: np.ndarray, total: np.ndarray, thickness: float,
     if direction is None:
         return center, frame, None, None
     top_step = direction[:, :3] + .5*thickness*np.asarray(director_steps)
-    center_step = .5*(top_step[0]+top_step[1])
-    mean_step = .5*(director_steps[0]+director_steps[1])
+    center_step = (1.-station)*top_step[0]+station*top_step[1]
+    mean_step = (1.-station)*director_steps[0]+station*director_steps[1]
     normal_step = (mean_step-normal*(normal@mean_step))/np.linalg.norm(mean_director)
     raw_step = top_step[1]-top_step[0]
     projected_step = (raw_step-normal_step*(normal@raw_tangent)-
@@ -199,13 +202,16 @@ class L1LogConnection:
     port: object
     beam_offset: tuple[float, float, float]
     joint: RigidPoseJoint
+    station: float = .5
 
     @classmethod
     def at_reference(cls, reference: np.ndarray, total: np.ndarray,
                      thickness: float, port, beam_state, *,
-                     beam_offset: tuple[float, float, float] = (0., 0., -.05)):
+                     beam_offset: tuple[float, float, float] = (0., 0., -.05),
+                     station: float = .5):
         reference = np.asarray(reference, dtype=float).copy()
-        shell, shell_frame, _, _ = shell_trace(reference, total, thickness)
+        shell, shell_frame, _, _ = shell_trace(
+            reference, total, thickness, station=station)
         high, low, beam_frame = port.pose_pair(beam_state)
         offset = np.asarray(beam_offset, dtype=float)
         if offset.shape != (3,) or not np.isfinite(offset).all():
@@ -215,7 +221,8 @@ class L1LogConnection:
                                np.array((shell_frame, beam_frame), dtype=np.float64))
         owned_reference = np.frombuffer(reference.tobytes(), dtype=float).reshape(
             reference.shape)
-        return cls(owned_reference, float(thickness), port, tuple(offset), joint)
+        return cls(owned_reference, float(thickness), port, tuple(offset), joint,
+                   float(station))
 
     def evaluate(self, total: np.ndarray, beam_state, *,
                  shell_direction: np.ndarray | None = None,
@@ -225,7 +232,8 @@ class L1LogConnection:
         if directional and (shell_direction is None or beam_direction is None):
             raise ValueError("paired E4/B3 directions required")
         shell, shell_frame, shell_step, frame_step = shell_trace(
-            self.reference, total, self.thickness, shell_direction)
+            self.reference, total, self.thickness, shell_direction,
+            station=self.station)
         high, low, beam_frame = self.port.pose_pair(beam_state)
         arm = beam_frame@np.asarray(self.beam_offset)
         beam = high+low+arm
@@ -283,8 +291,10 @@ class L1LogConnection:
         top = [[constant(self.reference[i, j])+nodal[i][j]+
                 .5*self.thickness*directors[i][j] for j in range(3)]
                for i in range(2)]
-        shell = [(top[0][j]+top[1][j])*.5 for j in range(3)]
-        mean = [(directors[0][j]+directors[1][j])*.5 for j in range(3)]
+        shell = [(1.-self.station)*top[0][j]+self.station*top[1][j]
+                 for j in range(3)]
+        mean = [(1.-self.station)*directors[0][j]+self.station*directors[1][j]
+                for j in range(3)]
         normal = _jet_unit(mean, "E4 mean director")
         raw = [top[1][j]-top[0][j] for j in range(3)]
         component = ad.dot(normal, raw)
@@ -334,3 +344,129 @@ class L1LogConnection:
         hessian[np.ix_(indices, indices)] = work.hessian
         return (work.value, np.array([entry.value for entry in gaps]),
                 residual, hessian)
+
+
+@dataclass(frozen=True)
+class SegmentedL1WeakWork:
+    """Two-segment, two-point Gauss action on fixed E4/B3 reference stations.
+
+    The quadrature exactly defines this *discrete* multiplier work and is
+    polynomial-exact through degree three per segment. Finite-rotation line
+    work need not be a cubic polynomial; this is no continuum exactness claim.
+    ``cuts`` are physical reference arclengths of the two straight E4 top
+    edges; the constructor checks that measure and explicit shell-frame
+    reference offsets against the supplied native ports. A piecewise-linear
+    six-channel dual is sampled at each station. No
+    multiplier space or connection law is selected by this probe.
+    """
+
+    connections: tuple[L1LogConnection, ...]
+    weights: tuple[float, ...]
+    stations: tuple[float, ...]
+
+    def __post_init__(self):
+        if (len(self.connections) != 4 or len(self.weights) != 4 or
+                len(self.stations) != 4 or
+                any(not isinstance(c, L1LogConnection) for c in self.connections) or
+                any(not np.isfinite(w) or w <= 0. for w in self.weights) or
+                any(not np.isfinite(s) for s in self.stations) or
+                not np.all(np.diff(self.stations) > 0.) or
+                any(not self.connections[2*i].station <
+                    self.connections[2*i+1].station for i in range(2))):
+            raise ValueError("four ordered owned L1 quadrature stations required")
+        context = self.connections[0].port.context
+        if any(c.port.context is not context for c in self.connections):
+            raise ValueError("one native retained context required")
+
+    @classmethod
+    def at_reference(cls, reference_nodes: np.ndarray, total: np.ndarray,
+                     thickness: float, cuts: np.ndarray, port_at, beam_state,
+                     *, beam_offset: tuple[float, float, float] =
+                     (0., 0., -.05),
+                     expected_reference_offset_shell: tuple[float, float, float] =
+                     (0., 0., 0.)):
+        reference_nodes = np.asarray(reference_nodes, dtype=float)
+        total = np.asarray(total, dtype=float)
+        cuts = np.asarray(cuts, dtype=float)
+        if (reference_nodes.shape != (3, 3) or total.shape != (3, 6) or
+                cuts.shape != (3,) or not np.isfinite(reference_nodes).all() or
+                not np.isfinite(total).all() or not np.isfinite(cuts).all() or
+                not np.all(np.diff(cuts) > 0.)):
+            raise ValueError("two ordered finite E4 trace segments required")
+        expected_offset = np.asarray(expected_reference_offset_shell, dtype=float)
+        arm = np.asarray(beam_offset, dtype=float)
+        if (expected_offset.shape != (3,) or arm.shape != (3,) or
+                not np.isfinite(expected_offset).all() or
+                not np.isfinite(arm).all()):
+            raise ValueError("finite declared reference and section offsets required")
+        abscissae = (.5-.5/np.sqrt(3.), .5+.5/np.sqrt(3.))
+        connections, weights, stations = [], [], []
+        for segment in range(2):
+            length = cuts[segment+1]-cuts[segment]
+            first, _, _, _ = shell_trace(
+                reference_nodes[segment:segment+2], total[segment:segment+2],
+                thickness, station=0.)
+            last, _, _, _ = shell_trace(
+                reference_nodes[segment:segment+2], total[segment:segment+2],
+                thickness, station=1.)
+            if not np.isclose(np.linalg.norm(last-first), length,
+                              rtol=1e-10, atol=1e-12):
+                raise ValueError("cuts must measure E4 top-edge reference length")
+            segment_ports = []
+            for alpha in abscissae:
+                station = cuts[segment]+alpha*length
+                port = port_at(float(station))
+                if not isinstance(port, NativeHalfCellSpatialPort):
+                    raise TypeError("native half-cell material port required")
+                shell, frame, _, _ = shell_trace(
+                    reference_nodes[segment:segment+2],
+                    total[segment:segment+2], thickness, station=float(alpha))
+                high, low, beam_frame = port.pose_pair(beam_state)
+                offset = frame.T@(high+low+beam_frame@arm-shell)
+                if not np.allclose(offset, expected_offset,
+                                   rtol=1e-10, atol=1e-10):
+                    raise ValueError("native port reference correspondence mismatch")
+                segment_ports.append(port)
+                connections.append(L1LogConnection.at_reference(
+                    reference_nodes[segment:segment+2],
+                    total[segment:segment+2], thickness,
+                    port, beam_state,
+                    beam_offset=beam_offset, station=float(alpha)))
+                weights.append(.5*length)
+                stations.append(float(station))
+            if ((segment_ports[0].element_index, segment_ports[0].cell) !=
+                    (segment_ports[1].element_index, segment_ports[1].cell) or
+                    not segment_ports[0].weight < segment_ports[1].weight):
+                raise ValueError("segment must lie in one ordered native half-cell")
+        return cls(tuple(connections), tuple(weights), tuple(stations))
+
+    def work_tangent(self, total: np.ndarray, beam_state,
+                     nodal_multipliers: np.ndarray
+                     ) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
+        """Exact first and second variations of the declared quadrature work."""
+        total = np.asarray(total, dtype=float)
+        nodal_multipliers = np.asarray(nodal_multipliers, dtype=float)
+        if (total.shape != (3, 6) or nodal_multipliers.shape != (3, 6) or
+                not np.isfinite(total).all() or
+                not np.isfinite(nodal_multipliers).all()):
+            raise ValueError("finite three-node E4 and six-channel dual fields required")
+        size = 18+self.connections[0].port.context.count
+        residual = np.zeros(size)
+        hessian = np.zeros((size, size))
+        gaps = np.zeros((4, 6))
+        work = 0.
+        for index, connection in enumerate(self.connections):
+            segment = index//2
+            alpha = connection.station
+            dual = ((1.-alpha)*nodal_multipliers[segment]+alpha*
+                    nodal_multipliers[segment+1])
+            value, gap, local_residual, local_hessian = connection.work_tangent(
+                total[segment:segment+2], beam_state, dual)
+            indices = np.r_[np.arange(6*segment, 6*segment+12),
+                            np.arange(18, size)]
+            weight = self.weights[index]
+            work += weight*value
+            gaps[index] = gap
+            residual[indices] += weight*local_residual
+            hessian[np.ix_(indices, indices)] += weight*local_hessian
+        return work, gaps, residual, hessian

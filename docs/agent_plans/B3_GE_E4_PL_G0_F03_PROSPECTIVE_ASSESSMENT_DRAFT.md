@@ -36,17 +36,24 @@ same constrained zero set. Away from that set, their derivatives, multiplier
 bases and work differ. Before accepting L1, derive the full first and second
 variations, physical wrench maps and chart transformations for the chosen
 convention; compare the alternative at the same constrained physical state.
-Do not use the current local first-variation probe as that derivation.
+The bounded local point probe now checks both work Hessians through actual
+E4/B3 updates. A two-segment probe composes their discrete quadrature work;
+neither establishes continuum line convergence or a production law.
 
 Specifically, with \(Q=R_s^TR_b\) and \(e_b=-A_0^Te_s\), the beam-frame
 translation candidate is
 \(c_b=-Q^Tc_t+(A_0^T-Q^T)e_s\). At a zero rotational gap,
-\(Q=A_0\) and \(c_b=-A_0^Tc_t\); away from it the extra term contributes to
-rotation work and tangent curvature. This identity does not select either law.
+\(Q=A_0\) and \(c_b=-A_0^Tc_t\), but at the constrained pose its variation is
+\(\delta c_b=-A_0^T\delta c_t-(\delta Q^T)e_s\). Thus a beam-frame translation
+multiplier also supplies a rotation moment. Its shell-frame dual has
+\(f_s=-A_0f_b\) and \(m_s=m_b+(A_0^Te_s)\times f_b\) in the declared Log basis.
+Away from the constraint, fixed-multiplier work and curvature differ. This
+identity does not select either law or permit mixing their multiplier bases.
 
 ## Supported primal operator required before a compliance quotient
 
-For a conservative elastic reference state, partition the actual assembled
+For a conservative virgin elastic reference state with zero attachment
+multiplier, partition the actual assembled
 native tangent between physical nodal/cell-rotation coordinates \(x\) and
 retained generalized-resultant coordinates \(p\):
 
@@ -57,6 +64,12 @@ H=\begin{bmatrix}H_{xx}&H_{xp}\\H_{px}&H_{pp}\end{bmatrix}.
 If \(H_{pp}\) is invertible on its stated local domain, certify the exact
 stationary reduction
 \(K_{\rm phys}=H_{xx}-H_{xp}H_{pp}^{-1}H_{px}\).
+Here \(x\) includes native retained **cell rotations**, while \(p\) contains
+generalized resultants only. Prove that the L1 line action has no \(p\) columns,
+then verify its full-retained compliance equals the reduced physical
+compliance on a bounded coupled fixture. An existing bounded check for an
+earlier law eliminates cell rotations together with resultants; its effective
+trace and direct retained-compliance term do not prove this L1 partition.
 If it is singular, derive a constrained reduction and its compatibility
 conditions explicitly. Include the actual E4 shell block, supports and
 physical nullspaces. A drilling spring, invented inertia or global dense
@@ -73,6 +86,9 @@ full indefinite native tangent may compute the same action compliance through
 a solve only **after** this reduction, trace restriction and nullspace
 equivalence are certified. Plastic active states and nonconservative follower
 states are outside this quotient.
+Loaded nonzero-multiplier states also lie outside this positive-work quotient
+until their \(\lambda\cdot D^2c\) curvature, chart transformations and an
+appropriate stationary energy interpretation have been derived separately.
 
 For an integrated line multiplier basis \(\Psi_h\), construct its work map
 from the actual E4/B3 pose derivatives and segmented reference quadrature:
@@ -108,15 +124,22 @@ or a full-face weld do not make it a same-law reference. The external all-shell
 flat-bar/T models are separate engineering-fidelity comparisons unless their
 connection and work maps are shown equivalent.
 
-"Work-preserving" has an executable meaning. For each registered common
-physical virtual field \(x\), with its reference representation \(T_hx\),
-verify \((J_h\lambda)^TB_{\rm ref}T_hx=\lambda^TB_hx\) within the stated
-integration error. Define \(J_h\) by physical traction/couple density,
-orientation, line measure and units, and check patches plus nontrivial
-resolved fields. An arbitrary rescaling of \(J_h\) is forbidden because it
-would rescale the quotient without changing the candidate mechanics.
+"Work-preserving" has an executable meaning on the **entire admitted**
+multiplier-action and physical virtual-field spaces: establish
+\(J_h^TB_{\rm ref}T_h=B_h\), or a uniform operator-error bound justified by
+integration and reference approximation. Checks on selected patches alone do
+not establish this identity. Define \(J_h\) by physical traction/couple
+density, orientation, line measure and units; verify basis-change and
+equivalent-unit covariance. An arbitrary rescaling of even one untested
+multiplier mode is forbidden because it would rescale the quotient without
+changing candidate mechanics.
 
-Let \(N_{\rm ref}=\ker C_{\rm ref,h}\) mean a proved exact gauge, not a
+With justified positive supported-space bases \(P_{\rm ref}\) and \(P_h\),
+identify \(N_{\rm ref}=\ker(P_{\rm ref}^TB_{\rm ref}^TJ_h)\) and
+\(N_h=\ker(P_h^TB_h^T)\). Verify that each reference action annihilates any
+unrestrained reference zero-energy motion before assigning finite compliance,
+then prove \(N_{\rm ref}\subseteq N_h\). Let \(N_{\rm ref}=\ker C_{\rm ref,h}\)
+mean this proved exact gauge, not a
 thresholded collection of small positive eigenvalues. Certify the gauge
 algebraically or with a justified numerical error bound; retain near-null
 positive modes in the quotient and report their uncertainty. The
@@ -155,7 +178,9 @@ zero-energy loaded direction hidden by a pseudoinverse; a reference-null
 action whose candidate work makes the quotient representative-dependent; and
 a full-row-rank candidate whose relative compliance floor tends to zero under
 refinement. It must reject an arbitrarily rescaled reference injection or a
-thresholded near-null mode that fabricates a gauge. It must also detect
+thresholded near-null mode that fabricates a gauge. In particular,
+\(J=\operatorname{diag}(1,\varepsilon)\) must fail a whole-space work check
+even if the registered patch excites only its first component. It must also detect
 checkerboards, excessive multiplier density,
 locking, artificial drilling transfer and a line law that suppresses admitted
 transverse shear. A physically admissible compliant mode is assessed by work,
