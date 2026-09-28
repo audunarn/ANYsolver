@@ -67,7 +67,22 @@ general moving-front problem. The 128-Q4 pressure comparison was in a
 linearized source-only model and does not measure nonlinear whole-route
 speed. A larger coupled run requires a registered pressure/response question,
 independent mechanics reference, resource rationale and unchanged gap,
-pressure and equilibrium gates. The next bounded check is coupled selected
-versus fine pressure on an affordable partially contacting shell patch,
-including pressure-space rank, virtual work and tangent under the
-same mechanical inputs. No existing formal evidence is retroactively changed.
+pressure and equilibrium gates.
+
+A second bounded four-Q4/two-S3 coupled development press used the same
+0.3 N distributed load and mechanical inputs with fine Q1 (10 modes) and
+selected knots `(0,1,2,4)` (8 modes). Both two-step solves completed with
+full scaled support rank and physical gaps of −0.606 and −0.597 µm. The
+selected field differs by 0.608% in nodal pressure L2 and 0.0296% in
+displacement L2 from the fine *discrete* field; the integrated normal force
+differs by 3.92×10⁻⁵ N. The selected run took 61.7 s versus 58.8 s for the
+fine run on this small scene. These timings show no speedup and cannot
+separate run variability from method cost. The raw comparison is
+`reports/general_contact_d1_selected_vs_fine_4q4_distributed_dev_20260928.json`
+with a `.log` companion.
+
+Next test a registered larger coupled moving-front fixture only after
+specifying which pressure or integrated-response discrepancy this small
+case cannot discriminate, its independent reference and a bounded runtime.
+The fine discrete field is not a continuum pressure oracle. No existing
+formal evidence is retroactively changed.
