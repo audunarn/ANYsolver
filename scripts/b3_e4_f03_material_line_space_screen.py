@@ -7,9 +7,12 @@ gaps; it cannot select a stable production multiplier space alone.
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 
 import anysolver
@@ -83,12 +86,14 @@ def _scaled_row_diagnostics(constraint, free, primal_scales):
     }
 
 
-def run() -> dict:
+def run(*, shell_cells: int = 2) -> dict:
+    if shell_cells not in (2, 4, 8):
+        raise ValueError("bounded material-line shell level required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     actual = Path(anysolver.__file__).resolve().parent
     if actual != expected:
         raise RuntimeError("line-space screen imported another ANYsolver checkout")
-    xs, ys = local_grid(2, transverse_cells=4)
+    xs, ys = local_grid(shell_cells, transverse_cells=4)
     beam = build(12, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um")
@@ -113,13 +118,23 @@ def run() -> dict:
     shell_reference = line.reference_nodes
     beam_reference = (beam.context.initial.mechanical.positions
                       +beam.context.initial.mechanical.position_low)
-    variants = (
-        ("p0_one", LineMultiplierSpace("piecewise_constant", (0., 1.))),
-        ("p0_two", LineMultiplierSpace("piecewise_constant", (0., .5, 1.))),
-        ("p1_two", LineMultiplierSpace("continuous_linear", (0., .5, 1.))),
-        ("dual_two", LineMultiplierSpace("dual_linear", (0., .5, 1.))),
-    )
-    p0_two_rows, _ = _rows(line, variants[1][1])
+    if shell_cells == 2:
+        variants = (
+            ("p0_one", LineMultiplierSpace("piecewise_constant", (0., 1.))),
+            ("p0_two", LineMultiplierSpace("piecewise_constant", (0., .5, 1.))),
+            ("p1_two", LineMultiplierSpace("continuous_linear", (0., .5, 1.))),
+            ("dual_two", LineMultiplierSpace("dual_linear", (0., .5, 1.))),
+        )
+    else:
+        variants = tuple(
+            (f"{short}_{intervals}", LineMultiplierSpace(
+                kind, tuple(np.linspace(0., 1., intervals+1))))
+            for intervals in (shell_cells//2, shell_cells)
+            for short, kind in (("p0", "piecewise_constant"),
+                                ("p1", "continuous_linear"),
+                                ("dual", "dual_linear")))
+    p0_two_rows = (_rows(line, variants[1][1])[0]
+                   if shell_cells == 2 else None)
     results = {}
     for label, space in variants:
         constraint, measure = _rows(line, space)
@@ -218,6 +233,11 @@ def run() -> dict:
     return {
         "classification": "private fixed-primal material-line row-growth screen",
         "qualification": "development only; not a multiplier selection or G0B pass",
+        "shell_cells": shell_cells,
+        "beam_half_cells": beam.n_half_cells,
+        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "source_git": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
         "anysolver_import_path": str(Path(anysolver.__file__).resolve()),
         "python_version": sys.version.split()[0],
         "numpy_version": np.__version__,
@@ -234,4 +254,20 @@ def run() -> dict:
 
 
 if __name__ == "__main__":
-    print(json.dumps(run(), indent=2, sort_keys=True))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--shell-cells", type=int, choices=(2, 4, 8), default=2)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    result = run(shell_cells=args.shell_cells)
+    if args.output is None:
+        print(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        if args.output.exists():
+            raise FileExistsError(args.output)
+        args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        print(json.dumps({"shell_cells": args.shell_cells,
+            "cases": {name: {"rank": entry["row_diagnostic"]["scaled_row_rank"],
+                "rows": entry["row_count"],
+                "loads": {load: value["status"] for load, value in
+                          entry["loads"].items()}}
+                for name, entry in result["result"].items()}}))

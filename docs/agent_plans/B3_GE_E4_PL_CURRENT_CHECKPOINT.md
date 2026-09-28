@@ -2,66 +2,26 @@
 
 ## Current state — 28 September 2026
 
-**Next bounded decision (material-line space):** The pure-action results
-separate axial/bending cross-work and torque from near-matched pure Fz;
-they do not select a multiplier. The next uncertainty is whether the
-declared material-line P0/P1/dual rows remain supported as their resolution
-grows, or instead exhibit deficient mixed modes or locking. Reuse the
-existing physical primal/dual norms and actual native retained KKT operator
-at bounded x4/x8 levels, with multiplier knots on shell cuts. If a space
-loses rank or mixed support, reject that resolution policy; if it remains
-supported, compare physical work, gaps and convergence before selection.
-A spectral quotient alone cannot settle physical fidelity. This development
-screen stays within the prior 1,900-row and 120-second limits and neither
-consumes formal F03 authority nor advances G0B.
-
-**Result of that bounded screen:** On Q4 x4/y4 with B3-12, material-line
-P0 m2/m4 and P1/dual m2 have full rows; P1/dual m4 each lose two.
-On Q4 x8/y4 with the same beam, all three m4 spaces have full rows,
-while P0 m8 has rank 44/48 and P1/dual m8 rank 48/54. The normed
-mixed KKT minima for supported x4/x8 cases cluster near 0.015, but this
-quotient does not choose a multiplier. A separate row-only beam-resolution
-probe at x8/m8 makes P0 full-rank with B3-18 or B3-24; P1/dual remain
-short by one or two rows. This points to joint shell/beam/interface
-resolution, not a simple P0/P1/dual ranking. **Next action:** Test
-physical loaded work and pointwise gaps for supported growing policies,
-then inspect deficient row modes and registered mesh ratios before
-freezing a policy. Do not advance to x16 solely for another quotient.
-
-**Decision sought:** Select a physically defensible native material-line
-law and stable exact multiplier policy. **Established:** The reviewed
-same-law P0 reconstruction has 24 complete solid action columns and
-passes work/rank checks. The bounded native loaded solve passes
-equilibrium, weak-gap and interface-work checks, but differs in applied
-work by `−12.96%` (Mx) and `−3.27%` (Fz). Under the *same fixed solid
-dual*, the shell accounts for over `95%`/`99%` of the native-minus-solid
-component-work difference; the separate loaded duals do not make that
-allocation. Increasing native shell x-resolution to full 24-row rank
-does not remove its fixed-action work shortfall. The unchanged x4 E4
-response puts only `0.00482%` (Mx) and `0.5388%` (Fz) of its quadratic
-work in the element-reported completion operator. Same-action material
-station traces reproduce both component works and place the signed
-shell-work difference in all four P0 intervals, rather than one
-misassembled station. Fixed physical probes show a sign-changing Mx
-director difference near the bond, while Fz midpoint vertical response
-stays within about `1%` of the 3D plate across the sampled range.
-Pure uniform Mx interface action has `7.50%` lower E4 shell work than
-the 3D plate, while pure uniform Fz differs by only `0.90%`; the saved
-mixed Fz gap comes mainly from Fx/My self-work differences partly
-cancelled by their cross term, not pure Fz transfer.
-Independent review
-found no blocking algebra/sign defect in these diagnostics, and their
-solid input is now identity-guarded. **Remaining uncertainty:** Physical
-sided torque/shear transfer, shell/3D kinematic and support idealization,
-and growing-space mixed-system stability. **Next discriminator and
-action:** Review the physical axial/bending and torsional transfer of
-the declared material-line trace, then assess that law under the
-registered growing-interface mixed-system criteria. The physical
-support and section idealization remain distinct. Avoid another
-general axial or x/y refinement.
-Advance B2 F09 independently. No automatic finer classical axial or
-x/y sweep follows. G0B/F03 remain open, G1 barred, formal F03 authority
-unconsumed; evidence and limitations follow.
+**Decision sought:** Establish the physical native material-line law and
+its exact multiplier resolution policy. **Established:** Identity-guarded
+same-action evidence locates the main fixed-action shell difference in
+torque and axial/bending work, while pure transverse force is close.
+The actual retained mixed-system x4/x8 screen finds supported growing
+m2/m4 spaces, but all three x8/m8 spaces lose rows with B3-12. Increasing
+beam resolution restores P0 row rank there, not P1/dual. Supported
+x4/m2 to x8/m4 loaded cases pass work and balance; their Mx tip work
+changes by at most 2.2%, Fz by at most 0.22%, with nonmonotone pointwise
+gaps. Deficient row combinations at x8/m8 occupy the in-plane `uy` and
+yaw channels, not the other four; beam refinement changes their count.
+**Remaining uncertainty:** Whether these `uy`/yaw dependencies reflect
+the trace law or this discretization, and whether supported spaces avoid locking over
+registered ratios, and whether sided torque/shear transfer matches the
+declared connection idealization. **Next discriminator and action:**
+Inspect the `uy`/yaw work identity and physically matched transfer, then
+run the required ratio/refinement assessment before selecting or revising
+the law and policy. No automatic finer classical axial or x/y sweep.
+Advance B2 F09 independently. G0B/F03 remain open, G1 barred, and formal
+F03 authority unconsumed; detailed evidence follows.
 
 ## Detailed 27 September development record
 
@@ -10651,3 +10611,50 @@ success. A first diagnostic invocation computed the cases but could not
 write into protected `docs/agent_plans`; rerunning with the required
 workspace permission saved the immutable x4 result. Neither condition
 changes the numerical interpretation above.
+
+**Supported loaded growing-space comparison:** The existing material-line
+row-growth screen now accepts bounded Q4 x2/x4/x8 grids while preserving
+its x2 default. It evaluates the same B3-12, P0/P1/dual mean-gap rows
+under `100 Nm` tip Mx and `1000 N` tip Fz. At x4/m2 and x8/m4 all six
+loaded cases per level pass bounded KKT equilibrium, weak compatibility,
+support force/moment balance, and positive shell physical work. The x4/m4
+P1/dual and x8/m8 all-space rank failures are reported without solving.
+The x4/m4 P0 tip works exactly reproduce the earlier independently
+saved native loaded result: `0.004688508252439385 J` (Mx) and
+`0.07018981976415747 J` (Fz). The unchanged x2 default still reports
+the historical P0 one/two pass and P1/dual two-row deficiency.
+
+For the growing supported x4/m2 to x8/m4 sequence, Mx tip work changes
+from `0.00503872425` to `0.00492966476 J` (P0), `0.00491856597` to
+`0.00485237637 J` (P1), and `0.00499332343` to `0.00495756915 J`
+(dual). Fz work changes from `0.0704564420` to `0.0703037125 J` (P0),
+`0.0702726595` to `0.0702786632 J` (P1), and `0.0704009982` to
+`0.0702851960 J` (dual). The largest relative changes are about
+`2.2%` Mx and `0.22%` Fz; pointwise station gaps are not uniformly
+decreasing. Two levels cannot establish convergence or absence of
+locking, and these terminal nodal loads are not the matched solid
+tip-face load. The next decision remains mode-level deficiency,
+physically matched work, and the registered ratio/refinement suite,
+not selection by smaller work or gap.
+
+Source SHA256 `ee55103c4389ccb049a43ca64e80fa3eb66862fa588890aee43af01cd1a1c8d9`.
+Raw `B3_E4_F03_C1_MATERIAL_LINE_LOADED_SPACE_X4_DEV_V1.json` has SHA256
+`0b07493268b6be6229169dd45fc55a42b376f090e492fc6eb223c6b9021f4b6b`;
+raw `B3_E4_F03_C1_MATERIAL_LINE_LOADED_SPACE_X8_DEV_V1.json` has SHA256
+`ceed9b18c19f11fc3e5fb884c92b8c906ac65daf0f30fe31834a3a5`.
+Their recorded pre-commit source identity is `a8921ba3`; the exact
+runner hash in each file identifies the evaluated source.
+
+A bounded left-null-space inspection of the same supported columns
+locates all x8/m8 row dependencies in the in-plane `uy` and shell/beam
+yaw channels. The invariant squared channel shares of the four P0
+B3-12 null directions are about `0.806` (`uy`) and `0.194` (yaw); the
+six P1 B3-12 directions share `0.692` and `0.308`. With B3-24, the two
+remaining P1 directions share `0.356` and `0.644`. Each individual P0
+channel at x8/m8 has rank eight, so its deficiency is a cross-channel
+relation; the P1/dual yaw channel alone has rank eight of nine. This
+narrows the next mechanics check to the material-line in-plane
+position/yaw work identity and beam/shell trace approximation, not a
+general six-channel or torsional loss. These are algebraic null spaces
+of this reference-linearized fixture; they do not alone classify
+physical connection adequacy or prescribe dropping rows.
