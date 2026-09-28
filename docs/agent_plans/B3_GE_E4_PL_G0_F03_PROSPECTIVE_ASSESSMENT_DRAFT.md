@@ -1,0 +1,167 @@
+# F03 prospective six-channel assessment — mathematical contract draft
+
+**Status:** Development draft, 28 September 2026. It is neither an adopted
+replacement criterion nor execution authority. Independent mechanics review,
+numerical floors and thresholds are required before a formal F03 run. Historical
+F03 registrations, failures and protected evidence remain unchanged. The
+Revision 7 development ceiling applies to any later diagnostic.
+
+## Decision and distinct questions
+
+Determine whether an objective six-channel, drill-free material line law can be
+enforced by a growing multiplier space without an unsupported interface mode,
+locking or incorrect physical transfer. Keep three decisions separate:
+
+1. Which continuous pose/offset work is intended and mechanically admissible?
+2. Which discrete interface space resolves that work at each mesh ratio?
+3. Does the resulting structure reproduce matched physical transfer and
+   response? An interface quotient alone answers neither (1) nor (3).
+
+The current L1 **development candidate** samples the E4 top-line position and
+its director/projected-material-tangent triad, plus the actual retained B3
+half-cell pose and a beam-local section arm. Its translation gap is
+
+\[
+ c_t=R_s^T(r_b-r_s)-e_s,\qquad
+ e_s=R_{s0}^T(r_{b0}-r_{s0}),
+\]
+
+and its rotation gap is
+\(c_R=\operatorname{Log}(A_0^TR_s^TR_b)\),
+\(A_0=R_{s0}^TR_{b0}\). This matches the existing point-joint convention,
+but **differs** from the saved beam-frame material-line candidate
+\(R_b^T(r_s-r_b)-e_b\). Both are objective. When the rotational gap vanishes
+and the reference offsets are transformed consistently, they can have the
+same constrained zero set. Away from that set, their derivatives, multiplier
+bases and work differ. Before accepting L1, derive the full first and second
+variations, physical wrench maps and chart transformations for the chosen
+convention; compare the alternative at the same constrained physical state.
+Do not use the current local first-variation probe as that derivation.
+
+Specifically, with \(Q=R_s^TR_b\) and \(e_b=-A_0^Te_s\), the beam-frame
+translation candidate is
+\(c_b=-Q^Tc_t+(A_0^T-Q^T)e_s\). At a zero rotational gap,
+\(Q=A_0\) and \(c_b=-A_0^Tc_t\); away from it the extra term contributes to
+rotation work and tangent curvature. This identity does not select either law.
+
+## Supported primal operator required before a compliance quotient
+
+For a conservative elastic reference state, partition the actual assembled
+native tangent between physical nodal/cell-rotation coordinates \(x\) and
+retained generalized-resultant coordinates \(p\):
+
+\[
+H=\begin{bmatrix}H_{xx}&H_{xp}\\H_{px}&H_{pp}\end{bmatrix}.
+\]
+
+If \(H_{pp}\) is invertible on its stated local domain, certify the exact
+stationary reduction
+\(K_{\rm phys}=H_{xx}-H_{xp}H_{pp}^{-1}H_{px}\).
+If it is singular, derive a constrained reduction and its compatibility
+conditions explicitly. Include the actual E4 shell block, supports and
+physical nullspaces. A drilling spring, invented inertia or global dense
+inverse is not an admissible repair.
+
+On the supported physical space modulo *proved* zero-energy motions, require
+\(K_{\rm phys}\) to define positive work for this particular conservative
+assessment. A failed positivity proof leaves the compliance metric undefined;
+it does not, by itself, prove the native mixed formulation has failed. The
+line action must annihilate every true unrestrained zero-energy motion; if
+\(B_hn\ne0\) for such a motion \(n\), its compliance is unbounded and a
+pseudoinverse must not assign it a finite value. The
+full indefinite native tangent may compute the same action compliance through
+a solve only **after** this reduction, trace restriction and nullspace
+equivalence are certified. Plastic active states and nonconservative follower
+states are outside this quotient.
+
+For an integrated line multiplier basis \(\Psi_h\), construct its work map
+from the actual E4/B3 pose derivatives and segmented reference quadrature:
+
+\[
+B_h=\int_{\Gamma_0}\Psi_h^T D_h\,dL_0,
+\qquad \delta W=\lambda_h^T B_h\delta x.
+\]
+
+The B3 trace includes nodal and retained cell-rotation variations but no
+invented multiplier action on the internal resultant coordinates. Define
+physical force/moment and translation/rotation scales once, including beam
+section arms, and verify equivalent-unit covariance. Check the transpose map
+against integrated interface force, moment about a common origin and virtual
+work. Separate exactly unsupported multiplier rows from low but physical
+compliance; do not infer either from a raw mixed-unit singular value.
+
+## Reference-relative metric, if the prerequisites pass
+
+With a support/nullspace basis \(P_h\) justified by the physical energy,
+define the candidate compliance on the same interface action:
+
+\[
+C_h=(B_hP_h)(P_h^TK_{\rm phys,h}P_h)^{-1}(B_hP_h)^T.
+\]
+
+Construct a converged same-law reference operator on the **same** geometry,
+supports, physical line length, six-channel units and applied multiplier
+action. Specify a work-preserving injection \(J_h\) into its interface space,
+giving \(C_{\rm ref,h}=J_h^TC_{\rm ref}J_h\). The reference must converge on
+the action subspace under at least three systematic levels; two refinements
+or a full-face weld do not make it a same-law reference. The external all-shell
+flat-bar/T models are separate engineering-fidelity comparisons unless their
+connection and work maps are shown equivalent.
+
+"Work-preserving" has an executable meaning. For each registered common
+physical virtual field \(x\), with its reference representation \(T_hx\),
+verify \((J_h\lambda)^TB_{\rm ref}T_hx=\lambda^TB_hx\) within the stated
+integration error. Define \(J_h\) by physical traction/couple density,
+orientation, line measure and units, and check patches plus nontrivial
+resolved fields. An arbitrary rescaling of \(J_h\) is forbidden because it
+would rescale the quotient without changing the candidate mechanics.
+
+Let \(N_{\rm ref}=\ker C_{\rm ref,h}\) mean a proved exact gauge, not a
+thresholded collection of small positive eigenvalues. Certify the gauge
+algebraically or with a justified numerical error bound; retain near-null
+positive modes in the quotient and report their uncertainty. The
+quotient
+
+\[
+q_h=\inf_{\lambda\notin N_{\rm ref}}
+\frac{\lambda^TC_h\lambda}
+     {\lambda^TC_{\rm ref,h}\lambda}
+\]
+
+is well defined on \(\Lambda_h/N_{\rm ref}\) only if every reference-gauge
+action is also a candidate gauge action. An extra candidate null direction
+with positive reference work gives \(q_h=0\) and is an unsupported mode.
+The quotient is diagnostic for relative work compliance, not a complete
+mixed-system well-posedness theorem. Retain independent primal equilibrium,
+constraint, locking, physical transfer, tangent and solution-convergence
+checks across all seven registered ratios and growing spaces.
+
+The independent review must fix, **before candidate scores are examined**,
+the physical reference construction, injection, support/nullspace policy,
+relative and absolute numerical floors, reference-convergence rule, and
+acceptance threshold justified by approximation/engineering requirements and
+independent controls. No observed candidate value may set its own threshold.
+Binary64 is admissible where a justified error bound supports it; exactness
+remains required for a claim that mathematically depends on exact rank.
+
+## Mandatory adversarial controls and terminal use
+
+The assessment must reject these failure patterns: a raw indefinite matrix
+such as \(H=\operatorname{diag}(1,-1)\) interpreted as a positive energy norm
+without its physical stationary reduction (the reduced physical block in
+this example is positive and must not be rejected merely because \(H\) is
+indefinite); a
+zero-energy loaded direction hidden by a pseudoinverse; a reference-null
+action whose candidate work makes the quotient representative-dependent; and
+a full-row-rank candidate whose relative compliance floor tends to zero under
+refinement. It must reject an arbitrarily rescaled reference injection or a
+thresholded near-null mode that fabricates a gauge. It must also detect
+checkerboards, excessive multiplier density,
+locking, artificial drilling transfer and a line law that suppresses admitted
+transverse shear. A physically admissible compliant mode is assessed by work,
+transfer and convergence, not rejected from one small quotient alone.
+
+Until the prerequisites and independent review pass, the decision is
+**F03 open; formal assessment barred**. A failed candidate or undefined metric
+remains visible. It does not authorize a penalty substitute, automatic row
+deletion, a narrower mesh-ratio envelope or G0/G1 acceptance.

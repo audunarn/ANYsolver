@@ -69,6 +69,12 @@ derive one convention. A native mixed-tangent inverse is not automatically a
 positive compliance: a proposed reference-relative metric first needs a
 certified physical reduction, support/nullspace treatment and common action
 map. These are open derivations, not a frozen replacement criterion.
+The independently reviewed prospective mathematical draft is
+`B3_GE_E4_PL_G0_F03_PROSPECTIVE_ASSESSMENT_DRAFT.md`; its review found three
+precision gaps (work-preserving reference injection, exact gauge, indefinite
+mixed controls), all corrected in the draft. The reference construction,
+numerical floors, thresholds and physical law still require independent
+acceptance before formal F03 execution.
 
 ## Decision sought
 
