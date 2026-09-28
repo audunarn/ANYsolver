@@ -187,14 +187,21 @@ work from 0.069010 to 0.069714 N m (+1.02%) when x was doubled, and to
 0.069030 N m (+0.029%) when y was doubled. The remaining shell-only change
 is predominantly longitudinal on this fixture. The source-bound results are
 in [the directional evidence](B3_E4_F03_L1_SHELL_DIRECTIONAL_DEV_V1.json).
-This justifies one bounded coupled x-refinement with the same physical line,
-loads and supports, 16 line edges/32 native half-cells, and the already-tested
-nine-node transverse shell grid. If its Fy work follows the shell-only x
-change and A/B torque responses draw together, proceed to reference-error
-and physical-transfer controls; if not, inspect the line/retained trace rather
-than tuning multiplier channels. This is not a fourth global refinement or
-an F03 reference-convergence claim. F03 floors, external physical transfer
-and the reviewed mixed-system contract remain open.
+The directed coupled x-refinement used that same physical line, loads and
+supports at 16 line edges/32 native half-cells while retaining the nine-node
+transverse shell grid. A/B Fy work was 0.051162/0.051175 N m, an A increase
+of 0.71% from eight edges versus the shell-only x increase of 1.02%. Their
+torque-work gap fell from 1.00% to 0.27%, but A torque work still changed
+1.29%. Shell-completion share of A Fy work fell to 0.20%. Equilibrium,
+compatibility and integrated work remain satisfied. The source-bound result
+is [the directed coupled evidence](B3_E4_F03_L1_LONGITUDINAL16_DEV_V1.json).
+This supports a shell-resolution explanation for much of the Fy trend; it
+does not prove convergence, physical connection fidelity or uniform stability.
+The bounded dense shell fixture cannot represent another full refinement.
+Next advance the replaceable L1 local operator through the experimental sparse
+owner, prove small sparse/dense and lifecycle parity, then obtain a further
+same-law reference level without raising dense prototype limits. External
+physical transfer and independently reviewed F03 floors remain separate.
 An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
 for plate/web Fy and web torque. Its clamped-root option matches the declared
 six-DOF support type but lacks verified rotational reaction output; the hinged
