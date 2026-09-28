@@ -1,0 +1,14 @@
+Command: python reports/s3_angles/5671c8f73c69/independent/reproduce_plate_20deg.py
+Source: 5671c8f73c69 (clean), CPython 3.11.15, numpy 2.4.6, scipy 1.17.1, Linux x86-64
+
+elements 352, min angle 20.000000, a=1.000000, b=1.000918
+FE w_c = 2.096684e-04; Navier(Kirchhoff) = 2.116302e-04; table(square) = 2.111200e-04
+error vs Navier = 9.2702e-03
+
+Campaign value for the same mesh (formal-t20, plate t=0.01, family "right",
+level 1): w_centre_error = 9.78e-03 against the Mindlin Navier reference.
+The 0.05% difference is the transverse-shear correction the Kirchhoff sum
+omits.  This reproduction shares no code with scripts/qualify_s3_angles.py
+or tests/_s3_angle_fixtures.py and uses the public pressure LoadCase route.
+It was written by the same author as the campaign; it is not an independent
+reviewer's reproduction (plan G5).

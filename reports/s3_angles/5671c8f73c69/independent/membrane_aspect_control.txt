@@ -1,0 +1,7 @@
+angle  family            aspect  N_L2(finest)  ratio_to_45deg_at_equal_dofs
+ 30.0  right               1.73  1.0772e-01    1.224
+ 30.0  right_alternating   1.73  8.9797e-02    1.020
+ 20.0  right               2.75  1.0444e-01    1.503
+ 20.0  right_alternating   2.75  9.4306e-02    1.357
+ 15.0  right               3.73  1.0345e-01    1.752
+ 15.0  right_alternating   3.73  9.7205e-02    1.647

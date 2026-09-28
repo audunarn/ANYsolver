@@ -1,0 +1,96 @@
+{
+ "acceptance": {
+  "buckling_factor_error": 0.03,
+  "element_patch_residual": 1e-10,
+  "element_rigid_residual": 1e-10,
+  "first_frequency_error": 0.01,
+  "membrane_resultant_ratio_to_regular": 1.5,
+  "mixed_error_factor": 1.5,
+  "principal_deflection_error": 0.02,
+  "rate_fraction_of_regular": 0.9,
+  "resultant_l2_error": 0.05
+ },
+ "candidate_envelopes": {
+  "candidate_15": {
+   "maximum_angle_deg": 150.0,
+   "maximum_edge_ratio": 4.0,
+   "minimum_angle_deg": 15.0,
+   "minimum_normalized_area": 0.3,
+   "minimum_scaled_jacobian": 0.2
+  },
+  "candidate_20": {
+   "maximum_angle_deg": 150.0,
+   "maximum_edge_ratio": 4.0,
+   "minimum_angle_deg": 20.0,
+   "minimum_normalized_area": 0.4,
+   "minimum_scaled_jacobian": 0.2
+  },
+  "historical_30": {
+   "maximum_angle_deg": 150.0,
+   "maximum_edge_ratio": 4.0,
+   "minimum_angle_deg": 30.0,
+   "minimum_normalized_area": 0.6,
+   "minimum_scaled_jacobian": 0.2
+  }
+ },
+ "command": [
+  "/tmp/claude-0/-home-user-ANYsolver/8473c81f-6755-5fcd-a32f-f22a175276bf/scratchpad/venv/bin/python",
+  "scripts/qualify_s3_angles.py",
+  "--target",
+  "20",
+  "--levels",
+  "4",
+  "--mode",
+  "formal",
+  "--run-id",
+  "formal"
+ ],
+ "commit": "5671c8f73c69c9a181ad9535ba48a6f7bb895518",
+ "dirty": false,
+ "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+ "implementation_id": "E4_PL_S3_V2D_RECOVERY_CURRENT_EIGEN_GATE_V1",
+ "levels": 4,
+ "mode": "formal",
+ "packages": {
+  "anyfileio": {
+   "location": "/tmp/claude-0/-home-user-ANYsolver/8473c81f-6755-5fcd-a32f-f22a175276bf/scratchpad/venv/lib/python3.11/site-packages/anyfileio",
+   "version": "0.3.2"
+  },
+  "anymaterial": {
+   "location": "/tmp/claude-0/-home-user-ANYsolver/8473c81f-6755-5fcd-a32f-f22a175276bf/scratchpad/venv/lib/python3.11/site-packages/anymaterial",
+   "version": "0.2.0"
+  },
+  "anymesher": {
+   "location": "/tmp/claude-0/-home-user-ANYsolver/8473c81f-6755-5fcd-a32f-f22a175276bf/scratchpad/venv/lib/python3.11/site-packages/anymesher",
+   "version": "0.5.0"
+  },
+  "anysolver": {
+   "location": "/home/user/ANYsolver/src/anysolver",
+   "version": "0.4.7"
+  },
+  "numba": {
+   "location": "/tmp/claude-0/-home-user-ANYsolver/8473c81f-6755-5fcd-a32f-f22a175276bf/scratchpad/venv/lib/python3.11/site-packages/numba",
+   "version": "0.67.0"
+  },
+  "numpy": {
+   "location": "/tmp/claude-0/-home-user-ANYsolver/8473c81f-6755-5fcd-a32f-f22a175276bf/scratchpad/venv/lib/python3.11/site-packages/numpy",
+   "version": "2.4.6"
+  },
+  "scipy": {
+   "location": "/tmp/claude-0/-home-user-ANYsolver/8473c81f-6755-5fcd-a32f-f22a175276bf/scratchpad/venv/lib/python3.11/site-packages/scipy",
+   "version": "1.17.1"
+  }
+ },
+ "platform": "Linux-6.18.44-fc-v42-x86_64-with-glibc2.39",
+ "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
+ "results_sha256": "826ec19e4242407acf98aa56eb476a5cecb09a27f99d7b639257a139a10a18fa",
+ "schema": "anysolver.s3-angle-campaign-v1",
+ "selected_s3_formulation": "e4-pl-s3-v2d",
+ "target_deg": 20.0,
+ "threads": {
+  "MKL_NUM_THREADS": null,
+  "OMP_NUM_THREADS": "2",
+  "OPENBLAS_NUM_THREADS": "2"
+ },
+ "wall_seconds": 2828.279916125999
+}
