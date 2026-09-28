@@ -26,6 +26,18 @@ from scripts.b3_e4_f03_solid_bond_pose_projection import _read_frd_u
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
+def thickness_mean_and_director(top, bottom, thickness):
+    """Return midplane translation and small physical rx/ry in +z frame."""
+    top = np.asarray(top, dtype=float)
+    bottom = np.asarray(bottom, dtype=float)
+    if (top.shape != (3,) or bottom.shape != (3,) or
+            not np.isfinite(top).all() or not np.isfinite(bottom).all() or
+            not np.isfinite(thickness) or thickness <= 0.):
+        raise ValueError("finite three-component face fields and positive thickness required")
+    chord = (top-bottom)/thickness
+    return .5*(top+bottom), np.array((-chord[1], chord[0]))
+
+
 def evaluate(reconstruction_path: Path) -> dict:
     solid = _validated_solid_reconstruction(reconstruction_path)
     source_root = Path(solid["source_root"])
@@ -131,9 +143,8 @@ def evaluate(reconstruction_path: Path) -> dict:
                 raise ValueError("fixed-distance physical plate/shell probe changed")
             top = solid_delta[index[face_ids["top"][0]]]
             bottom = solid_delta[index[face_ids["bottom"][0]]]
-            solid_mid = .5*(top+bottom)
-            solid_rotation = np.array((-(top[1]-bottom[1])/.035,
-                                        (top[0]-bottom[0])/.035))
+            solid_mid, solid_rotation = thickness_mean_and_director(
+                top, bottom, .035)
             native_mid = nodal[int(shell_ids[0]), :3]
             native_rotation = nodal[int(shell_ids[0]), 3:5]
             fixed_distance.append({
@@ -166,7 +177,7 @@ def evaluate(reconstruction_path: Path) -> dict:
             "same P0 action but E4 and 3D plate kinematics/supports differ",
             "linear fixed-dual action-only responses, not coupled loaded sensitivity",
             "interval work terms may cancel; they are not independent strain energies",
-            "two fixed-distance probes compare physical poses, not stress convergence",
+            "four fixed-distance probes compare physical poses, not stress convergence",
             "not F03/G0B acceptance or multiplier selection",
         ],
     }

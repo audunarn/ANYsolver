@@ -10488,3 +10488,25 @@ mode-resolved physical torque/shear work check, then apply the
 registered growing-space mixed-system criteria. The material-line law
 and multiplier policy remain candidates, not selections; F03/G0B
 remain open and G1 barred.
+
+Independent read-only review at `6febda51` found no mechanics/sign
+defect in the four fixed-distance probes and confirmed the limited
+Mx/Fz interpretation. It identified stale V3 limitation wording
+(`two` probes for four actual probes); V3 remains immutable, and the
+current source/result will correct it. A synthetic rigid-section
+sign-and-units test is added before relying on the director probe.
+
+**Next pure-action mode discriminator (prospective):** The current loaded
+Mx/Fz interface duals mix all six channel types, and their signed work
+has cross-channel cancellation. The existing 24×24 plate/bar and E4/B3
+component work operators permit one bounded comparison without a new
+solid solve: apply a physical `100 Nm` Mx or `1000 N` Fz integrated
+action on each individual P0 interval, then a uniform action of the
+same total resultant across all four intervals. If pure physical
+torque/shear shell responses differ consistently, review the shell
+trace/idealization directly. If pure responses agree but the saved
+mixed dual differs, examine cross-channel and longitudinal coupling
+instead. Keep all four component domains distinct and check positive
+work and matrix/action identity. This remains a linear open interface
+influence, not an independently qualified contact state or law/space
+selection.
