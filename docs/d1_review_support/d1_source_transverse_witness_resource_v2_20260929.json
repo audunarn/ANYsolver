@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 12.145486100002017,
+  "peak_process_tree_memory_mb": 214.638592,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_saved_active_compliance",
+    "--source-transverse-witness",
+    "--output",
+    "docs/d1_review_support/d1_source_transverse_witness_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_source_transverse_witness_log_v2_20260929.txt"
+}

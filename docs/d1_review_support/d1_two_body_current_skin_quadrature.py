@@ -16,7 +16,7 @@ import numpy as np
 import anysolver
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from anysolver.general_contact.semismooth import linearize
-from d1_two_body_reference_oracle import (
+from docs.d1_review_support.d1_two_body_reference_oracle import (
     _clip, _source_shape, _target_shape, _triangle_quadrature,
 )
 from scripts.general_contact_d1_free_target_press_probe import build_free_target_case
@@ -98,7 +98,7 @@ def overlap_incidence(source_xy, target_xy, polygon):
     return (len(polygon), min(rotations))
 
 
-def integrate_current_skin(model, definition, pose):
+def integrate_current_skin(model, definition, pose, *, pressure_gram=False):
     pressure_nodes = sorted({
         node for element_id in definition.surfaces[0].element_ids
         for node in model.mesh.elements[element_id].node_ids
@@ -106,6 +106,8 @@ def integrate_current_skin(model, definition, pose):
     pressure_index = {node: index for index, node in enumerate(pressure_nodes)}
     support = np.zeros(len(pressure_nodes))
     weighted_gap = np.zeros(len(pressure_nodes))
+    gram = (np.zeros((len(pressure_nodes), len(pressure_nodes)))
+            if pressure_gram else None)
     current_xy_area = 0.0
     quadrature_points = 0
     topology = []
@@ -149,10 +151,18 @@ def integrate_current_skin(model, definition, pose):
                         value = reference_weight*source_shape[local]
                         support[index] += value
                         weighted_gap[index] += value*gap
+                    if gram is not None:
+                        indices = [pressure_index[node]
+                                   for node in source_element.node_ids]
+                        gram[np.ix_(indices, indices)] += (
+                            reference_weight*np.outer(source_shape,
+                                                      source_shape))
                     current_xy_area += weight
                     quadrature_points += 1
     assert np.all(support > 0)
-    return support, weighted_gap, current_xy_area, quadrature_points, tuple(topology)
+    result = (support, weighted_gap, current_xy_area, quadrature_points,
+              tuple(topology))
+    return (*result, gram) if gram is not None else result
 
 
 def main():

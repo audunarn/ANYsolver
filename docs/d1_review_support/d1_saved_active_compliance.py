@@ -44,17 +44,22 @@ parser.add_argument(
     default=Path(__file__).with_name("d1_saved_16x8_near_rim_field_20260928.json"),
 )
 parser.add_argument("--structural-energy", action="store_true")
+parser.add_argument("--source-transverse-witness", action="store_true")
+parser.add_argument("--fourier-modes", type=int, default=0)
 parser.add_argument("--enriched-source-x2", action="store_true")
 parser.add_argument("--enriched-source-x4", action="store_true")
 parser.add_argument("--output", type=Path)
 args = parser.parse_args()
 enriched_source = args.enriched_source_x2 or args.enriched_source_x4
-if sum((args.structural_energy, args.enriched_source_x2,
-        args.enriched_source_x4)) > 1:
+if sum((args.structural_energy, args.source_transverse_witness,
+        args.enriched_source_x2, args.enriched_source_x4)) > 1:
     parser.error("select one pressure diagnostic")
-if ((args.structural_energy or enriched_source)
+if ((args.structural_energy or args.source_transverse_witness or enriched_source)
         and (args.output is None or args.output.exists())):
     parser.error("selected diagnostic requires a new --output path")
+if args.fourier_modes < 0 or (args.fourier_modes
+                             and not args.source_transverse_witness):
+    parser.error("Fourier modes require the source-transverse witness")
 started = time.perf_counter()
 path = args.saved.resolve()
 saved_bytes = path.read_bytes()
@@ -89,7 +94,8 @@ np.testing.assert_allclose(base.state.normalized_gap,
                            rtol=0.0, atol=1e-9)
 geometry_seconds = time.perf_counter()-started
 
-if not (args.structural_energy or enriched_source):
+if not (args.structural_energy or args.source_transverse_witness
+        or enriched_source):
     structural_tangent = _assemble_nonlinear_system(
         model, pose, {}, 5, tangent=True, kinematics="von_karman",
         require_full_coordinates=True,
@@ -492,6 +498,301 @@ if enriched_source:
                                  "elapsed_seconds")}, indent=2))
     raise SystemExit(0 if record["status"] ==
                      "development_enriched_shell_source_x2" else 2)
+
+if args.source_transverse_witness:
+    from docs.d1_review_support.d1_two_body_current_skin_quadrature import (
+        integrate_current_skin,
+    )
+
+    (oracle_support, oracle_weighted_gap, _oracle_area, oracle_points,
+     oracle_topology, oracle_gram) = integrate_current_skin(
+         model, definition, pose, pressure_gram=True,
+     )
+    support_error = float(np.linalg.norm(oracle_support-support)
+                          /np.linalg.norm(support))
+    gap_error = float(np.max(np.abs(
+        oracle_weighted_gap/oracle_support-base.state.normalized_gap)))
+    active_nodes = [int(manager.law.pressure_mode_ids[i]) for i in active]
+    source_stride = saved["columns"]+1
+    if any((node-1) % source_stride == 0 for node in active_nodes):
+        raise AssertionError("source transverse witness meets prescribed edge")
+    injection = np.zeros((pose.size, len(active)))
+    for column, node in enumerate(active_nodes):
+        injection[model.mesh.dof_manager.get_node_dofs(node)[2], column] = 1.0
+    reduced_injection = np.asarray(physical_transform.T @ injection)
+    reconstructed = np.asarray(physical_transform @ reduced_injection)
+    constraint_error = float(np.linalg.norm(reconstructed-injection)
+                             /np.linalg.norm(injection))
+    energy = (physical_transform.T @ linear_stiffness
+              @ physical_transform).toarray()
+    energy = 0.5*(energy+energy.T)
+    trial_energy = reduced_injection.T @ energy @ reduced_injection
+    trial_energy = 0.5*(trial_energy+trial_energy.T)
+    trial_diagonal = np.sqrt(np.diag(trial_energy))
+    trial_energy_min = float(np.linalg.eigvalsh(
+        trial_energy/np.outer(trial_diagonal, trial_diagonal))[0])
+    full_work = support[:, None]*base.gap_gradient
+    active_work = np.asarray(full_work[active] @ physical_transform)
+    trial_work = np.asarray(full_work[active] @ injection)
+    physical_gram = oracle_gram[np.ix_(active, active)]
+    physical_gram = 0.5*(physical_gram+physical_gram.T)
+    gram_diagonal = np.sqrt(np.diag(physical_gram))
+    gram_min = float(np.linalg.eigvalsh(
+        physical_gram/np.outer(gram_diagonal, gram_diagonal))[0])
+    symmetric_work = 0.5*(trial_work+trial_work.T)
+    work_relative_gram = float(np.linalg.norm(trial_work-physical_gram)
+                               /np.linalg.norm(physical_gram))
+    work_skew_relative = float(np.linalg.norm(trial_work-trial_work.T)
+                               /np.linalg.norm(trial_work))
+    work_relative_eigenvalues = linalg.eigvalsh(symmetric_work, physical_gram)
+    restricted_compliance = trial_work @ linalg.solve(
+        trial_energy, trial_work.T, assume_a="pos",
+    )
+    full_factor = splu(sparse.csc_matrix(energy))
+    full_response = full_factor.solve(active_work.T)
+    full_compliance = active_work @ full_response
+    restricted_compliance = 0.5*(restricted_compliance
+                                 +restricted_compliance.T)
+    full_compliance = 0.5*(full_compliance+full_compliance.T)
+    response_residual = float(np.linalg.norm(
+        energy @ full_response-active_work.T)
+        /np.linalg.norm(active_work.T))
+    full_diagonal = np.sqrt(np.diag(full_compliance))
+    difference = ((full_compliance-restricted_compliance)
+                  /np.outer(full_diagonal, full_diagonal))
+    difference_min = float(np.linalg.eigvalsh(
+        0.5*(difference+difference.T))[0])
+    witness_ratio = linalg.eigvalsh(restricted_compliance,
+                                    full_compliance)
+
+    def admissible_coordinates(nodes, components):
+        candidates = []
+        for node in nodes:
+            node_dofs = model.mesh.dof_manager.get_node_dofs(node)
+            for component in components:
+                dof = int(node_dofs[component])
+                row = physical_transform.getrow(dof)
+                if row.nnz == 0:
+                    continue
+                if row.nnz != 1 or row.data[0] != 1.0:
+                    raise AssertionError("pressure witness needs canonical free DOFs")
+                candidates.append(dof)
+        return tuple(candidates)
+
+    source_nodes = tuple(map(int, manager.law.source_node_ids))
+    target_nodes = tuple(map(int, manager.law.target_node_ids))
+    all_source_uz = admissible_coordinates(source_nodes, (2,))
+    all_source_ux = admissible_coordinates(source_nodes, (0,))
+    all_target = admissible_coordinates(target_nodes, range(6))
+    if len(all_source_uz) != (len(source_nodes)-saved["source_rows"]-1):
+        raise AssertionError("saved source transverse coordinate count changed")
+    source_uz_mode = {
+        int(model.mesh.dof_manager.get_node_dofs(node)[2]): source_index
+        for source_index, node in enumerate(source_nodes)
+    }
+    free_uz_modes = [source_uz_mode[dof] for dof in all_source_uz]
+    complete_source_work = np.asarray(full_work[np.ix_(active, all_source_uz)])
+    complete_oracle_mass = oracle_gram[np.ix_(active, free_uz_modes)]
+    complete_work_error = float(np.linalg.norm(
+        complete_source_work-complete_oracle_mass)
+        /np.linalg.norm(complete_oracle_mass))
+
+    def subset_response(dofs):
+        selection = np.eye(pose.size)[:, dofs]
+        reduced = np.asarray(physical_transform.T @ selection)
+        if np.linalg.norm(np.asarray(physical_transform @ reduced)
+                          -selection) > 1e-12*np.linalg.norm(selection):
+            raise AssertionError("pressure witness includes constrained motion")
+        subset_energy = reduced.T @ energy @ reduced
+        subset_work = active_work @ reduced
+        response = subset_work @ linalg.solve(
+            subset_energy, subset_work.T, assume_a="pos",
+        )
+        response = 0.5*(response+response.T)
+        spectrum = linalg.eigvalsh(response, full_compliance)
+        return {
+            "coordinates": int(len(dofs)),
+            "squared_dual_ratio_range": [float(spectrum[0]),
+                                         float(spectrum[-1])],
+        }
+
+    all_source_transverse = subset_response(all_source_uz)
+    target_only = subset_response(all_target)
+    transverse_with_target = subset_response(all_source_uz+all_target)
+    all_coordinates = subset_response(all_source_ux+all_source_uz+all_target)
+    if all_coordinates["coordinates"] != physical_transform.shape[1]:
+        raise AssertionError("coordinate attribution does not span free space")
+
+    # Independently assemble the scalar Q1 gradient energy on the actual
+    # reference rectangles. This diagnoses whether a continuum H1 reference
+    # can represent this constrained E4-PL transverse operator.
+    source_index = {node: index for index, node in enumerate(source_nodes)}
+    scalar_gradient = np.zeros((len(source_nodes), len(source_nodes)))
+    gauss_points = (-1.0/np.sqrt(3.0), 1.0/np.sqrt(3.0))
+    for element_id in definition.surfaces[0].element_ids:
+        nodes = tuple(map(int, model.mesh.elements[element_id].node_ids))
+        corners = np.asarray([(model.mesh.nodes[node].x,
+                               model.mesh.nodes[node].y) for node in nodes])
+        width = corners[1, 0]-corners[0, 0]
+        height = corners[3, 1]-corners[0, 1]
+        if (width <= 0.0 or height <= 0.0
+                or abs(corners[2, 0]-corners[1, 0]) > 1e-12
+                or abs(corners[2, 1]-corners[3, 1]) > 1e-12):
+            raise AssertionError("scalar reference requires planar rectangles")
+        local = np.zeros((4, 4))
+        for xi in gauss_points:
+            for eta in gauss_points:
+                dx = np.asarray((-(1-eta), 1-eta, 1+eta,
+                                 -(1+eta)))/(2.0*width)
+                dy = np.asarray((-(1-xi), -(1+xi), 1+xi,
+                                 1-xi))/(2.0*height)
+                local += (np.outer(dx, dx)+np.outer(dy, dy)) \
+                    *(width*height/4.0)
+        indices = [source_index[node] for node in nodes]
+        scalar_gradient[np.ix_(indices, indices)] += local
+    source_uz_dofs = [int(model.mesh.dof_manager.get_node_dofs(node)[2])
+                      for node in source_nodes]
+    actual_transverse = linear_stiffness[np.ix_(
+        source_uz_dofs, source_uz_dofs)].toarray()
+    fitted_shear_scale = float(np.sum(actual_transverse*scalar_gradient)
+                               /np.sum(scalar_gradient**2))
+    scalar_fit_error = float(np.linalg.norm(
+        actual_transverse-fitted_shear_scale*scalar_gradient)
+        /np.linalg.norm(actual_transverse))
+    material = model.materials["elastic"]
+    thickness = model.mesh.elements[
+        definition.surfaces[0].element_ids[0]].thickness
+    expected_shear_scale = (5.0/6.0*material.elastic_modulus*thickness
+                            /(2.0*(1.0+material.poisson_ratio)))
+    shear_scale_relative_error = abs(fitted_shear_scale-expected_shear_scale) \
+        /expected_shear_scale
+    fourier_record = None
+    if args.fourier_modes:
+        from docs.d1_review_support.d1_guided_q1_fourier import (
+            guided_q1_fourier_reference,
+        )
+
+        x_knots = np.asarray([model.mesh.nodes[node].x
+                              for node in source_nodes[:source_stride]])
+        y_knots = np.asarray([model.mesh.nodes[source_nodes[row*source_stride]].y
+                              for row in range(saved["source_rows"]+1)])
+        target_x = [model.mesh.nodes[node].x for node in target_nodes]
+        target_y = [model.mesh.nodes[node].y for node in target_nodes]
+        contact_y_upper = float(max(target_y))
+        source_ux = np.asarray([pose[model.mesh.dof_manager.get_node_dofs(node)[0]]
+                                for node in source_nodes])
+        if (all_target or scalar_fit_error > 1e-10
+                or min(target_x) > x_knots[0]
+                or max(target_x) < x_knots[-1]
+                or min(target_y) > y_knots[0]
+                or not y_knots[0] < contact_y_upper < y_knots[-1]
+                or np.max(np.abs(source_ux)) > 1e-8):
+            raise AssertionError("Fourier reference fixture assumptions changed")
+        finite, spectral_gram, tail_coefficient = (
+            guided_q1_fourier_reference(
+                x_knots, y_knots, active, contact_y_upper=contact_y_upper,
+                shear_stiffness_n_per_m=fitted_shear_scale,
+                x_modes=args.fourier_modes, y_modes=args.fourier_modes,
+            ))
+        spectral_gram_error = float(np.linalg.norm(
+            spectral_gram-physical_gram)/np.linalg.norm(physical_gram))
+        finite_diagonal = np.sqrt(np.diag(finite))
+        finite_min = float(np.linalg.eigvalsh(
+            finite/np.outer(finite_diagonal, finite_diagonal))[0])
+        if finite_min <= 1e-11:
+            raise AssertionError("Fourier pressure compliance is not resolved")
+        continuum_upper = finite+tail_coefficient*spectral_gram
+        tail_relative = linalg.eigvalsh(
+            tail_coefficient*spectral_gram, finite)
+        discrete_to_continuum_lower = linalg.eigvalsh(
+            full_compliance, continuum_upper)
+        discrete_to_continuum_upper = linalg.eigvalsh(
+            full_compliance, finite)
+        fourier_record = {
+            "modes_each_axis": args.fourier_modes,
+            "target_contact_y_upper_m": contact_y_upper,
+            "maximum_source_ux_m": float(np.max(np.abs(source_ux))),
+            "spectral_gram_relative_oracle_error": spectral_gram_error,
+            "finite_compliance_scaled_minimum_eigenvalue": finite_min,
+            "parseval_tail_coefficient_m3_per_n": tail_coefficient,
+            "maximum_relative_tail_bound": float(tail_relative[-1]),
+            "minimum_discrete_to_continuum_squared_ratio_lower": float(
+                discrete_to_continuum_lower[0]),
+            "minimum_discrete_to_continuum_squared_ratio_upper": float(
+                discrete_to_continuum_upper[0]),
+            "maximum_discrete_to_continuum_squared_ratio_upper": float(
+                discrete_to_continuum_upper[-1]),
+        }
+    record = {
+        "status": "development_source_transverse_active_witness",
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "independent_gram_oracle_sha256": hashlib.sha256(
+            Path(integrate_current_skin.__code__.co_filename).read_bytes()
+        ).hexdigest(),
+        "saved_source_sha256": hashlib.sha256(saved_bytes).hexdigest(),
+        "saved_runtime_identity": saved["runtime_identity"],
+        "anysolver_module": str(Path(anysolver.__file__).resolve()),
+        "active_modes": int(len(active)),
+        "active_pressure_node_ids": active_nodes,
+        "oracle_quadrature_points": int(oracle_points),
+        "oracle_topology_count": int(len(oracle_topology)),
+        "oracle_support_relative_error": support_error,
+        "oracle_gap_maximum_error_m": gap_error,
+        "source_trial_constraint_relative_error": constraint_error,
+        "source_trial_energy_scaled_minimum_eigenvalue": trial_energy_min,
+        "physical_pressure_gram_scaled_minimum_eigenvalue": gram_min,
+        "source_trial_work_relative_gram_difference": work_relative_gram,
+        "complete_source_transverse_work_relative_oracle_error":
+            complete_work_error,
+        "source_trial_work_skew_relative": work_skew_relative,
+        "source_trial_work_relative_gram_eigenvalue_range": [
+            float(work_relative_eigenvalues[0]),
+            float(work_relative_eigenvalues[-1]),
+        ],
+        "source_witness_to_full_dual_squared_ratio_range": [
+            float(witness_ratio[0]), float(witness_ratio[-1]),
+        ],
+        "all_free_source_transverse": all_source_transverse,
+        "free_target_only": target_only,
+        "all_source_transverse_plus_target": transverse_with_target,
+        "all_admissible_coordinates": all_coordinates,
+        "scalar_q1_gradient_fit": {
+            "fitted_shear_stiffness_n_per_m": fitted_shear_scale,
+            "relative_matrix_error": scalar_fit_error,
+            "independent_material_shear_stiffness_n_per_m":
+                expected_shear_scale,
+            "material_scale_relative_error": shear_scale_relative_error,
+        },
+        "guided_fourier_reference": fourier_record,
+        "full_minus_witness_scaled_minimum_eigenvalue": difference_min,
+        "full_response_relative_residual": response_residual,
+    }
+    if (support_error > 1e-8 or gap_error > 1e-8
+            or constraint_error > 1e-12 or trial_energy_min <= 1e-10
+            or gram_min <= 1e-10 or work_relative_eigenvalues[0] <= 0.0
+            or complete_work_error > 1e-8
+            or shear_scale_relative_error > 1e-10
+            or difference_min < -1e-8 or response_residual > 1e-8
+            or all_coordinates["squared_dual_ratio_range"][0] < 1.0-1e-8
+            or all_coordinates["squared_dual_ratio_range"][1] > 1.0+1e-8
+            or (fourier_record is not None
+                and fourier_record["spectral_gram_relative_oracle_error"]
+                    > 1e-8)):
+        record["status"] = "development_source_transverse_witness_unresolved"
+    record["elapsed_seconds"] = time.perf_counter()-started
+    record["peak_process_working_set_mb"] = (
+        psutil.Process().memory_info().peak_wset/1e6)
+    args.output.write_text(json.dumps(record, indent=2)+"\n",
+                           encoding="utf-8")
+    print(json.dumps({key: record[key] for key in (
+        "status", "active_modes", "oracle_support_relative_error",
+        "source_trial_work_relative_gram_eigenvalue_range",
+        "source_witness_to_full_dual_squared_ratio_range",
+        "elapsed_seconds")}, indent=2))
+    raise SystemExit(0 if record["status"] ==
+                     "development_source_transverse_active_witness" else 2)
 
 if args.structural_energy:
     # The physical pressure coefficient acts through S_i * D(gbar_i),
