@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_eccentric_source_director.py", line 164, in <module>
+    main()
+    ~~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_eccentric_source_director.py", line 160, in main
+    args.output.write_text(json.dumps(run(), indent=2)+"\n", encoding="utf-8")
+                                      ~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_eccentric_source_director.py", line 83, in run
+    raise RuntimeError("fixture invalid: " + "; ".join(capability.issues))
+RuntimeError: fixture invalid: Jet2 Q4/S3 development derivative requires a refined augmented general patch and four derivative tolerances
