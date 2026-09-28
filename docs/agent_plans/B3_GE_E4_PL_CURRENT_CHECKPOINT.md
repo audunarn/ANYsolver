@@ -14,14 +14,17 @@ metric. The weak vector is dominated by the beam kinematic norm, so
 this does not independently establish interface inf-sup stability.
 P1/dual still have dependencies at the full-resolution matched levels.
 The same-action shell/reference difference remains strongest in torque
-and axial/bending work. **Remaining uncertainty:** Whether P0 avoids
-locking and unsupported modes across ratios and whether physically
-matched sided torque/shear transfer validates the declared law.
-**Next discriminator and action:** Check a bounded cross-ratio loaded
-response and actual mixed-system behavior with the same physical
-observables, then obtain a genuinely matched sided reference only if it
-distinguishes shell, beam and connection contributions. Do not infer
-selection from rank or the quotient alone. Advance B2 F09 independently.
+and axial/bending work. The `1:8` ratio extreme passes loaded Mx/Fz
+checks, while the registered x16/y4 `8:1` fixture needs 1,956 rows
+and stops at the unchanged 1,900-row development cap before solution.
+**Remaining uncertainty:** Whether P0 avoids locking and unsupported
+modes across ratios and whether physically matched sided torque/shear
+transfer validates the declared law. **Next discriminator and action:**
+Obtain a same-law sided physical reference that separates shell, beam
+and connection effects. Revisit the `8:1` loaded check through an exact
+bounded drill quotient if its result changes the policy decision; the
+size guard alone is no mechanics verdict. Do not infer selection from
+rank or the quotient alone. Advance B2 F09 independently.
 G0B/F03 remain open, G1 barred, and formal F03 authority unconsumed;
 detailed evidence follows.
 
@@ -10808,3 +10811,42 @@ and the complete registered ratio/refinement assessment. No production
 space selection or G0B closure follows from these three levels.
 The focused material-line and P0 norm tests passed `41/41` after the
 diagnostic extensions; `git diff --check` reported no whitespace errors.
+
+**Reciprocal-ratio loaded discriminator (prospective):** On the same
+C1 geometry, supports, section and terminal Mx/Fz loads, test only the
+provisional P0 policy at shell:beam ratios `1:8` (Q4 x2/B3-26,
+P0 m2) and `8:1` (Q4 x16/B3-12, P0 m4). Competing explanations are
+that the matched 1:1 convergence reflects a sound resolution rule, or
+that it hides ratio-dependent locking/under-resolution. Use the
+existing bounded KKT, rank, compatibility, support-balance, physical
+work and fixed-distance trace observables, under the `1900`-row cap;
+retain a `120 s` per-run limit. A failed or pathological response
+returns to the policy, while acceptable responses only nominate it
+for the complete registered ratio/refinement and independently
+matched torque/shear checks. No external or classical axial rerun is
+part of this slice; no formal F03 authority is consumed.
+
+**Reciprocal-ratio outcome:** The shell:beam `1:8` Q4 x2/B3-26,
+P0 m2 case has `12/12` supported rows and passes both bounded Mx/Fz
+loads, equilibrium, compatibility and support balance in a `1272`-row
+KKT. Tip Mx rotation is `4.89539958e-5 rad` and Fz translation
+`7.03444358e-5 m`, close to but not an independent convergence proof
+against the matched x2/B3-12 values `4.86842337e-5 rad` and
+`7.02894007e-5 m`. Raw file
+`B3_E4_F03_C1_MATERIAL_LINE_RECIPROCAL_1_TO_8_DEV_V1.json` has SHA256
+`1afca952aed3565f45f77e6fb1bbf71ea7132a5e3d60f7f0bc91b0dbd8444059`.
+The registered shell:beam `8:1` Q4 x16/y4/B3-12 case has `1,932`
+free primal coordinates and `24` P0 rows; its `1,956`-row KKT exceeds
+the unchanged `1,900`-row bounded diagnostic cap. No loaded result or
+mechanical failure was inferred. The resource outcome is preserved in
+`B3_E4_F03_C1_MATERIAL_LINE_RECIPROCAL_8_TO_1_DEV_V1.json`, SHA256
+`92e3fd9fcb894e80b61be2b30bb1a0e61fe01e8ba610b7eb917d73a96f484579`.
+Both records bind runner SHA256
+`8dba14d60b0ab7353c51339fb26a8371b61c765e1263c220ef900d0a5f5ce4bc`.
+The next principal uncertainty is physical same-law transfer, not a
+reason to lift the cap or keep refining the classical axial model.
+If the exact `8:1` loaded result is later needed to select the
+multiplier policy, use the already checked drill-free exact quotient
+and reconstruct the full equilibrium; do not present a coarser
+transverse fixture as the registered x16/y4 comparison. F03/G0B
+remain open and G1 barred.

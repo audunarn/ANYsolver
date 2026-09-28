@@ -86,11 +86,14 @@ def _scaled_row_diagnostics(constraint, free, primal_scales):
     }
 
 
-def run(*, shell_cells: int = 2, beam_half_cells: int = 12) -> dict:
-    if shell_cells not in (2, 4, 8):
+def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
+        policy_p0_only: bool = False) -> dict:
+    if shell_cells not in ((2, 4, 8, 16) if policy_p0_only else (2, 4, 8)):
         raise ValueError("bounded material-line shell level required")
     if beam_half_cells not in (12, 14, 18, 24, 26):
         raise ValueError("bounded C1 native beam resolution required")
+    if policy_p0_only and (shell_cells, beam_half_cells) not in ((2, 26), (16, 12)):
+        raise ValueError("bounded reciprocal-ratio P0 policy level required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     actual = Path(anysolver.__file__).resolve().parent
     if actual != expected:
@@ -120,7 +123,15 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12) -> dict:
     shell_reference = line.reference_nodes
     beam_reference = (beam.context.initial.mechanical.positions
                       +beam.context.initial.mechanical.position_low)
-    if shell_cells == 2:
+    if policy_p0_only:
+        bond_halves = int(np.sum(np.diff(beam.abscissae)[
+            beam.abscissae[:-1] >= .9-1e-12] > 0.))
+        intervals = min(shell_cells, 2*bond_halves)
+        if shell_cells % intervals:
+            raise ArithmeticError("P0 policy cuts do not coincide with shell hosts")
+        variants = ((f"p0_policy_m{intervals}", LineMultiplierSpace(
+            "piecewise_constant", tuple(np.linspace(0., 1., intervals+1)))),)
+    elif shell_cells == 2:
         variants = (
             ("p0_one", LineMultiplierSpace("piecewise_constant", (0., 1.))),
             ("p0_two", LineMultiplierSpace("piecewise_constant", (0., .5, 1.))),
@@ -136,7 +147,7 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12) -> dict:
                                 ("p1", "continuous_linear"),
                                 ("dual", "dual_linear")))
     p0_two_rows = (_rows(line, variants[1][1])[0]
-                   if shell_cells == 2 else None)
+                   if shell_cells == 2 and not policy_p0_only else None)
     results = {}
     for label, space in variants:
         constraint, measure = _rows(line, space)
@@ -237,6 +248,7 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12) -> dict:
         "qualification": "development only; not a multiplier selection or G0B pass",
         "shell_cells": shell_cells,
         "beam_half_cells": beam.n_half_cells,
+        "policy_p0_only": policy_p0_only,
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "source_git": subprocess.check_output(
             ("git", "rev-parse", "HEAD"), text=True).strip(),
@@ -260,10 +272,12 @@ if __name__ == "__main__":
     parser.add_argument("--shell-cells", type=int, choices=(2, 4, 8), default=2)
     parser.add_argument("--beam-half-cells", type=int,
                         choices=(12, 14, 18, 24, 26), default=12)
+    parser.add_argument("--policy-p0-only", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     result = run(shell_cells=args.shell_cells,
-                 beam_half_cells=args.beam_half_cells)
+                 beam_half_cells=args.beam_half_cells,
+                 policy_p0_only=args.policy_p0_only)
     if args.output is None:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
