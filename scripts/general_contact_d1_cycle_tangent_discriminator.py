@@ -233,11 +233,90 @@ def run():
                     "pose_constraint_error": pose_constraint_error,
                     "trials": trials,
                 })
+        # The delivered guide fixes every source rotation. Add one such
+        # variation only for a full-coordinate local work-map discriminator.
+        source_director_pose = np.asarray(
+            result.snapshots[3].displacements, dtype=float)
+        source_director_multipliers = np.asarray(
+            history[3]["contact"]["normal_multiplier_estimate_pa"],
+            dtype=float)
+        source_director_direction = np.zeros_like(source_director_pose)
+        for node in (3, 8):
+            source_director_direction[
+                replay_model.mesh.dof_manager.get_node_dofs(node)[4]] = 0.5
+        # Full reaction rows are part of this comparison, including the
+        # constrained target corners. The earlier narrowed Hessian selection
+        # deliberately omitted them and could not test their derivatives.
+        manager.law.set_tangent_active_coordinates(
+            np.arange(manager.law.n_coordinates, dtype=np.intp))
+        manager.set_normal_multipliers(source_director_multipliers)
+        source_base, source_branches = _mapped_state(
+            manager, source_director_pose, source_director_multipliers)
+        source_base_force, source_base_tangent = _assemble(
+            replay_model, source_director_pose, states, tangent=True)
+        with suspend_contact():
+            source_structural, source_structural_tangent = _assemble(
+                replay_model, source_director_pose, states, tangent=True)
+        source_action = np.asarray(
+            (source_base_tangent-source_structural_tangent)
+            @ source_director_direction).reshape(-1)
+        full_groups = {
+            "source_force": np.asarray(sorted(source_dofs & translation_dofs)),
+            "source_moment": np.asarray(sorted(source_dofs-translation_dofs)),
+            "target_force": np.asarray(sorted(target_dofs & translation_dofs)),
+            "target_moment": np.asarray(sorted(target_dofs-translation_dofs)),
+        }
+        source_director_trials = []
+        for size in (8.0e-7, 4.0e-7):
+            side_forces = []
+            side_branches = []
+            for sign in (-1.0, 1.0):
+                trial_pose = source_director_pose + (
+                    sign*size*source_director_direction)
+                trial_state, trial_signature = _mapped_state(
+                    manager, trial_pose, source_director_multipliers)
+                side_branches.append({
+                    "active": bool(np.array_equal(
+                        trial_state.pressure > 0,
+                        source_base.pressure > 0)),
+                    "support": bool(np.array_equal(
+                        trial_state.reference_support > 0,
+                        source_base.reference_support > 0)),
+                    "overlap": (trial_state.overlap_signature
+                                == source_base.overlap_signature),
+                    "pair": trial_signature == source_branches,
+                })
+                trial_force, _ = _assemble(
+                    replay_model, trial_pose, states, tangent=False)
+                with suspend_contact():
+                    trial_structural, _ = _assemble(
+                        replay_model, trial_pose, states, tangent=False)
+                side_forces.append(trial_force-trial_structural)
+            source_finite = np.asarray(
+                (side_forces[1]-side_forces[0])/(2*size)).reshape(-1)
+            comparison = {}
+            for label, rows in full_groups.items():
+                error, scale = _relative_error(
+                    source_action[rows], source_finite[rows])
+                comparison[f"{label}_relative_error"] = error
+                comparison[f"{label}_action_scale"] = scale
+            source_director_trials.append({
+                "step_rad": size,
+                "branch_checks": side_branches,
+                "smooth": all(all(check.values())
+                              for check in side_branches),
+                **comparison,
+            })
         return {"status": "development_discriminator",
                 "accepted_steps": len(result.steps),
                 "reduced_row_counts": {key: len(rows)
                                        for key, rows in row_groups.items()},
-                "records": records}
+                "records": records,
+                "full_coordinate_source_director": {
+                    "step": 4,
+                    "active_pressure_modes": source_base.active_pressure_dofs,
+                    "trials": source_director_trials,
+                }}
 
 
 def main():

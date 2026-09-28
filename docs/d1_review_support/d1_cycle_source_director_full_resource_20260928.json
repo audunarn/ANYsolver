@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 51.40234380000038,
+  "peak_process_tree_memory_mb": 412.459008,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "scripts/general_contact_d1_cycle_tangent_discriminator.py",
+    "reports/d1_cycle_tangent_source_director_full_20260928.json"
+  ],
+  "log": "reports\\d1_cycle_tangent_source_director_full_console_20260928.txt"
+}
