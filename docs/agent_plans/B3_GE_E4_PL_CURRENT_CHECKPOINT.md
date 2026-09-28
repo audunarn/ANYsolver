@@ -10356,3 +10356,35 @@ weak rank becomes full, so further automatic x refinement is not
 justified by this matrix. Do not infer a faulty E4 equation, a better
 multiplier space, or a production law from component work alone.
 F03/G0B remain open and G1 barred.
+
+**Same-law review and input guard (28 September):** Independent read-only
+mechanics review found no blocking row-space, KKT-sign, multiplier-density,
+global-wrench, retained-coordinate, or fixed-dual work error in the three
+recent development diagnostics. It confirmed that the native and solid
+loaded interface wrenches arise from separately solved duals, while the
+component record is the valid fixed-dual comparison; signed channel terms
+are not independent strain energies. The reviewer identified one input
+admission gap: any `EXPLORATORY_COMPLETE` reconstruction was previously
+called same-law. Source `c840ab5a` now admits only the reviewed C1 P0
+reconstruction byte identity and its two source model/deck identities.
+Two source-guard and three adjacent focused tests pass `5/5`. The V2
+bounded rerun reproduces every V1 numerical/result field exactly; only
+the source commit differs. V1 is preserved. This closes a diagnostic
+provenance defect, not F03 or G0B.
+The preserved V2 result
+`B3_E4_F03_C1_NATIVE_MATERIAL_LINE_LOADED_DEV_V2.json` has SHA256
+`04a8a7ce95d3136d57a4d4b86a28fefadb68ed2e30e70ef68cb73efad6a3ebb1`.
+
+**Next bounded physical discriminator (prospective):** The x8 fixed-dual
+E4 shell work shortfall persists after shell weak-row rank becomes full.
+The next question is whether the x4 same-action shell response relies
+materially on E4's nonphysical drilling completion, or whether the
+remaining difference lies in physical shell/3D kinematics and support.
+Reuse the two saved solid P0 duals and the existing x4 E4 operator.
+At the unchanged full-tangent response, partition internal quadratic
+work into the element-reported physical operator and its completion;
+also report the work-conjugate nodal drilling component and equilibrium.
+If completion carries material work, revisit the trace's physical torque
+path before law selection. If it is negligible, proceed to a matched
+physical plate/shear/root-support comparison instead. This diagnostic
+does not tune a drilling parameter or establish production mechanics.
