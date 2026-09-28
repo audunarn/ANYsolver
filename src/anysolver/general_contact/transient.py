@@ -19,10 +19,11 @@ from anymaterial.isotropic import IsotropicMaterial
 
 from anysolver.algebraic_dynamics import build_declared_algebraic_basis
 from anysolver.assembly import assemble_mass_matrix, build_constraint_transformation
+from anysolver.boundary import LoadCase
 from anysolver.dynamics import TransientConfig
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
 from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
-from anysolver.matrix_assembly import assemble_stiffness_matrix
+from anysolver.matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
 from anysolver.nonlinear_state import commit_state_candidate, discard_active_state_candidate
 from anysolver.nonlinear_restart import (
     analysis_configuration_fingerprint, model_configuration_fingerprint,
@@ -151,10 +152,11 @@ class TransientContactResults:
     restart_checkpoint: dict | None = None
 
 
-def _restart_analysis_contract(transient, controls, manager, profile) -> dict:
+def _restart_analysis_contract(transient, controls, manager, profile,
+                               base_load_case, external_load) -> dict:
     # The requested end time is a continuation target, not a definition of
     # the already accepted state. All other integration inputs are bound.
-    return {
+    contract = {
         "profile": profile,
         "dt": float(transient.dt),
         "beta": float(transient.beta),
@@ -175,6 +177,12 @@ def _restart_analysis_contract(transient, controls, manager, profile) -> dict:
         },
         "contact": manager.restart_contract(),
     }
+    if base_load_case is not None:
+        contract["constant_nodal_load"] = {
+            "name": base_load_case.name,
+            "generalized_vector_si": np.asarray(external_load).tolist(),
+        }
+    return contract
 
 
 def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
@@ -369,6 +377,7 @@ def solve_transient_contact(
     transient: TransientConfig | TransientContactSettings,
     *,
     contact_settings: ContactSolverSettings | None = None,
+    base_load_case: LoadCase | None = None,
     solver_controls: ContactTransientSolverControls | None = None,
     restart_checkpoint: Mapping | None = None,
     emit_restart_checkpoint: bool = False,
@@ -377,8 +386,8 @@ def solve_transient_contact(
 
     Every Newton evaluation starts from the last committed material state.
     A rejected step leaves both the displacement and material state at the
-    last accepted time.  The affine fixed-plane gap is checked independently
-    at every accepted endpoint and across the accepted displacement segment.
+    last accepted time. The fixed-plane gap is checked independently at each
+    accepted endpoint and over its declared cubic Hermite integration path.
     S3 descriptor admission additionally requires explicit opt-in and a
     strictly open, stress-free rigid-normal initial state.
     """
@@ -390,8 +399,22 @@ def solve_transient_contact(
         raise ValueError("transient contact checkpoint needs one accepted time step")
     settings = ContactSolverSettings() if contact_settings is None else contact_settings
     profile = _admit(model, definition, settings, controls)
+    if base_load_case is not None:
+        if profile != _PROFILE:
+            raise ValueError("constant nodal loads are admitted only for the Q4 plane development profile")
+        if (type(base_load_case) is not LoadCase
+                or not base_load_case.nodal_loads
+                or base_load_case.element_loads
+                or base_load_case.pressure_loads
+                or base_load_case.gravity is not None
+                or base_load_case.added_node_masses
+                or base_load_case.follower_pressure):
+            raise ValueError("transient development loads require one nodal-only dead LoadCase")
     model.apply_boundary_conditions()
     size = model.mesh.dof_manager.total_dofs
+    external_load, _load_info = assemble_load_vector(model, base_load_case)
+    if external_load.shape != (size,) or not np.all(np.isfinite(external_load)):
+        raise ValueError("transient development load vector is invalid")
     if transient.initial_velocity is None:
         raise ValueError("initial_velocity is required for transient contact")
     initial_velocity = np.asarray(transient.initial_velocity, dtype=float)
@@ -409,6 +432,7 @@ def solve_transient_contact(
     _, _, T, u0, independent_dofs, _ = build_constraint_transformation(
         K0, np.zeros(size, dtype=float), model,
     )
+    external_reduced = np.asarray(T.T @ external_load).reshape(-1)
     if np.linalg.norm(u0, ord=np.inf) > 1.0e-13:
         raise ValueError("transient development profile requires zero prescribed displacements")
     if not len(independent_dofs):
@@ -486,7 +510,10 @@ def solve_transient_contact(
         if restart_checkpoint is not None or emit_restart_checkpoint:
             model_fingerprint = model_configuration_fingerprint(model)
             analysis_fingerprint = analysis_configuration_fingerprint(
-                _restart_analysis_contract(transient, controls, manager, profile)
+                _restart_analysis_contract(
+                    transient, controls, manager, profile,
+                    base_load_case, external_load,
+                )
             )
         if restart_checkpoint is None:
             current_time = 0.0
@@ -506,7 +533,8 @@ def solve_transient_contact(
                 model, full, committed_states, 3, tangent=tangent,
                 kinematics="von_karman",
             )
-            return full, np.asarray(T.T @ force).reshape(-1), stiffness, trial
+            return (full, np.asarray(T.T @ force).reshape(-1)
+                    - external_reduced, stiffness, trial)
 
         full0, force0, initial_tangent, trial0 = evaluate(
             q, tangent=(profile == _S3_PROFILE and restart_checkpoint is None),

@@ -17,6 +17,14 @@ initial displacement and velocity, and `save_every`. Optional
 `TransientContactSettings` remains a thin compatibility adapter for existing
 development callers. Only undamped average-acceleration Newmark is admitted;
 unsupported integration, selected recovery and resource options fail explicitly.
+The optional `base_load_case` admits one time-independent `LoadCase` containing
+nodal forces and moments only in this Q4 branch. Gravity, element/pressure or
+follower loads, added nodal mass and loads in the S3 descriptor branch fail
+explicitly. The reduced dynamic residual is
+`M a + F_structural + F_contact - F_nodal`; the same assembled load enters
+initial acceleration and restart balance. A contact checkpoint binds its load
+name and generalized vector, so changing either rejects continuation. This
+development slice does not yet report external work or admit varying loads.
 The result stores sampled displacement, velocity, acceleration, contact reaction
 and endpoint gap. Its swept-gap and equilibrium-residual entries bound every
 accepted step since the preceding saved sample; iteration counts cover every
@@ -39,7 +47,8 @@ first result after omitting that duplicate state. A focused split during
 active contact matched the uninterrupted Newmark path within declared
 floating-point tolerance. Sparse-output restart remains unadmitted.
 Run `python examples/general_contact_q4_plane_impact.py` from an installed
-package or a source environment.
+package or a source environment. Add `--constant-downward-load-n 0.02` to
+exercise the bounded constant-nodal-load branch.
 
 At each candidate, the coupled residual is `M a + F_structural + F_contact`.
 Its tangent includes the Newmark mass term and the structural/contact tangent.
@@ -60,8 +69,17 @@ rejection of unsupported settings. Active-contact split restart, tampering,
 changed time-step/contact-definition and off-grid export rejection are also covered. These are local
 development tests, not
 registered C6 qualification or independent review.
+The constant-nodal-load checks also compare free guided motion and loaded
+impact with independent one-coordinate mass–spring solutions, and test
+same-load restart and changed-load rejection. The complete focused transient
+file passed 19/19 after this addition.
+Independent read-only review found no concrete defect in load sign,
+projection, initial/resumed balance, restart binding or rollback ownership.
+The tests directly check initial/resumed acceleration and changed load name
+and vector. A nontrivial reduced projection and a loaded rejected step remain
+untested; neither is claimed as separately qualified here.
 
-Prescribed loads, moving tools, free rigid bodies, descriptor dynamics in this Q4 branch,
+General prescribed or varying loads, moving tools, free rigid bodies, descriptor dynamics in this Q4 branch,
 beam impact, general finite sliding, plasticity, friction, damping, general
 dynamic restart, work/energy accounting, cancellation and common-stage native
 coupling remain outside this profile. Contact result records retain the
