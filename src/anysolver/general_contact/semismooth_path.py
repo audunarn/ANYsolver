@@ -73,7 +73,7 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
             contact.state, at_z, c, contact.gap_gradient, tangent=tangent,
         )
         value = max(float(np.linalg.norm(residual))/scale,
-                    float(np.max(np.abs(constraint)))/control_scale,
+                    float(np.max(np.abs(constraint), initial=0.0))/control_scale,
                     float(np.sum(np.abs(ncp)))/scale)
         return (u, material_trial, contact, stiffness, residual, constraint,
                 ncp, active, ncp_q, ncp_z, value)
@@ -90,7 +90,7 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                                   q, mu, z, None, None, iteration, np.inf,
                                   np.inf, np.inf, evaluations, backtracks)
         residual_norm = float(np.linalg.norm(residual))
-        constraint_norm = float(np.max(np.abs(constraint)))
+        constraint_norm = float(np.max(np.abs(constraint), initial=0.0))
         ncp_force = float(np.sum(np.abs(ncp)))
         ncp_norm = ncp_force/scale
         instantaneous_force_scale = max(
@@ -249,7 +249,7 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                 candidate_error = None
                 candidate_norms = {
                     "equilibrium": float(np.linalg.norm(candidate[4]))/scale,
-                    "constraint": float(np.max(np.abs(candidate[5])))/control_scale,
+                    "constraint": float(np.max(np.abs(candidate[5]), initial=0.0))/control_scale,
                     "complementarity": float(np.sum(np.abs(candidate[6])))/scale,
                     "active_modes": int(np.count_nonzero(candidate[7])),
                 }

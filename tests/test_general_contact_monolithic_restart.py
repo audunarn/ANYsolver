@@ -30,9 +30,9 @@ def _case():
     return model, definition, settings, program
 
 
-def test_monolithic_rejects_unimplemented_ordinary_dispatch():
+def test_monolithic_rejects_missing_ordinary_load_and_invalid_force_scale():
     model, definition, settings, program = _case()
-    with pytest.raises(ValueError, match="requires contact_path_program"):
+    with pytest.raises(ValueError, match="needs a LoadCase"):
         solve_static_nonlinear(
             model, contact=definition, contact_settings=settings,
         )

@@ -145,10 +145,10 @@ class ContactPathProgram:
 
     def __post_init__(self) -> None:
         controls = tuple(self.controls)
-        if not 2 <= len(controls) <= 3 or any(
+        if len(controls) not in {0, 2, 3} or any(
             type(item) is not ContactPathControl for item in controls
         ) or len({item.terms for item in controls}) != len(controls):
-            raise ValueError("contact path requires two or three distinct controls")
+            raise ValueError("contact path requires zero, two or three distinct controls")
         points = tuple(tuple(float(value) for value in row)
                        for row in self.waypoints)
         if len(points) < 2 or any(len(row) != len(controls) for row in points):
@@ -225,6 +225,43 @@ class ContactPathProgram:
         return result
 
 
+def _program_from_dead_nodal_load_case(load_case, num_steps: int) -> ContactPathProgram:
+    """Own a narrow ordinary force load as a zero-control contact path."""
+    from anysolver.boundary import LoadCase
+
+    if type(load_case) is not LoadCase or type(num_steps) is not int or num_steps < 1:
+        raise ValueError("monolithic ordinary force contact needs a LoadCase and positive num_steps")
+    if any(type(value) is not dict for value in (
+            load_case.nodal_loads, load_case.element_loads,
+            load_case.pressure_loads, load_case.added_node_masses)):
+        raise ValueError("monolithic ordinary force contact needs owned load mappings")
+    if (load_case.element_loads or load_case.pressure_loads
+            or load_case.gravity is not None or load_case.added_node_masses
+            or load_case.follower_pressure or not load_case.nodal_loads):
+        raise ValueError("monolithic ordinary force contact admits dead nodal loads only")
+    forces = []
+    if any(type(node_id) is not int or node_id <= 0
+           for node_id in load_case.nodal_loads):
+        raise ValueError("monolithic nodal load needs exact positive node IDs")
+    for node_id, value in sorted(load_case.nodal_loads.items()):
+        if type(value) is not np.ndarray or value.dtype.kind not in {"f", "i", "u"}:
+            raise ValueError("monolithic nodal load needs primitive numeric arrays")
+        vector = np.asarray(value, dtype=float)
+        if (vector.shape != (6,) or not np.all(np.isfinite(vector))
+                or np.any(vector[3:] != 0.0)):
+            raise ValueError("monolithic ordinary force contact admits finite translation forces only")
+        for component, dof in enumerate(("ux", "uy", "uz")):
+            if vector[component] != 0.0:
+                forces.append(ContactPathNodalForce(
+                    node_id, dof, (0.0, float(vector[component])),
+                ))
+    if not forces:
+        raise ValueError("monolithic ordinary force contact needs a nonzero nodal force")
+    return ContactPathProgram(controls=(), waypoints=((), ()),
+                              steps_per_segment=num_steps,
+                              nodal_forces=tuple(forces))
+
+
 def solve_static_contact_path(
         model, definition: ContactDefinition, settings: ContactSolverSettings,
         program: ContactPathProgram, *, max_path_fraction: float = 1.0,
@@ -278,6 +315,8 @@ def solve_static_contact_path(
         raise ValueError("contact path currently requires a deformable shell pair")
     augmented = definition.interactions[0].normal_law == "augmented"
     semismooth = settings.enforcement_solver == "monolithic_active_set"
+    if not program.controls and not semismooth:
+        raise ValueError("zero-control contact path requires monolithic_active_set")
     if semismooth and (
             not augmented
             or report.profile not in {
@@ -509,8 +548,8 @@ def solve_static_contact_path(
                 )
                 status = "completed"
                 failure_reason = None
-                scale = max(1.0e-9, max(abs(value) for row in program.waypoints
-                                        for value in row))
+                scale = max(1.0e-9, max((abs(value) for row in program.waypoints
+                                         for value in row), default=0.0))
                 for step in range(accepted_step + 1, requested_step + 1):
                     cancellation_safe_point(cancellation_token,
                                             f"contact_path.step:{step}")

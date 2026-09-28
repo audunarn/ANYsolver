@@ -7719,6 +7719,41 @@ def solve_static_nonlinear(
             cancellation_token=cancellation_token,
         )
 
+    if contact is not None:
+        from .general_contact import ContactSolverSettings
+
+        if (type(contact_settings) is ContactSolverSettings
+                and contact_settings.enforcement_solver == "monolithic_active_set"):
+            from .general_contact.static_path import (
+                _program_from_dead_nodal_load_case,
+                solve_static_contact_path,
+            )
+
+            if (control != "force" or any(value is not None for value in (
+                    constant_load_case, imperfection, load_program,
+                    displacement_control, initial_element_states,
+                    convergence_settings, resource_config, fracture_config,
+                    status_callback, progress_callback, initial_fields,
+                    initial_displacements,
+            )) or equilibrate_initial_state is not None
+                    or record_increment_snapshots
+                    or min_step_fraction != 1.0 / 1024.0
+                    or kinematics != "von_karman"
+                    or corotational_tangent != "auto"):
+                raise ValueError(
+                    "monolithic ordinary force contact admits one dead nodal "
+                    "load case with default structural options"
+                )
+            force_program = _program_from_dead_nodal_load_case(load_case, num_steps)
+            return solve_static_contact_path(
+                model, contact, contact_settings, force_program,
+                max_path_fraction=max_load_factor,
+                max_iterations=max_iterations, tolerance=tolerance,
+                num_layers=num_layers, restart_checkpoint=restart_checkpoint,
+                emit_restart_checkpoint=emit_restart_checkpoint,
+                cancellation_token=cancellation_token,
+            )
+
     exact_guard = _EXACT_QUALIFIED_LIFECYCLE_GUARD
     run_under_lease = _run_with_qualified_assembly_runtime_lease
     own_resource_config = _owned_resource_config_snapshot
