@@ -32,6 +32,12 @@ slice; do not edit or run it by default.
   `a42fe0b28cc3d259ab5201660b2a03e6e2aec2491714dc516c26dee3d5b7a132`;
   14/14 installed B2 regressions passed in
   `.qualification/b3-ge-e4-pl/r7-b2-panel-residual-installed-dev-20260928-v1/`.
+  The follow-up sparse-pattern sharing change at `ad8c05a1` keeps absolute
+  values independently owned while reusing compiled CSR structure. Its new
+  installed wheel SHA-256 is
+  `11e928c9bb95be096d417be541864c70da34273b062401415e752e98def6a71`;
+  14/14 installed B2 checks passed with the actual site import recorded in
+  `.qualification/b3-ge-e4-pl/r7-b2-panel-residual-installed-dev-20260928-v2/`.
 - ANYfem has a separate experimental save/reopen consumer. The installed
   solver/consumer milestone and review are in
   `.qualification/b3-ge-e4-pl/r7-combined-integration-dev-20260928-v1/`.
@@ -190,6 +196,24 @@ historical F5 result is treated as the same connection law. Increasingly
 anisotropic Q4 meshes are not silently excluded: the programme has no
 explicit aspect-ratio ceiling, and any new admission rule needs scientific
 review.
+
+**Current-law slip discriminator:** The older C1 hybrid's mode-resolved check
+already distinguished transverse section nullity from coarse longitudinal
+projection nullity. A focused check now applies the even transverse field to
+the current finite-width rail itself. The shell root is fixed and the E4
+physical tangent gives positive strain energy; local top-surface slip is
+10 micrometres at the terminal centre node. Yet the finite rail pose at every
+Gauss station has zero six-channel gap, and P0, continuous-P1 and dual rows
+at 2/4/8 intervals all vanish to roundoff. This follows from the rail's
+transverse averaging, so repeating longitudinal refinement cannot detect
+this mode. It is an admitted section deformation if the chosen connection
+means an averaged pose bond, but it forbids describing the rail as a
+pointwise welded surface bond. This is a law-semantics observation, not a
+zero-energy mechanism or candidate acceptance. The next decision must test
+the declared reduced law's physical torque/shear transfer against a matched
+reference and establish the mesh-domain work bound and mixed-system behavior.
+The bounded executable check is
+`tests/test_b3_e4_f03_flat_rail_six_channel_map.py` (4/4 source checks).
 
 **Six-channel paired-screen result:** With the same supported 8x2 and 16x4
 grids, finite strip, and growing P0 rows, the complete shell-side work map

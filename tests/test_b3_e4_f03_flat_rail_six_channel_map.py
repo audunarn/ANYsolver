@@ -9,6 +9,8 @@ from scripts.b3_e4_f03_l1_physical_rail import FlatQ4PhysicalRail
 from scripts.b3_e4_f03_l1_physical_rail import SegmentedRailWeakWork
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
+from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
+from scripts.b3_e4_f03_plate_patch_work import raw_e4_tangent
 
 
 def _fixture():
@@ -131,3 +133,52 @@ def test_six_channel_shell_rows_match_native_relative_gap_at_reference():
     np.testing.assert_allclose(combined,
                                -action@q.ravel()+native_integrated,
                                rtol=0., atol=3e-13)
+
+
+def test_current_rail_admits_supported_even_transverse_slip():
+    """Classify this rail's continuous law, not only the older C1 hybrid."""
+    xs = np.linspace(.5, 1., 5)
+    ys = np.array((-.1, -.05, 0., .05, .1))
+    bounds = (-.05, .05)
+    thickness = .035
+    reference = np.array([[(x, y, 0.) for y in ys] for x in xs])
+    beam = build(4, z_offset=.0675, assemble=False)
+    state = beam.context.initial.mechanical
+
+    def port_at(station):
+        element, cell, weight, _ = beam._locate(station)
+        return NativeHalfCellSpatialPort(beam.context, element, cell, weight)
+
+    line = SegmentedRailWeakWork.at_reference(
+        reference, ys, bounds, thickness, port_at, state,
+        beam_offset=(0., 0., -.05),
+        expected_reference_offset_shell=(0., 0., 0.))
+    shell = np.zeros((len(ys), len(xs), 6))
+    even = np.array((0., 1., -1., 1., 0.))
+    longitudinal = np.array((0., 0., 0., .5, 1.))
+    shell[:, :, 2] = 1e-5*even[:, None]*longitudinal[None, :]
+    np.testing.assert_allclose(line.connections[0].rail.weights@even,
+                               0., rtol=0., atol=1e-15)
+    assert shell[2, -1, 2] == -1e-5  # Local shell-top/beam-surface slip.
+    assert not np.any(shell[:, 0, :])  # The supported end remains fixed.
+
+    gaps = []
+    for sample, connection in enumerate(line.connections):
+        segment = sample//2
+        local = shell[:, segment:segment+2, :].transpose(1, 0, 2)
+        gap, _ = connection.evaluate(local, state)
+        gaps.append(gap)
+    gaps = np.asarray(gaps)
+    np.testing.assert_allclose(gaps, 0., rtol=0., atol=2e-14)
+    for kind in ("piecewise_constant", "continuous_linear", "dual_linear"):
+        for intervals in (2, 4, 8):
+            space = LineMultiplierSpace(
+                kind, tuple(np.linspace(0., 1., intervals+1)))
+            projected = np.zeros((space.count, 6))
+            for x, weight, gap in zip(line.stations, line.weights, gaps):
+                projected += weight*space.values(2.*(x-.5))[:, None]*gap
+            np.testing.assert_allclose(projected, 0., rtol=0., atol=2e-14)
+
+    _, physical = raw_e4_tangent(xs, ys, thickness=thickness)
+    energy = .5*shell.ravel()@physical@shell.ravel()
+    assert np.isfinite(energy) and energy > 0.
