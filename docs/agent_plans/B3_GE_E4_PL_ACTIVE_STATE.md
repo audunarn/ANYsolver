@@ -97,8 +97,11 @@ those limits and the mathematical obstruction.
 
 ## Next discriminating action
 
-The physical-only Q4 block **does not uniformly control unrestricted growing
-P0 yaw density work**. Independent review derived a two-transverse-cell mode:
+The physical-only Q4 block **does not uniformly control growing P0 yaw
+density work on the tested longitudinal-only refinement family**. That
+family holds two transverse cells fixed while longitudinal cells shrink;
+the rectangles become increasingly anisotropic. Independent review derived
+a mode:
 nodal lateral pattern (1,-1,1) has zero mean shear on each cell but nonzero
 mean over the fixed central rail strip. Alternating longitudinal amplitude h
 and matching P0 yaw density give constant work 0.25 while physical energy
@@ -109,10 +112,10 @@ negative executable check and raw logs are in
 PL numerical completion can penalize in-plane curl but is not physical shear;
 the drill-only hourglass term does no work on this mode. Positive compliance
 on one fixed grid did not establish a uniform bound.
-The targeted twice-long P0 yaw support also retains this family: on 4/8 fine
+The targeted twice-long P0 yaw support also retains this anisotropic family: on 4/8 fine
 cells, physical energy 8.224e8/2.056e8 J and work 0.125. Thus a fixed
-two-cell macro P0 support does not by itself cure the full L2 continuity
-defect. Independent mechanics review confirmed the asymptotic witness and
+two-cell macro P0 support does not by itself cure continuity on that family.
+Independent mechanics review confirmed the asymptotic witness and
 its narrow implication. Its raw log is beside the first counterexample.
 Even constant yaw density has a free-end witness: localizing the same
 lateral pattern to the last shell cell keeps work 0.5 and fixed density
@@ -121,21 +124,35 @@ norm while physical energy halves at each refinement (5.263e10,
 the endpoint derivation. The executable check and raw log are retained
 with the other negative cases.
 
-The formulation/metric design and one targeted macro-P0 comparison now
-support a mechanics decision: **stop tuning P0 yaw resolution under the
-current rail/physical-core L2 claim.** Derive an objective
-finite-longitudinal-support shell trace or another reviewed continuous
-action that retains constant physical torque transfer and gives a
-whole-space work bound without PL/drilling dependence. Examine endpoints,
-interior support, reference consistency, shear freedom, and the distinction
-from rigid/distributing footprints before loaded comparisons. If that
-cannot preserve declared bonded-line semantics, identify the obstruction
-for independent review rather than relabel a footprint as a line.
-The current box-window prototype proves only bounded kinematics and first
-work variations; it filters one endpoint witness and transfers a local
-physical wrench. Next derive second variations and line-integrated work,
-then establish or refute missing supported E4 physical-core L2 control
-before any F03 metric is used.
+The previous decision to abandon P0 yaw for all refinements was too broad.
+The registered F03 refinements pair longitudinal and transverse resolution;
+the anisotropic witness does not decide their outcome. The current box-window
+prototype proves only bounded kinematics and first work variations; it is
+an unselected alternative, not a replacement bonded-line law.
+
+**Paired-refinement result:** The bounded 8/16/32 longitudinal by 2/4/8
+transverse Q4 screen kept the rail-cell aspect ratio at 1.25 and the same
+fixed physical strip, supports and density actions. The macro-P0 witness's
+normalized work was 6.595e-6, 0.862e-6 and 0.795e-6 J^-1/2; the constant
+endpoint witness's was 4.663e-6, 0.431e-6 and 0.281e-6 J^-1/2. Neither
+shows the anisotropic divergence. The strip average of the alternating
+transverse field is bounded by its two partial end cells and falls with
+transverse cell width; physical energy is constant for this macro field and
+increases for the endpoint field on these grids. This is a constructed-mode
+screen, not a whole-space bound, mixed-system result or F03 acceptance.
+The executable and raw output are in
+`.qualification/b3-ge-e4-pl/r7-f03-paired-refinement-dev-20260928-v1/`.
+
+**Next decision:** Retain the rail as a candidate for the registered paired
+family while checking the complete supported physical-core L2 work upper
+quotient or deriving an equivalent whole-space bound. If that fails, identify
+the responsible mode and correct the law or norm before F03 scoring. If it
+holds, proceed to native mixed stability and matched physical torque/shear
+transfer. Neither result silently removes increasingly anisotropic Q4 meshes
+from the admitted domain; that scope requires an explicit scientific decision.
+Do not silently restrict the admitted domain to shape-regular cells: the
+programme has no explicit aspect-ratio ceiling, and any new admission rule
+needs its own scientific review.
 F03 formal assessment stays barred. The seven ratios, growing spaces, three
 refinements, physical transfer, locking, shear, drilling, and mixed-system
 checks remain mandatory. No automatic axial sweep or new external reference

@@ -314,7 +314,9 @@ point values. Quadrature-defined discrete work therefore needs its own
 basis, integration-error and mesh-uniform work-continuity checks before the
 continuum L2 estimate can support an F03 assessment.
 The assumed E4 physical-energy control of shell H1 is **false for the
-unrestricted growing P0 yaw space on the tested Q4 family**. With two
+growing P0 yaw space on the tested longitudinal-only Q4 refinement family**.
+This family fixes two transverse cells while shrinking longitudinal cells;
+its element aspect ratio is unbounded. With two
 transverse cells, nodal lateral profile (1,-1,1) has zero mean on each
 cell but average -1/2 over the fixed central strip. On longitudinal cells
 of size h, use alternating nodal amplitudes 0,h,0,h,... and a matching
@@ -327,41 +329,61 @@ drilling loads vanish. The executable negative case is
 test_physical_core_does_not_uniformly_control_growing_p0_yaw;
 raw output is retained in
 .qualification/b3-ge-e4-pl/r7-f03-growing-rail-dev-20260928-v1/.
-This disproves the proposed *physical-core* uniform L2 continuity for that
-admitted density family. It does not establish failure of every prospective
-space or of the complete connection. The PL term can penalize in-plane curl
+This disproves the proposed *physical-core* uniform L2 continuity over that
+anisotropic refinement family. It does not establish failure on uniformly
+shape-regular grids, of every prospective space, or of the complete connection.
+The PL term can penalize in-plane curl
 through numerical drilling completion, while the drill-only hourglass term
 does no work on this zero-drill field. Neither supplies the missing physical
 membrane-shear proof. A restricted, still-growing multiplier space needs an
 independent whole-space bound and physical transfer checks before use.
 The targeted fixed 2:1 coarsening of yaw P0 supports also fails this
-continuity requirement on affine regular grids. Let each macro interval
+continuity requirement on affine but increasingly anisotropic rectangles.
+Let each macro interval
 contain two fine shell cells, alternate the macro density signs, and set
 the lateral nodal amplitude to h at every other macro boundary and zero
 elsewhere. The fixed-strip rail work stays 0.125 while physical-core
 energy falls from 8.224e8 to 2.056e8 J when the fine grid changes from
 four to eight cells; no drilling load or virgin gap occurs. The same test
 and retained raw log record this witness. Thus the proposed twice-long P0
-yaw support is not a uniform physical-core L2 work-continuity cure merely
-because it hides the one-cell checkerboard. This does not adjudicate other
-complete multiplier pairings or a corrected continuous law.
+yaw support is not a uniform physical-core L2 work-continuity cure over
+that family merely because it hides the one-cell checkerboard. This does
+not adjudicate shape-regular refinements, other complete multiplier
+pairings, or a corrected continuous law.
 Even a constant yaw density has an endpoint witness. Keep the same
 transverse profile, set every longitudinal nodal amplitude to zero except
 unit amplitude at the free rail end, and use unit yaw density. The
 physical core sees only transverse strain in the final cell, with energy
 O(h), while the rail's integrated yaw work is 0.5 and its L2 density norm
 is fixed. Actual E4 physical-core energies for h=1/4,1/8,1/16 are
-5.263e10, 2.632e10 and 1.316e10 J. Thus constant torque transfer itself
-has no uniform physical-core L2 work bound for this unsmoothed
-longitudinal-tangent trace at a free endpoint. Independent mechanics
+5.263e10, 2.632e10 and 1.316e10 J. Thus even constant torque transfer has
+no uniform physical-core L2 work bound for this unsmoothed
+longitudinal-tangent trace at a free endpoint over the tested anisotropic
+family. Independent mechanics
 review confirmed the derivation; the executable case
 test_constant_yaw_has_free_endpoint_physical_core_witness and raw log in
 the same evidence directory preserve it. Restricting yaw to H1-zero
 endpoint functions would exclude exact constant density and still needs
-a stronger-than-L2 derivative/bandwidth control. Do not score a new
-multiplier candidate until a revised continuous action, physical
-response, or prospectively justified endpoint-aware norm preserves
-required physical torque transfer.
+a stronger-than-L2 derivative/bandwidth control on that family. The registered
+paired refinements have bounded aspect ratio and this witness does not
+adjudicate them. Before scoring a new multiplier candidate, assess the
+registered family and justify a whole-space norm and physical torque transfer.
+Neither a replacement law nor a shape-regular-only admission is selected by
+these negative cases.
+
+A bounded paired-refinement discriminator subsequently used 8/16/32
+longitudinal by 2/4/8 transverse cells over the same physical panel, with
+rail-cell aspect ratio 1.25 and fixed strip (-0.047, 0.046) m. For the
+constructed macro-P0 field, physical-core energy stayed 8.224e8 J and the
+normalized work was 6.595e-6, 0.862e-6 and 0.795e-6 J^-1/2. For the
+constant-density endpoint field, energy rose 2.632e10, 5.263e10 and
+1.053e11 J and normalized work was 4.663e-6, 0.431e-6 and 0.281e-6
+J^-1/2. The alternating transverse profile cancels over complete cells;
+only at most two partial strip cells contribute, so its fixed-strip average
+is O(h_y). These two witnesses therefore do not show divergence under
+paired refinement. This does not establish a whole-space continuity bound,
+native mixed stability, or acceptance. Raw output and the executable are
+retained at .qualification/b3-ge-e4-pl/r7-f03-paired-refinement-dev-20260928-v1/.
 
 A distinct development alternative is a *line-indexed finite area patch*.
 At material station \(s\), freeze a normalized reference kernel

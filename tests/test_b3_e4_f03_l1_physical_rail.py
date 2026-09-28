@@ -742,6 +742,36 @@ def test_constant_yaw_has_free_endpoint_physical_core_witness():
         rtol=2e-12, atol=0.)
 
 
+def test_paired_refinement_screen_work_matches_actual_rail_spin():
+    """Check the screen's closed-form flat yaw work against the pose map."""
+    y = np.array((-.1, 0., .1))
+    bounds = (-.047, .046)
+    h = .125
+    phi = (-1.)**np.arange(len(y))
+    average = transverse_shape_integrals(y, bounds) @ phi
+    for name in ("macro_p0", "constant_endpoint"):
+        amplitude = np.zeros(5)
+        density = np.array((1., 1., -1., -1.))
+        if name == "macro_p0":
+            amplitude[2] = h
+        else:
+            amplitude[-1] = 1.
+            density[:] = 1.
+        actual = 0.
+        for i in range(4):
+            x0, x1 = .5+i*h, .5+(i+1)*h
+            reference = np.array([[(x, value, 0.) for value in y]
+                                  for x in (x0, x1)])
+            rail = FlatQ4PhysicalRail.from_reference(
+                reference, y, bounds, .035)
+            direction = np.zeros((2, len(y), 6))
+            direction[:, :, 1] = amplitude[i:i+2, None]*phi[None, :]
+            actual += density[i]*h*rail.spin(
+                np.zeros_like(direction), direction)[2]
+        assert actual == pytest.approx(
+            average * (density @ np.diff(amplitude)), abs=2e-14)
+
+
 def test_segmented_rail_constant_density_has_line_wrench_and_shell_compliance():
     line, beam = _segmented_rail()
     xs = np.array((0., .25, .5, .75, 1.))
