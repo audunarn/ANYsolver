@@ -45,9 +45,11 @@ modes across ratios and whether physically matched sided torque/shear
 transfer validates the declared law. **Next discriminator and action:**
 Examine the actual shell/retained-beam `rz` trace and the longitudinal
 test-space pairing on this saved fixture before another mesh or loaded
-solve. Determine whether the observed mode is detectable by a stable
-alternative weak space or requires a trace-law correction; neither is
-selected from gap magnitude alone.
+solve. The saved-field projection now shows continuous-P1 and dual-P1
+do detect the `rz` mode and both have full supported row rank on x16;
+next compare their bounded loaded and mixed-system behavior before
+considering either as the enforcement policy. Neither is selected
+from detection or rank alone.
 Establish a work-conjugate torque/section/support comparator that
 separates shell idealization from connection transfer; neither the
 saved pure-action fields nor a displacement fit does that alone.
@@ -11200,3 +11202,34 @@ Their exact respective runner hashes are
 `4e377d2c9553baa91791aa263c32871cd704f66a1f4556290ed6bc08001bd6ce`,
 `8d35f7d7878d022bd973ce34a84d9ed2b3df41f2fb87335ea45c2d35c29df8ac`,
 and `6f7073fadd391ac0ea0f37af626bc53777494e7dcabda5466b546e963141c0cc`.
+
+**Next no-solve pairing discriminator (prospective):** Reconstruct the
+already used three-point Gauss weights from the saved x16 station
+abscissae, verify total material-line measure and station identity,
+then project the saved m8 six-channel gap on existing continuous-P1
+and dual-P1 longitudinal test functions. Nonzero `rz` moments would
+nominate those spaces for full rank, work, locking and mixed-system
+checks; vanishing moments would send the trace/test design back for
+revision. This is a mode-detection calculation on existing states,
+not a new loaded solve or multiplier selection.
+
+**No-solve pairing outcome:** The 48 saved x16 quadrature abscissae
+form 16 three-point Gauss segments. Reconstructed positive weights
+sum to `0.10000000000000081 m`; their P0 projections reproduce the
+saved interval means within `1e-12`. On the m8 Mx state, the maximum
+normalized `rz` row is `1.25e-19 rad` for P0,
+`7.26219e-6 rad` for continuous P1, and `2.17866e-5 rad` for
+dual P1. The m4 state gives the same distinction:
+`1.69e-20`, `6.76632e-6`, and `2.02990e-5 rad`, respectively.
+The matching fixed x16/B3-14/m8 supported row audit gives
+P0 `48/48`, continuous P1 `54/54`, and dual P1 `54/54` with
+112 active primal columns; smallest unit-row singular values in
+that *algebraic* diagnostic are `0.231`, `0.161`, and `0.125`.
+Thus P1 and dual detect a real P0-invisible mode on this fixture and
+are not rejected for local row dependence here. This does not prove
+their mixed inf-sup behavior, freedom from locking, physical fidelity,
+or suitability at other ratios. The next action is a bounded
+same-primal loaded/mixed-system comparison of these two spaces while
+advancing the independent physically matched torque/shear reference;
+do not resume finer classical axial work or select from these row
+figures alone.
