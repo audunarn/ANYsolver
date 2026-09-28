@@ -45,13 +45,18 @@ def _relative(left: np.ndarray, right: np.ndarray) -> float:
 def evaluate(*, beam_half_cells: int = 12,
              p0_intervals: int = 4,
              mode_resolved_mx_only: bool = False,
-             space_kind: str = "piecewise_constant") -> dict:
+             space_kind: str = "piecewise_constant",
+             selective_yaw: bool = False) -> dict:
     if (beam_half_cells, p0_intervals) not in ((12, 4), (14, 4), (14, 8)):
         raise ValueError("bounded x16 P0 ratio fixture required")
     if space_kind not in ("piecewise_constant", "continuous_linear",
                           "dual_linear"):
         raise ValueError("bounded material-line multiplier kind required")
-    if space_kind != "piecewise_constant" and (
+    if selective_yaw and ((beam_half_cells, p0_intervals) != (14, 8) or
+                          space_kind == "piecewise_constant" or
+                          mode_resolved_mx_only):
+        raise ValueError("bounded x16/B3-14/m8 selective-yaw Mx/Fz comparison required")
+    if space_kind != "piecewise_constant" and not selective_yaw and (
             (beam_half_cells, p0_intervals) != (14, 8) or
             not mode_resolved_mx_only):
         raise ValueError("bounded x16/B3-14/m8 Mx space comparison required")
@@ -76,14 +81,27 @@ def evaluate(*, beam_half_cells: int = 12,
     full_free = np.r_[shell_free, ns+beam_free]
     reduced_free = np.r_[physical, ns+beam_free]
     line = MaterialLinePosition(xs, ys, beam)
-    rows, measures = _rows(line, LineMultiplierSpace(
-        space_kind, tuple(np.linspace(0., 1., p0_intervals+1))))
+    knots = tuple(np.linspace(0., 1., p0_intervals+1))
+    p0_rows, p0_measures = _rows(line, LineMultiplierSpace(
+        "piecewise_constant", knots))
+    if selective_yaw:
+        yaw_rows, yaw_measures = _rows(line, LineMultiplierSpace(
+            space_kind, knots))
+        rows = np.vstack([p0_rows[axis::6] for axis in range(5)] +
+                         [yaw_rows[5::6]])
+        valid_measure = (np.min(p0_measures) > 1e-12 and
+                         np.min(yaw_measures) > 1e-12 and
+                         abs(np.sum(p0_measures)-.1) <= 1e-12 and
+                         abs(np.sum(yaw_measures)-.1) <= 1e-12)
+    else:
+        rows, measures = _rows(line, LineMultiplierSpace(space_kind, knots))
+        valid_measure = (np.min(measures) > 1e-12 and
+                         abs(np.sum(measures)-.1) <= 1e-12 and
+                         (space_kind != "piecewise_constant" or np.allclose(
+                             measures, .1/p0_intervals, rtol=0., atol=1e-12)))
     row_count = len(rows)
     if (rows.shape != (row_count, ns+beam.context.count) or
-            np.min(measures) <= 1e-12 or
-            abs(np.sum(measures)-.1) > 1e-12 or
-            (space_kind == "piecewise_constant" and not np.allclose(
-                measures, .1/p0_intervals, rtol=0., atol=1e-12)) or
+            not valid_measure or
             np.max(np.abs(rows[:, drill])) > 1e-12):
         raise ArithmeticError("reviewed line rows act on changed drilling coordinates")
     full_scales, energy_scale = _scales(ns, beam, full_free,
@@ -210,11 +228,7 @@ def evaluate(*, beam_half_cells: int = 12,
             "position_max_m": float(np.max(np.linalg.norm(position_gap, axis=1))),
             "orientation_max_rad": float(np.max(np.linalg.norm(rotation_gap, axis=1))),
         }
-        if mode_resolved_mx_only:
-            p0_rows = (rows if space_kind == "piecewise_constant" else
-                       _rows(line, LineMultiplierSpace(
-                           "piecewise_constant", tuple(np.linspace(
-                               0., 1., p0_intervals+1))))[0])
+        if mode_resolved_mx_only or selective_yaw:
             case["continuous_gap_modes"] = _p0_gap_modes(
                 line, position_gap, rotation_gap, p0_intervals,
                 p0_rows@state)
@@ -230,11 +244,12 @@ def evaluate(*, beam_half_cells: int = 12,
         "source_git": subprocess.check_output(("git", "rev-parse", "HEAD"),
                                               text=True).strip(),
         "model": (f"C1 Q4 x16/y4 35 mm shell, B3-{beam_half_cells}, "
-                  f"material-line {space_kind} m{p0_intervals}, "
+                  f"material-line {'P0-five plus '+space_kind+' yaw' if selective_yaw else space_kind} m{p0_intervals}, "
                   "original full equations reconstructed"),
         "beam_half_cells": beam_half_cells,
         "p0_intervals": p0_intervals,
         "space_kind": space_kind,
+        "selective_yaw": selective_yaw,
         "mode_resolved_mx_only": mode_resolved_mx_only,
         "full_kkt_rows": len(full_free)+row_count,
         "quotient_kkt_rows": dimension,
@@ -268,6 +283,7 @@ def main() -> None:
     parser.add_argument("--beam-half-cells", type=int, choices=(12, 14), default=12)
     parser.add_argument("--p0-intervals", type=int, choices=(4, 8), default=4)
     parser.add_argument("--mode-resolved-mx-only", action="store_true")
+    parser.add_argument("--selective-yaw", action="store_true")
     parser.add_argument("--space-kind", choices=("piecewise_constant",
                                                   "continuous_linear",
                                                   "dual_linear"),
@@ -279,7 +295,8 @@ def main() -> None:
         result = evaluate(beam_half_cells=args.beam_half_cells,
                           p0_intervals=args.p0_intervals,
                           mode_resolved_mx_only=args.mode_resolved_mx_only,
-                          space_kind=args.space_kind)
+                          space_kind=args.space_kind,
+                          selective_yaw=args.selective_yaw)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n", encoding="utf-8")
     print(json.dumps({"elapsed_s": result["elapsed_s"],

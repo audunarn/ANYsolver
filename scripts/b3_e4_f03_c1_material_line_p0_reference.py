@@ -14,6 +14,7 @@ from pathlib import Path
 
 import numpy as np
 
+from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
 from scripts.b3_e4_f03_c1_material_line_solid_port import build_flat_solid_line_port
 from scripts.b3_e4_f03_ccx_six_channel_compliance import _source
 from scripts.b3_e4_f03_ccx_six_channel_preflight import _element_domain_nodes
@@ -115,17 +116,136 @@ def evaluate() -> dict:
     }
 
 
+def integrated_selective_yaw_rows(coords, plate, bar):
+    """P0 and exact yaw P1/dual rows in one common solid-face node order."""
+    nodes, p0, ports = integrated_rows(coords, plate, bar)
+    index = {node: k for k, node in enumerate(nodes)}
+    candidates = {}
+    for kind in ("continuous_linear", "dual_linear"):
+        space = LineMultiplierSpace(kind, (0., .5, 1.))
+        yaw = np.zeros((space.count, p0.shape[1]))
+        for interval in ports:
+            for weight, port in interval:
+                station = (port.station_x_m-X_EDGES[0])/(X_EDGES[-1]-X_EDGES[0])
+                values = space.values(station)
+                for k, node in enumerate(port.node_ids):
+                    yaw[:, 3*index[node]:3*index[node]+3] += (
+                        weight*values[:, None]*port.gap_jacobian[5, 3*k:3*k+3])
+        candidates[kind] = yaw
+    return nodes, p0, candidates
+
+
+def evaluate_selective_yaw_span() -> dict:
+    """Count the extra solid action directions needed beyond saved P0 columns."""
+    reconstruction = json.loads(RECON.read_text())
+    if reconstruction["status"] != "EXPLORATORY_COMPLETE":
+        raise ValueError("completed detached F4 reconstruction required")
+    deck, meta, coords, _, _, _ = _source(SOURCE / "tip_mx")
+    if digest(deck) != reconstruction["cases"]["tip_mx"]["source_deck_sha256"]:
+        raise ValueError("detached source deck changed")
+    plate, bar = _element_domain_nodes(deck)
+    nodes, p0, candidates = integrated_selective_yaw_rows(coords, plate, bar)
+    if set(nodes) & set(meta["boundary_node_ids"]):
+        raise ValueError("material-line action overlaps saved supports")
+
+    def rank(matrix):
+        norms = np.linalg.norm(matrix, axis=1)
+        if np.any(norms <= 0.):
+            raise ArithmeticError("zero solid action row")
+        normalized = matrix/norms[:, None]
+        singular = np.linalg.svd(normalized, compute_uv=False)
+        return int(np.sum(singular > 1e-10)), float(singular[-1])
+
+    base_rank, _ = rank(p0)
+    if base_rank != 24:
+        raise ArithmeticError("saved P0 action rank changed")
+    p1 = candidates["continuous_linear"]
+    dual = candidates["dual_linear"]
+    proposed = np.vstack((p0, p1[[0, 2]]))
+    proposed_rank, _ = rank(proposed)
+    combined = np.vstack((p0, p1, dual))
+    combined_rank, _ = rank(combined)
+    if proposed_rank != 26 or combined_rank != 26:
+        raise ArithmeticError("two P1 endpoint actions do not span both yaw spaces")
+    _, _, vt = np.linalg.svd(proposed, full_matrices=False)
+    basis = vt[:proposed_rank]
+    row_span_defects = {}
+    for kind, rows in candidates.items():
+        defects = np.linalg.norm(rows-(rows@basis.T)@basis, axis=1)
+        row_span_defects[kind] = (defects/np.linalg.norm(rows, axis=1)).tolist()
+    if max(max(values) for values in row_span_defects.values()) > 1e-10:
+        raise ArithmeticError("proposed extra actions do not span yaw candidates")
+
+    origin = np.array((.95, 0., .0175))
+    node_coordinates = np.array([coords[node] for node in nodes])
+    sample = np.array([[.01*np.sin(node), .02*np.cos(node),
+                        .005*np.sin(2*node)] for node in nodes])
+    actions = []
+    for yaw_index in (0, 2):
+        row = p1[yaw_index]
+        nodal = row.reshape(-1, 3)
+        force = np.sum(nodal, axis=0)
+        moment = np.sum(np.cross(node_coordinates-origin, nodal), axis=0)
+        plate_force = np.sum([nodal[i] for i, node in enumerate(nodes)
+                              if node in plate], axis=0)
+        bar_force = np.sum([nodal[i] for i, node in enumerate(nodes)
+                            if node in bar], axis=0)
+        work_defect = abs(float(row@sample.ravel()-np.sum(nodal*sample)))
+        result = {
+            "p1_yaw_index": yaw_index,
+            "row_norm": float(np.linalg.norm(row)),
+            "global_force_norm_n_per_unit_dual": float(np.linalg.norm(force)),
+            "global_moment_norm_nm_per_unit_dual": float(np.linalg.norm(moment)),
+            "side_force_norm_n_per_unit_dual": float(np.linalg.norm(plate_force+bar_force)),
+            "transpose_work_defect_j_per_unit_dual": work_defect,
+        }
+        if max(result[key] for key in (
+                "global_force_norm_n_per_unit_dual",
+                "global_moment_norm_nm_per_unit_dual",
+                "side_force_norm_n_per_unit_dual",
+                "transpose_work_defect_j_per_unit_dual")) > 1e-10:
+            raise ArithmeticError("extra solid action loses balance or work")
+        actions.append(result)
+    return {
+        "status": "DEVELOPMENT_SPAN_PREFLIGHT_PASSED",
+        "classification": "same detached solid geometry; exact selective-yaw action span only",
+        "source_deck_sha256": digest(deck),
+        "reference_reconstruction_sha256": digest(RECON),
+        "p0_row_count": len(p0),
+        "p0_rank": base_rank,
+        "p1_yaw_row_count": len(p1),
+        "dual_yaw_row_count": len(dual),
+        "p0_plus_p1_rank": rank(np.vstack((p0, p1)))[0],
+        "p0_plus_dual_rank": rank(np.vstack((p0, dual)))[0],
+        "combined_rank": combined_rank,
+        "proposed_extra_p1_yaw_indices": [0, 2],
+        "proposed_basis_rank": proposed_rank,
+        "candidate_row_relative_span_defects": row_span_defects,
+        "proposed_extra_actions": actions,
+        "active_face_nodes": len(nodes),
+        "limitations": [
+            "fixed solid face grid only; no growing-space or mesh-ratio claim",
+            "span does not supply unexecuted external displacement fields",
+            "no loaded P1/dual reference, F03/G0B acceptance, or multiplier selection",
+        ],
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--selective-yaw-span", action="store_true")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError("preserve prior action preflight")
-    result = evaluate()
+    result = (evaluate_selective_yaw_span() if args.selective_yaw_span
+              else evaluate())
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n", encoding="utf-8")
-    print(json.dumps({"status": result["status"], "rows": result["row_count"],
-                      "rank": result["row_rank"], "output": str(args.output)}))
+    print(json.dumps({"status": result["status"],
+                      "rows": result.get("row_count", result.get("proposed_basis_rank")),
+                      "rank": result.get("row_rank", result.get("combined_rank")),
+                      "output": str(args.output)}))
 
 
 if __name__ == "__main__":

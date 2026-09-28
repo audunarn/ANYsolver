@@ -45,14 +45,16 @@ CASES = (
 KINDS = ("piecewise_constant", "continuous_linear", "dual_linear")
 
 
-def evaluate() -> dict:
+def evaluate(*, selective_yaw: bool = False) -> dict:
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     if Path(anysolver.__file__).resolve().parent != expected:
         raise RuntimeError("ratio screen imported another ANYsolver checkout")
     started = monotonic()
     deadline = started+120.
     cases = {}
-    for shell_cells, beam_halves, label in CASES:
+    cases_to_check = (CASES + ((16, 14, "4:1-L2"),)
+                      if selective_yaw else CASES)
+    for shell_cells, beam_halves, label in cases_to_check:
         if monotonic() > deadline:
             raise TimeoutError("bounded C1 ratio row-screen deadline")
         xs, ys = local_grid(shell_cells, transverse_cells=4)
@@ -61,8 +63,9 @@ def evaluate() -> dict:
                      reference_profile="c1_tangent_2um", assemble=False)
         bond_halves = int(np.sum(np.diff(beam.abscissae)[
             beam.abscissae[:-1] >= .9-1e-12] > 0.))
-        if (shell_cells*1 != int(label.split(":")[0])*bond_halves /
-                int(label.split(":")[1])):
+        ratio_label = label.split("-")[0]
+        if (shell_cells*1 != int(ratio_label.split(":")[0])*bond_halves /
+                int(ratio_label.split(":")[1])):
             raise ArithmeticError("declared beam:shell bond ratio changed")
         intervals = min(shell_cells, 2*bond_halves)
         if shell_cells % intervals:
@@ -75,11 +78,21 @@ def evaluate() -> dict:
         fixed_beam = {ns+int(i) for i in beam.context.fixed}
         free = np.setdiff1d(np.arange(ns+beam.context.count),
                             np.array(sorted(fixed_shell|fixed_beam)))
+        yaw_intervals = shell_cells//2 if selective_yaw else None
         row_results = {}
-        for kind in KINDS:
-            space = LineMultiplierSpace(
-                kind, tuple(np.linspace(0., 1., intervals+1)))
-            rows, masses = _rows(line, space)
+        for kind in (KINDS[1:] if selective_yaw else KINDS):
+            if selective_yaw:
+                p0_rows, p0_masses = _rows(line, LineMultiplierSpace(
+                    "piecewise_constant", tuple(np.linspace(0., 1., intervals+1))))
+                yaw_rows, yaw_masses = _rows(line, LineMultiplierSpace(
+                    kind, tuple(np.linspace(0., 1., yaw_intervals+1))))
+                rows = np.vstack([p0_rows[axis::6] for axis in range(5)] +
+                                 [yaw_rows[5::6]])
+                masses = None
+            else:
+                space = LineMultiplierSpace(
+                    kind, tuple(np.linspace(0., 1., intervals+1)))
+                rows, masses = _rows(line, space)
             scales, _ = _scales(ns, beam, free, row_count=len(rows))
             diagnostic = _scaled_row_diagnostics(rows, free, scales[:len(free)])
             if diagnostic["scaled_row_rank"] > len(rows):
@@ -91,19 +104,25 @@ def evaluate() -> dict:
                     diagnostic["scaled_row_singular_values"]),
                 "rank_tolerance": diagnostic["rank_tolerance"],
                 "active_primal_columns": diagnostic["active_primal_columns"],
-                "basis_integrals_m": masses.tolist(),
+                **({"p0_basis_integrals_m": p0_masses.tolist(),
+                    "yaw_basis_integrals_m": yaw_masses.tolist()}
+                   if selective_yaw else {"basis_integrals_m": masses.tolist()}),
             }
         cases[label] = {
             "shell_bond_cells": shell_cells,
             "beam_half_cells_total": beam_halves,
             "beam_bond_half_cells": bond_halves,
             "multiplier_intervals": intervals,
+            "yaw_multiplier_intervals": yaw_intervals,
             "station_count": len(line.stations),
             "spaces": row_results,
         }
     return {
         "classification": "bounded material-line ratio row screen, not mixed stability or F03 acceptance",
-        "question": "Does m=min(shell bond cells,2*beam bond half-cells) avoid dependent projected rows at registered ratios?",
+        "selective_yaw": selective_yaw,
+        "question": ("Does P0 for five channels and every-second-shell-cell P1/dual yaw avoid dependent supported rows at the registered ratios?"
+                     if selective_yaw else
+                     "Does m=min(shell bond cells,2*beam bond half-cells) avoid dependent projected rows at registered ratios?"),
         "ratio_convention": "shell bond cell count : native beam half-cell count on the same 0.9-1.0 m line",
         "geometry": "Q4/y4, 35 mm shell, 100 mm square beam, 67.5 mm eccentricity, same C1 taper and root supports",
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
@@ -112,7 +131,7 @@ def evaluate() -> dict:
         "limits": ["existing <=60-row and <=1200-active-column unit-row diagnostic",
                    "no tangent, KKT solve, physical load, or mesh-uniform stability claim",
                    "one provisional policy and one shell/beam grid per ratio",
-                   "rank alone cannot select P0, P1, or dual"],
+                   "rank alone cannot select P0, P1, dual, or a channel-selective space"],
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "source_git": subprocess.check_output(
             ("git", "rev-parse", "HEAD"), text=True).strip(),
@@ -128,11 +147,12 @@ def evaluate() -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--selective-yaw", action="store_true")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     with threadpool_limits(limits=1):
-        result = evaluate()
+        result = evaluate(selective_yaw=args.selective_yaw)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps({ratio: {name: [item["rank"], item["rows"]]
                              for name, item in case["spaces"].items()}

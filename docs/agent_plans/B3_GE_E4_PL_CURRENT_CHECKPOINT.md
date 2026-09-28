@@ -2,69 +2,29 @@
 
 ## Current state — 28 September 2026
 
-**Decision sought:** Establish the physical native material-line law and
-its exact multiplier resolution policy. **Established:** The provisional
-P0 rule has independent supported rows and one bounded loaded Mx/Fz
-solve at all seven registered shell:beam ratios. Three matched 1:1
-levels, Q4 x2/B3-12 through Q4 x8/B3-18, pass loaded Mx/Fz
-equilibrium, work and balance; tip work
-changes contract with refinement. Their actual native retained mixed
-KKT has P0 ranks `12/12`, `24/24`, `48/48` and smallest normed
-responses `0.01502`, `0.01511`, `0.01514` in the existing diagnostic
-metric. The weak vector is dominated by the beam kinematic norm, so
-this does not independently establish interface inf-sup stability.
-P1/dual still have dependencies at the full-resolution matched levels.
-The same-action shell/reference difference remains strongest in torque
-and axial/bending work. A pure-torque width probe finds a `2.0–3.2%`
-E4/3D director discrepancy from pre-bond to bond, with small measured
-3D mid-thickness displacement warp. Pure Fz displacement differs by
-`0.9–1.2%` without a similar local rise. A Q4 least-squares fit to the
-pure-torque solid faces is geometrically close but `38%` away from
-the Q4 equilibrium field in its energy norm; it cannot allocate the
-work discrepancy. The `1:8` and `8:1` ratio extremes now pass bounded
-loaded Mx/Fz checks. The x16/y4 `8:1` fixture required an exact
-drilling quotient to reduce 1,956 full rows to 1,670 diagnostic rows
-without raising the 1,900-row cap; its full equations were checked
-after reconstruction.
-On fixed x8/B3-14, P0 m4 leaves a `6.82e-6 rad` torque-gap RMS,
-while m8 reduces it to `1.55e-7 rad` and changes torque tip response
-by about `7.4%`. Thus the coarse weak space, not beam resolution alone,
-causes the large same-mesh torque discrepancy.
-At fixed shell:beam `4:1`, joint x8/B3-12/m4 → x16/B3-14/m8
-refinement passes both loaded solves but the torque rotation-gap RMS
-increases `6.10e-6 → 9.11e-6 rad`; the policy is not qualified by
-the otherwise close tip response. Mode-resolved reconstruction locates
-the increase in local `rz` (`6.00e-6 → 9.08e-6 rad` RMS), with weak
-interval means below `2.8e-20`; `rx` contracts. On the *fixed*
-x16/B3-14 primal, m4 → m8 also increases `rz` RMS
-`7.51e-6 → 9.08e-6 rad` (`+21%`) despite valid full equilibrium,
-work and support balance. Thus simple P0 enrichment does not remove
-this unresolved within-interval mode at the second level.
-**Remaining uncertainty:** Whether P0 avoids locking and unsupported
-modes across ratios and whether physically matched sided torque/shear
-transfer validates the declared law. **Next discriminator and action:**
-Examine the actual shell/retained-beam `rz` trace and the longitudinal
-test-space pairing on this saved fixture before another mesh or loaded
-solve. The saved-field projection now shows continuous-P1 and dual-P1
-do detect the `rz` mode and both have full supported row rank on x16;
-their fixed-primal loaded Mx solves also pass and reduce its continuous
-RMS to `3.42e-6` and `1.18e-6 rad` respectively, versus P0 m8
-`9.08e-6 rad`. Their physical responses and P0 interval means differ,
-so the next decision needs normed mixed-system, locking/refinement,
-and matched physical torque/shear evidence. Neither is selected from
-this one load or smaller gaps.
-At fixed shell:beam `4:1`, auxiliary-norm trace minima on the
-x8/B3-12/m4 → x16/B3-14/m8 levels fall comparably for all three
-spaces (P0 `0.692 → 0.544`, P1 `0.603 → 0.454`, dual
-`0.600 → 0.453`) without rank loss. This is only a two-level
-diagnostic; physical transfer and the registered growing-space
-stability/locking evidence remain the governing decisions.
-Establish a work-conjugate torque/section/support comparator that
-separates shell idealization from connection transfer; neither the
-saved pure-action fields nor a displacement fit does that alone.
-Complete the remaining registered ratio/refinement and normed
-mixed-system checks for the provisional P0 rule. Do not infer selection from
-rank or the quotient alone. Advance B2 F09 independently.
+**Decision sought:** Choose a physically defensible six-channel
+material-line connection and exact multiplier policy before G1.
+**Established:** P0 passes bounded loaded Mx/Fz solves at all seven
+ratios but hides a growing within-interval yaw mode at fixed 4:1.
+Full P1/dual and initially selective yaw spaces have reference-row
+aliases at some ratios; the alias is pure yaw and lifts at finite pose,
+so deleting its row is unsound. A declared coarser P1/dual-yaw space
+has full supported rows at all seven ratios and a second 4:1 level;
+both variants pass one fixed native Mx/Fz solve. The existing solid
+P0 action fields lacked two yaw dimensions. Two bounded external
+actions now span both variants on the unchanged solid grid; their
+26-action compliance is reciprocal within saved-field precision and
+gives valid same-law Mx/Fz reconstructions. The solid P1 and dual
+torque responses are close, but native and solid discretizations
+and terminal load distributions differ. **Remaining uncertainty:**
+Physical torque/shear fidelity of the declared pose, growing-space
+mixed stability and locking, and the allocation of shell/section versus
+connection error. **Next discriminator:** Compare work-conjugate
+physical transfer on matching idealizations and systematically grow
+the admitted interface space with at least three refinement levels;
+use outcomes to retain or revise the law and multiplier policy.
+Advance independent B2/F05–F08 foundations where permitted.
+No space or physical connection is selected.
 G0B/F03 remain open, G1 barred, and formal F03 authority unconsumed;
 detailed evidence follows.
 
@@ -11351,3 +11311,192 @@ Raw `B3_E4_F03_C1_X8_B12_M4_TRACE_NORM_DEV_V1.json` SHA256 is
 `0b1f0f4a0993b0eb3093f8eb4759ee125466faacc38c03f02c1a01010c6e9539`;
 its runner SHA256 is
 `fdb9ce737e8ef4b69af67ce8c7b08f9c38db00dcb64d2be062dc5123dc3f803f`.
+
+**Next channel-selective law discriminator (prospective):** The
+fixed-primal Mx result isolates a P0-invisible local `rz` mode, while
+full P1/dual lose rows at some other ratios. Keep the
+same continuous six-channel material pose law and physical scales;
+test five P0 channels plus one continuous-P1 or dual-P1 `rz` channel
+on existing supported 1:1, 2:1 and two 4:1 fixtures. If the
+enriched row space is dependent, reject that pairing before loaded
+work. If independent and it detects the saved mode, nominate it for
+objective work, loaded torque/shear, normed mixed stability and
+locking checks across the registered ratios. This is a bounded
+row-space/mode-resolution test, not a multiplier selection or a
+revision of the continuous physical law.
+
+**Channel-selective result and decision:** On the same fixed supports,
+geometry, six-channel trace and interval policy, five P0 channels
+plus P1 `rz` have supported ranks `48/49` at 1:1 x8/B3-18/m8 and
+`48/49` at 2:1 x8/B3-14/m8; replacing P1 by dual P1 also gives
+`48/49` at both. The smallest row singular values are at roundoff
+(`2.1–7.2e-16`) under the existing row scaling. At the 4:1
+x8/B3-12/m4 and x16/B3-14/m8 levels both variants are full rank
+(`25/25`, `49/49`), but those levels cannot rescue a policy that is
+dependent at required ratios. Reject this simple channel-selective
+pairing before loaded solves. The result narrows the issue to a
+discrete yaw trace identity, not a failure of the
+continuous material-pose law. Do not delete a dependent row
+automatically or infer stability from the 4:1 raw singular values.
+The audit was a read-only assembly using existing
+`_channel_basis_rows`, `_scales`, and `_scaled_row_diagnostics` on
+source `08dfccb1`; no external execution or formal F03 authority was
+used. Next formulation work needs a derived, reviewable test space
+that respects the yaw trace identity and preserves physical work,
+while the matched torque/shear reference proceeds independently.
+
+**Next yaw-trace identity check (prospective):** Recover the
+rank-one left null of this same selective space at 1:1 and 2:1,
+undo row normalization, and inspect the actual P0 force and P1/dual
+moment densities and their separate shell/native-beam transpose
+actions. If the modes are the same work identity under both ratios,
+derive a compatible space from that identity; if they differ, review
+the discrete trace/port incidence before proposing another basis.
+No row will be removed automatically, and raw mixed-unit coefficients
+will not be treated as stability measures.
+
+**Yaw-trace null outcome:** Undoing row normalization on all four
+rank-deficient 1:1 and 2:1 selective spaces yields the same rank-one
+physical-row dependence: the only material coefficients are in the
+P1 or dual-P1 `rz` channel, proportional to the nine nodal weights
+`[-0.5, 1, -1, 1, -1, 1, -1, 1, -0.5]`. Every P0 channel is below
+`6.3e-14` after normalizing the largest `rz` coefficient to one.
+The combined transpose-action residual is `1.4–2.5e-16` of the
+sum of participating row-action norms; separate supported shell and
+native-beam defects are also below `1.9e-16`. Thus this is a pure
+longitudinal yaw checkerboard alias of both discrete traces, not a
+Fy/Mz or other cross-channel cancellation. The coefficient pattern
+is the same for the two tested ratios and for the two basis families,
+though their physical density shapes differ. This identifies the
+formulation issue more sharply but does not license automatically
+deleting a row or selecting a quotient basis. Derive a fixed,
+work-conjugate yaw test space and assess its physical modes before
+another loaded run; the independent torque/shear reference remains
+necessary. No formal F03 authority was consumed.
+
+**Finite-state yaw-alias outcome:** On the unchanged supported 1:1
+x8/B3-18/m8 reference, the P1-`rz` checkerboard row action is
+`3.5e-15` of the participating row-action norm. A deterministic
+supported shell-only finite pose of amplitude `1e-4` m/rad lifts it
+to `1.49e-5`, and amplitude `1e-2` to `1.64e-3`; a beam-only
+finite pose gives `7.38e-8` and `7.38e-6`. Direct reassembly of
+all 49 actual finite-chart rows agrees with the reference rows at
+zero motion and changes supported rank from `48/49` at reference
+(smallest unit-row singular `7.18e-16`) to `49/49` at shell
+amplitude `1e-4` (`3.49e-5`), beam amplitude `1e-4`
+(`2.06e-7`), and shell amplitude `1e-2` (`3.18e-3`). The test
+uses the actual `orientation_jacobian`, `position_jacobian`,
+left-multiplicative shell frames and native `context.advance`,
+with the root support held fixed. Thus the checkerboard is a
+reference-only discrete alias, not a removable nonlinear gauge.
+Do not quotient out that row or accept a singular reference KKT
+through artificial penalty. This does not show a defect in the
+continuous pose law; it requires a test space with full supported
+rank already at the reference state. No load solve or formal F03
+authority was used.
+
+**Next fixed-space resolution rule (prospective):** The observed
+checkerboard appears when yaw P1 knots sit on every shell bond cell.
+Keep the already tested P0 interval policy for five channels and use
+continuous-P1 or dual-P1 yaw knots at every second shell bond cell.
+This is a declared lower-resolution test space, not deletion of a
+dependent assembled row. Audit the complete supported row rank at
+all seven registered ratios and the second 4:1 level before any
+loaded solve. If any case loses rank, reject this rule. If all pass,
+it becomes only a candidate for finite-chart work, torque/shear,
+mixed-system stability and locking tests; the physical reference
+decision remains separate.
+
+**Selective-yaw row outcome and next loaded decision:** The declared
+every-second-shell-cell yaw rule has independent supported rows for
+both P1 and dual P1 at all seven registered ratios and at the
+second 4:1 level. Counts are `12/12`, `23/23`, `23/23`, `45/45`,
+`45/45`, `25/25`, `29/29`, and `49/49` in that order. Some unit-row
+minima at 2:1 and the high shell:beam ratios are small (`0.0057–0.013`
+for P1 on selected fixtures), so rank is only an admission result,
+not stability. The next bounded discriminator holds the x16/B3-14
+primal, supports and terminal `100 Nm` Mx / `1000 N` Fz loads fixed,
+and substitutes each selective-yaw basis for P0 m8. A failed
+full-equation, work or support check rejects the candidate; a passed
+solve only nominates it for actual-chart work, normed mixed-system,
+locking/refinement and physically matched transfer. Do not choose
+between P1 and dual by pointwise gap or tip response. Formal F03
+authority remains unconsumed.
+
+**Selective-yaw loaded outcome:** On fixed Q4 x16/y4, B3-14,
+49-row selective P1-yaw and dual-yaw systems each pass full
+reconstructed equilibrium (free residuals below `6.5e-11`), weak
+rows (below `8.1e-20`), work and global support checks under
+the same `100 Nm` Mx and `1000 N` Fz loads. Quotient size is
+`1,731` rows; elapsed times `65.90/70.14 s` remain within the
+unchanged 120-second limit. Against P0 m8 Mx tip rotation
+`4.90025648e-5 rad` and shell work `0.00196576105 J`, P1-yaw
+gives `4.63334368e-5 rad` and `0.00178051748 J`; dual-yaw gives
+`4.84336614e-5 rad` and `0.00197171742 J`. Continuous local
+`rz` RMS is `9.07561e-6 rad` (P0), `1.89854e-7 rad` (P1-yaw),
+and `9.96736e-6 rad` (dual-yaw). Fz tip vertical translation is
+`6.98939453e-5 m` in all three to the displayed precision.
+This different response and gap behavior is not an accuracy or
+locking verdict; neither candidate is selected.
+
+The immutable development files are
+`B3_E4_F03_C1_SELECTIVE_YAW_RATIO_ROWS_DEV_V1.json` SHA256
+`92fa9dcbc9d67323f5c80ddca4d7476c77695f3d0765f662bff034dcdfdadebf`,
+`B3_E4_F03_C1_X16_B14_P0_FIVE_P1_YAW_M8_LOADED_DEV_V1.json` SHA256
+`ab9bd27acb8d571db5cee97a632d6b464800303a28e9e36ea8a72e461944afae`,
+and `B3_E4_F03_C1_X16_B14_P0_FIVE_DUAL_YAW_M8_LOADED_DEV_V1.json` SHA256
+`202beca559e3e9ccc07713abe11a06caf175ee9d36e0e43a5af1754fa36258e3`.
+The ratio and loaded runner SHA256 values at execution were
+`82dcb5d286d73f93fd6667ae44d2d4bae0a051a9a086f79d0f557aa418e5bb61`
+and `cdc8255f2dc33c3b616ccb62679a56a22c7cbd769402ea692f44e253f63f42db`.
+
+**Solid action-span and execution decision:** On the unchanged
+detached F4 source geometry and supports, exact three-point P1/dual
+yaw rows add two action dimensions beyond the 24 executed P0 rows.
+The P1 yaw endpoint rows 0 and 2 span both candidates together with
+P0; individual relative projection defects are below `4e-15`.
+The two endpoint actions balance side/global force below `3e-16`,
+moment below `7e-17`, and preserve transpose work below `4e-18`
+in the preflight units. Thus
+two, rather than six, new external unit fields suffice on this fixed
+solid grid. Both CalculiX columns completed serially in `17.96` and
+`17.50 s`, each below `1.26 GB` peak solver RSS, under the existing
+one-thread/120-second/2-GiB limits. Each has positive self-work,
+complete field, matching source/deck/solver identities and saved
+failure-free result. Raw fields and outputs are preserved under
+`.qualification/b3-ge-e4-pl/f03-c1-material-line-selective-yaw-solid-dev-20260928-v1/`.
+Span preflights V1/V2 are preserved; current-source V2 file
+`B3_E4_F03_C1_SELECTIVE_YAW_SOLID_ACTION_SPAN_DEV_V2.json` has
+SHA256 `aa9e94f970657126025d614e5ea2a68d43c81c78a60edf1499ec02d64fcaf062`.
+The extra-action result JSON SHA256 values for channels 24/25 are
+`36f265818b6acc3f6c54f6588147a766b00acb5345595f3728ba3d164cc4a5c4`
+and `ddd1005ae3ed05d7583a84fe3e68b3e8fa3bf41997eb08927134771643f425b6`.
+
+**Matched solid reconstruction outcome:** The 24 prior P0 and two
+new yaw unit fields produce a 26-action work compliance with relative
+skew `1.925e-6` at saved FRD precision and positive minimum symmetric
+eigenvalue `1.337e-4 J`. The measured unsymmetrized compliance is used
+for both exact weak-law reconstructions. Under the same solid +100 Nm
+Mx source, P1-yaw and dual-yaw tip work-conjugate rotations are
+`52.44276` and `52.45612 µrad`; P0 was `53.86506 µrad`. Under the
+same +1000 N Fz source, both give `72.56238 µm`, identical to P0 at
+the displayed precision. Selective weak gaps close below `6.5e-21`;
+plate/bar interface work cancels below `3e-17 J`; total support balance
+is retained at saved-output precision. This demonstrates a physical
+transfer sensitivity to yaw enforcement on this fixed solid model,
+not a matched native/solid accuracy score or a multiplier verdict.
+The source-bound result
+`B3_E4_F03_C1_SELECTIVE_YAW_SOLID_RECON_DEV_V1.json` has SHA256
+`52d91a3037159e0742899ea88196eaf0cb8b8262368f49457d7bc061e459847`.
+
+**Next decision-oriented slice:** Compare native and solid
+work-conjugate torque/shear on matched load/support/connection
+idealizations, and inspect the difference in interface wrench shape
+before assigning an error to E4, B3, or the connection. In parallel,
+test the coarser yaw space with growing interface dimensions, actual
+native retained-variable norms, constrained mixed-system response,
+locking and three refinement levels across the registered ratios.
+If physical transfer or stability fails, revise the relevant law or
+space; if both pass, nominate the lowest-dimensional passing space
+for independent G0 review. No classical axial refinement is implied.
+F03/G0B remain open, G1 barred, and formal F03 authority unconsumed.
