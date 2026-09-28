@@ -290,6 +290,30 @@ reduction and exact-gauge quotient sound under its stated assumptions, but
 requires an explicit support-preserving physical-field map `T_h` and a frozen
 same-law reference-error rule. The draft now records both as open
 prerequisites; no formal assessment has started.
+Next matched-geometry discriminator: the old folded S4 smoke has a 1 m-wide
+plate and a web centroid/section unlike the native B3 fixture. A new bounded
+`native_line_geometry` deck sets the plate to 1 x 0.2 m, puts its reference
+nodes at the physical top face with CalculiX shell OFFSET=0.5, and places the
+0.01 x 0.2 m web centroid 0.1175 m above the E4 midplane. Before any response
+comparison, run its four-edge clamped flat-web Fy/Mx output path. A missing
+or ambiguous face displacement/reaction means repair the reference mapping;
+a passing route permits construction of the same-section native B3/E4 model.
+Neither outcome scores L1 or selects a multiplier space. The T variant remains
+a separate engineering model until an admissible matching beam section exists.
+The four-edge flat-web external Fy/Mx deck and the independently constructed
+native B3/E4 counterpart both execute. Independent read-only review found no
+geometry, shell-offset sign, root-support or applied-resultant mismatch.
+Calculated action works are external `0.000689073/0.001878843 J` and native A
+`0.000591246/0.001447212 J` for plate Fy/web Mx; native B is
+`0.000591260/0.001451488 J`. Thus native A is about 14.20% and 22.97% lower
+in the two one-level works. External cross work is about `-6.652e-5 J`, versus
+native A about `-1.109e-5 J`; both routes pass their own reciprocity checks
+within output/solve precision. See the versioned [paired development record]
+(B3_E4_F03_FLAT_WEB_MATCHED_DEV_V1.json) and preserved raw output. These
+differences are not an F03 score: S4 welded-web deformation, native B3 section
+idealization, shell formulation and line transfer remain entangled. The next
+bounded discriminator is an uncoupled plate/web section control or a verified
+sided-work reference, not automatic mesh refinement or multiplier selection.
 
 ## Execution boundary
 

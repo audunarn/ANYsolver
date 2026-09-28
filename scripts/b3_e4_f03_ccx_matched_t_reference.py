@@ -32,6 +32,7 @@ FY_N = 100.
 TORQUE_NM = 10.
 CASES = ("plate_fy", "web_fy", "web_mx")
 VARIANTS = ("flat", "t")
+PROFILES = ("legacy_fold", "native_line_geometry")
 _FRD_NUMBER = re.compile(r"[+-]?\d\.\d{5}E[+-]\d{2,3}", re.I)
 
 
@@ -84,12 +85,16 @@ def _section(variant: str) -> dict:
 
 
 def build_bundle(variant: str = "flat", case: str = "web_fy",
-                 nx: int = 4, root: str = "clamped") -> tuple[str, dict]:
+                 nx: int = 4, root: str = "clamped",
+                 profile: str = "legacy_fold") -> tuple[str, dict]:
     """Build one small S4 deck and its exact original-node action inventory."""
     if (variant not in VARIANTS or case not in CASES or
             type(nx) is not int or nx not in (4, 8, 16) or
-            root not in ("hinged", "clamped")):
+            root not in ("hinged", "clamped") or profile not in PROFILES):
         raise ValueError("bounded flat/T variant, action and x mesh required")
+    matched = profile == "native_line_geometry"
+    plate_halfwidth = .1 if matched else .5
+    plate_reference_z = PLATE_T_M/2 if matched else 0.
     points: dict[tuple[float, float, float], int] = {}
     nodes: dict[str, list[float]] = {}
 
@@ -101,11 +106,14 @@ def build_bundle(variant: str = "flat", case: str = "web_fy",
             nodes[str(index)] = list(key)
         return points[key]
 
-    plate = [[node(i/nx, -.5+j/4, 0.) for j in range(5)]
+    plate = [[node(i/nx, -plate_halfwidth+2*plate_halfwidth*j/4,
+                   plate_reference_z) for j in range(5)]
              for i in range(nx+1)]
-    web = [[node(i/nx, 0., k*WEB_H_M/4) for k in range(5)]
+    web = [[node(i/nx, 0., plate_reference_z+k*WEB_H_M/4)
+            for k in range(5)]
            for i in range(nx+1)]
-    flange = ([[node(i/nx, -.05+j*FLANGE_W_M/2, WEB_H_M)
+    flange = ([[node(i/nx, -.05+j*FLANGE_W_M/2,
+                     plate_reference_z+WEB_H_M)
                 for j in range(3)] for i in range(nx+1)]
               if variant == "t" else None)
 
@@ -119,7 +127,8 @@ def build_bundle(variant: str = "flat", case: str = "web_fy",
     web_root = web[0]
     flange_root = flange[0] if flange is not None else []
     supports = sorted(set(plate_root+web_root+flange_root))
-    loaded = {"plate": plate[-1][3], "web_low": web[-1][1],
+    loaded = {"plate": plate[-1][2 if matched else 3],
+              "web_low": web[-1][1],
               "web_center": web[-1][2], "web_high": web[-1][3]}
     # Low +Fy and high -Fy give +Mx because Mx = -z Fy.
     actions = {
@@ -152,8 +161,11 @@ def build_bundle(variant: str = "flat", case: str = "web_fy",
                             ("Flange", FLANGE_T_M)):
         if name == "Flange" and variant == "flat":
             continue
-        lines += [f"*SHELL SECTION,ELSET={name},MATERIAL=Steel",
-                  _number(thickness)]
+        section_card = f"*SHELL SECTION,ELSET={name},MATERIAL=Steel"
+        if matched and name == "Plate":
+            section_card += ",OFFSET=0.5"
+        lines += [section_card,
+                   _number(thickness)]
     lines += ["*STEP", "*STATIC", "*BOUNDARY",
               "Root,1,6,0" if root == "clamped" else "Root,1,3,0",
               "*CLOAD"]
@@ -181,15 +193,16 @@ def build_bundle(variant: str = "flat", case: str = "web_fy",
         "section_measure": "sum of nominal shell-wall sections; folded-knot overlap not subtracted",
         "section_axes": {"x": "longitudinal", "y": "plate_transverse",
                          "z": "web_height", "Iy": "about_y", "Iz": "about_z"},
-        "geometry_m": {"plate_mid_surface": {"x": [0., 1.],
-                                               "y": [-.5, .5], "z": 0.},
-                       "web_mid_surface": {"x": [0., 1.], "y": 0.,
-                                           "z": [0., WEB_H_M]},
-                       "flange_mid_surface": ({"x": [0., 1.],
-                                               "y": [-FLANGE_W_M/2, FLANGE_W_M/2],
-                                               "z": WEB_H_M}
-                                              if variant == "t" else None)},
-        "web_centroid_offset_from_plate_midplane_m": [0., 0., WEB_H_M/2],
+         "geometry_m": {"plate_mid_surface": {"x": [0., 1.],
+                                                "y": [-plate_halfwidth, plate_halfwidth], "z": 0.},
+                        "web_mid_surface": {"x": [0., 1.], "y": 0.,
+                                            "z": [plate_reference_z, plate_reference_z+WEB_H_M]},
+                        "flange_mid_surface": ({"x": [0., 1.],
+                                                "y": [-FLANGE_W_M/2, FLANGE_W_M/2],
+                                                "z": plate_reference_z+WEB_H_M}
+                                               if variant == "t" else None)},
+         "web_centroid_offset_from_plate_midplane_m": [
+             0., 0., plate_reference_z+WEB_H_M/2],
         "plate_thickness_m": PLATE_T_M, "web_thickness_m": WEB_T_M,
         "flange_thickness_m": FLANGE_T_M if variant == "t" else None,
         "shell_elements": {"plate": len(plate_cells), "web": len(web_cells),
@@ -206,6 +219,17 @@ def build_bundle(variant: str = "flat", case: str = "web_fy",
                         "T flange changes web-only section and centroid",
                         "one linear elastic level is not a converged reference"],
     }
+    if matched:
+        manifest["profile"] = profile
+        manifest["plate_reference_surface_z_m"] = plate_reference_z
+        manifest["plate_shell_section_offset"] = .5
+        manifest["comparison_scope"] = (
+            "same plate span/width/thickness, web section and eccentricity "
+            "as a separately constructed native B3/E4 model; an S4 welded "
+            "web is not the exact L1 material-pose line law"
+            if variant == "flat" else
+            "supplementary T-stiffener geometry; the added flange has no "
+            "admitted matching native B3 section in this comparator")
     return deck, manifest
 
 
@@ -306,7 +330,8 @@ def parse_outputs(manifest: dict, frd: str, dat: str) -> dict:
                                             ("variant", "case", "nx", "root")):
         raise ValueError("generated reference manifest required")
     _, expected = build_bundle(manifest["variant"], manifest["case"],
-                               manifest["nx"], manifest["root"])
+                               manifest["nx"], manifest["root"],
+                               manifest.get("profile", "legacy_fold"))
     if manifest != expected:
         raise ValueError("reference manifest identity changed")
     coordinates, displacement = _frd_fields(frd)
@@ -361,13 +386,15 @@ def main() -> None:
     generate.add_argument("--case", choices=CASES, default="web_fy")
     generate.add_argument("--nx", type=int, choices=(4, 8, 16), default=4)
     generate.add_argument("--root", choices=("hinged", "clamped"), default="clamped")
+    generate.add_argument("--profile", choices=PROFILES, default="legacy_fold")
     generate.add_argument("--stem", required=True, type=Path)
     parse = sub.add_parser("parse", help="read existing CalculiX .frd/.dat")
     parse.add_argument("--stem", required=True, type=Path)
     args = parser.parse_args()
     stem = args.stem
     if args.command == "generate":
-        deck, manifest = build_bundle(args.variant, args.case, args.nx, args.root)
+        deck, manifest = build_bundle(args.variant, args.case, args.nx,
+                                      args.root, args.profile)
         # Keep the on-disk deck identical to the bytes hashed in the manifest.
         # Text-mode writes translate LF to CRLF on Windows.
         with stem.with_suffix(".inp").open("xb") as output:

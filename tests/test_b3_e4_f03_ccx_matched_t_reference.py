@@ -25,6 +25,33 @@ def test_generated_deck_bytes_match_manifest_on_windows(tmp_path, monkeypatch):
     assert stem.with_suffix(".json").exists()
 
 
+def test_native_geometry_profile_keeps_physical_plate_top_and_web_seam():
+    legacy, old = build_bundle("flat", "web_mx", 4, "clamped")
+    assert old["deck_sha256"] == (
+        "c64f208a715e8b177a6978be0c4b83cb3c9c7bec352ab3ea4803f2732ff9c80b")
+    assert "profile" not in old
+    assert "OFFSET=0.5" not in legacy
+
+    deck, model = build_bundle("flat", "web_mx", 4, "clamped",
+                               "native_line_geometry")
+    assert model["deck_sha256"] == (
+        "c2736429f5a4c575bf98d896e9b2b7b2fe2ba1fffb5e2e9fa146767b38df5e4e")
+    assert model["profile"] == "native_line_geometry"
+    assert model["geometry_m"]["plate_mid_surface"] == {
+        "x": [0., 1.], "y": [-.1, .1], "z": 0.}
+    assert model["geometry_m"]["web_mid_surface"]["z"] == pytest.approx([.0175, .2175])
+    assert model["web_centroid_offset_from_plate_midplane_m"] == pytest.approx([0., 0., .1175])
+    assert model["plate_shell_section_offset"] == .5
+    assert "*SHELL SECTION,ELSET=Plate,MATERIAL=Steel,OFFSET=0.5" in deck
+    plate_tip = model["nodes_m"][str(model["loaded_nodes"]["plate"])]
+    assert plate_tip == [1., 0., .0175]
+    assert model["action_wrenches"]["web_mx"]["force_n"] == [0., 0., 0.]
+    assert model["action_wrenches"]["web_mx"]["moment_nm_about_origin"] == pytest.approx([10., 0., 0.])
+    _, t_model = build_bundle("t", "web_mx", 4, "clamped",
+                              "native_line_geometry")
+    assert "no admitted matching native B3 section" in t_model["comparison_scope"]
+
+
 def _synthetic_output(manifest):
     positions = {}
     motions = {}

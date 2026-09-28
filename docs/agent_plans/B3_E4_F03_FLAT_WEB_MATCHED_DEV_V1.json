@@ -1,0 +1,54 @@
+{
+  "schema": "B3_E4_F03_FLAT_WEB_MATCHED_DEV_V1",
+  "classification": "bounded_engineering_comparison_not_same_law_or_F03_acceptance",
+  "source_head_before_changes": "5d8859fccb69ae50040f4807a3298eb643278a4f",
+  "external_runner_sha256": "3353f5e4012325793c5a628f24dfb10c483968fdac366fc80bff11607ed09201",
+  "native_runner_sha256": "a0452e9d85aae2db3a20f913c8a0f8459ebd20e229e07f5fd77843f9093b6b85",
+  "calculix_exe_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "shell_offset_reference": "https://www.dhondt.de/ccx_2.23.pdf, SHELL SECTION OFFSET convention on PDF page 594",
+  "raw_evidence_directory": ".qualification/b3-ge-e4-pl/f03-flat-web-matched-dev-20260928-v1",
+  "native_output_sha256": "06d3d211fede23612d53af7d402008efc11d52381e25214bef848c9605493cf5",
+  "external_output_sha256": {
+    "web_mx_deck": "c2736429f5a4c575bf98d896e9b2b7b2fe2ba1fffb5e2e9fa146767b38df5e4e",
+    "web_mx_parsed": "d10478d64d2532f90a1b462502d2b61faebf77019252da3773c78dbfc062fef6",
+    "plate_fy_deck": "b8584b91ca6624fbf696ad1fd648a527107678fbf97774606eb0f75c88369e8a",
+    "plate_fy_parsed": "827e77539fe0ba3f465a74b054ac05ab7125d9f3204a313de916fee953c731b4"
+  },
+  "matched_reference_geometry": {
+    "plate_m": [1.0, 0.2, 0.035],
+    "web_m": [1.0, 0.01, 0.2],
+    "web_axis_z_m": 0.1175,
+    "physical_connection_z_m": 0.0175,
+    "plate_shell_section_offset": 0.5,
+    "root": "six-DOF fixed at x=0 on both plate and web/beam",
+    "plate_action": "100 N Fy at the plate physical top; native E4 equivalent is Fy=100 N and Mx=-1.75 Nm at the midplane",
+    "web_action": "10 Nm Mx at the beam axis; external S4 applies a resultant-equivalent two-force couple"
+  },
+  "works_j": {
+    "external_s4": {"plate_fy": 0.000689073, "web_mx": 0.001878843,
+                    "cross_plate_fy_under_web_mx": -0.0000665203,
+                    "cross_web_mx_under_plate_fy": -0.0000665210},
+    "native_l1_A": {"plate_fy": 0.0005912457669813178,
+                    "web_mx": 0.0014472122607067394},
+    "native_l1_B": {"plate_fy": 0.0005912600094919862,
+                    "web_mx": 0.0014514880574587135}
+  },
+  "native_relative_to_external_percent": {
+    "A_plate_fy": -14.196933128809574,
+    "A_web_mx": -22.97322018355232,
+    "B_plate_fy": -14.194866219981627,
+    "B_web_mx": -22.745644129993302
+  },
+  "effective_threads": {"calculix_reported_cpu": 1,
+                        "native_openblas_pools": [1, 1]},
+  "focused_tests": "14 passed",
+  "source_impact_check": "After limiting the T profile claim, the flat input hash stayed identical; both saved flat outputs reparse byte-for-byte to their saved result records under the final runner.",
+  "independent_review": "Read-only reviewer found no geometry, offset-sign, section-resultant, support or load-wrench mismatch at this level; no qualification judgment.",
+  "decision": "The one-level physical work and cross-work gaps are material. Do not select A/B, score F03 or refine automatically. Isolate shell/section idealization from connection transfer with bounded uncoupled controls or a sided work reference before interpreting cause.",
+  "limitations": [
+    "The welded S4 web and exact weak native L1 pose law are different continuous connection idealizations.",
+    "The S4 web admits cross-section deformation absent from the native B3 section; nominal beam shear area is approximate.",
+    "Clamped rotational support reactions and seam-sided work are unavailable in this output.",
+    "One mesh level is neither a converged external reference nor a formal F03 assessment."
+  ]
+}
