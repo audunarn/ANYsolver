@@ -48,6 +48,41 @@ def _jet_cross(left: list[ad.Jet2], right: list[ad.Jet2]) -> list[ad.Jet2]:
             left[0]*right[1]-left[1]*right[0]]
 
 
+def beam_frame_gap_from_shell(shell_gap: np.ndarray, relative_log: np.ndarray,
+                              reference_relative: np.ndarray,
+                              shell_reference_offset: np.ndarray) -> np.ndarray:
+    """Exact beam-frame translation gap from the shell-frame gap.
+
+    With A=Fs0.T Fb0, e=Fs0.T(rb0-rs0), and phi=Log(A.T Fs.T Fb),
+    c_b=-Exp(-phi) A.T c_s + (I-Exp(-phi)) A.T e. The relation uses the
+    same angular row and fixed reference material coordinates.
+    """
+    c = np.asarray(shell_gap, dtype=float)
+    phi = np.asarray(relative_log, dtype=float)
+    a = np.asarray(reference_relative, dtype=float)
+    e = np.asarray(shell_reference_offset, dtype=float)
+    if (c.shape != (3,) or phi.shape != (3,) or a.shape != (3, 3) or
+            e.shape != (3,) or not all(np.isfinite(v).all() for v in (c, phi, a, e)) or
+            np.linalg.norm(phi) >= .9*np.pi):
+        raise ValueError("finite admitted reference-relative pose required")
+    rotation = rotation_matrix_from_vector(-phi)
+    beam_offset = a.T@e
+    return -rotation@(a.T@c)+(np.eye(3)-rotation)@beam_offset
+
+
+def constrained_beam_to_shell_multiplier(beam_multiplier: np.ndarray,
+                                         reference_relative: np.ndarray,
+                                         shell_reference_offset: np.ndarray) -> np.ndarray:
+    """Dual map at c_s=phi=0; preserves first virtual work there."""
+    dual = np.asarray(beam_multiplier, dtype=float)
+    a = np.asarray(reference_relative, dtype=float)
+    e = np.asarray(shell_reference_offset, dtype=float)
+    if (dual.shape != (6,) or a.shape != (3, 3) or e.shape != (3,) or
+            not all(np.isfinite(v).all() for v in (dual, a, e))):
+        raise ValueError("finite six-channel beam multiplier and reference pose required")
+    return np.r_[-a@dual[:3], dual[3:]+np.cross(a.T@e, dual[:3])]
+
+
 def spatial_gap(shell: np.ndarray, shell_frame: np.ndarray,
                 beam: np.ndarray, beam_frame: np.ndarray) -> np.ndarray:
     """Early local axial-skew comparator for physical poses."""
@@ -212,10 +247,13 @@ class L1LogConnection:
                 evaluation.constraint_jacobian@pose_step)
 
     def work_tangent(self, total: np.ndarray, beam_state,
-                     multipliers: np.ndarray
+                     multipliers: np.ndarray, *, translation_frame: str = "shell"
                      ) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
         """Local-chart value, six gaps, residual and composed Hessian.
 
+        ``translation_frame='shell'`` is the pose-joint L1 convention.
+        ``'beam'`` is a bounded comparator for the saved beam-frame work
+        contract; its multiplier has that different material basis.
         The chart is additive E4 total coordinates and one native
         ``Context.advance`` exponential from ``beam_state``. The 21 active
         variables are 12 E4 coordinates, two B3 endpoint translations and
@@ -231,6 +269,8 @@ class L1LogConnection:
             raise ValueError("finite two-node E4 total coordinates required")
         if multiplier.shape != (6,) or not np.isfinite(multiplier).all():
             raise ValueError("finite six-channel multipliers required")
+        if translation_frame not in ("shell", "beam"):
+            raise ValueError("declared shell or beam translation frame required")
         self.joint.guard()
         owned, left, right, lift, _, rotation = self.port._parts(beam_state)
         high, low, beam_frame0 = self.port.pose_pair(owned)
@@ -267,8 +307,14 @@ class L1LogConnection:
         beam = [beam_origin[j]+arm[j] for j in range(3)]
 
         distance = [beam[j]-shell[j] for j in range(3)]
-        translation = [entry-constant(offset) for entry, offset in zip(
-            ad.matvec(ad.transpose(shell_frame), distance), self.joint._offset)]
+        if translation_frame == "shell":
+            translation = [entry-constant(offset) for entry, offset in zip(
+                ad.matvec(ad.transpose(shell_frame), distance), self.joint._offset)]
+        else:
+            beam_reference_offset = -self.joint._relative.T@self.joint._offset
+            translation = [entry-constant(offset) for entry, offset in zip(
+                ad.matvec(ad.transpose(beam_frame), [-entry for entry in distance]),
+                beam_reference_offset)]
         relative = ad.matmul(
             ad.constant_matrix(self.joint._relative.T, local_size),
             ad.matmul(ad.transpose(shell_frame), beam_frame))

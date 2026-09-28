@@ -43,6 +43,12 @@ claim. The factor-4 Fy fallback script remains dirty and unrun.
   imports, dependencies and manifest are preserved under
   .qualification/b3-ge-e4-pl/r7-integration-dev-20260928-v4/.
   These development wheels do not satisfy G6.
+- A read-only independent integration review found no confirmed owner,
+  checkpoint, B2-batch or ANYfem input-consumer defect, but v4 omitted exact
+  test nodes. Supplemental installed evidence v5 binds the same wheel hashes
+  to named 31 solver and 3 consumer passes, commands, imports and one-thread
+  settings. Finite restart supports final-state continuation; the checkpoint
+  alone does not independently replay every historical increment.
 - Reference equilibrium is screened by tangent-relative, unit-covariant
   residuals per element and after assembly. This is a roundoff screen, not
   an absolute physical force limit or G0 stress-free qualification.
@@ -74,10 +80,27 @@ and work-preserving action injection. Its reference, numerical floors and
 thresholds are not frozen; formal F03 assessment is barred. Rank or one
 quotient cannot select a multiplier space.
 
-Next: derive and verify the chosen translation-frame work and full curvature;
-then conduct one bounded theory-led multiplier design and targeted comparison.
-A matched all-shell flat-bar/T CalculiX reference first needs a folded-web
-deck, partitioned action/work parser and matched Fy/torque loads. Proceed with
+The bounded translation-frame discriminator now shows identical constrained
+first virtual work under the derived dual map and balanced eccentric wrenches,
+but different fixed-multiplier curvature off the constraint. Retain the
+shell-frame pose-joint convention as the explicit L1 development candidate;
+freeze its dual/work convention before any formal F03 assessment. This result
+does not select a production line law or multiplier space. Integrated line
+work, physical transfer and growing-space stability remain next.
+An existing bounded test already verifies exact native-retained condensation,
+including the interface action on cell rotations, for the earlier local-
+translation law and a supported Q4 panel. A no-JIT straight-beam check at 4/8
+half-cells also found an invertible indefinite retained block and positive
+supported reduction; a JIT-enabled attempt exhausted its 600 s ceiling before
+returning a matrix. These facts do not establish positivity, nullspaces or a
+same-law reference for integrated L1. Carry its retained trace action through
+the reduction before interpreting a compliance quotient.
+An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
+for plate/web Fy and web torque. Its clamped-root option matches the declared
+six-DOF support type but lacks verified rotational reaction output; the hinged
+option has a complete force-lever support wrench but is not a B3 clamp match.
+Saved S4 FRD and separate solid RF files validate grammar only. No new solver
+comparison or interface-sided traction has been established. Proceed with
 independent F01-F13 and GE/B2 lifecycle work that does not depend on this
 decision. Preserve all seven ratios, growing spaces, three refinement levels,
 physical transfer/locking and the registered G0-G6, F01-F13, V01-V28 and

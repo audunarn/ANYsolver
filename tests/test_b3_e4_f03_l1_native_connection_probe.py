@@ -8,7 +8,8 @@ from anysolver.corotational import rotation_matrix_from_vector
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts.b3_e4_f03_l1_native_connection_probe import (
-    L1LogConnection, shell_trace, six_gap, spatial_gap,
+    L1LogConnection, beam_frame_gap_from_shell,
+    constrained_beam_to_shell_multiplier, shell_trace, six_gap, spatial_gap,
 )
 
 
@@ -329,3 +330,168 @@ def test_log_work_objectivity_and_reference_ownership():
                                original[0], atol=1e-14)
     with pytest.raises(TypeError, match="retained native mechanical state"):
         connection.work_tangent(total, object(), dual)
+
+
+def _eccentric_constrained_pose(beam, reference, rigid_vector):
+    initial = beam.context.initial.mechanical
+    rigid = rotation_matrix_from_vector(rigid_vector)
+    shift = np.array((.3, -.2, .1))
+    total = np.zeros((2, 6))
+    for node in range(2):
+        total[node, :3] = rigid@reference[node]+shift-reference[node]
+        total[node, 3:] = rigid_vector
+    step = np.zeros(beam.context.count)
+    for node, position in enumerate(initial.positions):
+        if node == 0:  # supported node lies outside the sampled half-cell
+            continue
+        step[6*node:6*node+3] = rigid@position+shift-position
+        step[6*node+3:6*node+6] = rigid_vector
+    for element in range(len(beam.context.elements)):
+        begin = beam.context.nodal_count+24*element
+        step[begin:begin+6] = np.tile(rigid_vector, 2)
+    return total, beam.context.advance(initial, step)
+
+
+def test_shell_and_beam_frame_gap_relation_at_finite_eccentric_pose():
+    beam, port, reference = _case()
+    initial = beam.context.initial.mechanical
+    connection = L1LogConnection.at_reference(
+        reference, np.zeros((2, 6)), .035, port, initial,
+        beam_offset=(.018, .012, -.04))
+    base = np.zeros(beam.context.count)
+    cell = beam.context.nodal_count+24*port.element_index+3*port.cell
+    base[cell:cell+3] = (.11, -.08, .04)
+    base[6*beam.context.nodes[port.element_index][port.cell]:][:3] = (.001, -.002, .0004)
+    state = beam.context.advance(initial, base)
+    total = np.array(((.003, -.002, .001, .18, -.11, .05),
+                      (.001, .004, -.0008, .12, .09, -.06)))
+    shell_gap = connection.evaluate(total, state)[0]
+    beam_gap = connection.work_tangent(
+        total, state, np.zeros(6), translation_frame="beam")[1]
+    predicted = beam_frame_gap_from_shell(
+        shell_gap[:3], shell_gap[3:], connection.joint._relative,
+        connection.joint._offset)
+    np.testing.assert_allclose(beam_gap[:3], predicted, atol=3e-14)
+    np.testing.assert_allclose(beam_gap[3:], shell_gap[3:], atol=3e-14)
+    assert np.linalg.norm(connection.joint._offset) > .02
+    assert np.linalg.norm(shell_gap[3:]) > .05
+
+
+def test_constrained_dual_work_origin_wrench_shear_and_curvature_difference():
+    beam, port, reference = _case()
+    initial = beam.context.initial.mechanical
+    connection = L1LogConnection.at_reference(
+        reference, np.zeros((2, 6)), .035, port, initial,
+        beam_offset=(.018, .012, -.04))
+    total, state = _eccentric_constrained_pose(
+        beam, reference, np.array((.22, -.14, .09)))
+    beam_dual = np.array((120., -80., 50., 5., -3., 2.))
+    shell_dual = constrained_beam_to_shell_multiplier(
+        beam_dual, connection.joint._relative, connection.joint._offset)
+    assert np.linalg.norm(shell_dual[3:]-beam_dual[3:]) > 1.
+    shell_work = connection.work_tangent(total, state, shell_dual)
+    beam_work = connection.work_tangent(
+        total, state, beam_dual, translation_frame="beam")
+    np.testing.assert_allclose(shell_work[1], 0., atol=4e-14)
+    np.testing.assert_allclose(beam_work[1], 0., atol=4e-14)
+    np.testing.assert_allclose(shell_work[2], beam_work[2], atol=5e-11)
+    assert np.linalg.norm(shell_work[3]-beam_work[3]) > 1e-3
+
+    # The pose-level residual gives equal and opposite forces and a balanced
+    # total moment about the same spatial origin, including the eccentric arm.
+    shell, shell_frame, _, _ = shell_trace(reference, total, .035)
+    high, low, beam_frame = port.pose_pair(state)
+    beam_point = high+low+beam_frame@np.asarray(connection.beam_offset)
+    pose = connection.joint.evaluate(np.array((shell, beam_point)),
+                                     np.array((shell_frame, beam_frame)), shell_dual)
+    f_shell, m_shell, f_beam, m_beam = pose.residual[:12].reshape(4, 3)
+    np.testing.assert_allclose(f_shell+f_beam, 0., atol=2e-12)
+    np.testing.assert_allclose(m_shell+m_beam+
+                               np.cross(shell, f_shell)+np.cross(beam_point, f_beam),
+                               0., atol=2e-11)
+
+    # Independently differentiate the saved beam-frame convention at the
+    # physical poses; its origin wrench equals the transformed shell work.
+    e_beam = -connection.joint._relative.T@connection.joint._offset
+    def beam_pose_work(positions, frames):
+        translation = frames[1].T@(positions[0]-positions[1])-e_beam
+        rotation = Rotation.from_matrix(
+            connection.joint._relative.T@frames[0].T@frames[1]).as_rotvec()
+        return float(beam_dual@np.r_[translation, rotation])
+    positions = np.array((shell, beam_point))
+    frames = np.array((shell_frame, beam_frame))
+    beam_pose_residual = np.zeros(12)
+    step_size = 1e-6
+    for column in range(12):
+        values = []
+        for sign in (1., -1.):
+            trial_positions = positions.copy()
+            trial_frames = frames.copy()
+            port_index, component = divmod(column, 6)
+            if component < 3:
+                trial_positions[port_index, component] += sign*step_size
+            else:
+                spin = np.zeros(3)
+                spin[component-3] = sign*step_size
+                trial_frames[port_index] = rotation_matrix_from_vector(spin)@frames[port_index]
+            values.append(beam_pose_work(trial_positions, trial_frames))
+        beam_pose_residual[column] = (values[0]-values[1])/(2*step_size)
+    np.testing.assert_allclose(beam_pose_residual, pose.residual[:12],
+                               rtol=3e-9, atol=4e-8)
+    bf_s, bm_s, bf_b, bm_b = beam_pose_residual.reshape(4, 3)
+    np.testing.assert_allclose(bf_s+bf_b, 0., atol=4e-8)
+    np.testing.assert_allclose(bm_s+bm_b+
+                               np.cross(shell, bf_s)+np.cross(beam_point, bf_b),
+                               0., atol=7e-8)
+
+    shear = np.zeros((2, 6))
+    shear[:, 1] = 1.
+    beam_zero = np.zeros(beam.context.count)
+    actual_shear = connection.evaluate(
+        total, state, shell_direction=shear, beam_direction=beam_zero)[1]
+    assert abs(actual_shear[1]) > .8
+    shear_direction = np.r_[shear.ravel(), beam_zero]
+    np.testing.assert_allclose(shell_work[2]@shear_direction,
+                               beam_work[2]@shear_direction, atol=2e-11)
+
+    # Fixed dual coordinates give different off-constraint potentials and
+    # curvature, although their first work agrees on the constraint set.
+    direction = np.zeros(12+beam.context.count)
+    direction[1], direction[7], direction[10] = -.03, .04, .15
+    direction[12+cell_index(beam, port)+1] = .03
+    curvature = float(direction@(beam_work[3]-shell_work[3])@direction)
+    assert abs(curvature) > 1e-5
+    h = .01
+    def difference(scale):
+        trial = total+scale*direction[:12].reshape(2, 6)
+        updated = beam.context.advance(state, scale*direction[12:])
+        return (connection.work_tangent(trial, updated, beam_dual,
+                                         translation_frame="beam")[0]-
+                connection.work_tangent(trial, updated, shell_dual)[0])
+    finite_curvature = (difference(h)-2*difference(0.)+difference(-h))/(h*h)
+    np.testing.assert_allclose(finite_curvature, curvature,
+                               rtol=3e-4, atol=2e-6)
+
+
+def cell_index(beam, port):
+    return beam.context.nodal_count+24*port.element_index+3*port.cell
+
+
+def test_drill_only_shell_chart_has_no_point_stiffness_in_either_frame():
+    beam, port, reference = _case()
+    state = beam.context.initial.mechanical
+    connection = L1LogConnection.at_reference(
+        reference, np.zeros((2, 6)), .035, port, state,
+        beam_offset=(.018, .012, -.04))
+    total = np.zeros((2, 6))
+    total[:, 5] = .2
+    dual = np.array((11., -7., 5., 3., -2., 13.))
+    direction = np.zeros(12+beam.context.count)
+    direction[5] = direction[11] = 1.
+    for frame in ("shell", "beam"):
+        work, gap, residual, hessian = connection.work_tangent(
+            total, state, dual, translation_frame=frame)
+        np.testing.assert_allclose(gap, 0., atol=2e-15)
+        np.testing.assert_allclose(work, 0., atol=2e-13)
+        np.testing.assert_allclose(residual@direction, 0., atol=2e-12)
+        np.testing.assert_allclose(direction@hessian@direction, 0., atol=2e-11)
