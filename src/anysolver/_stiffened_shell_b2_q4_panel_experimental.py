@@ -8,7 +8,7 @@ nonlinear state or qualification is inferred from the point-joint assembly.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import hypot, isfinite
+from math import isfinite
 from typing import Mapping, Sequence
 
 import numpy as np
@@ -301,6 +301,10 @@ class ExperimentalB2Q4PanelAnalysis:
         self._K = K
         self._C = C
         self._T = T
+        self._abs_K = abs(K)
+        self._abs_C = abs(C)
+        self._abs_Ct = abs(C.T.tocsr())
+        self._abs_Tt = abs(T.T.tocsr())
         self._u0 = u0
         self._ku0 = np.asarray(K @ u0).reshape(-1)
         self._cu0 = np.asarray(C @ u0).reshape(-1)
@@ -333,17 +337,50 @@ class ExperimentalB2Q4PanelAnalysis:
                 raise _NumericalFailure("finite panel solution required")
             q, lam = answer[:-len(self._cu0)], answer[-len(self._cu0):]
             u = np.asarray(self._T @ q).reshape(-1)+self._u0
+            if not np.isfinite(u).all():
+                raise _NumericalFailure("finite panel solution required")
             gap = np.asarray(self._C @ u).reshape(-1)
-            reaction = np.asarray(self._K @ u+self._C.T @ lam-applied).reshape(-1)
             force = np.asarray(self._K @ u).reshape(-1)
+            constraint_force = np.asarray(self._C.T @ lam).reshape(-1)
+            reaction = force+constraint_force-applied
             projected = np.asarray(self._T.T @ reaction).reshape(-1)
-            force_scale = max(1., hypot(*applied), hypot(*force))
-            motion_scale = max(1., hypot(*u))
-            if (not np.isfinite(u).all() or not np.isfinite(reaction).all() or
+            # Each row uses the absolute contribution sum in its own physical
+            # work unit. A 1 N floor would mask a failed micro-/nano-load;
+            # a single mixed force/moment norm would depend on chosen units.
+            gap_scale = np.asarray(self._abs_C @ np.abs(u)).reshape(-1)
+            physical_force_scale = np.asarray(
+                self._abs_K @ np.abs(u)+self._abs_Ct @ np.abs(lam)+
+                np.abs(applied)).reshape(-1)
+            equilibrium_scale = np.asarray(
+                self._abs_Tt @ physical_force_scale).reshape(-1)
+            # Sparse factorization can leave roundoff in a locally quiet DOF.
+            # Its allowance follows the current force and moment magnitudes,
+            # separately, then maps through the affine transpose; it has no
+            # fixed N, Nm, m or rad floor.
+            by_node = physical_force_scale.reshape(-1, 6)
+            force_roundoff = float(np.max(by_node[:, :3]))
+            moment_roundoff = float(np.max(by_node[:, 3:]))
+            physical_roundoff = np.tile(
+                (force_roundoff,)*3+(moment_roundoff,)*3,
+                len(by_node))
+            projected_roundoff = np.asarray(
+                self._abs_Tt @ physical_roundoff).reshape(-1)
+            roundoff_fraction = len(rhs)*np.finfo(float).eps
+            if roundoff_fraction >= 1e-9:
+                raise _NumericalFailure("panel equilibrium resolution insufficient")
+            active_rhs = np.abs(rhs[:len(projected)])
+            active = active_rhs > 0.
+            if np.any(roundoff_fraction*projected_roundoff[active] >
+                      1e-9*active_rhs[active]):
+                raise _NumericalFailure("panel mixed-load resolution insufficient")
+            equilibrium_tolerance = (1e-9*equilibrium_scale+
+                                     roundoff_fraction*projected_roundoff)
+            if (not np.isfinite(reaction).all() or
                     not np.isfinite(gap).all() or not np.isfinite(projected).all() or
-                    not isfinite(force_scale) or not isfinite(motion_scale) or
-                    hypot(*gap) > 1e-9*motion_scale or
-                    hypot(*projected) > 1e-9*force_scale):
+                    not np.isfinite(gap_scale).all() or
+                    not np.isfinite(equilibrium_tolerance).all() or
+                    np.any(np.abs(gap) > 1e-9*gap_scale) or
+                    np.any(np.abs(projected) > equilibrium_tolerance)):
                 raise _NumericalFailure("panel point gap or equilibrium failed")
         except _NumericalFailure as exc:
             return ExperimentalB2Q4PanelResult(

@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 from dataclasses import replace
+from types import SimpleNamespace
 from scipy import sparse
 from scipy.linalg import null_space
 from anysolver import stiffened_shell
@@ -181,6 +182,52 @@ def test_multi_q4_multi_b2_panel_matches_bounded_dense_oracle():
         assert abs(u @ load - 2*result.internal_strain_energy) < 1e-9
         assert len(result.beam_resultants_local) == 2
         assert len(result.point_gaps) == 2
+    analysis.close()
+
+
+@pytest.mark.parametrize("tip_dof", (1, 3))
+def test_small_load_requires_relative_equilibrium_not_unit_floor(tip_dof):
+    nodes, shells, members, points, free = _panel()
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            sparse.eye(54, format="csr")[:, free], np.zeros(54)))
+    load = np.zeros(54)
+    load[6*8+tip_dof] = 1e-12
+    reference = analysis.solve_linear(load*1e12)
+    small = analysis.solve_linear(load)
+    assert reference.status == small.status == "completed"
+    np.testing.assert_allclose(small.displacements,
+                               np.asarray(reference.displacements)*1e-12,
+                               rtol=1e-8, atol=1e-24)
+
+    # A backend returning zero for this small nonzero RHS used to pass the
+    # former absolute 1 N residual floor and claim a completed solution.
+    factor = analysis._handle
+    analysis._handle = SimpleNamespace(
+        solve=lambda rhs: np.zeros_like(rhs),
+        factorization_count=factor.factorization_count,
+        solve_count=factor.solve_count)
+    failed = analysis.solve_linear(load)
+    assert failed.status == "failed"
+    assert "equilibrium" in failed.failure_reason
+    analysis.close()
+
+
+def test_mixed_force_scales_report_insufficient_resolution():
+    nodes, shells, members, points, free = _panel()
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            sparse.eye(54, format="csr")[:, free], np.zeros(54)))
+    load = np.zeros(54)
+    load[6*2+2] = 1000.
+    load[6*8+1] = 1e-12
+    result = analysis.solve_linear(load)
+    assert result.status == "failed"
+    assert result.failure_reason == "panel mixed-load resolution insufficient"
     analysis.close()
 
 
