@@ -182,13 +182,19 @@ The coupled Fy shift follows the shell-only trend, though that does not
 uniquely allocate coupled error; native beam discretization alone cannot
 explain the coupled torque trend on this fixture. The source-bound outputs
 are in [the matched controls](B3_E4_F03_L1_UNCOUPLED_CONTROLS_DEV_V1.json).
-Next compare x-only and y-only Q4 refinement around the fixed eight-edge
-shell-only control to locate the remaining shell error before extending the
-coupled reference. If shell work barely changes in either direction while
-coupled work does, inspect the interface resolution and retained trace.
-Do not set F03 floors from candidate values or automatically launch another
-coupled refinement. Physical engineering transfer and the reviewed
-mixed-system contract remain open.
+One-direction Q4 checks around the eight-edge shell-only control changed Fy
+work from 0.069010 to 0.069714 N m (+1.02%) when x was doubled, and to
+0.069030 N m (+0.029%) when y was doubled. The remaining shell-only change
+is predominantly longitudinal on this fixture. The source-bound results are
+in [the directional evidence](B3_E4_F03_L1_SHELL_DIRECTIONAL_DEV_V1.json).
+This justifies one bounded coupled x-refinement with the same physical line,
+loads and supports, 16 line edges/32 native half-cells, and the already-tested
+nine-node transverse shell grid. If its Fy work follows the shell-only x
+change and A/B torque responses draw together, proceed to reference-error
+and physical-transfer controls; if not, inspect the line/retained trace rather
+than tuning multiplier channels. This is not a fourth global refinement or
+an F03 reference-convergence claim. F03 floors, external physical transfer
+and the reviewed mixed-system contract remain open.
 An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
 for plate/web Fy and web torque. Its clamped-root option matches the declared
 six-DOF support type but lacks verified rotational reaction output; the hinged
