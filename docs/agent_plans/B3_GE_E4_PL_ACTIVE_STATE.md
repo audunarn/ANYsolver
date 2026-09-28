@@ -155,6 +155,32 @@ or derive a current-state physical scale that does not trust historical load
 metadata, before resuming sign-crossing work. Endpoint-only checks cannot
 prove path provenance; more load-step refinement does not resolve this issue.
 
+**Near-zero correction result:** At the best unaccepted `0.1` state the sparse
+linear backward residual is about `1.12e-21` in the mixed coordinate equations,
+while the shell/beam translational correction is at most `5.46e-16 m`, about
+one float64 spacing for metre-scale positions. Sampled forward and backward
+Newton steps worsen the existing residual ratio. Actual-chart central
+differences along the native correction have relative error above 2; scaling
+the direction by 100 and 10,000 reduces it to about `1.5e-2` and `6.4e-5`.
+This strongly suggests a coordinate-resolution floor but does not prove the
+analytic tangent or exclude a branch change. The raw norm of all free equations
+mixes force, moment, retained and multiplier units; do not label it newtons.
+The bounded same-predecessor ladder through the actual update chart now gives
+relative directional errors `6.40e-5`, `2.32e-5`, and `1.18e-6` at `1e4`,
+`1e5`, and `1e6` times the correction (`h=0.5`). Measured nonzero differences
+in selected beam-position components grow from at least 318 to 31,704 float64
+spacings. The thresholded accumulated-increment branch mask did not change.
+This supports a representation/evaluation floor at the native Newton step,
+against a persistent smooth-branch bias larger than about `1e-6` in that
+direction. It does not prove the full tangent, exact constitutive branch
+identity, or resolution of every physical and retained coordinate. Independent
+read-only review checked the same-predecessor evaluation and these limits.
+The first diagnostic log, a failed v2 diagnostic-script run, and the corrected
+v2 run are preserved in the same versioned evidence directory. Stop amplitude
+sweeps; next pursue a mechanically justified precision or convergence-scale
+remedy with trustworthy checkpoint reference before sign-crossing work. No
+product criterion changes or F03 authority are involved.
+
 A separate finite-support flat-Q4 shell-pose prototype has exact box-window
 centroid/covariance weights, objective rigid-motion recovery, a bounded
 endpoint-witness screen, and first variations through actual shell/native
