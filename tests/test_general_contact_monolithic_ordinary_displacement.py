@@ -7,8 +7,12 @@ import pytest
 from scipy import sparse
 
 from anysolver import solve_static_nonlinear
+from anysolver.assembly import build_constraint_transformation
 from anysolver.boundary import BoundaryCondition
+from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.nonlinear_static import DisplacementControl
+from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from anysolver.general_contact.semismooth import linearize
 from anysolver.general_contact.static_path import (
     ContactPathControl, ContactPathProgram,
     _elastic_displacement_force_predictor, solve_static_contact_path,
@@ -37,6 +41,124 @@ def _case():
         node_id=5, dof="uz", target_displacement=-8.0e-5,
     )
     return model, definition, settings, control
+
+
+def _clipped_linear_mass(knots, upper):
+    """Exact two-node Q1 mass over this fixture's left-aligned overlap."""
+    matrix = np.zeros((len(knots), len(knots)))
+    for cell in range(len(knots)-1):
+        left, right = knots[cell:cell+2]
+        reach = min(right, upper)
+        if reach <= left:
+            continue
+        length = right-left
+        t = (reach-left)/length
+        block = length*np.array([
+            [t-t*t+t*t*t/3, t*t/2-t*t*t/3],
+            [t*t/2-t*t*t/3, t*t*t/3],
+        ])
+        matrix[cell:cell+2, cell:cell+2] += block
+    return matrix
+
+
+def _independent_small_motion_oracle():
+    """Use model linear K and analytic contact work on the reference footprint."""
+    model, definition, _settings, control = _case()
+    assert definition.surfaces[0].element_ids == (1, 2, 3, 4)
+    assert definition.surfaces[1].element_ids == (5, 6)
+    model.apply_boundary_conditions()
+    stiffness, _info = assemble_stiffness_matrix(model)
+    ndof = model.mesh.dof_manager.total_dofs
+    _, _, transform, offset, _, _ = build_constraint_transformation(
+        stiffness, np.zeros(ndof), model,
+    )
+    assert np.linalg.norm(offset) == 0.0
+    source_x = np.array([model.mesh.nodes[node].x for node in range(1, 6)])
+    source_y = np.array([model.mesh.nodes[node].y for node in (1, 6)])
+    assert np.all(np.diff(source_x) > 0.0)
+    assert np.all(np.diff(source_y) > 0.0)
+    assert all(model.mesh.nodes[node].x == source_x[(node-1) % 5]
+               for node in range(1, 11))
+    assert all(model.mesh.nodes[node].y == source_y[(node-1) // 5]
+               for node in range(1, 11))
+    target_x = max(model.mesh.nodes[node].x for node in range(11, 15))
+    target_y = max(model.mesh.nodes[node].y for node in range(11, 15))
+    assert min(model.mesh.nodes[node].x for node in range(11, 15)) <= source_x[0]
+    assert min(model.mesh.nodes[node].y for node in range(11, 15)) <= source_y[0]
+    source_element = model.mesh.elements[1]
+    target_element = model.mesh.elements[5]
+    np.testing.assert_allclose(source_element.physical_reference_director,
+                               (0.0, 0.0, 1.0), atol=1e-12)
+    np.testing.assert_allclose(target_element.physical_reference_director,
+                               (0.0, 0.0, 1.0), atol=1e-12)
+    for node in range(1, 11):
+        for dof in model.mesh.dof_manager.get_node_dofs(node)[3:6]:
+            assert transform[dof, :].nnz == 0
+    for node in range(11, 15):
+        for dof in model.mesh.dof_manager.get_node_dofs(node):
+            assert transform[dof, :].nnz == 0
+    reference_gap = (
+        model.mesh.nodes[1].z-0.5*source_element.thickness
+        -model.mesh.nodes[11].z
+        -(0.5*target_element.thickness
+          -target_element.reference_surface_offset)
+    )
+    assert reference_gap == pytest.approx(40e-6, abs=1e-12)
+    mass = np.kron(_clipped_linear_mass(source_y, target_y),
+                   _clipped_linear_mass(source_x, target_x))
+    support = mass.sum(axis=1)
+    assert np.min(support) > 0.0
+    gap_work = np.zeros((len(support), ndof))
+    source_z = [model.mesh.dof_manager.get_node_dofs(node)[2]
+                for node in range(1, 11)]
+    gap_work[:, source_z] = mass
+    reduced_stiffness = (transform.T @ stiffness @ transform).toarray()
+    reduced_gap_work = np.asarray(transform.T @ gap_work.T).T
+    control_row = np.zeros(ndof)
+    control_row[model.mesh.dof_manager.get_node_dofs(control.node_id)[2]] = 1.0
+    reduced_control = np.asarray(control_row @ transform).reshape(1, -1)
+
+    def equilibrate(active):
+        active_gap_work = reduced_gap_work[active]
+        size = reduced_stiffness.shape[0]
+        count = int(active.sum())
+        matrix = np.block([
+            [reduced_stiffness, -active_gap_work.T, reduced_control.T],
+            [active_gap_work, np.zeros((count, count)),
+             np.zeros((count, 1))],
+            [reduced_control, np.zeros((1, count)), np.zeros((1, 1))],
+        ])
+        rhs = np.r_[np.zeros(size), -reference_gap*support[active],
+                    control.target_displacement]
+        solved = np.linalg.solve(matrix, rhs)
+        coordinates = solved[:size]
+        pressure = np.zeros(len(support))
+        pressure[active] = solved[size:size+count]
+        return coordinates, pressure, float(solved[-1])
+
+    active = np.zeros(len(support), dtype=bool)
+    for _ in range(20):
+        coordinates, pressure, multiplier = equilibrate(active)
+        normalized_gap = reference_gap + (reduced_gap_work @ coordinates)/support
+        updated = (pressure - definition.interactions[0].normal_stiffness
+                   * normalized_gap) > 0.0
+        if np.array_equal(updated, active):
+            break
+        active = updated
+    else:
+        raise AssertionError("independent Q1 active set did not settle")
+    assert int(active.sum()) == 1
+    assert np.min(pressure) >= -1e-12
+    assert np.min(normalized_gap) >= -1e-12
+    assert np.max(np.abs(pressure*normalized_gap)) < 1e-12
+    equilibrium = (reduced_stiffness @ coordinates
+                   - reduced_gap_work.T @ pressure
+                   + reduced_control.T.ravel()*multiplier)
+    assert np.linalg.norm(equilibrium) < 1e-10
+    displacement = np.asarray(transform @ coordinates).reshape(-1)
+    physical_contact_force = gap_work.T @ pressure
+    return (pressure, displacement, float(support @ pressure), multiplier,
+            float(physical_contact_force @ displacement))
 
 
 def test_contact_free_elastic_force_predictor_matches_diagonal_spring():
@@ -69,6 +191,31 @@ def test_ordinary_displacement_contact_and_split_restart():
         full.info["contact_free_elastic_force_predictor_n"],
     )
     assert full.info["general_contact"]["gap_tolerance_met"]
+    source_inplane = [abs(full.displacements[dof])
+                      for node in range(1, 11)
+                      for dof in model.mesh.dof_manager.get_node_dofs(node)[:2]]
+    # This analytic oracle freezes the planar footprint, so bound that approximation.
+    assert max(source_inplane) < 1e-8
+
+    (oracle_pressure, oracle_displacement, oracle_force, oracle_control,
+     oracle_work) = _independent_small_motion_oracle()
+    reported = full.info["general_contact"]
+    assert abs(reported["integration_force"][2]-oracle_force)/oracle_force < 1e-6
+    assert (np.linalg.norm(np.asarray(reported["numerical_pressure_pa"])
+                           - oracle_pressure)/np.linalg.norm(oracle_pressure)
+            < 1e-6)
+    assert (np.linalg.norm(full.displacements-oracle_displacement)
+            / np.linalg.norm(oracle_displacement) < 1e-4)
+    production_control = full.info["force_displacement_history"][-1][
+        "reaction_generalized"][0]
+    assert abs(production_control+oracle_control)/abs(oracle_control) < 1e-6
+    manager = GeneralS3PatchManager(model, definition, settings)
+    normal_forces = np.asarray(full.to_restart_checkpoint()["path_state"][
+        "normal_forces"])
+    contact = linearize(manager, full.displacements, normal_forces,
+                        tangent=False)
+    mapped_work = float(-contact.force @ full.displacements)
+    assert abs(mapped_work-oracle_work)/abs(oracle_work) < 1e-6
 
     scaled = solve_static_nonlinear(
         model, control="displacement", displacement_control=control,
