@@ -41,6 +41,14 @@ slice; do not edit or run it by default.
 - ANYfem has a separate experimental save/reopen consumer. The installed
   solver/consumer milestone and review are in
   `.qualification/b3-ge-e4-pl/r7-combined-integration-dev-20260928-v1/`.
+- The GE facade now returns a tuple of attachment capability names for both
+  point-only and line owners. This makes the experimental machine-readable
+  field consistent without changing analysis or checkpoint identity. Source
+  `6e83d5ec`, wheel SHA-256
+  `0809b913bafd54e29ef86ebb220334956b52d64a795934e108d02c471c373d69`;
+  21/21 installed point/line owner checks passed with the imported site path
+  recorded in
+  `.qualification/b3-ge-e4-pl/r7-ge-capabilities-installed-dev-20260928-v1/`.
 
 ## Connection facts and uncertainty
 
@@ -195,7 +203,9 @@ but cannot settle the law, discrete stability or physical fidelity. No
 historical F5 result is treated as the same connection law. Increasingly
 anisotropic Q4 meshes are not silently excluded: the programme has no
 explicit aspect-ratio ceiling, and any new admission rule needs scientific
-review.
+review. The current E4-PL Q4 validation checks Jacobian nondegeneracy and
+warpage; it does not supply a fixed element-aspect admission that removes the
+tested anisotropic counterexample from this prospective domain.
 
 **Current-law slip discriminator:** The older C1 hybrid's mode-resolved check
 already distinguished transverse section nullity from coarse longitudinal
