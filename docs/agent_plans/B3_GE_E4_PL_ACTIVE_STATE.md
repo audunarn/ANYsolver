@@ -83,7 +83,10 @@ A and B. Ritz maxima are 0.812–0.919 and negative consistency minima are
 −0.748 to −0.946 relative to fine
 compliance; coarse/fine ratios span 0.312–1.492. Their cancellation rules out
 a simple finite-grid agreement or monotone reference-error rule. Independent
-review found no formula defect. Next decide, by derivation rather than another
+review found no formula defect. The exact-source six-case rerun is in
+`.qualification/b3-ge-e4-pl/r7-f03-action-decomp-dev-20260928-v2/`, bound to
+`40359355`; it used one effective numerical thread and 31.6 seconds. Next
+decide, by derivation rather than another
 grid sweep, whether a computable same-law enclosure can bound both the
 nonconforming consistency defect and Ritz tail with exact gauges. If not,
 develop a prospectively reviewed physical multiplier norm and signed mixed
