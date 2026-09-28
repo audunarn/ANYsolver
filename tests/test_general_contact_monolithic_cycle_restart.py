@@ -30,6 +30,7 @@ def test_free_target_press_slide_open_recontact_split_restart():
     full = _solve()
     assert full.status == "completed"
     assert len(full.steps) == 8
+    _model, _definition, _settings, program = _case()
     history = full.info["force_displacement_history"]
     assert history[1]["contact"]["integration_force"][2] > 0.0
     assert history[5]["contact"]["active_pressure_dofs"] == 0
@@ -39,8 +40,17 @@ def test_free_target_press_slide_open_recontact_split_restart():
         source = np.asarray(row["contact"]["integration_force"])
         target = np.asarray(row["contact"]["target_force"])
         np.testing.assert_allclose(source+target, 0.0, atol=1e-9)
+        source_moment = np.asarray(row["contact"]["integration_moment"])
+        target_moment = np.asarray(row["contact"]["target_moment"])
+        np.testing.assert_allclose(source_moment+target_moment, 0.0, atol=1e-9)
         assert row["contact"]["gap_tolerance_met"]
         assert row["complementarity_relative_force"] <= 1e-8
+        step = int(row["step_index"])
+        support = full.steps[step-1].support_reactions
+        assert abs(support["target_left_clamp"][2]-source[2]) <= 3e-7
+        external_z = float(np.sum(program.force_values_at(step)))
+        assert abs(sum(values[2] for values in support.values())
+                   + external_z) <= 3e-7
 
     opened = _solve(stop=0.75)
     assert opened.status == "completed"
