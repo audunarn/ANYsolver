@@ -12,6 +12,7 @@ import sys
 import time
 
 import numpy as np
+import psutil
 from scipy.optimize import minimize
 import scipy.sparse as sparse
 import scipy.sparse.linalg as sparse_linalg
@@ -284,6 +285,116 @@ def enrichment_y_grid(y):
     return result
 
 
+def relative_q1_pressure_l2(first, second, *, support_y_max):
+    """Exact squared Q1 comparison on the union mesh and physical support."""
+    x_knots = np.unique(np.r_[first["xn"], second["xn"]])
+    y_knots = np.unique(np.r_[first["yn"], second["yn"], support_y_max])
+    y_knots = y_knots[y_knots <= support_y_max]
+    roots = (-1/np.sqrt(3.0), 1/np.sqrt(3.0))
+
+    def value(solution, x, y):
+        xs, ys, p = solution["xn"], solution["yn"], solution["p"]
+        i = min(int(np.searchsorted(xs, x, side="right")-1), len(xs)-2)
+        j = min(int(np.searchsorted(ys, y, side="right")-1), len(ys)-2)
+        a = (x-xs[i])/(xs[i+1]-xs[i])
+        b = (y-ys[j])/(ys[j+1]-ys[j])
+        return ((1-a)*(1-b)*p[j, i] + a*(1-b)*p[j, i+1]
+                + a*b*p[j+1, i+1] + (1-a)*b*p[j+1, i])
+
+    error = reference = 0.0
+    for x0, x1 in zip(x_knots[:-1], x_knots[1:]):
+        for y0, y1 in zip(y_knots[:-1], y_knots[1:]):
+            weight = (x1-x0)*(y1-y0)/4.0
+            for gx in roots:
+                x = (x0+x1)/2.0 + (x1-x0)*gx/2.0
+                for gy in roots:
+                    y = (y0+y1)/2.0 + (y1-y0)*gy/2.0
+                    p = value(first, x, y)
+                    q = value(second, x, y)
+                    error += weight*(p-q)**2
+                    reference += weight*q**2
+    if reference <= 0:
+        raise AssertionError("zero reference pressure norm")
+    return float(np.sqrt(error/reference))
+
+
+def run_coarse_y(output):
+    """Bounded y-pressure discriminator on the unchanged 32x8 structure."""
+    if output.exists():
+        raise FileExistsError(output)
+    started = time.perf_counter()
+    saved_path = Path("reports/general_contact_d1_16x8_near_rim_"
+                      "guarded_no_checkpoint_comparison_identity_dev_20260928.json")
+    saved_bytes = saved_path.read_bytes()
+    saved = json.loads(saved_bytes)
+    oracle_sha = hashlib.sha256(Path(oracle.__file__).read_bytes()).hexdigest()
+    if (saved["status"] != "development_comparison_only"
+            or saved["mesh"] != [16, 8]
+            or saved["oracle_sha256"] != oracle_sha):
+        raise ValueError("near-rim reference identity differs")
+    x = np.linspace(0.0, 1.0, 33)
+    y = np.asarray(saved["source_y_knots_m"])
+    coarse_y = y[[0, 2, 4, 6, 8]]
+    if not np.all(np.diff(coarse_y) > 0):
+        raise AssertionError("invalid nested coarse y pressure knots")
+    edges_x = np.linspace(0.0, 1.0, 9)
+    edges_y = np.r_[np.linspace(0.0, oracle.YR, 10), 1.0]
+    solutions = {}
+    cases = {}
+    for name, pressure_y in (("matching_32x8", y),
+                             ("coarse_y_32x4", coarse_y)):
+        solution, diagnostics = solve_fixed_structure(x, x, y, pressure_y)
+        bins = oracle.q1_bins(solution, edges_x, edges_y)
+        if abs(bins.sum()-diagnostics["reaction_n"]) > 1.0e-10:
+            raise AssertionError("physical bins lose reaction")
+        if name == "matching_32x8":
+            independent = oracle.solve_q1(32, 8, ynodes=y)
+            np.testing.assert_allclose(solution["p"], independent["p"],
+                                       rtol=1.0e-9, atol=1.0e-10)
+            np.testing.assert_allclose(bins, oracle.q1_bins(
+                independent, edges_x, edges_y), rtol=1.0e-9, atol=1.0e-12)
+        solutions[name] = solution
+        cases[name] = {**diagnostics, "pressure_y_knots_m": pressure_y.tolist(),
+                       "pressure_pa": solution["p"].tolist(),
+                       "bins_n": bins.tolist()}
+    coarse = cases["coarse_y_32x4"]
+    matching = cases["matching_32x8"]
+    coarse_bins = np.asarray(coarse["bins_n"])[:9]
+    matching_bins = np.asarray(matching["bins_n"])[:9]
+    record = {
+        "status": "development_fixed_structure_coarse_y_pressure",
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "oracle_sha256": oracle_sha,
+        "saved_comparison_sha256": hashlib.sha256(saved_bytes).hexdigest(),
+        "structural_mesh": [32, 8],
+        "structural_y_knots_m": y.tolist(),
+        "physical_support_y_max_m": oracle.YR,
+        "common_bins": [8, 9],
+        "cases": cases,
+        "coarse_vs_matching_bin_l2_relative": float(
+            np.linalg.norm(coarse_bins-matching_bins)
+            /np.linalg.norm(matching_bins)),
+        "coarse_vs_matching_rim_force_relative": float(
+            abs(coarse_bins[8].sum()-matching_bins[8].sum())
+            /abs(matching_bins[8].sum())),
+        "coarse_vs_matching_reaction_relative": float(
+            abs(coarse["reaction_n"]-matching["reaction_n"])
+            /abs(matching["reaction_n"])),
+        "coarse_vs_matching_physical_pressure_l2_relative": (
+            relative_q1_pressure_l2(
+                solutions["coarse_y_32x4"], solutions["matching_32x8"],
+                support_y_max=oracle.YR)),
+        "elapsed_seconds": time.perf_counter()-started,
+        "peak_process_working_set_mb": (
+            psutil.Process().memory_info().peak_wset / 1.0e6),
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps({key: record[key] for key in record
+                      if key.startswith("coarse_vs_matching_")}, indent=2))
+
+
 def run_enrichment(output, *, lcp_method="pdas"):
     """One fixed-structure, pressure-only refinement discriminator."""
     if output.exists():
@@ -503,5 +614,7 @@ if __name__ == "__main__":
         run_enrichment(Path(sys.argv[2]), lcp_method="scaled_qp")
     elif len(sys.argv) == 3 and sys.argv[1] == "--active-rank":
         run_active_rank(Path(sys.argv[2]))
+    elif len(sys.argv) == 3 and sys.argv[1] == "--coarse-y":
+        run_coarse_y(Path(sys.argv[2]))
     else:
         raise SystemExit("usage: python general_contact_d1_fixed_structure_pressure_probe.py [--enrichment] OUTPUT")

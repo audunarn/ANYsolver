@@ -20,6 +20,22 @@ nonmonotone (0.3344%→0.4811%). The [reviewed development record](d1_review_sup
 narrows x spatial behavior but leaves pressure-only, y/rim, full nonlinear
 and deformable-target stability gates open.
 
+**Saved active pressure response:** At the accepted 16×8 and 32×8 poses,
+the constrained pressure-to-gap responses have 48/48 and 96/96 positive
+active eigenvalues. Their unit-diagonal eigenvalue ratios decrease from
+9.77e−5 to 2.34e−5. The [source-bound development record](d1_review_support/d1_16_32_saved_active_compliance_20260928.md)
+rules out exact local active rank loss at these poses, while leaving
+mesh-uniform stability and the 7.8166% pressure-field change unresolved.
+The subsequent [fixed-structure y-pressure discriminator](d1_review_support/d1_fixed_structure_coarse_y_20260928.md)
+retains the 32×8 structure and coarsens only y pressure on a nested basis
+whose settled 60-mode active work map has positive eigenvalues. The full
+165-mode coarse map is rank limited by the clamped x edge; neither complete
+pressure space is certified by the active check. Both scalar KKT solves pass. The physical 8×9 bin
+force changes 0.7359% L2, while pressure over the physical support changes
+71.53% L2. This is pressure-representation sensitivity, not stability or
+instability qualification; regular-area and rim contributions need separate
+claim-bearing treatment. No larger coupled solve follows automatically.
+
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
 bound at all eight accepted poses. Local and installed fields match; a forced

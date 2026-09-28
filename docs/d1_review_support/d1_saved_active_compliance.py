@@ -1,9 +1,10 @@
-"""Offline active pressure-to-gap response at the saved 16x8 near-rim pose.
+"""Offline active pressure-to-gap response at a saved near-rim pose.
 
 Development discriminator only: a local active Jacobian is not a spatial or
 nonlinear pressure-space qualification.
 """
 
+import argparse
 import hashlib
 import json
 import platform
@@ -13,6 +14,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import psutil
 from scipy import sparse
 from scipy.sparse.linalg import splu
 
@@ -25,8 +27,14 @@ from anysolver.nonlinear_static import _assemble_nonlinear_system
 from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
 
 
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument(
+    "--saved", type=Path,
+    default=Path(__file__).with_name("d1_saved_16x8_near_rim_field_20260928.json"),
+)
+args = parser.parse_args()
 started = time.perf_counter()
-path = Path(__file__).with_name("d1_saved_16x8_near_rim_field_20260928.json")
+path = args.saved.resolve()
 saved_bytes = path.read_bytes()
 saved = json.loads(saved_bytes)
 assert saved["status"] == "completed" and saved["accepted_steps"] == 2
@@ -107,6 +115,7 @@ record = {
     "status": "development_saved_active_pressure_compliance",
     "source_commit": subprocess.check_output(("git", "rev-parse", "HEAD"),
                                               text=True).strip(),
+    "saved_source_file": str(path),
     "saved_source_sha256": hashlib.sha256(saved_bytes).hexdigest(),
     "saved_runtime_identity": saved["runtime_identity"],
     "python": sys.version.split()[0],
@@ -135,5 +144,8 @@ record = {
                                        /unit_diagonal_eigen[-1]),
     "geometry_seconds": geometry_seconds,
     "elapsed_seconds": time.perf_counter()-started,
+    "peak_process_working_set_mb": (
+        psutil.Process().memory_info().peak_wset / 1.0e6
+    ),
 }
 print(json.dumps(record, indent=2))

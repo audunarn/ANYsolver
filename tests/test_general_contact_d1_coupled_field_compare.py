@@ -4,6 +4,9 @@ import numpy as np
 import pytest
 
 from scripts.general_contact_d1_compare_coupled_fields import _relative_q1_l2
+from scripts.general_contact_d1_fixed_structure_pressure_probe import (
+    relative_q1_pressure_l2,
+)
 
 
 def test_common_refinement_integrates_two_linear_pressure_fields_exactly():
@@ -20,3 +23,17 @@ def test_common_refinement_integrates_two_linear_pressure_fields_exactly():
     assert _relative_q1_l2(first, second, y, support_y_max=0.5) == pytest.approx(
         np.sqrt(4.0/23.0), abs=1.0e-14,
     )
+
+
+def test_distinct_y_pressure_knots_and_clipped_physical_support():
+    x = np.array((0.0, 1.0))
+    first_y = np.array((0.0, 1.0))
+    second_y = np.array((0.0, 0.5, 1.0))
+    first = {"xn": x, "yn": first_y,
+             "p": np.array(((0.0, 0.0), (1.0, 1.0)))}
+    second = {"xn": x, "yn": second_y,
+              "p": np.array(((0.0, 0.0), (0.5, 0.5), (0.0, 0.0)))}
+    # Over y in [0, .75], squared difference is 1/48; q squared is 5/64.
+    assert relative_q1_pressure_l2(
+        first, second, support_y_max=0.75,
+    ) == pytest.approx(np.sqrt(4.0/15.0), abs=1.0e-14)
