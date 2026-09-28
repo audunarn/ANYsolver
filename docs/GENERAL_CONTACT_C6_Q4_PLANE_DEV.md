@@ -24,7 +24,10 @@ explicitly. The reduced dynamic residual is
 `M a + F_structural + F_contact - F_nodal`; the same assembled load enters
 initial acceleration and restart balance. A contact checkpoint binds its load
 name and generalized vector, so changing either rejects continuation. This
-development slice does not yet report external work or admit varying loads.
+development slice reports cumulative constant-nodal-load work in joules as
+`external_nodal_work_j = F_nodal · (u - u_initial)` at each saved state. The
+work is measured from the configured initial pose, including after restart.
+It does not yet admit varying loads.
 The result stores sampled displacement, velocity, acceleration, contact reaction
 and endpoint gap. Its swept-gap and equilibrium-residual entries bound every
 accepted step since the preceding saved sample; iteration counts cover every
@@ -71,8 +74,11 @@ development tests, not
 registered C6 qualification or independent review.
 The constant-nodal-load checks also compare free guided motion and loaded
 impact with independent one-coordinate mass–spring solutions, and test
-same-load restart and changed-load rejection. The complete focused transient
-file passed 19/19 after this addition.
+same-load restart and changed-load rejection. The free-motion check compares
+reported work with analytical force times displacement and kinetic-energy
+change; the impact check verifies work at an active-contact state. The
+complete focused transient file passed 19/19 before the work-field addition.
+The full file also passed 19/19 after it (21.46 s, source environment).
 Independent read-only review found no concrete defect in load sign,
 projection, initial/resumed balance, restart binding or rollback ownership.
 The tests directly check initial/resumed acceleration and changed load name
@@ -81,7 +87,7 @@ untested; neither is claimed as separately qualified here.
 
 General prescribed or varying loads, moving tools, free rigid bodies, descriptor dynamics in this Q4 branch,
 beam impact, general finite sliding, plasticity, friction, damping, general
-dynamic restart, work/energy accounting, cancellation and common-stage native
+dynamic restart, complete work/energy accounting, cancellation and common-stage native
 coupling remain outside this profile. Contact result records retain the
 static plane kernel identity; the surrounding transient result declares the
 distinct Newmark development profile. Full C6 and programme acceptance remain

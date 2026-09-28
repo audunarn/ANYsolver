@@ -149,6 +149,7 @@ class TransientContactResults:
     equilibrium_residuals: np.ndarray
     cutbacks: int
     newton_iterations: tuple[int, ...]
+    external_nodal_work_j: np.ndarray
     restart_checkpoint: dict | None = None
 
 
@@ -574,6 +575,7 @@ def solve_transient_contact(
         velocities = [np.asarray(T @ vred).reshape(-1)]
         accelerations = [np.asarray(T @ acceleration).reshape(-1)]
         contacts = [contact0]
+        external_work = [float(external_load @ (full0 - full_initial))]
         swept_gaps = [contact0.minimum_gap]
         residuals = [float(np.linalg.norm(Mred @ acceleration + force0))]
         iterations = []
@@ -651,6 +653,10 @@ def solve_transient_contact(
                         velocities.append(np.asarray(T @ vred).reshape(-1))
                         accelerations.append(np.asarray(T @ acceleration).reshape(-1))
                         contacts.append(contact_result)
+                        # The admitted load is a constant dead generalized
+                        # force. Its path integral is exact at every sample,
+                        # including the first sample of a resumed solve.
+                        external_work.append(float(external_load @ (full - full_initial)))
                         swept_gaps.append(pending_swept_gap)
                         residuals.append(pending_residual)
                         pending_swept_gap = float("inf")
@@ -680,5 +686,5 @@ def solve_transient_contact(
         profile, np.asarray(times), np.asarray(positions),
         np.asarray(velocities), np.asarray(accelerations), tuple(contacts),
         np.asarray(swept_gaps), np.asarray(residuals), cutbacks, tuple(iterations),
-        checkpoint,
+        np.asarray(external_work), checkpoint,
     )

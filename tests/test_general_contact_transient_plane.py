@@ -91,6 +91,12 @@ def test_q4_constant_nodal_load_matches_free_acceleration_and_restart():
             expected_acceleration, abs=2e-9,
         )
     assert all(item.active_pressure_dofs == 0 for item in full.contact)
+    expected_work = 0.5*0.02*(0.02/0.05)*full.times**2
+    np.testing.assert_allclose(full.external_nodal_work_j, expected_work,
+                               rtol=2e-9, atol=2e-14)
+    np.testing.assert_allclose(full.external_nodal_work_j,
+                               0.5*0.05*(0.02/0.05*full.times)**2,
+                               rtol=2e-9, atol=2e-14)
 
     split_model, split_contact, split_velocity = _guided_plate()
     split_velocity[:] = 0.0
@@ -114,6 +120,14 @@ def test_q4_constant_nodal_load_matches_free_acceleration_and_restart():
                                full.velocities[-1], atol=2e-9)
     np.testing.assert_allclose(continuation.accelerations[0],
                                first.accelerations[-1], atol=2e-9)
+    assert continuation.external_nodal_work_j[0] == pytest.approx(
+        first.external_nodal_work_j[-1], abs=2e-14,
+    )
+    np.testing.assert_allclose(
+        continuation.external_nodal_work_j,
+        full.external_nodal_work_j[len(first.times)-1:],
+        rtol=2e-9, atol=2e-14,
+    )
 
     changed_model, changed_contact, changed_velocity = _guided_plate()
     changed_velocity[:] = 0.0
@@ -157,6 +171,9 @@ def test_q4_constant_nodal_load_and_contact_match_mass_spring_impact():
     expected_displacement = -.01-penetration
     dof = model.mesh.dof_manager.get_node_dofs(1)[2]
     assert result.contact[-1].active_pressure_dofs > 0
+    assert result.external_nodal_work_j[-1] == pytest.approx(
+        -0.02*result.displacements[-1, dof], abs=2e-12,
+    )
     assert result.displacements[-1, dof] == pytest.approx(
         expected_displacement, abs=2.0e-5,
     )
@@ -487,6 +504,9 @@ def test_transient_config_initial_state_and_sparse_output_keep_event_checks():
     )
     assert len(sampled.newton_iterations) == len(full.newton_iterations)
     assert len(sampled.times) < len(full.times)
+    assert sampled.external_nodal_work_j.shape == sampled.times.shape
+    np.testing.assert_array_equal(sampled.external_nodal_work_j,
+                                  np.zeros_like(sampled.times))
     assert sampled.times[0] == 0.0
     assert sampled.times[-1] == pytest.approx(0.012)
     assert sampled.displacements[0, 2] == pytest.approx(-0.002)
