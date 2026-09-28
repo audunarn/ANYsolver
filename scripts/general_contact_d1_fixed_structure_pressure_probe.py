@@ -515,6 +515,99 @@ def run_rim_knot(output):
                       if key.startswith("moved_vs_matching_")}, indent=2))
 
 
+def run_aligned_rim_x(output):
+    """Preflight whether physical rim alignment changes scalar x convergence."""
+    if output.exists():
+        raise FileExistsError(output)
+    started = time.perf_counter()
+    saved_path = Path("reports/general_contact_d1_16x8_near_rim_"
+                      "guarded_no_checkpoint_comparison_identity_dev_20260928.json")
+    saved_bytes = saved_path.read_bytes()
+    saved = json.loads(saved_bytes)
+    oracle_sha = hashlib.sha256(Path(oracle.__file__).read_bytes()).hexdigest()
+    if (saved["status"] != "development_comparison_only"
+            or saved["mesh"] != [16, 8]
+            or saved["oracle_sha256"] != oracle_sha):
+        raise ValueError("near-rim reference identity differs")
+    original_y = np.asarray(saved["source_y_knots_m"])
+    aligned_y = original_y.copy()
+    if not np.isclose(aligned_y[-2], 0.895, rtol=0, atol=1e-12):
+        raise AssertionError("unexpected near-rim knot")
+    aligned_y[-2] = oracle.YR
+    edges_x = np.linspace(0.0, 1.0, 9)
+    edges_y = np.r_[np.linspace(0.0, oracle.YR, 10), 1.0]
+    reference_bins = np.asarray(saved["fv_bins_n"])[:9]
+    solutions = {}
+    cases = {}
+    for profile, y in (("original", original_y),
+                       ("aligned", aligned_y)):
+        for nx in (16, 32):
+            name = f"{profile}_{nx}x8"
+            x = np.linspace(0.0, 1.0, nx+1)
+            solution, diagnostics = solve_fixed_structure(x, x, y)
+            independent = oracle.solve_q1(nx, 8, ynodes=y)
+            np.testing.assert_allclose(solution["p"], independent["p"],
+                                       rtol=1e-9, atol=1e-10)
+            bins = oracle.q1_bins(solution, edges_x, edges_y)
+            np.testing.assert_allclose(
+                bins, oracle.q1_bins(independent, edges_x, edges_y),
+                rtol=1e-9, atol=1e-12)
+            if abs(bins.sum()-diagnostics["reaction_n"]) > 1e-10:
+                raise AssertionError("physical bins lose reaction")
+            solutions[name] = solution
+            cases[name] = {**diagnostics,
+                           "structural_y_knots_m": y.tolist(),
+                           "pressure_pa": solution["p"].tolist(),
+                           "bins_n": bins.tolist(),
+                           "fv_bin_l2_relative": float(
+                               np.linalg.norm(bins[:9]-reference_bins)
+                               /np.linalg.norm(reference_bins)),
+                           "active_work_rank": solved_active_work_rank(
+                               solution, x, y)}
+    comparisons = {}
+    for profile in ("original", "aligned"):
+        low = f"{profile}_16x8"
+        high = f"{profile}_32x8"
+        low_bins = np.asarray(cases[low]["bins_n"])[:9]
+        high_bins = np.asarray(cases[high]["bins_n"])[:9]
+        comparisons[profile] = {
+            "x_refinement_bin_l2_relative": float(
+                np.linalg.norm(high_bins-low_bins)/np.linalg.norm(low_bins)),
+            "x_refinement_rim_force_relative": float(
+                abs(high_bins[8].sum()-low_bins[8].sum())
+                /abs(low_bins[8].sum())),
+            "x_refinement_physical_pressure_l2_relative": (
+                relative_q1_pressure_l2(
+                    solutions[high], solutions[low],
+                    support_y_max=oracle.YR)),
+            "x_refinement_regular_pressure_l2_relative": (
+                relative_q1_pressure_l2(
+                    solutions[high], solutions[low],
+                    support_y_min=0.0, support_y_max=0.8)),
+            "x_refinement_rim_pressure_l2_relative": (
+                relative_q1_pressure_l2(
+                    solutions[high], solutions[low],
+                    support_y_min=0.8, support_y_max=oracle.YR)),
+        }
+    record = {
+        "status": "development_aligned_rim_x_preflight",
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "oracle_sha256": oracle_sha,
+        "saved_comparison_sha256": hashlib.sha256(saved_bytes).hexdigest(),
+        "physical_support_y_max_m": oracle.YR,
+        "common_bins": [8, 9],
+        "cases": cases,
+        "x_refinement_comparisons": comparisons,
+        "elapsed_seconds": time.perf_counter()-started,
+        "peak_process_working_set_mb": (
+            psutil.Process().memory_info().peak_wset / 1.0e6),
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps(comparisons, indent=2))
+
+
 def run_enrichment(output, *, lcp_method="pdas"):
     """One fixed-structure, pressure-only refinement discriminator."""
     if output.exists():
@@ -678,6 +771,7 @@ def main(output):
     matching_reference = oracle.solve_q1(32, 8, ynodes=y)
     cases = {}
     bins = {}
+    solutions = {}
     for name, pressure_x in pressure_grids:
         solution, diagnostics = solve_fixed_structure(pressure_x, structure_x, y)
         field = oracle.q1_bins(solution, edges_x, edges_y)
@@ -689,17 +783,21 @@ def main(output):
             np.testing.assert_allclose(field, oracle.q1_bins(
                 matching_reference, edges_x, edges_y), rtol=1e-9, atol=1e-12)
         bins[name] = field
+        solutions[name] = solution
         difference = field[:9]-reference[:9]
         diagnostics["fv_bin_l2_relative"] = float(
             np.linalg.norm(difference)/np.linalg.norm(reference[:9]))
         diagnostics["fv_rim_force_relative"] = float(
             abs(field[8].sum()-reference[8].sum())/abs(reference[8].sum()))
         diagnostics["bins_n"] = field.tolist()
+        diagnostics["active_work_rank"] = solved_active_work_rank(
+            solution, structure_x, y)
         cases[name] = diagnostics
     record = {
         "status": "development_fixed_structure_pressure_space_probe",
         "source_commit": subprocess.check_output(
             ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "oracle_sha256": oracle_sha,
         "saved_comparison_sha256": hashlib.sha256(saved_path.read_bytes()).hexdigest(),
         "structural_mesh": [32, 8],
@@ -713,7 +811,21 @@ def main(output):
             cases["coarse_x_16x8"]["reaction_n"]
             -cases["matching_32x8"]["reaction_n"])
             /abs(cases["matching_32x8"]["reaction_n"])),
+        "coarse_vs_matching_physical_pressure_l2_relative": (
+            relative_q1_pressure_l2(
+                solutions["coarse_x_16x8"], solutions["matching_32x8"],
+                support_y_max=oracle.YR)),
+        "coarse_vs_matching_regular_pressure_l2_relative": (
+            relative_q1_pressure_l2(
+                solutions["coarse_x_16x8"], solutions["matching_32x8"],
+                support_y_min=0.0, support_y_max=0.8)),
+        "coarse_vs_matching_rim_pressure_l2_relative": (
+            relative_q1_pressure_l2(
+                solutions["coarse_x_16x8"], solutions["matching_32x8"],
+                support_y_min=0.8, support_y_max=oracle.YR)),
         "elapsed_seconds": time.perf_counter()-started,
+        "peak_process_working_set_mb": (
+            psutil.Process().memory_info().peak_wset / 1.0e6),
     }
     output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
     print(json.dumps({
@@ -738,5 +850,7 @@ if __name__ == "__main__":
         run_coarse_y(Path(sys.argv[2]))
     elif len(sys.argv) == 3 and sys.argv[1] == "--rim-knot":
         run_rim_knot(Path(sys.argv[2]))
+    elif len(sys.argv) == 3 and sys.argv[1] == "--aligned-rim-x":
+        run_aligned_rim_x(Path(sys.argv[2]))
     else:
-        raise SystemExit("usage: python general_contact_d1_fixed_structure_pressure_probe.py [--enrichment|--coarse-y|--rim-knot] OUTPUT")
+        raise SystemExit("usage: python general_contact_d1_fixed_structure_pressure_probe.py [--enrichment|--coarse-y|--rim-knot|--aligned-rim-x] OUTPUT")

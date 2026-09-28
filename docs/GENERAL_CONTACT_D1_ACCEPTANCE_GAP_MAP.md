@@ -53,6 +53,21 @@ and active work-rank checks pass. Physical pressure changes 70.10% L2 overall,
 without explaining the earlier x-refinement change in the regular area or
 closing mesh-uniform pressure-space stability. It does not warrant a
 production-law change or a larger coupled run by itself.
+The [bounded aligned-rim x preflight](d1_review_support/d1_aligned_rim_x_06126ff8_20260928.md)
+then changed both structural and pressure y knots to the actual `.9 m`
+support edge in the independent scalar model. The 16→32 regular-area
+physical-pressure L2 shift remained 11.6182% versus 11.6018% on the
+original grid; common-bin force shifted 0.2522% versus 0.2554%. All four
+KKT solves and active work-rank checks passed. This defeats rim alignment
+as a reason, by itself, to spend the capped coupled-run budget. It does not
+resolve x/front spatial convergence or the full nonlinear shell claim.
+The [fixed-structure x-pressure field discriminator](d1_review_support/d1_x_pressure_field_06126ff8_20260928.md)
+changes only 32→16 x-pressure intervals on the 32×8 scalar structure.
+KKT and active work-rank checks pass; common-bin force changes 0.5040% L2,
+but regular-area pressure changes 10.6289% L2. This makes x-pressure
+representation a material part of the remaining field question. It does
+not establish a mesh-uniform stability or convergence result, nor justify
+changing the fine Q1 production basis.
 
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
