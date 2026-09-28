@@ -43,9 +43,13 @@ fallback is dirty, unrun and outside this task's edits.
   `.qualification/b3-ge-e4-pl/r7-b2-rank-dev-20260928-v2/`; this does not
   establish large-model performance or numerical rank under every backend.
 - ANYfem has an experimental panel consumer/save-reopen path distinct from
-  ordinary projects. Development installed wheels passed recorded checks at
-  `.qualification/b3-ge-e4-pl/r7-integration-dev-20260928-v4/` retain evidence.
-  Those wheels are not final G6 artifacts.
+  ordinary projects. The current solver and consumer wheels passed combined
+  installed GE/ANYfem and B2 batch workflows (5 checks), plus mixed Q4/S3 and
+  all-S3 installed GE paths (6 checks). Exact identities, an initial harness
+  error, and an independent read-only review with no code blocker are at
+  `.qualification/b3-ge-e4-pl/r7-combined-integration-dev-20260928-v1/`.
+  The experimental first integration milestone is verified; these are not
+  G0/G1 acceptance or final G6 artifacts.
 
 ## Connection facts and remaining uncertainty
 
