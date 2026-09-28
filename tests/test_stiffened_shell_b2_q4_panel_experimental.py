@@ -11,10 +11,11 @@ from anysolver._b2_f10_f11_point_attachment import compile_reference_point
 from anysolver._b2_physical_flexibility_linear import LinearSection
 from anysolver._b2_physical_linear_definition import PhysicalB2Member
 from anysolver._stiffened_shell_b2_q4_panel_experimental import (
-    Q4B2Point, Q4PanelShell,
+    Q4B2Point, Q4PanelShell, _require_independent_supported_point_rows,
 )
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
 from anysolver.fe_core import FEModel
+from anysolver.linalg import MatrixClass, factorize_cached
 
 
 def _panel():
@@ -103,6 +104,41 @@ def _independent_dense(nodes, shells, members, points):
              for j in range(6)])
         constraint[6*index:6*index+6, slots] += law.constraint
     return stiffness, constraint
+
+
+def test_supported_point_row_audit_bounds_dense_work(monkeypatch):
+    small = sparse.csr_matrix(((1., 2.), (0, 0), (0, 2)), shape=(1, 3))
+    _require_independent_supported_point_rows(small)
+    with pytest.raises(ValueError, match="independent supported point rows"):
+        _require_independent_supported_point_rows(
+            sparse.csr_matrix(((1., 2.), ([0, 1], [0, 0])), shape=(2, 2)))
+
+    def forbid_dense(_self, *args, **kwargs):
+        raise AssertionError("large supported-row audit materialized a dense matrix")
+
+    monkeypatch.setattr(sparse.csr_matrix, "toarray", forbid_dense)
+    monkeypatch.setattr(sparse.csc_matrix, "toarray", forbid_dense)
+    large = sparse.eye(96, 192, format="csc")
+    _require_independent_supported_point_rows(large)
+    dependent = large.tolil()
+    dependent[1, :] = 0.
+    dependent[1, 0] = 2.
+    with pytest.raises(ValueError, match="structurally independent"):
+        _require_independent_supported_point_rows(dependent.tocsc())
+
+    # Structural rank alone cannot detect proportional rows with two distinct
+    # columns; the production sparse KKT factorization must reject them.
+    proportional = sparse.eye(60, 61, format="lil")
+    proportional[0, 1] = 1.
+    proportional[1, :] = 0.
+    proportional[1, 0] = 2.
+    proportional[1, 1] = 2.
+    proportional = proportional.tocsc()
+    _require_independent_supported_point_rows(proportional)
+    kkt = sparse.bmat(((sparse.eye(61, format="csc"), proportional.T),
+                       (proportional, None)), format="csc")
+    factor = factorize_cached(kkt, MatrixClass.SYMMETRIC_INDEFINITE)
+    assert factor.status == "failed"
 
 
 def test_multi_q4_multi_b2_panel_matches_bounded_dense_oracle():

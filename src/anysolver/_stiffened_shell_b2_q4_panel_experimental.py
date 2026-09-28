@@ -13,6 +13,7 @@ from typing import Mapping, Sequence
 
 import numpy as np
 from scipy import sparse
+from scipy.sparse.csgraph import maximum_bipartite_matching
 
 from ._b2_f10_f11_point_attachment import LAW_ID, compile_reference_point
 from ._b2_physical_linear_definition import (
@@ -30,6 +31,30 @@ class ExperimentalB2Q4PanelError(RuntimeError):
 
 class _NumericalFailure(RuntimeError):
     """A checked sparse panel solution failed numerically."""
+
+
+_MAX_DENSE_AUDIT_ROWS = 48
+_MAX_DENSE_AUDIT_VALUES = 16_384
+
+
+def _require_independent_supported_point_rows(reduced_c: sparse.spmatrix) -> None:
+    """Bound the dense numerical audit; defer large numerical rank to KKT LU.
+
+    A matching proves only structural rank. The subsequent sparse KKT
+    factorization must still reject numerical row dependence for larger models.
+    """
+    rows, columns = reduced_c.shape
+    if rows > columns or not np.isfinite(reduced_c.data).all():
+        raise ValueError("independent supported point rows required")
+    if rows <= _MAX_DENSE_AUDIT_ROWS and rows*columns <= _MAX_DENSE_AUDIT_VALUES:
+        if np.linalg.matrix_rank(reduced_c.toarray()) != rows:
+            raise ValueError("independent supported point rows required")
+        return
+    pattern = reduced_c.tocsr(copy=True)
+    pattern.eliminate_zeros()
+    matching = maximum_bipartite_matching(pattern, perm_type="column")
+    if np.any(matching < 0):
+        raise ValueError("structurally independent supported point rows required")
 
 
 @dataclass(frozen=True)
@@ -261,8 +286,7 @@ class ExperimentalB2Q4PanelAnalysis:
                 not np.isfinite(u0).all()):
             raise ValueError("finite sparse panel affine plan required")
         reduced_c = (C @ T).tocsc()
-        if np.linalg.matrix_rank(reduced_c.toarray()) != 6*len(points):
-            raise ValueError("independent supported point rows required")
+        _require_independent_supported_point_rows(reduced_c)
         reduced_k = (T.T @ K @ T).tocsc()
         kkt = sparse.bmat(
             ((reduced_k, reduced_c.T), (reduced_c, None)), format="csc")
