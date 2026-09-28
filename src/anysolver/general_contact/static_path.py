@@ -34,6 +34,7 @@ from anysolver.nonlinear_static import (
     _commit_nonlinear_state_candidate,
     _discard_nonlinear_state_candidate,
     _finalize_nonlinear_element_states,
+    _increment_snapshot,
     _materialize_final_nonlinear_states,
     _max_plastic_strain,
     _prepare_initial_states,
@@ -320,9 +321,14 @@ def solve_static_contact_path(
         max_iterations: int = 18, tolerance: float = 1.0e-7,
         num_layers: int = 5, restart_checkpoint=None,
         emit_restart_checkpoint: bool = False,
+        record_increment_snapshots: bool = False,
         cancellation_token: CancellationToken | None = None,
         ) -> NonlinearStaticResult:
-    """Solve one multi-control path under an admitted static contact profile."""
+    """Solve one multi-control path under an admitted static contact profile.
+
+    Opt-in snapshots contain accepted increments produced by this invocation;
+    a resumed call does not recreate the checkpoint's earlier poses.
+    """
 
     if type(definition) is not ContactDefinition or type(settings) is not ContactSolverSettings:
         raise TypeError("contact path needs exact contact definitions and settings")
@@ -465,6 +471,8 @@ def solve_static_contact_path(
         raise ValueError("max_iterations must be a positive integer")
     if type(num_layers) is not int or num_layers < 1:
         raise ValueError("num_layers must be a positive integer")
+    if type(record_increment_snapshots) is not bool:
+        raise TypeError("record_increment_snapshots must be bool")
     if not np.isfinite(tolerance) or tolerance <= 0.0:
         raise ValueError("tolerance must be finite and positive")
 
@@ -553,6 +561,7 @@ def solve_static_contact_path(
                 multipliers = np.zeros(len(program.controls))
                 normal_forces = np.zeros(len(manager.law.pressure_mode_ids)) if semismooth else None
                 previous_steps: list[NonlinearStaticStep] = []
+                snapshots = []
                 history: list[dict[str, object]] = []
                 total_iterations = 0
                 if restart_checkpoint is None:
@@ -761,6 +770,13 @@ def solve_static_contact_path(
                             active_stage=f"segment_{(step - 1) // program.steps_per_segment + 1}",
                             support_reactions=support,
                         ))
+                        if record_increment_snapshots:
+                            snapshots.append(_increment_snapshot(
+                                step, step / program.total_steps,
+                                accepted_u, committed_states,
+                                control_value=(float(target[0])
+                                               if target.size else None),
+                            ))
                         continue
                     candidate_states = committed_states
                     normal_multiplier_change = 0.0
@@ -1534,6 +1550,13 @@ def solve_static_contact_path(
                         active_stage=f"segment_{(step - 1) // program.steps_per_segment + 1}",
                         support_reactions=support,
                     ))
+                    if record_increment_snapshots:
+                        snapshots.append(_increment_snapshot(
+                            step, step / program.total_steps,
+                            accepted_u, committed_states,
+                            control_value=(float(target[0])
+                                           if target.size else None),
+                        ))
                 final_u = np.asarray(T @ q + u0).reshape(-1)
                 finished_states = _materialize_final_nonlinear_states(
                     committed_states, info,
@@ -1597,7 +1620,8 @@ def solve_static_contact_path(
                 return NonlinearStaticResult(
                     previous_steps, status, final_u,
                     accepted_step / program.total_steps,
-                    finished_states, info, restart_checkpoint=checkpoint,
+                    finished_states, info, snapshots=tuple(snapshots),
+                    restart_checkpoint=checkpoint,
                 )
 
         return _run_with_nonlinear_state_cleanup(run)

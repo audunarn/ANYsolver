@@ -346,11 +346,15 @@ def test_q4_s3_patch_combines_press_slide_open_and_recontact():
         model, contact=definition, contact_settings=settings,
         contact_path_program=program,
         max_iterations=15, emit_restart_checkpoint=True,
+        record_increment_snapshots=True,
     )
     assert result.status == "completed", (
         result.failure_reason, result.info.get("general_contact"),
     )
     assert len(result.steps) == 4
+    assert [snapshot.step_index for snapshot in result.snapshots] == [1, 2, 3, 4]
+    np.testing.assert_array_equal(result.snapshots[-1].displacements,
+                                  result.displacements)
     assert result.info["general_contact"]["gap_tolerance_met"]
     assert result.info["general_contact"]["integration_force"][2] > 0.0
     history = result.info["force_displacement_history"]

@@ -47,11 +47,14 @@ def test_ordinary_force_matches_controlled_path_and_split_restart():
     ordinary = solve_static_nonlinear(
         ordinary_model, load_case=load, num_steps=2,
         contact=definition, contact_settings=settings, max_iterations=18,
-        emit_restart_checkpoint=True,
+        emit_restart_checkpoint=True, record_increment_snapshots=True,
     )
     assert ordinary.status == "completed", (
         ordinary.failure_reason, ordinary.info.get("contact_failure"),
     )
+    assert [snapshot.step_index for snapshot in ordinary.snapshots] == [1, 2]
+    np.testing.assert_array_equal(ordinary.snapshots[-1].displacements,
+                                  ordinary.displacements)
     np.testing.assert_allclose(ordinary.displacements, controlled.displacements,
                                rtol=0, atol=1e-10)
     for name in ("integration_force", "minimum_gap", "numerical_pressure_pa"):
@@ -63,15 +66,18 @@ def test_ordinary_force_matches_controlled_path_and_split_restart():
     half = solve_static_nonlinear(
         ordinary_model, load_case=load, num_steps=2, max_load_factor=0.5,
         contact=definition, contact_settings=settings, max_iterations=18,
-        emit_restart_checkpoint=True,
+        emit_restart_checkpoint=True, record_increment_snapshots=True,
     )
     assert half.status == "completed" and len(half.steps) == 1
+    assert [snapshot.step_index for snapshot in half.snapshots] == [1]
     resumed = solve_static_nonlinear(
         ordinary_model, load_case=load, num_steps=2,
         contact=definition, contact_settings=settings, max_iterations=18,
         restart_checkpoint=half.to_restart_checkpoint(),
+        record_increment_snapshots=True,
     )
     assert resumed.status == "completed"
+    assert [snapshot.step_index for snapshot in resumed.snapshots] == [2]
     np.testing.assert_allclose(resumed.displacements, ordinary.displacements,
                                rtol=0, atol=1e-10)
 

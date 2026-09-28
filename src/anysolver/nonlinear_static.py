@@ -7705,7 +7705,7 @@ def solve_static_nonlinear(
             resource_config, fracture_config, status_callback, progress_callback,
             initial_fields, initial_displacements,
         )) or control not in {"force", "contact_path"} or (
-            equilibrate_initial_state is not None or record_increment_snapshots
+            equilibrate_initial_state is not None
             or num_steps != 10 or min_step_fraction != 1.0 / 1024.0
             or kinematics != "von_karman" or corotational_tangent != "auto"
         ):
@@ -7716,6 +7716,7 @@ def solve_static_nonlinear(
             max_iterations=max_iterations, tolerance=tolerance,
             num_layers=num_layers, restart_checkpoint=restart_checkpoint,
             emit_restart_checkpoint=emit_restart_checkpoint,
+            record_increment_snapshots=record_increment_snapshots,
             cancellation_token=cancellation_token,
         )
 
@@ -7738,7 +7739,6 @@ def solve_static_nonlinear(
                     status_callback, progress_callback, initial_fields,
                     initial_displacements,
             )) or equilibrate_initial_state is not None
-                    or record_increment_snapshots
                     or min_step_fraction != 1.0 / 1024.0
                     or kinematics != "von_karman"
                     or corotational_tangent != "auto"):
@@ -7762,6 +7762,7 @@ def solve_static_nonlinear(
                 max_iterations=max_iterations, tolerance=tolerance,
                 num_layers=num_layers, restart_checkpoint=restart_checkpoint,
                 emit_restart_checkpoint=emit_restart_checkpoint,
+                record_increment_snapshots=record_increment_snapshots,
                 cancellation_token=cancellation_token,
             )
 

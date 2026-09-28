@@ -54,10 +54,13 @@ def test_ordinary_displacement_contact_and_split_restart():
         model, control="displacement", displacement_control=control,
         num_steps=4, contact=definition, contact_settings=settings,
         max_iterations=18, emit_restart_checkpoint=True,
+        record_increment_snapshots=True,
     )
     assert full.status == "completed", (
         full.failure_reason, full.info.get("contact_failure"),
     )
+    assert [snapshot.step_index for snapshot in full.snapshots] == [1, 2, 3, 4]
+    assert full.snapshots[-1].control_value == control.target_displacement
     assert full.info["contact_free_elastic_force_predictor_n"] >= (
         settings.complementarity_force_scale_n
     )
