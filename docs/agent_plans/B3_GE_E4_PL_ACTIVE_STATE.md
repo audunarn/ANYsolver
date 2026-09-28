@@ -47,8 +47,13 @@ full-P1 dual has an exact alternating zero-action row on the tested straight
 half-cells. A/B remain viable *development* spaces; local rank, small gaps and
 one spectral quotient do not select one. The prospective [F03 assessment draft]
 (B3_GE_E4_PL_G0_F03_PROSPECTIVE_ASSESSMENT_DRAFT.md) still needs a reviewed
-support-preserving physical-field map, same-law reference-error rule, numerical
-floors and thresholds before formal use. Preserve seven ratios, growing spaces,
+same-law reference-error rule, physical energy/norm treatment, numerical floors
+and thresholds before formal use. A new bounded physical-field injection maps
+every supported straight virgin Q4/B3 field at 2→4 and 4→8; with complete
+A/B multiplier injection, the six-channel work identity differs by at most
+8.4e-17. The independently derived gap Jacobian matches actual updates at all
+tested 2- and 8-edge stations. This is not a reviewed general reference map.
+Preserve seven ratios, growing spaces,
 three refinements, physical transfer, locking, shear/drilling and the native
 indefinite mixed-system checks.
 
@@ -82,6 +87,17 @@ specific native-law explanation from section/load idealization. Continue
 independent F01-F13 and GE/B2 lifecycle work. Do not infer a law change from
 an S4 percentage, repeat classical axial refinement or consume formal F03
 authority until the prospective assessment contract receives review.
+
+The next native discriminator is physical energy/norm approximation under the
+now-verified bounded work map, including native retained cell rotations and
+the stationary-resultant reduction. Compare the pullback of the *actual*
+virgin supported operators and identify any nonnested energy term before
+defining a compliance quotient. Separately review the support/nullspace and
+reference-error rule; the successful work identity alone cannot select A/B.
+The initial runs in this slice hit the 600-second limit during Numba import
+because the sandbox denied cache creation. A disposable cache in the authorized
+worktree made the same 2→4 and 4→8 checks finish in seconds. These aborted
+runs are execution diagnostics, not mechanics failures.
 
 ## Execution boundary
 

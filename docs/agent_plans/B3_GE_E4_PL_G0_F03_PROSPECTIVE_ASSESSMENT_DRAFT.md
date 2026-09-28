@@ -139,8 +139,22 @@ from the two discretizations, rather than fitting it to a candidate response.
 Then establish \(J_h^TB_{\rm ref}T_h=B_h\), or freeze a uniform bound on
 \(J_h^TB_{\rm ref}T_h-B_h\) in declared physical energy and dual-work norms,
 including supported nullspaces. Checks on selected patches alone do not
-establish this identity. No such \(T_h\) or bound has yet been constructed
-for the native L1/E4 reference, so this prerequisite remains open. Define
+establish this identity. A bounded straight virgin Q4/native-B3 construction
+now maps every supported shell nodal coordinate by bilinear interpolation,
+native nodal coordinates by station interpolation, and each fine retained
+cell rotation from its containing coarse half-cell. Generalized resultants
+remain stationary algebraic variables. Together with the complete A/B
+multiplier-basis injections, the entire assembled six-channel action satisfies
+\(J_h^TB_{2h}T_h=B_h\) to at most \(8.4\times10^{-17}\) absolute on the
+tested 2→4 and 4→8 nested straight grids; supported fields have zero fixed
+or resultant-row leakage. Its independently derived virgin gap Jacobian
+matches the actual connection-update Jacobian exactly at the tested 2- and
+8-edge stations. The executable source and focused tests are
+`scripts/b3_e4_f03_l1_physical_injection.py` and
+`tests/test_b3_e4_f03_l1_physical_injection.py`. This is development evidence
+for those grids only: nonmatching ratios, curved references, finite rotations,
+physical energy/norm approximation, reference convergence and independent
+review remain open. Define
 \(J_h\) by physical traction/couple
 density, orientation, line measure and units; verify basis-change and
 equivalent-unit covariance. An arbitrary rescaling of even one untested
