@@ -1,0 +1,41 @@
+{
+  "purpose": "development fixed-pose contact-front pressure comparison",
+  "source_report": "reports\\general_contact_d1_fixed_front_8_16_32x4_dev_20260928.json",
+  "reference": "analytic local-plane Q1 support/affine-gap projection and continuous positive-part pressure",
+  "continuum_reference_l2_pa_m": 0.5358015801892836,
+  "rows": [
+    {
+      "source_divisions": 8,
+      "source_rows": 4,
+      "exact_supported_modes": 28,
+      "reported_supported_modes": 28,
+      "max_absolute_support_error_m2": 5.407169607896112e-10,
+      "max_absolute_nodal_pressure_error_pa": 5.457541307762881e-09,
+      "relative_continuous_pressure_l2_error": 0.10503219554856852,
+      "reported_integrated_force_n": 0.1609465388429428,
+      "analytic_integrated_force_n": 0.17225000000000001
+    },
+    {
+      "source_divisions": 16,
+      "source_rows": 4,
+      "exact_supported_modes": 44,
+      "reported_supported_modes": 44,
+      "max_absolute_support_error_m2": 4.93698098028017e-10,
+      "max_absolute_nodal_pressure_error_pa": 8.08138622687693e-09,
+      "relative_continuous_pressure_l2_error": 0.03699897837129319,
+      "reported_integrated_force_n": 0.16976139758984216,
+      "analytic_integrated_force_n": 0.17225000000000001
+    },
+    {
+      "source_divisions": 32,
+      "source_rows": 4,
+      "exact_supported_modes": 76,
+      "reported_supported_modes": 76,
+      "max_absolute_support_error_m2": 3.996603707701052e-10,
+      "max_absolute_nodal_pressure_error_pa": 9.39327060578421e-09,
+      "relative_continuous_pressure_l2_error": 0.01374166879197815,
+      "reported_integrated_force_n": 0.17177348497348763,
+      "analytic_integrated_force_n": 0.17225000000000001
+    }
+  ]
+}

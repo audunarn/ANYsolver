@@ -189,6 +189,17 @@ reference-surface pressure L2 change increased from 7.04% at 16→24 Q4 to
 front; the established-contact interior improved. Integrated force changed
 only 0.0208% from 24 Q4. Pressure-space stability and complete C1 admission
 remain open.
+An independent [fixed-pose affine-front comparison](reference_cases/general_contact_d1_fixed_front_pressure_development.md)
+matched analytic nodal weighted-gap pressures within 1e−8 Pa and reduced the
+local-plane pressure-field L2 error from 10.50% to 1.37% across 8/16/32 Q4
+source columns. This bounds the base smooth-pose mortar behavior; it does not
+resolve the coupled front difference or extend C1 admission.
+A [saved coupled-pose comparison](reference_cases/general_contact_d1_coupled_front_pose_development.md)
+found a 6.86 nm reference-front L2 gap difference between 16 and 32 Q4, while
+the multiplier changed 0.02552 Pa in the same measure and the first active
+source node shifted left. Different step counts and the absence of an exact
+coupled pressure reference limit that result. Complete C1 pressure stability
+remains open.
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as
