@@ -254,6 +254,9 @@ class ExperimentalGEAnalysis:
         self._beam_index = beam_index
         self._beam_nodes = beam_nodes
         self._shell_xyz = shell_xyz
+        self._shell_model = shell_model
+        self._shell_parts = tuple(shell_parts)
+        self._beam_parts = tuple(beam_parts)
         self._definition = definition
         self._identity = sha256(json.dumps({
             "profile": PROFILE, "shell_ids": shell_ids,
@@ -266,6 +269,7 @@ class ExperimentalGEAnalysis:
             "fixed": [(v.domain, v.node, v.component) for v in definition.fixed],
         }, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         self._connections = []
+        self._joint_slots = []
         constraint_rows = []
         if not definition.points:
             raise ValueError("at least one explicit native point connection required")
@@ -291,6 +295,7 @@ class ExperimentalGEAnalysis:
                           np.arange(beam_slot, beam_slot+6)]
             constraint_rows.append((slots, evaluation.constraint_jacobian))
             self._connections.append(joint)
+            self._joint_slots.append(slots)
         c_row, c_col, c_data = [], [], []
         for i, (slots, jacobian) in enumerate(constraint_rows):
             c_row.extend(np.repeat(np.arange(6*i, 6*i+6), 12))
@@ -321,6 +326,7 @@ class ExperimentalGEAnalysis:
         if self._A.shape[0] < 1 or self._A.nnz == 0:
             raise ValueError("nonempty constrained mixed operator required")
         self._accepted = None
+        self._finite_driver = None
         self._generation = 0
         self._closed = False
 
@@ -333,8 +339,8 @@ class ExperimentalGEAnalysis:
         return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
                 "shell": "elastic flat Q4/S3", "beam": "generalized B3 retained",
                 "attachment": "reference point pose",
-                "analysis": ("reference_linear",),
-                "excluded": ("nonlinear", "line", "footprint", "modes", "buckling")}
+                "analysis": ("reference_linear", "experimental_elastic_finite_point"),
+                "excluded": ("plastic finite", "line", "footprint", "modes", "buckling")}
 
     def preflight(self):
         self._require_open()
@@ -346,6 +352,8 @@ class ExperimentalGEAnalysis:
     def solve_linear(self, actions: tuple[NodalAction, ...], *,
                      cancellation_token=None) -> LinearResult:
         self._require_open()
+        if self._finite_driver is not None:
+            raise RuntimeError("finite and reference-linear states cannot be mixed")
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.start")
         load = np.zeros(self._K.shape[0])
         for action in actions:
@@ -385,14 +393,38 @@ class ExperimentalGEAnalysis:
         self._accepted = (result, _owned(load))
         return result
 
+    def solve(self, actions: tuple[NodalAction, ...],
+              targets: tuple[float, ...] = (1.,), *, cancellation_token=None,
+              max_iterations: int = 12, max_backtracks: int = 8):
+        """Advance elastic finite point trials from one accepted predecessor."""
+        self._require_open()
+        if self._accepted is not None:
+            raise RuntimeError("finite and reference-linear states cannot be mixed")
+        if self._finite_driver is None:
+            from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
+            driver = FinitePointDriver(self)
+        else:
+            driver = self._finite_driver
+        try:
+            return driver.solve(
+                actions, targets, cancellation_token=cancellation_token,
+                max_iterations=max_iterations, max_backtracks=max_backtracks)
+        finally:
+            if self._finite_driver is None and driver._accepted is not None:
+                self._finite_driver = driver
+
     def recover(self) -> LinearResult:
         self._require_open()
+        if self._finite_driver is not None:
+            return self._finite_driver.recover()
         if self._accepted is None:
             raise RuntimeError("no accepted mixed linear result")
         return self._accepted[0]
 
     def checkpoint(self) -> bytes:
         self._require_open()
+        if self._finite_driver is not None:
+            return self._finite_driver.checkpoint()
         if self._accepted is None:
             raise RuntimeError("no accepted mixed linear result")
         result, load = self._accepted
@@ -407,6 +439,8 @@ class ExperimentalGEAnalysis:
 
     def restore(self, raw: bytes) -> LinearResult:
         self._require_open()
+        if self._finite_driver is not None:
+            raise RuntimeError("restore requires a fresh experimental GE analysis")
         if self._accepted is not None:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes or len(raw) > 2_000_000:
@@ -415,6 +449,13 @@ class ExperimentalGEAnalysis:
             value = json.loads(raw.decode("ascii"))
         except (UnicodeError, json.JSONDecodeError) as exc:
             raise ValueError("invalid mixed linear checkpoint") from exc
+        if type(value) is dict and value.get("schema") == (
+                "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"):
+            from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
+            driver = FinitePointDriver(self)
+            result = driver.restore(value)
+            self._finite_driver = driver
+            return result
         if (type(value) is not dict or set(value) !=
                 {"schema", "model", "generation", "q", "multipliers", "load"} or
                 value["schema"] != CHECKPOINT or value["model"] != self._identity or
@@ -442,4 +483,5 @@ class ExperimentalGEAnalysis:
 
     def close(self):
         self._accepted = None
+        self._finite_driver = None
         self._closed = True

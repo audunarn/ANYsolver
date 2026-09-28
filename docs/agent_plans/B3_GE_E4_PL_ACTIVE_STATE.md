@@ -16,28 +16,38 @@ production qualification or release is implied.
 
 - Branch `codex/b3-ge-e4-pl-integration`, original head `f50583da`; main untouched.
 - Sparse experimental GE owner solves two Q4/two native generalized B3 members,
-  or mixed Q4/S3 and all-S3 variants, with three eccentric point ties and 48
-  retained beam coordinates. It exposes explicit profile/facade, preflight,
-  linear solve, support reactions, immutable recovery, bounded checkpoint,
-  fresh-session restore and close. Disconnected shell cells are rejected.
-  The Q4 panel has a 120-row, 4,428-nonzero KKT; 100 N tip load gives free
-  equilibrium `7.94e-14`, constraint max `3.34e-19`, support Fz `-100 N`.
-  This is **reference-linear only**, with no nonlinear sequence or accepted G1.
+  or mixed Q4/S3 and all-S3 reference-linear variants, with three eccentric
+  point ties and 48 retained beam coordinates. It exposes the explicit facade,
+  preflight, reactions, immutable recovery, checkpoint, restore and close.
+  Disconnected shell cells are rejected. The Q4 reference-linear panel has a
+  120-row, 4,428-nonzero KKT; 100 N tip load gives free equilibrium `7.94e-14`,
+  constraint max `3.34e-19`, support Fz `-100 N`.
+- The same point-connected GE owner now has an **experimental elastic finite**
+  route: 1000 N Fz, factors 0.5 and 1.0, accepted predecessor and native retained
+  variables, then checkpoint/restore and continuation to factor 2. Rejection,
+  cancellation, first-attempt retry with a different load pattern, rotational
+  cutback and partial-prefix publication are tested. Finite S3, plasticity,
+  physical scaling and G1 qualification remain open.
 - Separate physical B2 connected beam graph runs 1/10/100 compatible loads,
   selected recovery and one factorization through the public facade. It has
-  no shell attachment. A second bounded public route joins one Q4 and one
-  physical B2 member through the existing F10 point law and matches a dense
-  reduced oracle for two loads, reactions, multipliers and work. Neither B2
-  route yet provides a multi-shell panel. Typed numerical failure gives
-  non-success; programming errors propagate. Both remain experimental.
-- Focused new/legacy regression: 71 passed after Q4/S3, B2 graph, and bounded
-  B2/Q4 point integration; the three B2/Q4 point tests passed after review
-  fixes. Temp-installed wheel SHA256
+  no shell attachment. Bounded public routes join one Q4/one B2, and now two
+  Q4/two physical B2 members, through existing F10 point laws. The two-member
+  panel matches an independently assembled dense reduced oracle for two loads,
+  reactions, multipliers and work. Its bounded dense rank audit is not a
+  production-scale constraint audit. Typed numerical failure gives non-success;
+  programming errors propagate. These routes remain experimental.
+- Previous focused new/legacy regression: 71 passed after Q4/S3, B2 graph, and
+  bounded B2/Q4 point integration; the three B2/Q4 point tests passed after
+  review fixes. New finite/panel-focused source checks: 18 passed; nearby
+  B2 attachment/batch/descriptor checks: 41 passed. Current disposable wheel
+  SHA256 `D7EE9D6AEBFAE4DBD53E5816B576AF95A7CD1BD31343AF63C783D84503F7AD95`;
+  its actual installed import passed the same 18 focused checks. Earlier wheel SHA256
   `26DDDEA1F7DDC6D7FC08F3D60CDEC592F45347C17D26CDAE56ED3D1D2F08E055`
   was the actual imported package for the Q4 example, mixed/all-S3 runs,
-  B2 1/10/100, and B2/Q4 point solve. Independent read-only reviews found
-  no unresolved blocker in these bounded slices. B2/Q4 now rejects overflow
-  and names general affine-plan reactions accurately.
+  B2 1/10/100, and B2/Q4 point solve. Independent
+  finite-driver review found two atomicity/cutback defects; both were repaired
+  and focused regression passed. B2/Q4 rejects overflow and names general
+  affine-plan reactions accurately.
 - F01-F13 have useful bounded evidence but none is fully accepted. The
   independent foundation inventory remains in the prior handoff; do not
   infer G0 closure from local implementation tests.
@@ -55,10 +65,12 @@ Two earlier computations completed but could not write evidence. Riesz work is
 not a physically loaded equilibrium. Existing Mx/Fz reference actions cannot
 qualify independent Fy/shear transfer. No multiplier candidate was selected.
 
-The next discriminator is a supported, physically matched Fy/shear reference
-with the same 0.1 m bond, 35 mm Q4 shell, square B3 section, supports and
-force/couple work. First check whether existing reference output provides that
-observable; otherwise obtain only the missing side-resolved physical work.
+No saved independent supported Fy/shear case matches the 0.1 m bond, 35 mm
+plate/Q4, square bar and supports. Existing F5 C3D20R +100 Nm Mx/-1000 N Fz
+common work induces Fy but is not a prescribed Fy test; the same-action Q4
+comparison separates action representation only for Mx/Fz. The next
+discriminator is a supported, physically matched Fy/shear action with the same
+geometry, supports and force/couple work, recording both support and sided work.
 A mismatch in continuous prohibited motion revises the law; an all-channel
 discrete compatibility failure motivates one derived resolution candidate;
 a physically admissible compliant mode goes to transfer/convergence checks.
@@ -68,9 +80,6 @@ numerical thread remain binding.
 
 ## Next integration action
 
-Build the short nonlinear GE accepted/trial sequence with atomic
-rejection/cancellation/restart on existing point operators, then extend the
-bounded B2/Q4 point route to the planned multi-element panel and begin
-ANYfem construction-persistence. Keep line and
-footprint interfaces replaceable. Complete F01-F13 and G0-G6 without weaker
-criteria, hidden exclusions, or interim release.
+Begin ANYfem construction-persistence. Test finite mixed/S3 before advertising
+that path; retain replaceable line/footprint interfaces. Complete F01-F13 and
+G0-G6 without weaker criteria, hidden exclusions or interim release.

@@ -16,6 +16,9 @@ from ._stiffened_shell_b2_experimental import ExperimentalB2Analysis
 from ._stiffened_shell_b2_q4_point_experimental import (
     ExperimentalB2Q4PointAnalysis,
 )
+from ._stiffened_shell_b2_q4_panel_experimental import (
+    ExperimentalB2Q4PanelAnalysis, Q4PanelShell, Q4B2Point,
+)
 
 from ._stiffened_shell_ge_experimental import (
     PROFILE as B3_GE_E4_PL_STIFFENED_SHELL_V1,
@@ -58,6 +61,19 @@ class B2Q4PointDefinition:
     reference_normal: tuple[float, float, float] = (0., 0., 1.)
 
 
+@dataclass(frozen=True)
+class B2Q4PanelDefinition:
+    """Experimental multi-Q4/multi-B2 point panel with an affine plan."""
+
+    profile: str
+    shell_nodes_m: object
+    shells: tuple[Q4PanelShell, ...]
+    members: tuple[PhysicalB2Member | CompiledPhysicalB2Member, ...]
+    points: tuple[Q4B2Point, ...]
+    transformation: object
+    prescribed_offset: object
+
+
 def create_analysis(*, definition, resources=None):
     """Create the explicitly selected experimental owner for an admitted profile."""
     if type(definition) is LinearDefinition:
@@ -81,6 +97,14 @@ def create_analysis(*, definition, resources=None):
             prescribed_offset=definition.prescribed_offset,
             offset_local_m=definition.offset_local_m,
             reference_normal=definition.reference_normal)
+    if type(definition) is B2Q4PanelDefinition:
+        if definition.profile != B2_E4_PL_FAST_LINEAR_V1 or resources is not None:
+            raise ValueError("explicit experimental B2/Q4 panel definition required")
+        return ExperimentalB2Q4PanelAnalysis(
+            definition.shell_nodes_m, definition.shells,
+            definition.members, definition.points,
+            transformation=definition.transformation,
+            prescribed_offset=definition.prescribed_offset)
     raise ValueError("unsupported stiffened-shell definition/profile")
 
 
@@ -88,6 +112,7 @@ __all__ = [
     "B3_GE_E4_PL_STIFFENED_SHELL_V1", "B2_E4_PL_FAST_LINEAR_V1",
     "ShellPanel", "PointConnection",
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",
-    "B2LinearDefinition", "B2Q4PointDefinition",
+    "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
+    "Q4PanelShell", "Q4B2Point",
     "create_analysis",
 ]
