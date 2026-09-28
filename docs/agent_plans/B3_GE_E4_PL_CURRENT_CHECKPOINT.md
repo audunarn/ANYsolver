@@ -19,15 +19,19 @@ shell-work difference in all four P0 intervals, rather than one
 misassembled station. Fixed physical probes show a sign-changing Mx
 director difference near the bond, while Fz midpoint vertical response
 stays within about `1%` of the 3D plate across the sampled range.
+Pure uniform Mx interface action has `7.50%` lower E4 shell work than
+the 3D plate, while pure uniform Fz differs by only `0.90%`; the saved
+mixed Fz case therefore calls for axial/bending cross-work review.
 Independent review
 found no blocking algebra/sign defect in these diagnostics, and their
 solid input is now identity-guarded. **Remaining uncertainty:** Physical
 sided torque/shear transfer, shell/3D kinematic and support idealization,
 and growing-space mixed-system stability. **Next discriminator and
-action:** Use the saved solid fields for a mode-resolved physical
-torque/shear work check, then apply the registered growing-interface
-mixed-system criteria. The physical support and section idealization
-remain distinct. Avoid another general axial or x/y refinement.
+action:** Resolve the saved mixed Fz action into Fx/My and cross-work
+with the same component matrices, then assess the physical Mx torque
+trace and registered growing-interface mixed system. The physical
+support and section idealization remain distinct. Avoid another
+general axial or x/y refinement.
 Advance B2 F09 independently. No automatic finer classical axial or
 x/y sweep follows. G0B/F03 remain open, G1 barred, formal F03 authority
 unconsumed; evidence and limitations follow.
@@ -10515,3 +10519,27 @@ instead. Keep all four component domains distinct and check positive
 work and matrix/action identity. This remains a linear open interface
 influence, not an independently qualified contact state or law/space
 selection.
+
+**Pure-action torque/shear outcome:** Source `32ca922d` reuses the
+reviewed 24 solid unit fields and four native/solid component work
+operators. All isolated and uniform physical actions have positive
+work. A uniform `100 Nm` Mx interface couple yields E4 shell work
+`0.01212223 J` versus 3D plate `0.01310494 J` (`−7.50%`); B3 versus
+3D bar differs by `−0.107%`. Four single-interval Mx shell actions
+are `19.1–21.5%` lower than 3D; their greater discrepancy than the
+uniform action shows substantial longitudinal interaction. A uniform
+`1000 N` Fz interface force yields E4 shell work `1.28573159 J`
+versus 3D plate `1.29738396 J` (`−0.898%`); B3 versus bar differs
+by `+0.818%`. Single-interval Fz shell differences stay between
+`−0.865%` and `−0.969%`. The raw
+`B3_E4_F03_C1_PURE_ACTION_MODES_DEV_V1.json` has SHA256
+`6f6592eaae6aa2e67326aa6d6716a27350c366041a809b324d362a0e86f8e94e`.
+This is an open-interface linear influence, not a re-equilibrated
+bonded or independent contact state. It makes a pure Fz shell-response
+defect an unlikely explanation for the much larger saved *mixed-dual*
+Fz work gap. The next bounded decision is to separate the saved Fz
+case's physical Fx and My actions and their cross terms using the same
+component matrices. If those dominate, review the axial/bending pose
+and eccentric transfer; if they do not, revisit longitudinal action
+shape. The Mx physical torque trace still needs matched shell/3D
+interpretation and growing-space stability. F03/G0B remain open.
