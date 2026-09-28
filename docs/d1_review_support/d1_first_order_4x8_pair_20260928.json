@@ -1,0 +1,82 @@
+{
+  "method": "process-local single active uniform-close candidate; not a coupled solve or acceptance",
+  "source_grid": [
+    4,
+    8
+  ],
+  "source_y_profile": "near_rim8",
+  "target_s3_faces": 2,
+  "closing_shift_m": -5e-05,
+  "elapsed_seconds": 4.839453000000503,
+  "tangent_elapsed_seconds": 1.5309679999991204,
+  "unwrapped_seconds": 1.0800423000036972,
+  "timings": {
+    "aggregate_pair_geometry": {
+      "calls": 2,
+      "inclusive_seconds": 0.8912052000014228,
+      "exclusive_seconds": 0.8912052000014228,
+      "exceptions": 0
+    },
+    "contact_evaluate": {
+      "calls": 2,
+      "inclusive_seconds": 3.759410699996806,
+      "exclusive_seconds": 0.10248389998741914,
+      "exceptions": 0
+    },
+    "jet2_contact_work": {
+      "calls": 2,
+      "inclusive_seconds": 2.76526470000681,
+      "exclusive_seconds": 0.01594039995688945,
+      "exceptions": 0
+    },
+    "prepare_projected_state": {
+      "calls": 2,
+      "inclusive_seconds": 0.8913274000005913,
+      "exclusive_seconds": 0.0001221999991685152,
+      "exceptions": 0
+    },
+    "pressure_rank_diagnostics": {
+      "calls": 2,
+      "inclusive_seconds": 0.000334700001985766,
+      "exclusive_seconds": 0.000334700001985766,
+      "exceptions": 0
+    },
+    "q4_s3_first_pair": {
+      "calls": 40,
+      "inclusive_seconds": 1.7335378999996465,
+      "exclusive_seconds": 1.7335378999996465,
+      "exceptions": 0
+    },
+    "q4_s3_jet2_pair": {
+      "calls": 40,
+      "inclusive_seconds": 1.015786400050274,
+      "exclusive_seconds": 1.015786400050274,
+      "exceptions": 0
+    }
+  },
+  "overlapping_pairs": 40,
+  "active_pressure_dofs": 45,
+  "contact_force_z_n": 0.09000000000002592,
+  "minimum_gap_m": -1.0000000036951286e-05,
+  "force_norm_n": 0.0524667568167646,
+  "tangent_nonzeros": 26493,
+  "residual_only_comparison": {
+    "elapsed_seconds": 2.22845110000344,
+    "force_max_difference_n": 1.734723475976807e-18,
+    "force_l2_difference_n": 2.363960413531082e-18,
+    "integration_force_max_difference_n": 1.5178113894824998e-20,
+    "pressure_max_difference_pa": 0.0,
+    "paired_derivative_calls": 40,
+    "different_branch_signatures": 0,
+    "different_triangle_counts": 0,
+    "maximum_support_gradient_difference": 1.734723475976807e-17,
+    "maximum_gap_gradient_difference": 1.734723475976807e-18
+  },
+  "independent_constant_pressure_oracle": {
+    "pressure_pa": 0.1,
+    "source_nodal_uz_residual_max_error_n": 1.515280956265741e-15,
+    "source_integrated_force_error_n": 2.596534098842085e-14,
+    "target_integrated_force_error_n": 2.6006974351844292e-14,
+    "bin_force_l2_relative_error": 2.898580721644204e-13
+  }
+}
