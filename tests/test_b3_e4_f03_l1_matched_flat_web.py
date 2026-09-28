@@ -34,9 +34,15 @@ def test_two_native_spaces_retain_equilibrium_and_reciprocal_work():
     for value in result["spaces"].values():
         assert value["factorizations"] == 1
         assert value["reciprocity_relative"] < 1e-5
-        assert all(case["load_displacement_work_j"] > 0.
+    assert all(case["load_displacement_work_j"] > 0.
                    and case["free_equilibrium_ratio"] < 1e-8
                    and case["constraint_max"] < 1e-9
+                   for case in value["cases"].values())
+    assert all(case["shell_internal_energy_j"] >= 0.
+                   and case["beam_internal_energy_j"] >= 0.
+                   and case["shell_internal_energy_j"]+
+                   case["beam_internal_energy_j"] == pytest.approx(
+                       case["load_displacement_work_j"]/2, rel=1e-8)
                    for case in value["cases"].values())
 
 

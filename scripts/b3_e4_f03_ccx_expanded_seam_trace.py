@@ -7,13 +7,14 @@ assessment. In particular, it does not reconstruct the shell drilling DOF.
 from __future__ import annotations
 
 import argparse
+from hashlib import sha256
 import json
 from pathlib import Path
 
 import numpy as np
 
 from scripts.b3_e4_f03_ccx_matched_t_reference import (
-    PLATE_T_M, WEB_T_M, _frd_fields,
+    PLATE_T_M, WEB_T_M, _frd_fields, build_bundle,
 )
 
 
@@ -114,10 +115,26 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--frd", type=Path, required=True)
+    parser.add_argument("--expected-frd-sha256", required=True)
     args = parser.parse_args()
-    coordinates, displacement = _frd_fields(args.frd.read_text())
-    result = reconstruct(json.loads(args.manifest.read_text()),
-                         coordinates, displacement)
+    manifest_bytes = args.manifest.read_bytes()
+    frd_bytes = args.frd.read_bytes()
+    frd_hash = sha256(frd_bytes).hexdigest()
+    if frd_hash != args.expected_frd_sha256.lower():
+        raise ValueError("FRD identity does not match the expected case output")
+    manifest = json.loads(manifest_bytes)
+    _, expected = build_bundle(manifest["variant"], manifest["case"],
+                               manifest["nx"], manifest["root"],
+                               manifest["profile"],
+                               manifest.get("domain", "coupled"))
+    if manifest != expected:
+        raise ValueError("reference manifest identity changed")
+    coordinates, displacement = _frd_fields(frd_bytes.decode("ascii"))
+    result = reconstruct(manifest, coordinates, displacement)
+    result.update({"case": manifest["case"],
+                   "deck_sha256": manifest["deck_sha256"],
+                   "manifest_sha256": sha256(manifest_bytes).hexdigest(),
+                   "frd_sha256": frd_hash})
     print(json.dumps(result, indent=2, sort_keys=True))
 
 

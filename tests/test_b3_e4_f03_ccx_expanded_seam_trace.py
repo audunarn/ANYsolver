@@ -1,9 +1,15 @@
 """Bounded expanded-shell kinematics, without claiming sided interface work."""
 
+from hashlib import sha256
+import json
+import sys
+
 import numpy as np
 import pytest
 
+from scripts import b3_e4_f03_ccx_expanded_seam_trace as diagnostic
 from scripts.b3_e4_f03_ccx_expanded_seam_trace import reconstruct
+from scripts.b3_e4_f03_ccx_matched_t_reference import build_bundle
 
 
 def _fields():
@@ -55,3 +61,28 @@ def test_missing_face_or_field_is_rejected():
     displacement.pop(11)
     with pytest.raises(ValueError, match="unique expanded"):
         reconstruct(_manifest(), coordinates, displacement)
+
+
+def test_cli_binds_manifest_and_expected_frd_bytes(tmp_path, monkeypatch,
+                                                   capsys):
+    _, manifest = build_bundle("flat", "plate_fy", 4, "clamped",
+                               "native_line_geometry")
+    manifest_path = tmp_path/"case.json"
+    frd_path = tmp_path/"case.frd"
+    manifest_path.write_text(json.dumps(manifest))
+    frd_path.write_bytes(b"synthetic bounded FRD")
+    coordinates = _fields()
+    displacement = {n: np.zeros(3) for n in coordinates}
+    monkeypatch.setattr(diagnostic, "_frd_fields",
+                        lambda text: (coordinates, displacement))
+    args = ["trace", "--manifest", str(manifest_path), "--frd", str(frd_path),
+            "--expected-frd-sha256", sha256(frd_path.read_bytes()).hexdigest()]
+    monkeypatch.setattr(sys, "argv", args)
+    diagnostic.main()
+    result = json.loads(capsys.readouterr().out)
+    assert result["case"] == "plate_fy"
+    assert result["deck_sha256"] == manifest["deck_sha256"]
+    assert result["frd_sha256"] == sha256(frd_path.read_bytes()).hexdigest()
+    monkeypatch.setattr(sys, "argv", args[:-1]+["0"*64])
+    with pytest.raises(ValueError, match="FRD identity"):
+        diagnostic.main()

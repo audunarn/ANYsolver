@@ -1,0 +1,41 @@
+{
+  "schema": "B3_E4_F03_FLAT_WEB_ENERGY_PARTITION_DEV_V2",
+  "classification": "bounded_case_bound_elastic_domain_energy_comparison_not_F03_assessment",
+  "source_head_before_changes": "49585f38",
+  "external_parser_sha256": "8dfddb25c0a03fc9a97016b18ca64a3d96ae15541e0636a999b9534a4bb25ac4",
+  "native_runner_sha256": "786735e43ec7460a7ee866cb3da0f515c0a4622f0893d995c35b6f70c04a8baa",
+  "calculix_version": "2.23",
+  "calculix_exe_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "raw_execution_directory": ".qualification/b3-ge-e4-pl/f03-flat-web-energy-partition-dev-20260928-v1",
+  "bound_parsing_directory": ".qualification/b3-ge-e4-pl/f03-flat-web-energy-partition-dev-20260928-v2",
+  "raw_sha256": {
+    "plate_energy_deck": "daeef34b1a1c88304ba41f0f7b71527211e7483eba9b343a55feeba0ba515881",
+    "plate_dat": "13fb1876c9b699a9a04e868447664dc1871903daa76b8da22b19bc7813ec7b0c",
+    "plate_frd": "0c475fedecb7dd98d08e5fad474cfdd651a497e0da6f0899005e12aac60befa1",
+    "plate_bound_result": "b1522b94c1151930811ef6fad2b89f1b57fa0dc350343738bd7a9a7710a44749",
+    "torque_energy_deck": "1d466414a7349f9813691877e45833581de572e184d6c0e6c15a11d6b8509075",
+    "torque_dat": "579a26f28f9447350b5325f6da41afbd1f377659b289e47d3d003838948ea218",
+    "torque_frd": "060ea9961978fb7f6cafa125abc949d92d016dab9c5dae3d1faadb738f28d04f",
+    "torque_bound_result": "a351091fa1c99ba665c100cfaab9b2268e5bd86d0153c086e87b0ed9f867bb25",
+    "native_result": "85bc5a96d78eed11b8b3994a2311533bc385e2a7ddb0379965fa04b105cffa75"
+  },
+  "binding": "The reader regenerates and validates the original case manifest, requires the actual energy deck to differ only by two EL PRINT/ELSE requests, verifies the expected FRD SHA-256, derives loaded work from that FRD/DAT rather than a caller-supplied number, and validates 16 contiguous Plate and 16 Web energy rows at the same time. Independent read-only review checked the raw deck difference, arithmetic, hashes and native block-diagonal operator.",
+  "external": {
+    "plate_fy": {"applied_work_j": 0.000689073, "plate_energy_j": 0.000344037644, "web_energy_j": 0.000000498803961, "half_work_relative_error": 0.000000151040600946592},
+    "web_mx": {"applied_work_j": 0.001878843, "plate_energy_j": 0.000177627338, "web_energy_j": 0.0007617921412, "half_work_relative_error": 0.00000215111108260065, "plate_energy_fraction": 0.189082025583785}
+  },
+  "native": {
+    "A_plate_fy": {"shell_energy_j": 0.000294607379657405, "beam_energy_j": 0.00000101550368478533},
+    "A_web_mx": {"shell_energy_j": 0.00000450017904272748, "beam_energy_j": 0.000719105951311083, "shell_energy_fraction": 0.00621910021758259},
+    "B_plate_fy": {"shell_energy_j": 0.000294603382256404, "beam_energy_j": 0.00000102662246907291},
+    "B_web_mx": {"shell_energy_j": 0.0000109684910751702, "beam_energy_j": 0.000714775537654256, "shell_energy_fraction": 0.0151134430887058}
+  },
+  "decision": "The torque-case domain energy allocations differ substantially, but equal resultant moments do not make the actions work-conjugate: S4 uses a two-force couple on deformable web nodes, while native B3 applies a moment to one rotational coordinate. The S4 web, B3 section and connection law also differ. This cannot isolate interface transfer or select A/B. A supported virtual side-work map or equivalent physically matched operator partition remains the specific obstruction.",
+  "limitations": [
+    "ELSE partitions domain strain energy, not interface force, moment or virtual work.",
+    "The generic CLI records the DAT hash and closure ratio but does not independently require an expected DAT hash or enforce a closure threshold; this saved instance is bound by the verified record.",
+    "One mesh level does not establish convergence, stability or physical transfer accuracy.",
+    "The bounded external shell remains a different connection and section idealization from native L1.",
+    "Reported DAT and FRD precision produces nonzero half-work closure errors."
+  ]
+}

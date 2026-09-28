@@ -113,8 +113,20 @@ def evaluate() -> dict:
                     dof = result.shell_displacement[6*shell_slot:6*shell_slot+6]
                     cross_work["plate_fy_under_web_mx_j"] = float(
                         100.*dof[1] - 100.*PLATE_T_M/2*dof[3])
+                shell_q = result.shell_displacement
+                beam_q = result.beam_coordinates
+                split = owner._shell_count
+                shell_energy = .5*float(shell_q@(
+                    owner._K[:split, :split]@shell_q))
+                beam_energy = .5*float(beam_q@(
+                    owner._K[split:, split:]@beam_q))
+                if abs(shell_energy+beam_energy-.5*work) > 1e-8*max(
+                        abs(work), 1e-12):
+                    raise RuntimeError("native domain energy/work balance failed")
                 cases[name] = {
                     "load_displacement_work_j": float(work),
+                    "shell_internal_energy_j": shell_energy,
+                    "beam_internal_energy_j": beam_energy,
                     "free_equilibrium_ratio": result.free_equilibrium_ratio,
                     "constraint_max": result.constraint_max,
                 }

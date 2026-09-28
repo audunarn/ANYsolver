@@ -368,13 +368,42 @@ the relative-triad Frobenius discrepancies reach `3.37e-6` and `2.09e-6`.
 These are diagnostics of S4 expanded-face kinematics, not a weld tolerance or
 an L1 rotation-gap score. The source is
 `scripts/b3_e4_f03_ccx_expanded_seam_trace.py`; the two JSON outputs are under
-`.qualification/b3-ge-e4-pl/f03-expanded-face-trace-dev-20260928-v1/`.
-Their SHA-256 identities are `7da6db3ff3341798d129659f7beb8c6d2fcbe4fe7546f467b957c0dbfec7826a`
-and `4c94da71b4412f7186deccdc60d1c77cd9e35a6bb30076bbd882324138a16c7f`.
+`.qualification/b3-ge-e4-pl/f03-expanded-face-trace-dev-20260928-v2/`.
+Their SHA-256 identities are `ccfdee5cbe71b803de7b79160b42986a703c49f177bc59275fd6ce6f931a0745`
+and `59237e85af4ae63ae8a58e3b79bdac35c0f01f9e0459bd9358757e7c18bb7fda`.
+The earlier V1 diagnostic output remains preserved but lacked explicit
+FRD/deck binding; the V2 reader verifies the expected FRD hash and generated
+manifest, and emits both identities. Independent review confirms the face
+pairing and objective frame calculation but notes that the shared node largely
+builds in the near-zero seam position gap. The triad discrepancy includes
+through-wall deformation and material-line approximation: even a continuous
+affine shear produces a nonzero value. It is not a pure rotation jump.
 Next, establish the conjugate *side work* for a chosen supported virtual
 field, with correct plate/web geometry and face interpolation. Kinematic
 reconstruction alone cannot allocate the coupled response difference or
 select the continuous law, A/B space, or F03 assessment metric.
+One bounded energy-output check can distinguish whether the external S4
+solver exposes an auditable plate/web elastic-energy partition: request
+element `ELSE` for each wall on the saved smallest coupled plate-Fy deck and
+compare their sum with one half of the already recovered applied work. An
+agreeing sum permits a later derivation of supported virtual side work from
+separate energy variations; disagreement redirects to an independent operator
+partition. Neither outcome by itself attributes the coupling discrepancy.
+The two-case element-energy check passed its own elastic closure: the plate-Fy
+plate/web energies are `0.000344037644/0.000000498804 J` and the web-Mx
+energies are `0.000177627338/0.000761792141 J`. Their sums differ from half
+the recovered applied work by `1.51e-7` and `2.15e-6` relative, consistent
+with printed-output precision. In the torque case, 18.9% of external S4 energy
+lies in the plate, versus 0.62%/1.51% of native A/B energy in E4. The
+[case-bound development partition](B3_E4_F03_FLAT_WEB_ENERGY_PARTITION_DEV_V2.json)
+binds the raw output and native block calculation; the earlier V1 parser
+output remains preserved but did not bind caller-supplied work and counts.
+This is a domain energy-allocation difference, not isolated interface transfer:
+the S4 two-force web couple and B3 rotational moment have different work
+conjugates, in addition to different section and connection idealizations.
+No candidate is selected; a
+supported side-work map or equivalent matched operator partition remains the
+specific obstruction before F03 assessment.
 
 ## Execution boundary
 
