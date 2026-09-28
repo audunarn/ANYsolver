@@ -364,21 +364,24 @@ review confirmed the derivation; the executable case
 test_constant_yaw_has_free_endpoint_physical_core_witness and raw log in
 the same evidence directory preserve it. Restricting yaw to H1-zero
 endpoint functions would exclude exact constant density and still needs
-a stronger-than-L2 derivative/bandwidth control on that family. The registered
-paired refinements have bounded aspect ratio and this witness does not
-adjudicate them. Before scoring a new multiplier candidate, assess the
-registered family and justify a whole-space norm and physical torque transfer.
+a stronger-than-L2 derivative/bandwidth control on that family. The previous
+provisional classical comparison paired refinements with bounded aspect ratio;
+the native F03 candidate meshes have not yet been pinned, and this witness
+does not adjudicate the paired family. Before scoring a new multiplier
+candidate, justify a whole-space norm and physical torque transfer.
 Neither a replacement law nor a shape-regular-only admission is selected by
 these negative cases.
 
 A bounded paired-refinement discriminator subsequently used 8/16/32
 longitudinal by 2/4/8 transverse cells over the same physical panel, with
 rail-cell aspect ratio 1.25 and fixed strip (-0.047, 0.046) m. For the
-constructed macro-P0 field, physical-core energy stayed 8.224e8 J and the
-normalized work was 6.595e-6, 0.862e-6 and 0.795e-6 J^-1/2. For the
-constant-density endpoint field, energy rose 2.632e10, 5.263e10 and
-1.053e11 J and normalized work was 4.663e-6, 0.431e-6 and 0.281e-6
-J^-1/2. The alternating transverse profile cancels over complete cells;
+constructed macro-P0 field, the physical-core quadratic form q^T K_phys q
+stayed 8.224e8 J and the reported normalized work was 6.595e-6, 0.862e-6
+and 0.795e-6. For the constant-density endpoint field, the quadratic form
+rose 2.632e10, 5.263e10 and 1.053e11 J and the quotient was 4.663e-6,
+0.431e-6 and 0.281e-6. The quotient uses numerical work divided by the
+square root of q^T K_phys q and the L2 density norm, with no unit conversion.
+The alternating transverse profile cancels over complete cells;
 only at most two partial strip cells contribute, so its fixed-strip average
 is O(h_y). These two witnesses therefore do not show divergence under
 paired refinement. This does not establish a whole-space continuity bound,

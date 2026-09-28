@@ -125,25 +125,28 @@ the endpoint derivation. The executable check and raw log are retained
 with the other negative cases.
 
 The previous decision to abandon P0 yaw for all refinements was too broad.
-The registered F03 refinements pair longitudinal and transverse resolution;
-the anisotropic witness does not decide their outcome. The current box-window
+The previous provisional classical comparison paired longitudinal and
+transverse refinement; native F03 candidate meshes have not yet been pinned.
+The anisotropic witness does not decide the paired family's outcome. The current box-window
 prototype proves only bounded kinematics and first work variations; it is
 an unselected alternative, not a replacement bonded-line law.
 
 **Paired-refinement result:** The bounded 8/16/32 longitudinal by 2/4/8
 transverse Q4 screen kept the rail-cell aspect ratio at 1.25 and the same
 fixed physical strip, supports and density actions. The macro-P0 witness's
-normalized work was 6.595e-6, 0.862e-6 and 0.795e-6 J^-1/2; the constant
-endpoint witness's was 4.663e-6, 0.431e-6 and 0.281e-6 J^-1/2. Neither
+normalized work was 6.595e-6, 0.862e-6 and 0.795e-6; the constant
+endpoint witness's was 4.663e-6, 0.431e-6 and 0.281e-6. The reported
+quotient is the numerical work divided by the square root of q^T K_phys q
+and the L2 density norm; no unit conversion was applied. Neither
 shows the anisotropic divergence. The strip average of the alternating
 transverse field is bounded by its two partial end cells and falls with
-transverse cell width; physical energy is constant for this macro field and
+transverse cell width; q^T K_phys q is constant for this macro field and
 increases for the endpoint field on these grids. This is a constructed-mode
 screen, not a whole-space bound, mixed-system result or F03 acceptance.
 The executable and raw output are in
 `.qualification/b3-ge-e4-pl/r7-f03-paired-refinement-dev-20260928-v1/`.
 
-**Next decision:** Retain the rail as a candidate for the registered paired
+**Next decision:** Retain the rail as a candidate for prospective paired
 family while checking the complete supported physical-core L2 work upper
 quotient or deriving an equivalent whole-space bound. If that fails, identify
 the responsible mode and correct the law or norm before F03 scoring. If it
