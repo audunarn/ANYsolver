@@ -84,6 +84,7 @@ class LinearDefinition:
 
 @dataclass(frozen=True)
 class LinearResult:
+    """Experimental linear result with dimensionless work/row-scaled errors."""
     status: str
     shell_displacement: np.ndarray
     beam_coordinates: np.ndarray
@@ -281,16 +282,48 @@ def _scaled_reference_residual(residual, tangent, coordinate_scale):
     return float(np.max(error))
 
 
-def _relative_equilibrium(residual, applied):
-    """Evaluate the existing Euclidean residual ratio without norm overflow."""
+def _relative_equilibrium(residual, applied, coordinate_scale, floor_work):
+    """Work-scaled mixed equilibrium ratio with a fixed physical work floor.
+
+    Each covector row is paired with its frozen characteristic coordinate.
+    This keeps forces, moments and native retained-variable equations in
+    work units and is invariant under a work-conjugate coordinate-unit change.
+    ``floor_work`` is one newton times the frozen reference length in SI.
+    """
     residual = np.asarray(residual, dtype=float)
     applied = np.asarray(applied, dtype=float)
-    if not np.isfinite(residual).all() or not np.isfinite(applied).all():
-        raise ValueError("finite mixed equilibrium vectors required")
-    scale = max(1., float(np.max(np.abs(residual), initial=0.)),
-                float(np.max(np.abs(applied), initial=0.)))
-    return float(np.linalg.norm(residual/scale) /
-                 max(1./scale, float(np.linalg.norm(applied/scale))))
+    coordinate_scale = np.asarray(coordinate_scale, dtype=float)
+    if (residual.shape != applied.shape or residual.shape !=
+            coordinate_scale.shape or residual.ndim != 1 or
+            not np.isfinite(residual).all() or
+            not np.isfinite(applied).all() or
+            not np.isfinite(coordinate_scale).all() or
+            np.any(coordinate_scale <= 0.) or
+            not np.isfinite(floor_work) or floor_work <= 0.):
+        raise ValueError("finite positive mixed work scales required")
+    weighted_residual = residual*coordinate_scale
+    weighted_applied = applied*coordinate_scale
+    if (not np.isfinite(weighted_residual).all() or
+            not np.isfinite(weighted_applied).all()):
+        raise ValueError("representable mixed work residual required")
+    scale = max(float(floor_work),
+                float(np.max(np.abs(weighted_residual), initial=0.)),
+                float(np.max(np.abs(weighted_applied), initial=0.)))
+    return float(np.linalg.norm(weighted_residual/scale) /
+                 max(floor_work/scale,
+                     float(np.linalg.norm(weighted_applied/scale))))
+
+
+def _scaled_constraint_gap(gap, row_scale):
+    """Normalize each translation/rotation or weak-line row by fixed work map."""
+    gap = np.asarray(gap, dtype=float)
+    row_scale = np.asarray(row_scale, dtype=float)
+    if (gap.ndim != 1 or gap.shape != row_scale.shape or
+            not np.isfinite(gap).all() or
+            not np.isfinite(row_scale).all() or
+            np.any(row_scale <= 0.)):
+        raise ValueError("finite positive constraint row scales required")
+    return float(np.max(np.abs(gap)/row_scale, initial=0.))
 
 
 class ExperimentalGEAnalysis:
@@ -322,6 +355,7 @@ class ExperimentalGEAnalysis:
         self._reference_length = reference_length
         self._reference_error = reference_error
         self._K = sparse.block_diag((shell_k, beam_k), format="csr")
+        self._coordinate_scale = _owned(np.r_[shell_scale, beam_scale])
         self._shell_count = shell_count
         self._beam_count = beam_count
         self._shell_ids = shell_ids
@@ -400,6 +434,10 @@ class ExperimentalGEAnalysis:
             self._C = sparse.vstack((self._C, line_c), format="csr")
         else:
             self._line_samples = ()
+        self._constraint_scale = _owned(
+            np.asarray(np.abs(self._C)@self._coordinate_scale).reshape(-1))
+        if np.any(self._constraint_scale <= 0.):
+            raise ValueError("nonzero physical constraint row scales required")
         fixed = set()
         for support in definition.fixed:
             if (type(support) is not FixedCoordinate or
@@ -460,6 +498,8 @@ class ExperimentalGEAnalysis:
                 "reference_linear_factorizations": self._linear_factorizations,
                 "reference_length_m": self._reference_length,
                 "stress_free_scaled_max": self._reference_error,
+                "equilibrium_norm": "frozen_work_weighted_l2",
+                "constraint_norm": "reference_row_scaled_max",
                 "production_qualified": False}
 
     def solve_linear(self, actions: tuple[NodalAction, ...], *,
@@ -491,9 +531,10 @@ class ExperimentalGEAnalysis:
         multipliers = solution[len(self._free):]
         equilibrium = self._K@q + self._C.T@multipliers-load
         gap = self._C@q
-        relative = _relative_equilibrium(equilibrium[self._free],
-                                         load[self._free])
-        constraint = float(np.max(np.abs(gap)))
+        relative = _relative_equilibrium(
+            equilibrium[self._free], load[self._free],
+            self._coordinate_scale[self._free], self._reference_length)
+        constraint = _scaled_constraint_gap(gap, self._constraint_scale)
         if not np.isfinite(relative) or relative > 1e-8 or constraint > 1e-9:
             raise RuntimeError("mixed reference linear equilibrium failed")
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.commit")
@@ -621,9 +662,11 @@ class ExperimentalGEAnalysis:
         lam = _owned(value["multipliers"], (self._C.shape[0],))
         load = _owned(value["load"], (self._K.shape[0],))
         equilibrium = self._K@q+self._C.T@lam-load
-        relative = _relative_equilibrium(equilibrium[self._free],
-                                         load[self._free])
-        constraint = float(np.max(np.abs(self._C@q)))
+        relative = _relative_equilibrium(
+            equilibrium[self._free], load[self._free],
+            self._coordinate_scale[self._free], self._reference_length)
+        constraint = _scaled_constraint_gap(
+            self._C@q, self._constraint_scale)
         if (not np.isfinite(relative) or relative > 1e-8 or constraint > 1e-9 or
                 np.max(np.abs(q[self._fixed])) > 1e-12):
             raise ValueError("mechanically inconsistent mixed linear checkpoint")

@@ -25,6 +25,12 @@ fallback is dirty, unrun and outside this task's edits.
   experimental L1 operator reaches the owner on a bounded matching line; it
   is not qualified nonmatching coupling. The 512-Q4/16-B3 panel ran in 36.2 s
   for A/B with sampled RSS ≤291 MB, not G5 qualification.
+- Linear and finite solve/restart acceptance now use frozen work-conjugate
+  equilibrium scaling and reference-row-scaled compatibility, covering point
+  and experimental weak-line rows. Focused source checks pass 29/29; installed
+  verification of this exact edit is pending. Independent read-only review
+  found no code blocker, but the SI floor and RMS-node length are not general
+  mesh/energy-unit invariants; weak L1 rows are not pointwise seam gaps.
 - The separate physical B2 profile executes 1/10/100 compatible load cases,
   selected recovery and eligible factorization reuse. Physical-range admission,
   attachment, mass/prestress, large-scale and installed qualification remain

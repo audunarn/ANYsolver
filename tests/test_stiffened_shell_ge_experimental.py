@@ -206,10 +206,37 @@ def test_stress_free_reference_check_is_rowwise_and_unit_covariant():
         np.array((0., 0., 1.)), tangent, coordinate_scale))
 
 
+def test_mixed_equilibrium_and_constraint_checks_are_work_covariant():
+    residual = np.array((.003, -.02, 1.e-4))
+    applied = np.array((2., -3., .5))
+    coordinate_scale = np.array((.2, 1., 4.))
+    original = ge_experimental._relative_equilibrium(
+        residual, applied, coordinate_scale, .2)
+    units = np.diag((1.e3, 1.e-3, 1.e6))
+    converted = ge_experimental._relative_equilibrium(
+        units@residual, units@applied,
+        np.linalg.solve(units, coordinate_scale), .2)
+    np.testing.assert_allclose(converted, original, rtol=1.e-14)
+
+    jacobian = np.array(((1., -2., 0.), (0., 3., .5)))
+    gap = np.array((.003, -.02))
+    original_gap = ge_experimental._scaled_constraint_gap(
+        gap, np.abs(jacobian)@coordinate_scale)
+    row_units = np.diag((1.e4, 1.e-5))
+    transformed_jacobian = row_units@jacobian@units
+    converted_gap = ge_experimental._scaled_constraint_gap(
+        row_units@gap,
+        np.abs(transformed_jacobian)@
+        np.linalg.solve(units, coordinate_scale))
+    np.testing.assert_allclose(converted_gap, original_gap, rtol=1.e-14)
+
+
 def test_compiled_stress_free_reference_reports_physical_scale():
     details = ExperimentalGEAnalysis(_panel()).preflight()
     assert details["reference_length_m"] > 0.
     assert details["stress_free_scaled_max"] <= 32.*np.finfo(float).eps
+    assert details["equilibrium_norm"] == "frozen_work_weighted_l2"
+    assert details["constraint_norm"] == "reference_row_scaled_max"
 
 
 def test_cancellation_after_linear_factorization_preserves_empty_prefix(monkeypatch):
