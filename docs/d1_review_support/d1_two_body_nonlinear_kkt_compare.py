@@ -20,6 +20,8 @@ from scipy import sparse
 import anysolver
 from anysolver.assembly import build_constraint_transformation
 from anysolver.general_contact.core import suspend_contact
+from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from anysolver.general_contact.semismooth import linearize
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.nonlinear_static import _assemble_nonlinear_system
 from d1_two_body_current_skin_quadrature import integrate_current_skin
@@ -167,11 +169,43 @@ production_pose = np.asarray(saved["production_displacements"])
 production_pressure = np.asarray(saved["production_pressure_pa"])
 production_support = np.asarray(saved["production_support_m2"])
 production_z = production_pressure*production_support
+control_gradient = np.zeros((len(active), len(control_dofs)))
+for column, dof in enumerate(control_dofs):
+    step = 2e-6
+    perturbation = np.zeros(ndof)
+    perturbation[dof] = step
+    _support, plus_gap = geometry(pose+perturbation)
+    _support, minus_gap = geometry(pose-perturbation)
+    control_gradient[:, column] = (
+        plus_gap[active]-minus_gap[active])/(2*step)
+with suspend_contact():
+    independent_internal = _assemble_nonlinear_system(
+        model, pose, {}, 5, tangent=False, kinematics="von_karman",
+        require_full_coordinates=True,
+    )[0]
+    production_internal = _assemble_nonlinear_system(
+        model, production_pose, {}, 5, tangent=False,
+        kinematics="von_karman", require_full_coordinates=True,
+    )[0]
+independent_control_reaction = (
+    independent_internal[list(control_dofs)]-external[list(control_dofs)]
+    -control_gradient.T @ z)
+manager = GeneralS3PatchManager(model, definition, _settings)
+production_contact = linearize(
+    manager, production_pose, production_z, tangent=False)
+production_control_reaction = (
+    production_internal[list(control_dofs)]-external[list(control_dofs)]
+    +production_contact.force[list(control_dofs)])
+reaction_scale = max(float(np.linalg.norm(production_control_reaction)), 1e-10)
 record = {
     "status": "development_independent_contact_nonlinear_kkt",
     "source_commit": subprocess.check_output(("git", "rev-parse", "HEAD"),
                                               text=True).strip(),
+    "command": "python docs/d1_review_support/d1_two_body_nonlinear_kkt_compare.py",
     "saved_source_sha256": hashlib.sha256(saved_bytes).hexdigest(),
+    "current_skin_oracle_source_sha256": hashlib.sha256(Path(
+        "docs/d1_review_support/d1_two_body_current_skin_quadrature.py"
+    ).read_bytes()).hexdigest(),
     "python": sys.version.split()[0],
     "platform": platform.platform(),
     "anysolver_module": str(Path(anysolver.__file__).resolve()),
@@ -198,5 +232,11 @@ record = {
     "production_integrated_normal_force_n": float(np.sum(production_z)),
     "relative_integrated_force_difference": float(
         abs(np.sum(z)-np.sum(production_z))/abs(np.sum(production_z))),
+    "independent_control_reaction_n": independent_control_reaction.tolist(),
+    "production_recovered_control_reaction_n": (
+        production_control_reaction.tolist()),
+    "control_reaction_relative_l2_difference": float(
+        np.linalg.norm(independent_control_reaction
+                       -production_control_reaction)/reaction_scale),
 }
 print(json.dumps(record, indent=2))
