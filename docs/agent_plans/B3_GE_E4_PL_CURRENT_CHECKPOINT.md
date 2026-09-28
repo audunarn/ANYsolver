@@ -27,7 +27,9 @@ actions now span both variants on the unchanged solid grid; their
 but not bounded by saved-field precision, and
 gives valid same-law Mx/Fz reconstructions. The solid P1 and dual
 torque responses are close, but native and solid discretizations
-and terminal load distributions differ. A three-level native mixed
+and terminal load distributions differ. A matched fixed-action
+plate-only comparison finds `4.5–4.7%` work change between two 3D
+mesh levels, so that reference is not converged. A three-level native mixed
 metric initially falls at x8 in an auxiliary drilling-chart mode;
 exact elimination of that chart gives nearly constant minimum values
 of `0.01502–0.01514`, dominated by beam kinematics, and does not
@@ -42,7 +44,10 @@ physical transfer on matching idealizations and assess interface
 trace norms, locking, and growing spaces over the registered ratios.
 Use those outcomes to retain or revise the law and
 multiplier policy.
-Advance independent B2/F05–F08 foundations where permitted.
+The independent B2 F09 private energy-admission study found a
+canonical-SI rule that removes a sampled direct-unit discrepancy and
+fails closed on erased stiffness, but F09 physical-range and product
+graph admission remain open. Advance F05–F08 foundations where permitted.
 No space or physical connection is selected.
 G0B/F03 remain open, G1 barred, and formal F03 authority unconsumed;
 detailed evidence follows.
@@ -11864,3 +11869,53 @@ physically matched torque/shear transfer and vertical-response
 evidence already identified; only a result that distinguishes
 connection, shell/beam idealization, or resolution justifies a new
 external run. F03/G0B remain open, G1 barred.
+
+**Previously registered plate-only load comparison completed:** The
+factor-four standalone C3D20R plate reuses the exact detached-plate
+geometry, support and frozen P0 line-dual action. Its torque and
+mixed-Fz action-only works reproduce the saved detached plate within
+`4.44e-8` and `3.49e-7` relative, respectively. Factor two applies
+the same physical resultant and gives `4.5398%` lower torque work
+and `4.7065%` lower mixed-Fz-case work than factor four. Factor two's
+24 action rows have rank 21, so it remains inadmissible for a 24-row
+exact multiplier solve; the fixed transpose action is still a valid
+load. All four linear no-contact external jobs complete within the
+existing 120 s limit; the slowest solver time is 16.94 s and peak
+solver RSS 1.13 GB. Raw runs, decks, logs and responses are preserved
+under `.qualification/b3-ge-e4-pl/f03-c1-material-line-plate-only-load-dev-20260928-v1`.
+Compact source-bound adjudication
+`B3_E4_F03_C1_MATERIAL_LINE_PLATE_ONLY_LOAD_ADJUDICATION_DEV_V1.json`
+has SHA256
+`1bebdf402c39459e6f2049ef6a3068c727d6de929bd9f73377b32059c76b5125`.
+The `tip_fz` label denotes the reconstructed *mixed* interface dual,
+which includes a large axial component; it is not pure vertical
+traction. These two 3D levels expose material reference-mesh
+sensitivity and do not establish 3D convergence or assign the
+remaining E4/3D action-work difference to the connection. Preserve
+the earlier factor-two exact-constraint preflight failure. Another
+solid mesh is not automatic; the next comparison must separate
+physical transfer or trace-resolution explanations within the
+registered resource envelope.
+
+**B2 F09 canonical-SI local admission feasibility:** A bounded exact
+six-basic-mode energy check first exposed a near-coupled generalized
+SPD section whose direct binary64 N-mm rounding failed the `1e-8`
+relative-energy guard while the physically congruent SI section
+passed. The adverse result remains in
+`B3_GE_E4_PL_G0_F09_LOCAL_ENERGY_ADMISSION_DEV_V1.json`, SHA256
+`e227b7f35ea9161f8cc229fb747d3602a0c5469af53b7f4591c91a0559fe6fcd`.
+A second bounded check converted declared N-mm inputs to owned
+canonical SI *before* constructing and rounding the private local
+operator. Two physical rectangles and the near-coupled section then
+give identical stored SI sections, guard decisions, and first passing
+tested decades; a nonzero stiffness erased by conversion raises
+`RepresentabilityError`. Its source-bound result is
+`B3_GE_E4_PL_G0_F09_CANONICAL_ENERGY_ADMISSION_DEV_V1.json`, SHA256
+`a7c6a97b1c1a927b2c18de9d9f2898ac0387d08f9d74b8528e82ba644422d060`.
+The candidate local rule is exact SPD and finite, non-erasing
+conversion/output in canonical SI, followed by exact LDL positivity
+of `εA ± (A_float−A)` at `ε=1e-8`. This is an all-basic-displacements
+relative-energy guard for the *private six-mode matrix*, not product
+admission. It does not establish a continuous physical section range,
+emitted 12×12 tangent fidelity, graph/state ownership, or a reason to
+change the provisional cutoff. F09 and G0B remain open.
