@@ -194,6 +194,16 @@ This finite result identifies transverse physical transfer as the next
 matched-reference priority; it is not a mesh-uniform theorem, unit-invariant
 accepted norm, mixed-system test, or multiplier choice. Raw output is in
 `.qualification/b3-ge-e4-pl/r7-f03-six-channel-work-dev-20260928-v2/`.
+
+The existing CalculiX folded-shell comparator is not a matched reference
+for that loaded rail: it has a 0.2 by 0.01 m web joined along the full
+shared midsurface seam, whereas the current native fixture has a generalized
+section with A=0.01 m2 and Iy=Iz=8.333e-6 m4, a 0.0675 m axis height, a half-length
+finite-width rail, and a free beam root. The existing external support and
+connection outputs cannot score this candidate. The next reference must
+match section, axis/offset, load, support and attachment extent, and expose
+the relevant physical work before comparison; a finer run of the current
+deck would not distinguish the line-law question.
 **Loaded flat-screen result:** The 16-Q4, 8-native-half-cell, four-segment
 P0 development fixture solves separate +100 Nm tip torque and +1000 N tip
 vertical shear with the beam root free. The support wrench balances both
