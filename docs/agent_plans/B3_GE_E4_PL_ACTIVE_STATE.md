@@ -225,6 +225,33 @@ reference and establish the mesh-domain work bound and mixed-system behavior.
 The bounded executable check is
 `tests/test_b3_e4_f03_flat_rail_six_channel_map.py` (4/4 source checks).
 
+**Matched-reference allocation:** Existing flat-web CalculiX and native L1
+runs match nominal plate/web dimensions, axis, root and applied resultants,
+but differ in connection and web idealization. Re-running the native energy
+split initially failed the GE work-scaled equilibrium check for the P1
+plate-load case; that failed output and row-level diagnosis are preserved in
+`.qualification/b3-ge-e4-pl/r7-flat-web-native-energy-dev-20260928-v1/`.
+One correction using the unchanged cached sparse factor reduces its ratio
+from 2.01e-7 to 1.01e-10, without changing the 1e-8 acceptance limit or
+accepted prefix. Product source `4773cfef` and the strengthened matched-case
+test pass 24/24 installed checks; the wheel SHA-256 is
+`bf38641fd1009f98a7dcff48ab1905c39cbe22c232a1fc6cab20f825731933ee`.
+The installed native run used one factorization and one P1 refinement; source
+and installed results are retained in the versioned `r7-flat-web-native-energy`
+v2 and `r7-ge-linear-refinement-installed` v1 directories.
+
+For plate Fy, native shell energy is 99.65% of total versus 99.86% in the
+executed external partition. For web tip Mx, native shell energy is only
+0.62–1.51% across P1/P0 versus 18.91% in the welded-shell reference;
+native total load work is about 77% of the external result. This is a
+specific torque-transfer discrepancy requiring physical connection/section
+review. It does not isolate the rail alone: the web is a shell in CalculiX
+and a generalized beam natively, and the uncoupled decks change seam
+topology, so their work cannot be subtracted as an exact partition. The next
+comparison needs verified sided work or an otherwise genuinely same-law
+reference before scoring the interface. No finer axial or new external mesh
+follows automatically. F03 stays open.
+
 **Six-channel paired-screen result:** With the same supported 8x2 and 16x4
 grids, finite strip, and growing P0 rows, the complete shell-side work map
 has no action on a numerical near-null mode on either grid. At a declared
