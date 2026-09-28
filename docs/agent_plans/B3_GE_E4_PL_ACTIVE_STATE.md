@@ -20,84 +20,63 @@ fallback is dirty, unrun and outside this task's edits.
 ## Working behavior
 
 - The sparse GE development owner solves multiple Q4/S3 shells and native B3
-  members with point connections, retained beam coordinates, linear and short
-  finite elastic steps, physical recovery, atomic rejection/cancellation,
-  checkpoint/restore and continuation. A replaceable experimental L1 local
-  operator reaches the sparse owner on a bounded matching line. It is not
-  qualified nonmatching coupling. The 16-edge development panel has 512 Q4
-  shells and 16 native B3 elements; its sampled process RSS was at most 291 MB
-  and both A/B runs took 36.2 s, within diagnostic limits. This is not a G5
-  workload or peak-memory qualification.
+  members with point connections, retained coordinates, elastic steps,
+  physical recovery, atomic rejection/cancellation and restart. A replaceable
+  experimental L1 operator reaches the owner on a bounded matching line; it
+  is not qualified nonmatching coupling. The 512-Q4/16-B3 panel ran in 36.2 s
+  for A/B with sampled RSS ≤291 MB, not G5 qualification.
 - The separate physical B2 profile executes 1/10/100 compatible load cases,
   selected recovery and eligible factorization reuse. Physical-range admission,
   attachment, mass/prestress, large-scale and installed qualification remain
   open. Existing public B2 behavior is unchanged.
-- ANYfem has an experimental panel consumer and save/reopen path distinct from
-  ordinary projects. Development installed wheels passed the recorded solver
-  and consumer checks; the full prior note and
+- ANYfem has an experimental panel consumer/save-reopen path distinct from
+  ordinary projects. Development installed wheels passed recorded checks at
   `.qualification/b3-ge-e4-pl/r7-integration-dev-20260928-v4/` retain evidence.
   Those wheels are not final G6 artifacts.
 
 ## Connection facts and remaining uncertainty
 
 The L1 shell-frame/director/material-line candidate passes bounded objective
-work, actual-chart derivatives and sparse/dense parity. Its reference offset,
-retained B3 half-cell ports and multiplier curvature are explicit. A constructed
-full-P1 dual has an exact alternating zero-action row on the tested straight
-half-cells. A/B remain viable *development* spaces; local rank, small gaps and
-one spectral quotient do not select one. The prospective [F03 assessment draft]
-(B3_GE_E4_PL_G0_F03_PROSPECTIVE_ASSESSMENT_DRAFT.md) still needs a reviewed
-same-law reference-error rule, physical energy/norm treatment, numerical floors
-and thresholds before formal use. A new bounded physical-field injection maps
-every supported straight virgin Q4/B3 field at 2→4 and 4→8; with complete
-A/B multiplier injection, the six-channel work identity differs by at most
-8.4e-17. The independently derived gap Jacobian matches actual updates at all
-tested 2- and 8-edge stations. This is not a reviewed general reference map.
-Preserve seven ratios, growing spaces,
-three refinements, physical transfer, locking, shear/drilling and the native
-indefinite mixed-system checks.
+work, actual-chart derivatives and sparse/dense parity. Its offset, native
+half-cell ports and multiplier curvature are explicit. Full-P1 dual has an
+alternating zero-action row on tested straight half-cells; A/B remain
+*development* spaces. Rank, gaps and one quotient cannot select them.
 
-The matched [flat-web comparison](B3_E4_F03_FLAT_WEB_MATCHED_DEV_V1.json)
-and [energy partition](B3_E4_F03_FLAT_WEB_ENERGY_PARTITION_DEV_V2.json)
-show different work and plate/web energy allocations between welded S4 and
-native L1. They cannot allocate cause to the connection: S4 uses a deformable
-web force couple, native B3 a rotational moment, and web/section laws differ.
-The saved S4 near-zero seam gap follows shared-node kinematics, not independent
-bonding qualification.
+A supported straight virgin Q4/B3 coarse→fine map at 2→4 and 4→8 preserves
+the complete A/B six-channel action to 8.4e-17. Its derived Jacobian matches
+actual updates at tested 2- and 8-edge stations. The stationary-resultant
+physical operators are positive on those fixtures, but the map is not an
+energy isometry: maximum pulled energy ratios are 13.44/20.69 for E4 and
+4.0/4.0 for native B3. These worst modes are not F03 scores. The prospective
+[F03 draft](B3_GE_E4_PL_G0_F03_PROSPECTIVE_ASSESSMENT_DRAFT.md) still needs a
+reviewed reference-error/norm rule, floors and thresholds. Seven ratios,
+growing spaces, three refinements and physical/mixed-system checks remain.
+Read-only independent development review found no bounded code-level blocker;
+the missing mathematical result is a candidate-independent uniform reference
+compliance error bound on the complete admitted multiplier-action space with
+supported action-gauge compatibility.
 
-The new [bounded replay and work result](B3_E4_F03_EXPANDED_WORK_DEV_V1.json)
-reconstructs 32 expanded S4 bricks at 100 saved exterior displacements. Wall
-energy sums agree with the S4 output to 2.8e-7/5.1e-6 relative. The knot has
-one common expansion coordinate alongside its six pose coordinates. For a
-support-zero seven-coordinate virtual hat, separate wall energy derivatives
-agree with replay RF work within 5.2e-4/1.9e-5 relative. The apparent seam
-work imbalance is 9.0e-5 J; an adjoint estimate of one-last-place FRD-U
-sensitivity in the replayed linear operator is 4.35e-4 J. Independent review accepts the *diagnostic*
-pullback and finds the saved displacement precision insufficient to infer an
-original S4 sided transfer defect. The two failed input-card attempts, nine
-successful serial work probes, raw hashes and review limits are preserved.
+The matched [flat-web comparison](B3_E4_F03_FLAT_WEB_MATCHED_DEV_V1.json) and
+[energy partition](B3_E4_F03_FLAT_WEB_ENERGY_PARTITION_DEV_V2.json) cannot
+allocate the S4/native difference to the connection because the load and
+web/section idealizations differ. The independently reviewed
+[S4 replay](B3_E4_F03_EXPANDED_WORK_DEV_V1.json) reproduces wall energies, but
+the saved FRD displacement precision exceeds the apparent sided-work imbalance;
+it cannot establish an original S4 transfer defect. Raw failed attempts,
+successful probes, hashes and review limits remain preserved.
 
 ## Next discriminating action
 
-Stop refining the welded-S4 comparator with the saved low-precision FRD. Next
-resolve the native L1 physical trace and growing-space multiplier choice with
-support-preserving work/norm maps, torque/shear transfer and mixed-system
-checks. Obtain higher-precision external sided output only when it separates a
-specific native-law explanation from section/load idealization. Continue
-independent F01-F13 and GE/B2 lifecycle work. Do not infer a law change from
-an S4 percentage, repeat classical axial refinement or consume formal F03
-authority until the prospective assessment contract receives review.
-
-The next native discriminator is physical energy/norm approximation under the
-now-verified bounded work map, including native retained cell rotations and
-the stationary-resultant reduction. Compare the pullback of the *actual*
-virgin supported operators and identify any nonnested energy term before
-defining a compliance quotient. Separately review the support/nullspace and
-reference-error rule; the successful work identity alone cannot select A/B.
-The initial runs in this slice hit the 600-second limit during Numba import
-because the sandbox denied cache creation. A disposable cache in the authorized
-worktree made the same 2→4 and 4→8 checks finish in seconds. These aborted
-runs are execution diagnostics, not mechanics failures.
+Review a candidate-independent reference-error rule on the full
+multiplier-action subspace, accounting for non-isometric primal transport,
+supported nullspaces and native retained rotations. Do not score formal F03
+or select A/B before this contract and the required physical/mixed-system
+checks. Continue independent foundations and GE/B2 lifecycle work. New
+external sided output needs a specific discriminating hypothesis; stop
+refining the low-precision saved S4 result. Early runs in this slice exhausted
+600 seconds during Numba cache creation denied by the sandbox; a disposable
+writable cache made the same checks finish in seconds. These aborted runs
+are execution diagnostics, not mechanics failures.
 
 ## Execution boundary
 

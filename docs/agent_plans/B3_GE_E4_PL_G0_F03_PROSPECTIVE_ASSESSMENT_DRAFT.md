@@ -153,8 +153,24 @@ matches the actual connection-update Jacobian exactly at the tested 2- and
 `scripts/b3_e4_f03_l1_physical_injection.py` and
 `tests/test_b3_e4_f03_l1_physical_injection.py`. This is development evidence
 for those grids only: nonmatching ratios, curved references, finite rotations,
-physical energy/norm approximation, reference convergence and independent
-review remain open. Define
+physical energy/norm acceptance, reference convergence and independent
+review remain open.
+The companion actual-operator check
+`scripts/b3_e4_f03_l1_physical_energy_map.py` reduces only the stationary
+generalized resultants and verifies positive supported virgin operators on
+these bounded grids. The maximum generalized energy ratios of the pulled fine
+operator to the coarse operator are 13.44 and 20.69 for the E4 shell block at
+2→4 and 4→8, and 4.0 for the native beam block at both doublings; minimum
+ratios are one within rounding. Whole-space near-isometry therefore cannot
+be assumed from exact work transport. These worst-mode ratios do not establish
+reference convergence on the multiplier-action subspace and are not F03
+acceptance scores. The proposed norm/error contract still requires derivation
+and independent review. A separate read-only development review found no
+correctness blocker in this bounded map or p-only stationary reduction; it
+identified a candidate-independent, uniform same-law reference-compliance
+error bound on the full admitted multiplier-action space, with action-gauge
+compatibility, as the next indispensable mathematical result. This review does
+not accept F03 or set its thresholds. Define
 \(J_h\) by physical traction/couple
 density, orientation, line measure and units; verify basis-change and
 equivalent-unit covariance. An arbitrary rescaling of even one untested
