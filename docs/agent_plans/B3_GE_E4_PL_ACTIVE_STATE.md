@@ -181,6 +181,19 @@ historical F5 result is treated as the same connection law. Increasingly
 anisotropic Q4 meshes are not silently excluded: the programme has no
 explicit aspect-ratio ceiling, and any new admission rule needs scientific
 review.
+
+**Six-channel paired-screen result:** With the same supported 8x2 and 16x4
+grids, finite strip, and growing P0 rows, the complete shell-side work map
+has no action on a numerical near-null mode on either grid. At a declared
+0.1 m force/moment length scale, its largest positive-subspace quotient
+changes from 5.16221185e-7 to 5.20803030e-7 (about +0.89%). The leading
+density is about 96% transverse force on both grids. An independent yaw-row
+formula matches the six-channel scatter exactly; its component reproduces
+the earlier complete-row result after the explicit length scaling.
+This finite result identifies transverse physical transfer as the next
+matched-reference priority; it is not a mesh-uniform theorem, unit-invariant
+accepted norm, mixed-system test, or multiplier choice. Raw output is in
+`.qualification/b3-ge-e4-pl/r7-f03-six-channel-work-dev-20260928-v2/`.
 **Loaded flat-screen result:** The 16-Q4, 8-native-half-cell, four-segment
 P0 development fixture solves separate +100 Nm tip torque and +1000 N tip
 vertical shear with the beam root free. The support wrench balances both
