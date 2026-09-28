@@ -88,19 +88,20 @@ The H^-1/2 prototype was discarded; A/B remain unselected. Continue
 independent GE/B2 work. New external sided output requires a specific
 discriminating hypothesis.
 
-The bounded 0.1 m flat Q4 rail now integrates its declared interpolated top
+The bounded 0.1 m flat Q4 rail integrates its declared interpolated top
 position/director across width and composes one station with the unchanged
-native B3 port. Eight focused checks pass: independent width quadrature,
-finite rigid motions, actual-chart derivatives, six selected local channels,
-width-distributed virgin yaw work, selected E4 physical energy, shear/drill
-kinematics, and reference station/offset negatives. Independent read-only
-review confirmed the kinematic composition but identified material-station
-and virgin-reference guards; both were added and checked. This is a *point
-prototype*, not E4 owner-field equivalence, full torque/shear transfer,
-nonmatching line work, second variation or F03 acceptance. Next derive and
-check the complete rail/native multiplier work and curvature, then the
-native broken-trace L2 energy bound, before multiplier scoring. No loaded
-refinement or F03 authority has been used.
+native B3 port. Ten focused checks pass, including width quadrature, finite
+rigid motions, six selected channels, distributed yaw work, selected E4
+physical energy, shear/drill kinematics and reference guards. Its constant-
+multiplier point work now has a composed local Hessian; same-parent finite
+differences check value, gradient, curvature and shell/native cross curvature
+at small and finite rotations. Read-only mechanics review found no missing
+term in that declared point chart. The shell chart remains additive; production
+E4 owner-field/update equivalence, complete torque/shear transfer, segmented
+line measure, native broken-trace L2 bound and F03 assessment remain open.
+Next establish the native trace energy pairing, then check the selected
+physical-width law against E4 owner fields before scoring multiplier spaces.
+No loaded refinement or F03 authority has been used.
 
 ## Execution boundary
 

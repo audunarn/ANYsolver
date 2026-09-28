@@ -278,3 +278,66 @@ def test_normal_moment_virtual_work_is_width_distributed():
     assert connection.evaluate(
         zero, state, shell_direction=zero,
         beam_direction=beam_spin)[1][5] == pytest.approx(1., abs=2e-13)
+
+
+@pytest.mark.parametrize("shell_scale,native_scale",
+                         ((.001, 2e-4), (.06, .01)))
+def test_multiplier_work_gradient_and_curvature_follow_actual_updates(
+        shell_scale, native_scale):
+    rail = _rail()
+    beam = build(4, z_offset=.0675, assemble=False)
+    element, cell, weight, _ = beam._locate(.95)
+    port = NativeHalfCellSpatialPort(beam.context, element, cell, weight)
+    state = beam.context.initial.mechanical
+    zero = np.zeros((2, 3, 6))
+    connection = RailL1LogConnection.at_reference(rail, zero, port, state)
+    rng = np.random.default_rng(510)
+    total = rng.normal(scale=shell_scale, size=zero.shape)
+    native_step = rng.normal(scale=native_scale, size=beam.context.count)
+    native_step[:6] = 0.
+    moved = beam.context.advance(state, native_step)
+    shell_direction = rng.normal(scale=.02, size=zero.shape)
+    beam_direction = rng.normal(scale=.002, size=beam.context.count)
+    beam_direction[:6] = 0.
+    multiplier = np.array((1.1, -.8, .7, .4, -.3, .6))
+
+    work, gap, gradient, hessian = connection.work_tangent(
+        total, moved, multiplier)
+    expected_gap, derivative = connection.evaluate(
+        total, moved, shell_direction=shell_direction,
+        beam_direction=beam_direction)
+    direction = np.r_[shell_direction.ravel(), beam_direction]
+    np.testing.assert_allclose(gap, expected_gap, rtol=0., atol=2e-12)
+    assert work == pytest.approx(multiplier@gap, rel=2e-12, abs=2e-12)
+    np.testing.assert_allclose(gradient@direction, multiplier@derivative,
+                               rtol=3e-9, atol=3e-11)
+    np.testing.assert_allclose(hessian, hessian.T, rtol=0., atol=2e-10)
+    assert not np.any(gradient[total.size+beam.context.nodal_count:
+                               total.size+beam.context.nodal_count+
+                               24*element])
+
+    for step_size in (2e-4, 1e-4):
+        plus = connection.evaluate(
+            total+step_size*shell_direction,
+            beam.context.advance(moved, step_size*beam_direction))[0]
+        minus = connection.evaluate(
+            total-step_size*shell_direction,
+            beam.context.advance(moved, -step_size*beam_direction))[0]
+        curvature_fd = multiplier@(plus-2*gap+minus)/step_size**2
+        np.testing.assert_allclose(direction@hessian@direction,
+                                   curvature_fd, rtol=2e-4, atol=2e-5)
+
+    step_size = 1e-4
+    mixed = np.empty((2, 2))
+    for i, shell_sign in enumerate((-1., 1.)):
+        for j, beam_sign in enumerate((-1., 1.)):
+            candidate = beam.context.advance(
+                moved, beam_sign*step_size*beam_direction)
+            mixed[i, j] = multiplier@connection.evaluate(
+                total+shell_sign*step_size*shell_direction, candidate)[0]
+    cross_fd = (mixed[1, 1]-mixed[1, 0]-mixed[0, 1]+mixed[0, 0]) / (
+        4*step_size**2)
+    cross_exact = (shell_direction.ravel()@hessian[:total.size, total.size:]@
+                   beam_direction)
+    np.testing.assert_allclose(cross_exact, cross_fd,
+                               rtol=2e-4, atol=2e-5)

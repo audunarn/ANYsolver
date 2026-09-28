@@ -17,6 +17,7 @@ from anysolver import _ge_beam3_mixed_ad as ad
 from anysolver._ge_beam3_pose_joint import RigidPoseJoint
 from anysolver.corotational import rotation_matrix_from_vector
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
+from scripts.b3_e4_f03_l1_native_connection_probe import _jet_cross, _jet_unit
 
 
 def _owned(value: np.ndarray, shape: tuple[int, ...]) -> np.ndarray:
@@ -235,3 +236,94 @@ class RailL1LogConnection:
         pose_step = np.r_[shell_step, shell_spin, beam_step, spatial[3:]]
         return (result.constraints.copy(),
                 result.constraint_jacobian@pose_step)
+
+    def work_tangent(self, total: np.ndarray, beam_state,
+                     multiplier: np.ndarray
+                     ) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
+        """Exact local-chart Hessian of six-channel multiplier work.
+
+        Shell total coordinates and native increments share one predecessor.
+        The generalized-resultant coordinates are absent from connection work.
+        This is a bounded point operator, not segmented line assembly.
+        """
+        shell_shape = (2, len(self.rail.y_cuts), 6)
+        q = _owned(total, shell_shape)
+        lam = _owned(multiplier, (6,))
+        self.joint.guard()
+        owned, left, right, lift, _, rotation = self.port._parts(beam_state)
+        high, low, beam_frame0 = self.port.pose_pair(owned)
+        shell_size = q.size
+        local_size = shell_size+9
+        constant = lambda value: ad.Jet2.constant(float(value), local_size)
+        variable = lambda value, index: ad.Jet2.variable(
+            float(value), index, local_size)
+        nodal = [[[variable(q[i, k, j], 6*(i*len(self.rail.y_cuts)+k)+j)
+                   for j in range(6)] for k in range(len(self.rail.y_cuts))]
+                 for i in range(2)]
+        ez = [constant(0.), constant(0.), constant(1.)]
+        directors = [[ad.matvec(ad.so3_exp(node[3:]), ez) for node in edge]
+                     for edge in nodal]
+        averaged_top, averaged_director = [], []
+        for i in range(2):
+            averaged_top.append([
+                sum((float(self.rail.weights[k])*(
+                    constant(self.rail.reference[i, k, j])+nodal[i][k][j]+
+                    .5*self.rail.thickness*directors[i][k][j])
+                     for k in range(len(self.rail.y_cuts))), start=constant(0.))
+                for j in range(3)])
+            averaged_director.append([
+                sum((float(self.rail.weights[k])*directors[i][k][j]
+                     for k in range(len(self.rail.y_cuts))), start=constant(0.))
+                for j in range(3)])
+        shell = [(1.-self.station)*averaged_top[0][j]+
+                 self.station*averaged_top[1][j] for j in range(3)]
+        mean = [(1.-self.station)*averaged_director[0][j]+
+                self.station*averaged_director[1][j] for j in range(3)]
+        normal = _jet_unit(mean, "averaged E4 director")
+        raw = [averaged_top[1][j]-averaged_top[0][j] for j in range(3)]
+        component = ad.dot(normal, raw)
+        tangent = _jet_unit([raw[j]-normal[j]*component for j in range(3)],
+                            "projected averaged material tangent")
+        side = _jet_cross(normal, tangent)
+        shell_frame = [[tangent[j], side[j], normal[j]] for j in range(3)]
+
+        spin = [variable(0., shell_size+6+j) for j in range(3)]
+        increment = ad.so3_exp(spin)
+        beam_frame = ad.matmul(
+            increment, ad.constant_matrix(beam_frame0, local_size))
+        rotated_lift = ad.matvec(
+            increment, [constant(value) for value in rotation@lift])
+        beam_origin = [
+            constant(high[j]+low[j])+
+            (1.-self.port.weight)*variable(0., shell_size+j)+
+            self.port.weight*variable(0., shell_size+3+j)+
+            rotated_lift[j]-constant((rotation@lift)[j])
+            for j in range(3)]
+        arm = ad.matvec(beam_frame,
+                        [constant(value) for value in self.beam_offset])
+        beam = [beam_origin[j]+arm[j] for j in range(3)]
+
+        distance = [beam[j]-shell[j] for j in range(3)]
+        translation = [entry-constant(offset) for entry, offset in zip(
+            ad.matvec(ad.transpose(shell_frame), distance),
+            self.joint._offset)]
+        relative = ad.matmul(
+            ad.constant_matrix(self.joint._relative.T, local_size),
+            ad.matmul(ad.transpose(shell_frame), beam_frame))
+        gaps = translation+ad.so3_log(relative)
+        work = sum((constant(lam[j])*gaps[j] for j in range(6)),
+                   start=constant(0.))
+
+        full_size = shell_size+self.port.context.count
+        indices = list(range(shell_size))
+        indices.extend(shell_size+6*left+j for j in range(3))
+        indices.extend(shell_size+6*right+j for j in range(3))
+        cell_column = (self.port.context.nodal_count+
+                       24*self.port.element_index+3*self.port.cell)
+        indices.extend(shell_size+cell_column+j for j in range(3))
+        residual = np.zeros(full_size)
+        hessian = np.zeros((full_size, full_size))
+        residual[indices] = work.gradient
+        hessian[np.ix_(indices, indices)] = work.hessian
+        return (work.value, np.array([gap.value for gap in gaps]),
+                residual, hessian)
