@@ -143,8 +143,8 @@ transverse field is bounded by its two partial end cells and falls with
 transverse cell width; q^T K_phys q is constant for this macro field and
 increases for the endpoint field on these grids. This is a constructed-mode
 screen, not a whole-space bound, mixed-system result or F03 acceptance.
-The executable and raw output are in
-`.qualification/b3-ge-e4-pl/r7-f03-paired-refinement-dev-20260928-v1/`.
+The corrected-provenance raw output is in
+`.qualification/b3-ge-e4-pl/r7-f03-paired-refinement-dev-20260928-v2/`.
 
 **Complete yaw-row screen:** On the first two prospective paired grids, the
 x=0-supported E4 physical matrices have no eigenvalue near the stated
@@ -153,9 +153,9 @@ rows, including the shell top-surface rotation-x arm, changes from
 7.1751385e-8 to 7.2329517e-8 under the script's unconverted physical
 coordinates and L2 density Gram. Independent review checked the row signs
 against the actual rail pose derivative and the rotation-only test. The
-initial translation-only run is retained as invalid evidence; the corrected
-raw output is at
-`.qualification/b3-ge-e4-pl/r7-f03-paired-yaw-upper-dev-20260928-v2/`.
+initial translation-only run is retained as invalid evidence. The
+corrected-provenance full-row output is at
+`.qualification/b3-ge-e4-pl/r7-f03-paired-yaw-upper-dev-20260928-v3/`.
 The roughly 0.81% increase over two grids is not a mesh-uniform theorem.
 
 **Six-channel reference result:** A bounded flat four-segment P0 shell-pose
@@ -164,7 +164,8 @@ spin derivatives for mixed fields, infinitesimal rigid motion and free
 transverse shear. It has no drilling work. At the centred virgin connection,
 the integrated six-component relative-gap derivative equals native retained
 half-cell pose motion minus that shell map, including the beam offset arm.
-The focused rail suites pass 29/29. Independent mechanics review found no
+The focused rail suites pass 29/29 with the worktree source imported.
+Independent mechanics review found no
 first-order sign or top-offset omission. The native comparison reuses the
 port tangent; existing actual-update derivative checks supply a separate
 bounded port check. This is not an assembled work-Hessian, loaded-transfer,
@@ -172,13 +173,36 @@ finite-motion, physical-core bound or mixed-stability result.
 
 **Next decision:** Keep the rail as a development candidate. Derive or
 refute a supported six-channel physical-core/broken-native work bound over
-the intended mesh domain; independently compare matched torque/shear
-transfer and check the actual constrained mixed system before selecting an
-interface space. A failing channel or unsupported mode identifies the
-law/space correction. Do not treat two finite yaw-grid values or this
-reference map as proof. Increasingly anisotropic Q4 meshes are not silently
-excluded: the programme has no explicit aspect-ratio ceiling, and any new
-admission rule needs scientific review.
+the intended mesh domain; compare matched torque/shear transfer and assess
+the constrained mixed system before selecting an interface space. The loaded
+screen below rules out a singular or drilling-only response on one flat grid,
+but cannot settle the law, discrete stability or physical fidelity. No
+historical F5 result is treated as the same connection law. Increasingly
+anisotropic Q4 meshes are not silently excluded: the programme has no
+explicit aspect-ratio ceiling, and any new admission rule needs scientific
+review.
+**Loaded flat-screen result:** The 16-Q4, 8-native-half-cell, four-segment
+P0 development fixture solves separate +100 Nm tip torque and +1000 N tip
+vertical shear with the beam root free. The support wrench balances both
+loads; the full KKT residual and integrated connection gap are small. The
+physical shell tangent carries positive work. Removing the numerical shell
+completion changes tip rotation by about 0.028% under torque and tip vertical
+translation by about 0.0008% under shear. Its reported `q^T K q` values are
+twice conventional strain energy. This is one flat elastic grid, not a
+uniform physical-core bound, a same-law external comparison, or accepted
+torque/shear fidelity. Independent review checked assembly signs and support
+wrenches and found no bounded-screen defect. Raw output is in
+`.qualification/b3-ge-e4-pl/r7-f03-physical-rail-loaded-dev-20260928-v2/`.
+
+**Evidence provenance correction:** The repository virtual environment
+originally resolved `anysolver` from the main checkout. Earlier local screen
+directories (paired v1, yaw v2, loaded v1) are preserved but are not evidence
+of worktree-package execution. The relevant shell/native source hashes matched
+and explicit-worktree reruns reproduced their numerical values exactly. The
+current screen scripts reject an imported checkout other than this worktree;
+their new output records the imported path. These remain source-level
+development screens, not installed-artifact qualification.
+
 F03 formal assessment stays barred. The seven ratios, growing spaces, three
 refinements, physical transfer, locking, shear, drilling, and mixed-system
 checks remain mandatory. No automatic axial sweep or new external reference

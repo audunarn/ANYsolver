@@ -6,10 +6,12 @@ native mixed-system stability, or formal F03 acceptance.
 
 import json
 import time
+from pathlib import Path
 
 import numpy as np
 from scipy import linalg
 from threadpoolctl import threadpool_info
+import anysolver
 
 from scripts.b3_e4_f03_l1_physical_rail import transverse_shape_integrals
 from scripts.b3_e4_f03_plate_patch_work import raw_e4_tangent
@@ -85,7 +87,12 @@ def screen(full_x_cells: int, transverse_cells: int) -> dict:
 
 
 if __name__ == "__main__":
-    print(json.dumps({"kind": "environment", "threadpools": threadpool_info()}),
+    expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
+    actual = Path(anysolver.__file__).resolve().parent
+    if actual != expected:
+        raise RuntimeError("yaw screen imported another ANYsolver checkout")
+    print(json.dumps({"kind": "environment", "threadpools": threadpool_info(),
+                      "imported_anysolver": str(actual)}),
           flush=True)
     for nx, ny in ((8, 2), (16, 4)):
         print(json.dumps({"kind": "yaw_upper_screen", **screen(nx, ny)}),
