@@ -182,6 +182,13 @@ target from two to four S3 faces left the integrated force unchanged to saved
 precision and changed the source pressure field by only 5.06e−13 relative
 L2. This [single target-partition development check](reference_cases/general_contact_d1_target_partition_development.md)
 does not settle source pressure convergence or general target-mesh admission.
+One further [32-Q4 fine-source press](reference_cases/general_contact_d1_source_pressure_32q4_development.md)
+passed its local force, gap, multiplier, rank and integration gates, but the
+reference-surface pressure L2 change increased from 7.04% at 16→24 Q4 to
+13.82% at 24→32 Q4. The difference is concentrated near the moving contact
+front; the established-contact interior improved. Integrated force changed
+only 0.0208% from 24 Q4. Pressure-space stability and complete C1 admission
+remain open.
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as

@@ -1,0 +1,43 @@
+{
+  "purpose": "development reference-surface pressure-field comparison",
+  "reference_report": "reports\\general_contact_d1_distributed_32q4_fine_press_dev_20260928.json",
+  "reference_columns": 32,
+  "reference_target_columns": 1,
+  "measure": "exact squared piecewise-bilinear L2 over common-refined unit reference strip",
+  "x_interval": [
+    0.8,
+    1.0
+  ],
+  "comparisons": [
+    {
+      "report": "reports\\general_contact_d1_mixed_16q4_interior_distributed_0p3n_cartesian_roundoff_four_phase_20260927.json",
+      "columns": 16,
+      "target_columns": 1,
+      "pressure_basis": "fine_nodal_q1",
+      "absolute_l2": 0.0024746856096510227,
+      "relative_reference_l2": 0.015671382986230775
+    },
+    {
+      "report": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+      "columns": 24,
+      "target_columns": 1,
+      "pressure_basis": "fine_nodal_q1",
+      "absolute_l2": 0.0011561415692861424,
+      "relative_reference_l2": 0.007321470350789337
+    }
+  ],
+  "adjacent_comparisons": [
+    {
+      "earlier_report": "reports\\general_contact_d1_mixed_16q4_interior_distributed_0p3n_cartesian_roundoff_four_phase_20260927.json",
+      "later_report": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+      "absolute_l2": 0.0027788141748558218,
+      "relative_later_l2": 0.01759299664153474
+    },
+    {
+      "earlier_report": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+      "later_report": "reports\\general_contact_d1_distributed_32q4_fine_press_dev_20260928.json",
+      "absolute_l2": 0.0011561415692861424,
+      "relative_later_l2": 0.007321470350789337
+    }
+  ]
+}
