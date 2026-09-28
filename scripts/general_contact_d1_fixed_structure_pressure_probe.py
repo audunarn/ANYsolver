@@ -194,6 +194,37 @@ def active_work_rank_record(pressure_x, pressure_y, structure_x, structure_y,
     return result_record
 
 
+def solved_active_work_rank(solution, structure_x, structure_y):
+    """Check the active work columns of the already certified PDAS solution."""
+    pressure_x, pressure_y = solution["xn"], solution["yn"]
+    work_all = sparse.kron(
+        sparse.csr_matrix(cross_mass(pressure_y, structure_y, oracle.YR)),
+        sparse.csr_matrix(cross_mass(pressure_x, structure_x, 1.0)),
+    ).tocsr()
+    support = np.asarray(work_all.sum(axis=1)).ravel()
+    if np.any(support < 0):
+        raise AssertionError("negative pressure support")
+    active = np.flatnonzero(solution["p"].ravel() > 1.0e-9)
+    if not len(active) or np.any(support[active] <= 0):
+        raise AssertionError("active pressure has no physical support")
+    free = np.ones((len(structure_x)*len(structure_y)), dtype=bool)
+    free[::len(structure_x)] = False
+    active_work = work_all[active][:, free].T.toarray()
+    column_scale = np.linalg.norm(active_work, axis=0)
+    if np.any(column_scale <= 0):
+        raise AssertionError("active work has a zero column")
+    singular = np.linalg.svd(active_work/column_scale,
+                             compute_uv=False)
+    ratios = singular/singular[0]
+    return {
+        "active_modes": int(len(active)),
+        "supported_modes": int(np.count_nonzero(support > 0)),
+        "active_unit_column_singular_min_relative": float(ratios[-1]),
+        "active_rank_relative_1e_10": int(np.count_nonzero(ratios > 1e-10)),
+        "active_rank_relative_1e_12": int(np.count_nonzero(ratios > 1e-12)),
+    }
+
+
 def solve_fixed_structure(pressure_x, structure_x, y, pressure_y=None,
                           lcp_method="pdas"):
     if pressure_y is None:
@@ -285,11 +316,14 @@ def enrichment_y_grid(y):
     return result
 
 
-def relative_q1_pressure_l2(first, second, *, support_y_max):
-    """Exact squared Q1 comparison on the union mesh and physical support."""
+def relative_q1_pressure_l2(first, second, *, support_y_max,
+                            support_y_min=0.0):
+    """Exact squared Q1 comparison on a physical-support y band."""
     x_knots = np.unique(np.r_[first["xn"], second["xn"]])
-    y_knots = np.unique(np.r_[first["yn"], second["yn"], support_y_max])
-    y_knots = y_knots[y_knots <= support_y_max]
+    y_knots = np.unique(np.r_[first["yn"], second["yn"],
+                               support_y_min, support_y_max])
+    y_knots = y_knots[(y_knots >= support_y_min)
+                      & (y_knots <= support_y_max)]
     roots = (-1/np.sqrt(3.0), 1/np.sqrt(3.0))
 
     def value(solution, x, y):
@@ -393,6 +427,92 @@ def run_coarse_y(output):
     output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
     print(json.dumps({key: record[key] for key in record
                       if key.startswith("coarse_vs_matching_")}, indent=2))
+
+
+def run_rim_knot(output):
+    """Move only the near-rim Q1 pressure knot to the physical support edge."""
+    if output.exists():
+        raise FileExistsError(output)
+    started = time.perf_counter()
+    saved_path = Path("reports/general_contact_d1_16x8_near_rim_"
+                      "guarded_no_checkpoint_comparison_identity_dev_20260928.json")
+    saved_bytes = saved_path.read_bytes()
+    saved = json.loads(saved_bytes)
+    oracle_sha = hashlib.sha256(Path(oracle.__file__).read_bytes()).hexdigest()
+    if (saved["status"] != "development_comparison_only"
+            or saved["mesh"] != [16, 8]
+            or saved["oracle_sha256"] != oracle_sha):
+        raise ValueError("near-rim reference identity differs")
+    x = np.linspace(0.0, 1.0, 33)
+    y = np.asarray(saved["source_y_knots_m"])
+    rim_y = y.copy()
+    if not np.isclose(rim_y[-2], 0.895, rtol=0, atol=1e-12):
+        raise AssertionError("unexpected near-rim knot")
+    rim_y[-2] = oracle.YR
+    if not np.all(np.diff(rim_y) > 0):
+        raise AssertionError("rim-aligned knots are invalid")
+    edges_x = np.linspace(0.0, 1.0, 9)
+    edges_y = np.r_[np.linspace(0.0, oracle.YR, 10), 1.0]
+    solutions = {}
+    cases = {}
+    for name, pressure_y in (("matching_32x8", y),
+                             ("rim_aligned_32x8", rim_y)):
+        solution, diagnostics = solve_fixed_structure(x, x, y, pressure_y)
+        bins = oracle.q1_bins(solution, edges_x, edges_y)
+        if abs(bins.sum()-diagnostics["reaction_n"]) > 1.0e-10:
+            raise AssertionError("physical bins lose reaction")
+        solutions[name] = solution
+        cases[name] = {**diagnostics,
+                       "pressure_y_knots_m": pressure_y.tolist(),
+                       "pressure_pa": solution["p"].tolist(),
+                       "bins_n": bins.tolist(),
+                       "active_work_rank": solved_active_work_rank(
+                           solution, x, y)}
+    baseline = cases["matching_32x8"]
+    moved = cases["rim_aligned_32x8"]
+    base_bins = np.asarray(baseline["bins_n"])[:9]
+    moved_bins = np.asarray(moved["bins_n"])[:9]
+    record = {
+        "status": "development_fixed_structure_rim_knot_discriminator",
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "oracle_sha256": oracle_sha,
+        "saved_comparison_sha256": hashlib.sha256(saved_bytes).hexdigest(),
+        "structural_mesh": [32, 8],
+        "structural_y_knots_m": y.tolist(),
+        "physical_support_y_max_m": oracle.YR,
+        "common_bins": [8, 9],
+        "cases": cases,
+        "moved_vs_matching_bin_l1_relative": float(
+            np.abs(moved_bins-base_bins).sum()/np.abs(base_bins).sum()),
+        "moved_vs_matching_bin_l2_relative": float(
+            np.linalg.norm(moved_bins-base_bins)/np.linalg.norm(base_bins)),
+        "moved_vs_matching_rim_force_relative": float(
+            abs(moved_bins[8].sum()-base_bins[8].sum())
+            /abs(base_bins[8].sum())),
+        "moved_vs_matching_reaction_relative": float(
+            abs(moved["reaction_n"]-baseline["reaction_n"])
+            /abs(baseline["reaction_n"])),
+        "moved_vs_matching_physical_pressure_l2_relative": (
+            relative_q1_pressure_l2(
+                solutions["rim_aligned_32x8"], solutions["matching_32x8"],
+                support_y_max=oracle.YR)),
+        "moved_vs_matching_regular_pressure_l2_relative": (
+            relative_q1_pressure_l2(
+                solutions["rim_aligned_32x8"], solutions["matching_32x8"],
+                support_y_min=0.0, support_y_max=0.8)),
+        "moved_vs_matching_rim_pressure_l2_relative": (
+            relative_q1_pressure_l2(
+                solutions["rim_aligned_32x8"], solutions["matching_32x8"],
+                support_y_min=0.8, support_y_max=oracle.YR)),
+        "elapsed_seconds": time.perf_counter()-started,
+        "peak_process_working_set_mb": (
+            psutil.Process().memory_info().peak_wset / 1.0e6),
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps({key: value for key, value in record.items()
+                      if key.startswith("moved_vs_matching_")}, indent=2))
 
 
 def run_enrichment(output, *, lcp_method="pdas"):
@@ -616,5 +736,7 @@ if __name__ == "__main__":
         run_active_rank(Path(sys.argv[2]))
     elif len(sys.argv) == 3 and sys.argv[1] == "--coarse-y":
         run_coarse_y(Path(sys.argv[2]))
+    elif len(sys.argv) == 3 and sys.argv[1] == "--rim-knot":
+        run_rim_knot(Path(sys.argv[2]))
     else:
-        raise SystemExit("usage: python general_contact_d1_fixed_structure_pressure_probe.py [--enrichment] OUTPUT")
+        raise SystemExit("usage: python general_contact_d1_fixed_structure_pressure_probe.py [--enrichment|--coarse-y|--rim-knot] OUTPUT")

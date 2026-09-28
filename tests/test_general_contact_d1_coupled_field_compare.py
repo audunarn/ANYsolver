@@ -40,6 +40,11 @@ def test_distinct_y_pressure_knots_and_clipped_physical_support():
     assert relative_q1_pressure_l2(
         first, second, support_y_max=0.75,
     ) == pytest.approx(np.sqrt(4.0/15.0), abs=1.0e-14)
+    # Isolate the clipped [.5, .75] band: squared difference 1/48,
+    # squared reference pressure 7/192.
+    assert relative_q1_pressure_l2(
+        first, second, support_y_min=0.5, support_y_max=0.75,
+    ) == pytest.approx(np.sqrt(4.0/7.0), abs=1.0e-14)
 
 
 def test_pressure_band_partition_recovers_exact_global_norm():
