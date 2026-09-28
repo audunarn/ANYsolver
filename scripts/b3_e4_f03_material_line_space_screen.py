@@ -92,8 +92,9 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
         raise ValueError("bounded material-line shell level required")
     if beam_half_cells not in (12, 14, 18, 24, 26):
         raise ValueError("bounded C1 native beam resolution required")
-    if policy_p0_only and (shell_cells, beam_half_cells) not in ((2, 26), (16, 12)):
-        raise ValueError("bounded reciprocal-ratio P0 policy level required")
+    if policy_p0_only and (shell_cells, beam_half_cells) not in (
+            (2, 26), (4, 26), (4, 18), (8, 14), (8, 12), (16, 12)):
+        raise ValueError("bounded ratio-policy P0 level required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     actual = Path(anysolver.__file__).resolve().parent
     if actual != expected:
@@ -249,6 +250,8 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
         "shell_cells": shell_cells,
         "beam_half_cells": beam.n_half_cells,
         "policy_p0_only": policy_p0_only,
+        "policy_bond_half_cells": bond_halves if policy_p0_only else None,
+        "policy_intervals": intervals if policy_p0_only else None,
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "source_git": subprocess.check_output(
             ("git", "rev-parse", "HEAD"), text=True).strip(),

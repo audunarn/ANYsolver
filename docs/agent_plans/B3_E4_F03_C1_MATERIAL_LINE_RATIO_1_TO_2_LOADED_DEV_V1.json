@@ -1,0 +1,152 @@
+{
+  "anysolver_import_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "beam_half_cells": 18,
+  "classification": "private fixed-primal material-line row-growth screen",
+  "numba_disable_jit": "1",
+  "numpy_version": "2.4.6",
+  "policy_bond_half_cells": 8,
+  "policy_intervals": 4,
+  "policy_p0_only": true,
+  "python_version": "3.14.2",
+  "qualification": "development only; not a multiplier selection or G0B pass",
+  "result": {
+    "p0_policy_m4": {
+      "basis_integrals_m": [
+        0.025000000000000022,
+        0.024999999999999915,
+        0.025000000000000022,
+        0.02500000000000003
+      ],
+      "loads": {
+        "tip_fz_1000n": {
+          "constraint_max": 1.3552527156068805e-20,
+          "dimension": 1272,
+          "free_residual_ratio": 5.51372462476954e-12,
+          "nnz": 21626,
+          "orientation_max_rad": 4.3475731999316426e-07,
+          "orientation_rms_rad": 1.9004101470748983e-07,
+          "position_max_m": 5.5318246178976915e-08,
+          "position_rms_m": 3.0614797581041915e-08,
+          "row_rank": 24,
+          "shell_physical_work_j": 0.013665527134457045,
+          "status": "BOUNDED_SOLVE_PASSED",
+          "support_force_balance_n": 8.32147964220989e-10,
+          "support_moment_balance_nm": 9.244140399151003e-10,
+          "tip_rotation_rad": [
+            1.6810551384494133e-17,
+            -6.215950141095743e-05,
+            -1.2578503688385944e-18
+          ],
+          "tip_translation_m": [
+            -2.628375568302752e-06,
+            -3.6124722454432656e-19,
+            6.985554250451325e-05
+          ],
+          "work_absolute_error_j": 4.3402781368939714e-13,
+          "work_relative_error": 6.213219425807985e-12
+        },
+        "tip_mx_100nm": {
+          "constraint_max": 6.776263578034403e-21,
+          "dimension": 1272,
+          "free_residual_ratio": 8.217754450236168e-12,
+          "nnz": 21626,
+          "orientation_max_rad": 7.317296356418954e-07,
+          "orientation_rms_rad": 4.015351902097861e-07,
+          "position_max_m": 1.7387454655609485e-08,
+          "position_rms_m": 7.45060879774296e-09,
+          "row_rank": 24,
+          "shell_physical_work_j": 0.0018492361415992926,
+          "status": "BOUNDED_SOLVE_PASSED",
+          "support_force_balance_n": 7.51516312040667e-11,
+          "support_moment_balance_nm": 1.3995940989701856e-10,
+          "tip_rotation_rad": [
+            4.845933156315146e-05,
+            -9.095372713027304e-18,
+            -7.996675141092318e-07
+          ],
+          "tip_translation_m": [
+            -3.8231683689182624e-19,
+            -3.16860021777696e-06,
+            8.494317046732812e-18
+          ],
+          "work_absolute_error_j": 4.407932352457067e-15,
+          "work_relative_error": 9.096147656747425e-13
+        }
+      },
+      "row_count": 24,
+      "row_diagnostic": {
+        "active_primal_columns": 76,
+        "left_null_modes": [],
+        "left_smallest_mode": [
+          -3.963547526105396e-17,
+          -0.22071173742183334,
+          -4.426161684432797e-16,
+          -0.007727352972297569,
+          -1.473554673103263e-16,
+          0.29816966852660565,
+          4.943386597631284e-18,
+          -0.061067137825154286,
+          -6.158118803643557e-16,
+          -0.0003574689327802782,
+          1.186230263383958e-16,
+          0.5988256362621897,
+          -6.559965454210752e-17,
+          0.06106713782515338,
+          1.022312417154528e-17,
+          0.000357468932779977,
+          -1.7583128298235103e-16,
+          0.5988256362621912,
+          9.80992165482109e-17,
+          0.22071173742183484,
+          -2.345656333171752e-16,
+          0.007727352972297289,
+          -5.1837008622650034e-17,
+          0.29816966852660615
+        ],
+        "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+        "rank_tolerance": 2.3423007603291043e-14,
+        "scaled_row_norm_max": 0.007698179926283008,
+        "scaled_row_norm_min": 0.0001272672580535353,
+        "scaled_row_rank": 24,
+        "scaled_row_singular_values": [
+          1.3879980041326032,
+          1.3357711248214503,
+          1.3103049678934713,
+          1.2561326688277774,
+          1.2560413152767635,
+          1.1851188248907367,
+          1.184885721669871,
+          1.1061028137641644,
+          1.1048648897279398,
+          1.0749782500311398,
+          1.0730666776148454,
+          1.00078002356273,
+          0.9991301959346143,
+          0.9226122361784708,
+          0.9193743313830776,
+          0.8827647339163849,
+          0.879688088147951,
+          0.7739623931679847,
+          0.7729032166051859,
+          0.6497158750589431,
+          0.6476019262342959,
+          0.5303474831560542,
+          0.4638165950931906,
+          0.27082915716618267
+        ]
+      },
+      "space": "piecewise_constant"
+    }
+  },
+  "runner_sha256": "b0a62cb13f5f5a1563fa7afdabd593059a0c692ed679e3fd4ac849e77e5abff8",
+  "scipy_version": "1.17.1",
+  "shell_cells": 4,
+  "shell_nodes": 165,
+  "source_git": "7fac82357e2efc6d3e8356242108db7fa0a68f7d",
+  "station_count": 24,
+  "thread_settings": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  }
+}

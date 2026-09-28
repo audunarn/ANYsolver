@@ -4,8 +4,9 @@
 
 **Decision sought:** Establish the physical native material-line law and
 its exact multiplier resolution policy. **Established:** The provisional
-P0 rule has independent supported rows at all seven registered
-shell:beam ratios. Three matched 1:1 levels, Q4 x2/B3-12 through
+P0 rule has independent supported rows and one bounded loaded Mx/Fz
+solve at all seven registered shell:beam ratios. Three matched 1:1
+levels, Q4 x2/B3-12 through
 Q4 x8/B3-18, pass loaded Mx/Fz equilibrium, work and balance; tip work
 changes contract with refinement. Their actual native retained mixed
 KKT has P0 ranks `12/12`, `24/24`, `48/48` and smallest normed
@@ -28,6 +29,8 @@ after reconstruction.
 **Remaining uncertainty:** Whether P0 avoids locking and unsupported
 modes across ratios and whether physically matched sided torque/shear
 transfer validates the declared law. **Next discriminator and action:**
+At fixed x8/B3-14 compare P0 m4/m8 to distinguish beam resolution
+from weak-row resolution behind the large coarse-B3 torque gap.
 Establish a work-conjugate torque/section/support comparator that
 separates shell idealization from connection transfer; neither the
 saved pure-action fields nor a displacement fit does that alone.
@@ -11002,3 +11005,58 @@ This fills a loaded ratio endpoint but does not establish mesh-uniform
 stability, locking freedom, physical transfer accuracy, or P0 selection.
 F03/G0B remain open; G1 remains barred and formal F03 authority
 unconsumed.
+
+**Intermediate-ratio loaded discriminator (prospective):** The
+provisional P0 rule has supported rows at all seven ratios; bounded
+loaded Mx/Fz checks now exist at both extremes and three matched
+`1:1` levels. The remaining question is whether any intermediate
+ratio reveals a failed solve, balance, work, or trace trend hidden by
+those endpoints. Run the four unchanged C1 fixtures at shell:beam
+`1:4` (x4/B3-26), `1:2` (x4/B3-18), `2:1` (x8/B3-14), and `4:1`
+(x8/B3-12), with only the rule-selected P0 intervals and the same
+terminal `100 Nm` Mx/`1000 N` Fz loads. Their conservative full KKT
+size bounds are `1488/1344/1560/1524`, all below `1900`.
+A ratio-specific failure sends the policy back for diagnosis; passes
+complete a one-grid loaded inventory and direct the next work to
+three-level refinement, actual mixed-system norms and physical
+transfer. Keep time and memory limits, no new external solve, and no
+multiplier selection from small gaps or close tip responses.
+
+**Intermediate-ratio loaded outcome:** All four missing registered
+one-grid ratios have full supported P0 row rank and pass both bounded
+Mx/Fz loaded solves, weak compatibility, free equilibrium, physical
+shell work and global wrench balance. The selected spaces are
+`1:4` x4/B3-26/m4 `24/24`, `1:2` x4/B3-18/m4 `24/24`,
+`2:1` x8/B3-14/m8 `48/48`, and `4:1` x8/B3-12/m4 `24/24`.
+Together with existing `1:8`, matched `1:1`, and exact-quotient
+`8:1` results, this completes **one bounded loaded grid per ratio**,
+not systematic ratio convergence or stable multiplier selection.
+The Mx tip rotations for `1:4/1:2/2:1/4:1` are respectively
+`4.84788434/4.84593316/4.62047794/4.92966476` × `1e-5 rad`;
+Fz tip translations are
+`6.98607204/6.98555425/6.97457029/7.03037125` × `1e-5 m`.
+The *unprojected* Mx orientation-gap RMS is
+`4.00e-7/4.02e-7/1.55e-7/6.10e-6 rad`; the `8:1` result also
+has `6.86e-6 rad`. These latter gaps do not violate the weak-row
+acceptance by themselves, but the coarse B3-12 bond half-cell count
+and the rule's m4 resolution are confounded. Smaller gaps or similar
+tip values cannot select a multiplier space. The four raw files
+`B3_E4_F03_C1_MATERIAL_LINE_RATIO_{1_TO_4,1_TO_2,2_TO_1,4_TO_1}_LOADED_DEV_V1.json`
+have respective SHA256
+`a7a3c77b25325dd6bddb4a4925e6494b2721e2403044a8daa55e503a20a45007`,
+`0121198729c6dbde64b7f25c458f028e3a44938ff7417c1ca4bc527b0a60025f`,
+`32db43ec5e61a6f3b59626f33e9bf7aa49d22312c77157ca02630a1092c7af47`,
+`b44d41bdb0e3c500771df4e76385bab48e2da487bf6911fe687d56a9ce5f2a9c`;
+runner SHA256 is
+`b0a62cb13f5f5a1563fa7afdabd593059a0c692ed679e3fd4ac849e77e5abff8`.
+
+**Fixed-x8 resolution discriminator (prospective):** Hold x8/y4,
+B3-14, physical geometry, supports, section, and terminal Mx/Fz
+loads fixed. Compare only P0 m4 and m8 on that same primal. If m4
+retains the large torque orientation-gap RMS while m8 removes it,
+weak multiplier resolution is the immediate cause. If both are
+small, B3 bond-half-cell resolution accounts for the earlier B3-12
+contrast. If both are large, return to the continuous trace/beam
+kinematics. Compare physical work, global balance, and actual mixed
+operator behavior before any production policy decision. This remains
+within the existing `1900`-row and `120 s` diagnostic limits.
