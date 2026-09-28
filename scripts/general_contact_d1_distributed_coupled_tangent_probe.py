@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import argparse
 import json
 from pathlib import Path
-import sys
 import time
 
 import numpy as np
@@ -32,12 +32,14 @@ def _assemble(model, displacement, states, *, tangent):
 
 
 def main(reference_path: Path, output_path: Path,
-         nodes: tuple[int, int] = (20, 45)) -> None:
+         nodes: tuple[int, int] = (20, 45),
+         axes: tuple[str, ...] = ("ux", "uz")) -> None:
     if output_path.exists():
         raise FileExistsError(output_path)
     started = time.perf_counter()
     report = {"reference": str(reference_path),
-              "candidate": "distributed_24q4_coupled_tangent_dev"}
+              "candidate": "distributed_24q4_coupled_tangent_dev",
+              "axes": list(axes)}
     try:
         saved = json.loads(reference_path.read_text(encoding="utf-8"))
         if (saved["status"], saved["columns"], saved["load_profile"],
@@ -71,8 +73,8 @@ def main(reference_path: Path, output_path: Path,
             direction_reduced = np.zeros(transform.shape[1])
             for node in nodes:
                 dofs = model.mesh.dof_manager.get_node_dofs(node)
-                direction_reduced[index[int(dofs[0])]] = 0.5
-                direction_reduced[index[int(dofs[2])]] = 0.5
+                for axis in axes:
+                    direction_reduced[index[int(dofs[0 if axis == "ux" else 2])]] = 0.5
             direction = np.asarray(transform@direction_reduced).reshape(-1)
             source, target = manager._positions(pose)
             state = manager.law.evaluate(source, target, multipliers)
@@ -170,10 +172,11 @@ def main(reference_path: Path, output_path: Path,
 
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (3, 6) or (len(sys.argv) == 6
-                                     and sys.argv[3] != "--nodes"):
-        raise SystemExit(
-            "usage: coupled_tangent_probe.py REF OUTPUT [--nodes NODE1 NODE2]")
-    selected = ((int(sys.argv[4]), int(sys.argv[5]))
-                if len(sys.argv) == 6 else (20, 45))
-    main(Path(sys.argv[1]), Path(sys.argv[2]), nodes=selected)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("reference", type=Path)
+    parser.add_argument("output", type=Path)
+    parser.add_argument("--nodes", type=int, nargs=2, default=(20, 45))
+    parser.add_argument("--axes", choices=("ux", "uz", "both"), default="both")
+    args = parser.parse_args()
+    selected_axes = ("ux", "uz") if args.axes == "both" else (args.axes,)
+    main(args.reference, args.output, nodes=tuple(args.nodes), axes=selected_axes)

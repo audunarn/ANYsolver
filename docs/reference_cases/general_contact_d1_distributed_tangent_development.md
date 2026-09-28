@@ -86,3 +86,30 @@ side, a deformable target's structural pullback or general target motion.
 Independent read-only review checked target-coordinate indexing, the
 one-sided quotient sign, all 48 pair signatures and the pressure-mode changes;
 it found no narrow code or sign issue in this development result.
+
+## Direction selection at the accepted fixed-target pose
+
+The coupled development probe now permits separate `ux` and `uz` source
+directions without changing the historical registered probe result. At the
+saved full-load pose, a combined direction at source nodes 7/32 remained
+smooth but had zero mapped contact action and was inconclusive for contact
+([raw](../../reports/general_contact_d1_distributed_tangent_nodes7_32_dev_20260928.json)).
+A combined direction at active nodes 23/48 passed the selected smooth
+derivative check with mapped contact action 78.8628 N/m and relative errors
+2.88e−10 and 7.29e−11
+([raw](../../reports/general_contact_d1_distributed_tangent_nodes23_48_dev_20260928.json)).
+
+At the originally registered active nodes 18/43, `uz` alone reproduced a
+78.8628 N/m mapped action and errors 2.88e−10 and 7.20e−11
+([raw](../../reports/general_contact_d1_distributed_tangent_uz_nodes18_43_dev_20260928.json)).
+`ux` alone remained smooth but its mapped contact action was only about
+2–4e−11 N/m, below the 1e−6 N/m meaningful-action floor
+([raw](../../reports/general_contact_d1_distributed_tangent_ux_nodes18_43_dev_20260928.json)).
+An `ux` direction at the active edge nodes 17/42 was similarly action-free
+([raw](../../reports/general_contact_d1_distributed_tangent_ux_nodes17_42_dev_20260928.json)).
+Those relative contact errors are cancellation dominated and are not tangent
+failures. The planar near-uniform gap and fixed target make this pose a poor
+discriminator for tangential geometry derivatives. A future complete-tangent
+gate needs a separate admitted pose with finite overlap-gradient/contact
+action or a declared one-sided geometry feature. No additional direction on
+this pose is automatically warranted.
