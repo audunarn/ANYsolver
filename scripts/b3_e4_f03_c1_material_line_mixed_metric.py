@@ -44,7 +44,8 @@ def _channel(metric: np.ndarray, axis: int, count: int) -> np.ndarray:
     return metric[np.ix_(ids, ids)]
 
 
-def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False) -> dict:
+def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
+             trace_only: bool = False) -> dict:
     if shell_cells not in BEAM_HALVES or kind not in KINDS:
         raise ValueError("registered 1:1 material-line fixture required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
@@ -143,8 +144,7 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False)
         raise ArithmeticError("line rows unexpectedly act on shell drilling")
     C = rows[:, free]
     R = linalg.block_diag(R_primal, R_line)
-    A = np.block([[K, C.T], [C, np.zeros((len(C), len(C)))]])
-    if len(A) > MAX_ROWS or monotonic() > deadline:
+    if len(K)+len(C) > MAX_ROWS or monotonic() > deadline:
         raise TimeoutError("bounded native KKT resource limit reached")
     primal_chol = linalg.cholesky(R_primal, lower=True, check_finite=True)
     line_chol = linalg.cholesky(R_line, lower=True, check_finite=True)
@@ -154,27 +154,58 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False)
     row_rank = int(np.linalg.matrix_rank(normed_C))
     if row_rank != len(C):
         raise ArithmeticError("normed material-line rows lost rank")
-    shell_n = len(shell_active)
-    beam_n = len(beam_free)
-    beam_resultant = R_resultant[np.ix_(beam_free, beam_free)]
-    pieces = {"C": C, "blocks": [
-        ("shell_physical", slice(0, shell_n), shell_physical_active),
-        ("shell_drilling_chart", slice(0, shell_n), shell_chart_active),
-        ("beam_kinematic", slice(shell_n, shell_n+beam_n),
-         R_beam[np.ix_(beam_free, beam_free)]-beam_resultant),
-        ("beam_complementary", slice(shell_n, shell_n+beam_n),
-         beam_resultant),
-        ("line_dual", slice(shell_n+beam_n, None), R_line),
-    ]}
-    report = _case(A, R, pieces, len(C), deadline)
+    if trace_only:
+        u, singular, vh = linalg.svd(normed_C, full_matrices=False,
+                                    check_finite=True)
+        weak_dual = linalg.solve_triangular(
+            line_chol.T, u[:, -1], lower=False, check_finite=True)
+        if kind == "piecewise_constant":
+            channels = [np.arange(axis, len(C), 6) for axis in range(6)]
+        else:
+            n_p0 = len(p0_masses)
+            channels = [np.arange(axis*n_p0, (axis+1)*n_p0)
+                        for axis in range(5)] + [np.arange(5*n_p0, len(C))]
+        shares = {name: float(weak_dual[ids] @
+                              R_line[np.ix_(ids, ids)] @ weak_dual[ids])
+                  for name, ids in zip(("fx", "fy", "fz", "mx", "my", "mz"),
+                                       channels)}
+        if abs(sum(shares.values())-1.) > 1e-8:
+            raise ArithmeticError("trace channel metric share changed")
+        report = {
+            "rows": len(K)+len(C), "constraint_rows": len(C),
+            "beta_min": float(singular[-1]),
+            "operator_max": float(singular[0]),
+            "normed_condition": float(singular[0]/singular[-1]),
+            "trace_channel_metric_share": shares,
+            "left_right_svd_defect": float(np.linalg.norm(
+                normed_C@vh[-1]-singular[-1]*u[:, -1])),
+            "dual_metric_norm_sq": float(weak_dual@R_line@weak_dual),
+        }
+    else:
+        A = np.block([[K, C.T], [C, np.zeros((len(C), len(C)))]])
+        shell_n = len(shell_active)
+        beam_n = len(beam_free)
+        beam_resultant = R_resultant[np.ix_(beam_free, beam_free)]
+        pieces = {"C": C, "blocks": [
+            (("shell_reduced_full_tangent" if exact_drill_quotient
+              else "shell_physical"), slice(0, shell_n), shell_physical_active),
+            ("shell_drilling_chart", slice(0, shell_n), shell_chart_active),
+            ("beam_kinematic", slice(shell_n, shell_n+beam_n),
+             R_beam[np.ix_(beam_free, beam_free)]-beam_resultant),
+            ("beam_complementary", slice(shell_n, shell_n+beam_n),
+             beam_resultant),
+            ("line_dual", slice(shell_n+beam_n, None), R_line),
+        ]}
+        report = _case(A, R, pieces, len(C), deadline)
     if monotonic() > deadline:
         raise TimeoutError("bounded native mixed metric deadline")
     return {
         "classification": "private material-line native retained KKT metric",
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
-        "decision": "three-level mixed behavior only; no uniform stability or multiplier selection",
+        "decision": "finite-level trace or mixed behavior only; no uniform stability or multiplier selection",
         "geometry": f"C1 Q4 x{shell_cells}/y4; B3-{beam_halves}; 1:1 bond",
         "space_kind": kind,
+        "trace_only": trace_only,
         "representation": ("exact_drilling_quotient" if exact_drill_quotient
                            else "full_shell_chart"),
         "drilling_quotient_check": drill_check,
@@ -205,13 +236,15 @@ def main() -> None:
     parser.add_argument("--shell-cells", type=int, required=True)
     parser.add_argument("--space-kind", choices=KINDS, required=True)
     parser.add_argument("--exact-drill-quotient", action="store_true")
+    parser.add_argument("--trace-only", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     with threadpool_limits(limits=1):
         result = evaluate(args.shell_cells, args.space_kind,
-                          exact_drill_quotient=args.exact_drill_quotient)
+                          exact_drill_quotient=args.exact_drill_quotient,
+                          trace_only=args.trace_only)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n")
     print(json.dumps({"rows": result["report"]["rows"],

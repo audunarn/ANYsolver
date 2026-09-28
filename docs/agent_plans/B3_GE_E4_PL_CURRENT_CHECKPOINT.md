@@ -31,7 +31,10 @@ and terminal load distributions differ. A three-level native mixed
 metric initially falls at x8 in an auxiliary drilling-chart mode;
 exact elimination of that chart gives nearly constant minimum values
 of `0.01502–0.01514`, dominated by beam kinematics, and does not
-separate P0 from selective P1/dual at x8. **Remaining uncertainty:**
+separate P0 from selective P1/dual at x8. A separate normalized trace
+screen falls `1.718→0.665→0.286` across x2/x4/x8; the x8 least
+trace mode is 99.95% vertical-force channel and unaffected by yaw
+choice. **Remaining uncertainty:**
 Physical torque/shear fidelity of the declared pose, growing-space
 trace stability and locking, and the allocation of shell/section versus
 connection error. **Next discriminator:** Compare work-conjugate
@@ -11804,6 +11807,13 @@ result SHA256 identities are:
 - x8 P1 yaw `b6a2b814295e182ad29cc54ed553ba619c86aa7430a142dde1d3a7f10e7f1c39`;
 - x8 dual yaw `ebe6685d50f786a3e0fa9dcd4a46912dcbe7b586a05b0c4b73e59e9b7037de72`.
 
+Independent mechanics review found no result-affecting algebra or
+unit defect. In these saved quotient files, `shell_physical` denotes
+the *reduced full shell tangent* and can include drilling
+stabilization; it is not a decomposition of original physical-only
+E4 energy. Future runner output labels it accordingly. The mixed
+minimum and beam-dominance inference are unchanged.
+
 This distinguishes the earlier falling auxiliary chart mode from a
 physical quotient mode on these three levels. The smallest quotient
 mode is beam-dominated and therefore **does not rank the interface
@@ -11813,3 +11823,44 @@ at registered ratios, finite-pose rank, and physically matched
 torque/shear transfer remain necessary. No multiplier space or
 connection law is selected; F03/G0B remain open, G1 barred, and formal
 F03 authority unconsumed.
+
+**Next trace discriminator (prospective):** The quotient KKT's least
+mode is beam-dominated and insensitive to yaw choice. To distinguish
+an interface trace weakness hidden above that least mode, compute
+the smallest singular value of the *same* normalized trace operator
+`R_line^-1/2 C R_primal^-1/2` without another full KKT factorization.
+Use P0 at matched x2/x4/x8 and both selective yaw spaces at x8;
+report channel content of the least trace mode. A decreasing trace
+minimum or yaw-dominated weak mode directs work to the space and
+registered-ratio check. A bounded trend permits physical torque/shear
+and locking to take priority. Neither outcome selects a space or
+replaces the frozen stability criterion.
+
+**Normalized trace outcome:** With the same exact-drill quotient
+primal metric and physical H^-1/2 line-dual metric, the P0 trace
+minimum falls from `1.71790250` (x2) to `0.66531669` (x4) to
+`0.28623707` (x8). Its least-mode normalized dual weight shifts
+from `71.40%` to `99.35%` to `99.9459%` in vertical-force `fz`.
+At x8, selective P1 and dual yaw give `0.28623707` to stored
+precision and the same `fz` share. All five screens retain full
+normalized row rank, unit dual metric norm, SVD residual defects
+below `4e-14`, and per-run row/time limits. Current runner SHA256
+`3ab792b5121f79d6fea1d62f69d3fc9f32e70ee781b97728bed2f6f8380ced1a`;
+result SHA256 identities are:
+
+- x2 P0 `12e1bddee563c24066201c03a2d6a727e5e6acfa077988647cb5a1ac64d5802c`;
+- x4 P0 `d29acf8610e6bcc0ff4c0723aebc5640a27ab97f9b0976836cebf410d89dc763`;
+- x8 P0 `db7283e126d79ba7d98fe6879da8867a5b83099ec14f1d0cf3b89a6b8d07d515`;
+- x8 P1 yaw `b946585ebb2583ab1af13f144d4c994ad975bf2968911585d2ffbd1179785135`;
+- x8 dual yaw `368ce9912fdf4be89f7a78ead4b1b38e270eb58f2b97b5d42b6e299b58d70d5a`.
+
+The finite sequence identifies a vertical-force trace weakness under
+this diagnostic norm, not a yaw-space distinction. It does not by
+itself prove asymptotic inf-sup failure or locking: the auxiliary
+beam/primal and dual norms, physical load response, and registered
+ratios still need joint interpretation. Do not extend this into an
+unbounded spectral sweep. The next actionable comparison is the
+physically matched torque/shear transfer and vertical-response
+evidence already identified; only a result that distinguishes
+connection, shell/beam idealization, or resolution justifies a new
+external run. F03/G0B remain open, G1 barred.
