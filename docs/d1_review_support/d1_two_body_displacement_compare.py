@@ -91,6 +91,12 @@ record = {
     "complete_elapsed_seconds": time.perf_counter()-started,
     "oracle_active_modes": int(np.count_nonzero(oracle["pressure"] > 0)),
     "production_active_modes": int(np.count_nonzero(production_pressure > 0)),
+    "minimum_independent_gap_m": float(contact["minimum_gap"]),
+    "gap_tolerance_met": bool(contact["gap_tolerance_met"]),
+    "source_target_vertical_force_balance_n": float(
+        contact["integration_force"][2]+contact["target_force"][2]),
+    "control_uz_m": float(production.displacements[
+        model.mesh.dof_manager.get_node_dofs(control.node_id)[2]]),
     "oracle_integrated_force_n": oracle["integrated_force"],
     "production_integrated_force_n": float(contact["integration_force"][2]),
     "integrated_force_relative_error": float(
