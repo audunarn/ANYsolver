@@ -414,6 +414,48 @@ def test_s3_descriptor_active_contact_restart_matches_fresh_model():
                                    rtol=1e-10, atol=1e-10)
 
 
+def test_s3_descriptor_cutback_retries_from_committed_state():
+    controls = ContactTransientSolverControls(allow_s3_descriptor_dev=True)
+    model, contact, velocity = _guided_s3_descriptor_impact()
+    config = TransientConfig(.012, .024, initial_velocity=velocity)
+    result = solve_transient_contact(
+        model, contact, config, solver_controls=controls,
+    )
+    assert result.cutbacks > 0
+    assert result.times[-1] == pytest.approx(.024)
+    assert np.all(np.diff(result.times) > 0.0)
+    assert all(state.gap_tolerance_met for state in result.contact)
+    assert max(result.equilibrium_residuals) < 1.0e-7
+    assert active_contact_manager() is None
+    mass, _ = assemble_mass_matrix(model)
+    for step in range(1, len(result.times)):
+        dt = result.times[step]-result.times[step-1]
+        velocity_defect = mass @ (
+            result.velocities[step]-result.velocities[step-1]
+            - .5*dt*(result.accelerations[step-1]+result.accelerations[step])
+        )
+        position_defect = mass @ (
+            result.displacements[step]-result.displacements[step-1]
+            - dt*result.velocities[step-1]
+            - .25*dt**2*(result.accelerations[step-1]
+                         + result.accelerations[step])
+        )
+        assert np.linalg.norm(velocity_defect) < 1.0e-10
+        assert np.linalg.norm(position_defect) < 1.0e-10
+
+    fresh_model, fresh_contact, fresh_velocity = _guided_s3_descriptor_impact()
+    repeat = solve_transient_contact(
+        fresh_model, fresh_contact,
+        TransientConfig(.012, .024, initial_velocity=fresh_velocity),
+        solver_controls=controls,
+    )
+    assert repeat.cutbacks == result.cutbacks
+    np.testing.assert_array_equal(repeat.times, result.times)
+    for name in ("displacements", "velocities", "accelerations"):
+        np.testing.assert_allclose(getattr(repeat, name), getattr(result, name),
+                                   rtol=0.0, atol=1.0e-12)
+
+
 def test_uniform_impact_matches_independent_mass_spring_solution():
     model, contact, velocity = _guided_plate()
     result = solve_transient_contact(
@@ -482,6 +524,37 @@ def test_rejected_step_leaves_model_reusable():
     )
     assert result.times[-1] == pytest.approx(0.012)
     assert result.contact[-1].active_pressure_dofs > 0
+
+
+def test_loaded_rejected_step_keeps_q4_model_and_work_reusable():
+    model, contact, velocity = _guided_plate()
+    load = _constant_q4_load()
+    with pytest.raises(RuntimeError, match="committed state retained"):
+        solve_transient_contact(
+            model, contact,
+            TransientConfig(.012, .012, initial_velocity=velocity),
+            base_load_case=load,
+            solver_controls=ContactTransientSolverControls(
+                maximum_newton_iterations=1, maximum_cutbacks=0,
+            ),
+        )
+    assert active_contact_manager() is None
+    retry = solve_transient_contact(
+        model, contact,
+        TransientConfig(.0002, .012, initial_velocity=velocity),
+        base_load_case=load,
+    )
+    fresh_model, fresh_contact, fresh_velocity = _guided_plate()
+    fresh = solve_transient_contact(
+        fresh_model, fresh_contact,
+        TransientConfig(.0002, .012, initial_velocity=fresh_velocity),
+        base_load_case=_constant_q4_load(),
+    )
+    assert retry.contact[-1].active_pressure_dofs > 0
+    for name in ("times", "displacements", "velocities", "accelerations",
+                 "external_nodal_work_j"):
+        np.testing.assert_allclose(getattr(retry, name), getattr(fresh, name),
+                                   rtol=0.0, atol=1.0e-12)
 
 
 def test_transient_config_initial_state_and_sparse_output_keep_event_checks():

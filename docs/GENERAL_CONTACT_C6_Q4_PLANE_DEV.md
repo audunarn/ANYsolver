@@ -53,7 +53,9 @@ Run `python examples/general_contact_q4_plane_impact.py` from an installed
 package or a source environment. Add `--constant-downward-load-n 0.02` to
 exercise the bounded constant-nodal-load branch.
 
-At each candidate, the coupled residual is `M a + F_structural + F_contact`.
+At each candidate, the coupled residual is
+`M a + F_structural + F_contact - F_nodal`, with `F_nodal = 0` in the
+historical unloaded case.
 Its tangent includes the Newmark mass term and the structural/contact tangent.
 Material trials originate from the last accepted step and are committed only
 after equilibrium and gap checks. The event check minimizes each physical Q4
@@ -82,8 +84,11 @@ The full file also passed 19/19 after it (21.46 s, source environment).
 Independent read-only review found no concrete defect in load sign,
 projection, initial/resumed balance, restart binding or rollback ownership.
 The tests directly check initial/resumed acceleration and changed load name
-and vector. A nontrivial reduced projection and a loaded rejected step remain
-untested; neither is claimed as separately qualified here.
+and vector. A subsequent focused check forced a loaded Q4 trial to fail under
+one Newton iteration and no cutbacks, then reused the same model and load for
+a successful solve; displacement, velocity, acceleration and cumulative work
+matched a fresh model to 1e−12. A nontrivial reduced projection remains
+untested. This check is local development evidence, not C6 qualification.
 
 General prescribed or varying loads, moving tools, free rigid bodies, descriptor dynamics in this Q4 branch,
 beam impact, general finite sliding, plasticity, friction, damping, general

@@ -51,7 +51,12 @@ improvement and a local energy check, a tilted facet with physical offset
 torque, certified nine-dimensional algebraic mass-null basis, final coupled
 and algebraic residual, an independent-step smooth-branch rate check with
 physical Newmark mass-action invariance, opt-in and initial-state rejection,
-and active-contact restart. An early tilted case exceeded its declared 1 mm physical-gap budget;
+active-contact restart, and a large-step run that completes after two cutbacks.
+The latter checks every accepted step's gap, equilibrium and physical Newmark
+kinematics, then compares a fresh-model repeat of the cutback path. The full
+transient file passed 20/20 after this check. It does not establish accurate
+event timing at the large step or correct one-sided algebraic rates exactly at
+activation and release. An early tilted case exceeded its declared 1 mm physical-gap budget;
 the failure and a bounded diagnostic with a larger budget are retained. A
 separate three-time-step DAE probe found that uncorrected algebraic velocity
 and acceleration defects did not improve with time refinement. The current
