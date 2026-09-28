@@ -6,6 +6,7 @@ see docs/S3_ANGLE_EXTENSION.md for the full campaign and its evidence.
 
 from __future__ import annotations
 
+import math
 import sys
 from pathlib import Path
 
@@ -119,3 +120,70 @@ def test_direct_modal_matches_public_solver_route_at_low_angle(layout: str) -> N
     public = campaign.run_plate_modal(mesh, 0.01, public_route=True)
     assert public["solver_status"] == "ok"
     np.testing.assert_allclose(direct["frequencies_hz"], public["frequencies_hz"], rtol=1.0e-8)
+
+
+def test_corotational_restart_is_bitwise_equivalent_on_a_15_degree_mesh() -> None:
+    """Restart/identity: V2D state carries no geometry-admission field, so a
+    reduced-angle model must checkpoint and resume exactly like any other."""
+
+    from anysolver import FEModel, create_shell_element
+    from anysolver.boundary import FixedSupport
+    from anysolver.e4_pl_s3_v2d_state import canonical_json_bytes
+    from anysolver.nonlinear_static import solve_static_nonlinear
+
+    # Two 15/75/90 triangles: restart checkpoint normalization currently runs
+    # a model-wide lifecycle guard per JSON node (quadratic in model size, see
+    # docs/S3_ANGLE_EXTENSION.md section 3), so keep this model minimal.
+    mesh = campaign.s3_family_mesh(
+        "right", 15.0, 0, target=(1.0, math.tan(math.radians(15.0))), base_count=1, narrow="y"
+    )
+    assert campaign.mesh_statistics(mesh)["s3_min_angle_deg"] == pytest.approx(15.0, abs=1e-9)
+
+    def model_and_load():
+        model = FEModel("s3-angle-restart")
+        model.add_material("steel", campaign.E, 0.0, density=campaign.DENSITY)
+        for node_id, (x, y) in mesh.nodes.items():
+            model.add_node(node_id, x, y, 0.0)
+        for element_id, (_kind, nodes) in enumerate(mesh.elements, start=1):
+            model.add_element(
+                element_id,
+                create_shell_element(
+                    element_id, list(nodes), "steel", thickness=0.01, reference_normal=(0.0, 0.0, 1.0)
+                ),
+            )
+        sides = campaign._boundary_nodes(mesh)
+        model.add_boundary_condition(FixedSupport("root", sides["x0"]))
+        rigidity = campaign.E * mesh.ly * 0.01**3 / 12.0
+        load = LoadCase("tip-moment")
+        tip = sides["x1"]
+        for node_id in tip:
+            load.add_nodal_load(node_id, moments=[0.0, -0.3 * rigidity / mesh.lx / len(tip), 0.0])
+        return model, load
+
+    options = dict(kinematics="corotational", corotational_tangent="consistent", emit_restart_checkpoint=True)
+    model, load = model_and_load()
+    full = solve_static_nonlinear(model, load, num_steps=2, **options)
+    model, load = model_and_load()
+    first = solve_static_nonlinear(model, load, max_load_factor=0.5, num_steps=1, **options)
+    model, load = model_and_load()
+    resumed = solve_static_nonlinear(
+        model,
+        load,
+        max_load_factor=1.0,
+        num_steps=1,
+        restart_checkpoint=first.restart_checkpoint_bytes(),
+        kinematics="corotational",
+        corotational_tangent="consistent",
+        emit_restart_checkpoint=True,
+    )
+    assert full.status == first.status == resumed.status == "completed"
+    np.testing.assert_array_equal(full.displacements, resumed.displacements)
+    for element_id in full.element_states:
+        assert canonical_json_bytes(full.element_states[element_id]) == canonical_json_bytes(
+            resumed.element_states[element_id]
+        )
+    # Physical sanity on this one-cell strip: tip lifts, within 10% of the arc.
+    dm = model.mesh.dof_manager
+    tip = campaign._boundary_nodes(mesh)["x1"]
+    w = float(np.mean([full.displacements[dm.get_node_dofs(n)[2]] for n in tip]))
+    assert w == pytest.approx(mesh.lx / 0.3 * (1.0 - math.cos(0.3)), rel=0.1)
