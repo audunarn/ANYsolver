@@ -37,8 +37,8 @@ LOADS = ("shell_fy", "beam_tip_mx")
 
 
 def _assembled_macro(segments: int) -> Macroelement:
-    if type(segments) is not int or segments not in (2, 4):
-        raise ValueError("bounded 2- or 4-edge L1 comparison required")
+    if type(segments) is not int or segments not in (2, 4, 8):
+        raise ValueError("bounded 2-, 4-, or 8-edge L1 comparison required")
     fixture = build(2*segments, z_offset=.0675, assemble=True)
     cuts = fixture.abscissae[segments:].copy()
     reference = np.column_stack((cuts, np.zeros(segments+1),
@@ -58,11 +58,15 @@ def _assembled_macro(segments: int) -> Macroelement:
     return Macroelement(fixture, blocks, cuts, stations, weights)
 
 
-def _supported_problem(macro: Macroelement):
+def _supported_problem(macro: Macroelement, *, globally_refined: bool = False):
     fixture = macro.fixture
     cuts = macro.cuts
-    xs = np.r_[(0., .25), cuts]
-    ys = np.array((-.1, 0., .1))
+    if globally_refined:
+        xs = np.linspace(0., 1., 2*macro.segments+1)
+        ys = np.linspace(-.1, .1, macro.segments+1)
+    else:
+        xs = np.r_[(0., .25), cuts]
+        ys = np.array((-.1, 0., .1))
     shell, physical_shell = raw_e4_tangent(xs, ys, thickness=.035)
     ns, nb = shell.shape[0], fixture.context.count
     nondrill = np.array([j for j in range(ns) if j % 6 != 5], dtype=int)
@@ -73,9 +77,11 @@ def _supported_problem(macro: Macroelement):
     if not np.array_equal(fixture.abscissae[macro.segments:], cuts):
         raise AssertionError("fixed shell and native material cuts differ")
     line_x = np.searchsorted(xs, cuts)
+    line_y = int(np.argmin(np.abs(ys)))
     line_shell = np.concatenate([
-        6*(len(xs)+int(j))+np.arange(6) for j in line_x])
-    if not np.array_equal(xs[line_x], cuts):
+        6*(line_y*len(xs)+int(j))+np.arange(6) for j in line_x])
+    if (not np.array_equal(xs[line_x], cuts) or
+            abs(ys[line_y]) > 1e-15):
         raise AssertionError("Q4 centerline node identity differs")
     shell_free = np.array([j for j in range(ns) if (j//6) % len(xs) != 0])
     drill = np.array([j for j in shell_free if j % 6 == 5], dtype=int)
@@ -105,7 +111,7 @@ def _supported_problem(macro: Macroelement):
     # Concentrated but physical work-conjugate actions: shell centerline Fy
     # at x=1 and native B3 tip nodal Mx. These are identical at both levels.
     loads = np.zeros((ns+nb, 2))
-    shell_tip_y = 6*(len(xs)+len(xs)-1)+1
+    shell_tip_y = 6*(line_y*len(xs)+len(xs)-1)+1
     native_tip_mx = ns+6*(2*macro.segments)+3
     loads[shell_tip_y, 0] = 1000.
     loads[native_tip_mx, 1] = 100.
@@ -118,6 +124,7 @@ def _supported_problem(macro: Macroelement):
         "samples": sample_spaces, "loads": loads,
         "shell_tip_y": shell_tip_y, "native_tip_mx": native_tip_mx,
         "completion_non_drill_relative": nondrill_change,
+        "xs": xs, "ys": ys,
     }
 
 
@@ -278,9 +285,9 @@ def _solve_variant(macro, problem, name: str, *,
             "cases": cases}
 
 
-def evaluate_level(segments: int) -> dict:
+def evaluate_level(segments: int, *, globally_refined: bool = False) -> dict:
     macro = _assembled_macro(segments)
-    problem = _supported_problem(macro)
+    problem = _supported_problem(macro, globally_refined=globally_refined)
     candidates = {}
     for name in SPACES:
         actual = _solve_variant(macro, problem, name, variant="actual_PL")
@@ -303,8 +310,10 @@ def evaluate_level(segments: int) -> dict:
                             "drill_coordinate_freeze_work_change_relative":
                             drill_change}
     return {"segments": segments, "line_interval_m": macro.cuts[[0, -1]].tolist(),
-            "shell_grid_x_m": np.r_[(0., .25), macro.cuts].tolist(),
-            "shell_grid_y_m": [-.1, 0., .1],
+            "grid_policy": ("whole_shell_and_beam" if globally_refined
+                            else "bond_shell_and_whole_beam"),
+            "shell_grid_x_m": problem["xs"].tolist(),
+            "shell_grid_y_m": problem["ys"].tolist(),
             "native_half_cells": 2*segments,
             "shell_thickness_m": .035, "beam_axis_z_m": .0675,
             "line_section_offset_z_m": -.05,
