@@ -23,6 +23,15 @@ slice; do not edit or run it by default.
 - The separate physical B2 profile batches 1/10/100 cases with selected
   recovery and eligible factorization reuse. Physical range, attachments,
   mass/prestress, and scale remain open; historical B2 is unchanged.
+- The experimental multi-Q4/B2 point owner now validates gaps and affine
+  equilibrium without a fixed 1 N/1 m floor. Tiny force/moment tests reject
+  a zero backend response; a 1000 N plus 1e-12 N case reports insufficient
+  mixed-load resolution. Independent review confirmed the prior false-pass
+  was closed and noted conservative refusal of some accurately solvable
+  mixed-scale cases. Source `09adb780`, installed wheel SHA-256
+  `a42fe0b28cc3d259ab5201660b2a03e6e2aec2491714dc516c26dee3d5b7a132`;
+  14/14 installed B2 regressions passed in
+  `.qualification/b3-ge-e4-pl/r7-b2-panel-residual-installed-dev-20260928-v1/`.
 - ANYfem has a separate experimental save/reopen consumer. The installed
   solver/consumer milestone and review are in
   `.qualification/b3-ge-e4-pl/r7-combined-integration-dev-20260928-v1/`.
