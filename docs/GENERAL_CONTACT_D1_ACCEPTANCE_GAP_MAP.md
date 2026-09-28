@@ -1,5 +1,18 @@
 # D1 shell-static acceptance gap map
 
+**Clipping ownership follow-up:** Smooth artificial S3 shared-edge ties are now
+tested on an effectively two-face active patch inside a three-face target.
+Independent review led to a guard against three positively overlapped target
+faces and a common reference-ownership check in the zero-area path. The focused
+suite and deformable-target cycle pass; local multi-active-face derivatives,
+physical features and a complete clipping-transition qualification remain open.
+
+**Pressure-only enrichment follow-up:** A reviewer-proposed fixed-structure
+64×8 x and 32×16 rim-knot y enrichment was run under the 180-second/1-GB cap.
+The independent scalar oracle's projected active set did not settle for either
+space after exact zero-support removal; no sensitivity value or stability
+verdict follows. [Probe, failures and decision](d1_review_support/d1_pressure_only_enrichment_a8ade309_20260928.md).
+
 **Candidate basis:** fine nodal Q1 pressure, batched Jet2 Q4/S3 derivatives and explicit monolithic active-set enforcement on the ordinary nonlinear static route. This is a development candidate, not an accepted profile. The nested supported-pressure Schur route remains available for comparison. The planar nonmatching Q4/S3 press, slide, opening and recontact scope is unchanged. The [capability ledger](GENERAL_CONTACT_CAPABILITIES.md) remains the status authority; [prior decisions and failures](GENERAL_CONTACT_RESTART_ARCHIVE_20260928.md) remain preserved.
 
 | Required D1 claim | Reusable evidence | Precise missing assessment |

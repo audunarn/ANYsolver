@@ -8,10 +8,12 @@ from decimal import Decimal
 from pathlib import Path
 
 from scripts.general_contact_d1_coupled_refinement import build_case
+from anysolver import create_shell_element
 from anysolver.general_contact.core import ContactSolverSettings
 from anysolver.general_contact.overlap import PlanarFace
 from anysolver.general_contact.q4_s3_overlap_derivatives import UnsupportedQ4S3Branch
 from anysolver.general_contact.s3_patch_augmented import (
+    MovingS3PatchProjectedNormal,
     _q4_s3_pair_value_rtol, _q4_s3_pair_values_agree,
     _q4_s3_gap_operand_roundoff,
     _touching_shared_target_edge,
@@ -334,6 +336,127 @@ def test_opt_in_exact_shared_edge_limit_preserves_exact_state_and_wrench():
     warped = target.copy()
     warped[2, 2] += 1.0e-4
     assert not owner.law._only_artificial_shared_edge_ties(source, warped)
+
+
+def test_three_face_smooth_patch_owns_existing_internal_tie():
+    model, definition, settings, _ = build_case(
+        4, 2, True, gap_certificate="projected_matching",
+        gap_tolerance=5.0e-5, normal_approach=0.01504,
+    )
+    # Extend the target along its left rim. The added face is adjacent to
+    # the original internal edge's owner, but does not touch the source.
+    new_node = max(model.mesh.nodes) + 1
+    new_face = max(model.mesh.elements) + 1
+    model.add_node(new_node, -1.5, 0.5, 0.0)
+    old_target = definition.surfaces[1].element_ids
+    first_face = model.mesh.get_element(old_target[0])
+    left_bottom, left_top = first_face.node_ids[0], first_face.node_ids[2]
+    model.add_element(new_face, create_shell_element(
+        new_face, (left_top, new_node, left_bottom), "elastic",
+        thickness=0.05, formulation="e4-pl-s3-v2d",
+        reference_normal=(0.0, 0.0, 1.0), reference_surface_offset=0.01,
+    ))
+    definition = replace(definition, surfaces=(
+        definition.surfaces[0],
+        replace(definition.surfaces[1], element_ids=(*old_target, new_face)),
+    ))
+    settings = replace(
+        settings, q4_s3_shared_edge_tie_step_m=3.0e-8,
+        q4_s3_shared_edge_tie_direction=(1.0, 0.0, 0.0),
+        q4_s3_shared_edge_tie_relative_tolerance=1.0e-6,
+    )
+    owner = GeneralS3PatchManager(model, definition, settings)
+    law = owner.law
+    source = law.geometry.reference_source.copy()
+    source[:, 0] += 0.05
+    source[:, 2] -= 0.01504
+    target = law.geometry.reference_target
+    multipliers = np.zeros(len(law.geometry.source_node_ids))
+    assert len(law.target_face_indices) == 3
+    assert law._only_artificial_shared_edge_ties(source, target)
+    work = law.work(source, target, multipliers, tangent=True)
+    assert work.tie_resolution_relative_error < 1.0e-6
+    for sign in (-1, 1):
+        smooth_source = source.copy()
+        smooth_source[:, 0] += sign*1.5e-8
+        neighbor = law.work(smooth_source, target, multipliers, tangent=True)
+        assert np.linalg.norm(work.residual-neighbor.residual)/np.linalg.norm(work.residual) < 1.0e-6
+        assert np.linalg.norm(work.tangent-neighbor.tangent)/np.linalg.norm(work.tangent) < 1.0e-6
+    plus = source.copy()
+    minus = source.copy()
+    plus[:, 2] += 1.0e-6
+    minus[:, 2] -= 1.0e-6
+    derivative = (law.work(plus, target, multipliers, tangent=False).residual
+                  - law.work(minus, target, multipliers, tangent=False).residual)/2.0e-6
+    direction = np.zeros_like(np.vstack((source, target)))
+    direction[:len(source), 2] = 1.0
+    action = work.tangent @ direction.ravel()
+    assert np.linalg.norm(derivative-action)/max(1.0, np.linalg.norm(action)) < 1.0e-5
+    forces = work.residual.reshape(-1, 3)
+    points = np.vstack((source, target))
+    assert np.linalg.norm(forces.sum(axis=0)) < 1.0e-6
+    assert np.linalg.norm(np.cross(points, forces).sum(axis=0)) < 1.0e-6
+    creased_reference = law.reference_target.copy()
+    creased_reference[2, 2] += 1.0e-4
+    law.reference_target = creased_reference
+    assert not law._only_artificial_shared_edge_ties(source, target)
+    with pytest.raises(UnsupportedQ4S3Branch):
+        law.work(source, target, multipliers, tangent=True)
+
+
+def _three_face_tie_geometry():
+    law = object.__new__(MovingS3PatchProjectedNormal)
+    law.reference_target = np.array((
+        (-0.5, 0.0, 0.0), (0.5, 0.0, 0.0),
+        (0.5, 1.0, 0.0), (-0.5, 1.0, 0.0),
+        (-1.5, 0.5, 0.0),
+    ))
+    law.target_face_indices = (
+        np.array((0, 1, 3)), np.array((1, 2, 3)),
+        np.array((3, 4, 0)),
+    )
+    law.source_face_indices = (np.arange(4),)
+    law.shared_edge_tie = (3.0e-8, np.array((1.0, 0.0, 0.0)), 1.0e-6)
+    return law
+
+
+def test_three_face_tie_rejects_rim_crease_and_ambiguous_topology():
+    law = _three_face_tie_geometry()
+    smooth = law._reference_smooth_target_edges()
+    assert (1, (1, 3)) in smooth[0]
+    assert (2, (0, 3)) in smooth[0]
+    rim_source = np.array(((0.5, 0.25, 0.1), (1.0, 0.25, 0.1),
+                           (1.0, 0.75, 0.1), (0.5, 0.75, 0.1)))
+    assert not law._only_artificial_shared_edge_ties(
+        rim_source, law.reference_target)
+
+    left_source = np.array(((-0.5, 0.25, 0.1), (-0.2, 0.25, 0.1),
+                            (-0.2, 0.75, 0.1), (-0.5, 0.75, 0.1)))
+    assert law._only_artificial_shared_edge_ties(left_source,
+                                                  law.reference_target)
+    # With three overlapped target faces, the full-patch derivative norm does
+    # not certify the local edge; this branch must stay unavailable.
+    busy_source = np.array(((-0.6, 0.25, 0.1), (0.5, 0.25, 0.1),
+                            (0.5, 0.75, 0.1), (-0.6, 0.75, 0.1)))
+    assert not law._only_artificial_shared_edge_ties(
+        busy_source, law.reference_target)
+    creased = law.reference_target.copy()
+    creased[4, 2] += 1.0e-4
+    assert not law._only_artificial_shared_edge_ties(left_source, creased)
+    law.reference_target = creased
+    assert (2, (0, 3)) not in law._reference_smooth_target_edges()[0]
+
+    law = _three_face_tie_geometry()
+    law.target_face_indices += (np.array((3, 1, 0)),)
+    assert law._reference_smooth_target_edges() is None
+    law = _three_face_tie_geometry()
+    law.reference_target = np.vstack((law.reference_target, (-2.0, 0.0, 0.0)))
+    law.target_face_indices += (np.array((0, 3, 5)),)
+    assert law._reference_smooth_target_edges() is None
+    law = _three_face_tie_geometry()
+    law.reference_target = np.vstack((law.reference_target, (-0.5, 0.0, 0.0)))
+    law.target_face_indices += (np.array((5, 2, 4)),)
+    assert law._reference_smooth_target_edges() is None
 
 
 @pytest.mark.parametrize("fixture_name, unresolved", [

@@ -628,54 +628,86 @@ class MovingS3PatchProjectedNormal:
                                                int(pair_match.group(1))
                                                if pair_match is not None else None))
 
-    def _d1_reference_diagonal(self):
-        """Return the internal edge of the smooth two-S3 reference quad."""
-        # This development route is tied to the D1 two-face target topology.
-        # A larger S3 mesh needs explicit physical-feature ownership before
-        # its interior edges can share this generalized projection branch.
+    def _reference_smooth_target_edges(self):
+        """Find manifold S3 edges with a smooth, convex local reference patch.
+
+        Only a shared material edge can own an artificial clipping tie. A
+        physical rim or nonconvex/creased two-face neighborhood has no
+        eligible owner. Nonmanifold or duplicate topology disables the route.
+        """
         faces = self.target_face_indices
-        if len(faces) != 2 or any(len(face) != 3 for face in faces):
+        if len(faces) < 2 or any(len(face) != 3 for face in faces):
             return None
-        first_ids, second_ids = (tuple(map(int, face)) for face in faces)
-        shared = sorted(set(first_ids).intersection(second_ids))
-        if (len(shared) != 2
-                or len(set(first_ids).union(second_ids)) != 4):
-            return None
-        first_tip = next(node for node in first_ids if node not in shared)
-        second_tip = next(node for node in second_ids if node not in shared)
         reference = np.asarray(self.reference_target, dtype=float)
-        first_reference = reference[list(first_ids)]
-        second_reference = reference[list(second_ids)]
-        first_normal = np.cross(first_reference[1]-first_reference[0],
-                                first_reference[2]-first_reference[0])
-        second_normal = np.cross(second_reference[1]-second_reference[0],
-                                 second_reference[2]-second_reference[0])
-        normal_scale = np.linalg.norm(first_normal)*np.linalg.norm(second_normal)
-        if (normal_scale <= 0.0 or np.dot(first_normal, second_normal)
-                < (1.0-1.0e-10)*normal_scale):
+        if not np.all(np.isfinite(reference)):
             return None
-        quad = reference[[first_tip, shared[0], second_tip, shared[1]]]
-        edge_scale = max(np.linalg.norm(quad[(index+1) % 4]-quad[index])
-                         for index in range(4))
-        if (abs(float((second_reference[0]-first_reference[0]) @ first_normal))
-                > 1.0e-10*edge_scale*np.linalg.norm(first_normal)):
+        incidence = {}
+        distinct_faces = set()
+        for face_index, face in enumerate(faces):
+            ids = tuple(map(int, face))
+            if (len(set(ids)) != 3 or min(ids) < 0
+                    or max(ids) >= len(reference)
+                    or frozenset(ids) in distinct_faces):
+                return None
+            distinct_faces.add(frozenset(ids))
+            for index in range(3):
+                edge = tuple(sorted((ids[index], ids[(index+1) % 3])))
+                incidence.setdefault(edge, []).append(face_index)
+        if any(len(owners) > 2 for owners in incidence.values()):
             return None
-        turns = np.asarray([
-            float(first_normal @ np.cross(
-                quad[(index+1) % 4]-quad[index],
-                quad[(index+2) % 4]-quad[(index+1) % 4],
-            )) for index in range(4)
-        ])
-        turn_floor = 1.0e-10*edge_scale*edge_scale*np.linalg.norm(first_normal)
-        if not (np.all(turns > turn_floor) or np.all(turns < -turn_floor)):
+        # Coincident positions with different identities leave material-edge
+        # ownership ambiguous even when the incidence map looks manifold.
+        used = sorted({int(node) for face in faces for node in face})
+        all_edges = [np.linalg.norm(reference[a]-reference[b])
+                     for a, b in incidence]
+        coordinate_tolerance = 1.0e-10*max(all_edges)
+        if any(np.linalg.norm(reference[a]-reference[b]) <= coordinate_tolerance
+               for index, a in enumerate(used) for b in used[index+1:]):
             return None
-        return tuple(shared)
+        smooth = {index: [] for index in range(len(faces))}
+        for shared, owners in incidence.items():
+            if len(owners) != 2:
+                continue
+            first_index, second_index = owners
+            first_ids = tuple(map(int, faces[first_index]))
+            second_ids = tuple(map(int, faces[second_index]))
+            first_tip = next(node for node in first_ids if node not in shared)
+            second_tip = next(node for node in second_ids if node not in shared)
+            first_reference = reference[list(first_ids)]
+            second_reference = reference[list(second_ids)]
+            first_normal = np.cross(first_reference[1]-first_reference[0],
+                                    first_reference[2]-first_reference[0])
+            second_normal = np.cross(second_reference[1]-second_reference[0],
+                                     second_reference[2]-second_reference[0])
+            normal_scale = np.linalg.norm(first_normal)*np.linalg.norm(second_normal)
+            if (normal_scale <= 0.0 or np.dot(first_normal, second_normal)
+                    < (1.0-1.0e-10)*normal_scale):
+                continue
+            quad = reference[[first_tip, shared[0], second_tip, shared[1]]]
+            edge_scale = max(np.linalg.norm(quad[(index+1) % 4]-quad[index])
+                             for index in range(4))
+            if (edge_scale <= 0.0 or abs(float(
+                    (second_reference[0]-first_reference[0]) @ first_normal))
+                    > 1.0e-10*edge_scale*np.linalg.norm(first_normal)):
+                continue
+            turns = np.asarray([
+                float(first_normal @ np.cross(
+                    quad[(index+1) % 4]-quad[index],
+                    quad[(index+2) % 4]-quad[(index+1) % 4],
+                )) for index in range(4)
+            ])
+            turn_floor = 1.0e-10*edge_scale*edge_scale*np.linalg.norm(first_normal)
+            if not (np.all(turns > turn_floor) or np.all(turns < -turn_floor)):
+                continue
+            smooth[first_index].append((second_index, shared))
+            smooth[second_index].append((first_index, shared))
+        return smooth
 
     def near_d1_diagonal_tiny_wedge(self, current_source, current_target,
                                    pair_index):
-        """Locate one tiny smooth overlap beside the D1 internal diagonal."""
-        shared = self._d1_reference_diagonal()
-        if shared is None or self.shared_edge_tie is None:
+        """Locate one tiny smooth overlap beside an internal S3 edge."""
+        smooth = self._reference_smooth_target_edges()
+        if smooth is None or self.shared_edge_tie is None:
             return False
         face_count = len(self.target_face_indices)
         source_face, target_face = divmod(pair_index, face_count)
@@ -686,42 +718,47 @@ class MovingS3PatchProjectedNormal:
         source = np.asarray(current_source, dtype=float)
         target = np.asarray(current_target, dtype=float)
         positions = target[self.target_face_indices[target_face]]
-        other = target[self.target_face_indices[1-target_face]]
         normal = np.cross(positions[1]-positions[0],
-                          positions[2]-positions[0])
-        other_normal = np.cross(other[1]-other[0], other[2]-other[0])
-        scale = np.linalg.norm(normal)*np.linalg.norm(other_normal)
-        if (scale <= 0.0 or np.dot(normal, other_normal)
-                < (1.0-1.0e-10)*scale):
-            return False
-        edge = target[shared[1]]-target[shared[0]]
-        edge_length = np.linalg.norm(edge)
-        if (edge_length <= 0.0
-                or abs(float((other[0]-positions[0]) @ normal))
-                > 1.0e-10*edge_length*np.linalg.norm(normal)):
+                           positions[2]-positions[0])
+        if np.linalg.norm(normal) <= 0.0:
             return False
         unit_normal = normal/np.linalg.norm(normal)
         vertices = source[self.source_face_indices[source_face]]
         projected = vertices-((vertices-positions[0]) @ unit_normal)[:, None]*unit_normal
-        along = ((projected-target[shared[0]]) @ edge)/(edge_length*edge_length)
-        distance = np.linalg.norm(
-            np.cross(projected-target[shared[0]], edge), axis=1,
-        )/edge_length
-        return bool(np.any(
-            (along >= -1.0e-10) & (along <= 1.0+1.0e-10)
-            & (distance <= self.shared_edge_tie[0])
-        ))
+        for other_face, shared in smooth[target_face]:
+            other = target[self.target_face_indices[other_face]]
+            other_normal = np.cross(other[1]-other[0], other[2]-other[0])
+            scale = np.linalg.norm(normal)*np.linalg.norm(other_normal)
+            if (scale <= 0.0 or np.dot(normal, other_normal)
+                    < (1.0-1.0e-10)*scale):
+                continue
+            edge = target[shared[1]]-target[shared[0]]
+            edge_length = np.linalg.norm(edge)
+            if (edge_length <= 0.0
+                    or abs(float((other[0]-positions[0]) @ normal))
+                    > 1.0e-10*edge_length*np.linalg.norm(normal)):
+                continue
+            along = ((projected-target[shared[0]]) @ edge)/(edge_length*edge_length)
+            distance = np.linalg.norm(
+                np.cross(projected-target[shared[0]], edge), axis=1,
+            )/edge_length
+            if np.any((along >= -1.0e-10) & (along <= 1.0+1.0e-10)
+                      & (distance <= self.shared_edge_tie[0])):
+                return True
+        return False
 
     def _only_artificial_shared_edge_ties(self, current_source, current_target,
                                           *, failed_pair=None):
-        """Admit only projected touches on the D1 reference quad diagonal."""
-        if self._d1_reference_diagonal() is None:
+        """Admit only projected touches on smooth shared S3 material edges."""
+        smooth = self._reference_smooth_target_edges()
+        if smooth is None:
             return False
         source = np.asarray(current_source, dtype=float)
         target = np.asarray(current_target, dtype=float)
         direction = self.shared_edge_tie[1]
         found = False
         failed_pair_seen = False
+        positive_target_faces = set()
         for source_face, source_ids in enumerate(self.source_face_indices):
             positions = source[source_ids]
             first, normal = projected_q4_source_face(positions)
@@ -729,6 +766,8 @@ class MovingS3PatchProjectedNormal:
                 positions = target[target_ids]
                 projected = positions-((positions-first.corners[0]) @ normal)[:, None]*normal
                 second = PlanarFace((2, 1), projected)
+                if planar_projected_overlap(first, second) is not None:
+                    positive_target_faces.add(target_face)
                 if not _touching_projected_boundaries(
                         first, second, relative_tolerance=1.0e-10):
                     continue
@@ -738,10 +777,8 @@ class MovingS3PatchProjectedNormal:
                 if abs(float(normal @ direction)) > 1.0e-4:
                     return False
                 admitted = False
-                for other_ids in self.target_face_indices:
-                    shared = set(map(int, target_ids)).intersection(map(int, other_ids))
-                    if np.array_equal(other_ids, target_ids) or len(shared) != 2:
-                        continue
+                for other_face, shared in smooth[target_face]:
+                    other_ids = self.target_face_indices[other_face]
                     other = target[other_ids]
                     first_normal = np.cross(positions[1]-positions[0],
                                             positions[2]-positions[0])
@@ -772,7 +809,11 @@ class MovingS3PatchProjectedNormal:
                 found = True
                 if failed_pair == source_face*len(self.target_face_indices)+target_face:
                     failed_pair_seen = True
-        return found and (failed_pair is None or failed_pair_seen)
+        # The verified limit compares complete patch work. Restrict it to an
+        # effectively two-face active target so unrelated active-face work
+        # cannot hide a local edge derivative discrepancy in that norm.
+        return (found and len(positive_target_faces) <= 2
+                and (failed_pair is None or failed_pair_seen))
 
     def _shared_edge_limit(self, current_source, current_target, multipliers, *,
                            tangent, recoverable_pair):
@@ -960,12 +1001,14 @@ class MovingS3PatchProjectedNormal:
                     # Use the inactive one-sided branch only for an artificial
                     # diagonal with an overlapping material-edge neighbor.
                     # Exterior rims and unmatched seams remain unresolved.
-                    target_nodes = set(map(int, target_index))
+                    smooth_edges = self._reference_smooth_target_edges()
+                    if smooth_edges is None:
+                        raise UnsupportedQ4S3Branch(
+                            "Q4/S3 zero-area touch has ambiguous target edge ownership"
+                        )
                     adjacent_positive = False
-                    for other_position, other_index in enumerate(self.target_face_indices):
-                        shared = target_nodes.intersection(map(int, other_index))
-                        if other_position == target_position or len(shared) != 2:
-                            continue
+                    for other_position, shared in smooth_edges[target_position]:
+                        other_index = self.target_face_indices[other_position]
                         if not _touching_shared_target_edge(
                                 first, target, target_index, shared):
                             continue
