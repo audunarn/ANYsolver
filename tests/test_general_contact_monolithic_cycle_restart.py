@@ -89,9 +89,18 @@ def _check_smooth_path_work(model, manager, snapshot, record):
     pose = snapshot.displacements
     base = linearize(manager, pose, nodal_forces, tangent=True)
     assert np.count_nonzero(nodal_forces > 0.0) > 0
-    for node, axis in ((3, 0), (3, 2), (13, 0), (13, 2), (13, 4)):
+    columns = ((3, 0), (3, 2), (13, 0), (13, 2), (13, 4))
+    directions = []
+    for node, axis in columns:
         direction = np.zeros_like(pose)
         direction[model.mesh.dof_manager.get_node_dofs(node)[axis]] = 1.0
+        directions.append(direction)
+    for weights in ((0.4, -0.3, 0.6, -0.5, 0.2),
+                    (-0.2, 0.5, 0.3, 0.4, -0.6)):
+        directions.append(sum((weight*direction for weight, direction
+                               in zip(weights, directions[:len(columns)], strict=True)),
+                              np.zeros_like(pose)))
+    for direction in directions:
         step = 1e-7
         plus = linearize(manager, pose+step*direction, nodal_forces,
                          tangent=False)
