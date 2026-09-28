@@ -200,6 +200,9 @@ the multiplier changed 0.02552 Pa in the same measure and the first active
 source node shifted left. Different step counts and the absence of an exact
 coupled pressure reference limit that result. Complete C1 pressure stability
 remains open.
+The same saved sequence's maximum cumulative-reaction difference increased
+from 1.02% (16→24 Q4) to 1.50% (24→32 Q4), so an integrated spatial-pressure
+measure cannot currently close that gate either.
 
 The working branch is `codex/general-contact-core`, started from ANYsolver
 `be41a77a62e1cd7e1767bda6e955253af0819f91`. C0 was committed as

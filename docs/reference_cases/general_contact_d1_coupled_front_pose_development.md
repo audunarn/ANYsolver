@@ -68,3 +68,39 @@ justified front-aware reference or pressure-space response analysis that
 separates structural resolution, multiplier representation and loading path.
 Do not treat small integrated-force change as proof of pressure-field
 convergence.
+
+## Saved pressure-response and integrated-load diagnostics
+
+The first full-press supported-Schur traces in the saved 16/24/32 Q4 reports
+have effective rank 34/50/66, with no truncated response. Their scaled
+condition estimates are 5,786/13,434/24,402. The weakest saved right mode is
+almost opposite between the two source rows (row correlations below −0.99999)
+and has only 13.9%/4.3%/1.2% of its squared nodal magnitude at reference
+nodes x∈[0.625,0.75]. Thus the growing condition is a risk indicator, but
+that one weakest mode is not itself localized at the observed pressure front.
+These are linearizations at saved augmentation iterates, not continuum
+pressure-stability certificates.
+
+A second read-only diagnostic integrates the saved Q1 pressure exactly over
+the physical reference y overlap [0.1,1] m, then forms the cumulative normal
+reaction along source x. The resulting total matches the saved contact force
+within 1.3e−14 N. The maximum absolute difference between cumulative curves
+is 0.001055 N (1.02% of later total) for 16→24 Q4 and 0.001558 N (1.50%)
+for 24→32 Q4. The latter maximum moves from x=0.732 to x=0.702. The raw
+comparison is
+`reports/general_contact_d1_cumulative_reaction_16_24_32_dev_20260928.json`.
+This integrated spatial measure also fails to improve on the last refinement,
+so these data do not justify promoting an edge-aware weak-pressure criterion.
+Independent read-only review checked the overlap weights, exact cumulative
+integration, interior-extremum search, saved-force agreement and this scoped
+decision. It found no concrete defect. The observed increase does not prove
+eventual nonconvergence.
+
+An [analytical Euler–Bernoulli beam contact study](https://escholarship.org/content/qt5b03c61b/qt5b03c61b_noSplash_21240afdc05e567847a8c0c335b6a539.pdf)
+exhibits a concentrated obstacle force at the boundary of a contacting
+interval. This is a different structural theory and loading geometry; it does
+not establish a singular front reaction in the present Q4/S3 shell case.
+Before setting a new shell pressure-field acceptance measure, determine the
+regularity and physically resolved response of an independent benchmark for
+the admitted shell formulation. Neither the strong nor cumulative field
+comparison from these saved meshes settles that question.
