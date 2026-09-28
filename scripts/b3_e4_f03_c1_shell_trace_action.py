@@ -113,8 +113,42 @@ def evaluate(reconstruction_path: Path) -> dict:
         if not np.isclose(total_native, float(shell_force@shell_u),
                           rtol=1e-10, atol=1e-12):
             raise ArithmeticError("native shell trace work changed")
+        fixed_distance = []
+        shell_nodes = line.reference_nodes
+        nodal = shell_u.reshape(-1, 6)
+        for x in (.5, .75):
+            shell_ids = np.flatnonzero(
+                (np.abs(shell_nodes[:, 0]-x) < 1e-10) &
+                (np.abs(shell_nodes[:, 1]) < 1e-10))
+            face_ids = {}
+            for side, z in (("top", .0175), ("bottom", -.0175)):
+                face_ids[side] = [node for node in plate
+                                  if abs(coords[node][0]-x) < 1e-10 and
+                                  abs(coords[node][1]) < 1e-10 and
+                                  abs(coords[node][2]-z) < 1e-10]
+            if (len(shell_ids) != 1 or len(face_ids["top"]) != 1 or
+                    len(face_ids["bottom"]) != 1):
+                raise ValueError("fixed-distance physical plate/shell probe changed")
+            top = solid_delta[index[face_ids["top"][0]]]
+            bottom = solid_delta[index[face_ids["bottom"][0]]]
+            solid_mid = .5*(top+bottom)
+            solid_rotation = np.array((-(top[1]-bottom[1])/.035,
+                                        (top[0]-bottom[0])/.035))
+            native_mid = nodal[int(shell_ids[0]), :3]
+            native_rotation = nodal[int(shell_ids[0]), 3:5]
+            fixed_distance.append({
+                "x_m": x,
+                "solid_thickness_mean_translation_m": solid_mid.tolist(),
+                "native_midplane_translation_m": native_mid.tolist(),
+                "solid_director_rotation_xy_rad": solid_rotation.tolist(),
+                "native_director_rotation_xy_rad": native_rotation.tolist(),
+                "translation_difference_m": (native_mid-solid_mid).tolist(),
+                "director_rotation_difference_rad": (
+                    native_rotation-solid_rotation).tolist(),
+            })
         cases[label] = {
             "intervals": interval,
+            "fixed_distance_probes": fixed_distance,
             "solid_shell_action_work_J": total_solid,
             "native_shell_action_work_J": total_native,
             "native_shell_equilibrium_ratio": equilibrium,
@@ -132,6 +166,7 @@ def evaluate(reconstruction_path: Path) -> dict:
             "same P0 action but E4 and 3D plate kinematics/supports differ",
             "linear fixed-dual action-only responses, not coupled loaded sensitivity",
             "interval work terms may cancel; they are not independent strain energies",
+            "two fixed-distance probes compare physical poses, not stress convergence",
             "not F03/G0B acceptance or multiplier selection",
         ],
     }

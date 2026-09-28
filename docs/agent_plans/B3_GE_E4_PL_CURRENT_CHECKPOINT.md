@@ -10423,3 +10423,18 @@ reviewed solid/deck/unit-field identities, unchanged E4 tangent,
 solid/native position and rotation row signs, fixed-action work parity,
 and the narrow interpretation above. This review is development
 scrutiny, not formal F03/G0B acceptance.
+
+**Next fixed-distance discriminator (prospective):** The saved same-action
+3D face field has a small global Q4 displacement-fit RMS (`1.94e−8 m`
+for Mx, `8.70e−8 m` for Fz), yet its fitted line work still differs
+from the solid work; the fitted field also differs from the actual
+E4 response. These are geometric fit and fixed-action work differences,
+not independent energy allocations. Reuse the saved 24 solid unit fields
+and current x4 E4 solve; at exact shared physical positions `x=.5`
+and `.75 m`, `y=0`, compare 3D thickness-mean translations and
+director rotations with E4 nodal values. If mismatch is already
+material well before the bond, review the physical shell/3D and clamp
+idealization. If it is small there but grows into the bond intervals,
+review the local trace/through-thickness warping. Either result still
+requires the registered torque/shear and growing-space checks; no new
+external solve or longitudinal refinement follows automatically.

@@ -17,6 +17,10 @@ def test_station_trace_reproduces_saved_component_work():
     assert result["solid_unit_field_count"] == 24
     for label, case in result["cases"].items():
         assert len(case["intervals"]) == 4
+        assert [item["x_m"] for item in case["fixed_distance_probes"]] == [.5, .75]
+        for item in case["fixed_distance_probes"]:
+            assert np.isfinite(item["translation_difference_m"]).all()
+            assert np.isfinite(item["director_rotation_difference_rad"]).all()
         np.testing.assert_allclose(
             case["solid_shell_action_work_J"],
             prior["cases"][label]["solid_shell_action_only_work_J"],
