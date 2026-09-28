@@ -26,6 +26,13 @@ def test_saved_slide_matches_independent_current_contact_kkt():
     assert result["minimum_inactive_gap_m"] >= -1e-9
     assert min(row["minimum_active_force_n"] for row in result["trace"]) > 0
     assert result["maximum_displacement_difference_m_or_rad"] <= 1e-9
+    derivative = result["gradient_step_sensitivity"]
+    assert derivative["directions"] == 30
+    assert derivative["resolved_columns_at_norm_1e_minus_4"] >= 10
+    assert derivative["maximum_half_vs_nominal_resolved_relative_difference"] <= 1e-5
+    assert derivative["maximum_double_vs_nominal_resolved_relative_difference"] <= 1e-5
+    assert derivative["maximum_half_vs_nominal_absolute_difference"] <= 1e-8
+    assert derivative["maximum_double_vs_nominal_absolute_difference"] <= 1e-8
     for name in (
         "relative_pressure_l2_difference",
         "relative_nodal_force_l2_difference",
