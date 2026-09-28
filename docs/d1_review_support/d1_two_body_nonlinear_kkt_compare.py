@@ -68,9 +68,8 @@ for force, value in zip(program.nodal_forces,
                         program.force_values_at(4), strict=True):
     assert force.dof == "uz"
     external[model.mesh.dof_manager.get_node_dofs(force.node_id)[2]] += value
-active = np.flatnonzero(np.asarray(saved["production_pressure_pa"]) > 0.0)
 oracle_pressure = np.asarray(saved["oracle_pressure_pa"])
-assert np.array_equal(active, np.flatnonzero(oracle_pressure > 0.0))
+active = np.flatnonzero(oracle_pressure > 0.0)
 oracle_pose = np.asarray(saved["oracle_displacements"])
 q = np.asarray(physical_transform.T @ (oracle_pose-fixed_pose)).reshape(-1)
 assert np.max(abs(fixed_pose+columns @ q-oracle_pose)) < 1e-12
@@ -97,18 +96,23 @@ def geometry(pose):
     return support, weighted/support
 
 
-def independent_gap_gradient(pose):
+def numerical_gap_gradient(pose, directions, sizes, multiplier=1.0):
     global gradient_count
     rows = len(saved["production_pressure_pa"])
-    gradient = np.zeros((rows, columns.shape[1]))
-    for index, step in enumerate(steps):
-        plus = pose+step*columns[:, index]
-        minus = pose-step*columns[:, index]
+    gradient = np.zeros((rows, directions.shape[1]))
+    for index, base_step in enumerate(sizes):
+        step = multiplier*base_step
+        plus = pose+step*directions[:, index]
+        minus = pose-step*directions[:, index]
         _support, plus_gap = geometry(plus)
         _support, minus_gap = geometry(minus)
         gradient[:, index] = (plus_gap-minus_gap)/(2*step)
     gradient_count += 1
     return gradient
+
+
+def independent_gap_gradient(pose):
+    return numerical_gap_gradient(pose, columns, steps)
 
 
 def state(coordinates, nodal_forces):
@@ -163,21 +167,49 @@ else:
     raise RuntimeError("independent nonlinear KKT iteration budget exhausted")
 
 assert np.min(gap) >= -1e-9
+production_active = np.flatnonzero(
+    np.asarray(saved["production_pressure_pa"]) > 0.0)
+assert np.array_equal(active, production_active)
 pressure = np.zeros(len(support))
 pressure[active] = z/support[active]
 production_pose = np.asarray(saved["production_displacements"])
 production_pressure = np.asarray(saved["production_pressure_pa"])
 production_support = np.asarray(saved["production_support_m2"])
 production_z = production_pressure*production_support
-control_gradient = np.zeros((len(active), len(control_dofs)))
-for column, dof in enumerate(control_dofs):
-    step = 2e-6
-    perturbation = np.zeros(ndof)
-    perturbation[dof] = step
-    _support, plus_gap = geometry(pose+perturbation)
-    _support, minus_gap = geometry(pose-perturbation)
-    control_gradient[:, column] = (
-        plus_gap[active]-minus_gap[active])/(2*step)
+control_columns = np.eye(ndof)[:, list(control_dofs)]
+control_gradient = numerical_gap_gradient(
+    pose, control_columns, np.full(len(control_dofs), 2e-6))[active]
+all_columns = np.column_stack((columns, control_columns))
+all_steps = np.r_[steps, np.full(len(control_dofs), 2e-6)]
+half_step_gradient = numerical_gap_gradient(
+    pose, all_columns, all_steps, multiplier=0.5)
+nominal_step_gradient = numerical_gap_gradient(
+    pose, all_columns, all_steps)
+double_step_gradient = numerical_gap_gradient(
+    pose, all_columns, all_steps, multiplier=2.0)
+column_norms = np.linalg.norm(nominal_step_gradient, axis=0)
+resolved_columns = column_norms >= 1e-4
+assert np.any(resolved_columns)
+half_differences = np.linalg.norm(
+    half_step_gradient-nominal_step_gradient, axis=0)
+double_differences = np.linalg.norm(
+    double_step_gradient-nominal_step_gradient, axis=0)
+gradient_step_sensitivity = {
+    "directions": int(all_columns.shape[1]),
+    "resolved_columns_at_norm_1e_minus_4": int(np.count_nonzero(resolved_columns)),
+    "maximum_half_vs_nominal_absolute_difference": float(
+        np.max(half_differences)),
+    "maximum_double_vs_nominal_absolute_difference": float(
+        np.max(double_differences)),
+    "maximum_half_vs_nominal_resolved_relative_difference": float(
+        np.max(half_differences[resolved_columns]
+               /column_norms[resolved_columns])),
+    "maximum_double_vs_nominal_resolved_relative_difference": float(
+        np.max(double_differences[resolved_columns]
+               /column_norms[resolved_columns])),
+    "minimum_nominal_column_norm": float(np.min(column_norms)),
+    "maximum_nominal_column_norm": float(np.max(column_norms)),
+}
 with suspend_contact():
     independent_internal = _assemble_nonlinear_system(
         model, pose, {}, 5, tangent=False, kinematics="von_karman",
@@ -213,6 +245,7 @@ record = {
     "free_structural_coordinates": len(q),
     "geometry_evaluations": evaluation_count,
     "gradient_evaluations": gradient_count,
+    "gradient_step_sensitivity": gradient_step_sensitivity,
     "elapsed_seconds": time.perf_counter()-started,
     "trace": trace,
     "final_scaled_merit": merit,
