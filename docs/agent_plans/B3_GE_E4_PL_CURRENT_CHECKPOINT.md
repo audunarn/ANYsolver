@@ -10438,3 +10438,25 @@ idealization. If it is small there but grows into the bond intervals,
 review the local trace/through-thickness warping. Either result still
 requires the registered torque/shear and growing-space checks; no new
 external solve or longitudinal refinement follows automatically.
+
+**Fixed-distance pre-bond outcome:** Source `529dbf76` preserves the
+V1 interval work and samples exact common plate/shell positions at
+`x=.5` and `.75 m`, `y=0`. The same-action Fz thickness-mean vertical
+plate displacement is `−38.519/−55.302 µm`, versus E4
+`−38.045/−54.675 µm`: absolute differences `0.473/0.626 µm`, about
+`1.23/1.13%` of the solid displacement. For Mx, 3D director `rx`
+is `25.650/34.343 µrad`, versus E4 `25.149/33.874 µrad`, about
+`1.95/1.36%` lower. Mx lateral translations are only tens of
+nanometres, so their larger relative differences are not a useful
+global accuracy measure. The source-bound
+`B3_E4_F03_C1_SHELL_TRACE_ACTION_DEV_V2.json` has SHA256
+`ee4c598389737afd0d61930f865dd0c8adc6d803a6bfe025a86c175b8a7e7706`;
+the focused probe/work test passes. These physical differences exist
+before the bond but are smaller than the `10–14%` fixed-action line
+work gap; they do not yet distinguish a local trace effect from a
+distributed plate response. Compare the *same* midpoint and director
+observables at exact `x=.9` and `.95 m` shell/3D positions, with the
+same source fields and no new solve. A sharp rise only in the bond
+region directs review to the local trace/warping idealization; a
+similar relative difference throughout directs review to plate and
+support response. Neither outcome alone selects a multiplier space.
