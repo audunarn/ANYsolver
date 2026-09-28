@@ -1,0 +1,247 @@
+"""Bounded x16/y4 8:1 P0 loaded solve with exact E4 drill elimination.
+
+Numerical drilling coordinates are reconstructed and checked in the
+original full equations. This is a private development diagnostic only.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+from time import monotonic
+import warnings
+
+import anysolver
+import numpy as np
+import scipy
+from scipy import linalg, sparse
+from scipy.sparse.linalg import MatrixRankWarning, spsolve
+from threadpoolctl import threadpool_info, threadpool_limits
+
+from scripts._b3_e4_f03_native_fixture import build
+from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
+from scripts.b3_e4_f03_material_line_loaded import _scales
+from scripts.b3_e4_f03_material_line_position import MaterialLinePosition
+from scripts.b3_e4_f03_material_line_space_screen import (
+    _rows, _scaled_row_diagnostics,
+)
+from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
+from scripts.b3_e4_f03_square_section_control import square_torsion_constant
+
+
+MAX_ROWS = 1900
+MAX_SECONDS = 120.
+
+
+def _relative(left: np.ndarray, right: np.ndarray) -> float:
+    return float(np.linalg.norm(left-right)/max(1., np.linalg.norm(right)))
+
+
+def evaluate() -> dict:
+    expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
+    if Path(anysolver.__file__).resolve().parent != expected:
+        raise RuntimeError("bounded quotient imported another ANYsolver checkout")
+    started = monotonic()
+    xs, ys = local_grid(16, transverse_cells=4)
+    shell, shell_physical_operator = raw_e4_tangent(xs, ys, thickness=.035)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um")
+    if beam.tangent is None or beam.residual is None:
+        raise ArithmeticError("assembled native fixture required")
+    ns = len(shell)
+    shell_free = np.array([i for i in range(ns) if (i//6) % len(xs) != 0])
+    drill = shell_free[shell_free % 6 == 5]
+    physical = shell_free[shell_free % 6 != 5]
+    beam_free = np.asarray(beam.context.free, dtype=int)
+    full_free = np.r_[shell_free, ns+beam_free]
+    reduced_free = np.r_[physical, ns+beam_free]
+    line = MaterialLinePosition(xs, ys, beam)
+    rows, measures = _rows(line, LineMultiplierSpace(
+        "piecewise_constant", tuple(np.linspace(0., 1., 5))))
+    if (rows.shape != (24, ns+beam.context.count) or
+            not np.allclose(measures, .025, rtol=0., atol=1e-12) or
+            np.max(np.abs(rows[:, drill])) > 1e-12):
+        raise ArithmeticError("reviewed P0 rows act on changed drilling coordinates")
+    full_scales, energy_scale = _scales(ns, beam, full_free, row_count=24)
+    row_check = _scaled_row_diagnostics(rows, full_free,
+                                         full_scales[:len(full_free)])
+    if row_check["scaled_row_rank"] != 24:
+        raise ArithmeticError("8:1 P0 supported row rank changed")
+
+    dd = shell[np.ix_(drill, drill)]
+    dp = shell[np.ix_(drill, physical)]
+    pd = shell[np.ix_(physical, drill)]
+    pp = shell[np.ix_(physical, physical)]
+    if max(_relative(dd, dd.T), _relative(pd, dp.T)) > 1e-10:
+        raise ArithmeticError("drilling partition is not conservative")
+    linalg.cholesky(dd, lower=True, check_finite=True)
+    lift = linalg.solve(dd, dp, assume_a="pos", check_finite=True)
+    quotient = pp-pd@lift
+    test = np.sin(np.arange(len(physical))*.173)
+    test_drill = -lift@test
+    shell_test = np.zeros(ns)
+    shell_test[physical], shell_test[drill] = test, test_drill
+    drill_check = float(np.linalg.norm(dd@test_drill+dp@test)/
+                        max(1., np.linalg.norm(dp@test)))
+    schur_check = _relative((shell@shell_test)[physical], quotient@test)
+    if max(drill_check, schur_check) > 1e-8:
+        raise ArithmeticError(
+            f"drilling quotient action reconstruction failed: "
+            f"drill={drill_check:.6g}, schur={schur_check:.6g}")
+    if monotonic()-started > MAX_SECONDS:
+        raise TimeoutError("bounded quotient preparation deadline")
+
+    beam_block = beam.tangent[beam_free, :][:, beam_free].tocsr()
+    k_reduced = sparse.block_diag((sparse.csr_matrix(quotient), beam_block),
+                                   format="csr")
+    c = sparse.csr_matrix(rows[:, reduced_free])
+    dimension = k_reduced.shape[0]+c.shape[0]
+    if dimension > MAX_ROWS:
+        raise ValueError("bounded exact-drill KKT row cap exceeded")
+    kkt = sparse.bmat(((k_reduced, c.T), (c, None)), format="csr")
+    scales, scale_energy = _scales(ns, beam, reduced_free, row_count=24)
+    if energy_scale != scale_energy:
+        raise ArithmeticError("full/quotient physical scales changed")
+    scaled = (sparse.diags(scales)@kkt@sparse.diags(scales)/energy_scale).tocsc()
+    accepted = np.r_[np.zeros(ns), beam.residual]
+    if np.max(np.abs(accepted[drill])) != 0.:
+        raise ArithmeticError("nonzero drill predecessor would require RHS Schur shift")
+    shell_reference = line.reference_nodes
+    beam_reference = (beam.context.initial.mechanical.positions+
+                      beam.context.initial.mechanical.position_low)
+    station_position = line.reference_jacobian().reshape(len(line.stations), 3, -1)
+    station_orientation = line.reference_orientation_jacobian().reshape(
+        len(line.stations), 3, -1)
+    weights = np.asarray([station.weight for station in line.stations])
+    cases = {}
+    for label, axis, magnitude in (("tip_mx_100nm", 3, 100.),
+                                   ("tip_fz_1000n", 2, 1000.)):
+        if monotonic()-started > MAX_SECONDS:
+            raise TimeoutError("bounded exact-drill loaded deadline")
+        load = np.zeros(ns+beam.context.count)
+        load[ns+6*beam.n_half_cells+axis] = magnitude
+        rhs_full = load-accepted
+        if np.max(np.abs(rhs_full[drill])) != 0.:
+            raise ArithmeticError("external drill load would require RHS Schur shift")
+        rhs = np.r_[rhs_full[reduced_free]*scales[:len(reduced_free)]/
+                    energy_scale, np.zeros(24)]
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", MatrixRankWarning)
+            answer = spsolve(scaled, rhs)
+        if not np.isfinite(answer).all():
+            raise ArithmeticError("nonfinite bounded quotient solve")
+        state = np.zeros(ns+beam.context.count)
+        state[reduced_free] = scales[:len(reduced_free)]*answer[:len(reduced_free)]
+        state[drill] = -lift@state[physical]
+        dual = scales[len(reduced_free):]*answer[len(reduced_free):]
+        equation = accepted+np.r_[shell@state[:ns],
+                                  beam.tangent@state[ns:]]+rows.T@dual-load
+        gap = rows@state
+        full_free_residual = float(np.linalg.norm(equation[full_free])/
+                                   max(1., np.linalg.norm(load[full_free])))
+        drill_residual = float(np.max(np.abs(equation[drill])))
+        weak_gap = float(np.max(np.abs(gap)))
+        work = float(state@np.r_[shell@state[:ns],
+                                 beam.tangent@state[ns:]])
+        external_work = float(rhs_full@state)
+        work_relative = abs(work-external_work)/max(1e-12, abs(external_work))
+        shell_work = float(state[:ns]@shell_physical_operator@state[:ns])
+        shell_support = equation[:ns].reshape(-1, 6)
+        beam_support = equation[ns:ns+beam.context.nodal_count].reshape(-1, 6)
+        support_force = shell_support[:, :3].sum(axis=0)+beam_support[:, :3].sum(axis=0)
+        support_moment = (np.sum(np.cross(shell_reference,
+                                          shell_support[:, :3])+
+                                 shell_support[:, 3:], axis=0)+
+                          np.sum(np.cross(beam_reference,
+                                          beam_support[:, :3])+
+                                 beam_support[:, 3:], axis=0))
+        applied_force = np.zeros(3)
+        applied_moment = np.zeros(3)
+        if axis < 3:
+            applied_force[axis] = magnitude
+            applied_moment = np.cross(beam_reference[-1], applied_force)
+        else:
+            applied_moment[axis-3] = magnitude
+        position_gap = np.einsum("kij,j->ki", station_position, state)
+        rotation_gap = np.einsum("kij,j->ki", station_orientation, state)
+        terminal = ns+6*beam.n_half_cells
+        case = {
+            "status": "BOUNDED_SOLVE_PASSED",
+            "full_free_equilibrium_ratio": full_free_residual,
+            "drilling_equilibrium_max": drill_residual,
+            "weak_constraint_max": weak_gap,
+            "work_relative_error": work_relative,
+            "support_force_balance_n": float(np.linalg.norm(support_force+applied_force)),
+            "support_moment_balance_nm": float(np.linalg.norm(support_moment+applied_moment)),
+            "shell_physical_work_j": shell_work,
+            "tip_translation_m": state[terminal:terminal+3].tolist(),
+            "tip_rotation_rad": state[terminal+3:terminal+6].tolist(),
+            "position_rms_m": float(np.sqrt(np.sum(weights*np.sum(position_gap**2,
+                                                            axis=1))/.1)),
+            "orientation_rms_rad": float(np.sqrt(np.sum(weights*np.sum(rotation_gap**2,
+                                                               axis=1))/.1)),
+            "position_max_m": float(np.max(np.linalg.norm(position_gap, axis=1))),
+            "orientation_max_rad": float(np.max(np.linalg.norm(rotation_gap, axis=1))),
+        }
+        if (max(full_free_residual, weak_gap, work_relative) > 1e-7 or
+                case["support_force_balance_n"] > 1e-5 or
+                case["support_moment_balance_nm"] > 1e-5 or
+                shell_work <= 0.):
+            raise ArithmeticError(f"reconstructed full loaded system failed: {case}")
+        cases[label] = case
+    return {
+        "classification": "bounded exact-drill loaded 8:1 material-line P0 diagnostic",
+        "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
+        "source_git": subprocess.check_output(("git", "rev-parse", "HEAD"),
+                                              text=True).strip(),
+        "model": "C1 Q4 x16/y4 35 mm shell, B3-12, material-line P0 m4, original full equations reconstructed",
+        "full_kkt_rows": len(full_free)+24,
+        "quotient_kkt_rows": dimension,
+        "quotient_nnz": int(scaled.nnz),
+        "max_rows": MAX_ROWS,
+        "max_seconds": MAX_SECONDS,
+        "elapsed_s": monotonic()-started,
+        "row_diagnostic": {key: row_check[key] for key in (
+            "scaled_row_rank", "active_primal_columns", "rank_tolerance")},
+        "drill_partition_rows": len(drill),
+        "drill_test_relative_residual": drill_check,
+        "schur_test_relative_residual": schur_check,
+        "cases": cases,
+        "limits": ["private exact algebraic elimination, not production condensation",
+                   "one 8:1 level and two terminal nodal loads, not mesh-uniform stability",
+                   "no physical connection accuracy or multiplier-space selection"],
+        "provenance": {
+            "python": sys.version.split()[0], "numpy": np.__version__,
+            "scipy": scipy.__version__, "anysolver_import": str(Path(anysolver.__file__).resolve()),
+            "threadpools": threadpool_info(),
+            "env": {key: os.environ.get(key) for key in
+                    ("NUMBA_DISABLE_JIT", "OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")},
+        },
+        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    if args.output.exists():
+        raise FileExistsError(args.output)
+    with threadpool_limits(limits=1):
+        result = evaluate()
+    args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
+                                      allow_nan=False)+"\n", encoding="utf-8")
+    print(json.dumps({"elapsed_s": result["elapsed_s"],
+                      "rows": result["quotient_kkt_rows"],
+                      "cases": {name: value["status"]
+                                for name, value in result["cases"].items()}}))
+
+
+if __name__ == "__main__":
+    main()

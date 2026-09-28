@@ -20,18 +20,19 @@ E4/3D director discrepancy from pre-bond to bond, with small measured
 `0.9–1.2%` without a similar local rise. A Q4 least-squares fit to the
 pure-torque solid faces is geometrically close but `38%` away from
 the Q4 equilibrium field in its energy norm; it cannot allocate the
-work discrepancy. The `1:8` ratio extreme passes loaded Mx/Fz checks,
-while the registered x16/y4 `8:1` fixture needs 1,956 rows
-and stops at the unchanged 1,900-row development cap before solution.
+work discrepancy. The `1:8` and `8:1` ratio extremes now pass bounded
+loaded Mx/Fz checks. The x16/y4 `8:1` fixture required an exact
+drilling quotient to reduce 1,956 full rows to 1,670 diagnostic rows
+without raising the 1,900-row cap; its full equations were checked
+after reconstruction.
 **Remaining uncertainty:** Whether P0 avoids locking and unsupported
 modes across ratios and whether physically matched sided torque/shear
 transfer validates the declared law. **Next discriminator and action:**
 Establish a work-conjugate torque/section/support comparator that
 separates shell idealization from connection transfer; neither the
 saved pure-action fields nor a displacement fit does that alone.
-Revisit the `8:1` loaded check through an exact bounded drill quotient
-if its result changes the policy decision; the
-size guard alone is no mechanics verdict. Do not infer selection from
+Complete the remaining registered ratio/refinement and normed
+mixed-system checks for the provisional P0 rule. Do not infer selection from
 rank or the quotient alone. Advance B2 F09 independently.
 G0B/F03 remain open, G1 barred, and formal F03 authority unconsumed;
 detailed evidence follows.
@@ -10958,3 +10959,46 @@ displacement fit as if it were an energy projection. A next external
 torque comparator must state matching section, load work and root
 constraint domains, and recover work-conjugate sides before scoring
 the native connection. F03/G0B remain open; G1 remains barred.
+
+**8:1 exact-drill loaded discriminator (prospective):** The registered
+Q4 x16/y4/B3-12/P0 m4 KKT requires `1,956` full rows and cannot run
+inside the unchanged `1,900`-row development cap. Its line rows do
+not act on numerical E4 drilling coordinates, and the previously
+checked drilling block is positive and exactly eliminable. Solve only
+this fixed Mx/Fz pair after an algebraically exact drilling Schur
+quotient, then reconstruct every drilling coordinate and audit the
+original full residual, weak gaps, support wrenches, interface work,
+and shell physical work. A pass completes a bounded loaded check of
+this ratio, not a stability or physical-law qualification. A failed
+reconstruction returns to the diagnostic; no cap, element equation,
+external model, or formal F03 authority changes.
+
+**8:1 exact-drill loaded outcome:** The fixed x16/y4/B3-12/P0 m4
+fixture has `24/24` independent supported rows. Exact elimination of
+`286` free numerical shell-drilling coordinates reduces the KKT from
+`1,956` to `1,670` rows; the quotient has `347,789` stored nonzeros
+and the run finished in `64.44 s` under the existing `120 s` limit.
+The original full shell/beam coordinates are reconstructed for every
+load. Both `100 Nm` Mx and `1000 N` Fz pass full-free equilibrium ratios
+below `4.8e-11`, original drilling residuals below `6e-13`, weak gaps
+below `3e-20`, relative work errors below `5.1e-11`, force balance
+below `3.2e-8 N` and moment balance below `3.1e-8 Nm`.
+The Mx tip rotation is `4.95531189e-5 rad` and Fz tip translation
+`7.03240133e-5 m`; physical shell work is positive in both cases.
+These values and the `1:8` result have different shell and beam grids,
+so their proximity is not a mesh convergence claim. The first private
+run stopped because its drill diagnostic divided an absolute floating
+residual by one; the absolute value `1.65e-6` is `1.23e-15` relative
+to the corresponding drill action. The second run exposed this, and
+the final run used the same relative reconstruction norm as the
+existing exact-drill diagnostic. No mechanics threshold or resource
+cap changed. The raw
+`B3_E4_F03_C1_MATERIAL_LINE_RECIPROCAL_8_TO_1_DRILL_QUOTIENT_DEV_V1.json`
+SHA256 is
+`e990e19ceed8a6c7173728c3ef61a988fc37ba18d0714669bda6d31c9f73a69a`;
+runner SHA256 is
+`255cad54bc11aa58883a950b457b3fb56556cc2bfb26385b1f25b24325093bba`.
+This fills a loaded ratio endpoint but does not establish mesh-uniform
+stability, locking freedom, physical transfer accuracy, or P0 selection.
+F03/G0B remain open; G1 remains barred and formal F03 authority
+unconsumed.
