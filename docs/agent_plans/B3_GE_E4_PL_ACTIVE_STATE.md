@@ -53,7 +53,7 @@ do not establish growing-space stability.
 The virgin joint covector now maps to a spatial force and shell-rail moment
 including the eccentric lever arm. A four-station physical-wrench quadrature
 Gram uses frozen force/length scales; station-map equality alone does not
-prove whole-segment constancy. Twenty-three focused checks pass. Independent
+prove whole-segment constancy. Twenty-four focused checks pass. Independent
 read-only reviews found no bounded discrete measure, scatter, or basis algebra
 defect. Gauss exactness
 applies to density products, not generally to nonlinear density-gap work.
@@ -103,13 +103,23 @@ cells, physical energy 8.224e8/2.056e8 J and work 0.125. Thus a fixed
 two-cell macro P0 support does not by itself cure the full L2 continuity
 defect. Independent mechanics review confirmed the asymptotic witness and
 its narrow implication. Its raw log is beside the first counterexample.
+Even constant yaw density has a free-end witness: localizing the same
+lateral pattern to the last shell cell keeps work 0.5 and fixed density
+norm while physical energy halves at each refinement (5.263e10,
+2.632e10, 1.316e10 J at h=.25,.125,.0625). Independent review confirms
+the endpoint derivation. The executable check and raw log are retained
+with the other negative cases.
 
 The formulation/metric design and one targeted macro-P0 comparison now
-support a decision checkpoint. Independently review the macro witness and
-identify a six-channel space or revised law with a **whole-space** physical
-work bound and transfer fidelity; do not tune a fixed ratio or remove only
-the observed vector. If none is defensible, report the obstructing equation
-and revise the continuous law or physical operator through mechanics review.
+support a mechanics decision: **stop tuning P0 yaw resolution under the
+current rail/physical-core L2 claim.** Derive an objective
+finite-longitudinal-support shell trace or another reviewed continuous
+action that retains constant physical torque transfer and gives a
+whole-space work bound without PL/drilling dependence. Examine endpoints,
+interior support, reference consistency, shear freedom, and the distinction
+from rigid/distributing footprints before loaded comparisons. If that
+cannot preserve declared bonded-line semantics, identify the obstruction
+for independent review rather than relabel a footprint as a line.
 F03 formal assessment stays barred. The seven ratios, growing spaces, three
 refinements, physical transfer, locking, shear, drilling, and mixed-system
 checks remain mandatory. No automatic axial sweep or new external reference

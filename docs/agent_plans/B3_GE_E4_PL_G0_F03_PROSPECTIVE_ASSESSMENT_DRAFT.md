@@ -345,6 +345,23 @@ and retained raw log record this witness. Thus the proposed twice-long P0
 yaw support is not a uniform physical-core L2 work-continuity cure merely
 because it hides the one-cell checkerboard. This does not adjudicate other
 complete multiplier pairings or a corrected continuous law.
+Even a constant yaw density has an endpoint witness. Keep the same
+transverse profile, set every longitudinal nodal amplitude to zero except
+unit amplitude at the free rail end, and use unit yaw density. The
+physical core sees only transverse strain in the final cell, with energy
+O(h), while the rail's integrated yaw work is 0.5 and its L2 density norm
+is fixed. Actual E4 physical-core energies for h=1/4,1/8,1/16 are
+5.263e10, 2.632e10 and 1.316e10 J. Thus constant torque transfer itself
+has no uniform physical-core L2 work bound for this unsmoothed
+longitudinal-tangent trace at a free endpoint. Independent mechanics
+review confirmed the derivation; the executable case
+test_constant_yaw_has_free_endpoint_physical_core_witness and raw log in
+the same evidence directory preserve it. Restricting yaw to H1-zero
+endpoint functions would exclude exact constant density and still needs
+a stronger-than-L2 derivative/bandwidth control. Do not score a new
+multiplier candidate until a revised continuous action, physical
+response, or prospectively justified endpoint-aware norm preserves
+required physical torque transfer.
 
 In the conditional continuum H1 estimate, uniform width \(w\) gives a factor
 growing as \(w^{-1/2}\), so width must be
@@ -452,7 +469,8 @@ equivalent units must preserve the result. No threshold is set by the current
 A/B values, and finitely many positive \(\beta_h\) values do not prove a
 uniform asymptotic bound.
 
-For a *corrected* positive-width rail, a simpler prospective metric uses the
+Only for a subsequently *corrected* rail with a proved physical work bound
+could a simpler prospective metric use the
 physical six-channel L2 density Gram
 \(\lambda^TM_{0,h}\lambda=\int_0^1\|\hat\lambda\|_2^2d\xi\).
 Only if the complete shell and broken-beam work maps satisfy mesh-uniform

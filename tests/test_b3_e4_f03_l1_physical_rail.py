@@ -706,6 +706,42 @@ def test_physical_core_does_not_uniformly_control_growing_p0_yaw(
         rtol=2e-12, atol=0.)
 
 
+def test_constant_yaw_has_free_endpoint_physical_core_witness():
+    """Constant yaw still performs endpoint work on a shrinking-energy mode."""
+    energies = []
+    for segments in (2, 4, 8):
+        cuts = np.linspace(.5, 1., segments+1)
+        line, beam = _segmented_rail(x_cuts=cuts)
+        zero = np.zeros((segments+1, 3, 6))
+        density = np.zeros((2*segments, 6))
+        density[:, 5] = 1.
+        _, gaps, gradient, _ = line.work_tangent(
+            zero, beam.context.initial.mechanical, density)
+        np.testing.assert_allclose(gaps, 0., rtol=0., atol=2e-14)
+
+        xs = np.r_[(0., .25), cuts]
+        _, physical = raw_e4_tangent(xs, np.array((-.1, 0., .1)),
+                                     thickness=.035)
+        q = np.zeros(len(physical))
+        load = np.zeros_like(q)
+        local = gradient[:zero.size].reshape(zero.shape)
+        for i in range(len(cuts)):
+            for j in range(3):
+                node = j*len(xs)+i+2
+                dofs = slice(6*node, 6*node+6)
+                if i == segments:
+                    q[6*node+1] = (1., -1., 1.)[j]
+                load[dofs] += local[i, j]
+        np.testing.assert_array_equal(load[5::6], 0.)
+        assert q@load == pytest.approx(.5, abs=2e-13)
+        energy = float(q@physical@q)
+        assert energy > 0.
+        energies.append(energy)
+    np.testing.assert_allclose(
+        np.array(energies[:-1])/np.array(energies[1:]), 2.,
+        rtol=2e-12, atol=0.)
+
+
 def test_segmented_rail_constant_density_has_line_wrench_and_shell_compliance():
     line, beam = _segmented_rail()
     xs = np.array((0., .25, .5, .75, 1.))
