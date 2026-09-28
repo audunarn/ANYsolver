@@ -489,8 +489,6 @@ def solve_transient_contact(
         ):
             raise ValueError("nodal load history knots are closer than the admitted minimum_dt or time resolution")
     if base_load_case is not None:
-        if profile != _PROFILE:
-            raise ValueError("constant nodal loads are admitted only for the Q4 plane development profile")
         if (type(base_load_case) is not LoadCase
                 or not base_load_case.nodal_loads
                 or base_load_case.element_loads
@@ -649,13 +647,35 @@ def solve_transient_contact(
                 algebraic_velocity_work = np.asarray(
                     basis.T @ (reduced_tangent @ vred)
                 ).reshape(-1)
-                if (float(np.linalg.norm(force0)) > controls.equilibrium_tolerance
-                        or float(np.linalg.norm(algebraic_velocity_work))
-                        > controls.equilibrium_tolerance):
+                if float(np.linalg.norm(algebraic_velocity_work)) > controls.equilibrium_tolerance:
                     raise ValueError("S3 descriptor initial algebraic state is inconsistent")
-                # Rigid-normal free motion has zero initial structural and
-                # contact acceleration. Massless rotations receive no inertia.
-                acceleration = np.zeros_like(q)
+                if base_load_case is None:
+                    if float(np.linalg.norm(force0)) > controls.equilibrium_tolerance:
+                        raise ValueError("S3 descriptor initial algebraic state is inconsistent")
+                    # Rigid-normal free motion has zero initial acceleration.
+                    acceleration = np.zeros_like(q)
+                else:
+                    force_scale = max(1.0, float(np.linalg.norm(force0)))
+                    algebraic_force = np.asarray(basis.T @ force0).reshape(-1)
+                    if (float(np.linalg.norm(algebraic_force))
+                            > controls.equilibrium_tolerance*force_scale):
+                        raise ValueError("S3 descriptor initial load has unresolved algebraic force")
+                    physical_acceleration = -np.linalg.pinv(
+                        Mred.toarray(), rcond=1.0e-10,
+                    ) @ force0
+                    mass_balance = Mred @ physical_acceleration + force0
+                    if (not np.all(np.isfinite(physical_acceleration))
+                            or float(np.linalg.norm(mass_balance))
+                            > controls.equilibrium_tolerance*force_scale):
+                        raise ValueError("S3 descriptor initial load is outside the physical mass range")
+                    recovered_velocity, acceleration = _consistent_s3_descriptor_rates(
+                        model, T, Mred, descriptor_basis, full0, vred,
+                        physical_acceleration, initial_tangent,
+                        committed_states, controls.s3_descriptor_difference_step_s,
+                    )
+                    if not np.allclose(recovered_velocity, vred,
+                                       rtol=0.0, atol=1.0e-10):
+                        raise ValueError("S3 descriptor initial loaded velocity is inconsistent")
             else:
                 acceleration = np.asarray(spsolve(Mred, -force0)).reshape(-1)
         else:

@@ -24,7 +24,7 @@ from anysolver import (
 from anysolver.fe_core import FEModel
 from anysolver.algebraic_dynamics import build_declared_algebraic_basis
 from anysolver.assembly import assemble_mass_matrix, build_constraint_transformation
-from anysolver.matrix_assembly import assemble_stiffness_matrix
+from anysolver.matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
 from anysolver.nonlinear_static import _assemble_nonlinear_system
 from anysolver.general_contact.core import (
     _PlanarQ4PlaneManager, active_contact_manager, contact_scope,
@@ -336,7 +336,7 @@ def test_q4_ramped_nodal_load_during_contact_matches_forced_oscillator():
     assert result.external_nodal_work_j[-1] > 0.0
 
 
-def test_transient_development_load_admission_is_nodal_q4_only():
+def test_transient_development_load_admission_is_nodal_and_mass_consistent():
     model, contact, velocity = _guided_plate()
     load = _constant_q4_load()
     load.add_pressure_load(1, 1.0)
@@ -348,11 +348,13 @@ def test_transient_development_load_admission_is_nodal_q4_only():
         )
 
     model, contact, velocity = _guided_s3_descriptor_impact()
-    with pytest.raises(ValueError, match="only for the Q4 plane"):
+    load = LoadCase("algebraic_s3_moment")
+    load.add_nodal_load(1, moments=(0.0, 1.0, 0.0))
+    with pytest.raises(ValueError, match="unresolved algebraic force"):
         solve_transient_contact(
             model, contact, TransientConfig(.001, .001,
                                             initial_velocity=velocity),
-            base_load_case=_constant_q4_load(),
+            base_load_case=load,
             solver_controls=ContactTransientSolverControls(
                 allow_s3_descriptor_dev=True,
             ),
@@ -390,6 +392,122 @@ def _guided_s3_descriptor_impact(*, tilt=0.0, span=1.0):
     for node_id in (1, 2, 3):
         velocity[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -1.0
     return model, contact, velocity
+
+
+def _uniform_s3_normal_load(force_n=-.02):
+    load = LoadCase("uniform_s3_normal_dead_load")
+    for node_id in (1, 2, 3):
+        load.add_nodal_load(node_id, forces=(0.0, 0.0, force_n/3.0))
+    return load
+
+
+def test_s3_descriptor_constant_load_free_motion_impact_and_restart():
+    controls = ContactTransientSolverControls(allow_s3_descriptor_dev=True)
+    model, contact, velocity = _guided_s3_descriptor_impact()
+    velocity[:] = 0.0
+    free = solve_transient_contact(
+        model, contact, TransientConfig(.001, .005,
+                                        initial_velocity=velocity),
+        base_load_case=_uniform_s3_normal_load(), solver_controls=controls,
+    )
+    dof = model.mesh.dof_manager.get_node_dofs(1)[2]
+    assert free.accelerations[0, dof] == pytest.approx(-.8, abs=1e-10)
+    assert free.velocities[-1, dof] == pytest.approx(-.004, abs=1e-10)
+    assert free.displacements[-1, dof] == pytest.approx(-1e-5, abs=1e-10)
+    assert free.external_nodal_work_j[-1] == pytest.approx(2e-7, abs=1e-12)
+    assert all(state.active_pressure_dofs == 0 for state in free.contact)
+
+    impact_model, impact_contact, impact_velocity = _guided_s3_descriptor_impact()
+    impact = solve_transient_contact(
+        impact_model, impact_contact,
+        TransientConfig(.0001, .012, initial_velocity=impact_velocity),
+        base_load_case=_uniform_s3_normal_load(), solver_controls=controls,
+    )
+    hit_time = (-1.0+math.sqrt(1.0+2.0*.8*.01))/.8
+    impact_speed = 1.0+.8*hit_time
+    duration = .011-hit_time
+    omega = math.sqrt(1.0e5/.05)
+    penetration = (
+        .02/50000.0*(1.0-math.cos(omega*duration))
+        + impact_speed/omega*math.sin(omega*duration)
+    )
+    sample = int(np.argmin(abs(impact.times-.011)))
+    assert impact.contact[sample].active_pressure_dofs > 0
+    assert impact.displacements[sample, dof] == pytest.approx(
+        -.01-penetration, abs=2e-5,
+    )
+    assert all(state.gap_tolerance_met for state in impact.contact)
+
+    split_model, split_contact, split_velocity = _guided_s3_descriptor_impact()
+    first = solve_transient_contact(
+        split_model, split_contact,
+        TransientConfig(.0001, .011, initial_velocity=split_velocity),
+        base_load_case=_uniform_s3_normal_load(), solver_controls=controls,
+        emit_restart_checkpoint=True,
+    )
+    assert first.restart_checkpoint["version"] == 1
+    resume_model, resume_contact, resume_velocity = _guided_s3_descriptor_impact()
+    resumed = solve_transient_contact(
+        resume_model, resume_contact,
+        TransientConfig(.0001, .012, initial_velocity=resume_velocity),
+        base_load_case=_uniform_s3_normal_load(), solver_controls=controls,
+        restart_checkpoint=first.restart_checkpoint,
+    )
+    for name in ("displacements", "velocities", "accelerations",
+                 "external_nodal_work_j"):
+        combined = np.concatenate((getattr(first, name),
+                                   getattr(resumed, name)[1:]), axis=0)
+        np.testing.assert_allclose(combined, getattr(impact, name),
+                                   rtol=0.0, atol=1e-10)
+    changed_model, changed_contact, changed_velocity = _guided_s3_descriptor_impact()
+    with pytest.raises(ValueError, match="checkpoint analysis is incompatible"):
+        solve_transient_contact(
+            changed_model, changed_contact,
+            TransientConfig(.0001, .012, initial_velocity=changed_velocity),
+            base_load_case=_uniform_s3_normal_load(-.021),
+            solver_controls=controls, restart_checkpoint=first.restart_checkpoint,
+        )
+
+
+def test_s3_descriptor_nonuniform_load_initial_dae_acceleration():
+    model, contact, velocity = _guided_s3_descriptor_impact()
+    velocity[:] = 0.0
+    load = LoadCase("nonuniform_s3_normal_dead_load")
+    for node_id, force in zip((1, 2, 3), (-.010, -.007, -.003)):
+        load.add_nodal_load(node_id, forces=(0.0, 0.0, force))
+    result = solve_transient_contact(
+        model, contact, TransientConfig(.0005, .001,
+                                        initial_velocity=velocity),
+        base_load_case=load,
+        solver_controls=ContactTransientSolverControls(
+            allow_s3_descriptor_dev=True,
+        ),
+    )
+    stiffness, _ = assemble_stiffness_matrix(model)
+    mass, _ = assemble_mass_matrix(model)
+    generalized_load, _ = assemble_load_vector(model, load)
+    _, _, transform, _, free_dofs, _ = build_constraint_transformation(
+        stiffness, np.zeros(mass.shape[0]), model,
+    )
+    reduced_mass_sparse = (transform.T @ mass @ transform).tocsr()
+    reduced_mass = reduced_mass_sparse.toarray()
+    reduced_stiffness = (transform.T @ stiffness @ transform).toarray()
+    null = build_declared_algebraic_basis(
+        model, mass, reduced_mass_sparse, transform, free_dofs,
+        dense_size_limit=512,
+    ).reduced_basis.toarray()
+    reduced_load = np.asarray(transform.T @ generalized_load).reshape(-1)
+    equations = np.vstack((reduced_mass, null.T @ reduced_stiffness))
+    right = np.r_[reduced_load, np.zeros(null.shape[1])]
+    independent_acceleration = np.linalg.lstsq(
+        equations, right, rcond=None,
+    )[0]
+    actual = result.accelerations[0, free_dofs]
+    np.testing.assert_allclose(actual, independent_acceleration,
+                               rtol=1e-8, atol=1e-9)
+    assert np.linalg.norm(reduced_mass @ actual-reduced_load) < 1e-9
+    assert np.linalg.norm(null.T @ reduced_stiffness @ actual) < 1e-8
+    assert all(state.gap_tolerance_met for state in result.contact)
 
 
 def test_s3_descriptor_impact_retains_massless_rotations_and_skin_offset():

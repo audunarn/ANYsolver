@@ -1,5 +1,6 @@
 """Guided S3 V2D impact with declared massless rotational coordinates."""
 
+import argparse
 import numpy as np
 
 from anysolver import (
@@ -8,6 +9,7 @@ from anysolver import (
     ContactInteraction,
     ContactSurface,
     ContactTransientSolverControls,
+    LoadCase,
     RigidContactBody,
     TransientConfig,
     create_shell_element,
@@ -17,6 +19,12 @@ from anysolver.fe_core import FEModel
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--constant-downward-load-n", type=float, default=0.0)
+    args = parser.parse_args()
+    if (not np.isfinite(args.constant_downward_load_n)
+            or args.constant_downward_load_n < 0.0):
+        parser.error("constant downward load must be finite and nonnegative")
     director = np.asarray((0.002, 0.0, 1.0), dtype=float)
     director /= np.linalg.norm(director)
     span = 0.1
@@ -47,9 +55,18 @@ def main() -> None:
     initial_velocity = np.zeros(model.mesh.dof_manager.total_dofs)
     for node_id in (1, 2, 3):
         initial_velocity[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -1.0
+    load = None
+    if args.constant_downward_load_n:
+        load = LoadCase("uniform_s3_normal_dead_load")
+        for node_id in (1, 2, 3):
+            load.add_nodal_load(
+                node_id,
+                forces=(0.0, 0.0, -args.constant_downward_load_n/3.0),
+            )
     result = solve_transient_contact(
         model, definition,
         TransientConfig(.0002, .012, initial_velocity=initial_velocity),
+        base_load_case=load,
         solver_controls=ContactTransientSolverControls(
             allow_s3_descriptor_dev=True,
         ),
@@ -63,6 +80,7 @@ def main() -> None:
         "final_active_pressure_nodes": result.contact[-1].active_pressure_dofs,
         "maximum_final_ry_rad": float(np.max(np.abs(result.displacements[-1, ry]))),
         "maximum_residual_n": float(np.max(result.equilibrium_residuals)),
+        "external_nodal_work_j": float(result.external_nodal_work_j[-1]),
     })
 
 
