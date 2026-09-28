@@ -46,14 +46,19 @@ moment and mixed densities produce the declared integrated shell/native wrench,
 zero resultant and drilling work, and supported physical-only shell compliance.
 Same-parent gradients and Hessians follow the actual native update. A
 two-segment finite P0/P1 six-channel density basis now gives owned coefficients,
-exact piecewise-polynomial L2 Gram, and coefficient-conjugate projected gaps;
-18 focused checks pass. Independent read-only reviews found no bounded
-discrete measure, scatter, or factory-basis algebra defect. Gauss exactness
+exact piecewise-polynomial L2 Gram, and coefficient-conjugate projected gaps.
+The virgin joint covector now maps to a spatial force and shell-rail moment
+including the eccentric lever arm. A four-station physical-wrench quadrature
+Gram uses frozen force/length scales; station-map equality alone does not
+prove whole-segment constancy. Twenty focused checks pass. Independent
+read-only reviews found no bounded discrete measure, scatter, or basis algebra
+defect. Gauss exactness
 applies to density products, not generally to nonlinear density-gap work.
 **Generic L2 densities have no point values.** This raw coordinate-density
-Gram is not the physical F03 norm: the actual dual-pose-to-spatial-wrench map,
-force/moment scales, quadrature error beyond these polynomials, growing-space
-stability, native trace bound, and full physical assessment remain.
+Gram is distinct from the new physical quadrature Gram. Whole-segment map
+constancy or bounded integration error, curved-line transport, growing-space
+stability, native trace bound, and full physical
+assessment remain.
 
 A bare native B3 broken-half-cell L2 screen at 4/8/16 half-cells produced
 upper quotients 9.260/9.222/9.213 × 10⁻⁶ J⁻¹. This finite-grid diagnostic
@@ -67,9 +72,9 @@ those limits and the mathematical obstruction.
 
 ## Next discriminating action
 
-Review the finite density basis; derive its physical six-channel work map and
-candidate-independent norm, plus a mathematical native trace bound or
-counterexample. Then compare complete A/B spaces only under an independently
+Review the flat physical Gram and derive its curved/variable-map extension and
+a mathematical native trace bound or counterexample. Then compare complete
+A/B spaces only under an independently
 reviewed F03 contract. The full seven ratios, growing spaces, three refinement
 levels, physical transfer, locking, shear, drilling, and mixed-system checks
 remain mandatory. No automatic finer axial sweep or new external reference is

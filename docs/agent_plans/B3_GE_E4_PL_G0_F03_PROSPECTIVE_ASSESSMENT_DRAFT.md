@@ -340,16 +340,34 @@ On one material line of length \(L\), let \(\xi=s/L\in[0,1]\), freeze a
 positive force scale \(F_*\) and length scale \(\ell_*\), and convert each
 six-channel multiplier density through the *actual reference-state dual pose
 map* to a spatial force density \(f\) and couple density \(m\) about the
-moving connection line. This conversion includes the eccentric lever arm and
+shell rail in the reference configuration. This conversion includes the eccentric lever arm and
 the Log-coordinate covector map; a raw rotation multiplier is not necessarily
-a physical moment. In one fixed reference frame, set
+a physical moment. At the straight virgin reference, the work-conjugate
+conversion is
+\[
+f=R_{s0}\lambda_t,\qquad
+m=R_{b0}\lambda_R+(r_{b0}-r_{s0})\times f,
+\]
+for the virgin pose law's spatial resultant **about the shell rail**. The
+shell-side physical residual is \((-f,-m)\); the beam-side residual is
+\((f,R_{b0}\lambda_R)\) about the beam port. This follows from the actual
+reference pose Jacobian, including the Log derivative, and has been checked
+for eccentric, rotated, origin-shifted joints. It is not a finite-motion or
+curved-line transport law.
+In one fixed reference frame, set
 \[
 \hat\lambda(\xi)=
 \begin{bmatrix}L f(L\xi)/F_*\\ L m(L\xi)/(F_*\ell_*)\end{bmatrix},
 \qquad W_*=F_*\ell_*.
 \]
-Then \(W_*^{-1}\delta W=\int_0^1\hat\lambda\cdot
-(\delta g_t/\ell_*,\delta g_R)\,d\xi\). The frame, line measure, units and
+Let \(d=r_{b0}-r_{s0}\). For spatial left-multiplicative port variations,
+define the reference relative variations **about the shell rail** as
+\(\delta u_{\rm rel}=\delta r_b-\delta r_s-\delta\theta_b\times d\) and
+\(\delta\theta_{\rm rel}=\delta\theta_b-\delta\theta_s\). They are not the
+raw material translation and Log-gap components. The pose-law virtual work
+then satisfies \(W_*^{-1}\delta W=\int_0^1\hat\lambda\cdot
+(\delta u_{\rm rel}/\ell_*,\delta\theta_{\rm rel})\,d\xi\).
+The frame, line measure, units and
 support interpretation must be frozen across candidates; a curved line needs
 a separately verified objective frame transport. Junction branches and loops
 need their own explicitly joined or periodic norm contract.
@@ -424,6 +442,21 @@ Its projected constraint rows are \(D^TQ g_6\), conjugate to the same
 coefficient vector used for station work. This establishes a finite discrete
 pairing only: \(D^TQD\) is **not** \(M_{0,h}\) until the reference-state dual
 pose-to-physical-wrench conversion and frozen force/moment scales are applied.
+For a proven constant reference dual map \(T\) on a straight rail,
+let \(\mathcal T=I_4\otimes T\),
+\(\mathcal S=I_4\otimes\operatorname{diag}(F_*^{-1}I_3,
+(F_*\ell_*)^{-1}I_3)\), and
+\(Q=\operatorname{diag}(w_iI_6)\). The exact mapped physical L2 Gram is
+\(M_{0,h}=L D^T\mathcal T^T\mathcal S^TQ\mathcal S\mathcal T D\).
+Its P0/P1 product integrals are exact under that constant-map condition;
+the reference line, scales, and shell-rail wrench origin are frozen across
+candidate spaces. The current implementation checks equality of the map at
+four stations only, which does **not** prove constancy between stations: its
+returned matrix is a four-station physical **quadrature Gram**, not yet the
+exact continuum \(M_{0,h}\). A whole-segment reference geometry/port contract
+or controlled map-integration error is required before that identification.
+This is a development norm construction, not an accepted F03 threshold or a
+mesh-uniform trace result.
 The same quadrature is not automatically exact for nonlinear density-gap work;
 its integration error needs a separate check. An independent read-only review
 found no algebra or factory-ownership defect in this bounded construction.

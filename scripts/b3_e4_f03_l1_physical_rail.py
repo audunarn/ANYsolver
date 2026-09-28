@@ -34,6 +34,30 @@ def _unit(value: np.ndarray, label: str) -> np.ndarray:
     return value/size
 
 
+def reference_spatial_wrench_map(joint: RigidPoseJoint) -> np.ndarray:
+    """Map virgin joint covectors to force and moment about the shell rail.
+
+    For material translation/rotation multipliers (lt, lr), the beam-side
+    spatial force is Rs lt and its axis couple is Rb lr. Transporting that
+    couple to the shell rail adds (rb-rs) cross force. The shell pose residual
+    is the negative of this transported wrench. This is a reference-state
+    dual map, not a finite-motion or curved-line transport rule.
+    """
+    if not isinstance(joint, RigidPoseJoint):
+        raise TypeError("native reference pose joint required")
+    joint.guard()
+    shell_frame, beam_frame = joint.reference_frames
+    arm = joint.reference_positions[1]-joint.reference_positions[0]
+    skew = np.array(((0., -arm[2], arm[1]),
+                     (arm[2], 0., -arm[0]),
+                     (-arm[1], arm[0], 0.)))
+    result = np.zeros((6, 6))
+    result[:3, :3] = shell_frame
+    result[3:, :3] = skew@shell_frame
+    result[3:, 3:] = beam_frame
+    return _owned(result, (6, 6))
+
+
 def transverse_shape_integrals(cuts: np.ndarray, bounds: tuple[float, float]
                                ) -> np.ndarray:
     """Integrate piecewise-linear Q4 transverse shape over physical width."""
@@ -479,3 +503,38 @@ class FiniteRailDensityBasis:
             raise ValueError("density basis and material line do not match")
         return line.work_tangent(shell_total, beam_state,
                                  self.density_samples(coefficients))
+
+    def flat_reference_physical_quadrature_gram(
+            self, line: SegmentedRailWeakWork, *, force_scale: float,
+            characteristic_length: float) -> np.ndarray:
+        """Four-station physical-wrench quadrature Gram, not F03 acceptance.
+
+        The fixed force/moment scales and shell-rail origin are common to all
+        six channels. Equality of four station maps is a bounded consistency
+        check; it does not prove constancy between stations. Hence this is
+        not asserted to be an exact continuum L2 Gram. Curved transport and
+        variable-map quadrature remain outside this development probe.
+        """
+        if (not np.array_equal(self.stations, line.stations) or
+                not np.array_equal(self.weights, line.weights)):
+            raise ValueError("density basis and material line do not match")
+        if (not np.isfinite((force_scale, characteristic_length)).all() or
+                force_scale <= 0. or characteristic_length <= 0.):
+            raise ValueError("positive frozen force and length scales required")
+        maps = [reference_spatial_wrench_map(c.joint)
+                for c in line.connections]
+        if any(not np.allclose(matrix, maps[0], rtol=0., atol=2e-12)
+               for matrix in maps[1:]):
+            raise ValueError("matching straight station wrench maps required")
+        length = self.cuts[-1]-self.cuts[0]
+        if not np.isclose(self.weights.sum(), length, rtol=0., atol=2e-15):
+            raise ValueError("reference line measure changed")
+        scale = np.diag([1./force_scale]*3+
+                        [1./(force_scale*characteristic_length)]*3)
+        metric = (scale@maps[0]).T@(scale@maps[0])
+        count = self.sample_matrix.shape[1]
+        gram = np.zeros((count, count))
+        for station, weight in enumerate(self.weights):
+            sample = self.sample_matrix[6*station:6*(station+1)]
+            gram += weight*sample.T@metric@sample
+        return _owned(length*gram, (count, count))

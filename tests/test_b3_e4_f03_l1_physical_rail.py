@@ -6,13 +6,14 @@ from scipy import linalg
 from scipy.spatial.transform import Rotation
 
 from anysolver.corotational import rotation_matrix_from_vector
+from anysolver._ge_beam3_pose_joint import RigidPoseJoint
 from anysolver.elements import create_shell_element
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts.b3_e4_f03_plate_patch_work import raw_e4_tangent
 from scripts.b3_e4_f03_l1_physical_rail import (
     FiniteRailDensityBasis, FlatQ4PhysicalRail, RailL1LogConnection,
-    SegmentedRailWeakWork,
+    SegmentedRailWeakWork, reference_spatial_wrench_map,
     transverse_shape_integrals,
 )
 
@@ -420,7 +421,8 @@ def test_rail_transfers_physical_wrench_without_shell_drilling_completion(
             physical_work, rtol=2e-12, atol=1e-16)
 
 
-def _segmented_rail():
+def _segmented_rail(*, beam_offset=(0., 0., -.05),
+                    expected_offset=(0., 0., 0.)):
     beam = build(4, z_offset=.0675, assemble=False)
     y = np.array((-.1, 0., .1))
     reference = np.array([[(x, value, 0.) for value in y]
@@ -433,8 +435,86 @@ def _segmented_rail():
 
     line = SegmentedRailWeakWork.at_reference(
         reference, y, (-.05, .05), .035, port_at,
-        beam.context.initial.mechanical)
+        beam.context.initial.mechanical, beam_offset=beam_offset,
+        expected_reference_offset_shell=expected_offset)
     return line, beam
+
+
+def test_reference_spatial_wrench_map_matches_joint_virtual_work_and_origin():
+    shell = Rotation.from_rotvec((.3, -.2, .1)).as_matrix()
+    beam = Rotation.from_rotvec((-.1, .4, .2)).as_matrix()
+    frames = np.array((shell, beam))
+    shell_position = np.array((2., -3., 4.))
+    arm = np.array((.12, -.07, .3))
+    positions = np.array((shell_position, shell_position+arm))
+    joint = RigidPoseJoint(positions, frames)
+    covector = np.array((1., 2., 3., 4., 5., 6.))
+    force, moment = np.split(reference_spatial_wrench_map(joint)@covector, 2)
+    beam_couple = beam@covector[3:]
+    np.testing.assert_allclose(force, shell@covector[:3],
+                               rtol=0., atol=2e-15)
+    np.testing.assert_allclose(moment, beam_couple+np.cross(arm, force),
+                               rtol=0., atol=2e-15)
+    result = joint.evaluate(positions, frames, covector)
+    residual = result.residual[:12]
+    np.testing.assert_allclose(residual, np.r_[-force, -moment,
+                                               force, beam_couple],
+                               rtol=0., atol=2e-14)
+    variation = np.array((.03, -.02, .04, .01, .06, -.05,
+                          -.04, .02, .05, -.03, .04, .02))
+    spatial_translation = (variation[6:9]-variation[:3]-
+                           np.cross(variation[9:12], arm))
+    spatial_rotation = variation[9:12]-variation[3:6]
+    assert covector@result.constraint_jacobian@variation == pytest.approx(
+        force@spatial_translation+moment@spatial_rotation,
+        rel=0., abs=2e-14)
+    shift = np.array((40., -23., 11.))
+    shifted = RigidPoseJoint(positions+shift, frames)
+    np.testing.assert_allclose(reference_spatial_wrench_map(shifted),
+                               reference_spatial_wrench_map(joint),
+                               rtol=0., atol=2e-14)
+    turn = Rotation.from_rotvec((.25, .1, -.3)).as_matrix()
+    rotated = RigidPoseJoint(np.array([turn@position for position in positions]),
+                             np.array([turn@frame for frame in frames]))
+    physical_turn = np.zeros((6, 6))
+    physical_turn[:3, :3] = turn
+    physical_turn[3:, 3:] = turn
+    np.testing.assert_allclose(reference_spatial_wrench_map(rotated),
+                               physical_turn@reference_spatial_wrench_map(joint),
+                               rtol=0., atol=2e-14)
+
+
+def test_flat_reference_physical_gram_uses_actual_offset_and_scales():
+    line, _ = _segmented_rail(beam_offset=(0., 0., 0.),
+                              expected_offset=(0., 0., .05))
+    basis = FiniteRailDensityBasis.on_two_segments(
+        (.5, .75, 1.), ("P1", "P0", "P1", "P0", "P1", "P0"))
+    density = np.array((.8, -.3, 1.2, .4, -.6, 1.1))
+    coefficients = []
+    for channel, kind in enumerate(basis.kinds):
+        coefficients.extend([density[channel]]*(2 if kind == "P0" else 3))
+    coefficients = np.asarray(coefficients)
+    np.testing.assert_allclose(basis.density_samples(coefficients),
+                               np.tile(density, (4, 1)),
+                               rtol=0., atol=2e-16)
+    force_scale, length_scale = 5., .2
+    gram = basis.flat_reference_physical_quadrature_gram(
+        line, force_scale=force_scale,
+        characteristic_length=length_scale)
+    assert not gram.flags.writeable
+    assert np.linalg.eigvalsh(gram).min() > 0.
+    force, moment = np.split(
+        reference_spatial_wrench_map(line.connections[0].joint)@density, 2)
+    length = .5
+    expected = length**2*(force@force/force_scale**2+
+                          moment@moment/(force_scale*length_scale)**2)
+    assert coefficients@gram@coefficients == pytest.approx(expected,
+                                                           rel=2e-14)
+    beam_axis_couple = line.connections[0].joint.reference_frames[1]@density[3:]
+    assert np.linalg.norm(moment-beam_axis_couple) > 1e-3
+    with pytest.raises(ValueError, match="positive frozen"):
+        basis.flat_reference_physical_quadrature_gram(
+            line, force_scale=0., characteristic_length=length_scale)
 
 
 def test_finite_density_basis_has_exact_piecewise_l2_gram_and_owned_data():
