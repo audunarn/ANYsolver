@@ -138,10 +138,10 @@ for iteration in range(8):
         break
     size = len(q)
     active_count = len(active)
-    matrix = np.block((
-        (tangent, -gradient.T),
-        (gradient, np.zeros((active_count, active_count))),
-    ))
+    matrix = np.block([
+        [tangent, -gradient.T],
+        [gradient, np.zeros((active_count, active_count))],
+    ])
     correction = np.linalg.solve(matrix, -np.r_[residual, gap[active]])
     accepted = False
     for backtrack in range(8):
