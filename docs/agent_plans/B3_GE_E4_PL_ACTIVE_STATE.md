@@ -69,34 +69,24 @@ successful probes, hashes and review limits remain preserved.
 
 Independent review proves that exact work transport and three reference
 levels cannot bound the unseen same-law compliance tail; the [F03 draft](B3_GE_E4_PL_G0_F03_PROSPECTIVE_ASSESSMENT_DRAFT.md)
-records the counterexample. The existing supported 2→4 and 4→8 grids now
-decompose admitted action compliance into nonnegative Ritz gain and indefinite
-coarse/fine energy-consistency defect.
-The bounded union A+B screen found Ritz spectra 0.162–1.000 and
-0.096–1.000, while consistency spans −1.069–0 and −2.025–0 relative to the
-fine action compliance. The union has a numerically null coarse action on
-both pairs that becomes visible on the fine grid; each individual A/B action
-matrix remains full row rank numerically. This is cross-space reference
-resolution, not evidence that either candidate has an unsupported mode.
-The targeted per-space split confirms a material consistency defect in both
-A and B. Ritz maxima are 0.812–0.919 and negative consistency minima are
-−0.748 to −0.946 relative to fine
-compliance; coarse/fine ratios span 0.312–1.492. Their cancellation rules out
-a simple finite-grid agreement or monotone reference-error rule. Independent
-review found no formula defect. The exact-source six-case rerun is in
-`.qualification/b3-ge-e4-pl/r7-f03-action-decomp-dev-20260928-v2/`, bound to
-`40359355`; it used one effective numerical thread and 31.6 seconds. Next
-decide, by derivation rather than another
-grid sweep, whether a computable same-law enclosure can bound both the
-nonconforming consistency defect and Ritz tail with exact gauges. If not,
-develop a prospectively reviewed physical multiplier norm and signed mixed
-criterion. Neither path selects A/B or scores formal F03 yet. Continue
-independent foundations and GE/B2 lifecycle work. New
-external sided output needs a specific discriminating hypothesis; stop
-refining the low-precision saved S4 result. Early runs in this slice exhausted
-600 seconds during Numba cache creation denied by the sandbox; a disposable
-writable cache made the same checks finish in seconds. These aborted runs
-are execution diagnostics, not mechanics failures.
+records the counterexample. The exact-source six-case split on existing grids
+found opposing Ritz and consistency terms, so apparent agreement is not a
+reference-error rule. See
+`.qualification/b3-ge-e4-pl/r7-f03-action-decomp-dev-20260928-v2/` at
+`40359355`; the union near-null is a reference-resolution warning, not an
+A/B failure. Earlier 600-second sandbox cache failures are execution
+diagnostics, not mechanics results.
+
+Independent mechanics review found a stronger obstruction: current unsmoothed
+L1 normal-spin work with P0 moments contains shell-line endpoint point
+evaluations, unbounded in continuum H1 shell energy. Broken native B3
+half-cell traces also need their own pairing. The draft records a conditional
+positive-width shell-rail correction. **Next derive and check that one
+physical-width trace** for work continuity, objectivity, torque/shear and
+actual-update derivatives before any multiplier score or further grid sweep.
+The H^-1/2 prototype was discarded; A/B remain unselected. Continue
+independent GE/B2 work. New external sided output requires a specific
+discriminating hypothesis.
 
 ## Execution boundary
 

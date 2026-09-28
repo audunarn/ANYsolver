@@ -263,6 +263,161 @@ independent controls. No observed candidate value may set its own threshold.
 Binary64 is admissible where a justified error bound supports it; exactness
 remains required for a claim that mathematically depends on exact rank.
 
+## Direct physical multiplier norm: reviewed obstruction and conditional route
+
+The same-law reference route above remains mathematically open: no guaranteed
+tail/consistency enclosure has been derived for the native E4/B3 pair. A
+candidate-independent multiplier norm was examined instead. Independent
+mechanics review found a **concrete continuity obstruction for the current
+unsmoothed L1 law**, so the norm below is conditional mathematics, not an
+adopted F03 criterion or authority to score A/B.
+
+At the straight virgin reference, the shell normal-spin variation contains
+the longitudinal slope of top-line lateral displacement. For a segmentwise
+constant normal-moment density \(m_z\), its shell work includes
+\(m_z\int_a^b\partial_s u_{\rm top,y}\,ds
+=m_z(u_{\rm top,y}(b)-u_{\rm top,y}(a))\). An E4/Reissner–Mindlin shell has
+an \(H^1\) surface displacement, whose zero-width line trace is only
+\(H^{1/2}\); point evaluation on that line is not bounded by shell energy.
+The current P0 normal-moment channel therefore lacks a mesh-uniform
+work-continuity bound in the proposed global \(H^{-1/2}\) density norm. A
+broken native B3 half-cell rotation also cannot simply be treated as a
+global \(H^{1/2}\) trace. This is a **law/space regularity finding**, not a
+numerical failure of A/B, and neither a small discrete residual nor an
+algebraic KKT inertia check repairs it.
+
+One targeted law correction to derive is a *physical positive-width shell
+rail*: average top-surface position and director across a frozen transverse
+kernel \(\rho_w\), then form the objective projected material-line triad from
+that averaged position and director. For
+\(\bar u(s)=\int\rho_w(y)u(s,y)\,dy\), Cauchy–Schwarz gives
+\(\|\bar u\|_{H^1_s}\le\|\rho_w\|_{L^2_y}\|u\|_{H^1_{s,y}}\). Hence
+\(\int m_z\partial_s\bar u_y\,ds\) is bounded for an L2 moment density.
+This estimate assumes a fixed product strip inside the physical shell, a
+material kernel independent of \(s\), and supported E4 energy controlling
+the relevant shell displacement/director \(H^1\) fields. A curved or varying
+strip needs its Jacobian and kernel derivatives in the proof. Normalize
+\(\int\rho_w\,dy=1\) in material measure to preserve rigid translations;
+average the actual top-surface position including thickness/director arm.
+The averaged director and its projected longitudinal tangent need uniform
+nondegeneracy, and the relative Log needs an admitted chart. An L2 multiplier
+pairing also needs a mesh-uniform L2 bound for the *broken native B3 pose*
+from its stationary-reduced physical energy.
+For a uniform width \(w\), the bound grows as \(w^{-1/2}\), so width must be
+a declared positive physical connection measure, not a mesh-dependent tuning
+parameter. This candidate changes the shell-side trace and must re-pass
+objectivity, stress-free reference, derivatives, torque/shear, topology,
+work, locking and matched-reference checks. A zero-width law with a smoother
+normal-moment space and controlled endpoint/jump terms is another theoretical
+possibility; it is not selected. Neither proposal may silently change the
+required six-channel physics or substitute a rigid footprint for a line.
+
+On one material line of length \(L\), let \(\xi=s/L\in[0,1]\), freeze a
+positive force scale \(F_*\) and length scale \(\ell_*\), and convert each
+six-channel multiplier density through the *actual reference-state dual pose
+map* to a spatial force density \(f\) and couple density \(m\) about the
+moving connection line. This conversion includes the eccentric lever arm and
+the Log-coordinate covector map; a raw rotation multiplier is not necessarily
+a physical moment. In one fixed reference frame, set
+\[
+\hat\lambda(\xi)=
+\begin{bmatrix}L f(L\xi)/F_*\\ L m(L\xi)/(F_*\ell_*)\end{bmatrix},
+\qquad W_*=F_*\ell_*.
+\]
+Then \(W_*^{-1}\delta W=\int_0^1\hat\lambda\cdot
+(\delta g_t/\ell_*,\delta g_R)\,d\xi\). The frame, line measure, units and
+support interpretation must be frozen across candidates; a curved line needs
+a separately verified objective frame transport. Junction branches and loops
+need their own explicitly joined or periodic norm contract.
+
+For a straight line, propose the componentwise spectral dual norm
+\[
+\|\hat\lambda\|_{-1/2,N}^{2}
+=\sum_{k=0}^{\infty}
+\bigl(1+(k\pi)^2\bigr)^{-1/2}
+\left\|\int_0^1\hat\lambda(\xi)\phi_k(\xi)\,d\xi\right\|_2^2,
+\quad \phi_0=1,\quad \phi_k=\sqrt2\cos(k\pi\xi)\ (k>0).
+\]
+This is a declared Neumann spectral \(H^{-1/2}\)-type norm, not a norm
+constructed from the candidate compliance. It is **not suitable as a
+six-channel F03 norm for the current unsmoothed law or the proposed rail yaw
+channel**. It is retained here solely as a rejected norm design and algebraic
+control; do not score A/B with it. Even after width averaging, take
+\(\bar u_n=\sin(n\pi s)/(n\pi)\) and \(m_n=\cos(n\pi s)\): shell \(H^1\)
+norm and yaw work stay order one while the spectral \(H^{-1/2}\) norm of
+\(m_n\) tends to zero. The derivative channel instead needs at least an L2
+density norm under the stated rail regularity. Its compatibility with native
+broken B3 traces and the other five channels still requires proof. For piecewise
+P0/P1 densities, exact polynomial integration gives
+the L2 Gram \(M_0\) and the first \(N+1\) Fourier coefficients. In exact
+arithmetic, Parseval gives the candidate-independent Loewner enclosure
+\[
+M_N\preceq M_{\Lambda}\preceq
+M_N+\bigl(1+((N+1)\pi)^2\bigr)^{-1/2}M_0.
+\]
+Any numerical implementation must separately bound quadrature/roundoff and
+check that the enclosure is tight enough *before* scoring candidates. This
+certifies the proposed norm evaluation, not continuum stability.
+
+For the supported positive virgin physical operator already defined, let
+\(C_h=B_hK_{\rm phys,h}^{-1}B_h^T\) on its proved physical support space.
+In a common coefficient basis, the direct discrete inf-sup candidate is
+\[
+\beta_h^2=\inf_{\lambda\ne0}
+\frac{\lambda^TC_h\lambda}
+     {W_*\,\lambda^TM_{\Lambda,h}\lambda}.
+\]
+The norm is fixed by physical line density, not by \(C_h\). An analytically
+redundant density basis may be quotiented by an exact basis map; a nonzero
+physical density in \(\ker B_h^T\) is instead an unsupported interface mode
+and must produce \(\beta_h=0\). The upper Gram enclosure gives a conservative
+lower bound on \(\beta_h\); its accuracy must be reported. Basis changes and
+equivalent units must preserve the result. No threshold is set by the current
+A/B values, and finitely many positive \(\beta_h\) values do not prove a
+uniform asymptotic bound.
+
+For a *corrected* positive-width rail, a simpler prospective metric uses the
+physical six-channel L2 density Gram
+\(\lambda^TM_{0,h}\lambda=\int_0^1\|\hat\lambda\|_2^2d\xi\).
+Provided the complete shell and broken-beam work maps satisfy mesh-uniform
+energy-to-L2 trace bounds, test **both**
+\[
+\beta_{0,h}^2=\lambda_{\min}(C_h/W_*,M_{0,h}),
+\qquad
+\gamma_{0,h}^2=\lambda_{\max}(C_h/W_*,M_{0,h}).
+\]
+The second is the work-continuity check that the rejected H^{-1/2} proposal
+missed. A meaningful refinement claim needs a prospectively justified common
+positive lower bound for \(\beta_{0,h}\) and finite upper bound for
+\(\gamma_{0,h}\), not just nonzero finite-grid values. Exact L2 Gram integration is straightforward for piecewise P0/P1
+densities, but the multiplier-to-physical-wrench map, E4/B3 trace bounds,
+mesh-ratio behavior, tolerances and independent threshold are still missing.
+If this common L2 norm proves too strong for a channel, derive its actual
+trace dual *before* inspecting A/B scores; do not tune channel weights to
+rescue a candidate. A finite set of positive generalized eigenvalues does
+not prove uniform stability or physical fidelity.
+
+For the virgin symmetric native system, exact stationary elimination of
+negative-definite generalized-resultant block \(H_{pp}\) makes the supported
+KKT congruent to a physical saddle system with \(K_{\rm phys}>0\). With an
+independent multiplier-density basis and full-row-rank \(B_h\), that system
+has inertia \((n_x,n_p+n_\lambda,0)\); a zero or unexpected sign requires
+investigation. This algebraic check is distinct from the norm-scaled inf-sup
+and from solution convergence. At nonzero multipliers, include constraint
+curvature and actual chart/load derivatives; the virgin positive-work
+argument cannot be reused to label a physical limit-point instability as an
+interface defect. Keep physical transfer, locking, seven ratios, growing
+spaces, three refinements, and full mixed-system checks mandatory.
+
+Before any formal use, independent review must first accept a corrected
+continuous law and a mesh-uniform work-continuity bound, then decide its
+correct multiplier norm, numerical floor and prospective stability threshold.
+Controls must include constant/linear densities,
+checkerboards, exact and near-null actions, basis rescaling, equivalent units,
+rigid modes, broken B3 traces and loaded signed KKT counterexamples. If the
+trace regularity or threshold cannot be justified, this route stays
+developmental and F03 remains open.
+
 ## Mandatory adversarial controls and terminal use
 
 The assessment must reject these failure patterns: a raw indefinite matrix
