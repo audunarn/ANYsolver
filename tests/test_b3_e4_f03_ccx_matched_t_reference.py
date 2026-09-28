@@ -52,6 +52,31 @@ def test_native_geometry_profile_keeps_physical_plate_top_and_web_seam():
     assert "no admitted matching native B3 section" in t_model["comparison_scope"]
 
 
+def test_uncoupled_controls_remove_the_other_domain_and_its_actions():
+    plate, p = build_bundle("flat", "plate_fy", 4, "clamped",
+                            "native_line_geometry", "plate_only")
+    web, w = build_bundle("flat", "web_mx", 4, "clamped",
+                          "native_line_geometry", "web_only")
+    assert p["domain"] == "plate_only" and w["domain"] == "web_only"
+    assert p["shell_elements"] == {"plate": 16, "web": 0, "flange": 0}
+    assert w["shell_elements"] == {"plate": 0, "web": 16, "flange": 0}
+    assert len(p["supports"]) == len(w["supports"]) == 5
+    assert set(p["actions"]) == {"plate_fy"}
+    assert set(w["actions"]) == {"web_fy", "web_mx"}
+    assert p["geometry_m"]["web_mid_surface"] is None
+    assert w["geometry_m"]["plate_mid_surface"] is None
+    assert all("no seam" in text.lower() or "no plate/web seam" in text.lower()
+               for text in (p["limitations"][0], w["limitations"][0]))
+    assert "ELSET=Web" not in plate
+    assert "ELSET=Plate" not in web
+    with pytest.raises(ValueError, match="physical domain"):
+        build_bundle("flat", "web_mx", 4, "clamped",
+                     "native_line_geometry", "plate_only")
+    with pytest.raises(ValueError, match="bounded flat/T"):
+        build_bundle("t", "web_mx", 4, "clamped",
+                     "native_line_geometry", "web_only")
+
+
 def _synthetic_output(manifest):
     positions = {}
     motions = {}

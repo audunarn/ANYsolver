@@ -5,6 +5,7 @@ import pytest
 
 from anysolver._stiffened_shell_l1_assembly_experimental import SPACE_A, SPACE_B
 from scripts.b3_e4_f03_l1_matched_flat_web import build, evaluate
+from scripts.b3_e4_f03_l1_uncoupled_flat_controls import evaluate as controls
 
 
 def test_native_model_matches_declared_external_section_and_top_line():
@@ -37,3 +38,18 @@ def test_two_native_spaces_retain_equilibrium_and_reciprocal_work():
                    and case["free_equilibrium_ratio"] < 1e-8
                    and case["constraint_max"] < 1e-9
                    for case in value["cases"].values())
+
+
+def test_uncoupled_native_blocks_and_uniform_torsion_oracle():
+    result = controls()
+    plate = result["cases"]["plate_only"]
+    web = result["cases"]["web_only"]
+    assert plate["matrix_rows"] == 120
+    assert web["matrix_rows"] == 72
+    assert plate["load_displacement_work_j"] > 0.
+    g = 210e9/(2*(1+.3))
+    expected_web_work = 10.**2/(g*result["section"]["J_rect_m4"])
+    assert web["load_displacement_work_j"] == pytest.approx(
+        expected_web_work, rel=1e-10)
+    assert plate["free_equilibrium_ratio"] < 1e-8
+    assert web["free_equilibrium_ratio"] < 1e-8

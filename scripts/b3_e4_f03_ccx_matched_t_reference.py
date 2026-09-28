@@ -33,6 +33,7 @@ TORQUE_NM = 10.
 CASES = ("plate_fy", "web_fy", "web_mx")
 VARIANTS = ("flat", "t")
 PROFILES = ("legacy_fold", "native_line_geometry")
+DOMAINS = ("coupled", "plate_only", "web_only")
 _FRD_NUMBER = re.compile(r"[+-]?\d\.\d{5}E[+-]\d{2,3}", re.I)
 
 
@@ -86,11 +87,15 @@ def _section(variant: str) -> dict:
 
 def build_bundle(variant: str = "flat", case: str = "web_fy",
                  nx: int = 4, root: str = "clamped",
-                 profile: str = "legacy_fold") -> tuple[str, dict]:
+                 profile: str = "legacy_fold",
+                 domain: str = "coupled") -> tuple[str, dict]:
     """Build one small S4 deck and its exact original-node action inventory."""
     if (variant not in VARIANTS or case not in CASES or
             type(nx) is not int or nx not in (4, 8, 16) or
-            root not in ("hinged", "clamped") or profile not in PROFILES):
+            root not in ("hinged", "clamped") or profile not in PROFILES or
+            domain not in DOMAINS or
+            (domain != "coupled" and
+             (profile != "native_line_geometry" or variant != "flat"))):
         raise ValueError("bounded flat/T variant, action and x mesh required")
     matched = profile == "native_line_geometry"
     plate_halfwidth = .1 if matched else .5
@@ -106,39 +111,46 @@ def build_bundle(variant: str = "flat", case: str = "web_fy",
             nodes[str(index)] = list(key)
         return points[key]
 
-    plate = [[node(i/nx, -plate_halfwidth+2*plate_halfwidth*j/4,
-                   plate_reference_z) for j in range(5)]
-             for i in range(nx+1)]
-    web = [[node(i/nx, 0., plate_reference_z+k*WEB_H_M/4)
-            for k in range(5)]
-           for i in range(nx+1)]
+    plate = ([[node(i/nx, -plate_halfwidth+2*plate_halfwidth*j/4,
+                    plate_reference_z) for j in range(5)]
+              for i in range(nx+1)] if domain != "web_only" else None)
+    web = ([[node(i/nx, 0., plate_reference_z+k*WEB_H_M/4)
+             for k in range(5)]
+            for i in range(nx+1)] if domain != "plate_only" else None)
     flange = ([[node(i/nx, -.05+j*FLANGE_W_M/2,
                      plate_reference_z+WEB_H_M)
                 for j in range(3)] for i in range(nx+1)]
-              if variant == "t" else None)
+              if variant == "t" and domain == "coupled" else None)
 
     def cells(grid: list[list[int]]) -> list[tuple[int, int, int, int]]:
         return [(grid[i][j], grid[i+1][j], grid[i+1][j+1], grid[i][j+1])
                 for i in range(nx) for j in range(len(grid[0])-1)]
 
-    plate_cells, web_cells = cells(plate), cells(web)
+    plate_cells = cells(plate) if plate is not None else []
+    web_cells = cells(web) if web is not None else []
     flange_cells = cells(flange) if flange is not None else []
-    plate_root = plate[0]
-    web_root = web[0]
+    plate_root = plate[0] if plate is not None else []
+    web_root = web[0] if web is not None else []
     flange_root = flange[0] if flange is not None else []
     supports = sorted(set(plate_root+web_root+flange_root))
-    loaded = {"plate": plate[-1][2 if matched else 3],
-              "web_low": web[-1][1],
-              "web_center": web[-1][2], "web_high": web[-1][3]}
+    loaded = {}
+    if plate is not None:
+        loaded["plate"] = plate[-1][2 if matched else 3]
+    if web is not None:
+        loaded.update(web_low=web[-1][1], web_center=web[-1][2],
+                      web_high=web[-1][3])
     # Low +Fy and high -Fy give +Mx because Mx = -z Fy.
-    actions = {
-        "plate_fy": [[loaded["plate"], 2, FY_N]],
-        "web_fy": [[loaded["web_center"], 2, FY_N]],
-        "web_mx": [[loaded["web_low"], 2, TORQUE_NM/.1],
-                   [loaded["web_high"], 2, -TORQUE_NM/.1]],
-    }
-    loaded_sides = {"plate": "plate", "web_low": "web",
-                    "web_center": "web", "web_high": "web"}
+    actions = {}
+    if plate is not None:
+        actions["plate_fy"] = [[loaded["plate"], 2, FY_N]]
+    if web is not None:
+        actions["web_fy"] = [[loaded["web_center"], 2, FY_N]]
+        actions["web_mx"] = [[loaded["web_low"], 2, TORQUE_NM/.1],
+                             [loaded["web_high"], 2, -TORQUE_NM/.1]]
+    if case not in actions:
+        raise ValueError("selected load requires its physical domain")
+    loaded_sides = {key: "plate" if key == "plate" else "web"
+                    for key in loaded}
     lines = ["** INERT S4 FOLDED-SHELL FLAT/T COMPARATOR; NO F03 ACCEPTANCE",
              "** x longitudinal, y plate transverse, z web height; metres/N/Pa",
              "** shared midsurface seams; no separately recoverable interface RF",
@@ -158,8 +170,9 @@ def build_bundle(variant: str = "flat", case: str = "web_fy",
               "*NSET,NSET=Supports", ",".join(map(str, supports)),
               "*MATERIAL,NAME=Steel", "*ELASTIC", f"{_number(E_PA)},{_number(NU)}"]
     for name, thickness in (("Plate", PLATE_T_M), ("Web", WEB_T_M),
-                            ("Flange", FLANGE_T_M)):
-        if name == "Flange" and variant == "flat":
+                             ("Flange", FLANGE_T_M)):
+        if not dict(Plate=plate_cells, Web=web_cells,
+                    Flange=flange_cells)[name]:
             continue
         section_card = f"*SHELL SECTION,ELSET={name},MATERIAL=Steel"
         if matched and name == "Plate":
@@ -230,6 +243,25 @@ def build_bundle(variant: str = "flat", case: str = "web_fy",
             if variant == "flat" else
             "supplementary T-stiffener geometry; the added flange has no "
             "admitted matching native B3 section in this comparator")
+    if domain != "coupled":
+        manifest["domain"] = domain
+        manifest["classification"] = "uncoupled_element_idealization_control"
+        manifest["comparison_scope"] = (
+            "isolated plate or web on the same geometry, root and action; "
+            "no interface law or transfer is tested")
+        if domain == "plate_only":
+            manifest["geometry_m"]["web_mid_surface"] = None
+            manifest["web_centroid_offset_from_plate_midplane_m"] = None
+        else:
+            manifest["geometry_m"]["plate_mid_surface"] = None
+        manifest["section_measure"] = "one isolated S4 wall; no folded knot"
+        manifest["limitations"] = [
+            "No plate/web seam or interface transfer exists in this control.",
+            "The other physical domain and its action are absent.",
+            "S4 response is not an exact E4 or native B3 section oracle.",
+            "Clamped rotational support reactions are not recovered.",
+            "One linear elastic level is not a converged reference.",
+        ]
     return deck, manifest
 
 
@@ -331,7 +363,8 @@ def parse_outputs(manifest: dict, frd: str, dat: str) -> dict:
         raise ValueError("generated reference manifest required")
     _, expected = build_bundle(manifest["variant"], manifest["case"],
                                manifest["nx"], manifest["root"],
-                               manifest.get("profile", "legacy_fold"))
+                               manifest.get("profile", "legacy_fold"),
+                               manifest.get("domain", "coupled"))
     if manifest != expected:
         raise ValueError("reference manifest identity changed")
     coordinates, displacement = _frd_fields(frd)
@@ -371,11 +404,16 @@ def parse_outputs(manifest: dict, frd: str, dat: str) -> dict:
             "rotational_support_reaction_available": False,
             "support_wrench_complete": manifest["root"] == "hinged",
             "wrench_balance": balance,
-            "interpretation": ("applied plate/web action work, not seam interface work; "
-                               "clamped-root force-lever moment excludes rotational reactions"
-                               if manifest["root"] == "clamped" else
-                               "applied plate/web action work, not seam interface work; "
-                               "complete support wrench for hinged shell root")}
+            "interpretation": (
+                "loaded_case_work is the applied action; other available "
+                "action_work entries are virtual cross-work; no interface "
+                "exists; clamped rotational support reactions are unavailable"
+                if manifest.get("domain", "coupled") != "coupled" else
+                ("applied plate/web action work, not seam interface work; "
+                 "clamped-root force-lever moment excludes rotational reactions"
+                 if manifest["root"] == "clamped" else
+                 "applied plate/web action work, not seam interface work; "
+                 "complete support wrench for hinged shell root"))}
 
 
 def main() -> None:
@@ -387,6 +425,7 @@ def main() -> None:
     generate.add_argument("--nx", type=int, choices=(4, 8, 16), default=4)
     generate.add_argument("--root", choices=("hinged", "clamped"), default="clamped")
     generate.add_argument("--profile", choices=PROFILES, default="legacy_fold")
+    generate.add_argument("--domain", choices=DOMAINS, default="coupled")
     generate.add_argument("--stem", required=True, type=Path)
     parse = sub.add_parser("parse", help="read existing CalculiX .frd/.dat")
     parse.add_argument("--stem", required=True, type=Path)
@@ -394,7 +433,7 @@ def main() -> None:
     stem = args.stem
     if args.command == "generate":
         deck, manifest = build_bundle(args.variant, args.case, args.nx,
-                                      args.root, args.profile)
+                                      args.root, args.profile, args.domain)
         # Keep the on-disk deck identical to the bytes hashed in the manifest.
         # Text-mode writes translate LF to CRLF on Windows.
         with stem.with_suffix(".inp").open("xb") as output:

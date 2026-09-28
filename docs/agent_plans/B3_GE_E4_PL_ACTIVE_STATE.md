@@ -314,6 +314,29 @@ differences are not an F03 score: S4 welded-web deformation, native B3 section
 idealization, shell formulation and line transfer remain entangled. The next
 bounded discriminator is an uncoupled plate/web section control or a verified
 sided-work reference, not automatic mesh refinement or multiplier selection.
+For that single control batch, compare the same four-edge E4/S4 plate-only
+top-force work and B3/S4 web-only torque work under the same root clamps.
+If either isolated ratio already explains much of the coupled discrepancy,
+attribute that portion to element/section idealization and avoid editing the
+line law from a coupled percentage. If both isolated routes agree while the
+coupled route differs, prioritize interface work/transfer and sided recovery.
+If both differ and interact, report the ambiguity and seek a mechanical
+partition before a law decision. This is not a refinement or F03 run.
+The isolated-control batch is complete and independently reviewed. The
+native E4 plate work is `0.000604007 J` against isolated S4 `0.000676453 J`
+(-10.71%); the native B3 web torsion work is `0.019175702 J` against isolated
+S4 `0.015258480 J` (+25.67%). The native web value equals its uniform-torsion
+oracle. These differences are material and the torque sign opposes the coupled
+native/external gap. Moreover, isolated S4 plate work is below its coupled
+plate work, so subtraction is not an exact connection-work partition. The
+external controls cannot recover seam-sided action or clamped rotational
+reactions. See [V2 development controls](B3_E4_F03_FLAT_WEB_UNCOUPLED_CONTROLS_DEV_V2.json);
+the earlier V1 raw evidence is retained with superseded output metadata.
+Decision: stop automatic refinement and multiplier tuning. Before a law or
+space decision, derive a sided interface-work reference or an equivalent
+operator partition with matching physical virtual fields; if unavailable,
+state the obstructing equation for focused mechanics review. F03 and G0B
+remain open, and no production connection choice follows from these controls.
 
 ## Execution boundary
 
