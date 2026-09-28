@@ -100,5 +100,49 @@ def evaluate(segments: int) -> dict:
     }
 
 
+def directional_shell_control(axis: str) -> dict:
+    """Refine only one shell direction beyond the eight-edge base grid.
+
+    The line/beam do not participate; this isolates the shell-only Fy
+    discretization direction without changing the reference panel or load.
+    Both cases remain below the existing 1,800-shell-DOF fixture limit.
+    """
+    if axis not in ("longitudinal", "transverse"):
+        raise ValueError("one declared shell resolution direction required")
+    xs = np.linspace(0., 1., 33 if axis == "longitudinal" else 17)
+    ys = np.linspace(-.1, .1, 9 if axis == "longitudinal" else 17)
+    shell, physical = raw_e4_tangent(xs, ys, thickness=.035)
+    count = shell.shape[0]
+    if count > 1800 or 8*count**2 > 8*1024**3:
+        raise ValueError("bounded directional shell resource ceiling exceeded")
+    free = np.array([j for j in range(count)
+                     if (j//6) % len(xs) != 0], dtype=int)
+    tip = 6*((len(ys)//2)*len(xs)+len(xs)-1)+1
+    load = np.zeros(count)
+    load[tip] = 1000.
+    factor = linalg.cho_factor(shell[np.ix_(free, free)], lower=True,
+                               check_finite=True)
+    q = np.zeros(count)
+    q[free] = linalg.cho_solve(factor, load[free])
+    residual = shell@q-load
+    error = float(np.linalg.norm(residual[free], ord=np.inf)/
+                  max(1., np.linalg.norm(load, ord=np.inf)))
+    work = float(load@q)
+    physical_work = float(q@physical@q)
+    completion_work = float(q@(shell-physical)@q)
+    if abs(physical_work+completion_work-work) > 1e-8*max(abs(work), 1e-12):
+        raise AssertionError("directional shell work does not partition")
+    return {
+        "direction": axis, "shell_grid_x_m": xs.tolist(),
+        "shell_grid_y_m": ys.tolist(), "shell_nodes": len(xs)*len(ys),
+        "shell_dofs": count, "shell_only_fy_tip_m": float(q[tip]),
+        "shell_only_fy_load_displacement_work_Nm": work,
+        "shell_only_physical_work_Nm": physical_work,
+        "shell_only_completion_work_Nm": completion_work,
+        "shell_free_equilibrium_relative": error,
+        "scope": "one-direction shell-only development screen",
+    }
+
+
 if __name__ == "__main__":
     print(json.dumps([evaluate(n) for n in (2, 4, 8)], indent=2))
