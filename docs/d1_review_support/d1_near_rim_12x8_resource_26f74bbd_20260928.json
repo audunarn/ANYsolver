@@ -1,0 +1,32 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 87.30348510000113,
+  "peak_process_tree_memory_mb": 431.026176,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "scripts/general_contact_d1_mixed_mesh_jet2_schur_press.py",
+    "12",
+    "reports/general_contact_d1_12x8_near_rim_guarded_no_checkpoint_dev_20260928.json",
+    "--source-rows",
+    "8",
+    "--source-y-profile",
+    "near_rim8",
+    "--target-right-x-m",
+    "1.3",
+    "--load-profile",
+    "distributed",
+    "--total-force-n",
+    "0.3",
+    "--enforcement-solver",
+    "monolithic_active_set",
+    "--monolithic-maximum-pivots",
+    "32",
+    "--monolithic-linear-solver",
+    "block_response_dev",
+    "--no-checkpoint"
+  ],
+  "log": "reports\\general_contact_d1_12x8_near_rim_guarded_no_checkpoint_20260928.txt"
+}
