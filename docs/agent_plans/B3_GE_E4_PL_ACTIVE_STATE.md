@@ -199,9 +199,8 @@ This supports a shell-resolution explanation for much of the Fy trend; it
 does not prove convergence, physical connection fidelity or uniform stability.
 The bounded dense shell fixture cannot represent another full refinement.
 The replaceable L1 local operator now reaches the experimental sparse owner;
-small sparse/dense and linear lifecycle parity pass. Obtain a further
-same-law reference level without raising dense prototype limits. External
-physical transfer and independently reviewed F03 floors remain separate.
+small sparse/dense and linear lifecycle parity pass. External physical
+transfer and independently reviewed F03 floors remain separate.
 The first product-private L1 local operator is now extracted. It returns the
 six gaps, their 21-coordinate Jacobian, multiplier-work gradient/Hessian and
 nine native retained gather slots without a model-wide dense derivative or
@@ -218,10 +217,35 @@ negative checks. A reviewer found a finite-checkpoint restore bypass and a
 point-only checkpoint-identity regression; both were repaired with regression
 checks. This route has matching shell edges and beam half-cells only; it is a
 replaceable development integration, not qualified nonmatching line coupling,
-multiplier selection, or F03 acceptance. The next mechanics work is a
-three-level same-law sparse reference and the registered growing-space,
-mesh-ratio, physical-transfer and mixed-system checks; do not extrapolate the
-small panel result.
+multiplier selection, or F03 acceptance. The bounded next discriminator held
+the 0.5--1 m line, supports, material and Fy/Mx actions fixed, tested
+two/four/eight-edge parity and extended one full-panel level beyond the dense
+fixture cap. It did not authorize an open refinement campaign.
+The planned sparse-owner batch is complete at two, four, eight and sixteen
+line edges. At two/four edges, its A/B physical load works agree with the
+earlier bounded dense actual-PL oracle to about `1e-12` relative; at eight,
+the largest relative discrepancy is `3.5e-7`. The full 16-edge panel uses
+512 Q4 and 16 native B3-GE elements, 3940/3920 mixed rows, at most 291 MB
+observed process RSS and 36.2 s for both A/B candidates. The sampled RSS
+and measured elapsed time are below diagnostic ceilings; this is not a
+process-peak memory measurement. Each unchanged operator is factored once.
+From eight
+to sixteen edges A's Fy work changes `+0.738%` and Mx work `-1.141%`;
+B changes `+0.747%` and `-0.409%`. At sixteen edges B differs from A by
+`+0.025%` in Fy work and `-0.266%` in Mx work. Compared with the earlier
+dense 16-edge longitudinal-only result, the full sparse 16-edge result
+differs in Fy by about `0.025%` and Mx by about `0.15%`. This comparison
+also changes assembly route, so it does not isolate transverse refinement.
+See the four source-bound runs:
+[N02](B3_E4_L1_SPARSE_OWNER_N02_DEV_V1.json),
+[N04](B3_E4_L1_SPARSE_OWNER_N04_DEV_V1.json),
+[N08](B3_E4_L1_SPARSE_OWNER_N08_DEV_V1.json), and
+[N16](B3_E4_L1_SPARSE_OWNER_N16_DEV_V1.json).
+Decision: sparse integration and the prior reference are consistent, and the
+remaining resolution trend appears chiefly longitudinal on this fixture. No same-law limit
+or physical fidelity is established; stop further automatic refinement and
+advance the matched torque/shear transfer reference and independently reviewed
+growing-space/mixed-system stability contract before multiplier selection.
 An isolated wheel built from the clean `fa9d9e4d` source archive passed seven
 fresh-process installed checks for both A/B weak-line candidates, the sampled
 work oracle, negatives and restart. Actual package import, wheel hash,
