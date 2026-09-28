@@ -26,8 +26,10 @@ production qualification or release is implied.
   route: 1000 N Fz, factors 0.5 and 1.0, accepted predecessor and native retained
   variables, then checkpoint/restore and continuation to factor 2. Rejection,
   cancellation, first-attempt retry with a different load pattern, rotational
-  cutback and partial-prefix publication are tested. Finite S3, plasticity,
-  physical scaling and G1 qualification remain open.
+  cutback and partial-prefix publication are tested. Mixed Q4/S3 and all-S3
+  finite panels now pass the same two-increment and restart/continue checks
+  (`7/7` finite tests); plasticity, physical scaling and G1 qualification
+  remain open.
 - Separate physical B2 connected beam graph runs 1/10/100 compatible loads,
   selected recovery and one factorization through the public facade. It has
   no shell attachment. Bounded public routes join one Q4/one B2, and now two
@@ -77,6 +79,30 @@ a physically admissible compliant mode goes to transfer/convergence checks.
 One targeted candidate batch at most before focused mechanics review. Formal
 F03 authority remains unconsumed; 1,900 diagnostic rows, 120 s/run and one
 numerical thread remain binding.
+
+The first supported Fy solid attempt used the saved F5 side-cut geometry and
+changed only the quadratic tip-face work to +100 N Fy. Preflight verified
+the `(0,100,0; -6.75,0,100) N/Nm` origin wrench. The pinned one-thread
+CalculiX execution reached the 120 s cap before producing `.dat` or a
+completed step; its immutable failed raw root is
+`.qualification/b3-ge-e4-pl/f03-c1-supported-fy-factor5-dev-20260928-v1`.
+It supplies **no** physical-response comparison. Do not infer a formulation
+failure or increase the cap. A lower-cost factor-4 instance is under focused
+review as the sole possible fallback in this diagnostic batch; if it cannot
+distinguish the hypotheses, stop external execution and identify the missing
+observable.
+
+The matched native x8/y4 +100 N Fy solves for B3-18 (1:1) and B3-14 (2:1)
+passed 44/44 supported rows and global wrench/work checks. Tip Uy is
+`0.452009` versus `0.440575 µm`, and shell-support Fy is `−93.989` versus
+`−93.613 N`; maximum continuous Fy gap is `6.14e−10 m` versus numerical zero.
+The earlier weak Fy/rotation least mode is not by itself a loaded failure under
+this uniform action. Full source-bound evidence is
+`B3_E4_F03_C1_FY_SUPPORTED_NATIVE_DEV_V1.json` (SHA256
+`A50837D8043356219275EE7B24F63EDBCF0023A0A874DA3C711358561073082B`).
+This does not select the law or multiplier. A factor-4 solid Fy comparison can
+check physical transfer but cannot alone allocate law versus discrete-space
+error; interpret it with the native continuous gap and all-channel row work.
 
 ## Next integration action
 

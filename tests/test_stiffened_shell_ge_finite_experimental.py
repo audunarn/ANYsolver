@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from dataclasses import replace
 
 from anysolver._stiffened_shell_ge_experimental import (
     ExperimentalGEAnalysis, NodalAction,
@@ -119,3 +120,29 @@ def test_partial_first_solve_keeps_accepted_prefix(monkeypatch):
     assert accepted.generation == 1 and accepted.accepted_factors == (.5,)
     resumed = analysis.solve(_actions(), (1.,))
     assert resumed.generation == 2
+
+
+@pytest.mark.parametrize("q4,s3", [
+    (((1, 2, 5, 4),), ((2, 3, 6), (2, 6, 5))),
+    ((), ((1, 2, 5), (1, 5, 4), (2, 3, 6), (2, 6, 5))),
+])
+def test_finite_mixed_and_s3_panels_restart_and_continue(q4, s3):
+    base = _panel()
+    definition = replace(base, shell=replace(
+        base.shell, q4_elements=q4, s3_elements=s3))
+    analysis = ExperimentalGEAnalysis(definition)
+    first = analysis.solve(_actions(), (.5, 1.))
+    assert first.generation == 2 and first.accepted_factors == (.5, 1.)
+    assert first.free_equilibrium_ratio <= 1e-8
+    assert first.constraint_max <= 1e-9
+    support = first.support_reactions[:analysis._shell_count].reshape(-1, 6)
+    np.testing.assert_allclose(support[:, 2].sum(), -1000., atol=1e-5)
+    resumed = ExperimentalGEAnalysis(definition)
+    restored = resumed.restore(analysis.checkpoint())
+    np.testing.assert_array_equal(restored.shell_displacement,
+                                  first.shell_displacement)
+    np.testing.assert_array_equal(restored.beam_positions,
+                                  first.beam_positions)
+    continued = resumed.solve(_actions(), (2.,))
+    assert continued.generation == 3
+    assert continued.free_equilibrium_ratio <= 1e-8
