@@ -3,30 +3,27 @@
 ## Current state — 28 September 2026
 
 **Decision sought:** Establish the physical native material-line law and
-its exact multiplier resolution policy. **Established:** Identity-guarded
-same-action evidence locates the main fixed-action shell difference in
-torque and axial/bending work, while pure transverse force is close.
-The actual retained mixed-system x4/x8 screen finds supported growing
-m2/m4 spaces, but all three x8/m8 spaces lose rows with B3-12. Increasing
-beam resolution restores P0 row rank there, not P1/dual. Supported
-x4/m2 to x8/m4 loaded cases pass work and balance; their Mx tip work
-changes by at most 2.2%, Fz by at most 0.22%, with nonmonotone pointwise
-gaps. Deficient row combinations at x8/m8 occupy the in-plane `uy` and
-yaw channels, not the other four; beam refinement changes their count.
-The existing flat-reference test already proves an x4 P1 projected
-Fy/Mz row identity, while its continuous traction remains nonzero.
-Transporting the B3-12 x8/m8 null actions to B3-18 lifts all four P0
-directions but only five of six P1/dual directions. **Remaining
-uncertainty:** Which interface-resolution policy avoids these aliases
-and locking over the registered discretizations, and whether
-sided torque/shear transfer matches the
-declared connection idealization. **Next discriminator and action:**
-Use the proven identity to design the admissible resolution policy;
-check physically matched transfer and then
-run the required ratio/refinement assessment before selecting or revising
-the law and policy. No automatic finer classical axial or x/y sweep.
-Advance B2 F09 independently. G0B/F03 remain open, G1 barred, and formal
-F03 authority unconsumed; detailed evidence follows.
+its exact multiplier resolution policy. **Established:** The provisional
+P0 rule has independent supported rows at all seven registered
+shell:beam ratios. Three matched 1:1 levels, Q4 x2/B3-12 through
+Q4 x8/B3-18, pass loaded Mx/Fz equilibrium, work and balance; tip work
+changes contract with refinement. Their actual native retained mixed
+KKT has P0 ranks `12/12`, `24/24`, `48/48` and smallest normed
+responses `0.01502`, `0.01511`, `0.01514` in the existing diagnostic
+metric. The weak vector is dominated by the beam kinematic norm, so
+this does not independently establish interface inf-sup stability.
+P1/dual still have dependencies at the full-resolution matched levels.
+The same-action shell/reference difference remains strongest in torque
+and axial/bending work. **Remaining uncertainty:** Whether P0 avoids
+locking and unsupported modes across ratios and whether physically
+matched sided torque/shear transfer validates the declared law.
+**Next discriminator and action:** Check a bounded cross-ratio loaded
+response and actual mixed-system behavior with the same physical
+observables, then obtain a genuinely matched sided reference only if it
+distinguishes shell, beam and connection contributions. Do not infer
+selection from rank or the quotient alone. Advance B2 F09 independently.
+G0B/F03 remain open, G1 barred, and formal F03 authority unconsumed;
+detailed evidence follows.
 
 ## Detailed 27 September development record
 
@@ -10751,3 +10748,63 @@ tip Mx/Fz; a nonconvergent or failed-work trend returns to the law or
 resolution policy, while a plausible trend nominates it for the
 registered mixed-system and matched-reference checks. Do not infer
 selection from this screen. G0B/F03 remain open, G1 barred.
+
+**Matched 1:1 loaded refinement outcome:** The existing material-line
+loaded screen was extended to explicit native beam half-cell counts,
+then run on unchanged physical geometry, section, supports and tip
+loads at Q4 x2/B3-12/P0 m2, x4/B3-14/P0 m4, and x8/B3-18/P0 m8.
+All six P0 load cases pass bounded KKT equilibrium, compatibility,
+support wrench balance and positive shell work. P1/dual retain one
+dependent full-resolution row at each level and are not solved there.
+For `100 Nm` Mx, P0 tip work is `0.00486842337`, `0.00483660214`,
+`0.00481500719 J`; for `1000 N` Fz it is `0.07028940065`,
+`0.06983430475`, `0.06966098290 J`. Successive changes contract
+from roughly `0.65%` to `0.45%` for Mx and `0.65%` to `0.25%` for Fz.
+Maximum station position and orientation gaps also fall at each level;
+for Mx the position maximum is `2.52e-8`, `1.63e-8`, `8.79e-9 m`
+and rotation maximum `1.38e-6`, `7.90e-7`, `4.11e-7 rad`.
+These are three systematic levels of one registered ratio and one
+terminal nodal-load idealization, not mesh-uniform stability or
+external accuracy. The exact physical mismatch to the solid tip-face
+load remains explicit. Source SHA256
+`6423f8f7742be5056af6d641a94cd5e1b479b8a7c3e86d5b56df42f9092325ef`;
+raw x2/B12, x4/B14, x8/B18 files have respective SHA256
+`955e3587583f6568e3cb58055ed9341d3e1a80aec591f569415052786ec63cf4`,
+`1c9735dced091c50499927d0b0c048234e3feae31526973b6ffe871ac7851df7a`,
+`bf03942362d8b093f98005e8d46fc41afc3604fc008a914cbec0259f8fc16cbf`.
+The next discriminator is the actual retained mixed-tangent normed
+behavior on those same three P0 levels, followed by cross-ratio
+physical work/locking and the matched torque/shear reference. No
+production policy is yet selected; F03/G0B remain open and G1 barred.
+
+**Matched 1:1 retained mixed-system outcome:** Using the existing
+drill-quotient diagnostic without changing the native tangent,
+constraint rows, reference geometry or physical norms, Q4 x2/B3-12,
+x4/B3-14 and x8/B3-18 with P0 m2/m4/m8 give independent supported
+rows `12/12`, `24/24`, `48/48`. The actual indefinite KKT sizes are
+`888`, `1046`, `1362` rows, below the established `1900`-row and
+`120 s` bounds. Their smallest normed singular values are `0.0150167`,
+`0.0151101`, `0.0151449`; largest values rise `98.90`, `170.87`,
+`315.83`, so the corresponding condition numbers rise rather than
+remaining constant. Drilling equilibrium and quotient reconstruction
+defects remain below `4e-15`; coordinate interface transpose-work
+discrepancies are below `2e-18 J`, and KKT skew below `3e-16`.
+The weak metric vector carries roughly `98.4%` beam kinematic share
+at each level. Thus the nondecreasing minimum is a necessary mixed
+diagnostic on one ratio, not an interface-specific stability proof,
+locking verdict or physical connection validation. The script's
+existing material-line norm is a diagnostic, not a replacement for the
+registered acceptance norm. Source SHA256
+`4bdc6998b824e30f90ca44ac25837b2872fac3eadfdfe97e8a075720367e477f`;
+raw matched-mixed x2/B12, x4/B14, x8/B18 SHA256 respectively
+`569587e2cc8a57b238750706435b21516dff7eb8c14527b3714b1184fdbe5e20`,
+`b2005fd755005587230c001ee6db239e0fe58a368c278215142222aa34688bde`,
+`68dc343362a3feff5daa02ef7ed32d6957b86e8a3a25e73e1fbfe75873b4b26b`.
+The bounded next question is whether the provisional P0 policy retains
+work, compatible response and acceptable mixed behavior at reciprocal
+ratio extremes; a failure returns to the resolution policy, while a
+pass nominates the law for physically matched torque/shear reference
+and the complete registered ratio/refinement assessment. No production
+space selection or G0B closure follows from these three levels.
+The focused material-line and P0 norm tests passed `41/41` after the
+diagnostic extensions; `git diff --check` reported no whitespace errors.

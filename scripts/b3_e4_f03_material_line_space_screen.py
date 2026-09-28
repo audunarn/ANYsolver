@@ -86,15 +86,17 @@ def _scaled_row_diagnostics(constraint, free, primal_scales):
     }
 
 
-def run(*, shell_cells: int = 2) -> dict:
+def run(*, shell_cells: int = 2, beam_half_cells: int = 12) -> dict:
     if shell_cells not in (2, 4, 8):
         raise ValueError("bounded material-line shell level required")
+    if beam_half_cells not in (12, 14, 18, 24, 26):
+        raise ValueError("bounded C1 native beam resolution required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     actual = Path(anysolver.__file__).resolve().parent
     if actual != expected:
         raise RuntimeError("line-space screen imported another ANYsolver checkout")
     xs, ys = local_grid(shell_cells, transverse_cells=4)
-    beam = build(12, z_offset=.0675,
+    beam = build(beam_half_cells, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um")
     shell_size = 6*len(xs)*len(ys)
@@ -256,9 +258,12 @@ def run(*, shell_cells: int = 2) -> dict:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--shell-cells", type=int, choices=(2, 4, 8), default=2)
+    parser.add_argument("--beam-half-cells", type=int,
+                        choices=(12, 14, 18, 24, 26), default=12)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    result = run(shell_cells=args.shell_cells)
+    result = run(shell_cells=args.shell_cells,
+                 beam_half_cells=args.beam_half_cells)
     if args.output is None:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
@@ -266,6 +271,7 @@ if __name__ == "__main__":
             raise FileExistsError(args.output)
         args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
         print(json.dumps({"shell_cells": args.shell_cells,
+            "beam_half_cells": args.beam_half_cells,
             "cases": {name: {"rank": entry["row_diagnostic"]["scaled_row_rank"],
                 "rows": entry["row_count"],
                 "loads": {load: value["status"] for load, value in

@@ -1,0 +1,124 @@
+{
+  "beam_half_cells": 14,
+  "beam_layout": {
+    "cell_rotations": 42,
+    "complementary_min_diagonal_J_per_resultant_squared": 1.1904761904761862e-11,
+    "free": 252,
+    "nodal": 90,
+    "resultants": 126
+  },
+  "beam_rows": 252,
+  "cases": {
+    "piecewise_constant_m4": {
+      "assembly_asymmetry_relative": 9.056188199650666e-17,
+      "beta_min": 0.015110081427224828,
+      "constraint_rows": 24,
+      "drill_constraint_column_max": 0.0,
+      "left_right_svd_defect": 3.241829762053268e-15,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.02500000000000003,
+          0.02499999999999991,
+          0.02500000000000003,
+          0.02500000000000003
+        ],
+        "density_gram_ordering_defect": 2.710505071948774e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "near_null_metric_share": {
+        "beam_complementary": 0.01194173299861869,
+        "beam_kinematic": 0.9840373758207925,
+        "line_dual": 0.0012695845596106437,
+        "shell_physical": 0.0027513066209860484
+      },
+      "normalized_constraint_rank": 24,
+      "normed_condition": 11308.300918665856,
+      "operator_max": 170.86934768460242,
+      "rows": 1046,
+      "scaled_weak_residual_norm": 0.015110081427190537,
+      "svd_residual_defect": -3.4290278949633546e-14,
+      "weak_constraint_euclidean": 2.049342225138767e-08,
+      "weak_vector_metric_norm_sq": 1.0000000000000078,
+      "work_left_J": 1.9183526074457375e-05,
+      "work_right_J": 1.9183526074455573e-05
+    }
+  },
+  "classification": "bounded drill-quotient native retained KKT diagnostic, not G0B acceptance",
+  "drilling_equilibrium_relative_residual": 6.6329693895299305e-16,
+  "elapsed_s": 22.299267299997155,
+  "limits": [
+    "exact bounded diagnostic elimination, not a production assembler or changed mechanics",
+    "physical-coordinate restriction is not a full continuum quotient proof",
+    "one matched 1:1 refinement series, not registered ratio/refinement acceptance",
+    "no multiplier selection or physical connection accuracy claim"
+  ],
+  "line_law": "material_line",
+  "matched_p0_only": true,
+  "maximum_rows": 1900,
+  "metric": "physical E4 energy on non-drilling coordinates; previous native B3 and basis-specific line norms",
+  "model": "C1 Q4 x4/y4 35 mm shell, native B3-14, material-line P0 m4 matched 1:1 level",
+  "operator": "actual E4 tangent with exact free-drilling Schur complement; actual native retained B3 tangent and declared line-law rows",
+  "provenance": {
+    "effective_threadpools": [
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.31.188.0"
+      },
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.30"
+      }
+    ],
+    "env": {
+      "NUMBA_DISABLE_JIT": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONPATH": ".;src"
+    },
+    "executable": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\.venv\\Scripts\\python.exe",
+    "numpy": "2.4.6",
+    "python": "3.14.2",
+    "scipy": "1.17.1",
+    "source_git": "a251d1cad7d357999522b54777f254a118571e1d",
+    "source_sha256": {
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_c1_drill_quotient_metric.py": "4bdc6998b824e30f90ca44ac25837b2872fac3eadfdfe97e8a075720367e477f",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_c1_native_mixed_metric.py": "7aff0289f5ec67c36f9937f30f48c1e7d6a451a5550e07f9689db5b29a804cf4",
+      "scripts\\_b3_e4_f03_dual_linear_norm.py": "690812e542ccd7274082f4f9f0b55cf3f0c6c821c060be704455394c31fdf21f",
+      "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+      "scripts\\_b3_e4_f03_p0_dual_norm.py": "08295c8376857840087b5dc699dbe9cefdb33995ca79fed638cf672ff7c3905e",
+      "scripts\\_b3_e4_f03_p1_dual_norm.py": "50b5397aa11ceb97932f7c8a66497ffa8f77537da57b0c046ea30eb07f386935",
+      "scripts\\_b3_e4_f03_weak_line_candidate.py": "701ef13c7aa571ae479320c99540c847b254a151dbb3379a9cacf568ecfdc443",
+      "scripts\\b3_e4_f03_distributed_surface_finite.py": "b3fa0d30068436f8bf69e69be510fc931fc705ae8f8e71e26bbd5da4c4fda9d1",
+      "scripts\\b3_e4_f03_material_line_position.py": "5ded28290d6ea548c5f00cc77b89e11a4db1484b716aa5ff9ea11b599f1fed7c",
+      "scripts\\b3_e4_f03_material_line_space_screen.py": "6423f8f7742be5056af6d641a94cd5e1b479b8a7c3e86d5b56df42f9092325ef",
+      "scripts\\b3_e4_f03_plate_patch_work.py": "211dfd94745a436967b0b1e2567bca411524f6d58b8ebfbcb430a1f6786fed0f",
+      "scripts\\b3_e4_f03_square_section_control.py": "efe684d6ad08236da0eeb4323812107d8a6bc96e04de622132a9b9915f4ab17f"
+    },
+    "threadpoolctl": "3.6.0"
+  },
+  "question": "Does the actual retained, drill-quotiented material-line P0 mixed KKT remain supported over three matched 1:1 refinement levels?",
+  "runner_sha256": "4bdc6998b824e30f90ca44ac25837b2872fac3eadfdfe97e8a075720367e477f",
+  "schur_action_relative_residual": 1.5455708347469447e-15,
+  "shell_drilling_rows_eliminated": 154,
+  "shell_physical_rows": 770
+}

@@ -65,9 +65,17 @@ def _material_line_space(xs, ys, beam, *, kind: str, intervals: int):
 
 def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
              weak_mode_line_norm: str = "hminus_half",
-             line_law: str = "hybrid") -> dict:
-    if shell_cells not in (4, 8, 16):
+             line_law: str = "hybrid", beam_half_cells: int = 12,
+             matched_p0_only: bool = False) -> dict:
+    if shell_cells not in ((2, 4, 8) if matched_p0_only else (4, 8, 16)):
         raise ValueError("bounded C1 drill-quotient shell level required")
+    if beam_half_cells not in (12, 14, 18):
+        raise ValueError("bounded native beam half-cell count required")
+    if not matched_p0_only and beam_half_cells != 12:
+        raise ValueError("beam refinement is only admitted for the matched P0 diagnostic")
+    if matched_p0_only and (line_law != "material_line" or weak_mode_only or
+                            weak_mode_line_norm != "hminus_half"):
+        raise ValueError("matched P0 diagnostic requires the material-line law and standard norm")
     if weak_mode_only and shell_cells != 16:
         raise ValueError("bounded P0 weak-mode inspection requires x16")
     if (weak_mode_line_norm not in ("hminus_half", "p0_l2") or
@@ -81,7 +89,7 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
     deadline = started+120.
     xs, ys = local_grid(shell_cells, transverse_cells=4)
     shell, physical = raw_e4_tangent(xs, ys, thickness=prior.T)
-    beam = build(12, z_offset=.0675,
+    beam = build(beam_half_cells, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um")
     ns = len(shell)
@@ -125,9 +133,10 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
     free_physical = np.r_[shell_physical, ns+beam_free]
     free_full = np.r_[shell_free, ns+beam_free]
     cases = {}
-    tested_intervals = ((shell_cells,) if weak_mode_only else
+    tested_intervals = ((shell_cells,) if (weak_mode_only or matched_p0_only) else
                         (shell_cells//2, shell_cells))
-    tested_kinds = (("piecewise_constant",) if weak_mode_only else prior.KINDS)
+    tested_kinds = (("piecewise_constant",) if (weak_mode_only or matched_p0_only)
+                    else prior.KINDS)
     for intervals in tested_intervals:
         for kind in tested_kinds:
             if monotonic() > deadline:
@@ -246,17 +255,23 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
     return {
         "classification": "bounded drill-quotient native retained KKT diagnostic, not G0B acceptance",
         "line_law": line_law,
-        "question": ("Do the declared material-line P0/P1/dual spaces retain "
+        "question": ("Does the actual retained, drill-quotiented material-line "
+                     "P0 mixed KKT remain supported over three matched 1:1 "
+                     "refinement levels?" if matched_p0_only else
+                     "Do the declared material-line P0/P1/dual spaces retain "
                      "supported rows and normed mixed-system behavior as their "
                      "interface resolution grows?" if line_law == "material_line"
                      else "Does the selected P0 high-frequency line mode persist under "
                      "the exact physical-density L2 sensitivity norm?"
                      if weak_mode_line_norm == "p0_l2" else
                      "Was the prior smallest native KKT mode only a numerical drilling metric mode, and do line-coupled modes decline under growing rows?"),
-        "model": (f"C1 Q4 x{shell_cells}/y4 35 mm shell, native B3-12, " +
+        "model": (f"C1 Q4 x{shell_cells}/y4 35 mm shell, native B3-{beam_half_cells}, " +
                   ("material-line " if line_law == "material_line" else "hybrid ") +
                   (f"P0 m{shell_cells} weak-mode inspection" if weak_mode_only
+                   else f"P0 m{shell_cells} matched 1:1 level" if matched_p0_only
                    else f"P0/P1/dual m{shell_cells//2}/m{shell_cells}")),
+        "beam_half_cells": beam_half_cells,
+        "matched_p0_only": matched_p0_only,
         "operator": "actual E4 tangent with exact free-drilling Schur complement; actual native retained B3 tangent and declared line-law rows",
         "metric": ("physical E4 energy on non-drilling coordinates; previous "
                    "native B3 norm; exact P0 physical-density L2 line comparator"
@@ -275,6 +290,8 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
                    "physical-coordinate restriction is not a full continuum quotient proof",
                    ("one R-normalized P0 weak mode, not a locking or stability verdict"
                     if weak_mode_only else
+                    "one matched 1:1 refinement series, not registered ratio/refinement acceptance"
+                    if matched_p0_only else
                     "two interface resolutions on one shell grid, not registered ratio/refinement acceptance"),
                    "no multiplier selection or physical connection accuracy claim"],
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -297,7 +314,9 @@ def evaluate(shell_cells: int = 8, *, weak_mode_only: bool = False,
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--shell-cells", type=int, choices=(4, 8, 16), default=8)
+    parser.add_argument("--shell-cells", type=int, choices=(2, 4, 8, 16), default=8)
+    parser.add_argument("--beam-half-cells", type=int, choices=(12, 14, 18), default=12)
+    parser.add_argument("--matched-p0-only", action="store_true")
     parser.add_argument("--weak-mode-only", action="store_true")
     parser.add_argument("--weak-mode-line-norm", choices=("hminus_half", "p0_l2"),
                         default="hminus_half")
@@ -310,7 +329,9 @@ def main() -> None:
         result = evaluate(args.shell_cells,
                           weak_mode_only=args.weak_mode_only,
                           weak_mode_line_norm=args.weak_mode_line_norm,
-                          line_law=args.line_law)
+                          line_law=args.line_law,
+                          beam_half_cells=args.beam_half_cells,
+                          matched_p0_only=args.matched_p0_only)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"elapsed_s": result["elapsed_s"],
                       "cases": {key: {
