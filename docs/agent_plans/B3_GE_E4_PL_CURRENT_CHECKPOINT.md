@@ -6,8 +6,8 @@
 its exact multiplier resolution policy. **Established:** The provisional
 P0 rule has independent supported rows and one bounded loaded Mx/Fz
 solve at all seven registered shell:beam ratios. Three matched 1:1
-levels, Q4 x2/B3-12 through
-Q4 x8/B3-18, pass loaded Mx/Fz equilibrium, work and balance; tip work
+levels, Q4 x2/B3-12 through Q4 x8/B3-18, pass loaded Mx/Fz
+equilibrium, work and balance; tip work
 changes contract with refinement. Their actual native retained mixed
 KKT has P0 ranks `12/12`, `24/24`, `48/48` and smallest normed
 responses `0.01502`, `0.01511`, `0.01514` in the existing diagnostic
@@ -26,11 +26,15 @@ loaded Mx/Fz checks. The x16/y4 `8:1` fixture required an exact
 drilling quotient to reduce 1,956 full rows to 1,670 diagnostic rows
 without raising the 1,900-row cap; its full equations were checked
 after reconstruction.
+On fixed x8/B3-14, P0 m4 leaves a `6.82e-6 rad` torque-gap RMS,
+while m8 reduces it to `1.55e-7 rad` and changes torque tip response
+by about `7.4%`. Thus the coarse weak space, not beam resolution alone,
+causes the large same-mesh torque discrepancy.
 **Remaining uncertainty:** Whether P0 avoids locking and unsupported
 modes across ratios and whether physically matched sided torque/shear
 transfer validates the declared law. **Next discriminator and action:**
-At fixed x8/B3-14 compare P0 m4/m8 to distinguish beam resolution
-from weak-row resolution behind the large coarse-B3 torque gap.
+Test a fixed `4:1` ratio at its next joint shell/beam refinement to
+see whether the policy's growing P0 space converges or remains weak.
 Establish a work-conjugate torque/section/support comparator that
 separates shell idealization from connection transfer; neither the
 saved pure-action fields nor a displacement fit does that alone.
@@ -11060,3 +11064,37 @@ contrast. If both are large, return to the continuous trace/beam
 kinematics. Compare physical work, global balance, and actual mixed
 operator behavior before any production policy decision. This remains
 within the existing `1900`-row and `120 s` diagnostic limits.
+
+**Fixed-x8 resolution outcome:** On exactly the same x8/y4/B3-14
+primal, P0 m4 and m8 have full ranks `24/24` and `48/48`, and both
+Mx/Fz cases pass bounded equilibrium, work, support balance and weak
+compatibility. Under Mx, m4 has an unprojected orientation-gap RMS
+`6.82064e-6 rad` and tip rotation `4.98880671e-5 rad`; m8 has
+`1.55486e-7 rad` and `4.62047794e-5 rad`. The gap falls about
+`44×`, while the torque tip rotation changes `7.38%` relative to m4
+and shell physical work changes from `0.00198825` to `0.00177764 J`.
+The Fz tip translation changes from `7.00025763e-5` to
+`6.97457029e-5 m`, about `0.37%`. Thus beam resolution alone does
+not remove the coarse P0 torque mode on this fixed primal; weak-row
+resolution materially changes torque transfer. Historical x8/B3-12
+m4 P1/dual cases retain torque orientation-gap RMS `4.41e-6` and
+`1.44e-6 rad`, so those existing m4 variants do not reproduce the
+resolved x8/B3-14 m8 result either. This does **not** prove that the
+provisional ratio policy fails under joint mesh refinement or that
+smaller pointwise gaps alone select P0. The raw
+`B3_E4_F03_C1_MATERIAL_LINE_X8_B14_P0_M4_M8_DEV_V1.json` SHA256 is
+`f341a84be1b236f994a4ba76e987976577fd062ed3c0be6e4b3c8852d296d1b8`;
+runner SHA256 is
+`4b42b2cdd6b928d0a176331c839fc5ffbc30bc496924064f8f6e76078430ae6c`.
+
+**Next fixed-ratio refinement (prospective):** At shell:beam `4:1`,
+compare the saved x8/B3-12/P0 m4 result to x16/y4/B3-14/P0 m8,
+holding physical geometry, section, root support and terminal Mx/Fz
+loads fixed while jointly refining the shell and bond beam mesh. The
+same policy doubles its weak resolution. Check supported rank,
+reconstructed full equilibrium, physical work, torque gap and tip
+response using the existing exact drilling quotient under the same
+`1900`-row and `120 s` limits. A contracting difference supports a
+third-level convergence design; a persistent large mode sends the
+policy or continuous trace back for revision. Two levels never prove
+convergence, and physical same-law torque accuracy remains independent.

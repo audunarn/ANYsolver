@@ -87,7 +87,7 @@ def _scaled_row_diagnostics(constraint, free, primal_scales):
 
 
 def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
-        policy_p0_only: bool = False) -> dict:
+        policy_p0_only: bool = False, p0_pair_only: bool = False) -> dict:
     if shell_cells not in ((2, 4, 8, 16) if policy_p0_only else (2, 4, 8)):
         raise ValueError("bounded material-line shell level required")
     if beam_half_cells not in (12, 14, 18, 24, 26):
@@ -95,6 +95,9 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
     if policy_p0_only and (shell_cells, beam_half_cells) not in (
             (2, 26), (4, 26), (4, 18), (8, 14), (8, 12), (16, 12)):
         raise ValueError("bounded ratio-policy P0 level required")
+    if p0_pair_only and (policy_p0_only or
+                         (shell_cells, beam_half_cells) != (8, 14)):
+        raise ValueError("bounded fixed-x8/B3-14 P0 pair required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
     actual = Path(anysolver.__file__).resolve().parent
     if actual != expected:
@@ -124,7 +127,12 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
     shell_reference = line.reference_nodes
     beam_reference = (beam.context.initial.mechanical.positions
                       +beam.context.initial.mechanical.position_low)
-    if policy_p0_only:
+    if p0_pair_only:
+        variants = tuple(
+            (f"p0_{count}", LineMultiplierSpace(
+                "piecewise_constant", tuple(np.linspace(0., 1., count+1))))
+            for count in (4, 8))
+    elif policy_p0_only:
         bond_halves = int(np.sum(np.diff(beam.abscissae)[
             beam.abscissae[:-1] >= .9-1e-12] > 0.))
         intervals = min(shell_cells, 2*bond_halves)
@@ -250,6 +258,7 @@ def run(*, shell_cells: int = 2, beam_half_cells: int = 12,
         "shell_cells": shell_cells,
         "beam_half_cells": beam.n_half_cells,
         "policy_p0_only": policy_p0_only,
+        "p0_pair_only": p0_pair_only,
         "policy_bond_half_cells": bond_halves if policy_p0_only else None,
         "policy_intervals": intervals if policy_p0_only else None,
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -276,11 +285,13 @@ if __name__ == "__main__":
     parser.add_argument("--beam-half-cells", type=int,
                         choices=(12, 14, 18, 24, 26), default=12)
     parser.add_argument("--policy-p0-only", action="store_true")
+    parser.add_argument("--p0-pair-only", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     result = run(shell_cells=args.shell_cells,
                  beam_half_cells=args.beam_half_cells,
-                 policy_p0_only=args.policy_p0_only)
+                 policy_p0_only=args.policy_p0_only,
+                 p0_pair_only=args.p0_pair_only)
     if args.output is None:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
