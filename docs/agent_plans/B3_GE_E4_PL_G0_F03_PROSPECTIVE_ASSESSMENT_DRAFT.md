@@ -313,7 +313,30 @@ field at quadrature stations: generic L2 equivalence classes have no defined
 point values. Quadrature-defined discrete work therefore needs its own
 basis, integration-error and mesh-uniform work-continuity checks before the
 continuum L2 estimate can support an F03 assessment.
-For a uniform width \(w\), the bound grows as \(w^{-1/2}\), so width must be
+The assumed E4 physical-energy control of shell H1 is **false for the
+unrestricted growing P0 yaw space on the tested Q4 family**. With two
+transverse cells, nodal lateral profile (1,-1,1) has zero mean on each
+cell but average -1/2 over the fixed central strip. On longitudinal cells
+of size h, use alternating nodal amplitudes 0,h,0,h,... and a matching
+unit P0 yaw density. The genuine membrane shear has zero projection onto
+the physical core's element-constant shear-stress mode; remaining transverse
+strain gives physical energy O(h²), while integrated rail work stays 0.25
+on the fixed half-length line. Actual E4 physical-core energies at
+h=1/4,1/8,1/16 are 6.579e9, 1.645e9, and 4.112e8 J. Virgin gaps and
+drilling loads vanish. The executable negative case is
+test_physical_core_does_not_uniformly_control_alternating_yaw_density;
+raw output is retained in
+.qualification/b3-ge-e4-pl/r7-f03-growing-rail-dev-20260928-v1/.
+This disproves the proposed *physical-core* uniform L2 continuity for that
+admitted density family. It does not establish failure of every prospective
+space or of the complete connection. The PL term can penalize in-plane curl
+through numerical drilling completion, while the drill-only hourglass term
+does no work on this zero-drill field. Neither supplies the missing physical
+membrane-shear proof. A restricted, still-growing multiplier space needs an
+independent whole-space bound and physical transfer checks before use.
+
+In the conditional continuum H1 estimate, uniform width \(w\) gives a factor
+growing as \(w^{-1/2}\), so width must be
 a declared positive physical connection measure, not a mesh-dependent tuning
 parameter. This candidate changes the shell-side trace and must re-pass
 objectivity, stress-free reference, derivatives, torque/shear, topology,
@@ -421,8 +444,8 @@ uniform asymptotic bound.
 For a *corrected* positive-width rail, a simpler prospective metric uses the
 physical six-channel L2 density Gram
 \(\lambda^TM_{0,h}\lambda=\int_0^1\|\hat\lambda\|_2^2d\xi\).
-Provided the complete shell and broken-beam work maps satisfy mesh-uniform
-energy-to-L2 trace bounds, test **both**
+Only if the complete shell and broken-beam work maps satisfy mesh-uniform
+energy-to-L2 trace bounds on the *prospectively admitted spaces*, test **both**
 \[
 \beta_{0,h}^2=\lambda_{\min}(C_h/W_*,M_{0,h}),
 \qquad
@@ -434,7 +457,7 @@ positive lower bound for \(\beta_{0,h}\) and finite upper bound for
 \(\gamma_{0,h}\), not just nonzero finite-grid values. Exact L2 Gram integration is straightforward for piecewise P0/P1
 densities, but the multiplier-to-physical-wrench map, E4/B3 trace bounds,
 mesh-ratio behavior, tolerances and independent threshold are still missing.
-The bounded two-segment implementation now compiles P0 or continuous P1
+The bounded growing-segment implementation now compiles P0 or continuous P1
 coefficients per six-channel component. With station interpolation \(D\) and
 reference Gauss weights \(Q\), its raw-coordinate Gram is \(D^TQD\);
 two interior Gauss points per segment integrate P0/P1 products exactly.
@@ -442,17 +465,18 @@ Its projected constraint rows are \(D^TQ g_6\), conjugate to the same
 coefficient vector used for station work. This establishes a finite discrete
 pairing only: \(D^TQD\) is **not** \(M_{0,h}\) until the reference-state dual
 pose-to-physical-wrench conversion and frozen force/moment scales are applied.
-For a proven constant reference dual map \(T\) on a straight rail,
-let \(\mathcal T=I_4\otimes T\),
-\(\mathcal S=I_4\otimes\operatorname{diag}(F_*^{-1}I_3,
+For a proven constant reference dual map \(T\) on a straight rail with
+\(N\) sampled Gauss stations,
+let \(\mathcal T=I_N\otimes T\),
+\(\mathcal S=I_N\otimes\operatorname{diag}(F_*^{-1}I_3,
 (F_*\ell_*)^{-1}I_3)\), and
 \(Q=\operatorname{diag}(w_iI_6)\). The exact mapped physical L2 Gram is
 \(M_{0,h}=L D^T\mathcal T^T\mathcal S^TQ\mathcal S\mathcal T D\).
 Its P0/P1 product integrals are exact under that constant-map condition;
 the reference line, scales, and shell-rail wrench origin are frozen across
-candidate spaces. The current implementation checks equality of the map at
-four stations only, which does **not** prove constancy between stations: its
-returned matrix is a four-station physical **quadrature Gram**, not yet the
+candidate spaces. The current implementation checks equality of sampled maps
+only, which does **not** prove constancy between stations: its
+returned matrix is a sampled physical **quadrature Gram**, not yet the
 exact continuum \(M_{0,h}\). A whole-segment reference geometry/port contract
 or controlled map-integration error is required before that identification.
 This is a development norm construction, not an accepted F03 threshold or a

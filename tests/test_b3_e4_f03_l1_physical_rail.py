@@ -638,6 +638,22 @@ def test_growing_rail_space_preserves_shared_work_and_exact_density_gram():
                                rtol=0., atol=2e-13)
     np.testing.assert_array_equal(shell[:, :, 5], 0.)
 
+    xs = np.r_[(0., .25), cuts]
+    _, physical = raw_e4_tangent(xs, np.array((-.1, 0., .1)),
+                                 thickness=.035)
+    free = np.array([6*(j*len(xs)+i)+axis
+                     for j in range(3) for i in range(1, len(xs))
+                     for axis in range(5)])
+    factor = linalg.cho_factor(physical[np.ix_(free, free)], lower=True)
+    load = np.zeros(len(physical))
+    for i in range(len(cuts)):
+        for j in range(3):
+            node = j*len(xs)+i+2
+            load[6*node:6*node+6] += shell[i, j]
+    np.testing.assert_array_equal(load[5::6], 0.)
+    compliance = float(load[free]@linalg.cho_solve(factor, load[free]))
+    assert compliance > 0.
+
     rng = np.random.default_rng(243)
     moved_shell = rng.normal(scale=.004, size=zero.shape)
     coefficients = rng.normal(scale=.2, size=27)
@@ -645,6 +661,44 @@ def test_growing_rail_space_preserves_shared_work_and_exact_density_gram():
         line, moved_shell, beam.context.initial.mechanical, coefficients)
     assert work == pytest.approx(coefficients@basis.constraint_rows(gaps),
                                  rel=2e-12, abs=2e-12)
+
+
+def test_physical_core_does_not_uniformly_control_alternating_yaw_density():
+    """A discrete physical-core shear mode blocks the proposed full L2 bound."""
+    energies = []
+    for segments in (2, 4, 8):
+        cuts = np.linspace(.5, 1., segments+1)
+        h = .5/segments
+        line, beam = _segmented_rail(x_cuts=cuts)
+        zero = np.zeros((segments+1, 3, 6))
+        density = np.zeros((2*segments, 6))
+        density[:, 5] = np.repeat((-1.)**np.arange(segments), 2)
+        _, gaps, gradient, _ = line.work_tangent(
+            zero, beam.context.initial.mechanical, density)
+        np.testing.assert_allclose(gaps, 0., rtol=0., atol=2e-14)
+
+        xs = np.r_[(0., .25), cuts]
+        _, physical = raw_e4_tangent(xs, np.array((-.1, 0., .1)),
+                                     thickness=.035)
+        motion = np.zeros_like(zero)
+        motion[1::2, :, 1] = h*np.array((1., -1., 1.))
+        q = np.zeros(len(physical))
+        load = np.zeros_like(q)
+        local = gradient[:zero.size].reshape(zero.shape)
+        for i in range(len(cuts)):
+            for j in range(3):
+                node = j*len(xs)+i+2
+                dofs = slice(6*node, 6*node+6)
+                q[dofs] = motion[i, j]
+                load[dofs] += local[i, j]
+        np.testing.assert_array_equal(load[5::6], 0.)
+        assert q@load == pytest.approx(.25, abs=2e-13)
+        energy = float(q@physical@q)
+        assert energy > 0.
+        energies.append(energy)
+    np.testing.assert_allclose(
+        np.array(energies[:-1])/np.array(energies[1:]), 4.,
+        rtol=2e-12, atol=0.)
 
 
 def test_segmented_rail_constant_density_has_line_wrench_and_shell_compliance():

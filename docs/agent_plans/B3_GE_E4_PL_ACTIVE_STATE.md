@@ -47,20 +47,20 @@ zero resultant and drilling work, and supported physical-only shell compliance.
 Same-parent gradients and Hessians follow the actual native update. A
 finite P0/P1 six-channel density basis gives owned coefficients,
 exact piecewise-polynomial L2 Gram, and coefficient-conjugate projected gaps.
-Four-segment tests check shared-node work cancellation and the independently
-derived growing density Gram; they do not establish growing-space stability.
+Four-segment tests check shared-node work cancellation, independently derived
+growing density Gram, and positive supported E4 physical-only compliance; they
+do not establish growing-space stability.
 The virgin joint covector now maps to a spatial force and shell-rail moment
 including the eccentric lever arm. A four-station physical-wrench quadrature
 Gram uses frozen force/length scales; station-map equality alone does not
-prove whole-segment constancy. Twenty-one focused checks pass. Independent
+prove whole-segment constancy. Twenty-two focused checks pass. Independent
 read-only reviews found no bounded discrete measure, scatter, or basis algebra
 defect. Gauss exactness
 applies to density products, not generally to nonlinear density-gap work.
 **Generic L2 densities have no point values.** This raw coordinate-density
 Gram is distinct from the new physical quadrature Gram. Whole-segment map
 constancy or bounded integration error, curved-line transport, growing-space
-stability, native trace bound, and full physical
-assessment remain.
+stability, and full physical assessment remain.
 
 A bare native B3 broken-half-cell L2 screen at 4/8/16 half-cells produced
 upper quotients 9.260/9.222/9.213 × 10⁻⁶ J⁻¹. This finite-grid diagnostic
@@ -86,11 +86,28 @@ those limits and the mathematical obstruction.
 
 ## Next discriminating action
 
-Prove whole-segment shell-rail work continuity and physical norm integration;
-extend native bounds only where the required curved/non-affine or fibre family
-demands it. Then compare complete A/B spaces under an independently reviewed
-F03 contract. The full seven ratios, growing spaces, three refinement
-levels, physical transfer, locking, shear, drilling, and mixed-system checks
+The physical-only Q4 block **does not uniformly control unrestricted growing
+P0 yaw density work**. Independent review derived a two-transverse-cell mode:
+nodal lateral pattern (1,-1,1) has zero mean shear on each cell but nonzero
+mean over the fixed central rail strip. Alternating longitudinal amplitude h
+and matching P0 yaw density give constant work 0.25 while physical energy
+quarters for h=.25,.125,.0625. The actual E4 operator reproduces energies
+6.579e9, 1.645e9, 4.112e8 J; drilling load and virgin gap are zero. The
+negative executable check and raw logs are in
+`.qualification/b3-ge-e4-pl/r7-f03-growing-rail-dev-20260928-v1/`.
+PL numerical completion can penalize in-plane curl but is not physical shear;
+the drill-only hourglass term does no work on this mode. Positive compliance
+on one fixed grid did not establish a uniform bound.
+
+Next derive whether a **prospectively chosen growing yaw space** suppresses
+the complete physical-core unresolved mode family, without excluding one
+observed vector or weakening six-channel and mesh-ratio requirements. If no
+such space has a defensible work bound and transfer fidelity, revise the
+continuous law or physical operator through mechanics review. Then assess
+complete A/B candidates under the reviewed F03 contract. Extend native bounds
+only where curved/non-affine or fibre families require it. The full seven
+ratios, growing spaces, three refinement levels, physical transfer, locking,
+shear, drilling, and mixed-system checks
 remain mandatory. No automatic finer axial sweep or new external reference is
 justified without a specific discriminating hypothesis.
 
