@@ -97,3 +97,11 @@ frozen and independently assessed. General shell descriptor states, moving
 tools, multiple elements, time-varying and non-nodal loads, nonlinear
 materials, friction, free rigid bodies, complete work/momentum accounting
 and installed package acceptance remain open.
+
+An isolated wheel built from source commit `ee0527e6ccb99bceb15ffec064fc7fd86819d780`
+has SHA256 `890fba7b8a8578722854d7b7972f1c01b641db85ddbd06621df1c78b489436ce`.
+With only its installation directory on `PYTHONPATH`, the loaded tilted S3
+example (`--constant-downward-load-n 0.0002`) completed 60 accepted steps,
+zero cutbacks, a −0.000830315 m minimum swept gap within its declared 1 mm
+budget, and a 1.11e−14 N maximum residual. This is an installed development
+smoke check, not qualification or release.
