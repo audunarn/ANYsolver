@@ -38,6 +38,8 @@ from ._stiffened_shell_l1_assembly_experimental import (
 PROFILE = "B3_GE_E4_PL_STIFFENED_SHELL_V1"
 CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_LINEAR_V1"
 FINITE_CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"
+FINITE_MATERIAL_CHECKPOINT = (
+    "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_MATERIAL_V3")
 MAX_JSON_CHECKPOINT_BYTES = 2_000_000
 MAX_JSON_CHECKPOINT_VALUES = 50_000
 _MAX_DENSE_CONSTRAINT_ROWS = 48
@@ -209,7 +211,7 @@ def _beam_reference(definitions: tuple[NativeBeamDefinition, ...]):
     for definition in definitions:
         element, _inertia = definition.instantiate()
         if type(element.section).__name__ != "EllipsoidalGeneralizedSection":
-            raise ValueError("experimental GE point slice admits elastic generalized B3")
+            raise ValueError("experimental GE point slice admits generalized B3")
         ref = element.operator.reference
         for node, position, frame in zip(element.node_ids, ref.coordinates,
                                          ref.nodal_triads):
@@ -563,17 +565,22 @@ class ExperimentalGEAnalysis:
         attachment = (("reference point pose",) if self._connections else ())
         if self._line_samples:
             attachment += ("experimental L1 weak-line candidate",)
-        excluded = (("plastic finite", "line", "footprint", "modes", "buckling")
+        excluded = (("shell J2 plastic", "physical-fibre B3 finite",
+                     "nonmonotone loads", "line", "footprint", "modes", "buckling")
                     if not self._line_samples else
-                    ("plastic finite", "qualified bonded line", "footprint",
+                    ("shell J2 plastic", "physical-fibre B3 finite",
+                     "qualified bonded line", "footprint",
                      "modes", "buckling"))
         return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
-                "shell": "elastic flat Q4/S3", "beam": "generalized B3 retained",
+                "shell": "elastic flat Q4/S3",
+                "beam": ("generalized B3 retained" if self._line_samples else
+                         "generalized B3 retained, including experimental yielding"),
                 "attachment": attachment,
                 "experimental_line_spaces": tuple(
                     line.multiplier_space for line in self._definition.lines),
                 "analysis": (("reference_linear",) if self._line_samples else
-                             ("reference_linear", "experimental_elastic_finite_point")),
+                             ("reference_linear", "experimental_elastic_finite_point",
+                              "experimental_generalized_plastic_finite_point")),
                 "excluded": excluded}
 
     def preflight(self):
@@ -651,7 +658,7 @@ class ExperimentalGEAnalysis:
     def solve(self, actions: tuple[NodalAction, ...],
               targets: tuple[float, ...] = (1.,), *, cancellation_token=None,
               max_iterations: int = 12, max_backtracks: int = 8):
-        """Advance elastic finite point trials from one accepted predecessor."""
+        """Advance point-coupled finite trials from one accepted predecessor."""
         self._require_open()
         if self._line_samples:
             raise ValueError("experimental L1 line admits reference-linear analysis only")
@@ -713,7 +720,7 @@ class ExperimentalGEAnalysis:
             raise ValueError("bounded mixed linear checkpoint required")
         if raw.startswith(BINARY_CHECKPOINT_MAGIC):
             def expected_shapes(kind, generation):
-                if kind == "finite" and self._line_samples:
+                if kind in ("finite", "finite_material") and self._line_samples:
                     raise ValueError(
                         "experimental L1 line admits reference-linear checkpoints only")
                 count = self._K.shape[0]
@@ -722,20 +729,28 @@ class ExperimentalGEAnalysis:
                     return (("q", (count,)), ("multipliers", (constraints,)),
                             ("load", (count,)))
                 members = len(self._beam_parts)
-                return (("q", (count,)),
+                base = (("q", (count,)),
                         ("frames", (len(self._beam_ids), 3, 3)),
                         ("cells", (members, 2, 3, 3)),
                         ("resultants", (members, 18)),
                         ("multipliers", (constraints,)),
                         ("pattern", (count,)),
                         ("accepted_factors", (generation,)))
+                if kind == "finite_material":
+                    stations = sum(len(part[0].operator.cell.stations)
+                                   for part in self._beam_parts)
+                    return base + (("beam_plastic", (stations, 6, 2)),
+                                   ("beam_accumulated", (stations, 2)))
+                return base
 
             kind, generation, arrays = _decode_binary_checkpoint(
                 raw, self._identity, expected_shapes)
-            value = {"schema": CHECKPOINT if kind == "linear" else
-                     FINITE_CHECKPOINT, "model": self._identity,
+            schema = (CHECKPOINT if kind == "linear" else
+                      FINITE_MATERIAL_CHECKPOINT if kind == "finite_material"
+                      else FINITE_CHECKPOINT)
+            value = {"schema": schema, "model": self._identity,
                      "generation": generation, **arrays}
-            if kind == "finite":
+            if kind in ("finite", "finite_material"):
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
         else:
             if len(raw) > MAX_JSON_CHECKPOINT_BYTES:
@@ -744,7 +759,8 @@ class ExperimentalGEAnalysis:
                 value = json.loads(raw.decode("ascii"))
             except (UnicodeError, json.JSONDecodeError, RecursionError) as exc:
                 raise ValueError("invalid mixed linear checkpoint") from exc
-        if type(value) is dict and value.get("schema") == FINITE_CHECKPOINT:
+        if (type(value) is dict and value.get("schema") in
+                (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT)):
             if self._line_samples:
                 raise ValueError(
                     "experimental L1 line admits reference-linear checkpoints only")

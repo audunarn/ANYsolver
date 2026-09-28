@@ -1,12 +1,13 @@
 """Bounded finite-step trial driver for the experimental GE point panel.
 
 All shell, beam and joint evaluations use one accepted predecessor per load
-increment. This is an elastic development slice, not a qualified mixed owner.
+increment. Shells remain elastic; generalized B3 yielding is experimental.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import localcontext
 import json
 import warnings
 
@@ -15,17 +16,53 @@ from scipy import sparse
 from scipy.sparse import linalg as spla
 
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
+from ._ge_beam3_generalized_cell import GeneralizedCellHistory
+from ._ge_beam3_generalized_ellipsoid_section import GeneralizedHistory
 from ._ge_beam3_p5.algebra import rotation
 from .control import cancellation_safe_point
 from .corotational import corotational_element_response
 from ._stiffened_shell_ge_experimental import (
-    NodalAction, _owned, _linear_equilibrium, _scaled_constraint_gap,
+    FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT, NodalAction, _owned,
+    _linear_equilibrium, _scaled_constraint_gap,
 )
 from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_checkpoint
 
 
 MAX_JSON_CHECKPOINT_BYTES = 2_000_000
 MAX_JSON_CHECKPOINT_VALUES = 50_000
+
+
+def _material_arrays(histories):
+    stations = tuple(station for history in histories
+                     for station in history.stations)
+    return (np.asarray([station.plastic for station in stations], dtype=float),
+            np.asarray([station.accumulated for station in stations], dtype=float))
+
+
+def _material_histories(owner, plastic, accumulated):
+    histories = []
+    index = 0
+    for element, _slots, _virgin in owner._beam_parts:
+        cell = element.operator.cell
+        stations = []
+        for _ in cell.stations:
+            stations.append(GeneralizedHistory(
+                element.section.identity,
+                tuple(tuple(map(float, pair)) for pair in plastic[index]),
+                tuple(map(float, accumulated[index]))))
+            index += 1
+        history = GeneralizedCellHistory(cell.identity, tuple(stations))
+        with localcontext() as context:
+            context.prec = 80
+            cell._origins(history)
+        histories.append(history)
+    return tuple(histories)
+
+
+def _material_observables(histories):
+    return tuple(tuple(float(sum(station.accumulated))
+                       for station in history.stations)
+                 for history in histories)
 
 
 @dataclass(frozen=True)
@@ -45,6 +82,7 @@ class FinitePointResult:
     iterations: int
     generation: int
     accepted_factors: tuple[float, ...]
+    beam_station_accumulated: tuple[tuple[float, ...], ...] = ()
     production_qualified: bool = False
 
 
@@ -237,11 +275,6 @@ class FinitePointDriver:
                     self._assemble(trial, factor, self._shell_origins,
                                    self._beam_origins, pattern=pattern))
                 if relative <= 1e-8 and gap <= 1e-9:
-                    if any(station.accumulated != (0., 0.)
-                           for history in beam_next
-                           for station in history.stations):
-                        raise RuntimeError(
-                            "experimental finite point path admits elastic B3 response only")
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.commit")
                     support = np.zeros(owner._K.shape[0])
@@ -254,7 +287,8 @@ class FinitePointDriver:
                         _owned(trial.frames), _owned(trial.cells),
                         _owned(trial.resultants), _owned(trial.multipliers),
                         _owned(support), relative, gap, iteration,
-                        owner._generation+1, next_factors)
+                        owner._generation+1, next_factors,
+                        _material_observables(beam_next))
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.publish")
                     self._state = trial
@@ -315,6 +349,15 @@ class FinitePointDriver:
                   ("multipliers", state.multipliers),
                   ("pattern", self._pattern),
                   ("accepted_factors", np.asarray(self._accepted_factors)))
+        if any(station.accumulated != (0., 0.)
+               for history in self._beam_origins
+               for station in history.stations):
+            plastic, accumulated = _material_arrays(self._beam_origins)
+            return _encode_binary_checkpoint(
+                "finite_material", self.owner._identity,
+                self.owner._generation,
+                arrays + (("beam_plastic", plastic),
+                          ("beam_accumulated", accumulated)))
         if sum(value.size for _name, value in arrays) > MAX_JSON_CHECKPOINT_VALUES:
             return _encode_binary_checkpoint(
                 "finite", self.owner._identity, self.owner._generation, arrays)
@@ -338,12 +381,25 @@ class FinitePointDriver:
         return raw
 
     def restore(self, value):
+        """Restore an accepted endpoint after mechanical consistency checks.
+
+        V3 checks material admissibility and re-evaluation from the saved
+        accepted material state at this endpoint. It does not prove that bytes
+        came from the recorded loading path; that needs trusted provenance or
+        an independent replay of the accepted history.
+        """
         owner = self.owner
-        if (type(value) is not dict or set(value) != {
-                "schema", "model", "generation", "accepted_factors", "q",
-                "frames", "cells", "resultants", "multipliers", "pattern"} or
-                value["schema"] !=
-                "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1" or
+        base_keys = {"schema", "model", "generation", "accepted_factors",
+                     "q", "frames", "cells", "resultants", "multipliers",
+                     "pattern"}
+        if type(value) is not dict:
+            raise ValueError("incompatible experimental finite checkpoint")
+        material = value.get("schema") == FINITE_MATERIAL_CHECKPOINT
+        expected_keys = (base_keys | {"beam_plastic", "beam_accumulated"}
+                         if material else base_keys)
+        if (set(value) != expected_keys or
+                value["schema"] not in
+                (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
                 type(value["generation"]) is not int or
                 value["generation"] < 1):
@@ -360,6 +416,16 @@ class FinitePointDriver:
         resultants = _owned(value["resultants"], self._state.resultants.shape)
         multipliers = _owned(value["multipliers"], self._state.multipliers.shape)
         pattern = _owned(value["pattern"], (owner._K.shape[0],))
+        if material:
+            stations = sum(len(part[0].operator.cell.stations)
+                           for part in owner._beam_parts)
+            plastic = _owned(value["beam_plastic"], (stations, 6, 2))
+            accumulated = _owned(value["beam_accumulated"], (stations, 2))
+            beam_origins = _material_histories(owner, plastic, accumulated)
+            if not np.any(accumulated):
+                raise ValueError("material checkpoint requires yielded history")
+        else:
+            beam_origins = self._beam_origins
         beam_nodal = q[owner._shell_count:
                        owner._shell_count+self._beam_nodal].reshape(-1, 6)
         if (np.any(q[owner._fixed] != 0.) or
@@ -375,23 +441,36 @@ class FinitePointDriver:
                 raise ValueError("nonphysical finite checkpoint rotation")
         trial = _State(q, frames, cells, resultants, multipliers)
         residual, _, relative, gap, shell_next, beam_next = self._assemble(
-            trial, factors[-1], self._shell_origins, self._beam_origins,
+            trial, factors[-1], self._shell_origins, beam_origins,
             pattern=pattern)
         if (not np.isfinite(relative) or relative > 1e-8 or gap > 1e-9 or
-                any(station.accumulated != (0., 0.)
-                    for history in beam_next for station in history.stations)):
+                (not material and any(station.accumulated != (0., 0.)
+                    for history in beam_next for station in history.stations))):
             raise ValueError("mechanically inconsistent finite checkpoint")
+        if material:
+            next_plastic, next_accumulated = _material_arrays(beam_next)
+            for saved, repeated in ((plastic, next_plastic),
+                                    (accumulated, next_accumulated)):
+                scale = max(float(np.max(np.abs(saved), initial=0.)),
+                            float(np.max(np.abs(repeated), initial=0.)),
+                            np.finfo(float).tiny)
+                # Paired Decimal updates can alter only low components when
+                # an equilibrium state is re-evaluated from its own origin.
+                if np.max(np.abs(saved-repeated), initial=0.) > (
+                        64.*np.finfo(float).eps*scale):
+                    raise ValueError("mechanically inconsistent material checkpoint")
         support = np.zeros(owner._K.shape[0])
         support[owner._fixed] = residual[owner._fixed]
         result = FinitePointResult(
             "completed", factors[-1], _owned(q[:owner._shell_count]),
             _owned(self._beam_positions(trial)), frames, cells, resultants,
             multipliers, _owned(support), relative, gap, 0,
-            value["generation"], tuple(factors))
+            value["generation"], tuple(factors),
+            _material_observables(beam_origins))
         self._state = trial
         self._pattern = pattern
         self._shell_origins = shell_next
-        self._beam_origins = beam_next
+        self._beam_origins = beam_origins if material else beam_next
         self._load_factor = factors[-1]
         self._accepted_factors = tuple(factors)
         self._accepted = result

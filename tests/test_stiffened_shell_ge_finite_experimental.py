@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from dataclasses import replace
 
+from anysolver import b3_ge
 from anysolver._stiffened_shell_ge_experimental import (
     ExperimentalGEAnalysis, NodalAction,
 )
@@ -17,6 +18,122 @@ from test_stiffened_shell_ge_experimental import _panel
 
 def _actions():
     return (NodalAction("beam", 105, (0., 0., 1000., 0., 0., 0.)),)
+
+
+def _plastic_panel():
+    base = _panel()
+    beams = []
+    for definition in base.beams:
+        element, inertia = definition.instantiate()
+        section = b3_ge.EllipsoidalGeneralizedSection(
+            element.section.elastic, element.section.metric, 4000., 1e8)
+        beams.append(b3_ge.define_beam(
+            "b3-ge", element.element_id, element.node_ids,
+            element.operator.reference.coordinates,
+            element.operator.reference.nodal_triads, section, inertia,
+            quadrature=element.operator.order))
+    return replace(base, beams=tuple(beams))
+
+
+def test_generalized_beam_plastic_history_is_atomic_and_restartable(monkeypatch):
+    definition = _plastic_panel()
+    owner = ExperimentalGEAnalysis(definition)
+    accepted = owner.solve(_actions(), (1.,), max_iterations=20,
+                           max_backtracks=12)
+    assert accepted.generation == 1
+    assert max(value for member in accepted.beam_station_accumulated
+               for value in member) > 0.
+    driver = owner._finite_driver
+    shell_origin = tuple(part[3] for part in owner._shell_parts)
+    beam_origin = tuple(part[2] for part in owner._beam_parts)
+    _, tangent, _, _, _, active = driver._assemble(
+        driver._state, 1., shell_origin, beam_origin,
+        pattern=driver._pattern)
+    assert max(float(sum(station.accumulated)) for history in active
+               for station in history.stations) > 0.
+    rng = np.random.default_rng(9125)
+    count = owner._K.shape[0]
+    beam_nodes_end = owner._shell_count+6*len(owner._beam_ids)
+    direction = np.zeros(tangent.shape[0])
+    direction[:owner._shell_count] = rng.normal(
+        size=owner._shell_count)*1e-7
+    direction[owner._shell_count:beam_nodes_end] = rng.normal(
+        size=beam_nodes_end-owner._shell_count)*1e-7
+    direction[beam_nodes_end:count] = rng.normal(
+        size=count-beam_nodes_end)*1e-3
+    direction[count:] = rng.normal(size=len(direction)-count)*1e-3
+    direction[owner._fixed] = 0.
+    predicted = tangent@direction
+    for step in (.5, .25):
+        plus = driver._advance(driver._state, direction, step)
+        minus = driver._advance(driver._state, direction, -step)
+        positive = driver._assemble(
+            plus, 1., shell_origin, beam_origin, pattern=driver._pattern)[0]
+        negative = driver._assemble(
+            minus, 1., shell_origin, beam_origin, pattern=driver._pattern)[0]
+        observed = (positive-negative)/(2*step)
+        for left, right in ((0, owner._shell_count),
+                            (owner._shell_count, count),
+                            (count, len(direction))):
+            relative = (np.linalg.norm((observed-predicted)[left:right]) /
+                        np.linalg.norm(predicted[left:right]))
+            assert relative < 1e-5
+    saved = owner.checkpoint()
+    assert saved.startswith(BINARY_CHECKPOINT_MAGIC)
+    restored_owner = ExperimentalGEAnalysis(definition)
+    restored = restored_owner.restore(saved)
+    assert restored.beam_station_accumulated == accepted.beam_station_accumulated
+    np.testing.assert_array_equal(restored.beam_positions,
+                                  accepted.beam_positions)
+    token = CancellationToken()
+    token.cancel("plastic prefix cancellation")
+    with pytest.raises(SolveCancelled, match="plastic prefix cancellation"):
+        owner.solve(_actions(), (1.1,), cancellation_token=token)
+    assert owner.checkpoint() == saved
+
+    state = driver._state
+    plastic, accumulated = finite_experimental._material_arrays(
+        driver._beam_origins)
+    forged_plastic = plastic.copy()
+    forged_plastic[-1, 0] = (0.5, 0.)
+    forged = encode_binary_checkpoint(
+        "finite_material", owner._identity, accepted.generation,
+        (("q", state.q), ("frames", state.frames),
+         ("cells", state.cells), ("resultants", state.resultants),
+         ("multipliers", state.multipliers), ("pattern", driver._pattern),
+         ("accepted_factors", np.asarray(accepted.accepted_factors)),
+         ("beam_plastic", forged_plastic),
+         ("beam_accumulated", accumulated)))
+    with pytest.raises(ValueError, match="mechanically inconsistent"):
+        ExperimentalGEAnalysis(definition).restore(forged)
+
+    original_assemble = finite_experimental.FinitePointDriver._assemble
+
+    def fail_trial(self, state, factor, *args, **kwargs):
+        if factor == 1.1:
+            raise RuntimeError("fixture material trial failure")
+        return original_assemble(self, state, factor, *args, **kwargs)
+
+    with monkeypatch.context() as patcher:
+        patcher.setattr(finite_experimental.FinitePointDriver,
+                        "_assemble", fail_trial)
+        with pytest.raises(RuntimeError, match="material trial failure"):
+            owner.solve(_actions(), (1.1,))
+    assert owner.checkpoint() == saved
+    assert owner.recover() is accepted
+
+    uninterrupted = owner.solve(_actions(), (1.1,), max_iterations=20,
+                                max_backtracks=12)
+    continued = restored_owner.solve(_actions(), (1.1,), max_iterations=20,
+                                     max_backtracks=12)
+    assert uninterrupted.accepted_factors == continued.accepted_factors == (
+        1., 1.1)
+    assert (uninterrupted.beam_station_accumulated ==
+            continued.beam_station_accumulated)
+    np.testing.assert_array_equal(uninterrupted.beam_positions,
+                                  continued.beam_positions)
+    np.testing.assert_array_equal(uninterrupted.cell_resultants,
+                                  continued.cell_resultants)
 
 
 def test_finite_tiny_load_cannot_accept_zero_response(monkeypatch):

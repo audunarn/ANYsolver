@@ -91,6 +91,26 @@ slice; do not edit or run it by default.
 
 ## Connection facts and uncertainty
 
+**G3 generalized-material slice, experimental:** The point-coupled finite
+owner retains accepted generalized B3 station histories and uses a separate
+V3 binary checkpoint when yielding occurs. A bounded panel yields at a 1.0
+load factor and continues identically after restoration; rejected work and
+cancellation preserve the accepted prefix. The active-branch assembled tangent
+was checked through the actual chart update from one fixed predecessor.
+The changed source passed 178 focused checks, and installed-wheel checks passed
+36 GE cases plus 23 material cases; the strengthened tangent check passed
+against the same wheel. Logs and the wheel hash are under
+`.qualification/b3-ge-e4-pl/r7-ge-generalized-material-installed-dev-20260929-v1/`.
+The first installed material run had 23 Windows temporary-directory setup
+errors, then passed with a local temporary directory; retain both logs.
+Independent read-only review found no further defect in predecessor, commit,
+cancellation, tangent, or legacy restore paths. It identified a V3 boundary:
+endpoint checks do not prove that a re-encoded material history arose from the
+recorded path. The digest checks bytes, not trusted provenance. Fast restore
+therefore remains an experimental endpoint consistency check; path
+reachability needs independent replay or trusted provenance. This does not
+admit shell J2, fibre sections, reversal, or G3 acceptance.
+
 A separate finite-support flat-Q4 shell-pose prototype has exact box-window
 centroid/covariance weights, objective rigid-motion recovery, a bounded
 endpoint-witness screen, and first variations through actual shell/native
