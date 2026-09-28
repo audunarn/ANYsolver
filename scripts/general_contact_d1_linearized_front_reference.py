@@ -73,7 +73,9 @@ def _planar_q1_matrix(structural_columns: int,
 
 
 def _nonnegative_quadratic(hessian: np.ndarray, linear: np.ndarray,
-                           support: np.ndarray) -> np.ndarray:
+                           support: np.ndarray, *,
+                           accept_iteration_limit_with_certificate: bool = False,
+                           diagnostics: dict | None = None) -> np.ndarray:
     """Solve the pressure LCP with bounded optimization and certify KKT."""
     scale = float(np.max(np.diag(hessian)))
     if not np.isfinite(scale) or scale <= 0.0:
@@ -113,12 +115,42 @@ def _nonnegative_quadratic(hessian: np.ndarray, linear: np.ndarray,
     weighted_gap = linear+hessian @ pressure
     gap = weighted_gap/support
     complementarity = np.max(np.abs(pressure*gap))
-    if (not result.success or np.min(pressure) < -1.0e-10
-            or np.min(gap) < -1.0e-11
-            or complementarity > 1.0e-11):
+    active_stationarity = (float(np.max(np.abs(gap[indices])))
+                           if len(indices) else 0.0)
+    inactive_min_gap = (float(np.min(gap[inactive]))
+                        if len(inactive) else float("inf"))
+    optimizer_iteration_limit = (
+        "TOTAL NO. OF ITERATIONS REACHED LIMIT" in str(result.message)
+    )
+    certificate = (
+        np.all(np.isfinite(pressure)) and np.all(np.isfinite(gap))
+        and np.min(pressure) >= -1.0e-10
+        and np.min(gap) >= -1.0e-11
+        and complementarity <= 1.0e-11
+    )
+    if accept_iteration_limit_with_certificate:
+        certificate = (certificate and active_stationarity <= 1.0e-11
+                       and inactive_min_gap >= -1.0e-11)
+    if diagnostics is not None:
+        diagnostics.update({
+            "preliminary_optimizer_success": bool(result.success),
+            "preliminary_optimizer_message": str(result.message),
+            "active_set_iterations": _+1,
+            "minimum_pressure_pa": float(np.min(pressure)),
+            "minimum_gap_m": float(np.min(gap)),
+            "active_stationarity_gap_m": active_stationarity,
+            "inactive_minimum_gap_m": inactive_min_gap,
+            "maximum_complementarity_pa_m": float(complementarity),
+            "certificate_passed": bool(certificate),
+        })
+    optimizer_admitted = (result.success or (
+        accept_iteration_limit_with_certificate and optimizer_iteration_limit
+    ))
+    if not optimizer_admitted or not certificate:
         raise RuntimeError(
             f"linearized pressure solve failed: {result.message}; "
             f"minimum gap={np.min(gap):.4g} m, "
+            f"active stationarity={active_stationarity:.4g} m, "
             f"complementarity={complementarity:.4g} Pa m"
         )
     return pressure

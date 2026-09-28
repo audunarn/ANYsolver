@@ -86,3 +86,42 @@ specifying which pressure or integrated-response discrepancy this small
 case cannot discriminate, its independent reference and a bounded runtime.
 The fine discrete field is not a continuum pressure oracle. No existing
 formal evidence is retroactively changed.
+
+## Eight-Q4 coupled development discriminator
+
+A bounded two-step eight-Q4/two-S3 distributed press at 0.3 N and target
+right edge x=1.3 m compared 18 fine pressure modes with 12 selected modes.
+Both runs completed with full scaled support rank, equilibrium and the
+unchanged 50 µm physical-gap budget. Selected knots `(0,1,2,4,6,8)` changed
+the exact full-field pressure over the overlap by **29.48% L2**, contact
+force by +1.0873% and displacement by 0.6675% relative to fine. The fine
+pressure turns on at structural column 6; the selected P1 basis introduces
+pressure at inactive column 5 because it lacks a knot there. Selected took
+137.5 s versus 101.3 s fine and used two more geometry/energy evaluations
+in each accepted step. This result is retained as a failed development
+discriminator, not hidden by the later choice.
+
+One follow-up kept 12 modes but placed knots `(0,4,5,6,7,8)` around the
+*observed* front. It reproduced fine pressure within 5.93×10⁻¹² relative
+full-field L2 and contact force within 2.28×10⁻¹³ relative. Both had the
+same 34/38 contact energy evaluations across their two steps. The selected
+run still took 112.5 s versus 101.3 s fine, with process RSS 309 versus
+303 MB. Timing from one run per option does not establish a statistical
+regression, but it provides no speedup evidence.
+
+The front-focused knots were selected after observing the fine solution;
+this demonstrates representational capacity on one fixture. A cheap,
+path-stable front rule is still missing. Further coupled mesh escalation
+or pressure-space tuning is deferred until that rule and a whole-route
+cost profile make the next experiment decision-oriented. Fine Q1 remains
+the default and C1 pressure-space acceptance is open. The separate
+128×16 source-only study is documented in
+[the continuum development record](reference_cases/general_contact_d1_continuum_obstacle_development.md).
+
+Saved same-mechanics outputs and exact-Q1 comparison reports:
+
+- `reports/general_contact_d1_selected_vs_fine_8q4_fine_dev_20260928.json`
+- `reports/general_contact_d1_selected_vs_fine_8q4_selected_dev_20260928.json`
+- `reports/general_contact_d1_selected_vs_fine_8q4_comparison_dev_20260928.json`
+- `reports/general_contact_d1_selected_vs_fine_8q4_front_knots_dev_20260928.json`
+- `reports/general_contact_d1_selected_vs_fine_8q4_front_knots_comparison_dev_20260928.json`

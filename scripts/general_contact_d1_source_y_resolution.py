@@ -17,6 +17,7 @@ from anysolver.assembly import build_constraint_transformation
 from anysolver.fe_core import FEModel
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from scripts.general_contact_d1_continuum_obstacle_reference import solve
+from scripts.general_contact_d1_front_cluster_screen import _cluster_knots
 from scripts.general_contact_d1_linearized_front_reference import _nonnegative_quadratic
 
 
@@ -40,6 +41,51 @@ def _q1_mass(cells: int, right: float) -> sparse.csr_matrix:
             matrix[cell:cell+2, cell:cell+2] += (
                 0.5*interval*np.outer(shape, shape)
             )
+    return matrix.tocsr()
+
+
+def _aligned_q1_cross_mass(structural_cells: int,
+                           pressure_cells: int) -> sparse.csr_matrix:
+    """Exact pressure P1 × structural Q1 work on nested x grids."""
+    if (pressure_cells < 1 or pressure_cells > structural_cells
+            or structural_cells % pressure_cells):
+        raise ValueError("pressure x knots must align to structural x nodes")
+    return _aligned_q1_cross_knots(
+        structural_cells, np.linspace(0.0, 1.0, pressure_cells+1),
+    )
+
+
+def _aligned_q1_cross_knots(structural_cells: int,
+                            pressure_knots: np.ndarray) -> sparse.csr_matrix:
+    """Exact Q1 cross-work for pressure knots on structural nodes."""
+    knots = np.asarray(pressure_knots, dtype=float)
+    if (knots.ndim != 1 or len(knots) < 2
+            or not np.all(np.isfinite(knots))
+            or knots[0] != 0.0 or knots[-1] != 1.0
+            or np.min(np.diff(knots)) <= 0.0
+            or not np.allclose(knots*structural_cells,
+                               np.rint(knots*structural_cells),
+                               rtol=0.0, atol=1.0e-12)):
+        raise ValueError("pressure x knots must align with structural nodes")
+    pressure_cells = len(knots)-1
+    matrix = sparse.lil_matrix((pressure_cells+1, structural_cells+1))
+    h = 1.0/structural_cells
+    points = (0.5*(1.0-1.0/np.sqrt(3.0)),
+              0.5*(1.0+1.0/np.sqrt(3.0)))
+    for cell in range(structural_cells):
+        for fraction in points:
+            coordinate = (cell+fraction)*h
+            pressure_cell = min(pressure_cells-1,
+                                int(np.searchsorted(knots, coordinate, side="right")-1))
+            structural_shape = np.array((1.0-fraction, fraction))
+            pressure_local = ((coordinate-knots[pressure_cell])
+                              /(knots[pressure_cell+1]-knots[pressure_cell]))
+            pressure_shape = np.array((1.0-pressure_local, pressure_local))
+            matrix[pressure_cell:pressure_cell+2, cell:cell+2] += (
+                0.5*h*np.outer(pressure_shape, structural_shape)
+            )
+    if abs(float(matrix.sum())-1.0) > 1.0e-13:
+        raise AssertionError("aligned Q1 cross-work partition is invalid")
     return matrix.tocsr()
 
 
@@ -73,7 +119,24 @@ def _model(nx: int, ny: int) -> FEModel:
     return model
 
 
-def run(nx: int, ny: int) -> dict:
+def run(nx: int, ny: int, pressure_nx: int | None = None,
+        comparison_nx: int | None = None,
+        pressure_knots: tuple[float, ...] | None = None) -> dict:
+    if pressure_knots is not None and pressure_nx is not None:
+        raise ValueError("choose uniform pressure cells or selected knots")
+    knots = (np.asarray(pressure_knots, dtype=float)
+             if pressure_knots is not None else None)
+    pressure_nx = (len(knots)-1 if knots is not None
+                   else nx if pressure_nx is None else pressure_nx)
+    comparison_nx = nx if comparison_nx is None else comparison_nx
+    pressure_coordinates = (knots if knots is not None
+                            else np.linspace(0.0, 1.0, pressure_nx+1))
+    if (comparison_nx < pressure_nx or comparison_nx > 256
+            or 256 % comparison_nx
+            or not np.allclose(pressure_coordinates*comparison_nx,
+                               np.rint(pressure_coordinates*comparison_nx),
+                               rtol=0.0, atol=1.0e-12)):
+        raise ValueError("comparison x bins must be a nested pressure grid dividing 256")
     model = _model(nx, ny)
     model.apply_boundary_conditions()
     stiffness, _ = assemble_stiffness_matrix(model)
@@ -98,13 +161,15 @@ def run(nx: int, ny: int) -> dict:
     if np.linalg.norm(offset) > 0.0:
         raise ValueError("source y reference requires zero prescribed pose")
 
-    mx = _q1_mass(nx, 1.0)
+    mx = (_aligned_q1_cross_knots(nx, knots) if knots is not None
+          else _q1_mass(nx, 1.0) if pressure_nx == nx
+          else _aligned_q1_cross_mass(nx, pressure_nx))
     my = _q1_mass(ny, 0.9)
     pressure_work_on_z = sparse.kron(my, mx, format="coo")
     work = sparse.coo_matrix((
         pressure_work_on_z.data,
         (pressure_work_on_z.row, node_z[pressure_work_on_z.col]),
-    ), shape=(len(node_z), stiffness.shape[0])).tocsr()
+    ), shape=(pressure_work_on_z.shape[0], stiffness.shape[0])).tocsr()
     full_support = np.asarray(pressure_work_on_z.tocsr() @ np.ones(len(node_z)))
     if np.min(full_support) < -1.0e-14 or abs(np.sum(full_support)-0.9) > 1.0e-12:
         raise ValueError("clipped Q1 pressure support is invalid")
@@ -119,7 +184,20 @@ def run(nx: int, ny: int) -> dict:
     compliance = 0.5*(compliance+compliance.T)
     initial_gap = 4.0e-5
     linear = support*initial_gap+reduced_work @ free
-    pressure = _nonnegative_quadratic(compliance, linear, support)
+    qp_diagnostics = {}
+    pressure = _nonnegative_quadratic(
+        compliance, linear, support,
+        accept_iteration_limit_with_certificate=True,
+        diagnostics=qp_diagnostics,
+    )
+    active = pressure > 1.0e-8
+    active_compliance = compliance[np.ix_(active, active)]
+    active_diagonal = np.sqrt(np.diag(active_compliance))
+    active_scaled = active_compliance / np.outer(active_diagonal, active_diagonal)
+    active_eigenvalues = np.linalg.eigvalsh(active_scaled)
+    if (not np.all(np.isfinite(active_eigenvalues))
+            or active_eigenvalues[0] <= 0.0):
+        raise RuntimeError("active pressure compliance is not positive definite")
     reduced_displacement = free+response @ pressure
     equilibrium = reduced_k @ reduced_displacement-reduced_load-reduced_work.T @ pressure
     weighted_gap = (linear+compliance @ pressure)/support
@@ -128,12 +206,20 @@ def run(nx: int, ny: int) -> dict:
         raise RuntimeError("source y-resolution equilibrium or weak gap failed")
     full = np.asarray(transform @ reduced_displacement).reshape(-1)
     vertical = full[node_z].reshape(ny+1, nx+1)
-    full_pressure = np.zeros(len(node_z))
+    full_pressure = np.zeros(pressure_work_on_z.shape[0])
     full_pressure[supported] = pressure
-    pressure_grid = full_pressure.reshape(ny+1, nx+1)
+    pressure_grid = full_pressure.reshape(ny+1, pressure_nx+1)
     y_support = np.asarray(my @ np.ones(ny+1)).reshape(-1)
     x_line = y_support @ pressure_grid
-    x_force = (x_line[:-1]+x_line[1:])/(2.0*nx)
+    # Pressure knots lie on the declared comparison grid. Interpolate the P1
+    # field there, then integrate every compared case on identical x bins.
+    shared_line = np.interp(
+        np.linspace(0.0, 1.0, comparison_nx+1),
+        pressure_coordinates, x_line,
+    )
+    x_force = (shared_line[:-1]+shared_line[1:])/(2.0*comparison_nx)
+    if abs(float(np.sum(x_force)-support @ pressure)) > 1.0e-12:
+        raise AssertionError("common-bin pressure force differs from Q1 support integral")
     boundary = 0.9*ny
     lower = int(np.floor(boundary))
     if lower == ny:
@@ -150,14 +236,23 @@ def run(nx: int, ny: int) -> dict:
     if represented_gap < -50.0e-6:
         raise RuntimeError("source y-resolution case exceeds its 50 µm represented-gap budget")
     return {
-        "nx": nx, "ny": ny,
+        "nx": nx, "ny": ny, "pressure_nx": pressure_nx,
+        "pressure_knots": (knots.tolist() if knots is not None else None),
+        "comparison_x_bins": comparison_nx,
         "pressure_modes": len(pressure),
         "unsupported_pressure_modes": int(np.sum(~supported)),
-        "active_modes": int(np.sum(pressure > 1.0e-8)),
+        "active_modes": int(np.sum(active)),
+        "active_scaled_compliance_minimum_eigenvalue": float(active_eigenvalues[0]),
+        "active_scaled_compliance_condition": float(
+            active_eigenvalues[-1]/active_eigenvalues[0]
+        ),
         "integrated_reaction_n": float(np.sum(x_force)),
         "minimum_weak_gap_m": float(np.min(weighted_gap)),
         "minimum_represented_gap_m": represented_gap,
         "equilibrium_residual_n": float(np.linalg.norm(equilibrium)),
+        "pressure_qp": qp_diagnostics,
+        "pressure_grid_pa": pressure_grid.tolist(),
+        "line_pressure_n_per_m": x_line.tolist(),
         "x_force_n": x_force.tolist(),
     }
 
@@ -166,16 +261,52 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--nx", type=int, nargs="+", default=(16, 32))
     parser.add_argument("--ny", type=int, nargs="+", default=(1, 2, 4, 8))
+    parser.add_argument("--pressure-nx", type=int, nargs="+", default=None)
+    parser.add_argument("--comparison-nx", type=int, default=None)
+    parser.add_argument("--front-cluster-subdivisions", type=int,
+                        choices=(8,), default=None)
     args = parser.parse_args()
-    if (not args.nx or not args.ny or max(args.nx) > 64
+    if (not args.nx or not args.ny or max(args.nx) > 128
             or max(args.ny) > 16 or min(args.nx) < 8 or min(args.ny) < 1
             or any(256 % nx for nx in args.nx)):
-        raise ValueError("development source grids require nx=8..64 dividing 256, ny=1..16")
+        raise ValueError("development source grids require nx=8..128 dividing 256, ny=1..16")
+    if args.pressure_nx is not None and (
+            not args.pressure_nx or min(args.pressure_nx) < 1
+            or any(pressure_nx > nx or nx % pressure_nx
+                   or 256 % pressure_nx
+                   for nx in args.nx for pressure_nx in args.pressure_nx)):
+        raise ValueError("pressure x grids must divide the structural and 256-cell reference grids")
+    selected_knots = (None if args.front_cluster_subdivisions is None
+                      else _cluster_knots(args.front_cluster_subdivisions))
+    if selected_knots is not None and (
+            args.pressure_nx is not None or args.nx != [128]
+            or args.ny != [16]):
+        raise ValueError("the selected front-knot screen is bounded to one 128x16 source")
+    if args.comparison_nx is not None and (
+            args.comparison_nx < 1 or args.comparison_nx > 256
+            or 256 % args.comparison_nx
+            or (selected_knots is not None and not np.allclose(
+                np.asarray(selected_knots)*args.comparison_nx,
+                np.rint(np.asarray(selected_knots)*args.comparison_nx),
+                rtol=0.0, atol=1.0e-12,
+            ))
+            or (selected_knots is None and any(
+                args.comparison_nx % pressure_nx
+                for nx in args.nx
+                for pressure_nx in (args.pressure_nx or (nx,))
+            ))):
+        raise ValueError("comparison x bins must contain every pressure knot and divide 256")
     continuum = solve(256, 320, 0.9)
     continuum_x = np.sum(continuum.pressure_force, axis=0)
-    cases = [run(nx, ny) for nx in args.nx for ny in args.ny]
+    cases = [
+        run(nx, ny, pressure_nx, args.comparison_nx,
+            pressure_knots=selected_knots)
+        for nx in args.nx for ny in args.ny
+        for pressure_nx in ((None,) if selected_knots is not None
+                            else (args.pressure_nx or (nx,)))
+    ]
     for case in cases:
-        bins = case["nx"]
+        bins = case["comparison_x_bins"]
         reference = continuum_x.reshape(bins, 256//bins).sum(axis=1)
         source = np.asarray(case.pop("x_force_n"))
         difference = source-reference
