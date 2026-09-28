@@ -46,20 +46,26 @@ parser.add_argument(
 parser.add_argument("--structural-energy", action="store_true")
 parser.add_argument("--source-transverse-witness", action="store_true")
 parser.add_argument("--fourier-modes", type=int, default=0)
+parser.add_argument("--coarse-pressure-transfer", type=Path)
 parser.add_argument("--enriched-source-x2", action="store_true")
 parser.add_argument("--enriched-source-x4", action="store_true")
 parser.add_argument("--output", type=Path)
 args = parser.parse_args()
 enriched_source = args.enriched_source_x2 or args.enriched_source_x4
 if sum((args.structural_energy, args.source_transverse_witness,
+        bool(args.coarse_pressure_transfer),
         args.enriched_source_x2, args.enriched_source_x4)) > 1:
     parser.error("select one pressure diagnostic")
-if ((args.structural_energy or args.source_transverse_witness or enriched_source)
+if ((args.structural_energy or args.source_transverse_witness or enriched_source
+     or args.coarse_pressure_transfer)
         and (args.output is None or args.output.exists())):
     parser.error("selected diagnostic requires a new --output path")
 if args.fourier_modes < 0 or (args.fourier_modes
-                             and not args.source_transverse_witness):
-    parser.error("Fourier modes require the source-transverse witness")
+                             and not (args.source_transverse_witness
+                                      or args.coarse_pressure_transfer)):
+    parser.error("Fourier modes require a source witness or pressure transfer")
+if args.coarse_pressure_transfer and not args.fourier_modes:
+    parser.error("pressure transfer requires a positive Fourier mode count")
 started = time.perf_counter()
 path = args.saved.resolve()
 saved_bytes = path.read_bytes()
@@ -95,7 +101,7 @@ np.testing.assert_allclose(base.state.normalized_gap,
 geometry_seconds = time.perf_counter()-started
 
 if not (args.structural_energy or args.source_transverse_witness
-        or enriched_source):
+        or args.coarse_pressure_transfer or enriched_source):
     structural_tangent = _assemble_nonlinear_system(
         model, pose, {}, 5, tangent=True, kinematics="von_karman",
         require_full_coordinates=True,
@@ -498,6 +504,162 @@ if enriched_source:
                                  "elapsed_seconds")}, indent=2))
     raise SystemExit(0 if record["status"] ==
                      "development_enriched_shell_source_x2" else 2)
+
+if args.coarse_pressure_transfer:
+    from docs.d1_review_support.d1_guided_q1_fourier import (
+        guided_q1_fourier_reference,
+    )
+    from docs.d1_review_support.d1_two_body_current_skin_quadrature import (
+        integrate_current_skin,
+    )
+
+    coarse_path = args.coarse_pressure_transfer.resolve()
+    coarse_bytes = coarse_path.read_bytes()
+    coarse = json.loads(coarse_bytes)
+    ratio = saved["columns"] // coarse["columns"]
+    if (coarse["status"] != "completed" or coarse["accepted_steps"] != 2
+            or ratio != 2 or saved["columns"] != ratio*coarse["columns"]
+            or any(saved[key] != coarse[key] for key in (
+                "source_rows", "source_y_profile", "target_right_x_m",
+                "target_reference_slope", "target_columns",
+                "full_width_target", "load_profile", "total_downward_force_n",
+                "steps_per_segment", "four_phase"))):
+        raise AssertionError("saved poses are not the declared x refinement pair")
+    coarse_pressure = np.asarray(
+        coarse["contact"]["numerical_pressure_pa"], dtype=float)
+    if coarse["contact"]["source_pressure_node_ids"] != list(
+            range(1, len(coarse_pressure)+1)):
+        raise AssertionError("coarse saved pressure ordering changed")
+    coarse_active = np.flatnonzero(coarse_pressure > 0.0)
+    fine_stride = saved["columns"]+1
+    coarse_stride = coarse["columns"]+1
+    source_nodes = tuple(map(int, manager.law.source_node_ids))
+    target_nodes = tuple(map(int, manager.law.target_node_ids))
+    if (len(source_nodes) != fine_stride*(saved["source_rows"]+1)
+            or len(coarse_pressure) != coarse_stride*(saved["source_rows"]+1)
+            or any(p <= 0.0 for p in support)):
+        raise AssertionError("source grid or pressure support changed")
+    prolongation = np.zeros((len(support), len(coarse_active)))
+    coarse_columns = {int(index): column for column, index in
+                      enumerate(coarse_active)}
+    for row in range(saved["source_rows"]+1):
+        for fine_column in range(fine_stride):
+            left = fine_column//ratio
+            fraction = (fine_column % ratio)/ratio
+            for coarse_column, weight in ((left, 1.0-fraction),
+                                          (left+1, fraction)):
+                if weight and coarse_column < coarse_stride:
+                    coarse_index = row*coarse_stride+coarse_column
+                    column = coarse_columns.get(coarse_index)
+                    if column is not None:
+                        prolongation[row*fine_stride+fine_column,
+                                     column] += weight
+    if (np.min(prolongation) < 0.0
+            or np.linalg.matrix_rank(prolongation) != len(coarse_active)):
+        raise AssertionError("coarse physical pressure transfer lost rank")
+    transfer_rows = np.flatnonzero(np.any(prolongation != 0.0, axis=1))
+    if np.setdiff1d(transfer_rows, active).size:
+        raise AssertionError("coarse pressure transfer left the fine active span")
+
+    oracle = integrate_current_skin(
+        model, definition, pose, pressure_gram=True)
+    oracle_gram = oracle[5]
+    x_knots = np.asarray([model.mesh.nodes[node].x
+                          for node in source_nodes[:fine_stride]])
+    y_knots = np.asarray([model.mesh.nodes[source_nodes[row*fine_stride]].y
+                          for row in range(saved["source_rows"]+1)])
+    coarse_x_knots = x_knots[::ratio]
+    target_x = [model.mesh.nodes[node].x for node in target_nodes]
+    target_y = [model.mesh.nodes[node].y for node in target_nodes]
+    contact_y_upper = float(max(target_y))
+    source_ux = np.asarray([pose[model.mesh.dof_manager.get_node_dofs(node)[0]]
+                            for node in source_nodes])
+    if (min(target_x) > x_knots[0] or max(target_x) < x_knots[-1]
+            or min(target_y) > y_knots[0]
+            or not y_knots[0] < contact_y_upper < y_knots[-1]
+            or np.max(np.abs(source_ux)) > 1e-8):
+        raise AssertionError("guided planar transfer fixture changed")
+    material = model.materials["elastic"]
+    thickness = model.mesh.elements[
+        definition.surfaces[0].element_ids[0]].thickness
+    shear_scale = (5.0/6.0*material.elastic_modulus*thickness
+                   /(2.0*(1.0+material.poisson_ratio)))
+    finite, spectral_gram, tail_coefficient = (
+        guided_q1_fourier_reference(
+            coarse_x_knots, y_knots, coarse_active,
+            contact_y_upper=contact_y_upper,
+            shear_stiffness_n_per_m=shear_scale,
+            x_modes=args.fourier_modes, y_modes=args.fourier_modes,
+        ))
+    transferred_gram = prolongation.T @ oracle_gram @ prolongation
+    gram_error = float(np.linalg.norm(transferred_gram-spectral_gram)
+                       /np.linalg.norm(spectral_gram))
+    full_work = support[:, None]*base.gap_gradient
+    transferred_work = np.asarray(
+        prolongation.T @ full_work @ physical_transform)
+    source_uz_dofs = [int(model.mesh.dof_manager.get_node_dofs(node)[2])
+                      for node in source_nodes]
+    free_source_uz = [i for i, dof in enumerate(source_uz_dofs)
+                      if physical_transform.getrow(dof).nnz]
+    oracle_work = (prolongation.T @ oracle_gram[:, free_source_uz])
+    actual_work = np.asarray(prolongation.T @ full_work[:,
+        np.asarray(source_uz_dofs)[free_source_uz]])
+    work_error = float(np.linalg.norm(actual_work-oracle_work)
+                       /np.linalg.norm(oracle_work))
+    energy = (physical_transform.T @ linear_stiffness
+              @ physical_transform).tocsc()
+    response = splu(energy).solve(transferred_work.T)
+    response_residual = float(np.linalg.norm(
+        energy @ response-transferred_work.T)
+        /np.linalg.norm(transferred_work.T))
+    compliance = transferred_work @ response
+    compliance = 0.5*(compliance+compliance.T)
+    continuum_upper = finite+tail_coefficient*spectral_gram
+    lower = linalg.eigvalsh(compliance, continuum_upper)
+    upper = linalg.eigvalsh(compliance, finite)
+    tail_relative = linalg.eigvalsh(
+        tail_coefficient*spectral_gram, finite)
+    record = {
+        "status": "development_coarse_pressure_on_fine_structure",
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "fine_saved_sha256": hashlib.sha256(saved_bytes).hexdigest(),
+        "coarse_saved_sha256": hashlib.sha256(coarse_bytes).hexdigest(),
+        "anysolver_module": str(Path(anysolver.__file__).resolve()),
+        "coarse_active_modes": int(len(coarse_active)),
+        "fine_settled_active_modes": int(len(active)),
+        "transferred_nonzero_fine_modes": int(len(transfer_rows)),
+        "pressure_transfer_rank": int(np.linalg.matrix_rank(prolongation)),
+        "transferred_gram_relative_oracle_error": gram_error,
+        "transferred_work_relative_oracle_error": work_error,
+        "response_relative_residual": response_residual,
+        "fourier_modes_each_axis": args.fourier_modes,
+        "shear_stiffness_n_per_m": shear_scale,
+        "maximum_relative_tail_bound": float(tail_relative[-1]),
+        "minimum_squared_dual_ratio_interval": [
+            float(lower[0]), float(upper[0])],
+        "maximum_squared_dual_ratio_upper": float(upper[-1]),
+        "interpretation_scope": (
+            "same coarse physical pressure subspace on saved fine structure; "
+            "not the fine settled KKT critical cone"),
+    }
+    if (gram_error > 1e-10 or work_error > 1e-8
+            or response_residual > 1e-8 or lower[0] <= 0.0):
+        record["status"] = "development_coarse_pressure_transfer_unresolved"
+    record["elapsed_seconds"] = time.perf_counter()-started
+    record["peak_process_working_set_mb"] = (
+        psutil.Process().memory_info().peak_wset/1e6)
+    args.output.write_text(json.dumps(record, indent=2)+"\n",
+                           encoding="utf-8")
+    print(json.dumps({key: record[key] for key in (
+        "status", "coarse_active_modes", "fine_settled_active_modes",
+        "transferred_gram_relative_oracle_error",
+        "transferred_work_relative_oracle_error",
+        "minimum_squared_dual_ratio_interval", "elapsed_seconds")},
+        indent=2))
+    raise SystemExit(0 if record["status"] ==
+                     "development_coarse_pressure_on_fine_structure" else 2)
 
 if args.source_transverse_witness:
     from docs.d1_review_support.d1_two_body_current_skin_quadrature import (

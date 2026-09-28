@@ -123,6 +123,17 @@ is not saturated. The E4-PL energy is non-Galerkin and no 32×8-to-64×8
 common-energy comparison exists, so this is not a convergence rate or a
 mesh-uniform stability verdict. No further automatic refinement is scheduled.
 
+The [coarse-pressure transfer discriminator](d1_review_support/d1_coarse_pressure_transfer_20260929.md)
+maps the same 48 settled-active 16×8 Q1 pressure functions onto the saved 32×8
+shell structure. Their independently bounded minimum squared dual ratio stays
+at `[0.591698, 0.593221]`, overlapping the coarse `[0.591616, 0.593137]`
+interval, whereas the full fine 96-mode active space is lower at
+`[0.432783, 0.443156]`. Independent review checked the mapping and full work.
+The lower fine-space minimum needs newly available pressure directions; this
+does not explain the observed physical pressure-field shift or prove
+mesh-uniform stability. The fixed-target guided scalar scope, other D1 gates
+and the cap on further refinement remain unchanged.
+
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
 bound at all eight accepted poses. Local and installed fields match; a forced
