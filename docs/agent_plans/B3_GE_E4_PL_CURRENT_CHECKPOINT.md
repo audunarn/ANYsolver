@@ -17,17 +17,20 @@ The same-action shell/reference difference remains strongest in torque
 and axial/bending work. A pure-torque width probe finds a `2.0–3.2%`
 E4/3D director discrepancy from pre-bond to bond, with small measured
 3D mid-thickness displacement warp. Pure Fz displacement differs by
-`0.9–1.2%` without a similar local rise. The `1:8` ratio extreme passes loaded Mx/Fz
-checks, while the registered x16/y4 `8:1` fixture needs 1,956 rows
+`0.9–1.2%` without a similar local rise. A Q4 least-squares fit to the
+pure-torque solid faces is geometrically close but `38%` away from
+the Q4 equilibrium field in its energy norm; it cannot allocate the
+work discrepancy. The `1:8` ratio extreme passes loaded Mx/Fz checks,
+while the registered x16/y4 `8:1` fixture needs 1,956 rows
 and stops at the unchanged 1,900-row development cap before solution.
 **Remaining uncertainty:** Whether P0 avoids locking and unsupported
 modes across ratios and whether physically matched sided torque/shear
 transfer validates the declared law. **Next discriminator and action:**
-Establish a physically matched torque/section/support comparator that
-separates shell idealization from connection transfer; the saved
-pure-action fields alone cannot do that. Revisit the `8:1` loaded
-check through an exact
-bounded drill quotient if its result changes the policy decision; the
+Establish a work-conjugate torque/section/support comparator that
+separates shell idealization from connection transfer; neither the
+saved pure-action fields nor a displacement fit does that alone.
+Revisit the `8:1` loaded check through an exact bounded drill quotient
+if its result changes the policy decision; the
 size guard alone is no mechanics verdict. Do not infer selection from
 rank or the quotient alone. Advance B2 F09 independently.
 G0B/F03 remain open, G1 barred, and formal F03 authority unconsumed;
@@ -10910,3 +10913,48 @@ discriminating reference must match the pure torque action, section
 origin and root/support idealization and distinguish shell constitutive
 response from local connection transfer before changing the law.
 No multiplier space is selected; F03/G0B remain open, G1 barred.
+
+**Pure-torque common-coordinate discriminator (prospective):** The
+pure-action width probe shows only small sampled 3D through-thickness
+displacement warp, but a `7.50%` integrated E4/3D work difference.
+On the unchanged x4 Q4 and reviewed solid fields, fit only the saved
+uniform `100 Nm` pure-torque plate face displacement to the clamped
+Q4 kinematic space using the already checked global fit operator.
+Compare the fit residual, action work, Q4 strain energy, and the
+energy-norm distance to the actual Q4 pure-torque equilibrium field.
+If the fit is close to the actual Q4 field yet energy/work disagree,
+review shell/3D constitutive and support idealization before changing
+the connection law. If the fitted shape materially differs, review
+trace and boundary transfer. The fit is a displacement projection,
+not a matched-energy projection or an external accuracy verdict; use
+one pure action and no new external solve or finer classical mesh.
+
+**Pure-torque common-coordinate outcome:** The source-guarded saved
+four solid Mx unit fields produce the same `100 Nm` uniform P0 action.
+The reviewed clamped Q4 least-squares operator fits `16,278` solid
+face displacement components with RMS residual `5.0189e-8 m`, only
+`0.465%` of the solid face-displacement RMS. Yet the fitted Q4 field
+is `0.3803` away from the actual pure-torque Q4 equilibrium field in
+the Q4 energy norm. Its Q4 internal quadratic work is `0.01490298 J`,
+its interface action work `0.01263591 J`, versus actual Q4 equilibrium
+work `0.01212223 J` and solid-plate action work `0.01310494 J`.
+The fitted-field variational identity closes to `2.0e-14 J`, and the
+unchanged Q4 equilibrium free residual is `1.33e-11` relative to
+its applied coordinate load norm. The fitted-field raw mixed-unit
+residual ratio (`56.4`) is only a diagnostic, not an acceptance norm.
+Thus a close *displacement* fit is not mechanically close enough to
+assign the `7.50%` work difference to shell constitutive stiffness or
+to clear the trace. In the saved 3D model all three translations are
+fixed over the complete plate left face and beam root face; the Q4
+model fixes all six midsurface coordinates on its left edge. These
+are nominally corresponding clamps but not identical through-thickness
+admissible fields. The raw
+`B3_E4_F03_C1_PURE_TORQUE_Q4_FIT_DEV_V1.json` SHA256 is
+`a1d56c97186e840b6e64f2cdca38ea422f76d52b56ff9c3740818d1aba527f9b`;
+runner SHA256 is
+`4940014bb360b1fdfac92e1d1b3367ffc30c12d073d9a67695c021e865da0565`.
+The adjacent Q4-fit/width tests pass `3/3`. Do not iterate the
+displacement fit as if it were an energy projection. A next external
+torque comparator must state matching section, load work and root
+constraint domains, and recover work-conjugate sides before scoring
+the native connection. F03/G0B remain open; G1 remains barred.
