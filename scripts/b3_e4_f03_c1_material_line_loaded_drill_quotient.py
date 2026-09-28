@@ -42,20 +42,31 @@ def _relative(left: np.ndarray, right: np.ndarray) -> float:
     return float(np.linalg.norm(left-right)/max(1., np.linalg.norm(right)))
 
 
-def evaluate(*, beam_half_cells: int = 12,
+def evaluate(*, shell_cells: int = 16,
+             beam_half_cells: int = 12,
              p0_intervals: int = 4,
              mode_resolved_mx_only: bool = False,
              space_kind: str = "piecewise_constant",
-             selective_yaw: bool = False) -> dict:
-    if (beam_half_cells, p0_intervals) not in ((12, 4), (14, 4), (14, 8)):
+             selective_yaw: bool = False,
+             yaw_intervals: int | None = None) -> dict:
+    if selective_yaw:
+        if (shell_cells, beam_half_cells, p0_intervals) not in (
+                (2, 12, 2), (4, 14, 4), (8, 18, 8), (16, 14, 8)):
+            raise ValueError("bounded selective-yaw refinement fixture required")
+    elif shell_cells != 16 or (beam_half_cells, p0_intervals) not in (
+            (12, 4), (14, 4), (14, 8)):
         raise ValueError("bounded x16 P0 ratio fixture required")
     if space_kind not in ("piecewise_constant", "continuous_linear",
                           "dual_linear"):
         raise ValueError("bounded material-line multiplier kind required")
-    if selective_yaw and ((beam_half_cells, p0_intervals) != (14, 8) or
-                          space_kind == "piecewise_constant" or
+    if selective_yaw and (space_kind == "piecewise_constant" or
                           mode_resolved_mx_only):
-        raise ValueError("bounded x16/B3-14/m8 selective-yaw Mx/Fz comparison required")
+        raise ValueError("bounded selective-yaw Mx/Fz comparison required")
+    if yaw_intervals is not None and (
+            not selective_yaw or
+            (shell_cells, beam_half_cells, p0_intervals, yaw_intervals) !=
+            (8, 18, 8, 7)):
+        raise ValueError("only fixed x8/B3-18 selective yaw m7 is admitted")
     if space_kind != "piecewise_constant" and not selective_yaw and (
             (beam_half_cells, p0_intervals) != (14, 8) or
             not mode_resolved_mx_only):
@@ -66,7 +77,7 @@ def evaluate(*, beam_half_cells: int = 12,
     if Path(anysolver.__file__).resolve().parent != expected:
         raise RuntimeError("bounded quotient imported another ANYsolver checkout")
     started = monotonic()
-    xs, ys = local_grid(16, transverse_cells=4)
+    xs, ys = local_grid(shell_cells, transverse_cells=4)
     shell, shell_physical_operator = raw_e4_tangent(xs, ys, thickness=.035)
     beam = build(beam_half_cells, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
@@ -85,8 +96,10 @@ def evaluate(*, beam_half_cells: int = 12,
     p0_rows, p0_measures = _rows(line, LineMultiplierSpace(
         "piecewise_constant", knots))
     if selective_yaw:
+        yaw_count = shell_cells//2 if yaw_intervals is None else yaw_intervals
+        yaw_knots = tuple(np.linspace(0., 1., yaw_count+1))
         yaw_rows, yaw_measures = _rows(line, LineMultiplierSpace(
-            space_kind, knots))
+            space_kind, yaw_knots))
         rows = np.vstack([p0_rows[axis::6] for axis in range(5)] +
                          [yaw_rows[5::6]])
         valid_measure = (np.min(p0_measures) > 1e-12 and
@@ -238,18 +251,22 @@ def evaluate(*, beam_half_cells: int = 12,
                 shell_work <= 0.):
             raise ArithmeticError(f"reconstructed full loaded system failed: {case}")
         cases[label] = case
+    yaw_model = f" / yaw m{yaw_count}" if selective_yaw else ""
     return {
-        "classification": "bounded exact-drill loaded x16 material-line space diagnostic",
+        "classification": "bounded exact-drill loaded material-line space diagnostic",
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
         "source_git": subprocess.check_output(("git", "rev-parse", "HEAD"),
                                               text=True).strip(),
-        "model": (f"C1 Q4 x16/y4 35 mm shell, B3-{beam_half_cells}, "
-                  f"material-line {'P0-five plus '+space_kind+' yaw' if selective_yaw else space_kind} m{p0_intervals}, "
+        "model": (f"C1 Q4 x{shell_cells}/y4 35 mm shell, B3-{beam_half_cells}, "
+                  f"material-line {'P0-five plus '+space_kind+' yaw' if selective_yaw else space_kind} "
+                  f"P0 m{p0_intervals}{yaw_model}, "
                   "original full equations reconstructed"),
+        "shell_cells": shell_cells,
         "beam_half_cells": beam_half_cells,
         "p0_intervals": p0_intervals,
         "space_kind": space_kind,
         "selective_yaw": selective_yaw,
+        "yaw_intervals": (yaw_count if selective_yaw else None),
         "mode_resolved_mx_only": mode_resolved_mx_only,
         "full_kkt_rows": len(full_free)+row_count,
         "quotient_kkt_rows": dimension,
@@ -264,7 +281,7 @@ def evaluate(*, beam_half_cells: int = 12,
         "schur_test_relative_residual": schur_check,
         "cases": cases,
         "limits": ["private exact algebraic elimination, not production condensation",
-                   "one x16 level and terminal nodal loads, not mesh-uniform stability",
+                   "one level and terminal nodal loads per run, not mesh-uniform stability",
                    "no physical connection accuracy or multiplier-space selection"],
         "provenance": {
             "python": sys.version.split()[0], "numpy": np.__version__,
@@ -280,10 +297,12 @@ def evaluate(*, beam_half_cells: int = 12,
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--beam-half-cells", type=int, choices=(12, 14), default=12)
-    parser.add_argument("--p0-intervals", type=int, choices=(4, 8), default=4)
+    parser.add_argument("--shell-cells", type=int, choices=(2, 4, 8, 16), default=16)
+    parser.add_argument("--beam-half-cells", type=int, choices=(12, 14, 18), default=12)
+    parser.add_argument("--p0-intervals", type=int, choices=(2, 4, 8), default=4)
     parser.add_argument("--mode-resolved-mx-only", action="store_true")
     parser.add_argument("--selective-yaw", action="store_true")
+    parser.add_argument("--yaw-intervals", type=int)
     parser.add_argument("--space-kind", choices=("piecewise_constant",
                                                   "continuous_linear",
                                                   "dual_linear"),
@@ -292,11 +311,13 @@ def main() -> None:
     if args.output.exists():
         raise FileExistsError(args.output)
     with threadpool_limits(limits=1):
-        result = evaluate(beam_half_cells=args.beam_half_cells,
+        result = evaluate(shell_cells=args.shell_cells,
+                          beam_half_cells=args.beam_half_cells,
                           p0_intervals=args.p0_intervals,
                           mode_resolved_mx_only=args.mode_resolved_mx_only,
                           space_kind=args.space_kind,
-                          selective_yaw=args.selective_yaw)
+                          selective_yaw=args.selective_yaw,
+                          yaw_intervals=args.yaw_intervals)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n", encoding="utf-8")
     print(json.dumps({"elapsed_s": result["elapsed_s"],

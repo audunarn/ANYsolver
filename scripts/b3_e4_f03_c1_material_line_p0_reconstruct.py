@@ -285,7 +285,25 @@ def evaluate_selective_yaw(source_root: Path, response_root: Path,
             support = {node: support_base[node] - sum(
                 coefficients[j]*unit_support[j][node] for j in range(26))
                        for node in support_base}
-            balance = _wrench(coords, support)+_wrench(coords, applied)
+            support_wrench = _wrench(coords, support)
+            applied_wrench = _wrench(coords, applied)
+            balance = support_wrench+applied_wrench
+            # Use absolute nodal action totals so a self-equilibrating
+            # torque case is not normalized by its near-zero net force.
+            force_scale = max(1.,
+                              sum(np.linalg.norm(value) for value in support.values()),
+                              sum(np.linalg.norm(value) for value in applied.values()))
+            moment_scale = max(1.,
+                               sum(np.linalg.norm(np.cross(coords[node], value))
+                                   for node, value in support.items()),
+                               sum(np.linalg.norm(np.cross(coords[node], value))
+                                   for node, value in applied.items()))
+            balance_ratio = max(np.linalg.norm(balance[:3])/force_scale,
+                                np.linalg.norm(balance[3:])/moment_scale)
+            # This detects gross saved-output inconsistency only. The
+            # programme's 1e-8 physical-balance criterion is unchanged.
+            if balance_ratio > 1e-6:
+                raise ArithmeticError("selective solid support balance changed")
             action = -(constraints.T@dual).reshape(-1, 3)
             line_forces = {node: action[i] for i, node in enumerate(nodes)}
             plate_forces = {node: action[i] for i, node in enumerate(nodes)
@@ -320,6 +338,8 @@ def evaluate_selective_yaw(source_root: Path, response_root: Path,
                 "plate_interface_work_J": plate_work,
                 "bar_interface_work_J": bar_work,
                 "global_external_support_balance": balance.tolist(),
+                "support_balance_diagnostic_ratio": float(balance_ratio),
+                "support_balance_diagnostic_limit": 1e-6,
                 "joint_global_wrench": joint_wrench.tolist(),
             }
         cases[kind]["action_span_relative_defect"] = action_defect
@@ -340,6 +360,7 @@ def evaluate_selective_yaw(source_root: Path, response_root: Path,
             "5e-6 skew is a bounded FRD-precision diagnostic allowance, not an acceptance limit",
             "measured unsymmetrized compliance used; no tangent symmetrization",
             "fixed detached solid grid and source loads; not native shell/beam equivalence",
+            "1e-6 saved-output support guard is not the frozen 1e-8 physical acceptance criterion",
             "no growing-space, contact, F03/G0B acceptance or multiplier selection",
         ],
     }
