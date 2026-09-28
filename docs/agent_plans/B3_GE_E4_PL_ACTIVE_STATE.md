@@ -39,18 +39,20 @@ include the native beam arm, do no shell drilling work, and excite supported
 physical Q4 compliance. Point yaw-slope evaluation remains unbounded on H1;
 these local checks do not qualify a line law.
 
-A bounded two-segment rail now assembles four material Gauss stations with
+A bounded material rail assembles two Gauss stations per segment with
 fixed reference arclength weights and finite-dimensional sampled six-component
 densities. Constant yaw density cancels interior shared-node shell work. Pure
 moment and mixed densities produce the declared integrated shell/native wrench,
 zero resultant and drilling work, and supported physical-only shell compliance.
 Same-parent gradients and Hessians follow the actual native update. A
-two-segment finite P0/P1 six-channel density basis now gives owned coefficients,
+finite P0/P1 six-channel density basis gives owned coefficients,
 exact piecewise-polynomial L2 Gram, and coefficient-conjugate projected gaps.
+Four-segment tests check shared-node work cancellation and the independently
+derived growing density Gram; they do not establish growing-space stability.
 The virgin joint covector now maps to a spatial force and shell-rail moment
 including the eccentric lever arm. A four-station physical-wrench quadrature
 Gram uses frozen force/length scales; station-map equality alone does not
-prove whole-segment constancy. Twenty focused checks pass. Independent
+prove whole-segment constancy. Twenty-one focused checks pass. Independent
 read-only reviews found no bounded discrete measure, scatter, or basis algebra
 defect. Gauss exactness
 applies to density products, not generally to nonlinear density-gap work.

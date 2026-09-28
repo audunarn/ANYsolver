@@ -422,11 +422,12 @@ def test_rail_transfers_physical_wrench_without_shell_drilling_completion(
 
 
 def _segmented_rail(*, beam_offset=(0., 0., -.05),
-                    expected_offset=(0., 0., 0.)):
+                    expected_offset=(0., 0., 0.),
+                    x_cuts=(.5, .75, 1.)):
     beam = build(4, z_offset=.0675, assemble=False)
     y = np.array((-.1, 0., .1))
     reference = np.array([[(x, value, 0.) for value in y]
-                          for x in (.5, .75, 1.)])
+                          for x in x_cuts])
 
     def port_at(station):
         element, cell, weight, _ = beam._locate(station)
@@ -603,6 +604,47 @@ def test_segmented_rail_constant_yaw_density_cancels_interior_shell_work():
         gradient[54+nodal_count+24*element+3*cell+2]
         for element in range(len(beam.context.elements)) for cell in (0, 1))
     assert beam_rotation_z == pytest.approx(.5, abs=2e-13)
+
+
+def test_growing_rail_space_preserves_shared_work_and_exact_density_gram():
+    cuts = np.array((.5, .625, .75, .875, 1.))
+    line, beam = _segmented_rail(x_cuts=cuts)
+    kinds = ("P0", "P1", "P0", "P1", "P0", "P1")
+    basis = FiniteRailDensityBasis.on_material_segments(cuts, kinds)
+    assert basis.sample_matrix.shape == (48, 27)
+    assert len(line.connections) == 8
+    lengths = np.diff(cuts)
+    p0 = np.diag(lengths)
+    p1 = np.diag(np.r_[lengths[0], lengths[:-1]+lengths[1:],
+                           lengths[-1]]/3.)
+    p1 += np.diag(lengths/6., 1)+np.diag(lengths/6., -1)
+    expected = linalg.block_diag(*(p0 if kind == "P0" else p1
+                                   for kind in kinds))
+    np.testing.assert_allclose(basis.raw_l2_gram, expected,
+                               rtol=0., atol=2e-16)
+
+    density = np.zeros((8, 6))
+    density[:, 5] = 1.
+    zero = np.zeros((5, 3, 6))
+    work, gaps, gradient, _ = line.work_tangent(
+        zero, beam.context.initial.mechanical, density)
+    assert work == pytest.approx(0., abs=1e-13)
+    np.testing.assert_allclose(gaps, 0., rtol=0., atol=2e-14)
+    shell = gradient[:zero.size].reshape(zero.shape)
+    expected_edge = np.array((.125, .75, .125))
+    np.testing.assert_allclose(shell[:, :, 1],
+                               np.vstack((expected_edge, np.zeros((3, 3)),
+                                          -expected_edge)),
+                               rtol=0., atol=2e-13)
+    np.testing.assert_array_equal(shell[:, :, 5], 0.)
+
+    rng = np.random.default_rng(243)
+    moved_shell = rng.normal(scale=.004, size=zero.shape)
+    coefficients = rng.normal(scale=.2, size=27)
+    work, gaps, _, _ = basis.work_tangent(
+        line, moved_shell, beam.context.initial.mechanical, coefficients)
+    assert work == pytest.approx(coefficients@basis.constraint_rows(gaps),
+                                 rel=2e-12, abs=2e-12)
 
 
 def test_segmented_rail_constant_density_has_line_wrench_and_shell_compliance():

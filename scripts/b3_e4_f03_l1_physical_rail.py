@@ -355,10 +355,10 @@ class RailL1LogConnection:
 
 @dataclass(frozen=True)
 class SegmentedRailWeakWork:
-    """Two material segments with exact shared-node station-work assembly.
+    """Material segments with exact shared-node station-work assembly.
 
     Two Gauss stations per segment define this bounded discrete weak action.
-    The line measure is fixed reference arclength and the four six-component
+    The line measure is fixed reference arclength and the six-component
     values are finite-dimensional density samples. They do not define point
     values of an arbitrary L2 equivalence class. No production multiplier
     basis, norm, or quadrature-error contract is selected.
@@ -368,6 +368,7 @@ class SegmentedRailWeakWork:
     weights: np.ndarray
     stations: np.ndarray
     transverse_nodes: int
+    longitudinal_nodes: int
 
     @classmethod
     def at_reference(cls, reference: np.ndarray, y_cuts: np.ndarray,
@@ -378,13 +379,16 @@ class SegmentedRailWeakWork:
         y = np.asarray(y_cuts, dtype=float)
         if y.ndim != 1 or len(y) < 2:
             raise ValueError("transverse material cuts required")
-        ref = _owned(reference, (3, len(y), 3))
+        raw = np.asarray(reference)
+        if raw.ndim != 3 or not 2 <= raw.shape[0] <= 9:
+            raise ValueError("bounded longitudinal rail nodes required")
+        ref = _owned(raw, (raw.shape[0], len(y), 3))
         cuts = ref[:, 0, 0]
         if not np.all(np.diff(cuts) > 0.):
-            raise ValueError("two ordered rail material segments required")
+            raise ValueError("ordered rail material segments required")
         abscissae = (.5-.5/np.sqrt(3.), .5+.5/np.sqrt(3.))
         connections, weights, stations = [], [], []
-        for segment in range(2):
+        for segment in range(len(cuts)-1):
             rail = FlatQ4PhysicalRail.from_reference(
                 ref[segment:segment+2], y, bounds, thickness)
             length = cuts[segment+1]-cuts[segment]
@@ -401,22 +405,24 @@ class SegmentedRailWeakWork:
         context = connections[0].port.context
         if any(c.port.context is not context for c in connections):
             raise ValueError("one native retained context required")
+        count = 2*(len(cuts)-1)
         return cls(tuple(connections),
-                   _owned(weights, (4,)), _owned(stations, (4,)), len(y))
+                   _owned(weights, (count,)), _owned(stations, (count,)),
+                   len(y), len(cuts))
 
     def work_tangent(self, shell_total: np.ndarray, beam_state,
                      multiplier_samples: np.ndarray
                      ) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
-        shell = _owned(shell_total, (3, self.transverse_nodes, 6))
-        density = _owned(multiplier_samples, (4, 6))
+        shell = _owned(shell_total, (self.longitudinal_nodes,
+                                     self.transverse_nodes, 6))
+        density = _owned(multiplier_samples, (len(self.connections), 6))
         context = self.connections[0].port.context
         shell_size = shell.size
         size = shell_size+context.count
         gradient = np.zeros(size)
         hessian = np.zeros((size, size))
-        gaps = np.empty((4, 6))
+        gaps = np.empty((len(self.connections), 6))
         work = 0.
-        local_shell_size = 2*self.transverse_nodes*6
         beam_indices = np.arange(shell_size, size)
         for sample, connection in enumerate(self.connections):
             segment = sample//2
@@ -442,7 +448,7 @@ class SegmentedRailWeakWork:
 class FiniteRailDensityBasis:
     """Development-only P0/P1 six-channel line-density coefficients.
 
-    Two-point Gauss on each of two material segments integrates products of
+    Two-point Gauss on each material segment integrates products of
     these piecewise-linear basis functions exactly. ``raw_l2_gram`` is only
     the unscaled coordinate-density L2 Gram. It is not the physical F03 norm:
     the pose-covector-to-spatial-wrench map and force/moment scales still need
@@ -459,19 +465,30 @@ class FiniteRailDensityBasis:
     @classmethod
     def on_two_segments(cls, cuts: np.ndarray, kinds: tuple[str, ...]):
         x = _owned(cuts, (3,))
+        return cls.on_material_segments(x, kinds)
+
+    @classmethod
+    def on_material_segments(cls, cuts: np.ndarray, kinds: tuple[str, ...]):
+        raw = np.asarray(cuts)
+        if raw.ndim != 1 or not 2 <= len(raw) <= 9:
+            raise ValueError("bounded material segment cuts required")
+        x = _owned(raw, (len(raw),))
         if not np.all(np.diff(x) > 0.):
             raise ValueError("ordered positive material segments required")
         if len(kinds) != 6 or any(kind not in ("P0", "P1") for kind in kinds):
             raise ValueError("one P0/P1 density choice per pose channel required")
+        segments = len(x)-1
+        sample_count = 2*segments
         gauss = (.5-.5/np.sqrt(3.), .5+.5/np.sqrt(3.))
         stations = np.array([x[segment]+(x[segment+1]-x[segment])*t
-                             for segment in range(2) for t in gauss])
+                             for segment in range(segments) for t in gauss])
         weights = np.repeat(np.diff(x)/2., 2)
-        count = sum(2 if kind == "P0" else 3 for kind in kinds)
-        samples = np.zeros((24, count))
+        count = sum(segments if kind == "P0" else segments+1
+                    for kind in kinds)
+        samples = np.zeros((6*sample_count, count))
         offset = 0
         for channel, kind in enumerate(kinds):
-            for segment in range(2):
+            for segment in range(segments):
                 for station, t in enumerate(gauss):
                     row = 6*(2*segment+station)+channel
                     if kind == "P0":
@@ -479,19 +496,20 @@ class FiniteRailDensityBasis:
                     else:
                         samples[row, offset+segment] = 1.-t
                         samples[row, offset+segment+1] = t
-            offset += 2 if kind == "P0" else 3
+            offset += segments if kind == "P0" else segments+1
         repeated_weights = np.repeat(weights, 6)
         gram = samples.T @ (repeated_weights[:, None]*samples)
-        return cls(x, tuple(kinds), _owned(stations, (4,)),
-                   _owned(weights, (4,)), _owned(samples, (24, count)),
+        return cls(x, tuple(kinds), _owned(stations, (sample_count,)),
+                   _owned(weights, (sample_count,)),
+                   _owned(samples, (6*sample_count, count)),
                    _owned(gram, (count, count)))
 
     def density_samples(self, coefficients: np.ndarray) -> np.ndarray:
         values = _owned(coefficients, (self.sample_matrix.shape[1],))
-        return (self.sample_matrix @ values).reshape(4, 6)
+        return (self.sample_matrix @ values).reshape(len(self.weights), 6)
 
     def constraint_rows(self, gaps: np.ndarray) -> np.ndarray:
-        gap = _owned(gaps, (4, 6))
+        gap = _owned(gaps, (len(self.weights), 6))
         return self.sample_matrix.T @ (np.repeat(self.weights, 6)*gap.ravel())
 
     def work_tangent(self, line: SegmentedRailWeakWork,
@@ -507,10 +525,10 @@ class FiniteRailDensityBasis:
     def flat_reference_physical_quadrature_gram(
             self, line: SegmentedRailWeakWork, *, force_scale: float,
             characteristic_length: float) -> np.ndarray:
-        """Four-station physical-wrench quadrature Gram, not F03 acceptance.
+        """Station physical-wrench quadrature Gram, not F03 acceptance.
 
         The fixed force/moment scales and shell-rail origin are common to all
-        six channels. Equality of four station maps is a bounded consistency
+        six channels. Equality of sampled station maps is a bounded consistency
         check; it does not prove constancy between stations. Hence this is
         not asserted to be an exact continuum L2 Gram. Curved transport and
         variable-map quadrature remain outside this development probe.
