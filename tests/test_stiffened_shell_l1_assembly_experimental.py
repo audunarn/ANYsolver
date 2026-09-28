@@ -48,6 +48,8 @@ def test_sparse_weak_line_matches_independent_dense_solution_and_restart(
     definition = _definition(space)
     owner = stiffened_shell.create_analysis(definition=definition)
     assert owner.capabilities["status"] == "EXPERIMENTAL_NOT_QUALIFIED"
+    assert owner.capabilities["attachment"] == (
+        "experimental L1 weak-line candidate",)
     assert owner.capabilities["analysis"] == ("reference_linear",)
     assert owner.capabilities["experimental_line_spaces"] == (space,)
     assert owner.preflight()["experimental_line_samples"] == 8

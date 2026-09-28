@@ -49,7 +49,7 @@ def _panel():
 def test_sparse_mixed_panel_solve_recovery_and_restart():
     definition = _panel()
     analysis = anysolver.stiffened_shell.create_analysis(definition=definition)
-    assert analysis.capabilities["attachment"] == "reference point pose"
+    assert analysis.capabilities["attachment"] == ("reference point pose",)
     legacy_identity = sha256(json.dumps({
         "profile": PROFILE, "shell_ids": definition.shell.node_ids,
         "shell_xyz": np.asarray(definition.shell.coordinates_m).tolist(),

@@ -472,9 +472,9 @@ class ExperimentalGEAnalysis:
 
     @property
     def capabilities(self):
-        attachment = ("reference point pose" if not self._line_samples else
-                      (("reference point pose",) if self._connections else ()) +
-                      ("experimental L1 weak-line candidate",))
+        attachment = (("reference point pose",) if self._connections else ())
+        if self._line_samples:
+            attachment += ("experimental L1 weak-line candidate",)
         excluded = (("plastic finite", "line", "footprint", "modes", "buckling")
                     if not self._line_samples else
                     ("plastic finite", "qualified bonded line", "footprint",
