@@ -246,6 +246,7 @@ record = {
     "geometry_evaluations": evaluation_count,
     "gradient_evaluations": gradient_count,
     "gradient_step_sensitivity": gradient_step_sensitivity,
+    "clipping_incidence_signature": topology_signature,
     "elapsed_seconds": time.perf_counter()-started,
     "trace": trace,
     "final_scaled_merit": merit,

@@ -58,6 +58,46 @@ def q4_derivatives(vertices, xi, eta):
     return along_x, along_y
 
 
+def overlap_incidence(source_xy, target_xy, polygon):
+    """Identify the source and target edges incident to clipped vertices.
+
+    This is an oracle branch signature, not a physical contact-feature label.
+    Cyclic normalization removes the arbitrary starting corner of the clipper
+    while retaining vertex order around the overlap.
+    """
+    length = max(float(np.linalg.norm(np.roll(vertices, -1, axis=0)
+                                      -vertices, axis=1).max())
+                 for vertices in (source_xy, target_xy))
+    tolerance = 1e-10*length
+
+    def edges_at(point, vertices):
+        matches = []
+        for edge_id, start in enumerate(vertices):
+            edge = vertices[(edge_id+1) % len(vertices)]-start
+            edge_length = float(np.linalg.norm(edge))
+            if edge_length <= 0:
+                raise ValueError("degenerate oracle polygon edge")
+            along = float(np.dot(point-start, edge))/edge_length
+            distance = abs(float(np.linalg.det(np.stack((edge, point-start))))) / edge_length
+            if (distance <= tolerance
+                    and -tolerance <= along <= edge_length+tolerance):
+                matches.append(edge_id)
+        return tuple(matches)
+
+    incidences = []
+    for point in polygon:
+        source_edges = edges_at(point, source_xy)
+        target_edges = edges_at(point, target_xy)
+        if not source_edges and not target_edges:
+            raise AssertionError("clipped vertex has no parent edge")
+        incidences.append((source_edges, target_edges))
+    if not incidences:
+        return (0, ())
+    rotations = (tuple(incidences[index:]+incidences[:index])
+                 for index in range(len(incidences)))
+    return (len(polygon), min(rotations))
+
+
 def integrate_current_skin(model, definition, pose):
     pressure_nodes = sorted({
         node for element_id in definition.surfaces[0].element_ids
@@ -68,7 +108,7 @@ def integrate_current_skin(model, definition, pose):
     weighted_gap = np.zeros(len(pressure_nodes))
     current_xy_area = 0.0
     quadrature_points = 0
-    polygon_sizes = []
+    topology = []
     for source_id in definition.surfaces[0].element_ids:
         source_element = model.mesh.elements[source_id]
         reference_source, current_source = physical_vertices(
@@ -81,7 +121,8 @@ def integrate_current_skin(model, definition, pose):
             _reference_target, current_target = physical_vertices(
                 model, target_element, pose, "top")
             polygon = _clip(source_xy, current_target[:, :2])
-            polygon_sizes.append(len(polygon))
+            topology.append((int(source_id), int(target_id), overlap_incidence(
+                source_xy, current_target[:, :2], polygon)))
             for fan in range(1, len(polygon)-1):
                 triangle = polygon[[0, fan, fan+1]]
                 for point, weight in _triangle_quadrature(triangle):
@@ -111,7 +152,7 @@ def integrate_current_skin(model, definition, pose):
                     current_xy_area += weight
                     quadrature_points += 1
     assert np.all(support > 0)
-    return support, weighted_gap, current_xy_area, quadrature_points, tuple(polygon_sizes)
+    return support, weighted_gap, current_xy_area, quadrature_points, tuple(topology)
 
 
 def main():

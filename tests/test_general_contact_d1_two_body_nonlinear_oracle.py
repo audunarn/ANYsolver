@@ -6,6 +6,26 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
+
+
+def test_clipping_signature_distinguishes_equal_vertex_counts_with_different_edges():
+    root = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root / "docs" / "d1_review_support"))
+    from d1_two_body_current_skin_quadrature import overlap_incidence
+    from d1_two_body_reference_oracle import _clip
+
+    source = np.array(((0., 0.), (1., 0.), (1., 1.), (0., 1.)))
+    lower_left = np.array(((0., 0.), (0.2, 0.), (0., 0.2)))
+    upper_right = np.array(((1., 1.), (0.8, 1.), (1., 0.8)))
+    first = _clip(source, lower_left)
+    second = _clip(source, upper_right)
+    assert len(first) == len(second) == 3
+    assert (overlap_incidence(source, lower_left, first)
+            == overlap_incidence(source, lower_left, np.roll(first, 1, axis=0)))
+    assert (overlap_incidence(source, lower_left, first)
+            != overlap_incidence(source, upper_right, second))
+
 
 def test_saved_slide_matches_independent_current_contact_kkt():
     root = Path(__file__).resolve().parents[1]
@@ -22,6 +42,7 @@ def test_saved_slide_matches_independent_current_contact_kkt():
     result = json.loads(completed.stdout)
     assert result["status"] == "development_independent_contact_nonlinear_kkt"
     assert result["active_pressure_modes"] == [3, 8]
+    assert result["clipping_incidence_signature"]
     assert result["final_scaled_merit"] <= 1e-9
     assert result["minimum_inactive_gap_m"] >= -1e-9
     assert min(row["minimum_active_force_n"] for row in result["trace"]) > 0
