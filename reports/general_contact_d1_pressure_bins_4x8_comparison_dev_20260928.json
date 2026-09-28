@@ -1,0 +1,16 @@
+{
+  "method": "development independent 16x16 physical-bin pressure-force refinement and source-only comparison; no acceptance tolerance set",
+  "reference_total_n": 0.10380440239149641,
+  "reference_refinement_l1_relative": 0.00031942699850209696,
+  "reference_refinement_l2_relative": 0.0010283028601919015,
+  "reference_refinement_max_bin_n": 8.087011064042415e-06,
+  "source_vs_ref_l1_relative": 0.32790289951917767,
+  "source_vs_ref_l2_relative": 0.3634369538056033,
+  "source_vs_ref_max_bin_n": 0.0016844554903719593,
+  "source_vs_ref_total_force_difference_n": -0.00024578492658215365,
+  "source_vs_ref_x_cumulative_max_relative": 0.07792644355926596,
+  "largest_source_error_bin_yx": [
+    14,
+    15
+  ]
+}
