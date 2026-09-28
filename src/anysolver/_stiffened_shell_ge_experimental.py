@@ -2,7 +2,8 @@
 
 This is an integration slice, not an accepted G0/G1 formulation.  It retains
 all native B3 cell variables and uses the existing objective point operator.
-Line coupling, material updates and finite-step equilibrium are separate work.
+Qualified line coupling and material updates are separate work. The optional
+L1 weak-line route is reference-linear and explicitly unqualified.
 """
 
 from __future__ import annotations
@@ -26,6 +27,9 @@ from .control import cancellation_safe_point
 from ._stiffened_shell_ge_checkpoint_binary import (
     MAGIC as BINARY_CHECKPOINT_MAGIC, decode as _decode_binary_checkpoint,
     encode as _encode_binary_checkpoint,
+)
+from ._stiffened_shell_l1_assembly_experimental import (
+    ExperimentalL1Line, compile_lines as _compile_l1_lines,
 )
 
 
@@ -75,6 +79,7 @@ class LinearDefinition:
     beams: tuple[NativeBeamDefinition, ...]
     points: tuple[PointConnection, ...]
     fixed: tuple[FixedCoordinate, ...]
+    lines: tuple[ExperimentalL1Line, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -329,7 +334,11 @@ class ExperimentalGEAnalysis:
         self._shell_parts = tuple(shell_parts)
         self._beam_parts = tuple(beam_parts)
         self._definition = definition
-        self._identity = sha256(json.dumps({
+        if (type(definition.lines) is not tuple or
+                any(type(line) is not ExperimentalL1Line
+                    for line in definition.lines)):
+            raise ValueError("typed experimental L1 lines required")
+        identity_payload = {
             "profile": PROFILE, "shell_ids": shell_ids,
             "shell_xyz": shell_xyz.tolist(), "shell_cells": panel.q4_elements,
             "shell_s3_cells": panel.s3_elements,
@@ -338,12 +347,18 @@ class ExperimentalGEAnalysis:
             "beams": [item.sha256 for item in definition.beams],
             "points": [(v.shell_node, v.beam_node) for v in definition.points],
             "fixed": [(v.domain, v.node, v.component) for v in definition.fixed],
-        }, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        }
+        if definition.lines:
+            identity_payload["lines"] = [line.descriptor() for line in
+                                         definition.lines]
+        self._identity = sha256(json.dumps(
+            identity_payload, sort_keys=True,
+            separators=(",", ":")).encode()).hexdigest()
         self._connections = []
         self._joint_slots = []
         constraint_rows = []
-        if not definition.points:
-            raise ValueError("at least one explicit native point connection required")
+        if not definition.points and not definition.lines:
+            raise ValueError("explicit native connection required")
         seen_points = set()
         for tie in definition.points:
             if (type(tie) is not PointConnection or
@@ -375,6 +390,16 @@ class ExperimentalGEAnalysis:
         count = self._K.shape[0]
         self._C = sparse.coo_matrix((c_data, (c_row, c_col)),
                                     shape=(6*len(constraint_rows), count)).tocsr()
+        if definition.lines:
+            line_c, self._line_samples = _compile_l1_lines(
+                definition.lines, shell_ids=shell_ids, shell_xyz=shell_xyz,
+                shell_cells=panel.q4_elements+panel.s3_elements,
+                thickness=panel.thickness_m, beam_ids=beam_ids,
+                beam_nodes=beam_nodes, beam_parts=beam_parts,
+                shell_count=shell_count, beam_count=beam_count)
+            self._C = sparse.vstack((self._C, line_c), format="csr")
+        else:
+            self._line_samples = ()
         fixed = set()
         for support in definition.fixed:
             if (type(support) is not FixedCoordinate or
@@ -409,11 +434,21 @@ class ExperimentalGEAnalysis:
 
     @property
     def capabilities(self):
+        attachment = ("reference point pose" if not self._line_samples else
+                      (("reference point pose",) if self._connections else ()) +
+                      ("experimental L1 weak-line candidate",))
+        excluded = (("plastic finite", "line", "footprint", "modes", "buckling")
+                    if not self._line_samples else
+                    ("plastic finite", "qualified bonded line", "footprint",
+                     "modes", "buckling"))
         return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
                 "shell": "elastic flat Q4/S3", "beam": "generalized B3 retained",
-                "attachment": "reference point pose",
-                "analysis": ("reference_linear", "experimental_elastic_finite_point"),
-                "excluded": ("plastic finite", "line", "footprint", "modes", "buckling")}
+                "attachment": attachment,
+                "experimental_line_spaces": tuple(
+                    line.multiplier_space for line in self._definition.lines),
+                "analysis": (("reference_linear",) if self._line_samples else
+                             ("reference_linear", "experimental_elastic_finite_point")),
+                "excluded": excluded}
 
     def preflight(self):
         self._require_open()
@@ -421,6 +456,7 @@ class ExperimentalGEAnalysis:
                 6*len(self._beam_ids), "retained_dofs": self._beam_count-
                 6*len(self._beam_ids), "constraints": self._C.shape[0],
                 "matrix_nnz": self._A.nnz,
+                "experimental_line_samples": len(self._line_samples),
                 "reference_linear_factorizations": self._linear_factorizations,
                 "reference_length_m": self._reference_length,
                 "stress_free_scaled_max": self._reference_error,
@@ -476,6 +512,8 @@ class ExperimentalGEAnalysis:
               max_iterations: int = 12, max_backtracks: int = 8):
         """Advance elastic finite point trials from one accepted predecessor."""
         self._require_open()
+        if self._line_samples:
+            raise ValueError("experimental L1 line admits reference-linear analysis only")
         if self._accepted is not None:
             raise RuntimeError("finite and reference-linear states cannot be mixed")
         if self._finite_driver is None:
@@ -534,6 +572,9 @@ class ExperimentalGEAnalysis:
             raise ValueError("bounded mixed linear checkpoint required")
         if raw.startswith(BINARY_CHECKPOINT_MAGIC):
             def expected_shapes(kind, generation):
+                if kind == "finite" and self._line_samples:
+                    raise ValueError(
+                        "experimental L1 line admits reference-linear checkpoints only")
                 count = self._K.shape[0]
                 constraints = self._C.shape[0]
                 if kind == "linear":
@@ -563,6 +604,9 @@ class ExperimentalGEAnalysis:
             except (UnicodeError, json.JSONDecodeError, RecursionError) as exc:
                 raise ValueError("invalid mixed linear checkpoint") from exc
         if type(value) is dict and value.get("schema") == FINITE_CHECKPOINT:
+            if self._line_samples:
+                raise ValueError(
+                    "experimental L1 line admits reference-linear checkpoints only")
             from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
             driver = FinitePointDriver(self)
             result = driver.restore(value)

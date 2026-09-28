@@ -22,7 +22,8 @@ from ._stiffened_shell_b2_q4_panel_experimental import (
 
 from ._stiffened_shell_ge_experimental import (
     PROFILE as B3_GE_E4_PL_STIFFENED_SHELL_V1,
-    ExperimentalGEAnalysis, FixedCoordinate, LinearDefinition, LinearResult,
+    ExperimentalGEAnalysis, ExperimentalL1Line, FixedCoordinate,
+    LinearDefinition, LinearResult,
     NodalAction, PointConnection, ShellPanel,
 )
 

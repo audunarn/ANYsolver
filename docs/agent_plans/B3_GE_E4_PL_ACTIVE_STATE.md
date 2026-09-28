@@ -198,8 +198,8 @@ is [the directed coupled evidence](B3_E4_F03_L1_LONGITUDINAL16_DEV_V1.json).
 This supports a shell-resolution explanation for much of the Fy trend; it
 does not prove convergence, physical connection fidelity or uniform stability.
 The bounded dense shell fixture cannot represent another full refinement.
-Next advance the replaceable L1 local operator through the experimental sparse
-owner, prove small sparse/dense and lifecycle parity, then obtain a further
+The replaceable L1 local operator now reaches the experimental sparse owner;
+small sparse/dense and linear lifecycle parity pass. Obtain a further
 same-law reference level without raising dense prototype limits. External
 physical transfer and independently reviewed F03 floors remain separate.
 The first product-private L1 local operator is now extracted. It returns the
@@ -208,11 +208,20 @@ nine native retained gather slots without a model-wide dense derivative or
 the development Context's 120-second lifetime. Independent read-only review
 found and then confirmed repair of a large-origin low-part loss in the work;
 the added sub-ULP gap/work check and 44 focused probe/port/local tests pass.
-This is operator extraction only: the sparse owner does not yet assemble this
-line candidate, no multiplier policy is selected, and F03/G0B remain open.
-Next connect it through a replaceable elastic sparse-assembly interface and
-check bounded sparse/dense, reactions and lifecycle parity before any larger
-same-law reference run.
+The extracted operator is now connected through a replaceable elastic sparse
+assembly seam. No multiplier policy is selected and F03/G0B remain open.
+The experimental owner now assembles an explicitly mapped, four-edge L1
+material line with two-point Gauss work and either complete A or B six-channel
+multiplier space. The bounded Q4/native B3 panel passes sparse/dense solution,
+integrated action, force/moment balance, linear checkpoint/restart and precise
+negative checks. A reviewer found a finite-checkpoint restore bypass and a
+point-only checkpoint-identity regression; both were repaired with regression
+checks. This route has matching shell edges and beam half-cells only; it is a
+replaceable development integration, not qualified nonmatching line coupling,
+multiplier selection, or F03 acceptance. The next mechanics work is a
+three-level same-law sparse reference and the registered growing-space,
+mesh-ratio, physical-transfer and mixed-system checks; do not extrapolate the
+small panel result.
 An inert folded S4 flat-web/T CalculiX deck and action-work reader now exist
 for plate/web Fy and web torque. Its clamped-root option matches the declared
 six-DOF support type but lacks verified rotational reaction output; the hinged

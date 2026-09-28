@@ -1,6 +1,8 @@
 """Integrated experimental Q4/native-B3 point-panel checks."""
 
 import anysolver
+from hashlib import sha256
+import json
 import numpy as np
 import pytest
 from dataclasses import replace
@@ -47,6 +49,20 @@ def _panel():
 def test_sparse_mixed_panel_solve_recovery_and_restart():
     definition = _panel()
     analysis = anysolver.stiffened_shell.create_analysis(definition=definition)
+    assert analysis.capabilities["attachment"] == "reference point pose"
+    legacy_identity = sha256(json.dumps({
+        "profile": PROFILE, "shell_ids": definition.shell.node_ids,
+        "shell_xyz": np.asarray(definition.shell.coordinates_m).tolist(),
+        "shell_cells": definition.shell.q4_elements,
+        "shell_s3_cells": definition.shell.s3_elements,
+        "thickness": definition.shell.thickness_m,
+        "E": definition.shell.young_pa, "nu": definition.shell.poisson,
+        "density": definition.shell.density_kg_m3,
+        "beams": [item.sha256 for item in definition.beams],
+        "points": [(v.shell_node, v.beam_node) for v in definition.points],
+        "fixed": [(v.domain, v.node, v.component) for v in definition.fixed],
+    }, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    assert analysis._identity == legacy_identity
     details = analysis.preflight()
     assert details["retained_dofs"] == 48
     assert details["constraints"] == 18
