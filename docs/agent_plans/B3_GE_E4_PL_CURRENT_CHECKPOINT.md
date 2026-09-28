@@ -12061,6 +12061,9 @@ bounded development results, not F03/G0B acceptance. Next work
 returns to the declared physical torque/shear law and the registered
 growing-space/mesh-ratio requirements rather than finer axial or
 S8R calculations.
+The Q4-action runner's result binds its exact source in integration
+commit `fe46cfbe`. A later docstring clarification narrows its stated
+inference without changing the recorded numerical run or raw evidence.
 
 **F05 S3 local branch-path screen (28 September):** A bounded sampled
 check around the existing yielded accepted predecessor covers 35

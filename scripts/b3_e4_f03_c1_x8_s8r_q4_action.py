@@ -1,7 +1,9 @@
 """Separate x8 S8R solve under the native Q4-projected fz nodal action.
 
-The result distinguishes load-space aliasing from shell stiffness in the
-fixed physical P0 fz witness. It is not a continuous-line convergence test.
+The result measures the load-projection effect within the fixed S8R space.
+Comparison with E4 alone cannot isolate shell stiffness or locking because
+the two formulations have different trial spaces. This is not a
+continuous-line convergence test.
 """
 
 from __future__ import annotations
