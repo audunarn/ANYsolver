@@ -363,6 +363,39 @@ multiplier candidate until a revised continuous action, physical
 response, or prospectively justified endpoint-aware norm preserves
 required physical torque transfer.
 
+A distinct development alternative is a *line-indexed finite area patch*.
+At material station \(s\), freeze a normalized reference kernel
+\(\rho_s(X)\) with positive longitudinal and transverse support. Average
+the current top position and director to obtain \(\bar p_s\) and \(n_s\).
+Set
+\[
+v_s=\int \rho_s(X)(X_1-\bar X_{1,s})p_{\rm top}(X)\,dA,\quad
+t_s=\operatorname{unit}\bigl(v_s-n_s(n_s\cdot v_s)\bigr),\quad
+R_s=[t_s,n_s\times t_s,n_s].
+\]
+With reference centroid/frame \(\bar p_{s0},R_{s0}\), define the shell pose
+\[
+r_s=\bar p_s+R_sR_{s0}^{T}(p_{\rm ref}(s)-\bar p_{s0}).
+\]
+The fixed material kernel and matching reference data make this pose
+objective: a rigid \(Q,c\) gives \(R_s=QR_{s0}\) and
+\(r_s=Qp_{\rm ref}(s)+c\), including truncated endpoint patches. At a
+flat virgin reference with longitudinal variance \(V_s>0\), its yaw
+variation is \(V_s^{-1}\int\rho_s(X)(X_1-\bar X_{1,s})
+\delta p_{{\rm top},y}(X)\,dA\), an area-weighted displacement functional
+with a bounded L2 operator for fixed kernel support and variance. The
+averaged director remains independent of the geometric tangent, so this
+kinematics does not itself suppress Mindlin transverse shear.
+The bounded flat-Q4 box-window prototype reproduces rigid motion and
+filters the specific free-end witness; four focused checks pass and
+independent read-only review found no factory-level defect. The box kernel
+is not the final smooth kernel. Crucially, this is a **line-indexed
+distributing footprint**, not the prior local bonded trace. It requires
+a prospective physical bond interpretation and distinct footprint
+semantics, complete six-channel work/tangent/transfer checks, and a
+separate mesh-uniform supported E4 physical-core L2 coercivity argument.
+No such proof or F03 acceptance is claimed.
+
 In the conditional continuum H1 estimate, uniform width \(w\) gives a factor
 growing as \(w^{-1/2}\), so width must be
 a declared positive physical connection measure, not a mesh-dependent tuning

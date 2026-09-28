@@ -29,6 +29,13 @@ slice; do not edit or run it by default.
 
 ## Connection facts and uncertainty
 
+A separate finite-support flat-Q4 shell-pose prototype has exact box-window
+centroid/covariance weights, objective rigid-motion recovery, and a bounded
+endpoint-witness screen. Four focused checks passed; independent read-only
+review found no bounded factory defect. This is a line-indexed 2D
+distributing-footprint candidate, not a selected bonded line or a uniform
+physical-core work proof.
+
 The unsmoothed zero-width L1 normal-spin law includes shell-line endpoint
 point evaluations and is unbounded on the continuum shell H1 energy space.
 The physical-width rail is a **separate finite connection law**: Q4 E4-PL does
@@ -120,6 +127,10 @@ interior support, reference consistency, shear freedom, and the distinction
 from rigid/distributing footprints before loaded comparisons. If that
 cannot preserve declared bonded-line semantics, identify the obstruction
 for independent review rather than relabel a footprint as a line.
+The current box-window prototype only proves reference kinematics and
+filters one endpoint witness. Next derive complete six-channel work and
+test physical transfer, then establish or refute the missing supported E4
+physical-core L2 control before any F03 metric is used.
 F03 formal assessment stays barred. The seven ratios, growing spaces, three
 refinements, physical transfer, locking, shear, drilling, and mixed-system
 checks remain mandatory. No automatic axial sweep or new external reference
