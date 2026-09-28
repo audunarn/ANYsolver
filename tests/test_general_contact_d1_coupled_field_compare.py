@@ -8,6 +8,7 @@ from scripts.general_contact_d1_compare_coupled_fields import (
     _relative_q1_l2,
 )
 from scripts.general_contact_d1_fixed_structure_pressure_probe import (
+    relative_pressure_dual_norm,
     relative_q1_pressure_l2,
 )
 
@@ -62,3 +63,24 @@ def test_pressure_band_partition_recovers_exact_global_norm():
     assert bands["global_relative_pressure_l2"] == pytest.approx(
         _relative_q1_l2(first, second, y, support_y_max=1.0), abs=1.0e-14,
     )
+
+
+def test_fixed_structure_pressure_probe_clips_x_and_y_exactly():
+    x = np.array((0.0, 0.5, 1.0))
+    y = np.array((0.0, 0.2, 1.0))
+    first = {"xn": x, "yn": y, "p": y[:, None]+x[None, :]}
+    second = {"xn": x, "yn": y, "p": y[:, None]+2.0*x[None, :]}
+    # Over x in [.5,1], y in [0,1], squared difference is 7/24
+    # and the second field's squared norm is 25/12.
+    assert relative_q1_pressure_l2(
+        first, second, x_min=0.5, x_max=1.0, support_y_max=1.0,
+    ) == pytest.approx(np.sqrt(7.0/50.0), abs=1e-14)
+
+
+def test_scalar_pressure_dual_norm_uses_physical_load_on_common_grid():
+    x = np.array((0.0, 0.5, 1.0))
+    y = np.array((0.0, 0.5, 1.0))
+    first = {"xn": x, "yn": y, "p": np.ones((3, 3))}
+    second = {"xn": x, "yn": y, "p": 2.0*np.ones((3, 3))}
+    assert relative_pressure_dual_norm(first, second, x, y) == pytest.approx(
+        0.5, abs=1e-14)

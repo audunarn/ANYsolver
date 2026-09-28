@@ -13,6 +13,7 @@ import time
 
 import numpy as np
 import psutil
+from scipy import linalg
 from scipy.optimize import minimize
 import scipy.sparse as sparse
 import scipy.sparse.linalg as sparse_linalg
@@ -317,9 +318,10 @@ def enrichment_y_grid(y):
 
 
 def relative_q1_pressure_l2(first, second, *, support_y_max,
-                            support_y_min=0.0):
-    """Exact squared Q1 comparison on a physical-support y band."""
-    x_knots = np.unique(np.r_[first["xn"], second["xn"]])
+                            support_y_min=0.0, x_min=0.0, x_max=1.0):
+    """Exact squared Q1 comparison on a physical-support rectangle."""
+    x_knots = np.unique(np.r_[first["xn"], second["xn"], x_min, x_max])
+    x_knots = x_knots[(x_knots >= x_min) & (x_knots <= x_max)]
     y_knots = np.unique(np.r_[first["yn"], second["yn"],
                                support_y_min, support_y_max])
     y_knots = y_knots[(y_knots >= support_y_min)
@@ -608,6 +610,188 @@ def run_aligned_rim_x(output):
     print(json.dumps(comparisons, indent=2))
 
 
+def structural_detection_compliance(pressure_x, pressure_y, structure_x,
+                                    structure_y):
+    """Scalar pressure work tested in the constrained structural energy norm.
+
+    The structural stiffness excludes contact; this is not an active-contact
+    Newton response or a shell inf-sup certificate.
+    """
+    nx, ny = len(structure_x)-1, len(structure_y)-1
+    kx = oracle.stiff1d(nx, structure_x)
+    mx = oracle.mass1d(nx, nodes=structure_x)
+    ky = oracle.stiff1d(ny, structure_y)
+    my = oracle.mass1d(ny, nodes=structure_y)
+    stiffness = oracle.D*(
+        sparse.kron(sparse.csr_matrix(my), sparse.csr_matrix(kx))
+        + sparse.kron(sparse.csr_matrix(ky), sparse.csr_matrix(mx)))
+    work = sparse.kron(
+        sparse.csr_matrix(cross_mass(pressure_y, structure_y, oracle.YR)),
+        sparse.csr_matrix(cross_mass(pressure_x, structure_x, 1.0)),
+    ).tocsr()
+    supported = np.asarray(work.sum(axis=1)).ravel() > 0
+    free = np.ones(len(structure_x)*len(structure_y), dtype=bool)
+    free[::len(structure_x)] = False
+    reduced_work = work[supported][:, free]
+    factor = sparse_linalg.splu(stiffness.tocsr()[free][:, free].tocsc())
+    response = np.asarray(reduced_work @ factor.solve(reduced_work.T.toarray()))
+    return 0.5*(response+response.T), supported, int(free.sum())
+
+
+def relative_pressure_dual_norm(first, second, structure_x, structure_y):
+    """Relative physical H^-1 load difference on a common structural grid."""
+    nx, ny = len(structure_x)-1, len(structure_y)-1
+    kx = oracle.stiff1d(nx, structure_x)
+    mx = oracle.mass1d(nx, nodes=structure_x)
+    ky = oracle.stiff1d(ny, structure_y)
+    my = oracle.mass1d(ny, nodes=structure_y)
+    stiffness = oracle.D*(
+        sparse.kron(sparse.csr_matrix(my), sparse.csr_matrix(kx))
+        + sparse.kron(sparse.csr_matrix(ky), sparse.csr_matrix(mx)))
+    free = np.ones(len(structure_x)*len(structure_y), dtype=bool)
+    free[::len(structure_x)] = False
+    factor = sparse_linalg.splu(stiffness.tocsr()[free][:, free].tocsc())
+
+    def load(solution):
+        work = sparse.kron(
+            sparse.csr_matrix(cross_mass(solution["yn"], structure_y,
+                                         oracle.YR)),
+            sparse.csr_matrix(cross_mass(solution["xn"], structure_x, 1.0)),
+        ).tocsr()
+        return np.asarray(work.T @ solution["p"].ravel())[free]
+
+    difference = load(first)-load(second)
+    reference = load(second)
+    reference_energy = float(reference @ factor.solve(reference))
+    if reference_energy <= 0:
+        raise AssertionError("zero physical pressure reference load")
+    return float(np.sqrt(max(0.0, difference @ factor.solve(difference))
+                         /reference_energy))
+
+
+def pressure_detection_ratio(coarse, enriched, indices, pressure_x, pressure_y,
+                             supported):
+    """Finite-reference beta squared on a declared pressure subspace."""
+    if not len(indices):
+        raise AssertionError("empty pressure subspace")
+    a = coarse[np.ix_(indices, indices)]
+    b = enriched[np.ix_(indices, indices)]
+    scale = np.sqrt(np.diag(b))
+    if np.any(scale <= 0):
+        raise AssertionError("reference has zero pressure work")
+    aa = a/np.outer(scale, scale)
+    bb = b/np.outer(scale, scale)
+    reference_eigenvalues = np.linalg.eigvalsh(bb)
+    if reference_eigenvalues[0] <= 1e-11:
+        raise AssertionError("enriched pressure reference is singular")
+    eigenvalues, vectors = linalg.eigh(aa, bb, subset_by_index=(0, 0))
+    coefficients = vectors[:, 0]/scale
+    dominant = np.argsort(abs(coefficients))[-5:][::-1]
+    full_indices = np.flatnonzero(supported)[indices]
+    return {
+        "beta_reference_squared": float(eigenvalues[0]),
+        "reference_scaled_eigen_min": float(reference_eigenvalues[0]),
+        "modes": int(len(indices)),
+        "weakest_mode_dominant_nodes": [
+            {"x_m": float(pressure_x[full_indices[k] % len(pressure_x)]),
+             "y_m": float(pressure_y[full_indices[k] // len(pressure_x)]),
+             "coefficient_relative": float(coefficients[k]
+                                           /max(abs(coefficients)))}
+            for k in dominant],
+    }
+
+
+def run_pressure_detection(output):
+    """Bounded aligned-rim scalar detection and physical-field discriminator."""
+    if output.exists():
+        raise FileExistsError(output)
+    started = time.perf_counter()
+    edges_x = np.linspace(0.0, 1.0, 9)
+    edges_y = np.r_[np.linspace(0.0, oracle.YR, 10), 1.0]
+    y = np.array((0.0, 0.4, 0.75, oracle.YR, 1.0))
+    cases, solutions, bins = {}, {}, {}
+    for nx in (8, 16, 32):
+        x = np.linspace(0.0, 1.0, nx+1)
+        if nx > 8:
+            y = np.sort(np.r_[y, 0.5*(y[:-1]+y[1:])])
+        solution, diagnostics = solve_fixed_structure(x, x, y)
+        independent = oracle.solve_q1(nx, len(y)-1, ynodes=y)
+        np.testing.assert_allclose(solution["p"], independent["p"],
+                                   rtol=1e-9, atol=1e-10)
+        coarse, supported, free_count = structural_detection_compliance(x, y, x, y)
+        richer_x = np.sort(np.r_[x, 0.5*(x[:-1]+x[1:])])
+        richer_y = np.sort(np.r_[y, 0.5*(y[:-1]+y[1:])])
+        enriched, reference_supported, _ = structural_detection_compliance(
+            x, y, richer_x, richer_y)
+        if not np.array_equal(supported, reference_supported):
+            raise AssertionError("reference changed pressure support")
+        active = solution["p"].ravel()[supported] > 1e-9
+        detection = {
+            "full_supported": pressure_detection_ratio(
+                coarse, enriched, np.arange(len(coarse)), x, y, supported),
+            "settled_active": pressure_detection_ratio(
+                coarse, enriched, np.flatnonzero(active), x, y, supported),
+        }
+        if nx == 8:
+            four_x = np.sort(np.r_[richer_x, 0.5*(richer_x[:-1]+richer_x[1:])])
+            four_y = np.sort(np.r_[richer_y, 0.5*(richer_y[:-1]+richer_y[1:])])
+            fourfold, four_supported, _ = structural_detection_compliance(
+                x, y, four_x, four_y)
+            if not np.array_equal(supported, four_supported):
+                raise AssertionError("fourfold reference changed pressure support")
+            detection["full_supported_4x"] = pressure_detection_ratio(
+                coarse, fourfold, np.arange(len(coarse)), x, y, supported)
+            detection["settled_active_4x"] = pressure_detection_ratio(
+                coarse, fourfold, np.flatnonzero(active), x, y, supported)
+        physical_bins = oracle.q1_bins(solution, edges_x, edges_y)
+        if abs(physical_bins.sum()-diagnostics["reaction_n"]) > 1e-10:
+            raise AssertionError("physical bins lose reaction")
+        solutions[nx], bins[nx] = solution, physical_bins
+        cases[f"{nx}x{len(y)-1}"] = {
+            **diagnostics, "free_structural_coordinates": free_count,
+            "structural_y_knots_m": y.tolist(),
+            "pressure_pa": solution["p"].tolist(),
+            "physical_bins_n": physical_bins.tolist(),
+            "detection": detection,
+        }
+    comparisons = {}
+    for low, high in ((8, 16), (16, 32)):
+        low_bins, high_bins = bins[low][:9], bins[high][:9]
+        reference_x = np.sort(np.r_[solutions[high]["xn"],
+            0.5*(solutions[high]["xn"][:-1]+solutions[high]["xn"][1:])])
+        reference_y = np.sort(np.r_[solutions[high]["yn"],
+            0.5*(solutions[high]["yn"][:-1]+solutions[high]["yn"][1:])])
+        comparisons[f"{low}_to_{high}"] = {
+            "common_bin_l2_relative": float(np.linalg.norm(high_bins-low_bins)
+                                            /np.linalg.norm(high_bins)),
+            "physical_pressure_l2_relative": relative_q1_pressure_l2(
+                solutions[low], solutions[high], support_y_max=oracle.YR),
+            "regular_pressure_l2_relative": relative_q1_pressure_l2(
+                solutions[low], solutions[high], support_y_max=0.75,
+                x_min=0.8),
+            "physical_pressure_dual_norm_relative": relative_pressure_dual_norm(
+                solutions[low], solutions[high], reference_x, reference_y),
+        }
+    record = {
+        "status": "development_scalar_finite_reference_detection_only",
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "oracle_sha256": hashlib.sha256(Path(oracle.__file__).read_bytes()).hexdigest(),
+        "cases": cases, "comparisons": comparisons,
+        "near_rim_32x8_dimension_control": {
+            "supported_pressure_modes": 297, "free_structural_coordinates": 288,
+            "settled_active_modes_from_prior_record": 96,
+        },
+        "elapsed_seconds": time.perf_counter()-started,
+        "peak_process_working_set_mb": psutil.Process().memory_info().peak_wset/1e6,
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps({"status": record["status"],
+                      "comparisons": comparisons,
+                      "elapsed_seconds": record["elapsed_seconds"]}, indent=2))
+
+
 def run_enrichment(output, *, lcp_method="pdas"):
     """One fixed-structure, pressure-only refinement discriminator."""
     if output.exists():
@@ -852,5 +1036,7 @@ if __name__ == "__main__":
         run_rim_knot(Path(sys.argv[2]))
     elif len(sys.argv) == 3 and sys.argv[1] == "--aligned-rim-x":
         run_aligned_rim_x(Path(sys.argv[2]))
+    elif len(sys.argv) == 3 and sys.argv[1] == "--pressure-detection":
+        run_pressure_detection(Path(sys.argv[2]))
     else:
-        raise SystemExit("usage: python general_contact_d1_fixed_structure_pressure_probe.py [--enrichment|--coarse-y|--rim-knot|--aligned-rim-x] OUTPUT")
+        raise SystemExit("usage: python general_contact_d1_fixed_structure_pressure_probe.py [--enrichment|--coarse-y|--rim-knot|--aligned-rim-x|--pressure-detection] OUTPUT")

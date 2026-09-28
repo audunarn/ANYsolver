@@ -69,6 +69,20 @@ representation a material part of the remaining field question. It does
 not establish a mesh-uniform stability or convergence result, nor justify
 changing the fine Q1 production basis.
 
+The [aligned scalar finite-reference check](d1_review_support/d1_scalar_pressure_detection_20260928.md)
+uses contact-free constrained structural stiffness for the area-obstacle
+pressure dual norm, rather than the saved contact-tangent response. Its
+8×4/16×8/32×16 full-supported Q1 spaces contain clamp work-null modes;
+settled active finite-reference β² values are 0.717/0.768/0.754 against 2×
+structural enrichment, but the smallest becomes 0.634 against 4×. The
+16×8→32×16 physical pressure shift is 34.97% L2 versus 1.34% in a common
+physical pressure dual norm and 3.66% in common-bin force. Exact scalar KKT
+and same-mesh checks pass. This is bounded scalar development evidence;
+the reference-sensitive active proxy and full work nulls leave actual
+shell pressure-space stability unresolved. The next discriminating check
+requires the shell trace norm and an explicit structural-boundary mode rule,
+not another automatic scalar refinement.
+
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
 bound at all eight accepted poses. Local and installed fields match; a forced
