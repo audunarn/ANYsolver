@@ -89,9 +89,20 @@ post-equilibrium algebraic rate recovery is not followed by a full discrete
 nullspace Newmark kinematics check. The present local tests do not establish
 general S3 descriptor loading or C6 acceptance.
 
+A bounded follow-up used the existing tilted-impact probe at 0.2, 0.1 and
+0.05 ms steps. Its maximum nullspace Newmark position defects were 1.85,
+1.12 and 1.12 µm; velocity defects were 0.0295, 0.0224 and 0.0224 m/s.
+At 0.1 ms the maximum occurred when active pressure nodes changed from one
+to three at 0.0102 s. Steps with unchanged active counts in this fixture had a maximum
+nullspace velocity defect of 9.25e−15 m/s. The result isolates an event-stage
+rate/kinematics discontinuity; it does not justify claiming full-coordinate
+Newmark consistency at activation. Event-aware algebraic-rate handling must
+be designed and verified before this profile can be accepted.
+
 Evidence: `tests/test_general_contact_transient_plane.py`,
 `scripts/general_contact_c6_s3_dae_probe.py`, and the retained
-`reports/general_contact_c6_s3_*_20260927.txt` files. The source identity,
+`reports/general_contact_c6_s3_*_20260927.txt` and
+`reports/general_contact_c6_s3_discrete_kinematics*_20260928.txt` files. The source identity,
 command and environment for any claim-bearing qualification still need to be
 frozen and independently assessed. General shell descriptor states, moving
 tools, multiple elements, time-varying and non-nodal loads, nonlinear

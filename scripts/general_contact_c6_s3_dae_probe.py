@@ -33,6 +33,40 @@ def run(dt: float) -> dict:
         model, M, (T.T @ M @ T).tocsr(), T, independent,
         dense_size_limit=512,
     ).reduced_basis
+    null_position_defects = []
+    null_velocity_defects = []
+    full_position_defects = []
+    full_velocity_defects = []
+    stage_defects = []
+    for index in range(1, len(result.times)):
+        step = float(result.times[index]-result.times[index-1])
+        previous_position = result.displacements[index-1, independent]
+        current_position = result.displacements[index, independent]
+        previous_velocity = result.velocities[index-1, independent]
+        current_velocity = result.velocities[index, independent]
+        previous_acceleration = result.accelerations[index-1, independent]
+        current_acceleration = result.accelerations[index, independent]
+        position_defect = (
+            current_position-previous_position-step*previous_velocity
+            -step*step*(0.25*previous_acceleration+0.25*current_acceleration)
+        )
+        velocity_defect = (
+            current_velocity-previous_velocity
+            -0.5*step*(previous_acceleration+current_acceleration)
+        )
+        full_position_defects.append(float(np.linalg.norm(position_defect)))
+        full_velocity_defects.append(float(np.linalg.norm(velocity_defect)))
+        null_position_defects.append(
+            float(np.linalg.norm(Z.T @ position_defect))
+        )
+        null_velocity_defects.append(
+            float(np.linalg.norm(Z.T @ velocity_defect))
+        )
+        stage_defects.append({
+            "end_time_s": float(result.times[index]),
+            "active_before": result.contact[index-1].active_pressure_dofs,
+            "active_after": result.contact[index].active_pressure_dofs,
+        })
     with contact_scope(model, contact,
                        initial_displacement=np.zeros(M.shape[0])):
         full = result.displacements[-1]
@@ -69,6 +103,16 @@ def run(dt: float) -> dict:
         "final_time_s": float(result.times[-1]),
         "final_minimum_gap_m": float(result.contact[-1].minimum_gap),
         "active_pressure_nodes": result.contact[-1].active_pressure_dofs,
+        "maximum_full_newmark_position_defect_m": max(full_position_defects),
+        "maximum_full_newmark_velocity_defect_m_per_s": max(full_velocity_defects),
+        "maximum_null_newmark_position_defect_m": max(null_position_defects),
+        "maximum_null_newmark_velocity_defect_m_per_s": max(null_velocity_defects),
+        "maximum_null_position_defect_stage": stage_defects[int(np.argmax(null_position_defects))],
+        "maximum_null_velocity_defect_stage": stage_defects[int(np.argmax(null_velocity_defects))],
+        "maximum_unchanged_activity_null_velocity_defect_m_per_s": max(
+            (defect for defect, stage in zip(null_velocity_defects, stage_defects)
+             if stage["active_before"] == stage["active_after"]), default=0.0,
+        ),
         "algebraic_velocity_defect_n_per_s": float(np.linalg.norm(algebraic_rate)),
         "full_force_rate_scale_n_per_s": float(np.linalg.norm(tangent_velocity)),
         "relative_algebraic_velocity_defect": float(
