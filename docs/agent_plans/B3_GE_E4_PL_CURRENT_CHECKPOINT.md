@@ -47,9 +47,12 @@ Examine the actual shell/retained-beam `rz` trace and the longitudinal
 test-space pairing on this saved fixture before another mesh or loaded
 solve. The saved-field projection now shows continuous-P1 and dual-P1
 do detect the `rz` mode and both have full supported row rank on x16;
-next compare their bounded loaded and mixed-system behavior before
-considering either as the enforcement policy. Neither is selected
-from detection or rank alone.
+their fixed-primal loaded Mx solves also pass and reduce its continuous
+RMS to `3.42e-6` and `1.18e-6 rad` respectively, versus P0 m8
+`9.08e-6 rad`. Their physical responses and P0 interval means differ,
+so the next decision needs normed mixed-system, locking/refinement,
+and matched physical torque/shear evidence. Neither is selected from
+this one load or smaller gaps.
 Establish a work-conjugate torque/section/support comparator that
 separates shell idealization from connection transfer; neither the
 saved pure-action fields nor a displacement fit does that alone.
@@ -11233,3 +11236,46 @@ same-primal loaded/mixed-system comparison of these two spaces while
 advancing the independent physically matched torque/shear reference;
 do not resume finer classical axial work or select from these row
 figures alone.
+
+**Next loaded comparison, before execution:** On the unchanged
+x16/y4/B3-14 fixture and 100 Nm Mx terminal load, substitute
+continuous-P1 or dual-P1 for P0 m8, each with eight line intervals.
+Use the existing exact-drill quotient and reconstruct the full
+equations. If either fails supported row rank, finite solve, full
+equilibrium, work, or balance, reject that candidate at this fixture.
+If both pass and reduce the P0-invisible `rz` mode, retain them only
+for normed mixed-system, locking/refinement, physical-transfer and
+cost comparisons. If neither reduces it, revisit the trace/test
+design. This adds no mesh, force level, cap, or formal authority.
+
+**Fixed-primal P1/dual Mx outcome:** The continuous-P1 and dual-P1
+x16/B3-14/m8 quotient systems each have 1,736 rows and supported
+rank `54/54`. They finish in `65.28 s` and `64.85 s`, below the
+unchanged 120-second limit, with reconstructed full-equation
+residuals below `4.9e-11`, actual weak gaps below `8.0e-20`,
+work-relative errors below `1.7e-11`, and support-moment imbalance
+below `3.7e-9 Nm`. Against the fixed P0 m8 solution, the continuous
+local `rz` RMS changes `9.07561e-6 → 3.42320e-6 rad` (P1) or
+`1.18114e-6 rad` (dual), while local `rx` RMS changes
+`8.30126e-7 → 3.27201e-7 / 2.55412e-7 rad`. Tip Mx rotation is
+`4.90025648e-5 rad` (P0), `4.84585499e-5 rad` (P1), and
+`4.88437557e-5 rad` (dual); shell physical work is respectively
+`0.00196576105`, `0.00185616798`, and `0.00186682850 J`.
+The P0 interval-mean diagnostic on the P1 and dual states is nonzero
+(`2.43e-6` and `1.34e-6 rad` maximum): those spaces enforce their
+own rows, not every P0 interval mean. Their lower station gap on one
+load is not proof of a better physical law, absence of locking, or
+uniform stability. Keep both as candidates for the declared growing-
+space/mixed-system and physically matched torque/shear assessments;
+do not refine the classical axial comparator to choose among them.
+F03/G0B remain open, G1 barred, formal F03 authority unconsumed.
+
+Raw immutable P1 and dual files are
+`B3_E4_F03_C1_MATERIAL_LINE_RATIO_4_TO_1_X16_B14_P1_M8_MODES_DEV_V1.json`
+SHA256 `7b6a2a21a8cb29191a46adf41b31eefd6ae3c120d617c873ab48c76b3e6d4e21`
+and
+`B3_E4_F03_C1_MATERIAL_LINE_RATIO_4_TO_1_X16_B14_DUAL_M8_MODES_DEV_V1.json`
+SHA256 `1ef66bc026a6648a94a958807e360b91dd1b8232d0a866a4321b30b90bf5b26a`.
+Both record runner SHA256
+`00c915f6dd865fc4157168d74ae110632e195e9548999febdac8680cbb666acd`
+and predecessor source `18225263`.

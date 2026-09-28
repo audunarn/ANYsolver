@@ -1,4 +1,4 @@
-"""Bounded x16/y4 P0 loaded solves with exact E4 drill elimination.
+"""Bounded x16/y4 material-line loaded solves with exact E4 drill elimination.
 
 Numerical drilling coordinates are reconstructed and checked in the
 original full equations. This is a private development diagnostic only.
@@ -44,9 +44,17 @@ def _relative(left: np.ndarray, right: np.ndarray) -> float:
 
 def evaluate(*, beam_half_cells: int = 12,
              p0_intervals: int = 4,
-             mode_resolved_mx_only: bool = False) -> dict:
+             mode_resolved_mx_only: bool = False,
+             space_kind: str = "piecewise_constant") -> dict:
     if (beam_half_cells, p0_intervals) not in ((12, 4), (14, 4), (14, 8)):
         raise ValueError("bounded x16 P0 ratio fixture required")
+    if space_kind not in ("piecewise_constant", "continuous_linear",
+                          "dual_linear"):
+        raise ValueError("bounded material-line multiplier kind required")
+    if space_kind != "piecewise_constant" and (
+            (beam_half_cells, p0_intervals) != (14, 8) or
+            not mode_resolved_mx_only):
+        raise ValueError("bounded x16/B3-14/m8 Mx space comparison required")
     if mode_resolved_mx_only and (beam_half_cells, p0_intervals) not in ((14, 4), (14, 8)):
         raise ValueError("bounded fixed-4:1 x16/B3-14 P0 mode required")
     expected = (Path(__file__).resolve().parents[1]/"src"/"anysolver").resolve()
@@ -69,12 +77,15 @@ def evaluate(*, beam_half_cells: int = 12,
     reduced_free = np.r_[physical, ns+beam_free]
     line = MaterialLinePosition(xs, ys, beam)
     rows, measures = _rows(line, LineMultiplierSpace(
-        "piecewise_constant", tuple(np.linspace(0., 1., p0_intervals+1))))
-    row_count = 6*p0_intervals
+        space_kind, tuple(np.linspace(0., 1., p0_intervals+1))))
+    row_count = len(rows)
     if (rows.shape != (row_count, ns+beam.context.count) or
-            not np.allclose(measures, .1/p0_intervals, rtol=0., atol=1e-12) or
+            np.min(measures) <= 1e-12 or
+            abs(np.sum(measures)-.1) > 1e-12 or
+            (space_kind == "piecewise_constant" and not np.allclose(
+                measures, .1/p0_intervals, rtol=0., atol=1e-12)) or
             np.max(np.abs(rows[:, drill])) > 1e-12):
-        raise ArithmeticError("reviewed P0 rows act on changed drilling coordinates")
+        raise ArithmeticError("reviewed line rows act on changed drilling coordinates")
     full_scales, energy_scale = _scales(ns, beam, full_free,
                                        row_count=row_count)
     row_check = _scaled_row_diagnostics(rows, full_free,
@@ -200,8 +211,13 @@ def evaluate(*, beam_half_cells: int = 12,
             "orientation_max_rad": float(np.max(np.linalg.norm(rotation_gap, axis=1))),
         }
         if mode_resolved_mx_only:
+            p0_rows = (rows if space_kind == "piecewise_constant" else
+                       _rows(line, LineMultiplierSpace(
+                           "piecewise_constant", tuple(np.linspace(
+                               0., 1., p0_intervals+1))))[0])
             case["continuous_gap_modes"] = _p0_gap_modes(
-                line, position_gap, rotation_gap, p0_intervals, gap)
+                line, position_gap, rotation_gap, p0_intervals,
+                p0_rows@state)
         if (max(full_free_residual, weak_gap, work_relative) > 1e-7 or
                 case["support_force_balance_n"] > 1e-5 or
                 case["support_moment_balance_nm"] > 1e-5 or
@@ -209,14 +225,16 @@ def evaluate(*, beam_half_cells: int = 12,
             raise ArithmeticError(f"reconstructed full loaded system failed: {case}")
         cases[label] = case
     return {
-        "classification": "bounded exact-drill loaded x16 material-line P0 diagnostic",
+        "classification": "bounded exact-drill loaded x16 material-line space diagnostic",
         "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
         "source_git": subprocess.check_output(("git", "rev-parse", "HEAD"),
                                               text=True).strip(),
         "model": (f"C1 Q4 x16/y4 35 mm shell, B3-{beam_half_cells}, "
-                  f"material-line P0 m{p0_intervals}, original full equations reconstructed"),
+                  f"material-line {space_kind} m{p0_intervals}, "
+                  "original full equations reconstructed"),
         "beam_half_cells": beam_half_cells,
         "p0_intervals": p0_intervals,
+        "space_kind": space_kind,
         "mode_resolved_mx_only": mode_resolved_mx_only,
         "full_kkt_rows": len(full_free)+row_count,
         "quotient_kkt_rows": dimension,
@@ -250,13 +268,18 @@ def main() -> None:
     parser.add_argument("--beam-half-cells", type=int, choices=(12, 14), default=12)
     parser.add_argument("--p0-intervals", type=int, choices=(4, 8), default=4)
     parser.add_argument("--mode-resolved-mx-only", action="store_true")
+    parser.add_argument("--space-kind", choices=("piecewise_constant",
+                                                  "continuous_linear",
+                                                  "dual_linear"),
+                        default="piecewise_constant")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     with threadpool_limits(limits=1):
         result = evaluate(beam_half_cells=args.beam_half_cells,
                           p0_intervals=args.p0_intervals,
-                          mode_resolved_mx_only=args.mode_resolved_mx_only)
+                          mode_resolved_mx_only=args.mode_resolved_mx_only,
+                          space_kind=args.space_kind)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n", encoding="utf-8")
     print(json.dumps({"elapsed_s": result["elapsed_s"],
