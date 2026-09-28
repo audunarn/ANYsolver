@@ -30,6 +30,10 @@ claim. The factor-4 Fy fallback script remains dirty and unrun.
   binary64 rounding loses more than the declared relative precision, including
   an independently checked subnormal case. Wider B2 conditioning,
   mass/prestress and scale qualification remain open.
+  A separate fixed-magnitude, nonproportional mixed-wrench check over three
+  constant-area rectangle aspects agrees with an independent rational
+  cut-wrench/work oracle and root/free balance. This samples one physical
+  direction; F09 range admission and G0B remain open.
 - ANYfem commit c7035a7 provides a separate experimental GE-panel format,
   save/reopen and headless restore/continue. Ordinary project formats retain
   their existing route.
