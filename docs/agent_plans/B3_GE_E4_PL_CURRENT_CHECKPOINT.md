@@ -47,6 +47,13 @@ Q4 nodal action. External S4 with that same Q4 action gives
 `0.07549 J` versus E4 `0.08861 J`; S8R continuous work rises to
 `1.18130 J` on x16. This supports a strong trial/trace-space
 contribution but not a converged physical reference or law selection.
+At the same fixed x4/x8 primals, coarsening only the fz P0 rows from
+m4/m8 to m2/m4 retains full rank and raises the trace minimum from
+`0.665/0.286` to `1.841/0.954`. The x4 least mode retains 69.8% fz;
+the x8 least mode shifts to Fx/My. This supports a resolution-specific
+trace explanation, but the x8 Fz load still has unselected fine fz
+interval gaps up to `1.83e-9 m` and pointwise gaps up to `4.64e-9 m`.
+Neither result establishes physical transfer or a multiplier policy.
 **Remaining uncertainty:**
 Physical torque/shear fidelity of the declared pose, growing-space
 trace stability and locking, and the allocation of shell/section versus
@@ -12123,3 +12130,31 @@ requirements. If the mode simply shifts to a new weak channel or rank
 fails, revisit the resolution policy before a wider sweep. Keep
 `1900` rows, 120 s and one numerical thread; do not select a space
 from these two levels or consume formal F03 authority.
+
+**x4/B3-14 matched-level outcome (28 September):** Five P0 m4
+channels plus fz P0 m2 retain supported rank `22/22`. On the same
+1,022-row primal and exact-drilling trace norm, the minimum rises
+from the saved six-channel m4 `0.665317` to `1.840915`; the least-mode
+shares are 69.78% fz, 24.08% Fx and 6.14% My. The SVD defect is
+`8.21e-15`, the drilling-equation defect `6.68e-16`, and the run took
+22.07 s. The source-bound result is
+`B3_E4_F03_C1_MATERIAL_LINE_X4_FZ_HALF_P0_TRACE_DEV_V1.json`, SHA256
+`8975cb1120a13993bf91cc3ba37dd588b6b45cc0961a1e4a4fd011c924463f43`.
+Together with x8, this supports the hypothesis that the provisional
+all-channel P0 rule over-resolves fz relative to the tested shell trace;
+the x4 least mode remains substantially fz, so it does not establish
+a mesh-uniform bound. The x8 loaded fine vertical gaps remain material
+to the physical-transfer question. Neither level selects a production
+space, and formal F03 authority remains unconsumed.
+
+**Next off-ratio discriminator (prospective):** Hold the x8/y4 shell
+and all its trace definitions fixed while changing only the native
+beam from B3-18 (1:1) to the already registered B3-14 (2:1). Compare
+six-channel P0 m8 with five P0 m8 channels plus fz P0 m4 in the
+same exact-drilling physical trace/dual norm. If the selective rule
+retains rank and a comparable bounded mode, advance it to the remaining
+registered ratios with loaded work, gap and locking checks. If it
+reintroduces a weak or dependent mode, revise the interface-resolution
+rule before a wide sweep. This is one diagnostic within the existing
+1900-row, 120-second, single-thread limits; it cannot qualify the
+physical connection law or G0B.

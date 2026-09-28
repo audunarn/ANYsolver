@@ -88,8 +88,8 @@ def evaluate(shell_cells: int, kind: str, *, exact_drill_quotient: bool = False,
              trace_only: bool = False, fz_riesz_audit: bool = False) -> dict:
     if shell_cells not in BEAM_HALVES or kind not in KINDS:
         raise ValueError("registered 1:1 material-line fixture required")
-    if kind == "fz_half_p0" and shell_cells != 8:
-        raise ValueError("fz half-resolution screen is fixed to x8/B3-18")
+    if kind == "fz_half_p0" and shell_cells not in (4, 8):
+        raise ValueError("fz half-resolution screen is bounded to x4/B3-14 or x8/B3-18")
     if fz_riesz_audit and not (trace_only and exact_drill_quotient and
                                kind == "piecewise_constant"):
         raise ValueError("fz audit requires exact-quotient P0 trace metric")
