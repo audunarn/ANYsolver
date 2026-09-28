@@ -16,6 +16,7 @@ from scripts.b3_e4_f03_l1_physical_rail import (
     SegmentedRailWeakWork, reference_spatial_wrench_map,
     transverse_shape_integrals,
 )
+from scripts.b3_e4_f03_paired_yaw_upper_screen import flat_yaw_p0_action
 
 
 def _rail(thickness=.035):
@@ -770,6 +771,29 @@ def test_paired_refinement_screen_work_matches_actual_rail_spin():
                 np.zeros_like(direction), direction)[2]
         assert actual == pytest.approx(
             average * (density @ np.diff(amplitude)), abs=2e-14)
+
+
+def test_full_p0_yaw_rows_include_top_surface_rotation():
+    """Every analytic row must match the actual flat physical rail spin."""
+    xs = np.linspace(0., 1., 9)
+    y = np.array((-.1, 0., .1))
+    weights = transverse_shape_integrals(y, (-.047, .046))
+    action = flat_yaw_p0_action(xs, y, weights, .035)
+    rng = np.random.default_rng(1903)
+    q = rng.normal(scale=.01, size=(len(y), len(xs), 6))
+    actual = []
+    h = xs[1]-xs[0]
+    for i in range(4, 8):
+        reference = np.array([[(x, value, 0.) for value in y]
+                              for x in xs[i:i+2]])
+        rail = FlatQ4PhysicalRail.from_reference(
+            reference, y, (-.047, .046), .035)
+        direction = q[:, i:i+2, :].transpose(1, 0, 2)
+        actual.append(h*rail.spin(np.zeros_like(direction), direction)[2])
+    np.testing.assert_allclose(action@q.ravel(), actual, rtol=0., atol=2e-14)
+    rotation_only = q.copy()
+    rotation_only[:, :, :3] = 0.
+    assert np.linalg.norm(action@rotation_only.ravel()) > 1e-5
 
 
 def test_segmented_rail_constant_density_has_line_wrench_and_shell_compliance():

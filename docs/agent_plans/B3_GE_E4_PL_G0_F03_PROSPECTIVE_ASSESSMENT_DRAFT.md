@@ -388,6 +388,20 @@ paired refinement. This does not establish a whole-space continuity bound,
 native mixed stability, or acceptance. Raw output and the executable are
 retained at .qualification/b3-ge-e4-pl/r7-f03-paired-refinement-dev-20260928-v1/.
 
+The next all-row scalar-yaw diagnostic used the x=0-supported E4 physical
+core and the exact flat-reference P0 rail yaw action, including both lateral
+translation and the top-surface rotation-x arm. The first implementation
+omitted the rotation arm; independent review identified that defect, and
+its version-one raw output is retained as invalid evidence. A focused
+rotation-only test checks the corrected rows against the actual rail spin.
+On the first two prospective paired grids, the supported matrices have no
+eigenvalue near the stated numerical floor. The corrected squared
+work-operator norms are 7.1751385e-8 and 7.2329517e-8 under unconverted
+physical coordinates and the P0 L2 density Gram. The 0.81% increase is
+only a two-grid flat virgin Q4 yaw observation, not a uniform estimate or a
+native six-channel/mixed-system assessment. The corrected output is in
+.qualification/b3-ge-e4-pl/r7-f03-paired-yaw-upper-dev-20260928-v2/.
+
 A distinct development alternative is a *line-indexed finite area patch*.
 At material station \(s\), freeze a normalized reference kernel
 \(\rho_s(X)\) with positive longitudinal and transverse support. Average
