@@ -53,7 +53,7 @@ do not establish growing-space stability.
 The virgin joint covector now maps to a spatial force and shell-rail moment
 including the eccentric lever arm. A four-station physical-wrench quadrature
 Gram uses frozen force/length scales; station-map equality alone does not
-prove whole-segment constancy. Twenty-two focused checks pass. Independent
+prove whole-segment constancy. Twenty-three focused checks pass. Independent
 read-only reviews found no bounded discrete measure, scatter, or basis algebra
 defect. Gauss exactness
 applies to density products, not generally to nonlinear density-gap work.
@@ -98,18 +98,22 @@ negative executable check and raw logs are in
 PL numerical completion can penalize in-plane curl but is not physical shear;
 the drill-only hourglass term does no work on this mode. Positive compliance
 on one fixed grid did not establish a uniform bound.
+The targeted twice-long P0 yaw support also retains this family: on 4/8 fine
+cells, physical energy 8.224e8/2.056e8 J and work 0.125. Thus a fixed
+two-cell macro P0 support does not by itself cure the full L2 continuity
+defect. Independent mechanics review confirmed the asymptotic witness and
+its narrow implication. Its raw log is beside the first counterexample.
 
-Next derive whether a **prospectively chosen growing yaw space** suppresses
-the complete physical-core unresolved mode family, without excluding one
-observed vector or weakening six-channel and mesh-ratio requirements. If no
-such space has a defensible work bound and transfer fidelity, revise the
-continuous law or physical operator through mechanics review. Then assess
-complete A/B candidates under the reviewed F03 contract. Extend native bounds
-only where curved/non-affine or fibre families require it. The full seven
-ratios, growing spaces, three refinement levels, physical transfer, locking,
-shear, drilling, and mixed-system checks
-remain mandatory. No automatic finer axial sweep or new external reference is
-justified without a specific discriminating hypothesis.
+The formulation/metric design and one targeted macro-P0 comparison now
+support a decision checkpoint. Independently review the macro witness and
+identify a six-channel space or revised law with a **whole-space** physical
+work bound and transfer fidelity; do not tune a fixed ratio or remove only
+the observed vector. If none is defensible, report the obstructing equation
+and revise the continuous law or physical operator through mechanics review.
+F03 formal assessment stays barred. The seven ratios, growing spaces, three
+refinements, physical transfer, locking, shear, drilling, and mixed-system
+checks remain mandatory. No automatic axial sweep or new external reference
+is justified without a discriminating hypothesis.
 
 ## Execution boundary
 

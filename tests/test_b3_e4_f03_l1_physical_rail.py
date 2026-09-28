@@ -663,16 +663,20 @@ def test_growing_rail_space_preserves_shared_work_and_exact_density_gram():
                                  rel=2e-12, abs=2e-12)
 
 
-def test_physical_core_does_not_uniformly_control_alternating_yaw_density():
-    """A discrete physical-core shear mode blocks the proposed full L2 bound."""
+@pytest.mark.parametrize("macro_factor,segment_counts", (
+    (1, (2, 4, 8)), (2, (4, 8))))
+def test_physical_core_does_not_uniformly_control_growing_p0_yaw(
+        macro_factor, segment_counts):
+    """Fixed-ratio P0 coarsening retains a physical-core shear witness."""
     energies = []
-    for segments in (2, 4, 8):
+    for segments in segment_counts:
         cuts = np.linspace(.5, 1., segments+1)
         h = .5/segments
         line, beam = _segmented_rail(x_cuts=cuts)
         zero = np.zeros((segments+1, 3, 6))
         density = np.zeros((2*segments, 6))
-        density[:, 5] = np.repeat((-1.)**np.arange(segments), 2)
+        density[:, 5] = np.repeat(
+            (-1.)**(np.arange(segments)//macro_factor), 2)
         _, gaps, gradient, _ = line.work_tangent(
             zero, beam.context.initial.mechanical, density)
         np.testing.assert_allclose(gaps, 0., rtol=0., atol=2e-14)
@@ -681,7 +685,8 @@ def test_physical_core_does_not_uniformly_control_alternating_yaw_density():
         _, physical = raw_e4_tangent(xs, np.array((-.1, 0., .1)),
                                      thickness=.035)
         motion = np.zeros_like(zero)
-        motion[1::2, :, 1] = h*np.array((1., -1., 1.))
+        motion[macro_factor::2*macro_factor, :, 1] = (
+            h*np.array((1., -1., 1.)))
         q = np.zeros(len(physical))
         load = np.zeros_like(q)
         local = gradient[:zero.size].reshape(zero.shape)
@@ -692,7 +697,7 @@ def test_physical_core_does_not_uniformly_control_alternating_yaw_density():
                 q[dofs] = motion[i, j]
                 load[dofs] += local[i, j]
         np.testing.assert_array_equal(load[5::6], 0.)
-        assert q@load == pytest.approx(.25, abs=2e-13)
+        assert q@load == pytest.approx(.25/macro_factor, abs=2e-13)
         energy = float(q@physical@q)
         assert energy > 0.
         energies.append(energy)

@@ -324,7 +324,7 @@ strain gives physical energy O(h²), while integrated rail work stays 0.25
 on the fixed half-length line. Actual E4 physical-core energies at
 h=1/4,1/8,1/16 are 6.579e9, 1.645e9, and 4.112e8 J. Virgin gaps and
 drilling loads vanish. The executable negative case is
-test_physical_core_does_not_uniformly_control_alternating_yaw_density;
+test_physical_core_does_not_uniformly_control_growing_p0_yaw;
 raw output is retained in
 .qualification/b3-ge-e4-pl/r7-f03-growing-rail-dev-20260928-v1/.
 This disproves the proposed *physical-core* uniform L2 continuity for that
@@ -334,6 +334,17 @@ through numerical drilling completion, while the drill-only hourglass term
 does no work on this zero-drill field. Neither supplies the missing physical
 membrane-shear proof. A restricted, still-growing multiplier space needs an
 independent whole-space bound and physical transfer checks before use.
+The targeted fixed 2:1 coarsening of yaw P0 supports also fails this
+continuity requirement on affine regular grids. Let each macro interval
+contain two fine shell cells, alternate the macro density signs, and set
+the lateral nodal amplitude to h at every other macro boundary and zero
+elsewhere. The fixed-strip rail work stays 0.125 while physical-core
+energy falls from 8.224e8 to 2.056e8 J when the fine grid changes from
+four to eight cells; no drilling load or virgin gap occurs. The same test
+and retained raw log record this witness. Thus the proposed twice-long P0
+yaw support is not a uniform physical-core L2 work-continuity cure merely
+because it hides the one-cell checkerboard. This does not adjudicate other
+complete multiplier pairings or a corrected continuous law.
 
 In the conditional continuum H1 estimate, uniform width \(w\) gives a factor
 growing as \(w^{-1/2}\), so width must be
