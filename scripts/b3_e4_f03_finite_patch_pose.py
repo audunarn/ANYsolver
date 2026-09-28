@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from anysolver import _ge_beam3_mixed_ad as ad
 from anysolver.corotational import rotation_matrix_from_vector
 from scripts.b3_e4_f03_l1_physical_rail import (
     _owned, _unit, transverse_shape_integrals,
@@ -130,3 +131,54 @@ class FlatQ4FiniteSupportPose:
         frame = np.column_stack((tangent, np.cross(normal, tangent), normal))
         position = centroid+frame@self.reference_frame.T@self.reference_offset
         return position, frame
+
+    def directional(
+            self, total: np.ndarray, direction: np.ndarray
+            ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Pose and first variation through the actual nodal rotation chart."""
+        shape = (*self.reference.shape[:2], 6)
+        q = _owned(total, shape)
+        dq = _owned(direction, shape)
+        position, frame = self.pose(q)
+        directors = np.empty((*shape[:2], 3))
+        director_step = np.empty_like(directors)
+        epsilon = ad.Jet2.variable(0., 0, 1)
+        ez = [ad.Jet2.constant(v, 1) for v in (0., 0., 1.)]
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                theta = [
+                    ad.Jet2.constant(q[i, j, 3+k], 1)+
+                    epsilon*dq[i, j, 3+k] for k in range(3)]
+                rotated = ad.matvec(ad.so3_exp(theta), ez)
+                directors[i, j] = [item.value for item in rotated]
+                director_step[i, j] = [
+                    item.gradient[0] for item in rotated]
+        top = self.reference+q[:, :, :3]+.5*self.thickness*directors
+        top_step = dq[:, :, :3]+.5*self.thickness*director_step
+        mean_director = np.einsum("ij,ijk->k", self.weights, directors)
+        mean_step = np.einsum("ij,ijk->k", self.weights, director_step)
+        normal = frame[:, 2]
+        normal_step = (mean_step-normal*(normal@mean_step))/np.linalg.norm(
+            mean_director)
+        raw = np.einsum("ij,ijk->k", self.moments, top)
+        raw_step = np.einsum("ij,ijk->k", self.moments, top_step)
+        projected = raw-normal*(normal@raw)
+        projected_step = (
+            raw_step-normal_step*(normal@raw)-
+            normal*(normal_step@raw+normal@raw_step))
+        tangent = frame[:, 0]
+        tangent_step = (
+            projected_step-tangent*(tangent@projected_step)) / np.linalg.norm(
+                projected)
+        frame_step = np.column_stack((
+            tangent_step,
+            np.cross(normal_step, tangent)+np.cross(normal, tangent_step),
+            normal_step))
+        centroid_step = np.einsum("ij,ijk->k", self.weights, top_step)
+        position_step = (centroid_step+
+                         frame_step@self.reference_frame.T@
+                         self.reference_offset)
+        if np.linalg.norm(frame_step@frame.T+frame@frame_step.T) > 1e-8:
+            raise AssertionError("finite patch frame variation lost orthogonality")
+        return (position, frame, _owned(position_step, (3,)),
+                _owned(frame_step, (3, 3)))

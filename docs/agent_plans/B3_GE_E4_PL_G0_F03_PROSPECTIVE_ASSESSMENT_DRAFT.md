@@ -387,12 +387,21 @@ with a bounded L2 operator for fixed kernel support and variance. The
 averaged director remains independent of the geometric tangent, so this
 kinematics does not itself suppress Mindlin transverse shear.
 The bounded flat-Q4 box-window prototype reproduces rigid motion and
-filters the specific free-end witness; four focused checks pass and
-independent read-only review found no factory-level defect. The box kernel
+filters the specific free-end witness. Its actual additive shell-chart
+first variation includes the projected frame and eccentric position
+terms. A composed native B3 point-port check matches all six joint work
+channels against finite differences from one accepted predecessor.
+On one fixed patch, pure yaw transfers a unit physical couple with zero
+shell drilling force and positive supported physical-only compliance;
+a transverse displacement slope leaves the independent director frame
+free while a vertical load performs nonzero work. Seven focused patch
+checks pass and independent read-only review found no bounded factory
+or first-derivative defect. The box kernel
 is not the final smooth kernel. Crucially, this is a **line-indexed
 distributing footprint**, not the prior local bonded trace. It requires
 a prospective physical bond interpretation and distinct footprint
-semantics, complete six-channel work/tangent/transfer checks, and a
+semantics, second variations, line-integrated six-channel work, growing
+space and physical transfer checks, and a
 separate mesh-uniform supported E4 physical-core L2 coercivity argument.
 No such proof or F03 acceptance is claimed.
 

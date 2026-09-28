@@ -30,9 +30,13 @@ slice; do not edit or run it by default.
 ## Connection facts and uncertainty
 
 A separate finite-support flat-Q4 shell-pose prototype has exact box-window
-centroid/covariance weights, objective rigid-motion recovery, and a bounded
-endpoint-witness screen. Four focused checks passed; independent read-only
-review found no bounded factory defect. This is a line-indexed 2D
+centroid/covariance weights, objective rigid-motion recovery, a bounded
+endpoint-witness screen, and first variations through actual shell/native
+updates. Seven focused patch checks pass, including six-channel work,
+physical pure torque without drilling, vertical transfer with director
+freedom, and positive physical-only compliance on one patch. Independent
+read-only review found no bounded factory or derivative defect. This is a
+line-indexed 2D
 distributing-footprint candidate, not a selected bonded line or a uniform
 physical-core work proof.
 
@@ -127,10 +131,11 @@ interior support, reference consistency, shear freedom, and the distinction
 from rigid/distributing footprints before loaded comparisons. If that
 cannot preserve declared bonded-line semantics, identify the obstruction
 for independent review rather than relabel a footprint as a line.
-The current box-window prototype only proves reference kinematics and
-filters one endpoint witness. Next derive complete six-channel work and
-test physical transfer, then establish or refute the missing supported E4
-physical-core L2 control before any F03 metric is used.
+The current box-window prototype proves only bounded kinematics and first
+work variations; it filters one endpoint witness and transfers a local
+physical wrench. Next derive second variations and line-integrated work,
+then establish or refute missing supported E4 physical-core L2 control
+before any F03 metric is used.
 F03 formal assessment stays barred. The seven ratios, growing spaces, three
 refinements, physical transfer, locking, shear, drilling, and mixed-system
 checks remain mandatory. No automatic axial sweep or new external reference
