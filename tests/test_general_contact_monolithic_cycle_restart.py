@@ -100,6 +100,10 @@ def _check_smooth_path_work(model, manager, snapshot, record):
         directions.append(sum((weight*direction for weight, direction
                                in zip(weights, directions[:len(columns)], strict=True)),
                               np.zeros_like(pose)))
+    for axis in (2, 3, 4):
+        direction = np.zeros_like(pose)
+        direction[model.mesh.dof_manager.get_node_dofs(14)[axis]] = 1.0
+        directions.append(direction)
     for direction in directions:
         step = 1e-7
         plus = linearize(manager, pose+step*direction, nodal_forces,
