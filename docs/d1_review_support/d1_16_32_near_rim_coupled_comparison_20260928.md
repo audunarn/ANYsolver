@@ -75,3 +75,20 @@ target, or close D1 pressure-space stability. A larger solve is not justified
 by these observations alone; the next investigation must discriminate local
 front resolution from pressure/structural coupling using the existing bounded
 reference framework.
+
+**Physical-support pressure partition, prospective follow-up.** The updated
+[source-bound comparator](../../scripts/general_contact_d1_compare_coupled_fields.py)
+partitions the same exact Q1 squared-error integral at y=.75 and .875 m,
+without changing the 7.8166% global pressure L2 result. Its [raw
+record](d1_16_32_pressure_bands_20260928.json) assigns 36.60% of squared
+pressure difference to y∈[0,.75], 3.20% to [.75,.875] and 60.20% to
+[.875,.9]. These are **shares of squared error**, not relative errors in each
+region: local relative L2 differences are 11.59%, 8.54% and 6.75%,
+respectively. The narrow rim band carries about 80.7% of the finer field's
+squared pressure norm. Both interior and rim contribute materially; the
+7.8166% difference cannot be dismissed as rim-only. An analytical
+partition test passed. This remains a saved-field development diagnostic,
+not a pressure-space convergence or acceptance result.
+Independent read-only review confirmed the refreshed comparator source hash,
+recomposition of the global Q1 norm and the squared-error-share
+interpretation; it did not assess D1 acceptance.

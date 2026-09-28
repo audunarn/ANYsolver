@@ -19,6 +19,10 @@ while physical-support pressure changes 7.8166% L2. FV bin error is
 nonmonotone (0.3344%→0.4811%). The [reviewed development record](d1_review_support/d1_16_32_near_rim_coupled_comparison_20260928.md)
 narrows x spatial behavior but leaves pressure-only, y/rim, full nonlinear
 and deformable-target stability gates open.
+An exact physical-support partition attributes 36.60% of the squared
+pressure difference to y≤.75 and 60.20% to the narrow .875–.9 rim band;
+the 7.8166% difference is not solely a rim effect. These shares do not
+establish the cause of the change.
 
 **Saved active pressure response:** At the accepted 16×8 and 32×8 poses,
 the constrained pressure-to-gap responses have 48/48 and 96/96 positive

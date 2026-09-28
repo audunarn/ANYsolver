@@ -128,6 +128,52 @@ def _relative_q1_l2(p, q, y_knots, *, support_y_max):
     return float(np.sqrt(squared_difference/squared_second))
 
 
+def _pressure_l2_y_bands(p, q, y_knots, band_edges):
+    """Partition exact squared Q1 pressure error without changing its norm."""
+    band_edges = np.asarray(band_edges, dtype=float)
+    if (len(band_edges) < 2 or band_edges[0] != y_knots[0]
+            or band_edges[-1] > y_knots[-1]
+            or np.any(np.diff(band_edges) <= 0)):
+        raise ValueError("invalid physical pressure band edges")
+    x_knots = np.unique(np.r_[np.linspace(0.0, 1.0, p.shape[1]),
+                                np.linspace(0.0, 1.0, q.shape[1])])
+    difference_energy = np.zeros(len(band_edges)-1)
+    reference_energy = np.zeros(len(band_edges)-1)
+    rule = (-1.0/np.sqrt(3.0), 1.0/np.sqrt(3.0))
+    for band, (lower, upper) in enumerate(zip(band_edges[:-1],
+                                              band_edges[1:])):
+        local_y = np.unique(np.r_[y_knots[(y_knots > lower)
+                                         & (y_knots < upper)], lower, upper])
+        for x0, x1 in zip(x_knots[:-1], x_knots[1:]):
+            for y0, y1 in zip(local_y[:-1], local_y[1:]):
+                weight = (x1-x0)*(y1-y0)/4.0
+                for gx in rule:
+                    x = (x0+x1)/2.0+(x1-x0)*gx/2.0
+                    for gy in rule:
+                        y = (y0+y1)/2.0+(y1-y0)*gy/2.0
+                        first = _pressure_at(p, y_knots, x, y)
+                        second = _pressure_at(q, y_knots, x, y)
+                        difference_energy[band] += weight*(first-second)**2
+                        reference_energy[band] += weight*second**2
+    if np.sum(reference_energy) <= 0.0:
+        raise ValueError("zero reference pressure on physical support")
+    total_difference = float(np.sum(difference_energy))
+    return {
+        "y_band_edges_m": band_edges.tolist(),
+        "difference_energy_pa2_m2": difference_energy.tolist(),
+        "reference_energy_pa2_m2": reference_energy.tolist(),
+        "difference_energy_fraction": (
+            (difference_energy/total_difference).tolist()
+            if total_difference > 0.0 else [0.0]*len(difference_energy)),
+        "band_relative_pressure_l2": [
+            float(np.sqrt(error/reference)) if reference > 0.0 else None
+            for error, reference in zip(difference_energy, reference_energy)
+        ],
+        "global_relative_pressure_l2": float(np.sqrt(
+            np.sum(difference_energy)/np.sum(reference_energy))),
+    }
+
+
 def compare(first_path: Path, second_path: Path):
     first, first_coupled, p = _load(first_path)
     second, second_coupled, q = _load(second_path)
@@ -141,6 +187,15 @@ def compare(first_path: Path, second_path: Path):
     # The finite S3 obstacle ends at y=.9. Nodal pressure outside its
     # projected support is not a physical contact-pressure field.
     support_y_max = oracle.YR
+    pressure_bands = _pressure_l2_y_bands(
+        p, q, y_knots, [0.0, 0.75, 0.875, support_y_max],
+    )
+    global_pressure_l2 = _relative_q1_l2(
+        p, q, y_knots, support_y_max=support_y_max,
+    )
+    if abs(pressure_bands["global_relative_pressure_l2"]
+           -global_pressure_l2) > 1.0e-12:
+        raise AssertionError("pressure partition changes the global norm")
     first_bins = np.asarray(first["coupled_bins_n"], dtype=float)
     second_bins = np.asarray(second["coupled_bins_n"], dtype=float)
     if first_bins.shape != second_bins.shape or first_bins.shape != (10, 8):
@@ -150,6 +205,7 @@ def compare(first_path: Path, second_path: Path):
     reaction_second = float(second_coupled["contact"]["integration_force"][2])
     return {
         "status": "development_comparison_only",
+        "comparator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "first_record": str(first_path),
         "second_record": str(second_path),
         "first_record_sha256": hashlib.sha256(first_path.read_bytes()).hexdigest(),
@@ -168,9 +224,8 @@ def compare(first_path: Path, second_path: Path):
         "rim_band_force_relative_to_second": float(
             abs(first_bins[8].sum()-second_bins[8].sum())
             / abs(second_bins[8].sum())),
-        "q1_pressure_l2_relative_to_second": _relative_q1_l2(
-            p, q, y_knots, support_y_max=support_y_max,
-        ),
+        "q1_pressure_l2_relative_to_second": global_pressure_l2,
+        "q1_pressure_l2_y_bands": pressure_bands,
         "reaction_first_n": reaction_first,
         "reaction_second_n": reaction_second,
         "reaction_relative_change": float(
