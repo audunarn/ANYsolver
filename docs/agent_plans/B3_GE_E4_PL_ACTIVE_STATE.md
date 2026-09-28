@@ -90,17 +90,23 @@ discriminating hypothesis.
 
 The bounded 0.1 m flat Q4 rail integrates its declared interpolated top
 position/director across width and composes one station with the unchanged
-native B3 port. Ten focused checks pass, including width quadrature, finite
+native B3 port. Eleven focused checks pass, including width quadrature, finite
 rigid motions, six selected channels, distributed yaw work, selected E4
 physical energy, shear/drill kinematics and reference guards. Its constant-
 multiplier point work now has a composed local Hessian; same-parent finite
 differences check value, gradient, curvature and shell/native cross curvature
 at small and finite rotations. Read-only mechanics review found no missing
 term in that declared point chart. The shell chart remains additive; production
-E4 owner-field/update equivalence, complete torque/shear transfer, segmented
-line measure, native broken-trace L2 bound and F03 assessment remain open.
-Next establish the native trace energy pairing, then check the selected
-physical-width law against E4 owner fields before scoring multiplier spaces.
+Complete torque/shear transfer, segmented line measure, a native broken-trace
+L2 bound and F03 assessment remain open.
+Independent source review found no unique finite Q4 interior director field
+to claim exact rail equivalence. An eleventh check instead verifies first-
+order virgin rail top/complete-frame variations against the E4 owner's Q4
+shape functions, gradients and Mindlin signs; it passes. Treat the rail as a
+separate finite connection law and qualify its transfer, charts and physical
+domain directly.
+Next establish the native trace energy pairing and the rail's finite physical
+transfer before scoring multiplier spaces.
 No loaded refinement or F03 authority has been used.
 
 Native pairing discriminator: the actual stationary-reduced, root-supported
@@ -112,8 +118,8 @@ checks agree. Effective OpenBLAS pools use one thread. Independent read-only
 review found no code or interpretation defect. This bare-port screen excludes
 the section arm, Log map and shell rail; it neither proves a uniform B3 trace
 bound nor selects A/B. The next action is a mathematical coercivity/bound or
-counterexample for the actual retained beam family, alongside E4 owner-field
-equivalence and physical torque/shear checks; no finer native sweep is justified
+counterexample for the actual retained beam family, alongside finite rail
+physical torque/shear checks; no finer native sweep is justified
 by these three values. Raw evidence is in
 `.qualification/b3-ge-e4-pl/r7-f03-native-broken-l2-dev-20260928-v3/`.
 

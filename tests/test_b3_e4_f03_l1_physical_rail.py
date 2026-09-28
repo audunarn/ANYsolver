@@ -5,6 +5,7 @@ import pytest
 from scipy.spatial.transform import Rotation
 
 from anysolver.corotational import rotation_matrix_from_vector
+from anysolver.elements import create_shell_element
 from scripts._b3_e4_f03_native_fixture import build
 from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
 from scripts.b3_e4_f03_plate_patch_work import raw_e4_tangent
@@ -41,6 +42,61 @@ def test_transverse_integral_is_width_owned_and_not_centerline_sampling():
     with pytest.raises(ValueError, match="strip"):
         transverse_shape_integrals(y, (-.11, .05))
     np.testing.assert_array_equal(rail.reference, original)
+
+
+def test_virgin_rail_variation_matches_owned_e4_q4_shape_field():
+    """Check first-order compatibility, not a finite interior director claim."""
+    rail = _rail()
+    element = create_shell_element(
+        1, [1, 2, 3, 4], "shell", formulation="e4-pl",
+        thickness=rail.thickness, reference_normal=(0., 0., 1.))
+    rng = np.random.default_rng(619)
+    direction = rng.normal(scale=.2, size=(2, 3, 6))
+    station = .29
+    zero = np.zeros_like(direction)
+    _, _, center_step, frame_step = rail.pose(
+        zero, station=station, direction=direction)
+    integrated_top = np.zeros(3)
+    integrated_director = np.zeros(3)
+    integrated_top_gradient = np.zeros(3)
+    abscissae, gauss_weights = np.polynomial.legendre.leggauss(3)
+    ez = np.array((0., 0., 1.))
+    width = rail.bounds[1]-rail.bounds[0]
+    for cell, (a, b) in enumerate(zip(rail.y_cuts[:-1], rail.y_cuts[1:])):
+        lo, hi = max(a, rail.bounds[0]), min(b, rail.bounds[1])
+        if hi <= lo:
+            continue
+        nodal = direction[[0, 1, 1, 0],
+                          [cell, cell, cell+1, cell+1]]
+        for point, weight in zip(abscissae, gauss_weights):
+            y = .5*(lo+hi)+.5*(hi-lo)*point
+            xi, eta = 2*station-1., 2*(y-a)/(b-a)-1.
+            shape, dshape_xi, _ = element.compute_shape_functions(xi, eta)
+            translation = shape@nodal[:, :3]
+            rotation = shape@nodal[:, 3:]
+            director = np.cross(rotation, ez)
+            top_nodal = nodal[:, :3]+.5*rail.thickness*np.cross(
+                nodal[:, 3:], ez)
+            factor = .5*(hi-lo)*weight/width
+            integrated_top += factor*(translation+.5*rail.thickness*director)
+            integrated_director += factor*director
+            integrated_top_gradient += factor*2/(rail.reference[1, 0, 0]-
+                                                 rail.reference[0, 0, 0]) * (
+                dshape_xi@top_nodal)
+    np.testing.assert_allclose(center_step, integrated_top,
+                               rtol=0., atol=2e-14)
+    np.testing.assert_allclose(frame_step[:, 2], integrated_director,
+                               rtol=0., atol=2e-14)
+    ex = np.array((1., 0., 0.))
+    tangent_step = integrated_top_gradient-ez*(
+        ez@integrated_top_gradient+integrated_director@ex)
+    tangent_step -= ex*(ex@tangent_step)
+    side_step = (np.cross(integrated_director, ex)+
+                 np.cross(ez, tangent_step))
+    np.testing.assert_allclose(frame_step[:, 0], tangent_step,
+                               rtol=0., atol=2e-14)
+    np.testing.assert_allclose(frame_step[:, 1], side_step,
+                               rtol=0., atol=2e-14)
 
 
 def test_common_finite_rigid_motion_is_objective():

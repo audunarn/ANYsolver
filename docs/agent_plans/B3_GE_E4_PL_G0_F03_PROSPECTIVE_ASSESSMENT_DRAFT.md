@@ -312,6 +312,20 @@ normal-moment space and controlled endpoint/jump terms is another theoretical
 possibility; it is not selected. Neither proposal may silently change the
 required six-channel physics or substitute a rigid footprint for a line.
 
+The rail is a separate finite-kinematic connection law on E4 nodal
+coordinates, not an exact sampling of an existing finite Q4 interior
+director field. Q4 E4-PL retains additive von-Karman/Mindlin mechanics; its
+corotational wrapper uses physical nodal `Exp(rotation)` to pull the nodal
+state into a small-deformation element response, but the owner exposes no
+unique finite interior top-surface/director update map. A bounded flat-Q4
+check using the actual E4 shape functions and longitudinal derivatives
+establishes first-order agreement of the rail top-position and complete
+projected frame variations at the virgin state, including the correct
+transverse-rotation signs and no drilling term.
+Finite agreement with an owner interior field must not be claimed without
+first defining that field. The rail instead requires its own finite work,
+derivative, physical transfer, chart, polarity, topology and domain checks.
+
 On one material line of length \(L\), let \(\xi=s/L\in[0,1]\), freeze a
 positive force scale \(F_*\) and length scale \(\ell_*\), and convert each
 six-channel multiplier density through the *actual reference-state dual pose
