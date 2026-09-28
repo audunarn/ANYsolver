@@ -10,6 +10,16 @@ is one timing pair, not a stable speedup claim or pressure-space acceptance.
 The search still scans face pairs. A larger coupled mesh requires a separate
 resource and mechanics preflight.
 
+**Current coupled x-refinement:** A 32×8 near-rim fine-Q1 partial-contact run
+completed with the sparse direct monolithic solver under 180 s/1 GB after the
+block-response route correctly rejected its dense allocation. It matches the
+independent same-mesh Q1 oracle to 6.05e−11 relative pressure L2. Relative
+to the saved 16×8 coupled field, 8×9 physical bin forces shift 0.2521% L2,
+while physical-support pressure changes 7.8166% L2. FV bin error is
+nonmonotone (0.3344%→0.4811%). The [reviewed development record](d1_review_support/d1_16_32_near_rim_coupled_comparison_20260928.md)
+narrows x spatial behavior but leaves pressure-only, y/rim, full nonlinear
+and deformable-target stability gates open.
+
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
 bound at all eight accepted poses. Local and installed fields match; a forced
