@@ -531,11 +531,35 @@ class MovingS3PatchProjectedNormal:
                     raise UnsupportedQ4S3Branch(
                         "raw shared-edge tie tangent column changes with step"
                     )
+            positions = np.vstack((current_source, current_target))
+            characteristic_length = max(float(np.max(np.linalg.norm(
+                positions-positions[0], axis=1))), 1.0e-20)
+            characteristic_force = max(float(np.sum(np.linalg.norm(
+                residual.reshape(-1, 3), axis=1))), 1.0e-20)
+            observed = ((observations[0][1].residual
+                         - observations[0][0].residual)/(2.0*step))[active]
+            predicted = (tangent_matrix @ action)[active]
+            # A rigid tangential shift can have a true derivative of zero.
+            # At nanometre offsets, subtracting O(N) residuals leaves a
+            # roundoff quotient. Bound its allowance by the subtraction's
+            # actual force scale, with a physical cap. This is a near-null
+            # development guard; resolved actions still use the relative
+            # directional check and the independent tangent gate.
+            residual_sides = observations[0]
+            residual_roundoff = (
+                32.0*np.finfo(float).eps
+                * (np.linalg.norm(residual_sides[0].residual[active])
+                   + np.linalg.norm(residual_sides[1].residual[active]))
+                / (2.0*step)
+            )
+            direction_budget = max(
+                tolerance*max(float(np.linalg.norm(observed)),
+                              float(np.linalg.norm(predicted))),
+                min(residual_roundoff,
+                    1.0e-5*characteristic_force/characteristic_length),
+            )
             if ((np.all(np.isin(np.flatnonzero(action), active))
-                 and relative_difference(((observations[0][1].residual
-                                           - observations[0][0].residual)/(2.0*step))[active],
-                                         (tangent_matrix @ action)[active])
-                 > tolerance)
+                 and np.linalg.norm(observed-predicted) > direction_budget)
                     or relative_difference(tangent_matrix, tangent_matrix.T)
                     > tolerance):
                 raise UnsupportedQ4S3Branch(
@@ -701,8 +725,6 @@ class MovingS3PatchProjectedNormal:
         for source_face, source_ids in enumerate(self.source_face_indices):
             positions = source[source_ids]
             first, normal = projected_q4_source_face(positions)
-            if abs(float(normal @ direction)) > 1.0e-4:
-                return False
             for target_face, target_ids in enumerate(self.target_face_indices):
                 positions = target[target_ids]
                 projected = positions-((positions-first.corners[0]) @ normal)[:, None]*normal
@@ -710,6 +732,11 @@ class MovingS3PatchProjectedNormal:
                 if not _touching_projected_boundaries(
                         first, second, relative_tolerance=1.0e-10):
                     continue
+                # The one-sided direction must resolve each actual tie. A
+                # sloped face elsewhere in the patch has no clipping event
+                # to own and is checked by the smooth neighbor work instead.
+                if abs(float(normal @ direction)) > 1.0e-4:
+                    return False
                 admitted = False
                 for other_ids in self.target_face_indices:
                     shared = set(map(int, target_ids)).intersection(map(int, other_ids))

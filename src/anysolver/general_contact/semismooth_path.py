@@ -326,4 +326,12 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                                    "attempts": attempts})
     return SemismoothStep(False, "contact_semismooth_iterations_exhausted",
                           q, mu, z, None, None, max_iterations, residual_norm,
-                          constraint_norm, ncp_norm, evaluations, backtracks)
+                          constraint_norm, ncp_norm, evaluations, backtracks,
+                          {"iteration": max_iterations,
+                           "equilibrium_residual_n": residual_norm,
+                           "constraint_error_m": constraint_norm,
+                           "complementarity_relative_force": ncp_norm,
+                           "active_modes": int(np.count_nonzero(active)),
+                           "nodal_force_n": z.tolist(),
+                           "normalized_gap_m": contact.state.normalized_gap.tolist(),
+                           "last_line_search": attempts})

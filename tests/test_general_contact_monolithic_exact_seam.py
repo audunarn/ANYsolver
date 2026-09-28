@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from anysolver import ContactPathNodalForce, solve_static_nonlinear
 from anysolver.assembly import build_constraint_transformation
 from anysolver.general_contact.q4_s3_overlap_derivatives import UnsupportedQ4S3Branch
 from anysolver.general_contact import s3_patch_augmented
@@ -190,3 +191,125 @@ def test_raw_seam_rejects_biased_supported_zero_force_gap_row(monkeypatch):
                        match="raw supported gap derivative is unresolved"):
         owner.law.nodal_force_linearization(source, target, z, tangent=False)
     assert calls
+
+
+def test_seam_ownership_ignores_sloped_face_without_tie():
+    owner, _source, _target, _base, _z = _case()
+    saved = json.loads((Path(__file__).parent / "fixtures" /
+                        "general_contact_q4_s3_sloped_neighbor_seam_pose.json").read_text())
+    source = np.asarray(saved["source"])
+    target = np.asarray(saved["target"])
+    z = np.asarray(saved["nodal_force_n"])
+    faces = owner.law.source_face_indices
+    _, unrelated_normal = s3_patch_augmented.projected_q4_source_face(
+        source[faces[0]])
+    _, tied_normal = s3_patch_augmented.projected_q4_source_face(
+        source[faces[1]])
+    assert abs(unrelated_normal[0]) > 1.0e-4
+    assert abs(tied_normal[0]) < 1.0e-4
+    assert owner.law._only_artificial_shared_edge_ties(
+        source, target, failed_pair=3)
+    raw = owner.law.nodal_force_linearization(source, target, z, tangent=True)
+    np.testing.assert_allclose(raw.residual, -z @ raw.gap_gradient,
+                               rtol=1.0e-6, atol=1.0e-10)
+    h = 1.0e-7
+    plus = source.copy()
+    minus = source.copy()
+    plus[1, 2] += h
+    minus[1, 2] -= h
+    observed = (owner.law.nodal_force_linearization(
+        plus, target, z, tangent=False).residual
+        - owner.law.nodal_force_linearization(
+            minus, target, z, tangent=False).residual)/(2.0*h)
+    predicted = raw.tangent[:, 5]
+    active = owner.law.tangent_active_coordinates
+    assert (np.linalg.norm((observed-predicted)[active])
+            / np.linalg.norm(predicted[active]) < 1.0e-5)
+
+    support = owner.law.geometry.evaluate(source, target).reference_support
+    multipliers = np.zeros_like(support)
+    np.divide(z, support, out=multipliers, where=support > 0.0)
+    projected = owner.law.work(source, target, multipliers, tangent=True)
+    np.testing.assert_allclose(projected.residual, raw.residual,
+                               rtol=1.0e-6, atol=1.0e-10)
+    assert np.all(np.isfinite(projected.tangent))
+
+
+def test_monolithic_guided_slide_reaches_exact_s3_diagonal(monkeypatch):
+    """Exercise the guarded seam derivative inside an accepted static step."""
+    model, definition, settings, program = build_case(
+        4, 2, True, gap_certificate="projected_matching",
+        gap_tolerance=5.0e-5, normal_approach=0.01504,
+    )
+    master = int(model.mesh.dof_manager.get_node_dofs(1)[0])
+    slave = int(model.mesh.dof_manager.get_node_dofs(2)[0])
+    model.add_constraint_equation(
+        terms=((slave, 1.0), (master, -1.0)),
+        dependent_dof=slave, source_id="guided_seam_node2_ux",
+    )
+    settings = replace(
+        settings, enforcement_solver="monolithic_active_set",
+        complementarity_force_scale_n=0.3,
+        augmentation_acceleration="none",
+        augmentation_schur_maximum_modes=None,
+        augmentation_schur_maximum_pressure_pa=None,
+        augmentation_schur_maximum_step_pa=None,
+        augmentation_schur_difference_step_m=None,
+        augmentation_schur_maximum_attempts=1,
+        augmentation_schur_maximum_relinearizations=0,
+        q4_s3_shared_edge_tie_step_m=3.0e-8,
+        q4_s3_shared_edge_tie_direction=(1.0, 0.0, 0.0),
+        q4_s3_shared_edge_tie_relative_tolerance=1.0e-6,
+    )
+    program = replace(
+        program, waypoints=((0.0, 0.0), (0.0, -0.01504),
+                            (0.05, -0.01504)),
+        nodal_forces=(ContactPathNodalForce(16, "uz", (0.0, -0.3, -0.3)),),
+    )
+    seam_calls = []
+    original = s3_patch_augmented.MovingS3PatchProjectedNormal._shared_edge_nodal_force_limit
+
+    def counted(self, *args, **kwargs):
+        result = original(self, *args, **kwargs)
+        seam_calls.append(True)
+        return result
+
+    monkeypatch.setattr(s3_patch_augmented.MovingS3PatchProjectedNormal,
+                        "_shared_edge_nodal_force_limit", counted)
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        tolerance=1.0e-6, emit_restart_checkpoint=False,
+    )
+    assert result.status == "completed", result.failure_reason
+    assert len(result.steps) == 2
+    assert len(seam_calls) >= 1
+    assert abs(0.35 + result.displacements[slave] - 0.4) < 1.0e-12
+    history = result.info["force_displacement_history"]
+    assert history[-1]["constraint_error"] < 1.0e-10
+    assert history[-1]["contact"]["minimum_gap"] >= -5.0e-5
+
+
+def test_raw_seam_rejects_consistent_near_null_tangent_bias(monkeypatch):
+    owner, _source, _target, _base, _z = _case()
+    saved = json.loads((Path(__file__).parent / "fixtures" /
+                        "general_contact_q4_s3_sloped_neighbor_seam_pose.json").read_text())
+    source = np.asarray(saved["source"])
+    target = np.asarray(saved["target"])
+    z = np.asarray(saved["nodal_force_n"])
+    direction = np.r_[np.tile((1.0, 0.0, 0.0), len(source)),
+                      np.zeros(3*len(target))]
+    direction /= np.linalg.norm(direction)
+    original = owner.law._nodal_force_unresolved
+
+    def biased(*args, **kwargs):
+        work = original(*args, **kwargs)
+        if work.tangent is None or kwargs.get("tiny_wedge_pair") is None:
+            return work
+        tangent = work.tangent + 1.0e-4*np.outer(direction, direction)
+        return replace(work, tangent=tangent)
+
+    monkeypatch.setattr(owner.law, "_nodal_force_unresolved", biased)
+    with pytest.raises(UnsupportedQ4S3Branch,
+                       match="raw shared-edge tie tangent direction or symmetry disagrees"):
+        owner.law.nodal_force_linearization(source, target, z, tangent=True)
