@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 from anysolver import solve_static_nonlinear
+from anysolver.control import SolveCancelled
 from anysolver.nonlinear_restart import _checkpoint_without_hash, _sha256
 from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
 
@@ -125,3 +126,35 @@ def test_monolithic_active_contact_split_restart_and_mode_identity():
             contact_path_program=program, max_iterations=18,
             restart_checkpoint=half.to_restart_checkpoint(),
         )
+
+
+def test_monolithic_cancellation_after_accepted_step_allows_clean_rerun():
+    class CancelBeforeSecondStep:
+        def raise_if_cancelled(self, stage=""):
+            if stage == "contact_path.step:2":
+                raise SolveCancelled("development interruption", stage=stage)
+
+    model, definition, settings, program = _case()
+    with pytest.raises(SolveCancelled, match="development interruption"):
+        solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=18,
+            cancellation_token=CancelBeforeSecondStep(),
+        )
+    rerun = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+    )
+    fresh_model, fresh_definition, fresh_settings, fresh_program = _case()
+    fresh = solve_static_nonlinear(
+        fresh_model, contact=fresh_definition, contact_settings=fresh_settings,
+        contact_path_program=fresh_program, max_iterations=18,
+    )
+    assert rerun.status == fresh.status == "completed"
+    np.testing.assert_allclose(rerun.displacements, fresh.displacements,
+                               rtol=0.0, atol=1e-10)
+    np.testing.assert_allclose(
+        rerun.info["general_contact"]["integration_force"],
+        fresh.info["general_contact"]["integration_force"],
+        rtol=0.0, atol=1e-10,
+    )
