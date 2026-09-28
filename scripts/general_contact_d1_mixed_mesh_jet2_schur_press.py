@@ -37,7 +37,8 @@ def build_case(columns: int, *, four_phase: bool = False,
                target_right_x_m: float = 1.0,
                target_reference_slope: float = 0.0,
                target_columns: int = 1,
-               full_width_target: bool = False):
+               full_width_target: bool = False,
+               source_rows: int = 1):
     if columns not in (4, 8, 16, 24, 32):
         raise ValueError("only the bounded four/eight/sixteen/twenty-four/thirty-two-Q4 refinements are admitted")
     if target_right_x_m not in (1.0, 1.3):
@@ -46,15 +47,19 @@ def build_case(columns: int, *, four_phase: bool = False,
         raise ValueError("target reference slope must be in [0, 1e-4]")
     if target_columns not in (1, 2):
         raise ValueError("this development case admits one or two target columns")
+    if source_rows not in (1, 2, 4, 8):
+        raise ValueError("this development case admits one, two, four or eight source rows")
     target_y0, target_y1 = ((-0.1, 1.2) if full_width_target
                             else (0.0, 1.0))
     stride = columns+1
-    source_nodes = tuple(range(1, 2*stride+1))
-    target_nodes = tuple(range(2*stride+1,
-                               2*stride+1+2*(target_columns+1)))
+    source_element_count = columns*source_rows
+    source_nodes = tuple(range(1, (source_rows+1)*stride+1))
+    target_nodes = tuple(range((source_rows+1)*stride+1,
+                               (source_rows+1)*stride+1+2*(target_columns+1)))
     model = FEModel(f"mixed_{columns}_q4_x_jet2_schur_press")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
-    for row, y in enumerate((0.1, 1.1)):
+    for row in range(source_rows+1):
+        y = 0.1+row/source_rows
         for column in range(stride):
             model.add_node(1+row*stride+column,
                            0.1+column/columns, y, 0.04004)
@@ -71,13 +76,15 @@ def build_case(columns: int, *, four_phase: bool = False,
                        z+target_reference_slope*(x-0.5*target_right_x_m))
     target_normal = np.asarray((-target_reference_slope, 0.0, 1.0))
     target_normal /= np.linalg.norm(target_normal)
-    for column in range(columns):
-        element_id = column+1
-        model.add_element(element_id, create_shell_element(
-            element_id,
-            (1+column, 2+column, stride+2+column, stride+1+column),
-            "elastic", thickness=0.05, reference_normal=(0.0, 0.0, 1.0),
-        ))
+    for row in range(source_rows):
+        for column in range(columns):
+            element_id = 1+row*columns+column
+            bottom = 1+row*stride+column
+            model.add_element(element_id, create_shell_element(
+                element_id,
+                (bottom, bottom+1, bottom+stride+1, bottom+stride),
+                "elastic", thickness=0.05, reference_normal=(0.0, 0.0, 1.0),
+            ))
     if target_columns == 1:
         target_faces = ((target_nodes[0], target_nodes[1], target_nodes[3]),
                         (target_nodes[1], target_nodes[2], target_nodes[3]))
@@ -91,7 +98,8 @@ def build_case(columns: int, *, four_phase: bool = False,
                  target_nodes[target_columns+2+column],
                  target_nodes[target_columns+1+column]),
             ))
-    for element_id, nodes in enumerate(target_faces, start=columns+1):
+    for element_id, nodes in enumerate(target_faces,
+                                       start=source_element_count+1):
         model.add_element(element_id, create_shell_element(
             element_id, nodes, "elastic", thickness=0.05,
             formulation="e4-pl-s3-v2d",
@@ -107,14 +115,17 @@ def build_case(columns: int, *, four_phase: bool = False,
         {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
     ))
     model.add_boundary_condition(BoundaryCondition(
-        "source_left_support", (1, stride+1), {"uz": 0.0},
+        "source_left_support",
+        tuple(1+row*stride for row in range(source_rows+1)),
+        {"uz": 0.0},
     ))
     definition = ContactDefinition(
         surfaces=(
-            ContactSurface("q4_source", tuple(range(1, columns+1)), "bottom"),
+            ContactSurface("q4_source",
+                           tuple(range(1, source_element_count+1)), "bottom"),
             ContactSurface("s3_target",
-                           tuple(range(columns+1,
-                                       columns+1+len(target_faces))), "top"),
+                           tuple(range(source_element_count+1,
+                                       source_element_count+1+len(target_faces))), "top"),
         ),
         rigid_bodies=(),
         interactions=(ContactInteraction(
@@ -127,7 +138,7 @@ def build_case(columns: int, *, four_phase: bool = False,
         q4_source_gap_certificate="projected_matching",
         general_s3_difference_step=2.0e-5,
         maximum_general_s3_energy_evaluations=14144,
-        maximum_candidate_pairs=max(32, 2*columns*target_columns),
+        maximum_candidate_pairs=max(32, 2*source_element_count*target_columns),
         q4_source_area_tolerance=1.0e-9,
         q4_source_weighted_gap_tolerance=1.0e-10,
         maximum_q4_source_integration_triangles=300,
@@ -138,7 +149,7 @@ def build_case(columns: int, *, four_phase: bool = False,
         q4_source_weighted_gap_hessian_tolerance=1.0e-5,
         pressure_tolerance=1.0e-5, maximum_augmentations=7,
         augmentation_acceleration="supported_schur_dev",
-        augmentation_schur_maximum_modes=2*stride,
+        augmentation_schur_maximum_modes=(source_rows+1)*stride,
         augmentation_schur_maximum_pressure_pa=10.0,
         augmentation_schur_maximum_step_pa=5.0,
         augmentation_schur_difference_step_m=2.0e-6,
@@ -151,12 +162,17 @@ def build_case(columns: int, *, four_phase: bool = False,
         waypoints += ((0.05, 0.05), (0.05, 0.05), (0.05, 0.05))
         force_factors += (1.0, 0.0, 1.0)
     if load_profile == "tip":
-        nodal_weights = {stride: 0.5, 2*stride: 0.5}
+        nodal_weights = {
+            (row+1)*stride:
+            (0.5 if row in (0, source_rows) else 1.0)/source_rows
+            for row in range(source_rows+1)
+        }
     elif load_profile == "distributed":
         nodal_weights = {
             1+row*stride+column:
-            (0.5 if column in (0, columns) else 1.0)/(2*columns)
-            for row in range(2) for column in range(stride)
+            ((0.5 if column in (0, columns) else 1.0)/columns)
+            *((0.5 if row in (0, source_rows) else 1.0)/source_rows)
+            for row in range(source_rows+1) for column in range(stride)
         }
     else:
         raise ValueError("load profile must be tip or distributed")
@@ -184,7 +200,8 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
          pressure_basis: str = "fine_nodal_q1",
          target_reference_slope: float = 0.0,
          target_columns: int = 1,
-         full_width_target: bool = False) -> None:
+         full_width_target: bool = False,
+         source_rows: int = 1) -> None:
     if output.exists():
         raise FileExistsError(f"development output already exists: {output}")
     model, definition, settings, program = build_case(
@@ -195,6 +212,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         target_reference_slope=target_reference_slope,
         target_columns=target_columns,
         full_width_target=full_width_target,
+        source_rows=source_rows,
     )
     if pressure_cap_pa <= 0.0 or schur_step_cap_pa <= 0.0:
         raise ValueError("Schur pressure and step caps must be positive")
@@ -232,6 +250,7 @@ def main(columns: int, output: Path, pressure_cap_pa: float = 10.0,
         "target_columns": target_columns,
         "full_width_target": full_width_target,
         "columns": columns,
+        "source_rows": source_rows,
         "pressure_basis": pressure_basis,
         "status": result.status,
         "failure_reason": result.failure_reason,
@@ -292,6 +311,7 @@ if __name__ == "__main__":
     parser.add_argument("--target-reference-slope", type=float, default=0.0)
     parser.add_argument("--target-columns", type=int, choices=(1, 2), default=1)
     parser.add_argument("--full-width-target", action="store_true")
+    parser.add_argument("--source-rows", type=int, choices=(1, 2, 4, 8), default=1)
     args = parser.parse_args()
     main(args.columns, args.output, args.pressure_cap_pa, args.four_phase,
          args.steps_per_segment, args.schur_step_cap_pa,
@@ -299,4 +319,4 @@ if __name__ == "__main__":
          args.schur_relinearizations, args.target_right_x_m,
          args.schur_maximum_attempts, args.pressure_basis,
          args.target_reference_slope, args.target_columns,
-         args.full_width_target)
+         args.full_width_target, args.source_rows)
