@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "failed_path_status": "stopped_at_limit",
+  "failed_path_reason": "contact_semismooth_backtracking_failed",
+  "failed_path_accepted_steps": 1,
+  "reused_path_status": "completed",
+  "fresh_path_status": "completed",
+  "maximum_displacement_difference_m": 0.0,
+  "maximum_contact_wrench_difference": 0.0,
+  "maximum_generalized_reaction_difference": 0.0,
+  "serialized_restart_checkpoints_equal": true,
+  "elapsed_seconds": 89.39745580000454
+}
