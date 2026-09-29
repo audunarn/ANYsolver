@@ -8,6 +8,9 @@ _CORE_EXPORTS = frozenset({
     "ContactSolverSettings", "ContactSurface", "ContactValidationReport",
     "RigidContactBody", "validate_general_contact",
 })
+_CAPABILITY_EXPORTS = frozenset({
+    "ContactCapabilityReport", "report_general_contact_capability",
+})
 _STATIC_EXPORTS = frozenset({
     "ContactPathControl", "ContactPathNodalForce", "ContactPathProgram",
     "solve_static_contact_path",
@@ -22,6 +25,8 @@ _TRANSIENT_EXPORTS = frozenset({
 def __getattr__(name: str):
     if name in _CORE_EXPORTS:
         module = "core"
+    elif name in _CAPABILITY_EXPORTS:
+        module = "capability"
     elif name in _STATIC_EXPORTS:
         module = "static_path"
     elif name in _TRANSIENT_EXPORTS:
@@ -37,6 +42,7 @@ def __dir__():
     return sorted(set(globals()) | set(__all__))
 
 __all__ = [
+    "ContactCapabilityReport",
     "ContactDefinition",
     "ContactInteraction",
     "ContactResults",
@@ -45,6 +51,7 @@ __all__ = [
     "ContactValidationReport",
     "RigidContactBody",
     "validate_general_contact",
+    "report_general_contact_capability",
     "ContactPathControl",
     "ContactPathNodalForce",
     "ContactPathProgram",

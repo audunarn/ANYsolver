@@ -246,13 +246,14 @@ from .contact import (
     validate_contact_configuration,
 )
 _GENERAL_CONTACT_EXPORTS = frozenset({
-    "ContactDefinition", "ContactInteraction", "ContactPathControl",
+    "ContactCapabilityReport", "ContactDefinition", "ContactInteraction", "ContactPathControl",
     "ContactPathNodalForce", "ContactPathProgram", "ContactResults",
     "ContactSolverSettings", "ContactSurface", "ContactValidationReport",
     "RigidContactBody", "solve_static_contact_path",
     "ContactNodalLoadHistory", "ContactTransientSolverControls",
     "TransientContactResults", "TransientContactSettings",
     "solve_transient_contact", "validate_general_contact",
+    "report_general_contact_capability",
 })
 from .fracture import (
     DeletedElementRecord,
@@ -705,6 +706,7 @@ __all__ = [
     "recommend_sphere_contact_penalty",
     "solve_transient_sphere_impact",
     "validate_contact_configuration",
+    "ContactCapabilityReport",
     "ContactDefinition",
     "ContactInteraction",
     "ContactPathControl",
@@ -722,6 +724,7 @@ __all__ = [
     "TransientContactSettings",
     "solve_transient_contact",
     "validate_general_contact",
+    "report_general_contact_capability",
     "DeletedElementRecord",
     "ElementDeletionConfig",
     "FractureConfig",

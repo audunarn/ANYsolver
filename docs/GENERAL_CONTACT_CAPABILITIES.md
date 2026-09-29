@@ -28,6 +28,16 @@ contact job while ordinary jobs remain usable. This C9 storage slice has no
 mesh map, contact solve or results adapter, and is neither independently
 accepted nor released. See its `docs/contact_intent_task.md` in that branch.
 
+The public `report_general_contact_capability(model, definition, settings)`
+reports the static validator's implementation verdict together with selected
+surface/rigid geometry, element formulations, material classes, friction and
+the limited lifecycle scope. Its `tested`, `independently_accepted` and
+`released` claims remain false: the report has no source-bound exact-model
+evidence certificate. `admitted_for_application` therefore remains false even
+for a valid development profile. The [D1 gap map](GENERAL_CONTACT_D1_ACCEPTANCE_GAP_MAP.md)
+and this ledger retain local profile-family test evidence; applications must
+not turn `validation.valid` or `implemented` into user-facing admission.
+
 | Profile and geometry | Analysis and lifecycle | Status | Evidence and dependency |
 |---|---|---|---|
 | Planar qualified E4-PL Q4 skin against one fixed rigid plane; midsurface/top/bottom; frictionless penalty mortar | Nonlinear static force or displacement control; version-2 penalty checkpoint under von Karman kinematics | Implemented, locally tested | `tests/test_general_contact_plane.py`, `examples/general_contact_planar_plate.py`; corotational restart, independent review and registered numerical qualification open |
