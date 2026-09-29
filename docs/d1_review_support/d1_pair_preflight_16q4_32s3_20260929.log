@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_pair_search_preflight_dev.py", line 89, in <module>
+    main(int(sys.argv[1]), int(sys.argv[2]), Path(sys.argv[3]),
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         len(sys.argv) < 5 or sys.argv[4] != "--exhaustive")
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_pair_search_preflight_dev.py", line 58, in main
+    geometry = MovingS3PatchPrimalMortarPenalty(
+        source_faces, target_faces, 10000.0,
+    ...<8 lines>...
+        pair_broadphase=pair_broadphase,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_mortar_energy.py", line 165, in __init__
+    raise MemoryError(
+        "S3 patch Hessian exceeds declared energy evaluation budget"
+    )
+MemoryError: S3 patch Hessian exceeds declared energy evaluation budget

@@ -50,11 +50,13 @@ def build_interior_press(*, force_n: float = 0.08,
                          reference_slope: float = 0.01,
                          target_columns: int = 1,
                          target_rows: int = 1,
+                         target_young_multiplier: float = 1.0,
                          source_support: str = "left",
                          source_columns: int = 4,
                          source_rows: int = 2,
                          source_y_profile: str | None = None,
                          offline_structural_reference_y16: bool = False,
+                         offline_structural_reference_y24: bool = False,
                          load_shape: str = "point",
                          four_phase: bool = False,
                          steps_per_segment: int = 2,
@@ -81,9 +83,11 @@ def build_interior_press(*, force_n: float = 0.08,
         columns, source_rows=rows, full_width_target=True,
         target_right_x_m=1.3, common_reference_slope=reference_slope,
         target_columns=target_columns, target_rows=target_rows,
+        target_young_multiplier=target_young_multiplier,
         load_profile="distributed", total_force_n=force_n,
         source_y_profile=source_y_profile,
         offline_structural_reference_y16=offline_structural_reference_y16,
+        offline_structural_reference_y24=offline_structural_reference_y24,
     )
     target_start = (rows + 1) * (columns + 1) + 1
     target_left_top = target_start + (
@@ -167,7 +171,7 @@ def build_interior_press(*, force_n: float = 0.08,
     elif load_shape == "interior_uniform":
         load_weights = {node: 1.0 / len(interior) for node in interior}
     elif load_shape == "physical_bump":
-        if source_y_profile not in (None, "uniform_ref16"):
+        if source_y_profile not in (None, "uniform_ref16", "uniform_ref24"):
             raise ValueError("physical bump requires uniform source coordinates")
         x_weights = _physical_bump_axis_weights(columns)
         y_weights = _physical_bump_axis_weights(rows)
@@ -204,6 +208,7 @@ def build_interior_press(*, force_n: float = 0.08,
 
 def main(output: Path, *, force_n: float, reference_slope: float,
          target_columns: int, target_rows: int, source_support: str,
+         target_young_multiplier: float,
          source_columns: int, source_rows: int, load_shape: str,
          source_y_profile: str | None,
          offline_structural_reference_y16: bool,
@@ -220,6 +225,7 @@ def main(output: Path, *, force_n: float, reference_slope: float,
     model, definition, settings, program = build_interior_press(
         force_n=force_n, reference_slope=reference_slope,
         target_columns=target_columns, target_rows=target_rows,
+        target_young_multiplier=target_young_multiplier,
         source_support=source_support,
         source_columns=source_columns, source_rows=source_rows,
         source_y_profile=source_y_profile,
@@ -291,6 +297,7 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         "target_s3_faces": 2 * target_columns * target_rows,
         "target_rows": target_rows,
         "target_columns": target_columns,
+        "target_young_multiplier": target_young_multiplier,
         "interior_pressure_node_ids": list(interior_nodes),
         "force_n": force_n,
         "reference_slope": reference_slope,
@@ -400,6 +407,7 @@ def replay_captured_sweep(capture: Path, output: Path):
             "target_columns", saved["target_s3_faces"] //
             (2*saved["target_rows"])),
         target_rows=saved["target_rows"],
+        target_young_multiplier=saved.get("target_young_multiplier", 1.0),
         source_support=saved["source_support"],
         source_columns=saved["source_columns"],
         source_rows=saved["source_rows"],
@@ -474,10 +482,12 @@ if __name__ == "__main__":
                         default=1)
     parser.add_argument("--target-rows", type=int, choices=(1, 2, 3, 4, 6),
                         default=1)
+    parser.add_argument("--target-young-multiplier", type=float,
+                        choices=(1.0, 5.0), default=1.0)
     parser.add_argument("--source-support", choices=("left", "perimeter"),
                         default="left")
-    parser.add_argument("--source-rows", type=int, choices=(2, 4, 8, 16), default=2)
-    parser.add_argument("--source-columns", type=int, choices=(4, 8), default=4)
+    parser.add_argument("--source-rows", type=int, choices=(2, 4, 8, 12, 16), default=2)
+    parser.add_argument("--source-columns", type=int, choices=(4, 8, 12), default=4)
     parser.add_argument("--source-y-profile", choices=("uniform_ref16",),
                         default=None)
     parser.add_argument("--offline-structural-reference-y16",
@@ -511,6 +521,7 @@ if __name__ == "__main__":
          reference_slope=arguments.reference_slope,
          target_columns=arguments.target_columns,
          target_rows=arguments.target_rows,
+         target_young_multiplier=arguments.target_young_multiplier,
          source_support=arguments.source_support,
          source_columns=arguments.source_columns,
          source_rows=arguments.source_rows, load_shape=arguments.load_shape,

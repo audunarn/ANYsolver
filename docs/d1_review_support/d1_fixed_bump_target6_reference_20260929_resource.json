@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.64593889999378,
+  "peak_process_tree_memory_mb": 282.607616,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_two_body_oracle_dev.py",
+    "--offline-target-xy-reference",
+    "docs/d1_review_support/d1_fixed_bump_target6_reference_20260929.json",
+    "docs/d1_review_support/d1_fixed_bump_target_xy_reference_20260929.json",
+    "6"
+  ],
+  "log": "docs\\d1_review_support\\d1_fixed_bump_target6_reference_20260929.log"
+}

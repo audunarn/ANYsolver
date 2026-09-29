@@ -327,7 +327,11 @@ def offline_target_reference(output: Path) -> None:
     print(json.dumps(cases))
 
 
-def offline_target_xy_reference(output: Path, baseline_path: Path) -> None:
+def offline_target_xy_reference(output: Path, baseline_path: Path | None,
+                                target_cells_to_run: tuple[int, ...] = (3, 4),
+                                target_young_multiplier: float = 1.0,
+                                source_cells: int = 16,
+                                ) -> None:
     """Screen x/y S3 refinement under the same fixed physical source load."""
     if output.exists():
         raise FileExistsError(output)
@@ -335,20 +339,34 @@ def offline_target_xy_reference(output: Path, baseline_path: Path) -> None:
         _independent_projected_gap_bound,
     )
 
-    baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
-    cases = [next(item for item in baseline["cases"]
-                  if item["target_columns"] == item["target_rows"] == 2)]
-    if (cases[0]["source_columns"] != 16
-            or cases[0]["source_rows"] != 16
-            or cases[0]["load_shape"] != "physical_bump"):
-        raise ValueError("baseline target reference has incompatible mechanics")
+    if target_young_multiplier not in (1.0, 5.0):
+        raise ValueError("unsupported target contrast")
+    if source_cells not in (8, 12, 16, 24):
+        raise ValueError("unsupported source contrast screen")
+    if baseline_path is None:
+        cases = []
+    else:
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        cases = [next(item for item in baseline["cases"]
+                      if item["target_columns"] == item["target_rows"] == 2)]
+        if (cases[0]["source_columns"] != source_cells
+                or cases[0]["source_rows"] != source_cells
+                or cases[0]["load_shape"] != "physical_bump"
+                or target_young_multiplier != 1.0):
+            raise ValueError("baseline target reference has incompatible mechanics")
     points = ((0.6, 0.6), (0.6, 0.7), (0.6, 0.9))
-    for target_cells in (3, 4):
+    for target_cells in target_cells_to_run:
+        if target_cells not in (3, 4, 6):
+            raise ValueError("unsupported offline target-XY screen")
         model, definition, _settings, program = build_interior_press(
-            source_support="perimeter", source_columns=16,
-            source_rows=16, source_y_profile="uniform_ref16",
-            offline_structural_reference_y16=True,
+            source_support="perimeter", source_columns=source_cells,
+            source_rows=source_cells,
+            source_y_profile=("uniform_ref16" if source_cells == 16 else
+                              "uniform_ref24" if source_cells == 24 else None),
+            offline_structural_reference_y16=source_cells == 16,
+            offline_structural_reference_y24=source_cells == 24,
             target_columns=target_cells, target_rows=target_cells,
+            target_young_multiplier=target_young_multiplier,
             force_n=0.04, reference_slope=1.0e-4,
             load_shape="physical_bump", slide_body="target",
             target_reference_full_left_clamp=True,
@@ -358,11 +376,12 @@ def offline_target_xy_reference(output: Path, baseline_path: Path) -> None:
         lower_gap = _independent_projected_gap_bound(
             model, definition, reference["displacement"],
             definition.interactions[0].gap_tolerance)
-        target_first = 17*17+1
+        target_first = (source_cells+1)**2+1
         cases.append({
-            "source_columns": 16, "source_rows": 16,
+            "source_columns": source_cells, "source_rows": source_cells,
             "target_columns": target_cells, "target_rows": target_cells,
             "target_s3_faces": 2*target_cells**2,
+            "target_young_multiplier": target_young_multiplier,
             "fixed_middle_left_nodes": tuple(
                 target_first+(target_cells+1)*row
                 for row in range(1, target_cells)),
@@ -372,11 +391,17 @@ def offline_target_xy_reference(output: Path, baseline_path: Path) -> None:
             "independent_projected_lower_gap_m": lower_gap,
             "sample_xy_m": points,
             "source_vertical_displacement_m": _source_vertical_samples(
-                model, reference["displacement"], 16, points, columns=16),
+                model, reference["displacement"], source_cells, points,
+                columns=source_cells),
             "structural_free_coordinates": reference[
                 "structural_free_coordinates"],
+            "target_maximum_vertical_displacement_m": max(abs(float(
+                reference["displacement"][model.mesh.dof_manager.get_node_dofs(
+                    node)[2]])) for node in range(
+                        target_first, target_first+(target_cells+1)**2)),
         })
-    output.write_text(json.dumps({"baseline": str(baseline_path),
+    output.write_text(json.dumps({"baseline": str(baseline_path)
+                                  if baseline_path is not None else None,
                                   "cases": cases}, indent=2)+"\n",
                       encoding="utf-8")
     print(json.dumps([{key: item[key] for key in (
@@ -482,6 +507,98 @@ def target8s3_coupled_comparison(output: Path, reference_path: Path,
     }
     output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
     print(json.dumps(record))
+
+
+def coupled_contrast_comparison(output: Path, reference_path: Path,
+                                saved_path: Path) -> None:
+    """Compare one bounded nonlinear contrast pose with its linear Q1 oracle."""
+    if output.exists():
+        raise FileExistsError(output)
+    from examples.general_contact_d1_interior_controls_dev import (
+        _independent_projected_gap_bound,
+    )
+
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    if (saved["status"] != "completed" or saved["accepted_steps"] != 2
+            or saved["target_young_multiplier"] != 5.0
+            or saved["source_support"] != "perimeter"
+            or saved["load_shape"] != "physical_bump"
+            or saved["target_reference_full_left_clamp"] is not True
+            or saved["q4_gap_certificate"] != "overlap_local_dev"):
+        raise ValueError("saved pose is outside the declared contrast case")
+    matching = [case for case in reference["cases"]
+                if case["source_columns"] == saved["source_columns"]
+                and case["source_rows"] == saved["source_rows"]
+                and case["target_columns"] == saved["target_columns"]
+                and case["target_rows"] == saved["target_rows"]
+                and case["target_young_multiplier"] == 5.0]
+    if len(matching) != 1:
+        raise ValueError("one matching independent reference is required")
+    oracle = matching[0]
+    model, definition, _settings, _program = build_interior_press(
+        source_support="perimeter",
+        source_columns=saved["source_columns"],
+        source_rows=saved["source_rows"],
+        source_y_profile=saved["source_y_profile"],
+        target_columns=saved["target_columns"],
+        target_rows=saved["target_rows"],
+        target_young_multiplier=5.0,
+        target_reference_full_left_clamp=True,
+        force_n=saved["force_n"],
+        reference_slope=saved["reference_slope"],
+        load_shape="physical_bump", slide_body="target",
+    )
+    displacement = np.asarray(saved["displacements"], dtype=float)
+    contact = saved["history"][-1]["contact"]
+    pressure = np.asarray(contact["numerical_pressure_pa"], dtype=float)
+    force = float(contact["integration_force"][2])
+    reference_force = float(oracle["integrated_normal_force_n"])
+    samples = _source_vertical_samples(
+        model, displacement, saved["source_rows"], oracle["sample_xy_m"],
+        columns=saved["source_columns"])
+    independent_lower = _independent_projected_gap_bound(
+        model, definition, displacement,
+        definition.interactions[0].gap_tolerance)
+    record = {
+        "saved_pose": str(saved_path), "oracle": str(reference_path),
+        "oracle_scope": "same_mesh_small_motion_linear_q1_mortar",
+        "solver_status": saved["status"],
+        "accepted_steps": saved["accepted_steps"],
+        "certificate": saved["q4_gap_certificate"],
+        "production_integrated_normal_force_n": force,
+        "oracle_integrated_normal_force_n": reference_force,
+        "relative_integrated_force_difference": abs(
+            force-reference_force)/abs(reference_force),
+        "production_active_node_ids": [node for node, value in zip(
+            contact["source_pressure_node_ids"], pressure) if value > 0.0],
+        "oracle_active_node_ids": oracle["active_node_ids"],
+        "production_source_vertical_displacement_m": samples,
+        "oracle_source_vertical_displacement_m": (
+            oracle["source_vertical_displacement_m"]),
+        "relative_source_displacement_difference": [
+            abs(a-b)/max(abs(b), 1.0e-15) for a, b in zip(
+                samples, oracle["source_vertical_displacement_m"])],
+        "independent_projected_lower_gap_m": independent_lower,
+        "registered_gap_tolerance_m": (
+            definition.interactions[0].gap_tolerance),
+        "production_contact_force_balance_n": [
+            a+b for a, b in zip(contact["integration_force"],
+                                contact["target_force"])],
+        "production_contact_moment_balance_nm": [
+            a+b for a, b in zip(contact["integration_moment"],
+                                contact["target_moment"])],
+        "active_rim_pressure_pa": saved["history"][-1]["rim_pressure_pa"],
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps({key: record[key] for key in (
+        "relative_integrated_force_difference",
+        "relative_source_displacement_difference",
+        "independent_projected_lower_gap_m",
+        "production_active_node_ids", "oracle_active_node_ids",
+        "production_contact_force_balance_n",
+        "production_contact_moment_balance_nm",
+        "active_rim_pressure_pa")}))
 
 
 def coupled_y_comparison(output: Path, reference_path: Path,
@@ -597,9 +714,29 @@ if __name__ == "__main__":
     elif len(sys.argv) > 1 and sys.argv[1] == "--target8s3-coupled-oracle":
         target8s3_coupled_oracle(Path(sys.argv[2]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--offline-target-xy-reference":
-        offline_target_xy_reference(Path(sys.argv[2]), Path(sys.argv[3]))
+        offline_target_xy_reference(
+            Path(sys.argv[2]), Path(sys.argv[3]),
+            tuple(map(int, sys.argv[4:])) if len(sys.argv) > 4 else (3, 4))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--offline-target-contrast":
+        offline_target_xy_reference(Path(sys.argv[2]), None, (4, 6),
+                                    target_young_multiplier=5.0)
+    elif len(sys.argv) > 1 and sys.argv[1] == "--offline-target-contrast-source8":
+        offline_target_xy_reference(Path(sys.argv[2]), None, (6,),
+                                    target_young_multiplier=5.0,
+                                    source_cells=8)
+    elif len(sys.argv) > 1 and sys.argv[1] == "--offline-target-contrast-source12":
+        offline_target_xy_reference(Path(sys.argv[2]), None, (4, 6),
+                                    target_young_multiplier=5.0,
+                                    source_cells=12)
+    elif len(sys.argv) > 1 and sys.argv[1] == "--offline-target-contrast-source24":
+        offline_target_xy_reference(Path(sys.argv[2]), None, (6,),
+                                    target_young_multiplier=5.0,
+                                    source_cells=24)
     elif len(sys.argv) > 1 and sys.argv[1] == "--target8s3-coupled-comparison":
         target8s3_coupled_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
+                                    Path(sys.argv[4]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--coupled-contrast-comparison":
+        coupled_contrast_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
                                     Path(sys.argv[4]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--coupled-y-comparison":
         coupled_y_comparison(Path(sys.argv[2]), Path(sys.argv[3]),

@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_two_body_oracle_dev.py", line 739, in <module>
+    coupled_contrast_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                Path(sys.argv[4]))
+                                ^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_two_body_oracle_dev.py", line 601, in coupled_contrast_comparison
+    "active_rim_pressure_pa")}, default=_json_default))
+                                        ^^^^^^^^^^^^^
+NameError: name '_json_default' is not defined

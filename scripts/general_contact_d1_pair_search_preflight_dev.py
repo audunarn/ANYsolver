@@ -49,7 +49,7 @@ def faces(source_cells: int, target_cells: int):
 
 def main(source_cells: int, target_cells: int, output: Path,
          pair_broadphase: bool):
-    if source_cells not in (4, 8, 16) or target_cells not in (2, 3, 4, 6):
+    if source_cells not in (4, 8, 12, 16) or target_cells not in (2, 3, 4, 6):
         raise ValueError("preflight mesh size is outside the bounded set")
     if output.exists():
         raise FileExistsError(output)

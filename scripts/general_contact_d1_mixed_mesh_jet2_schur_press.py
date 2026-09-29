@@ -50,12 +50,14 @@ def build_case(columns: int, *, four_phase: bool = False,
                common_reference_slope: float = 0.0,
                target_columns: int = 1,
                target_rows: int = 1,
+               target_young_multiplier: float = 1.0,
                full_width_target: bool = False,
                full_width_target_y0_m: float = -0.1,
                source_rows: int = 1,
                source_y_profile: str | None = None,
                offline_structural_reference_64: bool = False,
-               offline_structural_reference_y16: bool = False):
+               offline_structural_reference_y16: bool = False,
+               offline_structural_reference_y24: bool = False):
     if columns not in (4, 8, 12, 16, 24, 32) and not (
             columns == 64 and offline_structural_reference_64):
         raise ValueError(
@@ -73,26 +75,33 @@ def build_case(columns: int, *, four_phase: bool = False,
         raise ValueError("common slope must be in [0, 0.1] without target-only slope")
     if target_columns not in (1, 2, 3, 4, 6) or target_rows not in (1, 2, 3, 4, 6):
         raise ValueError("this development case admits 1/2/3/4/6 target rows and columns")
-    if source_rows not in (1, 2, 4, 8) and not (
-            source_rows == 16 and offline_structural_reference_y16):
-        raise ValueError("this development case admits at most eight source rows; "
-                         "sixteen require the offline structural-reference opt-in")
+    if target_young_multiplier not in (1.0, 5.0):
+        raise ValueError("development target contrast must be one or five")
+    if source_rows not in (1, 2, 4, 8, 12) and not (
+            source_rows == 16 and offline_structural_reference_y16) and not (
+            source_rows == columns == 24 and offline_structural_reference_y24):
+        raise ValueError("this development case admits at most twelve source rows; "
+                         "larger grids require the offline structural-reference opt-in")
     if source_y_profile not in (None, "rim8", "near_rim8", "near_rim8_ref16",
-                                "uniform_ref16"):
+                                "uniform_ref16", "uniform_ref24"):
         raise ValueError("unknown bounded source y profile")
     if source_y_profile == "uniform_ref16":
         if (not offline_structural_reference_y16 or source_rows != 16
                 or columns not in (8, 16)):
             raise ValueError("uniform sixteen-row reference is offline-only at eight or sixteen columns")
+    elif source_y_profile == "uniform_ref24":
+        if (not offline_structural_reference_y24 or source_rows != 24
+                or columns != 24):
+            raise ValueError("uniform twenty-four-row reference is offline-only")
     elif source_y_profile == "near_rim8_ref16":
         if (not offline_structural_reference_y16 or source_rows != 16
                 or columns != 16):
             raise ValueError("near-rim sixteen-row reference is offline-only")
-    elif source_rows == 16:
-        raise ValueError("sixteen source rows require an explicit offline profile")
+    elif source_rows in (16, 24):
+        raise ValueError("large source rows require an explicit offline profile")
     elif source_y_profile is not None and source_rows != 8:
         raise ValueError("rim profiles require eight source rows")
-    if source_y_profile in (None, "uniform_ref16"):
+    if source_y_profile in (None, "uniform_ref16", "uniform_ref24"):
         source_y_knots = np.linspace(0.0, 1.0, source_rows+1)
     else:
         coarse_y = np.asarray((0.0, 0.2, 0.4, 0.6, 0.75,
@@ -120,6 +129,9 @@ def build_case(columns: int, *, four_phase: bool = False,
                                +(target_rows+1)*(target_columns+1)))
     model = FEModel(f"mixed_{columns}_q4_x_jet2_schur_press")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
+    if target_young_multiplier != 1.0:
+        model.add_material("elastic_target", 1.0e5*target_young_multiplier,
+                           0.3, density=1.0)
     common_normal = np.asarray((-common_reference_slope, 0.0, 1.0))
     common_normal /= np.linalg.norm(common_normal)
     source_reference_height = 0.04004/common_normal[2]
@@ -174,7 +186,9 @@ def build_case(columns: int, *, four_phase: bool = False,
     for element_id, nodes in enumerate(target_faces,
                                        start=source_element_count+1):
         model.add_element(element_id, create_shell_element(
-            element_id, nodes, "elastic", thickness=0.05,
+            element_id, nodes,
+            "elastic" if target_young_multiplier == 1.0 else "elastic_target",
+            thickness=0.05,
             formulation="e4-pl-s3-v2d",
             reference_normal=tuple(target_normal),
             reference_surface_offset=0.01,
