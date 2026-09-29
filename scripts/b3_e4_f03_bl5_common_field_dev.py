@@ -16,6 +16,7 @@ import subprocess
 import anysolver
 from anysolver import stiffened_shell
 import numpy as np
+from scipy.sparse.linalg import spsolve
 from threadpoolctl import threadpool_info, threadpool_limits
 
 from test_stiffened_shell_l1_assembly_experimental import (
@@ -39,7 +40,8 @@ def _shell_field(x: float, kind: str) -> np.ndarray:
     raise ValueError("declared common field required")
 
 
-def _run(owner, intervals: int, span: int, kind: str) -> dict:
+def _run(owner, intervals: int, span: int, kind: str,
+         lift: str) -> dict:
     q = np.zeros(owner._K.shape[0])
     direct_rows = []
     for edge in range(intervals+1):
@@ -63,17 +65,37 @@ def _run(owner, intervals: int, span: int, kind: str) -> dict:
         raise AssertionError("the imposed strong nodal constraints are not zero")
     if np.max(np.abs(q[owner._fixed])) > 1e-14:
         raise AssertionError("common field violates a declared support")
+    retained_start = owner._shell_count+6*len(owner._beam_ids)
+    if lift == "equilibrated":
+        block = owner._K[retained_start:, retained_start:].tocsc()
+        rhs = -owner._K[retained_start:, :retained_start]@q[:retained_start]
+        q[retained_start:] = spsolve(block, rhs)
+        if not np.all(np.isfinite(q[retained_start:])):
+            raise ValueError("finite native retained lift required")
+        defect = np.asarray(block@q[retained_start:]-rhs).ravel()
+        retained_relative = float(np.linalg.norm(defect)/max(
+            np.linalg.norm(rhs),
+            np.linalg.norm(block@q[retained_start:]), 1e-20))
+        retained_absolute = float(np.linalg.norm(defect))
+    elif lift == "zero":
+        retained_relative = None
+        retained_absolute = None
+    else:
+        raise ValueError("declared native retained lift required")
     weak = np.asarray(owner._C@q).reshape(5, intervals//span)
     # Coefficients are illustrative physical line densities on the integrated
     # weak rows: 100 N/m in y and 10 Nm/m on the second director channel.
     dual = np.zeros_like(weak)
     dual[1] = 100.
     dual[4] = 10.
-    retained_start = owner._shell_count+6*len(owner._beam_ids)
     retained = owner._C[:, retained_start:]
     retained_column_norms = np.asarray(abs(retained).sum(axis=0)).ravel()
     return {
         "intervals": intervals, "span": span, "field": kind,
+        "retained_lift": lift,
+        "retained_equilibrium_relative": retained_relative,
+        "retained_equilibrium_absolute": retained_absolute,
+        "retained_coordinate_norm": float(np.linalg.norm(q[retained_start:])),
         "strong_nodal_gap_max": float(np.max(np.abs(direct))),
         "weak_integrated_gap_max_by_channel":
             np.max(np.abs(weak), axis=1).tolist(),
@@ -101,9 +123,10 @@ def main(output: Path) -> None:
         "imported_anysolver": str(expected),
         "cases": [],
         "limitations": ("Strong nodal and weak native work are compared only "
-                        "on imposed common nodal fields with zero native retained "
-                        "increments. OpenSees has no coordinate counterpart for "
-                        "native retained-only modes. No loaded or nonlinear solve.")}
+                        "on imposed common nodal fields with either zero or "
+                        "uncoupled-equilibrated native retained increments. "
+                        "OpenSees has no coordinate counterpart for native "
+                        "retained-only modes. No loaded or nonlinear solve.")}
     with threadpool_limits(limits=1):
         result["threadpools"] = threadpool_info()
         for intervals in (4, 8):
@@ -113,8 +136,9 @@ def main(output: Path) -> None:
                         intervals, intervals, span))
                 try:
                     for kind in ("affine", "smooth"):
-                        result["cases"].append(_run(
-                            owner, intervals, span, kind))
+                        for lift in ("zero", "equilibrated"):
+                            result["cases"].append(_run(
+                                owner, intervals, span, kind, lift))
                 finally:
                     owner.close()
     output.write_text(json.dumps(result, indent=2, sort_keys=True,
