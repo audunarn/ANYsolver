@@ -205,6 +205,94 @@ def test_q4_shell_and_beam_yield_atomically_and_restart(monkeypatch):
             assert relative < 1e-5
 
 
+def test_mixed_q4_s3_j2_and_beam_yield_checkpoint(monkeypatch):
+    base = _q4_shell_j2_panel()
+    definition = replace(base, shell=replace(
+        base.shell, q4_elements=((1, 2, 5, 4),),
+        s3_elements=((2, 3, 6), (2, 6, 5))))
+    owner = ExperimentalGEAnalysis(definition)
+    accepted = owner.solve(_actions(), (.5, 1.), max_iterations=20,
+                           max_backtracks=12)
+    assert accepted.status == "completed"
+    assert accepted.accepted_factors == (.5, 1.)
+    assert accepted.free_equilibrium_ratio <= 1e-8
+    assert accepted.constraint_max <= 1e-9
+    assert len(accepted.shell_q4_material) == 1
+    assert len(accepted.shell_s3_material) == 2
+    assert np.max(accepted.shell_q4_material[0].alpha) > 0.
+    assert all(np.isfinite(item.layer_stress).all()
+               for item in accepted.shell_s3_material)
+    assert max(max(row) for row in accepted.beam_station_accumulated) > 0.
+
+    saved = owner.checkpoint()
+    restored_owner = ExperimentalGEAnalysis(definition)
+    restored = restored_owner.restore(saved)
+    assert restored.shell_layer_alpha == accepted.shell_layer_alpha
+    assert restored.beam_station_accumulated == accepted.beam_station_accumulated
+    for field in ("shell_displacement", "beam_positions", "beam_frames",
+                  "cell_frames", "cell_resultants", "multipliers",
+                  "support_reactions"):
+        np.testing.assert_allclose(getattr(restored, field),
+                                   getattr(accepted, field),
+                                   rtol=1e-12, atol=1e-10)
+    for name in ("shell_q4_material", "shell_s3_material"):
+        before, after = getattr(accepted, name), getattr(restored, name)
+        assert len(before) == len(after)
+        for original, repeated in zip(before, after):
+            for field in ("layer_strain", "layer_stress", "plastic_strain",
+                          "alpha"):
+                np.testing.assert_allclose(getattr(original, field),
+                                           getattr(repeated, field),
+                                           rtol=1e-10, atol=1e-8)
+
+    original_assemble = finite_experimental.FinitePointDriver._assemble
+    candidate_assemblies = 0
+
+    def reject_advanced_candidate(self, state, factor, *args, **kwargs):
+        nonlocal candidate_assemblies
+        response = original_assemble(self, state, factor, *args, **kwargs)
+        if factor == 1.1:
+            candidate_assemblies += 1
+            if candidate_assemblies == 2:
+                assert not np.array_equal(state.q, self._state.q)
+                raise RuntimeError("rejected advanced mixed-material candidate")
+        return response
+
+    with monkeypatch.context() as patcher:
+        patcher.setattr(finite_experimental.FinitePointDriver, "_assemble",
+                        reject_advanced_candidate)
+        with pytest.raises(RuntimeError, match="advanced mixed-material"):
+            owner.solve(_actions(), (1.1,), max_iterations=20,
+                        max_backtracks=12)
+    assert candidate_assemblies == 2
+    assert owner.checkpoint() == saved
+    assert owner.recover() is accepted
+
+    direct_next = owner.solve(_actions(), (1.05,), max_iterations=20,
+                              max_backtracks=12)
+    resumed_next = restored_owner.solve(_actions(), (1.05,),
+                                        max_iterations=20, max_backtracks=12)
+    assert direct_next.accepted_factors == resumed_next.accepted_factors
+    assert direct_next.shell_layer_alpha == resumed_next.shell_layer_alpha
+    assert (direct_next.beam_station_accumulated ==
+            resumed_next.beam_station_accumulated)
+    for field in ("shell_displacement", "beam_positions", "beam_frames",
+                  "cell_frames", "cell_resultants", "multipliers",
+                  "support_reactions"):
+        np.testing.assert_allclose(getattr(direct_next, field),
+                                   getattr(resumed_next, field),
+                                   rtol=1e-10, atol=1e-8)
+    for name in ("shell_q4_material", "shell_s3_material"):
+        before, after = getattr(direct_next, name), getattr(resumed_next, name)
+        assert len(before) == len(after)
+        for original, repeated in zip(before, after):
+            for field in ("layer_strain", "layer_stress", "plastic_strain",
+                          "alpha"):
+                np.testing.assert_allclose(getattr(original, field),
+                                           getattr(repeated, field),
+                                           rtol=1e-10, atol=1e-8)
+
+
 def test_q4_j2_positive_unload_reload_restores_layer_response():
     definition = _q4_shell_j2_panel()
     actions = _actions()
