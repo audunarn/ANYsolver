@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 178.4609960000089,
+  "peak_process_tree_memory_mb": 482.050048,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_analytic_strip_dev.py",
+    "16",
+    "docs/d1_review_support/d1_manufactured_q1_16_20260929.json",
+    "--manufactured-2d",
+    "--exact-q1"
+  ],
+  "log": "docs\\d1_review_support\\d1_manufactured_q1_16_20260929.log"
+}

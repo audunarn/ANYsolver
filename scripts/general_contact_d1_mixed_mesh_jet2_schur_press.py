@@ -51,6 +51,7 @@ def build_case(columns: int, *, four_phase: bool = False,
                target_columns: int = 1,
                target_rows: int = 1,
                full_width_target: bool = False,
+               full_width_target_y0_m: float = -0.1,
                source_rows: int = 1,
                source_y_profile: str | None = None,
                offline_structural_reference_64: bool = False,
@@ -62,6 +63,9 @@ def build_case(columns: int, *, four_phase: bool = False,
             "64 columns require the offline structural-reference opt-in")
     if target_right_x_m not in (1.0, 1.3):
         raise ValueError("this probe admits only 1.0 or 1.3 m target right edges")
+    if full_width_target_y0_m not in (-0.1, -0.113) or (
+            not full_width_target and full_width_target_y0_m != -0.1):
+        raise ValueError("unsupported full-width target lower edge")
     if not 0.0 <= target_reference_slope <= 1.0e-4:
         raise ValueError("target reference slope must be in [0, 1e-4]")
     if not 0.0 <= common_reference_slope <= 0.1 or (
@@ -106,7 +110,7 @@ def build_case(columns: int, *, four_phase: bool = False,
     source_y_weights[0] = heights[0]/2
     source_y_weights[-1] = heights[-1]/2
     source_y_weights[1:-1] = (heights[:-1]+heights[1:])/2
-    target_y0, target_y1 = ((-0.1, 1.2) if full_width_target
+    target_y0, target_y1 = ((full_width_target_y0_m, 1.2) if full_width_target
                             else (0.0, 1.0))
     stride = columns+1
     source_element_count = columns*source_rows
