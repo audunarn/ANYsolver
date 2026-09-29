@@ -64,7 +64,8 @@ matching-projection region.
   rims to D1.
 - The numerical margin is an engineering floating-point allowance, not an
   IEEE interval-arithmetic proof. Review its scale and cancellation cases.
-- Existing random moving-warp samples, the new affine-path check and the
-  accepted shortened-trial check are development controls. They do not replace
-  independent certificate scrutiny or an actual physically caused accepted
-  cutback in the final D1 route.
+- Existing random moving-warp samples, the affine-path check and the
+  accepted shortened-trial check are development controls. A separate coarse
+  one-increment press physically caused fractions below one and completed
+  with an independent accepted-pose gap inside budget. None of these replaces
+  independent certificate scrutiny or a frozen D1 state-safety assessment.

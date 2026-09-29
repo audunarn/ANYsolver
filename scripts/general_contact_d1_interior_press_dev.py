@@ -221,6 +221,7 @@ def main(output: Path, *, force_n: float, reference_slope: float,
          target_reference_full_left_clamp: bool,
          shared_edge_tie: bool,
          capture_swept_failure: bool,
+         record_swept_fractions: bool,
          q4_gap_certificate: str | None):
     if output.exists():
         raise FileExistsError(output)
@@ -249,8 +250,9 @@ def main(output: Path, *, force_n: float, reference_slope: float,
     if not report.valid:
         raise ValueError(f"fixture capability rejected: {report.issues}")
     captured = []
+    swept_fractions = []
     original_admissible_fraction = None
-    if capture_swept_failure:
+    if capture_swept_failure or record_swept_fractions:
         from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 
         original_admissible_fraction = (
@@ -258,7 +260,9 @@ def main(output: Path, *, force_n: float, reference_slope: float,
 
         def capture_fraction(owner, start, end):
             fraction = original_admissible_fraction(owner, start, end)
-            if fraction == 0.0:
+            if record_swept_fractions:
+                swept_fractions.append(float(fraction))
+            if capture_swept_failure and fraction == 0.0:
                 captured.append((owner, np.asarray(start).copy(),
                                  np.asarray(end).copy()))
             return fraction
@@ -287,6 +291,8 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         step_records.append({
             "step": row.get("step_index"),
             "accepted": row.get("accepted"),
+            "backtracks": row.get("backtracks"),
+            "semismooth_iterations": row.get("semismooth_iterations"),
             "contact": contact,
             "rim_pressure_pa": {
                 str(node): value for node, value in pressure.items()
@@ -329,6 +335,8 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         "history": step_records,
         "contact_failure": result.info.get("contact_failure"),
     }
+    if record_swept_fractions:
+        payload["swept_fraction_trace"] = swept_fractions
     if capture_swept_failure:
         from anysolver.general_contact.q4_overlap_local_bound import (
             overlap_local_swept_lower,
@@ -597,6 +605,7 @@ if __name__ == "__main__":
     parser.add_argument("--target-reference-full-left-clamp",
                         action="store_true")
     parser.add_argument("--capture-swept-failure", action="store_true")
+    parser.add_argument("--record-swept-fractions", action="store_true")
     parser.add_argument("--q4-gap-certificate",
                         choices=("projected_matching", "overlap_local_dev"))
     parser.add_argument("--replay-captured-sweep", type=Path)
@@ -634,4 +643,5 @@ if __name__ == "__main__":
              arguments.target_reference_full_left_clamp),
          shared_edge_tie=arguments.shared_edge_tie,
          capture_swept_failure=arguments.capture_swept_failure,
+         record_swept_fractions=arguments.record_swept_fractions,
          q4_gap_certificate=arguments.q4_gap_certificate)
