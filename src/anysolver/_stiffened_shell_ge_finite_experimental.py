@@ -193,7 +193,7 @@ class FinitePointDriver:
                 force, tangent, candidate = corotational_element_response(
                     owner._shell_model, eid, element, state.q[slots], True,
                     committed_state=origin, num_layers=3,
-                    tangent_mode="consistent")
+                    tangent_mode="consistent", centered_shell_reference=True)
             scatter(slots, force, tangent)
             shell_candidates.append(candidate)
 

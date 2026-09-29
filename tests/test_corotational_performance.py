@@ -165,9 +165,13 @@ def test_fast_path_status_is_included_in_nonlinear_diagnostics() -> None:
 def test_reference_cache_ignores_load_revision_but_tracks_geometry() -> None:
     model = _models()[2]
     first = corotational._corotational_cache(model)
+    centered_first = corotational._corotational_cache(model, centered_shell=True)
+    assert centered_first is not first
     model.bump_revision("load")
     assert corotational._corotational_cache(model) is first
+    assert corotational._corotational_cache(model, centered_shell=True) is centered_first
 
     model.set_node_coordinates(2, 1.0, 0.0, 0.01)
     second = corotational._corotational_cache(model)
     assert second is not first
+    assert corotational._corotational_cache(model, centered_shell=True) is not centered_first

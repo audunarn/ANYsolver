@@ -174,7 +174,7 @@ def test_generalized_beam_unload_reload_preserves_history_across_restart():
                                   max_backtracks=12)
     restored_owner = ExperimentalGEAnalysis(definition)
     restored_owner.restore(uninterrupted.checkpoint())
-    targets = (.7, .4, .2, .5, 1.1)
+    targets = (.7, .4, .2, .1, .5, 1.1)
     for factor in targets:
         try:
             direct = uninterrupted.solve(actions, (factor,), max_iterations=20,
@@ -183,6 +183,8 @@ def test_generalized_beam_unload_reload_preserves_history_across_restart():
                                            max_backtracks=12)
         except RuntimeError as exc:
             pytest.fail(f"unload/reload target {factor}: {exc}")
+        assert direct.free_equilibrium_ratio <= 1e-8
+        assert resumed.free_equilibrium_ratio <= 1e-8
     assert direct.accepted_factors == resumed.accepted_factors == (1.,)+targets
     assert direct.beam_station_accumulated == resumed.beam_station_accumulated
     assert max(value for member in direct.beam_station_accumulated

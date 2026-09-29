@@ -206,6 +206,27 @@ need separate evidence and, if required, a recovery contract. `fsum` sums
 already rounded local values. Its Python list cost needs G5-scale measurement.
 No near-zero, reversal, G3, or G5 acceptance follows from this slice.
 
+**Centered Q4 precision follow-up, experimental:** A same-predecessor
+decomposition of the rejected `0.2 → 0.1` trial found that nearly all remaining
+free work residual comes from the Q4 shell, including cancellation of opposing
+element forces near 164 work units into a roughly 1e-6 residual. An opt-in
+centroid-relative Q4 reference in the finite GE owner preserves the original
+default corotational route and the physical point-joint origin. It accepts the
+registered positive plastic history through `0.1` at the unchanged 1e-8
+limit (ratio `6.84e-9`), including restore/reload parity. Actual-coordinate
+tangent, zero-state, rigid-motion, translated-origin and cache-invalidation
+checks pass. Independent read-only mechanics review found no direct defect in
+the exact-arithmetic pullback or ownership, while noting unmeasured two-cache
+memory cost. On Python 3.14, installed tests also exposed lazy stdlib `ABC`
+annotation metadata appearing after a strict shell-class authority snapshot;
+capturing those exact keys up front resolves the false failure without
+weakening the namespace comparison. The final same-process installed wheel
+imported from its disposable site and passed 78/78 affected tests; wheel
+SHA-256 `637671357D66400361FCA99FEFEB2D2A5DA403877DB7760CE7CA34116E293849`.
+The earlier installed 50/52 run and its two authority failures are retained
+as development history. This is a positive-load precision improvement, not
+support for sign reversal, shell J2, fibre plasticity, F03, G3 or G5 acceptance.
+
 A separate finite-support flat-Q4 shell-pose prototype has exact box-window
 centroid/covariance weights, objective rigid-motion recovery, a bounded
 endpoint-witness screen, and first variations through actual shell/native

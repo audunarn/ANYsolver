@@ -199,31 +199,40 @@ class _CorotationalReference:
 
     __slots__ = ("coordinates", "centroid", "frame", "category")
 
-    def __init__(self, element: Any, model: "FEModel"):
-        self.coordinates = np.asarray(element.get_node_coordinates(model.mesh), dtype=float).copy()
-        self.centroid = self.coordinates.mean(axis=0)
+    def __init__(self, element: Any, model: "FEModel", *, centered_shell: bool = False):
+        coordinates = np.asarray(element.get_node_coordinates(model.mesh), dtype=float).copy()
         self.category = _element_category(element)
+        if centered_shell and self.category == "shell":
+            coordinates -= coordinates.mean(axis=0)
+        self.coordinates = coordinates
+        self.centroid = coordinates.mean(axis=0)
         if self.category == "shell":
             self.frame = _shell_center_frame(element, self.coordinates)
         else:
             self.frame = None
 
 
-def _corotational_cache(model: "FEModel") -> Dict[int, _CorotationalReference]:
+def _corotational_cache(
+    model: "FEModel", *, centered_shell: bool = False
+) -> Dict[int, _CorotationalReference]:
     mesh = model.mesh
     revisions = mesh.revision_signature()
     signature = (
         int(revisions.get("topology", 0)),
         int(revisions.get("geometry", 0)),
     )
-    cached = getattr(mesh, "_corotational_cache", None)
+    cache_name = (
+        "_corotational_centered_shell_cache" if centered_shell else "_corotational_cache"
+    )
+    cached = getattr(mesh, cache_name, None)
     if cached is not None and cached[0] == signature:
         return cached[1]
     cache: Dict[int, _CorotationalReference] = {}
     for element_id, element in mesh.elements.items():
         if _element_category(element) is not None:
-            cache[int(element_id)] = _CorotationalReference(element, model)
-    mesh._corotational_cache = (signature, cache)
+            cache[int(element_id)] = _CorotationalReference(
+                element, model, centered_shell=centered_shell)
+    setattr(mesh, cache_name, (signature, cache))
     return cache
 
 
@@ -279,6 +288,7 @@ def corotational_element_response(
     committed_state: Optional[Any] = None,
     num_layers: int = 5,
     tangent_mode: str = "rotated",
+    centered_shell_reference: bool = False,
 ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[Any]]:
     """Corotational internal force, tangent and trial state for one element.
 
@@ -301,7 +311,10 @@ def corotational_element_response(
     if tangent_mode not in {"rotated", "consistent"}:
         raise ValueError("corotational tangent_mode must be 'rotated' or 'consistent'")
 
-    reference = _corotational_cache(model).get(int(element_id))
+    if type(centered_shell_reference) is not bool:
+        raise ValueError("centered shell reference flag must be boolean")
+    reference = _corotational_cache(
+        model, centered_shell=centered_shell_reference).get(int(element_id))
     if reference is None or reference.category is None:
         return None, None, None
     num_nodes = int(element.num_nodes)
