@@ -71,6 +71,39 @@ parity guard. All are preserved at
 `.qualification/b3-ge-e4-pl/r8-bl5-saved-mode-screen-dev-20260929-v1/`.
 No formal F03 authority was consumed.
 
+Current M1 E01 decision question: the 8×4 native/external coupled roll differs,
+but identical native shell action explains only 9.2% of it and independent
+straight beams agree. The missing observable is the external coupled shell
+interface covector. Capture ASDShellQ4 element resisting forces from the
+already defined positive-offset OpenSees model, assemble free shell actions,
+validate work and support balance, then replay that action on both isolated
+shell operators. If external replay reproduces its coupled shell state, the
+action extraction is credible; compare action shape and physical response
+before assigning a point-law or shell-idealization cause. A failed replay
+invalidates the extraction, not the formulation. No new mesh or changed E01
+criterion is authorized by this discriminator.
+
+The capture reproduced the external coupled shell field under isolated-shell
+replay to 1.93e-17 maximum absolute nodal difference. The remaining bounded
+question is which coordinate channel of the **difference in coupled shell
+action** drives bonded-tip roll. Apply each six-channel action difference to
+the unchanged native shell operator and require their summed roll to reproduce
+the paired same-action difference. Physical Fy/Mx dominance directs the next
+mechanics review to lateral/shear/torque transfer; Mz dominance directs it to
+drilling idealization. This is diagnostic allocation, not a connection-law
+acceptance or a changed E01 threshold.
+
+The completed channel screen attributes 2.17784e-7 rad to the changed Mx
+distribution, -1.91719e-8 rad to Fz, 1.08043e-8 rad to My, and zero to Mz
+on this symmetric fixture; superposition closes. The changed coupled action
+accounts for 2.09416e-7 of the 2.23708e-7 rad coupled-roll difference at
+fixed native shell stiffness. This points the next focused mechanics review
+to **physical roll-moment transfer along the point connection**, while
+leaving shell/connection interaction as competing causes. The same external
+action replays its coupled shell state to 1.93e-17. Results and limits are in
+`.qualification/b3-ge-e4-pl/r8-e01-external-action-dev-20260929-v1/README.md`.
+E01/M1 acceptance, G0B and G1 remain open; no formal F03 authority was used.
+
 The targeted flat-web comparison kept geometry, native section, normal offset,
 plate-root supports, and physical plate-Fy/beam-Mx actions identical. Both BL5
 P0 spans completed and closed equilibrium, constraint, support wrench, energy
