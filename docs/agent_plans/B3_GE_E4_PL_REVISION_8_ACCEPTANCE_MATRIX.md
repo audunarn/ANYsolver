@@ -1,7 +1,7 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
-**Updated:** 29 September 2026. **Candidate:** integration branch at `0be49f62`
-plus inert E01 preparation. This is the forward status index, not an
+**Updated:** 29 September 2026. **Candidate:** integration branch through
+`65d14cdc`, including inert E01 preparation. This is the forward status index, not an
 amendment to frozen registrations or historical results. The
 [complete programme](B3_GE_E4_PL_B2_COMPLETE_PROGRAMME.md) defines
 requirements; the [active note](B3_GE_E4_PL_ACTIVE_STATE.md) identifies
