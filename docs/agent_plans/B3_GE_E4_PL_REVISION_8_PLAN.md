@@ -6,9 +6,9 @@ on explicit user resumption; completing this review does not resume work.
 The companion [goal](B3_GE_E4_PL_REVISION_8_GOAL.md) defines the objective,
 decision rights and completion conditions.
 
-The original Revision 8 draft was prepared by a Claude review session. This
-revision records Codex's review of that draft against the repository, current
-evidence and primary references. It is a plan review, not mechanics qualification.
+This is a development plan, not mechanics qualification. Review it against the
+live worktree before relying on source-specific statements; later evidence does
+not retroactively change a frozen registration.
 
 ## 0. Basis, precedence and change of route
 
@@ -36,18 +36,25 @@ Section 9 explicitly records scientific and delivery amendments. All other
 programme obligations remain.
 
 A milestone has separate states: development, implemented, acceptance passed,
-release-ready and released. Producing a usable development artifact is progress
-even while publication awaits approval. It does not establish acceptance.
+release-ready and released. The first executable vertical slice is an
+implementation checkpoint: it needs focused correctness checks and truthful
+experimental admission, but need not wait for the milestone's complete
+acceptance package. Producing a usable development artifact is progress even
+while acceptance or publication awaits. It does not establish acceptance.
 No publication, merge to main, changed legacy default or release is authorized
 by this document alone.
 
 ## 1. What exists and what is preventing completion
 
-Repository reference for this review: integration commit 262f1ae2, following
-the Q4 precision fix at 55e79c19, on codex/b3-ge-e4-pl-integration in
+Repository reference for this review: integration commit 5ba6a77a, following
+the Q4 precision fix at 55e79c19 and bounded E01 external-reference work, on
+codex/b3-ge-e4-pl-integration in
 C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling.
 The historical main baseline is be41a77a, version 0.4.7; it is not a claim
 that remote main remains there. Verify changed inputs when resuming.
+The current worktree also contains uncommitted E01 diagnostics and an unrelated
+dirty F03 script. They are provisional work, not accepted evidence or permission
+to run the F03 script. Preserve their ownership and reconcile them on resumption.
 
 Existing experimental behavior includes:
 - Multi-Q4/S3 native B3 point models, sparse assembly, finite stepping,
@@ -64,7 +71,7 @@ scope, attachment combinations, physical fibres, spectra and practical scale
 still need their own evidence. None of F01–F13 is fully accepted in the current
 record, and aggregate G0/G1 acceptance is incomplete.
 
-Two useful recent findings change the next action:
+Three useful recent findings change the next action:
 1. The low-load Q4 cancellation fix passed 49 source and 5 installed checks.
    The 20 kPa mixed-shell path then accepted 5 N increments through 40 N but
    failed at 45 N. This is a separate unresolved material/driver case.
@@ -74,6 +81,13 @@ Two useful recent findings change the next action:
    not energy or compliance reductions. The laws are distinguishable.
    The earlier 0.66% torque and 0.067% shear tip differences on another
    fixture cannot establish law equivalence or physical correctness.
+3. Executed OpenSeesPy E01 point-link comparisons agree on primary axial tip
+   quantities within 1% in the tested x-only sequence, but secondary rotations
+   differ. Shell-only and same-action development screens localize much of the
+   roll difference to different shell operators; removing the native drilling
+   action leaves that roll finding. These screens do not qualify the point law
+   or E01. The 2/4/8 sequence has one shell cell across the panel: next compare
+   full two-direction refinement and the complete declared observable set.
 
 The main process correction is to stop making every capability wait for one
 line-law investigation. Modelling choices can be declared, but their claimed
@@ -97,6 +111,14 @@ capacity or advance ready M4 work. At most three workers, including the owner,
 are active at once; delegation is useful only with independent file ownership.
 A fixed staffing chart must not leave workers idle or cause duplicate work.
 Independent reviewers must not be sole implementers of what they accept.
+
+For each milestone, finish and show the smallest coherent working route first,
+then close the evidence needed for its stated acceptance claim. A failed
+independent comparison or one open foundation does not trigger a rebuild of the
+already working owner. It identifies the exact claim or interface that remains
+open. Track the critical path as one next deliverable and one next scientific
+decision, with an owner and a bounded discriminator for each; do not maintain
+a second task register.
 
 Every milestone delivers a runnable example through the existing public facade,
 clear preflight and numerical failure status, typed results, relevant persistence
@@ -142,7 +164,9 @@ equilibrium, state or tangent behavior blocks affected capability claims.
 
 ### 3.2 Acceptance
 
-Freeze one concise M1 contract using existing tests and evidence where applicable:
+Freeze one concise M1 acceptance contract using existing tests and evidence
+where applicable. The working panel and consumer can be consolidated and shown
+with explicit experimental status before this entire contract is closed:
 - V01: old/new one-shell agreement within 1e-10 where equations, variables,
   constraints and material scope are equivalent. A different released
   rotational law is not an exact-parity oracle.
@@ -155,9 +179,24 @@ Freeze one concise M1 contract using existing tests and evidence where applicabl
   corrupt/incompatible snapshots and continuation on the same accepted path.
 - E01: executed eccentric panel comparison with matched section, offset,
   loads, supports and nodal connection semantics; <=1% on registered
-  converged physical quantities with appropriate absolute floors.
+  converged physical quantities with appropriate absolute floors. The existing
+  one-cell-wide x-refinement is a diagnostic, not mesh convergence. Reuse it,
+  then compare at least three systematic two-direction refinement levels and
+  the full preregistered physical observable set. Diagnose persistent shell
+  formulation and connection-law differences under matched actions before
+  applying the cross-solver threshold. Do not discard discrepant secondary
+  observables by calling only the axial tip response representative.
 - Installed Windows wheel, Linux CI, relevant legacy regression, capability
   documentation and independent review of the complete candidate.
+
+E01 decision after the three-level two-direction comparison: if the declared
+physical differences converge within the frozen limits, prepare the formal
+comparison; if a discrepancy persists, identify whether a shell idealization,
+point-link work map or load/support mismatch explains it using the smallest
+same-action check. Record the obstructing observable and seek focused mechanics
+review if still unresolved. Do not start a fourth refinement merely because
+the third is inconclusive. Keep M1 acceptance open and advance unaffected M2,
+M3 or M4 work rather than restarting the owner.
 
 Compare a six-row nodal chain and an explicitly distinct BL5 nodal variant if
 useful for the intended lateral response. A difference above 1% is a sensitivity
@@ -530,18 +569,20 @@ tests, experiments, builds or product changes; it creates or resumes no task goa
 
 On explicit resumption:
 1. Verify relevant current worktree/process ownership and source identities.
-   Reconcile only changes affecting the next action; do not re-audit all history.
-2. Add pointers to these documents in the living note and complete programme,
-   leaving historical text/evidence unchanged. Update the one acceptance matrix
-   with M1–M5 dependencies and known deferrals. This is ordinary task setup.
-3. W1/integration owner: identify the smallest missing M1 acceptance item,
-   reuse the working panel/consumer and start the bounded material ticket only
-   where it affects that scope. Prepare the matched E01 route early.
-4. W2 when independent: perform the BL5 design slice and numerical-contract
-   decision. Do not launch formal F03 until its prerequisites and authority match.
-5. W3 when independent: finish the admitted physical B2 range and installed
-   batching/consumer slice. Schedule numerical work under the common ceiling.
-6. Continue without ritual approval between authorized slices. Report completed
+   Reconcile only changes affecting the next action, including the uncommitted
+   E01 work; do not re-audit all history or take over the unrelated F03 script.
+2. Link these documents from the living note and update the one acceptance
+   matrix with M1–M5 dependencies and known deferrals. Leave the historical
+   complete programme and evidence unchanged.
+3. Integration owner: consolidate the already working M1 panel/consumer, then
+   identify its smallest missing acceptance item. Use the bounded material
+   ticket only where it affects the claimed scope. Complete the E01
+   two-direction discriminator and make its stated decision.
+4. When independently owned work is useful and permitted, advance the BL5
+   design/metric decision and B2 physical admission/batch route without waiting
+   for an unrelated E01 result. Do not launch formal F03 until its prerequisites
+   and exact authority match. Schedule numerical work under the common ceiling.
+5. Continue without ritual approval between authorized slices. Report completed
    behavior, acceptance remaining and any actual decision needed from the user.
 
 No further general plan-review cycle is required to begin authorized development.

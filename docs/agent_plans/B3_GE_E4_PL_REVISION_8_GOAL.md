@@ -5,6 +5,14 @@ paused until the user explicitly resumes it. The user requested this review
 and direct document edits, not development. Editing this file neither starts
 a run nor creates or resumes a task goal.
 
+At reviewed integration source `5ba6a77a`, the M1/M3 experimental routes
+operate but are not acceptance-complete. E01 has an executed point-link screen.
+Shell-only and same-action diagnostics explain part of its rotational
+discrepancy; full two-direction mesh convergence is still untested. The E01
+scripts and active note contain uncommitted work. A separate dirty F03 script
+belongs to another investigation. Reconcile ownership on resumption; do not treat
+these files as accepted results or launch the F03 script by implication.
+
 Use this goal together with the [Revision 8 plan](B3_GE_E4_PL_REVISION_8_PLAN.md).
 The complete programme remains the final scope, with only the explicit
 prospective amendments in plan section 9. Historical evidence, consumed
@@ -60,6 +68,12 @@ Progress is a working behavior, a closed acceptance obligation, a repaired
 consequential defect or evidence that changes a decision. Tests, commits,
 documents and refined meshes are means, not progress targets.
 
+The near-term critical path is one consolidated M1 installed/consumer route,
+one bounded E01 two-direction comparison followed by its decision, and one
+mechanically defensible M2 law/space decision. Run the independent B2 admission
+and batch route when its ownership and numerical resources permit. These are
+priorities, not new gates or permission to start while implementation is paused.
+
 ## 3. Autonomous decision rights
 
 Within this plan, the integration owner may act without repeated permission:
@@ -70,6 +84,8 @@ Within this plan, the integration owner may act without repeated permission:
 - Stop a diagnostic that cannot change the next decision; reuse valid evidence.
 - Select the exact objective BL5 representation and an eligible complete
   multiplier-resolution candidate, subject to the plan's mechanics checks.
+  This development choice does not qualify BL5, make it equivalent to a
+  six-channel welded bond, or erase any unamended final obligation.
 - Develop Option B as a distinct distributing attachment when its physical
   declaration fits. It cannot be renamed a bonded line or inherit BL5 acceptance.
 - Defer an unready feature to a named milestone, keep its mandatory row open,
