@@ -7,8 +7,12 @@ import pytest
 from scipy.spatial.transform import Rotation
 
 from anysolver._stiffened_shell_bl5_local_experimental import BL5LocalOperator
-from anysolver._stiffened_shell_l1_local_experimental import NativeHalfCellPort
+from anysolver._stiffened_shell_l1_local_experimental import (
+    L1LocalOperator, NativeHalfCellPort,
+)
 from scripts._b3_e4_f03_native_fixture import build
+from scripts._b3_e4_f03_native_spatial_port import NativeHalfCellSpatialPort
+from scripts.b3_e4_f03_l1_native_connection_probe import L1LogConnection
 
 
 def _fixture(shell_y=0.):
@@ -35,6 +39,54 @@ def _rigid_beam_state(state, omega, pivot, translation=(0., 0., 0.)):
         nodal_frames=np.einsum('ij,njk->nik', q, state.nodal_frames),
         cell_rotations=np.einsum('ij,abjk->abik', q, state.cell_rotations),
     )
+
+
+def test_bl5_virgin_rows_equal_aligned_l1_without_yaw():
+    """Check the full local work map, not just a selected saved mode.
+
+    This identity applies to the aligned flat reference fixture. It does not
+    establish finite-law equivalence or qualify a multiplier space.
+    """
+    beam, reference, state, bl5 = _fixture()
+    element, cell, weight, _ = beam._locate(.95)
+    spatial_port = NativeHalfCellSpatialPort(beam.context, element, cell, weight)
+    l1 = L1LogConnection.at_reference(
+        reference, np.zeros((2, 6)), .035, spatial_port, state,
+        beam_offset=(0., 0., -.05), station=.5)
+    bl5_rows = bl5.evaluate(
+        np.zeros((2, 6)), state, np.zeros(5)).gap_jacobian
+    owner_l1 = L1LocalOperator.at_reference(
+        reference, np.zeros((2, 6)), .035, bl5.port, state,
+        offset=(0., 0., -.05), station=.5)
+    owner_l1_rows = owner_l1.evaluate(
+        np.zeros((2, 6)), state, np.zeros(6)).gap_jacobian
+    l1_rows = np.empty((6, 21))
+    slots = bl5.port.active_beam_slots()
+    for column in range(21):
+        direction = np.zeros(21)
+        direction[column] = 1.
+        beam_direction = np.zeros(beam.context.count)
+        beam_direction[slots] = direction[12:]
+        _, l1_rows[:, column] = l1.evaluate(
+            np.zeros((2, 6)), state,
+            shell_direction=direction[:12].reshape(2, 6),
+            beam_direction=beam_direction)
+
+    # BL5 uses a beam-frame translation and two director-basis components.
+    # The L1 frame uses the opposite translation and pitch/roll ordering here.
+    expected = np.vstack((-l1_rows[:3], -l1_rows[4], l1_rows[3]))
+    np.testing.assert_allclose(bl5_rows, expected, rtol=0., atol=2e-12)
+    np.testing.assert_allclose(owner_l1_rows, l1_rows, rtol=0., atol=2e-12)
+    assert np.linalg.matrix_rank(bl5_rows) == 5
+    assert np.linalg.matrix_rank(expected) == 5
+
+    # A supported shell-edge in-plane gradient changes L1 yaw alone. It must
+    # remain released by BL5 and by the five-row comparator.
+    gradient = np.zeros(21)
+    gradient[1], gradient[7] = -1., 1.
+    np.testing.assert_allclose(bl5_rows@gradient, 0., atol=2e-12)
+    np.testing.assert_allclose(expected@gradient, 0., atol=2e-12)
+    assert abs(l1_rows[5]@gradient) > 1.
 
 
 def test_bl5_reference_work_and_owned_derivatives():

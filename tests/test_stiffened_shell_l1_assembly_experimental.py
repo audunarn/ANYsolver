@@ -310,6 +310,41 @@ def _bl5_nonmatching_definition(shell_edges, span=1):
     return replace(base, shell=shell, fixed=fixed, lines=(line,))
 
 
+@pytest.mark.parametrize("shell_edges", (2, 8))
+@pytest.mark.parametrize("span", (1, 2))
+def test_bl5_supported_p0_rows_match_dropped_yaw_l1_locally(
+        shell_edges, span):
+    """Bounded straight/flat reference identity for one complete P0 rule.
+
+    This verifies the supported row space for the *same* five-channel P0
+    resolution. It does not compare the existing asymmetric L1 spaces or
+    establish stability, locking, or physical fidelity of either policy.
+    """
+    from anysolver._stiffened_shell_l1_local_experimental import L1LocalOperator
+
+    definition = _bl5_nonmatching_definition(shell_edges, span)
+    owner = stiffened_shell.create_analysis(definition=definition)
+    positions = np.array([owner._beam_nodes[node][0] for node in owner._beam_ids])
+    frames = np.array([owner._beam_nodes[node][1] for node in owner._beam_ids])
+    state = Mechanical(positions, np.zeros_like(positions), frames,
+                       np.tile(np.eye(3), (len(owner._beam_parts), 2, 1, 1)),
+                       np.zeros((len(owner._beam_parts), 18)))
+    projected = np.zeros(owner._C.shape)
+    for bl5, slots, weight, beam_edge, _ in owner._line_samples:
+        l1 = L1LocalOperator.at_reference(
+            bl5.reference, np.zeros((2, 6)), bl5.thickness,
+            bl5.port, state, offset=(0., 0., -.05), station=bl5.station)
+        l1_rows = l1.evaluate(
+            np.zeros((2, 6)), state, np.zeros(6)).gap_jacobian
+        five = np.vstack((-l1_rows[:3], -l1_rows[4], l1_rows[3]))
+        for channel in range(5):
+            row = channel*(4//span)+beam_edge//span
+            projected[row, slots] += weight*five[channel]
+    np.testing.assert_allclose(owner._C[:, owner._free].toarray(),
+                               projected[:, owner._free],
+                               rtol=0., atol=4e-14)
+
+
 @pytest.mark.parametrize("shell_edges,span,segments", (
     (2, 1, 4), (2, 2, 4), (3, 1, 6), (3, 2, 6),
     (8, 1, 8), (8, 2, 8)))
