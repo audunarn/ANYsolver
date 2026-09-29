@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 14.596906599996146,
+  "peak_process_tree_memory_mb": 282.640384,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_exact_pose_cache_route",
+    "--disable-cache",
+    "--output",
+    "docs/d1_review_support/d1_exact_pose_cache_baseline_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_exact_pose_cache_baseline_log_20260929.txt"
+}
