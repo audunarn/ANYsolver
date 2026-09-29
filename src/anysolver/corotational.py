@@ -31,11 +31,10 @@ Scope and validity:
   nonsymmetric; frame sensitivity is evaluated by centered differences while
   the remaining derivatives are analytical.  ``"rotated"`` retains the
   inexpensive historical ``E k_local E.T`` approximation;
-- the pull-back subtracts order-one nodal coordinates, so the internal force
-  carries an intrinsic roundoff floor of roughly ``eps * ||K_e|| * L`` per
-  element (~1e-7 N for steel at metre scale).  Use residual tolerances of
-  1e-5..1e-6 relative and realistic load magnitudes; demanding convergence
-  below the floor stalls the increment adaptation;
+- the shell pull-back uses displacement differences to reduce cancellation
+  at small loads. Beam pull-back and geometric-frame extraction can still
+  impose a roundoff floor; demanding convergence below it can stall an
+  increment;
 - eccentric beam-shell couplings use linear MPC constraints whose eccentricity
   vectors do not rotate; coupled regions should not undergo large rotations.
 """
@@ -257,13 +256,27 @@ def _corotational_deformation_state(
     else:
         R_rig = _beam_rigid_rotation(reference.coordinates, deformed, rotations)
 
-    centroid_def = deformed.mean(axis=0)
     u_d = np.zeros((num_nodes, 6), dtype=float)
+    if reference.category == "shell":
+        # The equivalent difference of order-element-size coordinates loses
+        # small shell deformation when the applied load is small.  Form the
+        # translational pull-back from displacement differences instead.
+        translation_offset = translations - translations.mean(axis=0)
+        reference_arm = reference.coordinates - reference.centroid
+        rotation_difference = R_rig.T - np.eye(3)
+    else:
+        centroid_def = deformed.mean(axis=0)
     for node in range(num_nodes):
-        u_d[node, :3] = (
-            R_rig.T @ (deformed[node] - centroid_def)
-            - (reference.coordinates[node] - reference.centroid)
-        )
+        if reference.category == "shell":
+            u_d[node, :3] = (
+                R_rig.T @ translation_offset[node]
+                + rotation_difference @ reference_arm[node]
+            )
+        else:
+            u_d[node, :3] = (
+                R_rig.T @ (deformed[node] - centroid_def)
+                - (reference.coordinates[node] - reference.centroid)
+            )
         R_node = rotation_matrix_from_vector(rotations[node])
         u_d[node, 3:] = rotation_vector_from_matrix(R_rig.T @ R_node)
     return u_d.reshape(-1), R_rig, deformed

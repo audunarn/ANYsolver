@@ -77,6 +77,25 @@ def _q4_shell_j2_panel():
     return replace(base, shell=replace(base.shell, j2_curve=curve))
 
 
+def test_mixed_q4_s3_small_load_converges_without_shell_pullback_floor():
+    base = _panel()
+    pressure = 20_000.
+    curve = DNVC208MaterialCurve(
+        pressure, 1.05*pressure, 1.1*pressure,
+        .005, .01, 4.*pressure, .2)
+    definition = replace(base, shell=replace(
+        base.shell, q4_elements=((1, 2, 5, 4),),
+        s3_elements=((2, 3, 6), (2, 6, 5)), j2_curve=curve))
+    owner = ExperimentalGEAnalysis(definition)
+    result = owner.solve(_actions(), (.01,), max_iterations=20,
+                         max_backtracks=12)
+    assert result.accepted_factors == (.01,)
+    assert result.free_equilibrium_ratio <= 1e-8
+    assert result.constraint_max <= 1e-9
+    assert len(result.shell_q4_material) == 1
+    assert len(result.shell_s3_material) == 2
+
+
 def test_q4_shell_and_beam_yield_atomically_and_restart(monkeypatch):
     definition = _q4_shell_j2_panel()
     direct_owner = ExperimentalGEAnalysis(definition)
