@@ -27,13 +27,29 @@ the result. Early probe versions returned process code zero for a mechanical
 nonzero code for noncompletion. The JSON `status`, not the old process code,
 is the mechanical outcome.
 
-The four-Q4 sweep trace shows the geometric lower gap progressing from
+The four-Q4 sweep trace shows the geometric lower bound progressing from
 `−4.8164e−5` to `−4.9993e−5 m`, while proposed Newton endpoints were near
 `−1.8928e−4 m`. At the last iterate, weighted nodal gaps were positive and
 the reported active set was empty, despite two small positive algorithmic
 forces. The conservative swept gate therefore correctly forbade a step that
 would exceed the declared physical-gap budget. Halving the force increment
 did not resolve this.
+
+A subsequent read-only capture of the rejected four-Q4 pose tested whether
+the lower bound was merely loose. An independent 81×81 bilinear-source
+sample over each projected planar S3 triangle found a minimum vertical gap
+of `−4.9993292564e−5 m` at the physical source-tip corner of face
+`[3,4,9,8]`, parametric position `[1,0]`. The production matched-projection
+lower bound for the same pair was `−4.9993233708e−5 m`, a difference of
+about `5.9e−11 m` from the sampled **vertical** gap. A separate direct
+[normal-projection calculation](d1_source_rotation_tip_gap_20260929.json)
+at that exact source corner gives physical normal gap
+`−4.9993233561e−5 m`, only `1.48e−13 m` above the bound. Its normal
+projection lands strictly inside the target triangle (minimum barycentric
+weight 0.05395). The bound is tight for this pose; improving only its
+conservatism will not clear the case. The [raw pose and pair records](d1_source_rotation_bound_sample_20260929.json)
+and [resource record](d1_source_rotation_bound_sample_resource_20260929.json)
+preserve this check.
 
 The unmodified eight-Q4 solver returned a twelve-set `pivot_trace` with no
 settled predictor. A temporary one-line patch took the Newton direction
@@ -53,12 +69,13 @@ recorded pivot and physical-gap controls. Neither the 4- nor 8-Q4 experiment
 accepted a step, so no source-moment or settled-tangent claim follows.
 
 **Decision:** stop load-step and x-only refinement on this profile. The
-combination of positive weak gaps and an independent physical-gap wall needs
-a contact-resolution or enforcement derivation, followed by a bounded
-coupled test. The predictor pivot issue is a separate algorithmic concern;
-improving it alone did not make this case admissible. Preserve the rejected
-profile as a D1 gap. Do not loosen the physical-gap target or silently
-discard supported pressure modes.
+combination of positive weak gaps and actual source-tip penetration needs
+contact-resolution or physical-boundary enforcement work, followed by a
+bounded coupled test. The predictor pivot issue is separate; improving it
+alone did not admit the case. Physical tip contact is part of the later
+boundary capability, and this experiment does not invalidate an explicitly
+bounded D1 workflow that excludes such contact. Do not loosen the gap
+target or silently discard supported pressure modes.
 
 The [probe](d1_source_rotation_coupled.py), [four-Q4 trace](d1_source_rotation_coupled_trace_20260929.json),
 [unmodified eight-Q4 result](d1_source_rotation_coupled_8q4_v2_20260929.json),

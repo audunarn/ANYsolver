@@ -13,6 +13,8 @@ from anysolver import BoundaryCondition, solve_static_nonlinear
 from anysolver.general_contact.core import suspend_contact
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from anysolver.general_contact.semismooth import linearize
+from anysolver.general_contact import static_path
+from anysolver.general_contact.q4_source_overlap import q4_source_projected_gap_lower
 from anysolver.nonlinear_static import _assemble_nonlinear_system
 from scripts.general_contact_d1_free_target_press_probe import build_free_target_case
 
@@ -65,8 +67,58 @@ def _assembled(model, manager, snapshot, pose, forces, tangent):
     ), contact
 
 
+def _sample_projected_gap(source, target, source_faces, target_faces):
+    """Separate dense bilinear/Q1 versus planar/P1 vertical-gap sample."""
+    grid = np.linspace(0., 1., 81)
+    records = []
+    for source_face in source_faces:
+        corners = source[source_face]
+        for target_face in target_faces:
+            triangle = target[target_face]
+            projected = np.column_stack((
+                triangle[1, :2]-triangle[0, :2],
+                triangle[2, :2]-triangle[0, :2],
+            ))
+            if abs(float(np.linalg.det(projected))) < 1e-12:
+                raise ValueError("sampled target projection is singular")
+            lowest = float("inf")
+            points = 0
+            location = None
+            for a in grid:
+                for b in grid:
+                    shape = np.asarray((
+                        (1-a)*(1-b), a*(1-b), a*b, (1-a)*b,
+                    ))
+                    point = shape @ corners
+                    bary = np.linalg.solve(projected, point[:2]-triangle[0, :2])
+                    if min(bary[0], bary[1], 1.-sum(bary)) < -1e-12:
+                        continue
+                    target_z = (
+                        triangle[0, 2]
+                        + bary[0]*(triangle[1, 2]-triangle[0, 2])
+                        + bary[1]*(triangle[2, 2]-triangle[0, 2])
+                    )
+                    gap = float(point[2]-target_z)
+                    points += 1
+                    if gap < lowest:
+                        lowest = gap
+                        location = [float(a), float(b)]
+            if points:
+                records.append({
+                    "source_face": np.asarray(source_face).tolist(),
+                    "target_face": np.asarray(target_face).tolist(),
+                    "sampled_vertical_gap_m": lowest,
+                    "sampled_parametric_location": location,
+                    "sampled_overlap_points": points,
+                    "certified_pair_lower_m": q4_source_projected_gap_lower(
+                        corners, triangle,
+                    ),
+                })
+    return records
+
+
 def main(output: Path, steps_per_segment: int, columns: int,
-         trace_swept: bool):
+         trace_swept: bool, capture_failed_pose: bool):
     if output.exists():
         raise FileExistsError(output)
     began = time.perf_counter()
@@ -88,6 +140,32 @@ def main(output: Path, steps_per_segment: int, columns: int,
             return fraction
 
         GeneralS3PatchManager.admissible_step_fraction = traced_admissible
+    captured = []
+    if capture_failed_pose:
+        original_increment = static_path.solve_semismooth_increment
+
+        def traced_increment(**kwargs):
+            step_result = original_increment(**kwargs)
+            if not step_result.completed:
+                manager = kwargs["manager"]
+                pose = np.asarray(
+                    kwargs["transform"] @ step_result.q + kwargs["offset"],
+                ).reshape(-1)
+                source, target = manager._positions(pose)
+                captured.append({
+                    "certified_global_lower_m": float(
+                        manager._gap_lower((source, target))
+                    ),
+                    "sampled_pairs": _sample_projected_gap(
+                        source, target, manager.law.source_face_indices,
+                        manager.law.target_face_indices,
+                    ),
+                    "physical_source_positions_m": source,
+                    "physical_target_positions_m": target,
+                })
+            return step_result
+
+        static_path.solve_semismooth_increment = traced_increment
     result = solve_static_nonlinear(
         model, contact=definition, contact_settings=settings,
         contact_path_program=program, max_iterations=18,
@@ -111,6 +189,8 @@ def main(output: Path, steps_per_segment: int, columns: int,
         if trace_swept:
             report["swept_calls_count"] = len(swept_calls)
             report["last_swept_calls"] = swept_calls[-10:]
+        if capture_failed_pose:
+            report["rejected_pose_geometry"] = captured[-1] if captured else None
     if result.status == "completed" and len(result.steps) == steps_per_segment:
         history = result.info["force_displacement_history"]
         report["integration_forces_n"] = [
@@ -199,5 +279,7 @@ if __name__ == "__main__":
     parser.add_argument("--steps-per-segment", type=int, default=2)
     parser.add_argument("--columns", type=int, default=4)
     parser.add_argument("--trace-swept", action="store_true")
+    parser.add_argument("--capture-failed-pose", action="store_true")
     args = parser.parse_args()
-    main(args.output, args.steps_per_segment, args.columns, args.trace_swept)
+    main(args.output, args.steps_per_segment, args.columns, args.trace_swept,
+         args.capture_failed_pose)
