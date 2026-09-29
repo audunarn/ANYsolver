@@ -15,6 +15,7 @@ enter physical recovery or reaction reporting.
 
 from __future__ import annotations
 
+from abc import ABC
 import copy
 import inspect
 import math
@@ -7510,6 +7511,19 @@ _q4_runtime_epoch_manager.protect_type_entries(
 _q4_runtime_epoch_manager.watch_type(QualifiedE4PLShellElement, None)
 
 
+def _capture_q4_class_namespace_authority() -> MappingProxyType:
+    namespaces = {}
+    for owner in type.__getattribute__(QualifiedE4PLShellElement, "__mro__"):
+        # ABC's lazy annotations can be observed by unrelated Python 3.14
+        # tooling after import. Capture its exact metadata before sealing.
+        if owner is ABC:
+            type.__getattribute__(owner, "__annotations__")
+        namespaces[owner] = MappingProxyType(
+            dict(type.__getattribute__(owner, "__dict__"))
+        )
+    return MappingProxyType(namespaces)
+
+
 _QUALIFIED_Q4_MODULE_FUNCTION_AUTHORITY = MappingProxyType(
     {
         name: value
@@ -7517,16 +7531,7 @@ _QUALIFIED_Q4_MODULE_FUNCTION_AUTHORITY = MappingProxyType(
         if callable(value) or isinstance(value, ModuleType)
     }
 )
-_QUALIFIED_Q4_CLASS_NAMESPACE_AUTHORITY = MappingProxyType(
-    {
-        owner: MappingProxyType(
-            dict(type.__getattribute__(owner, "__dict__"))
-        )
-        for owner in type.__getattribute__(
-            QualifiedE4PLShellElement, "__mro__"
-        )
-    }
-)
+_QUALIFIED_Q4_CLASS_NAMESPACE_AUTHORITY = _capture_q4_class_namespace_authority()
 _QUALIFIED_Q4_MODULE_DATA_AUTHORITY = MappingProxyType(
     {
         name: (type(value), _module_authority_signature(value))
