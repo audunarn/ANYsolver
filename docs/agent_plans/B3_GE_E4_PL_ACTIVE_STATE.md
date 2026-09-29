@@ -47,10 +47,15 @@ equilibrated sparse/dense solves, while physical coordinates differ by at
 most 1.36e-14 and both KKT residuals are below 1.6e-11. This is a numerical
 conditioning finding, not V02 acceptance or a reason to relax its criterion.
 The changed source plus existing GE and L1 checks pass 45/45 with JIT disabled
-and one numerical thread. These are small source-development screens, not the
+and one numerical thread. The same 45 checks pass from an isolated installed
+wheel (SHA-256 `9913a7f64a779191137480dc5855e84b3ada773c98a36a8a559fcfdd9a9621a3`)
+with actual site import verified; raw artifact and manifest are in
+`.qualification/b3-ge-e4-pl/r8-bl5-nonmatching-installed-dev-20260929-v1/`.
+These are small development screens, not the
 required seven-ratio/growing-space assessment. Next test the saved supported
 off-ratio mode and a coherent growing interface rule before any multiplier
-decision. No installed, physically matched, or formal F03 acceptance is implied.
+decision. No installed-artifact qualification, physically matched acceptance,
+or formal F03 acceptance is implied.
 
 The bounded M1 low-yield ticket restored the existing accepted 40 N checkpoint
 and reproduced the 45 N backtrack-budget failure (163 assemblies, best free
