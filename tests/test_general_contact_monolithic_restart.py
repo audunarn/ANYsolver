@@ -128,6 +128,19 @@ def test_monolithic_active_contact_split_restart_and_mode_identity():
             contact_path_program=program, max_iterations=18,
             restart_checkpoint=half.to_restart_checkpoint(),
         )
+    changed_interaction = replace(
+        definition.interactions[0],
+        normal_stiffness=1.01 * definition.interactions[0].normal_stiffness,
+    )
+    changed_definition = replace(
+        definition, interactions=(changed_interaction,),
+    )
+    with pytest.raises(ValueError, match="incompatible"):
+        solve_static_nonlinear(
+            model, contact=changed_definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=18,
+            restart_checkpoint=half.to_restart_checkpoint(),
+        )
 
 
 def test_monolithic_cancellation_after_accepted_step_allows_clean_rerun():
