@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "runs": [
+    {
+      "path": "old",
+      "seconds": 12.627514200001315,
+      "evaluations": 2524,
+      "triangles": 2416
+    },
+    {
+      "path": "new",
+      "seconds": 12.588094399994588,
+      "evaluations": 2524,
+      "triangles": 2416
+    },
+    {
+      "path": "new",
+      "seconds": 19.09536880000087,
+      "evaluations": 2524,
+      "triangles": 2416
+    },
+    {
+      "path": "old",
+      "seconds": 13.290667499997653,
+      "evaluations": 2524,
+      "triangles": 2416
+    }
+  ],
+  "setup_seconds": 10.383326800001669,
+  "source_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\q4_s3_overlap_derivatives.py",
+  "pose_source": "d1_target_grid_8x8_prediction_20260929.json",
+  "branch_parity": true,
+  "triangle_parity": true,
+  "evaluation_parity": true,
+  "scaled_errors": {
+    "support": 0.0,
+    "weighted_gap": 0.0,
+    "normalized_gap": 0.0,
+    "pressure_gram": 0.0,
+    "force": 1.3552527156068805e-20,
+    "local_force": 1.3552527156068805e-20,
+    "gap_gradient": 1.1102230246251565e-16,
+    "tangent": 3.4281425314022626e-20
+  },
+  "old_median_seconds": 12.959090849999484,
+  "new_median_seconds": 15.841731599997729,
+  "speed_ratio": 0.8180349962501159,
+  "rss_mb": 305.954816,
+  "elapsed_seconds": 68.02905949999695
+}
