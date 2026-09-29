@@ -203,6 +203,44 @@ def test_q4_shell_and_beam_yield_atomically_and_restart(monkeypatch):
             assert relative < 1e-5
 
 
+def test_q4_j2_positive_unload_reload_restores_layer_response():
+    definition = _q4_shell_j2_panel()
+    actions = _actions()
+    direct_owner = ExperimentalGEAnalysis(definition)
+    loaded = direct_owner.solve(actions, (.5, 1.), max_iterations=20,
+                                max_backtracks=12)
+    resumed_owner = ExperimentalGEAnalysis(definition)
+    resumed_owner.restore(direct_owner.checkpoint())
+    loaded_stress = tuple(item.layer_stress.copy()
+                          for item in loaded.shell_q4_material)
+    for factor in (.7, .4, .2, .1, .5, 1.1):
+        direct = direct_owner.solve(actions, (factor,), max_iterations=20,
+                                    max_backtracks=12)
+        resumed = resumed_owner.solve(actions, (factor,), max_iterations=20,
+                                      max_backtracks=12)
+        assert direct.free_equilibrium_ratio <= 1e-8
+        assert resumed.free_equilibrium_ratio <= 1e-8
+        assert direct.shell_layer_alpha == resumed.shell_layer_alpha
+        assert direct.beam_station_accumulated == resumed.beam_station_accumulated
+        for current, restarted in zip(direct.shell_q4_material,
+                                      resumed.shell_q4_material):
+            np.testing.assert_allclose(current.layer_stress,
+                                       restarted.layer_stress,
+                                       rtol=1e-10, atol=1e-8)
+            np.testing.assert_allclose(current.plastic_strain,
+                                       restarted.plastic_strain,
+                                       rtol=1e-10, atol=1e-12)
+        if factor == .1:
+            assert direct.shell_layer_alpha == loaded.shell_layer_alpha
+            assert any(not np.array_equal(item.layer_stress, before)
+                       for item, before in zip(direct.shell_q4_material,
+                                               loaded_stress))
+    assert direct.accepted_factors == resumed.accepted_factors == (
+        .5, 1., .7, .4, .2, .1, .5, 1.1)
+    assert max(max(row) for row in direct.shell_layer_alpha) > max(
+        max(row) for row in loaded.shell_layer_alpha)
+
+
 def test_q4_j2_checkpoint_rejects_corrupt_shell_history():
     definition = _q4_shell_j2_panel()
     owner = ExperimentalGEAnalysis(definition)

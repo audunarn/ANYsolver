@@ -149,8 +149,16 @@ constitutive check verifies stress from total minus plastic strain, and the
 source and fresh-wheel combined suites each passed 52/52. Independent review
 found no accepted-state mismatch. The values are local Q4 plane-stress layers,
 not global stress, transverse shear, resultants or a full shell stress tensor.
-The remaining frame/order/work, unload/reversal and material-family checks
+The remaining frame/order/work, broader unload/reversal and material-family checks
 still bar complete material recovery, F05/G3 and production acceptance.
+
+**Positive mixed-material history check:** On the same two-shell/two-beam Q4
+J2/generalized-yield panel, factors `0.5, 1.0, 0.7, 0.4, 0.2, 0.1, 0.5, 1.1`
+all converged with scaled equilibrium ratios at most `7.87e-9`. A focused
+regression compares direct and V4-restored layer stress, plastic strain,
+shell alpha and beam history at each later step; it passed with JIT enabled.
+The raw probe is retained separately. This is one positive-factor reversal of
+load direction, not a signed-load reversal or broad cyclic qualification.
 
 **Positive unloading/reloading development slice:** The same point owner now
 accepts changing positive load factors, preserves material history on
