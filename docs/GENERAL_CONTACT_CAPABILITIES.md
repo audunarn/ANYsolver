@@ -21,8 +21,9 @@ claim for every saved finite load path. A new derived pairing or consistent
 stabilization requires its own pressure, response and timing evidence.
 
 ANYfem contact-intent persistence is implemented and locally tested on the
-separate `codex/anyfem-contact-intent` branch at `45bdf688a48aeaa7175197a9a1755918a764dffb`
-(23 focused tests). It stores geometry-region selections and rejects a selected
+separate `codex/anyfem-contact-intent` branch at `878bbde`
+(23 focused suite tests at `45bdf688`, plus 6 focused file-round-trip tests at
+`878bbde`). It stores geometry-region selections and rejects a selected
 contact job while ordinary jobs remain usable. This C9 storage slice has no
 mesh map, contact solve or results adapter, and is neither independently
 accepted nor released. See its `docs/contact_intent_task.md` in that branch.
