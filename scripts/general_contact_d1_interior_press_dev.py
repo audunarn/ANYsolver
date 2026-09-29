@@ -125,8 +125,10 @@ def build_interior_press(*, force_n: float = 0.08,
                for node in (1 + row * stride + column,)}
         total = float(sum(raw.values()))
         load_weights = {node: weight / total for node, weight in raw.items()}
+    elif load_shape == "interior_uniform":
+        load_weights = {node: 1.0 / len(interior) for node in interior}
     else:
-        raise ValueError("load shape must be point or interior_distributed")
+        raise ValueError("load shape must be point, interior_distributed or interior_uniform")
     waypoints = ((0.0, 0.0), (0.0, 0.0))
     force_factors = (0.0, 1.0)
     if four_phase:
@@ -244,7 +246,8 @@ if __name__ == "__main__":
                         default="left")
     parser.add_argument("--source-rows", type=int, choices=(2, 4, 8), default=2)
     parser.add_argument("--source-columns", type=int, choices=(4, 8), default=4)
-    parser.add_argument("--load-shape", choices=("point", "interior_distributed"),
+    parser.add_argument("--load-shape", choices=("point", "interior_distributed",
+                                                 "interior_uniform"),
                         default="point")
     parser.add_argument("--max-path-fraction", type=float,
                         default=1.0)
