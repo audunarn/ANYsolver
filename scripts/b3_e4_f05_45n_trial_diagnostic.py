@@ -170,6 +170,40 @@ def run(checkpoint: Path, intermediate: float | None = None):
                                 "shell_plus": _active(positive[4]),
                                 "shell_minus": _active(negative[4])})
         count = owner._K.shape[0]
+        multiplier_probes = {}
+        zero_value = replace(state, multipliers=np.zeros_like(state.multipliers))
+        zero_increment = direction.copy()
+        zero_increment[count:] = 0.
+        for name, probe_state, probe_direction in (
+                ("zero_multiplier_value", zero_value, direction),
+                ("zero_multiplier_increment", state, zero_increment)):
+            probe = assembly(probe_state, *args, pattern=pattern)
+            predicted_probe = probe[1] @ probe_direction
+            step_size = 1e-5
+            plus = assembly(advance(probe_state, probe_direction, step_size),
+                            *args, pattern=pattern)
+            minus = assembly(advance(probe_state, probe_direction, -step_size),
+                             *args, pattern=pattern)
+            observed_probe = (plus[0]-minus[0])/(2*step_size)
+            multiplier_probes[name] = {
+                "multiplier_value_norm": float(np.linalg.norm(
+                    probe_state.multipliers)),
+                "multiplier_increment_norm": float(np.linalg.norm(
+                    probe_direction[count:])),
+                "step": step_size,
+                "blocks": {
+                    block: {
+                        "absolute": float(np.linalg.norm(
+                            (observed_probe-predicted_probe)[indices])),
+                        "relative": float(np.linalg.norm(
+                            (observed_probe-predicted_probe)[indices]) /
+                            max(np.linalg.norm(predicted_probe[indices]), 1e-12)),
+                        "predicted_norm": float(np.linalg.norm(
+                            predicted_probe[indices])),
+                    } for block, indices in blocks.items()},
+                "shell_plus": _active(plus[4]),
+                "shell_minus": _active(minus[4]),
+            }
         free = np.r_[owner._free, np.arange(count, tangent.shape[0])]
         linear = spsolve(tangent[free, :][:, free], -residual[free])
         diagnosis = {
@@ -185,7 +219,8 @@ def run(checkpoint: Path, intermediate: float | None = None):
             "fresh_direction_difference_ratio": float(np.linalg.norm(
                 linear-direction[free])/max(np.linalg.norm(linear), 1e-12)),
             "last_backtracks": candidates[-13:],
-            "actual_update_derivatives": derivatives}
+            "actual_update_derivatives": derivatives,
+            "multiplier_probes": multiplier_probes}
 
     return {"classification": "bounded development diagnostic; no F05/G3 acceptance",
             "source": str(expected), "checkpoint": str(checkpoint.resolve()),
