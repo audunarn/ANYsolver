@@ -14,8 +14,7 @@ from test_ge_beam3_coupled_modes import fixture as legacy_fixture
 from test_ge_beam3_native_generalized_modal import inertia
 
 
-@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
-def test_matching_one_shell_reference_tangent_solution_and_reactions(topology):
+def _matching_owners(topology):
     legacy = legacy_fixture(topology, False)
     assembly = legacy.assembly
     node_ids = tuple(range(1, len(assembly.coordinates)+1))
@@ -32,6 +31,13 @@ def test_matching_one_shell_reference_tangent_solution_and_reactions(topology):
         PROFILE, panel, beams,
         (PointConnection(assembly.shell_node+1, assembly.beam_node),),
         supports))
+    return legacy, current
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_matching_one_shell_reference_tangent_solution_and_reactions(topology):
+    legacy, current = _matching_owners(topology)
+    assembly = legacy.assembly
 
     state = legacy.initial
     response, old_residual, _, _ = legacy._evaluate(
@@ -64,3 +70,71 @@ def test_matching_one_shell_reference_tangent_solution_and_reactions(topology):
     np.testing.assert_allclose(result.reactions[current._fixed],
                                old_reactions[current._fixed],
                                rtol=1e-10, atol=1e-14)
+
+
+@pytest.mark.parametrize("topology", ("S3-V2D",))
+def test_matching_one_shell_finite_elastic_history(topology):
+    legacy, current = _matching_owners(topology)
+    old = legacy.solve(stop_after=2)
+    new = current.solve((NodalAction(
+        "beam", 3, (0., .0001, .0002, 0., 0., 0.)),),
+        (.5, 1.), max_iterations=20, max_backtracks=12)
+    assert old.status == "paused" and new.status == "completed"
+    assert new.accepted_factors == (.5, 1.)
+    np.testing.assert_allclose(new.shell_displacement,
+                               old.state.shell_u, rtol=1e-9, atol=1e-11)
+    np.testing.assert_allclose(new.beam_positions,
+                               old.state.mechanical.positions
+                               +old.state.mechanical.position_low,
+                               rtol=1e-9, atol=1e-11)
+    np.testing.assert_allclose(new.beam_frames,
+                               old.state.mechanical.nodal_frames,
+                               rtol=1e-9, atol=1e-11)
+    np.testing.assert_allclose(new.cell_frames,
+                               old.state.mechanical.cell_rotations,
+                               rtol=1e-9, atol=1e-11)
+    np.testing.assert_allclose(new.cell_resultants,
+                               old.state.mechanical.resultants,
+                               rtol=1e-9, atol=1e-11)
+    np.testing.assert_allclose(new.multipliers,
+                               old.state.multipliers,
+                               rtol=1e-9, atol=1e-11)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_matching_one_shell_finite_tangent_through_actual_updates(topology):
+    _, current = _matching_owners(topology)
+    current.solve((NodalAction("beam", 3,
+                               (0., .0001, .0002, 0., 0., 0.)),),
+                  (.5, 1.), max_iterations=20, max_backtracks=12)
+    driver = current._finite_driver
+    state = driver._state
+    residual, tangent, *_ = driver._assemble(
+        state, 1., driver._shell_origins, driver._beam_origins,
+        pattern=driver._pattern)
+    count = current._K.shape[0]
+    nodal_end = current._shell_count+6*len(current._beam_ids)
+    rng = np.random.default_rng(20260929)
+    direction = np.zeros(tangent.shape[0])
+    direction[:nodal_end] = 1e-7*rng.normal(size=nodal_end)
+    direction[nodal_end:count] = 1e-3*rng.normal(size=count-nodal_end)
+    direction[count:] = 1e-3*rng.normal(size=len(direction)-count)
+    direction[current._fixed] = 0.
+    predicted = tangent@direction
+    for amount in (.5, .25):
+        plus = driver._advance(state, direction, amount)
+        minus = driver._advance(state, direction, -amount)
+        positive = driver._assemble(
+            plus, 1., driver._shell_origins, driver._beam_origins,
+            pattern=driver._pattern)[0]
+        negative = driver._assemble(
+            minus, 1., driver._shell_origins, driver._beam_origins,
+            pattern=driver._pattern)[0]
+        observed = (positive-negative)/(2*amount)
+        for start, stop in ((0, current._shell_count),
+                            (current._shell_count, count),
+                            (count, len(direction))):
+            error = np.linalg.norm((observed-predicted)[start:stop])
+            scale = max(np.linalg.norm(predicted[start:stop]), 1e-10)
+            assert error/scale <= 1e-6
+    assert np.isfinite(residual).all()

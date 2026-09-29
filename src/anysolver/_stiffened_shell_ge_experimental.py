@@ -611,7 +611,8 @@ class ExperimentalGEAnalysis:
                     ("shell J2 plastic", "physical-fibre B3 finite",
                      "qualified bonded line", "footprint",
                      "modes", "buckling")+line_limits)
-        if self._definition.shell.s3_elements and not self._line_samples:
+        if (self._definition.shell.s3_elements and shell_plastic and
+                not self._line_samples):
             excluded += ("S3 corotational finite-rotation response",)
         return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
                 "shell": (("experimental isotropic Q4/S3-V2D J2"

@@ -21,6 +21,7 @@ from ._ge_beam3_generalized_cell import GeneralizedCellHistory
 from ._ge_beam3_generalized_ellipsoid_section import GeneralizedHistory
 from ._ge_beam3_p5.algebra import rotation
 from ._ge_beam3_p5.compensated_coordinates import split_sum
+from ._ge_beam3_variational_shell import response as variational_shell_response
 from .control import cancellation_safe_point
 from .corotational import corotational_element_response
 from ._stiffened_shell_ge_experimental import (
@@ -290,7 +291,10 @@ class FinitePointDriver:
             data.extend(tangent.ravel())
 
         for (eid, element, slots, _), origin in zip(owner._shell_parts, shell_origins):
-            if len(slots) == 18:
+            if len(slots) == 18 and owner._definition.shell.j2_curve is None:
+                force, tangent, candidate = variational_shell_response(
+                    owner._shell_model, element, state.q[slots], origin, 3)
+            elif len(slots) == 18:
                 force, tangent, candidate = element.compute_nonlinear_response(
                     owner._shell_model.mesh,
                     owner._shell_model.get_material("shell"),
@@ -332,7 +336,11 @@ class FinitePointDriver:
                 rotation_coordinates=coordinates,
                 charted_ports=(True, False), position_low=position_low)
             extended = np.r_[slots, np.arange(count+6*i, count+6*i+6)]
-            scatter(extended, trial.residual, trial.tangent)
+            # Element and load rows are spatial wrenches. Pull only the
+            # increment columns through the shell's additive rotation chart;
+            # coordinate-pulled joint rows cannot be summed with these rows.
+            scatter(extended, trial.pose.residual,
+                    trial.pose.spatial_jacobian@trial.coordinate_map)
 
         for row, value in enumerate(factor*load_pattern):
             force_terms[row].append(-float(value))
