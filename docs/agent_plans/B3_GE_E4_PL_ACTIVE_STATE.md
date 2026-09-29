@@ -104,6 +104,23 @@ action replays its coupled shell state to 1.93e-17. Results and limits are in
 `.qualification/b3-ge-e4-pl/r8-e01-external-action-dev-20260929-v1/README.md`.
 E01/M1 acceptance, G0B and G1 remain open; no formal F03 authority was used.
 
+The targeted +100 N m physical-x torque on the unchanged 8×4 edge-rib
+geometry completed for both offset signs in native and OpenSees models.
+OpenSees rolls 2.64368e-5 versus native 2.14142e-5 rad (19.0% compliance
+difference); signed torque-to-axial cross response mirrors the earlier
+axial-to-roll gap. Both models close gaps/work/support balance, and the
+native result is byte-identical from source and the isolated installed wheel.
+The native assembled matrix is symmetric to 3.34e-17 largest-entry ratio;
+one sparse triangular refinement reduces its small cross-reciprocity error
+from 1.786e-6 to 1.40e-12 relative, while changing torque self-compliance
+only 6.52e-14 relative. Thus numerical roundoff does not explain the 19%
+torsional disagreement. The straight-beam-only compliance already matched.
+The next E01 decision is a focused physical-shell/point torque-transfer
+review using the existing action and matched-reference evidence, not a
+point-law change or automatic refinement. Evidence:
+`.qualification/b3-ge-e4-pl/r8-e01-pure-torque-dev-20260929-v3/`.
+E01/M1 remain open; no formal F03 authority was used.
+
 Next independent M1/V06 question: does the reference-linear owner recover the
 signed `EA_b e ε κ` transformed-section energy cross term for a compatible
 uniform axial/curvature field on the registered elastic panel, with native
