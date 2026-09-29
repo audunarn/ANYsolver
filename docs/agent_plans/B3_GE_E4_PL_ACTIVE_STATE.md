@@ -41,6 +41,25 @@ matched E01, Linux/platform checks and independent review of the complete
 candidate. Do not use the earlier rigid-footprint CalculiX canary as a
 matching-station six-row point-bond oracle.
 
+Current E01 decision: the existing CalculiX rigid-footprint canary has a
+different connection and cannot score M1. Prepare one inert B31/S4 screen
+with the M1 panel coordinates, edge station pairs, signed eccentric offset,
+shell supports and six linearized pose equations. Check reference geometry,
+row independence, rigid-work identity and section assumptions before any
+numerical run. If CalculiX accepts a full elastic increment, next establish
+reaction/work interpretation and section matching, then register the refined
+E01 comparison. If it fails, revise the external representation. Neither
+outcome changes F03 or consumes its formal authority. Concurrent ANYmesh
+numerical jobs observed on 29 September prevent launching this screen now.
+The inert signed decks and manifest are in
+`.qualification/b3-ge-e4-pl/r8-e01-matching-point-canary-dev-20260929-v1/`.
+Their 18 rows have distinct beam pivots and rigid/wrench work balance to
+roundoff. A separate native-joint Jacobian comparison passed both offset
+signs (2/2). This establishes only reference-linear connection-row
+equivalence; B31 section, S4 response, recovery and execution remain
+unverified. Run one pinned CalculiX screen when the heavy-job slot is free,
+then decide whether this route can support a refined E01 comparison.
+
 Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1. This is the short working checkpoint. The complete pre-compaction note is preserved byte-for-byte in B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20260929.md (SHA-256 2D5071E8A93FDCF35FC3AF49955E0B85F431A19B1DF2BF3742A8CA560584BCDA). The complete programme, acceptance matrix, frozen registrations, failures, and versioned evidence remain authoritative.
 
 ## Decision and gates
