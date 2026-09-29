@@ -6,7 +6,7 @@ Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_
 
 Deliver one complete G0–G6 release, with native B3-GE/E4-PL principal and a separate mandatory physical B2 option. Experimental integration is allowed while G0 remains open. G0B/F03 are open, none of F01–F13 is fully accepted, and G1 acceptance and production qualification are barred. Formal F03 execution authority remains unconsumed. Historical one-use authorities are not replayed. The dirty factor-4 Fy fallback script belongs to another ongoing investigation; do not edit, stage, or execute it by default.
 
-Integration branch: codex/b3-ge-e4-pl-integration in this isolated worktree, reviewed through ddf50d90 before the present mixed-material test. Product mechanics remain at b702e50d. Preserve concurrent work and check actual process identity before launching a heavy job.
+Integration branch: codex/b3-ge-e4-pl-integration in this isolated worktree, reviewed through 4fa79458. Element/joint mechanics remain at b702e50d; GE compiled-definition ownership changed at 4fa79458. Preserve concurrent work and check actual process identity before launching a heavy job.
 
 ## Delivered experimental behavior
 
@@ -15,6 +15,7 @@ Integration branch: codex/b3-ge-e4-pl-integration in this isolated worktree, rev
 - Experimental ANYfem construction and save/reopen consumer exists in C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer. Its format is distinct from ordinary native-project persistence. The installed solver/consumer milestone and independent review are recorded in .qualification/b3-ge-e4-pl/r7-combined-integration-dev-20260928-v1/.
 - Reference-linear and finite residual scales were corrected so zero response to tiny active loads cannot pass. Point/line numerical-dependence preflight is bounded and exposes source provenance; a full nonlinear sparse constraint audit remains open. The detailed installed-wheel identities and regression logs are in the preserved history and their versioned evidence directories.
 - Experimental all-S3/J2 V5 checkpoint and accepted-state chart binding are in b702e50d. The source and installed-wheel checks for that product revision passed; the wheel SHA-256 is F32A38F2109FF6AF16EAFBC29550C6340CF1DFAA5295AA2EDA925D690D2D7BEF. The native S3 response is element-local, not a qualified corotational finite-rotation S3 route.
+- GE compilation now owns shell coordinates/connectivity and definition collections used by later material, capability and checkpoint decisions. A caller-mutation regression exposed the prior alias; 51/51 impacted source and newly installed-wheel tests pass. A mixed J2 checkpoint written by the preceding wheel restores and continues on the new wheel with the same identity and selected physical/material results. Independent review found no bounded defect. See .qualification/b3-ge-e4-pl/r7-ge-definition-ownership-dev-20260929-v1/. This is experimental V28/G1 progress, not definition-layer or gate acceptance.
 
 ## Live mechanical findings
 
