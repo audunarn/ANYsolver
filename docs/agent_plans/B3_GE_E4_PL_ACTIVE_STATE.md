@@ -51,11 +51,25 @@ and one numerical thread. The same 45 checks pass from an isolated installed
 wheel (SHA-256 `9913a7f64a779191137480dc5855e84b3ada773c98a36a8a559fcfdd9a9621a3`)
 with actual site import verified; raw artifact and manifest are in
 `.qualification/b3-ge-e4-pl/r8-bl5-nonmatching-installed-dev-20260929-v1/`.
-These are small development screens, not the
-required seven-ratio/growing-space assessment. Next test the saved supported
-off-ratio mode and a coherent growing interface rule before any multiplier
-decision. No installed-artifact qualification, physically matched acceptance,
-or formal F03 acceptance is implied.
+These are small development screens, not the required seven-ratio/growing-space
+assessment. No installed-artifact qualification or formal F03 acceptance follows.
+
+The bounded saved 2:1 Fy/rotation discriminator now uses the actual four native
+half-cell supports over the 0.9–1.0 m bond. BL5 translation is the negative of
+the independently reconstructed L1 translation to 4.03e-21 in this virgin
+field. The BL5 transverse-director component has continuous weighted L2 norm
+5.299e-6, while complete P0 spans one and two resolve 1.928e-7 and 1.755e-7;
+a continuous P1 check resolves 1.668e-7. The director gap alternates within
+each half-cell, so neither P0 span nor simple continuous P1 detects most of
+this one field. The field comes from a historical six-channel auxiliary solve,
+not a BL5 loaded equilibrium; its positive physical energy also prevents a
+zero-energy-mechanism claim. Next compare supported physical response and the
+actual mixed-system behavior under matched work before ranking spaces or
+changing the law. The v1 diagnostic grouped the historical eight cuts rather
+than native half-cells; v2 corrected the supports, and v3 added the translation
+parity guard. All are preserved at
+`.qualification/b3-ge-e4-pl/r8-bl5-saved-mode-screen-dev-20260929-v1/`.
+No formal F03 authority was consumed.
 
 The bounded M1 low-yield ticket restored the existing accepted 40 N checkpoint
 and reproduced the 45 N backtrack-budget failure (163 assemblies, best free
