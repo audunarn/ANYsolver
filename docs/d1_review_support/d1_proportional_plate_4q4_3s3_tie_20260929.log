@@ -1,0 +1,47 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_proportional_plate_dev.py", line 181, in <module>
+    main(args.output, source_cells=args.source_cells,
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         target_cells=args.target_cells, total_force_n=args.force_n)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_proportional_plate_dev.py", line 134, in main
+    result = solve_static_nonlinear(
+        model, load, contact=definition, contact_settings=settings,
+        kinematics="von_karman", num_steps=2, max_iterations=18,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7759, in solve_static_nonlinear
+    return solve_static_contact_path(
+        model, contact, contact_settings, owned_program,
+    ...<5 lines>...
+        cancellation_token=cancellation_token,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1700, in solve_static_contact_path
+    return _run_with_qualified_assembly_runtime_lease(
+        model, context="solve_static_contact_path", operation=operation,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3651, in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3626, in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1698, in operation
+    return _run_with_nonlinear_state_cleanup(run)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_state.py", line 271, in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1668, in run
+    else manager.evaluate(final_u, tangent=False)[2].to_dict()),
+         ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py", line 597, in evaluate
+    work = (self.law.work(source, target, self.normal_multipliers,
+            ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                          tangent=tangent, _prepared_state=prepared)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 600, in work
+    return self._work_unresolved(current_source, current_target,
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 multipliers, tangent=tangent,
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 prepared_state=_prepared_state)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 993, in _work_unresolved
+    raise ValueError("S3 patch shared-edge derivative is nonunique")
+ValueError: S3 patch shared-edge derivative is nonunique
