@@ -252,7 +252,7 @@ def solve(ops, intervals: int, case: str, *, constraint_form: str) -> dict:
 
 
 def main(site: Path, output: Path, *, canary: bool = False,
-         constraint_form: str = "chain"):
+         constraint_form: str = "chain", canary_load: str = "fy"):
     if sys.version_info[:2] != (3, 12):
         raise RuntimeError("pinned OpenSeesPy binary requires Python 3.12")
     if output.exists():
@@ -261,9 +261,12 @@ def main(site: Path, output: Path, *, canary: bool = False,
     import openseespy.opensees as ops
     from openseespywin import opensees as core
 
+    if canary_load not in LOADS:
+        raise ValueError("declared canary load required")
     result = {"classification": "BL5 five-channel nodal comparator; development only",
               "constraint_form": constraint_form,
-              "scope": "constraint canary n4 Fy" if canary else "4/8/16 Fy/Mx",
+              "scope": (f"constraint canary n4 {canary_load}" if canary
+                        else "4/8/16 Fy/Mx"),
               "opensees": ops.version(), "python": sys.version.split()[0],
               "binary": str(Path(core.__file__).resolve()),
               "binary_sha256": sha256(Path(core.__file__).read_bytes()).hexdigest(),
@@ -279,7 +282,7 @@ def main(site: Path, output: Path, *, canary: bool = False,
               "cases": [], "failure": None}
     try:
         for n in LEVELS[:1] if canary else LEVELS:
-            for case in ("fy",) if canary else LOADS:
+            for case in (canary_load,) if canary else LOADS:
                 result["cases"].append(solve(
                     ops, n, case, constraint_form=constraint_form))
     except Exception as exc:
@@ -299,8 +302,9 @@ if __name__ == "__main__":
     parser.add_argument("--site", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--canary", action="store_true")
+    parser.add_argument("--canary-load", choices=tuple(LOADS), default="fy")
     parser.add_argument("--constraint-form", choices=("chain", "direct"),
                         default="chain")
     args = parser.parse_args()
     main(args.site, args.output, canary=args.canary,
-         constraint_form=args.constraint_form)
+         constraint_form=args.constraint_form, canary_load=args.canary_load)
