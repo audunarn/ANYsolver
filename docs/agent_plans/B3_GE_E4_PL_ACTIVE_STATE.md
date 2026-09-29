@@ -140,6 +140,37 @@ The remaining V06 work is a representative engineering-boundary response,
 independent mechanics review and the required broader installed/platform
 checks; this focused wheel screen does not accept V06.
 
+Next bounded M1/V06 decision: under ordinary beam-tip axial force and
+physical-axis moment, does a centered eccentric stiffener on a symmetric,
+free-edge narrow Q4 strip approach the analytic transformed-section
+compliance on three 2D grids? Use both offset signs, identical section,
+root clamp, point stations and physical loads; compare the full axial/curvature
+cross-coupled prediction, shell strain shape, reactions and solver work.
+If physical quantities converge within the existing V06 criterion, register
+the representative case for independent review; if not, distinguish
+finite-width/root effects from point-transfer or solver defects before
+altering the law. This is a different idealization from E01's edge rib and
+does not resolve E01 by itself. No new F03 authority or tolerance change.
+
+The centered-rib comparison is complete on the three registered grids,
+both offset signs and three physical tip-load combinations (18 cases each
+native/external). OpenSees 3.8.0 closes point gaps, work and support balance;
+the native results from source and the isolated wheel are byte-identical.
+For pure Fx and My cases, beam-tip axial translation and physical-y rotation
+differ by at most 0.1752% native/external. The largest mixed-load axial
+relative difference is 1.3923% at negative offset, but that response is
+near cancellation (absolute difference 1.14e-9 m), so a registered floor is
+needed before formal scoring. Both implementations are 3.72%/3.86% more
+compliant in pure bending than the homogeneous 1D formula at 8×8; both have
+nonuniform cross-width curvature. Their local curvature profiles differ up
+to 8.47%, so close global response is not full field agreement. This rules
+out the simple 1D formula as an exact reference for this point-connected 2D
+geometry; it does not rule out native local-shell differences or settle the
+edge-rib E01 torsional question. Preserve the six-row point law and seek a
+reviewed physically matched V06 reference/floor; do not refine automatically.
+Evidence: `.qualification/b3-ge-e4-pl/r8-v06-centered-cantilever-dev-20260929-v3/`.
+V06/M1 remain open.
+
 The targeted flat-web comparison kept geometry, native section, normal offset,
 plate-root supports, and physical plate-Fy/beam-Mx actions identical. Both BL5
 P0 spans completed and closed equilibrium, constraint, support wrench, energy

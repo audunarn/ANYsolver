@@ -63,10 +63,15 @@ independently derived boundary-load solves pass both offsets and three 2D
 grids, with 6/6 source and isolated installed-wheel regressions on Windows.
 The finest-grid force-like retained
 coordinates show a 4.40e-9 scaled numerical drift. Representative
-engineering-boundary response, broader installed/platform checks, and complete V06
-adjudication remain open. See
+engineering-boundary centered-rib responses are now compared with executed
+OpenSees cases on three grids: pure-load tip outputs differ by at most 0.1752%,
+but local curvature profiles differ and a combined near-cancellation response
+needs the registered absolute floor. The homogeneous 1D section formula is
+not an exact oracle for that 2D model. Broader installed/platform checks,
+independent mechanics review and complete V06 adjudication remain open. See
 `.qualification/b3-ge-e4-pl/r8-v06-transformed-energy-dev-20260929-v5/`
-and `.qualification/b3-ge-e4-pl/r8-v06-installed-dev-20260929-v1/`.
+`.qualification/b3-ge-e4-pl/r8-v06-installed-dev-20260929-v1/` and
+`.qualification/b3-ge-e4-pl/r8-v06-centered-cantilever-dev-20260929-v3/`.
 
 | External comparison | Status | Current boundary |
 |---|---|---|
