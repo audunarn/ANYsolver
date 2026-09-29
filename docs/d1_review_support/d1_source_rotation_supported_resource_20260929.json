@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 11.982708600000478,
+  "peak_process_tree_memory_mb": 275.529728,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs/d1_review_support/d1_source_rotation_coupled.py",
+    "docs/d1_review_support/d1_source_rotation_supported_20260929.json",
+    "--steps-per-segment",
+    "2",
+    "--columns",
+    "4",
+    "--right-support"
+  ],
+  "log": "docs\\d1_review_support\\d1_source_rotation_supported_log_20260929.txt"
+}

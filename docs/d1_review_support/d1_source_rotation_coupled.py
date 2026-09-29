@@ -27,7 +27,8 @@ def _json_default(value):
     raise TypeError(f"cannot serialize {type(value).__name__}")
 
 
-def build_case(steps_per_segment: int = 2, columns: int = 4):
+def build_case(steps_per_segment: int = 2, columns: int = 4,
+               right_support: bool = False):
     model, definition, settings, program = build_free_target_case(
         columns, steps_per_segment=steps_per_segment,
         enforcement_solver="monolithic_active_set",
@@ -52,7 +53,18 @@ def build_case(steps_per_segment: int = 2, columns: int = 4):
         "source_left_bending_rotation", left_support.node_ids,
         {"ry": 0.0},
     ))
-    return model, definition, settings, program, source_nodes, left_support.node_ids
+    right_nodes = ()
+    if right_support:
+        right_x = max(model.mesh.nodes[node].x for node in source_nodes)
+        right_nodes = tuple(
+            node for node in source_nodes
+            if abs(model.mesh.nodes[node].x-right_x) < 1e-12
+        )
+        model.add_boundary_condition(BoundaryCondition(
+            "source_right_vertical_support", right_nodes, {"uz": 0.0},
+        ))
+    return (model, definition, settings, program, source_nodes,
+            left_support.node_ids, right_nodes)
 
 
 def _assembled(model, manager, snapshot, pose, forces, tangent):
@@ -118,12 +130,13 @@ def _sample_projected_gap(source, target, source_faces, target_faces):
 
 
 def main(output: Path, steps_per_segment: int, columns: int,
-         trace_swept: bool, capture_failed_pose: bool):
+         trace_swept: bool, capture_failed_pose: bool,
+         right_support: bool):
     if output.exists():
         raise FileExistsError(output)
     began = time.perf_counter()
-    model, definition, settings, program, source_nodes, left_nodes = build_case(
-        steps_per_segment, columns,
+    model, definition, settings, program, source_nodes, left_nodes, right_nodes = build_case(
+        steps_per_segment, columns, right_support,
     )
     swept_calls = []
     if trace_swept:
@@ -181,6 +194,7 @@ def main(output: Path, steps_per_segment: int, columns: int,
         "elapsed_seconds": time.perf_counter()-began,
         "source_nodes": source_nodes,
         "left_rotation_support_nodes": left_nodes,
+        "right_vertical_support_nodes": right_nodes,
     }
     if result.status != "completed":
         report["available_info_keys"] = sorted(result.info)
@@ -280,6 +294,7 @@ if __name__ == "__main__":
     parser.add_argument("--columns", type=int, default=4)
     parser.add_argument("--trace-swept", action="store_true")
     parser.add_argument("--capture-failed-pose", action="store_true")
+    parser.add_argument("--right-support", action="store_true")
     args = parser.parse_args()
     main(args.output, args.steps_per_segment, args.columns, args.trace_swept,
-         args.capture_failed_pose)
+         args.capture_failed_pose, args.right_support)

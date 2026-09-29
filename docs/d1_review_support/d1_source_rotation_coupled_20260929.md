@@ -68,6 +68,17 @@ rigid mechanism. The coupled failures are more directly explained by the
 recorded pivot and physical-gap controls. Neither the 4- nor 8-Q4 experiment
 accepted a step, so no source-moment or settled-tangent claim follows.
 
+A separate bounded two-step fixture supported source `uz` at both x ends,
+retained free interior `ry` and left-edge `ry` support, and kept the same
+contact law, 0.3 N load and 50 µm gap budget. It rejected its first step
+with `contact_semismooth_backtracking_failed` at iteration 10, 11.98 s /
+275.53 MB. This did not yield an accepted source-rotation work-map check;
+the support variant is stopped without tuning. Its
+[result](d1_source_rotation_supported_20260929.json),
+[log](d1_source_rotation_supported_log_20260929.txt) and
+[resource record](d1_source_rotation_supported_resource_20260929.json)
+are retained.
+
 **Decision:** stop load-step and x-only refinement on this profile. The
 combination of positive weak gaps and actual source-tip penetration needs
 contact-resolution or physical-boundary enforcement work, followed by a
