@@ -20,6 +20,13 @@ known D1 method blocker for unrestricted partial overlap, not a failure
 claim for every saved finite load path. A new derived pairing or consistent
 stabilization requires its own pressure, response and timing evidence.
 
+ANYfem contact-intent persistence is implemented and locally tested on the
+separate `codex/anyfem-contact-intent` branch at `45bdf688a48aeaa7175197a9a1755918a764dffb`
+(23 focused tests). It stores geometry-region selections and rejects a selected
+contact job while ordinary jobs remain usable. This C9 storage slice has no
+mesh map, contact solve or results adapter, and is neither independently
+accepted nor released. See its `docs/contact_intent_task.md` in that branch.
+
 | Profile and geometry | Analysis and lifecycle | Status | Evidence and dependency |
 |---|---|---|---|
 | Planar qualified E4-PL Q4 skin against one fixed rigid plane; midsurface/top/bottom; frictionless penalty mortar | Nonlinear static force or displacement control; version-2 penalty checkpoint under von Karman kinematics | Implemented, locally tested | `tests/test_general_contact_plane.py`, `examples/general_contact_planar_plate.py`; corotational restart, independent review and registered numerical qualification open |
