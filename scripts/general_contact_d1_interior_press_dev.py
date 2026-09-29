@@ -470,9 +470,9 @@ if __name__ == "__main__":
     parser.add_argument("output", type=Path)
     parser.add_argument("--force-n", type=float, default=0.08)
     parser.add_argument("--reference-slope", type=float, default=0.01)
-    parser.add_argument("--target-columns", type=int, choices=(1, 2, 3),
+    parser.add_argument("--target-columns", type=int, choices=(1, 2, 3, 4, 6),
                         default=1)
-    parser.add_argument("--target-rows", type=int, choices=(1, 2, 3),
+    parser.add_argument("--target-rows", type=int, choices=(1, 2, 3, 4, 6),
                         default=1)
     parser.add_argument("--source-support", choices=("left", "perimeter"),
                         default="left")

@@ -1155,7 +1155,8 @@ class MovingS3PatchProjectedNormal:
         # Only columns need restriction to reachable solution variations.
         weighted_hessian = np.zeros((count, len(active_coordinates))) if tangent else None
         support_hessian = np.zeros_like(weighted_hessian) if tangent else None
-        evaluations = len(self.geometry.pair_laws)
+        evaluations = (len(self.geometry.pair_laws) if base.pair_states is None
+                       else sum(local is not None for local in base.pair_states))
         zero_area_overlap_pairs = []
         source = np.asarray(current_source, dtype=float)
         target = np.asarray(current_target, dtype=float)
@@ -1190,6 +1191,8 @@ class MovingS3PatchProjectedNormal:
                 evaluations += 1
             else:
                 local = pair_states[pair_index]
+            if local is None:
+                continue
             if local.reference_overlap_area == 0.0:
                 if local.overlap_vertices > 0:
                     zero_area_overlap_pairs.append(pair_index)

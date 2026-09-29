@@ -327,6 +327,64 @@ def offline_target_reference(output: Path) -> None:
     print(json.dumps(cases))
 
 
+def offline_target_xy_reference(output: Path, baseline_path: Path) -> None:
+    """Screen x/y S3 refinement under the same fixed physical source load."""
+    if output.exists():
+        raise FileExistsError(output)
+    from examples.general_contact_d1_interior_controls_dev import (
+        _independent_projected_gap_bound,
+    )
+
+    baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+    cases = [next(item for item in baseline["cases"]
+                  if item["target_columns"] == item["target_rows"] == 2)]
+    if (cases[0]["source_columns"] != 16
+            or cases[0]["source_rows"] != 16
+            or cases[0]["load_shape"] != "physical_bump"):
+        raise ValueError("baseline target reference has incompatible mechanics")
+    points = ((0.6, 0.6), (0.6, 0.7), (0.6, 0.9))
+    for target_cells in (3, 4):
+        model, definition, _settings, program = build_interior_press(
+            source_support="perimeter", source_columns=16,
+            source_rows=16, source_y_profile="uniform_ref16",
+            offline_structural_reference_y16=True,
+            target_columns=target_cells, target_rows=target_cells,
+            force_n=0.04, reference_slope=1.0e-4,
+            load_shape="physical_bump", slide_body="target",
+            target_reference_full_left_clamp=True,
+        )
+        reference = solve_reference_singleton(
+            model, definition, program, 2, allow_multimode=True)
+        lower_gap = _independent_projected_gap_bound(
+            model, definition, reference["displacement"],
+            definition.interactions[0].gap_tolerance)
+        target_first = 17*17+1
+        cases.append({
+            "source_columns": 16, "source_rows": 16,
+            "target_columns": target_cells, "target_rows": target_cells,
+            "target_s3_faces": 2*target_cells**2,
+            "fixed_middle_left_nodes": tuple(
+                target_first+(target_cells+1)*row
+                for row in range(1, target_cells)),
+            "load_shape": "physical_bump",
+            "integrated_normal_force_n": reference["integrated_force"],
+            "active_node_ids": reference["active_node_ids"],
+            "independent_projected_lower_gap_m": lower_gap,
+            "sample_xy_m": points,
+            "source_vertical_displacement_m": _source_vertical_samples(
+                model, reference["displacement"], 16, points, columns=16),
+            "structural_free_coordinates": reference[
+                "structural_free_coordinates"],
+        })
+    output.write_text(json.dumps({"baseline": str(baseline_path),
+                                  "cases": cases}, indent=2)+"\n",
+                      encoding="utf-8")
+    print(json.dumps([{key: item[key] for key in (
+        "target_columns", "target_rows", "integrated_normal_force_n",
+        "independent_projected_lower_gap_m")}
+        for item in cases]))
+
+
 def target8s3_coupled_oracle(output: Path) -> None:
     if output.exists():
         raise FileExistsError(output)
@@ -538,6 +596,8 @@ if __name__ == "__main__":
         offline_target_reference(Path(sys.argv[2]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--target8s3-coupled-oracle":
         target8s3_coupled_oracle(Path(sys.argv[2]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--offline-target-xy-reference":
+        offline_target_xy_reference(Path(sys.argv[2]), Path(sys.argv[3]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--target8s3-coupled-comparison":
         target8s3_coupled_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
                                     Path(sys.argv[4]))

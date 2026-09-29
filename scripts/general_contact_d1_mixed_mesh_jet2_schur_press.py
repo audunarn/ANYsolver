@@ -67,8 +67,8 @@ def build_case(columns: int, *, four_phase: bool = False,
     if not 0.0 <= common_reference_slope <= 0.1 or (
             common_reference_slope and target_reference_slope):
         raise ValueError("common slope must be in [0, 0.1] without target-only slope")
-    if target_columns not in (1, 2, 3) or target_rows not in (1, 2, 3):
-        raise ValueError("this development case admits one to three target rows and columns")
+    if target_columns not in (1, 2, 3, 4, 6) or target_rows not in (1, 2, 3, 4, 6):
+        raise ValueError("this development case admits 1/2/3/4/6 target rows and columns")
     if source_rows not in (1, 2, 4, 8) and not (
             source_rows == 16 and offline_structural_reference_y16):
         raise ValueError("this development case admits at most eight source rows; "

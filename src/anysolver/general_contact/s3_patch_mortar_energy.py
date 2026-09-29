@@ -78,12 +78,16 @@ class MovingS3PatchPrimalMortarPenalty:
                  maximum_q4_source_integration_triangles: int | None = None,
                  q4_source_derivative_tolerances: tuple[float | None, ...] | None = None,
                  differentiation: str = "global",
-                 maximum_candidate_pairs: int = 4):
+                 maximum_candidate_pairs: int = 4,
+                 pair_broadphase: bool = True):
         self.source_faces = tuple(source_faces)
         self.target_faces = tuple(target_faces)
         if differentiation not in {"global", "pair_local", "jet2_s3", "jet2_q4_s3"}:
             raise ValueError("S3 patch differentiation mode is invalid")
         self.differentiation = differentiation
+        if type(pair_broadphase) is not bool:
+            raise ValueError("patch pair broad phase selection must be boolean")
+        self.pair_broadphase = pair_broadphase
         if (type(maximum_candidate_pairs) is not int or maximum_candidate_pairs < 1
                 or len(self.source_faces)*len(self.target_faces) > maximum_candidate_pairs):
             raise MemoryError("S3 patch exceeds declared candidate-pair budget")
@@ -289,6 +293,7 @@ class MovingS3PatchPrimalMortarPenalty:
             raise ValueError("S3 patch current coordinates have invalid size or values")
         self._check_same_side_overlap(source, self.source_face_indices)
         self._check_same_side_overlap(target, self.target_face_indices)
+        candidate_indices = self._candidate_pair_indices(source, target)
         support = np.zeros(len(self.source_node_ids))
         weighted_gap = np.zeros_like(support)
         gram = np.zeros((len(support), len(support)))
@@ -301,6 +306,10 @@ class MovingS3PatchPrimalMortarPenalty:
         area_error = 0.0
         pair_states = []
         for index, law in enumerate(self.pair_laws):
+            if candidate_indices is not None and index not in candidate_indices:
+                pair_states.append(None)
+                signature.append(0)
+                continue
             source_face = index // len(self.target_faces)
             target_face = index % len(self.target_faces)
             state = law.evaluate(source[self.source_face_indices[source_face]],
@@ -337,6 +346,72 @@ class MovingS3PatchPrimalMortarPenalty:
             weighted_error, integration_triangles, area_error,
             tuple(pair_states),
         )
+
+    def _candidate_pair_indices(self, source: np.ndarray,
+                                target: np.ndarray) -> set[int] | None:
+        """Conservatively bound target faces projected along each source normal.
+
+        The source Q4 projection is the same four-corner plane used by the
+        exact mortar kernel. Its bilinear interior stays in the convex hull
+        of those corners. A target point whose projection can enter that
+        hull lies in the full target-depth prism used for the tree query.
+        Inclusive padded boxes retain zero-area touching branches.
+        """
+        if not self.pair_broadphase or len(self.pair_laws) <= 64:
+            return None
+        from .contact_search import ContactAABBIndex
+
+        target_boxes = np.asarray([
+            np.r_[np.min(target[nodes], axis=0),
+                  np.max(target[nodes], axis=0)]
+            for nodes in self.target_face_indices
+        ])
+        search = ContactAABBIndex(
+            tuple(("target_face", i) for i in range(len(target_boxes))),
+            target_boxes,
+        )
+        scene_min = np.min(target, axis=0)
+        scene_max = np.max(target, axis=0)
+        scene_corners = np.asarray([
+            (x, y, z) for x in (scene_min[0], scene_max[0])
+            for y in (scene_min[1], scene_max[1])
+            for z in (scene_min[2], scene_max[2])
+        ])
+        scale = max(1.0, float(np.max(np.abs(source))),
+                    float(np.max(np.abs(target))))
+        margin = 256.0*np.finfo(float).eps*scale
+        candidate_indices: set[int] = set()
+        for source_index, nodes in enumerate(self.source_face_indices):
+            positions = source[nodes]
+            if len(nodes) == 4:
+                face, normal = projected_q4_source_face(positions)
+            else:
+                face = PlanarFace((1, source_index+1), positions)
+                normal = np.cross(positions[1]-positions[0],
+                                  positions[2]-positions[0])
+                normal /= np.linalg.norm(normal)
+            tangent = face.corners[1]-face.corners[0]
+            tangent /= np.linalg.norm(tangent)
+            binormal = np.cross(normal, tangent)
+            origin = face.corners[0]
+            source_relative = face.corners-origin
+            source_xy = np.column_stack((source_relative@tangent,
+                                         source_relative@binormal))
+            low = np.min(source_xy, axis=0)-margin
+            high = np.max(source_xy, axis=0)+margin
+            depth = (scene_corners-origin)@normal
+            prism = np.asarray([
+                origin+a*tangent+b*binormal+c*normal
+                for a in (low[0], high[0])
+                for b in (low[1], high[1])
+                for c in (np.min(depth)-margin, np.max(depth)+margin)
+            ])
+            box = np.r_[np.min(prism, axis=0), np.max(prism, axis=0)]
+            candidate_indices.update(
+                source_index*len(self.target_faces)+key[1]
+                for key in search.query(box, padding=4*margin)
+            )
+        return candidate_indices
 
     def work(self, current_source: np.ndarray, current_target: np.ndarray,
              *, tangent: bool = True) -> MovingS3PatchMortarWork:
