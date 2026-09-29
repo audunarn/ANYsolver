@@ -14,7 +14,7 @@ Statuses describe acceptance, not prototype progress. `IN_PROGRESS`
 includes incomplete or failed required cases; it never means a numerical
 pass.
 
-F07/F12 development correction: the distinct flat-Q4 director mass and corrected bounded descriptors pass 17/17 source and 17/17 exact installed checks, with independent review findings closed. Legacy mass and historical evidence are unchanged. Evidence: `.qualification/b3-ge-e4-pl/r8-physical-q4-mass-dev-20260929-v1/`. Sparse/public spectral admission and aggregate acceptance remain open.
+F07/F12 development correction: the distinct flat-Q4 director mass and corrected bounded descriptors pass 17/17 source and 17/17 exact installed checks, with independent review findings closed. Legacy mass and historical evidence are unchanged. Evidence: `.qualification/b3-ge-e4-pl/r8-physical-q4-mass-dev-20260929-v1/`. Sparse/public spectral qualification and aggregate acceptance remain open.
 
 M4 reference-modal development: the existing B2/Q4 facade now returns checked experimental finite pairs with explicit mass and coordinate supports, including retained zero-inertia primal variables. Source/installed solver 54/54 and installed consumer 6/6 pass; independent findings closed. Evidence: `.qualification/b3-ge-e4-pl/r8-b2-reference-modes-dev-20260929-v1/`. Completeness/repeated spaces, free-free, prestress/buckling/GE, modal persistence and G4B acceptance remain open.
 
