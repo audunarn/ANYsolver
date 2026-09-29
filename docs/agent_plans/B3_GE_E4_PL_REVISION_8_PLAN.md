@@ -1,8 +1,8 @@
 # B3-GE / E4-PL stiffened shells: Revision 8 development plan
 
-**Status, 29 September 2026:** reviewed and revised planning basis.
-**Implementation is paused.** This document becomes the forward execution basis
-on explicit user resumption; completing this review does not resume work.
+**Status, 29 September 2026:** active forward execution basis following the
+user's explicit resumption. The original planning review alone did not resume
+implementation.
 The companion [goal](B3_GE_E4_PL_REVISION_8_GOAL.md) defines the objective,
 decision rights and completion conditions.
 

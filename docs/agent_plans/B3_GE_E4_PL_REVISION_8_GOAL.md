@@ -1,9 +1,10 @@
 # B3-GE / E4-PL stiffened shells: Revision 8 goal
 
-**Status, 29 September 2026:** reviewed planning basis; implementation remains
-paused until the user explicitly resumes it. The user requested this review
-and direct document edits, not development. Editing this file neither starts
-a run nor creates or resumes a task goal.
+**Status, 29 September 2026:** active development. The user explicitly resumed
+implementation after approving this planning basis. The original document
+review did not itself authorize a run; subsequent user resumption did. The
+living [active state](B3_GE_E4_PL_ACTIVE_STATE.md) holds current source identity,
+delivered behavior and remaining decisions.
 
 At reviewed integration source `5ba6a77a`, the M1/M3 experimental routes
 operate but are not acceptance-complete. E01 has an executed point-link screen.
@@ -72,7 +73,7 @@ The near-term critical path is one consolidated M1 installed/consumer route,
 one bounded E01 two-direction comparison followed by its decision, and one
 mechanically defensible M2 law/space decision. Run the independent B2 admission
 and batch route when its ownership and numerical resources permit. These are
-priorities, not new gates or permission to start while implementation is paused.
+priorities, not new gates or independent execution authority.
 
 ## 3. Autonomous decision rights
 
