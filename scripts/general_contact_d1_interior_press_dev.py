@@ -1,8 +1,8 @@
 """Bounded development press for an interior Q4/S3 two-body contact patch.
 
 This is a feasibility fixture, not a qualification case. The source rotations
-are free, the S3 target bends, and only the source's interior middle node is
-loaded. Report active rim pressure explicitly rather than hiding it.
+are free, the S3 target bends, and source loads act on declared interior nodes.
+Report active rim pressure explicitly rather than hiding it.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ from pathlib import Path
 import time
 
 import anysolver
+import numpy as np
 from anysolver import (
     BoundaryCondition, ContactPathControl, ContactPathNodalForce,
     ContactPathProgram, solve_static_nonlinear, validate_general_contact,
@@ -32,7 +33,17 @@ def build_interior_press(*, force_n: float = 0.08,
                          source_rows: int = 2,
                          load_shape: str = "point",
                          four_phase: bool = False,
-                         steps_per_segment: int = 2):
+                         steps_per_segment: int = 2,
+                         slide_distance_m: float = 0.05,
+                         slide_intervals: int = 1,
+                         slide_body: str = "source",
+                         shared_edge_tie: bool = False):
+    if not np.isfinite(slide_distance_m) or slide_distance_m <= 0.0:
+        raise ValueError("slide distance must be positive and finite")
+    if type(slide_intervals) is not int or not 1 <= slide_intervals <= 10:
+        raise ValueError("slide intervals must be an integer in [1, 10]")
+    if slide_body not in {"source", "target"}:
+        raise ValueError("slide body must be source or target")
     columns, rows = source_columns, source_rows
     stride = columns + 1
     model, definition, settings, _program = build_case(
@@ -71,8 +82,14 @@ def build_interior_press(*, force_n: float = 0.08,
     model.add_boundary_condition(BoundaryCondition(
         "target_left_clamp", (target_start,
                               target_start + target_columns + 1),
-        {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+        {name: 0.0 for name in (("ux", "uy", "uz", "rx", "ry", "rz")
+                                    if slide_body == "source"
+                                    else ("uy", "uz", "rx", "ry", "rz"))},
     ))
+    if slide_body == "target":
+        model.add_boundary_condition(BoundaryCondition(
+            "source_x_anchor", (1,), {"ux": 0.0},
+        ))
     settings = replace(
         settings, enforcement_solver="monolithic_active_set",
         complementarity_force_scale_n=force_n,
@@ -86,6 +103,11 @@ def build_interior_press(*, force_n: float = 0.08,
         d1_interior_profile=True,
         d1_interior_coverage_tolerance_m2=1.0e-10,
         d1_interior_boundary_force_tolerance_n=1.0e-10,
+        **({
+            "q4_s3_shared_edge_tie_step_m": 3.0e-8,
+            "q4_s3_shared_edge_tie_direction": (1.0, 0.0, 0.0),
+            "q4_s3_shared_edge_tie_relative_tolerance": 1.0e-6,
+        } if shared_edge_tie else {}),
     )
     interior = tuple(1 + row * stride + column
                      for row in range(1, rows)
@@ -103,11 +125,15 @@ def build_interior_press(*, force_n: float = 0.08,
     waypoints = ((0.0, 0.0), (0.0, 0.0))
     force_factors = (0.0, 1.0)
     if four_phase:
-        waypoints += ((0.05, 0.05), (0.05, 0.05), (0.05, 0.05))
-        force_factors += (1.0, 0.0, 1.0)
+        waypoints += tuple((slide_distance_m * i / slide_intervals,) * 2
+                           for i in range(1, slide_intervals + 1))
+        waypoints += ((slide_distance_m, slide_distance_m),) * 2
+        force_factors += (1.0,) * slide_intervals + (0.0, 1.0)
+    controlled_nodes = ((1, columns + 2) if slide_body == "source" else
+                        (target_start, target_start + target_columns + 1))
     program = ContactPathProgram(
-        controls=(ContactPathControl.node(1, "ux"),
-                  ContactPathControl.node(columns + 2, "ux")),
+        controls=tuple(ContactPathControl.node(node, "ux")
+                       for node in controlled_nodes),
         waypoints=waypoints,
         steps_per_segment=steps_per_segment,
         nodal_forces=tuple(ContactPathNodalForce(
@@ -122,7 +148,9 @@ def main(output: Path, *, force_n: float, reference_slope: float,
          target_columns: int, source_support: str,
          source_columns: int, source_rows: int, load_shape: str,
          max_path_fraction: float, four_phase: bool,
-         steps_per_segment: int):
+         steps_per_segment: int, slide_distance_m: float,
+         slide_intervals: int, slide_body: str,
+         shared_edge_tie: bool):
     if output.exists():
         raise FileExistsError(output)
     started = time.perf_counter()
@@ -132,6 +160,10 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         source_columns=source_columns, source_rows=source_rows,
         load_shape=load_shape,
         four_phase=four_phase, steps_per_segment=steps_per_segment,
+        slide_distance_m=slide_distance_m,
+        slide_intervals=slide_intervals,
+        slide_body=slide_body,
+        shared_edge_tie=shared_edge_tie,
     )
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
@@ -176,6 +208,10 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         "max_path_fraction": max_path_fraction,
         "four_phase": four_phase,
         "steps_per_segment": steps_per_segment,
+        "slide_distance_m": slide_distance_m,
+        "slide_intervals": slide_intervals,
+        "slide_body": slide_body,
+        "shared_edge_tie": shared_edge_tie,
         "status": result.status,
         "failure_reason": result.failure_reason,
         "accepted_steps": len(result.steps),
@@ -204,9 +240,14 @@ if __name__ == "__main__":
     parser.add_argument("--source-columns", type=int, choices=(4, 8), default=4)
     parser.add_argument("--load-shape", choices=("point", "interior_distributed"),
                         default="point")
-    parser.add_argument("--max-path-fraction", type=float, choices=(0.5, 1.0),
+    parser.add_argument("--max-path-fraction", type=float,
                         default=1.0)
     parser.add_argument("--four-phase", action="store_true")
+    parser.add_argument("--slide-distance-m", type=float, default=0.05)
+    parser.add_argument("--slide-intervals", type=int, default=1)
+    parser.add_argument("--slide-body", choices=("source", "target"),
+                        default="source")
+    parser.add_argument("--shared-edge-tie", action="store_true")
     parser.add_argument("--steps-per-segment", type=int, choices=(1, 2),
                         default=2)
     arguments = parser.parse_args()
@@ -218,4 +259,8 @@ if __name__ == "__main__":
          source_rows=arguments.source_rows, load_shape=arguments.load_shape,
          max_path_fraction=arguments.max_path_fraction,
          four_phase=arguments.four_phase,
-         steps_per_segment=arguments.steps_per_segment)
+         steps_per_segment=arguments.steps_per_segment,
+         slide_distance_m=arguments.slide_distance_m,
+         slide_intervals=arguments.slide_intervals,
+         slide_body=arguments.slide_body,
+         shared_edge_tie=arguments.shared_edge_tie)

@@ -1,0 +1,27 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 28.84605900000315,
+  "peak_process_tree_memory_mb": 340.410368,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_press_dev.py",
+    "docs/d1_review_support/d1_interior_short_slide_20260929.json",
+    "--source-support",
+    "perimeter",
+    "--source-rows",
+    "4",
+    "--load-shape",
+    "interior_distributed",
+    "--force-n",
+    "0.04",
+    "--four-phase",
+    "--slide-distance-m",
+    "0.01",
+    "--max-path-fraction",
+    "0.375"
+  ],
+  "log": "docs\\d1_review_support\\d1_interior_short_slide_20260929.log"
+}
