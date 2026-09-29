@@ -1,0 +1,153 @@
+{
+  "source": "current working tree",
+  "status": "diverged",
+  "failure_reason": "contact_semismooth_backtracking_failed",
+  "accepted_steps": 0,
+  "requested_steps": 4,
+  "elapsed_seconds": 13.50984790000075,
+  "source_nodes": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "left_rotation_support_nodes": [
+    1,
+    6
+  ],
+  "available_info_keys": [
+    "contact_failure",
+    "contact_path",
+    "control",
+    "failure_reason",
+    "force_displacement_history",
+    "general_contact",
+    "general_contact_profile",
+    "nonlinear_state_storage",
+    "profile",
+    "qualified_q4_committed_state_lifecycle",
+    "qualified_s3_committed_state_lifecycle",
+    "status_category",
+    "stop_reason",
+    "total_newton_iterations"
+  ],
+  "contact_failure": {
+    "iteration": 9,
+    "merit": 0.052772869905373124,
+    "equilibrium": 0.052772869905373124,
+    "constraint": 3.211439707943206e-13,
+    "complementarity": 0.01564096528128577,
+    "active_modes": 0,
+    "z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0007450122636450907,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.00394727732074064
+    ],
+    "c": [
+      624.9999999999999,
+      1249.9999999999998,
+      1249.9999999999998,
+      1250.0000000000002,
+      625.0000000000005,
+      624.9999999999999,
+      1249.9999999999998,
+      1249.9999999999995,
+      1250.0,
+      625.0000000000002
+    ],
+    "support": [
+      0.061875000722112765,
+      0.12375000275701901,
+      0.12375000472666978,
+      0.12375000669595786,
+      0.061875004004425284,
+      0.05062500649898917,
+      0.10125002481321563,
+      0.1012500425400741,
+      0.10125006026371172,
+      0.05062503603989275
+    ],
+    "gap": [
+      0.0002934718591450018,
+      0.0003944801661589346,
+      0.00034821729071469467,
+      0.00016787787247944086,
+      2.4204079504505936e-05,
+      0.0002934555641385185,
+      0.00039442494933989705,
+      0.0003480882113445179,
+      0.00016776234490030608,
+      2.4205821675815634e-05
+    ],
+    "y": [
+      -0.18341991196562607,
+      -0.49310020769866814,
+      -0.4352716133933683,
+      -0.2098473405993011,
+      -0.014382537426671132,
+      -0.183409727586574,
+      -0.4930311866748712,
+      -0.4351102641806472,
+      -0.2097029311253826,
+      -0.011181361226644137
+    ],
+    "ncp": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0007450122636450907,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.00394727732074064
+    ],
+    "last_trial": null,
+    "direction_q_norm": 0.014255970609768796,
+    "direction_z_min": -0.0,
+    "direction_z_max": 0.006102200839379686,
+    "attempts": []
+  },
+  "contact_path": {
+    "accepted_step": 0,
+    "total_steps": 4,
+    "targets": [
+      0.0,
+      0.0
+    ],
+    "reaction_generalized": [
+      0.0,
+      0.0
+    ],
+    "profile": "Q4_S3_PATCH_REFINED_PROJECTED_AUGMENTED_PATH_DEV_V0",
+    "enforcement_solver": "monolithic_active_set",
+    "monolithic_linear_solver": "direct",
+    "monolithic_maximum_pivots": 12,
+    "nodal_forces_n": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0
+    ]
+  }
+}

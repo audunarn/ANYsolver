@@ -1,0 +1,1 @@
+{"status": "diverged", "failure_reason": "contact_semismooth_pivot_limit", "accepted_steps": 0, "elapsed_seconds": 4.647746900001948}
