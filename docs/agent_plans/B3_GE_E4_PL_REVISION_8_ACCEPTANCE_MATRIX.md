@@ -1,7 +1,8 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
 **Updated:** 29 September 2026. **Candidate:** integration branch through
-`65d14cdc`, including inert E01 preparation. This is the forward status index, not an
+`3009b3d0`, plus the E01 development screen recorded in the active state.
+This is the forward status index, not an
 amendment to frozen registrations or historical results. The
 [complete programme](B3_GE_E4_PL_B2_COMPLETE_PROGRAMME.md) defines
 requirements; the [active note](B3_GE_E4_PL_ACTIVE_STATE.md) identifies
@@ -59,7 +60,7 @@ candidate adjudication; a failed required case cannot disappear within it.
 
 | External comparison | Status | Current boundary |
 |---|---|---|
-| E01 eccentric elastic panel | IN_PROGRESS | Prior rigid-footprint canary is unlike M1. Signed six-row point decks are inert with native reference-Jacobian parity only. |
+| E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees 2/4/8-interval signed point screens and native source comparisons passed primary-response, link, work and wrench development checks, but secondary responses disagree; formal observable/floor registration, installed comparison, refinement adjudication and independent review remain open. |
 | E02 torque/footprint | NOT_STARTED | No executed matched comparison. |
 | E03 curved stiffener | NOT_STARTED | No executed matched comparison. |
 | E04 nonlinear GE/capacity | NOT_STARTED | No executed matched comparison. |

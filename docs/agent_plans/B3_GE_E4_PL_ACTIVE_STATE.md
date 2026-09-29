@@ -43,36 +43,28 @@ matched E01, Linux/platform checks and independent review of the complete
 candidate. Do not use the earlier rigid-footprint CalculiX canary as a
 matching-station six-row point-bond oracle.
 
-Current E01 decision: the existing CalculiX rigid-footprint canary has a
-different connection and cannot score M1. Prepare one inert B31/S4 screen
-with the M1 panel coordinates, edge station pairs, signed eccentric offset,
-shell supports and six linearized pose equations. Check reference geometry,
-row independence, rigid-work identity and section assumptions before any
-numerical run. If CalculiX accepts a full elastic increment, next establish
-the expanded rotational MPC work map, reaction interpretation and section
-matching, then register the refined E01 comparison. If it fails, revise the
-external representation. Neither outcome changes F03 or consumes its formal
-authority. Concurrent ANYmesh
-numerical jobs observed on 29 September prevent launching this screen now.
-The inert signed decks and manifest are in
-`.qualification/b3-ge-e4-pl/r8-e01-matching-point-canary-dev-20260929-v1/`.
-Their 18 rows have distinct beam pivots and rigid/wrench work balance to
-roundoff. A separate native-joint Jacobian comparison passed both offset
-signs (2/2). This establishes only reference-linear connection-row
-equivalence; B31 section, S4 response, recovery and execution remain
-unverified. A one-case runner with pinned executable/deck hashes, 120 s and
-8 GiB limits, raw-output retention and warning checks is prepared; its exact
-command is in the evidence README. Run it only when the heavy-job slot is
-free, then decide whether this route can support a refined E01 comparison.
-Before treating a successful solve as mechanically valid, inspect the
-expansion trace for knots at every rotational-MPC station and check rigid
-motion/work there. CalculiX 2.23 section 10.3.6 disallows rotational MPC
-terms at nodes without knots; the prior footprint comparator completed yet
-failed a rigid-motion check for that reason. A completed increment alone
-cannot promote this deck. Its B31 rectangular section also does not establish
-native generalized shear/torsion parity, and printed RF cannot be assumed to
-be the complete support wrench under MPCs. Source: CalculiX 2.23 manual,
-https://www.dhondt.de/ccx_2.23.pdf, sections 6.2, 10.3.6 and NODE PRINT.
+Current E01 decision: keep the inert signed B31/S4 deck and its passed
+native-row Jacobian check as development evidence, but do not execute it as
+a point-bond reference. CalculiX 2.23 creates no rotational knots at these
+flat single-direction stations, so its six rotational MPC terms have no
+verified physical expansion map. Source: `gen3dnor.f:830`, `gen3dmpc.f`
+and https://www.dhondt.de/ccx_2.23.pdf section 10.3.6. The prior rigid-
+footprint canary also failed a related rigid-motion check. This is an
+external encoding defect, not a native formulation rejection.
+
+An independent OpenSeesPy 3.8.0/Python 3.12 reference-linear route now
+supports matching six-coordinate point links with explicit elastic shear
+areas. Two signed offsets at each of 2/4/8 panel intervals completed. Link,
+global wrench and virtual-work checks passed; the printed support reaction
+required beam-root force and eccentric-arm recovery. Six native source solves
+on the same meshes differ from OpenSees by at most 0.077% in tip axial motion,
+0.787% in vertical motion and 0.944% in pitch rotation. Secondary lateral,
+roll and yaw components differ materially, so neither full physical agreement
+nor E01/M1 acceptance follows. Evidence and failed attempts are preserved at
+`.qualification/b3-ge-e4-pl/r8-e01-opensees-point-dev-20260929-v1/`.
+Next identify the secondary-response cause and freeze E01 observables,
+absolute floors and shell idealization before a formal installed comparison.
+No F03 authority was used. The separate ANYmesh heavy job was not interrupted.
 
 Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1. This is the short working checkpoint. The complete pre-compaction note is preserved byte-for-byte in B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20260929.md (SHA-256 2D5071E8A93FDCF35FC3AF49955E0B85F431A19B1DF2BF3742A8CA560584BCDA). The complete programme, acceptance matrix, frozen registrations, failures, and versioned evidence remain authoritative.
 
