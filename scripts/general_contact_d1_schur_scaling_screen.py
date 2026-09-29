@@ -82,8 +82,18 @@ def screen(theta: float) -> dict:
     # Each row maps a 1-Pa pressure coefficient into reduced nodal work.
     # Report quadratic values divided by (1 Pa)^2 so units are m^3/Pa.
     work = np.asarray((support[:, None]*raw.gap_gradient) @ transform)
+    structural_response = np.linalg.solve(reduced, work.T)
+    schur = work @ structural_response
+    if np.linalg.norm(schur-schur.T) > 1.0e-10*max(np.linalg.norm(schur), 1.0e-30):
+        raise AssertionError("structural pressure-response block is not symmetric")
     signed = pressure @ work
-    global_response = float(signed @ np.linalg.solve(reduced, signed))
+    global_response = float(pressure @ schur @ pressure)
+    direct_global = float(signed @ np.linalg.solve(reduced, signed))
+    if not np.isclose(global_response, direct_global, rtol=1.0e-9, atol=1.0e-20):
+        raise AssertionError("pressure-response and direct structural solves differ")
+    exact_individual_hat = float(np.dot(pressure**2, np.diag(schur)))
+    if exact_individual_hat <= 0.0:
+        raise AssertionError("exact individual-hat compliance is not positive")
     individual_hat_response = np.sum(work**2/diagonal[None, :], axis=1)
     local_diagonal = float(np.dot(pressure**2, individual_hat_response))
 
@@ -110,10 +120,14 @@ def screen(theta: float) -> dict:
             for node_id, value in zip(node_ids, pressure) if value != 0.0
         ],
         "global_reduced_compliance_m3_per_pa": global_response,
+        "exact_individual_hat_compliance_m3_per_pa": exact_individual_hat,
         "individual_hat_diagonal_proxy_m3_per_pa": local_diagonal,
         "projected_jump_m2": jump_work,
+        "exact_hat_to_jump_scale_m_per_pa": exact_individual_hat/jump_work,
+        "diagonal_proxy_to_exact_hat_ratio": local_diagonal/exact_individual_hat,
         "proxy_to_jump_scale_m_per_pa": local_diagonal/jump_work,
         "global_over_theta6": global_response/theta**6,
+        "exact_hat_over_theta4": exact_individual_hat/theta**4,
         "proxy_over_theta4": local_diagonal/theta**4,
         "jump_over_theta4": jump_work/theta**4,
         "pressure_support_max_abs_error_m2": float(np.max(np.abs(support-expected))),
@@ -141,8 +155,10 @@ def main() -> None:
     print(json.dumps([{
         "theta": row["theta"],
         "global_over_theta6": row["global_over_theta6"],
+        "exact_hat_over_theta4": row["exact_hat_over_theta4"],
         "proxy_over_theta4": row["proxy_over_theta4"],
         "jump_over_theta4": row["jump_over_theta4"],
+        "exact_hat_to_jump_scale_m_per_pa": row["exact_hat_to_jump_scale_m_per_pa"],
         "proxy_to_jump_scale_m_per_pa": row["proxy_to_jump_scale_m_per_pa"],
     } for row in result["rows"]]))
 
