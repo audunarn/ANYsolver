@@ -78,15 +78,19 @@ def _element_forces(ops, element_id, connectivity):
     return values
 
 
-def solve(ops, intervals: int, case: str) -> dict:
+def solve(ops, intervals: int, case: str, *, constraint_form: str) -> dict:
     if case not in LOADS:
         raise ValueError("declared Fy or Mx reference load required")
+    if constraint_form not in ("chain", "direct"):
+        raise ValueError("declared constraint form required")
     model = geometry(intervals)
     nodes = model["nodes"]
+    active_nodes = {tag: xyz for tag, xyz in nodes.items()
+                    if constraint_form == "chain" or tag < 2000}
     ops.wipe()
     try:
         ops.model("basic", "-ndm", 3, "-ndf", 6)
-        for tag, xyz in nodes.items():
+        for tag, xyz in active_nodes.items():
             ops.node(tag, *xyz)
         ops.section("ElasticMembranePlateSection", 1, E_PA, NU,
                     SHELL_THICKNESS_M, 7850.)
@@ -99,9 +103,23 @@ def solve(ops, intervals: int, case: str) -> dict:
                         BEAM_TORSION_M4, BEAM_BENDING_M4, BEAM_BENDING_M4,
                         BEAM_SHEAR_AREA_M2, BEAM_SHEAR_AREA_M2, 1)
         for shell, beam, shell_aux, beam_aux in model["attachments"]:
-            ops.rigidLink("beam", shell, shell_aux)
-            ops.rigidLink("beam", beam, beam_aux)
-            ops.equalDOF(shell_aux, beam_aux, 1, 2, 3, 4, 5)
+            if constraint_form == "chain":
+                ops.rigidLink("beam", shell, shell_aux)
+                ops.rigidLink("beam", beam, beam_aux)
+                ops.equalDOF(shell_aux, beam_aux, 1, 2, 3, 4, 5)
+            else:
+                # u_b + theta_b x r_b = u_s + theta_s x r_s;
+                # theta_bx/y = theta_sx/y. This is the same linear work
+                # space as the auxiliary chain, without chained MP nodes.
+                rb = BEAM_BOTTOM_ARM_M
+                rs = SHELL_THICKNESS_M/2
+                ops.equationConstraint(beam, 1, 1., shell, 1, -1.,
+                                       beam, 5, rb, shell, 5, -rs)
+                ops.equationConstraint(beam, 2, 1., shell, 2, -1.,
+                                       beam, 4, -rb, shell, 4, rs)
+                ops.equationConstraint(beam, 3, 1., shell, 3, -1.)
+                ops.equationConstraint(beam, 4, 1., shell, 4, -1.)
+                ops.equationConstraint(beam, 5, 1., shell, 5, -1.)
         for tag in model["root_shell_nodes"]:
             ops.fix(tag, 1, 1, 1, 1, 1, 1)
         ops.timeSeries("Linear", 1)
@@ -122,27 +140,35 @@ def solve(ops, intervals: int, case: str) -> dict:
         if code != 0:
             raise RuntimeError(f"OpenSees analyze returned {code}")
         displacement = {tag: tuple(float(v) for v in ops.nodeDisp(tag))
-                        for tag in nodes}
+                        for tag in active_nodes}
         if any(len(row) != 6 or not all(map(math.isfinite, row))
                for row in displacement.values()):
             raise ValueError("finite six-DOF external displacement required")
         max_gap = 0.
         max_rigid_gap = 0.
         for shell, beam, shell_aux, beam_aux in model["attachments"]:
-            shell_u, beam_u = displacement[shell_aux], displacement[beam_aux]
-            max_gap = max(max_gap, *(abs(shell_u[d]-beam_u[d])
-                                     for d in range(5)))
-            for primary, auxiliary in ((shell, shell_aux), (beam, beam_aux)):
-                arm = tuple(nodes[auxiliary][d]-nodes[primary][d]
-                            for d in range(3))
-                expected = tuple(displacement[primary][d]+v for d, v in
-                                 enumerate(_cross(displacement[primary][3:], arm)))
-                max_rigid_gap = max(
-                    max_rigid_gap,
-                    *(abs(displacement[auxiliary][d]-expected[d])
-                      for d in range(3)),
-                    *(abs(displacement[auxiliary][d+3]-displacement[primary][d+3])
-                      for d in range(3)))
+            if constraint_form == "chain":
+                shell_u, beam_u = displacement[shell_aux], displacement[beam_aux]
+                max_gap = max(max_gap, *(abs(shell_u[d]-beam_u[d])
+                                         for d in range(5)))
+                for primary, auxiliary in ((shell, shell_aux), (beam, beam_aux)):
+                    arm = tuple(nodes[auxiliary][d]-nodes[primary][d]
+                                for d in range(3))
+                    expected = tuple(displacement[primary][d]+v for d, v in
+                                     enumerate(_cross(displacement[primary][3:], arm)))
+                    max_rigid_gap = max(
+                        max_rigid_gap,
+                        *(abs(displacement[auxiliary][d]-expected[d])
+                          for d in range(3)),
+                        *(abs(displacement[auxiliary][d+3]-displacement[primary][d+3])
+                          for d in range(3)))
+            else:
+                su, bu = displacement[shell], displacement[beam]
+                rb, rs = BEAM_BOTTOM_ARM_M, SHELL_THICKNESS_M/2
+                gap = (bu[0]+rb*bu[4]-su[0]-rs*su[4],
+                       bu[1]-rb*bu[3]-su[1]+rs*su[3],
+                       bu[2]-su[2], bu[3]-su[3], bu[4]-su[4])
+                max_gap = max(max_gap, *(abs(value) for value in gap))
         internal_work = 0.
         support_force = [0., 0., 0.]
         support_moment = [0., 0., 0.]
@@ -185,6 +211,7 @@ def solve(ops, intervals: int, case: str) -> dict:
                              f"{max_gap=}, {max_rigid_gap=}, {force_error=}, "
                              f"{moment_error=}, {work_error=}")
         return {"intervals": intervals, "case": case,
+                "constraint_form": constraint_form,
                 "shell_elements": len(model["shell_cells"]),
                 "beam_elements": len(model["beam_cells"]),
                 "pointwise_constraint_rows": 5*len(model["attachments"]),
@@ -202,7 +229,8 @@ def solve(ops, intervals: int, case: str) -> dict:
         ops.wipe()
 
 
-def main(site: Path, output: Path, *, canary: bool = False):
+def main(site: Path, output: Path, *, canary: bool = False,
+         constraint_form: str = "chain"):
     if sys.version_info[:2] != (3, 12):
         raise RuntimeError("pinned OpenSeesPy binary requires Python 3.12")
     if output.exists():
@@ -212,6 +240,7 @@ def main(site: Path, output: Path, *, canary: bool = False):
     from openseespywin import opensees as core
 
     result = {"classification": "BL5 five-channel nodal comparator; development only",
+              "constraint_form": constraint_form,
               "scope": "constraint canary n4 Fy" if canary else "4/8/16 Fy/Mx",
               "opensees": ops.version(), "python": sys.version.split()[0],
               "binary": str(Path(core.__file__).resolve()),
@@ -229,7 +258,8 @@ def main(site: Path, output: Path, *, canary: bool = False):
     try:
         for n in LEVELS[:1] if canary else LEVELS:
             for case in ("fy",) if canary else LOADS:
-                result["cases"].append(solve(ops, n, case))
+                result["cases"].append(solve(
+                    ops, n, case, constraint_form=constraint_form))
     except Exception as exc:
         result["failure"] = f"{type(exc).__name__}: {exc}"
         raise
@@ -247,5 +277,8 @@ if __name__ == "__main__":
     parser.add_argument("--site", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--canary", action="store_true")
+    parser.add_argument("--constraint-form", choices=("chain", "direct"),
+                        default="chain")
     args = parser.parse_args()
-    main(args.site, args.output, canary=args.canary)
+    main(args.site, args.output, canary=args.canary,
+         constraint_form=args.constraint_form)
