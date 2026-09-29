@@ -25,10 +25,12 @@ from .control import cancellation_safe_point
 from .corotational import corotational_element_response
 from ._stiffened_shell_ge_experimental import (
     FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
-    FINITE_SHELL_MATERIAL_CHECKPOINT, NodalAction, _owned,
+    FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT,
+    NodalAction, _owned,
     _linear_equilibrium, _scaled_constraint_gap,
 )
 from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_checkpoint
+from ._stiffened_shell_ge_checkpoint_binary import encode_s3 as _encode_s3_checkpoint
 
 
 MAX_JSON_CHECKPOINT_BYTES = 2_000_000
@@ -81,6 +83,8 @@ def _material_observables(histories):
 
 
 def _shell_material_arrays(histories):
+    if not histories:
+        return _owned(np.empty((0, 12, 3))), _owned(np.empty((0, 12)))
     plastic = np.asarray([state["plastic_strain"] for state in histories],
                          dtype=float)
     alpha = np.asarray([state["alpha"] for state in histories], dtype=float)
@@ -124,6 +128,61 @@ def _shell_q4_recovery(parts, states):
 
 
 @dataclass(frozen=True)
+class ShellS3MaterialRecovery:
+    """Owned local S3 plane-stress layers and generalized resultants."""
+
+    element_id: int
+    layer_strain: np.ndarray
+    layer_stress: np.ndarray
+    plastic_strain: np.ndarray
+    alpha: np.ndarray
+    station_generalized_resultant: np.ndarray
+
+
+def _shell_s3_recovery(parts, states):
+    if len(parts) != len(states):
+        raise ValueError("complete S3 shell material recovery required")
+    return tuple(ShellS3MaterialRecovery(
+        int(part[0]),
+        _owned(state["layer_strain"], (9, 3)),
+        _owned(state["layer_stress"], (9, 3)),
+        _owned(state["plastic_strain"], (9, 3)),
+        _owned(state["alpha"], (9,)),
+        _owned(state["station_generalized_resultant"], (3, 8)),
+    ) for part, state in zip(parts, states))
+
+
+def _require_direct_s3_state(state, local_q, *, accepted):
+    """Bind the native S3 constitutive chart to this owner's direct route."""
+    expected = np.asarray(local_q, dtype=float)
+    constitutive = np.asarray(state["committed_constitutive_u"], dtype=float)
+    kinematics = "LINEAR" if accepted else "ELEMENT_LOCAL"
+    if (expected.shape != (18,) or constitutive.shape != (18,) or
+            not np.array_equal(constitutive, expected) or
+            state["solver_kinematics"] != kinematics):
+        raise ValueError("S3 material state disagrees with mixed owner coordinates")
+
+
+def _accepted_shell_material_origins(owner, trial, candidates):
+    """Prepare all Q4/S3 histories before the one mixed-state publish point."""
+    q4_count = len(owner._definition.shell.q4_elements)
+    if len(candidates) != len(owner._shell_parts):
+        raise ValueError("complete mixed shell material candidates required")
+    q4_plastic, q4_alpha = _shell_material_arrays(candidates[:q4_count])
+    origins = list(_shell_material_states(q4_plastic, q4_alpha))
+    material = owner._shell_model.get_material("shell")
+    for (eid, element, slots, _), candidate in zip(
+            owner._shell_parts[q4_count:], candidates[q4_count:]):
+        if len(slots) != 18:
+            raise ValueError("native S3 material candidate required")
+        _require_direct_s3_state(candidate, trial.q[slots], accepted=False)
+        origins.append(element.seal_solver_integrated_nonlinear_state(
+            owner._shell_model.mesh, material, candidate, 3,
+            trial.q[slots], kinematics="LINEAR"))
+    return tuple(origins)
+
+
+@dataclass(frozen=True)
 class FinitePointResult:
     """Experimental finite result with dimensionless work/row-scaled errors."""
     status: str
@@ -143,6 +202,7 @@ class FinitePointResult:
     beam_station_accumulated: tuple[tuple[float, ...], ...] = ()
     shell_layer_alpha: tuple[tuple[float, ...], ...] = ()
     shell_q4_material: tuple[ShellQ4MaterialRecovery, ...] = ()
+    shell_s3_material: tuple[ShellS3MaterialRecovery, ...] = ()
     production_qualified: bool = False
 
 
@@ -351,11 +411,11 @@ class FinitePointDriver:
                     support[owner._fixed] = residual[owner._fixed]
                     next_factors = self._accepted_factors+(float(factor),)
                     if owner._definition.shell.j2_curve is not None:
-                        shell_plastic, shell_alpha = _shell_material_arrays(shell_next)
-                        next_shell_origins = _shell_material_states(
-                            shell_plastic, shell_alpha)
+                        next_shell_origins = _accepted_shell_material_origins(
+                            owner, trial, shell_next)
                     else:
                         next_shell_origins = shell_next
+                    q4_count = len(owner._definition.shell.q4_elements)
                     next_result = FinitePointResult(
                         "completed", float(factor),
                         _owned(trial.q[:owner._shell_count]),
@@ -368,7 +428,11 @@ class FinitePointDriver:
                         (tuple(tuple(float(v) for v in state["alpha"])
                                for state in shell_next)
                          if owner._definition.shell.j2_curve is not None else ()),
-                        (_shell_q4_recovery(owner._shell_parts, shell_next)
+                        (_shell_q4_recovery(owner._shell_parts[:q4_count],
+                                            shell_next[:q4_count])
+                         if owner._definition.shell.j2_curve is not None else ()),
+                        (_shell_s3_recovery(owner._shell_parts[q4_count:],
+                                            shell_next[q4_count:])
                          if owner._definition.shell.j2_curve is not None else ()))
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.publish")
@@ -432,6 +496,24 @@ class FinitePointDriver:
                   ("accepted_factors", np.asarray(self._accepted_factors)))
         nonmonotone = any(b <= a for a, b in zip(
             self._accepted_factors, self._accepted_factors[1:]))
+        if (self.owner._definition.shell.j2_curve is not None and
+                self.owner._definition.shell.s3_elements):
+            q4_count = len(self.owner._definition.shell.q4_elements)
+            beam_plastic, beam_accumulated = _material_arrays(self._beam_origins)
+            shell_plastic, shell_alpha = _shell_material_arrays(
+                self._shell_origins[:q4_count])
+            material = self.owner._shell_model.get_material("shell")
+            s3_states = tuple(element.serialize_nonlinear_state(
+                self.owner._shell_model.mesh, material, origin, 3)
+                for (_eid, element, _slots, _), origin in zip(
+                    self.owner._shell_parts[q4_count:],
+                    self._shell_origins[q4_count:]))
+            return _encode_s3_checkpoint(
+                self.owner._identity, self.owner._generation,
+                arrays + (("beam_plastic", beam_plastic),
+                          ("beam_accumulated", beam_accumulated),
+                          ("shell_plastic", shell_plastic),
+                          ("shell_alpha", shell_alpha)), s3_states)
         if self.owner._definition.shell.j2_curve is not None:
             beam_plastic, beam_accumulated = _material_arrays(self._beam_origins)
             shell_plastic, shell_alpha = _shell_material_arrays(self._shell_origins)
@@ -487,21 +569,29 @@ class FinitePointDriver:
                      "pattern"}
         if type(value) is not dict:
             raise ValueError("incompatible experimental finite checkpoint")
-        shell_material = value.get("schema") == FINITE_SHELL_MATERIAL_CHECKPOINT
+        s3_material = value.get("schema") == FINITE_S3_MATERIAL_CHECKPOINT
+        shell_material = value.get("schema") in (
+            FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT)
         material = value.get("schema") in (
-            FINITE_MATERIAL_CHECKPOINT, FINITE_SHELL_MATERIAL_CHECKPOINT)
+            FINITE_MATERIAL_CHECKPOINT, FINITE_SHELL_MATERIAL_CHECKPOINT,
+            FINITE_S3_MATERIAL_CHECKPOINT)
         expected_keys = (base_keys | {"beam_plastic", "beam_accumulated"}
                          if material else base_keys)
         if shell_material:
             expected_keys |= {"shell_plastic", "shell_alpha"}
+        if s3_material:
+            expected_keys |= {"s3_states"}
         if (set(value) != expected_keys or
                 value["schema"] not in
                 (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
-                 FINITE_SHELL_MATERIAL_CHECKPOINT) or
+                 FINITE_SHELL_MATERIAL_CHECKPOINT,
+                 FINITE_S3_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
                 type(value["generation"]) is not int or
                 value["generation"] < 1 or
-                shell_material != (owner._definition.shell.j2_curve is not None)):
+                shell_material != (owner._definition.shell.j2_curve is not None) or
+                s3_material != bool(owner._definition.shell.j2_curve is not None
+                                    and owner._definition.shell.s3_elements)):
             raise ValueError("incompatible experimental finite checkpoint")
         factors = value["accepted_factors"]
         if (type(factors) is not list or len(factors) != value["generation"] or
@@ -525,18 +615,34 @@ class FinitePointDriver:
             plastic = _owned(value["beam_plastic"], (stations, 6, 2))
             accumulated = _owned(value["beam_accumulated"], (stations, 2))
             beam_origins = _material_histories(owner, plastic, accumulated)
-            if not np.any(accumulated) and all(
+            if not shell_material and not np.any(accumulated) and all(
                     b > a for a, b in zip(factors, factors[1:])):
                 raise ValueError("material checkpoint requires yielded or reversed history")
         else:
             beam_origins = self._beam_origins
         if shell_material:
-            shell_count = len(owner._shell_parts)
+            q4_count = len(owner._definition.shell.q4_elements)
+            shell_count = q4_count if s3_material else len(owner._shell_parts)
             shell_plastic = _owned(value["shell_plastic"], (shell_count, 12, 3))
             shell_alpha = _owned(value["shell_alpha"], (shell_count, 12))
             if np.any(shell_alpha < 0.):
                 raise ValueError("nonphysical shell J2 checkpoint state")
             shell_origins = _shell_material_states(shell_plastic, shell_alpha)
+            if s3_material:
+                blobs = value["s3_states"]
+                if (type(blobs) is not tuple or
+                        len(blobs) != len(owner._definition.shell.s3_elements)):
+                    raise ValueError("complete native S3 checkpoint states required")
+                shell_material_def = owner._shell_model.get_material("shell")
+                s3_origins = []
+                for (_eid, element, slots, _), blob in zip(
+                        owner._shell_parts[q4_count:], blobs):
+                    restored = element.deserialize_nonlinear_state(
+                        owner._shell_model.mesh, shell_material_def, blob, 3,
+                        expected_committed_total_u=q[slots])
+                    _require_direct_s3_state(restored, q[slots], accepted=True)
+                    s3_origins.append(restored)
+                shell_origins += tuple(s3_origins)
         else:
             shell_origins = self._shell_origins
         beam_nodal = q[owner._shell_count:
@@ -573,7 +679,8 @@ class FinitePointDriver:
                         64.*np.finfo(float).eps*scale):
                     raise ValueError("mechanically inconsistent material checkpoint")
         if shell_material:
-            next_plastic, next_alpha = _shell_material_arrays(shell_next)
+            next_plastic, next_alpha = _shell_material_arrays(
+                shell_next[:q4_count])
             for saved, repeated in ((shell_plastic, next_plastic),
                                     (shell_alpha, next_alpha)):
                 scale = max(float(np.max(np.abs(saved), initial=0.)),
@@ -582,6 +689,19 @@ class FinitePointDriver:
                 if np.max(np.abs(saved-repeated), initial=0.) > (
                         64.*np.finfo(float).eps*scale):
                     raise ValueError("mechanically inconsistent shell J2 checkpoint")
+            if s3_material:
+                for saved_state, repeated_state in zip(
+                        shell_origins[q4_count:], shell_next[q4_count:]):
+                    for name in ("plastic_strain", "alpha"):
+                        saved = np.asarray(saved_state[name], dtype=float)
+                        repeated = np.asarray(repeated_state[name], dtype=float)
+                        scale = max(float(np.max(np.abs(saved), initial=0.)),
+                                    float(np.max(np.abs(repeated), initial=0.)),
+                                    np.finfo(float).tiny)
+                        if np.max(np.abs(saved-repeated), initial=0.) > (
+                                64.*np.finfo(float).eps*scale):
+                            raise ValueError(
+                                "mechanically inconsistent S3 J2 checkpoint")
         support = np.zeros(owner._K.shape[0])
         support[owner._fixed] = residual[owner._fixed]
         result = FinitePointResult(
@@ -592,8 +712,12 @@ class FinitePointDriver:
             _material_observables(beam_origins),
             (tuple(tuple(float(v) for v in state["alpha"])
                    for state in shell_origins) if shell_material else ()),
-            (_shell_q4_recovery(owner._shell_parts, shell_next)
-             if shell_material else ()))
+            (_shell_q4_recovery(owner._shell_parts[:q4_count],
+                                shell_next[:q4_count])
+             if shell_material else ()),
+            (_shell_s3_recovery(owner._shell_parts[q4_count:],
+                                shell_next[q4_count:])
+             if s3_material else ()))
         self._state = trial
         self._pattern = pattern
         self._shell_origins = shell_origins if shell_material else shell_next

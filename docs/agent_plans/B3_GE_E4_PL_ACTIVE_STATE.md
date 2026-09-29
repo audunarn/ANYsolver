@@ -15,6 +15,44 @@ fully accepted. Formal F03 execution authority is unconsumed. A/B are developmen
 spaces, not selected policy. The dirty factor-4 Fy fallback is outside this
 slice; do not edit or run it by default.
 
+**Current S3 owner decision:** A low-load all-S3/J2 point model checks V5
+checkpoint, restore, continued stepping, and cancellation, but the 500-to-1000 N
+development path exhausts backtracking. The next bounded diagnostic distinguishes
+shell yield/active-set change from a merit or derivative inconsistency by
+inspecting the 500 N accepted predecessor and its first 1000 N correction,
+candidate merit, shell alpha, and beam accumulated state. A material transition
+calls for a fixed-predecessor tangent check at the disputed state; a non-descent
+correction calls for a driver/normalization check. No finer load sweep follows
+automatically. S3 J2 remains experimental and F05/G3 unaccepted.
+The S3 owner/V5 experimental slice passed low-load source and installed-wheel
+checks for 50 N followed by 100 N, including V5 restore,
+continuation, and cancellation. The selected S3/mixed source set passed 9/9;
+the complete affected GE source files subsequently passed 18/18 and 19/19,
+and V5 framing passed 3/3. The final capability wording and negative V5
+chart-binding checks passed 5/5 focused source tests. A newly built wheel,
+SHA-256 `F32A38F2109FF6AF16EAFBC29550C6340CF1DFAA5295AA2EDA925D690D2D7BEF`,
+passed 8/8 selected same-process installed checks with its import path verified.
+The development evidence is in
+`.qualification/b3-ge-e4-pl/r7-s3-j2-owner-dev-20260929-v2/`.
+Independent read-only review found and then confirmed the fix for an S3 chart
+binding gap on restore. A focused accepted-state test also rejects native S3
+blobs re-sealed with a wrong chart or altered constitutive displacement while
+preserving their valid inner integrity; the test passed. Yielded S3 restart
+remains unverified.
+An additional bounded 50 N shell-yield/elastic-beam probe, using a 20 kPa
+DNVC-C208 proportional stress, produced no result within its 120 s ceiling
+while PID 39416 was active. Its own process (PID 54160) was stopped. This also
+supplies no mechanics verdict; do not treat the unverified yielded route as
+accepted or automatically lower the yield stress again.
+The first-correction probe launched 29 September 04:41 local time while an
+independent Python numerical process (PID 39416) was already active. The probe
+produced no accepted-predecessor output by its 600 s ceiling and its own process
+(PID 31568) was stopped; the independent process was untouched. This is a
+resource-limited, non-diagnostic attempt. Do not infer a formulation result or
+repeat the same costly setup while that process remains active.
+Both bounded attempts and their absent numerical output are recorded in
+`.qualification/b3-ge-e4-pl/r7-s3-j2-owner-dev-20260929-v1/attempts.md`.
+
 ## Delivered experimental behavior
 
 - The sparse GE owner solves multi-Q4/S3/native-B3 point panels with retained

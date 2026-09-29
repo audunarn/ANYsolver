@@ -28,7 +28,9 @@ from .fe_core import FEModel
 from .control import cancellation_safe_point
 from ._stiffened_shell_ge_checkpoint_binary import (
     MAGIC as BINARY_CHECKPOINT_MAGIC, decode as _decode_binary_checkpoint,
-    encode as _encode_binary_checkpoint,
+    encode as _encode_binary_checkpoint, S3_MAGIC as S3_BINARY_CHECKPOINT_MAGIC,
+    S3_SCHEMA as FINITE_S3_MATERIAL_CHECKPOINT,
+    decode_s3 as _decode_s3_binary_checkpoint,
 )
 from ._stiffened_shell_l1_assembly_experimental import (
     ExperimentalL1Line, compile_lines as _compile_l1_lines,
@@ -162,10 +164,9 @@ def _shell_reference(panel: ShellPanel):
         raise ValueError("experimental connected flat Q4/S3 panel required")
     if panel.j2_curve is not None:
         if (type(panel.j2_curve) is not DNVC208MaterialCurve or
-                panel.s3_elements or
                 any(not np.isfinite(value)
                     for value in panel.j2_curve.as_dict().values())):
-            raise ValueError("experimental shell J2 requires finite Q4 DNVC-C208 data")
+            raise ValueError("experimental shell J2 requires finite DNVC-C208 data")
     index = {node: i for i, node in enumerate(ids)}
     model = FEModel("experimental-stiffened-shell-q4")
     model.add_material("shell", panel.young_pa, panel.poisson,
@@ -581,16 +582,20 @@ class ExperimentalGEAnalysis:
         if self._line_samples:
             attachment += ("experimental L1 weak-line candidate",)
         shell_plastic = self._definition.shell.j2_curve is not None
-        excluded = ((("S3 shell J2 plastic",) if shell_plastic else
-                     ("shell J2 plastic",)) + ("physical-fibre B3 finite",
+        excluded = ((("shell J2 plastic",) if not shell_plastic else ()) +
+                    ("physical-fibre B3 finite",
                      "nonpositive finite load factors", "line", "footprint",
                      "modes", "buckling")
                     if not self._line_samples else
                     ("shell J2 plastic", "physical-fibre B3 finite",
                      "qualified bonded line", "footprint",
                      "modes", "buckling"))
+        if self._definition.shell.s3_elements and not self._line_samples:
+            excluded += ("S3 corotational finite-rotation response",)
         return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
-                "shell": ("experimental isotropic Q4 J2" if shell_plastic else
+                "shell": (("experimental isotropic Q4/S3-V2D J2"
+                           if self._definition.shell.s3_elements else
+                           "experimental isotropic Q4 J2") if shell_plastic else
                           "elastic flat Q4/S3"),
                 "beam": ("generalized B3 retained" if self._line_samples else
                          "generalized B3 retained, including experimental yielding"),
@@ -600,7 +605,10 @@ class ExperimentalGEAnalysis:
                 "analysis": (("reference_linear",) if self._line_samples else
                              ("reference_linear", "experimental_elastic_finite_point",
                               "experimental_generalized_plastic_finite_point") +
-                             (("experimental_q4_j2_finite_point",) if shell_plastic
+                             (("experimental_q4_s3_j2_finite_point",)
+                              if shell_plastic and self._definition.shell.s3_elements
+                              else ("experimental_q4_j2_finite_point",)
+                              if shell_plastic
                               else ())),
                 "excluded": excluded}
 
@@ -780,6 +788,36 @@ class ExperimentalGEAnalysis:
                      "generation": generation, **arrays}
             if kind in ("finite", "finite_material", "finite_shell_material"):
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
+        elif raw.startswith(S3_BINARY_CHECKPOINT_MAGIC):
+            if (self._line_samples or self._definition.shell.j2_curve is None or
+                    not self._definition.shell.s3_elements):
+                raise ValueError("S3 J2 checkpoint requires matching point model")
+
+            def expected_s3_shapes(generation):
+                count = self._K.shape[0]
+                members = len(self._beam_parts)
+                stations = sum(len(part[0].operator.cell.stations)
+                               for part in self._beam_parts)
+                q4_count = len(self._definition.shell.q4_elements)
+                return (("q", (count,)),
+                        ("frames", (len(self._beam_ids), 3, 3)),
+                        ("cells", (members, 2, 3, 3)),
+                        ("resultants", (members, 18)),
+                        ("multipliers", (self._C.shape[0],)),
+                        ("pattern", (count,)),
+                        ("accepted_factors", (generation,)),
+                        ("beam_plastic", (stations, 6, 2)),
+                        ("beam_accumulated", (stations, 2)),
+                        ("shell_plastic", (q4_count, 12, 3)),
+                        ("shell_alpha", (q4_count, 12)))
+
+            generation, arrays, states = _decode_s3_binary_checkpoint(
+                raw, self._identity, expected_s3_shapes,
+                len(self._definition.shell.s3_elements))
+            value = {"schema": FINITE_S3_MATERIAL_CHECKPOINT,
+                     "model": self._identity, "generation": generation,
+                     **arrays, "s3_states": states,
+                     "accepted_factors": arrays["accepted_factors"].tolist()}
         else:
             if len(raw) > MAX_JSON_CHECKPOINT_BYTES:
                 raise ValueError("bounded mixed linear checkpoint required")
@@ -789,7 +827,8 @@ class ExperimentalGEAnalysis:
                 raise ValueError("invalid mixed linear checkpoint") from exc
         if (type(value) is dict and value.get("schema") in
                 (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
-                 FINITE_SHELL_MATERIAL_CHECKPOINT)):
+                 FINITE_SHELL_MATERIAL_CHECKPOINT,
+                 FINITE_S3_MATERIAL_CHECKPOINT)):
             if self._line_samples:
                 raise ValueError(
                     "experimental L1 line admits reference-linear checkpoints only")

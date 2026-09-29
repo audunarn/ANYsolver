@@ -12,7 +12,9 @@ from anysolver._stiffened_shell_ge_experimental import (
 from anysolver import _stiffened_shell_ge_finite_experimental as finite_experimental
 from anysolver._stiffened_shell_ge_checkpoint_binary import (
     MAGIC as BINARY_CHECKPOINT_MAGIC, encode as encode_binary_checkpoint,
+    S3_MAGIC as S3_BINARY_CHECKPOINT_MAGIC, decode_s3, encode_s3,
 )
+from anysolver.e4_pl_s3_v2d_state import seal_v2d_state
 from anysolver.control import CancellationToken, SolveCancelled
 from test_stiffened_shell_ge_experimental import _panel
 
@@ -272,13 +274,102 @@ def test_q4_j2_checkpoint_rejects_corrupt_shell_history():
         ExperimentalGEAnalysis(definition).restore(reencoded)
 
 
-def test_s3_shell_j2_requires_separate_material_adapter():
+def test_s3_shell_j2_is_explicitly_experimental():
     base = _q4_shell_j2_panel()
     definition = replace(base, shell=replace(
         base.shell, q4_elements=(),
         s3_elements=((1, 2, 5), (1, 5, 4), (2, 3, 6), (2, 6, 5))))
-    with pytest.raises(ValueError, match="Q4 DNVC-C208"):
-        ExperimentalGEAnalysis(definition)
+    owner = ExperimentalGEAnalysis(definition)
+    assert owner.capabilities["status"] == "EXPERIMENTAL_NOT_QUALIFIED"
+    assert "experimental_q4_s3_j2_finite_point" in owner.capabilities["analysis"]
+    assert "S3 corotational finite-rotation response" in owner.capabilities["excluded"]
+    assert owner.preflight()["stress_free_scaled_max"] <= 32.*np.finfo(float).eps
+
+
+def test_s3_j2_checkpoint_restores_without_beam_yield():
+    base = _q4_shell_j2_panel()
+    definition = replace(base, beams=_panel().beams, shell=replace(
+        base.shell, q4_elements=(),
+        s3_elements=((1, 2, 5), (1, 5, 4), (2, 3, 6), (2, 6, 5))))
+    owner = ExperimentalGEAnalysis(definition)
+    accepted = owner.solve(_actions(), (.05,), max_iterations=20,
+                           max_backtracks=12)
+    assert accepted.status == "completed"
+    assert len(accepted.shell_s3_material) == 4
+    assert max(max(row) for row in accepted.shell_layer_alpha) == 0.
+    assert max(max(row) for row in accepted.beam_station_accumulated) == 0.
+    saved = owner.checkpoint()
+    assert saved.startswith(S3_BINARY_CHECKPOINT_MAGIC)
+    driver = owner._finite_driver
+    beam_plastic, beam_accumulated = finite_experimental._material_arrays(
+        driver._beam_origins)
+    shell_plastic, shell_alpha = finite_experimental._shell_material_arrays(())
+    expected = (("q", driver._state.q.shape),
+                ("frames", driver._state.frames.shape),
+                ("cells", driver._state.cells.shape),
+                ("resultants", driver._state.resultants.shape),
+                ("multipliers", driver._state.multipliers.shape),
+                ("pattern", driver._pattern.shape),
+                ("accepted_factors", (1,)),
+                ("beam_plastic", beam_plastic.shape),
+                ("beam_accumulated", beam_accumulated.shape),
+                ("shell_plastic", shell_plastic.shape),
+                ("shell_alpha", shell_alpha.shape))
+    generation, arrays, blobs = decode_s3(
+        saved, owner._identity, lambda _: expected, 4)
+    _, element, slots, _ = owner._shell_parts[0]
+    material = owner._shell_model.get_material("shell")
+    wrong_chart = element.seal_solver_integrated_nonlinear_state(
+        owner._shell_model.mesh, material, driver._shell_origins[0], 3,
+        driver._state.q[slots], kinematics="COROTATIONAL")
+    wrong_blob = element.serialize_nonlinear_state(
+        owner._shell_model.mesh, material, wrong_chart, 3)
+    altered = encode_s3(owner._identity, generation,
+                        tuple((name, arrays[name]) for name, _ in expected),
+                        (wrong_blob,)+blobs[1:])
+    with pytest.raises(ValueError, match="disagrees with mixed owner"):
+        ExperimentalGEAnalysis(definition).restore(altered)
+    wrong_constitutive = dict(driver._shell_origins[0])
+    shifted = np.asarray(wrong_constitutive["committed_constitutive_u"]).copy()
+    shifted[0] += 1e-6
+    wrong_constitutive["committed_constitutive_u"] = shifted
+    wrong_constitutive = seal_v2d_state(wrong_constitutive)
+    wrong_blob = element.serialize_nonlinear_state(
+        owner._shell_model.mesh, material, wrong_constitutive, 3)
+    altered = encode_s3(owner._identity, generation,
+                        tuple((name, arrays[name]) for name, _ in expected),
+                        (wrong_blob,)+blobs[1:])
+    with pytest.raises(ValueError, match="disagrees with mixed owner"):
+        ExperimentalGEAnalysis(definition).restore(altered)
+    resumed_owner = ExperimentalGEAnalysis(definition)
+    restored = resumed_owner.restore(saved)
+    assert restored.accepted_factors == accepted.accepted_factors
+    np.testing.assert_array_equal(restored.shell_displacement,
+                                  accepted.shell_displacement)
+    for original, repeated in zip(accepted.shell_s3_material,
+                                  restored.shell_s3_material):
+        for field in ("layer_strain", "layer_stress", "plastic_strain", "alpha",
+                      "station_generalized_resultant"):
+            np.testing.assert_allclose(getattr(original, field),
+                                       getattr(repeated, field),
+                                       rtol=1e-10, atol=1e-8)
+    direct_next = owner.solve(_actions(), (.1,), max_iterations=20,
+                              max_backtracks=12)
+    resumed_next = resumed_owner.solve(_actions(), (.1,), max_iterations=20,
+                                      max_backtracks=12)
+    assert direct_next.accepted_factors == resumed_next.accepted_factors
+    np.testing.assert_allclose(direct_next.shell_displacement,
+                               resumed_next.shell_displacement,
+                               rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(direct_next.beam_positions,
+                               resumed_next.beam_positions,
+                               rtol=1e-10, atol=1e-12)
+    prefix = resumed_owner.checkpoint()
+    token = CancellationToken()
+    token.cancel("S3 accepted-prefix check")
+    with pytest.raises(SolveCancelled, match="S3 accepted-prefix check"):
+        resumed_owner.solve(_actions(), (.15,), cancellation_token=token)
+    assert resumed_owner.checkpoint() == prefix
 
 
 def test_generalized_beam_plastic_history_is_atomic_and_restartable(monkeypatch):
