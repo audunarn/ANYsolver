@@ -1,0 +1,1 @@
+{"cases": [{"source_q4_faces": 16, "idealized_source_dual_squared": 2.5246476191286166e-05, "discrete_to_source_ratio_squared": 0.4043770068029924}, {"source_q4_faces": 32, "idealized_source_dual_squared": 2.229345596291468e-06, "discrete_to_source_ratio_squared": 0.4682937521007204}]}

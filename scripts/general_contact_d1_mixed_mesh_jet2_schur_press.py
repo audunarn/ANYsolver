@@ -49,6 +49,7 @@ def build_case(columns: int, *, four_phase: bool = False,
                target_reference_slope: float = 0.0,
                common_reference_slope: float = 0.0,
                target_columns: int = 1,
+               target_rows: int = 1,
                full_width_target: bool = False,
                source_rows: int = 1,
                source_y_profile: str | None = None,
@@ -66,8 +67,8 @@ def build_case(columns: int, *, four_phase: bool = False,
     if not 0.0 <= common_reference_slope <= 0.1 or (
             common_reference_slope and target_reference_slope):
         raise ValueError("common slope must be in [0, 0.1] without target-only slope")
-    if target_columns not in (1, 2):
-        raise ValueError("this development case admits one or two target columns")
+    if target_columns not in (1, 2, 3) or target_rows not in (1, 2, 3):
+        raise ValueError("this development case admits one to three target rows and columns")
     if source_rows not in (1, 2, 4, 8) and not (
             source_rows == 16 and offline_structural_reference_y16):
         raise ValueError("this development case admits at most eight source rows; "
@@ -106,7 +107,8 @@ def build_case(columns: int, *, four_phase: bool = False,
     source_element_count = columns*source_rows
     source_nodes = tuple(range(1, (source_rows+1)*stride+1))
     target_nodes = tuple(range((source_rows+1)*stride+1,
-                               (source_rows+1)*stride+1+2*(target_columns+1)))
+                               (source_rows+1)*stride+1
+                               +(target_rows+1)*(target_columns+1)))
     model = FEModel(f"mixed_{columns}_q4_x_jet2_schur_press")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)
     common_normal = np.asarray((-common_reference_slope, 0.0, 1.0))
@@ -122,9 +124,10 @@ def build_case(columns: int, *, four_phase: bool = False,
     target_positions = (
         ((0.0, target_y0, 0.0), (target_right_x_m, target_y0, 0.0),
          (target_right_x_m, target_y1, 0.0), (0.0, target_y1, 0.0))
-        if target_columns == 1 else tuple(
-            (target_right_x_m*column/target_columns, y, 0.0)
-            for y in (target_y0, target_y1)
+        if target_columns == 1 and target_rows == 1 else tuple(
+            (target_right_x_m*column/target_columns,
+             target_y0+(target_y1-target_y0)*row/target_rows, 0.0)
+            for row in range(target_rows+1)
             for column in range(target_columns+1)))
     for node, position in zip(target_nodes, target_positions):
         x, y, z = position
@@ -144,18 +147,20 @@ def build_case(columns: int, *, four_phase: bool = False,
                 "elastic", thickness=0.05,
                 reference_normal=tuple(common_normal),
             ))
-    if target_columns == 1:
+    if target_columns == 1 and target_rows == 1:
         target_faces = ((target_nodes[0], target_nodes[1], target_nodes[3]),
                         (target_nodes[1], target_nodes[2], target_nodes[3]))
     else:
         target_faces = tuple(
-            nodes for column in range(target_columns)
+            nodes for row in range(target_rows)
+            for column in range(target_columns)
+            for base in (row*(target_columns+1)+column,)
             for nodes in (
-                (target_nodes[column], target_nodes[column+1],
-                 target_nodes[target_columns+1+column]),
-                (target_nodes[column+1],
-                 target_nodes[target_columns+2+column],
-                 target_nodes[target_columns+1+column]),
+                (target_nodes[base], target_nodes[base+1],
+                 target_nodes[base+target_columns+1]),
+                (target_nodes[base+1],
+                 target_nodes[base+target_columns+2],
+                 target_nodes[base+target_columns+1]),
             ))
     for element_id, nodes in enumerate(target_faces,
                                        start=source_element_count+1):
@@ -197,7 +202,7 @@ def build_case(columns: int, *, four_phase: bool = False,
         q4_source_gap_certificate="projected_matching",
         general_s3_difference_step=2.0e-5,
         maximum_general_s3_energy_evaluations=14144,
-        maximum_candidate_pairs=max(32, 2*source_element_count*target_columns),
+        maximum_candidate_pairs=max(32, source_element_count*len(target_faces)),
         q4_source_area_tolerance=1.0e-9,
         q4_source_weighted_gap_tolerance=1.0e-10,
         maximum_q4_source_integration_triangles=300,

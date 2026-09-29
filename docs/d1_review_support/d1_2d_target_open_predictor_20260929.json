@@ -1,0 +1,25 @@
+{
+  "candidate": "d1_2d_target_contact_free_linear_first_step_discriminator",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "structural_model": "linear_reference_stiffness_only",
+  "path_step": 1,
+  "applied_force_n": -0.02,
+  "control_targets_m": [
+    0.0,
+    0.0
+  ],
+  "control_reactions_n": [
+    0.0,
+    -0.0
+  ],
+  "linear_reduced_equilibrium_relative_error": 4.379165838797225e-14,
+  "reference_conservative_gap_lower_m": 3.999999996303853e-05,
+  "predicted_conservative_gap_lower_m": -0.00010552819413528453,
+  "registered_gap_tolerance_m": 5e-05,
+  "maximum_absolute_displacement_m": 0.00046418015771835115,
+  "target_interior_displacement_m": [
+    0.0,
+    0.0,
+    0.0
+  ]
+}

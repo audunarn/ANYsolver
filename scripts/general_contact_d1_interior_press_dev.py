@@ -28,6 +28,7 @@ from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import (
 def build_interior_press(*, force_n: float = 0.08,
                          reference_slope: float = 0.01,
                          target_columns: int = 1,
+                         target_rows: int = 1,
                          source_support: str = "left",
                          source_columns: int = 4,
                          source_rows: int = 2,
@@ -44,19 +45,21 @@ def build_interior_press(*, force_n: float = 0.08,
         raise ValueError("slide intervals must be an integer in [1, 10]")
     if slide_body not in {"source", "target", "target_diagonal_dev"}:
         raise ValueError("slide body must be source, target or target_diagonal_dev")
-    if slide_body == "target_diagonal_dev" and target_columns != 1:
+    if (slide_body == "target_diagonal_dev"
+            and (target_columns != 1 or target_rows != 1)):
         raise ValueError("diagonal target development control needs two S3 faces")
     columns, rows = source_columns, source_rows
     stride = columns + 1
     model, definition, settings, _program = build_case(
         columns, source_rows=rows, full_width_target=True,
         target_right_x_m=1.3, common_reference_slope=reference_slope,
-        target_columns=target_columns,
+        target_columns=target_columns, target_rows=target_rows,
         load_profile="distributed", total_force_n=force_n,
     )
     target_start = (rows + 1) * (columns + 1) + 1
-    target_left_top = target_start + (3 if target_columns == 1
-                                      else target_columns + 1)
+    target_left_top = target_start + (
+        3 if target_columns == 1 and target_rows == 1
+        else target_rows*(target_columns+1))
     target_control_top = (target_start + 2 if slide_body == "target_diagonal_dev"
                           else target_left_top)
     model.boundary_conditions = [
@@ -152,7 +155,7 @@ def build_interior_press(*, force_n: float = 0.08,
 
 
 def main(output: Path, *, force_n: float, reference_slope: float,
-         target_columns: int, source_support: str,
+         target_columns: int, target_rows: int, source_support: str,
          source_columns: int, source_rows: int, load_shape: str,
          max_path_fraction: float, four_phase: bool,
          steps_per_segment: int, slide_distance_m: float,
@@ -163,7 +166,8 @@ def main(output: Path, *, force_n: float, reference_slope: float,
     started = time.perf_counter()
     model, definition, settings, program = build_interior_press(
         force_n=force_n, reference_slope=reference_slope,
-        target_columns=target_columns, source_support=source_support,
+        target_columns=target_columns, target_rows=target_rows,
+        source_support=source_support,
         source_columns=source_columns, source_rows=source_rows,
         load_shape=load_shape,
         four_phase=four_phase, steps_per_segment=steps_per_segment,
@@ -204,7 +208,8 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         "anysolver_module": str(Path(anysolver.__file__).resolve()),
         "capability_profile": report.profile,
         "source_q4_faces": source_columns * source_rows,
-        "target_s3_faces": 2 * target_columns,
+        "target_s3_faces": 2 * target_columns * target_rows,
+        "target_rows": target_rows,
         "interior_pressure_node_ids": list(interior_nodes),
         "force_n": force_n,
         "reference_slope": reference_slope,
@@ -240,7 +245,9 @@ if __name__ == "__main__":
     parser.add_argument("output", type=Path)
     parser.add_argument("--force-n", type=float, default=0.08)
     parser.add_argument("--reference-slope", type=float, default=0.01)
-    parser.add_argument("--target-columns", type=int, choices=(1, 2),
+    parser.add_argument("--target-columns", type=int, choices=(1, 2, 3),
+                        default=1)
+    parser.add_argument("--target-rows", type=int, choices=(1, 2, 3),
                         default=1)
     parser.add_argument("--source-support", choices=("left", "perimeter"),
                         default="left")
@@ -264,6 +271,7 @@ if __name__ == "__main__":
     main(arguments.output, force_n=arguments.force_n,
          reference_slope=arguments.reference_slope,
          target_columns=arguments.target_columns,
+         target_rows=arguments.target_rows,
          source_support=arguments.source_support,
          source_columns=arguments.source_columns,
          source_rows=arguments.source_rows, load_shape=arguments.load_shape,

@@ -301,6 +301,50 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                 break
             backtracks += 1
             fraction *= 0.5
+        if (not improved and current_branch_delta is not None
+                and not np.array_equal(delta, current_branch_delta)):
+            # A predicted active set can give a non-descent direction for the
+            # current projected residual. The derivative of the *current*
+            # branch is also a valid generalized Newton choice. Try it under
+            # the same swept and merit gates before rejecting the increment.
+            branch_dq = current_branch_delta[:q_size]
+            branch_dmu = current_branch_delta[q_size:q_size+mu_size]
+            branch_dz = current_branch_delta[q_size+mu_size:]
+            branch_u = np.asarray(
+                transform @ (q+branch_dq) + offset,
+            ).reshape(-1)
+            branch_fraction = min(1.0, manager.admissible_step_fraction(u, branch_u))
+            pivot_trace.append({"fallback": "current_branch_after_line_search"})
+            for attempt in range(12):
+                cancellation_safe_point(
+                    cancellation_token,
+                    f"contact_path.step:{step}.semismooth.current_branch:{attempt}",
+                )
+                if branch_fraction <= 1.0e-12:
+                    break
+                trial_q = q + branch_fraction*branch_dq
+                trial_mu = mu + branch_fraction*branch_dmu
+                trial_z = z + branch_fraction*branch_dz
+                try:
+                    candidate = evaluate(trial_q, trial_mu, trial_z, tangent=False)
+                    last_candidate, last_z = candidate, trial_z
+                    new_merit = candidate[-1]
+                    candidate_error = None
+                except (ValueError, MemoryError) as exc:
+                    new_merit = np.inf
+                    candidate_error = f"{type(exc).__name__}: {exc}"[:200]
+                attempts.append({
+                    "fraction": float(branch_fraction), "merit": float(new_merit),
+                    "error": candidate_error, "kind": "current_branch",
+                })
+                _discard_nonlinear_state_candidate(committed_states)
+                if (np.isfinite(new_merit)
+                        and new_merit < merit*(1.0-1.0e-4*branch_fraction)):
+                    q, mu, z = trial_q, trial_mu, trial_z
+                    improved = True
+                    break
+                backtracks += 1
+                branch_fraction *= 0.5
         if not improved:
             # The projected complementarity map is smooth only up to the
             # first active-set event. A narrow rim mode may cross before the
