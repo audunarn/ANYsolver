@@ -46,8 +46,79 @@ def _station(xs, ys, beam, qs, qb, x):
     return local.gap_jacobian@direction
 
 
+def _saved_mean_row_guard(saved, xs, ys, beam, qs, qb):
+    """Check physical mean-row work and each native port in the saved field."""
+    x = np.asarray(saved["station_x_m"], dtype=float)
+    weights = np.asarray(saved["station_weights_m"], dtype=float)
+    historical = np.asarray(saved["station_gap"], dtype=float)
+    shell = np.asarray(saved["station_shell"], dtype=float)
+    native = np.asarray(saved["station_beam"], dtype=float)
+    if (x.shape != (24,) or weights.shape != (24,) or
+            any(a.shape != (24, 6) for a in (historical, shell, native)) or
+            not all(np.isfinite(a).all() for a in
+                    (x, weights, historical, shell, native)) or
+            np.min(weights) <= 0. or abs(float(weights.sum())-.1) > 1e-14 or
+            np.max(np.abs(shell+native-historical)) > 1e-12):
+        raise AssertionError("complete saved mean-row station work required")
+    cuts = np.linspace(.9, 1., 9)
+    names = ("fx", "fy", "fz", "mx", "my", "mz")
+    sign = np.array((-1., -1., -1., 1., 1., 1.))
+    state = beam.context.initial.mechanical
+    historical_work = np.zeros(2)
+    reconstructed_work = np.zeros(2)
+    max_native_gap_error = 0.
+    max_native_station_work_error = 0.
+    max_total_gap_error = 0.
+    for k, station in enumerate(x):
+        segment = int(np.searchsorted(cuts, station, side="right"))-1
+        if not 0 <= segment < 8:
+            raise AssertionError("saved station left the physical bond")
+        # Historical P0 rows are mean gaps. The stored duals are conjugate to
+        # those means; physical action densities divide by the row measure.
+        density = np.array([
+            saved["channel"][name]["dual_density"][
+                segment//2 if name == "fz" else segment]
+            /(.1/(4 if name == "fz" else 8)) for name in names])
+        l1_density = sign*density
+        operator, local_q, l1_total, _ = _l1_station(
+            xs, ys, beam, qs, qb, float(station))
+        _, l1_native = operator.evaluate(
+            np.zeros((2, 6)), state,
+            shell_direction=np.zeros_like(local_q), beam_direction=qb)
+        total_error = float(np.max(np.abs(l1_total-sign*historical[k])))
+        native_error = float(np.max(np.abs(l1_native-sign*native[k])))
+        old_station_work = weights[k]*float(density@native[k])
+        new_station_work = weights[k]*float(l1_density@l1_native)
+        max_total_gap_error = max(max_total_gap_error, total_error)
+        max_native_gap_error = max(max_native_gap_error, native_error)
+        max_native_station_work_error = max(
+            max_native_station_work_error,
+            abs(old_station_work-new_station_work))
+        historical_work += weights[k]*np.array((density@shell[k],
+                                                 density@native[k]))
+        reconstructed_work += weights[k]*np.array((
+            l1_density@(l1_total-l1_native),
+            l1_density@l1_native))
+    expected = np.array((saved["shell_work_sq"], saved["beam_work_sq"]))
+    work_error = max(float(np.max(np.abs(historical_work-expected))),
+                     float(np.max(np.abs(reconstructed_work-expected))),
+                     abs(float(reconstructed_work.sum())-saved["pairing_work_sq"]))
+    if (max_total_gap_error > 1e-12 or max_native_gap_error > 1e-12 or
+            max_native_station_work_error > 1e-12 or work_error > 1e-10):
+        raise AssertionError("saved mean-row or station native work changed")
+    return {
+        "historical_shell_beam_work": historical_work.tolist(),
+        "reconstructed_l1_shell_beam_work": reconstructed_work.tolist(),
+        "max_total_gap_error": max_total_gap_error,
+        "max_native_gap_error": max_native_gap_error,
+        "max_native_station_work_error": max_native_station_work_error,
+        "max_mean_row_work_error": work_error,
+    }
+
+
 def analyze(saved):
     xs, ys, _shell, _physical_shell, beam, _line, qs, qb = _recover(saved)
+    work_guard = _saved_mean_row_guard(saved, xs, ys, beam, qs, qb)
     cuts = np.linspace(.9, 1., 9)
     beam_cuts = np.asarray(beam.abscissae)
     beam_cuts = beam_cuts[(beam_cuts >= .9-1e-14) &
@@ -118,6 +189,7 @@ def analyze(saved):
         "continuous_gap": gap.tolist(),
         "max_abs_gap_by_channel": np.max(np.abs(gap), axis=0).tolist(),
         "max_bl5_plus_l1_translation_difference": max(translation_parity),
+        "saved_mean_row_work_guard": work_guard,
         "projection": projected,
         "effective_threadpools": threadpool_info(),
         "limit": ("One reconstructed saved supported 2:1 field. No BL5 loaded "
