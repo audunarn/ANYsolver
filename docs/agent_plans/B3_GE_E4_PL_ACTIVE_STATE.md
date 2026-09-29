@@ -4,6 +4,8 @@
 
 The [Revision 8 plan](B3_GE_E4_PL_REVISION_8_PLAN.md) and
 [goal](B3_GE_E4_PL_REVISION_8_GOAL.md) govern forward work after resumption.
+The [current acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md)
+keeps milestone and gate claims open until their evidence is adjudicated.
 They change milestone order and owner decision rights; the scientific criteria,
 historical evidence, consumed authorities and complete release boundary below
 remain intact. The current milestone is M1's matching-station elastic GE panel.
