@@ -47,6 +47,18 @@ pressure, complete coverage and resource use. If any is inadmissible,
 resolve the fixture before freezing the formal runs; do not silently
 substitute another mesh.
 
+A later read-only screen of that earlier accepted pose evaluated all 121
+signed interior pressure modes with its saved active nodal forces. It found
+`η=0.99999754`, `κ=221.80035` and `γcert=0.00450854` in 34.01 s/211 MB.
+This supports feasibility of the provisional levels on **one old-geometry
+pose only**. It neither checks current-pose energy equivalence nor executes
+the corrected family. The first screen used zero trial pressure and therefore
+misreported zero active modes; its `η` and `κ` were unchanged, and the corrected
+screen confirms two active modes. A final profile-identity check used the
+saved `overlap_local_dev` certificate setting and matched its reference
+support; the measures did not change. [Current screen](d1_pressure_gate_saved12_screen_v3_20260929.json),
+[resource](d1_pressure_gate_saved12_screen_v3_resource_20260929.json).
+
 Development preflight on 29 September at the original `y=−0.1 m` target
 selected interior nodes `(12,13)` on source `4×4` and `(40)` on source
 `8×8`, with independent gaps `−45.12` and `−26.20 µm`. The original
