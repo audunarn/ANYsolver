@@ -177,6 +177,26 @@ Q4/S3 pairs. This strengthens the full-workflow development route but does
 not close two-body spatial convergence, pressure stability, full moment work,
 swept-path or transition-derivative qualification.
 
+An [aligned target-only structural discriminator](d1_review_support/d1_two_body_target_stiffness_discriminator_20260929.md)
+keeps the physical S3 cantilever and unit affine traction moments fixed across
+the exact coupled 2×4→4×4 target mesh change. Compliance shifts −3.513%
+uniform, +0.114% free-edge x-biased and −2.207% upper-rim y-biased. This
+does not apportion the coupled −5.93% force shift: actual contact pressure and
+front motion remain unmeasured in this structural-only comparison. It directs
+the next bounded discriminator to the same recovered physical contact-shaped
+load, before another coupled mesh refinement.
+The [fixed-contact-shape follow-up and predicted 8×8 press](d1_review_support/d1_two_body_target_stiffness_discriminator_20260929.md)
+now hold the recovered 4×4 Q1 pressure field fixed across target meshes, then
+test one pre-recorded 4-Q4/128-S3 coupled press. The coupled force is
+0.00043102895 N, 0.0363% above the predictor and 0.660% above 4×4, with the
+same two active source nodes. Both accepted poses pass independent 50 µm
+target-normal gap checks; independent support/Gram/normalized gap agree with
+production despite 156 positive Q4/S3 overlaps. Active pressure magnitudes
+redistribute by about 9.29% L2. This supports the structural-resolution
+hypothesis for integrated force but does not establish pressure-field or
+spatial convergence. A direct 16×16 coupled run needs its own resource
+preflight and prospective reference criteria.
+
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
 bound at all eight accepted poses. Local and installed fields match; a forced
@@ -316,3 +336,5 @@ An opt-in monolithic raw-force exact-seam development branch now handles the ver
 The first guided monolithic press/slide seam run failed after 18 iterations with 3.81e−7 m control error despite small equilibrium/complementarity residuals. Its full trial met an artificial diagonal, but an unrelated sloped Q4 face blocked the global direction classifier. The classifier now checks only actual touching faces. At that saved pose, a near-null tangential force derivative had 7.74e−9 N/m finite-difference subtraction noise and 8.83e−16 N/m differentiated action; a roundoff-derived, physically capped absolute allowance now handles that near-null case without changing the historical resolved-action tangent gate. A 1e−4 N/m consistent tangent-bias mutation rejects. The same two-step path now completes with successful guarded seam fallback return(s), exact prescribed x=0.4 m and the declared 50 µm gap check. Eight focused seam tests passed in 44.01 s; the successful-return spy was corrected and its integrated test passed again in 9.59 s. Read-only independent review found no concrete unsafe admission in these narrow changes. This closes one guided artificial-seam development case; general clipping ownership, full constrained work, coupled pressure qualification and independent D1 acceptance remain open.
 
 The monolithic transaction now has focused current-source checks for an unexpected exception after contact evaluation, a rejected candidate and an unadmitted swept step, each after one accepted increment. Both injected candidate-failure variants reran on the same model to the exact fresh-model checkpoint (two checks, 30.70 s). Zero swept fraction produced controlled `contact_semismooth_backtracking_failed`, kept the accepted prefix and allowed the same exact fresh-model continuation (one check, 18.38 s). An empty-backtrack active-event guard prevents an unsupported event proposal when no swept trial exists. These development checks narrow the state/restart row; nonlinear material rollback, broader cutback/event policies and claim-bearing delivered-path assessment remain open.
+
+**Refined deformable-target resource and accuracy update:** The [bounded target-resolution record](d1_review_support/d1_two_body_target_stiffness_discriminator_20260929.md) supports structural target resolution as a leading explanation of the earlier 2×4→4×4 response change. One predicted 4-Q4/128-S3 8×8 two-step press completed in 69.05 s/432.55 MB, with final integrated source force 0.0363% above the prospectively calculated fixed-pressure predictor; its two accepted poses meet the 50 µm independent target-normal gap budget and independent support/Gram/gap parity. The pressure values nevertheless redistribute 9.29% L2 among the two active nodes. A 4-Q4/512-S3 16×16 two-step attempt and one instrumented replay both reached the unchanged 180 s limit before a durable result. The replay attributes 119.83 s of completed work to nine contact linearizations and 12.83 s to structural assembly, with step 2 incomplete. A small prepared-shape cost change gives exact saved-pose residual/tangent parity and only 1.072× local speed. Thus coupled spatial convergence, pressure-space stability, the registered integrated-response comparison and a twofold complete-route saving remain **open**; no capped attempt is rounded into acceptance or repeated automatically.

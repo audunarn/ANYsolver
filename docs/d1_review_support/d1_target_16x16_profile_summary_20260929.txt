@@ -1,0 +1,78 @@
+Tue Sep 29 03:24:21 2026    docs/d1_review_support/d1_target_16x16_profile_20260929.pstats
+
+         102770855 function calls (102388912 primitive calls) in 55.373 seconds
+
+   Ordered by: cumulative time
+   List reduced from 7575 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   1817/1    0.197    0.000   55.455   55.455 {built-in method builtins.exec}
+        1    0.000    0.000   55.455   55.455 d1_two_body_16x16_linearization_preflight.py:1(<module>)
+        1    0.004    0.004   53.739   53.739 d1_two_body_16x16_linearization_preflight.py:93(main)
+        2    0.001    0.001   53.650   26.825 d1_two_body_16x16_linearization_preflight.py:64(one_case)
+     7680    0.195    0.000   28.820    0.004 q4_source_overlap.py:255(q4_source_overlap_integrals)
+        2    0.002    0.001   28.307   14.153 s3_patch_static.py:402(__init__)
+        2    0.003    0.001   24.808   12.404 semismooth.py:47(linearize)
+        2    0.000    0.000   24.766   12.383 s3_patch_augmented.py:346(nodal_force_linearization)
+        2    0.001    0.000   24.766   12.383 s3_patch_augmented.py:387(_nodal_force_unresolved)
+        4    0.003    0.001   24.663    6.166 s3_patch_mortar_energy.py:70(__init__)
+    93000    1.479    0.000   20.911    0.000 q4_source_overlap.py:299(sample)
+     5124    0.010    0.000   20.775    0.004 s3_patch_mortar_energy.py:164(<genexpr>)
+     5120    0.028    0.000   20.765    0.004 q4_source_mortar_energy.py:48(__init__)
+     2478    0.041    0.000   20.555    0.008 q4_source_overlap.py:339(integrate)
+    12390    0.193    0.000   20.488    0.002 q4_source_overlap.py:323(rule)
+   608234    5.415    0.000   16.197    0.000 numeric.py:1567(cross)
+        2    0.089    0.044   13.342    6.671 s3_patch_augmented.py:1131(_jet2_s3_work)
+      632    0.011    0.000   13.126    0.021 q4_s3_overlap_derivatives.py:874(q4_s3_overlap_derivatives)
+      632    0.065    0.000   13.113    0.021 q4_s3_overlap_derivatives.py:576(_evaluate)
+   186000    0.096    0.000   13.073    0.000 overlap.py:61(shape_values)
+        2    0.002    0.001   13.002    6.501 s3_patch_static.py:99(validate_general_s3_patch)
+   186000    2.857    0.000   12.976    0.000 overlap.py:66(shape_values_and_gradient)
+        2    0.019    0.010   11.423    5.712 s3_patch_mortar_energy.py:281(evaluate)
+      826    0.043    0.000   10.811    0.013 q4_s3_overlap_derivatives.py:724(integrate)
+      826    0.209    0.000   10.597    0.013 q4_s3_overlap_derivatives.py:704(rule_many)
+      826    0.216    0.000   10.123    0.012 q4_s3_overlap_derivatives.py:1043(_rule_batched)
+  1824702    2.543    0.000    9.734    0.000 numeric.py:1493(moveaxis)
+     2560    0.020    0.000    9.733    0.004 q4_source_mortar_energy.py:85(evaluate)
+    56631    1.284    0.000    8.784    0.000 overlap.py:21(__post_init__)
+   136290    7.145    0.000    7.314    0.000 q4_s3_overlap_derivatives.py:158(__mul__)
+  3672675    3.806    0.000    6.063    0.000 numeric.py:1431(normalize_axis_tuple)
+       12    0.282    0.023    5.530    0.461 s3_patch_mortar_energy.py:199(_check_same_side_overlap)
+    32214    0.078    0.000    5.429    0.000 q4_s3_overlap_derivatives.py:974(_bsum)
+      826    0.057    0.000    4.885    0.006 q4_s3_overlap_derivatives.py:990(_bnatural)
+    12824    0.158    0.000    4.147    0.000 q4_source_overlap.py:40(projected_q4_source_face)
+
+
+Tue Sep 29 03:24:21 2026    docs/d1_review_support/d1_target_16x16_profile_20260929.pstats
+
+         102770855 function calls (102388912 primitive calls) in 55.373 seconds
+
+   Ordered by: internal time
+   List reduced from 7575 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   136290    7.145    0.000    7.314    0.000 q4_s3_overlap_derivatives.py:158(__mul__)
+   608234    5.415    0.000   16.197    0.000 numeric.py:1567(cross)
+  3672675    3.806    0.000    6.063    0.000 numeric.py:1431(normalize_axis_tuple)
+   186000    2.857    0.000   12.976    0.000 overlap.py:66(shape_values_and_gradient)
+  1824702    2.543    0.000    9.734    0.000 numeric.py:1493(moveaxis)
+    93000    1.479    0.000   20.911    0.000 q4_source_overlap.py:299(sample)
+  1371419    1.409    0.000    1.409    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+   372832    1.408    0.000    3.425    0.000 _linalg.py:362(solve)
+   414750    1.305    0.000    2.830    0.000 overlap.py:116(_to_frame)
+    56631    1.284    0.000    8.784    0.000 overlap.py:21(__post_init__)
+   526018    1.119    0.000    1.556    0.000 _shape_base_impl.py:625(column_stack)
+   765066    1.118    0.000    2.155    0.000 _linalg.py:2599(norm)
+   372000    0.957    0.000    1.360    0.000 overlap.py:103(_q4_shape)
+13513194/13511422    0.913    0.000    0.913    0.000 {built-in method builtins.len}
+  7345350    0.779    0.000    1.122    0.000 numeric.py:1480(<genexpr>)
+  2181108    0.775    0.000    0.775    0.000 {built-in method numpy.array}
+   336666    0.672    0.000    0.808    0.000 numeric.py:909(outer)
+   117596    0.645    0.000    1.254    0.000 _ge_beam3_mixed_ad.py:53(__mul__)
+   824941    0.598    0.000    1.503    0.000 fromnumeric.py:66(_wrapreduction)
+5834257/5833457    0.585    0.000    0.652    0.000 {built-in method builtins.isinstance}
+  5500827    0.533    0.000    0.533    0.000 {built-in method numpy.lib.array_utils.normalize_axis_index}
+    21375    0.440    0.000    0.715    0.000 overlap.py:134(_clip_convex)
+  1597745    0.429    0.000    0.429    0.000 {method 'astype' of 'numpy.ndarray' objects}
+  1878077    0.412    0.000    0.431    0.000 {built-in method builtins.sorted}
+  3957197    0.391    0.000    0.391    0.000 {built-in method numpy.asarray}

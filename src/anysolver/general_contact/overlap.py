@@ -63,14 +63,44 @@ class ProjectedOverlap:
 
         return self.shape_values_and_gradient(face, point)[0]
 
+    def prepared_shape_values(self, face: PlanarFace):
+        """Reuse one face's projected corners during overlap quadrature."""
+
+        xy = _to_frame(face.corners, self.origin, self.tangent, self.binormal)
+
+        def values(point: np.ndarray) -> np.ndarray:
+            target = _to_frame(np.asarray(point, dtype=float).reshape(1, 3),
+                               self.origin, self.tangent, self.binormal)[0]
+            shape, _derivatives = self._shape_from_xy(xy, target)
+            return shape
+
+        return values
+
     def shape_values_and_gradient(self, face: PlanarFace,
                                   point: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Return physical shape values and their projected spatial gradients."""
 
+        shape, derivatives, xy = self._shape_data(face, point)
+        jacobian = derivatives @ xy
+        gradient_xy = np.linalg.solve(jacobian, derivatives).T
+        gradient = (gradient_xy[:, 0, None] * self.tangent
+                    + gradient_xy[:, 1, None] * self.binormal)
+        return shape, gradient
+
+    def _shape_data(self, face: PlanarFace,
+                    point: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Invert the projected interpolation and retain its original guards."""
+
         xy = _to_frame(face.corners, self.origin, self.tangent, self.binormal)
         target = _to_frame(np.asarray(point, dtype=float).reshape(1, 3),
                            self.origin, self.tangent, self.binormal)[0]
-        if len(face.corners) == 3:
+        shape, derivatives = self._shape_from_xy(xy, target)
+        return shape, derivatives, xy
+
+    @staticmethod
+    def _shape_from_xy(xy: np.ndarray,
+                       target: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        if len(xy) == 3:
             edge_matrix = np.column_stack((xy[1] - xy[0], xy[2] - xy[0]))
             bary = np.linalg.solve(edge_matrix, target - xy[0])
             shape = np.array((1.0 - sum(bary), bary[0], bary[1]), dtype=float)
@@ -93,11 +123,7 @@ class ProjectedOverlap:
                 or float(np.min(shape)) < -1.0e-8
                 or abs(float(np.sum(shape)) - 1.0) > 1.0e-9):
             raise ValueError("projected point is outside the physical contact face")
-        jacobian = derivatives @ xy
-        gradient_xy = np.linalg.solve(jacobian, derivatives).T
-        gradient = (gradient_xy[:, 0, None] * self.tangent
-                    + gradient_xy[:, 1, None] * self.binormal)
-        return shape, gradient
+        return shape, derivatives
 
 
 def _q4_shape(natural: np.ndarray) -> tuple[np.ndarray, np.ndarray]:

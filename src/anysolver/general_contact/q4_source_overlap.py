@@ -296,8 +296,11 @@ def q4_source_overlap_integrals(
             support, weighted, gram, 0.0, 0.0, None, 0, 0.0, 0.0, 0,
         )
 
+    source_shape_at = overlap.prepared_shape_values(projected_source)
+    target_shape_at = overlap.prepared_shape_values(target_face)
+
     def sample(point):
-        shape = overlap.shape_values(projected_source, point)
+        shape = source_shape_at(point)
         r = float(-shape[0]+shape[1]+shape[2]-shape[3])
         s = float(-shape[0]-shape[1]+shape[2]+shape[3])
         shape, derivatives = _q4_shape(np.array((r, s)))
@@ -312,7 +315,7 @@ def q4_source_overlap_integrals(
         )))
         ratio = reference_area/projected_jacobian
         physical_normal /= np.linalg.norm(physical_normal)
-        target_shape = overlap.shape_values(target_face, point)
+        target_shape = target_shape_at(point)
         gap = float(physical_normal @ (shape@source-target_shape@target))
         values = np.concatenate((
             ratio*shape, ratio*shape*gap,

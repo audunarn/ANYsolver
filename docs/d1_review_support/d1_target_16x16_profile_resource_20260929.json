@@ -1,0 +1,21 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 55.801579899998615,
+  "peak_process_tree_memory_mb": 314.568704,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "cProfile",
+    "-o",
+    "docs/d1_review_support/d1_target_16x16_profile_20260929.pstats",
+    "docs/d1_review_support/d1_two_body_16x16_linearization_preflight.py",
+    "--saved-record",
+    "docs/d1_review_support/d1_target_grid_8x8_prediction_20260929.json",
+    "--output",
+    "docs/d1_review_support/d1_target_16x16_profile_result_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_target_16x16_profile_log_20260929.txt"
+}

@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.9752499000023818,
+  "peak_process_tree_memory_mb": 170.63936,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs/d1_review_support/d1_two_body_target_stiffness_discriminator.py",
+    "--pressure-record",
+    "docs/d1_review_support/d1_target_grid_4x4_pressure_20260929.json",
+    "--output",
+    "docs/d1_review_support/d1_target_contact_shaped_compliance_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_target_contact_shaped_compliance_log_20260929.txt"
+}

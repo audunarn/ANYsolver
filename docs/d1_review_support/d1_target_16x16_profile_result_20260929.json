@@ -1,0 +1,80 @@
+{
+  "status": "development_16x16_active_local_cost_preflight",
+  "source_commit": "6efbe8fae32b74ba38fa0bf24e956e3d1ac24f9e",
+  "saved_source_sha256": "ba2e0be212ee6ac25b9d208a7f2fb9644cba69330dd357810caef1ef41094bdb",
+  "probe_sha256": "526a0bba1010c28d22557ac7bce11d55ba1ad6f43dfbb70fea2d22200d52d654",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "old_case": {
+    "target_s3_faces": 128,
+    "structural_dofs": 546,
+    "structural_nnz": 19764,
+    "structural_assembly_seconds": 0.10603019999689423,
+    "contact_preparation_seconds": 6.511261300001934,
+    "active_contact_linearization_seconds": 6.204759100000956,
+    "contact_tangent_nnz": 62500,
+    "contact_evaluations": 668,
+    "supported_pressure_modes": 10,
+    "reference_overlap_area_m2": 0.8999998991633139,
+    "normalized_gap_m": [
+      3.0442582815372322e-05,
+      1.323415278020105e-05,
+      -5.751687186720963e-19,
+      4.243625436143196e-07,
+      6.757583906371145e-06,
+      3.041739445573051e-05,
+      1.3206062496505743e-05,
+      6.659040298249197e-19,
+      4.614101937379903e-07,
+      6.816662206699109e-06
+    ],
+    "reference_support_m2": [
+      0.06187499812619992,
+      0.12374999617879175,
+      0.12374999748485262,
+      0.1237499986018796,
+      0.06187499952460109,
+      0.050624983135813505,
+      0.10124996560915545,
+      0.10124997736368735,
+      0.10124998741692048,
+      0.05062499572141225
+    ]
+  },
+  "fine_case": {
+    "target_s3_faces": 512,
+    "structural_dofs": 1794,
+    "structural_nnz": 69876,
+    "structural_assembly_seconds": 0.428196000000753,
+    "contact_preparation_seconds": 21.79653800000233,
+    "active_contact_linearization_seconds": 18.60338359999878,
+    "contact_tangent_nnz": 442225,
+    "contact_evaluations": 2524,
+    "supported_pressure_modes": 10,
+    "reference_overlap_area_m2": 0.8999998991633142,
+    "normalized_gap_m": [
+      3.0442615397591783e-05,
+      1.3234189767737237e-05,
+      4.673938172888202e-12,
+      4.2434830371148226e-07,
+      6.757571913053097e-06,
+      3.0417359118653984e-05,
+      1.3206051872550797e-05,
+      2.8789746438954785e-11,
+      4.614414863966744e-07,
+      6.8166837813293576e-06
+    ],
+    "reference_support_m2": [
+      0.06187499812619989,
+      0.12374999617879176,
+      0.12374999748485271,
+      0.12374999860187956,
+      0.061874999524601036,
+      0.05062498313581352,
+      0.10124996560915543,
+      0.10124997736368742,
+      0.10124998741692051,
+      0.05062499572141218
+    ]
+  },
+  "fine_pose_maximum_translation_m": 9.34728979350943e-05
+}

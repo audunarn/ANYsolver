@@ -1,4 +1,4 @@
-"""Independent current-skin overlap check at the saved 4-Q4/32-S3 pose.
+"""Independent current-skin overlap check at a saved 4-Q4/S3 pose.
 
 Development evidence only. Reuses the existing independent clipping quadrature;
 does not solve equilibrium or certify a spatial reference.
@@ -38,8 +38,15 @@ def main():
     saved = json.loads(saved_bytes)
     assert saved["status"] == "completed"
     assert 1 <= args.accepted_step <= saved["accepted_steps"]
-    assert saved["source_q4_faces"] == 4 and saved["target_s3_faces"] == 32
-    model, definition, settings, _program, _x, _y = build_refined_case(4, 4, 4)
+    assert saved["source_q4_faces"] == 4
+    target_x_cells = len(saved["target_x_knots_m"])-1
+    target_y_cells = len(saved["target_y_knots_m"])-1
+    assert saved["target_s3_faces"] == 2*target_x_cells*target_y_cells
+    model, definition, settings, _program, x_knots, y_knots = (
+        build_refined_case(4, target_x_cells, target_y_cells)
+    )
+    np.testing.assert_array_equal(x_knots, saved["target_x_knots_m"])
+    np.testing.assert_array_equal(y_knots, saved["target_y_knots_m"])
     step = saved["steps"][args.accepted_step-1]
     if "accepted_displacements" in step:
         pose = np.asarray(step["accepted_displacements"], dtype=float)
