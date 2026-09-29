@@ -310,6 +310,73 @@ def _bl5_nonmatching_definition(shell_edges, span=1):
     return replace(base, shell=shell, fixed=fixed, lines=(line,))
 
 
+def _bl5_joint_mesh_definition(shell_edges, beam_halfcells, span):
+    base = _bl5_nonmatching_definition(shell_edges, span)
+    element, inertia = base.beams[0].instantiate()
+    xs = np.linspace(0., 1., beam_halfcells+1)
+    points = np.column_stack((xs, np.zeros_like(xs),
+                              np.full_like(xs, .0675)))
+    beams = tuple(b3_ge.define_beam(
+        "b3-ge", index+1,
+        (101+2*index, 102+2*index, 103+2*index),
+        points[2*index:2*index+3], np.tile(np.eye(3), (3, 1, 1)),
+        element.section, inertia)
+        for index in range(beam_halfcells//2))
+    line = replace(base.lines[0], beam_halfcells=tuple(
+        (element_index, cell)
+        for element_index in range(len(beams)) for cell in (0, 1)))
+    return replace(base, beams=beams, lines=(line,))
+
+
+def test_bl5_single_p0_support_misses_a_free_beam_yaw():
+    """One five-row mean support cannot anchor all six beam rigid motions."""
+    for span in (1, 2):
+        owner = stiffened_shell.create_analysis(definition=
+            _bl5_joint_mesh_definition(2, 2, span))
+        q = np.zeros(owner._K.shape[0])
+        beam_start = owner._shell_count
+        nodal = 6*len(owner._beam_ids)
+        # Rotate the complete free native beam about shell-normal z through
+        # x=0.5. The reference tangent must perform zero element work.
+        for node in owner._beam_ids:
+            slot = beam_start+6*owner._beam_index[node]
+            q[slot+1] = owner._beam_nodes[node][0][0]-.5
+            q[slot+5] = 1.
+        for index in range(len(owner._beam_parts)):
+            slot = beam_start+nodal+24*index
+            q[slot+2] = q[slot+5] = 1.
+        internal = np.asarray(owner._K@q).reshape(-1)
+        scale = np.asarray(abs(owner._K)@abs(q)).reshape(-1)
+        relative = np.divide(abs(internal), scale, out=np.zeros_like(internal),
+                             where=scale > 0.)
+        assert np.max(relative) <= 1e-12
+        gap = np.asarray(owner._C@q).reshape(-1)
+        if span == 2:
+            # The sole P0 support averages antisymmetric y displacement to
+            # zero; its two director rows also miss this physical yaw.
+            np.testing.assert_allclose(gap, 0., rtol=0., atol=1e-13)
+            assert owner.preflight()["unsupported_modes"] == (
+                "single-support BL5 leaves a free native beam rigid mode",)
+            with pytest.raises(ValueError, match="free native beam rigid mode"):
+                owner.solve_linear((stiffened_shell.NodalAction(
+                    "beam", 103, (0., 100., 0., 0., 0., 0.)),))
+            assert owner.preflight()["reference_linear_factorizations"] == 0
+        else:
+            assert np.max(abs(gap)) >= .1
+            assert owner.preflight()["unsupported_modes"] == ()
+
+
+def test_bl5_single_p0_support_with_beam_yaw_restraint_is_admitted():
+    model = _bl5_joint_mesh_definition(2, 2, 2)
+    model = replace(model, fixed=model.fixed+(
+        stiffened_shell.FixedCoordinate("beam", 101, 5),))
+    owner = stiffened_shell.create_analysis(definition=model)
+    assert owner.preflight()["unsupported_modes"] == ()
+    result = owner.solve_linear((stiffened_shell.NodalAction(
+        "beam", 103, (0., 100., 0., 0., 0., 0.)),))
+    assert result.status == "completed"
+
+
 @pytest.mark.parametrize("shell_edges", (2, 8))
 @pytest.mark.parametrize("span", (1, 2))
 def test_bl5_supported_p0_rows_match_dropped_yaw_l1_locally(

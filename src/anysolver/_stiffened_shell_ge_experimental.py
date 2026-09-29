@@ -569,6 +569,18 @@ class ExperimentalGEAnalysis:
         self._free = np.setdiff1d(np.arange(count), self._fixed)
         if not len(self._fixed) or not len(self._free):
             raise ValueError("physical supports and free coordinates required")
+        # This exact five-row layout cannot restrain all six rigid motions
+        # of an otherwise free native beam. Other lines or beam supports may
+        # supply the missing restraint and are not classified here.
+        self._unsupported_modes = (
+            ("single-support BL5 leaves a free native beam rigid mode",)
+            if (len(definition.lines) == 1 and
+                type(definition.lines[0]) is ExperimentalBL5Line and
+                len(definition.lines[0].beam_halfcells) == 2 and
+                definition.lines[0].multiplier_span == 2 and
+                not definition.points and
+                not any(support.domain == "beam" for support in definition.fixed))
+            else ())
         _require_independent_supported_rows(
             self._C, self._free, self._coordinate_scale,
             self._constraint_scale, tuple(row_sources))
@@ -647,6 +659,7 @@ class ExperimentalGEAnalysis:
                 "stress_free_scaled_max": self._reference_error,
                 "equilibrium_norm": "frozen_work_weighted_l2_plus_active_load_rows",
                 "constraint_norm": "reference_row_scaled_max",
+                "unsupported_modes": self._unsupported_modes,
                 "production_qualified": False}
 
     def solve_linear(self, actions: tuple[NodalAction, ...], *,
@@ -654,6 +667,8 @@ class ExperimentalGEAnalysis:
         self._require_open()
         if self._finite_driver is not None:
             raise RuntimeError("finite and reference-linear states cannot be mixed")
+        if self._unsupported_modes:
+            raise ValueError(self._unsupported_modes[0])
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.start")
         load = np.zeros(self._K.shape[0])
         for action in actions:
