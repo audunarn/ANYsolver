@@ -9,7 +9,9 @@ import pytest
 
 from anysolver import BoundaryCondition, solve_static_nonlinear
 from anysolver.assembly import build_constraint_transformation
+from anysolver.control import SolveCancelled
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from anysolver.general_contact import semismooth_path
 from anysolver.general_contact.semismooth import linearize
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from scripts.general_contact_d1_interior_press_dev import build_interior_press
@@ -161,6 +163,106 @@ def test_guarded_active_press_restarts_and_binds_profile_settings():
         full.info["general_contact"]["integration_force"],
         rtol=0.0, atol=1.0e-10,
     )
+
+
+def _guarded_left_edge_press_case():
+    return build_interior_press(
+        source_support="perimeter", source_rows=4,
+        load_shape="interior_distributed", force_n=0.04,
+        reference_slope=1.0e-4, slide_body="target",
+    )
+
+
+def test_guarded_left_edge_press_cancel_after_step_keeps_model_reusable():
+
+    class CancelBeforeSecondStep:
+        def raise_if_cancelled(self, stage=""):
+            if stage == "contact_path.step:2":
+                raise SolveCancelled("left-edge development interruption",
+                                     stage=stage)
+
+    model, definition, settings, program = _guarded_left_edge_press_case()
+    with pytest.raises(SolveCancelled,
+                       match="left-edge development interruption"):
+        solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=18,
+            cancellation_token=CancelBeforeSecondStep(),
+        )
+    rerun = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    fresh_model, fresh_definition, fresh_settings, fresh_program = (
+        _guarded_left_edge_press_case())
+    fresh = solve_static_nonlinear(
+        fresh_model, contact=fresh_definition, contact_settings=fresh_settings,
+        contact_path_program=fresh_program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    assert rerun.status == fresh.status == "completed"
+    np.testing.assert_allclose(rerun.displacements, fresh.displacements,
+                               rtol=0.0, atol=1.0e-10)
+    np.testing.assert_allclose(
+        rerun.info["general_contact"]["integration_force"],
+        fresh.info["general_contact"]["integration_force"],
+        rtol=0.0, atol=1.0e-10,
+    )
+    assert rerun.to_restart_checkpoint() == fresh.to_restart_checkpoint()
+
+
+def test_guarded_left_edge_contact_exception_restores_model(monkeypatch):
+    entered_second_step = [False]
+    raised = [False]
+
+    class MarkSecondStep:
+        def raise_if_cancelled(self, stage=""):
+            if stage == "contact_path.step:2":
+                entered_second_step[0] = True
+
+    original = semismooth_path.linearize
+
+    def raise_after_contact(*args, **kwargs):
+        work = original(*args, **kwargs)
+        if entered_second_step[0] and not raised[0]:
+            raised[0] = True
+            raise RuntimeError("injected left-edge candidate failure")
+        return work
+
+    monkeypatch.setattr(semismooth_path, "linearize", raise_after_contact)
+    model, definition, settings, program = _guarded_left_edge_press_case()
+    with pytest.raises(RuntimeError,
+                       match="injected left-edge candidate failure"):
+        solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=18,
+            cancellation_token=MarkSecondStep(),
+        )
+    assert raised[0]
+    monkeypatch.setattr(semismooth_path, "linearize", original)
+
+    rerun = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    fresh_model, fresh_definition, fresh_settings, fresh_program = (
+        _guarded_left_edge_press_case())
+    fresh = solve_static_nonlinear(
+        fresh_model, contact=fresh_definition, contact_settings=fresh_settings,
+        contact_path_program=fresh_program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    assert rerun.status == fresh.status == "completed"
+    np.testing.assert_allclose(rerun.displacements, fresh.displacements,
+                               rtol=0.0, atol=1.0e-10)
+    np.testing.assert_allclose(
+        rerun.info["general_contact"]["integration_force"],
+        fresh.info["general_contact"]["integration_force"],
+        rtol=0.0, atol=1.0e-10,
+    )
+    assert rerun.to_restart_checkpoint() == fresh.to_restart_checkpoint()
 
 
 @pytest.mark.parametrize("slide_body", ["target_diagonal_dev", "target"])
