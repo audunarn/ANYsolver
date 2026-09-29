@@ -7,6 +7,7 @@ or an external reference comparison. It keeps the native B3 retained blocks.
 from __future__ import annotations
 
 import argparse
+from hashlib import sha256
 import json
 from pathlib import Path
 
@@ -22,6 +23,37 @@ from scripts.b3_e4_f03_flat_rail_six_channel_map import (
 from scripts.b3_e4_f03_l1_physical_rail import SegmentedRailWeakWork
 from scripts.b3_e4_f03_material_line_loaded import _scales, _solve
 from scripts.b3_e4_f03_plate_patch_work import raw_e4_tangent
+
+
+def fixture_identity(xs, ys, bond_start, thickness, beam_offset, beam,
+                     shell_fixed):
+    """Bind a same-model comparison to geometry, native section and supports."""
+    tangent = beam.tangent.tocsr()
+    state = beam.context.initial.mechanical
+    arrays = (
+        tangent.data, tangent.indices, tangent.indptr, beam.residual,
+        state.positions, state.position_low, state.nodal_frames,
+        state.cell_rotations,
+    )
+    digest = sha256()
+    for value in arrays:
+        array = np.ascontiguousarray(value)
+        digest.update(str(array.shape).encode())
+        digest.update(str(array.dtype).encode())
+        digest.update(array.tobytes())
+    return {
+        "shell_x_m": np.asarray(xs).tolist(),
+        "shell_y_m": np.asarray(ys).tolist(),
+        "bond_x_m": np.asarray(xs)[bond_start:].tolist(),
+        "shell_thickness_m": float(thickness),
+        "beam_offset_local_m": np.asarray(beam_offset).tolist(),
+        "beam_axis_reference_z_m": .0675,
+        "native_operator_and_reference_sha256": digest.hexdigest(),
+        "fixed_shell_dofs": sorted(int(index) for index in shell_fixed),
+        "native_beam_root": "free",
+        "tip_actions": [["tip_mx_100nm", 3, 100.],
+                        ["tip_fz_1000n", 2, 1000.]],
+    }
 
 
 def evaluate() -> dict:
@@ -97,6 +129,8 @@ def evaluate() -> dict:
                             for j in range(len(ys)) for axis in range(6)])
     # The native beam root stays free; all applied work must reach the plate.
     base_fixed = set(shell_fixed.tolist())
+    fixture = fixture_identity(
+        xs, ys, bond_start, thickness, beam_offset, beam, base_fixed)
     terminal = shell_size+6*beam.n_half_cells
     shell_nodes = np.array([(x, y, 0.) for y in ys for x in xs])
     cases = {}
@@ -160,6 +194,7 @@ def evaluate() -> dict:
         "native_b3_halfcells": 8,
         "bond_segments": 4,
         "multiplier_rows": 24,
+        "fixture_identity": fixture,
         "physical_strip_m": bounds,
         "shell_thickness_m": thickness,
         "beam_axis_z_m": .0675,
