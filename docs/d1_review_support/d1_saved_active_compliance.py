@@ -49,12 +49,15 @@ parser.add_argument("--fourier-modes", type=int, default=0)
 parser.add_argument("--coarse-pressure-transfer", type=Path)
 parser.add_argument("--enriched-source-x2", action="store_true")
 parser.add_argument("--enriched-source-x4", action="store_true")
+parser.add_argument("--enriched-source-y2", action="store_true")
 parser.add_argument("--output", type=Path)
 args = parser.parse_args()
-enriched_source = args.enriched_source_x2 or args.enriched_source_x4
+enriched_source = (args.enriched_source_x2 or args.enriched_source_x4
+                   or args.enriched_source_y2)
 if sum((args.structural_energy, args.source_transverse_witness,
         bool(args.coarse_pressure_transfer),
-        args.enriched_source_x2, args.enriched_source_x4)) > 1:
+        args.enriched_source_x2, args.enriched_source_x4,
+        args.enriched_source_y2)) > 1:
     parser.error("select one pressure diagnostic")
 if ((args.structural_energy or args.source_transverse_witness or enriched_source
      or args.coarse_pressure_transfer)
@@ -127,11 +130,19 @@ assert len(active) == certificate["active_pressure_dofs"]
 if enriched_source:
     # Keep the physical pressure field fixed while enriching only source
     # structural virtual displacements. No coupled fine-mesh solve occurs.
-    refinement = 4 if args.enriched_source_x4 else 2
-    fine_columns = refinement*saved["columns"]
+    if args.enriched_source_y2 and (
+            saved["columns"] != 16 or saved["source_rows"] != 8
+            or saved["source_y_profile"] != "near_rim8"):
+        raise ValueError("y2 reference requires the saved 16x8 near-rim pose")
+    x_refinement = (4 if args.enriched_source_x4 else
+                    2 if args.enriched_source_x2 else 1)
+    y_refinement = 2 if args.enriched_source_y2 else 1
+    fine_columns = x_refinement*saved["columns"]
+    fine_rows = y_refinement*saved["source_rows"]
     fine_model, fine_definition, fine_settings, _program = build_case(
-        fine_columns, source_rows=saved["source_rows"],
-        source_y_profile=saved["source_y_profile"],
+        fine_columns, source_rows=fine_rows,
+        source_y_profile=("near_rim8_ref16" if args.enriched_source_y2
+                          else saved["source_y_profile"]),
         target_right_x_m=saved["target_right_x_m"],
         target_reference_slope=saved["target_reference_slope"],
         target_columns=saved["target_columns"],
@@ -141,6 +152,7 @@ if enriched_source:
         steps_per_segment=saved["steps_per_segment"],
         four_phase=saved["four_phase"],
         offline_structural_reference_64=args.enriched_source_x4,
+        offline_structural_reference_y16=args.enriched_source_y2,
     )
     fine_model.apply_boundary_conditions()
     fine_manager = GeneralS3PatchManager(
@@ -148,7 +160,7 @@ if enriched_source:
     coarse_stride = saved["columns"]+1
     fine_stride = fine_columns+1
     coarse_source_count = coarse_stride*(saved["source_rows"]+1)
-    fine_source_count = fine_stride*(saved["source_rows"]+1)
+    fine_source_count = fine_stride*(fine_rows+1)
     if (len(support) != coarse_source_count
             or fine_manager.law.source_node_ids !=
             tuple(range(1, fine_source_count+1))):
@@ -157,53 +169,59 @@ if enriched_source:
     coarse_dofs = model.mesh.dof_manager
     fine_dofs = fine_model.mesh.dof_manager
     pose_prolongation = sparse.lil_matrix((fine_pose.size, pose.size))
-    for row in range(saved["source_rows"]+1):
+    def coarse_weights(row, column):
+        low_row, row_fraction = divmod(row, y_refinement)
+        low_column, column_fraction = divmod(column, x_refinement)
+        row_fraction /= y_refinement
+        column_fraction /= x_refinement
+        for row_delta, row_weight in ((0, 1.0-row_fraction),
+                                      (1, row_fraction)):
+            if row_weight == 0.0:
+                continue
+            for column_delta, column_weight in ((0, 1.0-column_fraction),
+                                                (1, column_fraction)):
+                weight = row_weight*column_weight
+                if weight:
+                    yield (1+(low_row+row_delta)*coarse_stride
+                           +low_column+column_delta, weight)
+
+    for row in range(fine_rows+1):
         for column in range(fine_stride):
-            left = column//refinement
-            fraction = (column % refinement)/refinement
-            first = 1+row*coarse_stride+left
-            coarse_indices = coarse_dofs.get_node_dofs(first)
-            value = np.asarray(pose[coarse_indices])
-            if fraction:
-                second = first+1
-                second_indices = coarse_dofs.get_node_dofs(second)
-                value = (1.0-fraction)*value+fraction*pose[second_indices]
             node = 1+row*fine_stride+column
             fine_indices = fine_dofs.get_node_dofs(node)
+            value = np.zeros(len(fine_indices))
+            for coarse_node, weight in coarse_weights(row, column):
+                coarse_indices = coarse_dofs.get_node_dofs(coarse_node)
+                value += weight*pose[coarse_indices]
+                for component, fine_dof in enumerate(fine_indices):
+                    pose_prolongation[fine_dof, coarse_indices[component]] = weight
             fine_pose[fine_indices] = value
-            for component, fine_dof in enumerate(fine_indices):
-                pose_prolongation[fine_dof, coarse_indices[component]] = (
-                    1.0-fraction)
-                if fraction:
-                    pose_prolongation[fine_dof, second_indices[component]] = (
-                        fraction)
+    for local in range(len(fine_manager.law.target_node_ids)):
+        coarse_indices = coarse_dofs.get_node_dofs(coarse_source_count+local+1)
+        fine_indices = fine_dofs.get_node_dofs(fine_source_count+local+1)
+        fine_pose[fine_indices] = pose[coarse_indices]
+        for component, fine_dof in enumerate(fine_indices):
+            pose_prolongation[fine_dof, coarse_indices[component]] = 1.0
     pose_prolongation = pose_prolongation.tocsr()
     coarse_source, _coarse_target = manager._positions(pose)
     fine_source, fine_target = fine_manager._positions(fine_pose)
     expected_source = []
-    for row in range(saved["source_rows"]+1):
+    for row in range(fine_rows+1):
         for column in range(fine_stride):
-            left = row*coarse_stride+column//refinement
-            fraction = (column % refinement)/refinement
-            value = (1.0-fraction)*coarse_source[left]
-            if fraction:
-                value = value+fraction*coarse_source[left+1]
+            value = sum((weight*coarse_source[node-1]
+                         for node, weight in coarse_weights(row, column)),
+                        np.zeros(3))
             expected_source.append(value)
     expected_source = np.asarray(expected_source)
     geometry_error = float(np.max(np.linalg.norm(
         fine_source-expected_source, axis=1)))
     matrix = np.zeros((fine_source_count, coarse_source_count))
-    for row in range(saved["source_rows"]+1):
+    for row in range(fine_rows+1):
         for column in range(fine_stride):
             index = row*fine_stride+column
-            coarse_index = row*coarse_stride+column//refinement
-            fraction = (column % refinement)/refinement
-            if fraction:
-                matrix[index, coarse_index:coarse_index+2] = (
-                    1.0-fraction, fraction)
-            else:
-                matrix[index, coarse_index] = 1.0
-    anchors = tuple(1+row*fine_stride+refinement*column
+            for coarse_node, weight in coarse_weights(row, column):
+                matrix[index, coarse_node-1] = weight
+    anchors = tuple(1+y_refinement*row*fine_stride+x_refinement*column
                     for row in range(saved["source_rows"]+1)
                     for column in range(coarse_stride))
     basis = PressureBasis(
@@ -225,7 +243,9 @@ if enriched_source:
                            -base.state.reference_overlap_area)
                        /base.state.reference_overlap_area)
     record = {
-        "status": "development_enriched_shell_source_x2",
+        "status": ("development_enriched_shell_source_y2"
+                   if args.enriched_source_y2 else
+                   "development_enriched_shell_source_x2"),
         "source_commit": subprocess.check_output(
             ("git", "rev-parse", "HEAD"), text=True).strip(),
         "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -233,7 +253,8 @@ if enriched_source:
         "saved_runtime_identity": saved["runtime_identity"],
         "anysolver_module": str(Path(anysolver.__file__).resolve()),
         "coarse_source_cells": [saved["columns"], saved["source_rows"]],
-        "fine_source_cells": [fine_columns, saved["source_rows"]],
+        "fine_source_cells": [fine_columns, fine_rows],
+        "structural_refinement_factors": [x_refinement, y_refinement],
         "pressure_modes": int(len(support)),
         "settled_active_modes": int(len(active)),
         "source_skin_interpolation_error_m": geometry_error,
@@ -339,7 +360,7 @@ if enriched_source:
         if np.linalg.norm(fine_offset) != 0.0:
             raise AssertionError("enriched source has unexpected constraint offset")
         fine_transform = fine_transform.tocsr()
-        control_nodes = (1, fine_stride+1)
+        control_nodes = (1, y_refinement*fine_stride+1)
         controlled = []
         for node in control_nodes:
             dof = int(fine_dofs.get_node_dofs(node)[0])
@@ -502,8 +523,10 @@ if enriched_source:
                                  "pressure_support_l2_relative",
                                  "normalized_gap_maximum_error_m",
                                  "elapsed_seconds")}, indent=2))
-    raise SystemExit(0 if record["status"] ==
-                     "development_enriched_shell_source_x2" else 2)
+    raise SystemExit(0 if record["status"] in {
+        "development_enriched_shell_source_x2",
+        "development_enriched_shell_source_y2",
+    } else 2)
 
 if args.coarse_pressure_transfer:
     from docs.d1_review_support.d1_guided_q1_fourier import (

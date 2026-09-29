@@ -52,7 +52,8 @@ def build_case(columns: int, *, four_phase: bool = False,
                full_width_target: bool = False,
                source_rows: int = 1,
                source_y_profile: str | None = None,
-               offline_structural_reference_64: bool = False):
+               offline_structural_reference_64: bool = False,
+               offline_structural_reference_y16: bool = False):
     if columns not in (4, 8, 12, 16, 24, 32) and not (
             columns == 64 and offline_structural_reference_64):
         raise ValueError(
@@ -67,18 +68,33 @@ def build_case(columns: int, *, four_phase: bool = False,
         raise ValueError("common slope must be in [0, 0.1] without target-only slope")
     if target_columns not in (1, 2):
         raise ValueError("this development case admits one or two target columns")
-    if source_rows not in (1, 2, 4, 8):
-        raise ValueError("this development case admits one, two, four or eight source rows")
-    if source_y_profile not in (None, "rim8", "near_rim8"):
+    if source_rows not in (1, 2, 4, 8) and not (
+            source_rows == 16 and offline_structural_reference_y16):
+        raise ValueError("this development case admits at most eight source rows; "
+                         "sixteen require the offline structural-reference opt-in")
+    if source_y_profile not in (None, "rim8", "near_rim8", "near_rim8_ref16"):
         raise ValueError("unknown bounded source y profile")
-    if source_y_profile is not None and source_rows != 8:
+    if source_y_profile == "near_rim8_ref16":
+        if (not offline_structural_reference_y16 or source_rows != 16
+                or columns != 16):
+            raise ValueError("near-rim sixteen-row reference is offline-only")
+    elif source_rows == 16:
+        raise ValueError("sixteen source rows require the near-rim offline profile")
+    elif source_y_profile is not None and source_rows != 8:
         raise ValueError("rim profiles require eight source rows")
-    source_y_knots = (np.linspace(0.0, 1.0, source_rows+1)
-                      if source_y_profile is None else
-                      np.asarray((0.0, 0.2, 0.4, 0.6, 0.75,
-                                  0.825, 0.875,
-                                  0.9 if source_y_profile == "rim8" else 0.895,
-                                  1.0)))
+    if source_y_profile is None:
+        source_y_knots = np.linspace(0.0, 1.0, source_rows+1)
+    else:
+        coarse_y = np.asarray((0.0, 0.2, 0.4, 0.6, 0.75,
+                               0.825, 0.875,
+                               0.9 if source_y_profile == "rim8" else 0.895,
+                               1.0))
+        if source_y_profile == "near_rim8_ref16":
+            source_y_knots = np.empty(17)
+            source_y_knots[::2] = coarse_y
+            source_y_knots[1::2] = 0.5*(coarse_y[:-1]+coarse_y[1:])
+        else:
+            source_y_knots = coarse_y
     source_y_weights = np.empty(source_rows+1)
     heights = np.diff(source_y_knots)
     source_y_weights[0] = heights[0]/2
