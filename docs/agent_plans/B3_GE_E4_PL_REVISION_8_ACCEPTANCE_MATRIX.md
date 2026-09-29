@@ -1,6 +1,6 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
-**Updated:** 29 September 2026. **Candidate:** current integration branch;
+**Updated:** 30 September 2026. **Candidate:** current integration branch;
 exact development-screen source identities are recorded with their raw evidence.
 This is the forward status index, not an
 amendment to frozen registrations or historical results. The
@@ -13,6 +13,8 @@ Development update, 29 September 2026: the objective S3 J2 algorithmic owner sli
 Statuses describe acceptance, not prototype progress. `IN_PROGRESS`
 includes incomplete or failed required cases; it never means a numerical
 pass.
+
+F06 development: product `ffc1afd0` adds actual owned shell-anchor resets, immutable state, atomic generation events and a distinct anchored checkpoint/restore contract. Source 33/33 and exact installed 77/77 pass with independent review findings closed; mixed Q4/S3 elastic/J2 continuation matches unrebased controls. Evidence: `.qualification/b3-ge-e4-pl/r8-owned-shell-chart-dev-20260930-v1/`. Large noncommuting histories, partial rotational supports and broad chart/history qualification remain open. The shared all-S3 beam-yielded `.5→.55` failed increment is retained; no criterion was relaxed. F06/V18/G0B and aggregate acceptance remain IN_PROGRESS.
 
 F07/F12 development correction: the distinct flat-Q4 director mass and corrected bounded descriptors pass 17/17 source and 17/17 exact installed checks, with independent review findings closed. Legacy mass and historical evidence are unchanged. Evidence: `.qualification/b3-ge-e4-pl/r8-physical-q4-mass-dev-20260929-v1/`. Sparse/public spectral qualification and aggregate acceptance remain open.
 
