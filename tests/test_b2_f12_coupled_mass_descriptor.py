@@ -1,6 +1,5 @@
 """Bounded B2/Q4 point-mass and massless-multiplier descriptor checks."""
 
-from copy import copy
 from dataclasses import replace
 
 import numpy as np
@@ -8,8 +7,7 @@ import pytest
 from scipy import linalg
 
 from anysolver._b2_physical_linear_definition import MassMetadata
-from anysolver.e4_pl_element import QualifiedE4PLShellElement
-from anysolver.fe_core import FEModel
+from anysolver._stiffened_shell_physical_q4_mass import physical_mass
 from test_b2_f10_f11_point_attachment import VERTICES, specimen
 
 
@@ -30,17 +28,9 @@ def _section_mass():
 
 
 def _shell_mass():
-    model = FEModel("F12-physical-Q4")
-    model.add_material("plate", 1000., .3)
-    for i, x in enumerate(VERTICES, 1):
-        model.add_node(i, *x)
-    shell = QualifiedE4PLShellElement(
-        1, (1, 2, 3, 4), "plate", thickness=.15,
-        reference_normal=np.array([0., 0., 1.]))
-    model.add_element(1, shell)
-    material = copy(model.get_material("plate"))
-    material.density = 2.
-    return shell.compute_mass_matrix(model.mesh, material)
+    # The old fixture reused the inherited mass with drilling inertia. This
+    # candidate uses the independently kinetic-checked director plate law.
+    return physical_mass(VERTICES, density_kg_m3=2., thickness_m=.15)
 
 
 def test_candidate_b2_mass_reproduces_independent_rigid_particle_work():
