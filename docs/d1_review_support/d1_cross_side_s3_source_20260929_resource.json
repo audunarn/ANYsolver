@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 15.447802599999704,
+  "peak_process_tree_memory_mb": 202.01472,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_cross_side_broad_phase.py"
+  ],
+  "log": "docs\\d1_review_support\\d1_cross_side_s3_source_20260929.log"
+}
